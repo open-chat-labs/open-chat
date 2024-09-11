@@ -16,6 +16,7 @@ generate_query_call!(summary_updates);
 generate_update_call!(add_reaction);
 generate_update_call!(block_user);
 generate_update_call!(cancel_invites);
+generate_update_call!(change_channel_role);
 generate_update_call!(change_role);
 generate_update_call!(claim_prize);
 generate_update_call!(create_channel);
@@ -43,7 +44,7 @@ pub mod happy_path {
     use testing::rng::random_message_id;
     use types::{
         AccessGate, ChannelId, ChatId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
-        CommunityCanisterCommunitySummaryUpdates, CommunityId, CommunityRole, EventIndex, EventsResponse,
+        CommunityCanisterCommunitySummaryUpdates, CommunityId, CommunityRole, EventIndex, EventsResponse, GroupRole,
         MessageContentInitial, MessageId, MessageIndex, Rules, TextContent, TimestampMillis, UserId,
     };
 
@@ -66,9 +67,11 @@ pub mod happy_path {
                 subtype: None,
                 avatar: None,
                 history_visible_to_new_joiners: is_public,
+                messages_visible_to_non_members: None,
                 permissions_v2: None,
                 events_ttl: None,
                 gate: None,
+                external_url: None,
             },
         );
 
@@ -98,9 +101,11 @@ pub mod happy_path {
                 subtype: None,
                 avatar: None,
                 history_visible_to_new_joiners: is_public,
+                messages_visible_to_non_members: None,
                 permissions_v2: None,
                 events_ttl: None,
                 gate: Some(gate),
+                external_url: None,
             },
         );
 
@@ -205,6 +210,31 @@ pub mod happy_path {
         match response {
             community_canister::change_role::Response::Success => {}
             response => panic!("'change_role' error: {response:?}"),
+        }
+    }
+
+    pub fn change_channel_role(
+        env: &mut PocketIc,
+        sender: Principal,
+        community_id: CommunityId,
+        channel_id: ChannelId,
+        user_id: UserId,
+        new_role: GroupRole,
+    ) {
+        let response = super::change_channel_role(
+            env,
+            sender,
+            community_id.into(),
+            &community_canister::change_channel_role::Args {
+                user_id,
+                new_role,
+                channel_id,
+            },
+        );
+
+        match response {
+            community_canister::change_channel_role::Response::Success => {}
+            response => panic!("'change_channel_role' error: {response:?}"),
         }
     }
 
@@ -335,6 +365,29 @@ pub mod happy_path {
         match response {
             community_canister::selected_initial::Response::Success(result) => result,
             response => panic!("'selected_initial' error: {response:?}"),
+        }
+    }
+
+    pub fn selected_updates(
+        env: &PocketIc,
+        sender: &User,
+        community_id: CommunityId,
+        updates_since: TimestampMillis,
+    ) -> Option<community_canister::selected_updates_v2::SuccessResult> {
+        let response = super::selected_updates_v2(
+            env,
+            sender.principal,
+            community_id.into(),
+            &community_canister::selected_updates_v2::Args {
+                invite_code: None,
+                updates_since,
+            },
+        );
+
+        match response {
+            community_canister::selected_updates_v2::Response::Success(result) => Some(result),
+            community_canister::selected_updates_v2::Response::SuccessNoUpdates(_) => None,
+            response => panic!("'selected_updates_v2' error: {response:?}"),
         }
     }
 

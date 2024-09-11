@@ -152,7 +152,7 @@
         | { kind: "select_chat" }
         | { kind: "suspended" }
         | { kind: "no_access" }
-        | { kind: "new_group"; candidate: CandidateGroupChat }
+        | { kind: "new_group"; embeddedContent: boolean; candidate: CandidateGroupChat }
         | { kind: "wallet" }
         | { kind: "gate_check_failed"; gates: AccessGateWithLevel[] }
         | { kind: "hall_of_fame" }
@@ -537,6 +537,10 @@
                 rightPanelHistory.set([{ kind: "show_community_members", userGroupId }]);
                 pageReplace(removeQueryStringParam("usergroup"));
             }
+
+            if (modal?.kind === "claim_daily_chit") {
+                modal = { kind: "none" };
+            }
         }
     }
 
@@ -843,7 +847,7 @@
     /**
      * When we try to join a group we need to first scrutinise the access gates and
      * see whether any of them require client side action before we can proceed with the
-     * call to the back end. I there are gates which require action, we need to perform
+     * call to the back end. If there are gates which require action, we need to perform
      * those actions one by one until they are all done and then feed their results
      * back into this function.
      */
@@ -857,7 +861,7 @@
         const credentials = gateCheck?.credentials ?? [];
 
         if (gateCheck === undefined) {
-            const gates = client.accessGatesForChat(group);
+            const gates = client.accessGatesForChat(group, true);
             const passed = client.doesUserMeetAccessGates(gates);
 
             if (!passed) {
@@ -970,11 +974,11 @@
         modal = { kind: "wallet" };
     }
 
-    function newChannel() {
-        newGroup("channel");
+    function newChannel(ev: CustomEvent<boolean>) {
+        newGroup("channel", ev.detail);
     }
 
-    function newGroup(level: Level = "group") {
+    function newGroup(level: Level = "group", embeddedContent: boolean = false) {
         if (level === "channel" && $chatListScope.kind !== "community") {
             return;
         }
@@ -985,6 +989,7 @@
 
         modal = {
             kind: "new_group",
+            embeddedContent,
             candidate: {
                 id,
                 kind: "candidate_group_chat",
@@ -1001,6 +1006,7 @@
                     updateGroup: "admin",
                     pinMessages: "admin",
                     inviteUsers: "admin",
+                    addMembers: "admin",
                     mentionAllMembers: "member",
                     reactToMessages: "member",
                     startVideoCall: "member",
@@ -1017,6 +1023,7 @@
                     ...nullMembership(),
                     role: "owner",
                 },
+                messagesVisibleToNonMembers: false,
             },
         };
     }
@@ -1027,6 +1034,7 @@
         let rules = ev.detail.rules ?? { ...defaultChatRules(level), newVersion: false };
         modal = {
             kind: "new_group",
+            embeddedContent: chat.kind === "channel" && chat.externalUrl !== undefined,
             candidate: {
                 id: chat.id,
                 kind: "candidate_group_chat",
@@ -1046,6 +1054,8 @@
                 level,
                 membership: chat.membership,
                 eventsTTL: chat.eventsTTL,
+                messagesVisibleToNonMembers: chat.messagesVisibleToNonMembers,
+                externalUrl: chat.kind === "channel" ? chat.externalUrl : undefined,
             },
         };
     }
@@ -1250,7 +1260,6 @@
 {:else if modal.kind !== "none"}
     <Overlay
         dismissible={modal.kind !== "select_chat" &&
-            modal.kind !== "wallet" &&
             modal.kind !== "not_found" &&
             modal.kind !== "make_proposal"}
         alignLeft={modal.kind === "select_chat"}
@@ -1272,7 +1281,11 @@
                 on:close={closeModal}
                 on:success={accessGatesEvaluated} />
         {:else if modal.kind === "new_group"}
-            <NewGroup candidateGroup={modal.candidate} on:upgrade={upgrade} on:close={closeModal} />
+            <NewGroup
+                embeddedContent={modal.embeddedContent}
+                candidateGroup={modal.candidate}
+                on:upgrade={upgrade}
+                on:close={closeModal} />
         {:else if modal.kind === "edit_community"}
             <EditCommunity
                 originalRules={modal.communityRules}

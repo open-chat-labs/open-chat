@@ -3,7 +3,7 @@ FROM ubuntu:22.04 as builder
 SHELL ["bash", "-c"]
 
 ARG git_commit_id
-ARG rust_version=1.79.0
+ARG rust_version=1.81.0
 ARG canister_name
 
 ENV GIT_COMMIT_ID=$git_commit_id
@@ -26,7 +26,7 @@ RUN curl --fail https://sh.rustup.rs -sSf \
     rustup target add wasm32-unknown-unknown
 
 # Install IC Wasm
-RUN cargo install --version 0.7.0 ic-wasm
+RUN cargo install --version 0.8.0 ic-wasm
 
 COPY . /build
 WORKDIR /build

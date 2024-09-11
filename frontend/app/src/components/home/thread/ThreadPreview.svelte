@@ -6,6 +6,7 @@
         OpenChat,
         routeForChatIdentifier,
         type MultiUserChat,
+        routeForMessageContext,
     } from "openchat-client";
     import { pop } from "../../../utils/transition";
     import { _ } from "svelte-i18n";
@@ -87,6 +88,12 @@
     });
 
     function selectThread() {
+        // we want to preserve the right history so we will insert a history entry to represent the URL for the message context
+        const url = routeForMessageContext($chatListScope.kind, {
+            chatId: thread.chatId,
+            threadRootMessageIndex: thread.rootMessage.event.messageIndex,
+        });
+        window.history.pushState(null, "", url);
         page(
             `${routeForChatIdentifier($chatListScope.kind, thread.chatId)}/${
                 thread.rootMessage.event.messageIndex
@@ -137,7 +144,7 @@
                 <div class="body">
                     <div class="root-msg">
                         <ChatMessage
-                            sender={$userStore[thread.rootMessage.event.sender]}
+                            sender={$userStore.get(thread.rootMessage.event.sender)}
                             focused={false}
                             {observer}
                             confirmed
@@ -181,7 +188,7 @@
                     {#each grouped as userGroup}
                         {#each userGroup as evt, i (evt.event.messageId)}
                             <ChatMessage
-                                sender={$userStore[evt.event.sender]}
+                                sender={$userStore.get(evt.event.sender)}
                                 focused={false}
                                 {observer}
                                 confirmed

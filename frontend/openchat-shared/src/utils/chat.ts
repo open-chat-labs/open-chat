@@ -95,16 +95,24 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
                 userIds.add(e.event.unpinnedBy);
                 break;
             case "events_ttl_updated":
+            case "external_url_updated":
             case "gate_updated":
                 userIds.add(e.event.updatedBy);
                 break;
-            case "aggregate_common_events":
+            case "users_invited":
+                userIds.add(e.event.invitedBy);
+                e.event.userIds.forEach((id) => userIds.add(id));
+                break;
             case "chat_frozen":
+                userIds.add(e.event.frozenBy);
+                break;
             case "chat_unfrozen":
+                userIds.add(e.event.unfrozenBy);
+                break;
+            case "aggregate_common_events":
             case "direct_chat_created":
             case "empty":
             case "members_added_to_default_channel":
-            case "users_invited":
                 break;
             default:
                 console.warn("Unexpected ChatEvent type received", e.event);

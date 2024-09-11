@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
 use group_canister::init::Args as InitGroupCanisterArgs;
 use local_group_index_canister::c2c_create_group::{Response::*, *};
-use types::{BuildVersion, CanisterId, CanisterWasm, ChatId, Cycles, GroupCreatedEventPayload, UserId};
+use types::{BuildVersion, CanisterId, CanisterWasm, ChatId, Cycles, GroupCreatedEventPayload, UserId, UserType};
 use utils::canister;
 use utils::canister::CreateAndInstallError;
 use utils::consts::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
@@ -94,9 +94,15 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         subtype: args.subtype,
         // History is always visible on public groups
         history_visible_to_new_joiners: args.is_public || args.history_visible_to_new_joiners,
+        messages_visible_to_non_members: args.messages_visible_to_non_members,
         permissions_v2: args.permissions_v2,
         created_by_principal: args.created_by_user_principal,
         created_by_user_id: args.created_by_user_id,
+        created_by_user_type: if args.created_by_user_id == state.data.proposals_bot_user_id {
+            UserType::OcControlledBot
+        } else {
+            UserType::User
+        },
         events_ttl: args.events_ttl,
         mark_active_duration: MARK_ACTIVE_DURATION,
         group_index_canister_id: state.data.group_index_canister_id,

@@ -5,9 +5,50 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+
+## [[2.0.1328](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1328-local_group_index)] - 2024-09-03
+
+### Changed
+
+- Mark ProposalsBot as OC controlled bot ([#6287](https://github.com/open-chat-labs/open-chat/pull/6287))
+
+## [[2.0.1309](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1309-local_group_index)] - 2024-08-26
+
+### Changed
+
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+
+## [[2.0.1292](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1292-local_group_index)] - 2024-08-16
+
+### Changed
+
+- Remove references to deleted users ([#6241](https://github.com/open-chat-labs/open-chat/pull/6241))
+
+## [[2.0.1271](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1271-local_group_index)] - 2024-07-31
+
+### Changed
+
+- Configure message visibility to non-members of public channels/groups ([#6152](https://github.com/open-chat-labs/open-chat/pull/6152))
+
+## [[2.0.1259](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1259-local_group_index)] - 2024-07-26
+
+### Changed
+
+- Use `UserType` rather than `is_bot` and `is_oc_controlled_bot` ([#6116](https://github.com/open-chat-labs/open-chat/pull/6116))
+
+### Removed
+
+- Remove `Invited` gate ([#6112](https://github.com/open-chat-labs/open-chat/pull/6112))
+
+## [[2.0.1254](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1254-local_group_index)] - 2024-07-25
+
 ### Added
 
 - Add `Locked` gate ([#6095](https://github.com/open-chat-labs/open-chat/pull/6095))
+- Add `Invited` gate ([#6106](https://github.com/open-chat-labs/open-chat/pull/6106))
 
 ### Changed
 

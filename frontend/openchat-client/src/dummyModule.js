@@ -72,6 +72,8 @@ export class ChatMap extends Map {
 
 export class MessageMap extends Map {}
 
+export class GlobalMap extends Map {}
+
 export class CommunityMap extends Map {}
 
 export class ObjectSet extends Set {}

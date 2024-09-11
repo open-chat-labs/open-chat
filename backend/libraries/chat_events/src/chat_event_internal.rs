@@ -6,12 +6,12 @@ use std::collections::{HashMap, HashSet};
 use std::ops::{Deref, DerefMut};
 use types::{
     is_default, is_empty_slice, AvatarChanged, ChannelId, Chat, ChatId, ChatMetrics, CommunityId, Cryptocurrency, DeletedBy,
-    DirectChatCreated, EventIndex, EventWrapperInternal, EventsTimeToLiveUpdated, GroupCreated, GroupDescriptionChanged,
-    GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged,
-    GroupUnfrozen, GroupVisibilityChanged, MemberJoined, MemberLeft, MembersAdded, MembersAddedToDefaultChannel,
-    MembersRemoved, Message, MessageContent, MessageId, MessageIndex, MessagePinned, MessageUnpinned, MultiUserChat,
-    PermissionsChanged, PushIfNotContains, Reaction, ReplyContext, RoleChanged, ThreadSummary, TimestampMillis, Timestamped,
-    Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
+    DirectChatCreated, EventIndex, EventWrapperInternal, EventsTimeToLiveUpdated, ExternalUrlUpdated, GroupCreated,
+    GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext,
+    GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, MemberJoined, MemberLeft, MembersAdded,
+    MembersAddedToDefaultChannel, MembersRemoved, Message, MessageContent, MessageId, MessageIndex, MessagePinned,
+    MessageUnpinned, MultiUserChat, PermissionsChanged, PushIfNotContains, Reaction, ReplyContext, RoleChanged, ThreadSummary,
+    TimestampMillis, Timestamped, Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -66,6 +66,8 @@ pub enum ChatEventInternal {
     UsersInvited(Box<UsersInvited>),
     #[serde(rename = "adc")]
     MembersAddedToPublicChannel(Box<MembersAddedToPublicChannelInternal>),
+    #[serde(rename = "xu")]
+    ExternalUrlUpdated(Box<ExternalUrlUpdated>),
     #[serde(rename = "e")]
     Empty,
 }
@@ -107,6 +109,7 @@ impl ChatEventInternal {
                 | ChatEventInternal::GroupGateUpdated(_)
                 | ChatEventInternal::UsersInvited(_)
                 | ChatEventInternal::MembersAddedToPublicChannel(_)
+                | ChatEventInternal::ExternalUrlUpdated(_)
         )
     }
 
@@ -637,7 +640,7 @@ mod tests {
         let event_bytes = msgpack::serialize_then_unwrap(&event);
         let event_bytes_len = event_bytes.len();
 
-        assert_eq!(message_bytes_len, 50);
+        assert_eq!(message_bytes_len, 33);
         assert_eq!(event_bytes_len, message_bytes_len + 12);
 
         let _deserialized: EventWrapperInternal<ChatEventInternal> = msgpack::deserialize_then_unwrap(&event_bytes);
@@ -688,7 +691,7 @@ mod tests {
         let event_bytes = msgpack::serialize_then_unwrap(&event);
         let event_bytes_len = event_bytes.len();
 
-        assert_eq!(message_bytes_len, 199);
+        assert_eq!(message_bytes_len, 165);
         assert_eq!(event_bytes_len, message_bytes_len + 18);
 
         let _deserialized: EventWrapperInternal<ChatEventInternal> = msgpack::deserialize_then_unwrap(&event_bytes);

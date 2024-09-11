@@ -6,11 +6,114 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1342](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1342-local_user_index)] - 2024-09-10
+
+### Changed
+
+- Allow video calls started by diamond members to last 2 hours ([#6356](https://github.com/open-chat-labs/open-chat/pull/6356))
+- Allow paging failed user events ([#6360](https://github.com/open-chat-labs/open-chat/pull/6360))
+- Add `community_canister_timestamp` to `UserJoinedCommunityOrChannel` events ([#6361](https://github.com/open-chat-labs/open-chat/pull/6361))
+
+## [[2.0.1339](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1339-local_user_index)] - 2024-09-10
+
+### Fixed
+
+- Don't push events directly to users on other subnets ([#6355](https://github.com/open-chat-labs/open-chat/pull/6355))
+
+## [[2.0.1338](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1338-local_user_index)] - 2024-09-10
+
+### Added
+
+- Expose MessagePack versions of LocalUserIndex APIs ([#6318](https://github.com/open-chat-labs/open-chat/pull/6318))
+
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+- Support community referrals ([#6317](https://github.com/open-chat-labs/open-chat/pull/6317))
+
+## [[2.0.1310](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1310-local_user_index)] - 2024-08-29
+
+### Changed
+
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+
+### Fixed
+
+- Fix referrals sometimes not being recorded ([#6290](https://github.com/open-chat-labs/open-chat/pull/6290))
+
+## [[2.0.1299](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1299-local_user_index)] - 2024-08-20
+
+### Changed
+
+- Add OC dev team controller to 2 uninstalled canisters to recover funds ([#6247](https://github.com/open-chat-labs/open-chat/pull/6247))
+- Ensure referrer is known by user canister ([#6250](https://github.com/open-chat-labs/open-chat/pull/6250))
+
+## [[2.0.1288](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1288-local_user_index)] - 2024-08-13
+
+### Added
+
+- Add `external_url` property to channel ([#6226](https://github.com/open-chat-labs/open-chat/pull/6226))
+
+## [[2.0.1281](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1281-local_user_index)] - 2024-08-02
+
+### Changed
+
+- Remove canister which holds some tokens from the canister pool ([#6188](https://github.com/open-chat-labs/open-chat/pull/6188))
+
+## [[2.0.1278](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1278-local_user_index)] - 2024-08-01
+
+### Fixed
+
+- Store unique person proof if submitted to LocalUserIndex ([#6174](https://github.com/open-chat-labs/open-chat/pull/6174))
+
+## [[2.0.1277](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1277-local_user_index)] - 2024-08-01
+
+### Fixed
+
+- Fix submitting unique person proof via LocalUserIndex ([#6168](https://github.com/open-chat-labs/open-chat/pull/6168))
+- Use correct principal when verifying credentials ([#6170](https://github.com/open-chat-labs/open-chat/pull/6170))
+- Fix incorrect canister Id being used in place of Internet Identity canister Id ([#6171](https://github.com/open-chat-labs/open-chat/pull/6171))
+
+## [[2.0.1274](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1274-local_user_index)] - 2024-07-31
+
+### Changed
+
+- Configure message visibility to non-members of public channels/groups ([#6152](https://github.com/open-chat-labs/open-chat/pull/6152))
+
+## [[2.0.1268](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1268-local_user_index)] - 2024-07-30
+
+### Changed
+
+- Push unique person proofs to user canisters ([#6144](https://github.com/open-chat-labs/open-chat/pull/6144))
+
+## [[2.0.1267](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1267-local_user_index)] - 2024-07-29
+
+### Changed
+
+- Remove canister holding some ckBTC from canister pool ([#6137](https://github.com/open-chat-labs/open-chat/pull/6137))
+
+## [[2.0.1257](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1257-local_user_index)] - 2024-07-26
+
+### Added
+
+- Add `is_oc_controlled_bot` to `GlobalUser` ([#6115](https://github.com/open-chat-labs/open-chat/pull/6115))
+
+### Changed
+
+- Use `UserType` rather than `is_bot` and `is_oc_controlled_bot` ([#6116](https://github.com/open-chat-labs/open-chat/pull/6116))
+
+### Removed
+
+- Remove `Invited` gate ([#6112](https://github.com/open-chat-labs/open-chat/pull/6112))
+
+## [[2.0.1256](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1256-local_user_index)] - 2024-07-25
+
 ### Added
 
 - Support submitting proof of uniqueness to LocalUserIndex ([#6068](https://github.com/open-chat-labs/open-chat/pull/6068))
 - Support submitting proof of diamond membership to LocalUserIndex ([#6084](https://github.com/open-chat-labs/open-chat/pull/6084))
 - Add `Locked` gate ([#6095](https://github.com/open-chat-labs/open-chat/pull/6095))
+- Add `Invited` gate ([#6106](https://github.com/open-chat-labs/open-chat/pull/6106))
 
 ### Changed
 

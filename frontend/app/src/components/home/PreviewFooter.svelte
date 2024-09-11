@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher, getContext } from "svelte";
     import Button from "../Button.svelte";
-    import type { MultiUserChat, OpenChat } from "openchat-client";
+    import { isLocked, type MultiUserChat, type OpenChat } from "openchat-client";
     import { toastStore } from "../../stores/toast";
     import page from "page";
     import { routeForScope } from "../../routes";
@@ -19,6 +19,8 @@
     $: isFrozen = client.isFrozen(chat.id);
     $: selectedCommunity = client.selectedCommunity;
     $: previewingCommunity = $selectedCommunity?.membership.role === "none";
+    $: gates = client.accessGatesForChat(chat);
+    $: locked = gates.some((g) => isLocked(g));
 
     let freezingInProgress = false;
 
@@ -66,7 +68,7 @@
 
 <div class="preview">
     <div class="gate">
-        <AccessGateIconsForChat {chat} />
+        <AccessGateIconsForChat {gates} />
     </div>
     {#if $platformModerator}
         {#if isFrozen}
@@ -84,10 +86,13 @@
     </Button>
     <Button
         loading={joining !== undefined}
-        disabled={joining !== undefined}
+        disabled={locked || joining !== undefined}
         small
         on:click={joinGroup}>
-        <Translatable resourceKey={i18nKey("joinGroup", undefined, chat.level, true)} />
+        <Translatable
+            resourceKey={locked
+                ? i18nKey("access.lockedGate", undefined, chat.level, true)
+                : i18nKey("joinGroup", undefined, chat.level, true)} />
     </Button>
 </div>
 

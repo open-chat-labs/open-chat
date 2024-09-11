@@ -28,8 +28,9 @@ fn summary_impl(invite_code: Option<u64>, on_behalf_of: Option<Principal>, state
     }
 
     let member = state.data.members.get(caller);
+    let is_invited = state.data.is_invited(caller);
 
-    let summary = state.summary(member);
+    let summary = state.summary(member, Some(is_invited));
 
     Success(summary)
 }

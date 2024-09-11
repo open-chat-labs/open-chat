@@ -3,6 +3,7 @@ use chat_events::{
     DeleteUndeleteMessagesArgs, MessageContentInternal, PushMessageArgs, Reader, TipMessageArgs, UndeleteMessageResult,
 };
 use event_store_producer::{EventStoreClient, Runtime};
+use itertools::Itertools;
 use lazy_static::lazy_static;
 use regex_lite::Regex;
 use search::Query;
@@ -11,15 +12,16 @@ use std::cmp::{max, min};
 use std::collections::{BTreeSet, HashSet};
 use types::{
     AccessGate, AvatarChanged, ContentValidationError, CustomPermission, Document, EventIndex, EventOrExpiredRange,
-    EventWrapper, EventsResponse, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGateUpdated,
-    GroupNameChanged, GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
+    EventWrapper, EventsResponse, ExternalUrlUpdated, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged,
+    GroupGateUpdated, GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
     GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent,
     MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned,
     MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions,
     PermissionsChanged, PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview,
-    TimestampMillis, Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules,
-    VideoCall,
+    TimestampMillis, Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version, Versioned,
+    VersionedRules, VideoCall,
 };
+use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
     validate_description, validate_group_name, validate_rules, NameValidationError, RulesValidationError,
@@ -34,7 +36,6 @@ pub use invited_users::*;
 pub use members::*;
 pub use mentions::*;
 pub use roles::*;
-use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[derive(Serialize, Deserialize)]
 pub struct GroupChatCore {
@@ -45,6 +46,7 @@ pub struct GroupChatCore {
     pub subtype: Timestamped<Option<GroupSubtype>>,
     pub avatar: Timestamped<Option<Document>>,
     pub history_visible_to_new_joiners: bool,
+    pub messages_visible_to_non_members: Timestamped<bool>,
     pub members: GroupMembers,
     pub events: ChatEvents,
     pub created_by: UserId,
@@ -56,6 +58,8 @@ pub struct GroupChatCore {
     pub gate: Timestamped<Option<AccessGate>>,
     pub invited_users: InvitedUsers,
     pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
+    #[serde(default)]
+    pub external_url: Timestamped<Option<String>>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -70,14 +74,16 @@ impl GroupChatCore {
         subtype: Option<GroupSubtype>,
         avatar: Option<Document>,
         history_visible_to_new_joiners: bool,
+        messages_visible_to_non_members: bool,
         permissions: GroupPermissions,
         gate: Option<AccessGate>,
         events_ttl: Option<Milliseconds>,
-        is_bot: bool,
+        created_by_user_type: UserType,
         anonymized_chat_id: u128,
+        external_url: Option<String>,
         now: TimestampMillis,
     ) -> GroupChatCore {
-        let members = GroupMembers::new(created_by, is_bot, now);
+        let members = GroupMembers::new(created_by, created_by_user_type, now);
         let events = ChatEvents::new_group_chat(
             chat,
             name.clone(),
@@ -96,6 +102,7 @@ impl GroupChatCore {
             subtype: Timestamped::new(subtype, now),
             avatar: Timestamped::new(avatar, now),
             history_visible_to_new_joiners,
+            messages_visible_to_non_members: Timestamped::new(messages_visible_to_non_members, now),
             members,
             events,
             created_by,
@@ -107,6 +114,7 @@ impl GroupChatCore {
             gate: Timestamped::new(gate, now),
             invited_users: InvitedUsers::default(),
             min_visible_indexes_for_new_members: None,
+            external_url: Timestamped::new(external_url, now),
         }
     }
 
@@ -123,7 +131,7 @@ impl GroupChatCore {
     pub fn min_visible_event_index(&self, user_id: Option<UserId>) -> Option<EventIndex> {
         if let Some(user) = user_id.and_then(|u| self.members.get(&u)) {
             Some(user.min_visible_event_index())
-        } else if self.is_public.value && !self.has_payment_gate() {
+        } else if self.is_public.value && self.messages_visible_to_non_members.value {
             Some(self.min_visible_indexes_for_new_members.map(|(e, _)| e).unwrap_or_default())
         } else {
             None
@@ -213,6 +221,7 @@ impl GroupChatCore {
             permissions: self.permissions.if_set_after(since).cloned(),
             updated_events,
             is_public: self.is_public.if_set_after(since).copied(),
+            messages_visible_to_non_members: self.messages_visible_to_non_members.if_set_after(since).copied(),
             date_last_pinned: self.date_last_pinned.filter(|ts| *ts > since),
             events_ttl: events_ttl
                 .if_set_after(since)
@@ -228,6 +237,11 @@ impl GroupChatCore {
             video_call_in_progress: self
                 .events
                 .video_call_in_progress()
+                .if_set_after(since)
+                .cloned()
+                .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
+            external_url: self
+                .external_url
                 .if_set_after(since)
                 .cloned()
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
@@ -532,7 +546,7 @@ impl GroupChatCore {
     pub fn validate_and_send_message<R: Runtime + Send + 'static>(
         &mut self,
         sender: UserId,
-        sender_is_bot: bool,
+        sender_user_type: UserType,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         content: MessageContentInitial,
@@ -548,7 +562,11 @@ impl GroupChatCore {
     ) -> SendMessageResult {
         use SendMessageResult::*;
 
-        if let Err(error) = content.validate_for_new_message(false, sender_is_bot, forwarding, now) {
+        if self.external_url.is_some() {
+            return NotAuthorized;
+        }
+
+        if let Err(error) = content.validate_for_new_message(false, sender_user_type, forwarding, now) {
             return match error {
                 ContentValidationError::Empty => MessageEmpty,
                 ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
@@ -605,7 +623,7 @@ impl GroupChatCore {
             min_visible_event_index,
             mentions_disabled,
             everyone_mentioned,
-            sender_is_bot,
+            sender_user_type,
         } = match self.prepare_send_message(
             sender,
             thread_root_message_index,
@@ -642,7 +660,7 @@ impl GroupChatCore {
             mentioned: if !suppressed { mentioned.clone() } else { Vec::new() },
             replies_to: replies_to.as_ref().map(|r| r.into()),
             forwarded: forwarding,
-            sender_is_bot,
+            sender_is_bot: sender_user_type.is_bot(),
             block_level_markdown,
             correlation_id: 0,
             now,
@@ -721,7 +739,7 @@ impl GroupChatCore {
                 min_visible_event_index: EventIndex::default(),
                 mentions_disabled: true,
                 everyone_mentioned: false,
-                sender_is_bot: true,
+                sender_user_type: UserType::OcControlledBot,
             });
         }
 
@@ -756,7 +774,7 @@ impl GroupChatCore {
             min_visible_event_index: member.min_visible_event_index(),
             mentions_disabled: false,
             everyone_mentioned: member.role.can_mention_everyone(permissions) && is_everyone_mentioned(content),
-            sender_is_bot: member.is_bot,
+            sender_user_type: member.user_type,
         })
     }
 
@@ -1132,18 +1150,19 @@ impl GroupChatCore {
             }
 
             // The original caller must be authorized to invite other users
-            if !self.is_public.value && !member.role.can_invite_users(&self.permissions) {
+            if !member.role.can_invite_users(&self.permissions) {
                 return NotAuthorized;
             }
 
             // Filter out users who are already members and those who have already been invited
             let invited_users: Vec<_> = user_ids
                 .iter()
+                .unique()
                 .filter(|user_id| self.members.get(user_id).is_none() && !self.invited_users.contains(user_id))
                 .copied()
                 .collect();
 
-            if !self.is_public.value && !invited_users.is_empty() {
+            if !invited_users.is_empty() {
                 // Check the max invite limit will not be exceeded
                 if self.invited_users.len() + invited_users.len() > MAX_INVITES {
                     return TooManyInvites(MAX_INVITES as u32);
@@ -1330,7 +1349,9 @@ impl GroupChatCore {
         permissions: Option<OptionalGroupPermissions>,
         gate: OptionUpdate<AccessGate>,
         public: Option<bool>,
+        messages_visible_to_non_members: Option<bool>,
         events_ttl: OptionUpdate<Milliseconds>,
+        external_url: OptionUpdate<String>,
         now: TimestampMillis,
     ) -> UpdateResult {
         match self.can_update(&user_id, &name, &description, &rules, &avatar, permissions.as_ref(), &public) {
@@ -1343,7 +1364,9 @@ impl GroupChatCore {
                 permissions,
                 gate,
                 public,
+                messages_visible_to_non_members,
                 events_ttl,
+                external_url,
                 now,
             ))),
             Err(result) => result,
@@ -1422,7 +1445,9 @@ impl GroupChatCore {
         permissions: Option<OptionalGroupPermissions>,
         gate: OptionUpdate<AccessGate>,
         public: Option<bool>,
+        messages_visible_to_non_members: Option<bool>,
         events_ttl: OptionUpdate<Milliseconds>,
+        external_url: OptionUpdate<String>,
         now: TimestampMillis,
     ) -> UpdateSuccessResult {
         let mut result = UpdateSuccessResult {
@@ -1539,23 +1564,58 @@ impl GroupChatCore {
             }
         }
 
+        if let Some(external_url) = external_url.expand() {
+            if self.external_url.value != external_url {
+                self.external_url = Timestamped::new(external_url.clone(), now);
+
+                events.push_main_event(
+                    ChatEventInternal::ExternalUrlUpdated(Box::new(ExternalUrlUpdated {
+                        updated_by: user_id,
+                        new_url: external_url,
+                    })),
+                    0,
+                    now,
+                );
+            }
+        }
+
+        let mut public_changed = false;
+        let mut message_visbility_changed = false;
+
         if let Some(public) = public {
             if self.is_public.value != public {
                 self.is_public = Timestamped::new(public, now);
 
-                let event = GroupVisibilityChanged {
-                    now_public: public,
-                    changed_by: user_id,
-                };
+                public_changed = true;
 
-                let push_event_result =
-                    events.push_main_event(ChatEventInternal::GroupVisibilityChanged(Box::new(event)), 0, now);
-
-                if self.is_public.value {
-                    self.min_visible_indexes_for_new_members =
-                        Some((push_event_result.index, events.main_events_list().next_message_index()));
-                    result.newly_public = true;
+                if !public && self.messages_visible_to_non_members.value {
+                    self.messages_visible_to_non_members = Timestamped::new(false, now);
+                    message_visbility_changed = true;
                 }
+            }
+        }
+
+        if let Some(messages_visible_to_non_members) = messages_visible_to_non_members {
+            if self.is_public.value && self.messages_visible_to_non_members.value != messages_visible_to_non_members {
+                self.messages_visible_to_non_members = Timestamped::new(messages_visible_to_non_members, now);
+                message_visbility_changed = true;
+            }
+        }
+
+        if public_changed || message_visbility_changed {
+            let event = GroupVisibilityChanged {
+                public: public_changed.then_some(self.is_public.value),
+                messages_visible_to_non_members: message_visbility_changed
+                    .then_some(self.messages_visible_to_non_members.value),
+                changed_by: user_id,
+            };
+
+            let push_event_result = events.push_main_event(ChatEventInternal::GroupVisibilityChanged(Box::new(event)), 0, now);
+
+            if public_changed && self.is_public.value {
+                self.min_visible_indexes_for_new_members =
+                    Some((push_event_result.index, events.main_events_list().next_message_index()));
+                result.newly_public = true;
             }
         }
 
@@ -1683,7 +1743,7 @@ impl GroupChatCore {
             delete_messages: new.delete_messages.unwrap_or(old.delete_messages),
             update_group: new.update_group.unwrap_or(old.update_group),
             pin_messages: new.pin_messages.unwrap_or(old.pin_messages),
-            add_members: GroupPermissionRole::Owner,
+            add_members: new.add_members.unwrap_or(old.add_members),
             invite_users: new.invite_users.unwrap_or(old.invite_users),
             react_to_messages: new.react_to_messages.unwrap_or(old.react_to_messages),
             mention_all_members: new.mention_all_members.unwrap_or(old.mention_all_members),
@@ -1789,7 +1849,7 @@ pub struct SendMessageSuccess {
 }
 
 pub enum AddRemoveReactionResult {
-    Success,
+    Success(UserId),
     NoChange,
     InvalidReaction,
     MessageNotFound,
@@ -1801,7 +1861,7 @@ pub enum AddRemoveReactionResult {
 impl From<chat_events::AddRemoveReactionResult> for AddRemoveReactionResult {
     fn from(value: chat_events::AddRemoveReactionResult) -> Self {
         match value {
-            chat_events::AddRemoveReactionResult::Success => AddRemoveReactionResult::Success,
+            chat_events::AddRemoveReactionResult::Success(sender) => AddRemoveReactionResult::Success(sender),
             chat_events::AddRemoveReactionResult::NoChange => AddRemoveReactionResult::NoChange,
             chat_events::AddRemoveReactionResult::MessageNotFound => AddRemoveReactionResult::MessageNotFound,
         }
@@ -1983,12 +2043,14 @@ pub struct SummaryUpdates {
     pub permissions: Option<GroupPermissions>,
     pub updated_events: Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>,
     pub is_public: Option<bool>,
+    pub messages_visible_to_non_members: Option<bool>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub events_ttl_last_updated: Option<TimestampMillis>,
     pub gate: OptionUpdate<AccessGate>,
     pub rules_changed: bool,
     pub video_call_in_progress: OptionUpdate<VideoCall>,
+    pub external_url: OptionUpdate<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
@@ -2069,5 +2131,5 @@ struct PrepareSendMessageSuccess {
     min_visible_event_index: EventIndex,
     mentions_disabled: bool,
     everyone_mentioned: bool,
-    sender_is_bot: bool,
+    sender_user_type: UserType,
 }

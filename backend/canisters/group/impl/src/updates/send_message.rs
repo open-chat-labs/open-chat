@@ -9,7 +9,7 @@ use group_canister::send_message_v2::{Response::*, *};
 use group_chat_core::SendMessageResult;
 use types::{
     Achievement, EventWrapper, GroupMessageNotification, Message, MessageContent, MessageIndex, Notification, TimestampMillis,
-    User, UserId,
+    User, UserId, UserType,
 };
 
 #[update(candid = true, msgpack = true)]
@@ -30,12 +30,12 @@ fn c2c_send_message(args: C2CArgs) -> C2CResponse {
 
 fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
     match validate_caller(state) {
-        Ok(Caller { user_id, is_bot }) => {
+        Ok(Caller { user_id, user_type }) => {
             let now = state.env.now();
 
             let result = state.data.chat.validate_and_send_message(
                 user_id,
-                is_bot,
+                user_type,
                 args.thread_root_message_index,
                 args.message_id,
                 args.content,
@@ -68,9 +68,9 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
 
 fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse {
     match validate_caller(state) {
-        Ok(Caller { user_id, is_bot }) => {
+        Ok(Caller { user_id, user_type }) => {
             // Bots can't call this c2c endpoint since it skips the validation
-            if is_bot && user_id != state.data.proposals_bot_user_id && user_id != OPENCHAT_BOT_USER_ID {
+            if user_type.is_bot() && !user_type.is_oc_controlled_bot() {
                 return NotAuthorized;
             }
 
@@ -108,7 +108,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
 
 struct Caller {
     user_id: UserId,
-    is_bot: bool,
+    user_type: UserType,
 }
 
 fn validate_caller(state: &RuntimeState) -> Result<Caller, Response> {
@@ -123,13 +123,13 @@ fn validate_caller(state: &RuntimeState) -> Result<Caller, Response> {
         } else {
             Ok(Caller {
                 user_id: member.user_id,
-                is_bot: member.is_bot,
+                user_type: member.user_type,
             })
         }
     } else if caller == state.data.user_index_canister_id {
         Ok(Caller {
             user_id: OPENCHAT_BOT_USER_ID,
-            is_bot: true,
+            user_type: UserType::OcControlledBot,
         })
     } else {
         Err(CallerNotInGroup)
@@ -177,9 +177,18 @@ fn process_send_message_result(
             handle_activity_notification(state);
 
             if new_achievement {
-                state.notify_user_of_achievements(
+                state.data.achievements.notify_user(
                     sender,
                     Achievement::from_message(false, &result.message_event.event, thread_root_message_index.is_some()),
+                    &mut state.data.fire_and_forget_handler,
+                );
+            }
+
+            if let MessageContent::Crypto(c) = &result.message_event.event.content {
+                state.data.achievements.notify_user(
+                    c.recipient,
+                    vec![Achievement::ReceivedCrypto],
+                    &mut state.data.fire_and_forget_handler,
                 );
             }
 

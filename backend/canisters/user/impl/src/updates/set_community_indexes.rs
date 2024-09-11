@@ -1,11 +1,11 @@
 use crate::guards::caller_is_owner;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use types::Timestamped;
 use user_canister::set_community_indexes::{Response::*, *};
 
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner", candid = true)]
 #[trace]
 fn set_community_indexes(args: Args) -> Response {
     run_regular_jobs();

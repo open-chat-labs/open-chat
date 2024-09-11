@@ -4,7 +4,7 @@ use types::nns::CryptoAmount;
 use types::{
     CanisterId, ChannelLatestMessageIndex, ChatId, ChitEarnedReason, CommunityId, Cryptocurrency,
     DiamondMembershipPlanDuration, MessageContent, MessageContentInitial, MessageId, MessageIndex, PhoneNumber, ReferralType,
-    SuspensionDuration, TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User, UserId,
+    SuspensionDuration, TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User, UserId, UserType,
 };
 
 mod lifecycle;
@@ -37,6 +37,7 @@ pub enum Event {
     SecretKeySet(Vec<u8>),
     NotifyUniquePersonProof(UserId, UniquePersonProof),
     AddCanisterToPool(CanisterId),
+    ExternalAchievementAwarded(ExternalAchievementAwarded),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -72,7 +73,7 @@ pub struct UserRegistered {
     pub user_id: UserId,
     pub user_principal: Principal,
     pub username: String,
-    pub is_bot: bool,
+    pub user_type: UserType,
     pub referred_by: Option<UserId>,
 }
 
@@ -107,6 +108,7 @@ pub struct UserJoinedGroup {
     pub chat_id: ChatId,
     pub local_user_index_canister_id: CanisterId,
     pub latest_message_index: Option<MessageIndex>,
+    pub group_canister_timestamp: TimestampMillis,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -115,6 +117,7 @@ pub struct UserJoinedCommunityOrChannel {
     pub community_id: CommunityId,
     pub local_user_index_canister_id: CanisterId,
     pub channels: Vec<ChannelLatestMessageIndex>,
+    pub community_canister_timestamp: TimestampMillis,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -161,10 +164,14 @@ pub struct DeleteUser {
 pub struct GlobalUser {
     pub user_id: UserId,
     pub principal: Principal,
+    #[serde(default)]
     pub is_bot: bool,
+    #[serde(default)]
     pub is_platform_moderator: bool,
     pub diamond_membership_expires_at: Option<TimestampMillis>,
     pub unique_person_proof: Option<UniquePersonProof>,
+    #[serde(default)]
+    pub user_type: UserType,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -173,4 +180,13 @@ pub struct ChitEarned {
     pub amount: i32,
     pub timestamp: TimestampMillis,
     pub reason: ChitEarnedReason,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ExternalAchievementAwarded {
+    #[serde(default)]
+    pub id: u32,
+    pub user_id: UserId,
+    pub name: String,
+    pub chit_reward: u32,
 }

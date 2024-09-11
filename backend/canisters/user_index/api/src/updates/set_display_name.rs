@@ -1,12 +1,14 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user_index, set_display_name)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub display_name: Option<String>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user_index, set_display_name)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success,
     Unauthorized,

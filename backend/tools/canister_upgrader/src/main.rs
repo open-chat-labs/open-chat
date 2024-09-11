@@ -10,6 +10,7 @@ async fn main() {
     let identity = get_dfx_identity(&opts.controller);
 
     match opts.canister_to_upgrade {
+        CanisterName::AirdropBot => upgrade_airdrop_bot_canister(identity, opts.url, opts.airdrop_bot, opts.version).await,
         CanisterName::Community => upgrade_community_canister(identity, opts.url, opts.group_index, opts.version).await,
         CanisterName::CyclesDispenser => {
             upgrade_cycles_dispenser_canister(identity, opts.url, opts.cycles_dispenser, opts.version).await
@@ -82,6 +83,9 @@ struct Opts {
 
     #[arg(long)]
     proposals_bot: CanisterId,
+
+    #[arg(long)]
+    airdrop_bot: CanisterId,
 
     #[arg(long)]
     storage_index: CanisterId,

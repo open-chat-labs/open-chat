@@ -427,7 +427,11 @@ export function event(candid: ApiChatEvent): ChatEvent {
     if ("GroupVisibilityChanged" in candid) {
         return {
             kind: "group_visibility_changed",
-            nowPublic: candid.GroupVisibilityChanged.now_public,
+            public: optional(candid.GroupVisibilityChanged.public, identity),
+            messagesVisibleToNonMembers: optional(
+                candid.GroupVisibilityChanged.messages_visible_to_non_members,
+                identity,
+            ),
             changedBy: candid.GroupVisibilityChanged.changed_by.toString(),
         };
     }
@@ -479,6 +483,14 @@ export function event(candid: ApiChatEvent): ChatEvent {
     }
     if ("Empty" in candid) {
         return { kind: "empty" };
+    }
+
+    if ("ExternalUrlUpdated" in candid) {
+        return {
+            kind: "external_url_updated",
+            newUrl: optional(candid.ExternalUrlUpdated.new_url, identity),
+            updatedBy: candid.ExternalUrlUpdated.updated_by.toString(),
+        };
     }
 
     throw new UnsupportedValueError("Unexpected ApiEventWrapper type received", candid);
@@ -1197,6 +1209,7 @@ export function groupPermissions(candid: ApiGroupPermissions): ChatPermissions {
         changeRoles: permissionRole(candid.change_roles),
         updateGroup: permissionRole(candid.update_group),
         inviteUsers: permissionRole(candid.invite_users),
+        addMembers: permissionRole(candid.add_members),
         removeMembers: permissionRole(candid.remove_members),
         deleteMessages: permissionRole(candid.delete_messages),
         pinMessages: permissionRole(candid.pin_messages),
@@ -1278,11 +1291,11 @@ export function apiGroupPermissions(permissions: ChatPermissions): ApiGroupPermi
         change_roles: apiPermissionRole(permissions.changeRoles),
         update_group: apiPermissionRole(permissions.updateGroup),
         invite_users: apiPermissionRole(permissions.inviteUsers),
+        add_members: apiPermissionRole(permissions.addMembers),
         remove_members: apiPermissionRole(permissions.removeMembers),
         delete_messages: apiPermissionRole(permissions.deleteMessages),
         pin_messages: apiPermissionRole(permissions.pinMessages),
         react_to_messages: apiPermissionRole(permissions.reactToMessages),
-        add_members: apiPermissionRole("owner"),
         mention_all_members: apiPermissionRole(permissions.mentionAllMembers),
         start_video_call: apiPermissionRole(permissions.startVideoCall),
         message_permissions: apiMessagePermissions(permissions.messagePermissions),
@@ -1613,7 +1626,9 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
     }
     if (domain.kind === "no_gate") return [];
     if (domain.kind === "nft_gate") return []; // TODO
+    if (domain.kind === "unique_person_gate") return [{ UniquePerson: null }];
     if (domain.kind === "diamond_gate") return [{ DiamondMember: null }];
+    if (domain.kind === "locked_gate") return [{ Locked: null }];
     if (domain.kind === "credential_gate")
         return [
             {
@@ -1664,6 +1679,7 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
 }
 
 export function apiAccessGate(domain: AccessGate): ApiAccessGate {
+    if (domain.kind === "locked_gate") return { Locked: null };
     if (domain.kind === "diamond_gate") return { DiamondMember: null };
     if (domain.kind === "lifetime_diamond_gate") return { LifetimeDiamondMember: null };
     if (domain.kind === "unique_person_gate") return { UniquePerson: null };
@@ -1761,6 +1777,11 @@ export function accessGate(candid: ApiAccessGate): AccessGate {
     if ("DiamondMember" in candid) {
         return {
             kind: "diamond_gate",
+        };
+    }
+    if ("Locked" in candid) {
+        return {
+            kind: "locked_gate",
         };
     }
     if ("LifetimeDiamondMember" in candid) {
@@ -2012,6 +2033,8 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
             rulesAccepted: candid.rules_accepted,
         },
         localUserIndex: candid.local_user_index_canister_id.toString(),
+        isInvited: false, // this is only applicable when we are not a member
+        messagesVisibleToNonMembers: candid.messages_visible_to_non_members,
     };
 }
 
@@ -2058,6 +2081,7 @@ export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): 
         primaryLanguage: candid.primary_language,
         userGroups: new Map(candid.user_groups.map(userGroup)),
         localUserIndex,
+        isInvited: optional(candid.is_invited, identity) ?? false,
     };
 }
 
@@ -2120,6 +2144,9 @@ export function communityChannelSummary(
             archived: false,
             rulesAccepted: optional(candid.membership, (m) => m.rules_accepted) ?? false,
         },
+        isInvited: optional(candid.is_invited, identity) ?? false,
+        messagesVisibleToNonMembers: candid.messages_visible_to_non_members,
+        externalUrl: optional(candid.external_url, identity),
     };
 }
 
@@ -2161,6 +2188,9 @@ export function gateCheckFailedReason(candid: ApiGateCheckFailedReason): GateChe
     if ("FailedVerifiedCredentialCheck" in candid) {
         console.warn("FailedVerifiedCredentialCheck: ", candid);
         return "failed_verified_credential_check";
+    }
+    if ("Locked" in candid) {
+        return "locked";
     }
     throw new UnsupportedValueError("Unexpected ApiGateCheckFailedReason type received", candid);
 }
@@ -2313,7 +2343,8 @@ export function updateGroupResponse(
         "CommunityFrozen" in candid ||
         "CannotMakeChannelPublic" in candid ||
         "CannotMakeGroupPublic" in candid ||
-        "CannotMakeDefaultChannelPrivate" in candid
+        "CannotMakeDefaultChannelPrivate" in candid ||
+        "ExternalUrlInvalid" in candid
     ) {
         console.warn("UpdateGroupResponse failed with: ", candid);
         return { kind: "failure" };
@@ -2411,6 +2442,10 @@ export function createGroupResponse(
 
     if ("AccessGateInvalid" in candid) {
         return { kind: "access_gate_invalid" };
+    }
+
+    if ("ExternalUrlInvalid" in candid) {
+        return { kind: "external_url_invalid" };
     }
 
     throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", candid);

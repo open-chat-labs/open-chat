@@ -16,6 +16,7 @@ pub const CREATE_CANISTER_CYCLES_FEE: Cycles = 100_000_000_000; // 0.1T cycles
 pub const CYCLES_REQUIRED_FOR_UPGRADE: Cycles = 120_000_000_000; // 0.12T cycles
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
+pub const DELETED_USER_ID: UserId = UserId::new(Principal::from_slice(&[139, 36, 200, 58, 72, 145, 241, 66, 97, 1]));
 pub const OPENCHAT_BOT_USERNAME: &str = "OpenChatBot";
 
 pub const SNS_ROOT_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 2, 0, 0, 23, 1, 1]);
@@ -41,6 +42,8 @@ pub const MEMO_P2P_SWAP_CREATE: [u8; 8] = [0x4f, 0x43, 0x5f, 0x50, 0x32, 0x50, 0
 pub const MEMO_P2P_SWAP_ACCEPT: [u8; 8] = [0x4f, 0x43, 0x5f, 0x50, 0x32, 0x50, 0x53, 0x41]; // OC_P2PSA
 pub const MEMO_TRANSLATION_PAYMENT: [u8; 7] = [0x4f, 0x43, 0x5f, 0x54, 0x52, 0x41, 0x4e]; // OC_TRAN
 pub const MEMO_GROUP_IMPORT_INTO_COMMUNITY: [u8; 6] = [0x4f, 0x43, 0x5f, 0x47, 0x32, 0x43]; // OC_G2C
+pub const MEMO_CHIT_FOR_CHAT_AIRDROP: [u8; 6] = [0x4f, 0x43, 0x5f, 0x41, 0x49, 0x52]; // OC_AIR
+pub const MEMO_CHIT_FOR_CHAT_LOTTERY: [u8; 6] = [0x4f, 0x43, 0x5f, 0x4C, 0x4F, 0x54]; // OC_LOT
 
 #[cfg(test)]
 mod tests {
@@ -51,6 +54,14 @@ mod tests {
         assert_eq!(
             OPENCHAT_BOT_USER_ID,
             UserId::new(Principal::from_text("zzyk3-openc-hatbo-tq7my-cai").unwrap())
+        );
+    }
+
+    #[test]
+    fn deleted_user_id() {
+        assert_eq!(
+            DELETED_USER_ID,
+            UserId::new(Principal::from_text("zzvcw-delet-eduse-r6fbg-cai").unwrap())
         );
     }
 

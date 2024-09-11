@@ -50,6 +50,7 @@ if (dfxNetwork) {
         process.env.IDENTITY_CANISTER = canisters.identity[dfxNetwork];
         process.env.ONLINE_CANISTER = canisters.online_users[dfxNetwork];
         process.env.PROPOSALS_BOT_CANISTER = canisters.proposals_bot[dfxNetwork];
+        process.env.AIRDROP_BOT_CANISTER = canisters.airdrop_bot[dfxNetwork];
         process.env.STORAGE_INDEX_CANISTER = canisters.storage_index[dfxNetwork];
         process.env.REGISTRY_CANISTER = canisters.registry[dfxNetwork];
         process.env.MARKET_MAKER_CANISTER = canisters.market_maker[dfxNetwork];
@@ -64,6 +65,7 @@ if (dfxNetwork) {
         console.log("IdentityCanisterId: ", process.env.IDENTITY_CANISTER);
         console.log("OnlineCanisterId: ", process.env.ONLINE_CANISTER);
         console.log("ProposalsBotCanisterId: ", process.env.PROPOSALS_BOT_CANISTER);
+        console.log("AirdropBotCanisterId: ", process.env.AIRDROP_BOT_CANISTER);
         console.log("StorageIndex: ", process.env.STORAGE_INDEX_CANISTER);
         console.log("Registry: ", process.env.REGISTRY_CANISTER);
         console.log("MarketMaker: ", process.env.MARKET_MAKER_CANISTER);
@@ -108,6 +110,7 @@ const SERVICE_WORKER_PATH = `/service_worker.js?v=${version}`;
 console.log("BUILD_ENV", build_env);
 console.log("ENV", env);
 console.log("INTERNET IDENTITY URL", process.env.INTERNET_IDENTITY_URL);
+console.log("INTERNET IDENTITY CANISTER", process.env.INTERNET_IDENTITY_CANISTER_ID);
 console.log("NFID URL", process.env.NFID_URL);
 console.log("VERSION", version ?? "undefined");
 
@@ -236,6 +239,9 @@ export default {
         replace({
             preventAssignment: true,
             "process.env.INTERNET_IDENTITY_URL": JSON.stringify(process.env.INTERNET_IDENTITY_URL),
+            "process.env.INTERNET_IDENTITY_CANISTER_ID": JSON.stringify(
+                process.env.INTERNET_IDENTITY_CANISTER_ID,
+            ),
             "process.env.NFID_URL": JSON.stringify(process.env.NFID_URL),
             "process.env.DFX_NETWORK": JSON.stringify(dfxNetwork),
             "process.env.NODE_ENV": JSON.stringify(env),
@@ -254,6 +260,7 @@ export default {
             "process.env.PROPOSALS_BOT_CANISTER": JSON.stringify(
                 process.env.PROPOSALS_BOT_CANISTER,
             ),
+            "process.env.AIRDROP_BOT_CANISTER": JSON.stringify(process.env.AIRDROP_BOT_CANISTER),
             "process.env.STORAGE_INDEX_CANISTER": JSON.stringify(
                 process.env.STORAGE_INDEX_CANISTER,
             ),
@@ -272,7 +279,7 @@ export default {
             "process.env.USERGEEK_APIKEY": JSON.stringify(process.env.USERGEEK_APIKEY),
             "process.env.VIDEO_BRIDGE_URL": JSON.stringify(process.env.VIDEO_BRIDGE_URL),
             "process.env.METERED_APIKEY": JSON.stringify(process.env.METERED_APIKEY),
-            "process.env.GIPHY_APIKEY": JSON.stringify(process.env.GIPHY_APIKEY),
+            "process.env.TENOR_APIKEY": JSON.stringify(process.env.TENOR_APIKEY),
             "process.env.CORS_APIKEY": JSON.stringify(process.env.CORS_APIKEY),
             "process.env.PUBLIC_TRANSLATE_API_KEY": JSON.stringify(
                 process.env.PUBLIC_TRANSLATE_API_KEY,
@@ -306,7 +313,7 @@ export default {
                     base-uri 'self';
                     form-action 'self';
                     upgrade-insecure-requests;
-                    script-src 'self' 'unsafe-eval' https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(
+                    script-src 'self' 'unsafe-eval' https://scripts.wobbl3.com/ https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(
                         " ",
                     )}`;
                 if (development) {
@@ -325,6 +332,13 @@ export default {
                                     gtag('js', new Date());
                                     gtag('config', 'G-7P9R6CJLNR');
                                 </script>
+                                <!-- CLS Tracking Code -->
+                                <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+                                new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+                                j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+                                'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+                                })(window,document,'script','dataLayer','GTM-WQD48GK2');</script>
+                                <!-- End CLS Tracking Code -->
                                 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#22A7F2" />
                                 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1B1C21" />
                                 <meta name="description" content="OpenChat is a fully featured chat application running end-to-end on the Internet Computer blockchain." />
@@ -361,7 +375,11 @@ export default {
                                 ${inlineScripts.map((s) => `<script>${s}</script>`).join("")}
                             </head>
                             <template id="profile-link-template" style="cursor: pointer; font-weight: 700; text-decoration: underline;"></template>
-                            <body></body>
+                            <body>
+                                <!-- CLS Tracking (noscript) -->
+                                <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WQD48GK2" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+                                <!-- End CLS Tracking (noscript) -->
+                            </body>
                         </html>
                     `;
             },

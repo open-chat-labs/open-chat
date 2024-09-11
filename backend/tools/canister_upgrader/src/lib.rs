@@ -140,6 +140,25 @@ pub async fn upgrade_proposals_bot_canister(
     println!("Proposals bot canister upgraded");
 }
 
+pub async fn upgrade_airdrop_bot_canister(
+    identity: Box<dyn Identity>,
+    url: String,
+    airdrop_bot_canister_id: CanisterId,
+    version: BuildVersion,
+) {
+    upgrade_top_level_canister(
+        identity,
+        url,
+        airdrop_bot_canister_id,
+        version,
+        airdrop_bot_canister::post_upgrade::Args { wasm_version: version },
+        CanisterName::AirdropBot,
+    )
+    .await;
+
+    println!("Airdrop bot canister upgraded");
+}
+
 pub async fn upgrade_storage_index_canister(
     identity: Box<dyn Identity>,
     url: String,
@@ -560,7 +579,7 @@ async fn upgrade_wasm<A: CandidType + Send + Sync>(
     println!("Upgrading wasm for canister {canister_id}");
     match management_canister
         .install_code(canister_id, wasm_bytes)
-        .with_mode(InstallMode::Upgrade { skip_pre_upgrade: None })
+        .with_mode(InstallMode::Upgrade(None))
         .with_arg(args)
         .call_and_wait()
         .await

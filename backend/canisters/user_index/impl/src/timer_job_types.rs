@@ -251,6 +251,7 @@ impl Job for UnsuspendUser {
 impl Job for JoinUserToGroup {
     fn execute(self) {
         if let Some(args) = read_state(|state| {
+            #[allow(deprecated)]
             state
                 .data
                 .users
@@ -261,7 +262,8 @@ impl Job for JoinUserToGroup {
                     invite_code: None,
                     correlation_id: 0,
                     is_platform_moderator: state.data.platform_moderators.contains(&self.user_id),
-                    is_bot: u.is_bot,
+                    is_bot: u.user_type.is_bot(),
+                    user_type: u.user_type,
                     diamond_membership_expires_at: state
                         .data
                         .users
@@ -286,6 +288,7 @@ impl Job for JoinUserToGroup {
                             chat_id: group_id,
                             local_user_index_canister_id: s.local_user_index_canister_id,
                             latest_message_index: s.latest_message.map(|m| m.event.message_index),
+                            group_canister_timestamp: s.last_updated,
                         }),
                     )
                 }),

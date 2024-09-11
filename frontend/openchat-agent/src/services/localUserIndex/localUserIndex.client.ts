@@ -1,4 +1,4 @@
-import type { Identity, SignIdentity } from "@dfinity/agent";
+import type { HttpAgent, Identity, SignIdentity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { idlFactory, type LocalUserIndexService } from "./candid/idl";
 import type {
@@ -34,7 +34,6 @@ import {
     joinCommunityResponse,
     registerUserResponse,
 } from "./mappers";
-import type { AgentConfig } from "../../config";
 import { joinGroupResponse, apiOptional, apiChatIdentifier } from "../common/chatMappers";
 import { MAX_MISSING, textToCode, UnsupportedValueError } from "openchat-shared";
 import { identity } from "../../utils/mapping";
@@ -50,28 +49,15 @@ import {
 export class LocalUserIndexClient extends CandidService {
     private localUserIndexService: LocalUserIndexService;
 
-    private constructor(
+    constructor(
         identity: Identity,
-        config: AgentConfig,
+        agent: HttpAgent,
         canisterId: string,
         private db: Database,
     ) {
-        super(identity);
+        super(identity, agent, canisterId);
 
-        this.localUserIndexService = this.createServiceClient<LocalUserIndexService>(
-            idlFactory,
-            canisterId,
-            config,
-        );
-    }
-
-    static create(
-        identity: Identity,
-        config: AgentConfig,
-        canisterId: string,
-        db: Database,
-    ): LocalUserIndexClient {
-        return new LocalUserIndexClient(identity, config, canisterId, db);
+        this.localUserIndexService = this.createServiceClient<LocalUserIndexService>(idlFactory);
     }
 
     groupAndCommunitySummaryUpdates(
@@ -244,12 +230,14 @@ export class LocalUserIndexClient extends CandidService {
         communityId: string,
         inviteCode: string | undefined,
         credentialArgs: VerifiedCredentialArgs | undefined,
+        referredBy?: string,
     ): Promise<JoinCommunityResponse> {
         return this.handleResponse(
             this.localUserIndexService.join_community({
                 community_id: Principal.fromText(communityId),
                 invite_code: apiOptional(textToCode, inviteCode),
                 verified_credential_args: apiOptional(apiVerifiedCredentialArgs, credentialArgs),
+                referred_by: apiOptional((id) => Principal.fromText(id), referredBy),
             }),
             joinCommunityResponse,
         );
@@ -275,6 +263,7 @@ export class LocalUserIndexClient extends CandidService {
         id: ChannelIdentifier,
         inviteCode: string | undefined,
         credentialArgs: VerifiedCredentialArgs | undefined,
+        referredBy?: string,
     ): Promise<JoinGroupResponse> {
         return this.handleResponse(
             this.localUserIndexService.join_channel({
@@ -282,6 +271,7 @@ export class LocalUserIndexClient extends CandidService {
                 channel_id: BigInt(id.channelId),
                 invite_code: apiOptional(textToCode, inviteCode),
                 verified_credential_args: apiOptional(apiVerifiedCredentialArgs, credentialArgs),
+                referred_by: apiOptional((id) => Principal.fromText(id), referredBy),
             }),
             (resp) => joinChannelResponse(resp, id.communityId),
         );

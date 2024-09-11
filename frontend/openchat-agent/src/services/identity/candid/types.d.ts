@@ -9,16 +9,28 @@ export interface ApproveIdentityLinkArgs {
 }
 export type ApproveIdentityLinkResponse = { 'LinkRequestNotFound' : null } |
   { 'InvalidSignature' : null } |
+  { 'PrincipalAlreadyLinkedToAnotherOcUser' : null } |
   { 'Success' : null } |
   { 'MalformedSignature' : string } |
   { 'DelegationTooOld' : null } |
   { 'CallerNotRecognised' : null };
+export type AuthPrincipalsResponse = { 'NotFound' : null } |
+  {
+    'Success' : Array<
+      {
+        'principal' : Principal,
+        'originating_canister' : Principal,
+        'is_ii_principal' : boolean,
+      }
+    >
+  };
 export type CheckAuthPrincipalResponse = { 'NotFound' : null } |
   { 'Success' : null };
 export interface CreateIdentityArgs {
   'public_key' : PublicKey,
   'session_key' : PublicKey,
   'max_time_to_live' : [] | [Nanoseconds],
+  'is_ii_principal' : [] | [boolean],
   'challenge_attempt' : [] | [{ 'key' : number, 'chars' : string }],
 }
 export type CreateIdentityResponse = { 'AlreadyRegistered' : null } |
@@ -39,15 +51,18 @@ export type GetDelegationResponse = { 'NotFound' : null } |
 export interface InitiateIdentityLinkArgs {
   'public_key' : Uint8Array | number[],
   'link_to_principal' : Principal,
+  'is_ii_principal' : [] | [boolean],
 }
 export type InitiateIdentityLinkResponse = { 'AlreadyRegistered' : null } |
   { 'Success' : null } |
   { 'TargetUserNotFound' : null } |
-  { 'PublicKeyInvalid' : string };
+  { 'PublicKeyInvalid' : string } |
+  { 'AlreadyLinkedToPrincipal' : null };
 export type Nanoseconds = bigint;
 export interface PrepareDelegationArgs {
   'session_key' : PublicKey,
   'max_time_to_live' : [] | [Nanoseconds],
+  'is_ii_principal' : [] | [boolean],
 }
 export type PrepareDelegationResponse = { 'NotFound' : null } |
   { 'Success' : PrepareDelegationSuccess };
@@ -66,6 +81,7 @@ export interface _SERVICE {
     [ApproveIdentityLinkArgs],
     ApproveIdentityLinkResponse
   >,
+  'auth_principals' : ActorMethod<[{}], AuthPrincipalsResponse>,
   'check_auth_principal' : ActorMethod<[{}], CheckAuthPrincipalResponse>,
   'create_identity' : ActorMethod<[CreateIdentityArgs], CreateIdentityResponse>,
   'generate_challenge' : ActorMethod<[{}], GenerateChallengeResponse>,

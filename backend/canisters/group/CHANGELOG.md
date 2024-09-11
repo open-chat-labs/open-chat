@@ -5,6 +5,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+- Disallow sending messages to chats that have an external url set ([#6369](https://github.com/open-chat-labs/open-chat/pull/6369))
+
+### Fixed
+
+- Ensure invited users can't contain duplicates ([#6333](https://github.com/open-chat-labs/open-chat/pull/6333))
+
+## [[2.0.1327](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1327-group)] - 2024-09-03
+
+### Changed
+
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+- Mark ProposalsBot as OC controlled bot ([#6287](https://github.com/open-chat-labs/open-chat/pull/6287))
+
+## [[2.0.1295](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1295-group)] - 2024-08-16
+
+### Changed
+
+- Support next batch of achievements ([#6230](https://github.com/open-chat-labs/open-chat/pull/6230))
+- Remove references to deleted users ([#6241](https://github.com/open-chat-labs/open-chat/pull/6241))
+
+## [[2.0.1273](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1273-group)] - 2024-07-31
+
+### Changed
+
+- Change max channel name length from 25 to 40 chars ([#6138](https://github.com/open-chat-labs/open-chat/pull/6138))
+- Configure message visibility to non-members of public groups ([#6152](https://github.com/open-chat-labs/open-chat/pull/6152))
+
+## [[2.0.1262](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1262-group)] - 2024-07-26
+
 ### Added
 
 - Add `Locked` gate ([#6095](https://github.com/open-chat-labs/open-chat/pull/6095))
@@ -13,6 +45,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Fix fee then retry transfer if fee too high ([#6063](https://github.com/open-chat-labs/open-chat/pull/6063))
 - Handle transfer fee changing in either direction ([#6064](https://github.com/open-chat-labs/open-chat/pull/6064))
+- Bypass gates if user is invited ([#6110](https://github.com/open-chat-labs/open-chat/pull/6110))
+- Return `is_invited` when previewing a group ([#6113](https://github.com/open-chat-labs/open-chat/pull/6113))
+- Use `UserType` rather than `is_bot` and `is_oc_controlled_bot` ([#6116](https://github.com/open-chat-labs/open-chat/pull/6116))
+- Allow OC controlled bots to send crypto transfer messages ([#6117](https://github.com/open-chat-labs/open-chat/pull/6117))
 
 ### Fixed
 

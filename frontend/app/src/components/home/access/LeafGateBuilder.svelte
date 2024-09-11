@@ -323,8 +323,11 @@
         <div class="info">
             <Translatable resourceKey={i18nKey("access.openAccessInfo")} />
         </div>
-    {/if}
-    {#if gate.kind === "credential_gate"}
+    {:else if gate.kind === "locked_gate"}
+        <div class="info">
+            <Translatable resourceKey={i18nKey("access.lockedGateInfo", undefined, level, true)} />
+        </div>
+    {:else if gate.kind === "credential_gate"}
         <CredentialSelector {editable} bind:valid={credentialIssuerValid} bind:gate />
     {/if}
 </section>
@@ -344,6 +347,7 @@
 
     .info {
         @include font(book, normal, fs-90, 22);
+        color: var(--txt-light);
     }
 
     .section-title {

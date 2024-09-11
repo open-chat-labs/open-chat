@@ -10,7 +10,7 @@ use local_user_index_canister::{
     UserJoinedGroup, UserRegistered, UsernameChanged,
 };
 use storage_index_canister::add_or_update_users::UserConfig;
-use types::{CanisterId, MessageContent, TextContent, UserId};
+use types::{CanisterId, MessageContent, TextContent, UserId, UserType};
 use user_index_canister::c2c_notify_events::{Response::*, *};
 use user_index_canister::Event;
 
@@ -41,6 +41,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                     chat_id: ev.chat_id,
                     local_user_index_canister_id: ev.local_user_index_canister_id,
                     latest_message_index: ev.latest_message_index,
+                    group_canister_timestamp: ev.group_canister_timestamp,
                 }),
             );
         }
@@ -52,6 +53,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                     community_id: ev.community_id,
                     local_user_index_canister_id: ev.local_user_index_canister_id,
                     channels: ev.channels,
+                    community_canister_timestamp: ev.community_canister_timestamp,
                 }),
             );
         }
@@ -99,7 +101,10 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
         }
         Event::NotifyUniquePersonProof(ev) => {
             let (user_id, proof) = *ev;
-            state.data.users.record_proof_of_unique_personhood(user_id, proof.clone());
+            state
+                .data
+                .users
+                .record_proof_of_unique_personhood(user_id, proof.clone(), state.env.now());
             state.push_event_to_all_local_user_indexes(
                 LocalUserIndexEvent::NotifyUniquePersonProof(user_id, proof),
                 Some(caller),
@@ -109,7 +114,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
 }
 
 fn process_new_user(
-    caller: Principal,
+    principal: Principal,
     username: String,
     user_id: UserId,
     referred_by: Option<UserId>,
@@ -130,16 +135,16 @@ fn process_new_user(
     state
         .data
         .users
-        .register(caller, user_id, username.clone(), now, referred_by, false);
+        .register(principal, user_id, username.clone(), now, referred_by, UserType::User, None);
 
     state.data.local_index_map.add_user(local_user_index_canister_id, user_id);
 
     state.push_event_to_all_local_user_indexes(
         LocalUserIndexEvent::UserRegistered(UserRegistered {
             user_id,
-            user_principal: caller,
+            user_principal: principal,
             username: username.clone(),
-            is_bot: false,
+            user_type: UserType::User,
             referred_by,
         }),
         Some(local_user_index_canister_id),
@@ -178,7 +183,7 @@ You can change your username at any time by clicking \"Profile settings\" from t
     }
 
     state.data.storage_index_user_sync_queue.push(UserConfig {
-        user_id: caller,
+        user_id: principal,
         byte_limit: 100 * ONE_MB,
     });
     crate::jobs::sync_users_to_storage_index::try_run_now(state);
@@ -186,10 +191,7 @@ You can change your username at any time by clicking \"Profile settings\" from t
     state
         .data
         .identity_canister_user_sync_queue
-        .push_back((caller, Some(user_id)));
-    crate::jobs::sync_users_to_identity_canister::try_run_now(state);
+        .push_back((principal, Some(user_id)));
 
-    if let Some(referrer) = referred_by {
-        state.data.user_referral_leaderboards.add_referral(referrer, now);
-    }
+    crate::jobs::sync_users_to_identity_canister::try_run_now(state);
 }

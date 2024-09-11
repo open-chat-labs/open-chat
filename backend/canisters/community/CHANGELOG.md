@@ -5,6 +5,62 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Disallow sending messages to chats that have an external url set ([#6369](https://github.com/open-chat-labs/open-chat/pull/6369))
+
+## [[2.0.1337](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1337-community)] - 2024-09-10
+
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+- Support community referrals ([#6317](https://github.com/open-chat-labs/open-chat/pull/6317))
+- Don't allow a user to refer themselves ([#6322](https://github.com/open-chat-labs/open-chat/pull/6322))
+- Improve query caching by avoiding calls to `ic0::caller()` where possible ([#6332](https://github.com/open-chat-labs/open-chat/pull/6332))
+
+### Fixed
+
+- Ensure invited users can't contain duplicates ([#6333](https://github.com/open-chat-labs/open-chat/pull/6333))
+
+## [[2.0.1308](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1308-community)] - 2024-08-26
+
+### Fixed
+
+- Mark ProposalsBot as an OC controlled bot ([#6285](https://github.com/open-chat-labs/open-chat/pull/6285))
+
+## [[2.0.1296](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1296-community)] - 2024-08-16
+
+### Changed
+
+- Support next batch of achievements ([#6230](https://github.com/open-chat-labs/open-chat/pull/6230))
+- Remove references to deleted users ([#6241](https://github.com/open-chat-labs/open-chat/pull/6241))
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+
+## [[2.0.1287](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1287-community)] - 2024-08-13
+
+### Added
+
+- Add `external_url` property to channel ([#6226](https://github.com/open-chat-labs/open-chat/pull/6226))
+
+## [[2.0.1286](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1286-community)] - 2024-08-12
+
+### Added
+
+- Support updating add members permission ([#6194](https://github.com/open-chat-labs/open-chat/pull/6194))
+
+### Changed
+
+- Members of private communities can be added to channels skipping gate checks ([#6159](https://github.com/open-chat-labs/open-chat/pull/6159))
+
+## [[2.0.1272](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1272-community)] - 2024-07-31
+
+### Changed
+
+- Change max channel name length from 25 to 40 chars ([#6138](https://github.com/open-chat-labs/open-chat/pull/6138))
+- Configure message visibility to non-members of public channels ([#6152](https://github.com/open-chat-labs/open-chat/pull/6152))
+
+## [[2.0.1261](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1261-community)] - 2024-07-26
+
 ### Added
 
 - Add `Locked` gate ([#6095](https://github.com/open-chat-labs/open-chat/pull/6095))
@@ -13,6 +69,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Fix fee then retry transfer if fee too high ([#6063](https://github.com/open-chat-labs/open-chat/pull/6063))
 - Handle transfer fee changing in either direction ([#6064](https://github.com/open-chat-labs/open-chat/pull/6064))
+- Bypass gates if user is invited ([#6110](https://github.com/open-chat-labs/open-chat/pull/6110))
+- Return `is_invited` when previewing community/channel ([#6113](https://github.com/open-chat-labs/open-chat/pull/6113))
+- Use `UserType` rather than `is_bot` and `is_oc_controlled_bot` ([#6116](https://github.com/open-chat-labs/open-chat/pull/6116))
+- Allow OC controlled bots to send crypto transfer messages ([#6117](https://github.com/open-chat-labs/open-chat/pull/6117))
 
 ### Fixed
 

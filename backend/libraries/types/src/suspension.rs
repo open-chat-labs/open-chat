@@ -1,6 +1,7 @@
 use crate::{Milliseconds, TimestampMillis, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum SuspensionDuration {
@@ -18,14 +19,16 @@ impl From<SuspensionDuration> for Option<Milliseconds> {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export]
+#[derive(CandidType, Debug)]
 pub struct SuspensionDetails {
     pub reason: String,
     pub action: SuspensionAction,
     pub suspended_by: UserId,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export]
+#[derive(CandidType, Debug)]
 pub enum SuspensionAction {
     Unsuspend(TimestampMillis),
     Delete(TimestampMillis),

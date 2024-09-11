@@ -1,9 +1,11 @@
 use crate::{read_state, RuntimeState};
 use candid::Principal;
+use dataurl::DataUrl;
 use http_request::{build_json_response, encode_logs, extract_route, Route};
 use ic_cdk::query;
 use std::collections::BTreeMap;
-use types::{HttpRequest, HttpResponse, TimestampMillis, UserId};
+use types::{HeaderField, HttpRequest, HttpResponse, TimestampMillis, UserId};
+use utils::time::MonthKey;
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
@@ -24,7 +26,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
             .data
             .users
             .iter()
-            .filter(|u| u.is_bot)
+            .filter(|u| u.user_type.is_bot())
             .map(|u| (u.user_id.to_string(), u.username.clone()))
             .collect();
 
@@ -57,8 +59,33 @@ fn http_request(request: HttpRequest) -> HttpResponse {
             "new_users_per_day" => return get_new_users_per_day(state),
             "chitbands" => {
                 let size: u32 = parts.get(1).and_then(|s| (*s).parse::<u32>().ok()).unwrap_or(500);
+                let now = state.env.now();
+                let month_key = MonthKey::from_timestamp(now);
 
-                return build_json_response(&state.data.chit_bands(size));
+                return build_json_response(&state.data.chit_bands(size, month_key.year(), month_key.month()));
+            }
+            "achievement_logo" => {
+                let id = parts.get(1).and_then(|s| (*s).parse::<u32>().ok());
+                let Some(logo) =
+                    id.and_then(|achievement_id| state.data.external_achievements.get(achievement_id).map(|a| a.logo.clone()))
+                else {
+                    return HttpResponse::not_found();
+                };
+
+                let url = DataUrl::parse(&logo).unwrap();
+
+                return HttpResponse {
+                    status_code: 200,
+                    headers: vec![
+                        HeaderField("Content-Type".to_string(), url.get_media_type().to_string()),
+                        HeaderField(
+                            "Cache-Control".to_string(),
+                            "public, max-age=100000000, immutable".to_string(),
+                        ),
+                    ],
+                    body: url.get_data().to_vec(),
+                    streaming_strategy: None,
+                };
             }
             _ => (),
         }

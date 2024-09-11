@@ -19,6 +19,7 @@ fn init(args: Args) {
         env.canister_id().into(),
         args.created_by_principal,
         args.created_by_user_id,
+        args.created_by_user_type,
         args.is_public,
         args.name,
         args.description,

@@ -1,7 +1,6 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher } from "svelte";
-    import { onMount } from "svelte";
+    import { createEventDispatcher, onMount, tick } from "svelte";
     import { translatable } from "../actions/translatable";
     import { interpolate } from "../i18n/i18n";
     import type { ResourceKey } from "openchat-client";
@@ -17,6 +16,7 @@
     export let fontSize: "small" | "normal" | "large" | "huge" = "normal";
     export let align: "left" | "right" | "center" = "left";
     export let countdown: boolean = false;
+    export let pattern: string | undefined = undefined;
 
     const dispatch = createEventDispatcher();
 
@@ -24,7 +24,7 @@
 
     onMount(() => {
         if (autofocus) {
-            inp.focus();
+            tick().then(() => inp.focus());
         }
     });
 
@@ -71,6 +71,7 @@
         on:keydown={keyDown}
         on:blur
         bind:this={inp}
+        {pattern}
         {value}
         class={`textbox ${fontSize} ${align}`} />
 

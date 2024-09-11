@@ -178,6 +178,7 @@ type SelectedInitialSuccess = record {
     invited_users : vec UserId;
     chat_rules : VersionedRules;
     user_groups : vec UserGroupDetails;
+    referrals : vec UserId;
 };
 
 type SelectedUpdatesArgs = record {
@@ -208,6 +209,8 @@ type SelectedUpdatesSuccess = record {
     chat_rules : opt VersionedRules;
     user_groups : vec UserGroupDetails;
     user_groups_deleted : vec nat32;
+    referrals_added : vec UserId;
+    referrals_removed : vec UserId;
 };
 
 type UserGroupDetails = record {
@@ -299,6 +302,7 @@ type AcceptP2PSwapArgs = record {
     thread_root_message_index : opt MessageIndex;
     message_id : MessageId;
     pin : opt text;
+    new_achievement : bool;
 };
 
 type AcceptP2PSwapResponse = variant {
@@ -345,6 +349,7 @@ type AddMembersToChannelResponse = variant {
     PartialSuccess : AddMembersToChannelPartialSuccess;
     Failed : AddMembersToChannelFailed;
     CommunityFrozen;
+    CommunityPublic;
     UserSuspended;
     UserNotInCommunity;
     UserNotInChannel;
@@ -358,20 +363,13 @@ type AddMembersToChannelPartialSuccess = record {
     users_added : vec UserId;
     users_already_in_channel : vec UserId;
     users_limit_reached : vec UserId;
-    users_failed_gate_check : vec UserFailedGateCheck;
     users_failed_with_error : vec UserFailedError;
 };
 
 type AddMembersToChannelFailed = record {
     users_already_in_channel : vec UserId;
     users_limit_reached : vec UserId;
-    users_failed_gate_check : vec UserFailedGateCheck;
     users_failed_with_error : vec UserFailedError;
-};
-
-type UserFailedGateCheck = record {
-    user_id : UserId;
-    reason : GateCheckFailedReason;
 };
 
 type UserFailedError = record {
@@ -484,6 +482,8 @@ type CreateChannelArgs = record {
     permissions_v2 : opt GroupPermissions;
     events_ttl : opt Milliseconds;
     gate : opt AccessGate;
+    external_url : opt text;
+    messages_visible_to_non_members: opt bool;
 };
 
 type CreateChannelResponse = variant {
@@ -503,6 +503,7 @@ type CreateChannelResponse = variant {
     UserSuspended;
     NotAuthorized;
     CommunityFrozen;
+    ExternalUrlInvalid;
     InternalError : text;
 };
 
@@ -650,6 +651,7 @@ type ImportGroupResponse = variant {
 type JoinVideoCallArgs = record {
     channel_id : ChannelId;
     message_id : MessageId;
+    new_achievement : bool;
 };
 
 type JoinVideoCallResponse = variant {
@@ -700,6 +702,7 @@ type RegisterPollVoteArgs = record {
     message_index : MessageIndex;
     poll_option : nat32;
     operation : VoteOperation;
+    new_achievement : bool;
 };
 
 type RegisterPollVoteResponse = variant {
@@ -862,6 +865,7 @@ type SendMessageSuccess = record {
 
 type SetMemberDisplayNameArgs = record {
     display_name : opt text;
+    new_achievement : bool;
 };
 
 type SetMemberDisplayNameResponse = variant {
@@ -878,6 +882,7 @@ type SetVideoCallPresenceArgs = record {
     channel_id : ChannelId;
     message_id : MessageId;
     presence : VideoCallPresence;
+    new_achievement : bool;
 };
 
 type SetVideoCallPresenceResponse = variant {
@@ -962,6 +967,8 @@ type UpdateChannelArgs = record {
     events_ttl : EventsTimeToLiveUpdate;
     gate : AccessGateUpdate;
     public : opt bool;
+    messages_visible_to_non_members: opt bool;
+    external_url : TextUpdate;
 };
 
 type UpdateChannelResponse = variant {
@@ -983,6 +990,7 @@ type UpdateChannelResponse = variant {
     RulesTooShort : FieldTooShortResult;
     UserSuspended;
     CommunityFrozen;
+    ExternalUrlInvalid;
 };
 
 type UpdateCommunityArgs = record {
@@ -1117,7 +1125,7 @@ service : {
     pin_message : (PinMessageArgs) -> (PinMessageResponse);
     register_poll_vote : (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);
     register_proposal_vote : (RegisterProposalVoteArgs) -> (RegisterProposalVoteResponse);
-    register_proposal_vote_v2 : (RegisterProposalVoteArgs) -> (RegisterProposalVoteV2Response);
+    // register_proposal_vote_v2 : (RegisterProposalVoteArgs) -> (RegisterProposalVoteV2Response);
     remove_member : (RemoveMemberArgs) -> (RemoveMemberResponse);
     remove_member_from_channel : (RemoveMemberFromChannelArgs) -> (RemoveMemberFromChannelResponse);
     remove_reaction : (RemoveReactionArgs) -> (RemoveReactionResponse);

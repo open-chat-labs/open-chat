@@ -87,6 +87,7 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
             metrics: Some(chat.events.metrics().hydrate()),
             my_metrics: membership.my_metrics.clone(),
             is_public: updates.is_public,
+            messages_visible_to_non_members: updates.messages_visible_to_non_members,
             latest_threads: membership.latest_threads.clone(),
             unfollowed_threads: membership.unfollowed_threads.clone(),
             notifications_muted: membership.notifications_muted,

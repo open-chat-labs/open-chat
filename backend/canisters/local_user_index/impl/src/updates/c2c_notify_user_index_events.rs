@@ -8,8 +8,9 @@ use p256_key_pair::P256KeyPair;
 use std::cmp::min;
 use tracing::info;
 use user_canister::{
-    DiamondMembershipPaymentReceived, DisplayNameChanged, Event as UserEvent, OpenChatBotMessageV2, PhoneNumberConfirmed,
-    ReferredUserRegistered, StorageUpgraded, UserJoinedCommunityOrChannel, UserJoinedGroup, UserSuspended, UsernameChanged,
+    DiamondMembershipPaymentReceived, DisplayNameChanged, Event as UserEvent, ExternalAchievementAwarded, OpenChatBotMessageV2,
+    PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserJoinedCommunityOrChannel, UserJoinedGroup,
+    UserSuspended, UsernameChanged,
 };
 
 #[update(guard = "caller_is_user_index_canister", msgpack = true)]
@@ -73,7 +74,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
             );
         }
         Event::UserRegistered(ev) => {
-            state.data.global_users.add(ev.user_principal, ev.user_id, ev.is_bot);
+            state.data.global_users.add(ev.user_principal, ev.user_id, ev.user_type);
 
             if let Some(referred_by) = ev.referred_by {
                 if state.data.local_users.get(&referred_by).is_some() {
@@ -105,6 +106,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                     chat_id: ev.chat_id,
                     local_user_index_canister_id: ev.local_user_index_canister_id,
                     latest_message_index: ev.latest_message_index,
+                    group_canister_timestamp: ev.group_canister_timestamp,
                 })),
             );
         }
@@ -115,6 +117,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                     community_id: ev.community_id,
                     local_user_index_canister_id: ev.local_user_index_canister_id,
                     channels: ev.channels,
+                    community_canister_timestamp: ev.community_canister_timestamp,
                 })),
             );
         }
@@ -183,12 +186,24 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
             }
         }
         Event::NotifyUniquePersonProof(user_id, proof) => {
+            if state.data.local_users.contains(&user_id) {
+                state.push_event_to_user(user_id, UserEvent::NotifyUniquePersonProof(Box::new(proof.clone())))
+            }
             state.data.global_users.insert_unique_person_proof(user_id, proof);
         }
         Event::AddCanisterToPool(canister_id) => {
             if !state.data.canister_pool.contains(&canister_id) {
                 state.data.canister_pool.push(canister_id);
             }
+        }
+        Event::ExternalAchievementAwarded(ev) => {
+            state.push_event_to_user(
+                ev.user_id,
+                UserEvent::ExternalAchievementAwarded(Box::new(ExternalAchievementAwarded {
+                    name: ev.name,
+                    chit_reward: ev.chit_reward,
+                })),
+            );
         }
     }
 }

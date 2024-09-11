@@ -112,3 +112,15 @@ export type TokenExchangeRates = {
     toICP: number | undefined;
     toUSD: number | undefined;
 };
+
+export type WalletConfig = AutoWallet | ManualWallet;
+
+export type AutoWallet = {
+    kind: "auto_wallet";
+    minDollarValue: number;
+};
+
+export type ManualWallet = {
+    kind: "manual_wallet";
+    tokens: Set<string>;
+};

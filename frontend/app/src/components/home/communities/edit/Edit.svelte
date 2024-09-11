@@ -36,7 +36,7 @@
 
     let actualWidth = 0;
     let editing = original.id.communityId !== "";
-    let step = 0;
+    let step = "details";
     let busy = false;
     let confirming = false;
     let candidate = structuredClone(original);
@@ -67,7 +67,8 @@
     $: gateDirty = client.hasAccessGateChanged(candidate.gate, original.gate);
     $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty;
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
-    $: left = step * (actualWidth - padding);
+    $: stepIndex = steps.findIndex((s) => s.key === step) ?? 0;
+    $: left = stepIndex * (actualWidth - padding);
     $: valid = detailsValid && channelsValid && rulesValid && visibilityValid;
 
     function getSteps(
@@ -78,15 +79,15 @@
         rulesValid: boolean,
     ) {
         let steps = [
-            { labelKey: "communities.details", valid: detailsValid },
-            { labelKey: "communities.visibility", valid: visibilityValid },
-            { labelKey: "communities.rules", valid: rulesValid },
-            { labelKey: "permissions.permissions", valid: true },
+            { key: "details", labelKey: "communities.details", valid: detailsValid },
+            { key: "visibility", labelKey: "communities.visibility", valid: visibilityValid },
+            { key: "rules", labelKey: "communities.rules", valid: rulesValid },
+            { key: "permissions", labelKey: "permissions.permissions", valid: true },
         ];
 
         if (!editing) {
-            steps.push({ labelKey: "communities.channels", valid: channelsValid });
-            steps.push({ labelKey: "communities.invite", valid: true });
+            steps.push({ key: "channels", labelKey: "communities.channels", valid: channelsValid });
+            steps.push({ key: "invite", labelKey: "communities.invite", valid: true });
         }
         return steps;
     }
@@ -100,7 +101,7 @@
         candidateRules = { ...originalRules, newVersion: false };
     });
 
-    function changeStep(ev: CustomEvent<number>) {
+    function changeStep(ev: CustomEvent<string>) {
         step = ev.detail;
     }
 
@@ -205,29 +206,28 @@
         <StageHeader {steps} enabled on:step={changeStep} {step} />
         <div class="wrapper">
             <div class="sections" style={`left: -${left}px`}>
-                <div class="details" class:visible={step === 0}>
+                <div class="details" class:visible={step === "details"}>
                     <Details bind:valid={detailsValid} bind:busy bind:candidate />
                 </div>
-                <div class="visibility" class:visible={step === 1}>
+                <div class="visibility" class:visible={step === "visibility"}>
                     <VisibilityControl
                         canEditDisappearingMessages={false}
                         bind:candidate
                         bind:valid={visibilityValid}
                         {editing}
+                        {gateDirty}
                         history={false} />
                 </div>
-                <div class="rules" class:visible={step === 2}>
+                <div class="rules" class:visible={step === "rules"}>
                     <RulesEditor
                         bind:valid={rulesValid}
                         level={candidate.level}
                         bind:rules={candidateRules}
                         {editing} />
                 </div>
-                <div use:menuCloser class="permissions" class:visible={step === 3}>
+                <div use:menuCloser class="permissions" class:visible={step === "permissions"}>
                     {#if canEditPermissions}
-                        <PermissionsEditor
-                            isPublic={candidate.public}
-                            bind:permissions={candidate.permissions} />
+                        <PermissionsEditor bind:permissions={candidate.permissions} />
                     {:else}
                         <PermissionsViewer
                             isPublic={candidate.public}
@@ -235,10 +235,10 @@
                     {/if}
                 </div>
                 {#if !editing}
-                    <div class="channels" class:visible={step === 4}>
+                    <div class="channels" class:visible={step === "channels"}>
                         <ChooseChannels bind:valid={channelsValid} bind:channels />
                     </div>
-                    <div class="members" class:visible={step === 5}>
+                    <div class="members" class:visible={step === "invite"}>
                         <ChooseMembers userLookup={searchUsers} bind:members {busy} />
                     </div>
                 {/if}
@@ -248,12 +248,12 @@
     <span class="footer" slot="footer">
         <div class="community-buttons">
             <div class="back">
-                {#if !editing && step > 0}
+                {#if !editing && stepIndex > 0}
                     <Button
                         disabled={busy}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        on:click={() => (step = step - 1)}
+                        on:click={() => (step = steps[stepIndex - 1].key)}
                         ><Translatable resourceKey={i18nKey("communities.back")} /></Button>
                 {/if}
             </div>
@@ -279,11 +279,11 @@
                                 "community",
                                 true,
                             )} /></Button>
-                {:else if step < steps.length - 1}
+                {:else if stepIndex < steps.length - 1}
                     <Button
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        on:click={() => (step = step + 1)}>
+                        on:click={() => (step = steps[stepIndex + 1].key)}>
                         <Translatable resourceKey={i18nKey("communities.next")} />
                     </Button>
                 {:else}

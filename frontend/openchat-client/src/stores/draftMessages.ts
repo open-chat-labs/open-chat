@@ -44,7 +44,7 @@ function createDraftMessages() {
                         ? {
                               ...editingEvent.event.repliesTo,
                               content: editingEvent.event.content,
-                              sender: users[editingEvent.event.sender],
+                              sender: users.get(editingEvent.event.sender),
                           }
                         : undefined,
             }));

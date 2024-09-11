@@ -2,20 +2,18 @@
     import ModalContent from "../ModalContent.svelte";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
-    import { AuthProvider, Poller, type OpenChat } from "openchat-client";
+    import { AuthProvider, type OpenChat } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
-    import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
     import Button from "../Button.svelte";
     import { configKeys } from "../../utils/config";
-    import { ECDSAKeyIdentity } from "@dfinity/identity";
     import ButtonGroup from "../ButtonGroup.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import { toastStore } from "../../stores/toast";
     import { querystring } from "../../routes";
     import ChooseSignInOption from "./profile/ChooseSignInOption.svelte";
+    import { EmailPollerError, EmailSigninHandler } from "../../utils/signin";
+    import EmailSigninFeedback from "./EmailSigninFeedback.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -23,10 +21,11 @@
     let state: "options" | "logging-in" = "options";
     let mode: "signin" | "signup" = "signin";
     let email = "";
-    let emailSignInPoller: Poller | undefined = undefined;
     let error: string | undefined = undefined;
     let verificationCode: string | undefined = undefined;
     let emailInvalid = false;
+
+    let emailSigninHandler = new EmailSigninHandler(client, "registration", true);
 
     $: restrictTo = new Set($querystring.getAll("auth"));
     $: anonUser = client.anonUser;
@@ -43,15 +42,22 @@
         $selectedAuthProviderStore !== AuthProvider.SOL;
 
     onMount(() => {
+        emailSigninHandler.addEventListener("email_signin_event", emailEvent);
         client.gaTrack("opened_signin_modal", "registration");
         return () => {
             if ($anonUser && $identityState.kind === "logging_in") {
                 client.updateIdentityState({ kind: "anon" });
             }
-
-            emailSignInPoller?.stop();
+            emailSigninHandler.removeEventListener("email_signin_event", emailEvent);
+            emailSigninHandler.destroy();
         };
     });
+
+    function emailEvent(ev: Event): void {
+        if (ev instanceof EmailPollerError) {
+            error = "loginDialog.unexpectedError";
+        }
+    }
 
     $: {
         if ($identityState.kind === "anon" && state === "logging-in") {
@@ -87,7 +93,19 @@
         error = undefined;
 
         if (provider === AuthProvider.EMAIL) {
-            ECDSAKeyIdentity.generate().then((sk) => generateMagicLink(sk));
+            verificationCode = undefined;
+            emailSigninHandler.generateMagicLink(email).then((resp) => {
+                if (resp.kind === "success") {
+                    verificationCode = resp.code;
+                } else if (resp.kind === "email_invalid") {
+                    error = "loginDialog.invalidEmail";
+                } else if (resp.kind === "failed_to_send_email") {
+                    console.debug("generateMagicLink failed_to_send_email", resp.error);
+                    error = "loginDialog.failedToSendEmail";
+                } else {
+                    error = "loginDialog.unexpectedError";
+                }
+            });
         } else if (provider === AuthProvider.ETH) {
             console.log("Logging in with ETH");
         } else if (provider === AuthProvider.SOL) {
@@ -97,67 +115,9 @@
         }
     }
 
-    function generateMagicLink(sessionKey: ECDSAKeyIdentity) {
-        verificationCode = undefined;
-
-        client
-            .generateMagicLink(email, sessionKey)
-            .then((response) => {
-                if (response.kind === "success") {
-                    verificationCode = response.code;
-                    client.gaTrack("generated_magic_signin_link", "registration");
-                    startPoller(email, sessionKey, response.userKey, response.expiration);
-                } else if (response.kind === "email_invalid") {
-                    error = "loginDialog.invalidEmail";
-                } else if (response.kind === "failed_to_send_email") {
-                    console.debug("generateMagicLink failed_to_send_email", response.error);
-                    error = "loginDialog.failedToSendEmail";
-                } else if (response.kind === "blocked") {
-                    error = "loginDialog.unexpectedError";
-                }
-            })
-            .catch((err) => {
-                console.warn("generateMagicLink error", err);
-                error = "loginDialog.unexpectedError";
-            });
-    }
-
-    function startPoller(
-        email: string,
-        sessionKey: ECDSAKeyIdentity,
-        userKey: Uint8Array,
-        expiration: bigint,
-    ) {
-        emailSignInPoller = new Poller(
-            async () => {
-                if (emailSignInPoller !== undefined) {
-                    client
-                        .getSignInWithEmailDelegation(email, userKey, sessionKey, expiration)
-                        .then((response) => {
-                            if (response.kind === "success") {
-                                client.gaTrack("received_email_signin_delegation", "registration");
-                                emailSignInPoller?.stop();
-                                emailSignInPoller == undefined;
-                            } else if (response.kind === "error") {
-                                console.debug("getSignInWithEmailDelegation error", response.error);
-                                error = "loginDialog.unexpectedError";
-                            }
-                        })
-                        .catch((err) => {
-                            console.warn("getSignInWithEmailDelegation error", err);
-                            error = "loginDialog.unexpectedError";
-                        });
-                }
-            },
-            1000,
-            1000,
-        );
-    }
-
     function cancelLink() {
         client.gaTrack("email_signin_cancelled", "registration");
-        emailSignInPoller?.stop();
-        emailSignInPoller == undefined;
+        emailSigninHandler.stopPolling();
         state = "options";
     }
 
@@ -168,19 +128,6 @@
             client.gaTrack("signin_link_clicked", "registration");
         }
         mode = mode === "signin" ? "signup" : "signin";
-    }
-
-    function copyCode() {
-        if (verificationCode === undefined) return;
-
-        navigator.clipboard.writeText(verificationCode).then(
-            () => {
-                toastStore.showSuccessToast(i18nKey("loginDialog.codeCopiedToClipboard"));
-            },
-            () => {
-                toastStore.showFailureToast(i18nKey("loginDialog.failedToCopyCodeToClipboard"));
-            },
-        );
     }
 </script>
 
@@ -220,25 +167,10 @@
                 </a>
             </div>
         {:else if loggingInWithEmail}
-            <p>
-                <Translatable
-                    resourceKey={i18nKey(
-                        emailSignInPoller === undefined
-                            ? "loginDialog.generatingLink"
-                            : "loginDialog.checkEmail",
-                    )} />
-
-                {#if emailSignInPoller !== undefined && verificationCode !== undefined}
-                    <div class="code-wrapper">
-                        <div class="code">
-                            {verificationCode}
-                        </div>
-                        <div class="copy" on:click={copyCode}>
-                            <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
-                        </div>
-                    </div>
-                {/if}
-            </p>
+            <EmailSigninFeedback
+                code={verificationCode}
+                polling={$emailSigninHandler}
+                on:copy={(ev) => emailSigninHandler.copyCode(ev.detail)} />
             {#if error !== undefined}
                 <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
             {/if}
@@ -329,25 +261,5 @@
 
     .change-mode {
         margin-top: $sp4;
-    }
-
-    .code-wrapper {
-        margin-top: $sp4;
-        display: flex;
-        gap: $sp3;
-        flex-direction: row;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .code {
-        font-family: Menlo, Monaco, "Courier New", monospace;
-        @include font-size(fs-160);
-    }
-
-    .copy {
-        cursor: pointer;
-        position: relative;
-        top: 2px;
     }
 </style>

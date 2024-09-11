@@ -150,7 +150,9 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
         args.permissions_v2,
         args.gate,
         args.public,
+        args.messages_visible_to_non_members,
         args.events_ttl,
+        OptionUpdate::NoChange,
         state.env.now(),
     );
 

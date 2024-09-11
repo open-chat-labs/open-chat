@@ -1,7 +1,9 @@
 <script lang="ts">
     import MenuIcon from "../../MenuIcon.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
+    import BellOff from "svelte-material-icons/BellOff.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
+    import Contain from "svelte-material-icons/Contain.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
@@ -18,6 +20,7 @@
     import { rightPanelHistory } from "../../../stores/rightPanel";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
+    import { notificationsSupported } from "../../../utils/notifications";
 
     const client = getContext<OpenChat>("client");
 
@@ -32,6 +35,8 @@
     $: canEdit = member && client.canEditCommunity(community.id);
     $: canInvite = member && client.canInviteUsers(community.id);
     $: canCreateChannel = member && client.canCreateChannel(community.id);
+    $: chatSummariesListStore = client.chatSummariesListStore;
+    $: isCommunityMuted = $chatSummariesListStore.every((c) => c.membership.notificationsMuted);
 
     function leaveCommunity() {
         dispatch("leaveCommunity", {
@@ -60,7 +65,11 @@
     }
 
     function newChannel() {
-        canCreateChannel && dispatch("newChannel");
+        canCreateChannel && dispatch("newChannel", false);
+    }
+
+    function embedContent() {
+        canCreateChannel && dispatch("newChannel", true);
     }
 
     function showMembers() {
@@ -73,6 +82,10 @@
 
     function editCommunity() {
         canEdit && dispatch("editCommunity", community);
+    }
+
+    function muteAllChannels() {
+        client.muteAllChannels(community.id);
     }
 </script>
 
@@ -121,6 +134,13 @@
                         ><Translatable resourceKey={i18nKey("communities.createChannel")} /></span>
                 </MenuItem>
             {/if}
+            {#if canCreateChannel}
+                <MenuItem on:click={embedContent}>
+                    <Contain size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                    <span slot="text"
+                        ><Translatable resourceKey={i18nKey("communities.embed")} /></span>
+                </MenuItem>
+            {/if}
             <MenuItem disabled={!canMarkAllRead} on:click={markAllRead}>
                 <CheckboxMultipleMarked
                     size={$iconSize}
@@ -128,6 +148,14 @@
                     slot="icon" />
                 <span slot="text"><Translatable resourceKey={i18nKey("markAllRead")} /></span>
             </MenuItem>
+            {#if notificationsSupported && !isCommunityMuted}
+                <MenuItem on:click={muteAllChannels}>
+                    <BellOff size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                    <span slot="text"
+                        ><Translatable
+                            resourceKey={i18nKey("communities.muteAllChannels")} /></span>
+                </MenuItem>
+            {/if}
             {#if member}
                 <MenuItem separator />
                 {#if canDelete}

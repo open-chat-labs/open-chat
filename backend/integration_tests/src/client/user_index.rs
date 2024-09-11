@@ -10,6 +10,7 @@ generate_query_call!(platform_moderators_group);
 generate_query_call!(public_key);
 generate_query_call!(user);
 generate_query_call!(users);
+generate_query_call!(users_chit);
 
 // Updates
 generate_update_call!(add_local_user_index_canister);
@@ -31,8 +32,10 @@ generate_update_call!(upgrade_user_canister_wasm);
 pub mod happy_path {
     use candid::Principal;
     use pocket_ic::PocketIc;
+    use std::collections::HashMap;
     use types::{
-        CanisterId, CanisterWasm, Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration, Empty, UserId,
+        CanisterId, CanisterWasm, Chit, Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration, Empty, UserId,
+        UserSummary,
     };
     use user_index_canister::users::UserGroup;
 
@@ -100,6 +103,23 @@ pub mod happy_path {
         match response {
             user_index_canister::pay_for_diamond_membership::Response::Success(result) => result,
             response => panic!("'pay_for_diamond_membership' error: {response:?}"),
+        }
+    }
+
+    pub fn user(env: &PocketIc, canister_id: CanisterId, user_id: UserId) -> UserSummary {
+        let response = super::user(
+            env,
+            Principal::anonymous(),
+            canister_id,
+            &user_index_canister::user::Args {
+                user_id: Some(user_id),
+                username: None,
+            },
+        );
+
+        match response {
+            user_index_canister::user::Response::Success(result) => result,
+            _ => panic!("User not found"),
         }
     }
 
@@ -210,6 +230,29 @@ pub mod happy_path {
 
         match response {
             user_index_canister::add_platform_operator::Response::Success => {}
+        }
+    }
+
+    pub fn users_chit(
+        env: &PocketIc,
+        user_index_canister_id: CanisterId,
+        users: Vec<UserId>,
+        year: u16,
+        month: u8,
+    ) -> HashMap<UserId, Chit> {
+        let response = super::users_chit(
+            env,
+            Principal::anonymous(),
+            user_index_canister_id,
+            &user_index_canister::users_chit::Args {
+                users: users.clone(),
+                year,
+                month,
+            },
+        );
+
+        match response {
+            user_index_canister::users_chit::Response::Success(result) => users.into_iter().zip(result.chit).collect(),
         }
     }
 }

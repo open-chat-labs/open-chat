@@ -19,6 +19,25 @@ export const OPENCHAT_BOT_USER_ID = "zzyk3-openc-hatbo-tq7my-cai";
 export const OPENCHAT_BOT_USERNAME = "OpenChatBot";
 export const OPENCHAT_BOT_AVATAR_URL = "/assets/robot.svg";
 
+export const AIRDROP_BOT_USER_ID = process.env.AIRDROP_BOT_CANISTER!;
+export const AIRDROP_BOT_USERNAME = "AirdropBot";
+export const AIRDROP_BOT_AVATAR_URL = "/assets/airdrop_bot.svg";
+
+export const airdropBotUser: UserSummary = {
+    kind: "bot",
+    userId: AIRDROP_BOT_USER_ID,
+    username: AIRDROP_BOT_USERNAME,
+    displayName: undefined,
+    updated: BigInt(0),
+    suspended: false,
+    blobUrl: AIRDROP_BOT_AVATAR_URL,
+    diamondStatus: "inactive",
+    chitBalance: 0,
+    streak: 0,
+    isUniquePerson: false,
+    totalChitEarned: 0,
+};
+
 export const videoCallBotUser: UserSummary = {
     kind: "bot",
     userId: OPENCHAT_VIDEO_CALL_USER_ID,
@@ -31,6 +50,7 @@ export const videoCallBotUser: UserSummary = {
     chitBalance: 0,
     streak: 0,
     isUniquePerson: false,
+    totalChitEarned: 0,
 };
 
 export const openChatBotUser: UserSummary = {
@@ -45,6 +65,7 @@ export const openChatBotUser: UserSummary = {
     chitBalance: 0,
     streak: 0,
     isUniquePerson: false,
+    totalChitEarned: 0,
 };
 
 export const anonymousUserSummary: UserSummary = {
@@ -59,6 +80,7 @@ export const anonymousUserSummary: UserSummary = {
     chitBalance: 0,
     streak: 0,
     isUniquePerson: false,
+    totalChitEarned: 0,
 };
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -78,15 +100,16 @@ export function proposalsBotUser(userId: string): UserSummary {
         chitBalance: 0,
         streak: 0,
         isUniquePerson: false,
+        totalChitEarned: 0,
     };
 }
 
-export const specialUsers = writable<UserLookup>({});
-const normalUsers = writable<UserLookup>({});
+export const specialUsers = writable<UserLookup>(new Map());
+const normalUsers = writable<UserLookup>(new Map());
 
 const allUsers = derived([specialUsers, normalUsers], ([$specialUsers, $normalUsers]) => {
-    return Object.entries($specialUsers).reduce((all, [k, v]) => {
-        all[k] = v;
+    return [...$specialUsers.entries()].reduce((all, [k, v]) => {
+        all.set(k, v);
         return all;
     }, $normalUsers);
 });
@@ -94,7 +117,7 @@ const allUsers = derived([specialUsers, normalUsers], ([$specialUsers, $normalUs
 export const suspendedUsers = createSetStore(writable(new Set<string>()));
 
 export function overwriteUser(lookup: UserLookup, user: UserSummary): UserLookup {
-    lookup[user.userId] = { ...user };
+    lookup.set(user.userId, { ...user });
     return lookup;
 }
 
@@ -102,12 +125,12 @@ export const userStore = {
     subscribe: allUsers.subscribe,
     set: (users: UserLookup): void => {
         normalUsers.set(users);
-        const [suspended, _] = partitionSuspendedUsers(Object.values(users));
+        const [suspended, _] = partitionSuspendedUsers([...users.values()]);
         suspendedUsers.set(new Set(suspended));
     },
     add: (user: UserSummary): void => {
         normalUsers.update((users) => {
-            const clone = { ...users };
+            const clone = new Map(users);
             return overwriteUser(clone, user);
         });
         if (user.suspended) {
@@ -117,18 +140,20 @@ export const userStore = {
         }
     },
     addMany: (newUsers: UserSummary[]): void => {
-        normalUsers.update((users) => {
-            const clone = { ...users };
-            return newUsers.reduce((lookup, user) => overwriteUser(lookup, user), clone);
-        });
-        const [suspended, notSuspended] = partitionSuspendedUsers(newUsers);
-        suspendedUsers.addMany(suspended);
-        suspendedUsers.deleteMany(notSuspended);
+        if (newUsers.length > 0) {
+            normalUsers.update((users) => {
+                const clone = new Map(users);
+                return newUsers.reduce((lookup, user) => overwriteUser(lookup, user), clone);
+            });
+            const [suspended, notSuspended] = partitionSuspendedUsers(newUsers);
+            suspendedUsers.addMany(suspended);
+            suspendedUsers.deleteMany(notSuspended);
+        }
     },
     setUpdated: (userIds: string[], timestamp: bigint): void => {
         normalUsers.update((users) => {
             for (const userId of userIds) {
-                const user = users[userId];
+                const user = users.get(userId);
                 if (user !== undefined) {
                     user.updated = timestamp;
                 }

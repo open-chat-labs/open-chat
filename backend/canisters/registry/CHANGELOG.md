@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1334](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1334-registry)] - 2024-09-06
+
+### Added
+
+- Expose MessagePack versions of Registry canister APIs ([#6318](https://github.com/open-chat-labs/open-chat/pull/6318))
+
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+
+## [[2.0.1323](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1323-registry)] - 2024-09-03
+
+### Changed
+
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+
+## [[2.0.1298](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1298-registry)] - 2024-08-19
+
+### Changed
+
+- Mark tokens as incompatible with ICRC1 if they have a non-zero burn fee ([#6143](https://github.com/open-chat-labs/open-chat/pull/6143))
+- Check for transfer fee changes when refreshing token details ([#6252](https://github.com/open-chat-labs/open-chat/pull/6252))
+
+## [[2.0.1250](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1250-registry)] - 2024-07-25
+
+### Changed
+
+- Simplify adding tokens and add compatibility with `burn_fee` ([#6102](https://github.com/open-chat-labs/open-chat/pull/6102))
+
 ## [[2.0.1193](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1193-registry)] - 2024-06-06
 
 ### Fixed

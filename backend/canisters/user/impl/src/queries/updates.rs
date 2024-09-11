@@ -1,11 +1,11 @@
 use crate::guards::caller_is_owner;
 use crate::{read_state, RuntimeState};
-use ic_cdk::query;
+use canister_api_macros::query;
 use types::{OptionUpdate, TimestampMillis, UserId};
 use user_canister::updates::{Response::*, *};
 use utils::time::{today, tomorrow};
 
-#[query(guard = "caller_is_owner")]
+#[query(guard = "caller_is_owner", candid = true, msgpack = true)]
 fn updates(args: Args) -> Response {
     read_state(|state| updates_impl(args.updates_since, state))
 }
@@ -41,21 +41,26 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         .as_ref()
         .is_some_and(|p| p.timestamp > updates_since);
 
+    let wallet_config = state.data.wallet_config.if_set_after(updates_since).cloned();
+
+    let referrals = state.data.referrals.updated_since(updates_since);
+
     let has_any_updates = username.is_some()
         || display_name.has_update()
         || avatar_id.has_update()
         || blocked_users.is_some()
         || avatar_id.has_update()
         || suspended.is_some()
+        || wallet_config.is_some()
         || pin_number_updated
         || is_unique_person_updated
+        || !referrals.is_empty()
         || state.data.direct_chats.any_updated(updates_since)
         || state.data.group_chats.any_updated(updates_since)
         || state.data.favourite_chats.any_updated(updates_since)
         || state.data.communities.any_updated(updates_since)
-        || state.data.chit_events.has_achievements_since(updates_since)
-        || state.data.achievements_last_seen > updates_since
-        || state.data.chit_balance.timestamp > updates_since;
+        || state.data.chit_events.last_updated() > updates_since
+        || state.data.achievements_last_seen > updates_since;
 
     // Short circuit prior to calling `ic0.time()` so that caching works effectively
     if !has_any_updates {
@@ -140,7 +145,8 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         None
     };
 
-    let chit_balance = state.data.chit_balance.value;
+    let total_chit_earned = state.data.chit_events.total_chit_earned();
+    let chit_balance = state.data.chit_events.balance_for_month_by_timestamp(now);
     let streak = state.data.streak.days(now);
     let next_daily_claim = if state.data.streak.can_claim(now) { today(now) } else { tomorrow(now) };
     let streak_ends = state.data.streak.ends();
@@ -160,10 +166,13 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         pin_number_settings,
         achievements,
         achievements_last_seen,
+        total_chit_earned,
         chit_balance,
         streak,
         streak_ends,
         next_daily_claim,
         is_unique_person,
+        wallet_config,
+        referrals,
     })
 }

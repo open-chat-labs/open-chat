@@ -43,6 +43,7 @@ export type ChatPermissions = {
     changeRoles: ChatPermissionRole;
     updateGroup: ChatPermissionRole;
     inviteUsers: ChatPermissionRole;
+    addMembers: ChatPermissionRole;
     removeMembers: ChatPermissionRole;
     deleteMessages: ChatPermissionRole;
     pinMessages: ChatPermissionRole;
@@ -72,6 +73,7 @@ export type OptionalChatPermissions = {
     changeRoles?: ChatPermissionRole;
     updateGroup?: ChatPermissionRole;
     inviteUsers?: ChatPermissionRole;
+    addMembers?: ChatPermissionRole;
     removeMembers?: ChatPermissionRole;
     deleteMessages?: ChatPermissionRole;
     pinMessages?: ChatPermissionRole;

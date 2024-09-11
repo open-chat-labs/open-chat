@@ -1,7 +1,6 @@
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::storage_index_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
-use crate::model::user_referral_leaderboards::UserReferralLeaderboards;
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
@@ -12,6 +11,7 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
 use local_user_index_canister::Event as LocalUserIndexEvent;
 use model::chit_leaderboard::ChitLeaderboard;
+use model::external_achievements::{ExternalAchievementMetrics, ExternalAchievements};
 use model::local_user_index_map::LocalUserIndexMap;
 use model::pending_modclub_submissions_queue::{PendingModclubSubmission, PendingModclubSubmissionsQueue};
 use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
@@ -26,14 +26,14 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, DiamondMembershipFees, Milliseconds,
-    TimestampMillis, Timestamped, UserId,
+    BotConfig, BuildVersion, CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, DiamondMembershipFees, Milliseconds,
+    TimestampMillis, Timestamped, UserId, UserType,
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::consts::DEV_TEAM_DFX_PRINCIPAL;
 use utils::env::Environment;
-use utils::time::DAY_IN_MS;
+use utils::time::{MonthKey, DAY_IN_MS};
 
 mod guards;
 mod jobs;
@@ -185,6 +185,9 @@ impl RuntimeState {
 
             self.data.identity_canister_user_sync_queue.push_back((user.principal, None));
             jobs::sync_users_to_identity_canister::try_run_now(self);
+
+            self.data.remove_from_online_users_queue.push_back(user.principal);
+            jobs::remove_from_online_users_canister::start_job_if_required(self);
         }
     }
 
@@ -196,10 +199,14 @@ impl RuntimeState {
                 username: user.username.clone(),
                 date_created: user.date_created,
                 date_updated: user.date_updated,
-                is_bot: user.is_bot,
+                is_bot: user.user_type.is_bot(),
                 suspension_details: user.suspension_details.clone(),
                 moderation_flags_enabled: user.moderation_flags_enabled,
-                chit_balance: user.chit_balance,
+                chit_balance: user
+                    .chit_per_month
+                    .get(&MonthKey::from_timestamp(now))
+                    .copied()
+                    .unwrap_or_default(),
                 streak: user.streak(now),
                 streak_ends: user.streak_ends,
                 chit_updated: user.chit_updated,
@@ -251,6 +258,8 @@ impl RuntimeState {
                 notifications_index: self.data.notifications_index_canister_id,
                 identity: self.data.identity_canister_id,
                 proposals_bot: self.data.proposals_bot_canister_id,
+                airdrop_bot: self.data.airdrop_bot_canister_id,
+                online_users: self.data.online_users_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 storage_index: self.data.storage_index_canister_id,
                 escrow: self.data.escrow_canister_id,
@@ -264,7 +273,40 @@ impl RuntimeState {
             deleted_users: self.data.deleted_users.iter().take(100).map(|u| u.user_id).collect(),
             deleted_users_length: self.data.deleted_users.len(),
             unique_person_proofs_submitted: self.data.users.unique_person_proofs_submitted(),
+            july_airdrop_period: self.build_stats_for_cohort(1719792000000, 1723021200000),
+            august_airdrop_period: self.build_stats_for_cohort(1723021200000, 1725181200000),
+            survey_messages_sent: self.data.survey_messages_sent,
+            external_achievements: self.data.external_achievements.metrics(),
         }
+    }
+
+    fn build_stats_for_cohort(&self, airdrop_from: TimestampMillis, airdrop_to: TimestampMillis) -> AirdropStats {
+        let mut stats = AirdropStats::default();
+
+        for user in self.data.users.iter() {
+            let diamond = user.diamond_membership_details.was_active(airdrop_from)
+                || user.diamond_membership_details.was_active(airdrop_to);
+
+            let lifetime_diamond = user.diamond_membership_details.is_lifetime_diamond_member();
+
+            if diamond {
+                stats.diamond += 1;
+            }
+
+            if lifetime_diamond {
+                stats.lifetime_diamond += 1;
+            }
+
+            if user.unique_person_proof.is_some() {
+                stats.proved_uniqueness += 1;
+            }
+
+            if (user.unique_person_proof.is_some() && diamond) || lifetime_diamond {
+                stats.qualify_for_airdrop += 1;
+            }
+        }
+
+        stats
     }
 }
 
@@ -279,6 +321,8 @@ struct Data {
     pub notifications_index_canister_id: CanisterId,
     pub identity_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
+    pub airdrop_bot_canister_id: CanisterId,
+    pub online_users_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cycles_dispenser_canister_id: CanisterId,
@@ -300,7 +344,6 @@ struct Data {
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
     pub nns_governance_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
-    pub user_referral_leaderboards: UserReferralLeaderboards,
     pub platform_moderators_group: Option<ChatId>,
     pub reported_messages: ReportedMessages,
     pub fire_and_forget_handler: FireAndForgetHandler,
@@ -310,10 +353,16 @@ struct Data {
     pub video_call_operators: Vec<Principal>,
     pub oc_key_pair: P256KeyPair,
     pub empty_users: HashSet<UserId>,
+    // TODO: Remove this attribute after release
+    #[serde(default, skip_deserializing)]
     pub chit_leaderboard: ChitLeaderboard,
     pub deleted_users: Vec<DeletedUser>,
+    #[serde(with = "serde_bytes")]
     pub ic_root_key: Vec<u8>,
     pub identity_canister_user_sync_queue: VecDeque<(Principal, Option<UserId>)>,
+    pub remove_from_online_users_queue: VecDeque<Principal>,
+    pub survey_messages_sent: usize,
+    pub external_achievements: ExternalAchievements,
 }
 
 impl Data {
@@ -326,6 +375,8 @@ impl Data {
         notifications_index_canister_id: CanisterId,
         identity_canister_id: CanisterId,
         proposals_bot_canister_id: CanisterId,
+        airdrop_bot_canister_id: CanisterId,
+        online_users_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         storage_index_canister_id: CanisterId,
         escrow_canister_id: CanisterId,
@@ -336,6 +387,7 @@ impl Data {
         video_call_operators: Vec<Principal>,
         ic_root_key: Vec<u8>,
         test_mode: bool,
+        now: TimestampMillis,
     ) -> Self {
         let mut data = Data {
             users: UserMap::default(),
@@ -347,6 +399,8 @@ impl Data {
             notifications_index_canister_id,
             identity_canister_id,
             proposals_bot_canister_id,
+            airdrop_bot_canister_id,
+            online_users_canister_id,
             cycles_dispenser_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             total_cycles_spent_on_canisters: 0,
@@ -370,7 +424,6 @@ impl Data {
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             nns_governance_canister_id,
             internet_identity_canister_id,
-            user_referral_leaderboards: UserReferralLeaderboards::default(),
             platform_moderators_group: None,
             nns_8_year_neuron: None,
             reported_messages: ReportedMessages::default(),
@@ -384,6 +437,9 @@ impl Data {
             deleted_users: Vec::new(),
             ic_root_key,
             identity_canister_user_sync_queue: VecDeque::new(),
+            remove_from_online_users_queue: VecDeque::new(),
+            survey_messages_sent: 0,
+            external_achievements: ExternalAchievements::default(),
         };
 
         // Register the ProposalsBot
@@ -391,9 +447,21 @@ impl Data {
             proposals_bot_canister_id,
             proposals_bot_canister_id.into(),
             "ProposalsBot".to_string(),
-            0,
+            now,
             None,
-            true,
+            UserType::OcControlledBot,
+            Some(BotConfig::default()),
+        );
+
+        // Register the AirdropBot
+        data.users.register(
+            airdrop_bot_canister_id,
+            airdrop_bot_canister_id.into(),
+            "AirdropBot".to_string(),
+            now,
+            None,
+            UserType::OcControlledBot,
+            Some(BotConfig::default()),
         );
 
         data
@@ -426,13 +494,16 @@ impl Data {
         }
     }
 
-    pub fn chit_bands(&self, size: u32) -> BTreeMap<u32, u32> {
+    pub fn chit_bands(&self, size: u32, year: u32, month: u8) -> BTreeMap<u32, u32> {
         let mut bands = BTreeMap::new();
+        let month_key = MonthKey::new(year, month);
 
         for chit in self
             .users
             .iter()
-            .map(|u| if u.chit_balance > 0 { u.chit_balance as u32 } else { 0 })
+            .map(|u| u.chit_per_month.get(&month_key).copied().unwrap_or_default())
+            .filter(|c| *c > 0)
+            .map(|c| c as u32)
         {
             let band = (chit / size) * size;
             let key = if band > 0 { (chit / band) * band } else { 0 };
@@ -457,6 +528,8 @@ impl Default for Data {
             notifications_index_canister_id: Principal::anonymous(),
             identity_canister_id: Principal::anonymous(),
             proposals_bot_canister_id: Principal::anonymous(),
+            airdrop_bot_canister_id: Principal::anonymous(),
+            online_users_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             cycles_dispenser_canister_id: Principal::anonymous(),
             total_cycles_spent_on_canisters: 0,
@@ -478,7 +551,6 @@ impl Default for Data {
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             nns_governance_canister_id: Principal::anonymous(),
             internet_identity_canister_id: Principal::anonymous(),
-            user_referral_leaderboards: UserReferralLeaderboards::default(),
             platform_moderators_group: None,
             reported_messages: ReportedMessages::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
@@ -492,6 +564,9 @@ impl Default for Data {
             deleted_users: Vec::new(),
             ic_root_key: Vec::new(),
             identity_canister_user_sync_queue: VecDeque::new(),
+            remove_from_online_users_queue: VecDeque::new(),
+            survey_messages_sent: 0,
+            external_achievements: ExternalAchievements::default(),
         }
     }
 }
@@ -533,6 +608,10 @@ pub struct Metrics {
     pub deleted_users: Vec<UserId>,
     pub deleted_users_length: usize,
     pub unique_person_proofs_submitted: u32,
+    pub july_airdrop_period: AirdropStats,
+    pub august_airdrop_period: AirdropStats,
+    pub survey_messages_sent: usize,
+    pub external_achievements: Vec<ExternalAchievementMetrics>,
 }
 
 #[derive(Serialize, Debug)]
@@ -548,6 +627,14 @@ pub struct UserMetrics {
     pub chit_updated: TimestampMillis,
     pub streak: u16,
     pub streak_ends: TimestampMillis,
+}
+
+#[derive(Serialize, Debug, Default)]
+pub struct AirdropStats {
+    pub diamond: u32,
+    pub lifetime_diamond: u32,
+    pub proved_uniqueness: u32,
+    pub qualify_for_airdrop: u32,
 }
 
 #[derive(Serialize, Debug, Default)]
@@ -596,6 +683,8 @@ pub struct CanisterIds {
     pub notifications_index: CanisterId,
     pub identity: CanisterId,
     pub proposals_bot: CanisterId,
+    pub airdrop_bot: CanisterId,
+    pub online_users: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub storage_index: CanisterId,
     pub escrow: CanisterId,

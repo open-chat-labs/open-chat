@@ -1,0 +1,15 @@
+[package]
+name = "airdrop_bot_canister"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bot_api = { path = "../../../bots/api" }
+candid = { workspace = true }
+candid_gen = { path = "../../../libraries/candid_gen" }
+serde = { workspace = true }
+user_canister = { path = "../../user/api" }
+user_index_canister = { path = "../../user_index/api" }
+types = { path = "../../../libraries/types" }

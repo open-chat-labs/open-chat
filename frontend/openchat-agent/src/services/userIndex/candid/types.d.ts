@@ -6,6 +6,7 @@ export interface AcceptSwapSuccess { 'token1_txn_in' : bigint }
 export type AccessGate = { 'UniquePerson' : null } |
   { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
+  { 'Locked' : null } |
   { 'TokenBalance' : TokenBalanceGate } |
   { 'Composite' : { 'and' : boolean, 'inner' : Array<AccessGate> } } |
   { 'DiamondMember' : null } |
@@ -25,6 +26,7 @@ export interface Account {
 }
 export type AccountIdentifier = Uint8Array | number[];
 export type Achievement = { 'AppointedGroupModerator' : null } |
+  { 'Referred20thUser' : null } |
   { 'DirectChats5' : null } |
   { 'ChangedTheme' : null } |
   { 'ChosenAsGroupModerator' : null } |
@@ -43,6 +45,8 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'StartedCall' : null } |
   { 'ChosenAsGroupOwner' : null } |
   { 'TippedMessage' : null } |
+  { 'Streak100' : null } |
+  { 'Streak365' : null } |
   { 'SentGiphy' : null } |
   { 'SetCommunityAccessGate' : null } |
   { 'Streak14' : null } |
@@ -52,6 +56,7 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'SentReminder' : null } |
   { 'EditedMessage' : null } |
   { 'ReactedToMessage' : null } |
+  { 'Referred3rdUser' : null } |
   { 'UpgradedToDiamond' : null } |
   { 'ReceivedDirectMessage' : null } |
   { 'AcceptedP2PSwapOffer' : null } |
@@ -66,6 +71,7 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'OwnGroupWithOneThousandDiamondMembers' : null } |
   { 'SentP2PSwapOffer' : null } |
   { 'QuoteReplied' : null } |
+  { 'Referred50thUser' : null } |
   { 'OwnGroupWithOneDiamondMember' : null } |
   { 'SentCrypto' : null } |
   { 'ProvedUniquePersonhood' : null } |
@@ -73,7 +79,9 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'Streak3' : null } |
   { 'Streak7' : null } |
   { 'UpgradedToGoldDiamond' : null } |
+  { 'Referred1stUser' : null } |
   { 'ReceivedCrypto' : null } |
+  { 'Referred10thUser' : null } |
   { 'TranslationAccepted' : null } |
   { 'RepliedInThread' : null } |
   { 'DirectChats10' : null } |
@@ -137,6 +145,11 @@ export interface BlobReference {
   'canister_id' : CanisterId,
 }
 export type BlockIndex = bigint;
+export interface BotConfig {
+  'can_be_added_to_groups' : boolean,
+  'is_oc_controlled' : boolean,
+  'supports_direct_messages' : boolean,
+}
 export interface BuildVersion {
   'major' : number,
   'minor' : number,
@@ -232,6 +245,7 @@ export type ChatEvent = { 'Empty' : null } |
   { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
   { 'UsersUnblocked' : UsersUnblocked } |
   { 'ChatUnfrozen' : GroupUnfrozen } |
+  { 'ExternalUrlUpdated' : ExternalUrlUpdated } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'GroupRulesChanged' : GroupRulesChanged } |
   { 'GroupNameChanged' : GroupNameChanged } |
@@ -281,6 +295,7 @@ export type CheckUsernameResponse = { 'UsernameTaken' : null } |
   { 'UsernameInvalid' : null } |
   { 'UsernameTooLong' : number } |
   { 'Success' : null };
+export interface Chit { 'streak' : number, 'balance' : number }
 export interface ChitEarned {
   'timestamp' : TimestampMillis,
   'amount' : number,
@@ -288,7 +303,8 @@ export interface ChitEarned {
 }
 export type ChitEarnedReason = { 'DailyClaim' : null } |
   { 'Achievement' : Achievement } |
-  { 'MemeContestWinner' : null };
+  { 'MemeContestWinner' : null } |
+  { 'Referral' : ReferralStatus };
 export type ChitLeaderboardResponse = { 'Success' : Array<ChitUserBalance> };
 export interface ChitUserBalance {
   'username' : string,
@@ -299,11 +315,13 @@ export interface CommunityCanisterChannelSummary {
   'latest_message_sender_display_name' : [] | [string],
   'channel_id' : ChannelId,
   'is_public' : boolean,
+  'is_invited' : [] | [boolean],
   'video_call_in_progress' : [] | [VideoCall],
   'metrics' : ChatMetrics,
   'subtype' : [] | [GroupSubtype],
   'permissions_v2' : GroupPermissions,
   'date_last_pinned' : [] | [TimestampMillis],
+  'external_url' : [] | [string],
   'min_visible_event_index' : EventIndex,
   'gate' : [] | [AccessGate],
   'name' : string,
@@ -312,6 +330,7 @@ export interface CommunityCanisterChannelSummary {
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
   'avatar_id' : [] | [bigint],
+  'messages_visible_to_non_members' : boolean,
   'membership' : [] | [GroupMembership],
   'latest_event_index' : EventIndex,
   'history_visible_to_new_joiners' : boolean,
@@ -329,6 +348,7 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'subtype' : GroupSubtypeUpdate,
   'permissions_v2' : [] | [GroupPermissions],
   'date_last_pinned' : [] | [TimestampMillis],
+  'external_url' : TextUpdate,
   'gate' : AccessGateUpdate,
   'name' : [] | [string],
   'latest_message_index' : [] | [MessageIndex],
@@ -336,6 +356,7 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
   'avatar_id' : DocumentIdUpdate,
+  'messages_visible_to_non_members' : [] | [boolean],
   'membership' : [] | [GroupMembershipUpdates],
   'latest_event_index' : [] | [EventIndex],
   'updated_events' : Array<[[] | [number], number, bigint]>,
@@ -347,6 +368,7 @@ export interface CommunityCanisterCommunitySummary {
   'is_public' : boolean,
   'permissions' : CommunityPermissions,
   'community_id' : CommunityId,
+  'is_invited' : [] | [boolean],
   'metrics' : ChatMetrics,
   'gate' : [] | [AccessGate],
   'name' : string,
@@ -401,6 +423,7 @@ export interface CommunityMatch {
 }
 export interface CommunityMember {
   'role' : CommunityRole,
+  'referred_by' : [] | [UserId],
   'user_id' : UserId,
   'display_name' : [] | [string],
   'date_added' : TimestampMillis,
@@ -637,6 +660,10 @@ export interface EventsTimeToLiveUpdated {
   'new_ttl' : [] | [Milliseconds],
   'updated_by' : UserId,
 }
+export interface ExternalUrlUpdated {
+  'new_url' : [] | [string],
+  'updated_by' : UserId,
+}
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
   { 'ICRC1' : Icrc1FailedCryptoTransaction } |
   { 'ICRC2' : Icrc2FailedCryptoTransaction };
@@ -670,6 +697,7 @@ export type GateCheckFailedReason = { 'NotLifetimeDiamondMember' : null } |
   { 'InsufficientBalance' : bigint } |
   { 'NoSnsNeuronsFound' : null } |
   { 'NoSnsNeuronsWithRequiredDissolveDelayFound' : null } |
+  { 'Locked' : null } |
   { 'NoUniquePersonProof' : null } |
   { 'FailedVerifiedCredentialCheck' : string } |
   { 'NoSnsNeuronsWithRequiredStakeFound' : null };
@@ -709,6 +737,7 @@ export interface GroupCanisterGroupChatSummary {
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'rules_accepted' : boolean,
+  'messages_visible_to_non_members' : boolean,
   'membership' : [] | [GroupMembership],
   'local_user_index_canister_id' : CanisterId,
   'latest_threads' : Array<GroupCanisterThreadDetails>,
@@ -742,6 +771,7 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'unfollowed_threads' : Uint32Array | number[],
   'avatar_id' : DocumentIdUpdate,
   'rules_accepted' : [] | [boolean],
+  'messages_visible_to_non_members' : [] | [boolean],
   'membership' : [] | [GroupMembershipUpdates],
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'frozen' : FrozenGroupUpdate,
@@ -785,6 +815,7 @@ export interface GroupChatSummary {
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'rules_accepted' : boolean,
+  'messages_visible_to_non_members' : boolean,
   'local_user_index_canister_id' : CanisterId,
   'latest_threads' : Array<ThreadSyncDetails>,
   'frozen' : [] | [FrozenGroupInfo],
@@ -922,7 +953,8 @@ export type GroupSubtypeUpdate = { 'NoChange' : null } |
 export interface GroupUnfrozen { 'unfrozen_by' : UserId }
 export interface GroupVisibilityChanged {
   'changed_by' : UserId,
-  'now_public' : boolean,
+  'public' : [] | [boolean],
+  'messages_visible_to_non_members' : [] | [boolean],
 }
 export type Hash = Uint8Array | number[];
 export type ICP = Tokens;
@@ -1299,6 +1331,7 @@ export interface OptionalGroupPermissions {
   'thread_permissions' : OptionalMessagePermissionsUpdate,
   'change_roles' : [] | [PermissionRole],
   'start_video_call' : [] | [PermissionRole],
+  'add_members' : [] | [PermissionRole],
   'pin_messages' : [] | [PermissionRole],
   'react_to_messages' : [] | [PermissionRole],
 }
@@ -1502,6 +1535,7 @@ export interface PublicGroupSummary {
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
   'avatar_id' : [] | [bigint],
+  'messages_visible_to_non_members' : boolean,
   'local_user_index_canister_id' : CanisterId,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
@@ -1519,21 +1553,6 @@ export interface PushEventResult {
   'expires_at' : [] | [TimestampMillis],
 }
 export type Reaction = string;
-export interface ReferralLeaderboardArgs {
-  'count' : number,
-  'filter' : [] | [
-    { 'CurrentMonth' : null } |
-      { 'Month' : { 'month' : number, 'year' : number } }
-  ],
-}
-export type ReferralLeaderboardResponse = { 'AllTime' : Array<ReferralStats> } |
-  {
-    'Month' : {
-      'month' : number,
-      'year' : number,
-      'results' : Array<ReferralStats>,
-    }
-  };
 export type ReferralMetricsResponse = {
     'Success' : {
       'users_who_referred' : number,
@@ -1553,6 +1572,10 @@ export interface ReferralStats {
   'diamond_members' : number,
   'total_rewards_e8s' : bigint,
 }
+export type ReferralStatus = { 'Diamond' : null } |
+  { 'UniquePerson' : null } |
+  { 'LifetimeDiamond' : null } |
+  { 'Registered' : null };
 export type ReferralType = { 'User' : null } |
   { 'BtcMiami' : null };
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
@@ -1655,7 +1678,10 @@ export interface SnsProposal {
   'minimum_yes_proportion_of_exercised' : number,
 }
 export type Subaccount = Uint8Array | number[];
-export interface SubmitProofOfUniquePersonhoodArgs { 'credential_jwt' : string }
+export interface SubmitProofOfUniquePersonhoodArgs {
+  'credential_jwt' : string,
+  'user_ii_principal' : Principal,
+}
 export type SubmitProofOfUniquePersonhoodResponse = { 'Invalid' : string } |
   { 'Success' : null } |
   { 'UserNotFound' : null };
@@ -1791,6 +1817,7 @@ export type UserResponse = { 'Success' : UserSummary } |
 export interface UserSummary {
   'streak' : number,
   'username' : string,
+  'total_chit_earned' : number,
   'diamond_member' : boolean,
   'diamond_membership_status' : DiamondMembershipStatus,
   'is_unique_person' : boolean,
@@ -1803,6 +1830,7 @@ export interface UserSummary {
 }
 export interface UserSummaryStable {
   'username' : string,
+  'bot_config' : [] | [BotConfig],
   'diamond_membership_status' : DiamondMembershipStatus,
   'is_unique_person' : boolean,
   'is_bot' : boolean,
@@ -1817,6 +1845,7 @@ export interface UserSummaryV2 {
 }
 export interface UserSummaryVolatile {
   'streak' : number,
+  'total_chit_earned' : number,
   'chit_balance' : number,
 }
 export interface UsersArgs {
@@ -1829,12 +1858,19 @@ export interface UsersBlocked {
   'user_ids' : Array<UserId>,
   'blocked_by' : UserId,
 }
+export interface UsersChitArgs {
+  'month' : number,
+  'year' : number,
+  'users' : Array<UserId>,
+}
+export type UsersChitResponse = { 'Success' : { 'chit' : Array<Chit> } };
 export interface UsersInvited {
   'user_ids' : Array<UserId>,
   'invited_by' : UserId,
 }
 export type UsersResponse = {
     'Success' : {
+      'deleted' : Array<UserId>,
       'timestamp' : TimestampMillis,
       'users' : Array<UserSummaryV2>,
       'current_user' : [] | [CurrentUserSummary],
@@ -1946,10 +1982,6 @@ export interface _SERVICE {
     PlatformOperatorsResponse
   >,
   'public_key' : ActorMethod<[EmptyArgs], PublicKeyResponse>,
-  'referral_leaderboard' : ActorMethod<
-    [ReferralLeaderboardArgs],
-    ReferralLeaderboardResponse
-  >,
   'referral_metrics' : ActorMethod<[EmptyArgs], ReferralMetricsResponse>,
   'remove_platform_moderator' : ActorMethod<
     [RemovePlatformModeratorArgs],
@@ -1998,6 +2030,7 @@ export interface _SERVICE {
     UserRegistrationCanisterResponse
   >,
   'users' : ActorMethod<[UsersArgs], UsersResponse>,
+  'users_chit' : ActorMethod<[UsersChitArgs], UsersChitResponse>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

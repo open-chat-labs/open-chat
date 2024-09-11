@@ -4,6 +4,10 @@
     "ic_test": "pfs7b-iqaaa-aaaaf-abs7q-cai",
     "web_test": "xp7uu-xyaaa-aaaaf-aoa6a-cai"
   },
+  "airdrop_bot": {
+    "ic": "62rh2-kiaaa-aaaaf-bmy5q-cai",
+    "ic_test": "6pwwx-laaaa-aaaaf-bmy6a-cai"
+  },
   "cycles_dispenser": {
     "ic": "gonut-hqaaa-aaaaf-aby7a-cai",
     "ic_test": "mq2tp-baaaa-aaaaf-aucva-cai"

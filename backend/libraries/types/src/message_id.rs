@@ -1,10 +1,11 @@
 use candid::CandidType;
 use rand::distributions::{Distribution, Standard};
 use rand::Rng;
-use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
+use ts_export::ts_export;
 
-#[derive(CandidType, Serialize, Deserialize, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[ts_export]
+#[derive(CandidType, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct MessageId(u128);
 
 impl Distribution<MessageId> for Standard {

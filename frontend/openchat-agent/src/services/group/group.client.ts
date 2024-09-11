@@ -1,4 +1,4 @@
-import type { Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type GroupService } from "./candid/idl";
 import type {
     EventsResponse,
@@ -145,27 +145,14 @@ export class GroupClient extends CandidService {
 
     constructor(
         identity: Identity,
+        agent: HttpAgent,
         private config: AgentConfig,
         private chatId: GroupChatIdentifier,
         private db: Database,
         private inviteCode: string | undefined,
     ) {
-        super(identity);
-        this.groupService = this.createServiceClient<GroupService>(
-            idlFactory,
-            chatId.groupId,
-            config,
-        );
-    }
-
-    static create(
-        chatId: GroupChatIdentifier,
-        identity: Identity,
-        config: AgentConfig,
-        db: Database,
-        inviteCode: string | undefined,
-    ): GroupClient {
-        return new GroupClient(identity, config, chatId, db, inviteCode);
+        super(identity, agent, chatId.groupId);
+        this.groupService = this.createServiceClient<GroupService>(idlFactory);
     }
 
     summary(): Promise<GroupCanisterSummaryResponse> {
@@ -452,7 +439,7 @@ export class GroupClient extends CandidService {
         blockLevelMarkdown: boolean | undefined,
         newAchievement: boolean,
     ): Promise<EditMessageResponse> {
-        return DataClient.create(this.identity, this.config)
+        return new DataClient(this.identity, this.agent, this.config)
             .uploadData(message.content, [this.chatId.groupId])
             .then((content) => {
                 const args: EditMessageV2Args = {
@@ -494,7 +481,7 @@ export class GroupClient extends CandidService {
         // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
         removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
 
-        const dataClient = DataClient.create(this.identity, this.config);
+        const dataClient = new DataClient(this.identity, this.agent, this.config);
         const uploadContentPromise = event.event.forwarded
             ? dataClient.forwardData(event.event.content, [this.chatId.groupId])
             : dataClient.uploadData(event.event.content, [this.chatId.groupId]);
@@ -552,6 +539,7 @@ export class GroupClient extends CandidService {
         eventsTimeToLiveMs?: OptionUpdate<bigint>,
         gate?: AccessGate,
         isPublic?: boolean,
+        messagesVisibleToNonMembers?: boolean,
     ): Promise<UpdateGroupResponse> {
         return this.handleResponse(
             this.groupService.update_group_v2({
@@ -578,6 +566,7 @@ export class GroupClient extends CandidService {
                         : gate.kind === "no_gate"
                           ? { SetToNone: null }
                           : { SetToSome: apiAccessGate(gate) },
+                messages_visible_to_non_members: apiOptional(identity, messagesVisibleToNonMembers),
             }),
             updateGroupResponse,
         );
@@ -833,7 +822,8 @@ export class GroupClient extends CandidService {
         messageIdx: number,
         answerIdx: number,
         voteType: "register" | "delete",
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
+        newAchievement: boolean,
     ): Promise<RegisterPollVoteResponse> {
         return this.handleResponse(
             this.groupService.register_poll_vote({
@@ -841,6 +831,7 @@ export class GroupClient extends CandidService {
                 poll_option: answerIdx,
                 operation: voteType === "register" ? { RegisterVote: null } : { DeleteVote: null },
                 message_index: messageIdx,
+                new_achievement: newAchievement,
                 correlation_id: generateUint64(),
             }),
             registerPollVoteResponse,
@@ -1005,12 +996,14 @@ export class GroupClient extends CandidService {
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
         pin: string | undefined,
+        newAchievement: boolean,
     ): Promise<AcceptP2PSwapResponse> {
         return this.handleResponse(
             this.groupService.accept_p2p_swap({
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_id: messageId,
                 pin: apiOptional(identity, pin),
+                new_achievement: newAchievement,
             }),
             acceptP2PSwapResponse,
         );
@@ -1029,10 +1022,11 @@ export class GroupClient extends CandidService {
         );
     }
 
-    joinVideoCall(messageId: bigint): Promise<JoinVideoCallResponse> {
+    joinVideoCall(messageId: bigint, newAchievement: boolean): Promise<JoinVideoCallResponse> {
         return this.handleResponse(
             this.groupService.join_video_call({
                 message_id: messageId,
+                new_achievement: newAchievement,
             }),
             joinVideoCallResponse,
         );
@@ -1041,11 +1035,13 @@ export class GroupClient extends CandidService {
     setVideoCallPresence(
         messageId: bigint,
         presence: VideoCallPresence,
+        newAchievement: boolean,
     ): Promise<SetVideoCallPresenceResponse> {
         return this.handleResponse(
             this.groupService.set_video_call_presence({
                 message_id: messageId,
                 presence: apiVideoCallPresence(presence),
+                new_achievement: newAchievement,
             }),
             setVideoCallPresence,
         );

@@ -1,13 +1,15 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::SubscriptionInfo;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(notifications_index, push_subscription)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub subscription: SubscriptionInfo,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(notifications_index, push_subscription)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success,
     InternalError(String),

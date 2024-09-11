@@ -1,20 +1,39 @@
 import { IdentityClient } from "./identity/identity.client";
-import type { Identity, SignIdentity } from "@dfinity/agent";
+import { HttpAgent, type Identity, type SignIdentity } from "@dfinity/agent";
 import { DelegationIdentity } from "@dfinity/identity";
 import type {
     ApproveIdentityLinkResponse,
+    AuthenticationPrincipalsResponse,
     ChallengeAttempt,
     CreateOpenChatIdentityError,
     GenerateChallengeResponse,
     InitiateIdentityLinkResponse,
 } from "openchat-shared";
 import { buildDelegationIdentity, toDer } from "openchat-shared";
+import { createHttpAgent } from "../utils/httpAgent";
 
 export class IdentityAgent {
-    private _identityClient: IdentityClient;
+    private readonly _identityClient: IdentityClient;
+    private readonly _isIIPrincipal: boolean | undefined;
 
-    constructor(identity: Identity, identityCanister: string, icUrl: string) {
-        this._identityClient = IdentityClient.create(identity, identityCanister, icUrl);
+    private constructor(
+        identity: Identity,
+        agent: HttpAgent,
+        identityCanister: string,
+        isIIPrincipal: boolean | undefined,
+    ) {
+        this._identityClient = new IdentityClient(identity, agent, identityCanister);
+        this._isIIPrincipal = isIIPrincipal;
+    }
+
+    static async create(
+        identity: Identity,
+        identityCanister: string,
+        icUrl: string,
+        isIIPrincipal: boolean | undefined,
+    ): Promise<IdentityAgent> {
+        const agent = await createHttpAgent(identity, icUrl);
+        return new IdentityAgent(identity, agent, identityCanister, isIIPrincipal);
     }
 
     checkOpenChatIdentityExists(): Promise<boolean> {
@@ -28,6 +47,7 @@ export class IdentityAgent {
         const sessionKeyDer = toDer(sessionKey);
         const createIdentityResponse = await this._identityClient.createIdentity(
             sessionKeyDer,
+            this._isIIPrincipal,
             challengeAttempt,
         );
 
@@ -48,8 +68,10 @@ export class IdentityAgent {
 
     async getOpenChatIdentity(sessionKey: SignIdentity): Promise<DelegationIdentity | undefined> {
         const sessionKeyDer = toDer(sessionKey);
-        const prepareDelegationResponse =
-            await this._identityClient.prepareDelegation(sessionKeyDer);
+        const prepareDelegationResponse = await this._identityClient.prepareDelegation(
+            sessionKeyDer,
+            this._isIIPrincipal,
+        );
 
         return prepareDelegationResponse.kind === "success"
             ? this.getDelegation(
@@ -66,11 +88,15 @@ export class IdentityAgent {
     }
 
     initiateIdentityLink(linkToPrincipal: string): Promise<InitiateIdentityLinkResponse> {
-        return this._identityClient.initiateIdentityLink(linkToPrincipal);
+        return this._identityClient.initiateIdentityLink(linkToPrincipal, this._isIIPrincipal);
     }
 
     approveIdentityLink(linkInitiatedBy: string): Promise<ApproveIdentityLinkResponse> {
         return this._identityClient.approveIdentityLink(linkInitiatedBy);
+    }
+
+    getAuthenticationPrincipals(): Promise<AuthenticationPrincipalsResponse> {
+        return this._identityClient.getAuthenticationPrincipals();
     }
 
     private async getDelegation(

@@ -33,6 +33,8 @@ fn disappearing_messages_in_channel() {
             events_ttl: OptionUpdate::SetToSome(1000),
             gate: OptionUpdate::NoChange,
             public: None,
+            messages_visible_to_non_members: None,
+            external_url: OptionUpdate::NoChange,
         },
     );
 
@@ -78,6 +80,8 @@ fn disappearing_messages_in_channel() {
             events_ttl: OptionUpdate::SetToNone,
             gate: OptionUpdate::NoChange,
             public: None,
+            messages_visible_to_non_members: None,
+            external_url: OptionUpdate::NoChange,
         },
     );
 

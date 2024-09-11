@@ -3,7 +3,6 @@ use canister_logger::LogEntry;
 use ic_cdk::query;
 use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
 use serde::Serialize;
-use serde_bytes::ByteBuf;
 use std::io::Write;
 use types::{HeaderField, HttpRequest, HttpResponse};
 
@@ -34,7 +33,7 @@ fn encode_logs(logs: Vec<LogEntry>) -> HttpResponse {
             HeaderField("Content-Type".to_string(), "text/plain".to_string()),
             HeaderField("Content-Length".to_string(), body.len().to_string()),
         ],
-        body: ByteBuf::from(body),
+        body,
         streaming_strategy: None,
     }
 }
@@ -48,7 +47,7 @@ fn to_json_response<T: Serialize>(data: &T) -> HttpResponse {
             HeaderField("Content-Type".to_string(), "application/json".to_string()),
             HeaderField("Content-Length".to_string(), body.len().to_string()),
         ],
-        body: ByteBuf::from(body),
+        body,
         streaming_strategy: None,
     }
 }
@@ -64,7 +63,7 @@ fn get_ledger_account_impl(state: &State) -> HttpResponse {
             HeaderField("Content-Type".to_string(), "text/plain".to_string()),
             HeaderField("Content-Length".to_string(), body.len().to_string()),
         ],
-        body: ByteBuf::from(body),
+        body,
         streaming_strategy: None,
     }
 }

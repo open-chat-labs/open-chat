@@ -63,6 +63,7 @@
     $: userStore = client.userStore;
     $: favouritesStore = client.favouritesStore;
     $: menuColour = $mobileWidth ? "rgba(255,255,255,0.4)" : "var(--icon-txt)";
+    $: externalContent = chatSummary.kind === "channel" && chatSummary.externalUrl !== undefined;
 
     const dispatch = createEventDispatcher();
     let hovering = false;
@@ -77,11 +78,11 @@
             : { muted: 0, unmuted: 0 };
         switch (chatSummary.kind) {
             case "direct_chat":
-                const them = $userStore[chatSummary.them.userId];
+                const them = $userStore.get(chatSummary.them.userId);
                 return {
                     name: client.displayName(them),
-                    diamondStatus: them.diamondStatus,
-                    streak: client.getStreak(them.userId),
+                    diamondStatus: them?.diamondStatus ?? "inactive",
+                    streak: client.getStreak(chatSummary.them.userId),
                     avatarUrl: client.userAvatarUrl(them),
                     userId: chatSummary.them,
                     typing: client.getTypingString(
@@ -94,7 +95,7 @@
                     eventsTTL: undefined,
                     video,
                     private: false,
-                    uniquePerson: them.isUniquePerson,
+                    uniquePerson: them?.isUniquePerson ?? false,
                 };
             default:
                 return {
@@ -126,7 +127,7 @@
     }
 
     function formatLatestMessage(chatSummary: ChatSummary, users: UserLookup): string {
-        if (chatSummary.latestMessageIndex === undefined) {
+        if (chatSummary.latestMessageIndex === undefined || externalContent) {
             return "";
         }
 
@@ -387,188 +388,192 @@
                 {/if}
             </div>
         </div>
-        <!-- this date formatting is OK for now but we might want to use something like this:
-        https://date-fns.org/v2.22.1/docs/formatDistanceToNow -->
-        <div class:rtl={$rtlStore} class="chat-date">
-            {#if muted && notificationsSupported}
-                <div class="mute icon" class:rtl={$rtlStore}>
-                    <MutedIcon size={"1em"} color={"var(--icon-txt)"} />
-                </div>
-            {/if}
-            {#if pinned}
-                <div class="pin icon">
-                    <PinIcon size={"1em"} color={"var(--icon-txt)"} />
-                </div>
-            {/if}
-            {#if chat.fav}
-                <div class="fav icon">
-                    <Heart size={"1em"} color={"var(--icon-txt)"} />
-                </div>
-            {/if}
-            {client.formatMessageDate(displayDate, $_("today"), $_("yesterday"), true, true)}
-        </div>
-        {#if !readonly}
-            {#if unreadMentions > 0}
-                <div
-                    in:pop={{ duration: 1500 }}
-                    title={$_("chatSummary.mentions", {
-                        values: { count: unreadMentions.toString() },
-                    })}
-                    class:rtl={$rtlStore}
-                    class="notification mention">
-                    @
-                </div>
-            {/if}
-            {#if unreadMessages > 0}
-                <div
-                    in:pop={{ duration: 1500 }}
-                    title={$_("chatSummary.unread", {
-                        values: { count: unreadMessages.toString() },
-                    })}
-                    class:rtl={$rtlStore}
-                    class:muted
-                    class="notification">
-                    {unreadMessages > 999 ? "999+" : unreadMessages}
-                </div>
-            {/if}
-            {#if !$suspendedUser}
-                <div class="menu">
-                    <MenuIcon position={"bottom"} align={"end"}>
-                        <div class="menu-icon" class:rtl={$rtlStore} slot="icon">
-                            <DotsVertical viewBox="0 -3 24 24" size="1.6em" color={menuColour} />
-                        </div>
-                        <div slot="menu">
-                            <Menu>
-                                {#if !$favouritesStore.has(chatSummary.id)}
-                                    <MenuItem on:click={addToFavourites}>
-                                        <HeartPlus
-                                            size={$iconSize}
-                                            color={"var(--menu-warn)"}
-                                            slot="icon" />
-                                        <div slot="text">
-                                            <Translatable
-                                                resourceKey={i18nKey(
-                                                    "communities.addToFavourites",
-                                                )} />
-                                        </div>
-                                    </MenuItem>
-                                {:else}
-                                    <MenuItem on:click={removeFromFavourites}>
-                                        <HeartMinus
-                                            size={$iconSize}
-                                            color={"var(--menu-warn)"}
-                                            slot="icon" />
-                                        <div slot="text">
-                                            <Translatable
-                                                resourceKey={i18nKey(
-                                                    "communities.removeFromFavourites",
-                                                )} />
-                                        </div>
-                                    </MenuItem>
-                                {/if}
-                                {#if !pinned}
-                                    <MenuItem on:click={pinChat}>
-                                        <PinIcon
-                                            size={$iconSize}
-                                            color={"var(--icon-inverted-txt)"}
-                                            slot="icon" />
-                                        <div slot="text">
-                                            <Translatable
-                                                resourceKey={i18nKey("pinChat.menuItem")} />
-                                        </div>
-                                    </MenuItem>
-                                {:else}
-                                    <MenuItem on:click={unpinChat}>
-                                        <PinOffIcon
-                                            size={$iconSize}
-                                            color={"var(--icon-inverted-txt)"}
-                                            slot="icon" />
-                                        <div slot="text">
-                                            <Translatable
-                                                resourceKey={i18nKey("pinChat.unpinMenuItem")} />
-                                        </div>
-                                    </MenuItem>
-                                {/if}
-                                {#if notificationsSupported}
-                                    {#if muted}
-                                        <MenuItem on:click={() => toggleMuteNotifications(false)}>
-                                            <BellIcon
+        {#if !externalContent}
+            <!-- this date formatting is OK for now but we might want to use something like this:
+            https://date-fns.org/v2.22.1/docs/formatDistanceToNow -->
+            <div class:rtl={$rtlStore} class="chat-date">
+                {#if muted && notificationsSupported}
+                    <div class="mute icon" class:rtl={$rtlStore}>
+                        <MutedIcon size={"1em"} color={"var(--icon-txt)"} />
+                    </div>
+                {/if}
+                {#if pinned}
+                    <div class="pin icon">
+                        <PinIcon size={"1em"} color={"var(--icon-txt)"} />
+                    </div>
+                {/if}
+                {#if chat.fav}
+                    <div class="fav icon">
+                        <Heart size={"1em"} color={"var(--icon-txt)"} />
+                    </div>
+                {/if}
+                {client.formatMessageDate(displayDate, $_("today"), $_("yesterday"), true, true)}
+            </div>
+            {#if !readonly}
+                {#if unreadMentions > 0}
+                    <div
+                        in:pop={{ duration: 1500 }}
+                        title={$_("chatSummary.mentions", {
+                            values: { count: unreadMentions.toString() },
+                        })}
+                        class:rtl={$rtlStore}
+                        class="notification mention">
+                        @
+                    </div>
+                {/if}
+                {#if unreadMessages > 0}
+                    <div
+                        in:pop={{ duration: 1500 }}
+                        title={$_("chatSummary.unread", {
+                            values: { count: unreadMessages.toString() },
+                        })}
+                        class:rtl={$rtlStore}
+                        class:muted
+                        class="notification">
+                        {unreadMessages > 999 ? "999+" : unreadMessages}
+                    </div>
+                {/if}
+                {#if !$suspendedUser}
+                    <div class="menu">
+                        <MenuIcon position={"bottom"} align={"end"}>
+                            <div class="menu-icon" class:rtl={$rtlStore} slot="icon">
+                                <DotsVertical viewBox="0 -3 24 24" size="1.6em" color={menuColour} />
+                            </div>
+                            <div slot="menu">
+                                <Menu>
+                                    {#if !$favouritesStore.has(chatSummary.id)}
+                                        <MenuItem on:click={addToFavourites}>
+                                            <HeartPlus
                                                 size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"}
+                                                color={"var(--menu-warn)"}
                                                 slot="icon" />
                                             <div slot="text">
                                                 <Translatable
-                                                    resourceKey={i18nKey("unmuteNotifications")} />
+                                                    resourceKey={i18nKey(
+                                                        "communities.addToFavourites",
+                                                    )} />
                                             </div>
                                         </MenuItem>
                                     {:else}
-                                        <MenuItem on:click={() => toggleMuteNotifications(true)}>
-                                            <MutedIcon
+                                        <MenuItem on:click={removeFromFavourites}>
+                                            <HeartMinus
+                                                size={$iconSize}
+                                                color={"var(--menu-warn)"}
+                                                slot="icon" />
+                                            <div slot="text">
+                                                <Translatable
+                                                    resourceKey={i18nKey(
+                                                        "communities.removeFromFavourites",
+                                                    )} />
+                                            </div>
+                                        </MenuItem>
+                                    {/if}
+                                    {#if !pinned}
+                                        <MenuItem on:click={pinChat}>
+                                            <PinIcon
                                                 size={$iconSize}
                                                 color={"var(--icon-inverted-txt)"}
                                                 slot="icon" />
                                             <div slot="text">
                                                 <Translatable
-                                                    resourceKey={i18nKey("muteNotifications")} />
+                                                    resourceKey={i18nKey("pinChat.menuItem")} />
+                                            </div>
+                                        </MenuItem>
+                                    {:else}
+                                        <MenuItem on:click={unpinChat}>
+                                            <PinOffIcon
+                                                size={$iconSize}
+                                                color={"var(--icon-inverted-txt)"}
+                                                slot="icon" />
+                                            <div slot="text">
+                                                <Translatable
+                                                    resourceKey={i18nKey("pinChat.unpinMenuItem")} />
                                             </div>
                                         </MenuItem>
                                     {/if}
-                                {/if}
-                                {#if chatSummary.membership.archived}
-                                    <MenuItem on:click={selectChat}>
-                                        <ArchiveOffIcon
-                                            size={$iconSize}
-                                            color={"var(--icon-inverted-txt)"}
-                                            slot="icon" />
-                                        <div slot="text">
-                                            <Translatable resourceKey={i18nKey("unarchiveChat")} />
-                                        </div>
-                                    </MenuItem>
-                                {:else}
-                                    <MenuItem on:click={archiveChat}>
-                                        <ArchiveIcon
-                                            size={$iconSize}
-                                            color={"var(--icon-inverted-txt)"}
-                                            slot="icon" />
-                                        <div slot="text">
-                                            <Translatable resourceKey={i18nKey("archiveChat")} />
-                                        </div>
-                                    </MenuItem>
-                                {/if}
-                                {#if chatSummary.kind !== "direct_chat" && client.canLeaveGroup(chatSummary.id)}
-                                    <MenuItem warning on:click={leaveGroup}>
-                                        <LocationExit
-                                            size={$iconSize}
-                                            color={"var(--menu-warn)"}
-                                            slot="icon" />
-                                        <div slot="text">
-                                            {interpolate(
-                                                $_,
-                                                i18nKey(
-                                                    "leaveGroup",
-                                                    undefined,
-                                                    chatSummary.level,
-                                                    true,
-                                                ),
-                                            )}
-                                        </div>
-                                    </MenuItem>
-                                {/if}
-                                <MenuItem
-                                    disabled={unreadMessages === 0}
-                                    on:click={() => client.markAllRead(chatSummary)}>
-                                    <CheckboxMultipleMarked
-                                        size={$iconSize}
-                                        color={"var(--icon-inverted-txt)"}
-                                        slot="icon" />
-                                    <div slot="text">
-                                        <Translatable resourceKey={i18nKey("markAllRead")} />
-                                    </div>
-                                </MenuItem>
-                            </Menu>
-                        </div>
-                    </MenuIcon>
-                </div>
+                                    {#if notificationsSupported && !externalContent}
+                                        {#if muted}
+                                            <MenuItem on:click={() => toggleMuteNotifications(false)}>
+                                                <BellIcon
+                                                    size={$iconSize}
+                                                    color={"var(--icon-inverted-txt)"}
+                                                    slot="icon" />
+                                                <div slot="text">
+                                                    <Translatable
+                                                        resourceKey={i18nKey("unmuteNotifications")} />
+                                                </div>
+                                            </MenuItem>
+                                        {:else}
+                                            <MenuItem on:click={() => toggleMuteNotifications(true)}>
+                                                <MutedIcon
+                                                    size={$iconSize}
+                                                    color={"var(--icon-inverted-txt)"}
+                                                    slot="icon" />
+                                                <div slot="text">
+                                                    <Translatable
+                                                        resourceKey={i18nKey("muteNotifications")} />
+                                                </div>
+                                            </MenuItem>
+                                        {/if}
+                                    {/if}
+                                    {#if !externalContent}
+                                        <MenuItem
+                                            disabled={unreadMessages === 0}
+                                            on:click={() => client.markAllRead(chatSummary)}>
+                                            <CheckboxMultipleMarked
+                                                size={$iconSize}
+                                                color={"var(--icon-inverted-txt)"}
+                                                slot="icon" />
+                                            <div slot="text">
+                                                <Translatable resourceKey={i18nKey("markAllRead")} />
+                                            </div>
+                                        </MenuItem>
+                                    {/if}
+                                    {#if chatSummary.membership.archived}
+                                        <MenuItem on:click={selectChat}>
+                                            <ArchiveOffIcon
+                                                size={$iconSize}
+                                                color={"var(--icon-inverted-txt)"}
+                                                slot="icon" />
+                                            <div slot="text">
+                                                <Translatable resourceKey={i18nKey("unarchiveChat")} />
+                                            </div>
+                                        </MenuItem>
+                                    {:else}
+                                        <MenuItem on:click={archiveChat}>
+                                            <ArchiveIcon
+                                                size={$iconSize}
+                                                color={"var(--icon-inverted-txt)"}
+                                                slot="icon" />
+                                            <div slot="text">
+                                                <Translatable resourceKey={i18nKey("archiveChat")} />
+                                            </div>
+                                        </MenuItem>
+                                    {/if}
+                                    {#if chatSummary.kind !== "direct_chat" && client.canLeaveGroup(chatSummary.id)}
+                                        <MenuItem warning on:click={leaveGroup}>
+                                            <LocationExit
+                                                size={$iconSize}
+                                                color={"var(--menu-warn)"}
+                                                slot="icon" />
+                                            <div slot="text">
+                                                {interpolate(
+                                                    $_,
+                                                    i18nKey(
+                                                        "leaveGroup",
+                                                        undefined,
+                                                        chatSummary.level,
+                                                        true,
+                                                    ),
+                                                )}
+                                            </div>
+                                        </MenuItem>
+                                    {/if}
+                                </Menu>
+                            </div>
+                        </MenuIcon>
+                    </div>
+                {/if}
             {/if}
         {/if}
         {#if canDelete}

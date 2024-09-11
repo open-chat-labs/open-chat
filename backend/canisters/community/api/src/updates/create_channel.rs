@@ -14,9 +14,11 @@ pub struct Args {
     pub subtype: Option<GroupSubtype>,
     pub avatar: Option<Document>,
     pub history_visible_to_new_joiners: bool,
+    pub messages_visible_to_non_members: Option<bool>,
     pub permissions_v2: Option<GroupPermissions>,
     pub events_ttl: Option<Milliseconds>,
     pub gate: Option<AccessGate>,
+    pub external_url: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -35,6 +37,7 @@ pub enum Response {
     UserSuspended,
     NotAuthorized,
     CommunityFrozen,
+    ExternalUrlInvalid,
     InternalError(String),
 }
 

@@ -1,14 +1,14 @@
 use crate::guards::caller_is_owner;
 use crate::{mutate_state, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
-use ic_cdk::update;
 use serde::Serialize;
-use types::{Achievement, ChitEarned, ChitEarnedReason, Timestamped, UserId};
+use types::{Achievement, ChitEarned, ChitEarnedReason, UserId};
 use user_canister::claim_daily_chit::{Response::*, *};
 use utils::time::tomorrow;
 
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner", candid = true)]
 #[trace]
 fn claim_daily_chit(_args: Args) -> Response {
     mutate_state(claim_daily_chit_impl)
@@ -25,8 +25,6 @@ fn claim_daily_chit_impl(state: &mut RuntimeState) -> Response {
     let user_id: UserId = state.env.canister_id().into();
     let streak = state.data.streak.days(now);
     let chit_earned = chit_for_streak(streak);
-
-    state.data.chit_balance = Timestamped::new(state.data.chit_balance.value + chit_earned as i32, now);
 
     state.data.chit_events.push(ChitEarned {
         amount: chit_earned as i32,
@@ -50,6 +48,14 @@ fn claim_daily_chit_impl(state: &mut RuntimeState) -> Response {
         state.data.award_achievement(Achievement::Streak30, now);
     }
 
+    if streak >= 100 {
+        state.data.award_achievement(Achievement::Streak100, now);
+    }
+
+    if streak >= 365 {
+        state.data.award_achievement(Achievement::Streak365, now);
+    }
+
     state.data.notify_user_index_of_chit(now);
 
     state.data.event_store_client.push(
@@ -62,7 +68,7 @@ fn claim_daily_chit_impl(state: &mut RuntimeState) -> Response {
 
     Success(SuccessResult {
         chit_earned,
-        chit_balance: state.data.chit_balance.value,
+        chit_balance: state.data.chit_events.balance_for_month_by_timestamp(now),
         streak,
         next_claim: tomorrow,
     })

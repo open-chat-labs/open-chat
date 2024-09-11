@@ -57,8 +57,8 @@
         client.tryGetNervousSystem(governanceCanisterId)?.submittingProposalsEnabled ?? false;
     $: userId = selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them.userId : "";
     $: userStore = client.userStore;
-    $: isBot = $userStore[userId]?.kind === "bot";
-    $: isSuspended = $userStore[userId]?.suspended ?? false;
+    $: isBot = $userStore.get(userId)?.kind === "bot";
+    $: isSuspended = $userStore.get(userId)?.suspended ?? false;
     $: lastState = $rightPanelHistory[$rightPanelHistory.length - 1] ?? { kind: "no_panel" };
     $: groupDetailsSelected = lastState.kind === "group_details";
     $: pinnedSelected = lastState.kind === "show_pinned";
@@ -287,7 +287,7 @@
                     color={membersSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
             </HoverIcon>
         </span>
-        {#if client.canInviteUsers(selectedChatSummary.id)}
+        {#if selectedChatSummary.public || client.canInviteUsers(selectedChatSummary.id)}
             <span on:click={showInviteGroupUsers}>
                 <HoverIcon
                     title={interpolate(

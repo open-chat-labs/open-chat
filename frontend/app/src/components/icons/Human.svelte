@@ -21,8 +21,8 @@
 
 <style lang="scss">
     .human {
-        width: 16px;
-        height: 16px;
+        width: 15px;
+        height: 15px;
         background-image: url("/assets/human.svg");
         background-size: cover;
         background-repeat: no-repeat;

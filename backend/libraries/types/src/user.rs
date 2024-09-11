@@ -3,8 +3,10 @@ use candid::{CandidType, Principal};
 use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
+use ts_export::ts_export;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[ts_export]
+#[derive(CandidType, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct UserId(CanisterId);
 
 impl UserId {
@@ -46,7 +48,8 @@ impl Display for UserId {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+#[ts_export]
+#[derive(CandidType, Debug, Clone)]
 pub struct User {
     pub user_id: UserId,
     pub username: String,
@@ -61,4 +64,22 @@ pub struct UserDetails {
     pub is_platform_moderator: bool,
     pub is_platform_operator: bool,
     pub is_diamond_member: bool,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum UserType {
+    #[default]
+    User,
+    Bot,
+    OcControlledBot,
+}
+
+impl UserType {
+    pub fn is_bot(&self) -> bool {
+        matches!(self, UserType::Bot | UserType::OcControlledBot)
+    }
+
+    pub fn is_oc_controlled_bot(&self) -> bool {
+        matches!(self, UserType::OcControlledBot)
+    }
 }

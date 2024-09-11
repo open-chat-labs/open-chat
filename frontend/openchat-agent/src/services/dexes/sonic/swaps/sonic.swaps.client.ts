@@ -1,7 +1,6 @@
-import type { Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type SonicSwapsService } from "./candid/idl";
 import { CandidService } from "../../../candidService";
-import type { AgentConfig } from "../../../../config";
 import type { TokenSwapPool } from "openchat-shared";
 import { getAllPairsResponse, getPairResponse } from "./mappers";
 import { Principal } from "@dfinity/principal";
@@ -15,18 +14,10 @@ export class SonicSwapsClient extends CandidService {
     private pools: TokenSwapPool[] = []; // Cache the pools for 10 minutes
     private poolsLastUpdated: number = 0;
 
-    private constructor(identity: Identity, config: AgentConfig) {
-        super(identity);
+    constructor(identity: Identity, agent: HttpAgent) {
+        super(identity, agent, SONIC_INDEX_CANISTER_ID);
 
-        this.service = this.createServiceClient<SonicSwapsService>(
-            idlFactory,
-            SONIC_INDEX_CANISTER_ID,
-            config,
-        );
-    }
-
-    static create(identity: Identity, config: AgentConfig): SonicSwapsClient {
-        return new SonicSwapsClient(identity, config);
+        this.service = this.createServiceClient<SonicSwapsService>(idlFactory);
     }
 
     async getPools(): Promise<TokenSwapPool[]> {

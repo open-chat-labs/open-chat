@@ -69,7 +69,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
 
 fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut RuntimeState) -> Response {
     if state.data.local_index_map.add_index(canister_id, wasm_version) {
-        // We need to initialize the new local user index with all of the existing users
+        // We need to initialize the new local user index with all the existing users
         for user in state.data.users.iter() {
             state.data.user_index_event_sync_queue.push(
                 canister_id,
@@ -77,7 +77,7 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
                     user_id: user.user_id,
                     user_principal: user.principal,
                     username: user.username.clone(),
-                    is_bot: user.is_bot,
+                    user_type: user.user_type,
                     referred_by: user.referred_by,
                 }),
             )

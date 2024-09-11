@@ -32,7 +32,6 @@ import type {
     UpdatedEvent,
     UpdateUserGroupResponse,
     UserFailedError,
-    UserFailedGateCheck,
     UserGroupDetails,
 } from "openchat-shared";
 import { CommonResponses, UnsupportedValueError } from "openchat-shared";
@@ -54,7 +53,6 @@ import type {
     ApiOptionalCommunityPermissions,
     ApiAddMembersToChannelFailed,
     ApiAddMembersToChannelPartialSuccess,
-    ApiUserFailedGateCheck,
     ApiUserFailedError,
     ApiMessageMatch,
     ApiCommunityCanisterCommunitySummaryUpdates,
@@ -83,7 +81,6 @@ import {
     communityChannelSummary,
     communityPermissions,
     communitySummary,
-    gateCheckFailedReason,
     groupPermissions,
     groupSubtype,
     memberRole,
@@ -133,8 +130,14 @@ export function addMembersToChannelResponse(
     if ("CommunityFrozen" in candid) {
         return CommonResponses.communityFrozen();
     }
+    if ("CommunityPublic" in candid) {
+        return CommonResponses.communityPublic();
+    }
     if ("InternalError" in candid) {
         return CommonResponses.internalError();
+    }
+    if ("CommunityPublic" in candid) {
+        return CommonResponses.communityPublic();
     }
     throw new UnsupportedValueError(
         "Unexpected ApiAddMembersToChannelResponse type received",
@@ -147,7 +150,6 @@ function addToChannelFailed(candid: ApiAddMembersToChannelFailed): AddMembersToC
         kind: "add_to_channel_failed",
         usersLimitReached: candid.users_limit_reached.map((u) => u.toString()),
         usersAlreadyInChannel: candid.users_already_in_channel.map((u) => u.toString()),
-        usersFailedGateCheck: candid.users_failed_gate_check.map(userFailedGateCheck),
         usersFailedWithError: candid.users_failed_with_error.map(userFailedWithError),
     };
 }
@@ -159,13 +161,6 @@ function userFailedWithError(candid: ApiUserFailedError): UserFailedError {
     };
 }
 
-function userFailedGateCheck(candid: ApiUserFailedGateCheck): UserFailedGateCheck {
-    return {
-        userId: candid.user_id.toString(),
-        reason: gateCheckFailedReason(candid.reason),
-    };
-}
-
 function addToChannelPartialSuccess(
     candid: ApiAddMembersToChannelPartialSuccess,
 ): AddMembersToChannelResponse {
@@ -173,7 +168,6 @@ function addToChannelPartialSuccess(
         kind: "add_to_channel_partial_success",
         usersLimitReached: candid.users_limit_reached.map((u) => u.toString()),
         usersAlreadyInChannel: candid.users_already_in_channel.map((u) => u.toString()),
-        usersFailedGateCheck: candid.users_failed_gate_check.map(userFailedGateCheck),
         usersFailedWithError: candid.users_failed_with_error.map(userFailedWithError),
         usersAdded: candid.users_added.map((u) => u.toString()),
     };
@@ -364,7 +358,7 @@ export function summaryUpdatesResponse(
     if ("PrivateCommunity" in candid) {
         return CommonResponses.failure();
     }
-    throw new UnsupportedValueError("invalid ApiSummaryUpdatesResponse recieved", candid);
+    throw new UnsupportedValueError("invalid ApiSummaryUpdatesResponse received", candid);
 }
 
 export function communitySummaryUpdates(
@@ -425,6 +419,7 @@ export function communityChannelUpdates(
         gate: optionUpdate(candid.gate, accessGate),
         name: optional(candid.name, identity),
         description: optional(candid.description, identity),
+        externalUrl: optionUpdate(candid.external_url, identity),
         lastUpdated: candid.last_updated,
         avatarId: optionUpdate(candid.avatar_id, identity),
         membership: optional(candid.membership, GroupMembershipUpdates),
@@ -436,6 +431,7 @@ export function communityChannelUpdates(
         eventsTTL: optionUpdate(candid.events_ttl, identity),
         eventsTtlLastUpdated: optional(candid.events_ttl_last_updated, identity),
         videoCallInProgress: optionUpdate(candid.video_call_in_progress, (v) => v.message_index),
+        messageVisibleToNonMembers: optional(candid.messages_visible_to_non_members, identity),
     };
 }
 
@@ -571,6 +567,7 @@ export function communityDetailsResponse(
             rules: candid.Success.chat_rules,
             lastUpdated: candid.Success.timestamp,
             userGroups: new Map(candid.Success.user_groups.map(userGroupDetails)),
+            referrals: new Set(candid.Success.referrals.map((u) => u.toString())),
         };
     } else {
         console.warn("CommunityDetails failed with", candid);
@@ -614,6 +611,8 @@ export function communityDetailsUpdatesResponse(
             lastUpdated: candid.Success.timestamp,
             userGroups: candid.Success.user_groups.map(userGroupDetails).map(([_, g]) => g),
             userGroupsDeleted: new Set(candid.Success.user_groups_deleted),
+            referralsRemoved: new Set(candid.Success.referrals_removed.map((u) => u.toString())),
+            referralsAdded: new Set(candid.Success.referrals_added.map((u) => u.toString())),
         };
     } else if ("SuccessNoUpdates" in candid) {
         return {

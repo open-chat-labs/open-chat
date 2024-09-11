@@ -61,7 +61,8 @@ export function recommendedGroupsResponse(
     candid: ApiRecommendedGroupsResponse,
 ): GroupChatSummary[] {
     if ("Success" in candid) {
-        return candid.Success.groups.map(publicGroupSummary);
+        // TODO - we are hard-coding is_invited to false here which is something we have to live with for the moment
+        return candid.Success.groups.map((g) => publicGroupSummary(g, false));
     }
     throw new Error(`Unknown GroupIndex.RecommendedGroupsResponse of ${candid}`);
 }

@@ -9,6 +9,7 @@ pub struct Args {
     pub public_key: Vec<u8>,
     #[serde(with = "serde_bytes")]
     pub session_key: Vec<u8>,
+    pub is_ii_principal: Option<bool>,
     pub max_time_to_live: Option<Nanoseconds>,
     pub challenge_attempt: Option<ChallengeAttempt>,
 }

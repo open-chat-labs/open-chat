@@ -3,11 +3,12 @@ use crate::{client, TestEnv};
 use std::ops::Deref;
 use test_case::test_case;
 use testing::rng::random_string;
-use types::{AccessGate, CompositeGate, GateCheckFailedReason, Rules, TokenBalanceGate};
+use types::{AccessGate, AccessGateNonComposite, CompositeGate, GateCheckFailedReason, Rules, TokenBalanceGate};
 
-#[test_case(true; "diamond_member")]
-#[test_case(false; "not_diamond_member")]
-fn public_group_diamond_member_gate_check(is_diamond: bool) {
+#[test_case(true, false; "diamond_member")]
+#[test_case(false, false; "not_diamond_member")]
+#[test_case(false, true; "is_invited")]
+fn public_group_diamond_member_gate_check(is_diamond: bool, is_invited: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -34,6 +35,7 @@ fn public_group_diamond_member_gate_check(is_diamond: bool) {
             rules: Rules::default(),
             events_ttl: None,
             gate: Some(AccessGate::DiamondMember),
+            messages_visible_to_non_members: None,
         },
     ) {
         user_canister::create_group::Response::Success(result) => result.chat_id,
@@ -45,6 +47,16 @@ fn public_group_diamond_member_gate_check(is_diamond: bool) {
     } else {
         client::register_user(env, canister_ids)
     };
+
+    if is_invited {
+        client::local_user_index::happy_path::invite_users_to_group(
+            env,
+            &user1,
+            canister_ids.local_user_index,
+            group_id,
+            vec![user2.user_id],
+        );
+    }
 
     let join_group_response = client::local_user_index::join_group(
         env,
@@ -58,7 +70,7 @@ fn public_group_diamond_member_gate_check(is_diamond: bool) {
         },
     );
 
-    if is_diamond {
+    if is_diamond || is_invited {
         assert!(matches!(
             join_group_response,
             local_user_index_canister::join_group::Response::Success(_)
@@ -106,6 +118,7 @@ fn public_group_token_balance_gate_check(has_sufficient_balance: bool) {
                 ledger_canister_id: canister_ids.icp_ledger,
                 min_balance,
             })),
+            messages_visible_to_non_members: None,
         },
     ) {
         user_canister::create_group::Response::Success(result) => result.chat_id,
@@ -181,14 +194,15 @@ fn public_group_composite_gate_check(is_diamond: bool, has_sufficient_balance: b
             events_ttl: None,
             gate: Some(AccessGate::Composite(CompositeGate {
                 inner: vec![
-                    AccessGate::DiamondMember,
-                    AccessGate::TokenBalance(TokenBalanceGate {
+                    AccessGateNonComposite::DiamondMember,
+                    AccessGateNonComposite::TokenBalance(TokenBalanceGate {
                         ledger_canister_id: canister_ids.chat_ledger,
                         min_balance,
                     }),
                 ],
                 and: and_gate,
             })),
+            messages_visible_to_non_members: None,
         },
     ) {
         user_canister::create_group::Response::Success(result) => result.chat_id,

@@ -48,7 +48,7 @@ export function buildUsernameList(
 
     let usernamesArray = Array.from(userIds)
         .slice(0, maxUsernames * 1.5)
-        .map((uid) => [uid, users[uid]?.username])
+        .map((uid) => [uid, users.get(uid)?.username])
         .filter(([uid, username]) => username !== undefined && uid !== myUserId)
         .map(([_, username]) => username);
 
@@ -89,6 +89,7 @@ export function nullUser(username: string): UserSummary {
         chitBalance: 0,
         streak: 0,
         isUniquePerson: false,
+        totalChitEarned: 0,
     };
 }
 

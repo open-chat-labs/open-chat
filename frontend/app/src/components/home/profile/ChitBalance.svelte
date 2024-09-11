@@ -1,9 +1,12 @@
 <script lang="ts">
     import { i18nKey } from "../../../i18n/i18n";
+    import TooltipPopup from "../../TooltipPopup.svelte";
+    import TooltipWrapper from "../../TooltipWrapper.svelte";
     import Translatable from "../../Translatable.svelte";
     import LearnToEarn from "./LearnToEarn.svelte";
 
     export let balance: number;
+    export let totalEarned: number;
     export let me: boolean;
     export let size: "small" | "large" = "small";
 
@@ -25,7 +28,24 @@
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div on:click={click} class={`balance ${size}`} class:me>
         <div class="chit"></div>
-        {`${balance.toLocaleString()} CHIT`}
+        <div class="balances">
+            <TooltipWrapper position="top" align="middle">
+                <div slot="target" class="current">{`${balance.toLocaleString()} CHIT`}</div>
+                <div let:position let:align slot="tooltip">
+                    <TooltipPopup {align} {position}>
+                        <Translatable resourceKey={i18nKey("currentChitBalance")} />
+                    </TooltipPopup>
+                </div>
+            </TooltipWrapper>
+            <TooltipWrapper position="bottom" align="middle">
+                <div slot="target" class="total">{`${totalEarned.toLocaleString()} CHIT`}</div>
+                <div let:position let:align slot="tooltip">
+                    <TooltipPopup {align} {position}>
+                        <Translatable resourceKey={i18nKey("totalChitEarned")} />
+                    </TooltipPopup>
+                </div>
+            </TooltipWrapper>
+        </div>
     </div>
 {/if}
 {#if me}
@@ -52,6 +72,15 @@
             cursor: pointer;
         }
 
+        .balances {
+            display: flex;
+            flex-direction: column;
+            .total {
+                text-align: start;
+                @include font(light, normal, fs-60);
+            }
+        }
+
         .chit {
             background-image: url("/assets/chit.svg");
             background-repeat: no-repeat;
@@ -62,8 +91,8 @@
             gap: $sp3;
 
             .chit {
-                width: $sp4;
-                height: $sp4;
+                width: $sp5;
+                height: $sp5;
             }
         }
 
@@ -73,8 +102,8 @@
 
             gap: $sp4;
             .chit {
-                width: $sp5;
-                height: $sp5;
+                width: $sp6;
+                height: $sp6;
             }
         }
     }

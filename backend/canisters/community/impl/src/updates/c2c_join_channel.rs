@@ -28,8 +28,10 @@ async fn c2c_join_channel(args: Args) -> Response {
             user_id: args.user_id,
             principal: args.principal,
             invite_code: args.invite_code,
+            referred_by: args.referred_by,
             is_platform_moderator: args.is_platform_moderator,
             is_bot: args.is_bot,
+            user_type: args.user_type,
             diamond_membership_expires_at: args.diamond_membership_expires_at,
             verified_credential_args: args.verified_credential_args.clone(),
             unique_person_proof: args.unique_person_proof.clone(),
@@ -41,7 +43,7 @@ async fn c2c_join_channel(args: Args) -> Response {
                 if matches!(response, Success(_) | AlreadyInChannel(_)) {
                     let summary = read_state(|state| {
                         let member = state.data.members.get_by_user_id(&args.user_id);
-                        state.summary(member)
+                        state.summary(member, None)
                     });
                     SuccessJoinedCommunity(Box::new(summary))
                 } else {
@@ -139,12 +141,14 @@ fn is_permitted_to_join(
                         .summary(Some(channel_member.user_id), true, state.data.is_public, &state.data.members)
                         .unwrap(),
                 )))
-            } else if !channel.chat.is_public.value && channel.chat.invited_users.get(&member.user_id).is_none() {
-                Err(NotInvited)
             } else if let Some(limit) = channel.chat.members.user_limit_reached() {
                 Err(MemberLimitReached(limit))
             } else if channel.chat.members.is_blocked(&member.user_id) {
                 Err(UserBlocked)
+            } else if channel.chat.invited_users.get(&member.user_id).is_some() {
+                Ok(None)
+            } else if !channel.chat.is_public.value {
+                Err(NotInvited)
             } else {
                 Ok(channel.chat.gate.as_ref().map(|g| {
                     (
@@ -239,7 +243,7 @@ pub(crate) fn join_channel_unchecked(
         min_visible_event_index,
         min_visible_message_index,
         notifications_muted,
-        member.is_bot,
+        member.user_type,
     );
 
     match &result {

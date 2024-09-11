@@ -1,8 +1,9 @@
 use crate::{FileId, Hash, TimestampMillis};
 use candid::{CandidType, Principal};
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export]
+#[derive(CandidType, Debug)]
 pub struct FileAdded {
     pub file_id: FileId,
     pub hash: Hash,
@@ -10,25 +11,29 @@ pub struct FileAdded {
     pub meta_data: FileMetaData,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct FileRemoved {
     pub file_id: FileId,
     pub meta_data: FileMetaData,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct FileMetaData {
     pub owner: Principal,
     pub created: TimestampMillis,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export]
+#[derive(CandidType, Debug)]
 pub struct FileRejected {
     pub file_id: FileId,
     pub reason: FileRejectedReason,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export]
+#[derive(CandidType, Debug)]
 pub enum FileRejectedReason {
     AllowanceExceeded,
     UserNotFound,

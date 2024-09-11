@@ -1,9 +1,10 @@
 use crate::{EventIndex, TimestampMillis};
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
+use ts_export::ts_export;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export]
+#[derive(CandidType, Debug)]
 pub struct PushEventResult {
     pub index: EventIndex,
     pub timestamp: TimestampMillis,

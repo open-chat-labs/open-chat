@@ -5,9 +5,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1332](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1332-group_index)] - 2024-09-06
+
+### Added
+
+- Expose MessagePack versions of GroupIndex APIs ([#6318](https://github.com/open-chat-labs/open-chat/pull/6318))
+
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+
+## [[2.0.1318](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1318-group_index)] - 2024-09-02
+
+### Changed
+
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+
+## [[2.0.1270](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1270-group_index)] - 2024-07-31
+
+### Changed
+
+- Configure message visibility to non-members of public channels/groups ([#6152](https://github.com/open-chat-labs/open-chat/pull/6152))
+
+## [[2.0.1260](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1260-group_index)] - 2024-07-26
+
+### Removed
+
+- Remove `Invited` gate ([#6112](https://github.com/open-chat-labs/open-chat/pull/6112))
+
+## [[2.0.1253](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1253-group_index)] - 2024-07-25
+
 ### Added
 
 - Add `Locked` gate ([#6095](https://github.com/open-chat-labs/open-chat/pull/6095))
+- Add `Invited` gate ([#6106](https://github.com/open-chat-labs/open-chat/pull/6106))
 
 ### Changed
 

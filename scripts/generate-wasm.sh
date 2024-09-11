@@ -26,12 +26,12 @@ done
 cargo build --locked --target wasm32-unknown-unknown --release --package $PACKAGE
 
 echo Optimising wasm
-if ! cargo install --list | grep -Fxq "ic-wasm v0.7.1:"
+if ! cargo install --list | grep -Fxq "ic-wasm v0.8.0:"
 then
-  cargo install --version 0.7.1 ic-wasm
+  cargo install --version 0.8.0 ic-wasm
 fi
 ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm shrink
 
 echo Compressing wasm
 mkdir -p wasms
-gzip -fckn target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm > ./wasms/$CANISTER_NAME.wasm.gz
+gzip -fckn9 target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm > ./wasms/$CANISTER_NAME.wasm.gz

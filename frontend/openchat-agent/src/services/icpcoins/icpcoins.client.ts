@@ -1,27 +1,18 @@
-import type { Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@dfinity/agent";
 import type { TokenExchangeRates } from "openchat-shared";
 import { idlFactory, type ICPCoinsService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import { getLatestResponse } from "./mappers";
-import type { AgentConfig } from "../../config";
 
 const ICPCOINS_CANISTER_ID = "u45jl-liaaa-aaaam-abppa-cai";
 
 export class ICPCoinsClient extends CandidService {
     private service: ICPCoinsService;
 
-    private constructor(identity: Identity, config: AgentConfig) {
-        super(identity);
+    constructor(identity: Identity, agent: HttpAgent) {
+        super(identity, agent, ICPCOINS_CANISTER_ID);
 
-        this.service = this.createServiceClient<ICPCoinsService>(
-            idlFactory,
-            ICPCOINS_CANISTER_ID,
-            config
-        );
-    }
-
-    static create(identity: Identity, config: AgentConfig): ICPCoinsClient {
-        return new ICPCoinsClient(identity, config);
+        this.service = this.createServiceClient<ICPCoinsService>(idlFactory);
     }
 
     exchangeRates(): Promise<Record<string, TokenExchangeRates>> {

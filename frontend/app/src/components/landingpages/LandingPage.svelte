@@ -9,6 +9,7 @@
         isDiamondRoute,
         isFaqRoute,
         isGuidelinesRoute,
+        isTermsRoute,
         isRoadmapRoute,
         isWhitepaperRoute,
         pathParams,
@@ -98,6 +99,14 @@
                         </div>
                     {:then { default: GuidelinesPage }}
                         <GuidelinesPage />
+                    {/await}
+                {:else if isTermsRoute($pathParams)}
+                    {#await import("./TermsPage.svelte")}
+                        <div class="loading">
+                            <Loading />
+                        </div>
+                    {:then { default: TermsPage }}
+                        <TermsPage />
                     {/await}
                 {:else if isFaqRoute($pathParams)}
                     {#await import("./FAQPage.svelte")}

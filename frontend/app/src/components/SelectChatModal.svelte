@@ -192,19 +192,19 @@
         switch (chatSummary.kind) {
             case "direct_chat":
                 const description = await buildDirectChatDescription(chatSummary, now);
-                const them = $userStore[chatSummary.them.userId];
+                const them = $userStore.get(chatSummary.them.userId);
                 return {
                     kind: "chat",
                     id: chatSummary.id,
                     userId: chatSummary.them.userId,
                     name: client.displayName(them),
-                    diamondStatus: them.diamondStatus,
-                    streak: client.getStreak(them.userId),
+                    diamondStatus: them?.diamondStatus ?? "inactive",
+                    streak: client.getStreak(chatSummary.them.userId),
                     avatarUrl: client.userAvatarUrl(them),
                     description,
-                    username: "@" + them.username,
+                    username: them ? "@" + them.username : undefined,
                     lastUpdated: chatSummary.lastUpdated,
-                    uniquePerson: them.isUniquePerson,
+                    uniquePerson: them?.isUniquePerson ?? false,
                 };
 
             default:

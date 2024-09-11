@@ -1,7 +1,7 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import type { RegistryValue } from "openchat-shared";
 
-const CACHE_VERSION = 10;
+const CACHE_VERSION = 11;
 const KEY = "registry";
 
 let db: RegistryDatabase | undefined;

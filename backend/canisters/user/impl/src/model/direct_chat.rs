@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::cmp::min;
 use types::{
     DirectChatSummary, DirectChatSummaryUpdates, EventWrapper, Message, MessageId, MessageIndex, Milliseconds, OptionUpdate,
-    TimestampMillis, Timestamped, UserId,
+    TimestampMillis, Timestamped, UserId, UserType,
 };
 use user_canister::SendMessageArgs;
 
@@ -20,13 +20,15 @@ pub struct DirectChat {
     pub notifications_muted: Timestamped<bool>,
     pub archived: Timestamped<bool>,
     pub is_bot: bool,
+    #[serde(default)]
+    pub user_type: UserType,
     pub unconfirmed: Vec<SendMessageArgs>,
 }
 
 impl DirectChat {
     pub fn new(
         them: UserId,
-        is_bot: bool,
+        user_type: UserType,
         events_ttl: Option<Milliseconds>,
         anonymized_chat_id: u128,
         now: TimestampMillis,
@@ -40,7 +42,8 @@ impl DirectChat {
             read_by_them_up_to: Timestamped::new(None, now),
             notifications_muted: Timestamped::new(false, now),
             archived: Timestamped::new(false, now),
-            is_bot,
+            is_bot: user_type.is_bot(),
+            user_type,
             unconfirmed: Vec::new(),
         }
     }

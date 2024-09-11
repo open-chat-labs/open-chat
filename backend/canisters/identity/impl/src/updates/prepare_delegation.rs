@@ -21,6 +21,10 @@ fn prepare_delegation_impl(args: Args, state: &mut RuntimeState) -> Response {
         return NotFound;
     };
 
+    if args.is_ii_principal.unwrap_or_default() {
+        state.data.user_principals.set_ii_principal(&caller);
+    }
+
     let seed = state.data.calculate_seed(user.index);
 
     Success(prepare_delegation_inner(seed, args.session_key, args.max_time_to_live, state))

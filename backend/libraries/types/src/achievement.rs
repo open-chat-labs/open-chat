@@ -1,9 +1,9 @@
-use candid::CandidType;
-use serde::{Deserialize, Serialize};
-
 use crate::{Message, MessageIndex};
+use candid::CandidType;
+use ts_export::ts_export;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Achievement {
     JoinedGroup,
     JoinedCommunity,
@@ -18,7 +18,8 @@ pub enum Achievement {
     Streak7,
     Streak14,
     Streak30,
-
+    Streak100,
+    Streak365,
     SentPoll,
     SentText,
     SentImage,
@@ -38,20 +39,24 @@ pub enum Achievement {
     TippedMessage,
     DeletedMessage,
     ForwardedMessage,
+    ProvedUniquePersonhood,
 
-    SentReminder,
-    VotedOnPoll,
     ReceivedCrypto,
     HadMessageReactedTo,
     HadMessageTipped,
+    VotedOnPoll,
+    SentReminder,
     JoinedCall,
-    ProvedUniquePersonhood,
-    SetCommunityDisplayName,
-    ChangedTheme,
-    SwappedFromWallet,
     AcceptedP2PSwapOffer,
-    EnabledDisappearingMessages,
+    SetCommunityDisplayName,
+    Referred1stUser,
+    Referred3rdUser,
+    Referred10thUser,
+    Referred20thUser,
+    Referred50thUser,
+
     PinnedMessage,
+    SwappedFromWallet,
     FavouritedChat,
     FollowedThread,
     SuggestedTranslation,
@@ -65,6 +70,9 @@ pub enum Achievement {
     SetGroupAccessGate,
     SetCommunityAccessGate,
     JoinedGatedGroupOrCommunity,
+
+    ChangedTheme,
+    EnabledDisappearingMessages,
     OwnGroupWithOneDiamondMember,
     OwnGroupWithTenDiamondMembers,
     OwnGroupWithOneHundredDiamondMembers,
@@ -90,6 +98,8 @@ impl Achievement {
             Achievement::Streak7 => 3000,
             Achievement::Streak14 => 5000,
             Achievement::Streak30 => 10000,
+            Achievement::Streak100 => 20000,
+            Achievement::Streak365 => 50000,
             Achievement::ProvedUniquePersonhood => 10000,
             Achievement::SetCommunityDisplayName => 700,
             Achievement::ChangedTheme => 800,
@@ -142,6 +152,11 @@ impl Achievement {
             Achievement::DirectChats5 => 2000,
             Achievement::DirectChats10 => 4000,
             Achievement::DirectChats20 => 10000,
+            Achievement::Referred1stUser => 5000,
+            Achievement::Referred3rdUser => 10000,
+            Achievement::Referred10thUser => 20000,
+            Achievement::Referred20thUser => 30000,
+            Achievement::Referred50thUser => 50000,
         }
     }
 

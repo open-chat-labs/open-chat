@@ -1,4 +1,5 @@
 .dfx/
+.idea/
 .vscode/
 target/
 dist/
@@ -17,4 +18,5 @@ notification.did
 release_changelog.md
 summary.md
 temp.did
+website_release.md
 frontend/app/src/stores/timeline.ts

@@ -5,6 +5,7 @@ import type { IDL } from '@dfinity/candid';
 export interface AcceptP2PSwapArgs {
   'pin' : [] | [string],
   'channel_id' : ChannelId,
+  'new_achievement' : boolean,
   'message_id' : MessageId,
   'thread_root_message_index' : [] | [MessageIndex],
 }
@@ -27,6 +28,7 @@ export interface AcceptSwapSuccess { 'token1_txn_in' : bigint }
 export type AccessGate = { 'UniquePerson' : null } |
   { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
+  { 'Locked' : null } |
   { 'TokenBalance' : TokenBalanceGate } |
   { 'Composite' : { 'and' : boolean, 'inner' : Array<AccessGate> } } |
   { 'DiamondMember' : null } |
@@ -46,6 +48,7 @@ export interface Account {
 }
 export type AccountIdentifier = Uint8Array | number[];
 export type Achievement = { 'AppointedGroupModerator' : null } |
+  { 'Referred20thUser' : null } |
   { 'DirectChats5' : null } |
   { 'ChangedTheme' : null } |
   { 'ChosenAsGroupModerator' : null } |
@@ -64,6 +67,8 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'StartedCall' : null } |
   { 'ChosenAsGroupOwner' : null } |
   { 'TippedMessage' : null } |
+  { 'Streak100' : null } |
+  { 'Streak365' : null } |
   { 'SentGiphy' : null } |
   { 'SetCommunityAccessGate' : null } |
   { 'Streak14' : null } |
@@ -73,6 +78,7 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'SentReminder' : null } |
   { 'EditedMessage' : null } |
   { 'ReactedToMessage' : null } |
+  { 'Referred3rdUser' : null } |
   { 'UpgradedToDiamond' : null } |
   { 'ReceivedDirectMessage' : null } |
   { 'AcceptedP2PSwapOffer' : null } |
@@ -87,6 +93,7 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'OwnGroupWithOneThousandDiamondMembers' : null } |
   { 'SentP2PSwapOffer' : null } |
   { 'QuoteReplied' : null } |
+  { 'Referred50thUser' : null } |
   { 'OwnGroupWithOneDiamondMember' : null } |
   { 'SentCrypto' : null } |
   { 'ProvedUniquePersonhood' : null } |
@@ -94,7 +101,9 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'Streak3' : null } |
   { 'Streak7' : null } |
   { 'UpgradedToGoldDiamond' : null } |
+  { 'Referred1stUser' : null } |
   { 'ReceivedCrypto' : null } |
+  { 'Referred10thUser' : null } |
   { 'TranslationAccepted' : null } |
   { 'RepliedInThread' : null } |
   { 'DirectChats10' : null } |
@@ -118,13 +127,11 @@ export interface AddMembersToChannelArgs {
 }
 export interface AddMembersToChannelFailed {
   'users_limit_reached' : Array<UserId>,
-  'users_failed_gate_check' : Array<UserFailedGateCheck>,
   'users_already_in_channel' : Array<UserId>,
   'users_failed_with_error' : Array<UserFailedError>,
 }
 export interface AddMembersToChannelPartialSuccess {
   'users_limit_reached' : Array<UserId>,
-  'users_failed_gate_check' : Array<UserFailedGateCheck>,
   'users_already_in_channel' : Array<UserId>,
   'users_failed_with_error' : Array<UserFailedError>,
   'users_added' : Array<UserId>,
@@ -133,6 +140,7 @@ export type AddMembersToChannelResponse = {
     'Failed' : AddMembersToChannelFailed
   } |
   { 'UserNotInChannel' : null } |
+  { 'CommunityPublic' : null } |
   { 'PartialSuccess' : AddMembersToChannelPartialSuccess } |
   { 'ChannelNotFound' : null } |
   { 'UserLimitReached' : number } |
@@ -203,6 +211,11 @@ export type BlockUserResponse = { 'NotAuthorized' : null } |
   { 'InternalError' : string } |
   { 'CannotBlockSelf' : null } |
   { 'CannotBlockUser' : null };
+export interface BotConfig {
+  'can_be_added_to_groups' : boolean,
+  'is_oc_controlled' : boolean,
+  'supports_direct_messages' : boolean,
+}
 export interface BuildVersion {
   'major' : number,
   'minor' : number,
@@ -357,6 +370,7 @@ export type ChatEvent = { 'Empty' : null } |
   { 'GroupInviteCodeChanged' : GroupInviteCodeChanged } |
   { 'UsersUnblocked' : UsersUnblocked } |
   { 'ChatUnfrozen' : GroupUnfrozen } |
+  { 'ExternalUrlUpdated' : ExternalUrlUpdated } |
   { 'ParticipantLeft' : ParticipantLeft } |
   { 'GroupRulesChanged' : GroupRulesChanged } |
   { 'GroupNameChanged' : GroupNameChanged } |
@@ -400,6 +414,7 @@ export interface ChatMetrics {
   'custom_type_messages' : bigint,
   'prize_messages' : bigint,
 }
+export interface Chit { 'streak' : number, 'balance' : number }
 export interface ChitEarned {
   'timestamp' : TimestampMillis,
   'amount' : number,
@@ -407,7 +422,8 @@ export interface ChitEarned {
 }
 export type ChitEarnedReason = { 'DailyClaim' : null } |
   { 'Achievement' : Achievement } |
-  { 'MemeContestWinner' : null };
+  { 'MemeContestWinner' : null } |
+  { 'Referral' : ReferralStatus };
 export interface ClaimPrizeArgs {
   'channel_id' : ChannelId,
   'message_id' : MessageId,
@@ -428,11 +444,13 @@ export interface CommunityCanisterChannelSummary {
   'latest_message_sender_display_name' : [] | [string],
   'channel_id' : ChannelId,
   'is_public' : boolean,
+  'is_invited' : [] | [boolean],
   'video_call_in_progress' : [] | [VideoCall],
   'metrics' : ChatMetrics,
   'subtype' : [] | [GroupSubtype],
   'permissions_v2' : GroupPermissions,
   'date_last_pinned' : [] | [TimestampMillis],
+  'external_url' : [] | [string],
   'min_visible_event_index' : EventIndex,
   'gate' : [] | [AccessGate],
   'name' : string,
@@ -441,6 +459,7 @@ export interface CommunityCanisterChannelSummary {
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
   'avatar_id' : [] | [bigint],
+  'messages_visible_to_non_members' : boolean,
   'membership' : [] | [GroupMembership],
   'latest_event_index' : EventIndex,
   'history_visible_to_new_joiners' : boolean,
@@ -458,6 +477,7 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'subtype' : GroupSubtypeUpdate,
   'permissions_v2' : [] | [GroupPermissions],
   'date_last_pinned' : [] | [TimestampMillis],
+  'external_url' : TextUpdate,
   'gate' : AccessGateUpdate,
   'name' : [] | [string],
   'latest_message_index' : [] | [MessageIndex],
@@ -465,6 +485,7 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
   'avatar_id' : DocumentIdUpdate,
+  'messages_visible_to_non_members' : [] | [boolean],
   'membership' : [] | [GroupMembershipUpdates],
   'latest_event_index' : [] | [EventIndex],
   'updated_events' : Array<[[] | [number], number, bigint]>,
@@ -476,6 +497,7 @@ export interface CommunityCanisterCommunitySummary {
   'is_public' : boolean,
   'permissions' : CommunityPermissions,
   'community_id' : CommunityId,
+  'is_invited' : [] | [boolean],
   'metrics' : ChatMetrics,
   'gate' : [] | [AccessGate],
   'name' : string,
@@ -530,6 +552,7 @@ export interface CommunityMatch {
 }
 export interface CommunityMember {
   'role' : CommunityRole,
+  'referred_by' : [] | [UserId],
   'user_id' : UserId,
   'display_name' : [] | [string],
   'date_added' : TimestampMillis,
@@ -569,10 +592,12 @@ export interface CreateChannelArgs {
   'is_public' : boolean,
   'subtype' : [] | [GroupSubtype],
   'permissions_v2' : [] | [GroupPermissions],
+  'external_url' : [] | [string],
   'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,
   'events_ttl' : [] | [Milliseconds],
+  'messages_visible_to_non_members' : [] | [boolean],
   'history_visible_to_new_joiners' : boolean,
   'rules' : Rules,
   'avatar' : [] | [Document],
@@ -582,6 +607,7 @@ export type CreateChannelResponse = { 'MaxChannelsCreated' : number } |
   { 'RulesTooLong' : FieldTooLongResult } |
   { 'DescriptionTooLong' : FieldTooLongResult } |
   { 'NameTooShort' : FieldTooShortResult } |
+  { 'ExternalUrlInvalid' : null } |
   { 'AccessGateInvalid' : null } |
   { 'NotAuthorized' : null } |
   { 'AvatarTooBig' : FieldTooLongResult } |
@@ -884,6 +910,10 @@ export type ExploreChannelsResponse = { 'TermTooShort' : number } |
   { 'TermTooLong' : number } |
   { 'InvalidTerm' : null } |
   { 'PrivateCommunity' : null };
+export interface ExternalUrlUpdated {
+  'new_url' : [] | [string],
+  'updated_by' : UserId,
+}
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
   { 'ICRC1' : Icrc1FailedCryptoTransaction } |
   { 'ICRC2' : Icrc2FailedCryptoTransaction };
@@ -929,6 +959,7 @@ export type GateCheckFailedReason = { 'NotLifetimeDiamondMember' : null } |
   { 'InsufficientBalance' : bigint } |
   { 'NoSnsNeuronsFound' : null } |
   { 'NoSnsNeuronsWithRequiredDissolveDelayFound' : null } |
+  { 'Locked' : null } |
   { 'NoUniquePersonProof' : null } |
   { 'FailedVerifiedCredentialCheck' : string } |
   { 'NoSnsNeuronsWithRequiredStakeFound' : null };
@@ -968,6 +999,7 @@ export interface GroupCanisterGroupChatSummary {
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'rules_accepted' : boolean,
+  'messages_visible_to_non_members' : boolean,
   'membership' : [] | [GroupMembership],
   'local_user_index_canister_id' : CanisterId,
   'latest_threads' : Array<GroupCanisterThreadDetails>,
@@ -1001,6 +1033,7 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'unfollowed_threads' : Uint32Array | number[],
   'avatar_id' : DocumentIdUpdate,
   'rules_accepted' : [] | [boolean],
+  'messages_visible_to_non_members' : [] | [boolean],
   'membership' : [] | [GroupMembershipUpdates],
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'frozen' : FrozenGroupUpdate,
@@ -1044,6 +1077,7 @@ export interface GroupChatSummary {
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'rules_accepted' : boolean,
+  'messages_visible_to_non_members' : boolean,
   'local_user_index_canister_id' : CanisterId,
   'latest_threads' : Array<ThreadSyncDetails>,
   'frozen' : [] | [FrozenGroupInfo],
@@ -1181,7 +1215,8 @@ export type GroupSubtypeUpdate = { 'NoChange' : null } |
 export interface GroupUnfrozen { 'unfrozen_by' : UserId }
 export interface GroupVisibilityChanged {
   'changed_by' : UserId,
-  'now_public' : boolean,
+  'public' : [] | [boolean],
+  'messages_visible_to_non_members' : [] | [boolean],
 }
 export type Hash = Uint8Array | number[];
 export type ICP = Tokens;
@@ -1355,6 +1390,7 @@ export type InviteCodeResponse = { 'NotAuthorized' : null } |
   { 'UserNotInCommunity' : null };
 export interface JoinVideoCallArgs {
   'channel_id' : ChannelId,
+  'new_achievement' : boolean,
   'message_id' : MessageId,
 }
 export type JoinVideoCallResponse = { 'AlreadyEnded' : null } |
@@ -1604,6 +1640,7 @@ export interface OptionalGroupPermissions {
   'thread_permissions' : OptionalMessagePermissionsUpdate,
   'change_roles' : [] | [PermissionRole],
   'start_video_call' : [] | [PermissionRole],
+  'add_members' : [] | [PermissionRole],
   'pin_messages' : [] | [PermissionRole],
   'react_to_messages' : [] | [PermissionRole],
 }
@@ -1788,6 +1825,7 @@ export interface PublicGroupSummary {
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
   'avatar_id' : [] | [bigint],
+  'messages_visible_to_non_members' : boolean,
   'local_user_index_canister_id' : CanisterId,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
@@ -1803,8 +1841,13 @@ export interface PushEventResult {
   'expires_at' : [] | [TimestampMillis],
 }
 export type Reaction = string;
+export type ReferralStatus = { 'Diamond' : null } |
+  { 'UniquePerson' : null } |
+  { 'LifetimeDiamond' : null } |
+  { 'Registered' : null };
 export interface RegisterPollVoteArgs {
   'channel_id' : ChannelId,
+  'new_achievement' : boolean,
   'poll_option' : number,
   'operation' : VoteOperation,
   'thread_root_message_index' : [] | [MessageIndex],
@@ -1991,6 +2034,7 @@ export interface SelectedInitialSuccess {
   'invited_users' : Array<UserId>,
   'blocked_users' : Array<UserId>,
   'last_updated' : TimestampMillis,
+  'referrals' : Array<UserId>,
   'chat_rules' : VersionedRules,
   'user_groups' : Array<UserGroupDetails>,
   'timestamp' : TimestampMillis,
@@ -2007,12 +2051,14 @@ export interface SelectedUpdatesSuccess {
   'blocked_users_removed' : Array<UserId>,
   'invited_users' : [] | [Array<UserId>],
   'user_groups_deleted' : Uint32Array | number[],
+  'referrals_removed' : Array<UserId>,
   'last_updated' : TimestampMillis,
   'members_added_or_updated' : Array<CommunityMember>,
   'chat_rules' : [] | [VersionedRules],
   'user_groups' : Array<UserGroupDetails>,
   'members_removed' : Array<UserId>,
   'timestamp' : TimestampMillis,
+  'referrals_added' : Array<UserId>,
   'blocked_users_added' : Array<UserId>,
 }
 export type SelectedUpdatesV2Response = { 'Success' : SelectedUpdatesSuccess } |
@@ -2054,7 +2100,10 @@ export interface SendMessageSuccess {
   'expires_at' : [] | [TimestampMillis],
   'message_index' : MessageIndex,
 }
-export interface SetMemberDisplayNameArgs { 'display_name' : [] | [string] }
+export interface SetMemberDisplayNameArgs {
+  'new_achievement' : boolean,
+  'display_name' : [] | [string],
+}
 export type SetMemberDisplayNameResponse = { 'DisplayNameInvalid' : null } |
   { 'Success' : null } |
   { 'DisplayNameTooLong' : number } |
@@ -2064,6 +2113,7 @@ export type SetMemberDisplayNameResponse = { 'DisplayNameInvalid' : null } |
   { 'DisplayNameTooShort' : number };
 export interface SetVideoCallPresenceArgs {
   'channel_id' : ChannelId,
+  'new_achievement' : boolean,
   'presence' : VideoCallPresence,
   'message_id' : MessageId,
 }
@@ -2268,11 +2318,13 @@ export type UnfollowThreadResponse = { 'ThreadNotFound' : null } |
 export interface UpdateChannelArgs {
   'channel_id' : ChannelId,
   'permissions_v2' : [] | [OptionalGroupPermissions],
+  'external_url' : TextUpdate,
   'gate' : AccessGateUpdate,
   'name' : [] | [string],
   'description' : [] | [string],
   'events_ttl' : EventsTimeToLiveUpdate,
   'public' : [] | [boolean],
+  'messages_visible_to_non_members' : [] | [boolean],
   'rules' : [] | [UpdatedRules],
   'avatar' : DocumentUpdate,
 }
@@ -2280,6 +2332,7 @@ export type UpdateChannelResponse = { 'NameReserved' : null } |
   { 'RulesTooLong' : FieldTooLongResult } |
   { 'DescriptionTooLong' : FieldTooLongResult } |
   { 'NameTooShort' : FieldTooShortResult } |
+  { 'ExternalUrlInvalid' : null } |
   { 'UserNotInChannel' : null } |
   { 'AccessGateInvalid' : null } |
   { 'ChannelNotFound' : null } |
@@ -2342,10 +2395,6 @@ export interface UpdatedRules {
 }
 export interface User { 'username' : string, 'user_id' : UserId }
 export interface UserFailedError { 'user_id' : UserId, 'error' : string }
-export interface UserFailedGateCheck {
-  'user_id' : UserId,
-  'reason' : GateCheckFailedReason,
-}
 export interface UserGroup {
   'members' : number,
   'name' : string,
@@ -2360,6 +2409,7 @@ export type UserId = CanisterId;
 export interface UserSummary {
   'streak' : number,
   'username' : string,
+  'total_chit_earned' : number,
   'diamond_member' : boolean,
   'diamond_membership_status' : DiamondMembershipStatus,
   'is_unique_person' : boolean,
@@ -2372,6 +2422,7 @@ export interface UserSummary {
 }
 export interface UserSummaryStable {
   'username' : string,
+  'bot_config' : [] | [BotConfig],
   'diamond_membership_status' : DiamondMembershipStatus,
   'is_unique_person' : boolean,
   'is_bot' : boolean,
@@ -2386,6 +2437,7 @@ export interface UserSummaryV2 {
 }
 export interface UserSummaryVolatile {
   'streak' : number,
+  'total_chit_earned' : number,
   'chit_balance' : number,
 }
 export interface UsersBlocked {

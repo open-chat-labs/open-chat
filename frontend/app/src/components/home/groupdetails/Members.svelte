@@ -26,6 +26,7 @@
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { trimLeadingAtSymbol } from "../../../utils/user";
+    import ButtonGroup from "../../ButtonGroup.svelte";
 
     const MAX_SEARCH_RESULTS = 255; // irritatingly this is a nat8 in the candid
     const client = getContext<OpenChat>("client");
@@ -36,6 +37,7 @@
     export let members: MemberType[];
     export let blocked: Set<string>;
     export let initialUsergroup: number | undefined = undefined;
+    export let showHeader = true;
 
     let userGroups: UserGroups | undefined;
 
@@ -48,19 +50,24 @@
     $: fullMembers = knownUsers
         .filter((u) => matchesSearch(searchTermLower, u) && u.userId !== userId)
         .sort(compareMembers);
-    $: blockedUsers = Array.from(blocked)
-        .map((userId) => $userStore[userId])
-        .filter((u) => matchesSearch(searchTermLower, u) && u.userId !== userId);
-    $: invitedUsers = Array.from(invited)
-        .map((userId) => $userStore[userId])
-        .filter((u) => matchesSearch(searchTermLower, u) && u.userId !== userId);
-    $: publicCollection = collection.public;
-    $: showBlocked = publicCollection && blockedUsers.length > 0;
-    $: showInvited = !publicCollection && invitedUsers.length > 0;
+    $: blockedUsers = matchingUsers(searchTermLower, $userStore, blocked);
+    $: invitedUsers = matchingUsers(searchTermLower, $userStore, invited);
+    $: showBlocked = blockedUsers.length > 0;
+    $: showInvited = invitedUsers.length > 0;
     $: canInvite = client.canInviteUsers(collection.id);
     //$: platformModerator = client.platformModerator;
     //$: canPromoteMyselfToOwner = me !== undefined && me.role !== "owner" && $platformModerator;
     $: canPromoteMyselfToOwner = false;
+
+    function matchingUsers(term: string, users: UserLookup, ids: Set<string>): UserSummary[] {
+        return Array.from(ids).reduce((matching, id) => {
+            const user = users.get(id);
+            if (user && matchesSearch(term, user) && user.userId !== userId) {
+                matching.push(user);
+            }
+            return matching;
+        }, [] as UserSummary[]);
+    }
 
     let searchTermEntered = "";
     let id = collection.id;
@@ -124,7 +131,7 @@
     function getKnownUsers(userStore: UserLookup, members: MemberType[]): FullMember[] {
         const users: FullMember[] = [];
         members.forEach((m) => {
-            const user = userStore[m.userId];
+            const user = userStore.get(m.userId);
             if (user) {
                 users.push({
                     ...user,
@@ -168,12 +175,14 @@
     }
 </script>
 
-<MembersHeader
-    level={collection.level}
-    {closeIcon}
-    {canInvite}
-    on:close={close}
-    on:showInviteUsers={showInviteUsers} />
+{#if showHeader}
+    <MembersHeader
+        level={collection.level}
+        {closeIcon}
+        {canInvite}
+        on:close={close}
+        on:showInviteUsers={showInviteUsers} />
+{/if}
 
 {#if collection.level === "community"}
     <div class="tabs">
@@ -206,22 +215,25 @@
     </div>
 
     {#if showBlocked || showInvited}
-        <div class="section-selector">
-            <SelectionButton
-                title={$_("members")}
-                on:click={() => setView("members")}
-                selected={memberView === "members"} />
-            {#if showBlocked}
+        <div class="member-section-selector">
+            <ButtonGroup align="fill">
                 <SelectionButton
-                    title={$_("blocked")}
-                    on:click={() => setView("blocked")}
-                    selected={memberView === "blocked"} />
-            {:else}
-                <SelectionButton
-                    title={$_("invited")}
-                    on:click={() => setView("invited")}
-                    selected={memberView === "invited"} />
-            {/if}
+                    title={$_("members")}
+                    on:click={() => setView("members")}
+                    selected={memberView === "members"} />
+                {#if showInvited}
+                    <SelectionButton
+                        title={$_("invited")}
+                        on:click={() => setView("invited")}
+                        selected={memberView === "invited"} />
+                {/if}
+                {#if showBlocked}
+                    <SelectionButton
+                        title={$_("blocked")}
+                        on:click={() => setView("blocked")}
+                        selected={memberView === "blocked"} />
+                {/if}
+            </ButtonGroup>
         </div>
     {/if}
 
@@ -285,13 +297,16 @@
 {/if}
 
 <style lang="scss">
-    .section-selector {
-        display: flex;
-        justify-content: flex-start;
+    :global(.member-section-selector .button-group.fill) {
+        flex-wrap: nowrap;
+    }
+    :global(.member-section-selector button) {
+        padding: $sp2 0 !important;
+    }
+
+    .member-section-selector {
         margin: 0 $sp4 $sp4 $sp4;
-        gap: $sp3;
         @include mobile() {
-            justify-content: space-evenly;
             margin: 0 $sp3 $sp3 $sp3;
         }
     }

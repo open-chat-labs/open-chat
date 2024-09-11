@@ -7,8 +7,9 @@ use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashMap};
 use std::ops::RangeFrom;
 use tracing::info;
-use types::{CyclesTopUp, Milliseconds, SuspensionDuration, TimestampMillis, UniquePersonProof, UserId};
+use types::{BotConfig, CyclesTopUp, Milliseconds, SuspensionDuration, TimestampMillis, UniquePersonProof, UserId, UserType};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
+use utils::time::MonthKey;
 
 #[derive(Serialize, Deserialize, Default)]
 #[serde(from = "UserMapTrimmed")]
@@ -28,7 +29,6 @@ pub struct UserMap {
     suspended_or_unsuspended_users: BTreeSet<(TimestampMillis, UserId)>,
     user_id_to_principal_backup: HashMap<UserId, Principal>,
     deleted_users: HashMap<UserId, TimestampMillis>,
-    #[serde(default)]
     unique_person_proofs_submitted: u32,
 }
 
@@ -61,12 +61,13 @@ impl UserMap {
         username: String,
         now: TimestampMillis,
         referred_by: Option<UserId>,
-        is_bot: bool,
+        user_type: UserType,
+        bot_config: Option<BotConfig>,
     ) {
         self.username_to_user_id.insert(&username, user_id);
         self.principal_to_user_id.insert(principal, user_id);
 
-        let user = User::new(principal, user_id, username, now, referred_by, is_bot);
+        let user = User::new(principal, user_id, username, now, referred_by, user_type, bot_config);
         self.users.insert(user_id, user);
 
         if let Some(ref_by) = referred_by {
@@ -160,6 +161,10 @@ impl UserMap {
         Some(user)
     }
 
+    pub fn is_deleted(&self, user_id: &UserId) -> bool {
+        self.deleted_users.contains_key(user_id) && !self.users.contains_key(user_id)
+    }
+
     pub fn diamond_membership_details_mut(&mut self, user_id: &UserId) -> Option<&mut DiamondMembershipDetailsInternal> {
         self.users.get_mut(user_id).map(|u| &mut u.diamond_membership_details)
     }
@@ -201,16 +206,26 @@ impl UserMap {
             return false;
         };
 
-        if chit_event_timestamp <= user.latest_chit_event {
-            return false;
+        let chit_event_month = MonthKey::from_timestamp(chit_event_timestamp);
+
+        if chit_event_timestamp >= user.latest_chit_event {
+            if MonthKey::from_timestamp(user.latest_chit_event) == chit_event_month.previous() {
+                user.latest_chit_event_previous_month = user.latest_chit_event;
+            }
+            user.latest_chit_event = chit_event_timestamp;
+            user.streak = streak;
+            user.streak_ends = streak_ends;
+        } else {
+            let previous_month = MonthKey::from_timestamp(now).previous();
+            if chit_event_month == previous_month && chit_event_timestamp >= user.latest_chit_event_previous_month {
+                user.latest_chit_event_previous_month = chit_event_timestamp;
+            } else {
+                return false;
+            }
         }
 
-        user.latest_chit_event = chit_event_timestamp;
-        user.chit_balance = chit_balance;
-        user.streak = streak;
-        user.streak_ends = streak_ends;
         user.chit_updated = now;
-
+        user.chit_per_month.insert(chit_event_month, chit_balance);
         true
     }
 
@@ -344,12 +359,18 @@ impl UserMap {
         }
     }
 
-    pub fn record_proof_of_unique_personhood(&mut self, user_id: UserId, proof: UniquePersonProof) -> bool {
+    pub fn record_proof_of_unique_personhood(
+        &mut self,
+        user_id: UserId,
+        proof: UniquePersonProof,
+        now: TimestampMillis,
+    ) -> bool {
         if let Some(user) = self.users.get_mut(&user_id) {
             if user.unique_person_proof.is_none() {
                 self.unique_person_proofs_submitted += 1;
             }
             user.unique_person_proof = Some(proof);
+            user.date_updated = now;
             true
         } else {
             false
@@ -369,7 +390,8 @@ impl UserMap {
             user.username.clone(),
             user.date_created,
             None,
-            false,
+            UserType::User,
+            None,
         );
         self.update(user, date_created, false);
     }
@@ -411,7 +433,15 @@ impl From<UserMapTrimmed> for UserMap {
             if let Some(other_user_id) = user_map.principal_to_user_id.insert(user.principal, *user_id) {
                 user_map.users_with_duplicate_principals.push((*user_id, other_user_id));
             }
+
+            if user.unique_person_proof.is_some() {
+                user_map.unique_person_proofs_submitted += 1;
+            }
         }
+
+        user_map
+            .suspended_or_unsuspended_users
+            .retain(|(_, u)| !user_map.deleted_users.contains_key(u));
 
         user_map
     }
@@ -437,9 +467,9 @@ mod tests {
         let user_id2: UserId = Principal::from_slice(&[3, 2]).into();
         let user_id3: UserId = Principal::from_slice(&[3, 3]).into();
 
-        user_map.register(principal1, user_id1, username1.clone(), 1, None, false);
-        user_map.register(principal2, user_id2, username2.clone(), 2, None, false);
-        user_map.register(principal3, user_id3, username3.clone(), 3, None, false);
+        user_map.register(principal1, user_id1, username1.clone(), 1, None, UserType::User, None);
+        user_map.register(principal2, user_id2, username2.clone(), 2, None, UserType::User, None);
+        user_map.register(principal3, user_id3, username3.clone(), 3, None, UserType::User, None);
 
         let principal_to_user_id: Vec<_> = user_map
             .principal_to_user_id
@@ -476,7 +506,7 @@ mod tests {
 
         let user_id = Principal::from_slice(&[1, 1]).into();
 
-        user_map.register(principal, user_id, username1, 1, None, false);
+        user_map.register(principal, user_id, username1, 1, None, UserType::User, None);
 
         if let Some(original) = user_map.get_by_principal(&principal) {
             let mut updated = original.clone();

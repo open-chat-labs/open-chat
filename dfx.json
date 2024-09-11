@@ -1,5 +1,5 @@
 {
-  "dfx": "0.21.0",
+  "dfx": "0.23.0",
   "canisters": {
     "user_index": {
       "type": "custom",
@@ -67,6 +67,12 @@
       "wasm": "wasms/proposals_bot.wasm.gz",
       "build": "./scripts/generate-wasm.sh proposals_bot"
     },
+    "airdrop_bot": {
+      "type": "custom",
+      "candid": "backend/canisters/airdrop_bot/api/can.did",
+      "wasm": "wasms/airdrop_bot.wasm.gz",
+      "build": "./scripts/generate-wasm.sh airdrop_bot"
+    },
     "user": {
       "type": "custom",
       "candid": "backend/canisters/user/api/can.did",
@@ -123,13 +129,13 @@
     },
     "event_store": {
       "type": "custom",
-      "candid": "https://github.com/open-chat-labs/event-store/releases/download/v0.4.0/can.did",
-      "wasm": "https://github.com/open-chat-labs/event-store/releases/download/v0.4.0/event_store.wasm.gz"
+      "candid": "https://github.com/open-chat-labs/event-store/releases/download/v0.5.0/can.did",
+      "wasm": "https://github.com/open-chat-labs/event-store/releases/download/v0.5.0/event_store.wasm.gz"
     },
     "sign_in_with_email": {
       "type": "custom",
-      "candid": "https://github.com/open-chat-labs/ic-sign-in-with-email/releases/download/v0.12.0/can.did",
-      "wasm": "https://github.com/open-chat-labs/ic-sign-in-with-email/releases/download/v0.12.0/sign_in_with_email.wasm.gz"
+      "candid": "https://github.com/open-chat-labs/ic-sign-in-with-email/releases/download/v0.13.0/can.did",
+      "wasm": "https://github.com/open-chat-labs/ic-sign-in-with-email/releases/download/v0.13.0/sign_in_with_email.wasm.gz"
     },
     "sign_in_with_ethereum": {
       "type": "custom",

@@ -1,13 +1,13 @@
 use crate::{mutate_state, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
-use ic_cdk::update;
 use proof_of_unique_personhood::verify_proof_of_unique_personhood;
 use serde::Serialize;
 use types::UniquePersonProofProvider;
 use user_index_canister::submit_proof_of_unique_personhood::{Response::*, *};
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 fn submit_proof_of_unique_personhood(args: Args) -> Response {
     mutate_state(|state| submit_proof_of_unique_personhood_impl(args, state))
@@ -28,7 +28,10 @@ fn submit_proof_of_unique_personhood_impl(args: Args, state: &mut RuntimeState) 
         now,
     ) {
         Ok(proof) => {
-            state.data.users.record_proof_of_unique_personhood(user_id, proof.clone());
+            state
+                .data
+                .users
+                .record_proof_of_unique_personhood(user_id, proof.clone(), now);
             state.push_event_to_all_local_user_indexes(
                 local_user_index_canister::Event::NotifyUniquePersonProof(user_id, proof),
                 None,

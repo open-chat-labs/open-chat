@@ -33,15 +33,17 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(Acc
     // If the call is from the user index then we skip the checks
     if caller == state.data.user_index_canister_id {
         Ok(None)
-    } else if state.data.is_frozen() {
-        Err(ChatFrozen)
-    } else if !state.data.is_accessible(args.principal, args.invite_code) {
-        Err(NotInvited)
-    } else if let Some(limit) = state.data.chat.members.user_limit_reached() {
-        Err(ParticipantLimitReached(limit))
     } else if let Some(member) = state.data.chat.members.get(&args.user_id) {
         let summary = state.summary(member);
         Err(AlreadyInGroupV2(Box::new(summary)))
+    } else if state.data.is_frozen() {
+        Err(ChatFrozen)
+    } else if let Some(limit) = state.data.chat.members.user_limit_reached() {
+        Err(ParticipantLimitReached(limit))
+    } else if state.data.get_invitation(args.principal).is_some() {
+        Ok(None)
+    } else if !state.data.chat.is_public.value && !state.data.is_invite_code_valid(args.invite_code) {
+        Err(NotInvited)
     } else {
         Ok(state.data.chat.gate.as_ref().map(|g| {
             (
@@ -112,7 +114,7 @@ fn c2c_join_group_impl(args: Args, state: &mut RuntimeState) -> Response {
         min_visible_event_index,
         min_visible_message_index,
         mute_notifications: state.data.chat.is_public.value,
-        is_bot: args.is_bot,
+        user_type: args.user_type,
     }) {
         AddResult::Success(participant) => {
             let invitation = state.data.chat.invited_users.remove(&args.user_id, now);

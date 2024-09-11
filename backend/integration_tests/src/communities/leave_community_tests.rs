@@ -22,7 +22,13 @@ fn leave_community_succeeds() {
         community_id,
     } = init_test_data(env, canister_ids, *controller, true);
 
-    client::local_user_index::happy_path::join_community(env, user2.principal, canister_ids.local_user_index, community_id);
+    client::local_user_index::happy_path::join_community(
+        env,
+        user2.principal,
+        canister_ids.local_user_index,
+        community_id,
+        None,
+    );
 
     env.tick();
 
@@ -51,7 +57,13 @@ fn cannot_leave_community_if_last_owner() {
         community_id,
     } = init_test_data(env, canister_ids, *controller, true);
 
-    client::local_user_index::happy_path::join_community(env, user2.principal, canister_ids.local_user_index, community_id);
+    client::local_user_index::happy_path::join_community(
+        env,
+        user2.principal,
+        canister_ids.local_user_index,
+        community_id,
+        None,
+    );
 
     let leave_community_response = client::user::leave_community(
         env,
@@ -86,7 +98,13 @@ fn cannot_leave_community_if_last_owner_of_a_channel() {
         community_id,
     } = init_test_data(env, canister_ids, *controller, true);
 
-    client::local_user_index::happy_path::join_community(env, user2.principal, canister_ids.local_user_index, community_id);
+    client::local_user_index::happy_path::join_community(
+        env,
+        user2.principal,
+        canister_ids.local_user_index,
+        community_id,
+        None,
+    );
     client::community::happy_path::change_role(env, user1.principal, community_id, user2.user_id, CommunityRole::Owner);
     client::community::happy_path::create_channel(env, user2.principal, community_id, true, random_string());
 

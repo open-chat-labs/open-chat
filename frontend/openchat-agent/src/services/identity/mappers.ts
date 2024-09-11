@@ -1,5 +1,6 @@
 import type {
     ApiApproveIdentityLinkResponse,
+    ApiAuthPrincipalsResponse,
     ApiCheckAuthPrincipalResponse,
     ApiCreateIdentityResponse,
     ApiGenerateChallengeResponse,
@@ -9,6 +10,7 @@ import type {
 } from "./candid/idl";
 import {
     type ApproveIdentityLinkResponse,
+    type AuthenticationPrincipalsResponse,
     type CheckAuthPrincipalResponse,
     type CreateIdentityResponse,
     type GenerateChallengeResponse,
@@ -138,6 +140,9 @@ export function initiateIdentityLinkResponse(
     if ("AlreadyRegistered" in candid) {
         return "already_registered";
     }
+    if ("AlreadyLinkedToPrincipal" in candid) {
+        return "already_linked_to_principal";
+    }
     if ("TargetUserNotFound" in candid) {
         return "target_user_not_found";
     }
@@ -148,6 +153,24 @@ export function initiateIdentityLinkResponse(
         "Unexpected ApiInitiateIdentityLinkResponse type received",
         candid,
     );
+}
+
+export function authPrincipalsResponse(
+    candid: ApiAuthPrincipalsResponse,
+): AuthenticationPrincipalsResponse {
+    if ("NotFound" in candid) {
+        return [];
+    }
+
+    if ("Success" in candid) {
+        return candid.Success.map((p) => ({
+            principal: p.principal.toString(),
+            originatingCanister: p.originating_canister.toString(),
+            isIIPrincipal: p.is_ii_principal,
+        }));
+    }
+
+    throw new UnsupportedValueError("Unexpected ApiAuthPrincipalResponse type received", candid);
 }
 
 export function approveIdentityLinkResponse(
@@ -162,11 +185,17 @@ export function approveIdentityLinkResponse(
     if ("LinkRequestNotFound" in candid) {
         return "link_request_not_found";
     }
+    if ("PrincipalAlreadyLinkedToAnotherOcUser" in candid) {
+        return "principal_linked_to_another_oc_user";
+    }
     if ("MalformedSignature" in candid || "InvalidSignature" in candid) {
         return "invalid_signature";
     }
     if ("DelegationTooOld" in candid) {
         return "delegation_too_old";
+    }
+    if ("PrincipalAlreadyLinkedToAnotherOcUser" in candid) {
+        return "principal_linked_to_another_oc_user";
     }
     throw new UnsupportedValueError(
         "Unexpected ApiApproveIdentityLinkResponse type received",

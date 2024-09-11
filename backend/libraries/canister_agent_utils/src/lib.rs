@@ -1,5 +1,5 @@
 use candid::{CandidType, Principal};
-use ic_agent::agent::http_transport::reqwest_transport::ReqwestHttpReplicaV2Transport;
+use ic_agent::agent::http_transport::ReqwestTransport;
 use ic_agent::identity::{BasicIdentity, Secp256k1Identity};
 use ic_agent::{Agent, Identity};
 use ic_utils::interfaces::ManagementCanister;
@@ -13,6 +13,7 @@ use types::{BuildVersion, CanisterId, CanisterWasm};
 
 #[derive(Clone, Debug)]
 pub enum CanisterName {
+    AirdropBot,
     Community,
     CyclesDispenser,
     Escrow,
@@ -45,6 +46,7 @@ impl FromStr for CanisterName {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
+            "airdrop_bot" => Ok(CanisterName::AirdropBot),
             "community" => Ok(CanisterName::Community),
             "cycles_dispenser" => Ok(CanisterName::CyclesDispenser),
             "escrow" => Ok(CanisterName::Escrow),
@@ -78,6 +80,7 @@ impl FromStr for CanisterName {
 impl Display for CanisterName {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let name = match self {
+            CanisterName::AirdropBot => "airdrop_bot",
             CanisterName::Community => "community",
             CanisterName::CyclesDispenser => "cycles_dispenser",
             CanisterName::Escrow => "escrow",
@@ -120,6 +123,7 @@ pub struct CanisterIds {
     pub identity: CanisterId,
     pub online_users: CanisterId,
     pub proposals_bot: CanisterId,
+    pub airdrop_bot: CanisterId,
     pub storage_index: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub registry: CanisterId,
@@ -158,7 +162,7 @@ pub fn get_dfx_identity(name: &str) -> Box<dyn Identity> {
 
 pub async fn build_ic_agent(url: String, identity: Box<dyn Identity>) -> Agent {
     let mainnet = is_mainnet(&url);
-    let transport = ReqwestHttpReplicaV2Transport::create(url).expect("Failed to create Reqwest transport");
+    let transport = ReqwestTransport::create(url).expect("Failed to create Reqwest transport");
     let timeout = std::time::Duration::from_secs(60 * 5);
 
     let agent = Agent::builder()

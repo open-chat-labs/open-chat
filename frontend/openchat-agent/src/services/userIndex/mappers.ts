@@ -11,8 +11,6 @@ import type {
     DiamondMembershipDuration,
     DiamondMembershipFees,
     PayForDiamondMembershipResponse,
-    ReferralLeaderboardResponse,
-    ReferralStats,
     SetDisplayNameResponse,
     DiamondMembershipSubscription,
     DiamondMembershipStatus,
@@ -35,8 +33,6 @@ import type {
     ApiDiamondMembershipStatusFull,
     ApiDiamondMembershipSubscription,
     ApiPayForDiamondMembershipResponse,
-    ApiReferralLeaderboardResponse,
-    ApiReferralStats,
     ApiSearchResponse,
     ApiSetDisplayNameResponse,
     ApiSetUsernameResponse,
@@ -68,6 +64,7 @@ export function usersApiResponse(candid: ApiUsersResponse): UsersApiResponse {
         return {
             serverTimestamp: timestamp,
             users: candid.Success.users.map(userSummaryUpdate),
+            deletedUserIds: new Set(candid.Success.deleted.map((d) => d.toString())),
             currentUser: optional(candid.Success.current_user, (u) =>
                 currentUserSummary(u, timestamp),
             ),
@@ -120,6 +117,7 @@ export function userSummaryUpdate(candid: ApiUserSummaryUpdate): UserSummaryUpda
         volatile: optional(candid.volatile, (v) => ({
             chitBalance: v.chit_balance,
             streak: v.streak,
+            totalChitEarned: v.total_chit_earned,
         })),
     };
 }
@@ -138,6 +136,7 @@ export function userSummary(candid: ApiUserSummary, timestamp: bigint): UserSumm
         suspended: candid.suspended,
         diamondStatus: diamondStatus(candid.diamond_membership_status),
         chitBalance: candid.chit_balance,
+        totalChitEarned: candid.total_chit_earned,
         streak: candid.streak,
         isUniquePerson: candid.is_unique_person,
     };
@@ -177,7 +176,6 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             dateCreated: r.date_created,
             displayName: optional(r.display_name, identity),
             cryptoAccount: bytesToHexString(r.icp_account),
-            referrals: r.referrals.map((p) => p.toString()),
             isPlatformModerator: r.is_platform_moderator,
             isPlatformOperator: r.is_platform_operator,
             suspensionDetails: optional(r.suspension_details, suspensionDetails),
@@ -362,36 +360,6 @@ export function unsuspendUserResponse(candid: ApiUnsuspendUserResponse): Unsuspe
         return "user_not_suspended";
     }
     throw new UnsupportedValueError("Unexpected ApiSuspendUserResponse type received", candid);
-}
-
-export function referralStat(candid: ApiReferralStats): ReferralStats {
-    return {
-        username: candid.username,
-        totalUsers: candid.total_users,
-        userId: candid.user_id.toString(),
-        diamondMembers: candid.diamond_members,
-        totalRewardsE8s: candid.total_rewards_e8s,
-    };
-}
-
-export function referralLeaderboardResponse(
-    candid: ApiReferralLeaderboardResponse,
-): ReferralLeaderboardResponse {
-    if ("AllTime" in candid) {
-        return { kind: "all_time", stats: candid.AllTime.map(referralStat) };
-    }
-    if ("Month" in candid) {
-        return {
-            kind: "monthly",
-            stats: candid.Month.results.map(referralStat),
-            year: candid.Month.year,
-            month: candid.Month.month,
-        };
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiReferralLeaderboardResponse type received",
-        candid,
-    );
 }
 
 export function payForDiamondMembershipResponse(

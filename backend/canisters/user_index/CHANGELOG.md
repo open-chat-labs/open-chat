@@ -6,6 +6,150 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Extend `chit_leaderboard` to return all_time|this_month|last_month ([#6364](https://github.com/open-chat-labs/open-chat/pull/6364))
+- Add `register_external_achievement` to `inspect_message` ([#6374](https://github.com/open-chat-labs/open-chat/pull/6374))
+  
+## [[2.0.1345](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1345-user_index)] - 2024-09-11
+
+### Changed
+
+- Extended support for external achievements ([#6367](https://github.com/open-chat-labs/open-chat/pull/6367))
+- Send a survey to some recently joined active users ([#6368](https://github.com/open-chat-labs/open-chat/pull/6368))
+
+## [[2.0.1341](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1341-user_index)] - 2024-09-10
+
+### Added
+
+- Add support for external achievements ([#6350](https://github.com/open-chat-labs/open-chat/pull/6350))
+
+### Changed
+
+- Add `community_canister_timestamp` to `UserJoinedCommunityOrChannel` events ([#6361](https://github.com/open-chat-labs/open-chat/pull/6361))
+
+### Fixed
+
+- Replay referral reward events in case any were missed ([#6362](https://github.com/open-chat-labs/open-chat/pull/6362))
+
+## [[2.0.1336](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1336-user_index)] - 2024-09-07
+
+### Added
+
+- Send survey to selected users ([#6334](https://github.com/open-chat-labs/open-chat/pull/6334))
+
+## [[2.0.1331](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1331-user_index)] - 2024-09-06
+
+### Added
+
+- Expose MessagePack versions of UserIndex APIs ([#6318](https://github.com/open-chat-labs/open-chat/pull/6318))
+
+## [[2.0.1329](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1329-user_index)] - 2024-09-03
+
+### Changed
+
+- Add airdrop eligibility metrics ([#6312](https://github.com/open-chat-labs/open-chat/pull/6312))
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+
+## [[2.0.1313](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1313-user_index)] - 2024-09-02
+
+### Changed
+
+- Mark ProposalsBot as OC controlled bot ([#6287](https://github.com/open-chat-labs/open-chat/pull/6287))
+- Add metrics about recently joined users ([#6305](https://github.com/open-chat-labs/open-chat/pull/6305))
+
+## [[2.0.1302](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1302-user_index)] - 2024-08-22
+
+### Changed
+
+- Sync referrers and referrals with users ([#6250](https://github.com/open-chat-labs/open-chat/pull/6250))
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+
+## [[2.0.1293](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1293-user_index)] - 2024-08-16
+
+### Changed
+
+- Replace `chit_balances` with `users_chit` which includes streak ([#6238](https://github.com/open-chat-labs/open-chat/pull/6238))
+- Remove references to deleted users ([#6241](https://github.com/open-chat-labs/open-chat/pull/6241))
+
+### Removed
+
+- Remove user referral leaderboard ([#6245](https://github.com/open-chat-labs/open-chat/pull/6245))
+
+## [[2.0.1291](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1291-user_index)] - 2024-08-14
+
+### Added
+
+- Add `bot_config` to bot users ([#6220](https://github.com/open-chat-labs/open-chat/pull/6220))
+- Expose JSON versions of UserIndex APIs + generate Typescript bindings ([#6225](https://github.com/open-chat-labs/open-chat/pull/6225))
+
+### Removed
+
+- Remove deprecated `is_bot` field from user records ([#6219](https://github.com/open-chat-labs/open-chat/pull/6219))
+
+### Fixed
+
+- Fix `is_deleted` check to only return true if userId hasn't been reused ([#6235](https://github.com/open-chat-labs/open-chat/pull/6235))
+
+## [[2.0.1284](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1284-user_index)] - 2024-08-06
+
+### Added
+
+- Transfer airdrop funds to the AirdropBot ([#6199](https://github.com/open-chat-labs/open-chat/pull/6199))
+
+## [[2.0.1280](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1280-user_index)] - 2024-08-02
+
+### Added
+
+- Remove deleted users from OnlineUsers canister ([#6179](https://github.com/open-chat-labs/open-chat/pull/6179))
+
+### Changed
+
+- Add logging to find deleted account with OGY tokens ([#6177](https://github.com/open-chat-labs/open-chat/pull/6177))
+- Return deleted users in `users` response ([#6182](https://github.com/open-chat-labs/open-chat/pull/6182))
+- Use total CHIT earned for the leaderboard ([#6185](https://github.com/open-chat-labs/open-chat/pull/6185))
+
+## [[2.0.1279](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1279-user_index)] - 2024-08-01
+
+### Fixed
+
+- Push recent uniqueness proofs to LocalUserIndexes ([#6175](https://github.com/open-chat-labs/open-chat/pull/6175))
+
+## [[2.0.1269](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1269-user_index)] - 2024-07-30
+
+### Fixed
+
+- Ensure `date_updated` is non-zero for all users ([#6146](https://github.com/open-chat-labs/open-chat/pull/6146))
+
+## [[2.0.1266](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1266-user_index)] - 2024-07-29
+
+### Fixed
+
+- Bump `date_updated` after submitting proof of uniqueness ([#6135](https://github.com/open-chat-labs/open-chat/pull/6135))
+
+## [[2.0.1265](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1265-user_index)] - 2024-07-29
+
+### Changed
+
+- Register the AirdropBot user ([#6129](https://github.com/open-chat-labs/open-chat/pull/6129))
+
+### Fixed
+
+- Fix empty `ic_root_key` ([#6134](https://github.com/open-chat-labs/open-chat/pull/6134))
+
+## [[2.0.1258](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1258-user_index)] - 2024-07-26
+
+### Added
+
+- Special case registration of airdrop bot ([#6088](https://github.com/open-chat-labs/open-chat/pull/6088))
+
+### Changed
+
+- Set `is_oc_controlled_bot` to true when registering the ProposalsBot ([#6115](https://github.com/open-chat-labs/open-chat/pull/6115))
+- Use `UserType` rather than `is_bot` and `is_oc_controlled_bot` ([#6116](https://github.com/open-chat-labs/open-chat/pull/6116))
+
+## [[2.0.1255](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1255-user_index)] - 2024-07-25
+
 ### Added
 
 - Return proof as JWT after paying for Diamond membership ([#6078](https://github.com/open-chat-labs/open-chat/pull/6078))
@@ -18,8 +162,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Handle transfer fee changing in either direction ([#6064](https://github.com/open-chat-labs/open-chat/pull/6064))
 - Accept proofs of uniqueness from LocalUserIndexes ([#6068](https://github.com/open-chat-labs/open-chat/pull/6068))
 - Ensure UserIndex is only controller before installing LocalUserIndex ([#6070](https://github.com/open-chat-labs/open-chat/pull/6070))
+- Store CHIT balances per month ([#6087](https://github.com/open-chat-labs/open-chat/pull/6087))
 - Add `user_ii_principal` to `submit_proof_of_unique_personhood` args ([#6092](https://github.com/open-chat-labs/open-chat/pull/6092))
 - Bump `ic-verifiable-credentials` to latest version ([#6096](https://github.com/open-chat-labs/open-chat/pull/6096))
+- Simplify `chit_balances` responses ([#6107](https://github.com/open-chat-labs/open-chat/pull/6107))
 
 ### Removed
 

@@ -6,6 +6,59 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1343](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1343-user)] - 2024-09-10
+
+### Added
+
+- Expose MessagePack versions of a few User canister APIs ([#6318](https://github.com/open-chat-labs/open-chat/pull/6318))
+- Add support for external achievements ([#6350](https://github.com/open-chat-labs/open-chat/pull/6350))
+
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+- Consolidate `events` functions to remove duplicate code ([#6343](https://github.com/open-chat-labs/open-chat/pull/6343))
+
+### Removed
+
+- Remove the unused cached group summaries field from `initial_state` ([#6349](https://github.com/open-chat-labs/open-chat/pull/6349))
+
+### Fixed
+
+- Unblock OpenChat bot if it was blocked previously whilst there was a bug ([#6302](https://github.com/open-chat-labs/open-chat/pull/6302))
+- Allow referral status updates to arrive in any order ([#6357](https://github.com/open-chat-labs/open-chat/pull/6357))
+- Check user hasn't already left community when processing joined event ([#6361](https://github.com/open-chat-labs/open-chat/pull/6361))
+
+## [[2.0.1305](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1305-user)] - 2024-08-23
+
+### Changed
+
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+- Change default WalletConfig to zero balance ([#6269](https://github.com/open-chat-labs/open-chat/pull/6269))
+
+### Fixed
+
+- Remove lifetime diamond achievement where it was rewarded incorrectly ([#6280](https://github.com/open-chat-labs/open-chat/pull/6280))
+
+## [[2.0.1300](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1300-user)] - 2024-08-20
+
+### Added
+
+- Set/store user's wallet configuration ([#6242](https://github.com/open-chat-labs/open-chat/pull/6242))
+
+### Changed
+
+- Configure message visibility to non-members of public channels/groups ([#6152](https://github.com/open-chat-labs/open-chat/pull/6152))
+- Ensure user has never joined a group or community before marking empty ([#6186](https://github.com/open-chat-labs/open-chat/pull/6186))
+- Add 365 day streak achievement ([#6189](https://github.com/open-chat-labs/open-chat/pull/6189))
+- Support next batch of achievements ([#6230](https://github.com/open-chat-labs/open-chat/pull/6230))
+- Reward verified user referrals in CHIT ([#6250](https://github.com/open-chat-labs/open-chat/pull/6250))
+
+### Removed
+
+- Remove code to flag empty and dormant users for deletion ([#6246](https://github.com/open-chat-labs/open-chat/pull/6246))
+
+## [[2.0.1263](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1263-user)] - 2024-07-26
+
 ### Added
 
 - Add `Locked` gate ([#6095](https://github.com/open-chat-labs/open-chat/pull/6095))
@@ -13,6 +66,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Improve check for empty and dormant users ([#6073](https://github.com/open-chat-labs/open-chat/pull/6073))
+- Store CHIT balances per month ([#6087](https://github.com/open-chat-labs/open-chat/pull/6087))
+- Hack to include all built up CHIT in the July airdrop ([#6104](https://github.com/open-chat-labs/open-chat/pull/6104))
+- Use `UserType` rather than `is_bot` and `is_oc_controlled_bot` ([#6116](https://github.com/open-chat-labs/open-chat/pull/6116))
+- Allow OC controlled bots to send crypto transfer messages ([#6117](https://github.com/open-chat-labs/open-chat/pull/6117))
 
 ## [[2.0.1243](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1243-user)] - 2024-07-17
 

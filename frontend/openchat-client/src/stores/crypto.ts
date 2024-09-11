@@ -6,8 +6,10 @@ import {
     type NervousSystemDetails,
     DEFAULT_TOKENS,
     type TokenExchangeRates,
+    type WalletConfig,
 } from "openchat-shared";
 import { toRecord } from "../utils/list";
+import { localGlobalUpdates } from "./localGlobalUpdates";
 
 type LedgerCanister = string;
 type GovernanceCanister = string;
@@ -85,43 +87,81 @@ export const enhancedCryptoLookup = derived(
     },
 );
 
+export const serverWalletConfigStore = writable<WalletConfig>({
+    kind: "auto_wallet",
+    minDollarValue: 0,
+});
+
+export const walletConfigStore = derived(
+    [serverWalletConfigStore, localGlobalUpdates],
+    ([$serverWalletConfig, $localGlobalUpdates]) => {
+        return $localGlobalUpdates.get("global")?.walletConfig ?? $serverWalletConfig;
+    },
+);
+
 export const cryptoTokensSorted = derived([enhancedCryptoLookup], ([$lookup]) => {
     return Object.values($lookup)
         .filter((t) => t.enabled || !t.zero)
-        .sort((a, b) => {
-            // Sort by non-zero balances first
-            // Then by $ balance
-            // Then by whether token is a default
-            // Then by default precedence
-            // Then alphabetically by symbol
-
-            const aNonZero = a.balance > 0;
-            const bNonZero = b.balance > 0;
-
-            if (aNonZero !== bNonZero) {
-                return aNonZero ? -1 : 1;
-            }
-
-            const aDollarBalance = a.dollarBalance ?? -1;
-            const bDollarBalance = b.dollarBalance ?? -1;
-
-            if (aDollarBalance < bDollarBalance) {
-                return 1;
-            } else if (aDollarBalance > bDollarBalance) {
-                return -1;
-            } else {
-                const defA = DEFAULT_TOKENS.indexOf(a.symbol);
-                const defB = DEFAULT_TOKENS.indexOf(b.symbol);
-
-                if (defA >= 0 && defB >= 0) {
-                    return defA < defB ? 1 : -1;
-                } else if (defA >= 0) {
-                    return 1;
-                } else if (defB >= 0) {
-                    return -1;
-                } else {
-                    return a.symbol.localeCompare(b.symbol);
-                }
-            }
-        });
+        .sort(compareTokens);
 });
+
+function meetsAutoWalletCriteria(config: WalletConfig, token: EnhancedTokenDetails): boolean {
+    return (
+        config.kind === "auto_wallet" &&
+        (DEFAULT_TOKENS.includes(token.symbol) ||
+            (config.minDollarValue <= 0 && token.balance > 0) ||
+            (config.minDollarValue > 0 && (token.dollarBalance ?? 0) >= config.minDollarValue))
+    );
+}
+
+function meetsManualWalletCriteria(config: WalletConfig, token: EnhancedTokenDetails): boolean {
+    return config.kind === "manual_wallet" && config.tokens.has(token.ledger);
+}
+
+export const walletTokensSorted = derived(
+    [cryptoTokensSorted, walletConfigStore],
+    ([$tokens, $walletConfig]) => {
+        return $tokens.filter(
+            (t) =>
+                meetsAutoWalletCriteria($walletConfig, t) ||
+                meetsManualWalletCriteria($walletConfig, t),
+        );
+    },
+);
+
+function compareTokens(a: EnhancedTokenDetails, b: EnhancedTokenDetails): number {
+    // Sort by non-zero balances first
+    // Then by $ balance
+    // Then by whether token is a default
+    // Then by default precedence
+    // Then alphabetically by symbol
+
+    const aNonZero = a.balance > 0;
+    const bNonZero = b.balance > 0;
+
+    if (aNonZero !== bNonZero) {
+        return aNonZero ? -1 : 1;
+    }
+
+    const aDollarBalance = a.dollarBalance ?? -1;
+    const bDollarBalance = b.dollarBalance ?? -1;
+
+    if (aDollarBalance < bDollarBalance) {
+        return 1;
+    } else if (aDollarBalance > bDollarBalance) {
+        return -1;
+    } else {
+        const defA = DEFAULT_TOKENS.indexOf(a.symbol);
+        const defB = DEFAULT_TOKENS.indexOf(b.symbol);
+
+        if (defA >= 0 && defB >= 0) {
+            return defA < defB ? 1 : -1;
+        } else if (defA >= 0) {
+            return 1;
+        } else if (defB >= 0) {
+            return -1;
+        } else {
+            return a.symbol.localeCompare(b.symbol);
+        }
+    }
+}

@@ -2,7 +2,8 @@ use crate::{read_state, RuntimeState};
 use http_request::{build_json_response, encode_logs, extract_route, Route};
 use ic_cdk::query;
 use serde::Serialize;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
+use std::str::FromStr;
 use types::{BuildVersion, HttpRequest, HttpResponse, TimestampMillis, UserId};
 
 #[query]
@@ -36,11 +37,26 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         build_json_response(&vec)
     }
 
+    fn get_remote_user_events(qs: HashMap<String, String>, state: &RuntimeState) -> HttpResponse {
+        let skip = qs.get("skip").and_then(|v| usize::from_str(v).ok()).unwrap_or_default();
+
+        build_json_response(
+            &state
+                .data
+                .events_for_remote_users
+                .iter()
+                .skip(skip)
+                .take(1000)
+                .collect::<Vec<_>>(),
+        )
+    }
+
     match extract_route(&request.url) {
         Route::Logs(since) => get_logs_impl(since),
         Route::Traces(since) => get_traces_impl(since),
         Route::Metrics => read_state(get_metrics_impl),
         Route::Other(p, _) if p == "user_canister_versions" => read_state(get_user_canister_versions),
+        Route::Other(p, qs) if p == "remote_user_events" => read_state(|state| get_remote_user_events(qs, state)),
         _ => HttpResponse::not_found(),
     }
 }

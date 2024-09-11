@@ -1,16 +1,18 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{
     CanisterId, CommunityCanisterCommunitySummary, CommunityCanisterCommunitySummaryUpdates, GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates, TimestampMillis,
 };
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(local_user_index, group_and_community_summary_updates)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub requests: Vec<SummaryUpdatesArgs>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(local_user_index, group_and_community_summary_updates)]
+#[derive(CandidType, Debug)]
 pub struct SummaryUpdatesArgs {
     pub canister_id: CanisterId,
     pub is_community: bool,
@@ -18,12 +20,14 @@ pub struct SummaryUpdatesArgs {
     pub updates_since: Option<TimestampMillis>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(local_user_index, group_and_community_summary_updates)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success(Vec<SummaryUpdatesResponse>),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(local_user_index, group_and_community_summary_updates)]
+#[derive(CandidType, Debug)]
 pub enum SummaryUpdatesResponse {
     SuccessGroup(GroupCanisterGroupChatSummary),
     SuccessCommunity(CommunityCanisterCommunitySummary),

@@ -25,6 +25,7 @@ fn init(args: Args) {
         args.video_call_operators,
         args.username,
         args.test_mode,
+        args.referred_by,
         now,
     );
 

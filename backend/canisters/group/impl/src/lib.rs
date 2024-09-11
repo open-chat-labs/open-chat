@@ -14,7 +14,9 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::{
     AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, GroupRoleInternal, InvitedUsersResult, UserInvitation,
 };
-use group_community_common::{PaymentReceipts, PaymentRecipient, PendingPayment, PendingPaymentReason, PendingPaymentsQueue};
+use group_community_common::{
+    Achievements, PaymentReceipts, PaymentRecipient, PendingPayment, PendingPaymentReason, PendingPaymentsQueue,
+};
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
@@ -26,12 +28,11 @@ use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use std::time::Duration;
 use types::{
-    AccessGate, Achievement, BuildVersion, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document,
-    Empty, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype,
-    MessageIndex, Milliseconds, MultiUserChat, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId,
+    AccessGate, BuildVersion, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Empty,
+    EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype, MessageIndex,
+    Milliseconds, MultiUserChat, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId, UserType,
     MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
 };
-use user_canister::c2c_notify_achievement;
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
@@ -203,6 +204,7 @@ impl RuntimeState {
             avatar_id: Document::id(&chat.avatar),
             is_public: chat.is_public.value,
             history_visible_to_new_joiners: chat.history_visible_to_new_joiners,
+            messages_visible_to_non_members: chat.messages_visible_to_non_members.value,
             min_visible_event_index,
             min_visible_message_index,
             latest_message: main_events_reader.latest_message_event(Some(member.user_id)),
@@ -236,7 +238,7 @@ impl RuntimeState {
             args.min_visible_event_index,
             args.min_visible_message_index,
             args.mute_notifications,
-            args.is_bot,
+            args.user_type,
         );
 
         if matches!(result, AddMemberResult::Success(_) | AddMemberResult::AlreadyInGroup) {
@@ -414,15 +416,6 @@ impl RuntimeState {
             },
         }
     }
-
-    fn notify_user_of_achievements(&self, user_id: UserId, achievements: Vec<Achievement>) {
-        let args = c2c_notify_achievement::Args { achievements };
-        self.data.fire_and_forget_handler.send(
-            user_id.into(),
-            "c2c_notify_achievement_msgpack".to_string(),
-            serialize_then_unwrap(args),
-        );
-    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -457,6 +450,8 @@ struct Data {
     #[serde(with = "serde_bytes")]
     pub ic_root_key: Vec<u8>,
     pub event_store_client: EventStoreClient<CdkRuntime>,
+    #[serde(default)]
+    achievements: Achievements,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -474,8 +469,10 @@ impl Data {
         subtype: Option<GroupSubtype>,
         avatar: Option<Document>,
         history_visible_to_new_joiners: bool,
+        messages_visible_to_non_members: bool,
         creator_principal: Principal,
         creator_user_id: UserId,
+        creator_user_type: UserType,
         events_ttl: Option<Milliseconds>,
         now: TimestampMillis,
         mark_active_duration: Milliseconds,
@@ -504,11 +501,13 @@ impl Data {
             subtype,
             avatar,
             history_visible_to_new_joiners,
+            messages_visible_to_non_members,
             permissions.unwrap_or_default(),
             gate,
             events_ttl,
-            proposals_bot_user_id == creator_user_id,
+            creator_user_type,
             anonymized_chat_id,
+            None,
             now,
         );
 
@@ -543,6 +542,7 @@ impl Data {
             event_store_client: EventStoreClientBuilder::new(local_group_index_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
                 .build(),
+            achievements: Achievements::default(),
         }
     }
 
@@ -705,7 +705,7 @@ struct AddMemberArgs {
     min_visible_event_index: EventIndex,
     min_visible_message_index: MessageIndex,
     mute_notifications: bool,
-    is_bot: bool,
+    user_type: UserType,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

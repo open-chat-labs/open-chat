@@ -80,6 +80,7 @@ type EndVideoCallResponse = variant {
 
 type JoinVideoCallArgs = record {
     message_id : MessageId;
+    new_achievement : bool;
 };
 
 type JoinVideoCallResponse = variant {
@@ -94,6 +95,7 @@ type JoinVideoCallResponse = variant {
 type SetVideoCallPresenceArgs = record {
     message_id : MessageId;
     presence : VideoCallPresence;
+    new_achievement : bool;
 };
 
 type SetVideoCallPresenceResponse = variant {
@@ -144,6 +146,7 @@ type RegisterPollVoteArgs = record {
     message_index : MessageIndex;
     poll_option : nat32;
     operation : VoteOperation;
+    new_achievement : bool;
     correlation_id : nat64;
 };
 
@@ -162,6 +165,7 @@ type AcceptP2PSwapArgs = record {
     thread_root_message_index : opt MessageIndex;
     message_id : MessageId;
     pin : opt text;
+    new_achievement : bool;
 };
 
 type AcceptP2PSwapResponse = variant {
@@ -322,6 +326,7 @@ type UpdateGroupV2Args = record {
     events_ttl : EventsTimeToLiveUpdate;
     gate : AccessGateUpdate;
     public : opt bool;
+    messages_visible_to_non_members: opt bool;    
     correlation_id : nat64;
 };
 
@@ -608,6 +613,7 @@ type PublicSummaryResponse = variant {
 
 type PublicSummarySuccess = record {
     summary : PublicGroupSummary;
+    is_invited : bool;
 };
 
 type RulesArgs = record {

@@ -11,17 +11,13 @@ import type {
     ApiMessageMatch,
     ApiInitialStateResponse,
     ApiUpdatesResponse,
-    ApiGroupRole,
-    ApiMention,
     ApiSetBioResponse,
     ApiWithdrawCryptoResponse,
     ApiSendMessageWithTransferToGroupResponse,
     ApiPublicProfileResponse,
     ApiPinChatResponse,
     ApiUnpinChatResponse,
-    ApiThreadSyncDetails,
     ApiDirectChatSummary,
-    ApiGroupChatSummary,
     ApiUserCanisterGroupChatSummary,
     ApiUserCanisterGroupChatSummaryUpdates,
     ApiNnsFailedCryptoTransaction,
@@ -34,7 +30,6 @@ import type {
     ApiSetMessageReminderResponse,
     ApiCreateCommunityResponse,
     ApiGroupChatsInitial,
-    ApiCachedGroupChatSummaries,
     ApiDirectChatsInitial,
     ApiCommunitiesInitial,
     ApiUserCanisterCommunitySummary,
@@ -68,6 +63,9 @@ import type {
     ApiChitEarnedReason,
     ApiAchievement,
     ApiClaimDailyChitResponse,
+    ApiReferralStatus,
+    ApiReferral,
+    ApiWalletConfig,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -81,16 +79,12 @@ import type {
     UndeleteMessageResponse,
     InitialStateResponse,
     UpdatesResponse,
-    MemberRole,
-    Mention,
-    GroupChatSummary,
     DirectChatSummary,
     UserCanisterGroupChatSummary,
     UserCanisterGroupChatSummaryUpdates,
     WithdrawCryptocurrencyResponse,
     FailedCryptocurrencyWithdrawal,
     CompletedCryptocurrencyWithdrawal,
-    ThreadSyncDetails,
     PublicProfile,
     ArchiveChatResponse,
     MessageMatch,
@@ -104,7 +98,6 @@ import type {
     SetMessageReminderResponse,
     CreateCommunityResponse,
     GroupChatsInitial,
-    CachedGroupChatSummaries,
     DirectChatsInitial,
     CommunitiesInitial,
     UserCanisterCommunitySummary,
@@ -137,6 +130,9 @@ import type {
     ChitEarnedReason,
     Achievement,
     ClaimDailyChitResponse,
+    ReferralStatus,
+    Referral,
+    WalletConfig,
 } from "openchat-shared";
 import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
@@ -148,11 +144,8 @@ import {
     optionUpdate,
 } from "../../utils/mapping";
 import {
-    apiGroupSubtype,
     chatMetrics,
     completedCryptoTransfer,
-    accessGate,
-    groupPermissions,
     message,
     messageContent,
     apiOptional,
@@ -200,10 +193,29 @@ export function chitEarnedReason(candid: ApiChitEarnedReason): ChitEarnedReason 
     if ("Achievement" in candid) {
         return { kind: "achievement_unlocked", type: achievementType(candid.Achievement) };
     }
+    if ("Referral" in candid) {
+        return { kind: "referral", type: referralStatus(candid.Referral) };
+    }
     if ("MemeContestWinner" in candid) {
         return { kind: "meme_contest_winner" };
     }
     throw new UnsupportedValueError("Unexpected ApiChitEarnedReason encountered", candid);
+}
+
+export function referralStatus(candid: ApiReferralStatus): ReferralStatus {
+    if ("Registered" in candid) {
+        return "registered";
+    }
+    if ("Diamond" in candid) {
+        return "diamond";
+    }
+    if ("UniquePerson" in candid) {
+        return "unique_person";
+    }
+    if ("LifetimeDiamond" in candid) {
+        return "lifetime_diamond";
+    }
+    throw new UnsupportedValueError("Unexpected ApiReferralStatus encountered", candid);
 }
 
 export function achievementType(candid: ApiAchievement): Achievement {
@@ -393,6 +405,12 @@ export function achievementType(candid: ApiAchievement): Achievement {
     if ("Streak7" in candid) {
         return "streak_7";
     }
+    if ("Streak100" in candid) {
+        return "streak_100";
+    }
+    if ("Streak365" in candid) {
+        return "streak_365";
+    }
     if ("UpgradedToGoldDiamond" in candid) {
         return "upgrade_to_gold_diamond";
     }
@@ -401,6 +419,21 @@ export function achievementType(candid: ApiAchievement): Achievement {
     }
     if ("SetAvatar" in candid) {
         return "set_avatar";
+    }
+    if ("Referred1stUser" in candid) {
+        return "referred_1st_user";
+    }
+    if ("Referred3rdUser" in candid) {
+        return "referred_3rd_user";
+    }
+    if ("Referred10thUser" in candid) {
+        return "referred_10th_user";
+    }
+    if ("Referred20thUser" in candid) {
+        return "referred_20th_user";
+    }
+    if ("Referred50thUser" in candid) {
+        return "referred_50th_user";
     }
     throw new UnsupportedValueError("Unexpected ApiAchievement received", candid);
 }
@@ -772,18 +805,10 @@ export async function getEventsResponse(
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
 }
 
-function cachedGroupChatSummaries(candid: ApiCachedGroupChatSummaries): CachedGroupChatSummaries {
-    return {
-        summaries: candid.summaries.map(groupChatSummary),
-        timestamp: candid.timestamp,
-    };
-}
-
 function groupChatsInitial(candid: ApiGroupChatsInitial): GroupChatsInitial {
     return {
         summaries: candid.summaries.map(userCanisterGroupSummary),
         pinned: candid.pinned.map((c) => ({ kind: "group_chat", groupId: c.toString() })),
-        cached: optional(candid.cached, cachedGroupChatSummaries),
     };
 }
 
@@ -885,9 +910,47 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
             streak: result.streak,
             nextDailyClaim: result.next_daily_claim,
             chitBalance: result.chit_balance,
+            totalChitEarned: result.total_chit_earned,
+            referrals: result.referrals.map(referral),
+            walletConfig: walletConfig(result.wallet_config),
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
+}
+
+function referral(candid: ApiReferral): Referral {
+    return {
+        userId: candid.user_id.toString(),
+        status: referralStatus(candid.status),
+    };
+}
+
+export function apiWalletConfig(domain: WalletConfig): ApiWalletConfig {
+    switch (domain.kind) {
+        case "auto_wallet": {
+            return { Auto: { min_cents_visible: Math.round(domain.minDollarValue * 100) } };
+        }
+        case "manual_wallet": {
+            return { Manual: { tokens: [...domain.tokens].map((t) => Principal.fromText(t)) } };
+        }
+    }
+    throw new UnsupportedValueError("Unexpected WalletConfig value received", domain);
+}
+
+function walletConfig(candid: ApiWalletConfig): WalletConfig {
+    if ("Auto" in candid) {
+        return {
+            kind: "auto_wallet",
+            minDollarValue: candid.Auto.min_cents_visible / 100,
+        };
+    }
+    if ("Manual" in candid) {
+        return {
+            kind: "manual_wallet",
+            tokens: new Set<string>(candid.Manual.tokens.map((p) => p.toString())),
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiWalletConfig value received", candid);
 }
 
 function pinNumberSettings(candid: ApiPinNumberSettings): PinNumberSettings {
@@ -980,23 +1043,27 @@ export function manageFavouritesResponse(
 
 export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse {
     if ("Success" in candid) {
+        const result = candid.Success;
         return {
             kind: "success",
-            timestamp: candid.Success.timestamp,
-            blockedUsers: optional(candid.Success.blocked_users, (b) => b.map((u) => u.toString())),
-            communities: communitiesUpdates(candid.Success.communities),
-            favouriteChats: favouriteChatsUpdates(candid.Success.favourite_chats),
-            groupChats: groupChatsUpdates(candid.Success.group_chats),
-            avatarId: optionUpdate(candid.Success.avatar_id, identity),
-            directChats: directChatsUpdates(candid.Success.direct_chats),
-            suspended: optional(candid.Success.suspended, identity),
-            pinNumberSettings: optionUpdate(candid.Success.pin_number_settings, pinNumberSettings),
-            achievementsLastSeen: optional(candid.Success.achievements_last_seen, identity),
-            achievements: candid.Success.achievements.map(chitEarned),
-            streakEnds: candid.Success.streak_ends,
-            streak: candid.Success.streak,
-            nextDailyClaim: candid.Success.next_daily_claim,
-            chitBalance: candid.Success.chit_balance,
+            timestamp: result.timestamp,
+            blockedUsers: optional(result.blocked_users, (b) => b.map((u) => u.toString())),
+            communities: communitiesUpdates(result.communities),
+            favouriteChats: favouriteChatsUpdates(result.favourite_chats),
+            groupChats: groupChatsUpdates(result.group_chats),
+            avatarId: optionUpdate(result.avatar_id, identity),
+            directChats: directChatsUpdates(result.direct_chats),
+            suspended: optional(result.suspended, identity),
+            pinNumberSettings: optionUpdate(result.pin_number_settings, pinNumberSettings),
+            achievementsLastSeen: optional(result.achievements_last_seen, identity),
+            achievements: result.achievements.map(chitEarned),
+            streakEnds: result.streak_ends,
+            streak: result.streak,
+            nextDailyClaim: result.next_daily_claim,
+            chitBalance: result.chit_balance,
+            totalChitEarned: result.total_chit_earned,
+            referrals: result.referrals.map(referral),
+            walletConfig: optional(result.wallet_config, walletConfig),
         };
     }
 
@@ -1071,89 +1138,6 @@ function updatedEvent([eventIndex, timestamp]: [number, bigint]): UpdatedEvent {
     return {
         eventIndex,
         timestamp,
-    };
-}
-
-function memberRole(candid: ApiGroupRole): MemberRole {
-    if ("Admin" in candid) {
-        return "admin";
-    }
-    if ("Moderator" in candid) {
-        return "moderator";
-    }
-    if ("Participant" in candid) {
-        return "member";
-    }
-    if ("Owner" in candid) {
-        return "owner";
-    }
-    throw new UnsupportedValueError("Unexpected ApiRole type received", candid);
-}
-
-function mention(candid: ApiMention): Mention {
-    return {
-        messageId: candid.message_id,
-        messageIndex: candid.message_index,
-        eventIndex: candid.event_index,
-        mentionedBy: candid.mentioned_by.toString(),
-    };
-}
-
-function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
-    const latestMessage = optional(candid.latest_message, messageEvent);
-    return {
-        id: { kind: "group_chat", groupId: candid.chat_id.toString() },
-        kind: "group_chat",
-        latestMessage,
-        name: candid.name,
-        description: candid.description,
-        public: candid.is_public,
-        historyVisible: candid.history_visible_to_new_joiners,
-        minVisibleEventIndex: candid.min_visible_event_index,
-        minVisibleMessageIndex: candid.min_visible_message_index,
-        latestEventIndex: candid.latest_event_index,
-        latestMessageIndex: optional(candid.latest_message_index, identity),
-        lastUpdated: candid.last_updated,
-        blobReference: optional(candid.avatar_id, (blobId) => ({
-            blobId,
-            canisterId: candid.chat_id.toString(),
-        })),
-        memberCount: candid.participant_count,
-        permissions: groupPermissions(candid.permissions_v2),
-        metrics: chatMetrics(candid.metrics),
-        subtype: optional(candid.subtype, apiGroupSubtype),
-        previewed: false,
-        frozen: candid.frozen.length > 0,
-        dateLastPinned: optional(candid.date_last_pinned, identity),
-        dateReadPinned: optional(candid.date_read_pinned, identity),
-        gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
-        level: "group",
-        eventsTTL: optional(candid.events_ttl, identity),
-        eventsTtlLastUpdated: candid.events_ttl_last_updated,
-        membership: {
-            joined: candid.joined,
-            role: memberRole(candid.role),
-            mentions: candid.mentions
-                .filter((m) => m.thread_root_message_index.length === 0)
-                .map(mention),
-            latestThreads: candid.latest_threads.map(threadSyncDetails),
-            myMetrics: chatMetrics(candid.my_metrics),
-            notificationsMuted: candid.notifications_muted,
-            readByMeUpTo: optional(candid.read_by_me_up_to, identity),
-            archived: candid.archived,
-            rulesAccepted: candid.rules_accepted,
-        },
-        localUserIndex: candid.local_user_index_canister_id.toString(),
-    };
-}
-
-function threadSyncDetails(candid: ApiThreadSyncDetails): ThreadSyncDetails {
-    return {
-        threadRootMessageIndex: candid.root_message_index,
-        lastUpdated: candid.last_updated,
-        readUpTo: optional(candid.read_up_to, identity),
-        latestEventIndex: optional(candid.latest_event, identity) ?? -1,
-        latestMessageIndex: optional(candid.latest_message, identity) ?? -1,
     };
 }
 

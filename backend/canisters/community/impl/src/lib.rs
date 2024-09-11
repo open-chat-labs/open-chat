@@ -12,7 +12,9 @@ use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStore
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::AccessRulesInternal;
-use group_community_common::{PaymentReceipts, PaymentRecipient, PendingPayment, PendingPaymentReason, PendingPaymentsQueue};
+use group_community_common::{
+    Achievements, PaymentReceipts, PaymentRecipient, PendingPayment, PendingPaymentReason, PendingPaymentsQueue,
+};
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use msgpack::serialize_then_unwrap;
@@ -24,12 +26,11 @@ use std::cell::RefCell;
 use std::ops::Deref;
 use std::time::Duration;
 use types::{
-    AccessGate, Achievement, BuildVersion, CanisterId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
+    AccessGate, BuildVersion, CanisterId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
     CommunityPermissions, CommunityRole, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, Milliseconds, Notification,
-    PaymentGate, Rules, TimestampMillis, Timestamped, UserId,
+    PaymentGate, Rules, TimestampMillis, Timestamped, UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
-use user_canister::c2c_notify_achievement;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
 use utils::time::MINUTE_IN_MS;
@@ -149,7 +150,11 @@ impl RuntimeState {
         jobs::make_pending_payments::start_job_if_required(self);
     }
 
-    pub fn summary(&self, member: Option<&CommunityMemberInternal>) -> CommunityCanisterCommunitySummary {
+    pub fn summary(
+        &self,
+        member: Option<&CommunityMemberInternal>,
+        is_invited: Option<bool>,
+    ) -> CommunityCanisterCommunitySummary {
         let data = &self.data;
 
         let (channels, membership) = if let Some(m) = member {
@@ -213,6 +218,7 @@ impl RuntimeState {
             channels,
             membership,
             user_groups: data.members.iter_user_groups().map(|u| u.into()).collect(),
+            is_invited,
             metrics: data.cached_chat_metrics.value.clone(),
         }
     }
@@ -270,15 +276,6 @@ impl RuntimeState {
             },
         }
     }
-
-    fn notify_user_of_achievements(&self, user_id: UserId, achievements: Vec<Achievement>) {
-        let args = c2c_notify_achievement::Args { achievements };
-        self.data.fire_and_forget_handler.send(
-            user_id.into(),
-            "c2c_notify_achievement_msgpack".to_string(),
-            serialize_then_unwrap(args),
-        );
-    }
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -328,6 +325,7 @@ struct Data {
     #[serde(with = "serde_bytes")]
     ic_root_key: Vec<u8>,
     event_store_client: EventStoreClient<CdkRuntime>,
+    achievements: Achievements,
 }
 
 impl Data {
@@ -336,6 +334,7 @@ impl Data {
         community_id: CommunityId,
         created_by_principal: Principal,
         created_by_user_id: UserId,
+        created_by_user_type: UserType,
         is_public: bool,
         name: String,
         description: String,
@@ -365,13 +364,20 @@ impl Data {
         let channels = Channels::new(
             community_id,
             created_by_user_id,
+            created_by_user_type,
             default_channels,
             default_channel_rules,
             is_public,
             rng,
             now,
         );
-        let members = CommunityMembers::new(created_by_principal, created_by_user_id, channels.public_channel_ids(), now);
+        let members = CommunityMembers::new(
+            created_by_principal,
+            created_by_user_id,
+            created_by_user_type,
+            channels.public_channel_ids(),
+            now,
+        );
         let events = CommunityEvents::new(name.clone(), description.clone(), created_by_user_id, now);
 
         Data {
@@ -416,6 +422,7 @@ impl Data {
             event_store_client: EventStoreClientBuilder::new(local_group_index_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
                 .build(),
+            achievements: Achievements::default(),
         }
     }
 
@@ -426,11 +433,14 @@ impl Data {
     pub fn is_accessible(&self, caller: Principal, invite_code: Option<u64>) -> bool {
         self.is_public
             || self.members.get(caller).is_some()
-            || self
-                .members
-                .lookup_user_id(caller)
-                .map_or(false, |u| self.invited_users.get(&u).is_some())
+            || self.is_invited(caller)
             || self.is_invite_code_valid(invite_code)
+    }
+
+    pub fn is_invited(&self, caller: Principal) -> bool {
+        self.members
+            .lookup_user_id(caller)
+            .map_or(false, |u| self.invited_users.get(&u).is_some())
     }
 
     pub fn build_chat_metrics(&mut self, now: TimestampMillis) {

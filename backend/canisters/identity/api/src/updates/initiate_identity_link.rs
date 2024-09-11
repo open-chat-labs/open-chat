@@ -5,6 +5,7 @@ use serde::Serialize;
 pub struct Args {
     #[serde(with = "serde_bytes")]
     pub public_key: Vec<u8>,
+    pub is_ii_principal: Option<bool>,
     pub link_to_principal: Principal,
 }
 
@@ -12,6 +13,7 @@ pub struct Args {
 pub enum Response {
     Success,
     AlreadyRegistered,
+    AlreadyLinkedToPrincipal,
     TargetUserNotFound,
     PublicKeyInvalid(String),
 }

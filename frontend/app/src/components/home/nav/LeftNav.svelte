@@ -12,7 +12,6 @@
         AvatarSize,
         type CommunitySummary,
         type OpenChat,
-        type UserSummary,
         emptyCombinedUnreadCounts,
     } from "openchat-client";
     import { mobileWidth } from "../../../stores/screenDimensions";
@@ -38,7 +37,7 @@
     $: chitState = client.chitStateStore;
     $: createdUser = client.user;
     $: userStore = client.userStore;
-    $: user = $userStore[$createdUser.userId] as UserSummary | undefined; // annoying that this annotation is necessary
+    $: user = $userStore.get($createdUser.userId);
     $: avatarSize = $mobileWidth ? AvatarSize.Small : AvatarSize.Default;
     $: communities = client.communitiesList;
     $: selectedCommunity = client.selectedCommunity;

@@ -1,5 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 
 // This is needed when we would otherwise use an Option<Option<T>> in which case it would not be
 // possible to tell which layer is None when represented as JSON
@@ -59,3 +60,26 @@ impl<T> OptionUpdate<T> {
         }
     }
 }
+
+macro_rules! option_update {
+    ($name:ident, $event_type:ty) => {
+        #[ts_export]
+        #[derive(CandidType, Clone, Debug)]
+        pub enum $name {
+            NoChange,
+            SetToNone,
+            SetToSome($event_type),
+        }
+    };
+}
+
+option_update!(OptionUpdateString, String);
+option_update!(OptionUpdateU64, u64);
+option_update!(OptionUpdateU128, u128);
+option_update!(OptionUpdateAccessGate, crate::AccessGate);
+option_update!(OptionUpdateFrozenGroupInfo, crate::FrozenGroupInfo);
+option_update!(OptionUpdateGroupPermissionRole, crate::GroupPermissionRole);
+option_update!(OptionUpdateGroupSubtype, crate::GroupSubtype);
+option_update!(OptionUpdateOptionalMessagePermissions, crate::OptionalMessagePermissions);
+option_update!(OptionUpdatePinNumberSettings, crate::PinNumberSettings);
+option_update!(OptionUpdateVideoCall, crate::VideoCall);

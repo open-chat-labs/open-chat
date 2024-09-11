@@ -1,8 +1,8 @@
 use crate::{read_state, RuntimeState};
+use canister_api_macros::query;
 use group_index_canister::lookup_channel_by_group_id::{Response::*, *};
-use ic_cdk::query;
 
-#[query]
+#[query(candid = true, msgpack = true)]
 fn lookup_channel_by_group_id(args: Args) -> Response {
     read_state(|state| lookup_channel_by_group_id_impl(args, state))
 }

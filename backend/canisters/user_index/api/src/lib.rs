@@ -2,7 +2,7 @@ use candid::Principal;
 use serde::{Deserialize, Serialize};
 use types::{
     CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, MessageContent, MessageContentInitial, MessageId, MessageIndex,
-    UniquePersonProof, User, UserId,
+    TimestampMillis, UniquePersonProof, User, UserId,
 };
 
 mod lifecycle;
@@ -31,7 +31,6 @@ pub struct UserRegistered {
     pub user_id: UserId,
     pub username: String,
     pub referred_by: Option<UserId>,
-    #[serde(default)]
     pub is_from_identity_canister: bool,
 }
 
@@ -41,6 +40,7 @@ pub struct UserJoinedGroup {
     pub chat_id: ChatId,
     pub local_user_index_canister_id: CanisterId,
     pub latest_message_index: Option<MessageIndex>,
+    pub group_canister_timestamp: TimestampMillis,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -49,6 +49,7 @@ pub struct UserJoinedCommunityOrChannel {
     pub community_id: CommunityId,
     pub local_user_index_canister_id: CanisterId,
     pub channels: Vec<ChannelLatestMessageIndex>,
+    pub community_canister_timestamp: TimestampMillis,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -74,4 +75,16 @@ pub struct OpenChatBotMessageV2 {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct UserDeleted {
     pub user_id: UserId,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ExternalAchievementInitial {
+    pub id: u32,
+    pub name: String,
+    pub logo: String,
+    pub url: String,
+    pub canister_id: CanisterId,
+    pub chit_reward: u32,
+    pub expires: TimestampMillis,
+    pub chit_budget: u32,
 }

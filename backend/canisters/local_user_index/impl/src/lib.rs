@@ -17,14 +17,14 @@ use std::time::Duration;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChannelLatestMessageIndex, ChatId, ChunkedCanisterWasm,
     CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails,
-    MessageContent, ReferralType, TimestampMillis, Timestamped, User, UserId,
+    MessageContent, ReferralType, TimestampMillis, Timestamped, User, UserId, VerifiedCredentialGateArgs,
 };
 use user_canister::Event as UserEvent;
 use user_index_canister::Event as UserIndexEvent;
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
-use utils::consts::{CYCLES_REQUIRED_FOR_UPGRADE, IC_ROOT_KEY};
+use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
 use utils::env::Environment;
 use utils::time::MINUTE_IN_MS;
 
@@ -65,17 +65,20 @@ impl RuntimeState {
         self.data.global_users.get(&caller).unwrap()
     }
 
-    pub fn get_calling_user_and_process_credentials(&mut self, credential_jwts: Option<&[String]>) -> GlobalUser {
+    pub fn get_calling_user_and_process_credentials(
+        &mut self,
+        credential_args: Option<&VerifiedCredentialGateArgs>,
+    ) -> GlobalUser {
         let mut user_details = self.calling_user();
 
-        if let Some(jwts) = credential_jwts {
+        if let Some(credential_args) = credential_args {
             let now = self.env.now();
             let user_id = user_details.user_id;
 
-            for jwt in jwts {
+            for jwt in credential_args.credential_jwts.iter() {
                 if let Ok(unique_person_proof) = verify_proof_of_unique_personhood(
-                    user_details.principal,
-                    self.data.identity_canister_id,
+                    credential_args.user_ii_principal,
+                    self.data.internet_identity_canister_id,
                     jwt,
                     &self.data.ic_root_key,
                     now,
@@ -90,12 +93,17 @@ impl RuntimeState {
                             UserEvent::NotifyUniquePersonProof(Box::new(unique_person_proof.clone())),
                         );
                     }
-                    user_details.unique_person_proof = Some(unique_person_proof);
+                    user_details.unique_person_proof = Some(unique_person_proof.clone());
+                    self.data
+                        .global_users
+                        .insert_unique_person_proof(user_id, unique_person_proof);
                 } else if let Ok(claims) =
                     verify_jwt::<Claims<DiamondMembershipDetails>>(jwt, self.data.oc_key_pair.public_key_pem())
                 {
                     if claims.claim_type() == "diamond_membership" {
-                        user_details.diamond_membership_expires_at = Some(claims.custom().expires_at);
+                        let expires_at = claims.custom().expires_at;
+                        user_details.diamond_membership_expires_at = Some(expires_at);
+                        self.data.global_users.set_diamond_membership_expiry_date(user_id, expires_at);
                     }
                 }
             }
@@ -160,7 +168,7 @@ impl RuntimeState {
             })
             .collect();
 
-        self.notify_user_joined_community_or_channel(user_id, community.community_id, channels);
+        self.notify_user_joined_community_or_channel(user_id, community.community_id, channels, community.last_updated);
     }
 
     pub fn notify_user_joined_channel(
@@ -176,6 +184,7 @@ impl RuntimeState {
                 channel_id: channel.channel_id,
                 latest_message_index: channel.latest_message.as_ref().map(|m| m.event.message_index),
             }],
+            channel.last_updated,
         );
     }
 
@@ -184,6 +193,7 @@ impl RuntimeState {
         user_id: UserId,
         community_id: CommunityId,
         channels: Vec<ChannelLatestMessageIndex>,
+        community_canister_timestamp: TimestampMillis,
     ) {
         let local_user_index_canister_id = self.env.canister_id();
         if self.data.local_users.get(&user_id).is_some() {
@@ -193,6 +203,7 @@ impl RuntimeState {
                     community_id,
                     local_user_index_canister_id,
                     channels,
+                    community_canister_timestamp,
                 })),
             );
         } else {
@@ -202,6 +213,7 @@ impl RuntimeState {
                     community_id,
                     local_user_index_canister_id,
                     channels,
+                    community_canister_timestamp,
                 },
             )));
         }
@@ -264,7 +276,6 @@ struct Data {
     pub proposals_bot_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
-    #[serde(default = "internet_identity_canister_id")]
     pub internet_identity_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
@@ -278,22 +289,14 @@ struct Data {
     pub referral_codes: ReferralCodes,
     pub rng_seed: [u8; 32],
     pub video_call_operators: Vec<Principal>,
-    pub oc_secret_key_der: Option<Vec<u8>>,
-    #[serde(default)]
     pub oc_key_pair: P256KeyPair,
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
     pub users_to_delete_queue: VecDeque<UserToDelete>,
-    #[serde(with = "serde_bytes", default = "ic_root_key")]
+    #[serde(with = "serde_bytes")]
     pub ic_root_key: Vec<u8>,
-}
-
-fn ic_root_key() -> Vec<u8> {
-    IC_ROOT_KEY.to_vec()
-}
-
-fn internet_identity_canister_id() -> CanisterId {
-    CanisterId::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()
+    #[serde(default)]
+    pub events_for_remote_users: Vec<(UserId, UserEvent)>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -353,7 +356,6 @@ impl Data {
             referral_codes: ReferralCodes::default(),
             rng_seed: [0; 32],
             video_call_operators,
-            oc_secret_key_der: None,
             oc_key_pair: oc_secret_key_der
                 .map(|sk| P256KeyPair::from_secret_key_der(sk).unwrap())
                 .unwrap_or_default(),
@@ -363,6 +365,7 @@ impl Data {
             event_deduper: EventDeduper::default(),
             users_to_delete_queue: VecDeque::new(),
             ic_root_key,
+            events_for_remote_users: Vec::new(),
         }
     }
 }

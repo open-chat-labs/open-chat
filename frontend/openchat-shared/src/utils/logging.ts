@@ -6,6 +6,7 @@ export type Logger = {
 
 import Rollbar, { type LogArgument } from "rollbar";
 import { offline } from "./network";
+import { AnonymousOperationError } from "../domain";
 
 let rollbar: Rollbar | undefined;
 
@@ -33,6 +34,8 @@ export function inititaliseLogger(apikey: string, version: string, env: string):
     }
     return {
         error(message: unknown, error: unknown, ...optionalParams: unknown[]): void {
+            if (error instanceof AnonymousOperationError) return;
+
             console.error(message as string, error, optionalParams);
             if (!offline()) {
                 rollbar?.error(error as LogArgument, message as LogArgument, optionalParams);

@@ -68,7 +68,7 @@
     $: multiUserChat = chat.kind === "group_chat" || chat.kind === "channel";
     $: remainingBalance =
         draftAmount > 0n ? cryptoBalance - draftAmount - totalFees : cryptoBalance;
-    $: minAmount = 10n * BigInt(numberOfWinners ?? 0) * transferFees;
+    $: minAmount = 100n * BigInt(numberOfWinners ?? 0) * transferFees;
     $: maxAmount = bigIntMax(cryptoBalance - totalFees, BigInt(0));
     $: valid = error === undefined && tokenInputState === "ok" && !tokenChanging;
     $: zero = cryptoBalance <= transferFees && !tokenChanging;

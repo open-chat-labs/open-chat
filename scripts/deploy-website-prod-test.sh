@@ -10,11 +10,6 @@ SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
-if ! cargo install --list | grep -Fq "icx-asset"
-then
-  cargo install icx-asset
-fi
-
 npm run --prefix frontend deploy:prod_test
 
 if [ $? -eq 0 ]; then

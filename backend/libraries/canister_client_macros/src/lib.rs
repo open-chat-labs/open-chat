@@ -56,8 +56,8 @@ macro_rules! generate_c2c_call {
         ) -> ic_cdk::api::call::CallResult<$method_name::Response> {
             let method_name = concat!(stringify!($method_name), "_msgpack");
 
-            canister_client::make_c2c_call(canister_id, method_name, args, msgpack::serialize, |r| {
-                msgpack::deserialize(r)
+            canister_client::make_c2c_call(canister_id, method_name, args, msgpack::serialize_to_vec, |r| {
+                msgpack::deserialize_from_slice(r)
             })
             .await
         }

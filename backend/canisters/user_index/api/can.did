@@ -101,6 +101,7 @@ type UsersResponse = variant {
     Success : record {
         users : vec UserSummaryV2;
         current_user : opt CurrentUserSummary;
+        deleted : vec UserId;
         timestamp : TimestampMillis;
     };
 };
@@ -114,6 +115,18 @@ type SearchResponse = variant {
     Success : record {
         users : vec UserSummary;
         timestamp : TimestampMillis;
+    };
+};
+
+type UsersChitArgs = record {
+    users : vec UserId;
+    year : nat16;
+    month : nat8;
+};
+
+type UsersChitResponse = variant {
+    Success : record {
+        chit : vec Chit;
     };
 };
 
@@ -152,6 +165,21 @@ type AddPlatformOperatorArgs = record {
 };
 
 type AddPlatformOperatorResponse = variant {
+    Success;
+};
+
+type RegisterExternalAchievementArgs = record {
+    id : nat32;
+    name : text;
+    logo : text;
+    url : text;
+    canister_id : CanisterId;
+    chit_reward : nat32;
+    expires : TimestampMillis;
+    chit_budget : nat32;
+};
+
+type RegisterExternalAchievementResponse = variant {
     Success;
 };
 
@@ -241,6 +269,26 @@ type MarkSuspectedBotResponse = variant {
     Success;
 };
 
+type ExternalAchievementsArgs = record {
+    updates_since : TimestampMillis;
+};
+
+type ExternalAchievementsResponse = variant {
+    Success : record {
+        last_updated: TimestampMillis;
+        achievements_added : vec ExternalAchievement;
+        achievements_removed : vec ExternalAchievement;
+    };
+    SuccessNoUpdates;
+};
+
+type ExternalAchievement = record {
+    id : nat32;
+    name : text;
+    url : text;
+    chit_reward : nat32;
+};
+
 type PayForDiamondMembershipArgs = record {
     duration : DiamondMembershipPlanDuration;
     token : Cryptocurrency;
@@ -300,23 +348,6 @@ type ReferralMetricsResponse = variant {
     };
 };
 
-type ReferralLeaderboardArgs = record {
-    filter : opt variant {
-        Month : record { year : nat32; month : nat8 };
-        CurrentMonth;
-    };
-    count : nat32;
-};
-
-type ReferralLeaderboardResponse = variant {
-    AllTime : vec ReferralStats;
-    Month : record {
-        year : nat32;
-        month : nat8;
-        results : vec ReferralStats;
-    };
-};
-
 type ReferralStats = record {
     user_id : UserId;
     username : text;
@@ -327,6 +358,11 @@ type ReferralStats = record {
 
 type ChitLeaderboardResponse = variant {
     Success : vec ChitUserBalance;
+    SuccessV2 : record {
+        all_time : vec ChitUserBalance;
+        this_month : vec ChitUserBalance;
+        last_month : vec ChitUserBalance;
+    };
 };
 
 type ChitUserBalance = record {
@@ -377,6 +413,22 @@ type AddReferralCodesResponse = variant {
     Success;
 };
 
+type AwardExternalAchievementArgs = record {
+    achievement_id : nat32;
+    user_id : UserId;
+};
+
+type AwardExternalAchievementResponse = variant {
+    Success : record {
+        remaining_chit_budget : nat32;
+    };
+    InvalidCaller;
+    NotFound;
+    AlreadyAwarded;
+    InsufficientBudget;
+    Expired;
+};
+
 service : {
     user_registration_canister : (EmptyArgs) -> (UserRegistrationCanisterResponse) query;
     public_key : (EmptyArgs) -> (PublicKeyResponse) query;
@@ -405,17 +457,21 @@ service : {
     // Search for users matching some query
     search : (SearchArgs) -> (SearchResponse) query;
 
+    // Gets the CHIT balances and streaks for multiple users for a chosen month
+    users_chit : (UsersChitArgs) -> (UsersChitResponse) query;
+
     // Retrieves the current fees to pay for Diamond membership
     diamond_membership_fees : (EmptyArgs) -> (DiamondMembershipFeesResponse) query;
 
     // Mark the caller as a suspected bot
     mark_suspected_bot : (MarkSuspectedBotArgs) -> (MarkSuspectedBotResponse);
 
+    external_achievements : (ExternalAchievementsArgs) -> (ExternalAchievementsResponse) query;
+
     pay_for_diamond_membership : (PayForDiamondMembershipArgs) -> (PayForDiamondMembershipResponse);
     submit_proof_of_unique_personhood : (SubmitProofOfUniquePersonhoodArgs) -> (SubmitProofOfUniquePersonhoodResponse);
     update_diamond_membership_subscription : (UpdateDiamondMembershipSubscriptionArgs) -> (UpdateDiamondMembershipSubscriptionResponse);
     referral_metrics : (EmptyArgs) -> (ReferralMetricsResponse) query;
-    referral_leaderboard : (ReferralLeaderboardArgs) -> (ReferralLeaderboardResponse) query;
     chit_leaderboard : (EmptyArgs) -> (ChitLeaderboardResponse) query;
 
     // List the platform moderators/operators
@@ -426,6 +482,7 @@ service : {
     // Only callable by SNS governance canister
     add_platform_moderator : (AddPlatformModeratorArgs) -> (AddPlatformModeratorResponse);
     add_platform_operator : (AddPlatformOperatorArgs) -> (AddPlatformOperatorResponse);
+    register_external_achievement : (RegisterExternalAchievementArgs) -> (RegisterExternalAchievementResponse);
     remove_platform_moderator : (RemovePlatformModeratorArgs) -> (RemovePlatformModeratorResponse);
     remove_platform_operator : (RemovePlatformOperatorArgs) -> (RemovePlatformOperatorResponse);
     assign_platform_moderators_group : (AssignPlatformModeratorsGroupArgs) -> (AssignPlatformModeratorsGroupResponse);
@@ -442,4 +499,7 @@ service : {
 
     // Only callable by OC dev team dfx identity
     add_referral_codes : (AddReferralCodesArgs) -> (AddReferralCodesResponse);
+
+    // Only callable by whitelisted canisters
+    award_external_achievement : (AwardExternalAchievementArgs) -> (AwardExternalAchievementResponse);
 };

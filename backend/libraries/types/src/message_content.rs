@@ -2,17 +2,18 @@ use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
     Achievement, CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, Cryptocurrency,
     MessageIndex, Milliseconds, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapExpired, P2PSwapReserved,
-    P2PSwapStatus, ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId, VideoCallType,
+    P2PSwapStatus, ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId, UserType, VideoCallType,
 };
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
+use ts_export::ts_export;
 
 pub const MAX_TEXT_LENGTH: u32 = 10_000;
 pub const MAX_TEXT_LENGTH_USIZE: usize = MAX_TEXT_LENGTH as usize;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub enum MessageContentInitial {
     Text(TextContent),
     Image(ImageContent),
@@ -31,7 +32,8 @@ pub enum MessageContentInitial {
     Custom(CustomContent),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub enum MessageContent {
     Text(TextContent),
     Image(ImageContent),
@@ -53,7 +55,8 @@ pub enum MessageContent {
     Custom(CustomContent),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub enum ContentValidationError {
     Empty,
     TextTooLong(u32),
@@ -250,7 +253,7 @@ impl MessageContentInitial {
     pub fn validate_for_new_message(
         &self,
         is_direct_chat: bool,
-        sender_is_bot: bool,
+        sender_user_type: UserType,
         forwarding: bool,
         now: TimestampMillis,
     ) -> Result<(), ContentValidationError> {
@@ -279,11 +282,6 @@ impl MessageContentInitial {
                     return Err(ContentValidationError::PrizeEndDateInThePast);
                 }
             }
-            MessageContentInitial::P2PSwap(_) => {
-                if sender_is_bot {
-                    return Err(ContentValidationError::Unauthorized);
-                }
-            }
             MessageContentInitial::GovernanceProposal(_)
             | MessageContentInitial::MessageReminderCreated(_)
             | MessageContentInitial::MessageReminder(_) => {
@@ -291,6 +289,10 @@ impl MessageContentInitial {
             }
             _ => {}
         };
+
+        if self.contains_crypto_transfer() && sender_user_type.is_bot() && !sender_user_type.is_oc_controlled_bot() {
+            return Err(ContentValidationError::Unauthorized);
+        }
 
         let is_empty = match self {
             MessageContentInitial::Text(t) => t.text.is_empty(),
@@ -407,7 +409,8 @@ impl From<MessageContentInitial> for MessageContent {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct TextContent {
     pub text: String,
 }
@@ -418,7 +421,8 @@ impl From<String> for TextContent {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct ImageContent {
     pub width: u32,
     pub height: u32,
@@ -428,7 +432,8 @@ pub struct ImageContent {
     pub blob_reference: Option<BlobReference>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct GiphyImageVariant {
     pub width: u32,
     pub height: u32,
@@ -436,7 +441,8 @@ pub struct GiphyImageVariant {
     pub mime_type: String,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct GiphyContent {
     pub caption: Option<String>,
     pub title: String,
@@ -444,7 +450,8 @@ pub struct GiphyContent {
     pub mobile: GiphyImageVariant,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct VideoContent {
     pub width: u32,
     pub height: u32,
@@ -455,14 +462,16 @@ pub struct VideoContent {
     pub video_blob_reference: Option<BlobReference>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct AudioContent {
     pub caption: Option<String>,
     pub mime_type: String,
     pub blob_reference: Option<BlobReference>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct FileContent {
     pub name: String,
     pub caption: Option<String>,
@@ -471,7 +480,8 @@ pub struct FileContent {
     pub blob_reference: Option<BlobReference>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct PollContent {
     pub config: PollConfig,
     pub votes: PollVotes,
@@ -504,14 +514,16 @@ pub enum RegisterVoteResult {
     OptionIndexOutOfRange,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct CryptoContent {
     pub recipient: UserId,
     pub transfer: CryptoTransaction,
     pub caption: Option<String>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct PrizeContentInitial {
     pub prizes_v2: Vec<u128>,
     pub transfer: CryptoTransaction,
@@ -520,7 +532,8 @@ pub struct PrizeContentInitial {
     pub diamond_only: bool,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct PrizeContent {
     pub prizes_remaining: u32,
     pub prizes_pending: u32,
@@ -531,14 +544,16 @@ pub struct PrizeContent {
     pub diamond_only: bool,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct PrizeWinnerContent {
     pub winner: UserId,
     pub transaction: CompletedCryptoTransaction,
     pub prize_message: MessageIndex,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct MessageReminderCreatedContent {
     pub reminder_id: u64,
     pub remind_at: TimestampMillis,
@@ -546,19 +561,22 @@ pub struct MessageReminderCreatedContent {
     pub hidden: bool,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct MessageReminderContent {
     pub reminder_id: u64,
     pub notes: Option<String>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct ReportedMessage {
     pub reports: Vec<MessageReport>,
     pub count: u32,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct MessageReport {
     pub reported_by: UserId,
     pub timestamp: TimestampMillis,
@@ -566,7 +584,8 @@ pub struct MessageReport {
     pub notes: Option<String>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct P2PSwapContentInitial {
     pub token0: TokenInfo,
     pub token0_amount: u128,
@@ -576,7 +595,8 @@ pub struct P2PSwapContentInitial {
     pub caption: Option<String>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct P2PSwapContent {
     pub swap_id: u32,
     pub token0: TokenInfo,
@@ -589,12 +609,14 @@ pub struct P2PSwapContent {
     pub status: P2PSwapStatus,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct VideoCallContentInitial {
     pub initiator: UserId,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct VideoCallContent {
     pub call_type: VideoCallType,
     pub ended: Option<TimestampMillis>,
@@ -602,7 +624,8 @@ pub struct VideoCallContent {
     pub hidden_participants: u32,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct CallParticipant {
     pub user_id: UserId,
     pub joined: TimestampMillis,
@@ -699,20 +722,24 @@ impl P2PSwapContent {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct CustomContent {
     pub kind: String,
     #[serde(with = "serde_bytes")]
+    #[ts(as = "Vec<u8>")]
     pub data: Vec<u8>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct DeletedBy {
     pub deleted_by: UserId,
     pub timestamp: TimestampMillis,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug, PartialEq, Eq)]
 pub struct BlobReference {
     pub canister_id: CanisterId,
     pub blob_id: u128,
@@ -724,7 +751,8 @@ impl BlobReference {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone)]
+#[ts_export]
+#[derive(CandidType, Clone)]
 pub struct ThumbnailData(pub String);
 
 impl Debug for ThumbnailData {

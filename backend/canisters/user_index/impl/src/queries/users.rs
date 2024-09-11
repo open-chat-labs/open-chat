@@ -1,10 +1,11 @@
 use crate::{read_state, RuntimeState};
-use ic_cdk::query;
+use canister_api_macros::query;
 use std::collections::HashSet;
 use types::{CurrentUserSummary, UserSummaryV2};
 use user_index_canister::users::{Response::*, *};
+use utils::time::MonthKey;
 
-#[query]
+#[query(candid = true, msgpack = true)]
 fn users(args: Args) -> Response {
     read_state(|state| users_impl(args, state))
 }
@@ -15,6 +16,7 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
 
     let mut user_ids = HashSet::new();
     let mut users = Vec::new();
+    let mut deleted = Vec::new();
     let mut current_user: Option<CurrentUserSummary> = None;
 
     if let Some(u) = state.data.users.get_by_principal(&caller) {
@@ -32,7 +34,7 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
                     username: u.username.clone(),
                     display_name: u.display_name.clone(),
                     avatar_id: u.avatar_id,
-                    is_bot: u.is_bot,
+                    is_bot: u.user_type.is_bot(),
                     is_platform_moderator: state.data.platform_moderators.contains(&u.user_id),
                     is_platform_operator: state.data.platform_operators.contains(&u.user_id),
                     suspension_details,
@@ -46,26 +48,30 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
         }
     }
 
+    let now_month = MonthKey::from_timestamp(now);
     for group in args.user_groups {
         let updated_since = group.updated_since;
-        users.extend(
-            group
-                .users
-                .into_iter()
-                .filter_map(|u| state.data.users.get_by_user_id(&u))
-                .filter(move |u| {
-                    (u.date_updated > updated_since
-                        || u.chit_updated > updated_since
-                        || (now > u.streak_ends && u.streak_ends > updated_since))
-                        && u.principal != caller
-                })
-                .filter(|u| user_ids.insert(u.user_id))
-                .map(|u| UserSummaryV2 {
-                    user_id: u.user_id,
-                    stable: (u.date_updated > updated_since).then(|| u.to_summary_stable(now)),
-                    volatile: Some(u.to_summary_volatile(now)),
-                }),
-        );
+
+        for user_id in group.users {
+            if !user_ids.insert(user_id) {
+                continue;
+            }
+            if let Some(user) = state.data.users.get_by_user_id(&user_id).filter(|u| {
+                (u.date_updated > updated_since
+                    || u.chit_updated > updated_since
+                    || (now > u.streak_ends && u.streak_ends > updated_since))
+                    && u.principal != caller
+            }) {
+                users.push(UserSummaryV2 {
+                    user_id,
+                    stable: (user.date_updated > updated_since).then(|| user.to_summary_stable(now)),
+                    volatile: Some(user.to_summary_volatile(now, now_month)),
+                });
+                // TODO maybe convert `deleted_users` to a HashMap?
+            } else if state.data.users.is_deleted(&user_id) {
+                deleted.push(user_id)
+            }
+        }
     }
 
     if let Some(ts) = args.users_suspended_since {
@@ -78,13 +84,14 @@ fn users_impl(args: Args, state: &RuntimeState) -> Response {
                 .take(100)
                 .filter(|u| user_ids.insert(*u))
                 .filter_map(|u| state.data.users.get_by_user_id(&u))
-                .map(|u| u.to_summary_v2(now)),
+                .map(|u| u.to_summary_v2(now, now_month)),
         );
     }
 
     Success(Result {
         users,
         current_user,
+        deleted,
         timestamp: now,
     })
 }

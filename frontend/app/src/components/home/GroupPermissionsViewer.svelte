@@ -12,11 +12,21 @@
 
     export let permissions: ChatPermissions;
     export let isPublic: boolean;
+    export let isCommunityPublic: boolean;
+    export let isChannel: boolean;
+    export let embeddedContent: boolean;
 
+    let items = embeddedContent
+        ? [i18nKey("permissions.general")]
+        : [
+              i18nKey("permissions.general"),
+              i18nKey("permissions.message"),
+              i18nKey("permissions.thread"),
+          ];
     let generalPartition: PermissionsByRole;
     let messagePartition: PermissionsByRole;
     let threadPartition: PermissionsByRole;
-    let selectedTab = 0;
+    let selectedTab = items[0].key;
 
     $: {
         generalPartition = partitionPermissions(
@@ -24,6 +34,7 @@
                 changeRoles: permissions.changeRoles,
                 updateGroup: permissions.updateGroup,
                 inviteUsers: permissions.inviteUsers,
+                addMembers: permissions.addMembers,
                 removeMembers: permissions.removeMembers,
                 deleteMessages: permissions.deleteMessages,
                 startVideoCall: permissions.startVideoCall,
@@ -73,6 +84,9 @@
         if (isPublic && key === "inviteUsers") {
             return false;
         }
+        if (key === "addMembers" && (!isChannel || isCommunityPublic)) {
+            return false;
+        }
         return true;
     }
 
@@ -101,18 +115,12 @@
     }
 </script>
 
-<TabHeader
-    bind:selected={selectedTab}
-    items={[
-        i18nKey("permissions.general"),
-        i18nKey("permissions.message"),
-        i18nKey("permissions.thread"),
-    ]} />
+<TabHeader bind:selected={selectedTab} {items} />
 
-{#if selectedTab === 0}
+{#if selectedTab === "permissions.general"}
     <GroupPermissionsPartitionViewer partition={generalPartition} />
-{:else if selectedTab === 1}
+{:else if selectedTab === "permissions.message"}
     <GroupPermissionsPartitionViewer partition={messagePartition} />
-{:else if selectedTab === 2}
+{:else if selectedTab === "permissions.thread"}
     <GroupPermissionsPartitionViewer partition={threadPartition} />
 {/if}

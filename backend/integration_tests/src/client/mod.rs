@@ -11,6 +11,7 @@ use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration};
 
 mod macros;
 
+pub mod airdrop_bot;
 pub mod community;
 pub mod cycles_dispenser;
 pub mod escrow;
@@ -104,7 +105,7 @@ pub fn register_user_with_referrer(env: &mut PocketIc, canister_ids: &CanisterId
     let (auth_principal, public_key) = random_internet_identity_principal();
     let session_key = random::<[u8; 32]>().to_vec();
     let create_identity_result =
-        identity::happy_path::create_identity(env, auth_principal, canister_ids.identity, public_key, session_key);
+        identity::happy_path::create_identity(env, auth_principal, canister_ids.identity, public_key, session_key, true);
 
     local_user_index::happy_path::register_user_with_referrer(
         env,

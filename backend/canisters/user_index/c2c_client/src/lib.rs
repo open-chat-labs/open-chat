@@ -7,6 +7,7 @@ use user_index_canister::*;
 generate_c2c_call!(c2c_lookup_user);
 generate_candid_c2c_call!(platform_moderators_group);
 generate_c2c_call!(user);
+generate_candid_c2c_call!(users_chit);
 
 // Updates
 generate_c2c_call!(c2c_mark_user_canister_empty);

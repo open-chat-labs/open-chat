@@ -2,11 +2,13 @@ use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
 use crate::{model::account_billing::AccountBilling, TIME_UNTIL_SUSPENDED_ACCOUNT_IS_DELETED_MILLIS};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 use types::{
-    is_default, is_empty_slice, CyclesTopUp, CyclesTopUpInternal, PhoneNumber, RegistrationFee, SuspensionAction,
+    is_default, is_empty_slice, BotConfig, CyclesTopUp, CyclesTopUpInternal, PhoneNumber, RegistrationFee, SuspensionAction,
     SuspensionDuration, TimestampMillis, UniquePersonProof, UserId, UserSummary, UserSummaryStable, UserSummaryV2,
-    UserSummaryVolatile,
+    UserSummaryVolatile, UserType,
 };
+use utils::time::MonthKey;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct User {
@@ -36,8 +38,10 @@ pub struct User {
     pub phone_status: PhoneStatus,
     #[serde(rename = "rb", default, skip_serializing_if = "Option::is_none")]
     pub referred_by: Option<UserId>,
-    #[serde(rename = "ib", default, skip_serializing_if = "is_default")]
-    pub is_bot: bool,
+    #[serde(rename = "ut", default, skip_serializing_if = "is_default")]
+    pub user_type: UserType,
+    #[serde(rename = "bc", default, skip_serializing_if = "Option::is_none")]
+    pub bot_config: Option<BotConfig>,
     #[serde(rename = "sd", default, skip_serializing_if = "Option::is_none")]
     pub suspension_details: Option<SuspensionDetails>,
     #[serde(
@@ -50,8 +54,8 @@ pub struct User {
     pub moderation_flags_enabled: u32,
     #[serde(rename = "rm", default, skip_serializing_if = "is_empty_slice")]
     pub reported_messages: Vec<u64>,
-    #[serde(rename = "cb", alias = "c2", default, skip_serializing_if = "is_default")]
-    pub chit_balance: i32,
+    #[serde(rename = "cm", default, skip_serializing_if = "is_default")]
+    pub chit_per_month: BTreeMap<MonthKey, i32>,
     #[serde(rename = "sk", alias = "s", default, skip_serializing_if = "is_default")]
     pub streak: u16,
     #[serde(rename = "se", default, skip_serializing_if = "is_default")]
@@ -60,19 +64,10 @@ pub struct User {
     pub chit_updated: TimestampMillis,
     #[serde(rename = "lc", default)]
     pub latest_chit_event: TimestampMillis,
+    #[serde(rename = "lcp", default)]
+    pub latest_chit_event_previous_month: TimestampMillis,
     #[serde(rename = "uh", default, skip_serializing_if = "Option::is_none")]
     pub unique_person_proof: Option<UniquePersonProof>,
-}
-
-impl User {
-    pub fn set_avatar_id(&mut self, avatar_id: Option<u128>, now: TimestampMillis) {
-        self.avatar_id = avatar_id;
-        self.date_updated = now;
-    }
-
-    pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
-        self.cycle_top_ups.push(top_up.into())
-    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq)]
@@ -90,7 +85,8 @@ impl User {
         username: String,
         now: TimestampMillis,
         referred_by: Option<UserId>,
-        is_bot: bool,
+        user_type: UserType,
+        bot_config: Option<BotConfig>,
     ) -> User {
         User {
             principal,
@@ -106,16 +102,18 @@ impl User {
             account_billing: AccountBilling::default(),
             phone_status: PhoneStatus::None,
             referred_by,
-            is_bot,
+            user_type,
+            bot_config,
             suspension_details: None,
             diamond_membership_details: DiamondMembershipDetailsInternal::default(),
             moderation_flags_enabled: 0,
             reported_messages: Vec::new(),
-            chit_balance: 0,
+            chit_per_month: BTreeMap::new(),
             chit_updated: now,
             streak: 0,
             streak_ends: 0,
             latest_chit_event: 0,
+            latest_chit_event_previous_month: 0,
             unique_person_proof: None,
         }
     }
@@ -126,21 +124,22 @@ impl User {
             username: self.username.clone(),
             display_name: self.display_name.clone(),
             avatar_id: self.avatar_id,
-            is_bot: self.is_bot,
+            is_bot: self.user_type.is_bot(),
             suspended: self.suspension_details.is_some(),
             diamond_member: self.diamond_membership_details.is_active(now),
             diamond_membership_status: self.diamond_membership_details.status(now),
-            chit_balance: self.chit_balance,
+            total_chit_earned: self.total_chit_earned(),
+            chit_balance: self.current_chit_balance(now),
             streak: self.streak(now),
             is_unique_person: self.unique_person_proof.is_some(),
         }
     }
 
-    pub fn to_summary_v2(&self, now: TimestampMillis) -> UserSummaryV2 {
+    pub fn to_summary_v2(&self, now: TimestampMillis, month_key: MonthKey) -> UserSummaryV2 {
         UserSummaryV2 {
             user_id: self.user_id,
             stable: Some(self.to_summary_stable(now)),
-            volatile: Some(self.to_summary_volatile(now)),
+            volatile: Some(self.to_summary_volatile(now, month_key)),
         }
     }
 
@@ -149,16 +148,18 @@ impl User {
             username: self.username.clone(),
             display_name: self.display_name.clone(),
             avatar_id: self.avatar_id,
-            is_bot: self.is_bot,
+            is_bot: self.user_type.is_bot(),
             suspended: self.suspension_details.is_some(),
             diamond_membership_status: self.diamond_membership_details.status(now),
             is_unique_person: self.unique_person_proof.is_some(),
+            bot_config: self.bot_config.clone(),
         }
     }
 
-    pub fn to_summary_volatile(&self, now: TimestampMillis) -> UserSummaryVolatile {
+    pub fn to_summary_volatile(&self, now: TimestampMillis, month_key: MonthKey) -> UserSummaryVolatile {
         UserSummaryVolatile {
-            chit_balance: self.chit_balance,
+            total_chit_earned: self.total_chit_earned(),
+            chit_balance: self.chit_per_month.get(&month_key).copied().unwrap_or_default(),
             streak: self.streak(now),
         }
     }
@@ -169,6 +170,26 @@ impl User {
         } else {
             0
         }
+    }
+
+    pub fn set_avatar_id(&mut self, avatar_id: Option<u128>, now: TimestampMillis) {
+        self.avatar_id = avatar_id;
+        self.date_updated = now;
+    }
+
+    pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
+        self.cycle_top_ups.push(top_up.into())
+    }
+
+    pub fn total_chit_earned(&self) -> i32 {
+        self.chit_per_month.values().copied().sum()
+    }
+
+    pub fn current_chit_balance(&self, now: TimestampMillis) -> i32 {
+        self.chit_per_month
+            .get(&MonthKey::from_timestamp(now))
+            .copied()
+            .unwrap_or_default()
     }
 }
 
@@ -220,16 +241,18 @@ impl Default for User {
             account_billing: AccountBilling::default(),
             phone_status: PhoneStatus::None,
             referred_by: None,
-            is_bot: false,
+            user_type: UserType::User,
+            bot_config: None,
             suspension_details: None,
             diamond_membership_details: DiamondMembershipDetailsInternal::default(),
             moderation_flags_enabled: 0,
             reported_messages: Vec::new(),
-            chit_balance: 0,
+            chit_per_month: BTreeMap::new(),
             streak: 0,
             streak_ends: 0,
             chit_updated: 0,
             latest_chit_event: 0,
+            latest_chit_event_previous_month: 0,
             unique_person_proof: None,
         }
     }

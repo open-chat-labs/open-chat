@@ -27,6 +27,7 @@ import type {
 import type {
     ChatNotFound,
     CommunityFrozen,
+    CommunityPublic,
     Failure,
     InternalError,
     NotAuthorised,
@@ -75,6 +76,7 @@ export type CommunitySummary = AccessControlled &
         primaryLanguage: string;
         userGroups: Map<number, UserGroupSummary>;
         localUserIndex: string;
+        isInvited: boolean;
     };
 
 export type DefaultChannel = {
@@ -87,6 +89,7 @@ export type CommunitySpecificState = {
     members: Map<string, Member>;
     blockedUsers: Set<string>;
     invitedUsers: Set<string>;
+    referrals: Set<string>;
     rules?: VersionedRules;
 };
 
@@ -103,14 +106,12 @@ export interface UserFailedError {
 export type AddMembersToChannelFailed = {
     kind: "add_to_channel_failed";
     usersLimitReached: string[];
-    usersFailedGateCheck: UserFailedGateCheck[];
     usersAlreadyInChannel: string[];
     usersFailedWithError: UserFailedError[];
 };
 export interface AddMembersToChannelPartialSuccess {
     kind: "add_to_channel_partial_success";
     usersLimitReached: string[];
-    usersFailedGateCheck: UserFailedGateCheck[];
     usersAlreadyInChannel: string[];
     usersFailedWithError: UserFailedError[];
     usersAdded: string[];
@@ -126,8 +127,10 @@ export type AddMembersToChannelResponse =
     | UserNotInCommunity
     | UserSuspended
     | CommunityFrozen
+    | CommunityPublic
     | InternalError
-    | Offline;
+    | Offline
+    | CommunityPublic;
 
 export type BlockCommunityUserResponse = Success | Failure | Offline;
 
@@ -222,6 +225,8 @@ export type CommunityCanisterChannelSummaryUpdates = {
     eventsTTL: OptionUpdate<bigint>;
     eventsTtlLastUpdated: bigint | undefined;
     videoCallInProgress: OptionUpdate<number>;
+    messageVisibleToNonMembers?: boolean;
+    externalUrl: OptionUpdate<string>;
 };
 
 export type CommunityMembershipUpdates = {
@@ -268,6 +273,7 @@ export type CommunityDetails = {
     rules: VersionedRules;
     lastUpdated: bigint;
     userGroups: Map<number, UserGroupDetails>;
+    referrals: Set<string>;
 };
 
 export type CommunityDetailsUpdates = {
@@ -280,6 +286,8 @@ export type CommunityDetailsUpdates = {
     lastUpdated: bigint;
     userGroups: UserGroupDetails[];
     userGroupsDeleted: Set<number>;
+    referralsRemoved: Set<string>;
+    referralsAdded: Set<string>;
 };
 
 export type ChannelSummaryResponse = Failure | ChannelSummary | CanisterNotFound;

@@ -1,9 +1,11 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
+use ts_export::ts_export;
 
 const MAX_REACTION_LENGTH_BYTES: usize = 40;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct Reaction(String);
 
 impl Reaction {

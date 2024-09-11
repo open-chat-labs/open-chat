@@ -1,14 +1,16 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{CompletedCryptoTransaction, FailedCryptoTransaction, Milliseconds, PendingCryptoTransaction};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, withdraw_crypto)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub withdrawal: PendingCryptoTransaction,
     pub pin: Option<String>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, withdraw_crypto)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success(CompletedCryptoTransaction),
     TransactionFailed(FailedCryptoTransaction),

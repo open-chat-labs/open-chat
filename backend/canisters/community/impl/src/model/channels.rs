@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use types::{
     ChannelId, ChannelMatch, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, CommunityId,
     GroupMembership, GroupMembershipUpdates, GroupPermissionRole, GroupPermissions, MultiUserChat, Rules, TimestampMillis,
-    Timestamped, UserId, MAX_THREADS_IN_SUMMARY,
+    Timestamped, UserId, UserType, MAX_THREADS_IN_SUMMARY,
 };
 
 use super::members::CommunityMembers;
@@ -28,9 +28,11 @@ pub struct Channel {
 }
 
 impl Channels {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         community_id: CommunityId,
         created_by: UserId,
+        created_by_user_type: UserType,
         default_channels: Vec<String>,
         default_channel_rules: Option<Rules>,
         is_community_public: bool,
@@ -48,6 +50,7 @@ impl Channels {
                         community_id,
                         name,
                         created_by,
+                        created_by_user_type,
                         default_channel_rules.clone(),
                         is_community_public,
                         rng.gen(),
@@ -182,6 +185,7 @@ impl Channel {
         community_id: CommunityId,
         name: String,
         created_by: UserId,
+        created_by_user_type: UserType,
         channel_rules: Option<Rules>,
         is_community_public: bool,
         anonymized_id: u128,
@@ -204,11 +208,13 @@ impl Channel {
                 None,
                 None,
                 true,
+                true,
                 permissions,
                 None,
                 None,
-                false,
+                created_by_user_type,
                 anonymized_id,
+                None,
                 now,
             ),
             date_imported: None,
@@ -225,12 +231,17 @@ impl Channel {
         let chat = &self.chat;
         let member = user_id.and_then(|user_id| chat.members.get(&user_id));
 
-        let (min_visible_event_index, min_visible_message_index) = if let Some(member) = member {
-            (member.min_visible_event_index(), member.min_visible_message_index())
-        } else if chat.is_public.value {
-            chat.min_visible_indexes_for_new_members.unwrap_or_default()
+        let (min_visible_event_index, min_visible_message_index, is_invited) = if let Some(member) = member {
+            (member.min_visible_event_index(), member.min_visible_message_index(), None)
         } else if let Some(invitation) = user_id.and_then(|user_id| chat.invited_users.get(&user_id)) {
-            (invitation.min_visible_event_index, invitation.min_visible_message_index)
+            (
+                invitation.min_visible_event_index,
+                invitation.min_visible_message_index,
+                Some(true),
+            )
+        } else if chat.is_public.value {
+            let (e, m) = chat.min_visible_indexes_for_new_members.unwrap_or_default();
+            (e, m, Some(false))
         } else {
             return None;
         };
@@ -278,6 +289,7 @@ impl Channel {
             avatar_id: types::Document::id(&chat.avatar),
             is_public: chat.is_public.value,
             history_visible_to_new_joiners: chat.history_visible_to_new_joiners,
+            messages_visible_to_non_members: chat.messages_visible_to_non_members.value,
             min_visible_event_index,
             min_visible_message_index,
             latest_message,
@@ -293,6 +305,8 @@ impl Channel {
             gate: chat.gate.value.clone(),
             membership,
             video_call_in_progress: chat.events.video_call_in_progress().value.clone(),
+            is_invited,
+            external_url: chat.external_url.value.clone(),
         })
     }
 
@@ -361,6 +375,7 @@ impl Channel {
             subtype: updates.subtype,
             avatar_id: updates.avatar_id,
             is_public: updates.is_public,
+            messages_visible_to_non_members: updates.messages_visible_to_non_members,
             latest_message,
             latest_message_sender_display_name,
             latest_event_index: updates.latest_event_index,
@@ -375,6 +390,7 @@ impl Channel {
             gate: updates.gate,
             membership,
             video_call_in_progress: updates.video_call_in_progress,
+            external_url: updates.external_url,
         })
     }
 

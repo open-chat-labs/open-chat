@@ -31,7 +31,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
     }
 
     fn get_balance_history(state: &RuntimeState) -> HttpResponse {
-        build_json_response(&state.data.balance_history)
+        build_json_response(&state.data.balance_history.iter().take(5000).collect::<Vec<_>>())
     }
 
     match extract_route(&request.url) {

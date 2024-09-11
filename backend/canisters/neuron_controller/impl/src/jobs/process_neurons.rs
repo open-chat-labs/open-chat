@@ -79,8 +79,10 @@ async fn run_async() {
 
         let mut neurons_updated = false;
         if !neurons_to_spawn.is_empty() {
-            spawn_neurons(neurons_to_spawn).await;
-            neurons_updated = true;
+            let any_spawned = spawn_neurons(neurons_to_spawn).await;
+            if any_spawned {
+                neurons_updated = true;
+            }
         }
 
         if !neurons_to_disburse.is_empty() {
@@ -90,12 +92,12 @@ async fn run_async() {
 
         if neurons_updated {
             // Refresh the neurons again given that they've been updated
-            ic_cdk_timers::set_timer(Duration::ZERO, || ic_cdk::spawn(run_async()));
+            ic_cdk_timers::set_timer(Duration::ZERO, run);
         }
     }
 }
 
-async fn spawn_neurons(neuron_ids: Vec<u64>) {
+async fn spawn_neurons(neuron_ids: Vec<u64>) -> bool {
     let (nns_ledger_canister_id, cycles_minting_canister_id, cycles_dispenser_canister_id) = read_state(|state| {
         (
             state.data.nns_ledger_canister_id,
@@ -118,6 +120,9 @@ async fn spawn_neurons(neuron_ids: Vec<u64>) {
             info!(neuron_id, "Spawning neuron from maturity");
             manage_nns_neuron_impl(neuron_id, Command::Spawn(Spawn::default())).await;
         }
+        true
+    } else {
+        false
     }
 }
 

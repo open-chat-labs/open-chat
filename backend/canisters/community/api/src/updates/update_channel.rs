@@ -16,6 +16,8 @@ pub struct Args {
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub gate: OptionUpdate<AccessGate>,
     pub public: Option<bool>,
+    pub messages_visible_to_non_members: Option<bool>,
+    pub external_url: OptionUpdate<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -35,6 +37,7 @@ pub enum Response {
     RulesTooLong(FieldTooLongResult),
     RulesTooShort(FieldTooShortResult),
     UserSuspended,
+    ExternalUrlInvalid,
     CommunityFrozen,
 }
 

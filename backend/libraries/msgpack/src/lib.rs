@@ -1,18 +1,42 @@
 use rmp_serde::{decode, encode};
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
+use std::io::{Read, Write};
 
-pub fn serialize<T: Serialize>(value: T) -> Result<Vec<u8>, encode::Error> {
-    rmp_serde::to_vec_named(&value)
+pub fn serialize<T, W>(value: T, writer: W) -> Result<(), encode::Error>
+where
+    T: Serialize,
+    W: Write,
+{
+    let mut ser = rmp_serde::Serializer::new(writer)
+        .with_struct_map()
+        .with_large_ints_as_strings();
+
+    value.serialize(&mut ser).map(|_| ())
 }
 
-pub fn deserialize<'a, T: Deserialize<'a>>(bytes: &'a [u8]) -> Result<T, decode::Error> {
+pub fn deserialize<T, R>(reader: R) -> Result<T, decode::Error>
+where
+    T: DeserializeOwned,
+    R: Read,
+{
+    rmp_serde::from_read(reader)
+}
+
+pub fn serialize_to_vec<T: Serialize>(value: T) -> Result<Vec<u8>, encode::Error> {
+    let mut bytes = Vec::new();
+    serialize(value, &mut bytes)?;
+    Ok(bytes)
+}
+
+pub fn deserialize_from_slice<'a, T: Deserialize<'a>>(bytes: &'a [u8]) -> Result<T, decode::Error> {
     rmp_serde::from_slice(bytes)
 }
 
 pub fn serialize_then_unwrap<T: Serialize>(value: T) -> Vec<u8> {
-    serialize(value).unwrap()
+    serialize_to_vec(value).unwrap()
 }
 
 pub fn deserialize_then_unwrap<'a, T: Deserialize<'a>>(bytes: &'a [u8]) -> T {
-    deserialize(bytes).unwrap()
+    deserialize_from_slice(bytes).unwrap()
 }
