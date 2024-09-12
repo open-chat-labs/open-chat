@@ -4,4 +4,4 @@ import type { SnsNeuronGate } from "./SnsNeuronGate";
 import type { TokenBalanceGate } from "./TokenBalanceGate";
 import type { VerifiedCredentialGate } from "./VerifiedCredentialGate";
 
-export type AccessGateNonComposite = "DiamondMember" | "LifetimeDiamondMember" | "UniquePerson" | { "VerifiedCredential": VerifiedCredentialGate } | { "SnsNeuron": SnsNeuronGate } | { "Payment": PaymentGate } | { "TokenBalance": TokenBalanceGate } | "Locked";
+export type AccessGateNonComposite = "DiamondMember" | "LifetimeDiamondMember" | "UniquePerson" | { "VerifiedCredential": VerifiedCredentialGate } | { "SnsNeuron": SnsNeuronGate } | { "Payment": PaymentGate } | { "TokenBalance": TokenBalanceGate } | "Locked" | "ReferredByMember";

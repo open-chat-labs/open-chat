@@ -62,6 +62,7 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(Acc
                             ii_origin: vc.ii_origin.clone(),
                         }
                     }),
+                    referred_by_member: false,
                     now: state.env.now(),
                 },
             )

@@ -31,6 +31,7 @@ pub struct CheckGateArgs {
     pub this_canister: CanisterId,
     pub unique_person_proof: Option<UniquePersonProof>,
     pub verified_credential_args: Option<CheckVerifiedCredentialGateArgs>,
+    pub referred_by_member: bool,
     pub now: TimestampMillis,
 }
 
@@ -71,6 +72,7 @@ async fn check_non_composite_gate(gate: AccessGateNonComposite, args: CheckGateA
         AccessGateNonComposite::Payment(g) => try_transfer_from(&g, args.user_id, args.this_canister, args.now).await,
         AccessGateNonComposite::TokenBalance(g) => check_token_balance_gate(&g, args.user_id).await,
         AccessGateNonComposite::Locked => CheckIfPassesGateResult::Failed(GateCheckFailedReason::Locked),
+        AccessGateNonComposite::ReferredByMember => check_referred_by_member_gate(args.referred_by_member),
     }
 }
 
@@ -88,7 +90,16 @@ fn check_non_composite_gate_synchronously(
         AccessGateNonComposite::VerifiedCredential(g) => {
             Some(check_verified_credential_gate(&g, args.verified_credential_args, args.now))
         }
+        AccessGateNonComposite::ReferredByMember => Some(check_referred_by_member_gate(args.referred_by_member)),
         _ => None,
+    }
+}
+
+fn check_referred_by_member_gate(referred_by_member: bool) -> CheckIfPassesGateResult {
+    if referred_by_member {
+        CheckIfPassesGateResult::Success
+    } else {
+        CheckIfPassesGateResult::Failed(GateCheckFailedReason::NotReferredByMember)
     }
 }
 
