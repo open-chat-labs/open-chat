@@ -506,10 +506,16 @@ export function externalAchievementsResponse(
     if ("Success" in value) {
         return {
             kind: "success",
+            achievementsRemoved: candid.Success.achievements_removed.map(externalAchievement),
+            lastUpdated: candid.Success.last_updated,
+            achievementsAdded: candid.Success.achievements_added.map(externalAchievement),
             achievementsRemoved: value.Success.achievements_removed.map(externalAchievement),
             lastUpdated: value.Success.last_updated,
             achievementsAdded: value.Success.achievements_added.map(externalAchievement),
         };
+    }
+    if ("SuccessNoUpdates" in candid) {
+        return { kind: "success_no_updates" };
     }
     throw new UnsupportedValueError("Unexpected ExternalAchievementsResponse type received", value);
 }
