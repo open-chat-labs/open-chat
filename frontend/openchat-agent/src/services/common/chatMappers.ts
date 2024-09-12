@@ -1675,6 +1675,7 @@ export function apiLeafAccessGate(domain: LeafGate): ApiAccessGateNonComposite {
     if (domain.kind === "diamond_gate") return { DiamondMember: null };
     if (domain.kind === "lifetime_diamond_gate") return { LifetimeDiamondMember: null };
     if (domain.kind === "unique_person_gate") return { UniquePerson: null };
+    if (domain.kind === "referred_by_member_gate") return { ReferredByMember: null };
     if (domain.kind === "credential_gate")
         return {
             VerifiedCredential: {

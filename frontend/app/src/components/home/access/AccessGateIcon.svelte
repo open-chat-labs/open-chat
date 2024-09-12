@@ -169,6 +169,17 @@
                 </TooltipPopup>
             </div>
         </TooltipWrapper>
+    {:else if gate.kind === "referred_by_member_gate"}
+        <TooltipWrapper {position} {align}>
+            <div slot="target" class="referred_by_member">
+                <AccountCheck size={$iconSize} color={"var(--txt)"} />
+            </div>
+            <div let:position let:align slot="tooltip">
+                <TooltipPopup {position} {align}>
+                    <Translatable resourceKey={i18nKey("access.referredByMemberInfo")} />
+                </TooltipPopup>
+            </div>
+        </TooltipWrapper>
     {:else if isNeuronGate(gate)}
         <TooltipWrapper {position} {align}>
             <img slot="target" class="icon" class:small src={tokenDetails?.logo} />

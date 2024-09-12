@@ -80,6 +80,7 @@
         "public": "Public",
         "readonlyTitle": "Access gate",
         "referredByMember": "Referred by member",
+        "referredByMemberInfo": "Only users who have been referred by a community member will be allowed to join",
         "subscriptionComingSoon": "Subscription model coming soon.",
         "title": "Update access gate",
         "tokenBalance": "Token balance",
