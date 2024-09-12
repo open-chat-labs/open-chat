@@ -19,6 +19,8 @@ import type {
     UsersApiResponse,
     UserSummaryUpdate,
     SubmitProofOfUniquePersonhoodResponse,
+    ExternalAchievementsResponse,
+    ExternalAchievement,
     ChitLeaderboardResponse,
 } from "openchat-shared";
 import { CommonResponses, UnsupportedValueError } from "openchat-shared";
@@ -34,6 +36,8 @@ import type {
     ApiDiamondMembershipStatus,
     ApiDiamondMembershipStatusFull,
     ApiDiamondMembershipSubscription,
+    ApiExternalAchievement,
+    ApiExternalAchievementsResponse,
     ApiPayForDiamondMembershipResponse,
     ApiSearchResponse,
     ApiSetDisplayNameResponse,
@@ -67,7 +71,7 @@ export function usersApiResponse(candid: ApiUsersResponse): UsersApiResponse {
             users: candid.Success.users.map(userSummaryUpdate),
             deletedUserIds: new Set(candid.Success.deleted.map((d) => d.toString())),
             currentUser: optional(candid.Success.current_user, (u) =>
-                currentUserSummary(u, timestamp),
+                currentUserSummary(u, timestamp)
             ),
         };
     }
@@ -76,7 +80,7 @@ export function usersApiResponse(candid: ApiUsersResponse): UsersApiResponse {
 
 export function currentUserSummary(
     candid: ApiCurrentUserSummary,
-    timestamp: bigint,
+    timestamp: bigint
 ): CurrentUserSummary {
     return {
         kind: "current_user_summary",
@@ -157,7 +161,7 @@ export function diamondStatus(candid: ApiDiamondMembershipStatus): DiamondMember
 }
 
 export function userRegistrationCanisterResponse(
-    candid: ApiUserRegistrationCanisterResponse,
+    candid: ApiUserRegistrationCanisterResponse
 ): string {
     if ("Success" in candid) {
         return candid.Success.toString();
@@ -211,7 +215,7 @@ function diamondMembershipStatus(candid: ApiDiamondMembershipStatusFull): Diamon
     }
     throw new UnsupportedValueError(
         "Unexpected ApiDiamondMembershipStatusFull type received",
-        candid,
+        candid
     );
 }
 
@@ -224,7 +228,7 @@ function diamondMembership(candid: ApiDiamondMembershipDetails): DiamondMembersh
 }
 
 function diamondMembershipSubscription(
-    candid: ApiDiamondMembershipSubscription,
+    candid: ApiDiamondMembershipSubscription
 ): DiamondMembershipSubscription {
     if ("OneMonth" in candid) {
         return "one_month";
@@ -240,7 +244,7 @@ function diamondMembershipSubscription(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiDiamondMembershipSubscription type received",
-        candid,
+        candid
     );
 }
 
@@ -365,7 +369,7 @@ export function unsuspendUserResponse(candid: ApiUnsuspendUserResponse): Unsuspe
 
 export function payForDiamondMembershipResponse(
     duration: DiamondMembershipDuration,
-    candid: ApiPayForDiamondMembershipResponse,
+    candid: ApiPayForDiamondMembershipResponse
 ): PayForDiamondMembershipResponse {
     if ("PaymentAlreadyInProgress" in candid) {
         return { kind: "payment_already_in_progress" };
@@ -406,12 +410,12 @@ export function payForDiamondMembershipResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiPayForDiamondMembershipResponse type received",
-        candid,
+        candid
     );
 }
 
 export function apiDiamondDuration(
-    domain: DiamondMembershipDuration,
+    domain: DiamondMembershipDuration
 ): ApiDiamondMembershipPlanDuration {
     if (domain === "one_month") {
         return { OneMonth: null };
@@ -429,7 +433,7 @@ export function apiDiamondDuration(
 }
 
 export function diamondMembershipFeesResponse(
-    candid: ApiDiamondMembershipFeesResponse,
+    candid: ApiDiamondMembershipFeesResponse
 ): DiamondMembershipFees[] {
     if ("Success" in candid) {
         return candid.Success.map((f) => ({
@@ -442,12 +446,12 @@ export function diamondMembershipFeesResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiDiamondMembershipFeesResponse type received",
-        candid,
+        candid
     );
 }
 
 export function chitLeaderboardResponse(
-    candid: ApiChitLeaderboardResponse,
+    candid: ApiChitLeaderboardResponse
 ): ChitLeaderboardResponse {
     if ("SuccessV2" in candid) {
         return {
@@ -474,7 +478,7 @@ function chitUserBalance(candid: ApiChitUserBalance): ChitUserBalance {
 }
 
 export function submitProofOfUniquePersonhoodResponse(
-    candid: ApiSubmitProofOfUniquePersonhoodResponse,
+    candid: ApiSubmitProofOfUniquePersonhoodResponse
 ): SubmitProofOfUniquePersonhoodResponse {
     if ("Success" in candid) {
         return CommonResponses.success();
@@ -487,6 +491,35 @@ export function submitProofOfUniquePersonhoodResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiSubmitProofOfUniquePersonhoodResponse type received",
-        candid,
+        candid
     );
+}
+
+export function externalAchievementsResponse(
+    candid: ApiExternalAchievementsResponse
+): ExternalAchievementsResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            achievementsRemoved: candid.Success.achievements_removed.map(externalAchievement),
+            lastUpdated: candid.Success.last_updated,
+            achievementsAdded: candid.Success.achievements_added.map(externalAchievement),
+        };
+    }
+    if ("SuccessNoUpdates" in candid) {
+        return { kind: "success_no_updates" };
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiExternalAchievementsResponse type received",
+        candid
+    );
+}
+
+function externalAchievement(candid: ApiExternalAchievement): ExternalAchievement {
+    return {
+        id: candid.id,
+        url: candid.url,
+        name: candid.name,
+        chitReward: candid.chit_reward,
+    };
 }

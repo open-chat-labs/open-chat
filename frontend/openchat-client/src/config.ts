@@ -19,6 +19,7 @@ export type OpenChatConfig = {
     meteredApiKey: string;
     enableMultiCrypto?: boolean;
     blobUrlPattern: string;
+    achievementUrlPath: string;
     proposalBotCanister: string;
     marketMakerCanister: string;
     signInWithEmailCanister: string;

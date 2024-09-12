@@ -5,10 +5,22 @@ import type { IDL } from '@dfinity/candid';
 export interface AcceptSwapSuccess { 'token1_txn_in' : bigint }
 export type AccessGate = { 'UniquePerson' : null } |
   { 'VerifiedCredential' : VerifiedCredentialGate } |
+  { 'ReferredByMember' : null } |
   { 'SnsNeuron' : SnsNeuronGate } |
   { 'Locked' : null } |
   { 'TokenBalance' : TokenBalanceGate } |
-  { 'Composite' : { 'and' : boolean, 'inner' : Array<AccessGate> } } |
+  {
+    'Composite' : { 'and' : boolean, 'inner' : Array<AccessGateNonComposite> }
+  } |
+  { 'DiamondMember' : null } |
+  { 'Payment' : PaymentGate } |
+  { 'LifetimeDiamondMember' : null };
+export type AccessGateNonComposite = { 'UniquePerson' : null } |
+  { 'VerifiedCredential' : VerifiedCredentialGate } |
+  { 'ReferredByMember' : null } |
+  { 'SnsNeuron' : SnsNeuronGate } |
+  { 'Locked' : null } |
+  { 'TokenBalance' : TokenBalanceGate } |
   { 'DiamondMember' : null } |
   { 'Payment' : PaymentGate } |
   { 'LifetimeDiamondMember' : null };
@@ -16,7 +28,6 @@ export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
 export type AccessTokenType = { 'JoinVideoCall' : null } |
-  { 'StartVideoCall' : null } |
   { 'StartVideoCallV2' : { 'call_type' : VideoCallType } } |
   { 'MarkVideoCallAsEnded' : null };
 export type AccessorId = Principal;
@@ -135,6 +146,16 @@ export interface AvatarChanged {
   'previous_avatar' : [] | [bigint],
   'new_avatar' : [] | [bigint],
 }
+export interface AwardExternalAchievementArgs {
+  'user_id' : UserId,
+  'achievement_id' : number,
+}
+export type AwardExternalAchievementResponse = { 'InvalidCaller' : null } |
+  { 'NotFound' : null } |
+  { 'Success' : { 'remaining_chit_budget' : number } } |
+  { 'AlreadyAwarded' : null } |
+  { 'InsufficientBudget' : null } |
+  { 'Expired' : null };
 export interface BannerChanged {
   'new_banner' : [] | [bigint],
   'changed_by' : UserId,
@@ -303,6 +324,7 @@ export interface ChitEarned {
 }
 export type ChitEarnedReason = { 'DailyClaim' : null } |
   { 'Achievement' : Achievement } |
+  { 'ExternalAchievement' : string } |
   { 'MemeContestWinner' : null } |
   { 'Referral' : ReferralStatus };
 export type ChitLeaderboardResponse = { 'Success' : Array<ChitUserBalance> } |
@@ -667,6 +689,21 @@ export interface EventsTimeToLiveUpdated {
   'new_ttl' : [] | [Milliseconds],
   'updated_by' : UserId,
 }
+export interface ExternalAchievement {
+  'id' : number,
+  'url' : string,
+  'name' : string,
+  'chit_reward' : number,
+}
+export interface ExternalAchievementsArgs { 'updates_since' : TimestampMillis }
+export type ExternalAchievementsResponse = {
+    'Success' : {
+      'achievements_removed' : Array<ExternalAchievement>,
+      'last_updated' : TimestampMillis,
+      'achievements_added' : Array<ExternalAchievement>,
+    }
+  } |
+  { 'SuccessNoUpdates' : null };
 export interface ExternalUrlUpdated {
   'new_url' : [] | [string],
   'updated_by' : UserId,
@@ -699,6 +736,7 @@ export type FrozenGroupUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : FrozenGroupInfo };
 export type GateCheckFailedReason = { 'NotLifetimeDiamondMember' : null } |
+  { 'NotReferredByMember' : null } |
   { 'NotDiamondMember' : null } |
   { 'PaymentFailed' : ICRC2_TransferFromError } |
   { 'InsufficientBalance' : bigint } |
@@ -1585,6 +1623,17 @@ export type ReferralStatus = { 'Diamond' : null } |
   { 'Registered' : null };
 export type ReferralType = { 'User' : null } |
   { 'BtcMiami' : null };
+export interface RegisterExternalAchievementArgs {
+  'id' : number,
+  'url' : string,
+  'expires' : TimestampMillis,
+  'logo' : string,
+  'name' : string,
+  'canister_id' : CanisterId,
+  'chit_budget' : number,
+  'chit_reward' : number,
+}
+export type RegisterExternalAchievementResponse = { 'Success' : null };
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface RemovePlatformModeratorArgs { 'user_id' : UserId }
@@ -1964,12 +2013,20 @@ export interface _SERVICE {
     [AssignPlatformModeratorsGroupArgs],
     AssignPlatformModeratorsGroupResponse
   >,
+  'award_external_achievement' : ActorMethod<
+    [AwardExternalAchievementArgs],
+    AwardExternalAchievementResponse
+  >,
   'check_username' : ActorMethod<[CheckUsernameArgs], CheckUsernameResponse>,
   'chit_leaderboard' : ActorMethod<[EmptyArgs], ChitLeaderboardResponse>,
   'current_user' : ActorMethod<[EmptyArgs], CurrentUserResponse>,
   'diamond_membership_fees' : ActorMethod<
     [EmptyArgs],
     DiamondMembershipFeesResponse
+  >,
+  'external_achievements' : ActorMethod<
+    [ExternalAchievementsArgs],
+    ExternalAchievementsResponse
   >,
   'mark_suspected_bot' : ActorMethod<
     [MarkSuspectedBotArgs],
@@ -1990,6 +2047,10 @@ export interface _SERVICE {
   >,
   'public_key' : ActorMethod<[EmptyArgs], PublicKeyResponse>,
   'referral_metrics' : ActorMethod<[EmptyArgs], ReferralMetricsResponse>,
+  'register_external_achievement' : ActorMethod<
+    [RegisterExternalAchievementArgs],
+    RegisterExternalAchievementResponse
+  >,
   'remove_platform_moderator' : ActorMethod<
     [RemovePlatformModeratorArgs],
     RemovePlatformModeratorResponse

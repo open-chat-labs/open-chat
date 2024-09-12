@@ -1,5 +1,4 @@
 export const idlFactory = ({ IDL }) => {
-  const AccessGate = IDL.Rec();
   const ChannelId = IDL.Nat;
   const MessageId = IDL.Nat;
   const MessageIndex = IDL.Nat32;
@@ -290,22 +289,32 @@ export const idlFactory = ({ IDL }) => {
     'ledger_canister_id' : CanisterId,
     'amount' : IDL.Nat,
   });
-  AccessGate.fill(
-    IDL.Variant({
-      'UniquePerson' : IDL.Null,
-      'VerifiedCredential' : VerifiedCredentialGate,
-      'SnsNeuron' : SnsNeuronGate,
-      'Locked' : IDL.Null,
-      'TokenBalance' : TokenBalanceGate,
-      'Composite' : IDL.Record({
-        'and' : IDL.Bool,
-        'inner' : IDL.Vec(AccessGate),
-      }),
-      'DiamondMember' : IDL.Null,
-      'Payment' : PaymentGate,
-      'LifetimeDiamondMember' : IDL.Null,
-    })
-  );
+  const AccessGateNonComposite = IDL.Variant({
+    'UniquePerson' : IDL.Null,
+    'VerifiedCredential' : VerifiedCredentialGate,
+    'ReferredByMember' : IDL.Null,
+    'SnsNeuron' : SnsNeuronGate,
+    'Locked' : IDL.Null,
+    'TokenBalance' : TokenBalanceGate,
+    'DiamondMember' : IDL.Null,
+    'Payment' : PaymentGate,
+    'LifetimeDiamondMember' : IDL.Null,
+  });
+  const AccessGate = IDL.Variant({
+    'UniquePerson' : IDL.Null,
+    'VerifiedCredential' : VerifiedCredentialGate,
+    'ReferredByMember' : IDL.Null,
+    'SnsNeuron' : SnsNeuronGate,
+    'Locked' : IDL.Null,
+    'TokenBalance' : TokenBalanceGate,
+    'Composite' : IDL.Record({
+      'and' : IDL.Bool,
+      'inner' : IDL.Vec(AccessGateNonComposite),
+    }),
+    'DiamondMember' : IDL.Null,
+    'Payment' : PaymentGate,
+    'LifetimeDiamondMember' : IDL.Null,
+  });
   const GroupCanisterThreadDetails = IDL.Record({
     'root_message_index' : MessageIndex,
     'last_updated' : TimestampMillis,
@@ -1432,15 +1441,6 @@ export const idlFactory = ({ IDL }) => {
     'ProposalNotAcceptingVotes' : IDL.Null,
     'InternalError' : IDL.Text,
   });
-  const RegisterProposalVoteV2Response = IDL.Variant({
-    'ProposalMessageNotFound' : IDL.Null,
-    'UserNotInChannel' : IDL.Null,
-    'ChannelNotFound' : IDL.Null,
-    'Success' : IDL.Null,
-    'UserNotInCommunity' : IDL.Null,
-    'UserSuspended' : IDL.Null,
-    'CommunityFrozen' : IDL.Null,
-  });
   const RemoveMemberArgs = IDL.Record({ 'user_id' : UserId });
   const RemoveMemberResponse = IDL.Variant({
     'NotAuthorized' : IDL.Null,
@@ -2181,11 +2181,6 @@ export const idlFactory = ({ IDL }) => {
     'register_proposal_vote' : IDL.Func(
         [RegisterProposalVoteArgs],
         [RegisterProposalVoteResponse],
-        [],
-      ),
-    'register_proposal_vote_v2' : IDL.Func(
-        [RegisterProposalVoteArgs],
-        [RegisterProposalVoteV2Response],
         [],
       ),
     'remove_member' : IDL.Func([RemoveMemberArgs], [RemoveMemberResponse], []),
