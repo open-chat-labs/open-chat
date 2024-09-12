@@ -30,7 +30,7 @@ fi
 
 cd backend/integration_tests
 echo "PocketIC download starting"
-curl -sLO https://download.dfinity.systems/ic/a8a14a1d979b26ac5809cc575f0ca5e4175f8b71/binaries/x86_64-$PLATFORM/pocket-ic.gz || exit 1
+curl -sLO https://download.dfinity.systems/ic/691624bbd7d8e044208e5c8c21d1221402f706f8/binaries/x86_64-$PLATFORM/pocket-ic.gz || exit 1
 gzip -df pocket-ic.gz
 chmod +x pocket-ic
 echo "PocketIC download completed"
