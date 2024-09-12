@@ -32,7 +32,7 @@ import type {
     CommunityIdentifier,
     CommunitySummary,
 } from "../community";
-import type { Achievement, ChitEarned } from "../chit";
+import type { ChitEarned } from "../chit";
 import type { WalletConfig } from "../crypto";
 
 export type CallerNotInGroup = { kind: "caller_not_in_group" };
@@ -983,7 +983,7 @@ export type ChatStateFull = {
     favouriteChats: ChatIdentifier[];
     pinNumberSettings: PinNumberSettings | undefined;
     userCanisterLocalUserIndex: string;
-    achievements: Set<Achievement>;
+    achievements: Set<string>;
     achievementsLastSeen: bigint;
     chitState: ChitState;
     referrals: Referral[];
@@ -1768,7 +1768,8 @@ export type GateCheckFailedReason =
     | "failed_verified_credential_check"
     | "no_unique_person_proof"
     | "not_lifetime_diamond"
-    | "locked";
+    | "locked"
+    | "not_referred_by_member";
 
 export type ChatFrozenEvent = {
     kind: "chat_frozen";

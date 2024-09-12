@@ -18,7 +18,12 @@ export type LeafGate =
     | CredentialGate
     | TokenBalanceGate
     | UniquePersonGate
-    | LockedGate;
+    | LockedGate
+    | ReferredByMemberGate;
+
+export type ReferredByMemberGate = {
+    kind: "referred_by_member_gate";
+};
 
 export type LockedGate = {
     kind: "locked_gate";

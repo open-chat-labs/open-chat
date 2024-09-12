@@ -1,5 +1,4 @@
 export const idlFactory = ({ IDL }) => {
-  const AccessGate = IDL.Rec();
   const CanisterId = IDL.Principal;
   const ChatId = CanisterId;
   const CommunityId = CanisterId;
@@ -15,7 +14,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const AccessTokenType = IDL.Variant({
     'JoinVideoCall' : IDL.Null,
-    'StartVideoCall' : IDL.Null,
     'StartVideoCallV2' : IDL.Record({ 'call_type' : VideoCallType }),
     'MarkVideoCallAsEnded' : IDL.Null,
   });
@@ -626,22 +624,32 @@ export const idlFactory = ({ IDL }) => {
     'ledger_canister_id' : CanisterId,
     'amount' : IDL.Nat,
   });
-  AccessGate.fill(
-    IDL.Variant({
-      'UniquePerson' : IDL.Null,
-      'VerifiedCredential' : VerifiedCredentialGate,
-      'SnsNeuron' : SnsNeuronGate,
-      'Locked' : IDL.Null,
-      'TokenBalance' : TokenBalanceGate,
-      'Composite' : IDL.Record({
-        'and' : IDL.Bool,
-        'inner' : IDL.Vec(AccessGate),
-      }),
-      'DiamondMember' : IDL.Null,
-      'Payment' : PaymentGate,
-      'LifetimeDiamondMember' : IDL.Null,
-    })
-  );
+  const AccessGateNonComposite = IDL.Variant({
+    'UniquePerson' : IDL.Null,
+    'VerifiedCredential' : VerifiedCredentialGate,
+    'ReferredByMember' : IDL.Null,
+    'SnsNeuron' : SnsNeuronGate,
+    'Locked' : IDL.Null,
+    'TokenBalance' : TokenBalanceGate,
+    'DiamondMember' : IDL.Null,
+    'Payment' : PaymentGate,
+    'LifetimeDiamondMember' : IDL.Null,
+  });
+  const AccessGate = IDL.Variant({
+    'UniquePerson' : IDL.Null,
+    'VerifiedCredential' : VerifiedCredentialGate,
+    'ReferredByMember' : IDL.Null,
+    'SnsNeuron' : SnsNeuronGate,
+    'Locked' : IDL.Null,
+    'TokenBalance' : TokenBalanceGate,
+    'Composite' : IDL.Record({
+      'and' : IDL.Bool,
+      'inner' : IDL.Vec(AccessGateNonComposite),
+    }),
+    'DiamondMember' : IDL.Null,
+    'Payment' : PaymentGate,
+    'LifetimeDiamondMember' : IDL.Null,
+  });
   const GroupGateUpdated = IDL.Record({
     'updated_by' : UserId,
     'new_gate' : IDL.Opt(AccessGate),
@@ -1154,6 +1162,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const GateCheckFailedReason = IDL.Variant({
     'NotLifetimeDiamondMember' : IDL.Null,
+    'NotReferredByMember' : IDL.Null,
     'NotDiamondMember' : IDL.Null,
     'PaymentFailed' : ICRC2_TransferFromError,
     'InsufficientBalance' : IDL.Nat,

@@ -73,6 +73,7 @@
             videoBridgeUrl: process.env.VIDEO_BRIDGE_URL!,
             meteredApiKey: process.env.METERED_APIKEY!,
             blobUrlPattern: process.env.BLOB_URL_PATTERN!,
+            achievementUrlPath: process.env.ACHIEVEMENT_URL_PATH!,
             proposalBotCanister: process.env.PROPOSALS_BOT_CANISTER!,
             marketMakerCanister: process.env.MARKET_MAKER_CANISTER!,
             signInWithEmailCanister: process.env.SIGN_IN_WITH_EMAIL_CANISTER!,

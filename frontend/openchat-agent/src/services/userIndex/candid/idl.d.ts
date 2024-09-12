@@ -32,6 +32,9 @@ import {
     DiamondMembershipSubscription,
     ClaimDailyChitResponse,
     ChitUserBalance,
+    SubmitProofOfUniquePersonhoodResponse,
+    ExternalAchievementsResponse,
+    ExternalAchievement,
     ChitLeaderboardResponse,
     SubmitProofOfUniquePersonhoodResponse
 } from "./types";
@@ -68,6 +71,9 @@ export {
     DiamondMembershipSubscription as ApiDiamondMembershipSubscription,
     ClaimDailyChitResponse as ApiClaimDailyChitResponse,
     ChitUserBalance as ApiChitUserBalance,
+    SubmitProofOfUniquePersonhoodResponse as ApiSubmitProofOfUniquePersonhoodResponse,
+    ExternalAchievementsResponse as ApiExternalAchievementsResponse,
+    ExternalAchievement as ApiExternalAchievement,
     ChitLeaderboardResponse as ApiChitLeaderboardResponse,
     SubmitProofOfUniquePersonhoodResponse as ApiSubmitProofOfUniquePersonhoodResponse
 };

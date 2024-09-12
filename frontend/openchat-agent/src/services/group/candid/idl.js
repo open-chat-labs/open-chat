@@ -1,5 +1,4 @@
 export const idlFactory = ({ IDL }) => {
-  const AccessGate = IDL.Rec();
   const MessageId = IDL.Nat;
   const MessageIndex = IDL.Nat32;
   const AcceptP2PSwapArgs = IDL.Record({
@@ -852,22 +851,32 @@ export const idlFactory = ({ IDL }) => {
     'ledger_canister_id' : CanisterId,
     'amount' : IDL.Nat,
   });
-  AccessGate.fill(
-    IDL.Variant({
-      'UniquePerson' : IDL.Null,
-      'VerifiedCredential' : VerifiedCredentialGate,
-      'SnsNeuron' : SnsNeuronGate,
-      'Locked' : IDL.Null,
-      'TokenBalance' : TokenBalanceGate,
-      'Composite' : IDL.Record({
-        'and' : IDL.Bool,
-        'inner' : IDL.Vec(AccessGate),
-      }),
-      'DiamondMember' : IDL.Null,
-      'Payment' : PaymentGate,
-      'LifetimeDiamondMember' : IDL.Null,
-    })
-  );
+  const AccessGateNonComposite = IDL.Variant({
+    'UniquePerson' : IDL.Null,
+    'VerifiedCredential' : VerifiedCredentialGate,
+    'ReferredByMember' : IDL.Null,
+    'SnsNeuron' : SnsNeuronGate,
+    'Locked' : IDL.Null,
+    'TokenBalance' : TokenBalanceGate,
+    'DiamondMember' : IDL.Null,
+    'Payment' : PaymentGate,
+    'LifetimeDiamondMember' : IDL.Null,
+  });
+  const AccessGate = IDL.Variant({
+    'UniquePerson' : IDL.Null,
+    'VerifiedCredential' : VerifiedCredentialGate,
+    'ReferredByMember' : IDL.Null,
+    'SnsNeuron' : SnsNeuronGate,
+    'Locked' : IDL.Null,
+    'TokenBalance' : TokenBalanceGate,
+    'Composite' : IDL.Record({
+      'and' : IDL.Bool,
+      'inner' : IDL.Vec(AccessGateNonComposite),
+    }),
+    'DiamondMember' : IDL.Null,
+    'Payment' : PaymentGate,
+    'LifetimeDiamondMember' : IDL.Null,
+  });
   const GroupGateUpdated = IDL.Record({
     'updated_by' : UserId,
     'new_gate' : IDL.Opt(AccessGate),
