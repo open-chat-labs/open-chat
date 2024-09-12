@@ -53,7 +53,6 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
   });
   const ChitLeaderboardResponse = IDL.Variant({
-    'Success' : IDL.Vec(ChitUserBalance),
     'SuccessV2' : IDL.Record({
       'all_time' : IDL.Vec(ChitUserBalance),
       'last_month' : IDL.Vec(ChitUserBalance),
