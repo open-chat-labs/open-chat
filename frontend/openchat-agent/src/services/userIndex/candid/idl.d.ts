@@ -32,6 +32,7 @@ import {
     DiamondMembershipSubscription,
     ClaimDailyChitResponse,
     ChitUserBalance,
+    ChitLeaderboardResponse,
     SubmitProofOfUniquePersonhoodResponse
 } from "./types";
 export {
@@ -67,6 +68,7 @@ export {
     DiamondMembershipSubscription as ApiDiamondMembershipSubscription,
     ClaimDailyChitResponse as ApiClaimDailyChitResponse,
     ChitUserBalance as ApiChitUserBalance,
+    ChitLeaderboardResponse as ApiChitLeaderboardResponse,
     SubmitProofOfUniquePersonhoodResponse as ApiSubmitProofOfUniquePersonhoodResponse
 };
 

@@ -10,6 +10,12 @@ export type ClaimDailyChitResponse =
           nextDailyChitClaim: bigint;
       };
 
+export type ChitLeaderboardResponse = {
+    allTime: ChitUserBalance[];
+    lastMonth: ChitUserBalance[];
+    thisMonth: ChitUserBalance[];
+};
+
 export type ChitUserBalance = {
     userId: string;
     balance: number;

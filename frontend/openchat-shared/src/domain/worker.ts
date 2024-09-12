@@ -192,7 +192,7 @@ import type {
 import type {
     ChitEventsRequest,
     ChitEventsResponse,
-    ChitUserBalance,
+    ChitLeaderboardResponse,
     ClaimDailyChitResponse,
 } from "./chit";
 import type { JsonnableDelegationChain } from "@dfinity/identity";
@@ -1457,7 +1457,7 @@ export type WorkerResponseInner =
     | VideoCallParticipantsResponse
     | SetPinNumberResponse
     | ClaimDailyChitResponse
-    | ChitUserBalance[]
+    | ChitLeaderboardResponse
     | ChitEventsResponse
     | SubmitProofOfUniquePersonhoodResponse
     | AuthenticationPrincipalsResponse;
@@ -2122,7 +2122,7 @@ export type WorkerResult<T> = T extends Init
     : T extends ClaimDailyChit
     ? ClaimDailyChitResponse
     : T extends ChitLeaderboard
-    ? ChitUserBalance[]
+    ? ChitLeaderboardResponse
     : T extends ChitEventsRequest
     ? ChitEventsResponse
     : T extends MarkAchievementsSeen

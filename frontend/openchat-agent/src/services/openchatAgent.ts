@@ -211,6 +211,7 @@ import type {
     TopUpNeuronResponse,
     Referral,
     WalletConfig,
+    ChitLeaderboardResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -244,7 +245,6 @@ import { SignInWithSolanaClient } from "./signInWithSolana/signInWithSolana.clie
 import type { SetPinNumberResponse } from "openchat-shared";
 import type { PinNumberSettings } from "openchat-shared";
 import type { ClaimDailyChitResponse } from "openchat-shared";
-import type { ChitUserBalance } from "openchat-shared";
 import { createHttpAgentSync } from "../utils/httpAgent";
 import {
     deleteCommunityReferral,
@@ -3607,7 +3607,7 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.claimDailyChit();
     }
 
-    chitLeaderboard(): Promise<ChitUserBalance[]> {
+    chitLeaderboard(): Promise<ChitLeaderboardResponse> {
         return this._userIndexClient.chitLeaderboard();
     }
 
