@@ -93,6 +93,7 @@ fn main() {
     generate_ts_method!(user, search_messages);
     generate_ts_method!(user, saved_crypto_accounts);
     generate_ts_method!(user, token_swap_status);
+    generate_ts_method!(user, token_swaps);
     generate_ts_method!(user, updates);
 
     generate_ts_method!(user, accept_p2p_swap);
@@ -123,6 +124,7 @@ fn main() {
     generate_ts_method!(user, mute_notifications);
     generate_ts_method!(user, pin_chat_v2);
     generate_ts_method!(user, remove_reaction);
+    generate_ts_method!(user, reclaim_swap_tokens);
     generate_ts_method!(user, report_message);
     // generate_ts_method!(user, retrieve_btc);
     generate_ts_method!(user, save_crypto_account);

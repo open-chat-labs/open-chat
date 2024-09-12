@@ -45,6 +45,7 @@ pub mod pin_chat_v2;
 pub mod remove_reaction;
 pub mod report_message;
 // pub mod retrieve_btc;
+pub mod reclaim_swap_tokens;
 pub mod save_crypto_account;
 pub mod send_message;
 pub mod send_message_with_transfer;

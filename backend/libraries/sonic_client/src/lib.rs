@@ -72,11 +72,7 @@ impl SonicClient {
     pub async fn withdraw(&self, successful_swap: bool, amount: u128) -> CallResult<u128> {
         let token = if successful_swap { self.output_token() } else { self.input_token() };
         let amount = if successful_swap { amount } else { amount.saturating_sub(token.fee) };
-        let args = (token.ledger, amount.into());
-        match sonic_canister_c2c_client::withdraw(self.sonic_canister_id, args).await?.0 {
-            SonicResult::Ok(amount_withdrawn) => Ok(nat_to_u128(amount_withdrawn)),
-            SonicResult::Err(error) => Err(convert_error(error)),
-        }
+        withdraw(self.sonic_canister_id, token.ledger, amount).await
     }
 
     fn input_token(&self) -> &TokenInfo {
@@ -93,6 +89,14 @@ impl SonicClient {
         } else {
             &self.token0
         }
+    }
+}
+
+pub async fn withdraw(swap_canister_id: CanisterId, ledger_canister_id: CanisterId, amount: u128) -> CallResult<u128> {
+    let args = (ledger_canister_id, amount.into());
+    match sonic_canister_c2c_client::withdraw(swap_canister_id, args).await?.0 {
+        SonicResult::Ok(amount_withdrawn) => Ok(nat_to_u128(amount_withdrawn)),
+        SonicResult::Err(error) => Err(convert_error(error)),
     }
 }
 
