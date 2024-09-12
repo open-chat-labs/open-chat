@@ -18,6 +18,7 @@ pub enum AccessGate {
     TokenBalance(TokenBalanceGate),
     Composite(CompositeGate),
     Locked,
+    ReferredByMember,
 }
 
 #[ts_export]
@@ -31,6 +32,7 @@ pub enum AccessGateNonComposite {
     Payment(PaymentGate),
     TokenBalance(TokenBalanceGate),
     Locked,
+    ReferredByMember,
 }
 
 pub enum AccessGateType {
@@ -52,6 +54,7 @@ impl From<AccessGate> for AccessGateType {
             AccessGate::Payment(gate) => AccessGateType::NonComposite(AccessGateNonComposite::Payment(gate)),
             AccessGate::TokenBalance(gate) => AccessGateType::NonComposite(AccessGateNonComposite::TokenBalance(gate)),
             AccessGate::Locked => AccessGateType::NonComposite(AccessGateNonComposite::Locked),
+            AccessGate::ReferredByMember => AccessGateType::NonComposite(AccessGateNonComposite::ReferredByMember),
         }
     }
 }
@@ -81,6 +84,7 @@ impl AccessGate {
             AccessGate::TokenBalance(_) => "token_balance",
             AccessGate::Composite(_) => "composite",
             AccessGate::Locked => "locked",
+            AccessGate::ReferredByMember => "referral",
         }
     }
 }
@@ -145,6 +149,7 @@ pub enum GateCheckFailedReason {
     InsufficientBalance(u128),
     FailedVerifiedCredentialCheck(String),
     Locked,
+    NotReferredByMember,
 }
 
 #[ts_export]

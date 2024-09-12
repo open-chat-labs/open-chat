@@ -382,6 +382,8 @@ pub struct AccessGateMetrics {
     pub composite: u32,
     #[serde(default)]
     pub locked: u32,
+    #[serde(default)]
+    pub referred_by_member: u32,
 }
 
 impl AccessGateMetrics {
@@ -396,6 +398,7 @@ impl AccessGateMetrics {
             AccessGate::TokenBalance(_) => self.token_balance += 1,
             AccessGate::Composite(_) => self.composite += 1,
             AccessGate::Locked => self.locked += 1,
+            AccessGate::ReferredByMember => self.referred_by_member += 1,
         }
     }
 }
