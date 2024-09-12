@@ -80,6 +80,7 @@
         "public": "Público",
         "readonlyTitle": "Puerta de acceso",
         "referredByMember": "Referido por un miembro",
+        "referredByMemberInfo": "Sólo los usuarios que hayan sido referidos por un miembro de la comunidad podrán unirse.",
         "subscriptionComingSoon": "Próximamente modelo de suscripción.",
         "title": "Actualizar puerta de acceso",
         "tokenBalance": "Saldo de tokens",

@@ -80,6 +80,7 @@
         "public": "Công cộng",
         "readonlyTitle": "Cổng vào",
         "referredByMember": "Được giới thiệu bởi thành viên",
+        "referredByMemberInfo": "Chỉ những người dùng được thành viên cộng đồng giới thiệu mới được phép tham gia",
         "subscriptionComingSoon": "Mô hình đăng ký sắp ra mắt.",
         "title": "Cập nhật cổng truy cập",
         "tokenBalance": "Số dư mã thông báo",
