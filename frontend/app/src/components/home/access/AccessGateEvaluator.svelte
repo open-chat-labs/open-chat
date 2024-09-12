@@ -45,8 +45,6 @@
         currentGate?.kind === "composite_gate" &&
         optionalGatesByIndex.size >= currentGate.gates.length;
 
-    $: console.log("OptionalGates: ", optionalGatesByIndex);
-
     onMount(nextGate);
 
     function needsPreprocessing(gate: AccessGate): boolean {

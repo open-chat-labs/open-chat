@@ -4215,6 +4215,8 @@ export class OpenChat extends OpenChatAgentWorker {
                 return this._liveState.user.diamondStatus.kind === "lifetime";
             } else if (gate.kind === "unique_person_gate") {
                 return this._liveState.user.isUniquePerson;
+            } else if (gate.kind === "referred_by_member_gate") {
+                return false;
             } else {
                 return false;
             }

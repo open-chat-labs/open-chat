@@ -1,5 +1,6 @@
 <script lang="ts">
     import AccountCheck from "svelte-material-icons/AccountCheck.svelte";
+    import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
     import VectorCombine from "svelte-material-icons/VectorCombine.svelte";
     import ShieldLockOpenOutline from "svelte-material-icons/ShieldLockOpenOutline.svelte";
     import { _ } from "svelte-i18n";
@@ -172,7 +173,7 @@
     {:else if gate.kind === "referred_by_member_gate"}
         <TooltipWrapper {position} {align}>
             <div slot="target" class="referred_by_member">
-                <AccountCheck size={$iconSize} color={"var(--txt)"} />
+                <AccountPlusOutline size={$iconSize} color={"var(--txt)"} />
             </div>
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
