@@ -3072,6 +3072,13 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
+    achievementLogo(id: number): string {
+        return `${this.config.achievementUrlPath.replace(
+            "{canisterId}",
+            this.config.userIndexCanister,
+        )}/achievement_logo/${id}`;
+    }
+
     // this is unavoidably duplicated from the agent
     private rehydrateDataContent<T extends DataContent>(
         dataContent: T,
@@ -6736,6 +6743,13 @@ export class OpenChat extends OpenChatAgentWorker {
         }
 
         return resp;
+    }
+
+    getExternalAchievements() {
+        return this.sendRequest({ kind: "getExternalAchievements" }).catch((err) => {
+            console.error("getExternalAchievements error", err);
+            return [];
+        });
     }
 
     markAchievementsSeen() {
