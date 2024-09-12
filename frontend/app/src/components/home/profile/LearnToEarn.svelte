@@ -203,20 +203,32 @@
             {/if}
             {#if selectedTab === "external"}
                 <div class="list">
-                    {#each externalNotAchieved as achievement}
-                        <div class="achievement external">
-                            <div class="external icon">
-                                <img
-                                    class="logo"
-                                    src={client.achievementLogo(achievement.id)}
-                                    alt={achievement.name} />
-                                <ExternalLink iconColor={"var(--txt)"} href={achievement.url}>
-                                    {achievement.name}
-                                </ExternalLink>
-                                <div class="reward">{achievement.chitReward.toLocaleString()}</div>
+                    {#if externalNotAchieved.length === 0}
+                        <div class="empty">
+                            <div class="emoji">😎</div>
+                            <div class="msg">
+                                <Translatable
+                                    resourceKey={i18nKey("learnToEarn.nothingLeftToDo")} />
                             </div>
                         </div>
-                    {/each}
+                    {:else}
+                        {#each externalNotAchieved as achievement}
+                            <div class="achievement external">
+                                <div class="external icon">
+                                    <img
+                                        class="logo"
+                                        src={client.achievementLogo(achievement.id)}
+                                        alt={achievement.name} />
+                                    <ExternalLink iconColor={"var(--txt)"} href={achievement.url}>
+                                        {achievement.name}
+                                    </ExternalLink>
+                                    <div class="reward">
+                                        {achievement.chitReward.toLocaleString()}
+                                    </div>
+                                </div>
+                            </div>
+                        {/each}
+                    {/if}
                 </div>
             {/if}
         </div>

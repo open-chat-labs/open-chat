@@ -630,7 +630,7 @@
         "done": "終わり",
         "edited_message": "メッセージを編集する",
         "enabled_disappearing_messages": "消えるメッセージを有効にする",
-        "external": "外部実績",
+        "external": "やること（外部）",
         "externalInfo": "外部の成果は第三者によって定義されます。リンクをクリックして指示に従うだけで、CHIT 報酬を受け取ることができます。",
         "favourited_chat": "チャットをお気に入りとしてマークする",
         "followed_thread": "スレッドをフォローする",

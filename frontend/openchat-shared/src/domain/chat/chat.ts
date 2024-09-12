@@ -32,7 +32,7 @@ import type {
     CommunityIdentifier,
     CommunitySummary,
 } from "../community";
-import type { Achievement, ChitEarned } from "../chit";
+import type { ChitEarned } from "../chit";
 import type { WalletConfig } from "../crypto";
 
 export type CallerNotInGroup = { kind: "caller_not_in_group" };
