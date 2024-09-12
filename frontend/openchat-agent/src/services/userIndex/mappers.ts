@@ -19,10 +19,14 @@ import type {
     UsersApiResponse,
     UserSummaryUpdate,
     SubmitProofOfUniquePersonhoodResponse,
+    ExternalAchievementsResponse,
+    ExternalAchievement,
+    ChitLeaderboardResponse,
 } from "openchat-shared";
 import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import type {
     ApiCheckUsernameResponse,
+    ApiChitLeaderboardResponse,
     ApiChitUserBalance,
     ApiCurrentUserResponse,
     ApiCurrentUserSummary,
@@ -32,6 +36,8 @@ import type {
     ApiDiamondMembershipStatus,
     ApiDiamondMembershipStatusFull,
     ApiDiamondMembershipSubscription,
+    ApiExternalAchievement,
+    ApiExternalAchievementsResponse,
     ApiPayForDiamondMembershipResponse,
     ApiSearchResponse,
     ApiSetDisplayNameResponse,
@@ -48,7 +54,6 @@ import type {
 } from "./candid/idl";
 import { bytesToHexString, identity, optional } from "../../utils/mapping";
 import { token } from "../common/chatMappers";
-import type { ChitLeaderboardResponse } from "./candid/types";
 
 export function userSearchResponse(candid: ApiSearchResponse): UserSummary[] {
     if ("Success" in candid) {
@@ -445,11 +450,18 @@ export function diamondMembershipFeesResponse(
     );
 }
 
-export function chitLeaderboardResponse(candid: ChitLeaderboardResponse): ChitUserBalance[] {
-    if ("Success" in candid) {
-        return candid.Success.map(chitUserBalance);
+export function chitLeaderboardResponse(
+    candid: ApiChitLeaderboardResponse,
+): ChitLeaderboardResponse {
+    if ("SuccessV2" in candid) {
+        return {
+            allTime: candid.SuccessV2.all_time.map(chitUserBalance),
+            lastMonth: candid.SuccessV2.last_month.map(chitUserBalance),
+            thisMonth: candid.SuccessV2.this_month.map(chitUserBalance),
+        };
     }
-    throw new UnsupportedValueError("Unexpected ChitLeaderboardResponse type received", candid);
+
+    throw new UnsupportedValueError("Unexpected ApiChitLeaderboardResponse type received", candid);
 }
 
 function chitUserBalance(candid: ApiChitUserBalance): ChitUserBalance {
@@ -476,4 +488,33 @@ export function submitProofOfUniquePersonhoodResponse(
         "Unexpected ApiSubmitProofOfUniquePersonhoodResponse type received",
         candid,
     );
+}
+
+export function externalAchievementsResponse(
+    candid: ApiExternalAchievementsResponse,
+): ExternalAchievementsResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            achievementsRemoved: candid.Success.achievements_removed.map(externalAchievement),
+            lastUpdated: candid.Success.last_updated,
+            achievementsAdded: candid.Success.achievements_added.map(externalAchievement),
+        };
+    }
+    if ("SuccessNoUpdates" in candid) {
+        return { kind: "success_no_updates" };
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiExternalAchievementsResponse type received",
+        candid,
+    );
+}
+
+function externalAchievement(candid: ApiExternalAchievement): ExternalAchievement {
+    return {
+        id: candid.id,
+        url: candid.url,
+        name: candid.name,
+        chitReward: candid.chit_reward,
+    };
 }

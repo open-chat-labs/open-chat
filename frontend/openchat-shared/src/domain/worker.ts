@@ -192,8 +192,9 @@ import type {
 import type {
     ChitEventsRequest,
     ChitEventsResponse,
-    ChitUserBalance,
+    ChitLeaderboardResponse,
     ClaimDailyChitResponse,
+    ExternalAchievement,
 } from "./chit";
 import type { JsonnableDelegationChain } from "@dfinity/identity";
 
@@ -395,7 +396,12 @@ export type WorkerRequest =
     | GetAuthenticationPrincipals
     | ConfigureWallet
     | ClearCachedData
-    | SetCommunityReferral;
+    | SetCommunityReferral
+    | GetExternalAchievements;
+
+type GetExternalAchievements = {
+    kind: "getExternalAchievements";
+};
 
 type SetCommunityReferral = {
     kind: "setCommunityReferral";
@@ -1457,10 +1463,11 @@ export type WorkerResponseInner =
     | VideoCallParticipantsResponse
     | SetPinNumberResponse
     | ClaimDailyChitResponse
-    | ChitUserBalance[]
+    | ChitLeaderboardResponse
     | ChitEventsResponse
     | SubmitProofOfUniquePersonhoodResponse
-    | AuthenticationPrincipalsResponse;
+    | AuthenticationPrincipalsResponse
+    | ExternalAchievement[];
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -2122,7 +2129,7 @@ export type WorkerResult<T> = T extends Init
     : T extends ClaimDailyChit
     ? ClaimDailyChitResponse
     : T extends ChitLeaderboard
-    ? ChitUserBalance[]
+    ? ChitLeaderboardResponse
     : T extends ChitEventsRequest
     ? ChitEventsResponse
     : T extends MarkAchievementsSeen
@@ -2139,4 +2146,6 @@ export type WorkerResult<T> = T extends Init
     ? void
     : T extends SetCommunityReferral
     ? void
+    : T extends GetExternalAchievements
+    ? ExternalAchievement[]
     : never;

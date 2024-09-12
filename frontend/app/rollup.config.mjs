@@ -276,6 +276,7 @@ export default {
                 process.env.SIGN_IN_WITH_SOLANA_CANISTER,
             ),
             "process.env.BLOB_URL_PATTERN": JSON.stringify(process.env.BLOB_URL_PATTERN),
+            "process.env.ACHIEVEMENT_URL_PATH": JSON.stringify(process.env.ACHIEVEMENT_URL_PATH),
             "process.env.USERGEEK_APIKEY": JSON.stringify(process.env.USERGEEK_APIKEY),
             "process.env.VIDEO_BRIDGE_URL": JSON.stringify(process.env.VIDEO_BRIDGE_URL),
             "process.env.METERED_APIKEY": JSON.stringify(process.env.METERED_APIKEY),

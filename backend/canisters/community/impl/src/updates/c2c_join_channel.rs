@@ -165,6 +165,7 @@ fn is_permitted_to_join(
                                 ii_canister_id: state.data.internet_identity_canister_id,
                                 ii_origin: vc.ii_origin,
                             }),
+                            referred_by_member: false,
                             now: state.env.now(),
                         },
                     )

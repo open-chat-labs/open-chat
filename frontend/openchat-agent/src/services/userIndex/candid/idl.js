@@ -26,6 +26,18 @@ export const idlFactory = ({ IDL }) => {
     'AlreadySet' : ChatId,
     'Success' : IDL.Null,
   });
+  const AwardExternalAchievementArgs = IDL.Record({
+    'user_id' : UserId,
+    'achievement_id' : IDL.Nat32,
+  });
+  const AwardExternalAchievementResponse = IDL.Variant({
+    'InvalidCaller' : IDL.Null,
+    'NotFound' : IDL.Null,
+    'Success' : IDL.Record({ 'remaining_chit_budget' : IDL.Nat32 }),
+    'AlreadyAwarded' : IDL.Null,
+    'InsufficientBudget' : IDL.Null,
+    'Expired' : IDL.Null,
+  });
   const CheckUsernameArgs = IDL.Record({ 'username' : IDL.Text });
   const CheckUsernameResponse = IDL.Variant({
     'UsernameTaken' : IDL.Null,
@@ -41,7 +53,11 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
   });
   const ChitLeaderboardResponse = IDL.Variant({
-    'Success' : IDL.Vec(ChitUserBalance),
+    'SuccessV2' : IDL.Record({
+      'all_time' : IDL.Vec(ChitUserBalance),
+      'last_month' : IDL.Vec(ChitUserBalance),
+      'this_month' : IDL.Vec(ChitUserBalance),
+    }),
   });
   const DiamondMembershipSubscription = IDL.Variant({
     'OneYear' : IDL.Null,
@@ -119,6 +135,23 @@ export const idlFactory = ({ IDL }) => {
       })
     ),
   });
+  const ExternalAchievementsArgs = IDL.Record({
+    'updates_since' : TimestampMillis,
+  });
+  const ExternalAchievement = IDL.Record({
+    'id' : IDL.Nat32,
+    'url' : IDL.Text,
+    'name' : IDL.Text,
+    'chit_reward' : IDL.Nat32,
+  });
+  const ExternalAchievementsResponse = IDL.Variant({
+    'Success' : IDL.Record({
+      'achievements_removed' : IDL.Vec(ExternalAchievement),
+      'last_updated' : TimestampMillis,
+      'achievements_added' : IDL.Vec(ExternalAchievement),
+    }),
+    'SuccessNoUpdates' : IDL.Null,
+  });
   const MarkSuspectedBotArgs = IDL.Record({});
   const MarkSuspectedBotResponse = IDL.Variant({ 'Success' : IDL.Null });
   const DiamondMembershipPlanDuration = IDL.Variant({
@@ -172,6 +205,19 @@ export const idlFactory = ({ IDL }) => {
       'referrals_other' : IDL.Nat32,
       'users_who_referred_90_percent_unpaid_diamond' : IDL.Nat32,
     }),
+  });
+  const RegisterExternalAchievementArgs = IDL.Record({
+    'id' : IDL.Nat32,
+    'url' : IDL.Text,
+    'expires' : TimestampMillis,
+    'logo' : IDL.Text,
+    'name' : IDL.Text,
+    'canister_id' : CanisterId,
+    'chit_budget' : IDL.Nat32,
+    'chit_reward' : IDL.Nat32,
+  });
+  const RegisterExternalAchievementResponse = IDL.Variant({
+    'Success' : IDL.Null,
   });
   const RemovePlatformModeratorArgs = IDL.Record({ 'user_id' : UserId });
   const RemovePlatformModeratorResponse = IDL.Variant({
@@ -399,6 +445,11 @@ export const idlFactory = ({ IDL }) => {
         [AssignPlatformModeratorsGroupResponse],
         [],
       ),
+    'award_external_achievement' : IDL.Func(
+        [AwardExternalAchievementArgs],
+        [AwardExternalAchievementResponse],
+        [],
+      ),
     'check_username' : IDL.Func(
         [CheckUsernameArgs],
         [CheckUsernameResponse],
@@ -413,6 +464,11 @@ export const idlFactory = ({ IDL }) => {
     'diamond_membership_fees' : IDL.Func(
         [EmptyArgs],
         [DiamondMembershipFeesResponse],
+        ['query'],
+      ),
+    'external_achievements' : IDL.Func(
+        [ExternalAchievementsArgs],
+        [ExternalAchievementsResponse],
         ['query'],
       ),
     'mark_suspected_bot' : IDL.Func(
@@ -445,6 +501,11 @@ export const idlFactory = ({ IDL }) => {
         [EmptyArgs],
         [ReferralMetricsResponse],
         ['query'],
+      ),
+    'register_external_achievement' : IDL.Func(
+        [RegisterExternalAchievementArgs],
+        [RegisterExternalAchievementResponse],
+        [],
       ),
     'remove_platform_moderator' : IDL.Func(
         [RemovePlatformModeratorArgs],

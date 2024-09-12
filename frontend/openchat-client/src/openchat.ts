@@ -424,6 +424,7 @@ import type {
     AddMembersToChannelResponse,
     WalletConfig,
     AirdropChannelDetails,
+    ChitLeaderboardResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -547,7 +548,6 @@ import { captureRulesAcceptanceStore } from "./stores/rules";
 import type { SetPinNumberResponse } from "openchat-shared";
 import type { PinNumberFailures, MessageFormatter } from "openchat-shared";
 import { canRetryMessage, isTransfer } from "openchat-shared";
-import type { ChitUserBalance } from "openchat-shared";
 import {
     initialiseMostRecentSentMessageTimes,
     shouldThrottle,
@@ -3070,6 +3070,13 @@ export class OpenChat extends OpenChatAgentWorker {
             }
             await this.updateUserStoreFromEvents(serverChat.id, []);
         }
+    }
+
+    achievementLogo(id: number): string {
+        return `${this.config.achievementUrlPath.replace(
+            "{canisterId}",
+            this.config.userIndexCanister,
+        )}/achievement_logo/${id}`;
     }
 
     // this is unavoidably duplicated from the agent
@@ -6738,6 +6745,13 @@ export class OpenChat extends OpenChatAgentWorker {
         return resp;
     }
 
+    getExternalAchievements() {
+        return this.sendRequest({ kind: "getExternalAchievements" }).catch((err) => {
+            console.error("getExternalAchievements error", err);
+            return [];
+        });
+    }
+
     markAchievementsSeen() {
         this.sendRequest({ kind: "markAchievementsSeen" }).catch((err) => {
             console.error("markAchievementsSeen", err);
@@ -7472,7 +7486,7 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    chitLeaderboard(): Promise<ChitUserBalance[]> {
+    chitLeaderboard(): Promise<ChitLeaderboardResponse> {
         return this.sendRequest({ kind: "chitLeaderboard" });
     }
 

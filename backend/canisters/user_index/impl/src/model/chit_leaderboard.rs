@@ -11,13 +11,6 @@ pub struct ChitLeaderboard {
     this_month_key: MonthKey,
 }
 
-// TODO: Delete this after release
-impl Default for ChitLeaderboard {
-    fn default() -> ChitLeaderboard {
-        ChitLeaderboard::new(0)
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub struct ChitUserBalance {
     pub balance: u32,
@@ -43,19 +36,6 @@ impl ChitLeaderboard {
             self.last_month = mem::take(&mut self.this_month);
             self.this_month_key = mk;
         }
-    }
-
-    pub fn initialize(
-        &mut self,
-        all_time: Vec<ChitUserBalance>,
-        this_month: Vec<ChitUserBalance>,
-        last_month: Vec<ChitUserBalance>,
-        now: TimestampMillis,
-    ) {
-        self.all_time = all_time;
-        self.this_month = this_month;
-        self.last_month = last_month;
-        self.this_month_key = MonthKey::from_timestamp(now);
     }
 
     pub fn update_position(

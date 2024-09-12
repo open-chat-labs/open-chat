@@ -7,7 +7,6 @@ pub type Args = Empty;
 #[ts_export(user_index, chit_leaderboard)]
 #[derive(CandidType, Debug)]
 pub enum Response {
-    Success(Vec<ChitUserBalance>),
     SuccessV2(SuccessResult),
 }
 
