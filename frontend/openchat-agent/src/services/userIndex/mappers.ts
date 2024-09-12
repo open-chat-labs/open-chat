@@ -19,6 +19,9 @@ import type {
     UsersApiResponse,
     UserSummaryUpdate,
     SubmitProofOfUniquePersonhoodResponse,
+    ExternalAchievementsResponse,
+    ExternalAchievement,
+    ChitLeaderboardResponse,
 } from "openchat-shared";
 import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
@@ -455,7 +458,7 @@ export function diamondMembershipFeesResponse(
 
 export function chitLeaderboardResponse(
     value: UserIndexChitLeaderboardResponse,
-): ChitUserBalance[] {
+): ChitLeaderboardResponse {
     if ("Success" in value) {
         return value.Success.map(chitUserBalance);
     }
@@ -486,4 +489,31 @@ export function submitProofOfUniquePersonhoodResponse(
         "Unexpected SubmitProofOfUniquePersonhoodResponse type received",
         value,
     );
+}
+
+export function externalAchievementsResponse(candid: UserIndex): ExternalAchievementsResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            achievementsRemoved: candid.Success.achievements_removed.map(externalAchievement),
+            lastUpdated: candid.Success.last_updated,
+            achievementsAdded: candid.Success.achievements_added.map(externalAchievement),
+        };
+    }
+    if ("SuccessNoUpdates" in candid) {
+        return { kind: "success_no_updates" };
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiExternalAchievementsResponse type received",
+        candid,
+    );
+}
+
+function externalAchievement(candid: ApiExternalAchievement): ExternalAchievement {
+    return {
+        id: candid.id,
+        url: candid.url,
+        name: candid.name,
+        chitReward: candid.chit_reward,
+    };
 }

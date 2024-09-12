@@ -44,6 +44,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "upgrade_user_canister_wasm"
         | "upgrade_local_user_index_canister_wasm"
         | "mark_local_user_index_full"
+        | "register_external_achievement"
         | "suspected_bots" => state.is_caller_governance_principal(),
         "create_challenge" | "modclub_callback" => true,
         _ => false,

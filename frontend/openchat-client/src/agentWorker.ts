@@ -69,6 +69,7 @@ export class OpenChatAgentWorker extends EventTarget {
                     userGeekApiKey: this.config.userGeekApiKey,
                     enableMultiCrypto: this.config.enableMultiCrypto,
                     blobUrlPattern: this.config.blobUrlPattern,
+                    achievementUrlPath: this.config.achievementUrlPath,
                     proposalBotCanister: this.config.proposalBotCanister,
                     marketMakerCanister: this.config.marketMakerCanister,
                     signInWithEmailCanister: this.config.signInWithEmailCanister,
