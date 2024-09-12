@@ -292,6 +292,7 @@ export const idlFactory = ({ IDL }) => {
   const AccessGateNonComposite = IDL.Variant({
     'UniquePerson' : IDL.Null,
     'VerifiedCredential' : VerifiedCredentialGate,
+    'ReferredByMember' : IDL.Null,
     'SnsNeuron' : SnsNeuronGate,
     'Locked' : IDL.Null,
     'TokenBalance' : TokenBalanceGate,
@@ -302,6 +303,7 @@ export const idlFactory = ({ IDL }) => {
   const AccessGate = IDL.Variant({
     'UniquePerson' : IDL.Null,
     'VerifiedCredential' : VerifiedCredentialGate,
+    'ReferredByMember' : IDL.Null,
     'SnsNeuron' : SnsNeuronGate,
     'Locked' : IDL.Null,
     'TokenBalance' : TokenBalanceGate,

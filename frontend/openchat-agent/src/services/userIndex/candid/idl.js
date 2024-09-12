@@ -54,6 +54,11 @@ export const idlFactory = ({ IDL }) => {
   });
   const ChitLeaderboardResponse = IDL.Variant({
     'Success' : IDL.Vec(ChitUserBalance),
+    'SuccessV2' : IDL.Record({
+      'all_time' : IDL.Vec(ChitUserBalance),
+      'last_month' : IDL.Vec(ChitUserBalance),
+      'this_month' : IDL.Vec(ChitUserBalance),
+    }),
   });
   const DiamondMembershipSubscription = IDL.Variant({
     'OneYear' : IDL.Null,

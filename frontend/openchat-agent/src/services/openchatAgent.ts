@@ -206,7 +206,6 @@ import type {
     VerifiedCredentialArgs,
     ChitEventsRequest,
     ChitEventsResponse,
-    Achievement,
     ChitEarned,
     ChitState,
     SubmitProofOfUniquePersonhoodResponse,
@@ -215,7 +214,7 @@ import type {
     WalletConfig,
     ExternalAchievement,
     ExternalAchievementsSuccess,
-    CandidateExternalAchievement,
+    ChitLeaderboardResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -229,7 +228,6 @@ import {
     Stream,
     getOrAdd,
     waitAll,
-    achievements,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { AsyncMessageContextMap } from "../utils/messageContext";
@@ -250,7 +248,6 @@ import { SignInWithSolanaClient } from "./signInWithSolana/signInWithSolana.clie
 import type { SetPinNumberResponse } from "openchat-shared";
 import type { PinNumberSettings } from "openchat-shared";
 import type { ClaimDailyChitResponse } from "openchat-shared";
-import type { ChitUserBalance } from "openchat-shared";
 import { createHttpAgentSync } from "../utils/httpAgent";
 import {
     deleteCommunityReferral,
@@ -3616,7 +3613,7 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.claimDailyChit();
     }
 
-    chitLeaderboard(): Promise<ChitUserBalance[]> {
+    chitLeaderboard(): Promise<ChitLeaderboardResponse> {
         return this._userIndexClient.chitLeaderboard();
     }
 

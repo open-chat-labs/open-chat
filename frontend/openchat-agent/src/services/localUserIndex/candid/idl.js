@@ -627,6 +627,7 @@ export const idlFactory = ({ IDL }) => {
   const AccessGateNonComposite = IDL.Variant({
     'UniquePerson' : IDL.Null,
     'VerifiedCredential' : VerifiedCredentialGate,
+    'ReferredByMember' : IDL.Null,
     'SnsNeuron' : SnsNeuronGate,
     'Locked' : IDL.Null,
     'TokenBalance' : TokenBalanceGate,
@@ -637,6 +638,7 @@ export const idlFactory = ({ IDL }) => {
   const AccessGate = IDL.Variant({
     'UniquePerson' : IDL.Null,
     'VerifiedCredential' : VerifiedCredentialGate,
+    'ReferredByMember' : IDL.Null,
     'SnsNeuron' : SnsNeuronGate,
     'Locked' : IDL.Null,
     'TokenBalance' : TokenBalanceGate,
@@ -1160,6 +1162,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const GateCheckFailedReason = IDL.Variant({
     'NotLifetimeDiamondMember' : IDL.Null,
+    'NotReferredByMember' : IDL.Null,
     'NotDiamondMember' : IDL.Null,
     'PaymentFailed' : ICRC2_TransferFromError,
     'InsufficientBalance' : IDL.Nat,

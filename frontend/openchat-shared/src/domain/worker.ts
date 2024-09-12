@@ -193,7 +193,7 @@ import type {
     CandidateExternalAchievement,
     ChitEventsRequest,
     ChitEventsResponse,
-    ChitUserBalance,
+    ChitLeaderboardResponse,
     ClaimDailyChitResponse,
     ExternalAchievement,
 } from "./chit";
@@ -1464,7 +1464,7 @@ export type WorkerResponseInner =
     | VideoCallParticipantsResponse
     | SetPinNumberResponse
     | ClaimDailyChitResponse
-    | ChitUserBalance[]
+    | ChitLeaderboardResponse
     | ChitEventsResponse
     | SubmitProofOfUniquePersonhoodResponse
     | AuthenticationPrincipalsResponse
@@ -2130,7 +2130,7 @@ export type WorkerResult<T> = T extends Init
     : T extends ClaimDailyChit
     ? ClaimDailyChitResponse
     : T extends ChitLeaderboard
-    ? ChitUserBalance[]
+    ? ChitLeaderboardResponse
     : T extends ChitEventsRequest
     ? ChitEventsResponse
     : T extends MarkAchievementsSeen

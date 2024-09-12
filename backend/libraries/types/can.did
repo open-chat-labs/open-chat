@@ -1541,6 +1541,7 @@ type AccessGate = variant {
         and : bool;
     };
     Locked;
+    ReferredByMember;
 };
 
 type AccessGateNonComposite = variant {
@@ -1552,6 +1553,7 @@ type AccessGateNonComposite = variant {
     Payment : PaymentGate;
     TokenBalance : TokenBalanceGate;
     Locked;
+    ReferredByMember;
 };
 
 type AccessGateUpdate = variant {
@@ -1609,6 +1611,7 @@ type GateCheckFailedReason = variant {
     InsufficientBalance : nat;
     FailedVerifiedCredentialCheck : text;
     Locked;
+    NotReferredByMember;
 };
 
 type VerifiedCredentialGateArgs = record {

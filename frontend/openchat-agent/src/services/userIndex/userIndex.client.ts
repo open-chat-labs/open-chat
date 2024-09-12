@@ -16,13 +16,12 @@ import type {
     SetUserUpgradeConcurrencyResponse,
     SetDisplayNameResponse,
     DiamondMembershipFees,
-    ChitUserBalance,
     UsersApiResponse,
     UserSummaryUpdate,
     ChitState,
     SubmitProofOfUniquePersonhoodResponse,
     ExternalAchievementsResponse,
-    CandidateExternalAchievement,
+    ChitLeaderboardResponse,
 } from "openchat-shared";
 import {
     mergeUserSummaryWithUpdates,
@@ -471,7 +470,7 @@ export class UserIndexClient extends CandidService {
         );
     }
 
-    chitLeaderboard(): Promise<ChitUserBalance[]> {
+    chitLeaderboard(): Promise<ChitLeaderboardResponse> {
         return this.handleQueryResponse(
             () => this.userIndexService.chit_leaderboard({}),
             chitLeaderboardResponse

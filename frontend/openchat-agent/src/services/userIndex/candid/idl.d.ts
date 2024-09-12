@@ -34,7 +34,9 @@ import {
     ChitUserBalance,
     SubmitProofOfUniquePersonhoodResponse,
     ExternalAchievementsResponse,
-    ExternalAchievement
+    ExternalAchievement,
+    ChitLeaderboardResponse,
+    SubmitProofOfUniquePersonhoodResponse
 } from "./types";
 export {
     _SERVICE as UserIndexService,
@@ -71,7 +73,9 @@ export {
     ChitUserBalance as ApiChitUserBalance,
     SubmitProofOfUniquePersonhoodResponse as ApiSubmitProofOfUniquePersonhoodResponse,
     ExternalAchievementsResponse as ApiExternalAchievementsResponse,
-    ExternalAchievement as ApiExternalAchievement
+    ExternalAchievement as ApiExternalAchievement,
+    ChitLeaderboardResponse as ApiChitLeaderboardResponse,
+    SubmitProofOfUniquePersonhoodResponse as ApiSubmitProofOfUniquePersonhoodResponse
 };
 
 export const idlFactory: IDL.InterfaceFactory;

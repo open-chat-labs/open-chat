@@ -10,6 +10,12 @@ export type ClaimDailyChitResponse =
           nextDailyChitClaim: bigint;
       };
 
+export type ChitLeaderboardResponse = {
+    allTime: ChitUserBalance[];
+    lastMonth: ChitUserBalance[];
+    thisMonth: ChitUserBalance[];
+};
+
 export type ChitUserBalance = {
     userId: string;
     balance: number;
@@ -157,16 +163,5 @@ export type ExternalAchievement = {
     id: number;
     url: string;
     name: string;
-    chitReward: number;
-};
-
-export type CandidateExternalAchievement = {
-    id: number;
-    url: string;
-    expires: bigint;
-    logo: string;
-    name: string;
-    canisterId: string;
-    chitBudget: number;
     chitReward: number;
 };

@@ -424,7 +424,7 @@ import type {
     AddMembersToChannelResponse,
     WalletConfig,
     AirdropChannelDetails,
-    CandidateExternalAchievement,
+    ChitLeaderboardResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -548,7 +548,6 @@ import { captureRulesAcceptanceStore } from "./stores/rules";
 import type { SetPinNumberResponse } from "openchat-shared";
 import type { PinNumberFailures, MessageFormatter } from "openchat-shared";
 import { canRetryMessage, isTransfer } from "openchat-shared";
-import type { ChitUserBalance } from "openchat-shared";
 import {
     initialiseMostRecentSentMessageTimes,
     shouldThrottle,
@@ -7487,7 +7486,7 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    chitLeaderboard(): Promise<ChitUserBalance[]> {
+    chitLeaderboard(): Promise<ChitLeaderboardResponse> {
         return this.sendRequest({ kind: "chitLeaderboard" });
     }
 

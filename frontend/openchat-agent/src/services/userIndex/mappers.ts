@@ -21,10 +21,12 @@ import type {
     SubmitProofOfUniquePersonhoodResponse,
     ExternalAchievementsResponse,
     ExternalAchievement,
+    ChitLeaderboardResponse,
 } from "openchat-shared";
 import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import type {
     ApiCheckUsernameResponse,
+    ApiChitLeaderboardResponse,
     ApiChitUserBalance,
     ApiCurrentUserResponse,
     ApiCurrentUserSummary,
@@ -52,7 +54,6 @@ import type {
 } from "./candid/idl";
 import { bytesToHexString, identity, optional } from "../../utils/mapping";
 import { token } from "../common/chatMappers";
-import type { ChitLeaderboardResponse } from "./candid/types";
 
 export function userSearchResponse(candid: ApiSearchResponse): UserSummary[] {
     if ("Success" in candid) {
@@ -449,11 +450,23 @@ export function diamondMembershipFeesResponse(
     );
 }
 
-export function chitLeaderboardResponse(candid: ChitLeaderboardResponse): ChitUserBalance[] {
-    if ("Success" in candid) {
-        return candid.Success.map(chitUserBalance);
+export function chitLeaderboardResponse(
+    candid: ApiChitLeaderboardResponse
+): ChitLeaderboardResponse {
+    if ("SuccessV2" in candid) {
+        return {
+            allTime: candid.SuccessV2.all_time.map(chitUserBalance),
+            lastMonth: candid.SuccessV2.last_month.map(chitUserBalance),
+            thisMonth: candid.SuccessV2.this_month.map(chitUserBalance),
+        };
+    } else if ("Success" in candid) {
+        return {
+            allTime: candid.Success.map(chitUserBalance),
+            lastMonth: [],
+            thisMonth: [],
+        };
     }
-    throw new UnsupportedValueError("Unexpected ChitLeaderboardResponse type received", candid);
+    throw new UnsupportedValueError("Unexpected ApiChitLeaderboardResponse type received", candid);
 }
 
 function chitUserBalance(candid: ApiChitUserBalance): ChitUserBalance {
