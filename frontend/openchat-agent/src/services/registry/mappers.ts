@@ -1,33 +1,43 @@
-import type { ApiNervousSystemSummary, ApiTokenDetails, ApiUpdatesResponse } from "./candid/idl";
 import type {
     NervousSystemSummary,
     RegistryUpdatesResponse,
     CryptocurrencyDetails,
 } from "openchat-shared";
-import { optional } from "../../utils/mapping";
+import { mapOptional, principalBytesToString } from "../../utils/mapping";
 import { UnsupportedValueError } from "openchat-shared";
 import { buildTokenLogoUrl } from "../../utils/chat";
+import type {
+    RegistryNervousSystemSummary,
+    RegistryTokenDetails,
+    RegistryUpdatesResponse as TRegistryUpdatesResponse,
+} from "../../typebox";
 
 export function updatesResponse(
-    candid: ApiUpdatesResponse,
+    value: TRegistryUpdatesResponse,
     blobUrlPattern: string,
     registryCanisterId: string,
 ): RegistryUpdatesResponse {
-    if ("Success" in candid) {
+    if (value === "SuccessNoUpdates") {
+        return {
+            kind: "success_no_updates",
+        };
+    }
+    if ("Success" in value) {
         const communityId = "txydz-jyaaa-aaaaf-bifea-cai";
         const channelId = "83973693511680025111877019856849080554";
         const channelName = "September airdrop";
         const communityName = "CHIT for CHAT";
-        return {
+
+      return {
             kind: "success",
-            lastUpdated: candid.Success.last_updated,
+            lastUpdated: value.Success.last_updated,
             tokenDetails:
-                optional(candid.Success.token_details, (tokens) =>
+                mapOptional(value.Success.token_details, (tokens) =>
                     tokens.map((t) => tokenDetails(t, blobUrlPattern, registryCanisterId)),
                 ) ?? [],
-            nervousSystemSummary: candid.Success.nervous_system_details.map(nervousSystemSummary),
-            messageFiltersAdded: candid.Success.message_filters_added,
-            messageFiltersRemoved: Array.from(candid.Success.message_filters_removed),
+            nervousSystemSummary: value.Success.nervous_system_details.map(nervousSystemSummary),
+            messageFiltersAdded: value.Success.message_filters_added,
+            messageFiltersRemoved: value.Success.message_filters_removed,
             currentAirdropChannel: {
                 //TODO - fill this in
                 id: {
@@ -41,50 +51,50 @@ export function updatesResponse(
             },
         };
     }
-    if ("SuccessNoUpdates" in candid) {
-        return {
-            kind: "success_no_updates",
-        };
-    }
-    throw new UnsupportedValueError("Unexpected ApiUpdatesResponse type received", candid);
+
+    throw new UnsupportedValueError("Unexpected ApiUpdatesResponse type received", value);
 }
 
 function tokenDetails(
-    candid: ApiTokenDetails,
+    value: RegistryTokenDetails,
     blobUrlPattern: string,
     registryCanisterId: string,
 ): CryptocurrencyDetails {
-    const ledger = candid.ledger_canister_id.toString();
-    const logoId = candid.logo_id[0];
+    const ledger = principalBytesToString(value.ledger_canister_id);
 
     return {
         ledger,
-        name: candid.name,
-        symbol: candid.symbol,
-        decimals: candid.decimals,
-        transferFee: candid.fee,
+        name: value.name,
+        symbol: value.symbol,
+        decimals: value.decimals,
+        transferFee: value.fee,
         logo:
-            logoId !== undefined
-                ? buildTokenLogoUrl(blobUrlPattern, registryCanisterId, ledger, BigInt(logoId))
-                : candid.logo,
-        infoUrl: candid.info_url,
-        howToBuyUrl: candid.how_to_buy_url,
-        transactionUrlFormat: candid.transaction_url_format,
-        supportedStandards: candid.supported_standards,
-        added: candid.added,
-        enabled: candid.enabled,
-        lastUpdated: candid.last_updated,
+            value.logo_id !== undefined
+                ? buildTokenLogoUrl(
+                      blobUrlPattern,
+                      registryCanisterId,
+                      ledger,
+                      BigInt(value.logo_id),
+                  )
+                : value.logo,
+        infoUrl: value.info_url,
+        howToBuyUrl: value.how_to_buy_url,
+        transactionUrlFormat: value.transaction_url_format,
+        supportedStandards: value.supported_standards,
+        added: value.added,
+        enabled: value.enabled,
+        lastUpdated: value.last_updated,
     };
 }
 
-function nervousSystemSummary(candid: ApiNervousSystemSummary): NervousSystemSummary {
+function nervousSystemSummary(value: RegistryNervousSystemSummary): NervousSystemSummary {
     return {
-        rootCanisterId: candid.root_canister_id.toString(),
-        governanceCanisterId: candid.governance_canister_id.toString(),
-        ledgerCanisterId: candid.ledger_canister_id.toString(),
-        indexCanisterId: candid.index_canister_id.toString(),
-        isNns: candid.is_nns,
-        proposalRejectionFee: candid.proposal_rejection_fee,
-        submittingProposalsEnabled: candid.submitting_proposals_enabled,
+        rootCanisterId: principalBytesToString(value.root_canister_id),
+        governanceCanisterId: principalBytesToString(value.governance_canister_id),
+        ledgerCanisterId: principalBytesToString(value.ledger_canister_id),
+        indexCanisterId: principalBytesToString(value.index_canister_id),
+        isNns: value.is_nns,
+        proposalRejectionFee: value.proposal_rejection_fee,
+        submittingProposalsEnabled: value.submitting_proposals_enabled,
     };
 }
