@@ -2354,7 +2354,7 @@ export const AccountICRC1 = Type.Object({
             Type.Number(),
             Type.Number(),
             Type.Number(),
-        ]),
+        ])
     ),
 });
 
@@ -3427,7 +3427,7 @@ export const UserTokenSwapsTokenSwap = Type.Object({
             Type.Object({
                 Err: Type.String(),
             }),
-        ]),
+        ])
     ),
     notified_dex: Type.Optional(
         Type.Union([
@@ -3437,7 +3437,7 @@ export const UserTokenSwapsTokenSwap = Type.Object({
             Type.Object({
                 Err: Type.String(),
             }),
-        ]),
+        ])
     ),
     amount_swapped: Type.Optional(
         Type.Union([
@@ -3454,7 +3454,7 @@ export const UserTokenSwapsTokenSwap = Type.Object({
             Type.Object({
                 Err: Type.String(),
             }),
-        ]),
+        ])
     ),
     withdrawn_from_dex: Type.Optional(
         Type.Union([
@@ -3464,7 +3464,7 @@ export const UserTokenSwapsTokenSwap = Type.Object({
             Type.Object({
                 Err: Type.String(),
             }),
-        ]),
+        ])
     ),
     success: Type.Optional(Type.Boolean()),
 });
@@ -3940,7 +3940,7 @@ export const UsersUnblocked = Type.Object({
 
 export type Tips = Static<typeof Tips>;
 export const Tips = Type.Array(
-    Type.Tuple([PrincipalTS, Type.Array(Type.Tuple([UserId, Type.BigInt()]))]),
+    Type.Tuple([PrincipalTS, Type.Array(Type.Tuple([UserId, Type.BigInt()]))])
 );
 
 export type CallParticipant = Static<typeof CallParticipant>;
@@ -5544,7 +5544,7 @@ export const CommunityCanisterChannelSummaryUpdates = Type.Object({
     member_count: Type.Optional(Type.Number()),
     permissions_v2: Type.Optional(GroupPermissions),
     updated_events: Type.Array(
-        Type.Tuple([Type.Union([MessageIndex, Type.Null()]), EventIndex, Type.BigInt()]),
+        Type.Tuple([Type.Union([MessageIndex, Type.Null()]), EventIndex, Type.BigInt()])
     ),
     metrics: Type.Optional(ChatMetrics),
     date_last_pinned: Type.Optional(Type.BigInt()),
@@ -5661,7 +5661,7 @@ export const GroupCanisterGroupChatSummaryUpdates = Type.Object({
     wasm_version: Type.Optional(BuildVersion),
     permissions_v2: Type.Optional(GroupPermissions),
     updated_events: Type.Array(
-        Type.Tuple([Type.Union([MessageIndex, Type.Null()]), EventIndex, Type.BigInt()]),
+        Type.Tuple([Type.Union([MessageIndex, Type.Null()]), EventIndex, Type.BigInt()])
     ),
     metrics: Type.Optional(ChatMetrics),
     my_metrics: Type.Optional(ChatMetrics),
