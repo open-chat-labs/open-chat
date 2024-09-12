@@ -8,9 +8,6 @@ didc bind ../../backend/canisters/community/api/can.did -t js > ./src/services/c
 didc bind ../../backend/canisters/group/api/can.did -t ts > ./src/services/group/candid/types.d.ts
 didc bind ../../backend/canisters/group/api/can.did -t js > ./src/services/group/candid/idl.js
 
-didc bind ../../backend/canisters/group_index/api/can.did -t ts > ./src/services/groupIndex/candid/types.d.ts
-didc bind ../../backend/canisters/group_index/api/can.did -t js > ./src/services/groupIndex/candid/idl.js
-
 didc bind ../../backend/canisters/identity/api/can.did -t ts > ./src/services/identity/candid/types.d.ts
 didc bind ../../backend/canisters/identity/api/can.did -t js > ./src/services/identity/candid/idl.js
 
@@ -23,14 +20,8 @@ didc bind ../../backend/canisters/market_maker/api/can.did -t js > ./src/service
 didc bind ../../backend/canisters/notifications_index/api/can.did -t ts > ./src/services/notifications/candid/types.d.ts
 didc bind ../../backend/canisters/notifications_index/api/can.did -t js > ./src/services/notifications/candid/idl.js
 
-didc bind ../../backend/canisters/online_users/api/can.did -t ts > ./src/services/online/candid/types.d.ts
-didc bind ../../backend/canisters/online_users/api/can.did -t js > ./src/services/online/candid/idl.js
-
 didc bind ../../backend/canisters/proposals_bot/api/can.did -t ts > ./src/services/proposalsBot/candid/types.d.ts
 didc bind ../../backend/canisters/proposals_bot/api/can.did -t js > ./src/services/proposalsBot/candid/idl.js
-
-didc bind ../../backend/canisters/registry/api/can.did -t ts > ./src/services/registry/candid/types.d.ts
-didc bind ../../backend/canisters/registry/api/can.did -t js > ./src/services/registry/candid/idl.js
 
 didc bind ../../backend/canisters/storage_bucket/api/can.did -t ts > ./src/services/storageBucket/candid/types.d.ts
 didc bind ../../backend/canisters/storage_bucket/api/can.did -t js > ./src/services/storageBucket/candid/idl.js
@@ -43,9 +34,6 @@ didc bind ../../backend/canisters/translations/api/can.did -t js > ./src/service
 
 didc bind ../../backend/canisters/user/api/can.did -t ts > ./src/services/user/candid/types.d.ts
 didc bind ../../backend/canisters/user/api/can.did -t js > ./src/services/user/candid/idl.js
-
-didc bind ../../backend/canisters/user_index/api/can.did -t ts > ./src/services/userIndex/candid/types.d.ts
-didc bind ../../backend/canisters/user_index/api/can.did -t js > ./src/services/userIndex/candid/idl.js
 
 didc bind ./src/services/dexes/icpSwap/index/candid/can.did -t ts > ./src/services/dexes/icpSwap/index/candid/types.d.ts
 didc bind ./src/services/dexes/icpSwap/index/candid/can.did -t js > ./src/services/dexes/icpSwap/index/candid/idl.js
