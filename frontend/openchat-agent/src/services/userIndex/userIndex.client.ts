@@ -18,9 +18,8 @@ import type {
     UserSummaryUpdate,
     ChitState,
     SubmitProofOfUniquePersonhoodResponse,
-    ExternalAchievementsResponse,
     ChitLeaderboardResponse,
-    ChitUserBalance,
+    ExternalAchievementsResponse,
 } from "openchat-shared";
 import {
     mergeUserSummaryWithUpdates,
@@ -44,6 +43,7 @@ import {
     userRegistrationCanisterResponse,
     userSearchResponse,
     apiJsonDiamondDuration,
+    externalAchievementsResponse,
 } from "./mappers";
 import {
     getCachedUsers,
@@ -70,6 +70,8 @@ import {
     UserIndexChitLeaderboardResponse,
     UserIndexCurrentUserResponse,
     UserIndexDiamondMembershipFeesResponse,
+    UserIndexExternalAchievementsArgs,
+    UserIndexExternalAchievementsResponse,
     UserIndexPayForDiamondMembershipArgs,
     UserIndexPayForDiamondMembershipResponse,
     UserIndexPlatformModeratorsGroupResponse,
@@ -564,6 +566,16 @@ export class UserIndexClient extends CandidService {
             submitProofOfUniquePersonhoodResponse,
             UserIndexSubmitProofOfUniquePersonhoodArgs,
             UserIndexSubmitProofOfUniquePersonhoodResponse,
+        );
+    }
+
+    getExternalAchievements(updatesSince: bigint): Promise<ExternalAchievementsResponse> {
+        return this.executeMsgpackQuery(
+            "external_achievements",
+            { updates_since: updatesSince },
+            externalAchievementsResponse,
+            UserIndexExternalAchievementsArgs,
+            UserIndexExternalAchievementsResponse,
         );
     }
 }

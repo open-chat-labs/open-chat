@@ -272,6 +272,12 @@ export const UserEndVideoCallResponse = Type.Union([
     Type.Literal("AlreadyEnded"),
 ]);
 
+export type UserTokenSwapsArgs = Static<typeof UserTokenSwapsArgs>;
+export const UserTokenSwapsArgs = Type.Object({
+    start: Type.Number(),
+    max_results: Type.Number(),
+});
+
 export type UserBlockUserResponse = Static<typeof UserBlockUserResponse>;
 export const UserBlockUserResponse = Type.Union([
     Type.Literal("Success"),
@@ -285,6 +291,14 @@ export type UserStartVideoCallResponse = Static<typeof UserStartVideoCallRespons
 export const UserStartVideoCallResponse = Type.Union([
     Type.Literal("Success"),
     Type.Literal("NotAuthorized"),
+]);
+
+export type UserReclaimSwapTokensResponse = Static<typeof UserReclaimSwapTokensResponse>;
+export const UserReclaimSwapTokensResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Object({
+        Failed: Type.String(),
+    }),
 ]);
 
 export type UserPublicProfilePublicProfile = Static<typeof UserPublicProfilePublicProfile>;
@@ -440,6 +454,9 @@ export const CommunityRole = Type.Union([
     Type.Literal("Admin"),
     Type.Literal("Member"),
 ]);
+
+export type ExchangeId = Static<typeof ExchangeId>;
+export const ExchangeId = Type.Union([Type.Literal("ICPSwap"), Type.Literal("Sonic")]);
 
 export type ProposalDecisionStatus = Static<typeof ProposalDecisionStatus>;
 export const ProposalDecisionStatus = Type.Union([
@@ -823,6 +840,9 @@ export const ChitEarnedReason = Type.Union([
     Type.Literal("DailyClaim"),
     Type.Object({
         Achievement: Achievement,
+    }),
+    Type.Object({
+        ExternalAchievement: Type.String(),
     }),
     Type.Object({
         Referral: ReferralStatus,
@@ -1564,6 +1584,21 @@ export type UserIndexSetUserUpgradeConcurrencyResponse = Static<
 >;
 export const UserIndexSetUserUpgradeConcurrencyResponse = Type.Literal("Success");
 
+export type UserIndexExternalAchievementsExternalAchievement = Static<
+    typeof UserIndexExternalAchievementsExternalAchievement
+>;
+export const UserIndexExternalAchievementsExternalAchievement = Type.Object({
+    id: Type.Number(),
+    name: Type.String(),
+    url: Type.String(),
+    chit_reward: Type.Number(),
+});
+
+export type UserIndexExternalAchievementsArgs = Static<typeof UserIndexExternalAchievementsArgs>;
+export const UserIndexExternalAchievementsArgs = Type.Object({
+    updates_since: Type.BigInt(),
+});
+
 export type UserIndexReferralMetricsReferralMetrics = Static<
     typeof UserIndexReferralMetricsReferralMetrics
 >;
@@ -2237,6 +2272,15 @@ export const UserAddReactionResponse = Type.Union([
     Type.Literal("UserSuspended"),
 ]);
 
+export type UserReclaimSwapTokensArgs = Static<typeof UserReclaimSwapTokensArgs>;
+export const UserReclaimSwapTokensArgs = Type.Object({
+    exchange_id: ExchangeId,
+    swap_canister_id: PrincipalTS,
+    ledger_canister_id: PrincipalTS,
+    amount: Type.BigInt(),
+    fee: Type.BigInt(),
+});
+
 export type UserPublicProfileResponse = Static<typeof UserPublicProfileResponse>;
 export const UserPublicProfileResponse = Type.Object({
     Success: UserPublicProfilePublicProfile,
@@ -2310,7 +2354,7 @@ export const AccountICRC1 = Type.Object({
             Type.Number(),
             Type.Number(),
             Type.Number(),
-        ])
+        ]),
     ),
 });
 
@@ -2478,6 +2522,7 @@ export const GateCheckFailedReason = Type.Union([
         FailedVerifiedCredentialCheck: Type.String(),
     }),
     Type.Literal("Locked"),
+    Type.Literal("NotReferredByMember"),
 ]);
 
 export type TokenInfo = Static<typeof TokenInfo>;
@@ -2537,7 +2582,6 @@ export const CompletedCryptoTransactionNNS = Type.Object({
 
 export type AccessTokenType = Static<typeof AccessTokenType>;
 export const AccessTokenType = Type.Union([
-    Type.Literal("StartVideoCall"),
     Type.Object({
         StartVideoCallV2: VideoCallAccessTokenArgs,
     }),
@@ -2923,6 +2967,25 @@ export const UserIndexSuspectedBotsArgs = Type.Object({
     count: Type.Number(),
 });
 
+export type UserIndexExternalAchievementsSuccessResult = Static<
+    typeof UserIndexExternalAchievementsSuccessResult
+>;
+export const UserIndexExternalAchievementsSuccessResult = Type.Object({
+    last_updated: Type.BigInt(),
+    achievements_added: Type.Array(UserIndexExternalAchievementsExternalAchievement),
+    achievements_removed: Type.Array(UserIndexExternalAchievementsExternalAchievement),
+});
+
+export type UserIndexExternalAchievementsResponse = Static<
+    typeof UserIndexExternalAchievementsResponse
+>;
+export const UserIndexExternalAchievementsResponse = Type.Union([
+    Type.Object({
+        Success: UserIndexExternalAchievementsSuccessResult,
+    }),
+    Type.Literal("SuccessNoUpdates"),
+]);
+
 export type UserIndexUserArgs = Static<typeof UserIndexUserArgs>;
 export const UserIndexUserArgs = Type.Object({
     user_id: Type.Optional(UserId),
@@ -3279,6 +3342,12 @@ export const UserInitialStateCommunitiesInitial = Type.Object({
     summaries: Type.Array(UserCommunitySummary),
 });
 
+export type UserInitialStateGroupChatsInitial = Static<typeof UserInitialStateGroupChatsInitial>;
+export const UserInitialStateGroupChatsInitial = Type.Object({
+    summaries: Type.Array(UserGroupChatSummary),
+    pinned: Type.Array(ChatId),
+});
+
 export type UserDeleteMessagesArgs = Static<typeof UserDeleteMessagesArgs>;
 export const UserDeleteMessagesArgs = Type.Object({
     user_id: UserId,
@@ -3344,6 +3413,66 @@ export type UserEndVideoCallArgs = Static<typeof UserEndVideoCallArgs>;
 export const UserEndVideoCallArgs = Type.Object({
     user_id: UserId,
     message_id: MessageId,
+});
+
+export type UserTokenSwapsTokenSwap = Static<typeof UserTokenSwapsTokenSwap>;
+export const UserTokenSwapsTokenSwap = Type.Object({
+    args: UserSwapTokensArgs,
+    started: Type.BigInt(),
+    transfer: Type.Optional(
+        Type.Union([
+            Type.Object({
+                Ok: Type.BigInt(),
+            }),
+            Type.Object({
+                Err: Type.String(),
+            }),
+        ]),
+    ),
+    notified_dex: Type.Optional(
+        Type.Union([
+            Type.Object({
+                Ok: Type.Null(),
+            }),
+            Type.Object({
+                Err: Type.String(),
+            }),
+        ]),
+    ),
+    amount_swapped: Type.Optional(
+        Type.Union([
+            Type.Object({
+                Ok: Type.Union([
+                    Type.Object({
+                        Ok: Type.BigInt(),
+                    }),
+                    Type.Object({
+                        Err: Type.String(),
+                    }),
+                ]),
+            }),
+            Type.Object({
+                Err: Type.String(),
+            }),
+        ]),
+    ),
+    withdrawn_from_dex: Type.Optional(
+        Type.Union([
+            Type.Object({
+                Ok: Type.BigInt(),
+            }),
+            Type.Object({
+                Err: Type.String(),
+            }),
+        ]),
+    ),
+    success: Type.Optional(Type.Boolean()),
+});
+
+export type UserTokenSwapsSuccessResult = Static<typeof UserTokenSwapsSuccessResult>;
+export const UserTokenSwapsSuccessResult = Type.Object({
+    total: Type.Number(),
+    swaps: Type.Array(UserTokenSwapsTokenSwap),
 });
 
 export type UserRemoveReactionArgs = Static<typeof UserRemoveReactionArgs>;
@@ -3732,6 +3861,7 @@ export const AccessGateNonComposite = Type.Union([
         TokenBalance: TokenBalanceGate,
     }),
     Type.Literal("Locked"),
+    Type.Literal("ReferredByMember"),
 ]);
 
 export type Chat = Static<typeof Chat>;
@@ -3810,7 +3940,7 @@ export const UsersUnblocked = Type.Object({
 
 export type Tips = Static<typeof Tips>;
 export const Tips = Type.Array(
-    Type.Tuple([PrincipalTS, Type.Array(Type.Tuple([UserId, Type.BigInt()]))])
+    Type.Tuple([PrincipalTS, Type.Array(Type.Tuple([UserId, Type.BigInt()]))]),
 );
 
 export type CallParticipant = Static<typeof CallParticipant>;
@@ -4046,9 +4176,18 @@ export const UserIndexSearchResponse = Type.Object({
     Success: UserIndexSearchResult,
 });
 
+export type UserIndexChitLeaderboardSuccessResult = Static<
+    typeof UserIndexChitLeaderboardSuccessResult
+>;
+export const UserIndexChitLeaderboardSuccessResult = Type.Object({
+    all_time: Type.Array(UserIndexChitLeaderboardChitUserBalance),
+    this_month: Type.Array(UserIndexChitLeaderboardChitUserBalance),
+    last_month: Type.Array(UserIndexChitLeaderboardChitUserBalance),
+});
+
 export type UserIndexChitLeaderboardResponse = Static<typeof UserIndexChitLeaderboardResponse>;
 export const UserIndexChitLeaderboardResponse = Type.Object({
-    Success: Type.Array(UserIndexChitLeaderboardChitUserBalance),
+    SuccessV2: UserIndexChitLeaderboardSuccessResult,
 });
 
 export type UserIndexCurrentUserSuccessResult = Static<typeof UserIndexCurrentUserSuccessResult>;
@@ -4371,6 +4510,11 @@ export const UserSetMessageReminderArgs = Type.Object({
     remind_at: Type.BigInt(),
 });
 
+export type UserTokenSwapsResponse = Static<typeof UserTokenSwapsResponse>;
+export const UserTokenSwapsResponse = Type.Object({
+    Success: UserTokenSwapsSuccessResult,
+});
+
 export type UserArchiveUnarchiveChatsArgs = Static<typeof UserArchiveUnarchiveChatsArgs>;
 export const UserArchiveUnarchiveChatsArgs = Type.Object({
     to_archive: Type.Array(Chat),
@@ -4639,6 +4783,7 @@ export const AccessGate = Type.Union([
         Composite: CompositeGate,
     }),
     Type.Literal("Locked"),
+    Type.Literal("ReferredByMember"),
 ]);
 
 export type GroupIndexFreezeGroupResponse = Static<typeof GroupIndexFreezeGroupResponse>;
@@ -5399,7 +5544,7 @@ export const CommunityCanisterChannelSummaryUpdates = Type.Object({
     member_count: Type.Optional(Type.Number()),
     permissions_v2: Type.Optional(GroupPermissions),
     updated_events: Type.Array(
-        Type.Tuple([Type.Union([MessageIndex, Type.Null()]), EventIndex, Type.BigInt()])
+        Type.Tuple([Type.Union([MessageIndex, Type.Null()]), EventIndex, Type.BigInt()]),
     ),
     metrics: Type.Optional(ChatMetrics),
     date_last_pinned: Type.Optional(Type.BigInt()),
@@ -5424,14 +5569,6 @@ export const UserUndeleteMessagesResponse = Type.Union([
     Type.Literal("ChatNotFound"),
     Type.Literal("UserSuspended"),
 ]);
-
-export type UserInitialStateCachedGroupChatSummaries = Static<
-    typeof UserInitialStateCachedGroupChatSummaries
->;
-export const UserInitialStateCachedGroupChatSummaries = Type.Object({
-    summaries: Type.Array(GroupChatSummary),
-    timestamp: Type.BigInt(),
-});
 
 export type DirectChatSummary = Static<typeof DirectChatSummary>;
 export const DirectChatSummary = Type.Object({
@@ -5524,7 +5661,7 @@ export const GroupCanisterGroupChatSummaryUpdates = Type.Object({
     wasm_version: Type.Optional(BuildVersion),
     permissions_v2: Type.Optional(GroupPermissions),
     updated_events: Type.Array(
-        Type.Tuple([Type.Union([MessageIndex, Type.Null()]), EventIndex, Type.BigInt()])
+        Type.Tuple([Type.Union([MessageIndex, Type.Null()]), EventIndex, Type.BigInt()]),
     ),
     metrics: Type.Optional(ChatMetrics),
     my_metrics: Type.Optional(ChatMetrics),
@@ -5654,13 +5791,6 @@ export const LocalUserIndexJoinGroupResponse = Type.Union([
         InternalError: Type.String(),
     }),
 ]);
-
-export type UserInitialStateGroupChatsInitial = Static<typeof UserInitialStateGroupChatsInitial>;
-export const UserInitialStateGroupChatsInitial = Type.Object({
-    summaries: Type.Array(UserGroupChatSummary),
-    pinned: Type.Array(ChatId),
-    cached: Type.Optional(UserInitialStateCachedGroupChatSummaries),
-});
 
 export type UserInitialStateDirectChatsInitial = Static<typeof UserInitialStateDirectChatsInitial>;
 export const UserInitialStateDirectChatsInitial = Type.Object({

@@ -1684,6 +1684,11 @@ export function accessGate(value: TAccessGate): AccessGate {
             kind: "locked_gate",
         };
     }
+    if (value === "ReferredByMember") {
+        return {
+            kind: "referred_by_member_gate",
+        };
+    }
     if ("Composite" in value) {
         return {
             kind: "composite_gate",
@@ -2081,6 +2086,9 @@ export function gateCheckFailedReason(value: TGateCheckFailedReason): GateCheckF
     }
     if (value === "NoSnsNeuronsWithRequiredStakeFound") {
         return "min_stake_not_met";
+    }
+    if (value === "NotReferredByMember") {
+        return "not_referred_by_member";
     }
     if (value === "Locked") {
         return "locked";

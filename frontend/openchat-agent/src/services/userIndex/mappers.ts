@@ -56,6 +56,8 @@ import type {
     UserIndexUsersResponse,
     UserSummary as TUserSummary,
     UserSummaryV2 as TUserSummaryV2,
+    UserIndexExternalAchievementsResponse,
+    UserIndexExternalAchievementsExternalAchievement,
 } from "../../typebox";
 
 export function userSearchResponse(value: UserIndexSearchResponse): UserSummary[] {
@@ -459,8 +461,12 @@ export function diamondMembershipFeesResponse(
 export function chitLeaderboardResponse(
     value: UserIndexChitLeaderboardResponse,
 ): ChitLeaderboardResponse {
-    if ("Success" in value) {
-        return value.Success.map(chitUserBalance);
+    if ("SuccessV2" in value) {
+        return {
+            allTime: value.SuccessV2.all_time.map(chitUserBalance),
+            lastMonth: value.SuccessV2.last_month.map(chitUserBalance),
+            thisMonth: value.SuccessV2.this_month.map(chitUserBalance),
+        };
     }
     throw new UnsupportedValueError("Unexpected ChitLeaderboardResponse type received", value);
 }
@@ -491,29 +497,30 @@ export function submitProofOfUniquePersonhoodResponse(
     );
 }
 
-export function externalAchievementsResponse(candid: UserIndex): ExternalAchievementsResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            achievementsRemoved: candid.Success.achievements_removed.map(externalAchievement),
-            lastUpdated: candid.Success.last_updated,
-            achievementsAdded: candid.Success.achievements_added.map(externalAchievement),
-        };
-    }
-    if ("SuccessNoUpdates" in candid) {
+export function externalAchievementsResponse(
+    value: UserIndexExternalAchievementsResponse,
+): ExternalAchievementsResponse {
+    if (value === "SuccessNoUpdates") {
         return { kind: "success_no_updates" };
     }
-    throw new UnsupportedValueError(
-        "Unexpected ApiExternalAchievementsResponse type received",
-        candid,
-    );
+    if ("Success" in value) {
+        return {
+            kind: "success",
+            achievementsRemoved: value.Success.achievements_removed.map(externalAchievement),
+            lastUpdated: value.Success.last_updated,
+            achievementsAdded: value.Success.achievements_added.map(externalAchievement),
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ExternalAchievementsResponse type received", value);
 }
 
-function externalAchievement(candid: ApiExternalAchievement): ExternalAchievement {
+function externalAchievement(
+    value: UserIndexExternalAchievementsExternalAchievement,
+): ExternalAchievement {
     return {
-        id: candid.id,
-        url: candid.url,
-        name: candid.name,
-        chitReward: candid.chit_reward,
+        id: value.id,
+        url: value.url,
+        name: value.name,
+        chitReward: value.chit_reward,
     };
 }
