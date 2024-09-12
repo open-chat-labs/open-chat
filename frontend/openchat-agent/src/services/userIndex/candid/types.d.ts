@@ -327,8 +327,7 @@ export type ChitEarnedReason = { 'DailyClaim' : null } |
   { 'ExternalAchievement' : string } |
   { 'MemeContestWinner' : null } |
   { 'Referral' : ReferralStatus };
-export type ChitLeaderboardResponse = { 'Success' : Array<ChitUserBalance> } |
-  {
+export type ChitLeaderboardResponse = {
     'SuccessV2' : {
       'all_time' : Array<ChitUserBalance>,
       'last_month' : Array<ChitUserBalance>,
