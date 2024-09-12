@@ -79,6 +79,7 @@
         "private": "निजी",
         "public": "सार्वजनिक",
         "readonlyTitle": "प्रवेश द्वार",
+        "referredByMember": "सदस्य द्वारा संदर्भित",
         "subscriptionComingSoon": "सदस्यता मॉडल जल्द ही आ रहा है.",
         "title": "प्रवेश द्वार अद्यतन करें",
         "tokenBalance": "टोकन बैलेंस",

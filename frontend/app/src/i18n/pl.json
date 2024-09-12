@@ -79,6 +79,7 @@
         "private": "Prywatny",
         "public": "Publiczny",
         "readonlyTitle": "Brama dostępowa",
+        "referredByMember": "Polecony przez członka",
         "subscriptionComingSoon": "Model subskrypcyjny już wkrótce.",
         "title": "Zaktualizuj bramę dostępu",
         "tokenBalance": "Bilans tokenów",

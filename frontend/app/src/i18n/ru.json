@@ -79,6 +79,7 @@
         "private": "Приватный",
         "public": "Общедоступный",
         "readonlyTitle": "Ворота доступа",
+        "referredByMember": "Рекомендовано участником",
         "subscriptionComingSoon": "Модель подписки появится в ближайшее время.",
         "title": "Обновить ворота доступа",
         "tokenBalance": "Баланс токена",

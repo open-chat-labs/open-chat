@@ -79,6 +79,7 @@
         "private": "Privato",
         "public": "Pubblico",
         "readonlyTitle": "Cancello di accesso",
+        "referredByMember": "Segnalato dal membro",
         "subscriptionComingSoon": "Modello di abbonamento in arrivo.",
         "title": "Aggiorna il cancello di accesso",
         "tokenBalance": "Saldo dei gettoni",

@@ -79,6 +79,7 @@
         "private": "Privé",
         "public": "Public",
         "readonlyTitle": "Porte d'accès",
+        "referredByMember": "Référé par un membre",
         "subscriptionComingSoon": "Modèle d'abonnement à venir.",
         "title": "Mettre à jour la porte d'accès",
         "tokenBalance": "Solde des jetons",

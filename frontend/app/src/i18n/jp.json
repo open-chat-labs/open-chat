@@ -79,6 +79,7 @@
         "private": "非公開",
         "public": "公開",
         "readonlyTitle": "アクセスゲート",
+        "referredByMember": "メンバーからの紹介",
         "subscriptionComingSoon": "サブスクリプションモデルも近日登場予定。",
         "title": "アクセスゲートの更新",
         "tokenBalance": "トークン残高",

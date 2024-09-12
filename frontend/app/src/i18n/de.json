@@ -79,6 +79,7 @@
         "private": "Privatgelände",
         "public": "Öffentlich",
         "readonlyTitle": "Zugangstor",
+        "referredByMember": "Empfohlen von Mitglied",
         "subscriptionComingSoon": "Abonnementmodell folgt in Kürze.",
         "title": "Zugangstor aktualisieren",
         "tokenBalance": "Token-Guthaben",

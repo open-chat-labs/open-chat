@@ -79,6 +79,7 @@
         "private": "Private",
         "public": "Public",
         "readonlyTitle": "Access gate",
+        "referredByMember": "Referred by member",
         "subscriptionComingSoon": "Subscription model coming soon.",
         "title": "Update access gate",
         "tokenBalance": "Token balance",
