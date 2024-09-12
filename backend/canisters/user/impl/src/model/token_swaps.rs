@@ -1,12 +1,14 @@
 use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{TimestampMillis, Timestamped};
+use types::{CanisterId, ExchangeId, TimestampMillis, Timestamped};
 use user_canister::token_swap_status::TokenSwapStatus;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct TokenSwaps {
     swaps: HashMap<u128, TokenSwap>,
+    #[serde(default)]
+    reclaims: Vec<Reclaim>,
 }
 
 impl TokenSwaps {
@@ -20,12 +22,27 @@ impl TokenSwaps {
         self.swaps.insert(swap.args.swap_id, swap);
     }
 
+    pub fn record_reclaim(&mut self, args: user_canister::reclaim_swap_tokens::Args, now: TimestampMillis) {
+        self.reclaims.push(Reclaim {
+            timestamp: now,
+            exchange_id: args.exchange_id,
+            swap_canister_id: args.swap_canister_id,
+            ledger_canister_id: args.ledger_canister_id,
+            amount: args.amount,
+            fee: args.fee,
+        });
+    }
+
     pub fn get(&self, swap_id: u128) -> Option<&TokenSwap> {
         self.swaps.get(&swap_id)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &TokenSwap> {
         self.swaps.values()
+    }
+
+    pub fn len(&self) -> usize {
+        self.swaps.len()
     }
 }
 
@@ -70,4 +87,14 @@ impl From<TokenSwap> for TokenSwapStatus {
             success: value.success.map(|t| t.value),
         }
     }
+}
+
+#[derive(Serialize, Deserialize)]
+struct Reclaim {
+    timestamp: TimestampMillis,
+    exchange_id: ExchangeId,
+    swap_canister_id: CanisterId,
+    ledger_canister_id: CanisterId,
+    amount: u128,
+    fee: u128,
 }
