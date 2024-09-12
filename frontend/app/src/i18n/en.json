@@ -631,6 +631,7 @@
         "edited_message": "Edit a message",
         "enabled_disappearing_messages": "Enable disappearing messages",
         "external": "External Achievements",
+        "externalInfo": "External achievements are defined by third parties. Just click the link and follow their instructions to recieve a CHIT reward.",
         "favourited_chat": "Mark a chat as a favourite",
         "followed_thread": "Follow a thread",
         "forwarded_message": "Forward a message",

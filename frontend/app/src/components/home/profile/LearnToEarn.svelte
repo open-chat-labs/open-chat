@@ -1,4 +1,5 @@
 <script lang="ts">
+    import InformationOutline from "svelte-material-icons/InformationOutline.svelte";
     import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
     import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
     import {
@@ -16,6 +17,9 @@
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
     import Progress from "../../Progress.svelte";
+    import ExternalLink from "../../landingpages/ExternalLink.svelte";
+    import TooltipWrapper from "../../TooltipWrapper.svelte";
+    import TooltipPopup from "../../TooltipPopup.svelte";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -73,11 +77,13 @@
 
     $: globalState = client.globalStateStore;
     $: filtered = [...achievements].filter(filter);
-    $: [achieved, notAchieved] = client.partition(filtered, (a) =>
+    $: [internalAchieved, internalNotAchieved] = client.partition(filtered, (a) =>
         $globalState.achievements.has(a),
     );
-    $: percComplete = Math.floor((achieved.length / filtered.length) * 100);
     $: externalAchievements = [] as ExternalAchievement[];
+    $: totalAchievements = filtered.length + externalAchievements.length;
+    $: achieved = [...internalAchieved, ...externalAchieved.map((a) => a.name)];
+    $: percComplete = Math.round((achieved.length / totalAchievements) * 100);
     $: [externalAchieved, externalNotAchieved] = client.partition(externalAchievements, (a) => {
         return $globalState.achievements.has(a.name);
     });
@@ -92,8 +98,7 @@
 
     onMount(() => {
         client.getExternalAchievements().then((achievements) => {
-            console.log("achievements", achievements);
-            externalAchievements = achievements;
+            externalAchievements = achievements.sort((a, b) => b.chitReward - a.chitReward);
         });
     });
 </script>
@@ -114,15 +119,6 @@
                     class="tab">
                     <Translatable resourceKey={i18nKey("learnToEarn.todo")} />
                 </div>
-                <!-- svelte-ignore a11y-click-events-have-key-events -->
-                <div
-                    tabindex="0"
-                    role="button"
-                    on:click={() => selectTab("done")}
-                    class:selected={selectedTab === "done"}
-                    class="tab">
-                    <Translatable resourceKey={i18nKey("learnToEarn.done")} />
-                </div>
                 {#if externalAchievements.length > 0}
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                     <div
@@ -132,12 +128,37 @@
                         class:selected={selectedTab === "external"}
                         class="tab">
                         <Translatable resourceKey={i18nKey("learnToEarn.external")} />
+                        <div class="icon">
+                            <TooltipWrapper position={"bottom"} align={"end"}>
+                                <InformationOutline
+                                    slot="target"
+                                    size={"1.2em"}
+                                    color={selectedTab === "external"
+                                        ? "var(--txt)"
+                                        : "var(--txt-light)"} />
+                                <div let:position let:align slot="tooltip">
+                                    <TooltipPopup {position} {align}>
+                                        <Translatable
+                                            resourceKey={i18nKey("learnToEarn.externalInfo")} />
+                                    </TooltipPopup>
+                                </div>
+                            </TooltipWrapper>
+                        </div>
                     </div>
                 {/if}
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <div
+                    tabindex="0"
+                    role="button"
+                    on:click={() => selectTab("done")}
+                    class:selected={selectedTab === "done"}
+                    class="tab">
+                    <Translatable resourceKey={i18nKey("learnToEarn.done")} />
+                </div>
             </div>
             {#if selectedTab === "todo"}
                 <div class="list">
-                    {#if notAchieved.length === 0}
+                    {#if internalNotAchieved.length === 0}
                         <div class="empty">
                             <div class="emoji">😎</div>
                             <div class="msg">
@@ -146,7 +167,7 @@
                             </div>
                         </div>
                     {:else}
-                        {#each notAchieved as achievement}
+                        {#each internalNotAchieved as achievement}
                             <div class="achievement">
                                 <div class="no icon">
                                     <CheckCircleOutline size={$iconSize} color={"#ccc"} />
@@ -182,12 +203,18 @@
             {/if}
             {#if selectedTab === "external"}
                 <div class="list">
-                    {#each externalAchievements as achievement}
-                        <div class="achievement">
+                    {#each externalNotAchieved as achievement}
+                        <div class="achievement external">
                             <div class="external icon">
-                                <CheckCircleOutline size={$iconSize} color={"#ccc"} />
+                                <img
+                                    class="logo"
+                                    src={client.achievementLogo(achievement.id)}
+                                    alt={achievement.name} />
+                                <ExternalLink iconColor={"var(--txt)"} href={achievement.url}>
+                                    {achievement.name}
+                                </ExternalLink>
+                                <div class="reward">{achievement.chitReward.toLocaleString()}</div>
                             </div>
-                            {achievement.name}
                         </div>
                     {/each}
                 </div>
@@ -211,9 +238,19 @@
 </Overlay>
 
 <style lang="scss">
+    :global(.tab .icon .noselect) {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
     .achievement {
         display: flex;
         gap: $sp3;
+
+        &.external {
+            margin-bottom: $sp2;
+        }
     }
 
     .perc {
@@ -247,6 +284,10 @@
             margin-bottom: -2px;
             border-bottom: 3px solid transparent;
             white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: $sp2;
+
             &.selected {
                 color: var(--txt);
                 border-bottom: 3px solid var(--txt);
@@ -275,5 +316,24 @@
         .msg {
             @include font(bold, normal, fs-140);
         }
+    }
+
+    .logo {
+        width: toRem(20);
+        height: toRem(20);
+    }
+
+    .external {
+        display: flex;
+        align-items: center;
+        gap: $sp3;
+    }
+
+    .reward {
+        background-color: var(--button-bg);
+        color: var(--button-txt);
+        padding: $sp1 $sp2;
+        border-radius: $sp2;
+        @include font(light, normal, fs-70);
     }
 </style>

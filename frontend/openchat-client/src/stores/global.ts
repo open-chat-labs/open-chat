@@ -1,6 +1,5 @@
 /* eslint-disable no-case-declarations */
 import type {
-    Achievement,
     ChannelSummary,
     ChatIdentifier,
     ChatListScope,
