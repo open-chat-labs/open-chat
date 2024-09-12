@@ -353,8 +353,6 @@ struct Data {
     pub video_call_operators: Vec<Principal>,
     pub oc_key_pair: P256KeyPair,
     pub empty_users: HashSet<UserId>,
-    // TODO: Remove this attribute after release
-    #[serde(default, skip_deserializing)]
     pub chit_leaderboard: ChitLeaderboard,
     pub deleted_users: Vec<DeletedUser>,
     #[serde(with = "serde_bytes")]
@@ -433,7 +431,7 @@ impl Data {
             video_call_operators,
             oc_key_pair: P256KeyPair::default(),
             empty_users: HashSet::new(),
-            chit_leaderboard: ChitLeaderboard::default(),
+            chit_leaderboard: ChitLeaderboard::new(now),
             deleted_users: Vec::new(),
             ic_root_key,
             identity_canister_user_sync_queue: VecDeque::new(),
@@ -560,7 +558,7 @@ impl Default for Data {
             video_call_operators: Vec::default(),
             oc_key_pair: P256KeyPair::default(),
             empty_users: HashSet::new(),
-            chit_leaderboard: ChitLeaderboard::default(),
+            chit_leaderboard: ChitLeaderboard::new(0),
             deleted_users: Vec::new(),
             ic_root_key: Vec::new(),
             identity_canister_user_sync_queue: VecDeque::new(),
