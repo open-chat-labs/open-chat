@@ -84,7 +84,7 @@ impl AccessGate {
             AccessGate::TokenBalance(_) => "token_balance",
             AccessGate::Composite(_) => "composite",
             AccessGate::Locked => "locked",
-            AccessGate::ReferredByMember => "referral",
+            AccessGate::ReferredByMember => "referred_by_member",
         }
     }
 }
