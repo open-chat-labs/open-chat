@@ -5593,8 +5593,8 @@ checksum = "2900ede94e305130c13ddd391e0ab7cbaeb783945ae07a279c268cb05109c6cb"
 
 [[package]]
 name = "pocket-ic"
-version = "4.0.0"
-source = "git+https://github.com/dfinity/ic.git?rev=4332316c913a53433ed2d9ec33315cd361ba52b0#4332316c913a53433ed2d9ec33315cd361ba52b0"
+version = "5.0.0"
+source = "git+https://github.com/dfinity/ic.git?rev=a8a14a1d979b26ac5809cc575f0ca5e4175f8b71#a8a14a1d979b26ac5809cc575f0ca5e4175f8b71"
 dependencies = [
  "base64 0.13.1",
  "candid",
