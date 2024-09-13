@@ -82,7 +82,7 @@ export abstract class CandidService {
         const payload = CandidService.prepareMsgpackArgs(args, requestValidator);
 
         try {
-            const { requestId, response } = await this.makeCanisterRequest(() =>
+            const { requestId, response } = await this.sendRequestToCanister(() =>
                 this.agent.call(this.canisterId, {
                     methodName: methodName + "_msgpack",
                     arg: payload,
@@ -92,7 +92,7 @@ export abstract class CandidService {
             if (!response.ok || response.body) {
                 throw new UpdateCallRejectedError(canisterId, methodName, requestId, response);
             }
-            const { reply } = await this.makeCanisterRequest(() =>
+            const { reply } = await this.sendRequestToCanister(() =>
                 polling.pollForResponse(
                     this.agent,
                     canisterId,
@@ -124,7 +124,7 @@ export abstract class CandidService {
         args?: unknown,
         retries = 0,
     ): Promise<To> {
-        return this.makeCanisterRequest(() => serviceCall())
+        return this.sendRequestToCanister(() => serviceCall())
             .then(mapper)
             .catch((err) => {
                 const responseErr = toCanisterResponseError(err as Error, this.identity);
@@ -167,14 +167,17 @@ export abstract class CandidService {
             });
     }
 
-    private async makeCanisterRequest<T>(requestFn: () => Promise<T>, isRetry = false): Promise<T> {
+    private async sendRequestToCanister<T>(
+        requestFn: () => Promise<T>,
+        isRetry = false,
+    ): Promise<T> {
         try {
             return await requestFn();
         } catch (err) {
             if (!isRetry && err instanceof ReplicaTimeError) {
                 this.agent.replicaTime = err.replicaTime;
                 console.log("Set replica time to " + err.replicaTime);
-                return await this.makeCanisterRequest(requestFn, true);
+                return await this.sendRequestToCanister(requestFn, true);
             }
             throw err;
         }
