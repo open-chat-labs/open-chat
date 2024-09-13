@@ -54,11 +54,12 @@
                 canEdit={canEditChannel}
                 on:showGroupMembers
                 on:close
+                on:deleteGroup
                 on:editGroup={editGroup} />
         {/if}
     </div>
     <div slot="channel">
-        <GroupDetailsBody chat={channel} {memberCount} />
+        <GroupDetailsBody chat={channel} {memberCount} on:deleteGroup />
     </div>
     <div slot="community">
         <CommunityCard

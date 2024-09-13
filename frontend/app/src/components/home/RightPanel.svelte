@@ -373,6 +373,7 @@
                 community={$selectedCommunity}
                 selectedTab="channel"
                 on:showGroupMembers
+                on:deleteGroup
                 on:editGroup
                 on:editCommunity
                 on:close={popRightPanelHistory} />
@@ -540,6 +541,7 @@
                 memberCount={$currentChatMembers.length}
                 selectedTab="community"
                 on:showGroupMembers
+                on:deleteGroup
                 on:editGroup
                 on:editCommunity
                 on:close={popRightPanelHistory} />
