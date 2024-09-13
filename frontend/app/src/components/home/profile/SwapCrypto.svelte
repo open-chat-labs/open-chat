@@ -42,6 +42,8 @@
     let bestQuote: [DexId, bigint] | undefined = undefined;
     let swapId: bigint | undefined;
     let userAcceptedWarning = false;
+    let warnUnknownValue = false;
+    let warnValueDropped = false;
 
     $: cryptoLookup = client.enhancedCryptoLookup;
     $: detailsIn = $cryptoLookup[ledgerIn];
@@ -50,20 +52,6 @@
     $: swapping = state === "swap" && busy;
     $: amountInText = client.formatTokens(amountIn, detailsIn.decimals);
     $: exchangeRatesLookup = client.exchangeRatesLookupStore;
-    $: xrIn = $exchangeRatesLookup[detailsIn.symbol.toLowerCase()]?.toUSD;
-    $: xrOut = detailsOut !== undefined ? $exchangeRatesLookup[detailsOut.symbol.toLowerCase()]?.toUSD : undefined;
-    $: usdInText = calculateDollarAmount(
-        amountIn,
-        xrIn,
-        detailsIn.decimals,
-    );    
-    $: usdOutText = bestQuote !== undefined ? calculateDollarAmount(
-        bestQuote[1],
-        xrOut,
-        detailsOut!.decimals,
-    ) : "???";
-    $: warnUnknownValue = xrIn === undefined || xrOut === undefined;
-    $: warnValueDropped = !warnUnknownValue && Number(usdOutText) < 0.9 * Number(usdOutText);
     $: {
         valid =
             anySwapsAvailable && validAmount && (state === "swap" ? (bestQuote !== undefined && userAcceptedWarning || (!warnUnknownValue && !warnValueDropped)) : true);
@@ -126,6 +114,20 @@
                         detailsOut!.decimals,
                     );
 
+                    const usdInText = calculateDollarAmount(
+                        amountIn,
+                        $exchangeRatesLookup[detailsIn.symbol.toLowerCase()]?.toUSD,
+                        detailsIn.decimals,
+                    );    
+                    const usdOutText = calculateDollarAmount(
+                        bestQuote[1],
+                        $exchangeRatesLookup[detailsOut!.symbol.toLowerCase()]?.toUSD,
+                        detailsOut!.decimals,
+                    );
+                    
+                    warnUnknownValue = usdInText === "???" || usdOutText === "???";
+                    warnValueDropped = !warnUnknownValue && Number(usdOutText) < 0.9 * Number(usdOutText);
+
                     swapMessageValues = {
                         amountIn: amountInText,
                         tokenIn: detailsIn.symbol,
@@ -134,6 +136,8 @@
                         tokenOut: detailsOut!.symbol,
                         dex,
                         minAmountOut: minAmountOutText,
+                        usdOut: usdOutText,
+                        usdIn: usdInText,
                     };
 
                     if (quote > minAmountOut) {
@@ -280,7 +284,7 @@
 
         {#if state === "swap" && !swapping}
             <div>{$_("tokenSwap.bestQuote", { values: swapMessageValues })}</div>
-            <Markdown text={$_("tokenSwap.youWillReceive", { values: { ...swapMessageValues, usdOut: usdOutText, usdIn: usdInText } })} />
+            <Markdown text={$_("tokenSwap.youWillReceive", { values: swapMessageValues })} />
             
             {#if warnValueDropped || warnUnknownValue}
                 <div class="warning">
