@@ -1036,11 +1036,7 @@ export function canChangeRoles(
 
 export function canRemoveMembers(chat: ChatSummary): boolean {
     if (chat.kind !== "direct_chat") {
-        return (
-            !chat.public &&
-            !chat.frozen &&
-            isPermitted(chat.membership.role, chat.permissions.removeMembers)
-        );
+        return !chat.frozen && isPermitted(chat.membership.role, chat.permissions.removeMembers);
     } else {
         return false;
     }
