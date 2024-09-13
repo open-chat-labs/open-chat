@@ -13,8 +13,8 @@
     },
     "author": "julian.jelfs@gmail.com",
     "dependencies": {
-        "@dfinity/candid": "^2.0.0",
-        "@dfinity/principal": "^2.0.0",
+        "@dfinity/candid": "^2.1.0",
+        "@dfinity/principal": "^2.1.0",
         "openchat-agent": "*",
         "openchat-shared": "*"
     },
