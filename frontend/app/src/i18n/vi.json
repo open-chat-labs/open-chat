@@ -1395,8 +1395,8 @@
         "swapNotAvailable": "Hiện tại không thể hoán đổi {tokenIn} sang bất kỳ mã thông báo nào khác",
         "swapToken": "Hoán đổi {tokenIn}",
         "swapTokenTo": "Hoán đổi {tokenIn} thành {tokenOut}",
-        "warningSlippage": "Do tính thanh khoản thấp, giá trị của {tokenOut} bạn sẽ nhận được sẽ < 90% giá trị của {tokenIn} bạn sẽ hoán đổi (dựa trên giá trị USD được báo giá của các token này).",
-        "warningValueUnknown": "Giá đô la hiện tại của một hoặc nhiều mã thông báo này không có sẵn nên không thể cảnh báo bạn liệu việc hoán đổi này có mang lại giá trị tốt hay không.",
+        "warningValueDropped": "Do tính thanh khoản thấp, giá trị của {tokenOut} bạn sẽ nhận được sẽ < 90% giá trị của {tokenIn} bạn sẽ hoán đổi (dựa trên giá trị USD được báo giá của các token này).",
+        "warningValueUnknown": "Giá đô la hiện tại của một hoặc nhiều mã thông báo này không có sẵn nên không thể xác định liệu việc hoán đổi này có mang lại giá trị tốt hay không.",
         "youWillReceive": "Bạn sẽ nhận được **{amountOut}** {tokenOut} (${usdOut}) cho **{amountIn}** {tokenIn} (${usdIn})."
     },
     "tokenTransfer": {

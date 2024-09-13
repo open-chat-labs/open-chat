@@ -1395,8 +1395,8 @@
         "swapNotAvailable": "Derzeit ist es nicht möglich, {tokenIn} gegen einen anderen Token auszutauschen",
         "swapToken": "Tausche {tokenIn}",
         "swapTokenTo": "Tauschen Sie {tokenIn} gegen {tokenOut} aus",
-        "warningSlippage": "Aufgrund der geringen Liquidität beträgt der Wert von {tokenOut}, den Sie erhalten, < 90 % des Werts von {tokenIn}, den Sie tauschen (basierend auf dem angegebenen USD-Wert dieser Token).",
-        "warningValueUnknown": "Der aktuelle Dollarpreis für einen oder mehrere dieser Token ist nicht verfügbar. Daher ist es nicht möglich, Sie zu warnen, ob dieser Tausch ein gutes Preis-Leistungs-Verhältnis darstellt.",
+        "warningValueDropped": "Aufgrund der geringen Liquidität beträgt der Wert von {tokenOut}, den Sie erhalten, < 90 % des Werts von {tokenIn}, den Sie tauschen (basierend auf dem angegebenen USD-Wert dieser Token).",
+        "warningValueUnknown": "Der aktuelle Dollarpreis für einen oder mehrere dieser Token ist nicht verfügbar. Daher lässt sich nicht feststellen, ob dieser Tausch ein gutes Preis-Leistungs-Verhältnis darstellt.",
         "youWillReceive": "Sie erhalten **{amountOut}** {tokenOut} (${usdOut}) für **{amountIn}** {tokenIn} (${usdIn})."
     },
     "tokenTransfer": {

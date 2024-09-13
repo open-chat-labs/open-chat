@@ -289,7 +289,7 @@
             {#if warnValueDropped || warnUnknownValue}
                 <div class="warning">
                     {#if warnValueDropped}
-                        <div>{$_("tokenSwap.warningSlippage", { values: swapMessageValues })}</div>
+                        <div>{$_("tokenSwap.warningValueDropped", { values: swapMessageValues })}</div>
                     {:else}
                         <div>{$_("tokenSwap.warningValueUnknown", { values: swapMessageValues })}</div>
                     {/if}

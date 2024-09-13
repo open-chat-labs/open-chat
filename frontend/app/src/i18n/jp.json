@@ -1395,8 +1395,8 @@
         "swapNotAvailable": "現在、{tokenIn} を他のトークンに交換することはできません",
         "swapToken": "{tokenIn}を交換する",
         "swapTokenTo": "{tokenIn} を {tokenOut} に交換します",
-        "warningSlippage": "流動性が低いため、受け取る {tokenOut} の価値は、スワップする {tokenIn} の価値の 90% 未満になります (これらのトークンの見積 USD 価値に基づきます)。",
-        "warningValueUnknown": "これらのトークンの 1 つ以上の現在のドル価格は利用できないため、このスワップが適切な価値を表すかどうかを警告することはできません。",
+        "warningValueDropped": "流動性が低いため、受け取る {tokenOut} の価値は、スワップする {tokenIn} の価値の 90% 未満になります (これらのトークンの見積 USD 価値に基づきます)。",
+        "warningValueUnknown": "これらのトークンの 1 つ以上の現在のドル価格は入手できないため、このスワップが適切な価値を表すかどうかを判断することはできません。",
         "youWillReceive": "**{amountOut}** {tokenOut} (${usdOut}) に対して **{amountIn}** {tokenIn} (${usdIn}) を受け取ります。"
     },
     "tokenTransfer": {
