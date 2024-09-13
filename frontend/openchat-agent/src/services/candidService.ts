@@ -1,4 +1,11 @@
-import { Actor, HttpAgent, type Identity, polling, UpdateCallRejectedError } from "@dfinity/agent";
+import {
+    Actor,
+    HttpAgent,
+    type Identity,
+    polling,
+    ReplicaTimeError,
+    UpdateCallRejectedError,
+} from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
 import { Principal } from "@dfinity/principal";
 import {
@@ -75,19 +82,23 @@ export abstract class CandidService {
         const payload = CandidService.prepareMsgpackArgs(args, requestValidator);
 
         try {
-            const { requestId, response } = await this.agent.call(this.canisterId, {
-                methodName: methodName + "_msgpack",
-                arg: payload,
-            });
+            const { requestId, response } = await this.makeCanisterRequest(() =>
+                this.agent.call(this.canisterId, {
+                    methodName: methodName + "_msgpack",
+                    arg: payload,
+                }),
+            );
             const canisterId = Principal.fromText(this.canisterId);
             if (!response.ok || response.body) {
                 throw new UpdateCallRejectedError(canisterId, methodName, requestId, response);
             }
-            const { reply } = await polling.pollForResponse(
-                this.agent,
-                canisterId,
-                requestId,
-                polling.defaultStrategy(),
+            const { reply } = await this.makeCanisterRequest(() =>
+                polling.pollForResponse(
+                    this.agent,
+                    canisterId,
+                    requestId,
+                    polling.defaultStrategy(),
+                ),
             );
             return CandidService.processMsgpackResponse(reply, mapper, responseValidator);
         } catch (err) {
@@ -113,7 +124,7 @@ export abstract class CandidService {
         args?: unknown,
         retries = 0,
     ): Promise<To> {
-        return serviceCall()
+        return this.makeCanisterRequest(() => serviceCall())
             .then(mapper)
             .catch((err) => {
                 const responseErr = toCanisterResponseError(err as Error, this.identity);
@@ -154,6 +165,19 @@ export abstract class CandidService {
                     throw responseErr;
                 }
             });
+    }
+
+    private async makeCanisterRequest<T>(requestFn: () => Promise<T>, isRetry = false): Promise<T> {
+        try {
+            return await requestFn();
+        } catch (err) {
+            if (!isRetry && err instanceof ReplicaTimeError) {
+                this.agent.replicaTime = err.replicaTime;
+                console.log("Set replica time to " + err.replicaTime);
+                return await this.makeCanisterRequest(requestFn, true);
+            }
+            throw err;
+        }
     }
 
     private static validate<T extends TSchema>(value: unknown, validator: T): T {
