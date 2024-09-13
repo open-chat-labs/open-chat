@@ -36,4 +36,4 @@
     on:close={clickClose}
     on:editGroup={editGroup} />
 
-<GroupDetailsBody {chat} {memberCount} />
+<GroupDetailsBody {chat} {memberCount} on:deleteGroup />

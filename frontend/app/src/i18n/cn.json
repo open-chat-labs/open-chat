@@ -1370,9 +1370,12 @@
     "toggleTranslationEditMode": "切换翻译更正",
     "tokenSwap": {
         "back": "后退",
+        "bestQuote": "报价的最佳汇率为 {rate} {tokenOut} 每 {tokenIn} 从 {dex} 开始。",
+        "confirmUnderstanding": "勾选此框以确认您了解",
         "findingAvailableTokens": "正在寻找可用的代币进行兑换...",
         "getTokenSwapsError": "获取 {tokenIn} 的交换时出错",
         "noQuotes": "没有 DEX 提供兑换 {tokenIn} 的报价",
+        "proceedWithSwap": "只有当收到的 {tokenOut} 金额至少达到报价金额的 98% 时，交换才会进行。您想继续尝试交换吗？",
         "progress": {
             "deposit": "将 {amountIn} {tokenIn} 转移到 {dex}",
             "done": "兑换完成",
@@ -1390,10 +1393,12 @@
         "quoteTooLow": "所报的最佳费率是 {rate}  {tokenOut} / {tokenIn} @{dex}。这将从 {amountIn} {tokenIn} 兑换 {amountOut} {tokenOut} 。仅当报价金额超过 {minAmountOut} 时，您才可以进行交换。",
         "requote": "重新报价",
         "swap": "兑换",
-        "swapInfo": "所报的最佳费率是 {rate}  {tokenOut} / **{tokenIn}** @{dex}。这将从 **{amountIn}** {tokenIn} 兑换 **{amountOut}** {tokenOut} 。仅当收到的 {tokenOut} 金额至少为报价金额的 98% 时，兑换才会进行。您想继续尝试“{swap}”吗？",
         "swapNotAvailable": "目前无法将 {tokenIn} 交换为任何其他代币",
         "swapToken": "交换{tokenIn}",
-        "swapTokenTo": "将 {tokenIn} 交换为 {tokenOut}"
+        "swapTokenTo": "将 {tokenIn} 交换为 {tokenOut}",
+        "warningValueDropped": "由于流动性低，您将收到的{tokenOut}的价值<您将交换的{tokenIn}价值的90％（基于这些代币的报价美元价值）。",
+        "warningValueUnknown": "目前这些代币的美元价格尚不可用，因此无法确定这种交换是否具有良好的价值。",
+        "youWillReceive": "您将收到 **{amountOut}** {tokenOut} (${usdOut})，金额为 **{amountIn}** {tokenIn} (${usdIn})。"
     },
     "tokenTransfer": {
         "accountNameTaken": "您已有一个同名帐户",
