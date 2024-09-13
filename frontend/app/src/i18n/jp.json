@@ -1369,9 +1369,12 @@
     "toggleTranslationEditMode": "翻訳修正の切り替え",
     "tokenSwap": {
         "back": "戻る",
+        "bestQuote": "提示された最良の為替レートは、{rate} からの {tokenOut} {tokenIn} {dex} です。",
+        "confirmUnderstanding": "理解したことを確認するためにこのボックスにチェックを入れてください",
         "findingAvailableTokens": "交換できるトークンを見つけています...",
         "getTokenSwapsError": "{tokenIn} のスワップ取得エラー",
         "noQuotes": "{tokenIn} をスワップするための見積もりを提供した DEX はありませんでした",
+        "proceedWithSwap": "受け取る {tokenOut} の量が見積額の 98% 以上である場合にのみ、スワップが実行されます。先に進んで `{swap}` を試してみますか?",
         "progress": {
             "deposit": "{amountIn} {tokenIn} を {dex} に転送します",
             "done": "交換完了",
@@ -1389,10 +1392,12 @@
         "quoteTooLow": "見積もられた最良レートは、{rate} からの {tokenOut} あたり {tokenIn} {dex} です。これにより、{amountOut} {tokenOut} の {amountIn} {tokenIn} が得られます。見積金額が {minAmountOut} を超える場合にのみ交換できます。",
         "requote": "再引用",
         "swap": "スワップ",
-        "swapInfo": "見積もられた最良レートは、{rate} からの {tokenOut} あたり **{tokenIn}** {dex} です。これにより、**{amountOut}** {tokenOut} に対して **{amountIn}** {tokenIn} が得られます。スワップは、受け取る {tokenOut} の額が見積額の少なくとも 98% である場合にのみ続行されます。先に進んで「{swap}」を試してみませんか?",
         "swapNotAvailable": "現在、{tokenIn} を他のトークンに交換することはできません",
         "swapToken": "{tokenIn}を交換する",
-        "swapTokenTo": "{tokenIn} を {tokenOut} に交換します"
+        "swapTokenTo": "{tokenIn} を {tokenOut} に交換します",
+        "warningSlippage": "流動性が低いため、受け取る {tokenOut} の価値は、スワップする {tokenIn} の価値の 10% 未満になります (これらのトークンの見積 USD 価値に基づきます)。",
+        "warningValueUnknown": "これらのトークンの 1 つ以上の現在のドル価格は利用できないため、このスワップが適切な価値を表すかどうかを警告することはできません。",
+        "youWillReceive": "**{amountOut}** {tokenOut} (${usdOut}) に対して **{amountIn}** {tokenIn} (${usdIn}) を受け取ります。"
     },
     "tokenTransfer": {
         "accountNameTaken": "その名前のアカウントはすでにお持ちです",

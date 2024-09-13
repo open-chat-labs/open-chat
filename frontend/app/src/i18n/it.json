@@ -1369,9 +1369,12 @@
     "toggleTranslationEditMode": "Attiva/disattiva le correzioni di traduzione",
     "tokenSwap": {
         "back": "Indietro",
+        "bestQuote": "Il miglior tasso di cambio proposto è {rate} {tokenOut} {tokenIn} da {dex}.",
+        "confirmUnderstanding": "Seleziona questa casella per confermare di aver capito",
         "findingAvailableTokens": "ricerca di token disponibili per lo scambio...",
         "getTokenSwapsError": "Errore durante il recupero degli scambi per {tokenIn}",
         "noQuotes": "Nessun DEX ha fornito un preventivo per lo scambio di {tokenIn}",
+        "proceedWithSwap": "Lo scambio verrà effettuato solo se l'importo di {tokenOut} da ricevere è almeno il 98% dell'importo quotato. Vuoi procedere e tentare `{swap}`?",
         "progress": {
             "deposit": "Trasferisci {amountIn} {tokenIn} a {dex}",
             "done": "Scambio completato",
@@ -1389,10 +1392,12 @@
         "quoteTooLow": "La migliore tariffa indicata è {rate} {tokenOut} per {tokenIn} da {dex}. Questo dà {amountOut} {tokenOut} per {amountIn} {tokenIn}. Puoi scambiare solo se l'importo indicato supera {minAmountOut}.",
         "requote": "Riquotare",
         "swap": "Scambio",
-        "swapInfo": "La migliore tariffa indicata è **{rate}** {tokenOut} per {tokenIn} da {dex}. Questo dà **{amountOut}** {tokenOut} per **{amountIn}** {tokenIn}. Lo scambio andrà avanti solo se l'importo di {tokenOut} da ricevere sarà almeno il 98% dell'importo quotato. Vuoi andare avanti e tentare il `{swap}`?",
         "swapNotAvailable": "Attualmente non è possibile scambiare {tokenIn} con nessun altro token",
         "swapToken": "Scambia {tokenIn}",
-        "swapTokenTo": "Scambia {tokenIn} in {tokenOut}"
+        "swapTokenTo": "Scambia {tokenIn} in {tokenOut}",
+        "warningSlippage": "A causa della bassa liquidità, il valore di {tokenOut} che riceverai è < 10% del valore di {tokenIn} che scambierai (in base al valore USD quotato di questi token).",
+        "warningValueUnknown": "Il prezzo attuale in dollari per uno o più di questi token non è disponibile, quindi non è possibile avvisarti se questo swap rappresenta un buon valore.",
+        "youWillReceive": "Riceverai **{amountOut}** {tokenOut} (${usdOut}) per **{amountIn}** {tokenIn} (${usdIn})."
     },
     "tokenTransfer": {
         "accountNameTaken": "Hai già un account con quel nome",

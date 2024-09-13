@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import TokenInput from "../TokenInput.svelte";
-    import type { DexId, OpenChat, ResourceKey } from "openchat-client";
+    import type { DexId, InterpolationValues, OpenChat, ResourceKey } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Markdown from "../Markdown.svelte";
     import { random128 } from "openchat-shared";
@@ -18,6 +18,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
+    import Toggle from "../../Toggle.svelte";
 
     export let ledgerIn: string;
 
@@ -36,9 +37,10 @@
     let validAmount = false;
     let ledgerOut: string | undefined;
     let swaps = {} as Record<string, DexId[]>;
-    let message: string | undefined = undefined;
+    let swapMessageValues: InterpolationValues | undefined = undefined;
     let bestQuote: [DexId, bigint] | undefined = undefined;
     let swapId: bigint | undefined;
+    let userAcceptedWarning = false;
 
     $: cryptoLookup = client.enhancedCryptoLookup;
     $: detailsIn = $cryptoLookup[ledgerIn];
@@ -46,10 +48,12 @@
     $: anySwapsAvailable = Object.keys(swaps).length > 0 && detailsOut !== undefined;
     $: swapping = state === "swap" && busy;
     $: amountInText = client.formatTokens(amountIn, detailsIn.decimals);
+    $: warnUnknownValue = detailsIn?.dollarBalance === undefined || detailsOut?.dollarBalance === undefined;
+    $: warnValueDropped = !warnUnknownValue && (detailsOut!.dollarBalance! < 0.9 * detailsIn!.dollarBalance!);
 
     $: {
         valid =
-            anySwapsAvailable && validAmount && (state === "swap" ? bestQuote !== undefined : true);
+            anySwapsAvailable && validAmount && (state === "swap" ? (bestQuote !== undefined && userAcceptedWarning || (!warnUnknownValue && !warnValueDropped)) : true);
     }
 
     $: title =
@@ -99,6 +103,8 @@
                     bestQuote = response[0];
 
                     const [dexId, quote] = bestQuote!;
+                    const usdOutText = detailsOut!.dollarBalance !== undefined ? client.formatTokens(quote, detailsOut!.dollarBalance) : "??.??";
+                    const usdInText = detailsIn!.dollarBalance !== undefined ? client.formatTokens(quote, detailsIn!.dollarBalance) : "??.??";
                     const amountOutText = client.formatTokens(quote, detailsOut!.decimals);
                     const rate = (Number(amountOutText) / Number(amountInText)).toPrecision(3);
                     const dex = dexName(dexId);
@@ -109,7 +115,7 @@
                         detailsOut!.decimals,
                     );
 
-                    let values = {
+                    swapMessageValues = {
                         amountIn: amountInText,
                         tokenIn: detailsIn.symbol,
                         rate,
@@ -118,13 +124,14 @@
                         dex,
                         swap: swapText,
                         minAmountOut: minAmountOutText,
+                        usdOut: usdOutText,
+                        usdIn: usdInText,
                     };
 
                     if (quote > minAmountOut) {
                         state = "swap";
-                        message = $_("tokenSwap.swapInfo", { values });
                     } else {
-                        error = $_("tokenSwap.quoteTooLow", { values });
+                        error = $_("tokenSwap.quoteTooLow", { values: swapMessageValues });
                     }
                 }
             })
@@ -263,8 +270,26 @@
             </div>
         {/if}
 
-        {#if message !== undefined && state === "swap" && !swapping}
-            <Markdown inline={false} text={message} />
+        {#if state === "swap" && !swapping}
+            <div>{$_("tokenSwap.bestQuote", swapMessageValues)}</div>
+            <Markdown text={$_("tokenSwap.youWillReceive", swapMessageValues)} />
+            
+            {#if warnValueDropped || warnUnknownValue}
+                <div class="warning">
+                    {#if warnValueDropped}
+                        <div>{$_("tokenSwap.warningSlippage", swapMessageValues)}</div>
+                    {:else}
+                        <div>{$_("tokenSwap.warningValueUnknown", swapMessageValues)}</div>
+                    {/if}
+                    <Toggle
+                        id="confirm-understanding"
+                        small
+                        label={i18nKey("tokenSwap.confirmUnderstanding")}
+                        bind:checked={userAcceptedWarning} />
+                </div>
+            {/if}
+
+            <div>{$_("tokenSwap.proceedWithSwap", swapMessageValues)}</div>
         {/if}
 
         {#if error !== undefined || pinNumberError !== undefined}
@@ -348,4 +373,14 @@
             flex-grow: 1;
         }
     }
+
+    .warning {
+        @include font(book, normal, fs-80);
+        margin-bottom: $sp2;
+        background-color: var(--error);
+        padding: $sp3 $sp4;
+        display: flex;
+        flex-direction: column;
+        gap: $sp4;
+    }    
 </style>
