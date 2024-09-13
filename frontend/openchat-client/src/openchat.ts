@@ -1321,7 +1321,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     deleteGroup(chatId: MultiUserChatIdentifier): Promise<boolean> {
-        // TODO we don't use the local updates mechnism here at the moment for some reason. Probably should.
+        // TODO we don't use the local updates mechanism here at the moment for some reason. Probably should.
         return this.sendRequest({ kind: "deleteGroup", chatId })
             .then((resp) => {
                 if (resp === "success") {
