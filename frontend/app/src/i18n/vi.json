@@ -1369,7 +1369,7 @@
     "toggleTranslationEditMode": "Chuyển đổi sửa bản dịch",
     "tokenSwap": {
         "back": "Mặt sau",
-        "bestQuote": "Tỷ giá hối đoái tốt nhất được trích dẫn là {rate} {tokenOut} {tokenIn} từ {dex}.",
+        "bestQuote": "Tỷ giá hối đoái tốt nhất được trích dẫn là {rate} {tokenOut} cho mỗi {tokenIn} từ {dex}.",
         "confirmUnderstanding": "Đánh dấu vào ô này để xác nhận bạn đã hiểu",
         "findingAvailableTokens": "tìm kiếm token có sẵn để trao đổi...",
         "getTokenSwapsError": "Lỗi khi nhận giao dịch hoán đổi cho {tokenIn}",
@@ -1395,7 +1395,7 @@
         "swapNotAvailable": "Hiện tại không thể hoán đổi {tokenIn} sang bất kỳ mã thông báo nào khác",
         "swapToken": "Hoán đổi {tokenIn}",
         "swapTokenTo": "Hoán đổi {tokenIn} thành {tokenOut}",
-        "warningSlippage": "Do tính thanh khoản thấp, giá trị của {tokenOut} bạn sẽ nhận được là < 10% giá trị của {tokenIn} bạn sẽ hoán đổi (dựa trên giá trị USD được báo giá của các token này).",
+        "warningSlippage": "Do tính thanh khoản thấp, giá trị của {tokenOut} bạn sẽ nhận được sẽ < 90% giá trị của {tokenIn} bạn sẽ hoán đổi (dựa trên giá trị USD được báo giá của các token này).",
         "warningValueUnknown": "Giá đô la hiện tại của một hoặc nhiều mã thông báo này không có sẵn nên không thể cảnh báo bạn liệu việc hoán đổi này có mang lại giá trị tốt hay không.",
         "youWillReceive": "Bạn sẽ nhận được **{amountOut}** {tokenOut} (${usdOut}) cho **{amountIn}** {tokenIn} (${usdIn})."
     },

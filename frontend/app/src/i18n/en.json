@@ -1369,7 +1369,7 @@
     "toggleTranslationEditMode": "Toggle translation corrections",
     "tokenSwap": {
         "back": "Back",
-        "bestQuote": "The best exchange rate quoted is {rate} {tokenOut} {tokenIn} from {dex}.",
+        "bestQuote": "The best exchange rate quoted is {rate} {tokenOut} per {tokenIn} from {dex}.",
         "confirmUnderstanding": "Check this box to confirm you understand",
         "findingAvailableTokens": "finding available tokens to swap...",
         "getTokenSwapsError": "Error getting swaps for {tokenIn}",
@@ -1395,7 +1395,7 @@
         "swapNotAvailable": "Currently it is not possible to swap {tokenIn} to any other token",
         "swapToken": "Swap {tokenIn}",
         "swapTokenTo": "Swap {tokenIn} to {tokenOut}",
-        "warningSlippage": "Due to low liquidity, the value of {tokenOut} you will receive is < 10% of the value of {tokenIn} you will swap (based on the quoted USD value of these tokens).",
+        "warningSlippage": "Due to low liquidity, the value of {tokenOut} you will receive is < 90% of the value of {tokenIn} you will swap (based on the quoted USD value of these tokens).",
         "warningValueUnknown": "The current dollar price for one of more of these tokens is not available so it is not possible to warn you whether this swap represents good value.",
         "youWillReceive": "You will receive **{amountOut}** {tokenOut} (${usdOut}) for **{amountIn}** {tokenIn} (${usdIn})."
     },

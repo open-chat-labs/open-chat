@@ -1369,7 +1369,7 @@
     "toggleTranslationEditMode": "切换翻译更正",
     "tokenSwap": {
         "back": "后退",
-        "bestQuote": "报价的最佳汇率是 {rate} {tokenOut} {tokenIn} 来自 {dex}。",
+        "bestQuote": "报价的最佳汇率为 {rate} {tokenOut} 每 {tokenIn} 从 {dex} 开始。",
         "confirmUnderstanding": "勾选此框以确认您了解",
         "findingAvailableTokens": "正在寻找可用的代币进行兑换...",
         "getTokenSwapsError": "获取 {tokenIn} 的交换时出错",
@@ -1395,7 +1395,7 @@
         "swapNotAvailable": "目前无法将 {tokenIn} 交换为任何其他代币",
         "swapToken": "交换{tokenIn}",
         "swapTokenTo": "将 {tokenIn} 交换为 {tokenOut}",
-        "warningSlippage": "由于流动性低，您将收到的{tokenOut}的价值小于您将交换的{tokenIn}价值的 10%（基于这些代币的美元报价）。",
+        "warningSlippage": "由于流动性低，您将收到的{tokenOut}的价值<您将交换的{tokenIn}价值的90％（基于这些代币的报价美元价值）。",
         "warningValueUnknown": "目前这些代币中的一个或多个的美元价格不可用，因此无法警告您此交换是否具有良好的价值。",
         "youWillReceive": "您将收到 **{amountOut}** {tokenOut} (${usdOut})，金额为 **{amountIn}** {tokenIn} (${usdIn})。"
     },

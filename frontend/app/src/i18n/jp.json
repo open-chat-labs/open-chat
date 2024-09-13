@@ -1369,7 +1369,7 @@
     "toggleTranslationEditMode": "翻訳修正の切り替え",
     "tokenSwap": {
         "back": "戻る",
-        "bestQuote": "提示された最良の為替レートは、{rate} からの {tokenOut} {tokenIn} {dex} です。",
+        "bestQuote": "提示された最良の為替レートは、{rate} からの {tokenOut} あたり {tokenIn} {dex} です。",
         "confirmUnderstanding": "理解したことを確認するためにこのボックスにチェックを入れてください",
         "findingAvailableTokens": "交換できるトークンを見つけています...",
         "getTokenSwapsError": "{tokenIn} のスワップ取得エラー",
@@ -1395,7 +1395,7 @@
         "swapNotAvailable": "現在、{tokenIn} を他のトークンに交換することはできません",
         "swapToken": "{tokenIn}を交換する",
         "swapTokenTo": "{tokenIn} を {tokenOut} に交換します",
-        "warningSlippage": "流動性が低いため、受け取る {tokenOut} の価値は、スワップする {tokenIn} の価値の 10% 未満になります (これらのトークンの見積 USD 価値に基づきます)。",
+        "warningSlippage": "流動性が低いため、受け取る {tokenOut} の価値は、スワップする {tokenIn} の価値の 90% 未満になります (これらのトークンの見積 USD 価値に基づきます)。",
         "warningValueUnknown": "これらのトークンの 1 つ以上の現在のドル価格は利用できないため、このスワップが適切な価値を表すかどうかを警告することはできません。",
         "youWillReceive": "**{amountOut}** {tokenOut} (${usdOut}) に対して **{amountIn}** {tokenIn} (${usdIn}) を受け取ります。"
     },

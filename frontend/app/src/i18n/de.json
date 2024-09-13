@@ -1369,7 +1369,7 @@
     "toggleTranslationEditMode": "Übersetzungskorrekturen umschalten",
     "tokenSwap": {
         "back": "Zurück",
-        "bestQuote": "Der beste angegebene Wechselkurs ist {rate} {tokenOut} {tokenIn} von {dex}.",
+        "bestQuote": "Der beste angegebene Wechselkurs ist {rate} {tokenOut} pro {tokenIn} von {dex}.",
         "confirmUnderstanding": "Aktivieren Sie dieses Kontrollkästchen, um zu bestätigen, dass Sie verstanden haben",
         "findingAvailableTokens": "Verfügbare Token zum Tauschen finden...",
         "getTokenSwapsError": "Fehler beim Abrufen von Swaps für {tokenIn}",
@@ -1395,7 +1395,7 @@
         "swapNotAvailable": "Derzeit ist es nicht möglich, {tokenIn} gegen einen anderen Token auszutauschen",
         "swapToken": "Tausche {tokenIn}",
         "swapTokenTo": "Tauschen Sie {tokenIn} gegen {tokenOut} aus",
-        "warningSlippage": "Aufgrund der geringen Liquidität beträgt der Wert von {tokenOut}, den Sie erhalten, < 10 % des Werts von {tokenIn}, den Sie tauschen (basierend auf dem angegebenen USD-Wert dieser Token).",
+        "warningSlippage": "Aufgrund der geringen Liquidität beträgt der Wert von {tokenOut}, den Sie erhalten, < 90 % des Werts von {tokenIn}, den Sie tauschen (basierend auf dem angegebenen USD-Wert dieser Token).",
         "warningValueUnknown": "Der aktuelle Dollarpreis für einen oder mehrere dieser Token ist nicht verfügbar. Daher ist es nicht möglich, Sie zu warnen, ob dieser Tausch ein gutes Preis-Leistungs-Verhältnis darstellt.",
         "youWillReceive": "Sie erhalten **{amountOut}** {tokenOut} (${usdOut}) für **{amountIn}** {tokenIn} (${usdIn})."
     },

@@ -1369,7 +1369,7 @@
     "toggleTranslationEditMode": "החלף את תיקוני התרגום",
     "tokenSwap": {
         "back": "חזור",
-        "bestQuote": "שער החליפין הטוב ביותר שצוטט הוא {rate} {tokenOut} {tokenIn} מ-{dex}.",
+        "bestQuote": "שער החליפין הטוב ביותר שצוטט הוא {rate} {tokenOut} ל-{tokenIn} מ-{dex}.",
         "confirmUnderstanding": "סמן את התיבה הזו כדי לאשר שאתה מבין",
         "findingAvailableTokens": "מציאת אסימונים זמינים להחלפה...",
         "getTokenSwapsError": "שגיאה בקבלת החלפות עבור {tokenIn}",
@@ -1395,7 +1395,7 @@
         "swapNotAvailable": "נכון לעכשיו לא ניתן להחליף את {tokenIn} לשום אסימון אחר",
         "swapToken": "החלפה {tokenIn}",
         "swapTokenTo": "החלף את {tokenIn} ל-{tokenOut}",
-        "warningSlippage": "עקב נזילות נמוכה, הערך של {tokenOut} שתקבל הוא < 10% מהערך של {tokenIn} שתחליף (בהתבסס על הערך המצוטט בדולר ארה\"ב של אסימונים אלה).",
+        "warningSlippage": "עקב נזילות נמוכה, הערך של {tokenOut} שתקבל הוא < 90% מהערך של {tokenIn} שתחליף (בהתבסס על הערך המצוטט בדולר ארה\"ב של אסימונים אלה).",
         "warningValueUnknown": "המחיר הנוכחי בדולר עבור אחד או יותר מהאסימונים הללו אינו זמין ולכן לא ניתן להזהיר אותך אם החלפה זו מייצגת ערך טוב.",
         "youWillReceive": "תקבל **{amountOut}** {tokenOut} (${usdOut}) עבור **{amountIn}** {tokenIn} (${usdIn})."
     },

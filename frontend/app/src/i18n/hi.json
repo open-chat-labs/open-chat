@@ -1369,7 +1369,7 @@
     "toggleTranslationEditMode": "अनुवाद सुधार टॉगल करें",
     "tokenSwap": {
         "back": "पीछे",
-        "bestQuote": "सर्वोत्तम उद्धृत विनिमय दर {rate} {tokenOut} {tokenIn} से {dex} है।",
+        "bestQuote": "सर्वोत्तम उद्धृत विनिमय दर {rate} {tokenOut} प्रति {tokenIn} से {dex} है।",
         "confirmUnderstanding": "यह पुष्टि करने के लिए कि आप समझ गए हैं, इस बॉक्स को चेक करें",
         "findingAvailableTokens": "स्वैप करने के लिए उपलब्ध टोकन ढूँढना...",
         "getTokenSwapsError": "{tokenIn} के लिए स्वैप प्राप्त करने में त्रुटि",
@@ -1395,7 +1395,7 @@
         "swapNotAvailable": "वर्तमान में {tokenIn} को किसी अन्य टोकन में स्वैप करना संभव नहीं है",
         "swapToken": "स्वैप {tokenIn}",
         "swapTokenTo": "{tokenIn} को {tokenOut} में बदलें",
-        "warningSlippage": "कम तरलता के कारण, आपको प्राप्त होने वाला {tokenOut} का मूल्य आपके द्वारा स्वैप किए जाने वाले {tokenIn} के मूल्य का <10% होगा (इन टोकन के उद्धृत USD मूल्य के आधार पर)।",
+        "warningSlippage": "कम तरलता के कारण, आपको प्राप्त होने वाला {tokenOut} का मूल्य आपके द्वारा स्वैप किए जाने वाले {tokenIn} के मूल्य का < 90% होगा (इन टोकन के उद्धृत USD मूल्य के आधार पर)।",
         "warningValueUnknown": "इनमें से एक या अधिक टोकनों का वर्तमान डॉलर मूल्य उपलब्ध नहीं है, इसलिए आपको यह चेतावनी देना संभव नहीं है कि यह स्वैप अच्छे मूल्य का प्रतिनिधित्व करता है या नहीं।",
         "youWillReceive": "आपको **{amountOut}** {tokenOut} (${usdOut}) के बदले **{amountIn}** {tokenIn} (${usdIn}) प्राप्त होगा।"
     },

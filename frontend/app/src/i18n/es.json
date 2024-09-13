@@ -1369,7 +1369,7 @@
     "toggleTranslationEditMode": "Alternar correcciones de traducción",
     "tokenSwap": {
         "back": "Atrás",
-        "bestQuote": "El mejor tipo de cambio cotizado es {rate} {tokenOut} {tokenIn} desde {dex}.",
+        "bestQuote": "El mejor tipo de cambio cotizado es {rate} {tokenOut} por {tokenIn} desde {dex}.",
         "confirmUnderstanding": "Marque esta casilla para confirmar que lo entiende",
         "findingAvailableTokens": "encontrando tokens disponibles para intercambiar...",
         "getTokenSwapsError": "Error al obtener intercambios para {tokenIn}",
@@ -1395,7 +1395,7 @@
         "swapNotAvailable": "Actualmente no es posible intercambiar {tokenIn} por ningún otro token",
         "swapToken": "Intercambiar {tokenIn}",
         "swapTokenTo": "Intercambiar {tokenIn} por {tokenOut}",
-        "warningSlippage": "Debido a la baja liquidez, el valor de {tokenOut} que recibirá es <10% del valor de {tokenIn} que intercambiará (según el valor cotizado en USD de estos tokens).",
+        "warningSlippage": "Debido a la baja liquidez, el valor de {tokenOut} que recibirá es < 90% del valor de {tokenIn} que intercambiará (según el valor cotizado en USD de estos tokens).",
         "warningValueUnknown": "El precio actual en dólares de uno o más de estos tokens no está disponible, por lo que no es posible advertirle si este intercambio representa un buen valor.",
         "youWillReceive": "Recibirás **{amountOut}** {tokenOut} (${usdOut}) por **{amountIn}** {tokenIn} (${usdIn})."
     },

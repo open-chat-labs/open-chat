@@ -1369,7 +1369,7 @@
     "toggleTranslationEditMode": "Activer/désactiver les corrections de traduction",
     "tokenSwap": {
         "back": "Dos",
-        "bestQuote": "Le meilleur taux de change indiqué est {rate} {tokenOut} {tokenIn} de {dex}.",
+        "bestQuote": "Le meilleur taux de change indiqué est de {rate} {tokenOut} pour {tokenIn} à partir de {dex}.",
         "confirmUnderstanding": "Cochez cette case pour confirmer que vous avez compris",
         "findingAvailableTokens": "trouver les jetons disponibles à échanger...",
         "getTokenSwapsError": "Erreur lors de l'obtention des échanges pour {tokenIn}",
@@ -1395,7 +1395,7 @@
         "swapNotAvailable": "Actuellement, il n'est pas possible d'échanger {tokenIn} contre un autre jeton",
         "swapToken": "Échanger {tokenIn}",
         "swapTokenTo": "Remplacer {tokenIn} par {tokenOut}",
-        "warningSlippage": "En raison de la faible liquidité, la valeur de {tokenOut} que vous recevrez est < 10 % de la valeur de {tokenIn} que vous échangerez (sur la base de la valeur USD cotée de ces jetons).",
+        "warningSlippage": "En raison de la faible liquidité, la valeur de {tokenOut} que vous recevrez est < 90 % de la valeur de {tokenIn} que vous échangerez (sur la base de la valeur USD cotée de ces jetons).",
         "warningValueUnknown": "Le prix actuel en dollars pour un ou plusieurs de ces jetons n'est pas disponible, il n'est donc pas possible de vous avertir si cet échange représente une bonne valeur.",
         "youWillReceive": "Vous recevrez **{amountOut}** {tokenOut} (${usdOut}) pour **{amountIn}** {tokenIn} (${usdIn})."
     },
