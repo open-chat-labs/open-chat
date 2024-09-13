@@ -14,14 +14,12 @@ import type {
     DirectMessageTipped,
     CryptoTransferDetails,
 } from "openchat-shared";
-import { UnsupportedValueError } from "openchat-shared";
 import { identity, optional } from "../../utils/mapping";
 import type {
     ApiMuteNotificationsResponse,
     ApiUnmuteNotificationsResponse,
 } from "../user/candid/idl";
 import type {
-    ApiSubscriptionExistsResponse,
     ApiNotification,
     ApiAddedToChannelNotification,
     ApiChannelMessageNotification,
@@ -36,6 +34,7 @@ import type {
     ApiNotificationCryptoTransferDetails,
 } from "./candid/idl";
 import type { ApiToggleMuteChannelNotificationsResponse } from "../community/candid/idl";
+import type { NotificationsIndexSubscriptionExistsResponse } from "../../typebox";
 
 export function muteNotificationsResponse(
     candid:
@@ -52,18 +51,9 @@ export function muteNotificationsResponse(
 }
 
 export function subscriptionExistsResponse(
-    candid: ApiSubscriptionExistsResponse,
+    value: NotificationsIndexSubscriptionExistsResponse,
 ): SubscriptionExistsResponse {
-    if ("Yes" in candid) {
-        return true;
-    }
-    if ("No" in candid) {
-        return false;
-    }
-    throw new UnsupportedValueError(
-        `Unexpected ApiSubscriptionExistsResponse type received`,
-        candid,
-    );
+    return value === "Yes";
 }
 
 export function notification(candid: ApiNotification, timestamp: bigint): Notification {

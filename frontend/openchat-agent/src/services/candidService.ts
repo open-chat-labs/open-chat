@@ -1,9 +1,17 @@
-import { Actor, HttpAgent, type Identity } from "@dfinity/agent";
+import { Actor, HttpAgent, type Identity, polling, UpdateCallRejectedError } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
-import type { Principal } from "@dfinity/principal";
-import { AuthError, DestinationInvalidError, SessionExpiryError } from "openchat-shared";
+import { Principal } from "@dfinity/principal";
+import {
+    AuthError,
+    DestinationInvalidError,
+    ResponseTooLargeError,
+    SessionExpiryError,
+} from "openchat-shared";
 import { ReplicaNotUpToDateError, toCanisterResponseError } from "./error";
-import { ResponseTooLargeError } from "openchat-shared";
+import { type Options, Packr } from "msgpackr";
+import { identity } from "../utils/mapping";
+import type { Static, TSchema } from "@sinclair/typebox";
+import { Value } from "@sinclair/typebox/value";
 
 const MAX_RETRIES = process.env.NODE_ENV === "production" ? 7 : 3;
 const RETRY_DELAY = 100;
@@ -11,6 +19,8 @@ const RETRY_DELAY = 100;
 function debug(msg: string): void {
     console.log(msg);
 }
+
+const Packer = new Packr({ useRecords: false, skipValues: [undefined] } as unknown as Options);
 
 export abstract class CandidService {
     protected createServiceClient<T>(factory: IDL.InterfaceFactory): T {
@@ -22,6 +32,68 @@ export abstract class CandidService {
 
     protected get principal(): Principal {
         return this.identity.getPrincipal();
+    }
+
+    protected async executeMsgpackQuery<In extends TSchema, Resp extends TSchema, Out>(
+        methodName: string,
+        args: Static<In>,
+        mapper: (from: Static<Resp>) => Out,
+        requestValidator: In,
+        responseValidator: Resp,
+    ): Promise<Out> {
+        const payload = CandidService.prepareMsgpackArgs(args, requestValidator);
+
+        const response = await this.handleQueryResponse(
+            () =>
+                this.agent.query(this.canisterId, {
+                    methodName: methodName + "_msgpack",
+                    arg: payload,
+                }),
+            identity,
+            args,
+        );
+        if (response.status === "replied") {
+            return CandidService.processMsgpackResponse(
+                response.reply.arg,
+                mapper,
+                responseValidator,
+            );
+        } else {
+            throw new Error(
+                `query rejected. Code: ${response.reject_code}. Message: ${response.reject_message}`,
+            );
+        }
+    }
+
+    protected async executeMsgpackUpdate<In extends TSchema, Resp extends TSchema, Out>(
+        methodName: string,
+        args: Static<In>,
+        mapper: (from: Static<Resp>) => Out,
+        requestValidator: In,
+        responseValidator: Resp,
+    ): Promise<Out> {
+        const payload = CandidService.prepareMsgpackArgs(args, requestValidator);
+
+        try {
+            const { requestId, response } = await this.agent.call(this.canisterId, {
+                methodName: methodName + "_msgpack",
+                arg: payload,
+            });
+            const canisterId = Principal.fromText(this.canisterId);
+            if (!response.ok || response.body) {
+                throw new UpdateCallRejectedError(canisterId, methodName, requestId, response);
+            }
+            const { reply } = await polling.pollForResponse(
+                this.agent,
+                canisterId,
+                requestId,
+                polling.defaultStrategy(),
+            );
+            return CandidService.processMsgpackResponse(reply, mapper, responseValidator);
+        } catch (err) {
+            console.log(err, args);
+            throw toCanisterResponseError(err as Error, this.identity);
+        }
     }
 
     protected handleResponse<From, To>(
@@ -82,6 +154,32 @@ export abstract class CandidService {
                     throw responseErr;
                 }
             });
+    }
+
+    private static validate<T extends TSchema>(value: unknown, validator: T): T {
+        try {
+            return Value.Parse(validator, value);
+        } catch (err) {
+            throw new Error("Validation failed: " + JSON.stringify(err));
+        }
+    }
+
+    private static prepareMsgpackArgs<T extends TSchema>(
+        value: Static<T>,
+        validator: T,
+    ): ArrayBuffer {
+        const validated = CandidService.validate(value, validator);
+        return Packer.pack(validated);
+    }
+
+    private static processMsgpackResponse<Resp extends TSchema, Out>(
+        responseBytes: ArrayBuffer,
+        mapper: (from: Resp) => Out,
+        validator: Resp,
+    ): Out {
+        const response = Packer.unpack(new Uint8Array(responseBytes));
+        const validated = CandidService.validate(response, validator);
+        return mapper(validated);
     }
 
     constructor(
