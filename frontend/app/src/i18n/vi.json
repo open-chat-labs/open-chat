@@ -1374,7 +1374,7 @@
         "findingAvailableTokens": "tìm kiếm token có sẵn để trao đổi...",
         "getTokenSwapsError": "Lỗi khi nhận giao dịch hoán đổi cho {tokenIn}",
         "noQuotes": "Không có DEX nào cung cấp báo giá để hoán đổi {tokenIn}",
-        "proceedWithSwap": "Việc hoán đổi chỉ được tiến hành nếu số tiền {tokenOut} nhận được ít nhất là 98% số tiền được báo giá. Bạn có muốn tiếp tục và thử `{swap}` không?",
+        "proceedWithSwap": "Việc hoán đổi chỉ được tiến hành nếu số tiền {tokenOut} nhận được ít nhất là 98% số tiền được báo giá. Bạn có muốn tiếp tục và thử hoán đổi không?",
         "progress": {
             "deposit": "Chuyển {amountIn} {tokenIn} sang {dex}",
             "done": "Hoán đổi hoàn tất",

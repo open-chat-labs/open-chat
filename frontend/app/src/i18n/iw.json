@@ -1374,7 +1374,7 @@
         "findingAvailableTokens": "מציאת אסימונים זמינים להחלפה...",
         "getTokenSwapsError": "שגיאה בקבלת החלפות עבור {tokenIn}",
         "noQuotes": "שום DEXs לא סיפקו הצעת מחיר להחלפה {tokenIn}",
-        "proceedWithSwap": "ההחלפה תתבצע רק אם הסכום של {tokenOut} שיתקבל הוא לפחות 98% מהסכום הנקוב. האם תרצה להמשיך ולנסות את `{swap}`?",
+        "proceedWithSwap": "ההחלפה תתבצע רק אם הסכום של {tokenOut} שיתקבל הוא לפחות 98% מהסכום הנקוב. האם תרצה להמשיך ולנסות את ההחלפה?",
         "progress": {
             "deposit": "העבר את {amountIn} {tokenIn} אל {dex}",
             "done": "ההחלפה הושלמה",

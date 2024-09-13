@@ -1374,7 +1374,7 @@
         "findingAvailableTokens": "Verfügbare Token zum Tauschen finden...",
         "getTokenSwapsError": "Fehler beim Abrufen von Swaps für {tokenIn}",
         "noQuotes": "Keine DEXes haben ein Angebot für den Tausch von {tokenIn} bereitgestellt",
-        "proceedWithSwap": "Der Tausch wird nur durchgeführt, wenn der zu erhaltende Betrag von {tokenOut} mindestens 98 % des angegebenen Betrags beträgt. Möchten Sie fortfahren und `{swap}` versuchen?",
+        "proceedWithSwap": "Der Tausch wird nur durchgeführt, wenn der zu erhaltende Betrag von {tokenOut} mindestens 98 % des angegebenen Betrags beträgt. Möchten Sie den Tausch durchführen?",
         "progress": {
             "deposit": "Übertragen Sie {amountIn} {tokenIn} an {dex}",
             "done": "Tausch abgeschlossen",

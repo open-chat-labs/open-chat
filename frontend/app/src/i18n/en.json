@@ -1374,7 +1374,7 @@
         "findingAvailableTokens": "finding available tokens to swap...",
         "getTokenSwapsError": "Error getting swaps for {tokenIn}",
         "noQuotes": "No DEXes provided a quote to swap {tokenIn}",
-        "proceedWithSwap": "The swap will only go ahead if the amount of {tokenOut} to be received is at least 98% of the amount quoted. Would you like to go ahead and attempt the `{swap}`?",
+        "proceedWithSwap": "The swap will only go ahead if the amount of {tokenOut} to be received is at least 98% of the amount quoted. Would you like to go ahead and attempt the swap?",
         "progress": {
             "deposit": "Transfer {amountIn} {tokenIn} to {dex}",
             "done": "Swap complete",

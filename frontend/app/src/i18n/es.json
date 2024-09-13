@@ -1374,7 +1374,7 @@
         "findingAvailableTokens": "encontrando tokens disponibles para intercambiar...",
         "getTokenSwapsError": "Error al obtener intercambios para {tokenIn}",
         "noQuotes": "Ningún DEX proporcionó una cotización para intercambiar {tokenIn}",
-        "proceedWithSwap": "El canje solo se realizará si la cantidad de {tokenOut} a recibir es al menos el 98 % de la cantidad cotizada. ¿Le gustaría continuar e intentar el `{swap}`?",
+        "proceedWithSwap": "El canje solo se realizará si la cantidad de {tokenOut} a recibir es al menos el 98 % del monto cotizado. ¿Le gustaría continuar e intentar realizar el canje?",
         "progress": {
             "deposit": "Transferir {amountIn} {tokenIn} a {dex}",
             "done": "Intercambio completo",

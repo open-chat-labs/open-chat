@@ -120,7 +120,6 @@
                     const amountOutText = client.formatTokens(quote, detailsOut!.decimals);
                     const rate = (Number(amountOutText) / Number(amountInText)).toPrecision(3);
                     const dex = dexName(dexId);
-                    const swapText = $_("tokenSwap.swap");
                     const minAmountOut = BigInt(10) * detailsOut!.transferFee;
                     const minAmountOutText = client.formatTokens(
                         minAmountOut,
@@ -134,10 +133,7 @@
                         amountOut: amountOutText,
                         tokenOut: detailsOut!.symbol,
                         dex,
-                        swap: swapText,
                         minAmountOut: minAmountOutText,
-                        usdOut: usdOutText,
-                        usdIn: usdInText,
                     };
 
                     if (quote > minAmountOut) {
@@ -284,7 +280,7 @@
 
         {#if state === "swap" && !swapping}
             <div>{$_("tokenSwap.bestQuote", { values: swapMessageValues })}</div>
-            <Markdown text={$_("tokenSwap.youWillReceive", { values: swapMessageValues })} />
+            <Markdown text={$_("tokenSwap.youWillReceive", { values: { ...swapMessageValues, usdOut: usdOutText, usdIn: usdInText } })} />
             
             {#if warnValueDropped || warnUnknownValue}
                 <div class="warning">

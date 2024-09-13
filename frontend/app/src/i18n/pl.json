@@ -1374,7 +1374,7 @@
         "findingAvailableTokens": "znalezienie dostępnych tokenów do wymiany...",
         "getTokenSwapsError": "Błąd podczas pobierania zamiany na {tokenIn}",
         "noQuotes": "Żaden DEX nie przedstawił oferty zamiany {tokenIn}",
-        "proceedWithSwap": "Wymiana zostanie przeprowadzona tylko wtedy, gdy kwota {tokenOut}, która ma zostać otrzymana, będzie wynosić co najmniej 98% podanej kwoty. Czy chcesz kontynuować i spróbować `{swap}`?",
+        "proceedWithSwap": "Wymiana zostanie przeprowadzona tylko wtedy, gdy kwota {tokenOut}, która ma zostać otrzymana, będzie wynosić co najmniej 98% podanej kwoty. Czy chcesz kontynuować i spróbować dokonać wymiany?",
         "progress": {
             "deposit": "Przenieś {amountIn} {tokenIn} do {dex}",
             "done": "Wymiana zakończona",

@@ -1374,7 +1374,7 @@
         "findingAvailableTokens": "交換できるトークンを見つけています...",
         "getTokenSwapsError": "{tokenIn} のスワップ取得エラー",
         "noQuotes": "{tokenIn} をスワップするための見積もりを提供した DEX はありませんでした",
-        "proceedWithSwap": "受け取る {tokenOut} の量が見積額の 98% 以上である場合にのみ、スワップが実行されます。先に進んで `{swap}` を試してみますか?",
+        "proceedWithSwap": "受け取る {tokenOut} の量が見積額の 98% 以上である場合にのみ、スワップが実行されます。スワップを試行しますか?",
         "progress": {
             "deposit": "{amountIn} {tokenIn} を {dex} に転送します",
             "done": "交換完了",

@@ -1374,7 +1374,7 @@
         "findingAvailableTokens": "trouver les jetons disponibles à échanger...",
         "getTokenSwapsError": "Erreur lors de l'obtention des échanges pour {tokenIn}",
         "noQuotes": "Aucun DEX n'a fourni de devis pour échanger {tokenIn}",
-        "proceedWithSwap": "L'échange n'aura lieu que si le montant de {tokenOut} à recevoir est au moins égal à 98 % du montant indiqué. Souhaitez-vous tenter l'échange de {swap} ?",
+        "proceedWithSwap": "L'échange n'aura lieu que si le montant de {tokenOut} à recevoir est au moins égal à 98 % du montant indiqué. Souhaitez-vous tenter l'échange ?",
         "progress": {
             "deposit": "Transférer {amountIn} {tokenIn} vers {dex}",
             "done": "Échange terminé",

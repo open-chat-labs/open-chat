@@ -1374,7 +1374,7 @@
         "findingAvailableTokens": "正在寻找可用的代币进行兑换...",
         "getTokenSwapsError": "获取 {tokenIn} 的交换时出错",
         "noQuotes": "没有 DEX 提供兑换 {tokenIn} 的报价",
-        "proceedWithSwap": "只有当收到的 {tokenOut} 金额至少达到报价金额的 98% 时，交换才会进行。您想继续尝试“{swap}”吗？",
+        "proceedWithSwap": "只有当收到的 {tokenOut} 金额至少达到报价金额的 98% 时，交换才会进行。您想继续尝试交换吗？",
         "progress": {
             "deposit": "将 {amountIn} {tokenIn} 转移到 {dex}",
             "done": "兑换完成",
