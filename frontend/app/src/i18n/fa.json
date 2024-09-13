@@ -1369,9 +1369,12 @@
     "toggleTranslationEditMode": "تغییر وضعیت اصلاحات ترجمه",
     "tokenSwap": {
         "back": "بازگشت",
+        "bestQuote": "بهترین نرخ ارز نقل شده، {rate} {tokenOut} در هر {tokenIn} از {dex} است.",
+        "confirmUnderstanding": "این کادر را علامت بزنید تا مطمئن شوید متوجه شده اید",
         "findingAvailableTokens": "یافتن نشانه های موجود برای مبادله...",
         "getTokenSwapsError": "خطا در دریافت مبادله برای {tokenIn}",
         "noQuotes": "هیچ DEX پیشنهادی برای مبادله {tokenIn} ارائه نکرد",
+        "proceedWithSwap": "مبادله تنها در صورتی انجام می شود که مبلغ {tokenOut} دریافتی حداقل 98 درصد مبلغ ذکر شده باشد. آیا می‌خواهید ادامه دهید و مبادله را انجام دهید؟",
         "progress": {
             "deposit": "انتقال {amountIn} {tokenIn} به {dex}",
             "done": "تعویض کامل شد",
@@ -1389,10 +1392,12 @@
         "quoteTooLow": "بهترین نرخ نقل شده {rate} {tokenOut} به ازای هر {tokenIn} از {dex} است. این به {amountOut} {tokenOut} برای {amountIn} {tokenIn} می‌دهد. فقط در صورتی می‌توانید مبادله کنید که مبلغ نقل‌شده از {minAmountOut} بیشتر باشد.",
         "requote": "نقل قول مجدد",
         "swap": "تعویض کنید",
-        "swapInfo": "بهترین نرخ نقل شده **{rate}** {tokenOut} در هر {tokenIn} از {dex} است. این کار **{amountOut}** {tokenOut} را برای **{amountIn}** {tokenIn} می‌دهد. مبادله تنها در صورتی انجام می شود که مبلغ {tokenOut} دریافتی حداقل 98 درصد مبلغ ذکر شده باشد. آیا می‌خواهید ادامه دهید و «{swap}» را امتحان کنید؟",
         "swapNotAvailable": "در حال حاضر امکان تعویض {tokenIn} با هیچ توکن دیگری وجود ندارد",
         "swapToken": "تعویض {tokenIn}",
-        "swapTokenTo": "تعویض {tokenIn} به {tokenOut}"
+        "swapTokenTo": "تعویض {tokenIn} به {tokenOut}",
+        "warningValueDropped": "به دلیل نقدینگی کم، ارزش {tokenOut} که دریافت می‌کنید < 90 درصد ارزش {tokenIn} است که مبادله می‌کنید (بر اساس ارزش دلار نقل‌شده این توکن‌ها).",
+        "warningValueUnknown": "قیمت دلار فعلی برای یکی از این توکن‌ها در دسترس نیست، بنابراین نمی‌توان تعیین کرد که آیا این مبادله ارزش خوبی دارد یا خیر.",
+        "youWillReceive": "**{amountOut}** {tokenOut} (${usdOut}) را برای **{amountIn}** {tokenIn} (${usdIn}) دریافت خواهید کرد."
     },
     "tokenTransfer": {
         "accountNameTaken": "شما قبلاً یک حساب کاربری با این نام دارید",

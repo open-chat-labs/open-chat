@@ -1369,9 +1369,12 @@
     "toggleTranslationEditMode": "Переключить исправления перевода",
     "tokenSwap": {
         "back": "Назад",
+        "bestQuote": "Лучший обменный курс — {rate} {tokenOut} за {tokenIn} из {dex}.",
+        "confirmUnderstanding": "Установите этот флажок, чтобы подтвердить, что вы понимаете",
         "findingAvailableTokens": "поиск доступных токенов для обмена...",
         "getTokenSwapsError": "Ошибка при получении свопов для {tokenIn}.",
         "noQuotes": "Ни одна DEX не предоставила котировку на обмен {tokenIn}",
+        "proceedWithSwap": "Обмен будет произведен только в том случае, если сумма {tokenOut}, которую нужно получить, составляет не менее 98% от указанной суммы. Хотите попробовать обмен?",
         "progress": {
             "deposit": "Перевести {amountIn} {tokenIn} в {dex}",
             "done": "Обмен завершен",
@@ -1389,10 +1392,12 @@
         "quoteTooLow": "Лучшая заявленная ставка составляет {rate} {tokenOut} за {tokenIn} от {dex}. Это дает {amountOut} {tokenOut} для {amountIn} {tokenIn}. Вы можете обменять только в том случае, если заявленная сумма превышает {minAmountOut}.",
         "requote": "Повторная цитация",
         "swap": "Менять",
-        "swapInfo": "Лучшая заявленная цена — **{rate}** {tokenOut} за {tokenIn} от {dex}. Это дает **{amountOut}** {tokenOut} для **{amountIn}** {tokenIn}. Своп состоится только в том случае, если сумма {tokenOut}, подлежащая получению, составит не менее 98% от указанной суммы. Хотите продолжить и попробовать `{swap}`?",
         "swapNotAvailable": "В настоящее время невозможно обменять {tokenIn} на любой другой токен.",
         "swapToken": "Обмен {tokenIn}",
-        "swapTokenTo": "Замените {tokenIn} на {tokenOut}"
+        "swapTokenTo": "Замените {tokenIn} на {tokenOut}",
+        "warningValueDropped": "Из-за низкой ликвидности стоимость {tokenOut}, которую вы получите, составит < 90% от стоимости {tokenIn}, которую вы обменяете (на основе котируемой стоимости этих токенов в долларах США).",
+        "warningValueUnknown": "Текущая цена в долларах США для одного или нескольких из этих токенов неизвестна, поэтому невозможно определить, представляет ли этот обмен хорошую ценность.",
+        "youWillReceive": "Вы получите **{amountOut}** {tokenOut} (${usdOut}) за **{amountIn}** {tokenIn} (${usdIn})."
     },
     "tokenTransfer": {
         "accountNameTaken": "У вас уже есть аккаунт с таким именем",

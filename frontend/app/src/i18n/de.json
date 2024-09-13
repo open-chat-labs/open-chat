@@ -1369,9 +1369,12 @@
     "toggleTranslationEditMode": "Übersetzungskorrekturen umschalten",
     "tokenSwap": {
         "back": "Zurück",
+        "bestQuote": "Der beste angegebene Wechselkurs ist {rate} {tokenOut} pro {tokenIn} von {dex}.",
+        "confirmUnderstanding": "Aktivieren Sie dieses Kontrollkästchen, um zu bestätigen, dass Sie verstanden haben",
         "findingAvailableTokens": "Verfügbare Token zum Tauschen finden...",
         "getTokenSwapsError": "Fehler beim Abrufen von Swaps für {tokenIn}",
         "noQuotes": "Keine DEXes haben ein Angebot für den Tausch von {tokenIn} bereitgestellt",
+        "proceedWithSwap": "Der Tausch wird nur durchgeführt, wenn der zu erhaltende Betrag von {tokenOut} mindestens 98 % des angegebenen Betrags beträgt. Möchten Sie den Tausch durchführen?",
         "progress": {
             "deposit": "Übertragen Sie {amountIn} {tokenIn} an {dex}",
             "done": "Tausch abgeschlossen",
@@ -1389,10 +1392,12 @@
         "quoteTooLow": "Der beste angegebene Tarif ist {rate} {tokenOut} pro {tokenIn} ab {dex}. Dies ergibt {amountOut} {tokenOut} für {amountIn} {tokenIn}. Sie können nur tauschen, wenn der angegebene Betrag {minAmountOut} überschreitet.",
         "requote": "Nochmals zitieren",
         "swap": "Tauschen",
-        "swapInfo": "Der beste angegebene Tarif ist **{rate}** {tokenOut} pro {tokenIn} ab {dex}. Dies ergibt **{amountOut}** {tokenOut} für **{amountIn}** {tokenIn}. Der Swap wird nur durchgeführt, wenn der zu erhaltende Betrag von {tokenOut} mindestens 98 % des angegebenen Betrags beträgt. Möchten Sie fortfahren und es mit „{swap}“ versuchen?",
         "swapNotAvailable": "Derzeit ist es nicht möglich, {tokenIn} gegen einen anderen Token auszutauschen",
         "swapToken": "Tausche {tokenIn}",
-        "swapTokenTo": "Tauschen Sie {tokenIn} gegen {tokenOut} aus"
+        "swapTokenTo": "Tauschen Sie {tokenIn} gegen {tokenOut} aus",
+        "warningValueDropped": "Aufgrund der geringen Liquidität beträgt der Wert von {tokenOut}, den Sie erhalten, < 90 % des Werts von {tokenIn}, den Sie tauschen (basierend auf dem angegebenen USD-Wert dieser Token).",
+        "warningValueUnknown": "Der aktuelle Dollarpreis für einen oder mehrere dieser Token ist nicht verfügbar. Daher lässt sich nicht feststellen, ob dieser Tausch ein gutes Preis-Leistungs-Verhältnis darstellt.",
+        "youWillReceive": "Sie erhalten **{amountOut}** {tokenOut} (${usdOut}) für **{amountIn}** {tokenIn} (${usdIn})."
     },
     "tokenTransfer": {
         "accountNameTaken": "Sie haben bereits ein Konto mit diesem Namen",
