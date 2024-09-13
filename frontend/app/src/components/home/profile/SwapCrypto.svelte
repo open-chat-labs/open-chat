@@ -126,7 +126,7 @@
                     );
                     
                     warnUnknownValue = usdInText === "???" || usdOutText === "???";
-                    warnValueDropped = !warnUnknownValue && Number(usdOutText) < 0.9 * Number(usdOutText);
+                    warnValueDropped = !warnUnknownValue && Number(usdOutText) < 0.9 * Number(usdInText);
 
                     swapMessageValues = {
                         amountIn: amountInText,
