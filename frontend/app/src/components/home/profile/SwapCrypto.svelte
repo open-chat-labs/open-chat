@@ -49,10 +49,21 @@
     $: anySwapsAvailable = Object.keys(swaps).length > 0 && detailsOut !== undefined;
     $: swapping = state === "swap" && busy;
     $: amountInText = client.formatTokens(amountIn, detailsIn.decimals);
-    $: warnUnknownValue = detailsIn?.dollarBalance === undefined || detailsOut?.dollarBalance === undefined;
-    $: warnValueDropped = !warnUnknownValue && (detailsOut!.dollarBalance! < 0.9 * detailsIn!.dollarBalance!);
     $: exchangeRatesLookup = client.exchangeRatesLookupStore;
-
+    $: xrIn = $exchangeRatesLookup[detailsIn.symbol.toLowerCase()]?.toUSD;
+    $: xrOut = detailsOut !== undefined ? $exchangeRatesLookup[detailsOut.symbol.toLowerCase()]?.toUSD : undefined;
+    $: usdInText = calculateDollarAmount(
+        amountIn,
+        xrIn,
+        detailsIn.decimals,
+    );    
+    $: usdOutText = bestQuote !== undefined ? calculateDollarAmount(
+        bestQuote[1],
+        xrOut,
+        detailsOut!.decimals,
+    ) : "???";
+    $: warnUnknownValue = xrIn === undefined || xrOut === undefined;
+    $: warnValueDropped = !warnUnknownValue && Number(usdOutText) < 0.9 * Number(usdOutText);
     $: {
         valid =
             anySwapsAvailable && validAmount && (state === "swap" ? (bestQuote !== undefined && userAcceptedWarning || (!warnUnknownValue && !warnValueDropped)) : true);
@@ -106,16 +117,6 @@
 
                     const [dexId, quote] = bestQuote!;
 
-                    const usdInText = calculateDollarAmount(
-                        amountIn,
-                        $exchangeRatesLookup[detailsIn.symbol.toLowerCase()]?.toUSD,
-                        detailsIn.decimals,
-                    );
-                    const usdOutText = calculateDollarAmount(
-                        quote,
-                        $exchangeRatesLookup[detailsOut!.symbol.toLowerCase()]?.toUSD,
-                        detailsOut!.decimals,
-                    );
                     const amountOutText = client.formatTokens(quote, detailsOut!.decimals);
                     const rate = (Number(amountOutText) / Number(amountInText)).toPrecision(3);
                     const dex = dexName(dexId);
@@ -282,15 +283,15 @@
         {/if}
 
         {#if state === "swap" && !swapping}
-            <div>{$_("tokenSwap.bestQuote", swapMessageValues)}</div>
-            <Markdown text={$_("tokenSwap.youWillReceive", swapMessageValues)} />
+            <div>{$_("tokenSwap.bestQuote", { values: swapMessageValues })}</div>
+            <Markdown text={$_("tokenSwap.youWillReceive", { values: swapMessageValues })} />
             
             {#if warnValueDropped || warnUnknownValue}
                 <div class="warning">
                     {#if warnValueDropped}
-                        <div>{$_("tokenSwap.warningSlippage", swapMessageValues)}</div>
+                        <div>{$_("tokenSwap.warningSlippage", { values: swapMessageValues })}</div>
                     {:else}
-                        <div>{$_("tokenSwap.warningValueUnknown", swapMessageValues)}</div>
+                        <div>{$_("tokenSwap.warningValueUnknown", { values: swapMessageValues })}</div>
                     {/if}
                     <Toggle
                         id="confirm-understanding"
@@ -300,7 +301,7 @@
                 </div>
             {/if}
 
-            <div>{$_("tokenSwap.proceedWithSwap", swapMessageValues)}</div>
+            <div>{$_("tokenSwap.proceedWithSwap", { values: swapMessageValues })}</div>
         {/if}
 
         {#if error !== undefined || pinNumberError !== undefined}
