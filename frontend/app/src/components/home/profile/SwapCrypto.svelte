@@ -42,7 +42,7 @@
     let bestQuote: [DexId, bigint] | undefined = undefined;
     let swapId: bigint | undefined;
     let userAcceptedWarning = false;
-    let warnUnknownValue = false;
+    let warnValueUnknown = false;
     let warnValueDropped = false;
 
     $: cryptoLookup = client.enhancedCryptoLookup;
@@ -54,7 +54,7 @@
     $: exchangeRatesLookup = client.exchangeRatesLookupStore;
     $: {
         valid =
-            anySwapsAvailable && validAmount && (state === "swap" ? (bestQuote !== undefined && userAcceptedWarning || (!warnUnknownValue && !warnValueDropped)) : true);
+            anySwapsAvailable && validAmount && (state === "swap" ? (bestQuote !== undefined && userAcceptedWarning || (!warnValueUnknown && !warnValueDropped)) : true);
     }
 
     $: title =
@@ -125,8 +125,8 @@
                         detailsOut!.decimals,
                     );
                     
-                    warnUnknownValue = usdInText === "???" || usdOutText === "???";
-                    warnValueDropped = !warnUnknownValue && Number(usdOutText) < 0.9 * Number(usdInText);
+                    warnValueUnknown = usdInText === "???" || usdOutText === "???";
+                    warnValueDropped = !warnValueUnknown && Number(usdOutText) < 0.9 * Number(usdInText);
 
                     swapMessageValues = {
                         amountIn: amountInText,
@@ -286,7 +286,7 @@
             <div>{$_("tokenSwap.bestQuote", { values: swapMessageValues })}</div>
             <Markdown text={$_("tokenSwap.youWillReceive", { values: swapMessageValues })} />
             
-            {#if warnValueDropped || warnUnknownValue}
+            {#if warnValueDropped || warnValueUnknown}
                 <div class="warning">
                     {#if warnValueDropped}
                         <div>{$_("tokenSwap.warningValueDropped", { values: swapMessageValues })}</div>
