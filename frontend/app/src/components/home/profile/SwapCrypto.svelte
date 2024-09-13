@@ -19,6 +19,7 @@
     import Translatable from "../../Translatable.svelte";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
     import Toggle from "../../Toggle.svelte";
+    import { calculateDollarAmount } from "../../../utils/exchange";
 
     export let ledgerIn: string;
 
@@ -50,6 +51,7 @@
     $: amountInText = client.formatTokens(amountIn, detailsIn.decimals);
     $: warnUnknownValue = detailsIn?.dollarBalance === undefined || detailsOut?.dollarBalance === undefined;
     $: warnValueDropped = !warnUnknownValue && (detailsOut!.dollarBalance! < 0.9 * detailsIn!.dollarBalance!);
+    $: exchangeRatesLookup = client.exchangeRatesLookupStore;
 
     $: {
         valid =
@@ -103,8 +105,17 @@
                     bestQuote = response[0];
 
                     const [dexId, quote] = bestQuote!;
-                    const usdOutText = detailsOut!.dollarBalance !== undefined ? client.formatTokens(quote, detailsOut!.dollarBalance) : "??.??";
-                    const usdInText = detailsIn!.dollarBalance !== undefined ? client.formatTokens(quote, detailsIn!.dollarBalance) : "??.??";
+
+                    const usdInText = calculateDollarAmount(
+                        amountIn,
+                        $exchangeRatesLookup[detailsIn.symbol.toLowerCase()]?.toUSD,
+                        detailsIn.decimals,
+                    );
+                    const usdOutText = calculateDollarAmount(
+                        quote,
+                        $exchangeRatesLookup[detailsOut!.symbol.toLowerCase()]?.toUSD,
+                        detailsOut!.decimals,
+                    );
                     const amountOutText = client.formatTokens(quote, detailsOut!.decimals);
                     const rate = (Number(amountOutText) / Number(amountInText)).toPrecision(3);
                     const dex = dexName(dexId);
