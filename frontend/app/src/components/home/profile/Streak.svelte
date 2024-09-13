@@ -2,7 +2,14 @@
     import TooltipWrapper from "../../TooltipWrapper.svelte";
     import TooltipPopup from "../../TooltipPopup.svelte";
 
-    type Streak = "none" | "three" | "seven" | "fourteen" | "thirty";
+    type Streak =
+        | "none"
+        | "three"
+        | "seven"
+        | "fourteen"
+        | "thirty"
+        | "one_hundred"
+        | "three_six_five";
 
     export let days: number = 0;
     export let showTooltip = true;
@@ -21,10 +28,14 @@
                 ? "seven"
                 : days < 30
                   ? "fourteen"
-                  : "thirty";
+                  : days < 100
+                    ? "thirty"
+                    : days < 356
+                      ? "one_hundred"
+                      : "three_six_five";
     }
 
-    function streakNumber(streak: Streak): 0 | 3 | 7 | 14 | 30 {
+    function streakNumber(streak: Streak): 0 | 3 | 7 | 14 | 30 | 100 | 356 {
         switch (streak) {
             case "none":
                 return 0;
@@ -36,6 +47,10 @@
                 return 14;
             case "thirty":
                 return 30;
+            case "one_hundred":
+                return 100;
+            case "three_six_five":
+                return 356;
         }
     }
 </script>
@@ -95,6 +110,19 @@
             background-image: url("/assets/streaks/streak_thirty.svg");
             color: rgb(255, 0, 0);
         }
+
+        &.one_hundred {
+            background-image: url("/assets/streaks/streak_100.svg");
+            color: white;
+            text-shadow: 3px 3px 0px #000;
+        }
+
+        &.three_six_five {
+            background-image: url("/assets/streaks/streak_356.svg");
+            color: white;
+            text-shadow: 3px 3px 0px #000;
+        }
+
         &.disabled {
             background-image: url("/assets/streaks/streak_disabled.svg");
             color: #888;
