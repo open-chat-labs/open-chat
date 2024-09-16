@@ -27,7 +27,11 @@ function debug(msg: string): void {
     console.log(msg);
 }
 
-const Packer = new Packr({ useRecords: false, skipValues: [undefined] } as unknown as Options);
+const Packer = new Packr({
+    useRecords: false,
+    skipValues: [undefined],
+    largeBigIntToString: true,
+} as unknown as Options);
 
 export abstract class CandidService {
     protected createServiceClient<T>(factory: IDL.InterfaceFactory): T {
