@@ -80,6 +80,7 @@
         "public": "Public",
         "readonlyTitle": "Porte d'accès",
         "referredByMember": "Référé par un membre",
+        "referredByMemberInfo": "Seuls les utilisateurs qui ont été référés par un membre de la communauté seront autorisés à rejoindre",
         "subscriptionComingSoon": "Modèle d'abonnement à venir.",
         "title": "Mettre à jour la porte d'accès",
         "tokenBalance": "Solde des jetons",

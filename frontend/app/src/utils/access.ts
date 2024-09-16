@@ -5,6 +5,7 @@ import {
     type Credential,
     type CredentialGate,
     type CryptocurrencyDetails,
+    type Level,
     type NervousSystemDetails,
 } from "openchat-client";
 
@@ -30,8 +31,8 @@ export const gateLabel: Record<AccessGate["kind"], string> = {
     referred_by_member_gate: "access.referredByMember",
 };
 
-export function getGateBindings(): GateBinding[] {
-    return [
+export function getGateBindings(level: Level): GateBinding[] {
+    const gates = [
         noGate,
         diamondGate,
         lifetimeDiamondGate,
@@ -41,8 +42,12 @@ export function getGateBindings(): GateBinding[] {
         credentialGate,
         uniquePersonGate,
         lockedGate,
-        nftGate,
     ];
+    if (level === "community") {
+        gates.push(referredByMemberGate);
+    }
+    gates.push(nftGate);
+    return gates;
 }
 
 export function getNeuronGateBindings(
@@ -136,6 +141,13 @@ export const lockedGate: GateBinding = {
     label: "access.lockedGate",
     key: "locked_gate",
     gate: { kind: "locked_gate" },
+    enabled: true,
+};
+
+export const referredByMemberGate: GateBinding = {
+    label: "access.referredByMember",
+    key: "referred_by_member_gate",
+    gate: { kind: "referred_by_member_gate" },
     enabled: true,
 };
 

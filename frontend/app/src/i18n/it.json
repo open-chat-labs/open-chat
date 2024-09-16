@@ -80,6 +80,7 @@
         "public": "Pubblico",
         "readonlyTitle": "Cancello di accesso",
         "referredByMember": "Segnalato dal membro",
+        "referredByMemberInfo": "Solo gli utenti che sono stati segnalati da un membro della community potranno partecipare",
         "subscriptionComingSoon": "Modello di abbonamento in arrivo.",
         "title": "Aggiorna il cancello di accesso",
         "tokenBalance": "Saldo dei gettoni",

@@ -80,6 +80,7 @@
         "public": "Publiczny",
         "readonlyTitle": "Brama dostępowa",
         "referredByMember": "Polecony przez członka",
+        "referredByMemberInfo": "Dołączyć będą mogli tylko użytkownicy poleceni przez członka społeczności.",
         "subscriptionComingSoon": "Model subskrypcyjny już wkrótce.",
         "title": "Zaktualizuj bramę dostępu",
         "tokenBalance": "Bilans tokenów",

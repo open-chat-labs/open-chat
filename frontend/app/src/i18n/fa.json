@@ -80,6 +80,7 @@
         "public": "عمومی",
         "readonlyTitle": "دروازه دسترسی",
         "referredByMember": "ارجاع شده توسط عضو",
+        "referredByMemberInfo": "فقط کاربرانی که توسط یکی از اعضای انجمن معرفی شده اند مجاز به پیوستن خواهند بود",
         "subscriptionComingSoon": "مدل اشتراک به زودی.",
         "title": "به روز رسانی دروازه دسترسی",
         "tokenBalance": "موجودی رمز",
