@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{
-    AccessGate, ChannelId, Document, FieldTooLongResult, FieldTooShortResult, Milliseconds, OptionUpdate,
+    AccessGate, AccessGateConfig, ChannelId, Document, FieldTooLongResult, FieldTooShortResult, Milliseconds, OptionUpdate,
     OptionalGroupPermissions, UpdatedRules, Version,
 };
 
@@ -15,6 +15,7 @@ pub struct Args {
     pub permissions_v2: Option<OptionalGroupPermissions>,
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub gate: OptionUpdate<AccessGate>,
+    pub gate_config: OptionUpdate<AccessGateConfig>,
     pub public: Option<bool>,
     pub messages_visible_to_non_members: Option<bool>,
     pub external_url: OptionUpdate<String>,

@@ -44,6 +44,8 @@ async fn update_group_v2(mut args: Args) -> Response {
             description: prepare_result.description,
             avatar_id: prepare_result.avatar_id,
             gate: prepare_result.gate,
+            // TODO: AccessGateConfig
+            gate_config: None,
         };
 
         match group_index_canister_c2c_client::c2c_update_group(group_index_canister_id, &c2c_update_group_args).await {

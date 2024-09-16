@@ -37,6 +37,7 @@ async fn c2c_create_group(args: Args) -> Response {
         permissions_v2: args.permissions_v2,
         events_ttl: args.events_ttl,
         gate: args.gate.clone(),
+        gate_config: args.gate_config.clone(),
     };
 
     match local_group_index_canister_c2c_client::c2c_create_group(local_group_index_canister, &c2c_create_group_args).await {

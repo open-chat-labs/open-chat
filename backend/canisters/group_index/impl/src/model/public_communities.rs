@@ -255,6 +255,8 @@ impl PublicCommunityInfo {
             member_count: self.activity.member_count,
             channel_count: self.activity.channel_count,
             gate: self.gate.clone(),
+            // TODO: AccessGateConfig
+            gate_config: None,
             moderation_flags: self.moderation_flags.bits(),
             primary_language: self.primary_language.clone(),
         }

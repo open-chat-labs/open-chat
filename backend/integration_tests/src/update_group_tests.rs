@@ -35,6 +35,7 @@ fn update_group_name_succeeds() {
             public: None,
             correlation_id: 0,
             gate: NoChange,
+            gate_config: NoChange,
             messages_visible_to_non_members: None,
         },
     );
@@ -79,6 +80,7 @@ fn change_casing_of_group_name_succeeds() {
             public: None,
             correlation_id: 0,
             gate: NoChange,
+            gate_config: NoChange,
             messages_visible_to_non_members: None,
         },
     );
@@ -126,6 +128,7 @@ fn update_group_privacy_succeeds() {
             public: Some(false),
             correlation_id: 0,
             gate: NoChange,
+            gate_config: NoChange,
             messages_visible_to_non_members: None,
         },
     );
@@ -173,6 +176,7 @@ fn make_private_group_public_succeeds() {
             permissions_v2: None,
             events_ttl: NoChange,
             gate: NoChange,
+            gate_config: NoChange,
             public: Some(true),
             correlation_id: 0,
             messages_visible_to_non_members: None,

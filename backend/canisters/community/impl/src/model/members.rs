@@ -42,6 +42,7 @@ impl CommunityMembers {
             display_name: Timestamped::default(),
             referred_by: None,
             referrals: HashSet::new(),
+            lapsed: None,
         };
 
         CommunityMembers {
@@ -84,6 +85,7 @@ impl CommunityMembers {
                         display_name: Timestamped::default(),
                         referred_by,
                         referrals: HashSet::new(),
+                        lapsed: None,
                     };
                     e.insert(member.clone());
                     self.add_user_id(principal, user_id);
@@ -372,6 +374,8 @@ pub struct CommunityMemberInternal {
     display_name: Timestamped<Option<String>>,
     pub referred_by: Option<UserId>,
     pub referrals: HashSet<UserId>,
+    #[serde(default)]
+    pub lapsed: Option<TimestampMillis>,
 }
 
 impl CommunityMemberInternal {
@@ -443,25 +447,27 @@ pub struct ChangeRoleSuccessResult {
 }
 
 impl From<CommunityMemberInternal> for CommunityMember {
-    fn from(p: CommunityMemberInternal) -> Self {
+    fn from(m: CommunityMemberInternal) -> Self {
         CommunityMember {
-            user_id: p.user_id,
-            date_added: p.date_added,
-            role: p.role,
-            display_name: p.display_name.value,
-            referred_by: p.referred_by,
+            user_id: m.user_id,
+            date_added: m.date_added,
+            role: m.role,
+            display_name: m.display_name.value,
+            referred_by: m.referred_by,
+            lapsed: m.lapsed.is_some(),
         }
     }
 }
 
 impl From<&CommunityMemberInternal> for CommunityMember {
-    fn from(p: &CommunityMemberInternal) -> Self {
+    fn from(m: &CommunityMemberInternal) -> Self {
         CommunityMember {
-            user_id: p.user_id,
-            date_added: p.date_added,
-            role: p.role,
-            display_name: p.display_name.value.clone(),
-            referred_by: p.referred_by,
+            user_id: m.user_id,
+            date_added: m.date_added,
+            role: m.role,
+            display_name: m.display_name.value.clone(),
+            referred_by: m.referred_by,
+            lapsed: m.lapsed.is_some(),
         }
     }
 }

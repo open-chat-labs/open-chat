@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use crate::{
-    is_empty_hashmap, AccessGate, ChannelId, CommunityPermissions, CommunityRole, EventIndex, EventWrapper, GroupPermissions,
-    GroupRole, Message, MessageIndex, Milliseconds, TimestampMillis, UserId,
+    is_empty_hashmap, AccessGate, AccessGateConfig, ChannelId, CommunityPermissions, CommunityRole, EventIndex, EventWrapper,
+    GroupPermissions, GroupRole, Message, MessageIndex, Milliseconds, TimestampMillis, UserId,
 };
 use candid::CandidType;
 use serde::Serialize;
@@ -314,6 +314,7 @@ pub struct EventsTimeToLiveUpdated {
 pub struct GroupGateUpdated {
     pub updated_by: UserId,
     pub new_gate: Option<AccessGate>,
+    pub new_gate_config: Option<AccessGateConfig>,
 }
 
 #[ts_export]

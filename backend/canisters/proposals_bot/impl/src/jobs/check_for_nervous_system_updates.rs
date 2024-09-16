@@ -83,6 +83,7 @@ async fn create_group(ns: NervousSystemDetails, group_index_canister_id: Caniste
         }),
         events_ttl: None,
         gate: None,
+        gate_config: None,
     };
 
     match group_index_canister_c2c_client::c2c_create_group(group_index_canister_id, &create_group_args).await {

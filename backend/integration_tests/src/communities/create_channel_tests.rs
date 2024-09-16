@@ -5,7 +5,7 @@ use pocket_ic::PocketIc;
 use std::ops::Deref;
 use test_case::test_case;
 use testing::rng::random_string;
-use types::{AccessGate, CommunityId, Rules};
+use types::{AccessGate, AccessGateConfig, CommunityId, Rules};
 
 #[test_case(true)]
 #[test_case(false)]
@@ -79,7 +79,11 @@ fn existing_users_joined_to_new_public_channel(diamond_gate: bool) {
             messages_visible_to_non_members: None,
             permissions_v2: None,
             events_ttl: None,
-            gate: diamond_gate.then_some(AccessGate::DiamondMember),
+            gate: None,
+            gate_config: diamond_gate.then_some(AccessGateConfig {
+                gate: AccessGate::DiamondMember,
+                expiry: None,
+            }),
             external_url: None,
         },
     );

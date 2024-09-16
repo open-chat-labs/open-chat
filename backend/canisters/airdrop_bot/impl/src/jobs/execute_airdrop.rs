@@ -6,7 +6,7 @@ use std::cell::Cell;
 use std::iter::zip;
 use std::time::Duration;
 use tracing::{error, trace};
-use types::{AccessGate, CanisterId, Chit, GroupRole, OptionUpdate, UserId};
+use types::{AccessGate, AccessGateConfig, CanisterId, Chit, GroupRole, OptionUpdate, UserId};
 use utils::time::MonthKey;
 
 use super::process_pending_actions;
@@ -70,6 +70,10 @@ async fn prepare_airdrop(config: AirdropConfig, user_index_canister_id: Canister
             permissions_v2: None,
             events_ttl: OptionUpdate::NoChange,
             gate: OptionUpdate::SetToSome(AccessGate::Locked),
+            gate_config: OptionUpdate::SetToSome(AccessGateConfig {
+                gate: AccessGate::Locked,
+                expiry: None,
+            }),
             public: None,
             messages_visible_to_non_members: None,
             external_url: OptionUpdate::NoChange,

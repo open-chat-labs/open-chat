@@ -39,6 +39,7 @@ fn change_casing_of_community_name_succeeds() {
             banner: OptionUpdate::NoChange,
             permissions: None,
             gate: OptionUpdate::NoChange,
+            gate_config: OptionUpdate::NoChange,
             public: None,
             primary_language: None,
         },
@@ -89,6 +90,7 @@ fn update_permissions_succeeds() {
             manage_user_groups: None,
         }),
         gate: OptionUpdate::NoChange,
+        gate_config: OptionUpdate::NoChange,
         public: None,
         primary_language: None,
     };
@@ -140,6 +142,7 @@ fn update_permissions_summary_updates_succeeds() {
             manage_user_groups: None,
         }),
         gate: OptionUpdate::NoChange,
+        gate_config: OptionUpdate::NoChange,
         public: None,
         primary_language: None,
     };
@@ -185,6 +188,7 @@ fn make_private_community_public_succeeds() {
         banner: OptionUpdate::NoChange,
         permissions: None,
         gate: OptionUpdate::NoChange,
+        gate_config: OptionUpdate::NoChange,
         public: Some(true),
         primary_language: None,
     };

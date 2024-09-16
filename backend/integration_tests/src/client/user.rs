@@ -132,6 +132,7 @@ pub mod happy_path {
                 rules: Rules::default(),
                 events_ttl: None,
                 gate: None,
+                gate_config: None,
             },
         );
 
@@ -162,6 +163,7 @@ pub mod happy_path {
                 permissions: None,
                 rules: Rules::default(),
                 gate: None,
+                gate_config: None,
                 default_channels,
                 default_channel_rules: None,
                 primary_language: "en".to_string(),

@@ -11,15 +11,15 @@ use serde::{Deserialize, Serialize};
 use std::cmp::{max, min};
 use std::collections::{BTreeSet, HashSet};
 use types::{
-    AccessGate, AvatarChanged, ContentValidationError, CustomPermission, Document, EventIndex, EventOrExpiredRange,
-    EventWrapper, EventsResponse, ExternalUrlUpdated, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged,
-    GroupGateUpdated, GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
-    GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent,
-    MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned,
-    MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions,
-    PermissionsChanged, PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview,
-    TimestampMillis, Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version, Versioned,
-    VersionedRules, VideoCall,
+    AccessGate, AccessGateConfig, AvatarChanged, ContentValidationError, CustomPermission, Document, EventIndex,
+    EventOrExpiredRange, EventWrapper, EventsResponse, ExternalUrlUpdated, FieldTooLongResult, FieldTooShortResult,
+    GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole,
+    GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved,
+    Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned,
+    MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate, OptionalGroupPermissions,
+    OptionalMessagePermissions, PermissionsChanged, PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules,
+    SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UserType, UsersBlocked,
+    UsersInvited, Version, Versioned, VersionedRules, VideoCall,
 };
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::document_validation::validate_avatar;
@@ -233,6 +233,8 @@ impl GroupChatCore {
                 .if_set_after(since)
                 .cloned()
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
+            // TODO: AccessGateConfig
+            gate_config: OptionUpdate::NoChange,
             rules_changed: self.rules.version_last_updated > since,
             video_call_in_progress: self
                 .events
@@ -1557,6 +1559,8 @@ impl GroupChatCore {
                     ChatEventInternal::GroupGateUpdated(Box::new(GroupGateUpdated {
                         updated_by: user_id,
                         new_gate: gate,
+                        // TODO: AccessGateConfig
+                        new_gate_config: None,
                     })),
                     0,
                     now,
@@ -2048,6 +2052,7 @@ pub struct SummaryUpdates {
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub events_ttl_last_updated: Option<TimestampMillis>,
     pub gate: OptionUpdate<AccessGate>,
+    pub gate_config: OptionUpdate<AccessGateConfig>,
     pub rules_changed: bool,
     pub video_call_in_progress: OptionUpdate<VideoCall>,
     pub external_url: OptionUpdate<String>,

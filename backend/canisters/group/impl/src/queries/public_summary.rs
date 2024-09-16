@@ -48,6 +48,8 @@ fn public_summary_impl(args: Args, state: &RuntimeState) -> Response {
         events_ttl: events_ttl.value,
         events_ttl_last_updated: events_ttl.timestamp,
         gate: data.chat.gate.value.clone(),
+        // TODO: AccessGateConfig
+        gate_config: None,
         wasm_version: BuildVersion::default(),
     };
     Success(SuccessResult {

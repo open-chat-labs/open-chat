@@ -103,6 +103,7 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
             permissions_v2: args.permissions_v2,
             events_ttl: args.events_ttl,
             gate: args.gate,
+            gate_config: args.gate_config,
         };
         Ok(PrepareResult {
             group_index_canister_id: state.data.group_index_canister_id,

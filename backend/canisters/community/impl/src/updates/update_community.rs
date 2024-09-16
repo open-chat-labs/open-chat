@@ -63,6 +63,8 @@ async fn update_community(mut args: Args) -> Response {
             avatar_id: prepare_result.avatar_id,
             banner_id: prepare_result.banner_id,
             gate: prepare_result.gate,
+            // TODO: AccessGateConfig
+            gate_config: None,
             primary_language: prepare_result.primary_language,
             channel_count: prepare_result.channel_count,
         };
@@ -309,6 +311,8 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
                 CommunityEventInternal::GateUpdated(Box::new(GroupGateUpdated {
                     updated_by: my_user_id,
                     new_gate: gate,
+                    // TODO: AccessGateConfig
+                    new_gate_config: None,
                 })),
                 state.env.now(),
             );

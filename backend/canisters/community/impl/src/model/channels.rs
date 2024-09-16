@@ -303,6 +303,8 @@ impl Channel {
             events_ttl: events_ttl.value,
             events_ttl_last_updated: events_ttl.timestamp,
             gate: chat.gate.value.clone(),
+            // TODO: AccessGateConfig
+            gate_config: None,
             membership,
             video_call_in_progress: chat.events.video_call_in_progress().value.clone(),
             is_invited,
@@ -388,6 +390,7 @@ impl Channel {
             events_ttl: updates.events_ttl,
             events_ttl_last_updated: updates.events_ttl_last_updated,
             gate: updates.gate,
+            gate_config: updates.gate_config,
             membership,
             video_call_in_progress: updates.video_call_in_progress,
             external_url: updates.external_url,
@@ -429,6 +432,8 @@ impl From<&Channel> for ChannelMatch {
             avatar_id: types::Document::id(&channel.chat.avatar),
             member_count: channel.chat.members.len(),
             gate: channel.chat.gate.value.clone(),
+            // TODO: AccessGateConfig
+            gate_config: None,
             subtype: channel.chat.subtype.value.clone(),
         }
     }

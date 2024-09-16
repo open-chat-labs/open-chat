@@ -1,6 +1,8 @@
 use candid::CandidType;
 use ts_export::ts_export;
-use types::{AccessGate, CommunityId, CommunityPermissions, Document, FieldTooLongResult, FieldTooShortResult, Rules};
+use types::{
+    AccessGate, AccessGateConfig, CommunityId, CommunityPermissions, Document, FieldTooLongResult, FieldTooShortResult, Rules,
+};
 
 #[ts_export(user, create_community)]
 #[derive(CandidType, Debug)]
@@ -14,6 +16,7 @@ pub struct Args {
     pub history_visible_to_new_joiners: bool,
     pub permissions: Option<CommunityPermissions>,
     pub gate: Option<AccessGate>,
+    pub gate_config: Option<AccessGateConfig>,
     pub default_channels: Vec<String>,
     pub default_channel_rules: Option<Rules>,
     pub primary_language: String,

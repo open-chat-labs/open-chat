@@ -107,6 +107,9 @@ fn start_import(
                 avatar: state.data.chat.avatar.value.clone(),
                 permissions: args.permissions,
                 gate: state.data.chat.gate.value.clone(),
+                // TODO: AccessGateConfig
+                //gate_config: state.data.chat.gate.value.clone(),
+                gate_config: None,
                 primary_language: args.primary_language.unwrap_or_else(|| "en".to_string()),
                 history_visible_to_new_joiners: args.history_visible_to_new_joiners,
                 total_bytes: result.total_bytes,

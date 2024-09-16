@@ -214,6 +214,8 @@ impl RuntimeState {
             permissions: data.permissions.clone(),
             frozen: data.frozen.value.clone(),
             gate: data.gate.value.clone(),
+            // TODO: AccessGateConfig
+            gate_config: None,
             primary_language: data.primary_language.clone(),
             channels,
             membership,

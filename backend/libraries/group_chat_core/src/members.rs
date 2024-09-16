@@ -56,6 +56,7 @@ impl GroupMembers {
             rules_accepted: Some(Timestamped::new(Version::zero(), now)),
             is_bot: user_type.is_bot(),
             user_type,
+            lapsed: None,
         };
 
         GroupMembers {
@@ -99,6 +100,7 @@ impl GroupMembers {
                         rules_accepted: None,
                         is_bot: user_type.is_bot(),
                         user_type,
+                        lapsed: None,
                     };
                     e.insert(member.clone());
                     self.updates.insert((now, user_id, MemberUpdate::Added));
@@ -344,6 +346,8 @@ pub struct GroupMemberInternal {
     min_visible_event_index: EventIndex,
     #[serde(rename = "mm", default, skip_serializing_if = "is_default")]
     min_visible_message_index: MessageIndex,
+    #[serde(rename = "la", default, skip_serializing_if = "is_default")]
+    pub lapsed: Option<TimestampMillis>,
 }
 
 impl GroupMemberInternal {
@@ -407,11 +411,12 @@ impl GroupMemberInternal {
 }
 
 impl From<&GroupMemberInternal> for GroupMember {
-    fn from(p: &GroupMemberInternal) -> Self {
+    fn from(m: &GroupMemberInternal) -> Self {
         GroupMember {
-            user_id: p.user_id,
-            date_added: p.date_added,
-            role: p.role.value.into(),
+            user_id: m.user_id,
+            date_added: m.date_added,
+            role: m.role.value.into(),
+            lapsed: m.lapsed.is_some(),
         }
     }
 }
@@ -478,6 +483,7 @@ mod tests {
             rules_accepted: Some(Timestamped::new(Version::zero(), 1)),
             is_bot: false,
             user_type: UserType::User,
+            lapsed: None,
         };
 
         let member_bytes = msgpack::serialize_then_unwrap(&member);
@@ -508,6 +514,7 @@ mod tests {
             rules_accepted: Some(Timestamped::new(Version::zero(), 1)),
             is_bot: true,
             user_type: UserType::Bot,
+            lapsed: None,
         };
 
         let member_bytes = msgpack::serialize_then_unwrap(&member);

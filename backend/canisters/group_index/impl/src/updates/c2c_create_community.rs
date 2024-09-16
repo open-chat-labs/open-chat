@@ -33,6 +33,7 @@ async fn c2c_create_community(args: Args) -> Response {
         history_visible_to_new_joiners: args.history_visible_to_new_joiners,
         permissions: args.permissions,
         gate: args.gate.clone(),
+        gate_config: args.gate_config.clone(),
         default_channels: args.default_channels,
         default_channel_rules: args.default_channel_rules,
         source_group: None,

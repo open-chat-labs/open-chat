@@ -8,6 +8,13 @@ pub const SNS_FEE_SHARE_PERCENT: u128 = 2;
 
 #[ts_export]
 #[derive(CandidType, Clone, Debug, Eq, PartialEq)]
+pub struct AccessGateConfig {
+    pub gate: AccessGate,
+    pub expiry: Option<Milliseconds>,
+}
+
+#[ts_export]
+#[derive(CandidType, Clone, Debug, Eq, PartialEq)]
 pub enum AccessGate {
     DiamondMember,
     LifetimeDiamondMember,

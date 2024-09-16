@@ -102,6 +102,8 @@ impl PublicGroups {
             events_ttl: summary.events_ttl,
             events_ttl_last_updated: summary.events_ttl_last_updated,
             gate: summary.gate,
+            // TODO: AccessGateConfig
+            gate_config: None,
             wasm_version: BuildVersion::default(),
         })
     }

@@ -1,6 +1,9 @@
 use candid::CandidType;
 use ts_export::ts_export;
-use types::{AccessGate, ChatId, Document, FieldTooLongResult, FieldTooShortResult, GroupPermissions, Milliseconds, Rules};
+use types::{
+    AccessGate, AccessGateConfig, ChatId, Document, FieldTooLongResult, FieldTooShortResult, GroupPermissions, Milliseconds,
+    Rules,
+};
 
 #[ts_export(user, create_group)]
 #[derive(CandidType, Debug)]
@@ -15,6 +18,7 @@ pub struct Args {
     pub permissions_v2: Option<GroupPermissions>,
     pub events_ttl: Option<Milliseconds>,
     pub gate: Option<AccessGate>,
+    pub gate_config: Option<AccessGateConfig>,
 }
 
 #[ts_export(user, create_group)]

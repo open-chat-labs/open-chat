@@ -1,7 +1,7 @@
 use crate::{
-    AccessGate, BuildVersion, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupMember, GroupPermissions,
-    GroupRole, HydratedMention, Message, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis, UserId, Version,
-    MAX_RETURNED_MENTIONS,
+    AccessGate, AccessGateConfig, BuildVersion, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupMember,
+    GroupPermissions, GroupRole, HydratedMention, Message, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis, UserId,
+    Version, MAX_RETURNED_MENTIONS,
 };
 use candid::CandidType;
 use std::collections::HashSet;
@@ -73,6 +73,7 @@ pub struct GroupChatSummary {
     pub events_ttl: Option<Milliseconds>,
     pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
+    pub gate_config: Option<AccessGateConfig>,
     pub rules_accepted: bool,
     pub video_call_in_progress: Option<VideoCall>,
 }
@@ -126,6 +127,7 @@ pub struct PublicGroupSummary {
     pub events_ttl: Option<Milliseconds>,
     pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
+    pub gate_config: Option<AccessGateConfig>,
 }
 
 #[ts_export]
@@ -162,6 +164,7 @@ pub struct GroupCanisterGroupChatSummary {
     pub events_ttl: Option<Milliseconds>,
     pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
+    pub gate_config: Option<AccessGateConfig>,
     pub rules_accepted: bool,
     pub membership: Option<GroupMembership>,
     pub video_call_in_progress: Option<VideoCall>,
@@ -239,6 +242,7 @@ impl GroupCanisterGroupChatSummary {
             events_ttl: updates.events_ttl.apply_to(self.events_ttl),
             events_ttl_last_updated: updates.events_ttl_last_updated.unwrap_or(self.events_ttl_last_updated),
             gate: updates.gate.apply_to(self.gate),
+            gate_config: updates.gate_config.apply_to(self.gate_config),
             rules_accepted: membership.rules_accepted,
             membership: Some(membership),
             video_call_in_progress: updates.video_call_in_progress.apply_to(self.video_call_in_progress),
@@ -282,6 +286,8 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub events_ttl_last_updated: Option<TimestampMillis>,
     #[ts(as = "crate::OptionUpdateAccessGate")]
     pub gate: OptionUpdate<AccessGate>,
+    #[ts(as = "crate::OptionUpdateAccessGateConfig")]
+    pub gate_config: OptionUpdate<AccessGateConfig>,
     pub rules_accepted: Option<bool>,
     pub membership: Option<GroupMembershipUpdates>,
     #[ts(as = "crate::OptionUpdateVideoCall")]

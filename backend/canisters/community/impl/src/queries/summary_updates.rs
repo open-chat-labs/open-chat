@@ -140,6 +140,8 @@ fn summary_updates_impl(
         permissions: updates_from_events.permissions,
         frozen: updates_from_events.frozen,
         gate: updates_from_events.gate,
+        // TODO: AccessGateConfig
+        gate_config: OptionUpdate::NoChange,
         primary_language: updates_from_events.primary_language,
         latest_event_index: updates_from_events.latest_event_index,
         channels_added,

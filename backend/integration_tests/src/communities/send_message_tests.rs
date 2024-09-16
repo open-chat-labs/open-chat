@@ -737,6 +737,7 @@ fn set_community_rules(env: &mut PocketIc, sender: Principal, community_id: Comm
         banner: OptionUpdate::NoChange,
         permissions: None,
         gate: OptionUpdate::NoChange,
+        gate_config: OptionUpdate::NoChange,
         public: None,
         primary_language: None,
     };
@@ -757,6 +758,7 @@ fn set_channel_rules(env: &mut PocketIc, sender: Principal, community_id: Commun
         permissions_v2: None,
         events_ttl: OptionUpdate::NoChange,
         gate: OptionUpdate::NoChange,
+        gate_config: OptionUpdate::NoChange,
         public: None,
         channel_id,
         messages_visible_to_non_members: None,

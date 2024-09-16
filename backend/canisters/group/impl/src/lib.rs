@@ -225,6 +225,8 @@ impl RuntimeState {
             events_ttl: events_ttl.value,
             events_ttl_last_updated: events_ttl.timestamp,
             gate: chat.gate.value.clone(),
+            // TODO: AccessGateConfig
+            gate_config: None,
             rules_accepted: membership.rules_accepted,
             membership: Some(membership),
             video_call_in_progress: chat.events.video_call_in_progress().value.clone(),

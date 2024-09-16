@@ -3,7 +3,9 @@ use crate::{client, TestEnv};
 use std::ops::Deref;
 use test_case::test_case;
 use testing::rng::random_string;
-use types::{AccessGate, AccessGateNonComposite, CompositeGate, GateCheckFailedReason, Rules, TokenBalanceGate};
+use types::{
+    AccessGate, AccessGateConfig, AccessGateNonComposite, CompositeGate, GateCheckFailedReason, Rules, TokenBalanceGate,
+};
 
 #[test_case(true, false; "diamond_member")]
 #[test_case(false, false; "not_diamond_member")]
@@ -34,7 +36,11 @@ fn public_group_diamond_member_gate_check(is_diamond: bool, is_invited: bool) {
             permissions_v2: None,
             rules: Rules::default(),
             events_ttl: None,
-            gate: Some(AccessGate::DiamondMember),
+            gate: None,
+            gate_config: Some(AccessGateConfig {
+                gate: AccessGate::DiamondMember,
+                expiry: None,
+            }),
             messages_visible_to_non_members: None,
         },
     ) {
@@ -114,10 +120,14 @@ fn public_group_token_balance_gate_check(has_sufficient_balance: bool) {
             permissions_v2: None,
             rules: Rules::default(),
             events_ttl: None,
-            gate: Some(AccessGate::TokenBalance(TokenBalanceGate {
-                ledger_canister_id: canister_ids.icp_ledger,
-                min_balance,
-            })),
+            gate: None,
+            gate_config: Some(AccessGateConfig {
+                gate: AccessGate::TokenBalance(TokenBalanceGate {
+                    ledger_canister_id: canister_ids.icp_ledger,
+                    min_balance,
+                }),
+                expiry: None,
+            }),
             messages_visible_to_non_members: None,
         },
     ) {
@@ -192,16 +202,21 @@ fn public_group_composite_gate_check(is_diamond: bool, has_sufficient_balance: b
             permissions_v2: None,
             rules: Rules::default(),
             events_ttl: None,
-            gate: Some(AccessGate::Composite(CompositeGate {
-                inner: vec![
-                    AccessGateNonComposite::DiamondMember,
-                    AccessGateNonComposite::TokenBalance(TokenBalanceGate {
-                        ledger_canister_id: canister_ids.chat_ledger,
-                        min_balance,
-                    }),
-                ],
-                and: and_gate,
-            })),
+            gate: None,
+            gate_config: Some(AccessGateConfig {
+                gate: AccessGate::Composite(CompositeGate {
+                    inner: vec![
+                        AccessGateNonComposite::DiamondMember,
+                        AccessGateNonComposite::TokenBalance(TokenBalanceGate {
+                            ledger_canister_id: canister_ids.chat_ledger,
+                            min_balance,
+                        }),
+                    ],
+                    and: and_gate,
+                }),
+                expiry: None,
+            }),
+
             messages_visible_to_non_members: None,
         },
     ) {
