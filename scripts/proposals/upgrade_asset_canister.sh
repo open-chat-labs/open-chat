@@ -25,7 +25,7 @@ WASM_FILE=$CANISTER_NAME.wasm.gz
 WASM_PATH=$WASM_FOLDER/$WASM_FILE
 
 # Make the proposal using quill
-quill sns --canister-ids-file ././sns/scripts/utils/sns_canister_ids.json --pem-file $PEM_FILE make-upgrade-canister-proposal --title "$TITLE" --url "$URL" --summary "$SUMMARY" --target-canister-id $TARGET_CANISTER_ID --wasm-path $WASM_PATH $PROPOSER_NEURON_ID > msg.json
+quill sns --canister-ids-file ././sns/scripts/utils/sns_canister_ids.json --pem-file $PEM_FILE make-upgrade-canister-proposal --title "$TITLE" --url "$URL" --summary "$SUMMARY" --target-canister-id $TARGET_CANISTER_ID --wasm-path $WASM_PATH $PROPOSER_NEURON_ID --mode upgrade > msg.json
 quill send msg.json
 rm -f msg.json
 

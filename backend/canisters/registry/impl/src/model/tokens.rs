@@ -30,6 +30,13 @@ impl Tokens {
         if self.exists(ledger_canister_id) {
             false
         } else {
+            // If there is an existing token with the same symbol, disable it in favour of the
+            // newly added one
+            if let Some(matching_symbol) = self.tokens.iter_mut().find(|t| t.symbol == symbol) {
+                matching_symbol.enabled = false;
+                matching_symbol.last_updated = now;
+            }
+
             let logo_id = logo_id(&logo);
             self.tokens.push(TokenDetails {
                 ledger_canister_id,

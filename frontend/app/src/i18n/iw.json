@@ -80,6 +80,7 @@
         "public": "פּוּמְבֵּי",
         "readonlyTitle": "שער גישה",
         "referredByMember": "מופנה על ידי חבר",
+        "referredByMemberInfo": "רק משתמשים שהופנו על ידי חבר קהילה יורשו להצטרף",
         "subscriptionComingSoon": "דגם מנוי בקרוב.",
         "title": "עדכן את שער הגישה",
         "tokenBalance": "איזון סמלי",
@@ -1369,9 +1370,12 @@
     "toggleTranslationEditMode": "החלף את תיקוני התרגום",
     "tokenSwap": {
         "back": "חזור",
+        "bestQuote": "שער החליפין הטוב ביותר שצוטט הוא {rate} {tokenOut} ל-{tokenIn} מ-{dex}.",
+        "confirmUnderstanding": "סמן את התיבה הזו כדי לאשר שאתה מבין",
         "findingAvailableTokens": "מציאת אסימונים זמינים להחלפה...",
         "getTokenSwapsError": "שגיאה בקבלת החלפות עבור {tokenIn}",
         "noQuotes": "שום DEXs לא סיפקו הצעת מחיר להחלפה {tokenIn}",
+        "proceedWithSwap": "ההחלפה תתבצע רק אם הסכום של {tokenOut} שיתקבל הוא לפחות 98% מהסכום הנקוב. האם תרצה להמשיך ולנסות את ההחלפה?",
         "progress": {
             "deposit": "העבר את {amountIn} {tokenIn} אל {dex}",
             "done": "ההחלפה הושלמה",
@@ -1389,10 +1393,12 @@
         "quoteTooLow": "התעריף הטוב ביותר שצוטט הוא {rate} {tokenOut} לכל {tokenIn} מ-{dex}. זה נותן {amountOut} {tokenOut} עבור {amountIn} {tokenIn}. אתה יכול להחליף רק אם הסכום הנקוב עולה על {minAmountOut}.",
         "requote": "ציטוט מחדש",
         "swap": "לְהַחלִיף",
-        "swapInfo": "התעריף הטוב ביותר שצוטט הוא **{rate}** {tokenOut} לכל {tokenIn} מ-{dex}. זה נותן **{amountOut}** {tokenOut} עבור **{amountIn}** {tokenIn}. ההחלפה תתבצע רק אם הסכום של {tokenOut} שיתקבל הוא לפחות 98% מהסכום הנקוב. האם תרצה להמשיך ולנסות את `{swap}`?",
         "swapNotAvailable": "נכון לעכשיו לא ניתן להחליף את {tokenIn} לשום אסימון אחר",
         "swapToken": "החלפה {tokenIn}",
-        "swapTokenTo": "החלף את {tokenIn} ל-{tokenOut}"
+        "swapTokenTo": "החלף את {tokenIn} ל-{tokenOut}",
+        "warningValueDropped": "עקב נזילות נמוכה, הערך של {tokenOut} שתקבל הוא < 90% מהערך של {tokenIn} שתחליף (בהתבסס על הערך המצוטט בדולר ארה\"ב של אסימונים אלה).",
+        "warningValueUnknown": "המחיר הנוכחי בדולר עבור אחד או יותר מהאסימונים הללו אינו זמין ולכן לא ניתן לקבוע אם החלפה זו מייצגת ערך טוב.",
+        "youWillReceive": "תקבל **{amountOut}** {tokenOut} (${usdOut}) עבור **{amountIn}** {tokenIn} (${usdIn})."
     },
     "tokenTransfer": {
         "accountNameTaken": "כבר יש לך חשבון בשם זה",

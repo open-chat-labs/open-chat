@@ -80,6 +80,7 @@
         "public": "Public",
         "readonlyTitle": "Porte d'accès",
         "referredByMember": "Référé par un membre",
+        "referredByMemberInfo": "Seuls les utilisateurs qui ont été référés par un membre de la communauté seront autorisés à rejoindre",
         "subscriptionComingSoon": "Modèle d'abonnement à venir.",
         "title": "Mettre à jour la porte d'accès",
         "tokenBalance": "Solde des jetons",
@@ -1369,9 +1370,12 @@
     "toggleTranslationEditMode": "Activer/désactiver les corrections de traduction",
     "tokenSwap": {
         "back": "Dos",
+        "bestQuote": "Le meilleur taux de change indiqué est de {rate} {tokenOut} pour {tokenIn} à partir de {dex}.",
+        "confirmUnderstanding": "Cochez cette case pour confirmer que vous avez compris",
         "findingAvailableTokens": "trouver les jetons disponibles à échanger...",
         "getTokenSwapsError": "Erreur lors de l'obtention des échanges pour {tokenIn}",
         "noQuotes": "Aucun DEX n'a fourni de devis pour échanger {tokenIn}",
+        "proceedWithSwap": "L'échange n'aura lieu que si le montant de {tokenOut} à recevoir est au moins égal à 98 % du montant indiqué. Souhaitez-vous tenter l'échange ?",
         "progress": {
             "deposit": "Transférer {amountIn} {tokenIn} vers {dex}",
             "done": "Échange terminé",
@@ -1389,10 +1393,12 @@
         "quoteTooLow": "Le meilleur tarif indiqué est de {rate} {tokenOut} pour {tokenIn} à partir de {dex}. Cela donne {amountOut} {tokenOut} pour {amountIn} {tokenIn}. Vous ne pouvez échanger que si le montant indiqué dépasse {minAmountOut}.",
         "requote": "Re-citer",
         "swap": "Échanger",
-        "swapInfo": "Le meilleur tarif indiqué est de **{rate}** {tokenOut} pour {tokenIn} à partir de {dex}. Cela donne **{amountOut}** {tokenOut} pour **{amountIn}** {tokenIn}. L'échange n'aura lieu que si le montant de {tokenOut} à recevoir est d'au moins 98 % du montant indiqué. Souhaitez-vous continuer et tenter le « {swap}  » ?",
         "swapNotAvailable": "Actuellement, il n'est pas possible d'échanger {tokenIn} contre un autre jeton",
         "swapToken": "Échanger {tokenIn}",
-        "swapTokenTo": "Remplacer {tokenIn} par {tokenOut}"
+        "swapTokenTo": "Remplacer {tokenIn} par {tokenOut}",
+        "warningValueDropped": "En raison de la faible liquidité, la valeur de {tokenOut} que vous recevrez est < 90 % de la valeur de {tokenIn} que vous échangerez (sur la base de la valeur USD cotée de ces jetons).",
+        "warningValueUnknown": "Le prix actuel en dollars d'un ou plusieurs de ces jetons n'est pas disponible, il n'est donc pas possible de déterminer si cet échange représente une bonne valeur.",
+        "youWillReceive": "Vous recevrez **{amountOut}** {tokenOut} (${usdOut}) pour **{amountIn}** {tokenIn} (${usdIn})."
     },
     "tokenTransfer": {
         "accountNameTaken": "Vous avez déjà un compte avec ce nom",

@@ -70,10 +70,7 @@ export function canInviteUsers(community: CommunitySummary): boolean {
 }
 
 export function canRemoveMembers(community: CommunitySummary): boolean {
-    return (
-        !community.public &&
-        isPermitted(community.membership.role, community.permissions.removeMembers)
-    );
+    return isPermitted(community.membership.role, community.permissions.removeMembers);
 }
 
 export function mergeLocalUpdates(

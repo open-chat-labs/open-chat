@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Disallow sending messages to chats that have an external url set ([#6369](https://github.com/open-chat-labs/open-chat/pull/6369))
+- Change `cancel_invites` to mark community active ([#6390](https://github.com/open-chat-labs/open-chat/pull/6390))
 
 ## [[2.0.1337](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1337-community)] - 2024-09-10
 

@@ -80,6 +80,7 @@
         "public": "Public",
         "readonlyTitle": "Access gate",
         "referredByMember": "Referred by member",
+        "referredByMemberInfo": "Only users who have been referred by a community member will be allowed to join",
         "subscriptionComingSoon": "Subscription model coming soon.",
         "title": "Update access gate",
         "tokenBalance": "Token balance",
@@ -1369,9 +1370,12 @@
     "toggleTranslationEditMode": "Toggle translation corrections",
     "tokenSwap": {
         "back": "Back",
+        "bestQuote": "The best exchange rate quoted is {rate} {tokenOut} per {tokenIn} from {dex}.",
+        "confirmUnderstanding": "Check this box to confirm you understand",
         "findingAvailableTokens": "finding available tokens to swap...",
         "getTokenSwapsError": "Error getting swaps for {tokenIn}",
         "noQuotes": "No DEXes provided a quote to swap {tokenIn}",
+        "proceedWithSwap": "The swap will only go ahead if the amount of {tokenOut} to be received is at least 98% of the amount quoted. Would you like to go ahead and attempt the swap?",
         "progress": {
             "deposit": "Transfer {amountIn} {tokenIn} to {dex}",
             "done": "Swap complete",
@@ -1389,10 +1393,12 @@
         "quoteTooLow": "The best rate quoted is {rate} {tokenOut} per {tokenIn} from {dex}. This gives {amountOut} {tokenOut} for {amountIn} {tokenIn}. You can only swap if the quoted amount out exceeds {minAmountOut}.",
         "requote": "Re-quote",
         "swap": "Swap",
-        "swapInfo": "The best rate quoted is **{rate}** {tokenOut} per {tokenIn} from {dex}. This gives **{amountOut}** {tokenOut} for **{amountIn}** {tokenIn}. The swap will only go ahead if the amount of {tokenOut} to be received is at least 98% of the amount quoted. Would you like to go ahead and attempt the `{swap}`?",
         "swapNotAvailable": "Currently it is not possible to swap {tokenIn} to any other token",
         "swapToken": "Swap {tokenIn}",
-        "swapTokenTo": "Swap {tokenIn} to {tokenOut}"
+        "swapTokenTo": "Swap {tokenIn} to {tokenOut}",
+        "warningValueDropped": "Due to low liquidity, the value of {tokenOut} you will receive is < 90% of the value of {tokenIn} you will swap (based on the quoted USD value of these tokens).",
+        "warningValueUnknown": "The current dollar price for one of more of these tokens is not available so it is not possible to determine whether this swap represents good value.",
+        "youWillReceive": "You will receive **{amountOut}** {tokenOut} (${usdOut}) for **{amountIn}** {tokenIn} (${usdIn})."
     },
     "tokenTransfer": {
         "accountNameTaken": "You already have an account with that name",

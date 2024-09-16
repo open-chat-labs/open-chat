@@ -80,6 +80,7 @@
         "public": "Công cộng",
         "readonlyTitle": "Cổng vào",
         "referredByMember": "Được giới thiệu bởi thành viên",
+        "referredByMemberInfo": "Chỉ những người dùng được thành viên cộng đồng giới thiệu mới được phép tham gia",
         "subscriptionComingSoon": "Mô hình đăng ký sắp ra mắt.",
         "title": "Cập nhật cổng truy cập",
         "tokenBalance": "Số dư mã thông báo",
@@ -1369,9 +1370,12 @@
     "toggleTranslationEditMode": "Chuyển đổi sửa bản dịch",
     "tokenSwap": {
         "back": "Mặt sau",
+        "bestQuote": "Tỷ giá hối đoái tốt nhất được trích dẫn là {rate} {tokenOut} cho mỗi {tokenIn} từ {dex}.",
+        "confirmUnderstanding": "Đánh dấu vào ô này để xác nhận bạn đã hiểu",
         "findingAvailableTokens": "tìm kiếm token có sẵn để trao đổi...",
         "getTokenSwapsError": "Lỗi khi nhận giao dịch hoán đổi cho {tokenIn}",
         "noQuotes": "Không có DEX nào cung cấp báo giá để hoán đổi {tokenIn}",
+        "proceedWithSwap": "Việc hoán đổi chỉ được tiến hành nếu số tiền {tokenOut} nhận được ít nhất là 98% số tiền được báo giá. Bạn có muốn tiếp tục và thử hoán đổi không?",
         "progress": {
             "deposit": "Chuyển {amountIn} {tokenIn} sang {dex}",
             "done": "Hoán đổi hoàn tất",
@@ -1389,10 +1393,12 @@
         "quoteTooLow": "Tỷ giá được trích dẫn tốt nhất là {rate} {tokenOut} trên {tokenIn} từ {dex}. Điều này mang lại {amountOut} {tokenOut} cho {amountIn} {tokenIn}. Bạn chỉ có thể hoán đổi nếu số tiền trích dẫn vượt quá {minAmountOut}.",
         "requote": "Báo giá lại",
         "swap": "Tráo đổi",
-        "swapInfo": "Tỷ giá được báo giá tốt nhất là **{rate}** {tokenOut} trên {tokenIn} từ {dex}. Điều này mang lại **{amountOut}** {tokenOut} cho **{amountIn}** {tokenIn}. Việc hoán đổi sẽ chỉ tiếp tục nếu số lượng {tokenOut} được nhận ít nhất là 98% số tiền được báo giá. Bạn có muốn tiếp tục và thử `{swap}` không?",
         "swapNotAvailable": "Hiện tại không thể hoán đổi {tokenIn} sang bất kỳ mã thông báo nào khác",
         "swapToken": "Hoán đổi {tokenIn}",
-        "swapTokenTo": "Hoán đổi {tokenIn} thành {tokenOut}"
+        "swapTokenTo": "Hoán đổi {tokenIn} thành {tokenOut}",
+        "warningValueDropped": "Do tính thanh khoản thấp, giá trị của {tokenOut} bạn sẽ nhận được sẽ < 90% giá trị của {tokenIn} bạn sẽ hoán đổi (dựa trên giá trị USD được báo giá của các token này).",
+        "warningValueUnknown": "Giá đô la hiện tại của một hoặc nhiều mã thông báo này không có sẵn nên không thể xác định liệu việc hoán đổi này có mang lại giá trị tốt hay không.",
+        "youWillReceive": "Bạn sẽ nhận được **{amountOut}** {tokenOut} (${usdOut}) cho **{amountIn}** {tokenIn} (${usdIn})."
     },
     "tokenTransfer": {
         "accountNameTaken": "Bạn đã có tài khoản với tên đó",

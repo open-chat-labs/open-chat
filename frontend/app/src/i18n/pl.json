@@ -80,6 +80,7 @@
         "public": "Publiczny",
         "readonlyTitle": "Brama dostępowa",
         "referredByMember": "Polecony przez członka",
+        "referredByMemberInfo": "Dołączyć będą mogli tylko użytkownicy poleceni przez członka społeczności.",
         "subscriptionComingSoon": "Model subskrypcyjny już wkrótce.",
         "title": "Zaktualizuj bramę dostępu",
         "tokenBalance": "Bilans tokenów",
@@ -1369,9 +1370,12 @@
     "toggleTranslationEditMode": "Przełącz poprawki w tłumaczeniu",
     "tokenSwap": {
         "back": "Z powrotem",
+        "bestQuote": "Najlepszy oferowany kurs wymiany to {rate} {tokenOut} za {tokenIn} z {dex}.",
+        "confirmUnderstanding": "Zaznacz to pole, aby potwierdzić, że rozumiesz",
         "findingAvailableTokens": "znalezienie dostępnych tokenów do wymiany...",
         "getTokenSwapsError": "Błąd podczas pobierania zamiany na {tokenIn}",
         "noQuotes": "Żaden DEX nie przedstawił oferty zamiany {tokenIn}",
+        "proceedWithSwap": "Wymiana zostanie przeprowadzona tylko wtedy, gdy kwota {tokenOut}, która ma zostać otrzymana, będzie wynosić co najmniej 98% podanej kwoty. Czy chcesz kontynuować i spróbować dokonać wymiany?",
         "progress": {
             "deposit": "Przenieś {amountIn} {tokenIn} do {dex}",
             "done": "Wymiana zakończona",
@@ -1389,10 +1393,12 @@
         "quoteTooLow": "Najlepsza podana stawka to {rate} {tokenOut} za {tokenIn} z {dex}. Daje to {amountOut} {tokenOut} dla {amountIn} {tokenIn}. Możesz dokonać zamiany tylko wtedy, gdy podana kwota przekracza {minAmountOut}.",
         "requote": "Zacytuj ponownie",
         "swap": "Zamieniać",
-        "swapInfo": "Najlepsza podana stawka to **{rate}** {tokenOut} za {tokenIn} od {dex}. Daje to **{amountOut}** {tokenOut} dla **{amountIn}** {tokenIn}. Swap zostanie zrealizowany tylko wtedy, gdy otrzymana kwota {tokenOut} będzie wynosić co najmniej 98% podanej kwoty. Czy chcesz spróbować wykonać `{swap}`?",
         "swapNotAvailable": "Obecnie nie ma możliwości zamiany {tokenIn} na żaden inny token",
         "swapToken": "Zamień {tokenIn}",
-        "swapTokenTo": "Zamień {tokenIn} na {tokenOut}"
+        "swapTokenTo": "Zamień {tokenIn} na {tokenOut}",
+        "warningValueDropped": "Ze względu na niską płynność wartość {tokenOut}, którą otrzymasz, jest mniejsza niż 90% wartości {tokenIn}, którą wymienisz (w oparciu o notowaną wartość tych tokenów w USD).",
+        "warningValueUnknown": "Aktualna cena dolarowa jednego lub większej liczby tych tokenów nie jest dostępna, dlatego nie można określić, czy ta zamiana jest opłacalna.",
+        "youWillReceive": "Otrzymasz **{amountOut}** {tokenOut} (${usdOut}) za **{amountIn}** {tokenIn} (${usdIn})."
     },
     "tokenTransfer": {
         "accountNameTaken": "Masz już konto o tej nazwie",
