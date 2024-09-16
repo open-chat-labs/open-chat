@@ -76,6 +76,14 @@
                 break;
         }
     }
+
+    function onCancelCommunityInvite(ev: CustomEvent<unknown>): void {
+        dispatch("cancelCommunityInvite", ev.detail);
+    }
+
+    function onCancelGroupInvite(ev: CustomEvent<unknown>): void {
+        dispatch("cancelGroupInvite", ev.detail);
+    }
 </script>
 
 <ScopeToggle bind:selectedTab>
@@ -101,7 +109,8 @@
         on:chatWith
         on:showInviteUsers={showInviteCommunityUsers}
         on:removeMember={onRemoveCommunityMember}
-        on:changeRole={onChangeCommunityRole} />
+        on:changeRole={onChangeCommunityRole}
+        on:cancelInvite={onCancelCommunityInvite} />
 
     <Members
         slot="channel"
@@ -117,7 +126,8 @@
         on:chatWith
         on:showInviteUsers={showInviteGroupUsers}
         on:removeMember={onRemoveGroupMember}
-        on:changeRole={onChangeGroupRole} />
+        on:changeRole={onChangeGroupRole}
+        on:cancelInvite={onCancelGroupInvite} />
 </ScopeToggle>
 
 <style lang="scss">

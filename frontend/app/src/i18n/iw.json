@@ -122,6 +122,9 @@
     "blockUserFailed": "לא ניתן לחסום משתמש",
     "blockUserSucceeded": "המשתמש נחסם",
     "cancel": "לְבַטֵל",
+    "cancelInvite": "בטל הזמנה",
+    "cancelInviteFailed": "שגיאה בביטול ההזמנה",
+    "cancelInviteSucceeded": "ההזמנה בוטלה",
     "challenge": {
         "alreadyRegistered": "אנא סגור ונסה שוב מאוחר יותר",
         "failed": "האתגר נכשל. בבקשה נסה שוב.",

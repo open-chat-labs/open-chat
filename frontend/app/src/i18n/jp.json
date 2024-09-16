@@ -122,6 +122,9 @@
     "blockUserFailed": "ユーザーをブロックできませんでした",
     "blockUserSucceeded": "ユーザーはブロックされました",
     "cancel": "キャンセル",
+    "cancelInvite": "招待をキャンセル",
+    "cancelInviteFailed": "招待のキャンセル中にエラーが発生しました",
+    "cancelInviteSucceeded": "招待をキャンセルしました",
     "challenge": {
         "alreadyRegistered": "閉じて、後でもう一度お試しください",
         "failed": "チャレンジに失敗しました。もう一度お試しください。",

@@ -46,7 +46,6 @@ import type {
     UpdateGroupResponse,
     UpdatesResult,
     WithdrawCryptocurrencyResponse,
-    InviteUsersResponse,
     ResetInviteCodeResponse,
     AddHotGroupExclusionResponse,
     RemoveHotGroupExclusionResponse,
@@ -214,7 +213,6 @@ export type WorkerRequest =
     | ChangeRole
     | RemoveMember
     | InviteUsers
-    | InviteUsersToCommunity
     | PushSub
     | RemoveSub
     | SubscriptionExists
@@ -397,7 +395,8 @@ export type WorkerRequest =
     | ConfigureWallet
     | ClearCachedData
     | SetCommunityReferral
-    | GetExternalAchievements;
+    | GetExternalAchievements
+    | CancelInvites;
 
 type GetExternalAchievements = {
     kind: "getExternalAchievements";
@@ -783,17 +782,10 @@ type RemoveMember = {
 };
 
 type InviteUsers = {
-    chatId: MultiUserChatIdentifier;
+    id: MultiUserChatIdentifier | CommunityIdentifier;
     userIds: string[];
     callerUsername: string;
     kind: "inviteUsers";
-};
-
-type InviteUsersToCommunity = {
-    id: CommunityIdentifier;
-    userIds: string[];
-    callerUsername: string;
-    kind: "inviteUsersToCommunity";
 };
 
 type RemoveSub = {
@@ -1350,7 +1342,6 @@ export type WorkerResponseInner =
     | GroupChatSummary[]
     | RegisterProposalVoteResponse
     | ChangeRoleResponse
-    | InviteUsersResponse
     | RemoveMemberResponse
     | RegisterUserResponse
     | EditMessageResponse
@@ -1767,6 +1758,12 @@ type ChitLeaderboard = {
     kind: "chitLeaderboard";
 };
 
+type CancelInvites = {
+    kind: "cancelInvites";
+    id: MultiUserChatIdentifier | CommunityIdentifier;
+    userIds: string[];
+};
+
 export type ConnectToWorkerResponse = GetOpenChatIdentityResponse["kind"];
 
 // prettier-ignore
@@ -1883,9 +1880,7 @@ export type WorkerResult<T> = T extends Init
     : T extends RemoveSub
     ? void
     : T extends InviteUsers
-    ? InviteUsersResponse
-    : T extends InviteUsersToCommunity
-    ? InviteUsersResponse
+    ? boolean
     : T extends RemoveMember
     ? RemoveMemberResponse
     : T extends ChangeRole
@@ -2148,4 +2143,6 @@ export type WorkerResult<T> = T extends Init
     ? void
     : T extends GetExternalAchievements
     ? ExternalAchievement[]
+    : T extends CancelInvites
+    ? boolean
     : never;

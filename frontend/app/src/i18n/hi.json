@@ -122,6 +122,9 @@
     "blockUserFailed": "उपयोगकर्ता को ब्लॉक करने में असमर्थ",
     "blockUserSucceeded": "उपयोगकर्ता को ब्लॉक कर दिया गया है",
     "cancel": "रद्द करें",
+    "cancelInvite": "आमंत्रण रद्द करें",
+    "cancelInviteFailed": "आमंत्रण रद्द करने में त्रुटि",
+    "cancelInviteSucceeded": "आमंत्रण रद्द किया गया",
     "challenge": {
         "alreadyRegistered": "कृपया बंद करें और बाद में पुनः प्रयास करें",
         "failed": "चुनौती विफल. कृपया पुनः प्रयास करें.",

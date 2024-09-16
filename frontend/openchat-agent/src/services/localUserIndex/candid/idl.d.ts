@@ -32,8 +32,6 @@ export {
     ChatEventsResponse as ApiChatEventsResponse,
     JoinGroupResponse as ApiJoinGroupResponse,
     GateCheckFailedReason as ApiGateCheckFailedReason,
-    InviteUsersToGroupResponse as ApiInviteUsersResponse,
-    InviteUsersToChannelResponse as ApiInviteUsersToChannelResponse,
     JoinCommunityResponse as ApiJoinCommunityResponse,
     CommunityCanisterCommunitySummary as ApiCommunityCanisterCommunitySummary,
     JoinChannelResponse as ApiJoinChannelResponse,

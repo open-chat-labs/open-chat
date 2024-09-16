@@ -283,7 +283,7 @@
     {:else if memberView === "invited"}
         <div use:menuCloser class="user-list">
             {#each invitedUsers as user}
-                <InvitedUser {user} {searchTerm} canUninviteUser={false} on:uninviteUser />
+                <InvitedUser {user} {searchTerm} canUninviteUser={client.canInviteUsers(collection.id)} on:cancelInvite />
             {/each}
         </div>
     {/if}

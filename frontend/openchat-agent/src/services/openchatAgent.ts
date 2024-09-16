@@ -146,7 +146,6 @@ import type {
     UpdateMarketMakerConfigResponse,
     ProposalVoteDetails,
     SetMessageReminderResponse,
-    InviteUsersResponse,
     DeclineInvitationResponse,
     AccessGate,
     JoinCommunityResponse,
@@ -769,54 +768,38 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    async inviteUsersToCommunity(
-        id: CommunityIdentifier,
-        userIds: string[],
-        callerUsername: string
-    ): Promise<InviteUsersResponse> {
-        if (!userIds.length) {
-            return Promise.resolve<InviteUsersResponse>("success");
-        }
-
-        if (offline()) return Promise.resolve("failure");
-
-        const localUserIndex = await this.communityClient(id.communityId).localUserIndex();
-        return this.getLocalUserIndexClient(localUserIndex).inviteUsersToCommunity(
-            id.communityId,
-            userIds,
-            callerUsername
-        );
-    }
-
     async inviteUsers(
-        chatId: MultiUserChatIdentifier,
+        id: MultiUserChatIdentifier | CommunityIdentifier,
         userIds: string[],
         callerUsername: string
-    ): Promise<InviteUsersResponse> {
+    ): Promise<boolean> {
         if (!userIds.length) {
-            return Promise.resolve<InviteUsersResponse>("success");
+            return Promise.resolve(true);
         }
 
-        if (offline()) return Promise.resolve("failure");
+        if (offline()) return Promise.resolve(false);
 
-        switch (chatId.kind) {
-            case "group_chat": {
-                const localUserIndex = await this.getGroupClient(chatId.groupId).localUserIndex();
+        switch (id.kind) {
+            case "community": {
+                const localUserIndex = await this.communityClient(id.communityId).localUserIndex();
                 const localUserIndexClient = this.getLocalUserIndexClient(localUserIndex);
-                return localUserIndexClient.inviteUsersToGroup(
-                    chatId.groupId,
+                return localUserIndexClient.inviteUsersToCommunity(
+                    id.communityId,
                     userIds,
                     callerUsername
                 );
             }
+            case "group_chat": {
+                const localUserIndex = await this.getGroupClient(id.groupId).localUserIndex();
+                const localUserIndexClient = this.getLocalUserIndexClient(localUserIndex);
+                return localUserIndexClient.inviteUsersToGroup(id.groupId, userIds, callerUsername);
+            }
             case "channel": {
-                const localUserIndex = await this.communityClient(
-                    chatId.communityId
-                ).localUserIndex();
+                const localUserIndex = await this.communityClient(id.communityId).localUserIndex();
                 const localUserIndexClient = this.getLocalUserIndexClient(localUserIndex);
                 return localUserIndexClient.inviteUsersToChannel(
-                    chatId.communityId,
-                    chatId.channelId,
+                    id.communityId,
+                    id.channelId,
                     userIds,
                     callerUsername
                 );
@@ -3637,6 +3620,22 @@ export class OpenChatAgent extends EventTarget {
 
     configureWallet(config: WalletConfig): Promise<void> {
         return this.userClient.configureWallet(config);
+    }
+
+    cancelInvites(
+        id: MultiUserChatIdentifier | CommunityIdentifier,
+        userIds: string[]
+    ): Promise<boolean> {
+        if (offline()) return Promise.resolve(false);
+
+        switch (id.kind) {
+            case "group_chat":
+                return this.getGroupClient(id.groupId).cancelInvites(userIds);
+            case "channel":
+                return this.communityClient(id.communityId).cancelInvites(id.channelId, userIds);
+            case "community":
+                return this.communityClient(id.communityId).cancelInvites(undefined, userIds);
+        }
     }
 
     async clearCachedData(): Promise<void> {

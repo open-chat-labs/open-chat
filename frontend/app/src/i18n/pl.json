@@ -122,6 +122,9 @@
     "blockUserFailed": "Nie można zablokować użytkownika",
     "blockUserSucceeded": "Użytkownik został zablokowany",
     "cancel": "Anulować",
+    "cancelInvite": "Anuluj zaproszenie",
+    "cancelInviteFailed": "Błąd podczas anulowania zaproszenia",
+    "cancelInviteSucceeded": "Zaproszenie anulowane",
     "challenge": {
         "alreadyRegistered": "Zamknij i spróbuj ponownie później",
         "failed": "Wyzwanie nie powiodło się. Proszę spróbuj ponownie.",

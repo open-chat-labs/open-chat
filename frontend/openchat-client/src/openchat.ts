@@ -332,7 +332,6 @@ import type {
     AccessGate,
     ProposalVoteDetails,
     MessageReminderCreatedContent,
-    InviteUsersResponse,
     CommunityPermissions,
     CommunitySummary,
     CreateCommunityResponse,
@@ -4625,33 +4624,74 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "removeSubscription", subscription });
     }
 
-    private inviteUsersLocally(chatId: ChatIdentifier, userIds: string[]): void {
-        chatStateStore.updateProp(chatId, "invitedUsers", (b) => new Set([...b, ...userIds]));
+    private inviteUsersLocally(
+        id: MultiUserChatIdentifier | CommunityIdentifier,
+        userIds: string[],
+    ): void {
+        if (id.kind === "community") {
+            communityStateStore.updateProp(id, "invitedUsers", (b) => new Set([...b, ...userIds]));
+        } else {
+            chatStateStore.updateProp(id, "invitedUsers", (b) => new Set([...b, ...userIds]));
+        }
     }
 
-    private uninviteUsersLocally(chatId: ChatIdentifier, userIds: string[]): void {
-        chatStateStore.updateProp(chatId, "invitedUsers", (b) => {
-            return new Set([...b].filter((u) => !userIds.includes(u)));
-        });
+    private uninviteUsersLocally(
+        id: MultiUserChatIdentifier | CommunityIdentifier,
+        userIds: string[],
+    ): void {
+        if (id.kind === "community") {
+            communityStateStore.updateProp(id, "invitedUsers", (b) => {
+                return new Set([...b].filter((u) => !userIds.includes(u)));
+            });
+        } else {
+            chatStateStore.updateProp(id, "invitedUsers", (b) => {
+                return new Set([...b].filter((u) => !userIds.includes(u)));
+            });
+        }
     }
 
-    inviteUsers(chatId: MultiUserChatIdentifier, userIds: string[]): Promise<InviteUsersResponse> {
-        this.inviteUsersLocally(chatId, userIds);
+    inviteUsers(
+        id: MultiUserChatIdentifier | CommunityIdentifier,
+        userIds: string[],
+    ): Promise<boolean> {
+        this.inviteUsersLocally(id, userIds);
         return this.sendRequest({
             kind: "inviteUsers",
-            chatId,
+            id,
             userIds,
             callerUsername: this._liveState.user.username,
         })
             .then((resp) => {
-                if (resp !== "success") {
-                    this.uninviteUsersLocally(chatId, userIds);
+                if (!resp) {
+                    this.uninviteUsersLocally(id, userIds);
                 }
                 return resp;
             })
             .catch(() => {
-                this.uninviteUsersLocally(chatId, userIds);
-                return "failure";
+                this.uninviteUsersLocally(id, userIds);
+                return false;
+            });
+    }
+
+    cancelInvites(
+        id: MultiUserChatIdentifier | CommunityIdentifier,
+        userIds: string[],
+    ): Promise<boolean> {
+        this.uninviteUsersLocally(id, userIds);
+        return this.sendRequest({
+            kind: "cancelInvites",
+            id,
+            userIds,
+        })
+            .then((resp) => {
+                if (!resp) {
+                    this.inviteUsersLocally(id, userIds);
+                }
+                return resp;
+            })
+            .catch(() => {
+                this.inviteUsersLocally(id, userIds);
+                return false;
             });
     }
 
@@ -4668,39 +4708,6 @@ export class OpenChat extends OpenChatAgentWorker {
         }).catch((err) => {
             return { kind: "internal_error", error: err.toString() };
         });
-    }
-
-    private inviteUsersToCommunityLocally(id: CommunityIdentifier, userIds: string[]): void {
-        communityStateStore.updateProp(id, "invitedUsers", (b) => new Set([...b, ...userIds]));
-    }
-
-    private uninviteUsersToCommunityLocally(id: CommunityIdentifier, userIds: string[]): void {
-        communityStateStore.updateProp(id, "invitedUsers", (b) => {
-            return new Set([...b].filter((u) => !userIds.includes(u)));
-        });
-    }
-
-    inviteUsersToCommunity(
-        id: CommunityIdentifier,
-        userIds: string[],
-    ): Promise<InviteUsersResponse> {
-        this.inviteUsersToCommunityLocally(id, userIds);
-        return this.sendRequest({
-            kind: "inviteUsersToCommunity",
-            id,
-            userIds,
-            callerUsername: this._liveState.user.username,
-        })
-            .then((resp) => {
-                if (resp !== "success") {
-                    this.uninviteUsersToCommunityLocally(id, userIds);
-                }
-                return resp;
-            })
-            .catch(() => {
-                this.uninviteUsersToCommunityLocally(id, userIds);
-                return "failure";
-            });
     }
 
     removeCommunityMember(id: CommunityIdentifier, userId: string): Promise<RemoveMemberResponse> {

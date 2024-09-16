@@ -122,6 +122,9 @@
     "blockUserFailed": "Impossible de bloquer l'utilisateur",
     "blockUserSucceeded": "L'utilisateur a été bloqué",
     "cancel": "Annuler",
+    "cancelInvite": "Annuler l'invitation",
+    "cancelInviteFailed": "Erreur lors de l'annulation de l'invitation",
+    "cancelInviteSucceeded": "Invitation annulée",
     "challenge": {
         "alreadyRegistered": "Veuillez fermer et réessayer plus tard",
         "failed": "Le défi a échoué. Veuillez réessayer.",

@@ -114,12 +114,12 @@
             return Promise.resolve();
         }
         return client
-            .inviteUsersToCommunity(
+            .inviteUsers(
                 { kind: "community", communityId },
                 members.map((m) => m.user.userId),
             )
             .then((resp) => {
-                if (resp !== "success") {
+                if (!resp) {
                     Promise.reject("Unable to invite users to the new community");
                 }
             });

@@ -122,6 +122,9 @@
     "blockUserFailed": "مسدود کردن کاربر ممکن نیست",
     "blockUserSucceeded": "کاربر مسدود شده است",
     "cancel": "لغو کنید",
+    "cancelInvite": "لغو دعوت",
+    "cancelInviteFailed": "خطا در لغو دعوت",
+    "cancelInviteSucceeded": "دعوت لغو شد",
     "challenge": {
         "alreadyRegistered": "لطفاً ببندید و بعداً دوباره امتحان کنید",
         "failed": "چالش شکست خورد. لطفا دوباره تلاش کنید.",
