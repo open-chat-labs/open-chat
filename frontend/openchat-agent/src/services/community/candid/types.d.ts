@@ -236,6 +236,13 @@ export interface CallParticipant {
   'user_id' : UserId,
   'joined' : TimestampMillis,
 }
+export interface CancelInvitesArgs {
+  'channel_id' : [] | [ChannelId],
+  'user_ids' : Array<UserId>,
+}
+export type CancelInvitesResponse = { 'ChannelNotFound' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null };
 export interface CancelP2PSwapArgs {
   'channel_id' : ChannelId,
   'message_id' : MessageId,
@@ -2543,6 +2550,7 @@ export interface _SERVICE {
   >,
   'add_reaction' : ActorMethod<[AddReactionArgs], AddReactionResponse>,
   'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
+  'cancel_invites' : ActorMethod<[CancelInvitesArgs], CancelInvitesResponse>,
   'cancel_p2p_swap' : ActorMethod<[CancelP2PSwapArgs], CancelP2PSwapResponse>,
   'change_channel_role' : ActorMethod<
     [ChangeChannelRoleArgs],

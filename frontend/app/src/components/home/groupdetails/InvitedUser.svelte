@@ -20,8 +20,8 @@
     export let canUninviteUser: boolean = false;
     export let searchTerm: string = "";
 
-    function uninviteUser() {
-        dispatch("uninviteUser", user);
+    function cancelInvite() {
+        dispatch("cancelInvite", user.userId);
     }
 </script>
 
@@ -36,13 +36,13 @@
                 </span>
                 <span slot="menu">
                     <Menu>
-                        <MenuItem on:click={uninviteUser}>
+                        <MenuItem on:click={cancelInvite}>
                             <Cancel
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
                                 slot="icon" />
                             <div slot="text">
-                                <Translatable resourceKey={i18nKey("uninviteUser")} />
+                                <Translatable resourceKey={i18nKey("cancelInvite")} />
                             </div>
                         </MenuItem>
                     </Menu>

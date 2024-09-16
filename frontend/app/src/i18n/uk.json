@@ -123,6 +123,9 @@
     "blockUserFailed": "Не вдалося заблокувати користувача",
     "blockUserSucceeded": "Користувача заблоковано",
     "cancel": "Скасувати",
+    "cancelInvite": "Скасувати запрошення",
+    "cancelInviteFailed": "Помилка скасування запрошення",
+    "cancelInviteSucceeded": "Запрошення скасовано",
     "challenge": {
         "alreadyRegistered": "Будь ласка, закрийте та повторіть спробу пізніше",
         "failed": "Виклик не виконано. Будь ласка спробуйте ще раз.",

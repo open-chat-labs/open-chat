@@ -5,7 +5,6 @@ import type {
     ChatEventsBatchResponse,
     ChatEventsResponse,
     GroupAndCommunitySummaryUpdatesResponse,
-    InviteUsersResponse,
     JoinCommunityResponse,
     JoinGroupResponse,
     MessageContext,
@@ -21,8 +20,6 @@ import type {
     ApiChatEventsResponse,
     ApiEventsContext,
     ApiGroupAndCommunitySummaryUpdatesResponse,
-    ApiInviteUsersResponse,
-    ApiInviteUsersToChannelResponse,
     ApiJoinChannelResponse,
     ApiJoinCommunityResponse,
     ApiRegisterUserResponse,
@@ -71,7 +68,7 @@ export function accessTokenResponse(candid: ApiAccessTokenResponse): string | un
 }
 
 export function groupAndCommunitySummaryUpdates(
-    candid: ApiGroupAndCommunitySummaryUpdatesResponse,
+    candid: ApiGroupAndCommunitySummaryUpdatesResponse
 ): GroupAndCommunitySummaryUpdatesResponse[] {
     const results: GroupAndCommunitySummaryUpdatesResponse[] = [];
     for (const result of candid.Success) {
@@ -111,7 +108,7 @@ export function groupAndCommunitySummaryUpdates(
         } else {
             throw new UnsupportedValueError(
                 "Unexpected ApiSummaryUpdatesResponse type received",
-                result,
+                result
             );
         }
     }
@@ -183,7 +180,7 @@ function eventsArgsInner(args: ChatEventsArgs["args"]): ApiChatEventsArgsInner["
 export async function chatEventsBatchResponse(
     principal: Principal,
     requests: ChatEventsArgs[],
-    candid: ApiChatEventsResponse,
+    candid: ApiChatEventsResponse
 ): Promise<ChatEventsBatchResponse> {
     const responses = [] as ChatEventsResponse[];
     for (let i = 0; i < requests.length; i++) {
@@ -195,14 +192,14 @@ export async function chatEventsBatchResponse(
                 principal,
                 args.context.chatId,
                 response.Success.chat_last_updated,
-                true,
+                true
             );
 
             responses.push(
                 error ?? {
                     kind: "success",
                     result: eventsSuccessResponse(response.Success),
-                },
+                }
             );
         } else if ("ReplicaNotUpToDate" in response) {
             responses.push({
@@ -229,7 +226,7 @@ export async function chatEventsBatchResponse(
 
 export function joinChannelResponse(
     candid: ApiJoinChannelResponse,
-    communityId: string,
+    communityId: string
 ): JoinGroupResponse {
     if ("Success" in candid) {
         return { kind: "success", group: communityChannelSummary(candid.Success, communityId) };
@@ -308,17 +305,6 @@ export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterU
     throw new UnsupportedValueError("Unexpected ApiRegisterUserResponse type received", candid);
 }
 
-export function inviteUsersResponse(
-    candid: ApiInviteUsersResponse | ApiInviteUsersToChannelResponse,
-): InviteUsersResponse {
-    if ("Success" in candid) {
-        return "success";
-    } else {
-        console.warn("InviteUsersResponse was unsuccessful", candid);
-        return "failure";
-    }
-}
-
 export function joinCommunityResponse(candid: ApiJoinCommunityResponse): JoinCommunityResponse {
     if ("Success" in candid) {
         return { kind: "success", community: communitySummary(candid.Success) };
@@ -333,7 +319,7 @@ export function joinCommunityResponse(candid: ApiJoinCommunityResponse): JoinCom
 }
 
 export function apiVerifiedCredentialArgs(
-    domain: VerifiedCredentialArgs,
+    domain: VerifiedCredentialArgs
 ): ApiVerifiedCredentialGateArgs {
     return {
         user_ii_principal: Principal.fromText(domain.userIIPrincipal),
