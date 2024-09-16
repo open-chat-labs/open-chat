@@ -16,7 +16,7 @@ fn award_external_achievement_impl(args: Args, state: &mut RuntimeState) -> Resp
         args.user_id,
         state.env.caller(),
         state.env.now(),
-        state.data.test_mode,
+        state.data.test_mode && state.is_caller_governance_principal(),
     ) {
         AwardResult::Success(r) => r,
         AwardResult::NotFound => return NotFound,
