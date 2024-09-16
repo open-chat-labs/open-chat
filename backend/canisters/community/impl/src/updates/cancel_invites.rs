@@ -30,11 +30,12 @@ fn cancel_invites_impl(args: Args, state: &mut RuntimeState) -> Response {
             return ChannelNotFound;
         };
 
-        match channel.chat.cancel_invites(member.user_id, args.user_ids, now) {
-            CancelInvitesResult::Success => (),
-            CancelInvitesResult::UserSuspended => return NotAuthorized,
-            CancelInvitesResult::NotAuthorized | CancelInvitesResult::UserNotInGroup => return NotAuthorized,
-        }
+        if !matches!(
+            channel.chat.cancel_invites(member.user_id, args.user_ids, now),
+            CancelInvitesResult::Success
+        ) {
+            return NotAuthorized;
+        };
     } else {
         if !member.role.can_invite_users(&state.data.permissions) {
             return NotAuthorized;
