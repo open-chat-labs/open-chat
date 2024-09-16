@@ -7,7 +7,7 @@ use serde::Serialize;
 use types::UniquePersonProofProvider;
 use user_index_canister::submit_proof_of_unique_personhood::{Response::*, *};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn submit_proof_of_unique_personhood(args: Args) -> Response {
     mutate_state(|state| submit_proof_of_unique_personhood_impl(args, state))

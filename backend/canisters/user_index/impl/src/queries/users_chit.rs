@@ -1,10 +1,10 @@
 use crate::{read_state, RuntimeState};
-use ic_cdk::query;
+use canister_api_macros::query;
 use types::{Chit, UserId};
 use user_index_canister::users_chit::{Response::*, *};
 use utils::time::MonthKey;
 
-#[query]
+#[query(candid = true, msgpack = true)]
 fn users_chit(args: Args) -> Response {
     read_state(|state| users_chit_impl(args, state))
 }
