@@ -337,6 +337,17 @@ type CancelP2PSwapResponse = variant {
     ChatFrozen;
 };
 
+type CancelInvitesArgs = record {
+    channel_id : opt ChannelId;
+    user_ids : vec UserId;
+};
+
+type CancelInvitesResponse = variant {
+    Success;
+    NotAuthorized;
+    ChannelNotFound;
+};
+
 type AddMembersToChannelArgs = record {
     channel_id : ChannelId;
     user_ids : vec UserId;
@@ -1105,6 +1116,7 @@ service : {
     add_members_to_channel : (AddMembersToChannelArgs) -> (AddMembersToChannelResponse);
     add_reaction : (AddReactionArgs) -> (AddReactionResponse);
     block_user : (BlockUserArgs) -> (BlockUserResponse);
+    cancel_invites : (CancelInvitesArgs) -> (CancelInvitesResponse);
     cancel_p2p_swap : (CancelP2PSwapArgs) -> (CancelP2PSwapResponse);
     change_channel_role : (ChangeChannelRoleArgs) -> (ChangeChannelRoleResponse);
     change_role : (ChangeRoleArgs) -> (ChangeRoleResponse);
