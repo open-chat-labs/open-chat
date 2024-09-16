@@ -8,8 +8,8 @@
         | "seven"
         | "fourteen"
         | "thirty"
-        | "one_hundred"
-        | "three_six_five";
+        | "one hundred"
+        | "three six five";
 
     export let days: number = 0;
     export let showTooltip = true;
@@ -30,12 +30,12 @@
                   ? "fourteen"
                   : days < 100
                     ? "thirty"
-                    : days < 356
-                      ? "one_hundred"
-                      : "three_six_five";
+                    : days < 365
+                      ? "one hundred"
+                      : "three six five";
     }
 
-    function streakNumber(streak: Streak): 0 | 3 | 7 | 14 | 30 | 100 | 356 {
+    function streakNumber(streak: Streak): 0 | 3 | 7 | 14 | 30 | 100 | 365 {
         switch (streak) {
             case "none":
                 return 0;
@@ -47,10 +47,10 @@
                 return 14;
             case "thirty":
                 return 30;
-            case "one_hundred":
+            case "one hundred":
                 return 100;
-            case "three_six_five":
-                return 356;
+            case "three six five":
+                return 365;
         }
     }
 </script>
@@ -58,7 +58,7 @@
 {#if show}
     {#if showTooltip}
         <TooltipWrapper position="top" align="middle">
-            <div slot="target" class:disabled class={`icon ${streak}`}>
+            <div slot="target" class:disabled class={`icon ${streak.replace(/ /g, "_")}`}>
                 {num}
             </div>
             <div let:position let:align slot="tooltip">
@@ -114,13 +114,14 @@
         &.one_hundred {
             background-image: url("/assets/streaks/streak_100.svg");
             color: white;
-            text-shadow: 3px 3px 0px #000;
+            text-shadow: 0.5px 0.5px 0.5px #555;
         }
 
         &.three_six_five {
-            background-image: url("/assets/streaks/streak_356.svg");
+            background-image: url("/assets/streaks/streak_365.svg");
             color: white;
-            text-shadow: 3px 3px 0px #000;
+            text-shadow: 0.5px 0.5px 0.5px #555;
+            padding: 0 0 0 7px;
         }
 
         &.disabled {

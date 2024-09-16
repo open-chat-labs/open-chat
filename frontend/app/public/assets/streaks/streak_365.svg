@@ -9,10 +9,10 @@
       <stop style="stop-color: #eaeaea;" offset="1"/>
     </linearGradient>
     <linearGradient id="color-1" bx:pinned="true">
-      <stop style="stop-color: rgb(255, 159, 0);" offset="0"/>
-      <stop style="stop-color: rgb(174, 54, 219);" offset="1"/>
+      <stop style="stop-color: rgb(255, 255, 255);" offset="0"/>
+      <stop style="stop-color: rgb(210, 171, 19);" offset="1"/>
     </linearGradient>
-    <radialGradient id="color-1-0" gradientUnits="userSpaceOnUse" cx="251.384" cy="210.339" r="93.291" gradientTransform="matrix(0.827363, -0.561668, 0.6988, 1.029366, -86.554646, 127.432972)" xlink:href="#color-1"/>
+    <radialGradient id="color-1-0" gradientUnits="userSpaceOnUse" cx="264.116" cy="204.051" r="93.291" gradientTransform="matrix(0.827363, -0.561668, 0.6988, 1.029366, -86.554646, 127.432972)" xlink:href="#color-1"/>
   </defs>
   <g transform="matrix(1, 0, 0, 1, -105.884209, -92.226562)">
     <g>
