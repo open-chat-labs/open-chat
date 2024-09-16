@@ -8,6 +8,8 @@
     const ONE_MINUTE = 1000 * 60;
     const ONE_HOUR = ONE_MINUTE * 60;
     const ONE_DAY = ONE_HOUR * 24;
+    const ONE_WEEK = ONE_DAY * 7;
+    const ONE_MONTH = ONE_WEEK * 4;
     const client = getContext<OpenChat>("client");
 
     export let valid = true;
@@ -16,11 +18,19 @@
 
     let initialised = false;
     let amount: string;
-    let unit: "minutes" | "hours" | "days";
+    let unit: "minutes" | "hours" | "days" | "weeks" | "months";
 
     onMount(() => {
-        const { days, hours, minutes } = client.durationFromMilliseconds(Number(milliseconds));
-        if (days > 0) {
+        const { days, hours, minutes, weeks, months } = client.durationFromMilliseconds(
+            Number(milliseconds),
+        );
+        if (months > 0) {
+            amount = months.toString();
+            unit = "months";
+        } else if (weeks > 0) {
+            amount = weeks.toString();
+            unit = "weeks";
+        } else if (days > 0) {
             amount = days.toString();
             unit = "days";
         } else if (hours > 0) {
@@ -42,6 +52,12 @@
         }
         valid = true;
         switch (unit) {
+            case "months":
+                milliseconds = BigInt(ONE_MONTH * ttlNum);
+                break;
+            case "weeks":
+                milliseconds = BigInt(ONE_WEEK * ttlNum);
+                break;
             case "minutes":
                 milliseconds = BigInt(ONE_MINUTE * ttlNum);
                 break;
@@ -69,6 +85,8 @@
             <option value={"minutes"}>{$_("minutes")}</option>
             <option value={"hours"}>{$_("hours")}</option>
             <option value={"days"}>{$_("days")}</option>
+            <option value={"weeks"}>{$_("weeks")}</option>
+            <option value={"months"}>{$_("months")}</option>
         </Select>
     </div>
 </div>

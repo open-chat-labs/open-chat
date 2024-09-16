@@ -29,6 +29,8 @@
     $: requiresUpgrade = !editing && !$isDiamond && candidate.level !== "channel";
     $: canChangeVisibility = !editing ? client.canChangeVisibility(candidate) : true;
 
+    $: console.log("Access gate valid: ", valid);
+
     function gateUpdated() {
         if (
             gateDirty &&
