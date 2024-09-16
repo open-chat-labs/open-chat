@@ -44,7 +44,7 @@ export abstract class CandidService {
     protected async executeMsgpackQuery<In extends TSchema, Resp extends TSchema, Out>(
         methodName: string,
         args: Static<In>,
-        mapper: (from: Static<Resp>) => Out,
+        mapper: (from: Static<Resp>) => Out | Promise<Out>,
         requestValidator: In,
         responseValidator: Resp,
     ): Promise<Out> {
@@ -60,10 +60,8 @@ export abstract class CandidService {
             args,
         );
         if (response.status === "replied") {
-            return CandidService.processMsgpackResponse(
-                response.reply.arg,
-                mapper,
-                responseValidator,
+            return Promise.resolve(
+                CandidService.processMsgpackResponse(response.reply.arg, mapper, responseValidator),
             );
         } else {
             throw new Error(
@@ -75,7 +73,7 @@ export abstract class CandidService {
     protected async executeMsgpackUpdate<In extends TSchema, Resp extends TSchema, Out>(
         methodName: string,
         args: Static<In>,
-        mapper: (from: Static<Resp>) => Out,
+        mapper: (from: Static<Resp>) => Out | Promise<Out>,
         requestValidator: In,
         responseValidator: Resp,
     ): Promise<Out> {
@@ -89,7 +87,7 @@ export abstract class CandidService {
                 }),
             );
             const canisterId = Principal.fromText(this.canisterId);
-            if (!response.ok || response.body) {
+            if (!response.ok) {
                 throw new UpdateCallRejectedError(canisterId, methodName, requestId, response);
             }
             const { reply } = await this.sendRequestToCanister(() =>
@@ -100,7 +98,9 @@ export abstract class CandidService {
                     polling.defaultStrategy(),
                 ),
             );
-            return CandidService.processMsgpackResponse(reply, mapper, responseValidator);
+            return Promise.resolve(
+                CandidService.processMsgpackResponse(reply, mapper, responseValidator),
+            );
         } catch (err) {
             console.log(err, args);
             throw toCanisterResponseError(err as Error, this.identity);

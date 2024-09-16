@@ -13,40 +13,42 @@ import type {
     VerifiedCredentialArgs,
     VideoCallType,
 } from "openchat-shared";
-import { CommonResponses, MAX_EVENTS, MAX_MESSAGES, UnsupportedValueError } from "openchat-shared";
-import type {
-    ApiAccessTokenResponse,
-    ApiAccessTokenType,
-    ApiChatEventsArgsInner,
-    ApiChatEventsResponse,
-    ApiEventsContext,
-    ApiGroupAndCommunitySummaryUpdatesResponse,
-    ApiInviteUsersResponse,
-    ApiInviteUsersToChannelResponse,
-    ApiJoinChannelResponse,
-    ApiJoinCommunityResponse,
-    ApiRegisterUserResponse,
-    ApiVerifiedCredentialGateArgs,
-    ApiVideoCallType,
-} from "./candid/idl";
-import { bytesToHexString, identity } from "../../utils/mapping";
 import {
-    apiOptional,
+    type LocalUserIndexGroupAndCommunitySummaryUpdatesResponse,
+    type AccessTokenType as TAccessTokenType,
+    type VideoCallType as TVideoCallType,
+    type LocalUserIndexChatEventsResponse,
+    type LocalUserIndexAccessTokenResponse,
+    type LocalUserIndexJoinChannelResponse,
+    type LocalUserIndexRegisterUserResponse,
+    type LocalUserIndexInviteUsersToGroupResponse,
+    type LocalUserIndexInviteUsersToChannelResponse,
+    type LocalUserIndexJoinCommunityResponse,
+    type VerifiedCredentialGateArgs as TVerifiedCredentialGateArgs,
+    type LocalUserIndexChatEventsEventsArgsInner,
+    type LocalUserIndexChatEventsEventsArgs,
+    LocalUserIndexChatEventsEventsContext,
+} from "../../typebox";
+import { CommonResponses, MAX_EVENTS, MAX_MESSAGES, UnsupportedValueError } from "openchat-shared";
+import {
+    bytesToHexString,
+    principalBytesToString,
+    principalStringToBytes,
+} from "../../utils/mapping";
+import {
     communityChannelSummary,
     communitySummary,
     eventsSuccessResponse,
     gateCheckFailedReason,
-} from "../common/chatMappers";
-import { groupChatSummary, groupChatSummaryUpdates } from "../group/mappers";
-import { communitySummaryUpdates } from "../community/mappers";
+} from "../common/chatMappersV2";
+import { groupChatSummary, groupChatSummaryUpdates } from "../group/mappersV2";
+import { communitySummaryUpdates } from "../community/mappersV2";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 
-export function apiAccessTokenType(domain: AccessTokenType): ApiAccessTokenType {
+export function apiAccessTokenType(domain: AccessTokenType): TAccessTokenType {
     switch (domain.kind) {
         case "join_video_call":
-            return {
-                JoinVideoCall: null,
-            };
+            return "JoinVideoCall";
         case "start_video_call":
             return {
                 StartVideoCallV2: {
@@ -56,28 +58,32 @@ export function apiAccessTokenType(domain: AccessTokenType): ApiAccessTokenType 
     }
 }
 
-export function apiCallType(domain: VideoCallType): ApiVideoCallType {
-    if (domain === "broadcast") return { Broadcast: null };
-    if (domain === "default") return { Default: null };
+export function apiCallType(domain: VideoCallType): TVideoCallType {
+    if (domain === "broadcast") return "Broadcast";
+    if (domain === "default") return "Default";
     throw new UnsupportedValueError("Unexpected VideoCallType received", domain);
 }
 
-export function accessTokenResponse(candid: ApiAccessTokenResponse): string | undefined {
-    if ("Success" in candid) {
-        return candid.Success;
+export function accessTokenResponse(value: LocalUserIndexAccessTokenResponse): string | undefined {
+    if (typeof value !== "string" && "Success" in value) {
+        return value.Success;
     }
-    console.warn("Unable to get access token: ", candid);
+    console.warn("Unable to get access token: ", value);
     return undefined;
 }
 
 export function groupAndCommunitySummaryUpdates(
-    candid: ApiGroupAndCommunitySummaryUpdatesResponse,
+    value: LocalUserIndexGroupAndCommunitySummaryUpdatesResponse,
 ): GroupAndCommunitySummaryUpdatesResponse[] {
     const results: GroupAndCommunitySummaryUpdatesResponse[] = [];
-    for (const result of candid.Success) {
-        if ("SuccessNoUpdates" in result) {
+    for (const result of value.Success) {
+        if (result === "SuccessNoUpdates") {
             results.push({
                 kind: "no_updates",
+            });
+        } else if (result === "NotFound") {
+            results.push({
+                kind: "not_found",
             });
         } else if ("SuccessGroup" in result) {
             results.push({
@@ -99,10 +105,6 @@ export function groupAndCommunitySummaryUpdates(
                 kind: "community_updates",
                 value: communitySummaryUpdates(result.SuccessCommunityUpdates),
             });
-        } else if ("NotFound" in result) {
-            results.push({
-                kind: "not_found",
-            });
         } else if ("InternalError" in result) {
             results.push({
                 kind: "error",
@@ -119,39 +121,39 @@ export function groupAndCommunitySummaryUpdates(
     return results;
 }
 
-export function chatEventsArgs(eventArgs: ChatEventsArgs): ApiChatEventsArgsInner {
+export function chatEventsArgs(eventArgs: ChatEventsArgs): LocalUserIndexChatEventsEventsArgs {
     return {
         context: eventsContext(eventArgs.context),
         args: eventsArgsInner(eventArgs.args),
-        latest_known_update: apiOptional(identity, eventArgs.latestKnownUpdate),
+        latest_known_update: eventArgs.latestKnownUpdate,
     };
 }
 
-function eventsContext(context: MessageContext): ApiEventsContext {
+function eventsContext(context: MessageContext): LocalUserIndexChatEventsEventsContext {
     switch (context.chatId.kind) {
         case "direct_chat":
             return {
-                Direct: Principal.fromText(context.chatId.userId),
+                Direct: principalStringToBytes(context.chatId.userId),
             };
         case "group_chat":
             return {
                 Group: [
-                    Principal.fromText(context.chatId.groupId),
-                    apiOptional(identity, context.threadRootMessageIndex),
+                    principalStringToBytes(context.chatId.groupId),
+                    context.threadRootMessageIndex ?? null,
                 ],
             };
         case "channel":
             return {
                 Channel: [
-                    Principal.fromText(context.chatId.communityId),
+                    principalStringToBytes(context.chatId.communityId),
                     BigInt(context.chatId.channelId),
-                    apiOptional(identity, context.threadRootMessageIndex),
+                    context.threadRootMessageIndex ?? null,
                 ],
             };
     }
 }
 
-function eventsArgsInner(args: ChatEventsArgs["args"]): ApiChatEventsArgsInner["args"] {
+function eventsArgsInner(args: ChatEventsArgs["args"]): LocalUserIndexChatEventsEventsArgsInner {
     switch (args.kind) {
         case "page":
             return {
@@ -183,14 +185,18 @@ function eventsArgsInner(args: ChatEventsArgs["args"]): ApiChatEventsArgsInner["
 export async function chatEventsBatchResponse(
     principal: Principal,
     requests: ChatEventsArgs[],
-    candid: ApiChatEventsResponse,
+    value: LocalUserIndexChatEventsResponse,
 ): Promise<ChatEventsBatchResponse> {
     const responses = [] as ChatEventsResponse[];
     for (let i = 0; i < requests.length; i++) {
-        const response = candid.Success.responses[i];
+        const response = value.Success.responses[i];
         const args = requests[i];
 
-        if ("Success" in response) {
+        if (response === "NotFound") {
+            responses.push({
+                kind: "not_found",
+            });
+        } else if ("Success" in response) {
             const error = await ensureReplicaIsUpToDate(
                 principal,
                 args.context.chatId,
@@ -210,10 +216,6 @@ export async function chatEventsBatchResponse(
                 replicaTimestamp: response.ReplicaNotUpToDate,
                 clientTimestamp: args.latestKnownUpdate ?? BigInt(-1),
             });
-        } else if ("NotFound" in response) {
-            responses.push({
-                kind: "not_found",
-            });
         } else {
             responses.push({
                 kind: "internal_error",
@@ -223,120 +225,132 @@ export async function chatEventsBatchResponse(
     }
     return {
         responses,
-        timestamp: candid.Success.timestamp,
+        timestamp: value.Success.timestamp,
     };
 }
 
 export function joinChannelResponse(
-    candid: ApiJoinChannelResponse,
+    value: LocalUserIndexJoinChannelResponse,
     communityId: string,
 ): JoinGroupResponse {
-    if ("Success" in candid) {
-        return { kind: "success", group: communityChannelSummary(candid.Success, communityId) };
-    } else if ("AlreadyInChannel" in candid) {
-        return {
-            kind: "success",
-            group: communityChannelSummary(candid.AlreadyInChannel, communityId),
-        };
-    } else if ("SuccessJoinedCommunity" in candid) {
-        return {
-            kind: "success_joined_community",
-            community: communitySummary(candid.SuccessJoinedCommunity),
-        };
-    } else if ("UserBlocked" in candid) {
+    if (typeof value !== "string") {
+        if ("Success" in value) {
+            return { kind: "success", group: communityChannelSummary(value.Success, communityId) };
+        } else if ("AlreadyInChannel" in value) {
+            return {
+                kind: "success",
+                group: communityChannelSummary(value.AlreadyInChannel, communityId),
+            };
+        } else if ("SuccessJoinedCommunity" in value) {
+            return {
+                kind: "success_joined_community",
+                community: communitySummary(value.SuccessJoinedCommunity),
+            };
+        } else if ("GateCheckFailed" in value) {
+            return {
+                kind: "gate_check_failed",
+                reason: gateCheckFailedReason(value.GateCheckFailed),
+            };
+        }
+    }
+
+    if (value === "UserBlocked") {
         return CommonResponses.userBlocked();
-    } else if ("GateCheckFailed" in candid) {
-        return { kind: "gate_check_failed", reason: gateCheckFailedReason(candid.GateCheckFailed) };
     } else {
-        console.warn("Join group failed with: ", candid);
+        console.warn("Join group failed with: ", value);
         return CommonResponses.failure();
     }
 }
 
-export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterUserResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            userId: candid.Success.user_id.toString(),
-            icpAccount: bytesToHexString(candid.Success.icp_account),
-        };
-    }
-
-    if ("UsernameTaken" in candid) {
-        return { kind: "username_taken" };
-    }
-    if ("UsernameTooShort" in candid) {
-        return { kind: "username_too_short" };
-    }
-    if ("UsernameTooLong" in candid) {
-        return { kind: "username_too_long" };
-    }
-    if ("UsernameInvalid" in candid) {
+export function registerUserResponse(
+    value: LocalUserIndexRegisterUserResponse,
+): RegisterUserResponse {
+    if (value === "UsernameInvalid") {
         return { kind: "username_invalid" };
     }
-    if ("AlreadyRegistered" in candid) {
+    if (value === "AlreadyRegistered") {
         return { kind: "already_registered" };
     }
-    if ("UserLimitReached" in candid) {
+    if (value === "UserLimitReached") {
         return { kind: "user_limit_reached" };
     }
-    if ("NotSupported" in candid) {
-        return { kind: "not_supported" };
-    }
-    if ("InternalError" in candid) {
-        return { kind: "internal_error" };
-    }
-    if ("CyclesBalanceTooLow" in candid) {
-        return { kind: "cycles_balance_too_low" };
-    }
-    if ("PublicKeyInvalid" in candid) {
-        return { kind: "public_key_invalid" };
-    }
-    if ("ReferralCodeInvalid" in candid) {
-        return { kind: "referral_code_invalid" };
-    }
-    if ("ReferralCodeAlreadyClaimed" in candid) {
-        return { kind: "referral_code_already_claimed" };
-    }
-    if ("ReferralCodeExpired" in candid) {
-        return { kind: "referral_code_expired" };
-    }
-    if ("RegistrationInProgress" in candid) {
+    if (value === "RegistrationInProgress") {
         return { kind: "registration_in_progress" };
     }
+    if (value === "CyclesBalanceTooLow") {
+        return { kind: "cycles_balance_too_low" };
+    }
+    if (value === "ReferralCodeInvalid") {
+        return { kind: "referral_code_invalid" };
+    }
+    if (value === "ReferralCodeAlreadyClaimed") {
+        return { kind: "referral_code_already_claimed" };
+    }
+    if (value === "ReferralCodeExpired") {
+        return { kind: "referral_code_expired" };
+    }
+    if ("Success" in value) {
+        return {
+            kind: "success",
+            userId: principalBytesToString(value.Success.user_id),
+            icpAccount: bytesToHexString(value.Success.icp_account),
+        };
+    }
+    if ("UsernameTooShort" in value) {
+        return { kind: "username_too_short" };
+    }
+    if ("UsernameTooLong" in value) {
+        return { kind: "username_too_long" };
+    }
+    if ("NotSupported" in value) {
+        return { kind: "not_supported" };
+    }
+    if ("InternalError" in value) {
+        return { kind: "internal_error" };
+    }
+    if ("PublicKeyInvalid" in value) {
+        return { kind: "public_key_invalid" };
+    }
 
-    throw new UnsupportedValueError("Unexpected ApiRegisterUserResponse type received", candid);
+    throw new UnsupportedValueError("Unexpected ApiRegisterUserResponse type received", value);
 }
 
 export function inviteUsersResponse(
-    candid: ApiInviteUsersResponse | ApiInviteUsersToChannelResponse,
+    value: LocalUserIndexInviteUsersToGroupResponse | LocalUserIndexInviteUsersToChannelResponse,
 ): InviteUsersResponse {
-    if ("Success" in candid) {
+    if (typeof value !== "string" && "Success" in value) {
         return "success";
     } else {
-        console.warn("InviteUsersResponse was unsuccessful", candid);
+        console.warn("InviteUsersResponse was unsuccessful", value);
         return "failure";
     }
 }
 
-export function joinCommunityResponse(candid: ApiJoinCommunityResponse): JoinCommunityResponse {
-    if ("Success" in candid) {
-        return { kind: "success", community: communitySummary(candid.Success) };
-    } else if ("AlreadyInCommunity" in candid) {
-        return { kind: "success", community: communitySummary(candid.AlreadyInCommunity) };
-    } else if ("GateCheckFailed" in candid) {
-        return { kind: "gate_check_failed", reason: gateCheckFailedReason(candid.GateCheckFailed) };
-    } else {
-        console.warn("Join community failed with: ", candid);
-        return CommonResponses.failure();
+export function joinCommunityResponse(
+    value: LocalUserIndexJoinCommunityResponse,
+): JoinCommunityResponse {
+    if (typeof value !== "string") {
+        if ("Success" in value) {
+            return { kind: "success", community: communitySummary(value.Success) };
+        } else if ("AlreadyInCommunity" in value) {
+            return { kind: "success", community: communitySummary(value.AlreadyInCommunity) };
+        } else if ("GateCheckFailed" in value) {
+            return {
+                kind: "gate_check_failed",
+                reason: gateCheckFailedReason(value.GateCheckFailed),
+            };
+        }
     }
+
+    console.warn("Join community failed with: ", value);
+    return CommonResponses.failure();
 }
 
 export function apiVerifiedCredentialArgs(
     domain: VerifiedCredentialArgs,
-): ApiVerifiedCredentialGateArgs {
+): TVerifiedCredentialGateArgs {
     return {
-        user_ii_principal: Principal.fromText(domain.userIIPrincipal),
+        user_ii_principal: principalStringToBytes(domain.userIIPrincipal),
         ii_origin: domain.iiOrigin,
         credential_jwts: domain.credentialJwts,
         credential_jwt: domain.credentialJwts[0],
