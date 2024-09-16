@@ -4,7 +4,7 @@ use canister_tracing_macros::trace;
 use registry_canister::set_token_enabled::{Response::*, *};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn set_token_enabled(args: Args) -> Response {
     let (caller, user_index_canister_id) = read_state(|state| (state.env.caller(), state.data.user_index_canister_id));

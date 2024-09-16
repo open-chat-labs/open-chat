@@ -6,7 +6,7 @@ use event_store_producer::EventBuilder;
 use online_users_canister::mark_as_online::{Response::*, *};
 use types::{CanisterId, UserId};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn mark_as_online(_args: Args) -> Response {
     let user_id = match read_state(try_get_user_id_locally) {

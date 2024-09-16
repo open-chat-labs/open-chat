@@ -7,7 +7,7 @@ use local_user_index_canister::{Event, UsernameChanged};
 use user_index_canister::set_username::{Response::*, *};
 use utils::text_validation::{validate_username, UsernameValidationError};
 
-#[update(guard = "caller_is_openchat_user", candid = true, msgpack = true)]
+#[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
 fn set_username(args: Args) -> Response {
     mutate_state(|state| set_username_impl(args, state))

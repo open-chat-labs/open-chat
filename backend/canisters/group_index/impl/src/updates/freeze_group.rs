@@ -6,7 +6,7 @@ use group_index_canister::{freeze_group, unfreeze_group};
 use types::{CanisterId, ChatId, FrozenGroupInfo};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn freeze_group(args: freeze_group::Args) -> freeze_group::Response {
     use group_index_canister::freeze_group::Response::*;

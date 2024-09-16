@@ -2,7 +2,7 @@ use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
 use notifications_index_canister::subscription_exists::{Response::*, *};
 
-#[query(candid = true, msgpack = true)]
+#[query(msgpack = true)]
 fn subscription_exists(args: Args) -> Response {
     read_state(|state| subscription_exists_impl(args, state))
 }
