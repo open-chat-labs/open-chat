@@ -339,6 +339,12 @@
     }
 
     function onCancelCommunityInvite(ev: CustomEvent<string>) {
+        if ($selectedCommunity !== undefined) {
+            cancelInvite($selectedCommunity.id, ev.detail);
+        }
+    }
+
+    async function onCancelGroupInvite(ev: CustomEvent<string>) {
         if (
             $selectedChatId !== undefined &&
             ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel")
@@ -347,15 +353,9 @@
         }
     }
 
-    async function onCancelGroupInvite(ev: CustomEvent<string>) {
-        if ($selectedCommunity !== undefined) {
-            cancelInvite($selectedCommunity.id, ev.detail);
-        }
-    }
-
     async function cancelInvite(id: MultiUserChatIdentifier | CommunityIdentifier, userId: string) {
         const success = await client.cancelInvites(id, [userId]);
-        if (!success) {
+        if (success) {
             toastStore.showSuccessToast(i18nKey("cancelInviteSucceeded"));
         } else {
             toastStore.showFailureToast(i18nKey("cancelInviteFailed"));
@@ -451,7 +451,8 @@
                 on:removeGroupMember={onRemoveGroupMember}
                 on:showInviteGroupUsers={showInviteGroupUsers}
                 on:changeGroupRole={onChangeGroupRole}
-                on:cancelInvite={onCancelGroupInvite}
+                on:cancelGroupInvite={onCancelGroupInvite}
+                on:cancelCommunityInvite={onCancelCommunityInvite}
                 on:close={popRightPanelHistory}
                 on:chatWith />
         {:else}
@@ -510,7 +511,8 @@
             on:chatWith
             on:showInviteUsers={showInviteGroupUsers}
             on:removeMember={onRemoveGroupMember}
-            on:changeRole={onChangeGroupRole} />
+            on:changeRole={onChangeGroupRole} 
+            on:cancelInvite={onCancelGroupInvite} />
     {:else if lastState.kind === "show_group_members" && $selectedChatId !== undefined && $multiUserChat !== undefined && $multiUserChat.kind === "channel" && $selectedCommunity !== undefined}
         <ChannelOrCommunityMembers
             selectedTab="channel"
@@ -528,7 +530,9 @@
             on:showInviteGroupUsers={showInviteGroupUsers}
             on:changeGroupRole={onChangeGroupRole}
             on:close={popRightPanelHistory}
-            on:chatWith />
+            on:chatWith 
+            on:cancelGroupInvite={onCancelGroupInvite}
+            on:cancelCommunityInvite={onCancelCommunityInvite} />
     {:else if lastState.kind === "show_pinned" && $selectedChatId !== undefined && ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel") && $multiUserChat !== undefined}
         <PinnedMessages
             on:chatWith

@@ -77,11 +77,11 @@
         }
     }
 
-    function onCancelCommunityInvite(ev: CustomEvent<unknown>): void {
+    function onCancelCommunityInvite(ev: CustomEvent<string>): void {
         dispatch("cancelCommunityInvite", ev.detail);
     }
 
-    function onCancelGroupInvite(ev: CustomEvent<unknown>): void {
+    function onCancelGroupInvite(ev: CustomEvent<string>): void {
         dispatch("cancelGroupInvite", ev.detail);
     }
 </script>

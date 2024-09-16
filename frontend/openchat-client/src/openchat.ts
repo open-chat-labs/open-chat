@@ -4643,6 +4643,17 @@ export class OpenChat extends OpenChatAgentWorker {
             communityStateStore.updateProp(id, "invitedUsers", (b) => {
                 return new Set([...b].filter((u) => !userIds.includes(u)));
             });
+
+            const community = this._liveState.communities.get({
+                kind: "community",
+                communityId: id.communityId,
+            });
+
+            if (community !== undefined) {
+                for (const channel of community.channels) {
+                    this.uninviteUsersLocally(channel.id, userIds);
+                }
+            }
         } else {
             chatStateStore.updateProp(id, "invitedUsers", (b) => {
                 return new Set([...b].filter((u) => !userIds.includes(u)));
