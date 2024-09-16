@@ -123,6 +123,9 @@
     "blockUserFailed": "Không thể chặn người dùng",
     "blockUserSucceeded": "Người dùng đã bị chặn",
     "cancel": "Hủy bỏ",
+    "cancelInvite": "Hủy lời mời",
+    "cancelInviteFailed": "Lỗi khi hủy lời mời",
+    "cancelInviteSucceeded": "Lời mời đã hủy",
     "challenge": {
         "alreadyRegistered": "Vui lòng đóng và thử lại sau",
         "failed": "Thử thách không thành công. Vui lòng thử lại.",

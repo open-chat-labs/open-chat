@@ -200,6 +200,9 @@ export interface CallParticipant {
   'user_id' : UserId,
   'joined' : TimestampMillis,
 }
+export interface CancelInvitesArgs { 'user_ids' : Array<UserId> }
+export type CancelInvitesResponse = { 'NotAuthorized' : null } |
+  { 'Success' : null };
 export interface CancelP2PSwapArgs {
   'message_id' : MessageId,
   'thread_root_message_index' : [] | [MessageIndex],
@@ -2226,6 +2229,7 @@ export interface _SERVICE {
   'accept_p2p_swap' : ActorMethod<[AcceptP2PSwapArgs], AcceptP2PSwapResponse>,
   'add_reaction' : ActorMethod<[AddReactionArgs], AddReactionResponse>,
   'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
+  'cancel_invites' : ActorMethod<[CancelInvitesArgs], CancelInvitesResponse>,
   'cancel_p2p_swap' : ActorMethod<[CancelP2PSwapArgs], CancelP2PSwapResponse>,
   'change_role' : ActorMethod<[ChangeRoleArgs], ChangeRoleResponse>,
   'claim_prize' : ActorMethod<[ClaimPrizeArgs], ClaimPrizeResponse>,

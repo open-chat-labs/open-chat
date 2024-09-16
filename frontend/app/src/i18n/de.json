@@ -123,6 +123,9 @@
     "blockUserFailed": "Benutzer kann nicht blockiert werden",
     "blockUserSucceeded": "Benutzer wurde gesperrt",
     "cancel": "Abbrechen",
+    "cancelInvite": "Einladung abbrechen",
+    "cancelInviteFailed": "Fehler beim Abbrechen der Einladung",
+    "cancelInviteSucceeded": "Einladung abgebrochen",
     "challenge": {
         "alreadyRegistered": "Bitte schließen und später erneut versuchen",
         "failed": "Herausforderung fehlgeschlagen. Bitte versuchen Sie es erneut.",

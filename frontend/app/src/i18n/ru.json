@@ -123,6 +123,9 @@
     "blockUserFailed": "Не удалось заблокировать пользователя",
     "blockUserSucceeded": "Пользователь заблокирован",
     "cancel": "Отмена",
+    "cancelInvite": "Отменить приглашение",
+    "cancelInviteFailed": "Ошибка отмены приглашения",
+    "cancelInviteSucceeded": "Приглашение отменено",
     "challenge": {
         "alreadyRegistered": "Пожалуйста, закройте и повторите попытку позже.",
         "failed": "Вызов не удался. Пожалуйста, попробуйте еще раз.",

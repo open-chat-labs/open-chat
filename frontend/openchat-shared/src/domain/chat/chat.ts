@@ -1895,8 +1895,6 @@ export type SuccessJoinedCommunity = {
     community: CommunitySummary;
 };
 
-export type InviteUsersResponse = "success" | "failure";
-
 export type MarkReadRequest = {
     readUpTo: number | undefined;
     chatId: ChatIdentifier;
