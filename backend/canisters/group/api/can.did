@@ -715,6 +715,15 @@ type UnfollowThreadResponse = variant {
     GroupFrozen;
 };
 
+type CancelInvitesArgs = record {
+    user_ids : vec UserId;
+};
+
+type CancelInvitesResponse = variant {
+    Success;
+    NotAuthorized;
+};
+
 service : {
     // Owner only
     convert_into_community : (ConvertIntoCommunityArgs) -> (ConvertIntoCommunityResponse);
@@ -731,6 +740,7 @@ service : {
     enable_invite_code : (EnableInviteCodeArgs) -> (EnableInviteCodeResponse);
     disable_invite_code : (DisableInviteCodeArgs) -> (DisableInviteCodeResponse);
     reset_invite_code : (ResetInviteCodeArgs) -> (ResetInviteCodeResponse);
+    cancel_invites : (CancelInvitesArgs) -> (CancelInvitesResponse);
 
     // Regular users
     send_message_v2 : (SendMessageV2Args) -> (SendMessageResponse);
