@@ -55,12 +55,19 @@ impl ExternalAchievements {
         true
     }
 
-    pub fn award(&mut self, id: u32, user_id: UserId, caller: CanisterId, now: TimestampMillis) -> AwardResult {
+    pub fn award(
+        &mut self,
+        id: u32,
+        user_id: UserId,
+        caller: CanisterId,
+        now: TimestampMillis,
+        test_mode: bool,
+    ) -> AwardResult {
         let Some(achievement) = self.achievements.get_mut(&id) else {
             return AwardResult::NotFound;
         };
 
-        if achievement.canister_id != caller {
+        if !test_mode && achievement.canister_id != caller {
             return AwardResult::InvalidCaller;
         }
 
