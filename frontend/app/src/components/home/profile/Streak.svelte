@@ -2,7 +2,14 @@
     import TooltipWrapper from "../../TooltipWrapper.svelte";
     import TooltipPopup from "../../TooltipPopup.svelte";
 
-    type Streak = "none" | "three" | "seven" | "fourteen" | "thirty";
+    type Streak =
+        | "none"
+        | "three"
+        | "seven"
+        | "fourteen"
+        | "thirty"
+        | "one hundred"
+        | "three six five";
 
     export let days: number = 0;
     export let showTooltip = true;
@@ -21,10 +28,14 @@
                 ? "seven"
                 : days < 30
                   ? "fourteen"
-                  : "thirty";
+                  : days < 100
+                    ? "thirty"
+                    : days < 365
+                      ? "one hundred"
+                      : "three six five";
     }
 
-    function streakNumber(streak: Streak): 0 | 3 | 7 | 14 | 30 {
+    function streakNumber(streak: Streak): 0 | 3 | 7 | 14 | 30 | 100 | 365 {
         switch (streak) {
             case "none":
                 return 0;
@@ -36,6 +47,10 @@
                 return 14;
             case "thirty":
                 return 30;
+            case "one hundred":
+                return 100;
+            case "three six five":
+                return 365;
         }
     }
 </script>
@@ -43,7 +58,7 @@
 {#if show}
     {#if showTooltip}
         <TooltipWrapper position="top" align="middle">
-            <div slot="target" class:disabled class={`icon ${streak}`}>
+            <div slot="target" class:disabled class={`icon ${streak.replace(/ /g, "_")}`}>
                 {num}
             </div>
             <div let:position let:align slot="tooltip">
@@ -95,6 +110,20 @@
             background-image: url("/assets/streaks/streak_thirty.svg");
             color: rgb(255, 0, 0);
         }
+
+        &.one_hundred {
+            background-image: url("/assets/streaks/streak_100.svg");
+            color: white;
+            text-shadow: 0.5px 0.5px 0.5px #555;
+        }
+
+        &.three_six_five {
+            background-image: url("/assets/streaks/streak_365.svg");
+            color: white;
+            text-shadow: 0.5px 0.5px 0.5px #555;
+            padding: 0 0 0 7px;
+        }
+
         &.disabled {
             background-image: url("/assets/streaks/streak_disabled.svg");
             color: #888;

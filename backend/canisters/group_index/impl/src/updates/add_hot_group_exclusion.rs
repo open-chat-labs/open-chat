@@ -6,7 +6,7 @@ use group_index_canister::{add_hot_group_exclusion, remove_hot_group_exclusion};
 use types::{CanisterId, ChatId};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn add_hot_group_exclusion(args: add_hot_group_exclusion::Args) -> add_hot_group_exclusion::Response {
     use group_index_canister::add_hot_group_exclusion::Response::*;

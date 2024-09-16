@@ -3,7 +3,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use notifications_index_canister::remove_subscription::{Response::*, *};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn remove_subscription(args: Args) -> Response {
     mutate_state(|state| remove_subscription_impl(args, state))

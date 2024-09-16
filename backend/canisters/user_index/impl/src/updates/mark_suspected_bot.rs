@@ -1,9 +1,9 @@
 use crate::{mutate_state, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use user_index_canister::mark_suspected_bot::{Response::*, *};
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
 fn mark_suspected_bot(_args: Args) -> Response {
     mutate_state(mark_suspected_bot_impl)
