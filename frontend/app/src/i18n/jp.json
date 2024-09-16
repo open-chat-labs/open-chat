@@ -80,6 +80,7 @@
         "public": "公開",
         "readonlyTitle": "アクセスゲート",
         "referredByMember": "メンバーからの紹介",
+        "referredByMemberInfo": "コミュニティメンバーから紹介されたユーザーのみが参加できます",
         "subscriptionComingSoon": "サブスクリプションモデルも近日登場予定。",
         "title": "アクセスゲートの更新",
         "tokenBalance": "トークン残高",

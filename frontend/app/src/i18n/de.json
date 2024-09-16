@@ -80,6 +80,7 @@
         "public": "Öffentlich",
         "readonlyTitle": "Zugangstor",
         "referredByMember": "Empfohlen von Mitglied",
+        "referredByMemberInfo": "Nur Benutzer, die von einem Community-Mitglied empfohlen wurden, dürfen beitreten",
         "subscriptionComingSoon": "Abonnementmodell folgt in Kürze.",
         "title": "Zugangstor aktualisieren",
         "tokenBalance": "Token-Guthaben",
