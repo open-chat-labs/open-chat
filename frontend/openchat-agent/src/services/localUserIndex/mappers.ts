@@ -12,21 +12,21 @@ import type {
     VerifiedCredentialArgs,
     VideoCallType,
 } from "openchat-shared";
-import {
-    type LocalUserIndexGroupAndCommunitySummaryUpdatesResponse,
-    type AccessTokenType as TAccessTokenType,
-    type VideoCallType as TVideoCallType,
-    type LocalUserIndexChatEventsResponse,
-    type LocalUserIndexAccessTokenResponse,
-    type LocalUserIndexJoinChannelResponse,
-    type LocalUserIndexRegisterUserResponse,
-    type LocalUserIndexInviteUsersToGroupResponse,
-    type LocalUserIndexInviteUsersToChannelResponse,
-    type LocalUserIndexJoinCommunityResponse,
-    type VerifiedCredentialGateArgs as TVerifiedCredentialGateArgs,
-    type LocalUserIndexChatEventsEventsArgsInner,
-    type LocalUserIndexChatEventsEventsArgs,
+import type {
+    AccessTokenType as TAccessTokenType,
+    VideoCallType as TVideoCallType,
+    LocalUserIndexAccessTokenResponse,
+    LocalUserIndexChatEventsEventsArgsInner,
+    LocalUserIndexChatEventsEventsArgs,
     LocalUserIndexChatEventsEventsContext,
+    LocalUserIndexChatEventsResponse,
+    LocalUserIndexGroupAndCommunitySummaryUpdatesResponse,
+    LocalUserIndexInviteUsersToChannelResponse,
+    LocalUserIndexInviteUsersToGroupResponse,
+    LocalUserIndexJoinChannelResponse,
+    LocalUserIndexJoinCommunityResponse,
+    LocalUserIndexRegisterUserResponse,
+    VerifiedCredentialGateArgs as TVerifiedCredentialGateArgs,
 } from "../../typebox";
 import { CommonResponses, MAX_EVENTS, MAX_MESSAGES, UnsupportedValueError } from "openchat-shared";
 import {
@@ -112,7 +112,7 @@ export function groupAndCommunitySummaryUpdates(
         } else {
             throw new UnsupportedValueError(
                 "Unexpected ApiSummaryUpdatesResponse type received",
-                result
+                result,
             );
         }
     }
@@ -200,14 +200,14 @@ export async function chatEventsBatchResponse(
                 principal,
                 args.context.chatId,
                 response.Success.chat_last_updated,
-                true
+                true,
             );
 
             responses.push(
                 error ?? {
                     kind: "success",
                     result: eventsSuccessResponse(response.Success),
-                }
+                },
             );
         } else if ("ReplicaNotUpToDate" in response) {
             responses.push({
@@ -316,12 +316,12 @@ export function registerUserResponse(
 
 export function inviteUsersResponse(
     value: LocalUserIndexInviteUsersToGroupResponse | LocalUserIndexInviteUsersToChannelResponse,
-): InviteUsersResponse {
+): boolean {
     if (typeof value !== "string" && "Success" in value) {
-        return "success";
+        return true;
     } else {
         console.warn("InviteUsersResponse was unsuccessful", value);
-        return "failure";
+        return false;
     }
 }
 

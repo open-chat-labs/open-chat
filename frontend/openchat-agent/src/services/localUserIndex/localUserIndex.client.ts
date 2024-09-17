@@ -20,12 +20,13 @@ import type {
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
-    chatEventsArgs,
-    chatEventsBatchResponse,
     accessTokenResponse,
     apiAccessTokenType,
     apiVerifiedCredentialArgs,
+    chatEventsArgs,
+    chatEventsBatchResponse,
     groupAndCommunitySummaryUpdates,
+    inviteUsersResponse,
     joinChannelResponse,
     joinCommunityResponse,
     registerUserResponse,
@@ -75,7 +76,7 @@ export class LocalUserIndexClient extends CandidService {
     }
 
     groupAndCommunitySummaryUpdates(
-        requests: GroupAndCommunitySummaryUpdatesArgs[]
+        requests: GroupAndCommunitySummaryUpdatesArgs[],
     ): Promise<GroupAndCommunitySummaryUpdatesResponse[]> {
         const args = {
             requests: requests.map((r) => ({
@@ -97,7 +98,7 @@ export class LocalUserIndexClient extends CandidService {
 
     async chatEvents(
         requests: ChatEventsArgs[],
-        cachePrimer = false
+        cachePrimer = false,
     ): Promise<ChatEventsResponse[]> {
         // The responses must be ordered such that the response at index i matches the request at index i
         const responses = [] as ChatEventsResponse[];
@@ -119,7 +120,7 @@ export class LocalUserIndexClient extends CandidService {
                     setCachePrimerTimestamp(
                         this.db,
                         request.context.chatId,
-                        request.latestKnownUpdate
+                        request.latestKnownUpdate,
                     );
                 }
             } else if (missing.size > MAX_MISSING) {
@@ -149,13 +150,13 @@ export class LocalUserIndexClient extends CandidService {
                         this.db,
                         request.context.chatId,
                         response.result,
-                        request.context.threadRootMessageIndex
+                        request.context.threadRootMessageIndex,
                     );
                     if (cachePrimer) {
                         setCachePrimerTimestamp(
                             this.db,
                             request.context.chatId,
-                            batchResponse.timestamp
+                            batchResponse.timestamp,
                         );
                     }
                 }
@@ -184,7 +185,7 @@ export class LocalUserIndexClient extends CandidService {
 
     private async getEventsFromCache(
         context: MessageContext,
-        args: ChatEventsArgsInner
+        args: ChatEventsArgsInner,
     ): Promise<[EventsSuccessResult<ChatEvent>, Set<number>]> {
         if (args.kind === "page") {
             return await getCachedEvents(
@@ -195,7 +196,7 @@ export class LocalUserIndexClient extends CandidService {
                 args.ascending,
                 undefined,
                 undefined,
-                1
+                1,
             );
         }
         if (args.kind === "window") {
@@ -206,7 +207,7 @@ export class LocalUserIndexClient extends CandidService {
                 args.midPoint,
                 undefined,
                 undefined,
-                1
+                1,
             );
             return [cached, missing];
         }
@@ -232,7 +233,7 @@ export class LocalUserIndexClient extends CandidService {
 
     registerUser(
         username: string,
-        referralCode: string | undefined
+        referralCode: string | undefined,
     ): Promise<RegisterUserResponse> {
         return this.executeMsgpackUpdate(
             "register_user",
@@ -253,7 +254,7 @@ export class LocalUserIndexClient extends CandidService {
         communityId: string,
         inviteCode: string | undefined,
         credentialArgs: VerifiedCredentialArgs | undefined,
-        referredBy?: string
+        referredBy?: string,
     ): Promise<JoinCommunityResponse> {
         return this.executeMsgpackUpdate(
             "join_community",
@@ -272,7 +273,7 @@ export class LocalUserIndexClient extends CandidService {
     joinGroup(
         chatId: string,
         inviteCode: string | undefined,
-        credentialArgs: VerifiedCredentialArgs | undefined
+        credentialArgs: VerifiedCredentialArgs | undefined,
     ): Promise<JoinGroupResponse> {
         return this.executeMsgpackUpdate(
             "join_group",
@@ -292,7 +293,7 @@ export class LocalUserIndexClient extends CandidService {
         id: ChannelIdentifier,
         inviteCode: string | undefined,
         credentialArgs: VerifiedCredentialArgs | undefined,
-        referredBy?: string
+        referredBy?: string,
     ): Promise<JoinGroupResponse> {
         return this.executeMsgpackUpdate(
             "join_channel",
@@ -313,7 +314,7 @@ export class LocalUserIndexClient extends CandidService {
         communityId: string,
         userIds: string[],
         callerUsername: string,
-    ): Promise<InviteUsersResponse> {
+    ): Promise<boolean> {
         return this.executeMsgpackUpdate(
             "invite_users_to_community",
             {
@@ -331,7 +332,7 @@ export class LocalUserIndexClient extends CandidService {
         chatId: string,
         userIds: string[],
         callerUsername: string,
-    ): Promise<InviteUsersResponse> {
+    ): Promise<boolean> {
         return this.executeMsgpackUpdate(
             "invite_users_to_group",
             {
@@ -351,7 +352,7 @@ export class LocalUserIndexClient extends CandidService {
         channelId: string,
         userIds: string[],
         callerUsername: string,
-    ): Promise<InviteUsersResponse> {
+    ): Promise<boolean> {
         return this.executeMsgpackUpdate(
             "invite_users_to_channel",
             {
@@ -368,7 +369,7 @@ export class LocalUserIndexClient extends CandidService {
 
     getAccessToken(
         chatId: ChatIdentifier,
-        accessType: AccessTokenType
+        accessType: AccessTokenType,
     ): Promise<string | undefined> {
         return this.executeMsgpackQuery(
             "access_token",
