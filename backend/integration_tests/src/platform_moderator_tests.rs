@@ -59,7 +59,7 @@ fn report_message_succeeds() {
 
     let group_id = client::user::happy_path::create_group(env, &user2, &random_string(), true, true);
 
-    client::local_user_index::report_message_v2(
+    let report_message_response = client::local_user_index::report_message_v2(
         env,
         user2.principal,
         canister_ids.local_user_index,
@@ -71,36 +71,26 @@ fn report_message_succeeds() {
             notes: Some("abc".to_string()),
         },
     );
+    assert!(matches!(
+        report_message_response,
+        local_user_index_canister::report_message_v2::Response::Success,
+    ));
 
-    let events_response = client::group::events(
-        env,
-        user1.principal,
-        moderators_group.into(),
-        &group_canister::events::Args {
-            thread_root_message_index: None,
-            start_index: 0.into(),
-            ascending: true,
-            max_messages: 10,
-            max_events: 10,
-            latest_known_update: None,
-        },
-    );
+    let mut events_response = client::group::happy_path::events(env, &user1, moderators_group, 0.into(), true, 10, 10);
     let mut success = false;
-    if let group_canister::events::Response::Success(mut e) = events_response {
-        let last_event = e.events.pop().unwrap().event;
-        if let ChatEvent::Message(m) = last_event {
-            assert_eq!(
-                m.replies_to.as_ref().unwrap().chat_if_other,
-                Some((Chat::Group(group_id), None))
-            );
-            assert_eq!(m.replies_to.as_ref().unwrap().event_index, 10.into());
-            if let MessageContent::ReportedMessage(r) = m.content {
-                assert_eq!(r.reports.len(), 1);
-                assert_eq!(r.reports[0].reported_by, user2.user_id);
-                assert_eq!(r.reports[0].reason_code, 1);
-                assert_eq!(r.reports[0].notes, Some("abc".to_string()));
-                success = true;
-            }
+    let last_event = events_response.events.pop().unwrap().event;
+    if let ChatEvent::Message(m) = last_event {
+        assert_eq!(
+            m.replies_to.as_ref().unwrap().chat_if_other,
+            Some((Chat::Group(group_id), None))
+        );
+        assert_eq!(m.replies_to.as_ref().unwrap().event_index, 10.into());
+        if let MessageContent::ReportedMessage(r) = m.content {
+            assert_eq!(r.reports.len(), 1);
+            assert_eq!(r.reports[0].reported_by, user2.user_id);
+            assert_eq!(r.reports[0].reason_code, 1);
+            assert_eq!(r.reports[0].notes, Some("abc".to_string()));
+            success = true;
         }
     }
 

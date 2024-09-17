@@ -1,63 +1,88 @@
 type Address = text;
 type CanisterPublicKey = PublicKey;
-type Delegation = record {
-  pubkey : PublicKey;
-  targets : opt vec principal;
-  expiration : Timestamp;
-};
-type GetAddressResponse = variant { Ok : Address; Err : text };
-type GetDelegationResponse = variant { Ok : SignedDelegation; Err : text };
-type GetPrincipalResponse = variant { Ok : Principal; Err : text };
-type LoginDetails = record {
-  user_canister_pubkey : CanisterPublicKey;
-  expiration : Timestamp;
-};
-type LoginResponse = variant { Ok : LoginDetails; Err : text };
-type PrepareLoginResponse = variant { Ok : SiwsMessage; Err : text };
-type Principal = vec nat8;
-type PublicKey = vec nat8;
-type RuntimeFeature = variant {
-  IncludeUriInSeed;
-  DisablePrincipalToSolMapping;
-  DisableSolToPrincipalMapping;
-};
+type Principal = blob;
+type PublicKey = blob;
 type SessionKey = PublicKey;
-type SettingsInput = record {
-  uri : text;
-  runtime_features : opt vec RuntimeFeature;
-  domain : text;
-  statement : opt text;
-  scheme : opt text;
-  salt : text;
-  session_expires_in : opt nat64;
-  targets : opt vec text;
-  chain_id : opt text;
-  sign_in_expires_in : opt nat64;
-};
-type SignedDelegation = record {
-  signature : vec nat8;
-  delegation : Delegation;
-};
-type SiwsMessage = record {
-  uri : text;
-  issued_at : nat64;
-  domain : text;
-  statement : text;
-  version : nat32;
-  chain_id : text;
-  address : Address;
-  nonce : text;
-  expiration_time : nat64;
-};
 type SiwsSignature = text;
 type Timestamp = nat64;
-service : {
-  get_address : (Principal) -> (GetAddressResponse) query;
-  get_caller_address : () -> (GetAddressResponse) query;
-  get_principal : (Address) -> (GetPrincipalResponse) query;
-  siws_get_delegation : (Address, SessionKey, Timestamp) -> (
-      GetDelegationResponse,
-    ) query;
-  siws_login : (SiwsSignature, Address, SessionKey) -> (LoginResponse);
-  siws_prepare_login : (Address) -> (PrepareLoginResponse);
-}
+
+type RuntimeFeature = variant {
+  IncludeUriInSeed;
+  DisableSolToPrincipalMapping;
+  DisablePrincipalToSolMapping
+};
+
+type SettingsInput = record {
+  domain : text;
+  uri : text;
+  salt : text;
+  chain_id : opt text;
+  scheme : opt text;
+  statement : opt text;
+  sign_in_expires_in : opt nat64;
+  session_expires_in : opt nat64;
+  targets : opt vec text;
+  runtime_features: opt vec RuntimeFeature;
+};
+
+type GetAddressResponse = variant {
+  Ok : Address;
+  Err : text;
+};
+
+type GetDelegationResponse = variant {
+  Ok : SignedDelegation;
+  Err : text;
+};
+
+type SignedDelegation = record {
+  delegation : Delegation;
+  signature : blob;
+};
+
+type Delegation = record {
+  pubkey : PublicKey;
+  expiration : Timestamp;
+  targets : opt vec principal;
+};
+
+type GetPrincipalResponse = variant {
+  Ok : Principal;
+  Err : text;
+};
+
+type LoginResponse = variant {
+  Ok : LoginDetails;
+  Err : text;
+};
+
+type LoginDetails = record {
+  expiration : Timestamp;
+  user_canister_pubkey : CanisterPublicKey;
+};
+
+type SiwsMessage = record {
+  domain : text;
+  address : Address;
+  statement : text;
+  uri : text;
+  version : nat32;
+  chain_id : text;
+  nonce : text;
+  issued_at : nat64;
+  expiration_time : nat64;
+};
+
+type PrepareLoginResponse = variant {
+  Ok : SiwsMessage;
+  Err : text;
+};
+
+service : (settings_input : SettingsInput) -> {
+  "get_address" : (Principal) -> (GetAddressResponse) query;
+  "get_caller_address" : () -> (GetAddressResponse) query;
+  "get_principal" : (Address) -> (GetPrincipalResponse) query;
+  "siws_prepare_login" : (Address) -> (PrepareLoginResponse);
+  "siws_login" : (SiwsSignature, Address, SessionKey) -> (LoginResponse);
+  "siws_get_delegation" : (Address, SessionKey, Timestamp) -> (GetDelegationResponse) query;
+};

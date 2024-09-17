@@ -29,11 +29,12 @@ export class SignInWithEthereumClient extends CandidService {
         signature: string,
         address: string,
         sessionKey: Uint8Array,
+        nonce: string,
     ): Promise<PrepareDelegationResponse> {
         return this.handleResponse(
-            this.service.siwe_login(signature, address, sessionKey),
+            this.service.siwe_login(signature, address, sessionKey, nonce),
             loginResponse,
-            [signature, address, sessionKey],
+            [signature, address, sessionKey, nonce],
         );
     }
 

@@ -1,16 +1,16 @@
-use crate::{generate_query_call, generate_update_call};
+use crate::{generate_msgpack_query_call, generate_msgpack_update_call, generate_update_call};
 use group_index_canister::*;
 
 // Queries
-generate_query_call!(explore_communities);
-generate_query_call!(explore_groups);
-generate_query_call!(search);
+generate_msgpack_query_call!(explore_communities);
+generate_msgpack_query_call!(explore_groups);
+generate_msgpack_query_call!(search);
 
 // Updates
 generate_update_call!(add_local_group_index_canister);
-generate_update_call!(delete_frozen_group);
-generate_update_call!(freeze_group);
-generate_update_call!(unfreeze_group);
+generate_msgpack_update_call!(delete_frozen_group);
+generate_msgpack_update_call!(freeze_group);
+generate_msgpack_update_call!(unfreeze_group);
 generate_update_call!(upgrade_community_canister_wasm);
 generate_update_call!(upgrade_group_canister_wasm);
 generate_update_call!(upgrade_local_group_index_canister_wasm);
