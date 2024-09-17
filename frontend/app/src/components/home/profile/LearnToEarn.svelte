@@ -75,6 +75,7 @@
 
     let selectedTab: "todo" | "done" | "external" = "todo";
 
+    $: user = client.user;
     $: globalState = client.globalStateStore;
     $: filtered = [...achievements].filter(filter);
     $: [internalAchieved, internalNotAchieved] = client.partition(filtered, (a) =>
@@ -219,7 +220,9 @@
                                         class="logo"
                                         src={client.achievementLogo(achievement.id)}
                                         alt={achievement.name} />
-                                    <ExternalLink iconColor={"var(--txt)"} href={achievement.url}>
+                                    <ExternalLink
+                                        iconColor={"var(--txt)"}
+                                        href={`${achievement.url}?oc_userid=${$user.userId}&oc_username=${$user.username}`}>
                                         {achievement.name}
                                     </ExternalLink>
                                     <div class="reward">
