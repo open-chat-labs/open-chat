@@ -21,7 +21,12 @@ export interface LoginDetails {
 }
 export type LoginResponse = { 'Ok' : LoginDetails } |
   { 'Err' : string };
-export type PrepareLoginResponse = { 'Ok' : SiweMessage } |
+export type Nonce = string;
+export interface PrepareLoginOkResponse {
+  'nonce' : string,
+  'siwe_message' : SiweMessage,
+}
+export type PrepareLoginResponse = { 'Ok' : PrepareLoginOkResponse } |
   { 'Err' : string };
 export type Principal = Uint8Array | number[];
 export type PublicKey = Uint8Array | number[];
@@ -57,7 +62,7 @@ export interface _SERVICE {
     GetDelegationResponse
   >,
   'siwe_login' : ActorMethod<
-    [SiweSignature, Address, SessionKey],
+    [SiweSignature, Address, SessionKey, Nonce],
     LoginResponse
   >,
   'siwe_prepare_login' : ActorMethod<[Address], PrepareLoginResponse>,

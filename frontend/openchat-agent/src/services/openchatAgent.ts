@@ -3557,11 +3557,12 @@ export class OpenChatAgent extends EventTarget {
         token: "eth" | "sol",
         address: string,
         signature: string,
-        sessionKey: Uint8Array
+        sessionKey: Uint8Array,
+        nonce: string,
     ): Promise<PrepareDelegationResponse> {
         switch (token) {
             case "eth":
-                return this._signInWithEthereumClient.login(signature, address, sessionKey);
+                return this._signInWithEthereumClient.login(signature, address, sessionKey, nonce);
             case "sol":
                 return this._signInWithSolanaClient.login(signature, address, sessionKey);
         }
