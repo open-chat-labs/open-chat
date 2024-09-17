@@ -46,7 +46,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "mark_local_user_index_full"
         | "register_external_achievement"
         | "suspected_bots" => state.is_caller_governance_principal(),
-        "create_challenge" | "modclub_callback" => true,
+        "create_challenge" | "modclub_callback" | "award_external_achievement" => true,
         _ => false,
     };
 
