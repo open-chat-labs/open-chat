@@ -1,11 +1,11 @@
-use crate::{generate_query_call, generate_update_call};
+use crate::{generate_msgpack_query_call, generate_msgpack_update_call};
 use online_users_canister::*;
 
 // Queries
-generate_query_call!(last_online);
+generate_msgpack_query_call!(last_online);
 
 // Updates
-generate_update_call!(mark_as_online);
+generate_msgpack_update_call!(mark_as_online);
 
 pub mod happy_path {
     use candid::Principal;
