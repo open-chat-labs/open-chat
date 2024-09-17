@@ -33,6 +33,7 @@ pub use update_settings::*;
 pub fn should_retry_failed_c2c_call(rejection_code: RejectionCode, message: &str) -> bool {
     match rejection_code {
         RejectionCode::DestinationInvalid => false,
+        RejectionCode::CanisterReject => false,
         RejectionCode::CanisterError if message.contains("IC0536") => false, // CanisterMethodNotFound
         _ => true,
     }

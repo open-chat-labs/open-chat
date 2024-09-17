@@ -133,6 +133,7 @@ mod tests {
                     user_id: Principal::from_text("27eue-hyaaa-aaaaf-aaa4a-cai").unwrap().into(),
                     chat_id: StringChat::Group("6nb6r-kyaaa-aaaar-asvgq-cai".to_string()),
                     call_type: VideoCallType::Default,
+                    is_diamond: true,
                 },
             );
 

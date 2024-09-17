@@ -1,8 +1,9 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{ChitEarned, TimestampMillis};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, chit_events)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub from: Option<TimestampMillis>,
     pub to: Option<TimestampMillis>,
@@ -11,12 +12,14 @@ pub struct Args {
     pub ascending: bool,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, chit_events)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success(SuccessResult),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, chit_events)]
+#[derive(CandidType, Debug)]
 pub struct SuccessResult {
     pub events: Vec<ChitEarned>,
     pub total: u32,

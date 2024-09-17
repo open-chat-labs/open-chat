@@ -6,6 +6,68 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+No auth check for `award_external_achievement` in test mode - ([#6397](https://github.com/open-chat-labs/open-chat/pull/6397))
+
+### Removed
+
+- Remove deprecated candid endpoints ([#6396](https://github.com/open-chat-labs/open-chat/pull/6396))
+
+## [[2.0.1346](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1346-user_index)] - 2024-09-12
+
+### Changed
+
+- Extend `chit_leaderboard` to return all_time|this_month|last_month ([#6364](https://github.com/open-chat-labs/open-chat/pull/6364))
+- Add `register_external_achievement` to `inspect_message` ([#6374](https://github.com/open-chat-labs/open-chat/pull/6374))
+  
+## [[2.0.1345](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1345-user_index)] - 2024-09-11
+
+### Changed
+
+- Extended support for external achievements ([#6367](https://github.com/open-chat-labs/open-chat/pull/6367))
+- Send a survey to some recently joined active users ([#6368](https://github.com/open-chat-labs/open-chat/pull/6368))
+
+## [[2.0.1341](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1341-user_index)] - 2024-09-10
+
+### Added
+
+- Add support for external achievements ([#6350](https://github.com/open-chat-labs/open-chat/pull/6350))
+
+### Changed
+
+- Add `community_canister_timestamp` to `UserJoinedCommunityOrChannel` events ([#6361](https://github.com/open-chat-labs/open-chat/pull/6361))
+
+### Fixed
+
+- Replay referral reward events in case any were missed ([#6362](https://github.com/open-chat-labs/open-chat/pull/6362))
+
+## [[2.0.1336](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1336-user_index)] - 2024-09-07
+
+### Added
+
+- Send survey to selected users ([#6334](https://github.com/open-chat-labs/open-chat/pull/6334))
+
+## [[2.0.1331](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1331-user_index)] - 2024-09-06
+
+### Added
+
+- Expose MessagePack versions of UserIndex APIs ([#6318](https://github.com/open-chat-labs/open-chat/pull/6318))
+
+## [[2.0.1329](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1329-user_index)] - 2024-09-03
+
+### Changed
+
+- Add airdrop eligibility metrics ([#6312](https://github.com/open-chat-labs/open-chat/pull/6312))
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+
+## [[2.0.1313](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1313-user_index)] - 2024-09-02
+
+### Changed
+
+- Mark ProposalsBot as OC controlled bot ([#6287](https://github.com/open-chat-labs/open-chat/pull/6287))
+- Add metrics about recently joined users ([#6305](https://github.com/open-chat-labs/open-chat/pull/6305))
+
 ## [[2.0.1302](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1302-user_index)] - 2024-08-22
 
 ### Changed

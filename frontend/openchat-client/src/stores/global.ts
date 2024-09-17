@@ -1,6 +1,5 @@
 /* eslint-disable no-case-declarations */
 import type {
-    Achievement,
     ChannelSummary,
     ChatIdentifier,
     ChatListScope,
@@ -31,7 +30,7 @@ export type GlobalState = {
     groupChats: ChatMap<GroupChatSummary>;
     favourites: ObjectSet<ChatIdentifier>;
     pinnedChats: PinnedByScope;
-    achievements: Set<Achievement>;
+    achievements: Set<string>;
     referrals: Referral[];
 };
 
@@ -339,7 +338,7 @@ export function setGlobalState(
     allChats: ChatSummary[],
     favourites: ChatIdentifier[],
     pinnedChats: PinnedByScope,
-    achievements: Set<Achievement>,
+    achievements: Set<string>,
     chitState: ChitState,
     referrals: Referral[],
     walletConfig: WalletConfig,

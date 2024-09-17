@@ -18,6 +18,7 @@
     export let userLookup: (searchTerm: string) => Promise<[UserSummary[], UserSummary[]]>;
     export let placeholderKey: string = "searchForUsername";
     export let compact = false;
+    export let autofocus = true;
 
     const dispatch = createEventDispatcher();
     let inp: HTMLInputElement;
@@ -31,7 +32,9 @@
     onMount(() => {
         // this focus seems to cause a problem with the animation of the right panel without
         // this setTimeout. Pretty horrible and who knows if 300 ms will be enough on other machines?
-        window.setTimeout(() => inp.focus(), 300);
+        if (autofocus) {
+            window.setTimeout(() => inp.focus(), 300);
+        }
     });
 
     /**

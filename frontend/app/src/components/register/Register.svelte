@@ -199,6 +199,7 @@
                         {client}
                         disabled={busy}
                         originalUsername={$usernameStore ?? ""}
+                        autofocus={true}
                         bind:username
                         bind:usernameValid
                         bind:checking={checkingUsername}
@@ -217,6 +218,7 @@
                             enabled
                             compact
                             mode={"add"}
+                            autofocus={false}
                             on:selectUser={selectUser} />
                     {/if}
                 </div>

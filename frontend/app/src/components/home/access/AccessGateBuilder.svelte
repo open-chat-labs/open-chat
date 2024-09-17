@@ -42,7 +42,7 @@
 
     let gateValidity: boolean[] = [];
     let selectedGateIndex: number | undefined = undefined;
-    let gateBindings: GateBinding[] = getGateBindings();
+    let gateBindings: GateBinding[] = getGateBindings(level);
     $: nervousSystemLookup = client.nervousSystemLookup;
     $: cryptoLookup = client.cryptoLookup;
     $: nsLedgers = new Set(Object.values($nervousSystemLookup).map((d) => d.ledgerCanisterId));

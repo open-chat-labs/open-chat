@@ -1,6 +1,9 @@
+import { AuthProvider } from "./auth";
 import type { GroupInvite } from "./inviteCodes";
 
 export type AgentConfig = {
+    authPrincipal: string;
+    authProvider: AuthProvider | undefined;
     icUrl: string;
     iiDerivationOrigin?: string;
     openStorageIndexCanister: string;
@@ -16,6 +19,7 @@ export type AgentConfig = {
     userGeekApiKey: string;
     enableMultiCrypto?: boolean;
     blobUrlPattern: string;
+    achievementUrlPath: string;
     proposalBotCanister: string;
     marketMakerCanister: string;
     signInWithEmailCanister: string;

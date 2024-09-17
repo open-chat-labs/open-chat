@@ -188,7 +188,7 @@ export class CommunityClient extends CandidService {
         private config: AgentConfig,
         private communityId: string,
         private db: Database,
-        private inviteCode: string | undefined,
+        private inviteCode: string | undefined
     ) {
         super(identity, agent, communityId);
 
@@ -201,7 +201,7 @@ export class CommunityClient extends CandidService {
                 channel_id: BigInt(channelId),
                 message_id: messageId,
             }),
-            claimPrizeResponse,
+            claimPrizeResponse
         );
     }
 
@@ -209,7 +209,7 @@ export class CommunityClient extends CandidService {
         chatId: ChannelIdentifier,
         userIds: string[],
         username: string,
-        displayName: string | undefined,
+        displayName: string | undefined
     ): Promise<AddMembersToChannelResponse> {
         return this.handleResponse(
             this.service.add_members_to_channel({
@@ -218,7 +218,7 @@ export class CommunityClient extends CandidService {
                 added_by_name: username,
                 added_by_display_name: apiOptional(identity, displayName),
             }),
-            addMembersToChannelResponse,
+            addMembersToChannelResponse
         );
     }
 
@@ -229,7 +229,7 @@ export class CommunityClient extends CandidService {
         messageId: bigint,
         reaction: string,
         threadRootMessageIndex: number | undefined,
-        newAchievement: boolean,
+        newAchievement: boolean
     ): Promise<AddRemoveReactionResponse> {
         return this.handleResponse(
             this.service.add_reaction({
@@ -241,7 +241,7 @@ export class CommunityClient extends CandidService {
                 reaction,
                 new_achievement: newAchievement,
             }),
-            addRemoveReactionResponse,
+            addRemoveReactionResponse
         );
     }
 
@@ -250,14 +250,14 @@ export class CommunityClient extends CandidService {
             this.service.block_user({
                 user_id: Principal.fromText(userId),
             }),
-            blockUserResponse,
+            blockUserResponse
         );
     }
 
     changeChannelRole(
         chatId: ChannelIdentifier,
         userId: string,
-        newRole: MemberRole,
+        newRole: MemberRole
     ): Promise<ChangeRoleResponse> {
         return this.handleResponse(
             this.service.change_channel_role({
@@ -265,7 +265,7 @@ export class CommunityClient extends CandidService {
                 user_id: Principal.fromText(userId),
                 new_role: apiMemberRole(newRole),
             }),
-            changeChannelRoleResponse,
+            changeChannelRoleResponse
         );
     }
 
@@ -275,7 +275,7 @@ export class CommunityClient extends CandidService {
                 user_id: Principal.fromText(userId),
                 new_role: apiCommunityRole(newRole),
             }),
-            changeRoleResponse,
+            changeRoleResponse
         );
     }
 
@@ -289,25 +289,22 @@ export class CommunityClient extends CandidService {
                 description: channel.description,
                 external_url: apiOptional(identity, channel.externalUrl),
                 history_visible_to_new_joiners: channel.historyVisible,
-                avatar: apiOptional(
-                    (data) => {
-                        return {
-                            id: DataClient.newBlobId(),
-                            data,
-                            mime_type: "image/jpg",
-                        };
-                    },
-                    channel.avatar?.blobData,
-                ),
+                avatar: apiOptional((data) => {
+                    return {
+                        id: DataClient.newBlobId(),
+                        data,
+                        mime_type: "image/jpg",
+                    };
+                }, channel.avatar?.blobData),
                 permissions_v2: [apiGroupPermissions(channel.permissions)],
                 rules: channel.rules,
                 gate: apiMaybeAccessGate(channel.gate),
                 messages_visible_to_non_members: apiOptional(
                     identity,
-                    channel.messagesVisibleToNonMembers,
+                    channel.messagesVisibleToNonMembers
                 ),
             }),
-            (resp) => createGroupResponse(resp, channel.id),
+            (resp) => createGroupResponse(resp, channel.id)
         );
     }
 
@@ -316,7 +313,7 @@ export class CommunityClient extends CandidService {
             this.service.decline_invitation({
                 channel_id: [BigInt(chatId.channelId)],
             }),
-            declineInvitationResponse,
+            declineInvitationResponse
         );
     }
 
@@ -325,14 +322,14 @@ export class CommunityClient extends CandidService {
             this.service.delete_channel({
                 channel_id: BigInt(chatId.channelId),
             }),
-            deleteGroupResponse,
+            deleteGroupResponse
         );
     }
 
     getDeletedMessage(
         chatId: ChannelIdentifier,
         messageId: bigint,
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex?: number
     ): Promise<DeletedGroupMessageResponse> {
         return this.handleResponse(
             this.service.deleted_message({
@@ -340,7 +337,7 @@ export class CommunityClient extends CandidService {
                 message_id: messageId,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             }),
-            deletedMessageResponse,
+            deletedMessageResponse
         );
     }
 
@@ -349,7 +346,7 @@ export class CommunityClient extends CandidService {
         messageIds: bigint[],
         threadRootMessageIndex: number | undefined,
         asPlatformModerator: boolean | undefined,
-        newAchievement: boolean,
+        newAchievement: boolean
     ): Promise<DeleteMessageResponse> {
         return this.handleResponse(
             this.service.delete_messages({
@@ -359,7 +356,7 @@ export class CommunityClient extends CandidService {
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 new_achievement: newAchievement,
             }),
-            deleteMessageResponse,
+            deleteMessageResponse
         );
     }
 
@@ -372,7 +369,7 @@ export class CommunityClient extends CandidService {
         message: Message,
         threadRootMessageIndex: number | undefined,
         blockLevelMarkdown: boolean | undefined,
-        newAchievement: boolean,
+        newAchievement: boolean
     ): Promise<EditMessageResponse> {
         return new DataClient(this.identity, this.agent, this.config)
             .uploadData(message.content, [chatId.communityId])
@@ -387,7 +384,7 @@ export class CommunityClient extends CandidService {
                             blockLevelMarkdown === undefined ? [] : [blockLevelMarkdown],
                         new_achievement: newAchievement,
                     }),
-                    editMessageResponse,
+                    editMessageResponse
                 );
             });
     }
@@ -402,14 +399,14 @@ export class CommunityClient extends CandidService {
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined,
+        latestKnownUpdate: bigint | undefined
     ): Promise<EventsResponse<ChatEvent>> {
         const [cachedEvents, missing] = await getCachedEvents(
             this.db,
             eventIndexRange,
             { chatId, threadRootMessageIndex },
             startIndex,
-            ascending,
+            ascending
         );
 
         // we may or may not have all of the requested events
@@ -421,13 +418,13 @@ export class CommunityClient extends CandidService {
                 startIndex,
                 ascending,
                 threadRootMessageIndex,
-                latestKnownUpdate,
+                latestKnownUpdate
             )
                 .then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex))
                 .catch((err) => {
                     if (err instanceof ResponseTooLargeError) {
                         console.log(
-                            "Response size too large, we will try to split the payload into a a few chunks",
+                            "Response size too large, we will try to split the payload into a a few chunks"
                         );
                         return chunkedChatEventsFromBackend(
                             (index: number, chunkSize: number) =>
@@ -437,13 +434,13 @@ export class CommunityClient extends CandidService {
                                     ascending,
                                     threadRootMessageIndex,
                                     latestKnownUpdate,
-                                    chunkSize,
+                                    chunkSize
                                 ),
                             eventIndexRange,
                             startIndex,
-                            ascending,
+                            ascending
                         ).then((resp) =>
-                            this.setCachedEvents(chatId, resp, threadRootMessageIndex),
+                            this.setCachedEvents(chatId, resp, threadRootMessageIndex)
                         );
                     } else {
                         throw err;
@@ -454,7 +451,7 @@ export class CommunityClient extends CandidService {
                 chatId,
                 [cachedEvents, missing],
                 threadRootMessageIndex,
-                latestKnownUpdate,
+                latestKnownUpdate
             );
         }
     }
@@ -465,7 +462,7 @@ export class CommunityClient extends CandidService {
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-        maxEvents: number = MAX_EVENTS,
+        maxEvents: number = MAX_EVENTS
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             channel_id: BigInt(chatId.channelId),
@@ -481,7 +478,7 @@ export class CommunityClient extends CandidService {
             () => this.service.events(args),
             (res) => {
                 return getEventsResponse(this.principal, res, chatId, latestKnownUpdate);
-            },
+            }
         );
     }
 
@@ -489,13 +486,13 @@ export class CommunityClient extends CandidService {
         chatId: ChannelIdentifier,
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined,
+        latestKnownUpdate: bigint | undefined
     ): Promise<EventsResponse<ChatEvent>> {
         return getCachedEventsByIndex(this.db, eventIndexes, {
             chatId,
             threadRootMessageIndex,
         }).then((res) =>
-            this.handleMissingEvents(chatId, res, threadRootMessageIndex, latestKnownUpdate),
+            this.handleMissingEvents(chatId, res, threadRootMessageIndex, latestKnownUpdate)
         );
     }
 
@@ -503,7 +500,7 @@ export class CommunityClient extends CandidService {
         chatId: ChannelIdentifier,
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined,
+        latestKnownUpdate: bigint | undefined
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             channel_id: BigInt(chatId.channelId),
@@ -516,7 +513,7 @@ export class CommunityClient extends CandidService {
             () => this.service.events_by_index(args),
             (res) => {
                 return getEventsResponse(this.principal, res, chatId, latestKnownUpdate);
-            },
+            }
         );
     }
 
@@ -525,32 +522,32 @@ export class CommunityClient extends CandidService {
         eventIndexRange: IndexRange,
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined,
+        latestKnownUpdate: bigint | undefined
     ): Promise<EventsResponse<ChatEvent>> {
         const [cachedEvents, missing, totalMiss] = await getCachedEventsWindowByMessageIndex(
             this.db,
             eventIndexRange,
             { chatId, threadRootMessageIndex },
-            messageIndex,
+            messageIndex
         );
         if (totalMiss || missing.size >= MAX_MISSING) {
             // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
             console.log(
                 "We didn't get enough back from the cache, going to the api",
                 missing.size,
-                totalMiss,
+                totalMiss
             );
             return this.eventsWindowFromBackend(
                 chatId,
                 messageIndex,
                 threadRootMessageIndex,
-                latestKnownUpdate,
+                latestKnownUpdate
             )
                 .then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex))
                 .catch((err) => {
                     if (err instanceof ResponseTooLargeError) {
                         console.log(
-                            "Response size too large, we will try to split the window request into a a few chunks",
+                            "Response size too large, we will try to split the window request into a a few chunks"
                         );
                         return chunkedChatEventsWindowFromBackend(
                             (index: number, ascending: boolean, chunkSize: number) =>
@@ -560,7 +557,7 @@ export class CommunityClient extends CandidService {
                                     ascending,
                                     threadRootMessageIndex,
                                     latestKnownUpdate,
-                                    chunkSize,
+                                    chunkSize
                                 ),
                             (index: number, chunkSize: number) =>
                                 this.eventsWindowFromBackend(
@@ -568,12 +565,12 @@ export class CommunityClient extends CandidService {
                                     index,
                                     threadRootMessageIndex,
                                     latestKnownUpdate,
-                                    chunkSize,
+                                    chunkSize
                                 ),
                             eventIndexRange,
-                            messageIndex,
+                            messageIndex
                         ).then((resp) =>
-                            this.setCachedEvents(chatId, resp, threadRootMessageIndex),
+                            this.setCachedEvents(chatId, resp, threadRootMessageIndex)
                         );
                     } else {
                         throw err;
@@ -584,7 +581,7 @@ export class CommunityClient extends CandidService {
                 chatId,
                 [cachedEvents, missing],
                 threadRootMessageIndex,
-                latestKnownUpdate,
+                latestKnownUpdate
             );
         }
     }
@@ -594,7 +591,7 @@ export class CommunityClient extends CandidService {
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-        maxEvents: number = MAX_EVENTS,
+        maxEvents: number = MAX_EVENTS
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             channel_id: BigInt(chatId.channelId),
@@ -607,14 +604,14 @@ export class CommunityClient extends CandidService {
         };
         return this.handleQueryResponse(
             () => this.service.events_window(args),
-            (res) => getEventsResponse(this.principal, res, chatId, latestKnownUpdate),
+            (res) => getEventsResponse(this.principal, res, chatId, latestKnownUpdate)
         );
     }
 
     async getMessagesByMessageIndex(
         chatId: ChannelIdentifier,
         messageIndexes: Set<number>,
-        latestKnownUpdate: bigint | undefined,
+        latestKnownUpdate: bigint | undefined
     ): Promise<EventsResponse<Message>> {
         const fromCache = await loadMessagesByMessageIndex(this.db, chatId, messageIndexes);
         if (fromCache.missing.size > 0) {
@@ -623,7 +620,7 @@ export class CommunityClient extends CandidService {
             const resp = await this.getMessagesByMessageIndexFromBackend(
                 chatId,
                 fromCache.missing,
-                latestKnownUpdate,
+                latestKnownUpdate
             ).then((resp) => this.setCachedEvents(chatId, resp));
 
             return resp === "events_failed"
@@ -646,7 +643,7 @@ export class CommunityClient extends CandidService {
     private getMessagesByMessageIndexFromBackend(
         chatId: ChannelIdentifier,
         messageIndexes: Set<number>,
-        latestKnownUpdate: bigint | undefined,
+        latestKnownUpdate: bigint | undefined
     ): Promise<EventsResponse<Message>> {
         const thread_root_message_index: [] = [];
         const args = {
@@ -661,7 +658,7 @@ export class CommunityClient extends CandidService {
             () => this.service.messages_by_message_index(args),
             (resp) =>
                 getMessagesByMessageIndexResponse(this.principal, resp, chatId, latestKnownUpdate),
-            args,
+            args
         );
     }
 
@@ -669,7 +666,7 @@ export class CommunityClient extends CandidService {
         chatId: ChannelIdentifier,
         [cachedEvents, missing]: [EventsSuccessResult<ChatEvent>, Set<number>],
         threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined,
+        latestKnownUpdate: bigint | undefined
     ): Promise<EventsResponse<ChatEvent>> {
         if (missing.size === 0) {
             return Promise.resolve(cachedEvents);
@@ -678,7 +675,7 @@ export class CommunityClient extends CandidService {
                 chatId,
                 [...missing],
                 threadRootMessageIndex,
-                latestKnownUpdate,
+                latestKnownUpdate
             )
                 .then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex))
                 .then((resp) => {
@@ -693,10 +690,10 @@ export class CommunityClient extends CandidService {
     private setCachedEvents<T extends ChatEvent>(
         chatId: ChannelIdentifier,
         resp: EventsResponse<T>,
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex?: number
     ): EventsResponse<T> {
         setCachedEvents(this.db, chatId, resp, threadRootMessageIndex).catch((err) =>
-            this.config.logger.error("Error writing cached channel events", err),
+            this.config.logger.error("Error writing cached channel events", err)
         );
         return resp;
     }
@@ -710,13 +707,13 @@ export class CommunityClient extends CandidService {
             this.service.leave_channel({
                 channel_id: BigInt(chatId.channelId),
             }),
-            leaveGroupResponse,
+            leaveGroupResponse
         );
     }
 
     localUserIndex(): Promise<string> {
         return this.handleResponse(this.service.local_user_index({}), (resp) =>
-            resp.Success.toString(),
+            resp.Success.toString()
         );
     }
 
@@ -724,7 +721,7 @@ export class CommunityClient extends CandidService {
         chatId: ChannelIdentifier,
         messageIndexes: number[],
         threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined,
+        latestKnownUpdate: bigint | undefined
     ): Promise<EventsResponse<Message>> {
         const args = {
             channel_id: BigInt(chatId.channelId),
@@ -735,7 +732,7 @@ export class CommunityClient extends CandidService {
         };
         return this.handleQueryResponse(
             () => this.service.messages_by_message_index(args),
-            (res) => messagesByMessageIndexResponse(this.principal, res, chatId, latestKnownUpdate),
+            (res) => messagesByMessageIndexResponse(this.principal, res, chatId, latestKnownUpdate)
         );
     }
 
@@ -745,7 +742,7 @@ export class CommunityClient extends CandidService {
                 channel_id: BigInt(chatId.channelId),
                 message_index: messageIndex,
             }),
-            unpinMessageResponse,
+            unpinMessageResponse
         );
     }
 
@@ -755,7 +752,7 @@ export class CommunityClient extends CandidService {
                 channel_id: BigInt(chatId.channelId),
                 message_index: messageIndex,
             }),
-            pinMessageResponse,
+            pinMessageResponse
         );
     }
 
@@ -764,20 +761,20 @@ export class CommunityClient extends CandidService {
             this.service.remove_member({
                 user_id: Principal.fromText(userId),
             }),
-            removeMemberResponse,
+            removeMemberResponse
         );
     }
 
     removeMemberFromChannel(
         chatId: ChannelIdentifier,
-        userId: string,
+        userId: string
     ): Promise<RemoveMemberResponse> {
         return this.handleResponse(
             this.service.remove_member_from_channel({
                 channel_id: BigInt(chatId.channelId),
                 user_id: Principal.fromText(userId),
             }),
-            removeMemberFromChannelResponse,
+            removeMemberFromChannelResponse
         );
     }
 
@@ -785,7 +782,7 @@ export class CommunityClient extends CandidService {
         chatId: ChannelIdentifier,
         messageId: bigint,
         reaction: string,
-        threadRootMessageIndex: number | undefined,
+        threadRootMessageIndex: number | undefined
     ): Promise<AddRemoveReactionResponse> {
         return this.handleResponse(
             this.service.remove_reaction({
@@ -794,7 +791,7 @@ export class CommunityClient extends CandidService {
                 reaction,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             }),
-            addRemoveReactionResponse,
+            addRemoveReactionResponse
         );
     }
 
@@ -806,7 +803,7 @@ export class CommunityClient extends CandidService {
         chatId: ChannelIdentifier,
         maxResults: number,
         users: string[],
-        searchTerm: string,
+        searchTerm: string
     ): Promise<SearchGroupChatResponse> {
         return this.handleQueryResponse(
             () =>
@@ -816,13 +813,13 @@ export class CommunityClient extends CandidService {
                     users: users.length > 0 ? [users.map((u) => Principal.fromText(u))] : [],
                     search_term: searchTerm,
                 }),
-            (resp) => searchGroupChatResponse(resp, chatId),
+            (resp) => searchGroupChatResponse(resp, chatId)
         );
     }
 
     async getCommunityDetails(
         id: CommunityIdentifier,
-        communityLastUpdated: bigint,
+        communityLastUpdated: bigint
     ): Promise<CommunityDetailsResponse> {
         const fromCache = await getCachedCommunityDetails(this.db, id.communityId);
         if (fromCache !== undefined) {
@@ -846,13 +843,13 @@ export class CommunityClient extends CandidService {
                 this.service.selected_initial({
                     invite_code: apiOptional(textToCode, this.inviteCode),
                 }),
-            communityDetailsResponse,
+            communityDetailsResponse
         );
     }
 
     private async getCommunityDetailsUpdates(
         id: CommunityIdentifier,
-        previous: CommunityDetails,
+        previous: CommunityDetails
     ): Promise<CommunityDetails> {
         const response = await this.getCommunityDetailsUpdatesFromBackend(previous);
         if (response.lastUpdated > previous.lastUpdated) {
@@ -862,7 +859,7 @@ export class CommunityClient extends CandidService {
     }
 
     private async getCommunityDetailsUpdatesFromBackend(
-        previous: CommunityDetails,
+        previous: CommunityDetails
     ): Promise<CommunityDetails> {
         const updatesResponse = await this.handleQueryResponse(
             () =>
@@ -870,7 +867,7 @@ export class CommunityClient extends CandidService {
                     updates_since: previous.lastUpdated,
                     invite_code: apiOptional(textToCode, this.inviteCode),
                 }),
-            communityDetailsUpdatesResponse,
+            communityDetailsUpdatesResponse
         );
 
         if (updatesResponse.kind === "failure") {
@@ -889,7 +886,7 @@ export class CommunityClient extends CandidService {
 
     async getChannelDetails(
         chatId: ChannelIdentifier,
-        chatLastUpdated: bigint,
+        chatLastUpdated: bigint
     ): Promise<GroupChatDetailsResponse> {
         const cacheKey = `${chatId.communityId}_${chatId.channelId}`;
         const fromCache = await getCachedGroupDetails(this.db, cacheKey);
@@ -909,21 +906,21 @@ export class CommunityClient extends CandidService {
     }
 
     private getChannelDetailsFromBackend(
-        chatId: ChannelIdentifier,
+        chatId: ChannelIdentifier
     ): Promise<GroupChatDetailsResponse> {
         return this.handleQueryResponse(
             () =>
                 this.service.selected_channel_initial({
                     channel_id: BigInt(chatId.channelId),
                 }),
-            groupDetailsResponse,
+            groupDetailsResponse
         );
     }
 
     private async getChannelDetailsUpdates(
         chatId: ChannelIdentifier,
         cacheKey: string,
-        previous: GroupChatDetails,
+        previous: GroupChatDetails
     ): Promise<GroupChatDetails> {
         const response = await this.getChannelDetailsUpdatesFromBackend(chatId, previous);
         if (response.timestamp > previous.timestamp) {
@@ -934,7 +931,7 @@ export class CommunityClient extends CandidService {
 
     private async getChannelDetailsUpdatesFromBackend(
         chatId: ChannelIdentifier,
-        previous: GroupChatDetails,
+        previous: GroupChatDetails
     ): Promise<GroupChatDetails> {
         const updatesResponse = await this.handleQueryResponse(
             () =>
@@ -942,7 +939,7 @@ export class CommunityClient extends CandidService {
                     channel_id: BigInt(chatId.channelId),
                     updates_since: previous.timestamp,
                 }),
-            groupDetailsUpdatesResponse,
+            groupDetailsUpdatesResponse
         );
 
         if (updatesResponse.kind === "failure") {
@@ -969,7 +966,7 @@ export class CommunityClient extends CandidService {
         communityRulesAccepted: number | undefined,
         channelRulesAccepted: number | undefined,
         messageFilterFailed: bigint | undefined,
-        newAchievement: boolean,
+        newAchievement: boolean
     ): Promise<[SendMessageResponse, Message]> {
         // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
         removeFailedMessage(this.db, chatId, event.event.messageId, threadRootMessageIndex);
@@ -993,7 +990,7 @@ export class CommunityClient extends CandidService {
                     (replyContext) => ({
                         event_index: replyContext.eventIndex,
                     }),
-                    event.event.repliesTo,
+                    event.event.repliesTo
                 ),
                 mentioned: mentioned.map(apiUser),
                 forwarding: event.event.forwarded,
@@ -1012,7 +1009,7 @@ export class CommunityClient extends CandidService {
                         this.db,
                         chatId,
                         event,
-                        threadRootMessageIndex,
+                        threadRootMessageIndex
                     )(retVal);
                     return retVal;
                 })
@@ -1029,7 +1026,7 @@ export class CommunityClient extends CandidService {
         answerIdx: number,
         voteType: "register" | "delete",
         threadRootMessageIndex: number | undefined,
-        newAchievement: boolean,
+        newAchievement: boolean
     ): Promise<RegisterPollVoteResponse> {
         return this.handleResponse(
             this.service.register_poll_vote({
@@ -1040,7 +1037,7 @@ export class CommunityClient extends CandidService {
                 message_index: messageIdx,
                 new_achievement: newAchievement,
             }),
-            registerPollVoteResponse,
+            registerPollVoteResponse
         );
     }
 
@@ -1051,7 +1048,7 @@ export class CommunityClient extends CandidService {
                     channel_id: BigInt(chatId.channelId),
                     invite_code: apiOptional(textToCode, this.inviteCode),
                 }),
-            (resp) => communityChannelSummaryResponse(resp, this.communityId),
+            (resp) => communityChannelSummaryResponse(resp, this.communityId)
         ).catch((err) => {
             if (err instanceof DestinationInvalidError) {
                 return { kind: "canister_not_found" };
@@ -1066,7 +1063,7 @@ export class CommunityClient extends CandidService {
             this.service.import_group({
                 group_id: Principal.fromText(id.groupId),
             }),
-            (resp) => importGroupResponse(this.communityId, resp),
+            (resp) => importGroupResponse(this.communityId, resp)
         );
     }
 
@@ -1076,14 +1073,14 @@ export class CommunityClient extends CandidService {
                 this.service.summary({
                     invite_code: apiOptional(textToCode, this.inviteCode),
                 }),
-            summaryResponse,
+            summaryResponse
         );
     }
 
     exploreChannels(
         searchTerm: string | undefined,
         pageSize: number,
-        pageIndex: number,
+        pageIndex: number
     ): Promise<ExploreChannelsResponse> {
         return this.handleQueryResponse(
             () =>
@@ -1093,7 +1090,7 @@ export class CommunityClient extends CandidService {
                     search_term: apiOptional(identity, searchTerm),
                     invite_code: apiOptional(textToCode, this.inviteCode),
                 }),
-            (resp) => exploreChannelsResponse(resp, this.communityId),
+            (resp) => exploreChannelsResponse(resp, this.communityId)
         );
     }
 
@@ -1104,20 +1101,20 @@ export class CommunityClient extends CandidService {
                     updates_since: updatesSince,
                     invite_code: apiOptional(textToCode, this.inviteCode),
                 }),
-            summaryUpdatesResponse,
+            summaryUpdatesResponse
         );
     }
 
     toggleMuteChannelNotifications(
         chatId: ChannelIdentifier | undefined,
-        mute: boolean,
+        mute: boolean
     ): Promise<ToggleMuteNotificationResponse> {
         return this.handleResponse(
             this.service.toggle_mute_notifications({
                 channel_id: chatId ? [BigInt(chatId.channelId)] : [],
                 mute,
             }),
-            muteNotificationsResponse,
+            muteNotificationsResponse
         );
     }
 
@@ -1127,7 +1124,7 @@ export class CommunityClient extends CandidService {
                 channel_id: [],
                 mute,
             }),
-            toggleMuteNotificationsResponse,
+            toggleMuteNotificationsResponse
         );
     }
 
@@ -1136,14 +1133,14 @@ export class CommunityClient extends CandidService {
             this.service.unblock_user({
                 user_id: Principal.fromText(userId),
             }),
-            unblockUserResponse,
+            unblockUserResponse
         );
     }
 
     undeleteMessage(
         chatId: ChannelIdentifier,
         messageId: bigint,
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex?: number
     ): Promise<UndeleteMessageResponse> {
         return this.handleResponse(
             this.service.undelete_messages({
@@ -1151,14 +1148,14 @@ export class CommunityClient extends CandidService {
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_ids: [messageId],
             }),
-            undeleteMessageResponse,
+            undeleteMessageResponse
         );
     }
 
     threadPreviews(
         chatId: ChannelIdentifier,
         threadRootMessageIndexes: number[],
-        latestClientThreadUpdate: bigint | undefined,
+        latestClientThreadUpdate: bigint | undefined
     ): Promise<ThreadPreviewsResponse> {
         return this.handleQueryResponse(
             () =>
@@ -1167,14 +1164,14 @@ export class CommunityClient extends CandidService {
                     threads: new Uint32Array(threadRootMessageIndexes),
                     latest_client_thread_update: apiOptional(identity, latestClientThreadUpdate),
                 }),
-            (resp) => threadPreviewsResponse(resp, chatId, latestClientThreadUpdate),
+            (resp) => threadPreviewsResponse(resp, chatId, latestClientThreadUpdate)
         );
     }
 
     registerProposalVote(
         channelId: string,
         messageIdx: number,
-        adopt: boolean,
+        adopt: boolean
     ): Promise<RegisterProposalVoteResponse> {
         return this.handleResponse(
             this.service.register_proposal_vote({
@@ -1182,7 +1179,7 @@ export class CommunityClient extends CandidService {
                 adopt,
                 message_index: messageIdx,
             }),
-            registerProposalVoteResponse,
+            registerProposalVoteResponse
         );
     }
 
@@ -1197,7 +1194,7 @@ export class CommunityClient extends CandidService {
         gate?: AccessGate,
         isPublic?: boolean,
         messagesVisibleToNonMembers?: boolean,
-        externalUrl?: string,
+        externalUrl?: string
     ): Promise<UpdateGroupResponse> {
         return this.handleResponse(
             this.service.update_channel({
@@ -1214,8 +1211,8 @@ export class CommunityClient extends CandidService {
                     gate === undefined
                         ? { NoChange: null }
                         : gate.kind === "no_gate"
-                          ? { SetToNone: null }
-                          : { SetToSome: apiAccessGate(gate) },
+                        ? { SetToNone: null }
+                        : { SetToSome: apiAccessGate(gate) },
                 avatar:
                     avatar === undefined
                         ? { NoChange: null }
@@ -1228,7 +1225,7 @@ export class CommunityClient extends CandidService {
                           },
                 messages_visible_to_non_members: apiOptional(identity, messagesVisibleToNonMembers),
             }),
-            updateGroupResponse,
+            updateGroupResponse
         );
     }
 
@@ -1241,7 +1238,7 @@ export class CommunityClient extends CandidService {
         banner?: Uint8Array,
         gate?: AccessGate,
         isPublic?: boolean,
-        primaryLanguage?: string,
+        primaryLanguage?: string
     ): Promise<UpdateCommunityResponse> {
         return this.handleResponse(
             this.service.update_community({
@@ -1255,8 +1252,8 @@ export class CommunityClient extends CandidService {
                     gate === undefined
                         ? { NoChange: null }
                         : gate.kind === "no_gate"
-                          ? { SetToNone: null }
-                          : { SetToSome: apiAccessGate(gate) },
+                        ? { SetToNone: null }
+                        : { SetToSome: apiAccessGate(gate) },
                 avatar:
                     avatar === undefined
                         ? { NoChange: null }
@@ -1278,7 +1275,7 @@ export class CommunityClient extends CandidService {
                               },
                           },
             }),
-            updateCommunityResponse,
+            updateCommunityResponse
         );
     }
 
@@ -1288,7 +1285,7 @@ export class CommunityClient extends CandidService {
                 name,
                 user_ids: users.map((u) => Principal.fromText(u)),
             }),
-            createUserGroupResponse,
+            createUserGroupResponse
         );
     }
 
@@ -1296,7 +1293,7 @@ export class CommunityClient extends CandidService {
         userGroupId: number,
         name: string | undefined,
         usersToAdd: string[],
-        usersToRemove: string[],
+        usersToRemove: string[]
     ): Promise<UpdateUserGroupResponse> {
         return this.handleResponse(
             this.service.update_user_group({
@@ -1305,20 +1302,20 @@ export class CommunityClient extends CandidService {
                 users_to_add: usersToAdd.map((u) => Principal.fromText(u)),
                 users_to_remove: usersToRemove.map((u) => Principal.fromText(u)),
             }),
-            updateUserGroupResponse,
+            updateUserGroupResponse
         );
     }
 
     setMemberDisplayName(
         displayName: string | undefined,
-        newAchievement: boolean,
+        newAchievement: boolean
     ): Promise<SetMemberDisplayNameResponse> {
         return this.handleResponse(
             this.service.set_member_display_name({
                 display_name: apiOptional(identity, displayName),
                 new_achievement: newAchievement,
             }),
-            setMemberDisplayNameResponse,
+            setMemberDisplayNameResponse
         );
     }
 
@@ -1327,14 +1324,14 @@ export class CommunityClient extends CandidService {
             this.service.delete_user_groups({
                 user_group_ids: userGroupIds,
             }),
-            deleteUserGroupsResponse,
+            deleteUserGroupsResponse
         );
     }
 
     followThread(
         channelId: string,
         threadRootMessageIndex: number,
-        follow: boolean,
+        follow: boolean
     ): Promise<FollowThreadResponse> {
         const args = {
             channel_id: BigInt(channelId),
@@ -1342,7 +1339,7 @@ export class CommunityClient extends CandidService {
         };
         return this.handleResponse(
             follow ? this.service.follow_thread(args) : this.service.unfollow_thread(args),
-            followThreadResponse,
+            followThreadResponse
         );
     }
 
@@ -1350,7 +1347,7 @@ export class CommunityClient extends CandidService {
         channelId: string,
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
-        deleteMessage: boolean,
+        deleteMessage: boolean
     ): Promise<boolean> {
         return this.handleResponse(
             this.service.report_message({
@@ -1359,7 +1356,7 @@ export class CommunityClient extends CandidService {
                 message_id: messageId,
                 delete: deleteMessage,
             }),
-            reportMessageResponse,
+            reportMessageResponse
         );
     }
 
@@ -1368,7 +1365,7 @@ export class CommunityClient extends CandidService {
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
         pin: string | undefined,
-        newAchievement: boolean,
+        newAchievement: boolean
     ): Promise<AcceptP2PSwapResponse> {
         return this.handleResponse(
             this.service.accept_p2p_swap({
@@ -1378,14 +1375,14 @@ export class CommunityClient extends CandidService {
                 pin: apiOptional(identity, pin),
                 new_achievement: newAchievement,
             }),
-            acceptP2PSwapResponse,
+            acceptP2PSwapResponse
         );
     }
 
     cancelP2PSwap(
         channelId: string,
         threadRootMessageIndex: number | undefined,
-        messageId: bigint,
+        messageId: bigint
     ): Promise<CancelP2PSwapResponse> {
         return this.handleResponse(
             this.service.cancel_p2p_swap({
@@ -1393,14 +1390,14 @@ export class CommunityClient extends CandidService {
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_id: messageId,
             }),
-            cancelP2PSwapResponse,
+            cancelP2PSwapResponse
         );
     }
 
     joinVideoCall(
         channelId: string,
         messageId: bigint,
-        newAchievement: boolean,
+        newAchievement: boolean
     ): Promise<JoinVideoCallResponse> {
         return this.handleResponse(
             this.service.join_video_call({
@@ -1408,7 +1405,7 @@ export class CommunityClient extends CandidService {
                 channel_id: BigInt(channelId),
                 new_achievement: newAchievement,
             }),
-            joinVideoCallResponse,
+            joinVideoCallResponse
         );
     }
 
@@ -1416,7 +1413,7 @@ export class CommunityClient extends CandidService {
         channelId: string,
         messageId: bigint,
         presence: VideoCallPresence,
-        newAchievement: boolean,
+        newAchievement: boolean
     ): Promise<SetVideoCallPresenceResponse> {
         return this.handleResponse(
             this.service.set_video_call_presence({
@@ -1425,14 +1422,14 @@ export class CommunityClient extends CandidService {
                 presence: apiVideoCallPresence(presence),
                 new_achievement: newAchievement,
             }),
-            setVideoCallPresence,
+            setVideoCallPresence
         );
     }
 
     videoCallParticipants(
         channelId: string,
         messageId: bigint,
-        updatesSince?: bigint,
+        updatesSince?: bigint
     ): Promise<VideoCallParticipantsResponse> {
         return this.handleQueryResponse(
             () =>
@@ -1441,7 +1438,17 @@ export class CommunityClient extends CandidService {
                     message_id: messageId,
                     updated_since: apiOptional(identity, updatesSince),
                 }),
-            videoCallParticipantsResponse,
+            videoCallParticipantsResponse
+        );
+    }
+
+    cancelInvites(channelId: string | undefined, userIds: string[]): Promise<boolean> {
+        return this.handleResponse(
+            this.service.cancel_invites({
+                channel_id: apiOptional((cid) => BigInt(cid), channelId),
+                user_ids: userIds.map((u) => Principal.fromText(u)),
+            }),
+            (candid) => "Success" in candid
         );
     }
 }

@@ -67,7 +67,7 @@ import { distinctBy, groupWhile, toRecordFiltered } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import DRange from "drange";
-import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID, userStore } from "../stores/user";
+import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID } from "../stores/user";
 import Identicon from "identicon.js";
 import md5 from "md5";
 import { rtcConnectionsManager } from "../utils/rtcConnectionsManager";
@@ -195,7 +195,7 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
         case "message_unpinned":
             return event.unpinnedBy;
         case "events_ttl_updated":
-            return event.updatedBy;
+        case "external_url_updated":
         case "gate_updated":
             return event.updatedBy;
         case "users_invited":
@@ -414,6 +414,8 @@ export function mergeLocalSummaryUpdates(
                             notificationsMuted:
                                 updated.notificationsMuted ?? current.membership.notificationsMuted,
                             archived: updated.archived ?? current.membership.archived,
+                            rulesAccepted:
+                                updated.rulesAccepted ?? current.membership.rulesAccepted,
                         },
                         eventsTTL: updated.eventsTTL
                             ? updated.eventsTTL === "set_to_none"
@@ -1034,11 +1036,7 @@ export function canChangeRoles(
 
 export function canRemoveMembers(chat: ChatSummary): boolean {
     if (chat.kind !== "direct_chat") {
-        return (
-            !chat.public &&
-            !chat.frozen &&
-            isPermitted(chat.membership.role, chat.permissions.removeMembers)
-        );
+        return !chat.frozen && isPermitted(chat.membership.role, chat.permissions.removeMembers);
     } else {
         return false;
     }
@@ -1084,11 +1082,12 @@ export function canEditGroupDetails(chat: ChatSummary): boolean {
     }
 }
 
-export function canStartVideoCalls(chat: ChatSummary): boolean {
-    if (chat.kind !== "direct_chat") {
-        return !chat.frozen && isPermitted(chat.membership.role, chat.permissions.startVideoCall);
+export function canStartVideoCalls(chat: ChatSummary, userLookup: UserLookup): boolean {
+    if (chat.kind === "direct_chat") {
+        const user = userLookup.get(chat.them.userId);
+        return user !== undefined && user.kind === "user";
     } else {
-        return true;
+        return !chat.frozen && isPermitted(chat.membership.role, chat.permissions.startVideoCall);
     }
 }
 
@@ -1806,11 +1805,7 @@ export function buildCryptoTransferText(
     }
 
     function username(userId: string): string {
-        const lookup = get(userStore);
-
-        return userId === myUserId
-            ? formatter("you")
-            : `${lookup.get(userId)?.username ?? formatter("unknown")}`;
+        return userId === myUserId ? formatter("you") : `@UserId(${userId})`;
     }
 
     const tokenDetails = cryptoLookup[content.transfer.ledger];

@@ -1,13 +1,13 @@
+use crate::icrc2::TransferFromError;
 use crate::{CanisterId, Milliseconds};
 use candid::{CandidType, Principal};
-use icrc_ledger_types::icrc2::transfer_from::TransferFromError;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use ts_rs::TS;
+use ts_export::ts_export;
 
 pub const SNS_FEE_SHARE_PERCENT: u128 = 2;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug, Eq, PartialEq)]
 pub enum AccessGate {
     DiamondMember,
     LifetimeDiamondMember,
@@ -18,15 +18,51 @@ pub enum AccessGate {
     TokenBalance(TokenBalanceGate),
     Composite(CompositeGate),
     Locked,
+    ReferredByMember,
+}
+
+#[ts_export]
+#[derive(CandidType, Clone, Debug, Eq, PartialEq)]
+pub enum AccessGateNonComposite {
+    DiamondMember,
+    LifetimeDiamondMember,
+    UniquePerson,
+    VerifiedCredential(VerifiedCredentialGate),
+    SnsNeuron(SnsNeuronGate),
+    Payment(PaymentGate),
+    TokenBalance(TokenBalanceGate),
+    Locked,
+    ReferredByMember,
+}
+
+pub enum AccessGateType {
+    Composite(CompositeGate),
+    NonComposite(AccessGateNonComposite),
+}
+
+impl From<AccessGate> for AccessGateType {
+    fn from(value: AccessGate) -> Self {
+        match value {
+            AccessGate::Composite(gate) => AccessGateType::Composite(gate),
+            AccessGate::DiamondMember => AccessGateType::NonComposite(AccessGateNonComposite::DiamondMember),
+            AccessGate::LifetimeDiamondMember => AccessGateType::NonComposite(AccessGateNonComposite::LifetimeDiamondMember),
+            AccessGate::UniquePerson => AccessGateType::NonComposite(AccessGateNonComposite::UniquePerson),
+            AccessGate::VerifiedCredential(gate) => {
+                AccessGateType::NonComposite(AccessGateNonComposite::VerifiedCredential(gate))
+            }
+            AccessGate::SnsNeuron(gate) => AccessGateType::NonComposite(AccessGateNonComposite::SnsNeuron(gate)),
+            AccessGate::Payment(gate) => AccessGateType::NonComposite(AccessGateNonComposite::Payment(gate)),
+            AccessGate::TokenBalance(gate) => AccessGateType::NonComposite(AccessGateNonComposite::TokenBalance(gate)),
+            AccessGate::Locked => AccessGateType::NonComposite(AccessGateNonComposite::Locked),
+            AccessGate::ReferredByMember => AccessGateType::NonComposite(AccessGateNonComposite::ReferredByMember),
+        }
+    }
 }
 
 impl AccessGate {
     pub fn validate(&self) -> bool {
         if let AccessGate::Composite(g) = self {
             if g.inner.is_empty() || g.inner.len() > 10 {
-                return false;
-            }
-            if g.inner.iter().any(|i| matches!(i, AccessGate::Composite(_))) {
                 return false;
             }
         }
@@ -48,11 +84,13 @@ impl AccessGate {
             AccessGate::TokenBalance(_) => "token_balance",
             AccessGate::Composite(_) => "composite",
             AccessGate::Locked => "locked",
+            AccessGate::ReferredByMember => "referred_by_member",
         }
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug, Eq, PartialEq)]
 pub struct VerifiedCredentialGate {
     pub issuer_canister_id: CanisterId,
     pub issuer_origin: String,
@@ -61,41 +99,45 @@ pub struct VerifiedCredentialGate {
     pub credential_arguments: HashMap<String, VerifiedCredentialArgumentValue>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug, Eq, PartialEq)]
 pub enum VerifiedCredentialArgumentValue {
     String(String),
     Int(i32),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug, Eq, PartialEq)]
 pub struct SnsNeuronGate {
     pub governance_canister_id: CanisterId,
-    #[ts(optional)]
     pub min_stake_e8s: Option<u64>,
-    #[ts(optional)]
     pub min_dissolve_delay: Option<Milliseconds>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug, Eq, PartialEq)]
 pub struct PaymentGate {
     pub ledger_canister_id: CanisterId,
     pub amount: u128,
     pub fee: u128,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug, Eq, PartialEq)]
 pub struct TokenBalanceGate {
     pub ledger_canister_id: CanisterId,
     pub min_balance: u128,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug, Eq, PartialEq)]
 pub struct CompositeGate {
-    pub inner: Vec<AccessGate>,
+    pub inner: Vec<AccessGateNonComposite>,
     pub and: bool,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub enum GateCheckFailedReason {
     NotDiamondMember,
     NotLifetimeDiamondMember,
@@ -103,13 +145,15 @@ pub enum GateCheckFailedReason {
     NoSnsNeuronsFound,
     NoSnsNeuronsWithRequiredStakeFound,
     NoSnsNeuronsWithRequiredDissolveDelayFound,
-    PaymentFailed(#[ts(as = "TransferFromErrorJS")] TransferFromError),
+    PaymentFailed(TransferFromError),
     InsufficientBalance(u128),
     FailedVerifiedCredentialCheck(String),
     Locked,
+    NotReferredByMember,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, TS)]
+#[ts_export]
+#[derive(CandidType, Clone, Debug)]
 pub struct VerifiedCredentialGateArgs {
     pub user_ii_principal: Principal,
     pub credential_jwt: String,
@@ -126,19 +170,4 @@ impl VerifiedCredentialGateArgs {
         }
         credential_jwts
     }
-}
-
-#[derive(TS)]
-pub enum TransferFromErrorJS {
-    BadFee { expected_fee: u128 },
-    BadBurn { min_burn_amount: u128 },
-    // The [from] account does not hold enough funds for the transfer.
-    InsufficientFunds { balance: u128 },
-    // The caller exceeded its allowance.
-    InsufficientAllowance { allowance: u128 },
-    TooOld,
-    CreatedInFuture { ledger_time: u64 },
-    Duplicate { duplicate_of: u128 },
-    TemporarilyUnavailable,
-    GenericError { error_code: u128, message: String },
 }

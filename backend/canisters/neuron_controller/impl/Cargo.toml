@@ -28,6 +28,7 @@ icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_led
 icrc-ledger-types = { workspace = true }
 k256 = "0.13.1"
 ledger_utils = { path = "../../../libraries/ledger_utils" }
+msgpack = { path = "../../../libraries/msgpack" }
 neuron_controller_canister = { path = "../api" }
 nns_governance_canister = { path = "../../../external_canisters/nns_governance/api" }
 nns_governance_canister_c2c_client = { path = "../../../external_canisters/nns_governance/c2c_client" }
@@ -35,7 +36,6 @@ rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serde_cbor = { workspace = true }
-serializer = { path = "../../../libraries/serializer" }
 sha256 = { path = "../../../libraries/sha256" }
 stable_memory = { path = "../../../libraries/stable_memory" }
 tracing = { workspace = true }

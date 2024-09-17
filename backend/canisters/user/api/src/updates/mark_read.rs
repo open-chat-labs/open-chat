@@ -1,14 +1,16 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{ChannelId, ChatId, CommunityId, MessageIndex, TimestampMillis};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, mark_read)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub messages_read: Vec<ChatMessagesRead>,
     pub community_messages_read: Vec<CommunityMessagesRead>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, mark_read)]
+#[derive(CandidType, Debug)]
 pub struct ChatMessagesRead {
     pub chat_id: ChatId,
     pub read_up_to: Option<MessageIndex>,
@@ -16,19 +18,22 @@ pub struct ChatMessagesRead {
     pub date_read_pinned: Option<TimestampMillis>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, mark_read)]
+#[derive(CandidType, Debug)]
 pub struct ThreadRead {
     pub root_message_index: MessageIndex,
     pub read_up_to: MessageIndex,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, mark_read)]
+#[derive(CandidType, Debug)]
 pub struct CommunityMessagesRead {
     pub community_id: CommunityId,
     pub channels_read: Vec<ChannelMessagesRead>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, mark_read)]
+#[derive(CandidType, Debug)]
 pub struct ChannelMessagesRead {
     pub channel_id: ChannelId,
     pub read_up_to: Option<MessageIndex>,
@@ -36,7 +41,8 @@ pub struct ChannelMessagesRead {
     pub date_read_pinned: Option<TimestampMillis>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, mark_read)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success,
 }

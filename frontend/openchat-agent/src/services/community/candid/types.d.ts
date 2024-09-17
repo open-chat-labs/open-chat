@@ -27,10 +27,22 @@ export type AcceptP2PSwapResponse = {
 export interface AcceptSwapSuccess { 'token1_txn_in' : bigint }
 export type AccessGate = { 'UniquePerson' : null } |
   { 'VerifiedCredential' : VerifiedCredentialGate } |
+  { 'ReferredByMember' : null } |
   { 'SnsNeuron' : SnsNeuronGate } |
   { 'Locked' : null } |
   { 'TokenBalance' : TokenBalanceGate } |
-  { 'Composite' : { 'and' : boolean, 'inner' : Array<AccessGate> } } |
+  {
+    'Composite' : { 'and' : boolean, 'inner' : Array<AccessGateNonComposite> }
+  } |
+  { 'DiamondMember' : null } |
+  { 'Payment' : PaymentGate } |
+  { 'LifetimeDiamondMember' : null };
+export type AccessGateNonComposite = { 'UniquePerson' : null } |
+  { 'VerifiedCredential' : VerifiedCredentialGate } |
+  { 'ReferredByMember' : null } |
+  { 'SnsNeuron' : SnsNeuronGate } |
+  { 'Locked' : null } |
+  { 'TokenBalance' : TokenBalanceGate } |
   { 'DiamondMember' : null } |
   { 'Payment' : PaymentGate } |
   { 'LifetimeDiamondMember' : null };
@@ -38,7 +50,6 @@ export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
 export type AccessTokenType = { 'JoinVideoCall' : null } |
-  { 'StartVideoCall' : null } |
   { 'StartVideoCallV2' : { 'call_type' : VideoCallType } } |
   { 'MarkVideoCallAsEnded' : null };
 export type AccessorId = Principal;
@@ -225,6 +236,13 @@ export interface CallParticipant {
   'user_id' : UserId,
   'joined' : TimestampMillis,
 }
+export interface CancelInvitesArgs {
+  'channel_id' : [] | [ChannelId],
+  'user_ids' : Array<UserId>,
+}
+export type CancelInvitesResponse = { 'ChannelNotFound' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null };
 export interface CancelP2PSwapArgs {
   'channel_id' : ChannelId,
   'message_id' : MessageId,
@@ -422,6 +440,7 @@ export interface ChitEarned {
 }
 export type ChitEarnedReason = { 'DailyClaim' : null } |
   { 'Achievement' : Achievement } |
+  { 'ExternalAchievement' : string } |
   { 'MemeContestWinner' : null } |
   { 'Referral' : ReferralStatus };
 export interface ClaimPrizeArgs {
@@ -552,6 +571,7 @@ export interface CommunityMatch {
 }
 export interface CommunityMember {
   'role' : CommunityRole,
+  'referred_by' : [] | [UserId],
   'user_id' : UserId,
   'display_name' : [] | [string],
   'date_added' : TimestampMillis,
@@ -953,6 +973,7 @@ export type FrozenGroupUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : FrozenGroupInfo };
 export type GateCheckFailedReason = { 'NotLifetimeDiamondMember' : null } |
+  { 'NotReferredByMember' : null } |
   { 'NotDiamondMember' : null } |
   { 'PaymentFailed' : ICRC2_TransferFromError } |
   { 'InsufficientBalance' : bigint } |
@@ -2033,6 +2054,7 @@ export interface SelectedInitialSuccess {
   'invited_users' : Array<UserId>,
   'blocked_users' : Array<UserId>,
   'last_updated' : TimestampMillis,
+  'referrals' : Array<UserId>,
   'chat_rules' : VersionedRules,
   'user_groups' : Array<UserGroupDetails>,
   'timestamp' : TimestampMillis,
@@ -2049,12 +2071,14 @@ export interface SelectedUpdatesSuccess {
   'blocked_users_removed' : Array<UserId>,
   'invited_users' : [] | [Array<UserId>],
   'user_groups_deleted' : Uint32Array | number[],
+  'referrals_removed' : Array<UserId>,
   'last_updated' : TimestampMillis,
   'members_added_or_updated' : Array<CommunityMember>,
   'chat_rules' : [] | [VersionedRules],
   'user_groups' : Array<UserGroupDetails>,
   'members_removed' : Array<UserId>,
   'timestamp' : TimestampMillis,
+  'referrals_added' : Array<UserId>,
   'blocked_users_added' : Array<UserId>,
 }
 export type SelectedUpdatesV2Response = { 'Success' : SelectedUpdatesSuccess } |
@@ -2526,6 +2550,7 @@ export interface _SERVICE {
   >,
   'add_reaction' : ActorMethod<[AddReactionArgs], AddReactionResponse>,
   'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
+  'cancel_invites' : ActorMethod<[CancelInvitesArgs], CancelInvitesResponse>,
   'cancel_p2p_swap' : ActorMethod<[CancelP2PSwapArgs], CancelP2PSwapResponse>,
   'change_channel_role' : ActorMethod<
     [ChangeChannelRoleArgs],
@@ -2583,10 +2608,6 @@ export interface _SERVICE {
   'register_proposal_vote' : ActorMethod<
     [RegisterProposalVoteArgs],
     RegisterProposalVoteResponse
-  >,
-  'register_proposal_vote_v2' : ActorMethod<
-    [RegisterProposalVoteArgs],
-    RegisterProposalVoteV2Response
   >,
   'remove_member' : ActorMethod<[RemoveMemberArgs], RemoveMemberResponse>,
   'remove_member_from_channel' : ActorMethod<

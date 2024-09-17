@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Rules, Metrics, CommunitySummary } from "openchat-client";
+    import { type Rules, type Metrics, type CommunitySummary } from "openchat-client";
     import {
         communityAdvancedOpen,
         communityInviteUsersOpen,
@@ -17,12 +17,14 @@
     import InviteUsersWithLink from "../../InviteUsersWithLink.svelte";
     import { i18nKey } from "../../../../i18n/i18n";
     import Translatable from "../../../Translatable.svelte";
+    import ReferredUsersList from "../../profile/ReferredUsersList.svelte";
 
     export let community: CommunitySummary;
     export let rules: Rules | undefined;
     export let metrics: Metrics;
     export let canDelete: boolean;
     export let canInvite: boolean;
+    export let referrals: Set<string>;
 </script>
 
 <div class="details">
@@ -89,6 +91,7 @@
             <InviteUsersWithLink container={community} />
         </CollapsibleCard>
     {/if}
+    <ReferredUsersList {referrals} />
     <CollapsibleCard
         on:toggle={communityPermissionsOpen.toggle}
         open={$communityPermissionsOpen}

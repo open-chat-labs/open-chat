@@ -1537,10 +1537,23 @@ type AccessGate = variant {
     Payment : PaymentGate;
     TokenBalance : TokenBalanceGate;
     Composite : record {
-        inner : vec AccessGate;
+        inner : vec AccessGateNonComposite;
         and : bool;
     };
     Locked;
+    ReferredByMember;
+};
+
+type AccessGateNonComposite = variant {
+    DiamondMember;
+    LifetimeDiamondMember;
+    UniquePerson;
+    VerifiedCredential : VerifiedCredentialGate;
+    SnsNeuron : SnsNeuronGate;
+    Payment : PaymentGate;
+    TokenBalance : TokenBalanceGate;
+    Locked;
+    ReferredByMember;
 };
 
 type AccessGateUpdate = variant {
@@ -1598,6 +1611,7 @@ type GateCheckFailedReason = variant {
     InsufficientBalance : nat;
     FailedVerifiedCredentialCheck : text;
     Locked;
+    NotReferredByMember;
 };
 
 type VerifiedCredentialGateArgs = record {
@@ -1772,6 +1786,7 @@ type CommunityMember = record {
     date_added : TimestampMillis;
     role : CommunityRole;
     display_name : opt text;
+    referred_by : opt UserId;
 };
 
 type PermissionRoleUpdate = variant {
@@ -1847,7 +1862,6 @@ type VideoCallParticipants = record {
 };
 
 type AccessTokenType = variant {
-    StartVideoCall;
     StartVideoCallV2 : record {
         call_type : VideoCallType;
     };
@@ -1876,6 +1890,7 @@ type ChitEarned = record {
 type ChitEarnedReason = variant {
     DailyClaim;
     Achievement : Achievement;
+    ExternalAchievement : text;
     Referral : ReferralStatus;
     MemeContestWinner;
 };

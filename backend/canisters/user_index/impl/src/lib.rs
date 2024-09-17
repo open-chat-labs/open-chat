@@ -11,6 +11,7 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
 use local_user_index_canister::Event as LocalUserIndexEvent;
 use model::chit_leaderboard::ChitLeaderboard;
+use model::external_achievements::{ExternalAchievementMetrics, ExternalAchievements};
 use model::local_user_index_map::LocalUserIndexMap;
 use model::pending_modclub_submissions_queue::{PendingModclubSubmission, PendingModclubSubmissionsQueue};
 use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
@@ -272,7 +273,40 @@ impl RuntimeState {
             deleted_users: self.data.deleted_users.iter().take(100).map(|u| u.user_id).collect(),
             deleted_users_length: self.data.deleted_users.len(),
             unique_person_proofs_submitted: self.data.users.unique_person_proofs_submitted(),
+            july_airdrop_period: self.build_stats_for_cohort(1719792000000, 1723021200000),
+            august_airdrop_period: self.build_stats_for_cohort(1723021200000, 1725181200000),
+            survey_messages_sent: self.data.survey_messages_sent,
+            external_achievements: self.data.external_achievements.metrics(),
         }
+    }
+
+    fn build_stats_for_cohort(&self, airdrop_from: TimestampMillis, airdrop_to: TimestampMillis) -> AirdropStats {
+        let mut stats = AirdropStats::default();
+
+        for user in self.data.users.iter() {
+            let diamond = user.diamond_membership_details.was_active(airdrop_from)
+                || user.diamond_membership_details.was_active(airdrop_to);
+
+            let lifetime_diamond = user.diamond_membership_details.is_lifetime_diamond_member();
+
+            if diamond {
+                stats.diamond += 1;
+            }
+
+            if lifetime_diamond {
+                stats.lifetime_diamond += 1;
+            }
+
+            if user.unique_person_proof.is_some() {
+                stats.proved_uniqueness += 1;
+            }
+
+            if (user.unique_person_proof.is_some() && diamond) || lifetime_diamond {
+                stats.qualify_for_airdrop += 1;
+            }
+        }
+
+        stats
     }
 }
 
@@ -325,6 +359,8 @@ struct Data {
     pub ic_root_key: Vec<u8>,
     pub identity_canister_user_sync_queue: VecDeque<(Principal, Option<UserId>)>,
     pub remove_from_online_users_queue: VecDeque<Principal>,
+    pub survey_messages_sent: usize,
+    pub external_achievements: ExternalAchievements,
 }
 
 impl Data {
@@ -395,11 +431,13 @@ impl Data {
             video_call_operators,
             oc_key_pair: P256KeyPair::default(),
             empty_users: HashSet::new(),
-            chit_leaderboard: ChitLeaderboard::default(),
+            chit_leaderboard: ChitLeaderboard::new(now),
             deleted_users: Vec::new(),
             ic_root_key,
             identity_canister_user_sync_queue: VecDeque::new(),
             remove_from_online_users_queue: VecDeque::new(),
+            survey_messages_sent: 0,
+            external_achievements: ExternalAchievements::default(),
         };
 
         // Register the ProposalsBot
@@ -520,11 +558,13 @@ impl Default for Data {
             video_call_operators: Vec::default(),
             oc_key_pair: P256KeyPair::default(),
             empty_users: HashSet::new(),
-            chit_leaderboard: ChitLeaderboard::default(),
+            chit_leaderboard: ChitLeaderboard::new(0),
             deleted_users: Vec::new(),
             ic_root_key: Vec::new(),
             identity_canister_user_sync_queue: VecDeque::new(),
             remove_from_online_users_queue: VecDeque::new(),
+            survey_messages_sent: 0,
+            external_achievements: ExternalAchievements::default(),
         }
     }
 }
@@ -566,6 +606,10 @@ pub struct Metrics {
     pub deleted_users: Vec<UserId>,
     pub deleted_users_length: usize,
     pub unique_person_proofs_submitted: u32,
+    pub july_airdrop_period: AirdropStats,
+    pub august_airdrop_period: AirdropStats,
+    pub survey_messages_sent: usize,
+    pub external_achievements: Vec<ExternalAchievementMetrics>,
 }
 
 #[derive(Serialize, Debug)]
@@ -581,6 +625,14 @@ pub struct UserMetrics {
     pub chit_updated: TimestampMillis,
     pub streak: u16,
     pub streak_ends: TimestampMillis,
+}
+
+#[derive(Serialize, Debug, Default)]
+pub struct AirdropStats {
+    pub diamond: u32,
+    pub lifetime_diamond: u32,
+    pub proved_uniqueness: u32,
+    pub qualify_for_airdrop: u32,
 }
 
 #[derive(Serialize, Debug, Default)]

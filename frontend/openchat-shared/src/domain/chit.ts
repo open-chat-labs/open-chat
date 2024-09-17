@@ -10,6 +10,12 @@ export type ClaimDailyChitResponse =
           nextDailyChitClaim: bigint;
       };
 
+export type ChitLeaderboardResponse = {
+    allTime: ChitUserBalance[];
+    lastMonth: ChitUserBalance[];
+    thisMonth: ChitUserBalance[];
+};
+
 export type ChitUserBalance = {
     userId: string;
     balance: number;
@@ -106,12 +112,22 @@ export type AchievementUnlocked = {
     type: Achievement;
 };
 
+export type ExternalAchievementUnlocked = {
+    kind: "external_achievement_unlocked";
+    name: string;
+};
+
 export type ReferralType = {
     kind: "referral";
     type: ReferralStatus;
 };
 
-export type ChitEarnedReason = DailyClaim | MemeContestWinner | AchievementUnlocked | ReferralType;
+export type ChitEarnedReason =
+    | DailyClaim
+    | MemeContestWinner
+    | AchievementUnlocked
+    | ReferralType
+    | ExternalAchievementUnlocked;
 
 export type ChitEarned = {
     amount: number;
@@ -130,4 +146,22 @@ export type ChitEventsRequest = {
     to: bigint;
     max: number;
     ascending: boolean;
+};
+
+export type ExternalAchievementsResponse =
+    | ExternalAchievementsSuccess
+    | { kind: "success_no_updates" };
+
+export type ExternalAchievementsSuccess = {
+    kind: "success";
+    achievementsRemoved: ExternalAchievement[];
+    lastUpdated: bigint;
+    achievementsAdded: ExternalAchievement[];
+};
+
+export type ExternalAchievement = {
+    id: number;
+    url: string;
+    name: string;
+    chitReward: number;
 };

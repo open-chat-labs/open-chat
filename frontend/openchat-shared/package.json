@@ -16,11 +16,11 @@
     },
     "author": "julian.jelfs@gmail.com",
     "dependencies": {
-        "@dfinity/agent": "^2.0.0",
-        "@dfinity/auth-client": "^2.0.0",
-        "@dfinity/candid": "^2.0.0",
-        "@dfinity/identity": "^2.0.0",
-        "@dfinity/principal": "^2.0.0",
+        "@dfinity/agent": "^2.1.0",
+        "@dfinity/auth-client": "^2.1.0",
+        "@dfinity/candid": "^2.1.0",
+        "@dfinity/identity": "^2.1.0",
+        "@dfinity/principal": "^2.1.0",
         "drange": "^2.0.1",
         "rollbar": "^2.26.2"
     },
@@ -39,6 +39,7 @@
         "jest": "^29.6.2",
         "jest-environment-jsdom": "^29.6.2",
         "ts-jest": "^29.1.1",
+        "typescript": "=5.4.2",
         "wait-on": "^7.0.1"
     }
 }

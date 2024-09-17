@@ -27,7 +27,6 @@ notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
 notifications_index_canister = { path = "../api" }
 rand = { workspace = true }
 serde = { workspace = true }
-serializer = { path = "../../../libraries/serializer" }
 stable_memory = { path = "../../../libraries/stable_memory" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }

@@ -18,11 +18,11 @@ http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
+msgpack = { path = "../../../libraries/msgpack" }
 num-traits = { workspace = true }
 rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
-serializer = { path = "../../../libraries/serializer" }
 stable_memory = { path = "../../../libraries/stable_memory" }
 storage_bucket_canister = { path = "../api" }
 storage_index_canister = { path = "../../storage_index/api" }

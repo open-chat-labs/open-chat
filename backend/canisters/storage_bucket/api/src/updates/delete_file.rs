@@ -1,13 +1,15 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::FileId;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(storage_bucket, delete_file)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub file_id: FileId,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(storage_bucket, delete_file)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success,
     NotAuthorized,

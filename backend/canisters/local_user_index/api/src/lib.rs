@@ -37,6 +37,7 @@ pub enum Event {
     SecretKeySet(Vec<u8>),
     NotifyUniquePersonProof(UserId, UniquePersonProof),
     AddCanisterToPool(CanisterId),
+    ExternalAchievementAwarded(ExternalAchievementAwarded),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -107,6 +108,7 @@ pub struct UserJoinedGroup {
     pub chat_id: ChatId,
     pub local_user_index_canister_id: CanisterId,
     pub latest_message_index: Option<MessageIndex>,
+    pub group_canister_timestamp: TimestampMillis,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -115,6 +117,7 @@ pub struct UserJoinedCommunityOrChannel {
     pub community_id: CommunityId,
     pub local_user_index_canister_id: CanisterId,
     pub channels: Vec<ChannelLatestMessageIndex>,
+    pub community_canister_timestamp: TimestampMillis,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -177,4 +180,13 @@ pub struct ChitEarned {
     pub amount: i32,
     pub timestamp: TimestampMillis,
     pub reason: ChitEarnedReason,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ExternalAchievementAwarded {
+    #[serde(default)]
+    pub id: u32,
+    pub user_id: UserId,
+    pub name: String,
+    pub chit_reward: u32,
 }

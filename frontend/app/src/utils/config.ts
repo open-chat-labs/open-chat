@@ -46,6 +46,7 @@ export const configKeys = {
     communityStatsSection: "openchat_community_stats_section",
     communityAdvancedSection: "openchat_community_advanced_section",
     communityInviteUsersSections: "openchat_community_invite_users_section",
+    referredUsersOpen: "openchat_referred_users_section",
     browseChannels: "openchat_browse_channels",
     useBlockLevelMarkdown: "openchat_block_markdown",
     pinEnabled: "openchat_pin_enabled",

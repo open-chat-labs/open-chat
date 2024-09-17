@@ -1,14 +1,16 @@
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{AccessTokenType, Chat};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(local_user_index, access_token)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub token_type: AccessTokenType,
     pub chat: Chat,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(local_user_index, access_token)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success(String),
     NotAuthorized,

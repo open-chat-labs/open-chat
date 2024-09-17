@@ -3,6 +3,7 @@ use chat_events::{
     DeleteUndeleteMessagesArgs, MessageContentInternal, PushMessageArgs, Reader, TipMessageArgs, UndeleteMessageResult,
 };
 use event_store_producer::{EventStoreClient, Runtime};
+use itertools::Itertools;
 use lazy_static::lazy_static;
 use regex_lite::Regex;
 use search::Query;
@@ -560,6 +561,10 @@ impl GroupChatCore {
         now: TimestampMillis,
     ) -> SendMessageResult {
         use SendMessageResult::*;
+
+        if self.external_url.is_some() {
+            return NotAuthorized;
+        }
 
         if let Err(error) = content.validate_for_new_message(false, sender_user_type, forwarding, now) {
             return match error {
@@ -1152,6 +1157,7 @@ impl GroupChatCore {
             // Filter out users who are already members and those who have already been invited
             let invited_users: Vec<_> = user_ids
                 .iter()
+                .unique()
                 .filter(|user_id| self.members.get(user_id).is_none() && !self.invited_users.contains(user_id))
                 .copied()
                 .collect();

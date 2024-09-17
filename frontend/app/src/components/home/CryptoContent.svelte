@@ -28,7 +28,9 @@
             <img class="logo" src={logo} />
         </div>
         <div class="details">
-            <div class="transfer-txt">{transferText}</div>
+            <div class="transfer-txt">
+                <Markdown text={transferText} inline={true} />
+            </div>
             <div class="links">
                 {#if transactionLinkText !== undefined}
                     <div class="link transaction">

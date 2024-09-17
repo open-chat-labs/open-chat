@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use user_index_canister::update_diamond_membership_subscription::{Response::*, *};
 
-#[update(guard = "caller_is_openchat_user", candid = true, json = true)]
+#[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
 fn update_diamond_membership_subscription(args: Args) -> Response {
     mutate_state(|state| update_diamond_membership_subscription_impl(args, state))

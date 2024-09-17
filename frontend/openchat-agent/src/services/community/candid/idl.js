@@ -1,5 +1,4 @@
 export const idlFactory = ({ IDL }) => {
-  const AccessGate = IDL.Rec();
   const ChannelId = IDL.Nat;
   const MessageId = IDL.Nat;
   const MessageIndex = IDL.Nat32;
@@ -121,6 +120,15 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
     'CannotBlockSelf' : IDL.Null,
     'CannotBlockUser' : IDL.Null,
+  });
+  const CancelInvitesArgs = IDL.Record({
+    'channel_id' : IDL.Opt(ChannelId),
+    'user_ids' : IDL.Vec(UserId),
+  });
+  const CancelInvitesResponse = IDL.Variant({
+    'ChannelNotFound' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
   });
   const CancelP2PSwapArgs = IDL.Record({
     'channel_id' : ChannelId,
@@ -290,22 +298,32 @@ export const idlFactory = ({ IDL }) => {
     'ledger_canister_id' : CanisterId,
     'amount' : IDL.Nat,
   });
-  AccessGate.fill(
-    IDL.Variant({
-      'UniquePerson' : IDL.Null,
-      'VerifiedCredential' : VerifiedCredentialGate,
-      'SnsNeuron' : SnsNeuronGate,
-      'Locked' : IDL.Null,
-      'TokenBalance' : TokenBalanceGate,
-      'Composite' : IDL.Record({
-        'and' : IDL.Bool,
-        'inner' : IDL.Vec(AccessGate),
-      }),
-      'DiamondMember' : IDL.Null,
-      'Payment' : PaymentGate,
-      'LifetimeDiamondMember' : IDL.Null,
-    })
-  );
+  const AccessGateNonComposite = IDL.Variant({
+    'UniquePerson' : IDL.Null,
+    'VerifiedCredential' : VerifiedCredentialGate,
+    'ReferredByMember' : IDL.Null,
+    'SnsNeuron' : SnsNeuronGate,
+    'Locked' : IDL.Null,
+    'TokenBalance' : TokenBalanceGate,
+    'DiamondMember' : IDL.Null,
+    'Payment' : PaymentGate,
+    'LifetimeDiamondMember' : IDL.Null,
+  });
+  const AccessGate = IDL.Variant({
+    'UniquePerson' : IDL.Null,
+    'VerifiedCredential' : VerifiedCredentialGate,
+    'ReferredByMember' : IDL.Null,
+    'SnsNeuron' : SnsNeuronGate,
+    'Locked' : IDL.Null,
+    'TokenBalance' : TokenBalanceGate,
+    'Composite' : IDL.Record({
+      'and' : IDL.Bool,
+      'inner' : IDL.Vec(AccessGateNonComposite),
+    }),
+    'DiamondMember' : IDL.Null,
+    'Payment' : PaymentGate,
+    'LifetimeDiamondMember' : IDL.Null,
+  });
   const GroupCanisterThreadDetails = IDL.Record({
     'root_message_index' : MessageIndex,
     'last_updated' : TimestampMillis,
@@ -1432,15 +1450,6 @@ export const idlFactory = ({ IDL }) => {
     'ProposalNotAcceptingVotes' : IDL.Null,
     'InternalError' : IDL.Text,
   });
-  const RegisterProposalVoteV2Response = IDL.Variant({
-    'ProposalMessageNotFound' : IDL.Null,
-    'UserNotInChannel' : IDL.Null,
-    'ChannelNotFound' : IDL.Null,
-    'Success' : IDL.Null,
-    'UserNotInCommunity' : IDL.Null,
-    'UserSuspended' : IDL.Null,
-    'CommunityFrozen' : IDL.Null,
-  });
   const RemoveMemberArgs = IDL.Record({ 'user_id' : UserId });
   const RemoveMemberResponse = IDL.Variant({
     'NotAuthorized' : IDL.Null,
@@ -1589,6 +1598,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const CommunityMember = IDL.Record({
     'role' : CommunityRole,
+    'referred_by' : IDL.Opt(UserId),
     'user_id' : UserId,
     'display_name' : IDL.Opt(IDL.Text),
     'date_added' : TimestampMillis,
@@ -1603,6 +1613,7 @@ export const idlFactory = ({ IDL }) => {
     'invited_users' : IDL.Vec(UserId),
     'blocked_users' : IDL.Vec(UserId),
     'last_updated' : TimestampMillis,
+    'referrals' : IDL.Vec(UserId),
     'chat_rules' : VersionedRules,
     'user_groups' : IDL.Vec(UserGroupDetails),
     'timestamp' : TimestampMillis,
@@ -1620,12 +1631,14 @@ export const idlFactory = ({ IDL }) => {
     'blocked_users_removed' : IDL.Vec(UserId),
     'invited_users' : IDL.Opt(IDL.Vec(UserId)),
     'user_groups_deleted' : IDL.Vec(IDL.Nat32),
+    'referrals_removed' : IDL.Vec(UserId),
     'last_updated' : TimestampMillis,
     'members_added_or_updated' : IDL.Vec(CommunityMember),
     'chat_rules' : IDL.Opt(VersionedRules),
     'user_groups' : IDL.Vec(UserGroupDetails),
     'members_removed' : IDL.Vec(UserId),
     'timestamp' : TimestampMillis,
+    'referrals_added' : IDL.Vec(UserId),
     'blocked_users_added' : IDL.Vec(UserId),
   });
   const SelectedUpdatesResponse = IDL.Variant({
@@ -2068,6 +2081,11 @@ export const idlFactory = ({ IDL }) => {
       ),
     'add_reaction' : IDL.Func([AddReactionArgs], [AddReactionResponse], []),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
+    'cancel_invites' : IDL.Func(
+        [CancelInvitesArgs],
+        [CancelInvitesResponse],
+        [],
+      ),
     'cancel_p2p_swap' : IDL.Func(
         [CancelP2PSwapArgs],
         [CancelP2PSwapResponse],
@@ -2177,11 +2195,6 @@ export const idlFactory = ({ IDL }) => {
     'register_proposal_vote' : IDL.Func(
         [RegisterProposalVoteArgs],
         [RegisterProposalVoteResponse],
-        [],
-      ),
-    'register_proposal_vote_v2' : IDL.Func(
-        [RegisterProposalVoteArgs],
-        [RegisterProposalVoteV2Response],
         [],
       ),
     'remove_member' : IDL.Func([RemoveMemberArgs], [RemoveMemberResponse], []),

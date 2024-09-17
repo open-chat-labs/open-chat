@@ -1,12 +1,12 @@
 use crate::guards::caller_is_platform_operator;
 use crate::{mutate_state, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use local_user_index_canister::{Event, UserUpgradeConcurrencyChanged};
 use tracing::info;
 use user_index_canister::set_user_upgrade_concurrency::{Response::*, *};
 
-#[update(guard = "caller_is_platform_operator")]
+#[update(guard = "caller_is_platform_operator", msgpack = true)]
 #[trace]
 async fn set_user_upgrade_concurrency(args: Args) -> Response {
     mutate_state(|state| set_user_upgrade_concurrency_impl(args, state))

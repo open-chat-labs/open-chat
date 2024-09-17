@@ -178,6 +178,7 @@ type SelectedInitialSuccess = record {
     invited_users : vec UserId;
     chat_rules : VersionedRules;
     user_groups : vec UserGroupDetails;
+    referrals : vec UserId;
 };
 
 type SelectedUpdatesArgs = record {
@@ -208,6 +209,8 @@ type SelectedUpdatesSuccess = record {
     chat_rules : opt VersionedRules;
     user_groups : vec UserGroupDetails;
     user_groups_deleted : vec nat32;
+    referrals_added : vec UserId;
+    referrals_removed : vec UserId;
 };
 
 type UserGroupDetails = record {
@@ -332,6 +335,17 @@ type CancelP2PSwapResponse = variant {
     UserNotInCommunity;
     UserNotInChannel;
     ChatFrozen;
+};
+
+type CancelInvitesArgs = record {
+    channel_id : opt ChannelId;
+    user_ids : vec UserId;
+};
+
+type CancelInvitesResponse = variant {
+    Success;
+    NotAuthorized;
+    ChannelNotFound;
 };
 
 type AddMembersToChannelArgs = record {
@@ -1102,6 +1116,7 @@ service : {
     add_members_to_channel : (AddMembersToChannelArgs) -> (AddMembersToChannelResponse);
     add_reaction : (AddReactionArgs) -> (AddReactionResponse);
     block_user : (BlockUserArgs) -> (BlockUserResponse);
+    cancel_invites : (CancelInvitesArgs) -> (CancelInvitesResponse);
     cancel_p2p_swap : (CancelP2PSwapArgs) -> (CancelP2PSwapResponse);
     change_channel_role : (ChangeChannelRoleArgs) -> (ChangeChannelRoleResponse);
     change_role : (ChangeRoleArgs) -> (ChangeRoleResponse);
@@ -1122,7 +1137,7 @@ service : {
     pin_message : (PinMessageArgs) -> (PinMessageResponse);
     register_poll_vote : (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);
     register_proposal_vote : (RegisterProposalVoteArgs) -> (RegisterProposalVoteResponse);
-    register_proposal_vote_v2 : (RegisterProposalVoteArgs) -> (RegisterProposalVoteV2Response);
+    // register_proposal_vote_v2 : (RegisterProposalVoteArgs) -> (RegisterProposalVoteV2Response);
     remove_member : (RemoveMemberArgs) -> (RemoveMemberResponse);
     remove_member_from_channel : (RemoveMemberFromChannelArgs) -> (RemoveMemberFromChannelResponse);
     remove_reaction : (RemoveReactionArgs) -> (RemoveReactionResponse);

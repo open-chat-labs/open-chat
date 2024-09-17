@@ -1,9 +1,9 @@
 use crate::{read_state, RuntimeState};
+use canister_api_macros::query;
 use canister_tracing_macros::trace;
-use ic_cdk::query;
 use registry_canister::updates::{Response::*, *};
 
-#[query]
+#[query(msgpack = true)]
 #[trace]
 fn updates(args: Args) -> Response {
     read_state(|state| updates_impl(args, state))

@@ -26,6 +26,8 @@ struct AttributeInput {
     pub name: Option<String>,
     pub guard: Option<String>,
     #[serde(default)]
+    pub composite: bool,
+    #[serde(default)]
     pub candid: bool,
     #[serde(default)]
     pub msgpack: bool,
@@ -53,11 +55,12 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
 
     let name = attr.name.unwrap_or_else(|| item.sig.ident.to_string());
     let guard = attr.guard.map(|g| quote! { guard = #g, });
+    let composite = attr.composite.then_some(quote! { composite = true, });
     let manual_reply = attr.manual_reply.then_some(quote! { manual_reply = "true", });
 
     let candid = if attr.candid {
         quote! {
-            #[ic_cdk::#method_type(name = #name, #guard #manual_reply)]
+            #[ic_cdk::#method_type(name = #name, #guard #composite #manual_reply)]
             #item
         }
     } else {
@@ -83,7 +86,7 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
             use msgpack::serialize_then_unwrap as #serializer_ident;
             use msgpack::deserialize_then_unwrap as #deserializer_ident;
 
-            #[ic_cdk::#method_type(name = #msgpack_name, #guard #manual_reply #serializer #deserializer)]
+            #[ic_cdk::#method_type(name = #msgpack_name, #guard #composite #manual_reply #serializer #deserializer)]
             #msgpack_item
         }
     } else {
@@ -109,7 +112,7 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
             use json::serialize_then_unwrap as #serializer_ident;
             use json::deserialize_then_unwrap as #deserializer_ident;
 
-            #[ic_cdk::#method_type(name = #json_name, #guard #manual_reply #serializer #deserializer)]
+            #[ic_cdk::#method_type(name = #json_name, #guard #composite #manual_reply #serializer #deserializer)]
             #json_item
         }
     } else {

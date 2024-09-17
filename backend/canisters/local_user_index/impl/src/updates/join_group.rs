@@ -1,13 +1,13 @@
 use crate::guards::caller_is_openchat_user;
 use crate::{mutate_state, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use local_user_index_canister::join_group::{Response::*, *};
-use types::{ChatId, MessageIndex, UserId};
+use types::{ChatId, MessageIndex, TimestampMillis, UserId};
 use user_canister::Event as UserEvent;
 use user_index_canister::Event as UserIndexEvent;
 
-#[update(guard = "caller_is_openchat_user")]
+#[update(guard = "caller_is_openchat_user", candid = true, msgpack = true)]
 #[trace]
 async fn join_group(args: Args) -> Response {
     let user_details =
@@ -35,6 +35,7 @@ async fn join_group(args: Args) -> Response {
                         user_details.user_id,
                         args.chat_id,
                         s.latest_message.as_ref().map(|m| m.event.message_index),
+                        s.last_updated,
                         state,
                     );
                 });
@@ -53,7 +54,13 @@ async fn join_group(args: Args) -> Response {
     }
 }
 
-fn commit(user_id: UserId, chat_id: ChatId, latest_message_index: Option<MessageIndex>, state: &mut RuntimeState) {
+fn commit(
+    user_id: UserId,
+    chat_id: ChatId,
+    latest_message_index: Option<MessageIndex>,
+    group_canister_timestamp: TimestampMillis,
+    state: &mut RuntimeState,
+) {
     let local_user_index_canister_id = state.env.canister_id();
 
     if state.data.local_users.get(&user_id).is_some() {
@@ -63,6 +70,7 @@ fn commit(user_id: UserId, chat_id: ChatId, latest_message_index: Option<Message
                 chat_id,
                 local_user_index_canister_id,
                 latest_message_index,
+                group_canister_timestamp,
             })),
         );
     } else {
@@ -72,6 +80,7 @@ fn commit(user_id: UserId, chat_id: ChatId, latest_message_index: Option<Message
                 chat_id,
                 local_user_index_canister_id,
                 latest_message_index,
+                group_canister_timestamp,
             },
         )));
     }

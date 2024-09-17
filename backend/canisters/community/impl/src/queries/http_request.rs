@@ -6,14 +6,14 @@ use types::{ChannelId, HttpRequest, HttpResponse, TimestampMillis};
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
     fn get_avatar_impl(requested_avatar_id: Option<u128>, state: &RuntimeState) -> HttpResponse {
-        get_document(requested_avatar_id, &state.data.avatar, "avatar")
+        get_document(requested_avatar_id, state.data.avatar.as_ref(), "avatar")
     }
 
     fn get_channel_avatar_impl(channel_id: ChannelId, requested_avatar_id: Option<u128>, state: &RuntimeState) -> HttpResponse {
         if let Some(channel) = state.data.channels.get(&channel_id) {
             get_document(
                 requested_avatar_id,
-                &channel.chat.avatar,
+                channel.chat.avatar.as_ref(),
                 &format!("channel/{channel_id}/avatar"),
             )
         } else {
@@ -22,7 +22,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
     }
 
     fn get_banner_impl(requested_banner_id: Option<u128>, state: &RuntimeState) -> HttpResponse {
-        get_document(requested_banner_id, &state.data.banner, "banner")
+        get_document(requested_banner_id, state.data.banner.as_ref(), "banner")
     }
 
     fn get_logs_impl(since: Option<TimestampMillis>) -> HttpResponse {

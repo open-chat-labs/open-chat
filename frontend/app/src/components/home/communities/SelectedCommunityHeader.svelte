@@ -6,7 +6,7 @@
     import CommunityMenu from "./CommunityMenu.svelte";
     import { getContext } from "svelte";
     import VisibilityLabel from "../VisibilityLabel.svelte";
-    import { pushRightPanelHistory } from "../../../stores/rightPanel";
+    import { rightPanelHistory } from "../../../stores/rightPanel";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
 
@@ -16,7 +16,7 @@
     export let canMarkAllRead: boolean;
 
     function showCommunityMembers() {
-        pushRightPanelHistory({ kind: "show_community_members" });
+        rightPanelHistory.set([{ kind: "show_community_members" }]);
     }
 </script>
 

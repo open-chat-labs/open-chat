@@ -46,7 +46,6 @@ import type {
     UpdateGroupResponse,
     UpdatesResult,
     WithdrawCryptocurrencyResponse,
-    InviteUsersResponse,
     ResetInviteCodeResponse,
     AddHotGroupExclusionResponse,
     RemoveHotGroupExclusionResponse,
@@ -192,8 +191,9 @@ import type {
 import type {
     ChitEventsRequest,
     ChitEventsResponse,
-    ChitUserBalance,
+    ChitLeaderboardResponse,
     ClaimDailyChitResponse,
+    ExternalAchievement,
 } from "./chit";
 import type { JsonnableDelegationChain } from "@dfinity/identity";
 
@@ -213,7 +213,6 @@ export type WorkerRequest =
     | ChangeRole
     | RemoveMember
     | InviteUsers
-    | InviteUsersToCommunity
     | PushSub
     | RemoveSub
     | SubscriptionExists
@@ -394,7 +393,20 @@ export type WorkerRequest =
     | LinkIdentities
     | GetAuthenticationPrincipals
     | ConfigureWallet
-    | ClearCachedData;
+    | ClearCachedData
+    | SetCommunityReferral
+    | GetExternalAchievements
+    | CancelInvites;
+
+type GetExternalAchievements = {
+    kind: "getExternalAchievements";
+};
+
+type SetCommunityReferral = {
+    kind: "setCommunityReferral";
+    communityId: CommunityIdentifier;
+    referredBy: string;
+};
 
 type ClearCachedData = {
     kind: "clearCachedData";
@@ -770,17 +782,10 @@ type RemoveMember = {
 };
 
 type InviteUsers = {
-    chatId: MultiUserChatIdentifier;
+    id: MultiUserChatIdentifier | CommunityIdentifier;
     userIds: string[];
     callerUsername: string;
     kind: "inviteUsers";
-};
-
-type InviteUsersToCommunity = {
-    id: CommunityIdentifier;
-    userIds: string[];
-    callerUsername: string;
-    kind: "inviteUsersToCommunity";
 };
 
 type RemoveSub = {
@@ -925,12 +930,14 @@ type JoinGroup = {
     chatId: MultiUserChatIdentifier;
     credentialArgs: VerifiedCredentialArgs | undefined;
     kind: "joinGroup";
+    referredBy?: string;
 };
 
 type JoinCommunity = {
     id: CommunityIdentifier;
     credentialArgs: VerifiedCredentialArgs | undefined;
     kind: "joinCommunity";
+    referredBy?: string;
 };
 
 type LeaveGroup = {
@@ -1290,6 +1297,7 @@ type LinkIdentities = {
     kind: "linkIdentities";
     initiatorKey: CryptoKeyPair;
     initiatorDelegation: JsonnableDelegationChain;
+    initiatorIsIIPrincipal: boolean;
     approverKey: CryptoKeyPair;
     approverDelegation: JsonnableDelegationChain;
 };
@@ -1334,7 +1342,6 @@ export type WorkerResponseInner =
     | GroupChatSummary[]
     | RegisterProposalVoteResponse
     | ChangeRoleResponse
-    | InviteUsersResponse
     | RemoveMemberResponse
     | RegisterUserResponse
     | EditMessageResponse
@@ -1447,10 +1454,11 @@ export type WorkerResponseInner =
     | VideoCallParticipantsResponse
     | SetPinNumberResponse
     | ClaimDailyChitResponse
-    | ChitUserBalance[]
+    | ChitLeaderboardResponse
     | ChitEventsResponse
     | SubmitProofOfUniquePersonhoodResponse
-    | AuthenticationPrincipalsResponse;
+    | AuthenticationPrincipalsResponse
+    | ExternalAchievement[];
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -1750,6 +1758,12 @@ type ChitLeaderboard = {
     kind: "chitLeaderboard";
 };
 
+type CancelInvites = {
+    kind: "cancelInvites";
+    id: MultiUserChatIdentifier | CommunityIdentifier;
+    userIds: string[];
+};
+
 export type ConnectToWorkerResponse = GetOpenChatIdentityResponse["kind"];
 
 // prettier-ignore
@@ -1866,9 +1880,7 @@ export type WorkerResult<T> = T extends Init
     : T extends RemoveSub
     ? void
     : T extends InviteUsers
-    ? InviteUsersResponse
-    : T extends InviteUsersToCommunity
-    ? InviteUsersResponse
+    ? boolean
     : T extends RemoveMember
     ? RemoveMemberResponse
     : T extends ChangeRole
@@ -2112,7 +2124,7 @@ export type WorkerResult<T> = T extends Init
     : T extends ClaimDailyChit
     ? ClaimDailyChitResponse
     : T extends ChitLeaderboard
-    ? ChitUserBalance[]
+    ? ChitLeaderboardResponse
     : T extends ChitEventsRequest
     ? ChitEventsResponse
     : T extends MarkAchievementsSeen
@@ -2127,4 +2139,10 @@ export type WorkerResult<T> = T extends Init
     ? void
     : T extends ClearCachedData
     ? void
+    : T extends SetCommunityReferral
+    ? void
+    : T extends GetExternalAchievements
+    ? ExternalAchievement[]
+    : T extends CancelInvites
+    ? boolean
     : never;

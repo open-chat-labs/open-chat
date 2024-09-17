@@ -2,6 +2,7 @@ use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
 use crate::{client, TestEnv};
 use airdrop_bot_canister::{set_airdrop, AirdropAlgorithm, V1Algorithm, V2Algorithm};
+use itertools::Itertools;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
@@ -41,7 +42,13 @@ fn airdrop_end_to_end(v2: bool) {
     env.tick();
 
     for user in users.iter() {
-        client::local_user_index::happy_path::join_community(env, user.principal, canister_ids.local_user_index, community_id);
+        client::local_user_index::happy_path::join_community(
+            env,
+            user.principal,
+            canister_ids.local_user_index,
+            community_id,
+            None,
+        );
     }
 
     tick_many(env, 10);
@@ -153,9 +160,10 @@ fn airdrop_end_to_end(v2: bool) {
         assert_eq!(contents[3].transfer.units(), 200_000_000_000);
     } else {
         assert_eq!(contents.len(), 3);
-        assert_eq!(contents[0].transfer.units(), 100_000_000_000);
-        assert_eq!(contents[1].transfer.units(), 200_000_000_000);
-        assert_eq!(contents[2].transfer.units(), 500_000_000_000);
+        let units: Vec<_> = contents.iter().map(|c| c.transfer.units()).sorted().collect();
+        assert_eq!(units[0], 100_000_000_000);
+        assert_eq!(units[1], 200_000_000_000);
+        assert_eq!(units[2], 500_000_000_000);
     }
 
     // Assert user1 has been sent a DM from the Airdrop Bot for the expected amount of CHAT

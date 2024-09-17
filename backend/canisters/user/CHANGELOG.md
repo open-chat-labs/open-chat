@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add ability to reclaim tokens from failed swaps ([#6381](https://github.com/open-chat-labs/open-chat/pull/6381))
+- Add `ReferredByMember` access gate ([#6377](https://github.com/open-chat-labs/open-chat/pull/6377))
+
+## [[2.0.1343](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1343-user)] - 2024-09-10
+
+### Added
+
+- Expose MessagePack versions of a few User canister APIs ([#6318](https://github.com/open-chat-labs/open-chat/pull/6318))
+- Add support for external achievements ([#6350](https://github.com/open-chat-labs/open-chat/pull/6350))
+
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+- Consolidate `events` functions to remove duplicate code ([#6343](https://github.com/open-chat-labs/open-chat/pull/6343))
+
+### Removed
+
+- Remove the unused cached group summaries field from `initial_state` ([#6349](https://github.com/open-chat-labs/open-chat/pull/6349))
+
+### Fixed
+
+- Unblock OpenChat bot if it was blocked previously whilst there was a bug ([#6302](https://github.com/open-chat-labs/open-chat/pull/6302))
+- Allow referral status updates to arrive in any order ([#6357](https://github.com/open-chat-labs/open-chat/pull/6357))
+- Check user hasn't already left community when processing joined event ([#6361](https://github.com/open-chat-labs/open-chat/pull/6361))
+
 ## [[2.0.1305](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1305-user)] - 2024-08-23
 
 ### Changed

@@ -54,3 +54,4 @@ export const communityInviteUsersOpen = createLsBoolStore(
     configKeys.communityInviteUsersSections,
     false,
 );
+export const referredUsersOpen = createLsBoolStore(configKeys.referredUsersOpen, false);

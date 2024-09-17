@@ -1,13 +1,15 @@
 use crate::ChatInList;
 use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, unpin_chat)]
+#[derive(CandidType, Debug)]
 pub struct Args {
     pub chat: ChatInList,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[ts_export(user, unpin_chat)]
+#[derive(CandidType, Debug)]
 pub enum Response {
     Success,
     ChatNotFound,

@@ -5,10 +5,22 @@ import type { IDL } from '@dfinity/candid';
 export interface AcceptSwapSuccess { 'token1_txn_in' : bigint }
 export type AccessGate = { 'UniquePerson' : null } |
   { 'VerifiedCredential' : VerifiedCredentialGate } |
+  { 'ReferredByMember' : null } |
   { 'SnsNeuron' : SnsNeuronGate } |
   { 'Locked' : null } |
   { 'TokenBalance' : TokenBalanceGate } |
-  { 'Composite' : { 'and' : boolean, 'inner' : Array<AccessGate> } } |
+  {
+    'Composite' : { 'and' : boolean, 'inner' : Array<AccessGateNonComposite> }
+  } |
+  { 'DiamondMember' : null } |
+  { 'Payment' : PaymentGate } |
+  { 'LifetimeDiamondMember' : null };
+export type AccessGateNonComposite = { 'UniquePerson' : null } |
+  { 'VerifiedCredential' : VerifiedCredentialGate } |
+  { 'ReferredByMember' : null } |
+  { 'SnsNeuron' : SnsNeuronGate } |
+  { 'Locked' : null } |
+  { 'TokenBalance' : TokenBalanceGate } |
   { 'DiamondMember' : null } |
   { 'Payment' : PaymentGate } |
   { 'LifetimeDiamondMember' : null };
@@ -23,7 +35,6 @@ export type AccessTokenResponse = { 'NotAuthorized' : null } |
   { 'Success' : string } |
   { 'InternalError' : string };
 export type AccessTokenType = { 'JoinVideoCall' : null } |
-  { 'StartVideoCall' : null } |
   { 'StartVideoCallV2' : { 'call_type' : VideoCallType } } |
   { 'MarkVideoCallAsEnded' : null };
 export type AccessorId = Principal;
@@ -320,6 +331,7 @@ export interface ChitEarned {
 }
 export type ChitEarnedReason = { 'DailyClaim' : null } |
   { 'Achievement' : Achievement } |
+  { 'ExternalAchievement' : string } |
   { 'MemeContestWinner' : null } |
   { 'Referral' : ReferralStatus };
 export interface CommunityCanisterChannelSummary {
@@ -434,6 +446,7 @@ export interface CommunityMatch {
 }
 export interface CommunityMember {
   'role' : CommunityRole,
+  'referred_by' : [] | [UserId],
   'user_id' : UserId,
   'display_name' : [] | [string],
   'date_added' : TimestampMillis,
@@ -666,6 +679,7 @@ export type FrozenGroupUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : FrozenGroupInfo };
 export type GateCheckFailedReason = { 'NotLifetimeDiamondMember' : null } |
+  { 'NotReferredByMember' : null } |
   { 'NotDiamondMember' : null } |
   { 'PaymentFailed' : ICRC2_TransferFromError } |
   { 'InsufficientBalance' : bigint } |
@@ -1143,6 +1157,7 @@ export interface JoinChannelArgs {
   'channel_id' : ChannelId,
   'community_id' : CommunityId,
   'invite_code' : [] | [bigint],
+  'referred_by' : [] | [UserId],
   'verified_credential_args' : [] | [VerifiedCredentialGateArgs],
 }
 export type JoinChannelResponse = { 'NotInvited' : null } |
@@ -1161,6 +1176,7 @@ export type JoinChannelResponse = { 'NotInvited' : null } |
 export interface JoinCommunityArgs {
   'community_id' : CommunityId,
   'invite_code' : [] | [bigint],
+  'referred_by' : [] | [UserId],
   'verified_credential_args' : [] | [VerifiedCredentialGateArgs],
 }
 export type JoinCommunityResponse = { 'NotInvited' : null } |

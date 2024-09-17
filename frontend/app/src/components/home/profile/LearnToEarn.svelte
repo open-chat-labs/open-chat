@@ -1,20 +1,29 @@
 <script lang="ts">
+    import InformationOutline from "svelte-material-icons/InformationOutline.svelte";
     import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
     import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
-    import { OpenChat, achievements, type Achievement } from "openchat-client";
+    import {
+        OpenChat,
+        achievements,
+        type Achievement,
+        type ExternalAchievement,
+    } from "openchat-client";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
     import Translatable from "../../Translatable.svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
     import Button from "../../Button.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
     import Progress from "../../Progress.svelte";
+    import ExternalLink from "../../landingpages/ExternalLink.svelte";
+    import TooltipWrapper from "../../TooltipWrapper.svelte";
+    import TooltipPopup from "../../TooltipPopup.svelte";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
-    const enabled = new Set<Achievement>([
+    const enabled = new Set<string>([
         "streak_3",
         "streak_7",
         "streak_14",
@@ -61,25 +70,37 @@
         "referred_10th_user",
         "referred_20th_user",
         "referred_50th_user",
-        "upgrade_to_gold_diamond"
+        "upgrade_to_gold_diamond",
     ]);
 
-    let selectedTab: "todo" | "done" = "todo";
+    let selectedTab: "todo" | "done" | "external" = "todo";
 
     $: globalState = client.globalStateStore;
     $: filtered = [...achievements].filter(filter);
-    $: [achieved, notAchieved] = client.partition(filtered, (a) =>
+    $: [internalAchieved, internalNotAchieved] = client.partition(filtered, (a) =>
         $globalState.achievements.has(a),
     );
-    $: percComplete = Math.floor((achieved.length / filtered.length) * 100);
+    $: externalAchievements = [] as ExternalAchievement[];
+    $: totalAchievements = filtered.length + externalAchievements.length;
+    $: achieved = [...internalAchieved, ...externalAchieved.map((a) => a.name)];
+    $: percComplete = Math.round((achieved.length / totalAchievements) * 100);
+    $: [externalAchieved, externalNotAchieved] = client.partition(externalAchievements, (a) => {
+        return $globalState.achievements.has(a.name);
+    });
 
     function filter(achievement: Achievement): boolean {
         return enabled.has(achievement) || $globalState.achievements.has(achievement);
     }
 
-    function selectTab(tab: "todo" | "done") {
+    function selectTab(tab: "todo" | "done" | "external") {
         selectedTab = tab;
     }
+
+    onMount(() => {
+        client.getExternalAchievements().then((achievements) => {
+            externalAchievements = achievements.sort((a, b) => b.chitReward - a.chitReward);
+        });
+    });
 </script>
 
 <Overlay dismissible>
@@ -98,6 +119,33 @@
                     class="tab">
                     <Translatable resourceKey={i18nKey("learnToEarn.todo")} />
                 </div>
+                {#if externalAchievements.length > 0}
+                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                    <div
+                        tabindex="0"
+                        role="button"
+                        on:click={() => selectTab("external")}
+                        class:selected={selectedTab === "external"}
+                        class="tab">
+                        <Translatable resourceKey={i18nKey("learnToEarn.external")} />
+                        <div class="icon">
+                            <TooltipWrapper position={"bottom"} align={"end"}>
+                                <InformationOutline
+                                    slot="target"
+                                    size={"1.2em"}
+                                    color={selectedTab === "external"
+                                        ? "var(--txt)"
+                                        : "var(--txt-light)"} />
+                                <div let:position let:align slot="tooltip">
+                                    <TooltipPopup {position} {align}>
+                                        <Translatable
+                                            resourceKey={i18nKey("learnToEarn.externalInfo")} />
+                                    </TooltipPopup>
+                                </div>
+                            </TooltipWrapper>
+                        </div>
+                    </div>
+                {/if}
                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                 <div
                     tabindex="0"
@@ -110,7 +158,7 @@
             </div>
             {#if selectedTab === "todo"}
                 <div class="list">
-                    {#if notAchieved.length === 0}
+                    {#if internalNotAchieved.length === 0}
                         <div class="empty">
                             <div class="emoji">😎</div>
                             <div class="msg">
@@ -119,7 +167,7 @@
                             </div>
                         </div>
                     {:else}
-                        {#each notAchieved as achievement}
+                        {#each internalNotAchieved as achievement}
                             <div class="achievement">
                                 <div class="no icon">
                                     <CheckCircleOutline size={$iconSize} color={"#ccc"} />
@@ -153,6 +201,36 @@
                     {/if}
                 </div>
             {/if}
+            {#if selectedTab === "external"}
+                <div class="list">
+                    {#if externalNotAchieved.length === 0}
+                        <div class="empty">
+                            <div class="emoji">😎</div>
+                            <div class="msg">
+                                <Translatable
+                                    resourceKey={i18nKey("learnToEarn.nothingLeftToDo")} />
+                            </div>
+                        </div>
+                    {:else}
+                        {#each externalNotAchieved as achievement}
+                            <div class="achievement external">
+                                <div class="external icon">
+                                    <img
+                                        class="logo"
+                                        src={client.achievementLogo(achievement.id)}
+                                        alt={achievement.name} />
+                                    <ExternalLink iconColor={"var(--txt)"} href={achievement.url}>
+                                        {achievement.name}
+                                    </ExternalLink>
+                                    <div class="reward">
+                                        {achievement.chitReward.toLocaleString()}
+                                    </div>
+                                </div>
+                            </div>
+                        {/each}
+                    {/if}
+                </div>
+            {/if}
         </div>
 
         <span class="footer" slot="footer">
@@ -172,9 +250,19 @@
 </Overlay>
 
 <style lang="scss">
+    :global(.tab .icon .noselect) {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
     .achievement {
         display: flex;
         gap: $sp3;
+
+        &.external {
+            margin-bottom: $sp2;
+        }
     }
 
     .perc {
@@ -208,6 +296,10 @@
             margin-bottom: -2px;
             border-bottom: 3px solid transparent;
             white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: $sp2;
+
             &.selected {
                 color: var(--txt);
                 border-bottom: 3px solid var(--txt);
@@ -236,5 +328,24 @@
         .msg {
             @include font(bold, normal, fs-140);
         }
+    }
+
+    .logo {
+        width: toRem(20);
+        height: toRem(20);
+    }
+
+    .external {
+        display: flex;
+        align-items: center;
+        gap: $sp3;
+    }
+
+    .reward {
+        background-color: var(--button-bg);
+        color: var(--button-txt);
+        padding: $sp1 $sp2;
+        border-radius: $sp2;
+        @include font(light, normal, fs-70);
     }
 </style>

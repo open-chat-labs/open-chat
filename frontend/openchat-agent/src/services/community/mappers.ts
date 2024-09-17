@@ -358,7 +358,7 @@ export function summaryUpdatesResponse(
     if ("PrivateCommunity" in candid) {
         return CommonResponses.failure();
     }
-    throw new UnsupportedValueError("invalid ApiSummaryUpdatesResponse recieved", candid);
+    throw new UnsupportedValueError("invalid ApiSummaryUpdatesResponse received", candid);
 }
 
 export function communitySummaryUpdates(
@@ -567,6 +567,7 @@ export function communityDetailsResponse(
             rules: candid.Success.chat_rules,
             lastUpdated: candid.Success.timestamp,
             userGroups: new Map(candid.Success.user_groups.map(userGroupDetails)),
+            referrals: new Set(candid.Success.referrals.map((u) => u.toString())),
         };
     } else {
         console.warn("CommunityDetails failed with", candid);
@@ -610,6 +611,8 @@ export function communityDetailsUpdatesResponse(
             lastUpdated: candid.Success.timestamp,
             userGroups: candid.Success.user_groups.map(userGroupDetails).map(([_, g]) => g),
             userGroupsDeleted: new Set(candid.Success.user_groups_deleted),
+            referralsRemoved: new Set(candid.Success.referrals_removed.map((u) => u.toString())),
+            referralsAdded: new Set(candid.Success.referrals_added.map((u) => u.toString())),
         };
     } else if ("SuccessNoUpdates" in candid) {
         return {

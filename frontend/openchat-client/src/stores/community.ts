@@ -63,6 +63,7 @@ export const communityStateStore = createCommunitySpecificObjectStore<CommunityS
         members: new Map<string, Member>(),
         blockedUsers: new Set<string>(),
         invitedUsers: new Set<string>(),
+        referrals: new Set<string>(),
         userGroups: new Map<number, UserGroupDetails>(),
         rules: emptyRules(),
     }),
@@ -83,6 +84,11 @@ export const currentCommunityBlockedUsers = createDerivedPropStore<
     CommunitySpecificState,
     "blockedUsers"
 >(communityStateStore, "blockedUsers", () => new Set<string>(), setsAreEqual);
+
+export const currentCommunityReferrals = createDerivedPropStore<
+    CommunitySpecificState,
+    "referrals"
+>(communityStateStore, "referrals", () => new Set<string>(), setsAreEqual);
 
 export const currentCommunityInvitedUsers = createDerivedPropStore<
     CommunitySpecificState,

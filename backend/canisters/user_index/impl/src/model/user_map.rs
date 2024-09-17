@@ -229,17 +229,6 @@ impl UserMap {
         true
     }
 
-    pub fn set_bot_config(&mut self, user_id: UserId, config: BotConfig, now: TimestampMillis) -> bool {
-        if let Some(user) = self.users.get_mut(&user_id) {
-            if let Some(c) = &mut user.bot_config {
-                *c = config;
-                user.date_updated = now;
-                return true;
-            }
-        }
-        false
-    }
-
     pub fn suspend_user(
         &mut self,
         user_id: UserId,

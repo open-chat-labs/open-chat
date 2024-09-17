@@ -21,9 +21,6 @@ fn c2c_can_issue_access_token_for_channel_impl(args: Args, state: &RuntimeState)
     };
 
     match args.access_type {
-        AccessTokenType::StartVideoCall => {
-            can_start_video_call(member, state.data.is_public, VideoCallType::Default, &channel.chat)
-        }
         AccessTokenType::StartVideoCallV2(vc) => {
             can_start_video_call(member, state.data.is_public, vc.call_type, &channel.chat)
         }

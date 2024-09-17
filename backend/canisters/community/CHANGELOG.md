@@ -5,6 +5,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1349](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1349-community)] - 2024-09-16
+
+### Added
+
+- Add `ReferredByMember` access gate ([#6377](https://github.com/open-chat-labs/open-chat/pull/6377))
+
+### Changed
+
+- Disallow sending messages to chats that have an external url set ([#6369](https://github.com/open-chat-labs/open-chat/pull/6369))
+- Change `cancel_invites` to mark community active ([#6390](https://github.com/open-chat-labs/open-chat/pull/6390))
+
+## [[2.0.1337](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1337-community)] - 2024-09-10
+
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+- Support community referrals ([#6317](https://github.com/open-chat-labs/open-chat/pull/6317))
+- Don't allow a user to refer themselves ([#6322](https://github.com/open-chat-labs/open-chat/pull/6322))
+- Improve query caching by avoiding calls to `ic0::caller()` where possible ([#6332](https://github.com/open-chat-labs/open-chat/pull/6332))
+
+### Fixed
+
+- Ensure invited users can't contain duplicates ([#6333](https://github.com/open-chat-labs/open-chat/pull/6333))
+
 ## [[2.0.1308](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1308-community)] - 2024-08-26
 
 ### Fixed

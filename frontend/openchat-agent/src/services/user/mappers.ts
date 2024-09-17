@@ -11,17 +11,13 @@ import type {
     ApiMessageMatch,
     ApiInitialStateResponse,
     ApiUpdatesResponse,
-    ApiGroupRole,
-    ApiMention,
     ApiSetBioResponse,
     ApiWithdrawCryptoResponse,
     ApiSendMessageWithTransferToGroupResponse,
     ApiPublicProfileResponse,
     ApiPinChatResponse,
     ApiUnpinChatResponse,
-    ApiThreadSyncDetails,
     ApiDirectChatSummary,
-    ApiGroupChatSummary,
     ApiUserCanisterGroupChatSummary,
     ApiUserCanisterGroupChatSummaryUpdates,
     ApiNnsFailedCryptoTransaction,
@@ -34,7 +30,6 @@ import type {
     ApiSetMessageReminderResponse,
     ApiCreateCommunityResponse,
     ApiGroupChatsInitial,
-    ApiCachedGroupChatSummaries,
     ApiDirectChatsInitial,
     ApiCommunitiesInitial,
     ApiUserCanisterCommunitySummary,
@@ -84,16 +79,12 @@ import type {
     UndeleteMessageResponse,
     InitialStateResponse,
     UpdatesResponse,
-    MemberRole,
-    Mention,
-    GroupChatSummary,
     DirectChatSummary,
     UserCanisterGroupChatSummary,
     UserCanisterGroupChatSummaryUpdates,
     WithdrawCryptocurrencyResponse,
     FailedCryptocurrencyWithdrawal,
     CompletedCryptocurrencyWithdrawal,
-    ThreadSyncDetails,
     PublicProfile,
     ArchiveChatResponse,
     MessageMatch,
@@ -107,7 +98,6 @@ import type {
     SetMessageReminderResponse,
     CreateCommunityResponse,
     GroupChatsInitial,
-    CachedGroupChatSummaries,
     DirectChatsInitial,
     CommunitiesInitial,
     UserCanisterCommunitySummary,
@@ -154,11 +144,8 @@ import {
     optionUpdate,
 } from "../../utils/mapping";
 import {
-    apiGroupSubtype,
     chatMetrics,
     completedCryptoTransfer,
-    accessGate,
-    groupPermissions,
     message,
     messageContent,
     apiOptional,
@@ -211,6 +198,9 @@ export function chitEarnedReason(candid: ApiChitEarnedReason): ChitEarnedReason 
     }
     if ("MemeContestWinner" in candid) {
         return { kind: "meme_contest_winner" };
+    }
+    if ("ExternalAchievement" in candid) {
+        return { kind: "external_achievement_unlocked", name: candid.ExternalAchievement };
     }
     throw new UnsupportedValueError("Unexpected ApiChitEarnedReason encountered", candid);
 }
@@ -452,7 +442,7 @@ export function achievementType(candid: ApiAchievement): Achievement {
 }
 
 export function saveCryptoAccountResponse(
-    candid: ApiSaveCryptoAccountResponse,
+    candid: ApiSaveCryptoAccountResponse
 ): SaveCryptoAccountResponse {
     if ("Success" in candid) {
         return CommonResponses.success();
@@ -465,7 +455,7 @@ export function saveCryptoAccountResponse(
 }
 
 export function savedCryptoAccountsResponse(
-    candid: ApiSavedCryptoAccountsResponse,
+    candid: ApiSavedCryptoAccountsResponse
 ): NamedAccount[] {
     if ("Success" in candid) {
         return candid.Success;
@@ -518,7 +508,7 @@ export function setBioResponse(candid: ApiSetBioResponse): SetBioResponse {
 
 export function searchDirectChatResponse(
     candid: ApiSearchDirectChatResponse,
-    chatId: DirectChatIdentifier,
+    chatId: DirectChatIdentifier
 ): SearchDirectChatResponse {
     if ("Success" in candid) {
         return {
@@ -538,7 +528,7 @@ export function searchDirectChatResponse(
     }
     throw new UnsupportedValueError(
         "Unknown UserIndex.ApiSearchMessagesResponse type received",
-        candid,
+        candid
     );
 }
 
@@ -563,7 +553,7 @@ export function deleteMessageResponse(candid: ApiDeleteMessageResponse): DeleteM
 }
 
 export function undeleteMessageResponse(
-    candid: ApiUndeleteMessageResponse,
+    candid: ApiUndeleteMessageResponse
 ): UndeleteMessageResponse {
     if ("Success" in candid) {
         if (candid.Success.messages.length == 0) {
@@ -611,7 +601,7 @@ export function unblockResponse(_candid: ApiUnblockUserResponse): UnblockUserRes
 }
 
 export function pinChatResponse(
-    candid: ApiPinChatResponse | ApiPinChatV2Response,
+    candid: ApiPinChatResponse | ApiPinChatV2Response
 ): PinChatResponse {
     if ("Success" in candid) {
         return "success";
@@ -622,7 +612,7 @@ export function pinChatResponse(
 }
 
 export function unpinChatResponse(
-    candid: ApiUnpinChatResponse | ApiUnpinV2ChatResponse,
+    candid: ApiUnpinChatResponse | ApiUnpinV2ChatResponse
 ): UnpinChatResponse {
     if ("Success" in candid) {
         return "success";
@@ -644,7 +634,7 @@ export function archiveChatResponse(candid: ApiArchiveUnarchiveChatsResponse): A
 export function sendMessageWithTransferToChannelResponse(
     candid: ApiSendMessageWithTransferToChannelResponse,
     sender: string,
-    recipient: string | undefined,
+    recipient: string | undefined
 ): SendMessageResponse {
     if ("Success" in candid) {
         return {
@@ -672,7 +662,7 @@ export function sendMessageWithTransferToChannelResponse(
 export function sendMessageWithTransferToGroupResponse(
     candid: ApiSendMessageWithTransferToGroupResponse,
     sender: string,
-    recipient: string | undefined,
+    recipient: string | undefined
 ): SendMessageResponse {
     if ("Success" in candid) {
         return {
@@ -700,7 +690,7 @@ export function sendMessageWithTransferToGroupResponse(
 export function sendMessageResponse(
     candid: ApiSendMessageResponse,
     sender: string,
-    recipient: string,
+    recipient: string
 ): SendMessageResponse {
     if ("Success" in candid) {
         return {
@@ -781,7 +771,7 @@ export function sendMessageResponse(
 }
 
 export function createCommunityResponse(
-    candid: ApiCreateCommunityResponse,
+    candid: ApiCreateCommunityResponse
 ): CreateCommunityResponse {
     if ("Success" in candid) {
         return { kind: "success", id: candid.Success.community_id.toString() };
@@ -797,7 +787,7 @@ export async function getEventsResponse(
     principal: Principal,
     candid: ApiEventsResponse,
     chatId: DirectChatIdentifier,
-    latestKnownUpdatePreRequest: bigint | undefined,
+    latestKnownUpdatePreRequest: bigint | undefined
 ): Promise<EventsResponse<ChatEvent>> {
     if ("Success" in candid) {
         await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
@@ -811,25 +801,17 @@ export async function getEventsResponse(
         throw ReplicaNotUpToDateError.byTimestamp(
             candid.ReplicaNotUpToDateV2,
             latestKnownUpdatePreRequest ?? BigInt(-1),
-            false,
+            false
         );
     }
 
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
 }
 
-function cachedGroupChatSummaries(candid: ApiCachedGroupChatSummaries): CachedGroupChatSummaries {
-    return {
-        summaries: candid.summaries.map((g) => groupChatSummary(g, false)),
-        timestamp: candid.timestamp,
-    };
-}
-
 function groupChatsInitial(candid: ApiGroupChatsInitial): GroupChatsInitial {
     return {
         summaries: candid.summaries.map(userCanisterGroupSummary),
         pinned: candid.pinned.map((c) => ({ kind: "group_chat", groupId: c.toString() })),
-        cached: optional(candid.cached, cachedGroupChatSummaries),
     };
 }
 
@@ -842,7 +824,7 @@ function directChatsInitial(candid: ApiDirectChatsInitial): DirectChatsInitial {
 
 function userCanisterChannelSummary(
     candid: ApiUserCanisterChannelSummary,
-    communityId: string,
+    communityId: string
 ): UserCanisterChannelSummary {
     return {
         id: {
@@ -852,19 +834,16 @@ function userCanisterChannelSummary(
         },
         readByMeUpTo: optional(candid.read_by_me_up_to, identity),
         dateReadPinned: optional(candid.date_read_pinned, identity),
-        threadsRead: candid.threads_read.reduce(
-            (curr, next) => {
-                curr[next[0]] = next[1];
-                return curr;
-            },
-            {} as Record<number, number>,
-        ),
+        threadsRead: candid.threads_read.reduce((curr, next) => {
+            curr[next[0]] = next[1];
+            return curr;
+        }, {} as Record<number, number>),
         archived: candid.archived,
     };
 }
 
 function userCanisterCommunitySummary(
-    candid: ApiUserCanisterCommunitySummary,
+    candid: ApiUserCanisterCommunitySummary
 ): UserCanisterCommunitySummary {
     const communityId = candid.community_id.toString();
     return {
@@ -983,25 +962,22 @@ function pinNumberSettings(candid: ApiPinNumberSettings): PinNumberSettings {
 
 export function userCanisterChannelSummaryUpdates(
     candid: ApiUserCanisterChannelSummaryUpdates,
-    communityId: string,
+    communityId: string
 ): UserCanisterChannelSummaryUpdates {
     return {
         id: { kind: "channel", communityId, channelId: candid.channel_id.toString() },
         readByMeUpTo: optional(candid.read_by_me_up_to, identity),
         dateReadPinned: optional(candid.date_read_pinned, identity),
-        threadsRead: candid.threads_read.reduce(
-            (curr, next) => {
-                curr[next[0]] = next[1];
-                return curr;
-            },
-            {} as Record<number, number>,
-        ),
+        threadsRead: candid.threads_read.reduce((curr, next) => {
+            curr[next[0]] = next[1];
+            return curr;
+        }, {} as Record<number, number>),
         archived: optional(candid.archived, identity),
     };
 }
 
 export function userCanisterCommunitySummaryUpdates(
-    candid: ApiUserCanisterCommunitySummaryUpdates,
+    candid: ApiUserCanisterCommunitySummaryUpdates
 ): UserCanisterCommunitySummaryUpdates {
     const communityId = candid.community_id.toString();
     return {
@@ -1009,7 +985,7 @@ export function userCanisterCommunitySummaryUpdates(
         index: optional(candid.index, identity),
         channels: candid.channels.map((c) => userCanisterChannelSummaryUpdates(c, communityId)),
         pinned: optional(candid.pinned, (p) =>
-            p.map((p) => ({ kind: "channel", communityId, channelId: p.toString() })),
+            p.map((p) => ({ kind: "channel", communityId, channelId: p.toString() }))
         ),
         archived: optional(candid.archived, identity),
     };
@@ -1034,7 +1010,7 @@ export function groupChatsUpdates(candid: ApiGroupChatsUpdates): GroupChatsUpdat
     return {
         added: candid.added.map(userCanisterGroupSummary),
         pinned: optional(candid.pinned, (p) =>
-            p.map((p) => ({ kind: "group_chat", groupId: p.toString() })),
+            p.map((p) => ({ kind: "group_chat", groupId: p.toString() }))
         ),
         updated: candid.updated.map(userCanisterGroupSummaryUpdates),
         removed: candid.removed.map((c) => c.toString()),
@@ -1045,14 +1021,14 @@ export function directChatsUpdates(candid: ApiDirectChatsUpdates): DirectChatsUp
     return {
         added: candid.added.map(directChatSummary),
         pinned: optional(candid.pinned, (p) =>
-            p.map((p) => ({ kind: "direct_chat", userId: p.toString() })),
+            p.map((p) => ({ kind: "direct_chat", userId: p.toString() }))
         ),
         updated: candid.updated.map(directChatSummaryUpdates),
     };
 }
 
 export function manageFavouritesResponse(
-    candid: ApiManageFavouriteChatsResponse,
+    candid: ApiManageFavouriteChatsResponse
 ): ManageFavouritesResponse {
     if ("Success" in candid) {
         return "success";
@@ -1084,7 +1060,7 @@ export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse 
             chitBalance: result.chit_balance,
             totalChitEarned: result.total_chit_earned,
             referrals: result.referrals.map(referral),
-			walletConfig: optional(result.wallet_config, walletConfig),
+            walletConfig: optional(result.wallet_config, walletConfig),
         };
     }
 
@@ -1098,18 +1074,15 @@ export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse 
 }
 
 function userCanisterGroupSummary(
-    summary: ApiUserCanisterGroupChatSummary,
+    summary: ApiUserCanisterGroupChatSummary
 ): UserCanisterGroupChatSummary {
     return {
         id: { kind: "group_chat", groupId: summary.chat_id.toString() },
         readByMeUpTo: optional(summary.read_by_me_up_to, identity),
-        threadsRead: summary.threads_read.reduce(
-            (curr, next) => {
-                curr[next[0]] = next[1];
-                return curr;
-            },
-            {} as Record<number, number>,
-        ),
+        threadsRead: summary.threads_read.reduce((curr, next) => {
+            curr[next[0]] = next[1];
+            return curr;
+        }, {} as Record<number, number>),
         archived: summary.archived,
         dateReadPinned: optional(summary.date_read_pinned, identity),
         localUserIndex: summary.local_user_index_canister_id.toString(),
@@ -1117,18 +1090,15 @@ function userCanisterGroupSummary(
 }
 
 function userCanisterGroupSummaryUpdates(
-    summary: ApiUserCanisterGroupChatSummaryUpdates,
+    summary: ApiUserCanisterGroupChatSummaryUpdates
 ): UserCanisterGroupChatSummaryUpdates {
     return {
         id: { kind: "group_chat", groupId: summary.chat_id.toString() },
         readByMeUpTo: optional(summary.read_by_me_up_to, identity),
-        threadsRead: summary.threads_read.reduce(
-            (curr, next) => {
-                curr[next[0]] = next[1];
-                return curr;
-            },
-            {} as Record<number, number>,
-        ),
+        threadsRead: summary.threads_read.reduce((curr, next) => {
+            curr[next[0]] = next[1];
+            return curr;
+        }, {} as Record<number, number>),
         archived: optional(summary.archived, identity),
         dateReadPinned: optional(summary.date_read_pinned, identity),
     };
@@ -1162,91 +1132,6 @@ function updatedEvent([eventIndex, timestamp]: [number, bigint]): UpdatedEvent {
     };
 }
 
-function memberRole(candid: ApiGroupRole): MemberRole {
-    if ("Admin" in candid) {
-        return "admin";
-    }
-    if ("Moderator" in candid) {
-        return "moderator";
-    }
-    if ("Participant" in candid) {
-        return "member";
-    }
-    if ("Owner" in candid) {
-        return "owner";
-    }
-    throw new UnsupportedValueError("Unexpected ApiRole type received", candid);
-}
-
-function mention(candid: ApiMention): Mention {
-    return {
-        messageId: candid.message_id,
-        messageIndex: candid.message_index,
-        eventIndex: candid.event_index,
-        mentionedBy: candid.mentioned_by.toString(),
-    };
-}
-
-function groupChatSummary(candid: ApiGroupChatSummary, isInvited: boolean): GroupChatSummary {
-    const latestMessage = optional(candid.latest_message, messageEvent);
-    return {
-        id: { kind: "group_chat", groupId: candid.chat_id.toString() },
-        kind: "group_chat",
-        latestMessage,
-        name: candid.name,
-        description: candid.description,
-        public: candid.is_public,
-        historyVisible: candid.history_visible_to_new_joiners,
-        minVisibleEventIndex: candid.min_visible_event_index,
-        minVisibleMessageIndex: candid.min_visible_message_index,
-        latestEventIndex: candid.latest_event_index,
-        latestMessageIndex: optional(candid.latest_message_index, identity),
-        lastUpdated: candid.last_updated,
-        blobReference: optional(candid.avatar_id, (blobId) => ({
-            blobId,
-            canisterId: candid.chat_id.toString(),
-        })),
-        memberCount: candid.participant_count,
-        permissions: groupPermissions(candid.permissions_v2),
-        metrics: chatMetrics(candid.metrics),
-        subtype: optional(candid.subtype, apiGroupSubtype),
-        previewed: false,
-        frozen: candid.frozen.length > 0,
-        dateLastPinned: optional(candid.date_last_pinned, identity),
-        dateReadPinned: optional(candid.date_read_pinned, identity),
-        gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
-        level: "group",
-        eventsTTL: optional(candid.events_ttl, identity),
-        eventsTtlLastUpdated: candid.events_ttl_last_updated,
-        membership: {
-            joined: candid.joined,
-            role: memberRole(candid.role),
-            mentions: candid.mentions
-                .filter((m) => m.thread_root_message_index.length === 0)
-                .map(mention),
-            latestThreads: candid.latest_threads.map(threadSyncDetails),
-            myMetrics: chatMetrics(candid.my_metrics),
-            notificationsMuted: candid.notifications_muted,
-            readByMeUpTo: optional(candid.read_by_me_up_to, identity),
-            archived: candid.archived,
-            rulesAccepted: candid.rules_accepted,
-        },
-        localUserIndex: candid.local_user_index_canister_id.toString(),
-        isInvited,
-        messagesVisibleToNonMembers: candid.messages_visible_to_non_members,
-    };
-}
-
-function threadSyncDetails(candid: ApiThreadSyncDetails): ThreadSyncDetails {
-    return {
-        threadRootMessageIndex: candid.root_message_index,
-        lastUpdated: candid.last_updated,
-        readUpTo: optional(candid.read_up_to, identity),
-        latestEventIndex: optional(candid.latest_event, identity) ?? -1,
-        latestMessageIndex: optional(candid.latest_message, identity) ?? -1,
-    };
-}
-
 function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
     return {
         id: { kind: "direct_chat", userId: candid.them.toString() },
@@ -1275,7 +1160,7 @@ function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
 }
 
 function failedNnsCryptoWithdrawal(
-    candid: ApiNnsFailedCryptoTransaction,
+    candid: ApiNnsFailedCryptoTransaction
 ): FailedCryptocurrencyWithdrawal {
     return {
         kind: "failed",
@@ -1289,7 +1174,7 @@ function failedNnsCryptoWithdrawal(
 }
 
 function failedIcrc1CryptoWithdrawal(
-    candid: ApiIcrc1FailedCryptoTransaction,
+    candid: ApiIcrc1FailedCryptoTransaction
 ): FailedCryptocurrencyWithdrawal {
     return {
         kind: "failed",
@@ -1303,7 +1188,7 @@ function failedIcrc1CryptoWithdrawal(
 }
 
 function completedNnsCryptoWithdrawal(
-    candid: ApiNnsCompletedCryptoTransaction,
+    candid: ApiNnsCompletedCryptoTransaction
 ): CompletedCryptocurrencyWithdrawal {
     return {
         kind: "completed",
@@ -1317,7 +1202,7 @@ function completedNnsCryptoWithdrawal(
 }
 
 function completedIcrc1CryptoWithdrawal(
-    candid: ApiIcrc1CompletedCryptoTransaction,
+    candid: ApiIcrc1CompletedCryptoTransaction
 ): CompletedCryptocurrencyWithdrawal {
     return {
         kind: "completed",
@@ -1331,7 +1216,7 @@ function completedIcrc1CryptoWithdrawal(
 }
 
 export function withdrawCryptoResponse(
-    candid: ApiWithdrawCryptoResponse,
+    candid: ApiWithdrawCryptoResponse
 ): WithdrawCryptocurrencyResponse {
     if (
         "PinRequired" in candid ||
@@ -1369,7 +1254,7 @@ function formatIcrc1Account(candid: ApiIcrc1Account): string {
 }
 
 export function deletedMessageResponse(
-    candid: ApiDeletedDirectMessageResponse,
+    candid: ApiDeletedDirectMessageResponse
 ): DeletedDirectMessageResponse {
     if ("Success" in candid) {
         return {
@@ -1394,12 +1279,12 @@ export function deletedMessageResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiDeletedDirectMessageResponse type received",
-        candid,
+        candid
     );
 }
 
 export function setMessageReminderResponse(
-    candid: ApiSetMessageReminderResponse,
+    candid: ApiSetMessageReminderResponse
 ): SetMessageReminderResponse {
     if ("Success" in candid) {
         return "success";
@@ -1419,7 +1304,7 @@ export function leaveCommunityResponse(candid: ApiLeaveCommunityResponse): Leave
 }
 
 export function deleteCommunityResponse(
-    candid: ApiDeleteCommunityResponse,
+    candid: ApiDeleteCommunityResponse
 ): DeleteCommunityResponse {
     if ("Success" in candid) {
         return "success";
@@ -1525,7 +1410,7 @@ export function swapTokensResponse(candid: ApiSwapTokensResponse): SwapTokensRes
 }
 
 export function tokenSwapStatusResponse(
-    candid: ApiTokenSwapStatusResponse,
+    candid: ApiTokenSwapStatusResponse
 ): TokenSwapStatusResponse {
     if ("Success" in candid) {
         return {
@@ -1560,7 +1445,7 @@ function result<T>(candid: { Ok: T } | { Err: string }): Result<T> {
 }
 
 function resultOfResult<T>(
-    candid: { Ok: { Ok: T } | { Err: string } } | { Err: string },
+    candid: { Ok: { Ok: T } | { Err: string } } | { Err: string }
 ): Result<Result<T>> {
     if ("Ok" in candid) {
         return {
@@ -1575,7 +1460,7 @@ function resultOfResult<T>(
 }
 
 export function approveTransferResponse(
-    candid: ApiApproveTransferResponse,
+    candid: ApiApproveTransferResponse
 ): ApproveTransferResponse {
     if ("Success" in candid) {
         return { kind: "success" };
@@ -1598,7 +1483,7 @@ export function approveTransferResponse(
 }
 
 export function apiExchangeArgs(
-    args: ExchangeTokenSwapArgs,
+    args: ExchangeTokenSwapArgs
 ): { Sonic: ApiExchangeArgs } | { ICPSwap: ApiExchangeArgs } {
     const value = {
         swap_canister_id: Principal.fromText(args.swapCanisterId),

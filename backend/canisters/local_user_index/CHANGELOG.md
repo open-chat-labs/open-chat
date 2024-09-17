@@ -6,9 +6,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1342](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1342-local_user_index)] - 2024-09-10
+
+### Changed
+
+- Allow video calls started by diamond members to last 2 hours ([#6356](https://github.com/open-chat-labs/open-chat/pull/6356))
+- Allow paging failed user events ([#6360](https://github.com/open-chat-labs/open-chat/pull/6360))
+- Add `community_canister_timestamp` to `UserJoinedCommunityOrChannel` events ([#6361](https://github.com/open-chat-labs/open-chat/pull/6361))
+
+## [[2.0.1339](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1339-local_user_index)] - 2024-09-10
+
+### Fixed
+
+- Don't push events directly to users on other subnets ([#6355](https://github.com/open-chat-labs/open-chat/pull/6355))
+
+## [[2.0.1338](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1338-local_user_index)] - 2024-09-10
+
+### Added
+
+- Expose MessagePack versions of LocalUserIndex APIs ([#6318](https://github.com/open-chat-labs/open-chat/pull/6318))
+
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+- Support community referrals ([#6317](https://github.com/open-chat-labs/open-chat/pull/6317))
+
+## [[2.0.1310](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1310-local_user_index)] - 2024-08-29
+
 ### Changed
 
 - Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+
+### Fixed
+
+- Fix referrals sometimes not being recorded ([#6290](https://github.com/open-chat-labs/open-chat/pull/6290))
 
 ## [[2.0.1299](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1299-local_user_index)] - 2024-08-20
 

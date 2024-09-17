@@ -5,9 +5,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1350](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1350-group)] - 2024-09-16
+
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+- Disallow sending messages to chats that have an external url set ([#6369](https://github.com/open-chat-labs/open-chat/pull/6369))
+- Change `cancel_invites` to mark group active ([#6390](https://github.com/open-chat-labs/open-chat/pull/6390))
+
+### Fixed
+
+- Ensure invited users can't contain duplicates ([#6333](https://github.com/open-chat-labs/open-chat/pull/6333))
+
+## [[2.0.1327](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1327-group)] - 2024-09-03
+
 ### Changed
 
 - Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+- Mark ProposalsBot as OC controlled bot ([#6287](https://github.com/open-chat-labs/open-chat/pull/6287))
 
 ## [[2.0.1295](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1295-group)] - 2024-08-16
 

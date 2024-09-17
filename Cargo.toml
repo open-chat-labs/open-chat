@@ -144,12 +144,12 @@ members = [
     "backend/libraries/proof_of_unique_personhood",
     "backend/libraries/storage_bucket_client",
     "backend/libraries/search",
-    "backend/libraries/serializer",
     "backend/libraries/sha256",
     "backend/libraries/sonic_client",
     "backend/libraries/stable_memory",
     "backend/libraries/testing",
-    "backend/libraries/ts_gen",
+    "backend/libraries/ts_export",
+    "backend/libraries/ts_export_macros",
     "backend/libraries/types",
     "backend/libraries/utils",
     "backend/notification_pusher/aws",
@@ -161,6 +161,7 @@ members = [
     "backend/tools/canister_upgrader",
     "backend/tools/principal_generator",
     "backend/tools/translation_tool",
+    "backend/tools/ts_exporter",
 ]
 resolver = "2"
 
@@ -173,7 +174,7 @@ aws-types = "1.1.5"
 base64 = "0.22.1"
 bitflags = { version = "2.4.1", features = ["serde"] }
 candid = "0.10.10"
-canister_sig_util = { git = "https://github.com/dfinity/internet-identity", rev = "5753544a82105e605cd51772ce1d4e4184fe8106" }
+canister_sig_util = { git = "https://github.com/dfinity/internet-identity", rev = "719a8f9d81d00d86fe3fc08ba136fd96e0f609a2" }
 ciborium = "0.2.2"
 clap = "4.5.4"
 ct-codecs = "1.1.1"
@@ -181,28 +182,28 @@ data-encoding = "2.6.0"
 dataurl = "0.1.2"
 dirs = "5.0.1"
 dotenv = "0.15.0"
-event_store_canister = { git = "https://github.com/open-chat-labs/event-store", rev = "v0.4.0" }
-event_store_producer = { git = "https://github.com/open-chat-labs/event-store", rev = "v0.4.0" }
-event_store_producer_cdk_runtime = { git = "https://github.com/open-chat-labs/event-store", rev = "v0.4.0" }
-event_store_utils = { git = "https://github.com/open-chat-labs/event-store", rev = "v0.4.0" }
+event_store_canister = { git = "https://github.com/open-chat-labs/event-store", rev = "v0.5.0" }
+event_store_producer = { git = "https://github.com/open-chat-labs/event-store", rev = "v0.5.0" }
+event_store_producer_cdk_runtime = { git = "https://github.com/open-chat-labs/event-store", rev = "v0.5.0" }
+event_store_utils = { git = "https://github.com/open-chat-labs/event-store", rev = "v0.5.0" }
 futures = "0.3.30"
 getrandom = { version = "0.2.15", features = ["custom"] }
 hex = "0.4.3"
 hmac-sha256 = { version = "1.1.7", features = ["traits010"] }
-ic-agent = "0.35.0"
+ic-agent = "0.37.1"
 ic-captcha = "1.0.0"
 ic-cbor = "2.5.0"
-ic-cdk = "0.14.0"
-ic-cdk-macros = "0.14.0"
-ic-cdk-timers = "0.8.0"
+ic-cdk = "0.16.0"
+ic-cdk-macros = "0.16.0"
+ic-cdk-timers = "0.10.0"
 ic-certificate-verification = "2.4.0"
 ic-certification = "2.5.0"
-ic-ledger-types = "0.11.0"
-ic_principal = { version = "0.1.1", features = ["ts-rs"] }
+ic-ledger-types = "0.13.0"
+ic_principal = "0.1.1"
 ic-stable-structures = "0.6.4"
-ic-transport-types = "0.35.0"
-ic-utils = "0.35.0"
-ic-verifiable-credentials = { git = "https://github.com/dfinity/verifiable-credentials-sdk", rev = "a116a2e53a13e4a1f6f7e8429960a7d0d6142e70" }
+ic-transport-types = "0.37.1"
+ic-utils = "0.37.0"
+ic-verifiable-credentials = { git = "https://github.com/dfinity/verifiable-credentials-sdk", rev = "5f21c3fe999df30f779586745f072fb115be53af" }
 icrc-ledger-types = "0.1.5"
 ic0 = "0.23.0"
 itertools = "0.13.0"
@@ -213,9 +214,9 @@ lazy_static = "1.4.0"
 num-traits = "0.2.19"
 openssl = "0.10.66"
 p256 = { version = "0.13.2" }
-pocket-ic = "4.0.0"
+pocket-ic = "5.0.0"
 proc-macro2 = "1.0.83"
-pulldown-cmark = { version = "0.11.0", default-features = false, features = [
+pulldown-cmark = { version = "0.12.0", default-features = false, features = [
     "html",
 ] }
 quote = "1.0.36"
@@ -233,8 +234,8 @@ serde_repr = "0.1.19"
 serde_tokenstream = "0.2.0"
 sha2 = "0.10.8"
 sha3 = "0.10.8"
-sign_in_with_email_canister = { git = "https://github.com/open-chat-labs/ic-sign-in-with-email", rev = "v0.12.0" }
-sign_in_with_email_canister_test_utils = { package = "test_utils", git = "https://github.com/open-chat-labs/ic-sign-in-with-email", rev = "v0.12.0" }
+sign_in_with_email_canister = { git = "https://github.com/open-chat-labs/ic-sign-in-with-email", rev = "v0.13.0" }
+sign_in_with_email_canister_test_utils = { package = "test_utils", git = "https://github.com/open-chat-labs/ic-sign-in-with-email", rev = "v0.13.0" }
 syn = "2.0.65"
 test-case = "3.3.1"
 time = "0.3.36"
@@ -242,7 +243,7 @@ tokio = "1.37.0"
 tracing = "0.1.40"
 tracing-attributes = "0.1.27"
 tracing-subscriber = "0.3.18"
-ts-rs = "9.0.1"
+ts-rs = { version = "9.0.1", features = ["no-serde-warnings"] }
 url = "2.5.2"
 web-push = { version = "0.10.1", default-features = false, features = [
     "hyper-client",
@@ -256,6 +257,6 @@ codegen-units = 1
 debug = false
 
 [patch.crates-io]
-ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "c99e5e54e7eb3e04d964f9c45aca0334e3aa2363" }
-ic_principal = { git = "https://github.com/hpeebles/candid", rev = "e404498843bdc83df29745956e64f3d2e1f425bc" }
+ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "f20bca1b4210b37effcb3c5d82adbb05c6647cbd" }
 rmp-serde = { git = "https://github.com/hpeebles/msgpack-rust", rev = "832a3f48e67eea56c869715ae6e1045583dd011b" }
+ts-rs = { git = "https://github.com/hpeebles/ts-rs", rev = "7b402398a066b33f2bc27e1771fb2c2318f402c4" }

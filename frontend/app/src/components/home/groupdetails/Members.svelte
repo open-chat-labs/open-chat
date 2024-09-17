@@ -37,6 +37,7 @@
     export let members: MemberType[];
     export let blocked: Set<string>;
     export let initialUsergroup: number | undefined = undefined;
+    export let showHeader = true;
 
     let userGroups: UserGroups | undefined;
 
@@ -174,12 +175,14 @@
     }
 </script>
 
-<MembersHeader
-    level={collection.level}
-    {closeIcon}
-    {canInvite}
-    on:close={close}
-    on:showInviteUsers={showInviteUsers} />
+{#if showHeader}
+    <MembersHeader
+        level={collection.level}
+        {closeIcon}
+        {canInvite}
+        on:close={close}
+        on:showInviteUsers={showInviteUsers} />
+{/if}
 
 {#if collection.level === "community"}
     <div class="tabs">
@@ -280,7 +283,7 @@
     {:else if memberView === "invited"}
         <div use:menuCloser class="user-list">
             {#each invitedUsers as user}
-                <InvitedUser {user} {searchTerm} canUninviteUser={false} on:uninviteUser />
+                <InvitedUser {user} {searchTerm} canUninviteUser={client.canInviteUsers(collection.id)} on:cancelInvite />
             {/each}
         </div>
     {/if}

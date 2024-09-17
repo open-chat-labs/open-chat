@@ -1,5 +1,4 @@
 export const idlFactory = ({ IDL }) => {
-  const AccessGate = IDL.Rec();
   const CanisterId = IDL.Principal;
   const UserId = CanisterId;
   const MessageId = IDL.Nat;
@@ -237,6 +236,7 @@ export const idlFactory = ({ IDL }) => {
   const ChitEarnedReason = IDL.Variant({
     'DailyClaim' : IDL.Null,
     'Achievement' : Achievement,
+    'ExternalAchievement' : IDL.Text,
     'MemeContestWinner' : IDL.Null,
     'Referral' : ReferralStatus,
   });
@@ -318,22 +318,32 @@ export const idlFactory = ({ IDL }) => {
     'ledger_canister_id' : CanisterId,
     'amount' : IDL.Nat,
   });
-  AccessGate.fill(
-    IDL.Variant({
-      'UniquePerson' : IDL.Null,
-      'VerifiedCredential' : VerifiedCredentialGate,
-      'SnsNeuron' : SnsNeuronGate,
-      'Locked' : IDL.Null,
-      'TokenBalance' : TokenBalanceGate,
-      'Composite' : IDL.Record({
-        'and' : IDL.Bool,
-        'inner' : IDL.Vec(AccessGate),
-      }),
-      'DiamondMember' : IDL.Null,
-      'Payment' : PaymentGate,
-      'LifetimeDiamondMember' : IDL.Null,
-    })
-  );
+  const AccessGateNonComposite = IDL.Variant({
+    'UniquePerson' : IDL.Null,
+    'VerifiedCredential' : VerifiedCredentialGate,
+    'ReferredByMember' : IDL.Null,
+    'SnsNeuron' : SnsNeuronGate,
+    'Locked' : IDL.Null,
+    'TokenBalance' : TokenBalanceGate,
+    'DiamondMember' : IDL.Null,
+    'Payment' : PaymentGate,
+    'LifetimeDiamondMember' : IDL.Null,
+  });
+  const AccessGate = IDL.Variant({
+    'UniquePerson' : IDL.Null,
+    'VerifiedCredential' : VerifiedCredentialGate,
+    'ReferredByMember' : IDL.Null,
+    'SnsNeuron' : SnsNeuronGate,
+    'Locked' : IDL.Null,
+    'TokenBalance' : TokenBalanceGate,
+    'Composite' : IDL.Record({
+      'and' : IDL.Bool,
+      'inner' : IDL.Vec(AccessGateNonComposite),
+    }),
+    'DiamondMember' : IDL.Null,
+    'Payment' : PaymentGate,
+    'LifetimeDiamondMember' : IDL.Null,
+  });
   const Document = IDL.Record({
     'id' : IDL.Nat,
     'data' : IDL.Vec(IDL.Nat8),
@@ -1162,14 +1172,6 @@ export const idlFactory = ({ IDL }) => {
     'thread_root_message_index' : IDL.Opt(MessageIndex),
     'latest_known_update' : IDL.Opt(TimestampMillis),
   });
-  const GetBtcAddressResponse = IDL.Variant({
-    'Success' : IDL.Text,
-    'InternalError' : IDL.Text,
-  });
-  const GetCachedBtcAddressResponse = IDL.Variant({
-    'NotFound' : IDL.Null,
-    'Success' : IDL.Text,
-  });
   const HotGroupExclusionsArgs = IDL.Record({});
   const HotGroupExclusionsResponse = IDL.Variant({
     'Success' : IDL.Vec(ChatId),
@@ -1212,6 +1214,10 @@ export const idlFactory = ({ IDL }) => {
     'threads_read' : IDL.Vec(IDL.Tuple(MessageIndex, MessageIndex)),
     'archived' : IDL.Bool,
   });
+  const GroupChatsInitial = IDL.Record({
+    'summaries' : IDL.Vec(UserCanisterGroupChatSummary),
+    'pinned' : IDL.Vec(ChatId),
+  });
   const VideoCall = IDL.Record({
     'call_type' : VideoCallType,
     'message_index' : MessageIndex,
@@ -1242,89 +1248,12 @@ export const idlFactory = ({ IDL }) => {
     'custom_type_messages' : IDL.Nat64,
     'prize_messages' : IDL.Nat64,
   });
-  const GovernanceProposalsSubtype = IDL.Record({
-    'is_nns' : IDL.Bool,
-    'governance_canister_id' : CanisterId,
-  });
-  const GroupSubtype = IDL.Variant({
-    'GovernanceProposals' : GovernanceProposalsSubtype,
-  });
-  const BuildVersion = IDL.Record({
-    'major' : IDL.Nat32,
-    'minor' : IDL.Nat32,
-    'patch' : IDL.Nat32,
-  });
-  const ThreadSyncDetails = IDL.Record({
-    'root_message_index' : MessageIndex,
-    'last_updated' : TimestampMillis,
-    'read_up_to' : IDL.Opt(MessageIndex),
-    'latest_event' : IDL.Opt(EventIndex),
-    'latest_message' : IDL.Opt(MessageIndex),
-  });
-  const FrozenGroupInfo = IDL.Record({
-    'timestamp' : TimestampMillis,
-    'frozen_by' : UserId,
-    'reason' : IDL.Opt(IDL.Text),
-  });
-  const Mention = IDL.Record({
-    'message_id' : MessageId,
-    'event_index' : EventIndex,
-    'thread_root_message_index' : IDL.Opt(MessageIndex),
-    'mentioned_by' : UserId,
-    'message_index' : MessageIndex,
-  });
   const MessageEventWrapper = IDL.Record({
     'event' : Message,
     'timestamp' : TimestampMillis,
     'index' : EventIndex,
     'correlation_id' : IDL.Nat64,
     'expires_at' : IDL.Opt(TimestampMillis),
-  });
-  const GroupChatSummary = IDL.Record({
-    'is_public' : IDL.Bool,
-    'video_call_in_progress' : IDL.Opt(VideoCall),
-    'metrics' : ChatMetrics,
-    'subtype' : IDL.Opt(GroupSubtype),
-    'permissions_v2' : GroupPermissions,
-    'date_last_pinned' : IDL.Opt(TimestampMillis),
-    'min_visible_event_index' : EventIndex,
-    'gate' : IDL.Opt(AccessGate),
-    'name' : IDL.Text,
-    'role' : GroupRole,
-    'wasm_version' : BuildVersion,
-    'notifications_muted' : IDL.Bool,
-    'latest_message_index' : IDL.Opt(MessageIndex),
-    'description' : IDL.Text,
-    'events_ttl' : IDL.Opt(Milliseconds),
-    'last_updated' : TimestampMillis,
-    'joined' : TimestampMillis,
-    'avatar_id' : IDL.Opt(IDL.Nat),
-    'rules_accepted' : IDL.Bool,
-    'messages_visible_to_non_members' : IDL.Bool,
-    'local_user_index_canister_id' : CanisterId,
-    'latest_threads' : IDL.Vec(ThreadSyncDetails),
-    'frozen' : IDL.Opt(FrozenGroupInfo),
-    'latest_event_index' : EventIndex,
-    'history_visible_to_new_joiners' : IDL.Bool,
-    'read_by_me_up_to' : IDL.Opt(MessageIndex),
-    'min_visible_message_index' : MessageIndex,
-    'mentions' : IDL.Vec(Mention),
-    'chat_id' : ChatId,
-    'date_read_pinned' : IDL.Opt(TimestampMillis),
-    'archived' : IDL.Bool,
-    'events_ttl_last_updated' : TimestampMillis,
-    'participant_count' : IDL.Nat32,
-    'my_metrics' : ChatMetrics,
-    'latest_message' : IDL.Opt(MessageEventWrapper),
-  });
-  const CachedGroupChatSummaries = IDL.Record({
-    'summaries' : IDL.Vec(GroupChatSummary),
-    'timestamp' : TimestampMillis,
-  });
-  const GroupChatsInitial = IDL.Record({
-    'summaries' : IDL.Vec(UserCanisterGroupChatSummary),
-    'pinned' : IDL.Vec(ChatId),
-    'cached' : IDL.Opt(CachedGroupChatSummaries),
   });
   const DirectChatSummary = IDL.Record({
     'read_by_them_up_to' : IDL.Opt(MessageIndex),
@@ -1518,16 +1447,6 @@ export const idlFactory = ({ IDL }) => {
     'ChatNotFound' : IDL.Null,
     'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
-    'InternalError' : IDL.Text,
-  });
-  const RetrieveBtcArgs = IDL.Record({
-    'address' : IDL.Text,
-    'amount' : IDL.Nat64,
-  });
-  const RetrieveBtcResponse = IDL.Variant({
-    'ApproveError' : IDL.Text,
-    'Success' : IDL.Nat64,
-    'RetrieveBtcError' : IDL.Text,
     'InternalError' : IDL.Text,
   });
   const NamedAccount = IDL.Record({ 'name' : IDL.Text, 'account' : IDL.Text });
@@ -2122,12 +2041,6 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
-    'get_btc_address' : IDL.Func([EmptyArgs], [GetBtcAddressResponse], []),
-    'get_cached_btc_address' : IDL.Func(
-        [EmptyArgs],
-        [GetCachedBtcAddressResponse],
-        ['query'],
-      ),
     'hot_group_exclusions' : IDL.Func(
         [HotGroupExclusionsArgs],
         [HotGroupExclusionsResponse],
@@ -2187,7 +2100,6 @@ export const idlFactory = ({ IDL }) => {
         [ReportMessageResponse],
         [],
       ),
-    'retrieve_btc' : IDL.Func([RetrieveBtcArgs], [RetrieveBtcResponse], []),
     'save_crypto_account' : IDL.Func(
         [NamedAccount],
         [SaveCryptoAccountResponse],

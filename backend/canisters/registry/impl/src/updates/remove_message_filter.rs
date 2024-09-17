@@ -1,10 +1,10 @@
 use crate::{mutate_state, read_state};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use registry_canister::remove_message_filter::{Response::*, *};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
 async fn remove_message_filter(args: Args) -> Response {
     let (caller, user_index_canister_id) = read_state(|state| (state.env.caller(), state.data.user_index_canister_id));
