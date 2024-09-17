@@ -139,13 +139,13 @@
     },
     "sign_in_with_ethereum": {
       "type": "custom",
-      "candid": "https://github.com/kristoferlund/ic-siwe/releases/download/v0.0.6/ic_siwe_provider.did",
-      "wasm": "https://github.com/kristoferlund/ic-siwe/releases/download/v0.0.6/ic_siwe_provider.wasm.gz"
+      "candid": "https://github.com/kristoferlund/ic-siwe/releases/download/v0.1.1/ic_siwe_provider.did",
+      "wasm": "https://github.com/kristoferlund/ic-siwe/releases/download/v0.1.1/ic_siwe_provider.wasm.gz"
     },
     "sign_in_with_solana": {
       "type": "custom",
-      "candid": "https://github.com/kristoferlund/ic-siws/releases/download/v0.0.1/ic_siws_provider.did",
-      "wasm": "https://github.com/kristoferlund/ic-siws/releases/download/v0.0.1/ic_siws_provider.wasm.gz"
+      "candid": "https://github.com/kristoferlund/ic-siws/releases/download/v0.0.2/ic_siws_provider.did",
+      "wasm": "https://github.com/kristoferlund/ic-siws/releases/download/v0.0.2/ic_siws_provider.wasm.gz"
     },
     "website": {
       "build": "",
