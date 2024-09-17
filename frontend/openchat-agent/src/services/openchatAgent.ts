@@ -3656,12 +3656,9 @@ export class OpenChatAgent extends EventTarget {
             const merged = this.mergeExternalAchievements(cached, updates);
             setCachedExternalAchievements(merged.lastUpdated, merged.achievements);
             return merged.achievements;
-        } else if (updates.kind === "success_no_updates") {
-            setCachedExternalAchievements(BigInt(Date.now()), cached?.achievements ?? []);
-            return cached?.achievements ?? [];
         }
 
-        return [];
+        return cached?.achievements ?? [];
     }
 
     private mergeExternalAchievements(
