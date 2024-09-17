@@ -83,7 +83,10 @@
     );
     $: externalAchievements = [] as ExternalAchievement[];
     $: totalAchievements = filtered.length + externalAchievements.length;
-    $: achieved = [...internalAchieved, ...externalAchieved.map((a) => a.name)];
+    $: achieved = [
+        ...internalAchieved.map((a) => `learnToEarn.${a}`),
+        ...externalAchieved.map((a) => a.name),
+    ];
     $: percComplete = Math.round((achieved.length / totalAchievements) * 100);
     $: [externalAchieved, externalNotAchieved] = client.partition(externalAchievements, (a) => {
         return $globalState.achievements.has(a.name);
@@ -196,7 +199,7 @@
                                         size={$iconSize}
                                         color={"var(--toast-success-bg)"} />
                                 </div>
-                                <Translatable resourceKey={i18nKey(`learnToEarn.${achievement}`)} />
+                                <Translatable resourceKey={i18nKey(achievement)} />
                             </div>
                         {/each}
                     {/if}
