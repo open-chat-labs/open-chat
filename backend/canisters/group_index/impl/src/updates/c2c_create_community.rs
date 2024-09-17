@@ -4,7 +4,7 @@ use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_community::{Response::*, *};
-use types::{AccessGate, CanisterId, CommunityId, Document, UserId};
+use types::{AccessGateConfig, CanisterId, CommunityId, Document, UserId};
 
 #[update(msgpack = true)]
 #[trace]
@@ -58,6 +58,7 @@ pub(crate) async fn create_community_impl(
             mutate_state(|state| {
                 let avatar_id = Document::id(&args.avatar);
                 let banner_id = Document::id(&args.banner);
+                let gate_config = if args.gate_config.is_some() { args.gate_config } else { args.gate.map(|g| g.into()) };
 
                 commit(
                     args.is_public,
@@ -66,7 +67,7 @@ pub(crate) async fn create_community_impl(
                     args.description,
                     avatar_id,
                     banner_id,
-                    args.gate,
+                    gate_config,
                     args.primary_language,
                     local_group_index_canister,
                     args.default_channels.len() as u32,
@@ -131,7 +132,7 @@ fn commit(
     description: String,
     avatar_id: Option<u128>,
     banner_id: Option<u128>,
-    gate: Option<AccessGate>,
+    gate_config: Option<AccessGateConfig>,
     primary_language: String,
     local_group_index_canister: CanisterId,
     channel_count: u32,
@@ -146,7 +147,7 @@ fn commit(
             description,
             avatar_id,
             banner_id,
-            gate,
+            gate_config,
             primary_language,
             channel_count,
             now,

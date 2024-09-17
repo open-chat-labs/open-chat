@@ -12,6 +12,7 @@ fn c2c_update_community(args: Args) -> Response {
 
 fn c2c_update_community_impl(args: Args, state: &mut RuntimeState) -> Response {
     let community_id = CommunityId::from(state.env.caller());
+    let gate_config = if args.gate_config.is_some() { args.gate_config } else { args.gate.map(|g| g.into()) };
 
     if let Some(community) = state.data.public_communities.get(&community_id) {
         if community.name().to_uppercase() != args.name.to_uppercase() {
@@ -36,7 +37,7 @@ fn c2c_update_community_impl(args: Args, state: &mut RuntimeState) -> Response {
             args.description,
             args.avatar_id,
             args.banner_id,
-            args.gate,
+            gate_config,
         );
         Success
     } else if let Some(community) = state.data.private_communities.get(&community_id) {
@@ -58,7 +59,7 @@ fn c2c_update_community_impl(args: Args, state: &mut RuntimeState) -> Response {
             args.description,
             args.avatar_id,
             args.banner_id,
-            args.gate,
+            gate_config,
             args.primary_language,
             args.channel_count,
             date_created,
