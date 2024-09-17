@@ -26,9 +26,9 @@ use std::cell::RefCell;
 use std::ops::Deref;
 use std::time::Duration;
 use types::{
-    AccessGate, BuildVersion, CanisterId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
-    CommunityPermissions, CommunityRole, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, Milliseconds, Notification,
-    PaymentGate, Rules, TimestampMillis, Timestamped, UserId, UserType,
+    AccessGate, AccessGateConfig, BuildVersion, CanisterId, ChatMetrics, CommunityCanisterCommunitySummary,
+    CommunityMembership, CommunityPermissions, CommunityRole, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo,
+    Milliseconds, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use utils::env::Environment;
@@ -213,9 +213,8 @@ impl RuntimeState {
             member_count: data.members.len(),
             permissions: data.permissions.clone(),
             frozen: data.frozen.value.clone(),
-            gate: data.gate.value.clone(),
-            // TODO: AccessGateConfig
-            gate_config: None,
+            gate: data.gate_config.value.as_ref().map(|gc| gc.clone().into()),
+            gate_config: data.gate_config.value.clone(),
             primary_language: data.primary_language.clone(),
             channels,
             membership,
@@ -293,7 +292,8 @@ struct Data {
     avatar: Option<Document>,
     banner: Option<Document>,
     permissions: CommunityPermissions,
-    gate: Timestamped<Option<AccessGate>>,
+    #[serde(alias = "gate")]
+    gate_config: Timestamped<Option<AccessGateConfig>>,
     primary_language: String,
     user_index_canister_id: CanisterId,
     local_user_index_canister_id: CanisterId,
@@ -353,7 +353,7 @@ impl Data {
         proposals_bot_user_id: UserId,
         escrow_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
-        gate: Option<AccessGate>,
+        gate: Option<AccessGateConfig>,
         default_channels: Vec<String>,
         default_channel_rules: Option<Rules>,
         mark_active_duration: Milliseconds,
@@ -390,7 +390,7 @@ impl Data {
             avatar,
             banner,
             permissions,
-            gate: Timestamped::new(gate, now),
+            gate_config: Timestamped::new(gate, now),
             primary_language,
             user_index_canister_id,
             local_user_index_canister_id,
@@ -485,10 +485,10 @@ impl Data {
     }
 
     pub fn has_payment_gate(&self) -> bool {
-        self.gate
+        self.gate_config
             .value
             .as_ref()
-            .map(|g| matches!(g, AccessGate::Payment(_)))
+            .map(|g| matches!(g.gate, AccessGate::Payment(_)))
             .unwrap_or_default()
     }
 

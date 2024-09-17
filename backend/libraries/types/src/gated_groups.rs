@@ -8,9 +8,26 @@ pub const SNS_FEE_SHARE_PERCENT: u128 = 2;
 
 #[ts_export]
 #[derive(CandidType, Clone, Debug, Eq, PartialEq)]
+#[serde(from = "AccessGate")]
 pub struct AccessGateConfig {
     pub gate: AccessGate,
     pub expiry: Option<Milliseconds>,
+}
+
+// TODO: Delete this after it is released
+impl From<AccessGate> for AccessGateConfig {
+    fn from(value: AccessGate) -> Self {
+        AccessGateConfig {
+            gate: value,
+            expiry: None,
+        }
+    }
+}
+
+impl From<AccessGateConfig> for AccessGate {
+    fn from(value: AccessGateConfig) -> Self {
+        value.gate
+    }
 }
 
 #[ts_export]
