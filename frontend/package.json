@@ -36,6 +36,7 @@
         "@rollup/plugin-replace": "^5.0.5",
         "@rollup/plugin-terser": "^0.4.4",
         "@rollup/plugin-typescript": "^11.1.2",
+        "@sinclair/typebox": "^0.33.11",
         "@typescript-eslint/eslint-plugin": "^6.4.0",
         "@typescript-eslint/parser": "^6.4.0",
         "auto-changelog": "open-chat-labs/auto-changelog#master",
