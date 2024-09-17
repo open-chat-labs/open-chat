@@ -1,16 +1,16 @@
-use crate::{generate_query_call, generate_update_call};
+use crate::{generate_msgpack_query_call, generate_msgpack_update_call, generate_query_call, generate_update_call};
 use user_index_canister::*;
 
 // Queries
-generate_query_call!(check_username);
-generate_query_call!(current_user);
-generate_query_call!(search);
-generate_query_call!(platform_moderators);
-generate_query_call!(platform_moderators_group);
+generate_msgpack_query_call!(check_username);
+generate_msgpack_query_call!(current_user);
+generate_msgpack_query_call!(search);
+generate_msgpack_query_call!(platform_moderators);
+generate_msgpack_query_call!(platform_moderators_group);
 generate_query_call!(public_key);
-generate_query_call!(user);
-generate_query_call!(users);
-generate_query_call!(users_chit);
+generate_msgpack_query_call!(user);
+generate_msgpack_query_call!(users);
+generate_msgpack_query_call!(users_chit);
 
 // Updates
 generate_update_call!(add_local_user_index_canister);
@@ -18,14 +18,14 @@ generate_update_call!(add_platform_moderator);
 generate_update_call!(add_platform_operator);
 generate_update_call!(assign_platform_moderators_group);
 generate_update_call!(c2c_register_bot);
-generate_update_call!(delete_user);
-generate_update_call!(pay_for_diamond_membership);
+generate_msgpack_update_call!(delete_user);
+generate_msgpack_update_call!(pay_for_diamond_membership);
 generate_update_call!(remove_platform_moderator);
-generate_update_call!(set_display_name);
-generate_update_call!(set_username);
-generate_update_call!(suspend_user);
-generate_update_call!(update_diamond_membership_subscription);
-generate_update_call!(unsuspend_user);
+generate_msgpack_update_call!(set_display_name);
+generate_msgpack_update_call!(set_username);
+generate_msgpack_update_call!(suspend_user);
+generate_msgpack_update_call!(update_diamond_membership_subscription);
+generate_msgpack_update_call!(unsuspend_user);
 generate_update_call!(upgrade_local_user_index_canister_wasm);
 generate_update_call!(upgrade_user_canister_wasm);
 
