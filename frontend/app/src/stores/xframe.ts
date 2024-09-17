@@ -27,7 +27,8 @@ const FRAME_ANCESTORS = [
     "https://zdgud-kqaaa-aaaal-ajn4q-cai.icp0.io", // tendy zone test
     "https://okowr-oqaaa-aaaag-qkedq-cai.icp0.io", // konecta pre-register
     "https://pre.konecta.one", //konecta pre-register
-    "https://konecta.one" //konecta website/webapp
+    "https://konecta.one", //konecta website/webapp
+    "https://y7mum-taaaa-aaaag-qklxq-cai.icp0.io" // konecta pre-register test env
 ];
 
 type InboundXFrameMessage = UpdateTheme | ChangeRoute | OverrideSettings | Logout;
