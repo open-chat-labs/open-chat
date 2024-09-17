@@ -43,7 +43,7 @@
                     const signResponse = await signMessage(data);
                     const signature = base58.encode(signResponse);
                     await client
-                        .signInWithWallet("sol", account, signature, assumeIdentity)
+                        .signInWithWallet("sol", account, signature, "", assumeIdentity)
                         .then((resp) => {
                             if (resp.kind === "success") {
                                 dispatch("connected", resp);

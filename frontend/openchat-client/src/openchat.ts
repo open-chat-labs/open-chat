@@ -6866,6 +6866,7 @@ export class OpenChat extends OpenChatAgentWorker {
         token: "eth" | "sol",
         address: string,
         signature: string,
+        nonce: string,
         connectWorker: boolean,
     ): Promise<
         | { kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain }
@@ -6878,6 +6879,7 @@ export class OpenChat extends OpenChatAgentWorker {
             token,
             address,
             signature,
+            nonce,
             sessionKey: sessionKeyDer,
         });
 
