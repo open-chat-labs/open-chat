@@ -71,7 +71,7 @@ impl ExternalAchievements {
             return AwardResult::InvalidCaller;
         }
 
-        if achievement.expires >= now {
+        if achievement.expires <= now {
             return AwardResult::Expired;
         }
 
