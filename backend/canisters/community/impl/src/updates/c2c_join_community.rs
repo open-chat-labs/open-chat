@@ -70,9 +70,9 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(Acc
     } else if !state.data.is_public && !state.data.is_invite_code_valid(args.invite_code) {
         Err(NotInvited)
     } else {
-        Ok(state.data.gate.as_ref().map(|g| {
+        Ok(state.data.gate_config.as_ref().map(|g| {
             (
-                g.clone(),
+                g.gate.clone(),
                 CheckGateArgs {
                     user_id: args.user_id,
                     diamond_membership_expires_at: args.diamond_membership_expires_at,
@@ -139,8 +139,8 @@ pub(crate) fn join_community_impl(args: &Args, state: &mut RuntimeState) -> Resu
             );
 
             // If there is a payment gate on this community then queue payments to owner(s) and treasury
-            if let Some(AccessGate::Payment(gate)) = state.data.gate.value.as_ref() {
-                state.queue_access_gate_payments(gate.clone());
+            if let Some(AccessGate::Payment(gate)) = state.data.gate_config.value.as_ref().map(|gc| gc.gate.clone()) {
+                state.queue_access_gate_payments(gate);
             }
 
             handle_activity_notification(state);

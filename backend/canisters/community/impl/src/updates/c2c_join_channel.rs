@@ -14,7 +14,9 @@ use gated_groups::{
     CheckVerifiedCredentialGateArgs,
 };
 use group_chat_core::AddResult;
-use types::{AccessGate, ChannelId, MemberJoined, TimestampMillis, UniquePersonProof, VerifiedCredentialGateArgs};
+use types::{
+    AccessGate, AccessGateConfig, ChannelId, MemberJoined, TimestampMillis, UniquePersonProof, VerifiedCredentialGateArgs,
+};
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
@@ -80,9 +82,9 @@ pub(crate) fn join_channel_synchronously(
         )
     }) {
         Ok(None) => {}
-        Ok(Some((gate, args))) => {
+        Ok(Some((gate_config, args))) => {
             if !matches!(
-                check_if_passes_gate_synchronously(gate, args),
+                check_if_passes_gate_synchronously(gate_config.gate, args),
                 Some(CheckIfPassesGateResult::Success)
             ) {
                 return;
@@ -105,7 +107,7 @@ async fn check_gate_then_join_channel(args: &Args) -> Response {
             state,
         )
     }) {
-        Ok(Some((gate, check_gate_args))) => match check_if_passes_gate(gate, check_gate_args).await {
+        Ok(Some((gate_config, check_gate_args))) => match check_if_passes_gate(gate_config.gate, check_gate_args).await {
             CheckIfPassesGateResult::Success => {}
             CheckIfPassesGateResult::Failed(reason) => return GateCheckFailed(reason),
             CheckIfPassesGateResult::InternalError(error) => return InternalError(error),
@@ -124,7 +126,7 @@ fn is_permitted_to_join(
     unique_person_proof: Option<UniquePersonProof>,
     verified_credential_args: Option<VerifiedCredentialGateArgs>,
     state: &RuntimeState,
-) -> Result<Option<(AccessGate, CheckGateArgs)>, Response> {
+) -> Result<Option<(AccessGateConfig, CheckGateArgs)>, Response> {
     if state.data.is_frozen() {
         return Err(CommunityFrozen);
     }
@@ -150,7 +152,7 @@ fn is_permitted_to_join(
             } else if !channel.chat.is_public.value {
                 Err(NotInvited)
             } else {
-                Ok(channel.chat.gate.as_ref().map(|g| {
+                Ok(channel.chat.gate_config.as_ref().map(|g| {
                     (
                         g.clone(),
                         CheckGateArgs {
@@ -190,7 +192,7 @@ fn commit(channel_id: ChannelId, user_principal: Principal, state: &mut RuntimeS
                         .unwrap();
 
                     // If there is a payment gate on this channel then queue payments to *community* owner(s) and treasury
-                    if let Some(AccessGate::Payment(gate)) = channel.chat.gate.value.as_ref().cloned() {
+                    if let Some(AccessGate::Payment(gate)) = channel.chat.gate_config.value.as_ref().map(|gc| gc.gate.clone()) {
                         state.queue_access_gate_payments(gate);
                     }
 

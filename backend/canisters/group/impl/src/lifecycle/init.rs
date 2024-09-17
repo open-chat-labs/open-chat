@@ -40,7 +40,7 @@ fn init(args: Args) {
         args.internet_identity_canister_id,
         args.test_mode,
         args.permissions_v2,
-        args.gate,
+        if args.gate_config.is_some() { args.gate_config } else { args.gate.map(|g| g.into()) },
         args.video_call_operators,
         args.ic_root_key,
         env.rng().gen(),

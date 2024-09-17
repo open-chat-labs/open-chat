@@ -30,6 +30,12 @@ impl From<AccessGateConfig> for AccessGate {
     }
 }
 
+impl AccessGateConfig {
+    pub fn new(gate: AccessGate) -> AccessGateConfig {
+        AccessGateConfig { gate, expiry: None }
+    }
+}
+
 #[ts_export]
 #[derive(CandidType, Clone, Debug, Eq, PartialEq)]
 pub enum AccessGate {

@@ -7,7 +7,7 @@ use group_index_canister::{c2c_make_community_private, c2c_update_community};
 use ic_cdk::update;
 use tracing::error;
 use types::{
-    AccessGate, AvatarChanged, BannerChanged, CanisterId, CommunityId, CommunityPermissions, CommunityPermissionsChanged,
+    AccessGateConfig, AvatarChanged, BannerChanged, CanisterId, CommunityId, CommunityPermissions, CommunityPermissionsChanged,
     CommunityVisibilityChanged, Document, GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged, GroupRulesChanged,
     OptionUpdate, OptionalCommunityPermissions, PrimaryLanguageChanged, Timestamped, UserId,
 };
@@ -62,9 +62,8 @@ async fn update_community(mut args: Args) -> Response {
             description: prepare_result.description,
             avatar_id: prepare_result.avatar_id,
             banner_id: prepare_result.banner_id,
-            gate: prepare_result.gate,
-            // TODO: AccessGateConfig
-            gate_config: None,
+            gate: prepare_result.gate_config.as_ref().map(|gc| gc.gate.clone()),
+            gate_config: prepare_result.gate_config,
             primary_language: prepare_result.primary_language,
             channel_count: prepare_result.channel_count,
         };
@@ -103,7 +102,7 @@ struct PrepareResult {
     description: String,
     avatar_id: Option<u128>,
     banner_id: Option<u128>,
-    gate: Option<AccessGate>,
+    gate_config: Option<AccessGateConfig>,
     primary_language: String,
     channel_count: u32,
 }
@@ -122,7 +121,12 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     let caller = state.env.caller();
     let avatar_update = args.avatar.as_ref().expand();
     let banner_update = args.banner.as_ref().expand();
-    let gate = args.gate.as_ref().apply_to(state.data.gate.value.as_ref());
+    let gate_config_updates = if args.gate_config.has_update() {
+        &args.gate_config
+    } else {
+        &args.gate.as_ref().map(|g| AccessGateConfig::new(g.clone()))
+    };
+    let gate_config = gate_config_updates.as_ref().apply_to(state.data.gate_config.value.as_ref());
 
     if let Some(name) = &args.name {
         if let Err(error) = validate_community_name(name, state.data.is_public) {
@@ -184,7 +188,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 description: args.description.as_ref().unwrap_or(&state.data.description).clone(),
                 avatar_id: avatar_update.map_or(Document::id(&state.data.avatar), |avatar| avatar.map(|a| a.id)),
                 banner_id: banner_update.map_or(Document::id(&state.data.banner), |banner| banner.map(|a| a.id)),
-                gate: gate.cloned(),
+                gate_config: gate_config.cloned(),
                 primary_language: args.primary_language.as_ref().unwrap_or(&state.data.primary_language).clone(),
                 channel_count: state.data.channels.public_channel_ids().len() as u32,
             })
@@ -303,16 +307,21 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
         );
     }
 
-    if let Some(gate) = args.gate.expand() {
-        if state.data.gate.value != gate {
-            state.data.gate = Timestamped::new(gate.clone(), now);
+    let gate_config_updates = if args.gate_config.has_update() {
+        args.gate_config
+    } else {
+        args.gate.as_ref().map(|g| AccessGateConfig::new(g.clone()))
+    };
+
+    if let Some(gate_config) = gate_config_updates.expand() {
+        if state.data.gate_config.value != gate_config {
+            state.data.gate_config = Timestamped::new(gate_config.clone(), now);
 
             state.data.events.push_event(
                 CommunityEventInternal::GateUpdated(Box::new(GroupGateUpdated {
                     updated_by: my_user_id,
-                    new_gate: gate,
-                    // TODO: AccessGateConfig
-                    new_gate_config: None,
+                    new_gate: gate_config.clone().map(|gc| gc.gate),
+                    new_gate_config: gate_config,
                 })),
                 state.env.now(),
             );

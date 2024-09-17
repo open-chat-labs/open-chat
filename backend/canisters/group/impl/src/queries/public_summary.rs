@@ -47,9 +47,8 @@ fn public_summary_impl(args: Args, state: &RuntimeState) -> Response {
         frozen: data.frozen.value.clone(),
         events_ttl: events_ttl.value,
         events_ttl_last_updated: events_ttl.timestamp,
-        gate: data.chat.gate.value.clone(),
-        // TODO: AccessGateConfig
-        gate_config: None,
+        gate: data.chat.gate_config.value.as_ref().map(|gc| gc.gate.clone()),
+        gate_config: data.chat.gate_config.value.clone(),
         wasm_version: BuildVersion::default(),
     };
     Success(SuccessResult {

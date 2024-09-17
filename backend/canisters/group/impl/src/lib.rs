@@ -28,7 +28,7 @@ use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use std::time::Duration;
 use types::{
-    AccessGate, BuildVersion, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Empty,
+    AccessGateConfig, BuildVersion, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Empty,
     EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype, MessageIndex,
     Milliseconds, MultiUserChat, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId, UserType,
     MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
@@ -224,9 +224,8 @@ impl RuntimeState {
             date_last_pinned: chat.date_last_pinned,
             events_ttl: events_ttl.value,
             events_ttl_last_updated: events_ttl.timestamp,
-            gate: chat.gate.value.clone(),
-            // TODO: AccessGateConfig
-            gate_config: None,
+            gate: chat.gate_config.value.as_ref().map(|gc| gc.gate.clone()),
+            gate_config: chat.gate_config.value.clone(),
             rules_accepted: membership.rules_accepted,
             membership: Some(membership),
             video_call_in_progress: chat.events.video_call_in_progress().value.clone(),
@@ -488,7 +487,7 @@ impl Data {
         internet_identity_canister_id: CanisterId,
         test_mode: bool,
         permissions: Option<GroupPermissions>,
-        gate: Option<AccessGate>,
+        gate_config: Option<AccessGateConfig>,
         video_call_operators: Vec<Principal>,
         ic_root_key: Vec<u8>,
         anonymized_chat_id: u128,
@@ -505,7 +504,7 @@ impl Data {
             history_visible_to_new_joiners,
             messages_visible_to_non_members,
             permissions.unwrap_or_default(),
-            gate,
+            gate_config,
             events_ttl,
             creator_user_type,
             anonymized_chat_id,

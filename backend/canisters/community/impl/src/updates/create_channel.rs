@@ -128,6 +128,7 @@ fn create_channel_impl(
             let now = state.env.now();
             let channel_id: ChannelId = state.env.rng().gen();
             let permissions = args.permissions_v2.unwrap_or_default();
+            let gate_config = if args.gate_config.is_some() { args.gate_config } else { args.gate.map(|g| g.into()) };
 
             let chat = GroupChatCore::new(
                 MultiUserChat::Channel(state.env.canister_id().into(), channel_id),
@@ -141,7 +142,7 @@ fn create_channel_impl(
                 args.history_visible_to_new_joiners,
                 messages_visible_to_non_members,
                 permissions,
-                args.gate.clone(),
+                gate_config.clone(),
                 args.events_ttl,
                 member.user_type,
                 state.env.rng().gen(),
@@ -158,7 +159,7 @@ fn create_channel_impl(
             };
 
             if args.is_public {
-                match args.gate {
+                match gate_config.map(|gc| gc.gate) {
                     Some(AccessGate::DiamondMember) => {
                         for m in state
                             .data

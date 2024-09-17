@@ -45,6 +45,7 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
 
         if let Some(member) = state.data.members.get(caller) {
             let now = state.env.now();
+            let gate_config = if args.gate_config.has_update() { args.gate_config } else { args.gate.map(|g| g.into()) };
             match channel.chat.update(
                 member.user_id,
                 args.name,
@@ -52,7 +53,7 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                 args.rules,
                 args.avatar,
                 args.permissions_v2,
-                args.gate,
+                gate_config,
                 args.public,
                 args.messages_visible_to_non_members,
                 args.events_ttl,
@@ -60,10 +61,10 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                 now,
             ) {
                 UpdateResult::Success(result) => {
-                    if channel.chat.is_public.value && channel.chat.gate.is_none() {
+                    if channel.chat.is_public.value && channel.chat.gate_config.is_none() {
                         // If the channel has just been made public or had its gate removed, join
                         // existing community members to the channel
-                        if result.newly_public || matches!(result.gate_update, OptionUpdate::SetToNone) {
+                        if result.newly_public || matches!(result.gate_config_update, OptionUpdate::SetToNone) {
                             for m in state.data.members.iter_mut() {
                                 if !m.channels_removed.iter().any(|c| c.value == channel.id) {
                                     join_channel_unchecked(channel, m, true, now);

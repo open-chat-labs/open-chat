@@ -7,7 +7,7 @@ use group_chat_core::UpdateResult;
 use group_index_canister::{c2c_make_private, c2c_update_group};
 use ic_cdk::update;
 use tracing::error;
-use types::{AccessGate, CanisterId, ChatId, Document, OptionUpdate, UserId};
+use types::{AccessGateConfig, CanisterId, ChatId, Document, OptionUpdate, UserId};
 
 #[update]
 #[trace]
@@ -43,9 +43,8 @@ async fn update_group_v2(mut args: Args) -> Response {
             name: prepare_result.name,
             description: prepare_result.description,
             avatar_id: prepare_result.avatar_id,
-            gate: prepare_result.gate,
-            // TODO: AccessGateConfig
-            gate_config: None,
+            gate: prepare_result.gate_config.as_ref().map(|gc| gc.gate.clone()),
+            gate_config: prepare_result.gate_config,
         };
 
         match group_index_canister_c2c_client::c2c_update_group(group_index_canister_id, &c2c_update_group_args).await {
@@ -81,7 +80,7 @@ struct PrepareResult {
     name: String,
     description: String,
     avatar_id: Option<u128>,
-    gate: Option<AccessGate>,
+    gate_config: Option<AccessGateConfig>,
 }
 
 fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
@@ -95,7 +94,15 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     }
 
     let caller = state.env.caller();
-    let gate = args.gate.as_ref().apply_to(state.data.chat.gate.value.as_ref());
+    let gate_config_updates = if args.gate_config.has_update() {
+        &args.gate_config
+    } else {
+        &args.gate.as_ref().map(|g| g.clone().into())
+    };
+
+    let gate_config = gate_config_updates
+        .as_ref()
+        .apply_to(state.data.chat.gate_config.value.as_ref());
 
     if let Some(member) = state.data.get_member(caller) {
         let permissions = args.permissions_v2.as_ref();
@@ -120,7 +127,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                     name: args.name.as_ref().unwrap_or(&state.data.chat.name).clone(),
                     description: args.description.as_ref().unwrap_or(&state.data.chat.description).clone(),
                     avatar_id: avatar_update.map_or(Document::id(&state.data.chat.avatar), |avatar| avatar.map(|a| a.id)),
-                    gate: gate.cloned(),
+                    gate_config: gate_config.cloned(),
                 })
             }
             Err(result) => match result {
@@ -143,6 +150,8 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
 }
 
 fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessResult {
+    let gate_config = if args.gate_config.has_update() { args.gate_config } else { args.gate.map(|g| g.into()) };
+
     let result = state.data.chat.do_update(
         my_user_id,
         args.name,
@@ -150,7 +159,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
         args.rules,
         args.avatar,
         args.permissions_v2,
-        args.gate,
+        gate_config,
         args.public,
         args.messages_visible_to_non_members,
         args.events_ttl,

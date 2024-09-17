@@ -55,7 +55,8 @@ pub struct GroupChatCore {
     pub pinned_messages_removed: BTreeSet<(TimestampMillis, MessageIndex)>,
     pub permissions: Timestamped<GroupPermissions>,
     pub date_last_pinned: Option<TimestampMillis>,
-    pub gate: Timestamped<Option<AccessGate>>,
+    #[serde(alias = "gate")]
+    pub gate_config: Timestamped<Option<AccessGateConfig>>,
     pub invited_users: InvitedUsers,
     pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
     #[serde(default)]
@@ -76,7 +77,7 @@ impl GroupChatCore {
         history_visible_to_new_joiners: bool,
         messages_visible_to_non_members: bool,
         permissions: GroupPermissions,
-        gate: Option<AccessGate>,
+        gate_config: Option<AccessGateConfig>,
         events_ttl: Option<Milliseconds>,
         created_by_user_type: UserType,
         anonymized_chat_id: u128,
@@ -111,7 +112,7 @@ impl GroupChatCore {
             pinned_messages_removed: BTreeSet::new(),
             permissions: Timestamped::new(permissions, now),
             date_last_pinned: None,
-            gate: Timestamped::new(gate, now),
+            gate_config: Timestamped::new(gate_config, now),
             invited_users: InvitedUsers::default(),
             min_visible_indexes_for_new_members: None,
             external_url: Timestamped::new(external_url, now),
@@ -229,12 +230,15 @@ impl GroupChatCore {
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
             events_ttl_last_updated: (events_ttl.timestamp > since).then_some(events_ttl.timestamp),
             gate: self
-                .gate
+                .gate_config
+                .if_set_after(since)
+                .cloned()
+                .map_or(OptionUpdate::NoChange, |ogc| OptionUpdate::from_update(ogc.map(|gc| gc.gate))),
+            gate_config: self
+                .gate_config
                 .if_set_after(since)
                 .cloned()
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
-            // TODO: AccessGateConfig
-            gate_config: OptionUpdate::NoChange,
             rules_changed: self.rules.version_last_updated > since,
             video_call_in_progress: self
                 .events
@@ -1349,7 +1353,7 @@ impl GroupChatCore {
         rules: Option<UpdatedRules>,
         avatar: OptionUpdate<Document>,
         permissions: Option<OptionalGroupPermissions>,
-        gate: OptionUpdate<AccessGate>,
+        gate_config: OptionUpdate<AccessGateConfig>,
         public: Option<bool>,
         messages_visible_to_non_members: Option<bool>,
         events_ttl: OptionUpdate<Milliseconds>,
@@ -1364,7 +1368,7 @@ impl GroupChatCore {
                 rules,
                 avatar,
                 permissions,
-                gate,
+                gate_config,
                 public,
                 messages_visible_to_non_members,
                 events_ttl,
@@ -1445,7 +1449,7 @@ impl GroupChatCore {
         rules: Option<UpdatedRules>,
         avatar: OptionUpdate<Document>,
         permissions: Option<OptionalGroupPermissions>,
-        gate: OptionUpdate<AccessGate>,
+        gate_config: OptionUpdate<AccessGateConfig>,
         public: Option<bool>,
         messages_visible_to_non_members: Option<bool>,
         events_ttl: OptionUpdate<Milliseconds>,
@@ -1454,7 +1458,7 @@ impl GroupChatCore {
     ) -> UpdateSuccessResult {
         let mut result = UpdateSuccessResult {
             newly_public: false,
-            gate_update: OptionUpdate::NoChange,
+            gate_config_update: OptionUpdate::NoChange,
             rules_version: None,
         };
 
@@ -1550,17 +1554,16 @@ impl GroupChatCore {
             );
         }
 
-        if let Some(gate) = gate.expand() {
-            if self.gate.value != gate {
-                self.gate = Timestamped::new(gate.clone(), now);
-                result.gate_update = OptionUpdate::from_update(gate.clone());
+        if let Some(gate_config) = gate_config.expand() {
+            if self.gate_config.value != gate_config {
+                self.gate_config = Timestamped::new(gate_config.clone(), now);
+                result.gate_config_update = OptionUpdate::from_update(gate_config.clone());
 
                 events.push_main_event(
                     ChatEventInternal::GroupGateUpdated(Box::new(GroupGateUpdated {
                         updated_by: user_id,
-                        new_gate: gate,
-                        // TODO: AccessGateConfig
-                        new_gate_config: None,
+                        new_gate: gate_config.as_ref().map(|gc| gc.gate.clone()),
+                        new_gate_config: gate_config,
                     })),
                     0,
                     now,
@@ -1817,7 +1820,11 @@ impl GroupChatCore {
     }
 
     pub fn has_payment_gate(&self) -> bool {
-        self.gate.value.as_ref().map(|g| g.is_payment_gate()).unwrap_or_default()
+        self.gate_config
+            .value
+            .as_ref()
+            .map(|g| g.gate.is_payment_gate())
+            .unwrap_or_default()
     }
 }
 
@@ -1955,7 +1962,7 @@ pub enum UpdateResult {
 
 pub struct UpdateSuccessResult {
     pub newly_public: bool,
-    pub gate_update: OptionUpdate<AccessGate>,
+    pub gate_config_update: OptionUpdate<AccessGateConfig>,
     pub rules_version: Option<Version>,
 }
 
