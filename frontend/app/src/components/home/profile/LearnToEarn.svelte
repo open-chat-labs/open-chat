@@ -222,7 +222,7 @@
                                         alt={achievement.name} />
                                     <ExternalLink
                                         iconColor={"var(--txt)"}
-                                        href={`${achievement.url}?userid=${$user.userId}&username=${$user.username}`}>
+                                        href={`${achievement.url}?oc_userid=${$user.userId}&oc_username=${$user.username}`}>
                                         {achievement.name}
                                     </ExternalLink>
                                     <div class="reward">
