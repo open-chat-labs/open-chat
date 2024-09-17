@@ -5,6 +5,7 @@ use candid::{CandidType, Principal};
 use pocket_ic::{PocketIc, UserError, WasmResult};
 use rand::random;
 use serde::de::DeserializeOwned;
+use serde::Serialize;
 use std::time::Duration;
 use testing::rng::random_internet_identity_principal;
 use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration};
@@ -76,6 +77,16 @@ pub fn execute_query<P: CandidType, R: CandidType + DeserializeOwned>(
     unwrap_response(env.query_call(canister_id, sender, method_name, candid::encode_one(payload).unwrap()))
 }
 
+pub fn execute_msgpack_query<P: Serialize, R: DeserializeOwned>(
+    env: &PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    method_name: &str,
+    payload: &P,
+) -> R {
+    unwrap_msgpack_response(env.query_call(canister_id, sender, method_name, msgpack::serialize_then_unwrap(payload)))
+}
+
 pub fn execute_update<P: CandidType, R: CandidType + DeserializeOwned>(
     env: &mut PocketIc,
     sender: Principal,
@@ -84,6 +95,16 @@ pub fn execute_update<P: CandidType, R: CandidType + DeserializeOwned>(
     payload: &P,
 ) -> R {
     unwrap_response(env.update_call(canister_id, sender, method_name, candid::encode_one(payload).unwrap()))
+}
+
+pub fn execute_msgpack_update<P: Serialize, R: DeserializeOwned>(
+    env: &mut PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    method_name: &str,
+    payload: &P,
+) -> R {
+    unwrap_msgpack_response(env.update_call(canister_id, sender, method_name, msgpack::serialize_then_unwrap(payload)))
 }
 
 pub fn execute_update_no_response<P: CandidType>(
@@ -139,6 +160,13 @@ pub fn upgrade_user(
 fn unwrap_response<R: CandidType + DeserializeOwned>(response: Result<WasmResult, UserError>) -> R {
     match response.unwrap() {
         WasmResult::Reply(bytes) => candid::decode_one(&bytes).unwrap(),
+        WasmResult::Reject(error) => panic!("{error}"),
+    }
+}
+
+fn unwrap_msgpack_response<R: DeserializeOwned>(response: Result<WasmResult, UserError>) -> R {
+    match response.unwrap() {
+        WasmResult::Reply(bytes) => msgpack::deserialize_then_unwrap(&bytes),
         WasmResult::Reject(error) => panic!("{error}"),
     }
 }

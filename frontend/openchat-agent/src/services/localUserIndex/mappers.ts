@@ -5,7 +5,6 @@ import type {
     ChatEventsBatchResponse,
     ChatEventsResponse,
     GroupAndCommunitySummaryUpdatesResponse,
-    InviteUsersResponse,
     JoinCommunityResponse,
     JoinGroupResponse,
     MessageContext,
@@ -113,7 +112,7 @@ export function groupAndCommunitySummaryUpdates(
         } else {
             throw new UnsupportedValueError(
                 "Unexpected ApiSummaryUpdatesResponse type received",
-                result,
+                result
             );
         }
     }
@@ -201,14 +200,14 @@ export async function chatEventsBatchResponse(
                 principal,
                 args.context.chatId,
                 response.Success.chat_last_updated,
-                true,
+                true
             );
 
             responses.push(
                 error ?? {
                     kind: "success",
                     result: eventsSuccessResponse(response.Success),
-                },
+                }
             );
         } else if ("ReplicaNotUpToDate" in response) {
             responses.push({
