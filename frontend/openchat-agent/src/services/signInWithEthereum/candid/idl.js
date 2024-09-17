@@ -1,4 +1,21 @@
 export const idlFactory = ({ IDL }) => {
+  const RuntimeFeature = IDL.Variant({
+    'IncludeUriInSeed' : IDL.Null,
+    'DisableEthToPrincipalMapping' : IDL.Null,
+    'DisablePrincipalToEthMapping' : IDL.Null,
+  });
+  const SettingsInput = IDL.Record({
+    'uri' : IDL.Text,
+    'runtime_features' : IDL.Opt(IDL.Vec(RuntimeFeature)),
+    'domain' : IDL.Text,
+    'statement' : IDL.Opt(IDL.Text),
+    'scheme' : IDL.Opt(IDL.Text),
+    'salt' : IDL.Text,
+    'session_expires_in' : IDL.Opt(IDL.Nat64),
+    'targets' : IDL.Opt(IDL.Vec(IDL.Text)),
+    'chain_id' : IDL.Opt(IDL.Nat),
+    'sign_in_expires_in' : IDL.Opt(IDL.Nat64),
+  });
   const Principal = IDL.Vec(IDL.Nat8);
   const Address = IDL.Text;
   const GetAddressResponse = IDL.Variant({ 'Ok' : Address, 'Err' : IDL.Text });
@@ -23,6 +40,7 @@ export const idlFactory = ({ IDL }) => {
     'Err' : IDL.Text,
   });
   const SiweSignature = IDL.Text;
+  const Nonce = IDL.Text;
   const CanisterPublicKey = PublicKey;
   const LoginDetails = IDL.Record({
     'user_canister_pubkey' : CanisterPublicKey,
@@ -30,8 +48,12 @@ export const idlFactory = ({ IDL }) => {
   });
   const LoginResponse = IDL.Variant({ 'Ok' : LoginDetails, 'Err' : IDL.Text });
   const SiweMessage = IDL.Text;
+  const PrepareLoginOkResponse = IDL.Record({
+    'nonce' : IDL.Text,
+    'siwe_message' : SiweMessage,
+  });
   const PrepareLoginResponse = IDL.Variant({
-    'Ok' : SiweMessage,
+    'Ok' : PrepareLoginOkResponse,
     'Err' : IDL.Text,
   });
   return IDL.Service({
@@ -44,11 +66,30 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'siwe_login' : IDL.Func(
-        [SiweSignature, Address, SessionKey],
+        [SiweSignature, Address, SessionKey, Nonce],
         [LoginResponse],
         [],
       ),
     'siwe_prepare_login' : IDL.Func([Address], [PrepareLoginResponse], []),
   });
 };
-export const init = ({ IDL }) => { return []; };
+export const init = ({ IDL }) => {
+  const RuntimeFeature = IDL.Variant({
+    'IncludeUriInSeed' : IDL.Null,
+    'DisableEthToPrincipalMapping' : IDL.Null,
+    'DisablePrincipalToEthMapping' : IDL.Null,
+  });
+  const SettingsInput = IDL.Record({
+    'uri' : IDL.Text,
+    'runtime_features' : IDL.Opt(IDL.Vec(RuntimeFeature)),
+    'domain' : IDL.Text,
+    'statement' : IDL.Opt(IDL.Text),
+    'scheme' : IDL.Opt(IDL.Text),
+    'salt' : IDL.Text,
+    'session_expires_in' : IDL.Opt(IDL.Nat64),
+    'targets' : IDL.Opt(IDL.Vec(IDL.Text)),
+    'chain_id' : IDL.Opt(IDL.Nat),
+    'sign_in_expires_in' : IDL.Opt(IDL.Nat64),
+  });
+  return [SettingsInput];
+};
