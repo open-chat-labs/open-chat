@@ -76,7 +76,7 @@ fn report_message_succeeds() {
         local_user_index_canister::report_message_v2::Response::Success,
     ));
 
-    let mut events_response = client::group::happy_path::events(env, &user1, moderators_group.into(), 0.into(), true, 10, 10);
+    let mut events_response = client::group::happy_path::events(env, &user1, moderators_group, 0.into(), true, 10, 10);
     let mut success = false;
     let last_event = events_response.events.pop().unwrap().event;
     if let ChatEvent::Message(m) = last_event {
