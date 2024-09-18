@@ -865,8 +865,7 @@
             color: var(--txt);
             display: inline;
 
-            &.fill,
-            &.crypto {
+            &.fill {
                 color: #fff;
             }
         }
