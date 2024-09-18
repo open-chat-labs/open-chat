@@ -13,7 +13,6 @@ pub mod c2c_report_message;
 pub mod c2c_send_openchat_bot_messages;
 pub mod c2c_set_avatar;
 pub mod c2c_suspend_users;
-pub mod create_challenge;
 pub mod delete_user;
 pub mod mark_local_user_index_full;
 pub mod mark_suspected_bot;

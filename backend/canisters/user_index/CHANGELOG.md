@@ -13,6 +13,7 @@ No auth check for `award_external_achievement` in test mode - ([#6397](https://g
 ### Removed
 
 - Remove deprecated candid endpoints ([#6396](https://github.com/open-chat-labs/open-chat/pull/6396))
+- Remove `create_challenge` ([#6409](https://github.com/open-chat-labs/open-chat/pull/6409))
 
 ### Fixed
 
