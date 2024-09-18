@@ -21,7 +21,7 @@ export function getTheme(base: Theme): Theme {
     base.txt = txt;
     base["txt-light"] = txt70;
     base.bd = "#ededed";
-    base.bd = "rgba(0,0,0,0.1)";
+    base.bd = "rgba(0,0,0,0.08)";
     base.disabledTxt = txt40;
     base.placeholder = txt60;
     base.progress.bd = "rgba(0,0,0,0.2)";
@@ -53,7 +53,8 @@ export function getTheme(base: Theme): Theme {
     base.button["disabled-txt"] = disabledTxt;
     base.modal.filter = "blur(5px)";
     base.modal.bg = white;
-    base.modal.bd = "none";
+    base.modal.bd = "var(--bw) solid var(--bd)";
+    base.modal.sh = base.menu.sh;
     base.modalPage.bg = "rgba(255, 255, 255, 0.5)";
     base.modalPage.txt = txt;
     base.currentChat.msg.bg = "#efefef";
@@ -64,7 +65,7 @@ export function getTheme(base: Theme): Theme {
     base.currentChat.msg.me.bd = "#efefef";
     base.currentChat.msg.me.bg = base.primary;
     base.currentChat.date.bg = "#efefef";
-    base.currentChat.date.bd = "none";
+    base.currentChat.date.bd = "var(--bw) solid rgba(0,0,0,0.05)";
     base.icon.txt = txt60;
     base.icon.inverted.txt = txt60;
     base.icon.selected = base.primary;
@@ -82,6 +83,7 @@ export function getTheme(base: Theme): Theme {
     base.daily.mainAreaBgAccent = base.accent;
     base.daily.mainAreaText = txt;
     base.daily.supportiveText = "#4e5670";
+    base.vote.maybe.color = "#ddd";
 
     return base;
 }
