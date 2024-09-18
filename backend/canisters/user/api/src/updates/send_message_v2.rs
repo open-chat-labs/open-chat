@@ -1,4 +1,5 @@
 use candid::CandidType;
+use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
     ChatId, CompletedCryptoTransaction, EventIndex, InvalidPollReason, MessageContentInitial, MessageId, MessageIndex,
@@ -6,7 +7,7 @@ use types::{
 };
 
 #[ts_export(user, send_message)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub recipient: UserId,
     pub thread_root_message_index: Option<MessageIndex>,
@@ -22,7 +23,7 @@ pub struct Args {
 
 #[allow(clippy::large_enum_variant)]
 #[ts_export(user, send_message)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
     TransferSuccessV2(TransferSuccessV2Result),
@@ -45,7 +46,7 @@ pub enum Response {
 }
 
 #[ts_export(user, send_message)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub chat_id: ChatId,
     pub event_index: EventIndex,
@@ -55,7 +56,7 @@ pub struct SuccessResult {
 }
 
 #[ts_export(user, send_message)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct TransferSuccessV2Result {
     pub chat_id: ChatId,
     pub event_index: EventIndex,

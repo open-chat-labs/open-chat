@@ -1,11 +1,11 @@
 use candid::CandidType;
 use human_readable::{HumanReadablePrincipal, ToHumanReadable};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{CanisterId, TimestampMillis};
 
 #[ts_export(user_index, pay_for_diamond_membership)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub id: u32,
     pub name: String,
@@ -18,7 +18,7 @@ pub struct Args {
 }
 
 #[ts_export(user_index, pay_for_diamond_membership)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
 }

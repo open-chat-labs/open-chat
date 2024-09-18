@@ -1,9 +1,10 @@
 use candid::CandidType;
+use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use ts_export::ts_export;
 
 #[ts_export]
-#[derive(CandidType, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct EventIndex(u32);
 
 impl EventIndex {
