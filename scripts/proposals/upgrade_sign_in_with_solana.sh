@@ -3,9 +3,9 @@
 VERSION=$1
 CHANGELOG_PATH=$2
 
-TITLE="Upgrade EventStore canister to $VERSION"
-URL="https://github.com/open-chat-labs/event-store/releases/tag/v$VERSION"
-CANISTER_NAME=event_store
+TITLE="Upgrade SignInWithSolana canister to $VERSION"
+URL="https://github.com/kristoferlund/ic-siws/releases/tag/v$VERSION"
+CANISTER_NAME=sign_in_with_solana
 CHANGELOG=`cat $CHANGELOG_PATH`
 
 # Set current directory to the scripts root
