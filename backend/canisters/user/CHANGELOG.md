@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add ability to reclaim tokens from failed swaps ([#6381](https://github.com/open-chat-labs/open-chat/pull/6381))
 - Add `ReferredByMember` access gate ([#6377](https://github.com/open-chat-labs/open-chat/pull/6377))
+- Add MessagePack version of `send_message` ([#6418](https://github.com/open-chat-labs/open-chat/pull/6418))
 
 ## [[2.0.1343](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1343-user)] - 2024-09-10
 
