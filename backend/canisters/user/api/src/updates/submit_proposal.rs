@@ -1,11 +1,12 @@
 use candid::CandidType;
 use proposals_bot_canister::ProposalToSubmit;
+use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use ts_export::ts_export;
 use types::{CanisterId, Cryptocurrency};
 
 #[ts_export(user, submit_proposal)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub governance_canister_id: CanisterId,
     pub proposal: ProposalToSubmit,
@@ -16,7 +17,7 @@ pub struct Args {
 }
 
 #[ts_export(user, submit_proposal)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
     GovernanceCanisterNotSupported,

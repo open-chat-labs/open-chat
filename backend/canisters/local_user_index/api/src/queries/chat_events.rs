@@ -1,15 +1,16 @@
 use candid::CandidType;
+use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{ChannelId, ChatId, CommunityId, EventIndex, MessageIndex, TimestampMillis, UserId};
 
 #[ts_export(local_user_index, chat_events)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub requests: Vec<EventsArgs>,
 }
 
 #[ts_export(local_user_index, chat_events)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct EventsArgs {
     pub context: EventsContext,
     pub args: EventsArgsInner,
@@ -17,7 +18,7 @@ pub struct EventsArgs {
 }
 
 #[ts_export(local_user_index, chat_events)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum EventsContext {
     Direct(UserId),
     Group(ChatId, Option<MessageIndex>),
@@ -25,7 +26,7 @@ pub enum EventsContext {
 }
 
 #[ts_export(local_user_index, chat_events)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum EventsArgsInner {
     Page(EventsPageArgs),
     ByIndex(EventsByIndexArgs),
@@ -33,7 +34,7 @@ pub enum EventsArgsInner {
 }
 
 #[ts_export(local_user_index, chat_events)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct EventsPageArgs {
     pub start_index: EventIndex,
     pub ascending: bool,
@@ -42,13 +43,13 @@ pub struct EventsPageArgs {
 }
 
 #[ts_export(local_user_index, chat_events)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct EventsByIndexArgs {
     pub events: Vec<EventIndex>,
 }
 
 #[ts_export(local_user_index, chat_events)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct EventsWindowArgs {
     pub mid_point: MessageIndex,
     pub max_messages: u32,
@@ -56,20 +57,20 @@ pub struct EventsWindowArgs {
 }
 
 #[ts_export(local_user_index, chat_events)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
 }
 
 #[ts_export(local_user_index, chat_events)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub responses: Vec<EventsResponse>,
     pub timestamp: TimestampMillis,
 }
 
 #[ts_export(local_user_index, chat_events)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum EventsResponse {
     Success(types::EventsResponse),
     NotFound,

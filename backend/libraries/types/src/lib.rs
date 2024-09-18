@@ -163,7 +163,7 @@ pub type TimestampMillis = u64;
 pub type TimestampNanos = u64;
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub struct Empty {}
 
 pub trait PushIfNotContains<T> {

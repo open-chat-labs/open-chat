@@ -1,8 +1,9 @@
+use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{CanisterId, ExchangeId};
 
 #[ts_export(user, reclaim_swap_tokens)]
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub exchange_id: ExchangeId,
     pub swap_canister_id: CanisterId,
@@ -12,7 +13,7 @@ pub struct Args {
 }
 
 #[ts_export(user, reclaim_swap_tokens)]
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
     Failed(String),

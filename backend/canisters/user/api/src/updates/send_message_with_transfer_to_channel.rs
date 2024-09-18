@@ -1,4 +1,5 @@
 use candid::CandidType;
+use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
     ChannelId, CommunityId, CompletedCryptoTransaction, Cryptocurrency, EventIndex, GroupReplyContext, MessageContentInitial,
@@ -6,7 +7,7 @@ use types::{
 };
 
 #[ts_export(user, send_message_with_transfer_to_channel)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub community_id: CommunityId,
     pub channel_id: ChannelId,
@@ -25,7 +26,7 @@ pub struct Args {
 }
 
 #[ts_export(user, send_message_with_transfer_to_channel)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
     TextTooLong(u32),
@@ -50,7 +51,7 @@ pub enum Response {
 }
 
 #[ts_export(user, send_message_with_transfer_to_channel)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub event_index: EventIndex,
     pub message_index: MessageIndex,
