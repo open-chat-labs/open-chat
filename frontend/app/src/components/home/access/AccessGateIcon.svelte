@@ -99,7 +99,7 @@
     {#if gate.kind === "no_gate" && showNoGate}
         <TooltipWrapper {position} {align}>
             <div slot="target" class="open">
-                <ShieldLockOpenOutline size={$iconSize} color={"var(--txt)"} />
+                <ShieldLockOpenOutline size={$iconSize} color={"var(--button-txt)"} />
             </div>
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
@@ -120,7 +120,7 @@
     {:else if gate.kind === "composite_gate"}
         <TooltipWrapper {position} {align}>
             <div slot="target" class="composite">
-                <VectorCombine size={$iconSize} color={"var(--txt)"} />
+                <VectorCombine size={$iconSize} color={"var(--button-txt)"} />
             </div>
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
@@ -153,7 +153,7 @@
     {:else if gate.kind === "unique_person_gate"}
         <TooltipWrapper {position} {align}>
             <div slot="target" class="unique">
-                <AccountCheck size={$iconSize} color={"var(--txt)"} />
+                <AccountCheck size={$iconSize} color={"var(--button-txt)"} />
             </div>
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
@@ -173,7 +173,7 @@
     {:else if gate.kind === "referred_by_member_gate"}
         <TooltipWrapper {position} {align}>
             <div slot="target" class="referred_by_member">
-                <AccountPlusOutline size={$iconSize} color={"var(--txt)"} />
+                <AccountPlusOutline size={$iconSize} color={"var(--button-txt)"} />
             </div>
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>

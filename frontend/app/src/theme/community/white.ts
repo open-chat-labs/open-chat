@@ -11,6 +11,7 @@ const disabledTxt = txt70;
 const white = "#ffffff";
 
 export function getTheme(base: Theme): Theme {
+    base.primary = "#459cd1";
     base.author = "2yfsq-kaaaa-aaaaf-aaa4q-cai";
     base.name = "white";
     base.label = "White";
@@ -35,6 +36,7 @@ export function getTheme(base: Theme): Theme {
     base.input.bg = textBox;
     base.entry.bg = "rgba(226,226,226,0.3)";
     base.entry.input.bg = white;
+    base.button.bg = base.primary;
     // base.entry.input.sh = "inset 0px 2px 4px rgba(138, 138, 138, 0.5)";
     base.panel.bg = "transparent";
     base.panel.left.bg = "transparent";
