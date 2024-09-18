@@ -83,6 +83,7 @@ export function getTheme(base: Theme): Theme {
     base.daily.mainAreaBgAccent = base.accent;
     base.daily.mainAreaText = txt;
     base.daily.supportiveText = "#4e5670";
+    base.vote.maybe.color = "#ddd";
 
     return base;
 }
