@@ -11,6 +11,7 @@
         @include font(book, normal, fs-80);
         margin-bottom: $sp3;
         background-color: var(--error);
+        color: #fff;
         padding: $sp3 $sp4;
     }
 </style>
