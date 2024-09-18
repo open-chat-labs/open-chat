@@ -41,6 +41,7 @@
         width: $thumbSize;
         border-radius: 50%;
         background: #ffffff;
+        border: 1px solid var(--bd);
         cursor: pointer;
         -webkit-appearance: none;
         margin-top: calc(-1 * $trackHeight);
@@ -59,6 +60,7 @@
         width: $thumbSize;
         border-radius: 50%;
         background: #ffffff;
+        border: 1px solid var(--bd);
         cursor: pointer;
     }
     input[type="range"]::-ms-track {
@@ -75,6 +77,7 @@
         width: $thumbSize;
         border-radius: 50%;
         background: #ffffff;
+        border: 1px solid var(--bd);
         cursor: pointer;
     }
 </style>
