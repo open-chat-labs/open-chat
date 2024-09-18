@@ -20,18 +20,6 @@ TARGET_CANISTER_ID=$(dfx -qq canister --network $NETWORK id $CANISTER_NAME)
 WASM_FILE=$CANISTER_NAME.wasm.gz
 WASM_PATH=$WASM_FOLDER/$WASM_FILE
 
-if [ -z "$UPGRADE_ARG" ]
-then
-    # Parse the version string
-    IFS='.' read -ra VERSION_PARTS <<< "$VERSION"
-    MAJOR=${VERSION_PARTS[0]}
-    MINOR=${VERSION_PARTS[1]}
-    BUILD=${VERSION_PARTS[2]}
-
-    # Build the canister-upgrade-arg
-    UPGRADE_ARG="(record { wasm_version = record { major=$MAJOR:nat32; minor=$MINOR:nat32; patch=$BUILD:nat32 } })"
-fi
-
 # Make the proposal using quill
 quill sns --canister-ids-file ./sns_canister_ids.json --pem-file $PEM_FILE make-upgrade-canister-proposal --canister-upgrade-arg "$UPGRADE_ARG" --title "$TITLE" --url "$URL" --summary "$SUMMARY" --target-canister-id $TARGET_CANISTER_ID --wasm-path $WASM_PATH $PROPOSER_NEURON_ID --mode upgrade > msg.json
 quill send msg.json
