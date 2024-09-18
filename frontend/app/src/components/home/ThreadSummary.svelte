@@ -145,6 +145,7 @@
         &.selected {
             background: var(--notificationBar-bg);
             color: var(--notificationBar-txt);
+            border: 1px solid transparent;
         }
 
         .thread-avatars {
