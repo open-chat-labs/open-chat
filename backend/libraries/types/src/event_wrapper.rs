@@ -49,7 +49,7 @@ impl<T> From<EventWrapperInternal<T>> for EventWrapper<T> {
 macro_rules! event_wrapper {
     ($name:ident, $event_type:ty) => {
         #[ts_export]
-        #[derive(CandidType, Clone, Debug)]
+        #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
         pub struct $name {
             pub index: EventIndex,
             pub timestamp: TimestampMillis,

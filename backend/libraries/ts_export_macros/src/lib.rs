@@ -77,7 +77,7 @@ pub fn generate_ts_method(input: TokenStream) -> TokenStream {
 
 fn insert_container_attributes(attrs: &mut Vec<Attribute>, ident: &Ident, export_to: String, prefix: Option<String>) {
     let mut to_prepend: Vec<Attribute> = vec![
-        parse_quote!( #[derive(::serde::Serialize, ::serde::Deserialize, ::ts_rs::TS)] ),
+        parse_quote!( #[derive(::ts_rs::TS)] ),
         parse_quote!( #[ts(export_to = #export_to)] ),
     ];
     if let Some(p) = prefix {

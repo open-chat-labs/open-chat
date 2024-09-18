@@ -1,9 +1,10 @@
 use candid::CandidType;
+use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{MessageIndex, MessagesResponse, TimestampMillis, UserId};
 
 #[ts_export(user, messages_by_message_index)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub user_id: UserId,
     pub thread_root_message_index: Option<MessageIndex>,
@@ -12,7 +13,7 @@ pub struct Args {
 }
 
 #[ts_export(user, messages_by_message_index)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(MessagesResponse),
     ChatNotFound,

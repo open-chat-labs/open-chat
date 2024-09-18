@@ -16,7 +16,7 @@ pub use queries::*;
 use ts_export::ts_export;
 
 #[ts_export(registry)]
-#[derive(CandidType, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct TokenDetails {
     pub ledger_canister_id: CanisterId,
     pub name: String,
@@ -65,7 +65,7 @@ pub struct NervousSystemDetails {
 }
 
 #[ts_export(registry)]
-#[derive(CandidType, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct NervousSystemSummary {
     pub root_canister_id: CanisterId,
     pub governance_canister_id: CanisterId,
@@ -91,7 +91,7 @@ impl From<&NervousSystemDetails> for NervousSystemSummary {
 }
 
 #[ts_export(registry)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct MessageFilterSummary {
     pub id: u64,
     pub regex: String,

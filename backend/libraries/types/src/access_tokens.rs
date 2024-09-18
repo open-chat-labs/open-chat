@@ -1,9 +1,10 @@
 use crate::VideoCallType;
 use candid::CandidType;
+use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 
 #[ts_export]
-#[derive(CandidType, Debug, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub enum AccessTokenType {
     StartVideoCallV2(VideoCallAccessTokenArgs),
     JoinVideoCall,
@@ -11,7 +12,7 @@ pub enum AccessTokenType {
 }
 
 #[ts_export]
-#[derive(CandidType, Debug, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct VideoCallAccessTokenArgs {
     pub call_type: VideoCallType,
 }

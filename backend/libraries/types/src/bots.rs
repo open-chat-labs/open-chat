@@ -1,9 +1,10 @@
 use crate::{MessageContentInitial, MessageId};
 use candid::CandidType;
+use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub struct BotConfig {
     pub is_oc_controlled: bool,
     pub supports_direct_messages: bool,
@@ -11,7 +12,7 @@ pub struct BotConfig {
 }
 
 #[ts_export]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct BotMessage {
     pub thread_root_message_id: Option<MessageId>,
     pub content: MessageContentInitial,
