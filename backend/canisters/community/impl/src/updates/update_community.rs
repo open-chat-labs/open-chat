@@ -124,7 +124,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     let gate_config_updates = if args.gate_config.has_update() {
         &args.gate_config
     } else {
-        &args.gate.as_ref().map(|g| AccessGateConfig::new(g.clone()))
+        &args.gate.as_ref().map(|g| g.clone().into())
     };
     let gate_config = gate_config_updates.as_ref().apply_to(state.data.gate_config.value.as_ref());
 
@@ -310,7 +310,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
     let gate_config_updates = if args.gate_config.has_update() {
         args.gate_config
     } else {
-        args.gate.as_ref().map(|g| AccessGateConfig::new(g.clone()))
+        args.gate.as_ref().map(|g| g.clone().into())
     };
 
     if let Some(gate_config) = gate_config_updates.expand() {

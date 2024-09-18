@@ -1,6 +1,7 @@
 use crate::icrc2::TransferFromError;
 use crate::{CanisterId, Milliseconds};
 use candid::{CandidType, Principal};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use ts_export::ts_export;
 
@@ -8,7 +9,7 @@ pub const SNS_FEE_SHARE_PERCENT: u128 = 2;
 
 #[ts_export]
 #[derive(CandidType, Clone, Debug, Eq, PartialEq)]
-#[serde(from = "AccessGate")]
+#[serde(from = "AccessGateCombined")]
 pub struct AccessGateConfig {
     pub gate: AccessGate,
     pub expiry: Option<Milliseconds>,
@@ -24,16 +25,20 @@ impl From<AccessGate> for AccessGateConfig {
     }
 }
 
-impl From<AccessGateConfig> for AccessGate {
-    fn from(value: AccessGateConfig) -> Self {
-        value.gate
+impl From<AccessGateCombined> for AccessGateConfig {
+    fn from(value: AccessGateCombined) -> Self {
+        match value {
+            AccessGateCombined::AccessGateConfig(access_gate_config) => access_gate_config,
+            AccessGateCombined::Accessgate(access_gate) => access_gate.into(),
+        }
     }
 }
 
-impl AccessGateConfig {
-    pub fn new(gate: AccessGate) -> AccessGateConfig {
-        AccessGateConfig { gate, expiry: None }
-    }
+#[derive(Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum AccessGateCombined {
+    AccessGateConfig(AccessGateConfig),
+    Accessgate(AccessGate),
 }
 
 #[ts_export]
