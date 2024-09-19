@@ -12,13 +12,19 @@
     const ONE_MONTH = ONE_WEEK * 4;
     const client = getContext<OpenChat>("client");
 
+    type DurationUnit = "minutes" | "hours" | "days" | "weeks" | "months";
+
     export let valid = true;
     export let milliseconds: bigint = BigInt(ONE_HOUR);
     export let disabled = false;
+    export let unitFilter = (_: DurationUnit) => true;
 
     let initialised = false;
     let amount: string;
-    let unit: "minutes" | "hours" | "days" | "weeks" | "months";
+    let unit: DurationUnit;
+
+    $: allUnits = ["minutes", "hours", "days", "weeks", "months"] as DurationUnit[];
+    $: supportedDurations = allUnits.filter(unitFilter);
 
     onMount(() => {
         const { days, hours, minutes, weeks, months } = client.durationFromMilliseconds(
@@ -82,11 +88,9 @@
 
     <div class="units">
         <Select {disabled} margin={false} on:change={() => updateAmount(amount)} bind:value={unit}>
-            <option value={"minutes"}>{$_("minutes")}</option>
-            <option value={"hours"}>{$_("hours")}</option>
-            <option value={"days"}>{$_("days")}</option>
-            <option value={"weeks"}>{$_("weeks")}</option>
-            <option value={"months"}>{$_("months")}</option>
+            {#each supportedDurations as duration}
+                <option value={duration}>{$_(duration)}</option>
+            {/each}
         </Select>
     </div>
 </div>

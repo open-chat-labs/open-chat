@@ -74,7 +74,8 @@
                 {#if evaluationInterval !== undefined}
                     <DurationPicker
                         bind:valid={evaluationIntervalValid}
-                        bind:milliseconds={evaluationInterval} />
+                        bind:milliseconds={evaluationInterval}
+                        unitFilter={(u) => !["minutes", "hours"].includes(u)} />
                 {/if}
             </div>
         </Checkbox>
