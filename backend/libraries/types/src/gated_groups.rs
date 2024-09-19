@@ -51,7 +51,7 @@ pub enum AccessGateCombined {
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum AccessGate {
     DiamondMember,
     LifetimeDiamondMember,
