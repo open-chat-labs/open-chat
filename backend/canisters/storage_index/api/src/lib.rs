@@ -1,4 +1,5 @@
 use candid::CandidType;
+use serde::{Deserialize, Serialize};
 
 mod lifecycle;
 mod queries;
@@ -10,7 +11,7 @@ use ts_export::ts_export;
 pub use updates::*;
 
 #[ts_export(storage_index)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct ProjectedAllowance {
     pub byte_limit: u64,
     pub bytes_used: u64,

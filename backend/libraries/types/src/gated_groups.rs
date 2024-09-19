@@ -1,13 +1,14 @@
 use crate::icrc2::TransferFromError;
 use crate::{CanisterId, Milliseconds};
 use candid::{CandidType, Principal};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use ts_export::ts_export;
 
 pub const SNS_FEE_SHARE_PERCENT: u128 = 2;
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum AccessGate {
     DiamondMember,
     LifetimeDiamondMember,
@@ -22,7 +23,7 @@ pub enum AccessGate {
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum AccessGateNonComposite {
     DiamondMember,
     LifetimeDiamondMember,
@@ -90,7 +91,7 @@ impl AccessGate {
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct VerifiedCredentialGate {
     pub issuer_canister_id: CanisterId,
     pub issuer_origin: String,
@@ -100,14 +101,14 @@ pub struct VerifiedCredentialGate {
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum VerifiedCredentialArgumentValue {
     String(String),
     Int(i32),
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct SnsNeuronGate {
     pub governance_canister_id: CanisterId,
     pub min_stake_e8s: Option<u64>,
@@ -115,7 +116,7 @@ pub struct SnsNeuronGate {
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct PaymentGate {
     pub ledger_canister_id: CanisterId,
     pub amount: u128,
@@ -123,21 +124,21 @@ pub struct PaymentGate {
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct TokenBalanceGate {
     pub ledger_canister_id: CanisterId,
     pub min_balance: u128,
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct CompositeGate {
     pub inner: Vec<AccessGateNonComposite>,
     pub and: bool,
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum GateCheckFailedReason {
     NotDiamondMember,
     NotLifetimeDiamondMember,
@@ -153,7 +154,7 @@ pub enum GateCheckFailedReason {
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct VerifiedCredentialGateArgs {
     pub user_ii_principal: Principal,
     pub credential_jwt: String,

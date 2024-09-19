@@ -727,19 +727,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.inviteUsers(payload.chatId, payload.userIds, payload.callerUsername),
-                );
-                break;
-
-            case "inviteUsersToCommunity":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent.inviteUsersToCommunity(
-                        payload.id,
-                        payload.userIds,
-                        payload.callerUsername,
-                    ),
+                    agent.inviteUsers(payload.id, payload.userIds, payload.callerUsername),
                 );
                 break;
 
@@ -1746,6 +1734,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.address,
                         payload.signature,
                         payload.sessionKey,
+                        payload.nonce,
                     ),
                 );
                 break;
@@ -1842,6 +1831,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "getExternalAchievements":
                 executeThenReply(payload, correlationId, agent.getExternalAchievements());
+                break;
+
+            case "cancelInvites":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.cancelInvites(payload.id, payload.userIds),
+                );
                 break;
 
             default:

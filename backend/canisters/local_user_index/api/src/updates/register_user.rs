@@ -1,20 +1,20 @@
 use candid::CandidType;
 use ic_ledger_types::AccountIdentifier;
+use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::UserId;
 
 #[ts_export(local_user_index, register_user)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub username: String,
     pub referral_code: Option<String>,
-    #[ts(as = "Vec<u8>")]
     #[serde(with = "serde_bytes")]
     pub public_key: Vec<u8>,
 }
 
 #[ts_export(local_user_index, register_user)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
     RegistrationInProgress,
@@ -32,7 +32,7 @@ pub enum Response {
 }
 
 #[ts_export(local_user_index, register_user)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub user_id: UserId,
     #[ts(as = "[u8; 32]")]

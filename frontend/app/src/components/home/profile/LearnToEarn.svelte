@@ -75,6 +75,7 @@
 
     let selectedTab: "todo" | "done" | "external" = "todo";
 
+    $: user = client.user;
     $: globalState = client.globalStateStore;
     $: filtered = [...achievements].filter(filter);
     $: [internalAchieved, internalNotAchieved] = client.partition(filtered, (a) =>
@@ -82,7 +83,10 @@
     );
     $: externalAchievements = [] as ExternalAchievement[];
     $: totalAchievements = filtered.length + externalAchievements.length;
-    $: achieved = [...internalAchieved, ...externalAchieved.map((a) => a.name)];
+    $: achieved = [
+        ...internalAchieved.map((a) => `learnToEarn.${a}`),
+        ...externalAchieved.map((a) => a.name),
+    ];
     $: percComplete = Math.round((achieved.length / totalAchievements) * 100);
     $: [externalAchieved, externalNotAchieved] = client.partition(externalAchievements, (a) => {
         return $globalState.achievements.has(a.name);
@@ -195,7 +199,7 @@
                                         size={$iconSize}
                                         color={"var(--toast-success-bg)"} />
                                 </div>
-                                <Translatable resourceKey={i18nKey(`learnToEarn.${achievement}`)} />
+                                <Translatable resourceKey={i18nKey(achievement)} />
                             </div>
                         {/each}
                     {/if}
@@ -219,7 +223,9 @@
                                         class="logo"
                                         src={client.achievementLogo(achievement.id)}
                                         alt={achievement.name} />
-                                    <ExternalLink iconColor={"var(--txt)"} href={achievement.url}>
+                                    <ExternalLink
+                                        iconColor={"var(--txt)"}
+                                        href={`${achievement.url}?oc_userid=${$user.userId}&oc_username=${$user.username}`}>
                                         {achievement.name}
                                     </ExternalLink>
                                     <div class="reward">

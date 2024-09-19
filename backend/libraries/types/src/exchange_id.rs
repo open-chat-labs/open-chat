@@ -1,9 +1,10 @@
 use candid::CandidType;
+use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use ts_export::ts_export;
 
 #[ts_export]
-#[derive(CandidType, Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExchangeId {
     ICPSwap,
     Sonic,

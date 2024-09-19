@@ -83,6 +83,11 @@ export const idlFactory = ({ IDL }) => {
     'CannotBlockSelf' : IDL.Null,
     'CannotBlockUser' : IDL.Null,
   });
+  const CancelInvitesArgs = IDL.Record({ 'user_ids' : IDL.Vec(UserId) });
+  const CancelInvitesResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+  });
   const CancelP2PSwapArgs = IDL.Record({
     'message_id' : MessageId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
@@ -1686,6 +1691,11 @@ export const idlFactory = ({ IDL }) => {
       ),
     'add_reaction' : IDL.Func([AddReactionArgs], [AddReactionResponse], []),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
+    'cancel_invites' : IDL.Func(
+        [CancelInvitesArgs],
+        [CancelInvitesResponse],
+        [],
+      ),
     'cancel_p2p_swap' : IDL.Func(
         [CancelP2PSwapArgs],
         [CancelP2PSwapResponse],

@@ -6,9 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+No auth check for `award_external_achievement` in test mode - ([#6397](https://github.com/open-chat-labs/open-chat/pull/6397))
+
 ### Removed
 
 - Remove deprecated candid endpoints ([#6396](https://github.com/open-chat-labs/open-chat/pull/6396))
+- Remove `create_challenge` ([#6409](https://github.com/open-chat-labs/open-chat/pull/6409))
+
+### Fixed
+
+- Fix `award_external_achievement` ([#6408](https://github.com/open-chat-labs/open-chat/pull/6408))
 
 ## [[2.0.1346](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1346-user_index)] - 2024-09-12
 

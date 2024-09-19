@@ -1,5 +1,5 @@
 use proc_macro::TokenStream;
-use quote::{format_ident, quote};
+use quote::{format_ident, quote, ToTokens};
 use std::fmt::Write;
 use syn::punctuated::Punctuated;
 use syn::{parse_macro_input, parse_quote, Attribute, Field, Ident, Item, Token, Type};
@@ -77,7 +77,7 @@ pub fn generate_ts_method(input: TokenStream) -> TokenStream {
 
 fn insert_container_attributes(attrs: &mut Vec<Attribute>, ident: &Ident, export_to: String, prefix: Option<String>) {
     let mut to_prepend: Vec<Attribute> = vec![
-        parse_quote!( #[derive(::serde::Serialize, ::serde::Deserialize, ::ts_rs::TS)] ),
+        parse_quote!( #[derive(::ts_rs::TS)] ),
         parse_quote!( #[ts(export_to = #export_to)] ),
     ];
     if let Some(p) = prefix {
@@ -108,6 +108,8 @@ fn insert_field_attributes(field: &mut Field, is_tuple: bool) {
             && (type_path.path.segments[0].ident == "Principal" || type_path.path.segments[0].ident == "CanisterId")
         {
             field.attrs.push(parse_quote ! ( #[ts(as = "ts_export::PrincipalTS")] ));
+        } else if field.attrs.iter().any(is_using_serde_bytes) {
+            field.attrs.push(parse_quote ! ( #[ts(type = "Uint8Array")] ))
         }
     }
 }
@@ -144,4 +146,8 @@ fn convert_case(s: &str, start_with_capital: bool) -> String {
     }
 
     result
+}
+
+fn is_using_serde_bytes(attr: &Attribute) -> bool {
+    attr.into_token_stream().to_string().contains("serde_bytes")
 }

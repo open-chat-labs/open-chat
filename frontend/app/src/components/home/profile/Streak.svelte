@@ -126,7 +126,7 @@
 
         &.disabled {
             background-image: url("/assets/streaks/streak_disabled.svg");
-            color: #888;
+            color: #9a9a9a;
         }
     }
 

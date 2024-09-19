@@ -46,7 +46,7 @@
                         message: prepareResponse.siweMessage,
                     });
                     client
-                        .signInWithWallet("eth", account, signResponse, assumeIdentity)
+                        .signInWithWallet("eth", account, signResponse, prepareResponse.nonce, assumeIdentity)
                         .then((resp) => {
                             if (resp.kind === "success") {
                                 dispatch("connected", resp);

@@ -122,11 +122,8 @@
         flex-direction: column;
         gap: $sp4;
         align-items: center;
-
         padding: $sp8;
-        // background-color: rgba(255, 255, 255, 0.05);
         backdrop-filter: blur(10px);
-
         background: var(--modal-bg);
         border: var(--modal-bd);
         border-radius: var(--modal-rd);

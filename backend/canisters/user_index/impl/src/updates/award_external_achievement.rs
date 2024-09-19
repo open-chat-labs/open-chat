@@ -11,19 +11,20 @@ fn award_external_achievement(args: Args) -> Response {
 }
 
 fn award_external_achievement_impl(args: Args, state: &mut RuntimeState) -> Response {
-    let result =
-        match state
-            .data
-            .external_achievements
-            .award(args.achievement_id, args.user_id, state.env.caller(), state.env.now())
-        {
-            AwardResult::Success(r) => r,
-            AwardResult::NotFound => return NotFound,
-            AwardResult::AlreadyAwarded => return AlreadyAwarded,
-            AwardResult::InsufficientBudget => return InsufficientBudget,
-            AwardResult::InvalidCaller => return InvalidCaller,
-            AwardResult::Expired => return Expired,
-        };
+    let result = match state.data.external_achievements.award(
+        args.achievement_id,
+        args.user_id,
+        state.env.caller(),
+        state.env.now(),
+        state.data.test_mode && state.is_caller_governance_principal(),
+    ) {
+        AwardResult::Success(r) => r,
+        AwardResult::NotFound => return NotFound,
+        AwardResult::AlreadyAwarded => return AlreadyAwarded,
+        AwardResult::InsufficientBudget => return InsufficientBudget,
+        AwardResult::InvalidCaller => return InvalidCaller,
+        AwardResult::Expired => return Expired,
+    };
 
     state.push_event_to_local_user_index(
         args.user_id,

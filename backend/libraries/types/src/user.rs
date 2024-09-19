@@ -6,7 +6,7 @@ use std::fmt::{Debug, Display, Formatter};
 use ts_export::ts_export;
 
 #[ts_export]
-#[derive(CandidType, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct UserId(CanisterId);
 
 impl UserId {
@@ -49,7 +49,7 @@ impl Display for UserId {
 }
 
 #[ts_export]
-#[derive(CandidType, Debug, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct User {
     pub user_id: UserId,
     pub username: String,

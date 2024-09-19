@@ -1,9 +1,10 @@
 use candid::CandidType;
+use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{MessageContent, MessageId, UserId};
 
 #[ts_export(user, deleted_message)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub user_id: UserId,
     pub message_id: MessageId,
@@ -11,7 +12,7 @@ pub struct Args {
 
 #[allow(clippy::large_enum_variant)]
 #[ts_export(user, deleted_message)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
     ChatNotFound,
@@ -21,7 +22,7 @@ pub enum Response {
 }
 
 #[ts_export(user, deleted_message)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub content: MessageContent,
 }

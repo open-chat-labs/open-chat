@@ -234,8 +234,7 @@
                     {adoptPercent}
                     {rejectPercent}
                     minYesPercentageOfTotal={proposal.minYesPercentageOfTotal}
-                    minYesPercentageOfExercised={proposal.minYesPercentageOfExercised}
-                />
+                    minYesPercentageOfExercised={proposal.minYesPercentageOfExercised} />
             </div>
 
             <div slot="reject" class="reject">
@@ -335,7 +334,7 @@
         position: relative;
         overflow-x: hidden;
         color: var(--markdown-fg-color);
-        background-color: rgba(0, 0, 0, 0.1);
+        background-color: rgba(0, 0, 0, 0.05);
         padding: $sp3;
 
         &.expanded {

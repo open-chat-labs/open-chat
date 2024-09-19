@@ -123,6 +123,9 @@
     "blockUserFailed": "无法加入黑名单",
     "blockUserSucceeded": "该用户已被加入黑名单",
     "cancel": "取消",
+    "cancelInvite": "取消邀请",
+    "cancelInviteFailed": "取消邀请时出错",
+    "cancelInviteSucceeded": "邀请已取消",
     "challenge": {
         "alreadyRegistered": "请关闭并稍后重试",
         "failed": "挑战失败。请重试。",

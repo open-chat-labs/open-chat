@@ -17,9 +17,6 @@ didc bind ../../backend/canisters/local_user_index/api/can.did -t js > ./src/ser
 didc bind ../../backend/canisters/market_maker/api/can.did -t ts > ./src/services/marketMaker/candid/types.d.ts
 didc bind ../../backend/canisters/market_maker/api/can.did -t js > ./src/services/marketMaker/candid/idl.js
 
-didc bind ../../backend/canisters/notifications_index/api/can.did -t ts > ./src/services/notifications/candid/types.d.ts
-didc bind ../../backend/canisters/notifications_index/api/can.did -t js > ./src/services/notifications/candid/idl.js
-
 didc bind ../../backend/canisters/proposals_bot/api/can.did -t ts > ./src/services/proposalsBot/candid/types.d.ts
 didc bind ../../backend/canisters/proposals_bot/api/can.did -t js > ./src/services/proposalsBot/candid/idl.js
 

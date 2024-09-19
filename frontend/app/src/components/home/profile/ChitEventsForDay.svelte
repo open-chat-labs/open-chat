@@ -43,6 +43,10 @@
                                 </p>
                             {:else if event.reason.kind === "meme_contest_winner"}
                                 <p>{`🏆️ Meme contest win: ${event.amount.toLocaleString()}`}</p>
+                            {:else if event.reason.kind === "external_achievement_unlocked"}
+                                <p>
+                                    🔓 <Translatable resourceKey={i18nKey(event.reason.name)} />: {event.amount.toLocaleString()}
+                                </p>
                             {/if}
                         {/each}
                     </div>

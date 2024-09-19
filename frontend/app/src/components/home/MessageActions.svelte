@@ -201,7 +201,7 @@
                 class="send-icp"
                 on:click|stopPropagation={createTokenTransfer}>
                 <HoverIcon title={"Send Crypto"}>
-                    <Bitcoin size={$iconSize} color={iconColour} />
+                    <Bitcoin size={$iconSize} color={"var(--button-txt)"} />
                 </HoverIcon>
             </div>
         {/if}

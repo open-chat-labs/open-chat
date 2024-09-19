@@ -1,9 +1,10 @@
 use crate::OptionUpdate;
 use candid::CandidType;
+use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 
 #[ts_export]
-#[derive(CandidType, Copy, Clone, Debug, Default, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Default, Eq, PartialEq)]
 pub enum GroupRole {
     Owner,
     Admin,
@@ -13,7 +14,7 @@ pub enum GroupRole {
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupPermissions {
     pub change_roles: GroupPermissionRole,
     pub update_group: GroupPermissionRole,
@@ -35,7 +36,7 @@ fn admin() -> GroupPermissionRole {
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MessagePermissions {
     pub default: GroupPermissionRole,
     pub text: Option<GroupPermissionRole>,
@@ -54,14 +55,14 @@ pub struct MessagePermissions {
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CustomPermission {
     pub subtype: String,
     pub role: GroupPermissionRole,
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub struct OptionalGroupPermissions {
     pub change_roles: Option<GroupPermissionRole>,
     pub update_group: Option<GroupPermissionRole>,
@@ -79,7 +80,7 @@ pub struct OptionalGroupPermissions {
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub struct OptionalMessagePermissions {
     pub default: Option<GroupPermissionRole>,
     #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
@@ -149,7 +150,7 @@ impl Default for MessagePermissions {
 }
 
 #[ts_export]
-#[derive(CandidType, Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq)]
 pub enum GroupPermissionRole {
     None,
     Owner,

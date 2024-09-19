@@ -1,17 +1,18 @@
 use candid::CandidType;
+use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{Empty, TimestampMillis};
 
 pub type Args = Empty;
 
 #[ts_export(user, public_profile)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(PublicProfile),
 }
 
 #[ts_export(user, public_profile)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct PublicProfile {
     pub username: String,
     pub display_name: Option<String>,
