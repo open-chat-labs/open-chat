@@ -540,6 +540,7 @@ pub struct PrizeContentInitial {
 pub struct PrizeContent {
     pub prizes_remaining: u32,
     pub prizes_pending: u32,
+    #[serde(default)]
     pub winners: Vec<UserId>,
     #[serde(default)]
     pub winner_count: u32,
