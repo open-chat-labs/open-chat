@@ -10,7 +10,7 @@ pub struct Args {
     pub file_id: FileId,
     pub hash: Hash,
     pub mime_type: String,
-    #[ts(as = "Vec<ts_export::PrincipalTS>")]
+    #[ts(as = "Vec<ts_export::TSBytes>")]
     pub accessors: Vec<AccessorId>,
     pub chunk_index: u32,
     pub chunk_size: u32,

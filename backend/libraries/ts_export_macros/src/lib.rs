@@ -90,6 +90,8 @@ fn insert_container_attributes(attrs: &mut Vec<Attribute>, ident: &Ident, export
     }
 }
 
+const PRINCIPAL_ALIASES: [&str; 3] = ["Principal", "CanisterId", "AccessorId"];
+
 fn insert_field_attributes(field: &mut Field, is_tuple: bool) {
     if let Type::Path(type_path) = &field.ty {
         if !is_tuple
@@ -105,11 +107,11 @@ fn insert_field_attributes(field: &mut Field, is_tuple: bool) {
         } else if type_path.qself.is_none()
             && type_path.path.leading_colon.is_none()
             && type_path.path.segments.len() == 1
-            && (type_path.path.segments[0].ident == "Principal" || type_path.path.segments[0].ident == "CanisterId")
+            && PRINCIPAL_ALIASES.iter().any(|a| type_path.path.segments[0].ident == a)
         {
-            field.attrs.push(parse_quote ! ( #[ts(as = "ts_export::PrincipalTS")] ));
+            field.attrs.push(parse_quote ! ( #[ts(as = "ts_export::TSBytes")] ));
         } else if field.attrs.iter().any(is_using_serde_bytes) {
-            field.attrs.push(parse_quote ! ( #[ts(type = "Uint8Array")] ))
+            field.attrs.push(parse_quote ! ( #[ts(as = "ts_export::TSBytes")] ));
         }
     }
 }

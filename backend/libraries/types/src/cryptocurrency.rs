@@ -507,7 +507,7 @@ pub mod icrc1 {
         pub amount: u128,
         pub to: Account,
         pub fee: u128,
-        #[ts(as = "Option<Vec<u8>>")]
+        #[ts(as = "Option::<ts_export::TSBytes>")]
         pub memo: Option<Memo>,
         pub created: TimestampNanos,
     }
@@ -522,7 +522,7 @@ pub mod icrc1 {
         pub from: CryptoAccount,
         pub to: CryptoAccount,
         pub fee: u128,
-        #[ts(as = "Option<Vec<u8>>")]
+        #[ts(as = "Option::<ts_export::TSBytes>")]
         pub memo: Option<Memo>,
         pub created: TimestampNanos,
         pub block_index: u64,
@@ -538,7 +538,7 @@ pub mod icrc1 {
         pub fee: u128,
         pub from: CryptoAccount,
         pub to: CryptoAccount,
-        #[ts(as = "Option<Vec<u8>>")]
+        #[ts(as = "Option::<ts_export::TSBytes>")]
         pub memo: Option<Memo>,
         pub created: TimestampNanos,
         pub error_message: String,
@@ -578,7 +578,7 @@ pub mod icrc2 {
         pub from: Account,
         pub to: Account,
         pub fee: u128,
-        #[ts(as = "Option<Vec<u8>>")]
+        #[ts(as = "Option::<ts_export::TSBytes>")]
         pub memo: Option<Memo>,
         pub created: TimestampNanos,
     }
@@ -594,7 +594,7 @@ pub mod icrc2 {
         pub from: icrc1::CryptoAccount,
         pub to: icrc1::CryptoAccount,
         pub fee: u128,
-        #[ts(as = "Option<Vec<u8>>")]
+        #[ts(as = "Option::<ts_export::TSBytes>")]
         pub memo: Option<Memo>,
         pub created: TimestampNanos,
         pub block_index: u64,
@@ -611,7 +611,7 @@ pub mod icrc2 {
         pub spender: UserId,
         pub from: icrc1::CryptoAccount,
         pub to: icrc1::CryptoAccount,
-        #[ts(as = "Option<Vec<u8>>")]
+        #[ts(as = "Option::<ts_export::TSBytes>")]
         pub memo: Option<Memo>,
         pub created: TimestampNanos,
         pub error_message: String,
