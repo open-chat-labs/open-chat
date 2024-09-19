@@ -1483,6 +1483,8 @@ dependencies = [
  "chat_events",
  "serde",
  "serde_bytes",
+ "ts-rs",
+ "ts_export",
  "types",
 ]
 
@@ -2712,6 +2714,8 @@ dependencies = [
  "chat_events",
  "serde",
  "serde_bytes",
+ "ts-rs",
+ "ts_export",
  "types",
 ]
 
