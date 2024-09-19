@@ -77,7 +77,8 @@ import {
     AcceptP2PSwapResponse,
     CancelP2PSwapResponse,
     JoinVideoCallResponse,
-    VideoCallParticipantsResponse
+    VideoCallParticipantsResponse,
+    UserGroup,
 } from "./types";
 export {
     _SERVICE as CommunityService,
@@ -156,7 +157,8 @@ export {
     AcceptP2PSwapResponse as ApiAcceptP2PSwapResponse,
     CancelP2PSwapResponse as ApiCancelP2PSwapResponse,
     JoinVideoCallResponse as ApiJoinVideoCallResponse,
-    VideoCallParticipantsResponse as ApiVideoCallParticipantsResponse
+    VideoCallParticipantsResponse as ApiVideoCallParticipantsResponse,
+    UserGroup as ApiUserGroup,
 };
 
 export const idlFactory: IDL.InterfaceFactory;
