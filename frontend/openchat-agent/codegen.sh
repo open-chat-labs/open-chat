@@ -11,9 +11,6 @@ didc bind ../../backend/canisters/group/api/can.did -t js > ./src/services/group
 didc bind ../../backend/canisters/identity/api/can.did -t ts > ./src/services/identity/candid/types.d.ts
 didc bind ../../backend/canisters/identity/api/can.did -t js > ./src/services/identity/candid/idl.js
 
-didc bind ../../backend/canisters/local_user_index/api/can.did -t ts > ./src/services/localUserIndex/candid/types.d.ts
-didc bind ../../backend/canisters/local_user_index/api/can.did -t js > ./src/services/localUserIndex/candid/idl.js
-
 didc bind ../../backend/canisters/market_maker/api/can.did -t ts > ./src/services/marketMaker/candid/types.d.ts
 didc bind ../../backend/canisters/market_maker/api/can.did -t js > ./src/services/marketMaker/candid/idl.js
 
