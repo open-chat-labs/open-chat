@@ -16,7 +16,6 @@ pub struct Args {
     pub chunk_size: u32,
     pub total_size: u64,
     #[serde(with = "serde_bytes")]
-    #[ts(as = "Vec<u8>")]
     pub bytes: Vec<u8>,
     pub expiry: Option<TimestampMillis>,
 }
