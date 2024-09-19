@@ -1808,7 +1808,7 @@ export type LocalUserIndexRegisterUserArgs = Static<typeof LocalUserIndexRegiste
 export const LocalUserIndexRegisterUserArgs = Type.Object({
     username: Type.String(),
     referral_code: Type.Optional(Type.String()),
-    public_key: Type.Array(Type.Number()),
+    public_key: Type.Uint8Array(),
 });
 
 export type LocalUserIndexChatEventsEventsByIndexArgs = Static<

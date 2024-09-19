@@ -240,9 +240,7 @@ export class LocalUserIndexClient extends CandidService {
             {
                 username,
                 referral_code: referralCode,
-                public_key: Array.from(
-                    new Uint8Array((this.identity as SignIdentity).getPublicKey().toDer()),
-                ),
+                public_key: new Uint8Array((this.identity as SignIdentity).getPublicKey().toDer()),
             },
             registerUserResponse,
             LocalUserIndexRegisterUserArgs,

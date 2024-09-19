@@ -534,9 +534,8 @@ function reportedMessage(value: TReportedMessage): ReportedMessageContent {
 
 function customContent(value: TCustomContent): MessageContent {
     if (value.kind === "meme_fighter") {
-        const data = new Uint8Array(value.data);
         const decoder = new TextDecoder();
-        const json = decoder.decode(data);
+        const json = decoder.decode(value.data);
         const decoded = JSON.parse(json) as { url: string; width: number; height: number };
         return {
             kind: "meme_fighter_content",
