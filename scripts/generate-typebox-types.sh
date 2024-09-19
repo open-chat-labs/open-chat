@@ -4,7 +4,13 @@ SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
-./scripts/validate-candid-matches-rust.sh
+for canister_path in ./backend/canisters/*/
+do
+  canister_path=${canister_path%*/}
+  canister_name=${canister_path##*/}
+
+  cargo run -p ${canister_name}_canister > /dev/null
+done
 
 cargo run -p ts_exporter
 
