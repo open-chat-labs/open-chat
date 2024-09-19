@@ -126,7 +126,7 @@ describe("thread utils", () => {
                         },
                     },
                 ],
-                messageIds: new Set(),
+                messageIds: new Map(),
             },
         );
         const chat = mergeUnconfirmedThreadsIntoSummary(defaultGroupChat, unconf);

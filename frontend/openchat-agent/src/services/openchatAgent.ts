@@ -518,89 +518,109 @@ export class OpenChatAgent extends EventTarget {
         acceptedRules: AcceptedRules | undefined,
         messageFilterFailed: bigint | undefined,
         pin: string | undefined,
-        newAchievement: boolean
-    ): Promise<[SendMessageResponse, Message]> {
-        const { chatId, threadRootMessageIndex } = messageContext;
+        newAchievement: boolean,
+    ): Stream<"accepted" | [SendMessageResponse, Message]> {
+        return new Stream(async (resolve, reject) => {
+            const onAccepted = () => resolve("accepted");
+            const { chatId, threadRootMessageIndex } = messageContext;
 
-        if (offline()) {
-            recordFailedMessage(this.db, chatId, event, threadRootMessageIndex);
-            return Promise.resolve([CommonResponses.offline(), event.event]);
-        }
+            if (offline()) {
+                recordFailedMessage(this.db, chatId, event, threadRootMessageIndex);
+                return resolve([CommonResponses.offline(), event.event], true);
+            }
 
-        if (chatId.kind === "channel") {
-            if (
-                event.event.content.kind === "crypto_content" ||
-                event.event.content.kind === "prize_content_initial" ||
-                event.event.content.kind === "p2p_swap_content_initial"
-            ) {
-                return this.userClient.sendMessageWithTransferToChannel(
-                    chatId,
-                    event.event.content.kind !== "p2p_swap_content_initial"
-                        ? event.event.content.transfer.recipient
-                        : undefined,
-                    user,
-                    event,
-                    threadRootMessageIndex,
-                    acceptedRules?.community,
-                    acceptedRules?.chat,
-                    messageFilterFailed,
-                    pin
+            if (chatId.kind === "channel") {
+                if (
+                    event.event.content.kind === "crypto_content" ||
+                    event.event.content.kind === "prize_content_initial" ||
+                    event.event.content.kind === "p2p_swap_content_initial"
+                ) {
+                    return resolve(
+                        await this.userClient.sendMessageWithTransferToChannel(
+                            chatId,
+                            event.event.content.kind !== "p2p_swap_content_initial"
+                                ? event.event.content.transfer.recipient
+                                : undefined,
+                            user,
+                            event,
+                            threadRootMessageIndex,
+                            acceptedRules?.community,
+                            acceptedRules?.chat,
+                            messageFilterFailed,
+                            pin,
+                        ),
+                        true,
+                    );
+                }
+                return resolve(
+                    await this.sendChannelMessage(
+                        chatId,
+                        user.username,
+                        user.displayName,
+                        mentioned,
+                        event,
+                        threadRootMessageIndex,
+                        acceptedRules?.community,
+                        acceptedRules?.chat,
+                        messageFilterFailed,
+                        newAchievement,
+                        onAccepted,
+                    ),
+                    true,
                 );
             }
-            return this.sendChannelMessage(
-                chatId,
-                user.username,
-                user.displayName,
-                mentioned,
-                event,
-                threadRootMessageIndex,
-                acceptedRules?.community,
-                acceptedRules?.chat,
-                messageFilterFailed,
-                newAchievement
-            );
-        }
-        if (chatId.kind === "group_chat") {
-            if (
-                event.event.content.kind === "crypto_content" ||
-                event.event.content.kind === "prize_content_initial" ||
-                event.event.content.kind === "p2p_swap_content_initial"
-            ) {
-                return this.userClient.sendMessageWithTransferToGroup(
-                    chatId,
-                    event.event.content.kind !== "p2p_swap_content_initial"
-                        ? event.event.content.transfer.recipient
-                        : undefined,
-                    user,
-                    event,
-                    threadRootMessageIndex,
-                    acceptedRules?.chat,
-                    messageFilterFailed,
-                    pin
+            if (chatId.kind === "group_chat") {
+                if (
+                    event.event.content.kind === "crypto_content" ||
+                    event.event.content.kind === "prize_content_initial" ||
+                    event.event.content.kind === "p2p_swap_content_initial"
+                ) {
+                    return resolve(
+                        await this.userClient.sendMessageWithTransferToGroup(
+                            chatId,
+                            event.event.content.kind !== "p2p_swap_content_initial"
+                                ? event.event.content.transfer.recipient
+                                : undefined,
+                            user,
+                            event,
+                            threadRootMessageIndex,
+                            acceptedRules?.chat,
+                            messageFilterFailed,
+                            pin,
+                        ),
+                        true,
+                    );
+                }
+                return resolve(
+                    await this.sendGroupMessage(
+                        chatId,
+                        user.username,
+                        user.displayName,
+                        mentioned,
+                        event,
+                        threadRootMessageIndex,
+                        acceptedRules?.chat,
+                        messageFilterFailed,
+                        newAchievement,
+                        onAccepted,
+                    ),
+                    true,
                 );
             }
-            return this.sendGroupMessage(
-                chatId,
-                user.username,
-                user.displayName,
-                mentioned,
-                event,
-                threadRootMessageIndex,
-                acceptedRules?.chat,
-                messageFilterFailed,
-                newAchievement
-            );
-        }
-        if (chatId.kind === "direct_chat") {
-            return this.sendDirectMessage(
-                chatId,
-                event,
-                messageFilterFailed,
-                threadRootMessageIndex,
-                pin
-            );
-        }
-        throw new UnsupportedValueError("Unexpect chat type", chatId);
+            if (chatId.kind === "direct_chat") {
+                return resolve(
+                    await this.sendDirectMessage(
+                        chatId,
+                        event,
+                        messageFilterFailed,
+                        threadRootMessageIndex,
+                        pin,
+                    ),
+                    true,
+                );
+            }
+            reject(new UnsupportedValueError("Unexpect chat type", chatId));
+        });
     }
 
     private sendChannelMessage(

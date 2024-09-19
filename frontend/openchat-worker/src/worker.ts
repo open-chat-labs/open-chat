@@ -661,7 +661,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "sendMessage":
-                executeThenReply(
+                streamReplies(
                     payload,
                     correlationId,
                     agent.sendMessage(

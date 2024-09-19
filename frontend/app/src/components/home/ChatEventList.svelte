@@ -479,7 +479,7 @@
 
     function isConfirmed(_unconf: unknown, evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message" && messageContext) {
-            return !unconfirmed.contains(messageContext, evt.event.messageId);
+            return !unconfirmed.pendingAcceptance(messageContext, evt.event.messageId);
         }
         return true;
     }
