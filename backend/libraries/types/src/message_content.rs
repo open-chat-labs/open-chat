@@ -728,7 +728,6 @@ impl P2PSwapContent {
 pub struct CustomContent {
     pub kind: String,
     #[serde(with = "serde_bytes")]
-    #[ts(as = "Vec<u8>")]
     pub data: Vec<u8>,
 }
 
