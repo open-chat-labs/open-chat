@@ -35,7 +35,6 @@ impl From<CanisterWasm> for ChunkedCanisterWasm {
 pub struct CanisterWasm {
     pub version: BuildVersion,
     #[serde(with = "serde_bytes")]
-    #[ts(as = "Vec::<u8>")]
     pub module: Vec<u8>,
 }
 

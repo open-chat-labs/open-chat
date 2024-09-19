@@ -43,7 +43,6 @@ pub enum Treasury {
 pub struct UpgradeSnsControlledCanister {
     pub canister_id: CanisterId,
     #[serde(with = "serde_bytes")]
-    #[ts(as = "Vec<u8>")]
     pub new_canister_wasm: Vec<u8>,
     pub mode: CanisterInstallMode,
 }
@@ -71,7 +70,6 @@ impl From<CanisterInstallMode> for i32 {
 pub struct ExecuteGenericNervousSystemFunction {
     pub function_id: u64,
     #[serde(with = "serde_bytes")]
-    #[ts(as = "Vec<u8>")]
     pub payload: Vec<u8>,
 }
 
