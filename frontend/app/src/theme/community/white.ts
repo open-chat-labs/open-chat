@@ -43,14 +43,15 @@ export function getTheme(base: Theme): Theme {
     base.panel.nav.bg = "transparent";
     base.panel.right.bg = "transparent";
     base.panel.right.modal = white;
-    base.unread["mute-solid"] = "rgba(0,0,0,0.1)";
+    base.unread.mute = "rgba(0,0,0,0.2)";
+    base.unread["mute-solid"] = "rgba(0,0,0,0.2)";
     base.chatSearch.bg = textBox;
     base.chatSummary["bg-selected"] = "rgba(226,226,226,0.5)";
     base.menu.txt = txt70;
     base.menu["disabled-txt"] = hexPercent(txtDark, 50);
     base.menu.separator = base.bd;
     base.menu.bd = "#efefef";
-    base.button["disabled-txt"] = disabledTxt;
+    base.button["disabled-txt"] = txt40;
     base.modal.filter = "blur(5px)";
     base.modal.bg = white;
     base.modal.bd = "var(--bw) solid var(--bd)";
