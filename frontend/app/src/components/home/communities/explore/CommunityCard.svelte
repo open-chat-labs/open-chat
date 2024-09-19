@@ -176,7 +176,8 @@
                 flex-wrap: wrap;
 
                 .flag {
-                    background-color: var(--primary);
+                    background-color: var(--button-bg);
+                    color: var(--button-txt);
                     padding: $sp1 $sp3;
                     border-radius: var(--rd);
                 }

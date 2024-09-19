@@ -66,6 +66,7 @@
 
             &.selected {
                 background-color: var(--button-bg);
+                color: var(--button-txt);
                 @media (hover: hover) {
                     &:hover {
                         background: var(--button-hv);

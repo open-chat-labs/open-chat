@@ -233,7 +233,9 @@
             {/if}
 
             {#if error}
-                <ErrorMessage>{error}</ErrorMessage>
+                <ErrorMessage>
+                    <Translatable resourceKey={i18nKey(error)} />
+                </ErrorMessage>
             {/if}
         </div>
     {/if}

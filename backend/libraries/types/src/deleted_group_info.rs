@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 
 #[ts_export]
-#[derive(CandidType, Debug, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct DeletedGroupInfo {
     pub id: ChatId,
     pub timestamp: TimestampMillis,
@@ -26,7 +26,7 @@ pub struct DeletedGroupInfoInternal {
 }
 
 #[ts_export]
-#[derive(CandidType, Debug, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct DeletedCommunityInfo {
     pub id: CommunityId,
     pub timestamp: TimestampMillis,

@@ -73,6 +73,7 @@
         gap: $sp3;
         background-color: var(--button-bg);
         border-radius: var(--button-rd);
+        color: var(--button-txt);
         transition:
             background ease-in-out 200ms,
             color ease-in-out 200ms;

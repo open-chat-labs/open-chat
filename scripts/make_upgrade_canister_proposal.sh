@@ -79,8 +79,17 @@ if [ "$FUNCTION_ID" -ge "1000" ] ; then
 
     rm -f $PROPOSAL_BUILDER_PATH
 else
+    # Parse the version string
+    IFS='.' read -ra VERSION_PARTS <<< "$VERSION"
+    MAJOR=${VERSION_PARTS[0]}
+    MINOR=${VERSION_PARTS[1]}
+    PATCH=${VERSION_PARTS[2]}
+
+    # Build the canister-upgrade-arg
+    UPGRADE_ARG="(record { wasm_version = record { major=$MAJOR:nat32; minor=$MINOR:nat32; patch=$PATCH:nat32 } })"
+
     # Submit the proposal
-    ./sns/scripts/utils/submit_upgrade_proposal.sh $CANISTER_NAME $VERSION "$TITLE" "$URL" "$SUMMARY"
+    ./sns/scripts/utils/submit_upgrade_proposal.sh $CANISTER_NAME $VERSION "$TITLE" "$URL" "$SUMMARY" "$UPGRADE_ARG"
 fi
 
 # Cleanup
