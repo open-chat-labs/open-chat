@@ -64,7 +64,6 @@ import { CandidService } from "../candidService";
 import {
     apiRole,
     getEventsResponse,
-    sendMessageResponse,
     removeMemberResponse,
     blockUserResponse,
     unblockUserResponse,
@@ -77,6 +76,7 @@ import {
     followThreadResponse,
     reportMessageResponse,
 } from "./mappers";
+import { sendMessageResponse } from "./mappersV2";
 import {
     type Database,
     getCachedEvents,
@@ -107,7 +107,6 @@ import {
     deletedMessageResponse,
     updateGroupResponse,
     registerPollVoteResponse,
-    apiUser,
     enableInviteCodeResponse,
     disableInviteCodeResponse,
     resetInviteCodeResponse,
@@ -124,10 +123,14 @@ import {
     setVideoCallPresence,
     videoCallParticipantsResponse,
 } from "../common/chatMappers";
+import {
+    apiMessageContent as apiMessageContentV2,
+    apiUser as apiUserV2,
+} from "../common/chatMappersV2";
 import { DataClient } from "../data/data.client";
 import { mergeGroupChatDetails } from "../../utils/chat";
 import { publicSummaryResponse } from "../common/publicSummaryMapper";
-import { apiOptionUpdate, identity } from "../../utils/mapping";
+import { apiOptionUpdate, identity, mapOptional } from "../../utils/mapping";
 import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
 import { setCachedMessageFromSendResponse } from "../../utils/caching";
@@ -139,6 +142,7 @@ import {
     chunkedChatEventsFromBackend,
     chunkedChatEventsWindowFromBackend,
 } from "../common/chunked";
+import { GroupSendMessageArgs, GroupSendMessageResponse } from "../../typebox";
 
 export class GroupClient extends CandidService {
     private groupService: GroupService;
@@ -149,7 +153,7 @@ export class GroupClient extends CandidService {
         private config: AgentConfig,
         private chatId: GroupChatIdentifier,
         private db: Database,
-        private inviteCode: string | undefined
+        private inviteCode: string | undefined,
     ) {
         super(identity, agent, chatId.groupId);
         this.groupService = this.createServiceClient<GroupService>(idlFactory);
@@ -159,7 +163,7 @@ export class GroupClient extends CandidService {
         return this.handleQueryResponse(
             () => this.groupService.summary({}),
             summaryResponse,
-            {}
+            {},
         ).catch((err) => {
             if (err instanceof DestinationInvalidError) {
                 return { kind: "canister_not_found" };
@@ -175,14 +179,14 @@ export class GroupClient extends CandidService {
         return this.handleQueryResponse(
             () => this.groupService.summary_updates(args),
             summaryUpdatesResponse,
-            args
+            args,
         );
     }
 
     chatEventsByIndex(
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined
+        latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
         return getCachedEventsByIndex(this.db, eventIndexes, {
             chatId: this.chatId,
@@ -192,10 +196,10 @@ export class GroupClient extends CandidService {
 
     private setCachedEvents<T extends ChatEvent>(
         resp: EventsResponse<T>,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
     ): EventsResponse<T> {
         setCachedEvents(this.db, this.chatId, resp, threadRootMessageIndex).catch((err) =>
-            this.config.logger.error("Error writing cached group events", err)
+            this.config.logger.error("Error writing cached group events", err),
         );
         return resp;
     }
@@ -203,7 +207,7 @@ export class GroupClient extends CandidService {
     private handleMissingEvents(
         [cachedEvents, missing]: [EventsSuccessResult<ChatEvent>, Set<number>],
         threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined
+        latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
         if (missing.size === 0) {
             return Promise.resolve(cachedEvents);
@@ -211,7 +215,7 @@ export class GroupClient extends CandidService {
             return this.chatEventsByIndexFromBackend(
                 [...missing],
                 threadRootMessageIndex,
-                latestKnownUpdate
+                latestKnownUpdate,
             )
                 .then((resp) => this.setCachedEvents(resp, threadRootMessageIndex))
                 .then((resp) => {
@@ -226,7 +230,7 @@ export class GroupClient extends CandidService {
     chatEventsByIndexFromBackend(
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined
+        latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
@@ -237,7 +241,7 @@ export class GroupClient extends CandidService {
         return this.handleQueryResponse(
             () => this.groupService.events_by_index(args),
             (resp) => getEventsResponse(this.principal, resp, this.chatId, latestKnownUpdate),
-            args
+            args,
         );
     }
 
@@ -246,14 +250,14 @@ export class GroupClient extends CandidService {
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-        maxEvents: number = MAX_EVENTS
+        maxEvents: number = MAX_EVENTS,
     ): Promise<EventsResponse<ChatEvent>> {
         const [cachedEvents, missing, totalMiss] = await getCachedEventsWindowByMessageIndex(
             this.db,
             eventIndexRange,
             { chatId: this.chatId, threadRootMessageIndex },
             messageIndex,
-            maxEvents
+            maxEvents,
         );
 
         if (totalMiss || missing.size >= MAX_MISSING) {
@@ -261,19 +265,19 @@ export class GroupClient extends CandidService {
             console.log(
                 "We didn't get enough back from the cache, going to the api",
                 missing.size,
-                totalMiss
+                totalMiss,
             );
             return this.chatEventsWindowFromBackend(
                 messageIndex,
                 threadRootMessageIndex,
                 latestKnownUpdate,
-                maxEvents
+                maxEvents,
             )
                 .then((resp) => this.setCachedEvents(resp, threadRootMessageIndex))
                 .catch((err) => {
                     if (err instanceof ResponseTooLargeError) {
                         console.log(
-                            "Response size too large, we will try to split the window request into a a few chunks"
+                            "Response size too large, we will try to split the window request into a a few chunks",
                         );
                         return chunkedChatEventsWindowFromBackend(
                             (index: number, ascending: boolean, chunkSize: number) =>
@@ -282,17 +286,17 @@ export class GroupClient extends CandidService {
                                     ascending,
                                     threadRootMessageIndex,
                                     latestKnownUpdate,
-                                    chunkSize
+                                    chunkSize,
                                 ),
                             (index: number, chunkSize: number) =>
                                 this.chatEventsWindowFromBackend(
                                     index,
                                     threadRootMessageIndex,
                                     latestKnownUpdate,
-                                    chunkSize
+                                    chunkSize,
                                 ),
                             eventIndexRange,
-                            messageIndex
+                            messageIndex,
                         ).then((resp) => this.setCachedEvents(resp, threadRootMessageIndex));
                     } else {
                         throw err;
@@ -302,7 +306,7 @@ export class GroupClient extends CandidService {
             return this.handleMissingEvents(
                 [cachedEvents, missing],
                 threadRootMessageIndex,
-                latestKnownUpdate
+                latestKnownUpdate,
             );
         }
     }
@@ -311,7 +315,7 @@ export class GroupClient extends CandidService {
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-        maxEvents: number = MAX_EVENTS
+        maxEvents: number = MAX_EVENTS,
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
@@ -324,7 +328,7 @@ export class GroupClient extends CandidService {
         return this.handleQueryResponse(
             () => this.groupService.events_window(args),
             (resp) => getEventsResponse(this.principal, resp, this.chatId, latestKnownUpdate),
-            args
+            args,
         );
     }
 
@@ -333,14 +337,14 @@ export class GroupClient extends CandidService {
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined
+        latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
         const [cachedEvents, missing] = await getCachedEvents(
             this.db,
             eventIndexRange,
             { chatId: this.chatId, threadRootMessageIndex },
             startIndex,
-            ascending
+            ascending,
         );
 
         // we may or may not have all of the requested events
@@ -351,13 +355,13 @@ export class GroupClient extends CandidService {
                 startIndex,
                 ascending,
                 threadRootMessageIndex,
-                latestKnownUpdate
+                latestKnownUpdate,
             )
                 .then((resp) => this.setCachedEvents(resp, threadRootMessageIndex))
                 .catch((err) => {
                     if (err instanceof ResponseTooLargeError) {
                         console.log(
-                            "Response size too large, we will try to split the payload into a a few chunks"
+                            "Response size too large, we will try to split the payload into a a few chunks",
                         );
                         return chunkedChatEventsFromBackend(
                             (index: number, chunkSize: number) =>
@@ -366,11 +370,11 @@ export class GroupClient extends CandidService {
                                     ascending,
                                     threadRootMessageIndex,
                                     latestKnownUpdate,
-                                    chunkSize
+                                    chunkSize,
                                 ),
                             eventIndexRange,
                             startIndex,
-                            ascending
+                            ascending,
                         ).then((resp) => this.setCachedEvents(resp, threadRootMessageIndex));
                     } else {
                         throw err;
@@ -380,7 +384,7 @@ export class GroupClient extends CandidService {
             return this.handleMissingEvents(
                 [cachedEvents, missing],
                 threadRootMessageIndex,
-                latestKnownUpdate
+                latestKnownUpdate,
             );
         }
     }
@@ -390,7 +394,7 @@ export class GroupClient extends CandidService {
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-        maxEvents: number = MAX_EVENTS
+        maxEvents: number = MAX_EVENTS,
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
@@ -404,7 +408,7 @@ export class GroupClient extends CandidService {
         return this.handleQueryResponse(
             () => this.groupService.events(args),
             (resp) => getEventsResponse(this.principal, resp, this.chatId, latestKnownUpdate),
-            args
+            args,
         );
     }
 
@@ -419,7 +423,7 @@ export class GroupClient extends CandidService {
                 new_role,
                 correlation_id: generateUint64(),
             }),
-            changeRoleResponse
+            changeRoleResponse,
         );
     }
 
@@ -429,7 +433,7 @@ export class GroupClient extends CandidService {
                 user_id: Principal.fromText(userId),
                 correlation_id: generateUint64(),
             }),
-            removeMemberResponse
+            removeMemberResponse,
         );
     }
 
@@ -437,7 +441,7 @@ export class GroupClient extends CandidService {
         message: Message,
         threadRootMessageIndex: number | undefined,
         blockLevelMarkdown: boolean | undefined,
-        newAchievement: boolean
+        newAchievement: boolean,
     ): Promise<EditMessageResponse> {
         return new DataClient(this.identity, this.agent, this.config)
             .uploadData(message.content, [this.chatId.groupId])
@@ -453,7 +457,7 @@ export class GroupClient extends CandidService {
                 };
                 return this.handleResponse(
                     this.groupService.edit_message_v2(args),
-                    editMessageResponse
+                    editMessageResponse,
                 );
             });
     }
@@ -464,7 +468,7 @@ export class GroupClient extends CandidService {
                 correlation_id: generateUint64(),
                 message_id: messageId,
             }),
-            claimPrizeResponse
+            claimPrizeResponse,
         );
     }
 
@@ -476,7 +480,7 @@ export class GroupClient extends CandidService {
         threadRootMessageIndex: number | undefined,
         rulesAccepted: number | undefined,
         messageFilterFailed: bigint | undefined,
-        newAchievement: boolean
+        newAchievement: boolean,
     ): Promise<[SendMessageResponse, Message]> {
         // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
         removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
@@ -489,27 +493,30 @@ export class GroupClient extends CandidService {
         return uploadContentPromise.then((content) => {
             const newContent = content ?? event.event.content;
             const args = {
-                content: apiMessageContent(newContent),
+                content: apiMessageContentV2(newContent),
                 message_id: event.event.messageId,
                 sender_name: senderName,
-                sender_display_name: apiOptional(identity, senderDisplayName),
-                rules_accepted: apiOptional(identity, rulesAccepted),
-                replies_to: apiOptional(
-                    (replyContext) => ({
-                        event_index: replyContext.eventIndex,
-                    }),
-                    event.event.repliesTo
-                ),
-                mentioned: mentioned.map(apiUser),
+                sender_display_name: senderDisplayName,
+                rules_accepted: rulesAccepted,
+                replies_to: mapOptional(event.event.repliesTo, (replyContext) => ({
+                    event_index: replyContext.eventIndex,
+                })),
+                mentioned: mentioned.map(apiUserV2),
                 forwarding: event.event.forwarded,
-                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-                message_filter_failed: apiOptional(identity, messageFilterFailed),
+                thread_root_message_index: threadRootMessageIndex,
+                message_filter_failed: messageFilterFailed,
                 correlation_id: generateUint64(),
                 block_level_markdown: event.event.blockLevelMarkdown,
                 new_achievement: newAchievement,
             };
 
-            return this.handleResponse(this.groupService.send_message_v2(args), sendMessageResponse)
+            return this.executeMsgpackUpdate(
+                "send_message_v2",
+                args,
+                sendMessageResponse,
+                GroupSendMessageArgs,
+                GroupSendMessageResponse,
+            )
                 .then((resp) => {
                     const retVal: [SendMessageResponse, Message] = [
                         resp,
@@ -519,7 +526,7 @@ export class GroupClient extends CandidService {
                         this.db,
                         this.chatId,
                         event,
-                        threadRootMessageIndex
+                        threadRootMessageIndex,
                     )(retVal);
                     return retVal;
                 })
@@ -539,7 +546,7 @@ export class GroupClient extends CandidService {
         eventsTimeToLiveMs?: OptionUpdate<bigint>,
         gate?: AccessGate,
         isPublic?: boolean,
-        messagesVisibleToNonMembers?: boolean
+        messagesVisibleToNonMembers?: boolean,
     ): Promise<UpdateGroupResponse> {
         return this.handleResponse(
             this.groupService.update_group_v2({
@@ -568,7 +575,7 @@ export class GroupClient extends CandidService {
                         : { SetToSome: apiAccessGate(gate) },
                 messages_visible_to_non_members: apiOptional(identity, messagesVisibleToNonMembers),
             }),
-            updateGroupResponse
+            updateGroupResponse,
         );
     }
 
@@ -578,7 +585,7 @@ export class GroupClient extends CandidService {
         username: string,
         displayName: string | undefined,
         threadRootMessageIndex: number | undefined,
-        newAchievement: boolean
+        newAchievement: boolean,
     ): Promise<AddRemoveReactionResponse> {
         return this.handleResponse(
             this.groupService.add_reaction({
@@ -590,14 +597,14 @@ export class GroupClient extends CandidService {
                 correlation_id: generateUint64(),
                 new_achievement: newAchievement,
             }),
-            addRemoveReactionResponse
+            addRemoveReactionResponse,
         );
     }
 
     removeReaction(
         messageId: bigint,
         reaction: string,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
     ): Promise<AddRemoveReactionResponse> {
         return this.handleResponse(
             this.groupService.remove_reaction({
@@ -606,7 +613,7 @@ export class GroupClient extends CandidService {
                 reaction,
                 correlation_id: generateUint64(),
             }),
-            addRemoveReactionResponse
+            addRemoveReactionResponse,
         );
     }
 
@@ -614,7 +621,7 @@ export class GroupClient extends CandidService {
         messageId: bigint,
         threadRootMessageIndex: number | undefined,
         asPlatformModerator: boolean | undefined,
-        newAchievement: boolean
+        newAchievement: boolean,
     ): Promise<DeleteMessageResponse> {
         return this.handleResponse(
             this.groupService.delete_messages({
@@ -624,13 +631,13 @@ export class GroupClient extends CandidService {
                 as_platform_moderator: apiOptional(identity, asPlatformModerator),
                 new_achievement: newAchievement,
             }),
-            deleteMessageResponse
+            deleteMessageResponse,
         );
     }
 
     undeleteMessage(
         messageId: bigint,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
     ): Promise<UndeleteMessageResponse> {
         return this.handleResponse(
             this.groupService.undelete_messages({
@@ -638,7 +645,7 @@ export class GroupClient extends CandidService {
                 message_ids: [messageId],
                 correlation_id: generateUint64(),
             }),
-            undeleteMessageResponse
+            undeleteMessageResponse,
         );
     }
 
@@ -648,7 +655,7 @@ export class GroupClient extends CandidService {
                 user_id: Principal.fromText(userId),
                 correlation_id: generateUint64(),
             }),
-            blockUserResponse
+            blockUserResponse,
         );
     }
 
@@ -658,7 +665,7 @@ export class GroupClient extends CandidService {
                 user_id: Principal.fromText(userId),
                 correlation_id: generateUint64(),
             }),
-            unblockUserResponse
+            unblockUserResponse,
         );
     }
 
@@ -682,7 +689,7 @@ export class GroupClient extends CandidService {
     private getGroupDetailsFromBackend(): Promise<GroupChatDetailsResponse> {
         return this.handleQueryResponse(
             () => this.groupService.selected_initial({}),
-            groupDetailsResponse
+            groupDetailsResponse,
         );
     }
 
@@ -695,7 +702,7 @@ export class GroupClient extends CandidService {
     }
 
     private async getGroupDetailsUpdatesFromBackend(
-        previous: GroupChatDetails
+        previous: GroupChatDetails,
     ): Promise<GroupChatDetails> {
         const args = {
             updates_since: previous.timestamp,
@@ -703,7 +710,7 @@ export class GroupClient extends CandidService {
         const updatesResponse = await this.handleQueryResponse(
             () => this.groupService.selected_updates_v2(args),
             groupDetailsUpdatesResponse,
-            args
+            args,
         );
 
         if (updatesResponse.kind === "failure") {
@@ -725,13 +732,13 @@ export class GroupClient extends CandidService {
         return this.handleQueryResponse(
             () => this.groupService.public_summary(args),
             publicSummaryResponse,
-            args
+            args,
         );
     }
 
     async getMessagesByMessageIndex(
         messageIndexes: Set<number>,
-        latestKnownUpdate: bigint | undefined
+        latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<Message>> {
         const fromCache = await loadMessagesByMessageIndex(this.db, this.chatId, messageIndexes);
         if (fromCache.missing.size > 0) {
@@ -739,7 +746,7 @@ export class GroupClient extends CandidService {
 
             const resp = await this.getMessagesByMessageIndexFromBackend(
                 fromCache.missing,
-                latestKnownUpdate
+                latestKnownUpdate,
             ).then((resp) => this.setCachedEvents(resp));
 
             return resp === "events_failed"
@@ -761,7 +768,7 @@ export class GroupClient extends CandidService {
 
     private getMessagesByMessageIndexFromBackend(
         messageIndexes: Set<number>,
-        latestKnownUpdate: bigint | undefined
+        latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<Message>> {
         const thread_root_message_index: [] = [];
         const invite_code: [] = [];
@@ -779,22 +786,22 @@ export class GroupClient extends CandidService {
                     this.principal,
                     resp,
                     this.chatId,
-                    latestKnownUpdate
+                    latestKnownUpdate,
                 ),
-            args
+            args,
         );
     }
 
     getDeletedMessage(
         messageId: bigint,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
     ): Promise<DeletedGroupMessageResponse> {
         return this.handleResponse(
             this.groupService.deleted_message({
                 message_id: messageId,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             }),
-            deletedMessageResponse
+            deletedMessageResponse,
         );
     }
 
@@ -804,7 +811,7 @@ export class GroupClient extends CandidService {
                 message_index: messageIndex,
                 correlation_id: generateUint64(),
             }),
-            pinMessageResponse
+            pinMessageResponse,
         );
     }
 
@@ -814,7 +821,7 @@ export class GroupClient extends CandidService {
                 message_index: messageIndex,
                 correlation_id: generateUint64(),
             }),
-            unpinMessageResponse
+            unpinMessageResponse,
         );
     }
 
@@ -823,7 +830,7 @@ export class GroupClient extends CandidService {
         answerIdx: number,
         voteType: "register" | "delete",
         threadRootMessageIndex: number | undefined,
-        newAchievement: boolean
+        newAchievement: boolean,
     ): Promise<RegisterPollVoteResponse> {
         return this.handleResponse(
             this.groupService.register_poll_vote({
@@ -834,34 +841,34 @@ export class GroupClient extends CandidService {
                 new_achievement: newAchievement,
                 correlation_id: generateUint64(),
             }),
-            registerPollVoteResponse
+            registerPollVoteResponse,
         );
     }
 
     searchGroupChat(
         searchTerm: string,
         userIds: string[],
-        maxResults: number
+        maxResults: number,
     ): Promise<SearchGroupChatResponse> {
         const args = {
             search_term: searchTerm,
             max_results: maxResults,
             users: apiOptional(
                 identity,
-                userIds.map((u) => Principal.fromText(u))
+                userIds.map((u) => Principal.fromText(u)),
             ),
         };
         return this.handleQueryResponse(
             () => this.groupService.search_messages(args),
             (res) => searchGroupChatResponse(res, this.chatId),
-            args
+            args,
         );
     }
 
     getInviteCode(): Promise<InviteCodeResponse> {
         return this.handleQueryResponse(
             () => this.groupService.invite_code({}),
-            inviteCodeResponse
+            inviteCodeResponse,
         );
     }
 
@@ -870,7 +877,7 @@ export class GroupClient extends CandidService {
             this.groupService.enable_invite_code({
                 correlation_id: generateUint64(),
             }),
-            enableInviteCodeResponse
+            enableInviteCodeResponse,
         );
     }
 
@@ -879,7 +886,7 @@ export class GroupClient extends CandidService {
             this.groupService.disable_invite_code({
                 correlation_id: generateUint64(),
             }),
-            disableInviteCodeResponse
+            disableInviteCodeResponse,
         );
     }
 
@@ -888,13 +895,13 @@ export class GroupClient extends CandidService {
             this.groupService.reset_invite_code({
                 correlation_id: generateUint64(),
             }),
-            resetInviteCodeResponse
+            resetInviteCodeResponse,
         );
     }
 
     threadPreviews(
         threadRootMessageIndexes: number[],
-        latestClientThreadUpdate: bigint | undefined
+        latestClientThreadUpdate: bigint | undefined,
     ): Promise<ThreadPreviewsResponse> {
         return this.handleQueryResponse(
             () =>
@@ -902,54 +909,54 @@ export class GroupClient extends CandidService {
                     threads: new Uint32Array(threadRootMessageIndexes),
                     latest_client_thread_update: apiOptional(identity, latestClientThreadUpdate),
                 }),
-            (resp) => threadPreviewsResponse(resp, this.chatId, latestClientThreadUpdate)
+            (resp) => threadPreviewsResponse(resp, this.chatId, latestClientThreadUpdate),
         );
     }
 
     registerProposalVote(
         messageIdx: number,
-        adopt: boolean
+        adopt: boolean,
     ): Promise<RegisterProposalVoteResponse> {
         return this.handleResponse(
             this.groupService.register_proposal_vote({
                 adopt,
                 message_index: messageIdx,
             }),
-            registerProposalVoteResponse
+            registerProposalVoteResponse,
         );
     }
 
     registerProposalVoteV2(
         messageIdx: number,
-        adopt: boolean
+        adopt: boolean,
     ): Promise<RegisterProposalVoteResponse> {
         return this.handleResponse(
             this.groupService.register_proposal_vote_v2({
                 adopt,
                 message_index: messageIdx,
             }),
-            registerProposalVoteResponse
+            registerProposalVoteResponse,
         );
     }
 
     localUserIndex(): Promise<string> {
         return this.handleQueryResponse(
             () => this.groupService.local_user_index({}),
-            (resp) => resp.Success.toString()
+            (resp) => resp.Success.toString(),
         );
     }
 
     declineInvitation(): Promise<DeclineInvitationResponse> {
         return this.handleResponse(
             this.groupService.decline_invitation({}),
-            declineInvitationResponse
+            declineInvitationResponse,
         );
     }
 
     toggleMuteNotifications(mute: boolean): Promise<ToggleMuteNotificationResponse> {
         return this.handleResponse(
             this.groupService.toggle_mute_notifications({ mute }),
-            muteNotificationsResponse
+            muteNotificationsResponse,
         );
     }
 
@@ -961,7 +968,7 @@ export class GroupClient extends CandidService {
                 permissions: [],
                 rules,
             }),
-            convertToCommunityReponse
+            convertToCommunityReponse,
         );
     }
 
@@ -973,14 +980,14 @@ export class GroupClient extends CandidService {
             follow
                 ? this.groupService.follow_thread(args)
                 : this.groupService.unfollow_thread(args),
-            followThreadResponse
+            followThreadResponse,
         );
     }
 
     reportMessage(
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
-        deleteMessage: boolean
+        deleteMessage: boolean,
     ): Promise<boolean> {
         return this.handleResponse(
             this.groupService.report_message({
@@ -988,7 +995,7 @@ export class GroupClient extends CandidService {
                 message_id: messageId,
                 delete: deleteMessage,
             }),
-            reportMessageResponse
+            reportMessageResponse,
         );
     }
 
@@ -996,7 +1003,7 @@ export class GroupClient extends CandidService {
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
         pin: string | undefined,
-        newAchievement: boolean
+        newAchievement: boolean,
     ): Promise<AcceptP2PSwapResponse> {
         return this.handleResponse(
             this.groupService.accept_p2p_swap({
@@ -1005,20 +1012,20 @@ export class GroupClient extends CandidService {
                 pin: apiOptional(identity, pin),
                 new_achievement: newAchievement,
             }),
-            acceptP2PSwapResponse
+            acceptP2PSwapResponse,
         );
     }
 
     cancelP2PSwap(
         threadRootMessageIndex: number | undefined,
-        messageId: bigint
+        messageId: bigint,
     ): Promise<CancelP2PSwapResponse> {
         return this.handleResponse(
             this.groupService.cancel_p2p_swap({
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_id: messageId,
             }),
-            cancelP2PSwapResponse
+            cancelP2PSwapResponse,
         );
     }
 
@@ -1028,14 +1035,14 @@ export class GroupClient extends CandidService {
                 message_id: messageId,
                 new_achievement: newAchievement,
             }),
-            joinVideoCallResponse
+            joinVideoCallResponse,
         );
     }
 
     setVideoCallPresence(
         messageId: bigint,
         presence: VideoCallPresence,
-        newAchievement: boolean
+        newAchievement: boolean,
     ): Promise<SetVideoCallPresenceResponse> {
         return this.handleResponse(
             this.groupService.set_video_call_presence({
@@ -1043,13 +1050,13 @@ export class GroupClient extends CandidService {
                 presence: apiVideoCallPresence(presence),
                 new_achievement: newAchievement,
             }),
-            setVideoCallPresence
+            setVideoCallPresence,
         );
     }
 
     videoCallParticipants(
         messageId: bigint,
-        updatesSince?: bigint
+        updatesSince?: bigint,
     ): Promise<VideoCallParticipantsResponse> {
         return this.handleQueryResponse(
             () =>
@@ -1057,7 +1064,7 @@ export class GroupClient extends CandidService {
                     message_id: messageId,
                     updated_since: apiOptional(identity, updatesSince),
                 }),
-            videoCallParticipantsResponse
+            videoCallParticipantsResponse,
         );
     }
 
@@ -1066,7 +1073,7 @@ export class GroupClient extends CandidService {
             this.groupService.cancel_invites({
                 user_ids: userIds.map((u) => Principal.fromText(u)),
             }),
-            (candid) => "Success" in candid
+            (candid) => "Success" in candid,
         );
     }
 }
