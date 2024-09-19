@@ -5,10 +5,11 @@ use crate::{
     OptionUpdate, TimestampMillis,
 };
 use candid::CandidType;
+use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CommunityCanisterCommunitySummary {
     pub community_id: CommunityId,
     pub local_user_index_canister_id: CanisterId,
@@ -33,7 +34,7 @@ pub struct CommunityCanisterCommunitySummary {
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CommunityMembership {
     pub joined: TimestampMillis,
     pub role: CommunityRole,
@@ -42,7 +43,7 @@ pub struct CommunityMembership {
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CommunityCanisterCommunitySummaryUpdates {
     pub community_id: CommunityId,
     pub last_updated: TimestampMillis,
@@ -73,7 +74,7 @@ pub struct CommunityCanisterCommunitySummaryUpdates {
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CommunityMembershipUpdates {
     pub role: Option<CommunityRole>,
     pub rules_accepted: Option<bool>,

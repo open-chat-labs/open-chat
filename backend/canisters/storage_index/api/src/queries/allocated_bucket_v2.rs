@@ -1,10 +1,11 @@
 use crate::ProjectedAllowance;
 use candid::CandidType;
+use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{CanisterId, FileId, Hash};
 
 #[ts_export(storage_index, allocation_bucket)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub file_hash: Hash,
     pub file_size: u64,
@@ -12,7 +13,7 @@ pub struct Args {
 }
 
 #[ts_export(storage_index, allocation_bucket)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
     AllowanceExceeded(ProjectedAllowance),
@@ -21,7 +22,7 @@ pub enum Response {
 }
 
 #[ts_export(storage_index, allocation_bucket)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub canister_id: CanisterId,
     pub file_id: FileId,

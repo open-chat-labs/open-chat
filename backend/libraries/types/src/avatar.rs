@@ -1,9 +1,10 @@
 use candid::CandidType;
+use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Formatter};
 use ts_export::ts_export;
 
 #[ts_export]
-#[derive(CandidType, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Clone)]
 pub struct Document {
     pub id: u128,
     pub mime_type: String,

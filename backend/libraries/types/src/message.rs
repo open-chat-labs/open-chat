@@ -1,11 +1,11 @@
 use crate::{CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex, Reaction, ThreadSummary, UserId};
 use candid::CandidType;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::ops::{Deref, DerefMut};
 use ts_export::{ts_export, PrincipalTS};
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Message {
     pub message_index: MessageIndex,
     pub message_id: MessageId,
@@ -22,14 +22,14 @@ pub struct Message {
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ReplyContext {
     pub chat_if_other: Option<(Chat, Option<MessageIndex>)>,
     pub event_index: EventIndex,
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupReplyContext {
     pub event_index: EventIndex,
 }
@@ -67,7 +67,7 @@ pub struct MessageEditedEventPayload {
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 #[ts(as = "TipsTS")]
 pub struct Tips(Vec<(CanisterId, Vec<(UserId, u128)>)>);
 
@@ -99,6 +99,7 @@ impl Tips {
     }
 }
 
+#[allow(dead_code)]
 #[ts_export]
 pub struct TipsTS(Vec<(PrincipalTS, Vec<(UserId, u128)>)>);
 

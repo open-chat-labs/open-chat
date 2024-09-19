@@ -1,9 +1,10 @@
 use candid::CandidType;
+use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{ChatId, GateCheckFailedReason, GroupCanisterGroupChatSummary, VerifiedCredentialGateArgs};
 
 #[ts_export(local_user_index, join_group)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub chat_id: ChatId,
     pub invite_code: Option<u64>,
@@ -12,7 +13,7 @@ pub struct Args {
 }
 
 #[ts_export(local_user_index, join_group)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(Box<GroupCanisterGroupChatSummary>),
     AlreadyInGroup,

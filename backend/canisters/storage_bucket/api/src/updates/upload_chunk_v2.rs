@@ -1,10 +1,11 @@
 use candid::CandidType;
+use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Formatter};
 use ts_export::ts_export;
 use types::{AccessorId, FileId, Hash, TimestampMillis};
 
 #[ts_export(storage_bucket, upload_chunk)]
-#[derive(CandidType)]
+#[derive(CandidType, Serialize, Deserialize)]
 pub struct Args {
     pub file_id: FileId,
     pub hash: Hash,
@@ -21,7 +22,7 @@ pub struct Args {
 }
 
 #[ts_export(storage_bucket, upload_chunk)]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
     AllowanceExceeded,

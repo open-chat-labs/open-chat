@@ -18,7 +18,7 @@ pub struct CancelOrderRequest {
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct TokenInfo {
     pub token: Cryptocurrency,
     pub ledger: CanisterId,

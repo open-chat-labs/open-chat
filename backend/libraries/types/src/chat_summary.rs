@@ -4,13 +4,14 @@ use crate::{
     Version, MAX_RETURNED_MENTIONS,
 };
 use candid::CandidType;
+use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use ts_export::ts_export;
 
 pub const MAX_THREADS_IN_SUMMARY: usize = 20;
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct DirectChatSummary {
     pub them: UserId,
     pub last_updated: TimestampMillis,
@@ -37,7 +38,7 @@ impl DirectChatSummary {
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupChatSummary {
     pub chat_id: ChatId,
     pub local_user_index_canister_id: CanisterId,
@@ -79,7 +80,7 @@ pub struct GroupChatSummary {
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct DirectChatSummaryUpdates {
     pub chat_id: ChatId,
     pub last_updated: TimestampMillis,
@@ -105,7 +106,7 @@ pub struct DirectChatSummaryUpdates {
 // which is causing unnecessarily coupling. We should use separate types for these use cases.
 // For instance we only need to return history_visible_to_new_joiners and is_public from group::public_summary
 #[ts_export]
-#[derive(CandidType, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PublicGroupSummary {
     pub chat_id: ChatId,
     pub local_user_index_canister_id: CanisterId,
@@ -131,7 +132,7 @@ pub struct PublicGroupSummary {
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupCanisterGroupChatSummary {
     pub chat_id: ChatId,
     pub local_user_index_canister_id: CanisterId,
@@ -251,7 +252,7 @@ impl GroupCanisterGroupChatSummary {
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupCanisterGroupChatSummaryUpdates {
     pub chat_id: ChatId,
     pub last_updated: TimestampMillis,
@@ -295,7 +296,7 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupMembership {
     pub joined: TimestampMillis,
     pub role: GroupRole,
@@ -307,7 +308,7 @@ pub struct GroupMembership {
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupMembershipUpdates {
     pub role: Option<GroupRole>,
     pub mentions: Vec<HydratedMention>,
@@ -319,7 +320,7 @@ pub struct GroupMembershipUpdates {
 }
 
 #[ts_export]
-#[derive(CandidType, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Default)]
 pub struct SelectedGroupUpdates {
     pub timestamp: TimestampMillis,
     pub last_updated: TimestampMillis,
@@ -348,7 +349,7 @@ impl SelectedGroupUpdates {
 }
 
 #[ts_export]
-#[derive(CandidType, Debug, Default, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Default, Clone)]
 pub struct ChatMetrics {
     pub text_messages: u64,
     pub image_messages: u64,
@@ -377,7 +378,7 @@ pub struct ChatMetrics {
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ThreadSyncDetails {
     pub root_message_index: MessageIndex,
     pub latest_event: Option<EventIndex>,
@@ -387,7 +388,7 @@ pub struct ThreadSyncDetails {
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupCanisterThreadDetails {
     pub root_message_index: MessageIndex,
     pub latest_event: EventIndex,
@@ -408,27 +409,27 @@ impl From<&GroupCanisterThreadDetails> for ThreadSyncDetails {
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum GroupSubtype {
     GovernanceProposals(GovernanceProposalsSubtype),
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GovernanceProposalsSubtype {
     pub is_nns: bool,
     pub governance_canister_id: CanisterId,
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub struct Rules {
     pub text: String,
     pub enabled: bool,
 }
 
 #[ts_export]
-#[derive(CandidType, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct VersionedRules {
     pub text: String,
     pub version: Version,
@@ -436,7 +437,7 @@ pub struct VersionedRules {
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub struct UpdatedRules {
     pub text: String,
     pub enabled: bool,
@@ -444,14 +445,14 @@ pub struct UpdatedRules {
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct VideoCall {
     pub message_index: MessageIndex,
     pub call_type: VideoCallType,
 }
 
 #[ts_export]
-#[derive(CandidType, Clone, Debug, Copy, Default, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Copy, Default, Eq, PartialEq)]
 pub enum VideoCallType {
     Broadcast,
     #[default]
