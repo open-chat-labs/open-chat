@@ -1,6 +1,7 @@
 use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageResult,
-    DeleteUndeleteMessagesArgs, MessageContentInternal, PushMessageArgs, Reader, TipMessageArgs, UndeleteMessageResult,
+    DeleteUndeleteMessagesArgs, MessageContentInternal, PushMessageArgs, Reader, RemoveExpiredEventsResult, TipMessageArgs,
+    UndeleteMessageResult,
 };
 use event_store_producer::{EventStoreClient, Runtime};
 use itertools::Itertools;
@@ -1680,17 +1681,19 @@ impl GroupChatCore {
         }
     }
 
-    pub fn remove_expired_events(&mut self, now: TimestampMillis) {
+    pub fn remove_expired_events(&mut self, now: TimestampMillis) -> RemoveExpiredEventsResult {
         let result = self.events.remove_expired_events(now);
 
-        for (thread_root_message_index, users) in result.threads {
+        for (thread_root_message_index, users) in result.threads.iter() {
             for user_id in users {
-                if let Some(member) = self.members.get_mut(&user_id) {
+                if let Some(member) = self.members.get_mut(user_id) {
                     member.threads.remove(&thread_root_message_index);
-                    member.unfollowed_threads.retain(|&m| m != thread_root_message_index);
+                    member.unfollowed_threads.retain(|&m| m != *thread_root_message_index);
                 }
             }
         }
+
+        result
     }
 
     fn events_reader(&self, user_id: Option<UserId>, thread_root_message_index: Option<MessageIndex>) -> EventsReaderResult {

@@ -6,7 +6,7 @@ use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_message_id, random_string};
 use types::{
-    icrc1, ChatEvent, CryptoTransaction, Cryptocurrency, EventIndex, MessageContent, MessageContentInitial,
+    icrc1, ChatEvent, CryptoTransaction, Cryptocurrency, EventIndex, MessageContent, MessageContentInitial, OptionUpdate,
     PendingCryptoTransaction, PrizeContentInitial,
 };
 use utils::time::{HOUR_IN_MS, MINUTE_IN_MS};
@@ -102,9 +102,10 @@ fn prize_messages_can_be_claimed_successfully() {
     }
 }
 
-#[test_case(false)]
-#[test_case(true)]
-fn unclaimed_prizes_get_refunded(delete_message: bool) {
+#[test_case(1; "Prize expires")]
+#[test_case(2; "Message deleted")]
+#[test_case(3; "Message disappears")]
+fn unclaimed_prizes_get_refunded(case: u32) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -116,6 +117,20 @@ fn unclaimed_prizes_get_refunded(delete_message: bool) {
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
     let user2 = client::register_user(env, canister_ids);
     let group_id = client::user::happy_path::create_group(env, &user1, random_string().as_str(), true, true);
+
+    if case == 3 {
+        // Set disappearing messages to 5 minutes
+        client::group::happy_path::update_group(
+            env,
+            user1.principal,
+            group_id,
+            &group_canister::update_group_v2::Args {
+                events_ttl: OptionUpdate::SetToSome(5 * MINUTE_IN_MS),
+                ..Default::default()
+            },
+        );
+    }
+
     client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
 
     // Send user1 some ICP
@@ -163,20 +178,23 @@ fn unclaimed_prizes_get_refunded(delete_message: bool) {
 
     client::group::happy_path::claim_prize(env, user2.principal, group_id, message_id);
 
-    let interval = if delete_message {
-        client::group::happy_path::delete_messages(env, user1.principal, group_id, None, vec![message_id]);
-        5 * MINUTE_IN_MS
-    } else {
-        HOUR_IN_MS
+    let interval = match case {
+        1 => HOUR_IN_MS,
+        2 => {
+            client::group::happy_path::delete_messages(env, user1.principal, group_id, None, vec![message_id]);
+            5 * MINUTE_IN_MS
+        }
+        3 => 5 * MINUTE_IN_MS,
+        _ => unreachable!(),
     };
 
     env.advance_time(Duration::from_millis(interval - 1));
-    env.tick();
+    tick_many(env, 3);
 
     let user1_balance_before_refund = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id);
 
     env.advance_time(Duration::from_millis(1));
-    tick_many(env, 2);
+    tick_many(env, 3);
 
     let user1_balance_after_refund = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id);
 
