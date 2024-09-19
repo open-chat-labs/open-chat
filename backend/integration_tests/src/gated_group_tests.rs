@@ -3,9 +3,7 @@ use crate::{client, TestEnv};
 use std::ops::Deref;
 use test_case::test_case;
 use testing::rng::random_string;
-use types::{
-    AccessGate, AccessGateConfig, AccessGateNonComposite, CompositeGate, GateCheckFailedReason, Rules, TokenBalanceGate,
-};
+use types::{AccessGate, AccessGateNonComposite, CompositeGate, GateCheckFailedReason, Rules, TokenBalanceGate};
 
 #[test_case(true, false; "diamond_member")]
 #[test_case(false, false; "not_diamond_member")]

@@ -5,7 +5,7 @@ use pocket_ic::PocketIc;
 use std::ops::Deref;
 use test_case::test_case;
 use testing::rng::random_string;
-use types::{AccessGate, AccessGateConfig, CommunityId, Rules};
+use types::{AccessGate, CommunityId, Rules};
 
 #[test_case(true)]
 #[test_case(false)]
