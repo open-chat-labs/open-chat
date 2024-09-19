@@ -5,9 +5,9 @@ const textBox = "rgba(226,226,226,0.4)";
 const txt = "#242834";
 const txt70 = hexPercent(txt, 70);
 const txt40 = hexPercent(txt, 40);
+const txt50 = hexPercent(txt, 50);
 const txt60 = hexPercent(txt, 60);
 const txtDark = "#242834";
-const disabledTxt = txt70;
 const white = "#ffffff";
 
 export function getTheme(base: Theme): Theme {
@@ -19,11 +19,15 @@ export function getTheme(base: Theme): Theme {
     base.burst = false;
     base.logo = false;
     base.txt = txt;
+    base.code = {
+        bg: "rgba(255,255,255,0.9)",
+        txt: txt,
+    };
     base["txt-light"] = txt70;
     base.bd = "#ededed";
     base.bd = "rgba(0,0,0,0.08)";
     base.disabledTxt = txt40;
-    base.placeholder = txt60;
+    base.placeholder = txt50;
     base.progress.bd = "rgba(0,0,0,0.2)";
     base.collapsible.closed.header.txt = txt70;
     base.timeline.txt = txt70;
@@ -43,14 +47,16 @@ export function getTheme(base: Theme): Theme {
     base.panel.nav.bg = "transparent";
     base.panel.right.bg = "transparent";
     base.panel.right.modal = white;
-    base.unread["mute-solid"] = "rgba(0,0,0,0.1)";
+    base.unread.mute = "#dddddd";
+    base.unread["mute-solid"] = "#dddddd";
+    base.unread["mute-txt"] = "#999999";
     base.chatSearch.bg = textBox;
     base.chatSummary["bg-selected"] = "rgba(226,226,226,0.5)";
     base.menu.txt = txt70;
     base.menu["disabled-txt"] = hexPercent(txtDark, 50);
     base.menu.separator = base.bd;
     base.menu.bd = "#efefef";
-    base.button["disabled-txt"] = disabledTxt;
+    base.button["disabled-txt"] = txt40;
     base.modal.filter = "blur(5px)";
     base.modal.bg = white;
     base.modal.bd = "var(--bw) solid var(--bd)";

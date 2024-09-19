@@ -72,7 +72,10 @@ export function getTheme(base: Theme): Theme {
     base.link.underline = base.primary;
     base.scrollbar.bg = base.button.hv;
     base.toast.success.bg = base.notificationBar.bg;
-    base.code = white;
+    base.code = {
+        bg: white,
+        txt: pink1,
+    };
     base.entry.input.sh = "none";
     base.input.sh = "none";
     base.chatSearch.sh = "none";
