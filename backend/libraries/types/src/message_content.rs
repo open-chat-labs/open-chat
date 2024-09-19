@@ -396,6 +396,8 @@ impl From<MessageContentInitial> for MessageContent {
             MessageContentInitial::Prize(c) => MessageContent::Prize(PrizeContent {
                 prizes_remaining: c.prizes_v2.len() as u32,
                 winners: Vec::new(),
+                winner_count: 0,
+                user_is_winner: false,
                 token: c.transfer.token(),
                 end_date: c.end_date,
                 caption: c.caption,
@@ -539,6 +541,10 @@ pub struct PrizeContent {
     pub prizes_remaining: u32,
     pub prizes_pending: u32,
     pub winners: Vec<UserId>,
+    #[serde(default)]
+    pub winner_count: u32,
+    #[serde(default)]
+    pub user_is_winner: bool,
     pub token: Cryptocurrency,
     pub end_date: TimestampMillis,
     pub caption: Option<String>,
