@@ -104,7 +104,7 @@ fn prize_messages_can_be_claimed_successfully() {
 
 #[test_case(1; "Prize expires")]
 #[test_case(2; "Message deleted")]
-#[test_case(3; "Message disappears")]
+#[test_case(3; "Message removed due to disappearing messages")]
 fn unclaimed_prizes_get_refunded(case: u32) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
