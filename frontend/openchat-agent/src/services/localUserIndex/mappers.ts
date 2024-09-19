@@ -14,7 +14,6 @@ import type {
 } from "openchat-shared";
 import type {
     AccessTokenType as TAccessTokenType,
-    VideoCallType as TVideoCallType,
     LocalUserIndexAccessTokenResponse,
     LocalUserIndexChatEventsEventsArgsInner,
     LocalUserIndexChatEventsEventsArgs,
@@ -22,11 +21,13 @@ import type {
     LocalUserIndexChatEventsResponse,
     LocalUserIndexGroupAndCommunitySummaryUpdatesResponse,
     LocalUserIndexInviteUsersToChannelResponse,
+    LocalUserIndexInviteUsersToCommunityResponse,
     LocalUserIndexInviteUsersToGroupResponse,
     LocalUserIndexJoinChannelResponse,
     LocalUserIndexJoinCommunityResponse,
     LocalUserIndexRegisterUserResponse,
     VerifiedCredentialGateArgs as TVerifiedCredentialGateArgs,
+    VideoCallType as TVideoCallType,
 } from "../../typebox";
 import { CommonResponses, MAX_EVENTS, MAX_MESSAGES, UnsupportedValueError } from "openchat-shared";
 import {
@@ -315,9 +316,12 @@ export function registerUserResponse(
 }
 
 export function inviteUsersResponse(
-    value: LocalUserIndexInviteUsersToGroupResponse | LocalUserIndexInviteUsersToChannelResponse,
+    value:
+        | LocalUserIndexInviteUsersToGroupResponse
+        | LocalUserIndexInviteUsersToChannelResponse
+        | LocalUserIndexInviteUsersToCommunityResponse,
 ): boolean {
-    if (typeof value !== "string" && "Success" in value) {
+    if (value === "Success") {
         return true;
     } else {
         console.warn("InviteUsersResponse was unsuccessful", value);
