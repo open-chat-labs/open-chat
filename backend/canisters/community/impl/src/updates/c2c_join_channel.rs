@@ -1,5 +1,6 @@
 use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::model::channels::Channel;
+use crate::model::expiring_members::ExpiringMember;
 use crate::model::members::CommunityMemberInternal;
 use crate::run_regular_jobs;
 use crate::updates::c2c_join_community::join_community;
@@ -71,6 +72,8 @@ pub(crate) fn join_channel_synchronously(
     diamond_membership_expires_at: Option<TimestampMillis>,
     unique_person_proof: Option<UniquePersonProof>,
 ) {
+    let is_unique_person = unique_person_proof.is_some();
+
     match read_state(|state| {
         is_permitted_to_join(
             channel_id,
@@ -93,7 +96,15 @@ pub(crate) fn join_channel_synchronously(
         _ => return,
     };
 
-    mutate_state(|state| commit(channel_id, user_principal, state));
+    mutate_state(|state| {
+        commit(
+            channel_id,
+            user_principal,
+            diamond_membership_expires_at,
+            is_unique_person,
+            state,
+        )
+    });
 }
 
 async fn check_gate_then_join_channel(args: &Args) -> Response {
@@ -116,7 +127,15 @@ async fn check_gate_then_join_channel(args: &Args) -> Response {
         Err(response) => return response,
     };
 
-    mutate_state(|state| commit(args.channel_id, args.principal, state))
+    mutate_state(|state| {
+        commit(
+            args.channel_id,
+            args.principal,
+            args.diamond_membership_expires_at,
+            args.unique_person_proof.is_some(),
+            state,
+        )
+    })
 }
 
 fn is_permitted_to_join(
@@ -181,20 +200,42 @@ fn is_permitted_to_join(
     }
 }
 
-fn commit(channel_id: ChannelId, user_principal: Principal, state: &mut RuntimeState) -> Response {
+fn commit(
+    channel_id: ChannelId,
+    user_principal: Principal,
+    diamond_membership_expires_at: Option<TimestampMillis>,
+    is_unique_person: bool,
+    state: &mut RuntimeState,
+) -> Response {
     if let Some(member) = state.data.members.get_mut(user_principal) {
+        let user_id = member.user_id;
         if let Some(channel) = state.data.channels.get_mut(&channel_id) {
             let now = state.env.now();
             match join_channel_unchecked(channel, member, state.data.is_public, now) {
                 AddResult::Success(_) => {
                     let summary = channel
-                        .summary(Some(member.user_id), true, state.data.is_public, &state.data.members)
+                        .summary(Some(user_id), true, state.data.is_public, &state.data.members)
                         .unwrap();
+
+                    if let Some(expiry) = channel.chat.gate_config.value.as_ref().map(|gc| gc.expiry()).flatten() {
+                        state.data.expiring_members.push(ExpiringMember {
+                            expires: now + expiry,
+                            channel_id: Some(channel_id),
+                            user_id,
+                        });
+
+                        // TODO: Start job if necessary
+                    }
 
                     // If there is a payment gate on this channel then queue payments to *community* owner(s) and treasury
                     if let Some(AccessGate::Payment(gate)) = channel.chat.gate_config.value.as_ref().map(|gc| gc.gate.clone()) {
                         state.queue_access_gate_payments(gate);
                     }
+
+                    state
+                        .data
+                        .user_cache
+                        .insert(user_id, diamond_membership_expires_at, is_unique_person);
 
                     handle_activity_notification(state);
 
@@ -202,7 +243,7 @@ fn commit(channel_id: ChannelId, user_principal: Principal, state: &mut RuntimeS
                 }
                 AddResult::AlreadyInGroup => {
                     let summary = channel
-                        .summary(Some(member.user_id), true, state.data.is_public, &state.data.members)
+                        .summary(Some(user_id), true, state.data.is_public, &state.data.members)
                         .unwrap();
                     AlreadyInChannel(Box::new(summary))
                 }

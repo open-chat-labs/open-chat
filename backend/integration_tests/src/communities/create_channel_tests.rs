@@ -80,10 +80,7 @@ fn existing_users_joined_to_new_public_channel(diamond_gate: bool) {
             permissions_v2: None,
             events_ttl: None,
             gate: None,
-            gate_config: diamond_gate.then_some(AccessGateConfig {
-                gate: AccessGate::DiamondMember,
-                expiry: None,
-            }),
+            gate_config: diamond_gate.then_some(AccessGate::DiamondMember.into()),
             external_url: None,
         },
     );

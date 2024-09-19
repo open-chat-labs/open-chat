@@ -1,6 +1,7 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::model::events::CommunityEventInternal;
+use crate::model::expiring_members::ExpiringMember;
 use crate::model::members::AddResult;
 use crate::updates::c2c_join_channel::join_channel_synchronously;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
@@ -142,6 +143,22 @@ pub(crate) fn join_community_impl(args: &Args, state: &mut RuntimeState) -> Resu
             if let Some(AccessGate::Payment(gate)) = state.data.gate_config.value.as_ref().map(|gc| gc.gate.clone()) {
                 state.queue_access_gate_payments(gate);
             }
+
+            if let Some(expiry) = state.data.gate_config.value.as_ref().map(|gc| gc.expiry()).flatten() {
+                state.data.expiring_members.push(ExpiringMember {
+                    expires: now + expiry,
+                    channel_id: None,
+                    user_id: args.user_id,
+                });
+
+                // TODO: Start job if necessary
+            }
+
+            state.data.user_cache.insert(
+                args.user_id,
+                args.diamond_membership_expires_at,
+                args.unique_person_proof.is_some(),
+            );
 
             handle_activity_notification(state);
 

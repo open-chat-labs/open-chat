@@ -15,6 +15,15 @@ pub struct AccessGateConfig {
     pub expiry: Option<Milliseconds>,
 }
 
+impl AccessGateConfig {
+    pub fn expiry(&self) -> Option<Milliseconds> {
+        match self.gate {
+            AccessGate::Composite(_) | AccessGate::Locked | AccessGate::ReferredByMember => None,
+            _ => self.expiry,
+        }
+    }
+}
+
 // TODO: Delete this after it is released
 impl From<AccessGate> for AccessGateConfig {
     fn from(value: AccessGate) -> Self {

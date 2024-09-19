@@ -1,3 +1,4 @@
+use crate::model::expiring_members::ExpiringMember;
 use crate::updates::c2c_join_channel::join_channel_unchecked;
 use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
@@ -46,6 +47,7 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
         if let Some(member) = state.data.members.get(caller) {
             let now = state.env.now();
             let gate_config = if args.gate_config.has_update() { args.gate_config } else { args.gate.map(|g| g.into()) };
+            let prev_gate_had_expiry = channel.chat.gate_config.as_ref().map_or(false, |gc| gc.expiry().is_some());
             match channel.chat.update(
                 member.user_id,
                 args.name,
@@ -70,6 +72,26 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                                     join_channel_unchecked(channel, m, true, now);
                                 }
                             }
+                        }
+                    }
+
+                    if prev_gate_had_expiry {
+                        // If the channel has had a gate expiry removed then remove all members from expiry job
+                        let gate_has_expiry = channel.chat.gate_config.as_ref().map_or(false, |gc| gc.expiry().is_some());
+                        if !gate_has_expiry {
+                            state.data.expiring_members.remove_matching(Some(channel.id));
+                        }
+                    } else {
+                        // If the channel has had a gate added with an expiry then add all members to expiry job
+                        if let Some(expiry) = channel.chat.gate_config.value.as_ref().map(|gc| gc.expiry()).flatten() {
+                            for m in channel.chat.members.iter() {
+                                state.data.expiring_members.push(ExpiringMember {
+                                    expires: now + expiry,
+                                    channel_id: Some(channel.id),
+                                    user_id: m.user_id,
+                                });
+                            }
+                            // TODO: Start job if necessary
                         }
                     }
 

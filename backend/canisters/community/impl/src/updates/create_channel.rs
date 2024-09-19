@@ -2,13 +2,14 @@ use super::c2c_join_community::join_community_impl;
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_proposals_bot;
 use crate::model::channels::Channel;
+use crate::model::expiring_members::ExpiringMember;
 use crate::updates::c2c_join_channel::join_channel_unchecked;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_join_community;
 use community_canister::create_channel::{Response::*, *};
-use group_chat_core::GroupChatCore;
+use group_chat_core::{AddResult, GroupChatCore};
 use rand::Rng;
 use std::collections::HashMap;
 use types::{AccessGate, ChannelId, MultiUserChat, TimestampMillis, UserId, UserType};
@@ -159,6 +160,8 @@ fn create_channel_impl(
             };
 
             if args.is_public {
+                let gate_expiry = gate_config.as_ref().map(|gc| gc.expiry).flatten();
+
                 match gate_config.map(|gc| gc.gate) {
                     Some(AccessGate::DiamondMember) => {
                         for m in state
@@ -167,8 +170,18 @@ fn create_channel_impl(
                             .iter_mut()
                             .filter(|m| diamond_membership_expiry_dates.get(&m.user_id).copied() > Some(now))
                         {
-                            join_channel_unchecked(&mut channel, m, true, now);
+                            if matches!(join_channel_unchecked(&mut channel, m, true, now), AddResult::Success(_)) {
+                                if let Some(expiry) = gate_expiry {
+                                    state.data.expiring_members.push(ExpiringMember {
+                                        expires: now + expiry,
+                                        channel_id: Some(channel_id),
+                                        user_id: m.user_id,
+                                    });
+                                }
+                            }
                         }
+
+                        // TODO: Start job if necessary
                     }
                     None => {
                         for m in state.data.members.iter_mut() {

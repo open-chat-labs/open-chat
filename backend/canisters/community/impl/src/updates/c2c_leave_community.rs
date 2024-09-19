@@ -41,8 +41,7 @@ fn c2c_leave_community_impl(state: &mut RuntimeState) -> Response {
 
     let user_id = member.user_id;
 
-    let removed = state.data.members.remove(&user_id, now);
-    state.data.channels.leave_all_channels(user_id, now);
+    let removed = state.data.remove_user_from_community(user_id, now);
 
     state.data.events.push_event(
         CommunityEventInternal::MemberLeft(Box::new(CommunityMemberLeft {

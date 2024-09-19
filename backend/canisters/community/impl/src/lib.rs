@@ -13,9 +13,10 @@ use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::AccessRulesInternal;
 use group_community_common::{
-    Achievements, PaymentReceipts, PaymentRecipient, PendingPayment, PendingPaymentReason, PendingPaymentsQueue,
+    Achievements, PaymentReceipts, PaymentRecipient, PendingPayment, PendingPaymentReason, PendingPaymentsQueue, UserCache,
 };
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
+use model::expiring_members::ExpiringMembers;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
@@ -26,7 +27,7 @@ use std::cell::RefCell;
 use std::ops::Deref;
 use std::time::Duration;
 use types::{
-    AccessGate, AccessGateConfig, BuildVersion, CanisterId, ChatMetrics, CommunityCanisterCommunitySummary,
+    AccessGate, AccessGateConfig, BuildVersion, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary,
     CommunityMembership, CommunityPermissions, CommunityRole, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo,
     Milliseconds, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId, UserType,
 };
@@ -328,6 +329,10 @@ struct Data {
     ic_root_key: Vec<u8>,
     event_store_client: EventStoreClient<CdkRuntime>,
     achievements: Achievements,
+    #[serde(default)]
+    expiring_members: ExpiringMembers,
+    #[serde(default)]
+    user_cache: UserCache,
 }
 
 impl Data {
@@ -425,6 +430,8 @@ impl Data {
                 .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
                 .build(),
             achievements: Achievements::default(),
+            expiring_members: ExpiringMembers::default(),
+            user_cache: UserCache::default(),
         }
     }
 
@@ -512,6 +519,19 @@ impl Data {
         }
 
         false
+    }
+
+    fn remove_user_from_community(&mut self, user_id: UserId, now: TimestampMillis) -> Option<CommunityMemberInternal> {
+        let removed = self.members.remove(&user_id, now);
+        self.channels.leave_all_channels(user_id, now);
+        self.expiring_members.remove(user_id, None);
+        self.user_cache.delete(user_id);
+        removed
+    }
+
+    fn remove_user_from_channel(&mut self, user_id: UserId, channel_id: ChannelId, now: TimestampMillis) {
+        self.members.mark_member_left_channel(&user_id, channel_id, now);
+        self.expiring_members.remove(user_id, Some(channel_id));
     }
 }
 

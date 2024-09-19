@@ -43,7 +43,7 @@ pub mod happy_path {
     use pocket_ic::PocketIc;
     use testing::rng::random_message_id;
     use types::{
-        AccessGate, AccessGateConfig, ChannelId, ChatId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
+        AccessGate, ChannelId, ChatId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
         CommunityCanisterCommunitySummaryUpdates, CommunityId, CommunityRole, EventIndex, EventsResponse, GroupRole,
         MessageContentInitial, MessageId, MessageIndex, Rules, TextContent, TimestampMillis, UserId,
     };
@@ -106,7 +106,7 @@ pub mod happy_path {
                 permissions_v2: None,
                 events_ttl: None,
                 gate: None,
-                gate_config: Some(AccessGateConfig { gate, expiry: None }),
+                gate_config: Some(gate.into()),
                 external_url: None,
             },
         );

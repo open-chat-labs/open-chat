@@ -37,10 +37,7 @@ fn public_group_diamond_member_gate_check(is_diamond: bool, is_invited: bool) {
             rules: Rules::default(),
             events_ttl: None,
             gate: None,
-            gate_config: Some(AccessGateConfig {
-                gate: AccessGate::DiamondMember,
-                expiry: None,
-            }),
+            gate_config: Some(AccessGate::DiamondMember.into()),
             messages_visible_to_non_members: None,
         },
     ) {
@@ -121,13 +118,13 @@ fn public_group_token_balance_gate_check(has_sufficient_balance: bool) {
             rules: Rules::default(),
             events_ttl: None,
             gate: None,
-            gate_config: Some(AccessGateConfig {
-                gate: AccessGate::TokenBalance(TokenBalanceGate {
+            gate_config: Some(
+                AccessGate::TokenBalance(TokenBalanceGate {
                     ledger_canister_id: canister_ids.icp_ledger,
                     min_balance,
-                }),
-                expiry: None,
-            }),
+                })
+                .into(),
+            ),
             messages_visible_to_non_members: None,
         },
     ) {
@@ -203,8 +200,8 @@ fn public_group_composite_gate_check(is_diamond: bool, has_sufficient_balance: b
             rules: Rules::default(),
             events_ttl: None,
             gate: None,
-            gate_config: Some(AccessGateConfig {
-                gate: AccessGate::Composite(CompositeGate {
+            gate_config: Some(
+                AccessGate::Composite(CompositeGate {
                     inner: vec![
                         AccessGateNonComposite::DiamondMember,
                         AccessGateNonComposite::TokenBalance(TokenBalanceGate {
@@ -213,9 +210,9 @@ fn public_group_composite_gate_check(is_diamond: bool, has_sufficient_balance: b
                         }),
                     ],
                     and: and_gate,
-                }),
-                expiry: None,
-            }),
+                })
+                .into(),
+            ),
 
             messages_visible_to_non_members: None,
         },

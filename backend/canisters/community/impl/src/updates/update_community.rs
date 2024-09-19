@@ -1,5 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::model::events::CommunityEventInternal;
+use crate::model::expiring_members::ExpiringMember;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::update_community::{Response::*, *};
@@ -315,7 +316,29 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
 
     if let Some(gate_config) = gate_config_updates.expand() {
         if state.data.gate_config.value != gate_config {
+            let prev_gate_had_expiry = state.data.gate_config.as_ref().map_or(false, |gc| gc.expiry().is_some());
+
             state.data.gate_config = Timestamped::new(gate_config.clone(), now);
+
+            if prev_gate_had_expiry {
+                // If the community has had a gate expiry removed then remove all members from expiry job
+                let gate_has_expiry = state.data.gate_config.as_ref().map_or(false, |gc| gc.expiry().is_some());
+                if !gate_has_expiry {
+                    state.data.expiring_members.remove_matching(None);
+                }
+            } else {
+                // If the community has had a gate added with an expiry then add all members to expiry job
+                if let Some(expiry) = gate_config.as_ref().map(|gc| gc.expiry()).flatten() {
+                    for m in state.data.members.iter() {
+                        state.data.expiring_members.push(ExpiringMember {
+                            expires: now + expiry,
+                            channel_id: None,
+                            user_id: m.user_id,
+                        });
+                    }
+                }
+                // TODO: Start job if necessary
+            }
 
             state.data.events.push_event(
                 CommunityEventInternal::GateUpdated(Box::new(GroupGateUpdated {
