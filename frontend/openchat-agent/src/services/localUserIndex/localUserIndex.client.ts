@@ -1,6 +1,4 @@
 import type { HttpAgent, Identity, SignIdentity } from "@dfinity/agent";
-import { Principal } from "@dfinity/principal";
-import { idlFactory, type LocalUserIndexService } from "./candid/idl";
 import type {
     AccessTokenType,
     ChannelIdentifier,
@@ -22,19 +20,20 @@ import type {
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
-    chatEventsArgs,
-    chatEventsBatchResponse,
     accessTokenResponse,
     apiAccessTokenType,
     apiVerifiedCredentialArgs,
+    chatEventsArgs,
+    chatEventsBatchResponse,
     groupAndCommunitySummaryUpdates,
+    inviteUsersResponse,
     joinChannelResponse,
     joinCommunityResponse,
     registerUserResponse,
 } from "./mappers";
-import { joinGroupResponse, apiOptional, apiChatIdentifier } from "../common/chatMappers";
+import { joinGroupResponse, apiChatIdentifier } from "../common/chatMappersV2";
 import { MAX_MISSING, textToCode, UnsupportedValueError } from "openchat-shared";
-import { identity } from "../../utils/mapping";
+import { mapOptional, principalStringToBytes } from "../../utils/mapping";
 import {
     type Database,
     getCachedEvents,
@@ -43,38 +42,63 @@ import {
     setCachedEvents,
     setCachePrimerTimestamp,
 } from "../../utils/caching";
+import {
+    LocalUserIndexAccessTokenArgs,
+    LocalUserIndexAccessTokenResponse,
+    LocalUserIndexChatEventsArgs,
+    LocalUserIndexChatEventsResponse,
+    LocalUserIndexGroupAndCommunitySummaryUpdatesArgs,
+    LocalUserIndexGroupAndCommunitySummaryUpdatesResponse,
+    LocalUserIndexInviteUsersToChannelArgs,
+    LocalUserIndexInviteUsersToChannelResponse,
+    LocalUserIndexInviteUsersToCommunityArgs,
+    LocalUserIndexInviteUsersToCommunityResponse,
+    LocalUserIndexInviteUsersToGroupArgs,
+    LocalUserIndexInviteUsersToGroupResponse,
+    LocalUserIndexJoinChannelArgs,
+    LocalUserIndexJoinChannelResponse,
+    LocalUserIndexJoinCommunityArgs,
+    LocalUserIndexJoinCommunityResponse,
+    LocalUserIndexJoinGroupArgs,
+    LocalUserIndexJoinGroupResponse,
+    LocalUserIndexRegisterUserArgs,
+    LocalUserIndexRegisterUserResponse,
+} from "../../typebox";
 
 export class LocalUserIndexClient extends CandidService {
-    private localUserIndexService: LocalUserIndexService;
-
-    constructor(identity: Identity, agent: HttpAgent, canisterId: string, private db: Database) {
+    constructor(
+        identity: Identity,
+        agent: HttpAgent,
+        canisterId: string,
+        private db: Database,
+    ) {
         super(identity, agent, canisterId);
-
-        this.localUserIndexService = this.createServiceClient<LocalUserIndexService>(idlFactory);
     }
 
     groupAndCommunitySummaryUpdates(
-        requests: GroupAndCommunitySummaryUpdatesArgs[]
+        requests: GroupAndCommunitySummaryUpdatesArgs[],
     ): Promise<GroupAndCommunitySummaryUpdatesResponse[]> {
         const args = {
             requests: requests.map((r) => ({
-                canister_id: Principal.fromText(r.canisterId),
+                canister_id: principalStringToBytes(r.canisterId),
                 is_community: r.isCommunity,
-                invite_code: apiOptional(identity, r.inviteCode),
-                updates_since: apiOptional(identity, r.updatesSince),
+                invite_code: r.inviteCode,
+                updates_since: r.updatesSince,
             })),
         };
 
-        return this.handleQueryResponse(
-            () => this.localUserIndexService.group_and_community_summary_updates(args),
+        return this.executeMsgpackQuery(
+            "group_and_community_summary_updates",
+            args,
             groupAndCommunitySummaryUpdates,
-            args
+            LocalUserIndexGroupAndCommunitySummaryUpdatesArgs,
+            LocalUserIndexGroupAndCommunitySummaryUpdatesResponse,
         );
     }
 
     async chatEvents(
         requests: ChatEventsArgs[],
-        cachePrimer = false
+        cachePrimer = false,
     ): Promise<ChatEventsResponse[]> {
         // The responses must be ordered such that the response at index i matches the request at index i
         const responses = [] as ChatEventsResponse[];
@@ -96,7 +120,7 @@ export class LocalUserIndexClient extends CandidService {
                     setCachePrimerTimestamp(
                         this.db,
                         request.context.chatId,
-                        request.latestKnownUpdate
+                        request.latestKnownUpdate,
                     );
                 }
             } else if (missing.size > MAX_MISSING) {
@@ -126,13 +150,13 @@ export class LocalUserIndexClient extends CandidService {
                         this.db,
                         request.context.chatId,
                         response.result,
-                        request.context.threadRootMessageIndex
+                        request.context.threadRootMessageIndex,
                     );
                     if (cachePrimer) {
                         setCachePrimerTimestamp(
                             this.db,
                             request.context.chatId,
-                            batchResponse.timestamp
+                            batchResponse.timestamp,
                         );
                     }
                 }
@@ -161,7 +185,7 @@ export class LocalUserIndexClient extends CandidService {
 
     private async getEventsFromCache(
         context: MessageContext,
-        args: ChatEventsArgsInner
+        args: ChatEventsArgsInner,
     ): Promise<[EventsSuccessResult<ChatEvent>, Set<number>]> {
         if (args.kind === "page") {
             return await getCachedEvents(
@@ -172,7 +196,7 @@ export class LocalUserIndexClient extends CandidService {
                 args.ascending,
                 undefined,
                 undefined,
-                1
+                1,
             );
         }
         if (args.kind === "window") {
@@ -183,7 +207,7 @@ export class LocalUserIndexClient extends CandidService {
                 args.midPoint,
                 undefined,
                 undefined,
-                1
+                1,
             );
             return [cached, missing];
         }
@@ -198,24 +222,29 @@ export class LocalUserIndexClient extends CandidService {
             requests: requests.map(chatEventsArgs),
         };
 
-        return this.handleQueryResponse(
-            () => this.localUserIndexService.chat_events(args),
+        return this.executeMsgpackQuery(
+            "chat_events",
+            args,
             (resp) => chatEventsBatchResponse(this.principal, requests, resp),
-            args
+            LocalUserIndexChatEventsArgs,
+            LocalUserIndexChatEventsResponse,
         );
     }
 
     registerUser(
         username: string,
-        referralCode: string | undefined
+        referralCode: string | undefined,
     ): Promise<RegisterUserResponse> {
-        return this.handleResponse(
-            this.localUserIndexService.register_user({
+        return this.executeMsgpackUpdate(
+            "register_user",
+            {
                 username,
-                referral_code: apiOptional(identity, referralCode),
+                referral_code: referralCode,
                 public_key: new Uint8Array((this.identity as SignIdentity).getPublicKey().toDer()),
-            }),
-            registerUserResponse
+            },
+            registerUserResponse,
+            LocalUserIndexRegisterUserArgs,
+            LocalUserIndexRegisterUserResponse,
         );
     }
 
@@ -223,32 +252,38 @@ export class LocalUserIndexClient extends CandidService {
         communityId: string,
         inviteCode: string | undefined,
         credentialArgs: VerifiedCredentialArgs | undefined,
-        referredBy?: string
+        referredBy?: string,
     ): Promise<JoinCommunityResponse> {
-        return this.handleResponse(
-            this.localUserIndexService.join_community({
-                community_id: Principal.fromText(communityId),
-                invite_code: apiOptional(textToCode, inviteCode),
-                verified_credential_args: apiOptional(apiVerifiedCredentialArgs, credentialArgs),
-                referred_by: apiOptional((id) => Principal.fromText(id), referredBy),
-            }),
-            joinCommunityResponse
+        return this.executeMsgpackUpdate(
+            "join_community",
+            {
+                community_id: principalStringToBytes(communityId),
+                invite_code: mapOptional(inviteCode, textToCode),
+                verified_credential_args: mapOptional(credentialArgs, apiVerifiedCredentialArgs),
+                referred_by: mapOptional(referredBy, principalStringToBytes),
+            },
+            joinCommunityResponse,
+            LocalUserIndexJoinCommunityArgs,
+            LocalUserIndexJoinCommunityResponse,
         );
     }
 
     joinGroup(
         chatId: string,
         inviteCode: string | undefined,
-        credentialArgs: VerifiedCredentialArgs | undefined
+        credentialArgs: VerifiedCredentialArgs | undefined,
     ): Promise<JoinGroupResponse> {
-        return this.handleResponse(
-            this.localUserIndexService.join_group({
-                chat_id: Principal.fromText(chatId),
-                invite_code: apiOptional(textToCode, inviteCode),
-                verified_credential_args: apiOptional(apiVerifiedCredentialArgs, credentialArgs),
+        return this.executeMsgpackUpdate(
+            "join_group",
+            {
+                chat_id: principalStringToBytes(chatId),
+                invite_code: mapOptional(inviteCode, textToCode),
+                verified_credential_args: mapOptional(credentialArgs, apiVerifiedCredentialArgs),
                 correlation_id: BigInt(0),
-            }),
-            joinGroupResponse
+            },
+            joinGroupResponse,
+            LocalUserIndexJoinGroupArgs,
+            LocalUserIndexJoinGroupResponse,
         );
     }
 
@@ -256,48 +291,57 @@ export class LocalUserIndexClient extends CandidService {
         id: ChannelIdentifier,
         inviteCode: string | undefined,
         credentialArgs: VerifiedCredentialArgs | undefined,
-        referredBy?: string
+        referredBy?: string,
     ): Promise<JoinGroupResponse> {
-        return this.handleResponse(
-            this.localUserIndexService.join_channel({
-                community_id: Principal.fromText(id.communityId),
+        return this.executeMsgpackUpdate(
+            "join_channel",
+            {
+                community_id: principalStringToBytes(id.communityId),
                 channel_id: BigInt(id.channelId),
-                invite_code: apiOptional(textToCode, inviteCode),
-                verified_credential_args: apiOptional(apiVerifiedCredentialArgs, credentialArgs),
-                referred_by: apiOptional((id) => Principal.fromText(id), referredBy),
-            }),
-            (resp) => joinChannelResponse(resp, id.communityId)
+                invite_code: mapOptional(inviteCode, textToCode),
+                verified_credential_args: mapOptional(credentialArgs, apiVerifiedCredentialArgs),
+                referred_by: mapOptional(referredBy, principalStringToBytes),
+            },
+            (resp) => joinChannelResponse(resp, id.communityId),
+            LocalUserIndexJoinChannelArgs,
+            LocalUserIndexJoinChannelResponse,
         );
     }
 
     inviteUsersToCommunity(
         communityId: string,
         userIds: string[],
-        callerUsername: string
+        callerUsername: string,
     ): Promise<boolean> {
-        return this.handleResponse(
-            this.localUserIndexService.invite_users_to_community({
-                community_id: Principal.fromText(communityId),
-                user_ids: userIds.map((u) => Principal.fromText(u)),
+        return this.executeMsgpackUpdate(
+            "invite_users_to_community",
+            {
+                community_id: principalStringToBytes(communityId),
+                user_ids: userIds.map(principalStringToBytes),
                 caller_username: callerUsername,
-            }),
-            (candid) => "Success" in candid
+            },
+            inviteUsersResponse,
+            LocalUserIndexInviteUsersToCommunityArgs,
+            LocalUserIndexInviteUsersToCommunityResponse,
         );
     }
 
     inviteUsersToGroup(
         chatId: string,
         userIds: string[],
-        callerUsername: string
+        callerUsername: string,
     ): Promise<boolean> {
-        return this.handleResponse(
-            this.localUserIndexService.invite_users_to_group({
-                group_id: Principal.fromText(chatId),
-                user_ids: userIds.map((u) => Principal.fromText(u)),
+        return this.executeMsgpackUpdate(
+            "invite_users_to_group",
+            {
+                group_id: principalStringToBytes(chatId),
+                user_ids: userIds.map(principalStringToBytes),
                 caller_username: callerUsername,
                 correlation_id: BigInt(0),
-            }),
-            (candid) => "Success" in candid
+            },
+            inviteUsersResponse,
+            LocalUserIndexInviteUsersToGroupArgs,
+            LocalUserIndexInviteUsersToGroupResponse,
         );
     }
 
@@ -305,30 +349,35 @@ export class LocalUserIndexClient extends CandidService {
         communityId: string,
         channelId: string,
         userIds: string[],
-        callerUsername: string
+        callerUsername: string,
     ): Promise<boolean> {
-        return this.handleResponse(
-            this.localUserIndexService.invite_users_to_channel({
-                community_id: Principal.fromText(communityId),
+        return this.executeMsgpackUpdate(
+            "invite_users_to_channel",
+            {
+                community_id: principalStringToBytes(communityId),
                 channel_id: BigInt(channelId),
-                user_ids: userIds.map((u) => Principal.fromText(u)),
+                user_ids: userIds.map(principalStringToBytes),
                 caller_username: callerUsername,
-            }),
-            (candid) => "Success" in candid
+            },
+            inviteUsersResponse,
+            LocalUserIndexInviteUsersToChannelArgs,
+            LocalUserIndexInviteUsersToChannelResponse,
         );
     }
 
     getAccessToken(
         chatId: ChatIdentifier,
-        accessType: AccessTokenType
+        accessType: AccessTokenType,
     ): Promise<string | undefined> {
-        return this.handleQueryResponse(
-            () =>
-                this.localUserIndexService.access_token({
-                    chat: apiChatIdentifier(chatId),
-                    token_type: apiAccessTokenType(accessType),
-                }),
-            accessTokenResponse
+        return this.executeMsgpackQuery(
+            "access_token",
+            {
+                chat: apiChatIdentifier(chatId),
+                token_type: apiAccessTokenType(accessType),
+            },
+            accessTokenResponse,
+            LocalUserIndexAccessTokenArgs,
+            LocalUserIndexAccessTokenResponse,
         );
     }
 }

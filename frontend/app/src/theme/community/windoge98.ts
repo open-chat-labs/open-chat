@@ -44,6 +44,11 @@ export function getTheme(base: Theme): Theme {
     base.time.me.icon = white;
     base.time.me.bg = "rgba(255,255,255,0.2)";
 
+    base.code = {
+        bg: "rgba(0,0,0,0.8)",
+        txt: "#38e838",
+    };
+
     base.input.bg = white;
     base.input.accent = msBlue;
     base.input.sh = "inset 0px 2px 4px rgba(0, 0, 0, 0.6)";

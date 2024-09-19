@@ -101,6 +101,13 @@ export function getTheme(base: Theme): Theme {
     base.daily.mainAreaBgAccent = base.accent;
     base.daily.mainAreaText = txt;
     base.daily.supportiveText = "#4e5670";
+    base.code = {
+        bg: white,
+        txt: powderBlue,
+    };
+    base.unread.mute = "#dddddd";
+    base.unread["mute-solid"] = "#dddddd";
+    base.unread["mute-txt"] = "#999999";
 
     return base;
 }

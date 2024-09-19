@@ -65,7 +65,10 @@ export function getTheme(base: Theme): Theme {
     base.link.underline = white;
     base.scrollbar.bg = raspberry;
     base.toast.success.bg = base.notificationBar.bg;
-    base.code = white;
+    base.code = {
+        txt: white,
+        bg: "black",
+    };
     base.entry.input.sh = "none";
     base.input.sh = "none";
     base.chatSearch.sh = "none";

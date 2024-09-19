@@ -437,7 +437,10 @@
                     <div class="menu">
                         <MenuIcon position={"bottom"} align={"end"}>
                             <div class="menu-icon" class:rtl={$rtlStore} slot="icon">
-                                <DotsVertical viewBox="0 -3 24 24" size="1.6em" color={menuColour} />
+                                <DotsVertical
+                                    viewBox="0 -3 24 24"
+                                    size="1.6em"
+                                    color={menuColour} />
                             </div>
                             <div slot="menu">
                                 <Menu>
@@ -487,31 +490,39 @@
                                                 slot="icon" />
                                             <div slot="text">
                                                 <Translatable
-                                                    resourceKey={i18nKey("pinChat.unpinMenuItem")} />
+                                                    resourceKey={i18nKey(
+                                                        "pinChat.unpinMenuItem",
+                                                    )} />
                                             </div>
                                         </MenuItem>
                                     {/if}
                                     {#if notificationsSupported && !externalContent}
                                         {#if muted}
-                                            <MenuItem on:click={() => toggleMuteNotifications(false)}>
+                                            <MenuItem
+                                                on:click={() => toggleMuteNotifications(false)}>
                                                 <BellIcon
                                                     size={$iconSize}
                                                     color={"var(--icon-inverted-txt)"}
                                                     slot="icon" />
                                                 <div slot="text">
                                                     <Translatable
-                                                        resourceKey={i18nKey("unmuteNotifications")} />
+                                                        resourceKey={i18nKey(
+                                                            "unmuteNotifications",
+                                                        )} />
                                                 </div>
                                             </MenuItem>
                                         {:else}
-                                            <MenuItem on:click={() => toggleMuteNotifications(true)}>
+                                            <MenuItem
+                                                on:click={() => toggleMuteNotifications(true)}>
                                                 <MutedIcon
                                                     size={$iconSize}
                                                     color={"var(--icon-inverted-txt)"}
                                                     slot="icon" />
                                                 <div slot="text">
                                                     <Translatable
-                                                        resourceKey={i18nKey("muteNotifications")} />
+                                                        resourceKey={i18nKey(
+                                                            "muteNotifications",
+                                                        )} />
                                                 </div>
                                             </MenuItem>
                                         {/if}
@@ -525,7 +536,8 @@
                                                 color={"var(--icon-inverted-txt)"}
                                                 slot="icon" />
                                             <div slot="text">
-                                                <Translatable resourceKey={i18nKey("markAllRead")} />
+                                                <Translatable
+                                                    resourceKey={i18nKey("markAllRead")} />
                                             </div>
                                         </MenuItem>
                                     {/if}
@@ -536,7 +548,8 @@
                                                 color={"var(--icon-inverted-txt)"}
                                                 slot="icon" />
                                             <div slot="text">
-                                                <Translatable resourceKey={i18nKey("unarchiveChat")} />
+                                                <Translatable
+                                                    resourceKey={i18nKey("unarchiveChat")} />
                                             </div>
                                         </MenuItem>
                                     {:else}
@@ -546,7 +559,8 @@
                                                 color={"var(--icon-inverted-txt)"}
                                                 slot="icon" />
                                             <div slot="text">
-                                                <Translatable resourceKey={i18nKey("archiveChat")} />
+                                                <Translatable
+                                                    resourceKey={i18nKey("archiveChat")} />
                                             </div>
                                         </MenuItem>
                                     {/if}
@@ -806,6 +820,7 @@
 
         &.muted {
             background-color: var(--unread-mute);
+            color: var(--unread-mute-txt);
             text-shadow: none;
         }
     }

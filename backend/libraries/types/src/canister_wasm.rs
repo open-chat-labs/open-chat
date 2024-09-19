@@ -59,8 +59,8 @@ impl Debug for CanisterWasm {
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq)]
 pub struct UpgradesFilter {
-    #[ts(as = "Vec::<ts_export::PrincipalTS>")]
+    #[ts(as = "Vec::<ts_export::TSBytes>")]
     pub include: Vec<CanisterId>,
-    #[ts(as = "Vec::<ts_export::PrincipalTS>")]
+    #[ts(as = "Vec::<ts_export::TSBytes>")]
     pub exclude: Vec<CanisterId>,
 }
