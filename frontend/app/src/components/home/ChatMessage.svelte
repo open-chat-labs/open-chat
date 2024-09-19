@@ -891,6 +891,12 @@
             .username {
                 color: var(--currentChat-msg-me-txt);
             }
+
+            &.inert {
+                .username {
+                    color: var(--txt);
+                }
+            }
         }
 
         &.rtl {
