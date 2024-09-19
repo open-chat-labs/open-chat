@@ -1687,7 +1687,7 @@ impl GroupChatCore {
         for (thread_root_message_index, users) in result.threads.iter() {
             for user_id in users {
                 if let Some(member) = self.members.get_mut(user_id) {
-                    member.threads.remove(&thread_root_message_index);
+                    member.threads.remove(thread_root_message_index);
                     member.unfollowed_threads.retain(|&m| m != *thread_root_message_index);
                 }
             }
