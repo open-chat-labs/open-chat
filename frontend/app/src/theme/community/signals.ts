@@ -105,6 +105,9 @@ export function getTheme(base: Theme): Theme {
         bg: white,
         txt: powderBlue,
     };
+    base.unread.mute = "#dddddd";
+    base.unread["mute-solid"] = "#dddddd";
+    base.unread["mute-txt"] = "#999999";
 
     return base;
 }

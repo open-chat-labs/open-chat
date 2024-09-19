@@ -55,6 +55,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
         unread: {
             mute: "rgba(255,255,255,0.2)",
             "mute-solid": "#555",
+            "mute-txt": txt,
         },
 
         progress: {

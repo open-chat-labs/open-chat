@@ -47,8 +47,9 @@ export function getTheme(base: Theme): Theme {
     base.panel.nav.bg = "transparent";
     base.panel.right.bg = "transparent";
     base.panel.right.modal = white;
-    base.unread.mute = "rgba(0,0,0,0.2)";
+    base.unread.mute = "#dddddd";
     base.unread["mute-solid"] = "#dddddd";
+    base.unread["mute-txt"] = "#999999";
     base.chatSearch.bg = textBox;
     base.chatSummary["bg-selected"] = "rgba(226,226,226,0.5)";
     base.menu.txt = txt70;
