@@ -101,6 +101,10 @@ export function getTheme(base: Theme): Theme {
     base.daily.mainAreaBgAccent = base.accent;
     base.daily.mainAreaText = txt;
     base.daily.supportiveText = "#4e5670";
+    base.code = {
+        bg: white,
+        txt: powderBlue,
+    };
 
     return base;
 }

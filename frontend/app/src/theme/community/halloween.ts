@@ -25,8 +25,10 @@ export function getTheme(base: Theme): Theme {
     base.txt = txt;
     base["txt-light"] = txtLight;
     base.accent = green;
-    base.code = green;
-
+    base.code = {
+        txt: green,
+        bg: "rgba(0,0,0,0.8)",
+    };
     base.icon.txt = yellow;
     base.icon.selected = lightGreen;
     base.button.bg = orange;

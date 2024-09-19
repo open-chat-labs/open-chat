@@ -35,7 +35,10 @@ export function lightTheme(): Theme {
         disabledTxt: txtLight,
         placeholder: txtLight,
         primary,
-        code: orangeAccent,
+        code: {
+            txt: orangeAccent,
+            bg: "rgba(255,255,255,0.1)",
+        },
         font: '"Roboto", sans-serif',
         "font-bold": '"Manrope", sans-serif',
 

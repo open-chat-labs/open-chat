@@ -45,7 +45,10 @@ export function darkTheme(defaultTheme: Theme): Theme {
         accent: "#ff2e2e",
         disabledTxt: txtLow,
         primary,
-        code: "#f36D28",
+        code: {
+            bg: "rgba(0,0,0,0.7)",
+            txt: "#f36D28",
+        },
         font: '"Roboto", sans-serif',
         "font-bold": '"Manrope", sans-serif',
 
