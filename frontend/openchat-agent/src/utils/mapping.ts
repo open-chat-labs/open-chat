@@ -1,4 +1,9 @@
-import { type ApiOptionUpdate, type OptionUpdate, UnsupportedValueError } from "openchat-shared";
+import {
+    type ApiOptionUpdate,
+    type ApiOptionUpdateV2,
+    type OptionUpdate,
+    UnsupportedValueError,
+} from "openchat-shared";
 import { Principal } from "@dfinity/principal";
 
 // takes a type of the form [] | [A] and a mapper from A -> B and returns a B or undefined
@@ -18,6 +23,16 @@ export function optionUpdate<A, B>(
     if ("SetToNone" in candid) return "set_to_none";
     if ("SetToSome" in candid) return { value: mapper(candid.SetToSome) };
     throw new UnsupportedValueError("Unexpected ApiOptionUpdate type returned", candid);
+}
+
+export function optionUpdateV2<A, B>(
+    value: ApiOptionUpdateV2<A>,
+    mapper: (a: A) => B,
+): OptionUpdate<B> {
+    if (value === "NoChange") return undefined;
+    if (value === "SetToNone") return "set_to_none";
+    if ("SetToSome" in value) return { value: mapper(value.SetToSome) };
+    throw new UnsupportedValueError("Unexpected ApiOptionUpdate type returned", value);
 }
 
 export function apiOptionUpdate<A, B>(

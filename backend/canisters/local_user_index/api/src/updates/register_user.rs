@@ -9,7 +9,6 @@ use types::UserId;
 pub struct Args {
     pub username: String,
     pub referral_code: Option<String>,
-    #[ts(as = "Vec<u8>")]
     #[serde(with = "serde_bytes")]
     pub public_key: Vec<u8>,
 }

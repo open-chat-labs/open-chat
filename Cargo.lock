@@ -4519,7 +4519,6 @@ name = "local_user_index_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
- "candid_gen",
  "community_canister",
  "event_store_canister",
  "group_canister",
@@ -8095,7 +8094,6 @@ dependencies = [
 name = "ts_export"
 version = "0.1.0"
 dependencies = [
- "serde",
  "ts-rs",
  "ts_export_macros",
 ]

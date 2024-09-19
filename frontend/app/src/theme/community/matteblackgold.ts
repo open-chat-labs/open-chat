@@ -71,7 +71,10 @@ export function getTheme(base: Theme): Theme {
     base.link.underline = base.primary;
     base.scrollbar.bg = base.button.hv;
     base.toast.success.bg = base.notificationBar.bg;
-    base.code = gold;
+    base.code = {
+        txt: gold,
+        bg: "rgba(255,255,255,0.1)",
+    };
 
     return base;
 }

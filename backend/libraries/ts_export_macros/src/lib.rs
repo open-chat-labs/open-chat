@@ -1,5 +1,5 @@
 use proc_macro::TokenStream;
-use quote::{format_ident, quote};
+use quote::{format_ident, quote, ToTokens};
 use std::fmt::Write;
 use syn::punctuated::Punctuated;
 use syn::{parse_macro_input, parse_quote, Attribute, Field, Ident, Item, Token, Type};
@@ -90,6 +90,8 @@ fn insert_container_attributes(attrs: &mut Vec<Attribute>, ident: &Ident, export
     }
 }
 
+const PRINCIPAL_ALIASES: [&str; 3] = ["Principal", "CanisterId", "AccessorId"];
+
 fn insert_field_attributes(field: &mut Field, is_tuple: bool) {
     if let Type::Path(type_path) = &field.ty {
         if !is_tuple
@@ -102,12 +104,13 @@ fn insert_field_attributes(field: &mut Field, is_tuple: bool) {
             field
                 .attrs
                 .push(parse_quote ! ( #[serde(skip_serializing_if = "Option::is_none")] ));
-        } else if type_path.qself.is_none()
-            && type_path.path.leading_colon.is_none()
-            && type_path.path.segments.len() == 1
-            && (type_path.path.segments[0].ident == "Principal" || type_path.path.segments[0].ident == "CanisterId")
+        } else if field.attrs.iter().any(is_using_serde_bytes)
+            || (type_path.qself.is_none()
+                && type_path.path.leading_colon.is_none()
+                && type_path.path.segments.len() == 1
+                && PRINCIPAL_ALIASES.iter().any(|a| type_path.path.segments[0].ident == a))
         {
-            field.attrs.push(parse_quote ! ( #[ts(as = "ts_export::PrincipalTS")] ));
+            field.attrs.push(parse_quote ! ( #[ts(as = "ts_export::TSBytes")] ));
         }
     }
 }
@@ -144,4 +147,8 @@ fn convert_case(s: &str, start_with_capital: bool) -> String {
     }
 
     result
+}
+
+fn is_using_serde_bytes(attr: &Attribute) -> bool {
+    attr.into_token_stream().to_string().contains("serde_bytes")
 }

@@ -4,11 +4,12 @@ import {
     identity,
     mapOptional,
     principalBytesToString,
+    principalStringToBytes,
 } from "../../utils/mapping";
 import type {
     Message,
     ChatEvent,
-    // EventsSuccessResult,
+    EventsSuccessResult,
     ThreadSummary,
     // StaleMessage,
     MessageContent,
@@ -80,7 +81,7 @@ import type {
     // ThreadPreviewsResponse,
     // ChangeRoleResponse,
     // RegisterPollVoteResponse,
-    // JoinGroupResponse,
+    JoinGroupResponse,
     // SearchGroupChatResponse,
     // InviteCodeResponse,
     // EnableInviteCodeResponse,
@@ -109,12 +110,14 @@ import type {
     // VideoCallParticipantsResponse,
     VideoCallParticipant,
     LeafGate,
+    ChatIdentifier,
+    UpdatedEvent,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
     ProposalRewardStatus,
     UnsupportedValueError,
-    // CommonResponses,
+    CommonResponses,
     emptyChatMetrics,
     // codeToText,
     CHAT_SYMBOL,
@@ -128,7 +131,7 @@ import {
 // import type { SetPinNumberResponse } from "openchat-shared";
 // import { pinNumberFailureResponse } from "./pinNumberErrorMapper";
 import { toRecord2 } from "../../utils/list";
-import {
+import type {
     AccessGate as TAccessGate,
     AudioContent as TAudioContent,
     BlobReference as TBlobReference,
@@ -147,6 +150,7 @@ import {
     CryptoTransaction as TCryptoTransaction,
     CustomContent as TCustomContent,
     DeletedBy as TDeletedBy,
+    EventsResponse as TEventsResponse,
     EventWrapperChatEvent as TEventWrapperChatEvent,
     EventWrapperMessage as TEventWrapperMessage,
     FailedCryptoTransaction as TFailedCryptoTransaction,
@@ -189,20 +193,19 @@ import {
     VideoContent as TVideoContent,
     VideoCallContent as TVideoCallContent,
     VideoCallType as TVideoCallType,
+    LocalUserIndexJoinGroupResponse,
 } from "../../typebox";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
-// export function eventsSuccessResponse(
-//     candid: ApiEventsSuccessResult,
-// ): EventsSuccessResult<ChatEvent> {
-//     return {
-//         events: candid.events.map(eventWrapper),
-//         expiredEventRanges: candid.expired_event_ranges.map(expiredEventsRange),
-//         expiredMessageRanges: candid.expired_message_ranges.map(expiredMessagesRange),
-//         latestEventIndex: candid.latest_event_index,
-//     };
-// }
+export function eventsSuccessResponse(value: TEventsResponse): EventsSuccessResult<ChatEvent> {
+    return {
+        events: value.events.map(eventWrapper),
+        expiredEventRanges: value.expired_event_ranges.map(expiredEventsRange),
+        expiredMessageRanges: value.expired_message_ranges.map(expiredMessagesRange),
+        latestEventIndex: value.latest_event_index,
+    };
+}
 
 export function eventWrapper(value: TEventWrapperChatEvent): EventWrapper<ChatEvent> {
     return {
@@ -531,9 +534,8 @@ function reportedMessage(value: TReportedMessage): ReportedMessageContent {
 
 function customContent(value: TCustomContent): MessageContent {
     if (value.kind === "meme_fighter") {
-        const data = new Uint8Array(value.data);
         const decoder = new TextDecoder();
-        const json = decoder.decode(data);
+        const json = decoder.decode(value.data);
         const decoded = JSON.parse(json) as { url: string; width: number; height: number };
         return {
             kind: "meme_fighter_content",
@@ -2068,6 +2070,18 @@ export function threadSyncDetails(value: TGroupCanisterThreadDetails): ThreadSyn
     };
 }
 
+export function updatedEvent([threadRootMessageIndex, eventIndex, timestamp]: [
+    number | null,
+    number,
+    bigint,
+]): UpdatedEvent {
+    return {
+        eventIndex,
+        threadRootMessageIndex: mapOptional(threadRootMessageIndex, identity),
+        timestamp,
+    };
+}
+
 export function gateCheckFailedReason(value: TGateCheckFailedReason): GateCheckFailedReason {
     if (value === "NoUniquePersonProof") {
         return "no_unique_person_proof";
@@ -2600,31 +2614,39 @@ export function expiredMessagesRange([start, end]: [number, number]): ExpiredMes
 //     }
 // }
 
-// export function apiChatIdentifier(chatId: ChatIdentifier): ApiChat {
-//     switch (chatId.kind) {
-//         case "group_chat":
-//             return { Group: Principal.fromText(chatId.groupId) };
-//         case "direct_chat":
-//             return { Direct: Principal.fromText(chatId.userId) };
-//         case "channel":
-//             return { Channel: [Principal.fromText(chatId.communityId), BigInt(chatId.channelId)] };
-//     }
-// }
+export function apiChatIdentifier(chatId: ChatIdentifier): TChat {
+    switch (chatId.kind) {
+        case "group_chat":
+            return { Group: principalStringToBytes(chatId.groupId) };
+        case "direct_chat":
+            return { Direct: principalStringToBytes(chatId.userId) };
+        case "channel":
+            return {
+                Channel: [principalStringToBytes(chatId.communityId), BigInt(chatId.channelId)],
+            };
+    }
+}
 
-// export function joinGroupResponse(candid: ApiJoinGroupResponse): JoinGroupResponse {
-//     if ("Success" in candid) {
-//         return { kind: "success", group: groupChatSummary(candid.Success) };
-//     } else if ("AlreadyInGroupV2" in candid) {
-//         return { kind: "success", group: groupChatSummary(candid.AlreadyInGroupV2) };
-//     } else if ("Blocked" in candid) {
-//         return CommonResponses.userBlocked();
-//     } else if ("GateCheckFailed" in candid) {
-//         return { kind: "gate_check_failed", reason: gateCheckFailedReason(candid.GateCheckFailed) };
-//     } else {
-//         console.warn("Join group failed with: ", candid);
-//         return CommonResponses.failure();
-//     }
-// }
+export function joinGroupResponse(value: LocalUserIndexJoinGroupResponse): JoinGroupResponse {
+    if (typeof value !== "string") {
+        if ("Success" in value) {
+            return { kind: "success", group: groupChatSummary(value.Success) };
+        } else if ("AlreadyInGroupV2" in value) {
+            return { kind: "success", group: groupChatSummary(value.AlreadyInGroupV2) };
+        } else if ("GateCheckFailed" in value) {
+            return {
+                kind: "gate_check_failed",
+                reason: gateCheckFailedReason(value.GateCheckFailed),
+            };
+        }
+    }
+    if (value === "Blocked") {
+        return CommonResponses.userBlocked();
+    } else {
+        console.warn("Join group failed with: ", value);
+        return CommonResponses.failure();
+    }
+}
 
 // export function searchGroupChatResponse(
 //     candid: ApiSearchGroupChatResponse | ApiSearchChannelResponse,

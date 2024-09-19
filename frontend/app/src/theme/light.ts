@@ -35,13 +35,17 @@ export function lightTheme(): Theme {
         disabledTxt: txtLight,
         placeholder: txtLight,
         primary,
-        code: orangeAccent,
+        code: {
+            txt: orangeAccent,
+            bg: "rgba(255,255,255,0.1)",
+        },
         font: '"Roboto", sans-serif',
         "font-bold": '"Manrope", sans-serif',
 
         unread: {
             mute: "rgba(0,0,0,0.1)",
             "mute-solid": "rgb(55,127,195)",
+            "mute-txt": txt,
         },
 
         progress: {
