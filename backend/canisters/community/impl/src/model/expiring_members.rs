@@ -19,6 +19,7 @@ impl ExpiringMembers {
         self.queue.push(member);
     }
 
+    #[allow(dead_code)]
     pub fn pop_if_expires_before(&mut self, expires_before: TimestampMillis) -> Option<ExpiringMember> {
         if let Some(member) = self.queue.peek() {
             if member.expires < expires_before {

@@ -160,7 +160,7 @@ fn create_channel_impl(
             };
 
             if args.is_public {
-                let gate_expiry = gate_config.as_ref().map(|gc| gc.expiry).flatten();
+                let gate_expiry = gate_config.as_ref().and_then(|gc| gc.expiry);
 
                 match gate_config.map(|gc| gc.gate) {
                     Some(AccessGate::DiamondMember) => {

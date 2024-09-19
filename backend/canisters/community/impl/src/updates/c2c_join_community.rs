@@ -144,7 +144,7 @@ pub(crate) fn join_community_impl(args: &Args, state: &mut RuntimeState) -> Resu
                 state.queue_access_gate_payments(gate);
             }
 
-            if let Some(expiry) = state.data.gate_config.value.as_ref().map(|gc| gc.expiry()).flatten() {
+            if let Some(expiry) = state.data.gate_config.value.as_ref().and_then(|gc| gc.expiry()) {
                 state.data.expiring_members.push(ExpiringMember {
                     expires: now + expiry,
                     channel_id: None,

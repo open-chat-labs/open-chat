@@ -83,7 +83,7 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                         }
                     } else {
                         // If the channel has had a gate added with an expiry then add all members to expiry job
-                        if let Some(expiry) = channel.chat.gate_config.value.as_ref().map(|gc| gc.expiry()).flatten() {
+                        if let Some(expiry) = channel.chat.gate_config.value.as_ref().and_then(|gc| gc.expiry()) {
                             for m in channel.chat.members.iter() {
                                 state.data.expiring_members.push(ExpiringMember {
                                     expires: now + expiry,

@@ -131,7 +131,7 @@ fn commit(
         let mut users_added: Vec<UserId> = Vec::new();
         let mut users_limit_reached: Vec<UserId> = Vec::new();
 
-        let gate_expiry = channel.chat.gate_config.value.as_ref().map(|gc| gc.expiry()).flatten();
+        let gate_expiry = channel.chat.gate_config.value.as_ref().and_then(|gc| gc.expiry());
 
         for (user_id, user_type) in users_to_add {
             match channel.chat.members.add(

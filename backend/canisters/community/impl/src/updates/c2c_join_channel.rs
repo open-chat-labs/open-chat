@@ -217,7 +217,7 @@ fn commit(
                         .summary(Some(user_id), true, state.data.is_public, &state.data.members)
                         .unwrap();
 
-                    if let Some(expiry) = channel.chat.gate_config.value.as_ref().map(|gc| gc.expiry()).flatten() {
+                    if let Some(expiry) = channel.chat.gate_config.value.as_ref().and_then(|gc| gc.expiry()) {
                         state.data.expiring_members.push(ExpiringMember {
                             expires: now + expiry,
                             channel_id: Some(channel_id),

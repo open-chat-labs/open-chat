@@ -328,7 +328,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
                 }
             } else {
                 // If the community has had a gate added with an expiry then add all members to expiry job
-                if let Some(expiry) = gate_config.as_ref().map(|gc| gc.expiry()).flatten() {
+                if let Some(expiry) = gate_config.as_ref().and_then(|gc| gc.expiry()) {
                     for m in state.data.members.iter() {
                         state.data.expiring_members.push(ExpiringMember {
                             expires: now + expiry,
