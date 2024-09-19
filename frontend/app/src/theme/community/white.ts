@@ -25,7 +25,6 @@ export function getTheme(base: Theme): Theme {
     };
     base["txt-light"] = txt70;
     base.bd = "#ededed";
-    base.bd = "rgba(0,0,0,0.08)";
     base.disabledTxt = txt40;
     base.placeholder = txt50;
     base.progress.bd = "rgba(0,0,0,0.2)";
