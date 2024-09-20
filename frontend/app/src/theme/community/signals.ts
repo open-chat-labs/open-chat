@@ -1,3 +1,4 @@
+import { blueDiamondHue } from "../../components/icons/diamond";
 import type { Theme } from "../types";
 import { hexPercent } from "../utils";
 
@@ -108,6 +109,13 @@ export function getTheme(base: Theme): Theme {
     base.unread.mute = "#dddddd";
     base.unread["mute-solid"] = "#dddddd";
     base.unread["mute-txt"] = "#999999";
+
+    base.audio.outer = powderBlue;
+    base.audio.me.outer = powderBlue;
+    base.audio.inner = yellow;
+    base.audio.me.inner = yellow;
+    base.audio.note = black;
+    base.audio.me.note = white;
 
     return base;
 }
