@@ -28,7 +28,10 @@ export interface Theme {
     accentDarker: string;
     disabledTxt: string;
     primary: string;
-    code: string;
+    code: {
+        bg: string;
+        txt: string;
+    };
 
     placeholder: string;
 
@@ -39,6 +42,7 @@ export interface Theme {
     unread: {
         mute: string;
         "mute-solid": string;
+        "mute-txt": string;
     };
 
     collapsible: {
@@ -315,6 +319,17 @@ export interface Theme {
     nav: {
         icon: {
             rd: string;
+        };
+    };
+
+    audio: {
+        outer: string;
+        inner: string;
+        note: string;
+        me: {
+            outer: string;
+            inner: string;
+            note: string;
         };
     };
 

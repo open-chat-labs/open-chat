@@ -25,6 +25,7 @@ use types::{
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
+const MEMO_PRIZE_REFUND: [u8; 8] = [0x4f, 0x43, 0x5f, 0x50, 0x52, 0x5a, 0x52, 0x46]; // OC_PRZRF
 
 #[derive(Serialize, Deserialize)]
 pub struct ChatEvents {
@@ -499,16 +500,16 @@ impl ChatEvents {
     }
 
     pub fn prize_refund(
-        &self,
+        &mut self,
         thread_root_message_index: Option<MessageIndex>,
         message_index: MessageIndex,
         memo: &[u8],
         now_nanos: TimestampNanos,
     ) -> Option<PendingCryptoTransaction> {
         if let Some((message, _)) =
-            self.message_internal(EventIndex::default(), thread_root_message_index, message_index.into())
+            self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_index.into())
         {
-            if let MessageContentInternal::Prize(p) = &message.content {
+            if let MessageContentInternal::Prize(p) = &mut message.content {
                 return p.prize_refund(message.sender, memo, now_nanos);
             }
         }
@@ -1550,6 +1551,11 @@ impl ChatEvents {
                             .threads
                             .push((m.message_index, thread.participants_and_followers(true)));
                     }
+                    if let MessageContentInternal::Prize(mut p) = m.content {
+                        if let Some(refund) = p.prize_refund(m.sender, &MEMO_PRIZE_REFUND, now * 1_000_000) {
+                            result.prize_refunds.push(refund);
+                        }
+                    }
                 }
             }
         }
@@ -2010,6 +2016,7 @@ pub enum UnfollowThreadResult {
 pub struct RemoveExpiredEventsResult {
     pub events: Vec<EventIndex>,
     pub threads: Vec<(MessageIndex, Vec<UserId>)>,
+    pub prize_refunds: Vec<PendingCryptoTransaction>,
 }
 
 #[derive(Copy, Clone)]

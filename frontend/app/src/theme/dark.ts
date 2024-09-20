@@ -24,6 +24,7 @@ const txtLow = "rgba(255,255,255,0.38)";
 
 const primary = "#23a2ee";
 const blueAccent = "#085d8c";
+const accent = "#ff2e2e";
 
 export function darkTheme(defaultTheme: Theme): Theme {
     return {
@@ -42,16 +43,20 @@ export function darkTheme(defaultTheme: Theme): Theme {
         bw: "1px",
         error: "#CF6679",
         warn: "#f36D28",
-        accent: "#ff2e2e",
+        accent: accent,
         disabledTxt: txtLow,
         primary,
-        code: "#f36D28",
+        code: {
+            bg: "rgba(0,0,0,0.7)",
+            txt: "#f36D28",
+        },
         font: '"Roboto", sans-serif',
         "font-bold": '"Manrope", sans-serif',
 
         unread: {
             mute: "rgba(255,255,255,0.2)",
             "mute-solid": "#555",
+            "mute-txt": txt,
         },
 
         progress: {
@@ -320,6 +325,17 @@ export function darkTheme(defaultTheme: Theme): Theme {
         nav: {
             icon: {
                 rd: "50%",
+            },
+        },
+
+        audio: {
+            outer: primary,
+            inner: accent,
+            note: txt,
+            me: {
+                outer: primary,
+                inner: accent,
+                note: txt,
             },
         },
 

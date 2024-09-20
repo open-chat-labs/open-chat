@@ -3544,89 +3544,96 @@ export class OpenChat extends OpenChatAgentWorker {
         const newAchievement = this.isNewSendMessageAchievement(messageContext, eventWrapper.event);
         const isCryptoMessage = eventWrapper.event.content.kind === "crypto_content";
 
-        return this.sendRequest(
-            {
-                kind: "sendMessage",
-                chatType: chat.kind,
-                messageContext,
-                user: this._liveState.user,
-                mentioned,
-                event: eventWrapper,
-                acceptedRules,
-                messageFilterFailed,
-                pin,
-                newAchievement,
-            },
-            undefined,
-            isCryptoMessage ? 2 * DEFAULT_WORKER_TIMEOUT : undefined,
-        )
-            .then(([resp, msg]) => {
-                if (resp.kind === "success" || resp.kind === "transfer_success") {
-                    this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
-                    if (msg.kind === "message" && msg.content.kind === "crypto_content") {
-                        this.refreshAccountBalance(msg.content.transfer.ledger);
+        return new Promise((resolve) => {
+            this.sendStreamRequest(
+                {
+                    kind: "sendMessage",
+                    chatType: chat.kind,
+                    messageContext,
+                    user: this._liveState.user,
+                    mentioned,
+                    event: eventWrapper,
+                    acceptedRules,
+                    messageFilterFailed,
+                    pin,
+                    newAchievement,
+                },
+                undefined,
+                isCryptoMessage ? 2 * DEFAULT_WORKER_TIMEOUT : undefined,
+            )
+                .subscribe((response) => {
+                    if (response === "accepted") {
+                        unconfirmed.markAccepted(messageContext, eventWrapper.event.messageId);
+                        return;
                     }
-                    if (threadRootMessageIndex !== undefined) {
-                        trackEvent("sent_threaded_message");
-                    } else {
-                        if (chat.kind === "direct_chat") {
-                            trackEvent("sent_direct_message");
+                    const [resp, msg] = response;
+                    if (resp.kind === "success" || resp.kind === "transfer_success") {
+                        this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
+                        if (msg.kind === "message" && msg.content.kind === "crypto_content") {
+                            this.refreshAccountBalance(msg.content.transfer.ledger);
+                        }
+                        if (threadRootMessageIndex !== undefined) {
+                            trackEvent("sent_threaded_message");
                         } else {
-                            if (chat.public) {
-                                trackEvent("sent_public_group_message");
+                            if (chat.kind === "direct_chat") {
+                                trackEvent("sent_direct_message");
                             } else {
-                                trackEvent("sent_private_group_message");
+                                if (chat.public) {
+                                    trackEvent("sent_public_group_message");
+                                } else {
+                                    trackEvent("sent_private_group_message");
+                                }
                             }
                         }
-                    }
-                    if (msg.repliesTo !== undefined) {
-                        // double counting here which I think is OK since we are limited to string events
-                        trackEvent("replied_to_message");
+                        if (msg.repliesTo !== undefined) {
+                            // double counting here which I think is OK since we are limited to string events
+                            trackEvent("replied_to_message");
+                        }
+
+                        if (acceptedRules?.chat !== undefined) {
+                            this.markChatRulesAcceptedLocally(true);
+                        }
+                        if (acceptedRules?.community !== undefined) {
+                            this.markCommunityRulesAcceptedLocally(true);
+                        }
+                    } else {
+                        if (resp.kind == "rules_not_accepted") {
+                            this.markChatRulesAcceptedLocally(false);
+                        } else if (resp.kind == "community_rules_not_accepted") {
+                            this.markCommunityRulesAcceptedLocally(false);
+                        } else if (
+                            resp.kind === "pin_incorrect" ||
+                            resp.kind === "pin_required" ||
+                            resp.kind === "too_main_failed_pin_attempts"
+                        ) {
+                            pinNumberFailureStore.set(resp as PinNumberFailures);
+                        }
+
+                        this.onSendMessageFailure(
+                            chatId,
+                            msg.messageId,
+                            threadRootMessageIndex,
+                            eventWrapper,
+                            canRetry,
+                            resp,
+                        );
                     }
 
-                    if (acceptedRules?.chat !== undefined) {
-                        this.markChatRulesAcceptedLocally(true);
-                    }
-                    if (acceptedRules?.community !== undefined) {
-                        this.markCommunityRulesAcceptedLocally(true);
-                    }
-                } else {
-                    if (resp.kind == "rules_not_accepted") {
-                        this.markChatRulesAcceptedLocally(false);
-                    } else if (resp.kind == "community_rules_not_accepted") {
-                        this.markCommunityRulesAcceptedLocally(false);
-                    } else if (
-                        resp.kind === "pin_incorrect" ||
-                        resp.kind === "pin_required" ||
-                        resp.kind === "too_main_failed_pin_attempts"
-                    ) {
-                        pinNumberFailureStore.set(resp as PinNumberFailures);
-                    }
-
+                    resolve(resp);
+                })
+                .catch(() => {
                     this.onSendMessageFailure(
                         chatId,
-                        msg.messageId,
+                        eventWrapper.event.messageId,
                         threadRootMessageIndex,
                         eventWrapper,
                         canRetry,
-                        resp,
+                        undefined,
                     );
-                }
 
-                return resp;
-            })
-            .catch(() => {
-                this.onSendMessageFailure(
-                    chatId,
-                    eventWrapper.event.messageId,
-                    threadRootMessageIndex,
-                    eventWrapper,
-                    canRetry,
-                    undefined,
-                );
-
-                return CommonResponses.failure();
-            });
+                    return resolve(CommonResponses.failure());
+                });
+        });
     }
 
     private isNewSendMessageAchievement(

@@ -1,7 +1,7 @@
 use crate::memory::{get_instruction_counts_data_memory, get_instruction_counts_index_memory};
 use crate::model::new_joiner_rewards::{NewJoinerRewardMetrics, NewJoinerRewardStatus, NewJoinerRewards};
 use crate::new_joiner_rewards::process_new_joiner_reward;
-use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
+use crate::timer_job_types::{MakeTransferJob, RemoveExpiredEventsJob, TimerJob};
 use crate::updates::c2c_freeze_group::freeze_group_impl;
 use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
@@ -343,13 +343,23 @@ impl RuntimeState {
 
     pub fn run_event_expiry_job(&mut self) {
         let now = self.env.now();
-        self.data.chat.remove_expired_events(now);
+        let result = self.data.chat.remove_expired_events(now);
 
         self.data.next_event_expiry = self.data.chat.events.next_event_expiry();
         if let Some(expiry) = self.data.next_event_expiry {
             self.data
                 .timer_jobs
                 .enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
+        }
+        for pending_transaction in result.prize_refunds {
+            self.data.timer_jobs.enqueue_job(
+                TimerJob::MakeTransfer(MakeTransferJob {
+                    pending_transaction,
+                    attempt: 0,
+                }),
+                now,
+                now,
+            );
         }
     }
 

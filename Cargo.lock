@@ -1290,7 +1290,6 @@ dependencies = [
  "candid",
  "event_store_producer",
  "hex",
- "ic-ledger-types",
  "itertools 0.13.0",
  "ledger_utils",
  "msgpack",
@@ -1483,6 +1482,8 @@ dependencies = [
  "chat_events",
  "serde",
  "serde_bytes",
+ "ts-rs",
+ "ts_export",
  "types",
 ]
 
@@ -2712,6 +2713,8 @@ dependencies = [
  "chat_events",
  "serde",
  "serde_bytes",
+ "ts-rs",
+ "ts_export",
  "types",
 ]
 
@@ -4520,7 +4523,6 @@ name = "local_user_index_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
- "candid_gen",
  "community_canister",
  "event_store_canister",
  "group_canister",

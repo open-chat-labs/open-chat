@@ -2,7 +2,7 @@ use crate::memory::{get_instruction_counts_data_memory, get_instruction_counts_i
 use crate::model::channels::Channels;
 use crate::model::groups_being_imported::{GroupBeingImportedSummary, GroupsBeingImported};
 use crate::model::members::CommunityMembers;
-use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
+use crate::timer_job_types::{MakeTransferJob, RemoveExpiredEventsJob, TimerJob};
 use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
@@ -229,13 +229,15 @@ impl RuntimeState {
     pub fn run_event_expiry_job(&mut self) {
         let now = self.env.now();
         let mut next_event_expiry = None;
+        let mut prize_refunds = Vec::new();
         for channel in self.data.channels.iter_mut() {
-            channel.chat.remove_expired_events(now);
+            let result = channel.chat.remove_expired_events(now);
             if let Some(expiry) = channel.chat.events.next_event_expiry() {
                 if next_event_expiry.map_or(true, |current| expiry < current) {
                     next_event_expiry = Some(expiry);
                 }
             }
+            prize_refunds.extend(result.prize_refunds);
         }
 
         self.data.next_event_expiry = next_event_expiry;
@@ -243,6 +245,16 @@ impl RuntimeState {
             self.data
                 .timer_jobs
                 .enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
+        }
+        for pending_transaction in prize_refunds {
+            self.data.timer_jobs.enqueue_job(
+                TimerJob::MakeTransfer(MakeTransferJob {
+                    pending_transaction,
+                    attempt: 0,
+                }),
+                now,
+                now,
+            );
         }
     }
 
