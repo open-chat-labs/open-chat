@@ -72,6 +72,7 @@
     export let expiresAt: number | undefined;
     export let first: boolean;
     export let last: boolean;
+    export let accepted: boolean;
     export let confirmed: boolean;
     export let failed: boolean;
     export let readByThem: boolean;
@@ -567,7 +568,7 @@
                             {expiresAt}
                             {percentageExpired}
                             {me}
-                            {confirmed}
+                            {accepted}
                             {failed}
                             deleted={msg.deleted}
                             {undeleting}

@@ -974,6 +974,7 @@ export class CommunityClient extends CandidService {
         channelRulesAccepted: number | undefined,
         messageFilterFailed: bigint | undefined,
         newAchievement: boolean,
+        onRequestAccepted: () => void,
     ): Promise<[SendMessageResponse, Message]> {
         // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
         removeFailedMessage(this.db, chatId, event.event.messageId, threadRootMessageIndex);
@@ -1009,6 +1010,7 @@ export class CommunityClient extends CandidService {
                 sendMessageResponseV2,
                 CommunitySendMessageArgs,
                 CommunitySendMessageResponse,
+                onRequestAccepted,
             )
                 .then((resp) => {
                     const retVal: [SendMessageResponse, Message] = [
