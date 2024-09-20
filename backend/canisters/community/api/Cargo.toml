@@ -11,4 +11,6 @@ candid_gen = { path = "../../../libraries/candid_gen" }
 chat_events = { path = "../../../libraries/chat_events" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
+ts_export = { path = "../../../libraries/ts_export" }
+ts-rs = { workspace = true }
 types = { path = "../../../libraries/types" }

@@ -859,11 +859,13 @@ impl PrizeContentInternal {
 impl MessageContentInternalSubtype for PrizeContentInternal {
     type ContentType = PrizeContent;
 
-    fn hydrate(&self, _my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(&self, my_user_id: Option<UserId>) -> Self::ContentType {
         PrizeContent {
             prizes_remaining: self.prizes_remaining.len() as u32,
             prizes_pending: self.reservations.len() as u32,
             winners: self.winners.iter().copied().collect(),
+            winner_count: self.winners.len() as u32,
+            user_is_winner: my_user_id.map(|u| self.winners.contains(&u)).unwrap_or_default(),
             token: self.transaction.token(),
             end_date: self.end_date,
             caption: self.caption.clone(),
