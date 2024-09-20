@@ -316,6 +316,7 @@
     bind:initialised
     bind:messagesDiv
     bind:messagesDivHeight
+    let:isAccepted
     let:isConfirmed
     let:isFailed
     let:isReadByMe
@@ -338,6 +339,7 @@
                             first={reverseScroll ? i + 1 === userGroup.length : i === 0}
                             last={reverseScroll ? i === 0 : i + 1 === userGroup.length}
                             me={evt.event.sender === $user.userId}
+                            accepted={isAccepted($unconfirmed, evt)}
                             confirmed={isConfirmed($unconfirmed, evt)}
                             failed={isFailed($failedMessagesStore, evt)}
                             readByMe={evt.event.messageId === rootEvent.event.messageId ||

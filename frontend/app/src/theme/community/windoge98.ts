@@ -141,5 +141,12 @@ export function getTheme(base: Theme): Theme {
     base.daily.mainAreaText = txt;
     base.daily.supportiveText = "#4e5670";
 
+    base.audio.outer = base.primary;
+    base.audio.me.outer = base.accent;
+    base.audio.inner = base.accent;
+    base.audio.me.inner = green;
+    base.audio.note = base.currentChat.msg.txt;
+    base.audio.me.note = base.currentChat.msg.me.txt;
+
     return base;
 }

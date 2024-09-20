@@ -322,6 +322,17 @@ export interface Theme {
         };
     };
 
+    audio: {
+        outer: string;
+        inner: string;
+        note: string;
+        me: {
+            outer: string;
+            inner: string;
+            note: string;
+        };
+    };
+
     landing: {
         txt: string;
         "txt-light": string;

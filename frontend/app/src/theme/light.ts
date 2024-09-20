@@ -333,6 +333,17 @@ export function lightTheme(): Theme {
             },
         },
 
+        audio: {
+            outer: primary,
+            inner: pinkAccent,
+            note: txt,
+            me: {
+                outer: primary,
+                inner: pinkAccent,
+                note: txt,
+            },
+        },
+
         landing: {
             txt: txtDark,
             "txt-light": "#5C5C5C",

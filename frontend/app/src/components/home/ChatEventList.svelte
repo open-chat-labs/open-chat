@@ -477,6 +477,13 @@
         return document.querySelector(`.${rootSelector} [data-index~='${index}']`);
     }
 
+    function isAccepted(_unconf: unknown, evt: EventWrapper<ChatEventType>): boolean {
+        if (evt.event.kind === "message" && messageContext) {
+            return !unconfirmed.pendingAcceptance(messageContext, evt.event.messageId);
+        }
+        return true;
+    }
+
     function isConfirmed(_unconf: unknown, evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message" && messageContext) {
             return !unconfirmed.contains(messageContext, evt.event.messageId);
@@ -705,7 +712,7 @@
     class:interrupt
     class:reverse={reverseScroll}
     class={`scrollable-list ${rootSelector}`}>
-    <slot {isConfirmed} {isFailed} {isReadByMe} {messageObserver} {labelObserver} />
+    <slot {isAccepted} {isConfirmed} {isFailed} {isReadByMe} {messageObserver} {labelObserver} />
 </div>
 
 {#if scrollTopButtonEnabled}

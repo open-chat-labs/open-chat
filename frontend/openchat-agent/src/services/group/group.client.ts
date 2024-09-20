@@ -481,6 +481,7 @@ export class GroupClient extends CandidService {
         rulesAccepted: number | undefined,
         messageFilterFailed: bigint | undefined,
         newAchievement: boolean,
+        onRequestAccepted: () => void,
     ): Promise<[SendMessageResponse, Message]> {
         // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
         removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
@@ -516,6 +517,7 @@ export class GroupClient extends CandidService {
                 sendMessageResponse,
                 GroupSendMessageArgs,
                 GroupSendMessageResponse,
+                onRequestAccepted,
             )
                 .then((resp) => {
                     const retVal: [SendMessageResponse, Message] = [

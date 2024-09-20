@@ -75,5 +75,12 @@ export function getTheme(base: Theme): Theme {
     base.recommended.bg = raspberry;
     base.unread["mute-solid"] = raspberry;
 
+    base.audio.outer = lightPurple;
+    base.audio.me.outer = lightPurple;
+    base.audio.inner = silver;
+    base.audio.me.inner = silver;
+    base.audio.note = txt;
+    base.audio.me.note = txt;
+
     return base;
 }

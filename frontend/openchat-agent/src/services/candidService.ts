@@ -80,6 +80,7 @@ export abstract class CandidService {
         mapper: (from: Static<Resp>) => Out | Promise<Out>,
         requestValidator: In,
         responseValidator: Resp,
+        onRequestAccepted?: () => void,
     ): Promise<Out> {
         const payload = CandidService.prepareMsgpackArgs(args, requestValidator);
 
@@ -88,12 +89,18 @@ export abstract class CandidService {
                 this.agent.call(this.canisterId, {
                     methodName: methodName + "_msgpack",
                     arg: payload,
+                    callSync: onRequestAccepted === undefined,
                 }),
             );
             const canisterId = Principal.fromText(this.canisterId);
             if (!response.ok) {
                 throw new UpdateCallRejectedError(canisterId, methodName, requestId, response);
             }
+
+            if (onRequestAccepted !== undefined) {
+                onRequestAccepted();
+            }
+
             const { reply } = await this.sendRequestToCanister(() =>
                 polling.pollForResponse(
                     this.agent,
