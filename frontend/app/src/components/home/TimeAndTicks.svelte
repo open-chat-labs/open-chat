@@ -17,7 +17,7 @@
     export let timestamp: bigint;
     export let expiresAt: number | undefined;
     export let percentageExpired: number;
-    export let confirmed: boolean;
+    export let accepted: boolean;
     export let failed: boolean;
     export let chatType: ChatType;
     export let readByThem: boolean;
@@ -46,7 +46,7 @@
         {/if}
     {:else}
         {#if me}
-            {#if confirmed}
+            {#if accepted}
                 <CheckCircle size={"0.9em"} color={iconColor} />
             {:else}
                 <div class="confirming" />
@@ -58,7 +58,7 @@
                     <CheckCircleOutline size={"0.9em"} color={iconColor} />
                 {/if}
             {/if}
-        {:else if !confirmed}
+        {:else if !accepted}
             <div class="confirming" />
         {/if}
         {#if expiresAt !== undefined}

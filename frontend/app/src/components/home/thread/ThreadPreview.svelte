@@ -147,6 +147,7 @@
                             sender={$userStore.get(thread.rootMessage.event.sender)}
                             focused={false}
                             {observer}
+                            accepted
                             confirmed
                             failed={false}
                             senderTyping={false}
@@ -191,6 +192,7 @@
                                 sender={$userStore.get(evt.event.sender)}
                                 focused={false}
                                 {observer}
+                                accepted
                                 confirmed
                                 failed={false}
                                 senderTyping={false}

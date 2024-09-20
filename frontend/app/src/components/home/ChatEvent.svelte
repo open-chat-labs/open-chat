@@ -40,6 +40,7 @@
     export let first: boolean;
     export let last: boolean;
     export let me: boolean;
+    export let accepted: boolean;
     export let confirmed: boolean;
     export let failed: boolean;
     export let readByThem: boolean;
@@ -132,6 +133,7 @@
             senderTyping={client.isTyping($typing, event.event.sender, messageContext)}
             {focused}
             {observer}
+            {accepted}
             {confirmed}
             {failed}
             {readByMe}

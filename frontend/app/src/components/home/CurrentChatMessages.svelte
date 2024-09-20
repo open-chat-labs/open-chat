@@ -279,6 +279,7 @@
     bind:initialised
     bind:messagesDiv
     bind:messagesDivHeight
+    let:isAccepted
     let:isConfirmed
     let:isFailed
     let:isReadByMe
@@ -317,6 +318,7 @@
                             focused={evt.event.kind === "message" &&
                                 evt.event.messageIndex === $focusMessageIndex &&
                                 !isFailed($failedMessagesStore, evt)}
+                            accepted={isAccepted($unconfirmed, evt)}
                             confirmed={isConfirmed($unconfirmed, evt)}
                             failed={isFailed($failedMessagesStore, evt)}
                             readByThem={isReadByThem(chat, $unconfirmedReadByThem, evt)}
