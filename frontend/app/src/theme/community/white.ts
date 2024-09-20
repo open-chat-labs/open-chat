@@ -4,7 +4,6 @@ import { hexPercent } from "../utils";
 const textBox = "rgba(226,226,226,0.4)";
 const txt = "#242834";
 const txt70 = hexPercent(txt, 70);
-const txt40 = hexPercent(txt, 40);
 const txt50 = hexPercent(txt, 50);
 const txt60 = hexPercent(txt, 60);
 const txtDark = "#242834";
@@ -27,7 +26,7 @@ export function getTheme(base: Theme): Theme {
     };
     base["txt-light"] = txt70;
     base.bd = "#ededed";
-    base.disabledTxt = txt40;
+    base.disabledTxt = txt50;
     base.placeholder = txt50;
     base.progress.bd = "rgba(0,0,0,0.2)";
     base.collapsible.closed.header.txt = txt70;
@@ -57,7 +56,7 @@ export function getTheme(base: Theme): Theme {
     base.menu["disabled-txt"] = hexPercent(txtDark, 50);
     base.menu.separator = base.bd;
     base.menu.bd = "#efefef";
-    base.button["disabled-txt"] = txt40;
+    base.button["disabled-txt"] = txt50;
     base.modal.filter = "blur(5px)";
     base.modal.bg = white;
     base.modal.bd = "var(--bw) solid var(--bd)";
@@ -91,7 +90,6 @@ export function getTheme(base: Theme): Theme {
     base.daily.mainAreaText = txt;
     base.daily.supportiveText = "#4e5670";
     base.vote.maybe.color = "#ddd";
-
     base.audio.outer = base.primary;
     base.audio.me.outer = base.accent;
     base.audio.inner = base.accent;
