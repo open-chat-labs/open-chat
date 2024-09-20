@@ -174,7 +174,7 @@
             pre {
                 padding: toRem(16);
                 overflow-x: auto;
-                border-radius: $sp3;
+                border-radius: $sp2;
                 border: 1px solid rgba(255, 255, 255, 0.1);
                 background-color: var(--code-bg);
                 color: var(--code-txt);

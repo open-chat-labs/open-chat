@@ -113,6 +113,7 @@
         overflow: hidden;
         @include nice-scrollbar();
         max-height: 300px;
+        box-shadow: inset 1px 2px 4px rgba(0, 0, 0, 0.15);
 
         .inert {
             pointer-events: none;
