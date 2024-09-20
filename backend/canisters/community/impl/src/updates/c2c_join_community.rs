@@ -4,7 +4,7 @@ use crate::model::events::CommunityEventInternal;
 use crate::model::expiring_members::ExpiringMember;
 use crate::model::members::AddResult;
 use crate::updates::c2c_join_channel::join_channel_synchronously;
-use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
+use crate::{jobs, mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_join_community::{Response::*, *};
@@ -150,8 +150,6 @@ pub(crate) fn join_community_impl(args: &Args, state: &mut RuntimeState) -> Resu
                     channel_id: None,
                     user_id: args.user_id,
                 });
-
-                // TODO: Start job if necessary
             }
 
             state.data.user_cache.insert(
@@ -159,6 +157,8 @@ pub(crate) fn join_community_impl(args: &Args, state: &mut RuntimeState) -> Resu
                 args.diamond_membership_expires_at,
                 args.unique_person_proof.is_some(),
             );
+
+            jobs::expire_members::start_job_if_required(state);
 
             handle_activity_notification(state);
 

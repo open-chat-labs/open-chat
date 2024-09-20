@@ -2824,6 +2824,7 @@ dependencies = [
  "serde_repr",
  "types",
  "user_canister",
+ "utils 0.1.0",
 ]
 
 [[package]]

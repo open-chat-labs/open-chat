@@ -1,6 +1,6 @@
 use crate::{
-    activity_notifications::handle_activity_notification, model::expiring_members::ExpiringMember, mutate_state, read_state,
-    run_regular_jobs, RuntimeState,
+    activity_notifications::handle_activity_notification, jobs, model::expiring_members::ExpiringMember, mutate_state,
+    read_state, run_regular_jobs, RuntimeState,
 };
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
@@ -152,7 +152,6 @@ fn commit(
                             channel_id: Some(channel_id),
                             user_id,
                         });
-                        // TODO: Start job if necessary
                     }
                 }
                 AddResult::AlreadyInGroup => users_already_in_channel.push(user_id),
@@ -196,6 +195,8 @@ fn commit(
         });
 
         state.push_notification(users_added.clone(), notification);
+
+        jobs::expire_members::start_job_if_required(state);
 
         handle_activity_notification(state);
 

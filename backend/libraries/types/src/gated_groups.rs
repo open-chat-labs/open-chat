@@ -22,6 +22,10 @@ impl AccessGateConfig {
             _ => self.expiry,
         }
     }
+
+    pub fn gate(&self) -> &AccessGate {
+        &self.gate
+    }
 }
 
 // TODO: Delete this after it is released

@@ -20,14 +20,20 @@ impl ExpiringMembers {
     }
 
     #[allow(dead_code)]
-    pub fn pop_if_expires_before(&mut self, expires_before: TimestampMillis) -> Option<ExpiringMember> {
-        if let Some(member) = self.queue.peek() {
-            if member.expires < expires_before {
-                return self.queue.pop();
+    pub fn pop_if_expires_before(&mut self, expires_before: TimestampMillis) -> Vec<ExpiringMember> {
+        let mut results = Vec::new();
+
+        loop {
+            if let Some(member) = self.queue.peek() {
+                if member.expires < expires_before {
+                    results.push(self.queue.pop().unwrap());
+                    continue;
+                }
             }
+            break;
         }
 
-        None
+        results
     }
 
     pub fn remove_matching(&mut self, channel_id: Option<ChannelId>) {
@@ -37,5 +43,9 @@ impl ExpiringMembers {
     pub fn remove(&mut self, user_id: UserId, channel_id: Option<ChannelId>) {
         self.queue
             .retain(|m| !(m.user_id == user_id && (channel_id.is_none() || channel_id == m.channel_id)));
+    }
+
+    pub fn next_expiry(&self) -> Option<TimestampMillis> {
+        self.queue.peek().map(|m| m.expires)
     }
 }

@@ -1,3 +1,4 @@
+use crate::jobs;
 use crate::model::expiring_members::ExpiringMember;
 use crate::updates::c2c_join_channel::join_channel_unchecked;
 use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
@@ -75,13 +76,13 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                         }
                     }
 
-                    if prev_gate_had_expiry {
-                        // If the channel has had a gate expiry removed then remove all members from expiry job
-                        let gate_has_expiry = channel.chat.gate_config.as_ref().map_or(false, |gc| gc.expiry().is_some());
-                        if !gate_has_expiry {
+                    // If the gate has just been changed changed
+                    if channel.chat.gate_config.timestamp == now {
+                        if prev_gate_had_expiry {
+                            // Either the gate has changed or the expiry has changed - either way remove all members form `expiring_members`
                             state.data.expiring_members.remove_matching(Some(channel.id));
                         }
-                    } else {
+
                         // If the channel has had a gate added with an expiry then add all members to expiry job
                         if let Some(expiry) = channel.chat.gate_config.value.as_ref().and_then(|gc| gc.expiry()) {
                             for m in channel.chat.members.iter() {
@@ -91,8 +92,9 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                                     user_id: m.user_id,
                                 });
                             }
-                            // TODO: Start job if necessary
                         }
+
+                        jobs::expire_members::start_job_if_required(state);
                     }
 
                     handle_activity_notification(state);

@@ -2,9 +2,9 @@ use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::model::channels::Channel;
 use crate::model::expiring_members::ExpiringMember;
 use crate::model::members::CommunityMemberInternal;
-use crate::run_regular_jobs;
 use crate::updates::c2c_join_community::join_community;
 use crate::{activity_notifications::handle_activity_notification, mutate_state, read_state, RuntimeState};
+use crate::{jobs, run_regular_jobs};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -223,8 +223,6 @@ fn commit(
                             channel_id: Some(channel_id),
                             user_id,
                         });
-
-                        // TODO: Start job if necessary
                     }
 
                     // If there is a payment gate on this channel then queue payments to *community* owner(s) and treasury
@@ -236,6 +234,8 @@ fn commit(
                         .data
                         .user_cache
                         .insert(user_id, diamond_membership_expires_at, is_unique_person);
+
+                    jobs::expire_members::start_job_if_required(state);
 
                     handle_activity_notification(state);
 

@@ -16,6 +16,7 @@ use group_community_common::{
     Achievements, PaymentReceipts, PaymentRecipient, PendingPayment, PendingPaymentReason, PendingPaymentsQueue, UserCache,
 };
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
+use model::expiring_member_actions::ExpiringMemberActions;
 use model::expiring_members::ExpiringMembers;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use msgpack::serialize_then_unwrap;
@@ -332,6 +333,8 @@ struct Data {
     #[serde(default)]
     expiring_members: ExpiringMembers,
     #[serde(default)]
+    expiring_member_actions: ExpiringMemberActions,
+    #[serde(default)]
     user_cache: UserCache,
 }
 
@@ -431,6 +434,7 @@ impl Data {
                 .build(),
             achievements: Achievements::default(),
             expiring_members: ExpiringMembers::default(),
+            expiring_member_actions: ExpiringMemberActions::default(),
             user_cache: UserCache::default(),
         }
     }
@@ -509,7 +513,7 @@ impl Data {
         }
     }
 
-    fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {
+    pub fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {
         if self.invite_code_enabled {
             if let Some(provided_code) = invite_code {
                 if let Some(stored_code) = self.invite_code {
@@ -521,7 +525,7 @@ impl Data {
         false
     }
 
-    fn remove_user_from_community(&mut self, user_id: UserId, now: TimestampMillis) -> Option<CommunityMemberInternal> {
+    pub fn remove_user_from_community(&mut self, user_id: UserId, now: TimestampMillis) -> Option<CommunityMemberInternal> {
         let removed = self.members.remove(&user_id, now);
         self.channels.leave_all_channels(user_id, now);
         self.expiring_members.remove(user_id, None);
@@ -529,9 +533,33 @@ impl Data {
         removed
     }
 
-    fn remove_user_from_channel(&mut self, user_id: UserId, channel_id: ChannelId, now: TimestampMillis) {
+    pub fn remove_user_from_channel(&mut self, user_id: UserId, channel_id: ChannelId, now: TimestampMillis) {
         self.members.mark_member_left_channel(&user_id, channel_id, now);
         self.expiring_members.remove(user_id, Some(channel_id));
+    }
+
+    pub fn expire_member(&mut self, user_id: UserId, channel_id: Option<ChannelId>, now: TimestampMillis) {
+        if let Some(channel_id) = channel_id {
+            if let Some(member) = self
+                .channels
+                .get_mut(&channel_id)
+                .and_then(|channel| channel.chat.members.get_mut(&user_id))
+            {
+                member.lapsed = Some(now);
+            }
+        } else if let Some(member) = self.members.get_by_user_id_mut(&user_id) {
+            member.lapsed = Some(now);
+        }
+    }
+
+    pub fn get_access_gate_config(&self, channel_id: Option<ChannelId>) -> Option<&AccessGateConfig> {
+        if let Some(channel_id) = channel_id {
+            self.channels
+                .get(&channel_id)
+                .and_then(|channel| channel.chat.gate_config.value.as_ref())
+        } else {
+            self.gate_config.value.as_ref()
+        }
     }
 }
 

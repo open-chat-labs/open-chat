@@ -4,7 +4,7 @@ use crate::guards::caller_is_proposals_bot;
 use crate::model::channels::Channel;
 use crate::model::expiring_members::ExpiringMember;
 use crate::updates::c2c_join_channel::join_channel_unchecked;
-use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
+use crate::{jobs, mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_join_community;
@@ -180,8 +180,6 @@ fn create_channel_impl(
                                 }
                             }
                         }
-
-                        // TODO: Start job if necessary
                     }
                     None => {
                         for m in state.data.members.iter_mut() {
@@ -193,6 +191,8 @@ fn create_channel_impl(
             }
 
             state.data.channels.add(channel);
+
+            jobs::expire_members::start_job_if_required(state);
 
             handle_activity_notification(state);
             Success(SuccessResult { channel_id })

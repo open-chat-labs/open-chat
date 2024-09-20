@@ -236,7 +236,7 @@ fn check_composite_gate_synchronously(gate: CompositeGate, args: CheckGateArgs) 
     ))
 }
 
-async fn check_sns_neuron_gate(gate: &SnsNeuronGate, user_id: UserId) -> CheckIfPassesGateResult {
+pub async fn check_sns_neuron_gate(gate: &SnsNeuronGate, user_id: UserId) -> CheckIfPassesGateResult {
     let args = sns_governance_canister::list_neurons::Args {
         limit: 10,
         start_page_at: None,
@@ -303,7 +303,7 @@ async fn try_transfer_from(
     }
 }
 
-async fn check_token_balance_gate(gate: &TokenBalanceGate, user_id: UserId) -> CheckIfPassesGateResult {
+pub async fn check_token_balance_gate(gate: &TokenBalanceGate, user_id: UserId) -> CheckIfPassesGateResult {
     match icrc_ledger_canister_c2c_client::icrc1_balance_of(gate.ledger_canister_id, &Account::from(user_id)).await {
         Ok(balance) if balance >= gate.min_balance => CheckIfPassesGateResult::Success,
         Ok(balance) => {
