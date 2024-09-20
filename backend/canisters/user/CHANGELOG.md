@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1357](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1357-user)] - 2024-09-20
+
 ### Added
 
 - Add ability to reclaim tokens from failed swaps ([#6381](https://github.com/open-chat-labs/open-chat/pull/6381))
