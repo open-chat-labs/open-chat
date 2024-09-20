@@ -521,7 +521,7 @@ export class OpenChatAgent extends EventTarget {
         newAchievement: boolean,
     ): Stream<"accepted" | [SendMessageResponse, Message]> {
         return new Stream(async (resolve, reject) => {
-            const onAccepted = () => resolve("accepted");
+            const onAccepted = () => resolve("accepted", false);
             const { chatId, threadRootMessageIndex } = messageContext;
 
             if (offline()) {
@@ -633,7 +633,8 @@ export class OpenChatAgent extends EventTarget {
         communityRulesAccepted: number | undefined,
         channelRulesAccepted: number | undefined,
         messageFilterFailed: bigint | undefined,
-        newAchievement: boolean
+        newAchievement: boolean,
+        onAccepted: () => void,
     ): Promise<[SendMessageResponse, Message]> {
         return this.communityClient(chatId.communityId).sendMessage(
             chatId,
@@ -645,7 +646,8 @@ export class OpenChatAgent extends EventTarget {
             communityRulesAccepted,
             channelRulesAccepted,
             messageFilterFailed,
-            newAchievement
+            newAchievement,
+            onAccepted,
         );
     }
 
@@ -658,7 +660,8 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         rulesAccepted: number | undefined,
         messageFilterFailed: bigint | undefined,
-        newAchievement: boolean
+        newAchievement: boolean,
+        onAccepted: () => void,
     ): Promise<[SendMessageResponse, Message]> {
         return this.getGroupClient(chatId.groupId).sendMessage(
             senderName,
@@ -668,7 +671,8 @@ export class OpenChatAgent extends EventTarget {
             threadRootMessageIndex,
             rulesAccepted,
             messageFilterFailed,
-            newAchievement
+            newAchievement,
+            onAccepted,
         );
     }
 
