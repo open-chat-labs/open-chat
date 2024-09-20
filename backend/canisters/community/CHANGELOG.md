@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Update `send_message` args to work with MessagePack ([#6425](https://github.com/open-chat-labs/open-chat/pull/6315))
 - Add `winner_count` to prizes enabling us to stop sending all winners ([#6426](https://github.com/open-chat-labs/open-chat/pull/6426))
 
 ## [[2.0.1349](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1349-community)] - 2024-09-16
