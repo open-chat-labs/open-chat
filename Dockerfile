@@ -1,5 +1,5 @@
 # To build run 'docker build . -t openchat'
-FROM ubuntu:22.04 as builder
+FROM ubuntu:22.04 AS builder
 SHELL ["bash", "-c"]
 
 ARG git_commit_id
@@ -11,9 +11,7 @@ ENV TZ=UTC
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
     apt -yq update && \
-    apt -yqq install --no-install-recommends curl ca-certificates \
-        build-essential libssl-dev llvm-dev liblmdb-dev clang cmake \
-        git pkg-config
+    apt -yqq install --no-install-recommends curl ca-certificates build-essential
 
 # Install Rust and Cargo in /opt
 ENV RUSTUP_HOME=/opt/rustup \
