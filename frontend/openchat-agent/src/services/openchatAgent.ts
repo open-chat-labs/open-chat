@@ -521,7 +521,7 @@ export class OpenChatAgent extends EventTarget {
         newAchievement: boolean,
     ): Stream<"accepted" | [SendMessageResponse, Message]> {
         return new Stream(async (resolve, reject) => {
-            const onAccepted = () => resolve("accepted", false);
+            const onRequestAccepted = () => resolve("accepted", false);
             const { chatId, threadRootMessageIndex } = messageContext;
 
             if (offline()) {
@@ -564,7 +564,7 @@ export class OpenChatAgent extends EventTarget {
                         acceptedRules?.chat,
                         messageFilterFailed,
                         newAchievement,
-                        onAccepted,
+                        onRequestAccepted,
                     ),
                     true,
                 );
@@ -602,7 +602,7 @@ export class OpenChatAgent extends EventTarget {
                         acceptedRules?.chat,
                         messageFilterFailed,
                         newAchievement,
-                        onAccepted,
+                        onRequestAccepted,
                     ),
                     true,
                 );
@@ -634,7 +634,7 @@ export class OpenChatAgent extends EventTarget {
         channelRulesAccepted: number | undefined,
         messageFilterFailed: bigint | undefined,
         newAchievement: boolean,
-        onAccepted: () => void,
+        onRequestAccepted: () => void,
     ): Promise<[SendMessageResponse, Message]> {
         return this.communityClient(chatId.communityId).sendMessage(
             chatId,
@@ -647,7 +647,7 @@ export class OpenChatAgent extends EventTarget {
             channelRulesAccepted,
             messageFilterFailed,
             newAchievement,
-            onAccepted,
+            onRequestAccepted,
         );
     }
 
@@ -661,7 +661,7 @@ export class OpenChatAgent extends EventTarget {
         rulesAccepted: number | undefined,
         messageFilterFailed: bigint | undefined,
         newAchievement: boolean,
-        onAccepted: () => void,
+        onRequestAccepted: () => void,
     ): Promise<[SendMessageResponse, Message]> {
         return this.getGroupClient(chatId.groupId).sendMessage(
             senderName,
@@ -672,7 +672,7 @@ export class OpenChatAgent extends EventTarget {
             rulesAccepted,
             messageFilterFailed,
             newAchievement,
-            onAccepted,
+            onRequestAccepted,
         );
     }
 
