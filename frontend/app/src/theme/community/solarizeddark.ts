@@ -68,6 +68,12 @@ export function getTheme(base: Theme): Theme {
     base.link.underline = base.primary;
     base.scrollbar.bg = hexPercent(base.button.hv, 60);
     base.toast.success.bg = base.notificationBar.bg;
+    base.audio.outer = darkBlue;
+    base.audio.me.outer = darkBlue;
+    base.audio.inner = olive;
+    base.audio.me.inner = olive;
+    base.audio.note = txt;
+    base.audio.me.note = txt;
 
     return base;
 }

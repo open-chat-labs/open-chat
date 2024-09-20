@@ -75,6 +75,12 @@ export function getTheme(base: Theme): Theme {
         txt: gold,
         bg: "rgba(255,255,255,0.1)",
     };
+    base.audio.outer = gold;
+    base.audio.me.outer = gold;
+    base.audio.inner = txt;
+    base.audio.me.inner = txt;
+    base.audio.note = txt;
+    base.audio.me.note = txt;
 
     return base;
 }

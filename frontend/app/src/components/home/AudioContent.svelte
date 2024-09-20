@@ -10,6 +10,10 @@
     export let content: AudioContent;
     export let edited: boolean;
     export let blockLevelMarkdown: boolean = false;
+    export let me: boolean;
+
+    $: inner = `var(--audio${me ? "-me" : ""}-inner)`;
+    $: note = `var(--audio${me ? "-me" : ""}-note)`;
 
     let audioPlayer: HTMLAudioElement;
     let playing: boolean = false;
@@ -52,19 +56,25 @@
     <div class="circle">
         <div class="number">
             {#if playing}
-                <Pause size={"2.5em"} color={"#fff"} />
+                <Pause size={"2.5em"} color={note} />
             {:else}
-                <MusicNote size={"2.5em"} color={"#fff"} />
+                <MusicNote size={"2.5em"} color={note} />
             {/if}
         </div>
         <svg class="pie" viewBox="0 0 320 320">
             <clipPath id="hollow">
                 <path
                     d="M 160 160 m -160 0 a 160 160 0 1 0 320 0 a 160 160 0 1 0 -320 0 Z M 160 160 m -100 0 a 100 100 0 0 1 200 0 a 100 100 0 0 1 -200 0 Z"
-                    style="fill: rgb(216, 216, 216); stroke: rgb(0, 0, 0);" />
+                    style={`fill: rgb(216, 216, 216); stroke: rgb(0, 0, 0);`} />
             </clipPath>
 
-            <circle class="background" cx={160} cy={160} r={150} clip-path="url(#hollow)" />
+            <circle
+                class:me
+                class="background"
+                cx={160}
+                cy={160}
+                r={150}
+                clip-path="url(#hollow)" />
 
             {#if percPlayed > 0}
                 <circle
@@ -72,7 +82,7 @@
                     cx={160}
                     cy={160}
                     r={75}
-                    stroke={"var(--accent)"}
+                    stroke={inner}
                     clip-path="url(#hollow)"
                     transform={`rotate(${-90})`}
                     stroke-dasharray={`${(percPlayed * circum) / 100} ${circum}`} />
@@ -101,7 +111,11 @@
         }
 
         .background {
-            fill: var(--primary);
+            fill: var(--audio-outer);
+
+            &.me {
+                fill: var(--audio-me-outer);
+            }
         }
     }
 

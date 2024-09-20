@@ -9,12 +9,14 @@ const txt50 = hexPercent(txt, 50);
 const txt60 = hexPercent(txt, 60);
 const txtDark = "#242834";
 const white = "#ffffff";
+const accent = "#e53b78";
 
 export function getTheme(base: Theme): Theme {
     base.primary = "#459cd1";
     base.author = "2yfsq-kaaaa-aaaaf-aaa4q-cai";
     base.name = "white";
     base.label = "White";
+    base.accent = accent;
     base.bg = white;
     base.burst = false;
     base.logo = false;
@@ -63,7 +65,7 @@ export function getTheme(base: Theme): Theme {
     base.modalPage.bg = "rgba(255, 255, 255, 0.5)";
     base.modalPage.txt = txt;
     base.currentChat.msg.bg = "#efefef";
-    base.currentChat.msg.muted = "rgba(255,255,255,0.6)";
+    base.currentChat.msg.muted = txt50;
     base.currentChat.msg.txt = txt70;
     base.currentChat.msg.inert = "rgba(226,226,226,0.8)";
     base.currentChat.msg.separator = "rgba(0,0,0,0.1)";
@@ -89,6 +91,13 @@ export function getTheme(base: Theme): Theme {
     base.daily.mainAreaText = txt;
     base.daily.supportiveText = "#4e5670";
     base.vote.maybe.color = "#ddd";
+
+    base.audio.outer = base.primary;
+    base.audio.me.outer = base.accent;
+    base.audio.inner = base.accent;
+    base.audio.me.inner = base.input.accent;
+    base.audio.note = base.currentChat.msg.txt;
+    base.audio.me.note = base.currentChat.msg.me.txt;
 
     return base;
 }

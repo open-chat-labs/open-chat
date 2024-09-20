@@ -5,6 +5,7 @@ const green = "#0d8329";
 const txtLight = "#0d8329ba";
 const txt = green;
 const componentBg = "#151f19";
+const accent = "#a9be54";
 
 export function getTheme(base: Theme): Theme {
     // it's ok to mutate the theme passed in because it's a clone
@@ -24,7 +25,7 @@ export function getTheme(base: Theme): Theme {
     base.button.txt = "rgba(255 255 255 / 80%)";
     base.collapsible.closed.header.txt = txt;
     base.collapsible.open.header.arrow = green;
-    base.accent = "#a9be54";
+    base.accent = accent;
     base.panel.left.bg = "rgba(0,0,0,0.1)";
     base.panel.right.modal = "#151a15";
     base.modal.bd = base.bd;
@@ -57,6 +58,12 @@ export function getTheme(base: Theme): Theme {
     base.link.underline = base.primary;
     base.scrollbar.bg = base.button.hv;
     base.toast.success.bg = base.notificationBar.bg;
+    base.audio.outer = green;
+    base.audio.me.outer = green;
+    base.audio.inner = accent;
+    base.audio.me.inner = accent;
+    base.audio.note = txt;
+    base.audio.me.note = txt;
 
     return base;
 }
