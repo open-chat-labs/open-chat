@@ -1282,7 +1282,6 @@ type LoginWithWallet = {
     address: string;
     signature: string;
     sessionKey: Uint8Array;
-    nonce: string;
     kind: "loginWithWallet";
 };
 

@@ -1734,7 +1734,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.address,
                         payload.signature,
                         payload.sessionKey,
-                        payload.nonce,
                     ),
                 );
                 break;
