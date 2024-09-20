@@ -1,5 +1,4 @@
 use crate::DeletedByInternal;
-use ic_ledger_types::Tokens;
 use ledger_utils::{create_pending_transaction, format_crypto_amount};
 use search::Document;
 use serde::{Deserialize, Serialize};
@@ -801,9 +800,8 @@ impl MessageContentInternalSubtype for ProposalContentInternal {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(from = "PrizeContentInternalCombined")]
 pub struct PrizeContentInternal {
-    #[serde(rename = "p2", default, skip_serializing_if = "is_empty_slice")]
+    #[serde(rename = "p", alias = "p2", default, skip_serializing_if = "is_empty_slice")]
     pub prizes_remaining: Vec<u128>,
     #[serde(rename = "r", default, skip_serializing_if = "is_empty_hashset")]
     pub reservations: HashSet<UserId>,
@@ -817,44 +815,6 @@ pub struct PrizeContentInternal {
     pub caption: Option<String>,
     #[serde(rename = "d", default, skip_serializing_if = "is_default")]
     pub diamond_only: bool,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct PrizeContentInternalCombined {
-    #[serde(rename = "p2", default, skip_serializing_if = "is_empty_slice")]
-    pub prizes_remaining_v2: Vec<u128>,
-    #[serde(rename = "p", default, skip_serializing_if = "is_empty_slice")]
-    pub prizes_remaining: Vec<Tokens>,
-    #[serde(rename = "r", default, skip_serializing_if = "is_empty_hashset")]
-    pub reservations: HashSet<UserId>,
-    #[serde(rename = "w")]
-    pub winners: HashSet<UserId>,
-    #[serde(rename = "t")]
-    pub transaction: CompletedCryptoTransaction,
-    #[serde(rename = "e")]
-    pub end_date: TimestampMillis,
-    #[serde(rename = "c", default, skip_serializing_if = "Option::is_none")]
-    pub caption: Option<String>,
-    #[serde(rename = "d", default, skip_serializing_if = "is_default")]
-    pub diamond_only: bool,
-}
-
-impl From<PrizeContentInternalCombined> for PrizeContentInternal {
-    fn from(value: PrizeContentInternalCombined) -> Self {
-        PrizeContentInternal {
-            prizes_remaining: if value.prizes_remaining.is_empty() {
-                value.prizes_remaining_v2
-            } else {
-                value.prizes_remaining.into_iter().map(|t| t.e8s() as u128).collect()
-            },
-            reservations: value.reservations,
-            winners: value.winners,
-            transaction: value.transaction,
-            end_date: value.end_date,
-            caption: value.caption,
-            diamond_only: value.diamond_only,
-        }
-    }
 }
 
 impl PrizeContentInternal {
@@ -892,11 +852,13 @@ impl PrizeContentInternal {
 impl MessageContentInternalSubtype for PrizeContentInternal {
     type ContentType = PrizeContent;
 
-    fn hydrate(&self, _my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(&self, my_user_id: Option<UserId>) -> Self::ContentType {
         PrizeContent {
             prizes_remaining: self.prizes_remaining.len() as u32,
             prizes_pending: self.reservations.len() as u32,
             winners: self.winners.iter().copied().collect(),
+            winner_count: self.winners.len() as u32,
+            user_is_winner: my_user_id.map(|u| self.winners.contains(&u)).unwrap_or_default(),
             token: self.transaction.token(),
             end_date: self.end_date,
             caption: self.caption.clone(),
