@@ -65,7 +65,7 @@ export function getTheme(base: Theme): Theme {
     base.modalPage.bg = "rgba(255, 255, 255, 0.5)";
     base.modalPage.txt = txt;
     base.currentChat.msg.bg = "#efefef";
-    base.currentChat.msg.muted = "rgba(255,255,255,0.6)";
+    base.currentChat.msg.muted = txt50;
     base.currentChat.msg.txt = txt70;
     base.currentChat.msg.inert = "rgba(226,226,226,0.8)";
     base.currentChat.msg.separator = "rgba(0,0,0,0.1)";
