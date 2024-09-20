@@ -6,12 +6,11 @@ type SessionKey = PublicKey;
 type SiweMessage = text;
 type SiweSignature = text;
 type Timestamp = nat64;
-type Nonce = text;
 
-type RuntimeFeature = variant {
-  IncludeUriInSeed;
-  DisableEthToPrincipalMapping;
-  DisablePrincipalToEthMapping
+type RuntimeFeature = variant { 
+  IncludeUriInSeed; 
+  DisableEthToPrincipalMapping; 
+  DisablePrincipalToEthMapping 
 };
 
 type SettingsInput = record {
@@ -63,13 +62,8 @@ type LoginDetails = record {
   user_canister_pubkey : CanisterPublicKey;
 };
 
-type PrepareLoginOkResponse = record {
-  siwe_message: SiweMessage;
-  nonce : text;
-};
-
 type PrepareLoginResponse = variant {
-  Ok : PrepareLoginOkResponse;
+  Ok : SiweMessage;
   Err : text;
 };
 
@@ -78,6 +72,6 @@ service : (settings_input : SettingsInput) -> {
   "get_caller_address" : () -> (GetAddressResponse) query;
   "get_principal" : (Address) -> (GetPrincipalResponse) query;
   "siwe_prepare_login" : (Address) -> (PrepareLoginResponse);
-  "siwe_login" : (SiweSignature, Address, SessionKey, Nonce) -> (LoginResponse);
+  "siwe_login" : (SiweSignature, Address, SessionKey) -> (LoginResponse);
   "siwe_get_delegation" : (Address, SessionKey, Timestamp) -> (GetDelegationResponse) query;
 };

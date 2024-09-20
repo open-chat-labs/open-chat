@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1352](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1352-group)] - 2024-09-20
+
 ### Changed
 
 - Update `send_message` args to work with MessagePack ([#6425](https://github.com/open-chat-labs/open-chat/pull/6315))
