@@ -13,7 +13,7 @@ export type ProposalsBotCommonExecuteGenericNervousSystemFunction = Static<
 >;
 export const ProposalsBotCommonExecuteGenericNervousSystemFunction = Type.Object({
     function_id: Type.BigInt(),
-    payload: Type.Array(Type.Number()),
+    payload: Type.Uint8Array(),
 });
 
 export type ProposalsBotCommonCanisterInstallMode = Static<
@@ -585,13 +585,13 @@ export type Document = Static<typeof Document>;
 export const Document = Type.Object({
     id: Type.BigInt(),
     mime_type: Type.String(),
-    data: Type.Array(Type.Number()),
+    data: Type.Uint8Array(),
 });
 
 export type CustomContent = Static<typeof CustomContent>;
 export const CustomContent = Type.Object({
     kind: Type.String(),
-    data: Type.Array(Type.Number()),
+    data: Type.Uint8Array(),
 });
 
 export type GroupPermissionRole = Static<typeof GroupPermissionRole>;
@@ -2053,7 +2053,7 @@ export const StorageBucketUploadChunkArgs = Type.Object({
     chunk_index: Type.Number(),
     chunk_size: Type.Number(),
     total_size: Type.BigInt(),
-    bytes: Type.Array(Type.Number()),
+    bytes: Type.Uint8Array(),
     expiry: Type.Optional(Type.BigInt()),
 });
 
@@ -2089,7 +2089,7 @@ export type ProposalsBotCommonUpgradeSnsControlledCanister = Static<
 >;
 export const ProposalsBotCommonUpgradeSnsControlledCanister = Type.Object({
     canister_id: PrincipalTS,
-    new_canister_wasm: Type.Array(Type.Number()),
+    new_canister_wasm: Type.Uint8Array(),
     mode: ProposalsBotCommonCanisterInstallMode,
 });
 

@@ -2,4 +2,4 @@
 import type { PrincipalTS } from "../../shared/PrincipalTS";
 import type { ProposalsBotCommonCanisterInstallMode } from "./ProposalsBotCommonCanisterInstallMode";
 
-export type ProposalsBotCommonUpgradeSnsControlledCanister = { canister_id: PrincipalTS, new_canister_wasm: Array<number>, mode: ProposalsBotCommonCanisterInstallMode, };
+export type ProposalsBotCommonUpgradeSnsControlledCanister = { canister_id: PrincipalTS, new_canister_wasm: Uint8Array, mode: ProposalsBotCommonCanisterInstallMode, };
