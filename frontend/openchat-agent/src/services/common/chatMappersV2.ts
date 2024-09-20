@@ -1,4 +1,5 @@
 import {
+    bigintToBytes,
     bytesToBigint,
     bytesToHexString,
     identity,
@@ -91,12 +92,12 @@ import type {
     // RegisterProposalVoteResponse,
     UserGroupSummary,
     TipsReceived,
-    // PrizeContentInitial,
+    PrizeContentInitial,
     // ClaimPrizeResponse,
     MessagePermissions,
     ExpiredEventsRange,
     ExpiredMessagesRange,
-    // P2PSwapContentInitial,
+    P2PSwapContentInitial,
     P2PSwapContent,
     P2PSwapStatus,
     TokenInfo,
@@ -112,6 +113,7 @@ import type {
     LeafGate,
     ChatIdentifier,
     UpdatedEvent,
+    User,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -168,16 +170,19 @@ import type {
     HydratedMention as TMention,
     Message as TMessage,
     MessageContent as TMessageContent,
+    MessageContentInitial as TMessageContentInitial,
     MessagePermissions as TMessagePermissions,
     MessageReminderContent as TMessageReminderContent,
     MessageReminderCreatedContent as TMessageReminderCreatedContent,
     P2PSwapContent as TP2PSwapContent,
+    P2PSwapContentInitial as TP2PSwapContentInitial,
     P2PSwapStatus as TP2PSwapStatus,
     PendingCryptoTransaction as TPendingCryptoTransaction,
     PollConfig as TPollConfig,
     PollContent as TPollContent,
     PollVotes as TPollVotes,
     PrizeContent as TPrizeContent,
+    PrizeContentInitial as TPrizeContentInitial,
     PrizeWinnerContent as TPrizeWinnerContent,
     Proposal as TProposal,
     ProposalContent as TProposalContent,
@@ -188,7 +193,9 @@ import type {
     TextContent as TTextContent,
     ThreadSummary as TThreadSummary,
     TokenInfo as TTokenInfo,
+    Tokens as TTokens,
     TotalVotes as TTotalVotes,
+    User as TUser,
     UserGroupSummary as TUserGroupSummary,
     VideoContent as TVideoContent,
     VideoCallContent as TVideoCallContent,
@@ -689,12 +696,12 @@ function p2pTradeStatus(value: TP2PSwapStatus): P2PSwapStatus {
     throw new UnsupportedValueError("Unexpected ApiP2PSwapStatus type received", value);
 }
 
-// export function apiUser(domain: User): ApiUser {
-//     return {
-//         user_id: Principal.fromText(domain.userId),
-//         username: domain.username,
-//     };
-// }
+export function apiUser(domain: User): TUser {
+    return {
+        user_id: principalStringToBytes(domain.userId),
+        username: domain.username,
+    };
+}
 
 function proposalContent(value: TProposalContent): ProposalContent {
     return {
@@ -1338,184 +1345,179 @@ export function memberRole(value: TGroupRole | TCommunityRole): MemberRole {
 //         };
 //     }
 // }
-//
-// export function apiMessageContent(domain: MessageContent): ApiMessageContentInitial {
-//     switch (domain.kind) {
-//         case "text_content":
-//             return { Text: apiTextContent(domain) };
-//
-//         case "image_content":
-//             return { Image: apiImageContent(domain) };
-//
-//         case "video_content":
-//             return { Video: apiVideoContent(domain) };
-//
-//         case "audio_content":
-//             return { Audio: apiAudioContent(domain) };
-//
-//         case "file_content":
-//             return { File: apiFileContent(domain) };
-//
-//         case "crypto_content":
-//             return { Crypto: apiPendingCryptoContent(domain) };
-//
-//         case "poll_content":
-//             return { Poll: apiPollContent(domain) };
-//
-//         case "giphy_content":
-//             return { Giphy: apiGiphyContent(domain) };
-//
-//         case "proposal_content":
-//             return { GovernanceProposal: apiProposalContent(domain) };
-//
-//         case "prize_content_initial":
-//             return { Prize: apiPrizeContentInitial(domain) };
-//
-//         case "p2p_swap_content_initial":
-//             return { P2PSwap: apiP2PSwapContentInitial(domain) };
-//
-//         case "meme_fighter_content":
-//             // eslint-disable-next-line no-case-declarations
-//             const encoder = new TextEncoder();
-//             return {
-//                 Custom: {
-//                     kind: "meme_fighter",
-//                     data: encoder.encode(
-//                         JSON.stringify({
-//                             url: domain.url,
-//                             width: domain.width,
-//                             height: domain.height,
-//                         }),
-//                     ),
-//                 },
-//             };
-//
-//         case "user_referral_card":
-//             return {
-//                 Custom: {
-//                     kind: "user_referral_card",
-//                     data: [],
-//                 },
-//             };
-//
-//         case "video_call_content":
-//         case "deleted_content":
-//         case "blocked_content":
-//         case "prize_content":
-//         case "prize_winner_content":
-//         case "placeholder_content":
-//         case "message_reminder_content":
-//         case "message_reminder_created_content":
-//         case "reported_message_content":
-//         case "p2p_swap_content":
-//             throw new Error(`Incorrectly attempting to send {domain.kind} content to the server`);
-//     }
-// }
-//
-// function apiProposalContent(_: ProposalContent): ApiProposalContent {
-//     throw new Error("Sending messages of type 'GovernanceProposal' is not currently supported");
-// }
-//
-// function apiGiphyContent(domain: GiphyContent): ApiGiphyContent {
-//     return {
-//         title: domain.title,
-//         caption: apiOptional(identity, domain.caption),
-//         desktop: apiGiphyImageVariant(domain.desktop),
-//         mobile: apiGiphyImageVariant(domain.mobile),
-//     };
-// }
-//
-// function apiGiphyImageVariant(domain: GiphyImage): ApiGiphyImageVariant {
-//     return {
-//         height: domain.height,
-//         width: domain.width,
-//         url: domain.url,
-//         mime_type: domain.mimeType,
-//     };
-// }
-//
-// function apiPollContent(domain: PollContent): ApiPollContent {
-//     return {
-//         votes: apiPollVotes(domain.votes),
-//         config: apiPollConfig(domain.config),
-//         ended: domain.ended,
-//     };
-// }
-//
-// function apiPollConfig(domain: PollConfig): ApiPollConfig {
-//     return {
-//         allow_multiple_votes_per_user: domain.allowMultipleVotesPerUser,
-//         allow_user_to_change_vote: domain.allowUserToChangeVote,
-//         text: apiOptional(identity, domain.text),
-//         show_votes_before_end_date: domain.showVotesBeforeEndDate,
-//         end_date: apiOptional(identity, domain.endDate),
-//         anonymous: domain.anonymous,
-//         options: domain.options,
-//     };
-// }
-//
-// function apiPollVotes(domain: PollVotes): ApiPollVotes {
-//     return {
-//         total: apiTotalPollVotes(domain.total),
-//         user: new Uint32Array(domain.user),
-//     };
-// }
-//
-// function apiTotalPollVotes(domain: TotalPollVotes): ApiTotalPollVotes {
-//     if (domain.kind === "anonymous_poll_votes") {
-//         return {
-//             Anonymous: Object.entries(domain.votes).map(([idx, votes]) => [Number(idx), votes]),
-//         };
-//     }
-//
-//     if (domain.kind === "hidden_poll_votes") {
-//         return {
-//             Hidden: domain.votes,
-//         };
-//     }
-//
-//     if (domain.kind === "visible_poll_votes") {
-//         return {
-//             Visible: Object.entries(domain.votes).map(([idx, userIds]) => [
-//                 Number(idx),
-//                 [...userIds].map((u) => Principal.fromText(u)),
-//             ]),
-//         };
-//     }
-//     throw new UnsupportedValueError("Unexpected TotalPollVotes type received", domain);
-// }
-//
-// function apiImageContent(domain: ImageContent): ApiImageContent {
-//     return {
-//         height: domain.height,
-//         mime_type: domain.mimeType,
-//         blob_reference: apiBlobReference(domain.blobReference),
-//         thumbnail_data: domain.thumbnailData,
-//         caption: apiOptional(identity, domain.caption),
-//         width: domain.width,
-//     };
-// }
-//
-// function apiVideoContent(domain: VideoContent): ApiVideoContent {
-//     return {
-//         height: domain.height,
-//         mime_type: domain.mimeType,
-//         video_blob_reference: apiBlobReference(domain.videoData.blobReference),
-//         image_blob_reference: apiBlobReference(domain.imageData.blobReference),
-//         thumbnail_data: domain.thumbnailData,
-//         caption: apiOptional(identity, domain.caption),
-//         width: domain.width,
-//     };
-// }
-//
-// function apiAudioContent(domain: AudioContent): ApiAudioContent {
-//     return {
-//         mime_type: domain.mimeType,
-//         blob_reference: apiBlobReference(domain.blobReference),
-//         caption: apiOptional(identity, domain.caption),
-//     };
-// }
-//
+
+export function apiMessageContent(domain: MessageContent): TMessageContentInitial {
+    switch (domain.kind) {
+        case "text_content":
+            return { Text: apiTextContent(domain) };
+
+        case "image_content":
+            return { Image: apiImageContent(domain) };
+
+        case "video_content":
+            return { Video: apiVideoContent(domain) };
+
+        case "audio_content":
+            return { Audio: apiAudioContent(domain) };
+
+        case "file_content":
+            return { File: apiFileContent(domain) };
+
+        case "crypto_content":
+            return { Crypto: apiPendingCryptoContent(domain) };
+
+        case "poll_content":
+            return { Poll: apiPollContent(domain) };
+
+        case "giphy_content":
+            return { Giphy: apiGiphyContent(domain) };
+
+        case "prize_content_initial":
+            return { Prize: apiPrizeContentInitial(domain) };
+
+        case "p2p_swap_content_initial":
+            return { P2PSwap: apiP2PSwapContentInitial(domain) };
+
+        case "meme_fighter_content":
+            // eslint-disable-next-line no-case-declarations
+            const encoder = new TextEncoder();
+            return {
+                Custom: {
+                    kind: "meme_fighter",
+                    data: encoder.encode(
+                        JSON.stringify({
+                            url: domain.url,
+                            width: domain.width,
+                            height: domain.height,
+                        }),
+                    ),
+                },
+            };
+
+        case "user_referral_card":
+            return {
+                Custom: {
+                    kind: "user_referral_card",
+                    data: new Uint8Array(),
+                },
+            };
+
+        case "video_call_content":
+        case "deleted_content":
+        case "blocked_content":
+        case "prize_content":
+        case "prize_winner_content":
+        case "placeholder_content":
+        case "proposal_content":
+        case "message_reminder_content":
+        case "message_reminder_created_content":
+        case "reported_message_content":
+        case "p2p_swap_content":
+            throw new Error(`Incorrectly attempting to send {domain.kind} content to the server`);
+    }
+}
+
+function apiGiphyContent(domain: GiphyContent): TGiphyContent {
+    return {
+        title: domain.title,
+        caption: domain.caption,
+        desktop: apiGiphyImageVariant(domain.desktop),
+        mobile: apiGiphyImageVariant(domain.mobile),
+    };
+}
+
+function apiGiphyImageVariant(domain: GiphyImage): TGiphyImageVariant {
+    return {
+        height: domain.height,
+        width: domain.width,
+        url: domain.url,
+        mime_type: domain.mimeType,
+    };
+}
+
+function apiPollContent(domain: PollContent): TPollContent {
+    return {
+        votes: apiPollVotes(domain.votes),
+        config: apiPollConfig(domain.config),
+        ended: domain.ended,
+    };
+}
+
+function apiPollConfig(domain: PollConfig): TPollConfig {
+    return {
+        allow_multiple_votes_per_user: domain.allowMultipleVotesPerUser,
+        allow_user_to_change_vote: domain.allowUserToChangeVote,
+        text: domain.text,
+        show_votes_before_end_date: domain.showVotesBeforeEndDate,
+        end_date: domain.endDate,
+        anonymous: domain.anonymous,
+        options: domain.options,
+    };
+}
+
+function apiPollVotes(domain: PollVotes): TPollVotes {
+    return {
+        total: apiTotalPollVotes(domain.total),
+        user: domain.user,
+    };
+}
+
+function apiTotalPollVotes(domain: TotalPollVotes): TTotalVotes {
+    if (domain.kind === "anonymous_poll_votes") {
+        return {
+            Anonymous: domain.votes,
+        };
+    }
+
+    if (domain.kind === "hidden_poll_votes") {
+        return {
+            Hidden: domain.votes,
+        };
+    }
+
+    if (domain.kind === "visible_poll_votes") {
+        return {
+            Visible: toRecord2(
+                Object.entries(domain.votes),
+                ([idx, _]) => Number(idx),
+                ([_, userIds]) => userIds.map(principalStringToBytes),
+            ),
+        };
+    }
+    throw new UnsupportedValueError("Unexpected TotalPollVotes type received", domain);
+}
+
+function apiImageContent(domain: ImageContent): TImageContent {
+    return {
+        height: domain.height,
+        mime_type: domain.mimeType,
+        blob_reference: apiBlobReference(domain.blobReference),
+        thumbnail_data: domain.thumbnailData,
+        caption: domain.caption,
+        width: domain.width,
+    };
+}
+
+function apiVideoContent(domain: VideoContent): TVideoContent {
+    return {
+        height: domain.height,
+        mime_type: domain.mimeType,
+        video_blob_reference: apiBlobReference(domain.videoData.blobReference),
+        image_blob_reference: apiBlobReference(domain.imageData.blobReference),
+        thumbnail_data: domain.thumbnailData,
+        caption: domain.caption,
+        width: domain.width,
+    };
+}
+
+function apiAudioContent(domain: AudioContent): TAudioContent {
+    return {
+        mime_type: domain.mimeType,
+        blob_reference: apiBlobReference(domain.blobReference),
+        caption: domain.caption,
+    };
+}
+
 // export function apiOptional<D, A>(mapper: (d: D) => A, domain: D | undefined): [] | [A] {
 //     return domain !== undefined ? [mapper(domain)] : [];
 // }
@@ -1741,94 +1743,91 @@ export function accessGate(value: TAccessGate): AccessGate {
     throw new UnsupportedValueError("Unexpected ApiGroupGate type received", value);
 }
 
-// function apiBlobReference(domain?: BlobReference): [] | [ApiBlobReference] {
-//     return apiOptional(
-//         (b) => ({
-//             blob_id: b.blobId,
-//             canister_id: Principal.fromText(b.canisterId),
-//         }),
-//         domain,
-//     );
-// }
-//
-// export function apiPrizeContentInitial(domain: PrizeContentInitial): ApiPrizeCotentInitial {
-//     return {
-//         caption: apiOptional(identity, domain.caption),
-//         transfer: apiPendingCryptoTransaction(domain.transfer),
-//         end_date: domain.endDate,
-//         diamond_only: domain.diamondOnly,
-//         prizes_v2: domain.prizes,
-//     };
-// }
-//
-// export function apiP2PSwapContentInitial(domain: P2PSwapContentInitial): ApiP2PSwapContentInitial {
-//     return {
-//         token0: apiTokenInfo(domain.token0),
-//         token1: apiTokenInfo(domain.token1),
-//         token0_amount: domain.token0Amount,
-//         token1_amount: domain.token1Amount,
-//         caption: apiOptional(identity, domain.caption),
-//         expires_in: domain.expiresIn,
-//     };
-// }
-//
-// function apiTokenInfo(domain: TokenInfo): ApiTokenInfo {
-//     return {
-//         fee: domain.fee,
-//         decimals: domain.decimals,
-//         token: apiToken(domain.symbol),
-//         ledger: Principal.fromText(domain.ledger),
-//     };
-// }
-//
-// export function apiPendingCryptoContent(domain: CryptocurrencyContent): ApiCryptoContent {
-//     return {
-//         recipient: Principal.fromText(domain.transfer.recipient),
-//         caption: apiOptional(identity, domain.caption),
-//         transfer: apiPendingCryptoTransaction(domain.transfer),
-//     };
-// }
-//
-// export function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoTransaction {
-//     if (domain.kind === "pending") {
-//         if (domain.token === "ICP") {
-//             return {
-//                 Pending: {
-//                     NNS: {
-//                         ledger: Principal.fromText(domain.ledger),
-//                         token: apiToken(domain.token),
-//                         to: {
-//                             User: Principal.fromText(domain.recipient),
-//                         },
-//                         amount: apiICP(domain.amountE8s),
-//                         fee: [],
-//                         memo: apiOptional(identity, domain.memo),
-//                         created: domain.createdAtNanos,
-//                     },
-//                 },
-//             };
-//         } else {
-//             return {
-//                 Pending: {
-//                     ICRC1: {
-//                         ledger: Principal.fromText(domain.ledger),
-//                         token: apiToken(domain.token),
-//                         to: {
-//                             owner: Principal.fromText(domain.recipient),
-//                             subaccount: [],
-//                         },
-//                         amount: domain.amountE8s,
-//                         fee: domain.feeE8s ?? BigInt(0),
-//                         memo: apiOptional(bigintToBytes, domain.memo),
-//                         created: domain.createdAtNanos,
-//                     },
-//                 },
-//             };
-//         }
-//     }
-//     throw new Error("Transaction is not of type 'Pending': " + JSON.stringify(domain));
-// }
-//
+function apiBlobReference(domain?: BlobReference): TBlobReference | undefined {
+    return mapOptional(domain, (b) => ({
+        blob_id: b.blobId,
+        canister_id: principalStringToBytes(b.canisterId),
+    }));
+}
+
+export function apiPrizeContentInitial(domain: PrizeContentInitial): TPrizeContentInitial {
+    return {
+        caption: domain.caption,
+        transfer: apiPendingCryptoTransaction(domain.transfer),
+        end_date: domain.endDate,
+        diamond_only: domain.diamondOnly,
+        prizes_v2: domain.prizes,
+    };
+}
+
+export function apiP2PSwapContentInitial(domain: P2PSwapContentInitial): TP2PSwapContentInitial {
+    return {
+        token0: apiTokenInfo(domain.token0),
+        token1: apiTokenInfo(domain.token1),
+        token0_amount: domain.token0Amount,
+        token1_amount: domain.token1Amount,
+        caption: domain.caption,
+        expires_in: domain.expiresIn,
+    };
+}
+
+function apiTokenInfo(domain: TokenInfo): TTokenInfo {
+    return {
+        fee: domain.fee,
+        decimals: domain.decimals,
+        token: apiToken(domain.symbol),
+        ledger: principalStringToBytes(domain.ledger),
+    };
+}
+
+export function apiPendingCryptoContent(domain: CryptocurrencyContent): TCryptoContent {
+    return {
+        recipient: principalStringToBytes(domain.transfer.recipient),
+        caption: domain.caption,
+        transfer: apiPendingCryptoTransaction(domain.transfer),
+    };
+}
+
+export function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): TCryptoTransaction {
+    if (domain.kind === "pending") {
+        if (domain.token === "ICP") {
+            return {
+                Pending: {
+                    NNS: {
+                        ledger: principalStringToBytes(domain.ledger),
+                        token: apiToken(domain.token),
+                        to: {
+                            User: principalStringToBytes(domain.recipient),
+                        },
+                        amount: apiICP(domain.amountE8s),
+                        fee: undefined,
+                        memo: domain.memo,
+                        created: domain.createdAtNanos,
+                    },
+                },
+            };
+        } else {
+            return {
+                Pending: {
+                    ICRC1: {
+                        ledger: principalStringToBytes(domain.ledger),
+                        token: apiToken(domain.token),
+                        to: {
+                            owner: principalStringToBytes(domain.recipient),
+                            subaccount: undefined,
+                        },
+                        amount: domain.amountE8s,
+                        fee: domain.feeE8s ?? BigInt(0),
+                        memo: mapOptional(domain.memo, bigintToBytes),
+                        created: domain.createdAtNanos,
+                    },
+                },
+            };
+        }
+    }
+    throw new Error("Transaction is not of type 'Pending': " + JSON.stringify(domain));
+}
+
 // export function apiPendingCryptocurrencyWithdrawal(
 //     domain: PendingCryptocurrencyWithdrawal,
 //     pin: string | undefined,
@@ -1876,27 +1875,27 @@ export function apiProposalVote(vote: boolean): number {
     return vote ? 1 : 2;
 }
 
-// function apiTextContent(domain: TextContent): ApiTextContent {
-//     return {
-//         text: domain.text,
-//     };
-// }
-//
-// function apiFileContent(domain: FileContent): ApiFileContent {
-//     return {
-//         name: domain.name,
-//         mime_type: domain.mimeType,
-//         blob_reference: apiBlobReference(domain.blobReference),
-//         caption: apiOptional(identity, domain.caption),
-//         file_size: domain.fileSize,
-//     };
-// }
-//
-// function apiICP(amountE8s: bigint): ApiICP {
-//     return {
-//         e8s: amountE8s,
-//     };
-// }
+function apiTextContent(domain: TextContent): TTextContent {
+    return {
+        text: domain.text,
+    };
+}
+
+function apiFileContent(domain: FileContent): TFileContent {
+    return {
+        name: domain.name,
+        mime_type: domain.mimeType,
+        blob_reference: apiBlobReference(domain.blobReference),
+        caption: domain.caption,
+        file_size: domain.fileSize,
+    };
+}
+
+function apiICP(amountE8s: bigint): TTokens {
+    return {
+        e8s: amountE8s,
+    };
+}
 
 export function groupChatSummary(value: TGroupCanisterGroupChatSummary): GroupChatSummary {
     const groupId = principalBytesToString(value.chat_id);
