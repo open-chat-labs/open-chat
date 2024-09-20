@@ -3544,7 +3544,7 @@ export class OpenChat extends OpenChatAgentWorker {
         const newAchievement = this.isNewSendMessageAchievement(messageContext, eventWrapper.event);
         const isCryptoMessage = eventWrapper.event.content.kind === "crypto_content";
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.sendStreamRequest(
                 {
                     kind: "sendMessage",
@@ -3631,7 +3631,7 @@ export class OpenChat extends OpenChatAgentWorker {
                         undefined,
                     );
 
-                    return reject(CommonResponses.failure());
+                    return resolve(CommonResponses.failure());
                 });
         });
     }
