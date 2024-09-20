@@ -44,7 +44,7 @@ export function getTheme(base: Theme): Theme {
     // base.entry.input.sh = "inset 0px 2px 4px rgba(138, 138, 138, 0.5)";
     base.panel.bg = "transparent";
     base.panel.left.bg = "transparent";
-    base.panel.nav.bg = "transparent";
+    base.panel.nav.bg = white;
     base.panel.right.bg = "transparent";
     base.panel.right.modal = white;
     base.unread.mute = "#dddddd";
