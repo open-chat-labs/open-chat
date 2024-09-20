@@ -1,4 +1,3 @@
-import { blueDiamondHue } from "../../components/icons/diamond";
 import type { Theme } from "../types";
 import { hexPercent } from "../utils";
 
