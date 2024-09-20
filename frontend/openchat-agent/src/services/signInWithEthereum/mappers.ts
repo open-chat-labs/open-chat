@@ -16,8 +16,7 @@ export function prepareLoginResponse(candid: ApiPrepareLoginResponse): SiwePrepa
     if ("Ok" in candid) {
         return {
             kind: "success",
-            siweMessage: candid.Ok.siwe_message,
-            nonce: candid.Ok.nonce,
+            siweMessage: candid.Ok,
         };
     }
     if ("Err" in candid) {

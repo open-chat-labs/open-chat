@@ -42,7 +42,7 @@ export type GetDelegationResponse =
     | { kind: "error"; error: string };
 
 export type SiwePrepareLoginResponse =
-    | { kind: "success"; siweMessage: string; nonce: string }
+    | { kind: "success"; siweMessage: string }
     | { kind: "error"; error: string };
 
 export type SiwsPrepareLoginResponse =
