@@ -815,6 +815,8 @@ pub struct PrizeContentInternal {
     pub caption: Option<String>,
     #[serde(rename = "d", default, skip_serializing_if = "is_default")]
     pub diamond_only: bool,
+    #[serde(rename = "f", default, skip_serializing_if = "is_default")]
+    pub refund_started: bool,
 }
 
 impl PrizeContentInternal {
@@ -827,13 +829,18 @@ impl PrizeContentInternal {
             end_date: content.end_date,
             caption: content.caption,
             diamond_only: content.diamond_only,
+            refund_started: false,
         }
     }
 
-    pub fn prize_refund(&self, sender: UserId, memo: &[u8], now_nanos: TimestampNanos) -> Option<PendingCryptoTransaction> {
+    pub fn prize_refund(&mut self, sender: UserId, memo: &[u8], now_nanos: TimestampNanos) -> Option<PendingCryptoTransaction> {
+        if self.refund_started {
+            return None;
+        }
         let fee = self.transaction.fee();
         let unclaimed = self.prizes_remaining.iter().map(|p| p + fee).sum::<u128>();
         if unclaimed > 0 {
+            self.refund_started = true;
             Some(create_pending_transaction(
                 self.transaction.token(),
                 self.transaction.ledger_canister_id(),

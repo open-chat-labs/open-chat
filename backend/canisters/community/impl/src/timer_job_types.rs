@@ -180,7 +180,7 @@ impl Job for HardDeleteMessageContentJob {
                         });
                         ic_cdk::spawn(storage_bucket_client::delete_files(files_to_delete));
                     }
-                    if let MessageContentInternal::Prize(prize) = content {
+                    if let MessageContentInternal::Prize(mut prize) = content {
                         if let Some(message_index) = channel
                             .chat
                             .events
@@ -270,8 +270,8 @@ impl Job for MarkGroupImportCompleteJob {
 
 impl Job for RefundPrizeJob {
     fn execute(self) {
-        if let Some(pending_transaction) = read_state(|state| {
-            if let Some(channel) = state.data.channels.get(&self.channel_id) {
+        if let Some(pending_transaction) = mutate_state(|state| {
+            if let Some(channel) = state.data.channels.get_mut(&self.channel_id) {
                 channel.chat.events.prize_refund(
                     self.thread_root_message_index,
                     self.message_index,
