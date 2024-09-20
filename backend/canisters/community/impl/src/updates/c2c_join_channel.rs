@@ -178,7 +178,7 @@ fn is_permitted_to_join(
                             user_id: member.user_id,
                             diamond_membership_expires_at,
                             this_canister: state.env.canister_id(),
-                            unique_person_proof,
+                            is_unique_person: unique_person_proof.is_some(),
                             verified_credential_args: verified_credential_args.map(|vc| CheckVerifiedCredentialGateArgs {
                                 user_ii_principal: vc.user_ii_principal,
                                 credential_jwts: vc.credential_jwts(),

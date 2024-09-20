@@ -2,13 +2,13 @@ use crate::{
     model::{expiring_member_actions::ExpiringMemberAction, expiring_members::ExpiringMember},
     mutate_state, read_state, RuntimeState,
 };
-use gated_groups::{check_sns_neuron_gate, check_token_balance_gate, CheckIfPassesGateResult};
+use gated_groups::{check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult};
 use ic_cdk_timers::TimerId;
 use local_user_index_canister_c2c_client::lookup_users;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
-use types::{AccessGate, ChannelId, Milliseconds, TimestampMillis, UserId};
+use types::{ChannelId, Milliseconds, UserId};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -40,8 +40,8 @@ fn run() {
 async fn process_action(action: ExpiringMemberAction) {
     match action {
         ExpiringMemberAction::UserDetails(vec) => process_user_details_action(&vec).await,
-        ExpiringMemberAction::TokenBalance(user_id, channel_id) => process_token_balance_action(user_id, channel_id).await,
-        ExpiringMemberAction::SnsNeuron(user_id, channel_id) => process_sns_neuron_action(user_id, channel_id).await,
+        ExpiringMemberAction::TokenBalance(user_id, channel_id) => process_gate_check(user_id, channel_id).await,
+        ExpiringMemberAction::SnsNeuron(user_id, channel_id) => process_gate_check(user_id, channel_id).await,
     }
 }
 
@@ -59,8 +59,7 @@ async fn process_user_details_action(user_details_args: &[(UserId, Option<Channe
             }
 
             for (user_id, channel_id) in user_details_args {
-                let result = process_user_details(*user_id, *channel_id, state);
-                handle_gate_check_result(*user_id, *channel_id, result, state);
+                process_gate_check(*user_id, *channel_id);
             }
         }),
         Err(_) => mutate_state(|state| {
@@ -71,110 +70,54 @@ async fn process_user_details_action(user_details_args: &[(UserId, Option<Channe
     }
 }
 
-async fn process_token_balance_action(user_id: UserId, channel_id: Option<ChannelId>) {
+async fn process_gate_check(user_id: UserId, channel_id: Option<ChannelId>) {
     let Some(gate_config) = read_state(|state| state.data.get_access_gate_config(channel_id).cloned()) else {
         return;
     };
 
-    let AccessGate::TokenBalance(gate) = gate_config.gate() else {
-        return;
-    };
+    let check_gate_args = read_state(|state| {
+        let (diamond_membership_expires_at, is_unique_person) = state
+            .data
+            .user_cache
+            .get(&user_id)
+            .map_or((None, false), |u| (u.diamond_membership_expires_at, u.is_unique_person));
 
-    let result = check_token_balance_gate(gate, user_id).await;
-
-    mutate_state(|state| {
-        handle_gate_check_result(
+        CheckGateArgs {
             user_id,
-            channel_id,
-            CheckGateResult::from(result, gate_config.expiry()),
-            state,
-        )
-    });
-}
-
-async fn process_sns_neuron_action(user_id: UserId, channel_id: Option<ChannelId>) {
-    let Some(gate_config) = read_state(|state| state.data.get_access_gate_config(channel_id).cloned()) else {
-        return;
-    };
-
-    let AccessGate::SnsNeuron(gate) = gate_config.gate() else {
-        return;
-    };
-
-    let result = check_sns_neuron_gate(gate, user_id).await;
-
-    mutate_state(|state| {
-        handle_gate_check_result(
-            user_id,
-            channel_id,
-            CheckGateResult::from(result, gate_config.expiry()),
-            state,
-        )
-    });
-}
-
-fn process_user_details(user_id: UserId, channel_id: Option<ChannelId>, state: &mut RuntimeState) -> CheckGateResult {
-    let Some(gate_config) = state.data.get_access_gate_config(channel_id) else {
-        return CheckGateResult::NotFound;
-    };
-
-    let Some(user_details) = state.data.user_cache.get(&user_id) else {
-        return CheckGateResult::Failed;
-    };
-
-    let passes_gate = match gate_config.gate {
-        AccessGate::DiamondMember => user_details.is_diamond(state.env.now()),
-        AccessGate::LifetimeDiamondMember => user_details.is_lifetime_diamond_member(),
-        AccessGate::UniquePerson => user_details.is_unique_person,
-        _ => false,
-    };
-
-    if passes_gate {
-        return CheckGateResult::Failed;
-    }
-
-    CheckGateResult::Success(gate_config.expiry())
-}
-
-enum CheckGateResult {
-    Success(Option<TimestampMillis>),
-    NotFound,
-    Failed,
-    InternalError,
-}
-
-impl CheckGateResult {
-    pub fn from(result: CheckIfPassesGateResult, gate_expiry: Option<TimestampMillis>) -> CheckGateResult {
-        match result {
-            CheckIfPassesGateResult::Success => CheckGateResult::Success(gate_expiry),
-            CheckIfPassesGateResult::Failed(_) => CheckGateResult::Failed,
-            CheckIfPassesGateResult::InternalError(_) => CheckGateResult::InternalError,
+            diamond_membership_expires_at,
+            this_canister: state.env.canister_id(),
+            is_unique_person,
+            verified_credential_args: None,
+            referred_by_member: false,
+            now: state.env.now(),
         }
-    }
-}
+    });
 
-fn handle_gate_check_result(user_id: UserId, channel_id: Option<ChannelId>, result: CheckGateResult, state: &mut RuntimeState) {
-    let now = state.env.now();
+    let gate_expiry = gate_config.expiry();
+    let result = check_if_passes_gate(gate_config.gate, check_gate_args).await;
 
-    match result {
-        CheckGateResult::NotFound => (),
-        CheckGateResult::Success(gate_expiry) => {
-            if let Some(expiry) = gate_expiry {
-                state.data.expiring_members.push(ExpiringMember {
-                    expires: now + expiry,
-                    channel_id,
-                    user_id,
-                });
+    mutate_state(|state| {
+        let now = state.env.now();
+
+        match result {
+            CheckIfPassesGateResult::Success => {
+                if let Some(expiry) = gate_expiry {
+                    state.data.expiring_members.push(ExpiringMember {
+                        expires: now + expiry,
+                        channel_id,
+                        user_id,
+                    });
+                }
+            }
+            CheckIfPassesGateResult::Failed(_) => {
+                //
+                state.data.expire_member(user_id, channel_id, now)
+            }
+            CheckIfPassesGateResult::InternalError(_) => {
+                requeue_member_expiry(user_id, channel_id, state);
             }
         }
-        CheckGateResult::Failed => {
-            //
-            state.data.expire_member(user_id, channel_id, now)
-        }
-        CheckGateResult::InternalError => {
-            requeue_member_expiry(user_id, channel_id, state);
-        }
-    }
+    });
 }
 
 fn requeue_member_expiry(user_id: UserId, channel_id: Option<ChannelId>, state: &mut RuntimeState) {
