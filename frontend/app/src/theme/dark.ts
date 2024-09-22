@@ -215,6 +215,10 @@ export function darkTheme(defaultTheme: Theme): Theme {
             "txt-sh": "1px 1px rgba(0, 0, 0, 0.2)",
         },
 
+        replies: {
+            bd: "var(--bd);",
+        },
+
         currentChat: {
             ...defaultTheme.currentChat,
             msgs: {

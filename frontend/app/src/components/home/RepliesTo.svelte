@@ -107,13 +107,12 @@
         padding: $sp3;
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
-        border: var(--bw) solid var(--bd);
+        border: var(--bw) solid var(--replies-bd);
         cursor: pointer;
         margin-bottom: $sp3;
         overflow: hidden;
         @include nice-scrollbar();
         max-height: 300px;
-        box-shadow: inset 1px 2px 4px rgba(0, 0, 0, 0.15);
 
         .inert {
             pointer-events: none;

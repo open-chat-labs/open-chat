@@ -96,6 +96,8 @@ export function getTheme(base: Theme): Theme {
     base.audio.me.inner = base.input.accent;
     base.audio.note = base.currentChat.msg.txt;
     base.audio.me.note = base.currentChat.msg.me.txt;
+    base.replies.bd = "var(--bw) solid #cccccc;";
+    base.replies.bd = "#dddddd";
 
     return base;
 }
