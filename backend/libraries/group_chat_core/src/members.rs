@@ -320,7 +320,7 @@ pub struct GroupMemberInternal {
     pub user_id: UserId,
     #[serde(rename = "d")]
     pub date_added: TimestampMillis,
-    #[serde(rename = "r", alias = "r2", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "r", default, skip_serializing_if = "is_default")]
     pub role: Timestamped<GroupRoleInternal>,
     #[serde(rename = "n")]
     pub notifications_muted: Timestamped<bool>,
