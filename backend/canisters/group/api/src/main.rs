@@ -1,4 +1,6 @@
 use candid_gen::generate_candid_method;
+use std::env;
+use ts_export::generate_ts_method;
 
 #[allow(deprecated)]
 fn main() {
@@ -52,6 +54,13 @@ fn main() {
     generate_candid_method!(group, unfollow_thread, update);
     generate_candid_method!(group, unpin_message, update);
     generate_candid_method!(group, update_group_v2, update);
+
+    let directory = env::current_dir().unwrap().join("tsBindings/group");
+    if directory.exists() {
+        std::fs::remove_dir_all(&directory).unwrap();
+    }
+
+    generate_ts_method!(group, send_message_v2);
 
     candid::export_service!();
     std::print!("{}", __export_service());

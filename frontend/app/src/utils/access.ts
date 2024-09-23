@@ -148,7 +148,7 @@ export const referredByMemberGate: GateBinding = {
     label: "access.referredByMember",
     key: "referred_by_member_gate",
     gate: { kind: "referred_by_member_gate" },
-    enabled: true,
+    enabled: false,
 };
 
 export const neuronGateFolder: GateBinding = {

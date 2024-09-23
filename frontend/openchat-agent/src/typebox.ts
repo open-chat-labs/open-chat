@@ -1795,6 +1795,40 @@ export const LocalUserIndexGroupAndCommunitySummaryUpdatesSummaryUpdatesArgs = T
     updates_since: Type.Optional(Type.BigInt()),
 });
 
+export type CommunitySendMessageSuccessResult = Static<typeof CommunitySendMessageSuccessResult>;
+export const CommunitySendMessageSuccessResult = Type.Object({
+    event_index: EventIndex,
+    message_index: MessageIndex,
+    timestamp: Type.BigInt(),
+    expires_at: Type.Optional(Type.Union([Type.BigInt(), Type.Null()])),
+});
+
+export type CommunitySendMessageResponse = Static<typeof CommunitySendMessageResponse>;
+export const CommunitySendMessageResponse = Type.Union([
+    Type.Object({
+        Success: CommunitySendMessageSuccessResult,
+    }),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("ThreadMessageNotFound"),
+    Type.Literal("MessageEmpty"),
+    Type.Object({
+        TextTooLong: Type.Number(),
+    }),
+    Type.Object({
+        InvalidPoll: InvalidPollReason,
+    }),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("UserNotInChannel"),
+    Type.Literal("UserSuspended"),
+    Type.Object({
+        InvalidRequest: Type.String(),
+    }),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("RulesNotAccepted"),
+    Type.Literal("CommunityRulesNotAccepted"),
+]);
+
 export type NotificationsIndexPushSubscriptionResponse = Static<
     typeof NotificationsIndexPushSubscriptionResponse
 >;
@@ -2023,6 +2057,37 @@ export const ProposalsBotCommonUpgradeSnsControlledCanister = Type.Object({
     new_canister_wasm: TSBytes,
     mode: ProposalsBotCommonCanisterInstallMode,
 });
+
+export type GroupSendMessageSuccessResult = Static<typeof GroupSendMessageSuccessResult>;
+export const GroupSendMessageSuccessResult = Type.Object({
+    event_index: EventIndex,
+    message_index: MessageIndex,
+    timestamp: Type.BigInt(),
+    expires_at: Type.Optional(Type.Union([Type.BigInt(), Type.Null()])),
+});
+
+export type GroupSendMessageResponse = Static<typeof GroupSendMessageResponse>;
+export const GroupSendMessageResponse = Type.Union([
+    Type.Object({
+        Success: GroupSendMessageSuccessResult,
+    }),
+    Type.Literal("ThreadMessageNotFound"),
+    Type.Literal("MessageEmpty"),
+    Type.Object({
+        TextTooLong: Type.Number(),
+    }),
+    Type.Object({
+        InvalidPoll: InvalidPollReason,
+    }),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("CallerNotInGroup"),
+    Type.Literal("UserSuspended"),
+    Type.Object({
+        InvalidRequest: Type.String(),
+    }),
+    Type.Literal("ChatFrozen"),
+    Type.Literal("RulesNotAccepted"),
+]);
 
 export type UserSavedCryptoAccountsResponse = Static<typeof UserSavedCryptoAccountsResponse>;
 export const UserSavedCryptoAccountsResponse = Type.Object({
@@ -5270,6 +5335,41 @@ export const GroupIndexExploreGroupsResponse = Type.Union([
     }),
     Type.Literal("InvalidTerm"),
 ]);
+
+export type CommunitySendMessageArgs = Static<typeof CommunitySendMessageArgs>;
+export const CommunitySendMessageArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_id: MessageId,
+    content: MessageContentInitial,
+    sender_name: Type.String(),
+    sender_display_name: Type.Optional(Type.String()),
+    replies_to: Type.Optional(GroupReplyContext),
+    mentioned: Type.Array(User),
+    forwarding: Type.Boolean(),
+    block_level_markdown: Type.Boolean(),
+    community_rules_accepted: Type.Optional(Version),
+    channel_rules_accepted: Type.Optional(Version),
+    message_filter_failed: Type.Optional(Type.BigInt()),
+    new_achievement: Type.Boolean(),
+});
+
+export type GroupSendMessageArgs = Static<typeof GroupSendMessageArgs>;
+export const GroupSendMessageArgs = Type.Object({
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_id: MessageId,
+    content: MessageContentInitial,
+    sender_name: Type.String(),
+    sender_display_name: Type.Optional(Type.String()),
+    replies_to: Type.Optional(GroupReplyContext),
+    mentioned: Type.Array(User),
+    forwarding: Type.Boolean(),
+    block_level_markdown: Type.Boolean(),
+    rules_accepted: Type.Optional(Version),
+    message_filter_failed: Type.Optional(Type.BigInt()),
+    new_achievement: Type.Boolean(),
+    correlation_id: Type.BigInt(),
+});
 
 export type UserSearchMessagesSuccessResult = Static<typeof UserSearchMessagesSuccessResult>;
 export const UserSearchMessagesSuccessResult = Type.Object({

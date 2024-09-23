@@ -1,11 +1,12 @@
 import type {
     GroupCanisterGroupChatSummary as TGroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates as TGroupCanisterGroupChatSummaryUpdates,
+    GroupSendMessageResponse,
 } from "../../typebox";
 import type {
     // ChatEvent,
     // EventsResponse,
-    // SendMessageResponse,
+    SendMessageResponse,
     // RemoveMemberResponse,
     // BlockUserResponse,
     // UnblockUserResponse,
@@ -24,7 +25,10 @@ import type {
     // OptionalChatPermissions,
     // OptionalMessagePermissions,
 } from "openchat-shared";
-// import { CommonResponses, UnsupportedValueError } from "openchat-shared";
+import {
+    // CommonResponses,
+    UnsupportedValueError,
+} from "openchat-shared";
 import {
     accessGate,
     chatMetrics,
@@ -280,51 +284,53 @@ export function groupChatSummaryUpdates(
 // export function apiGateUpdate(): ApiGroupGateUpdate {
 //     return { NoChange: null };
 // }
-//
-// export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessageResponse {
-//     if ("Success" in candid) {
-//         return {
-//             kind: "success",
-//             timestamp: candid.Success.timestamp,
-//             messageIndex: candid.Success.message_index,
-//             eventIndex: candid.Success.event_index,
-//             expiresAt: optional(candid.Success.expires_at, Number),
-//         };
-//     }
-//     if ("CallerNotInGroup" in candid) {
-//         return { kind: "not_in_group" };
-//     }
-//     if ("TextTooLong" in candid) {
-//         return { kind: "text_too_long" };
-//     }
-//     if ("MessageEmpty" in candid) {
-//         return { kind: "message_empty" };
-//     }
-//     if ("InvalidRequest" in candid) {
-//         return { kind: "invalid_request", reason: candid.InvalidRequest };
-//     }
-//     if ("InvalidPoll" in candid) {
-//         return { kind: "invalid_poll" };
-//     }
-//     if ("NotAuthorized" in candid) {
-//         return { kind: "not_authorized" };
-//     }
-//     if ("ThreadMessageNotFound" in candid) {
-//         return { kind: "thread_message_not_found" };
-//     }
-//     if ("UserSuspended" in candid) {
-//         return { kind: "user_suspended" };
-//     }
-//     if ("ChatFrozen" in candid) {
-//         return { kind: "chat_frozen" };
-//     }
-//     if ("RulesNotAccepted" in candid) {
-//         return { kind: "rules_not_accepted" };
-//     }
-//
-//     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
-// }
-//
+
+export function sendMessageResponse(value: GroupSendMessageResponse): SendMessageResponse {
+    if (typeof value !== "string") {
+        if ("Success" in value) {
+            return {
+                kind: "success",
+                timestamp: value.Success.timestamp,
+                messageIndex: value.Success.message_index,
+                eventIndex: value.Success.event_index,
+                expiresAt: mapOptional(value.Success.expires_at, Number),
+            };
+        }
+        if ("TextTooLong" in value) {
+            return { kind: "text_too_long" };
+        }
+        if ("InvalidRequest" in value) {
+            return { kind: "invalid_request", reason: value.InvalidRequest };
+        }
+        if ("InvalidPoll" in value) {
+            return { kind: "invalid_poll" };
+        }
+    }
+    if (value === "CallerNotInGroup") {
+        return { kind: "not_in_group" };
+    }
+    if (value === "MessageEmpty") {
+        return { kind: "message_empty" };
+    }
+    if (value === "NotAuthorized") {
+        return { kind: "not_authorized" };
+    }
+    if (value === "ThreadMessageNotFound") {
+        return { kind: "thread_message_not_found" };
+    }
+    if (value === "UserSuspended") {
+        return { kind: "user_suspended" };
+    }
+    if (value === "ChatFrozen") {
+        return { kind: "chat_frozen" };
+    }
+    if (value === "RulesNotAccepted") {
+        return { kind: "rules_not_accepted" };
+    }
+
+    throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", value);
+}
+
 // export function removeMemberResponse(candid: ApiRemoveParticipantResponse): RemoveMemberResponse {
 //     if ("Success" in candid) {
 //         return "success";

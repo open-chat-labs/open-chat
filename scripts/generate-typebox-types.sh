@@ -4,6 +4,8 @@ SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
+rm -rf ./tsBindings
+
 for canister_path in ./backend/canisters/*/
 do
   canister_path=${canister_path%*/}

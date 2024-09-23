@@ -1282,7 +1282,6 @@ type LoginWithWallet = {
     address: string;
     signature: string;
     sessionKey: Uint8Array;
-    nonce: string;
     kind: "loginWithWallet";
 };
 
@@ -1869,7 +1868,7 @@ export type WorkerResult<T> = T extends Init
     : T extends ListNervousSystemFunctions
     ? ListNervousSystemFunctionsResponse
     : T extends SendMessage
-    ? [ SendMessageResponse, Message ]
+    ? "accepted" | [ SendMessageResponse, Message ]
     : T extends EditMessage
     ? EditMessageResponse
     : T extends RegisterUser

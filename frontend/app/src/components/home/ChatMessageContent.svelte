@@ -59,13 +59,21 @@
         {blockLevelMarkdown}
         on:removePreview />
 {:else if content.kind === "image_content"}
-    <ImageContent {edited} {intersecting} {fill} {content} {reply} {pinned} {height} {blockLevelMarkdown} />
+    <ImageContent
+        {edited}
+        {intersecting}
+        {fill}
+        {content}
+        {reply}
+        {pinned}
+        {height}
+        {blockLevelMarkdown} />
 {:else if content.kind === "video_content"}
     <VideoContent {edited} {fill} {content} {reply} {height} {blockLevelMarkdown} />
 {:else if content.kind === "video_call_content"}
     <VideoCallContent on:startVideoCall {senderId} {messageIndex} {content} {timestamp} />
 {:else if content.kind === "audio_content"}
-    <AudioContent {edited} {content} {blockLevelMarkdown} />
+    <AudioContent {me} {edited} {content} {blockLevelMarkdown} />
 {:else if content.kind === "file_content"}
     <FileContent {edited} {me} {content} {blockLevelMarkdown} />
 {:else if content.kind === "deleted_content"}

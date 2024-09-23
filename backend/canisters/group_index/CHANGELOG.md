@@ -1,9 +1,12 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
+
+## [[2.0.1355](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1355-group_index)] - 2024-09-20
 
 ### Added
 
@@ -188,7 +191,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [[2.0.866](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.866-group_index)] - 2023-09-27
 
-### Changed 
+### Changed
 
 - Accept calls to `set_community_upgrade_concurrency` ([#4418](https://github.com/open-chat-labs/open-chat/pull/4418))
 
@@ -198,7 +201,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add `mention_all_members` group permission ([#4405](https://github.com/open-chat-labs/open-chat/pull/4405))
 
-### Changed 
+### Changed
 
 - Accept calls to `set_max_concurrent_community_canister_upgrades` ([#4391](https://github.com/open-chat-labs/open-chat/pull/4391))
 
@@ -328,7 +331,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Removed `search_v2` endpoint ([#3796](https://github.com/open-chat-labs/open-chat/pull/3796))
- 
+
 ### Fixed
 
 - Fix `c2c_create_community` ([#3777](https://github.com/open-chat-labs/open-chat/pull/3777))
@@ -373,7 +376,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Rename is_super_admin to is_platform_operator in c2c_lookup_user ([#3264](https://github.com/open-chat-labs/open-chat/pull/3264)) 
+- Rename is_super_admin to is_platform_operator in c2c_lookup_user ([#3264](https://github.com/open-chat-labs/open-chat/pull/3264))
 
 ### Removed
 

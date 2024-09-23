@@ -62,7 +62,7 @@
     $: typersByContext = client.typersByContext;
     $: userStore = client.userStore;
     $: favouritesStore = client.favouritesStore;
-    $: menuColour = $mobileWidth ? "rgba(255,255,255,0.4)" : "var(--icon-txt)";
+    $: menuColour = "var(--icon-txt)";
     $: externalContent = chatSummary.kind === "channel" && chatSummary.externalUrl !== undefined;
 
     const dispatch = createEventDispatcher();
@@ -684,7 +684,7 @@
 
             @include mobile() {
                 width: 18px;
-                opacity: 1;
+                opacity: 0.4;
                 margin-left: 6px;
 
                 &.rtl {

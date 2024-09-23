@@ -148,7 +148,7 @@ impl Job for HardDeleteMessageContentJob {
                     ic_cdk::spawn(storage_bucket_client::delete_files(files_to_delete));
                 }
                 match content {
-                    MessageContentInternal::Prize(prize) => {
+                    MessageContentInternal::Prize(mut prize) => {
                         if let Some(message_index) = state
                             .data
                             .chat
@@ -223,7 +223,7 @@ impl Job for EndPollJob {
 
 impl Job for RefundPrizeJob {
     fn execute(self) {
-        if let Some(pending_transaction) = read_state(|state| {
+        if let Some(pending_transaction) = mutate_state(|state| {
             state.data.chat.events.prize_refund(
                 self.thread_root_message_index,
                 self.message_index,

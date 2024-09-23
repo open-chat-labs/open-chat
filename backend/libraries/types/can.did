@@ -1484,6 +1484,8 @@ type PrizeContent = record {
     prizes_remaining : nat32;
     prizes_pending : nat32;
     winners : vec UserId;
+    winner_count : nat32;
+    user_is_winner : bool;
     token : Cryptocurrency;
     end_date : TimestampMillis;
     caption : opt text;

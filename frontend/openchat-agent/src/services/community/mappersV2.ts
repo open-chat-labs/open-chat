@@ -24,7 +24,7 @@ import type {
     //     MemberRole,
     //     Message,
     //     RemoveMemberResponse,
-    //     SendMessageResponse,
+    SendMessageResponse,
     //     SetMemberDisplayNameResponse,
     //     ToggleMuteCommunityNotificationsResponse,
     //     UnblockCommunityUserResponse,
@@ -34,11 +34,15 @@ import type {
     //     UserFailedError,
     //     UserGroupDetails,
 } from "openchat-shared";
-// import { CommonResponses, UnsupportedValueError } from "openchat-shared";
+import {
+    CommonResponses,
+    // UnsupportedValueError
+} from "openchat-shared";
 import type {
     CommunityCanisterCommunitySummaryUpdates as TCommunityCanisterCommunitySummaryUpdates,
     CommunityCanisterChannelSummaryUpdates as TCommunityCanisterChannelSummaryUpdates,
     CommunityMembershipUpdates as TCommunityMembershipUpdates,
+    CommunitySendMessageResponse,
     GroupMembershipUpdates as TGroupMembershipUpdates,
 } from "../../typebox";
 import { mapOptional, optionUpdateV2, principalBytesToString } from "../../utils/mapping";
@@ -224,26 +228,29 @@ import { identity } from "../../utils/mapping";
 //         messageIndex: candid.message_index,
 //     };
 // }
-//
-// export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessageResponse {
-//     if ("Success" in candid) {
-//         return {
-//             kind: "success",
-//             timestamp: candid.Success.timestamp,
-//             messageIndex: candid.Success.message_index,
-//             eventIndex: candid.Success.event_index,
-//             expiresAt: optional(candid.Success.expires_at, Number),
-//         };
-//     } else if ("RulesNotAccepted" in candid) {
-//         return { kind: "rules_not_accepted" };
-//     } else if ("CommunityRulesNotAccepted" in candid) {
-//         return { kind: "community_rules_not_accepted" };
-//     } else {
-//         console.warn("SendMessage failed with", candid);
-//         return CommonResponses.failure();
-//     }
-// }
-//
+
+export function sendMessageResponse(value: CommunitySendMessageResponse): SendMessageResponse {
+    if (typeof value !== "string") {
+        if ("Success" in value) {
+            return {
+                kind: "success",
+                timestamp: value.Success.timestamp,
+                messageIndex: value.Success.message_index,
+                eventIndex: value.Success.event_index,
+                expiresAt: mapOptional(value.Success.expires_at, Number),
+            };
+        }
+    }
+    if (value === "RulesNotAccepted") {
+        return { kind: "rules_not_accepted" };
+    } else if (value === "CommunityRulesNotAccepted") {
+        return { kind: "community_rules_not_accepted" };
+    } else {
+        console.warn("SendMessage failed with", value);
+        return CommonResponses.failure();
+    }
+}
+
 // export function exploreChannelsResponse(
 //     candid: ApiExploreChannelsResponse,
 //     communityId: string,

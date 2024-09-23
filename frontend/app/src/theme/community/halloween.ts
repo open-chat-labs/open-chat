@@ -37,6 +37,12 @@ export function getTheme(base: Theme): Theme {
     base.button.disabled = lighterBrown;
     base.button["disabled-txt"] = hexPercent(darkOrange, 90);
     base.button["disabled-bd"] = base.bd;
+    base.audio.outer = green;
+    base.audio.inner = yellow;
+    base.audio.me.outer = green;
+    base.audio.me.inner = yellow;
+    base.audio.note = txt;
+    base.audio.me.note = txt;
 
     base.collapsible.closed.header.txt = txt;
     base.collapsible.open.header.arrow = lightGreen;

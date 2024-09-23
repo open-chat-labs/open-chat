@@ -11,6 +11,8 @@ const txtLight = hexPercent(txt, 67);
 const txtDark = "#242834";
 const txtDark75pc = hexPercent(txtDark, 75);
 const disabledTxt = txtLight;
+const border = "rgba(255,255,255,0.1)";
+const borderWidth = "1px";
 
 export function lightTheme(): Theme {
     return {
@@ -26,9 +28,9 @@ export function lightTheme(): Theme {
         // bg: "#ffffff",
         txt,
         "txt-light": txtLight,
-        bd: "rgba(255,255,255,0.1)",
+        bd: border,
         rd: "4px",
-        bw: "1px",
+        bw: borderWidth,
         error: "#CF6679",
         accent: pinkAccent,
         accentDarker: "rgba(150, 50, 50, 0.8)",
@@ -209,6 +211,10 @@ export function lightTheme(): Theme {
             "txt-sh": "1px 1px rgba(255, 255, 255, 0.2)",
         },
 
+        replies: {
+            bd: "var(--bd);",
+        },
+
         currentChat: {
             date: {
                 bg: "rgba(0,0,0,0.1)",
@@ -330,6 +336,17 @@ export function lightTheme(): Theme {
         nav: {
             icon: {
                 rd: "50%",
+            },
+        },
+
+        audio: {
+            outer: primary,
+            inner: pinkAccent,
+            note: txt,
+            me: {
+                outer: primary,
+                inner: pinkAccent,
+                note: txt,
             },
         },
 

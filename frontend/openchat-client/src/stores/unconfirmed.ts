@@ -9,7 +9,7 @@ import {
 
 export type UnconfirmedState = {
     messages: EventWrapper<Message>[];
-    messageIds: Set<bigint>;
+    messageIds: Map<bigint, boolean>;
 };
 
 export type UnconfirmedMessages = MessageContextMap<UnconfirmedState>;
@@ -29,44 +29,38 @@ function createUnconfirmedStore() {
         if (storeValue.size > 0) {
             const oneMinuteAgo = BigInt(Date.now() - 60000);
             store.update((state) => {
-                return state.entries().reduce((result, [key, { messages }]) => {
-                    return applyUpdateToState(
-                        result,
-                        key,
-                        removeWhere(messages, (m) => m.timestamp < oneMinuteAgo),
-                    );
+                return state.entries().reduce((result, [key, s]) => {
+                    const newState = filterMessages(s, (m) => m.timestamp > oneMinuteAgo);
+                    if (newState.messageIds.size > 0) {
+                        result.set(key, newState);
+                    }
+                    return result;
                 }, new MessageContextMap<UnconfirmedState>());
             });
         }
     }
 
-    function removeWhere(
-        messages: EventWrapper<Message>[],
+    function filterMessages(
+        state: UnconfirmedState,
         predicate: (message: EventWrapper<Message>) => boolean,
-    ): EventWrapper<Message>[] {
-        return messages.filter((m) => {
-            if (predicate(m)) {
-                revokeObjectUrls(m);
+    ): UnconfirmedState {
+        state.messages = state.messages.filter((message) => {
+            if (predicate(message)) {
+                return true;
+            } else {
+                revokeObjectUrls(message);
+                state.messageIds.delete(message.event.messageId);
                 return false;
             }
-            return true;
-        });
-    }
-
-    function applyUpdateToState(
-        state: UnconfirmedMessages,
-        keyUpdated: MessageContext,
-        messages: EventWrapper<Message>[],
-    ): UnconfirmedMessages {
-        if (messages.length === 0) {
-            state.delete(keyUpdated);
-            return state;
-        }
-        state.set(keyUpdated, {
-            messages,
-            messageIds: new Set<bigint>(messages.map((m) => m.event.messageId)),
         });
         return state;
+    }
+
+    function emptyState(): UnconfirmedState {
+        return {
+            messages: [],
+            messageIds: new Map<bigint, boolean>(),
+        };
     }
 
     // Remove old messages every 30 seconds
@@ -79,21 +73,45 @@ function createUnconfirmedStore() {
         },
         add: (key: MessageContext, message: EventWrapper<Message>): void => {
             store.update((state) => {
-                const messages = [...(state.get(key)?.messages ?? []), message];
-                return applyUpdateToState(state, key, messages);
+                const s = state.get(key) ?? emptyState();
+                if (!s.messageIds.has(message.event.messageId)) {
+                    s.messages.push(message);
+                    s.messageIds.set(message.event.messageId, false);
+                    state.set(key, s);
+                }
+                return state;
             });
         },
         contains: (key: MessageContext, messageId: bigint): boolean => {
             return storeValue.get(key)?.messageIds.has(messageId) ?? false;
         },
+        markAccepted: (key: MessageContext, messageId: bigint): void => {
+            if (storeValue.get(key)?.messageIds.has(messageId)) {
+                store.update((state) => {
+                    const newState = state.get(key);
+                    if (newState !== undefined && newState.messageIds.has(messageId)) {
+                        newState.messageIds.set(messageId, true);
+                    }
+                    return state;
+                });
+            }
+        },
+        pendingAcceptance: (key: MessageContext, messageId: bigint): boolean => {
+            return storeValue.get(key)?.messageIds.get(messageId) === false;
+        },
         delete: (key: MessageContext, messageId: bigint): boolean => {
             if (storeValue.get(key)?.messageIds.has(messageId)) {
                 store.update((state) => {
-                    const messages = removeWhere(
-                        state.get(key)?.messages ?? [],
-                        (m) => m.event.messageId === messageId,
-                    );
-                    return applyUpdateToState(state, key, messages);
+                    const s = state.get(key);
+                    if (s !== undefined) {
+                        const newState = filterMessages(s, (m) => m.event.messageId !== messageId);
+                        if (newState.messageIds.size === 0) {
+                            state.delete(key);
+                        } else {
+                            state.set(key, newState);
+                        }
+                    }
+                    return state;
                 });
                 return true;
             }

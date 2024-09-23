@@ -92,5 +92,12 @@ export function getTheme(base: Theme): Theme {
     base.daily.mainAreaText = txt;
     base.daily.supportiveText = txtLight;
 
+    base.audio.outer = pink3;
+    base.audio.me.outer = barbieBlue;
+    base.audio.inner = barbieYellow;
+    base.audio.me.inner = barbieYellow;
+    base.audio.note = txt;
+    base.audio.me.note = txt;
+
     return base;
 }
