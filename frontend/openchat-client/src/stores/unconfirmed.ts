@@ -113,6 +113,7 @@ function createUnconfirmedStore() {
                     }
                     return state;
                 });
+                return true;
             }
             return false;
         },

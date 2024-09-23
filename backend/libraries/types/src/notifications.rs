@@ -6,11 +6,11 @@ use std::fmt::{Debug, Formatter};
 
 #[derive(CandidType, Serialize, Deserialize, Clone)]
 pub struct NotificationEnvelope {
-    #[serde(rename = "r", alias = "recipients")]
+    #[serde(rename = "r")]
     pub recipients: Vec<UserId>,
-    #[serde(rename = "n", alias = "notification_bytes")]
+    #[serde(rename = "n")]
     pub notification_bytes: ByteBuf,
-    #[serde(rename = "t", alias = "timestamp")]
+    #[serde(rename = "t")]
     pub timestamp: TimestampMillis,
 }
 

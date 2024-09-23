@@ -368,7 +368,7 @@ pub(crate) trait MessageContentInternalSubtype {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct TextContentInternal {
-    #[serde(rename = "t", alias = "text")]
+    #[serde(rename = "t")]
     pub text: String,
 }
 
@@ -388,17 +388,17 @@ impl MessageContentInternalSubtype for TextContentInternal {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ImageContentInternal {
-    #[serde(rename = "w", alias = "width")]
+    #[serde(rename = "w")]
     pub width: u32,
-    #[serde(rename = "h", alias = "height")]
+    #[serde(rename = "h")]
     pub height: u32,
-    #[serde(rename = "t", alias = "thumbnail_data")]
+    #[serde(rename = "t")]
     pub thumbnail_data: ThumbnailData,
-    #[serde(rename = "c", alias = "caption", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "c", default, skip_serializing_if = "Option::is_none")]
     pub caption: Option<String>,
-    #[serde(rename = "m", alias = "mime_type")]
+    #[serde(rename = "m")]
     pub mime_type: String,
-    #[serde(rename = "b", alias = "blob_reference", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "b", default, skip_serializing_if = "Option::is_none")]
     pub blob_reference: Option<BlobReference>,
 }
 
@@ -432,29 +432,19 @@ impl MessageContentInternalSubtype for ImageContentInternal {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct VideoContentInternal {
-    #[serde(rename = "w", alias = "width")]
+    #[serde(rename = "w")]
     pub width: u32,
-    #[serde(rename = "h", alias = "height")]
+    #[serde(rename = "h")]
     pub height: u32,
-    #[serde(rename = "t", alias = "thumbnail_data")]
+    #[serde(rename = "t")]
     pub thumbnail_data: ThumbnailData,
-    #[serde(rename = "c", alias = "caption", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "c", default, skip_serializing_if = "Option::is_none")]
     pub caption: Option<String>,
-    #[serde(rename = "m", alias = "mime_type")]
+    #[serde(rename = "m")]
     pub mime_type: String,
-    #[serde(
-        rename = "i",
-        alias = "image_blob_reference",
-        default,
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(rename = "i", default, skip_serializing_if = "Option::is_none")]
     pub image_blob_reference: Option<BlobReference>,
-    #[serde(
-        rename = "v",
-        alias = "video_blob_reference",
-        default,
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(rename = "v", default, skip_serializing_if = "Option::is_none")]
     pub video_blob_reference: Option<BlobReference>,
 }
 
@@ -490,11 +480,11 @@ impl MessageContentInternalSubtype for VideoContentInternal {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct AudioContentInternal {
-    #[serde(rename = "c", alias = "caption", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "c", default, skip_serializing_if = "Option::is_none")]
     pub caption: Option<String>,
-    #[serde(rename = "m", alias = "mime_type")]
+    #[serde(rename = "m")]
     pub mime_type: String,
-    #[serde(rename = "b", alias = "blob_reference", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "b", default, skip_serializing_if = "Option::is_none")]
     pub blob_reference: Option<BlobReference>,
 }
 
@@ -522,15 +512,15 @@ impl MessageContentInternalSubtype for AudioContentInternal {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct FileContentInternal {
-    #[serde(rename = "n", alias = "name")]
+    #[serde(rename = "n")]
     pub name: String,
-    #[serde(rename = "c", alias = "caption", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "c", default, skip_serializing_if = "Option::is_none")]
     pub caption: Option<String>,
-    #[serde(rename = "m", alias = "mime_type")]
+    #[serde(rename = "m")]
     pub mime_type: String,
-    #[serde(rename = "f", alias = "file_size")]
+    #[serde(rename = "f")]
     pub file_size: u32,
-    #[serde(rename = "b", alias = "blob_reference", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "b", default, skip_serializing_if = "Option::is_none")]
     pub blob_reference: Option<BlobReference>,
 }
 
@@ -562,11 +552,11 @@ impl MessageContentInternalSubtype for FileContentInternal {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct PollContentInternal {
-    #[serde(rename = "c", alias = "config")]
+    #[serde(rename = "c")]
     pub config: PollConfig,
-    #[serde(rename = "v", alias = "votes")]
+    #[serde(rename = "v")]
     pub votes: HashMap<u32, Vec<UserId>>,
-    #[serde(rename = "e", alias = "ended")]
+    #[serde(rename = "e")]
     pub ended: bool,
 }
 
@@ -699,25 +689,25 @@ impl MessageContentInternalSubtype for CryptoContentInternal {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GiphyContentInternal {
-    #[serde(rename = "c", alias = "caption", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "c", default, skip_serializing_if = "Option::is_none")]
     pub caption: Option<String>,
-    #[serde(rename = "t", alias = "title")]
+    #[serde(rename = "t")]
     pub title: String,
-    #[serde(rename = "d", alias = "desktop")]
+    #[serde(rename = "d")]
     pub desktop: GiphyImageVariantInternal,
-    #[serde(rename = "m", alias = "mobile")]
+    #[serde(rename = "m")]
     pub mobile: GiphyImageVariantInternal,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GiphyImageVariantInternal {
-    #[serde(rename = "w", alias = "width")]
+    #[serde(rename = "w")]
     pub width: u32,
-    #[serde(rename = "h", alias = "height")]
+    #[serde(rename = "h")]
     pub height: u32,
-    #[serde(rename = "u", alias = "url")]
+    #[serde(rename = "u")]
     pub url: String,
-    #[serde(rename = "m", alias = "mime_type")]
+    #[serde(rename = "m")]
     pub mime_type: String,
 }
 
@@ -769,11 +759,11 @@ impl MessageContentInternalSubtype for GiphyContentInternal {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ProposalContentInternal {
-    #[serde(rename = "g", alias = "governance_canister_id")]
+    #[serde(rename = "g")]
     pub governance_canister_id: CanisterId,
-    #[serde(rename = "p", alias = "proposal")]
+    #[serde(rename = "p")]
     pub proposal: Proposal,
-    #[serde(rename = "v", alias = "votes", default, skip_serializing_if = "is_empty_hashmap")]
+    #[serde(rename = "v", default, skip_serializing_if = "is_empty_hashmap")]
     pub votes: HashMap<UserId, bool>,
 }
 
@@ -876,11 +866,11 @@ impl MessageContentInternalSubtype for PrizeContentInternal {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct PrizeWinnerContentInternal {
-    #[serde(rename = "w", alias = "winner")]
+    #[serde(rename = "w")]
     pub winner: UserId,
-    #[serde(rename = "t", alias = "transaction")]
+    #[serde(rename = "t")]
     pub transaction: CompletedCryptoTransaction,
-    #[serde(rename = "m", alias = "prize_message")]
+    #[serde(rename = "m")]
     pub prize_message: MessageIndex,
 }
 
@@ -908,13 +898,13 @@ impl MessageContentInternalSubtype for PrizeWinnerContentInternal {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MessageReminderCreatedContentInternal {
-    #[serde(rename = "i", alias = "reminder_id")]
+    #[serde(rename = "i")]
     pub reminder_id: u64,
-    #[serde(rename = "r", alias = "remind_at")]
+    #[serde(rename = "r")]
     pub remind_at: TimestampMillis,
-    #[serde(rename = "n", alias = "notes", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "n", default, skip_serializing_if = "Option::is_none")]
     pub notes: Option<String>,
-    #[serde(rename = "h", alias = "hidden", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "h", default, skip_serializing_if = "is_default")]
     pub hidden: bool,
 }
 
@@ -944,9 +934,9 @@ impl MessageContentInternalSubtype for MessageReminderCreatedContentInternal {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MessageReminderContentInternal {
-    #[serde(rename = "i", alias = "reminder_id")]
+    #[serde(rename = "i")]
     pub reminder_id: u64,
-    #[serde(rename = "n", alias = "notes", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "n", default, skip_serializing_if = "Option::is_none")]
     pub notes: Option<String>,
 }
 
@@ -972,7 +962,7 @@ impl MessageContentInternalSubtype for MessageReminderContentInternal {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ReportedMessageInternal {
-    #[serde(rename = "r", alias = "reports")]
+    #[serde(rename = "r")]
     pub reports: Vec<MessageReport>,
 }
 
@@ -1039,9 +1029,9 @@ impl MessageContentInternalSubtype for ReportedMessageInternal {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct CustomContentInternal {
-    #[serde(rename = "k", alias = "kind")]
+    #[serde(rename = "k")]
     pub kind: String,
-    #[serde(rename = "d", alias = "data", with = "serde_bytes")]
+    #[serde(rename = "d", with = "serde_bytes")]
     pub data: Vec<u8>,
 }
 

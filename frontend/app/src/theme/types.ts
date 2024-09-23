@@ -200,6 +200,10 @@ export interface Theme {
         "txt-sh": string;
     };
 
+    replies: {
+        bd: string;
+    };
+
     currentChat: {
         msgs: {
             bg: string;
