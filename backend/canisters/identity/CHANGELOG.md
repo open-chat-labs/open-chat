@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
+
 ## [[2.0.1344](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1344-identity)] - 2024-09-10
 
 ### Fixed
