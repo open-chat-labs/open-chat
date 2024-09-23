@@ -8,6 +8,15 @@ const FLAGS_COMPACTION_V2: u8 = 0b01000000;
 const FLAGS_COMPACTION_V3: u8 = 0b01100000;
 const FLAGS_NO_COMPACTION: u8 = 0b11100000;
 
+/*
+This is based on the observation that (so far) most bytes within canisterIds are zero, and the last
+2 bytes are always 1. So we attempt to compact canisterIds by detecting which bytes are 0 and
+storing their indices in a bit map, then removing 0's and trailing 1's, only leaving the remaining
+bytes.
+To recreate the original canisterId we insert the 0's using the bit map then append 1's until we
+have 10 bytes.
+This reduces our current canisterIds from 10 bytes down to either 4 or 5.
+ */
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct CanisterIdInternal(Vec<u8>);
 
