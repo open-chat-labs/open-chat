@@ -6,6 +6,7 @@ const ZEROES_MASK: u8 = 0b00011111;
 const FLAGS_V1: u8 = 0b00100000;
 const FLAGS_V2: u8 = 0b01000000;
 const FLAGS_V3: u8 = 0b01100000;
+const FLAGS_NO_MATCH: u8 = 0b11100000;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct CanisterIdInternal(Vec<u8>);
@@ -16,18 +17,20 @@ impl From<CanisterId> for CanisterIdInternal {
 
         if let Ok(array) = <[u8; 10]>::try_from(bytes) {
             array.into()
-        } else {
+        } else if bytes.len() < 10 {
             let mut result = Vec::with_capacity(bytes.len() + 1);
-            result.push(0);
+            result.push(FLAGS_NO_MATCH);
             result.extend_from_slice(bytes);
             CanisterIdInternal(result)
+        } else {
+            CanisterIdInternal(bytes.to_vec())
         }
     }
 }
 
 impl From<[u8; 10]> for CanisterIdInternal {
-    fn from(value: [u8; 10]) -> Self {
-        let ones_at_end_count = value
+    fn from(input: [u8; 10]) -> Self {
+        let ones_at_end_count = input
             .iter()
             .rev()
             .enumerate()
@@ -39,7 +42,7 @@ impl From<[u8; 10]> for CanisterIdInternal {
         let mut zeroes_bits_last_5 = 0;
 
         let mut filtered = Vec::new();
-        for (index, byte) in value[..10 - ones_at_end_count].iter().enumerate() {
+        for (index, byte) in input[..10 - ones_at_end_count].iter().enumerate() {
             if *byte == 0 {
                 if index < 5 {
                     zeroes_bits_first_5 += 1 << (4 - index);
@@ -51,29 +54,39 @@ impl From<[u8; 10]> for CanisterIdInternal {
             }
         }
 
-        let mut result: Vec<u8>;
-
+        let mut compacted: Vec<u8>;
         match (zeroes_bits_first_5 != 0, zeroes_bits_last_5 != 0) {
             (false, false) => {
-                result = Vec::with_capacity(1 + filtered.len());
-                result.push(FLAGS_V1);
+                compacted = Vec::with_capacity(1 + filtered.len());
+                compacted.push(FLAGS_V1);
             }
             (true, false) => {
-                result = Vec::with_capacity(1 + filtered.len());
-                result.push(FLAGS_V1 + zeroes_bits_first_5);
+                compacted = Vec::with_capacity(1 + filtered.len());
+                compacted.push(FLAGS_V1 + zeroes_bits_first_5);
             }
             (false, true) => {
-                result = Vec::with_capacity(1 + filtered.len());
-                result.push(FLAGS_V2 + zeroes_bits_last_5);
+                compacted = Vec::with_capacity(1 + filtered.len());
+                compacted.push(FLAGS_V2 + zeroes_bits_last_5);
             }
             (true, true) => {
-                result = Vec::with_capacity(2 + filtered.len());
-                result.push(FLAGS_V3 + zeroes_bits_first_5);
-                result.push(zeroes_bits_last_5);
+                compacted = Vec::with_capacity(2 + filtered.len());
+                compacted.push(FLAGS_V3 + zeroes_bits_first_5);
+                compacted.push(zeroes_bits_last_5);
             }
         }
 
-        result.extend(filtered);
+        compacted.extend(filtered);
+
+        let result = if compacted.len() < 10 {
+            compacted
+        } else if input[0] == FLAGS_NO_MATCH {
+            let mut result = Vec::with_capacity(input.len() + 1);
+            result.push(FLAGS_NO_MATCH);
+            result.extend_from_slice(&input);
+            result
+        } else {
+            input.to_vec()
+        };
 
         CanisterIdInternal(result)
     }
@@ -81,6 +94,10 @@ impl From<[u8; 10]> for CanisterIdInternal {
 
 impl From<CanisterIdInternal> for CanisterId {
     fn from(CanisterIdInternal(bytes): CanisterIdInternal) -> Self {
+        if bytes.len() >= 10 {
+            return CanisterId::from_slice(if bytes[0] == FLAGS_NO_MATCH { &bytes[1..] } else { &bytes });
+        }
+
         let first_byte = bytes[0];
         let version = first_byte & VERSION_MASK;
 
@@ -118,6 +135,7 @@ impl From<CanisterIdInternal> for CanisterId {
                 }
                 CanisterId::from_slice(&result)
             }
+            FLAGS_NO_MATCH => CanisterId::from_slice(&bytes[1..]),
             _ => unreachable!(),
         }
     }
@@ -151,12 +169,16 @@ mod tests {
     #[test_case("66227-4aaaa-aaaar-aoeyq-cai", 5)]
     #[test_case("dgegb-daaaa-aaaar-arlhq-cai", 5)]
     #[test_case("zzyk3-openc-hatbo-tq7my-cai", 10)]
-    #[test_case("tu45y-p4p3d-b4gg4-gmyy3-rgweo-whsrq-fephi-vshrn-cipca-xdkri-pae", 30)]
+    #[test_case("tu45y-p4p3d-b4gg4-gmyy3-rgweo-whsrq-fephi-vshrn-cipca-xdkri-pae", 29)]
     #[test_case("aaaaa-aa", 1)]
     fn roundtrip_from_str(s: &str, expected_length: usize) {
         roundtrip(CanisterId::from_text(s).unwrap(), expected_length);
     }
 
+    #[test_case(&[], 1)]
+    #[test_case(&[0], 2)]
+    #[test_case(&[1], 2)]
+    #[test_case(&[2], 2)]
     #[test_case(&[0,0,0,0,0,1,1,1,1,1], 1)]
     #[test_case(&[1,0,0,0,0,1,1,1,1,1], 2)]
     #[test_case(&[1,2,0,0,0,1,1,1,1,1], 3)]
@@ -164,10 +186,19 @@ mod tests {
     #[test_case(&[1,1,1,1,0,0,0,0,1,2], 8)]
     #[test_case(&[1,0,1,1,1,1,1,1,1,1], 2)]
     #[test_case(&[1,0,0,1,1,1,1,1,1,2], 9)]
-    #[test_case(&[], 1)]
-    #[test_case(&[0], 2)]
-    #[test_case(&[1], 2)]
+    #[test_case(&[1,2,3,4,5,6,7,8,9,10], 10)]
     fn roundtrip_from_bytes(bytes: &[u8], expected_length: usize) {
+        roundtrip(CanisterId::from_slice(bytes), expected_length);
+    }
+
+    #[test_case(&[224], 2)]
+    #[test_case(&[224,1,1,0,0,1,1,1,1,1], 4)]
+    #[test_case(&[224,1,1,1,1,0,0,1,1,1], 6)]
+    #[test_case(&[224,1,1,0,0,0,0,1,1,1], 5)]
+    #[test_case(&[224,1,1,1,1,1,1,1,1,1], 2)]
+    #[test_case(&[224,2,3,4,5,6,7,8,9], 10)]
+    #[test_case(&[224,2,3,4,5,6,7,8,9,10], 11)]
+    fn roundtrip_starting_with_no_match_flag(bytes: &[u8], expected_length: usize) {
         roundtrip(CanisterId::from_slice(bytes), expected_length);
     }
 
