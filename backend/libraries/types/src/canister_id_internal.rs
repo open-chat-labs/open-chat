@@ -3,9 +3,9 @@ use serde::{Deserialize, Serialize};
 
 const VERSION_MASK: u8 = 0b11100000;
 const ZEROES_MASK: u8 = 0b00011111;
-const FLAGS_V1: u8 = 0b00100000;
-const FLAGS_V2: u8 = 0b01000000;
-const FLAGS_V3: u8 = 0b01100000;
+const FLAGS_COMPACTION_V1: u8 = 0b00100000;
+const FLAGS_COMPACTION_V2: u8 = 0b01000000;
+const FLAGS_COMPACTION_V3: u8 = 0b01100000;
 const FLAGS_NO_COMPACTION: u8 = 0b11100000;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -63,19 +63,19 @@ impl CanisterIdInternal {
         match (zeroes_bits_first_5 != 0, zeroes_bits_last_5 != 0) {
             (false, false) => {
                 compacted = Vec::with_capacity(1 + filtered.len());
-                compacted.push(FLAGS_V1);
+                compacted.push(FLAGS_COMPACTION_V1);
             }
             (true, false) => {
                 compacted = Vec::with_capacity(1 + filtered.len());
-                compacted.push(FLAGS_V1 + zeroes_bits_first_5);
+                compacted.push(FLAGS_COMPACTION_V1 + zeroes_bits_first_5);
             }
             (false, true) => {
                 compacted = Vec::with_capacity(1 + filtered.len());
-                compacted.push(FLAGS_V2 + zeroes_bits_last_5);
+                compacted.push(FLAGS_COMPACTION_V2 + zeroes_bits_last_5);
             }
             (true, true) => {
                 compacted = Vec::with_capacity(2 + filtered.len());
-                compacted.push(FLAGS_V3 + zeroes_bits_first_5);
+                compacted.push(FLAGS_COMPACTION_V3 + zeroes_bits_first_5);
                 compacted.push(zeroes_bits_last_5);
             }
         }
@@ -99,19 +99,17 @@ impl From<CanisterIdInternal> for CanisterId {
             return CanisterId::from_slice(if skip_no_compaction_flag { &bytes[1..] } else { &bytes });
         }
 
-        let first_byte = bytes[0];
-        let version = first_byte & VERSION_MASK;
+        let compaction_version = bytes[0] & VERSION_MASK;
 
-        match version {
-            0 => CanisterId::from_slice(&bytes[1..]),
-            FLAGS_V1 | FLAGS_V2 | FLAGS_V3 => {
-                let prefix_length = if version == FLAGS_V3 { 2 } else { 1 };
+        match compaction_version {
+            FLAGS_COMPACTION_V1 | FLAGS_COMPACTION_V2 | FLAGS_COMPACTION_V3 => {
+                let prefix_length = if compaction_version == FLAGS_COMPACTION_V3 { 2 } else { 1 };
                 let (prefix, remainder) = bytes.split_at(prefix_length);
                 let mut bytes_to_add = remainder.to_vec();
                 bytes_to_add.reverse();
 
-                let has_zeroes_in_first_5 = version & FLAGS_V1 != 0;
-                let has_zeroes_in_last_5 = version & FLAGS_V2 != 0;
+                let has_zeroes_in_first_5 = compaction_version & FLAGS_COMPACTION_V1 != 0;
+                let has_zeroes_in_last_5 = compaction_version & FLAGS_COMPACTION_V2 != 0;
 
                 let zeroes_first_5 = if has_zeroes_in_first_5 { prefix[0] & ZEROES_MASK } else { 0 };
                 let zeroes_last_5 = if has_zeroes_in_last_5 { prefix[prefix.len() - 1] & ZEROES_MASK } else { 0 };
