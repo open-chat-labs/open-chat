@@ -209,7 +209,7 @@ self.addEventListener("unhandledrejection", (err: PromiseRejectionEvent) => {
 });
 
 self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) => {
-    logger?.debug("WORKER: received ", msg.data.kind, msg.data.correlationId);
+    (logger ?? console).debug("WORKER: received ", msg.data.kind, msg.data.correlationId);
     const payload = msg.data;
     const kind = payload.kind;
     const correlationId = payload.correlationId;
