@@ -972,6 +972,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private startChatsPoller() {
+        console.log("starting chats poller");
         this._chatsPoller?.stop();
         this._chatsPoller = new Poller(
             () => this.loadChats(),
@@ -6259,11 +6260,13 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private async updateRegistry(): Promise<void> {
+        const start = Date.now();
+        let resolved = false;
         return new Promise((resolve) => {
             this.sendStreamRequest({
                 kind: "updateRegistry",
             })
-                .subscribe(([registry, updated], final) => {
+                .subscribe(([registry, updated]) => {
                     if (updated || Object.keys(get(cryptoLookup)).length === 0) {
                         this.currentAirdropChannel = registry.currentAirdropChannel;
                         const cryptoRecord = toRecord(registry.tokenDetails, (t) => t.ledger);
@@ -6293,7 +6296,10 @@ export class OpenChat extends OpenChatAgentWorker {
                         );
                     }
 
-                    if (final) {
+                    // make sure we only resolve once so that we don't end up waiting for the downstream fetch
+                    if (!resolved) {
+                        resolved = true;
+                        console.log("UpdateRegistry took: ", Date.now() - start);
                         resolve();
                     }
                 })
