@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - When a token is added, disable existing token with the same ticker ([#6392](https://github.com/open-chat-labs/open-chat/pull/6392))
+- Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
 
 ### Removed
 
