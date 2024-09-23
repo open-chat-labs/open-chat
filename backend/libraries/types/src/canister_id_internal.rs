@@ -6,7 +6,7 @@ const ZEROES_MASK: u8 = 0b00011111;
 const FLAGS_V1: u8 = 0b00100000;
 const FLAGS_V2: u8 = 0b01000000;
 const FLAGS_V3: u8 = 0b01100000;
-const FLAGS_NO_MATCH: u8 = 0b11100000;
+const FLAGS_NO_COMPACTION: u8 = 0b11100000;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct CanisterIdInternal(Vec<u8>);
@@ -16,10 +16,15 @@ impl From<CanisterId> for CanisterIdInternal {
         let bytes = value.as_slice();
 
         if let Ok(array) = <[u8; 10]>::try_from(bytes) {
-            array.into()
-        } else if bytes.len() < 10 {
+            if let Some(result) = CanisterIdInternal::try_compact(array) {
+                return result;
+            }
+        }
+
+        let requires_no_compaction_flag = bytes.len() < 10 || (bytes.len() == 10 && bytes[0] == FLAGS_NO_COMPACTION);
+        if requires_no_compaction_flag {
             let mut result = Vec::with_capacity(bytes.len() + 1);
-            result.push(FLAGS_NO_MATCH);
+            result.push(FLAGS_NO_COMPACTION);
             result.extend_from_slice(bytes);
             CanisterIdInternal(result)
         } else {
@@ -28,8 +33,8 @@ impl From<CanisterId> for CanisterIdInternal {
     }
 }
 
-impl From<[u8; 10]> for CanisterIdInternal {
-    fn from(input: [u8; 10]) -> Self {
+impl CanisterIdInternal {
+    fn try_compact(input: [u8; 10]) -> Option<CanisterIdInternal> {
         let ones_at_end_count = input
             .iter()
             .rev()
@@ -77,25 +82,21 @@ impl From<[u8; 10]> for CanisterIdInternal {
 
         compacted.extend(filtered);
 
-        let result = if compacted.len() < 10 {
-            compacted
-        } else if input[0] == FLAGS_NO_MATCH {
-            let mut result = Vec::with_capacity(input.len() + 1);
-            result.push(FLAGS_NO_MATCH);
-            result.extend_from_slice(&input);
-            result
+        if compacted.len() < 10 {
+            Some(CanisterIdInternal(compacted))
         } else {
-            input.to_vec()
-        };
-
-        CanisterIdInternal(result)
+            None
+        }
     }
 }
 
 impl From<CanisterIdInternal> for CanisterId {
     fn from(CanisterIdInternal(bytes): CanisterIdInternal) -> Self {
         if bytes.len() >= 10 {
-            return CanisterId::from_slice(if bytes[0] == FLAGS_NO_MATCH { &bytes[1..] } else { &bytes });
+            let skip_no_compaction_flag =
+                bytes.len() <= 11 && bytes[0] == FLAGS_NO_COMPACTION && bytes[1] == FLAGS_NO_COMPACTION;
+
+            return CanisterId::from_slice(if skip_no_compaction_flag { &bytes[1..] } else { &bytes });
         }
 
         let first_byte = bytes[0];
@@ -135,7 +136,7 @@ impl From<CanisterIdInternal> for CanisterId {
                 }
                 CanisterId::from_slice(&result)
             }
-            FLAGS_NO_MATCH => CanisterId::from_slice(&bytes[1..]),
+            FLAGS_NO_COMPACTION => CanisterId::from_slice(&bytes[1..]),
             _ => unreachable!(),
         }
     }
@@ -148,6 +149,7 @@ fn has_flag(bits: u8, index: usize) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rand::{thread_rng, Rng};
     use test_case::test_case;
 
     #[test_case("4bkt6-4aaaa-aaaaf-aaaiq-cai", 4)]
@@ -172,7 +174,7 @@ mod tests {
     #[test_case("tu45y-p4p3d-b4gg4-gmyy3-rgweo-whsrq-fephi-vshrn-cipca-xdkri-pae", 29)]
     #[test_case("aaaaa-aa", 1)]
     fn roundtrip_from_str(s: &str, expected_length: usize) {
-        roundtrip(CanisterId::from_text(s).unwrap(), expected_length);
+        roundtrip(CanisterId::from_text(s).unwrap(), Some(expected_length));
     }
 
     #[test_case(&[], 1)]
@@ -188,7 +190,7 @@ mod tests {
     #[test_case(&[1,0,0,1,1,1,1,1,1,2], 9)]
     #[test_case(&[1,2,3,4,5,6,7,8,9,10], 10)]
     fn roundtrip_from_bytes(bytes: &[u8], expected_length: usize) {
-        roundtrip(CanisterId::from_slice(bytes), expected_length);
+        roundtrip(CanisterId::from_slice(bytes), Some(expected_length));
     }
 
     #[test_case(&[224], 2)]
@@ -196,15 +198,44 @@ mod tests {
     #[test_case(&[224,1,1,1,1,0,0,1,1,1], 6)]
     #[test_case(&[224,1,1,0,0,0,0,1,1,1], 5)]
     #[test_case(&[224,1,1,1,1,1,1,1,1,1], 2)]
+    #[test_case(&[224,1,1,1,1,1,1,1,1,2], 11)]
+    #[test_case(&[224,2,3,4,5,6,7,8], 9)]
     #[test_case(&[224,2,3,4,5,6,7,8,9], 10)]
     #[test_case(&[224,2,3,4,5,6,7,8,9,10], 11)]
-    fn roundtrip_starting_with_no_match_flag(bytes: &[u8], expected_length: usize) {
-        roundtrip(CanisterId::from_slice(bytes), expected_length);
+    #[test_case(&[224,1,2,3,4,5,6,7,8,9,10], 11)]
+    fn roundtrip_starting_with_no_compaction_flag(bytes: &[u8], expected_length: usize) {
+        roundtrip(CanisterId::from_slice(bytes), Some(expected_length));
     }
 
-    fn roundtrip(input: CanisterId, expected_length: usize) {
+    #[test]
+    fn roundtrip_random() {
+        for _ in 0..1000 {
+            let bytes: [u8; 10] = thread_rng().gen();
+            roundtrip(CanisterId::from_slice(&bytes), None);
+        }
+    }
+
+    #[test]
+    fn roundtrip_random_starting_with_no_compaction_flag() {
+        for _ in 0..1000 {
+            let mut bytes = [0; 10];
+            bytes[0] = FLAGS_NO_COMPACTION;
+            let remaining_bytes: [u8; 9] = thread_rng().gen();
+            bytes[1..].copy_from_slice(&remaining_bytes);
+            roundtrip(CanisterId::from_slice(&bytes), None);
+        }
+    }
+
+    fn roundtrip(input: CanisterId, expected_length: Option<usize>) {
         let internal = CanisterIdInternal::from(input);
-        assert_eq!(internal.0.len(), expected_length);
+        if let Some(length) = expected_length {
+            assert_eq!(internal.0.len(), length);
+        } else {
+            let input_bytes = input.as_slice();
+            let max_length =
+                input_bytes.len() + (if input_bytes.first().copied() == Some(FLAGS_NO_COMPACTION) { 1 } else { 0 });
+            assert!(internal.0.len() <= max_length);
+        }
 
         let output = CanisterId::from(internal);
         assert_eq!(input, output);
