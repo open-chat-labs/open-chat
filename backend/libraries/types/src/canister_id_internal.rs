@@ -14,14 +14,68 @@ impl From<CanisterId> for CanisterIdInternal {
     fn from(value: CanisterId) -> Self {
         let bytes = value.as_slice();
 
-        if let Ok(array) = bytes.try_into() {
-            convert(array)
+        if let Ok(array) = <[u8; 10]>::try_from(bytes) {
+            array.into()
         } else {
             let mut result = Vec::with_capacity(bytes.len() + 1);
             result.push(0);
-            result.extend_from_slice(&bytes);
+            result.extend_from_slice(bytes);
             CanisterIdInternal(result)
         }
+    }
+}
+
+impl From<[u8; 10]> for CanisterIdInternal {
+    fn from(value: [u8; 10]) -> Self {
+        let ones_at_end_count = value
+            .iter()
+            .rev()
+            .enumerate()
+            .find(|(_, &b)| b != 1)
+            .map(|(i, _)| i)
+            .unwrap_or(10);
+
+        let mut zeroes_bits_first_5 = 0;
+        let mut zeroes_bits_last_5 = 0;
+
+        let mut filtered = Vec::new();
+        for (index, byte) in value[..10 - ones_at_end_count].iter().enumerate() {
+            if *byte == 0 {
+                if index < 5 {
+                    zeroes_bits_first_5 += 1 << (4 - index);
+                } else {
+                    zeroes_bits_last_5 += 1 << (9 - index);
+                }
+            } else {
+                filtered.push(*byte);
+            }
+        }
+
+        let mut result: Vec<u8>;
+
+        match (zeroes_bits_first_5 != 0, zeroes_bits_last_5 != 0) {
+            (false, false) => {
+                result = Vec::with_capacity(1 + filtered.len());
+                result.push(FLAGS_V1);
+            }
+            (true, false) => {
+                result = Vec::with_capacity(1 + filtered.len());
+                result.push(FLAGS_V1 + zeroes_bits_first_5);
+            }
+            (false, true) => {
+                result = Vec::with_capacity(1 + filtered.len());
+                result.push(FLAGS_V2 + zeroes_bits_last_5);
+            }
+            (true, true) => {
+                result = Vec::with_capacity(2 + filtered.len());
+                result.push(FLAGS_V3 + zeroes_bits_first_5);
+                result.push(zeroes_bits_last_5);
+            }
+        }
+
+        result.extend(filtered);
+
+        CanisterIdInternal(result)
     }
 }
 
@@ -45,21 +99,21 @@ impl From<CanisterIdInternal> for CanisterId {
                 let zeroes_last_5 = if has_zeroes_in_last_5 { prefix[prefix.len() - 1] & ZEROES_MASK } else { 0 };
 
                 let mut result = [0; 10];
-                for i in 0usize..10 {
-                    if i < 5 {
-                        if has_flag(zeroes_first_5, i + 3) {
+                for (index, output) in result.iter_mut().enumerate() {
+                    if index < 5 {
+                        if has_flag(zeroes_first_5, index + 3) {
                             // This byte should remain as 0
                             continue;
                         }
-                    } else if has_flag(zeroes_last_5, i - 2) {
+                    } else if has_flag(zeroes_last_5, index - 2) {
                         // This byte should remain as 0
                         continue;
                     }
 
                     if let Some(byte) = bytes_to_add.pop() {
-                        result[i] = byte
+                        *output = byte
                     } else {
-                        result[i] = 1;
+                        *output = 1;
                     }
                 }
                 CanisterId::from_slice(&result)
@@ -71,58 +125,6 @@ impl From<CanisterIdInternal> for CanisterId {
 
 fn has_flag(bits: u8, index: usize) -> bool {
     bits & (1 << (7 - index)) != 0
-}
-
-fn convert(bytes: [u8; 10]) -> CanisterIdInternal {
-    let ones_at_end_count = bytes
-        .iter()
-        .rev()
-        .enumerate()
-        .find(|(_, &b)| b != 1)
-        .map(|(i, _)| i)
-        .unwrap_or(10);
-
-    let mut zeroes_bits_first_5 = 0;
-    let mut zeroes_bits_last_5 = 0;
-
-    let mut filtered = Vec::new();
-    for (index, byte) in bytes[..10 - ones_at_end_count].iter().enumerate() {
-        if *byte == 0 {
-            if index < 5 {
-                zeroes_bits_first_5 += 1 << (4 - index);
-            } else {
-                zeroes_bits_last_5 += 1 << (9 - index);
-            }
-        } else {
-            filtered.push(*byte);
-        }
-    }
-
-    let mut result: Vec<u8>;
-
-    match (zeroes_bits_first_5 != 0, zeroes_bits_last_5 != 0) {
-        (false, false) => {
-            result = Vec::with_capacity(1 + filtered.len());
-            result.push(FLAGS_V1);
-        }
-        (true, false) => {
-            result = Vec::with_capacity(1 + filtered.len());
-            result.push(FLAGS_V1 + zeroes_bits_first_5);
-        }
-        (false, true) => {
-            result = Vec::with_capacity(1 + filtered.len());
-            result.push(FLAGS_V2 + zeroes_bits_last_5);
-        }
-        (true, true) => {
-            result = Vec::with_capacity(2 + filtered.len());
-            result.push(FLAGS_V3 + zeroes_bits_first_5);
-            result.push(zeroes_bits_last_5);
-        }
-    }
-
-    result.extend(filtered);
-
-    CanisterIdInternal(result)
 }
 
 #[cfg(test)]
