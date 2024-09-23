@@ -35,7 +35,6 @@ import type {
     EventWrapper,
     OptionUpdate,
     ClaimPrizeResponse,
-    AccessGate,
     DeclineInvitationResponse,
     EventsSuccessResult,
     ChatEvent,
@@ -51,6 +50,7 @@ import type {
     SetVideoCallPresenceResponse,
     VideoCallPresence,
     VideoCallParticipantsResponse,
+    AccessGateConfig,
 } from "openchat-shared";
 import {
     DestinationInvalidError,
@@ -546,7 +546,7 @@ export class GroupClient extends CandidService {
         permissions?: OptionalChatPermissions,
         avatar?: Uint8Array,
         eventsTimeToLiveMs?: OptionUpdate<bigint>,
-        gate?: AccessGate,
+        gateConfig?: AccessGateConfig,
         isPublic?: boolean,
         messagesVisibleToNonMembers?: boolean,
     ): Promise<UpdateGroupResponse> {
@@ -570,11 +570,11 @@ export class GroupClient extends CandidService {
                 events_ttl: apiOptionUpdate(identity, eventsTimeToLiveMs),
                 correlation_id: generateUint64(),
                 gate:
-                    gate === undefined
+                    gateConfig === undefined
                         ? { NoChange: null }
-                        : gate.kind === "no_gate"
-                        ? { SetToNone: null }
-                        : { SetToSome: apiAccessGate(gate) },
+                        : gateConfig.gate.kind === "no_gate"
+                          ? { SetToNone: null }
+                          : { SetToSome: apiAccessGate(gateConfig.gate) },
                 messages_visible_to_non_members: apiOptional(identity, messagesVisibleToNonMembers),
             }),
             updateGroupResponse,

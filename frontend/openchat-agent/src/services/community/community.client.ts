@@ -141,6 +141,7 @@ import type {
     VideoCallPresence,
     SetVideoCallPresenceResponse,
     VideoCallParticipantsResponse,
+    AccessGateConfig,
 } from "openchat-shared";
 import {
     textToCode,
@@ -305,7 +306,7 @@ export class CommunityClient extends CandidService {
                 ),
                 permissions_v2: [apiGroupPermissions(channel.permissions)],
                 rules: channel.rules,
-                gate: apiMaybeAccessGate(channel.gate),
+                gate: apiMaybeAccessGate(channel.gateConfig.gate),
                 messages_visible_to_non_members: apiOptional(
                     identity,
                     channel.messagesVisibleToNonMembers,
@@ -1203,7 +1204,7 @@ export class CommunityClient extends CandidService {
         permissions?: OptionalChatPermissions,
         avatar?: Uint8Array,
         eventsTimeToLiveMs?: OptionUpdate<bigint>,
-        gate?: AccessGate,
+        gateConfig?: AccessGateConfig,
         isPublic?: boolean,
         messagesVisibleToNonMembers?: boolean,
         externalUrl?: string,
@@ -1220,11 +1221,11 @@ export class CommunityClient extends CandidService {
                 public: apiOptional(identity, isPublic),
                 events_ttl: apiOptionUpdate(identity, eventsTimeToLiveMs),
                 gate:
-                    gate === undefined
+                    gateConfig === undefined
                         ? { NoChange: null }
-                        : gate.kind === "no_gate"
-                        ? { SetToNone: null }
-                        : { SetToSome: apiAccessGate(gate) },
+                        : gateConfig.gate.kind === "no_gate"
+                          ? { SetToNone: null }
+                          : { SetToSome: apiAccessGate(gateConfig.gate) },
                 avatar:
                     avatar === undefined
                         ? { NoChange: null }
@@ -1248,7 +1249,7 @@ export class CommunityClient extends CandidService {
         permissions?: Partial<CommunityPermissions>,
         avatar?: Uint8Array,
         banner?: Uint8Array,
-        gate?: AccessGate,
+        gateConfig?: AccessGateConfig,
         isPublic?: boolean,
         primaryLanguage?: string,
     ): Promise<UpdateCommunityResponse> {
@@ -1261,11 +1262,11 @@ export class CommunityClient extends CandidService {
                 public: apiOptional(identity, isPublic),
                 primary_language: apiOptional(identity, primaryLanguage),
                 gate:
-                    gate === undefined
+                    gateConfig === undefined
                         ? { NoChange: null }
-                        : gate.kind === "no_gate"
-                        ? { SetToNone: null }
-                        : { SetToSome: apiAccessGate(gate) },
+                        : gateConfig.gate.kind === "no_gate"
+                          ? { SetToNone: null }
+                          : { SetToSome: apiAccessGate(gateConfig.gate) },
                 avatar:
                     avatar === undefined
                         ? { NoChange: null }

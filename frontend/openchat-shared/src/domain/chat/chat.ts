@@ -2,7 +2,13 @@ import type DRange from "drange";
 import type { DataContent } from "../data/data";
 import type { Referral, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
-import type { AccessGate, AccessControlled, VersionedRules, UpdatedRules } from "../access";
+import type {
+    AccessGate,
+    AccessControlled,
+    VersionedRules,
+    UpdatedRules,
+    AccessGateConfig,
+} from "../access";
 import type {
     ChatPermissionRole,
     ChatPermissions,
@@ -673,7 +679,7 @@ export type LocalChatSummaryUpdates = {
               public?: boolean;
               permissions?: OptionalChatPermissions;
               frozen?: boolean;
-              gate?: AccessGate;
+              gateConfig?: AccessGateConfig;
               notificationsMuted?: boolean;
               archived?: boolean;
               rulesAccepted?: boolean;

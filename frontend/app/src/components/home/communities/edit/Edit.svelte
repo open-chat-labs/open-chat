@@ -64,7 +64,7 @@
     $: bannerDirty = editing && candidate.banner.blobUrl !== original.banner.blobUrl;
     $: visDirty = editing && candidate.public !== original.public;
     $: infoDirty = nameDirty || descDirty || avatarDirty || bannerDirty || languageDirty;
-    $: gateDirty = client.hasAccessGateChanged(candidate.gate, original.gate);
+    $: gateDirty = client.hasAccessGateChanged(candidate.gateConfig, original.gateConfig);
     $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty;
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: stepIndex = steps.findIndex((s) => s.key === step) ?? 0;
@@ -96,7 +96,10 @@
         candidate = {
             ...original,
             permissions: { ...original.permissions },
-            gate: { ...original.gate },
+            gateConfig: {
+                gate: { ...original.gateConfig.gate },
+                expiry: original.gateConfig.expiry,
+            },
         };
         candidateRules = { ...originalRules, newVersion: false };
     });
@@ -155,7 +158,7 @@
                     permissionsDirty ? candidate.permissions : undefined,
                     avatarDirty ? candidate.avatar.blobData : undefined,
                     bannerDirty ? candidate.banner.blobData : undefined,
-                    gateDirty ? candidate.gate : undefined,
+                    gateDirty ? candidate.gateConfig : undefined,
                     candidate.public !== original.public ? candidate.public : undefined,
                     languageDirty ? candidate.primaryLanguage : undefined,
                 )

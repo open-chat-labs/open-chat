@@ -1017,7 +1017,7 @@
                     threadPermissions: undefined,
                 },
                 rules: { ...defaultChatRules(level), newVersion: false },
-                gate: { kind: "no_gate" },
+                gateConfig: { gate: { kind: "no_gate" } },
                 level,
                 membership: {
                     ...nullMembership(),
@@ -1050,7 +1050,7 @@
                     blobUrl: chat.blobUrl,
                     blobData: chat.blobData,
                 },
-                gate: chat.gate,
+                gateConfig: chat.gateConfig,
                 level,
                 membership: chat.membership,
                 eventsTTL: chat.eventsTTL,

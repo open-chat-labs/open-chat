@@ -183,6 +183,7 @@ import type {
     VideoCallParticipantsResponse,
     VideoCallParticipant,
     LeafGate,
+    AccessGateConfig,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -1760,6 +1761,13 @@ function apiCredentialArguments(
     });
 }
 
+// TODO - sort this out later
+export function accessGateConfig(candid: ApiAccessGate): AccessGateConfig {
+    return {
+        gate: accessGate(candid),
+    };
+}
+
 export function accessGate(candid: ApiAccessGate): AccessGate {
     if ("Composite" in candid) {
         return {
@@ -2026,7 +2034,7 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
         frozen: candid.frozen.length > 0,
         dateLastPinned: optional(candid.date_last_pinned, identity),
         dateReadPinned: undefined,
-        gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
+        gateConfig: optional(candid.gate, accessGateConfig) ?? { gate: { kind: "no_gate" } },
         level: "group",
         eventsTTL: optional(candid.events_ttl, identity),
         eventsTtlLastUpdated: candid.events_ttl_last_updated,
@@ -2074,7 +2082,7 @@ export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): 
         },
         memberCount: candid.member_count,
         frozen: candid.frozen.length > 0,
-        gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
+        gateConfig: optional(candid.gate, accessGateConfig) ?? { gate: { kind: "no_gate" } },
         level: "community",
         permissions: communityPermissions(candid.permissions),
         membership: {
@@ -2135,7 +2143,7 @@ export function communityChannelSummary(
         frozen: false, // TODO - doesn't exist
         dateLastPinned: optional(candid.date_last_pinned, identity),
         dateReadPinned: undefined,
-        gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
+        gateConfig: optional(candid.gate, accessGateConfig) ?? { gate: { kind: "no_gate" } },
         level: "channel",
         eventsTTL: optional(candid.events_ttl, identity),
         eventsTtlLastUpdated: candid.events_ttl_last_updated,

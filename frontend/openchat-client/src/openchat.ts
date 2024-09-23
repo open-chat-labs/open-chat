@@ -424,6 +424,7 @@ import type {
     WalletConfig,
     AirdropChannelDetails,
     ChitLeaderboardResponse,
+    AccessGateConfig,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -1408,7 +1409,7 @@ export class OpenChat extends OpenChatAgentWorker {
         group: MultiUserChat | CommunitySummary,
     ): Promise<ApproveAccessGatePaymentResponse> {
         // If there is no payment gate then do nothing
-        if (!isPaymentGate(group.gate)) {
+        if (!isPaymentGate(group.gateConfig.gate)) {
             // If this is a channel there might still be a payment gate on the community
             if (group.kind === "channel") {
                 return this.approveAccessGatePayment(
@@ -1426,7 +1427,7 @@ export class OpenChat extends OpenChatAgentWorker {
         // approval for the group/community to transfer the payment
         const spender = group.kind === "group_chat" ? group.id.groupId : group.id.communityId;
 
-        const token = this.getTokenDetailsForAccessGate(group.gate);
+        const token = this.getTokenDetailsForAccessGate(group.gateConfig.gate);
 
         if (token === undefined) {
             return CommonResponses.failure();
@@ -1441,8 +1442,8 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({
             kind: "approveTransfer",
             spender,
-            ledger: group.gate.ledgerCanister,
-            amount: group.gate.amount - token.transferFee, // The user should pay only the amount not amount+fee so it is a round number
+            ledger: group.gateConfig.gate.ledgerCanister,
+            amount: group.gateConfig.gate.amount - token.transferFee, // The user should pay only the amount not amount+fee so it is a round number
             expiresIn: BigInt(5 * 60 * 1000), // Allow 5 mins for the join_group call before the approval expires
             pin,
         })
@@ -2773,9 +2774,15 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.diffGroupPermissions(p1, p2) !== undefined;
     }
 
-    hasAccessGateChanged(current: AccessGate, original: AccessGate): boolean {
-        if (current === original) return false;
+    hasAccessGateChanged(
+        currentConfig: AccessGateConfig,
+        originalConfig: AccessGateConfig,
+    ): boolean {
+        if (currentConfig === originalConfig) return false;
+        const current = currentConfig.gate;
+        const original = originalConfig.gate;
         if (current.kind !== original.kind) return true;
+        if (currentConfig.expiry !== originalConfig.expiry) return true;
         if (isNeuronGate(current) && isNeuronGate(original)) {
             return (
                 current.governanceCanister !== original.governanceCanister ||
@@ -4259,18 +4266,18 @@ export class OpenChat extends OpenChatAgentWorker {
             chat.kind === "channel" ? this.getCommunityForChannel(chat.id) : undefined;
         if (
             community !== undefined &&
-            community.gate.kind !== "no_gate" &&
+            community.gateConfig.gate.kind !== "no_gate" &&
             community.membership.role === "none" &&
             (!community.isInvited || !excludeInvited)
         ) {
-            gates.push({ level: "community", ...community.gate });
+            gates.push({ level: "community", ...community.gateConfig.gate });
         }
         if (
-            chat.gate.kind !== "no_gate" &&
+            chat.gateConfig.gate.kind !== "no_gate" &&
             chat.membership.role === "none" &&
             (!chat.isInvited || !excludeInvited)
         ) {
-            gates.push({ level: chat.level, ...chat.gate });
+            gates.push({ level: chat.level, ...chat.gateConfig.gate });
         }
         return gates;
     }
@@ -5241,7 +5248,7 @@ export class OpenChat extends OpenChatAgentWorker {
         permissions?: OptionalChatPermissions,
         avatar?: Uint8Array,
         eventsTimeToLive?: OptionUpdate<bigint>,
-        gate?: AccessGate,
+        gateConfig?: AccessGateConfig,
         isPublic?: boolean,
         messagesVisibleToNonMembers?: boolean,
         externalUrl?: string,
@@ -5255,7 +5262,7 @@ export class OpenChat extends OpenChatAgentWorker {
             permissions,
             avatar,
             eventsTimeToLive,
-            gate,
+            gateConfig,
             isPublic,
             messagesVisibleToNonMembers,
             externalUrl,
@@ -5267,7 +5274,7 @@ export class OpenChat extends OpenChatAgentWorker {
                         name,
                         description: desc,
                         permissions,
-                        gate,
+                        gateConfig: gateConfig,
                         eventsTTL: eventsTimeToLive,
                     });
 
@@ -7217,7 +7224,7 @@ export class OpenChat extends OpenChatAgentWorker {
         permissions: CommunityPermissions | undefined,
         avatar: Uint8Array | undefined,
         banner: Uint8Array | undefined,
-        gate: AccessGate | undefined,
+        gateConfig: AccessGateConfig | undefined,
         isPublic: boolean | undefined,
         primaryLanguage: string | undefined,
     ): Promise<boolean> {
@@ -7230,7 +7237,7 @@ export class OpenChat extends OpenChatAgentWorker {
             permissions,
             avatar,
             banner,
-            gate,
+            gateConfig,
             isPublic,
             primaryLanguage,
         })

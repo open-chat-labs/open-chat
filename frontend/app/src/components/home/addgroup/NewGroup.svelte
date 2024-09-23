@@ -77,7 +77,8 @@
     $: avatarDirty = editing && candidateGroup.avatar?.blobUrl !== originalGroup.avatar?.blobUrl;
     $: visDirty = editing && candidateGroup.public !== originalGroup.public;
     $: infoDirty = nameDirty || descDirty || avatarDirty || externalUrlDirty;
-    $: gateDirty = editing && client.hasAccessGateChanged(candidateGroup.gate, originalGroup.gate);
+    $: gateDirty =
+        editing && client.hasAccessGateChanged(candidateGroup.gateConfig, originalGroup.gateConfig);
     $: ttlDirty = editing && candidateGroup.eventsTTL !== originalGroup.eventsTTL;
     $: messagesVisibleToNonMembersDirty =
         editing &&
@@ -238,7 +239,7 @@
                         ? "set_to_none"
                         : { value: updatedGroup.eventsTTL }
                     : undefined,
-                gateDirty ? updatedGroup.gate : undefined,
+                gateDirty ? updatedGroup.gateConfig : undefined,
                 visDirty ? updatedGroup.public : undefined,
                 messagesVisibleToNonMembersDirty
                     ? updatedGroup.messagesVisibleToNonMembers

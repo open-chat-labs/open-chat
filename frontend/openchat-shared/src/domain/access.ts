@@ -1,5 +1,10 @@
 import type { Level } from "./structure";
 
+export type AccessGateConfig = {
+    gate: AccessGate;
+    expiry?: number;
+};
+
 export type AccessGateWithLevel = { level: Level } & AccessGate;
 
 export type AccessGate = LeafGate | CompositeGate;
@@ -149,7 +154,7 @@ export type LifetimeDiamondGate = { kind: "lifetime_diamond_gate" };
 export type UniquePersonGate = { kind: "unique_person_gate" };
 
 export type AccessControlled = {
-    gate: AccessGate;
+    gateConfig: AccessGateConfig;
     public: boolean;
     frozen: boolean;
     historyVisible: boolean;
