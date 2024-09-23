@@ -1438,6 +1438,7 @@ export function nullMembership(): ChatMembership {
         readByMeUpTo: undefined,
         archived: false,
         rulesAccepted: false,
+        lapsed: false,
     };
 }
 
@@ -1451,6 +1452,7 @@ export type ChatMembership = {
     readByMeUpTo: number | undefined;
     archived: boolean;
     rulesAccepted: boolean;
+    lapsed: boolean;
 };
 
 export type GroupCanisterSummaryResponse =

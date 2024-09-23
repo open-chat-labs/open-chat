@@ -114,6 +114,7 @@ import type {
     ChatIdentifier,
     UpdatedEvent,
     User,
+    AccessGateConfig,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -1667,6 +1668,13 @@ export function credentialArguments(
 //     });
 // }
 
+// TODO - sort this out later
+export function accessGateConfig(value: TAccessGate): AccessGateConfig {
+    return {
+        gate: accessGate(value),
+    };
+}
+
 export function accessGate(value: TAccessGate): AccessGate {
     if (value === "DiamondMember") {
         return {
@@ -1925,7 +1933,7 @@ export function groupChatSummary(value: TGroupCanisterGroupChatSummary): GroupCh
         frozen: value.frozen !== undefined,
         dateLastPinned: value.date_last_pinned,
         dateReadPinned: undefined,
-        gate: mapOptional(value.gate, accessGate) ?? { kind: "no_gate" },
+        gateConfig: mapOptional(value.gate, accessGateConfig) ?? { gate: { kind: "no_gate" } },
         level: "group",
         eventsTTL: value.events_ttl,
         eventsTtlLastUpdated: value.events_ttl_last_updated,
@@ -1939,6 +1947,7 @@ export function groupChatSummary(value: TGroupCanisterGroupChatSummary): GroupCh
             readByMeUpTo: latestMessage?.event.messageIndex,
             archived: false,
             rulesAccepted: value.rules_accepted,
+            lapsed: true, // FIXME - fill this in
         },
         localUserIndex: principalBytesToString(value.local_user_index_canister_id),
         isInvited: false, // this is only applicable when we are not a member
@@ -1973,7 +1982,7 @@ export function communitySummary(value: TCommunityCanisterCommunitySummary): Com
         },
         memberCount: value.member_count,
         frozen: value.frozen !== undefined,
-        gate: mapOptional(value.gate, accessGate) ?? { kind: "no_gate" },
+        gateConfig: mapOptional(value.gate, accessGateConfig) ?? { gate: { kind: "no_gate" } },
         level: "community",
         permissions: communityPermissions(value.permissions),
         membership: {
@@ -1984,6 +1993,7 @@ export function communitySummary(value: TCommunityCanisterCommunitySummary): Com
             index: 0,
             displayName: mapOptional(value.membership, (m) => m.display_name),
             rulesAccepted: mapOptional(value.membership, (m) => m.rules_accepted) ?? false,
+            lapsed: true, // FIXME - fill this in
         },
         channels: value.channels.map((c) => communityChannelSummary(c, communityId)),
         primaryLanguage: value.primary_language,
@@ -2034,7 +2044,7 @@ export function communityChannelSummary(
         frozen: false, // TODO - doesn't exist
         dateLastPinned: value.date_last_pinned,
         dateReadPinned: undefined,
-        gate: mapOptional(value.gate, accessGate) ?? { kind: "no_gate" },
+        gateConfig: mapOptional(value.gate, accessGateConfig) ?? { gate: { kind: "no_gate" } },
         level: "channel",
         eventsTTL: value.events_ttl,
         eventsTtlLastUpdated: value.events_ttl_last_updated,
@@ -2053,6 +2063,7 @@ export function communityChannelSummary(
             mentions: [],
             archived: false,
             rulesAccepted: mapOptional(value.membership, (m) => m.rules_accepted) ?? false,
+            lapsed: true, // FIXME - fill this in
         },
         isInvited: value.is_invited ?? false,
         messagesVisibleToNonMembers: value.messages_visible_to_non_members,

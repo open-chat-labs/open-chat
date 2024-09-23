@@ -50,6 +50,7 @@ export type CommunityMembership = {
     index: number;
     displayName: string | undefined;
     rulesAccepted: boolean;
+    lapsed: boolean;
 };
 
 export type CommunityIdentifier = {
@@ -229,12 +230,14 @@ export type CommunityCanisterChannelSummaryUpdates = {
     externalUrl: OptionUpdate<string>;
 };
 
+// FIXME - add lapsed
 export type CommunityMembershipUpdates = {
     role: MemberRole | undefined;
     displayName: OptionUpdate<string>;
     rulesAccepted: boolean | undefined;
 };
 
+// FIXME - add lapsed
 export type GroupMembershipUpdates = {
     role: MemberRole | undefined;
     notificationsMuted: boolean | undefined;

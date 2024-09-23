@@ -74,7 +74,6 @@ import {
     apiUser as apiUserV2,
 } from "../common/chatMappersV2";
 import type {
-    AccessGate,
     AddMembersToChannelResponse,
     BlockCommunityUserResponse,
     CandidateChannel,

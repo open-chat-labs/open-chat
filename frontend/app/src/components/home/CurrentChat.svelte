@@ -86,6 +86,7 @@
     $: communities = client.communities;
     $: canSendAny = client.canSendMessage(chat.id, "message");
     $: preview = client.isPreviewing(chat.id);
+    $: lapsed = client.isLapsed(chat.id);
     $: canPin = client.canPinMessages(chat.id);
     $: canBlockUsers = client.canBlockUsers(chat.id);
     $: canDelete = client.canDeleteOtherUsersMessages(chat.id);
@@ -130,7 +131,7 @@
     }
 
     function getUnreadMessageCount(chat: ChatSummary): number {
-        if (client.isPreviewing(chat.id)) return 0;
+        if (client.isPreviewing(chat.id) || client.isLapsed(chat.id)) return 0;
 
         return messagesRead.unreadMessageCount(chat.id, chat.latestMessage?.event.messageIndex);
     }
@@ -410,6 +411,7 @@
             mode={"message"}
             {joining}
             {preview}
+            {lapsed}
             {blocked}
             externalContent={externalUrl !== undefined}
             on:joinGroup

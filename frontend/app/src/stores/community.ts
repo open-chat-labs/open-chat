@@ -40,6 +40,7 @@ export function createCandidateCommunity(id: string, index: number): CommunitySu
             index,
             displayName: undefined,
             rulesAccepted: false,
+            lapsed: false,
         },
         primaryLanguage: "en",
         metrics: emptyChatMetrics(),

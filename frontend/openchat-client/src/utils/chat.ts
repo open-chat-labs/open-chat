@@ -89,6 +89,10 @@ export function isPreviewing(chat: ChatSummary): boolean {
     return chat.membership.role === "none";
 }
 
+export function isLapsed(chat: ChatSummary): boolean {
+    return chat.membership.lapsed;
+}
+
 export function isFrozen(thing: AccessControlled): boolean {
     return thing.frozen;
 }
@@ -396,6 +400,7 @@ export function mergeLocalSummaryUpdates(
                         },
                     });
                 } else if (current.kind === updated.kind) {
+                    const mergedGate = { ...current.gateConfig.gate, ...updated.gateConfig?.gate };
                     merged.set(chatId, {
                         ...current,
                         latestMessage,
@@ -405,9 +410,9 @@ export function mergeLocalSummaryUpdates(
                         description: updated.description ?? current.description,
                         public: updated.public ?? current.public,
                         permissions: mergePermissions(current.permissions, updated.permissions),
-                        gate: {
-                            ...current.gate,
-                            ...updated.gate,
+                        gateConfig: {
+                            gate: mergedGate,
+                            expiry: updated.gateConfig?.expiry ?? current.gateConfig.expiry,
                         },
                         membership: {
                             ...current.membership,
@@ -906,7 +911,7 @@ export function groupChatFromCandidate(
         frozen: false,
         dateLastPinned: undefined,
         dateReadPinned: undefined,
-        gate: candidate.gate,
+        gateConfig: candidate.gateConfig,
         level: "group",
         membership: {
             ...nullMembership(),

@@ -14,6 +14,7 @@
 
     export let chat: MultiUserChat;
     export let joining: MultiUserChat | undefined;
+    export let lapsed: boolean;
 
     $: platformModerator = client.platformModerator;
     $: isFrozen = client.isFrozen(chat.id);
@@ -21,6 +22,8 @@
     $: previewingCommunity = $selectedCommunity?.membership.role === "none";
     $: gates = client.accessGatesForChat(chat);
     $: locked = gates.some((g) => isLocked(g));
+
+    $: console.log("Lapsed: ", lapsed);
 
     let freezingInProgress = false;
 

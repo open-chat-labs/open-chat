@@ -74,6 +74,7 @@ import {
     doesMessageFailFilter,
     canStartVideoCalls,
     buildBlobUrl,
+    isLapsed,
 } from "./utils/chat";
 import {
     buildUsernameList,
@@ -1919,6 +1920,11 @@ export class OpenChat extends OpenChatAgentWorker {
     isPreviewing(chatId: ChatIdentifier): boolean {
         if (chatId.kind === "direct_chat") return false;
         return this.multiUserChatPredicate(chatId, isPreviewing);
+    }
+
+    isLapsed(chatId: ChatIdentifier): boolean {
+        if (chatId.kind === "direct_chat") return false;
+        return this.multiUserChatPredicate(chatId, isLapsed);
     }
 
     isFrozen(chatId: ChatIdentifier): boolean {

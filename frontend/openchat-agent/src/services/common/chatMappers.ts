@@ -2048,6 +2048,7 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
             readByMeUpTo: latestMessage?.event.messageIndex,
             archived: false,
             rulesAccepted: candid.rules_accepted,
+            lapsed: true, // FIXME - fill this in
         },
         localUserIndex: candid.local_user_index_canister_id.toString(),
         isInvited: false, // this is only applicable when we are not a member
@@ -2093,6 +2094,7 @@ export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): 
             index: 0,
             displayName: optional(candid.membership, (m) => optional(m.display_name, identity)),
             rulesAccepted: optional(candid.membership, (m) => m.rules_accepted) ?? false,
+            lapsed: true, // FIXME - fill this in
         },
         channels: candid.channels.map((c) => communityChannelSummary(c, communityId)),
         primaryLanguage: candid.primary_language,
@@ -2160,6 +2162,7 @@ export function communityChannelSummary(
             mentions: [],
             archived: false,
             rulesAccepted: optional(candid.membership, (m) => m.rules_accepted) ?? false,
+            lapsed: true, // FIXME - fill this in
         },
         isInvited: optional(candid.is_invited, identity) ?? false,
         messagesVisibleToNonMembers: candid.messages_visible_to_non_members,
