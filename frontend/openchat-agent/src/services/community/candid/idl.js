@@ -189,6 +189,62 @@ export const idlFactory = ({ IDL }) => {
     'channel_id' : ChannelId,
     'invite_code' : IDL.Opt(IDL.Nat64),
   });
+  const VerifiedCredentialGate = IDL.Record({
+    'credential_arguments' : IDL.Vec(
+      IDL.Tuple(
+        IDL.Text,
+        IDL.Variant({ 'Int' : IDL.Int32, 'String' : IDL.Text }),
+      )
+    ),
+    'issuer_origin' : IDL.Text,
+    'issuer_canister_id' : CanisterId,
+    'credential_name' : IDL.Text,
+    'credential_type' : IDL.Text,
+  });
+  const SnsNeuronGate = IDL.Record({
+    'min_stake_e8s' : IDL.Opt(IDL.Nat64),
+    'min_dissolve_delay' : IDL.Opt(Milliseconds),
+    'governance_canister_id' : CanisterId,
+  });
+  const TokenBalanceGate = IDL.Record({
+    'min_balance' : IDL.Nat,
+    'ledger_canister_id' : CanisterId,
+  });
+  const PaymentGate = IDL.Record({
+    'fee' : IDL.Nat,
+    'ledger_canister_id' : CanisterId,
+    'amount' : IDL.Nat,
+  });
+  const AccessGateNonComposite = IDL.Variant({
+    'UniquePerson' : IDL.Null,
+    'VerifiedCredential' : VerifiedCredentialGate,
+    'ReferredByMember' : IDL.Null,
+    'SnsNeuron' : SnsNeuronGate,
+    'Locked' : IDL.Null,
+    'TokenBalance' : TokenBalanceGate,
+    'DiamondMember' : IDL.Null,
+    'Payment' : PaymentGate,
+    'LifetimeDiamondMember' : IDL.Null,
+  });
+  const AccessGate = IDL.Variant({
+    'UniquePerson' : IDL.Null,
+    'VerifiedCredential' : VerifiedCredentialGate,
+    'ReferredByMember' : IDL.Null,
+    'SnsNeuron' : SnsNeuronGate,
+    'Locked' : IDL.Null,
+    'TokenBalance' : TokenBalanceGate,
+    'Composite' : IDL.Record({
+      'and' : IDL.Bool,
+      'inner' : IDL.Vec(AccessGateNonComposite),
+    }),
+    'DiamondMember' : IDL.Null,
+    'Payment' : PaymentGate,
+    'LifetimeDiamondMember' : IDL.Null,
+  });
+  const AccessGateConfig = IDL.Record({
+    'gate' : AccessGate,
+    'expiry' : IDL.Opt(Milliseconds),
+  });
   const VideoCallType = IDL.Variant({
     'Default' : IDL.Null,
     'Broadcast' : IDL.Null,
@@ -272,58 +328,6 @@ export const idlFactory = ({ IDL }) => {
     'react_to_messages' : PermissionRole,
   });
   const EventIndex = IDL.Nat32;
-  const VerifiedCredentialGate = IDL.Record({
-    'credential_arguments' : IDL.Vec(
-      IDL.Tuple(
-        IDL.Text,
-        IDL.Variant({ 'Int' : IDL.Int32, 'String' : IDL.Text }),
-      )
-    ),
-    'issuer_origin' : IDL.Text,
-    'issuer_canister_id' : CanisterId,
-    'credential_name' : IDL.Text,
-    'credential_type' : IDL.Text,
-  });
-  const SnsNeuronGate = IDL.Record({
-    'min_stake_e8s' : IDL.Opt(IDL.Nat64),
-    'min_dissolve_delay' : IDL.Opt(Milliseconds),
-    'governance_canister_id' : CanisterId,
-  });
-  const TokenBalanceGate = IDL.Record({
-    'min_balance' : IDL.Nat,
-    'ledger_canister_id' : CanisterId,
-  });
-  const PaymentGate = IDL.Record({
-    'fee' : IDL.Nat,
-    'ledger_canister_id' : CanisterId,
-    'amount' : IDL.Nat,
-  });
-  const AccessGateNonComposite = IDL.Variant({
-    'UniquePerson' : IDL.Null,
-    'VerifiedCredential' : VerifiedCredentialGate,
-    'ReferredByMember' : IDL.Null,
-    'SnsNeuron' : SnsNeuronGate,
-    'Locked' : IDL.Null,
-    'TokenBalance' : TokenBalanceGate,
-    'DiamondMember' : IDL.Null,
-    'Payment' : PaymentGate,
-    'LifetimeDiamondMember' : IDL.Null,
-  });
-  const AccessGate = IDL.Variant({
-    'UniquePerson' : IDL.Null,
-    'VerifiedCredential' : VerifiedCredentialGate,
-    'ReferredByMember' : IDL.Null,
-    'SnsNeuron' : SnsNeuronGate,
-    'Locked' : IDL.Null,
-    'TokenBalance' : TokenBalanceGate,
-    'Composite' : IDL.Record({
-      'and' : IDL.Bool,
-      'inner' : IDL.Vec(AccessGateNonComposite),
-    }),
-    'DiamondMember' : IDL.Null,
-    'Payment' : PaymentGate,
-    'LifetimeDiamondMember' : IDL.Null,
-  });
   const GroupCanisterThreadDetails = IDL.Record({
     'root_message_index' : MessageIndex,
     'last_updated' : TimestampMillis,
@@ -470,6 +474,7 @@ export const idlFactory = ({ IDL }) => {
     'width' : IDL.Nat32,
   });
   const PrizeContent = IDL.Record({
+    'winner_count' : IDL.Nat32,
     'token' : Cryptocurrency,
     'end_date' : TimestampMillis,
     'prizes_remaining' : IDL.Nat32,
@@ -477,6 +482,7 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'diamond_only' : IDL.Bool,
     'winners' : IDL.Vec(UserId),
+    'user_is_winner' : IDL.Bool,
   });
   const CustomMessageContent = IDL.Record({
     'data' : IDL.Vec(IDL.Nat8),
@@ -785,6 +791,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_message_sender_display_name' : IDL.Opt(IDL.Text),
     'channel_id' : ChannelId,
     'is_public' : IDL.Bool,
+    'gate_config' : IDL.Opt(AccessGateConfig),
     'is_invited' : IDL.Opt(IDL.Bool),
     'video_call_in_progress' : IDL.Opt(VideoCall),
     'metrics' : ChatMetrics,
@@ -819,6 +826,11 @@ export const idlFactory = ({ IDL }) => {
     'channel_id' : ChannelId,
     'updates_since' : TimestampMillis,
     'invite_code' : IDL.Opt(IDL.Nat64),
+  });
+  const AccessGateConfigUpdate = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'SetToNone' : IDL.Null,
+    'SetToSome' : AccessGateConfig,
   });
   const VideoCallUpdates = IDL.Variant({
     'NoChange' : IDL.Null,
@@ -863,6 +875,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_message_sender_display_name' : IDL.Opt(IDL.Text),
     'channel_id' : ChannelId,
     'is_public' : IDL.Opt(IDL.Bool),
+    'gate_config' : AccessGateConfigUpdate,
     'video_call_in_progress' : VideoCallUpdates,
     'metrics' : IDL.Opt(ChatMetrics),
     'subtype' : GroupSubtypeUpdate,
@@ -920,6 +933,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const CreateChannelArgs = IDL.Record({
     'is_public' : IDL.Bool,
+    'gate_config' : IDL.Opt(AccessGateConfig),
     'subtype' : IDL.Opt(GroupSubtype),
     'permissions_v2' : IDL.Opt(GroupPermissions),
     'external_url' : IDL.Opt(IDL.Text),
@@ -1194,6 +1208,7 @@ export const idlFactory = ({ IDL }) => {
   const GroupGateUpdated = IDL.Record({
     'updated_by' : UserId,
     'new_gate' : IDL.Opt(AccessGate),
+    'new_gate_config' : IDL.Opt(AccessGateConfig),
   });
   const RoleChanged = IDL.Record({
     'user_ids' : IDL.Vec(UserId),
@@ -1289,6 +1304,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ChannelMatch = IDL.Record({
     'id' : ChannelId,
+    'gate_config' : IDL.Opt(AccessGateConfig),
     'subtype' : IDL.Opt(GroupSubtype),
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
@@ -1538,6 +1554,7 @@ export const idlFactory = ({ IDL }) => {
   const SelectedChannelInitialArgs = IDL.Record({ 'channel_id' : ChannelId });
   const Participant = IDL.Record({
     'role' : GroupRole,
+    'lapsed' : IDL.Bool,
     'user_id' : UserId,
     'date_added' : TimestampMillis,
   });
@@ -1598,6 +1615,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const CommunityMember = IDL.Record({
     'role' : CommunityRole,
+    'lapsed' : IDL.Bool,
     'referred_by' : IDL.Opt(UserId),
     'user_id' : UserId,
     'display_name' : IDL.Opt(IDL.Text),
@@ -1780,6 +1798,7 @@ export const idlFactory = ({ IDL }) => {
   const CommunityCanisterCommunitySummary = IDL.Record({
     'is_public' : IDL.Bool,
     'permissions' : CommunityPermissions,
+    'gate_config' : IDL.Opt(AccessGateConfig),
     'community_id' : CommunityId,
     'is_invited' : IDL.Opt(IDL.Bool),
     'metrics' : ChatMetrics,
@@ -1819,6 +1838,7 @@ export const idlFactory = ({ IDL }) => {
   const CommunityCanisterCommunitySummaryUpdates = IDL.Record({
     'is_public' : IDL.Opt(IDL.Bool),
     'permissions' : IDL.Opt(CommunityPermissions),
+    'gate_config' : AccessGateConfigUpdate,
     'community_id' : CommunityId,
     'channels_updated' : IDL.Vec(CommunityCanisterChannelSummaryUpdates),
     'metrics' : IDL.Opt(ChatMetrics),
@@ -1965,6 +1985,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const UpdateChannelArgs = IDL.Record({
     'channel_id' : ChannelId,
+    'gate_config' : AccessGateConfigUpdate,
     'permissions_v2' : IDL.Opt(OptionalGroupPermissions),
     'external_url' : TextUpdate,
     'gate' : AccessGateUpdate,
@@ -2006,6 +2027,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const UpdateCommunityArgs = IDL.Record({
     'permissions' : IDL.Opt(OptionalCommunityPermissions),
+    'gate_config' : AccessGateConfigUpdate,
     'gate' : AccessGateUpdate,
     'name' : IDL.Opt(IDL.Text),
     'banner' : DocumentUpdate,

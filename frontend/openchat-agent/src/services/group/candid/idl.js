@@ -423,6 +423,7 @@ export const idlFactory = ({ IDL }) => {
     'width' : IDL.Nat32,
   });
   const PrizeContent = IDL.Record({
+    'winner_count' : IDL.Nat32,
     'token' : Cryptocurrency,
     'end_date' : TimestampMillis,
     'prizes_remaining' : IDL.Nat32,
@@ -430,6 +431,7 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'diamond_only' : IDL.Bool,
     'winners' : IDL.Vec(UserId),
+    'user_is_winner' : IDL.Bool,
   });
   const CustomMessageContent = IDL.Record({
     'data' : IDL.Vec(IDL.Nat8),
@@ -882,9 +884,14 @@ export const idlFactory = ({ IDL }) => {
     'Payment' : PaymentGate,
     'LifetimeDiamondMember' : IDL.Null,
   });
+  const AccessGateConfig = IDL.Record({
+    'gate' : AccessGate,
+    'expiry' : IDL.Opt(Milliseconds),
+  });
   const GroupGateUpdated = IDL.Record({
     'updated_by' : UserId,
     'new_gate' : IDL.Opt(AccessGate),
+    'new_gate_config' : IDL.Opt(AccessGateConfig),
   });
   const RoleChanged = IDL.Record({
     'user_ids' : IDL.Vec(UserId),
@@ -1060,6 +1067,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const PublicGroupSummary = IDL.Record({
     'is_public' : IDL.Bool,
+    'gate_config' : IDL.Opt(AccessGateConfig),
     'subtype' : IDL.Opt(GroupSubtype),
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
@@ -1215,6 +1223,7 @@ export const idlFactory = ({ IDL }) => {
   const SelectedInitialArgs = IDL.Record({});
   const Participant = IDL.Record({
     'role' : GroupRole,
+    'lapsed' : IDL.Bool,
     'user_id' : UserId,
     'date_added' : TimestampMillis,
   });
@@ -1388,6 +1397,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const GroupCanisterGroupChatSummary = IDL.Record({
     'is_public' : IDL.Bool,
+    'gate_config' : IDL.Opt(AccessGateConfig),
     'video_call_in_progress' : IDL.Opt(VideoCall),
     'metrics' : ChatMetrics,
     'subtype' : IDL.Opt(GroupSubtype),
@@ -1426,6 +1436,11 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Record({ 'summary' : GroupCanisterGroupChatSummary }),
   });
   const SummaryUpdatesArgs = IDL.Record({ 'updates_since' : TimestampMillis });
+  const AccessGateConfigUpdate = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'SetToNone' : IDL.Null,
+    'SetToSome' : AccessGateConfig,
+  });
   const VideoCallUpdates = IDL.Variant({
     'NoChange' : IDL.Null,
     'SetToNone' : IDL.Null,
@@ -1467,6 +1482,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const GroupCanisterGroupChatSummaryUpdates = IDL.Record({
     'is_public' : IDL.Opt(IDL.Bool),
+    'gate_config' : AccessGateConfigUpdate,
     'video_call_in_progress' : VideoCallUpdates,
     'metrics' : IDL.Opt(ChatMetrics),
     'subtype' : GroupSubtypeUpdate,
@@ -1633,6 +1649,7 @@ export const idlFactory = ({ IDL }) => {
     'SetToSome' : Document,
   });
   const UpdateGroupV2Args = IDL.Record({
+    'gate_config' : AccessGateConfigUpdate,
     'permissions_v2' : IDL.Opt(OptionalGroupPermissions),
     'gate' : AccessGateUpdate,
     'name' : IDL.Opt(IDL.Text),

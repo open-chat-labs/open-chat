@@ -291,7 +291,6 @@ export const idlFactory = ({ IDL }) => {
     'change_roles' : CommunityPermissionRole,
     'create_private_channel' : CommunityPermissionRole,
   });
-  const Rules = IDL.Record({ 'text' : IDL.Text, 'enabled' : IDL.Bool });
   const VerifiedCredentialGate = IDL.Record({
     'credential_arguments' : IDL.Vec(
       IDL.Tuple(
@@ -344,6 +343,11 @@ export const idlFactory = ({ IDL }) => {
     'Payment' : PaymentGate,
     'LifetimeDiamondMember' : IDL.Null,
   });
+  const AccessGateConfig = IDL.Record({
+    'gate' : AccessGate,
+    'expiry' : IDL.Opt(Milliseconds),
+  });
+  const Rules = IDL.Record({ 'text' : IDL.Text, 'enabled' : IDL.Bool });
   const Document = IDL.Record({
     'id' : IDL.Nat,
     'data' : IDL.Vec(IDL.Nat8),
@@ -352,6 +356,7 @@ export const idlFactory = ({ IDL }) => {
   const CreateCommunityArgs = IDL.Record({
     'is_public' : IDL.Bool,
     'permissions' : IDL.Opt(CommunityPermissions),
+    'gate_config' : IDL.Opt(AccessGateConfig),
     'default_channel_rules' : IDL.Opt(Rules),
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
@@ -435,6 +440,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const CreateGroupArgs = IDL.Record({
     'is_public' : IDL.Bool,
+    'gate_config' : IDL.Opt(AccessGateConfig),
     'permissions_v2' : IDL.Opt(GroupPermissions),
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
@@ -630,6 +636,7 @@ export const idlFactory = ({ IDL }) => {
     'width' : IDL.Nat32,
   });
   const PrizeContent = IDL.Record({
+    'winner_count' : IDL.Nat32,
     'token' : Cryptocurrency,
     'end_date' : TimestampMillis,
     'prizes_remaining' : IDL.Nat32,
@@ -637,6 +644,7 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'diamond_only' : IDL.Bool,
     'winners' : IDL.Vec(UserId),
+    'user_is_winner' : IDL.Bool,
   });
   const CustomMessageContent = IDL.Record({
     'data' : IDL.Vec(IDL.Nat8),
@@ -1081,6 +1089,7 @@ export const idlFactory = ({ IDL }) => {
   const GroupGateUpdated = IDL.Record({
     'updated_by' : UserId,
     'new_gate' : IDL.Opt(AccessGate),
+    'new_gate_config' : IDL.Opt(AccessGateConfig),
   });
   const GroupRole = IDL.Variant({
     'Participant' : IDL.Null,
