@@ -8,6 +8,7 @@ mod achievement;
 mod avatar;
 mod bots;
 mod build_version;
+mod canister_id_internal;
 mod canister_upgrade_status;
 mod canister_wasm;
 mod channel_summary;

@@ -18,3 +18,6 @@ serde_bytes = { workspace = true }
 serde_json.workspace = true
 ts_export = { path = "../ts_export" }
 ts-rs.workspace = true
+
+[dev-dependencies]
+test-case = { workspace = true }
