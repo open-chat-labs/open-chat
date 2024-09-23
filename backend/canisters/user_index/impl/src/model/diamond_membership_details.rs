@@ -10,13 +10,13 @@ const LIFETIME_TIMESTAMP: TimestampMillis = 30000000000000; // This timestamp is
 
 #[derive(Serialize, Deserialize, Clone, Default)]
 pub struct DiamondMembershipDetailsInternal {
-    #[serde(rename = "e", alias = "expires_at", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "e", default, skip_serializing_if = "Option::is_none")]
     expires_at: Option<TimestampMillis>,
-    #[serde(rename = "p", alias = "payments", default, skip_serializing_if = "is_empty_slice")]
+    #[serde(rename = "p", default, skip_serializing_if = "is_empty_slice")]
     payments: Vec<DiamondMembershipPayment>,
-    #[serde(rename = "c", alias = "pay_in_chat", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "c", default, skip_serializing_if = "is_default")]
     pay_in_chat: bool,
-    #[serde(rename = "s", alias = "subscription", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "s", default, skip_serializing_if = "is_default")]
     subscription: DiamondMembershipSubscription,
     #[serde(skip)]
     payment_in_progress: bool,

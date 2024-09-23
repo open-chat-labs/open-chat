@@ -56,7 +56,7 @@ pub struct User {
     pub reported_messages: Vec<u64>,
     #[serde(rename = "cm", default, skip_serializing_if = "is_default")]
     pub chit_per_month: BTreeMap<MonthKey, i32>,
-    #[serde(rename = "sk", alias = "s", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "sk", default, skip_serializing_if = "is_default")]
     pub streak: u16,
     #[serde(rename = "se", default, skip_serializing_if = "is_default")]
     pub streak_ends: TimestampMillis,
