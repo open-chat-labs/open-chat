@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::BinaryHeap;
 use types::{ChannelId, TimestampMillis, UserId};
@@ -36,13 +37,25 @@ impl ExpiringMembers {
         results
     }
 
-    pub fn remove_matching(&mut self, channel_id: Option<ChannelId>) {
+    pub fn remove_gate(&mut self, channel_id: Option<ChannelId>) {
         self.queue.retain(|m| m.channel_id != channel_id);
     }
 
-    pub fn remove(&mut self, user_id: UserId, channel_id: Option<ChannelId>) {
+    pub fn remove_member(&mut self, user_id: UserId, channel_id: Option<ChannelId>) {
         self.queue
             .retain(|m| !(m.user_id == user_id && (channel_id.is_none() || channel_id == m.channel_id)));
+    }
+
+    pub fn change_gate_expiry(&mut self, channel_id: Option<ChannelId>, expiry_difference: i64) {
+        let elements = self.queue.drain().collect_vec();
+
+        for mut e in elements {
+            if e.channel_id == channel_id {
+                e.expires = e.expires.saturating_add_signed(expiry_difference)
+            }
+
+            self.queue.push(e);
+        }
     }
 
     pub fn next_expiry(&self) -> Option<TimestampMillis> {

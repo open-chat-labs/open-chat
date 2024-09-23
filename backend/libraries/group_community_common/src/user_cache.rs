@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{TimestampMillis, UserId};
-use utils::consts::LIFETIME_DIAMOND_TIMESTAMP;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserCache {
@@ -12,16 +11,6 @@ pub struct UserCache {
 pub struct CachedUser {
     pub diamond_membership_expires_at: Option<TimestampMillis>,
     pub is_unique_person: bool,
-}
-
-impl CachedUser {
-    pub fn is_lifetime_diamond_member(&self) -> bool {
-        self.diamond_membership_expires_at > Some(LIFETIME_DIAMOND_TIMESTAMP)
-    }
-
-    pub fn is_diamond(&self, now: TimestampMillis) -> bool {
-        self.diamond_membership_expires_at.map_or(false, |e| e >= now)
-    }
 }
 
 impl UserCache {

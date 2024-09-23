@@ -1,5 +1,4 @@
 use crate::jobs;
-use crate::model::expiring_members::ExpiringMember;
 use crate::updates::c2c_join_channel::join_channel_unchecked;
 use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
@@ -47,8 +46,11 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
 
         if let Some(member) = state.data.members.get(caller) {
             let now = state.env.now();
-            let gate_config = if args.gate_config.has_update() { args.gate_config } else { args.gate.map(|g| g.into()) };
-            let prev_gate_had_expiry = channel.chat.gate_config.as_ref().map_or(false, |gc| gc.expiry().is_some());
+            let gate_config_updates =
+                if args.gate_config.has_update() { args.gate_config } else { args.gate.map(|g| g.into()) };
+
+            let prev_gate_config = channel.chat.gate_config.value.clone();
+
             match channel.chat.update(
                 member.user_id,
                 args.name,
@@ -56,7 +58,7 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                 args.rules,
                 args.avatar,
                 args.permissions_v2,
-                gate_config,
+                gate_config_updates,
                 args.public,
                 args.messages_visible_to_non_members,
                 args.events_ttl,
@@ -76,28 +78,12 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                         }
                     }
 
-                    // If the gate has just been changed changed
-                    if channel.chat.gate_config.timestamp == now {
-                        if prev_gate_had_expiry {
-                            // Either the gate has changed or the expiry has changed - either way remove all members form `expiring_members`
-                            state.data.expiring_members.remove_matching(Some(channel.id));
-                        }
+                    state.data.update_member_expiry(Some(args.channel_id), &prev_gate_config, now);
 
-                        // If the channel has had a gate added with an expiry then add all members to expiry job
-                        if let Some(expiry) = channel.chat.gate_config.value.as_ref().and_then(|gc| gc.expiry()) {
-                            for m in channel.chat.members.iter() {
-                                state.data.expiring_members.push(ExpiringMember {
-                                    expires: now + expiry,
-                                    channel_id: Some(channel.id),
-                                    user_id: m.user_id,
-                                });
-                            }
-                        }
-
-                        jobs::expire_members::start_job_if_required(state);
-                    }
+                    jobs::expire_members::start_job_if_required(state);
 
                     handle_activity_notification(state);
+
                     SuccessV2(SuccessResult {
                         rules_version: result.rules_version,
                     })

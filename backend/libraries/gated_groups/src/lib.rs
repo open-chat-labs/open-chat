@@ -6,7 +6,7 @@ use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use sns_governance_canister::types::neuron::DissolveState;
 use sns_governance_canister::types::Neuron;
 use types::{
-    AccessGate, AccessGateNonComposite, AccessGateType, CanisterId, CompositeGate, GateCheckFailedReason, PaymentGate,
+    AccessGate, AccessGateNonComposite, AccessGateScope, CanisterId, CompositeGate, GateCheckFailedReason, PaymentGate,
     SnsNeuronGate, TimestampMillis, TokenBalanceGate, UserId, VerifiedCredentialGate,
 };
 use utils::consts::MEMO_JOINING_FEE;
@@ -45,16 +45,16 @@ pub struct CheckVerifiedCredentialGateArgs {
 }
 
 pub async fn check_if_passes_gate(gate: AccessGate, args: CheckGateArgs) -> CheckIfPassesGateResult {
-    match AccessGateType::from(gate) {
-        AccessGateType::Composite(gate) => check_composite_gate(gate, args).await,
-        AccessGateType::NonComposite(gate) => check_non_composite_gate(gate, args).await,
+    match AccessGateScope::from(gate) {
+        AccessGateScope::Composite(gate) => check_composite_gate(gate, args).await,
+        AccessGateScope::NonComposite(gate) => check_non_composite_gate(gate, args).await,
     }
 }
 
 pub fn check_if_passes_gate_synchronously(gate: AccessGate, args: CheckGateArgs) -> Option<CheckIfPassesGateResult> {
-    match AccessGateType::from(gate) {
-        AccessGateType::Composite(gate) => check_composite_gate_synchronously(gate, args),
-        AccessGateType::NonComposite(gate) => check_non_composite_gate_synchronously(gate, args),
+    match AccessGateScope::from(gate) {
+        AccessGateScope::Composite(gate) => check_composite_gate_synchronously(gate, args),
+        AccessGateScope::NonComposite(gate) => check_non_composite_gate_synchronously(gate, args),
     }
 }
 

@@ -69,6 +69,20 @@ pub enum AccessGate {
     ReferredByMember,
 }
 
+#[derive(Serialize, Deserialize, Eq, PartialEq)]
+pub enum AccessGateType {
+    DiamondMember,
+    LifetimeDiamondMember,
+    UniquePerson,
+    VerifiedCredential,
+    SnsNeuron,
+    Payment,
+    TokenBalance,
+    Composite,
+    Locked,
+    ReferredByMember,
+}
+
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum AccessGateNonComposite {
@@ -83,26 +97,64 @@ pub enum AccessGateNonComposite {
     ReferredByMember,
 }
 
-pub enum AccessGateType {
+pub enum AccessGateScope {
     Composite(CompositeGate),
     NonComposite(AccessGateNonComposite),
 }
 
-impl From<AccessGate> for AccessGateType {
+#[derive(Serialize, Deserialize, Eq, PartialEq)]
+pub enum AccessGateExpiryType {
+    Batch,
+    Single,
+    Lapse,
+    Invalid,
+}
+
+impl From<AccessGate> for AccessGateScope {
     fn from(value: AccessGate) -> Self {
         match value {
-            AccessGate::Composite(gate) => AccessGateType::Composite(gate),
-            AccessGate::DiamondMember => AccessGateType::NonComposite(AccessGateNonComposite::DiamondMember),
-            AccessGate::LifetimeDiamondMember => AccessGateType::NonComposite(AccessGateNonComposite::LifetimeDiamondMember),
-            AccessGate::UniquePerson => AccessGateType::NonComposite(AccessGateNonComposite::UniquePerson),
+            AccessGate::Composite(gate) => AccessGateScope::Composite(gate),
+            AccessGate::DiamondMember => AccessGateScope::NonComposite(AccessGateNonComposite::DiamondMember),
+            AccessGate::LifetimeDiamondMember => AccessGateScope::NonComposite(AccessGateNonComposite::LifetimeDiamondMember),
+            AccessGate::UniquePerson => AccessGateScope::NonComposite(AccessGateNonComposite::UniquePerson),
             AccessGate::VerifiedCredential(gate) => {
-                AccessGateType::NonComposite(AccessGateNonComposite::VerifiedCredential(gate))
+                AccessGateScope::NonComposite(AccessGateNonComposite::VerifiedCredential(gate))
             }
-            AccessGate::SnsNeuron(gate) => AccessGateType::NonComposite(AccessGateNonComposite::SnsNeuron(gate)),
-            AccessGate::Payment(gate) => AccessGateType::NonComposite(AccessGateNonComposite::Payment(gate)),
-            AccessGate::TokenBalance(gate) => AccessGateType::NonComposite(AccessGateNonComposite::TokenBalance(gate)),
-            AccessGate::Locked => AccessGateType::NonComposite(AccessGateNonComposite::Locked),
-            AccessGate::ReferredByMember => AccessGateType::NonComposite(AccessGateNonComposite::ReferredByMember),
+            AccessGate::SnsNeuron(gate) => AccessGateScope::NonComposite(AccessGateNonComposite::SnsNeuron(gate)),
+            AccessGate::Payment(gate) => AccessGateScope::NonComposite(AccessGateNonComposite::Payment(gate)),
+            AccessGate::TokenBalance(gate) => AccessGateScope::NonComposite(AccessGateNonComposite::TokenBalance(gate)),
+            AccessGate::Locked => AccessGateScope::NonComposite(AccessGateNonComposite::Locked),
+            AccessGate::ReferredByMember => AccessGateScope::NonComposite(AccessGateNonComposite::ReferredByMember),
+        }
+    }
+}
+
+impl From<&AccessGate> for AccessGateExpiryType {
+    fn from(value: &AccessGate) -> Self {
+        match value {
+            AccessGate::DiamondMember | AccessGate::LifetimeDiamondMember | AccessGate::UniquePerson => {
+                AccessGateExpiryType::Batch
+            }
+            AccessGate::Payment(_) | AccessGate::VerifiedCredential(_) => AccessGateExpiryType::Lapse,
+            AccessGate::SnsNeuron(_) | AccessGate::TokenBalance(_) => AccessGateExpiryType::Single,
+            _ => AccessGateExpiryType::Invalid,
+        }
+    }
+}
+
+impl From<&AccessGate> for AccessGateType {
+    fn from(value: &AccessGate) -> Self {
+        match value {
+            AccessGate::DiamondMember => AccessGateType::DiamondMember,
+            AccessGate::LifetimeDiamondMember => AccessGateType::LifetimeDiamondMember,
+            AccessGate::UniquePerson => AccessGateType::UniquePerson,
+            AccessGate::VerifiedCredential(_) => AccessGateType::VerifiedCredential,
+            AccessGate::SnsNeuron(_) => AccessGateType::SnsNeuron,
+            AccessGate::Payment(_) => AccessGateType::Payment,
+            AccessGate::TokenBalance(_) => AccessGateType::TokenBalance,
+            AccessGate::Composite(_) => AccessGateType::Composite,
+            AccessGate::Locked => AccessGateType::Locked,
+            AccessGate::ReferredByMember => AccessGateType::ReferredByMember,
         }
     }
 }
@@ -198,6 +250,7 @@ pub enum GateCheckFailedReason {
     FailedVerifiedCredentialCheck(String),
     Locked,
     NotReferredByMember,
+    Unknown,
 }
 
 #[ts_export]

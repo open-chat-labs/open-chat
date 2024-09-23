@@ -17,7 +17,7 @@ use group_community_common::{
 };
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use model::expiring_member_actions::ExpiringMemberActions;
-use model::expiring_members::ExpiringMembers;
+use model::expiring_members::{ExpiringMember, ExpiringMembers};
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
@@ -28,9 +28,10 @@ use std::cell::RefCell;
 use std::ops::Deref;
 use std::time::Duration;
 use types::{
-    AccessGate, AccessGateConfig, BuildVersion, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary,
-    CommunityMembership, CommunityPermissions, CommunityRole, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo,
-    Milliseconds, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId, UserType,
+    AccessGate, AccessGateConfig, AccessGateType, BuildVersion, CanisterId, ChannelId, ChatMetrics,
+    CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, CommunityRole, Cryptocurrency, Cycles,
+    Document, Empty, FrozenGroupInfo, Milliseconds, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId,
+    UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use utils::env::Environment;
@@ -540,14 +541,16 @@ impl Data {
     pub fn remove_user_from_community(&mut self, user_id: UserId, now: TimestampMillis) -> Option<CommunityMemberInternal> {
         let removed = self.members.remove(&user_id, now);
         self.channels.leave_all_channels(user_id, now);
-        self.expiring_members.remove(user_id, None);
+        self.expiring_members.remove_member(user_id, None);
+        self.expiring_member_actions.remove_member(user_id, None);
         self.user_cache.delete(user_id);
         removed
     }
 
     pub fn remove_user_from_channel(&mut self, user_id: UserId, channel_id: ChannelId, now: TimestampMillis) {
         self.members.mark_member_left_channel(&user_id, channel_id, now);
-        self.expiring_members.remove(user_id, Some(channel_id));
+        self.expiring_members.remove_member(user_id, Some(channel_id));
+        self.expiring_member_actions.remove_member(user_id, Some(channel_id));
     }
 
     pub fn expire_member(&mut self, user_id: UserId, channel_id: Option<ChannelId>, now: TimestampMillis) {
@@ -561,6 +564,42 @@ impl Data {
             }
         } else if let Some(member) = self.members.get_by_user_id_mut(&user_id) {
             member.lapsed = Some(now);
+        }
+    }
+
+    pub fn update_member_expiry(
+        &mut self,
+        channel_id: Option<ChannelId>,
+        prev_gate_config: &Option<AccessGateConfig>,
+        now: TimestampMillis,
+    ) {
+        let prev_gate_expiry = prev_gate_config.as_ref().and_then(|gc| gc.expiry());
+        let prev_gate_type: Option<AccessGateType> = prev_gate_config.as_ref().map(|gc| gc.gate().into());
+
+        let new_gate_config = self.get_access_gate_config(channel_id);
+        let new_gate_expiry = new_gate_config.and_then(|gc| gc.expiry());
+        let new_gate_type: Option<AccessGateType> = new_gate_config.map(|gc| gc.gate().into());
+
+        if prev_gate_expiry.is_some() {
+            if prev_gate_type != new_gate_type {
+                self.expiring_members.remove_gate(channel_id);
+                self.expiring_member_actions.remove_gate(channel_id);
+            } else if new_gate_expiry.is_some() && prev_gate_expiry != new_gate_expiry {
+                self.expiring_members
+                    .change_gate_expiry(channel_id, new_gate_expiry.unwrap() as i64 - prev_gate_expiry.unwrap() as i64);
+            }
+        }
+
+        if let Some(gate_expiry) = new_gate_expiry {
+            if prev_gate_expiry.is_none() || prev_gate_type != new_gate_type {
+                for m in self.members.iter() {
+                    self.expiring_members.push(ExpiringMember {
+                        expires: now + gate_expiry,
+                        channel_id,
+                        user_id: m.user_id,
+                    });
+                }
+            }
         }
     }
 

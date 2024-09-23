@@ -1,17 +1,10 @@
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
-use types::{ChannelId, UserId};
+use types::{AccessGateType, ChannelId, Milliseconds, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct ExpiringMemberActions {
     queue: VecDeque<ExpiringMemberAction>,
-}
-
-#[derive(Serialize, Deserialize)]
-pub enum ExpiringMemberAction {
-    UserDetails(Vec<(UserId, Option<ChannelId>)>),
-    TokenBalance(UserId, Option<ChannelId>),
-    SnsNeuron(UserId, Option<ChannelId>),
 }
 
 impl ExpiringMemberActions {
@@ -32,7 +25,48 @@ impl ExpiringMemberActions {
         batch
     }
 
+    pub fn remove_gate(&mut self, channel_id: Option<ChannelId>) {
+        for a in self.queue.iter_mut() {
+            if let ExpiringMemberAction::Batch(list) = a {
+                list.retain(|d| d.channel_id != channel_id);
+            }
+        }
+
+        self.queue.retain(|a| match a {
+            ExpiringMemberAction::Batch(vec) => !vec.is_empty(),
+            ExpiringMemberAction::Single(d) => d.channel_id != channel_id,
+        });
+    }
+
+    pub fn remove_member(&mut self, user_id: UserId, channel_id: Option<ChannelId>) {
+        for a in self.queue.iter_mut() {
+            if let ExpiringMemberAction::Batch(list) = a {
+                list.retain(|d| !(d.user_id == user_id && (channel_id.is_none() || channel_id == d.channel_id)));
+            }
+        }
+
+        self.queue.retain(|a| match a {
+            ExpiringMemberAction::Batch(vec) => !vec.is_empty(),
+            ExpiringMemberAction::Single(d) => !(d.user_id == user_id && (channel_id.is_none() || channel_id == d.channel_id)),
+        });
+    }
+
     pub fn is_empty(&self) -> bool {
         self.queue.is_empty()
     }
+}
+
+#[derive(Serialize, Deserialize)]
+pub enum ExpiringMemberAction {
+    Batch(Vec<ExpiringMemberActionDetails>),
+    Single(ExpiringMemberActionDetails),
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ExpiringMemberActionDetails {
+    pub user_id: UserId,
+    pub channel_id: Option<ChannelId>,
+    pub member_expires: TimestampMillis,
+    pub original_gate_type: AccessGateType,
+    pub original_gate_expiry: Milliseconds,
 }
