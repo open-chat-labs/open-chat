@@ -88,23 +88,41 @@ impl CanisterIdInternal {
             None
         }
     }
+
+    fn is_compacted(&self) -> bool {
+        let length = self.0.len();
+        if length >= 10 || length == 0 {
+            false
+        } else {
+            self.0[0] != FLAGS_NO_COMPACTION
+        }
+    }
+
+    fn has_no_compaction_flag_prepended(&self) -> bool {
+        let length = self.0.len();
+        if length > 11 || length == 0 {
+            false
+        } else if length == 11 || length == 10 {
+            self.0[0] == FLAGS_NO_COMPACTION && self.0[1] == FLAGS_NO_COMPACTION
+        } else {
+            self.0[0] == FLAGS_NO_COMPACTION
+        }
+    }
 }
 
 impl From<CanisterIdInternal> for CanisterId {
-    fn from(CanisterIdInternal(bytes): CanisterIdInternal) -> Self {
-        if bytes.len() >= 10 {
-            let skip_no_compaction_flag =
-                bytes.len() <= 11 && bytes[0] == FLAGS_NO_COMPACTION && bytes[1] == FLAGS_NO_COMPACTION;
-
-            return CanisterId::from_slice(if skip_no_compaction_flag { &bytes[1..] } else { &bytes });
+    fn from(value: CanisterIdInternal) -> Self {
+        if !value.is_compacted() {
+            let skip_first_byte = value.has_no_compaction_flag_prepended();
+            return CanisterId::from_slice(if skip_first_byte { &value.0[1..] } else { &value.0 });
         }
 
-        let compaction_version = bytes[0] & VERSION_MASK;
+        let compaction_version = value.0[0] & VERSION_MASK;
 
         match compaction_version {
             FLAGS_COMPACTION_V1 | FLAGS_COMPACTION_V2 | FLAGS_COMPACTION_V3 => {
                 let prefix_length = if compaction_version == FLAGS_COMPACTION_V3 { 2 } else { 1 };
-                let (prefix, remainder) = bytes.split_at(prefix_length);
+                let (prefix, remainder) = value.0.split_at(prefix_length);
                 let mut bytes_to_add = remainder.to_vec();
                 bytes_to_add.reverse();
 
@@ -134,7 +152,6 @@ impl From<CanisterIdInternal> for CanisterId {
                 }
                 CanisterId::from_slice(&result)
             }
-            FLAGS_NO_COMPACTION => CanisterId::from_slice(&bytes[1..]),
             _ => unreachable!(),
         }
     }
