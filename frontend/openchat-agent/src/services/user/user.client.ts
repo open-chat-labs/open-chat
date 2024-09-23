@@ -149,6 +149,7 @@ import {
     cancelP2PSwapResponse,
     joinVideoCallResponse,
     setPinNumberResponse,
+    apiMaybeAccessGateConfig,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { muteNotificationsResponse } from "../notifications/mappers";
@@ -294,6 +295,7 @@ export class UserClient extends CandidService {
                 ),
                 permissions: [apiCommunityPermissions(community.permissions)],
                 rules,
+                gate_config: apiMaybeAccessGateConfig(community.gateConfig),
                 gate: apiMaybeAccessGate(community.gateConfig.gate),
                 default_channels: defaultChannels,
                 default_channel_rules: [defaultChannelRules],
@@ -323,6 +325,7 @@ export class UserClient extends CandidService {
                 permissions_v2: [apiGroupPermissions(group.permissions)],
                 rules: group.rules,
                 gate: apiMaybeAccessGate(group.gateConfig.gate),
+                gate_config: apiMaybeAccessGateConfig(group.gateConfig),
                 events_ttl: apiOptional(identity, group.eventsTTL),
                 messages_visible_to_non_members: apiOptional(
                     identity,

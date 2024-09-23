@@ -2,7 +2,7 @@ import type { Level } from "./structure";
 
 export type AccessGateConfig = {
     gate: AccessGate;
-    expiry?: number;
+    expiry?: bigint;
 };
 
 export type AccessGateWithLevel = { level: Level } & AccessGate;

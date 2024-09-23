@@ -35,7 +35,6 @@ import { sendMessageResponse as sendMessageResponseV2 } from "./mappersV2";
 import { Principal } from "@dfinity/principal";
 import {
     apiGroupPermissions,
-    apiMaybeAccessGate,
     apiOptional,
     apiMessageContent,
     apiAccessGate,
@@ -68,6 +67,8 @@ import {
     apiVideoCallPresence,
     setVideoCallPresence,
     videoCallParticipantsResponse,
+    apiMaybeAccessGateConfig,
+    apiAccessGateConfig,
 } from "../common/chatMappers";
 import {
     apiMessageContent as apiMessageContentV2,
@@ -305,7 +306,8 @@ export class CommunityClient extends CandidService {
                 ),
                 permissions_v2: [apiGroupPermissions(channel.permissions)],
                 rules: channel.rules,
-                gate: apiMaybeAccessGate(channel.gateConfig.gate),
+                gate_config: apiMaybeAccessGateConfig(channel.gateConfig),
+                gate: [],
                 messages_visible_to_non_members: apiOptional(
                     identity,
                     channel.messagesVisibleToNonMembers,
@@ -1219,6 +1221,12 @@ export class CommunityClient extends CandidService {
                 rules: apiOptional(apiUpdatedRules, rules),
                 public: apiOptional(identity, isPublic),
                 events_ttl: apiOptionUpdate(identity, eventsTimeToLiveMs),
+                gate_config:
+                    gateConfig === undefined
+                        ? { NoChange: null }
+                        : gateConfig.gate.kind === "no_gate"
+                          ? { SetToNone: null }
+                          : { SetToSome: apiAccessGateConfig(gateConfig) },
                 gate:
                     gateConfig === undefined
                         ? { NoChange: null }
@@ -1260,6 +1268,12 @@ export class CommunityClient extends CandidService {
                 rules: apiOptional(apiUpdatedRules, rules),
                 public: apiOptional(identity, isPublic),
                 primary_language: apiOptional(identity, primaryLanguage),
+                gate_config:
+                    gateConfig === undefined
+                        ? { NoChange: null }
+                        : gateConfig.gate.kind === "no_gate"
+                          ? { SetToNone: null }
+                          : { SetToSome: apiAccessGateConfig(gateConfig) },
                 gate:
                     gateConfig === undefined
                         ? { NoChange: null }

@@ -80,6 +80,7 @@ import type {
     ApiCallParticipant,
     ApiSetPinNumberResponse,
     ApiAccessGateNonComposite,
+    ApiAccessGateConfig,
 } from "../user/candid/idl";
 import type {
     Message,
@@ -1609,6 +1610,19 @@ export function apiOptional<D, A>(mapper: (d: D) => A, domain: D | undefined): [
     return domain !== undefined ? [mapper(domain)] : [];
 }
 
+export function apiMaybeAccessGateConfig(domain: AccessGateConfig): [] | [ApiAccessGateConfig] {
+    const gate = apiMaybeAccessGate(domain.gate);
+    if (gate.length === 0) {
+        return [];
+    }
+    return [
+        {
+            gate: gate[0],
+            expiry: apiOptional(identity, domain.expiry),
+        },
+    ];
+}
+
 export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
     if (domain.kind === "composite_gate") {
         return [
@@ -1718,6 +1732,13 @@ export function apiLeafAccessGate(domain: LeafGate): ApiAccessGateNonComposite {
         };
     }
     throw new Error(`Received a domain level group gate that we cannot parse: ${domain}`);
+}
+
+export function apiAccessGateConfig(domain: AccessGateConfig): ApiAccessGateConfig {
+    return {
+        gate: apiAccessGate(domain.gate),
+        expiry: apiOptional(identity, domain.expiry),
+    };
 }
 
 export function apiAccessGate(domain: AccessGate): ApiAccessGate {
