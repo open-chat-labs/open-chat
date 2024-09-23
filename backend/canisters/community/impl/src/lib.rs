@@ -580,21 +580,23 @@ impl Data {
         let new_gate_expiry = new_gate_config.and_then(|gc| gc.expiry());
         let new_gate_type: Option<AccessGateType> = new_gate_config.map(|gc| gc.gate().into());
 
-        if prev_gate_expiry.is_some() {
+        if let Some(prev_gate_expiry) = prev_gate_expiry {
             if prev_gate_type != new_gate_type {
                 self.expiring_members.remove_gate(channel_id);
                 self.expiring_member_actions.remove_gate(channel_id);
-            } else if new_gate_expiry.is_some() && prev_gate_expiry != new_gate_expiry {
-                self.expiring_members
-                    .change_gate_expiry(channel_id, new_gate_expiry.unwrap() as i64 - prev_gate_expiry.unwrap() as i64);
+            } else if let Some(new_gate_expiry) = new_gate_expiry {
+                if prev_gate_expiry != new_gate_expiry {
+                    self.expiring_members
+                        .change_gate_expiry(channel_id, new_gate_expiry as i64 - prev_gate_expiry as i64);
+                }
             }
         }
 
-        if let Some(gate_expiry) = new_gate_expiry {
+        if let Some(new_gate_expiry) = new_gate_expiry {
             if prev_gate_expiry.is_none() || prev_gate_type != new_gate_type {
                 for m in self.members.iter() {
                     self.expiring_members.push(ExpiringMember {
-                        expires: now + gate_expiry,
+                        expires: now + new_gate_expiry,
                         channel_id,
                         user_id: m.user_id,
                     });
