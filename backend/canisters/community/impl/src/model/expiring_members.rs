@@ -20,7 +20,6 @@ impl ExpiringMembers {
         self.queue.push(member);
     }
 
-    #[allow(dead_code)]
     pub fn pop_if_expires_before(&mut self, expires_before: TimestampMillis) -> Vec<ExpiringMember> {
         let mut results = Vec::new();
 

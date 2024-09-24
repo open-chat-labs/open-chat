@@ -30,7 +30,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 }
 
 fn run() {
-    trace!("'expire_members' job running");
+    trace!("'process_expire_member_actions' job running");
     TIMER_ID.set(None);
 
     let actions = mutate_state(|state| state.data.expiring_member_actions.pop_batch());
