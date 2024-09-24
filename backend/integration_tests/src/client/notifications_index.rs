@@ -24,11 +24,7 @@ pub mod happy_path {
             env,
             sender,
             notifications_index_canister_id,
-            &notifications_index_canister::upgrade_notifications_canister_wasm::Args {
-                wasm,
-                filter: None,
-                use_for_new_canisters: None,
-            },
+            &notifications_index_canister::upgrade_notifications_canister_wasm::Args { wasm, filter: None },
         );
 
         assert!(matches!(

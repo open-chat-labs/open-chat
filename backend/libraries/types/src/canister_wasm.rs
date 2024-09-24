@@ -9,7 +9,6 @@ use ts_export::ts_export;
 pub struct UpgradeCanisterWasmArgs {
     pub wasm: CanisterWasm,
     pub filter: Option<UpgradesFilter>,
-    pub use_for_new_canisters: Option<bool>,
 }
 
 #[ts_export]

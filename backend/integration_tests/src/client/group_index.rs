@@ -71,11 +71,7 @@ pub mod happy_path {
             env,
             sender,
             group_index_canister_id,
-            &group_index_canister::upgrade_local_group_index_canister_wasm::Args {
-                wasm,
-                filter: None,
-                use_for_new_canisters: None,
-            },
+            &group_index_canister::upgrade_local_group_index_canister_wasm::Args { wasm, filter: None },
         );
 
         assert!(matches!(
@@ -94,11 +90,7 @@ pub mod happy_path {
             env,
             sender,
             group_index_canister_id,
-            &group_index_canister::upgrade_group_canister_wasm::Args {
-                wasm,
-                filter: None,
-                use_for_new_canisters: None,
-            },
+            &group_index_canister::upgrade_group_canister_wasm::Args { wasm, filter: None },
         );
 
         assert!(matches!(
@@ -117,11 +109,7 @@ pub mod happy_path {
             env,
             sender,
             group_index_canister_id,
-            &group_index_canister::upgrade_community_canister_wasm::Args {
-                wasm,
-                filter: None,
-                use_for_new_canisters: None,
-            },
+            &group_index_canister::upgrade_community_canister_wasm::Args { wasm, filter: None },
         );
 
         assert!(matches!(
