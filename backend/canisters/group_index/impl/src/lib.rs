@@ -1,4 +1,5 @@
 use crate::model::cached_hot_groups::CachedHotGroups;
+use crate::model::child_canister_wasms::ChildCanisterWasms;
 use crate::model::deleted_communities::DeletedCommunities;
 use crate::model::deleted_groups::DeletedGroups;
 use crate::model::local_group_index_map::LocalGroupIndex;
@@ -10,6 +11,7 @@ use crate::model::public_groups::PublicGroups;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use fire_and_forget_handler::FireAndForgetHandler;
+use group_index_canister::ChildCanisterType;
 use model::local_group_index_map::LocalGroupIndexMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -99,8 +101,9 @@ impl RuntimeState {
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
             governance_principals: self.data.governance_principals.iter().copied().collect(),
-            group_wasm_version: self.data.group_canister_wasm.version,
-            local_group_index_wasm_version: self.data.local_group_index_canister_wasm_for_new_canisters.version,
+            local_group_index_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::LocalGroupIndex).version,
+            group_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::Group).version,
+            community_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::Community).version,
             local_group_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
@@ -123,6 +126,8 @@ struct Data {
     pub deleted_communities: DeletedCommunities,
     pub public_group_and_community_names: PublicGroupAndCommunityNames,
     pub governance_principals: HashSet<Principal>,
+    #[serde(default)]
+    pub child_canister_wasms: ChildCanisterWasms,
     pub group_canister_wasm: CanisterWasm,
     pub community_canister_wasm: CanisterWasm,
     pub local_group_index_canister_wasm_for_new_canisters: CanisterWasm,
@@ -171,6 +176,11 @@ impl Data {
             deleted_communities: DeletedCommunities::default(),
             public_group_and_community_names: PublicGroupAndCommunityNames::default(),
             governance_principals: governance_principals.into_iter().collect(),
+            child_canister_wasms: ChildCanisterWasms::new(
+                local_group_index_canister_wasm.clone(),
+                group_canister_wasm.clone(),
+                community_canister_wasm.clone(),
+            ),
             group_canister_wasm,
             community_canister_wasm,
             local_group_index_canister_wasm_for_new_canisters: local_group_index_canister_wasm.clone(),
@@ -279,6 +289,7 @@ impl Default for Data {
             deleted_communities: DeletedCommunities::default(),
             public_group_and_community_names: PublicGroupAndCommunityNames::default(),
             governance_principals: HashSet::default(),
+            child_canister_wasms: ChildCanisterWasms::default(),
             group_canister_wasm: CanisterWasm::default(),
             community_canister_wasm: CanisterWasm::default(),
             local_group_index_canister_wasm_for_new_canisters: CanisterWasm::default(),
@@ -335,8 +346,9 @@ pub struct Metrics {
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
     pub canister_upgrades_pending: u64,
     pub canister_upgrades_in_progress: u64,
-    pub group_wasm_version: BuildVersion,
     pub local_group_index_wasm_version: BuildVersion,
+    pub group_wasm_version: BuildVersion,
+    pub community_wasm_version: BuildVersion,
     pub local_group_indexes: Vec<(CanisterId, LocalGroupIndex)>,
     pub canister_ids: CanisterIds,
 }

@@ -3,6 +3,7 @@ use crate::{mutate_state, read_state, RuntimeState};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use group_index_canister::upgrade_group_canister_wasm::{Response::*, *};
+use group_index_canister::ChildCanisterType;
 use ic_cdk::api::call::CallResult;
 use tracing::info;
 use types::{CanisterId, CanisterWasm, UpgradeCanisterWasmArgs, UpgradesFilter};
@@ -40,7 +41,7 @@ async fn upgrade_group_canister_wasm(args: Args) -> Response {
         InternalError(format!("{first_error:?}"))
     } else {
         mutate_state(|state| {
-            state.data.group_canister_wasm = wasm;
+            state.data.child_canister_wasms.set(ChildCanisterType::Group, wasm);
         });
 
         info!(%version, "Group canister wasm upgraded");

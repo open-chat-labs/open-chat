@@ -1,3 +1,4 @@
+use crate::model::child_canister_wasms::ChildCanisterWasms;
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::storage_index_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
@@ -314,6 +315,8 @@ impl RuntimeState {
 struct Data {
     pub users: UserMap,
     pub governance_principals: HashSet<Principal>,
+    #[serde(default)]
+    pub child_canister_wasms: ChildCanisterWasms,
     pub user_canister_wasm: CanisterWasm,
     pub local_user_index_canister_wasm_for_new_canisters: CanisterWasm,
     pub local_user_index_canister_wasm_for_upgrades: CanisterWasm,
@@ -390,6 +393,7 @@ impl Data {
         let mut data = Data {
             users: UserMap::default(),
             governance_principals: governance_principals.into_iter().collect(),
+            child_canister_wasms: ChildCanisterWasms::new(local_user_index_canister_wasm.clone(), user_canister_wasm.clone()),
             user_canister_wasm,
             local_user_index_canister_wasm_for_new_canisters: local_user_index_canister_wasm.clone(),
             local_user_index_canister_wasm_for_upgrades: local_user_index_canister_wasm,
@@ -519,6 +523,7 @@ impl Default for Data {
         Data {
             users: UserMap::default(),
             governance_principals: HashSet::new(),
+            child_canister_wasms: ChildCanisterWasms::default(),
             user_canister_wasm: CanisterWasm::default(),
             local_user_index_canister_wasm_for_new_canisters: CanisterWasm::default(),
             local_user_index_canister_wasm_for_upgrades: CanisterWasm::default(),

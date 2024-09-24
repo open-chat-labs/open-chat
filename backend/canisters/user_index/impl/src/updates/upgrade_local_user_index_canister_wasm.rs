@@ -6,6 +6,7 @@ use std::collections::HashSet;
 use tracing::info;
 use types::BuildVersion;
 use user_index_canister::upgrade_local_user_index_canister_wasm::{Response::*, *};
+use user_index_canister::ChildCanisterType;
 use utils::canister::should_perform_upgrade;
 
 #[proposal(guard = "caller_is_governance_principal")]
@@ -21,8 +22,10 @@ fn upgrade_local_user_index_canister_wasm_impl(args: Args, state: &mut RuntimeSt
         VersionNotHigher
     } else {
         state.data.canisters_requiring_upgrade.clear();
-        state.data.local_user_index_canister_wasm_for_new_canisters = args.wasm.clone();
-        state.data.local_user_index_canister_wasm_for_upgrades = args.wasm;
+        state
+            .data
+            .child_canister_wasms
+            .set(ChildCanisterType::LocalUserIndex, args.wasm);
 
         let filter = args.filter.unwrap_or_default();
         let include: HashSet<_> = filter.include.into_iter().collect();

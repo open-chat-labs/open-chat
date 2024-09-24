@@ -1,6 +1,7 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::Data;
+use crate::model::child_canister_wasms::ChildCanisterWasms;
+use crate::{mutate_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use group_index_canister::post_upgrade::Args;
@@ -24,4 +25,12 @@ fn post_upgrade(args: Args) {
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
+
+    mutate_state(|state| {
+        state.data.child_canister_wasms = ChildCanisterWasms::new(
+            state.data.local_group_index_canister_wasm_for_upgrades.clone(),
+            state.data.group_canister_wasm.clone(),
+            state.data.community_canister_wasm.clone(),
+        );
+    })
 }

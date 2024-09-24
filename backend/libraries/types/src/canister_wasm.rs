@@ -63,3 +63,22 @@ pub struct UpgradesFilter {
     #[ts(as = "Vec::<ts_export::TSBytes>")]
     pub exclude: Vec<CanisterId>,
 }
+
+#[derive(Serialize, Deserialize, Default)]
+pub struct CanisterWasmManager {
+    wasm: CanisterWasm,
+}
+
+impl CanisterWasmManager {
+    pub fn new(wasm: CanisterWasm) -> CanisterWasmManager {
+        CanisterWasmManager { wasm }
+    }
+
+    pub fn get(&self) -> &CanisterWasm {
+        &self.wasm
+    }
+
+    pub fn set(&mut self, wasm: CanisterWasm) {
+        self.wasm = wasm;
+    }
+}

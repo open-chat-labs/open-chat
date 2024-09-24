@@ -6,6 +6,7 @@ use ic_cdk::api::call::CallResult;
 use tracing::info;
 use types::{CanisterId, CanisterWasm, UpgradeCanisterWasmArgs, UpgradesFilter};
 use user_index_canister::upgrade_user_canister_wasm::{Response::*, *};
+use user_index_canister::ChildCanisterType;
 use utils::canister::build_filter_map;
 
 #[proposal(guard = "caller_is_governance_principal")]
@@ -40,7 +41,7 @@ async fn upgrade_user_canister_wasm(args: Args) -> Response {
         InternalError(format!("{first_error:?}"))
     } else {
         mutate_state(|state| {
-            state.data.user_canister_wasm = wasm;
+            state.data.child_canister_wasms.set(ChildCanisterType::User, wasm);
         });
 
         info!(%version, "User canister wasm upgraded");

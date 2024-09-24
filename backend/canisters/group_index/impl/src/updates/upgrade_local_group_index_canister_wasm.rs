@@ -3,6 +3,7 @@ use crate::{mutate_state, Data, RuntimeState};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use group_index_canister::upgrade_local_group_index_canister_wasm::{Response::*, *};
+use group_index_canister::ChildCanisterType;
 use std::collections::HashSet;
 use tracing::info;
 use types::BuildVersion;
@@ -21,8 +22,10 @@ fn upgrade_local_group_index_canister_wasm_impl(args: Args, state: &mut RuntimeS
         VersionNotHigher
     } else {
         state.data.canisters_requiring_upgrade.clear();
-        state.data.local_group_index_canister_wasm_for_new_canisters = args.wasm.clone();
-        state.data.local_group_index_canister_wasm_for_upgrades = args.wasm;
+        state
+            .data
+            .child_canister_wasms
+            .set(ChildCanisterType::LocalGroupIndex, args.wasm);
 
         let filter = args.filter.unwrap_or_default();
         let include: HashSet<_> = filter.include.into_iter().collect();
