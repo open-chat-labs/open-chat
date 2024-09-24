@@ -151,7 +151,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
     };
 
     let canister_id = state.data.canister_pool.pop();
-    let canister_wasm = state.data.user_canister_wasm_for_new_canisters.wasm.clone();
+    let canister_wasm = state.data.user_canister_wasm.wasm.clone();
 
     let referred_by = referral_code
         .and_then(|c| c.user())

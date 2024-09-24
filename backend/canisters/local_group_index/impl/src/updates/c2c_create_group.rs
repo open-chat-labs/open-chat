@@ -84,7 +84,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
     };
 
     let canister_id = state.data.canister_pool.pop();
-    let canister_wasm = state.data.group_canister_wasm_for_new_canisters.wasm.clone();
+    let canister_wasm = state.data.group_canister_wasm.wasm.clone();
     let local_user_index_canister_id = state.data.local_user_index_canister_id;
     let init_canister_args = group_canister::init::Args {
         is_public: args.is_public,

@@ -28,7 +28,7 @@ fn post_upgrade(args: Args) {
 
     mutate_state(|state| {
         state.data.child_canister_wasms = ChildCanisterWasms::new(
-            state.data.local_group_index_canister_wasm_for_upgrades.clone(),
+            state.data.local_group_index_canister_wasm.clone(),
             state.data.group_canister_wasm.clone(),
             state.data.community_canister_wasm.clone(),
         );

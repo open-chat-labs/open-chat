@@ -49,7 +49,7 @@ mod upgrade_groups {
     fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
         let chat_id = canister_id.into();
         let group = state.data.local_groups.get_mut(&chat_id)?;
-        let group_canister_wasm = &state.data.group_canister_wasm_for_upgrades;
+        let group_canister_wasm = &state.data.group_canister_wasm;
         let current_wasm_version = group.wasm_version;
         let new_wasm_version = group_canister_wasm.wasm.version;
         let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > min_cycles_balance(state.data.test_mode);
@@ -174,7 +174,7 @@ mod upgrade_communities {
     fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
         let community_id = canister_id.into();
         let community = state.data.local_communities.get_mut(&community_id)?;
-        let community_canister_wasm = &state.data.community_canister_wasm_for_upgrades;
+        let community_canister_wasm = &state.data.community_canister_wasm;
         let current_wasm_version = community.wasm_version;
         let new_wasm_version = community_canister_wasm.wasm.version;
         let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > min_cycles_balance(state.data.test_mode);

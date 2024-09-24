@@ -89,8 +89,8 @@ impl RuntimeState {
             community_upgrades_completed: community_upgrades_metrics.completed,
             community_upgrades_pending: community_upgrades_metrics.pending as u64,
             community_upgrades_in_progress: community_upgrades_metrics.in_progress as u64,
-            group_wasm_version: self.data.group_canister_wasm_for_new_canisters.wasm.version,
-            community_wasm_version: self.data.community_canister_wasm_for_new_canisters.wasm.version,
+            group_wasm_version: self.data.group_canister_wasm.wasm.version,
+            community_wasm_version: self.data.community_canister_wasm.wasm.version,
             max_concurrent_group_upgrades: self.data.max_concurrent_group_upgrades,
             group_upgrade_concurrency: self.data.group_upgrade_concurrency,
             max_concurrent_community_upgrades: self.data.max_concurrent_community_upgrades,
@@ -117,10 +117,10 @@ impl RuntimeState {
 struct Data {
     pub local_groups: LocalGroupMap,
     pub local_communities: LocalCommunityMap,
-    pub group_canister_wasm_for_new_canisters: ChunkedCanisterWasm,
-    pub group_canister_wasm_for_upgrades: ChunkedCanisterWasm,
-    pub community_canister_wasm_for_new_canisters: ChunkedCanisterWasm,
-    pub community_canister_wasm_for_upgrades: ChunkedCanisterWasm,
+    #[serde(alias = "group_canister_wasm_for_upgrades")]
+    pub group_canister_wasm: ChunkedCanisterWasm,
+    #[serde(alias = "community_canister_wasm_for_upgrades")]
+    pub community_canister_wasm: ChunkedCanisterWasm,
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
@@ -168,10 +168,8 @@ impl Data {
         Data {
             local_groups: LocalGroupMap::default(),
             local_communities: LocalCommunityMap::default(),
-            group_canister_wasm_for_new_canisters: group_canister_wasm.clone().into(),
-            group_canister_wasm_for_upgrades: group_canister_wasm.into(),
-            community_canister_wasm_for_new_canisters: community_canister_wasm.clone().into(),
-            community_canister_wasm_for_upgrades: community_canister_wasm.into(),
+            group_canister_wasm: group_canister_wasm.into(),
+            community_canister_wasm: community_canister_wasm.into(),
             user_index_canister_id,
             local_user_index_canister_id,
             group_index_canister_id,
