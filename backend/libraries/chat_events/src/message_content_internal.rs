@@ -661,20 +661,6 @@ pub struct CryptoContentInternal {
     pub caption: Option<String>,
 }
 
-impl From<CryptoContent> for CryptoContentInternal {
-    fn from(value: CryptoContent) -> Self {
-        if let CryptoTransaction::Completed(transfer) = value.transfer {
-            CryptoContentInternal {
-                recipient: value.recipient,
-                transfer,
-                caption: value.caption,
-            }
-        } else {
-            panic!("Unable to convert from CryptoContent to CryptoContentInternal")
-        }
-    }
-}
-
 impl MessageContentInternalSubtype for CryptoContentInternal {
     type ContentType = CryptoContent;
 
@@ -865,7 +851,26 @@ impl MessageContentInternalSubtype for PrizeContentInternal {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(from = "PrizeWinnerContentInternalPrevious")]
 pub struct PrizeWinnerContentInternal {
+    #[serde(rename = "w")]
+    pub winner: UserId,
+    #[serde(rename = "l")]
+    pub ledger: CanisterId,
+    #[serde(rename = "a")]
+    pub amount: u128,
+    #[serde(rename = "f")]
+    pub fee: u128,
+    #[serde(rename = "i")]
+    pub block_index: u64,
+    #[serde(rename = "t")]
+    pub transaction: CompletedCryptoTransaction,
+    #[serde(rename = "m")]
+    pub prize_message: MessageIndex,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct PrizeWinnerContentInternalPrevious {
     #[serde(rename = "w")]
     pub winner: UserId,
     #[serde(rename = "t")]
@@ -874,10 +879,14 @@ pub struct PrizeWinnerContentInternal {
     pub prize_message: MessageIndex,
 }
 
-impl From<PrizeWinnerContent> for PrizeWinnerContentInternal {
-    fn from(value: PrizeWinnerContent) -> Self {
+impl From<PrizeWinnerContentInternalPrevious> for PrizeWinnerContentInternal {
+    fn from(value: PrizeWinnerContentInternalPrevious) -> Self {
         PrizeWinnerContentInternal {
             winner: value.winner,
+            ledger: value.transaction.ledger_canister_id(),
+            amount: value.transaction.units(),
+            fee: value.transaction.fee(),
+            block_index: value.transaction.index(),
             transaction: value.transaction,
             prize_message: value.prize_message,
         }

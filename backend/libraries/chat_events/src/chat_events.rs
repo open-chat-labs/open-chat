@@ -791,6 +791,10 @@ impl ChatEvents {
                             message_id: rng.gen(),
                             content: MessageContentInternal::PrizeWinner(PrizeWinnerContentInternal {
                                 winner,
+                                ledger: transaction.ledger_canister_id(),
+                                amount: transaction.units(),
+                                fee: transaction.fee(),
+                                block_index: transaction.index(),
                                 transaction,
                                 prize_message: message_index,
                             }),
