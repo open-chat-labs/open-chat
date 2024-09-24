@@ -317,7 +317,6 @@ pub async fn upgrade_local_group_index_canister(
             module: canister_wasm.module,
         },
         filter: None,
-        use_for_new_canisters: None,
     };
 
     let response =
@@ -348,7 +347,6 @@ pub async fn upgrade_group_canister(
             module: canister_wasm.module,
         },
         filter: None,
-        use_for_new_canisters: None,
     };
 
     let response = group_index_canister_client::upgrade_group_canister_wasm(&agent, &group_index_canister_id, &args)
@@ -375,7 +373,6 @@ pub async fn upgrade_community_canister(
             module: canister_wasm.module,
         },
         filter: None,
-        use_for_new_canisters: None,
     };
 
     let response = group_index_canister_client::upgrade_community_canister_wasm(&agent, &group_index_canister_id, &args)
@@ -405,7 +402,6 @@ pub async fn upgrade_user_canister(
             module: canister_wasm.module,
         },
         filter: None,
-        use_for_new_canisters: None,
     };
 
     let response = user_index_canister_client::upgrade_user_canister_wasm(&agent, &user_index_canister_id, &args)
@@ -432,7 +428,6 @@ pub async fn upgrade_local_user_index_canister(
             module: canister_wasm.module,
         },
         filter: None,
-        use_for_new_canisters: None,
     };
 
     let response = user_index_canister_client::upgrade_local_user_index_canister_wasm(&agent, &user_index_canister_id, &args)
@@ -462,7 +457,6 @@ pub async fn upgrade_notifications_canister(
             module: canister_wasm.module,
         },
         filter: None,
-        use_for_new_canisters: None,
     };
 
     let response = notifications_index_canister_client::upgrade_notifications_canister_wasm(
@@ -496,7 +490,6 @@ pub async fn upgrade_storage_bucket_canister(
             module: canister_wasm.module,
         },
         filter: None,
-        use_for_new_canisters: None,
     };
 
     let response = storage_index_canister_client::upgrade_bucket_canister_wasm(&agent, &storage_index_canister_id, &args)

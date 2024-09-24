@@ -49,7 +49,6 @@ fn create_proposal(config: Config) -> Result<Proposal, Box<dyn Error>> {
             module: wasm_module,
         },
         filter: None,
-        use_for_new_canisters: None,
     };
 
     let payload = Encode!(&args)?;
