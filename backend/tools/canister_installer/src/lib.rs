@@ -456,7 +456,6 @@ async fn install_service_canisters_impl(
             &user_index_canister::upgrade_local_user_index_canister_wasm::Args {
                 wasm: local_user_index_canister_wasm,
                 filter: None,
-                use_for_new_canisters: None,
             },
         ),
         group_index_canister_client::upgrade_local_group_index_canister_wasm(
@@ -465,7 +464,6 @@ async fn install_service_canisters_impl(
             &group_index_canister::upgrade_local_group_index_canister_wasm::Args {
                 wasm: local_group_index_canister_wasm,
                 filter: None,
-                use_for_new_canisters: None,
             },
         ),
     )
@@ -479,7 +477,6 @@ async fn install_service_canisters_impl(
             &user_index_canister::upgrade_user_canister_wasm::Args {
                 wasm: user_canister_wasm,
                 filter: None,
-                use_for_new_canisters: None,
             },
         ),
         group_index_canister_client::upgrade_group_canister_wasm(
@@ -488,7 +485,6 @@ async fn install_service_canisters_impl(
             &group_index_canister::upgrade_group_canister_wasm::Args {
                 wasm: group_canister_wasm,
                 filter: None,
-                use_for_new_canisters: None,
             },
         ),
         group_index_canister_client::upgrade_community_canister_wasm(
@@ -497,7 +493,6 @@ async fn install_service_canisters_impl(
             &group_index_canister::upgrade_community_canister_wasm::Args {
                 wasm: community_canister_wasm,
                 filter: None,
-                use_for_new_canisters: None,
             },
         ),
         notifications_index_canister_client::upgrade_notifications_canister_wasm(
@@ -506,7 +501,6 @@ async fn install_service_canisters_impl(
             &notifications_index_canister::upgrade_notifications_canister_wasm::Args {
                 wasm: notifications_canister_wasm,
                 filter: None,
-                use_for_new_canisters: None,
             },
         ),
     )

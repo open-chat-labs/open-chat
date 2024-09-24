@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
 
+### Removed
+
+- Remove the unused `use_for_new_canisters` field from upgrade args ([#6452](https://github.com/open-chat-labs/open-chat/pull/6452))
+
 ## [[2.0.1356](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1356-local_group_index)] - 2024-09-20
 
 ### Added

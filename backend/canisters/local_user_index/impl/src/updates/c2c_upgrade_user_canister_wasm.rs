@@ -19,9 +19,7 @@ async fn c2c_upgrade_user_canister_wasm(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    if args.use_for_new_canisters.unwrap_or(true) {
-        clear_chunk_store(this_canister_id).await;
-    }
+    clear_chunk_store(this_canister_id).await;
 
     let chunks = upload_wasm_in_chunks(&args.wasm.module, this_canister_id).await;
 
@@ -52,9 +50,7 @@ fn commit(args: Args, chunks: Vec<Hash>, state: &mut RuntimeState) -> Response {
         chunks,
         wasm_hash,
     };
-    if args.use_for_new_canisters.unwrap_or(true) {
-        state.data.user_canister_wasm_for_new_canisters = chunked_wasm.clone();
-    }
+    state.data.user_canister_wasm_for_new_canisters = chunked_wasm.clone();
     state.data.user_canister_wasm_for_upgrades = chunked_wasm;
 
     let filter = args.filter.unwrap_or_default();
