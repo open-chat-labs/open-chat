@@ -52,6 +52,7 @@
             <div class="gate">
                 <AccessGateIcon
                     clickable
+                    button
                     level={"community"}
                     position={"bottom"}
                     align={"end"}

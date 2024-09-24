@@ -51,6 +51,7 @@
                 </div>
                 <div class="gate">
                     <AccessGateIcon
+                        button
                         clickable
                         level={"channel"}
                         small
