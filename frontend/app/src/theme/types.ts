@@ -1,5 +1,5 @@
 export type Themes = Record<string, Theme> & {
-    light: Theme;
+    white: Theme;
     dark: Theme;
 };
 

@@ -1,5 +1,5 @@
-import { hexPercent } from "./utils";
-import type { Theme } from "./types";
+import { hexPercent } from "../utils";
+import type { Theme } from "../types";
 
 const orangeAccent = "#ff9505";
 const pinkAccent = "#ff005c";
@@ -14,11 +14,12 @@ const disabledTxt = txtLight;
 const border = "rgba(255,255,255,0.1)";
 const borderWidth = "1px";
 
-export function lightTheme(): Theme {
+export function getTheme(): Theme {
     return {
+        author: "2yfsq-kaaaa-aaaaf-aaa4q-cai",
         hidden: false,
-        name: "light",
-        label: "Default light",
+        name: "blue",
+        label: "OG blue",
         burst: false,
         logo: true,
         mode: "light",
