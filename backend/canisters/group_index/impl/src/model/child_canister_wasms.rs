@@ -22,16 +22,16 @@ impl ChildCanisterWasms {
     pub fn get(&self, canister_type: ChildCanisterType) -> &CanisterWasm {
         match canister_type {
             ChildCanisterType::LocalGroupIndex => self.local_group_index.get(),
-            ChildCanisterType::Group => self.local_group_index.get(),
-            ChildCanisterType::Community => self.local_group_index.get(),
+            ChildCanisterType::Group => self.group.get(),
+            ChildCanisterType::Community => self.community.get(),
         }
     }
 
     pub fn set(&mut self, canister_type: ChildCanisterType, wasm: CanisterWasm) {
         match canister_type {
             ChildCanisterType::LocalGroupIndex => self.local_group_index.set(wasm),
-            ChildCanisterType::Group => self.local_group_index.set(wasm),
-            ChildCanisterType::Community => self.local_group_index.set(wasm),
+            ChildCanisterType::Group => self.group.set(wasm),
+            ChildCanisterType::Community => self.community.set(wasm),
         }
     }
 }
