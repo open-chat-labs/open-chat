@@ -1,3 +1,4 @@
+mod access_gate_expiry_tests;
 mod cancel_invites_tests;
 mod convert_group_into_community_tests;
 mod create_channel_tests;
