@@ -1,5 +1,6 @@
 use candid::Encode;
 use clap::Parser;
+use sha256::sha256;
 use sns_governance_canister::types::{proposal, ExecuteGenericNervousSystemFunction, Proposal};
 use std::error::Error;
 use std::fs;
@@ -29,11 +30,8 @@ pub struct Config {
     #[arg(long)]
     pub wasm_path: std::path::PathBuf,
 
-    #[arg(long)]
-    pub expected_wasm_hash: String,
-
-    #[arg(long)]
-    pub install_from_chunks: bool,
+    #[arg(long, action = clap::ArgAction::Set)]
+    pub chunked: bool,
 
     /// Version of the wasm module
     #[arg(long)]
@@ -48,18 +46,9 @@ pub fn build(config: Config) -> Result<Vec<u8>, Box<dyn Error>> {
 
 fn create_proposal(config: Config) -> Result<Proposal, Box<dyn Error>> {
     let wasm_module = fs::read(config.wasm_path)?;
+    let wasm_hash = sha256(&wasm_module);
 
-    let wasm_hash = sha256::sha256(&wasm_module);
-    let wasm_hash_hex = hex::encode(wasm_hash);
-    if wasm_hash_hex != config.expected_wasm_hash {
-        return Err(format!(
-            "Wasm hash mismatch. Expected: {}. Actual: {}",
-            config.expected_wasm_hash, wasm_hash_hex
-        )
-        .into());
-    }
-
-    let payload = if config.install_from_chunks {
+    let payload = if config.chunked {
         Encode!(&UpgradeChunkedCanisterWasmArgs {
             version: config.version,
             wasm_hash,
