@@ -54,7 +54,7 @@
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div class:invalid={!valid} on:click={open} class:editable class="summary">
         <div class="icon">
-            <AccessGateIcon {level} showNoGate {gate} />
+            <AccessGateIcon button {level} showNoGate {gate} />
         </div>
         <div class="name">
             {#if gateText !== undefined}

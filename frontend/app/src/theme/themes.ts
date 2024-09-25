@@ -1,6 +1,6 @@
-import { darkTheme } from "./dark";
-import { lightTheme } from "./light";
-import { getTheme as getWhiteTheme } from "./community/white";
+import { darkTheme } from "./defaultDark";
+import { getTheme as getBlueTheme } from "./community/blue";
+import { getTheme as getWhiteTheme } from "./defaultLight";
 import { derived, readable, writable } from "svelte/store";
 import { getTheme as getSubmarineTheme } from "./community/submarine";
 import { getTheme as getNightvisionTheme } from "./community/nightvision";
@@ -15,26 +15,27 @@ import type { Theme, Themes } from "./types";
 import { deepMerge } from "./merge";
 import { createLocalStorageStore } from "../utils/store";
 
-const defaultTheme = lightTheme();
-const dark = darkTheme(defaultTheme);
+const blueTheme = getBlueTheme();
+const defaultLight = getWhiteTheme(cloneTheme(blueTheme));
+const defaultDark = darkTheme(blueTheme);
 
 // Community themes need to be added here
 export const communityThemes = [
-    getWhiteTheme(cloneTheme(defaultTheme)),
-    getSubmarineTheme(cloneTheme(dark)),
-    getNightvisionTheme(cloneTheme(dark)),
-    getMatteBlackGoldTheme(cloneTheme(dark)),
-    getBarbieTheme(cloneTheme(defaultTheme)),
-    getTokyoNightTheme(cloneTheme(dark)),
-    getWindoge98Theme(cloneTheme(defaultTheme)),
-    getSolarizedDarkTheme(cloneTheme(dark)),
-    getHalloweenTheme(cloneTheme(dark)),
-    getSignalsTheme(cloneTheme(defaultTheme)),
+    blueTheme,
+    getSubmarineTheme(cloneTheme(defaultDark)),
+    getNightvisionTheme(cloneTheme(defaultDark)),
+    getMatteBlackGoldTheme(cloneTheme(defaultDark)),
+    getBarbieTheme(cloneTheme(blueTheme)),
+    getTokyoNightTheme(cloneTheme(defaultDark)),
+    getWindoge98Theme(cloneTheme(blueTheme)),
+    getSolarizedDarkTheme(cloneTheme(defaultDark)),
+    getHalloweenTheme(cloneTheme(defaultDark)),
+    getSignalsTheme(cloneTheme(blueTheme)),
 ];
 
 export const themes: Themes = {
-    light: defaultTheme,
-    dark,
+    white: defaultLight,
+    dark: defaultDark,
 };
 
 communityThemes.forEach((theme) => {
@@ -82,20 +83,23 @@ export function setModifiedTheme(
 export const themeOverride = writable<string>(undefined);
 export const themeType = createLocalStorageStore("openchat_theme", "system");
 export const preferredDarkThemeName = createLocalStorageStore("openchat_dark_theme", "dark");
-export const preferredLightThemeName = createLocalStorageStore("openchat_light_theme", "light");
+export const preferredLightThemeName = createLocalStorageStore("openchat_light_theme", "white");
 
 export const preferredDarkTheme = derived(preferredDarkThemeName, (darkName) => themes[darkName]);
-export const preferredLightTheme = derived(
-    preferredLightThemeName,
-    (lightName) => themes[lightName],
-);
+export const preferredLightTheme = derived(preferredLightThemeName, (lightName) => {
+    if (lightName === "light") {
+        // we have renamed "light" to "blue"
+        lightName = "blue";
+    }
+    return themes[lightName];
+});
 
 export const currentThemeName = derived(
     [themeType, preferredDarkThemeName, preferredLightThemeName, osDarkStore, themeOverride],
     ([$themeType, preferredDark, preferredLight, prefersDark, override]) => {
         if (override !== undefined) return override;
 
-        let themeName = "light";
+        let themeName = "white";
         if ($themeType === "system") {
             if (prefersDark) {
                 themeName = preferredDark;

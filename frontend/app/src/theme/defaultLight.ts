@@ -1,5 +1,5 @@
-import type { Theme } from "../types";
-import { hexPercent } from "../utils";
+import type { Theme } from "./types";
+import { hexPercent } from "./utils";
 
 const textBox = "rgba(226,226,226,0.4)";
 const txt = "#242834";
@@ -12,9 +12,8 @@ const accent = "#e53b78";
 
 export function getTheme(base: Theme): Theme {
     base.primary = "#459cd1";
-    base.author = "2yfsq-kaaaa-aaaaf-aaa4q-cai";
     base.name = "white";
-    base.label = "White";
+    base.label = "Default light";
     base.accent = accent;
     base.bg = white;
     base.burst = false;

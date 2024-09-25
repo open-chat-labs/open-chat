@@ -133,10 +133,10 @@
     $: expandedDeletedMessages = client.expandedDeletedMessages;
 
     $: timeline = client.groupEvents(
-        reverseScroll ? [...events].reverse() : events,
+        $reverseScroll ? [...events].reverse() : events,
         $user.userId,
         $expandedDeletedMessages,
-        reverseScroll,
+        $reverseScroll,
         groupInner(filteredProposals),
     );
 
@@ -285,7 +285,7 @@
     let:isReadByMe
     let:messageObserver
     let:labelObserver>
-    {#if !reverseScroll}
+    {#if !$reverseScroll}
         {#if showAvatar}
             {#if $isProposalGroup}
                 <ProposalBot />
@@ -327,8 +327,8 @@
                             chatType={chat.kind}
                             user={$user}
                             me={isMe(evt)}
-                            first={reverseScroll ? i + 1 === innerGroup.length : i === 0}
-                            last={reverseScroll ? i === 0 : i + 1 === innerGroup.length}
+                            first={$reverseScroll ? i + 1 === innerGroup.length : i === 0}
+                            last={$reverseScroll ? i === 0 : i + 1 === innerGroup.length}
                             {readonly}
                             {canPin}
                             {canBlockUsers}
@@ -363,7 +363,7 @@
             {/if}
         {/each}
     {/if}
-    {#if reverseScroll}
+    {#if $reverseScroll}
         {#if privatePreview}
             <PrivatePreview />
         {/if}
