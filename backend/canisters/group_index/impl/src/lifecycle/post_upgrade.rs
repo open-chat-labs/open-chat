@@ -38,5 +38,5 @@ fn post_upgrade(args: Args) {
             (ChildCanisterType::Community, state.data.community_canister_wasm.clone()),
         ]);
         state.data.upload_wasm_chunks_whitelist.push(DEV_TEAM_DFX_PRINCIPAL);
-    })
+    });
 }
