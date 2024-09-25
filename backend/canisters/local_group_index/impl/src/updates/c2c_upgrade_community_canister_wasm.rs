@@ -62,7 +62,10 @@ fn commit(args: Args, wasm: CanisterWasm, chunks: Vec<Hash>, state: &mut Runtime
     let version = args.version;
     let wasm_hash = args.wasm_hash;
 
-    state.data.community_canister_wasm = ChunkedCanisterWasm { wasm, chunks, wasm_hash };
+    state
+        .data
+        .child_canister_wasms
+        .set(ChildCanisterType::Community, ChunkedCanisterWasm { wasm, chunks, wasm_hash });
 
     let filter = args.filter.unwrap_or_default();
     let include: HashSet<_> = filter.include.into_iter().collect();

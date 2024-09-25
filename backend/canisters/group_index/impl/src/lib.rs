@@ -100,9 +100,14 @@ impl RuntimeState {
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
             governance_principals: self.data.governance_principals.iter().copied().collect(),
-            local_group_index_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::LocalGroupIndex).version,
-            group_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::Group).version,
-            community_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::Community).version,
+            local_group_index_wasm_version: self
+                .data
+                .child_canister_wasms
+                .get(ChildCanisterType::LocalGroupIndex)
+                .wasm
+                .version,
+            group_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::Group).wasm.version,
+            community_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::Community).wasm.version,
             local_group_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
@@ -153,9 +158,6 @@ impl Data {
     #[allow(clippy::too_many_arguments)]
     fn new(
         governance_principals: Vec<Principal>,
-        group_canister_wasm: CanisterWasm,
-        community_canister_wasm: CanisterWasm,
-        local_group_index_canister_wasm: CanisterWasm,
         user_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
@@ -175,14 +177,10 @@ impl Data {
             deleted_communities: DeletedCommunities::default(),
             public_group_and_community_names: PublicGroupAndCommunityNames::default(),
             governance_principals: governance_principals.into_iter().collect(),
-            child_canister_wasms: ChildCanisterWasms::new(vec![
-                (ChildCanisterType::LocalGroupIndex, local_group_index_canister_wasm.clone()),
-                (ChildCanisterType::Group, group_canister_wasm.clone()),
-                (ChildCanisterType::Community, community_canister_wasm.clone()),
-            ]),
-            group_canister_wasm,
-            community_canister_wasm,
-            local_group_index_canister_wasm,
+            child_canister_wasms: ChildCanisterWasms::default(),
+            group_canister_wasm: CanisterWasm::default(),
+            community_canister_wasm: CanisterWasm::default(),
+            local_group_index_canister_wasm: CanisterWasm::default(),
             user_index_canister_id,
             cycles_dispenser_canister_id,
             proposals_bot_user_id,

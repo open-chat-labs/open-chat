@@ -1,4 +1,3 @@
-use crate::model::child_canister_wasms::ChildCanisterWasms;
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::storage_index_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
@@ -27,8 +26,8 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use types::{
-    BotConfig, BuildVersion, CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, DiamondMembershipFees, Milliseconds,
-    TimestampMillis, Timestamped, UserId, UserType,
+    BotConfig, BuildVersion, CanisterId, CanisterWasm, ChatId, ChildCanisterWasms, Cryptocurrency, Cycles,
+    DiamondMembershipFees, Milliseconds, TimestampMillis, Timestamped, UserId, UserType,
 };
 use user_index_canister::ChildCanisterType;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
@@ -241,8 +240,13 @@ impl RuntimeState {
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
             governance_principals: self.data.governance_principals.iter().copied().collect(),
-            user_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::User).version,
-            local_user_index_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::LocalUserIndex).version,
+            user_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::User).wasm.version,
+            local_user_index_wasm_version: self
+                .data
+                .child_canister_wasms
+                .get(ChildCanisterType::LocalUserIndex)
+                .wasm
+                .version,
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
             platform_moderators: self.data.platform_moderators.len() as u8,
             platform_operators: self.data.platform_operators.len() as u8,
@@ -317,7 +321,7 @@ struct Data {
     pub users: UserMap,
     pub governance_principals: HashSet<Principal>,
     #[serde(default)]
-    pub child_canister_wasms: ChildCanisterWasms,
+    pub child_canister_wasms: ChildCanisterWasms<ChildCanisterType>,
     pub user_canister_wasm: CanisterWasm,
     #[serde(alias = "local_user_index_canister_wasm_for_upgrades")]
     pub local_user_index_canister_wasm: CanisterWasm,
@@ -371,8 +375,6 @@ impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         governance_principals: Vec<Principal>,
-        user_canister_wasm: CanisterWasm,
-        local_user_index_canister_wasm: CanisterWasm,
         group_index_canister_id: CanisterId,
         notifications_index_canister_id: CanisterId,
         identity_canister_id: CanisterId,
@@ -394,9 +396,9 @@ impl Data {
         let mut data = Data {
             users: UserMap::default(),
             governance_principals: governance_principals.into_iter().collect(),
-            child_canister_wasms: ChildCanisterWasms::new(local_user_index_canister_wasm.clone(), user_canister_wasm.clone()),
-            user_canister_wasm,
-            local_user_index_canister_wasm,
+            child_canister_wasms: ChildCanisterWasms::default(),
+            user_canister_wasm: CanisterWasm::default(),
+            local_user_index_canister_wasm: CanisterWasm::default(),
             group_index_canister_id,
             notifications_index_canister_id,
             identity_canister_id,

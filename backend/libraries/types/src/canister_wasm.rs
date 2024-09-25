@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
-use ts_export::ts_export;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct UpgradeCanisterWasmArgs {
@@ -27,8 +26,7 @@ pub enum UpgradeChunkedCanisterWasmResponse {
     InternalError(String),
 }
 
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Default)]
 pub struct ChunkedCanisterWasm {
     pub wasm: CanisterWasm,
     pub chunks: Vec<Hash>,
@@ -45,7 +43,6 @@ impl From<CanisterWasm> for ChunkedCanisterWasm {
     }
 }
 
-#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone)]
 pub struct CanisterWasm {
     pub version: BuildVersion,
@@ -77,34 +74,31 @@ impl Debug for CanisterWasm {
     }
 }
 
-#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq)]
 pub struct UpgradesFilter {
-    #[ts(as = "Vec::<ts_export::TSBytes>")]
     pub include: Vec<CanisterId>,
-    #[ts(as = "Vec::<ts_export::TSBytes>")]
     pub exclude: Vec<CanisterId>,
 }
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct CanisterWasmManager {
-    wasm: CanisterWasm,
+    wasm: ChunkedCanisterWasm,
     chunks: Vec<Vec<u8>>,
 }
 
 impl CanisterWasmManager {
-    pub fn new(wasm: CanisterWasm) -> CanisterWasmManager {
+    pub fn new(wasm: ChunkedCanisterWasm) -> CanisterWasmManager {
         CanisterWasmManager {
             wasm,
             chunks: Vec::new(),
         }
     }
 
-    pub fn get(&self) -> &CanisterWasm {
+    pub fn get(&self) -> &ChunkedCanisterWasm {
         &self.wasm
     }
 
-    pub fn set(&mut self, wasm: CanisterWasm) {
+    pub fn set(&mut self, wasm: ChunkedCanisterWasm) {
         self.wasm = wasm;
     }
 
@@ -142,23 +136,26 @@ impl CanisterWasmManager {
 #[derive(Serialize, Deserialize)]
 pub struct ChildCanisterWasms<T: Eq + std::hash::Hash> {
     map: HashMap<T, CanisterWasmManager>,
-    default: CanisterWasm,
+    default: ChunkedCanisterWasm,
 }
 
 impl<T: Eq + std::hash::Hash> ChildCanisterWasms<T> {
-    pub fn new(wasms: Vec<(T, CanisterWasm)>) -> ChildCanisterWasms<T> {
+    pub fn new(wasms: Vec<(T, impl Into<ChunkedCanisterWasm>)>) -> ChildCanisterWasms<T> {
         ChildCanisterWasms {
-            map: wasms.into_iter().map(|(t, w)| (t, CanisterWasmManager::new(w))).collect(),
-            default: CanisterWasm::default(),
+            map: wasms
+                .into_iter()
+                .map(|(t, w)| (t, CanisterWasmManager::new(w.into())))
+                .collect(),
+            default: ChunkedCanisterWasm::default(),
         }
     }
 
-    pub fn get(&self, canister_type: T) -> &CanisterWasm {
+    pub fn get(&self, canister_type: T) -> &ChunkedCanisterWasm {
         self.manager(canister_type).map(|m| m.get()).unwrap_or(&self.default)
     }
 
-    pub fn set(&mut self, canister_type: T, wasm: CanisterWasm) {
-        self.manager_mut(canister_type).set(wasm);
+    pub fn set(&mut self, canister_type: T, wasm: impl Into<ChunkedCanisterWasm>) {
+        self.manager_mut(canister_type).set(wasm.into());
     }
 
     pub fn push_chunk(&mut self, canister_type: T, chunk: Vec<u8>, index: u8) -> Result<Hash, u8> {
@@ -186,7 +183,7 @@ impl<T: Eq + std::hash::Hash> Default for ChildCanisterWasms<T> {
     fn default() -> Self {
         ChildCanisterWasms {
             map: HashMap::default(),
-            default: CanisterWasm::default(),
+            default: ChunkedCanisterWasm::default(),
         }
     }
 }

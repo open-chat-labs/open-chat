@@ -41,6 +41,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
             .data
             .child_canister_wasms
             .get(ChildCanisterType::LocalGroupIndex)
+            .wasm
             .clone();
         let wasm_version = canister_wasm.version;
 
@@ -48,8 +49,8 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
             this_canister_id: state.env.canister_id(),
             canister_wasm,
             init_args: local_group_index_canister::init::Args {
-                group_canister_wasm: state.data.child_canister_wasms.get(ChildCanisterType::Group).clone(),
-                community_canister_wasm: state.data.child_canister_wasms.get(ChildCanisterType::Community).clone(),
+                group_canister_wasm: state.data.child_canister_wasms.get(ChildCanisterType::Group).wasm.clone(),
+                community_canister_wasm: state.data.child_canister_wasms.get(ChildCanisterType::Community).wasm.clone(),
                 wasm_version,
                 user_index_canister_id: state.data.user_index_canister_id,
                 local_user_index_canister_id: args.local_user_index_canister_id,

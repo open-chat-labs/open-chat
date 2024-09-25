@@ -38,14 +38,19 @@ struct PrepareResult {
 
 fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
     if !state.data.local_index_map.contains_key(&args.canister_id) {
-        let canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::LocalUserIndex).clone();
+        let canister_wasm = state
+            .data
+            .child_canister_wasms
+            .get(ChildCanisterType::LocalUserIndex)
+            .wasm
+            .clone();
         let wasm_version = canister_wasm.version;
 
         Ok(PrepareResult {
             this_canister_id: state.env.canister_id(),
             canister_wasm,
             init_args: local_user_index_canister::init::Args {
-                user_canister_wasm: state.data.child_canister_wasms.get(ChildCanisterType::User).clone(),
+                user_canister_wasm: state.data.child_canister_wasms.get(ChildCanisterType::User).wasm.clone(),
                 wasm_version,
                 user_index_canister_id: state.env.canister_id(),
                 group_index_canister_id: state.data.group_index_canister_id,

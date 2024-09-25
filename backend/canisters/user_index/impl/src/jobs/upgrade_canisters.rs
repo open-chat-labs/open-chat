@@ -60,7 +60,7 @@ fn try_get_next(state: &mut RuntimeState) -> GetNextResult {
         None => return GetNextResult::Continue,
     };
 
-    let new_wasm = state.data.child_canister_wasms.get(ChildCanisterType::LocalUserIndex);
+    let new_wasm = &state.data.child_canister_wasms.get(ChildCanisterType::LocalUserIndex).wasm;
     let new_wasm_version = new_wasm.version;
     let current_wasm_version = match state
         .data

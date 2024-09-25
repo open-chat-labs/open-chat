@@ -29,8 +29,8 @@ fn post_upgrade(args: Args) {
 
     mutate_state(|state| {
         state.data.child_canister_wasms = ChildCanisterWasms::new(vec![
-            (ChildCanisterType::Group, state.data.group_canister_wasm.wasm.clone()),
-            (ChildCanisterType::Community, state.data.community_canister_wasm.wasm.clone()),
+            (ChildCanisterType::Group, state.data.group_canister_wasm.clone()),
+            (ChildCanisterType::Community, state.data.community_canister_wasm.clone()),
         ]);
     });
 }
