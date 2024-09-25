@@ -89,7 +89,7 @@ pub struct ExternalAchievementInitial {
     pub chit_budget: u32,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum ChildCanisterType {
     LocalUserIndex,
     User,

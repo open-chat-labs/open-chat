@@ -1,5 +1,4 @@
 use crate::model::cached_hot_groups::CachedHotGroups;
-use crate::model::child_canister_wasms::ChildCanisterWasms;
 use crate::model::deleted_communities::DeletedCommunities;
 use crate::model::deleted_groups::DeletedGroups;
 use crate::model::local_group_index_map::LocalGroupIndex;
@@ -17,8 +16,8 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{
-    AccessGate, BuildVersion, CanisterId, CanisterWasm, ChatId, CommunityId, Cycles, FrozenGroupInfo, Milliseconds,
-    TimestampMillis, Timestamped, UserId,
+    AccessGate, BuildVersion, CanisterId, CanisterWasm, ChatId, ChildCanisterWasms, CommunityId, Cycles, FrozenGroupInfo,
+    Milliseconds, TimestampMillis, Timestamped, UserId,
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
@@ -127,7 +126,7 @@ struct Data {
     pub public_group_and_community_names: PublicGroupAndCommunityNames,
     pub governance_principals: HashSet<Principal>,
     #[serde(default)]
-    pub child_canister_wasms: ChildCanisterWasms,
+    pub child_canister_wasms: ChildCanisterWasms<ChildCanisterType>,
     pub group_canister_wasm: CanisterWasm,
     pub community_canister_wasm: CanisterWasm,
     #[serde(alias = "local_group_index_canister_wasm_for_upgrades")]
@@ -176,11 +175,11 @@ impl Data {
             deleted_communities: DeletedCommunities::default(),
             public_group_and_community_names: PublicGroupAndCommunityNames::default(),
             governance_principals: governance_principals.into_iter().collect(),
-            child_canister_wasms: ChildCanisterWasms::new(
-                local_group_index_canister_wasm.clone(),
-                group_canister_wasm.clone(),
-                community_canister_wasm.clone(),
-            ),
+            child_canister_wasms: ChildCanisterWasms::new(vec![
+                (ChildCanisterType::LocalGroupIndex, local_group_index_canister_wasm.clone()),
+                (ChildCanisterType::Group, group_canister_wasm.clone()),
+                (ChildCanisterType::Community, community_canister_wasm.clone()),
+            ]),
             group_canister_wasm,
             community_canister_wasm,
             local_group_index_canister_wasm,

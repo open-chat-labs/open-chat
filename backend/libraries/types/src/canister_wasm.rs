@@ -2,6 +2,7 @@ use crate::{BuildVersion, CanisterId, Hash};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use ts_export::ts_export;
 
@@ -123,5 +124,57 @@ impl CanisterWasmManager {
             hasher.update(chunk);
         }
         hasher.finalize().into()
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ChildCanisterWasms<T: Eq + std::hash::Hash> {
+    map: HashMap<T, CanisterWasmManager>,
+    default: CanisterWasm,
+}
+
+impl<T: Eq + std::hash::Hash> ChildCanisterWasms<T> {
+    pub fn new(wasms: Vec<(T, CanisterWasm)>) -> ChildCanisterWasms<T> {
+        ChildCanisterWasms {
+            map: wasms.into_iter().map(|(t, w)| (t, CanisterWasmManager::new(w))).collect(),
+            default: CanisterWasm::default(),
+        }
+    }
+
+    pub fn get(&self, canister_type: T) -> &CanisterWasm {
+        self.manager(canister_type).map(|m| m.get()).unwrap_or(&self.default)
+    }
+
+    pub fn set(&mut self, canister_type: T, wasm: CanisterWasm) {
+        self.manager_mut(canister_type).set(wasm);
+    }
+
+    pub fn push_chunk(&mut self, canister_type: T, chunk: Vec<u8>, index: u8) -> Result<Hash, u8> {
+        self.manager_mut(canister_type).push_chunk(chunk, index)
+    }
+
+    pub fn wasm_from_chunks(&self, canister_type: T) -> Vec<u8> {
+        self.manager(canister_type).map(|m| m.wasm_from_chunks()).unwrap_or_default()
+    }
+
+    pub fn chunks_hash(&self, canister_type: T) -> Hash {
+        self.manager(canister_type).map(|m| m.chunks_hash()).unwrap_or_default()
+    }
+
+    fn manager(&self, canister_type: T) -> Option<&CanisterWasmManager> {
+        self.map.get(&canister_type)
+    }
+
+    fn manager_mut(&mut self, canister_type: T) -> &mut CanisterWasmManager {
+        self.map.entry(canister_type).or_default()
+    }
+}
+
+impl<T: Eq + std::hash::Hash> Default for ChildCanisterWasms<T> {
+    fn default() -> Self {
+        ChildCanisterWasms {
+            map: HashMap::default(),
+            default: CanisterWasm::default(),
+        }
     }
 }
