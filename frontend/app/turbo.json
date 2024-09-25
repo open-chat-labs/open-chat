@@ -1,20 +1,20 @@
 {
-  "extends": ["//"],
-  "pipeline": {
-    "build": {
-      "env": ["OPENCHAT_WEBSITE_VERSION"]
-    },
-    "build:ci": {
-      "env": ["OPENCHAT_WEBSITE_VERSION"]
-    },
-    "build:prod_test": {
-      "env": ["OPENCHAT_WEBSITE_VERSION"]
-    },
-    "build:prod": {
-      "env": ["OPENCHAT_WEBSITE_VERSION"]
-    },
-    "build:testnet": {
-      "env": ["OPENCHAT_WEBSITE_VERSION"]
+    "extends": ["//"],
+    "tasks": {
+        "build": {
+            "env": ["OPENCHAT_WEBSITE_VERSION"]
+        },
+        "build:ci": {
+            "env": ["OPENCHAT_WEBSITE_VERSION"]
+        },
+        "build:prod_test": {
+            "env": ["OPENCHAT_WEBSITE_VERSION"]
+        },
+        "build:prod": {
+            "env": ["OPENCHAT_WEBSITE_VERSION"]
+        },
+        "build:testnet": {
+            "env": ["OPENCHAT_WEBSITE_VERSION"]
+        }
     }
-  }
 }
