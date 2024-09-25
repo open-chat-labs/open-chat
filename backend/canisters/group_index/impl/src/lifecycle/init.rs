@@ -16,9 +16,6 @@ fn init(args: Args) {
 
     let data = Data::new(
         args.governance_principals,
-        args.group_canister_wasm,
-        args.community_canister_wasm,
-        args.local_group_index_canister_wasm,
         args.user_index_canister_id,
         args.cycles_dispenser_canister_id,
         args.proposals_bot_user_id,

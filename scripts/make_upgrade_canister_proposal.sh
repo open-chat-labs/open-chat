@@ -17,6 +17,7 @@ CANISTER_NAME=$2
 VERSION=$3
 TITLE=$4
 CHANGELOG=$5
+CHUNKED=${6:-false}
 
 TAG=v$VERSION-$CANISTER_NAME
 COMMIT_ID=$(git rev-list -n 1 tags/$TAG) || exit 1
@@ -69,7 +70,7 @@ if [ "$FUNCTION_ID" -ge "1000" ] ; then
 
     # Build the proposal file
     cd $PROPOSAL_BUILDER_FOLDER
-    cargo run --quiet -- --title "$TITLE" --summary "$SUMMARY" --url "$URL" --function-id $FUNCTION_ID --wasm-path "$WASM_PATH" --version $VERSION > $PROPOSAL_FILE
+    cargo run --quiet -- --title "$TITLE" --summary "$SUMMARY" --url "$URL" --function-id $FUNCTION_ID --wasm-path "$WASM_PATH" --version $VERSION --chunked $CHUNKED > $PROPOSAL_FILE
 
     # cd back into root of OpenChat repo
     cd $SCRIPT_DIR/..

@@ -26,9 +26,10 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use types::{
-    BotConfig, BuildVersion, CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, DiamondMembershipFees, Milliseconds,
-    TimestampMillis, Timestamped, UserId, UserType,
+    BotConfig, BuildVersion, CanisterId, CanisterWasm, ChatId, ChildCanisterWasms, Cryptocurrency, Cycles,
+    DiamondMembershipFees, Milliseconds, TimestampMillis, Timestamped, UserId, UserType,
 };
+use user_index_canister::ChildCanisterType;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::consts::DEV_TEAM_DFX_PRINCIPAL;
@@ -123,6 +124,11 @@ impl RuntimeState {
     pub fn is_caller_modclub(&self) -> bool {
         let caller = self.env.caller();
         caller == self.modclub_canister_id()
+    }
+
+    pub fn can_caller_upload_wasm_chunks(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.governance_principals.contains(&caller) || self.data.upload_wasm_chunks_whitelist.contains(&caller)
     }
 
     pub fn modclub_canister_id(&self) -> CanisterId {
@@ -239,8 +245,13 @@ impl RuntimeState {
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
             governance_principals: self.data.governance_principals.iter().copied().collect(),
-            user_wasm_version: self.data.user_canister_wasm.version,
-            local_user_index_wasm_version: self.data.local_user_index_canister_wasm_for_new_canisters.version,
+            user_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::User).wasm.version,
+            local_user_index_wasm_version: self
+                .data
+                .child_canister_wasms
+                .get(ChildCanisterType::LocalUserIndex)
+                .wasm
+                .version,
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
             platform_moderators: self.data.platform_moderators.len() as u8,
             platform_operators: self.data.platform_operators.len() as u8,
@@ -277,6 +288,14 @@ impl RuntimeState {
             august_airdrop_period: self.build_stats_for_cohort(1723021200000, 1725181200000),
             survey_messages_sent: self.data.survey_messages_sent,
             external_achievements: self.data.external_achievements.metrics(),
+            upload_wasm_chunks_whitelist: self.data.upload_wasm_chunks_whitelist.clone(),
+            wasm_chunks_uploaded: self
+                .data
+                .child_canister_wasms
+                .chunk_hashes()
+                .into_iter()
+                .map(|(c, h)| (*c, hex::encode(h)))
+                .collect(),
         }
     }
 
@@ -314,9 +333,11 @@ impl RuntimeState {
 struct Data {
     pub users: UserMap,
     pub governance_principals: HashSet<Principal>,
+    #[serde(default)]
+    pub child_canister_wasms: ChildCanisterWasms<ChildCanisterType>,
     pub user_canister_wasm: CanisterWasm,
-    pub local_user_index_canister_wasm_for_new_canisters: CanisterWasm,
-    pub local_user_index_canister_wasm_for_upgrades: CanisterWasm,
+    #[serde(alias = "local_user_index_canister_wasm_for_upgrades")]
+    pub local_user_index_canister_wasm: CanisterWasm,
     pub group_index_canister_id: CanisterId,
     pub notifications_index_canister_id: CanisterId,
     pub identity_canister_id: CanisterId,
@@ -361,14 +382,14 @@ struct Data {
     pub remove_from_online_users_queue: VecDeque<Principal>,
     pub survey_messages_sent: usize,
     pub external_achievements: ExternalAchievements,
+    #[serde(default)]
+    pub upload_wasm_chunks_whitelist: Vec<Principal>,
 }
 
 impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         governance_principals: Vec<Principal>,
-        user_canister_wasm: CanisterWasm,
-        local_user_index_canister_wasm: CanisterWasm,
         group_index_canister_id: CanisterId,
         notifications_index_canister_id: CanisterId,
         identity_canister_id: CanisterId,
@@ -390,9 +411,9 @@ impl Data {
         let mut data = Data {
             users: UserMap::default(),
             governance_principals: governance_principals.into_iter().collect(),
-            user_canister_wasm,
-            local_user_index_canister_wasm_for_new_canisters: local_user_index_canister_wasm.clone(),
-            local_user_index_canister_wasm_for_upgrades: local_user_index_canister_wasm,
+            child_canister_wasms: ChildCanisterWasms::default(),
+            user_canister_wasm: CanisterWasm::default(),
+            local_user_index_canister_wasm: CanisterWasm::default(),
             group_index_canister_id,
             notifications_index_canister_id,
             identity_canister_id,
@@ -438,6 +459,7 @@ impl Data {
             remove_from_online_users_queue: VecDeque::new(),
             survey_messages_sent: 0,
             external_achievements: ExternalAchievements::default(),
+            upload_wasm_chunks_whitelist: Vec::new(),
         };
 
         // Register the ProposalsBot
@@ -519,9 +541,9 @@ impl Default for Data {
         Data {
             users: UserMap::default(),
             governance_principals: HashSet::new(),
+            child_canister_wasms: ChildCanisterWasms::default(),
             user_canister_wasm: CanisterWasm::default(),
-            local_user_index_canister_wasm_for_new_canisters: CanisterWasm::default(),
-            local_user_index_canister_wasm_for_upgrades: CanisterWasm::default(),
+            local_user_index_canister_wasm: CanisterWasm::default(),
             group_index_canister_id: Principal::anonymous(),
             notifications_index_canister_id: Principal::anonymous(),
             identity_canister_id: Principal::anonymous(),
@@ -565,6 +587,7 @@ impl Default for Data {
             remove_from_online_users_queue: VecDeque::new(),
             survey_messages_sent: 0,
             external_achievements: ExternalAchievements::default(),
+            upload_wasm_chunks_whitelist: Vec::new(),
         }
     }
 }
@@ -610,6 +633,8 @@ pub struct Metrics {
     pub august_airdrop_period: AirdropStats,
     pub survey_messages_sent: usize,
     pub external_achievements: Vec<ExternalAchievementMetrics>,
+    pub upload_wasm_chunks_whitelist: Vec<Principal>,
+    pub wasm_chunks_uploaded: Vec<(ChildCanisterType, String)>,
 }
 
 #[derive(Serialize, Debug)]

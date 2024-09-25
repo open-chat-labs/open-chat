@@ -3,6 +3,7 @@ use crate::{mutate_state, read_state, RuntimeState};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use group_index_canister::add_local_group_index_canister::{Response::*, *};
+use group_index_canister::ChildCanisterType;
 use tracing::info;
 use types::{BuildVersion, CanisterId, CanisterWasm};
 use utils::canister::{install_basic, set_controllers};
@@ -36,13 +37,21 @@ struct PrepareResult {
 
 fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
     if !state.data.local_index_map.contains_key(&args.canister_id) {
+        let canister_wasm = state
+            .data
+            .child_canister_wasms
+            .get(ChildCanisterType::LocalGroupIndex)
+            .wasm
+            .clone();
+        let wasm_version = canister_wasm.version;
+
         Ok(PrepareResult {
             this_canister_id: state.env.canister_id(),
-            canister_wasm: state.data.local_group_index_canister_wasm_for_new_canisters.clone(),
+            canister_wasm,
             init_args: local_group_index_canister::init::Args {
-                group_canister_wasm: state.data.group_canister_wasm.clone(),
-                community_canister_wasm: state.data.community_canister_wasm.clone(),
-                wasm_version: state.data.local_group_index_canister_wasm_for_new_canisters.version,
+                group_canister_wasm: state.data.child_canister_wasms.get(ChildCanisterType::Group).wasm.clone(),
+                community_canister_wasm: state.data.child_canister_wasms.get(ChildCanisterType::Community).wasm.clone(),
+                wasm_version,
                 user_index_canister_id: state.data.user_index_canister_id,
                 local_user_index_canister_id: args.local_user_index_canister_id,
                 group_index_canister_id: state.env.canister_id(),

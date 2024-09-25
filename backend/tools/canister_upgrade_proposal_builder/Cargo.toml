@@ -8,5 +8,7 @@ edition = "2021"
 [dependencies]
 candid = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
+hex = { workspace = true }
+sha256 = { path = "../../libraries/sha256" }
 sns_governance_canister = { path = "../../external_canisters/sns_governance/api" }
 types = { path = "../../libraries/types" }
