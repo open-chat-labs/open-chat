@@ -1,12 +1,4 @@
-use candid::CandidType;
-use serde::{Deserialize, Serialize};
-use types::{Hash, UpgradeChunkedCanisterWasmArgs};
+use types::{UpgradeChunkedCanisterWasmArgs, UpgradeChunkedCanisterWasmResponse};
 
 pub type Args = UpgradeChunkedCanisterWasmArgs;
-
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    HashMismatch(Hash),
-    VersionNotHigher,
-}
+pub type Response = UpgradeChunkedCanisterWasmResponse;

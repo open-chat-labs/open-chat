@@ -6,19 +6,25 @@ use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use ts_export::ts_export;
 
-#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct UpgradeCanisterWasmArgs {
     pub wasm: CanisterWasm,
     pub filter: Option<UpgradesFilter>,
 }
 
-#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct UpgradeChunkedCanisterWasmArgs {
     pub version: BuildVersion,
     pub wasm_hash: Hash,
     pub filter: Option<UpgradesFilter>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub enum UpgradeChunkedCanisterWasmResponse {
+    Success,
+    HashMismatch(Hash),
+    VersionNotHigher,
+    InternalError(String),
 }
 
 #[ts_export]
@@ -53,6 +59,12 @@ impl Default for CanisterWasm {
             version: BuildVersion::new(0, 0, 0),
             module: Vec::default(),
         }
+    }
+}
+
+impl CanisterWasm {
+    pub fn hash(&self) -> Hash {
+        sha256(&self.module)
     }
 }
 
@@ -177,4 +189,10 @@ impl<T: Eq + std::hash::Hash> Default for ChildCanisterWasms<T> {
             default: CanisterWasm::default(),
         }
     }
+}
+
+fn sha256(bytes: &[u8]) -> Hash {
+    let mut hasher = Sha256::new();
+    hasher.update(bytes);
+    hasher.finalize().into()
 }

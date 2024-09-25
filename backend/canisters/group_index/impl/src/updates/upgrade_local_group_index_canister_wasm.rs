@@ -2,11 +2,11 @@ use crate::guards::caller_is_governance_principal;
 use crate::{mutate_state, Data, RuntimeState};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
-use group_index_canister::upgrade_local_group_index_canister_wasm::{Response::*, *};
+use group_index_canister::upgrade_local_group_index_canister_wasm::*;
 use group_index_canister::ChildCanisterType;
 use std::collections::HashSet;
 use tracing::info;
-use types::{BuildVersion, CanisterWasm};
+use types::{BuildVersion, CanisterWasm, UpgradeChunkedCanisterWasmResponse::*};
 use utils::canister::should_perform_upgrade;
 
 #[proposal(guard = "caller_is_governance_principal")]

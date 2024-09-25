@@ -450,13 +450,28 @@ async fn install_service_canisters_impl(
     let local_user_index_canister_wasm = get_canister_wasm(CanisterName::LocalUserIndex, version);
     let notifications_canister_wasm = get_canister_wasm(CanisterName::Notifications, version);
 
-    group_index_canister_client::upload_wasm_in_chunks(
-        agent,
-        &canister_ids.group_index,
-        &local_group_index_canister_wasm.module,
-        group_index_canister::ChildCanisterType::LocalGroupIndex,
+    futures::future::try_join3(
+        group_index_canister_client::upload_wasm_in_chunks(
+            agent,
+            &canister_ids.group_index,
+            &local_group_index_canister_wasm.module,
+            group_index_canister::ChildCanisterType::LocalGroupIndex,
+        ),
+        group_index_canister_client::upload_wasm_in_chunks(
+            agent,
+            &canister_ids.group_index,
+            &group_canister_wasm.module,
+            group_index_canister::ChildCanisterType::Group,
+        ),
+        group_index_canister_client::upload_wasm_in_chunks(
+            agent,
+            &canister_ids.group_index,
+            &community_canister_wasm.module,
+            group_index_canister::ChildCanisterType::Community,
+        ),
     )
-    .await;
+    .await
+    .unwrap();
 
     futures::future::try_join(
         user_index_canister_client::upgrade_local_user_index_canister_wasm(
@@ -493,7 +508,8 @@ async fn install_service_canisters_impl(
             agent,
             &canister_ids.group_index,
             &group_index_canister::upgrade_group_canister_wasm::Args {
-                wasm: group_canister_wasm,
+                version,
+                wasm_hash: sha256(&group_canister_wasm.module),
                 filter: None,
             },
         ),
@@ -501,7 +517,8 @@ async fn install_service_canisters_impl(
             agent,
             &canister_ids.group_index,
             &group_index_canister::upgrade_community_canister_wasm::Args {
-                wasm: community_canister_wasm,
+                version,
+                wasm_hash: sha256(&community_canister_wasm.module),
                 filter: None,
             },
         ),

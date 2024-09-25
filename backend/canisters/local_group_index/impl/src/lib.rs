@@ -4,12 +4,14 @@ use canister_state_macros::canister_state;
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use event_store_utils::EventDeduper;
+use local_group_index_canister::ChildCanisterType;
 use model::local_group_map::LocalGroupMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::time::Duration;
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, ChunkedCanisterWasm, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId,
+    BuildVersion, CanisterId, CanisterWasm, ChildCanisterWasms, ChunkedCanisterWasm, Cycles, Milliseconds, TimestampMillis,
+    Timestamped, UserId,
 };
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
@@ -117,6 +119,8 @@ impl RuntimeState {
 struct Data {
     pub local_groups: LocalGroupMap,
     pub local_communities: LocalCommunityMap,
+    #[serde(default)]
+    pub child_canister_wasms: ChildCanisterWasms<ChildCanisterType>,
     #[serde(alias = "group_canister_wasm_for_upgrades")]
     pub group_canister_wasm: ChunkedCanisterWasm,
     #[serde(alias = "community_canister_wasm_for_upgrades")]
@@ -168,6 +172,10 @@ impl Data {
         Data {
             local_groups: LocalGroupMap::default(),
             local_communities: LocalCommunityMap::default(),
+            child_canister_wasms: ChildCanisterWasms::new(vec![
+                (ChildCanisterType::Group, group_canister_wasm.clone()),
+                (ChildCanisterType::Community, community_canister_wasm.clone()),
+            ]),
             group_canister_wasm: group_canister_wasm.into(),
             community_canister_wasm: community_canister_wasm.into(),
             user_index_canister_id,
