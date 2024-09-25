@@ -31,7 +31,8 @@ fn accept_if_valid(state: &RuntimeState) {
         | "set_community_moderation_flags"
         | "set_community_upgrade_concurrency"
         | "set_group_upgrade_concurrency"
-        | "unfreeze_group" => true,
+        | "unfreeze_group"
+        | "upload_wasm_chunk" => true,
         _ => false,
     };
 
