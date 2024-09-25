@@ -102,14 +102,15 @@ impl CanisterWasmManager {
         self.wasm = wasm;
     }
 
-    pub fn push_chunk(&mut self, chunk: Vec<u8>, index: u8) -> Result<Hash, u8> {
+    pub fn push_chunk(&mut self, chunk: Vec<u8>, index: u8) -> Result<(u32, Hash), u8> {
         if index == 0 {
             self.chunks.clear();
         }
         let expected_index = self.chunks.len() as u8;
         if index == expected_index {
             self.chunks.push(chunk);
-            Ok(self.chunks_hash())
+            let total_bytes = self.chunks.iter().map(|c| c.len() as u32).sum();
+            Ok((total_bytes, self.chunks_hash()))
         } else {
             Err(expected_index)
         }
@@ -158,7 +159,7 @@ impl<T: Eq + std::hash::Hash> ChildCanisterWasms<T> {
         self.manager_mut(canister_type).set(wasm.into());
     }
 
-    pub fn push_chunk(&mut self, canister_type: T, chunk: Vec<u8>, index: u8) -> Result<Hash, u8> {
+    pub fn push_chunk(&mut self, canister_type: T, chunk: Vec<u8>, index: u8) -> Result<(u32, Hash), u8> {
         self.manager_mut(canister_type).push_chunk(chunk, index)
     }
 

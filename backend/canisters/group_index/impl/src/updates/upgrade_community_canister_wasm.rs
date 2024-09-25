@@ -49,12 +49,12 @@ struct PrepareResult {
 }
 
 fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
-    let chunks_hash = state.data.child_canister_wasms.chunks_hash(ChildCanisterType::Group);
+    let chunks_hash = state.data.child_canister_wasms.chunks_hash(ChildCanisterType::Community);
     if chunks_hash != args.wasm_hash {
         return Err(HashMismatch(chunks_hash));
     }
 
-    let wasm = state.data.child_canister_wasms.wasm_from_chunks(ChildCanisterType::Group);
+    let wasm = state.data.child_canister_wasms.wasm_from_chunks(ChildCanisterType::Community);
 
     let local_group_index_canister_ids: Vec<_> = state.data.local_index_map.canisters().copied().collect();
 

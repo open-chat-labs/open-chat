@@ -15,7 +15,7 @@ fn upload_wasm_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
         .child_canister_wasms
         .push_chunk(args.canister_type, args.chunk, args.index)
     {
-        Ok(hash) => Success(hash),
+        Ok((total_bytes, hash)) => Success(SuccessResult { total_bytes, hash }),
         Err(expected_index) => UnexpectedIndex(expected_index),
     }
 }

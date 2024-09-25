@@ -13,6 +13,12 @@ pub struct Args {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success(Hash),
+    Success(SuccessResult),
     UnexpectedIndex(u8),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct SuccessResult {
+    pub total_bytes: u32,
+    pub hash: Hash,
 }
