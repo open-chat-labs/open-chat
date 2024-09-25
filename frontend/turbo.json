@@ -1,99 +1,189 @@
 {
-    "$schema": "https://turborepo.org/schema.json",
-    "globalEnv": [
-        "DFX_NETWORK",
-        "NODE_ENV",
-        "USERGEEK_APIKEY",
-        "METERED_APIKEY",
-        "ROLLBAR_ACCESS_TOKEN",
-        "TRANSLATE_API_KEY",
-        "PUBLIC_TRANSLATE_API_KEY",
-        "TENOR_APIKEY",
-        "CORS_APIKEY"
-    ],
-    "pipeline": {
-        "deploy:prod": {
-            "outputs": ["lib/**", "build/**"],
-            "dependsOn": ["typecheck", "validate", "lint", "test:prod"]
-        },
-        "deploy:prod_test": {
-            "outputs": ["lib/**", "build/**"],
-            "dependsOn": ["typecheck", "validate", "lint", "test:prod_test"]
-        },
-        "deploy:testnet": {
-            "outputs": ["lib/**", "build/**"],
-            "dependsOn": ["typecheck", "validate", "lint", "test:testnet"]
-        },
-
-        "build:prod": {
-            "outputs": ["lib/**", "build/**"],
-            "dependsOn": ["^build", "openchat-service-worker#build", "openchat-worker#build"]
-        },
-        "build:prod_test": {
-            "outputs": ["lib/**", "build/**"],
-            "dependsOn": ["^build", "openchat-service-worker#build", "openchat-worker#build"]
-        },
-        "build:testnet": {
-            "outputs": ["lib/**", "build/**"],
-            "dependsOn": ["^build", "openchat-service-worker#build", "openchat-worker#build"]
-        },
-
-        "build": {
-            "outputs": ["lib/**", "build/**"],
-            "dependsOn": ["^build"]
-        },
-
-        "build:ci": {
-            "outputs": ["lib/**", "build/**"],
-            "dependsOn": ["build:prod", "typecheck", "validate", "lint", "test:prod"]
-        },
-
-        "verify": {
-            "dependsOn": ["typecheck", "validate", "lint", "test:prod"]
-        },
-
-        "test:prod": {
-            "dependsOn": ["build:prod", "^test"],
-            "outputs": [],
-            "inputs": ["src/**/*.ts"]
-        },
-        "test:prod_test": {
-            "dependsOn": ["build:prod_test"],
-            "outputs": [],
-            "inputs": ["src/**/*.ts"]
-        },
-        "test:testnet": {
-            "dependsOn": ["build:testnet"],
-            "outputs": [],
-            "inputs": ["src/**/*.ts"]
-        },
-
-        "dev": {
-            "cache": false,
-            "persistent": true,
-            "dependsOn": ["^wait"]
-        },
-        "wait": {
-            "cache": false
-        },
-        "test": {
-            "dependsOn": ["build"],
-            "outputs": [],
-            "inputs": ["src/**/*.ts"]
-        },
-        "typecheck": {
-            "dependsOn": ["^build"],
-            "outputs": [],
-            "inputs": ["src/**/*.ts", "src/**/*.svelte"]
-        },
-        "validate": {
-            "dependsOn": ["^build"],
-            "outputs": [],
-            "inputs": ["src/**/*.ts", "src/**/*.svelte"]
-        },
-        "lint": {
-            "outputs": [],
-            "inputs": ["src/**/*.ts", "src/**/*.svelte"]
-        }
+  "$schema": "https://turborepo.org/schema.json",
+  "globalEnv": [
+    "DFX_NETWORK",
+    "NODE_ENV",
+    "USERGEEK_APIKEY",
+    "METERED_APIKEY",
+    "ROLLBAR_ACCESS_TOKEN",
+    "TRANSLATE_API_KEY",
+    "PUBLIC_TRANSLATE_API_KEY",
+    "TENOR_APIKEY",
+    "CORS_APIKEY"
+  ],
+  "tasks": {
+    "deploy:prod": {
+      "outputs": [
+        "lib/**",
+        "build/**"
+      ],
+      "dependsOn": [
+        "typecheck",
+        "validate",
+        "lint",
+        "test:prod"
+      ]
+    },
+    "deploy:prod_test": {
+      "outputs": [
+        "lib/**",
+        "build/**"
+      ],
+      "dependsOn": [
+        "typecheck",
+        "validate",
+        "lint",
+        "test:prod_test"
+      ]
+    },
+    "deploy:testnet": {
+      "outputs": [
+        "lib/**",
+        "build/**"
+      ],
+      "dependsOn": [
+        "typecheck",
+        "validate",
+        "lint",
+        "test:testnet"
+      ]
+    },
+    "build:prod": {
+      "outputs": [
+        "lib/**",
+        "build/**"
+      ],
+      "dependsOn": [
+        "^build",
+        "openchat-service-worker#build",
+        "openchat-worker#build"
+      ]
+    },
+    "build:prod_test": {
+      "outputs": [
+        "lib/**",
+        "build/**"
+      ],
+      "dependsOn": [
+        "^build",
+        "openchat-service-worker#build",
+        "openchat-worker#build"
+      ]
+    },
+    "build:testnet": {
+      "outputs": [
+        "lib/**",
+        "build/**"
+      ],
+      "dependsOn": [
+        "^build",
+        "openchat-service-worker#build",
+        "openchat-worker#build"
+      ]
+    },
+    "build": {
+      "outputs": [
+        "lib/**",
+        "build/**"
+      ],
+      "dependsOn": [
+        "^build"
+      ]
+    },
+    "build:ci": {
+      "outputs": [
+        "lib/**",
+        "build/**"
+      ],
+      "dependsOn": [
+        "build:prod",
+        "typecheck",
+        "validate",
+        "lint",
+        "test:prod"
+      ]
+    },
+    "verify": {
+      "dependsOn": [
+        "typecheck",
+        "validate",
+        "lint",
+        "test:prod"
+      ]
+    },
+    "test:prod": {
+      "dependsOn": [
+        "build:prod",
+        "^test"
+      ],
+      "outputs": [],
+      "inputs": [
+        "src/**/*.ts"
+      ]
+    },
+    "test:prod_test": {
+      "dependsOn": [
+        "build:prod_test"
+      ],
+      "outputs": [],
+      "inputs": [
+        "src/**/*.ts"
+      ]
+    },
+    "test:testnet": {
+      "dependsOn": [
+        "build:testnet"
+      ],
+      "outputs": [],
+      "inputs": [
+        "src/**/*.ts"
+      ]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": [
+        "^wait"
+      ]
+    },
+    "wait": {
+      "cache": false
+    },
+    "test": {
+      "dependsOn": [
+        "build"
+      ],
+      "outputs": [],
+      "inputs": [
+        "src/**/*.ts"
+      ]
+    },
+    "typecheck": {
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [],
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.svelte"
+      ]
+    },
+    "validate": {
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [],
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.svelte"
+      ]
+    },
+    "lint": {
+      "outputs": [],
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.svelte"
+      ]
     }
+  }
 }
