@@ -9,6 +9,7 @@ use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
 use tracing::info;
 use types::ChildCanisterWasms;
+use utils::consts::DEV_TEAM_DFX_PRINCIPAL;
 use utils::cycles::init_cycles_dispenser_client;
 
 #[post_upgrade]
@@ -36,5 +37,6 @@ fn post_upgrade(args: Args) {
             (ChildCanisterType::Group, state.data.group_canister_wasm.clone()),
             (ChildCanisterType::Community, state.data.community_canister_wasm.clone()),
         ]);
+        state.data.upload_wasm_chunks_whitelist.push(DEV_TEAM_DFX_PRINCIPAL);
     })
 }

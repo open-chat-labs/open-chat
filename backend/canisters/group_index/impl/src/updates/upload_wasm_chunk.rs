@@ -1,9 +1,10 @@
+use crate::guards::caller_can_upload_wasm_chunks;
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use group_index_canister::upload_wasm_chunk::{Response::*, *};
 use ic_cdk::update;
 
-#[update]
+#[update(guard = "caller_can_upload_wasm_chunks")]
 #[trace]
 fn upload_wasm_chunk(args: Args) -> Response {
     mutate_state(|state| upload_wasm_chunk_impl(args, state))

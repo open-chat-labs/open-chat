@@ -66,6 +66,11 @@ impl RuntimeState {
         self.data.public_communities.get(&caller).is_some() || self.data.private_communities.get(&caller).is_some()
     }
 
+    pub fn can_caller_upload_wasm_chunks(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.governance_principals.contains(&caller) || self.data.upload_wasm_chunks_whitelist.contains(&caller)
+    }
+
     pub fn metrics(&self) -> Metrics {
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
 
@@ -109,6 +114,7 @@ impl RuntimeState {
             group_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::Group).wasm.version,
             community_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::Community).wasm.version,
             local_group_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
+            upload_wasm_chunks_whitelist: self.data.upload_wasm_chunks_whitelist.clone(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
@@ -150,6 +156,8 @@ struct Data {
     pub local_index_map: LocalGroupIndexMap,
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub video_call_operators: Vec<Principal>,
+    #[serde(default)]
+    pub upload_wasm_chunks_whitelist: Vec<Principal>,
     pub ic_root_key: Vec<u8>,
     pub rng_seed: [u8; 32],
 }
@@ -176,7 +184,7 @@ impl Data {
             private_communities: PrivateCommunities::default(),
             deleted_communities: DeletedCommunities::default(),
             public_group_and_community_names: PublicGroupAndCommunityNames::default(),
-            governance_principals: governance_principals.into_iter().collect(),
+            governance_principals: governance_principals.iter().copied().collect(),
             child_canister_wasms: ChildCanisterWasms::default(),
             group_canister_wasm: CanisterWasm::default(),
             community_canister_wasm: CanisterWasm::default(),
@@ -195,6 +203,7 @@ impl Data {
             local_index_map: LocalGroupIndexMap::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             video_call_operators,
+            upload_wasm_chunks_whitelist: Vec::default(),
             ic_root_key,
             rng_seed: [0; 32],
         }
@@ -303,6 +312,7 @@ impl Default for Data {
             local_index_map: LocalGroupIndexMap::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             video_call_operators: Vec::default(),
+            upload_wasm_chunks_whitelist: Vec::default(),
             ic_root_key: Vec::new(),
             rng_seed: [0; 32],
         }
@@ -345,6 +355,7 @@ pub struct Metrics {
     pub group_wasm_version: BuildVersion,
     pub community_wasm_version: BuildVersion,
     pub local_group_indexes: Vec<(CanisterId, LocalGroupIndex)>,
+    pub upload_wasm_chunks_whitelist: Vec<Principal>,
     pub canister_ids: CanisterIds,
 }
 
