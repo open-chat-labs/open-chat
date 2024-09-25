@@ -5,7 +5,7 @@ use ic_utils::call::AsyncCall;
 use ic_utils::interfaces::management_canister::builders::InstallMode;
 use ic_utils::interfaces::management_canister::CanisterStatus;
 use ic_utils::interfaces::ManagementCanister;
-use types::{BuildVersion, CanisterId, CanisterWasm, UpgradeCanisterWasmArgs};
+use types::{BuildVersion, CanisterId, CanisterWasm, UpgradeCanisterWasmArgs, UpgradeChunkedCanisterWasmArgs};
 
 pub async fn upgrade_group_index_canister(
     identity: Box<dyn Identity>,
@@ -311,11 +311,19 @@ pub async fn upgrade_local_group_index_canister(
 ) {
     let agent = build_ic_agent(url, identity).await;
     let canister_wasm = get_canister_wasm(CanisterName::LocalGroupIndex, version);
-    let args = UpgradeCanisterWasmArgs {
-        wasm: CanisterWasm {
-            version,
-            module: canister_wasm.module,
-        },
+    let wasm_hash = sha256::sha256(&canister_wasm.module);
+
+    group_index_canister_client::upload_wasm_in_chunks(
+        &agent,
+        &group_index_canister_id,
+        &canister_wasm.module,
+        group_index_canister::ChildCanisterType::LocalGroupIndex,
+    )
+    .await;
+
+    let args = UpgradeChunkedCanisterWasmArgs {
+        version,
+        wasm_hash,
         filter: None,
     };
 

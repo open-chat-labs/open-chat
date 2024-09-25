@@ -1,6 +1,7 @@
 use crate::{BuildVersion, CanisterId, Hash};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::fmt::{Debug, Formatter};
 use ts_export::ts_export;
 
@@ -8,6 +9,14 @@ use ts_export::ts_export;
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct UpgradeCanisterWasmArgs {
     pub wasm: CanisterWasm,
+    pub filter: Option<UpgradesFilter>,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct UpgradeChunkedCanisterWasmArgs {
+    pub version: BuildVersion,
+    pub wasm_hash: Hash,
     pub filter: Option<UpgradesFilter>,
 }
 
@@ -67,11 +76,15 @@ pub struct UpgradesFilter {
 #[derive(Serialize, Deserialize, Default)]
 pub struct CanisterWasmManager {
     wasm: CanisterWasm,
+    chunks: Vec<Vec<u8>>,
 }
 
 impl CanisterWasmManager {
     pub fn new(wasm: CanisterWasm) -> CanisterWasmManager {
-        CanisterWasmManager { wasm }
+        CanisterWasmManager {
+            wasm,
+            chunks: Vec::new(),
+        }
     }
 
     pub fn get(&self) -> &CanisterWasm {
@@ -80,5 +93,35 @@ impl CanisterWasmManager {
 
     pub fn set(&mut self, wasm: CanisterWasm) {
         self.wasm = wasm;
+    }
+
+    pub fn push_chunk(&mut self, chunk: Vec<u8>, index: u8) -> Result<Hash, u8> {
+        if index == 0 {
+            self.chunks.clear();
+        }
+        let expected_index = self.chunks.len() as u8;
+        if index == expected_index {
+            self.chunks.push(chunk);
+            Ok(self.chunks_hash())
+        } else {
+            Err(expected_index)
+        }
+    }
+
+    pub fn wasm_from_chunks(&self) -> Vec<u8> {
+        let total_bytes = self.chunks.iter().map(|c| c.len()).sum();
+        let mut wasm = Vec::with_capacity(total_bytes);
+        for chunk in self.chunks.iter() {
+            wasm.extend_from_slice(&chunk);
+        }
+        wasm
+    }
+
+    pub fn chunks_hash(&self) -> Hash {
+        let mut hasher = Sha256::new();
+        for chunk in self.chunks.iter() {
+            hasher.update(chunk);
+        }
+        hasher.finalize().into()
     }
 }

@@ -2,6 +2,7 @@ use candid::Principal;
 use canister_agent_utils::{build_ic_agent, get_canister_wasm, install_wasm, set_controllers, CanisterIds, CanisterName};
 use ic_agent::{Agent, Identity};
 use ic_utils::interfaces::ManagementCanister;
+use sha256::sha256;
 use types::{BuildVersion, CanisterWasm, Cycles};
 use utils::consts::{SNS_GOVERNANCE_CANISTER_ID, SNS_LEDGER_CANISTER_ID};
 
@@ -449,6 +450,14 @@ async fn install_service_canisters_impl(
     let local_user_index_canister_wasm = get_canister_wasm(CanisterName::LocalUserIndex, version);
     let notifications_canister_wasm = get_canister_wasm(CanisterName::Notifications, version);
 
+    group_index_canister_client::upload_wasm_in_chunks(
+        agent,
+        &canister_ids.group_index,
+        &local_group_index_canister_wasm.module,
+        group_index_canister::ChildCanisterType::LocalGroupIndex,
+    )
+    .await;
+
     futures::future::try_join(
         user_index_canister_client::upgrade_local_user_index_canister_wasm(
             agent,
@@ -462,7 +471,8 @@ async fn install_service_canisters_impl(
             agent,
             &canister_ids.group_index,
             &group_index_canister::upgrade_local_group_index_canister_wasm::Args {
-                wasm: local_group_index_canister_wasm,
+                version,
+                wasm_hash: sha256(&local_group_index_canister_wasm.module),
                 filter: None,
             },
         ),

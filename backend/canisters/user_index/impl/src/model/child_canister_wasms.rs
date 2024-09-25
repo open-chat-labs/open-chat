@@ -18,16 +18,24 @@ impl ChildCanisterWasms {
     }
 
     pub fn get(&self, canister_type: ChildCanisterType) -> &CanisterWasm {
-        match canister_type {
-            ChildCanisterType::LocalUserIndex => self.local_user_index.get(),
-            ChildCanisterType::User => self.user.get(),
-        }
+        self.manager(canister_type).get()
     }
 
     pub fn set(&mut self, canister_type: ChildCanisterType, wasm: CanisterWasm) {
+        self.manager_mut(canister_type).set(wasm);
+    }
+
+    fn manager(&self, canister_type: ChildCanisterType) -> &CanisterWasmManager {
         match canister_type {
-            ChildCanisterType::LocalUserIndex => self.local_user_index.set(wasm),
-            ChildCanisterType::User => self.user.set(wasm),
+            ChildCanisterType::LocalUserIndex => &self.local_user_index,
+            ChildCanisterType::User => &self.user,
+        }
+    }
+
+    fn manager_mut(&mut self, canister_type: ChildCanisterType) -> &mut CanisterWasmManager {
+        match canister_type {
+            ChildCanisterType::LocalUserIndex => &mut self.local_user_index,
+            ChildCanisterType::User => &mut self.user,
         }
     }
 }

@@ -3,7 +3,7 @@ use clap::Parser;
 use sns_governance_canister::types::{proposal, ExecuteGenericNervousSystemFunction, Proposal};
 use std::error::Error;
 use std::fs;
-use types::{BuildVersion, CanisterWasm, UpgradeCanisterWasmArgs};
+use types::{BuildVersion, CanisterWasm, UpgradeCanisterWasmArgs, UpgradeChunkedCanisterWasmArgs};
 
 /// Builds the binary encoded candid representation of an ExecuteGenericNervousSystemFunction proposal
 /// for upgrading a canister WASM
@@ -29,6 +29,12 @@ pub struct Config {
     #[arg(long)]
     pub wasm_path: std::path::PathBuf,
 
+    #[arg(long)]
+    pub expected_wasm_hash: String,
+
+    #[arg(long)]
+    pub install_from_chunks: bool,
+
     /// Version of the wasm module
     #[arg(long)]
     pub version: BuildVersion,
@@ -43,15 +49,31 @@ pub fn build(config: Config) -> Result<Vec<u8>, Box<dyn Error>> {
 fn create_proposal(config: Config) -> Result<Proposal, Box<dyn Error>> {
     let wasm_module = fs::read(config.wasm_path)?;
 
-    let args = UpgradeCanisterWasmArgs {
-        wasm: CanisterWasm {
-            version: config.version,
-            module: wasm_module,
-        },
-        filter: None,
-    };
+    let wasm_hash = sha256::sha256(&wasm_module);
+    let wasm_hash_hex = hex::encode(wasm_hash);
+    if wasm_hash_hex != config.expected_wasm_hash {
+        return Err(format!(
+            "Wasm hash mismatch. Expected: {}. Actual: {}",
+            config.expected_wasm_hash, wasm_hash_hex
+        )
+        .into());
+    }
 
-    let payload = Encode!(&args)?;
+    let payload = if config.install_from_chunks {
+        Encode!(&UpgradeChunkedCanisterWasmArgs {
+            version: config.version,
+            wasm_hash,
+            filter: None,
+        })
+    } else {
+        Encode!(&UpgradeCanisterWasmArgs {
+            wasm: CanisterWasm {
+                version: config.version,
+                module: wasm_module.into(),
+            },
+            filter: None,
+        })
+    }?;
 
     let proposal = Proposal {
         title: config.title,

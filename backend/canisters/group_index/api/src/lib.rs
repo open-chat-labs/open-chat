@@ -9,7 +9,7 @@ pub use lifecycle::*;
 pub use queries::*;
 pub use updates::*;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug)]
 pub enum ChildCanisterType {
     LocalGroupIndex,
     Group,

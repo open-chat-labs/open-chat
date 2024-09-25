@@ -1111,6 +1111,7 @@ dependencies = [
  "online_users_canister",
  "proposals_bot_canister",
  "registry_canister",
+ "sha256",
  "sign_in_with_email_canister",
  "storage_index_canister",
  "test_utils",
@@ -1187,6 +1188,8 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "clap 4.5.4",
+ "hex",
+ "sha256",
  "sns_governance_canister",
  "types",
 ]
@@ -1214,6 +1217,7 @@ dependencies = [
  "online_users_canister",
  "proposals_bot_canister",
  "registry_canister",
+ "sha256",
  "sign_in_with_email_canister",
  "storage_index_canister",
  "storage_index_canister_client",
@@ -2895,6 +2899,8 @@ dependencies = [
  "search",
  "serde",
  "serde_bytes",
+ "sha2 0.10.8",
+ "sha256",
  "stable_memory",
  "tracing",
  "types",
@@ -3178,6 +3184,7 @@ name = "human_readable"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "hex",
  "human_readable_derive",
  "serde",
  "serde_json",
@@ -4191,6 +4198,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serial_test",
+ "sha256",
  "sign_in_with_email_canister",
  "storage_bucket_canister",
  "storage_index_canister",
@@ -8150,6 +8158,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serde_json",
+ "sha2 0.10.8",
  "ts-rs",
  "ts_export",
 ]
