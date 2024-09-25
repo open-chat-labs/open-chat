@@ -356,7 +356,7 @@
                 size={AvatarSize.Default} />
             {#if chat.eventsTTL}
                 <div class="expires">
-                    <CameraTimer size={"1em"} color={"#fff"} />
+                    <CameraTimer size={"1em"} color={"var(--txt)"} />
                 </div>
             {/if}
             <VideoCallIcon video={chat.video} />

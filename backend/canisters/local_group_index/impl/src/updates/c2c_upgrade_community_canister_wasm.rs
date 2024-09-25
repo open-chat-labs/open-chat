@@ -40,7 +40,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     } else {
         Ok(PrepareResult {
             this_canister_id: state.env.canister_id(),
-            clear_chunk_store: args.use_for_new_canisters.unwrap_or(true) && state.data.groups_requiring_upgrade.is_empty(),
+            clear_chunk_store: state.data.groups_requiring_upgrade.is_empty(),
         })
     }
 }
@@ -55,9 +55,7 @@ fn commit(args: Args, chunks: Vec<Hash>, state: &mut RuntimeState) -> Response {
         chunks,
         wasm_hash,
     };
-    if args.use_for_new_canisters.unwrap_or(true) {
-        state.data.community_canister_wasm_for_new_canisters = chunked_wasm.clone();
-    }
+    state.data.community_canister_wasm_for_new_canisters = chunked_wasm.clone();
     state.data.community_canister_wasm_for_upgrades = chunked_wasm;
 
     let filter = args.filter.unwrap_or_default();

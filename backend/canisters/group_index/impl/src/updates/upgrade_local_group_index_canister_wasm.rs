@@ -21,9 +21,7 @@ fn upgrade_local_group_index_canister_wasm_impl(args: Args, state: &mut RuntimeS
         VersionNotHigher
     } else {
         state.data.canisters_requiring_upgrade.clear();
-        if args.use_for_new_canisters.unwrap_or(true) {
-            state.data.local_group_index_canister_wasm_for_new_canisters = args.wasm.clone();
-        }
+        state.data.local_group_index_canister_wasm_for_new_canisters = args.wasm.clone();
         state.data.local_group_index_canister_wasm_for_upgrades = args.wasm;
 
         let filter = args.filter.unwrap_or_default();

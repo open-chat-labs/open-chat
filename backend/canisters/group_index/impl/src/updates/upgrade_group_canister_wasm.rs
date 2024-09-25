@@ -12,7 +12,6 @@ use utils::canister::build_filter_map;
 #[trace]
 async fn upgrade_group_canister_wasm(args: Args) -> Response {
     let version = args.wasm.version;
-    let use_for_new_canisters = args.use_for_new_canisters.unwrap_or(true);
 
     let PrepareResult {
         wasm,
@@ -30,7 +29,6 @@ async fn upgrade_group_canister_wasm(args: Args) -> Response {
                 UpgradeCanisterWasmArgs {
                     wasm: wasm.clone(),
                     filter: Some(filter),
-                    use_for_new_canisters: Some(use_for_new_canisters),
                 },
             )
         })
@@ -41,11 +39,9 @@ async fn upgrade_group_canister_wasm(args: Args) -> Response {
     if let Some(first_error) = result.into_iter().filter_map(|res| res.err()).next() {
         InternalError(format!("{first_error:?}"))
     } else {
-        if use_for_new_canisters {
-            mutate_state(|state| {
-                state.data.group_canister_wasm = wasm;
-            });
-        }
+        mutate_state(|state| {
+            state.data.group_canister_wasm = wasm;
+        });
 
         info!(%version, "Group canister wasm upgraded");
         Success

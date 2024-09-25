@@ -152,11 +152,7 @@ pub mod happy_path {
             env,
             sender,
             user_index_canister_id,
-            &user_index_canister::upgrade_local_user_index_canister_wasm::Args {
-                wasm,
-                filter: None,
-                use_for_new_canisters: None,
-            },
+            &user_index_canister::upgrade_local_user_index_canister_wasm::Args { wasm, filter: None },
         );
 
         assert!(matches!(
@@ -175,11 +171,7 @@ pub mod happy_path {
             env,
             sender,
             user_index_canister_id,
-            &user_index_canister::upgrade_user_canister_wasm::Args {
-                wasm,
-                filter: None,
-                use_for_new_canisters: None,
-            },
+            &user_index_canister::upgrade_user_canister_wasm::Args { wasm, filter: None },
         );
 
         assert!(matches!(

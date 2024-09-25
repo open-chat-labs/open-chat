@@ -85,11 +85,7 @@ pub mod happy_path {
             env,
             sender,
             storage_index_canister_id,
-            &storage_index_canister::upgrade_bucket_canister_wasm::Args {
-                wasm,
-                filter: None,
-                use_for_new_canisters: None,
-            },
+            &storage_index_canister::upgrade_bucket_canister_wasm::Args { wasm, filter: None },
         );
 
         assert!(matches!(
