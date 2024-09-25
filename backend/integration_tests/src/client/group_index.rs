@@ -78,15 +78,13 @@ pub mod happy_path {
             ChildCanisterType::LocalGroupIndex,
         );
 
-        let wasm_hash = sha256(&wasm.module);
-
         let response = super::upgrade_local_group_index_canister_wasm(
             env,
             sender,
             group_index_canister_id,
             &group_index_canister::upgrade_local_group_index_canister_wasm::Args {
                 version: wasm.version,
-                wasm_hash,
+                wasm_hash: sha256(&wasm.module),
                 filter: None,
             },
         );
@@ -103,11 +101,17 @@ pub mod happy_path {
         group_index_canister_id: CanisterId,
         wasm: CanisterWasm,
     ) {
+        upload_wasm_in_chunks(env, sender, group_index_canister_id, &wasm.module, ChildCanisterType::Group);
+
         let response = super::upgrade_group_canister_wasm(
             env,
             sender,
             group_index_canister_id,
-            &group_index_canister::upgrade_group_canister_wasm::Args { wasm, filter: None },
+            &group_index_canister::upgrade_group_canister_wasm::Args {
+                version: wasm.version,
+                wasm_hash: sha256(&wasm.module),
+                filter: None,
+            },
         );
 
         assert!(matches!(
@@ -122,11 +126,23 @@ pub mod happy_path {
         group_index_canister_id: CanisterId,
         wasm: CanisterWasm,
     ) {
+        upload_wasm_in_chunks(
+            env,
+            sender,
+            group_index_canister_id,
+            &wasm.module,
+            ChildCanisterType::Community,
+        );
+
         let response = super::upgrade_community_canister_wasm(
             env,
             sender,
             group_index_canister_id,
-            &group_index_canister::upgrade_community_canister_wasm::Args { wasm, filter: None },
+            &group_index_canister::upgrade_community_canister_wasm::Args {
+                version: wasm.version,
+                wasm_hash: sha256(&wasm.module),
+                filter: None,
+            },
         );
 
         assert!(matches!(
