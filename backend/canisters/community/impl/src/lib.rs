@@ -553,17 +553,21 @@ impl Data {
         self.expiring_member_actions.remove_member(user_id, Some(channel_id));
     }
 
-    pub fn expire_member(&mut self, user_id: UserId, channel_id: Option<ChannelId>, now: TimestampMillis) {
+    pub fn mark_member_lapsed(&mut self, user_id: UserId, channel_id: Option<ChannelId>, now: TimestampMillis) {
         if let Some(channel_id) = channel_id {
             if let Some(member) = self
                 .channels
                 .get_mut(&channel_id)
                 .and_then(|channel| channel.chat.members.get_mut(&user_id))
             {
-                member.lapsed = Some(now);
+                if !member.role.is_owner() {
+                    member.lapsed = Some(now);
+                }
             }
         } else if let Some(member) = self.members.get_by_user_id_mut(&user_id) {
-            member.lapsed = Some(now);
+            if !member.role.is_owner() {
+                member.lapsed = Some(now);
+            }
         }
     }
 
@@ -595,11 +599,13 @@ impl Data {
         if let Some(new_gate_expiry) = new_gate_expiry {
             if prev_gate_expiry.is_none() || prev_gate_type != new_gate_type {
                 for m in self.members.iter() {
-                    self.expiring_members.push(ExpiringMember {
-                        expires: now + new_gate_expiry,
-                        channel_id,
-                        user_id: m.user_id,
-                    });
+                    if !m.role.is_owner() {
+                        self.expiring_members.push(ExpiringMember {
+                            expires: now + new_gate_expiry,
+                            channel_id,
+                            user_id: m.user_id,
+                        });
+                    }
                 }
             }
         }
@@ -612,6 +618,19 @@ impl Data {
                 .and_then(|channel| channel.chat.gate_config.value.as_ref())
         } else {
             self.gate_config.value.as_ref()
+        }
+    }
+
+    fn is_owner(&self, user_id: &UserId, channel_id: Option<ChannelId>) -> bool {
+        if let Some(channel_id) = channel_id {
+            self.channels
+                .get(&channel_id)
+                .and_then(|channel| channel.chat.members.get(user_id))
+                .map_or(false, |member| member.role.is_owner())
+        } else {
+            self.members
+                .get_by_user_id(user_id)
+                .map_or(false, |member| member.role.is_owner())
         }
     }
 }

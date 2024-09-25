@@ -170,7 +170,9 @@ fn create_channel_impl(
                             .iter_mut()
                             .filter(|m| diamond_membership_expiry_dates.get(&m.user_id).copied() > Some(now))
                         {
-                            if matches!(join_channel_unchecked(&mut channel, m, true, now), AddResult::Success(_)) {
+                            let result = join_channel_unchecked(&mut channel, m, true, now);
+
+                            if matches!(result, AddResult::Success(_)) && !m.role.is_owner() {
                                 if let Some(gate_expiry) = gate_expiry {
                                     state.data.expiring_members.push(ExpiringMember {
                                         expires: now + gate_expiry,

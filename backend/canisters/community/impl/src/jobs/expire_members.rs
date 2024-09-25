@@ -75,11 +75,13 @@ fn run() {
 
                     if passes_gate {
                         // Queue up the next check
-                        state.data.expiring_members.push(ExpiringMember {
-                            expires: now + gate_expiry,
-                            channel_id: member.channel_id,
-                            user_id: member.user_id,
-                        });
+                        if !state.data.is_owner(&member.user_id, member.channel_id) {
+                            state.data.expiring_members.push(ExpiringMember {
+                                expires: now + gate_expiry,
+                                channel_id: member.channel_id,
+                                user_id: member.user_id,
+                            });
+                        }
                     } else {
                         // Add this member to the list of batchable actions
                         batched_actions.push(ExpiringMemberActionDetails {
@@ -99,7 +101,7 @@ fn run() {
                     }
                 }
                 AccessGateExpiryType::Lapse => {
-                    state.data.expire_member(member.user_id, member.channel_id, now);
+                    state.data.mark_member_lapsed(member.user_id, member.channel_id, now);
                 }
                 AccessGateExpiryType::Single => {
                     state

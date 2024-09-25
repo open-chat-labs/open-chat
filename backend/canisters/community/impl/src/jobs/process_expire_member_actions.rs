@@ -13,7 +13,7 @@ use std::{cmp::max, time::Duration};
 use tracing::trace;
 use types::AccessGateConfig;
 
-use super::expire_members::MEMBER_ACCESS_EXPIRY_DELAY;
+use super::expire_members::{self, MEMBER_ACCESS_EXPIRY_DELAY};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -154,7 +154,7 @@ fn handle_gate_check_result(details: ExpiringMemberActionDetails, result: CheckI
 
         if matches!(result, CheckIfPassesGateResult::Failed(_)) && expiry_increase == 0 {
             // Membership lapsed
-            state.data.expire_member(details.user_id, details.channel_id, now);
+            state.data.mark_member_lapsed(details.user_id, details.channel_id, now);
             return;
         }
 
@@ -165,10 +165,14 @@ fn handle_gate_check_result(details: ExpiringMemberActionDetails, result: CheckI
             CheckIfPassesGateResult::InternalError(_) => max(expiry_increase, MEMBER_ACCESS_EXPIRY_DELAY),
         };
 
-        state.data.expiring_members.push(ExpiringMember {
-            expires: now + expiry,
-            channel_id: details.channel_id,
-            user_id: details.user_id,
-        });
+        if !state.data.is_owner(&details.user_id, details.channel_id) {
+            state.data.expiring_members.push(ExpiringMember {
+                expires: now + expiry,
+                channel_id: details.channel_id,
+                user_id: details.user_id,
+            });
+
+            expire_members::start_job_if_required(state);
+        }
     });
 }
