@@ -126,6 +126,11 @@ impl RuntimeState {
         caller == self.modclub_canister_id()
     }
 
+    pub fn can_caller_upload_wasm_chunks(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.governance_principals.contains(&caller) || self.data.upload_wasm_chunks_whitelist.contains(&caller)
+    }
+
     pub fn modclub_canister_id(&self) -> CanisterId {
         let modclub_canister_id =
             if self.data.test_mode { "d7isk-4aaaa-aaaah-qdbsa-cai" } else { "gwuzc-waaaa-aaaah-qdboa-cai" };
@@ -283,6 +288,14 @@ impl RuntimeState {
             august_airdrop_period: self.build_stats_for_cohort(1723021200000, 1725181200000),
             survey_messages_sent: self.data.survey_messages_sent,
             external_achievements: self.data.external_achievements.metrics(),
+            upload_wasm_chunks_whitelist: self.data.upload_wasm_chunks_whitelist.clone(),
+            wasm_chunks_uploaded: self
+                .data
+                .child_canister_wasms
+                .chunk_hashes()
+                .into_iter()
+                .map(|(c, h)| (*c, hex::encode(h)))
+                .collect(),
         }
     }
 
@@ -369,6 +382,8 @@ struct Data {
     pub remove_from_online_users_queue: VecDeque<Principal>,
     pub survey_messages_sent: usize,
     pub external_achievements: ExternalAchievements,
+    #[serde(default)]
+    pub upload_wasm_chunks_whitelist: Vec<Principal>,
 }
 
 impl Data {
@@ -444,6 +459,7 @@ impl Data {
             remove_from_online_users_queue: VecDeque::new(),
             survey_messages_sent: 0,
             external_achievements: ExternalAchievements::default(),
+            upload_wasm_chunks_whitelist: Vec::new(),
         };
 
         // Register the ProposalsBot
@@ -571,6 +587,7 @@ impl Default for Data {
             remove_from_online_users_queue: VecDeque::new(),
             survey_messages_sent: 0,
             external_achievements: ExternalAchievements::default(),
+            upload_wasm_chunks_whitelist: Vec::new(),
         }
     }
 }
@@ -616,6 +633,8 @@ pub struct Metrics {
     pub august_airdrop_period: AirdropStats,
     pub survey_messages_sent: usize,
     pub external_achievements: Vec<ExternalAchievementMetrics>,
+    pub upload_wasm_chunks_whitelist: Vec<Principal>,
+    pub wasm_chunks_uploaded: Vec<(ChildCanisterType, String)>,
 }
 
 #[derive(Serialize, Debug)]

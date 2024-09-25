@@ -445,7 +445,19 @@ async fn install_service_canisters_impl(
     let local_user_index_canister_wasm = get_canister_wasm(CanisterName::LocalUserIndex, version);
     let notifications_canister_wasm = get_canister_wasm(CanisterName::Notifications, version);
 
-    futures::future::try_join3(
+    futures::future::try_join5(
+        user_index_canister_client::upload_wasm_in_chunks(
+            agent,
+            &canister_ids.user_index,
+            &local_user_index_canister_wasm.module,
+            user_index_canister::ChildCanisterType::LocalUserIndex,
+        ),
+        user_index_canister_client::upload_wasm_in_chunks(
+            agent,
+            &canister_ids.user_index,
+            &user_canister_wasm.module,
+            user_index_canister::ChildCanisterType::User,
+        ),
         group_index_canister_client::upload_wasm_in_chunks(
             agent,
             &canister_ids.group_index,
@@ -473,7 +485,8 @@ async fn install_service_canisters_impl(
             agent,
             &canister_ids.user_index,
             &user_index_canister::upgrade_local_user_index_canister_wasm::Args {
-                wasm: local_user_index_canister_wasm,
+                version,
+                wasm_hash: sha256(&local_user_index_canister_wasm.module),
                 filter: None,
             },
         ),
@@ -495,7 +508,8 @@ async fn install_service_canisters_impl(
             agent,
             &canister_ids.user_index,
             &user_index_canister::upgrade_user_canister_wasm::Args {
-                wasm: user_canister_wasm,
+                version,
+                wasm_hash: sha256(&user_canister_wasm.module),
                 filter: None,
             },
         ),

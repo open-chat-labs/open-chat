@@ -8409,6 +8409,7 @@ dependencies = [
  "futures",
  "group_canister",
  "group_canister_c2c_client",
+ "hex",
  "http_request",
  "human_readable",
  "ic-cdk 0.16.0",

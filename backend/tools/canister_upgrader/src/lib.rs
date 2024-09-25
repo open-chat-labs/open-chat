@@ -5,6 +5,7 @@ use ic_utils::call::AsyncCall;
 use ic_utils::interfaces::management_canister::builders::InstallMode;
 use ic_utils::interfaces::management_canister::CanisterStatus;
 use ic_utils::interfaces::ManagementCanister;
+use sha256::sha256;
 use types::{BuildVersion, CanisterId, CanisterWasm, UpgradeCanisterWasmArgs, UpgradeChunkedCanisterWasmArgs};
 
 pub async fn upgrade_group_index_canister(
@@ -311,7 +312,6 @@ pub async fn upgrade_local_group_index_canister(
 ) {
     let agent = build_ic_agent(url, identity).await;
     let canister_wasm = get_canister_wasm(CanisterName::LocalGroupIndex, version);
-    let wasm_hash = sha256::sha256(&canister_wasm.module);
 
     group_index_canister_client::upload_wasm_in_chunks(
         &agent,
@@ -324,7 +324,7 @@ pub async fn upgrade_local_group_index_canister(
 
     let args = UpgradeChunkedCanisterWasmArgs {
         version,
-        wasm_hash,
+        wasm_hash: sha256(&canister_wasm.module),
         filter: None,
     };
 
@@ -350,7 +350,6 @@ pub async fn upgrade_group_canister(
 ) {
     let agent = build_ic_agent(url, identity).await;
     let canister_wasm = get_canister_wasm(CanisterName::Group, version);
-    let wasm_hash = sha256::sha256(&canister_wasm.module);
 
     group_index_canister_client::upload_wasm_in_chunks(
         &agent,
@@ -363,7 +362,7 @@ pub async fn upgrade_group_canister(
 
     let args = UpgradeChunkedCanisterWasmArgs {
         version,
-        wasm_hash,
+        wasm_hash: sha256(&canister_wasm.module),
         filter: None,
     };
 
@@ -385,7 +384,6 @@ pub async fn upgrade_community_canister(
 ) {
     let agent = build_ic_agent(url, identity).await;
     let canister_wasm = get_canister_wasm(CanisterName::Community, version);
-    let wasm_hash = sha256::sha256(&canister_wasm.module);
 
     group_index_canister_client::upload_wasm_in_chunks(
         &agent,
@@ -398,7 +396,7 @@ pub async fn upgrade_community_canister(
 
     let args = UpgradeChunkedCanisterWasmArgs {
         version,
-        wasm_hash,
+        wasm_hash: sha256(&canister_wasm.module),
         filter: None,
     };
 
@@ -423,11 +421,19 @@ pub async fn upgrade_user_canister(
 ) {
     let agent = build_ic_agent(url, identity).await;
     let canister_wasm = get_canister_wasm(CanisterName::User, version);
-    let args = UpgradeCanisterWasmArgs {
-        wasm: CanisterWasm {
-            version,
-            module: canister_wasm.module,
-        },
+
+    user_index_canister_client::upload_wasm_in_chunks(
+        &agent,
+        &user_index_canister_id,
+        &canister_wasm.module,
+        user_index_canister::ChildCanisterType::User,
+    )
+    .await
+    .unwrap();
+
+    let args = UpgradeChunkedCanisterWasmArgs {
+        version,
+        wasm_hash: sha256(&canister_wasm.module),
         filter: None,
     };
 
@@ -449,11 +455,19 @@ pub async fn upgrade_local_user_index_canister(
 ) {
     let agent = build_ic_agent(url, identity).await;
     let canister_wasm = get_canister_wasm(CanisterName::LocalUserIndex, version);
-    let args = UpgradeCanisterWasmArgs {
-        wasm: CanisterWasm {
-            version,
-            module: canister_wasm.module,
-        },
+
+    user_index_canister_client::upload_wasm_in_chunks(
+        &agent,
+        &user_index_canister_id,
+        &canister_wasm.module,
+        user_index_canister::ChildCanisterType::LocalUserIndex,
+    )
+    .await
+    .unwrap();
+
+    let args = UpgradeChunkedCanisterWasmArgs {
+        version,
+        wasm_hash: sha256(&canister_wasm.module),
         filter: None,
     };
 

@@ -7,7 +7,7 @@ use local_group_index_canister::ChildCanisterType;
 use sha256::sha256;
 use std::collections::HashSet;
 use tracing::info;
-use types::{BuildVersion, CanisterId, CanisterWasm, ChunkedCanisterWasm, Hash};
+use types::{BuildVersion, CanisterId, CanisterWasm, ChunkedCanisterWasm, Hash, UpgradeChunkedCanisterWasmResponse::*};
 use utils::canister::{should_perform_upgrade, upload_wasm_in_chunks};
 
 #[update(guard = "caller_is_group_index_canister", msgpack = true)]
@@ -42,9 +42,9 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     let wasm_hash = sha256(&wasm);
 
     if wasm_hash != args.wasm_hash {
-        Err(Response::HashMismatch(wasm_hash))
+        Err(HashMismatch(wasm_hash))
     } else if !state.data.test_mode && Some(args.version) <= min_canister_version(&state.data) {
-        Err(Response::VersionNotHigher)
+        Err(VersionNotHigher)
     } else {
         Ok(PrepareResult {
             this_canister_id: state.env.canister_id(),
@@ -92,7 +92,7 @@ fn commit(args: Args, wasm: CanisterWasm, chunks: Vec<Hash>, state: &mut Runtime
 
     let canisters_queued_for_upgrade = state.data.communities_requiring_upgrade.count_pending();
     info!(%version, canisters_queued_for_upgrade, "Community canister wasm upgraded");
-    Response::Success
+    Success
 }
 
 fn min_canister_version(data: &Data) -> Option<BuildVersion> {

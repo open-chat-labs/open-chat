@@ -5,7 +5,7 @@ use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStore
 use event_store_producer_cdk_runtime::CdkRuntime;
 use event_store_utils::EventDeduper;
 use jwt::{verify_jwt, Claims};
-use local_user_index_canister::GlobalUser;
+use local_user_index_canister::{ChildCanisterType, GlobalUser};
 use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
 use p256_key_pair::P256KeyPair;
@@ -15,7 +15,7 @@ use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
 use std::time::Duration;
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, ChannelLatestMessageIndex, ChatId, ChunkedCanisterWasm,
+    BuildVersion, CanisterId, CanisterWasm, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms, ChunkedCanisterWasm,
     CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails,
     MessageContent, ReferralType, TimestampMillis, Timestamped, User, UserId, VerifiedCredentialGateArgs,
 };
@@ -267,6 +267,8 @@ impl RuntimeState {
 struct Data {
     pub local_users: LocalUserMap,
     pub global_users: GlobalUserMap,
+    #[serde(default)]
+    pub child_canister_wasms: ChildCanisterWasms<ChildCanisterType>,
     #[serde(alias = "user_canister_wasm_for_upgrades")]
     pub user_canister_wasm: ChunkedCanisterWasm,
     pub user_index_canister_id: CanisterId,
@@ -334,6 +336,7 @@ impl Data {
         Data {
             local_users: LocalUserMap::default(),
             global_users: GlobalUserMap::default(),
+            child_canister_wasms: ChildCanisterWasms::default(),
             user_canister_wasm: user_canister_wasm.into(),
             user_index_canister_id,
             group_index_canister_id,
