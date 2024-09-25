@@ -112,7 +112,7 @@ impl CanisterWasmManager {
         let total_bytes = self.chunks.iter().map(|c| c.len()).sum();
         let mut wasm = Vec::with_capacity(total_bytes);
         for chunk in self.chunks.iter() {
-            wasm.extend_from_slice(&chunk);
+            wasm.extend_from_slice(chunk);
         }
         wasm
     }

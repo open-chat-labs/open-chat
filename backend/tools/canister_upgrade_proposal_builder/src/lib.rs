@@ -69,7 +69,7 @@ fn create_proposal(config: Config) -> Result<Proposal, Box<dyn Error>> {
         Encode!(&UpgradeCanisterWasmArgs {
             wasm: CanisterWasm {
                 version: config.version,
-                module: wasm_module.into(),
+                module: wasm_module,
             },
             filter: None,
         })
