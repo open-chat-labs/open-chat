@@ -171,6 +171,14 @@ impl<T: Eq + std::hash::Hash> ChildCanisterWasms<T> {
         self.manager(canister_type).map(|m| m.chunks_hash()).unwrap_or_default()
     }
 
+    pub fn chunk_hashes(&self) -> Vec<(&T, Hash)> {
+        self.map
+            .iter()
+            .filter(|(_, w)| !w.chunks.is_empty())
+            .map(|(c, w)| (c, w.chunks_hash()))
+            .collect()
+    }
+
     fn manager(&self, canister_type: T) -> Option<&CanisterWasmManager> {
         self.map.get(&canister_type)
     }

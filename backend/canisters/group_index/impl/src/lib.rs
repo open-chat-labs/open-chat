@@ -115,6 +115,13 @@ impl RuntimeState {
             community_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::Community).wasm.version,
             local_group_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
             upload_wasm_chunks_whitelist: self.data.upload_wasm_chunks_whitelist.clone(),
+            wasm_chunks_uploaded: self
+                .data
+                .child_canister_wasms
+                .chunk_hashes()
+                .into_iter()
+                .map(|(c, h)| (*c, hex::encode(h)))
+                .collect(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
@@ -356,6 +363,7 @@ pub struct Metrics {
     pub community_wasm_version: BuildVersion,
     pub local_group_indexes: Vec<(CanisterId, LocalGroupIndex)>,
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
+    pub wasm_chunks_uploaded: Vec<(ChildCanisterType, String)>,
     pub canister_ids: CanisterIds,
 }
 
