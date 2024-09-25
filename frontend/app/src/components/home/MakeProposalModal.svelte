@@ -33,7 +33,7 @@
     const MAX_TITLE_LENGTH = 120;
     const MAX_URL_LENGTH = 2000;
     const MIN_SUMMARY_LENGTH = 3;
-    const MAX_SUMMARY_LENGTH = 5000;
+    const MAX_SUMMARY_LENGTH = 10000;
     const CANISTER_ID_LENGTH = 27;
 
     const client = getContext<OpenChat>("client");
