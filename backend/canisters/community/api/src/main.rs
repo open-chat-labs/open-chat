@@ -16,10 +16,8 @@ fn main() {
     generate_candid_method!(community, messages_by_message_index, query);
     generate_candid_method!(community, search_channel, query);
     generate_candid_method!(community, selected_channel_initial, query);
-    generate_candid_method!(community, selected_channel_updates, query);
     generate_candid_method!(community, selected_channel_updates_v2, query);
     generate_candid_method!(community, selected_initial, query);
-    generate_candid_method!(community, selected_updates, query);
     generate_candid_method!(community, selected_updates_v2, query);
     generate_candid_method!(community, summary, query);
     generate_candid_method!(community, summary_updates, query);

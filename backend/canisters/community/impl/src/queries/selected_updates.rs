@@ -9,11 +9,6 @@ use std::collections::HashSet;
 use types::UserId;
 
 #[query]
-fn selected_updates(args: Args) -> community_canister::selected_updates::Response {
-    read_state(|state| selected_updates_impl(args, state)).into()
-}
-
-#[query]
 fn selected_updates_v2(args: Args) -> Response {
     read_state(|state| selected_updates_impl(args, state))
 }
