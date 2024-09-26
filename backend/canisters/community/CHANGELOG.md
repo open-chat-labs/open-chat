@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add MessagePack versions of all endpoints ([#6463](https://github.com/open-chat-labs/open-chat/pull/6463))
+
 ### Changed
 
 - Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
