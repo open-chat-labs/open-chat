@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
 - Simplify prize winner messages to reduce size (part 1) ([#6449](https://github.com/open-chat-labs/open-chat/pull/6449))
 
+### Removed
+
+- Remove `selected_updates` now that everything uses the v2 version ([#6461](https://github.com/open-chat-labs/open-chat/pull/6461))
+
 ## [[2.0.1351](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1351-community)] - 2024-09-20
 
 ### Changed
