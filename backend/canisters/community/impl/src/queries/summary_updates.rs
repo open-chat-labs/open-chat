@@ -12,7 +12,7 @@ use types::{
     FrozenGroupInfo, OptionUpdate, TimestampMillis,
 };
 
-#[query(candid = true)]
+#[query(candid = true, msgpack = true)]
 fn summary_updates(args: Args) -> Response {
     read_state(|state| summary_updates_impl(args.updates_since, args.invite_code, None, state))
 }

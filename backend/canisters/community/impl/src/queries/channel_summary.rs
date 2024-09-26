@@ -1,9 +1,9 @@
 use crate::read_state;
 use crate::RuntimeState;
+use canister_api_macros::query;
 use community_canister::channel_summary::{Response::*, *};
-use ic_cdk::query;
 
-#[query]
+#[query(candid = true, msgpack = true)]
 fn channel_summary(args: Args) -> Response {
     read_state(|state| summary_impl(args, state))
 }

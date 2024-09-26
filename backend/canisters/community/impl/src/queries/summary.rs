@@ -5,7 +5,7 @@ use canister_api_macros::query;
 use community_canister::c2c_summary::{Args as C2CArgs, Response as C2CResponse};
 use community_canister::summary::{Response::*, *};
 
-#[query(candid = true)]
+#[query(candid = true, msgpack = true)]
 fn summary(args: Args) -> Response {
     read_state(|state| summary_impl(args.invite_code, None, state))
 }

@@ -2,12 +2,12 @@ use crate::{
     activity_notifications::handle_activity_notification, model::events::CommunityEventInternal, mutate_state,
     run_regular_jobs, RuntimeState,
 };
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::disable_invite_code::{Response::*, *};
-use ic_cdk::update;
 use types::{GroupInviteCodeChange, GroupInviteCodeChanged};
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 fn disable_invite_code(_args: Args) -> Response {
     run_regular_jobs();

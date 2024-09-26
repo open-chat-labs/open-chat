@@ -1,15 +1,15 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::updates::update_group_v2::Response::*;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::update_group_v2::*;
 use group_chat_core::UpdateResult;
 use group_index_canister::{c2c_make_private, c2c_update_group};
-use ic_cdk::update;
 use tracing::error;
 use types::{AccessGateConfig, CanisterId, ChatId, Document, OptionUpdate, UserId};
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn update_group_v2(mut args: Args) -> Response {
     run_regular_jobs();

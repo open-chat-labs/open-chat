@@ -8,17 +8,15 @@
 
 import { Type, type Static } from "@sinclair/typebox";
 
-export type ProposalsBotCommonCanisterInstallMode = Static<
-    typeof ProposalsBotCommonCanisterInstallMode
->;
-export const ProposalsBotCommonCanisterInstallMode = Type.Union([
+export type ProposalsBotCanisterInstallMode = Static<typeof ProposalsBotCanisterInstallMode>;
+export const ProposalsBotCanisterInstallMode = Type.Union([
     Type.Literal("Install"),
     Type.Literal("Reinstall"),
     Type.Literal("Upgrade"),
 ]);
 
-export type ProposalsBotCommonTreasury = Static<typeof ProposalsBotCommonTreasury>;
-export const ProposalsBotCommonTreasury = Type.Union([Type.Literal("ICP"), Type.Literal("SNS")]);
+export type ProposalsBotTreasury = Static<typeof ProposalsBotTreasury>;
+export const ProposalsBotTreasury = Type.Union([Type.Literal("ICP"), Type.Literal("SNS")]);
 
 export type ReferralStatus = Static<typeof ReferralStatus>;
 export const ReferralStatus = Type.Union([
@@ -149,6 +147,14 @@ export const UserPinChatResponse = Type.Union([
     Type.Literal("ChatNotFound"),
 ]);
 
+export type UserCachedBtcAddressResponse = Static<typeof UserCachedBtcAddressResponse>;
+export const UserCachedBtcAddressResponse = Type.Union([
+    Type.Object({
+        Success: Type.String(),
+    }),
+    Type.Literal("NotFound"),
+]);
+
 export type UserDeleteDirectChatResponse = Static<typeof UserDeleteDirectChatResponse>;
 export const UserDeleteDirectChatResponse = Type.Union([
     Type.Literal("Success"),
@@ -212,6 +218,16 @@ export type UserMuteNotificationsResponse = Static<typeof UserMuteNotificationsR
 export const UserMuteNotificationsResponse = Type.Union([
     Type.Literal("Success"),
     Type.Literal("ChatNotFound"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
+export type UserBtcAddressResponse = Static<typeof UserBtcAddressResponse>;
+export const UserBtcAddressResponse = Type.Union([
+    Type.Object({
+        Success: Type.String(),
+    }),
     Type.Object({
         InternalError: Type.String(),
     }),
@@ -296,6 +312,28 @@ export const UserPublicProfilePublicProfile = Type.Object({
     is_premium: Type.Boolean(),
     phone_is_verified: Type.Boolean(),
     created: Type.BigInt(),
+});
+
+export type UserRetrieveBtcResponse = Static<typeof UserRetrieveBtcResponse>;
+export const UserRetrieveBtcResponse = Type.Union([
+    Type.Object({
+        Success: Type.BigInt(),
+    }),
+    Type.Object({
+        ApproveError: Type.String(),
+    }),
+    Type.Object({
+        RetrieveBtcError: Type.String(),
+    }),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
+export type UserRetrieveBtcArgs = Static<typeof UserRetrieveBtcArgs>;
+export const UserRetrieveBtcArgs = Type.Object({
+    amount: Type.BigInt(),
+    address: Type.String(),
 });
 
 export type UserMarkReadResponse = Static<typeof UserMarkReadResponse>;
@@ -2035,21 +2073,21 @@ export const StorageBucketForwardFileArgs = Type.Object({
     accessors: Type.Array(TSBytes),
 });
 
-export type ProposalsBotCommonExecuteGenericNervousSystemFunction = Static<
-    typeof ProposalsBotCommonExecuteGenericNervousSystemFunction
+export type ProposalsBotExecuteGenericNervousSystemFunction = Static<
+    typeof ProposalsBotExecuteGenericNervousSystemFunction
 >;
-export const ProposalsBotCommonExecuteGenericNervousSystemFunction = Type.Object({
+export const ProposalsBotExecuteGenericNervousSystemFunction = Type.Object({
     function_id: Type.BigInt(),
     payload: TSBytes,
 });
 
-export type ProposalsBotCommonUpgradeSnsControlledCanister = Static<
-    typeof ProposalsBotCommonUpgradeSnsControlledCanister
+export type ProposalsBotUpgradeSnsControlledCanister = Static<
+    typeof ProposalsBotUpgradeSnsControlledCanister
 >;
-export const ProposalsBotCommonUpgradeSnsControlledCanister = Type.Object({
+export const ProposalsBotUpgradeSnsControlledCanister = Type.Object({
     canister_id: TSBytes,
     new_canister_wasm: TSBytes,
-    mode: ProposalsBotCommonCanisterInstallMode,
+    mode: ProposalsBotCanisterInstallMode,
 });
 
 export type GroupSendMessageSuccessResult = Static<typeof GroupSendMessageSuccessResult>;
@@ -3234,11 +3272,11 @@ export const StorageBucketDeleteFilesResponse = Type.Object({
     failures: Type.Array(StorageBucketDeleteFilesDeleteFileFailure),
 });
 
-export type ProposalsBotCommonTransferSnsTreasuryFunds = Static<
-    typeof ProposalsBotCommonTransferSnsTreasuryFunds
+export type ProposalsBotTransferSnsTreasuryFunds = Static<
+    typeof ProposalsBotTransferSnsTreasuryFunds
 >;
-export const ProposalsBotCommonTransferSnsTreasuryFunds = Type.Object({
-    treasury: ProposalsBotCommonTreasury,
+export const ProposalsBotTransferSnsTreasuryFunds = Type.Object({
+    treasury: ProposalsBotTreasury,
     amount: Type.BigInt(),
     to: AccountICRC1,
     memo: Type.Optional(Type.BigInt()),
@@ -4394,29 +4432,27 @@ export const LocalUserIndexReportMessageArgs = Type.Object({
     notes: Type.Optional(Type.String()),
 });
 
-export type ProposalsBotCommonProposalToSubmitAction = Static<
-    typeof ProposalsBotCommonProposalToSubmitAction
->;
-export const ProposalsBotCommonProposalToSubmitAction = Type.Union([
+export type ProposalsBotProposalToSubmitAction = Static<typeof ProposalsBotProposalToSubmitAction>;
+export const ProposalsBotProposalToSubmitAction = Type.Union([
     Type.Literal("Motion"),
     Type.Object({
-        TransferSnsTreasuryFunds: ProposalsBotCommonTransferSnsTreasuryFunds,
+        TransferSnsTreasuryFunds: ProposalsBotTransferSnsTreasuryFunds,
     }),
     Type.Literal("UpgradeSnsToNextVersion"),
     Type.Object({
-        UpgradeSnsControlledCanister: ProposalsBotCommonUpgradeSnsControlledCanister,
+        UpgradeSnsControlledCanister: ProposalsBotUpgradeSnsControlledCanister,
     }),
     Type.Object({
-        ExecuteGenericNervousSystemFunction: ProposalsBotCommonExecuteGenericNervousSystemFunction,
+        ExecuteGenericNervousSystemFunction: ProposalsBotExecuteGenericNervousSystemFunction,
     }),
 ]);
 
-export type ProposalsBotCommonProposalToSubmit = Static<typeof ProposalsBotCommonProposalToSubmit>;
-export const ProposalsBotCommonProposalToSubmit = Type.Object({
+export type ProposalsBotProposalToSubmit = Static<typeof ProposalsBotProposalToSubmit>;
+export const ProposalsBotProposalToSubmit = Type.Object({
     title: Type.String(),
     summary: Type.String(),
     url: Type.String(),
-    action: ProposalsBotCommonProposalToSubmitAction,
+    action: ProposalsBotProposalToSubmitAction,
 });
 
 export type OnlineUsersLastOnlineResponse = Static<typeof OnlineUsersLastOnlineResponse>;
@@ -4570,7 +4606,7 @@ export const UserUpdatesFavouriteChatsUpdates = Type.Object({
 export type UserSubmitProposalArgs = Static<typeof UserSubmitProposalArgs>;
 export const UserSubmitProposalArgs = Type.Object({
     governance_canister_id: TSBytes,
-    proposal: ProposalsBotCommonProposalToSubmit,
+    proposal: ProposalsBotProposalToSubmit,
     ledger: TSBytes,
     token: Cryptocurrency,
     proposal_rejection_fee: Type.BigInt(),

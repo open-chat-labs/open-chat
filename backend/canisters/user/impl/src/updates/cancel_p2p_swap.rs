@@ -6,7 +6,7 @@ use canister_tracing_macros::trace;
 use types::CancelP2PSwapResult;
 use user_canister::cancel_p2p_swap::{Response::*, *};
 
-#[update(guard = "caller_is_owner", candid = true)]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 fn cancel_p2p_swap(args: Args) -> Response {
     run_regular_jobs();

@@ -8,7 +8,7 @@ use user_canister::edit_message_v2::{Response::*, *};
 use user_canister::UserCanisterEvent;
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
-#[update(guard = "caller_is_owner", candid = true)]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 fn edit_message_v2(args: Args) -> Response {
     run_regular_jobs();

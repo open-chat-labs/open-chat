@@ -1,10 +1,10 @@
 use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::remove_member_from_channel::{Response::*, *};
 use group_chat_core::RemoveMemberResult;
-use ic_cdk::update;
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 fn remove_member_from_channel(args: Args) -> Response {
     run_regular_jobs();

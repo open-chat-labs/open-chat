@@ -1,10 +1,10 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::model::events::CommunityEventInternal;
 use crate::{jobs, mutate_state, read_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::update_community::{Response::*, *};
 use group_index_canister::{c2c_make_community_private, c2c_update_community};
-use ic_cdk::update;
 use tracing::error;
 use types::{
     AccessGateConfig, AvatarChanged, BannerChanged, CanisterId, CommunityId, CommunityPermissions, CommunityPermissionsChanged,
@@ -16,7 +16,7 @@ use utils::text_validation::{
     validate_community_name, validate_description, validate_rules, NameValidationError, RulesValidationError,
 };
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn update_community(mut args: Args) -> Response {
     run_regular_jobs();

@@ -4,7 +4,7 @@ use types::TimestampMillis;
 pub mod bio;
 pub mod c2c_can_issue_access_token;
 pub mod c2c_is_empty_and_dormant;
-// pub mod cached_btc_address;
+pub mod cached_btc_address;
 pub mod chit_events;
 pub mod contacts;
 pub mod deleted_message;

@@ -4,16 +4,16 @@ use crate::{
     activity_notifications::handle_activity_notification, model::events::CommunityEventInternal, mutate_state, read_state,
     run_regular_jobs, RuntimeState,
 };
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::remove_member::{Response::*, *};
 use fire_and_forget_handler::FireAndForgetHandler;
-use ic_cdk::update;
 use local_user_index_canister_c2c_client::{lookup_user, LookupUserError};
 use msgpack::serialize_then_unwrap;
 use types::{CanisterId, CommunityMembersRemoved, CommunityRole, CommunityUsersBlocked, UserId};
 use user_canister::c2c_remove_from_community;
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn block_user(args: community_canister::block_user::Args) -> community_canister::block_user::Response {
     run_regular_jobs();
@@ -25,7 +25,7 @@ async fn block_user(args: community_canister::block_user::Args) -> community_can
     remove_member_impl(args.user_id, true).await.into()
 }
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn remove_member(args: Args) -> Response {
     run_regular_jobs();

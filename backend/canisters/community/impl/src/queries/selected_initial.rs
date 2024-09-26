@@ -1,8 +1,8 @@
 use crate::{read_state, RuntimeState};
+use canister_api_macros::query;
 use community_canister::selected_initial::{Response::*, *};
-use ic_cdk::query;
 
-#[query]
+#[query(candid = true, msgpack = true)]
 fn selected_initial(args: Args) -> Response {
     read_state(|state| selected_initial_impl(args, state))
 }

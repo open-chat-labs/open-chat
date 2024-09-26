@@ -1,18 +1,23 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{
     AccessGate, AccessGateConfig, Document, FieldTooLongResult, FieldTooShortResult, Milliseconds, OptionUpdate,
     OptionalGroupPermissions, UpdatedRules, Version,
 };
 
+#[ts_export(group, update_group)]
 #[derive(CandidType, Serialize, Deserialize, Debug, Default)]
 pub struct Args {
     pub name: Option<String>,
     pub description: Option<String>,
     pub rules: Option<UpdatedRules>,
+    #[ts(as = "types::OptionUpdateDocument")]
     pub avatar: OptionUpdate<Document>,
     pub permissions_v2: Option<OptionalGroupPermissions>,
+    #[ts(as = "types::OptionUpdateU64")]
     pub events_ttl: OptionUpdate<Milliseconds>,
+    #[ts(as = "types::OptionUpdateAccessGate")]
     pub gate: OptionUpdate<AccessGate>,
     pub gate_config: OptionUpdate<AccessGateConfig>,
     pub public: Option<bool>,
@@ -20,6 +25,7 @@ pub struct Args {
     pub correlation_id: u64,
 }
 
+#[ts_export(group, update_group)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     SuccessV2(SuccessResult),
@@ -39,6 +45,7 @@ pub enum Response {
     InternalError,
 }
 
+#[ts_export(group, update_group)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub rules_version: Option<Version>,
