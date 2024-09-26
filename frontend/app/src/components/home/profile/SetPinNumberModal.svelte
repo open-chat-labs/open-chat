@@ -41,10 +41,9 @@
     $: setValid = type.kind === "set" && isPinValid(newPinArray);
     $: clearValid = type.kind === "clear" && verificationValid;
     $: isValid = type.kind === "forgot" || changeValid || setValid || clearValid;
+    $: showCurrentPin = type.kind !== "set" && delegation === undefined;
 
     $: errorMessage = $pinNumberErrorMessageStore;
-
-    $: console.log("Operation type: ", type);
 
     onMount(() => {
         pinNumberFailureStore.set(undefined);
@@ -140,7 +139,7 @@
                     <Translatable resourceKey={message} />
                 </p>
             {/if}
-            {#if type.kind !== "set" && delegation === undefined}
+            {#if showCurrentPin}
                 <div class="code">
                     {#if type.kind === "change"}
                         <div><Translatable resourceKey={i18nKey("pinNumber.currentPin")} /></div>
@@ -154,7 +153,11 @@
                     {#if type.kind === "change"}
                         <div><Translatable resourceKey={i18nKey("pinNumber.newPin")} /></div>
                     {/if}
-                    <Pincode type="numeric" length={6} bind:code={newPinArray} />
+                    <Pincode
+                        focusFirst={!showCurrentPin}
+                        type="numeric"
+                        length={6}
+                        bind:code={newPinArray} />
                 </div>
             {/if}
             {#if errorMessage !== undefined}
