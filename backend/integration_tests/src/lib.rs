@@ -63,7 +63,6 @@ pub struct User {
     pub principal: Principal,
     pub user_id: UserId,
     pub public_key: Vec<u8>,
-    pub delegation: SignedDelegation,
 }
 
 impl User {
