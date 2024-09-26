@@ -20,13 +20,14 @@ use model::{events::CommunityEvents, invited_users::InvitedUsers, members::Commu
 use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
 use rand::rngs::StdRng;
+use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::cell::RefCell;
 use std::ops::Deref;
 use std::time::Duration;
 use types::{
-    AccessGate, BuildVersion, CanisterId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
+    AccessGate, BuildVersion, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
     CommunityPermissions, CommunityRole, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, Milliseconds, Notification,
     PaymentGate, Rules, TimestampMillis, Timestamped, UserId, UserType,
 };
@@ -252,6 +253,15 @@ impl RuntimeState {
                 now,
                 now,
             );
+        }
+    }
+
+    pub fn generate_channel_id(&mut self) -> ChannelId {
+        loop {
+            let channel_id = self.env.rng().next_u32() as ChannelId;
+            if self.data.channels.get(&channel_id).is_none() {
+                return channel_id;
+            }
         }
     }
 
