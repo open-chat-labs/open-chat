@@ -115,6 +115,7 @@ fn summary_updates_impl(
                 Some(display_name) => OptionUpdate::SetToSome(display_name.clone()),
                 None => OptionUpdate::SetToNone,
             }),
+        lapsed: m.lapsed.if_set_after(updates_since).copied(),
     });
 
     let last_updated = [

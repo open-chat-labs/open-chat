@@ -57,7 +57,7 @@ impl GroupMembers {
             rules_accepted: Some(Timestamped::new(Version::zero(), now)),
             is_bot: user_type.is_bot(),
             user_type,
-            lapsed: None,
+            lapsed: Timestamped::default(),
         };
 
         GroupMembers {
@@ -101,7 +101,7 @@ impl GroupMembers {
                         rules_accepted: None,
                         is_bot: user_type.is_bot(),
                         user_type,
-                        lapsed: None,
+                        lapsed: Timestamped::new(false, now),
                     };
                     e.insert(member.clone());
                     self.updates.insert((now, user_id, MemberUpdate::Added));
@@ -366,7 +366,7 @@ pub struct GroupMemberInternal {
     #[serde(rename = "mm", default, skip_serializing_if = "is_default")]
     min_visible_message_index: MessageIndex,
     #[serde(rename = "la", default, skip_serializing_if = "is_default")]
-    pub lapsed: Option<TimestampMillis>,
+    pub lapsed: Timestamped<bool>,
 }
 
 impl GroupMemberInternal {
@@ -377,6 +377,7 @@ impl GroupMemberInternal {
             self.notifications_muted.timestamp,
             self.suspended.timestamp,
             self.rules_accepted.as_ref().map(|r| r.timestamp).unwrap_or_default(),
+            self.lapsed.timestamp,
         ]
         .into_iter()
         .max()
@@ -438,15 +439,11 @@ impl Member for GroupMemberInternal {
         self.role.is_owner()
     }
 
-    fn lapsed(&self) -> Option<TimestampMillis> {
-        self.lapsed
+    fn lapsed(&self) -> bool {
+        self.lapsed.value
     }
 
-    fn clear_lapsed(&mut self) {
-        self.lapsed = None;
-    }
-
-    fn set_lapsed(&mut self, lapsed: Option<TimestampMillis>) {
+    fn set_lapsed(&mut self, lapsed: Timestamped<bool>) {
         self.lapsed = lapsed;
     }
 }
@@ -457,7 +454,7 @@ impl From<&GroupMemberInternal> for GroupMember {
             user_id: m.user_id,
             date_added: m.date_added,
             role: m.role.value.into(),
-            lapsed: m.lapsed.is_some(),
+            lapsed: m.lapsed.value,
         }
     }
 }
@@ -524,7 +521,7 @@ mod tests {
             rules_accepted: Some(Timestamped::new(Version::zero(), 1)),
             is_bot: false,
             user_type: UserType::User,
-            lapsed: None,
+            lapsed: Timestamped::default(),
         };
 
         let member_bytes = msgpack::serialize_then_unwrap(&member);
@@ -555,7 +552,7 @@ mod tests {
             rules_accepted: Some(Timestamped::new(Version::zero(), 1)),
             is_bot: true,
             user_type: UserType::Bot,
-            lapsed: None,
+            lapsed: Timestamped::new(false, 1),
         };
 
         let member_bytes = msgpack::serialize_then_unwrap(&member);

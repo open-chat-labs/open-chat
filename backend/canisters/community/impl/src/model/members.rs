@@ -43,7 +43,7 @@ impl CommunityMembers {
             display_name: Timestamped::default(),
             referred_by: None,
             referrals: HashSet::new(),
-            lapsed: None,
+            lapsed: Timestamped::default(),
         };
 
         CommunityMembers {
@@ -86,7 +86,7 @@ impl CommunityMembers {
                         display_name: Timestamped::default(),
                         referred_by,
                         referrals: HashSet::new(),
-                        lapsed: None,
+                        lapsed: Timestamped::default(),
                     };
                     e.insert(member.clone());
                     self.add_user_id(principal, user_id);
@@ -394,7 +394,7 @@ pub struct CommunityMemberInternal {
     pub referred_by: Option<UserId>,
     pub referrals: HashSet<UserId>,
     #[serde(default)]
-    pub lapsed: Option<TimestampMillis>,
+    pub lapsed: Timestamped<bool>,
 }
 
 impl CommunityMemberInternal {
@@ -432,6 +432,7 @@ impl CommunityMemberInternal {
             self.channels_removed.last().map(|c| c.timestamp).unwrap_or_default(),
             self.rules_accepted.as_ref().map(|r| r.timestamp).unwrap_or_default(),
             self.display_name.timestamp,
+            self.lapsed.timestamp,
         ]
         .into_iter()
         .max()
@@ -452,15 +453,11 @@ impl Member for CommunityMemberInternal {
         self.role.is_owner()
     }
 
-    fn lapsed(&self) -> Option<TimestampMillis> {
-        self.lapsed
+    fn lapsed(&self) -> bool {
+        self.lapsed.value
     }
 
-    fn clear_lapsed(&mut self) {
-        self.lapsed = None;
-    }
-
-    fn set_lapsed(&mut self, lapsed: Option<TimestampMillis>) {
+    fn set_lapsed(&mut self, lapsed: Timestamped<bool>) {
         self.lapsed = lapsed;
     }
 }
@@ -495,7 +492,7 @@ impl From<CommunityMemberInternal> for CommunityMember {
             role: m.role,
             display_name: m.display_name.value,
             referred_by: m.referred_by,
-            lapsed: m.lapsed.is_some(),
+            lapsed: m.lapsed.value,
         }
     }
 }
@@ -508,7 +505,7 @@ impl From<&CommunityMemberInternal> for CommunityMember {
             role: m.role,
             display_name: m.display_name.value.clone(),
             referred_by: m.referred_by,
-            lapsed: m.lapsed.is_some(),
+            lapsed: m.lapsed.value,
         }
     }
 }

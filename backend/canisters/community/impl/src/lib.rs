@@ -170,6 +170,7 @@ impl RuntimeState {
                     .as_ref()
                     .map_or(false, |version| version.value >= self.data.rules.text.version),
                 display_name: m.display_name().value.clone(),
+                lapsed: m.lapsed.value,
             };
 
             // Return all the channels that the user is a member of
@@ -593,10 +594,10 @@ impl Data {
             if new_gate_expiry_type.map_or(true, |expiry_type| matches!(expiry_type, AccessGateExpiryType::Invalid)) {
                 if let Some(channel_id) = channel_id {
                     if let Some(channel) = self.channels.get_mut(&channel_id) {
-                        channel.chat.members.clear_lapsed();
+                        channel.chat.members.clear_lapsed(now);
                     }
                 } else {
-                    self.members.clear_lapsed();
+                    self.members.clear_lapsed(now);
                 }
             }
 

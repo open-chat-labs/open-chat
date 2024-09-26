@@ -40,6 +40,7 @@ pub struct CommunityMembership {
     pub role: CommunityRole,
     pub rules_accepted: bool,
     pub display_name: Option<String>,
+    pub lapsed: bool,
 }
 
 #[ts_export]
@@ -80,4 +81,5 @@ pub struct CommunityMembershipUpdates {
     pub rules_accepted: Option<bool>,
     #[ts(as = "crate::OptionUpdateString")]
     pub display_name: OptionUpdate<String>,
+    pub lapsed: Option<bool>,
 }
