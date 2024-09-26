@@ -130,7 +130,7 @@ fn create_channel_impl(
             let permissions = args.permissions_v2.unwrap_or_default();
 
             let chat = GroupChatCore::new(
-                MultiUserChat::Channel(state.env.canister_id().into(), channel_id as u128),
+                MultiUserChat::Channel(state.env.canister_id().into(), channel_id),
                 member.user_id,
                 args.is_public,
                 args.name,
