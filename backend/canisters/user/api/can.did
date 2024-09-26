@@ -1299,7 +1299,7 @@ service : {
     local_user_index : (EmptyArgs) -> (LocalUserIndexResponse) query;
     chit_events : (ChitEventsArgs) -> (ChitEventsResponse) query;
 
-    // cached_btc_address : (EmptyArgs) -> (CachedBtcAddressResponse) query;
-    // btc_address : (EmptyArgs) -> (BtcAddressResponse);
-    // retrieve_btc : (RetrieveBtcArgs) -> (RetrieveBtcResponse);
+    cached_btc_address : (EmptyArgs) -> (CachedBtcAddressResponse) query;
+    btc_address : (EmptyArgs) -> (BtcAddressResponse);
+    retrieve_btc : (RetrieveBtcArgs) -> (RetrieveBtcResponse);
 };
