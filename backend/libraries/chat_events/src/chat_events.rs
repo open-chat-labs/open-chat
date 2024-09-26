@@ -1,5 +1,6 @@
 use crate::expiring_events::ExpiringEvents;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
+use crate::search_index::SearchIndex;
 use crate::*;
 use candid::Principal;
 use event_store_producer::{EventBuilder, EventStoreClient, Runtime};
@@ -11,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use types::{
     AcceptP2PSwapResult, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, CompleteP2PSwapResult,
     CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated,
@@ -40,9 +41,22 @@ pub struct ChatEvents {
     last_updated_timestamps: LastUpdatedTimestamps,
     video_call_in_progress: Timestamped<Option<VideoCall>>,
     anonymized_id: String,
+    #[serde(default)]
+    search_index: SearchIndex,
 }
 
 impl ChatEvents {
+    // TODO remove this
+    pub fn populate_search_index(&mut self) {
+        for event in self.main.iter(None, true, EventIndex::default()) {
+            if let EventOrExpiredRangeInternal::Event(e) = event {
+                if let ChatEventInternal::Message(m) = &e.event {
+                    self.search_index.push(m.message_index, m.sender, Document::from(&m.content));
+                }
+            }
+        }
+    }
+
     pub fn new_direct_chat(
         them: UserId,
         events_ttl: Option<Milliseconds>,
@@ -61,6 +75,7 @@ impl ChatEvents {
             last_updated_timestamps: LastUpdatedTimestamps::default(),
             video_call_in_progress: Timestamped::default(),
             anonymized_id: hex::encode(anonymized_id.to_be_bytes()),
+            search_index: SearchIndex::default(),
         };
 
         events.push_event(None, ChatEventInternal::DirectChatCreated(DirectChatCreated {}), 0, now);
@@ -89,6 +104,7 @@ impl ChatEvents {
             last_updated_timestamps: LastUpdatedTimestamps::default(),
             video_call_in_progress: Timestamped::default(),
             anonymized_id: hex::encode(anonymized_id.to_be_bytes()),
+            search_index: SearchIndex::default(),
         };
 
         events.push_event(
@@ -249,6 +265,10 @@ impl ChatEvents {
                             let already_edited = message.last_edited.is_some();
                             message.last_edited = Some(args.now);
 
+                            let message_index = message.message_index;
+                            let sender = message.sender;
+                            let document = Document::from(&message.content);
+
                             if let Some(client) = event_store_client {
                                 let new_length = message.content.text_length();
                                 let payload = MessageEditedEventPayload {
@@ -268,6 +288,10 @@ impl ChatEvents {
                                         .with_json_payload(&payload)
                                         .build(),
                                 )
+                            }
+
+                            if args.thread_root_message_index.is_none() {
+                                self.search_index.push(message_index, sender, document);
                             }
 
                             add_to_metrics(
@@ -416,10 +440,15 @@ impl ChatEvents {
         let (message, _) = self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_id.into())?;
 
         let deleted_by = message.deleted_by.clone()?;
-
         let content = std::mem::replace(&mut message.content, MessageContentInternal::Deleted(deleted_by));
+        let sender = message.sender;
 
-        Some((content, message.sender))
+        if thread_root_message_index.is_none() {
+            let message_index = message.message_index;
+            self.search_index.remove(message_index);
+        }
+
+        Some((content, sender))
     }
 
     pub fn register_poll_vote(&mut self, args: RegisterPollVoteArgs) -> RegisterPollVoteResult {
@@ -1272,6 +1301,9 @@ impl ChatEvents {
         let events_list = if let Some(root_message_index) = thread_root_message_index {
             self.threads.get_mut(&root_message_index).unwrap()
         } else {
+            if let ChatEventInternal::Message(m) = &event {
+                self.search_index.push(m.message_index, m.sender, Document::from(&m.content));
+            }
             &mut self.main
         };
 
@@ -1308,37 +1340,23 @@ impl ChatEvents {
 
     pub fn search_messages(
         &self,
-        now: TimestampMillis,
-        min_visible_event_index: EventIndex,
-        query: &Query,
+        min_visible_message_index: MessageIndex,
+        query: Query,
+        users: HashSet<UserId>,
         max_results: u8,
         my_user_id: UserId,
     ) -> Vec<MessageMatch> {
-        self.visible_main_events_reader(min_visible_event_index)
-            .iter(None, true)
-            .filter_map(|e| e.as_event())
-            .filter_map(|e| e.event.as_message().filter(|m| m.deleted_by.is_none()).map(|m| (e, m)))
-            .filter(|(_, m)| if query.users.is_empty() { true } else { query.users.contains(&m.sender) })
-            .filter_map(|(e, m)| {
-                if query.tokens.is_empty() {
-                    Some((1, m))
-                } else {
-                    let mut document: Document = (&m.content).into();
-                    document.set_age(now - e.timestamp);
-                    match document.calculate_score(query) {
-                        0 => None,
-                        n => Some((n, m)),
-                    }
-                }
-            })
-            .sorted_unstable_by_key(|(score, _)| *score)
-            .rev()
+        let reader = self.main_events_reader();
+        self.search_index
+            .search_messages(min_visible_message_index, query, users)
+            .filter_map(|m| reader.message_internal(m.into()))
+            .filter(|m| m.deleted_by.is_none())
             .take(max_results as usize)
-            .map(|(score, message)| MessageMatch {
+            .map(|message| MessageMatch {
                 message_index: message.message_index,
                 sender: message.sender,
                 content: message.content.hydrate(Some(my_user_id)),
-                score,
+                score: 1,
             })
             .collect()
     }
