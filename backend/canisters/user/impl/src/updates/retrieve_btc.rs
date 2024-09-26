@@ -7,7 +7,7 @@ use types::Cryptocurrency;
 use user_canister::retrieve_btc::{Response::*, *};
 use utils::time::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 
-#[update(guard = "caller_is_owner", candid = true)]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 async fn retrieve_btc(args: Args) -> Response {
     run_regular_jobs();

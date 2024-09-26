@@ -1,10 +1,10 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::delete_user_groups::{Response::*, *};
-use ic_cdk::update;
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 fn delete_user_groups(args: Args) -> Response {
     run_regular_jobs();

@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use community_canister::c2c_leave_community;
 use user_canister::leave_community::{Response::*, *};
 
-#[update(guard = "caller_is_owner", candid = true)]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 async fn leave_community(args: Args) -> Response {
     run_regular_jobs();

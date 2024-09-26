@@ -3,13 +3,13 @@ use crate::{
     model::{events::CommunityEventInternal, members::ChangeRoleResult},
     mutate_state, read_state, run_regular_jobs, RuntimeState,
 };
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::change_role::{Response::*, *};
-use ic_cdk::update;
 use types::{CanisterId, CommunityRoleChanged, UserId};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn change_role(args: Args) -> Response {
     run_regular_jobs();

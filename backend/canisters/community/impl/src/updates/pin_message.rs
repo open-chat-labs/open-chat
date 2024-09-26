@@ -1,10 +1,10 @@
 use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::pin_message::{Response::*, *};
 use group_chat_core::PinUnpinMessageResult;
-use ic_cdk::update;
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 fn pin_message(args: Args) -> Response {
     run_regular_jobs();
@@ -12,7 +12,7 @@ fn pin_message(args: Args) -> Response {
     mutate_state(|state| pin_message_impl(args, true, state))
 }
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 fn unpin_message(args: Args) -> Response {
     run_regular_jobs();

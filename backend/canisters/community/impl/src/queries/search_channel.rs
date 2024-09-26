@@ -1,9 +1,9 @@
 use crate::{read_state, RuntimeState};
+use canister_api_macros::query;
 use community_canister::search_channel::{Response::*, *};
 use group_chat_core::SearchResults;
-use ic_cdk::query;
 
-#[query]
+#[query(candid = true, msgpack = true)]
 fn search_channel(args: Args) -> Response {
     read_state(|state| search_channel_impl(args, state))
 }
