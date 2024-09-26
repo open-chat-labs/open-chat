@@ -165,7 +165,7 @@ fn handle_gate_check_result(details: ExpiringMemberActionDetails, result: CheckI
             CheckIfPassesGateResult::InternalError(_) => max(expiry_increase, MEMBER_ACCESS_EXPIRY_DELAY),
         };
 
-        if !state.data.is_owner(&details.user_id, details.channel_id) {
+        if state.data.can_member_lapse(&details.user_id, details.channel_id) {
             state.data.expiring_members.push(ExpiringMember {
                 expires: now + expiry,
                 channel_id: details.channel_id,

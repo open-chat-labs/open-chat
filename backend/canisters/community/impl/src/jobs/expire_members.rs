@@ -75,7 +75,7 @@ fn run() {
 
                     if passes_gate {
                         // Queue up the next check
-                        if !state.data.is_owner(&member.user_id, member.channel_id) {
+                        if state.data.can_member_lapse(&member.user_id, member.channel_id) {
                             state.data.expiring_members.push(ExpiringMember {
                                 expires: now + gate_expiry,
                                 channel_id: member.channel_id,

@@ -1,8 +1,12 @@
-use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
+use crate::{
+    activity_notifications::handle_activity_notification, model::expiring_members::ExpiringMember, mutate_state,
+    run_regular_jobs, RuntimeState,
+};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::change_channel_role::{Response::*, *};
-use group_chat_core::ChangeRoleResult;
+use group_chat_core::{ChangeRoleResult, GroupRoleInternal};
+use types::GroupRole;
 
 #[update(candid = true, msgpack = true)]
 #[trace]
@@ -30,7 +34,20 @@ fn change_channel_role_impl(args: Args, state: &mut RuntimeState) -> Response {
                 .chat
                 .change_role(member.user_id, args.user_id, args.new_role, false, false, now)
             {
-                ChangeRoleResult::Success(_) => {
+                ChangeRoleResult::Success(result) => {
+                    // Owners can't "lapse" so either add or remove user from expiry list if they lose or gain owner status
+                    if let Some(gate_expiry) = channel.chat.gate_config.value.as_ref().and_then(|gc| gc.expiry()) {
+                        if matches!(args.new_role, GroupRole::Owner) {
+                            state.data.expiring_members.remove_member(args.user_id, Some(args.channel_id));
+                        } else if matches!(result.prev_role, GroupRoleInternal::Owner) {
+                            state.data.expiring_members.push(ExpiringMember {
+                                expires: now + gate_expiry,
+                                channel_id: Some(args.channel_id),
+                                user_id: args.user_id,
+                            });
+                        }
+                    }
+
                     handle_activity_notification(state);
                     Success
                 }

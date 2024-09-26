@@ -13,7 +13,8 @@ use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::AccessRulesInternal;
 use group_community_common::{
-    Achievements, PaymentReceipts, PaymentRecipient, PendingPayment, PendingPaymentReason, PendingPaymentsQueue, UserCache,
+    Achievements, Members, PaymentReceipts, PaymentRecipient, PendingPayment, PendingPaymentReason, PendingPaymentsQueue,
+    UserCache,
 };
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use model::expiring_member_actions::ExpiringMemberActions;
@@ -28,7 +29,7 @@ use std::cell::RefCell;
 use std::ops::Deref;
 use std::time::Duration;
 use types::{
-    AccessGate, AccessGateConfig, AccessGateType, BuildVersion, CanisterId, ChannelId, ChatMetrics,
+    AccessGate, AccessGateConfig, AccessGateExpiryType, AccessGateType, BuildVersion, CanisterId, ChannelId, ChatMetrics,
     CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, CommunityRole, Cryptocurrency, Cycles,
     Document, Empty, FrozenGroupInfo, Milliseconds, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId,
     UserType,
@@ -553,21 +554,23 @@ impl Data {
         self.expiring_member_actions.remove_member(user_id, Some(channel_id));
     }
 
+    fn can_member_lapse(&self, user_id: &UserId, channel_id: Option<ChannelId>) -> bool {
+        if let Some(channel_id) = channel_id {
+            self.channels
+                .get(&channel_id)
+                .map_or(false, |c| c.chat.members.can_member_lapse(user_id))
+        } else {
+            self.members.can_member_lapse(user_id)
+        }
+    }
+
     pub fn mark_member_lapsed(&mut self, user_id: UserId, channel_id: Option<ChannelId>, now: TimestampMillis) {
         if let Some(channel_id) = channel_id {
-            if let Some(member) = self
-                .channels
-                .get_mut(&channel_id)
-                .and_then(|channel| channel.chat.members.get_mut(&user_id))
-            {
-                if !member.role.is_owner() {
-                    member.lapsed = Some(now);
-                }
+            if let Some(channel) = self.channels.get_mut(&channel_id) {
+                channel.chat.members.mark_member_lapsed(&user_id, now);
             }
-        } else if let Some(member) = self.members.get_by_user_id_mut(&user_id) {
-            if !member.role.is_owner() {
-                member.lapsed = Some(now);
-            }
+        } else {
+            self.members.mark_member_lapsed(&user_id, now);
         }
     }
 
@@ -585,6 +588,18 @@ impl Data {
         let new_gate_type: Option<AccessGateType> = new_gate_config.map(|gc| gc.gate().into());
 
         if let Some(prev_gate_expiry) = prev_gate_expiry {
+            let new_gate_expiry_type: Option<AccessGateExpiryType> = new_gate_config.map(|gc| gc.gate().into());
+
+            if new_gate_expiry_type.map_or(true, |expiry_type| matches!(expiry_type, AccessGateExpiryType::Invalid)) {
+                if let Some(channel_id) = channel_id {
+                    if let Some(channel) = self.channels.get_mut(&channel_id) {
+                        channel.chat.members.clear_lapsed();
+                    }
+                } else {
+                    self.members.clear_lapsed();
+                }
+            }
+
             if prev_gate_type != new_gate_type {
                 self.expiring_members.remove_gate(channel_id);
                 self.expiring_member_actions.remove_gate(channel_id);
@@ -598,12 +613,22 @@ impl Data {
 
         if let Some(new_gate_expiry) = new_gate_expiry {
             if prev_gate_expiry.is_none() || prev_gate_type != new_gate_type {
-                for m in self.members.iter() {
-                    if !m.role.is_owner() {
+                let mut user_ids = Vec::new();
+
+                if let Some(channel_id) = channel_id {
+                    if let Some(channel) = self.channels.get_mut(&channel_id) {
+                        user_ids = channel.chat.members.iter().map(|m| m.user_id).collect();
+                    }
+                } else {
+                    user_ids = self.members.iter().map(|m| m.user_id).collect();
+                }
+
+                for user_id in user_ids {
+                    if self.can_member_lapse(&user_id, channel_id) {
                         self.expiring_members.push(ExpiringMember {
                             expires: now + new_gate_expiry,
                             channel_id,
-                            user_id: m.user_id,
+                            user_id,
                         });
                     }
                 }
@@ -621,18 +646,19 @@ impl Data {
         }
     }
 
-    fn is_owner(&self, user_id: &UserId, channel_id: Option<ChannelId>) -> bool {
-        if let Some(channel_id) = channel_id {
-            self.channels
-                .get(&channel_id)
-                .and_then(|channel| channel.chat.members.get(user_id))
-                .map_or(false, |member| member.role.is_owner())
-        } else {
-            self.members
-                .get_by_user_id(user_id)
-                .map_or(false, |member| member.role.is_owner())
-        }
-    }
+    // fn members(&self, channel_id: Option<ChannelId>) -> Box<dyn Iterator<Item = Box<&dyn Member>>> {
+    //     if let Some(channel_id) = channel_id {
+    //         self.channels
+    //             .get(&channel_id)
+    //             .map_or(Box::new(std::iter::empty()), |channel| {
+    //                 Box::new(channel.chat.members.iter().map(Box::new))
+    //             })
+    //     } else {
+    //         Box::new(self.members.iter().map(Box::new))
+    //     }
+    // }
+
+    //fn member(&self, user_id: UserId, channel_id: Option<ChannelId>) -> Option<&Member> {}
 }
 
 fn run_regular_jobs() {

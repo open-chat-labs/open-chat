@@ -1,5 +1,6 @@
 use crate::model::user_groups::{UserGroup, UserGroups};
 use candid::Principal;
+use group_community_common::{Member, Members};
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
@@ -361,6 +362,24 @@ impl CommunityMembers {
     }
 }
 
+impl Members<CommunityMemberInternal> for CommunityMembers {
+    fn iter(&self) -> impl Iterator<Item = &CommunityMemberInternal> {
+        self.iter()
+    }
+
+    fn iter_mut(&mut self) -> impl Iterator<Item = &mut CommunityMemberInternal> {
+        self.iter_mut()
+    }
+
+    fn get_mut(&mut self, user_id: &UserId) -> Option<&mut CommunityMemberInternal> {
+        self.get_by_user_id_mut(user_id)
+    }
+
+    fn get(&self, user_id: &UserId) -> Option<&CommunityMemberInternal> {
+        self.get_by_user_id(user_id)
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct CommunityMemberInternal {
     pub user_id: UserId,
@@ -421,6 +440,28 @@ impl CommunityMemberInternal {
 
     pub fn display_name(&self) -> &Timestamped<Option<String>> {
         &self.display_name
+    }
+}
+
+impl Member for CommunityMemberInternal {
+    fn user_id(&self) -> UserId {
+        self.user_id
+    }
+
+    fn is_owner(&self) -> bool {
+        self.role.is_owner()
+    }
+
+    fn lapsed(&self) -> Option<TimestampMillis> {
+        self.lapsed
+    }
+
+    fn clear_lapsed(&mut self) {
+        self.lapsed = None;
+    }
+
+    fn set_lapsed(&mut self, lapsed: Option<TimestampMillis>) {
+        self.lapsed = lapsed;
     }
 }
 

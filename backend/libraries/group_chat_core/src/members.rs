@@ -2,6 +2,7 @@ use crate::mentions::Mentions;
 use crate::roles::GroupRoleInternal;
 use crate::AccessRulesInternal;
 use chat_events::ChatEvents;
+use group_community_common::{Member, Members};
 use serde::de::{SeqAccess, Visitor};
 use serde::ser::SerializeSeq;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -294,6 +295,24 @@ impl GroupMembers {
     }
 }
 
+impl Members<GroupMemberInternal> for GroupMembers {
+    fn iter(&self) -> impl Iterator<Item = &GroupMemberInternal> {
+        self.iter()
+    }
+
+    fn iter_mut(&mut self) -> impl Iterator<Item = &mut GroupMemberInternal> {
+        self.iter_mut()
+    }
+
+    fn get_mut(&mut self, user_id: &UserId) -> Option<&mut GroupMemberInternal> {
+        self.get_mut(user_id)
+    }
+
+    fn get(&self, user_id: &UserId) -> Option<&GroupMemberInternal> {
+        self.get(user_id)
+    }
+}
+
 #[allow(clippy::large_enum_variant)]
 pub enum AddResult {
     Success(GroupMemberInternal),
@@ -407,6 +426,28 @@ impl GroupMemberInternal {
                 .rules_accepted
                 .as_ref()
                 .map_or(false, |accepted| accepted.value >= rules.text.version))
+    }
+}
+
+impl Member for GroupMemberInternal {
+    fn user_id(&self) -> UserId {
+        self.user_id
+    }
+
+    fn is_owner(&self) -> bool {
+        self.role.is_owner()
+    }
+
+    fn lapsed(&self) -> Option<TimestampMillis> {
+        self.lapsed
+    }
+
+    fn clear_lapsed(&mut self) {
+        self.lapsed = None;
+    }
+
+    fn set_lapsed(&mut self, lapsed: Option<TimestampMillis>) {
+        self.lapsed = lapsed;
     }
 }
 

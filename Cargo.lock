@@ -2804,6 +2804,7 @@ dependencies = [
  "candid",
  "chat_events",
  "event_store_producer",
+ "group_community_common",
  "itertools 0.13.0",
  "lazy_static",
  "msgpack",
