@@ -3945,13 +3945,13 @@ dependencies = [
  "canister_tracing_macros",
  "http_request",
  "ic-captcha",
- "ic-cbor",
  "ic-cdk 0.16.0",
  "ic-cdk-timers",
  "ic-certificate-verification",
  "ic-certification",
  "ic-stable-structures",
  "identity_canister",
+ "identity_utils",
  "msgpack",
  "rand 0.8.5",
  "serde",
@@ -4048,6 +4048,16 @@ dependencies = [
  "subtle",
  "thiserror",
  "zeroize",
+]
+
+[[package]]
+name = "identity_utils"
+version = "0.1.0"
+dependencies = [
+ "ic-cbor",
+ "ic-certificate-verification",
+ "ic-certification",
+ "types",
 ]
 
 [[package]]
@@ -8313,12 +8323,14 @@ dependencies = [
  "http_request",
  "ic-cdk 0.16.0",
  "ic-cdk-timers",
+ "ic-certificate-verification",
  "ic-ledger-types",
  "ic-stable-structures",
  "icpswap_client",
  "icrc-ledger-types",
  "icrc_ledger_canister",
  "icrc_ledger_canister_c2c_client",
+ "identity_utils",
  "itertools 0.13.0",
  "ledger_utils",
  "local_user_index_canister",

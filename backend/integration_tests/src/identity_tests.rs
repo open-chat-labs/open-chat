@@ -1,13 +1,13 @@
 use crate::env::ENV;
 use crate::{client, CanisterIds, TestEnv};
 use candid::Principal;
-use identity_canister::{Delegation, SignedDelegation};
 use pocket_ic::PocketIc;
 use rand::random;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_internet_identity_principal, random_string};
+use types::{Delegation, SignedDelegation};
 use utils::time::NANOS_PER_MILLISECOND;
 
 #[test_case(false)]

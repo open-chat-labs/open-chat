@@ -2,4 +2,4 @@
 import type { FieldTooLongResult } from "../../shared/FieldTooLongResult";
 import type { FieldTooShortResult } from "../../shared/FieldTooShortResult";
 
-export type UserSetPinNumberResponse = "Success" | { "TooShort": FieldTooShortResult } | { "TooLong": FieldTooLongResult } | "PinRequired" | { "PinIncorrect": bigint } | { "TooManyFailedPinAttempts": bigint };
+export type UserSetPinNumberResponse = "Success" | { "TooShort": FieldTooShortResult } | { "TooLong": FieldTooLongResult } | "PinRequired" | { "PinIncorrect": bigint } | { "TooManyFailedPinAttempts": bigint } | { "MalformedSignature": string } | "DelegationTooOld";
