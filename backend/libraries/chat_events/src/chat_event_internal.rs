@@ -344,7 +344,7 @@ impl From<GroupGateUpdatedInternal> for GroupGateUpdated {
     fn from(value: GroupGateUpdatedInternal) -> Self {
         GroupGateUpdated {
             updated_by: value.updated_by,
-            new_gate: value.new_gate_config.clone().map(|gc| gc.gate.into()),
+            new_gate: value.new_gate_config.clone().map(|gc| gc.gate),
             new_gate_config: value.new_gate_config.map(|gc| gc.into()),
         }
     }
