@@ -9,6 +9,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_join_community::{Response::*, *};
 use gated_groups::{check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult, CheckVerifiedCredentialGateArgs};
+use group_community_common::Member;
 use types::{AccessGate, ChannelId, MemberJoined, UsersUnblocked};
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
@@ -58,8 +59,6 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(Acc
     // If the call is from the user index then we skip the checks
     if caller == state.data.user_index_canister_id {
         Ok(None)
-    } else if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
-        Err(AlreadyInCommunity(Box::new(state.summary(Some(member), None))))
     } else if state.data.members.is_blocked(&args.user_id) {
         Err(UserBlocked)
     } else if state.data.is_frozen() {
@@ -71,6 +70,12 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(Acc
     } else if !state.data.is_public && !state.data.is_invite_code_valid(args.invite_code) {
         Err(NotInvited)
     } else {
+        if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
+            if !member.lapsed.value {
+                return Err(AlreadyInCommunity(Box::new(state.summary(Some(member), None))));
+            }
+        }
+
         Ok(state.data.gate_config.as_ref().map(|g| {
             (
                 g.gate.clone(),
@@ -123,52 +128,57 @@ pub(crate) fn join_community_impl(args: &Args, state: &mut RuntimeState) -> Resu
         .map(|i| i.invited_by)
         .or(args.referred_by);
 
-    match state
+    let result = state
         .data
         .members
-        .add(args.user_id, args.principal, args.user_type, referred_by, now)
-    {
-        AddResult::Success(_) => {
-            state.data.invited_users.remove(&args.user_id, now);
+        .add(args.user_id, args.principal, args.user_type, referred_by, now);
 
-            state.data.events.push_event(
-                CommunityEventInternal::MemberJoined(Box::new(MemberJoined {
-                    user_id: args.user_id,
-                    invited_by: referred_by,
-                })),
-                now,
-            );
-
-            // If there is a payment gate on this community then queue payments to owner(s) and treasury
-            if let Some(AccessGate::Payment(gate)) = state.data.gate_config.value.as_ref().map(|gc| gc.gate.clone()) {
-                state.queue_access_gate_payments(gate);
-            }
-
-            if let Some(gate_expiry) = state.data.gate_config.value.as_ref().and_then(|gc| gc.expiry()) {
-                state.data.expiring_members.push(ExpiringMember {
-                    expires: now + gate_expiry,
-                    channel_id: None,
-                    user_id: args.user_id,
-                });
-            }
-
-            state.data.user_cache.insert(
-                args.user_id,
-                args.diamond_membership_expires_at,
-                args.unique_person_proof.is_some(),
-            );
-
-            jobs::expire_members::start_job_if_required(state);
-
-            handle_activity_notification(state);
-
-            Ok(state.data.channels.public_channel_ids())
-        }
+    match result {
+        AddResult::Success(_) => {}
         AddResult::AlreadyInCommunity => {
             let member = state.data.members.get_by_user_id(&args.user_id).unwrap();
-            let summary = state.summary(Some(member), None);
-            Err(AlreadyInCommunity(Box::new(summary)))
+            if !member.lapsed() {
+                let summary = state.summary(Some(member), None);
+                return Err(AlreadyInCommunity(Box::new(summary)));
+            }
         }
-        AddResult::Blocked => Err(UserBlocked),
+        AddResult::Blocked => return Err(UserBlocked),
     }
+
+    state.data.invited_users.remove(&args.user_id, now);
+
+    if !matches!(result, AddResult::AlreadyInCommunity) {
+        state.data.events.push_event(
+            CommunityEventInternal::MemberJoined(Box::new(MemberJoined {
+                user_id: args.user_id,
+                invited_by: referred_by,
+            })),
+            now,
+        );
+    }
+
+    // If there is a payment gate on this community then queue payments to owner(s) and treasury
+    if let Some(AccessGate::Payment(gate)) = state.data.gate_config.value.as_ref().map(|gc| gc.gate.clone()) {
+        state.queue_access_gate_payments(gate);
+    }
+
+    if let Some(gate_expiry) = state.data.gate_config.value.as_ref().and_then(|gc| gc.expiry()) {
+        state.data.expiring_members.push(ExpiringMember {
+            expires: now + gate_expiry,
+            channel_id: None,
+            user_id: args.user_id,
+        });
+    }
+
+    state.data.user_cache.insert(
+        args.user_id,
+        args.diamond_membership_expires_at,
+        args.unique_person_proof.is_some(),
+    );
+
+    jobs::expire_members::start_job_if_required(state);
+
+    handle_activity_notification(state);
+
+    Ok(state.data.channels.public_channel_ids())
 }

@@ -141,9 +141,8 @@ fn c2c_join_group_impl(args: Args, state: &mut RuntimeState) -> Response {
 
             Success(Box::new(summary))
         }
-        AddResult::AlreadyInGroup => {
-            let member = state.data.chat.members.get(&args.user_id).unwrap();
-            let summary = state.summary(member);
+        AddResult::AlreadyInGroup(member) => {
+            let summary = state.summary(&member);
             AlreadyInGroupV2(Box::new(summary))
         }
         AddResult::Blocked => Blocked,

@@ -156,13 +156,7 @@ fn is_permitted_to_join(
         }
 
         if let Some(channel) = state.data.channels.get(&channel_id) {
-            if let Some(channel_member) = channel.chat.members.get(&member.user_id) {
-                Err(AlreadyInChannel(Box::new(
-                    channel
-                        .summary(Some(channel_member.user_id), true, state.data.is_public, &state.data.members)
-                        .unwrap(),
-                )))
-            } else if let Some(limit) = channel.chat.members.user_limit_reached() {
+            if let Some(limit) = channel.chat.members.user_limit_reached() {
                 Err(MemberLimitReached(limit))
             } else if channel.chat.members.is_blocked(&member.user_id) {
                 Err(UserBlocked)
@@ -171,6 +165,16 @@ fn is_permitted_to_join(
             } else if !channel.chat.is_public.value {
                 Err(NotInvited)
             } else {
+                if let Some(channel_member) = channel.chat.members.get(&member.user_id) {
+                    if !channel_member.lapsed.value {
+                        return Err(AlreadyInChannel(Box::new(
+                            channel
+                                .summary(Some(channel_member.user_id), true, state.data.is_public, &state.data.members)
+                                .unwrap(),
+                        )));
+                    }
+                }
+
                 Ok(channel.chat.gate_config.as_ref().map(|g| {
                     (
                         g.clone(),
@@ -207,67 +211,67 @@ fn commit(
     is_unique_person: bool,
     state: &mut RuntimeState,
 ) -> Response {
-    if let Some(member) = state.data.members.get_mut(user_principal) {
-        let user_id = member.user_id;
-        if let Some(channel) = state.data.channels.get_mut(&channel_id) {
-            let now = state.env.now();
-            match join_channel_unchecked(channel, member, state.data.is_public, now) {
-                AddResult::Success(_) => {
-                    let summary = channel
-                        .summary(Some(user_id), true, state.data.is_public, &state.data.members)
-                        .unwrap();
+    let Some(member) = state.data.members.get_mut(user_principal) else {
+        return UserNotInCommunity;
+    };
 
-                    if let Some(gate_expiry) = channel.chat.gate_config.value.as_ref().and_then(|gc| gc.expiry()) {
-                        state.data.expiring_members.push(ExpiringMember {
-                            expires: now + gate_expiry,
-                            channel_id: Some(channel_id),
-                            user_id,
-                        });
-                    }
+    let user_id = member.user_id;
+    let Some(channel) = state.data.channels.get_mut(&channel_id) else {
+        return ChannelNotFound;
+    };
 
-                    // If there is a payment gate on this channel then queue payments to *community* owner(s) and treasury
-                    if let Some(AccessGate::Payment(gate)) = channel.chat.gate_config.value.as_ref().map(|gc| gc.gate.clone()) {
-                        state.queue_access_gate_payments(gate);
-                    }
+    let now = state.env.now();
+    match join_channel_unchecked(channel, member, state.data.is_public, now) {
+        AddResult::Success(_) => {
+            let summary = channel
+                .summary(Some(user_id), true, state.data.is_public, &state.data.members)
+                .unwrap();
 
-                    state
-                        .data
-                        .user_cache
-                        .insert(user_id, diamond_membership_expires_at, is_unique_person);
-
-                    jobs::expire_members::start_job_if_required(state);
-
-                    handle_activity_notification(state);
-
-                    Success(Box::new(summary))
-                }
-                AddResult::AlreadyInGroup => {
-                    let summary = channel
-                        .summary(Some(user_id), true, state.data.is_public, &state.data.members)
-                        .unwrap();
-                    AlreadyInChannel(Box::new(summary))
-                }
-                AddResult::Blocked => UserBlocked,
-                AddResult::MemberLimitReached(limit) => MemberLimitReached(limit),
+            if let Some(gate_expiry) = channel.chat.gate_config.value.as_ref().and_then(|gc| gc.expiry()) {
+                state.data.expiring_members.push(ExpiringMember {
+                    expires: now + gate_expiry,
+                    channel_id: Some(channel_id),
+                    user_id,
+                });
             }
-        } else {
-            ChannelNotFound
+
+            // If there is a payment gate on this channel then queue payments to *community* owner(s) and treasury
+            if let Some(AccessGate::Payment(gate)) = channel.chat.gate_config.value.as_ref().map(|gc| gc.gate.clone()) {
+                state.queue_access_gate_payments(gate);
+            }
+
+            state
+                .data
+                .user_cache
+                .insert(user_id, diamond_membership_expires_at, is_unique_person);
+
+            jobs::expire_members::start_job_if_required(state);
+
+            handle_activity_notification(state);
+
+            Success(Box::new(summary))
         }
-    } else {
-        UserNotInCommunity
+        AddResult::AlreadyInGroup(_) => {
+            let summary = channel
+                .summary(Some(user_id), true, state.data.is_public, &state.data.members)
+                .unwrap();
+            AlreadyInChannel(Box::new(summary))
+        }
+        AddResult::Blocked => UserBlocked,
+        AddResult::MemberLimitReached(limit) => MemberLimitReached(limit),
     }
 }
 
 pub(crate) fn join_channel_unchecked(
     channel: &mut Channel,
-    member: &mut CommunityMemberInternal,
+    community_member: &mut CommunityMemberInternal,
     notifications_muted: bool,
     now: TimestampMillis,
 ) -> AddResult {
     let min_visible_event_index;
     let min_visible_message_index;
 
-    if let Some(invitation) = channel.chat.invited_users.get(&member.user_id) {
+    if let Some(invitation) = channel.chat.invited_users.get(&community_member.user_id) {
         min_visible_event_index = invitation.min_visible_event_index;
         min_visible_message_index = invitation.min_visible_message_index;
     } else if channel.chat.history_visible_to_new_joiners {
@@ -282,37 +286,40 @@ pub(crate) fn join_channel_unchecked(
     };
 
     let result = channel.chat.members.add(
-        member.user_id,
+        community_member.user_id,
         now,
         min_visible_event_index,
         min_visible_message_index,
         notifications_muted,
-        member.user_type,
+        community_member.user_type,
     );
 
-    match &result {
-        AddResult::Success(_) => {
-            let invitation = channel.chat.invited_users.remove(&member.user_id, now);
+    if matches!(result, AddResult::Blocked | AddResult::MemberLimitReached(_)) {
+        return result;
+    }
 
-            if channel.chat.is_public.value {
-                channel.chat.events.mark_member_added_to_public_channel(member.user_id, now);
-            } else {
-                channel.chat.events.push_main_event(
-                    ChatEventInternal::ParticipantJoined(Box::new(MemberJoined {
-                        user_id: member.user_id,
-                        invited_by: invitation.map(|i| i.invited_by),
-                    })),
-                    0,
-                    now,
-                );
-            }
+    community_member.channels.insert(channel.id);
 
-            member.channels.insert(channel.id);
-        }
-        AddResult::AlreadyInGroup => {
-            member.channels.insert(channel.id);
-        }
-        AddResult::Blocked | AddResult::MemberLimitReached(_) => {}
+    let invitation = channel.chat.invited_users.remove(&community_member.user_id, now);
+
+    if let AddResult::AlreadyInGroup(member) = result {
+        return AddResult::Success(member);
+    }
+
+    if channel.chat.is_public.value {
+        channel
+            .chat
+            .events
+            .mark_member_added_to_public_channel(community_member.user_id, now);
+    } else {
+        channel.chat.events.push_main_event(
+            ChatEventInternal::ParticipantJoined(Box::new(MemberJoined {
+                user_id: community_member.user_id,
+                invited_by: invitation.map(|i| i.invited_by),
+            })),
+            0,
+            now,
+        );
     }
 
     result
