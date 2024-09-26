@@ -34,6 +34,7 @@ fn accept_if_valid(state: &RuntimeState) {
         "add_referral_codes" => state.is_caller_dev_team_dfx_principal(),
         "suspend_user" | "unsuspend_user" => state.is_caller_platform_moderator(),
         "set_user_upgrade_concurrency" | "set_diamond_membership_fees" => state.is_caller_platform_operator(),
+        "upload_wasm_chunk" => state.can_caller_upload_wasm_chunks(),
         "add_platform_moderator"
         | "add_platform_operator"
         | "remove_platform_moderator"

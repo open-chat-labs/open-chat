@@ -637,8 +637,20 @@ type CancelMessageReminderResponse = variant {
 };
 
 type SetPinNumberArgs = record {
-    current : opt text;
     new : opt text;
+    verification : variant {
+        None;
+        PIN : text;
+        Delegation : SignedDelegation;
+    };
+};
+
+type SignedDelegation = record {
+    delegation : record {
+        pubkey : blob;
+        expiration : TimestampNanos;
+    };
+    signature : blob;
 };
 
 type SetPinNumberResponse = variant {
@@ -648,6 +660,8 @@ type SetPinNumberResponse = variant {
     PinRequired;
     PinIncorrect : Milliseconds;
     TooManyFailedPinAttempts : Milliseconds;
+    MalformedSignature : text;
+    DelegationTooOld;
 };
 
 type SendMessageWithTransferToChannelArgs = record {

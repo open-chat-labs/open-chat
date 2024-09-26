@@ -79,3 +79,11 @@ pub fn caller_is_translations_canister() -> Result<(), String> {
         Err("Caller is not the translations canister".to_string())
     }
 }
+
+pub fn caller_can_upload_wasm_chunks() -> Result<(), String> {
+    if read_state(|state| state.can_caller_upload_wasm_chunks()) {
+        Ok(())
+    } else {
+        Err("Caller is not permitted to upload wasm chunks".to_string())
+    }
+}

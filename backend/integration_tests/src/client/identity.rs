@@ -15,9 +15,8 @@ generate_update_call!(prepare_delegation);
 pub mod happy_path {
     use candid::Principal;
     use identity_canister::auth_principals::UserPrincipal;
-    use identity_canister::SignedDelegation;
     use pocket_ic::PocketIc;
-    use types::{CanisterId, TimestampMillis};
+    use types::{CanisterId, SignedDelegation, TimestampMillis};
 
     pub fn create_identity(
         env: &mut PocketIc,

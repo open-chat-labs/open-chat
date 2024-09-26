@@ -1,11 +1,4 @@
-use candid::CandidType;
-use serde::{Deserialize, Serialize};
-use types::UpgradeCanisterWasmArgs;
+use types::{UpgradeChunkedCanisterWasmArgs, UpgradeChunkedCanisterWasmResponse};
 
-pub type Args = UpgradeCanisterWasmArgs;
-
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success,
-    VersionNotHigher,
-}
+pub type Args = UpgradeChunkedCanisterWasmArgs;
+pub type Response = UpgradeChunkedCanisterWasmResponse;

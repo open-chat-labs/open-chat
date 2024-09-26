@@ -1111,6 +1111,7 @@ dependencies = [
  "online_users_canister",
  "proposals_bot_canister",
  "registry_canister",
+ "sha256",
  "sign_in_with_email_canister",
  "storage_index_canister",
  "test_utils",
@@ -1187,6 +1188,8 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "clap 4.5.4",
+ "hex",
+ "sha256",
  "sns_governance_canister",
  "types",
 ]
@@ -1214,6 +1217,7 @@ dependencies = [
  "online_users_canister",
  "proposals_bot_canister",
  "registry_canister",
+ "sha256",
  "sign_in_with_email_canister",
  "storage_index_canister",
  "storage_index_canister_client",
@@ -2884,6 +2888,7 @@ dependencies = [
  "group_canister",
  "group_canister_c2c_client",
  "group_index_canister",
+ "hex",
  "http_request",
  "human_readable",
  "ic-cdk 0.16.0",
@@ -2897,6 +2902,8 @@ dependencies = [
  "search",
  "serde",
  "serde_bytes",
+ "sha2 0.10.8",
+ "sha256",
  "stable_memory",
  "tracing",
  "types",
@@ -3180,6 +3187,7 @@ name = "human_readable"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "hex",
  "human_readable_derive",
  "serde",
  "serde_json",
@@ -3939,13 +3947,13 @@ dependencies = [
  "canister_tracing_macros",
  "http_request",
  "ic-captcha",
- "ic-cbor",
  "ic-cdk 0.16.0",
  "ic-cdk-timers",
  "ic-certificate-verification",
  "ic-certification",
  "ic-stable-structures",
  "identity_canister",
+ "identity_utils",
  "msgpack",
  "rand 0.8.5",
  "serde",
@@ -4042,6 +4050,16 @@ dependencies = [
  "subtle",
  "thiserror",
  "zeroize",
+]
+
+[[package]]
+name = "identity_utils"
+version = "0.1.0"
+dependencies = [
+ "ic-cbor",
+ "ic-certificate-verification",
+ "ic-certification",
+ "types",
 ]
 
 [[package]]
@@ -4193,6 +4211,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serial_test",
+ "sha256",
  "sign_in_with_email_canister",
  "storage_bucket_canister",
  "storage_index_canister",
@@ -8152,6 +8171,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serde_json",
+ "sha2 0.10.8",
  "ts-rs",
  "ts_export",
 ]
@@ -8305,12 +8325,14 @@ dependencies = [
  "http_request",
  "ic-cdk 0.16.0",
  "ic-cdk-timers",
+ "ic-certificate-verification",
  "ic-ledger-types",
  "ic-stable-structures",
  "icpswap_client",
  "icrc-ledger-types",
  "icrc_ledger_canister",
  "icrc_ledger_canister_c2c_client",
+ "identity_utils",
  "itertools 0.13.0",
  "ledger_utils",
  "local_user_index_canister",
@@ -8401,6 +8423,7 @@ dependencies = [
  "futures",
  "group_canister",
  "group_canister_c2c_client",
+ "hex",
  "http_request",
  "human_readable",
  "ic-cdk 0.16.0",
