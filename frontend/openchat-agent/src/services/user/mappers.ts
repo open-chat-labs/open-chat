@@ -161,11 +161,9 @@ import type {
     ProposalToSubmit,
     ProposalToSubmitAction,
     ReportMessageResponse,
-    SignedDelegation,
 } from "./candid/types";
 import type { PinNumberSettings } from "openchat-shared";
 import { pinNumberFailureResponse } from "../common/pinNumberErrorMapper";
-import type { DelegationChain } from "@dfinity/identity";
 import { signedDelegation } from "../../utils/id";
 
 export function chitEventsResponse(candid: ApiChitEventsResponse): ChitEventsResponse {
