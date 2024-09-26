@@ -63,7 +63,7 @@ impl Document {
         for token in query.tokens.iter() {
             let mut matches = false;
             for field in &self.fields {
-                if score_field_for_token(&token, field) > 0.0 {
+                if score_field_for_token(token, field) > 0.0 {
                     matches = true;
                     break;
                 }
