@@ -149,6 +149,14 @@ export const UserPinChatResponse = Type.Union([
     Type.Literal("ChatNotFound"),
 ]);
 
+export type UserCachedBtcAddressResponse = Static<typeof UserCachedBtcAddressResponse>;
+export const UserCachedBtcAddressResponse = Type.Union([
+    Type.Object({
+        Success: Type.String(),
+    }),
+    Type.Literal("NotFound"),
+]);
+
 export type UserDeleteDirectChatResponse = Static<typeof UserDeleteDirectChatResponse>;
 export const UserDeleteDirectChatResponse = Type.Union([
     Type.Literal("Success"),
@@ -212,6 +220,16 @@ export type UserMuteNotificationsResponse = Static<typeof UserMuteNotificationsR
 export const UserMuteNotificationsResponse = Type.Union([
     Type.Literal("Success"),
     Type.Literal("ChatNotFound"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
+export type UserBtcAddressResponse = Static<typeof UserBtcAddressResponse>;
+export const UserBtcAddressResponse = Type.Union([
+    Type.Object({
+        Success: Type.String(),
+    }),
     Type.Object({
         InternalError: Type.String(),
     }),
@@ -296,6 +314,28 @@ export const UserPublicProfilePublicProfile = Type.Object({
     is_premium: Type.Boolean(),
     phone_is_verified: Type.Boolean(),
     created: Type.BigInt(),
+});
+
+export type UserRetrieveBtcResponse = Static<typeof UserRetrieveBtcResponse>;
+export const UserRetrieveBtcResponse = Type.Union([
+    Type.Object({
+        Success: Type.BigInt(),
+    }),
+    Type.Object({
+        ApproveError: Type.String(),
+    }),
+    Type.Object({
+        RetrieveBtcError: Type.String(),
+    }),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
+export type UserRetrieveBtcArgs = Static<typeof UserRetrieveBtcArgs>;
+export const UserRetrieveBtcArgs = Type.Object({
+    amount: Type.BigInt(),
+    address: Type.String(),
 });
 
 export type UserMarkReadResponse = Static<typeof UserMarkReadResponse>;
