@@ -10,7 +10,7 @@ use community_canister::c2c_join_community;
 use community_canister::create_channel::{Response::*, *};
 use group_chat_core::GroupChatCore;
 use rand::Rng;
-use types::{ChannelId, MultiUserChat, UserType};
+use types::{MultiUserChat, UserType};
 use url::Url;
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
@@ -75,6 +75,7 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
     let messages_visible_to_non_members = args.is_public && args.messages_visible_to_non_members.unwrap_or(args.gate.is_none());
 
     let caller = state.env.caller();
+    let channel_id = state.generate_channel_id();
     if let Some(member) = state.data.members.get_mut(caller) {
         if member.suspended.value {
             return UserSuspended;
@@ -115,7 +116,6 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
             NameTaken
         } else {
             let now = state.env.now();
-            let channel_id: ChannelId = state.env.rng().gen();
             let permissions = args.permissions_v2.unwrap_or_default();
             let gate_config = if args.gate_config.is_some() { args.gate_config } else { args.gate.map(|g| g.into()) };
 

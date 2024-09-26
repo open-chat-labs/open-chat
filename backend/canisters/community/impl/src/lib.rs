@@ -23,6 +23,7 @@ use model::{events::CommunityEvents, invited_users::InvitedUsers, members::Commu
 use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
 use rand::rngs::StdRng;
+use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::cell::RefCell;
@@ -258,6 +259,15 @@ impl RuntimeState {
                 now,
                 now,
             );
+        }
+    }
+
+    pub fn generate_channel_id(&mut self) -> ChannelId {
+        loop {
+            let channel_id = self.env.rng().next_u32() as ChannelId;
+            if self.data.channels.get(&channel_id).is_none() {
+                return channel_id;
+            }
         }
     }
 
