@@ -313,13 +313,17 @@
             .swap,
             .poll {
                 top: -18px;
-                left: toRem(-44);
+                left: toRem(-40);
                 opacity: 0;
                 position: absolute;
                 transition:
                     top 200ms ease-in,
                     opacity 200ms ease-in;
                 @include z-index("action-list");
+
+                @include mobile() {
+                    left: toRem(-44);
+                }
             }
 
             &.rtl {

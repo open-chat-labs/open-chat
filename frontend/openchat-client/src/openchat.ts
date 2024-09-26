@@ -7429,6 +7429,9 @@ export class OpenChat extends OpenChatAgentWorker {
     private promptForCurrentPin(message: string | undefined): Promise<string> {
         pinNumberFailureStore.set(undefined);
 
+        // TODO we need to make sure that this promise does not get resolved until we have the pin
+        // This needs to cover the pin reset flow (I really don't think that's possible if the auth method is email)
+
         return new Promise((resolve, reject) => {
             capturePinNumberStore.set({
                 resolve: (pin: string) => {

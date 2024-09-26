@@ -26,7 +26,6 @@ const networkOffline = writable<boolean>(!navigator.onLine, (set) => {
 export const offlineStore = derived(
     [networkInformation, networkOffline],
     ([$networkInformation, $networkOffline]) => {
-        console.log("Network stuff: ", $networkInformation, $networkOffline);
         return (
             $networkOffline ||
             ($networkInformation !== undefined && $networkInformation.downlink < MIN_DOWNLINK)
