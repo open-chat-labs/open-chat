@@ -29,10 +29,10 @@ use std::cell::RefCell;
 use std::ops::Deref;
 use std::time::Duration;
 use types::{
-    AccessGate, AccessGateConfigInternal, AccessGateExpiryType, AccessGateType, BuildVersion, CanisterId,
-    ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, CommunityRole,
-    Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, Milliseconds, Notification, PaymentGate, Rules, TimestampMillis,
-    Timestamped, UserId, UserType,
+    AccessGate, AccessGateConfigInternal, AccessGateExpiryType, AccessGateType, BuildVersion, CanisterId, ChannelId,
+    ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, CommunityRole, Cryptocurrency,
+    Cycles, Document, Empty, FrozenGroupInfo, Milliseconds, Notification, PaymentGate, Rules, TimestampMillis, Timestamped,
+    UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use utils::env::Environment;
