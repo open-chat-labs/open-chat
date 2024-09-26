@@ -1134,8 +1134,6 @@
     let forgotPin = false;
 
     function onForgotPin() {
-        // at this point we still have a dangling promise but we want to close the promise
-        // modal and open the forgot modal (which might be just the setpinmodal)
         forgotPin = true;
     }
 
