@@ -56,7 +56,7 @@ impl PublicGroups {
             .map(|c| {
                 let score = if let Some(query) = &query {
                     let document: Document = c.into();
-                    document.calculate_score(&query)
+                    document.calculate_score(query)
                 } else if c.hotness_score > 0 {
                     c.hotness_score
                 } else {
