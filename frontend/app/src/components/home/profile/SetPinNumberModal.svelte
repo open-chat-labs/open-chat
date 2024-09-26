@@ -83,6 +83,8 @@
                     toastStore.showSuccessToast(i18nKey(`pinNumber.${type.kind}PinSuccess`));
                     dispatch("pinSet", newPin);
                     close();
+                } else {
+                    console.log("SetPinNumber failed", resp);
                 }
             })
             .finally(() => {

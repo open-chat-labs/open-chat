@@ -12,7 +12,7 @@
     import ChooseSignInOption from "./ChooseSignInOption.svelte";
     import { configKeys } from "../../../utils/config";
     import { AuthClient } from "@dfinity/auth-client";
-    import { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
+    import { DelegationChain, ECDSAKeyIdentity, DelegationIdentity } from "@dfinity/identity";
     import {
         EmailPollerError,
         EmailPollerSuccess,
@@ -102,7 +102,7 @@
                             if (delegation) {
                                 const principal = c.getIdentity().getPrincipal().toString();
                                 if (principal !== client.AuthPrincipal) {
-                                    error = "Principal mismatch";
+                                    error = "identity.failure.principalMismatch";
                                 } else {
                                     dispatch("success", {
                                         key: identity,
@@ -129,11 +129,18 @@
         provider: AuthProvider.ETH | AuthProvider.SOL | AuthProvider.EMAIL,
         ev: CustomEvent<{ kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain }>,
     ) {
-        dispatch("success", {
-            key: ev.detail.key,
-            delegation: ev.detail.delegation,
-            provider,
-        });
+        const identity = DelegationIdentity.fromDelegation(ev.detail.key, ev.detail.delegation);
+        const principal = identity.getPrincipal().toString();
+        if (principal !== client.AuthPrincipal) {
+            approverStep = "choose_provider";
+            error = "identity.failure.principalMismatch";
+        } else {
+            dispatch("success", {
+                key: ev.detail.key,
+                delegation: ev.detail.delegation,
+                provider,
+            });
+        }
     }
 </script>
 
@@ -168,9 +175,13 @@
             code={verificationCode}
             polling={$emailSigninHandler}
             on:copy={(ev) => emailSigninHandler.copyCode(ev.detail)} />
-        {#if error !== undefined}
-            <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
-        {/if}
+    {/if}
+    {#if error !== undefined}
+        <p class="info">
+            <ErrorMessage>
+                <Translatable resourceKey={i18nKey(error)} />
+            </ErrorMessage>
+        </p>
     {/if}
 </div>
 

@@ -6877,7 +6877,7 @@ export class OpenChat extends OpenChatAgentWorker {
         token: "eth" | "sol",
         address: string,
         signature: string,
-        connectWorker: boolean,
+        assumeIdentity: boolean,
     ): Promise<
         | { kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain }
         | { kind: "failure" }
@@ -6908,8 +6908,8 @@ export class OpenChat extends OpenChatAgentWorker {
                     getDelegationResponse.signature,
                 );
                 const delegation = identity.getDelegation();
-                await storeIdentity(this._authClientStorage, sessionKey, delegation);
-                if (connectWorker) {
+                if (assumeIdentity) {
+                    await storeIdentity(this._authClientStorage, sessionKey, delegation);
                     this.loadedAuthenticationIdentity(
                         identity,
                         token === "eth" ? AuthProvider.ETH : AuthProvider.SOL,
