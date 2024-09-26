@@ -2023,11 +2023,6 @@ export interface SelectedChannelUpdatesArgs {
   'channel_id' : ChannelId,
   'updates_since' : TimestampMillis,
 }
-export type SelectedChannelUpdatesResponse = { 'ChannelNotFound' : null } |
-  { 'Success' : SelectedGroupUpdates } |
-  { 'SuccessNoUpdates' : null } |
-  { 'PrivateCommunity' : null } |
-  { 'PrivateChannel' : null };
 export type SelectedChannelUpdatesV2Response = { 'ChannelNotFound' : null } |
   { 'Success' : SelectedGroupUpdates } |
   { 'SuccessNoUpdates' : TimestampMillis } |
@@ -2064,9 +2059,6 @@ export interface SelectedUpdatesArgs {
   'updates_since' : TimestampMillis,
   'invite_code' : [] | [bigint],
 }
-export type SelectedUpdatesResponse = { 'Success' : SelectedUpdatesSuccess } |
-  { 'SuccessNoUpdates' : null } |
-  { 'PrivateCommunity' : null };
 export interface SelectedUpdatesSuccess {
   'blocked_users_removed' : Array<UserId>,
   'invited_users' : [] | [Array<UserId>],
@@ -2622,10 +2614,6 @@ export interface _SERVICE {
     [SelectedChannelInitialArgs],
     SelectedChannelInitialResponse
   >,
-  'selected_channel_updates' : ActorMethod<
-    [SelectedChannelUpdatesArgs],
-    SelectedChannelUpdatesResponse
-  >,
   'selected_channel_updates_v2' : ActorMethod<
     [SelectedChannelUpdatesArgs],
     SelectedChannelUpdatesV2Response
@@ -2633,10 +2621,6 @@ export interface _SERVICE {
   'selected_initial' : ActorMethod<
     [SelectedInitialArgs],
     SelectedInitialResponse
-  >,
-  'selected_updates' : ActorMethod<
-    [SelectedUpdatesArgs],
-    SelectedUpdatesResponse
   >,
   'selected_updates_v2' : ActorMethod<
     [SelectedUpdatesArgs],
