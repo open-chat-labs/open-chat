@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::utils::now_nanos;
-use crate::{client, TestEnv};
+use crate::{client, env, TestEnv};
 use ledger_utils::create_pending_transaction;
 use std::ops::Deref;
 use std::time::Duration;
@@ -11,7 +11,7 @@ use user_canister::set_pin_number::PinNumberVerification;
 use utils::time::MINUTE_IN_MS;
 
 #[test]
-fn can_set_pin_number() {
+fn can_set_pin_number_by_providing_current() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
@@ -26,6 +26,51 @@ fn can_set_pin_number() {
 
     client::user::happy_path::set_pin_number(env, &user, Some("1000".to_string()), Some("1001".to_string()));
     client::user::happy_path::set_pin_number(env, &user, Some("1001".to_string()), None);
+
+    let initial_state2 = client::user::happy_path::initial_state(env, &user);
+
+    assert!(initial_state2.pin_number_settings.is_none());
+}
+
+#[test_case(true)]
+#[test_case(false)]
+fn can_set_pin_number_by_providing_recent_delegation(within_5_minutes: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let (user, delegation) = client::register_user_and_include_delegation(env, canister_ids);
+
+    client::user::happy_path::set_pin_number(env, &user, None, Some("1000".to_string()));
+
+    let initial_state1 = client::user::happy_path::initial_state(env, &user);
+
+    assert!(initial_state1.pin_number_settings.is_some());
+    assert!(initial_state1.pin_number_settings.unwrap().attempts_blocked_until.is_none());
+
+    let advance_by = if within_5_minutes { Duration::from_secs(299) } else { Duration::from_secs(301) };
+    env.advance_time(advance_by);
+
+    let set_pin_number_response = client::user::set_pin_number(
+        env,
+        user.principal,
+        user.canister(),
+        &user_canister::set_pin_number::Args {
+            new: None,
+            verification: PinNumberVerification::Delegation(delegation),
+        },
+    );
+
+    if within_5_minutes {
+        assert!(matches!(
+            set_pin_number_response,
+            user_canister::set_pin_number::Response::Success
+        ));
+    } else {
+        assert!(matches!(
+            set_pin_number_response,
+            user_canister::set_pin_number::Response::DelegationTooOld
+        ));
+    }
 
     let initial_state2 = client::user::happy_path::initial_state(env, &user);
 

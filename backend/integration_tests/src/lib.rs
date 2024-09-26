@@ -3,7 +3,7 @@
 use crate::utils::principal_to_username;
 use candid::Principal;
 use pocket_ic::PocketIc;
-use types::{CanisterId, Cycles, UserId};
+use types::{CanisterId, Cycles, SignedDelegation, UserId};
 
 mod airdrop_bot_tests;
 mod batched_summary_and_event_tests;
@@ -63,6 +63,7 @@ pub struct User {
     pub principal: Principal,
     pub user_id: UserId,
     pub public_key: Vec<u8>,
+    pub delegation: SignedDelegation,
 }
 
 impl User {
