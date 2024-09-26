@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::utils::now_nanos;
-use crate::{client, env, TestEnv};
+use crate::{client, TestEnv};
 use ledger_utils::create_pending_transaction;
 use std::ops::Deref;
 use std::time::Duration;

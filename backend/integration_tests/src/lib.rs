@@ -3,7 +3,7 @@
 use crate::utils::principal_to_username;
 use candid::Principal;
 use pocket_ic::PocketIc;
-use types::{CanisterId, Cycles, SignedDelegation, UserId};
+use types::{CanisterId, Cycles, UserId};
 
 mod airdrop_bot_tests;
 mod batched_summary_and_event_tests;
