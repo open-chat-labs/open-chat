@@ -32,7 +32,6 @@
         NervousSystemDetails,
         AccessGateWithLevel,
         GateCheckSucceeded,
-        AuthProvider,
     } from "openchat-client";
     import {
         ChatsUpdated,
@@ -104,7 +103,6 @@
     import { chitPopup } from "../../stores/settings";
     import AccessGateEvaluator from "./access/AccessGateEvaluator.svelte";
     import SetPinNumberModal from "./profile/SetPinNumberModal.svelte";
-    import type { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
 
     type ViewProfileConfig = {
         userId: string;
@@ -1342,6 +1340,7 @@
 {:else if forgotPin}
     <Overlay>
         <SetPinNumberModal
+            on:pinSet={onPinNumberComplete}
             on:close={() => (forgotPin = false)}
             type={{ kind: "forgot", while: { kind: "enter" } }} />
     </Overlay>

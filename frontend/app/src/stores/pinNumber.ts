@@ -12,6 +12,10 @@ export type ForgotPin = { kind: "forgot"; while: ForgotPinWhile };
 export type PinOperation = SetPin | ClearPin | ChangePin | ForgotPin | EnterPin;
 export type ForgotPinWhile = ClearPin | ChangePin | EnterPin;
 
+export function supportsForgot(operation: PinOperation): operation is ForgotPinWhile {
+    return operation.kind === "change" || operation.kind === "clear" || operation.kind === "enter";
+}
+
 export const pinNumberErrorMessageStore = derived(
     [now500, pinNumberFailureStore],
     ([$nowStore, $pinNumberFailureStore]) => {

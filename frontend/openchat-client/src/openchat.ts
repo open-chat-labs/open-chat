@@ -424,6 +424,7 @@ import type {
     WalletConfig,
     AirdropChannelDetails,
     ChitLeaderboardResponse,
+    Verification,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -6316,7 +6317,7 @@ export class OpenChat extends OpenChatAgentWorker {
     private async refreshBalancesInSeries() {
         const config = this._liveState.walletConfig;
         for (const t of Object.values(get(cryptoLookup))) {
-            if (config.kind === "auto_wallet" || config.tokens.has(t.ledger)) {
+            if (t.enabled && (config.kind === "auto_wallet" || config.tokens.has(t.ledger))) {
                 await this.refreshAccountBalance(t.ledger);
             }
         }
@@ -7406,12 +7407,12 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     setPinNumber(
-        currentPin: string | undefined,
+        verification: Verification,
         newPin: string | undefined,
     ): Promise<SetPinNumberResponse> {
         pinNumberFailureStore.set(undefined);
 
-        return this.sendRequest({ kind: "setPinNumber", currentPin, newPin }).then((resp) => {
+        return this.sendRequest({ kind: "setPinNumber", verification, newPin }).then((resp) => {
             if (resp.kind === "success") {
                 this.pinNumberRequiredStore.set(newPin !== undefined);
             } else if (

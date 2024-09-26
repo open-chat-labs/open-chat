@@ -22,11 +22,12 @@ import {
     initiateIdentityLinkResponse,
     prepareDelegationResponse,
 } from "./mappers";
-import type { CreateIdentityArgs, SignedDelegation } from "./candid/types";
+import type { CreateIdentityArgs } from "./candid/types";
 import { apiOptional } from "../common/chatMappers";
 import { identity } from "../../utils/mapping";
 import { Principal } from "@dfinity/principal";
 import type { DelegationIdentity } from "@dfinity/identity";
+import { signedDelegation } from "../../utils/id";
 
 export class IdentityClient extends CandidService {
     private service: IdentityService;
@@ -115,7 +116,7 @@ export class IdentityClient extends CandidService {
             this.service.approve_identity_link({
                 link_initiated_by: Principal.fromText(linkInitiatedBy),
                 public_key: this.publicKey(),
-                delegation: this.delegation(),
+                delegation: signedDelegation((this.identity as DelegationIdentity).getDelegation()),
             }),
             approveIdentityLinkResponse,
         );
@@ -130,17 +131,5 @@ export class IdentityClient extends CandidService {
 
     private publicKey(): Uint8Array {
         return new Uint8Array((this.identity as SignIdentity).getPublicKey().toDer());
-    }
-
-    private delegation(): SignedDelegation {
-        const delegation = (this.identity as DelegationIdentity).getDelegation().delegations[0];
-
-        return {
-            signature: new Uint8Array(delegation.signature),
-            delegation: {
-                pubkey: new Uint8Array(delegation.delegation.pubkey),
-                expiration: delegation.delegation.expiration,
-            },
-        };
     }
 }
