@@ -1807,6 +1807,7 @@ export interface PollVotes {
   'user' : Uint32Array | number[],
 }
 export interface PrizeContent {
+  'winner_count' : number,
   'token' : Cryptocurrency,
   'end_date' : TimestampMillis,
   'prizes_remaining' : number,
@@ -1814,6 +1815,7 @@ export interface PrizeContent {
   'caption' : [] | [string],
   'diamond_only' : boolean,
   'winners' : Array<UserId>,
+  'user_is_winner' : boolean,
 }
 export interface PrizeContentInitial {
   'prizes_v2' : Array<bigint>,
@@ -2173,7 +2175,9 @@ export interface SetMessageReminderV2Args {
 }
 export interface SetPinNumberArgs {
   'new' : [] | [string],
-  'current' : [] | [string],
+  'verification' : { 'PIN' : string } |
+    { 'Delegation' : SignedDelegation } |
+    { 'None' : null },
 }
 export type SetPinNumberResponse = {
     'TooManyFailedPinAttempts' : Milliseconds
@@ -2182,7 +2186,16 @@ export type SetPinNumberResponse = {
   { 'PinIncorrect' : Milliseconds } |
   { 'TooShort' : FieldTooShortResult } |
   { 'PinRequired' : null } |
-  { 'Success' : null };
+  { 'Success' : null } |
+  { 'MalformedSignature' : string } |
+  { 'DelegationTooOld' : null };
+export interface SignedDelegation {
+  'signature' : Uint8Array | number[],
+  'delegation' : {
+    'pubkey' : Uint8Array | number[],
+    'expiration' : TimestampNanos,
+  },
+}
 export interface SnsNeuronGate {
   'min_stake_e8s' : [] | [bigint],
   'min_dissolve_delay' : [] | [Milliseconds],
@@ -2621,6 +2634,8 @@ export interface _SERVICE {
   >,
   'bio' : ActorMethod<[BioArgs], BioResponse>,
   'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
+  'btc_address' : ActorMethod<[EmptyArgs], BtcAddressResponse>,
+  'cached_btc_address' : ActorMethod<[EmptyArgs], CachedBtcAddressResponse>,
   'cancel_message_reminder' : ActorMethod<
     [CancelMessageReminderArgs],
     CancelMessageReminderResponse
@@ -2684,6 +2699,7 @@ export interface _SERVICE {
   'public_profile' : ActorMethod<[PublicProfileArgs], PublicProfileResponse>,
   'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
   'report_message' : ActorMethod<[ReportMessageArgs], ReportMessageResponse>,
+  'retrieve_btc' : ActorMethod<[RetrieveBtcArgs], RetrieveBtcResponse>,
   'save_crypto_account' : ActorMethod<
     [NamedAccount],
     SaveCryptoAccountResponse
