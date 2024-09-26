@@ -29,7 +29,7 @@
     let emailSigninHandler = new EmailSigninHandler(client, "account_linking", false);
     let emailInvalid = false;
     let email = "";
-    let approverStep:
+    let authStep:
         | "choose_provider"
         | "choose_eth_wallet"
         | "choose_sol_wallet"
@@ -57,7 +57,7 @@
     }
 
     // This is where we login in with the provider that we are currently signed in with (which can be any provider type)
-    async function loginApprover(ev: CustomEvent<AuthProvider>) {
+    async function login(ev: CustomEvent<AuthProvider>) {
         const provider = ev.detail;
         if (emailInvalid && provider === AuthProvider.EMAIL) {
             return;
@@ -68,7 +68,7 @@
         error = undefined;
 
         if (provider === AuthProvider.EMAIL) {
-            approverStep = "signing_in_with_email";
+            authStep = "signing_in_with_email";
             emailSigninHandler.generateMagicLink(email).then((resp) => {
                 if (resp.kind === "success") {
                     verificationCode = resp.code;
@@ -82,9 +82,9 @@
                 }
             });
         } else if (provider === AuthProvider.ETH) {
-            approverStep = "choose_eth_wallet";
+            authStep = "choose_eth_wallet";
         } else if (provider === AuthProvider.SOL) {
-            approverStep = "choose_sol_wallet";
+            authStep = "choose_sol_wallet";
         } else {
             // This is the II / NFID case
             const identity = await ECDSAKeyIdentity.generate();
@@ -132,7 +132,7 @@
         const identity = DelegationIdentity.fromDelegation(ev.detail.key, ev.detail.delegation);
         const principal = identity.getPrincipal().toString();
         if (principal !== client.AuthPrincipal) {
-            approverStep = "choose_provider";
+            authStep = "choose_provider";
             error = "identity.failure.principalMismatch";
         } else {
             dispatch("success", {
@@ -145,12 +145,12 @@
 </script>
 
 <div class="body">
-    {#if approverStep === "choose_provider"}
+    {#if authStep === "choose_provider"}
         <div class="info center">
             <Translatable resourceKey={message} />
         </div>
-        <ChooseSignInOption mode={"signin"} bind:emailInvalid bind:email on:login={loginApprover} />
-    {:else if approverStep === "choose_eth_wallet"}
+        <ChooseSignInOption mode={"signin"} bind:emailInvalid bind:email on:login={login} />
+    {:else if authStep === "choose_eth_wallet"}
         <div class="eth-options">
             {#await import("../SigninWithEth.svelte")}
                 <div class="loading">...</div>
@@ -160,7 +160,7 @@
                     on:connected={(ev) => authComplete(AuthProvider.ETH, ev)} />
             {/await}
         </div>
-    {:else if approverStep === "choose_sol_wallet"}
+    {:else if authStep === "choose_sol_wallet"}
         <div class="sol-options">
             {#await import("../SigninWithSol.svelte")}
                 <div class="loading">...</div>
@@ -170,7 +170,7 @@
                     on:connected={(ev) => authComplete(AuthProvider.SOL, ev)} />
             {/await}
         </div>
-    {:else if approverStep === "signing_in_with_email"}
+    {:else if authStep === "signing_in_with_email"}
         <EmailSigninFeedback
             code={verificationCode}
             polling={$emailSigninHandler}
