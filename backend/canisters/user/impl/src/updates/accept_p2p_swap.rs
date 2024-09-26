@@ -17,7 +17,7 @@ use user_canister::{P2PSwapStatusChange, UserCanisterEvent};
 use utils::consts::MEMO_P2P_SWAP_ACCEPT;
 use utils::time::NANOS_PER_MILLISECOND;
 
-#[update(guard = "caller_is_owner", candid = true)]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 async fn accept_p2p_swap(args: Args) -> Response {
     run_regular_jobs();

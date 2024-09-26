@@ -1,25 +1,32 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{
     AccessGate, ChannelId, Document, FieldTooLongResult, FieldTooShortResult, Milliseconds, OptionUpdate,
     OptionalGroupPermissions, UpdatedRules, Version,
 };
 
+#[ts_export(community, update_channel)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub channel_id: ChannelId,
     pub name: Option<String>,
     pub description: Option<String>,
     pub rules: Option<UpdatedRules>,
+    #[ts(as = "types::OptionUpdateDocument")]
     pub avatar: OptionUpdate<Document>,
     pub permissions_v2: Option<OptionalGroupPermissions>,
+    #[ts(as = "types::OptionUpdateU64")]
     pub events_ttl: OptionUpdate<Milliseconds>,
+    #[ts(as = "types::OptionUpdateAccessGate")]
     pub gate: OptionUpdate<AccessGate>,
     pub public: Option<bool>,
     pub messages_visible_to_non_members: Option<bool>,
+    #[ts(as = "types::OptionUpdateString")]
     pub external_url: OptionUpdate<String>,
 }
 
+#[ts_export(community, update_channel)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     SuccessV2(SuccessResult),
@@ -41,6 +48,7 @@ pub enum Response {
     CommunityFrozen,
 }
 
+#[ts_export(community, update_channel)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub rules_version: Option<Version>,

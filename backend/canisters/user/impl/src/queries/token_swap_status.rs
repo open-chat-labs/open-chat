@@ -3,7 +3,7 @@ use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
 use user_canister::token_swap_status::{Response::*, *};
 
-#[query(guard = "caller_is_owner", candid = true)]
+#[query(guard = "caller_is_owner", candid = true, msgpack = true)]
 fn token_swap_status(args: Args) -> Response {
     read_state(|state| token_swap_status_impl(args, state))
 }

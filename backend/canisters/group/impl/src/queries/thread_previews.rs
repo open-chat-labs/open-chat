@@ -1,10 +1,10 @@
 use crate::queries::check_replica_up_to_date;
 use crate::{read_state, RuntimeState};
+use canister_api_macros::query;
 use group_canister::thread_previews::{Response::*, *};
 use group_chat_core::ThreadPreviewsResult;
-use ic_cdk::query;
 
-#[query]
+#[query(candid = true, msgpack = true)]
 fn thread_previews(args: Args) -> Response {
     read_state(|state| thread_previews_impl(args, state))
 }

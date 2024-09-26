@@ -1,7 +1,9 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{MessageId, VideoCallPresence};
 
+#[ts_export(group, join_video_call)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub message_id: MessageId,
