@@ -128,8 +128,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
 
     let user_index_init_args = user_index_canister::init::Args {
         governance_principals: vec![controller],
-        user_canister_wasm: CanisterWasm::default(),
-        local_user_index_canister_wasm: CanisterWasm::default(),
         group_index_canister_id,
         notifications_index_canister_id,
         identity_canister_id,
@@ -158,9 +156,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
 
     let group_index_init_args = group_index_canister::init::Args {
         governance_principals: vec![controller],
-        group_canister_wasm: CanisterWasm::default(),
-        community_canister_wasm: CanisterWasm::default(),
-        local_group_index_canister_wasm: CanisterWasm::default(),
         user_index_canister_id,
         cycles_dispenser_canister_id,
         proposals_bot_user_id: proposals_bot_canister_id.into(),

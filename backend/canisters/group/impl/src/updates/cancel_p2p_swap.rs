@@ -1,11 +1,11 @@
 use crate::timer_job_types::CancelP2PSwapInEscrowCanisterJob;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::cancel_p2p_swap::{Response::*, *};
-use ic_cdk::update;
 use types::CancelP2PSwapResult;
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 fn cancel_p2p_swap(args: Args) -> Response {
     run_regular_jobs();

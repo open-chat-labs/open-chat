@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use types::Timestamped;
 use user_canister::set_community_indexes::{Response::*, *};
 
-#[update(guard = "caller_is_owner", candid = true)]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 fn set_community_indexes(args: Args) -> Response {
     run_regular_jobs();

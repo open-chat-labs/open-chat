@@ -1,9 +1,9 @@
 use crate::{read_state, RuntimeState};
+use canister_api_macros::query;
 use community_canister::deleted_message::{Response::*, *};
 use group_chat_core::DeletedMessageResult;
-use ic_cdk::query;
 
-#[query]
+#[query(candid = true, msgpack = true)]
 fn deleted_message(args: Args) -> Response {
     read_state(|state| deleted_message_impl(args, state))
 }

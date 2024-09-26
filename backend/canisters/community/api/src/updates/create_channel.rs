@@ -1,10 +1,12 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{
     AccessGate, ChannelId, Document, FieldTooLongResult, FieldTooShortResult, GroupPermissions, GroupSubtype, Milliseconds,
     Rules,
 };
 
+#[ts_export(community, create_channel)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub is_public: bool,
@@ -21,6 +23,7 @@ pub struct Args {
     pub external_url: Option<String>,
 }
 
+#[ts_export(community, create_channel)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
@@ -41,6 +44,7 @@ pub enum Response {
     InternalError(String),
 }
 
+#[ts_export(community, create_channel)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub channel_id: ChannelId,

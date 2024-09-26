@@ -1,16 +1,16 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, read_state, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_canister::remove_participant::{Response::*, *};
 use group_chat_core::GroupRoleInternal;
-use ic_cdk::update;
 use local_user_index_canister_c2c_client::{lookup_user, LookupUserError};
 use msgpack::serialize_then_unwrap;
 use types::{CanisterId, UserId};
 use user_canister::c2c_remove_from_group;
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn block_user(args: group_canister::block_user::Args) -> group_canister::block_user::Response {
     if !read_state(|state| state.data.chat.is_public.value) {
@@ -20,7 +20,7 @@ async fn block_user(args: group_canister::block_user::Args) -> group_canister::b
     remove_participant_impl(args.user_id, true).await.into()
 }
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn remove_participant(args: Args) -> Response {
     remove_participant_impl(args.user_id, false).await

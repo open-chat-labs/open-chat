@@ -1,9 +1,9 @@
 use crate::read_state;
 use crate::RuntimeState;
+use canister_api_macros::query;
 use group_canister::invite_code::{Response::*, *};
-use ic_cdk::query;
 
-#[query]
+#[query(candid = true, msgpack = true)]
 fn invite_code(_: Args) -> Response {
     read_state(invite_code_impl)
 }

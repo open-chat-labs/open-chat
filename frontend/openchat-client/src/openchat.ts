@@ -6316,7 +6316,7 @@ export class OpenChat extends OpenChatAgentWorker {
     private async refreshBalancesInSeries() {
         const config = this._liveState.walletConfig;
         for (const t of Object.values(get(cryptoLookup))) {
-            if (t.enabled && (config.kind === "auto_wallet" || config.tokens.has(t.ledger))) {
+            if (config.kind === "auto_wallet" || config.tokens.has(t.ledger)) {
                 await this.refreshAccountBalance(t.ledger);
             }
         }

@@ -1,13 +1,8 @@
 use crate::{read_state, RuntimeState};
+use canister_api_macros::query;
 use community_canister::selected_channel_updates_v2::{Response::*, *};
-use ic_cdk::query;
 
-#[query]
-fn selected_channel_updates(args: Args) -> community_canister::selected_channel_updates::Response {
-    read_state(|state| selected_channel_updates_impl(args, state)).into()
-}
-
-#[query]
+#[query(candid = true, msgpack = true)]
 fn selected_channel_updates_v2(args: Args) -> Response {
     read_state(|state| selected_channel_updates_impl(args, state))
 }

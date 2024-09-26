@@ -144,14 +144,6 @@ type SelectedChannelUpdatesArgs = record {
     updates_since : TimestampMillis;
 };
 
-type SelectedChannelUpdatesResponse = variant {
-    Success : SelectedGroupUpdates;
-    SuccessNoUpdates;
-    PrivateCommunity;
-    ChannelNotFound;
-    PrivateChannel;
-};
-
 type SelectedChannelUpdatesV2Response = variant {
     Success : SelectedGroupUpdates;
     SuccessNoUpdates : TimestampMillis;
@@ -184,12 +176,6 @@ type SelectedInitialSuccess = record {
 type SelectedUpdatesArgs = record {
     invite_code : opt nat64;
     updates_since : TimestampMillis;
-};
-
-type SelectedUpdatesResponse = variant {
-    Success : SelectedUpdatesSuccess;
-    SuccessNoUpdates;
-    PrivateCommunity;
 };
 
 type SelectedUpdatesV2Response = variant {
@@ -1102,10 +1088,8 @@ service : {
     messages_by_message_index : (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
     search_channel : (SearchChannelArgs) -> (SearchChannelResponse) query;
     selected_channel_initial : (SelectedChannelInitialArgs) -> (SelectedChannelInitialResponse) query;
-    selected_channel_updates : (SelectedChannelUpdatesArgs) -> (SelectedChannelUpdatesResponse) query;
     selected_channel_updates_v2 : (SelectedChannelUpdatesArgs) -> (SelectedChannelUpdatesV2Response) query;
     selected_initial : (SelectedInitialArgs) -> (SelectedInitialResponse) query;
-    selected_updates : (SelectedUpdatesArgs) -> (SelectedUpdatesResponse) query;
     selected_updates_v2 : (SelectedUpdatesArgs) -> (SelectedUpdatesV2Response) query;
     summary : (SummaryArgs) -> (SummaryResponse) query;
     summary_updates : (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
