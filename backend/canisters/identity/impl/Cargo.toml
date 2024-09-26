@@ -18,13 +18,13 @@ canister_state_macros = { path = "../../../libraries/canister_state_macros" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 http_request = { path = "../../../libraries/http_request" }
 ic-captcha = { workspace = true }
-ic-cbor = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-certificate-verification = { workspace = true }
 ic-certification = { workspace = true }
 ic-stable-structures = { workspace = true }
 identity_canister = { path = "../api" }
+identity_utils = { path = "../../../libraries/identity_utils" }
 msgpack = { path = "../../../libraries/msgpack" }
 rand = { workspace = true }
 serde = { workspace = true }

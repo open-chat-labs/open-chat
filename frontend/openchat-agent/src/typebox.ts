@@ -129,12 +129,6 @@ export const UserTokenSwapStatusTokenSwapStatus = Type.Object({
     success: Type.Optional(Type.Boolean()),
 });
 
-export type UserSetPinNumberArgs = Static<typeof UserSetPinNumberArgs>;
-export const UserSetPinNumberArgs = Type.Object({
-    current: Type.Optional(Type.String()),
-    new: Type.Optional(Type.String()),
-});
-
 export type UserSwapTokensSuccessResult = Static<typeof UserSwapTokensSuccessResult>;
 export const UserSwapTokensSuccessResult = Type.Object({
     amount_out: Type.BigInt(),
@@ -2118,6 +2112,10 @@ export const UserSetPinNumberResponse = Type.Union([
     Type.Object({
         TooManyFailedPinAttempts: Type.BigInt(),
     }),
+    Type.Object({
+        MalformedSignature: Type.String(),
+    }),
+    Type.Literal("DelegationTooOld"),
 ]);
 
 export type UserSwapTokensICPSwapArgs = Static<typeof UserSwapTokensICPSwapArgs>;
@@ -2345,7 +2343,7 @@ export const AccountICRC1 = Type.Object({
             Type.Number(),
             Type.Number(),
             Type.Number(),
-        ])
+        ]),
     ),
 });
 
@@ -2369,6 +2367,12 @@ export const SnsNeuronGate = Type.Object({
     governance_canister_id: TSBytes,
     min_stake_e8s: Type.Optional(Type.BigInt()),
     min_dissolve_delay: Type.Optional(Type.BigInt()),
+});
+
+export type Delegation = Static<typeof Delegation>;
+export const Delegation = Type.Object({
+    pubkey: TSBytes,
+    expiration: Type.BigInt(),
 });
 
 export type MessagePermissions = Static<typeof MessagePermissions>;
@@ -3483,7 +3487,7 @@ export const UserTokenSwapsTokenSwap = Type.Object({
             Type.Object({
                 Err: Type.String(),
             }),
-        ])
+        ]),
     ),
     notified_dex: Type.Optional(
         Type.Union([
@@ -3493,7 +3497,7 @@ export const UserTokenSwapsTokenSwap = Type.Object({
             Type.Object({
                 Err: Type.String(),
             }),
-        ])
+        ]),
     ),
     amount_swapped: Type.Optional(
         Type.Union([
@@ -3510,7 +3514,7 @@ export const UserTokenSwapsTokenSwap = Type.Object({
             Type.Object({
                 Err: Type.String(),
             }),
-        ])
+        ]),
     ),
     withdrawn_from_dex: Type.Optional(
         Type.Union([
@@ -3520,7 +3524,7 @@ export const UserTokenSwapsTokenSwap = Type.Object({
             Type.Object({
                 Err: Type.String(),
             }),
-        ])
+        ]),
     ),
     success: Type.Optional(Type.Boolean()),
 });
@@ -3739,6 +3743,12 @@ export const GroupSubtype = Type.Object({
     GovernanceProposals: GovernanceProposalsSubtype,
 });
 
+export type SignedDelegation = Static<typeof SignedDelegation>;
+export const SignedDelegation = Type.Object({
+    delegation: Delegation,
+    signature: TSBytes,
+});
+
 export type P2PSwapReserved = Static<typeof P2PSwapReserved>;
 export const P2PSwapReserved = Type.Object({
     reserved_by: UserId,
@@ -3820,6 +3830,8 @@ export const PrizeContent = Type.Object({
     prizes_remaining: Type.Number(),
     prizes_pending: Type.Number(),
     winners: Type.Array(UserId),
+    winner_count: Type.Number(),
+    user_is_winner: Type.Boolean(),
     token: Cryptocurrency,
     end_date: Type.BigInt(),
     caption: Type.Optional(Type.String()),
@@ -3996,7 +4008,7 @@ export const UsersUnblocked = Type.Object({
 
 export type Tips = Static<typeof Tips>;
 export const Tips = Type.Array(
-    Type.Tuple([TSBytes, Type.Array(Type.Tuple([UserId, Type.BigInt()]))])
+    Type.Tuple([TSBytes, Type.Array(Type.Tuple([UserId, Type.BigInt()]))]),
 );
 
 export type CallParticipant = Static<typeof CallParticipant>;
@@ -4452,6 +4464,25 @@ export const UserCreateGroupResponse = Type.Union([
     Type.Literal("UnauthorizedToCreatePublicGroup"),
     Type.Literal("InternalError"),
 ]);
+
+export type UserSetPinNumberPinNumberVerification = Static<
+    typeof UserSetPinNumberPinNumberVerification
+>;
+export const UserSetPinNumberPinNumberVerification = Type.Union([
+    Type.Literal("None"),
+    Type.Object({
+        PIN: Type.String(),
+    }),
+    Type.Object({
+        Delegation: SignedDelegation,
+    }),
+]);
+
+export type UserSetPinNumberArgs = Static<typeof UserSetPinNumberArgs>;
+export const UserSetPinNumberArgs = Type.Object({
+    new: Type.Optional(Type.String()),
+    verification: UserSetPinNumberPinNumberVerification,
+});
 
 export type UserTipMessageArgs = Static<typeof UserTipMessageArgs>;
 export const UserTipMessageArgs = Type.Object({
@@ -5596,7 +5627,7 @@ export const CommunityCanisterChannelSummaryUpdates = Type.Object({
     member_count: Type.Optional(Type.Number()),
     permissions_v2: Type.Optional(GroupPermissions),
     updated_events: Type.Array(
-        Type.Tuple([Type.Union([MessageIndex, Type.Null()]), EventIndex, Type.BigInt()])
+        Type.Tuple([Type.Union([MessageIndex, Type.Null()]), EventIndex, Type.BigInt()]),
     ),
     metrics: Type.Optional(ChatMetrics),
     date_last_pinned: Type.Optional(Type.BigInt()),
@@ -5713,7 +5744,7 @@ export const GroupCanisterGroupChatSummaryUpdates = Type.Object({
     wasm_version: Type.Optional(BuildVersion),
     permissions_v2: Type.Optional(GroupPermissions),
     updated_events: Type.Array(
-        Type.Tuple([Type.Union([MessageIndex, Type.Null()]), EventIndex, Type.BigInt()])
+        Type.Tuple([Type.Union([MessageIndex, Type.Null()]), EventIndex, Type.BigInt()]),
     ),
     metrics: Type.Optional(ChatMetrics),
     my_metrics: Type.Optional(ChatMetrics),
