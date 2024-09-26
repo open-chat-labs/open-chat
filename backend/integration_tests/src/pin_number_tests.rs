@@ -7,6 +7,7 @@ use std::time::Duration;
 use test_case::test_case;
 use testing::rng::random_message_id;
 use types::{CryptoContent, CryptoTransaction, Cryptocurrency, MessageContentInitial};
+use user_canister::set_pin_number::PinNumberVerification;
 use utils::time::MINUTE_IN_MS;
 
 #[test]
@@ -46,7 +47,7 @@ fn attempts_blocked_after_incorrect_attempts() {
             user.principal,
             user.canister(),
             &user_canister::set_pin_number::Args {
-                current: Some(format!("100{i}")),
+                verification: PinNumberVerification::PIN(format!("100{i}")),
                 new: Some("2000".to_string()),
             },
         );
