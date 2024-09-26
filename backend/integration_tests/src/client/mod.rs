@@ -147,7 +147,7 @@ pub fn upgrade_user(
 ) {
     ledger::happy_path::transfer(env, controller, canister_ids.icp_ledger, user.user_id, 1_000_000_000);
 
-    user_index::happy_path::pay_for_diamond_membership(env, user.principal, canister_ids.user_index, duration, false, true);
+    user_index::happy_path::pay_for_diamond_membership(env, user.principal, canister_ids.user_index, duration, false, false);
 
     tick_many(env, 4);
 }

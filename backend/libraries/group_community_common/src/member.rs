@@ -15,7 +15,7 @@ pub trait Member {
     }
 
     fn can_member_lapse(&self) -> bool {
-        !self.is_owner() && self.lapsed()
+        !self.is_owner() && !self.lapsed()
     }
 }
 

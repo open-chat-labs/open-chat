@@ -15,6 +15,7 @@ use gated_groups::{
     CheckVerifiedCredentialGateArgs,
 };
 use group_chat_core::AddResult;
+use group_community_common::Member;
 use types::{
     AccessGate, AccessGateConfigInternal, ChannelId, MemberJoined, TimestampMillis, UniquePersonProof,
     VerifiedCredentialGateArgs,
@@ -25,7 +26,13 @@ use types::{
 async fn c2c_join_channel(args: Args) -> Response {
     run_regular_jobs();
 
-    if read_state(|state| state.data.members.get_by_user_id(&args.user_id).is_some()) {
+    if read_state(|state| {
+        state
+            .data
+            .members
+            .get_by_user_id(&args.user_id)
+            .map_or(false, |member| !member.lapsed())
+    }) {
         check_gate_then_join_channel(&args).await
     } else {
         match join_community(community_canister::c2c_join_community::Args {
@@ -167,7 +174,7 @@ fn is_permitted_to_join(
                 Err(NotInvited)
             } else {
                 if let Some(channel_member) = channel.chat.members.get(&member.user_id) {
-                    if !channel_member.lapsed.value {
+                    if !member.lapsed() && !channel_member.lapsed() {
                         return Err(AlreadyInChannel(Box::new(
                             channel
                                 .summary(Some(channel_member.user_id), true, state.data.is_public, &state.data.members)
@@ -252,7 +259,7 @@ fn commit(
 
             Success(Box::new(summary))
         }
-        AddResult::AlreadyInGroup(_) => {
+        AddResult::AlreadyInGroup => {
             let summary = channel
                 .summary(Some(user_id), true, state.data.is_public, &state.data.members)
                 .unwrap();
@@ -303,8 +310,10 @@ pub(crate) fn join_channel_unchecked(
 
     let invitation = channel.chat.invited_users.remove(&community_member.user_id, now);
 
-    if let AddResult::AlreadyInGroup(member) = result {
-        return AddResult::Success(member);
+    if matches!(result, AddResult::AlreadyInGroup) {
+        let member = channel.chat.members.get_mut(&community_member.user_id).unwrap();
+        member.clear_lapsed(now);
+        return AddResult::Success(member.clone());
     }
 
     if channel.chat.is_public.value {

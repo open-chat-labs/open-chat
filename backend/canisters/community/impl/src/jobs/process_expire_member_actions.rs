@@ -54,18 +54,20 @@ async fn process_batch(batch: Vec<ExpiringMemberActionDetails>) {
     let user_ids = batch.iter().map(|details| details.user_id).collect();
 
     match lookup_users(user_ids, local_user_index_canister).await {
-        Ok(user_details) => mutate_state(|state| {
-            for u in user_details.values() {
-                state
-                    .data
-                    .user_cache
-                    .insert(u.user_id, u.diamond_membership_expires_at, u.unique_person_proof.is_some());
-            }
+        Ok(user_details) => {
+            mutate_state(|state| {
+                for u in user_details.values() {
+                    state
+                        .data
+                        .user_cache
+                        .insert(u.user_id, u.diamond_membership_expires_at, u.unique_person_proof.is_some());
+                }
+            });
 
             for details in batch {
                 process_gate_check_sync(details);
             }
-        }),
+        }
         Err(err) => {
             for details in batch {
                 handle_gate_check_result(details, CheckIfPassesGateResult::InternalError(err.to_string()));

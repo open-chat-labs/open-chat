@@ -155,6 +155,13 @@ pub(crate) fn join_community_impl(args: &Args, state: &mut RuntimeState) -> Resu
             })),
             now,
         );
+    } else {
+        state
+            .data
+            .members
+            .get_by_user_id_mut(&args.user_id)
+            .unwrap()
+            .clear_lapsed(now);
     }
 
     // If there is a payment gate on this community then queue payments to owner(s) and treasury

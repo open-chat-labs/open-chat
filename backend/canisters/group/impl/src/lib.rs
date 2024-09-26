@@ -243,7 +243,7 @@ impl RuntimeState {
             args.user_type,
         );
 
-        if matches!(result, AddMemberResult::Success(_) | AddMemberResult::AlreadyInGroup(_)) {
+        if matches!(result, AddMemberResult::Success(_) | AddMemberResult::AlreadyInGroup) {
             self.data.principal_to_user_id_map.insert(args.principal, args.user_id);
             if let Some(new_joiner_rewards) = &mut self.data.new_joiner_rewards {
                 if let Ok(amount) = new_joiner_rewards.try_claim_user_reward(args.user_id, args.now) {

@@ -154,7 +154,7 @@ fn commit(
                         });
                     }
                 }
-                AddResult::AlreadyInGroup(_) => users_already_in_channel.push(user_id),
+                AddResult::AlreadyInGroup => users_already_in_channel.push(user_id),
                 AddResult::MemberLimitReached(_) => users_limit_reached.push(user_id),
                 AddResult::Blocked => users_failed_with_error.push(UserFailedError {
                     user_id,

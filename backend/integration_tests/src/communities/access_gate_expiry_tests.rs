@@ -8,14 +8,14 @@ use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use testing::rng::random_string;
-use types::{AccessGate, AccessGateConfig, ChannelId, CommunityId, OptionUpdate};
+use types::{AccessGate, AccessGateConfig, ChannelId, CommunityId, DiamondMembershipPlanDuration, OptionUpdate};
 
 const DAY_IN_MS: Milliseconds = 24 * 60 * 60 * 1000;
 
 #[test_case(true)]
 #[test_case(false)]
 fn diamond_member_lapses_and_rejoins_successfully(channel: bool) {
-    // Create 2 diamond users, a community and a channel
+    // Create 2 diamond users, a public community and a public channel
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -34,7 +34,7 @@ fn diamond_member_lapses_and_rejoins_successfully(channel: bool) {
     // with an expiring diamond access gate
     let gate_config_update = OptionUpdate::SetToSome(AccessGateConfig {
         gate: AccessGate::DiamondMember,
-        expiry: Some(DAY_IN_MS),
+        expiry: Some(15 * DAY_IN_MS),
     });
 
     if channel {
@@ -81,7 +81,7 @@ fn diamond_member_lapses_and_rejoins_successfully(channel: bool) {
     );
 
     // Move the time forward so that user2's diamond membership expires + the gate expiry
-    env.advance_time(Duration::from_millis(32 * DAY_IN_MS));
+    env.advance_time(Duration::from_millis(46 * DAY_IN_MS));
     tick_many(env, 10);
 
     // Assert that user2 has lapsed
@@ -93,9 +93,32 @@ fn diamond_member_lapses_and_rejoins_successfully(channel: bool) {
         assert!(summary.membership.map_or(false, |m| m.lapsed));
     }
 
-    // User2 rejoins channel successfully
+    // Buy Diamond again
+    client::upgrade_user(
+        &user2,
+        env,
+        canister_ids,
+        *controller,
+        DiamondMembershipPlanDuration::OneMonth,
+    );
+
+    // User2 rejoins channel
+    client::local_user_index::happy_path::join_channel(
+        env,
+        user2.principal,
+        canister_ids.local_user_index,
+        community_id,
+        channel_id,
+    );
 
     // Assert that user2 is no longer lapsed
+    if channel {
+        let summary = client::community::happy_path::channel_summary(env, &user2, community_id, channel_id);
+        assert!(summary.membership.map_or(false, |m| !m.lapsed));
+    } else {
+        let summary = client::community::happy_path::summary(env, &user2, community_id);
+        assert!(summary.membership.map_or(false, |m| !m.lapsed));
+    }
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {

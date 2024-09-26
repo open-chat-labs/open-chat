@@ -8,7 +8,7 @@ use serde::ser::SerializeSeq;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::cmp::max;
-use std::collections::hash_map::Entry::{Occupied, Vacant};
+use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::fmt::Formatter;
 use types::{
@@ -107,7 +107,7 @@ impl GroupMembers {
                     self.updates.insert((now, user_id, MemberUpdate::Added));
                     AddResult::Success(member)
                 }
-                Occupied(e) => AddResult::AlreadyInGroup(e.get().clone()),
+                _ => AddResult::AlreadyInGroup,
             }
         }
     }
@@ -316,7 +316,7 @@ impl Members<GroupMemberInternal> for GroupMembers {
 #[allow(clippy::large_enum_variant)]
 pub enum AddResult {
     Success(GroupMemberInternal),
-    AlreadyInGroup(GroupMemberInternal),
+    AlreadyInGroup,
     MemberLimitReached(u32),
     Blocked,
 }

@@ -1,3 +1,4 @@
+use crate::jobs::process_expire_member_actions;
 use crate::model::expiring_member_actions::ExpiringMemberActionDetails;
 use crate::model::expiring_members::ExpiringMember;
 use crate::{model::expiring_member_actions::ExpiringMemberAction, mutate_state, RuntimeState};
@@ -128,6 +129,7 @@ fn run() {
                 .push(ExpiringMemberAction::Batch(batched_actions))
         }
 
+        process_expire_member_actions::start_job_if_required(state);
         start_job_if_required(state);
     });
 }
