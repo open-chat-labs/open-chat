@@ -1,4 +1,4 @@
-use rand::{Rng, RngCore};
+use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use std::collections::{BTreeMap, HashSet};
@@ -103,7 +103,7 @@ impl UserGroups {
         let ids: HashSet<_> = self.groups.iter().map(|g| g.id).collect();
 
         loop {
-            let id: u32 = rng.gen();
+            let id = rng.next_u32();
             if !ids.contains(&id) {
                 return id;
             }
