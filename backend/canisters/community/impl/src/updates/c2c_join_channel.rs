@@ -16,7 +16,8 @@ use gated_groups::{
 };
 use group_chat_core::AddResult;
 use types::{
-    AccessGate, AccessGateConfig, ChannelId, MemberJoined, TimestampMillis, UniquePersonProof, VerifiedCredentialGateArgs,
+    AccessGate, AccessGateConfigInternal, ChannelId, MemberJoined, TimestampMillis, UniquePersonProof,
+    VerifiedCredentialGateArgs,
 };
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
@@ -145,7 +146,7 @@ fn is_permitted_to_join(
     unique_person_proof: Option<UniquePersonProof>,
     verified_credential_args: Option<VerifiedCredentialGateArgs>,
     state: &RuntimeState,
-) -> Result<Option<(AccessGateConfig, CheckGateArgs)>, Response> {
+) -> Result<Option<(AccessGateConfigInternal, CheckGateArgs)>, Response> {
     if state.data.is_frozen() {
         return Err(CommunityFrozen);
     }

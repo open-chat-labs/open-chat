@@ -29,10 +29,10 @@ use std::cell::RefCell;
 use std::ops::Deref;
 use std::time::Duration;
 use types::{
-    AccessGate, AccessGateConfig, AccessGateExpiryType, AccessGateType, BuildVersion, CanisterId, ChannelId, ChatMetrics,
-    CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, CommunityRole, Cryptocurrency, Cycles,
-    Document, Empty, FrozenGroupInfo, Milliseconds, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId,
-    UserType,
+    AccessGate, AccessGateConfigInternal, AccessGateExpiryType, AccessGateType, BuildVersion, CanisterId,
+    ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, CommunityRole,
+    Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, Milliseconds, Notification, PaymentGate, Rules, TimestampMillis,
+    Timestamped, UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use utils::env::Environment;
@@ -219,7 +219,7 @@ impl RuntimeState {
             permissions: data.permissions.clone(),
             frozen: data.frozen.value.clone(),
             gate: data.gate_config.value.as_ref().map(|gc| gc.gate.clone()),
-            gate_config: data.gate_config.value.clone(),
+            gate_config: data.gate_config.value.clone().map(|gc| gc.into()),
             primary_language: data.primary_language.clone(),
             channels,
             membership,
@@ -310,7 +310,7 @@ struct Data {
     banner: Option<Document>,
     permissions: CommunityPermissions,
     #[serde(alias = "gate")]
-    gate_config: Timestamped<Option<AccessGateConfig>>,
+    gate_config: Timestamped<Option<AccessGateConfigInternal>>,
     primary_language: String,
     user_index_canister_id: CanisterId,
     local_user_index_canister_id: CanisterId,
@@ -376,7 +376,7 @@ impl Data {
         proposals_bot_user_id: UserId,
         escrow_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
-        gate: Option<AccessGateConfig>,
+        gate: Option<AccessGateConfigInternal>,
         default_channels: Vec<String>,
         default_channel_rules: Option<Rules>,
         mark_active_duration: Milliseconds,
@@ -578,7 +578,7 @@ impl Data {
     pub fn update_member_expiry(
         &mut self,
         channel_id: Option<ChannelId>,
-        prev_gate_config: &Option<AccessGateConfig>,
+        prev_gate_config: &Option<AccessGateConfigInternal>,
         now: TimestampMillis,
     ) {
         let prev_gate_expiry = prev_gate_config.as_ref().and_then(|gc| gc.expiry());
@@ -637,7 +637,7 @@ impl Data {
         }
     }
 
-    pub fn get_access_gate_config(&self, channel_id: Option<ChannelId>) -> Option<&AccessGateConfig> {
+    pub fn get_access_gate_config(&self, channel_id: Option<ChannelId>) -> Option<&AccessGateConfigInternal> {
         if let Some(channel_id) = channel_id {
             self.channels
                 .get(&channel_id)

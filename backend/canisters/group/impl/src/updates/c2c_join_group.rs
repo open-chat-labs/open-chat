@@ -7,7 +7,7 @@ use chat_events::ChatEventInternal;
 use gated_groups::{check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult, CheckVerifiedCredentialGateArgs};
 use group_canister::c2c_join_group::{Response::*, *};
 use group_chat_core::AddResult;
-use types::{AccessGate, AccessGateConfig, MemberJoined, UsersUnblocked};
+use types::{AccessGate, AccessGateConfigInternal, MemberJoined, UsersUnblocked};
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
@@ -27,7 +27,10 @@ async fn c2c_join_group(args: Args) -> Response {
     mutate_state(|state| c2c_join_group_impl(args, state))
 }
 
-fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(AccessGateConfig, CheckGateArgs)>, Response> {
+fn is_permitted_to_join(
+    args: &Args,
+    state: &RuntimeState,
+) -> Result<Option<(AccessGateConfigInternal, CheckGateArgs)>, Response> {
     let caller = state.env.caller();
 
     // If the call is from the user index then we skip the checks

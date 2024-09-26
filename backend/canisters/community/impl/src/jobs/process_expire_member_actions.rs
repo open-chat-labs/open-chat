@@ -11,7 +11,7 @@ use local_user_index_canister_c2c_client::lookup_users;
 use std::cell::Cell;
 use std::{cmp::max, time::Duration};
 use tracing::trace;
-use types::AccessGateConfig;
+use types::AccessGateConfigInternal;
 
 use super::expire_members::{self, MEMBER_ACCESS_EXPIRY_DELAY};
 
@@ -98,7 +98,7 @@ async fn process_gate_check_async(details: ExpiringMemberActionDetails) {
 
 struct PrepareResult {
     details: ExpiringMemberActionDetails,
-    gate_config: AccessGateConfig,
+    gate_config: AccessGateConfigInternal,
     check_gate_args: CheckGateArgs,
 }
 

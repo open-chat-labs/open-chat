@@ -19,6 +19,7 @@ pub struct Args {
     pub events_ttl: OptionUpdate<Milliseconds>,
     #[ts(as = "types::OptionUpdateAccessGate")]
     pub gate: OptionUpdate<AccessGate>,
+    #[ts(as = "types::OptionUpdateAccessGateConfig")]
     pub gate_config: OptionUpdate<AccessGateConfig>,
     pub public: Option<bool>,
     pub messages_visible_to_non_members: Option<bool>,

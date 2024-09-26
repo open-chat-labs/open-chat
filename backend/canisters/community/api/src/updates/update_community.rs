@@ -19,6 +19,7 @@ pub struct Args {
     pub permissions: Option<OptionalCommunityPermissions>,
     #[ts(as = "types::OptionUpdateAccessGate")]
     pub gate: OptionUpdate<AccessGate>,
+    #[ts(as = "types::OptionUpdateAccessGateConfig")]
     pub gate_config: OptionUpdate<AccessGateConfig>,
     pub public: Option<bool>,
     pub primary_language: Option<String>,

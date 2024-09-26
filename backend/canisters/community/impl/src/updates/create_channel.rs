@@ -131,7 +131,7 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
                 args.history_visible_to_new_joiners,
                 messages_visible_to_non_members,
                 permissions,
-                gate_config.clone(),
+                gate_config.clone().map(|gc| gc.into()),
                 args.events_ttl,
                 member.user_type,
                 state.env.rng().gen(),

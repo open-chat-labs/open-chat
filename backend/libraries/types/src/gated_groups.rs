@@ -8,14 +8,20 @@ use ts_export::ts_export;
 pub const SNS_FEE_SHARE_PERCENT: u128 = 2;
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-#[serde(from = "AccessGateCombined")]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct AccessGateConfig {
     pub gate: AccessGate,
     pub expiry: Option<Milliseconds>,
 }
 
-impl AccessGateConfig {
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[serde(from = "AccessGateCombined")]
+pub struct AccessGateConfigInternal {
+    pub gate: AccessGate,
+    pub expiry: Option<Milliseconds>,
+}
+
+impl AccessGateConfigInternal {
     pub fn expiry(&self) -> Option<Milliseconds> {
         match self.gate {
             AccessGate::Composite(_) | AccessGate::Locked | AccessGate::ReferredByMember => None,
@@ -38,7 +44,35 @@ impl From<AccessGate> for AccessGateConfig {
     }
 }
 
-impl From<AccessGateCombined> for AccessGateConfig {
+// TODO: Delete this after it is released
+impl From<AccessGate> for AccessGateConfigInternal {
+    fn from(value: AccessGate) -> Self {
+        AccessGateConfigInternal {
+            gate: value,
+            expiry: None,
+        }
+    }
+}
+
+impl From<AccessGateConfigInternal> for AccessGateConfig {
+    fn from(value: AccessGateConfigInternal) -> Self {
+        AccessGateConfig {
+            gate: value.gate,
+            expiry: value.expiry,
+        }
+    }
+}
+
+impl From<AccessGateConfig> for AccessGateConfigInternal {
+    fn from(value: AccessGateConfig) -> Self {
+        AccessGateConfigInternal {
+            gate: value.gate,
+            expiry: value.expiry,
+        }
+    }
+}
+
+impl From<AccessGateCombined> for AccessGateConfigInternal {
     fn from(value: AccessGateCombined) -> Self {
         match value {
             AccessGateCombined::AccessGateConfig(access_gate_config) => access_gate_config,
@@ -50,7 +84,7 @@ impl From<AccessGateCombined> for AccessGateConfig {
 #[derive(Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum AccessGateCombined {
-    AccessGateConfig(AccessGateConfig),
+    AccessGateConfig(AccessGateConfigInternal),
     Accessgate(AccessGate),
 }
 

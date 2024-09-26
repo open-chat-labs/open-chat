@@ -1,7 +1,7 @@
 use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageResult,
-    DeleteUndeleteMessagesArgs, MessageContentInternal, PushMessageArgs, Reader, RemoveExpiredEventsResult, TipMessageArgs,
-    UndeleteMessageResult,
+    DeleteUndeleteMessagesArgs, GroupGateUpdatedInternal, MessageContentInternal, PushMessageArgs, Reader,
+    RemoveExpiredEventsResult, TipMessageArgs, UndeleteMessageResult,
 };
 use event_store_producer::{EventStoreClient, Runtime};
 use itertools::Itertools;
@@ -12,15 +12,15 @@ use serde::{Deserialize, Serialize};
 use std::cmp::{max, min};
 use std::collections::{BTreeSet, HashSet};
 use types::{
-    AccessGate, AccessGateConfig, AvatarChanged, ContentValidationError, CustomPermission, Document, EventIndex,
-    EventOrExpiredRange, EventWrapper, EventsResponse, ExternalUrlUpdated, FieldTooLongResult, FieldTooShortResult,
-    GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole,
-    GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved,
-    Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned,
-    MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate, OptionalGroupPermissions,
-    OptionalMessagePermissions, PermissionsChanged, PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules,
-    SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UserType, UsersBlocked,
-    UsersInvited, Version, Versioned, VersionedRules, VideoCall,
+    AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, ContentValidationError, CustomPermission, Document,
+    EventIndex, EventOrExpiredRange, EventWrapper, EventsResponse, ExternalUrlUpdated, FieldTooLongResult, FieldTooShortResult,
+    GroupDescriptionChanged, GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
+    GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent,
+    MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned,
+    MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions,
+    PermissionsChanged, PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview,
+    TimestampMillis, Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version, Versioned,
+    VersionedRules, VideoCall,
 };
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::document_validation::validate_avatar;
@@ -57,7 +57,7 @@ pub struct GroupChatCore {
     pub permissions: Timestamped<GroupPermissions>,
     pub date_last_pinned: Option<TimestampMillis>,
     #[serde(alias = "gate")]
-    pub gate_config: Timestamped<Option<AccessGateConfig>>,
+    pub gate_config: Timestamped<Option<AccessGateConfigInternal>>,
     pub invited_users: InvitedUsers,
     pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
     #[serde(default)]
@@ -78,7 +78,7 @@ impl GroupChatCore {
         history_visible_to_new_joiners: bool,
         messages_visible_to_non_members: bool,
         permissions: GroupPermissions,
-        gate_config: Option<AccessGateConfig>,
+        gate_config: Option<AccessGateConfigInternal>,
         events_ttl: Option<Milliseconds>,
         created_by_user_type: UserType,
         anonymized_chat_id: u128,
@@ -239,7 +239,7 @@ impl GroupChatCore {
                 .gate_config
                 .if_set_after(since)
                 .cloned()
-                .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
+                .map_or(OptionUpdate::NoChange, |ogc| OptionUpdate::from_update(ogc.map(|g| g.into()))),
             rules_changed: self.rules.version_last_updated > since,
             video_call_in_progress: self
                 .events
@@ -1354,7 +1354,7 @@ impl GroupChatCore {
         rules: Option<UpdatedRules>,
         avatar: OptionUpdate<Document>,
         permissions: Option<OptionalGroupPermissions>,
-        gate_config: OptionUpdate<AccessGateConfig>,
+        gate_config: OptionUpdate<AccessGateConfigInternal>,
         public: Option<bool>,
         messages_visible_to_non_members: Option<bool>,
         events_ttl: OptionUpdate<Milliseconds>,
@@ -1450,7 +1450,7 @@ impl GroupChatCore {
         rules: Option<UpdatedRules>,
         avatar: OptionUpdate<Document>,
         permissions: Option<OptionalGroupPermissions>,
-        gate_config: OptionUpdate<AccessGateConfig>,
+        gate_config: OptionUpdate<AccessGateConfigInternal>,
         public: Option<bool>,
         messages_visible_to_non_members: Option<bool>,
         events_ttl: OptionUpdate<Milliseconds>,
@@ -1561,9 +1561,8 @@ impl GroupChatCore {
                 result.gate_config_update = OptionUpdate::from_update(gate_config.clone());
 
                 events.push_main_event(
-                    ChatEventInternal::GroupGateUpdated(Box::new(GroupGateUpdated {
+                    ChatEventInternal::GroupGateUpdated(Box::new(GroupGateUpdatedInternal {
                         updated_by: user_id,
-                        new_gate: gate_config.as_ref().map(|gc| gc.gate.clone()),
                         new_gate_config: gate_config,
                     })),
                     0,
@@ -1965,7 +1964,7 @@ pub enum UpdateResult {
 
 pub struct UpdateSuccessResult {
     pub newly_public: bool,
-    pub gate_config_update: OptionUpdate<AccessGateConfig>,
+    pub gate_config_update: OptionUpdate<AccessGateConfigInternal>,
     pub rules_version: Option<Version>,
 }
 

@@ -185,7 +185,7 @@ fn process_events(since: TimestampMillis, member: Option<&CommunityMemberInterna
     }
 
     if data.gate_config.timestamp > since {
-        updates.gate_config = OptionUpdate::from_update(data.gate_config.value.clone());
+        updates.gate_config = OptionUpdate::from_update(data.gate_config.value.clone().map(|gc| gc.into()));
     }
 
     // Iterate through events starting from most recent

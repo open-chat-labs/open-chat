@@ -1,10 +1,11 @@
 use candid::CandidType;
+use chat_events::GroupGateUpdatedInternal;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use types::{
     AvatarChanged, BannerChanged, ChannelDeleted, ChannelId, ChatId, CommunityMemberLeft, CommunityMembersRemoved,
     CommunityPermissionsChanged, CommunityRoleChanged, CommunityUsersBlocked, CommunityVisibilityChanged,
-    DefaultChannelsChanged, EventIndex, EventWrapper, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated,
+    DefaultChannelsChanged, EventIndex, EventWrapper, GroupCreated, GroupDescriptionChanged, GroupFrozen,
     GroupInviteCodeChanged, GroupNameChanged, GroupRulesChanged, GroupUnfrozen, MemberJoined, PrimaryLanguageChanged,
     TimestampMillis, UserId, UsersInvited, UsersUnblocked,
 };
@@ -16,7 +17,7 @@ pub struct CommunityEvents {
     latest_event_timestamp: TimestampMillis,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum CommunityEventInternal {
     Created(Box<GroupCreated>),
     NameChanged(Box<GroupNameChanged>),
@@ -36,7 +37,7 @@ pub enum CommunityEventInternal {
     InviteCodeChanged(Box<GroupInviteCodeChanged>),
     Frozen(Box<GroupFrozen>),
     Unfrozen(Box<GroupUnfrozen>),
-    GateUpdated(Box<GroupGateUpdated>),
+    GateUpdated(Box<GroupGateUpdatedInternal>),
     ChannelDeleted(Box<ChannelDeleted>),
     DefaultChannelsChanged(Box<DefaultChannelsChanged>),
     PrimaryLanguageChanged(Box<PrimaryLanguageChanged>),

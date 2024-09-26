@@ -304,7 +304,7 @@ impl Channel {
             events_ttl: events_ttl.value,
             events_ttl_last_updated: events_ttl.timestamp,
             gate: chat.gate_config.value.as_ref().map(|gc| gc.gate.clone()),
-            gate_config: chat.gate_config.value.clone(),
+            gate_config: chat.gate_config.value.clone().map(|gc| gc.into()),
             membership,
             video_call_in_progress: chat.events.video_call_in_progress().value.clone(),
             is_invited,
@@ -433,7 +433,7 @@ impl From<&Channel> for ChannelMatch {
             avatar_id: types::Document::id(&channel.chat.avatar),
             member_count: channel.chat.members.len(),
             gate: channel.chat.gate_config.value.as_ref().map(|gc| gc.gate.clone()),
-            gate_config: channel.chat.gate_config.value.clone(),
+            gate_config: channel.chat.gate_config.value.clone().map(|gc| gc.into()),
             subtype: channel.chat.subtype.value.clone(),
         }
     }

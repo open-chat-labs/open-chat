@@ -58,7 +58,7 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                 args.rules,
                 args.avatar,
                 args.permissions_v2,
-                gate_config_updates,
+                gate_config_updates.map(|gc| gc.into()),
                 args.public,
                 args.messages_visible_to_non_members,
                 args.events_ttl,

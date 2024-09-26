@@ -3,13 +3,14 @@ use crate::model::events::CommunityEventInternal;
 use crate::{jobs, mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use chat_events::GroupGateUpdatedInternal;
 use community_canister::update_community::{Response::*, *};
 use group_index_canister::{c2c_make_community_private, c2c_update_community};
 use tracing::error;
 use types::{
-    AccessGateConfig, AvatarChanged, BannerChanged, CanisterId, CommunityId, CommunityPermissions, CommunityPermissionsChanged,
-    CommunityVisibilityChanged, Document, GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged, GroupRulesChanged,
-    OptionUpdate, OptionalCommunityPermissions, PrimaryLanguageChanged, Timestamped, UserId,
+    AccessGateConfigInternal, AvatarChanged, BannerChanged, CanisterId, CommunityId, CommunityPermissions,
+    CommunityPermissionsChanged, CommunityVisibilityChanged, Document, GroupDescriptionChanged, GroupNameChanged,
+    GroupRulesChanged, OptionUpdate, OptionalCommunityPermissions, PrimaryLanguageChanged, Timestamped, UserId,
 };
 use utils::document_validation::{validate_avatar, validate_banner};
 use utils::text_validation::{
@@ -63,7 +64,7 @@ async fn update_community(mut args: Args) -> Response {
             avatar_id: prepare_result.avatar_id,
             banner_id: prepare_result.banner_id,
             gate: prepare_result.gate_config.as_ref().map(|gc| gc.gate.clone()),
-            gate_config: prepare_result.gate_config,
+            gate_config: prepare_result.gate_config.map(|gc| gc.into()),
             primary_language: prepare_result.primary_language,
             channel_count: prepare_result.channel_count,
         };
@@ -102,7 +103,7 @@ struct PrepareResult {
     description: String,
     avatar_id: Option<u128>,
     banner_id: Option<u128>,
-    gate_config: Option<AccessGateConfig>,
+    gate_config: Option<AccessGateConfigInternal>,
     primary_language: String,
     channel_count: u32,
 }
@@ -122,10 +123,11 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     let avatar_update = args.avatar.as_ref().expand();
     let banner_update = args.banner.as_ref().expand();
     let gate_config_updates = if args.gate_config.has_update() {
-        &args.gate_config
+        &args.gate_config.as_ref().map(|gc| gc.clone().into())
     } else {
         &args.gate.as_ref().map(|g| g.clone().into())
     };
+
     let gate_config = gate_config_updates.as_ref().apply_to(state.data.gate_config.value.as_ref());
 
     if let Some(name) = &args.name {
@@ -308,7 +310,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
     }
 
     let gate_config_updates = if args.gate_config.has_update() {
-        args.gate_config
+        args.gate_config.as_ref().map(|g| g.clone().into())
     } else {
         args.gate.as_ref().map(|g| g.clone().into())
     };
@@ -322,9 +324,8 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
             state.data.update_member_expiry(None, &prev_gate_config, now);
 
             state.data.events.push_event(
-                CommunityEventInternal::GateUpdated(Box::new(GroupGateUpdated {
+                CommunityEventInternal::GateUpdated(Box::new(GroupGateUpdatedInternal {
                     updated_by: my_user_id,
-                    new_gate: gate_config.clone().map(|gc| gc.gate),
                     new_gate_config: gate_config,
                 })),
                 state.env.now(),

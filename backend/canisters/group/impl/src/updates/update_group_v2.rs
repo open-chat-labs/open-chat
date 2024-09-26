@@ -7,7 +7,7 @@ use group_canister::update_group_v2::*;
 use group_chat_core::UpdateResult;
 use group_index_canister::{c2c_make_private, c2c_update_group};
 use tracing::error;
-use types::{AccessGateConfig, CanisterId, ChatId, Document, OptionUpdate, UserId};
+use types::{AccessGateConfigInternal, CanisterId, ChatId, Document, OptionUpdate, UserId};
 
 #[update(candid = true, msgpack = true)]
 #[trace]
@@ -44,7 +44,7 @@ async fn update_group_v2(mut args: Args) -> Response {
             description: prepare_result.description,
             avatar_id: prepare_result.avatar_id,
             gate: prepare_result.gate_config.as_ref().map(|gc| gc.gate.clone()),
-            gate_config: prepare_result.gate_config,
+            gate_config: prepare_result.gate_config.map(|gc| gc.into()),
         };
 
         match group_index_canister_c2c_client::c2c_update_group(group_index_canister_id, &c2c_update_group_args).await {
@@ -80,7 +80,7 @@ struct PrepareResult {
     name: String,
     description: String,
     avatar_id: Option<u128>,
-    gate_config: Option<AccessGateConfig>,
+    gate_config: Option<AccessGateConfigInternal>,
 }
 
 fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
@@ -95,7 +95,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
 
     let caller = state.env.caller();
     let gate_config_updates = if args.gate_config.has_update() {
-        &args.gate_config
+        &args.gate_config.as_ref().map(|gcu| gcu.clone().into())
     } else {
         &args.gate.as_ref().map(|g| g.clone().into())
     };
@@ -150,7 +150,8 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
 }
 
 fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessResult {
-    let gate_config = if args.gate_config.has_update() { args.gate_config } else { args.gate.map(|g| g.into()) };
+    let gate_config =
+        (if args.gate_config.has_update() { args.gate_config } else { args.gate.map(|g| g.into()) }).map(|gc| gc.into());
 
     let result = state.data.chat.do_update(
         my_user_id,
