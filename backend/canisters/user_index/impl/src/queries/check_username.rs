@@ -3,7 +3,7 @@ use canister_api_macros::query;
 use user_index_canister::check_username::{Response::*, *};
 use utils::text_validation::{validate_username, UsernameValidationError};
 
-#[query(msgpack = true)]
+#[query(candid = true, msgpack = true)]
 fn check_username(args: Args) -> Response {
     read_state(|state| check_username_impl(args, state))
 }
