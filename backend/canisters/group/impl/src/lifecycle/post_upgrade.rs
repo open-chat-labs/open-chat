@@ -1,6 +1,6 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{read_state, Data};
+use crate::{mutate_state, read_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use group_canister::post_upgrade::Args;
@@ -29,5 +29,9 @@ fn post_upgrade(args: Args) {
         state
             .data
             .record_instructions_count(InstructionCountFunctionId::PostUpgrade, now)
+    });
+
+    mutate_state(|state| {
+        state.data.chat.events.populate_search_index();
     });
 }

@@ -15,7 +15,7 @@ fn search_messages_impl(args: Args, state: &RuntimeState) -> Response {
         match state
             .data
             .chat
-            .search(user_id, args.search_term, args.users, args.max_results, state.env.now())
+            .search(user_id, args.search_term, args.users, args.max_results)
         {
             SearchResults::Success(matches) => Success(SuccessResult { matches }),
             SearchResults::InvalidTerm => InvalidTerm,
