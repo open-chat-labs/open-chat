@@ -100,6 +100,7 @@ fn diamond_member_lapses_and_rejoins_successfully(channel: bool) {
         canister_ids,
         *controller,
         DiamondMembershipPlanDuration::OneMonth,
+        false,
     );
 
     // User2 rejoins channel
@@ -123,7 +124,17 @@ fn diamond_member_lapses_and_rejoins_successfully(channel: bool) {
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
-    let user2 = client::register_diamond_user(env, canister_ids, controller);
+    let user2 = client::register_user(env, canister_ids);
+
+    // Upgrade user 2 to non-recurring diamond membership
+    client::upgrade_user(
+        &user2,
+        env,
+        canister_ids,
+        controller,
+        DiamondMembershipPlanDuration::OneMonth,
+        false,
+    );
 
     let community_id = client::user::happy_path::create_community(env, &user1, &random_string(), true, vec![random_string()]);
     let channel_id = client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string());
