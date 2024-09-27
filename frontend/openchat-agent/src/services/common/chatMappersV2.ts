@@ -120,6 +120,7 @@ import {
     ProposalRewardStatus,
     UnsupportedValueError,
     CommonResponses,
+    chatIdentifiersEqual,
     emptyChatMetrics,
     // codeToText,
     CHAT_SYMBOL,
@@ -174,6 +175,7 @@ import type {
     MessagePermissions as TMessagePermissions,
     MessageReminderContent as TMessageReminderContent,
     MessageReminderCreatedContent as TMessageReminderCreatedContent,
+    MultiUserChat as TMultiUserChat,
     P2PSwapContent as TP2PSwapContent,
     P2PSwapContentInitial as TP2PSwapContentInitial,
     P2PSwapStatus as TP2PSwapStatus,
@@ -1309,42 +1311,40 @@ export function memberRole(value: TGroupRole | TCommunityRole): MemberRole {
     throw new UnsupportedValueError("Unexpected ApiRole type received", value);
 }
 
-// export function apiMultiUserChat(chatId: ChatIdentifier): ApiMultiUserChat {
-//     switch (chatId.kind) {
-//         case "group_chat":
-//             return {
-//                 Group: Principal.fromText(chatId.groupId),
-//             };
-//         case "channel":
-//             return {
-//                 Channel: [Principal.fromText(chatId.communityId), BigInt(chatId.channelId)],
-//             };
-//         default:
-//             throw new Error("Cannot convert a DirectChatIdentifier into an ApiMultiUserChat");
-//     }
-// }
-//
-// export function apiReplyContextArgs(chatId: ChatIdentifier, domain: ReplyContext): ApiReplyContext {
-//     if (
-//         domain.sourceContext !== undefined &&
-//         !chatIdentifiersEqual(chatId, domain.sourceContext.chatId)
-//     ) {
-//         return {
-//             chat_if_other: [
-//                 [
-//                     apiMultiUserChat(domain.sourceContext.chatId),
-//                     apiOptional(identity, domain.sourceContext.threadRootMessageIndex),
-//                 ],
-//             ],
-//             event_index: domain.eventIndex,
-//         };
-//     } else {
-//         return {
-//             chat_if_other: [],
-//             event_index: domain.eventIndex,
-//         };
-//     }
-// }
+export function apiMultiUserChat(chatId: ChatIdentifier): TMultiUserChat {
+    switch (chatId.kind) {
+        case "group_chat":
+            return {
+                Group: principalStringToBytes(chatId.groupId),
+            };
+        case "channel":
+            return {
+                Channel: [principalStringToBytes(chatId.communityId), BigInt(chatId.channelId)],
+            };
+        default:
+            throw new Error("Cannot convert a DirectChatIdentifier into an ApiMultiUserChat");
+    }
+}
+
+export function apiReplyContextArgs(chatId: ChatIdentifier, domain: ReplyContext): TReplyContext {
+    if (
+        domain.sourceContext !== undefined &&
+        !chatIdentifiersEqual(chatId, domain.sourceContext.chatId)
+    ) {
+        return {
+            chat_if_other: [
+                apiMultiUserChat(domain.sourceContext.chatId),
+                domain.sourceContext.threadRootMessageIndex ?? null,
+            ],
+            event_index: domain.eventIndex,
+        };
+    } else {
+        return {
+            chat_if_other: undefined,
+            event_index: domain.eventIndex,
+        };
+    }
+}
 
 export function apiMessageContent(domain: MessageContent): TMessageContentInitial {
     switch (domain.kind) {

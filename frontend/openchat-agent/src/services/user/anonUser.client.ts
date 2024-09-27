@@ -197,7 +197,8 @@ export class AnonUserClient {
         _chatId: DirectChatIdentifier,
         _event: EventWrapper<Message>,
         _messageFilterFailed: bigint | undefined,
-        _threadRootMessageIndex?: number,
+        _threadRootMessageIndex: number | undefined,
+        _onRequestAccepted: () => void,
     ): Promise<[SendMessageResponse, Message]> {
         throw new AnonymousOperationError();
     }
