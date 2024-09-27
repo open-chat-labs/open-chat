@@ -3,6 +3,7 @@ use crate::{CanisterId, Milliseconds};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fmt::{Display, Formatter};
 use ts_export::ts_export;
 
 pub const SNS_FEE_SHARE_PERCENT: u128 = 2;
@@ -23,8 +24,9 @@ pub struct AccessGateConfigInternal {
 
 impl AccessGateConfigInternal {
     pub fn expiry(&self) -> Option<Milliseconds> {
-        match self.gate {
-            AccessGate::Composite(_) | AccessGate::Locked | AccessGate::ReferredByMember => None,
+        let expiry_type: AccessGateExpiryType = self.gate().into();
+        match expiry_type {
+            AccessGateExpiryType::Invalid => None,
             _ => self.expiry,
         }
     }
@@ -117,6 +119,25 @@ pub enum AccessGateType {
     ReferredByMember,
 }
 
+impl Display for AccessGateType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let str = match self {
+            AccessGateType::DiamondMember => "diamond",
+            AccessGateType::LifetimeDiamondMember => "lifetime_diamond",
+            AccessGateType::UniquePerson => "unique_person",
+            AccessGateType::VerifiedCredential => "verified_credential",
+            AccessGateType::SnsNeuron => "sns_neuron",
+            AccessGateType::Payment => "payment",
+            AccessGateType::TokenBalance => "token_balance",
+            AccessGateType::Composite => "composite",
+            AccessGateType::Locked => "locked",
+            AccessGateType::ReferredByMember => "referred_by_member",
+        };
+
+        f.write_str(str)
+    }
+}
+
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum AccessGateNonComposite {
@@ -166,9 +187,7 @@ impl From<AccessGate> for AccessGateScope {
 impl From<&AccessGate> for AccessGateExpiryType {
     fn from(value: &AccessGate) -> Self {
         match value {
-            AccessGate::DiamondMember | AccessGate::LifetimeDiamondMember | AccessGate::UniquePerson => {
-                AccessGateExpiryType::Batch
-            }
+            AccessGate::DiamondMember => AccessGateExpiryType::Batch,
             AccessGate::Payment(_) | AccessGate::VerifiedCredential(_) => AccessGateExpiryType::Lapse,
             AccessGate::SnsNeuron(_) | AccessGate::TokenBalance(_) => AccessGateExpiryType::Single,
             _ => AccessGateExpiryType::Invalid,
@@ -207,19 +226,8 @@ impl AccessGate {
         matches!(self, AccessGate::Payment(_))
     }
 
-    pub fn gate_type(&self) -> &'static str {
-        match self {
-            AccessGate::DiamondMember => "diamond",
-            AccessGate::LifetimeDiamondMember => "lifetime_diamond",
-            AccessGate::UniquePerson => "unique_person",
-            AccessGate::VerifiedCredential(_) => "verified_credential",
-            AccessGate::SnsNeuron(_) => "sns_neuron",
-            AccessGate::Payment(_) => "payment",
-            AccessGate::TokenBalance(_) => "token_balance",
-            AccessGate::Composite(_) => "composite",
-            AccessGate::Locked => "locked",
-            AccessGate::ReferredByMember => "referred_by_member",
-        }
+    pub fn gate_type(&self) -> AccessGateType {
+        self.into()
     }
 }
 
