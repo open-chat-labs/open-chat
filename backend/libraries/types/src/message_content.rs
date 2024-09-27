@@ -460,7 +460,7 @@ impl Display for MessageContentType {
             MessageContentType::ReportedMessage => "ReportedMessage",
             MessageContentType::P2PSwap => "P2PSwap",
             MessageContentType::VideoCall => "VideoCall",
-            MessageContentType::Custom(c) => &c,
+            MessageContentType::Custom(c) => c,
         };
 
         f.write_str(s)
