@@ -22,6 +22,7 @@
     import ReAuthenticate from "./ReAuthenticate.svelte";
     import type { DelegationChain, ECDSAKeyIdentity } from "@dfinity/identity";
     import ForgotPinLabel from "../ForgotPinLabel.svelte";
+    import { mobileWidth } from "../../../stores/screenDimensions";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -126,7 +127,7 @@
     }
 </script>
 
-<ModalContent closeIcon fixedWidth={false} on:close>
+<ModalContent closeIcon fitToContent={!$mobileWidth} fixedWidth={false} on:close>
     <div class="header" slot="header">
         <Translatable resourceKey={title} />
     </div>

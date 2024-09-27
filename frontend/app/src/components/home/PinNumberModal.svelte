@@ -5,6 +5,7 @@
     import ModalContent from "../ModalContent.svelte";
     import Pincode from "../pincode/Pincode.svelte";
     import ForgotPinLabel from "./ForgotPinLabel.svelte";
+    import { mobileWidth } from "../../stores/screenDimensions";
 
     const dispatch = createEventDispatcher();
 
@@ -18,7 +19,7 @@
     }
 </script>
 
-<ModalContent closeIcon hideFooter fixedWidth={false} on:close>
+<ModalContent closeIcon hideFooter fitToContent={!mobileWidth} fixedWidth={false} on:close>
     <div slot="header">
         <Translatable resourceKey={i18nKey("pinNumber.enterPin")} />
     </div>

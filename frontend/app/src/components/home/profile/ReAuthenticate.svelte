@@ -186,6 +186,14 @@
 </div>
 
 <style lang="scss">
+    .body {
+        width: 100%;
+
+        @include not-mobile() {
+            min-width: 350px;
+        }
+    }
+
     .info {
         margin-bottom: $sp4;
 
