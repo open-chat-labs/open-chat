@@ -3,7 +3,7 @@ use canister_api_macros::query;
 use canister_tracing_macros::trace;
 use registry_canister::updates::{Response::*, *};
 
-#[query(msgpack = true)]
+#[query(candid = true, msgpack = true)]
 #[trace]
 fn updates(args: Args) -> Response {
     read_state(|state| updates_impl(args, state))

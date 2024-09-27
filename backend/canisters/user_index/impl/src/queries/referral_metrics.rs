@@ -4,7 +4,7 @@ use std::{cmp::Reverse, collections::HashMap};
 use types::UserId;
 use user_index_canister::referral_metrics::{Response::*, *};
 
-#[query(msgpack = true)]
+#[query(candid = true, msgpack = true)]
 fn referral_metrics(_args: Args) -> Response {
     read_state(referral_metrics_impl)
 }

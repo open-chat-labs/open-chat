@@ -4,7 +4,7 @@ use ledger_utils::default_ledger_account;
 use types::{BuildVersion, CanisterUpgradeStatus};
 use user_index_canister::current_user::{Response::*, *};
 
-#[query(msgpack = true)]
+#[query(candid = true, msgpack = true)]
 fn current_user(_args: Args) -> Response {
     read_state(current_user_impl)
 }
