@@ -1,5 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use ts_export::ts_export;
 use types::{MessageMatch, UserId};
 
@@ -8,7 +9,7 @@ use types::{MessageMatch, UserId};
 pub struct Args {
     pub search_term: String,
     pub max_results: u8,
-    pub users: Option<Vec<UserId>>,
+    pub users: Option<HashSet<UserId>>,
 }
 
 #[ts_export(group, search_messages)]
