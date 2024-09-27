@@ -88,7 +88,6 @@ import {
     initialStateResponse,
     markReadResponse,
     searchDirectChatResponse,
-    sendMessageResponse,
     setAvatarResponse,
     setBioResponse,
     unblockResponse,
@@ -119,6 +118,7 @@ import {
     claimDailyChitResponse,
     apiWalletConfig,
 } from "./mappers";
+import { sendMessageResponse } from "./mappersV2";
 import {
     type Database,
     getCachedEvents,
@@ -150,9 +150,13 @@ import {
     joinVideoCallResponse,
     setPinNumberResponse,
 } from "../common/chatMappers";
+import {
+    apiMessageContent as apiMessageContentV2,
+    apiReplyContextArgs as apiReplyContextArgsV2,
+} from "../common/chatMappersV2";
 import { DataClient } from "../data/data.client";
 import { muteNotificationsResponse } from "../notifications/mappers";
-import { identity, toVoid } from "../../utils/mapping";
+import { identity, mapOptional, principalStringToBytes, toVoid } from "../../utils/mapping";
 import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
 import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING, ResponseTooLargeError } from "openchat-shared";
@@ -163,6 +167,7 @@ import {
 } from "../common/chunked";
 import type { SetPinNumberResponse } from "openchat-shared";
 import { setChitInfoInCache } from "../../utils/userCache";
+import { UserSendMessageArgs, UserSendMessageResponse } from "../../typebox";
 
 export class UserClient extends CandidService {
     private userService: UserService;
@@ -174,7 +179,7 @@ export class UserClient extends CandidService {
         identity: Identity,
         agent: HttpAgent,
         private config: AgentConfig,
-        private db: Database
+        private db: Database,
     ) {
         super(identity, agent, userId);
         this.userId = userId;
@@ -185,10 +190,10 @@ export class UserClient extends CandidService {
     private setCachedEvents(
         chatId: ChatIdentifier,
         resp: EventsResponse<ChatEvent>,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
     ): EventsResponse<ChatEvent> {
         setCachedEvents(this.db, chatId, resp, threadRootMessageIndex).catch((err) =>
-            this.config.logger.error("Error writing cached group events", err)
+            this.config.logger.error("Error writing cached group events", err),
         );
         return resp;
     }
@@ -197,7 +202,7 @@ export class UserClient extends CandidService {
         chatId: DirectChatIdentifier,
         [cachedEvents, missing]: [EventsSuccessResult<ChatEvent>, Set<number>],
         threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined
+        latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
         if (missing.size === 0) {
             return Promise.resolve(cachedEvents);
@@ -206,7 +211,7 @@ export class UserClient extends CandidService {
                 [...missing],
                 chatId,
                 threadRootMessageIndex,
-                latestKnownUpdate
+                latestKnownUpdate,
             )
                 .then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex))
                 .then((resp) => {
@@ -224,7 +229,7 @@ export class UserClient extends CandidService {
                 to_add: [apiChatIdentifier(chatId)],
                 to_remove: [],
             }),
-            manageFavouritesResponse
+            manageFavouritesResponse,
         );
     }
 
@@ -234,7 +239,7 @@ export class UserClient extends CandidService {
                 to_add: [],
                 to_remove: [apiChatIdentifier(chatId)],
             }),
-            manageFavouritesResponse
+            manageFavouritesResponse,
         );
     }
 
@@ -245,7 +250,7 @@ export class UserClient extends CandidService {
         return this.handleQueryResponse(
             () => this.userService.initial_state(args),
             initialStateResponse,
-            args
+            args,
         );
     }
 
@@ -256,7 +261,7 @@ export class UserClient extends CandidService {
         return this.handleQueryResponse(
             () => this.userService.updates(args),
             getUpdatesResponse,
-            args
+            args,
         );
     }
 
@@ -264,7 +269,7 @@ export class UserClient extends CandidService {
         community: CommunitySummary,
         rules: Rules,
         defaultChannels: string[],
-        defaultChannelRules: Rules
+        defaultChannelRules: Rules,
     ): Promise<CreateCommunityResponse> {
         return this.handleResponse(
             this.userService.create_community({
@@ -272,20 +277,26 @@ export class UserClient extends CandidService {
                 name: community.name,
                 description: community.description,
                 history_visible_to_new_joiners: community.historyVisible,
-                avatar: apiOptional((data) => {
-                    return {
-                        id: DataClient.newBlobId(),
-                        data,
-                        mime_type: "image/jpg",
-                    };
-                }, community.avatar?.blobData),
-                banner: apiOptional((data) => {
-                    return {
-                        id: DataClient.newBlobId(),
-                        data,
-                        mime_type: "image/jpg",
-                    };
-                }, community.banner?.blobData),
+                avatar: apiOptional(
+                    (data) => {
+                        return {
+                            id: DataClient.newBlobId(),
+                            data,
+                            mime_type: "image/jpg",
+                        };
+                    },
+                    community.avatar?.blobData,
+                ),
+                banner: apiOptional(
+                    (data) => {
+                        return {
+                            id: DataClient.newBlobId(),
+                            data,
+                            mime_type: "image/jpg",
+                        };
+                    },
+                    community.banner?.blobData,
+                ),
                 permissions: [apiCommunityPermissions(community.permissions)],
                 rules,
                 gate: apiMaybeAccessGate(community.gate),
@@ -293,7 +304,7 @@ export class UserClient extends CandidService {
                 default_channel_rules: [defaultChannelRules],
                 primary_language: community.primaryLanguage,
             }),
-            createCommunityResponse
+            createCommunityResponse,
         );
     }
 
@@ -304,23 +315,26 @@ export class UserClient extends CandidService {
                 name: group.name,
                 description: group.description,
                 history_visible_to_new_joiners: group.historyVisible,
-                avatar: apiOptional((data) => {
-                    return {
-                        id: DataClient.newBlobId(),
-                        data,
-                        mime_type: "image/jpg",
-                    };
-                }, group.avatar?.blobData),
+                avatar: apiOptional(
+                    (data) => {
+                        return {
+                            id: DataClient.newBlobId(),
+                            data,
+                            mime_type: "image/jpg",
+                        };
+                    },
+                    group.avatar?.blobData,
+                ),
                 permissions_v2: [apiGroupPermissions(group.permissions)],
                 rules: group.rules,
                 gate: apiMaybeAccessGate(group.gate),
                 events_ttl: apiOptional(identity, group.eventsTTL),
                 messages_visible_to_non_members: apiOptional(
                     identity,
-                    group.messagesVisibleToNonMembers
+                    group.messagesVisibleToNonMembers,
                 ),
             }),
-            (resp) => createGroupResponse(resp, group.id)
+            (resp) => createGroupResponse(resp, group.id),
         );
     }
 
@@ -329,7 +343,7 @@ export class UserClient extends CandidService {
             this.userService.delete_group({
                 chat_id: Principal.fromText(chatId),
             }),
-            deleteGroupResponse
+            deleteGroupResponse,
         );
     }
 
@@ -338,7 +352,7 @@ export class UserClient extends CandidService {
             this.userService.delete_community({
                 community_id: Principal.fromText(id.communityId),
             }),
-            deleteCommunityResponse
+            deleteCommunityResponse,
         );
     }
 
@@ -346,13 +360,13 @@ export class UserClient extends CandidService {
         eventIndexes: number[],
         chatId: DirectChatIdentifier,
         threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined
+        latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
         return getCachedEventsByIndex(this.db, eventIndexes, {
             chatId,
             threadRootMessageIndex,
         }).then((res) =>
-            this.handleMissingEvents(chatId, res, threadRootMessageIndex, latestKnownUpdate)
+            this.handleMissingEvents(chatId, res, threadRootMessageIndex, latestKnownUpdate),
         );
     }
 
@@ -360,7 +374,7 @@ export class UserClient extends CandidService {
         eventIndexes: number[],
         chatId: DirectChatIdentifier,
         threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined
+        latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
@@ -372,7 +386,7 @@ export class UserClient extends CandidService {
         return this.handleQueryResponse(
             () => this.userService.events_by_index(args),
             (resp) => getEventsResponse(this.principal, resp, chatId, latestKnownUpdate),
-            args
+            args,
         );
     }
 
@@ -380,27 +394,27 @@ export class UserClient extends CandidService {
         eventIndexRange: IndexRange,
         chatId: DirectChatIdentifier,
         messageIndex: number,
-        latestKnownUpdate: bigint | undefined
+        latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
         const [cachedEvents, missing, totalMiss] = await getCachedEventsWindowByMessageIndex(
             this.db,
             eventIndexRange,
             { chatId },
-            messageIndex
+            messageIndex,
         );
         if (totalMiss || missing.size >= MAX_MISSING) {
             // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
             console.log(
                 "We didn't get enough back from the cache, going to the api",
                 missing.size,
-                totalMiss
+                totalMiss,
             );
             return this.chatEventsWindowFromBackend(chatId, messageIndex, latestKnownUpdate)
                 .then((resp) => this.setCachedEvents(chatId, resp))
                 .catch((err) => {
                     if (err instanceof ResponseTooLargeError) {
                         console.log(
-                            "Response size too large, we will try to split the window request into a a few chunks"
+                            "Response size too large, we will try to split the window request into a a few chunks",
                         );
                         return chunkedChatEventsWindowFromBackend(
                             (index: number, ascending: boolean, chunkSize: number) =>
@@ -410,17 +424,17 @@ export class UserClient extends CandidService {
                                     ascending,
                                     undefined,
                                     latestKnownUpdate,
-                                    chunkSize
+                                    chunkSize,
                                 ),
                             (index: number, chunkSize: number) =>
                                 this.chatEventsWindowFromBackend(
                                     chatId,
                                     index,
                                     latestKnownUpdate,
-                                    chunkSize
+                                    chunkSize,
                                 ),
                             eventIndexRange,
-                            messageIndex
+                            messageIndex,
                         ).then((resp) => this.setCachedEvents(chatId, resp));
                     } else {
                         throw err;
@@ -431,7 +445,7 @@ export class UserClient extends CandidService {
                 chatId,
                 [cachedEvents, missing],
                 undefined,
-                latestKnownUpdate
+                latestKnownUpdate,
             );
         }
     }
@@ -440,7 +454,7 @@ export class UserClient extends CandidService {
         chatId: DirectChatIdentifier,
         messageIndex: number,
         latestKnownUpdate: bigint | undefined,
-        maxEvents: number = MAX_EVENTS
+        maxEvents: number = MAX_EVENTS,
     ): Promise<EventsResponse<ChatEvent>> {
         const thread_root_message_index: [] = [];
         const args = {
@@ -455,7 +469,7 @@ export class UserClient extends CandidService {
         return this.handleQueryResponse(
             () => this.userService.events_window(args),
             (resp) => getEventsResponse(this.principal, resp, chatId, latestKnownUpdate),
-            args
+            args,
         );
     }
 
@@ -465,14 +479,14 @@ export class UserClient extends CandidService {
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined
+        latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
         const [cachedEvents, missing] = await getCachedEvents(
             this.db,
             eventIndexRange,
             { chatId, threadRootMessageIndex },
             startIndex,
-            ascending
+            ascending,
         );
 
         // we may or may not have all of the requested events
@@ -484,13 +498,13 @@ export class UserClient extends CandidService {
                 startIndex,
                 ascending,
                 threadRootMessageIndex,
-                latestKnownUpdate
+                latestKnownUpdate,
             )
                 .then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex))
                 .catch((err) => {
                     if (err instanceof ResponseTooLargeError) {
                         console.log(
-                            "Response size too large, we will try to split the payload into a a few chunks"
+                            "Response size too large, we will try to split the payload into a a few chunks",
                         );
                         return chunkedChatEventsFromBackend(
                             (index: number, chunkSize: number) =>
@@ -500,13 +514,13 @@ export class UserClient extends CandidService {
                                     ascending,
                                     threadRootMessageIndex,
                                     latestKnownUpdate,
-                                    chunkSize
+                                    chunkSize,
                                 ),
                             eventIndexRange,
                             startIndex,
-                            ascending
+                            ascending,
                         ).then((resp) =>
-                            this.setCachedEvents(chatId, resp, threadRootMessageIndex)
+                            this.setCachedEvents(chatId, resp, threadRootMessageIndex),
                         );
                     } else {
                         throw err;
@@ -517,7 +531,7 @@ export class UserClient extends CandidService {
                 chatId,
                 [cachedEvents, missing],
                 threadRootMessageIndex,
-                latestKnownUpdate
+                latestKnownUpdate,
             );
         }
     }
@@ -528,7 +542,7 @@ export class UserClient extends CandidService {
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-        maxEvents: number = MAX_EVENTS
+        maxEvents: number = MAX_EVENTS,
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
@@ -544,7 +558,7 @@ export class UserClient extends CandidService {
         return this.handleQueryResponse(
             () => this.userService.events(args),
             (resp) => getEventsResponse(this.principal, resp, chatId, latestKnownUpdate),
-            args
+            args,
         );
     }
 
@@ -558,7 +572,7 @@ export class UserClient extends CandidService {
                     mime_type: "image/jpg",
                 }),
             }),
-            setAvatarResponse
+            setAvatarResponse,
         ).then((resp) => {
             if (resp === "success") {
                 return {
@@ -574,7 +588,7 @@ export class UserClient extends CandidService {
         recipientId: string,
         message: Message,
         threadRootMessageIndex?: number,
-        blockLevelMarkdown?: boolean
+        blockLevelMarkdown?: boolean,
     ): Promise<EditMessageResponse> {
         return new DataClient(this.identity, this.agent, this.config)
             .uploadData(message.content, [this.userId, recipientId])
@@ -590,7 +604,7 @@ export class UserClient extends CandidService {
                 };
                 return this.handleResponse(
                     this.userService.edit_message_v2(req),
-                    editMessageResponse
+                    editMessageResponse,
                 );
             });
     }
@@ -600,7 +614,8 @@ export class UserClient extends CandidService {
         event: EventWrapper<Message>,
         messageFilterFailed: bigint | undefined,
         threadRootMessageIndex: number | undefined,
-        pin: string | undefined
+        pin: string | undefined,
+        onRequestAccepted: () => void,
     ): Promise<[SendMessageResponse, Message]> {
         removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
         return this.sendMessageToBackend(
@@ -608,15 +623,16 @@ export class UserClient extends CandidService {
             event,
             messageFilterFailed,
             threadRootMessageIndex,
-            pin
+            pin,
+            onRequestAccepted,
         )
             .then(
                 setCachedMessageFromSendResponse(
                     this.db,
                     this.chatId,
                     event,
-                    threadRootMessageIndex
-                )
+                    threadRootMessageIndex,
+                ),
             )
             .catch((err) => {
                 recordFailedMessage(this.db, this.chatId, event, threadRootMessageIndex);
@@ -629,7 +645,8 @@ export class UserClient extends CandidService {
         event: EventWrapper<Message>,
         messageFilterFailed: bigint | undefined,
         threadRootMessageIndex: number | undefined,
-        pin: string | undefined
+        pin: string | undefined,
+        onRequestAccepted: () => void,
     ): Promise<[SendMessageResponse, Message]> {
         const dataClient = new DataClient(this.identity, this.agent, this.config);
         const uploadContentPromise = event.event.forwarded
@@ -639,22 +656,26 @@ export class UserClient extends CandidService {
         return uploadContentPromise.then((content) => {
             const newContent = content ?? event.event.content;
             const req = {
-                content: apiMessageContent(newContent),
-                recipient: Principal.fromText(chatId.userId),
+                content: apiMessageContentV2(newContent),
+                recipient: principalStringToBytes(chatId.userId),
                 message_id: event.event.messageId,
-                replies_to: apiOptional(
-                    (replyContext) => apiReplyContextArgs(chatId, replyContext),
-                    event.event.repliesTo
+                replies_to: mapOptional(event.event.repliesTo, (replyContext) =>
+                    apiReplyContextArgsV2(chatId, replyContext),
                 ),
                 forwarding: event.event.forwarded,
-                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-                message_filter_failed: apiOptional(identity, messageFilterFailed),
-                pin: apiOptional(identity, pin),
+                thread_root_message_index: threadRootMessageIndex,
+                message_filter_failed: messageFilterFailed,
+                pin,
                 correlation_id: generateUint64(),
                 block_level_markdown: event.event.blockLevelMarkdown,
             };
-            return this.handleResponse(this.userService.send_message_v2(req), (resp) =>
-                sendMessageResponse(resp, event.event.sender, chatId.userId)
+            return this.executeMsgpackUpdate(
+                "send_message_v2",
+                req,
+                (resp) => sendMessageResponse(resp, event.event.sender, chatId.userId),
+                UserSendMessageArgs,
+                UserSendMessageResponse,
+                onRequestAccepted,
             ).then((resp) => [resp, { ...event.event, content: newContent }]);
         });
     }
@@ -667,7 +688,7 @@ export class UserClient extends CandidService {
         threadRootMessageIndex: number | undefined,
         rulesAccepted: number | undefined,
         messageFilterFailed: bigint | undefined,
-        pin: string | undefined
+        pin: string | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
         return this.sendMessageWithTransferToGroupToBackend(
@@ -678,7 +699,7 @@ export class UserClient extends CandidService {
             threadRootMessageIndex,
             rulesAccepted,
             messageFilterFailed,
-            pin
+            pin,
         )
             .then(setCachedMessageFromSendResponse(this.db, groupId, event, threadRootMessageIndex))
             .catch((err) => {
@@ -695,7 +716,7 @@ export class UserClient extends CandidService {
         threadRootMessageIndex: number | undefined,
         rulesAccepted: number | undefined,
         messageFilterFailed: bigint | undefined,
-        pin: string | undefined
+        pin: string | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         const content = apiMessageContent(event.event.content);
 
@@ -710,7 +731,7 @@ export class UserClient extends CandidService {
             group_id: Principal.fromText(groupId.groupId),
             replies_to: apiOptional(
                 (replyContext) => apiReplyContextArgs(groupId, replyContext),
-                event.event.repliesTo
+                event.event.repliesTo,
             ),
             block_level_markdown: true,
             message_filter_failed: apiOptional(identity, messageFilterFailed),
@@ -719,14 +740,14 @@ export class UserClient extends CandidService {
         };
         return this.handleResponse(
             this.userService.send_message_with_transfer_to_group(req),
-            (resp) => sendMessageWithTransferToGroupResponse(resp, event.event.sender, recipientId)
+            (resp) => sendMessageWithTransferToGroupResponse(resp, event.event.sender, recipientId),
         ).then((resp) => [resp, event.event]);
     }
 
     loadSavedCryptoAccounts(): Promise<NamedAccount[]> {
         return this.handleQueryResponse(
             () => this.userService.saved_crypto_accounts({}),
-            savedCryptoAccountsResponse
+            savedCryptoAccountsResponse,
         );
     }
 
@@ -736,7 +757,7 @@ export class UserClient extends CandidService {
                 name,
                 account,
             }),
-            saveCryptoAccountResponse
+            saveCryptoAccountResponse,
         );
     }
 
@@ -749,7 +770,7 @@ export class UserClient extends CandidService {
         communityRulesAccepted: number | undefined,
         channelRulesAccepted: number | undefined,
         messageFilterFailed: bigint | undefined,
-        pin: string | undefined
+        pin: string | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
         return this.sendMessageWithTransferToChannelToBackend(
@@ -761,7 +782,7 @@ export class UserClient extends CandidService {
             communityRulesAccepted,
             channelRulesAccepted,
             messageFilterFailed,
-            pin
+            pin,
         )
             .then(setCachedMessageFromSendResponse(this.db, id, event, threadRootMessageIndex))
             .catch((err) => {
@@ -779,7 +800,7 @@ export class UserClient extends CandidService {
         communityRulesAccepted: number | undefined,
         channelRulesAccepted: number | undefined,
         messageFilterFailed: bigint | undefined,
-        pin: string | undefined
+        pin: string | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         const content = apiMessageContent(event.event.content);
 
@@ -794,7 +815,7 @@ export class UserClient extends CandidService {
             channel_id: BigInt(id.channelId),
             replies_to: apiOptional(
                 (replyContext) => apiReplyContextArgs(id, replyContext),
-                event.event.repliesTo
+                event.event.repliesTo,
             ),
             block_level_markdown: true,
             community_rules_accepted: apiOptional(identity, communityRulesAccepted),
@@ -805,7 +826,7 @@ export class UserClient extends CandidService {
         return this.handleResponse(
             this.userService.send_message_with_transfer_to_channel(req),
             (resp) =>
-                sendMessageWithTransferToChannelResponse(resp, event.event.sender, recipientId)
+                sendMessageWithTransferToChannelResponse(resp, event.event.sender, recipientId),
         ).then((resp) => [resp, event.event]);
     }
 
@@ -814,7 +835,7 @@ export class UserClient extends CandidService {
             this.userService.block_user({
                 user_id: Principal.fromText(userId),
             }),
-            blockResponse
+            blockResponse,
         );
     }
 
@@ -823,7 +844,7 @@ export class UserClient extends CandidService {
             this.userService.unblock_user({
                 user_id: Principal.fromText(userId),
             }),
-            unblockResponse
+            unblockResponse,
         );
     }
 
@@ -833,7 +854,7 @@ export class UserClient extends CandidService {
                 chat_id: Principal.fromText(chatId),
                 correlation_id: generateUint64(),
             }),
-            leaveGroupResponse
+            leaveGroupResponse,
         );
     }
 
@@ -842,7 +863,7 @@ export class UserClient extends CandidService {
             this.userService.leave_community({
                 community_id: Principal.fromText(id.communityId),
             }),
-            leaveCommunityResponse
+            leaveCommunityResponse,
         );
     }
 
@@ -850,7 +871,7 @@ export class UserClient extends CandidService {
         chatId: string,
         readUpTo: number | undefined,
         threads: ThreadRead[],
-        dateReadPinned: bigint | undefined
+        dateReadPinned: bigint | undefined,
     ) {
         return {
             chat_id: Principal.fromText(chatId),
@@ -867,7 +888,7 @@ export class UserClient extends CandidService {
         channelId: string,
         readUpTo: number | undefined,
         threads: ThreadRead[],
-        dateReadPinned: bigint | undefined
+        dateReadPinned: bigint | undefined,
     ) {
         return {
             channel_id: BigInt(channelId),
@@ -896,7 +917,7 @@ export class UserClient extends CandidService {
                     community[chatId.communityId] = [];
                 }
                 community[chatId.communityId].push(
-                    this.markChannelMessageArg(chatId.channelId, readUpTo, threads, dateReadPinned)
+                    this.markChannelMessageArg(chatId.channelId, readUpTo, threads, dateReadPinned),
                 );
             }
         });
@@ -913,7 +934,7 @@ export class UserClient extends CandidService {
     markMessagesRead(request: MarkReadRequest): Promise<MarkReadResponse> {
         return this.handleResponse(
             this.userService.mark_read(this.markMessageArgs(request)),
-            markReadResponse
+            markReadResponse,
         );
     }
 
@@ -922,7 +943,7 @@ export class UserClient extends CandidService {
         messageId: bigint,
         transfer: PendingCryptocurrencyTransfer,
         decimals: number,
-        pin: string | undefined
+        pin: string | undefined,
     ): Promise<TipMessageResponse> {
         return this.handleResponse(
             this.userService.tip_message({
@@ -936,11 +957,11 @@ export class UserClient extends CandidService {
                 amount: transfer.amountE8s,
                 thread_root_message_index: apiOptional(
                     identity,
-                    messageContext.threadRootMessageIndex
+                    messageContext.threadRootMessageIndex,
                 ),
                 pin: apiOptional(identity, pin),
             }),
-            tipMessageResponse
+            tipMessageResponse,
         );
     }
 
@@ -949,7 +970,7 @@ export class UserClient extends CandidService {
         messageId: bigint,
         reaction: string,
         threadRootMessageIndex: number | undefined,
-        newAchievement: boolean
+        newAchievement: boolean,
     ): Promise<AddRemoveReactionResponse> {
         return this.handleResponse(
             this.userService.add_reaction({
@@ -960,7 +981,7 @@ export class UserClient extends CandidService {
                 correlation_id: generateUint64(),
             }),
             addRemoveReactionResponse,
-            newAchievement
+            newAchievement,
         );
     }
 
@@ -968,7 +989,7 @@ export class UserClient extends CandidService {
         otherUserId: string,
         messageId: bigint,
         reaction: string,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
     ): Promise<AddRemoveReactionResponse> {
         return this.handleResponse(
             this.userService.remove_reaction({
@@ -978,14 +999,14 @@ export class UserClient extends CandidService {
                 reaction,
                 correlation_id: generateUint64(),
             }),
-            addRemoveReactionResponse
+            addRemoveReactionResponse,
         );
     }
 
     deleteMessage(
         otherUserId: string,
         messageId: bigint,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
     ): Promise<DeleteMessageResponse> {
         return this.handleResponse(
             this.userService.delete_messages({
@@ -994,14 +1015,14 @@ export class UserClient extends CandidService {
                 message_ids: [messageId],
                 correlation_id: generateUint64(),
             }),
-            deleteMessageResponse
+            deleteMessageResponse,
         );
     }
 
     undeleteMessage(
         otherUserId: string,
         messageId: bigint,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
     ): Promise<UndeleteMessageResponse> {
         return this.handleResponse(
             this.userService.undelete_messages({
@@ -1010,14 +1031,14 @@ export class UserClient extends CandidService {
                 message_ids: [messageId],
                 correlation_id: generateUint64(),
             }),
-            undeleteMessageResponse
+            undeleteMessageResponse,
         );
     }
 
     searchDirectChat(
         chatId: DirectChatIdentifier,
         searchTerm: string,
-        maxResults: number
+        maxResults: number,
     ): Promise<SearchDirectChatResponse> {
         const args = {
             user_id: Principal.fromText(chatId.userId),
@@ -1027,27 +1048,27 @@ export class UserClient extends CandidService {
         return this.handleQueryResponse(
             () => this.userService.search_messages(args),
             (res) => searchDirectChatResponse(res, chatId),
-            args
+            args,
         );
     }
 
     toggleMuteNotifications(
         chatId: string,
-        muted: boolean
+        muted: boolean,
     ): Promise<ToggleMuteNotificationResponse> {
         if (muted) {
             return this.handleResponse(
                 this.userService.mute_notifications({
                     chat_id: Principal.fromText(chatId),
                 }),
-                muteNotificationsResponse
+                muteNotificationsResponse,
             );
         } else {
             return this.handleResponse(
                 this.userService.unmute_notifications({
                     chat_id: Principal.fromText(chatId),
                 }),
-                muteNotificationsResponse
+                muteNotificationsResponse,
             );
         }
     }
@@ -1058,21 +1079,21 @@ export class UserClient extends CandidService {
                 duration: [],
                 groups: [Principal.fromText(chatId)],
             }),
-            toVoid
+            toVoid,
         );
     }
 
     getBio(): Promise<string> {
         return this.handleQueryResponse(
             () => this.userService.bio({}),
-            (candid) => candid.Success
+            (candid) => candid.Success,
         );
     }
 
     getPublicProfile(): Promise<PublicProfile> {
         return this.handleQueryResponse(
             () => this.userService.public_profile({}),
-            publicProfileResponse
+            publicProfileResponse,
         );
     }
 
@@ -1082,12 +1103,12 @@ export class UserClient extends CandidService {
 
     withdrawCryptocurrency(
         domain: PendingCryptocurrencyWithdrawal,
-        pin: string | undefined
+        pin: string | undefined,
     ): Promise<WithdrawCryptocurrencyResponse> {
         const req = apiPendingCryptocurrencyWithdrawal(domain, pin);
         return this.handleResponse(
             this.userService.withdraw_crypto_v2(req),
-            withdrawCryptoResponse
+            withdrawCryptoResponse,
         );
     }
 
@@ -1132,7 +1153,7 @@ export class UserClient extends CandidService {
                 chat: this.toChatInList(chatId, favourite),
             }),
 
-            pinChatResponse
+            pinChatResponse,
         );
     }
 
@@ -1141,7 +1162,7 @@ export class UserClient extends CandidService {
             this.userService.unpin_chat_v2({
                 chat: this.toChatInList(chatId, favourite),
             }),
-            unpinChatResponse
+            unpinChatResponse,
         );
     }
 
@@ -1151,7 +1172,7 @@ export class UserClient extends CandidService {
                 to_archive: [apiChatIdentifier(chatId)],
                 to_unarchive: [],
             }),
-            archiveChatResponse
+            archiveChatResponse,
         );
     }
 
@@ -1161,7 +1182,7 @@ export class UserClient extends CandidService {
                 to_unarchive: [apiChatIdentifier(chatId)],
                 to_archive: [],
             }),
-            archiveChatResponse
+            archiveChatResponse,
         );
     }
 
@@ -1171,7 +1192,7 @@ export class UserClient extends CandidService {
                 user_id: Principal.fromText(userId),
                 message_id: messageId,
             }),
-            deletedMessageResponse
+            deletedMessageResponse,
         );
     }
 
@@ -1180,7 +1201,7 @@ export class UserClient extends CandidService {
         eventIndex: number,
         remindAt: number,
         notes?: string,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
     ): Promise<SetMessageReminderResponse> {
         return this.handleResponse(
             this.userService.set_message_reminder_v2({
@@ -1190,7 +1211,7 @@ export class UserClient extends CandidService {
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 event_index: eventIndex,
             }),
-            setMessageReminderResponse
+            setMessageReminderResponse,
         );
     }
 
@@ -1199,7 +1220,7 @@ export class UserClient extends CandidService {
             this.userService.cancel_message_reminder({
                 reminder_id: reminderId,
             }),
-            (_) => true
+            (_) => true,
         );
     }
 
@@ -1210,7 +1231,7 @@ export class UserClient extends CandidService {
         ]);
         return this.handleResponse(
             this.userService.set_community_indexes({ indexes }),
-            (_) => true
+            (_) => true,
         );
     }
 
@@ -1220,7 +1241,7 @@ export class UserClient extends CandidService {
         ledger: string,
         token: string,
         proposalRejectionFee: bigint,
-        transactionFee: bigint
+        transactionFee: bigint,
     ): Promise<SubmitProposalResponse> {
         return this.handleResponse(
             this.userService.submit_proposal({
@@ -1231,7 +1252,7 @@ export class UserClient extends CandidService {
                 proposal_rejection_fee: proposalRejectionFee,
                 transaction_fee: transactionFee,
             }),
-            submitProposalResponse
+            submitProposalResponse,
         );
     }
 
@@ -1239,7 +1260,7 @@ export class UserClient extends CandidService {
         chatId: DirectChatIdentifier,
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
-        deleteMessage: boolean
+        deleteMessage: boolean,
     ): Promise<boolean> {
         return this.handleResponse(
             this.userService.report_message({
@@ -1248,7 +1269,7 @@ export class UserClient extends CandidService {
                 delete: deleteMessage,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             }),
-            reportMessageResponse
+            reportMessageResponse,
         );
     }
 
@@ -1259,7 +1280,7 @@ export class UserClient extends CandidService {
         amountIn: bigint,
         minAmountOut: bigint,
         exchangeArgs: ExchangeTokenSwapArgs,
-        pin: string | undefined
+        pin: string | undefined,
     ): Promise<SwapTokensResponse> {
         return this.handleResponse(
             this.userService.swap_tokens({
@@ -1281,7 +1302,7 @@ export class UserClient extends CandidService {
                 min_output_amount: minAmountOut,
                 pin: apiOptional(identity, pin),
             }),
-            swapTokensResponse
+            swapTokensResponse,
         );
     }
 
@@ -1292,7 +1313,7 @@ export class UserClient extends CandidService {
         return this.handleQueryResponse(
             () => this.userService.token_swap_status(args),
             tokenSwapStatusResponse,
-            args
+            args,
         );
     }
 
@@ -1301,7 +1322,7 @@ export class UserClient extends CandidService {
         ledger: string,
         amount: bigint,
         expiresIn: bigint | undefined,
-        pin: string | undefined
+        pin: string | undefined,
     ): Promise<ApproveTransferResponse> {
         return this.handleResponse(
             this.userService.approve_transfer({
@@ -1314,7 +1335,7 @@ export class UserClient extends CandidService {
                 expires_in: apiOptional(identity, expiresIn),
                 pin: apiOptional(identity, pin),
             }),
-            approveTransferResponse
+            approveTransferResponse,
         );
     }
 
@@ -1324,7 +1345,7 @@ export class UserClient extends CandidService {
                 user_id: Principal.fromText(userId),
                 block_user: blockUser,
             }),
-            (resp) => "Success" in resp
+            (resp) => "Success" in resp,
         );
     }
 
@@ -1332,7 +1353,7 @@ export class UserClient extends CandidService {
         userId: string,
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
-        pin: string | undefined
+        pin: string | undefined,
     ): Promise<AcceptP2PSwapResponse> {
         return this.handleResponse(
             this.userService.accept_p2p_swap({
@@ -1341,7 +1362,7 @@ export class UserClient extends CandidService {
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 pin: apiOptional(identity, pin),
             }),
-            acceptP2PSwapResponse
+            acceptP2PSwapResponse,
         );
     }
 
@@ -1351,7 +1372,7 @@ export class UserClient extends CandidService {
                 user_id: Principal.fromText(userId),
                 message_id: messageId,
             }),
-            cancelP2PSwapResponse
+            cancelP2PSwapResponse,
         );
     }
 
@@ -1361,27 +1382,27 @@ export class UserClient extends CandidService {
                 user_id: Principal.fromText(userId),
                 message_id: messageId,
             }),
-            joinVideoCallResponse
+            joinVideoCallResponse,
         );
     }
 
     localUserIndex(): Promise<string> {
         return this.handleQueryResponse(
             () => this.userService.local_user_index({}),
-            (resp) => resp.Success.toString()
+            (resp) => resp.Success.toString(),
         );
     }
 
     setPinNumber(
         currentPin: string | undefined,
-        newPin: string | undefined
+        newPin: string | undefined,
     ): Promise<SetPinNumberResponse> {
         return this.handleResponse(
             this.userService.set_pin_number({
                 current: apiOptional(identity, currentPin),
                 new: apiOptional(identity, newPin),
             }),
-            setPinNumberResponse
+            setPinNumberResponse,
         );
     }
 
@@ -1395,7 +1416,7 @@ export class UserClient extends CandidService {
                     ascending,
                     skip: [],
                 }),
-            chitEventsResponse
+            chitEventsResponse,
         );
     }
 
@@ -1406,14 +1427,14 @@ export class UserClient extends CandidService {
             }),
             (res) => {
                 console.log("Set Achievements Last seen", lastSeen, res);
-            }
+            },
         );
     }
 
     claimDailyChit(): Promise<ClaimDailyChitResponse> {
         return this.handleQueryResponse(
             () => this.userService.claim_daily_chit({}),
-            claimDailyChitResponse
+            claimDailyChitResponse,
         ).then((res) => {
             if (res.kind === "success") {
                 // Note this only updates the users db, the chats db will be updated by the updates loop
@@ -1428,7 +1449,7 @@ export class UserClient extends CandidService {
             this.userService.configure_wallet({
                 config: apiWalletConfig(walletConfig),
             }),
-            toVoid
+            toVoid,
         );
     }
 }
