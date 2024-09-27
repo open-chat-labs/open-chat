@@ -27,7 +27,7 @@ impl Message {
     pub fn achievements(&self, direct: bool, is_thread: bool) -> Vec<Achievement> {
         let mut achievements = Vec::new();
 
-        if let Some(achievement) = self.content.achievement() {
+        if let Some(achievement) = self.content.content_type().achievement() {
             achievements.push(achievement);
         }
 

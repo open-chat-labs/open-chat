@@ -148,7 +148,7 @@ impl ChatEvents {
 
         if let Some(client) = event_store_client.as_mut() {
             let event_payload = MessageEventPayload {
-                message_type: args.content.message_type(),
+                message_type: args.content.content_type().to_string(),
                 chat_type: self.chat.chat_type().to_string(),
                 chat_id: self.anonymized_id.clone(),
                 thread: args.thread_root_message_index.is_some(),
@@ -308,7 +308,7 @@ impl ChatEvents {
                 if let Some(client) = event_store_client {
                     let new_length = message.content.text_length();
                     let payload = MessageEditedEventPayload {
-                        message_type: message.content.message_type(),
+                        message_type: message.content.content_type().to_string(),
                         chat_type: chat.chat_type().to_string(),
                         chat_id: anonymized_id,
                         thread: args.thread_root_message_index.is_some(),
@@ -760,7 +760,7 @@ impl ChatEvents {
 
         if let Some(client) = event_store_client {
             let payload = ReactionAddedEventPayload {
-                message_type: message.content.message_type(),
+                message_type: message.content.content_type().to_string(),
                 chat_type: chat.chat_type().to_string(),
                 chat_id: anonymized_id.clone(),
                 thread: args.thread_root_message_index.is_some(),
@@ -874,7 +874,7 @@ impl ChatEvents {
         message.tips.push(args.ledger, args.user_id, args.amount);
 
         if let Some(client) = event_store_client {
-            let message_type = message.content.message_type();
+            let message_type = message.content.content_type().to_string();
 
             client.push(
                 EventBuilder::new("message_tipped", args.now)

@@ -4,11 +4,11 @@ use search::Document;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use types::{
-    is_default, is_empty_hashmap, is_empty_hashset, is_empty_slice, Achievement, AudioContent, BlobReference, CallParticipant,
-    CanisterId, CompletedCryptoTransaction, ContentWithCaptionEventPayload, CryptoContent, CryptoContentEventPayload,
-    CryptoTransaction, CustomContent, FileContent, FileContentEventPayload, GiphyContent, GiphyImageVariant,
+    is_default, is_empty_hashmap, is_empty_hashset, is_empty_slice, AudioContent, BlobReference, CallParticipant, CanisterId,
+    CompletedCryptoTransaction, ContentWithCaptionEventPayload, CryptoContent, CryptoContentEventPayload, CryptoTransaction,
+    CustomContent, FileContent, FileContentEventPayload, GiphyContent, GiphyImageVariant,
     GovernanceProposalContentEventPayload, ImageContent, ImageOrVideoContentEventPayload, MessageContent,
-    MessageContentEventPayload, MessageContentInitial, MessageIndex, MessageReminderContent,
+    MessageContentEventPayload, MessageContentInitial, MessageContentType, MessageIndex, MessageReminderContent,
     MessageReminderContentEventPayload, MessageReminderCreatedContent, MessageReport, P2PSwapContent,
     P2PSwapContentEventPayload, PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload, PollVotes,
     PrizeContent, PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload, Proposal,
@@ -174,60 +174,6 @@ impl MessageContentInternal {
         references
     }
 
-    pub fn achievement(&self) -> Option<Achievement> {
-        match self {
-            MessageContentInternal::Text(_) => Some(Achievement::SentText),
-            MessageContentInternal::Image(_) => Some(Achievement::SentImage),
-            MessageContentInternal::Video(_) => Some(Achievement::SentVideo),
-            MessageContentInternal::Audio(_) => Some(Achievement::SentAudio),
-            MessageContentInternal::File(_) => Some(Achievement::SentFile),
-            MessageContentInternal::Poll(_) => Some(Achievement::SentPoll),
-            MessageContentInternal::Crypto(_) => Some(Achievement::SentCrypto),
-            MessageContentInternal::Deleted(_) => Some(Achievement::DeletedMessage),
-            MessageContentInternal::Giphy(_) => Some(Achievement::SentGiphy),
-            MessageContentInternal::GovernanceProposal(_) => None,
-            MessageContentInternal::Prize(_) => Some(Achievement::SentPrize),
-            MessageContentInternal::PrizeWinner(_) => None,
-            MessageContentInternal::MessageReminderCreated(_) => Some(Achievement::SentReminder),
-            MessageContentInternal::MessageReminder(_) => Some(Achievement::SentReminder),
-            MessageContentInternal::ReportedMessage(_) => None,
-            MessageContentInternal::P2PSwap(_) => Some(Achievement::SentP2PSwapOffer),
-            MessageContentInternal::VideoCall(_) => Some(Achievement::StartedCall),
-            MessageContentInternal::Custom(c) => {
-                if c.kind == "meme_fighter" {
-                    Some(Achievement::SentMeme)
-                } else {
-                    None
-                }
-            }
-        }
-    }
-
-    pub fn message_type(&self) -> String {
-        let message_type = match self {
-            MessageContentInternal::Text(_) => "Text",
-            MessageContentInternal::Image(_) => "Image",
-            MessageContentInternal::Video(_) => "Video",
-            MessageContentInternal::Audio(_) => "Audio",
-            MessageContentInternal::File(_) => "File",
-            MessageContentInternal::Poll(_) => "Poll",
-            MessageContentInternal::Crypto(_) => "Crypto",
-            MessageContentInternal::Deleted(_) => "Deleted",
-            MessageContentInternal::Giphy(_) => "Giphy",
-            MessageContentInternal::GovernanceProposal(_) => "GovernanceProposal",
-            MessageContentInternal::Prize(_) => "Prize",
-            MessageContentInternal::PrizeWinner(_) => "PrizeWinner",
-            MessageContentInternal::MessageReminderCreated(_) => "MessageReminderCreated",
-            MessageContentInternal::MessageReminder(_) => "MessageReminder",
-            MessageContentInternal::ReportedMessage(_) => "ReportedMessage",
-            MessageContentInternal::P2PSwap(_) => "P2PSwap",
-            MessageContentInternal::VideoCall(_) => "VideoCall",
-            MessageContentInternal::Custom(c) => &c.kind,
-        };
-
-        message_type.to_string()
-    }
-
     pub fn event_payload(&self) -> MessageContentEventPayload {
         match self {
             MessageContentInternal::Text(c) => MessageContentEventPayload::Text(TextContentEventPayload {
@@ -309,6 +255,10 @@ impl MessageContentInternal {
                 MessageContentEventPayload::Empty
             }
         }
+    }
+
+    pub fn content_type(&self) -> MessageContentType {
+        self.into()
     }
 }
 
@@ -1126,6 +1076,31 @@ impl From<MessageContentInitial> for MessageContentInternal {
             MessageContentInitial::P2PSwap(_) | MessageContentInitial::Prize(_) => {
                 unreachable!()
             }
+        }
+    }
+}
+
+impl From<&MessageContentInternal> for MessageContentType {
+    fn from(value: &MessageContentInternal) -> Self {
+        match value {
+            MessageContentInternal::Text(_) => MessageContentType::Text,
+            MessageContentInternal::Image(_) => MessageContentType::Image,
+            MessageContentInternal::Video(_) => MessageContentType::Video,
+            MessageContentInternal::Audio(_) => MessageContentType::Audio,
+            MessageContentInternal::File(_) => MessageContentType::File,
+            MessageContentInternal::Poll(_) => MessageContentType::Poll,
+            MessageContentInternal::Crypto(_) => MessageContentType::Crypto,
+            MessageContentInternal::Deleted(_) => MessageContentType::Deleted,
+            MessageContentInternal::Giphy(_) => MessageContentType::Giphy,
+            MessageContentInternal::GovernanceProposal(_) => MessageContentType::GovernanceProposal,
+            MessageContentInternal::Prize(_) => MessageContentType::Prize,
+            MessageContentInternal::PrizeWinner(_) => MessageContentType::PrizeWinner,
+            MessageContentInternal::MessageReminderCreated(_) => MessageContentType::MessageReminderCreated,
+            MessageContentInternal::MessageReminder(_) => MessageContentType::MessageReminder,
+            MessageContentInternal::ReportedMessage(_) => MessageContentType::ReportedMessage,
+            MessageContentInternal::P2PSwap(_) => MessageContentType::P2PSwap,
+            MessageContentInternal::VideoCall(_) => MessageContentType::VideoCall,
+            MessageContentInternal::Custom(c) => MessageContentType::Custom(c.kind.clone()),
         }
     }
 }
