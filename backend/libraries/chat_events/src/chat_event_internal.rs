@@ -121,14 +121,6 @@ impl ChatEventInternal {
         matches!(self, ChatEventInternal::Message(_))
     }
 
-    pub fn as_message(&self) -> Option<&MessageInternal> {
-        if let ChatEventInternal::Message(m) = self {
-            Some(m.deref())
-        } else {
-            None
-        }
-    }
-
     pub fn as_message_mut(&mut self) -> Option<&mut MessageInternal> {
         if let ChatEventInternal::Message(m) = self {
             Some(m.deref_mut())

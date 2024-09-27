@@ -629,7 +629,7 @@ mod tests {
         let event_by_message_index = events_reader.get_event(EventKey::MessageIndex(10.into())).unwrap();
         let event_by_event_index = events_reader.get_event(event_by_message_index.index.into()).unwrap();
         let event_by_message_id = events_reader
-            .get_event(event_by_message_index.event.as_message().unwrap().message_id.into())
+            .get_event(event_by_message_index.event.into_message().unwrap().message_id.into())
             .unwrap();
 
         assert_eq!(event_by_message_index.index, event_by_event_index.index);

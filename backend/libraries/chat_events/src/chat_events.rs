@@ -1719,7 +1719,7 @@ impl ChatEvents {
                         .main
                         .get_event((*root_message_index).into(), min_visible_event_index)?
                         .event
-                        .as_message()?
+                        .into_message()?
                         .thread_summary
                         .as_ref()?
                         .get_follower(my_user_id);
@@ -1755,7 +1755,7 @@ impl ChatEvents {
 
         for message_index in root_message_indexes.rev().copied() {
             if let Some(wrapped_event) = self.main.get_event(message_index.into(), EventIndex::default()) {
-                if let Some(message) = wrapped_event.event.as_message() {
+                if let Some(message) = wrapped_event.event.into_message() {
                     if let Some(thread_summary) = message.thread_summary.as_ref() {
                         if let Some(follower) = thread_summary.get_follower(my_user_id) {
                             if follower.timestamp <= updated_since {
