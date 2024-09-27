@@ -4,9 +4,9 @@ use search::Document;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use types::{
-    is_default, is_empty_hashmap, is_empty_hashset, is_empty_slice, AudioContent, BlobReference, CallParticipant, CanisterId,
-    CompletedCryptoTransaction, ContentWithCaptionEventPayload, CryptoContent, CryptoContentEventPayload, CryptoTransaction,
-    CustomContent, FileContent, FileContentEventPayload, GiphyContent, GiphyImageVariant,
+    is_default, is_empty_hashmap, is_empty_hashset, is_empty_slice, Achievement, AudioContent, BlobReference, CallParticipant,
+    CanisterId, CompletedCryptoTransaction, ContentWithCaptionEventPayload, CryptoContent, CryptoContentEventPayload,
+    CryptoTransaction, CustomContent, FileContent, FileContentEventPayload, GiphyContent, GiphyImageVariant,
     GovernanceProposalContentEventPayload, ImageContent, ImageOrVideoContentEventPayload, MessageContent,
     MessageContentEventPayload, MessageContentInitial, MessageIndex, MessageReminderContent,
     MessageReminderContentEventPayload, MessageReminderCreatedContent, MessageReport, P2PSwapContent,
@@ -78,7 +78,7 @@ impl MessageContentInternal {
         }
     }
 
-    pub fn hydrate(&self, my_user_id: Option<UserId>) -> MessageContent {
+    pub fn hydrate(self, my_user_id: Option<UserId>) -> MessageContent {
         match self {
             MessageContentInternal::Text(t) => MessageContent::Text(t.hydrate(my_user_id)),
             MessageContentInternal::Image(i) => MessageContent::Image(i.hydrate(my_user_id)),
@@ -172,6 +172,35 @@ impl MessageContentInternal {
         }
 
         references
+    }
+
+    pub fn achievement(&self) -> Option<Achievement> {
+        match self {
+            MessageContentInternal::Text(_) => Some(Achievement::SentText),
+            MessageContentInternal::Image(_) => Some(Achievement::SentImage),
+            MessageContentInternal::Video(_) => Some(Achievement::SentVideo),
+            MessageContentInternal::Audio(_) => Some(Achievement::SentAudio),
+            MessageContentInternal::File(_) => Some(Achievement::SentFile),
+            MessageContentInternal::Poll(_) => Some(Achievement::SentPoll),
+            MessageContentInternal::Crypto(_) => Some(Achievement::SentCrypto),
+            MessageContentInternal::Deleted(_) => Some(Achievement::DeletedMessage),
+            MessageContentInternal::Giphy(_) => Some(Achievement::SentGiphy),
+            MessageContentInternal::GovernanceProposal(_) => None,
+            MessageContentInternal::Prize(_) => Some(Achievement::SentPrize),
+            MessageContentInternal::PrizeWinner(_) => None,
+            MessageContentInternal::MessageReminderCreated(_) => Some(Achievement::SentReminder),
+            MessageContentInternal::MessageReminder(_) => Some(Achievement::SentReminder),
+            MessageContentInternal::ReportedMessage(_) => None,
+            MessageContentInternal::P2PSwap(_) => Some(Achievement::SentP2PSwapOffer),
+            MessageContentInternal::VideoCall(_) => Some(Achievement::StartedCall),
+            MessageContentInternal::Custom(c) => {
+                if c.kind == "meme_fighter" {
+                    Some(Achievement::SentMeme)
+                } else {
+                    None
+                }
+            }
+        }
     }
 
     pub fn message_type(&self) -> String {
@@ -363,7 +392,7 @@ impl From<&MessageContentInternal> for Document {
 pub(crate) trait MessageContentInternalSubtype {
     type ContentType;
 
-    fn hydrate(&self, my_user_id: Option<UserId>) -> Self::ContentType;
+    fn hydrate(self, my_user_id: Option<UserId>) -> Self::ContentType;
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -381,8 +410,8 @@ impl From<TextContent> for TextContentInternal {
 impl MessageContentInternalSubtype for TextContentInternal {
     type ContentType = TextContent;
 
-    fn hydrate(&self, _my_user_id: Option<UserId>) -> Self::ContentType {
-        TextContent { text: self.text.clone() }
+    fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
+        TextContent { text: self.text }
     }
 }
 
@@ -418,14 +447,14 @@ impl From<ImageContent> for ImageContentInternal {
 impl MessageContentInternalSubtype for ImageContentInternal {
     type ContentType = ImageContent;
 
-    fn hydrate(&self, _my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
         ImageContent {
             width: self.width,
             height: self.height,
-            thumbnail_data: self.thumbnail_data.clone(),
-            caption: self.caption.clone(),
-            mime_type: self.mime_type.clone(),
-            blob_reference: self.blob_reference.clone(),
+            thumbnail_data: self.thumbnail_data,
+            caption: self.caption,
+            mime_type: self.mime_type,
+            blob_reference: self.blob_reference,
         }
     }
 }
@@ -465,15 +494,15 @@ impl From<VideoContent> for VideoContentInternal {
 impl MessageContentInternalSubtype for VideoContentInternal {
     type ContentType = VideoContent;
 
-    fn hydrate(&self, _my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
         VideoContent {
             width: self.width,
             height: self.height,
-            thumbnail_data: self.thumbnail_data.clone(),
-            caption: self.caption.clone(),
-            mime_type: self.mime_type.clone(),
-            image_blob_reference: self.image_blob_reference.clone(),
-            video_blob_reference: self.video_blob_reference.clone(),
+            thumbnail_data: self.thumbnail_data,
+            caption: self.caption,
+            mime_type: self.mime_type,
+            image_blob_reference: self.image_blob_reference,
+            video_blob_reference: self.video_blob_reference,
         }
     }
 }
@@ -501,11 +530,11 @@ impl From<AudioContent> for AudioContentInternal {
 impl MessageContentInternalSubtype for AudioContentInternal {
     type ContentType = AudioContent;
 
-    fn hydrate(&self, _my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
         AudioContent {
-            caption: self.caption.clone(),
-            mime_type: self.mime_type.clone(),
-            blob_reference: self.blob_reference.clone(),
+            caption: self.caption,
+            mime_type: self.mime_type,
+            blob_reference: self.blob_reference,
         }
     }
 }
@@ -539,13 +568,13 @@ impl From<FileContent> for FileContentInternal {
 impl MessageContentInternalSubtype for FileContentInternal {
     type ContentType = FileContent;
 
-    fn hydrate(&self, _my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
         FileContent {
-            name: self.name.clone(),
-            caption: self.caption.clone(),
-            mime_type: self.mime_type.clone(),
+            name: self.name,
+            caption: self.caption,
+            mime_type: self.mime_type,
             file_size: self.file_size,
-            blob_reference: self.blob_reference.clone(),
+            blob_reference: self.blob_reference,
         }
     }
 }
@@ -573,33 +602,10 @@ impl From<PollContent> for PollContentInternal {
 impl MessageContentInternalSubtype for PollContentInternal {
     type ContentType = PollContent;
 
-    fn hydrate(&self, my_user_id: Option<UserId>) -> Self::ContentType {
-        let user_votes = if let Some(user_id) = my_user_id {
-            self.votes
-                .iter()
-                .filter(|(_, v)| v.contains(&user_id))
-                .map(|(k, _)| *k)
-                .collect()
-        } else {
-            Vec::new()
-        };
-
-        let total_votes: TotalVotes;
-        let hide_votes = self.config.end_date.is_some() && !self.ended && !self.config.show_votes_before_end_date;
-        if hide_votes {
-            total_votes = TotalVotes::Hidden(self.votes.values().map(|v| v.len() as u32).sum());
-        } else if self.config.anonymous {
-            total_votes = TotalVotes::Anonymous(self.votes.iter().map(|(k, v)| (*k, v.len() as u32)).collect());
-        } else {
-            total_votes = TotalVotes::Visible(self.votes.clone());
-        }
-
+    fn hydrate(self, my_user_id: Option<UserId>) -> Self::ContentType {
         PollContent {
-            config: self.config.clone(),
-            votes: PollVotes {
-                total: total_votes,
-                user: user_votes,
-            },
+            votes: self.votes(my_user_id),
+            config: self.config,
             ended: self.ended,
         }
     }
@@ -649,6 +655,33 @@ impl PollContentInternal {
             }
         }
     }
+
+    pub fn votes(&self, my_user_id: Option<UserId>) -> PollVotes {
+        let user_votes = if let Some(user_id) = my_user_id {
+            self.votes
+                .iter()
+                .filter(|(_, v)| v.contains(&user_id))
+                .map(|(k, _)| *k)
+                .collect()
+        } else {
+            Vec::new()
+        };
+
+        let total_votes: TotalVotes;
+        let hide_votes = self.config.end_date.is_some() && !self.ended && !self.config.show_votes_before_end_date;
+        if hide_votes {
+            total_votes = TotalVotes::Hidden(self.votes.values().map(|v| v.len() as u32).sum());
+        } else if self.config.anonymous {
+            total_votes = TotalVotes::Anonymous(self.votes.iter().map(|(k, v)| (*k, v.len() as u32)).collect());
+        } else {
+            total_votes = TotalVotes::Visible(self.votes.clone());
+        }
+
+        PollVotes {
+            user: user_votes,
+            total: total_votes,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -664,11 +697,11 @@ pub struct CryptoContentInternal {
 impl MessageContentInternalSubtype for CryptoContentInternal {
     type ContentType = CryptoContent;
 
-    fn hydrate(&self, _my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
         CryptoContent {
             recipient: self.recipient,
-            transfer: CryptoTransaction::Completed(self.transfer.clone()),
-            caption: self.caption.clone(),
+            transfer: CryptoTransaction::Completed(self.transfer),
+            caption: self.caption,
         }
     }
 }
@@ -733,10 +766,10 @@ impl From<&GiphyImageVariantInternal> for GiphyImageVariant {
 impl MessageContentInternalSubtype for GiphyContentInternal {
     type ContentType = GiphyContent;
 
-    fn hydrate(&self, _my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
         GiphyContent {
-            caption: self.caption.clone(),
-            title: self.title.clone(),
+            caption: self.caption,
+            title: self.title,
             desktop: GiphyImageVariant::from(&self.desktop),
             mobile: GiphyImageVariant::from(&self.mobile),
         }
@@ -766,10 +799,10 @@ impl From<ProposalContent> for ProposalContentInternal {
 impl MessageContentInternalSubtype for ProposalContentInternal {
     type ContentType = ProposalContent;
 
-    fn hydrate(&self, my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, my_user_id: Option<UserId>) -> Self::ContentType {
         ProposalContent {
             governance_canister_id: self.governance_canister_id,
-            proposal: self.proposal.clone(),
+            proposal: self.proposal,
             my_vote: my_user_id.and_then(|u| self.votes.get(&u)).copied(),
         }
     }
@@ -835,16 +868,16 @@ impl PrizeContentInternal {
 impl MessageContentInternalSubtype for PrizeContentInternal {
     type ContentType = PrizeContent;
 
-    fn hydrate(&self, my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, my_user_id: Option<UserId>) -> Self::ContentType {
         PrizeContent {
             prizes_remaining: self.prizes_remaining.len() as u32,
             prizes_pending: self.reservations.len() as u32,
-            winners: self.winners.iter().copied().collect(),
             winner_count: self.winners.len() as u32,
             user_is_winner: my_user_id.map(|u| self.winners.contains(&u)).unwrap_or_default(),
+            winners: self.winners.into_iter().collect(),
             token: self.transaction.token(),
             end_date: self.end_date,
-            caption: self.caption.clone(),
+            caption: self.caption,
             diamond_only: self.diamond_only,
         }
     }
@@ -896,10 +929,10 @@ impl From<PrizeWinnerContentInternalPrevious> for PrizeWinnerContentInternal {
 impl MessageContentInternalSubtype for PrizeWinnerContentInternal {
     type ContentType = PrizeWinnerContent;
 
-    fn hydrate(&self, _my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
         PrizeWinnerContent {
             winner: self.winner,
-            transaction: self.transaction.clone(),
+            transaction: self.transaction,
             prize_message: self.prize_message,
         }
     }
@@ -931,11 +964,11 @@ impl From<MessageReminderCreatedContent> for MessageReminderCreatedContentIntern
 impl MessageContentInternalSubtype for MessageReminderCreatedContentInternal {
     type ContentType = MessageReminderCreatedContent;
 
-    fn hydrate(&self, _my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
         MessageReminderCreatedContent {
             reminder_id: self.reminder_id,
             remind_at: self.remind_at,
-            notes: self.notes.clone(),
+            notes: self.notes,
             hidden: self.hidden,
         }
     }
@@ -961,10 +994,10 @@ impl From<MessageReminderContent> for MessageReminderContentInternal {
 impl MessageContentInternalSubtype for MessageReminderContentInternal {
     type ContentType = MessageReminderContent;
 
-    fn hydrate(&self, _my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
         MessageReminderContent {
             reminder_id: self.reminder_id,
-            notes: self.notes.clone(),
+            notes: self.notes,
         }
     }
 }
@@ -1028,10 +1061,10 @@ pub struct CallParticipantInternal {
 impl MessageContentInternalSubtype for ReportedMessageInternal {
     type ContentType = ReportedMessage;
 
-    fn hydrate(&self, _my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
         ReportedMessage {
-            reports: self.reports.iter().take(10).cloned().collect(),
             count: self.reports.len() as u32,
+            reports: self.reports.into_iter().take(10).collect(),
         }
     }
 }
@@ -1056,10 +1089,10 @@ impl From<CustomContent> for CustomContentInternal {
 impl MessageContentInternalSubtype for CustomContentInternal {
     type ContentType = CustomContent;
 
-    fn hydrate(&self, _my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
         CustomContent {
-            kind: self.kind.clone(),
-            data: self.data.clone(),
+            kind: self.kind,
+            data: self.data,
         }
     }
 }

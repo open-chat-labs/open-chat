@@ -203,7 +203,7 @@ impl MessageContent {
         }
     }
 
-    pub fn to_achievement(&self) -> Option<Achievement> {
+    pub fn achievement(&self) -> Option<Achievement> {
         match self {
             MessageContent::Text(_) => Some(Achievement::SentText),
             MessageContent::Image(_) => Some(Achievement::SentImage),
