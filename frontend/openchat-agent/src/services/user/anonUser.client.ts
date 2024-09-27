@@ -198,6 +198,7 @@ export class AnonUserClient {
         _event: EventWrapper<Message>,
         _messageFilterFailed: bigint | undefined,
         _threadRootMessageIndex: number | undefined,
+        _pin: string | undefined,
         _onRequestAccepted: () => void,
     ): Promise<[SendMessageResponse, Message]> {
         throw new AnonymousOperationError();
