@@ -25,6 +25,8 @@ jobs:
       #     path: ~/.npm
       #     key: npm-${{ hashFiles('package-lock.json') }}
       #     restore-keys: npm-
+      - name: Clear npm cache
+        run: npm cache clean --force
       - name: Restore Turborepo files from cache
         uses: actions/cache/restore@v3
         with:
