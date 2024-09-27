@@ -72,7 +72,7 @@ async fn send_message_with_transfer_to_channel(
         Err(error) => return TransferFailed(error),
     };
 
-    let achievement = content.hydrate(None).to_achievement();
+    let achievement = content.content_type().achievement();
     let has_thread = args.thread_root_message_index.is_some();
     let quote_reply = args.replies_to.is_some();
 
@@ -195,7 +195,7 @@ async fn send_message_with_transfer_to_group(
         Err(error) => return TransferFailed(error),
     };
 
-    let achievement = content.hydrate(None).to_achievement();
+    let achievement = content.content_type().achievement();
     let has_thread = args.thread_root_message_index.is_some();
     let quote_reply = args.replies_to.is_some();
 

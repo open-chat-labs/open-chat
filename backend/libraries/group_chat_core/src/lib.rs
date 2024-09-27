@@ -685,7 +685,6 @@ impl GroupChatCore {
                 self.events
                     .visible_main_events_reader(min_visible_event_index)
                     .message_internal(root_message_index.into())
-                    .cloned()
             }) {
                 if thread_root_message.sender != sender {
                     users_to_notify.insert(thread_root_message.sender);

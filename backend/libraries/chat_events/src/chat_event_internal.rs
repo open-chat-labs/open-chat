@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{HashMap, HashSet};
-use std::ops::{Deref, DerefMut};
+use std::ops::DerefMut;
 use types::{
     is_default, is_empty_slice, AccessGate, AccessGateConfigInternal, AvatarChanged, ChannelId, Chat, ChatId, ChatMetrics,
     CommunityId, Cryptocurrency, DeletedBy, DirectChatCreated, EventIndex, EventWrapperInternal, EventsTimeToLiveUpdated,
@@ -121,14 +121,6 @@ impl ChatEventInternal {
         matches!(self, ChatEventInternal::Message(_))
     }
 
-    pub fn as_message(&self) -> Option<&MessageInternal> {
-        if let ChatEventInternal::Message(m) = self {
-            Some(m.deref())
-        } else {
-            None
-        }
-    }
-
     pub fn as_message_mut(&mut self) -> Option<&mut MessageInternal> {
         if let ChatEventInternal::Message(m) = self {
             Some(m.deref_mut())
@@ -136,15 +128,23 @@ impl ChatEventInternal {
             None
         }
     }
+
+    pub fn into_message(self) -> Option<MessageInternal> {
+        if let ChatEventInternal::Message(m) = self {
+            Some(*m)
+        } else {
+            None
+        }
+    }
 }
 
-pub enum EventOrExpiredRangeInternal<'a> {
-    Event(&'a EventWrapperInternal<ChatEventInternal>),
+pub enum EventOrExpiredRangeInternal {
+    Event(EventWrapperInternal<ChatEventInternal>),
     ExpiredEventRange(EventIndex, EventIndex),
 }
 
-impl<'a> EventOrExpiredRangeInternal<'a> {
-    pub fn as_event(self) -> Option<&'a EventWrapperInternal<ChatEventInternal>> {
+impl EventOrExpiredRangeInternal {
+    pub fn into_event(self) -> Option<EventWrapperInternal<ChatEventInternal>> {
         if let EventOrExpiredRangeInternal::Event(event) = self {
             Some(event)
         } else {
@@ -190,12 +190,12 @@ pub struct MessageInternal {
 }
 
 impl MessageInternal {
-    pub fn hydrate(&self, my_user_id: Option<UserId>) -> Message {
+    pub fn hydrate(self, my_user_id: Option<UserId>) -> Message {
         Message {
             message_index: self.message_index,
             message_id: self.message_id,
             sender: self.sender,
-            content: if let Some(deleted_by) = self.deleted_by.clone() {
+            content: if let Some(deleted_by) = self.deleted_by {
                 MessageContent::Deleted(deleted_by.hydrate())
             } else {
                 self.content.hydrate(my_user_id)

@@ -4,22 +4,21 @@ use std::ops::RangeBounds;
 use types::{EventIndex, EventWrapperInternal};
 
 pub trait EventsMap {
-    fn get_mut(&mut self, event_index: EventIndex) -> Option<&mut EventWrapperInternal<ChatEventInternal>>;
+    fn get(&self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>>;
     fn insert(&mut self, event: EventWrapperInternal<ChatEventInternal>);
     fn remove(&mut self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>>;
     fn range<R: RangeBounds<EventIndex>>(
         &self,
         range: R,
-    ) -> Box<dyn DoubleEndedIterator<Item = (&EventIndex, &EventWrapperInternal<ChatEventInternal>)> + '_>;
-    fn values(&self) -> Box<dyn DoubleEndedIterator<Item = &EventWrapperInternal<ChatEventInternal>> + '_>;
-    fn values_mut(&mut self) -> Box<dyn DoubleEndedIterator<Item = &mut EventWrapperInternal<ChatEventInternal>> + '_>;
+    ) -> Box<dyn DoubleEndedIterator<Item = EventWrapperInternal<ChatEventInternal>> + '_>;
+    fn iter(&self) -> Box<dyn DoubleEndedIterator<Item = EventWrapperInternal<ChatEventInternal>> + '_>;
     fn len(&self) -> usize;
     fn is_empty(&self) -> bool;
 }
 
 impl EventsMap for BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>> {
-    fn get_mut(&mut self, event_index: EventIndex) -> Option<&mut EventWrapperInternal<ChatEventInternal>> {
-        self.get_mut(&event_index)
+    fn get(&self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
+        self.get(&event_index).cloned()
     }
 
     fn insert(&mut self, event: EventWrapperInternal<ChatEventInternal>) {
@@ -33,16 +32,12 @@ impl EventsMap for BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>>
     fn range<R: RangeBounds<EventIndex>>(
         &self,
         range: R,
-    ) -> Box<dyn DoubleEndedIterator<Item = (&EventIndex, &EventWrapperInternal<ChatEventInternal>)> + '_> {
-        Box::new(self.range(range))
+    ) -> Box<dyn DoubleEndedIterator<Item = EventWrapperInternal<ChatEventInternal>> + '_> {
+        Box::new(self.range(range).map(|(_, e)| e.clone()))
     }
 
-    fn values(&self) -> Box<dyn DoubleEndedIterator<Item = &EventWrapperInternal<ChatEventInternal>> + '_> {
-        Box::new(self.values())
-    }
-
-    fn values_mut(&mut self) -> Box<dyn DoubleEndedIterator<Item = &mut EventWrapperInternal<ChatEventInternal>> + '_> {
-        Box::new(self.values_mut())
+    fn iter(&self) -> Box<dyn DoubleEndedIterator<Item = EventWrapperInternal<ChatEventInternal>> + '_> {
+        Box::new(self.values().cloned())
     }
 
     fn len(&self) -> usize {
