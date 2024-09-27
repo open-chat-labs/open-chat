@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{HashMap, HashSet};
-use std::ops::{Deref, DerefMut};
+use std::ops::DerefMut;
 use types::{
     is_default, is_empty_slice, AvatarChanged, ChannelId, Chat, ChatId, ChatMetrics, CommunityId, Cryptocurrency, DeletedBy,
     DirectChatCreated, EventIndex, EventWrapperInternal, EventsTimeToLiveUpdated, ExternalUrlUpdated, GroupCreated,
