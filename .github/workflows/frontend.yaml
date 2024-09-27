@@ -19,14 +19,12 @@ jobs:
         working-directory: frontend
     steps:
       - uses: actions/checkout@v4
-      # - name: Restore dependencies from cache
-      #   uses: actions/cache/restore@v3
-      #   with:
-      #     path: ~/.npm
-      #     key: npm-${{ hashFiles('package-lock.json') }}
-      #     restore-keys: npm-
-      - name: Clear npm cache
-        run: npm cache clean --force
+      - name: Restore dependencies from cache
+        uses: actions/cache/restore@v3
+        with:
+          path: ~/.npm
+          key: npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: npm-
       - name: Restore Turborepo files from cache
         uses: actions/cache/restore@v3
         with:
