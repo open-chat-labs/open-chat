@@ -10,9 +10,9 @@ use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, PushMessageArgs, Reader};
 use rand::Rng;
 use types::{
-    Achievement, BlobReference, CanisterId, Chat, ChatId, CompletedCryptoTransaction, ContentValidationError,
-    CryptoTransaction, EventWrapper, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, P2PSwapLocation,
-    TimestampMillis, UserId, UserType,
+    BlobReference, CanisterId, Chat, ChatId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction,
+    EventWrapper, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, P2PSwapLocation, TimestampMillis,
+    UserId, UserType,
 };
 use user_canister::send_message_v2::{Response::*, *};
 use user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCanisterEvent};
@@ -292,7 +292,7 @@ fn send_message_impl(
 
         state
             .data
-            .award_achievements_and_notify(Achievement::from_message(true, &message_event.event, false), now)
+            .award_achievements_and_notify(message_event.event.achievements(true, false), now);
     }
 
     register_timer_jobs(

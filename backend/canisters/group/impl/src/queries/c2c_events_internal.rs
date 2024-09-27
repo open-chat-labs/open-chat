@@ -21,7 +21,6 @@ fn c2c_events_internal_impl(args: Args, state: &RuntimeState) -> Response {
         let events = events_reader
             .iter_events(Some(args.start_index.into()), true)
             .take(args.max_events as usize)
-            .cloned()
             .map(|e| e.into())
             .collect();
 
