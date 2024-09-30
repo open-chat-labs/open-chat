@@ -79,6 +79,8 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
     if let Some(member) = state.data.members.get_mut(caller) {
         if member.suspended.value {
             return UserSuspended;
+        } else if member.lapsed.value {
+            return UserLapsed;
         }
 
         let subtype = is_proposals_channel.then_some(args.subtype).flatten();

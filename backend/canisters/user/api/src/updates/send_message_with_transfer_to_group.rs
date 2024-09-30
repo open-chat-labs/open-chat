@@ -38,6 +38,7 @@ pub enum Response {
     TransferCannotBeToSelf,
     P2PSwapSetUpFailed(String),
     UserSuspended,
+    UserLapsed,
     ChatFrozen,
     RulesNotAccepted,
     Retrying(String, CompletedCryptoTransaction),

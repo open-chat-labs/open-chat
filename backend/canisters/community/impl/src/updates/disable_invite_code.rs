@@ -24,6 +24,8 @@ fn disable_invite_code_impl(state: &mut RuntimeState) -> Response {
     if let Some(member) = state.data.members.get(caller) {
         if member.suspended.value {
             return UserSuspended;
+        } else if member.lapsed.value {
+            return UserLapsed;
         }
 
         if member.role.can_invite_users(&state.data.permissions) {

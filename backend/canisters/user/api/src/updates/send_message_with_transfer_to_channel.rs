@@ -41,6 +41,7 @@ pub enum Response {
     TransferCannotBeToSelf,
     P2PSwapSetUpFailed(String),
     UserSuspended,
+    UserLapsed,
     CommunityFrozen,
     RulesNotAccepted,
     CommunityRulesNotAccepted,

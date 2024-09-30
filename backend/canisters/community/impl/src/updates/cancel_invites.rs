@@ -20,7 +20,9 @@ fn cancel_invites_impl(args: Args, state: &mut RuntimeState) -> Response {
     };
 
     if member.suspended.value {
-        return NotAuthorized;
+        return UserSuspended;
+    } else if member.lapsed.value {
+        return UserLapsed;
     }
 
     let now = state.env.now();
@@ -30,12 +32,13 @@ fn cancel_invites_impl(args: Args, state: &mut RuntimeState) -> Response {
             return ChannelNotFound;
         };
 
-        if !matches!(
-            channel.chat.cancel_invites(member.user_id, args.user_ids, now),
-            CancelInvitesResult::Success
-        ) {
-            return NotAuthorized;
-        };
+        match channel.chat.cancel_invites(member.user_id, args.user_ids, now) {
+            CancelInvitesResult::Success => (),
+            CancelInvitesResult::UserNotInGroup => return NotAuthorized,
+            CancelInvitesResult::UserSuspended => return UserSuspended,
+            CancelInvitesResult::NotAuthorized => return NotAuthorized,
+            CancelInvitesResult::UserLapsed => return UserLapsed,
+        }
     } else {
         if !member.role.can_invite_users(&state.data.permissions) {
             return NotAuthorized;

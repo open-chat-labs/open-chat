@@ -17,5 +17,6 @@ pub enum Response {
     ThreadNotFound,
     UserNotInGroup,
     UserSuspended,
+    UserLapsed,
     GroupFrozen,
 }

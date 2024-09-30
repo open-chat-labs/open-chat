@@ -15,5 +15,6 @@ pub enum Response {
     AlreadyImportingToAnotherCommunity,
     NotAuthorized,
     UserSuspended,
+    UserLapsed,
     ChatFrozen,
 }

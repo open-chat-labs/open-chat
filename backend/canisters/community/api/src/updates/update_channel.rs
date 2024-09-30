@@ -48,6 +48,7 @@ pub enum Response {
     UserSuspended,
     ExternalUrlInvalid,
     CommunityFrozen,
+    UserLapsed,
 }
 
 #[ts_export(community, update_channel)]

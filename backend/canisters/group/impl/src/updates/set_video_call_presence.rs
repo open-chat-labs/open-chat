@@ -23,6 +23,8 @@ pub(crate) fn set_video_call_presence_impl(args: Args, state: &mut RuntimeState)
     if let Some(member) = state.data.get_member(caller) {
         if member.suspended.value {
             return UserSuspended;
+        } else if member.lapsed.value {
+            return UserLapsed;
         }
 
         let now = state.env.now();

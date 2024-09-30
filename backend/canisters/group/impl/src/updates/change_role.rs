@@ -109,5 +109,6 @@ fn change_role_impl(
         ChangeRoleResult::Unchanged => Success,
         ChangeRoleResult::Invalid => Invalid,
         ChangeRoleResult::UserSuspended => UserSuspended,
+        ChangeRoleResult::UserLapsed => UserLapsed,
     }
 }

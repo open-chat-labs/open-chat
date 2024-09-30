@@ -35,5 +35,6 @@ fn unfollow_thread_impl(args: Args, state: &mut RuntimeState) -> Response {
         UnfollowThreadResult::ThreadNotFound => ThreadNotFound,
         UnfollowThreadResult::UserNotInGroup => UserNotInGroup,
         UnfollowThreadResult::UserSuspended => UserSuspended,
+        UnfollowThreadResult::UserLapsed => UserLapsed,
     }
 }

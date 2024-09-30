@@ -21,4 +21,5 @@ pub enum Response {
     UserSuspended,
     CommunityFrozen,
     InternalError(String),
+    UserLapsed,
 }

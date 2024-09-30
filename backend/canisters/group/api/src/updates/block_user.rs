@@ -22,6 +22,7 @@ pub enum Response {
     NotAuthorized,
     UserNotInGroup,
     UserSuspended,
+    UserLapsed,
     ChatFrozen,
 }
 
@@ -36,6 +37,7 @@ impl From<crate::remove_participant::Response> for Response {
             crate::remove_participant::Response::NotAuthorized => Response::NotAuthorized,
             crate::remove_participant::Response::UserNotInGroup => Response::UserNotInGroup,
             crate::remove_participant::Response::UserSuspended => Response::UserSuspended,
+            crate::remove_participant::Response::UserLapsed => Response::UserLapsed,
             crate::remove_participant::Response::ChatFrozen => Response::ChatFrozen,
         }
     }

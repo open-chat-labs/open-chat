@@ -205,6 +205,8 @@ impl GroupMembers {
             Some(p) => {
                 if p.suspended.value {
                     return ChangeRoleResult::UserSuspended;
+                } else if p.lapsed() {
+                    return ChangeRoleResult::UserLapsed;
                 }
                 // Platform moderators can always promote themselves to owner
                 if !(p.role.can_change_roles(new_role, permissions) || (is_caller_platform_moderator && new_role.is_owner())) {
@@ -329,6 +331,7 @@ pub enum ChangeRoleResult {
     Unchanged,
     Invalid,
     UserSuspended,
+    UserLapsed,
 }
 
 pub struct ChangeRoleSuccess {

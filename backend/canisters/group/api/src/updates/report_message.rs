@@ -16,6 +16,7 @@ pub struct Args {
 pub enum Response {
     Success,
     UserSuspended,
+    UserLapsed,
     ChatFrozen,
     CallerNotInGroup,
     NotAuthorized,

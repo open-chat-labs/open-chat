@@ -108,5 +108,6 @@ fn delete_messages_impl(user_id: UserId, args: Args, state: &mut RuntimeState) -
         DeleteMessagesResult::MessageNotFound => MessageNotFound,
         DeleteMessagesResult::UserNotInGroup => CallerNotInGroup,
         DeleteMessagesResult::UserSuspended => UserSuspended,
+        DeleteMessagesResult::UserLapsed => UserLapsed,
     }
 }

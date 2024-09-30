@@ -15,4 +15,5 @@ pub enum Response {
     NotAuthorized,
     CommunityFrozen,
     UserSuspended,
+    UserLapsed,
 }

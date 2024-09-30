@@ -25,6 +25,7 @@ async fn delete_community(args: Args) -> Response {
             c2c_delete_community::Response::NotAuthorized => NotAuthorized,
             c2c_delete_community::Response::CommunityFrozen => CommunityFrozen,
             c2c_delete_community::Response::UserSuspended => UserSuspended,
+            c2c_delete_community::Response::UserLapsed => UserLapsed,
             c2c_delete_community::Response::InternalError(error) => InternalError(error),
         },
         Err(error) => InternalError(format!("{error:?}")),

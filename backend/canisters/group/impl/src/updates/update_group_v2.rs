@@ -132,6 +132,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
             }
             Err(result) => match result {
                 UpdateResult::UserSuspended => Err(UserSuspended),
+                UpdateResult::UserLapsed => Err(NotAuthorized),
                 UpdateResult::UserNotInGroup => Err(CallerNotInGroup),
                 UpdateResult::NotAuthorized => Err(NotAuthorized),
                 UpdateResult::NameTooShort(v) => Err(NameTooShort(v)),

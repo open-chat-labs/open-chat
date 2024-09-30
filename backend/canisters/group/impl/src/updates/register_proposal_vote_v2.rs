@@ -27,6 +27,8 @@ fn register_proposal_vote_impl(args: Args, state: &mut RuntimeState) -> Response
 
     if member.suspended.value {
         return UserSuspended;
+    } else if member.lapsed.value {
+        return UserLapsed;
     }
 
     let min_visible_event_index = member.min_visible_event_index();

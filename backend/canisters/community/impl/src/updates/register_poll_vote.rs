@@ -28,6 +28,8 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     if member.suspended.value {
         return UserSuspended;
+    } else if member.lapsed.value {
+        return UserLapsed;
     }
 
     let channel = match state.data.channels.get_mut(&args.channel_id) {
@@ -39,6 +41,10 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> Response {
         Some(m) => m,
         None => return UserNotInChannel,
     };
+
+    if channel_member.lapsed.value {
+        return UserLapsed;
+    }
 
     let now = state.env.now();
     let user_id = member.user_id;

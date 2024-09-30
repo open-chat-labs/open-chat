@@ -21,6 +21,7 @@ pub enum Response {
     SwapNotFound,
     UserNotInGroup,
     UserSuspended,
+    UserLapsed,
     ChatFrozen,
     PinRequired,
     PinIncorrect(Milliseconds),

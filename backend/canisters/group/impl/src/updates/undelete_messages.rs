@@ -50,6 +50,7 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
             UndeleteMessagesResult::MessageNotFound => MessageNotFound,
             UndeleteMessagesResult::UserNotInGroup => CallerNotInGroup,
             UndeleteMessagesResult::UserSuspended => UserSuspended,
+            UndeleteMessagesResult::UserLapsed => UserLapsed,
         }
     } else {
         CallerNotInGroup

@@ -27,4 +27,5 @@ pub enum Response {
     UserNotInCommunity,
     ChannelNotFound,
     UserSuspended,
+    UserLapsed,
 }

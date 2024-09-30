@@ -155,6 +155,8 @@ fn validate_caller(community_rules_accepted: Option<Version>, state: &mut Runtim
     if let Some(member) = state.data.members.get_mut(caller) {
         if member.suspended.value {
             Err(UserSuspended)
+        } else if member.lapsed.value {
+            Err(UserLapsed)
         } else {
             if let Some(version) = community_rules_accepted {
                 member.accept_rules(version, state.env.now());
@@ -279,6 +281,7 @@ fn process_send_message_result(
         SendMessageResult::NotAuthorized => NotAuthorized,
         SendMessageResult::UserNotInGroup => UserNotInChannel,
         SendMessageResult::UserSuspended => UserSuspended,
+        SendMessageResult::UserLapsed => UserLapsed,
         SendMessageResult::RulesNotAccepted => RulesNotAccepted,
         SendMessageResult::InvalidRequest(error) => InvalidRequest(error),
     }

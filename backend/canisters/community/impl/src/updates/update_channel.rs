@@ -89,6 +89,7 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                     })
                 }
                 UpdateResult::UserSuspended => UserSuspended,
+                UpdateResult::UserLapsed => UserLapsed,
                 UpdateResult::UserNotInGroup => UserNotInChannel,
                 UpdateResult::NotAuthorized => NotAuthorized,
                 UpdateResult::NameTooShort(v) => NameTooShort(v),

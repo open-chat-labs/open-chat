@@ -71,6 +71,8 @@ fn prepare(user_id: UserId, state: &RuntimeState) -> Result<PrepareResult, Respo
     if let Some(member) = state.data.members.get(caller) {
         if member.suspended.value {
             Err(UserSuspended)
+        } else if member.lapsed.value {
+            Err(UserLapsed)
         } else {
             Ok(PrepareResult {
                 caller_id: member.user_id,

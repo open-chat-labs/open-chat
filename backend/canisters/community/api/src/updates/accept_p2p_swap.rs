@@ -29,4 +29,5 @@ pub enum Response {
     PinIncorrect(Milliseconds),
     TooManyFailedPinAttempts(Milliseconds),
     InternalError(String),
+    UserLapsed,
 }

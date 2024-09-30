@@ -21,6 +21,7 @@ pub enum Response {
     UserNotInChannel,
     UserSuspended,
     CommunityFrozen,
+    UserLapsed,
 }
 
 #[ts_export(community, undelete_messages)]

@@ -92,12 +92,14 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
     }
 
     let caller = state.env.caller();
-    if let Some(participant) = state.data.members.get(caller) {
-        if participant.suspended.value {
+    if let Some(member) = state.data.members.get(caller) {
+        if member.suspended.value {
             return Err(UserSuspended);
+        } else if member.lapsed.value {
+            return Err(UserLapsed);
         }
 
-        if participant.role.can_invite_users(&state.data.permissions) {
+        if member.role.can_invite_users(&state.data.permissions) {
             return Ok(PrepareResult {
                 caller,
                 code: state.data.invite_code,

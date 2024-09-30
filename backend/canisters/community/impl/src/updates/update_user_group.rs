@@ -22,6 +22,8 @@ fn update_user_group_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Some(member) = state.data.members.get_mut(caller) {
         if member.suspended.value {
             return UserSuspended;
+        } else if member.lapsed.value {
+            return UserLapsed;
         }
 
         if !member.role.can_manage_user_groups(&state.data.permissions) {

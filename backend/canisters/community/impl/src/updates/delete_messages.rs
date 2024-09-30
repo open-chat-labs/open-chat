@@ -48,6 +48,8 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
     let user_id = if let Some(member) = state.data.members.get(caller) {
         if member.suspended.value {
             return Err(UserSuspended);
+        } else if member.lapsed.value {
+            return Err(UserLapsed);
         } else {
             member.user_id
         }
@@ -69,54 +71,55 @@ fn delete_messages_impl(user_id: UserId, args: Args, state: &mut RuntimeState) -
         return CommunityFrozen;
     }
 
-    if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-        let now = state.env.now();
+    let Some(channel) = state.data.channels.get_mut(&args.channel_id) else {
+        return ChannelNotFound;
+    };
 
-        match channel.chat.delete_messages(
-            user_id,
-            args.thread_root_message_index,
-            args.message_ids,
-            args.as_platform_moderator.unwrap_or_default(),
-            now,
-        ) {
-            DeleteMessagesResult::Success(results) => {
-                let remove_deleted_message_content_at = now + (5 * MINUTE_IN_MS);
-                for message_id in results.into_iter().filter_map(|(message_id, result)| {
-                    if let DeleteMessageResult::Success(sender) = result {
-                        (sender == user_id).then_some(message_id)
-                    } else {
-                        None
-                    }
-                }) {
-                    // After 5 minutes hard delete those messages where the deleter was the message sender
-                    state.data.timer_jobs.enqueue_job(
-                        TimerJob::HardDeleteMessageContent(HardDeleteMessageContentJob {
-                            channel_id: args.channel_id,
-                            thread_root_message_index: args.thread_root_message_index,
-                            message_id,
-                        }),
-                        remove_deleted_message_content_at,
-                        now,
-                    );
+    let now = state.env.now();
+
+    match channel.chat.delete_messages(
+        user_id,
+        args.thread_root_message_index,
+        args.message_ids,
+        args.as_platform_moderator.unwrap_or_default(),
+        now,
+    ) {
+        DeleteMessagesResult::Success(results) => {
+            let remove_deleted_message_content_at = now + (5 * MINUTE_IN_MS);
+            for message_id in results.into_iter().filter_map(|(message_id, result)| {
+                if let DeleteMessageResult::Success(sender) = result {
+                    (sender == user_id).then_some(message_id)
+                } else {
+                    None
                 }
-
-                handle_activity_notification(state);
-
-                if args.new_achievement {
-                    state.data.achievements.notify_user(
-                        user_id,
-                        vec![Achievement::DeletedMessage],
-                        &mut state.data.fire_and_forget_handler,
-                    );
-                }
-
-                Success
+            }) {
+                // After 5 minutes hard delete those messages where the deleter was the message sender
+                state.data.timer_jobs.enqueue_job(
+                    TimerJob::HardDeleteMessageContent(HardDeleteMessageContentJob {
+                        channel_id: args.channel_id,
+                        thread_root_message_index: args.thread_root_message_index,
+                        message_id,
+                    }),
+                    remove_deleted_message_content_at,
+                    now,
+                );
             }
-            DeleteMessagesResult::MessageNotFound => MessageNotFound,
-            DeleteMessagesResult::UserNotInGroup => UserNotInChannel,
-            DeleteMessagesResult::UserSuspended => UserSuspended,
+
+            handle_activity_notification(state);
+
+            if args.new_achievement {
+                state.data.achievements.notify_user(
+                    user_id,
+                    vec![Achievement::DeletedMessage],
+                    &mut state.data.fire_and_forget_handler,
+                );
+            }
+
+            Success
         }
-    } else {
-        ChannelNotFound
+        DeleteMessagesResult::MessageNotFound => MessageNotFound,
+        DeleteMessagesResult::UserNotInGroup => UserNotInChannel,
+        DeleteMessagesResult::UserSuspended => UserSuspended,
+        DeleteMessagesResult::UserLapsed => UserLapsed,
     }
 }

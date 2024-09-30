@@ -4,6 +4,7 @@ use chat_events::{
     RemoveExpiredEventsResult, TipMessageArgs, UndeleteMessageResult,
 };
 use event_store_producer::{EventStoreClient, Runtime};
+use group_community_common::Member;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use regex_lite::Regex;
@@ -796,6 +797,8 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
+            } else if member.lapsed.value {
+                return UserLapsed;
             }
             if !member.role.can_react_to_messages(&self.permissions) {
                 return NotAuthorized;
@@ -834,6 +837,8 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
+            } else if member.lapsed.value {
+                return UserLapsed;
             }
             if !member.role.can_react_to_messages(&self.permissions) {
                 return NotAuthorized;
@@ -866,8 +871,9 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&args.user_id) {
             if member.suspended.value {
                 return UserSuspended;
-            }
-            if !member.role.can_react_to_messages(&self.permissions) {
+            } else if member.lapsed.value {
+                return UserLapsed;
+            } else if !member.role.can_react_to_messages(&self.permissions) {
                 return NotAuthorized;
             }
 
@@ -894,6 +900,8 @@ impl GroupChatCore {
         let (is_admin, min_visible_event_index) = if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
+            } else if member.lapsed() {
+                return UserLapsed;
             }
             (
                 member.role.can_delete_messages(&self.permissions),
@@ -959,6 +967,8 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
+            } else if member.lapsed() {
+                return UserLapsed;
             }
 
             let min_visible_event_index = member.min_visible_event_index();
@@ -1034,8 +1044,9 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
-            }
-            if !member.role.can_pin_messages(&self.permissions) {
+            } else if member.lapsed.value {
+                return UserLapsed;
+            } else if !member.role.can_pin_messages(&self.permissions) {
                 return NotAuthorized;
             }
 
@@ -1077,8 +1088,9 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
-            }
-            if !member.role.can_pin_messages(&self.permissions) {
+            } else if member.lapsed.value {
+                return UserLapsed;
+            } else if !member.role.can_pin_messages(&self.permissions) {
                 return NotAuthorized;
             }
 
@@ -1227,9 +1239,9 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&cancelled_by) {
             if member.suspended.value {
                 return UserSuspended;
-            }
-
-            if !member.role.can_invite_users(&self.permissions) {
+            } else if member.lapsed.value {
+                return UserLapsed;
+            } else if !member.role.can_invite_users(&self.permissions) {
                 return NotAuthorized;
             }
 
@@ -1297,6 +1309,8 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
+            } else if member.lapsed.value {
+                return UserLapsed;
             }
 
             let target_member_role = match self.members.get(&target_user_id) {
@@ -1423,6 +1437,8 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(user_id) {
             if member.suspended.value {
                 return Err(UserSuspended);
+            } else if member.lapsed.value {
+                return Err(UserLapsed);
             }
 
             let group_permissions = &self.permissions;
@@ -1640,21 +1656,27 @@ impl GroupChatCore {
     ) -> FollowThreadResult {
         use FollowThreadResult::*;
 
-        if let Some(member) = self.members.get_mut(&user_id) {
-            match self
-                .events
-                .follow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)
-            {
-                chat_events::FollowThreadResult::Success => {
-                    member.unfollowed_threads.retain(|i| *i != thread_root_message_index);
-                    member.threads.insert(thread_root_message_index);
-                    Success
-                }
-                chat_events::FollowThreadResult::AlreadyFollowing => AlreadyFollowing,
-                chat_events::FollowThreadResult::ThreadNotFound => ThreadNotFound,
+        let Some(member) = self.members.get_mut(&user_id) else {
+            return UserNotInGroup;
+        };
+
+        if member.suspended.value {
+            return UserSuspended;
+        } else if member.lapsed.value {
+            return UserLapsed;
+        }
+
+        match self
+            .events
+            .follow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)
+        {
+            chat_events::FollowThreadResult::Success => {
+                member.unfollowed_threads.retain(|i| *i != thread_root_message_index);
+                member.threads.insert(thread_root_message_index);
+                Success
             }
-        } else {
-            UserNotInGroup
+            chat_events::FollowThreadResult::AlreadyFollowing => AlreadyFollowing,
+            chat_events::FollowThreadResult::ThreadNotFound => ThreadNotFound,
         }
     }
 
@@ -1666,21 +1688,27 @@ impl GroupChatCore {
     ) -> UnfollowThreadResult {
         use UnfollowThreadResult::*;
 
-        if let Some(member) = self.members.get_mut(&user_id) {
-            match self
-                .events
-                .unfollow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)
-            {
-                chat_events::UnfollowThreadResult::Success => {
-                    member.threads.remove(&thread_root_message_index);
-                    member.unfollowed_threads.push_if_not_contains(thread_root_message_index);
-                    Success
-                }
-                chat_events::UnfollowThreadResult::NotFollowing => NotFollowing,
-                chat_events::UnfollowThreadResult::ThreadNotFound => ThreadNotFound,
+        let Some(member) = self.members.get_mut(&user_id) else {
+            return UserNotInGroup;
+        };
+
+        if member.suspended.value {
+            return UserSuspended;
+        } else if member.lapsed.value {
+            return UserLapsed;
+        }
+
+        match self
+            .events
+            .unfollow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)
+        {
+            chat_events::UnfollowThreadResult::Success => {
+                member.threads.remove(&thread_root_message_index);
+                member.unfollowed_threads.push_if_not_contains(thread_root_message_index);
+                Success
             }
-        } else {
-            UserNotInGroup
+            chat_events::UnfollowThreadResult::NotFollowing => NotFollowing,
+            chat_events::UnfollowThreadResult::ThreadNotFound => ThreadNotFound,
         }
     }
 
@@ -1849,6 +1877,7 @@ pub enum SendMessageResult {
     NotAuthorized,
     UserNotInGroup,
     UserSuspended,
+    UserLapsed,
     RulesNotAccepted,
     InvalidRequest(String),
 }
@@ -1866,6 +1895,7 @@ pub enum AddRemoveReactionResult {
     UserNotInGroup,
     NotAuthorized,
     UserSuspended,
+    UserLapsed,
 }
 
 impl From<chat_events::AddRemoveReactionResult> for AddRemoveReactionResult {
@@ -1886,6 +1916,7 @@ pub enum TipMessageResult {
     NotAuthorized,
     UserNotInGroup,
     UserSuspended,
+    UserLapsed,
 }
 
 impl From<chat_events::TipMessageResult> for TipMessageResult {
@@ -1904,6 +1935,7 @@ pub enum DeleteMessagesResult {
     MessageNotFound,
     UserNotInGroup,
     UserSuspended,
+    UserLapsed,
 }
 
 pub enum UndeleteMessagesResult {
@@ -1911,6 +1943,7 @@ pub enum UndeleteMessagesResult {
     MessageNotFound,
     UserNotInGroup,
     UserSuspended,
+    UserLapsed,
 }
 
 pub enum PinUnpinMessageResult {
@@ -1920,6 +1953,7 @@ pub enum PinUnpinMessageResult {
     UserNotInGroup,
     MessageNotFound,
     UserSuspended,
+    UserLapsed,
 }
 
 pub enum CanLeaveResult {
@@ -1939,6 +1973,7 @@ pub enum LeaveResult {
 pub enum RemoveMemberResult {
     Success,
     UserSuspended,
+    UserLapsed,
     UserNotInGroup,
     TargetUserNotInGroup,
     NotAuthorized,
@@ -1948,6 +1983,7 @@ pub enum RemoveMemberResult {
 pub enum UpdateResult {
     Success(Box<UpdateSuccessResult>),
     UserSuspended,
+    UserLapsed,
     UserNotInGroup,
     NotAuthorized,
     NameTooShort(FieldTooShortResult),
@@ -2019,6 +2055,7 @@ pub enum CancelInvitesResult {
     UserNotInGroup,
     UserSuspended,
     NotAuthorized,
+    UserLapsed,
 }
 
 pub enum FollowThreadResult {
@@ -2027,6 +2064,7 @@ pub enum FollowThreadResult {
     ThreadNotFound,
     UserNotInGroup,
     UserSuspended,
+    UserLapsed,
 }
 
 pub enum UnfollowThreadResult {
@@ -2035,6 +2073,7 @@ pub enum UnfollowThreadResult {
     ThreadNotFound,
     UserNotInGroup,
     UserSuspended,
+    UserLapsed,
 }
 
 #[derive(Default)]

@@ -112,6 +112,7 @@ async fn send_message_with_transfer_to_channel(
             Response::UserNotInChannel => UserNotInChannel(completed_transaction),
             Response::ChannelNotFound => ChannelNotFound(completed_transaction),
             Response::UserSuspended => UserSuspended,
+            Response::UserLapsed => UserLapsed,
             Response::CommunityFrozen => CommunityFrozen,
             Response::RulesNotAccepted => RulesNotAccepted,
             Response::CommunityRulesNotAccepted => CommunityRulesNotAccepted,
@@ -232,6 +233,7 @@ async fn send_message_with_transfer_to_group(
             }
             Response::CallerNotInGroup => CallerNotInGroup(Some(completed_transaction)),
             Response::UserSuspended => UserSuspended,
+            Response::UserLapsed => UserLapsed,
             Response::ChatFrozen => ChatFrozen,
             Response::RulesNotAccepted => RulesNotAccepted,
             Response::MessageEmpty

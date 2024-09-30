@@ -21,4 +21,5 @@ pub enum Response {
     UserNotInCommunity,
     UserSuspended,
     CommunityFrozen,
+    UserLapsed,
 }

@@ -25,4 +25,5 @@ pub enum Response {
     GroupFrozen,
     UserNotInGroup,
     UserSuspended,
+    UserLapsed,
 }

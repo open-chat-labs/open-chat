@@ -172,6 +172,8 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     if let Some(member) = state.data.members.get(caller) {
         if member.suspended.value {
             return Err(UserSuspended);
+        } else if member.lapsed.value {
+            return Err(UserLapsed);
         }
 
         let permissions = &state.data.permissions;

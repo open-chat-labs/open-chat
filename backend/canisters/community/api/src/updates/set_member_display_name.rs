@@ -19,4 +19,5 @@ pub enum Response {
     DisplayNameInvalid,
     DisplayNameTooShort(u16),
     DisplayNameTooLong(u16),
+    UserLapsed,
 }

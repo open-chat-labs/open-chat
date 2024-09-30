@@ -19,5 +19,6 @@ pub enum Response {
     GroupNotPublic,
     NotAuthorized,
     UserSuspended,
+    UserLapsed,
     ChatFrozen,
 }

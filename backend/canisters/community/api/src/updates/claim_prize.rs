@@ -25,4 +25,5 @@ pub enum Response {
     PrizeEnded,
     TransferFailed(String, FailedCryptoTransaction),
     FailedAfterTransfer(String, CompletedCryptoTransaction),
+    UserLapsed,
 }

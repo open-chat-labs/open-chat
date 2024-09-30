@@ -22,6 +22,7 @@ pub enum Response {
     UserSuspended,
     CommunityFrozen,
     InternalError(String),
+    UserLapsed,
 }
 
 impl From<crate::remove_member::Response> for Response {
@@ -36,6 +37,7 @@ impl From<crate::remove_member::Response> for Response {
             crate::remove_member::Response::TargetUserNotInCommunity => Response::TargetUserNotInCommunity,
             crate::remove_member::Response::UserSuspended => Response::UserSuspended,
             crate::remove_member::Response::CommunityFrozen => Response::CommunityFrozen,
+            crate::remove_member::Response::UserLapsed => Response::UserLapsed,
         }
     }
 }

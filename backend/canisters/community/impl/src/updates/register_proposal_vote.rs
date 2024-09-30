@@ -63,6 +63,8 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
 
     if member.suspended.value {
         return Err(UserSuspended);
+    } else if member.lapsed.value {
+        return Err(UserLapsed);
     }
 
     let channel = match state.data.channels.get(&args.channel_id) {
@@ -74,6 +76,10 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         Some(m) => m,
         None => return Err(UserNotInChannel),
     };
+
+    if channel_member.lapsed.value {
+        return Err(UserLapsed);
+    }
 
     let min_visible_event_index = channel_member.min_visible_event_index();
 

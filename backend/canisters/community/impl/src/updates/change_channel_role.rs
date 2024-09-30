@@ -25,6 +25,8 @@ fn change_channel_role_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Some(member) = state.data.members.get(caller) {
         if member.suspended.value {
             return UserSuspended;
+        } else if member.lapsed.value {
+            return UserLapsed;
         }
 
         if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
@@ -57,6 +59,7 @@ fn change_channel_role_impl(args: Args, state: &mut RuntimeState) -> Response {
                 ChangeRoleResult::Unchanged => Success,
                 ChangeRoleResult::Invalid => Invalid,
                 ChangeRoleResult::UserSuspended => UserSuspended,
+                ChangeRoleResult::UserLapsed => UserLapsed,
             }
         } else {
             ChannelNotFound

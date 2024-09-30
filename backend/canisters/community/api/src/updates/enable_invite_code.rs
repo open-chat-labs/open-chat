@@ -12,6 +12,7 @@ pub enum Response {
     NotAuthorized,
     UserSuspended,
     CommunityFrozen,
+    UserLapsed,
 }
 
 #[ts_export(community, enable_invite_code)]

@@ -22,6 +22,7 @@ pub(crate) fn set_video_call_presence_impl(args: Args, state: &mut RuntimeState)
 
     let user_id = match state.data.members.get(caller) {
         Some(member) if member.suspended.value => return UserSuspended,
+        Some(member) if member.lapsed.value => return UserLapsed,
         Some(member) => member.user_id,
         None => return UserNotInCommunity,
     };

@@ -23,6 +23,7 @@ pub enum Response {
     GroupImportingToAnotherCommunity,
     GroupFrozen,
     InternalError(String),
+    UserLapsed,
 }
 
 #[ts_export(community, import_group)]

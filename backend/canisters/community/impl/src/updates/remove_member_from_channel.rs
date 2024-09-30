@@ -21,6 +21,7 @@ fn remove_member_from_channel_impl(args: Args, state: &mut RuntimeState) -> Resp
 
     let user_id = match state.data.members.get(caller) {
         Some(m) if m.suspended.value => return UserSuspended,
+        Some(m) if m.lapsed.value => return UserLapsed,
         Some(m) => m.user_id,
         _ => return UserNotInCommunity,
     };
@@ -41,6 +42,7 @@ fn remove_member_from_channel_impl(args: Args, state: &mut RuntimeState) -> Resp
             Success
         }
         RemoveMemberResult::UserSuspended => UserSuspended,
+        RemoveMemberResult::UserLapsed => UserLapsed,
         RemoveMemberResult::UserNotInGroup => UserNotInChannel,
         RemoveMemberResult::TargetUserNotInGroup => TargetUserNotInChannel,
         RemoveMemberResult::NotAuthorized => NotAuthorized,

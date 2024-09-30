@@ -42,6 +42,7 @@ pub enum Response {
     CommunityFrozen,
     RulesNotAccepted,
     CommunityRulesNotAccepted,
+    UserLapsed,
 }
 
 #[ts_export(community, send_message)]

@@ -21,4 +21,5 @@ pub enum Response {
     Invalid,
     CommunityFrozen,
     InternalError(String),
+    UserLapsed,
 }

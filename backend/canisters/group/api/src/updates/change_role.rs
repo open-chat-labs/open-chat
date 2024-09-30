@@ -19,6 +19,7 @@ pub enum Response {
     NotAuthorized,
     UserNotInGroup,
     UserSuspended,
+    UserLapsed,
     Invalid,
     ChatFrozen,
     InternalError(String),

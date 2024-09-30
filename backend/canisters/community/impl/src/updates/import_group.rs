@@ -54,6 +54,7 @@ async fn import_group_impl(group_id: ChatId, user_id: UserId, group_index_canist
         Ok(C2cResponse::UserNotInGroup) => UserNotInGroup,
         Ok(C2cResponse::NotAuthorized) => UserNotGroupOwner,
         Ok(C2cResponse::UserSuspended) => UserSuspended,
+        Ok(C2cResponse::UserLapsed) => UserLapsed,
         Ok(C2cResponse::GroupNotFound) => GroupNotFound,
         Ok(C2cResponse::AlreadyImportingToAnotherCommunity) => GroupImportingToAnotherCommunity,
         Ok(C2cResponse::ChatFrozen) => GroupFrozen,

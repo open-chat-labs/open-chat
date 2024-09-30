@@ -56,6 +56,8 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     if let Some(member) = state.data.members.get(caller) {
         if member.suspended.value {
             return Err(UserSuspended);
+        } else if member.lapsed.value {
+            return Err(UserLapsed);
         }
 
         let user_id = member.user_id;
@@ -67,6 +69,8 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 let permissions = &channel.chat.permissions;
                 if !channel_member.role.can_add_members(permissions) {
                     return Err(NotAuthorized);
+                } else if channel_member.lapsed.value {
+                    return Err(UserLapsed);
                 }
 
                 let mut users_to_add = Vec::new();

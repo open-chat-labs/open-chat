@@ -45,6 +45,7 @@ pub enum Response {
     UserSuspended,
     CommunityFrozen,
     InvalidLanguage,
+    UserLapsed,
 }
 
 #[ts_export(community, update_community)]

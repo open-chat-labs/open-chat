@@ -42,6 +42,7 @@ pub enum Response {
     AccessGateInvalid,
     NameTaken,
     UserSuspended,
+    UserLapsed,
     ChatFrozen,
     InternalError,
 }

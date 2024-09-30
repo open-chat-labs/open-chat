@@ -78,6 +78,8 @@ fn reserve_p2p_swap(args: Args, state: &mut RuntimeState) -> Result<ReserveP2PSw
     if let Some(member) = state.data.members.get(caller) {
         if member.suspended.value {
             return Err(Box::new(UserSuspended));
+        } else if member.lapsed.value {
+            return Err(Box::new(UserLapsed));
         }
         let user_id = member.user_id;
 
@@ -86,6 +88,11 @@ fn reserve_p2p_swap(args: Args, state: &mut RuntimeState) -> Result<ReserveP2PSw
                 Some(m) => m,
                 _ => return Err(Box::new(UserNotInChannel)),
             };
+
+            if channel_member.lapsed.value {
+                return Err(Box::new(UserLapsed));
+            }
+
             let now = state.env.now();
 
             match channel.chat.events.reserve_p2p_swap(
