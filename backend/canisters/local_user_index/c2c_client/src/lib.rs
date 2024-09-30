@@ -48,7 +48,7 @@ pub async fn push_wasm_in_chunks(
             canister_id,
             &c2c_push_wasm_chunk::Args {
                 canister_type,
-                chunk: chunk.to_vec(),
+                chunk: chunk.to_vec().into(),
                 index: index as u8,
             },
         )

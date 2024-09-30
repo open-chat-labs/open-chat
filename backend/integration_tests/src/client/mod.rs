@@ -64,7 +64,12 @@ pub fn install_canister<P: CandidType>(
     payload: P,
 ) {
     env.advance_time(Duration::from_millis(1));
-    env.install_canister(canister_id, wasm.module, candid::encode_one(&payload).unwrap(), Some(sender))
+    env.install_canister(
+        canister_id,
+        wasm.module.into(),
+        candid::encode_one(&payload).unwrap(),
+        Some(sender),
+    )
 }
 
 pub fn execute_query<P: CandidType, R: CandidType + DeserializeOwned>(
