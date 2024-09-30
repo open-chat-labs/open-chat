@@ -29,9 +29,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         return NotAuthorized;
     };
 
-    if member.suspended.value {
-        return NotAuthorized;
-    } else if member.lapsed.value {
+    if member.suspended.value || member.lapsed.value {
         return NotAuthorized;
     }
 
