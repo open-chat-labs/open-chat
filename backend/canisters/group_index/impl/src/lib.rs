@@ -16,8 +16,8 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{
-    AccessGate, BuildVersion, CanisterId, CanisterWasm, ChatId, ChildCanisterWasms, CommunityId, Cycles, FrozenGroupInfo,
-    Milliseconds, TimestampMillis, Timestamped, UserId,
+    AccessGate, BuildVersion, CanisterId, ChatId, ChildCanisterWasms, CommunityId, Cycles, FrozenGroupInfo, Milliseconds,
+    TimestampMillis, Timestamped, UserId,
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
@@ -114,7 +114,7 @@ impl RuntimeState {
             group_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::Group).wasm.version,
             community_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::Community).wasm.version,
             local_group_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
-            upload_wasm_chunks_whitelist: self.data.upload_wasm_chunks_whitelist.clone(),
+            upload_wasm_chunks_whitelist: self.data.upload_wasm_chunks_whitelist.iter().copied().collect(),
             wasm_chunks_uploaded: self
                 .data
                 .child_canister_wasms
@@ -143,12 +143,7 @@ struct Data {
     pub deleted_communities: DeletedCommunities,
     pub public_group_and_community_names: PublicGroupAndCommunityNames,
     pub governance_principals: HashSet<Principal>,
-    #[serde(default)]
     pub child_canister_wasms: ChildCanisterWasms<ChildCanisterType>,
-    pub group_canister_wasm: CanisterWasm,
-    pub community_canister_wasm: CanisterWasm,
-    #[serde(alias = "local_group_index_canister_wasm_for_upgrades")]
-    pub local_group_index_canister_wasm: CanisterWasm,
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
@@ -163,8 +158,7 @@ struct Data {
     pub local_index_map: LocalGroupIndexMap,
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub video_call_operators: Vec<Principal>,
-    #[serde(default)]
-    pub upload_wasm_chunks_whitelist: Vec<Principal>,
+    pub upload_wasm_chunks_whitelist: HashSet<Principal>,
     pub ic_root_key: Vec<u8>,
     pub rng_seed: [u8; 32],
 }
@@ -193,9 +187,6 @@ impl Data {
             public_group_and_community_names: PublicGroupAndCommunityNames::default(),
             governance_principals: governance_principals.iter().copied().collect(),
             child_canister_wasms: ChildCanisterWasms::default(),
-            group_canister_wasm: CanisterWasm::default(),
-            community_canister_wasm: CanisterWasm::default(),
-            local_group_index_canister_wasm: CanisterWasm::default(),
             user_index_canister_id,
             cycles_dispenser_canister_id,
             proposals_bot_user_id,
@@ -210,7 +201,7 @@ impl Data {
             local_index_map: LocalGroupIndexMap::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             video_call_operators,
-            upload_wasm_chunks_whitelist: Vec::default(),
+            upload_wasm_chunks_whitelist: HashSet::default(),
             ic_root_key,
             rng_seed: [0; 32],
         }
@@ -302,9 +293,6 @@ impl Default for Data {
             public_group_and_community_names: PublicGroupAndCommunityNames::default(),
             governance_principals: HashSet::default(),
             child_canister_wasms: ChildCanisterWasms::default(),
-            group_canister_wasm: CanisterWasm::default(),
-            community_canister_wasm: CanisterWasm::default(),
-            local_group_index_canister_wasm: CanisterWasm::default(),
             user_index_canister_id: Principal::anonymous(),
             cycles_dispenser_canister_id: Principal::anonymous(),
             proposals_bot_user_id: Principal::anonymous().into(),
@@ -319,7 +307,7 @@ impl Default for Data {
             local_index_map: LocalGroupIndexMap::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             video_call_operators: Vec::default(),
-            upload_wasm_chunks_whitelist: Vec::default(),
+            upload_wasm_chunks_whitelist: HashSet::default(),
             ic_root_key: Vec::new(),
             rng_seed: [0; 32],
         }
