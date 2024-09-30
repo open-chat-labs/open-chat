@@ -141,37 +141,14 @@ type MigrationFunction<T> = (
     transaction: IDBPTransaction<T, StoreNames<T>[], "versionchange">,
 ) => Promise<void>;
 
-async function clearChatsStore(
-    _db: IDBPDatabase<ChatSchema>,
-    _principal: Principal,
-    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-) {
-    await tx.objectStore("chats").clear();
-}
-
-async function clearEventsStore(
-    _db: IDBPDatabase<ChatSchema>,
-    _principal: Principal,
-    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-) {
-    await tx.objectStore("chat_events").clear();
-}
-
-async function clearCommunityDetails(
-    _db: IDBPDatabase<ChatSchema>,
-    _principal: Principal,
-    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-) {
-    await tx.objectStore("community_details").clear();
-}
-
-async function createExternalAchievementsStore(
-    db: IDBPDatabase<ChatSchema>,
-    _principal: Principal,
-    _tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-) {
-    db.createObjectStore("externalAchievements");
-}
+// Leaving this here as an example - needs to be commented to keep the compiler happy
+// async function clearChatsStore(
+//     _db: IDBPDatabase<ChatSchema>,
+//     _principal: Principal,
+//     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+// ) {
+//     await tx.objectStore("chats").clear();
+// }
 
 async function clearEverything(
     db: IDBPDatabase<ChatSchema>,
@@ -182,34 +159,6 @@ async function clearEverything(
 }
 
 const migrations: Record<number, MigrationFunction<ChatSchema>> = {
-    105: clearChatsStore,
-    106: clearChatsStore,
-    107: async (
-        _db: IDBPDatabase<ChatSchema>,
-        principal: Principal,
-        tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-    ) => {
-        const key = principal.toString();
-        const store = tx.objectStore("chats");
-        const chatState = await store.get(key);
-        if (chatState) {
-            chatState.chitState.totalChitEarned = chatState.chitState.chitBalance;
-            await store.put(chatState, key);
-        }
-    },
-    108: async (
-        db: IDBPDatabase<ChatSchema>,
-        principal: Principal,
-        tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-    ) => {
-        await clearEventsStore(db, principal, tx);
-        await clearChatsStore(db, principal, tx);
-    },
-    109: clearChatsStore,
-    110: clearChatsStore,
-    111: clearChatsStore,
-    112: clearCommunityDetails,
-    113: createExternalAchievementsStore,
     114: clearEverything,
 };
 
