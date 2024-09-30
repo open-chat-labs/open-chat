@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { type DailyCall } from "@daily-co/daily-js";
     import { _ } from "svelte-i18n";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import {
@@ -50,6 +51,7 @@
     let hostEnded = false;
     let denied = false;
     let askedToSpeak = false;
+    let call: DailyCall | undefined = undefined;
 
     $: {
         activeVideoCall.changeTheme(getThemeConfig($currentTheme));
@@ -128,7 +130,12 @@
                 accessType,
             );
 
-            const call = daily.createFrame(iframeContainer, {
+            if (call !== undefined) {
+                await call.destroy();
+                call = undefined;
+            }
+
+            call = daily.createFrame(iframeContainer, {
                 token,
                 activeSpeakerMode: callType === "broadcast" ? true : $videoSpeakerView,
                 showLeaveButton: false,
@@ -152,14 +159,14 @@
                         activeVideoCall.captureAccessRequest(ev.data);
                     }
                     if (ev.data.kind === "demote_participant") {
-                        const me = call.participants().local.session_id;
+                        const me = call?.participants().local.session_id;
                         if (ev.data.participantId === me && $user.userId === ev.data.userId) {
                             askedToSpeak = false;
                             client.setVideoCallPresence(chat.id, BigInt(messageId), "hidden");
                         }
                     }
                     if (ev.data.kind === "ask_to_speak_response") {
-                        const me = call.participants().local.session_id;
+                        const me = call?.participants().local.session_id;
                         if (ev.data.participantId === me && $user.userId === ev.data.userId) {
                             askedToSpeak = false;
                             denied = !ev.data.approved;
@@ -211,7 +218,7 @@
 
             // if we are not joining aka starting we need to tell the other users
             if (!joining) {
-                client.ringOtherUsers(messageId);
+                client.ringOtherUsers(chat.id, messageId);
             }
 
             await call.join();
@@ -281,7 +288,7 @@
                 const present = $activeVideoCall.call.participantCounts().present;
                 if (present === 1) {
                     // I must be the last person left in the call
-                    client.endVideoCall($activeVideoCall.chatId);
+                    client.endVideoCall($activeVideoCall.chatId, $activeVideoCall.messageId);
                 }
             }
 
