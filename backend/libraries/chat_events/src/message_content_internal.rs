@@ -4,15 +4,14 @@ use search::Document;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use types::{
-    is_default, is_empty_hashmap, is_empty_hashset, is_empty_slice, AudioContent, BlobReference, CallParticipant, CanisterId,
-    CompletedCryptoTransaction, ContentWithCaptionEventPayload, CryptoContent, CryptoContentEventPayload, CryptoTransaction,
-    CustomContent, FileContent, FileContentEventPayload, GiphyContent, GiphyImageVariant,
-    GovernanceProposalContentEventPayload, ImageContent, ImageOrVideoContentEventPayload, MessageContent,
-    MessageContentEventPayload, MessageContentInitial, MessageContentType, MessageIndex, MessageReminderContent,
-    MessageReminderContentEventPayload, MessageReminderCreatedContent, MessageReport, P2PSwapContent,
-    P2PSwapContentEventPayload, PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload, PollVotes,
-    PrizeContent, PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload, Proposal,
-    ProposalContent, RegisterVoteResult, ReportedMessage, ReportedMessageContentEventPayload, TextContent,
+    is_default, AudioContent, BlobReference, CallParticipant, CanisterId, CompletedCryptoTransaction,
+    ContentWithCaptionEventPayload, CryptoContent, CryptoContentEventPayload, CryptoTransaction, CustomContent, FileContent,
+    FileContentEventPayload, GiphyContent, GiphyImageVariant, GovernanceProposalContentEventPayload, ImageContent,
+    ImageOrVideoContentEventPayload, MessageContent, MessageContentEventPayload, MessageContentInitial, MessageContentType,
+    MessageIndex, MessageReminderContent, MessageReminderContentEventPayload, MessageReminderCreatedContent, MessageReport,
+    P2PSwapContent, P2PSwapContentEventPayload, PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload,
+    PollVotes, PrizeContent, PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload,
+    Proposal, ProposalContent, RegisterVoteResult, ReportedMessage, ReportedMessageContentEventPayload, TextContent,
     TextContentEventPayload, ThumbnailData, TimestampMillis, TimestampNanos, TotalVotes, UserId, VideoCallContent,
     VideoCallPresence, VideoCallType, VideoContent, VoteOperation,
 };
@@ -732,7 +731,7 @@ pub struct ProposalContentInternal {
     pub governance_canister_id: CanisterId,
     #[serde(rename = "p")]
     pub proposal: Proposal,
-    #[serde(rename = "v", default, skip_serializing_if = "is_empty_hashmap")]
+    #[serde(rename = "v", default, skip_serializing_if = "HashMap::is_empty")]
     pub votes: HashMap<UserId, bool>,
 }
 
@@ -760,9 +759,9 @@ impl MessageContentInternalSubtype for ProposalContentInternal {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct PrizeContentInternal {
-    #[serde(rename = "p", alias = "p2", default, skip_serializing_if = "is_empty_slice")]
+    #[serde(rename = "p", alias = "p2", default, skip_serializing_if = "Vec::is_empty")]
     pub prizes_remaining: Vec<u128>,
-    #[serde(rename = "r", default, skip_serializing_if = "is_empty_hashset")]
+    #[serde(rename = "r", default, skip_serializing_if = "HashSet::is_empty")]
     pub reservations: HashSet<UserId>,
     #[serde(rename = "w")]
     pub winners: HashSet<UserId>,

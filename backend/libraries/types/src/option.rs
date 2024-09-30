@@ -59,6 +59,10 @@ impl<T> OptionUpdate<T> {
             OptionUpdate::SetToSome(value) => Some(value),
         }
     }
+
+    pub fn is_empty(&self) -> bool {
+        !self.has_update()
+    }
 }
 
 macro_rules! option_update {

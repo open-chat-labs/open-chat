@@ -5,8 +5,8 @@ use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{HashMap, HashSet};
 use std::ops::DerefMut;
 use types::{
-    is_default, is_empty_slice, AccessGate, AccessGateConfigInternal, AvatarChanged, ChannelId, Chat, ChatId, ChatMetrics,
-    CommunityId, Cryptocurrency, DeletedBy, DirectChatCreated, EventIndex, EventWrapperInternal, EventsTimeToLiveUpdated,
+    is_default, AccessGate, AccessGateConfigInternal, AvatarChanged, ChannelId, Chat, ChatId, ChatMetrics, CommunityId,
+    Cryptocurrency, DeletedBy, DirectChatCreated, EventIndex, EventWrapperInternal, EventsTimeToLiveUpdated,
     ExternalUrlUpdated, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged,
     GroupNameChanged, GroupReplyContext, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, MemberJoined, MemberLeft,
     MembersAdded, MembersAddedToDefaultChannel, MembersRemoved, Message, MessageContent, MessageId, MessageIndex,
@@ -173,9 +173,9 @@ pub struct MessageInternal {
     pub content: MessageContentInternal,
     #[serde(rename = "p", default, skip_serializing_if = "Option::is_none")]
     pub replies_to: Option<ReplyContextInternal>,
-    #[serde(rename = "r", default, skip_serializing_if = "is_empty_slice")]
+    #[serde(rename = "r", default, skip_serializing_if = "Vec::is_empty")]
     pub reactions: Vec<(Reaction, HashSet<UserId>)>,
-    #[serde(rename = "ti", default, skip_serializing_if = "is_empty_slice")]
+    #[serde(rename = "ti", default, skip_serializing_if = "Vec::is_empty")]
     pub tips: Tips,
     #[serde(rename = "e", default, skip_serializing_if = "Option::is_none")]
     pub last_edited: Option<TimestampMillis>,

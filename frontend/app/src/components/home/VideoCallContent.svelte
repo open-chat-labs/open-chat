@@ -24,6 +24,7 @@
     $: selectedChat = client.selectedChatStore;
     $: communityMembers = client.currentCommunityMembers;
     $: userStore = client.userStore;
+    $: user = client.user;
     $: displayName = client.getDisplayNameById(senderId, $communityMembers);
     $: incall =
         $activeVideoCall !== undefined &&
@@ -31,6 +32,8 @@
         $selectedChat.videoCallInProgress === messageIndex &&
         chatIdentifiersEqual($activeVideoCall.chatId, $selectedChat?.id);
     $: endedDate = content.ended ? new Date(Number(content.ended)) : undefined;
+    $: missed =
+        content.ended && content.participants.find((p) => p.userId === $user.userId) === undefined;
     $: duration =
         content.ended !== undefined && timestamp !== undefined
             ? i18nKey("videoCall.duration", {
@@ -52,10 +55,13 @@
 </script>
 
 <div class="video-call">
-    <p class="initiator">
+    <p class="initiator" class:missed>
         {#if content.callType === "broadcast"}
             <Translatable
                 resourceKey={i18nKey("videoCall.broadcastStartedBy", { username: displayName })} />
+        {:else if missed}
+            <Translatable
+                resourceKey={i18nKey("videoCall.missedCall", { username: displayName })} />
         {:else}
             <Translatable resourceKey={i18nKey("videoCall.startedBy", { username: displayName })} />
         {/if}
@@ -120,6 +126,10 @@
 
     .initiator {
         margin-bottom: $sp3;
+
+        &.missed {
+            color: var(--warn);
+        }
     }
 
     .avatars {

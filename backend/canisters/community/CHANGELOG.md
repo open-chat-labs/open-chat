@@ -18,10 +18,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Generate new channel Ids as 32bit rather than 128bit ([#6464](https://github.com/open-chat-labs/open-chat/pull/6464))
 - Simplify search logic and move it into `SearchIndex` struct ([#6465](https://github.com/open-chat-labs/open-chat/pull/6465))
 - Return owned values from `EventsMap` in prep for switch to stable memory ([#6469](https://github.com/open-chat-labs/open-chat/pull/6469))
+- Add serde default attribute in preparation for skipping serialization if default ([#6475](https://github.com/open-chat-labs/open-chat/pull/6475))
 
 ### Removed
 
 - Remove `selected_updates` now that everything uses the v2 version ([#6461](https://github.com/open-chat-labs/open-chat/pull/6461))
+
+### Fixed
+
+- Avoid pushing community event if no users invited ([#6477](https://github.com/open-chat-labs/open-chat/pull/6477))
 
 ## [[2.0.1351](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1351-community)] - 2024-09-20
 

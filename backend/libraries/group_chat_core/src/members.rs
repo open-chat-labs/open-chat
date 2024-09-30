@@ -12,8 +12,8 @@ use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::fmt::Formatter;
 use types::{
-    is_default, is_empty_btreemap, is_empty_hashset, is_empty_slice, EventIndex, GroupMember, GroupPermissions,
-    HydratedMention, MessageIndex, TimestampMillis, Timestamped, UserId, UserType, Version, MAX_RETURNED_MENTIONS,
+    is_default, EventIndex, GroupMember, GroupPermissions, HydratedMention, MessageIndex, TimestampMillis, Timestamped, UserId,
+    UserType, Version, MAX_RETURNED_MENTIONS,
 };
 
 const MAX_MEMBERS_PER_GROUP: u32 = 100_000;
@@ -350,11 +350,11 @@ pub struct GroupMemberInternal {
     pub notifications_muted: Timestamped<bool>,
     #[serde(rename = "m", default, skip_serializing_if = "mentions_are_empty")]
     pub mentions: Mentions,
-    #[serde(rename = "t", default, skip_serializing_if = "is_empty_hashset")]
+    #[serde(rename = "t", default, skip_serializing_if = "HashSet::is_empty")]
     pub threads: HashSet<MessageIndex>,
-    #[serde(rename = "f", default, skip_serializing_if = "is_empty_slice")]
+    #[serde(rename = "f", default, skip_serializing_if = "Vec::is_empty")]
     pub unfollowed_threads: Vec<MessageIndex>,
-    #[serde(rename = "p", default, skip_serializing_if = "is_empty_btreemap")]
+    #[serde(rename = "p", default, skip_serializing_if = "BTreeMap::is_empty")]
     pub proposal_votes: BTreeMap<TimestampMillis, Vec<MessageIndex>>,
     #[serde(rename = "s", default, skip_serializing_if = "is_default")]
     pub suspended: Timestamped<bool>,

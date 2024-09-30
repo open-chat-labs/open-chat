@@ -320,7 +320,6 @@ pub enum GateCheckFailedReason {
 pub struct VerifiedCredentialGateArgs {
     pub user_ii_principal: Principal,
     pub credential_jwt: String,
-    #[serde(default)]
     pub credential_jwts: Vec<String>,
     pub ii_origin: String,
 }
