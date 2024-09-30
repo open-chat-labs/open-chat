@@ -34,11 +34,11 @@ lazy_static! {
 }
 
 fn get_canister_wasm(canister_name: &str) -> CanisterWasm {
-    let module = read_file_from_local_bin(&format!("{canister_name}.wasm.gz"));
+    let wasm = read_file_from_local_bin(&format!("{canister_name}.wasm.gz"));
 
     CanisterWasm {
         version: BuildVersion::min(),
-        module,
+        module: wasm.into(),
     }
 }
 
