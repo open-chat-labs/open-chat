@@ -211,7 +211,7 @@
 
             // if we are not joining aka starting we need to tell the other users
             if (!joining) {
-                client.ringOtherUsers(messageId);
+                client.ringOtherUsers(chat.id, messageId);
             }
 
             await call.join();
@@ -281,7 +281,7 @@
                 const present = $activeVideoCall.call.participantCounts().present;
                 if (present === 1) {
                     // I must be the last person left in the call
-                    client.endVideoCall($activeVideoCall.chatId);
+                    client.endVideoCall($activeVideoCall.chatId, $activeVideoCall.messageId);
                 }
             }
 

@@ -46,6 +46,7 @@
         routeForChatIdentifier,
         routeForMessage,
         UserSuspensionChanged,
+        RemoteVideoCallEndedEvent,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -254,6 +255,8 @@
             openThread(ev.detail);
         } else if (ev instanceof RemoteVideoCallStartedEvent) {
             remoteVideoCallStarted(ev);
+        } else if (ev instanceof RemoteVideoCallEndedEvent) {
+            remoteVideoCallEnded(ev);
         } else if (ev instanceof ThreadClosed) {
             closeThread();
         } else if (ev instanceof SendMessageFailed) {
@@ -284,6 +287,12 @@
         } else if (ev instanceof UserSuspensionChanged) {
             // The latest suspension details will be picked up on reload when user_index::current_user is called
             window.location.reload();
+        }
+    }
+
+    function remoteVideoCallEnded(ev: RemoteVideoCallEndedEvent) {
+        if ($incomingVideoCall?.messageId === ev.detail.messageId) {
+            incomingVideoCall.set(undefined);
         }
     }
 
