@@ -33,5 +33,7 @@ fn events_by_index_impl(args: Args, on_behalf_of: Option<Principal>, state: &Run
         EventsResult::Success(response) => Success(response),
         EventsResult::UserNotInGroup => CallerNotInGroup,
         EventsResult::ThreadNotFound => ThreadMessageNotFound,
+        EventsResult::UserSuspended => UserSuspended,
+        EventsResult::UserLapsed => UserLapsed,
     }
 }

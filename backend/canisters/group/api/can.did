@@ -544,6 +544,8 @@ type EventsResponse = variant {
     Success : EventsSuccessResult;
     CallerNotInGroup;
     ThreadMessageNotFound;
+    UserSuspended;
+    UserLapsed;
     ReplicaNotUpToDateV2 : TimestampMillis;
 };
 
@@ -563,6 +565,8 @@ type MessagesByMessageIndexResponse = variant {
     Success : MessagesSuccessResult;
     CallerNotInGroup;
     ThreadMessageNotFound;
+    UserSuspended;
+    UserLapsed;
     ReplicaNotUpToDateV2 : TimestampMillis;
 };
 

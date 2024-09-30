@@ -131,14 +131,30 @@ impl GroupChatCore {
         }
     }
 
-    pub fn min_visible_event_index(&self, user_id: Option<UserId>) -> Option<EventIndex> {
-        if let Some(user) = user_id.and_then(|u| self.members.get(&u)) {
-            Some(user.min_visible_event_index())
-        } else if self.is_public.value && self.messages_visible_to_non_members.value {
-            Some(self.min_visible_indexes_for_new_members.map(|(e, _)| e).unwrap_or_default())
-        } else {
-            None
+    pub fn min_visible_event_index(&self, user_id: Option<UserId>) -> MinVisibleEventIndexResult {
+        let hidden_for_non_members =
+            !self.is_public.value || !self.messages_visible_to_non_members.value || self.has_payment_gate();
+        let member = user_id.and_then(|u| self.members.get(&u));
+
+        if hidden_for_non_members {
+            if let Some(member) = member {
+                if member.suspended.value {
+                    return MinVisibleEventIndexResult::UserSuspended;
+                } else if member.lapsed.value {
+                    return MinVisibleEventIndexResult::UserLapsed;
+                }
+            } else {
+                return MinVisibleEventIndexResult::UserNotInGroup;
+            }
         }
+
+        let event_index = if let Some(member) = member {
+            member.min_visible_event_index()
+        } else {
+            self.min_visible_indexes_for_new_members.map(|(e, _)| e).unwrap_or_default()
+        };
+
+        MinVisibleEventIndexResult::Success(event_index)
     }
 
     pub fn details_last_updated(&self) -> TimestampMillis {
@@ -361,6 +377,8 @@ impl GroupChatCore {
             }
             EventsReaderResult::ThreadNotFound => ThreadNotFound,
             EventsReaderResult::UserNotInGroup => UserNotInGroup,
+            EventsReaderResult::UserSuspended => UserSuspended,
+            EventsReaderResult::UserLapsed => UserLapsed,
         }
     }
 
@@ -389,6 +407,8 @@ impl GroupChatCore {
             }
             EventsReaderResult::ThreadNotFound => ThreadNotFound,
             EventsReaderResult::UserNotInGroup => UserNotInGroup,
+            EventsReaderResult::UserSuspended => UserSuspended,
+            EventsReaderResult::UserLapsed => UserLapsed,
         }
     }
 
@@ -424,6 +444,8 @@ impl GroupChatCore {
             }
             EventsReaderResult::ThreadNotFound => ThreadNotFound,
             EventsReaderResult::UserNotInGroup => UserNotInGroup,
+            EventsReaderResult::UserSuspended => UserSuspended,
+            EventsReaderResult::UserLapsed => UserLapsed,
         }
     }
 
@@ -452,6 +474,8 @@ impl GroupChatCore {
             }
             EventsReaderResult::ThreadNotFound => ThreadNotFound,
             EventsReaderResult::UserNotInGroup => UserNotInGroup,
+            EventsReaderResult::UserSuspended => UserSuspended,
+            EventsReaderResult::UserLapsed => UserLapsed,
         }
     }
 
@@ -1730,14 +1754,17 @@ impl GroupChatCore {
     fn events_reader(&self, user_id: Option<UserId>, thread_root_message_index: Option<MessageIndex>) -> EventsReaderResult {
         use EventsReaderResult::*;
 
-        if let Some(min_visible_event_index) = self.min_visible_event_index(user_id) {
-            if let Some(events_reader) = self.events.events_reader(min_visible_event_index, thread_root_message_index) {
-                Success(events_reader)
-            } else {
-                ThreadNotFound
+        match self.min_visible_event_index(user_id) {
+            MinVisibleEventIndexResult::Success(min_visible_event_index) => {
+                if let Some(events_reader) = self.events.events_reader(min_visible_event_index, thread_root_message_index) {
+                    Success(events_reader)
+                } else {
+                    ThreadNotFound
+                }
             }
-        } else {
-            UserNotInGroup
+            MinVisibleEventIndexResult::UserLapsed => EventsReaderResult::UserLapsed,
+            MinVisibleEventIndexResult::UserSuspended => EventsReaderResult::UserSuspended,
+            MinVisibleEventIndexResult::UserNotInGroup => EventsReaderResult::UserNotInGroup,
         }
     }
 
@@ -1859,12 +1886,16 @@ pub enum EventsResult {
     Success(EventsResponse),
     UserNotInGroup,
     ThreadNotFound,
+    UserSuspended,
+    UserLapsed,
 }
 
 pub enum MessagesResult {
     Success(MessagesResponse),
     UserNotInGroup,
     ThreadNotFound,
+    UserSuspended,
+    UserLapsed,
 }
 
 #[allow(clippy::large_enum_variant)]
@@ -2005,6 +2036,8 @@ enum EventsReaderResult<'r> {
     Success(ChatEventsListReader<'r>),
     UserNotInGroup,
     ThreadNotFound,
+    UserSuspended,
+    UserLapsed,
 }
 
 pub enum MakePrivateResult {
@@ -2182,4 +2215,11 @@ struct PrepareSendMessageSuccess {
     mentions_disabled: bool,
     everyone_mentioned: bool,
     sender_user_type: UserType,
+}
+
+pub enum MinVisibleEventIndexResult {
+    Success(EventIndex),
+    UserLapsed,
+    UserSuspended,
+    UserNotInGroup,
 }

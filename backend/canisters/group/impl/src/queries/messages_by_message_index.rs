@@ -25,5 +25,7 @@ fn messages_by_message_index_impl(args: Args, state: &RuntimeState) -> Response 
         MessagesResult::Success(response) => Success(response),
         MessagesResult::UserNotInGroup => CallerNotInGroup,
         MessagesResult::ThreadNotFound => ThreadMessageNotFound,
+        MessagesResult::UserSuspended => UserSuspended,
+        MessagesResult::UserLapsed => UserLapsed,
     }
 }

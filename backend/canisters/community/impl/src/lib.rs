@@ -8,6 +8,7 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use chat_events::ChatMetricsInternal;
+use community_canister::EventsResponse;
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -675,6 +676,25 @@ impl Data {
     // }
 
     //fn member(&self, user_id: UserId, channel_id: Option<ChannelId>) -> Option<&Member> {}
+
+    pub fn get_member_for_events(&self, caller: Principal) -> Result<Option<&CommunityMemberInternal>, EventsResponse> {
+        let hidden_for_non_members = !self.is_public || self.has_payment_gate();
+        let member = self.members.get(caller);
+
+        if hidden_for_non_members {
+            if let Some(member) = member {
+                if member.suspended.value {
+                    return Err(EventsResponse::UserSuspended);
+                } else if member.lapsed.value {
+                    return Err(EventsResponse::UserLapsed);
+                }
+            } else {
+                return Err(EventsResponse::UserNotInCommunity);
+            }
+        }
+
+        Ok(member)
+    }
 }
 
 fn run_regular_jobs() {

@@ -36,5 +36,7 @@ fn events_impl(args: Args, on_behalf_of: Option<Principal>, state: &RuntimeState
         EventsResult::Success(response) => Success(response),
         EventsResult::UserNotInGroup => CallerNotInGroup,
         EventsResult::ThreadNotFound => ThreadMessageNotFound,
+        EventsResult::UserSuspended => UserSuspended,
+        EventsResult::UserLapsed => UserLapsed,
     }
 }

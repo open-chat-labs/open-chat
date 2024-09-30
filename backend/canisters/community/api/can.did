@@ -50,6 +50,8 @@ type EventsResponse = variant {
     UserNotInChannel;
     ChannelNotFound;
     ThreadNotFound;
+    UserSuspended;
+    UserLapsed;
     ReplicaNotUpToDateV2 : TimestampMillis;
 };
 
@@ -107,6 +109,8 @@ type MessagesByMessageIndexResponse = variant {
     UserNotInChannel;
     ChannelNotFound;
     ThreadNotFound;
+    UserSuspended;
+    UserLapsed;
     ReplicaNotUpToDateV2 : TimestampMillis;
 };
 

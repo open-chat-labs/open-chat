@@ -16,5 +16,7 @@ pub enum EventsResponse {
     UserNotInChannel,
     ChannelNotFound,
     ThreadNotFound,
+    UserSuspended,
+    UserLapsed,
     ReplicaNotUpToDateV2(types::TimestampMillis),
 }

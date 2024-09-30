@@ -20,5 +20,7 @@ pub enum Response {
     UserNotInChannel,
     ChannelNotFound,
     ThreadNotFound,
+    UserSuspended,
+    UserLapsed,
     ReplicaNotUpToDateV2(TimestampMillis),
 }
