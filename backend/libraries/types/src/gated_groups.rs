@@ -212,6 +212,26 @@ impl From<&AccessGate> for AccessGateType {
     }
 }
 
+impl AccessGateConfig {
+    pub fn validate(&self) -> bool {
+        pub const DAY_IN_MS: Milliseconds = 1000 * 60 * 60 * 24;
+
+        if let Some(expiry) = self.expiry {
+            if expiry < DAY_IN_MS {
+                return false;
+            }
+
+            let expiry_type: AccessGateExpiryType = (&self.gate).into();
+
+            if matches!(expiry_type, AccessGateExpiryType::Invalid) {
+                return false;
+            }
+        }
+
+        self.gate.validate()
+    }
+}
+
 impl AccessGate {
     pub fn validate(&self) -> bool {
         if let AccessGate::Composite(g) = self {

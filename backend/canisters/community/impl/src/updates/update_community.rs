@@ -113,8 +113,8 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         return Err(CommunityFrozen);
     }
 
-    if let OptionUpdate::SetToSome(gate) = &args.gate {
-        if !gate.validate() {
+    if let OptionUpdate::SetToSome(gate_config) = &args.gate_config {
+        if !gate_config.validate() {
             return Err(AccessGateInvalid);
         }
     }

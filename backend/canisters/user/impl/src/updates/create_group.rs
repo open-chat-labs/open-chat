@@ -88,7 +88,7 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
         });
     } else if let Err(error) = validate_avatar(args.avatar.as_ref()) {
         Err(AvatarTooBig(error))
-    } else if args.gate.as_ref().map(|g| !g.validate()).unwrap_or_default() {
+    } else if args.gate_config.as_ref().map(|g| !g.validate()).unwrap_or_default() {
         Err(AccessGateInvalid)
     } else {
         let create_group_args = c2c_create_group::Args {

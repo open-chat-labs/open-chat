@@ -87,8 +87,8 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     if state.data.is_frozen() {
         return Err(ChatFrozen);
     }
-    if let OptionUpdate::SetToSome(gate) = &args.gate {
-        if !gate.validate() {
+    if let OptionUpdate::SetToSome(gate_config) = &args.gate_config {
+        if !gate_config.validate() {
             return Err(AccessGateInvalid);
         }
     }
