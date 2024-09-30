@@ -1,7 +1,6 @@
 use crate::nns::Tokens;
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashMap, HashSet};
 
 mod access_tokens;
 mod achievement;
@@ -191,22 +190,6 @@ pub enum ResultLowercase<T, E> {
     Err(E),
 }
 
-pub fn is_empty_slice<T>(value: &[T]) -> bool {
-    value.is_empty()
-}
-
-pub fn is_empty_hashmap<K, V>(value: &HashMap<K, V>) -> bool {
-    value.is_empty()
-}
-
-pub fn is_empty_hashset<T>(value: &HashSet<T>) -> bool {
-    value.is_empty()
-}
-
-pub fn is_empty_btreemap<K, V>(value: &BTreeMap<K, V>) -> bool {
-    value.is_empty()
-}
-
-pub fn is_default<T: Default + Eq>(value: &T) -> bool {
+pub fn is_default<T: Default + PartialEq>(value: &T) -> bool {
     *value == Default::default()
 }

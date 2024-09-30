@@ -19,7 +19,6 @@ pub struct Message {
     pub thread_summary: Option<ThreadSummary>,
     pub edited: bool,
     pub forwarded: bool,
-    #[serde(default)]
     pub block_level_markdown: bool,
 }
 
@@ -129,6 +128,7 @@ impl Tips {
 
 #[allow(dead_code)]
 #[ts_export]
+#[derive(Serialize, Deserialize)]
 pub struct TipsTS(Vec<(TSBytes, Vec<(UserId, u128)>)>);
 
 #[derive(Serialize)]
