@@ -237,6 +237,7 @@ import {
 } from "./utils/media";
 import { mergeKeepingOnlyChanged } from "./utils/object";
 import {
+    createRemoteVideoEndedEvent,
     createRemoteVideoStartedEvent,
     filterWebRtcMessage,
     parseWebRtcMessage,
@@ -4284,6 +4285,13 @@ export class OpenChat extends OpenChatAgentWorker {
             }
             return;
         }
+        if (msg.kind === "remote_video_call_ended") {
+            const ev = createRemoteVideoEndedEvent(msg);
+            if (ev) {
+                this.dispatchEvent(ev);
+            }
+            return;
+        }
         const fromChatId = filterWebRtcMessage(msg);
         if (fromChatId === undefined) return;
 
@@ -5578,6 +5586,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     this._liveState.user.userId,
                     chatsResponse.state.userCanisterLocalUserIndex,
                     (ev) => this.dispatchEvent(ev),
+                    (ev) => this.dispatchEvent(ev),
                 );
             }
             if (this._cachePrimer !== undefined) {
@@ -6580,8 +6589,11 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => false);
     }
 
-    async ringOtherUsers(messageId: bigint) {
-        const chat = this._liveState.selectedChat;
+    private async sendVideoCallUsersWebRtcMessage(msg: WebRtcMessage, chatId: ChatIdentifier) {
+        const chat = this._liveState.allChats.get(chatId);
+        if (chat === undefined) {
+            throw new Error(`Unknown chat: ${chatId}`);
+        }
         let userIds: string[] = [];
         const me = this._liveState.user.userId;
         if (chat !== undefined) {
@@ -6602,14 +6614,21 @@ export class OpenChat extends OpenChatAgentWorker {
                         ),
                     ),
                 );
-                this.sendRtcMessage(userIds, {
-                    kind: "remote_video_call_started",
-                    id: chat.id,
-                    userId: me,
-                    messageId,
-                });
+                this.sendRtcMessage(userIds, msg);
             }
         }
+    }
+
+    async ringOtherUsers(chatId: ChatIdentifier, messageId: bigint) {
+        this.sendVideoCallUsersWebRtcMessage(
+            {
+                kind: "remote_video_call_started",
+                id: chatId,
+                userId: this._liveState.user.userId,
+                messageId,
+            },
+            chatId,
+        );
     }
 
     private getRoomAccessToken(
@@ -6689,10 +6708,21 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    endVideoCall(chatId: ChatIdentifier) {
+    endVideoCall(chatId: ChatIdentifier, messageId?: bigint) {
         const chat = this._liveState.allChats.get(chatId);
         if (chat === undefined) {
             throw new Error(`Unknown chat: ${chatId}`);
+        }
+        if (messageId !== undefined) {
+            this.sendVideoCallUsersWebRtcMessage(
+                {
+                    kind: "remote_video_call_ended",
+                    id: chatId,
+                    userId: this._liveState.user.userId,
+                    messageId,
+                },
+                chatId,
+            );
         }
         return this.getLocalUserIndex(chat).then((localUserIndex) => {
             return this.sendRequest({
