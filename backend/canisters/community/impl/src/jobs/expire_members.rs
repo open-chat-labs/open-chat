@@ -31,6 +31,15 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     false
 }
 
+pub(crate) fn restart_job(state: &RuntimeState) {
+    if let Some(timer_id) = TIMER_ID.get() {
+        ic_cdk_timers::clear_timer(timer_id);
+        TIMER_ID.set(None);
+    }
+
+    start_job_if_required(state);
+}
+
 fn run() {
     trace!("'expire_members' job running");
     TIMER_ID.set(None);

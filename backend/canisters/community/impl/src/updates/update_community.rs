@@ -367,7 +367,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
         }
     }
 
-    jobs::expire_members::start_job_if_required(state);
+    jobs::expire_members::restart_job(state);
 
     handle_activity_notification(state);
     result

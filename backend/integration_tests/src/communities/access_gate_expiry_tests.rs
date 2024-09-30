@@ -143,55 +143,97 @@ fn remove_gate_unlapses_members(channel: bool) {
     assert_user_lapsed(env, channel, &user2, community_id, channel_id, false);
 }
 
-// #[test_case(true, true)]
-// #[test_case(true, false)]
-// #[test_case(false, true)]
-// #[test_case(false, false)]
-// fn extend_or_reduce_expiry_then_member_lapses_when_expected(channel: bool, extend_expiry: bool) {
-//     // Create 2 diamond users, a public community and a public channel
-//     let mut wrapper = ENV.deref().get();
-//     let TestEnv {
-//         env,
-//         canister_ids,
-//         controller,
-//     } = wrapper.env();
+#[test_case(true, true)]
+#[test_case(true, false)]
+#[test_case(false, true)]
+#[test_case(false, false)]
+fn extend_or_reduce_expiry_then_member_lapses_when_expected(channel: bool, extend_expiry: bool) {
+    // Create 2 diamond users, a public community and a public channel
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
 
-//     let TestData {
-//         user1,
-//         user2,
-//         community_id,
-//         channel_id,
-//     } = init_test_data(env, canister_ids, *controller);
+    let TestData {
+        user1,
+        user2,
+        community_id,
+        channel_id,
+    } = init_test_data(env, canister_ids, *controller);
 
-//     // Depending on the test branch either update the community or channel
-//     // with an expiring diamond access gate
-//     let gate_config_update = OptionUpdate::SetToSome(AccessGateConfig {
-//         gate: AccessGate::DiamondMember,
-//         expiry: Some(15 * DAY_IN_MS),
-//     });
+    // Depending on the test branch either update the community or channel with a token balance gate
+    let min_balance = 900_000_000;
+    let gate = AccessGate::TokenBalance(TokenBalanceGate {
+        ledger_canister_id: canister_ids.icp_ledger,
+        min_balance,
+    });
 
-//     if channel {
-//         update_channel_gate(env, user1.principal, community_id, channel_id, gate_config_update);
-//     } else {
-//         update_community_gate(env, user1.principal, community_id, gate_config_update);
-//     }
+    let gate_config_update = OptionUpdate::SetToSome(AccessGateConfig {
+        gate: gate.clone(),
+        expiry: Some(4 * DAY_IN_MS),
+    });
 
-//     // User 2 joins the channel
-//     client::local_user_index::happy_path::join_channel(
-//         env,
-//         user2.principal,
-//         canister_ids.local_user_index,
-//         community_id,
-//         channel_id,
-//     );
+    if channel {
+        update_channel_gate(env, user1.principal, community_id, channel_id, gate_config_update);
+    } else {
+        update_community_gate(env, user1.principal, community_id, gate_config_update);
+    }
 
-//     // Move the time forward so that user2's diamond membership expires + the gate expiry
-//     env.advance_time(Duration::from_millis(46 * DAY_IN_MS));
-//     tick_many(env, 10);
+    // User 2 joins the channel
+    client::local_user_index::happy_path::join_channel(
+        env,
+        user2.principal,
+        canister_ids.local_user_index,
+        community_id,
+        channel_id,
+    );
 
-//     // Assert that user2 has lapsed
-//     assert_user_lapsed(env, channel, &user2, community_id, channel_id, true);
-// }
+    // User2 upgrades to 1 year diamond to reduce their token balance so they are set to lapse
+    //
+    user_index::happy_path::pay_for_diamond_membership(
+        env,
+        user2.principal,
+        canister_ids.user_index,
+        DiamondMembershipPlanDuration::OneYear,
+        false,
+        false,
+    );
+
+    tick_many(env, 4);
+
+    // Either extend or reduce the expiry
+    //
+    let expiry = if extend_expiry { Some(6 * DAY_IN_MS) } else { Some(2 * DAY_IN_MS) };
+
+    let gate_config_update = OptionUpdate::SetToSome(AccessGateConfig {
+        gate: gate.clone(),
+        expiry,
+    });
+
+    if channel {
+        update_channel_gate(env, user1.principal, community_id, channel_id, gate_config_update);
+    } else {
+        update_community_gate(env, user1.principal, community_id, gate_config_update);
+    }
+
+    // Move the time forward so the member should not lapse
+    let duration = if extend_expiry { 5 } else { 1 };
+
+    env.advance_time(Duration::from_millis(duration * DAY_IN_MS));
+    tick_many(env, 10);
+
+    // Assert that user2 has *not* lapsed
+    assert_user_lapsed(env, channel, &user2, community_id, channel_id, false);
+
+    // Move the time forward so the member should now lapse
+    env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
+    tick_many(env, 10);
+
+    // Assert that user2 has lapsed
+    assert_user_lapsed(env, channel, &user2, community_id, channel_id, true);
+}
 
 #[test_case(true)]
 #[test_case(false)]
@@ -213,7 +255,7 @@ fn member_lapses_from_token_balance_gate_and_rejoins_successfully(channel: bool)
 
     // Depending on the test branch either update the community or channel
     // with a token balance gate
-    let min_balance = 500_000_000;
+    let min_balance = 900_000_000;
     let gate_config_update = OptionUpdate::SetToSome(AccessGateConfig {
         gate: AccessGate::TokenBalance(TokenBalanceGate {
             ledger_canister_id: canister_ids.icp_ledger,
@@ -244,12 +286,12 @@ fn member_lapses_from_token_balance_gate_and_rejoins_successfully(channel: bool)
     // User2 should have sufficient balance so should not be lapsed
     assert_user_lapsed(env, channel, &user2, community_id, channel_id, false);
 
-    // User2 upgrades to 3 month diamond to reduce their token balance
+    // User2 upgrades to 1 year diamond to reduce their token balance
     user_index::happy_path::pay_for_diamond_membership(
         env,
         user2.principal,
         canister_ids.user_index,
-        DiamondMembershipPlanDuration::ThreeMonths,
+        DiamondMembershipPlanDuration::OneYear,
         false,
         false,
     );

@@ -80,7 +80,7 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
 
                     state.data.update_member_expiry(Some(args.channel_id), &prev_gate_config, now);
 
-                    jobs::expire_members::start_job_if_required(state);
+                    jobs::expire_members::restart_job(state);
 
                     handle_activity_notification(state);
 

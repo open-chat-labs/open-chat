@@ -174,7 +174,7 @@ fn handle_gate_check_result(details: ExpiringMemberActionDetails, result: CheckI
                 user_id: details.user_id,
             });
 
-            expire_members::start_job_if_required(state);
+            expire_members::restart_job(state);
         }
     });
 }
