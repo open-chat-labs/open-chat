@@ -332,6 +332,7 @@ type TipMessageResponse = variant {
     TransferFailed : text;
     ChatFrozen;
     UserSuspended;
+    UserLapsed;
     Retrying : text;
     PinRequired;
     PinIncorrect : Milliseconds;
@@ -535,6 +536,7 @@ type DeleteCommunityResponse = variant {
     Success;
     NotAuthorized;
     UserSuspended;
+    UserLapsed;
     CommunityFrozen;
     InternalError : text;
 };
@@ -701,6 +703,7 @@ type SendMessageWithTransferToChannelResponse = variant {
     TransferCannotBeToSelf;
     P2PSwapSetUpFailed : text;
     UserSuspended;
+    UserLapsed;
     CommunityFrozen;
     RulesNotAccepted;
     CommunityRulesNotAccepted;
@@ -744,6 +747,7 @@ type SendMessageWithTransferToGroupResponse = variant {
     TransferCannotBeToSelf;
     P2PSwapSetUpFailed : text;
     UserSuspended;
+    UserLapsed;
     ChatFrozen;
     RulesNotAccepted;
     Retrying : record { text; CompletedCryptoTransaction };

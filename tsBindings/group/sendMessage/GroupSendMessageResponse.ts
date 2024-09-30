@@ -2,4 +2,4 @@
 import type { GroupSendMessageSuccessResult } from "./GroupSendMessageSuccessResult";
 import type { InvalidPollReason } from "../../shared/InvalidPollReason";
 
-export type GroupSendMessageResponse = { "Success": GroupSendMessageSuccessResult } | "ThreadMessageNotFound" | "MessageEmpty" | { "TextTooLong": number } | { "InvalidPoll": InvalidPollReason } | "NotAuthorized" | "CallerNotInGroup" | "UserSuspended" | { "InvalidRequest": string } | "ChatFrozen" | "RulesNotAccepted";
+export type GroupSendMessageResponse = { "Success": GroupSendMessageSuccessResult } | "ThreadMessageNotFound" | "MessageEmpty" | { "TextTooLong": number } | { "InvalidPoll": InvalidPollReason } | "NotAuthorized" | "CallerNotInGroup" | "UserSuspended" | "UserLapsed" | { "InvalidRequest": string } | "ChatFrozen" | "RulesNotAccepted";
