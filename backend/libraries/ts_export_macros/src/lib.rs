@@ -126,7 +126,7 @@ fn skip_serializing_if_default(s: &str) -> Option<&str> {
         "HashSet" => Some("HashSet::is_empty"),
         "OptionUpdate" => Some("OptionUpdate::is_empty"),
         "bool" | "usize" | "u8" | "u16" | "u32" | "u64" | "u128" | "isize" | "i8" | "i16" | "i32" | "i64" | "i128"
-        | "TimestampMillis" | "TimestampNanos" => Some("ts_export::is_default"),
+        | "EventIndex" | "MessageIndex" | "TimestampMillis" | "TimestampNanos" => Some("ts_export::is_default"),
         _ => None,
     }
 }
