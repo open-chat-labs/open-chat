@@ -83,6 +83,17 @@ type LocalUserIndexResponse = variant {
     Success : CanisterId;
 };
 
+type LookupMembersArgs = record {
+    user_ids : vec UserId;
+};
+
+type LookupMembersResponse = variant {
+    Success : record {
+        members : vec CommunityMember;
+    };
+    PrivateCommunity;
+};
+
 type MessagesByMessageIndexArgs = record {
     channel_id : ChannelId;
     thread_root_message_index : opt MessageIndex;
@@ -1087,6 +1098,7 @@ service : {
     events_window : (EventsWindowArgs) -> (EventsResponse) query;
     explore_channels : (ExploreChannelsArgs) -> (ExploreChannelsResponse) query;
     invite_code : (EmptyArgs) -> (InviteCodeResponse) query;
+    lookup_members : (LookupMembersArgs) -> (LookupMembersResponse) query;
     local_user_index : (EmptyArgs) -> (LocalUserIndexResponse) query;
     messages_by_message_index : (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
     search_channel : (SearchChannelArgs) -> (SearchChannelResponse) query;
