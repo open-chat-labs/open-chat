@@ -24,6 +24,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove `selected_updates` now that everything uses the v2 version ([#6461](https://github.com/open-chat-labs/open-chat/pull/6461))
 
+### Fixed
+
+- Avoid pushing community event if no users invited ([#6477](https://github.com/open-chat-labs/open-chat/pull/6477))
+
 ## [[2.0.1351](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1351-community)] - 2024-09-20
 
 ### Changed
