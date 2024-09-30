@@ -94,24 +94,41 @@ const PRINCIPAL_ALIASES: [&str; 3] = ["Principal", "CanisterId", "AccessorId"];
 
 fn insert_field_attributes(field: &mut Field, is_tuple: bool) {
     if let Type::Path(type_path) = &field.ty {
-        if !is_tuple
-            && type_path.qself.is_none()
-            && type_path.path.leading_colon.is_none()
-            && type_path.path.segments.len() == 1
-            && type_path.path.segments[0].ident == "Option"
-        {
-            field.attrs.push(parse_quote ! ( #[ts(optional)] ));
-            field
-                .attrs
-                .push(parse_quote ! ( #[serde(skip_serializing_if = "Option::is_none")] ));
-        } else if field.attrs.iter().any(is_using_serde_bytes)
-            || (type_path.qself.is_none()
-                && type_path.path.leading_colon.is_none()
-                && type_path.path.segments.len() == 1
-                && PRINCIPAL_ALIASES.iter().any(|a| type_path.path.segments[0].ident == a))
-        {
-            field.attrs.push(parse_quote ! ( #[ts(as = "ts_export::TSBytes")] ));
+        if type_path.qself.is_none() && type_path.path.leading_colon.is_none() && type_path.path.segments.len() == 1 {
+            if !is_tuple && type_path.path.segments[0].ident == "Option" {
+                field.attrs.push(parse_quote!( #[ts(optional)] ));
+                field
+                    .attrs
+                    .push(parse_quote!( #[serde(skip_serializing_if = "Option::is_none")] ));
+            } else if field.attrs.iter().any(is_using_serde_bytes)
+                || PRINCIPAL_ALIASES.iter().any(|a| type_path.path.segments[0].ident == a)
+            {
+                field.attrs.push(parse_quote!( #[ts(as = "ts_export::TSBytes")] ));
+            }
+            if let Some(_skip_serializing_if) = skip_serializing_if_default(&type_path.path.segments[0].ident.to_string()) {
+                field.attrs.push(parse_quote!( #[serde(default)] ));
+
+                // Uncomment this once canisters have been upgraded to add the serde(default) attribute
+                // field
+                //     .attrs
+                //     .push(parse_quote!( #[serde(skip_serializing_if = #skip_serializing_if)]))
+            }
         }
+    }
+}
+
+fn skip_serializing_if_default(s: &str) -> Option<&str> {
+    match s {
+        "Vec" => Some("Vec::is_empty"),
+        "BTreeMap" => Some("BTreeMap::is_empty"),
+        "BTreeSet" => Some("BTreeSet::is_empty"),
+        "HashMap" => Some("HashMap::is_empty"),
+        "HashSet" => Some("HashSet::is_empty"),
+        "OptionUpdate" => Some("OptionUpdate::is_empty"),
+        "bool" | "usize" | "u8" | "u16" | "u32" | "u64" | "u128" | "isize" | "i8" | "i16" | "i32" | "i64" | "i128"
+        | "CommunityRole" | "EventIndex" | "GroupRole" | "MessageIndex" | "Milliseconds" | "Nanoseconds"
+        | "TimestampMillis" | "TimestampNanos" => Some("ts_export::is_default"),
+        _ => None,
     }
 }
 
