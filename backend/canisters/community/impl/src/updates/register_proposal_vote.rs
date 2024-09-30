@@ -82,7 +82,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         .events
         .visible_main_events_reader(min_visible_event_index)
         .message_internal(args.message_index.into())
-        .and_then(|m| if let MessageContentInternal::GovernanceProposal(p) = &m.content { Some(p) } else { None })
+        .and_then(|m| if let MessageContentInternal::GovernanceProposal(p) = m.content { Some(p) } else { None })
     {
         if let Some(vote) = proposal.votes.get(&member.user_id) {
             Err(AlreadyVoted(*vote))

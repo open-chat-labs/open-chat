@@ -13,13 +13,10 @@ fn search_channel_impl(args: Args, state: &RuntimeState) -> Response {
 
     if let Some(member) = state.data.members.get(caller) {
         if let Some(channel) = state.data.channels.get(&args.channel_id) {
-            match channel.chat.search(
-                member.user_id,
-                args.search_term,
-                args.users,
-                args.max_results,
-                state.env.now(),
-            ) {
+            match channel
+                .chat
+                .search(member.user_id, args.search_term, args.users, args.max_results)
+            {
                 SearchResults::Success(matches) => Success(SuccessResult { matches }),
                 SearchResults::InvalidTerm => InvalidTerm,
                 SearchResults::TermTooLong(v) => TermTooLong(v),

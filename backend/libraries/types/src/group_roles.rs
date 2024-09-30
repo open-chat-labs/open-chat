@@ -103,7 +103,6 @@ pub struct OptionalMessagePermissions {
     pub prize: OptionUpdate<GroupPermissionRole>,
     #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub p2p_swap: OptionUpdate<GroupPermissionRole>,
-    #[serde(default)]
     #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub video_call: OptionUpdate<GroupPermissionRole>,
     pub custom_updated: Vec<CustomPermission>,

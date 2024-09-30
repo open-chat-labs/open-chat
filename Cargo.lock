@@ -2838,6 +2838,7 @@ name = "group_index_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "candid_gen",
  "human_readable",
  "serde",
  "serde_bytes",
@@ -5244,6 +5245,7 @@ name = "online_users_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "candid_gen",
  "serde",
  "ts-rs",
  "ts_export",
@@ -6210,6 +6212,7 @@ name = "registry_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "candid_gen",
  "human_readable",
  "serde",
  "ts-rs",
@@ -6709,6 +6712,7 @@ dependencies = [
 name = "search"
 version = "0.1.0"
 dependencies = [
+ "serde",
  "types",
 ]
 
@@ -8117,6 +8121,7 @@ dependencies = [
 name = "ts_export"
 version = "0.1.0"
 dependencies = [
+ "serde",
  "ts-rs",
  "ts_export_macros",
 ]
@@ -8366,6 +8371,7 @@ name = "user_index_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "candid_gen",
  "human_readable",
  "ic-ledger-types",
  "modclub_canister",

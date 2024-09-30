@@ -619,6 +619,7 @@ export class OpenChatAgent extends EventTarget {
                         messageFilterFailed,
                         threadRootMessageIndex,
                         pin,
+                        onRequestAccepted,
                     ),
                     true,
                 );
@@ -717,6 +718,7 @@ export class OpenChatAgent extends EventTarget {
         messageFilterFailed: bigint | undefined,
         threadRootMessageIndex: number | undefined,
         pin: string | undefined,
+        onRequestAccepted: () => void,
     ): Promise<[SendMessageResponse, Message]> {
         return this.userClient.sendMessage(
             chatId,
@@ -724,6 +726,7 @@ export class OpenChatAgent extends EventTarget {
             messageFilterFailed,
             threadRootMessageIndex,
             pin,
+            onRequestAccepted,
         );
     }
 
