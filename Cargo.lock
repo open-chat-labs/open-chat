@@ -1230,6 +1230,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "canister_wasm_chunks_uploader"
+version = "0.1.0"
+dependencies = [
+ "canister_agent_utils",
+ "clap 4.5.4",
+ "group_index_canister",
+ "group_index_canister_client",
+ "ic-agent",
+ "tokio",
+ "types",
+ "user_index_canister",
+ "user_index_canister_client",
+]
+
+[[package]]
 name = "cargo-license"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
