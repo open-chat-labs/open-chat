@@ -1882,6 +1882,10 @@ export class OpenChatAgent extends EventTarget {
 
         const summaryUpdatesResults = await waitAll(summaryUpdatesPromises);
 
+        for (const error of summaryUpdatesResults.errors) {
+            this._logger.error("Summary updates error", error);
+        }
+
         const groupCanisterGroupSummaries: GroupCanisterGroupChatSummary[] = [];
         const communityCanisterCommunitySummaries: CommunitySummary[] = [];
         const groupUpdates: GroupCanisterGroupChatSummaryUpdates[] = [];
