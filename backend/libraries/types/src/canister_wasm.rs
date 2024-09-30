@@ -81,9 +81,9 @@ impl From<CanisterWasmBytes> for Vec<u8> {
 
 impl Debug for CanisterWasmBytes {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("CanisterWasm")
+        f.debug_struct("CanisterWasmBytes")
             .field("length", &self.0.len())
-            .field("hash", &hex::encode(&self.hash()))
+            .field("hash", &hex::encode(self.hash()))
             .finish()
     }
 }

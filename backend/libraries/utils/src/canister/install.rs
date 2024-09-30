@@ -34,7 +34,7 @@ pub async fn install_basic<A: CandidType>(canister_id: CanisterId, wasm: Caniste
         canister_id,
         current_wasm_version: BuildVersion::default(),
         new_wasm_version: wasm.version,
-        new_wasm: WasmToInstall::Default(wasm.module.into()),
+        new_wasm: WasmToInstall::Default(wasm.module),
         deposit_cycles_if_needed: true,
         args: init_args,
         mode: CanisterInstallMode::Install,
