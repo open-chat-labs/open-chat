@@ -169,7 +169,7 @@ mod upgrade_canisters {
             canister_id,
             current_wasm_version: bucket.wasm_version,
             new_wasm_version: new_wasm.version,
-            new_wasm: WasmToInstall::Default(new_wasm.module),
+            new_wasm: WasmToInstall::Default(new_wasm.module.into()),
             args: storage_bucket_canister::post_upgrade::Args { wasm_version },
             deposit_cycles_if_needed: false,
             mode: CanisterInstallMode::Upgrade(None),

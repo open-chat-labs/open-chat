@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
+use std::ops::Deref;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct UpgradeCanisterWasmArgs {
@@ -43,33 +44,46 @@ impl From<CanisterWasm> for ChunkedCanisterWasm {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub struct CanisterWasm {
     pub version: BuildVersion,
-    #[serde(with = "serde_bytes")]
-    pub module: Vec<u8>,
+    pub module: CanisterWasmBytes,
 }
 
-impl Default for CanisterWasm {
-    fn default() -> Self {
-        CanisterWasm {
-            version: BuildVersion::new(0, 0, 0),
-            module: Vec::default(),
-        }
-    }
-}
+#[derive(CandidType, Serialize, Deserialize, Clone, Default)]
+pub struct CanisterWasmBytes(#[serde(with = "serde_bytes")] pub Vec<u8>);
 
-impl CanisterWasm {
+impl CanisterWasmBytes {
     pub fn hash(&self) -> Hash {
-        sha256(&self.module)
+        sha256(&self.0)
     }
 }
 
-impl Debug for CanisterWasm {
+impl Deref for CanisterWasmBytes {
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<Vec<u8>> for CanisterWasmBytes {
+    fn from(value: Vec<u8>) -> Self {
+        CanisterWasmBytes(value)
+    }
+}
+
+impl From<CanisterWasmBytes> for Vec<u8> {
+    fn from(value: CanisterWasmBytes) -> Self {
+        value.0
+    }
+}
+
+impl Debug for CanisterWasmBytes {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("CanisterWasm")
-            .field("version", &self.version)
-            .field("byte_length", &self.module.len())
+            .field("length", &self.0.len())
+            .field("hash", &hex::encode(&self.hash()))
             .finish()
     }
 }
@@ -102,13 +116,13 @@ impl CanisterWasmManager {
         self.wasm = wasm;
     }
 
-    pub fn push_chunk(&mut self, chunk: Vec<u8>, index: u8) -> Result<(u32, Hash), u8> {
+    pub fn push_chunk(&mut self, chunk: CanisterWasmBytes, index: u8) -> Result<(u32, Hash), u8> {
         if index == 0 {
             self.chunks.clear();
         }
         let expected_index = self.chunks.len() as u8;
         if index == expected_index {
-            self.chunks.push(chunk);
+            self.chunks.push(chunk.into());
             let total_bytes = self.chunks.iter().map(|c| c.len() as u32).sum();
             Ok((total_bytes, self.chunks_hash()))
         } else {
@@ -116,13 +130,13 @@ impl CanisterWasmManager {
         }
     }
 
-    pub fn wasm_from_chunks(&self) -> Vec<u8> {
+    pub fn wasm_from_chunks(&self) -> CanisterWasmBytes {
         let total_bytes = self.chunks.iter().map(|c| c.len()).sum();
         let mut wasm = Vec::with_capacity(total_bytes);
         for chunk in self.chunks.iter() {
             wasm.extend_from_slice(chunk);
         }
-        wasm
+        wasm.into()
     }
 
     pub fn chunks_hash(&self) -> Hash {
@@ -159,11 +173,11 @@ impl<T: Eq + std::hash::Hash> ChildCanisterWasms<T> {
         self.manager_mut(canister_type).set(wasm.into());
     }
 
-    pub fn push_chunk(&mut self, canister_type: T, chunk: Vec<u8>, index: u8) -> Result<(u32, Hash), u8> {
+    pub fn push_chunk(&mut self, canister_type: T, chunk: CanisterWasmBytes, index: u8) -> Result<(u32, Hash), u8> {
         self.manager_mut(canister_type).push_chunk(chunk, index)
     }
 
-    pub fn wasm_from_chunks(&self, canister_type: T) -> Vec<u8> {
+    pub fn wasm_from_chunks(&self, canister_type: T) -> CanisterWasmBytes {
         self.manager(canister_type).map(|m| m.wasm_from_chunks()).unwrap_or_default()
     }
 

@@ -216,7 +216,10 @@ pub fn get_canister_wasm(canister_name: impl ToString, version: BuildVersion) ->
     let file_path = local_bin_path.join(file_name);
     let bytes = read_file(file_path);
 
-    CanisterWasm { module: bytes, version }
+    CanisterWasm {
+        module: bytes.into(),
+        version,
+    }
 }
 
 pub fn read_file(file_path: PathBuf) -> Vec<u8> {

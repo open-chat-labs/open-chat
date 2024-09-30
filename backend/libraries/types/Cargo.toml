@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 candid = { workspace = true }
 getrandom = { workspace = true }
+hex = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic_principal = { workspace = true }
 icrc-ledger-types = { workspace = true }
