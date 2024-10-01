@@ -29,7 +29,7 @@ async fn upgrade_group_canister_wasm(args: Args) -> Response {
         .collect();
 
     if let Err(error) = futures::future::try_join_all(futures).await {
-        error!(?error, "Failed to upgrade Community canisters");
+        error!(?error, "Failed to upgrade Group canisters");
         InternalError(format!("{error:?}"))
     } else {
         mutate_state(|state| {
