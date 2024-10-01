@@ -1,7 +1,9 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{AcceptSwapSuccess, MessageId, MessageIndex, Milliseconds, SwapStatusError, UserId};
 
+#[ts_export(user, accept_p2p_swap)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub user_id: UserId,
@@ -10,6 +12,7 @@ pub struct Args {
     pub pin: Option<String>,
 }
 
+#[ts_export(user, accept_p2p_swap)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(AcceptSwapSuccess),

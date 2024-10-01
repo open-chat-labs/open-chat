@@ -26,7 +26,8 @@
     $: message = $_("report.messageReport", {
         values: {
             username:
-                $userStore[report.reportedBy]?.username ?? `unknown user (${report.reportedBy}))`,
+                $userStore.get(report.reportedBy)?.username ??
+                `unknown user (${report.reportedBy}))`,
             timestamp: client.toDatetimeString(new Date(report.timestamp)),
             reason: reasons[report.reasonCode],
         },

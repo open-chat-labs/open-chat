@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use types::{
     CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration,
     EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds, P2PSwapStatus, PhoneNumber,
-    Reaction, SuspensionDuration, TimestampMillis, UniquePersonProof, User, UserId,
+    Reaction, ReferralStatus, SuspensionDuration, TimestampMillis, UniquePersonProof, User, UserId,
 };
 
 mod lifecycle;
@@ -18,7 +18,9 @@ mod _updates;
 pub use _updates::*;
 pub use lifecycle::*;
 pub use queries::*;
+use ts_export::ts_export;
 
+#[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum EventsResponse {
     Success(types::EventsResponse),
@@ -27,6 +29,7 @@ pub enum EventsResponse {
     ReplicaNotUpToDateV2(TimestampMillis),
 }
 
+#[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupChatSummary {
     pub chat_id: ChatId,
@@ -37,6 +40,7 @@ pub struct GroupChatSummary {
     pub date_read_pinned: Option<TimestampMillis>,
 }
 
+#[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupChatSummaryUpdates {
     pub chat_id: ChatId,
@@ -46,6 +50,7 @@ pub struct GroupChatSummaryUpdates {
     pub date_read_pinned: Option<TimestampMillis>,
 }
 
+#[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CommunitySummary {
     pub community_id: CommunityId,
@@ -56,6 +61,7 @@ pub struct CommunitySummary {
     pub pinned: Vec<ChannelId>,
 }
 
+#[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CommunitySummaryUpdates {
     pub community_id: CommunityId,
@@ -65,6 +71,7 @@ pub struct CommunitySummaryUpdates {
     pub pinned: Option<Vec<ChannelId>>,
 }
 
+#[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ChannelSummary {
     pub channel_id: ChannelId,
@@ -74,6 +81,7 @@ pub struct ChannelSummary {
     pub date_read_pinned: Option<TimestampMillis>,
 }
 
+#[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ChannelSummaryUpdates {
     pub channel_id: ChannelId,
@@ -98,6 +106,7 @@ pub enum Event {
     UserJoinedCommunityOrChannel(Box<UserJoinedCommunityOrChannel>),
     DiamondMembershipPaymentReceived(Box<DiamondMembershipPaymentReceived>),
     NotifyUniquePersonProof(Box<UniquePersonProof>),
+    ExternalAchievementAwarded(Box<ExternalAchievementAwarded>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -150,6 +159,7 @@ pub struct UserJoinedGroup {
     pub chat_id: ChatId,
     pub local_user_index_canister_id: CanisterId,
     pub latest_message_index: Option<MessageIndex>,
+    pub group_canister_timestamp: TimestampMillis,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -157,6 +167,7 @@ pub struct UserJoinedCommunityOrChannel {
     pub community_id: CommunityId,
     pub local_user_index_canister_id: CanisterId,
     pub channels: Vec<ChannelLatestMessageIndex>,
+    pub community_canister_timestamp: TimestampMillis,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -183,6 +194,7 @@ pub enum UserCanisterEvent {
     P2PSwapStatusChange(Box<P2PSwapStatusChange>),
     StartVideoCall(Box<StartVideoCallArgs>),
     JoinVideoCall(Box<JoinVideoCall>),
+    SetReferralStatus(Box<ReferralStatus>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -211,12 +223,14 @@ pub enum C2CReplyContext {
     OtherChat(Chat, Option<MessageIndex>, EventIndex),
 }
 
+#[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct DeleteUndeleteMessagesArgs {
     pub thread_root_message_id: Option<MessageId>,
     pub message_ids: Vec<MessageId>,
 }
 
+#[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct EditMessageArgs {
     pub thread_root_message_id: Option<MessageId>,
@@ -225,6 +239,7 @@ pub struct EditMessageArgs {
     pub block_level_markdown: Option<bool>,
 }
 
+#[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ToggleReactionArgs {
     pub thread_root_message_id: Option<MessageId>,
@@ -236,6 +251,7 @@ pub struct ToggleReactionArgs {
     pub user_avatar_id: Option<u128>,
 }
 
+#[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct TipMessageArgs {
     pub thread_root_message_id: Option<MessageId>,
@@ -249,6 +265,7 @@ pub struct TipMessageArgs {
     pub user_avatar_id: Option<u128>,
 }
 
+#[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MarkMessagesReadArgs {
     pub read_up_to: MessageIndex,
@@ -284,6 +301,7 @@ pub fn map_chats_to_chat_ids(chats: Vec<Chat>) -> Vec<ChatId> {
         .collect()
 }
 
+#[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum ChatInList {
     Direct(ChatId),
@@ -292,8 +310,54 @@ pub enum ChatInList {
     Community(CommunityId, ChannelId),
 }
 
+#[ts_export(user)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct NamedAccount {
     pub name: String,
     pub account: String,
+}
+
+#[ts_export(user)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum WalletConfig {
+    Auto(AutoWallet),
+    Manual(ManualWallet),
+}
+
+#[ts_export(user)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+pub struct AutoWallet {
+    pub min_cents_visible: u32,
+}
+
+#[ts_export(user)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+pub struct ManualWallet {
+    #[ts(as = "Vec<ts_export::TSBytes>")]
+    pub tokens: Vec<CanisterId>,
+}
+
+impl Default for WalletConfig {
+    fn default() -> Self {
+        WalletConfig::Auto(AutoWallet::default())
+    }
+}
+
+#[ts_export(user)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct Referral {
+    pub user_id: UserId,
+    pub status: ReferralStatus,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct Referrals {
+    pub referred_by: Option<UserId>,
+    pub referrals: Vec<Referral>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ExternalAchievementAwarded {
+    pub name: String,
+    pub chit_reward: u32,
 }

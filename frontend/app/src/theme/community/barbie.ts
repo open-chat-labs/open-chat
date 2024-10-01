@@ -72,7 +72,10 @@ export function getTheme(base: Theme): Theme {
     base.link.underline = base.primary;
     base.scrollbar.bg = base.button.hv;
     base.toast.success.bg = base.notificationBar.bg;
-    base.code = white;
+    base.code = {
+        bg: white,
+        txt: pink1,
+    };
     base.entry.input.sh = "none";
     base.input.sh = "none";
     base.chatSearch.sh = "none";
@@ -88,6 +91,13 @@ export function getTheme(base: Theme): Theme {
     base.daily.mainAreaBgAccent = barbieYellow;
     base.daily.mainAreaText = txt;
     base.daily.supportiveText = txtLight;
+
+    base.audio.outer = pink3;
+    base.audio.me.outer = barbieBlue;
+    base.audio.inner = barbieYellow;
+    base.audio.me.inner = barbieYellow;
+    base.audio.note = txt;
+    base.audio.me.note = txt;
 
     return base;
 }

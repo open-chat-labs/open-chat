@@ -319,6 +319,10 @@
         <div class="info">
             <Translatable resourceKey={i18nKey("access.minimumBalanceInfo")} />
         </div>
+    {:else if gate.kind === "referred_by_member_gate"}
+        <div class="info">
+            <Translatable resourceKey={i18nKey("access.referredByMemberInfo")} />
+        </div>
     {:else if gate.kind === "no_gate"}
         <div class="info">
             <Translatable resourceKey={i18nKey("access.openAccessInfo")} />

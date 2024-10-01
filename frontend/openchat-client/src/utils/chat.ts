@@ -67,7 +67,7 @@ import { distinctBy, groupWhile, toRecordFiltered } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import DRange from "drange";
-import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID, userStore } from "../stores/user";
+import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID } from "../stores/user";
 import Identicon from "identicon.js";
 import md5 from "md5";
 import { rtcConnectionsManager } from "../utils/rtcConnectionsManager";
@@ -153,9 +153,12 @@ export function makeRtcConnections(
     if (userIds.length === 0) return;
 
     userIds
-        .map((u) => lookup[u])
-        .filter((user) => user.kind === "user")
-        .map((user) => user.userId)
+        .reduce((ids, id) => {
+            if (lookup.get(id)?.kind === "user") {
+                ids.push(id);
+            }
+            return ids;
+        }, [] as string[])
         .forEach((userId) => {
             rtcConnectionsManager.create(myUserId, userId, meteredApiKey);
         });
@@ -192,7 +195,7 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
         case "message_unpinned":
             return event.unpinnedBy;
         case "events_ttl_updated":
-            return event.updatedBy;
+        case "external_url_updated":
         case "gate_updated":
             return event.updatedBy;
         case "users_invited":
@@ -234,7 +237,7 @@ export function getMembersString(
         return `${memberIds.length} members`;
     }
     const sorted = memberIds
-        .map((id) => userLookup[id] ?? nullUser(unknownUser))
+        .map((id) => userLookup.get(id) ?? nullUser(unknownUser))
         .sort(compareUsersFn ?? compareUsername)
         .map((p) => `**${p.userId === user.userId ? you : p.displayName ?? p.username}**`);
 
@@ -392,7 +395,7 @@ export function mergeLocalSummaryUpdates(
                                 updated.rulesAccepted ?? current.membership.rulesAccepted,
                         },
                     });
-                } else if (current.kind === "group_chat" && updated.kind === "group_chat") {
+                } else if (current.kind === updated.kind) {
                     merged.set(chatId, {
                         ...current,
                         latestMessage,
@@ -411,6 +414,8 @@ export function mergeLocalSummaryUpdates(
                             notificationsMuted:
                                 updated.notificationsMuted ?? current.membership.notificationsMuted,
                             archived: updated.archived ?? current.membership.archived,
+                            rulesAccepted:
+                                updated.rulesAccepted ?? current.membership.rulesAccepted,
                         },
                         eventsTTL: updated.eventsTTL
                             ? updated.eventsTTL === "set_to_none"
@@ -539,6 +544,7 @@ function mergePermissions(
         changeRoles: updated.changeRoles ?? current.changeRoles,
         updateGroup: updated.updateGroup ?? current.updateGroup,
         inviteUsers: updated.inviteUsers ?? current.inviteUsers,
+        addMembers: updated.addMembers ?? current.addMembers,
         removeMembers: updated.removeMembers ?? current.removeMembers,
         deleteMessages: updated.deleteMessages ?? current.deleteMessages,
         pinMessages: updated.pinMessages ?? current.pinMessages,
@@ -879,7 +885,7 @@ export function groupChatFromCandidate(
     chatId: MultiUserChatIdentifier,
     candidate: CandidateGroupChat,
 ): MultiUserChat {
-    return {
+    const chat = {
         kind: chatId.kind,
         id: chatId,
         latestEventIndex: 0,
@@ -909,6 +915,12 @@ export function groupChatFromCandidate(
         },
         eventsTTL: candidate.eventsTTL,
     } as MultiUserChat;
+
+    if (chat.kind === "channel") {
+        chat.externalUrl = candidate.externalUrl;
+    }
+
+    return chat;
 }
 
 function updatePollContent(content: PollContent, votes: LocalPollVote[]): PollContent {
@@ -1024,11 +1036,7 @@ export function canChangeRoles(
 
 export function canRemoveMembers(chat: ChatSummary): boolean {
     if (chat.kind !== "direct_chat") {
-        return (
-            !chat.public &&
-            !chat.frozen &&
-            isPermitted(chat.membership.role, chat.permissions.removeMembers)
-        );
+        return !chat.frozen && isPermitted(chat.membership.role, chat.permissions.removeMembers);
     } else {
         return false;
     }
@@ -1074,11 +1082,12 @@ export function canEditGroupDetails(chat: ChatSummary): boolean {
     }
 }
 
-export function canStartVideoCalls(chat: ChatSummary): boolean {
-    if (chat.kind !== "direct_chat") {
-        return !chat.frozen && isPermitted(chat.membership.role, chat.permissions.startVideoCall);
+export function canStartVideoCalls(chat: ChatSummary, userLookup: UserLookup): boolean {
+    if (chat.kind === "direct_chat") {
+        const user = userLookup.get(chat.them.userId);
+        return user !== undefined && user.kind === "user";
     } else {
-        return true;
+        return !chat.frozen && isPermitted(chat.membership.role, chat.permissions.startVideoCall);
     }
 }
 
@@ -1095,6 +1104,14 @@ export function canInviteUsers(chat: ChatSummary): boolean {
         chat.kind !== "direct_chat" &&
         !chat.frozen &&
         isPermitted(chat.membership.role, chat.permissions.inviteUsers)
+    );
+}
+
+export function canAddMembers(chat: ChatSummary): boolean {
+    return (
+        chat.kind === "channel" &&
+        !chat.frozen &&
+        isPermitted(chat.membership.role, chat.permissions.addMembers)
     );
 }
 
@@ -1788,11 +1805,7 @@ export function buildCryptoTransferText(
     }
 
     function username(userId: string): string {
-        const lookup = get(userStore);
-
-        return userId === myUserId
-            ? formatter("you")
-            : `${lookup[userId]?.username ?? formatter("unknown")}`;
+        return userId === myUserId ? formatter("you") : `@UserId(${userId})`;
     }
 
     const tokenDetails = cryptoLookup[content.transfer.ledger];
@@ -1853,7 +1866,7 @@ export function getTypingString(
         return formatter("membersAreTyping", { values: { number: typers.size } });
     } else {
         const userIds = [...typers];
-        const username = users[userIds[0]]?.username ?? formatter("unknown");
+        const username = users.get(userIds[0])?.username ?? formatter("unknown");
         return formatter("memberIsTyping", { values: { username } });
     }
 }
@@ -1899,6 +1912,9 @@ export function diffGroupPermissions(
     }
     if (original.inviteUsers !== updated.inviteUsers) {
         diff.inviteUsers = updated.inviteUsers;
+    }
+    if (original.addMembers !== updated.addMembers) {
+        diff.addMembers = updated.addMembers;
     }
     if (original.removeMembers !== updated.removeMembers) {
         diff.removeMembers = updated.removeMembers;

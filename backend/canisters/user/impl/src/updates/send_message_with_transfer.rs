@@ -3,11 +3,11 @@ use crate::model::p2p_swaps::P2PSwap;
 use crate::model::pin_number::VerifyPinError;
 use crate::timer_job_types::{NotifyEscrowCanisterOfDepositJob, SendMessageToChannelJob, SendMessageToGroupJob, TimerJob};
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::MessageContentInternal;
 use escrow_canister::deposit_subaccount;
-use ic_cdk::update;
-use icrc_ledger_types::icrc1::account::Account;
+use types::icrc1::Account;
 use types::{
     icrc1, Achievement, CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, MessageContentInitial, MessageId,
     MessageIndex, Milliseconds, P2PSwapLocation, PendingCryptoTransaction, TimestampMillis, UserId, MAX_TEXT_LENGTH,
@@ -18,7 +18,7 @@ use user_canister::{send_message_v2, send_message_with_transfer_to_channel};
 use utils::consts::{MEMO_MESSAGE, MEMO_P2P_SWAP_CREATE, MEMO_PRIZE};
 use utils::time::{NANOS_PER_MILLISECOND, SECOND_IN_MS};
 
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 async fn send_message_with_transfer_to_channel(
     args: send_message_with_transfer_to_channel::Args,
@@ -72,7 +72,7 @@ async fn send_message_with_transfer_to_channel(
         Err(error) => return TransferFailed(error),
     };
 
-    let achievement = content.hydrate(None).to_achievement();
+    let achievement = content.content_type().achievement();
     let has_thread = args.thread_root_message_index.is_some();
     let quote_reply = args.replies_to.is_some();
 
@@ -141,7 +141,7 @@ async fn send_message_with_transfer_to_channel(
     }
 }
 
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 async fn send_message_with_transfer_to_group(
     args: send_message_with_transfer_to_group::Args,
@@ -195,7 +195,7 @@ async fn send_message_with_transfer_to_group(
         Err(error) => return TransferFailed(error),
     };
 
-    let achievement = content.hydrate(None).to_achievement();
+    let achievement = content.content_type().achievement();
     let has_thread = args.thread_root_message_index.is_some();
     let quote_reply = args.replies_to.is_some();
 

@@ -1,7 +1,6 @@
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::storage_index_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
-use crate::model::user_referral_leaderboards::UserReferralLeaderboards;
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
@@ -12,6 +11,7 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
 use local_user_index_canister::Event as LocalUserIndexEvent;
 use model::chit_leaderboard::ChitLeaderboard;
+use model::external_achievements::{ExternalAchievementMetrics, ExternalAchievements};
 use model::local_user_index_map::LocalUserIndexMap;
 use model::pending_modclub_submissions_queue::{PendingModclubSubmission, PendingModclubSubmissionsQueue};
 use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
@@ -26,9 +26,10 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, DiamondMembershipFees, Milliseconds,
-    TimestampMillis, Timestamped, UserId, UserType,
+    BotConfig, BuildVersion, CanisterId, ChatId, ChildCanisterWasms, Cryptocurrency, Cycles, DiamondMembershipFees,
+    Milliseconds, TimestampMillis, Timestamped, UserId, UserType,
 };
+use user_index_canister::ChildCanisterType;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::consts::DEV_TEAM_DFX_PRINCIPAL;
@@ -125,6 +126,11 @@ impl RuntimeState {
         caller == self.modclub_canister_id()
     }
 
+    pub fn can_caller_upload_wasm_chunks(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.governance_principals.contains(&caller) || self.data.upload_wasm_chunks_whitelist.contains(&caller)
+    }
+
     pub fn modclub_canister_id(&self) -> CanisterId {
         let modclub_canister_id =
             if self.data.test_mode { "d7isk-4aaaa-aaaah-qdbsa-cai" } else { "gwuzc-waaaa-aaaah-qdboa-cai" };
@@ -185,6 +191,9 @@ impl RuntimeState {
 
             self.data.identity_canister_user_sync_queue.push_back((user.principal, None));
             jobs::sync_users_to_identity_canister::try_run_now(self);
+
+            self.data.remove_from_online_users_queue.push_back(user.principal);
+            jobs::remove_from_online_users_canister::start_job_if_required(self);
         }
     }
 
@@ -196,7 +205,7 @@ impl RuntimeState {
                 username: user.username.clone(),
                 date_created: user.date_created,
                 date_updated: user.date_updated,
-                is_bot: user.is_bot,
+                is_bot: user.user_type.is_bot(),
                 suspension_details: user.suspension_details.clone(),
                 moderation_flags_enabled: user.moderation_flags_enabled,
                 chit_balance: user
@@ -236,8 +245,13 @@ impl RuntimeState {
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
             governance_principals: self.data.governance_principals.iter().copied().collect(),
-            user_wasm_version: self.data.user_canister_wasm.version,
-            local_user_index_wasm_version: self.data.local_user_index_canister_wasm_for_new_canisters.version,
+            user_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::User).wasm.version,
+            local_user_index_wasm_version: self
+                .data
+                .child_canister_wasms
+                .get(ChildCanisterType::LocalUserIndex)
+                .wasm
+                .version,
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
             platform_moderators: self.data.platform_moderators.len() as u8,
             platform_operators: self.data.platform_operators.len() as u8,
@@ -255,6 +269,8 @@ impl RuntimeState {
                 notifications_index: self.data.notifications_index_canister_id,
                 identity: self.data.identity_canister_id,
                 proposals_bot: self.data.proposals_bot_canister_id,
+                airdrop_bot: self.data.airdrop_bot_canister_id,
+                online_users: self.data.online_users_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 storage_index: self.data.storage_index_canister_id,
                 escrow: self.data.escrow_canister_id,
@@ -268,7 +284,48 @@ impl RuntimeState {
             deleted_users: self.data.deleted_users.iter().take(100).map(|u| u.user_id).collect(),
             deleted_users_length: self.data.deleted_users.len(),
             unique_person_proofs_submitted: self.data.users.unique_person_proofs_submitted(),
+            july_airdrop_period: self.build_stats_for_cohort(1719792000000, 1723021200000),
+            august_airdrop_period: self.build_stats_for_cohort(1723021200000, 1725181200000),
+            survey_messages_sent: self.data.survey_messages_sent,
+            external_achievements: self.data.external_achievements.metrics(),
+            upload_wasm_chunks_whitelist: self.data.upload_wasm_chunks_whitelist.clone(),
+            wasm_chunks_uploaded: self
+                .data
+                .child_canister_wasms
+                .chunk_hashes()
+                .into_iter()
+                .map(|(c, h)| (*c, hex::encode(h)))
+                .collect(),
         }
+    }
+
+    fn build_stats_for_cohort(&self, airdrop_from: TimestampMillis, airdrop_to: TimestampMillis) -> AirdropStats {
+        let mut stats = AirdropStats::default();
+
+        for user in self.data.users.iter() {
+            let diamond = user.diamond_membership_details.was_active(airdrop_from)
+                || user.diamond_membership_details.was_active(airdrop_to);
+
+            let lifetime_diamond = user.diamond_membership_details.is_lifetime_diamond_member();
+
+            if diamond {
+                stats.diamond += 1;
+            }
+
+            if lifetime_diamond {
+                stats.lifetime_diamond += 1;
+            }
+
+            if user.unique_person_proof.is_some() {
+                stats.proved_uniqueness += 1;
+            }
+
+            if (user.unique_person_proof.is_some() && diamond) || lifetime_diamond {
+                stats.qualify_for_airdrop += 1;
+            }
+        }
+
+        stats
     }
 }
 
@@ -276,14 +333,13 @@ impl RuntimeState {
 struct Data {
     pub users: UserMap,
     pub governance_principals: HashSet<Principal>,
-    pub user_canister_wasm: CanisterWasm,
-    pub local_user_index_canister_wasm_for_new_canisters: CanisterWasm,
-    pub local_user_index_canister_wasm_for_upgrades: CanisterWasm,
+    pub child_canister_wasms: ChildCanisterWasms<ChildCanisterType>,
     pub group_index_canister_id: CanisterId,
     pub notifications_index_canister_id: CanisterId,
     pub identity_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
     pub airdrop_bot_canister_id: CanisterId,
+    pub online_users_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cycles_dispenser_canister_id: CanisterId,
@@ -305,7 +361,6 @@ struct Data {
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
     pub nns_governance_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
-    pub user_referral_leaderboards: UserReferralLeaderboards,
     pub platform_moderators_group: Option<ChatId>,
     pub reported_messages: ReportedMessages,
     pub fire_and_forget_handler: FireAndForgetHandler,
@@ -320,19 +375,22 @@ struct Data {
     #[serde(with = "serde_bytes")]
     pub ic_root_key: Vec<u8>,
     pub identity_canister_user_sync_queue: VecDeque<(Principal, Option<UserId>)>,
+    pub remove_from_online_users_queue: VecDeque<Principal>,
+    pub survey_messages_sent: usize,
+    pub external_achievements: ExternalAchievements,
+    pub upload_wasm_chunks_whitelist: Vec<Principal>,
 }
 
 impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         governance_principals: Vec<Principal>,
-        user_canister_wasm: CanisterWasm,
-        local_user_index_canister_wasm: CanisterWasm,
         group_index_canister_id: CanisterId,
         notifications_index_canister_id: CanisterId,
         identity_canister_id: CanisterId,
         proposals_bot_canister_id: CanisterId,
         airdrop_bot_canister_id: CanisterId,
+        online_users_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         storage_index_canister_id: CanisterId,
         escrow_canister_id: CanisterId,
@@ -348,14 +406,13 @@ impl Data {
         let mut data = Data {
             users: UserMap::default(),
             governance_principals: governance_principals.into_iter().collect(),
-            user_canister_wasm,
-            local_user_index_canister_wasm_for_new_canisters: local_user_index_canister_wasm.clone(),
-            local_user_index_canister_wasm_for_upgrades: local_user_index_canister_wasm,
+            child_canister_wasms: ChildCanisterWasms::default(),
             group_index_canister_id,
             notifications_index_canister_id,
             identity_canister_id,
             proposals_bot_canister_id,
             airdrop_bot_canister_id,
+            online_users_canister_id,
             cycles_dispenser_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             total_cycles_spent_on_canisters: 0,
@@ -379,7 +436,6 @@ impl Data {
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             nns_governance_canister_id,
             internet_identity_canister_id,
-            user_referral_leaderboards: UserReferralLeaderboards::default(),
             platform_moderators_group: None,
             nns_8_year_neuron: None,
             reported_messages: ReportedMessages::default(),
@@ -389,10 +445,14 @@ impl Data {
             video_call_operators,
             oc_key_pair: P256KeyPair::default(),
             empty_users: HashSet::new(),
-            chit_leaderboard: ChitLeaderboard::default(),
+            chit_leaderboard: ChitLeaderboard::new(now),
             deleted_users: Vec::new(),
             ic_root_key,
             identity_canister_user_sync_queue: VecDeque::new(),
+            remove_from_online_users_queue: VecDeque::new(),
+            survey_messages_sent: 0,
+            external_achievements: ExternalAchievements::default(),
+            upload_wasm_chunks_whitelist: Vec::new(),
         };
 
         // Register the ProposalsBot
@@ -403,6 +463,7 @@ impl Data {
             now,
             None,
             UserType::OcControlledBot,
+            Some(BotConfig::default()),
         );
 
         // Register the AirdropBot
@@ -413,6 +474,7 @@ impl Data {
             now,
             None,
             UserType::OcControlledBot,
+            Some(BotConfig::default()),
         );
 
         data
@@ -472,14 +534,13 @@ impl Default for Data {
         Data {
             users: UserMap::default(),
             governance_principals: HashSet::new(),
-            user_canister_wasm: CanisterWasm::default(),
-            local_user_index_canister_wasm_for_new_canisters: CanisterWasm::default(),
-            local_user_index_canister_wasm_for_upgrades: CanisterWasm::default(),
+            child_canister_wasms: ChildCanisterWasms::default(),
             group_index_canister_id: Principal::anonymous(),
             notifications_index_canister_id: Principal::anonymous(),
             identity_canister_id: Principal::anonymous(),
             proposals_bot_canister_id: Principal::anonymous(),
             airdrop_bot_canister_id: Principal::anonymous(),
+            online_users_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             cycles_dispenser_canister_id: Principal::anonymous(),
             total_cycles_spent_on_canisters: 0,
@@ -501,7 +562,6 @@ impl Default for Data {
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             nns_governance_canister_id: Principal::anonymous(),
             internet_identity_canister_id: Principal::anonymous(),
-            user_referral_leaderboards: UserReferralLeaderboards::default(),
             platform_moderators_group: None,
             reported_messages: ReportedMessages::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
@@ -511,10 +571,14 @@ impl Default for Data {
             video_call_operators: Vec::default(),
             oc_key_pair: P256KeyPair::default(),
             empty_users: HashSet::new(),
-            chit_leaderboard: ChitLeaderboard::default(),
+            chit_leaderboard: ChitLeaderboard::new(0),
             deleted_users: Vec::new(),
             ic_root_key: Vec::new(),
             identity_canister_user_sync_queue: VecDeque::new(),
+            remove_from_online_users_queue: VecDeque::new(),
+            survey_messages_sent: 0,
+            external_achievements: ExternalAchievements::default(),
+            upload_wasm_chunks_whitelist: Vec::new(),
         }
     }
 }
@@ -556,6 +620,12 @@ pub struct Metrics {
     pub deleted_users: Vec<UserId>,
     pub deleted_users_length: usize,
     pub unique_person_proofs_submitted: u32,
+    pub july_airdrop_period: AirdropStats,
+    pub august_airdrop_period: AirdropStats,
+    pub survey_messages_sent: usize,
+    pub external_achievements: Vec<ExternalAchievementMetrics>,
+    pub upload_wasm_chunks_whitelist: Vec<Principal>,
+    pub wasm_chunks_uploaded: Vec<(ChildCanisterType, String)>,
 }
 
 #[derive(Serialize, Debug)]
@@ -571,6 +641,14 @@ pub struct UserMetrics {
     pub chit_updated: TimestampMillis,
     pub streak: u16,
     pub streak_ends: TimestampMillis,
+}
+
+#[derive(Serialize, Debug, Default)]
+pub struct AirdropStats {
+    pub diamond: u32,
+    pub lifetime_diamond: u32,
+    pub proved_uniqueness: u32,
+    pub qualify_for_airdrop: u32,
 }
 
 #[derive(Serialize, Debug, Default)]
@@ -619,6 +697,8 @@ pub struct CanisterIds {
     pub notifications_index: CanisterId,
     pub identity: CanisterId,
     pub proposals_bot: CanisterId,
+    pub airdrop_bot: CanisterId,
+    pub online_users: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub storage_index: CanisterId,
     pub escrow: CanisterId,

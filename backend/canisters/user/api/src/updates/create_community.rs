@@ -1,7 +1,9 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{AccessGate, CommunityId, CommunityPermissions, Document, FieldTooLongResult, FieldTooShortResult, Rules};
 
+#[ts_export(user, create_community)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub is_public: bool,
@@ -18,6 +20,7 @@ pub struct Args {
     pub primary_language: String,
 }
 
+#[ts_export(user, create_community)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
@@ -39,6 +42,7 @@ pub enum Response {
     InternalError(String),
 }
 
+#[ts_export(user, create_community)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub community_id: CommunityId,

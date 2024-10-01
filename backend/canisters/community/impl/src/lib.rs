@@ -2,7 +2,7 @@ use crate::memory::{get_instruction_counts_data_memory, get_instruction_counts_i
 use crate::model::channels::Channels;
 use crate::model::groups_being_imported::{GroupBeingImportedSummary, GroupsBeingImported};
 use crate::model::members::CommunityMembers;
-use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
+use crate::timer_job_types::{MakeTransferJob, RemoveExpiredEventsJob, TimerJob};
 use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
@@ -12,24 +12,26 @@ use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStore
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::AccessRulesInternal;
-use group_community_common::{PaymentReceipts, PaymentRecipient, PendingPayment, PendingPaymentReason, PendingPaymentsQueue};
+use group_community_common::{
+    Achievements, PaymentReceipts, PaymentRecipient, PendingPayment, PendingPaymentReason, PendingPaymentsQueue,
+};
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
 use rand::rngs::StdRng;
+use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::cell::RefCell;
 use std::ops::Deref;
 use std::time::Duration;
 use types::{
-    AccessGate, Achievement, BuildVersion, CanisterId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
+    AccessGate, BuildVersion, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
     CommunityPermissions, CommunityRole, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, Milliseconds, Notification,
     PaymentGate, Rules, TimestampMillis, Timestamped, UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
-use user_canister::c2c_notify_achievement;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
 use utils::time::MINUTE_IN_MS;
@@ -225,13 +227,15 @@ impl RuntimeState {
     pub fn run_event_expiry_job(&mut self) {
         let now = self.env.now();
         let mut next_event_expiry = None;
+        let mut prize_refunds = Vec::new();
         for channel in self.data.channels.iter_mut() {
-            channel.chat.remove_expired_events(now);
+            let result = channel.chat.remove_expired_events(now);
             if let Some(expiry) = channel.chat.events.next_event_expiry() {
                 if next_event_expiry.map_or(true, |current| expiry < current) {
                     next_event_expiry = Some(expiry);
                 }
             }
+            prize_refunds.extend(result.prize_refunds);
         }
 
         self.data.next_event_expiry = next_event_expiry;
@@ -239,6 +243,25 @@ impl RuntimeState {
             self.data
                 .timer_jobs
                 .enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
+        }
+        for pending_transaction in prize_refunds {
+            self.data.timer_jobs.enqueue_job(
+                TimerJob::MakeTransfer(MakeTransferJob {
+                    pending_transaction,
+                    attempt: 0,
+                }),
+                now,
+                now,
+            );
+        }
+    }
+
+    pub fn generate_channel_id(&mut self) -> ChannelId {
+        loop {
+            let channel_id = self.env.rng().next_u32() as ChannelId;
+            if self.data.channels.get(&channel_id).is_none() {
+                return channel_id;
+            }
         }
     }
 
@@ -274,15 +297,6 @@ impl RuntimeState {
                 internet_identity: self.data.internet_identity_canister_id,
             },
         }
-    }
-
-    fn notify_user_of_achievements(&self, user_id: UserId, achievements: Vec<Achievement>) {
-        let args = c2c_notify_achievement::Args { achievements };
-        self.data.fire_and_forget_handler.send(
-            user_id.into(),
-            "c2c_notify_achievement_msgpack".to_string(),
-            serialize_then_unwrap(args),
-        );
     }
 }
 
@@ -333,6 +347,7 @@ struct Data {
     #[serde(with = "serde_bytes")]
     ic_root_key: Vec<u8>,
     event_store_client: EventStoreClient<CdkRuntime>,
+    achievements: Achievements,
 }
 
 impl Data {
@@ -429,6 +444,7 @@ impl Data {
             event_store_client: EventStoreClientBuilder::new(local_group_index_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
                 .build(),
+            achievements: Achievements::default(),
         }
     }
 

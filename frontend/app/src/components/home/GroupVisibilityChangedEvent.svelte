@@ -11,22 +11,22 @@
     const client = getContext<OpenChat>("client");
 
     export let user: UserSummary | undefined;
-    export let nowPublic: boolean;
+    export let isPublic: boolean | undefined;
+    export let messagesVisibleToNonMembers: boolean | undefined;
     export let changedBy: string;
     export let timestamp: bigint;
     export let level: Level;
 
+    $: showEvent = messagesVisibleToNonMembers !== undefined || isPublic !== undefined;
     $: userStore = client.userStore;
     $: me = changedBy === user?.userId;
     $: changedByStr = buildDisplayName($userStore, changedBy, me);
-    $: visibility = (nowPublic ? $_("public") : $_("private")).toLowerCase();
     $: text = interpolate(
         $_,
         i18nKey(
             "groupVisibilityChangedBy",
             {
                 changedBy: changedByStr,
-                visibility: visibility,
             },
             level,
             true,
@@ -34,4 +34,6 @@
     );
 </script>
 
-<NonMessageEvent {text} {timestamp} />
+{#if showEvent}
+    <NonMessageEvent {text} {timestamp} />
+{/if}

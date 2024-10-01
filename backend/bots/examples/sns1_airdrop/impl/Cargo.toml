@@ -24,7 +24,6 @@ rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serde_json = { workspace = true }
-serializer = { path = "../../../../libraries/serializer" }
 sns1_airdrop = { path = "../api" }
 stable_memory = { path = "../../../../libraries/stable_memory" }
 tracing = { workspace = true }

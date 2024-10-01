@@ -59,6 +59,7 @@
     import Human from "../../icons/Human.svelte";
     import VerifyHumanity from "./VerifyHumanity.svelte";
     import { uniquePersonGate } from "../../../utils/access";
+    import ReferredUsersList from "./ReferredUsersList.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -123,6 +124,9 @@
         !saving &&
         !readonly;
     $: canEditTranslations = !$locale?.startsWith("en");
+    $: globalState = client.globalStateStore;
+    $: referrals = $globalState.referrals;
+    $: referredUserIds = new Set(referrals.map((r) => r.userId));
 
     onMount(() => {
         if (!$anonUser) {
@@ -433,6 +437,7 @@
                     <ReferUsers />
                 </CollapsibleCard>
             </div>
+            <ReferredUsersList referrals={referredUserIds} />
             <div class="chats">
                 <CollapsibleCard
                     on:toggle={chatsSectionOpen.toggle}
@@ -576,9 +581,17 @@
                         </div>
                     </div>
                 {/if}
-                <div>
+                <div class="para">
                     <Legend label={i18nKey("version")} rules={i18nKey("websiteVersion")} />
                     <div>{version}</div>
+                </div>
+                <div class="para">
+                    <p class="para smallprint">
+                        <Translatable resourceKey={i18nKey("clearDataCacheInfo")} />
+                    </p>
+                    <Button on:click={() => client.clearCachedData()}>
+                        <Translatable resourceKey={i18nKey("clearDataCache")} />
+                    </Button>
                 </div>
             </CollapsibleCard>
         </div>
@@ -636,6 +649,11 @@
 
     .para {
         margin-bottom: $sp4;
+    }
+
+    .smallprint {
+        @include font(light, normal, fs-70);
+        color: var(--txt-light);
     }
 
     .user-form {

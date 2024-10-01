@@ -703,7 +703,13 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     let user2 = client::register_user(env, canister_ids);
     let community_id =
         client::user::happy_path::create_community(env, &user1, &random_string(), true, vec!["general".to_string()]);
-    client::local_user_index::happy_path::join_community(env, user2.principal, canister_ids.local_user_index, community_id);
+    client::local_user_index::happy_path::join_community(
+        env,
+        user2.principal,
+        canister_ids.local_user_index,
+        community_id,
+        None,
+    );
 
     env.tick();
 
@@ -754,6 +760,7 @@ fn set_channel_rules(env: &mut PocketIc, sender: Principal, community_id: Commun
         public: None,
         channel_id,
         messages_visible_to_non_members: None,
+        external_url: OptionUpdate::NoChange,
     };
 
     client::community::happy_path::update_channel(env, sender, community_id, &args);

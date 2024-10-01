@@ -10,6 +10,7 @@ export type UserNotInCommunity = { kind: "user_not_in_community" };
 export type CommunityFrozen = { kind: "community_frozen" };
 export type ChatFrozen = { kind: "chat_frozen" };
 export type CommunityNotPublic = { kind: "community_not_public" };
+export type CommunityPublic = { kind: "community_public" };
 export type MessageNotFound = {
     kind: "message_not_found";
 };
@@ -62,6 +63,7 @@ export const CommonResponses = {
         ({ kind: "user_not_in_community" }) as UserNotInCommunity,
     userSuspended: (): UserSuspended => ({ kind: "user_suspended" }) as UserSuspended,
     communityFrozen: (): CommunityFrozen => ({ kind: "community_frozen" }) as CommunityFrozen,
+    communityPublic: (): CommunityPublic => ({ kind: "community_public" }) as CommunityPublic,
     messageNotFound: (): MessageNotFound => ({ kind: "message_not_found" }) as MessageNotFound,
     noChange: (): NoChange => ({ kind: "no_change" }) as NoChange,
     communityNotPublic: (): CommunityNotPublic =>

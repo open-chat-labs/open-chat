@@ -43,6 +43,7 @@ const defaultGroupChat: GroupChatSummary = {
         updateGroup: "admin",
         pinMessages: "admin",
         inviteUsers: "admin",
+        addMembers: "admin",
         reactToMessages: "member",
         mentionAllMembers: "member",
         startVideoCall: "admin",
@@ -81,6 +82,7 @@ const defaultGroupChat: GroupChatSummary = {
     },
     localUserIndex: "",
     isInvited: false,
+    messagesVisibleToNonMembers: false,
 };
 
 function createUser(userId: string, username: string): UserSummary {
@@ -124,7 +126,7 @@ describe("thread utils", () => {
                         },
                     },
                 ],
-                messageIds: new Set(),
+                messageIds: new Map(),
             },
         );
         const chat = mergeUnconfirmedThreadsIntoSummary(defaultGroupChat, unconf);
@@ -336,18 +338,18 @@ describe("get members string for group chat", () => {
     const withFewerThanSix = ["a", "b", "c", "d", "z"];
     const withUnknown = ["a", "b", "x", "d", "z"];
     const withMoreThanSix = ["a", "b", "c", "d", "e", "f", "g", "z"];
-    const lookup: UserLookup = {
-        a: createUser("a", "Mr A"),
-        b: createUser("b", "Mr B"),
-        c: createUser("c", "Mr C"),
-        d: createUser("d", "Mr D"),
-        e: createUser("e", "Mr E"),
-        f: createUser("f", "Mr F"),
-        g: createUser("g", "Mr G"),
-        z: createUser("z", "Mr Z"),
-    };
+    const lookup: UserLookup = new Map([
+        ["a", createUser("a", "Mr A")],
+        ["b", createUser("b", "Mr B")],
+        ["c", createUser("c", "Mr C")],
+        ["d", createUser("d", "Mr D")],
+        ["e", createUser("e", "Mr E")],
+        ["f", createUser("f", "Mr F")],
+        ["g", createUser("g", "Mr G")],
+        ["z", createUser("z", "Mr Z")],
+    ]);
 
-    const user = lookup.z as UserSummary;
+    const user = lookup.get("z") as UserSummary;
 
     test("up to five members get listed", () => {
         const members = getMembersString(user, lookup, withFewerThanSix, "Unknown User", "You");

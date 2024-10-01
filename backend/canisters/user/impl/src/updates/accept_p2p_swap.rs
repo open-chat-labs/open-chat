@@ -3,21 +3,21 @@ use crate::model::p2p_swaps::P2PSwap;
 use crate::model::pin_number::VerifyPinError;
 use crate::timer_job_types::NotifyEscrowCanisterOfDepositJob;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use escrow_canister::deposit_subaccount;
-use ic_cdk::update;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use types::{
-    AcceptP2PSwapResult, AcceptSwapSuccess, CanisterId, Chat, EventIndex, P2PSwapLocation, P2PSwapStatus, ReserveP2PSwapResult,
-    ReserveP2PSwapSuccess, TimestampMillis, UserId,
+    AcceptP2PSwapResult, AcceptSwapSuccess, Achievement, CanisterId, Chat, EventIndex, P2PSwapLocation, P2PSwapStatus,
+    ReserveP2PSwapResult, ReserveP2PSwapSuccess, TimestampMillis, UserId,
 };
 use user_canister::accept_p2p_swap::{Response::*, *};
 use user_canister::{P2PSwapStatusChange, UserCanisterEvent};
 use utils::consts::MEMO_P2P_SWAP_ACCEPT;
 use utils::time::NANOS_PER_MILLISECOND;
 
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 async fn accept_p2p_swap(args: Args) -> Response {
     run_regular_jobs();
@@ -93,10 +93,14 @@ async fn accept_p2p_swap(args: Args) -> Response {
                             })),
                         );
                         crate::jobs::push_user_canister_events::start_job_if_required(state);
+                        state
+                            .data
+                            .award_achievement_and_notify(Achievement::AcceptedP2PSwapOffer, now);
                     }
                 }
             });
             NotifyEscrowCanisterOfDepositJob::run(content.swap_id);
+
             Success(AcceptSwapSuccess { token1_txn_in: index })
         }
         Err(response) => {

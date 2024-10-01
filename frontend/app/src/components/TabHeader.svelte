@@ -3,18 +3,18 @@
     import Translatable from "./Translatable.svelte";
 
     export let items: ResourceKey[];
-    export let selected = 0;
+    export let selected = items[0]?.key;
     export let underline = false;
 </script>
 
 {#if items.length > 0}
     <div class="tabs" class:underline>
-        {#each items as item, i}
+        {#each items as item}
             <div
                 tabindex="0"
                 role="button"
-                on:click={() => (selected = i)}
-                class:selected={selected === i}
+                on:click={() => (selected = item.key)}
+                class:selected={selected === item.key}
                 class="tab">
                 <Translatable resourceKey={item} />
             </div>

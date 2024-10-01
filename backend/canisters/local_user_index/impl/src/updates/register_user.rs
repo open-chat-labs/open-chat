@@ -1,10 +1,11 @@
 use crate::model::referral_codes::{ReferralCode, ReferralCodeError};
 use crate::{mutate_state, RuntimeState, USER_CANISTER_INITIAL_CYCLES_BALANCE};
 use candid::Principal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use ledger_utils::default_ledger_account;
 use local_user_index_canister::register_user::{Response::*, *};
+use local_user_index_canister::ChildCanisterType;
 use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, MessageContentInitial, TextContent, UserId, UserType};
 use user_canister::init::Args as InitUserCanisterArgs;
 use user_canister::{Event as UserEvent, ReferredUserRegistered};
@@ -17,7 +18,7 @@ use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
 
 pub const USER_LIMIT: usize = 200_000;
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn register_user(args: Args) -> Response {
     // Check the principal is derived from Internet Identity + check the username is valid
@@ -26,7 +27,7 @@ async fn register_user(args: Args) -> Response {
         canister_id,
         canister_wasm,
         cycles_to_use,
-        referral_code,
+        referred_by,
         is_from_identity_canister,
         init_canister_args,
     } = match mutate_state(|state| prepare(&args, state)) {
@@ -53,7 +54,7 @@ async fn register_user(args: Args) -> Response {
                     user_id,
                     args.username,
                     wasm_version,
-                    referral_code,
+                    referred_by,
                     is_from_identity_canister,
                     state,
                 )
@@ -75,7 +76,7 @@ struct PrepareOk {
     canister_id: Option<CanisterId>,
     canister_wasm: CanisterWasm,
     cycles_to_use: Cycles,
-    referral_code: Option<ReferralCode>,
+    referred_by: Option<UserId>,
     is_from_identity_canister: bool,
     init_canister_args: InitUserCanisterArgs,
 }
@@ -151,7 +152,12 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
     };
 
     let canister_id = state.data.canister_pool.pop();
-    let canister_wasm = state.data.user_canister_wasm_for_new_canisters.wasm.clone();
+    let canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::User).wasm.clone();
+
+    let referred_by = referral_code
+        .and_then(|c| c.user())
+        .filter(|user_id| state.data.global_users.contains(user_id));
+
     let init_canister_args = InitUserCanisterArgs {
         owner: caller,
         group_index_canister_id: state.data.group_index_canister_id,
@@ -164,6 +170,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         username: args.username.clone(),
         openchat_bot_messages,
         video_call_operators: state.data.video_call_operators.clone(),
+        referred_by,
         test_mode: state.data.test_mode,
     };
 
@@ -174,7 +181,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         canister_id,
         canister_wasm,
         cycles_to_use,
-        referral_code,
+        referred_by,
         is_from_identity_canister,
         init_canister_args,
     })
@@ -185,11 +192,12 @@ fn commit(
     user_id: UserId,
     username: String,
     wasm_version: BuildVersion,
-    referral_code: Option<ReferralCode>,
+    referred_by: Option<UserId>,
     is_from_identity_canister: bool,
     state: &mut RuntimeState,
 ) {
     let now = state.env.now();
+
     state.data.local_users.add(user_id, principal, wasm_version, now);
     state.data.global_users.add(principal, user_id, UserType::User);
 
@@ -197,20 +205,17 @@ fn commit(
         principal,
         user_id,
         username: username.clone(),
-        referred_by: referral_code.as_ref().and_then(|r| r.user()),
+        referred_by,
         is_from_identity_canister,
     })));
 
-    match referral_code {
-        Some(ReferralCode::User(referred_by)) => {
-            if state.data.local_users.get(&referred_by).is_some() {
-                state.push_event_to_user(
-                    referred_by,
-                    UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered { user_id, username })),
-                );
-            }
+    if let Some(referred_by) = referred_by {
+        if state.data.local_users.contains(&referred_by) {
+            state.push_event_to_user(
+                referred_by,
+                UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered { user_id, username })),
+            );
         }
-        Some(ReferralCode::BtcMiami(_)) | None => {}
     }
 }
 

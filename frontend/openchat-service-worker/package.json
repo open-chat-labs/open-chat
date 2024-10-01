@@ -13,8 +13,8 @@
     },
     "author": "julian.jelfs@gmail.com",
     "dependencies": {
-        "@dfinity/candid": "^2.0.0",
-        "@dfinity/principal": "^2.0.0",
+        "@dfinity/candid": "^2.1.1",
+        "@dfinity/principal": "^2.1.1",
         "openchat-agent": "*",
         "openchat-shared": "*"
     },
@@ -23,6 +23,7 @@
         "@typescript-eslint/parser": "^6.4.0",
         "eslint-config-prettier": "^9.0.0",
         "eslint-plugin-prettier": "^5.0.0",
+        "typescript": "=5.4.2",
         "wait-on": "^7.0.1"
     }
 }

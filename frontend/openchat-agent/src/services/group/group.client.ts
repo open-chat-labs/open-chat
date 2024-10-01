@@ -1,4 +1,4 @@
-import type { Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type GroupService } from "./candid/idl";
 import type {
     EventsResponse,
@@ -64,7 +64,6 @@ import { CandidService } from "../candidService";
 import {
     apiRole,
     getEventsResponse,
-    sendMessageResponse,
     removeMemberResponse,
     blockUserResponse,
     unblockUserResponse,
@@ -77,6 +76,7 @@ import {
     followThreadResponse,
     reportMessageResponse,
 } from "./mappers";
+import { sendMessageResponse } from "./mappersV2";
 import {
     type Database,
     getCachedEvents,
@@ -107,7 +107,6 @@ import {
     deletedMessageResponse,
     updateGroupResponse,
     registerPollVoteResponse,
-    apiUser,
     enableInviteCodeResponse,
     disableInviteCodeResponse,
     resetInviteCodeResponse,
@@ -124,10 +123,14 @@ import {
     setVideoCallPresence,
     videoCallParticipantsResponse,
 } from "../common/chatMappers";
+import {
+    apiMessageContent as apiMessageContentV2,
+    apiUser as apiUserV2,
+} from "../common/chatMappersV2";
 import { DataClient } from "../data/data.client";
 import { mergeGroupChatDetails } from "../../utils/chat";
 import { publicSummaryResponse } from "../common/publicSummaryMapper";
-import { apiOptionUpdate, identity } from "../../utils/mapping";
+import { apiOptionUpdate, identity, mapOptional } from "../../utils/mapping";
 import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
 import { setCachedMessageFromSendResponse } from "../../utils/caching";
@@ -139,33 +142,21 @@ import {
     chunkedChatEventsFromBackend,
     chunkedChatEventsWindowFromBackend,
 } from "../common/chunked";
+import { GroupSendMessageArgs, GroupSendMessageResponse } from "../../typebox";
 
 export class GroupClient extends CandidService {
     private groupService: GroupService;
 
     constructor(
         identity: Identity,
+        agent: HttpAgent,
         private config: AgentConfig,
         private chatId: GroupChatIdentifier,
         private db: Database,
         private inviteCode: string | undefined,
     ) {
-        super(identity);
-        this.groupService = this.createServiceClient<GroupService>(
-            idlFactory,
-            chatId.groupId,
-            config,
-        );
-    }
-
-    static create(
-        chatId: GroupChatIdentifier,
-        identity: Identity,
-        config: AgentConfig,
-        db: Database,
-        inviteCode: string | undefined,
-    ): GroupClient {
-        return new GroupClient(identity, config, chatId, db, inviteCode);
+        super(identity, agent, chatId.groupId);
+        this.groupService = this.createServiceClient<GroupService>(idlFactory);
     }
 
     summary(): Promise<GroupCanisterSummaryResponse> {
@@ -452,7 +443,7 @@ export class GroupClient extends CandidService {
         blockLevelMarkdown: boolean | undefined,
         newAchievement: boolean,
     ): Promise<EditMessageResponse> {
-        return DataClient.create(this.identity, this.config)
+        return new DataClient(this.identity, this.agent, this.config)
             .uploadData(message.content, [this.chatId.groupId])
             .then((content) => {
                 const args: EditMessageV2Args = {
@@ -490,11 +481,12 @@ export class GroupClient extends CandidService {
         rulesAccepted: number | undefined,
         messageFilterFailed: bigint | undefined,
         newAchievement: boolean,
+        onRequestAccepted: () => void,
     ): Promise<[SendMessageResponse, Message]> {
         // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
         removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
 
-        const dataClient = DataClient.create(this.identity, this.config);
+        const dataClient = new DataClient(this.identity, this.agent, this.config);
         const uploadContentPromise = event.event.forwarded
             ? dataClient.forwardData(event.event.content, [this.chatId.groupId])
             : dataClient.uploadData(event.event.content, [this.chatId.groupId]);
@@ -502,27 +494,31 @@ export class GroupClient extends CandidService {
         return uploadContentPromise.then((content) => {
             const newContent = content ?? event.event.content;
             const args = {
-                content: apiMessageContent(newContent),
+                content: apiMessageContentV2(newContent),
                 message_id: event.event.messageId,
                 sender_name: senderName,
-                sender_display_name: apiOptional(identity, senderDisplayName),
-                rules_accepted: apiOptional(identity, rulesAccepted),
-                replies_to: apiOptional(
-                    (replyContext) => ({
-                        event_index: replyContext.eventIndex,
-                    }),
-                    event.event.repliesTo,
-                ),
-                mentioned: mentioned.map(apiUser),
+                sender_display_name: senderDisplayName,
+                rules_accepted: rulesAccepted,
+                replies_to: mapOptional(event.event.repliesTo, (replyContext) => ({
+                    event_index: replyContext.eventIndex,
+                })),
+                mentioned: mentioned.map(apiUserV2),
                 forwarding: event.event.forwarded,
-                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-                message_filter_failed: apiOptional(identity, messageFilterFailed),
+                thread_root_message_index: threadRootMessageIndex,
+                message_filter_failed: messageFilterFailed,
                 correlation_id: generateUint64(),
                 block_level_markdown: event.event.blockLevelMarkdown,
                 new_achievement: newAchievement,
             };
 
-            return this.handleResponse(this.groupService.send_message_v2(args), sendMessageResponse)
+            return this.executeMsgpackUpdate(
+                "send_message_v2",
+                args,
+                sendMessageResponse,
+                GroupSendMessageArgs,
+                GroupSendMessageResponse,
+                onRequestAccepted,
+            )
                 .then((resp) => {
                     const retVal: [SendMessageResponse, Message] = [
                         resp,
@@ -552,6 +548,7 @@ export class GroupClient extends CandidService {
         eventsTimeToLiveMs?: OptionUpdate<bigint>,
         gate?: AccessGate,
         isPublic?: boolean,
+        messagesVisibleToNonMembers?: boolean,
     ): Promise<UpdateGroupResponse> {
         return this.handleResponse(
             this.groupService.update_group_v2({
@@ -576,8 +573,9 @@ export class GroupClient extends CandidService {
                     gate === undefined
                         ? { NoChange: null }
                         : gate.kind === "no_gate"
-                          ? { SetToNone: null }
-                          : { SetToSome: apiAccessGate(gate) },
+                        ? { SetToNone: null }
+                        : { SetToSome: apiAccessGate(gate) },
+                messages_visible_to_non_members: apiOptional(identity, messagesVisibleToNonMembers),
             }),
             updateGroupResponse,
         );
@@ -833,7 +831,8 @@ export class GroupClient extends CandidService {
         messageIdx: number,
         answerIdx: number,
         voteType: "register" | "delete",
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex: number | undefined,
+        newAchievement: boolean,
     ): Promise<RegisterPollVoteResponse> {
         return this.handleResponse(
             this.groupService.register_poll_vote({
@@ -841,6 +840,7 @@ export class GroupClient extends CandidService {
                 poll_option: answerIdx,
                 operation: voteType === "register" ? { RegisterVote: null } : { DeleteVote: null },
                 message_index: messageIdx,
+                new_achievement: newAchievement,
                 correlation_id: generateUint64(),
             }),
             registerPollVoteResponse,
@@ -1005,12 +1005,14 @@ export class GroupClient extends CandidService {
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
         pin: string | undefined,
+        newAchievement: boolean,
     ): Promise<AcceptP2PSwapResponse> {
         return this.handleResponse(
             this.groupService.accept_p2p_swap({
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_id: messageId,
                 pin: apiOptional(identity, pin),
+                new_achievement: newAchievement,
             }),
             acceptP2PSwapResponse,
         );
@@ -1029,10 +1031,11 @@ export class GroupClient extends CandidService {
         );
     }
 
-    joinVideoCall(messageId: bigint): Promise<JoinVideoCallResponse> {
+    joinVideoCall(messageId: bigint, newAchievement: boolean): Promise<JoinVideoCallResponse> {
         return this.handleResponse(
             this.groupService.join_video_call({
                 message_id: messageId,
+                new_achievement: newAchievement,
             }),
             joinVideoCallResponse,
         );
@@ -1041,11 +1044,13 @@ export class GroupClient extends CandidService {
     setVideoCallPresence(
         messageId: bigint,
         presence: VideoCallPresence,
+        newAchievement: boolean,
     ): Promise<SetVideoCallPresenceResponse> {
         return this.handleResponse(
             this.groupService.set_video_call_presence({
                 message_id: messageId,
                 presence: apiVideoCallPresence(presence),
+                new_achievement: newAchievement,
             }),
             setVideoCallPresence,
         );
@@ -1062,6 +1067,15 @@ export class GroupClient extends CandidService {
                     updated_since: apiOptional(identity, updatesSince),
                 }),
             videoCallParticipantsResponse,
+        );
+    }
+
+    cancelInvites(userIds: string[]): Promise<boolean> {
+        return this.handleResponse(
+            this.groupService.cancel_invites({
+                user_ids: userIds.map((u) => Principal.fromText(u)),
+            }),
+            (candid) => "Success" in candid,
         );
     }
 }

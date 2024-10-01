@@ -1,7 +1,9 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{MessageContentInitial, MessageId, MessageIndex, UserId};
 
+#[ts_export(user, edit_message)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub user_id: UserId,
@@ -12,6 +14,7 @@ pub struct Args {
     pub correlation_id: u64,
 }
 
+#[ts_export(user, edit_message)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,

@@ -40,6 +40,7 @@
     export let first: boolean;
     export let last: boolean;
     export let me: boolean;
+    export let accepted: boolean;
     export let confirmed: boolean;
     export let failed: boolean;
     export let readByThem: boolean;
@@ -128,10 +129,11 @@
 {#if event.event.kind === "message"}
     {#if !hidden}
         <ChatMessage
-            sender={$userStore[event.event.sender]}
+            sender={$userStore.get(event.event.sender)}
             senderTyping={client.isTyping($typing, event.event.sender, messageContext)}
             {focused}
             {observer}
+            {accepted}
             {confirmed}
             {failed}
             {readByMe}
@@ -260,11 +262,19 @@
         changedBy={event.event.updatedBy}
         property={$_("access.gate").toLowerCase()}
         timestamp={event.timestamp} />
+{:else if event.event.kind === "external_url_updated"}
+    <GroupChangedEvent
+        {level}
+        user={userSummary}
+        changedBy={event.event.updatedBy}
+        property={$_("externalContent.name").toLowerCase()}
+        timestamp={event.timestamp} />
 {:else if event.event.kind === "group_visibility_changed"}
     <GroupVisibilityChangedEvent
         level={levelType}
         user={userSummary}
-        nowPublic={event.event.nowPublic}
+        isPublic={event.event.public}
+        messagesVisibleToNonMembers={event.event.messagesVisibleToNonMembers}
         changedBy={event.event.changedBy}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "group_invite_code_changed"}

@@ -3,10 +3,10 @@ use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{HashMap, HashSet};
-use std::ops::{Deref, DerefMut};
+use std::ops::DerefMut;
 use types::{
-    is_default, is_empty_slice, AvatarChanged, ChannelId, Chat, ChatId, ChatMetrics, CommunityId, Cryptocurrency, DeletedBy,
-    DirectChatCreated, EventIndex, EventWrapperInternal, EventsTimeToLiveUpdated, GroupCreated, GroupDescriptionChanged,
+    is_default, AvatarChanged, ChannelId, Chat, ChatId, ChatMetrics, CommunityId, Cryptocurrency, DeletedBy, DirectChatCreated,
+    EventIndex, EventWrapperInternal, EventsTimeToLiveUpdated, ExternalUrlUpdated, GroupCreated, GroupDescriptionChanged,
     GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged,
     GroupUnfrozen, GroupVisibilityChanged, MemberJoined, MemberLeft, MembersAdded, MembersAddedToDefaultChannel,
     MembersRemoved, Message, MessageContent, MessageId, MessageIndex, MessagePinned, MessageUnpinned, MultiUserChat,
@@ -66,6 +66,8 @@ pub enum ChatEventInternal {
     UsersInvited(Box<UsersInvited>),
     #[serde(rename = "adc")]
     MembersAddedToPublicChannel(Box<MembersAddedToPublicChannelInternal>),
+    #[serde(rename = "xu")]
+    ExternalUrlUpdated(Box<ExternalUrlUpdated>),
     #[serde(rename = "e")]
     Empty,
 }
@@ -107,6 +109,7 @@ impl ChatEventInternal {
                 | ChatEventInternal::GroupGateUpdated(_)
                 | ChatEventInternal::UsersInvited(_)
                 | ChatEventInternal::MembersAddedToPublicChannel(_)
+                | ChatEventInternal::ExternalUrlUpdated(_)
         )
     }
 
@@ -118,14 +121,6 @@ impl ChatEventInternal {
         matches!(self, ChatEventInternal::Message(_))
     }
 
-    pub fn as_message(&self) -> Option<&MessageInternal> {
-        if let ChatEventInternal::Message(m) = self {
-            Some(m.deref())
-        } else {
-            None
-        }
-    }
-
     pub fn as_message_mut(&mut self) -> Option<&mut MessageInternal> {
         if let ChatEventInternal::Message(m) = self {
             Some(m.deref_mut())
@@ -133,15 +128,23 @@ impl ChatEventInternal {
             None
         }
     }
+
+    pub fn into_message(self) -> Option<MessageInternal> {
+        if let ChatEventInternal::Message(m) = self {
+            Some(*m)
+        } else {
+            None
+        }
+    }
 }
 
-pub enum EventOrExpiredRangeInternal<'a> {
-    Event(&'a EventWrapperInternal<ChatEventInternal>),
+pub enum EventOrExpiredRangeInternal {
+    Event(EventWrapperInternal<ChatEventInternal>),
     ExpiredEventRange(EventIndex, EventIndex),
 }
 
-impl<'a> EventOrExpiredRangeInternal<'a> {
-    pub fn as_event(self) -> Option<&'a EventWrapperInternal<ChatEventInternal>> {
+impl EventOrExpiredRangeInternal {
+    pub fn into_event(self) -> Option<EventWrapperInternal<ChatEventInternal>> {
         if let EventOrExpiredRangeInternal::Event(event) = self {
             Some(event)
         } else {
@@ -170,9 +173,9 @@ pub struct MessageInternal {
     pub content: MessageContentInternal,
     #[serde(rename = "p", default, skip_serializing_if = "Option::is_none")]
     pub replies_to: Option<ReplyContextInternal>,
-    #[serde(rename = "r", default, skip_serializing_if = "is_empty_slice")]
+    #[serde(rename = "r", default, skip_serializing_if = "Vec::is_empty")]
     pub reactions: Vec<(Reaction, HashSet<UserId>)>,
-    #[serde(rename = "ti", default, skip_serializing_if = "is_empty_slice")]
+    #[serde(rename = "ti", default, skip_serializing_if = "Vec::is_empty")]
     pub tips: Tips,
     #[serde(rename = "e", default, skip_serializing_if = "Option::is_none")]
     pub last_edited: Option<TimestampMillis>,
@@ -187,12 +190,12 @@ pub struct MessageInternal {
 }
 
 impl MessageInternal {
-    pub fn hydrate(&self, my_user_id: Option<UserId>) -> Message {
+    pub fn hydrate(self, my_user_id: Option<UserId>) -> Message {
         Message {
             message_index: self.message_index,
             message_id: self.message_id,
             sender: self.sender,
-            content: if let Some(deleted_by) = self.deleted_by.clone() {
+            content: if let Some(deleted_by) = self.deleted_by {
                 MessageContent::Deleted(deleted_by.hydrate())
             } else {
                 self.content.hydrate(my_user_id)
@@ -637,7 +640,7 @@ mod tests {
         let event_bytes = msgpack::serialize_then_unwrap(&event);
         let event_bytes_len = event_bytes.len();
 
-        assert_eq!(message_bytes_len, 50);
+        assert_eq!(message_bytes_len, 33);
         assert_eq!(event_bytes_len, message_bytes_len + 12);
 
         let _deserialized: EventWrapperInternal<ChatEventInternal> = msgpack::deserialize_then_unwrap(&event_bytes);
@@ -688,7 +691,7 @@ mod tests {
         let event_bytes = msgpack::serialize_then_unwrap(&event);
         let event_bytes_len = event_bytes.len();
 
-        assert_eq!(message_bytes_len, 199);
+        assert_eq!(message_bytes_len, 165);
         assert_eq!(event_bytes_len, message_bytes_len + 18);
 
         let _deserialized: EventWrapperInternal<ChatEventInternal> = msgpack::deserialize_then_unwrap(&event_bytes);

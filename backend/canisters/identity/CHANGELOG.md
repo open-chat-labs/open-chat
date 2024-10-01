@@ -6,6 +6,57 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
+- Extract certificate handling code into `identity_utils` ([#6459](https://github.com/open-chat-labs/open-chat/pull/6459)) 
+- Add serde default attribute in preparation for skipping serialization if default ([#6475](https://github.com/open-chat-labs/open-chat/pull/6475))
+
+## [[2.0.1344](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1344-identity)] - 2024-09-10
+
+### Fixed
+
+- Use the mainnet II canister Id rather than the one used in local testing ([#6363](https://github.com/open-chat-labs/open-chat/pull/6363))
+
+## [[2.0.1340](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1340-identity)] - 2024-09-10
+
+### Changed
+
+- Set `is_ii_principal` field to true where that is known to be the case ([#6326](https://github.com/open-chat-labs/open-chat/pull/6326))
+
+## [[2.0.1330](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1330-identity)] - 2024-09-05
+
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+- Flag which authentication principals are II principals ([#6321](https://github.com/open-chat-labs/open-chat/pull/6321))
+
+## [[2.0.1311](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1311-identity)] - 2024-08-30
+
+### Changed
+
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+
+### Fixed
+
+- Allow linking existing identities which have not registered as OC users ([#6292](https://github.com/open-chat-labs/open-chat/pull/6292))
+
+## [[2.0.1289](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1289-identity)] - 2024-08-13
+
+### Added
+
+- Add `user_principals` showing current user's principals per auth provider ([#6205](https://github.com/open-chat-labs/open-chat/pull/6205))
+
+### Changed
+
+- Add `AlreadyLinkedToPrincipal` to `initiate_identity_link` response ([#6204](https://github.com/open-chat-labs/open-chat/pull/6204))
+- Rename `user_principals` to `auth_principals` ([#6206](https://github.com/open-chat-labs/open-chat/pull/6206))
+
+### Fixed
+
+- Add new principal to `auth_principals` list after linking ([#6207](https://github.com/open-chat-labs/open-chat/pull/6207))
+- Only return `AlreadyRegistered` if identity is linked to an OC account ([#6208](https://github.com/open-chat-labs/open-chat/pull/6208))
+
 ## [[2.0.1251](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1251-identity)] - 2024-07-25
 
 ### Changed

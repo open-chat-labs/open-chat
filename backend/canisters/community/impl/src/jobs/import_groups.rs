@@ -12,7 +12,7 @@ use std::cell::Cell;
 use std::collections::HashMap;
 use std::time::Duration;
 use tracing::{info, trace};
-use types::{ChannelId, ChannelLatestMessageIndex, Chat, ChatId, Empty, UserId, UserType, UsersBlocked};
+use types::{ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityUsersBlocked, Empty, UserId, UserType};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
 const PAGE_SIZE: u32 = 19 * 102 * 1024; // Roughly 1.9MB (1.9 * 1024 * 1024)
@@ -125,9 +125,10 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
                 }
                 if !blocked_from_community.is_empty() {
                     state.data.events.push_event(
-                        CommunityEventInternal::UsersBlocked(Box::new(UsersBlocked {
+                        CommunityEventInternal::UsersBlocked(Box::new(CommunityUsersBlocked {
                             user_ids: blocked_from_community,
                             blocked_by: OPENCHAT_BOT_USER_ID,
+                            referred_by: HashMap::new(),
                         })),
                         now,
                     );
@@ -199,6 +200,7 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
                         user_id,
                         principal,
                         members_to_add_to_community.get(&user_id).copied().unwrap_or_default(),
+                        None,
                         now,
                     ) {
                         AddResult::Success(_) => {

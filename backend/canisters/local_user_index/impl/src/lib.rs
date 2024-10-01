@@ -5,7 +5,7 @@ use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStore
 use event_store_producer_cdk_runtime::CdkRuntime;
 use event_store_utils::EventDeduper;
 use jwt::{verify_jwt, Claims};
-use local_user_index_canister::GlobalUser;
+use local_user_index_canister::{ChildCanisterType, GlobalUser};
 use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
 use p256_key_pair::P256KeyPair;
@@ -15,9 +15,9 @@ use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
 use std::time::Duration;
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, ChannelLatestMessageIndex, ChatId, ChunkedCanisterWasm,
+    BuildVersion, CanisterId, CanisterWasm, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms,
     CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails,
-    MessageContent, ReferralType, TimestampMillis, Timestamped, User, UserId,
+    MessageContent, ReferralType, TimestampMillis, Timestamped, User, UserId, VerifiedCredentialGateArgs,
 };
 use user_canister::Event as UserEvent;
 use user_index_canister::Event as UserIndexEvent;
@@ -65,17 +65,20 @@ impl RuntimeState {
         self.data.global_users.get(&caller).unwrap()
     }
 
-    pub fn get_calling_user_and_process_credentials(&mut self, credential_jwts: Option<&[String]>) -> GlobalUser {
+    pub fn get_calling_user_and_process_credentials(
+        &mut self,
+        credential_args: Option<&VerifiedCredentialGateArgs>,
+    ) -> GlobalUser {
         let mut user_details = self.calling_user();
 
-        if let Some(jwts) = credential_jwts {
+        if let Some(credential_args) = credential_args {
             let now = self.env.now();
             let user_id = user_details.user_id;
 
-            for jwt in jwts {
+            for jwt in credential_args.credential_jwts.iter() {
                 if let Ok(unique_person_proof) = verify_proof_of_unique_personhood(
-                    user_details.principal,
-                    self.data.identity_canister_id,
+                    credential_args.user_ii_principal,
+                    self.data.internet_identity_canister_id,
                     jwt,
                     &self.data.ic_root_key,
                     now,
@@ -90,12 +93,17 @@ impl RuntimeState {
                             UserEvent::NotifyUniquePersonProof(Box::new(unique_person_proof.clone())),
                         );
                     }
-                    user_details.unique_person_proof = Some(unique_person_proof);
+                    user_details.unique_person_proof = Some(unique_person_proof.clone());
+                    self.data
+                        .global_users
+                        .insert_unique_person_proof(user_id, unique_person_proof);
                 } else if let Ok(claims) =
                     verify_jwt::<Claims<DiamondMembershipDetails>>(jwt, self.data.oc_key_pair.public_key_pem())
                 {
                     if claims.claim_type() == "diamond_membership" {
-                        user_details.diamond_membership_expires_at = Some(claims.custom().expires_at);
+                        let expires_at = claims.custom().expires_at;
+                        user_details.diamond_membership_expires_at = Some(expires_at);
+                        self.data.global_users.set_diamond_membership_expiry_date(user_id, expires_at);
                     }
                 }
             }
@@ -160,7 +168,7 @@ impl RuntimeState {
             })
             .collect();
 
-        self.notify_user_joined_community_or_channel(user_id, community.community_id, channels);
+        self.notify_user_joined_community_or_channel(user_id, community.community_id, channels, community.last_updated);
     }
 
     pub fn notify_user_joined_channel(
@@ -176,6 +184,7 @@ impl RuntimeState {
                 channel_id: channel.channel_id,
                 latest_message_index: channel.latest_message.as_ref().map(|m| m.event.message_index),
             }],
+            channel.last_updated,
         );
     }
 
@@ -184,6 +193,7 @@ impl RuntimeState {
         user_id: UserId,
         community_id: CommunityId,
         channels: Vec<ChannelLatestMessageIndex>,
+        community_canister_timestamp: TimestampMillis,
     ) {
         let local_user_index_canister_id = self.env.canister_id();
         if self.data.local_users.get(&user_id).is_some() {
@@ -193,6 +203,7 @@ impl RuntimeState {
                     community_id,
                     local_user_index_canister_id,
                     channels,
+                    community_canister_timestamp,
                 })),
             );
         } else {
@@ -202,6 +213,7 @@ impl RuntimeState {
                     community_id,
                     local_user_index_canister_id,
                     channels,
+                    community_canister_timestamp,
                 },
             )));
         }
@@ -227,7 +239,7 @@ impl RuntimeState {
             canister_upgrades_completed: canister_upgrades_metrics.completed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
-            user_wasm_version: self.data.user_canister_wasm_for_new_canisters.wasm.version,
+            user_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::User).wasm.version,
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
             user_upgrade_concurrency: self.data.user_upgrade_concurrency,
             user_events_queue_length: self.data.user_event_sync_queue.len(),
@@ -255,8 +267,7 @@ impl RuntimeState {
 struct Data {
     pub local_users: LocalUserMap,
     pub global_users: GlobalUserMap,
-    pub user_canister_wasm_for_new_canisters: ChunkedCanisterWasm,
-    pub user_canister_wasm_for_upgrades: ChunkedCanisterWasm,
+    pub child_canister_wasms: ChildCanisterWasms<ChildCanisterType>,
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub identity_canister_id: CanisterId,
@@ -283,6 +294,7 @@ struct Data {
     pub users_to_delete_queue: VecDeque<UserToDelete>,
     #[serde(with = "serde_bytes")]
     pub ic_root_key: Vec<u8>,
+    pub events_for_remote_users: Vec<(UserId, UserEvent)>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -320,8 +332,7 @@ impl Data {
         Data {
             local_users: LocalUserMap::default(),
             global_users: GlobalUserMap::default(),
-            user_canister_wasm_for_new_canisters: user_canister_wasm.clone().into(),
-            user_canister_wasm_for_upgrades: user_canister_wasm.into(),
+            child_canister_wasms: ChildCanisterWasms::new(vec![(ChildCanisterType::User, user_canister_wasm)]),
             user_index_canister_id,
             group_index_canister_id,
             identity_canister_id,
@@ -351,6 +362,7 @@ impl Data {
             event_deduper: EventDeduper::default(),
             users_to_delete_queue: VecDeque::new(),
             ic_root_key,
+            events_for_remote_users: Vec::new(),
         }
     }
 }

@@ -1,6 +1,6 @@
 use crate::updates::c2c_notify_low_balance::top_up_user;
 use crate::{mutate_state, RuntimeState};
-use ic_cdk::api::call::RejectionCode;
+use ic_cdk::api::call::RejectionCode::CanisterReject;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
@@ -8,6 +8,7 @@ use tracing::trace;
 use types::CanisterId;
 use user_canister::Event as UserEvent;
 use utils::canister::should_retry_failed_c2c_call;
+use utils::cycles::is_out_of_cycles_error;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -65,13 +66,19 @@ async fn process_batch(batch: Vec<(CanisterId, Vec<UserEvent>)>) {
 async fn sync_events(canister_id: CanisterId, events: Vec<UserEvent>) {
     let args = user_canister::c2c_notify_events::Args { events: events.clone() };
     if let Err((code, msg)) = user_canister_c2c_client::c2c_notify_events(canister_id, &args).await {
-        if code == RejectionCode::SysTransient && msg.starts_with("IC0207:") {
+        if is_out_of_cycles_error(code, &msg) {
             // Canister is out of cycles
             top_up_user(Some(canister_id.into())).await;
         }
         if should_retry_failed_c2c_call(code, &msg) {
             mutate_state(|state| {
                 state.data.user_event_sync_queue.requeue_failed_events(canister_id, events);
+            });
+        } else if code == CanisterReject {
+            mutate_state(|state| {
+                for event in events {
+                    state.data.events_for_remote_users.push((canister_id.into(), event));
+                }
             });
         }
     }

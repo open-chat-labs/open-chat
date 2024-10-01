@@ -12,9 +12,9 @@ pub struct CyclesTopUp {
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct CyclesTopUpInternal {
-    #[serde(rename = "d", alias = "date")]
+    #[serde(rename = "d")]
     pub date: TimestampMillis,
-    #[serde(rename = "a", alias = "amount")]
+    #[serde(rename = "a")]
     pub amount: Cycles,
 }
 

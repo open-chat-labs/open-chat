@@ -33,7 +33,7 @@
         showVotesBeforeEndDate: boolean;
         allowMultipleVotesPerUser: boolean;
         allowUserToChangeVote: boolean;
-        pollAnswers: Set<string>;
+        pollAnswers: Map<string, string>;
     };
 
     export let open: boolean;
@@ -64,20 +64,23 @@
             showVotesBeforeEndDate: true,
             allowMultipleVotesPerUser: false,
             allowUserToChangeVote: true,
-            pollAnswers: new Set<string>(),
+            pollAnswers: new Map<string, string>(),
         };
     }
 
     function answerIsValid(answer: string): boolean {
-        if (answer === undefined) return false;
-        if (poll.pollAnswers.has(nextAnswer)) return false;
-        return answer.length > 0 && answer.length <= MAX_ANSWER_LENGTH;
+        const trimmed = answer?.trim();
+        return trimmed !== undefined
+            && trimmed.length > 0
+            && trimmed.length <= MAX_ANSWER_LENGTH
+            && !poll.pollAnswers.has(trimmed.toUpperCase());
     }
 
     function addAnswer() {
-        if (answerIsValid(nextAnswer)) {
+        const trimmed = nextAnswer?.trim();
+        if (answerIsValid(trimmed)) {
             answerError = undefined;
-            poll.pollAnswers = new Set(poll.pollAnswers.add(nextAnswer));
+            poll.pollAnswers = new Map(poll.pollAnswers.set(trimmed.toUpperCase(), trimmed));
             nextAnswer = "";
             return true;
         } else {
@@ -87,8 +90,8 @@
     }
 
     function deleteAnswer(answer: string) {
-        poll.pollAnswers.delete(answer);
-        poll.pollAnswers = new Set(poll.pollAnswers);
+        poll.pollAnswers.delete(answer.toUpperCase());
+        poll.pollAnswers = new Map(poll.pollAnswers);
     }
 
     function createPollVotes(): TotalPollVotes {
@@ -132,7 +135,7 @@
                 showVotesBeforeEndDate: poll.showVotesBeforeEndDate,
                 endDate: createPollEndDate(),
                 anonymous: poll.anonymous,
-                options: [...poll.pollAnswers],
+                options: [...poll.pollAnswers.values()],
             },
             ended: false,
         };
@@ -185,7 +188,7 @@
                             <Legend
                                 label={i18nKey("poll.answersLabel")}
                                 rules={i18nKey("poll.atLeastTwo")} />
-                            {#each [...poll.pollAnswers] as answer (answer)}
+                            {#each [...poll.pollAnswers.values()] as answer (answer)}
                                 <div class="answer">
                                     <div class="answer-text">
                                         {answer}

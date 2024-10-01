@@ -1,9 +1,62 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
+
+### Changed
+
+- Add `CanisterWasmBytes` to reduce duplication ([#6480](https://github.com/open-chat-labs/open-chat/pull/6480))
+
+### Fixed
+
+- Fix chunked Community upgrades ([#6483](https://github.com/open-chat-labs/open-chat/pull/6483))
+
+## [[2.0.1363](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1363-local_group_index)] - 2024-09-30
+
+### Added
+
+- Support upgrading to large wasms by uploading in chunks ([#6453](https://github.com/open-chat-labs/open-chat/pull/6453))
+
+### Changed
+
+- Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
+
+### Removed
+
+- Remove the unused `use_for_new_canisters` field from upgrade args ([#6452](https://github.com/open-chat-labs/open-chat/pull/6452))
+
+## [[2.0.1356](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1356-local_group_index)] - 2024-09-20
+
+### Added
+
+- Add `ReferredByMember` access gate ([#6377](https://github.com/open-chat-labs/open-chat/pull/6377))
+
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+
+## [[2.0.1328](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1328-local_group_index)] - 2024-09-03
+
+### Changed
+
+- Mark ProposalsBot as OC controlled bot ([#6287](https://github.com/open-chat-labs/open-chat/pull/6287))
+
+## [[2.0.1309](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1309-local_group_index)] - 2024-08-26
+
+### Changed
+
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+
+## [[2.0.1292](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1292-local_group_index)] - 2024-08-16
+
+### Changed
+
+- Remove references to deleted users ([#6241](https://github.com/open-chat-labs/open-chat/pull/6241))
+
+## [[2.0.1271](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1271-local_group_index)] - 2024-07-31
 
 ### Changed
 
@@ -176,7 +229,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add `mention_all_members` group permission ([#4405](https://github.com/open-chat-labs/open-chat/pull/4405))
-  
+
 ## [[2.0.849](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.849-local_group_index)] - 2023-09-18
 
 ### Added

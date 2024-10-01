@@ -7,8 +7,10 @@ mod updates;
 
 pub use lifecycle::*;
 pub use queries::*;
+use ts_export::ts_export;
 pub use updates::*;
 
+#[ts_export(storage_index)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct ProjectedAllowance {
     pub byte_limit: u64,

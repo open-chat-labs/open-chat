@@ -25,7 +25,7 @@
 
     let crypto = msg.content.kind === "crypto_content";
 
-    $: sender = $userStore[senderId];
+    $: sender = $userStore.get(senderId);
     $: communityMembers = client.currentCommunityMembers;
     $: username = client.getDisplayName(sender, $communityMembers);
     $: userStore = client.userStore;
@@ -34,6 +34,8 @@
     $: me = user.userId === senderId;
 
     function openUserProfile(e: Event) {
+        if (!sender) return;
+
         e.preventDefault();
         e.target?.dispatchEvent(
             new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
@@ -55,7 +57,7 @@
     <div class="avatar" on:click={openUserProfile}>
         <Avatar
             url={client.userAvatarUrl(sender)}
-            userId={sender.userId}
+            userId={sender?.userId}
             size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
     </div>
     <IntersectionObserver let:intersecting>
@@ -173,10 +175,6 @@
         &.me {
             background-color: var(--currentChat-msg-me-bg);
             color: var(--currentChat-msg-me-txt);
-        }
-
-        &.crypto {
-            @include gold();
         }
 
         &.fill {

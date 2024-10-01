@@ -1,10 +1,10 @@
 use crate::{read_state, RuntimeState};
-use ic_cdk::query;
+use canister_api_macros::query;
 use ledger_utils::default_ledger_account;
 use types::{BuildVersion, CanisterUpgradeStatus};
 use user_index_canister::current_user::{Response::*, *};
 
-#[query]
+#[query(candid = true, msgpack = true)]
 fn current_user(_args: Args) -> Response {
     read_state(current_user_impl)
 }

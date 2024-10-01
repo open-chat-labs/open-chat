@@ -184,11 +184,13 @@ function mergeChannelUpdates(
             canisterId: channel.id.communityId,
         }));
 
+        const description = c?.description ?? channel.description;
+
         return {
             kind: "channel",
             id: channel.id,
             name: c?.name ?? channel.name,
-            description: c?.description ?? channel.description,
+            description,
             minVisibleEventIndex: channel.minVisibleEventIndex,
             minVisibleMessageIndex: channel.minVisibleMessageIndex,
             lastUpdated: c?.lastUpdated ?? channel.lastUpdated,
@@ -241,6 +243,9 @@ function mergeChannelUpdates(
                 rulesAccepted: c?.membership?.rulesAccepted ?? channel.membership.rulesAccepted,
             },
             isInvited: false,
+            messagesVisibleToNonMembers:
+                c?.messageVisibleToNonMembers ?? channel.messagesVisibleToNonMembers,
+            externalUrl: applyOptionUpdate(channel.externalUrl, c?.externalUrl),
         };
     });
 }

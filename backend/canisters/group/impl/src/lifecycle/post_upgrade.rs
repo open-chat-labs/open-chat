@@ -8,7 +8,6 @@ use ic_cdk::post_upgrade;
 use instruction_counts_log::InstructionCountFunctionId;
 use stable_memory::get_reader;
 use tracing::info;
-use types::Timestamped;
 
 #[post_upgrade]
 #[trace]
@@ -16,7 +15,7 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
-    let (data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) = serializer::deserialize(reader).unwrap();
+    let (data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) = msgpack::deserialize(reader).unwrap();
 
     canister_logger::init_with_logs(data.test_mode, logs, traces);
 
@@ -32,10 +31,7 @@ fn post_upgrade(args: Args) {
             .record_instructions_count(InstructionCountFunctionId::PostUpgrade, now)
     });
 
-    // TODO: Delete this one-time code
     mutate_state(|state| {
-        if state.data.chat.is_public.value && state.data.chat.gate.value.is_none() {
-            state.data.chat.messages_visible_to_non_members = Timestamped::new(true, state.env.now());
-        }
+        state.data.chat.events.populate_search_index();
     });
 }

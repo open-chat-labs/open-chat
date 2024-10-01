@@ -1,7 +1,12 @@
 import { AnonymousIdentity, SignIdentity } from "@dfinity/agent";
 import { AuthClient, IdbStorage } from "@dfinity/auth-client";
-import { DelegationIdentity, ECDSAKeyIdentity } from "@dfinity/identity";
-import { IdentityAgent, OpenChatAgent } from "openchat-agent";
+import {
+    DelegationChain,
+    DelegationIdentity,
+    ECDSAKeyIdentity,
+    type JsonnableDelegationChain,
+} from "@dfinity/identity";
+import { IdentityAgent, OpenChatAgent, setCommunityReferral } from "openchat-agent";
 import {
     type CorrelatedWorkerRequest,
     type Init,
@@ -18,6 +23,8 @@ import {
     type GetOpenChatIdentityResponse,
     type ChallengeAttempt,
     type CreateOpenChatIdentityError,
+    type LinkIdentitiesResponse,
+    AuthProvider,
 } from "openchat-shared";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -40,28 +47,37 @@ let identityAgent: IdentityAgent | undefined = undefined;
 let authPrincipalString: string | undefined = undefined;
 let logger: Logger | undefined = undefined;
 let agent: OpenChatAgent | undefined = undefined;
+let identityCanister: string = "";
+let icUrl: string = "";
 
 async function initialize(
-    identityCanister: string,
-    icUrl: string,
+    expectedAuthPrincipal: string,
+    authProvider: AuthProvider | undefined,
+    _identityCanister: string,
+    _icUrl: string,
 ): Promise<GetOpenChatIdentityResponse> {
+    identityCanister = _identityCanister;
+    icUrl = _icUrl;
+
     const authProviderIdentity = await authClient.then((a) => a.getIdentity());
     const authPrincipal = authProviderIdentity.getPrincipal();
-    if (authPrincipal.isAnonymous()) {
+    authPrincipalString = authPrincipal.toString();
+
+    if (authPrincipal.isAnonymous() || authPrincipalString !== expectedAuthPrincipal) {
         return { kind: "auth_identity_not_found" };
     }
 
-    authPrincipalString = authPrincipal.toString();
+    identityAgent = await IdentityAgent.create(
+        authProviderIdentity as SignIdentity,
+        identityCanister,
+        icUrl,
+        authProvider === undefined ? undefined : authProvider === AuthProvider.II,
+    );
+
     const ocIdentity = await ocIdentityStorage.get(authPrincipalString);
     if (ocIdentity !== undefined) {
         return { kind: "success", identity: ocIdentity };
     }
-
-    identityAgent = new IdentityAgent(
-        authProviderIdentity as SignIdentity,
-        identityCanister,
-        icUrl,
-    );
 
     const ocIdentityExists = await identityAgent.checkOpenChatIdentityExists();
     if (ocIdentityExists) {
@@ -193,7 +209,7 @@ self.addEventListener("unhandledrejection", (err: PromiseRejectionEvent) => {
 });
 
 self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) => {
-    logger?.debug("WORKER: received ", msg.data.kind, msg.data.correlationId);
+    (logger ?? console).debug("WORKER: received ", msg.data.kind, msg.data.correlationId);
     const payload = msg.data;
     const kind = payload.kind;
     const correlationId = payload.correlationId;
@@ -205,7 +221,12 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             executeThenReply(
                 payload,
                 correlationId,
-                initialize(payload.identityCanister, payload.icUrl).then((resp) => {
+                initialize(
+                    init.authPrincipal,
+                    init.authProvider,
+                    init.identityCanister,
+                    init.icUrl,
+                ).then((resp) => {
                     const id = resp.kind === "success" ? resp.identity : new AnonymousIdentity();
                     console.debug(
                         "anon: init worker",
@@ -425,7 +446,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.toggleMuteNotifications(payload.chatId, payload.muted),
+                    agent.toggleMuteNotifications(payload.id, payload.muted),
                 );
                 break;
 
@@ -485,7 +506,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.joinGroup(payload.chatId, payload.localUserIndex, payload.credentialArgs),
+                    agent.joinGroup(payload.chatId, payload.credentialArgs),
                 );
                 break;
 
@@ -493,7 +514,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.joinCommunity(payload.id, payload.localUserIndex, payload.credentialArgs),
+                    agent.joinCommunity(payload.id, payload.credentialArgs),
                 );
                 break;
 
@@ -511,6 +532,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.eventsTimeToLive,
                         payload.gate,
                         payload.isPublic,
+                        payload.messagesVisibleToNonMembers,
+                        payload.externalUrl,
                     ),
                 );
                 break;
@@ -525,6 +548,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.answerIdx,
                         payload.voteType,
                         payload.threadRootMessageIndex,
+                        payload.newAchievement,
                     ),
                 );
                 break;
@@ -637,7 +661,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "sendMessage":
-                executeThenReply(
+                streamReplies(
                     payload,
                     correlationId,
                     agent.sendMessage(
@@ -703,25 +727,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.inviteUsers(
-                        payload.chatId,
-                        payload.localUserIndex,
-                        payload.userIds,
-                        payload.callerUsername,
-                    ),
-                );
-                break;
-
-            case "inviteUsersToCommunity":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent.inviteUsersToCommunity(
-                        payload.id,
-                        payload.localUserIndex,
-                        payload.userIds,
-                        payload.callerUsername,
-                    ),
+                    agent.inviteUsers(payload.id, payload.userIds, payload.callerUsername),
                 );
                 break;
 
@@ -1131,14 +1137,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
-            case "getReferralLeaderboard":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent.getReferralLeaderboard(payload.args),
-                );
-                break;
-
             case "reportMessage":
                 executeThenReply(
                     payload,
@@ -1443,7 +1441,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.setMemberDisplayName(payload.communityId, payload.displayName),
+                    agent.setMemberDisplayName(
+                        payload.communityId,
+                        payload.displayName,
+                        payload.newAchievement,
+                    ),
                 );
                 break;
 
@@ -1621,6 +1623,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.threadRootMessageIndex,
                         payload.messageId,
                         payload.pin,
+                        payload.newAchievement,
                     ),
                 );
                 break;
@@ -1641,7 +1644,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.joinVideoCall(payload.chatId, payload.messageId),
+                    agent.joinVideoCall(payload.chatId, payload.messageId, payload.newAchievement),
                 );
                 break;
 
@@ -1661,7 +1664,12 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.setVideoCallPresence(payload.chatId, payload.messageId, payload.presence),
+                    agent.setVideoCallPresence(
+                        payload.chatId,
+                        payload.messageId,
+                        payload.presence,
+                        payload.newAchievement,
+                    ),
                 );
                 break;
 
@@ -1775,6 +1783,63 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "linkIdentities":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    linkIdentities(
+                        payload.initiatorKey,
+                        payload.initiatorDelegation,
+                        payload.initiatorIsIIPrincipal,
+                        payload.approverKey,
+                        payload.approverDelegation,
+                    ),
+                );
+                break;
+
+            case "getAuthenticationPrincipals":
+                if (identityAgent === undefined) {
+                    throw new Error("IdentityAgent not initialized");
+                }
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    identityAgent.getAuthenticationPrincipals(),
+                );
+                break;
+
+            case "configureWallet":
+                executeThenReply(payload, correlationId, agent.configureWallet(payload.config));
+                break;
+
+            case "clearCachedData":
+                executeThenReply(payload, correlationId, agent.clearCachedData());
+                break;
+
+            case "setCommunityReferral":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    setCommunityReferral(
+                        payload.communityId.communityId,
+                        payload.referredBy,
+                        Date.now(),
+                    ),
+                );
+                break;
+
+            case "getExternalAchievements":
+                executeThenReply(payload, correlationId, agent.getExternalAchievements());
+                break;
+
+            case "cancelInvites":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.cancelInvites(payload.id, payload.userIds),
+                );
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }
@@ -1783,3 +1848,45 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
         sendError(correlationId)(err);
     }
 });
+
+async function linkIdentities(
+    initiatorKey: CryptoKeyPair,
+    initiatorDelegation: JsonnableDelegationChain,
+    initiatorIsIIPrincipal: boolean,
+    approverKey: CryptoKeyPair,
+    approverDelegation: JsonnableDelegationChain,
+): Promise<LinkIdentitiesResponse> {
+    const initiatorIdentity = DelegationIdentity.fromDelegation(
+        await ECDSAKeyIdentity.fromKeyPair(initiatorKey),
+        DelegationChain.fromJSON(initiatorDelegation),
+    );
+    const initiator = initiatorIdentity.getPrincipal().toString();
+    const initiatorAgent = await IdentityAgent.create(
+        initiatorIdentity,
+        identityCanister,
+        icUrl,
+        initiatorIsIIPrincipal,
+    );
+
+    const approverIdentity = DelegationIdentity.fromDelegation(
+        await ECDSAKeyIdentity.fromKeyPair(approverKey),
+        DelegationChain.fromJSON(approverDelegation),
+    );
+    const approver = approverIdentity.getPrincipal().toString();
+    const approverAgent = await IdentityAgent.create(
+        approverIdentity,
+        identityCanister,
+        icUrl,
+        undefined,
+    );
+
+    if (approver != authPrincipalString) {
+        return "principal_mismatch";
+    }
+
+    const initiateResponse = await initiatorAgent.initiateIdentityLink(approver);
+    if (initiateResponse !== "success") {
+        return initiateResponse;
+    }
+    return await approverAgent.approveIdentityLink(initiator);
+}

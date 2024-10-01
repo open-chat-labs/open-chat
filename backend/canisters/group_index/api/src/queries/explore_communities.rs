@@ -1,7 +1,9 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::CommunityMatch;
 
+#[ts_export(group_index, explore_communities)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub search_term: Option<String>,
@@ -11,6 +13,7 @@ pub struct Args {
     pub include_moderation_flags: u32,
 }
 
+#[ts_export(group_index, explore_communities)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
@@ -20,6 +23,7 @@ pub enum Response {
     InvalidFlags,
 }
 
+#[ts_export(group_index, explore_communities)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub matches: Vec<CommunityMatch>,

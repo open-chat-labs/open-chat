@@ -71,6 +71,7 @@ pub mod happy_path {
                 permissions_v2: None,
                 events_ttl: None,
                 gate: None,
+                external_url: None,
             },
         );
 
@@ -104,6 +105,7 @@ pub mod happy_path {
                 permissions_v2: None,
                 events_ttl: None,
                 gate: Some(gate),
+                external_url: None,
             },
         );
 
@@ -363,6 +365,29 @@ pub mod happy_path {
         match response {
             community_canister::selected_initial::Response::Success(result) => result,
             response => panic!("'selected_initial' error: {response:?}"),
+        }
+    }
+
+    pub fn selected_updates(
+        env: &PocketIc,
+        sender: &User,
+        community_id: CommunityId,
+        updates_since: TimestampMillis,
+    ) -> Option<community_canister::selected_updates_v2::SuccessResult> {
+        let response = super::selected_updates_v2(
+            env,
+            sender.principal,
+            community_id.into(),
+            &community_canister::selected_updates_v2::Args {
+                invite_code: None,
+                updates_since,
+            },
+        );
+
+        match response {
+            community_canister::selected_updates_v2::Response::Success(result) => Some(result),
+            community_canister::selected_updates_v2::Response::SuccessNoUpdates(_) => None,
+            response => panic!("'selected_updates_v2' error: {response:?}"),
         }
     }
 

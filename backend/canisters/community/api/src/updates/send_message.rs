@@ -1,10 +1,12 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{
     ChannelId, EventIndex, GroupReplyContext, InvalidPollReason, MessageContentInitial, MessageId, MessageIndex,
     TimestampMillis, User, Version,
 };
 
+#[ts_export(community, send_message)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub channel_id: ChannelId,
@@ -23,6 +25,7 @@ pub struct Args {
     pub new_achievement: bool,
 }
 
+#[ts_export(community, send_message)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
@@ -41,6 +44,7 @@ pub enum Response {
     CommunityRulesNotAccepted,
 }
 
+#[ts_export(community, send_message)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub event_index: EventIndex,

@@ -46,7 +46,6 @@ import type {
     UpdateGroupResponse,
     UpdatesResult,
     WithdrawCryptocurrencyResponse,
-    InviteUsersResponse,
     ResetInviteCodeResponse,
     AddHotGroupExclusionResponse,
     RemoveHotGroupExclusionResponse,
@@ -99,8 +98,6 @@ import type {
     DiamondMembershipFees,
     PayForDiamondMembershipResponse,
     SetMessageReminderResponse,
-    ReferralLeaderboardRange,
-    ReferralLeaderboardResponse,
     SetUserUpgradeConcurrencyResponse,
     ManageFavouritesResponse,
     SetDisplayNameResponse,
@@ -161,14 +158,21 @@ import type {
 } from "./proposalsBot";
 import type { CandidateProposal } from "./proposals";
 import type { OptionUpdate } from "./optionUpdate";
-import type { AccountTransactionResult, CryptocurrencyDetails, TokenExchangeRates } from "./crypto";
+import type {
+    AccountTransactionResult,
+    CryptocurrencyDetails,
+    TokenExchangeRates,
+    WalletConfig,
+} from "./crypto";
 import type { DexId } from "./dexes";
 import type {
+    AuthenticationPrincipalsResponse,
     ChallengeAttempt,
     CreateOpenChatIdentityResponse,
     GenerateChallengeResponse,
     GetDelegationResponse,
     GetOpenChatIdentityResponse,
+    LinkIdentitiesResponse,
     PrepareDelegationResponse,
     SiwePrepareLoginResponse,
     SiwsPrepareLoginResponse,
@@ -187,9 +191,12 @@ import type {
 import type {
     ChitEventsRequest,
     ChitEventsResponse,
-    ChitUserBalance,
+    ChitLeaderboardResponse,
     ClaimDailyChitResponse,
+    ExternalAchievement,
 } from "./chit";
+import type { JsonnableDelegationChain } from "@dfinity/identity";
+
 /**
  * Worker request types
  */
@@ -206,7 +213,6 @@ export type WorkerRequest =
     | ChangeRole
     | RemoveMember
     | InviteUsers
-    | InviteUsersToCommunity
     | PushSub
     | RemoveSub
     | SubscriptionExists
@@ -306,7 +312,6 @@ export type WorkerRequest =
     | UpdateMarketMakerConfig
     | SetMessageReminder
     | CancelMessageReminder
-    | ReferralLeaderboard
     | ReportMessage
     | DeclineInvitation
     | AddMembersToChannel
@@ -384,7 +389,37 @@ export type WorkerRequest =
     | ChitLeaderboard
     | ChitEventsRequest
     | MarkAchievementsSeen
-    | SubmitProofOfUniquePersonhood;
+    | SubmitProofOfUniquePersonhood
+    | LinkIdentities
+    | GetAuthenticationPrincipals
+    | ConfigureWallet
+    | ClearCachedData
+    | SetCommunityReferral
+    | GetExternalAchievements
+    | CancelInvites;
+
+type GetExternalAchievements = {
+    kind: "getExternalAchievements";
+};
+
+type SetCommunityReferral = {
+    kind: "setCommunityReferral";
+    communityId: CommunityIdentifier;
+    referredBy: string;
+};
+
+type ClearCachedData = {
+    kind: "clearCachedData";
+};
+
+type ConfigureWallet = {
+    kind: "configureWallet";
+    config: WalletConfig;
+};
+
+type GetAuthenticationPrincipals = {
+    kind: "getAuthenticationPrincipals";
+};
 
 type SubmitProofOfUniquePersonhood = {
     kind: "submitProofOfUniquePersonhood";
@@ -408,6 +443,7 @@ type SetVideoCallPresence = {
     chatId: MultiUserChatIdentifier;
     messageId: bigint;
     presence: VideoCallPresence;
+    newAchievement: boolean;
 };
 
 type GetLocalUserIndexForUser = {
@@ -426,6 +462,7 @@ type JoinVideoCall = {
     kind: "joinVideoCall";
     chatId: ChatIdentifier;
     messageId: bigint;
+    newAchievement: boolean;
 };
 
 type ProposeTranslation = {
@@ -575,11 +612,6 @@ type ExploreChannels = {
 type GetCommunitySummary = {
     communityId: string;
     kind: "getCommunitySummary";
-};
-
-type ReferralLeaderboard = {
-    args?: ReferralLeaderboardRange;
-    kind: "getReferralLeaderboard";
 };
 
 type SetCachedMessageFromNotification = {
@@ -750,19 +782,10 @@ type RemoveMember = {
 };
 
 type InviteUsers = {
-    chatId: MultiUserChatIdentifier;
-    localUserIndex: string;
+    id: MultiUserChatIdentifier | CommunityIdentifier;
     userIds: string[];
     callerUsername: string;
     kind: "inviteUsers";
-};
-
-type InviteUsersToCommunity = {
-    id: CommunityIdentifier;
-    localUserIndex: string;
-    userIds: string[];
-    callerUsername: string;
-    kind: "inviteUsersToCommunity";
 };
 
 type RemoveSub = {
@@ -883,7 +906,8 @@ type RegisterPollVote = {
     messageIdx: number;
     answerIdx: number;
     voteType: "register" | "delete";
-    threadRootMessageIndex?: number;
+    threadRootMessageIndex: number | undefined;
+    newAchievement: boolean;
     kind: "registerPollVote";
 };
 
@@ -898,20 +922,22 @@ type UpdateGroup = {
     gate?: AccessGate;
     isPublic?: boolean;
     kind: "updateGroup";
+    messagesVisibleToNonMembers?: boolean;
+    externalUrl?: string;
 };
 
 type JoinGroup = {
     chatId: MultiUserChatIdentifier;
-    localUserIndex: string;
     credentialArgs: VerifiedCredentialArgs | undefined;
     kind: "joinGroup";
+    referredBy?: string;
 };
 
 type JoinCommunity = {
     id: CommunityIdentifier;
-    localUserIndex: string;
     credentialArgs: VerifiedCredentialArgs | undefined;
     kind: "joinCommunity";
+    referredBy?: string;
 };
 
 type LeaveGroup = {
@@ -962,7 +988,7 @@ type ArchiveChat = {
 };
 
 type ToggleMuteNotifications = {
-    chatId: ChatIdentifier;
+    id: ChatIdentifier | CommunityIdentifier;
     muted: boolean;
     kind: "toggleMuteNotifications";
 };
@@ -1267,6 +1293,15 @@ type GetDelegationWithWallet = {
     kind: "getDelegationWithWallet";
 };
 
+type LinkIdentities = {
+    kind: "linkIdentities";
+    initiatorKey: CryptoKeyPair;
+    initiatorDelegation: JsonnableDelegationChain;
+    initiatorIsIIPrincipal: boolean;
+    approverKey: CryptoKeyPair;
+    approverDelegation: JsonnableDelegationChain;
+};
+
 /**
  * Worker error type
  */
@@ -1307,7 +1342,6 @@ export type WorkerResponseInner =
     | GroupChatSummary[]
     | RegisterProposalVoteResponse
     | ChangeRoleResponse
-    | InviteUsersResponse
     | RemoveMemberResponse
     | RegisterUserResponse
     | EditMessageResponse
@@ -1364,7 +1398,6 @@ export type WorkerResponseInner =
     | ClaimPrizeResponse
     | UpdateMarketMakerConfigResponse
     | SetMessageReminderResponse
-    | ReferralLeaderboardResponse
     | BlockCommunityUserResponse
     | ChangeCommunityRoleResponse
     | ToggleMuteCommunityNotificationsResponse
@@ -1421,9 +1454,11 @@ export type WorkerResponseInner =
     | VideoCallParticipantsResponse
     | SetPinNumberResponse
     | ClaimDailyChitResponse
-    | ChitUserBalance[]
+    | ChitLeaderboardResponse
     | ChitEventsResponse
-    | SubmitProofOfUniquePersonhoodResponse;
+    | SubmitProofOfUniquePersonhoodResponse
+    | AuthenticationPrincipalsResponse
+    | ExternalAchievement[];
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -1653,6 +1688,7 @@ type UpdateRegistry = {
 type SetMemberDisplayName = {
     communityId: string;
     displayName: string | undefined;
+    newAchievement: boolean;
     kind: "setMemberDisplayName";
 };
 
@@ -1697,6 +1733,7 @@ type AcceptP2PSwap = {
     threadRootMessageIndex: number | undefined;
     messageId: bigint;
     pin: string | undefined;
+    newAchievement: boolean;
     kind: "acceptP2PSwap";
 };
 
@@ -1719,6 +1756,12 @@ type ClaimDailyChit = {
 
 type ChitLeaderboard = {
     kind: "chitLeaderboard";
+};
+
+type CancelInvites = {
+    kind: "cancelInvites";
+    id: MultiUserChatIdentifier | CommunityIdentifier;
+    userIds: string[];
 };
 
 export type ConnectToWorkerResponse = GetOpenChatIdentityResponse["kind"];
@@ -1825,7 +1868,7 @@ export type WorkerResult<T> = T extends Init
     : T extends ListNervousSystemFunctions
     ? ListNervousSystemFunctionsResponse
     : T extends SendMessage
-    ? [ SendMessageResponse, Message ]
+    ? "accepted" | [ SendMessageResponse, Message ]
     : T extends EditMessage
     ? EditMessageResponse
     : T extends RegisterUser
@@ -1837,9 +1880,7 @@ export type WorkerResult<T> = T extends Init
     : T extends RemoveSub
     ? void
     : T extends InviteUsers
-    ? InviteUsersResponse
-    : T extends InviteUsersToCommunity
-    ? InviteUsersResponse
+    ? boolean
     : T extends RemoveMember
     ? RemoveMemberResponse
     : T extends ChangeRole
@@ -1944,8 +1985,6 @@ export type WorkerResult<T> = T extends Init
     ? SetMessageReminderResponse
     : T extends CancelMessageReminder
     ? boolean
-    : T extends ReferralLeaderboard
-    ? ReferralLeaderboardResponse
     : T extends ReportMessage
     ? boolean
     : T extends ApproveTransfer
@@ -2085,11 +2124,25 @@ export type WorkerResult<T> = T extends Init
     : T extends ClaimDailyChit
     ? ClaimDailyChitResponse
     : T extends ChitLeaderboard
-    ? ChitUserBalance[]
+    ? ChitLeaderboardResponse
     : T extends ChitEventsRequest
     ? ChitEventsResponse
     : T extends MarkAchievementsSeen
     ? void
     : T extends SubmitProofOfUniquePersonhood
     ? SubmitProofOfUniquePersonhoodResponse
+    : T extends LinkIdentities
+    ? LinkIdentitiesResponse
+    : T extends GetAuthenticationPrincipals
+    ? AuthenticationPrincipalsResponse
+    : T extends ConfigureWallet
+    ? void
+    : T extends ClearCachedData
+    ? void
+    : T extends SetCommunityReferral
+    ? void
+    : T extends GetExternalAchievements
+    ? ExternalAchievement[]
+    : T extends CancelInvites
+    ? boolean
     : never;

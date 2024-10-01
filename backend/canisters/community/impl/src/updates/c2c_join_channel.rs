@@ -28,6 +28,7 @@ async fn c2c_join_channel(args: Args) -> Response {
             user_id: args.user_id,
             principal: args.principal,
             invite_code: args.invite_code,
+            referred_by: args.referred_by,
             is_platform_moderator: args.is_platform_moderator,
             is_bot: args.is_bot,
             user_type: args.user_type,
@@ -164,6 +165,7 @@ fn is_permitted_to_join(
                                 ii_canister_id: state.data.internet_identity_canister_id,
                                 ii_origin: vc.ii_origin,
                             }),
+                            referred_by_member: false,
                             now: state.env.now(),
                         },
                     )

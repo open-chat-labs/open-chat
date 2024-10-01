@@ -18,6 +18,7 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use model::chit::ChitEarnedEvents;
 use model::contacts::Contacts;
 use model::favourite_chats::FavouriteChats;
+use model::referrals::Referrals;
 use model::streak::Streak;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
@@ -28,13 +29,13 @@ use std::ops::Deref;
 use std::time::Duration;
 use types::{
     Achievement, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEarned, ChitEarnedReason, CommunityId,
-    Cryptocurrency, Cycles, Document, Notification, TimestampMillis, Timestamped, UniquePersonProof, UserId,
+    Cryptocurrency, Cycles, Document, Milliseconds, Notification, TimestampMillis, Timestamped, UniquePersonProof, UserId,
 };
-use user_canister::{NamedAccount, UserCanisterEvent};
+use user_canister::{NamedAccount, UserCanisterEvent, WalletConfig};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
-use utils::time::{today, tomorrow, MINUTE_IN_MS};
+use utils::time::{today, tomorrow, DAY_IN_MS, MINUTE_IN_MS};
 
 mod crypto;
 mod governance_clients;
@@ -53,6 +54,7 @@ mod updates;
 pub const BASIC_GROUP_CREATION_LIMIT: u32 = 5;
 pub const PREMIUM_GROUP_CREATION_LIMIT: u32 = 40;
 pub const COMMUNITY_CREATION_LIMIT: u32 = 10;
+const SIX_MONTHS: Milliseconds = 183 * DAY_IN_MS;
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
@@ -146,6 +148,23 @@ impl RuntimeState {
         }
     }
 
+    pub fn is_empty_and_dormant(&self) -> bool {
+        if self.data.direct_chats.len() <= 1
+            && self.data.group_chats.len() == 0
+            && self.data.communities.len() == 0
+            && self.data.diamond_membership_expires_at.is_none()
+            && self.data.unique_person_proof.is_none()
+            && self.data.group_chats.removed_len() == 0
+            && self.data.communities.removed_len() == 0
+        {
+            let now = self.env.now();
+            if self.data.user_created + SIX_MONTHS < now && self.data.chit_events.last_updated() + SIX_MONTHS < now {
+                return true;
+            }
+        }
+        false
+    }
+
     pub fn metrics(&self) -> Metrics {
         let now = self.env.now();
         Metrics {
@@ -224,9 +243,17 @@ struct Data {
     pub chit_events: ChitEarnedEvents,
     pub streak: Streak,
     pub achievements: HashSet<Achievement>,
+    #[serde(default)]
+    pub external_achievements: HashSet<String>,
     pub achievements_last_seen: TimestampMillis,
     pub unique_person_proof: Option<UniquePersonProof>,
+    #[serde(default)]
+    pub wallet_config: Timestamped<WalletConfig>,
     pub rng_seed: [u8; 32],
+    #[serde(default)]
+    pub referred_by: Option<UserId>,
+    #[serde(default)]
+    pub referrals: Referrals,
 }
 
 impl Data {
@@ -242,6 +269,7 @@ impl Data {
         video_call_operators: Vec<Principal>,
         username: String,
         test_mode: bool,
+        referred_by: Option<UserId>,
         now: TimestampMillis,
     ) -> Data {
         Data {
@@ -286,9 +314,13 @@ impl Data {
             chit_events: ChitEarnedEvents::default(),
             streak: Streak::default(),
             achievements: HashSet::new(),
+            external_achievements: HashSet::new(),
             achievements_last_seen: 0,
             unique_person_proof: None,
             rng_seed: [0; 32],
+            wallet_config: Timestamped::default(),
+            referred_by,
+            referrals: Referrals::default(),
         }
     }
 
@@ -358,6 +390,22 @@ impl Data {
                 timestamp: now,
                 reason: ChitEarnedReason::Achievement(achievement),
             });
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn award_external_achievement(&mut self, name: String, chit_reward: u32, now: TimestampMillis) -> bool {
+        if self.external_achievements.insert(name.clone()) {
+            self.chit_events.push(ChitEarned {
+                amount: chit_reward as i32,
+                timestamp: now,
+                reason: ChitEarnedReason::ExternalAchievement(name),
+            });
+
+            self.notify_user_index_of_chit(now);
+
             true
         } else {
             false

@@ -1,13 +1,17 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 
-#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq)]
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Default, Eq, PartialEq)]
 pub enum CommunityRole {
     Owner,
     Admin,
+    #[default]
     Member,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CommunityPermissions {
     pub change_roles: CommunityPermissionRole,
@@ -19,6 +23,7 @@ pub struct CommunityPermissions {
     pub manage_user_groups: CommunityPermissionRole,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct OptionalCommunityPermissions {
     pub change_roles: Option<CommunityPermissionRole>,
@@ -44,6 +49,7 @@ impl Default for CommunityPermissions {
     }
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug)]
 pub enum CommunityPermissionRole {
     Owners,

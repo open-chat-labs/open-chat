@@ -1,7 +1,6 @@
-import type { Identity } from "@dfinity/agent";
+import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type LedgerIndexService } from "./candid/idl";
 import { CandidService } from "../candidService";
-import type { AgentConfig } from "../../config";
 import { Principal } from "@dfinity/principal";
 import { accountTransactions } from "./mappers";
 import type { AccountTransactionResult } from "openchat-shared";
@@ -11,28 +10,20 @@ import { identity } from "../../utils/mapping";
 export class LedgerIndexClient extends CandidService {
     private service: LedgerIndexService;
 
-    private constructor(identity: Identity, config: AgentConfig, canisterId: string) {
-        super(identity);
+    constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
+        super(identity, agent, canisterId);
 
-        this.service = this.createServiceClient<LedgerIndexService>(idlFactory, canisterId, config);
-    }
-
-    static create(identity: Identity, config: AgentConfig, canisterId: string): LedgerIndexClient {
-        return new LedgerIndexClient(identity, config, canisterId);
+        this.service = this.createServiceClient<LedgerIndexService>(idlFactory);
     }
 
     getAccountTransactions(principal: string, fromId?: bigint): Promise<AccountTransactionResult> {
-        // return new Promise((resolve) => {
-        //     console.log("returning fake transactions");
-        //     setTimeout(() => resolve(fake), 3000);
-        // });
-
-        return this.handleResponse(
-            this.service.get_account_transactions({
-                max_results: 100n,
-                start: apiOptional(identity, fromId),
-                account: { owner: Principal.fromText(principal), subaccount: [] },
-            }),
+        return this.handleQueryResponse(
+            () =>
+                this.service.get_account_transactions({
+                    max_results: 100n,
+                    start: apiOptional(identity, fromId),
+                    account: { owner: Principal.fromText(principal), subaccount: [] },
+                }),
             accountTransactions,
         );
     }

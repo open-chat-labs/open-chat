@@ -1,6 +1,15 @@
 <script lang="ts">
+    import { querystring } from "../../routes";
+    import { scrollToSection } from "../../utils/urls";
     import Headline from "./Headline.svelte";
     import TermsContent from "./TermsContent.svelte";
+
+    $: {
+        const section = $querystring.get("section");
+        if (section) {
+            scrollToSection(section);
+        }
+    }
 </script>
 
 <div class="terms">

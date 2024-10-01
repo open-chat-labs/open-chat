@@ -87,6 +87,7 @@ export type CreateOpenChatIdentityResponse = "success" | CreateOpenChatIdentityE
 export type InitiateIdentityLinkResponse =
     | "success"
     | "already_registered"
+    | "already_linked_to_principal"
     | "target_user_not_found"
     | "public_key_invalid";
 
@@ -94,5 +95,20 @@ export type ApproveIdentityLinkResponse =
     | "success"
     | "caller_not_recognised"
     | "link_request_not_found"
+    | "already_linked_to_principal"
+    | "principal_linked_to_another_oc_user"
     | "invalid_signature"
     | "delegation_too_old";
+
+export type LinkIdentitiesResponse =
+    | InitiateIdentityLinkResponse
+    | ApproveIdentityLinkResponse
+    | "principal_mismatch";
+
+export type AuthenticationPrincipal = {
+    principal: string;
+    originatingCanister: string;
+    isIIPrincipal: boolean;
+};
+
+export type AuthenticationPrincipalsResponse = AuthenticationPrincipal[];

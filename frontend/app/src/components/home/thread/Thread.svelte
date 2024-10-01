@@ -77,10 +77,10 @@
     $: atRoot = $threadEvents.length === 0 || $threadEvents[0]?.index === 0;
     $: events = atRoot ? [rootEvent, ...$threadEvents] : $threadEvents;
     $: timeline = client.groupEvents(
-        reverseScroll ? [...events].reverse() : events,
+        $reverseScroll ? [...events].reverse() : events,
         $user.userId,
         $expandedDeletedMessages,
-        reverseScroll,
+        $reverseScroll,
     ) as TimelineItem<Message>[];
     $: readonly = client.isChatReadOnly(chat.id);
     $: thread = rootEvent.event.thread;
@@ -316,6 +316,7 @@
     bind:initialised
     bind:messagesDiv
     bind:messagesDivHeight
+    let:isAccepted
     let:isConfirmed
     let:isFailed
     let:isReadByMe
@@ -335,9 +336,10 @@
                             chatType={chat.kind}
                             user={$user}
                             event={evt}
-                            first={reverseScroll ? i + 1 === userGroup.length : i === 0}
-                            last={reverseScroll ? i === 0 : i + 1 === userGroup.length}
+                            first={$reverseScroll ? i + 1 === userGroup.length : i === 0}
+                            last={$reverseScroll ? i === 0 : i + 1 === userGroup.length}
                             me={evt.event.sender === $user.userId}
+                            accepted={isAccepted($unconfirmed, evt)}
                             confirmed={isConfirmed($unconfirmed, evt)}
                             failed={isFailed($failedMessagesStore, evt)}
                             readByMe={evt.event.messageId === rootEvent.event.messageId ||

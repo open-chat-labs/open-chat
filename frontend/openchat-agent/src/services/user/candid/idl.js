@@ -1,5 +1,4 @@
 export const idlFactory = ({ IDL }) => {
-  const AccessGate = IDL.Rec();
   const CanisterId = IDL.Principal;
   const UserId = CanisterId;
   const MessageId = IDL.Nat;
@@ -156,6 +155,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const Achievement = IDL.Variant({
     'AppointedGroupModerator' : IDL.Null,
+    'Referred20thUser' : IDL.Null,
     'DirectChats5' : IDL.Null,
     'ChangedTheme' : IDL.Null,
     'ChosenAsGroupModerator' : IDL.Null,
@@ -174,6 +174,8 @@ export const idlFactory = ({ IDL }) => {
     'StartedCall' : IDL.Null,
     'ChosenAsGroupOwner' : IDL.Null,
     'TippedMessage' : IDL.Null,
+    'Streak100' : IDL.Null,
+    'Streak365' : IDL.Null,
     'SentGiphy' : IDL.Null,
     'SetCommunityAccessGate' : IDL.Null,
     'Streak14' : IDL.Null,
@@ -183,6 +185,7 @@ export const idlFactory = ({ IDL }) => {
     'SentReminder' : IDL.Null,
     'EditedMessage' : IDL.Null,
     'ReactedToMessage' : IDL.Null,
+    'Referred3rdUser' : IDL.Null,
     'UpgradedToDiamond' : IDL.Null,
     'ReceivedDirectMessage' : IDL.Null,
     'AcceptedP2PSwapOffer' : IDL.Null,
@@ -197,6 +200,7 @@ export const idlFactory = ({ IDL }) => {
     'OwnGroupWithOneThousandDiamondMembers' : IDL.Null,
     'SentP2PSwapOffer' : IDL.Null,
     'QuoteReplied' : IDL.Null,
+    'Referred50thUser' : IDL.Null,
     'OwnGroupWithOneDiamondMember' : IDL.Null,
     'SentCrypto' : IDL.Null,
     'ProvedUniquePersonhood' : IDL.Null,
@@ -204,7 +208,9 @@ export const idlFactory = ({ IDL }) => {
     'Streak3' : IDL.Null,
     'Streak7' : IDL.Null,
     'UpgradedToGoldDiamond' : IDL.Null,
+    'Referred1stUser' : IDL.Null,
     'ReceivedCrypto' : IDL.Null,
+    'Referred10thUser' : IDL.Null,
     'TranslationAccepted' : IDL.Null,
     'RepliedInThread' : IDL.Null,
     'DirectChats10' : IDL.Null,
@@ -221,10 +227,18 @@ export const idlFactory = ({ IDL }) => {
     'SetAvatar' : IDL.Null,
     'SentVideo' : IDL.Null,
   });
+  const ReferralStatus = IDL.Variant({
+    'Diamond' : IDL.Null,
+    'UniquePerson' : IDL.Null,
+    'LifetimeDiamond' : IDL.Null,
+    'Registered' : IDL.Null,
+  });
   const ChitEarnedReason = IDL.Variant({
     'DailyClaim' : IDL.Null,
     'Achievement' : Achievement,
+    'ExternalAchievement' : IDL.Text,
     'MemeContestWinner' : IDL.Null,
+    'Referral' : ReferralStatus,
   });
   const ChitEarned = IDL.Record({
     'timestamp' : TimestampMillis,
@@ -247,6 +261,14 @@ export const idlFactory = ({ IDL }) => {
       'next_claim' : TimestampMillis,
     }),
   });
+  const AutoWallet = IDL.Record({ 'min_cents_visible' : IDL.Nat32 });
+  const ManualWallet = IDL.Record({ 'tokens' : IDL.Vec(CanisterId) });
+  const WalletConfig = IDL.Variant({
+    'Auto' : AutoWallet,
+    'Manual' : ManualWallet,
+  });
+  const ConfigureWalletArgs = IDL.Record({ 'config' : WalletConfig });
+  const ConfigureWalletResponse = IDL.Variant({ 'Success' : IDL.Null });
   const ContactsArgs = IDL.Record({});
   const Contact = IDL.Record({
     'nickname' : IDL.Opt(IDL.Text),
@@ -296,22 +318,32 @@ export const idlFactory = ({ IDL }) => {
     'ledger_canister_id' : CanisterId,
     'amount' : IDL.Nat,
   });
-  AccessGate.fill(
-    IDL.Variant({
-      'UniquePerson' : IDL.Null,
-      'VerifiedCredential' : VerifiedCredentialGate,
-      'SnsNeuron' : SnsNeuronGate,
-      'Locked' : IDL.Null,
-      'TokenBalance' : TokenBalanceGate,
-      'Composite' : IDL.Record({
-        'and' : IDL.Bool,
-        'inner' : IDL.Vec(AccessGate),
-      }),
-      'DiamondMember' : IDL.Null,
-      'Payment' : PaymentGate,
-      'LifetimeDiamondMember' : IDL.Null,
-    })
-  );
+  const AccessGateNonComposite = IDL.Variant({
+    'UniquePerson' : IDL.Null,
+    'VerifiedCredential' : VerifiedCredentialGate,
+    'ReferredByMember' : IDL.Null,
+    'SnsNeuron' : SnsNeuronGate,
+    'Locked' : IDL.Null,
+    'TokenBalance' : TokenBalanceGate,
+    'DiamondMember' : IDL.Null,
+    'Payment' : PaymentGate,
+    'LifetimeDiamondMember' : IDL.Null,
+  });
+  const AccessGate = IDL.Variant({
+    'UniquePerson' : IDL.Null,
+    'VerifiedCredential' : VerifiedCredentialGate,
+    'ReferredByMember' : IDL.Null,
+    'SnsNeuron' : SnsNeuronGate,
+    'Locked' : IDL.Null,
+    'TokenBalance' : TokenBalanceGate,
+    'Composite' : IDL.Record({
+      'and' : IDL.Bool,
+      'inner' : IDL.Vec(AccessGateNonComposite),
+    }),
+    'DiamondMember' : IDL.Null,
+    'Payment' : PaymentGate,
+    'LifetimeDiamondMember' : IDL.Null,
+  });
   const Document = IDL.Record({
     'id' : IDL.Nat,
     'data' : IDL.Vec(IDL.Nat8),
@@ -408,6 +440,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
     'events_ttl' : IDL.Opt(Milliseconds),
+    'messages_visible_to_non_members' : IDL.Opt(IDL.Bool),
     'history_visible_to_new_joiners' : IDL.Bool,
     'rules' : Rules,
     'avatar' : IDL.Opt(Document),
@@ -977,7 +1010,8 @@ export const idlFactory = ({ IDL }) => {
   });
   const GroupVisibilityChanged = IDL.Record({
     'changed_by' : UserId,
-    'now_public' : IDL.Bool,
+    'public' : IDL.Opt(IDL.Bool),
+    'messages_visible_to_non_members' : IDL.Opt(IDL.Bool),
   });
   const ThreadSummary = IDL.Record({
     'latest_event_timestamp' : TimestampMillis,
@@ -1029,6 +1063,10 @@ export const idlFactory = ({ IDL }) => {
     'unblocked_by' : UserId,
   });
   const GroupUnfrozen = IDL.Record({ 'unfrozen_by' : UserId });
+  const ExternalUrlUpdated = IDL.Record({
+    'new_url' : IDL.Opt(IDL.Text),
+    'updated_by' : UserId,
+  });
   const ParticipantLeft = IDL.Record({ 'user_id' : UserId });
   const GroupRulesChanged = IDL.Record({
     'changed_by' : UserId,
@@ -1089,6 +1127,7 @@ export const idlFactory = ({ IDL }) => {
     'GroupInviteCodeChanged' : GroupInviteCodeChanged,
     'UsersUnblocked' : UsersUnblocked,
     'ChatUnfrozen' : GroupUnfrozen,
+    'ExternalUrlUpdated' : ExternalUrlUpdated,
     'ParticipantLeft' : ParticipantLeft,
     'GroupRulesChanged' : GroupRulesChanged,
     'GroupNameChanged' : GroupNameChanged,
@@ -1133,14 +1172,6 @@ export const idlFactory = ({ IDL }) => {
     'thread_root_message_index' : IDL.Opt(MessageIndex),
     'latest_known_update' : IDL.Opt(TimestampMillis),
   });
-  const GetBtcAddressResponse = IDL.Variant({
-    'Success' : IDL.Text,
-    'InternalError' : IDL.Text,
-  });
-  const GetCachedBtcAddressResponse = IDL.Variant({
-    'NotFound' : IDL.Null,
-    'Success' : IDL.Text,
-  });
   const HotGroupExclusionsArgs = IDL.Record({});
   const HotGroupExclusionsResponse = IDL.Variant({
     'Success' : IDL.Vec(ChatId),
@@ -1167,6 +1198,10 @@ export const idlFactory = ({ IDL }) => {
   const CommunitiesInitial = IDL.Record({
     'summaries' : IDL.Vec(UserCanisterCommunitySummary),
   });
+  const Referral = IDL.Record({
+    'status' : ReferralStatus,
+    'user_id' : UserId,
+  });
   const FavouriteChatsInitial = IDL.Record({
     'chats' : IDL.Vec(Chat),
     'pinned' : IDL.Vec(Chat),
@@ -1178,6 +1213,10 @@ export const idlFactory = ({ IDL }) => {
     'date_read_pinned' : IDL.Opt(TimestampMillis),
     'threads_read' : IDL.Vec(IDL.Tuple(MessageIndex, MessageIndex)),
     'archived' : IDL.Bool,
+  });
+  const GroupChatsInitial = IDL.Record({
+    'summaries' : IDL.Vec(UserCanisterGroupChatSummary),
+    'pinned' : IDL.Vec(ChatId),
   });
   const VideoCall = IDL.Record({
     'call_type' : VideoCallType,
@@ -1209,88 +1248,12 @@ export const idlFactory = ({ IDL }) => {
     'custom_type_messages' : IDL.Nat64,
     'prize_messages' : IDL.Nat64,
   });
-  const GovernanceProposalsSubtype = IDL.Record({
-    'is_nns' : IDL.Bool,
-    'governance_canister_id' : CanisterId,
-  });
-  const GroupSubtype = IDL.Variant({
-    'GovernanceProposals' : GovernanceProposalsSubtype,
-  });
-  const BuildVersion = IDL.Record({
-    'major' : IDL.Nat32,
-    'minor' : IDL.Nat32,
-    'patch' : IDL.Nat32,
-  });
-  const ThreadSyncDetails = IDL.Record({
-    'root_message_index' : MessageIndex,
-    'last_updated' : TimestampMillis,
-    'read_up_to' : IDL.Opt(MessageIndex),
-    'latest_event' : IDL.Opt(EventIndex),
-    'latest_message' : IDL.Opt(MessageIndex),
-  });
-  const FrozenGroupInfo = IDL.Record({
-    'timestamp' : TimestampMillis,
-    'frozen_by' : UserId,
-    'reason' : IDL.Opt(IDL.Text),
-  });
-  const Mention = IDL.Record({
-    'message_id' : MessageId,
-    'event_index' : EventIndex,
-    'thread_root_message_index' : IDL.Opt(MessageIndex),
-    'mentioned_by' : UserId,
-    'message_index' : MessageIndex,
-  });
   const MessageEventWrapper = IDL.Record({
     'event' : Message,
     'timestamp' : TimestampMillis,
     'index' : EventIndex,
     'correlation_id' : IDL.Nat64,
     'expires_at' : IDL.Opt(TimestampMillis),
-  });
-  const GroupChatSummary = IDL.Record({
-    'is_public' : IDL.Bool,
-    'video_call_in_progress' : IDL.Opt(VideoCall),
-    'metrics' : ChatMetrics,
-    'subtype' : IDL.Opt(GroupSubtype),
-    'permissions_v2' : GroupPermissions,
-    'date_last_pinned' : IDL.Opt(TimestampMillis),
-    'min_visible_event_index' : EventIndex,
-    'gate' : IDL.Opt(AccessGate),
-    'name' : IDL.Text,
-    'role' : GroupRole,
-    'wasm_version' : BuildVersion,
-    'notifications_muted' : IDL.Bool,
-    'latest_message_index' : IDL.Opt(MessageIndex),
-    'description' : IDL.Text,
-    'events_ttl' : IDL.Opt(Milliseconds),
-    'last_updated' : TimestampMillis,
-    'joined' : TimestampMillis,
-    'avatar_id' : IDL.Opt(IDL.Nat),
-    'rules_accepted' : IDL.Bool,
-    'local_user_index_canister_id' : CanisterId,
-    'latest_threads' : IDL.Vec(ThreadSyncDetails),
-    'frozen' : IDL.Opt(FrozenGroupInfo),
-    'latest_event_index' : EventIndex,
-    'history_visible_to_new_joiners' : IDL.Bool,
-    'read_by_me_up_to' : IDL.Opt(MessageIndex),
-    'min_visible_message_index' : MessageIndex,
-    'mentions' : IDL.Vec(Mention),
-    'chat_id' : ChatId,
-    'date_read_pinned' : IDL.Opt(TimestampMillis),
-    'archived' : IDL.Bool,
-    'events_ttl_last_updated' : TimestampMillis,
-    'participant_count' : IDL.Nat32,
-    'my_metrics' : ChatMetrics,
-    'latest_message' : IDL.Opt(MessageEventWrapper),
-  });
-  const CachedGroupChatSummaries = IDL.Record({
-    'summaries' : IDL.Vec(GroupChatSummary),
-    'timestamp' : TimestampMillis,
-  });
-  const GroupChatsInitial = IDL.Record({
-    'summaries' : IDL.Vec(UserCanisterGroupChatSummary),
-    'pinned' : IDL.Vec(ChatId),
-    'cached' : IDL.Opt(CachedGroupChatSummaries),
   });
   const DirectChatSummary = IDL.Record({
     'read_by_them_up_to' : IDL.Opt(MessageIndex),
@@ -1320,8 +1283,10 @@ export const idlFactory = ({ IDL }) => {
       'pin_number_settings' : IDL.Opt(PinNumberSettings),
       'communities' : CommunitiesInitial,
       'total_chit_earned' : IDL.Int32,
+      'wallet_config' : WalletConfig,
       'blocked_users' : IDL.Vec(UserId),
       'is_unique_person' : IDL.Bool,
+      'referrals' : IDL.Vec(Referral),
       'next_daily_claim' : TimestampMillis,
       'favourite_chats' : FavouriteChatsInitial,
       'achievements' : IDL.Vec(ChitEarned),
@@ -1482,16 +1447,6 @@ export const idlFactory = ({ IDL }) => {
     'ChatNotFound' : IDL.Null,
     'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
-    'InternalError' : IDL.Text,
-  });
-  const RetrieveBtcArgs = IDL.Record({
-    'address' : IDL.Text,
-    'amount' : IDL.Nat64,
-  });
-  const RetrieveBtcResponse = IDL.Variant({
-    'ApproveError' : IDL.Text,
-    'Success' : IDL.Nat64,
-    'RetrieveBtcError' : IDL.Text,
     'InternalError' : IDL.Text,
   });
   const NamedAccount = IDL.Record({ 'name' : IDL.Text, 'account' : IDL.Text });
@@ -1974,8 +1929,10 @@ export const idlFactory = ({ IDL }) => {
       'communities' : CommunitiesUpdates,
       'username' : IDL.Opt(IDL.Text),
       'total_chit_earned' : IDL.Int32,
+      'wallet_config' : IDL.Opt(WalletConfig),
       'blocked_users' : IDL.Opt(IDL.Vec(UserId)),
       'is_unique_person' : IDL.Opt(IDL.Bool),
+      'referrals' : IDL.Vec(Referral),
       'next_daily_claim' : TimestampMillis,
       'favourite_chats' : FavouriteChatsUpdates,
       'display_name' : TextUpdate,
@@ -2038,6 +1995,11 @@ export const idlFactory = ({ IDL }) => {
       ),
     'chit_events' : IDL.Func([ChitEventsArgs], [ChitEventsResponse], ['query']),
     'claim_daily_chit' : IDL.Func([EmptyArgs], [ClaimDailyChitResponse], []),
+    'configure_wallet' : IDL.Func(
+        [ConfigureWalletArgs],
+        [ConfigureWalletResponse],
+        [],
+      ),
     'contacts' : IDL.Func([ContactsArgs], [ContactsResponse], ['query']),
     'create_community' : IDL.Func(
         [CreateCommunityArgs],
@@ -2079,12 +2041,6 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
-    'get_btc_address' : IDL.Func([EmptyArgs], [GetBtcAddressResponse], []),
-    'get_cached_btc_address' : IDL.Func(
-        [EmptyArgs],
-        [GetCachedBtcAddressResponse],
-        ['query'],
-      ),
     'hot_group_exclusions' : IDL.Func(
         [HotGroupExclusionsArgs],
         [HotGroupExclusionsResponse],
@@ -2144,7 +2100,6 @@ export const idlFactory = ({ IDL }) => {
         [ReportMessageResponse],
         [],
       ),
-    'retrieve_btc' : IDL.Func([RetrieveBtcArgs], [RetrieveBtcResponse], []),
     'save_crypto_account' : IDL.Func(
         [NamedAccount],
         [SaveCryptoAccountResponse],

@@ -37,6 +37,7 @@
     export let members: MemberType[];
     export let blocked: Set<string>;
     export let initialUsergroup: number | undefined = undefined;
+    export let showHeader = true;
 
     let userGroups: UserGroups | undefined;
 
@@ -49,18 +50,24 @@
     $: fullMembers = knownUsers
         .filter((u) => matchesSearch(searchTermLower, u) && u.userId !== userId)
         .sort(compareMembers);
-    $: blockedUsers = Array.from(blocked)
-        .map((userId) => $userStore[userId])
-        .filter((u) => matchesSearch(searchTermLower, u) && u.userId !== userId);
-    $: invitedUsers = Array.from(invited)
-        .map((userId) => $userStore[userId])
-        .filter((u) => matchesSearch(searchTermLower, u) && u.userId !== userId);
+    $: blockedUsers = matchingUsers(searchTermLower, $userStore, blocked);
+    $: invitedUsers = matchingUsers(searchTermLower, $userStore, invited);
     $: showBlocked = blockedUsers.length > 0;
     $: showInvited = invitedUsers.length > 0;
     $: canInvite = client.canInviteUsers(collection.id);
     //$: platformModerator = client.platformModerator;
     //$: canPromoteMyselfToOwner = me !== undefined && me.role !== "owner" && $platformModerator;
     $: canPromoteMyselfToOwner = false;
+
+    function matchingUsers(term: string, users: UserLookup, ids: Set<string>): UserSummary[] {
+        return Array.from(ids).reduce((matching, id) => {
+            const user = users.get(id);
+            if (user && matchesSearch(term, user) && user.userId !== userId) {
+                matching.push(user);
+            }
+            return matching;
+        }, [] as UserSummary[]);
+    }
 
     let searchTermEntered = "";
     let id = collection.id;
@@ -124,7 +131,7 @@
     function getKnownUsers(userStore: UserLookup, members: MemberType[]): FullMember[] {
         const users: FullMember[] = [];
         members.forEach((m) => {
-            const user = userStore[m.userId];
+            const user = userStore.get(m.userId);
             if (user) {
                 users.push({
                     ...user,
@@ -168,12 +175,14 @@
     }
 </script>
 
-<MembersHeader
-    level={collection.level}
-    {closeIcon}
-    {canInvite}
-    on:close={close}
-    on:showInviteUsers={showInviteUsers} />
+{#if showHeader}
+    <MembersHeader
+        level={collection.level}
+        {closeIcon}
+        {canInvite}
+        on:close={close}
+        on:showInviteUsers={showInviteUsers} />
+{/if}
 
 {#if collection.level === "community"}
     <div class="tabs">
@@ -274,7 +283,7 @@
     {:else if memberView === "invited"}
         <div use:menuCloser class="user-list">
             {#each invitedUsers as user}
-                <InvitedUser {user} {searchTerm} canUninviteUser={false} on:uninviteUser />
+                <InvitedUser {user} {searchTerm} canUninviteUser={client.canInviteUsers(collection.id)} on:cancelInvite />
             {/each}
         </div>
     {/if}

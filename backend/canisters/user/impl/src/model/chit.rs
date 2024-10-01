@@ -4,15 +4,9 @@ use types::{ChitEarned, ChitEarnedReason, TimestampMillis};
 use utils::time::MonthKey;
 
 #[derive(Serialize, Deserialize, Default)]
-#[serde(from = "ChitEarnedEventsPrevious")]
 pub struct ChitEarnedEvents {
     events: Vec<ChitEarned>,
     total_chit_earned: i32,
-}
-
-#[derive(Serialize, Deserialize, Default)]
-pub struct ChitEarnedEventsPrevious {
-    events: Vec<ChitEarned>,
 }
 
 impl ChitEarnedEvents {
@@ -59,13 +53,7 @@ impl ChitEarnedEvents {
     }
 
     pub fn balance_for_month(&self, month: MonthKey) -> i32 {
-        let mut timestamp_range = month.timestamp_range();
-
-        // TODO remove this once the July airdrop is complete
-        if month.year() == 2024 && month.month() == 7 {
-            timestamp_range.start = 0;
-        }
-
+        let timestamp_range = month.timestamp_range();
         let range = self.range(timestamp_range);
         range.iter().map(|e| e.amount).sum()
     }
@@ -75,7 +63,12 @@ impl ChitEarnedEvents {
             .iter()
             .rev()
             .take_while(|e| since.map_or(true, |ts| e.timestamp > ts))
-            .filter(|e| matches!(e.reason, ChitEarnedReason::Achievement(_)))
+            .filter(|e| {
+                matches!(
+                    e.reason,
+                    ChitEarnedReason::Achievement(_) | ChitEarnedReason::ExternalAchievement(_)
+                )
+            })
             .cloned()
             .collect()
     }
@@ -89,17 +82,6 @@ impl ChitEarnedEvents {
         let end = self.events.partition_point(|e| e.timestamp <= range.end);
 
         &self.events[start..end]
-    }
-}
-
-impl From<ChitEarnedEventsPrevious> for ChitEarnedEvents {
-    fn from(value: ChitEarnedEventsPrevious) -> Self {
-        let total_chit_earned = value.events.iter().map(|e| e.amount).sum();
-
-        ChitEarnedEvents {
-            events: value.events,
-            total_chit_earned,
-        }
     }
 }
 

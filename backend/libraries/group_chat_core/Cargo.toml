@@ -9,6 +9,7 @@ edition = "2021"
 candid = { workspace = true }
 chat_events = { path = "../chat_events" }
 event_store_producer = { workspace = true }
+itertools = { workspace = true }
 lazy_static = { workspace = true }
 regex-lite = { workspace = true }
 search = { path = "../search" }

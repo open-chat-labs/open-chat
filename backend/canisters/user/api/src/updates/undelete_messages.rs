@@ -1,7 +1,9 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{Message, MessageId, MessageIndex, UserId};
 
+#[ts_export(user, undelete_messages)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub user_id: UserId,
@@ -10,6 +12,7 @@ pub struct Args {
     pub correlation_id: u64,
 }
 
+#[ts_export(user, undelete_messages)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
@@ -17,6 +20,7 @@ pub enum Response {
     UserSuspended,
 }
 
+#[ts_export(user, undelete_messages)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub messages: Vec<Message>,

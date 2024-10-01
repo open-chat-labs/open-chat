@@ -6,6 +6,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_invite_users::{Response::*, *};
+use itertools::Itertools;
 use types::UsersInvited;
 
 const MAX_INVITES: usize = 100;
@@ -39,6 +40,7 @@ pub(crate) fn invite_users_to_community_impl(args: Args, state: &mut RuntimeStat
         let invited_users: Vec<_> = args
             .users
             .iter()
+            .unique_by(|(u, _)| u)
             .filter(|(user_id, principal)| {
                 state.data.members.get(*principal).is_none()
                     && !state.data.invited_users.contains(user_id)
@@ -49,35 +51,37 @@ pub(crate) fn invite_users_to_community_impl(args: Args, state: &mut RuntimeStat
 
         let user_ids: Vec<_> = invited_users.iter().map(|(user_id, _)| user_id).copied().collect();
 
-        // Check the max invite limit will not be exceeded
-        if state.data.invited_users.len() + invited_users.len() > MAX_INVITES {
-            return TooManyInvites(MAX_INVITES as u32);
-        }
+        if !user_ids.is_empty() {
+            // Check the max invite limit will not be exceeded
+            if state.data.invited_users.len() + invited_users.len() > MAX_INVITES {
+                return TooManyInvites(MAX_INVITES as u32);
+            }
 
-        // Add new invites
-        for user_id in user_ids.iter().copied() {
-            state.data.invited_users.add(
-                user_id,
-                UserInvitation {
+            // Add new invites
+            for user_id in user_ids.iter().copied() {
+                state.data.invited_users.add(
+                    user_id,
+                    UserInvitation {
+                        invited_by: member.user_id,
+                        timestamp: now,
+                    },
+                );
+            }
+
+            // Push a UsersInvited event
+            state.data.events.push_event(
+                CommunityEventInternal::UsersInvited(Box::new(UsersInvited {
+                    user_ids: user_ids.clone(),
                     invited_by: member.user_id,
-                    timestamp: now,
-                },
+                })),
+                now,
             );
-        }
 
-        // Push a UsersInvited event
-        state.data.events.push_event(
-            CommunityEventInternal::UsersInvited(Box::new(UsersInvited {
-                user_ids: user_ids.clone(),
-                invited_by: member.user_id,
-            })),
-            now,
-        );
+            handle_activity_notification(state);
 
-        handle_activity_notification(state);
-
-        for (user_id, principal) in invited_users.iter() {
-            state.data.members.add_user_id(*principal, *user_id);
+            for (user_id, principal) in invited_users.iter() {
+                state.data.members.add_user_id(*principal, *user_id);
+            }
         }
 
         Success(SuccessResult {

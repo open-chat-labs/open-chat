@@ -6,9 +6,77 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Allow changing PIN number if signed in within last 5 minutes ([#6459](https://github.com/open-chat-labs/open-chat/pull/6459))
+- Re-add BTC methods now that we can support larger wasms ([#6462](https://github.com/open-chat-labs/open-chat/pull/6462))
+- Add MessagePack versions of all endpoints ([#6463](https://github.com/open-chat-labs/open-chat/pull/6463))
+
+### Changed
+
+- Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
+- Simplify search logic and move it into `SearchIndex` struct ([#6465](https://github.com/open-chat-labs/open-chat/pull/6465))
+- Return owned values from `EventsMap` in prep for switch to stable memory ([#6469](https://github.com/open-chat-labs/open-chat/pull/6469))
+- Add serde default attribute in preparation for skipping serialization if default ([#6475](https://github.com/open-chat-labs/open-chat/pull/6475))
+
+## [[2.0.1357](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1357-user)] - 2024-09-20
+
+### Added
+
+- Add ability to reclaim tokens from failed swaps ([#6381](https://github.com/open-chat-labs/open-chat/pull/6381))
+- Add `ReferredByMember` access gate ([#6377](https://github.com/open-chat-labs/open-chat/pull/6377))
+- Add MessagePack version of `send_message` ([#6418](https://github.com/open-chat-labs/open-chat/pull/6418))
+
+## [[2.0.1343](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1343-user)] - 2024-09-10
+
+### Added
+
+- Expose MessagePack versions of a few User canister APIs ([#6318](https://github.com/open-chat-labs/open-chat/pull/6318))
+- Add support for external achievements ([#6350](https://github.com/open-chat-labs/open-chat/pull/6350))
+
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+- Consolidate `events` functions to remove duplicate code ([#6343](https://github.com/open-chat-labs/open-chat/pull/6343))
+
+### Removed
+
+- Remove the unused cached group summaries field from `initial_state` ([#6349](https://github.com/open-chat-labs/open-chat/pull/6349))
+
+### Fixed
+
+- Unblock OpenChat bot if it was blocked previously whilst there was a bug ([#6302](https://github.com/open-chat-labs/open-chat/pull/6302))
+- Allow referral status updates to arrive in any order ([#6357](https://github.com/open-chat-labs/open-chat/pull/6357))
+- Check user hasn't already left community when processing joined event ([#6361](https://github.com/open-chat-labs/open-chat/pull/6361))
+
+## [[2.0.1305](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1305-user)] - 2024-08-23
+
+### Changed
+
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+- Change default WalletConfig to zero balance ([#6269](https://github.com/open-chat-labs/open-chat/pull/6269))
+
+### Fixed
+
+- Remove lifetime diamond achievement where it was rewarded incorrectly ([#6280](https://github.com/open-chat-labs/open-chat/pull/6280))
+
+## [[2.0.1300](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1300-user)] - 2024-08-20
+
+### Added
+
+- Set/store user's wallet configuration ([#6242](https://github.com/open-chat-labs/open-chat/pull/6242))
+
 ### Changed
 
 - Configure message visibility to non-members of public channels/groups ([#6152](https://github.com/open-chat-labs/open-chat/pull/6152))
+- Ensure user has never joined a group or community before marking empty ([#6186](https://github.com/open-chat-labs/open-chat/pull/6186))
+- Add 365 day streak achievement ([#6189](https://github.com/open-chat-labs/open-chat/pull/6189))
+- Support next batch of achievements ([#6230](https://github.com/open-chat-labs/open-chat/pull/6230))
+- Reward verified user referrals in CHIT ([#6250](https://github.com/open-chat-labs/open-chat/pull/6250))
+
+### Removed
+
+- Remove code to flag empty and dormant users for deletion ([#6246](https://github.com/open-chat-labs/open-chat/pull/6246))
 
 ## [[2.0.1263](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1263-user)] - 2024-07-26
 

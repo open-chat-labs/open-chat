@@ -1,6 +1,6 @@
-use crate::SignedDelegation;
 use candid::{CandidType, Deserialize, Principal};
 use serde::Serialize;
+use types::SignedDelegation;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -15,6 +15,7 @@ pub enum Response {
     Success,
     CallerNotRecognised,
     LinkRequestNotFound,
+    PrincipalAlreadyLinkedToAnotherOcUser,
     MalformedSignature(String),
     InvalidSignature,
     DelegationTooOld,

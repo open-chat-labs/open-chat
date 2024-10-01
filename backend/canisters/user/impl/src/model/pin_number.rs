@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
-use types::{Milliseconds, TimestampMillis, Timestamped};
-use user_canister::initial_state::PinNumberSettings;
+use types::{Milliseconds, PinNumberSettings, TimestampMillis, Timestamped};
 use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
 
 #[derive(Serialize, Deserialize, Default)]

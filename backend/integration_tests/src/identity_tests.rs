@@ -1,13 +1,13 @@
 use crate::env::ENV;
 use crate::{client, CanisterIds, TestEnv};
 use candid::Principal;
-use identity_canister::{Delegation, SignedDelegation};
 use pocket_ic::PocketIc;
 use rand::random;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_internet_identity_principal, random_string};
+use types::{Delegation, SignedDelegation};
 use utils::time::NANOS_PER_MILLISECOND;
 
 #[test_case(false)]
@@ -28,6 +28,7 @@ fn link_auth_identities(delay: bool) {
         canister_ids.identity,
         public_key1.clone(),
         session_key1.clone(),
+        false,
     );
 
     let oc_principal1 = Principal::self_authenticating(create_identity_result.user_key.clone());
@@ -45,6 +46,7 @@ fn link_auth_identities(delay: bool) {
         auth_principal2,
         canister_ids.identity,
         public_key2,
+        true,
         auth_principal1,
     );
 
@@ -75,6 +77,36 @@ fn link_auth_identities(delay: bool) {
         identity_canister::approve_identity_link::Response::DelegationTooOld if delay => {}
         response => panic!("{response:?}"),
     };
+}
+
+#[test_case(false)]
+#[test_case(true)]
+fn flag_ii_principal(is_ii_principal: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let (auth_principal, public_key) = if is_ii_principal {
+        random_internet_identity_principal()
+    } else {
+        let (a, p, _) = sign_in_with_email(env, canister_ids);
+        (a, p)
+    };
+
+    let session_key = random::<[u8; 32]>().to_vec();
+
+    client::identity::happy_path::create_identity(
+        env,
+        auth_principal,
+        canister_ids.identity,
+        public_key.clone(),
+        session_key.clone(),
+        is_ii_principal,
+    );
+
+    let auth_principals_response = client::identity::happy_path::auth_principals(env, auth_principal, canister_ids.identity);
+
+    assert_eq!(auth_principals_response.len(), 1);
+    assert_eq!(auth_principals_response.first().unwrap().is_ii_principal, is_ii_principal);
 }
 
 fn sign_in_with_email(env: &mut PocketIc, canister_ids: &CanisterIds) -> (Principal, Vec<u8>, SignedDelegation) {

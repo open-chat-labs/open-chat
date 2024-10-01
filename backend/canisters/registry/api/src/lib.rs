@@ -13,7 +13,9 @@ mod _updates;
 pub use _updates::*;
 pub use lifecycle::*;
 pub use queries::*;
+use ts_export::ts_export;
 
+#[ts_export(registry)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct TokenDetails {
     pub ledger_canister_id: CanisterId,
@@ -62,6 +64,7 @@ pub struct NervousSystemDetails {
     pub last_updated: TimestampMillis,
 }
 
+#[ts_export(registry)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct NervousSystemSummary {
     pub root_canister_id: CanisterId,
@@ -87,6 +90,7 @@ impl From<&NervousSystemDetails> for NervousSystemSummary {
     }
 }
 
+#[ts_export(registry)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct MessageFilterSummary {
     pub id: u64,

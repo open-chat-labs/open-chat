@@ -1,9 +1,59 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
+
+### Changed
+
+- Add `CanisterWasmBytes` to reduce duplication ([#6480](https://github.com/open-chat-labs/open-chat/pull/6480))
+- Log error if chunked Group/Community upgrade fails ([#6483](https://github.com/open-chat-labs/open-chat/pull/6483))
+
+## [[2.0.1360](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1360-group_index)] - 2024-09-30
+
+### Added
+
+- Support upgrading to large wasms by uploading in chunks ([#6453](https://github.com/open-chat-labs/open-chat/pull/6453))
+- Reinstate some candid endpoints ([#6468](https://github.com/open-chat-labs/open-chat/pull/6468))
+
+### Changed
+
+- Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
+- Add serde default attribute in preparation for skipping serialization if default ([#6475](https://github.com/open-chat-labs/open-chat/pull/6475))
+
+### Removed
+
+- Remove the unused `use_for_new_canisters` field from upgrade args ([#6452](https://github.com/open-chat-labs/open-chat/pull/6452))
+
+## [[2.0.1355](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1355-group_index)] - 2024-09-20
+
+### Added
+
+- Add `ReferredByMember` access gate ([#6377](https://github.com/open-chat-labs/open-chat/pull/6377))
+
+### Removed
+
+- Remove deprecated candid endpoints ([#6396](https://github.com/open-chat-labs/open-chat/pull/6396))
+
+## [[2.0.1332](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1332-group_index)] - 2024-09-06
+
+### Added
+
+- Expose MessagePack versions of GroupIndex APIs ([#6318](https://github.com/open-chat-labs/open-chat/pull/6318))
+
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+
+## [[2.0.1318](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1318-group_index)] - 2024-09-02
+
+### Changed
+
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+
+## [[2.0.1270](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1270-group_index)] - 2024-07-31
 
 ### Changed
 
@@ -162,7 +212,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [[2.0.866](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.866-group_index)] - 2023-09-27
 
-### Changed 
+### Changed
 
 - Accept calls to `set_community_upgrade_concurrency` ([#4418](https://github.com/open-chat-labs/open-chat/pull/4418))
 
@@ -172,7 +222,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add `mention_all_members` group permission ([#4405](https://github.com/open-chat-labs/open-chat/pull/4405))
 
-### Changed 
+### Changed
 
 - Accept calls to `set_max_concurrent_community_canister_upgrades` ([#4391](https://github.com/open-chat-labs/open-chat/pull/4391))
 
@@ -302,7 +352,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Removed `search_v2` endpoint ([#3796](https://github.com/open-chat-labs/open-chat/pull/3796))
- 
+
 ### Fixed
 
 - Fix `c2c_create_community` ([#3777](https://github.com/open-chat-labs/open-chat/pull/3777))
@@ -347,7 +397,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Rename is_super_admin to is_platform_operator in c2c_lookup_user ([#3264](https://github.com/open-chat-labs/open-chat/pull/3264)) 
+- Rename is_super_admin to is_platform_operator in c2c_lookup_user ([#3264](https://github.com/open-chat-labs/open-chat/pull/3264))
 
 ### Removed
 

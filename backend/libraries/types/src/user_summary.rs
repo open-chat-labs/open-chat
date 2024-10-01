@@ -1,7 +1,11 @@
-use crate::{DiamondMembershipDetails, DiamondMembershipStatus, DiamondMembershipStatusFull, SuspensionDetails, UserId};
+use crate::{
+    BotConfig, DiamondMembershipDetails, DiamondMembershipStatus, DiamondMembershipStatusFull, SuspensionDetails, UserId,
+};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct UserSummary {
     pub user_id: UserId,
@@ -18,6 +22,7 @@ pub struct UserSummary {
     pub is_unique_person: bool,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct UserSummaryV2 {
     pub user_id: UserId,
@@ -25,6 +30,7 @@ pub struct UserSummaryV2 {
     pub volatile: Option<UserSummaryVolatile>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct UserSummaryStable {
     pub username: String,
@@ -34,8 +40,10 @@ pub struct UserSummaryStable {
     pub suspended: bool,
     pub diamond_membership_status: DiamondMembershipStatus,
     pub is_unique_person: bool,
+    pub bot_config: Option<BotConfig>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct UserSummaryVolatile {
     pub total_chit_earned: i32,
@@ -43,6 +51,7 @@ pub struct UserSummaryVolatile {
     pub streak: u16,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct CurrentUserSummary {
     pub user_id: UserId,

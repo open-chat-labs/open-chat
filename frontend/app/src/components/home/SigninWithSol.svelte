@@ -6,7 +6,7 @@
         WalletAdapterNetwork,
     } from "@solana/wallet-adapter-base";
     import { Connection, clusterApiUrl } from "@solana/web3.js";
-    import { getContext, onMount } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import { CoinbaseWalletAdapter } from "@solana/wallet-adapter-coinbase";
     import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
     import { WalletConnectWalletAdapter } from "@solana/wallet-adapter-walletconnect";
@@ -14,9 +14,12 @@
     import type { OpenChat, SiwsMessage } from "openchat-client";
     import base58 from "bs58";
 
+    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
-
     const localStorageKey = "walletAdapter";
+
+    export let assumeIdentity = true;
+
     let connecting: WalletName | undefined = undefined;
 
     $: ({ publicKey, wallet, connect, select, signMessage } = $walletStore);
@@ -39,7 +42,13 @@
                     const data = new TextEncoder().encode(request);
                     const signResponse = await signMessage(data);
                     const signature = base58.encode(signResponse);
-                    await client.signInWithWallet("sol", account, signature);
+                    await client
+                        .signInWithWallet("sol", account, signature, assumeIdentity)
+                        .then((resp) => {
+                            if (resp.kind === "success") {
+                                dispatch("connected", resp);
+                            }
+                        });
                 }
             } else {
                 console.error("Didn't get an address back from the connector");
@@ -73,12 +82,8 @@
 
     function buildSignInRequest(siwsMessage: SiwsMessage): string {
         // expiration_time and issued_at are in nanoseconds, convert to milliseconds.
-        const expMilliseconds = Number(
-            siwsMessage.expirationTime / BigInt(1000000)
-        );
-        const issuedAtMilliseconds = Number(
-            siwsMessage.issuedAt / BigInt(1000000)
-        );
+        const expMilliseconds = Number(siwsMessage.expirationTime / BigInt(1000000));
+        const issuedAtMilliseconds = Number(siwsMessage.issuedAt / BigInt(1000000));
 
         let request = `${siwsMessage.domain} wants you to sign in with your Solana account:\n${siwsMessage.address}\n\n`;
         request += `${siwsMessage.statement}\n\n`;

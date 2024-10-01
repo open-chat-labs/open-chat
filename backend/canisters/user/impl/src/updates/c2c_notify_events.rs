@@ -2,10 +2,10 @@ use crate::guards::caller_is_local_user_index;
 use crate::{mutate_state, openchat_bot, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use types::{Achievement, DiamondMembershipPlanDuration, MessageContentInitial, Timestamped};
+use types::{Achievement, DiamondMembershipPlanDuration, MessageContentInitial, ReferralStatus, Timestamped};
 use user_canister::c2c_notify_events::{Response::*, *};
 use user_canister::mark_read::ChannelMessagesRead;
-use user_canister::Event;
+use user_canister::{Event, UserCanisterEvent};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
@@ -41,7 +41,8 @@ fn process_event(event: Event, state: &mut RuntimeState) {
             openchat_bot::send_storage_ugraded_bot_message(&ev, state);
         }
         Event::ReferredUserRegistered(ev) => {
-            openchat_bot::send_referred_user_joined_message(&ev, state);
+            state.data.referrals.set_status(ev.user_id, ReferralStatus::Registered, now);
+            openchat_bot::send_referred_user_joined_message(ev.user_id, ev.username, state);
         }
         Event::UserSuspended(ev) => {
             openchat_bot::send_user_suspended_message(&ev, state);
@@ -54,31 +55,49 @@ fn process_event(event: Event, state: &mut RuntimeState) {
             openchat_bot::send_message(message.content.into(), message.mentioned, false, state);
         }
         Event::UserJoinedGroup(ev) => {
-            state
+            // Check that the user didn't already leave the group before this event arrived
+            if !state
                 .data
                 .group_chats
-                .join(ev.chat_id, ev.local_user_index_canister_id, ev.latest_message_index, now);
-            state.data.hot_group_exclusions.remove(&ev.chat_id, now);
-            state.data.award_achievement_and_notify(Achievement::JoinedGroup, now);
+                .removed_since(ev.group_canister_timestamp)
+                .contains(&ev.chat_id)
+            {
+                state
+                    .data
+                    .group_chats
+                    .join(ev.chat_id, ev.local_user_index_canister_id, ev.latest_message_index, now);
+
+                state.data.hot_group_exclusions.remove(&ev.chat_id, now);
+                state.data.award_achievement_and_notify(Achievement::JoinedGroup, now);
+            }
         }
         Event::UserJoinedCommunityOrChannel(ev) => {
-            let (community, _) = state
+            // Check that the user didn't already leave the community before this event arrived
+            if !state
                 .data
                 .communities
-                .join(ev.community_id, ev.local_user_index_canister_id, now);
-            community.mark_read(
-                ev.channels
-                    .into_iter()
-                    .map(|c| ChannelMessagesRead {
-                        channel_id: c.channel_id,
-                        read_up_to: c.latest_message_index,
-                        threads: Vec::new(),
-                        date_read_pinned: None,
-                    })
-                    .collect(),
-                now,
-            );
-            state.data.award_achievement_and_notify(Achievement::JoinedCommunity, now);
+                .removed_since(ev.community_canister_timestamp)
+                .contains(&ev.community_id)
+            {
+                let (community, _) = state
+                    .data
+                    .communities
+                    .join(ev.community_id, ev.local_user_index_canister_id, now);
+
+                community.mark_read(
+                    ev.channels
+                        .into_iter()
+                        .map(|c| ChannelMessagesRead {
+                            channel_id: c.channel_id,
+                            read_up_to: c.latest_message_index,
+                            threads: Vec::new(),
+                            date_read_pinned: None,
+                        })
+                        .collect(),
+                    now,
+                );
+                state.data.award_achievement_and_notify(Achievement::JoinedCommunity, now);
+            }
         }
         Event::DiamondMembershipPaymentReceived(ev) => {
             let mut awarded = state.data.award_achievement(Achievement::UpgradedToDiamond, now);
@@ -101,12 +120,31 @@ fn process_event(event: Event, state: &mut RuntimeState) {
                     state,
                 );
             }
+
+            if let Some(referred_by) = state.data.referred_by {
+                let status = if matches!(ev.duration, DiamondMembershipPlanDuration::Lifetime) {
+                    ReferralStatus::LifetimeDiamond
+                } else {
+                    ReferralStatus::Diamond
+                };
+                state.push_user_canister_event(referred_by.into(), UserCanisterEvent::SetReferralStatus(Box::new(status)))
+            }
         }
         Event::NotifyUniquePersonProof(proof) => {
             if state.data.award_achievement(Achievement::ProvedUniquePersonhood, now) {
                 state.data.notify_user_index_of_chit(now);
             }
             state.data.unique_person_proof = Some(*proof);
+
+            if let Some(referred_by) = state.data.referred_by {
+                state.push_user_canister_event(
+                    referred_by.into(),
+                    UserCanisterEvent::SetReferralStatus(Box::new(ReferralStatus::UniquePerson)),
+                )
+            }
+        }
+        Event::ExternalAchievementAwarded(ev) => {
+            state.data.award_external_achievement(ev.name, ev.chit_reward, now);
         }
     }
 }

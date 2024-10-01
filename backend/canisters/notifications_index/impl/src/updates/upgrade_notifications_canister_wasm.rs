@@ -20,9 +20,7 @@ fn upgrade_notifications_canister_wasm_impl(args: Args, state: &mut RuntimeState
         VersionNotHigher
     } else {
         state.data.canisters_requiring_upgrade.clear();
-        if args.use_for_new_canisters.unwrap_or(true) {
-            state.data.notifications_canister_wasm_for_new_canisters = args.wasm.clone();
-        }
+        state.data.notifications_canister_wasm_for_new_canisters = args.wasm.clone();
         state.data.notifications_canister_wasm_for_upgrades = args.wasm;
 
         let filter = args.filter.unwrap_or_default();

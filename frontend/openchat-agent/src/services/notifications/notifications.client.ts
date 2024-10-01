@@ -1,34 +1,31 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import type { Identity } from "@dfinity/agent";
-import { idlFactory, type NotificationsService } from "./candid/idl";
+import type { HttpAgent, Identity } from "@dfinity/agent";
 import { CandidService } from "../candidService";
 import { subscriptionExistsResponse } from "./mappers";
 import { toVoid } from "../../utils/mapping";
-import type { AgentConfig } from "../../config";
+import {
+    NotificationsIndexPushSubscriptionArgs,
+    NotificationsIndexPushSubscriptionResponse,
+    NotificationsIndexRemoveSubscriptionArgs,
+    NotificationsIndexRemoveSubscriptionResponse,
+    NotificationsIndexSubscriptionExistsArgs,
+    NotificationsIndexSubscriptionExistsResponse,
+} from "../../typebox";
 
 export class NotificationsClient extends CandidService {
-    private service: NotificationsService;
-
-    private constructor(identity: Identity, config: AgentConfig) {
-        super(identity);
-
-        this.service = this.createServiceClient<NotificationsService>(
-            idlFactory,
-            config.notificationsCanister,
-            config
-        );
-    }
-
-    static create(identity: Identity, config: AgentConfig): NotificationsClient {
-        return new NotificationsClient(identity, config);
+    constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
+        super(identity, agent, canisterId);
     }
 
     subscriptionExists(p256dh_key: string): Promise<boolean> {
-        return this.handleResponse(
-            this.service.subscription_exists({
+        return this.executeMsgpackQuery(
+            "subscription_exists",
+            {
                 p256dh_key,
-            }),
-            subscriptionExistsResponse
+            },
+            subscriptionExistsResponse,
+            NotificationsIndexSubscriptionExistsArgs,
+            NotificationsIndexSubscriptionExistsResponse,
         );
     }
 
@@ -42,15 +39,24 @@ export class NotificationsClient extends CandidService {
                 },
             },
         };
-        return this.handleResponse(this.service.push_subscription(request), toVoid);
+        return this.executeMsgpackUpdate(
+            "push_subscription",
+            request,
+            toVoid,
+            NotificationsIndexPushSubscriptionArgs,
+            NotificationsIndexPushSubscriptionResponse,
+        );
     }
 
     removeSubscription(subscription: PushSubscriptionJSON): Promise<void> {
-        return this.handleResponse(
-            this.service.remove_subscription({
+        return this.executeMsgpackUpdate(
+            "remove_subscription",
+            {
                 p256dh_key: subscription.keys!["p256dh"],
-            }),
-            toVoid
+            },
+            toVoid,
+            NotificationsIndexRemoveSubscriptionArgs,
+            NotificationsIndexRemoveSubscriptionResponse,
         );
     }
 }

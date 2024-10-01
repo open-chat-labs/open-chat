@@ -1,36 +1,39 @@
-import type { Identity } from "@dfinity/agent";
-import { Principal } from "@dfinity/principal";
-import { idlFactory, type OnlineService } from "./candid/idl";
+import type { HttpAgent, Identity } from "@dfinity/agent";
 import { CandidService } from "../candidService";
-import { toVoid } from "../../utils/mapping";
-import type { AgentConfig } from "../../config";
+import { principalStringToBytes, toVoid } from "../../utils/mapping";
 import { lastOnlineResponse } from "./mappers";
+import {
+    Empty,
+    OnlineUsersLastOnlineArgs,
+    OnlineUsersLastOnlineResponse,
+    OnlineUsersMarkAsOnlineResponse,
+} from "../../typebox";
 
 export class OnlineClient extends CandidService {
-    private service: OnlineService;
-
-    private constructor(identity: Identity, config: AgentConfig) {
-        super(identity);
-
-        this.service = this.createServiceClient<OnlineService>(
-            idlFactory,
-            config.onlineCanister,
-            config
-        );
-    }
-
-    static create(identity: Identity, config: AgentConfig): OnlineClient {
-        return new OnlineClient(identity, config);
+    constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
+        super(identity, agent, canisterId);
     }
 
     lastOnline(userIds: string[]): Promise<Record<string, number>> {
         const args = {
-            user_ids: userIds.map((u) => Principal.fromText(u)),
+            user_ids: userIds.map(principalStringToBytes),
         };
-        return this.handleQueryResponse(() => this.service.last_online(args), lastOnlineResponse);
+        return this.executeMsgpackQuery(
+            "last_online",
+            args,
+            lastOnlineResponse,
+            OnlineUsersLastOnlineArgs,
+            OnlineUsersLastOnlineResponse,
+        );
     }
 
     markAsOnline(): Promise<void> {
-        return this.handleResponse(this.service.mark_as_online({}), toVoid);
+        return this.executeMsgpackUpdate(
+            "mark_as_online",
+            {},
+            toVoid,
+            Empty,
+            OnlineUsersMarkAsOnlineResponse,
+        );
     }
 }

@@ -8,8 +8,8 @@ use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use types::{
-    Cryptocurrency, DiamondMembershipDetails, DiamondMembershipFees, DiamondMembershipPlanDuration,
-    DiamondMembershipSubscription,
+    Achievement, ChitEarnedReason, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipFees,
+    DiamondMembershipPlanDuration, DiamondMembershipSubscription, ReferralStatus,
 };
 use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
@@ -151,10 +151,9 @@ fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
     );
 }
 
-#[test_case(true)]
-#[test_case(false)]
-#[serial]
-fn membership_payment_shared_with_referrer(lifetime: bool) {
+#[test]
+#[allow(dead_code)]
+fn referrer_awarded_chit_when_referred_gets_diamond() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -176,38 +175,65 @@ fn membership_payment_shared_with_referrer(lifetime: bool) {
     // Register user_b with referral from user_a
     let user_b = client::register_user_with_referrer(env, canister_ids, Some(user_a.user_id.to_string()));
 
-    // Take a snapshot of the ledger and referrer ICP balances
-    let init_treasury_balance =
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
-    let init_referrer_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user_a.user_id);
-
     // Upgrade user_b to Diamond
-    let duration = if lifetime {
-        DiamondMembershipPlanDuration::Lifetime
-    } else {
-        DiamondMembershipPlanDuration::OneMonth
-    };
-    client::upgrade_user(&user_b, env, canister_ids, *controller, duration);
+    client::upgrade_user(
+        &user_b,
+        env,
+        canister_ids,
+        *controller,
+        DiamondMembershipPlanDuration::OneMonth,
+    );
 
-    let fees = DiamondMembershipFees::default();
+    tick_many(env, 3);
 
-    let amount_to_referer = if lifetime {
-        fees.icp_price_e8s(DiamondMembershipPlanDuration::OneYear) / 2
-    } else {
-        fees.icp_price_e8s(DiamondMembershipPlanDuration::OneMonth) / 2
-    } as u128;
+    // Check user_a has received expected CHIT reward, achievement and referral
+    //
+    let user_state = client::user::happy_path::initial_state(env, &user_a);
 
-    // Check the referrer has been credited with half the Diamond payment
-    let balance_referrer = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user_a.user_id);
-    assert_eq!(balance_referrer - init_referrer_balance, amount_to_referer);
+    assert!(user_state
+        .achievements
+        .iter()
+        .any(|ev| if let ChitEarnedReason::Achievement(a) = &ev.reason {
+            matches!(a, Achievement::Referred1stUser)
+        } else {
+            false
+        }));
 
-    // Check the treasury has received the remainder less the fees
-    let treasury_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
-    let fees = DiamondMembershipFees::default();
+    assert_eq!(user_state.referrals.len(), 1);
+    assert_eq!(user_state.referrals[0].user_id, user_b.user_id);
+    assert!(matches!(user_state.referrals[0].status, ReferralStatus::Diamond));
 
     assert_eq!(
-        treasury_balance - init_treasury_balance,
-        u128::from(fees.icp_price_e8s(duration)) - amount_to_referer - (3 * Cryptocurrency::InternetComputer.fee().unwrap())
+        user_state.chit_balance as u32,
+        Achievement::UpgradedToDiamond.chit_reward()
+            + Achievement::Referred1stUser.chit_reward()
+            + ReferralStatus::Diamond.chit_reward()
+    );
+
+    // Upgrade user_b to Lifetime Diamond
+    client::upgrade_user(
+        &user_b,
+        env,
+        canister_ids,
+        *controller,
+        DiamondMembershipPlanDuration::Lifetime,
+    );
+
+    tick_many(env, 3);
+
+    // Check user_a has received expected CHIT reward and referral status has been updated
+    //
+    let user_state = client::user::happy_path::initial_state(env, &user_a);
+
+    assert_eq!(user_state.referrals.len(), 1);
+    assert_eq!(user_state.referrals[0].user_id, user_b.user_id);
+    assert!(matches!(user_state.referrals[0].status, ReferralStatus::LifetimeDiamond));
+
+    assert_eq!(
+        user_state.chit_balance as u32,
+        Achievement::UpgradedToDiamond.chit_reward()
+            + Achievement::Referred1stUser.chit_reward()
+            + ReferralStatus::LifetimeDiamond.chit_reward()
     );
 }
 

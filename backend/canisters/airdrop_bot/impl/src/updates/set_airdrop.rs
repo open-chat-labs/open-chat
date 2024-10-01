@@ -1,6 +1,6 @@
 use crate::guards::caller_is_admin;
 use crate::jobs::execute_airdrop::start_airdrop_timer;
-use crate::model::airdrops::{AirdropConfig, SetNextResult};
+use crate::model::airdrops::SetNextResult;
 use crate::model::pending_actions_queue::Action;
 use crate::{mutate_state, RuntimeState};
 use airdrop_bot_canister::set_airdrop::*;
@@ -14,22 +14,15 @@ fn set_airdrop(args: Args) -> Response {
 }
 
 fn set_airdrop_impl(args: Args, state: &mut RuntimeState) -> Response {
-    let config = AirdropConfig {
-        community_id: args.community_id,
-        channel_id: args.channel_id,
-        start: args.start,
-        main_chat_fund: args.main_chat_fund,
-        main_chit_band: args.main_chit_band,
-        lottery_prizes: args.lottery_prizes,
-        lottery_chit_band: args.lottery_chit_band,
-    };
+    let community_id = args.community_id;
+    let channel_id = args.channel_id;
 
-    match state.data.airdrops.set_next(config, state.env.now()) {
+    match state.data.airdrops.set_next(args, state.env.now()) {
         SetNextResult::Success => {
-            if state.data.channels_joined.contains(&(args.community_id, args.channel_id)) {
+            if state.data.channels_joined.contains(&(community_id, channel_id)) {
                 start_airdrop_timer(state);
             } else {
-                state.enqueue_pending_action(Action::JoinChannel(args.community_id, args.channel_id), None);
+                state.enqueue_pending_action(Action::JoinChannel(community_id, channel_id), None, false);
             }
             Response::Success
         }

@@ -2,9 +2,9 @@ use crate::guards::caller_is_owner;
 use crate::{
     mutate_state, read_state, run_regular_jobs, RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT,
 };
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_group;
-use ic_cdk::update;
 use tracing::error;
 use types::{CanisterId, ChatId};
 use user_canister::create_group::{Response::*, *};
@@ -13,7 +13,7 @@ use utils::text_validation::{
     validate_description, validate_group_name, validate_rules, NameValidationError, RulesValidationError,
 };
 
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 async fn create_group(mut args: Args) -> Response {
     run_regular_jobs();

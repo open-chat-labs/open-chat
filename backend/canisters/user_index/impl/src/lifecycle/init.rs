@@ -17,13 +17,12 @@ fn init(args: Args) {
 
     let data = Data::new(
         args.governance_principals,
-        args.user_canister_wasm,
-        args.local_user_index_canister_wasm,
         args.group_index_canister_id,
         args.notifications_index_canister_id,
         args.identity_canister_id,
         args.proposals_bot_canister_id,
         args.airdrop_bot_canister_id,
+        args.online_users_canister_id,
         args.cycles_dispenser_canister_id,
         args.storage_index_canister_id,
         args.escrow_canister_id,

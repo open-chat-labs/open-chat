@@ -1,7 +1,9 @@
 use crate::{CanisterId, MessageId, NnsNeuronId, ProposalId, SnsNeuronId, TimestampMillis};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum Proposal {
     NNS(NnsProposal),
@@ -81,6 +83,7 @@ impl Proposal {
     }
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct NnsProposal {
     pub id: ProposalId,
@@ -116,6 +119,7 @@ impl NnsProposal {
     }
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct SnsProposal {
     pub id: ProposalId,
@@ -153,6 +157,7 @@ impl SnsProposal {
     }
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ProposalContent {
     pub governance_canister_id: CanisterId,
@@ -188,6 +193,7 @@ impl From<ProposalUpdate> for ProposalStatusUpdate {
     }
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq)]
 pub struct Tally {
     pub yes: u64,
@@ -196,6 +202,7 @@ pub struct Tally {
     pub timestamp: TimestampMillis,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Eq, PartialEq)]
 #[repr(u8)]
 pub enum ProposalDecisionStatus {
@@ -223,6 +230,7 @@ impl TryFrom<i32> for ProposalDecisionStatus {
     }
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Eq, PartialEq)]
 #[repr(u8)]
 pub enum ProposalRewardStatus {

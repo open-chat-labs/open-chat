@@ -12,8 +12,8 @@ use chat_events::{
 use event_store_producer_cdk_runtime::CdkRuntime;
 use ledger_utils::format_crypto_amount_with_symbol;
 use types::{
-    Achievement, DirectMessageTipped, DirectReactionAddedNotification, EventIndex, Notification, UserId, UserType,
-    VideoCallPresence,
+    Achievement, ChitEarned, ChitEarnedReason, DirectMessageTipped, DirectReactionAddedNotification, EventIndex, Notification,
+    UserId, UserType, VideoCallPresence,
 };
 use user_canister::c2c_notify_user_canister_events::{Response::*, *};
 use user_canister::{SendMessagesArgs, ToggleReactionArgs, UserCanisterEvent};
@@ -112,6 +112,35 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
                 args.max_duration.unwrap_or(HOUR_IN_MS),
                 state,
             );
+        }
+        UserCanisterEvent::SetReferralStatus(status) => {
+            let chit_reward = state.data.referrals.set_status(caller_user_id, *status, now);
+            let mut rewarded = false;
+
+            if chit_reward > 0 {
+                state.data.chit_events.push(ChitEarned {
+                    amount: chit_reward as i32,
+                    timestamp: now,
+                    reason: ChitEarnedReason::Referral(*status),
+                });
+
+                rewarded = true;
+            }
+
+            if let Some(achievement) = match state.data.referrals.total_verified() {
+                1 => Some(Achievement::Referred1stUser),
+                3 => Some(Achievement::Referred3rdUser),
+                10 => Some(Achievement::Referred10thUser),
+                20 => Some(Achievement::Referred20thUser),
+                50 => Some(Achievement::Referred50thUser),
+                _ => None,
+            } {
+                rewarded |= state.data.award_achievement(achievement, now);
+            }
+
+            if rewarded {
+                state.data.notify_user_index_of_chit(now);
+            }
         }
     }
 }
@@ -228,25 +257,29 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
     if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
         let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
 
+        let now = state.env.now();
+
         let add_remove_reaction_args = AddRemoveReactionArgs {
             user_id: caller_user_id,
             min_visible_event_index: EventIndex::default(),
             thread_root_message_index,
             message_id: args.message_id,
             reaction: args.reaction.clone(),
-            now: state.env.now(),
+            now,
         };
 
         if args.added {
             if matches!(
                 chat.events.add_reaction::<CdkRuntime>(add_remove_reaction_args, None),
-                AddRemoveReactionResult::Success
+                AddRemoveReactionResult::Success(_)
             ) && !state.data.suspended.value
             {
                 if let Some((recipient, notification)) = build_notification(args, chat) {
                     state.push_notification(recipient, notification);
                 }
             }
+
+            state.data.award_achievement_and_notify(Achievement::HadMessageReactedTo, now);
         } else {
             chat.events.remove_reaction(add_remove_reaction_args);
         }
@@ -330,6 +363,8 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
                 });
                 state.push_notification(my_user_id, notification);
             }
+
+            state.data.award_achievement_and_notify(Achievement::HadMessageTipped, now);
         }
     }
 }

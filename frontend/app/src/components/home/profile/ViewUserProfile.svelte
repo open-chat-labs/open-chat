@@ -111,7 +111,7 @@
     function blockUser() {
         if ($selectedChat !== undefined) {
             if ($selectedChat.kind === "direct_chat") {
-                client.blockUserFromDirectChat($selectedChat.them.userId).then((success) => {
+                client.blockUserFromDirectChat(userId).then((success) => {
                     afterBlock(success, i18nKey("blockUserSucceeded"), i18nKey("blockUserFailed"));
                 });
                 onClose();
@@ -139,7 +139,7 @@
     function unblockUser() {
         if ($selectedChat !== undefined) {
             if ($selectedChat.kind === "direct_chat") {
-                client.unblockUserFromDirectChat($selectedChat.them.userId).then((success) => {
+                client.unblockUserFromDirectChat(userId).then((success) => {
                     afterBlock(
                         success,
                         i18nKey("unblockUserSucceeded"),

@@ -106,6 +106,7 @@ import {
     Icrc1Account,
     DeletedMessageResponse,
     AccessGate,
+    AccessGateNonComposite,
     SetMessageReminderResponse,
     CustomMessageContent,
     ReportedMessage,
@@ -164,6 +165,9 @@ import {
     ChitEarnedReason,
     Achievement,
     ClaimDailyChitResponse,
+    ReferralStatus,
+    Referral,
+    WalletConfig,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -264,6 +268,7 @@ export {
     SendMessageWithTransferToChannelArgs as ApiSendMessageWithTransferToChannelArgs,
     SendMessageWithTransferToChannelResponse as ApiSendMessageWithTransferToChannelResponse,
     AccessGate as ApiAccessGate,
+    AccessGateNonComposite as ApiAccessGateNonComposite,
     SetMessageReminderResponse as ApiSetMessageReminderResponse,
     MessageReminder as ApiMessageReminder,
     MessageReminderCreated as ApiMessageReminderCreated,
@@ -330,6 +335,9 @@ export {
     ChitEarnedReason as ApiChitEarnedReason,
     Achievement as ApiAchievement,
     ClaimDailyChitResponse as ApiClaimDailyChitResponse,
+    ReferralStatus as ApiReferralStatus,
+    Referral as ApiReferral,
+    WalletConfig as ApiWalletConfig
 };
 
 export const idlFactory: IDL.InterfaceFactory;

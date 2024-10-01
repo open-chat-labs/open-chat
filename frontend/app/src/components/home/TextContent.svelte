@@ -25,6 +25,7 @@
     $: expanded = !$lowBandwidth && $renderPreviews;
     $: text = truncateText(content.text);
     $: previewUrls = extractPreviewUrls(content.text);
+    $: iconColour = me ? "var(--currentChat-msg-me-txt)" : "var(--currentChat-msg-txt)";
 
     function extractPreviewUrls(text: string): string[] {
         const urls = client.extractEnabledLinks(text);
@@ -57,7 +58,7 @@
 {#if previewUrls.length > 0}
     {#if !expanded}
         <span on:click={expand} class="expand" title={$_("showPreview")}>
-            <ArrowExpand viewBox="0 -3 24 24" size={"1em"} color={"var(--txt)"} />
+            <ArrowExpand viewBox="0 -3 24 24" size={"1em"} color={iconColour} />
         </span>
     {:else}
         <IntersectionObserver unobserveOnIntersect={false} let:intersecting>

@@ -2,12 +2,14 @@ use crate::{is_default, EventIndex, TimestampMillis};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
+use ts_export::ts_export;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct EventWrapper<T> {
     pub index: EventIndex,
     pub timestamp: TimestampMillis,
     pub correlation_id: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub expires_at: Option<TimestampMillis>,
     pub event: T,
 }
@@ -43,3 +45,22 @@ impl<T> From<EventWrapperInternal<T>> for EventWrapper<T> {
         }
     }
 }
+
+macro_rules! event_wrapper {
+    ($name:ident, $event_type:ty) => {
+        #[ts_export]
+        #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+        pub struct $name {
+            pub index: EventIndex,
+            pub timestamp: TimestampMillis,
+            pub correlation_id: u64,
+            pub expires_at: Option<TimestampMillis>,
+            pub event: $event_type,
+        }
+    };
+}
+
+event_wrapper!(EventWrapperChatEvent, crate::ChatEvent);
+event_wrapper!(EventWrapperGroupFrozen, crate::GroupFrozen);
+event_wrapper!(EventWrapperGroupUnfrozen, crate::GroupUnfrozen);
+event_wrapper!(EventWrapperMessage, crate::Message);

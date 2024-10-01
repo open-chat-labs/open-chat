@@ -1,7 +1,9 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{CanisterId, Chat, CompletedCryptoTransaction, Cryptocurrency, MessageId, MessageIndex, Milliseconds, UserId};
 
+#[ts_export(user, tip_message)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub chat: Chat,
@@ -16,6 +18,7 @@ pub struct Args {
     pub pin: Option<String>,
 }
 
+#[ts_export(user, tip_message)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,

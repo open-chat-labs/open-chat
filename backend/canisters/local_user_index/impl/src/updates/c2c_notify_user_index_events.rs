@@ -8,8 +8,9 @@ use p256_key_pair::P256KeyPair;
 use std::cmp::min;
 use tracing::info;
 use user_canister::{
-    DiamondMembershipPaymentReceived, DisplayNameChanged, Event as UserEvent, OpenChatBotMessageV2, PhoneNumberConfirmed,
-    ReferredUserRegistered, StorageUpgraded, UserJoinedCommunityOrChannel, UserJoinedGroup, UserSuspended, UsernameChanged,
+    DiamondMembershipPaymentReceived, DisplayNameChanged, Event as UserEvent, ExternalAchievementAwarded, OpenChatBotMessageV2,
+    PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserJoinedCommunityOrChannel, UserJoinedGroup,
+    UserSuspended, UsernameChanged,
 };
 
 #[update(guard = "caller_is_user_index_canister", msgpack = true)]
@@ -105,6 +106,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                     chat_id: ev.chat_id,
                     local_user_index_canister_id: ev.local_user_index_canister_id,
                     latest_message_index: ev.latest_message_index,
+                    group_canister_timestamp: ev.group_canister_timestamp,
                 })),
             );
         }
@@ -115,6 +117,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                     community_id: ev.community_id,
                     local_user_index_canister_id: ev.local_user_index_canister_id,
                     channels: ev.channels,
+                    community_canister_timestamp: ev.community_canister_timestamp,
                 })),
             );
         }
@@ -192,6 +195,15 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
             if !state.data.canister_pool.contains(&canister_id) {
                 state.data.canister_pool.push(canister_id);
             }
+        }
+        Event::ExternalAchievementAwarded(ev) => {
+            state.push_event_to_user(
+                ev.user_id,
+                UserEvent::ExternalAchievementAwarded(Box::new(ExternalAchievementAwarded {
+                    name: ev.name,
+                    chit_reward: ev.chit_reward,
+                })),
+            );
         }
     }
 }

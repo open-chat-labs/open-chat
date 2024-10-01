@@ -5,6 +5,7 @@ use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
 use group_canister::init::Args as InitGroupCanisterArgs;
 use local_group_index_canister::c2c_create_group::{Response::*, *};
+use local_group_index_canister::ChildCanisterType;
 use types::{BuildVersion, CanisterId, CanisterWasm, ChatId, Cycles, GroupCreatedEventPayload, UserId, UserType};
 use utils::canister;
 use utils::canister::CreateAndInstallError;
@@ -84,7 +85,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
     };
 
     let canister_id = state.data.canister_pool.pop();
-    let canister_wasm = state.data.group_canister_wasm_for_new_canisters.wasm.clone();
+    let canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::Group).wasm.clone();
     let local_user_index_canister_id = state.data.local_user_index_canister_id;
     let init_canister_args = group_canister::init::Args {
         is_public: args.is_public,
@@ -98,7 +99,11 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         permissions_v2: args.permissions_v2,
         created_by_principal: args.created_by_user_principal,
         created_by_user_id: args.created_by_user_id,
-        created_by_user_type: UserType::User,
+        created_by_user_type: if args.created_by_user_id == state.data.proposals_bot_user_id {
+            UserType::OcControlledBot
+        } else {
+            UserType::User
+        },
         events_ttl: args.events_ttl,
         mark_active_duration: MARK_ACTIVE_DURATION,
         group_index_canister_id: state.data.group_index_canister_id,

@@ -1,10 +1,9 @@
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
-use ic_cbor::{parse_cbor, CborValue, CertificateToCbor};
 use ic_cdk::update;
 use ic_certificate_verification::VerifyCertificate;
-use ic_certification::Certificate;
 use identity_canister::approve_identity_link::{Response::*, *};
+use identity_utils::extract_certificate;
 use utils::time::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 
 #[update]
@@ -20,21 +19,9 @@ fn approve_identity_link_impl(args: Args, state: &mut RuntimeState) -> Response 
         return CallerNotRecognised;
     };
 
-    let now = state.env.now();
-    let now_nanos = (now * NANOS_PER_MILLISECOND) as u128;
-    let five_minutes = (5 * MINUTE_IN_MS * NANOS_PER_MILLISECOND) as u128;
-
-    let Ok(cbor) = parse_cbor(&args.delegation.signature) else {
-        return MalformedSignature("Unable to parse signature as CBOR".to_string());
-    };
-    let CborValue::Map(map) = cbor else {
-        return MalformedSignature("Expected CBOR map".to_string());
-    };
-    let Some(CborValue::ByteString(certificate_bytes)) = map.get("certificate") else {
-        return MalformedSignature("Couldn't find certificate".to_string());
-    };
-    let Ok(certificate) = Certificate::from_cbor(certificate_bytes) else {
-        return MalformedSignature("Unable to parse certificate".to_string());
+    let certificate = match extract_certificate(&args.delegation.signature) {
+        Ok(c) => c,
+        Err(e) => return MalformedSignature(e),
     };
     if certificate
         .verify(
@@ -45,18 +32,28 @@ fn approve_identity_link_impl(args: Args, state: &mut RuntimeState) -> Response 
     {
         return InvalidSignature;
     }
+
+    let now = state.env.now();
+    let now_nanos = (now * NANOS_PER_MILLISECOND) as u128;
+    let five_minutes = (5 * MINUTE_IN_MS * NANOS_PER_MILLISECOND) as u128;
+
     if ic_certificate_verification::validate_certificate_time(&certificate, &now_nanos, &five_minutes).is_err() {
         return DelegationTooOld;
     }
 
-    if let Some(originating_canister) = state.data.identity_link_requests.take(caller, args.link_initiated_by, now) {
-        state.data.user_principals.link_auth_principal_with_existing_user(
+    if let Some((originating_canister, is_ii_principal)) =
+        state.data.identity_link_requests.take(caller, args.link_initiated_by, now)
+    {
+        if state.data.user_principals.link_auth_principal_with_existing_user(
             args.link_initiated_by,
             originating_canister,
+            is_ii_principal,
             auth_principal.user_principal_index,
-        );
-
-        Success
+        ) {
+            Success
+        } else {
+            PrincipalAlreadyLinkedToAnotherOcUser
+        }
     } else {
         LinkRequestNotFound
     }

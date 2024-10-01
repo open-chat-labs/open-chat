@@ -1,6 +1,6 @@
 import type DRange from "drange";
 import type { DataContent } from "../data/data";
-import type { UserSummary } from "../user/user";
+import type { Referral, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
 import type { AccessGate, AccessControlled, VersionedRules, UpdatedRules } from "../access";
 import type {
@@ -32,7 +32,8 @@ import type {
     CommunityIdentifier,
     CommunitySummary,
 } from "../community";
-import type { Achievement, ChitEarned } from "../chit";
+import type { ChitEarned } from "../chit";
+import type { WalletConfig } from "../crypto";
 
 export type CallerNotInGroup = { kind: "caller_not_in_group" };
 export type CanisterNotFound = { kind: "canister_not_found" };
@@ -649,6 +650,11 @@ export type LocalPollVote = {
     userId: string;
 };
 
+export type LocalGlobalUpdates = {
+    walletConfig?: WalletConfig;
+    lastUpdated: number;
+};
+
 export type LocalChatSummaryUpdates = {
     added?: ChatSummary;
     updated?:
@@ -670,6 +676,7 @@ export type LocalChatSummaryUpdates = {
               gate?: AccessGate;
               notificationsMuted?: boolean;
               archived?: boolean;
+              rulesAccepted?: boolean;
               eventsTTL?: OptionUpdate<bigint>;
           };
     removedAtTimestamp?: bigint;
@@ -726,7 +733,8 @@ export type ChatEvent =
     | EventsTimeToLiveUpdated
     | UsersInvitedEvent
     | MembersAddedToDefaultChannel
-    | EmptyEvent;
+    | EmptyEvent
+    | ExternalUrlUpdated;
 
 export type MembersAdded = {
     kind: "members_added";
@@ -876,7 +884,8 @@ export type PermissionsChanged = {
 
 export type GroupVisibilityChanged = {
     kind: "group_visibility_changed";
-    nowPublic: boolean;
+    public?: boolean;
+    messagesVisibleToNonMembers?: boolean;
     changedBy: string;
 };
 
@@ -974,9 +983,11 @@ export type ChatStateFull = {
     favouriteChats: ChatIdentifier[];
     pinNumberSettings: PinNumberSettings | undefined;
     userCanisterLocalUserIndex: string;
-    achievements: Set<Achievement>;
+    achievements: Set<string>;
     achievementsLastSeen: bigint;
     chitState: ChitState;
+    referrals: Referral[];
+    walletConfig: WalletConfig;
 };
 
 export type ChitState = {
@@ -1001,7 +1012,6 @@ export type CachedGroupChatSummaries = {
 export type GroupChatsInitial = {
     summaries: UserCanisterGroupChatSummary[];
     pinned: GroupChatIdentifier[];
-    cached?: CachedGroupChatSummaries;
 };
 
 export type DirectChatsInitial = {
@@ -1142,6 +1152,8 @@ export type InitialStateResponse = {
     nextDailyClaim: bigint;
     chitBalance: number;
     totalChitEarned: number;
+    referrals: Referral[];
+    walletConfig: WalletConfig;
 };
 
 export type PinNumberSettings = {
@@ -1184,6 +1196,8 @@ export type UpdatesSuccessResponse = {
     streak: number;
     nextDailyClaim: bigint;
     totalChitEarned: number;
+    referrals: Referral[];
+    walletConfig: WalletConfig | undefined;
 };
 
 export type DirectChatsUpdates = {
@@ -1374,6 +1388,8 @@ export type ChannelSummary = DataContent &
         dateLastPinned: bigint | undefined;
         dateReadPinned: bigint | undefined;
         isInvited: boolean;
+        messagesVisibleToNonMembers: boolean;
+        externalUrl?: string;
     };
 
 export type DirectChatSummary = ChatSummaryCommon & {
@@ -1402,6 +1418,7 @@ export type GroupChatSummary = DataContent &
         dateReadPinned: bigint | undefined;
         localUserIndex: string;
         isInvited: boolean;
+        messagesVisibleToNonMembers: boolean;
     };
 
 export function nullMembership(): ChatMembership {
@@ -1467,6 +1484,7 @@ export type GroupCanisterGroupChatSummary = AccessControlled &
         eventsTtlLastUpdated: bigint;
         localUserIndex: string;
         videoCallInProgress?: number;
+        messagesVisibleToNonMembers: boolean;
     };
 
 export type UpdatedEvent = {
@@ -1503,6 +1521,7 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     eventsTTL: OptionUpdate<bigint>;
     eventsTtlLastUpdated?: bigint;
     videoCallInProgress: OptionUpdate<number>;
+    messagesVisibleToNonMembers?: boolean;
 };
 
 export type GroupCanisterThreadDetails = {
@@ -1544,6 +1563,8 @@ export type CandidateGroupChat = AccessControlled &
         members: CandidateMember[];
         avatar?: DataContent;
         eventsTTL?: bigint;
+        messagesVisibleToNonMembers?: boolean;
+        externalUrl?: string;
     };
 
 export type CandidateChannel = CandidateGroupChat;
@@ -1568,7 +1589,8 @@ export type CreateGroupResponse =
     | UserSuspended
     | { kind: "access_gate_invalid" }
     | Offline
-    | DefaultMustBePublic;
+    | DefaultMustBePublic
+    | { kind: "external_url_invalid" };
 
 export type CreateGroupSuccess = {
     kind: "success";
@@ -1746,7 +1768,8 @@ export type GateCheckFailedReason =
     | "failed_verified_credential_check"
     | "no_unique_person_proof"
     | "not_lifetime_diamond"
-    | "locked";
+    | "locked"
+    | "not_referred_by_member";
 
 export type ChatFrozenEvent = {
     kind: "chat_frozen";
@@ -1820,6 +1843,12 @@ export type EmptyEvent = {
     kind: "empty";
 };
 
+export type ExternalUrlUpdated = {
+    kind: "external_url_updated";
+    newUrl?: string;
+    updatedBy: string;
+};
+
 export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error" | "user_suspended";
 
 export type ChangeRoleResponse = "failure" | "success" | "offline";
@@ -1865,8 +1894,6 @@ export type SuccessJoinedCommunity = {
     kind: "success_joined_community";
     community: CommunitySummary;
 };
-
-export type InviteUsersResponse = "success" | "failure";
 
 export type MarkReadRequest = {
     readUpTo: number | undefined;

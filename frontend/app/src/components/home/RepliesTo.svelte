@@ -107,7 +107,7 @@
         padding: $sp3;
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
-        border: 2px solid var(--bd);
+        border: var(--bw) solid var(--replies-bd);
         cursor: pointer;
         margin-bottom: $sp3;
         overflow: hidden;
@@ -120,7 +120,7 @@
 
         &.me {
             background-color: var(--currentChat-msg-me-bg);
-            border: 2px solid var(--currentChat-msg-me-bd);
+            border: var(--bw) solid var(--currentChat-msg-me-bd);
             color: var(--currentChat-msg-me-txt);
         }
 

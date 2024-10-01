@@ -4,7 +4,10 @@ use crate::{
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use ts_export::ts_export;
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum ChatEvent {
     Empty,
@@ -33,10 +36,13 @@ pub enum ChatEvent {
     GroupGateUpdated(GroupGateUpdated),
     UsersInvited(UsersInvited),
     MembersAddedToDefaultChannel(MembersAddedToDefaultChannel),
+    ExternalUrlUpdated(ExternalUrlUpdated),
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct EventsResponse {
+    #[ts(as = "Vec<crate::EventWrapperChatEvent>")]
     pub events: Vec<EventWrapper<ChatEvent>>,
     pub expired_event_ranges: Vec<(EventIndex, EventIndex)>,
     pub expired_message_ranges: Vec<(MessageIndex, MessageIndex)>,
@@ -78,13 +84,16 @@ impl EventOrExpiredRange {
     }
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct MessagesResponse {
+    #[ts(as = "Vec<crate::EventWrapperMessage>")]
     pub messages: Vec<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,
     pub chat_last_updated: TimestampMillis,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupCreated {
     pub name: String,
@@ -92,6 +101,7 @@ pub struct GroupCreated {
     pub created_by: UserId,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupNameChanged {
     pub new_name: String,
@@ -99,6 +109,7 @@ pub struct GroupNameChanged {
     pub changed_by: UserId,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupDescriptionChanged {
     pub new_description: String,
@@ -106,6 +117,7 @@ pub struct GroupDescriptionChanged {
     pub changed_by: UserId,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupRulesChanged {
     pub enabled: bool,
@@ -113,6 +125,7 @@ pub struct GroupRulesChanged {
     pub changed_by: UserId,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct AvatarChanged {
     pub new_avatar: Option<u128>,
@@ -120,6 +133,7 @@ pub struct AvatarChanged {
     pub changed_by: UserId,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct BannerChanged {
     pub new_banner: Option<u128>,
@@ -127,6 +141,7 @@ pub struct BannerChanged {
     pub changed_by: UserId,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MembersAdded {
     pub user_ids: Vec<UserId>,
@@ -134,35 +149,64 @@ pub struct MembersAdded {
     pub unblocked: Vec<UserId>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MembersRemoved {
     pub user_ids: Vec<UserId>,
     pub removed_by: UserId,
 }
 
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CommunityMembersRemoved {
+    pub user_ids: Vec<UserId>,
+    pub removed_by: UserId,
+    pub referred_by: HashMap<UserId, UserId>,
+}
+
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct UsersBlocked {
     pub user_ids: Vec<UserId>,
     pub blocked_by: UserId,
 }
 
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CommunityUsersBlocked {
+    pub user_ids: Vec<UserId>,
+    pub blocked_by: UserId,
+    pub referred_by: HashMap<UserId, UserId>,
+}
+
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct UsersUnblocked {
     pub user_ids: Vec<UserId>,
     pub unblocked_by: UserId,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MemberJoined {
     pub user_id: UserId,
     pub invited_by: Option<UserId>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MemberLeft {
     pub user_id: UserId,
 }
 
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CommunityMemberLeft {
+    pub user_id: UserId,
+    pub referred_by: Option<UserId>,
+}
+
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct RoleChanged {
     pub user_ids: Vec<UserId>,
@@ -171,6 +215,7 @@ pub struct RoleChanged {
     pub new_role: GroupRole,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CommunityRoleChanged {
     pub user_ids: Vec<UserId>,
@@ -179,12 +224,14 @@ pub struct CommunityRoleChanged {
     pub new_role: CommunityRole,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MessagePinned {
     pub message_index: MessageIndex,
     pub pinned_by: UserId,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MessageUnpinned {
     pub message_index: MessageIndex,
@@ -192,6 +239,7 @@ pub struct MessageUnpinned {
     pub due_to_message_deleted: bool,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PermissionsChanged {
     pub old_permissions_v2: GroupPermissions,
@@ -199,6 +247,7 @@ pub struct PermissionsChanged {
     pub changed_by: UserId,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CommunityPermissionsChanged {
     pub old_permissions: CommunityPermissions,
@@ -206,46 +255,29 @@ pub struct CommunityPermissionsChanged {
     pub changed_by: UserId,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-#[serde(from = "GroupVisibilityChangedPrevious")]
 pub struct GroupVisibilityChanged {
-    // TODO: deprecated
-    pub now_public: bool,
     pub public: Option<bool>,
     pub messages_visible_to_non_members: Option<bool>,
     pub changed_by: UserId,
 }
 
-// TODO: Delete this one-time code
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct GroupVisibilityChangedPrevious {
-    pub now_public: bool,
-    pub changed_by: UserId,
-}
-
-impl From<GroupVisibilityChangedPrevious> for GroupVisibilityChanged {
-    fn from(value: GroupVisibilityChangedPrevious) -> Self {
-        GroupVisibilityChanged {
-            now_public: value.now_public,
-            public: Some(value.now_public),
-            messages_visible_to_non_members: None,
-            changed_by: value.changed_by,
-        }
-    }
-}
-
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CommunityVisibilityChanged {
     pub now_public: bool,
     pub changed_by: UserId,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupInviteCodeChanged {
     pub change: GroupInviteCodeChange,
     pub changed_by: UserId,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum GroupInviteCodeChange {
     Enabled,
@@ -253,38 +285,52 @@ pub enum GroupInviteCodeChange {
     Reset,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupFrozen {
     pub frozen_by: UserId,
     pub reason: Option<String>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupUnfrozen {
     pub unfrozen_by: UserId,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct EventsTimeToLiveUpdated {
     pub updated_by: UserId,
     pub new_ttl: Option<Milliseconds>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupGateUpdated {
     pub updated_by: UserId,
     pub new_gate: Option<AccessGate>,
 }
 
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ExternalUrlUpdated {
+    pub updated_by: UserId,
+    pub new_url: Option<String>,
+}
+
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug)]
 pub struct DirectChatCreated {}
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct UsersInvited {
     pub user_ids: Vec<UserId>,
     pub invited_by: UserId,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ChannelDeleted {
     pub channel_id: ChannelId,
@@ -292,6 +338,7 @@ pub struct ChannelDeleted {
     pub deleted_by: UserId,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct DefaultChannelsChanged {
     pub added: Vec<ChannelId>,
@@ -299,6 +346,7 @@ pub struct DefaultChannelsChanged {
     pub changed_by: UserId,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PrimaryLanguageChanged {
     pub previous: String,
@@ -306,6 +354,7 @@ pub struct PrimaryLanguageChanged {
     pub changed_by: UserId,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MembersAddedToDefaultChannel {
     pub count: u32,

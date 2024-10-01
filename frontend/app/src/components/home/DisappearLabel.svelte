@@ -15,7 +15,7 @@
 <TooltipWrapper position={"bottom"} align={"end"}>
     <div slot="target" class="disappears">
         <div class="expires">
-            <CameraTimer size={"1em"} color={"#fff"} />
+            <CameraTimer size={"1em"} color={"var(--txt-light)"} />
         </div>
         <div class="name">{client.formatDisappearingMessageTime(Number(ttl), $_)}</div>
     </div>

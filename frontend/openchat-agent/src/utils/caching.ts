@@ -1,4 +1,5 @@
 import {
+    deleteDB,
     openDB,
     type DBSchema,
     type IDBPCursorWithValue,
@@ -33,6 +34,7 @@ import type {
     DiamondMembershipStatus,
     TransferSuccess,
     CurrentUserSummary,
+    ExternalAchievement,
 } from "openchat-shared";
 import {
     canRetryMessage,
@@ -49,7 +51,7 @@ import type { CryptocurrencyContent } from "openchat-shared";
 import type { PrizeContent } from "openchat-shared";
 import type { P2PSwapContent } from "openchat-shared";
 
-const CACHE_VERSION = 107;
+const CACHE_VERSION = 114;
 const FIRST_MIGRATION = 104;
 const MAX_INDEX = 9999999999;
 
@@ -123,40 +125,45 @@ export interface ChatSchema extends DBSchema {
         key: string;
         value: string;
     };
+
+    externalAchievements: {
+        key: string;
+        value: {
+            lastUpdated: bigint;
+            achievements: ExternalAchievement[];
+        };
+    };
 }
 
 type MigrationFunction<T> = (
+    db: IDBPDatabase<T>,
     principal: Principal,
     transaction: IDBPTransaction<T, StoreNames<T>[], "versionchange">,
 ) => Promise<void>;
 
-async function clearChatsStore(
-    principal: Principal,
-    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+// Leaving this here as an example - needs to be commented to keep the compiler happy
+// async function clearChatsStore(
+//     _db: IDBPDatabase<ChatSchema>,
+//     _principal: Principal,
+//     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+// ) {
+//     await tx.objectStore("chats").clear();
+// }
+
+async function clearEverything(
+    db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
+    _tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
 ) {
-    const key = principal.toString();
-    const store = tx.objectStore("chats");
-    store.delete(key);
+    nuke(db);
 }
 
 const migrations: Record<number, MigrationFunction<ChatSchema>> = {
-    105: clearChatsStore,
-    106: clearChatsStore,
-    107: async (
-        principal: Principal,
-        tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-    ) => {
-        const key = principal.toString();
-        const store = tx.objectStore("chats");
-        const chatState = await store.get(key);
-        if (chatState) {
-            chatState.chitState.totalChitEarned = chatState.chitState.chitBalance;
-            await store.put(chatState, key);
-        }
-    },
+    114: clearEverything,
 };
 
 async function migrate(
+    db: IDBPDatabase<ChatSchema>,
     principal: Principal,
     from: number,
     to: number,
@@ -165,7 +172,7 @@ async function migrate(
     for (let version = from + 1; version <= to; version++) {
         if (migrations[version]) {
             console.debug(`DB: applying migration for version ${version}`);
-            await migrations[version](principal, transaction);
+            await migrations[version](db, principal, transaction);
         }
     }
 }
@@ -204,6 +211,9 @@ function nuke(db: IDBPDatabase<ChatSchema>) {
     if (db.objectStoreNames.contains("localUserIndex")) {
         db.deleteObjectStore("localUserIndex");
     }
+    if (db.objectStoreNames.contains("externalAchievements")) {
+        db.deleteObjectStore("externalAchievements");
+    }
     const chatEvents = db.createObjectStore("chat_events");
     chatEvents.createIndex("messageIdx", "messageKey");
     chatEvents.createIndex("expiresAt", "expiresAt");
@@ -217,6 +227,7 @@ function nuke(db: IDBPDatabase<ChatSchema>) {
     db.createObjectStore("cachePrimer");
     db.createObjectStore("currentUser");
     db.createObjectStore("localUserIndex");
+    db.createObjectStore("externalAchievements");
 }
 
 function padMessageIndex(i: number): string {
@@ -253,7 +264,7 @@ export function openCache(principal: Principal): Database {
                 nuke(db);
             } else {
                 console.debug(`DB: migrating database from ${previousVersion} to ${newVersion}`);
-                migrate(principal, previousVersion, newVersion, transaction).then(() => {
+                migrate(db, principal, previousVersion, newVersion, transaction).then(() => {
                     console.debug(
                         `DB: migration from ${previousVersion} to ${newVersion} complete`,
                     );
@@ -1308,4 +1319,32 @@ export async function cacheLocalUserIndexForUser(
     if (db === undefined) return localUserIndex;
     (await db).put("localUserIndex", localUserIndex, userId);
     return localUserIndex;
+}
+
+export async function clearCache(principal: string): Promise<void> {
+    const name = `openchat_db_${principal}`;
+    try {
+        if (db !== undefined) {
+            (await db).close();
+        }
+        await deleteDB(name);
+        console.error("deleted db: ", name);
+    } catch (err) {
+        console.error("Unable to delete db: ", name, err);
+    }
+}
+
+export async function getCachedExternalAchievements(): Promise<
+    { lastUpdated: bigint; achievements: ExternalAchievement[] } | undefined
+> {
+    if (db === undefined) return undefined;
+    return (await db).get("externalAchievements", "value");
+}
+
+export async function setCachedExternalAchievements(
+    lastUpdated: bigint,
+    achievements: ExternalAchievement[],
+): Promise<void> {
+    if (db === undefined) return;
+    (await db).put("externalAchievements", { lastUpdated, achievements }, "value");
 }

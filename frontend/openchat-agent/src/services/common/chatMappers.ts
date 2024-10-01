@@ -79,6 +79,7 @@ import type {
     ApiSetVideoCallPresenceResponse,
     ApiCallParticipant,
     ApiSetPinNumberResponse,
+    ApiAccessGateNonComposite,
 } from "../user/candid/idl";
 import type {
     Message,
@@ -124,7 +125,6 @@ import type {
     MessageContext,
     ReportedMessageContent,
     GroupChatSummary,
-    GateCheckFailedReason,
     CommunityPermissionRole,
     CommunityPermissions,
     ChatIdentifier,
@@ -155,7 +155,6 @@ import type {
     ThreadPreviewsResponse,
     ChangeRoleResponse,
     RegisterPollVoteResponse,
-    JoinGroupResponse,
     SearchGroupChatResponse,
     InviteCodeResponse,
     EnableInviteCodeResponse,
@@ -236,12 +235,6 @@ import type {
     ApiVideoCallParticipantsResponse as ApiGroupVideoCallParticipantsResponse,
 } from "../group/candid/idl";
 import type {
-    ApiGateCheckFailedReason,
-    ApiCommunityCanisterCommunitySummary,
-    ApiJoinGroupResponse,
-    ApiUserGroup,
-} from "../localUserIndex/candid/idl";
-import type {
     ApiCommunityPermissionRole,
     ApiCommunityRole,
     ApiAddReactionResponse as ApiAddChannelReactionResponse,
@@ -272,6 +265,8 @@ import type {
     ApiCancelP2PSwapResponse as ApiCommunityCancelP2PSwapResponse,
     ApiJoinVideoCallResponse as ApiJoinChannelVideoCallResponse,
     ApiVideoCallParticipantsResponse as ApiChannelVideoCallParticipantsResponse,
+    ApiUserGroup,
+    ApiCommunityCanisterCommunitySummary,
 } from "../community/candid/idl";
 import { ReplicaNotUpToDateError } from "../error";
 import { messageMatch } from "../user/mappers";
@@ -427,7 +422,11 @@ export function event(candid: ApiChatEvent): ChatEvent {
     if ("GroupVisibilityChanged" in candid) {
         return {
             kind: "group_visibility_changed",
-            nowPublic: candid.GroupVisibilityChanged.now_public,
+            public: optional(candid.GroupVisibilityChanged.public, identity),
+            messagesVisibleToNonMembers: optional(
+                candid.GroupVisibilityChanged.messages_visible_to_non_members,
+                identity,
+            ),
             changedBy: candid.GroupVisibilityChanged.changed_by.toString(),
         };
     }
@@ -479,6 +478,14 @@ export function event(candid: ApiChatEvent): ChatEvent {
     }
     if ("Empty" in candid) {
         return { kind: "empty" };
+    }
+
+    if ("ExternalUrlUpdated" in candid) {
+        return {
+            kind: "external_url_updated",
+            newUrl: optional(candid.ExternalUrlUpdated.new_url, identity),
+            updatedBy: candid.ExternalUrlUpdated.updated_by.toString(),
+        };
     }
 
     throw new UnsupportedValueError("Unexpected ApiEventWrapper type received", candid);
@@ -1197,6 +1204,7 @@ export function groupPermissions(candid: ApiGroupPermissions): ChatPermissions {
         changeRoles: permissionRole(candid.change_roles),
         updateGroup: permissionRole(candid.update_group),
         inviteUsers: permissionRole(candid.invite_users),
+        addMembers: permissionRole(candid.add_members),
         removeMembers: permissionRole(candid.remove_members),
         deleteMessages: permissionRole(candid.delete_messages),
         pinMessages: permissionRole(candid.pin_messages),
@@ -1278,11 +1286,11 @@ export function apiGroupPermissions(permissions: ChatPermissions): ApiGroupPermi
         change_roles: apiPermissionRole(permissions.changeRoles),
         update_group: apiPermissionRole(permissions.updateGroup),
         invite_users: apiPermissionRole(permissions.inviteUsers),
+        add_members: apiPermissionRole(permissions.addMembers),
         remove_members: apiPermissionRole(permissions.removeMembers),
         delete_messages: apiPermissionRole(permissions.deleteMessages),
         pin_messages: apiPermissionRole(permissions.pinMessages),
         react_to_messages: apiPermissionRole(permissions.reactToMessages),
-        add_members: apiPermissionRole("owner"),
         mention_all_members: apiPermissionRole(permissions.mentionAllMembers),
         start_video_call: apiPermissionRole(permissions.startVideoCall),
         message_permissions: apiMessagePermissions(permissions.messagePermissions),
@@ -1605,7 +1613,7 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
         return [
             {
                 Composite: {
-                    inner: domain.gates.map(apiAccessGate),
+                    inner: domain.gates.map(apiLeafAccessGate),
                     and: domain.operator === "and",
                 },
             },
@@ -1613,8 +1621,10 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
     }
     if (domain.kind === "no_gate") return [];
     if (domain.kind === "nft_gate") return []; // TODO
+    if (domain.kind === "unique_person_gate") return [{ UniquePerson: null }];
     if (domain.kind === "diamond_gate") return [{ DiamondMember: null }];
     if (domain.kind === "locked_gate") return [{ Locked: null }];
+    if (domain.kind === "referred_by_member_gate") return [{ ReferredByMember: null }];
     if (domain.kind === "credential_gate")
         return [
             {
@@ -1664,11 +1674,12 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
     return [];
 }
 
-export function apiAccessGate(domain: AccessGate): ApiAccessGate {
+export function apiLeafAccessGate(domain: LeafGate): ApiAccessGateNonComposite {
     if (domain.kind === "locked_gate") return { Locked: null };
     if (domain.kind === "diamond_gate") return { DiamondMember: null };
     if (domain.kind === "lifetime_diamond_gate") return { LifetimeDiamondMember: null };
     if (domain.kind === "unique_person_gate") return { UniquePerson: null };
+    if (domain.kind === "referred_by_member_gate") return { ReferredByMember: null };
     if (domain.kind === "credential_gate")
         return {
             VerifiedCredential: {
@@ -1705,15 +1716,20 @@ export function apiAccessGate(domain: AccessGate): ApiAccessGate {
             },
         };
     }
+    throw new Error(`Received a domain level group gate that we cannot parse: ${domain}`);
+}
+
+export function apiAccessGate(domain: AccessGate): ApiAccessGate {
     if (domain.kind === "composite_gate") {
         return {
             Composite: {
                 and: domain.operator === "and",
-                inner: domain.gates.map(apiAccessGate),
+                inner: domain.gates.map(apiLeafAccessGate),
             },
         };
+    } else {
+        return apiLeafAccessGate(domain);
     }
-    throw new Error(`Received a domain level group gate that we cannot parse: ${domain}`);
 }
 
 export function credentialArguments(
@@ -1810,6 +1826,13 @@ export function accessGate(candid: ApiAccessGate): AccessGate {
             minBalance: candid.TokenBalance.min_balance,
         };
     }
+
+    if ("ReferredByMember" in candid) {
+        return {
+            kind: "referred_by_member_gate",
+        };
+    }
+
     if ("Composite" in candid) {
         return {
             kind: "no_gate",
@@ -2020,6 +2043,7 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
         },
         localUserIndex: candid.local_user_index_canister_id.toString(),
         isInvited: false, // this is only applicable when we are not a member
+        messagesVisibleToNonMembers: candid.messages_visible_to_non_members,
     };
 }
 
@@ -2130,6 +2154,8 @@ export function communityChannelSummary(
             rulesAccepted: optional(candid.membership, (m) => m.rules_accepted) ?? false,
         },
         isInvited: optional(candid.is_invited, identity) ?? false,
+        messagesVisibleToNonMembers: candid.messages_visible_to_non_members,
+        externalUrl: optional(candid.external_url, identity),
     };
 }
 
@@ -2140,42 +2166,6 @@ export function threadSyncDetails(candid: ApiGroupCanisterThreadDetails): Thread
         latestEventIndex: candid.latest_event,
         latestMessageIndex: candid.latest_message,
     };
-}
-
-export function gateCheckFailedReason(candid: ApiGateCheckFailedReason): GateCheckFailedReason {
-    if ("NoUniquePersonProof" in candid) {
-        return "no_unique_person_proof";
-    }
-    if ("NotLifetimeDiamondMember" in candid) {
-        return "not_lifetime_diamond";
-    }
-    if ("NotDiamondMember" in candid) {
-        return "not_diamond";
-    }
-    if ("NoSnsNeuronsFound" in candid) {
-        return "no_sns_neuron_found";
-    }
-    if ("NoSnsNeuronsWithRequiredDissolveDelayFound" in candid) {
-        return "dissolve_delay_not_met";
-    }
-    if ("NoSnsNeuronsWithRequiredStakeFound" in candid) {
-        return "min_stake_not_met";
-    }
-    if ("PaymentFailed" in candid) {
-        console.warn("PaymentFailed: ", candid);
-        return "payment_failed";
-    }
-    if ("InsufficientBalance" in candid) {
-        return "insufficient_balance";
-    }
-    if ("FailedVerifiedCredentialCheck" in candid) {
-        console.warn("FailedVerifiedCredentialCheck: ", candid);
-        return "failed_verified_credential_check";
-    }
-    if ("Locked" in candid) {
-        return "locked";
-    }
-    throw new UnsupportedValueError("Unexpected ApiGateCheckFailedReason type received", candid);
 }
 
 export function addRemoveReactionResponse(
@@ -2326,7 +2316,8 @@ export function updateGroupResponse(
         "CommunityFrozen" in candid ||
         "CannotMakeChannelPublic" in candid ||
         "CannotMakeGroupPublic" in candid ||
-        "CannotMakeDefaultChannelPrivate" in candid
+        "CannotMakeDefaultChannelPrivate" in candid ||
+        "ExternalUrlInvalid" in candid
     ) {
         console.warn("UpdateGroupResponse failed with: ", candid);
         return { kind: "failure" };
@@ -2424,6 +2415,10 @@ export function createGroupResponse(
 
     if ("AccessGateInvalid" in candid) {
         return { kind: "access_gate_invalid" };
+    }
+
+    if ("ExternalUrlInvalid" in candid) {
+        return { kind: "external_url_invalid" };
     }
 
     throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", candid);
@@ -2683,21 +2678,6 @@ export function apiChatIdentifier(chatId: ChatIdentifier): ApiChat {
             return { Direct: Principal.fromText(chatId.userId) };
         case "channel":
             return { Channel: [Principal.fromText(chatId.communityId), BigInt(chatId.channelId)] };
-    }
-}
-
-export function joinGroupResponse(candid: ApiJoinGroupResponse): JoinGroupResponse {
-    if ("Success" in candid) {
-        return { kind: "success", group: groupChatSummary(candid.Success) };
-    } else if ("AlreadyInGroupV2" in candid) {
-        return { kind: "success", group: groupChatSummary(candid.AlreadyInGroupV2) };
-    } else if ("Blocked" in candid) {
-        return CommonResponses.userBlocked();
-    } else if ("GateCheckFailed" in candid) {
-        return { kind: "gate_check_failed", reason: gateCheckFailedReason(candid.GateCheckFailed) };
-    } else {
-        console.warn("Join group failed with: ", candid);
-        return CommonResponses.failure();
     }
 }
 

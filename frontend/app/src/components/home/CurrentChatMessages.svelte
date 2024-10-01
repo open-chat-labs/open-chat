@@ -45,6 +45,7 @@
     export let canReplyInThread: boolean;
     export let events: EventWrapper<ChatEventType>[];
     export let filteredProposals: FilteredProposals | undefined;
+    export let privateChatPreview: boolean;
 
     $: user = client.user;
     $: isProposalGroup = client.isProposalGroup;
@@ -132,10 +133,10 @@
     $: expandedDeletedMessages = client.expandedDeletedMessages;
 
     $: timeline = client.groupEvents(
-        reverseScroll ? [...events].reverse() : events,
+        $reverseScroll ? [...events].reverse() : events,
         $user.userId,
         $expandedDeletedMessages,
-        reverseScroll,
+        $reverseScroll,
         groupInner(filteredProposals),
     );
 
@@ -143,11 +144,6 @@
         $selectedCommunity !== undefined &&
         $selectedCommunity.membership.role === "none" &&
         (!$selectedCommunity.public || $selectedCommunity.gate.kind !== "no_gate");
-
-    $: privateChatPreview =
-        (chat.kind === "group_chat" || chat.kind === "channel") &&
-        chat.membership.role === "none" &&
-        (!chat.public || chat.gate.kind !== "no_gate");
 
     $: privatePreview = privateCommunityPreview || privateChatPreview;
     $: isEmptyChat = chat.latestEventIndex <= 0 || privatePreview;
@@ -283,12 +279,13 @@
     bind:initialised
     bind:messagesDiv
     bind:messagesDivHeight
+    let:isAccepted
     let:isConfirmed
     let:isFailed
     let:isReadByMe
     let:messageObserver
     let:labelObserver>
-    {#if !reverseScroll}
+    {#if !$reverseScroll}
         {#if showAvatar}
             {#if $isProposalGroup}
                 <ProposalBot />
@@ -299,7 +296,7 @@
             {:else if chat.kind === "direct_chat"}
                 <div class="big-avatar">
                     <Avatar
-                        url={client.userAvatarUrl($userStore[chat.them.userId])}
+                        url={client.userAvatarUrl($userStore.get(chat.them.userId))}
                         userId={chat.them.userId}
                         size={AvatarSize.Large} />
                 </div>
@@ -321,6 +318,7 @@
                             focused={evt.event.kind === "message" &&
                                 evt.event.messageIndex === $focusMessageIndex &&
                                 !isFailed($failedMessagesStore, evt)}
+                            accepted={isAccepted($unconfirmed, evt)}
                             confirmed={isConfirmed($unconfirmed, evt)}
                             failed={isFailed($failedMessagesStore, evt)}
                             readByThem={isReadByThem(chat, $unconfirmedReadByThem, evt)}
@@ -329,8 +327,8 @@
                             chatType={chat.kind}
                             user={$user}
                             me={isMe(evt)}
-                            first={reverseScroll ? i + 1 === innerGroup.length : i === 0}
-                            last={reverseScroll ? i === 0 : i + 1 === innerGroup.length}
+                            first={$reverseScroll ? i + 1 === innerGroup.length : i === 0}
+                            last={$reverseScroll ? i === 0 : i + 1 === innerGroup.length}
                             {readonly}
                             {canPin}
                             {canBlockUsers}
@@ -365,7 +363,7 @@
             {/if}
         {/each}
     {/if}
-    {#if reverseScroll}
+    {#if $reverseScroll}
         {#if privatePreview}
             <PrivatePreview />
         {/if}
@@ -379,7 +377,7 @@
             {:else if chat.kind === "direct_chat"}
                 <div class="big-avatar">
                     <Avatar
-                        url={client.userAvatarUrl($userStore[chat.them.userId])}
+                        url={client.userAvatarUrl($userStore.get(chat.them.userId))}
                         userId={chat.them.userId}
                         size={AvatarSize.Large} />
                 </div>

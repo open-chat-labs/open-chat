@@ -1,14 +1,14 @@
 use crate::guards::caller_is_owner;
 use crate::{mutate_state, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
-use ic_cdk::update;
 use serde::Serialize;
 use types::{Achievement, ChitEarned, ChitEarnedReason, UserId};
 use user_canister::claim_daily_chit::{Response::*, *};
 use utils::time::tomorrow;
 
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 fn claim_daily_chit(_args: Args) -> Response {
     mutate_state(claim_daily_chit_impl)
@@ -46,6 +46,14 @@ fn claim_daily_chit_impl(state: &mut RuntimeState) -> Response {
 
     if streak >= 30 {
         state.data.award_achievement(Achievement::Streak30, now);
+    }
+
+    if streak >= 100 {
+        state.data.award_achievement(Achievement::Streak100, now);
+    }
+
+    if streak >= 365 {
+        state.data.award_achievement(Achievement::Streak365, now);
     }
 
     state.data.notify_user_index_of_chit(now);

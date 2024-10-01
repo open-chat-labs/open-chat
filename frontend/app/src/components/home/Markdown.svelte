@@ -24,7 +24,7 @@
 
     function replaceUserIds(text: string): string {
         return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
-            const u = $userStore[p1];
+            const u = $userStore.get(p1);
             if (u !== undefined) {
                 return `<profile-link text="${u.username}" user-id="${u.userId}" suppress-links="${suppressLinks}"></profile-link>`;
             }
@@ -165,8 +165,8 @@
             }
 
             code {
-                color: var(--code);
-                background-color: rgba(255, 255, 255, 0.1);
+                color: var(--code-txt);
+                background-color: var(--code-bg);
                 padding: 3px 5px;
                 border-radius: 4px;
             }
@@ -174,8 +174,10 @@
             pre {
                 padding: toRem(16);
                 overflow-x: auto;
-                border-radius: toRem(12);
+                border-radius: $sp2;
                 border: 1px solid rgba(255, 255, 255, 0.1);
+                background-color: var(--code-bg);
+                color: var(--code-txt);
 
                 code {
                     background-color: transparent;

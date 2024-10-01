@@ -1,9 +1,9 @@
 use crate::{read_state, RuntimeState};
+use canister_api_macros::query;
 use group_canister::search_messages::{Response::*, *};
 use group_chat_core::SearchResults;
-use ic_cdk::query;
 
-#[query]
+#[query(candid = true, msgpack = true)]
 fn search_messages(args: Args) -> Response {
     read_state(|state| search_messages_impl(args, state))
 }
@@ -15,7 +15,7 @@ fn search_messages_impl(args: Args, state: &RuntimeState) -> Response {
         match state
             .data
             .chat
-            .search(user_id, args.search_term, args.users, args.max_results, state.env.now())
+            .search(user_id, args.search_term, args.users, args.max_results)
         {
             SearchResults::Success(matches) => Success(SuccessResult { matches }),
             SearchResults::InvalidTerm => InvalidTerm,

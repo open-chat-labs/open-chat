@@ -1,16 +1,16 @@
-use crate::{generate_query_call, generate_update_call};
+use crate::{generate_msgpack_query_call, generate_msgpack_update_call, generate_query_call, generate_update_call};
 use user_index_canister::*;
 
 // Queries
-generate_query_call!(check_username);
-generate_query_call!(chit_balances);
-generate_query_call!(current_user);
-generate_query_call!(search);
-generate_query_call!(platform_moderators);
-generate_query_call!(platform_moderators_group);
+generate_msgpack_query_call!(check_username);
+generate_msgpack_query_call!(current_user);
+generate_msgpack_query_call!(search);
+generate_msgpack_query_call!(platform_moderators);
+generate_msgpack_query_call!(platform_moderators_group);
 generate_query_call!(public_key);
-generate_query_call!(user);
-generate_query_call!(users);
+generate_msgpack_query_call!(user);
+generate_msgpack_query_call!(users);
+generate_msgpack_query_call!(users_chit);
 
 // Updates
 generate_update_call!(add_local_user_index_canister);
@@ -18,26 +18,29 @@ generate_update_call!(add_platform_moderator);
 generate_update_call!(add_platform_operator);
 generate_update_call!(assign_platform_moderators_group);
 generate_update_call!(c2c_register_bot);
-generate_update_call!(delete_user);
-generate_update_call!(pay_for_diamond_membership);
+generate_msgpack_update_call!(delete_user);
+generate_msgpack_update_call!(pay_for_diamond_membership);
 generate_update_call!(remove_platform_moderator);
-generate_update_call!(set_display_name);
-generate_update_call!(set_username);
-generate_update_call!(suspend_user);
-generate_update_call!(update_diamond_membership_subscription);
-generate_update_call!(unsuspend_user);
+generate_msgpack_update_call!(set_display_name);
+generate_msgpack_update_call!(set_username);
+generate_msgpack_update_call!(suspend_user);
+generate_msgpack_update_call!(update_diamond_membership_subscription);
+generate_msgpack_update_call!(unsuspend_user);
 generate_update_call!(upgrade_local_user_index_canister_wasm);
 generate_update_call!(upgrade_user_canister_wasm);
+generate_update_call!(upload_wasm_chunk);
 
 pub mod happy_path {
     use candid::Principal;
     use pocket_ic::PocketIc;
+    use sha256::sha256;
     use std::collections::HashMap;
     use types::{
-        CanisterId, CanisterWasm, Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration, Empty, UserId,
+        CanisterId, CanisterWasm, Chit, Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration, Empty, UserId,
         UserSummary,
     };
     use user_index_canister::users::UserGroup;
+    use user_index_canister::ChildCanisterType;
 
     pub fn current_user(
         env: &PocketIc,
@@ -148,14 +151,22 @@ pub mod happy_path {
         user_index_canister_id: CanisterId,
         wasm: CanisterWasm,
     ) {
+        upload_wasm_in_chunks(
+            env,
+            sender,
+            user_index_canister_id,
+            &wasm.module,
+            ChildCanisterType::LocalUserIndex,
+        );
+
         let response = super::upgrade_local_user_index_canister_wasm(
             env,
             sender,
             user_index_canister_id,
             &user_index_canister::upgrade_local_user_index_canister_wasm::Args {
-                wasm,
+                version: wasm.version,
+                wasm_hash: sha256(&wasm.module),
                 filter: None,
-                use_for_new_canisters: None,
             },
         );
 
@@ -171,14 +182,16 @@ pub mod happy_path {
         user_index_canister_id: CanisterId,
         wasm: CanisterWasm,
     ) {
+        upload_wasm_in_chunks(env, sender, user_index_canister_id, &wasm.module, ChildCanisterType::User);
+
         let response = super::upgrade_user_canister_wasm(
             env,
             sender,
             user_index_canister_id,
             &user_index_canister::upgrade_user_canister_wasm::Args {
-                wasm,
+                version: wasm.version,
+                wasm_hash: sha256(&wasm.module),
                 filter: None,
-                use_for_new_canisters: None,
             },
         );
 
@@ -233,18 +246,18 @@ pub mod happy_path {
         }
     }
 
-    pub fn chit_balances(
+    pub fn users_chit(
         env: &PocketIc,
         user_index_canister_id: CanisterId,
         users: Vec<UserId>,
         year: u16,
         month: u8,
-    ) -> HashMap<UserId, i32> {
-        let response = super::chit_balances(
+    ) -> HashMap<UserId, Chit> {
+        let response = super::users_chit(
             env,
             Principal::anonymous(),
             user_index_canister_id,
-            &user_index_canister::chit_balances::Args {
+            &user_index_canister::users_chit::Args {
                 users: users.clone(),
                 year,
                 month,
@@ -252,7 +265,32 @@ pub mod happy_path {
         );
 
         match response {
-            user_index_canister::chit_balances::Response::Success(result) => users.into_iter().zip(result.balances).collect(),
+            user_index_canister::users_chit::Response::Success(result) => users.into_iter().zip(result.chit).collect(),
+        }
+    }
+
+    fn upload_wasm_in_chunks(
+        env: &mut PocketIc,
+        sender: Principal,
+        user_index_canister_id: CanisterId,
+        wasm: &[u8],
+        canister_type: ChildCanisterType,
+    ) {
+        for (index, chunk) in wasm.chunks(1_000_000).enumerate() {
+            let response = super::upload_wasm_chunk(
+                env,
+                sender,
+                user_index_canister_id,
+                &user_index_canister::upload_wasm_chunk::Args {
+                    canister_type,
+                    chunk: chunk.to_vec().into(),
+                    index: index as u8,
+                },
+            );
+            assert!(matches!(
+                response,
+                user_index_canister::upload_wasm_chunk::Response::Success(_)
+            ));
         }
     }
 }

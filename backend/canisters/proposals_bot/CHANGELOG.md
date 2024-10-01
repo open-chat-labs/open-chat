@@ -5,6 +5,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+- Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
+
+## [[2.0.1307](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1307-proposals_bot)] - 2024-08-26
+
+### Changed
+
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+
+### Fixed
+
+- Fix case where messages marked as pushed when they actually failed ([#6284](https://github.com/open-chat-labs/open-chat/pull/6284))
+
 ## [[2.0.1237](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1237-proposals_bot)] - 2024-07-16
 
 ### Added

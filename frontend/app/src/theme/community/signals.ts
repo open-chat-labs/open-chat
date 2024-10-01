@@ -44,7 +44,7 @@ export function getTheme(base: Theme): Theme {
     base.entry.input.sh = "none";
     base.entry.input.bd = black;
     base.panel.bg = "transparent";
-    base.panel.nav.bg = "transparent";
+    base.panel.nav.bg = white;
     base.panel.left.bg = "transparent";
     base.panel.right.bg = "transparent";
     base.panel.right.modal = white;
@@ -101,6 +101,20 @@ export function getTheme(base: Theme): Theme {
     base.daily.mainAreaBgAccent = base.accent;
     base.daily.mainAreaText = txt;
     base.daily.supportiveText = "#4e5670";
+    base.code = {
+        bg: white,
+        txt: powderBlue,
+    };
+    base.unread.mute = "#dddddd";
+    base.unread["mute-solid"] = "#dddddd";
+    base.unread["mute-txt"] = "#999999";
+
+    base.audio.outer = powderBlue;
+    base.audio.me.outer = powderBlue;
+    base.audio.inner = yellow;
+    base.audio.me.inner = yellow;
+    base.audio.note = black;
+    base.audio.me.note = white;
 
     return base;
 }

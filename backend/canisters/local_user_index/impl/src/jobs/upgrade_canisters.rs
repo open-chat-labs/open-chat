@@ -1,6 +1,7 @@
 use crate::{mutate_state, RuntimeState};
 use ic_cdk::api::management_canister::main::CanisterInstallMode;
 use ic_cdk_timers::TimerId;
+use local_user_index_canister::ChildCanisterType;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
@@ -72,7 +73,7 @@ fn try_get_next(state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
 fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
     let user_id = canister_id.into();
     let user = state.data.local_users.get_mut(&user_id)?;
-    let user_canister_wasm = &state.data.user_canister_wasm_for_upgrades;
+    let user_canister_wasm = &state.data.child_canister_wasms.get(ChildCanisterType::User);
     let current_wasm_version = user.wasm_version;
     let new_wasm_version = user_canister_wasm.wasm.version;
     let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > min_cycles_balance(state.data.test_mode);

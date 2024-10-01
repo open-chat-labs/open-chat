@@ -8,6 +8,7 @@ import {
     type WorkerError,
     type WorkerResult,
     type ConnectToWorkerResponse,
+    AuthProvider,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -41,13 +42,18 @@ export class OpenChatAgentWorker extends EventTarget {
         super();
     }
 
-    protected connectToWorker(): Promise<ConnectToWorkerResponse> {
+    protected connectToWorker(
+        authPrincipal: string,
+        authProvider: AuthProvider | undefined,
+    ): Promise<ConnectToWorkerResponse> {
         console.debug("WORKER_CLIENT: loading worker with version: ", this.config.websiteVersion);
         this._worker = new Worker(`/worker.js?v=${this.config.websiteVersion}`, { type: "module" });
         const initResponse = new Promise<ConnectToWorkerResponse>((resolve) => {
             this.sendRequest(
                 {
                     kind: "init",
+                    authPrincipal,
+                    authProvider,
                     icUrl: this.config.icUrl ?? window.location.origin,
                     iiDerivationOrigin: this.config.iiDerivationOrigin,
                     openStorageIndexCanister: this.config.openStorageIndexCanister,
@@ -63,6 +69,7 @@ export class OpenChatAgentWorker extends EventTarget {
                     userGeekApiKey: this.config.userGeekApiKey,
                     enableMultiCrypto: this.config.enableMultiCrypto,
                     blobUrlPattern: this.config.blobUrlPattern,
+                    achievementUrlPath: this.config.achievementUrlPath,
                     proposalBotCanister: this.config.proposalBotCanister,
                     marketMakerCanister: this.config.marketMakerCanister,
                     signInWithEmailCanister: this.config.signInWithEmailCanister,

@@ -1,13 +1,15 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use serde_bytes::ByteBuf;
 use std::fmt::{Debug, Formatter};
+use ts_export::ts_export;
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone)]
 pub struct Document {
     pub id: u128,
     pub mime_type: String,
-    pub data: ByteBuf,
+    #[serde(with = "serde_bytes")]
+    pub data: Vec<u8>,
 }
 
 impl Document {

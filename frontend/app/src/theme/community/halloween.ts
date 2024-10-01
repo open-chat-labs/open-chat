@@ -25,8 +25,10 @@ export function getTheme(base: Theme): Theme {
     base.txt = txt;
     base["txt-light"] = txtLight;
     base.accent = green;
-    base.code = green;
-
+    base.code = {
+        txt: green,
+        bg: "rgba(0,0,0,0.8)",
+    };
     base.icon.txt = yellow;
     base.icon.selected = lightGreen;
     base.button.bg = orange;
@@ -35,6 +37,12 @@ export function getTheme(base: Theme): Theme {
     base.button.disabled = lighterBrown;
     base.button["disabled-txt"] = hexPercent(darkOrange, 90);
     base.button["disabled-bd"] = base.bd;
+    base.audio.outer = green;
+    base.audio.inner = yellow;
+    base.audio.me.outer = green;
+    base.audio.me.inner = yellow;
+    base.audio.note = txt;
+    base.audio.me.note = txt;
 
     base.collapsible.closed.header.txt = txt;
     base.collapsible.open.header.arrow = lightGreen;

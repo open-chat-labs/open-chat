@@ -27,6 +27,22 @@ export type UserSummary = DataContent & {
     isUniquePerson: boolean;
 };
 
+export function deletedUser(userId: string): UserSummary {
+    return {
+        kind: "user",
+        userId,
+        username: "Deleted User",
+        displayName: undefined,
+        updated: BigInt(Number.MAX_VALUE), // we want to *never* request updates for a deleted user
+        suspended: false,
+        diamondStatus: "inactive",
+        chitBalance: 0,
+        streak: 0,
+        isUniquePerson: false,
+        totalChitEarned: 0,
+    };
+}
+
 // Note this *has* to return UserSummary | undefined because of the types, but we would not expect it to ever do so in practice
 export function mergeUserSummaryWithUpdates(
     cached: UserSummary | undefined,
@@ -135,7 +151,7 @@ export type IdentityState =
     | { kind: "upgrade_user"; postLogin?: PostLoginOperation }
     | { kind: "challenging"; postLogin?: PostLoginOperation };
 
-export type UserLookup = Record<string, UserSummary>;
+export type UserLookup = Map<string, UserSummary>;
 
 export type User = {
     userId: string;
@@ -163,6 +179,7 @@ export type UsersArgs = {
 export type UsersResponse = {
     serverTimestamp?: bigint;
     users: UserSummary[];
+    deletedUserIds: Set<string>;
     currentUser?: CurrentUserSummary;
 };
 
@@ -189,6 +206,7 @@ export type UserSummaryUpdate = {
 
 export type UsersApiResponse = {
     serverTimestamp: bigint;
+    deletedUserIds: Set<string>;
     users: UserSummaryUpdate[];
     currentUser?: CurrentUserSummary;
 };
@@ -243,7 +261,6 @@ export type CreatedUser = CurrentUserCommon & {
     kind: "created_user";
     dateCreated: bigint;
     cryptoAccount: string;
-    referrals: string[];
 };
 
 export function anonymousUser(): CreatedUser {
@@ -254,7 +271,6 @@ export function anonymousUser(): CreatedUser {
         displayName: ANON_DISPLAY_NAME, // TODO probably need to translate this
         cryptoAccount: "", // TODO - will this be a problem?
         userId: ANON_USER_ID,
-        referrals: [],
         isPlatformModerator: false,
         isPlatformOperator: false,
         suspensionDetails: undefined,
@@ -395,30 +411,6 @@ export type SetUserUpgradeConcurrencyResponse = "success" | "offline";
 
 export type SetMessageReminderResponse = "failure" | "success" | "offline";
 
-export type ReferralLeaderboardRange = { year: number; month: number };
-
-export type ReferralLeaderboardResponse = AllTimeReferralStats | MonthlyReferralStats;
-
-export type AllTimeReferralStats = {
-    kind: "all_time";
-    stats: ReferralStats[];
-};
-
-export type MonthlyReferralStats = {
-    kind: "monthly";
-    month: number;
-    year: number;
-    stats: ReferralStats[];
-};
-
-export type ReferralStats = {
-    username: string;
-    totalUsers: number;
-    userId: string;
-    diamondMembers: number;
-    totalRewardsE8s: bigint;
-};
-
 export type ModerationFlag = 1 | 2 | 4;
 
 export const ModerationFlags = {
@@ -502,3 +494,10 @@ export type DiamondMembershipFees = {
 };
 
 export type SubmitProofOfUniquePersonhoodResponse = Success | Invalid | UserNotFound;
+
+export type ReferralStatus = "registered" | "diamond" | "unique_person" | "lifetime_diamond";
+
+export type Referral = {
+    userId: string;
+    status: ReferralStatus;
+};

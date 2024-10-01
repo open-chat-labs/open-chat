@@ -1,13 +1,13 @@
 use crate::guards::caller_is_owner;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{AddRemoveReactionArgs, AddRemoveReactionResult};
-use ic_cdk::update;
 use types::{Achievement, EventIndex};
 use user_canister::add_reaction::{Response::*, *};
 use user_canister::{ToggleReactionArgs, UserCanisterEvent};
 
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 fn add_reaction(args: Args) -> Response {
     run_regular_jobs();
@@ -39,7 +39,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
             },
             Some(&mut state.data.event_store_client),
         ) {
-            AddRemoveReactionResult::Success => {
+            AddRemoveReactionResult::Success(_) => {
                 let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
 
                 state.push_user_canister_event(

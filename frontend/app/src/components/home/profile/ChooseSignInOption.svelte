@@ -7,8 +7,8 @@
     import Input from "../../Input.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Button from "../../Button.svelte";
-    import InternetIdentityLogo from "../../landingpages/InternetIdentityLogo.svelte";
     import Translatable from "../../Translatable.svelte";
+    import SignInOption from "./SignInOption.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -118,28 +118,13 @@
                         </Button>
                     </div>
                 {:else}
-                    <div class="auth-option">
-                        <div class="icon center">
-                            {#if provider === AuthProvider.II}
-                                <InternetIdentityLogo />
-                            {:else if provider === AuthProvider.ETH}
-                                <img class="eth-img" src="/assets/ethereum.svg" alt="ethereum" />
-                            {:else if provider === AuthProvider.SOL}
-                                <img class="sol-img" src="/assets/solana.svg" alt="solana" />
-                            {:else if provider === AuthProvider.NFID}
-                                <img class="nfid-img" src="/assets/nfid.svg" alt="nfid" />
-                            {/if}
-                        </div>
-                        <Button fill on:click={() => login(provider)}>
-                            <Translatable
-                                resourceKey={i18nKey(
-                                    mode === "signin"
-                                        ? "loginDialog.signinWith"
-                                        : "loginDialog.signupWith",
-                                    { provider: providerName(provider) },
-                                )} />
-                        </Button>
-                    </div>
+                    <SignInOption
+                        {provider}
+                        name={i18nKey(
+                            mode === "signin" ? "loginDialog.signinWith" : "loginDialog.signupWith",
+                            { provider: providerName(provider) },
+                        )}
+                        on:click={() => login(provider)} />
                 {/if}
             </div>
         {/if}
@@ -159,10 +144,6 @@
 
     :global(.sign-in-options .email .input-wrapper) {
         margin-bottom: 0;
-    }
-
-    :global(.sign-in-options .auth-option button) {
-        border-radius: 0 $sp2 $sp2 0;
     }
 
     :global(.sign-in-options .email button) {
@@ -223,13 +204,6 @@
                 .email-txt {
                     flex: auto;
                 }
-            }
-
-            .auth-option {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                flex: auto;
             }
 
             &.separate {

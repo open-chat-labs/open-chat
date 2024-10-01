@@ -1,5 +1,6 @@
 <script lang="ts">
     import AccountCheck from "svelte-material-icons/AccountCheck.svelte";
+    import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
     import VectorCombine from "svelte-material-icons/VectorCombine.svelte";
     import ShieldLockOpenOutline from "svelte-material-icons/ShieldLockOpenOutline.svelte";
     import { _ } from "svelte-i18n";
@@ -31,6 +32,7 @@
     export let showNoGate = false;
     export let level: Level;
     export let clickable = false;
+    export let button = false;
 
     const client = getContext<OpenChat>("client");
 
@@ -38,6 +40,7 @@
 
     $: tokenDetails = client.getTokenDetailsForAccessGate(gate);
     $: params = formatParams(gate, tokenDetails);
+    $: defaultColor = button ? "var(--button-txt)" : "var(--icon-txt)";
 
     function formatParams(
         gate: AccessGate,
@@ -98,7 +101,7 @@
     {#if gate.kind === "no_gate" && showNoGate}
         <TooltipWrapper {position} {align}>
             <div slot="target" class="open">
-                <ShieldLockOpenOutline size={$iconSize} color={"var(--txt)"} />
+                <ShieldLockOpenOutline size={$iconSize} color={defaultColor} />
             </div>
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
@@ -119,7 +122,7 @@
     {:else if gate.kind === "composite_gate"}
         <TooltipWrapper {position} {align}>
             <div slot="target" class="composite">
-                <VectorCombine size={$iconSize} color={"var(--txt)"} />
+                <VectorCombine size={$iconSize} color={defaultColor} />
             </div>
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
@@ -152,7 +155,7 @@
     {:else if gate.kind === "unique_person_gate"}
         <TooltipWrapper {position} {align}>
             <div slot="target" class="unique">
-                <AccountCheck size={$iconSize} color={"var(--txt)"} />
+                <AccountCheck size={$iconSize} color={defaultColor} />
             </div>
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
@@ -166,6 +169,17 @@
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
                     <CredentialGatePopup {gate} />
+                </TooltipPopup>
+            </div>
+        </TooltipWrapper>
+    {:else if gate.kind === "referred_by_member_gate"}
+        <TooltipWrapper {position} {align}>
+            <div slot="target" class="referred_by_member">
+                <AccountPlusOutline size={$iconSize} color={defaultColor} />
+            </div>
+            <div let:position let:align slot="tooltip">
+                <TooltipPopup {position} {align}>
+                    <Translatable resourceKey={i18nKey("access.referredByMemberInfo")} />
                 </TooltipPopup>
             </div>
         </TooltipWrapper>

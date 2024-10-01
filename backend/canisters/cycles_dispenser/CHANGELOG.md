@@ -7,8 +7,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+- Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
+
+## [[2.0.1315](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1315-cycles_dispenser)] - 2024-09-02
+
+### Changed
+
 - Remove duplicate code ([#5637](https://github.com/open-chat-labs/open-chat/pull/5637))
 - Expose both heap and stable memory in metrics ([#5718](https://github.com/open-chat-labs/open-chat/pull/5718))
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
 
 ## [[2.0.1126](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1126-cycles_dispenser)] - 2024-04-05
 

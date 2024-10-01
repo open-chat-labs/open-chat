@@ -1,5 +1,11 @@
 <script context="module" lang="ts">
+    export type DateRange = { date: Date; range: [Date, Date] };
     export const title = writable("");
+    export const month = writable(0);
+    export const selectedRange = writable<DateRange>({
+        date: new Date(),
+        range: [new Date(), new Date()],
+    });
 </script>
 
 <script lang="ts">
@@ -16,12 +22,9 @@
 
     const dispatch = createEventDispatcher();
 
-    export let busy = false;
-
     let today = new Date();
     let showDate = new Date();
     let dates: Date[][] = [];
-    let month = 0;
 
     $: translatedLocale = translationCodes[$locale || "en"] || "en";
     $: {
@@ -30,16 +33,23 @@
 
     onMount(() => getDates(showDate));
 
+    function endOfDay(date: Date): Date {
+        return new Date(date.getTime() + 24 * 60 * 60 * 1000 - 1);
+    }
+
     function getDates(start: Date) {
         const resp = getMonthCalendar(start);
         title.set(getTitleText(resp.year, resp.month, translatedLocale));
         dates = resp.dates;
-        month = resp.month;
+        month.set(resp.month);
         const allDates = resp.dates.flatMap((d) => d);
-        dispatch("dateSelected", {
+        const finalDay = allDates[allDates.length - 1];
+        const range: DateRange = {
             date: start,
-            range: [allDates[0], allDates[allDates.length - 1]],
-        });
+            range: [allDates[0], endOfDay(finalDay)],
+        };
+        selectedRange.set(range);
+        dispatch("dateSelected", range);
     }
 
     function previousMonth() {
@@ -88,7 +98,7 @@
                     <!-- svelte-ignore a11y-click-events-have-key-events -->
                     <!-- svelte-ignore a11y-no-static-element-interactions -->
                     <div
-                        class:disabled={day.getMonth() !== month}
+                        class:disabled={day.getMonth() !== $month}
                         class:today={typeof day === "string" ? false : isSameDay(today, day)}
                         class="block daily-date-block pointer">
                         <slot {day}>

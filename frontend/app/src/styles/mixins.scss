@@ -244,33 +244,6 @@ $sp11: 192px;
     }
 }
 
-@mixin gold() {
-    color: #ffffff;
-    border: none;
-    background: linear-gradient(
-        to bottom,
-        #cfc09f 22%,
-        #ffecb3 30%,
-        #cfc09f 40%,
-        #cfc09f 50%,
-        #634f2c 78%
-    );
-    animation: shimmer 15s ease-in-out infinite;
-    background-size: 120% 120%;
-}
-
-@keyframes shimmer {
-    0% {
-        background-position: 0 0%;
-    }
-    50% {
-        background-position: 0 75%;
-    }
-    100% {
-        background-position: 0 0%;
-    }
-}
-
 /* z-index stuff */
 
 /* 
@@ -577,7 +550,7 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     padding: 2px;
     border-radius: 50%;
     backdrop-filter: blur(1px);
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.3);
     position: absolute;
     bottom: -2px;
     right: 2px;

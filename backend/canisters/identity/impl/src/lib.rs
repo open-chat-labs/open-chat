@@ -7,12 +7,11 @@ use canister_sig_util::signature_map::{SignatureMap, LABEL_SIG};
 use canister_sig_util::CanisterSigPublicKey;
 use canister_state_macros::canister_state;
 use ic_cdk::api::set_certified_data;
-use identity_canister::Delegation;
 use serde::{Deserialize, Serialize};
 use sha256::sha256;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
-use types::{BuildVersion, CanisterId, Cycles, Hash, TimestampMillis, Timestamped};
+use types::{BuildVersion, CanisterId, Cycles, Delegation, Hash, TimestampMillis, Timestamped};
 use utils::consts::IC_ROOT_KEY;
 use utils::env::Environment;
 use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
@@ -51,7 +50,12 @@ impl RuntimeState {
         CanisterSigPublicKey::new(canister_id, seed.to_vec()).to_der()
     }
 
-    pub fn push_new_user(&mut self, auth_principal: Principal, originating_canister: CanisterId) -> [u8; 32] {
+    pub fn push_new_user(
+        &mut self,
+        auth_principal: Principal,
+        originating_canister: CanisterId,
+        is_ii_principal: bool,
+    ) -> [u8; 32] {
         let index = self.data.user_principals.next_index();
         let seed = self.data.calculate_seed(index);
         let public_key = self.der_encode_canister_sig_key(seed);
@@ -59,7 +63,7 @@ impl RuntimeState {
 
         self.data
             .user_principals
-            .push(index, principal, auth_principal, originating_canister);
+            .push(index, principal, auth_principal, originating_canister, is_ii_principal);
 
         seed
     }

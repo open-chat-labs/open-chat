@@ -1,6 +1,4 @@
-import type { Identity } from "@dfinity/agent";
-import { Principal } from "@dfinity/principal";
-import type { AgentConfig } from "../../config";
+import type { HttpAgent, Identity } from "@dfinity/agent";
 import type {
     AddHotGroupExclusionResponse,
     DeleteFrozenGroupResponse,
@@ -18,7 +16,6 @@ import type {
     ChannelIdentifier,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
-import { idlFactory, type GroupIndexService } from "./candid/idl";
 import {
     addHotGroupExclusionResponse,
     deleteFrozenGroupResponse,
@@ -28,29 +25,46 @@ import {
     setCommunityModerationFlagsResponse,
     setUpgradeConcurrencyResponse,
     unfreezeGroupResponse,
-    searchGroupsResponse,
     activeGroupsResponse,
     exploreCommunitiesResponse,
     lookupChannelResponse,
+    exploreGroupsResponse,
 } from "./mappers";
-import { apiOptional } from "../common/chatMappers";
-import { identity } from "../../utils/mapping";
+import {
+    GroupIndexActiveGroupsArgs,
+    GroupIndexActiveGroupsResponse,
+    GroupIndexAddHotGroupExclusionArgs,
+    GroupIndexAddHotGroupExclusionResponse,
+    GroupIndexDeleteFrozenGroupArgs,
+    GroupIndexDeleteFrozenGroupResponse,
+    GroupIndexExploreCommunitiesArgs,
+    GroupIndexExploreCommunitiesResponse,
+    GroupIndexExploreGroupsArgs,
+    GroupIndexExploreGroupsResponse,
+    GroupIndexFreezeGroupArgs,
+    GroupIndexFreezeGroupResponse,
+    GroupIndexLookupChannelByGroupIdArgs,
+    GroupIndexLookupChannelByGroupIdResponse,
+    GroupIndexMarkLocalGroupIndexFullArgs,
+    GroupIndexMarkLocalGroupIndexFullResponse,
+    GroupIndexRecommendedGroupsArgs,
+    GroupIndexRecommendedGroupsResponse,
+    GroupIndexRemoveHotGroupExclusionArgs,
+    GroupIndexRemoveHotGroupExclusionResponse,
+    GroupIndexSetCommunityModerationFlagsArgs,
+    GroupIndexSetCommunityModerationFlagsResponse,
+    GroupIndexSetCommunityUpgradeConcurrencyArgs,
+    GroupIndexSetCommunityUpgradeConcurrencyResponse,
+    GroupIndexSetGroupUpgradeConcurrencyArgs,
+    GroupIndexSetGroupUpgradeConcurrencyResponse,
+    GroupIndexUnfreezeGroupArgs,
+    GroupIndexUnfreezeGroupResponse,
+} from "../../typebox";
+import { principalStringToBytes } from "../../utils/mapping";
 
 export class GroupIndexClient extends CandidService {
-    private groupIndexService: GroupIndexService;
-
-    private constructor(identity: Identity, config: AgentConfig) {
-        super(identity);
-
-        this.groupIndexService = this.createServiceClient<GroupIndexService>(
-            idlFactory,
-            config.groupIndexCanister,
-            config,
-        );
-    }
-
-    static create(identity: Identity, config: AgentConfig): GroupIndexClient {
-        return new GroupIndexClient(identity, config);
+    constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
+        super(identity, agent, canisterId);
     }
 
     activeGroups(
@@ -59,48 +73,57 @@ export class GroupIndexClient extends CandidService {
         activeSince: bigint,
     ): Promise<ActiveGroupsResponse> {
         const args = {
-            group_ids: groupIds.map((c) => Principal.fromText(c.groupId)),
-            community_ids: communityIds.map((c) => Principal.fromText(c.communityId)),
-            active_since: apiOptional(identity, activeSince),
+            group_ids: groupIds.map((c) => principalStringToBytes(c.groupId)),
+            community_ids: communityIds.map((c) => principalStringToBytes(c.communityId)),
+            active_since: activeSince,
         };
-        return this.handleQueryResponse(
-            () => this.groupIndexService.active_groups(args),
-            activeGroupsResponse,
+        return this.executeMsgpackQuery(
+            "active_groups",
             args,
+            activeGroupsResponse,
+            GroupIndexActiveGroupsArgs,
+            GroupIndexActiveGroupsResponse,
         );
     }
 
     recommendedGroups(exclusions: string[]): Promise<GroupChatSummary[]> {
         const args = {
             count: 30,
-            exclusions: exclusions.map((c) => Principal.fromText(c)),
+            exclusions: exclusions.map(principalStringToBytes),
         };
-        return this.handleQueryResponse(
-            () => this.groupIndexService.recommended_groups(args),
-            recommendedGroupsResponse,
+        return this.executeMsgpackQuery(
+            "recommended_groups",
             args,
+            recommendedGroupsResponse,
+            GroupIndexRecommendedGroupsArgs,
+            GroupIndexRecommendedGroupsResponse,
         );
     }
 
     searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
         const args = {
             search_term: searchTerm,
-            max_results: maxResults,
+            page_index: 0,
+            page_size: maxResults,
         };
-        return this.handleQueryResponse(
-            () => this.groupIndexService.search(args),
-            searchGroupsResponse,
+        return this.executeMsgpackQuery(
+            "explore_groups",
             args,
+            exploreGroupsResponse,
+            GroupIndexExploreGroupsArgs,
+            GroupIndexExploreGroupsResponse,
         );
     }
 
     lookupChannelByGroupId(id: GroupChatIdentifier): Promise<ChannelIdentifier | undefined> {
-        return this.handleQueryResponse(
-            () =>
-                this.groupIndexService.lookup_channel_by_group_id({
-                    group_id: Principal.fromText(id.groupId),
-                }),
+        return this.executeMsgpackQuery(
+            "lookup_channel_by_group_id",
+            {
+                group_id: principalStringToBytes(id.groupId),
+            },
             lookupChannelResponse,
+            GroupIndexLookupChannelByGroupIdArgs,
+            GroupIndexLookupChannelByGroupIdResponse,
         );
     }
 
@@ -116,53 +139,67 @@ export class GroupIndexClient extends CandidService {
             include_moderation_flags: flags,
             page_size: pageSize,
             page_index: pageIndex,
-            search_term: apiOptional(identity, searchTerm),
+            search_term: searchTerm,
         };
-        return this.handleQueryResponse(
-            () => this.groupIndexService.explore_communities(args),
-            exploreCommunitiesResponse,
+        return this.executeMsgpackQuery(
+            "explore_communities",
             args,
+            exploreCommunitiesResponse,
+            GroupIndexExploreCommunitiesArgs,
+            GroupIndexExploreCommunitiesResponse,
         );
     }
 
     freezeGroup(chatId: string, reason: string | undefined): Promise<FreezeGroupResponse> {
-        return this.handleResponse(
-            this.groupIndexService.freeze_group({
-                suspend_members: [],
-                chat_id: Principal.fromText(chatId),
-                reason: apiOptional(identity, reason),
-            }),
+        return this.executeMsgpackUpdate(
+            "freeze_group",
+            {
+                chat_id: principalStringToBytes(chatId),
+                reason: reason,
+            },
             freezeGroupResponse,
+            GroupIndexFreezeGroupArgs,
+            GroupIndexFreezeGroupResponse,
         );
     }
 
     unfreezeGroup(chatId: string): Promise<UnfreezeGroupResponse> {
-        return this.handleResponse(
-            this.groupIndexService.unfreeze_group({ chat_id: Principal.fromText(chatId) }),
+        return this.executeMsgpackUpdate(
+            "unfreeze_group",
+            { chat_id: principalStringToBytes(chatId) },
             unfreezeGroupResponse,
+            GroupIndexUnfreezeGroupArgs,
+            GroupIndexUnfreezeGroupResponse,
         );
     }
 
     deleteFrozenGroup(chatId: string): Promise<DeleteFrozenGroupResponse> {
-        return this.handleResponse(
-            this.groupIndexService.delete_frozen_group({ chat_id: Principal.fromText(chatId) }),
+        return this.executeMsgpackUpdate(
+            "delete_frozen_group",
+            { chat_id: principalStringToBytes(chatId) },
             deleteFrozenGroupResponse,
+            GroupIndexDeleteFrozenGroupArgs,
+            GroupIndexDeleteFrozenGroupResponse,
         );
     }
 
     addHotGroupExclusion(chatId: string): Promise<AddHotGroupExclusionResponse> {
-        return this.handleResponse(
-            this.groupIndexService.add_hot_group_exclusion({ chat_id: Principal.fromText(chatId) }),
+        return this.executeMsgpackUpdate(
+            "add_hot_group_exclusion",
+            { chat_id: principalStringToBytes(chatId) },
             addHotGroupExclusionResponse,
+            GroupIndexAddHotGroupExclusionArgs,
+            GroupIndexAddHotGroupExclusionResponse,
         );
     }
 
     removeHotGroupExclusion(chatId: string): Promise<RemoveHotGroupExclusionResponse> {
-        return this.handleResponse(
-            this.groupIndexService.remove_hot_group_exclusion({
-                chat_id: Principal.fromText(chatId),
-            }),
+        return this.executeMsgpackUpdate(
+            "remove_hot_group_exclusion",
+            { chat_id: principalStringToBytes(chatId) },
             removeHotGroupExclusionResponse,
+            GroupIndexRemoveHotGroupExclusionArgs,
+            GroupIndexRemoveHotGroupExclusionResponse,
         );
     }
 
@@ -170,36 +207,48 @@ export class GroupIndexClient extends CandidService {
         communityId: string,
         flags: number,
     ): Promise<SetCommunityModerationFlagsResponse> {
-        return this.handleResponse(
-            this.groupIndexService.set_community_moderation_flags({
-                community_id: Principal.fromText(communityId),
+        return this.executeMsgpackUpdate(
+            "set_community_moderation_flags",
+            {
+                community_id: principalStringToBytes(communityId),
                 flags,
-            }),
+            },
             setCommunityModerationFlagsResponse,
+            GroupIndexSetCommunityModerationFlagsArgs,
+            GroupIndexSetCommunityModerationFlagsResponse,
         );
     }
 
     setGroupUpgradeConcurrency(value: number): Promise<SetGroupUpgradeConcurrencyResponse> {
-        return this.handleResponse(
-            this.groupIndexService.set_group_upgrade_concurrency({ value }),
+        return this.executeMsgpackUpdate(
+            "set_group_upgrade_concurrency",
+            { value },
             setUpgradeConcurrencyResponse,
+            GroupIndexSetGroupUpgradeConcurrencyArgs,
+            GroupIndexSetGroupUpgradeConcurrencyResponse,
         );
     }
 
     setCommunityUpgradeConcurrency(value: number): Promise<SetGroupUpgradeConcurrencyResponse> {
-        return this.handleResponse(
-            this.groupIndexService.set_community_upgrade_concurrency({ value }),
+        return this.executeMsgpackUpdate(
+            "set_community_upgrade_concurrency",
+            { value },
             setUpgradeConcurrencyResponse,
+            GroupIndexSetCommunityUpgradeConcurrencyArgs,
+            GroupIndexSetCommunityUpgradeConcurrencyResponse,
         );
     }
 
     markLocalGroupIndexFull(canisterId: string, full: boolean): Promise<boolean> {
-        return this.handleResponse(
-            this.groupIndexService.mark_local_group_index_full({
-                canister_id: Principal.fromText(canisterId),
+        return this.executeMsgpackUpdate(
+            "mark_local_group_index_full",
+            {
+                canister_id: principalStringToBytes(canisterId),
                 full,
-            }),
-            (resp) => "Success" in resp,
+            },
+            (resp) => resp === "Success",
+            GroupIndexMarkLocalGroupIndexFullArgs,
+            GroupIndexMarkLocalGroupIndexFullResponse,
         );
     }
 }

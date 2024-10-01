@@ -1,17 +1,19 @@
+use std::collections::HashMap;
+
 use crate::{
     activity_notifications::handle_activity_notification, model::events::CommunityEventInternal, mutate_state, read_state,
     run_regular_jobs, RuntimeState,
 };
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::remove_member::{Response::*, *};
 use fire_and_forget_handler::FireAndForgetHandler;
-use ic_cdk::update;
 use local_user_index_canister_c2c_client::{lookup_user, LookupUserError};
 use msgpack::serialize_then_unwrap;
-use types::{CanisterId, CommunityRole, MembersRemoved, UserId, UsersBlocked};
+use types::{CanisterId, CommunityMembersRemoved, CommunityRole, CommunityUsersBlocked, UserId};
 use user_canister::c2c_remove_from_community;
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn block_user(args: community_canister::block_user::Args) -> community_canister::block_user::Response {
     run_regular_jobs();
@@ -23,7 +25,7 @@ async fn block_user(args: community_canister::block_user::Args) -> community_can
     remove_member_impl(args.user_id, true).await.into()
 }
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn remove_member(args: Args) -> Response {
     run_regular_jobs();
@@ -108,24 +110,31 @@ fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeS
     let now = state.env.now();
 
     // Remove the user from the community
-    let removed = state.data.members.remove(&user_id, now).is_some();
+    let removed_member = state.data.members.remove(&user_id, now);
+    let removed = removed_member.is_some();
 
     // Remove the user from each group they are a member of
     state.data.channels.leave_all_channels(user_id, now);
 
     let blocked = block && state.data.members.block(user_id);
 
+    let referred_by = removed_member
+        .and_then(|r| r.referred_by)
+        .map_or(HashMap::new(), |referred_by| HashMap::from_iter([(user_id, referred_by)]));
+
     // Push relevant event
     let event = if blocked {
-        let event = UsersBlocked {
+        let event = CommunityUsersBlocked {
             user_ids: vec![user_id],
             blocked_by: removed_by,
+            referred_by,
         };
         CommunityEventInternal::UsersBlocked(Box::new(event))
     } else if removed {
-        let event = MembersRemoved {
+        let event = CommunityMembersRemoved {
             user_ids: vec![user_id],
             removed_by,
+            referred_by,
         };
         CommunityEventInternal::MembersRemoved(Box::new(event))
     } else {

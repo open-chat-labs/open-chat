@@ -50,10 +50,10 @@
                     <MenuItem on:click={() => onSelect(theme.name)}>
                         <div class="theme-item" slot="text">
                             <div class="label">{theme.label}</div>
-                            {#if theme.author !== undefined && $userStore[theme.author] !== undefined}
+                            {#if theme.author !== undefined && $userStore.get(theme.author) !== undefined}
                                 <div class="avatar">
                                     <Avatar
-                                        url={client.userAvatarUrl($userStore[theme.author])}
+                                        url={client.userAvatarUrl($userStore.get(theme.author))}
                                         userId={theme.author}
                                         size={AvatarSize.Tiny} />
                                 </div>

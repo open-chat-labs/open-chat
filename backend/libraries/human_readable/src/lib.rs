@@ -1,7 +1,7 @@
 use candid::Principal;
 use serde::{Serialize, Serializer};
 use sha256::sha256_string;
-use types::{BuildVersion, CanisterWasm, Empty, UpgradeCanisterWasmArgs, UpgradesFilter};
+use types::{BuildVersion, CanisterWasm, Empty, UpgradeCanisterWasmArgs, UpgradeChunkedCanisterWasmArgs, UpgradesFilter};
 
 pub use human_readable_derive::HumanReadable;
 
@@ -64,7 +64,6 @@ impl Serialize for HumanReadablePrincipal {
 pub struct HumanReadableUpgradeCanisterWasmArgs {
     wasm: CanisterWasmTrimmed,
     filter: Option<HumanReadableUpgradesFilter>,
-    use_for_new_canisters: Option<bool>,
 }
 
 #[derive(Serialize)]
@@ -74,6 +73,13 @@ pub struct CanisterWasmTrimmed {
     byte_length: u64,
 }
 
+#[derive(Serialize)]
+pub struct HumanReadableUpgradeChunkedCanisterWasmArgs {
+    version: BuildVersion,
+    wasm_hash: String,
+    filter: Option<HumanReadableUpgradesFilter>,
+}
+
 impl ToHumanReadable for UpgradeCanisterWasmArgs {
     type Target = HumanReadableUpgradeCanisterWasmArgs;
 
@@ -81,7 +87,18 @@ impl ToHumanReadable for UpgradeCanisterWasmArgs {
         HumanReadableUpgradeCanisterWasmArgs {
             wasm: (&self.wasm).into(),
             filter: self.filter.as_ref().map(|f| f.into()),
-            use_for_new_canisters: self.use_for_new_canisters,
+        }
+    }
+}
+
+impl ToHumanReadable for UpgradeChunkedCanisterWasmArgs {
+    type Target = HumanReadableUpgradeChunkedCanisterWasmArgs;
+
+    fn to_human_readable(&self) -> Self::Target {
+        HumanReadableUpgradeChunkedCanisterWasmArgs {
+            version: self.version,
+            wasm_hash: hex::encode(self.wasm_hash),
+            filter: self.filter.as_ref().map(|f| f.into()),
         }
     }
 }

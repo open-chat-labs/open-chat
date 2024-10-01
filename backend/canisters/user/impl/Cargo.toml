@@ -38,12 +38,14 @@ group_index_canister_c2c_client = { path = "../../group_index/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
+ic-certificate-verification = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
 icpswap_client = { path = "../../../libraries/icpswap_client" }
 icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_ledger/c2c_client" }
 icrc_ledger_canister = { path = "../../../external_canisters/icrc_ledger/api" }
 icrc-ledger-types = { workspace = true }
+identity_utils = { path = "../../../libraries/identity_utils" }
 itertools = { workspace = true }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 local_user_index_canister = { path = "../../local_user_index/api" }
@@ -60,7 +62,6 @@ rand = { workspace = true }
 search = { path = "../../../libraries/search" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
-serializer = { path = "../../../libraries/serializer" }
 sns_governance_canister = { path = "../../../external_canisters/sns_governance/api" }
 sns_governance_canister_c2c_client = { path = "../../../external_canisters/sns_governance/c2c_client" }
 sonic_client = { path = "../../../libraries/sonic_client" }

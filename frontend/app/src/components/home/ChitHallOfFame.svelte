@@ -21,12 +21,18 @@
 
     let bodyElement: HTMLDivElement;
     let showGame = false;
+    let mode: "all-time" | "last-month" | "this-month" = "this-month";
     let blankLeader = {
         username: "________",
         userId: "",
         balance: 0,
     };
     let leaders: ChitUserBalance[] = dummyData();
+    let date = new Date();
+    let thisMonth = date.getUTCMonth() + 1;
+    let lastMonth = thisMonth == 1 ? 12 : thisMonth - 1;
+    $: thisMonthText = buildMonthText(thisMonth);
+    $: lastMonthText = buildMonthText(lastMonth);
 
     onMount(() => {
         if (bodyElement) {
@@ -43,6 +49,10 @@
         getData();
     });
 
+    function buildMonthText(month: number): string {
+        return client.toMonthString(new Date(2000, month - 1));
+    }
+
     function dummyData() {
         const data = [];
         for (let i = 0; i < 10; i++) {
@@ -55,11 +65,22 @@
         client
             .chitLeaderboard()
             .then((result) => {
-                leaders = result.slice(0, 10);
+                switch (mode) {
+                    case "all-time": leaders = result.allTime; break;
+                    case "last-month": leaders = result.lastMonth; break;
+                    case "this-month": leaders = result.thisMonth; break;
+                }
+
+                leaders = leaders.slice(0, 10);
             })
             .finally(() => {
                 leaders = [...leaders, ...Array(10 - leaders.length).fill(blankLeader)];
             });
+    }
+
+    function changeMode(m: "all-time" | "last-month" | "this-month") {
+        mode = m;
+        getData();
     }
 
     function streak() {
@@ -83,6 +104,26 @@
         {#if showGame}
             <Invaders />
         {:else}
+            <div class="settings">
+                <div
+                    on:click={() => changeMode("last-month")}
+                    class="setting"
+                    class:selected={mode === "last-month"}>
+                    {lastMonthText}
+                </div>
+                <div
+                    on:click={() => changeMode("this-month")}
+                    class="setting"
+                    class:selected={mode === "this-month"}>
+                    {thisMonthText}
+                </div>
+                <div
+                    on:click={() => changeMode("all-time")}
+                    class="setting"
+                    class:selected={mode === "all-time"}>
+                    {$_("halloffame.allTime")}
+                </div>
+            </div>        
             <div class="scoreboard-container">
                 <table cellpadding="3px" class="scoreboard">
                     <thead class="table-header">
@@ -252,4 +293,24 @@
         left: $sp3;
         @include z-index("overlay");
     }
+
+    .settings {
+        font-size: 0.9rem;
+        justify-content: space-evenly;
+        @include mobile() {
+            font-size: 0.7rem;
+        }
+        display: flex;
+        gap: $sp4;
+        margin-bottom: $sp5;
+
+        .setting {
+            cursor: pointer;
+            text-transform: uppercase;
+
+            &.selected {
+                border-bottom: 2px solid var(--txt);
+            }
+        }
+    }    
 </style>

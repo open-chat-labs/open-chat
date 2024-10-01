@@ -19,6 +19,8 @@
     export let history: boolean;
     export let canEditDisappearingMessages: boolean;
     export let valid: boolean;
+    export let gateDirty: boolean;
+    export let embeddedContent: boolean = false;
 
     let disappearingMessages =
         candidate.kind === "candidate_group_chat" && candidate.eventsTTL !== undefined;
@@ -27,10 +29,30 @@
     $: requiresUpgrade = !editing && !$isDiamond && candidate.level !== "channel";
     $: canChangeVisibility = !editing ? client.canChangeVisibility(candidate) : true;
 
+    function gateUpdated() {
+        if (
+            gateDirty &&
+            candidate.kind === "candidate_group_chat" &&
+            candidate.gate.kind !== "no_gate"
+        ) {
+            candidate.messagesVisibleToNonMembers = false;
+        }
+    }
+
     function toggleScope() {
         candidate.public = !candidate.public;
         if (candidate.public) {
             candidate.historyVisible = true;
+        }
+        if (candidate.kind === "candidate_group_chat") {
+            candidate.messagesVisibleToNonMembers =
+                candidate.public && candidate.gate.kind === "no_gate";
+        }
+    }
+
+    function toggleVisibleToNonMembers() {
+        if (candidate.kind === "candidate_group_chat") {
+            candidate.messagesVisibleToNonMembers = !candidate.messagesVisibleToNonMembers;
         }
     }
 
@@ -95,7 +117,7 @@
     </Radio>
 </div>
 
-{#if history}
+{#if history && !embeddedContent}
     <div class="section">
         <Checkbox
             id="history-visible"
@@ -118,7 +140,7 @@
     </div>
 {/if}
 
-{#if candidate.kind === "candidate_group_chat"}
+{#if candidate.kind === "candidate_group_chat" && !embeddedContent}
     <div class="section">
         <Checkbox
             id="disappearing-messages"
@@ -141,8 +163,27 @@
     </div>
 {/if}
 
+{#if candidate.public && candidate.kind === "candidate_group_chat" && candidate.level === "channel"}
+    <div class="section">
+        <Checkbox
+            id="visible_to_non_members"
+            on:change={toggleVisibleToNonMembers}
+            label={i18nKey("access.messagesVisibleToNonMembers")}
+            align={"start"}
+            checked={candidate.messagesVisibleToNonMembers}>
+            <div class="section-title disappear">
+                <Translatable resourceKey={i18nKey("access.messagesVisibleToNonMembers")} />
+            </div>
+        </Checkbox>
+    </div>
+{/if}
+
 {#if !requiresUpgrade}
-    <AccessGateControl bind:gate={candidate.gate} level={candidate.level} bind:valid />
+    <AccessGateControl
+        on:updated={gateUpdated}
+        bind:gate={candidate.gate}
+        level={candidate.level}
+        bind:valid />
 {/if}
 
 {#if requiresUpgrade}

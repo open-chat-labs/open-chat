@@ -1,12 +1,13 @@
 use crate::updates::c2c_join_channel::join_channel_unchecked;
 use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::update_channel::{Response::*, *};
 use group_chat_core::UpdateResult;
-use ic_cdk::update;
 use types::OptionUpdate;
+use url::Url;
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 fn update_channel(args: Args) -> Response {
     run_regular_jobs();
@@ -19,6 +20,12 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
 
     if state.data.is_frozen() {
         return CommunityFrozen;
+    }
+
+    if let OptionUpdate::SetToSome(external_url) = &args.external_url {
+        if Url::parse(external_url).is_err() {
+            return ExternalUrlInvalid;
+        }
     }
 
     if let OptionUpdate::SetToSome(gate) = &args.gate {
@@ -49,6 +56,7 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                 args.public,
                 args.messages_visible_to_non_members,
                 args.events_ttl,
+                args.external_url,
                 now,
             ) {
                 UpdateResult::Success(result) => {

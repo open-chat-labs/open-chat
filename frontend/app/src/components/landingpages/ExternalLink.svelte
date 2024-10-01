@@ -2,6 +2,7 @@
     import OpenInNew from "svelte-material-icons/OpenInNew.svelte";
 
     export let href: string;
+    export let iconColor: string = "var(--landing-txt)";
     let viewBox = "0 -3 26 26";
 </script>
 
@@ -9,7 +10,7 @@
     <slot />
 
     <div class="icon">
-        <OpenInNew {viewBox} size={"1em"} color={"var(--landing-txt)"} />
+        <OpenInNew {viewBox} size={"1em"} color={iconColor} />
     </div>
 </a>
 

@@ -1,10 +1,12 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{
     AccessGate, ChannelId, Document, FieldTooLongResult, FieldTooShortResult, GroupPermissions, GroupSubtype, Milliseconds,
     Rules,
 };
 
+#[ts_export(community, create_channel)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub is_public: bool,
@@ -18,8 +20,10 @@ pub struct Args {
     pub permissions_v2: Option<GroupPermissions>,
     pub events_ttl: Option<Milliseconds>,
     pub gate: Option<AccessGate>,
+    pub external_url: Option<String>,
 }
 
+#[ts_export(community, create_channel)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
@@ -36,9 +40,11 @@ pub enum Response {
     UserSuspended,
     NotAuthorized,
     CommunityFrozen,
+    ExternalUrlInvalid,
     InternalError(String),
 }
 
+#[ts_export(community, create_channel)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub channel_id: ChannelId,

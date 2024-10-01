@@ -22,10 +22,14 @@ const FRAME_ANCESTORS = [
     "https://xw4dq-4yaaa-aaaam-abeuq-cai.ic0.app", //Betbase live
     "https://kjfeq-waaaa-aaaan-qedva-cai.icp0.io", // vaultbet test
     "https://spyzr-gqaaa-aaaan-qd66q-cai.icp0.io", // vaultbet
-    "https://bxnm7-oqaaa-aaaag-albpq-cai.icp0.io", // ZKP
+    "https://zkpoker.app", // ZKP
     "https://panoramablock.com", // Panorama Block Live
     "https://zdgud-kqaaa-aaaal-ajn4q-cai.icp0.io", // tendyzone test
-    "dragonwizards.club/lair.html" // dragon paladin wizard web2 test
+    "https://okowr-oqaaa-aaaag-qkedq-cai.icp0.io", // konecta pre-register
+    "https://pre.konecta.one", //konecta pre-register
+    "https://konecta.one", //konecta website/webapp
+    "https://y7mum-taaaa-aaaag-qklxq-cai.icp0.io" // konecta pre-register test env
+    "https://dragonwizards.club" // dragon paladin wizard web2 test
 ];
 
 type InboundXFrameMessage = UpdateTheme | ChangeRoute | OverrideSettings | Logout;

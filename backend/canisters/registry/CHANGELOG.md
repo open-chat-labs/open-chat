@@ -6,9 +6,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Reinstate some candid endpoints ([#6468](https://github.com/open-chat-labs/open-chat/pull/6468))
+- Add `add_remove_swap_provider` ([#6485](https://github.com/open-chat-labs/open-chat/pull/6485))
+
+### Changed
+
+- When a token is added, disable existing token with the same ticker ([#6392](https://github.com/open-chat-labs/open-chat/pull/6392))
+- Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
+- Add serde default attribute in preparation for skipping serialization if default ([#6475](https://github.com/open-chat-labs/open-chat/pull/6475))
+
+### Removed
+
+- Remove deprecated candid endpoints ([#6396](https://github.com/open-chat-labs/open-chat/pull/6396))
+
+## [[2.0.1334](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1334-registry)] - 2024-09-06
+
+### Added
+
+- Expose MessagePack versions of Registry canister APIs ([#6318](https://github.com/open-chat-labs/open-chat/pull/6318))
+
+### Changed
+
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+
+## [[2.0.1323](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1323-registry)] - 2024-09-03
+
+### Changed
+
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
+
+## [[2.0.1298](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1298-registry)] - 2024-08-19
+
 ### Changed
 
 - Mark tokens as incompatible with ICRC1 if they have a non-zero burn fee ([#6143](https://github.com/open-chat-labs/open-chat/pull/6143))
+- Check for transfer fee changes when refreshing token details ([#6252](https://github.com/open-chat-labs/open-chat/pull/6252))
 
 ## [[2.0.1250](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1250-registry)] - 2024-07-25
 

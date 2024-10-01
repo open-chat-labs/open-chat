@@ -1,3 +1,4 @@
+use crate::model::user_principals::UserPrincipal;
 use crate::{extract_originating_canister, mutate_state, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
@@ -13,10 +14,15 @@ fn initiate_identity_link(args: Args) -> Response {
 fn initiate_identity_link_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
 
-    if is_registered_as_user(&caller, state) {
-        return AlreadyRegistered;
+    if let Some(user) = get_user_principal_for_oc_user(&caller, state) {
+        return if user.auth_principals.contains(&args.link_to_principal) {
+            AlreadyLinkedToPrincipal
+        } else {
+            AlreadyRegistered
+        };
     }
-    if !is_registered_as_user(&args.link_to_principal, state) {
+
+    if get_user_principal_for_oc_user(&args.link_to_principal, state).is_none() {
         return TargetUserNotFound;
     }
 
@@ -25,18 +31,21 @@ fn initiate_identity_link_impl(args: Args, state: &mut RuntimeState) -> Response
         Err(error) => return PublicKeyInvalid(error),
     };
 
-    state
-        .data
-        .identity_link_requests
-        .push(caller, originating_canister, args.link_to_principal, state.env.now());
+    state.data.identity_link_requests.push(
+        caller,
+        originating_canister,
+        args.is_ii_principal.unwrap_or_default(),
+        args.link_to_principal,
+        state.env.now(),
+    );
 
     Success
 }
 
-fn is_registered_as_user(auth_principal: &Principal, state: &RuntimeState) -> bool {
+fn get_user_principal_for_oc_user(auth_principal: &Principal, state: &RuntimeState) -> Option<UserPrincipal> {
     state
         .data
         .user_principals
         .get_by_auth_principal(auth_principal)
-        .is_some_and(|u| u.user_id.is_some())
+        .filter(|u| u.user_id.is_some())
 }

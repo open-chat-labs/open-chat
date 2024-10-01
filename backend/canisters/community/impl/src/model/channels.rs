@@ -1,12 +1,12 @@
 use chat_events::Reader;
 use group_chat_core::{CanLeaveResult, GroupChatCore, GroupMemberInternal, LeaveResult};
 use rand::rngs::StdRng;
-use rand::Rng;
+use rand::{Rng, RngCore};
 use search::*;
 use serde::{Deserialize, Serialize};
 use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::Vacant;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use types::{
     ChannelId, ChannelMatch, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, CommunityId,
     GroupMembership, GroupMembershipUpdates, GroupPermissionRole, GroupPermissions, MultiUserChat, Rules, TimestampMillis,
@@ -39,10 +39,17 @@ impl Channels {
         rng: &mut StdRng,
         now: TimestampMillis,
     ) -> Channels {
+        let mut channel_ids = HashSet::new();
+
         let channels = default_channels
             .into_iter()
             .map(|name| {
-                let channel_id = rng.gen();
+                let channel_id = loop {
+                    let id = rng.next_u32() as ChannelId;
+                    if channel_ids.insert(id) {
+                        break id;
+                    }
+                };
                 (
                     channel_id,
                     Channel::new(
@@ -214,6 +221,7 @@ impl Channel {
                 None,
                 created_by_user_type,
                 anonymized_id,
+                None,
                 now,
             ),
             date_imported: None,
@@ -305,6 +313,7 @@ impl Channel {
             membership,
             video_call_in_progress: chat.events.video_call_in_progress().value.clone(),
             is_invited,
+            external_url: chat.external_url.value.clone(),
         })
     }
 
@@ -388,6 +397,7 @@ impl Channel {
             gate: updates.gate,
             membership,
             video_call_in_progress: updates.video_call_in_progress,
+            external_url: updates.external_url,
         })
     }
 

@@ -1,11 +1,10 @@
 <script lang="ts">
     import { spring, tweened } from "svelte/motion";
-    import { ChitEarnedEvent, type Achievement, type OpenChat } from "openchat-client";
+    import { ChitEarnedEvent, type OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import SpinningToken from "../icons/SpinningToken.svelte";
     import { Confetti } from "svelte-confetti";
-    import Translatable from "../Translatable.svelte";
-    import { i18nKey } from "../../i18n/i18n";
+    import { _ } from "svelte-i18n";
 
     const OFF_SCREEN_OPACITY = 0.0;
     const SHOW_DURATION = 3000;
@@ -20,17 +19,20 @@
     let msg = tweened({ scale: 0, opacity: 1 }, { duration: TWEEN_DURATION });
     let left = dimensions.width / 2;
     let amount = 0;
-    let labels: Achievement[] = [];
+    let labels: string[] = [];
     let active = false;
 
     function trigger(ev: ChitEarnedEvent) {
         amount = ev.detail.reduce((total, chit) => total + chit.amount, 0);
         labels = ev.detail.reduce((labels, c) => {
             if (c.reason.kind === "achievement_unlocked") {
-                labels.push(c.reason.type);
+                labels.push($_(`learnToEarn.${c.reason.type}`));
+            }
+            if (c.reason.kind === "external_achievement_unlocked") {
+                labels.push(c.reason.name);
             }
             return labels;
-        }, [] as Achievement[]);
+        }, [] as string[]);
         ypos.set(dimensions.height / 2);
         opacity.set(1);
         active = true;
@@ -103,9 +105,7 @@
             </div>
             <div class="msgs">
                 {#each labels as label}
-                    <div class="msg">
-                        <Translatable resourceKey={i18nKey(`learnToEarn.${label}`)} />
-                    </div>
+                    <div class="msg">{label}</div>
                 {/each}
             </div>
         </div>
@@ -122,11 +122,8 @@
         flex-direction: column;
         gap: $sp4;
         align-items: center;
-
         padding: $sp8;
-        // background-color: rgba(255, 255, 255, 0.05);
         backdrop-filter: blur(10px);
-
         background: var(--modal-bg);
         border: var(--modal-bd);
         border-radius: var(--modal-rd);

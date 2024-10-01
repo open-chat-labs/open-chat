@@ -1,17 +1,17 @@
 use crate::guards::caller_is_owner;
 use crate::{mutate_state, run_regular_jobs};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use ic_cdk::update;
 use types::{ChatId, Timestamped};
 use user_canister::mute_notifications::{Response::*, *};
 
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 fn mute_notifications(args: Args) -> Response {
     toggle_mute_notifications_impl(args.chat_id, true)
 }
 
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 fn unmute_notifications(args: Args) -> Response {
     toggle_mute_notifications_impl(args.chat_id, false)

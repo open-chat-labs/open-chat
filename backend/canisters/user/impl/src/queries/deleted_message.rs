@@ -1,10 +1,10 @@
 use crate::guards::caller_is_owner;
 use crate::{read_state, RuntimeState};
+use canister_api_macros::query;
 use chat_events::{MessageContentInternal, Reader};
-use ic_cdk::query;
 use user_canister::deleted_message::{Response::*, *};
 
-#[query(guard = "caller_is_owner")]
+#[query(guard = "caller_is_owner", candid = true, msgpack = true)]
 fn deleted_message(args: Args) -> Response {
     read_state(|state| deleted_message_impl(args, state))
 }

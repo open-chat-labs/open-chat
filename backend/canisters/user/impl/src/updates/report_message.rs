@@ -1,13 +1,13 @@
 use crate::guards::caller_is_owner;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{DeleteUndeleteMessagesArgs, Reader};
-use ic_cdk::update;
 use types::{CanisterId, Chat, EventIndex, UserId};
 use user_canister::report_message::{Response::*, *};
 use user_index_canister::c2c_report_message;
 
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 async fn report_message(args: Args) -> Response {
     run_regular_jobs();

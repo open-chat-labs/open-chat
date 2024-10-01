@@ -1,12 +1,12 @@
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::{add_hot_group_exclusion, remove_hot_group_exclusion};
-use ic_cdk::update;
 use types::{CanisterId, ChatId};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 
-#[update]
+#[update(msgpack = true)]
 #[trace]
 async fn add_hot_group_exclusion(args: add_hot_group_exclusion::Args) -> add_hot_group_exclusion::Response {
     use group_index_canister::add_hot_group_exclusion::Response::*;
@@ -33,7 +33,7 @@ async fn add_hot_group_exclusion(args: add_hot_group_exclusion::Args) -> add_hot
     }
 }
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn remove_hot_group_exclusion(args: remove_hot_group_exclusion::Args) -> remove_hot_group_exclusion::Response {
     use group_index_canister::remove_hot_group_exclusion::Response::*;

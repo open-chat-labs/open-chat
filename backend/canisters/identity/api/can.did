@@ -2,6 +2,15 @@ type Nanoseconds = nat64;
 type PublicKey = blob;
 type TimestampNanoseconds = nat64;
 
+type AuthPrincipalsResponse = variant {
+    Success : vec record {
+        "principal" : principal;
+        originating_canister : principal;
+        is_ii_principal : bool;
+    };
+    NotFound;
+};
+
 type CheckAuthPrincipalResponse = variant {
     Success;
     NotFound;
@@ -44,6 +53,7 @@ type ApproveIdentityLinkResponse = variant {
     Success;
     CallerNotRecognised;
     LinkRequestNotFound;
+    PrincipalAlreadyLinkedToAnotherOcUser;
     MalformedSignature : text;
     InvalidSignature;
     DelegationTooOld;
@@ -52,6 +62,7 @@ type ApproveIdentityLinkResponse = variant {
 type CreateIdentityArgs = record {
     public_key : PublicKey;
     session_key : PublicKey;
+    is_ii_principal : opt bool;
     max_time_to_live : opt Nanoseconds;
     challenge_attempt : opt record {
         key : nat32;
@@ -70,11 +81,13 @@ type CreateIdentityResponse = variant {
 
 type InitiateIdentityLinkArgs = record {
     public_key : blob;
+    is_ii_principal : opt bool;
     link_to_principal : principal;
 };
 
 type InitiateIdentityLinkResponse = variant {
     Success;
+    AlreadyLinkedToPrincipal;
     AlreadyRegistered;
     TargetUserNotFound;
     PublicKeyInvalid : text;
@@ -82,6 +95,7 @@ type InitiateIdentityLinkResponse = variant {
 
 type PrepareDelegationArgs = record {
     session_key : PublicKey;
+    is_ii_principal : opt bool;
     max_time_to_live : opt Nanoseconds;
 };
 
@@ -96,6 +110,7 @@ type PrepareDelegationSuccess = record {
 };
 
 service : {
+    auth_principals : (record {}) -> (AuthPrincipalsResponse) query;
     check_auth_principal : (record {}) -> (CheckAuthPrincipalResponse) query;
     get_delegation : (GetDelegationArgs) -> (GetDelegationResponse) query;
     approve_identity_link : (ApproveIdentityLinkArgs) -> (ApproveIdentityLinkResponse);

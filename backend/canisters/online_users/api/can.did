@@ -11,17 +11,6 @@ type LastOnlineResponse = variant {
     };
 };
 
-type MarkAsOnlineArgs = record {};
-
-type MarkAsOnlineResponse = variant {
-    Success;
-    UserNotFound;
-    InternalError : text;
-};
-
 service : {
     last_online : (LastOnlineArgs) -> (LastOnlineResponse) query;
-
-    // Call this regularly to maintain the online status of the user
-    mark_as_online : (MarkAsOnlineArgs) -> (MarkAsOnlineResponse);
 };

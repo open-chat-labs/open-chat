@@ -1,7 +1,9 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{CanisterId, ExchangeId, Milliseconds, TokenInfo};
 
+#[ts_export(user, swap_tokens)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
     pub swap_id: u128,
@@ -13,6 +15,7 @@ pub struct Args {
     pub pin: Option<String>,
 }
 
+#[ts_export(user, swap_tokens)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum ExchangeArgs {
     ICPSwap(ICPSwapArgs),
@@ -28,6 +31,7 @@ impl ExchangeArgs {
     }
 }
 
+#[ts_export(user, swap_tokens)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ICPSwapArgs {
     pub swap_canister_id: CanisterId,
@@ -36,6 +40,7 @@ pub struct ICPSwapArgs {
 
 pub type SonicArgs = ICPSwapArgs;
 
+#[ts_export(user, swap_tokens)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
@@ -46,6 +51,7 @@ pub enum Response {
     InternalError(String),
 }
 
+#[ts_export(user, swap_tokens)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub amount_out: u128,

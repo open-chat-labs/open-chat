@@ -63,7 +63,7 @@
             if (chat) {
                 switch (chat.kind) {
                     case "direct_chat":
-                        const them = $userStore[chat.them.userId];
+                        const them = $userStore.get(chat.them.userId);
                         return {
                             name: client.displayName(them),
                             avatarUrl: client.userAvatarUrl(them),
@@ -144,7 +144,7 @@
                             tabindex="0"
                             class="cam"
                             on:click|stopPropagation={askToSpeak}>
-                            <HandFrontLeft size={"1.6em"} color={"var(--txt)"} />
+                            <HandFrontLeft size={"1.6em"} color={"var(--toast-success-txt)"} />
                         </div>
                         <div let:position let:align slot="tooltip">
                             <TooltipPopup {position} {align}>
@@ -161,9 +161,9 @@
                             class="cam"
                             on:click|stopPropagation={toggleCamera}>
                             {#if $camera}
-                                <Video size={"1.6em"} color={"var(--txt)"} />
+                                <Video size={"1.6em"} color={"var(--toast-success-txt)"} />
                             {:else}
-                                <VideoOff size={"1.6em"} color={"var(--txt)"} />
+                                <VideoOff size={"1.6em"} color={"var(--toast-success-txt)"} />
                             {/if}
                         </div>
                         <div let:position let:align slot="tooltip">
@@ -180,9 +180,9 @@
                             class="mic"
                             on:click|stopPropagation={toggleMic}>
                             {#if $microphone}
-                                <Microphone size={"1.6em"} color={"var(--txt)"} />
+                                <Microphone size={"1.6em"} color={"var(--toast-success-txt)"} />
                             {:else}
-                                <MicrophoneOff size={"1.6em"} color={"var(--txt)"} />
+                                <MicrophoneOff size={"1.6em"} color={"var(--toast-success-txt)"} />
                             {/if}
                         </div>
                         <div let:position let:align slot="tooltip">
@@ -199,9 +199,9 @@
                             class="mic"
                             on:click|stopPropagation={toggleShare}>
                             {#if $sharing}
-                                <MonitorOff size={"1.6em"} color={"var(--txt)"} />
+                                <MonitorOff size={"1.6em"} color={"var(--toast-success-txt)"} />
                             {:else}
-                                <MonitorShare size={"1.6em"} color={"var(--txt)"} />
+                                <MonitorShare size={"1.6em"} color={"var(--toast-success-txt)"} />
                             {/if}
                         </div>
                         <div let:position let:align slot="tooltip">
@@ -218,7 +218,7 @@
                         tabindex="0"
                         class="hangup"
                         on:click|stopPropagation={hangup}>
-                        <PhoneHangup size={"1.6em"} color={"var(--txt)"} />
+                        <PhoneHangup size={"1.6em"} color={"var(--toast-success-txt)"} />
                     </div>
                     <div let:position let:align slot="tooltip">
                         <TooltipPopup {position} {align}>

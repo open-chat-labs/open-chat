@@ -2,10 +2,11 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use types::{
-    AvatarChanged, BannerChanged, ChannelDeleted, ChannelId, ChatId, CommunityPermissionsChanged, CommunityRoleChanged,
-    CommunityVisibilityChanged, DefaultChannelsChanged, EventIndex, EventWrapper, GroupCreated, GroupDescriptionChanged,
-    GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged, GroupRulesChanged, GroupUnfrozen, MemberJoined,
-    MemberLeft, MembersRemoved, PrimaryLanguageChanged, TimestampMillis, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
+    AvatarChanged, BannerChanged, ChannelDeleted, ChannelId, ChatId, CommunityMemberLeft, CommunityMembersRemoved,
+    CommunityPermissionsChanged, CommunityRoleChanged, CommunityUsersBlocked, CommunityVisibilityChanged,
+    DefaultChannelsChanged, EventIndex, EventWrapper, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated,
+    GroupInviteCodeChanged, GroupNameChanged, GroupRulesChanged, GroupUnfrozen, MemberJoined, PrimaryLanguageChanged,
+    TimestampMillis, UserId, UsersInvited, UsersUnblocked,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -25,10 +26,10 @@ pub enum CommunityEventInternal {
     BannerChanged(Box<BannerChanged>),
     UsersInvited(Box<UsersInvited>),
     MemberJoined(Box<MemberJoined>),
-    MembersRemoved(Box<MembersRemoved>),
-    MemberLeft(Box<MemberLeft>),
+    MembersRemoved(Box<CommunityMembersRemoved>),
+    MemberLeft(Box<CommunityMemberLeft>),
     RoleChanged(Box<CommunityRoleChanged>),
-    UsersBlocked(Box<UsersBlocked>),
+    UsersBlocked(Box<CommunityUsersBlocked>),
     UsersUnblocked(Box<UsersUnblocked>),
     PermissionsChanged(Box<CommunityPermissionsChanged>),
     VisibilityChanged(Box<CommunityVisibilityChanged>),

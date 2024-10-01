@@ -62,9 +62,9 @@
     onMount(() => {
         // default the receiver to the other user in a direct chat
         if (chat.kind === "direct_chat") {
-            receiver = $userStore[chat.them.userId];
+            receiver = $userStore.get(chat.them.userId);
         } else if (defaultReceiver !== undefined && defaultReceiver !== $user.userId) {
-            receiver = $userStore[defaultReceiver];
+            receiver = $userStore.get(defaultReceiver);
         }
     });
 

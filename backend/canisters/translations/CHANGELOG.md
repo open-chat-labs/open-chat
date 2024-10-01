@@ -7,8 +7,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
+- Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
+
+## [[2.0.1326](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1326-translations)] - 2024-09-03
+
+### Changed
+
 - Fix fee then retry transfer if fee too high ([#6063](https://github.com/open-chat-labs/open-chat/pull/6063))
 - Handle transfer fee changing in either direction ([#6064](https://github.com/open-chat-labs/open-chat/pull/6064))
+- Support deserializing u128 and i128 values from strings ([#6259](https://github.com/open-chat-labs/open-chat/pull/6259))
 
 ## [[2.0.1220](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1220-translations)] - 2024-07-03
 

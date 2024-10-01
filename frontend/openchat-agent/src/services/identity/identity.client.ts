@@ -1,8 +1,9 @@
-import type { Identity, SignIdentity } from "@dfinity/agent";
+import type { HttpAgent, Identity, SignIdentity } from "@dfinity/agent";
 import { idlFactory, type IdentityService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import type {
     ApproveIdentityLinkResponse,
+    AuthenticationPrincipalsResponse,
     ChallengeAttempt,
     CheckAuthPrincipalResponse,
     CreateIdentityResponse,
@@ -13,6 +14,7 @@ import type {
 } from "openchat-shared";
 import {
     approveIdentityLinkResponse,
+    authPrincipalsResponse,
     checkAuthPrincipalResponse,
     createIdentityResponse,
     generateChallengeResponse,
@@ -29,25 +31,21 @@ import type { DelegationIdentity } from "@dfinity/identity";
 export class IdentityClient extends CandidService {
     private service: IdentityService;
 
-    private constructor(identity: Identity, identityCanister: string, icUrl: string) {
-        super(identity);
+    constructor(identity: Identity, agent: HttpAgent, identityCanister: string) {
+        super(identity, agent, identityCanister);
 
-        this.service = this.createServiceClient<IdentityService>(idlFactory, identityCanister, {
-            icUrl,
-        });
-    }
-
-    static create(identity: Identity, identityCanister: string, icUrl: string): IdentityClient {
-        return new IdentityClient(identity, identityCanister, icUrl);
+        this.service = this.createServiceClient<IdentityService>(idlFactory);
     }
 
     createIdentity(
         sessionKey: Uint8Array,
+        isIIPrincipal: boolean | undefined,
         challengeAttempt: ChallengeAttempt | undefined,
     ): Promise<CreateIdentityResponse> {
         const args: CreateIdentityArgs = {
             public_key: this.publicKey(),
             session_key: sessionKey,
+            is_ii_principal: apiOptional(identity, isIIPrincipal),
             max_time_to_live: [] as [] | [bigint],
             challenge_attempt: apiOptional(identity, challengeAttempt),
         };
@@ -66,9 +64,13 @@ export class IdentityClient extends CandidService {
         );
     }
 
-    prepareDelegation(sessionKey: Uint8Array): Promise<PrepareDelegationResponse> {
+    prepareDelegation(
+        sessionKey: Uint8Array,
+        isIIPrincipal: boolean | undefined,
+    ): Promise<PrepareDelegationResponse> {
         const args = {
             session_key: sessionKey,
+            is_ii_principal: apiOptional(identity, isIIPrincipal),
             max_time_to_live: [] as [] | [bigint],
         };
         return this.handleResponse(
@@ -94,11 +96,15 @@ export class IdentityClient extends CandidService {
         return this.handleResponse(this.service.generate_challenge({}), generateChallengeResponse);
     }
 
-    initiateIdentityLink(linkToPrincipal: string): Promise<InitiateIdentityLinkResponse> {
+    initiateIdentityLink(
+        linkToPrincipal: string,
+        isIIPrincipal: boolean | undefined,
+    ): Promise<InitiateIdentityLinkResponse> {
         return this.handleResponse(
             this.service.initiate_identity_link({
                 link_to_principal: Principal.fromText(linkToPrincipal),
                 public_key: this.publicKey(),
+                is_ii_principal: apiOptional(identity, isIIPrincipal),
             }),
             initiateIdentityLinkResponse,
         );
@@ -112,6 +118,13 @@ export class IdentityClient extends CandidService {
                 delegation: this.delegation(),
             }),
             approveIdentityLinkResponse,
+        );
+    }
+
+    getAuthenticationPrincipals(): Promise<AuthenticationPrincipalsResponse> {
+        return this.handleQueryResponse(
+            () => this.service.auth_principals({}),
+            authPrincipalsResponse,
         );
     }
 

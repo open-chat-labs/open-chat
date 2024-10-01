@@ -38,6 +38,8 @@
         &.muted {
             background-color: var(--unread-mute);
             text-shadow: none;
+            backdrop-filter: blur(10px);
+            color: var(--unread-mute-txt);
 
             &.solid {
                 background-color: var(--unread-mute-solid);

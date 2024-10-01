@@ -9,6 +9,7 @@ type UpdatesResponse = variant {
         last_updated : TimestampMillis;
         token_details : opt vec TokenDetails;
         nervous_system_details : vec NervousSystemSummary;
+        swap_providers : opt vec ExchangeId;
         message_filters_added : vec MessageFilterSummary;
         message_filters_removed : vec nat64;
     };
@@ -47,43 +48,6 @@ type MessageFilterSummary = record {
     regex : text;
 };
 
-type AddMessageFilterArgs = record {
-    regex : text;
-};
-
-type AddMessageFilterResponse = variant {
-    Success : nat64;
-    NotAuthorized;
-    AlreadyAdded;
-    InvalidRequest : text;
-    InternalError : text;
-};
-
-type RemoveMessageFilterArgs = record {
-    id : nat64;
-};
-
-type RemoveMessageFilterResponse = variant {
-    Success;
-    NotAuthorized;
-    NotFound;
-    InternalError : text;
-};
-
-type SetTokenEnabledArgs = record {
-    ledger_canister_id : CanisterId;
-    enabled : bool;
-};
-
-type SetTokenEnabledResponse = variant {
-    Success;
-    NotAuthorized;
-    InternalError : text;
-};
-
 service : {
-    add_message_filter : (AddMessageFilterArgs) -> (AddMessageFilterResponse);
-    remove_message_filter : (RemoveMessageFilterArgs) -> (RemoveMessageFilterResponse);
-    set_token_enabled : (SetTokenEnabledArgs) -> (SetTokenEnabledResponse);
     updates : (UpdatesArgs) -> (UpdatesResponse) query;
 };

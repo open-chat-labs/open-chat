@@ -1,70 +1,78 @@
-import type { Identity } from "@dfinity/agent";
-import { Principal } from "@dfinity/principal";
+import type { HttpAgent, Identity } from "@dfinity/agent";
 import type { RegistryUpdatesResponse } from "openchat-shared";
-import { idlFactory, type RegistryService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import { updatesResponse } from "./mappers";
-import type { AgentConfig } from "../../config";
-import { apiOptional } from "../common/chatMappers";
-import { identity } from "../../utils/mapping";
+import { principalStringToBytes } from "../../utils/mapping";
+import {
+    RegistryAddMessageFilterArgs,
+    RegistryAddMessageFilterResponse,
+    RegistryRemoveMessageFilterArgs,
+    RegistrySetTokenEnabledArgs,
+    RegistrySetTokenEnabledResponse,
+    RegistryUpdatesArgs,
+    RegistryUpdatesResponse as TRegistryUpdatesResponse,
+} from "../../typebox";
 
 export class RegistryClient extends CandidService {
-    private readonly service: RegistryService;
     private readonly blobUrlPattern: string;
-    private readonly canisterId: string;
 
-    private constructor(identity: Identity, config: AgentConfig) {
-        super(identity);
+    constructor(identity: Identity, agent: HttpAgent, canisterId: string, blobUrlPattern: string) {
+        super(identity, agent, canisterId);
 
-        this.service = this.createServiceClient<RegistryService>(
-            idlFactory,
-            config.registryCanister,
-            config,
-        );
-        this.blobUrlPattern = config.blobUrlPattern;
-        this.canisterId = config.registryCanister;
-    }
-
-    static create(identity: Identity, config: AgentConfig): RegistryClient {
-        return new RegistryClient(identity, config);
+        this.blobUrlPattern = blobUrlPattern;
     }
 
     updates(since?: bigint): Promise<RegistryUpdatesResponse> {
         const args = {
-            since: apiOptional(identity, since),
+            since,
         };
-        return this.handleQueryResponse(
-            () => this.service.updates(args),
+        return this.executeMsgpackQuery(
+            "updates",
+            args,
             (resp) => updatesResponse(resp, this.blobUrlPattern, this.canisterId),
+            RegistryUpdatesArgs,
+            TRegistryUpdatesResponse,
         );
     }
 
     addMessageFilter(regex: string): Promise<boolean> {
-        return this.handleResponse(this.service.add_message_filter({ regex }), (resp) => {
-            if ("Success" in resp) {
-                console.log(`New message filter id: ${resp.Success}`);
-                return true;
-            } else {
-                console.debug("Error calling add_message_filter", resp);
-                return false;
-            }
-        });
+        return this.executeMsgpackUpdate(
+            "add_message_filter",
+            { regex },
+            (resp) => {
+                if (typeof resp !== "string" && "Success" in resp) {
+                    console.log(`New message filter id: ${resp.Success}`);
+                    return true;
+                } else {
+                    console.debug("Error calling add_message_filter", resp);
+                    return false;
+                }
+            },
+            RegistryAddMessageFilterArgs,
+            RegistryAddMessageFilterResponse,
+        );
     }
 
     removeMessageFilter(id: bigint): Promise<boolean> {
-        return this.handleResponse(
-            this.service.remove_message_filter({ id }),
-            (resp) => "Success" in resp,
+        return this.executeMsgpackUpdate(
+            "remove_message_filter",
+            { id },
+            (resp) => typeof resp !== "string" && "Success" in resp,
+            RegistryRemoveMessageFilterArgs,
+            RegistryAddMessageFilterResponse,
         );
     }
 
     setTokenEnabled(ledger: string, enabled: boolean): Promise<boolean> {
-        return this.handleResponse(
-            this.service.set_token_enabled({
-                ledger_canister_id: Principal.fromText(ledger),
+        return this.executeMsgpackUpdate(
+            "set_token_enabled",
+            {
+                ledger_canister_id: principalStringToBytes(ledger),
                 enabled,
-            }),
-            (resp) => "Success" in resp,
+            },
+            (resp) => typeof resp !== "string" && "Success" in resp,
+            RegistrySetTokenEnabledArgs,
+            RegistrySetTokenEnabledResponse,
         );
     }
 }

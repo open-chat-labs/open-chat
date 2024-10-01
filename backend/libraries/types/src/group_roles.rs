@@ -1,7 +1,9 @@
 use crate::OptionUpdate;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Default, Eq, PartialEq)]
 pub enum GroupRole {
     Owner,
@@ -11,6 +13,7 @@ pub enum GroupRole {
     Participant,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupPermissions {
     pub change_roles: GroupPermissionRole,
@@ -32,6 +35,7 @@ fn admin() -> GroupPermissionRole {
     GroupPermissionRole::Admins
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MessagePermissions {
     pub default: GroupPermissionRole,
@@ -50,17 +54,20 @@ pub struct MessagePermissions {
     pub custom: Vec<CustomPermission>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CustomPermission {
     pub subtype: String,
     pub role: GroupPermissionRole,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub struct OptionalGroupPermissions {
     pub change_roles: Option<GroupPermissionRole>,
     pub update_group: Option<GroupPermissionRole>,
     pub invite_users: Option<GroupPermissionRole>,
+    pub add_members: Option<GroupPermissionRole>,
     pub remove_members: Option<GroupPermissionRole>,
     pub delete_messages: Option<GroupPermissionRole>,
     pub pin_messages: Option<GroupPermissionRole>,
@@ -68,23 +75,35 @@ pub struct OptionalGroupPermissions {
     pub mention_all_members: Option<GroupPermissionRole>,
     pub start_video_call: Option<GroupPermissionRole>,
     pub message_permissions: Option<OptionalMessagePermissions>,
+    #[ts(as = "crate::OptionUpdateOptionalMessagePermissions")]
     pub thread_permissions: OptionUpdate<OptionalMessagePermissions>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub struct OptionalMessagePermissions {
     pub default: Option<GroupPermissionRole>,
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub text: OptionUpdate<GroupPermissionRole>,
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub image: OptionUpdate<GroupPermissionRole>,
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub video: OptionUpdate<GroupPermissionRole>,
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub audio: OptionUpdate<GroupPermissionRole>,
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub file: OptionUpdate<GroupPermissionRole>,
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub poll: OptionUpdate<GroupPermissionRole>,
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub crypto: OptionUpdate<GroupPermissionRole>,
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub giphy: OptionUpdate<GroupPermissionRole>,
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub prize: OptionUpdate<GroupPermissionRole>,
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub p2p_swap: OptionUpdate<GroupPermissionRole>,
-    #[serde(default)]
+    #[ts(as = "crate::OptionUpdateGroupPermissionRole")]
     pub video_call: OptionUpdate<GroupPermissionRole>,
     pub custom_updated: Vec<CustomPermission>,
     pub custom_deleted: Vec<String>,
@@ -129,6 +148,7 @@ impl Default for MessagePermissions {
     }
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq)]
 pub enum GroupPermissionRole {
     None,

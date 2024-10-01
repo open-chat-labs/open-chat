@@ -160,7 +160,7 @@ fn validate_caller(community_rules_accepted: Option<Version>, state: &mut Runtim
                 member.accept_rules(version, state.env.now());
             }
             if state.data.rules.enabled
-                && !member.is_bot
+                && !member.user_type.is_bot()
                 && member
                     .rules_accepted
                     .as_ref()
@@ -247,9 +247,21 @@ fn process_send_message_result(
             );
 
             if new_achievement {
-                state.notify_user_of_achievements(
+                state.data.achievements.notify_user(
                     sender,
-                    Achievement::from_message(false, &result.message_event.event, thread_root_message_index.is_some()),
+                    result
+                        .message_event
+                        .event
+                        .achievements(false, thread_root_message_index.is_some()),
+                    &mut state.data.fire_and_forget_handler,
+                );
+            }
+
+            if let MessageContent::Crypto(c) = &result.message_event.event.content {
+                state.data.achievements.notify_user(
+                    c.recipient,
+                    vec![Achievement::ReceivedCrypto],
+                    &mut state.data.fire_and_forget_handler,
                 );
             }
 

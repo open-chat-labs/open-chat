@@ -38,9 +38,10 @@ impl CommunityMembers {
             channels: public_channels.into_iter().collect(),
             channels_removed: Vec::new(),
             rules_accepted: Some(Timestamped::new(Version::zero(), now)),
-            is_bot: creator_user_type.is_bot(),
             user_type: creator_user_type,
             display_name: Timestamped::default(),
+            referred_by: None,
+            referrals: HashSet::new(),
         };
 
         CommunityMembers {
@@ -54,12 +55,23 @@ impl CommunityMembers {
         }
     }
 
-    pub fn add(&mut self, user_id: UserId, principal: Principal, user_type: UserType, now: TimestampMillis) -> AddResult {
+    pub fn add(
+        &mut self,
+        user_id: UserId,
+        principal: Principal,
+        user_type: UserType,
+        mut referred_by: Option<UserId>,
+        now: TimestampMillis,
+    ) -> AddResult {
         if self.blocked.contains(&user_id) {
             AddResult::Blocked
         } else {
             match self.members.entry(user_id) {
                 Vacant(e) => {
+                    if referred_by == Some(user_id) {
+                        referred_by = None;
+                    }
+
                     let member = CommunityMemberInternal {
                         user_id,
                         date_added: now,
@@ -68,12 +80,18 @@ impl CommunityMembers {
                         channels: HashSet::new(),
                         channels_removed: Vec::new(),
                         rules_accepted: None,
-                        is_bot: user_type.is_bot(),
                         user_type,
                         display_name: Timestamped::default(),
+                        referred_by,
+                        referrals: HashSet::new(),
                     };
                     e.insert(member.clone());
                     self.add_user_id(principal, user_id);
+
+                    if let Some(referrer) = referred_by.and_then(|ref_id| self.get_by_user_id_mut(&ref_id)) {
+                        referrer.referrals.insert(user_id);
+                    }
+
                     AddResult::Success(member)
                 }
                 _ => AddResult::AlreadyInCommunity,
@@ -100,6 +118,10 @@ impl CommunityMembers {
                 }
 
                 self.user_groups.remove_user_from_all(&member.user_id, now);
+
+                if let Some(referrer) = member.referred_by.and_then(|uid| self.get_by_user_id_mut(&uid)) {
+                    referrer.referrals.remove(&user_id);
+                }
 
                 return Some(member);
             }
@@ -346,10 +368,10 @@ pub struct CommunityMemberInternal {
     pub channels: HashSet<ChannelId>,
     pub channels_removed: Vec<Timestamped<ChannelId>>,
     pub rules_accepted: Option<Timestamped<Version>>,
-    pub is_bot: bool,
-    #[serde(default)]
     pub user_type: UserType,
     display_name: Timestamped<Option<String>>,
+    pub referred_by: Option<UserId>,
+    pub referrals: HashSet<UserId>,
 }
 
 impl CommunityMemberInternal {
@@ -427,6 +449,7 @@ impl From<CommunityMemberInternal> for CommunityMember {
             date_added: p.date_added,
             role: p.role,
             display_name: p.display_name.value,
+            referred_by: p.referred_by,
         }
     }
 }
@@ -438,6 +461,7 @@ impl From<&CommunityMemberInternal> for CommunityMember {
             date_added: p.date_added,
             role: p.role,
             display_name: p.display_name.value.clone(),
+            referred_by: p.referred_by,
         }
     }
 }

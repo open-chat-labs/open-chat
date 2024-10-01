@@ -8,11 +8,12 @@
         "build:prod": "npm ci && dotenv -- turbo run build:prod --cache-dir .turbo",
         "build:prod_test": "npm ci && dotenv -- turbo run build:prod_test --cache-dir .turbo",
         "build:testnet": "npm ci && dotenv -- turbo run build:testnet --cache-dir .turbo",
-        "deploy:prod_test": "npm i && dotenv -- turbo run deploy:prod_test --cache-dir .turbo",
+        "deploy:prod_test": "npm ci && dotenv -- turbo run deploy:prod_test --cache-dir .turbo",
         "deploy:prod": "npm ci && dotenv -- turbo run deploy:prod --cache-dir .turbo",
         "deploy:testnet": "npm ci && dotenv -- turbo run deploy:testnet --cache-dir .turbo",
         "dev": "npm i && dotenv -- turbo run dev --cache-dir .turbo",
-        "changelog": "auto-changelog --tag-pattern '-website' --file-pattern '^frontend'"
+        "changelog": "auto-changelog --tag-pattern '-website' --file-pattern '^frontend'",
+        "verify": "dotenv -- turbo run verify --cache-dir .turbo"
     },
     "author": "julian.jelfs@gmail.com",
     "workspaces": [
@@ -43,7 +44,7 @@
         "dotenv-cli": "^7.2.1",
         "eslint-config-prettier": "^9.0.0",
         "eslint-plugin-prettier": "^5.0.0",
-        "rollup": "^4.4.0",
+        "rollup": "^4.22.4",
         "rollup-plugin-analyzer": "^4.0.0",
         "rollup-plugin-cleaner": "^1.0.0",
         "rollup-plugin-copy": "^3.4.0",
@@ -55,7 +56,7 @@
         "rollup-plugin-svelte": "^7.1.6",
         "rollup-styles": "^1.5.0",
         "ts-jest": "^29.1.1",
-        "turbo": "^1.10.13"
+        "turbo": "^2.1.2"
     },
     "dependencies": {
         "workbox-core": "^7.1.0",
@@ -63,5 +64,6 @@
         "workbox-recipes": "^7.1.0",
         "workbox-routing": "^7.1.0",
         "workbox-strategies": "^7.1.0"
-    }
+    },
+    "packageManager": "npm@10.8.2"
 }

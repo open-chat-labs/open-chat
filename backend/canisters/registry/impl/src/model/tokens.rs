@@ -30,6 +30,13 @@ impl Tokens {
         if self.exists(ledger_canister_id) {
             false
         } else {
+            // If there is an existing token with the same symbol, disable it in favour of the
+            // newly added one
+            if let Some(matching_symbol) = self.tokens.iter_mut().find(|t| t.symbol == symbol) {
+                matching_symbol.enabled = false;
+                matching_symbol.last_updated = now;
+            }
+
             let logo_id = logo_id(&logo);
             self.tokens.push(TokenDetails {
                 ledger_canister_id,
@@ -73,6 +80,9 @@ impl Tokens {
                 token.logo_id = logo_id(&logo);
                 token.logo = logo;
             }
+            if let Some(fee) = args.fee {
+                token.fee = fee;
+            }
             token.last_updated = now;
             self.last_updated = now;
             info!(ledger_canister_id = %args.ledger_canister_id, "Token details updated");
@@ -87,17 +97,6 @@ impl Tokens {
             if token.supported_standards != supported_standards {
                 token.supported_standards = supported_standards;
                 token.last_updated = now;
-            }
-        }
-    }
-
-    #[allow(dead_code)]
-    pub fn set_fee(&mut self, ledger_canister_id: CanisterId, fee: u128, now: TimestampMillis) {
-        if let Some(token) = self.get_mut(ledger_canister_id) {
-            if token.fee != fee {
-                token.fee = fee;
-                token.last_updated = now;
-                self.last_updated = now;
             }
         }
     }

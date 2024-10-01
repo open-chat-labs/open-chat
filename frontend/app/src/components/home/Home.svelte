@@ -46,6 +46,7 @@
         routeForChatIdentifier,
         routeForMessage,
         UserSuspensionChanged,
+        RemoteVideoCallEndedEvent,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -152,7 +153,7 @@
         | { kind: "select_chat" }
         | { kind: "suspended" }
         | { kind: "no_access" }
-        | { kind: "new_group"; candidate: CandidateGroupChat }
+        | { kind: "new_group"; embeddedContent: boolean; candidate: CandidateGroupChat }
         | { kind: "wallet" }
         | { kind: "gate_check_failed"; gates: AccessGateWithLevel[] }
         | { kind: "hall_of_fame" }
@@ -254,6 +255,8 @@
             openThread(ev.detail);
         } else if (ev instanceof RemoteVideoCallStartedEvent) {
             remoteVideoCallStarted(ev);
+        } else if (ev instanceof RemoteVideoCallEndedEvent) {
+            remoteVideoCallEnded(ev);
         } else if (ev instanceof ThreadClosed) {
             closeThread();
         } else if (ev instanceof SendMessageFailed) {
@@ -287,10 +290,16 @@
         }
     }
 
+    function remoteVideoCallEnded(ev: RemoteVideoCallEndedEvent) {
+        if ($incomingVideoCall?.messageId === ev.detail.messageId) {
+            incomingVideoCall.set(undefined);
+        }
+    }
+
     function remoteVideoCallStarted(ev: RemoteVideoCallStartedEvent) {
         // If current user is already in the call, or has previously been in the call, or the call started more than an hour ago, exit
         if (
-            $activeVideoCall?.chatId === ev.detail.chatId ||
+            chatIdentifiersEqual($activeVideoCall?.chatId, ev.detail.chatId) ||
             ev.detail.currentUserIsParticipant ||
             Number(ev.detail.timestamp) < Date.now() - 60 * 60 * 1000
         ) {
@@ -536,6 +545,10 @@
                 const userGroupId = Number(usergroup);
                 rightPanelHistory.set([{ kind: "show_community_members", userGroupId }]);
                 pageReplace(removeQueryStringParam("usergroup"));
+            }
+
+            if (modal?.kind === "claim_daily_chit") {
+                modal = { kind: "none" };
             }
         }
     }
@@ -970,11 +983,11 @@
         modal = { kind: "wallet" };
     }
 
-    function newChannel() {
-        newGroup("channel");
+    function newChannel(ev: CustomEvent<boolean>) {
+        newGroup("channel", ev.detail);
     }
 
-    function newGroup(level: Level = "group") {
+    function newGroup(level: Level = "group", embeddedContent: boolean = false) {
         if (level === "channel" && $chatListScope.kind !== "community") {
             return;
         }
@@ -985,6 +998,7 @@
 
         modal = {
             kind: "new_group",
+            embeddedContent,
             candidate: {
                 id,
                 kind: "candidate_group_chat",
@@ -1001,6 +1015,7 @@
                     updateGroup: "admin",
                     pinMessages: "admin",
                     inviteUsers: "admin",
+                    addMembers: "admin",
                     mentionAllMembers: "member",
                     reactToMessages: "member",
                     startVideoCall: "member",
@@ -1017,6 +1032,7 @@
                     ...nullMembership(),
                     role: "owner",
                 },
+                messagesVisibleToNonMembers: false,
             },
         };
     }
@@ -1027,6 +1043,7 @@
         let rules = ev.detail.rules ?? { ...defaultChatRules(level), newVersion: false };
         modal = {
             kind: "new_group",
+            embeddedContent: chat.kind === "channel" && chat.externalUrl !== undefined,
             candidate: {
                 id: chat.id,
                 kind: "candidate_group_chat",
@@ -1046,6 +1063,8 @@
                 level,
                 membership: chat.membership,
                 eventsTTL: chat.eventsTTL,
+                messagesVisibleToNonMembers: chat.messagesVisibleToNonMembers,
+                externalUrl: chat.kind === "channel" ? chat.externalUrl : undefined,
             },
         };
     }
@@ -1250,7 +1269,6 @@
 {:else if modal.kind !== "none"}
     <Overlay
         dismissible={modal.kind !== "select_chat" &&
-            modal.kind !== "wallet" &&
             modal.kind !== "not_found" &&
             modal.kind !== "make_proposal"}
         alignLeft={modal.kind === "select_chat"}
@@ -1272,7 +1290,11 @@
                 on:close={closeModal}
                 on:success={accessGatesEvaluated} />
         {:else if modal.kind === "new_group"}
-            <NewGroup candidateGroup={modal.candidate} on:upgrade={upgrade} on:close={closeModal} />
+            <NewGroup
+                embeddedContent={modal.embeddedContent}
+                candidateGroup={modal.candidate}
+                on:upgrade={upgrade}
+                on:close={closeModal} />
         {:else if modal.kind === "edit_community"}
             <EditCommunity
                 originalRules={modal.communityRules}

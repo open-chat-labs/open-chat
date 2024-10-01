@@ -34,7 +34,7 @@
 
     const screenshotMap: Record<string, { url: string; alt: string }[]> = {};
 
-    [...communityThemes, themes.dark, themes.light].forEach((theme) => {
+    [...communityThemes, themes.dark, themes.white].forEach((theme) => {
         screenshotMap[theme.name] = [
             {
                 url: `/assets/screenshots/features/communities_${theme.mode}.webp`,

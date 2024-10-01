@@ -1,4 +1,5 @@
 <script lang="ts">
+    import Alert from "svelte-material-icons/Alert.svelte";
     import Send from "svelte-material-icons/Send.svelte";
     import ContentSaveEditOutline from "svelte-material-icons/ContentSaveMoveOutline.svelte";
     import Close from "svelte-material-icons/Close.svelte";
@@ -51,6 +52,7 @@
     export let replyingTo: EnhancedReplyContext | undefined;
     export let textContent: string | undefined;
     export let mode: "thread" | "message" = "message";
+    export let externalContent: boolean;
 
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
@@ -262,7 +264,7 @@
 
     function formatUserMentions(text: string): string {
         return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
-            const u = $userStore[p1];
+            const u = $userStore.get(p1);
             if (u?.username !== undefined) {
                 const username = u.username;
                 return `@${username}`;
@@ -558,6 +560,11 @@
         </div>
     {:else if preview && chat.kind !== "direct_chat"}
         <PreviewFooter {joining} {chat} on:joinGroup on:upgrade />
+    {:else if externalContent}
+        <div class="disclaimer">
+            <Alert size={$iconSize} color={"var(--warn"} />
+            <Translatable resourceKey={i18nKey("externalContent.disclaimer")} />
+        </div>
     {:else if !canSendAny}
         <div class="disabled">
             <Translatable
@@ -757,5 +764,13 @@
     .note {
         @include font(book, normal, fs-70);
         margin-bottom: $sp2;
+    }
+
+    .disclaimer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        gap: $sp4;
     }
 </style>

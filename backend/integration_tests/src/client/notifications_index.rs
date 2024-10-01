@@ -1,12 +1,12 @@
-use crate::{generate_query_call, generate_update_call};
+use crate::{generate_msgpack_query_call, generate_msgpack_update_call, generate_update_call};
 use notifications_index_canister::*;
 
 // Queries
-generate_query_call!(subscription_exists);
+generate_msgpack_query_call!(subscription_exists);
 
 // Updates
 generate_update_call!(add_notifications_canister);
-generate_update_call!(push_subscription);
+generate_msgpack_update_call!(push_subscription);
 generate_update_call!(upgrade_notifications_canister_wasm);
 
 pub mod happy_path {
@@ -24,11 +24,7 @@ pub mod happy_path {
             env,
             sender,
             notifications_index_canister_id,
-            &notifications_index_canister::upgrade_notifications_canister_wasm::Args {
-                wasm,
-                filter: None,
-                use_for_new_canisters: None,
-            },
+            &notifications_index_canister::upgrade_notifications_canister_wasm::Args { wasm, filter: None },
         );
 
         assert!(matches!(

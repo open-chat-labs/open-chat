@@ -7,11 +7,13 @@ use crate::{
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fmt::{Debug, Formatter};
+use std::fmt::{Debug, Display, Formatter};
+use ts_export::ts_export;
 
 pub const MAX_TEXT_LENGTH: u32 = 10_000;
 pub const MAX_TEXT_LENGTH_USIZE: usize = MAX_TEXT_LENGTH as usize;
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum MessageContentInitial {
     Text(TextContent),
@@ -31,6 +33,7 @@ pub enum MessageContentInitial {
     Custom(CustomContent),
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum MessageContent {
     Text(TextContent),
@@ -53,6 +56,29 @@ pub enum MessageContent {
     Custom(CustomContent),
 }
 
+#[derive(Clone)]
+pub enum MessageContentType {
+    Text,
+    Image,
+    Video,
+    Audio,
+    File,
+    Poll,
+    Crypto,
+    Deleted,
+    Giphy,
+    GovernanceProposal,
+    Prize,
+    PrizeWinner,
+    MessageReminderCreated,
+    MessageReminder,
+    ReportedMessage,
+    P2PSwap,
+    VideoCall,
+    Custom(String),
+}
+
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum ContentValidationError {
     Empty,
@@ -199,33 +225,8 @@ impl MessageContent {
         }
     }
 
-    pub fn to_achievement(&self) -> Option<Achievement> {
-        match self {
-            MessageContent::Text(_) => Some(Achievement::SentText),
-            MessageContent::Image(_) => Some(Achievement::SentImage),
-            MessageContent::Video(_) => Some(Achievement::SentVideo),
-            MessageContent::Audio(_) => Some(Achievement::SentAudio),
-            MessageContent::File(_) => Some(Achievement::SentFile),
-            MessageContent::Poll(_) => Some(Achievement::SentPoll),
-            MessageContent::Crypto(_) => Some(Achievement::SentCrypto),
-            MessageContent::Deleted(_) => Some(Achievement::DeletedMessage),
-            MessageContent::Giphy(_) => Some(Achievement::SentGiphy),
-            MessageContent::GovernanceProposal(_) => None,
-            MessageContent::Prize(_) => Some(Achievement::SentPrize),
-            MessageContent::PrizeWinner(_) => None,
-            MessageContent::MessageReminderCreated(_) => Some(Achievement::SentReminder),
-            MessageContent::MessageReminder(_) => Some(Achievement::SentReminder),
-            MessageContent::ReportedMessage(_) => None,
-            MessageContent::P2PSwap(_) => Some(Achievement::SentP2PSwapOffer),
-            MessageContent::VideoCall(_) => Some(Achievement::StartedCall),
-            MessageContent::Custom(c) => {
-                if c.kind == "meme_fighter" {
-                    Some(Achievement::SentMeme)
-                } else {
-                    None
-                }
-            }
-        }
+    pub fn content_type(&self) -> MessageContentType {
+        self.into()
     }
 
     pub fn notification_crypto_transfer_details(&self, mentioned: &[User]) -> Option<CryptoTransferDetails> {
@@ -392,6 +393,8 @@ impl From<MessageContentInitial> for MessageContent {
             MessageContentInitial::Prize(c) => MessageContent::Prize(PrizeContent {
                 prizes_remaining: c.prizes_v2.len() as u32,
                 winners: Vec::new(),
+                winner_count: 0,
+                user_is_winner: false,
                 token: c.transfer.token(),
                 end_date: c.end_date,
                 caption: c.caption,
@@ -406,6 +409,90 @@ impl From<MessageContentInitial> for MessageContent {
     }
 }
 
+impl MessageContentType {
+    pub fn achievement(&self) -> Option<Achievement> {
+        match self {
+            MessageContentType::Text => Some(Achievement::SentText),
+            MessageContentType::Image => Some(Achievement::SentImage),
+            MessageContentType::Video => Some(Achievement::SentVideo),
+            MessageContentType::Audio => Some(Achievement::SentAudio),
+            MessageContentType::File => Some(Achievement::SentFile),
+            MessageContentType::Poll => Some(Achievement::SentPoll),
+            MessageContentType::Crypto => Some(Achievement::SentCrypto),
+            MessageContentType::Deleted => Some(Achievement::DeletedMessage),
+            MessageContentType::Giphy => Some(Achievement::SentGiphy),
+            MessageContentType::GovernanceProposal => None,
+            MessageContentType::Prize => Some(Achievement::SentPrize),
+            MessageContentType::PrizeWinner => None,
+            MessageContentType::MessageReminderCreated => Some(Achievement::SentReminder),
+            MessageContentType::MessageReminder => Some(Achievement::SentReminder),
+            MessageContentType::ReportedMessage => None,
+            MessageContentType::P2PSwap => Some(Achievement::SentP2PSwapOffer),
+            MessageContentType::VideoCall => Some(Achievement::StartedCall),
+            MessageContentType::Custom(c) => {
+                if c == "meme_fighter" {
+                    Some(Achievement::SentMeme)
+                } else {
+                    None
+                }
+            }
+        }
+    }
+}
+
+impl Display for MessageContentType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            MessageContentType::Text => "Text",
+            MessageContentType::Image => "Image",
+            MessageContentType::Video => "Video",
+            MessageContentType::Audio => "Audio",
+            MessageContentType::File => "File",
+            MessageContentType::Poll => "Poll",
+            MessageContentType::Crypto => "Crypto",
+            MessageContentType::Deleted => "Deleted",
+            MessageContentType::Giphy => "Giphy",
+            MessageContentType::GovernanceProposal => "GovernanceProposal",
+            MessageContentType::Prize => "Prize",
+            MessageContentType::PrizeWinner => "PrizeWinner",
+            MessageContentType::MessageReminderCreated => "MessageReminderCreated",
+            MessageContentType::MessageReminder => "MessageReminder",
+            MessageContentType::ReportedMessage => "ReportedMessage",
+            MessageContentType::P2PSwap => "P2PSwap",
+            MessageContentType::VideoCall => "VideoCall",
+            MessageContentType::Custom(c) => c,
+        };
+
+        f.write_str(s)
+    }
+}
+
+impl From<&MessageContent> for MessageContentType {
+    fn from(value: &MessageContent) -> Self {
+        match value {
+            MessageContent::Text(_) => MessageContentType::Text,
+            MessageContent::Image(_) => MessageContentType::Image,
+            MessageContent::Video(_) => MessageContentType::Video,
+            MessageContent::Audio(_) => MessageContentType::Audio,
+            MessageContent::File(_) => MessageContentType::File,
+            MessageContent::Poll(_) => MessageContentType::Poll,
+            MessageContent::Crypto(_) => MessageContentType::Crypto,
+            MessageContent::Deleted(_) => MessageContentType::Deleted,
+            MessageContent::Giphy(_) => MessageContentType::Giphy,
+            MessageContent::GovernanceProposal(_) => MessageContentType::GovernanceProposal,
+            MessageContent::Prize(_) => MessageContentType::Prize,
+            MessageContent::PrizeWinner(_) => MessageContentType::PrizeWinner,
+            MessageContent::MessageReminderCreated(_) => MessageContentType::MessageReminderCreated,
+            MessageContent::MessageReminder(_) => MessageContentType::MessageReminder,
+            MessageContent::ReportedMessage(_) => MessageContentType::ReportedMessage,
+            MessageContent::P2PSwap(_) => MessageContentType::P2PSwap,
+            MessageContent::VideoCall(_) => MessageContentType::VideoCall,
+            MessageContent::Custom(c) => MessageContentType::Custom(c.kind.clone()),
+        }
+    }
+}
+
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct TextContent {
     pub text: String,
@@ -417,6 +504,7 @@ impl From<String> for TextContent {
     }
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ImageContent {
     pub width: u32,
@@ -427,6 +515,7 @@ pub struct ImageContent {
     pub blob_reference: Option<BlobReference>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GiphyImageVariant {
     pub width: u32,
@@ -435,6 +524,7 @@ pub struct GiphyImageVariant {
     pub mime_type: String,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GiphyContent {
     pub caption: Option<String>,
@@ -443,6 +533,7 @@ pub struct GiphyContent {
     pub mobile: GiphyImageVariant,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct VideoContent {
     pub width: u32,
@@ -454,6 +545,7 @@ pub struct VideoContent {
     pub video_blob_reference: Option<BlobReference>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct AudioContent {
     pub caption: Option<String>,
@@ -461,6 +553,7 @@ pub struct AudioContent {
     pub blob_reference: Option<BlobReference>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct FileContent {
     pub name: String,
@@ -470,6 +563,7 @@ pub struct FileContent {
     pub blob_reference: Option<BlobReference>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PollContent {
     pub config: PollConfig,
@@ -503,6 +597,7 @@ pub enum RegisterVoteResult {
     OptionIndexOutOfRange,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CryptoContent {
     pub recipient: UserId,
@@ -510,6 +605,7 @@ pub struct CryptoContent {
     pub caption: Option<String>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PrizeContentInitial {
     pub prizes_v2: Vec<u128>,
@@ -519,17 +615,21 @@ pub struct PrizeContentInitial {
     pub diamond_only: bool,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PrizeContent {
     pub prizes_remaining: u32,
     pub prizes_pending: u32,
     pub winners: Vec<UserId>,
+    pub winner_count: u32,
+    pub user_is_winner: bool,
     pub token: Cryptocurrency,
     pub end_date: TimestampMillis,
     pub caption: Option<String>,
     pub diamond_only: bool,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PrizeWinnerContent {
     pub winner: UserId,
@@ -537,6 +637,7 @@ pub struct PrizeWinnerContent {
     pub prize_message: MessageIndex,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MessageReminderCreatedContent {
     pub reminder_id: u64,
@@ -545,18 +646,21 @@ pub struct MessageReminderCreatedContent {
     pub hidden: bool,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MessageReminderContent {
     pub reminder_id: u64,
     pub notes: Option<String>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ReportedMessage {
     pub reports: Vec<MessageReport>,
     pub count: u32,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MessageReport {
     pub reported_by: UserId,
@@ -565,6 +669,7 @@ pub struct MessageReport {
     pub notes: Option<String>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct P2PSwapContentInitial {
     pub token0: TokenInfo,
@@ -575,6 +680,7 @@ pub struct P2PSwapContentInitial {
     pub caption: Option<String>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct P2PSwapContent {
     pub swap_id: u32,
@@ -588,11 +694,13 @@ pub struct P2PSwapContent {
     pub status: P2PSwapStatus,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct VideoCallContentInitial {
     pub initiator: UserId,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct VideoCallContent {
     pub call_type: VideoCallType,
@@ -601,6 +709,7 @@ pub struct VideoCallContent {
     pub hidden_participants: u32,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CallParticipant {
     pub user_id: UserId,
@@ -698,6 +807,7 @@ impl P2PSwapContent {
     }
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CustomContent {
     pub kind: String,
@@ -705,12 +815,14 @@ pub struct CustomContent {
     pub data: Vec<u8>,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct DeletedBy {
     pub deleted_by: UserId,
     pub timestamp: TimestampMillis,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct BlobReference {
     pub canister_id: CanisterId,
@@ -723,6 +835,7 @@ impl BlobReference {
     }
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone)]
 pub struct ThumbnailData(pub String);
 

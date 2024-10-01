@@ -1,12 +1,12 @@
-use crate::model::airdrops::AirdropConfig;
 use crate::model::pending_actions_queue::{Action, AirdropTransfer, AirdropType, LotteryAirdrop, MainAidrop};
 use crate::{mutate_state, read_state, RuntimeState};
+use airdrop_bot_canister::AirdropConfig;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::iter::zip;
 use std::time::Duration;
 use tracing::{error, trace};
-use types::{AccessGate, CanisterId, GroupRole, OptionUpdate, UserId};
+use types::{AccessGate, CanisterId, Chit, GroupRole, OptionUpdate, UserId};
 use utils::time::MonthKey;
 
 use super::process_pending_actions;
@@ -72,6 +72,7 @@ async fn prepare_airdrop(config: AirdropConfig, user_index_canister_id: Canister
             gate: OptionUpdate::SetToSome(AccessGate::Locked),
             public: None,
             messages_visible_to_non_members: None,
+            external_url: OptionUpdate::NoChange,
         },
     )
     .await
@@ -89,7 +90,7 @@ async fn prepare_airdrop(config: AirdropConfig, user_index_canister_id: Canister
         }
     }
 
-    // Call the configured community canister to fetch the particpants of the configured channel
+    // Call the configured community canister to fetch the participants of the configured channel
     let members = match community_canister_c2c_client::selected_channel_initial(
         config.community_id.into(),
         &community_canister::selected_channel_initial::Args {
@@ -121,9 +122,9 @@ async fn prepare_airdrop(config: AirdropConfig, user_index_canister_id: Canister
         .map(|m| m.user_id)
         .collect();
 
-    let balances = match user_index_canister_c2c_client::chit_balances(
+    let chit = match user_index_canister_c2c_client::users_chit(
         user_index_canister_id,
-        &user_index_canister::chit_balances::Args {
+        &user_index_canister::users_chit::Args {
             users: users.clone(),
             year: mk.year() as u16,
             month: mk.month(),
@@ -131,7 +132,7 @@ async fn prepare_airdrop(config: AirdropConfig, user_index_canister_id: Canister
     )
     .await
     {
-        Ok(user_index_canister::chit_balances::Response::Success(result)) => result.balances,
+        Ok(user_index_canister::users_chit::Response::Success(result)) => result.chit,
         Err(err) => {
             error!("{err:?}");
             let timer_id = ic_cdk_timers::set_timer(Duration::from_secs(60), run);
@@ -140,16 +141,16 @@ async fn prepare_airdrop(config: AirdropConfig, user_index_canister_id: Canister
         }
     };
 
-    let user_balances = zip(users, balances).collect();
+    let participants = zip(users, chit).collect();
 
     // Execute the airdrop
-    mutate_state(|state| execute_airdrop(user_balances, state));
+    mutate_state(|state| execute_airdrop(participants, state));
 }
 
-fn execute_airdrop(particpants: Vec<(UserId, i32)>, state: &mut RuntimeState) {
+fn execute_airdrop(participants: Vec<(UserId, Chit)>, state: &mut RuntimeState) {
     let rng = state.env.rng();
 
-    if let Some(airdrop) = state.data.airdrops.execute(particpants, rng) {
+    if let Some(airdrop) = state.data.airdrops.execute(participants, rng) {
         // Add the CHAT transfer actions to the queue. When each transfer has succeeded
         // the corresponding message action will be added to the queue.
 
@@ -158,8 +159,8 @@ fn execute_airdrop(particpants: Vec<(UserId, i32)>, state: &mut RuntimeState) {
 
         let mut lottery_winners = airdrop.outcome.lottery_winners.clone();
 
-        for (user_id, particpant) in airdrop.outcome.participants.iter() {
-            if state.data.pending_actions_queue.len() % 50 == 0 {
+        for (user_id, participant) in airdrop.outcome.participants.iter() {
+            if state.data.pending_actions_queue.len() % 500 == 0 {
                 if let Some((user_id, prize)) = lottery_winners.pop() {
                     state
                         .data
@@ -174,7 +175,7 @@ fn execute_airdrop(particpants: Vec<(UserId, i32)>, state: &mut RuntimeState) {
                 }
             }
 
-            if let Some(prize) = &particpant.prize {
+            if let Some(prize) = &participant.prize {
                 state
                     .data
                     .pending_actions_queue
@@ -182,8 +183,8 @@ fn execute_airdrop(particpants: Vec<(UserId, i32)>, state: &mut RuntimeState) {
                         recipient: *user_id,
                         amount: prize.chat_won,
                         airdrop_type: AirdropType::Main(MainAidrop {
-                            chit: particpant.chit,
-                            shares: particpant.shares,
+                            chit: participant.chit,
+                            shares: participant.shares,
                         }),
                     })))
             }

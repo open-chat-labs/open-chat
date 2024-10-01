@@ -1,13 +1,13 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::timer_job_types::NotifyEscrowCanisterOfDepositJob;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::accept_p2p_swap::{Response::*, *};
-use ic_cdk::update;
 use icrc_ledger_types::icrc1::transfer::TransferError;
-use types::{AcceptSwapSuccess, ChannelId, Chat, MessageId, MessageIndex, P2PSwapLocation, UserId};
+use types::{AcceptSwapSuccess, Achievement, ChannelId, Chat, MessageId, MessageIndex, P2PSwapLocation, UserId};
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn accept_p2p_swap(args: Args) -> Response {
     run_regular_jobs();
@@ -15,6 +15,7 @@ async fn accept_p2p_swap(args: Args) -> Response {
     let channel_id = args.channel_id;
     let thread_root_message_index = args.thread_root_message_index;
     let message_id = args.message_id;
+    let new_achievement = args.new_achievement;
 
     let ReserveP2PSwapResult { user_id, c2c_args } = match mutate_state(|state| reserve_p2p_swap(args, state)) {
         Ok(result) => result,
@@ -31,6 +32,17 @@ async fn accept_p2p_swap(args: Args) -> Response {
                 message_id,
                 transaction_index,
             );
+
+            if new_achievement {
+                mutate_state(|state| {
+                    state.data.achievements.notify_user(
+                        user_id,
+                        vec![Achievement::AcceptedP2PSwapOffer],
+                        &mut state.data.fire_and_forget_handler,
+                    );
+                });
+            }
+
             Success(AcceptSwapSuccess {
                 token1_txn_in: transaction_index,
             })

@@ -1,8 +1,12 @@
-use crate::{CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex, Reaction, ThreadSummary, UserId};
+use crate::{
+    Achievement, CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex, Reaction, ThreadSummary, UserId,
+};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::ops::{Deref, DerefMut};
+use ts_export::{ts_export, TSBytes};
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Message {
     pub message_index: MessageIndex,
@@ -15,16 +19,43 @@ pub struct Message {
     pub thread_summary: Option<ThreadSummary>,
     pub edited: bool,
     pub forwarded: bool,
-    #[serde(default)]
     pub block_level_markdown: bool,
 }
 
+impl Message {
+    pub fn achievements(&self, direct: bool, is_thread: bool) -> Vec<Achievement> {
+        let mut achievements = Vec::new();
+
+        if let Some(achievement) = self.content.content_type().achievement() {
+            achievements.push(achievement);
+        }
+
+        if direct {
+            achievements.push(Achievement::SentDirectMessage);
+        }
+
+        if self.forwarded {
+            achievements.push(Achievement::ForwardedMessage);
+        }
+
+        if self.replies_to.is_some() {
+            achievements.push(Achievement::QuoteReplied);
+        } else if is_thread && self.message_index == MessageIndex::from(0) {
+            achievements.push(Achievement::RepliedInThread);
+        }
+
+        achievements
+    }
+}
+
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ReplyContext {
     pub chat_if_other: Option<(Chat, Option<MessageIndex>)>,
     pub event_index: EventIndex,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupReplyContext {
     pub event_index: EventIndex,
@@ -62,7 +93,9 @@ pub struct MessageEditedEventPayload {
     pub new_length: u32,
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+#[ts(as = "TipsTS")]
 pub struct Tips(Vec<(CanisterId, Vec<(UserId, u128)>)>);
 
 impl Deref for Tips {
@@ -92,6 +125,11 @@ impl Tips {
         }
     }
 }
+
+#[allow(dead_code)]
+#[ts_export]
+#[derive(Serialize, Deserialize)]
+pub struct TipsTS(Vec<(TSBytes, Vec<(UserId, u128)>)>);
 
 #[derive(Serialize)]
 #[serde(untagged)]

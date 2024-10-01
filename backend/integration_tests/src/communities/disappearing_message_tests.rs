@@ -34,6 +34,7 @@ fn disappearing_messages_in_channel() {
             gate: OptionUpdate::NoChange,
             public: None,
             messages_visible_to_non_members: None,
+            external_url: OptionUpdate::NoChange,
         },
     );
 
@@ -80,6 +81,7 @@ fn disappearing_messages_in_channel() {
             gate: OptionUpdate::NoChange,
             public: None,
             messages_visible_to_non_members: None,
+            external_url: OptionUpdate::NoChange,
         },
     );
 

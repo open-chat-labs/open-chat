@@ -3,7 +3,9 @@ use candid::{CandidType, Principal};
 use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
+use ts_export::ts_export;
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct UserId(CanisterId);
 
@@ -46,6 +48,7 @@ impl Display for UserId {
     }
 }
 
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct User {
     pub user_id: UserId,

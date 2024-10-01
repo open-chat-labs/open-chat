@@ -9,6 +9,7 @@ use std::time::Duration;
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
+mod guards;
 mod jobs;
 mod lifecycle;
 mod memory;
@@ -30,6 +31,11 @@ struct RuntimeState {
 impl RuntimeState {
     pub fn new(env: Box<dyn Environment>, data: Data) -> RuntimeState {
         RuntimeState { env, data }
+    }
+
+    pub fn is_caller_user_index_canister(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.user_index_canister_id == caller
     }
 
     pub fn metrics(&self) -> Metrics {

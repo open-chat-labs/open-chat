@@ -93,6 +93,17 @@ export class SafeMap<K, V> {
     }
 }
 
+// This is a bit weird
+export class GlobalMap<V> extends SafeMap<"global", V> {
+    constructor(_map: Map<"global", V> = new Map<"global", V>()) {
+        super(
+            (_: "global") => "global",
+            (_: string) => "global",
+            _map,
+        );
+    }
+}
+
 export class ChatMap<V> extends SafeMap<ChatIdentifier, V> {
     constructor(_map: Map<string, V> = new Map<string, V>()) {
         super(

@@ -57,7 +57,13 @@ fn members_added_if_channel_made_public_or_gate_removed(make_public: bool) {
 
     client::community::happy_path::leave_channel(env, user2.principal, community_id, channel_id);
 
-    client::local_user_index::happy_path::join_community(env, user3.principal, canister_ids.local_user_index, community_id);
+    client::local_user_index::happy_path::join_community(
+        env,
+        user3.principal,
+        canister_ids.local_user_index,
+        community_id,
+        None,
+    );
     client::community::happy_path::update_channel(
         env,
         user1.principal,
@@ -73,6 +79,7 @@ fn members_added_if_channel_made_public_or_gate_removed(make_public: bool) {
             gate: if !make_public { OptionUpdate::SetToNone } else { OptionUpdate::NoChange },
             public: make_public.then_some(true),
             messages_visible_to_non_members: None,
+            external_url: OptionUpdate::NoChange,
         },
     );
 

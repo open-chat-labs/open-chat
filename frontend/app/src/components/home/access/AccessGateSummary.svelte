@@ -6,6 +6,9 @@
     import Translatable from "../../Translatable.svelte";
     import AccessGateBuilder from "./AccessGateBuilder.svelte";
     import { _ } from "svelte-i18n";
+    import { createEventDispatcher } from "svelte";
+
+    const dispatch = createEventDispatcher();
 
     export let gate: AccessGate;
     export let editable: boolean;
@@ -35,15 +38,15 @@
         }
         return i18nKey(getGateResourceKey(gate));
     }
+
+    function close() {
+        showDetail = false;
+        dispatch("updated");
+    }
 </script>
 
 {#if showDetail}
-    <AccessGateBuilder
-        bind:valid
-        {level}
-        on:close={() => (showDetail = false)}
-        bind:gate
-        {editable} />
+    <AccessGateBuilder bind:valid {level} on:close={close} bind:gate {editable} />
 {/if}
 
 {#if gate.kind !== "no_gate" || showNoGate}
@@ -51,7 +54,7 @@
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div class:invalid={!valid} on:click={open} class:editable class="summary">
         <div class="icon">
-            <AccessGateIcon {level} showNoGate {gate} />
+            <AccessGateIcon button {level} showNoGate {gate} />
         </div>
         <div class="name">
             {#if gateText !== undefined}
@@ -70,6 +73,7 @@
         gap: $sp3;
         background-color: var(--button-bg);
         border-radius: var(--button-rd);
+        color: var(--button-txt);
         transition:
             background ease-in-out 200ms,
             color ease-in-out 200ms;

@@ -1,11 +1,11 @@
 use crate::guards::caller_is_owner;
 use crate::{read_state, RuntimeState};
-use ic_cdk::query;
+use canister_api_macros::query;
 use types::UserId;
 use user_canister::initial_state::{Response::*, *};
 use utils::time::{today, tomorrow};
 
-#[query(guard = "caller_is_owner")]
+#[query(guard = "caller_is_owner", candid = true, msgpack = true)]
 fn initial_state(_args: Args) -> Response {
     read_state(initial_state_impl)
 }
@@ -24,7 +24,6 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
     let group_chats = GroupChatsInitial {
         summaries: state.data.group_chats.iter().map(|g| g.to_summary()).collect(),
         pinned: state.data.group_chats.pinned().to_vec(),
-        cached: None,
     };
 
     let communities = CommunitiesInitial {
@@ -55,5 +54,7 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
         streak_ends: state.data.streak.ends(),
         next_daily_claim: if state.data.streak.can_claim(now) { today(now) } else { tomorrow(now) },
         is_unique_person: state.data.unique_person_proof.is_some(),
+        wallet_config: state.data.wallet_config.value.clone(),
+        referrals: state.data.referrals.list(),
     })
 }

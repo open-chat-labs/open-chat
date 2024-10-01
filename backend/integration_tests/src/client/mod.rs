@@ -5,9 +5,10 @@ use candid::{CandidType, Principal};
 use pocket_ic::{PocketIc, UserError, WasmResult};
 use rand::random;
 use serde::de::DeserializeOwned;
+use serde::Serialize;
 use std::time::Duration;
 use testing::rng::random_internet_identity_principal;
-use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration};
+use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration, SignedDelegation};
 
 mod macros;
 
@@ -63,7 +64,12 @@ pub fn install_canister<P: CandidType>(
     payload: P,
 ) {
     env.advance_time(Duration::from_millis(1));
-    env.install_canister(canister_id, wasm.module, candid::encode_one(&payload).unwrap(), Some(sender))
+    env.install_canister(
+        canister_id,
+        wasm.module.into(),
+        candid::encode_one(&payload).unwrap(),
+        Some(sender),
+    )
 }
 
 pub fn execute_query<P: CandidType, R: CandidType + DeserializeOwned>(
@@ -76,6 +82,16 @@ pub fn execute_query<P: CandidType, R: CandidType + DeserializeOwned>(
     unwrap_response(env.query_call(canister_id, sender, method_name, candid::encode_one(payload).unwrap()))
 }
 
+pub fn execute_msgpack_query<P: Serialize, R: DeserializeOwned>(
+    env: &PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    method_name: &str,
+    payload: &P,
+) -> R {
+    unwrap_msgpack_response(env.query_call(canister_id, sender, method_name, msgpack::serialize_then_unwrap(payload)))
+}
+
 pub fn execute_update<P: CandidType, R: CandidType + DeserializeOwned>(
     env: &mut PocketIc,
     sender: Principal,
@@ -84,6 +100,16 @@ pub fn execute_update<P: CandidType, R: CandidType + DeserializeOwned>(
     payload: &P,
 ) -> R {
     unwrap_response(env.update_call(canister_id, sender, method_name, candid::encode_one(payload).unwrap()))
+}
+
+pub fn execute_msgpack_update<P: Serialize, R: DeserializeOwned>(
+    env: &mut PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+    method_name: &str,
+    payload: &P,
+) -> R {
+    unwrap_msgpack_response(env.update_call(canister_id, sender, method_name, msgpack::serialize_then_unwrap(payload)))
 }
 
 pub fn execute_update_no_response<P: CandidType>(
@@ -102,18 +128,13 @@ pub fn register_user(env: &mut PocketIc, canister_ids: &CanisterIds) -> User {
 }
 
 pub fn register_user_with_referrer(env: &mut PocketIc, canister_ids: &CanisterIds, referral_code: Option<String>) -> User {
-    let (auth_principal, public_key) = random_internet_identity_principal();
-    let session_key = random::<[u8; 32]>().to_vec();
-    let create_identity_result =
-        identity::happy_path::create_identity(env, auth_principal, canister_ids.identity, public_key, session_key);
+    let (user, _) = register_user_internal(env, canister_ids, referral_code, false);
+    user
+}
 
-    local_user_index::happy_path::register_user_with_referrer(
-        env,
-        Principal::self_authenticating(&create_identity_result.user_key),
-        canister_ids.local_user_index,
-        create_identity_result.user_key,
-        referral_code,
-    )
+pub fn register_user_and_include_delegation(env: &mut PocketIc, canister_ids: &CanisterIds) -> (User, SignedDelegation) {
+    let (user, delegation) = register_user_internal(env, canister_ids, None, true);
+    (user, delegation.unwrap())
 }
 
 pub fn register_diamond_user(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> User {
@@ -136,9 +157,56 @@ pub fn upgrade_user(
     tick_many(env, 4);
 }
 
+fn register_user_internal(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    referral_code: Option<String>,
+    get_delegation: bool,
+) -> (User, Option<SignedDelegation>) {
+    let (auth_principal, public_key) = random_internet_identity_principal();
+    let session_key = random::<[u8; 32]>().to_vec();
+    let create_identity_result = identity::happy_path::create_identity(
+        env,
+        auth_principal,
+        canister_ids.identity,
+        public_key,
+        session_key.clone(),
+        true,
+    );
+
+    let user = local_user_index::happy_path::register_user_with_referrer(
+        env,
+        Principal::self_authenticating(&create_identity_result.user_key),
+        canister_ids.local_user_index,
+        create_identity_result.user_key,
+        referral_code,
+    );
+
+    let delegation = if get_delegation {
+        Some(identity::happy_path::get_delegation(
+            env,
+            auth_principal,
+            canister_ids.identity,
+            session_key,
+            create_identity_result.expiration,
+        ))
+    } else {
+        None
+    };
+
+    (user, delegation)
+}
+
 fn unwrap_response<R: CandidType + DeserializeOwned>(response: Result<WasmResult, UserError>) -> R {
     match response.unwrap() {
         WasmResult::Reply(bytes) => candid::decode_one(&bytes).unwrap(),
+        WasmResult::Reject(error) => panic!("{error}"),
+    }
+}
+
+fn unwrap_msgpack_response<R: DeserializeOwned>(response: Result<WasmResult, UserError>) -> R {
+    match response.unwrap() {
+        WasmResult::Reply(bytes) => msgpack::deserialize_then_unwrap(&bytes),
         WasmResult::Reject(error) => panic!("{error}"),
     }
 }

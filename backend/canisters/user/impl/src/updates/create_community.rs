@@ -1,8 +1,8 @@
 use crate::guards::caller_is_owner;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, COMMUNITY_CREATION_LIMIT};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_community;
-use ic_cdk::update;
 use std::collections::HashSet;
 use tracing::error;
 use types::{CanisterId, CommunityId};
@@ -13,7 +13,7 @@ use utils::text_validation::{
     RulesValidationError,
 };
 
-#[update(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 async fn create_community(mut args: Args) -> Response {
     run_regular_jobs();

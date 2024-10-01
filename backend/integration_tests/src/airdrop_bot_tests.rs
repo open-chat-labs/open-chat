@@ -1,14 +1,17 @@
 use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
 use crate::{client, TestEnv};
-use airdrop_bot_canister::set_airdrop;
+use airdrop_bot_canister::{set_airdrop, AirdropAlgorithm, V1Algorithm, V2Algorithm};
+use itertools::Itertools;
 use std::ops::Deref;
 use std::time::Duration;
+use test_case::test_case;
 use types::{AccessGate, ChatEvent, CryptoContent, EventIndex, GroupRole, Message, MessageContent, UserId};
 use utils::time::MonthKey;
 
-#[test]
-fn airdrop_end_to_end() {
+#[test_case(true)]
+#[test_case(false)]
+fn airdrop_end_to_end(v2: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -22,7 +25,7 @@ fn airdrop_end_to_end() {
     // Owner creates the airdrop community
     // Join each other user to the community
     // Owner creates a public airdrop channel gated by diamond - the 5 users will be added automatically
-    // Transfer 75,001 CHAT to the airdrop_bot canister
+    // Transfer 63,001 CHAT to the airdrop_bot canister
     // Owner invites the airdrop_bot to the channel
     //
     let airdrop_bot_user_id: UserId = canister_ids.airdrop_bot.into();
@@ -39,7 +42,13 @@ fn airdrop_end_to_end() {
     env.tick();
 
     for user in users.iter() {
-        client::local_user_index::happy_path::join_community(env, user.principal, canister_ids.local_user_index, community_id);
+        client::local_user_index::happy_path::join_community(
+            env,
+            user.principal,
+            canister_ids.local_user_index,
+            community_id,
+            None,
+        );
     }
 
     tick_many(env, 10);
@@ -58,7 +67,7 @@ fn airdrop_end_to_end() {
         *controller,
         canister_ids.chat_ledger,
         canister_ids.airdrop_bot,
-        7_500_100_000_000,
+        6_300_100_000_000,
     );
 
     client::local_user_index::happy_path::invite_users_to_channel(
@@ -77,6 +86,23 @@ fn airdrop_end_to_end() {
     let next_month = airdrop_month.next();
     let start_airdrop = next_month.start_timestamp() + 10000;
 
+    let algorithm = if v2 {
+        AirdropAlgorithm::V2(V2Algorithm {
+            main_chat_fund: 5_500_000_000_000,
+            main_chit_band: 500,
+            lottery_prizes: vec![200_000_000_000, 200_000_000_000, 200_000_000_000, 200_000_000_000],
+            lottery_min_chit: 500,
+            lottery_min_streak: 30,
+        })
+    } else {
+        AirdropAlgorithm::V1(V1Algorithm {
+            main_chat_fund: 5_500_000_000_000,
+            main_chit_band: 500,
+            lottery_prizes: vec![500_000_000_000, 200_000_000_000, 100_000_000_000],
+            lottery_chit_band: 500,
+        })
+    };
+
     let response = client::airdrop_bot::set_airdrop(
         env,
         *controller,
@@ -85,10 +111,7 @@ fn airdrop_end_to_end() {
             community_id,
             channel_id,
             start: start_airdrop,
-            main_chat_fund: 5_500_000_000_000,
-            main_chit_band: 500,
-            lottery_prizes: vec![1_200_000_000_000, 500_000_000_000, 300_000_000_000],
-            lottery_chit_band: 500,
+            algorithm,
         },
     );
 
@@ -129,11 +152,19 @@ fn airdrop_end_to_end() {
         .filter_map(|m| if let MessageContent::Crypto(content) = m.content { Some(content) } else { None })
         .collect();
 
-    assert_eq!(contents.len(), 3);
-
-    assert_eq!(contents[0].transfer.units(), 300_000_000_000);
-    assert_eq!(contents[1].transfer.units(), 500_000_000_000);
-    assert_eq!(contents[2].transfer.units(), 1_200_000_000_000);
+    if v2 {
+        assert_eq!(contents.len(), 4);
+        assert_eq!(contents[0].transfer.units(), 200_000_000_000);
+        assert_eq!(contents[1].transfer.units(), 200_000_000_000);
+        assert_eq!(contents[2].transfer.units(), 200_000_000_000);
+        assert_eq!(contents[3].transfer.units(), 200_000_000_000);
+    } else {
+        assert_eq!(contents.len(), 3);
+        let units: Vec<_> = contents.iter().map(|c| c.transfer.units()).sorted().collect();
+        assert_eq!(units[0], 100_000_000_000);
+        assert_eq!(units[1], 200_000_000_000);
+        assert_eq!(units[2], 500_000_000_000);
+    }
 
     // Assert user1 has been sent a DM from the Airdrop Bot for the expected amount of CHAT
     //

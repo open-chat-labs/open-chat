@@ -1,4 +1,6 @@
 use candid_gen::generate_candid_method;
+use std::env;
+use ts_export::generate_ts_method;
 
 #[allow(deprecated)]
 fn main() {
@@ -11,13 +13,12 @@ fn main() {
     generate_candid_method!(community, explore_channels, query);
     generate_candid_method!(community, invite_code, query);
     generate_candid_method!(community, local_user_index, query);
+    generate_candid_method!(community, lookup_members, query);
     generate_candid_method!(community, messages_by_message_index, query);
     generate_candid_method!(community, search_channel, query);
     generate_candid_method!(community, selected_channel_initial, query);
-    generate_candid_method!(community, selected_channel_updates, query);
     generate_candid_method!(community, selected_channel_updates_v2, query);
     generate_candid_method!(community, selected_initial, query);
-    generate_candid_method!(community, selected_updates, query);
     generate_candid_method!(community, selected_updates_v2, query);
     generate_candid_method!(community, summary, query);
     generate_candid_method!(community, summary_updates, query);
@@ -29,6 +30,7 @@ fn main() {
     generate_candid_method!(community, add_reaction, update);
     generate_candid_method!(community, block_user, update);
     generate_candid_method!(community, cancel_p2p_swap, update);
+    generate_candid_method!(community, cancel_invites, update);
     generate_candid_method!(community, change_channel_role, update);
     generate_candid_method!(community, change_role, update);
     generate_candid_method!(community, claim_prize, update);
@@ -48,8 +50,8 @@ fn main() {
     generate_candid_method!(community, leave_channel, update);
     generate_candid_method!(community, pin_message, update);
     generate_candid_method!(community, register_poll_vote, update);
-    generate_candid_method!(community, register_proposal_vote_v2, update);
     generate_candid_method!(community, register_proposal_vote, update);
+    // generate_candid_method!(community, register_proposal_vote_v2, update);
     generate_candid_method!(community, remove_member_from_channel, update);
     generate_candid_method!(community, remove_member, update);
     generate_candid_method!(community, remove_reaction, update);
@@ -67,6 +69,13 @@ fn main() {
     generate_candid_method!(community, update_channel, update);
     generate_candid_method!(community, update_community, update);
     generate_candid_method!(community, update_user_group, update);
+
+    let directory = env::current_dir().unwrap().join("tsBindings/community");
+    if directory.exists() {
+        std::fs::remove_dir_all(&directory).unwrap();
+    }
+
+    generate_ts_method!(community, send_message);
 
     candid::export_service!();
     std::print!("{}", __export_service());
