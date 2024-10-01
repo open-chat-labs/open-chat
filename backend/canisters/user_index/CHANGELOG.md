@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Expose counts of how many users have each streak badge ([#6492](https://github.com/open-chat-labs/open-chat/pull/6492))
+- Register `Konecta` external achievement ([#6493](https://github.com/open-chat-labs/open-chat/pull/6493))
+
 ### Changed
 
 - Add `CanisterWasmBytes` to reduce duplication ([#6480](https://github.com/open-chat-labs/open-chat/pull/6480))
