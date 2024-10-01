@@ -1,11 +1,10 @@
-use ic_cdk::api::call::CallResult;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::VecDeque;
 use std::rc::Rc;
-use std::sync::Mutex;
+use std::sync::{Mutex, MutexGuard};
 
 pub trait TimerJobItem: Clone {
-    fn process(&self) -> impl std::future::Future<Output = CallResult<()>> + Send;
+    fn process(&self) -> impl std::future::Future<Output = Result<(), bool>> + Send;
 }
 
 pub struct TimerJobQueue<T> {
@@ -23,9 +22,44 @@ impl<T> TimerJobQueue<T> {
         }
     }
 
+    pub fn enqueue(&self, item: T) {
+        self.unlock().queue.push_back(item);
+    }
+
+    pub fn enqueue_front(&self, item: T) {
+        self.unlock().queue.push_front(item);
+    }
+
+    pub fn enqueue_many(&self, items: impl Iterator<Item = T>) {
+        let mut inner = self.unlock();
+        for item in items {
+            inner.queue.push_back(item);
+        }
+    }
+
     pub fn set_max_concurrency(&mut self, value: usize) {
         let mut inner = self.inner.lock().unwrap();
         inner.max_concurrency = value;
+    }
+
+    pub fn clear(&self) {
+        self.unlock().queue.clear()
+    }
+
+    pub fn len(&self) -> usize {
+        self.inner.lock().unwrap().queue.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.unlock().queue.is_empty()
+    }
+
+    pub fn in_progress(&self) -> usize {
+        self.unlock().in_progress
+    }
+
+    fn unlock(&self) -> MutexGuard<TimerJobProcessorInner<T>> {
+        self.inner.lock().unwrap()
     }
 }
 
@@ -40,10 +74,10 @@ impl<T> TimerJobQueue<T>
 where
     T: TimerJobItem + 'static,
 {
-    pub fn run(&self) -> bool {
-        let mut inner = self.inner.lock().unwrap();
+    pub fn run(&self) -> Option<usize> {
+        let mut inner = self.unlock();
         if inner.queue.is_empty() && inner.in_progress == 0 {
-            return true;
+            return None;
         }
 
         let max_to_start = inner.max_concurrency.saturating_sub(inner.in_progress);
@@ -55,37 +89,15 @@ where
                 break;
             }
         }
-        inner.in_progress = inner.in_progress.saturating_add(items.len());
+        let count = items.len();
+        inner.in_progress = inner.in_progress.saturating_add(count);
 
         if !items.is_empty() {
             let clone = self.clone();
             ic_cdk::spawn(clone.process_batch(items));
         }
 
-        false
-    }
-
-    pub fn enqueue(&mut self, item: T) {
-        self.inner.lock().unwrap().queue.push_back(item);
-    }
-
-    pub fn enqueue_front(&mut self, item: T) {
-        self.inner.lock().unwrap().queue.push_front(item);
-    }
-
-    pub fn enqueue_many(&mut self, items: impl Iterator<Item = T>) {
-        let mut inner = self.inner.lock().unwrap();
-        for item in items {
-            inner.queue.push_back(item);
-        }
-    }
-
-    pub fn len(&self) -> usize {
-        self.inner.lock().unwrap().queue.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.inner.lock().unwrap().queue.is_empty()
+        Some(count)
     }
 
     async fn process_batch(self, batch: Vec<T>) {
@@ -93,10 +105,12 @@ where
     }
 
     async fn process_single(&self, item: T) {
-        if item.process().await.is_err() {
-            let mut inner = self.inner.lock().unwrap();
-            inner.queue.push_front(item);
-            inner.in_progress = inner.in_progress.saturating_sub(1);
+        if let Err(retry) = item.process().await {
+            if retry {
+                let mut inner = self.unlock();
+                inner.queue.push_front(item);
+                inner.in_progress = inner.in_progress.saturating_sub(1);
+            }
         }
     }
 }
