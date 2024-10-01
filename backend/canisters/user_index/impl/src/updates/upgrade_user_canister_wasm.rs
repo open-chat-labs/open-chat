@@ -29,6 +29,7 @@ async fn upgrade_user_canister_wasm(args: Args) -> Response {
         .collect();
 
     if let Err(error) = futures::future::try_join_all(futures).await {
+        error!(?error, "Failed to upgrade User canisters");
         InternalError(format!("{error:?}"))
     } else {
         mutate_state(|state| {
@@ -90,7 +91,7 @@ async fn process_local_user_index(
         return Err((RejectionCode::Unknown, format!("{push_wasm_response:?}")));
     }
 
-    local_user_index_canister_c2c_client::c2c_upgrade_user_canister_wasm(
+    let upgrade_response = local_user_index_canister_c2c_client::c2c_upgrade_user_canister_wasm(
         canister_id,
         &local_user_index_canister::c2c_upgrade_user_canister_wasm::Args {
             version: canister_wasm.version,
@@ -99,6 +100,10 @@ async fn process_local_user_index(
         },
     )
     .await?;
+
+    if !matches!(upgrade_response, Success) {
+        return Err((RejectionCode::Unknown, format!("{upgrade_response:?}")));
+    }
 
     Ok(())
 }
