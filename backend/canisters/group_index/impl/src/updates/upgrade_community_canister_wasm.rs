@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use group_index_canister::upgrade_community_canister_wasm::*;
 use group_index_canister::ChildCanisterType;
 use ic_cdk::api::call::{CallResult, RejectionCode};
-use tracing::info;
+use tracing::{error, info};
 use types::{CanisterId, CanisterWasm, Hash, UpgradeChunkedCanisterWasmResponse::*, UpgradesFilter};
 use utils::canister::build_filter_map;
 
@@ -28,10 +28,9 @@ async fn upgrade_community_canister_wasm(args: Args) -> Response {
         .map(|(canister_id, filter)| process_local_group_index(canister_id, &wasm, wasm_hash, Some(filter)))
         .collect();
 
-    let result = futures::future::join_all(futures).await;
-
-    if let Some(first_error) = result.into_iter().filter_map(|res| res.err()).next() {
-        InternalError(format!("{first_error:?}"))
+    if let Err(error) = futures::future::try_join_all(futures).await {
+        error!(?error, "Failed to upgrade Community canisters");
+        InternalError(format!("{error:?}"))
     } else {
         mutate_state(|state| {
             state.data.child_canister_wasms.set(ChildCanisterType::Community, wasm);
@@ -92,7 +91,7 @@ async fn process_local_group_index(
         return Err((RejectionCode::Unknown, format!("{push_wasm_response:?}")));
     }
 
-    local_group_index_canister_c2c_client::c2c_upgrade_community_canister_wasm(
+    let upgrade_response = local_group_index_canister_c2c_client::c2c_upgrade_community_canister_wasm(
         canister_id,
         &local_group_index_canister::c2c_upgrade_community_canister_wasm::Args {
             version: canister_wasm.version,
@@ -101,6 +100,10 @@ async fn process_local_group_index(
         },
     )
     .await?;
+
+    if !matches!(upgrade_response, Success) {
+        return Err((RejectionCode::Unknown, format!("{upgrade_response:?}")));
+    }
 
     Ok(())
 }
