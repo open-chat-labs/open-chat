@@ -25,6 +25,7 @@ const FRAME_ANCESTORS = [
     "https://bxnm7-oqaaa-aaaag-albpq-cai.icp0.io", // ZKP
     "https://panoramablock.com", // Panorama Block Live
     "https://zdgud-kqaaa-aaaal-ajn4q-cai.icp0.io", // tendyzone test
+    "dragonwizards.club/lair.html" // dragon paladin wizard web2 test
 ];
 
 type InboundXFrameMessage = UpdateTheme | ChangeRoute | OverrideSettings | Logout;
