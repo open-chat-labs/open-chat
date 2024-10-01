@@ -663,20 +663,6 @@ impl Data {
         }
     }
 
-    // fn members(&self, channel_id: Option<ChannelId>) -> Box<dyn Iterator<Item = Box<&dyn Member>>> {
-    //     if let Some(channel_id) = channel_id {
-    //         self.channels
-    //             .get(&channel_id)
-    //             .map_or(Box::new(std::iter::empty()), |channel| {
-    //                 Box::new(channel.chat.members.iter().map(Box::new))
-    //             })
-    //     } else {
-    //         Box::new(self.members.iter().map(Box::new))
-    //     }
-    // }
-
-    //fn member(&self, user_id: UserId, channel_id: Option<ChannelId>) -> Option<&Member> {}
-
     pub fn get_member_for_events(&self, caller: Principal) -> Result<Option<&CommunityMemberInternal>, EventsResponse> {
         let hidden_for_non_members = !self.is_public || self.has_payment_gate();
         let member = self.members.get(caller);
