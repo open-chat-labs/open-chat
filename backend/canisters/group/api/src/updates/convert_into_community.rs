@@ -1,7 +1,9 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{ChannelId, CommunityId, CommunityPermissions, Rules};
 
+#[ts_export(group, convert_into_community)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub rules: Rules,
@@ -10,6 +12,7 @@ pub struct Args {
     pub history_visible_to_new_joiners: bool,
 }
 
+#[ts_export(group, convert_into_community)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
@@ -21,6 +24,7 @@ pub enum Response {
     InternalError(String),
 }
 
+#[ts_export(group, convert_into_community)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub community_id: CommunityId,

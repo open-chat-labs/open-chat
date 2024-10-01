@@ -1582,6 +1582,7 @@
         "leave": "Quitter l'appel",
         "leaveVideo": "Quitter l'appel vidéo",
         "minimise": "Minimiser",
+        "missedCall": "Appel vidéo manqué de {username}",
         "noMeetingToJoin": "Désolé mais la réunion à laquelle vous essayez de participer est terminée",
         "participants": "Participants",
         "presenters": "Présentateurs ({count})",

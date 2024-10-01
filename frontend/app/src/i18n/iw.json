@@ -1582,6 +1582,7 @@
         "leave": "עזוב את השיחה",
         "leaveVideo": "עזוב שיחת וידאו",
         "minimise": "לְצַמְצֵם",
+        "missedCall": "שיחת וידאו שלא נענתה מ-{username}",
         "noMeetingToJoin": "מצטערים אבל הפגישה שאליו אתה מנסה להצטרף הסתיימה",
         "participants": "משתתפים",
         "presenters": "מציגים ({count})",

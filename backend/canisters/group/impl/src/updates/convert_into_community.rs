@@ -1,15 +1,15 @@
 use crate::updates::c2c_unfreeze_group::c2c_unfreeze_group_impl;
 use crate::{mutate_state, run_regular_jobs, CommunityBeingImportedInto, RuntimeState, StartImportIntoCommunityResult};
 use candid::Principal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::convert_into_community::{Response::*, *};
-use ic_cdk::update;
 use rand::Rng;
 use std::collections::HashMap;
 use types::{CanisterId, UserId};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn convert_into_community(args: Args) -> Response {
     run_regular_jobs();

@@ -7,7 +7,7 @@ use crate::{
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fmt::{Debug, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 use ts_export::ts_export;
 
 pub const MAX_TEXT_LENGTH: u32 = 10_000;
@@ -54,6 +54,28 @@ pub enum MessageContent {
     P2PSwap(P2PSwapContent),
     VideoCall(VideoCallContent),
     Custom(CustomContent),
+}
+
+#[derive(Clone)]
+pub enum MessageContentType {
+    Text,
+    Image,
+    Video,
+    Audio,
+    File,
+    Poll,
+    Crypto,
+    Deleted,
+    Giphy,
+    GovernanceProposal,
+    Prize,
+    PrizeWinner,
+    MessageReminderCreated,
+    MessageReminder,
+    ReportedMessage,
+    P2PSwap,
+    VideoCall,
+    Custom(String),
 }
 
 #[ts_export]
@@ -203,33 +225,8 @@ impl MessageContent {
         }
     }
 
-    pub fn to_achievement(&self) -> Option<Achievement> {
-        match self {
-            MessageContent::Text(_) => Some(Achievement::SentText),
-            MessageContent::Image(_) => Some(Achievement::SentImage),
-            MessageContent::Video(_) => Some(Achievement::SentVideo),
-            MessageContent::Audio(_) => Some(Achievement::SentAudio),
-            MessageContent::File(_) => Some(Achievement::SentFile),
-            MessageContent::Poll(_) => Some(Achievement::SentPoll),
-            MessageContent::Crypto(_) => Some(Achievement::SentCrypto),
-            MessageContent::Deleted(_) => Some(Achievement::DeletedMessage),
-            MessageContent::Giphy(_) => Some(Achievement::SentGiphy),
-            MessageContent::GovernanceProposal(_) => None,
-            MessageContent::Prize(_) => Some(Achievement::SentPrize),
-            MessageContent::PrizeWinner(_) => None,
-            MessageContent::MessageReminderCreated(_) => Some(Achievement::SentReminder),
-            MessageContent::MessageReminder(_) => Some(Achievement::SentReminder),
-            MessageContent::ReportedMessage(_) => None,
-            MessageContent::P2PSwap(_) => Some(Achievement::SentP2PSwapOffer),
-            MessageContent::VideoCall(_) => Some(Achievement::StartedCall),
-            MessageContent::Custom(c) => {
-                if c.kind == "meme_fighter" {
-                    Some(Achievement::SentMeme)
-                } else {
-                    None
-                }
-            }
-        }
+    pub fn content_type(&self) -> MessageContentType {
+        self.into()
     }
 
     pub fn notification_crypto_transfer_details(&self, mentioned: &[User]) -> Option<CryptoTransferDetails> {
@@ -412,6 +409,89 @@ impl From<MessageContentInitial> for MessageContent {
     }
 }
 
+impl MessageContentType {
+    pub fn achievement(&self) -> Option<Achievement> {
+        match self {
+            MessageContentType::Text => Some(Achievement::SentText),
+            MessageContentType::Image => Some(Achievement::SentImage),
+            MessageContentType::Video => Some(Achievement::SentVideo),
+            MessageContentType::Audio => Some(Achievement::SentAudio),
+            MessageContentType::File => Some(Achievement::SentFile),
+            MessageContentType::Poll => Some(Achievement::SentPoll),
+            MessageContentType::Crypto => Some(Achievement::SentCrypto),
+            MessageContentType::Deleted => Some(Achievement::DeletedMessage),
+            MessageContentType::Giphy => Some(Achievement::SentGiphy),
+            MessageContentType::GovernanceProposal => None,
+            MessageContentType::Prize => Some(Achievement::SentPrize),
+            MessageContentType::PrizeWinner => None,
+            MessageContentType::MessageReminderCreated => Some(Achievement::SentReminder),
+            MessageContentType::MessageReminder => Some(Achievement::SentReminder),
+            MessageContentType::ReportedMessage => None,
+            MessageContentType::P2PSwap => Some(Achievement::SentP2PSwapOffer),
+            MessageContentType::VideoCall => Some(Achievement::StartedCall),
+            MessageContentType::Custom(c) => {
+                if c == "meme_fighter" {
+                    Some(Achievement::SentMeme)
+                } else {
+                    None
+                }
+            }
+        }
+    }
+}
+
+impl Display for MessageContentType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            MessageContentType::Text => "Text",
+            MessageContentType::Image => "Image",
+            MessageContentType::Video => "Video",
+            MessageContentType::Audio => "Audio",
+            MessageContentType::File => "File",
+            MessageContentType::Poll => "Poll",
+            MessageContentType::Crypto => "Crypto",
+            MessageContentType::Deleted => "Deleted",
+            MessageContentType::Giphy => "Giphy",
+            MessageContentType::GovernanceProposal => "GovernanceProposal",
+            MessageContentType::Prize => "Prize",
+            MessageContentType::PrizeWinner => "PrizeWinner",
+            MessageContentType::MessageReminderCreated => "MessageReminderCreated",
+            MessageContentType::MessageReminder => "MessageReminder",
+            MessageContentType::ReportedMessage => "ReportedMessage",
+            MessageContentType::P2PSwap => "P2PSwap",
+            MessageContentType::VideoCall => "VideoCall",
+            MessageContentType::Custom(c) => c,
+        };
+
+        f.write_str(s)
+    }
+}
+
+impl From<&MessageContent> for MessageContentType {
+    fn from(value: &MessageContent) -> Self {
+        match value {
+            MessageContent::Text(_) => MessageContentType::Text,
+            MessageContent::Image(_) => MessageContentType::Image,
+            MessageContent::Video(_) => MessageContentType::Video,
+            MessageContent::Audio(_) => MessageContentType::Audio,
+            MessageContent::File(_) => MessageContentType::File,
+            MessageContent::Poll(_) => MessageContentType::Poll,
+            MessageContent::Crypto(_) => MessageContentType::Crypto,
+            MessageContent::Deleted(_) => MessageContentType::Deleted,
+            MessageContent::Giphy(_) => MessageContentType::Giphy,
+            MessageContent::GovernanceProposal(_) => MessageContentType::GovernanceProposal,
+            MessageContent::Prize(_) => MessageContentType::Prize,
+            MessageContent::PrizeWinner(_) => MessageContentType::PrizeWinner,
+            MessageContent::MessageReminderCreated(_) => MessageContentType::MessageReminderCreated,
+            MessageContent::MessageReminder(_) => MessageContentType::MessageReminder,
+            MessageContent::ReportedMessage(_) => MessageContentType::ReportedMessage,
+            MessageContent::P2PSwap(_) => MessageContentType::P2PSwap,
+            MessageContent::VideoCall(_) => MessageContentType::VideoCall,
+            MessageContent::Custom(c) => MessageContentType::Custom(c.kind.clone()),
+        }
+    }
+}
+
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct TextContent {
@@ -540,11 +620,8 @@ pub struct PrizeContentInitial {
 pub struct PrizeContent {
     pub prizes_remaining: u32,
     pub prizes_pending: u32,
-    #[serde(default)]
     pub winners: Vec<UserId>,
-    #[serde(default)]
     pub winner_count: u32,
-    #[serde(default)]
     pub user_is_winner: bool,
     pub token: Cryptocurrency,
     pub end_date: TimestampMillis,

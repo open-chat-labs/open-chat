@@ -11,14 +11,14 @@ use community_canister::create_channel::{Response::*, *};
 use group_chat_core::GroupChatCore;
 use rand::Rng;
 use std::collections::HashMap;
-use types::{AccessGate, ChannelId, MultiUserChat, TimestampMillis, UserId, UserType};
+use types::{AccessGate, MultiUserChat, TimestampMillis, UserId, UserType};
 use url::Url;
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
     validate_description, validate_group_name, validate_rules, NameValidationError, RulesValidationError,
 };
 
-#[update(candid = true)]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn create_channel(args: Args) -> Response {
     run_regular_jobs();
@@ -86,6 +86,7 @@ fn create_channel_impl(
     let messages_visible_to_non_members = args.is_public && args.messages_visible_to_non_members.unwrap_or(args.gate.is_none());
 
     let caller = state.env.caller();
+    let channel_id = state.generate_channel_id();
     if let Some(member) = state.data.members.get_mut(caller) {
         if member.suspended.value {
             return UserSuspended;
@@ -126,7 +127,6 @@ fn create_channel_impl(
             NameTaken
         } else {
             let now = state.env.now();
-            let channel_id: ChannelId = state.env.rng().gen();
             let permissions = args.permissions_v2.unwrap_or_default();
 
             let chat = GroupChatCore::new(

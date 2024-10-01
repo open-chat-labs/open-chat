@@ -1,4 +1,6 @@
-use crate::{CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex, Reaction, ThreadSummary, UserId};
+use crate::{
+    Achievement, CanisterId, Chat, EventIndex, MessageContent, MessageId, MessageIndex, Reaction, ThreadSummary, UserId,
+};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::ops::{Deref, DerefMut};
@@ -17,8 +19,33 @@ pub struct Message {
     pub thread_summary: Option<ThreadSummary>,
     pub edited: bool,
     pub forwarded: bool,
-    #[serde(default)]
     pub block_level_markdown: bool,
+}
+
+impl Message {
+    pub fn achievements(&self, direct: bool, is_thread: bool) -> Vec<Achievement> {
+        let mut achievements = Vec::new();
+
+        if let Some(achievement) = self.content.content_type().achievement() {
+            achievements.push(achievement);
+        }
+
+        if direct {
+            achievements.push(Achievement::SentDirectMessage);
+        }
+
+        if self.forwarded {
+            achievements.push(Achievement::ForwardedMessage);
+        }
+
+        if self.replies_to.is_some() {
+            achievements.push(Achievement::QuoteReplied);
+        } else if is_thread && self.message_index == MessageIndex::from(0) {
+            achievements.push(Achievement::RepliedInThread);
+        }
+
+        achievements
+    }
 }
 
 #[ts_export]
@@ -101,6 +128,7 @@ impl Tips {
 
 #[allow(dead_code)]
 #[ts_export]
+#[derive(Serialize, Deserialize)]
 pub struct TipsTS(Vec<(TSBytes, Vec<(UserId, u128)>)>);
 
 #[derive(Serialize)]

@@ -1,14 +1,14 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::ReservePrizeResult;
 use community_canister::claim_prize::{Response::*, *};
-use ic_cdk::update;
 use ledger_utils::{create_pending_transaction, process_transaction};
 use types::{CanisterId, CompletedCryptoTransaction, PendingCryptoTransaction, UserId};
 use utils::consts::MEMO_PRIZE_CLAIM;
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn claim_prize(args: Args) -> Response {
     run_regular_jobs();

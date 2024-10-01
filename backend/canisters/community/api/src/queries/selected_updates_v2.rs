@@ -1,13 +1,16 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{CommunityMember, TimestampMillis, UserGroupDetails, UserId, VersionedRules};
 
+#[ts_export(community, selected_updates)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub invite_code: Option<u64>,
     pub updates_since: TimestampMillis,
 }
 
+#[ts_export(community, selected_updates)]
 #[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
@@ -16,6 +19,7 @@ pub enum Response {
     PrivateCommunity,
 }
 
+#[ts_export(community, selected_updates)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub timestamp: TimestampMillis,
@@ -30,15 +34,4 @@ pub struct SuccessResult {
     pub user_groups_deleted: Vec<u32>,
     pub referrals_added: Vec<UserId>,
     pub referrals_removed: Vec<UserId>,
-}
-
-impl SuccessResult {
-    pub fn has_updates(&self) -> bool {
-        !self.members_added_or_updated.is_empty()
-            || !self.members_removed.is_empty()
-            || !self.blocked_users_added.is_empty()
-            || !self.blocked_users_removed.is_empty()
-            || self.invited_users.is_some()
-            || self.chat_rules.is_some()
-    }
 }

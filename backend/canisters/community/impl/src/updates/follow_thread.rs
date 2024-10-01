@@ -1,10 +1,10 @@
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::follow_thread::{Response::*, *};
 use group_chat_core::FollowThreadResult;
-use ic_cdk::update;
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 fn follow_thread(args: Args) -> Response {
     run_regular_jobs();

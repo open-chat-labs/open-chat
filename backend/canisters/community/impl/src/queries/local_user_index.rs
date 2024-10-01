@@ -1,8 +1,8 @@
 use crate::{read_state, RuntimeState};
+use canister_api_macros::query;
 use community_canister::local_user_index::{Response::*, *};
-use ic_cdk::query;
 
-#[query]
+#[query(candid = true, msgpack = true)]
 fn local_user_index(_args: Args) -> Response {
     read_state(local_user_index_impl)
 }

@@ -1579,13 +1579,6 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : EventIndex,
     'blocked_users_added' : IDL.Vec(UserId),
   });
-  const SelectedChannelUpdatesResponse = IDL.Variant({
-    'ChannelNotFound' : IDL.Null,
-    'Success' : SelectedGroupUpdates,
-    'SuccessNoUpdates' : IDL.Null,
-    'PrivateCommunity' : IDL.Null,
-    'PrivateChannel' : IDL.Null,
-  });
   const SelectedChannelUpdatesV2Response = IDL.Variant({
     'ChannelNotFound' : IDL.Null,
     'Success' : SelectedGroupUpdates,
@@ -1640,11 +1633,6 @@ export const idlFactory = ({ IDL }) => {
     'timestamp' : TimestampMillis,
     'referrals_added' : IDL.Vec(UserId),
     'blocked_users_added' : IDL.Vec(UserId),
-  });
-  const SelectedUpdatesResponse = IDL.Variant({
-    'Success' : SelectedUpdatesSuccess,
-    'SuccessNoUpdates' : IDL.Null,
-    'PrivateCommunity' : IDL.Null,
   });
   const SelectedUpdatesV2Response = IDL.Variant({
     'Success' : SelectedUpdatesSuccess,
@@ -2224,11 +2212,6 @@ export const idlFactory = ({ IDL }) => {
         [SelectedChannelInitialResponse],
         ['query'],
       ),
-    'selected_channel_updates' : IDL.Func(
-        [SelectedChannelUpdatesArgs],
-        [SelectedChannelUpdatesResponse],
-        ['query'],
-      ),
     'selected_channel_updates_v2' : IDL.Func(
         [SelectedChannelUpdatesArgs],
         [SelectedChannelUpdatesV2Response],
@@ -2237,11 +2220,6 @@ export const idlFactory = ({ IDL }) => {
     'selected_initial' : IDL.Func(
         [SelectedInitialArgs],
         [SelectedInitialResponse],
-        ['query'],
-      ),
-    'selected_updates' : IDL.Func(
-        [SelectedUpdatesArgs],
-        [SelectedUpdatesResponse],
         ['query'],
       ),
     'selected_updates_v2' : IDL.Func(

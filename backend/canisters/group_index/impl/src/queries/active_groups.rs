@@ -2,7 +2,7 @@ use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
 use group_index_canister::active_groups::{Response::*, *};
 
-#[query(msgpack = true)]
+#[query(candid = true, msgpack = true)]
 fn active_groups(args: Args) -> Response {
     read_state(|state| active_groups_impl(args, state))
 }

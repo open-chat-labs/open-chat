@@ -635,8 +635,20 @@ type CancelMessageReminderResponse = variant {
 };
 
 type SetPinNumberArgs = record {
-    current : opt text;
     new : opt text;
+    verification : variant {
+        None;
+        PIN : text;
+        Delegation : SignedDelegation;
+    };
+};
+
+type SignedDelegation = record {
+    delegation : record {
+        pubkey : blob;
+        expiration : TimestampNanos;
+    };
+    signature : blob;
 };
 
 type SetPinNumberResponse = variant {
@@ -646,6 +658,8 @@ type SetPinNumberResponse = variant {
     PinRequired;
     PinIncorrect : Milliseconds;
     TooManyFailedPinAttempts : Milliseconds;
+    MalformedSignature : text;
+    DelegationTooOld;
 };
 
 type SendMessageWithTransferToChannelArgs = record {
@@ -1285,7 +1299,7 @@ service : {
     local_user_index : (EmptyArgs) -> (LocalUserIndexResponse) query;
     chit_events : (ChitEventsArgs) -> (ChitEventsResponse) query;
 
-    // cached_btc_address : (EmptyArgs) -> (CachedBtcAddressResponse) query;
-    // btc_address : (EmptyArgs) -> (BtcAddressResponse);
-    // retrieve_btc : (RetrieveBtcArgs) -> (RetrieveBtcResponse);
+    cached_btc_address : (EmptyArgs) -> (CachedBtcAddressResponse) query;
+    btc_address : (EmptyArgs) -> (BtcAddressResponse);
+    retrieve_btc : (RetrieveBtcArgs) -> (RetrieveBtcResponse);
 };

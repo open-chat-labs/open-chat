@@ -1,0 +1,53 @@
+import "../../../libraries/types/can.did";
+
+type UpdatesArgs = record {
+    since : opt TimestampMillis;
+};
+
+type UpdatesResponse = variant {
+    Success : record {
+        last_updated : TimestampMillis;
+        token_details : opt vec TokenDetails;
+        nervous_system_details : vec NervousSystemSummary;
+        swap_providers : opt vec ExchangeId;
+        message_filters_added : vec MessageFilterSummary;
+        message_filters_removed : vec nat64;
+    };
+    SuccessNoUpdates;
+};
+
+type TokenDetails = record {
+    ledger_canister_id : CanisterId;
+    name : text;
+    symbol : text;
+    decimals : nat8;
+    fee : nat;
+    logo : text;
+    logo_id : opt nat;
+    info_url : text;
+    how_to_buy_url : text;
+    transaction_url_format : text;
+    supported_standards : vec text;
+    added : TimestampMillis;
+    enabled : bool;
+    last_updated : TimestampMillis;
+};
+
+type NervousSystemSummary = record {
+    root_canister_id : CanisterId;
+    governance_canister_id : CanisterId;
+    ledger_canister_id : CanisterId;
+    index_canister_id : CanisterId;
+    is_nns : bool;
+    proposal_rejection_fee : nat64;
+    submitting_proposals_enabled : bool;
+};
+
+type MessageFilterSummary = record {
+    id : nat64;
+    regex : text;
+};
+
+service : {
+    updates : (UpdatesArgs) -> (UpdatesResponse) query;
+};

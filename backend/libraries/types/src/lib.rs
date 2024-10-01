@@ -1,7 +1,6 @@
 use crate::nns::Tokens;
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashMap, HashSet};
 
 mod access_tokens;
 mod achievement;
@@ -22,6 +21,7 @@ mod community_roles;
 mod community_summary;
 mod cryptocurrency;
 mod cycles;
+mod delegation;
 mod deleted_group_info;
 mod diamond_membership;
 mod error;
@@ -94,6 +94,7 @@ pub use community_roles::*;
 pub use community_summary::*;
 pub use cryptocurrency::*;
 pub use cycles::*;
+pub use delegation::*;
 pub use deleted_group_info::*;
 pub use diamond_membership::*;
 pub use error::*;
@@ -189,22 +190,6 @@ pub enum ResultLowercase<T, E> {
     Err(E),
 }
 
-pub fn is_empty_slice<T>(value: &[T]) -> bool {
-    value.is_empty()
-}
-
-pub fn is_empty_hashmap<K, V>(value: &HashMap<K, V>) -> bool {
-    value.is_empty()
-}
-
-pub fn is_empty_hashset<T>(value: &HashSet<T>) -> bool {
-    value.is_empty()
-}
-
-pub fn is_empty_btreemap<K, V>(value: &BTreeMap<K, V>) -> bool {
-    value.is_empty()
-}
-
-pub fn is_default<T: Default + Eq>(value: &T) -> bool {
+pub fn is_default<T: Default + PartialEq>(value: &T) -> bool {
     *value == Default::default()
 }

@@ -1,10 +1,10 @@
 use crate::queries::check_replica_up_to_date;
 use crate::{read_state, RuntimeState};
+use canister_api_macros::query;
 use community_canister::messages_by_message_index::{Response::*, *};
 use group_chat_core::MessagesResult;
-use ic_cdk::query;
 
-#[query]
+#[query(candid = true, msgpack = true)]
 fn messages_by_message_index(args: Args) -> Response {
     read_state(|state| messages_by_message_index_impl(args, state))
 }

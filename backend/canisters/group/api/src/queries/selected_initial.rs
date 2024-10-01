@@ -1,15 +1,18 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{Empty, EventIndex, GroupMember, MessageIndex, TimestampMillis, UserId, VersionedRules};
 
 pub type Args = Empty;
 
+#[ts_export(group, selected_initial)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
     CallerNotInGroup,
 }
 
+#[ts_export(group, selected_initial)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub timestamp: TimestampMillis,

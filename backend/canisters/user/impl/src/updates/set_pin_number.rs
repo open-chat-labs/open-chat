@@ -3,13 +3,15 @@ use crate::model::pin_number::VerifyPinError;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use identity_utils::extract_certificate;
 use types::{FieldTooLongResult, FieldTooShortResult};
 use user_canister::set_pin_number::{Response::*, *};
+use utils::time::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 
 const MIN_LENGTH: usize = 4;
 const MAX_LENGTH: usize = 20;
 
-#[update(guard = "caller_is_owner", candid = true)]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 fn set_pin_number(args: Args) -> Response {
     run_regular_jobs();
@@ -20,30 +22,50 @@ fn set_pin_number(args: Args) -> Response {
 fn set_pin_number_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
 
-    if let Err(error) = state.data.pin_number.verify(args.current.as_deref(), now) {
-        match error {
-            VerifyPinError::PinRequired => PinRequired,
-            VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),
-            VerifyPinError::TooManyFailedAttempted(delay) => TooManyFailedPinAttempts(delay),
-        }
-    } else {
-        if let Some(new) = args.new.as_ref() {
-            let length = new.len();
-            if length < MIN_LENGTH {
-                return TooShort(FieldTooShortResult {
-                    length_provided: length as u32,
-                    min_length: MIN_LENGTH as u32,
-                });
+    if state.data.pin_number.enabled() {
+        match args.verification {
+            PinNumberVerification::None => return PinRequired,
+            PinNumberVerification::PIN(attempt) => {
+                if let Err(error) = state.data.pin_number.verify(Some(&attempt), now) {
+                    return match error {
+                        VerifyPinError::PinRequired => PinRequired,
+                        VerifyPinError::PinIncorrect(delay) => PinIncorrect(delay),
+                        VerifyPinError::TooManyFailedAttempted(delay) => TooManyFailedPinAttempts(delay),
+                    };
+                }
             }
-            if length > MAX_LENGTH {
-                return TooLong(FieldTooLongResult {
-                    length_provided: length as u32,
-                    max_length: MAX_LENGTH as u32,
-                });
-            }
-        }
+            PinNumberVerification::Delegation(delegation) => {
+                let certificate = match extract_certificate(&delegation.signature) {
+                    Ok(c) => c,
+                    Err(e) => return MalformedSignature(e),
+                };
 
-        state.data.pin_number.set(args.new, now);
-        Success
+                let now_nanos = (now * NANOS_PER_MILLISECOND) as u128;
+                let five_minutes = (5 * MINUTE_IN_MS * NANOS_PER_MILLISECOND) as u128;
+
+                if ic_certificate_verification::validate_certificate_time(&certificate, &now_nanos, &five_minutes).is_err() {
+                    return DelegationTooOld;
+                };
+            }
+        }
     }
+
+    if let Some(new) = args.new.as_ref() {
+        let length = new.len();
+        if length < MIN_LENGTH {
+            return TooShort(FieldTooShortResult {
+                length_provided: length as u32,
+                min_length: MIN_LENGTH as u32,
+            });
+        }
+        if length > MAX_LENGTH {
+            return TooLong(FieldTooLongResult {
+                length_provided: length as u32,
+                max_length: MAX_LENGTH as u32,
+            });
+        }
+    }
+
+    state.data.pin_number.set(args.new, now);
+    Success
 }

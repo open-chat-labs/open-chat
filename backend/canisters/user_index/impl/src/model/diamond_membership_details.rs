@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use types::{
-    is_default, is_empty_slice, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration,
-    DiamondMembershipStatus, DiamondMembershipStatusFull, DiamondMembershipSubscription, TimestampMillis,
+    is_default, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration, DiamondMembershipStatus,
+    DiamondMembershipStatusFull, DiamondMembershipSubscription, TimestampMillis,
 };
 use utils::time::DAY_IN_MS;
 
@@ -12,7 +12,7 @@ const LIFETIME_TIMESTAMP: TimestampMillis = 30000000000000; // This timestamp is
 pub struct DiamondMembershipDetailsInternal {
     #[serde(rename = "e", default, skip_serializing_if = "Option::is_none")]
     expires_at: Option<TimestampMillis>,
-    #[serde(rename = "p", default, skip_serializing_if = "is_empty_slice")]
+    #[serde(rename = "p", default, skip_serializing_if = "Vec::is_empty")]
     payments: Vec<DiamondMembershipPayment>,
     #[serde(rename = "c", default, skip_serializing_if = "is_default")]
     pay_in_chat: bool,

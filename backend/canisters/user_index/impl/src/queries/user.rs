@@ -2,7 +2,7 @@ use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
 use user_index_canister::user::{Response::*, *};
 
-#[query(msgpack = true)]
+#[query(candid = true, msgpack = true)]
 fn user(args: Args) -> Response {
     read_state(|state| user_impl(args, state))
 }

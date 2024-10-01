@@ -1230,6 +1230,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "canister_wasm_chunks_uploader"
+version = "0.1.0"
+dependencies = [
+ "canister_agent_utils",
+ "clap 4.5.4",
+ "group_index_canister",
+ "group_index_canister_client",
+ "ic-agent",
+ "tokio",
+ "types",
+ "user_index_canister",
+ "user_index_canister_client",
+]
+
+[[package]]
 name = "cargo-license"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2838,6 +2853,7 @@ name = "group_index_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "candid_gen",
  "human_readable",
  "serde",
  "serde_bytes",
@@ -3945,13 +3961,13 @@ dependencies = [
  "canister_tracing_macros",
  "http_request",
  "ic-captcha",
- "ic-cbor",
  "ic-cdk 0.16.0",
  "ic-cdk-timers",
  "ic-certificate-verification",
  "ic-certification",
  "ic-stable-structures",
  "identity_canister",
+ "identity_utils",
  "msgpack",
  "rand 0.8.5",
  "serde",
@@ -4048,6 +4064,16 @@ dependencies = [
  "subtle",
  "thiserror",
  "zeroize",
+]
+
+[[package]]
+name = "identity_utils"
+version = "0.1.0"
+dependencies = [
+ "ic-cbor",
+ "ic-certificate-verification",
+ "ic-certification",
+ "types",
 ]
 
 [[package]]
@@ -5234,6 +5260,7 @@ name = "online_users_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "candid_gen",
  "serde",
  "ts-rs",
  "ts_export",
@@ -6200,6 +6227,7 @@ name = "registry_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "candid_gen",
  "human_readable",
  "serde",
  "ts-rs",
@@ -6699,6 +6727,7 @@ dependencies = [
 name = "search"
 version = "0.1.0"
 dependencies = [
+ "serde",
  "types",
 ]
 
@@ -8107,6 +8136,7 @@ dependencies = [
 name = "ts_export"
 version = "0.1.0"
 dependencies = [
+ "serde",
  "ts-rs",
  "ts_export_macros",
 ]
@@ -8151,6 +8181,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "getrandom 0.2.15",
+ "hex",
  "ic-ledger-types",
  "ic_principal",
  "icrc-ledger-types",
@@ -8313,12 +8344,14 @@ dependencies = [
  "http_request",
  "ic-cdk 0.16.0",
  "ic-cdk-timers",
+ "ic-certificate-verification",
  "ic-ledger-types",
  "ic-stable-structures",
  "icpswap_client",
  "icrc-ledger-types",
  "icrc_ledger_canister",
  "icrc_ledger_canister_c2c_client",
+ "identity_utils",
  "itertools 0.13.0",
  "ledger_utils",
  "local_user_index_canister",
@@ -8354,6 +8387,7 @@ name = "user_index_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "candid_gen",
  "human_readable",
  "ic-ledger-types",
  "modclub_canister",

@@ -3,7 +3,7 @@ use canister_api_macros::query;
 use types::Cryptocurrency;
 use user_index_canister::diamond_membership_fees::{Response::*, *};
 
-#[query(msgpack = true)]
+#[query(candid = true, msgpack = true)]
 fn diamond_membership_fees(_args: Args) -> Response {
     read_state(diamond_membership_fees_impl)
 }
