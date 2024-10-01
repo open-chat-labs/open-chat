@@ -1,7 +1,7 @@
 use crate::jobs::process_expire_member_actions;
 use crate::{mutate_state, RuntimeState};
 use gated_groups::{check_if_passes_gate_synchronously, CheckGateArgs, CheckIfPassesGateResult};
-use group_community_common::{ExpiringMember, ExpiringMemberAction, ExpiringMemberActionDetails};
+use group_community_common::{ExpiringMember, ExpiringMemberAction, ExpiringMemberActionDetails, Members};
 use ic_cdk_timers::TimerId;
 use std::time::Duration;
 use std::{cell::Cell, mem};
@@ -48,7 +48,7 @@ fn run() {
 
         for member in state.data.expiring_members.pop_if_expires_before(now) {
             // If there is no longer a gate then continue
-            let Some(gate_config) = state.data.get_access_gate_config(member.channel_id) else {
+            let Some(gate_config) = state.data.chat.gate_config.value.as_ref() else {
                 continue;
             };
 
@@ -84,7 +84,7 @@ fn run() {
 
                     if passes_gate {
                         // Queue up the next check
-                        if state.data.can_member_lapse(&member.user_id, member.channel_id) {
+                        if state.data.chat.members.can_member_lapse(&member.user_id) {
                             state.data.expiring_members.push(ExpiringMember {
                                 expires: now + gate_expiry,
                                 channel_id: member.channel_id,
@@ -110,7 +110,7 @@ fn run() {
                     }
                 }
                 AccessGateExpiryType::Lapse => {
-                    state.data.mark_member_lapsed(member.user_id, member.channel_id, now);
+                    state.data.chat.members.mark_member_lapsed(&member.user_id, now);
                 }
                 AccessGateExpiryType::Single => {
                     state

@@ -1,11 +1,13 @@
 use crate::{
     activity_notifications::handle_activity_notification,
-    model::{events::CommunityEventInternal, expiring_members::ExpiringMember, members::ChangeRoleResult},
+    jobs,
+    model::{events::CommunityEventInternal, members::ChangeRoleResult},
     mutate_state, read_state, run_regular_jobs, RuntimeState,
 };
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::change_role::{Response::*, *};
+use group_community_common::ExpiringMember;
 use types::{CanisterId, CommunityRole, CommunityRoleChanged, UserId};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 
@@ -134,6 +136,8 @@ fn change_role_impl(
                 .data
                 .events
                 .push_event(CommunityEventInternal::RoleChanged(Box::new(event)), now);
+
+            jobs::expire_members::start_job_if_required(state);
 
             handle_activity_notification(state);
             Success

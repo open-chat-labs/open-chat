@@ -1,6 +1,6 @@
 use crate::{mutate_state, read_state, RuntimeState};
 use gated_groups::{check_if_passes_gate, check_if_passes_gate_synchronously, CheckGateArgs, CheckIfPassesGateResult};
-use group_community_common::{ExpiringMember, ExpiringMemberAction, ExpiringMemberActionDetails};
+use group_community_common::{ExpiringMember, ExpiringMemberAction, ExpiringMemberActionDetails, Members};
 use ic_cdk_timers::TimerId;
 use local_user_index_canister_c2c_client::lookup_users;
 use std::cell::Cell;
@@ -101,7 +101,7 @@ struct PrepareResult {
 
 fn prepare_gate_check(details: ExpiringMemberActionDetails) -> Option<PrepareResult> {
     read_state(|state| {
-        let gate_config = state.data.get_access_gate_config(details.channel_id).cloned()?;
+        let gate_config = state.data.chat.gate_config.value.clone()?;
 
         let (diamond_membership_expires_at, is_unique_person) = state
             .data
@@ -130,7 +130,7 @@ fn prepare_gate_check(details: ExpiringMemberActionDetails) -> Option<PrepareRes
 fn handle_gate_check_result(details: ExpiringMemberActionDetails, result: CheckIfPassesGateResult) {
     mutate_state(|state| {
         // If there is no longer an access gate then do nothing
-        let Some(gate_config) = state.data.get_access_gate_config(details.channel_id) else {
+        let Some(gate_config) = state.data.chat.gate_config.value.as_ref() else {
             return;
         };
 
@@ -151,7 +151,7 @@ fn handle_gate_check_result(details: ExpiringMemberActionDetails, result: CheckI
 
         if matches!(result, CheckIfPassesGateResult::Failed(_)) && expiry_increase == 0 {
             // Membership lapsed
-            state.data.mark_member_lapsed(details.user_id, details.channel_id, now);
+            state.data.chat.members.mark_member_lapsed(&details.user_id, now);
             return;
         }
 
@@ -162,7 +162,7 @@ fn handle_gate_check_result(details: ExpiringMemberActionDetails, result: CheckI
             CheckIfPassesGateResult::InternalError(_) => max(expiry_increase, MEMBER_ACCESS_EXPIRY_DELAY),
         };
 
-        if state.data.can_member_lapse(&details.user_id, details.channel_id) {
+        if state.data.chat.members.can_member_lapse(&details.user_id) {
             state.data.expiring_members.push(ExpiringMember {
                 expires: now + expiry,
                 channel_id: details.channel_id,

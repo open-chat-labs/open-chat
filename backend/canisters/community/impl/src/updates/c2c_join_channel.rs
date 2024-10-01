@@ -1,6 +1,5 @@
 use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::model::channels::Channel;
-use crate::model::expiring_members::ExpiringMember;
 use crate::model::members::CommunityMemberInternal;
 use crate::updates::c2c_join_community::join_community;
 use crate::{activity_notifications::handle_activity_notification, mutate_state, read_state, RuntimeState};
@@ -15,7 +14,7 @@ use gated_groups::{
     CheckVerifiedCredentialGateArgs,
 };
 use group_chat_core::AddResult;
-use group_community_common::Member;
+use group_community_common::{ExpiringMember, Member};
 use types::{
     AccessGate, AccessGateConfigInternal, ChannelId, MemberJoined, TimestampMillis, UniquePersonProof,
     VerifiedCredentialGateArgs,

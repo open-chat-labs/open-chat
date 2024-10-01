@@ -1,11 +1,9 @@
-use crate::{
-    activity_notifications::handle_activity_notification, model::expiring_members::ExpiringMember, mutate_state,
-    run_regular_jobs, RuntimeState,
-};
+use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::change_channel_role::{Response::*, *};
 use group_chat_core::{ChangeRoleResult, GroupRoleInternal};
+use group_community_common::ExpiringMember;
 use types::GroupRole;
 
 #[update(candid = true, msgpack = true)]

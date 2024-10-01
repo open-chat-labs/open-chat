@@ -15,7 +15,8 @@ use group_chat_core::{
     AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, GroupRoleInternal, InvitedUsersResult, UserInvitation,
 };
 use group_community_common::{
-    Achievements, PaymentReceipts, PaymentRecipient, PendingPayment, PendingPaymentReason, PendingPaymentsQueue,
+    Achievements, ExpiringMemberActions, ExpiringMembers, PaymentReceipts, PaymentRecipient, PendingPayment,
+    PendingPaymentReason, PendingPaymentsQueue, UserCache,
 };
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use msgpack::serialize_then_unwrap;
@@ -464,6 +465,12 @@ struct Data {
     pub event_store_client: EventStoreClient<CdkRuntime>,
     #[serde(default)]
     achievements: Achievements,
+    #[serde(default)]
+    expiring_members: ExpiringMembers,
+    #[serde(default)]
+    expiring_member_actions: ExpiringMemberActions,
+    #[serde(default)]
+    user_cache: UserCache,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -555,6 +562,9 @@ impl Data {
                 .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
                 .build(),
             achievements: Achievements::default(),
+            expiring_members: ExpiringMembers::default(),
+            expiring_member_actions: ExpiringMemberActions::default(),
+            user_cache: UserCache::default(),
         }
     }
 
@@ -624,17 +634,6 @@ impl Data {
             .and_then(|user_id| self.chat.invited_users.remove(&user_id, now))
     }
 
-    pub fn remove_principal(&mut self, user_id: UserId) {
-        if let Some(principal) = self
-            .principal_to_user_id_map
-            .iter()
-            .find(|(_, &u)| u == user_id)
-            .map(|(p, _)| *p)
-        {
-            self.principal_to_user_id_map.remove(&principal);
-        }
-    }
-
     pub fn record_instructions_count(&self, function_id: InstructionCountFunctionId, now: TimestampMillis) {
         let wasm_version = WASM_VERSION.with_borrow(|v| **v);
         let instructions_count = ic_cdk::api::instruction_counter();
@@ -672,6 +671,21 @@ impl Data {
         }
 
         false
+    }
+
+    pub fn remove_user(&mut self, user_id: UserId) {
+        if let Some(principal) = self
+            .principal_to_user_id_map
+            .iter()
+            .find(|(_, &u)| u == user_id)
+            .map(|(p, _)| *p)
+        {
+            self.principal_to_user_id_map.remove(&principal);
+        }
+
+        self.expiring_members.remove_member(user_id, None);
+        self.expiring_member_actions.remove_member(user_id, None);
+        self.user_cache.delete(user_id);
     }
 }
 

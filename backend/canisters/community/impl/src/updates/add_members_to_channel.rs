@@ -1,12 +1,12 @@
 use crate::{
-    activity_notifications::handle_activity_notification, jobs, model::expiring_members::ExpiringMember, mutate_state,
-    read_state, run_regular_jobs, RuntimeState,
+    activity_notifications::handle_activity_notification, jobs, mutate_state, read_state, run_regular_jobs, RuntimeState,
 };
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use community_canister::add_members_to_channel::{Response::*, *};
 use group_chat_core::AddResult;
+use group_community_common::ExpiringMember;
 use types::{AddedToChannelNotification, ChannelId, EventIndex, MembersAdded, MessageIndex, Notification, UserId, UserType};
 
 #[update(candid = true, msgpack = true)]

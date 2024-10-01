@@ -24,7 +24,7 @@ fn c2c_leave_group_impl(state: &mut RuntimeState) -> Response {
 
     match state.data.chat.leave(caller, now) {
         LeaveResult::Success(_) => {
-            state.data.remove_principal(caller);
+            state.data.remove_user(caller);
 
             handle_activity_notification(state);
 
