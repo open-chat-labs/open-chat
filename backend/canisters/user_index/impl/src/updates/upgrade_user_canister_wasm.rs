@@ -3,7 +3,7 @@ use crate::{mutate_state, read_state, RuntimeState};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use ic_cdk::api::call::{CallResult, RejectionCode};
-use tracing::info;
+use tracing::{error, info};
 use types::{CanisterId, CanisterWasm, Hash, UpgradeChunkedCanisterWasmResponse::*, UpgradesFilter};
 use user_index_canister::upgrade_user_canister_wasm::*;
 use user_index_canister::ChildCanisterType;
