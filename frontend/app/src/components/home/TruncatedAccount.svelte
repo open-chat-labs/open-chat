@@ -6,7 +6,7 @@
     import { copyToClipboard } from "../../utils/urls";
     import { i18nKey } from "../../i18n/i18n";
 
-    export let principal: string;
+    export let account: string;
     export let centered = false;
 
     function collapseAccount(account: string) {
@@ -17,13 +17,13 @@
     }
 
     function copy() {
-        copyToClipboard(principal).then((success) => {
+        copyToClipboard(account).then((success) => {
             if (success) {
                 toastStore.showSuccessToast(i18nKey("copiedToClipboard"));
             } else {
                 toastStore.showFailureToast(
                     i18nKey("failedToCopyToClipboard", {
-                        principal,
+                        account,
                     }),
                 );
             }
@@ -33,7 +33,7 @@
 
 <div class="wrapper" class:centered>
     <div class="principal">
-        {collapseAccount(principal)}
+        {collapseAccount(account)}
     </div>
     <div class="copy" title={$_("copyToClipboard")} on:click={copy}>
         <ContentCopy size={$iconSize} color={"var(--icon-txt)"} />

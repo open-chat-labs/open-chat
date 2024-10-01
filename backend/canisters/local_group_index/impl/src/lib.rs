@@ -10,8 +10,7 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::time::Duration;
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, ChildCanisterWasms, ChunkedCanisterWasm, Cycles, Milliseconds, TimestampMillis,
-    Timestamped, UserId,
+    BuildVersion, CanisterId, CanisterWasm, ChildCanisterWasms, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId,
 };
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
@@ -119,12 +118,7 @@ impl RuntimeState {
 struct Data {
     pub local_groups: LocalGroupMap,
     pub local_communities: LocalCommunityMap,
-    #[serde(default)]
     pub child_canister_wasms: ChildCanisterWasms<ChildCanisterType>,
-    #[serde(alias = "group_canister_wasm_for_upgrades")]
-    pub group_canister_wasm: ChunkedCanisterWasm,
-    #[serde(alias = "community_canister_wasm_for_upgrades")]
-    pub community_canister_wasm: ChunkedCanisterWasm,
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
@@ -173,11 +167,9 @@ impl Data {
             local_groups: LocalGroupMap::default(),
             local_communities: LocalCommunityMap::default(),
             child_canister_wasms: ChildCanisterWasms::new(vec![
-                (ChildCanisterType::Group, group_canister_wasm.clone()),
-                (ChildCanisterType::Community, community_canister_wasm.clone()),
+                (ChildCanisterType::Group, group_canister_wasm),
+                (ChildCanisterType::Community, community_canister_wasm),
             ]),
-            group_canister_wasm: group_canister_wasm.into(),
-            community_canister_wasm: community_canister_wasm.into(),
             user_index_canister_id,
             local_user_index_canister_id,
             group_index_canister_id,
