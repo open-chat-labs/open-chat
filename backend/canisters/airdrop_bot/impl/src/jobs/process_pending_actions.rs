@@ -60,13 +60,11 @@ async fn process_batch(batch: Vec<Action>) {
 }
 
 async fn process_action(action: Action) {
-    match action.clone() {
+    match action {
         Action::JoinChannel(community_id, channel_id) => join_channel(community_id, channel_id).await,
-        Action::SendMessage(action) if matches!(action.airdrop_type, AirdropType::Lottery(_)) => {
-            handle_lottery_message_action(*action).await
-        }
-        Action::SendMessage(action) => handle_main_message_action(*action).await,
-        Action::Transfer(action) => handle_transfer_action(*action).await,
+        Action::SendMessage(a) if matches!(a.airdrop_type, AirdropType::Lottery(_)) => handle_lottery_message_action(*a).await,
+        Action::SendMessage(a) => handle_main_message_action(*a).await,
+        Action::Transfer(a) => handle_transfer_action(*a).await,
     }
 }
 
