@@ -19,13 +19,15 @@ pub struct DirectChat {
     pub read_by_them_up_to: Timestamped<Option<MessageIndex>>,
     pub notifications_muted: Timestamped<bool>,
     pub archived: Timestamped<bool>,
-    pub is_bot: bool,
-    #[serde(default)]
     pub user_type: UserType,
     pub unconfirmed: Vec<SendMessageArgs>,
 }
 
 impl DirectChat {
+    pub fn set_user_as_ic_controlled_bot(&mut self) {
+        self.user_type = UserType::OcControlledBot;
+    }
+
     pub fn new(
         them: UserId,
         user_type: UserType,
@@ -42,7 +44,6 @@ impl DirectChat {
             read_by_them_up_to: Timestamped::new(None, now),
             notifications_muted: Timestamped::new(false, now),
             archived: Timestamped::new(false, now),
-            is_bot: user_type.is_bot(),
             user_type,
             unconfirmed: Vec::new(),
         }
