@@ -1,16 +1,18 @@
-use crate::jobs::execute_airdrop::start_airdrop_timer;
-use crate::model::pending_actions_queue::{Action, AirdropMessage, AirdropTransfer, AirdropType, LotteryAirdrop, MainAidrop};
 use crate::{mutate_state, read_state, RuntimeState, USERNAME};
+use candid::Deserialize;
+use ic_cdk::api::call::{CallResult, RejectionCode};
 use ic_cdk_timers::TimerId;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use rand::Rng;
+use serde::Serialize;
 use std::cell::Cell;
 use std::time::Duration;
+use timer_job_queue::TimerJobItem;
 use tracing::{error, info, trace};
 use types::icrc1::{self, Account};
 use types::{
     BotMessage, CanisterId, ChannelId, CommunityId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction,
-    Cryptocurrency, MessageContentInitial,
+    Cryptocurrency, MessageContentInitial, UserId,
 };
 use utils::consts::{MEMO_CHIT_FOR_CHAT_AIRDROP, MEMO_CHIT_FOR_CHAT_LOTTERY};
 use utils::time::{MonthKey, MONTHS};
@@ -19,11 +21,9 @@ thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
 }
 
-const BATCH_SIZE: usize = 10;
-
-pub(crate) fn start_job_if_required(state: &RuntimeState, after: Option<Duration>) -> bool {
+pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() && !state.data.pending_actions_queue.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer(after.unwrap_or_default(), run);
+        let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
         TIMER_ID.set(Some(timer_id));
         trace!("'process_pending_actions' job started");
         true
@@ -33,42 +33,66 @@ pub(crate) fn start_job_if_required(state: &RuntimeState, after: Option<Duration
 }
 
 fn run() {
-    TIMER_ID.set(None);
-
-    let batch = mutate_state(next_batch);
-    if !batch.is_empty() {
-        ic_cdk::spawn(process_batch(batch));
-        read_state(|state| start_job_if_required(state, None));
-    }
-}
-
-fn next_batch(state: &mut RuntimeState) -> Vec<Action> {
-    let mut actions = Vec::new();
-    while let Some(next) = state.data.pending_actions_queue.pop() {
-        actions.push(next);
-        if actions.len() == BATCH_SIZE {
-            break;
+    let stop = read_state(|state| state.data.pending_actions_queue.run());
+    if stop {
+        if let Some(timer_id) = TIMER_ID.take() {
+            ic_cdk_timers::clear_timer(timer_id);
         }
     }
-
-    actions
 }
 
-async fn process_batch(batch: Vec<Action>) {
-    let futures: Vec<_> = batch.into_iter().map(process_action).collect();
-    futures::future::join_all(futures).await;
-}
-
-async fn process_action(action: Action) {
-    match action {
-        Action::JoinChannel(community_id, channel_id) => join_channel(community_id, channel_id).await,
-        Action::SendMessage(a) if matches!(a.airdrop_type, AirdropType::Lottery(_)) => handle_lottery_message_action(*a).await,
-        Action::SendMessage(a) => handle_main_message_action(*a).await,
-        Action::Transfer(a) => handle_transfer_action(*a).await,
+impl TimerJobItem for Action {
+    async fn process(&self) -> CallResult<()> {
+        match self.clone() {
+            Action::JoinChannel(community_id, channel_id) => join_channel(community_id, channel_id).await,
+            Action::SendMessage(a) if matches!(a.airdrop_type, AirdropType::Lottery(_)) => {
+                handle_lottery_message_action(*a).await
+            }
+            Action::SendMessage(a) => handle_main_message_action(*a).await,
+            Action::Transfer(a) => handle_transfer_action(*a).await,
+        }
     }
 }
 
-async fn join_channel(community_id: CommunityId, channel_id: ChannelId) {
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum Action {
+    JoinChannel(CommunityId, ChannelId),
+    Transfer(Box<AirdropTransfer>),
+    SendMessage(Box<AirdropMessage>),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct AirdropTransfer {
+    pub recipient: UserId,
+    pub amount: u128,
+    pub airdrop_type: AirdropType,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct AirdropMessage {
+    pub recipient: UserId,
+    pub transaction: CompletedCryptoTransaction,
+    pub airdrop_type: AirdropType,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum AirdropType {
+    Main(MainAirdrop),
+    Lottery(LotteryAirdrop),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct MainAirdrop {
+    pub chit: u32,
+    pub shares: u32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct LotteryAirdrop {
+    pub position: usize,
+}
+
+async fn join_channel(community_id: CommunityId, channel_id: ChannelId) -> CallResult<()> {
     info!(?community_id, ?channel_id, "Join channel");
 
     let local_user_index_canister_id = match community_canister_c2c_client::local_user_index(
@@ -78,17 +102,7 @@ async fn join_channel(community_id: CommunityId, channel_id: ChannelId) {
     .await
     {
         Ok(community_canister::local_user_index::Response::Success(canister_id)) => canister_id,
-        Err(err) => {
-            error!("Failed to get local_user_index {err:?}");
-            mutate_state(|state| {
-                state.enqueue_pending_action(
-                    Action::JoinChannel(community_id, channel_id),
-                    Some(Duration::from_secs(60)),
-                    false,
-                )
-            });
-            return;
-        }
+        Err(err) => return Err(err),
     };
 
     match local_user_index_canister_c2c_client::join_channel(
@@ -108,38 +122,23 @@ async fn join_channel(community_id: CommunityId, channel_id: ChannelId) {
         | Ok(local_user_index_canister::join_channel::Response::SuccessJoinedCommunity(_)) => (),
         Ok(local_user_index_canister::join_channel::Response::InternalError(err)) => {
             error!("Failed to join_channel {err:?}");
-            mutate_state(|state| {
-                state.enqueue_pending_action(
-                    Action::JoinChannel(community_id, channel_id),
-                    Some(Duration::from_secs(60)),
-                    false,
-                )
-            });
-            return;
+            return Err((RejectionCode::CanisterError, err));
         }
         Ok(resp) => {
             error!("Failed to join_channel {resp:?}");
-            return;
+            return Ok(());
         }
         Err(err) => {
             error!("Failed to join_channel {err:?}");
-            mutate_state(|state| {
-                state.enqueue_pending_action(
-                    Action::JoinChannel(community_id, channel_id),
-                    Some(Duration::from_secs(60)),
-                    false,
-                )
-            });
-            return;
+            return Err(err);
         }
     }
 
     mutate_state(|state| state.data.channels_joined.insert((community_id, channel_id)));
-
-    read_state(start_airdrop_timer);
+    Ok(())
 }
 
-async fn handle_transfer_action(action: AirdropTransfer) {
+async fn handle_transfer_action(action: AirdropTransfer) -> CallResult<()> {
     let amount = action.amount.into();
 
     trace!(?amount, "CHAT Transfer");
@@ -190,8 +189,7 @@ async fn handle_transfer_action(action: AirdropTransfer) {
                     airdrop_type: action.airdrop_type.clone(),
                 }));
 
-                state.data.pending_actions_queue.push_front(message_action);
-                start_job_if_required(state, None);
+                state.data.pending_actions_queue.enqueue_front(message_action);
 
                 match action.airdrop_type {
                     AirdropType::Lottery(LotteryAirdrop { position }) => {
@@ -209,16 +207,18 @@ async fn handle_transfer_action(action: AirdropTransfer) {
         }
         Err(error) => {
             error!(?args, ?error, "Failed to transfer CHAT, retrying");
-            mutate_state(|state| state.enqueue_pending_action(Action::Transfer(Box::new(action)), None, true))
+            return Err(error);
         }
     }
+
+    Ok(())
 }
 
-async fn handle_main_message_action(action: AirdropMessage) {
+async fn handle_main_message_action(action: AirdropMessage) -> CallResult<()> {
     trace!("Send DM");
 
-    let AirdropType::Main(MainAidrop { chit, shares }) = action.airdrop_type else {
-        return;
+    let AirdropType::Main(MainAirdrop { chit, shares }) = action.airdrop_type else {
+        return Ok(());
     };
 
     let Some(month) = read_state(|state| {
@@ -227,7 +227,7 @@ async fn handle_main_message_action(action: AirdropMessage) {
             MONTHS[mk.month() as usize - 1]
         })
     }) else {
-        return;
+        return Ok(());
     };
 
     let args = user_canister::c2c_handle_bot_messages::Args {
@@ -248,22 +248,23 @@ async fn handle_main_message_action(action: AirdropMessage) {
     };
 
     match user_canister_c2c_client::c2c_handle_bot_messages(CanisterId::from(action.recipient), &args).await {
-        Ok(user_canister::c2c_handle_bot_messages::Response::Success) => (),
+        Ok(user_canister::c2c_handle_bot_messages::Response::Success) => Ok(()),
         Ok(resp) => {
             error!(?args, ?resp, "Failed to send DM");
+            Ok(())
         }
         Err(error) => {
             error!(?args, ?error, "Failed to send DM");
-            mutate_state(|state| state.enqueue_pending_action(Action::SendMessage(Box::new(action)), None, true));
+            Err(error)
         }
     }
 }
 
-async fn handle_lottery_message_action(action: AirdropMessage) {
+async fn handle_lottery_message_action(action: AirdropMessage) -> CallResult<()> {
     info!("Send lottery winners message");
 
     let AirdropType::Lottery(LotteryAirdrop { position }): AirdropType = action.airdrop_type else {
-        return;
+        return Ok(());
     };
 
     let Some((community_id, channel_id, message_id)) = mutate_state(|state| {
@@ -273,7 +274,7 @@ async fn handle_lottery_message_action(action: AirdropMessage) {
             .current(state.env.now())
             .map(|c| (c.community_id, c.channel_id, state.env.rng().gen()))
     }) else {
-        return;
+        return Ok(());
     };
 
     let position = match position {
@@ -310,13 +311,14 @@ async fn handle_lottery_message_action(action: AirdropMessage) {
     };
 
     match community_canister_c2c_client::send_message(community_id.into(), &args).await {
-        Ok(community_canister::send_message::Response::Success(_)) => (),
+        Ok(community_canister::send_message::Response::Success(_)) => Ok(()),
         Ok(resp) => {
             error!(?args, ?resp, "Failed to send lottery message");
+            Ok(())
         }
         Err(error) => {
             error!(?args, ?error, "Failed to send lottery message");
-            mutate_state(|state| state.enqueue_pending_action(Action::SendMessage(Box::new(action)), None, true));
+            Err(error)
         }
     }
 }

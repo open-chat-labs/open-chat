@@ -149,6 +149,7 @@ members = [
     "backend/libraries/sonic_client",
     "backend/libraries/stable_memory",
     "backend/libraries/testing",
+    "backend/libraries/timer_job_queue",
     "backend/libraries/ts_export",
     "backend/libraries/ts_export_macros",
     "backend/libraries/types",
