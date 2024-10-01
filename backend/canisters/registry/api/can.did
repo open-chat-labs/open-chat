@@ -9,6 +9,7 @@ type UpdatesResponse = variant {
         last_updated : TimestampMillis;
         token_details : opt vec TokenDetails;
         nervous_system_details : vec NervousSystemSummary;
+        swap_providers : opt vec ExchangeId;
         message_filters_added : vec MessageFilterSummary;
         message_filters_removed : vec nat64;
     };
