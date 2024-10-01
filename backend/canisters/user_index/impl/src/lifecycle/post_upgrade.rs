@@ -36,7 +36,7 @@ fn post_upgrade(args: Args) {
                 chit_reward: 5000, 
                 expires: 1729123199000, 
                 chit_budget: 40000000,                         
-            }, state.env.now());  
+            }, state.env.now());
         }
     });
 
