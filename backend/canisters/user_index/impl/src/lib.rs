@@ -26,8 +26,8 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use types::{
-    BotConfig, BuildVersion, CanisterId, CanisterWasm, ChatId, ChildCanisterWasms, Cryptocurrency, Cycles,
-    DiamondMembershipFees, Milliseconds, TimestampMillis, Timestamped, UserId, UserType,
+    BotConfig, BuildVersion, CanisterId, ChatId, ChildCanisterWasms, Cryptocurrency, Cycles, DiamondMembershipFees,
+    Milliseconds, TimestampMillis, Timestamped, UserId, UserType,
 };
 use user_index_canister::ChildCanisterType;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
@@ -333,11 +333,7 @@ impl RuntimeState {
 struct Data {
     pub users: UserMap,
     pub governance_principals: HashSet<Principal>,
-    #[serde(default)]
     pub child_canister_wasms: ChildCanisterWasms<ChildCanisterType>,
-    pub user_canister_wasm: CanisterWasm,
-    #[serde(alias = "local_user_index_canister_wasm_for_upgrades")]
-    pub local_user_index_canister_wasm: CanisterWasm,
     pub group_index_canister_id: CanisterId,
     pub notifications_index_canister_id: CanisterId,
     pub identity_canister_id: CanisterId,
@@ -382,7 +378,6 @@ struct Data {
     pub remove_from_online_users_queue: VecDeque<Principal>,
     pub survey_messages_sent: usize,
     pub external_achievements: ExternalAchievements,
-    #[serde(default)]
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
 }
 
@@ -412,8 +407,6 @@ impl Data {
             users: UserMap::default(),
             governance_principals: governance_principals.into_iter().collect(),
             child_canister_wasms: ChildCanisterWasms::default(),
-            user_canister_wasm: CanisterWasm::default(),
-            local_user_index_canister_wasm: CanisterWasm::default(),
             group_index_canister_id,
             notifications_index_canister_id,
             identity_canister_id,
@@ -542,8 +535,6 @@ impl Default for Data {
             users: UserMap::default(),
             governance_principals: HashSet::new(),
             child_canister_wasms: ChildCanisterWasms::default(),
-            user_canister_wasm: CanisterWasm::default(),
-            local_user_index_canister_wasm: CanisterWasm::default(),
             group_index_canister_id: Principal::anonymous(),
             notifications_index_canister_id: Principal::anonymous(),
             identity_canister_id: Principal::anonymous(),
