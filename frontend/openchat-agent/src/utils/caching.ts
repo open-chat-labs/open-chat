@@ -52,7 +52,7 @@ import type { PrizeContent } from "openchat-shared";
 import type { P2PSwapContent } from "openchat-shared";
 
 const CACHE_VERSION = 114;
-const FIRST_MIGRATION = 104;
+const EARLIEST_SUPPORTED_MIGRATION = 114;
 const MAX_INDEX = 9999999999;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
@@ -258,7 +258,7 @@ export function openCache(principal: Principal): Database {
         upgrade(db, previousVersion, newVersion, transaction) {
             if (
                 previousVersion == null ||
-                previousVersion < FIRST_MIGRATION ||
+                previousVersion < EARLIEST_SUPPORTED_MIGRATION ||
                 newVersion == null
             ) {
                 nuke(db);
