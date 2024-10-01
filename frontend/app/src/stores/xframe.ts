@@ -28,7 +28,9 @@ const FRAME_ANCESTORS = [
     "https://okowr-oqaaa-aaaag-qkedq-cai.icp0.io", // konecta pre-register
     "https://pre.konecta.one", //konecta pre-register
     "https://konecta.one", //konecta website/webapp
-    "https://y7mum-taaaa-aaaag-qklxq-cai.icp0.io" // konecta pre-register test env
+    "https://y7mum-taaaa-aaaag-qklxq-cai.icp0.io", // konecta pre-register test env
+    "https://ic-vc.com", // ICVC via domain
+    "https://mnc6b-aaaaa-aaaap-qhnrq-cai.icp0.io" // ICVC via canister ID
 ];
 
 type InboundXFrameMessage = UpdateTheme | ChangeRoute | OverrideSettings | Logout;
