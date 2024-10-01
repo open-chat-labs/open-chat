@@ -15,7 +15,7 @@ use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
 use std::time::Duration;
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms, ChunkedCanisterWasm,
+    BuildVersion, CanisterId, CanisterWasm, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms,
     CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails,
     MessageContent, ReferralType, TimestampMillis, Timestamped, User, UserId, VerifiedCredentialGateArgs,
 };
@@ -239,7 +239,7 @@ impl RuntimeState {
             canister_upgrades_completed: canister_upgrades_metrics.completed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
-            user_wasm_version: self.data.user_canister_wasm.wasm.version,
+            user_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::User).wasm.version,
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
             user_upgrade_concurrency: self.data.user_upgrade_concurrency,
             user_events_queue_length: self.data.user_event_sync_queue.len(),
@@ -267,10 +267,7 @@ impl RuntimeState {
 struct Data {
     pub local_users: LocalUserMap,
     pub global_users: GlobalUserMap,
-    #[serde(default)]
     pub child_canister_wasms: ChildCanisterWasms<ChildCanisterType>,
-    #[serde(alias = "user_canister_wasm_for_upgrades")]
-    pub user_canister_wasm: ChunkedCanisterWasm,
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub identity_canister_id: CanisterId,
@@ -297,7 +294,6 @@ struct Data {
     pub users_to_delete_queue: VecDeque<UserToDelete>,
     #[serde(with = "serde_bytes")]
     pub ic_root_key: Vec<u8>,
-    #[serde(default)]
     pub events_for_remote_users: Vec<(UserId, UserEvent)>,
 }
 
@@ -336,8 +332,7 @@ impl Data {
         Data {
             local_users: LocalUserMap::default(),
             global_users: GlobalUserMap::default(),
-            child_canister_wasms: ChildCanisterWasms::default(),
-            user_canister_wasm: user_canister_wasm.into(),
+            child_canister_wasms: ChildCanisterWasms::new(vec![(ChildCanisterType::User, user_canister_wasm)]),
             user_index_canister_id,
             group_index_canister_id,
             identity_canister_id,
