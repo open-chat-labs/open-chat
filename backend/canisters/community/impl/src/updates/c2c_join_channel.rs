@@ -252,7 +252,10 @@ pub(crate) fn join_channel_unchecked(
             let invitation = channel.chat.invited_users.remove(&member.user_id, now);
 
             if channel.chat.is_public.value {
-                channel.chat.events.mark_member_added_to_public_channel(member.user_id, now);
+                channel
+                    .chat
+                    .events
+                    .mark_members_added_to_public_channel(vec![member.user_id], now);
             } else {
                 channel.chat.events.push_main_event(
                     ChatEventInternal::ParticipantJoined(Box::new(MemberJoined {
