@@ -2,7 +2,8 @@ use canister_client::make_c2c_call_raw;
 use ic_cdk_timers::TimerId;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::{BTreeMap, HashMap};
-use std::sync::{Arc, Mutex};
+use std::rc::Rc;
+use std::sync::{Mutex, MutexGuard};
 use std::time::Duration;
 use tracing::trace;
 use types::{CanisterId, TimestampMillis};
@@ -10,12 +11,12 @@ use utils::canister::should_retry_failed_c2c_call;
 use utils::time::{now_millis, SECOND_IN_MS};
 
 pub struct FireAndForgetHandler {
-    inner: Arc<Mutex<FireAndForgetHandlerInner>>,
+    inner: Rc<Mutex<FireAndForgetHandlerInner>>,
 }
 
 impl FireAndForgetHandler {
     pub fn send(&self, canister_id: CanisterId, method_name: impl Into<String>, payload: Vec<u8>) {
-        let mut inner = self.inner.lock().unwrap();
+        let mut inner = self.inner();
         let id = inner.next_id;
         inner.next_id += 1;
 
@@ -31,7 +32,7 @@ impl FireAndForgetHandler {
     }
 
     fn init(inner: FireAndForgetHandlerInner) -> Self {
-        let wrapped = Arc::new(Mutex::new(inner));
+        let wrapped = Rc::new(Mutex::new(inner));
         let handler = FireAndForgetHandler { inner: wrapped };
         handler.clone().start_job_if_required();
         handler
@@ -41,7 +42,7 @@ impl FireAndForgetHandler {
         let result = make_c2c_call_raw(call.canister_id, &call.method_name, &call.payload, 0).await;
 
         if result.is_err() || call.attempt > 0 {
-            let handler = &mut self.inner.lock().unwrap();
+            let handler = &mut self.inner();
             let calls = handler.canisters.entry(call.canister_id).or_default();
             calls.in_progress.retain(|id| *id != call.id);
 
@@ -68,10 +69,10 @@ impl FireAndForgetHandler {
     }
 
     fn start_job_if_required(&self) {
-        if self.inner.lock().unwrap().should_start_job() {
+        if self.inner().should_start_job() {
             let clone = self.clone();
             let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, move || clone.run());
-            self.inner.lock().unwrap().timer_id = Some(timer_id);
+            self.inner().timer_id = Some(timer_id);
             trace!("FireAndForgetHandler job started");
         }
     }
@@ -79,17 +80,21 @@ impl FireAndForgetHandler {
     fn run(&self) {
         let now = now_millis();
         // This line must remain separate from the match statement so that the MutexGuard is dropped
-        let next_batch = self.inner.lock().unwrap().next_batch(50, now);
+        let next_batch = self.inner().next_batch(50, now);
         match next_batch {
             NextBatchResult::Success(batch) => ic_cdk::spawn(self.clone().process_batch(batch)),
             NextBatchResult::Continue => {}
             NextBatchResult::StopJob => {
-                if let Some(timer_id) = self.inner.lock().unwrap().timer_id.take() {
+                if let Some(timer_id) = self.inner().timer_id.take() {
                     ic_cdk_timers::clear_timer(timer_id);
                     trace!("FireAndForgetHandler job stopped");
                 }
             }
         }
+    }
+
+    fn inner(&self) -> MutexGuard<FireAndForgetHandlerInner> {
+        self.inner.lock().unwrap()
     }
 }
 
@@ -175,7 +180,7 @@ impl Serialize for FireAndForgetHandler {
     where
         S: Serializer,
     {
-        self.inner.lock().unwrap().serialize(serializer)
+        self.inner().serialize(serializer)
     }
 }
 
