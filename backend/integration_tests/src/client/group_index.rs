@@ -190,7 +190,7 @@ pub mod happy_path {
                 group_index_canister_id,
                 &group_index_canister::upload_wasm_chunk::Args {
                     canister_type,
-                    chunk: chunk.to_vec(),
+                    chunk: chunk.to_vec().into(),
                     index: index as u8,
                 },
             );

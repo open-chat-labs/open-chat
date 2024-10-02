@@ -24,11 +24,11 @@ export function updatesResponse(
     }
     if ("Success" in value) {
         const communityId = "txydz-jyaaa-aaaaf-bifea-cai";
-        const channelId = "83973693511680025111877019856849080554";
-        const channelName = "September airdrop";
+        const channelId = "116038783899146119312635856055055056435";
+        const channelName = "October airdrop";
         const communityName = "CHIT for CHAT";
 
-      return {
+        return {
             kind: "success",
             lastUpdated: value.Success.last_updated,
             tokenDetails:

@@ -52,7 +52,9 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
                         getContentAsFormattedText(fakeFormatter, e.event.repliesTo.content, {}),
                     ).forEach((id) => userIds.add(id));
                 }
-                if (e.event.content.kind === "reported_message_content") {
+                if (e.event.content.kind === "crypto_content") {
+                    userIds.add(e.event.content.transfer.recipient);
+                } else if (e.event.content.kind === "reported_message_content") {
                     e.event.content.reports.forEach((r) => userIds.add(r.reportedBy));
                 }
                 extractUserIdsFromMentions(

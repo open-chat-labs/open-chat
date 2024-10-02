@@ -150,6 +150,7 @@ dependencies = [
  "serde_json",
  "stable_memory",
  "testing",
+ "timer_job_queue",
  "tracing",
  "types",
  "user_canister",
@@ -1225,6 +1226,21 @@ dependencies = [
  "translations_canister",
  "types",
  "user_canister",
+ "user_index_canister",
+ "user_index_canister_client",
+]
+
+[[package]]
+name = "canister_wasm_chunks_uploader"
+version = "0.1.0"
+dependencies = [
+ "canister_agent_utils",
+ "clap 4.5.4",
+ "group_index_canister",
+ "group_index_canister_client",
+ "ic-agent",
+ "tokio",
+ "types",
  "user_index_canister",
  "user_index_canister_client",
 ]
@@ -7796,6 +7812,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "timer_job_queue"
+version = "0.1.0"
+dependencies = [
+ "futures",
+ "ic-cdk 0.16.0",
+ "ic-cdk-timers",
+ "serde",
+]
+
+[[package]]
 name = "tinyvec"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8166,6 +8192,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "getrandom 0.2.15",
+ "hex",
  "ic-ledger-types",
  "ic_principal",
  "icrc-ledger-types",

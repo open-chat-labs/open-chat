@@ -38,7 +38,7 @@ struct PrepareResult {
 }
 
 fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
-    let wasm = state.data.child_canister_wasms.wasm_from_chunks(ChildCanisterType::Group);
+    let wasm = state.data.child_canister_wasms.wasm_from_chunks(ChildCanisterType::Community);
     let wasm_hash = sha256(&wasm);
 
     if wasm_hash != args.wasm_hash {

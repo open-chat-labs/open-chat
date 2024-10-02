@@ -2039,3 +2039,5 @@ type ReferralStatus = variant {
     LifetimeDiamond;
     Registered;
 };
+
+type ExchangeId = variant { Sonic; KongSwap; ICPSwap };

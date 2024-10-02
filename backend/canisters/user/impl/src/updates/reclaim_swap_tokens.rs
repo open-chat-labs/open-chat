@@ -15,6 +15,7 @@ async fn reclaim_swap_tokens(args: Args) -> Response {
             icpswap_client::withdraw(args.swap_canister_id, args.ledger_canister_id, args.amount, args.fee).await
         }
         ExchangeId::Sonic => sonic_client::withdraw(args.swap_canister_id, args.ledger_canister_id, args.amount).await,
+        ExchangeId::KongSwap => unimplemented!(),
     };
 
     match result {
