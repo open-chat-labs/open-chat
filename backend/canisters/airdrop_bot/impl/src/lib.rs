@@ -1,4 +1,4 @@
-use crate::jobs::process_pending_actions::Action;
+use crate::actions::Action;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use model::airdrops::{Airdrops, AirdropsMetrics};
@@ -9,6 +9,7 @@ use timer_job_queue::TimerJobQueue;
 use types::{BuildVersion, CanisterId, ChannelId, CommunityId, Cycles, Document, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
+mod actions;
 mod guards;
 mod jobs;
 mod lifecycle;
@@ -38,11 +39,6 @@ impl RuntimeState {
     pub fn is_caller_admin(&self) -> bool {
         let caller = self.env.caller();
         self.data.admins.contains(&caller)
-    }
-
-    pub fn enqueue_pending_action(&mut self, action: Action) {
-        self.data.pending_actions_queue.enqueue(action);
-        jobs::process_pending_actions::start_job_if_required(self);
     }
 
     pub fn metrics(&self) -> Metrics {

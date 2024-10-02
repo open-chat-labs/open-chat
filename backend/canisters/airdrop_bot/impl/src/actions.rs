@@ -1,11 +1,8 @@
-use crate::{mutate_state, read_state, RuntimeState, USERNAME};
+use crate::{mutate_state, read_state, USERNAME};
 use candid::Deserialize;
-use ic_cdk_timers::TimerId;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use rand::Rng;
 use serde::Serialize;
-use std::cell::Cell;
-use std::time::Duration;
 use timer_job_queue::TimerJobItem;
 use tracing::{error, info, trace};
 use types::icrc1::{self, Account};
@@ -15,29 +12,6 @@ use types::{
 };
 use utils::consts::{MEMO_CHIT_FOR_CHAT_AIRDROP, MEMO_CHIT_FOR_CHAT_LOTTERY};
 use utils::time::{MonthKey, MONTHS};
-
-thread_local! {
-    static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
-}
-
-pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
-    if TIMER_ID.get().is_none() && !state.data.pending_actions_queue.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
-        TIMER_ID.set(Some(timer_id));
-        trace!("'process_pending_actions' job started");
-        true
-    } else {
-        false
-    }
-}
-
-fn run() {
-    if read_state(|state| state.data.pending_actions_queue.run()).is_none() {
-        if let Some(timer_id) = TIMER_ID.take() {
-            ic_cdk_timers::clear_timer(timer_id);
-        }
-    }
-}
 
 impl TimerJobItem for Action {
     async fn process(&self) -> Result<(), bool> {

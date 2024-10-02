@@ -1,5 +1,4 @@
-use super::process_pending_actions;
-use crate::jobs::process_pending_actions::{Action, AirdropTransfer, AirdropType, LotteryAirdrop, MainAirdrop};
+use crate::actions::{Action, AirdropTransfer, AirdropType, LotteryAirdrop, MainAirdrop};
 use crate::{mutate_state, read_state, RuntimeState};
 use airdrop_bot_canister::AirdropConfig;
 use ic_cdk_timers::TimerId;
@@ -195,6 +194,5 @@ fn execute_airdrop(participants: Vec<(UserId, Chit)>, state: &mut RuntimeState) 
         }
 
         state.data.pending_actions_queue.enqueue_many(actions.into_iter());
-        process_pending_actions::start_job_if_required(state);
     }
 }
