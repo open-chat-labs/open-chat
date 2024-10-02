@@ -150,6 +150,7 @@ dependencies = [
  "serde_json",
  "stable_memory",
  "testing",
+ "timer_job_queue",
  "tracing",
  "types",
  "user_canister",
@@ -7811,6 +7812,16 @@ checksum = "3f252a68540fde3a3877aeea552b832b40ab9a69e318efd078774a01ddee1ccf"
 dependencies = [
  "num-conv",
  "time-core",
+]
+
+[[package]]
+name = "timer_job_queue"
+version = "0.1.0"
+dependencies = [
+ "futures",
+ "ic-cdk 0.16.0",
+ "ic-cdk-timers",
+ "serde",
 ]
 
 [[package]]

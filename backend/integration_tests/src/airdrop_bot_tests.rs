@@ -1,11 +1,12 @@
 use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
 use crate::{client, TestEnv};
-use airdrop_bot_canister::{set_airdrop, AirdropAlgorithm, V1Algorithm, V2Algorithm};
+use airdrop_bot_canister::{AirdropAlgorithm, V1Algorithm, V2Algorithm};
 use itertools::Itertools;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
+use testing::rng::random_string;
 use types::{AccessGate, ChatEvent, CryptoContent, EventIndex, GroupRole, Message, MessageContent, UserId};
 use utils::time::MonthKey;
 
@@ -34,7 +35,7 @@ fn airdrop_end_to_end(v2: bool) {
     let owner = client::register_diamond_user(env, canister_ids, *controller);
 
     let community_id =
-        client::user::happy_path::create_community(env, &owner, "CHIT for CHAT airdrops", true, vec!["General".to_string()]);
+        client::user::happy_path::create_community(env, &owner, &random_string(), true, vec!["General".to_string()]);
 
     let users: Vec<_> = (0..5)
         .map(|_| client::register_diamond_user(env, canister_ids, *controller))
@@ -116,7 +117,7 @@ fn airdrop_end_to_end(v2: bool) {
         },
     );
 
-    assert!(matches!(response, set_airdrop::Response::Success));
+    assert!(matches!(response, airdrop_bot_canister::set_airdrop::Response::Success));
 
     tick_many(env, 3);
 
