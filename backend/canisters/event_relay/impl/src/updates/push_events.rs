@@ -2,7 +2,6 @@ use crate::guards::caller_can_push_events;
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use event_relay_canister::push_events::Args;
-use event_store_producer::EventBuilder;
 use ic_cdk::update;
 
 #[update(guard = "caller_can_push_events")]
