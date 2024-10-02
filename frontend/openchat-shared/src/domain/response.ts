@@ -24,6 +24,7 @@ export type NotAuthorised = {
     kind: "not_authorized";
 };
 export type UserSuspended = { kind: "user_suspended" };
+export type UserLapsed = { kind: "user_lapsed" };
 export type NoChange = {
     kind: "no_change";
 };
@@ -62,6 +63,7 @@ export const CommonResponses = {
     userNotInCommunity: (): UserNotInCommunity =>
         ({ kind: "user_not_in_community" }) as UserNotInCommunity,
     userSuspended: (): UserSuspended => ({ kind: "user_suspended" }) as UserSuspended,
+    userLapsed: (): UserLapsed => ({ kind: "user_lapsed" }) as UserLapsed,
     communityFrozen: (): CommunityFrozen => ({ kind: "community_frozen" }) as CommunityFrozen,
     communityPublic: (): CommunityPublic => ({ kind: "community_public" }) as CommunityPublic,
     messageNotFound: (): MessageNotFound => ({ kind: "message_not_found" }) as MessageNotFound,

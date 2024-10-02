@@ -122,6 +122,7 @@ import {
     apiVideoCallPresence,
     setVideoCallPresence,
     videoCallParticipantsResponse,
+    apiAccessGateConfig,
 } from "../common/chatMappers";
 import {
     apiMessageContent as apiMessageContentV2,
@@ -573,8 +574,19 @@ export class GroupClient extends CandidService {
                     gate === undefined
                         ? { NoChange: null }
                         : gate.kind === "no_gate"
-                        ? { SetToNone: null }
-                        : { SetToSome: apiAccessGate(gate) },
+                          ? { SetToNone: null }
+                          : { SetToSome: apiAccessGate(gate) },
+                gate_config:
+                    gate === undefined
+                        ? { NoChange: null }
+                        : gate.kind === "no_gate"
+                          ? { SetToNone: null }
+                          : {
+                                SetToSome: apiAccessGateConfig({
+                                    gate,
+                                    expiry: undefined,
+                                }),
+                            },
                 messages_visible_to_non_members: apiOptional(identity, messagesVisibleToNonMembers),
             }),
             updateGroupResponse,

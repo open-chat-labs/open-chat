@@ -25,6 +25,7 @@ import type {
     TransferFailed,
     InternalError,
     Offline,
+    UserLapsed,
 } from "../response";
 import { emptyChatMetrics } from "../../utils";
 import type {
@@ -1587,6 +1588,7 @@ export type CreateGroupResponse =
     | NotAuthorised
     | CommunityFrozen
     | UserSuspended
+    | UserLapsed
     | { kind: "access_gate_invalid" }
     | Offline
     | DefaultMustBePublic
@@ -1677,6 +1679,7 @@ export type SendMessageResponse =
     | NotAuthorised
     | ThreadMessageNotFound
     | UserSuspended
+    | UserLapsed
     | Failure
     | ChatFrozen
     | RulesNotAccepted
@@ -1867,6 +1870,7 @@ export type BlockUserResponse =
     | "cannot_block_self"
     | "cannot_block_user"
     | "user_suspended"
+    | "user_lapsed"
     | "chat_frozen"
     | "offline";
 
@@ -1877,6 +1881,7 @@ export type UnblockUserResponse =
     | "caller_not_in_group"
     | "not_authorized"
     | "user_suspended"
+    | "user_lapsed"
     | "chat_frozen"
     | "offline";
 
@@ -1926,6 +1931,7 @@ export type UpdateGroupResponse =
     | { kind: "rules_too_short" }
     | { kind: "rules_too_long" }
     | { kind: "user_suspended" }
+    | { kind: "user_lapsed" }
     | { kind: "chat_frozen" }
     | { kind: "internal_error" }
     | { kind: "failure" }
@@ -1937,6 +1943,7 @@ export type UpdatePermissionsResponse =
     | "not_authorized"
     | "not_in_group"
     | "user_suspended"
+    | "user_lapsed"
     | "chat_frozen"
     | "offline";
 
@@ -2058,6 +2065,7 @@ export type RegisterProposalVoteResponse =
     | "proposal_not_accepting_votes"
     | "chat_frozen"
     | "user_suspended"
+    | "user_lapsed"
     | "internal_error"
     | "offline";
 
@@ -2258,6 +2266,7 @@ export type AcceptP2PSwapResponse =
     | { kind: "channel_not_found" }
     | { kind: "chat_not_found" }
     | { kind: "user_suspended" }
+    | { kind: "user_lapsed" }
     | { kind: "user_not_in_group" }
     | { kind: "user_not_in_community" }
     | { kind: "user_not_in_channel" }

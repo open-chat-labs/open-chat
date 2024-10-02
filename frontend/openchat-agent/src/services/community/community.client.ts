@@ -68,6 +68,7 @@ import {
     apiVideoCallPresence,
     setVideoCallPresence,
     videoCallParticipantsResponse,
+    apiAccessGateConfig,
 } from "../common/chatMappers";
 import {
     apiMessageContent as apiMessageContentV2,
@@ -1223,8 +1224,19 @@ export class CommunityClient extends CandidService {
                     gate === undefined
                         ? { NoChange: null }
                         : gate.kind === "no_gate"
-                        ? { SetToNone: null }
-                        : { SetToSome: apiAccessGate(gate) },
+                          ? { SetToNone: null }
+                          : { SetToSome: apiAccessGate(gate) },
+                gate_config:
+                    gate === undefined
+                        ? { NoChange: null }
+                        : gate.kind === "no_gate"
+                          ? { SetToNone: null }
+                          : {
+                                SetToSome: apiAccessGateConfig({
+                                    gate,
+                                    expiry: undefined,
+                                }),
+                            },
                 avatar:
                     avatar === undefined
                         ? { NoChange: null }
@@ -1264,8 +1276,19 @@ export class CommunityClient extends CandidService {
                     gate === undefined
                         ? { NoChange: null }
                         : gate.kind === "no_gate"
-                        ? { SetToNone: null }
-                        : { SetToSome: apiAccessGate(gate) },
+                          ? { SetToNone: null }
+                          : { SetToSome: apiAccessGate(gate) },
+                gate_config:
+                    gate === undefined
+                        ? { NoChange: null }
+                        : gate.kind === "no_gate"
+                          ? { SetToNone: null }
+                          : {
+                                SetToSome: apiAccessGateConfig({
+                                    gate,
+                                    expiry: undefined,
+                                }),
+                            },
                 avatar:
                     avatar === undefined
                         ? { NoChange: null }

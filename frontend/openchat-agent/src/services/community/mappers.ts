@@ -127,6 +127,9 @@ export function addMembersToChannelResponse(
     if ("UserSuspended" in candid) {
         return CommonResponses.userSuspended();
     }
+    if ("UserLapsed" in candid) {
+        return CommonResponses.userLapsed();
+    }
     if ("CommunityFrozen" in candid) {
         return CommonResponses.communityFrozen();
     }
@@ -207,6 +210,8 @@ export async function messagesByMessageIndexResponse(
         "ThreadMessageNotFound" in candid ||
         "ThreadNotFound" in candid ||
         "ChannelNotFound" in candid ||
+        "UserSuspended" in candid ||
+        "UserLapsed" in candid ||
         "UserNotInChannel" in candid ||
         "UserNotInCommunity" in candid
     ) {
@@ -680,6 +685,9 @@ export function setMemberDisplayNameResponse(
     }
     if ("UserSuspended" in candid) {
         return "user_suspended";
+    }
+    if ("UserLapsed" in candid) {
+        return "user_lapsed";
     }
     if ("CommunityFrozen" in candid) {
         return "community_frozen";

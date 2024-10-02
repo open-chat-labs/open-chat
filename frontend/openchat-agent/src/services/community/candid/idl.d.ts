@@ -79,6 +79,7 @@ import {
     JoinVideoCallResponse,
     VideoCallParticipantsResponse,
     UserGroup,
+    AccessGateConfig,
 } from "./types";
 export {
     _SERVICE as CommunityService,
@@ -159,6 +160,7 @@ export {
     JoinVideoCallResponse as ApiJoinVideoCallResponse,
     VideoCallParticipantsResponse as ApiVideoCallParticipantsResponse,
     UserGroup as ApiUserGroup,
+    AccessGateConfig as ApiAccessGateConfig,
 };
 
 export const idlFactory: IDL.InterfaceFactory;
