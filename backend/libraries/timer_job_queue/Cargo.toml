@@ -1,0 +1,10 @@
+[package]
+name = "timer_job_queue"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+futures = { workspace = true }
+ic-cdk = { workspace = true }
+ic-cdk-timers = { workspace = true }
+serde = { workspace = true }
