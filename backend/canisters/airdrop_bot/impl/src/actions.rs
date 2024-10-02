@@ -1,3 +1,4 @@
+use crate::jobs::execute_airdrop::start_airdrop_timer;
 use crate::{mutate_state, read_state, USERNAME};
 use candid::Deserialize;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
@@ -106,7 +107,10 @@ async fn join_channel(community_id: CommunityId, channel_id: ChannelId) -> Resul
         }
     }
 
-    mutate_state(|state| state.data.channels_joined.insert((community_id, channel_id)));
+    mutate_state(|state| {
+        state.data.channels_joined.insert((community_id, channel_id));
+        start_airdrop_timer(state);
+    });
     Ok(())
 }
 
