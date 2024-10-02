@@ -132,7 +132,7 @@ fn airdrop_end_to_end(v2: bool) {
     );
 
     // Advance time to just after the airdrop is due
-    env.advance_time(Duration::from_millis(1000 + start_airdrop - now_millis(env)));
+    env.advance_time(Duration::from_millis(1000 + start_airdrop.saturating_sub(now_millis(env))));
 
     tick_many(env, 30);
 
