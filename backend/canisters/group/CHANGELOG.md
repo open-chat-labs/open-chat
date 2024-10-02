@@ -1,9 +1,12 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
+
+## [[2.0.1366](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1366-group)] - 2024-10-02
 
 ### Added
 
@@ -217,7 +220,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Set `anonymized_id` in `post_upgrade` ([#5478](https://github.com/open-chat-labs/open-chat/pull/5478))
 - Simplify `start_video_call` responses ([#5479](https://github.com/open-chat-labs/open-chat/pull/5479))
 - Join video calls by `message_id` rather than `message_index` ([#5482](https://github.com/open-chat-labs/open-chat/pull/5482))
-- Add `start_video_call` permission  ([#5488](https://github.com/open-chat-labs/open-chat/pull/5488))
+- Add `start_video_call` permission ([#5488](https://github.com/open-chat-labs/open-chat/pull/5488))
 - Push message events from within `chat_events` ([#5494](https://github.com/open-chat-labs/open-chat/pull/5494))
 
 ## [[2.0.1076](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1076-group)] - 2024-02-22
@@ -530,7 +533,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add language field to community ([#3923](https://github.com/open-chat-labs/open-chat/pull/3923))
-  
+
 ### Changed
 
 - Refactored `claim_prize` ([#3854](https://github.com/open-chat-labs/open-chat/pull/3854))
@@ -625,7 +628,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Split common group logic into new `group_chat_core` library ([#3620](https://github.com/open-chat-labs/open-chat/pull/3620)), ([#3622](https://github.com/open-chat-labs/open-chat/pull/3622)), ([#3624](https://github.com/open-chat-labs/open-chat/pull/3624)), ([#3626](https://github.com/open-chat-labs/open-chat/pull/3626)), ([#3633](https://github.com/open-chat-labs/open-chat/pull/3633)), ([#3634](https://github.com/open-chat-labs/open-chat/pull/3634)), ([#3662](https://github.com/open-chat-labs/open-chat/pull/3662)),  ([#3665](https://github.com/open-chat-labs/open-chat/pull/3665)), ([#3667](https://github.com/open-chat-labs/open-chat/pull/3667)), ([#3668](https://github.com/open-chat-labs/open-chat/pull/3668))
+- Split common group logic into new `group_chat_core` library ([#3620](https://github.com/open-chat-labs/open-chat/pull/3620)), ([#3622](https://github.com/open-chat-labs/open-chat/pull/3622)), ([#3624](https://github.com/open-chat-labs/open-chat/pull/3624)), ([#3626](https://github.com/open-chat-labs/open-chat/pull/3626)), ([#3633](https://github.com/open-chat-labs/open-chat/pull/3633)), ([#3634](https://github.com/open-chat-labs/open-chat/pull/3634)), ([#3662](https://github.com/open-chat-labs/open-chat/pull/3662)), ([#3665](https://github.com/open-chat-labs/open-chat/pull/3665)), ([#3667](https://github.com/open-chat-labs/open-chat/pull/3667)), ([#3668](https://github.com/open-chat-labs/open-chat/pull/3668))
 - Simplify `c2c_update_proposals` ([#3621](https://github.com/open-chat-labs/open-chat/pull/3621))
 - Simplify `remove_participant` ([#3641](https://github.com/open-chat-labs/open-chat/pull/3641))
 - Avoid multi subnet calls when (un)muting group notifications ([#3685](https://github.com/open-chat-labs/open-chat/pull/3685))
