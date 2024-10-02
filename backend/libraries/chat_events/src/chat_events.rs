@@ -1829,6 +1829,10 @@ impl ChatEvents {
     }
 
     pub fn mark_members_added_to_public_channel(&mut self, mut user_ids: Vec<UserId>, now: TimestampMillis) {
+        if user_ids.is_empty() {
+            return;
+        }
+
         if let Some(last_event_index) = self.latest_event_index() {
             if self
                 .update_event(None, last_event_index.into(), EventIndex::default(), Some(now), |event| {
