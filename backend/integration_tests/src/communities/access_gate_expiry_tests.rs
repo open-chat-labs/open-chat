@@ -50,7 +50,7 @@ fn diamond_member_lapses_and_rejoins_successfully(container: Container) {
 
     // Move the time forward so that user2's diamond membership expires + the gate expiry
     env.advance_time(Duration::from_millis(46 * DAY_IN_MS));
-    tick_many(env, 10);
+    tick_many(env, 5);
 
     // Assert that user2 has lapsed
     assert_user_lapsed(env, container, &user2, community_id, channel_id, group_id, true);
@@ -108,7 +108,7 @@ fn remove_gate_unlapses_members(container: Container) {
 
     // Move the time forward so that user2's diamond membership expires + the gate expiry
     env.advance_time(Duration::from_millis(46 * DAY_IN_MS));
-    tick_many(env, 10);
+    tick_many(env, 5);
 
     // Assert that user2 has lapsed
     assert_user_lapsed(env, container, &user2, community_id, channel_id, group_id, true);
@@ -190,14 +190,14 @@ fn extend_or_reduce_expiry_then_member_lapses_when_expected(container: Container
     let duration = if extend_expiry { 5 } else { 1 };
 
     env.advance_time(Duration::from_millis(duration * DAY_IN_MS));
-    tick_many(env, 10);
+    tick_many(env, 5);
 
     // Assert that user2 has *not* lapsed
     assert_user_lapsed(env, container, &user2, community_id, channel_id, group_id, false);
 
     // Move the time forward so the member should now lapse
     env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
-    tick_many(env, 10);
+    tick_many(env, 5);
 
     // Assert that user2 has lapsed
     assert_user_lapsed(env, container, &user2, community_id, channel_id, group_id, true);
