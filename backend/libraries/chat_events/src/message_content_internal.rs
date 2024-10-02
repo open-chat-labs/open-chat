@@ -775,6 +775,8 @@ pub struct PrizeContentInternal {
     pub diamond_only: bool,
     #[serde(rename = "f", default, skip_serializing_if = "is_default")]
     pub refund_started: bool,
+    #[serde(rename = "l", default, skip_serializing_if = "is_default")]
+    pub ledger_error: bool,
 }
 
 impl PrizeContentInternal {
@@ -788,6 +790,7 @@ impl PrizeContentInternal {
             caption: content.caption,
             diamond_only: content.diamond_only,
             refund_started: false,
+            ledger_error: false,
         }
     }
 

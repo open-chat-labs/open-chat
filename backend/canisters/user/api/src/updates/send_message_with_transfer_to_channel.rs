@@ -48,6 +48,7 @@ pub enum Response {
     PinRequired,
     PinIncorrect(Milliseconds),
     TooManyFailedPinAttempts(Milliseconds),
+    InternalError(String),
 }
 
 #[ts_export(user, send_message_with_transfer_to_channel)]

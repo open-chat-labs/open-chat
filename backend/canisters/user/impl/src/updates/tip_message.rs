@@ -35,8 +35,10 @@ async fn tip_message(args: Args) -> Response {
         created: now_nanos,
     });
     // Make the crypto transfer
-    if let Err(failed) = process_transaction(pending_transfer).await {
-        return TransferFailed(failed.error_message().to_string());
+    match process_transaction(pending_transfer).await {
+        Ok(Ok(_)) => {}
+        Ok(Err(failed)) => return TransferFailed(failed.error_message().to_string()),
+        Err(error) => return InternalError(format!("{error:?}")),
     }
 
     mutate_state(|state| {
