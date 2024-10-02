@@ -10,12 +10,6 @@ fn push_events(args: Args) {
     mutate_state(|state| push_events_impl(args, state))
 }
 
-#[update(guard = "caller_is_local_group_or_community_canister")]
-#[trace]
-fn push_events_v2(args: Args) {
-    mutate_state(|state| push_events_impl(args, state))
-}
-
 fn push_events_impl(args: Args, state: &mut RuntimeState) {
     let now = state.env.now();
 
