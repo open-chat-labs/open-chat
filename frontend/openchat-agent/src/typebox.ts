@@ -480,7 +480,11 @@ export const CommunityRole = Type.Union([
 ]);
 
 export type ExchangeId = Static<typeof ExchangeId>;
-export const ExchangeId = Type.Union([Type.Literal("ICPSwap"), Type.Literal("Sonic")]);
+export const ExchangeId = Type.Union([
+    Type.Literal("ICPSwap"),
+    Type.Literal("Sonic"),
+    Type.Literal("KongSwap"),
+]);
 
 export type ProposalDecisionStatus = Static<typeof ProposalDecisionStatus>;
 export const ProposalDecisionStatus = Type.Union([
@@ -2992,6 +2996,7 @@ export const RegistryUpdatesSuccessResult = Type.Object({
     nervous_system_details: Type.Array(RegistryNervousSystemSummary),
     message_filters_added: Type.Array(RegistryMessageFilterSummary),
     message_filters_removed: Type.Array(Type.BigInt()),
+    swap_providers: Type.Optional(Type.Array(ExchangeId)),
 });
 
 export type RegistryUpdatesResponse = Static<typeof RegistryUpdatesResponse>;

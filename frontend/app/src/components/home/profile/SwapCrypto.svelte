@@ -194,6 +194,9 @@
 
             case "sonic":
                 return "Sonic";
+
+            case "kongswap":
+                return "KongSwap";
         }
     }
 
