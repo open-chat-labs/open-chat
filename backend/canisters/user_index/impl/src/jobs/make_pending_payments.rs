@@ -51,7 +51,7 @@ async fn process_payment(pending_payment: PendingPayment) {
 
     mutate_state(|state| {
         match result {
-            Ok(block_index) => match reason {
+            Ok(Ok(block_index)) => match reason {
                 PendingPaymentReason::ReferralReward => {
                     inform_referrer(&pending_payment, block_index, state);
                 }
@@ -60,10 +60,9 @@ async fn process_payment(pending_payment: PendingPayment) {
                 }
                 _ => {}
             },
-            Err((_, retry)) => {
-                if retry {
-                    state.data.pending_payments_queue.push(pending_payment);
-                }
+            Ok(Err(_)) => {}
+            Err(_) => {
+                state.data.pending_payments_queue.push(pending_payment);
             }
         }
         start_job_if_required(state);

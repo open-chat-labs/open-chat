@@ -1,3 +1,4 @@
+use ic_cdk::api::call::CallResult;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use types::{
     icrc2::{CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction},
@@ -7,7 +8,7 @@ use types::{
 pub async fn process_transaction(
     transaction: PendingCryptoTransaction,
     sender: CanisterId,
-) -> Result<CompletedCryptoTransaction, FailedCryptoTransaction> {
+) -> CallResult<Result<CompletedCryptoTransaction, FailedCryptoTransaction>> {
     let args = TransferFromArgs {
         spender_subaccount: None,
         from: transaction.from.into(),
@@ -18,8 +19,9 @@ pub async fn process_transaction(
         amount: transaction.amount.into(),
     };
 
-    match icrc_ledger_canister_c2c_client::icrc2_transfer_from(transaction.ledger, &args).await {
-        Ok(Ok(block_index)) => Ok(CompletedCryptoTransaction {
+    let response = icrc_ledger_canister_c2c_client::icrc2_transfer_from(transaction.ledger, &args).await?;
+    Ok(match response {
+        Ok(block_index) => Ok(CompletedCryptoTransaction {
             ledger: transaction.ledger,
             token: transaction.token.clone(),
             amount: transaction.amount,
@@ -31,25 +33,20 @@ pub async fn process_transaction(
             created: transaction.created,
             block_index: block_index.0.try_into().unwrap(),
         }),
-        Ok(Err(transfer_error)) => {
+        Err(transfer_error) => {
             let error_message = format!("Transfer failed. {transfer_error:?}");
-            Err(error_message)
+            Err(FailedCryptoTransaction {
+                ledger: transaction.ledger,
+                token: transaction.token,
+                amount: transaction.amount,
+                fee: transaction.fee,
+                spender: sender.into(),
+                from: transaction.from.into(),
+                to: transaction.to.into(),
+                memo: transaction.memo,
+                created: transaction.created,
+                error_message,
+            })
         }
-        Err((code, msg)) => {
-            let error_message = format!("Transfer failed. {code:?}: {msg}");
-            Err(error_message)
-        }
-    }
-    .map_err(|error| FailedCryptoTransaction {
-        ledger: transaction.ledger,
-        token: transaction.token,
-        amount: transaction.amount,
-        fee: transaction.fee,
-        spender: sender.into(),
-        from: transaction.from.into(),
-        to: transaction.to.into(),
-        memo: transaction.memo,
-        created: transaction.created,
-        error_message: error,
     })
 }

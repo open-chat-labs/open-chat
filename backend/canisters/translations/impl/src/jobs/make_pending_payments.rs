@@ -46,13 +46,8 @@ async fn process_payment(pending_payment: PendingPayment) {
     let result = make_transfer(pending_payment.currency.ledger_canister_id().unwrap(), &args, true).await;
 
     mutate_state(|state| {
-        match result {
-            Ok(_) => (),
-            Err((_, retry)) => {
-                if retry {
-                    state.data.pending_payments_queue.push(pending_payment);
-                }
-            }
+        if result.is_err() {
+            state.data.pending_payments_queue.push(pending_payment);
         }
         start_job_if_required(state);
     });

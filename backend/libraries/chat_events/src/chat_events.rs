@@ -931,6 +931,10 @@ impl ChatEvents {
             return Err(UpdateEventError::NoChange(ReservePrizeResult::AlreadyClaimed));
         }
 
+        if content.ledger_error {
+            return Err(UpdateEventError::NoChange(ReservePrizeResult::LedgerError));
+        }
+
         // Pop the last prize and reserve it
         let amount = content.prizes_remaining.pop().expect("some prizes_remaining");
         let token = content.transaction.token();
@@ -1009,10 +1013,11 @@ impl ChatEvents {
         message_id: MessageId,
         user_id: UserId,
         amount: u128,
+        ledger_error: bool,
         now: TimestampMillis,
     ) -> UnreservePrizeResult {
         match self.update_message(None, message_id.into(), EventIndex::default(), Some(now), |message, _| {
-            Self::unreserve_prize_inner(message, user_id, amount)
+            Self::unreserve_prize_inner(message, user_id, amount, ledger_error)
         }) {
             Ok(_) => UnreservePrizeResult::Success,
             Err(UpdateEventError::NoChange(_)) => UnreservePrizeResult::ReservationNotFound,
@@ -1020,10 +1025,19 @@ impl ChatEvents {
         }
     }
 
-    fn unreserve_prize_inner(message: &mut MessageInternal, user_id: UserId, amount: u128) -> Result<(), UpdateEventError> {
+    fn unreserve_prize_inner(
+        message: &mut MessageInternal,
+        user_id: UserId,
+        amount: u128,
+        ledger_error: bool,
+    ) -> Result<(), UpdateEventError> {
         let MessageContentInternal::Prize(content) = &mut message.content else {
             return Err(UpdateEventError::NotFound);
         };
+
+        if ledger_error {
+            content.ledger_error = true;
+        }
 
         // Remove the reservation
         if content.reservations.remove(&user_id) {
@@ -2377,6 +2391,7 @@ pub enum ReservePrizeResult {
     AlreadyClaimed,
     PrizeFullyClaimed,
     PrizeEnded,
+    LedgerError,
 }
 
 #[allow(clippy::large_enum_variant)]

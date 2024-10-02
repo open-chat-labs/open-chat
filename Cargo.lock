@@ -4464,6 +4464,7 @@ name = "ledger_utils"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "ic-cdk 0.16.0",
  "ic-ledger-types",
  "icp_ledger_canister_c2c_client",
  "icrc-ledger-types",
@@ -8524,6 +8525,7 @@ dependencies = [
  "sha256",
  "sha3",
  "time",
+ "timer_job_queue",
  "tracing",
  "types",
 ]
