@@ -20,7 +20,7 @@ export class DexesAgent {
         outputTokens: Set<string>,
         swapProviders: DexId[],
     ): Promise<TokenSwapPool[]> {
-        const allPools = await this.getSwapPoolsUnfiltered(swapProviders);
+        const allPools = await this.getAllSwapPools(swapProviders);
 
         return allPools.filter(
             (p) =>
@@ -30,7 +30,7 @@ export class DexesAgent {
     }
 
     async canSwap(tokens: Set<string>, swapProviders: DexId[]): Promise<Set<string>> {
-        const allPools = await this.getSwapPoolsUnfiltered(swapProviders);
+        const allPools = await this.getAllSwapPools(swapProviders);
 
         const available = new Set<string>();
 
@@ -61,7 +61,7 @@ export class DexesAgent {
         );
     }
 
-    private getSwapPoolsUnfiltered(swapProviders: DexId[]): Promise<TokenSwapPool[]> {
+    private getAllSwapPools(swapProviders: DexId[]): Promise<TokenSwapPool[]> {
         const promises: Promise<TokenSwapPool[]>[] = [];
         if (swapProviders.includes("icpswap")) {
             promises.push(this._icpSwapIndexClient.getPools());
