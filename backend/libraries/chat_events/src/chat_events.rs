@@ -14,6 +14,7 @@ use sha2::{Digest, Sha256};
 use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{HashMap, HashSet};
+use std::mem;
 use std::ops::DerefMut;
 use types::{
     AcceptP2PSwapResult, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, CompleteP2PSwapResult,
@@ -1827,14 +1828,18 @@ impl ChatEvents {
         )
     }
 
-    pub fn mark_member_added_to_public_channel(&mut self, user_id: UserId, now: TimestampMillis) {
+    pub fn mark_members_added_to_public_channel(&mut self, mut user_ids: Vec<UserId>, now: TimestampMillis) {
+        if user_ids.is_empty() {
+            return;
+        }
+
         if let Some(last_event_index) = self.latest_event_index() {
             if self
                 .update_event(None, last_event_index.into(), EventIndex::default(), Some(now), |event| {
                     // If the last event is of type `MembersAddedToPublicChannel` then add this user_id to that
                     // event and mark the event as updated, else push a new event
                     if let ChatEventInternal::MembersAddedToPublicChannel(m) = &mut event.event {
-                        m.user_ids.push(user_id);
+                        m.user_ids.extend(mem::take(&mut user_ids));
                         event.timestamp = now;
                         Ok(())
                     } else {
@@ -1848,9 +1853,7 @@ impl ChatEvents {
         }
 
         self.push_main_event(
-            ChatEventInternal::MembersAddedToPublicChannel(Box::new(MembersAddedToPublicChannelInternal {
-                user_ids: vec![user_id],
-            })),
+            ChatEventInternal::MembersAddedToPublicChannel(Box::new(MembersAddedToPublicChannelInternal { user_ids })),
             0,
             now,
         );
