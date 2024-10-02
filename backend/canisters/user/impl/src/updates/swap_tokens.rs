@@ -233,6 +233,7 @@ fn build_swap_client(args: &Args, state: &RuntimeState) -> Box<dyn SwapClient> {
                 sonic.zero_for_one,
             ))
         }
+        ExchangeArgs::KongSwap(_) => unimplemented!(),
     }
 }
 
