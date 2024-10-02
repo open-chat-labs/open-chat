@@ -129,15 +129,16 @@ where
     }
 
     async fn process_single(&self, item: T) {
-        if let Err(retry) = item.process().await {
+        let result = item.process().await;
+        let retry = matches!(result, Err(true));
+
+        self.within_lock(|i| {
             if retry {
-                self.within_lock(|i| {
-                    i.queue.push_front(item);
-                    i.in_progress = i.in_progress.saturating_sub(1);
-                });
-                self.start_job_if_required();
+                i.queue.push_front(item);
             }
-        }
+            i.in_progress = i.in_progress.saturating_sub(1);
+        });
+        self.start_job_if_required();
     }
 }
 
