@@ -421,8 +421,7 @@ impl Channel {
     }
 
     fn can_view_latest_message(&self, is_channel_member: bool, is_community_member: bool, is_community_public: bool) -> bool {
-        is_channel_member
-            || (self.chat.is_public.value && !self.chat.has_payment_gate() && (is_community_member || is_community_public))
+        is_channel_member || (self.chat.is_public.value && (is_community_member || is_community_public))
     }
 }
 

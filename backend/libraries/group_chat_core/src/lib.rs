@@ -132,8 +132,7 @@ impl GroupChatCore {
     }
 
     pub fn min_visible_event_index(&self, user_id: Option<UserId>) -> MinVisibleEventIndexResult {
-        let hidden_for_non_members =
-            !self.is_public.value || !self.messages_visible_to_non_members.value || self.has_payment_gate();
+        let hidden_for_non_members = !self.is_public.value || !self.messages_visible_to_non_members.value;
         let member = user_id.and_then(|u| self.members.get(&u));
 
         if hidden_for_non_members {
@@ -1871,14 +1870,6 @@ impl GroupChatCore {
                 .collect(),
             total_replies: thread_events_reader.next_message_index().into(),
         })
-    }
-
-    pub fn has_payment_gate(&self) -> bool {
-        self.gate_config
-            .value
-            .as_ref()
-            .map(|g| g.gate.is_payment_gate())
-            .unwrap_or_default()
     }
 }
 
