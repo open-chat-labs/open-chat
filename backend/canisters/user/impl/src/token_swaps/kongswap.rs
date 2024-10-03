@@ -51,7 +51,7 @@ impl SwapClient for KongSwapClient {
                 pay_token: format!("IC.{}", self.token_in.ledger),
                 receive_amount: Some(min_amount_out.into()),
                 receive_token: format!("IC.{}", self.token_out.ledger),
-                max_slippage: Some(0.0),
+                max_slippage: None,
                 referred_by: None,
             },
         )
