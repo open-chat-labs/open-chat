@@ -1,4 +1,4 @@
-use crate::updates::c2c_join_channel::join_channel_unchecked;
+use crate::updates::c2c_join_channel::add_members_to_public_channel_unchecked;
 use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -64,11 +64,16 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                         // If the channel has just been made public or had its gate removed, join
                         // existing community members to the channel
                         if result.newly_public || matches!(result.gate_update, OptionUpdate::SetToNone) {
-                            for m in state.data.members.iter_mut() {
-                                if !m.channels_removed.iter().any(|c| c.value == channel.id) {
-                                    join_channel_unchecked(channel, m, true, now);
-                                }
-                            }
+                            let channel_id = channel.id;
+                            add_members_to_public_channel_unchecked(
+                                channel,
+                                state
+                                    .data
+                                    .members
+                                    .iter_mut()
+                                    .filter(|m| !m.channels_removed.iter().any(|c| c.value == channel_id)),
+                                now,
+                            );
                         }
                     }
 
