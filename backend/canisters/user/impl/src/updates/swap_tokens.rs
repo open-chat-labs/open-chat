@@ -154,25 +154,23 @@ pub(crate) async fn process_token_swap(
         }
     }
 
-    if !token_swap.icrc2 {
-        if extract_result(&token_swap.notified_dex_at).is_none() {
-            if let Err(error) = swap_client.deposit(amount_to_dex).await {
-                let msg = format!("{error:?}");
-                mutate_state(|state| {
-                    let now = state.env.now();
-                    token_swap.notified_dex_at = Some(Timestamped::new(Err(msg.clone()), now));
-                    state.data.token_swaps.upsert(token_swap.clone());
-                    enqueue_token_swap(token_swap, attempt, now, &mut state.data);
-                });
-                log_error("Failed to deposit tokens", msg.as_str(), &args, attempt);
-                return InternalError(msg);
-            } else {
-                mutate_state(|state| {
-                    let now = state.env.now();
-                    token_swap.notified_dex_at = Some(Timestamped::new(Ok(()), now));
-                    state.data.token_swaps.upsert(token_swap.clone());
-                });
-            }
+    if !token_swap.icrc2 && extract_result(&token_swap.notified_dex_at).is_none() {
+        if let Err(error) = swap_client.deposit(amount_to_dex).await {
+            let msg = format!("{error:?}");
+            mutate_state(|state| {
+                let now = state.env.now();
+                token_swap.notified_dex_at = Some(Timestamped::new(Err(msg.clone()), now));
+                state.data.token_swaps.upsert(token_swap.clone());
+                enqueue_token_swap(token_swap, attempt, now, &mut state.data);
+            });
+            log_error("Failed to deposit tokens", msg.as_str(), &args, attempt);
+            return InternalError(msg);
+        } else {
+            mutate_state(|state| {
+                let now = state.env.now();
+                token_swap.notified_dex_at = Some(Timestamped::new(Ok(()), now));
+                state.data.token_swaps.upsert(token_swap.clone());
+            });
         }
     }
 

@@ -40,5 +40,5 @@ fn map_inner<I: Clone, O, F: FnOnce(I) -> O>(
     value: &Option<Timestamped<Result<I, String>>>,
     f: F,
 ) -> Option<Result<O, String>> {
-    value.as_ref().map(|v| v.value.clone().map(|i| f(i)))
+    value.as_ref().map(|v| v.value.clone().map(f))
 }
