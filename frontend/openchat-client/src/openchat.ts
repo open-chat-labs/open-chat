@@ -425,6 +425,8 @@ import type {
     WalletConfig,
     AirdropChannelDetails,
     ChitLeaderboardResponse,
+    AuthenticationPrincipalsResponse,
+    AuthenticationPrincipal,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -7555,6 +7557,38 @@ export class OpenChat extends OpenChatAgentWorker {
                 events: [],
                 total: 0,
             };
+        });
+    }
+
+    private authProviderFromAuthPrincipal(principal: AuthenticationPrincipal): AuthProvider {
+        if (principal.originatingCanister === this.config.signInWithEthereumCanister) {
+            return AuthProvider.ETH;
+        } else if (principal.originatingCanister === this.config.signInWithSolanaCanister) {
+            return AuthProvider.SOL;
+        } else if (principal.originatingCanister === this.config.signInWithEmailCanister) {
+            return AuthProvider.EMAIL;
+        } else if (principal.originatingCanister === process.env.INTERNET_IDENTITY_CANISTER_ID) {
+            if (principal.isIIPrincipal) {
+                return AuthProvider.II;
+            } else {
+                return AuthProvider.NFID;
+            }
+        }
+        return AuthProvider.II;
+    }
+
+    getAuthenticationPrincipals(): Promise<
+        (AuthenticationPrincipal & { provider: AuthProvider })[]
+    > {
+        return this.sendRequest({
+            kind: "getAuthenticationPrincipals",
+        }).then((principals) => {
+            return principals.map((p) => {
+                return {
+                    ...p,
+                    provider: this.authProviderFromAuthPrincipal(p),
+                };
+            });
         });
     }
 

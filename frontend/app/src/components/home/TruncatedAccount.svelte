@@ -32,6 +32,7 @@
 </script>
 
 <div class="wrapper" class:centered>
+    <slot />
     <div class="principal">
         {collapseAccount(account)}
     </div>

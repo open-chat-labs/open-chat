@@ -25,6 +25,7 @@ export const videoSectionOpen = createLsBoolStore(configKeys.videoSection, false
 export const referralOpen = createLsBoolStore(configKeys.referralSection, false);
 export const storageSectionOpen = createLsBoolStore(configKeys.storageSection, false);
 export const verificationSectionOpen = createLsBoolStore(configKeys.verificationSectionOpen, false);
+export const accountsSectionOpen = createLsBoolStore(configKeys.verificationSectionOpen, false);
 export const statsSectionOpen = createLsBoolStore(configKeys.userStatsSection, false);
 export const advancedSectionOpen = createLsBoolStore(configKeys.userAdvancedSection, false);
 export const groupInfoOpen = createLsBoolStore(configKeys.groupInfoSection, true);

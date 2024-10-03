@@ -17,12 +17,15 @@
     export let restrictTo: Set<string> = new Set();
     export let emailInvalid: boolean;
     export let email: string;
-
-    let showMore = false;
+    export let currentProvider: AuthProvider | undefined = undefined;
+    export let showMore = false;
 
     $: selectedAuthProviderStore = client.selectedAuthProviderStore;
-    $: options = buildOptions($selectedAuthProviderStore, mode, restrictTo);
-    $: showAllOptions = $selectedAuthProviderStore === undefined || showMore || mode === "signup";
+    $: options = buildOptions(currentProvider ?? $selectedAuthProviderStore, mode, restrictTo);
+    $: showAllOptions =
+        (currentProvider ?? $selectedAuthProviderStore) === undefined ||
+        showMore ||
+        mode === "signup";
     $: {
         emailInvalid = !isEmailValid(email);
     }
