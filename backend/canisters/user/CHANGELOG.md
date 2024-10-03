@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Allow changing PIN number if signed in within last 5 minutes ([#6459](https://github.com/open-chat-labs/open-chat/pull/6459))
 - Re-add BTC methods now that we can support larger wasms ([#6462](https://github.com/open-chat-labs/open-chat/pull/6462))
 - Add MessagePack versions of all endpoints ([#6463](https://github.com/open-chat-labs/open-chat/pull/6463))
+- Integrate with KongSwap for performing token swaps ([#6508](https://github.com/open-chat-labs/open-chat/pull/6508))
 
 ### Changed
 
