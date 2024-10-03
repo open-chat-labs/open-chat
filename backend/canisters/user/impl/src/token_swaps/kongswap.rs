@@ -61,7 +61,7 @@ impl SwapClient for KongSwapClient {
                 let amount_out = nat_to_u128(response.receive_amount);
                 Ok(Ok(SwapSuccess {
                     amount_out,
-                    withdrawal_success: Some(!response.transfer_ids.is_empty()),
+                    withdrawal_success: Some(response.claim_ids.is_empty()),
                 }))
             }
             Err(error) => Ok(Err(error)),
