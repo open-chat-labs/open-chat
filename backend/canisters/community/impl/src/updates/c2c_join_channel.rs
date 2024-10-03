@@ -228,7 +228,7 @@ fn commit(
     };
 
     let now = state.env.now();
-    match join_channel_unchecked(channel, member, state.data.is_public, now) {
+    match join_channel_unchecked(channel, member, state.data.is_public, true, now) {
         AddResult::Success(_) => {
             let summary = channel
                 .summary(Some(user_id), true, state.data.is_public, &state.data.members)
@@ -269,10 +269,28 @@ fn commit(
     }
 }
 
+pub(crate) fn add_members_to_public_channel_unchecked<'a>(
+    channel: &mut Channel,
+    members: impl Iterator<Item = &'a mut CommunityMemberInternal>,
+    now: TimestampMillis,
+) {
+    let mut user_ids = Vec::new();
+    for member in members {
+        let result = join_channel_unchecked(channel, member, true, false, now);
+        if matches!(result, AddResult::Success(_)) {
+            member.channels.insert(channel.id);
+            user_ids.push(member.user_id);
+        }
+    }
+
+    channel.chat.events.mark_members_added_to_public_channel(user_ids, now);
+}
+
 pub(crate) fn join_channel_unchecked(
     channel: &mut Channel,
     community_member: &mut CommunityMemberInternal,
     notifications_muted: bool,
+    push_event: bool,
     now: TimestampMillis,
 ) -> AddResult {
     let min_visible_event_index;
@@ -315,20 +333,22 @@ pub(crate) fn join_channel_unchecked(
         return AddResult::Success(member.clone());
     }
 
-    if channel.chat.is_public.value {
-        channel
-            .chat
-            .events
-            .mark_member_added_to_public_channel(community_member.user_id, now);
-    } else {
-        channel.chat.events.push_main_event(
-            ChatEventInternal::ParticipantJoined(Box::new(MemberJoined {
-                user_id: community_member.user_id,
-                invited_by: invitation.map(|i| i.invited_by),
-            })),
-            0,
-            now,
-        );
+    if push_event {
+        if channel.chat.is_public.value {
+            channel
+                .chat
+                .events
+                .mark_members_added_to_public_channel(vec![community_member.user_id], now);
+        } else {
+            channel.chat.events.push_main_event(
+                ChatEventInternal::ParticipantJoined(Box::new(MemberJoined {
+                    user_id: community_member.user_id,
+                    invited_by: invitation.map(|i| i.invited_by),
+                })),
+                0,
+                now,
+            );
+        }
     }
 
     result

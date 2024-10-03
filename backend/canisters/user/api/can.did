@@ -185,6 +185,7 @@ type SwapTokensArgs = record {
     exchange_args : variant {
         ICPSwap : ExchangeArgs;
         Sonic : ExchangeArgs;
+        KongSwap : ExchangeArgs;
     };
     min_output_amount : nat;
     pin : opt text;
@@ -337,7 +338,7 @@ type TipMessageResponse = variant {
     PinRequired;
     PinIncorrect : Milliseconds;
     TooManyFailedPinAttempts : Milliseconds;
-    InternalError : record { text; CompletedCryptoTransaction };
+    InternalError : text;
 };
 
 type MarkAchievementsSeenArgs = record {
@@ -711,6 +712,7 @@ type SendMessageWithTransferToChannelResponse = variant {
     PinRequired;
     PinIncorrect : Milliseconds;
     TooManyFailedPinAttempts : Milliseconds;
+    InternalError : text;
 };
 
 type SendMessageWithTransferToGroupArgs = record {
@@ -754,6 +756,7 @@ type SendMessageWithTransferToGroupResponse = variant {
     PinRequired;
     PinIncorrect : Milliseconds;
     TooManyFailedPinAttempts : Milliseconds;
+    InternalError : text;
 };
 
 type WithdrawCryptoArgs = record {
@@ -768,6 +771,7 @@ type WithdrawCryptoResponse = variant {
     PinRequired;
     PinIncorrect : Milliseconds;
     TooManyFailedPinAttempts : Milliseconds;
+    InternalError : text;
 };
 
 type PinChatV2Request = record {

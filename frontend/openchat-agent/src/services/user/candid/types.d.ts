@@ -2277,6 +2277,7 @@ export interface SwapTokensArgs {
   'swap_id' : bigint,
   'input_token' : TokenInfo,
   'exchange_args' : { 'Sonic' : ExchangeArgs } |
+    { 'KongSwap' : ExchangeArgs } |
     { 'ICPSwap' : ExchangeArgs },
   'output_token' : TokenInfo,
 }

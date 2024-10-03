@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
+ic-cdk = { workspace = true }
 ic-ledger-types = { workspace = true }
 icp_ledger_canister_c2c_client = { path = "../../external_canisters/icp_ledger/c2c_client" }
 icrc_ledger_canister_c2c_client = { path = "../../external_canisters/icrc_ledger/c2c_client" }

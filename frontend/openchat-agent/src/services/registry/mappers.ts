@@ -2,11 +2,13 @@ import type {
     NervousSystemSummary,
     RegistryUpdatesResponse,
     CryptocurrencyDetails,
+    DexId,
 } from "openchat-shared";
 import { mapOptional, principalBytesToString } from "../../utils/mapping";
 import { UnsupportedValueError } from "openchat-shared";
 import { buildTokenLogoUrl } from "../../utils/chat";
 import type {
+    ExchangeId as TExchangeId,
     RegistryNervousSystemSummary,
     RegistryTokenDetails,
     RegistryUpdatesResponse as TRegistryUpdatesResponse,
@@ -36,6 +38,7 @@ export function updatesResponse(
                     tokens.map((t) => tokenDetails(t, blobUrlPattern, registryCanisterId)),
                 ) ?? [],
             nervousSystemSummary: value.Success.nervous_system_details.map(nervousSystemSummary),
+            swapProviders: mapOptional(value.Success.swap_providers, (r) => r.map(swapProvider)),
             messageFiltersAdded: value.Success.message_filters_added,
             messageFiltersRemoved: value.Success.message_filters_removed,
             currentAirdropChannel: {
@@ -97,4 +100,11 @@ function nervousSystemSummary(value: RegistryNervousSystemSummary): NervousSyste
         proposalRejectionFee: value.proposal_rejection_fee,
         submittingProposalsEnabled: value.submitting_proposals_enabled,
     };
+}
+
+function swapProvider(value: TExchangeId): DexId {
+    if (value === "ICPSwap") return "icpswap";
+    if (value === "Sonic") return "sonic";
+    if (value === "KongSwap") return "kongswap";
+    throw new UnsupportedValueError("Unexpected ApiSwapProvider type received", value);
 }

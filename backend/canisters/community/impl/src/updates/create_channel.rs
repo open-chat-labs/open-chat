@@ -2,7 +2,7 @@ use super::c2c_join_community::join_community_impl;
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_proposals_bot;
 use crate::model::channels::Channel;
-use crate::updates::c2c_join_channel::join_channel_unchecked;
+use crate::updates::c2c_join_channel::add_members_to_public_channel_unchecked;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -150,9 +150,7 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
             };
 
             if args.is_public && gate_config.is_none() {
-                for m in state.data.members.iter_mut() {
-                    join_channel_unchecked(&mut channel, m, true, now);
-                }
+                add_members_to_public_channel_unchecked(&mut channel, state.data.members.iter_mut(), now);
             }
 
             state.data.channels.add(channel);

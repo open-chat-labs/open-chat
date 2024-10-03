@@ -54,7 +54,7 @@ async fn process_payment(pending_payment: PendingPayment, now_nanos: TimestampNa
     };
 
     match make_transfer(pending_payment.ledger_canister, &args, true).await {
-        Ok(_) => {
+        Ok(Ok(_)) => {
             if matches!(pending_payment.reason, PendingPaymentReason::AccessGate) {
                 if let PaymentRecipient::Member(user_id) = pending_payment.recipient {
                     mutate_state(|state| {
@@ -66,13 +66,12 @@ async fn process_payment(pending_payment: PendingPayment, now_nanos: TimestampNa
                 }
             }
         }
-        Err((_, retry)) => {
-            if retry {
-                mutate_state(|state| {
-                    state.data.pending_payments_queue.push(pending_payment);
-                    start_job_if_required(state);
-                });
-            }
+        Ok(Err(_)) => {}
+        Err(_) => {
+            mutate_state(|state| {
+                state.data.pending_payments_queue.push(pending_payment);
+                start_job_if_required(state);
+            });
         }
     }
 }

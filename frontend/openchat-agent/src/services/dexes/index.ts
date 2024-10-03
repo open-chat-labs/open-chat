@@ -15,8 +15,12 @@ export class DexesAgent {
         this._sonicSwapsClient = new SonicSwapsClient(this._identity, this.agent);
     }
 
-    async getSwapPools(inputToken: string, outputTokens: Set<string>): Promise<TokenSwapPool[]> {
-        const allPools = await this.getSwapPoolsUnfiltered();
+    async getSwapPools(
+        inputToken: string,
+        outputTokens: Set<string>,
+        swapProviders: DexId[],
+    ): Promise<TokenSwapPool[]> {
+        const allPools = await this.getAllSwapPools(swapProviders);
 
         return allPools.filter(
             (p) =>
@@ -25,8 +29,8 @@ export class DexesAgent {
         );
     }
 
-    async canSwap(tokens: Set<string>): Promise<Set<string>> {
-        const allPools = await this.getSwapPoolsUnfiltered();
+    async canSwap(tokens: Set<string>, swapProviders: DexId[]): Promise<Set<string>> {
+        const allPools = await this.getAllSwapPools(swapProviders);
 
         const available = new Set<string>();
 
@@ -44,8 +48,9 @@ export class DexesAgent {
         inputToken: string,
         outputToken: string,
         amountIn: bigint,
+        swapProviders: DexId[],
     ): Promise<[DexId, bigint][]> {
-        const pools = await this.getSwapPools(inputToken, new Set([outputToken]));
+        const pools = await this.getSwapPools(inputToken, new Set([outputToken]), swapProviders);
 
         return await Promise.all(
             pools.map((p) =>
@@ -56,13 +61,15 @@ export class DexesAgent {
         );
     }
 
-    private async getSwapPoolsUnfiltered(): Promise<TokenSwapPool[]> {
-        const [icpSwap, sonic] = await Promise.all([
-            this._icpSwapIndexClient.getPools(),
-            this._sonicSwapsClient.getPools(),
-        ]);
-
-        return icpSwap.concat(sonic);
+    private getAllSwapPools(swapProviders: DexId[]): Promise<TokenSwapPool[]> {
+        const promises: Promise<TokenSwapPool[]>[] = [];
+        if (swapProviders.includes("icpswap")) {
+            promises.push(this._icpSwapIndexClient.getPools());
+        }
+        if (swapProviders.includes("sonic")) {
+            promises.push(this._sonicSwapsClient.getPools());
+        }
+        return Promise.all(promises).then((r) => r.flat());
     }
 
     private quoteSingle(

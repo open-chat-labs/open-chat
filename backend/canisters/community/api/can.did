@@ -488,8 +488,10 @@ type ClaimPrizeResponse = variant {
     AlreadyClaimed;
     PrizeFullyClaimed;
     PrizeEnded;
+    LedgerError;
     TransferFailed : record { text; FailedCryptoTransaction };
     FailedAfterTransfer : record { text; CompletedCryptoTransaction };
+    InternalError : text;
 };
 
 type CreateChannelArgs = record {

@@ -1753,6 +1753,7 @@ export const idlFactory = ({ IDL }) => {
     'input_token' : TokenInfo,
     'exchange_args' : IDL.Variant({
       'Sonic' : ExchangeArgs,
+      'KongSwap' : ExchangeArgs,
       'ICPSwap' : ExchangeArgs,
     }),
     'output_token' : TokenInfo,
