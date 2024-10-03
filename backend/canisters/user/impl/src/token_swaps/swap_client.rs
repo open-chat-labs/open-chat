@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use ic_cdk::api::call::CallResult;
-use icrc_ledger_types::icrc1::account::Account;
+use types::icrc1::Account;
 
 #[async_trait]
 pub trait SwapClient {
