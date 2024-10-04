@@ -48,6 +48,7 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
             let now = state.env.now();
             let gate_config_updates =
                 if args.gate_config.has_update() { args.gate_config } else { args.gate.map(|g| g.into()) };
+            let has_gate_config_updates = gate_config_updates.has_update();
 
             let prev_gate_config = channel.chat.gate_config.value.clone();
 
@@ -67,7 +68,7 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
             ) {
                 UpdateResult::Success(result) => {
                     if channel.chat.is_public.value && channel.chat.gate_config.is_none() {
-                        // If the channel has just been made public or had its gate removed, join
+                        // If the channel has just been made public or had its gate removed, add
                         // existing community members to the channel
                         if result.newly_public || matches!(result.gate_config_update, OptionUpdate::SetToNone) {
                             let channel_id = channel.id;
@@ -83,9 +84,10 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                         }
                     }
 
-                    state.data.update_member_expiry(Some(args.channel_id), &prev_gate_config, now);
-
-                    jobs::expire_members::restart_job(state);
+                    if has_gate_config_updates {
+                        state.data.update_member_expiry(Some(args.channel_id), &prev_gate_config, now);
+                        jobs::expire_members::restart_job(state);
+                    }
 
                     handle_activity_notification(state);
 

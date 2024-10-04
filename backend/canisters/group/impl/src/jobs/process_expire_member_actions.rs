@@ -1,14 +1,13 @@
+use super::expire_members;
 use crate::{mutate_state, read_state, RuntimeState};
 use gated_groups::{check_if_passes_gate, check_if_passes_gate_synchronously, CheckGateArgs, CheckIfPassesGateResult};
 use group_community_common::{ExpiringMember, ExpiringMemberAction, ExpiringMemberActionDetails, Members};
 use ic_cdk_timers::TimerId;
 use local_user_index_canister_c2c_client::lookup_users;
 use std::cell::Cell;
-use std::{cmp::max, time::Duration};
+use std::time::Duration;
 use tracing::trace;
 use types::AccessGateConfigInternal;
-
-use super::expire_members::{self, MEMBER_ACCESS_EXPIRY_DELAY};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -48,30 +47,34 @@ async fn process_batch(batch: Vec<ExpiringMemberActionDetails>) {
     let local_user_index_canister = read_state(|state| state.data.local_user_index_canister_id);
     let user_ids = batch.iter().map(|details| details.user_id).collect();
 
-    match lookup_users(user_ids, local_user_index_canister).await {
-        Ok(user_details) => {
-            mutate_state(|state| {
+    let lookup_users_result = lookup_users(user_ids, local_user_index_canister).await;
+
+    mutate_state(|state| {
+        match lookup_users_result {
+            Ok(user_details) => {
                 for u in user_details.values() {
                     state
                         .data
                         .user_cache
                         .insert(u.user_id, u.diamond_membership_expires_at, u.unique_person_proof.is_some());
                 }
-            });
 
-            for details in batch {
-                process_gate_check_sync(details);
+                for details in batch {
+                    process_gate_check_sync(details, state);
+                }
+            }
+            Err(err) => {
+                for details in batch {
+                    handle_gate_check_result(details, CheckIfPassesGateResult::InternalError(err.to_string()), state);
+                }
             }
         }
-        Err(err) => {
-            for details in batch {
-                handle_gate_check_result(details, CheckIfPassesGateResult::InternalError(err.to_string()));
-            }
-        }
-    }
+
+        expire_members::restart_job(state);
+    });
 }
 
-fn process_gate_check_sync(details: ExpiringMemberActionDetails) {
+fn process_gate_check_sync(details: ExpiringMemberActionDetails, state: &mut RuntimeState) {
     let Some(prep) = prepare_gate_check(details) else {
         return;
     };
@@ -80,7 +83,7 @@ fn process_gate_check_sync(details: ExpiringMemberActionDetails) {
         return;
     };
 
-    handle_gate_check_result(prep.details, result);
+    handle_gate_check_result(prep.details, result, state);
 }
 
 async fn process_gate_check_async(details: ExpiringMemberActionDetails) {
@@ -90,7 +93,11 @@ async fn process_gate_check_async(details: ExpiringMemberActionDetails) {
 
     let result = check_if_passes_gate(prep.gate_config.gate, prep.check_gate_args).await;
 
-    handle_gate_check_result(prep.details, result);
+    mutate_state(|state| {
+        handle_gate_check_result(prep.details, result, state);
+
+        expire_members::restart_job(state);
+    });
 }
 
 struct PrepareResult {
@@ -127,49 +134,47 @@ fn prepare_gate_check(details: ExpiringMemberActionDetails) -> Option<PrepareRes
     })
 }
 
-fn handle_gate_check_result(details: ExpiringMemberActionDetails, result: CheckIfPassesGateResult) {
-    mutate_state(|state| {
-        // If there is no longer an access gate then do nothing
-        let Some(gate_config) = state.data.chat.gate_config.value.as_ref() else {
-            return;
-        };
+fn handle_gate_check_result(details: ExpiringMemberActionDetails, result: CheckIfPassesGateResult, state: &mut RuntimeState) {
+    // If there is no longer an access gate then do nothing
+    let Some(gate_config) = state.data.chat.gate_config.value.as_ref() else {
+        return;
+    };
 
-        // If the access gate no longer expires then do nothing
-        let Some(curr_gate_expiry) = gate_config.expiry() else {
-            return;
-        };
+    // If the access gate no longer expires then do nothing
+    let Some(curr_gate_expiry) = gate_config.expiry() else {
+        return;
+    };
 
-        // If the access gate has changed type the do nothing
-        if details.original_gate_type != gate_config.gate().into() {
-            return;
-        }
+    // If the access gate has changed type then do nothing
+    if details.original_gate_type != gate_config.gate().into() {
+        return;
+    }
 
-        let now = state.env.now();
+    // If the member can no longer lapse then do nothing
+    if !state.data.chat.members.can_member_lapse(&details.user_id) {
+        return;
+    }
 
-        // Determine if the gate expiry has increased since the action was added to the queue
-        let expiry_increase = curr_gate_expiry.saturating_sub(details.original_gate_expiry);
+    let now = state.env.now();
 
-        if matches!(result, CheckIfPassesGateResult::Failed(_)) && expiry_increase == 0 {
-            // Membership lapsed
-            state.data.chat.members.mark_member_lapsed(&details.user_id, now);
-            return;
-        }
+    // Determine if the gate expiry has increased since the action was added to the queue
+    let expiry_increase = curr_gate_expiry.saturating_sub(details.original_gate_expiry);
 
-        // In all other cases re-queue the check
-        let expiry = match result {
-            CheckIfPassesGateResult::Success => curr_gate_expiry,
-            CheckIfPassesGateResult::Failed(_) => expiry_increase,
-            CheckIfPassesGateResult::InternalError(_) => max(expiry_increase, MEMBER_ACCESS_EXPIRY_DELAY),
-        };
+    if matches!(result, CheckIfPassesGateResult::Failed(_)) && expiry_increase == 0 {
+        // Membership lapsed
+        state.data.chat.members.mark_member_lapsed(&details.user_id, now);
+        return;
+    }
 
-        if state.data.chat.members.can_member_lapse(&details.user_id) {
-            state.data.expiring_members.push(ExpiringMember {
-                expires: now + expiry,
-                channel_id: details.channel_id,
-                user_id: details.user_id,
-            });
+    // In all other cases re-queue the check
+    let expiry = match result {
+        CheckIfPassesGateResult::Success => curr_gate_expiry,
+        _ => expiry_increase,
+    };
 
-            expire_members::restart_job(state);
-        }
+    state.data.expiring_members.push(ExpiringMember {
+        expires: now + expiry,
+        channel_id: None,
+        user_id: details.user_id,
     });
 }
