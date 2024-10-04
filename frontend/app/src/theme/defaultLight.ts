@@ -40,6 +40,7 @@ export function getTheme(base: Theme): Theme {
     base.entry.bg = "rgba(226,226,226,0.3)";
     base.entry.input.bg = white;
     base.button.bg = base.primary;
+    base.button.disabled = "rgba(0,0,0,0.15)";
     // base.entry.input.sh = "inset 0px 2px 4px rgba(138, 138, 138, 0.5)";
     base.panel.bg = "transparent";
     base.panel.left.bg = "transparent";
@@ -75,8 +76,6 @@ export function getTheme(base: Theme): Theme {
     base.icon.inverted.txt = txt60;
     base.icon.selected = base.primary;
     base.recommended.bg = white;
-    base.markdown.fg.color = "inherit";
-    base.markdown.fg.bright = "inherit";
     base.daily.header = white;
     base.daily.accent = base.accent;
     base.daily.accentText = txt;

@@ -321,13 +321,6 @@ export function getTheme(): Theme {
             },
         },
 
-        markdown: {
-            fg: {
-                color: txt,
-                bright: txt,
-            },
-        },
-
         card: {
             rd: "8px",
             sh: "none",
