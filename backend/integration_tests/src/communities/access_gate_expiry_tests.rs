@@ -275,8 +275,8 @@ fn member_lapses_from_token_balance_gate_and_rejoins_successfully(container_type
     }
 }
 
-#[test_case(Container::Community)]
-#[test_case(Container::Channel)]
+#[test_case(ContainerType::Community)]
+#[test_case(ContainerType::Channel)]
 #[test_case(ContainerType::Group)]
 fn gate_changes_and_members_lapse_as_expected(container_type: ContainerType) {
     let mut wrapper = ENV.deref().get();
