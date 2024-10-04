@@ -216,7 +216,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
         },
 
         replies: {
-            bd: "var(--bd);",
+            bd: "var(--bd)",
         },
 
         currentChat: {
