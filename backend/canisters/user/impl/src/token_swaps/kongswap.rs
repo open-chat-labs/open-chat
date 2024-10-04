@@ -4,6 +4,7 @@ use async_trait::async_trait;
 use ic_cdk::api::call::CallResult;
 use types::icrc1::Account;
 use types::{CanisterId, TokenInfo};
+use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 
 pub struct KongSwapClient {
     canister_id: CanisterId,
@@ -51,8 +52,7 @@ impl SwapClient for KongSwapClient {
                 pay_token: format!("IC.{}", self.token_in.ledger),
                 receive_amount: Some(min_amount_out.into()),
                 receive_token: format!("IC.{}", self.token_out.ledger),
-                max_slippage: None,
-                referred_by: None,
+                referred_by: Some(SNS_GOVERNANCE_CANISTER_ID.to_string()),
             },
         )
         .await?

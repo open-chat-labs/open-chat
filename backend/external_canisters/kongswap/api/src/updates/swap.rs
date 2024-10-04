@@ -9,7 +9,7 @@ pub struct Args {
     pub receive_token: String,
     pub receive_amount: Option<Nat>,
     // pub receive_address: Option<String>,
-    pub max_slippage: Option<f32>,
+    // pub max_slippage: Option<f32>,
     pub referred_by: Option<String>,
 }
 
