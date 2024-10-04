@@ -2,8 +2,9 @@ import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type IcpSwapPoolService } from "./candid/idl";
 import { CandidService } from "../../../candidService";
 import { quoteResponse } from "./mappers";
+import type { SwapPoolClient } from "../../index";
 
-export class IcpSwapPoolClient extends CandidService {
+export class IcpSwapPoolClient extends CandidService implements SwapPoolClient {
     private service: IcpSwapPoolService;
 
     constructor(
