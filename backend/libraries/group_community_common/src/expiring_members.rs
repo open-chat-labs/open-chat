@@ -1,10 +1,10 @@
 use serde::{Deserialize, Serialize};
-use std::collections::BinaryHeap;
 use types::{ChannelId, TimestampMillis, UserId};
+use utils::min_heap::MinBinaryHeap;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct ExpiringMembers {
-    heap: BinaryHeap<ExpiringMember>,
+    heap: MinBinaryHeap<ExpiringMember>,
 }
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Ord, PartialOrd)]
@@ -43,7 +43,7 @@ impl ExpiringMembers {
             return;
         }
 
-        let mut new_heap = BinaryHeap::new();
+        let mut new_heap = MinBinaryHeap::new();
 
         for mut e in self.heap.drain() {
             if e.channel_id == channel_id {

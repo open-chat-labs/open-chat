@@ -75,7 +75,7 @@ async fn process_batch(batch: Vec<ExpiringMemberActionDetails>) {
 }
 
 fn process_gate_check_sync(details: ExpiringMemberActionDetails, state: &mut RuntimeState) {
-    let Some(prep) = prepare_gate_check(details) else {
+    let Some(prep) = prepare_gate_check(details, state) else {
         return;
     };
 
@@ -87,7 +87,7 @@ fn process_gate_check_sync(details: ExpiringMemberActionDetails, state: &mut Run
 }
 
 async fn process_gate_check_async(details: ExpiringMemberActionDetails) {
-    let Some(prep) = prepare_gate_check(details) else {
+    let Some(prep) = read_state(|state| prepare_gate_check(details, state)) else {
         return;
     };
 
@@ -106,31 +106,29 @@ struct PrepareResult {
     check_gate_args: CheckGateArgs,
 }
 
-fn prepare_gate_check(details: ExpiringMemberActionDetails) -> Option<PrepareResult> {
-    read_state(|state| {
-        let gate_config = state.data.chat.gate_config.value.clone()?;
+fn prepare_gate_check(details: ExpiringMemberActionDetails, state: &RuntimeState) -> Option<PrepareResult> {
+    let gate_config = state.data.chat.gate_config.value.clone()?;
 
-        let (diamond_membership_expires_at, is_unique_person) = state
-            .data
-            .user_cache
-            .get(&details.user_id)
-            .map_or((None, false), |u| (u.diamond_membership_expires_at, u.is_unique_person));
+    let (diamond_membership_expires_at, is_unique_person) = state
+        .data
+        .user_cache
+        .get(&details.user_id)
+        .map_or((None, false), |u| (u.diamond_membership_expires_at, u.is_unique_person));
 
-        let check_gate_args = CheckGateArgs {
-            user_id: details.user_id,
-            diamond_membership_expires_at,
-            this_canister: state.env.canister_id(),
-            is_unique_person,
-            verified_credential_args: None,
-            referred_by_member: false,
-            now: state.env.now(),
-        };
+    let check_gate_args = CheckGateArgs {
+        user_id: details.user_id,
+        diamond_membership_expires_at,
+        this_canister: state.env.canister_id(),
+        is_unique_person,
+        verified_credential_args: None,
+        referred_by_member: false,
+        now: state.env.now(),
+    };
 
-        Some(PrepareResult {
-            details,
-            gate_config,
-            check_gate_args,
-        })
+    Some(PrepareResult {
+        details,
+        gate_config,
+        check_gate_args,
     })
 }
 
@@ -144,11 +142,6 @@ fn handle_gate_check_result(details: ExpiringMemberActionDetails, result: CheckI
     let Some(curr_gate_expiry) = gate_config.expiry() else {
         return;
     };
-
-    // If the access gate has changed type then do nothing
-    if details.original_gate_type != gate_config.gate().into() {
-        return;
-    }
 
     // If the member can no longer lapse then do nothing
     if !state.data.chat.members.can_member_lapse(&details.user_id) {

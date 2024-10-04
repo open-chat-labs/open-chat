@@ -29,10 +29,9 @@ use std::cell::RefCell;
 use std::ops::Deref;
 use std::time::Duration;
 use types::{
-    AccessGate, AccessGateConfigInternal, AccessGateType, BuildVersion, CanisterId, ChannelId, ChatMetrics,
-    CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, CommunityRole, Cryptocurrency, Cycles,
-    Document, Empty, FrozenGroupInfo, Milliseconds, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId,
-    UserType,
+    AccessGate, AccessGateConfigInternal, BuildVersion, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary,
+    CommunityMembership, CommunityPermissions, CommunityRole, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo,
+    Milliseconds, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use utils::env::Environment;
@@ -591,11 +590,8 @@ impl Data {
         now: TimestampMillis,
     ) {
         let prev_gate_expiry = prev_gate_config.as_ref().and_then(|gc| gc.expiry());
-        let prev_gate_type: Option<AccessGateType> = prev_gate_config.as_ref().map(|gc| gc.gate().into());
-
         let new_gate_config = self.get_access_gate_config(channel_id);
         let new_gate_expiry = new_gate_config.and_then(|gc| gc.expiry());
-        let new_gate_type: Option<AccessGateType> = new_gate_config.map(|gc| gc.gate().into());
 
         if let Some(prev_gate_expiry) = prev_gate_expiry {
             // If the access gate has been removed then clear lapsed status of members
@@ -609,43 +605,34 @@ impl Data {
                 }
             }
 
-            if prev_gate_type != new_gate_type {
-                // If the gate has been removed or its type has changed then remove members
-                // from the expiry schedule.
+            if let Some(new_gate_expiry) = new_gate_expiry {
+                // If there is also a new expiring gate then update the expiry schedule of members if necessary
+                self.expiring_members
+                    .change_gate_expiry(channel_id, new_gate_expiry as i64 - prev_gate_expiry as i64);
+            } else {
+                // Remove the expiring members altogether
                 self.expiring_members.remove_gate(channel_id);
                 self.expiring_member_actions.remove_gate(channel_id);
-            } else if let Some(new_gate_expiry) = new_gate_expiry {
-                // If the gate type is unchanged but the expiry time has changed then update
-                // the expiry schedule of members.
-                if prev_gate_expiry != new_gate_expiry {
-                    self.expiring_members
-                        .change_gate_expiry(channel_id, new_gate_expiry as i64 - prev_gate_expiry as i64);
-                }
             }
-        }
+        } else if let Some(new_gate_expiry) = new_gate_expiry {
+            // Else if the new gate has an expiry then add members to the expiry schedule.
+            let mut user_ids = Vec::new();
 
-        if let Some(new_gate_expiry) = new_gate_expiry {
-            if prev_gate_expiry.is_none() || prev_gate_type != new_gate_type {
-                // If the new gate has an expiry and it is different from the previous gate
-                // then add members to the expiry schedule.
-                let mut user_ids = Vec::new();
-
-                if let Some(channel_id) = channel_id {
-                    if let Some(channel) = self.channels.get_mut(&channel_id) {
-                        user_ids = channel.chat.members.iter().map(|m| m.user_id).collect();
-                    }
-                } else {
-                    user_ids = self.members.iter().map(|m| m.user_id).collect();
+            if let Some(channel_id) = channel_id {
+                if let Some(channel) = self.channels.get_mut(&channel_id) {
+                    user_ids = channel.chat.members.iter().map(|m| m.user_id).collect();
                 }
+            } else {
+                user_ids = self.members.iter().map(|m| m.user_id).collect();
+            }
 
-                for user_id in user_ids {
-                    if self.can_member_lapse(&user_id, channel_id) {
-                        self.expiring_members.push(ExpiringMember {
-                            expires: now + new_gate_expiry,
-                            channel_id,
-                            user_id,
-                        });
-                    }
+            for user_id in user_ids {
+                if self.can_member_lapse(&user_id, channel_id) {
+                    self.expiring_members.push(ExpiringMember {
+                        expires: now + new_gate_expiry,
+                        channel_id,
+                        user_id,
+                    });
                 }
             }
         }

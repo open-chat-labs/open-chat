@@ -5,10 +5,10 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::update_group_v2::*;
 use group_chat_core::UpdateResult;
-use group_community_common::{ExpiringMember, Members};
+use group_community_common::{ExpiringMember, Member, Members};
 use group_index_canister::{c2c_make_private, c2c_update_group};
 use tracing::error;
-use types::{AccessGateConfigInternal, AccessGateType, CanisterId, ChatId, Document, OptionUpdate, TimestampMillis, UserId};
+use types::{AccessGateConfigInternal, CanisterId, ChatId, Document, OptionUpdate, TimestampMillis, UserId};
 
 #[update(candid = true, msgpack = true)]
 #[trace]
@@ -187,11 +187,8 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
 
 pub fn update_member_expiry(data: &mut Data, prev_gate_config: &Option<AccessGateConfigInternal>, now: TimestampMillis) {
     let prev_gate_expiry = prev_gate_config.as_ref().and_then(|gc| gc.expiry());
-    let prev_gate_type: Option<AccessGateType> = prev_gate_config.as_ref().map(|gc| gc.gate().into());
-
     let new_gate_config = data.chat.gate_config.value.as_ref();
     let new_gate_expiry = new_gate_config.and_then(|gc| gc.expiry());
-    let new_gate_type: Option<AccessGateType> = new_gate_config.map(|gc| gc.gate().into());
 
     if let Some(prev_gate_expiry) = prev_gate_expiry {
         // If the access gate has been removed then clear lapsed status of members
@@ -199,36 +196,23 @@ pub fn update_member_expiry(data: &mut Data, prev_gate_config: &Option<AccessGat
             data.chat.members.clear_lapsed(now);
         }
 
-        if prev_gate_type != new_gate_type {
-            // If the gate has been removed or its type has changed then remove members
-            // from the expiry schedule.
+        if let Some(new_gate_expiry) = new_gate_expiry {
+            // If there is also a new expiring gate then update the expiry schedule of members if necessary
+            data.expiring_members
+                .change_gate_expiry(None, new_gate_expiry as i64 - prev_gate_expiry as i64);
+        } else {
+            // Remove the expiring members altogether
             data.expiring_members.remove_gate(None);
             data.expiring_member_actions.remove_gate(None);
-        } else if let Some(new_gate_expiry) = new_gate_expiry {
-            // If the gate type is unchanged but the expiry time has changed then update
-            // the expiry schedule of members.
-            if prev_gate_expiry != new_gate_expiry {
-                data.expiring_members
-                    .change_gate_expiry(None, new_gate_expiry as i64 - prev_gate_expiry as i64);
-            }
         }
-    }
-
-    if let Some(new_gate_expiry) = new_gate_expiry {
-        if prev_gate_expiry.is_none() || prev_gate_type != new_gate_type {
-            // If the new gate has an expiry and it is different from the previous gate
-            // then add members to the expiry schedule.
-            let user_ids: Vec<_> = data.chat.members.iter().map(|m| m.user_id).collect();
-
-            for user_id in user_ids {
-                if data.chat.members.can_member_lapse(&user_id) {
-                    data.expiring_members.push(ExpiringMember {
-                        expires: now + new_gate_expiry,
-                        channel_id: None,
-                        user_id,
-                    });
-                }
-            }
+    } else if let Some(new_gate_expiry) = new_gate_expiry {
+        // Else if the new gate has an expiry then add members to the expiry schedule.
+        for member in data.chat.members.iter().filter(|m| m.can_member_lapse()) {
+            data.expiring_members.push(ExpiringMember {
+                expires: now + new_gate_expiry,
+                channel_id: None,
+                user_id: member.user_id,
+            });
         }
     }
 }

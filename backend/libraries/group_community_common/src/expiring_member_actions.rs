@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
-use types::{AccessGateType, ChannelId, Milliseconds, TimestampMillis, UserId};
+use types::{ChannelId, Milliseconds, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct ExpiringMemberActions {
@@ -67,6 +67,5 @@ pub struct ExpiringMemberActionDetails {
     pub user_id: UserId,
     pub channel_id: Option<ChannelId>,
     pub member_expires: TimestampMillis,
-    pub original_gate_type: AccessGateType,
     pub original_gate_expiry: Milliseconds,
 }

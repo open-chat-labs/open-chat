@@ -6,7 +6,7 @@ use ic_cdk_timers::TimerId;
 use std::time::Duration;
 use std::{cell::Cell, mem};
 use tracing::trace;
-use types::{AccessGateExpiryType, AccessGateType, Milliseconds};
+use types::{AccessGateExpiryType, Milliseconds};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -61,7 +61,6 @@ fn run() {
                 continue;
             };
 
-            let gate_type: AccessGateType = gate_config.gate().into();
             let expiry_gate_type: AccessGateExpiryType = gate_config.gate().into();
 
             match expiry_gate_type {
@@ -101,7 +100,6 @@ fn run() {
                             user_id: member.user_id,
                             channel_id: member.channel_id,
                             member_expires: member.expires,
-                            original_gate_type: gate_type,
                             original_gate_expiry: gate_expiry,
                         });
 
@@ -124,7 +122,6 @@ fn run() {
                             user_id: member.user_id,
                             channel_id: member.channel_id,
                             member_expires: member.expires,
-                            original_gate_type: gate_type,
                             original_gate_expiry: gate_expiry,
                         }));
                 }
