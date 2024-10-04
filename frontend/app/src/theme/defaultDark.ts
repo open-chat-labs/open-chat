@@ -313,14 +313,6 @@ export function darkTheme(defaultTheme: Theme): Theme {
             },
         },
 
-        markdown: {
-            fg: {
-                color: txt,
-                bright: txt,
-                muted: textBodyLight,
-            },
-        },
-
         card: {
             rd: "8px",
             sh: "none",
