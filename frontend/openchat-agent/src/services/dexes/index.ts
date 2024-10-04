@@ -1,19 +1,21 @@
 import { AnonymousIdentity, type HttpAgent, type Identity } from "@dfinity/agent";
 import type { DexId, TokenSwapPool } from "openchat-shared";
 import { IcpSwapIndexClient } from "./icpSwap/index/icpSwap.index.client";
+import { KongSwapClient } from "./kongswap/kongswap.client";
 import { SonicSwapsClient } from "./sonic/swaps/sonic.swaps.client";
 
 const TEN_MINUTES = 10 * 60 * 1000;
 
 export class DexesAgent {
     private _identity: Identity;
-    private _swapIndexClients: Record<string, SwapIndexClient>;
+    private _swapIndexClients: Record<DexId, SwapIndexClient>;
     private _poolsCache: Record<string, [TokenSwapPool[], number]> = {};
 
     constructor(private agent: HttpAgent) {
         this._identity = new AnonymousIdentity();
         this._swapIndexClients = {
             icpswap: new IcpSwapIndexClient(this._identity, this.agent),
+            kongswap: new KongSwapClient(this._identity, this.agent),
             sonic: new SonicSwapsClient(this._identity, this.agent),
         };
     }
