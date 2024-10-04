@@ -4,15 +4,12 @@ import { CandidService } from "../../../candidService";
 import type { TokenSwapPool } from "openchat-shared";
 import { getAllPairsResponse, getPairResponse } from "./mappers";
 import { Principal } from "@dfinity/principal";
+import type { SwapIndexClient, SwapPoolClient } from "../..";
 
 const SONIC_INDEX_CANISTER_ID = "3xwpq-ziaaa-aaaah-qcn4a-cai";
-const TEN_MINUTES = 10 * 60 * 1000;
-const ENABLED: boolean = false;
 
-export class SonicSwapsClient extends CandidService {
+export class SonicSwapsClient extends CandidService implements SwapIndexClient, SwapPoolClient {
     private service: SonicSwapsService;
-    private pools: TokenSwapPool[] = []; // Cache the pools for 10 minutes
-    private poolsLastUpdated: number = 0;
 
     constructor(identity: Identity, agent: HttpAgent) {
         super(identity, agent, SONIC_INDEX_CANISTER_ID);
@@ -20,19 +17,14 @@ export class SonicSwapsClient extends CandidService {
         this.service = this.createServiceClient<SonicSwapsService>(idlFactory);
     }
 
-    async getPools(): Promise<TokenSwapPool[]> {
-        if (!ENABLED) return Promise.resolve([]);
+    getPoolClient(_canisterId: string, _token0: string, _token1: string): SwapPoolClient {
+        return this;
+    }
 
-        const now = Date.now();
-        if (this.pools.length > 0 && now - this.poolsLastUpdated < TEN_MINUTES)
-            return Promise.resolve(this.pools);
-
-        const pools = await this.handleQueryResponse(this.service.getAllPairs, (resp) =>
+    getPools(): Promise<TokenSwapPool[]> {
+        return this.handleQueryResponse(this.service.getAllPairs, (resp) =>
             getAllPairsResponse(resp, SONIC_INDEX_CANISTER_ID),
         );
-
-        this.poolsLastUpdated = now;
-        return (this.pools = pools);
     }
 
     async quote(inputToken: string, outputToken: string, amountIn: bigint): Promise<bigint> {
