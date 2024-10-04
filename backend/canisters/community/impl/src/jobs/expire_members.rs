@@ -46,7 +46,11 @@ fn run() {
         let now = state.env.now();
         let mut batched_actions = Vec::new();
 
-        for member in state.data.expiring_members.pop_if_expires_before(now) {
+        loop {
+            let Some(member) = state.data.expiring_members.pop_if_expires_before(now) else {
+                break;
+            };
+
             // If there is no longer a gate then continue
             let Some(gate_config) = state.data.get_access_gate_config(member.channel_id) else {
                 continue;
