@@ -425,7 +425,6 @@ import type {
     WalletConfig,
     AirdropChannelDetails,
     ChitLeaderboardResponse,
-    AuthenticationPrincipalsResponse,
     AuthenticationPrincipal,
 } from "openchat-shared";
 import {

@@ -110,7 +110,6 @@
         }
 
         localStorage.setItem(configKeys.selectedAuthEmail, email);
-        selectedAuthProviderStore.set(provider);
         error = undefined;
 
         if (provider === AuthProvider.EMAIL) {
