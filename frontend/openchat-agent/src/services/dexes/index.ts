@@ -1,18 +1,21 @@
 import { AnonymousIdentity, type HttpAgent, type Identity } from "@dfinity/agent";
 import type { DexId, TokenSwapPool } from "openchat-shared";
 import { IcpSwapIndexClient } from "./icpSwap/index/icpSwap.index.client";
-import { IcpSwapPoolClient } from "./icpSwap/pool/icpSwap.pool.client";
 import { SonicSwapsClient } from "./sonic/swaps/sonic.swaps.client";
+
+const TEN_MINUTES = 10 * 60 * 1000;
 
 export class DexesAgent {
     private _identity: Identity;
-    private _icpSwapIndexClient: IcpSwapIndexClient;
-    private _sonicSwapsClient: SonicSwapsClient;
+    private _swapIndexClients: Record<string, SwapIndexClient>;
+    private _poolsCache: Record<string, [TokenSwapPool[], number]> = {};
 
     constructor(private agent: HttpAgent) {
         this._identity = new AnonymousIdentity();
-        this._icpSwapIndexClient = new IcpSwapIndexClient(this._identity, this.agent);
-        this._sonicSwapsClient = new SonicSwapsClient(this._identity, this.agent);
+        this._swapIndexClients = {
+            icpswap: new IcpSwapIndexClient(this._identity, this.agent),
+            sonic: new SonicSwapsClient(this._identity, this.agent),
+        };
     }
 
     async getSwapPools(
@@ -63,11 +66,22 @@ export class DexesAgent {
 
     private getAllSwapPools(swapProviders: DexId[]): Promise<TokenSwapPool[]> {
         const promises: Promise<TokenSwapPool[]>[] = [];
-        if (swapProviders.includes("icpswap")) {
-            promises.push(this._icpSwapIndexClient.getPools());
-        }
-        if (swapProviders.includes("sonic")) {
-            promises.push(this._sonicSwapsClient.getPools());
+        for (const swapProvider of swapProviders) {
+            const cached = this.tryGetAllSwapPoolsFromCache(swapProvider);
+            if (cached !== undefined) {
+                promises.push(Promise.resolve(cached));
+                continue;
+            }
+            const client = this._swapIndexClients[swapProvider];
+            if (client === undefined) {
+                continue;
+            }
+            promises.push(
+                client.getPools().then((pools) => {
+                    this._poolsCache[swapProvider] = [pools, Date.now()];
+                    return pools;
+                }),
+            );
         }
         return Promise.all(promises).then((r) => r.flat());
     }
@@ -78,20 +92,30 @@ export class DexesAgent {
         outputToken: string,
         amountIn: bigint,
     ): Promise<bigint> {
-        if (pool.dex === "icpswap") {
-            const client = new IcpSwapPoolClient(
-                this._identity,
-                this.agent,
-                pool.canisterId,
-                pool.token0,
-                pool.token1,
-            );
-            return client.quote(inputToken, outputToken, amountIn);
-        } else if (pool.dex === "sonic") {
-            const client = new SonicSwapsClient(this._identity, this.agent);
-            return client.quote(inputToken, outputToken, amountIn);
-        } else {
+        const indexClient = this._swapIndexClients[pool.dex];
+        if (indexClient === undefined) {
             return Promise.resolve(BigInt(0));
         }
+        const poolClient = indexClient.getPoolClient(pool.canisterId, pool.token0, pool.token1);
+        return poolClient.quote(inputToken, outputToken, amountIn);
     }
+
+    private tryGetAllSwapPoolsFromCache(dex: DexId): TokenSwapPool[] | undefined {
+        const cached = this._poolsCache[dex];
+        if (cached === undefined) {
+            return undefined;
+        }
+        const [pools, timestamp] = cached;
+        const now = Date.now();
+        return now - timestamp < TEN_MINUTES ? pools : undefined;
+    }
+}
+
+export interface SwapIndexClient {
+    getPoolClient(canisterId: string, token0: string, token1: string): SwapPoolClient;
+    getPools(): Promise<TokenSwapPool[]>;
+}
+
+export interface SwapPoolClient {
+    quote(inputToken: string, outputToken: string, amountIn: bigint): Promise<bigint>;
 }

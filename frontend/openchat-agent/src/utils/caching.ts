@@ -51,8 +51,8 @@ import type { CryptocurrencyContent } from "openchat-shared";
 import type { PrizeContent } from "openchat-shared";
 import type { P2PSwapContent } from "openchat-shared";
 
-const CACHE_VERSION = 114;
-const EARLIEST_SUPPORTED_MIGRATION = 114;
+const CACHE_VERSION = 115;
+const EARLIEST_SUPPORTED_MIGRATION = 115;
 const MAX_INDEX = 9999999999;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
