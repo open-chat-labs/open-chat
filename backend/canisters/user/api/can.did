@@ -185,6 +185,7 @@ type SwapTokensArgs = record {
     exchange_args : variant {
         ICPSwap : ExchangeArgs;
         Sonic : ExchangeArgs;
+        KongSwap : ExchangeArgs;
     };
     min_output_amount : nat;
     pin : opt text;

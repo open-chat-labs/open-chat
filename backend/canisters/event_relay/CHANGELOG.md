@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
 - Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
 
+### Removed
+
+- Remove `push_events_v2` which is no longer used ([#6502](https://github.com/open-chat-labs/open-chat/pull/6502))
+
 ## [[2.0.1317](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1317-event_relay)] - 2024-09-02
 
 ### Changed

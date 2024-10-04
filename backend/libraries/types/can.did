@@ -2040,4 +2040,8 @@ type ReferralStatus = variant {
     Registered;
 };
 
-type ExchangeId = variant { Sonic; KongSwap; ICPSwap };
+type ExchangeId = variant {
+    ICPSwap;
+    KongSwap;
+    Sonic;
+};

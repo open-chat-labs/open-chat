@@ -1,6 +1,6 @@
-use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use types::icrc1::Account;
 use types::{CanisterId, ExchangeId, TimestampMillis, Timestamped};
 use user_canister::token_swap_status::TokenSwapStatus;
 

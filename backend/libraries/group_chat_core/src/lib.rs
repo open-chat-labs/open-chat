@@ -59,7 +59,6 @@ pub struct GroupChatCore {
     pub gate: Timestamped<Option<AccessGate>>,
     pub invited_users: InvitedUsers,
     pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
-    #[serde(default)]
     pub external_url: Timestamped<Option<String>>,
 }
 

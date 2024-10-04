@@ -2,7 +2,7 @@ use super::c2c_join_community::join_community_impl;
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_proposals_bot;
 use crate::model::channels::Channel;
-use crate::updates::c2c_join_channel::join_channel_unchecked;
+use crate::updates::c2c_join_channel::add_members_to_public_channel_unchecked;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -160,20 +160,17 @@ fn create_channel_impl(
             if args.is_public {
                 match args.gate {
                     Some(AccessGate::DiamondMember) => {
-                        for m in state
-                            .data
-                            .members
-                            .iter_mut()
-                            .filter(|m| diamond_membership_expiry_dates.get(&m.user_id).copied() > Some(now))
-                        {
-                            join_channel_unchecked(&mut channel, m, true, now);
-                        }
+                        add_members_to_public_channel_unchecked(
+                            &mut channel,
+                            state
+                                .data
+                                .members
+                                .iter_mut()
+                                .filter(|m| diamond_membership_expiry_dates.get(&m.user_id).copied() > Some(now)),
+                            now,
+                        );
                     }
-                    None => {
-                        for m in state.data.members.iter_mut() {
-                            join_channel_unchecked(&mut channel, m, true, now);
-                        }
-                    }
+                    None => add_members_to_public_channel_unchecked(&mut channel, state.data.members.iter_mut(), now),
                     _ => {}
                 }
             }
