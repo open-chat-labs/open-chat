@@ -214,6 +214,8 @@ pub(crate) async fn process_token_swap(
         (false, amount_to_dex.saturating_sub(args.input_token.fee))
     };
 
+    // Should we skip withdrawing if the swap failed, and it used ICRC2, and auto withdrawals
+    // is false? (This isn't possible right now because only KongSwap is using ICRC2)
     if !swap_client.auto_withdrawals() && extract_result(&token_swap.withdrawn_from_dex_at).is_none() {
         if let Err(error) = swap_client.withdraw(successful_swap, amount_out).await {
             let msg = format!("{error:?}");
