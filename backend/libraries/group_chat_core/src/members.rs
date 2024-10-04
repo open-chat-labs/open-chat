@@ -297,7 +297,9 @@ impl GroupMembers {
     }
 }
 
-impl Members<GroupMemberInternal> for GroupMembers {
+impl Members for GroupMembers {
+    type Member = GroupMemberInternal;
+
     fn iter(&self) -> impl Iterator<Item = &GroupMemberInternal> {
         self.iter()
     }

@@ -362,7 +362,9 @@ impl CommunityMembers {
     }
 }
 
-impl Members<CommunityMemberInternal> for CommunityMembers {
+impl Members for CommunityMembers {
+    type Member = CommunityMemberInternal;
+
     fn iter(&self) -> impl Iterator<Item = &CommunityMemberInternal> {
         self.iter()
     }

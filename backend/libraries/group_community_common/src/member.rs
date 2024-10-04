@@ -19,11 +19,13 @@ pub trait Member {
     }
 }
 
-pub trait Members<M: Member + 'static> {
-    fn get(&self, user_id: &UserId) -> Option<&M>;
-    fn get_mut(&mut self, user_id: &UserId) -> Option<&mut M>;
-    fn iter(&self) -> impl Iterator<Item = &M>;
-    fn iter_mut(&mut self) -> impl Iterator<Item = &mut M>;
+pub trait Members {
+    type Member: Member;
+
+    fn get(&self, user_id: &UserId) -> Option<&Self::Member>;
+    fn get_mut(&mut self, user_id: &UserId) -> Option<&mut Self::Member>;
+    fn iter(&self) -> impl Iterator<Item = &Self::Member>;
+    fn iter_mut(&mut self) -> impl Iterator<Item = &mut Self::Member>;
 
     fn clear_lapsed(&mut self, now: TimestampMillis) {
         for m in self.iter_mut() {
