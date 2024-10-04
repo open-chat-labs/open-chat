@@ -40,6 +40,7 @@ export function getTheme(base: Theme): Theme {
     base.entry.bg = "rgba(226,226,226,0.3)";
     base.entry.input.bg = white;
     base.button.bg = base.primary;
+    base.button.disabled = "rgba(0,0,0,0.15)";
     // base.entry.input.sh = "inset 0px 2px 4px rgba(138, 138, 138, 0.5)";
     base.panel.bg = "transparent";
     base.panel.left.bg = "transparent";
@@ -67,7 +68,7 @@ export function getTheme(base: Theme): Theme {
     base.currentChat.msg.txt = txt70;
     base.currentChat.msg.inert = "rgba(226,226,226,0.8)";
     base.currentChat.msg.separator = "rgba(0,0,0,0.1)";
-    base.currentChat.msg.me.bd = "#efefef";
+    base.currentChat.msg.me.bd = "rgba(255,255,255,0.5)";
     base.currentChat.msg.me.bg = base.primary;
     base.currentChat.date.bg = "#efefef";
     base.currentChat.date.bd = "var(--bw) solid rgba(0,0,0,0.05)";
@@ -75,9 +76,6 @@ export function getTheme(base: Theme): Theme {
     base.icon.inverted.txt = txt60;
     base.icon.selected = base.primary;
     base.recommended.bg = white;
-    base.markdown.fg.color = txt;
-    base.markdown.fg.bright = txt;
-    base.markdown.fg.muted = txt70;
     base.daily.header = white;
     base.daily.accent = base.accent;
     base.daily.accentText = txt;
