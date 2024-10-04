@@ -114,7 +114,6 @@ export function getTheme(base: Theme): Theme {
     base.recommended.bg = white;
     base.markdown.fg.color = txt;
     base.markdown.fg.bright = txt;
-    base.markdown.fg.muted = txt40;
 
     base.vote.yes.color = successGreen;
     base.vote.no.color = errorRed;

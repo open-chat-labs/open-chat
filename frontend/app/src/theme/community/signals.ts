@@ -86,7 +86,6 @@ export function getTheme(base: Theme): Theme {
     base.recommended.bg = white;
     base.markdown.fg.color = txt;
     base.markdown.fg.bright = txt;
-    base.markdown.fg.muted = txt70;
     base.members.hv = yellow;
     base.card.rd = "0";
     base.card.sh = `8px 8px 0 ${powderBlue}`;

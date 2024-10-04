@@ -317,7 +317,6 @@ export function darkTheme(defaultTheme: Theme): Theme {
             fg: {
                 color: txt,
                 bright: txt,
-                muted: textBodyLight,
             },
         },
 

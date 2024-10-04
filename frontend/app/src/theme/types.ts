@@ -311,7 +311,6 @@ export interface Theme {
         fg: {
             color: string;
             bright: string;
-            muted: string;
         };
     };
 

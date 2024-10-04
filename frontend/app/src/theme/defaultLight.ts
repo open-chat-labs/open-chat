@@ -75,9 +75,8 @@ export function getTheme(base: Theme): Theme {
     base.icon.inverted.txt = txt60;
     base.icon.selected = base.primary;
     base.recommended.bg = white;
-    base.markdown.fg.color = txt;
-    base.markdown.fg.bright = txt;
-    base.markdown.fg.muted = txt70;
+    base.markdown.fg.color = "inherit";
+    base.markdown.fg.bright = "inherit";
     base.daily.header = white;
     base.daily.accent = base.accent;
     base.daily.accentText = txt;

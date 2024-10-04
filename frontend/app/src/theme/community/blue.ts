@@ -325,7 +325,6 @@ export function getTheme(): Theme {
             fg: {
                 color: txt,
                 bright: txt,
-                muted: txtLight,
             },
         },
 
