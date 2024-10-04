@@ -12,7 +12,7 @@
     import TooltipPopup from "../../TooltipPopup.svelte";
     import LinkAccountsModal from "./LinkAccountsModal.svelte";
     import Overlay from "../../Overlay.svelte";
-    import LinkAccountsGeneral from "./LinkAccounts.svelte";
+    import LinkAccounts from "./LinkAccounts.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -30,12 +30,12 @@
 {#if linking}
     <Overlay>
         <LinkAccountsModal on:close={refresh}>
-            <LinkAccountsGeneral
+            <LinkAccounts
                 explanations={[i18nKey("identity.linkedAccounts.linkAdvice")]}
                 iiPrincipal={undefined}
                 linkInternetIdentity={false}
-                on:close={refresh}
-                on:proceed{refresh} />
+                onProceed={refresh}
+                on:close={refresh} />
         </LinkAccountsModal>
     </Overlay>
 {/if}

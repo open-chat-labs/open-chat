@@ -35,6 +35,7 @@
     export let explanations: ResourceKey[];
     export let iiPrincipal: string | undefined;
     export let linkInternetIdentity = true;
+    export let onProceed: () => void = () => dispatch("proceed");
 
     type IdentityDetail = {
         key: ECDSAKeyIdentity;
@@ -202,6 +203,7 @@
         provider: AuthProvider.ETH | AuthProvider.SOL | AuthProvider.EMAIL,
         ev: CustomEvent<{ kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain }>,
     ) {
+        providerStep = "choose_provider";
         if (substep.kind === "approver") {
             substep = {
                 kind: "ready_to_link",
@@ -242,11 +244,10 @@
             )
             .then((resp) => {
                 if (resp === "success") {
-                    dispatch("proceed");
+                    onProceed();
                 } else if (resp === "already_linked_to_principal") {
                     console.log("Identity already linked by you: ", resp);
                     error = "identity.failure.alreadyLinked";
-                    dispatch("proceed");
                 } else if (resp === "already_registered") {
                     console.log("Identity already linked by someone else: ", resp);
                     error = "identity.failure.alreadyLinked";
@@ -300,111 +301,72 @@
             {/each}
         </AlertBox>
     {:else if step === "linking"}
-        {#if substep.kind === "approver"}
-            {#if providerStep === "choose_provider"}
-                <div class="info center">
-                    <Translatable resourceKey={i18nKey("identity.signInCurrent")} />
-                </div>
-                <ChooseSignInOption
-                    mode={"signin"}
-                    {currentProvider}
-                    bind:emailInvalid
-                    bind:email
-                    on:login={loginProvider} />
-            {:else if providerStep === "choose_eth_wallet"}
-                <div class="eth-options">
-                    {#await import("../SigninWithEth.svelte")}
-                        <div class="loading">...</div>
-                    {:then { default: SigninWithEth }}
-                        <SigninWithEth
-                            assumeIdentity={false}
-                            on:connected={(ev) => authComplete(AuthProvider.ETH, ev)} />
-                    {/await}
-                </div>
-            {:else if providerStep === "choose_sol_wallet"}
-                <div class="sol-options">
-                    {#await import("../SigninWithSol.svelte")}
-                        <div class="loading">...</div>
-                    {:then { default: SigninWithSol }}
-                        <SigninWithSol
-                            assumeIdentity={false}
-                            on:connected={(ev) => authComplete(AuthProvider.SOL, ev)} />
-                    {/await}
-                </div>
-            {:else if providerStep === "signing_in_with_email"}
-                <EmailSigninFeedback
-                    code={verificationCode}
-                    polling={$emailSigninHandler}
-                    on:copy={(ev) => emailSigninHandler.copyCode(ev.detail)} />
-                {#if error !== undefined}
-                    <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
-                {/if}
-            {/if}
-        {:else if substep.kind === "initiator"}
-            {#if linkInternetIdentity}
-                <div class="info">
-                    <Translatable resourceKey={i18nKey("identity.signInNext")} />
-                </div>
-                <Button
-                    loading={loggingInInitiator}
-                    disabled={loggingInInitiator}
-                    on:click={loginInternetIdentity}>
-                    <span class="link-ii-logo">
-                        <InternetIdentityLogo />
-                    </span>
-                    <Translatable resourceKey={i18nKey("loginDialog.signin")} /></Button>
-            {:else if providerStep === "choose_provider"}
-                <div class="info center">
-                    <Translatable resourceKey={i18nKey("Sign into the account to link")} />
-                </div>
-                <ChooseSignInOption
-                    mode={"signin"}
-                    {currentProvider}
-                    showMore={true}
-                    bind:emailInvalid
-                    bind:email
-                    on:login={loginProvider} />
-            {:else if providerStep === "choose_eth_wallet"}
-                <div class="eth-options">
-                    {#await import("../SigninWithEth.svelte")}
-                        <div class="loading">...</div>
-                    {:then { default: SigninWithEth }}
-                        <SigninWithEth
-                            assumeIdentity={false}
-                            on:connected={(ev) => authComplete(AuthProvider.ETH, ev)} />
-                    {/await}
-                </div>
-            {:else if providerStep === "choose_sol_wallet"}
-                <div class="sol-options">
-                    {#await import("../SigninWithSol.svelte")}
-                        <div class="loading">...</div>
-                    {:then { default: SigninWithSol }}
-                        <SigninWithSol
-                            assumeIdentity={false}
-                            on:connected={(ev) => authComplete(AuthProvider.SOL, ev)} />
-                    {/await}
-                </div>
-            {:else if providerStep === "signing_in_with_email"}
-                <EmailSigninFeedback
-                    code={verificationCode}
-                    polling={$emailSigninHandler}
-                    on:copy={(ev) => emailSigninHandler.copyCode(ev.detail)} />
-                {#if error !== undefined}
-                    <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
-                {/if}
-            {/if}
-        {:else if substep.kind === "ready_to_link"}
+        {#if substep.kind === "ready_to_link"}
             <div class="info">
                 <Translatable resourceKey={i18nKey("identity.linkTwoIdentities")} />
             </div>
             <div class="identities">
-                <SignInOption hollow provider={AuthProvider.II} name={i18nKey(AuthProvider.II)} />
+                <SignInOption
+                    hollow
+                    provider={substep.initiator.provider}
+                    name={i18nKey(substep.initiator.provider)} />
                 <ArrowRightBoldOutline size={$iconSize} color={"var(--icon-txt)"} />
                 <SignInOption
                     hollow
                     provider={substep.approver.provider}
                     name={i18nKey(substep.approver.provider)} />
             </div>
+        {:else if substep.kind === "initiator" && linkInternetIdentity}
+            <div class="info">
+                <Translatable resourceKey={i18nKey("identity.signInNext")} />
+            </div>
+            <Button
+                loading={loggingInInitiator}
+                disabled={loggingInInitiator}
+                on:click={loginInternetIdentity}>
+                <span class="link-ii-logo">
+                    <InternetIdentityLogo />
+                </span>
+                <Translatable resourceKey={i18nKey("loginDialog.signin")} /></Button>
+        {:else if providerStep === "choose_provider"}
+            <div class="info center">
+                <Translatable resourceKey={i18nKey(`identity.signIn_${substep.kind}`)} />
+            </div>
+            <ChooseSignInOption
+                mode={"signin"}
+                {currentProvider}
+                showMore={substep.kind === "initiator"}
+                bind:emailInvalid
+                bind:email
+                on:login={loginProvider} />
+        {:else if providerStep === "choose_eth_wallet"}
+            <div class="eth-options">
+                {#await import("../SigninWithEth.svelte")}
+                    <div class="loading">...</div>
+                {:then { default: SigninWithEth }}
+                    <SigninWithEth
+                        assumeIdentity={false}
+                        on:connected={(ev) => authComplete(AuthProvider.ETH, ev)} />
+                {/await}
+            </div>
+        {:else if providerStep === "choose_sol_wallet"}
+            <div class="sol-options">
+                {#await import("../SigninWithSol.svelte")}
+                    <div class="loading">...</div>
+                {:then { default: SigninWithSol }}
+                    <SigninWithSol
+                        assumeIdentity={false}
+                        on:connected={(ev) => authComplete(AuthProvider.SOL, ev)} />
+                {/await}
+            </div>
+        {:else if providerStep === "signing_in_with_email"}
+            <EmailSigninFeedback
+                code={verificationCode}
+                polling={$emailSigninHandler}
+                on:copy={(ev) => emailSigninHandler.copyCode(ev.detail)} />
+            {#if error !== undefined}
+                <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
+            {/if}
         {/if}
     {/if}
 </div>
@@ -432,9 +394,6 @@
                 ><Translatable resourceKey={i18nKey("identity.back")} /></Button>
             {#if substep.kind === "ready_to_link"}
                 <Button loading={linking} disabled={linking} on:click={linkIdentities}>
-                    <span class="link-ii-logo">
-                        <InternetIdentityLogo />
-                    </span>
                     <Translatable resourceKey={i18nKey("identity.link")} /></Button>
             {/if}
         {/if}
