@@ -68,7 +68,7 @@ export function getTheme(base: Theme): Theme {
     base.currentChat.msg.txt = txt70;
     base.currentChat.msg.inert = "rgba(226,226,226,0.8)";
     base.currentChat.msg.separator = "rgba(0,0,0,0.1)";
-    base.currentChat.msg.me.bd = "#efefef";
+    base.currentChat.msg.me.bd = "rgba(255,255,255,0.5)";
     base.currentChat.msg.me.bg = base.primary;
     base.currentChat.date.bg = "#efefef";
     base.currentChat.date.bd = "var(--bw) solid rgba(0,0,0,0.05)";
