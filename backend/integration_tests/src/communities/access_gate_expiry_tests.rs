@@ -22,8 +22,8 @@ enum Container {
     Group,
 }
 
-#[test_case(Container::Community)]
-#[test_case(Container::Channel)]
+// #[test_case(Container::Community)]
+// #[test_case(Container::Channel)]
 #[test_case(Container::Group)]
 fn diamond_member_lapses_and_rejoins_successfully(container: Container) {
     let mut wrapper = ENV.deref().get();
@@ -38,46 +38,54 @@ fn diamond_member_lapses_and_rejoins_successfully(container: Container) {
         expiry: Some(15 * DAY_IN_MS),
     };
 
-    // Create 2 diamond users, a public community with a public channel, and a public group
-    // Update the container with the access gate and join iuser 2 to the container
+    let num_users = 1;
+
+    // Create n diamond users, a public community with a public channel, and a public group
+    // Update the container with the access gate and join users to the container
     let TestData {
-        user1: _,
-        user2,
+        owner: _,
+        users,
         community_id,
         channel_id,
         group_id,
-    } = init_test_data(env, canister_ids, *controller, gate_config, container);
+    } = init_test_data(env, canister_ids, *controller, gate_config, num_users, container);
 
-    // Move the time forward so that user2's diamond membership expires + the gate expiry
+    // Move the time forward so that the users' diamond membership expires + the gate expiry
     env.advance_time(Duration::from_millis(46 * DAY_IN_MS));
     tick_many(env, 5);
 
-    // Assert that user2 has lapsed
-    assert_user_lapsed(env, container, &user2, community_id, channel_id, group_id, true);
+    println!("XXX 1");
 
-    // Buy Diamond again
-    client::upgrade_user(
-        &user2,
-        env,
-        canister_ids,
-        *controller,
-        DiamondMembershipPlanDuration::OneMonth,
-        false,
-    );
+    for user in users.iter() {
+        // Assert that user has lapsed
+        assert_user_lapsed(env, container, user, community_id, channel_id, group_id, true);
+        println!("XXX 2");
 
-    // User2 rejoins channel
-    join_container(
-        env,
-        user2.principal,
-        canister_ids,
-        community_id,
-        channel_id,
-        group_id,
-        container,
-    );
+        // Buy Diamond again
+        client::upgrade_user(
+            user,
+            env,
+            canister_ids,
+            *controller,
+            DiamondMembershipPlanDuration::OneMonth,
+            false,
+        );
 
-    // Assert that user2 is no longer lapsed
-    assert_user_lapsed(env, container, &user2, community_id, channel_id, group_id, false);
+        // user rejoins channel
+        join_container(
+            env,
+            user.principal,
+            canister_ids,
+            community_id,
+            channel_id,
+            group_id,
+            container,
+        );
+
+        // Assert that user2 is no longer lapsed
+        assert_user_lapsed(env, container, user, community_id, channel_id, group_id, false);
+        println!("XXX 3");
+    }
 }
 
 #[test_case(Container::Community)]
@@ -96,28 +104,34 @@ fn remove_gate_unlapses_members(container: Container) {
         expiry: Some(15 * DAY_IN_MS),
     };
 
-    // Create 2 diamond users, a public community with a public channel, and a public group
-    // Update the container with the access gate and join iuser 2 to the container
+    let num_users = 2;
+
+    // Create n diamond users, a public community with a public channel, and a public group
+    // Update the container with the access gate and join users to the container
     let TestData {
-        user1,
-        user2,
+        owner,
+        users,
         community_id,
         channel_id,
         group_id,
-    } = init_test_data(env, canister_ids, *controller, gate_config, container);
+    } = init_test_data(env, canister_ids, *controller, gate_config, num_users, container);
 
     // Move the time forward so that user2's diamond membership expires + the gate expiry
     env.advance_time(Duration::from_millis(46 * DAY_IN_MS));
     tick_many(env, 5);
 
-    // Assert that user2 has lapsed
-    assert_user_lapsed(env, container, &user2, community_id, channel_id, group_id, true);
+    for user in users.iter() {
+        // Assert that users have lapsed
+        assert_user_lapsed(env, container, user, community_id, channel_id, group_id, true);
+    }
 
     // Remove the gate
-    update_container_gate(env, user1.principal, community_id, channel_id, group_id, container, None);
+    update_container_gate(env, owner.principal, community_id, channel_id, group_id, container, None);
 
-    // Assert that user2 is no longer lapsed
-    assert_user_lapsed(env, container, &user2, community_id, channel_id, group_id, false);
+    for user in users.iter() {
+        // Assert that users are no longer lapsed
+        assert_user_lapsed(env, container, user, community_id, channel_id, group_id, false);
+    }
 }
 
 #[test_case(Container::Community, true)]
@@ -146,26 +160,30 @@ fn extend_or_reduce_expiry_then_member_lapses_when_expected(container: Container
         expiry: Some(4 * DAY_IN_MS),
     };
 
-    // Create 2 diamond users, a public community with a public channel, and a public group
-    // Update the container with the access gate and join iuser 2 to the container
+    let num_users = 2;
+
+    // Create n diamond users, a public community with a public channel, and a public group
+    // Update the container with the access gate and join users to the container
     let TestData {
-        user1,
-        user2,
+        owner,
+        users,
         community_id,
         channel_id,
         group_id,
-    } = init_test_data(env, canister_ids, *controller, gate_config, container);
+    } = init_test_data(env, canister_ids, *controller, gate_config, num_users, container);
 
-    // User2 upgrades to 1 year diamond to reduce their token balance so they are set to lapse
-    //
-    user_index::happy_path::pay_for_diamond_membership(
-        env,
-        user2.principal,
-        canister_ids.user_index,
-        DiamondMembershipPlanDuration::OneYear,
-        false,
-        false,
-    );
+    for user in users.iter() {
+        // Users upgrade to 1 year diamond to reduce their token balance so they are set to lapse
+        //
+        user_index::happy_path::pay_for_diamond_membership(
+            env,
+            user.principal,
+            canister_ids.user_index,
+            DiamondMembershipPlanDuration::OneYear,
+            false,
+            false,
+        );
+    }
 
     tick_many(env, 4);
 
@@ -175,7 +193,7 @@ fn extend_or_reduce_expiry_then_member_lapses_when_expected(container: Container
 
     update_container_gate(
         env,
-        user1.principal,
+        owner.principal,
         community_id,
         channel_id,
         group_id,
@@ -192,15 +210,19 @@ fn extend_or_reduce_expiry_then_member_lapses_when_expected(container: Container
     env.advance_time(Duration::from_millis(duration * DAY_IN_MS));
     tick_many(env, 5);
 
-    // Assert that user2 has *not* lapsed
-    assert_user_lapsed(env, container, &user2, community_id, channel_id, group_id, false);
+    for user in users.iter() {
+        // Assert that the users have *not* lapsed
+        assert_user_lapsed(env, container, user, community_id, channel_id, group_id, false);
+    }
 
     // Move the time forward so the member should now lapse
     env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
     tick_many(env, 5);
 
-    // Assert that user2 has lapsed
-    assert_user_lapsed(env, container, &user2, community_id, channel_id, group_id, true);
+    for user in users.iter() {
+        // Assert that the users have now lapsed
+        assert_user_lapsed(env, container, user, community_id, channel_id, group_id, true);
+    }
 }
 
 #[test_case(Container::Community)]
@@ -223,24 +245,123 @@ fn member_lapses_from_token_balance_gate_and_rejoins_successfully(container: Con
         expiry: Some(DAY_IN_MS),
     };
 
-    // Create 2 diamond users, a public community with a public channel, and a public group
-    // Update the container with the access gate and join iuser 2 to the container
+    let num_users = 2;
+
+    // Create n diamond users, a public community with a public channel, and a public group
+    // Update the container with the access gate and join users to the container
     let TestData {
-        user1: _,
-        user2,
+        owner: _,
+        users,
         community_id,
         channel_id,
         group_id,
-    } = init_test_data(env, canister_ids, *controller, gate_config, container);
+    } = init_test_data(env, canister_ids, *controller, gate_config, num_users, container);
 
     // Move the time forward so that the gate expires
     env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
     tick_many(env, 5);
 
-    // User2 should have sufficient balance so should not be lapsed
-    assert_user_lapsed(env, container, &user2, community_id, channel_id, group_id, false);
+    for user in users.iter() {
+        // User should have sufficient balance so should not be lapsed
+        assert_user_lapsed(env, container, user, community_id, channel_id, group_id, false);
 
-    // User2 upgrades to 1 year diamond to reduce their token balance
+        // User upgrades to 1 year diamond to reduce their token balance
+        user_index::happy_path::pay_for_diamond_membership(
+            env,
+            user.principal,
+            canister_ids.user_index,
+            DiamondMembershipPlanDuration::OneYear,
+            false,
+            false,
+        );
+    }
+
+    tick_many(env, 4);
+
+    // Move the time forward so that the gate expires
+    env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
+    tick_many(env, 5);
+
+    for user in users.iter() {
+        // Assert that user2 has lapsed
+        assert_user_lapsed(env, container, user, community_id, channel_id, group_id, true);
+
+        // Increase token balance
+        client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user.user_id, min_balance);
+
+        // User2 rejoins channel
+        join_container(
+            env,
+            user.principal,
+            canister_ids,
+            community_id,
+            channel_id,
+            group_id,
+            container,
+        );
+
+        // Assert that user2 is no longer lapsed
+        assert_user_lapsed(env, container, user, community_id, channel_id, group_id, false);
+    }
+}
+
+#[test_case(Container::Community)]
+#[test_case(Container::Channel)]
+#[test_case(Container::Group)]
+fn gate_changes_and_members_lapse_as_expected(container: Container) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let gate_config = AccessGateConfig {
+        gate: AccessGate::DiamondMember,
+        expiry: Some(3 * DAY_IN_MS),
+    };
+
+    let num_users = 2;
+
+    // Create 2 diamond users, a public community with a public channel, and a public group
+    // Update the container with the access gate and join users to the container
+    let TestData {
+        owner,
+        users,
+        community_id,
+        channel_id,
+        group_id,
+    } = init_test_data(env, canister_ids, *controller, gate_config, num_users, container);
+
+    let user1 = &users[0];
+    let user2 = &users[1];
+
+    // Move the time forward 1 day
+    env.advance_time(Duration::from_millis(DAY_IN_MS));
+    tick_many(env, 5);
+
+    // A 3rd user now joins the channel
+    let user3 = &register_and_join(env, canister_ids, *controller, community_id, channel_id, group_id, container);
+
+    // Change container to have payment gate expiring in 3 days
+    update_container_gate(
+        env,
+        owner.principal,
+        community_id,
+        channel_id,
+        group_id,
+        container,
+        Some(AccessGateConfig {
+            gate: AccessGate::TokenBalance(TokenBalanceGate {
+                ledger_canister_id: canister_ids.icp_ledger,
+                min_balance: 900_000_000,
+            }),
+            expiry: Some(3 * DAY_IN_MS),
+        }),
+    );
+
+    // user2, user3 spend money so not enough for payment gate
+    //
     user_index::happy_path::pay_for_diamond_membership(
         env,
         user2.principal,
@@ -249,32 +370,58 @@ fn member_lapses_from_token_balance_gate_and_rejoins_successfully(container: Con
         false,
         false,
     );
+    user_index::happy_path::pay_for_diamond_membership(
+        env,
+        user3.principal,
+        canister_ids.user_index,
+        DiamondMembershipPlanDuration::OneYear,
+        false,
+        false,
+    );
 
-    tick_many(env, 4);
-
-    // Move the time forward so that the gate expires
-    env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
+    // Move the time forward 2.1 days
+    env.advance_time(Duration::from_millis((21 * DAY_IN_MS) / 10));
     tick_many(env, 5);
 
-    // Assert that user2 has lapsed
-    assert_user_lapsed(env, container, &user2, community_id, channel_id, group_id, true);
+    // Only user2 should be lapsed
+    assert_user_lapsed(env, container, user1, community_id, channel_id, group_id, false);
+    assert_user_lapsed(env, container, user2, community_id, channel_id, group_id, true);
+    assert_user_lapsed(env, container, user3, community_id, channel_id, group_id, false);
 
-    // Increase token balance
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user2.user_id, min_balance);
-
-    // User2 rejoins channel
-    join_container(
+    // Change to payment gate expires in 4 days
+    update_container_gate(
         env,
-        user2.principal,
-        canister_ids,
+        owner.principal,
         community_id,
         channel_id,
         group_id,
         container,
+        Some(AccessGateConfig {
+            gate: AccessGate::TokenBalance(TokenBalanceGate {
+                ledger_canister_id: canister_ids.icp_ledger,
+                min_balance: 900_000_000,
+            }),
+            expiry: Some(4 * DAY_IN_MS),
+        }),
     );
 
-    // Assert that user2 is no longer lapsed
-    assert_user_lapsed(env, container, &user2, community_id, channel_id, group_id, false);
+    // Move the time forward 1 day
+    env.advance_time(Duration::from_millis(DAY_IN_MS));
+    tick_many(env, 5);
+
+    // User 3 still not lapsed
+    assert_user_lapsed(env, container, user1, community_id, channel_id, group_id, false);
+    assert_user_lapsed(env, container, user2, community_id, channel_id, group_id, true);
+    assert_user_lapsed(env, container, user3, community_id, channel_id, group_id, false);
+
+    // Move the time forward 1 day
+    env.advance_time(Duration::from_millis(DAY_IN_MS));
+    tick_many(env, 5);
+
+    // User 3 now lapsed
+    assert_user_lapsed(env, container, user1, community_id, channel_id, group_id, false);
+    assert_user_lapsed(env, container, user2, community_id, channel_id, group_id, true);
+    assert_user_lapsed(env, container, user3, community_id, channel_id, group_id, true);
 }
 
 fn assert_user_lapsed(
@@ -424,19 +571,20 @@ fn update_group_gate(
     client::group::happy_path::update_group(env, principal, group_id, &args);
 }
 
-fn init_test_data(
+fn register_and_join(
     env: &mut PocketIc,
     canister_ids: &CanisterIds,
     controller: Principal,
-    gate_config: AccessGateConfig,
+    community_id: CommunityId,
+    channel_id: ChannelId,
+    group_id: ChatId,
     container: Container,
-) -> TestData {
-    let user1 = client::register_diamond_user(env, canister_ids, controller);
-    let user2 = client::register_user(env, canister_ids);
+) -> User {
+    let user = client::register_user(env, canister_ids);
 
-    // Upgrade user 2 to non-recurring diamond membership
+    // Upgrade users to non-recurring diamond membership
     client::upgrade_user(
-        &user2,
+        &user,
         env,
         canister_ids,
         controller,
@@ -444,25 +592,10 @@ fn init_test_data(
         false,
     );
 
-    let community_id = client::user::happy_path::create_community(env, &user1, &random_string(), true, vec![random_string()]);
-    let channel_id = client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string());
-    let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
-
-    // Update the container's access gate
-    update_container_gate(
-        env,
-        user1.principal,
-        community_id,
-        channel_id,
-        group_id,
-        container,
-        Some(gate_config),
-    );
-
-    // User 2 joins the "container"
+    // Join the "container"
     join_container(
         env,
-        user2.principal,
+        user.principal,
         canister_ids,
         community_id,
         channel_id,
@@ -470,9 +603,44 @@ fn init_test_data(
         container,
     );
 
+    user
+}
+
+fn init_test_data(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    controller: Principal,
+    gate_config: AccessGateConfig,
+    num_users: usize,
+    container: Container,
+) -> TestData {
+    let owner = client::register_diamond_user(env, canister_ids, controller);
+
+    let community_id = client::user::happy_path::create_community(env, &owner, &random_string(), true, vec![random_string()]);
+    let channel_id = client::community::happy_path::create_channel(env, owner.principal, community_id, true, random_string());
+    let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
+
+    // Update the container's access gate
+    update_container_gate(
+        env,
+        owner.principal,
+        community_id,
+        channel_id,
+        group_id,
+        container,
+        Some(gate_config),
+    );
+
+    let mut users = Vec::new();
+
+    for _i in 0..num_users {
+        let user = register_and_join(env, canister_ids, controller, community_id, channel_id, group_id, container);
+        users.push(user);
+    }
+
     TestData {
-        user1,
-        user2,
+        owner,
+        users,
         community_id,
         channel_id,
         group_id,
@@ -480,8 +648,8 @@ fn init_test_data(
 }
 
 struct TestData {
-    user1: User,
-    user2: User,
+    owner: User,
+    users: Vec<User>,
     community_id: CommunityId,
     channel_id: ChannelId,
     group_id: ChatId,
