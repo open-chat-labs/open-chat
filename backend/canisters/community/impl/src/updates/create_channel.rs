@@ -2,16 +2,16 @@ use super::c2c_join_community::join_community_impl;
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_proposals_bot;
 use crate::model::channels::Channel;
-use crate::model::members::CommunityMemberInternal;
+use crate::updates::c2c_join_channel::add_members_to_public_channel_unchecked;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_join_community;
 use community_canister::create_channel::{Response::*, *};
-use group_chat_core::{AddResult, GroupChatCore};
+use group_chat_core::GroupChatCore;
 use rand::Rng;
 use std::collections::HashMap;
-use types::{AccessGate, EventIndex, MessageIndex, MultiUserChat, TimestampMillis, UserId, UserType};
+use types::{AccessGate, MultiUserChat, TimestampMillis, UserId, UserType};
 use url::Url;
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
@@ -160,17 +160,17 @@ fn create_channel_impl(
             if args.is_public {
                 match args.gate {
                     Some(AccessGate::DiamondMember) => {
-                        join_users_to_new_channel(
+                        add_members_to_public_channel_unchecked(
+                            &mut channel,
                             state
                                 .data
                                 .members
                                 .iter_mut()
                                 .filter(|m| diamond_membership_expiry_dates.get(&m.user_id).copied() > Some(now)),
-                            &mut channel,
                             now,
                         );
                     }
-                    None => join_users_to_new_channel(state.data.members.iter_mut(), &mut channel, now),
+                    None => add_members_to_public_channel_unchecked(&mut channel, state.data.members.iter_mut(), now),
                     _ => {}
                 }
             }
@@ -208,29 +208,4 @@ async fn get_diamond_membership_expiry_dates_if_needed(args: &Args) -> Result<Ha
     } else {
         Ok(HashMap::new())
     }
-}
-
-fn join_users_to_new_channel<'a>(
-    members: impl Iterator<Item = &'a mut CommunityMemberInternal>,
-    channel: &mut Channel,
-    now: TimestampMillis,
-) {
-    let mut user_ids = Vec::new();
-    for member in members {
-        let result = channel.chat.members.add(
-            member.user_id,
-            now,
-            EventIndex::default(),
-            MessageIndex::default(),
-            true,
-            member.user_type,
-        );
-
-        if matches!(result, AddResult::Success(_)) {
-            member.channels.insert(channel.id);
-            user_ids.push(member.user_id);
-        }
-    }
-
-    channel.chat.events.mark_members_added_to_public_channel(user_ids, now);
 }

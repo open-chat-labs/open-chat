@@ -2,13 +2,13 @@ use crate::guards::caller_is_owner;
 use crate::model::pin_number::VerifyPinError;
 use crate::model::token_swaps::TokenSwap;
 use crate::timer_job_types::{ProcessTokenSwapJob, TimerJob};
+use crate::token_swaps::icpswap::ICPSwapClient;
+use crate::token_swaps::sonic::SonicClient;
 use crate::token_swaps::swap_client::SwapClient;
 use crate::{mutate_state, read_state, run_regular_jobs, Data, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use icpswap_client::ICPSwapClient;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
-use sonic_client::SonicClient;
 use tracing::{error, info};
 use types::{TimestampMillis, Timestamped};
 use user_canister::swap_tokens::{Response::*, *};
@@ -84,7 +84,7 @@ pub(crate) async fn process_token_swap(mut token_swap: TokenSwap, attempt: u32, 
             args.input_token.ledger,
             &TransferArg {
                 from_subaccount: None,
-                to: account,
+                to: account.into(),
                 fee: Some(args.input_token.fee.into()),
                 created_at_time: Some(now * NANOS_PER_MILLISECOND),
                 memo: Some(MEMO_SWAP.to_vec().into()),

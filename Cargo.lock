@@ -140,7 +140,9 @@ dependencies = [
  "ic-ledger-types",
  "ic-stable-structures",
  "icrc-ledger-types",
+ "icrc_ledger_canister",
  "icrc_ledger_canister_c2c_client",
+ "ledger_utils",
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",
  "msgpack",
@@ -3848,20 +3850,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "icpswap_client"
-version = "0.1.0"
-dependencies = [
- "candid",
- "ic-cdk 0.16.0",
- "icpswap_swap_pool_canister",
- "icpswap_swap_pool_canister_c2c_client",
- "icrc-ledger-types",
- "ledger_utils",
- "serde",
- "types",
-]
-
-[[package]]
 name = "icpswap_swap_pool_canister"
 version = "0.1.0"
 dependencies = [
@@ -7317,21 +7305,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sonic_client"
-version = "0.1.0"
-dependencies = [
- "candid",
- "ic-cdk 0.16.0",
- "icrc-ledger-types",
- "ledger_utils",
- "serde",
- "sonic_canister",
- "sonic_canister_c2c_client",
- "tracing",
- "types",
-]
-
-[[package]]
 name = "spin"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8359,7 +8332,8 @@ dependencies = [
  "ic-certificate-verification",
  "ic-ledger-types",
  "ic-stable-structures",
- "icpswap_client",
+ "icpswap_swap_pool_canister",
+ "icpswap_swap_pool_canister_c2c_client",
  "icrc-ledger-types",
  "icrc_ledger_canister",
  "icrc_ledger_canister_c2c_client",
@@ -8382,7 +8356,8 @@ dependencies = [
  "serde_bytes",
  "sns_governance_canister",
  "sns_governance_canister_c2c_client",
- "sonic_client",
+ "sonic_canister",
+ "sonic_canister_c2c_client",
  "stable_memory",
  "storage_bucket_client",
  "tracing",
