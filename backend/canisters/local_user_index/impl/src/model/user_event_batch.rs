@@ -46,8 +46,7 @@ impl TimerJobItem for UserEventBatch {
         .await;
 
         match response {
-            Ok(result) if matches!(result, user_canister::c2c_notify_events::Response::Success) => Ok(()),
-            Ok(_) => Err(false),
+            Ok(user_canister::c2c_notify_events::Response::Success) => Ok(()),
             Err(_) => Err(true),
         }
     }

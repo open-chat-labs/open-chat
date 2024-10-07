@@ -24,7 +24,7 @@ impl<T: TimerJobItemGroup> GroupedTimerJobQueue<T> {
                 max_concurrency,
                 timer_id: None,
             })),
-            phantom: PhantomData::default(),
+            phantom: PhantomData,
         }
     }
 
@@ -176,7 +176,7 @@ impl<T: TimerJobItemGroup> Clone for GroupedTimerJobQueue<T> {
     fn clone(&self) -> Self {
         Self {
             inner: self.inner.clone(),
-            phantom: PhantomData::default(),
+            phantom: PhantomData,
         }
     }
 }
@@ -200,7 +200,7 @@ where
         let inner = GroupedTimerJobQueueInner::deserialize(deserializer)?;
         let value = GroupedTimerJobQueue::<T> {
             inner: Rc::new(Mutex::new(inner)),
-            phantom: PhantomData::default(),
+            phantom: PhantomData,
         };
         value.set_timer_if_required();
         Ok(value)
