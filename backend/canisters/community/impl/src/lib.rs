@@ -594,23 +594,23 @@ impl Data {
         let new_gate_expiry = new_gate_config.and_then(|gc| gc.expiry());
 
         if let Some(prev_gate_expiry) = prev_gate_expiry {
-            // If the access gate has been removed then clear lapsed status of members
-            if new_gate_config.is_none() {
-                if let Some(channel_id) = channel_id {
-                    if let Some(channel) = self.channels.get_mut(&channel_id) {
-                        channel.chat.members.clear_lapsed(now);
-                    }
-                } else {
-                    self.members.clear_lapsed(now);
-                }
-            }
-
             if let Some(new_gate_expiry) = new_gate_expiry {
                 // If there is also a new expiring gate then update the expiry schedule of members if necessary
                 self.expiring_members
                     .change_gate_expiry(channel_id, new_gate_expiry as i64 - prev_gate_expiry as i64);
             } else {
-                // Remove the expiring members altogether
+                // If the access gate has been removed then clear lapsed status of members
+                if new_gate_config.is_none() {
+                    if let Some(channel_id) = channel_id {
+                        if let Some(channel) = self.channels.get_mut(&channel_id) {
+                            channel.chat.members.clear_lapsed(now);
+                        }
+                    } else {
+                        self.members.clear_lapsed(now);
+                    }
+                }
+
+                // There is no expiring gate any longer so remove the expiring members
                 self.expiring_members.remove_gate(channel_id);
                 self.expiring_member_actions.remove_gate(channel_id);
             }

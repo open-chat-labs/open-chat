@@ -191,11 +191,6 @@ pub fn update_member_expiry(data: &mut Data, prev_gate_config: &Option<AccessGat
     let new_gate_expiry = new_gate_config.and_then(|gc| gc.expiry());
 
     if let Some(prev_gate_expiry) = prev_gate_expiry {
-        // If the access gate has been removed then clear lapsed status of members
-        if new_gate_config.is_none() {
-            data.chat.members.clear_lapsed(now);
-        }
-
         if let Some(new_gate_expiry) = new_gate_expiry {
             // If there is also a new expiring gate then update the expiry schedule of members if necessary
             data.expiring_members
@@ -204,6 +199,11 @@ pub fn update_member_expiry(data: &mut Data, prev_gate_config: &Option<AccessGat
             // Remove the expiring members altogether
             data.expiring_members.remove_gate(None);
             data.expiring_member_actions.remove_gate(None);
+
+            // If the access gate has been removed then clear lapsed status of members
+            if new_gate_config.is_none() {
+                data.chat.members.clear_lapsed(now);
+            }
         }
     } else if let Some(new_gate_expiry) = new_gate_expiry {
         // Else if the new gate has an expiry then add members to the expiry schedule.
