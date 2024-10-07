@@ -1,5 +1,6 @@
 use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use crate::model::user_event_batch::UserEventBatch;
+use crate::model::user_index_event_batch::UserIndexEventBatch;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
@@ -141,9 +142,7 @@ impl RuntimeState {
     pub fn push_event_to_user_index(&mut self, event: UserIndexEvent) {
         self.data
             .user_index_event_sync_queue
-            .push(self.data.user_index_canister_id, event);
-
-        jobs::sync_events_to_user_index_canister::try_run_now(self);
+            .enqueue(self.data.user_index_canister_id, event, true);
     }
 
     pub fn push_oc_bot_message_to_user(&mut self, user_id: UserId, content: MessageContent, _mentioned: Vec<User>) {
@@ -282,7 +281,8 @@ struct Data {
     pub total_cycles_spent_on_canisters: Cycles,
     #[serde(deserialize_with = "deserialize_user_event_sync_queue")]
     pub user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
-    pub user_index_event_sync_queue: CanisterEventSyncQueue<UserIndexEvent>,
+    #[serde(deserialize_with = "deserialize_user_index_event_sync_queue")]
+    pub user_index_event_sync_queue: GroupedTimerJobQueue<UserIndexEventBatch>,
     pub test_mode: bool,
     pub max_concurrent_canister_upgrades: u32,
     pub user_upgrade_concurrency: u32,
@@ -307,6 +307,18 @@ fn deserialize_user_event_sync_queue<'de, D: Deserializer<'de>>(
     let new = GroupedTimerJobQueue::new(10);
     for (canister_id, events) in previous.take_all() {
         new.enqueue_many(canister_id.into(), events, false);
+    }
+    Ok(new)
+}
+
+fn deserialize_user_index_event_sync_queue<'de, D: Deserializer<'de>>(
+    d: D,
+) -> Result<GroupedTimerJobQueue<UserIndexEventBatch>, D::Error> {
+    let previous: CanisterEventSyncQueue<UserIndexEvent> = CanisterEventSyncQueue::deserialize(d)?;
+
+    let new = GroupedTimerJobQueue::new(1);
+    for (canister_id, events) in previous.take_all() {
+        new.enqueue_many(canister_id, events, false);
     }
     Ok(new)
 }
@@ -359,7 +371,7 @@ impl Data {
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
             user_event_sync_queue: GroupedTimerJobQueue::new(10),
-            user_index_event_sync_queue: CanisterEventSyncQueue::default(),
+            user_index_event_sync_queue: GroupedTimerJobQueue::new(1),
             test_mode,
             max_concurrent_canister_upgrades: 10,
             user_upgrade_concurrency: 10,
