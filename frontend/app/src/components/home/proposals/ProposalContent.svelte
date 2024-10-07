@@ -333,7 +333,7 @@
         cursor: pointer;
         position: relative;
         overflow-x: hidden;
-        color: var(--markdown-fg-color);
+        color: "inherit";
         background-color: rgba(0, 0, 0, 0.05);
         padding: $sp3;
 
