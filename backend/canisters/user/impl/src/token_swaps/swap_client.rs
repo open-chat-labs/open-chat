@@ -21,26 +21,17 @@ pub trait SwapClient {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(from = "u128")]
 pub struct SwapSuccess {
     pub amount_out: u128,
     pub withdrawal_success: Option<bool>,
 }
 
-#[derive(Serialize, Deserialize)]
-#[serde(untagged)]
-enum SwapSuccessCombined {
-    Old(u128),
-    New(SwapSuccess),
-}
-
-impl From<SwapSuccessCombined> for SwapSuccess {
-    fn from(value: SwapSuccessCombined) -> Self {
-        match value {
-            SwapSuccessCombined::Old(amount) => SwapSuccess {
-                amount_out: amount,
-                withdrawal_success: None,
-            },
-            SwapSuccessCombined::New(result) => result,
+impl From<u128> for SwapSuccess {
+    fn from(value: u128) -> Self {
+        SwapSuccess {
+            amount_out: value,
+            withdrawal_success: None,
         }
     }
 }
