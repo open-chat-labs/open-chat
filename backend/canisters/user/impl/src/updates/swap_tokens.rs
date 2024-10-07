@@ -63,8 +63,10 @@ pub(crate) async fn process_token_swap(
     let args = token_swap.args.clone();
     let swap_client = swap_client.unwrap_or_else(|| read_state(|state| build_swap_client(&args, state)));
 
-    let account = if let Some(a) = extract_result(&token_swap.deposit_account) {
-        *a
+    let icrc1_account = if token_swap.icrc2 {
+        None
+    } else if let Some(a) = extract_result(&token_swap.deposit_account) {
+        Some(*a)
     } else {
         match swap_client.deposit_account().await {
             Ok(a) => {
@@ -73,7 +75,7 @@ pub(crate) async fn process_token_swap(
                     token_swap.deposit_account = Some(Timestamped::new(Ok(a), now));
                     state.data.token_swaps.upsert(token_swap.clone());
                 });
-                a
+                Some(a)
             }
             Err(error) => {
                 let msg = format!("{error:?}");
@@ -93,7 +95,25 @@ pub(crate) async fn process_token_swap(
 
     if extract_result(&token_swap.transfer_or_approval).is_none() {
         let now = read_state(|state| state.env.now());
-        let transfer_or_approve_result = if token_swap.icrc2 {
+        let transfer_or_approve_result = if let Some(account) = icrc1_account {
+            match icrc_ledger_canister_c2c_client::icrc1_transfer(
+                args.input_token.ledger,
+                &TransferArg {
+                    from_subaccount: None,
+                    to: account.into(),
+                    fee: Some(args.input_token.fee.into()),
+                    created_at_time: Some(now * NANOS_PER_MILLISECOND),
+                    memo: Some(MEMO_SWAP.to_vec().into()),
+                    amount: amount_to_dex.into(),
+                },
+            )
+            .await
+            {
+                Ok(Ok(index)) => Ok(index),
+                Ok(Err(error)) => Err(format!("{error:?}")),
+                Err(error) => Err(format!("{error:?}")),
+            }
+        } else {
             match icrc_ledger_canister_c2c_client::icrc2_approve(
                 args.input_token.ledger,
                 &ApproveArgs {
@@ -105,24 +125,6 @@ pub(crate) async fn process_token_swap(
                     fee: Some(args.input_token.fee.into()),
                     memo: Some(MEMO_SWAP_APPROVAL.to_vec().into()),
                     created_at_time: Some(now * NANOS_PER_MILLISECOND),
-                },
-            )
-            .await
-            {
-                Ok(Ok(index)) => Ok(index),
-                Ok(Err(error)) => Err(format!("{error:?}")),
-                Err(error) => Err(format!("{error:?}")),
-            }
-        } else {
-            match icrc_ledger_canister_c2c_client::icrc1_transfer(
-                args.input_token.ledger,
-                &TransferArg {
-                    from_subaccount: None,
-                    to: account.into(),
-                    fee: Some(args.input_token.fee.into()),
-                    created_at_time: Some(now * NANOS_PER_MILLISECOND),
-                    memo: Some(MEMO_SWAP.to_vec().into()),
-                    amount: amount_to_dex.into(),
                 },
             )
             .await
