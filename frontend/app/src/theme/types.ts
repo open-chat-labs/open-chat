@@ -307,14 +307,6 @@ export interface Theme {
         };
     };
 
-    markdown: {
-        fg: {
-            color: string;
-            bright: string;
-            muted: string;
-        };
-    };
-
     card: {
         rd: string;
         sh: string;
