@@ -114,6 +114,7 @@ import type {
     ChatIdentifier,
     UpdatedEvent,
     User,
+    DexId,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -156,6 +157,7 @@ import type {
     EventsResponse as TEventsResponse,
     EventWrapperChatEvent as TEventWrapperChatEvent,
     EventWrapperMessage as TEventWrapperMessage,
+    ExchangeId as TExchangeId,
     FailedCryptoTransaction as TFailedCryptoTransaction,
     FileContent as TFileContent,
     GateCheckFailedReason as TGateCheckFailedReason,
@@ -2961,3 +2963,14 @@ export function joinGroupResponse(value: LocalUserIndexJoinGroupResponse): JoinG
 //
 //     throw new UnsupportedValueError("Unexpected ApiSetPinNumberResponse type received", candid);
 // }
+
+export function apiDexId(dex: DexId): TExchangeId {
+    switch (dex) {
+        case "icpswap":
+            return "ICPSwap";
+        case "kongswap":
+            return "KongSwap";
+        case "sonic":
+            return "Sonic";
+    }
+}
