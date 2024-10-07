@@ -3419,6 +3419,10 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.setDiamondMembershipFees(fees);
     }
 
+    addRemoveSwapProvider(swapProvider: DexId, add: boolean): Promise<boolean> {
+        return this._registryClient.addRemoveSwapProvider(swapProvider, add);
+    }
+
     addMessageFilter(regex: string): Promise<boolean> {
         return this._registryClient.addMessageFilter(regex);
     }

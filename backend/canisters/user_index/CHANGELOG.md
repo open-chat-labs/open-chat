@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Clear wasm chunks once new wasm version has been set ([#6524](https://github.com/open-chat-labs/open-chat/pull/6524))
+
 ### Removed
 
 - Remove unused fields from metrics ([#6525](https://github.com/open-chat-labs/open-chat/pull/6525))
