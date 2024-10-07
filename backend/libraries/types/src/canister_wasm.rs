@@ -170,7 +170,9 @@ impl<T: Eq + std::hash::Hash> ChildCanisterWasms<T> {
     }
 
     pub fn set(&mut self, canister_type: T, wasm: impl Into<ChunkedCanisterWasm>) {
-        self.manager_mut(canister_type).set(wasm.into());
+        let manager = self.manager_mut(canister_type);
+        manager.set(wasm.into());
+        manager.chunks.clear();
     }
 
     pub fn push_chunk(&mut self, canister_type: T, chunk: CanisterWasmBytes, index: u8) -> Result<(u32, Hash), u8> {
