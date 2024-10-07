@@ -10,8 +10,13 @@ pub trait Member {
         self.set_lapsed(Timestamped::new(true, now));
     }
 
-    fn clear_lapsed(&mut self, now: TimestampMillis) {
-        self.set_lapsed(Timestamped::new(false, now));
+    fn clear_lapsed(&mut self, now: TimestampMillis) -> bool {
+        if self.lapsed() {
+            self.set_lapsed(Timestamped::new(false, now));
+            true
+        } else {
+            false
+        }
     }
 
     fn can_member_lapse(&self) -> bool {

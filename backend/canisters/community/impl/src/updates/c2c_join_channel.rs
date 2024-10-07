@@ -319,19 +319,20 @@ pub(crate) fn join_channel_unchecked(
         community_member.user_type,
     );
 
-    if matches!(result, AddResult::Blocked | AddResult::MemberLimitReached(_)) {
+    if matches!(result, AddResult::AlreadyInGroup) {
+        let member = channel.chat.members.get_mut(&community_member.user_id).unwrap();
+        if member.clear_lapsed(now) {
+            return AddResult::Success(member.clone());
+        }
+    }
+
+    if !matches!(result, AddResult::Success(_)) {
         return result;
     }
 
     community_member.channels.insert(channel.id);
 
     let invitation = channel.chat.invited_users.remove(&community_member.user_id, now);
-
-    if matches!(result, AddResult::AlreadyInGroup) {
-        let member = channel.chat.members.get_mut(&community_member.user_id).unwrap();
-        member.clear_lapsed(now);
-        return AddResult::Success(member.clone());
-    }
 
     if push_event {
         if channel.chat.is_public.value {

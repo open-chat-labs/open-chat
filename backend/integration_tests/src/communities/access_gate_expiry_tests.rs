@@ -99,12 +99,12 @@ fn remove_gate_unlapses_members(container_type: ContainerType) {
 
     let num_users = 2;
 
-    // Create n diamond users, a public community with a public channel, and a public group
+    // Create 2 diamond users, a public community with a public channel, and a public group
     // Update the container with the access gate and join users to the container
     let TestData { owner, users, container } =
         init_test_data(env, canister_ids, *controller, gate_config, num_users, container_type);
 
-    // Move the time forward so that user2's diamond membership expires + the gate expiry
+    // Move the time forward so that the users' diamond membership expires + the gate expiry
     env.advance_time(Duration::from_millis(46 * DAY_IN_MS));
     tick_many(env, 5);
 
@@ -150,7 +150,7 @@ fn extend_or_reduce_expiry_then_member_lapses_when_expected(container_type: Cont
 
     let num_users = 2;
 
-    // Create n diamond users, a public community with a public channel, and a public group
+    // Create 2 diamond users, a public community with a public channel, and a public group
     // Update the container with the access gate and join users to the container
     let TestData { owner, users, container } =
         init_test_data(env, canister_ids, *controller, gate_config, num_users, container_type);
@@ -184,14 +184,14 @@ fn extend_or_reduce_expiry_then_member_lapses_when_expected(container_type: Cont
         }),
     );
 
-    // Move the time forward so the member should not lapse
+    // Move the time forward so the members should not lapse
     let duration = if extend_expiry { 5 } else { 1 };
 
     env.advance_time(Duration::from_millis(duration * DAY_IN_MS));
     tick_many(env, 5);
 
     for user in users.iter() {
-        // Assert that the users have *not* lapsed
+        // Assert that the members have *not* lapsed
         assert!(!has_user_lapsed(env, user, &container));
     }
 
@@ -200,7 +200,7 @@ fn extend_or_reduce_expiry_then_member_lapses_when_expected(container_type: Cont
     tick_many(env, 5);
 
     for user in users.iter() {
-        // Assert that the users have now lapsed
+        // Assert that the members have now lapsed
         assert!(has_user_lapsed(env, user, &container));
     }
 }
