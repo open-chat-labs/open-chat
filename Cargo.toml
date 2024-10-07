@@ -149,7 +149,7 @@ members = [
     "backend/libraries/sha256",
     "backend/libraries/stable_memory",
     "backend/libraries/testing",
-    "backend/libraries/timer_job_queue",
+    "backend/libraries/timer_job_queues",
     "backend/libraries/ts_export",
     "backend/libraries/ts_export_macros",
     "backend/libraries/types",

@@ -1,3 +1,4 @@
+use crate::TimerJobItem;
 use ic_cdk_timers::TimerId;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::VecDeque;
@@ -5,10 +6,6 @@ use std::ops::DerefMut;
 use std::rc::Rc;
 use std::sync::Mutex;
 use std::time::Duration;
-
-pub trait TimerJobItem {
-    fn process(&self) -> impl std::future::Future<Output = Result<(), bool>> + Send;
-}
 
 pub struct TimerJobQueue<T> {
     inner: Rc<Mutex<TimerJobQueueInner<T>>>,

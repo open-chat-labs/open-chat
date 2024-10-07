@@ -37,7 +37,7 @@ serde_bytes = { workspace = true }
 serde_json = { workspace = true }
 stable_memory = { path = "../../../libraries/stable_memory" }
 testing = { path = "../../../libraries/testing" }
-timer_job_queue = { path = "../../../libraries/timer_job_queue" }
+timer_job_queues = { path = "../../../libraries/timer_job_queues" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_canister_c2c_client = { path = "../../user/c2c_client" }
