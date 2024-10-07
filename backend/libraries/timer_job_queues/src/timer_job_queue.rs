@@ -62,9 +62,36 @@ impl<T> TimerJobQueue<T>
 where
     T: TimerJobItem + 'static,
 {
-    pub fn start_job_if_required(&self) -> bool {
-        let should_start_job = self.within_lock(|i| i.timer_id.is_none() && !i.queue.is_empty());
-        if should_start_job {
+    pub fn enqueue(&self, item: T, run_immediately: bool) {
+        self.within_lock(|i| i.queue.push_back(item));
+        self.run_immediately_or_set_timer_if_required(run_immediately);
+    }
+
+    pub fn enqueue_front(&self, item: T, run_immediately: bool) {
+        self.within_lock(|i| i.queue.push_front(item));
+        self.run_immediately_or_set_timer_if_required(run_immediately);
+    }
+
+    pub fn enqueue_many(&self, items: impl Iterator<Item = T>, run_immediately: bool) {
+        self.within_lock(|i| {
+            for item in items {
+                i.queue.push_back(item);
+            }
+        });
+        self.run_immediately_or_set_timer_if_required(run_immediately);
+    }
+
+    fn run_immediately_or_set_timer_if_required(&self, run_immediately: bool) {
+        if run_immediately {
+            self.run()
+        } else {
+            self.set_timer_if_required();
+        }
+    }
+
+    fn set_timer_if_required(&self) -> bool {
+        let should_set_timer = self.within_lock(|i| i.timer_id.is_none() && !i.queue.is_empty());
+        if should_set_timer {
             let clone = self.clone();
             let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, move || clone.run());
             self.within_lock(|i| i.timer_id = Some(timer_id));
@@ -72,25 +99,6 @@ where
         } else {
             false
         }
-    }
-
-    pub fn enqueue(&self, item: T) {
-        self.within_lock(|i| i.queue.push_back(item));
-        self.start_job_if_required();
-    }
-
-    pub fn enqueue_front(&self, item: T) {
-        self.within_lock(|i| i.queue.push_front(item));
-        self.start_job_if_required();
-    }
-
-    pub fn enqueue_many(&self, items: impl Iterator<Item = T>) {
-        self.within_lock(|i| {
-            for item in items {
-                i.queue.push_back(item);
-            }
-        });
-        self.start_job_if_required();
     }
 
     fn run(&self) {
@@ -135,7 +143,7 @@ where
             }
             i.in_progress = i.in_progress.saturating_sub(1);
         });
-        self.start_job_if_required();
+        self.set_timer_if_required();
     }
 }
 
@@ -159,7 +167,7 @@ impl<'de, T: Deserialize<'de> + TimerJobItem + 'static> Deserialize<'de> for Tim
         let value = TimerJobQueue {
             inner: Rc::new(Mutex::new(inner)),
         };
-        value.start_job_if_required();
+        value.set_timer_if_required();
         Ok(value)
     }
 }

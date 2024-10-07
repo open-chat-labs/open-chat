@@ -68,23 +68,11 @@ impl<T: TimerJobItemGroup + 'static> GroupedTimerJobQueue<T>
 where
     <T as TimerJobItemGroup>::Key: Clone + Ord,
 {
-    pub fn start_job_if_required(&self) -> bool {
-        let should_start_job = self.within_lock(|i| i.timer_id.is_none() && !i.queue.is_empty());
-        if should_start_job {
-            let clone = self.clone();
-            let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, move || clone.run());
-            self.within_lock(|i| i.timer_id = Some(timer_id));
-            true
-        } else {
-            false
-        }
+    pub fn enqueue(&self, grouping_key: T::Key, item: T::Item, run_immediately: bool) {
+        self.enqueue_many(grouping_key, vec![item], run_immediately)
     }
 
-    pub fn enqueue(&self, grouping_key: T::Key, item: T::Item) {
-        self.enqueue_many(grouping_key, vec![item])
-    }
-
-    pub fn enqueue_many(&self, grouping_key: T::Key, items: Vec<T::Item>) {
+    pub fn enqueue_many(&self, grouping_key: T::Key, items: Vec<T::Item>, run_immediately: bool) {
         self.within_lock(|i| match i.items_map.entry(grouping_key.clone()) {
             Vacant(e) => {
                 e.insert(VecDeque::from(items));
@@ -94,7 +82,23 @@ where
                 e.get_mut().extend(items);
             }
         });
-        self.start_job_if_required();
+        if run_immediately {
+            self.run()
+        } else {
+            self.set_timer_if_required();
+        }
+    }
+
+    fn set_timer_if_required(&self) -> bool {
+        let should_set_timer = self.within_lock(|i| i.timer_id.is_none() && !i.queue.is_empty());
+        if should_set_timer {
+            let clone = self.clone();
+            let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, move || clone.run());
+            self.within_lock(|i| i.timer_id = Some(timer_id));
+            true
+        } else {
+            false
+        }
     }
 
     fn run(&self) {
@@ -164,7 +168,7 @@ where
                 i.queue.push_back(key);
             }
         });
-        self.start_job_if_required();
+        self.set_timer_if_required();
     }
 }
 
@@ -198,7 +202,7 @@ where
             inner: Rc::new(Mutex::new(inner)),
             phantom: PhantomData::default(),
         };
-        value.start_job_if_required();
+        value.set_timer_if_required();
         Ok(value)
     }
 }

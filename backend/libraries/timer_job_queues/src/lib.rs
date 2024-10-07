@@ -1,6 +1,7 @@
 mod grouped_timer_job_queue;
 mod timer_job_queue;
 
+pub use grouped_timer_job_queue::GroupedTimerJobQueue;
 pub use timer_job_queue::TimerJobQueue;
 
 pub trait TimerJobItem {

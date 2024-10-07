@@ -1,4 +1,5 @@
 use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
+use crate::model::user_event_batch::UserEventBatch;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
@@ -10,10 +11,11 @@ use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
 use p256_key_pair::P256KeyPair;
 use proof_of_unique_personhood::verify_proof_of_unique_personhood;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
 use std::time::Duration;
+use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms,
     CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails,
@@ -133,8 +135,7 @@ impl RuntimeState {
     }
 
     pub fn push_event_to_user(&mut self, user_id: UserId, event: UserEvent) {
-        self.data.user_event_sync_queue.push(user_id.into(), event);
-        jobs::sync_events_to_user_canisters::try_run_now(self);
+        self.data.user_event_sync_queue.enqueue(user_id, event, true);
     }
 
     pub fn push_event_to_user_index(&mut self, event: UserIndexEvent) {
@@ -279,7 +280,8 @@ struct Data {
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
-    pub user_event_sync_queue: CanisterEventSyncQueue<UserEvent>,
+    #[serde(deserialize_with = "deserialize_user_event_sync_queue")]
+    pub user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<UserIndexEvent>,
     pub test_mode: bool,
     pub max_concurrent_canister_upgrades: u32,
@@ -295,6 +297,18 @@ struct Data {
     #[serde(with = "serde_bytes")]
     pub ic_root_key: Vec<u8>,
     pub events_for_remote_users: Vec<(UserId, UserEvent)>,
+}
+
+fn deserialize_user_event_sync_queue<'de, D: Deserializer<'de>>(
+    d: D,
+) -> Result<GroupedTimerJobQueue<UserEventBatch>, D::Error> {
+    let previous: CanisterEventSyncQueue<UserEvent> = CanisterEventSyncQueue::deserialize(d)?;
+
+    let new = GroupedTimerJobQueue::new(10);
+    for (canister_id, events) in previous.take_all() {
+        new.enqueue_many(canister_id.into(), events, false);
+    }
+    Ok(new)
 }
 
 #[derive(Serialize, Deserialize)]
@@ -344,7 +358,7 @@ impl Data {
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
-            user_event_sync_queue: CanisterEventSyncQueue::default(),
+            user_event_sync_queue: GroupedTimerJobQueue::new(10),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             test_mode,
             max_concurrent_canister_upgrades: 10,

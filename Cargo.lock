@@ -4632,6 +4632,7 @@ dependencies = [
  "serde_json",
  "sha256",
  "stable_memory",
+ "timer_job_queues",
  "tracing",
  "types",
  "user_canister",

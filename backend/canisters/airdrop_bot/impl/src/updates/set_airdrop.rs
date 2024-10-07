@@ -25,7 +25,7 @@ fn set_airdrop_impl(args: Args, state: &mut RuntimeState) -> Response {
                 state
                     .data
                     .pending_actions_queue
-                    .enqueue(Action::JoinChannel(community_id, channel_id));
+                    .enqueue(Action::JoinChannel(community_id, channel_id), true);
             }
             Response::Success
         }
