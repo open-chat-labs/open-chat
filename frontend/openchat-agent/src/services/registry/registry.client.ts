@@ -1,17 +1,20 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
-import type { RegistryUpdatesResponse } from "openchat-shared";
+import type { DexId, RegistryUpdatesResponse } from "openchat-shared";
 import { CandidService } from "../candidService";
 import { updatesResponse } from "./mappers";
 import { principalStringToBytes } from "../../utils/mapping";
 import {
     RegistryAddMessageFilterArgs,
     RegistryAddMessageFilterResponse,
+    RegistryAddRemoveSwapProviderArgs,
+    RegistryAddRemoveSwapProviderResponse,
     RegistryRemoveMessageFilterArgs,
     RegistrySetTokenEnabledArgs,
     RegistrySetTokenEnabledResponse,
     RegistryUpdatesArgs,
     RegistryUpdatesResponse as TRegistryUpdatesResponse,
 } from "../../typebox";
+import { apiDexId } from "../common/chatMappersV2";
 
 export class RegistryClient extends CandidService {
     private readonly blobUrlPattern: string;
@@ -32,6 +35,19 @@ export class RegistryClient extends CandidService {
             (resp) => updatesResponse(resp, this.blobUrlPattern, this.canisterId),
             RegistryUpdatesArgs,
             TRegistryUpdatesResponse,
+        );
+    }
+
+    addRemoveSwapProvider(swapProvider: DexId, add: boolean): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "add_remove_swap_provider",
+            {
+                swap_provider: apiDexId(swapProvider),
+                add,
+            },
+            (resp) => resp === "Success",
+            RegistryAddRemoveSwapProviderArgs,
+            RegistryAddRemoveSwapProviderResponse,
         );
     }
 
