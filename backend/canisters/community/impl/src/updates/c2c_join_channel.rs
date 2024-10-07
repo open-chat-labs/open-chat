@@ -274,16 +274,16 @@ pub(crate) fn add_members_to_public_channel_unchecked<'a>(
     members: impl Iterator<Item = &'a mut CommunityMemberInternal>,
     now: TimestampMillis,
 ) {
-    let mut user_ids = Vec::new();
+    let mut users_added = Vec::new();
     for member in members {
         let result = join_channel_unchecked(channel, member, true, false, now);
         if matches!(result, AddResult::Success(_)) {
             member.channels.insert(channel.id);
-            user_ids.push(member.user_id);
+            users_added.push(member.user_id);
         }
     }
 
-    channel.chat.events.mark_members_added_to_public_channel(user_ids, now);
+    channel.chat.events.mark_members_added_to_public_channel(users_added, now);
 }
 
 pub(crate) fn join_channel_unchecked(

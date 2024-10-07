@@ -214,11 +214,17 @@ type TokenSwapStatusArgs = record {
 type TokenSwapStatusResponse = variant {
     Success : record {
         started : TimestampMillis;
+        icrc2 : bool;
+        auto_withdrawals : bool;
         deposit_account : opt variant {
             Ok;
             Err : text;
         };
         transfer : opt variant {
+            Ok : nat64;
+            Err : text;
+        };
+        transfer_or_approval : opt variant {
             Ok : nat64;
             Err : text;
         };

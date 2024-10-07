@@ -20,8 +20,11 @@ pub enum Response {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct TokenSwapStatus {
     pub started: TimestampMillis,
+    pub icrc2: bool,
+    pub auto_withdrawals: bool,
     pub deposit_account: SwapSubtask<()>,
-    pub transfer: SwapSubtask<u64>, // Block Index
+    pub transfer: SwapSubtask<u64>,             // Block Index
+    pub transfer_or_approval: SwapSubtask<u64>, // Block Index
     pub notify_dex: SwapSubtask<()>,
     pub amount_swapped: SwapSubtask<Result<u128, String>>,
     pub withdraw_from_dex: SwapSubtask<u128>,

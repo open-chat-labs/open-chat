@@ -289,6 +289,7 @@ export type WorkerRequest =
     | DeleteFrozenGroup
     | AddHotGroupExclusion
     | RemoveHotGroupExclusion
+    | AddRemoveSwapProvider
     | AddMessageFilter
     | RemoveMessageFilter
     | SetTokenEnabled
@@ -1110,6 +1111,12 @@ type AddHotGroupExclusion = {
 type RemoveHotGroupExclusion = {
     chatId: GroupChatIdentifier;
     kind: "removeHotGroupExclusion";
+};
+
+type AddRemoveSwapProvider = {
+    swapProvider: DexId;
+    add: boolean;
+    kind: "addRemoveSwapProvider";
 };
 
 type AddMessageFilter = {
@@ -1943,6 +1950,8 @@ export type WorkerResult<T> = T extends Init
     ? AddHotGroupExclusionResponse
     : T extends RemoveHotGroupExclusion
     ? RemoveHotGroupExclusionResponse
+    : T extends AddRemoveSwapProvider
+    ? boolean
     : T extends AddMessageFilter
     ? boolean
     : T extends RemoveMessageFilter
