@@ -1,13 +1,13 @@
 use super::expire_members;
 use crate::{mutate_state, read_state, RuntimeState};
-use gated_groups::{check_if_passes_gate, check_if_passes_gate_synchronously, CheckGateArgs, CheckIfPassesGateResult};
+use gated_groups::{check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult};
 use group_community_common::{ExpiringMember, ExpiringMemberAction, ExpiringMemberActionDetails, Members};
 use ic_cdk_timers::TimerId;
 use local_user_index_canister_c2c_client::lookup_users;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
-use types::AccessGateConfigInternal;
+use types::{AccessGateConfigInternal, UserId};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -38,52 +38,26 @@ fn run() {
 
 async fn process_action(action: ExpiringMemberAction) {
     match action {
-        ExpiringMemberAction::Batch(batch) => process_batch(batch).await,
-        ExpiringMemberAction::Single(details) => process_gate_check_async(details).await,
+        ExpiringMemberAction::UserLookup(batch) => process_lookup_users(batch).await,
+        ExpiringMemberAction::AsyncGateCheck(details) => process_gate_check_async(details).await,
     }
 }
 
-async fn process_batch(batch: Vec<ExpiringMemberActionDetails>) {
+async fn process_lookup_users(user_ids: Vec<UserId>) {
     let local_user_index_canister = read_state(|state| state.data.local_user_index_canister_id);
-    let user_ids = batch.iter().map(|details| details.user_id).collect();
 
     let lookup_users_result = lookup_users(user_ids, local_user_index_canister).await;
 
-    mutate_state(|state| {
-        match lookup_users_result {
-            Ok(user_details) => {
-                for u in user_details.values() {
-                    state
-                        .data
-                        .user_cache
-                        .insert(u.user_id, u.diamond_membership_expires_at, u.unique_person_proof.is_some());
-                }
-
-                for details in batch {
-                    process_gate_check_sync(details, state);
-                }
+    if let Ok(user_details) = lookup_users_result {
+        mutate_state(|state| {
+            for u in user_details.values() {
+                state
+                    .data
+                    .user_cache
+                    .insert(u.user_id, u.diamond_membership_expires_at, u.unique_person_proof.is_some());
             }
-            Err(err) => {
-                for details in batch {
-                    handle_gate_check_result(details, CheckIfPassesGateResult::InternalError(err.to_string()), state);
-                }
-            }
-        }
-
-        expire_members::restart_job(state);
-    });
-}
-
-fn process_gate_check_sync(details: ExpiringMemberActionDetails, state: &mut RuntimeState) {
-    let Some(prep) = prepare_gate_check(details, state) else {
-        return;
+        })
     };
-
-    let Some(result) = check_if_passes_gate_synchronously(prep.gate_config.gate, prep.check_gate_args) else {
-        return;
-    };
-
-    handle_gate_check_result(prep.details, result, state);
 }
 
 async fn process_gate_check_async(details: ExpiringMemberActionDetails) {

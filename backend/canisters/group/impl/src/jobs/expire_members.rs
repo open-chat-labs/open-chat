@@ -41,11 +41,11 @@ pub(crate) fn restart_job(state: &RuntimeState) {
 
 fn run() {
     trace!("'expire_members' job running");
-
     TIMER_ID.set(None);
     mutate_state(|state| {
         let now = state.env.now();
-        let mut batched_actions = Vec::new();
+        let mut users_to_lookup = Vec::new();
+        let mut check_gate_actions = Vec::new();
 
         loop {
             let Some(member) = state.data.expiring_members.pop_if_expires_before(now) else {
@@ -64,67 +64,60 @@ fn run() {
 
             let expiry_gate_type: AccessGateExpiryType = gate_config.gate().into();
 
-            match expiry_gate_type {
-                AccessGateExpiryType::Batch => {
-                    let mut check_gate_args = CheckGateArgs {
-                        user_id: member.user_id,
-                        diamond_membership_expires_at: None,
-                        this_canister: state.env.canister_id(),
-                        is_unique_person: false,
-                        verified_credential_args: None,
-                        referred_by_member: false,
-                        now: state.env.now(),
-                    };
+            if matches!(expiry_gate_type, AccessGateExpiryType::UserLookup) {
+                let mut check_gate_args = CheckGateArgs {
+                    user_id: member.user_id,
+                    diamond_membership_expires_at: None,
+                    this_canister: state.env.canister_id(),
+                    is_unique_person: false,
+                    verified_credential_args: None,
+                    referred_by_member: false,
+                    now: state.env.now(),
+                };
 
-                    if let Some(cached_details) = state.data.user_cache.get(&member.user_id) {
-                        check_gate_args.diamond_membership_expires_at = cached_details.diamond_membership_expires_at;
-                        check_gate_args.is_unique_person = cached_details.is_unique_person;
-                    }
+                if let Some(cached_details) = state.data.user_cache.get(&member.user_id) {
+                    check_gate_args.diamond_membership_expires_at = cached_details.diamond_membership_expires_at;
+                    check_gate_args.is_unique_person = cached_details.is_unique_person;
+                }
 
-                    let passes_gate = matches!(
-                        check_if_passes_gate_synchronously(gate_config.gate().clone(), check_gate_args),
-                        Some(CheckIfPassesGateResult::Success)
-                    );
+                let passes_gate = matches!(
+                    check_if_passes_gate_synchronously(gate_config.gate().clone(), check_gate_args),
+                    Some(CheckIfPassesGateResult::Success)
+                );
 
-                    if passes_gate {
-                        // Queue up the next check
-                        if state.data.chat.members.can_member_lapse(&member.user_id) {
-                            state.data.expiring_members.push(ExpiringMember {
-                                expires: now + gate_expiry,
-                                channel_id: member.channel_id,
-                                user_id: member.user_id,
-                            });
-                        }
-                    } else {
-                        // Add this member to the list of batchable actions
-                        batched_actions.push(ExpiringMemberActionDetails {
-                            user_id: member.user_id,
+                if passes_gate {
+                    // Queue up the next check
+                    if state.data.chat.members.can_member_lapse(&member.user_id) {
+                        state.data.expiring_members.push(ExpiringMember {
+                            expires: now + gate_expiry,
                             channel_id: member.channel_id,
-                            member_expires: member.expires,
-                            original_gate_expiry: gate_expiry,
+                            user_id: member.user_id,
                         });
-
-                        if batched_actions.len() >= USER_DETAILS_BATCH_SIZE {
-                            state
-                                .data
-                                .expiring_member_actions
-                                .push(ExpiringMemberAction::Batch(mem::take(&mut batched_actions)))
-                        }
                     }
+                } else {
+                    // Add this member to the list of batchable actions
+                    users_to_lookup.push(member.user_id);
+
+                    if users_to_lookup.len() >= USER_DETAILS_BATCH_SIZE {
+                        state
+                            .data
+                            .expiring_member_actions
+                            .push(ExpiringMemberAction::UserLookup(mem::take(&mut users_to_lookup)))
+                    }
+                }
+            }
+
+            match expiry_gate_type {
+                AccessGateExpiryType::UserLookup | AccessGateExpiryType::Check => {
+                    check_gate_actions.push(ExpiringMemberActionDetails {
+                        user_id: member.user_id,
+                        channel_id: member.channel_id,
+                        member_expires: member.expires,
+                        original_gate_expiry: gate_expiry,
+                    });
                 }
                 AccessGateExpiryType::Lapse => {
                     state.data.chat.members.mark_member_lapsed(&member.user_id, now);
-                }
-                AccessGateExpiryType::Single => {
-                    state
-                        .data
-                        .expiring_member_actions
-                        .push(ExpiringMemberAction::Single(ExpiringMemberActionDetails {
-                            user_id: member.user_id,
-                            channel_id: member.channel_id,
-                            member_expires: member.expires,
-                            original_gate_expiry: gate_expiry,
-                        }));
                 }
                 AccessGateExpiryType::Invalid => {
                     // Do nothing
@@ -132,11 +125,20 @@ fn run() {
             }
         }
 
-        if !batched_actions.is_empty() {
+        if !users_to_lookup.is_empty() {
             state
                 .data
                 .expiring_member_actions
-                .push(ExpiringMemberAction::Batch(batched_actions))
+                .push(ExpiringMemberAction::UserLookup(users_to_lookup))
+        }
+
+        // Now that the batches of user lookups have been queued then queue all the
+        // individual gate check actions
+        for action in check_gate_actions {
+            state
+                .data
+                .expiring_member_actions
+                .push(ExpiringMemberAction::AsyncGateCheck(action));
         }
 
         process_expire_member_actions::start_job_if_required(state);

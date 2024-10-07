@@ -26,28 +26,18 @@ impl ExpiringMemberActions {
     }
 
     pub fn remove_gate(&mut self, channel_id: Option<ChannelId>) {
-        for a in self.queue.iter_mut() {
-            if let ExpiringMemberAction::Batch(list) = a {
-                list.retain(|d| d.channel_id != channel_id);
-            }
-        }
-
         self.queue.retain(|a| match a {
-            ExpiringMemberAction::Batch(vec) => !vec.is_empty(),
-            ExpiringMemberAction::Single(d) => d.channel_id != channel_id,
+            ExpiringMemberAction::UserLookup(_) => true,
+            ExpiringMemberAction::AsyncGateCheck(d) => d.channel_id != channel_id,
         });
     }
 
     pub fn remove_member(&mut self, user_id: UserId, channel_id: Option<ChannelId>) {
-        for a in self.queue.iter_mut() {
-            if let ExpiringMemberAction::Batch(list) = a {
-                list.retain(|d| !(d.user_id == user_id && (channel_id.is_none() || channel_id == d.channel_id)));
-            }
-        }
-
         self.queue.retain(|a| match a {
-            ExpiringMemberAction::Batch(vec) => !vec.is_empty(),
-            ExpiringMemberAction::Single(d) => !(d.user_id == user_id && (channel_id.is_none() || channel_id == d.channel_id)),
+            ExpiringMemberAction::UserLookup(_) => true,
+            ExpiringMemberAction::AsyncGateCheck(d) => {
+                !(d.user_id == user_id && (channel_id.is_none() || channel_id == d.channel_id))
+            }
         });
     }
 
@@ -58,8 +48,8 @@ impl ExpiringMemberActions {
 
 #[derive(Serialize, Deserialize)]
 pub enum ExpiringMemberAction {
-    Batch(Vec<ExpiringMemberActionDetails>),
-    Single(ExpiringMemberActionDetails),
+    UserLookup(Vec<UserId>),
+    AsyncGateCheck(ExpiringMemberActionDetails),
 }
 
 #[derive(Serialize, Deserialize)]
