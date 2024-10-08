@@ -33,7 +33,7 @@ import { CustomCachePlugin } from "./cache_plugin";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-expect-error
-self.__WB_DISABLE_DEV_LOGS = true;
+self.__WB_DISABLE_DEV_LOGS = false;
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -64,12 +64,16 @@ staticResourceCache({
 });
 
 pageCache({
-    matchCallback: ({ request }) => request.mode === "navigate",
+    matchCallback: ({ request }) => {
+        console.debug("SW: pageCache matchCallback", request.mode === "navigate", request.url);
+        return request.mode === "navigate";
+    },
     networkTimeoutSeconds: 3,
     cacheName: "openchat_network_first",
     plugins: [
         {
             cacheKeyWillBeUsed: async () => {
+                console.debug("SW: cacheKeyWillBeUsed");
                 return "openchat_document";
             },
         },
