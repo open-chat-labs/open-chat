@@ -49,17 +49,6 @@ pub struct ChatEvents {
 }
 
 impl ChatEvents {
-    // TODO remove this
-    pub fn populate_search_index(&mut self) {
-        for event in self.main.iter(None, true, EventIndex::default()) {
-            if let EventOrExpiredRangeInternal::Event(e) = event {
-                if let ChatEventInternal::Message(m) = &e.event {
-                    self.search_index.push(m.message_index, m.sender, Document::from(&m.content));
-                }
-            }
-        }
-    }
-
     pub fn new_direct_chat(
         them: UserId,
         events_ttl: Option<Milliseconds>,

@@ -21,17 +21,7 @@ pub trait SwapClient {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(from = "u128")]
 pub struct SwapSuccess {
     pub amount_out: u128,
     pub withdrawal_success: Option<bool>,
-}
-
-impl From<u128> for SwapSuccess {
-    fn from(value: u128) -> Self {
-        SwapSuccess {
-            amount_out: value,
-            withdrawal_success: None,
-        }
-    }
 }
