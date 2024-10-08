@@ -207,6 +207,7 @@ async fn send_prize_message_to_group(
             Response::Success(_) => Ok(()),
             Response::CallerNotInGroup => Err("Bot not in group".to_string()),
             Response::UserSuspended => Err("Bot suspended".to_string()),
+            Response::UserLapsed => Err("Bot lapsed".to_string()),
             Response::ChatFrozen => Err("Group frozen".to_string()),
             Response::MessageEmpty
             | Response::RulesNotAccepted

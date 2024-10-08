@@ -1,13 +1,14 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_user_index_or_local_user_index;
-use crate::{mutate_state, read_state, run_regular_jobs, AddMemberArgs, RuntimeState};
+use crate::{jobs, mutate_state, read_state, run_regular_jobs, AddMemberArgs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use gated_groups::{check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult, CheckVerifiedCredentialGateArgs};
 use group_canister::c2c_join_group::{Response::*, *};
 use group_chat_core::AddResult;
-use types::{AccessGate, MemberJoined, UsersUnblocked};
+use group_community_common::{ExpiringMember, Member};
+use types::{AccessGate, AccessGateConfigInternal, MemberJoined, UsersUnblocked};
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
@@ -15,7 +16,7 @@ async fn c2c_join_group(args: Args) -> Response {
     run_regular_jobs();
 
     match read_state(|state| is_permitted_to_join(&args, state)) {
-        Ok(Some((gate, check_gate_args))) => match check_if_passes_gate(gate, check_gate_args).await {
+        Ok(Some((gate_config, check_gate_args))) => match check_if_passes_gate(gate_config.gate, check_gate_args).await {
             CheckIfPassesGateResult::Success => {}
             CheckIfPassesGateResult::Failed(reason) => return GateCheckFailed(reason),
             CheckIfPassesGateResult::InternalError(error) => return InternalError(error),
@@ -27,15 +28,15 @@ async fn c2c_join_group(args: Args) -> Response {
     mutate_state(|state| c2c_join_group_impl(args, state))
 }
 
-fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(AccessGate, CheckGateArgs)>, Response> {
+fn is_permitted_to_join(
+    args: &Args,
+    state: &RuntimeState,
+) -> Result<Option<(AccessGateConfigInternal, CheckGateArgs)>, Response> {
     let caller = state.env.caller();
 
     // If the call is from the user index then we skip the checks
     if caller == state.data.user_index_canister_id {
         Ok(None)
-    } else if let Some(member) = state.data.chat.members.get(&args.user_id) {
-        let summary = state.summary(member);
-        Err(AlreadyInGroupV2(Box::new(summary)))
     } else if state.data.is_frozen() {
         Err(ChatFrozen)
     } else if let Some(limit) = state.data.chat.members.user_limit_reached() {
@@ -45,14 +46,21 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(Acc
     } else if !state.data.chat.is_public.value && !state.data.is_invite_code_valid(args.invite_code) {
         Err(NotInvited)
     } else {
-        Ok(state.data.chat.gate.as_ref().map(|g| {
+        if let Some(member) = state.data.chat.members.get(&args.user_id) {
+            if !member.lapsed.value {
+                let summary = state.summary(member);
+                return Err(AlreadyInGroupV2(Box::new(summary)));
+            }
+        }
+
+        Ok(state.data.chat.gate_config.as_ref().map(|gc| {
             (
-                g.clone(),
+                gc.clone(),
                 CheckGateArgs {
                     user_id: args.user_id,
                     diamond_membership_expires_at: args.diamond_membership_expires_at,
                     this_canister: state.env.canister_id(),
-                    unique_person_proof: args.unique_person_proof.clone(),
+                    is_unique_person: args.unique_person_proof.is_some(),
                     verified_credential_args: args.verified_credential_args.as_ref().map(|vc| {
                         CheckVerifiedCredentialGateArgs {
                             user_ii_principal: vc.user_ii_principal,
@@ -117,7 +125,7 @@ fn c2c_join_group_impl(args: Args, state: &mut RuntimeState) -> Response {
         mute_notifications: state.data.chat.is_public.value,
         user_type: args.user_type,
     }) {
-        AddResult::Success(participant) => {
+        AddResult::Success(member) => {
             let invitation = state.data.chat.invited_users.remove(&args.user_id, now);
 
             let event = MemberJoined {
@@ -132,23 +140,42 @@ fn c2c_join_group_impl(args: Args, state: &mut RuntimeState) -> Response {
 
             new_event = true;
 
-            let summary = state.summary(&participant);
+            let summary = state.summary(&member);
 
             // If there is a payment gate on this group then queue payments to owner(s) and treasury
-            if let Some(AccessGate::Payment(gate)) = state.data.chat.gate.value.as_ref() {
-                state.queue_access_gate_payments(gate.clone());
+            if let Some(AccessGate::Payment(gate)) = state.data.chat.gate_config.value.as_ref().map(|gc| gc.gate.clone()) {
+                state.queue_access_gate_payments(gate);
             }
 
             Success(Box::new(summary))
         }
         AddResult::AlreadyInGroup => {
+            let member = state.data.chat.members.get_mut(&args.user_id).unwrap();
+            member.clear_lapsed(now);
+
             let member = state.data.chat.members.get(&args.user_id).unwrap();
             let summary = state.summary(member);
-            AlreadyInGroupV2(Box::new(summary))
+            Success(Box::new(summary))
         }
         AddResult::Blocked => Blocked,
         AddResult::MemberLimitReached(limit) => ParticipantLimitReached(limit),
     };
+
+    if let Some(gate_expiry) = state.data.chat.gate_config.value.as_ref().and_then(|gc| gc.expiry()) {
+        state.data.expiring_members.push(ExpiringMember {
+            expires: now + gate_expiry,
+            channel_id: None,
+            user_id: args.user_id,
+        });
+    }
+
+    state.data.user_cache.insert(
+        args.user_id,
+        args.diamond_membership_expires_at,
+        args.unique_person_proof.is_some(),
+    );
+
+    jobs::expire_members::start_job_if_required(state);
 
     if new_event {
         handle_activity_notification(state);

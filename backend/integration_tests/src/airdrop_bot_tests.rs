@@ -25,7 +25,8 @@ fn airdrop_end_to_end(v2: bool) {
     // Create 1 owner and 5 other users
     // Owner creates the airdrop community
     // Join each other user to the community
-    // Owner creates a public airdrop channel gated by diamond - the 5 users will be added automatically
+    // Owner creates a public airdrop channel gated by diamond
+    // The users join the channel
     // Transfer 63,001 CHAT to the airdrop_bot canister
     // Owner invites the airdrop_bot to the channel
     //
@@ -42,18 +43,6 @@ fn airdrop_end_to_end(v2: bool) {
 
     env.tick();
 
-    for user in users.iter() {
-        client::local_user_index::happy_path::join_community(
-            env,
-            user.principal,
-            canister_ids.local_user_index,
-            community_id,
-            None,
-        );
-    }
-
-    tick_many(env, 10);
-
     let channel_id = client::community::happy_path::create_gated_channel(
         env,
         owner.principal,
@@ -62,6 +51,18 @@ fn airdrop_end_to_end(v2: bool) {
         "July airdrop".to_string(),
         AccessGate::DiamondMember,
     );
+
+    for user in users.iter() {
+        client::local_user_index::happy_path::join_channel(
+            env,
+            user.principal,
+            canister_ids.local_user_index,
+            community_id,
+            channel_id,
+        );
+    }
+
+    tick_many(env, 10);
 
     client::ledger::happy_path::transfer(
         env,
@@ -132,7 +133,7 @@ fn airdrop_end_to_end(v2: bool) {
     );
 
     // Advance time to just after the airdrop is due
-    env.advance_time(Duration::from_millis(1000 + start_airdrop - now_millis(env)));
+    env.advance_time(Duration::from_millis(1000 + start_airdrop.saturating_sub(now_millis(env))));
 
     tick_many(env, 30);
 

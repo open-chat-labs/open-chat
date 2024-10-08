@@ -66,6 +66,7 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
             .as_ref()
             .filter(|accepted| updates.rules_changed || accepted.timestamp > updates_since)
             .map(|accepted| accepted.value >= chat.rules.text.version),
+        lapsed: member.lapsed.if_set_after(updates_since).copied(),
     };
 
     Success(SuccessResult {
@@ -102,6 +103,7 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
             events_ttl: updates.events_ttl,
             events_ttl_last_updated: updates.events_ttl_last_updated,
             gate: updates.gate,
+            gate_config: updates.gate_config,
             rules_accepted: membership.rules_accepted,
             membership: Some(membership),
             video_call_in_progress: updates.video_call_in_progress,

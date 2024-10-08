@@ -35,5 +35,7 @@ fn events_window_impl(args: Args, on_behalf_of: Option<Principal>, state: &Runti
         EventsResult::Success(response) => Success(response),
         EventsResult::UserNotInGroup => CallerNotInGroup,
         EventsResult::ThreadNotFound => ThreadMessageNotFound,
+        EventsResult::UserSuspended => UserSuspended,
+        EventsResult::UserLapsed => UserLapsed,
     }
 }

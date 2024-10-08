@@ -209,6 +209,7 @@ fn process_send_message_result(
         SendMessageResult::NotAuthorized => NotAuthorized,
         SendMessageResult::UserNotInGroup => CallerNotInGroup,
         SendMessageResult::UserSuspended => UserSuspended,
+        SendMessageResult::UserLapsed => NotAuthorized,
         SendMessageResult::RulesNotAccepted => RulesNotAccepted,
         SendMessageResult::InvalidRequest(error) => InvalidRequest(error),
     }

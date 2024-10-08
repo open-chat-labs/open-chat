@@ -454,7 +454,7 @@ pub trait Reader {
             ChatEventInternal::ChatFrozen(f) => ChatEvent::ChatFrozen(*f),
             ChatEventInternal::ChatUnfrozen(u) => ChatEvent::ChatUnfrozen(*u),
             ChatEventInternal::EventsTimeToLiveUpdated(u) => ChatEvent::EventsTimeToLiveUpdated(*u),
-            ChatEventInternal::GroupGateUpdated(g) => ChatEvent::GroupGateUpdated(*g),
+            ChatEventInternal::GroupGateUpdated(g) => ChatEvent::GroupGateUpdated((*g).into()),
             ChatEventInternal::UsersInvited(e) => ChatEvent::UsersInvited(*e),
             ChatEventInternal::MembersAddedToPublicChannel(m) => ChatEvent::MembersAddedToDefaultChannel(m.as_ref().into()),
             ChatEventInternal::ExternalUrlUpdated(u) => ChatEvent::ExternalUrlUpdated(*u),

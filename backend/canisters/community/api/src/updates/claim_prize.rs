@@ -27,4 +27,5 @@ pub enum Response {
     TransferFailed(String, FailedCryptoTransaction),
     FailedAfterTransfer(String, CompletedCryptoTransaction),
     InternalError(String),
+    UserLapsed,
 }

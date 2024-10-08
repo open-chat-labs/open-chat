@@ -6,8 +6,8 @@ use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use sns_governance_canister::types::neuron::DissolveState;
 use sns_governance_canister::types::Neuron;
 use types::{
-    AccessGate, AccessGateNonComposite, AccessGateType, CanisterId, CompositeGate, GateCheckFailedReason, PaymentGate,
-    SnsNeuronGate, TimestampMillis, TokenBalanceGate, UniquePersonProof, UserId, VerifiedCredentialGate,
+    AccessGate, AccessGateNonComposite, AccessGateScope, CanisterId, CompositeGate, GateCheckFailedReason, PaymentGate,
+    SnsNeuronGate, TimestampMillis, TokenBalanceGate, UserId, VerifiedCredentialGate,
 };
 use utils::consts::MEMO_JOINING_FEE;
 use utils::time::{DAY_IN_MS, NANOS_PER_MILLISECOND};
@@ -29,7 +29,7 @@ pub struct CheckGateArgs {
     pub user_id: UserId,
     pub diamond_membership_expires_at: Option<TimestampMillis>,
     pub this_canister: CanisterId,
-    pub unique_person_proof: Option<UniquePersonProof>,
+    pub is_unique_person: bool,
     pub verified_credential_args: Option<CheckVerifiedCredentialGateArgs>,
     pub referred_by_member: bool,
     pub now: TimestampMillis,
@@ -45,16 +45,16 @@ pub struct CheckVerifiedCredentialGateArgs {
 }
 
 pub async fn check_if_passes_gate(gate: AccessGate, args: CheckGateArgs) -> CheckIfPassesGateResult {
-    match AccessGateType::from(gate) {
-        AccessGateType::Composite(gate) => check_composite_gate(gate, args).await,
-        AccessGateType::NonComposite(gate) => check_non_composite_gate(gate, args).await,
+    match AccessGateScope::from(gate) {
+        AccessGateScope::Composite(gate) => check_composite_gate(gate, args).await,
+        AccessGateScope::NonComposite(gate) => check_non_composite_gate(gate, args).await,
     }
 }
 
 pub fn check_if_passes_gate_synchronously(gate: AccessGate, args: CheckGateArgs) -> Option<CheckIfPassesGateResult> {
-    match AccessGateType::from(gate) {
-        AccessGateType::Composite(gate) => check_composite_gate_synchronously(gate, args),
-        AccessGateType::NonComposite(gate) => check_non_composite_gate_synchronously(gate, args),
+    match AccessGateScope::from(gate) {
+        AccessGateScope::Composite(gate) => check_composite_gate_synchronously(gate, args),
+        AccessGateScope::NonComposite(gate) => check_non_composite_gate_synchronously(gate, args),
     }
 }
 
@@ -64,7 +64,7 @@ async fn check_non_composite_gate(gate: AccessGateNonComposite, args: CheckGateA
         AccessGateNonComposite::LifetimeDiamondMember => {
             check_lifetime_diamond_member_gate(args.diamond_membership_expires_at, args.now)
         }
-        AccessGateNonComposite::UniquePerson => check_unique_person_gate(args.unique_person_proof),
+        AccessGateNonComposite::UniquePerson => check_unique_person_gate(args.is_unique_person),
         AccessGateNonComposite::VerifiedCredential(g) => {
             check_verified_credential_gate(&g, args.verified_credential_args, args.now)
         }
@@ -86,7 +86,7 @@ fn check_non_composite_gate_synchronously(
             args.diamond_membership_expires_at,
             args.now,
         )),
-        AccessGateNonComposite::UniquePerson => Some(check_unique_person_gate(args.unique_person_proof)),
+        AccessGateNonComposite::UniquePerson => Some(check_unique_person_gate(args.is_unique_person)),
         AccessGateNonComposite::VerifiedCredential(g) => {
             Some(check_verified_credential_gate(&g, args.verified_credential_args, args.now))
         }
@@ -126,8 +126,8 @@ fn check_lifetime_diamond_member_gate(
     }
 }
 
-fn check_unique_person_gate(proof: Option<UniquePersonProof>) -> CheckIfPassesGateResult {
-    if proof.is_some() {
+fn check_unique_person_gate(is_unique_person: bool) -> CheckIfPassesGateResult {
+    if is_unique_person {
         CheckIfPassesGateResult::Success
     } else {
         CheckIfPassesGateResult::Failed(GateCheckFailedReason::NoUniquePersonProof)

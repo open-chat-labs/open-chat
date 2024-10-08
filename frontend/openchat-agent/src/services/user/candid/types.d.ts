@@ -684,7 +684,8 @@ export interface CyclesRegistrationFee {
   'amount' : Cycles,
 }
 export interface DeleteCommunityArgs { 'community_id' : CommunityId }
-export type DeleteCommunityResponse = { 'NotAuthorized' : null } |
+export type DeleteCommunityResponse = { 'UserLapsed' : null } |
+  { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'UserSuspended' : null } |
   { 'CommunityFrozen' : null } |
@@ -2075,6 +2076,7 @@ export type SendMessageWithTransferToChannelResponse = {
   { 'TextTooLong' : number } |
   { 'P2PSwapSetUpFailed' : string } |
   { 'PinIncorrect' : Milliseconds } |
+  { 'UserLapsed' : null } |
   { 'UserNotInChannel' : CompletedCryptoTransaction } |
   { 'PinRequired' : null } |
   { 'ChannelNotFound' : CompletedCryptoTransaction } |
@@ -2120,6 +2122,7 @@ export type SendMessageWithTransferToGroupResponse = {
   { 'TextTooLong' : number } |
   { 'P2PSwapSetUpFailed' : string } |
   { 'PinIncorrect' : Milliseconds } |
+  { 'UserLapsed' : null } |
   { 'PinRequired' : null } |
   { 'CallerNotInGroup' : [] | [CompletedCryptoTransaction] } |
   { 'ChatFrozen' : null } |
@@ -2339,6 +2342,7 @@ export type TipMessageResponse = { 'TooManyFailedPinAttempts' : Milliseconds } |
   { 'Retrying' : string } |
   { 'PinIncorrect' : Milliseconds } |
   { 'TransferNotToMessageSender' : null } |
+  { 'UserLapsed' : null } |
   { 'PinRequired' : null } |
   { 'MessageNotFound' : null } |
   { 'ChatNotFound' : null } |

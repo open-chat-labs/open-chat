@@ -83,5 +83,6 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
         TipMessageResult::UserNotInGroup => UserNotInGroup,
         TipMessageResult::NotAuthorized => NotAuthorized,
         TipMessageResult::UserSuspended => UserSuspended,
+        TipMessageResult::UserLapsed => UserLapsed,
     }
 }

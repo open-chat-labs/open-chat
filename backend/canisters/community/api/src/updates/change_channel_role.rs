@@ -23,4 +23,5 @@ pub enum Response {
     TargetUserNotInChannel,
     NotAuthorized,
     Invalid,
+    UserLapsed,
 }

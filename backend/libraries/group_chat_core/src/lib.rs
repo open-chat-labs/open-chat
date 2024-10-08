@@ -1,9 +1,10 @@
 use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageResult,
-    DeleteUndeleteMessagesArgs, MessageContentInternal, PushMessageArgs, Reader, RemoveExpiredEventsResult, TipMessageArgs,
-    UndeleteMessageResult,
+    DeleteUndeleteMessagesArgs, GroupGateUpdatedInternal, MessageContentInternal, PushMessageArgs, Reader,
+    RemoveExpiredEventsResult, TipMessageArgs, UndeleteMessageResult,
 };
 use event_store_producer::{EventStoreClient, Runtime};
+use group_community_common::Member;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use regex_lite::Regex;
@@ -12,9 +13,9 @@ use serde::{Deserialize, Serialize};
 use std::cmp::{max, min};
 use std::collections::{BTreeSet, HashSet};
 use types::{
-    AccessGate, AvatarChanged, ContentValidationError, CustomPermission, Document, EventIndex, EventOrExpiredRange,
-    EventWrapper, EventsResponse, ExternalUrlUpdated, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged,
-    GroupGateUpdated, GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
+    AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, ContentValidationError, CustomPermission, Document,
+    EventIndex, EventOrExpiredRange, EventWrapper, EventsResponse, ExternalUrlUpdated, FieldTooLongResult, FieldTooShortResult,
+    GroupDescriptionChanged, GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
     GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent,
     MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned,
     MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions,
@@ -56,7 +57,8 @@ pub struct GroupChatCore {
     pub pinned_messages_removed: BTreeSet<(TimestampMillis, MessageIndex)>,
     pub permissions: Timestamped<GroupPermissions>,
     pub date_last_pinned: Option<TimestampMillis>,
-    pub gate: Timestamped<Option<AccessGate>>,
+    #[serde(alias = "gate")]
+    pub gate_config: Timestamped<Option<AccessGateConfigInternal>>,
     pub invited_users: InvitedUsers,
     pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
     pub external_url: Timestamped<Option<String>>,
@@ -76,7 +78,7 @@ impl GroupChatCore {
         history_visible_to_new_joiners: bool,
         messages_visible_to_non_members: bool,
         permissions: GroupPermissions,
-        gate: Option<AccessGate>,
+        gate_config: Option<AccessGateConfigInternal>,
         events_ttl: Option<Milliseconds>,
         created_by_user_type: UserType,
         anonymized_chat_id: u128,
@@ -111,7 +113,7 @@ impl GroupChatCore {
             pinned_messages_removed: BTreeSet::new(),
             permissions: Timestamped::new(permissions, now),
             date_last_pinned: None,
-            gate: Timestamped::new(gate, now),
+            gate_config: Timestamped::new(gate_config, now),
             invited_users: InvitedUsers::default(),
             min_visible_indexes_for_new_members: None,
             external_url: Timestamped::new(external_url, now),
@@ -128,14 +130,29 @@ impl GroupChatCore {
         }
     }
 
-    pub fn min_visible_event_index(&self, user_id: Option<UserId>) -> Option<EventIndex> {
-        if let Some(user) = user_id.and_then(|u| self.members.get(&u)) {
-            Some(user.min_visible_event_index())
-        } else if self.is_public.value && self.messages_visible_to_non_members.value {
-            Some(self.min_visible_indexes_for_new_members.map(|(e, _)| e).unwrap_or_default())
-        } else {
-            None
+    pub fn min_visible_event_index(&self, user_id: Option<UserId>) -> MinVisibleEventIndexResult {
+        let hidden_for_non_members = !self.is_public.value || !self.messages_visible_to_non_members.value;
+        let member = user_id.and_then(|u| self.members.get(&u));
+
+        if hidden_for_non_members {
+            if let Some(member) = member {
+                if member.suspended.value {
+                    return MinVisibleEventIndexResult::UserSuspended;
+                } else if member.lapsed.value {
+                    return MinVisibleEventIndexResult::UserLapsed;
+                }
+            } else {
+                return MinVisibleEventIndexResult::UserNotInGroup;
+            }
         }
+
+        let event_index = if let Some(member) = member {
+            member.min_visible_event_index()
+        } else {
+            self.min_visible_indexes_for_new_members.map(|(e, _)| e).unwrap_or_default()
+        };
+
+        MinVisibleEventIndexResult::Success(event_index)
     }
 
     pub fn details_last_updated(&self) -> TimestampMillis {
@@ -229,10 +246,15 @@ impl GroupChatCore {
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
             events_ttl_last_updated: (events_ttl.timestamp > since).then_some(events_ttl.timestamp),
             gate: self
-                .gate
+                .gate_config
                 .if_set_after(since)
                 .cloned()
-                .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
+                .map_or(OptionUpdate::NoChange, |ogc| OptionUpdate::from_update(ogc.map(|gc| gc.gate))),
+            gate_config: self
+                .gate_config
+                .if_set_after(since)
+                .cloned()
+                .map_or(OptionUpdate::NoChange, |ogc| OptionUpdate::from_update(ogc.map(|g| g.into()))),
             rules_changed: self.rules.version_last_updated > since,
             video_call_in_progress: self
                 .events
@@ -353,6 +375,8 @@ impl GroupChatCore {
             }
             EventsReaderResult::ThreadNotFound => ThreadNotFound,
             EventsReaderResult::UserNotInGroup => UserNotInGroup,
+            EventsReaderResult::UserSuspended => UserSuspended,
+            EventsReaderResult::UserLapsed => UserLapsed,
         }
     }
 
@@ -381,6 +405,8 @@ impl GroupChatCore {
             }
             EventsReaderResult::ThreadNotFound => ThreadNotFound,
             EventsReaderResult::UserNotInGroup => UserNotInGroup,
+            EventsReaderResult::UserSuspended => UserSuspended,
+            EventsReaderResult::UserLapsed => UserLapsed,
         }
     }
 
@@ -416,6 +442,8 @@ impl GroupChatCore {
             }
             EventsReaderResult::ThreadNotFound => ThreadNotFound,
             EventsReaderResult::UserNotInGroup => UserNotInGroup,
+            EventsReaderResult::UserSuspended => UserSuspended,
+            EventsReaderResult::UserLapsed => UserLapsed,
         }
     }
 
@@ -444,6 +472,8 @@ impl GroupChatCore {
             }
             EventsReaderResult::ThreadNotFound => ThreadNotFound,
             EventsReaderResult::UserNotInGroup => UserNotInGroup,
+            EventsReaderResult::UserSuspended => UserSuspended,
+            EventsReaderResult::UserLapsed => UserLapsed,
         }
     }
 
@@ -789,6 +819,8 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
+            } else if member.lapsed.value {
+                return UserLapsed;
             }
             if !member.role.can_react_to_messages(&self.permissions) {
                 return NotAuthorized;
@@ -827,6 +859,8 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
+            } else if member.lapsed.value {
+                return UserLapsed;
             }
             if !member.role.can_react_to_messages(&self.permissions) {
                 return NotAuthorized;
@@ -859,8 +893,9 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&args.user_id) {
             if member.suspended.value {
                 return UserSuspended;
-            }
-            if !member.role.can_react_to_messages(&self.permissions) {
+            } else if member.lapsed.value {
+                return UserLapsed;
+            } else if !member.role.can_react_to_messages(&self.permissions) {
                 return NotAuthorized;
             }
 
@@ -887,6 +922,8 @@ impl GroupChatCore {
         let (is_admin, min_visible_event_index) = if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
+            } else if member.lapsed() {
+                return UserLapsed;
             }
             (
                 member.role.can_delete_messages(&self.permissions),
@@ -952,6 +989,8 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
+            } else if member.lapsed() {
+                return UserLapsed;
             }
 
             let min_visible_event_index = member.min_visible_event_index();
@@ -1027,8 +1066,9 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
-            }
-            if !member.role.can_pin_messages(&self.permissions) {
+            } else if member.lapsed.value {
+                return UserLapsed;
+            } else if !member.role.can_pin_messages(&self.permissions) {
                 return NotAuthorized;
             }
 
@@ -1070,8 +1110,9 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
-            }
-            if !member.role.can_pin_messages(&self.permissions) {
+            } else if member.lapsed.value {
+                return UserLapsed;
+            } else if !member.role.can_pin_messages(&self.permissions) {
                 return NotAuthorized;
             }
 
@@ -1220,9 +1261,9 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&cancelled_by) {
             if member.suspended.value {
                 return UserSuspended;
-            }
-
-            if !member.role.can_invite_users(&self.permissions) {
+            } else if member.lapsed.value {
+                return UserLapsed;
+            } else if !member.role.can_invite_users(&self.permissions) {
                 return NotAuthorized;
             }
 
@@ -1290,6 +1331,8 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
+            } else if member.lapsed.value {
+                return UserLapsed;
             }
 
             let target_member_role = match self.members.get(&target_user_id) {
@@ -1344,7 +1387,7 @@ impl GroupChatCore {
         rules: Option<UpdatedRules>,
         avatar: OptionUpdate<Document>,
         permissions: Option<OptionalGroupPermissions>,
-        gate: OptionUpdate<AccessGate>,
+        gate_config: OptionUpdate<AccessGateConfigInternal>,
         public: Option<bool>,
         messages_visible_to_non_members: Option<bool>,
         events_ttl: OptionUpdate<Milliseconds>,
@@ -1359,7 +1402,7 @@ impl GroupChatCore {
                 rules,
                 avatar,
                 permissions,
-                gate,
+                gate_config,
                 public,
                 messages_visible_to_non_members,
                 events_ttl,
@@ -1416,6 +1459,8 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(user_id) {
             if member.suspended.value {
                 return Err(UserSuspended);
+            } else if member.lapsed.value {
+                return Err(UserLapsed);
             }
 
             let group_permissions = &self.permissions;
@@ -1440,7 +1485,7 @@ impl GroupChatCore {
         rules: Option<UpdatedRules>,
         avatar: OptionUpdate<Document>,
         permissions: Option<OptionalGroupPermissions>,
-        gate: OptionUpdate<AccessGate>,
+        gate_config: OptionUpdate<AccessGateConfigInternal>,
         public: Option<bool>,
         messages_visible_to_non_members: Option<bool>,
         events_ttl: OptionUpdate<Milliseconds>,
@@ -1449,7 +1494,7 @@ impl GroupChatCore {
     ) -> UpdateSuccessResult {
         let mut result = UpdateSuccessResult {
             newly_public: false,
-            gate_update: OptionUpdate::NoChange,
+            gate_config_update: OptionUpdate::NoChange,
             rules_version: None,
         };
 
@@ -1545,15 +1590,15 @@ impl GroupChatCore {
             );
         }
 
-        if let Some(gate) = gate.expand() {
-            if self.gate.value != gate {
-                self.gate = Timestamped::new(gate.clone(), now);
-                result.gate_update = OptionUpdate::from_update(gate.clone());
+        if let Some(gate_config) = gate_config.expand() {
+            if self.gate_config.value != gate_config {
+                self.gate_config = Timestamped::new(gate_config.clone(), now);
+                result.gate_config_update = OptionUpdate::from_update(gate_config.clone());
 
                 events.push_main_event(
-                    ChatEventInternal::GroupGateUpdated(Box::new(GroupGateUpdated {
+                    ChatEventInternal::GroupGateUpdated(Box::new(GroupGateUpdatedInternal {
                         updated_by: user_id,
-                        new_gate: gate,
+                        new_gate_config: gate_config,
                     })),
                     0,
                     now,
@@ -1633,21 +1678,27 @@ impl GroupChatCore {
     ) -> FollowThreadResult {
         use FollowThreadResult::*;
 
-        if let Some(member) = self.members.get_mut(&user_id) {
-            match self
-                .events
-                .follow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)
-            {
-                chat_events::FollowThreadResult::Success => {
-                    member.unfollowed_threads.retain(|i| *i != thread_root_message_index);
-                    member.threads.insert(thread_root_message_index);
-                    Success
-                }
-                chat_events::FollowThreadResult::AlreadyFollowing => AlreadyFollowing,
-                chat_events::FollowThreadResult::ThreadNotFound => ThreadNotFound,
+        let Some(member) = self.members.get_mut(&user_id) else {
+            return UserNotInGroup;
+        };
+
+        if member.suspended.value {
+            return UserSuspended;
+        } else if member.lapsed.value {
+            return UserLapsed;
+        }
+
+        match self
+            .events
+            .follow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)
+        {
+            chat_events::FollowThreadResult::Success => {
+                member.unfollowed_threads.retain(|i| *i != thread_root_message_index);
+                member.threads.insert(thread_root_message_index);
+                Success
             }
-        } else {
-            UserNotInGroup
+            chat_events::FollowThreadResult::AlreadyFollowing => AlreadyFollowing,
+            chat_events::FollowThreadResult::ThreadNotFound => ThreadNotFound,
         }
     }
 
@@ -1659,21 +1710,27 @@ impl GroupChatCore {
     ) -> UnfollowThreadResult {
         use UnfollowThreadResult::*;
 
-        if let Some(member) = self.members.get_mut(&user_id) {
-            match self
-                .events
-                .unfollow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)
-            {
-                chat_events::UnfollowThreadResult::Success => {
-                    member.threads.remove(&thread_root_message_index);
-                    member.unfollowed_threads.push_if_not_contains(thread_root_message_index);
-                    Success
-                }
-                chat_events::UnfollowThreadResult::NotFollowing => NotFollowing,
-                chat_events::UnfollowThreadResult::ThreadNotFound => ThreadNotFound,
+        let Some(member) = self.members.get_mut(&user_id) else {
+            return UserNotInGroup;
+        };
+
+        if member.suspended.value {
+            return UserSuspended;
+        } else if member.lapsed.value {
+            return UserLapsed;
+        }
+
+        match self
+            .events
+            .unfollow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)
+        {
+            chat_events::UnfollowThreadResult::Success => {
+                member.threads.remove(&thread_root_message_index);
+                member.unfollowed_threads.push_if_not_contains(thread_root_message_index);
+                Success
             }
-        } else {
-            UserNotInGroup
+            chat_events::UnfollowThreadResult::NotFollowing => NotFollowing,
+            chat_events::UnfollowThreadResult::ThreadNotFound => ThreadNotFound,
         }
     }
 
@@ -1695,14 +1752,17 @@ impl GroupChatCore {
     fn events_reader(&self, user_id: Option<UserId>, thread_root_message_index: Option<MessageIndex>) -> EventsReaderResult {
         use EventsReaderResult::*;
 
-        if let Some(min_visible_event_index) = self.min_visible_event_index(user_id) {
-            if let Some(events_reader) = self.events.events_reader(min_visible_event_index, thread_root_message_index) {
-                Success(events_reader)
-            } else {
-                ThreadNotFound
+        match self.min_visible_event_index(user_id) {
+            MinVisibleEventIndexResult::Success(min_visible_event_index) => {
+                if let Some(events_reader) = self.events.events_reader(min_visible_event_index, thread_root_message_index) {
+                    Success(events_reader)
+                } else {
+                    ThreadNotFound
+                }
             }
-        } else {
-            UserNotInGroup
+            MinVisibleEventIndexResult::UserLapsed => EventsReaderResult::UserLapsed,
+            MinVisibleEventIndexResult::UserSuspended => EventsReaderResult::UserSuspended,
+            MinVisibleEventIndexResult::UserNotInGroup => EventsReaderResult::UserNotInGroup,
         }
     }
 
@@ -1810,22 +1870,22 @@ impl GroupChatCore {
             total_replies: thread_events_reader.next_message_index().into(),
         })
     }
-
-    pub fn has_payment_gate(&self) -> bool {
-        self.gate.value.as_ref().map(|g| g.is_payment_gate()).unwrap_or_default()
-    }
 }
 
 pub enum EventsResult {
     Success(EventsResponse),
     UserNotInGroup,
     ThreadNotFound,
+    UserSuspended,
+    UserLapsed,
 }
 
 pub enum MessagesResult {
     Success(MessagesResponse),
     UserNotInGroup,
     ThreadNotFound,
+    UserSuspended,
+    UserLapsed,
 }
 
 #[allow(clippy::large_enum_variant)]
@@ -1838,6 +1898,7 @@ pub enum SendMessageResult {
     NotAuthorized,
     UserNotInGroup,
     UserSuspended,
+    UserLapsed,
     RulesNotAccepted,
     InvalidRequest(String),
 }
@@ -1855,6 +1916,7 @@ pub enum AddRemoveReactionResult {
     UserNotInGroup,
     NotAuthorized,
     UserSuspended,
+    UserLapsed,
 }
 
 impl From<chat_events::AddRemoveReactionResult> for AddRemoveReactionResult {
@@ -1875,6 +1937,7 @@ pub enum TipMessageResult {
     NotAuthorized,
     UserNotInGroup,
     UserSuspended,
+    UserLapsed,
 }
 
 impl From<chat_events::TipMessageResult> for TipMessageResult {
@@ -1893,6 +1956,7 @@ pub enum DeleteMessagesResult {
     MessageNotFound,
     UserNotInGroup,
     UserSuspended,
+    UserLapsed,
 }
 
 pub enum UndeleteMessagesResult {
@@ -1900,6 +1964,7 @@ pub enum UndeleteMessagesResult {
     MessageNotFound,
     UserNotInGroup,
     UserSuspended,
+    UserLapsed,
 }
 
 pub enum PinUnpinMessageResult {
@@ -1909,6 +1974,7 @@ pub enum PinUnpinMessageResult {
     UserNotInGroup,
     MessageNotFound,
     UserSuspended,
+    UserLapsed,
 }
 
 pub enum CanLeaveResult {
@@ -1928,6 +1994,7 @@ pub enum LeaveResult {
 pub enum RemoveMemberResult {
     Success,
     UserSuspended,
+    UserLapsed,
     UserNotInGroup,
     TargetUserNotInGroup,
     NotAuthorized,
@@ -1937,6 +2004,7 @@ pub enum RemoveMemberResult {
 pub enum UpdateResult {
     Success(Box<UpdateSuccessResult>),
     UserSuspended,
+    UserLapsed,
     UserNotInGroup,
     NotAuthorized,
     NameTooShort(FieldTooShortResult),
@@ -1950,7 +2018,7 @@ pub enum UpdateResult {
 
 pub struct UpdateSuccessResult {
     pub newly_public: bool,
-    pub gate_update: OptionUpdate<AccessGate>,
+    pub gate_config_update: OptionUpdate<AccessGateConfigInternal>,
     pub rules_version: Option<Version>,
 }
 
@@ -1958,6 +2026,8 @@ enum EventsReaderResult<'r> {
     Success(ChatEventsListReader<'r>),
     UserNotInGroup,
     ThreadNotFound,
+    UserSuspended,
+    UserLapsed,
 }
 
 pub enum MakePrivateResult {
@@ -2008,6 +2078,7 @@ pub enum CancelInvitesResult {
     UserNotInGroup,
     UserSuspended,
     NotAuthorized,
+    UserLapsed,
 }
 
 pub enum FollowThreadResult {
@@ -2016,6 +2087,7 @@ pub enum FollowThreadResult {
     ThreadNotFound,
     UserNotInGroup,
     UserSuspended,
+    UserLapsed,
 }
 
 pub enum UnfollowThreadResult {
@@ -2024,6 +2096,7 @@ pub enum UnfollowThreadResult {
     ThreadNotFound,
     UserNotInGroup,
     UserSuspended,
+    UserLapsed,
 }
 
 #[derive(Default)]
@@ -2047,6 +2120,7 @@ pub struct SummaryUpdates {
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub events_ttl_last_updated: Option<TimestampMillis>,
     pub gate: OptionUpdate<AccessGate>,
+    pub gate_config: OptionUpdate<AccessGateConfig>,
     pub rules_changed: bool,
     pub video_call_in_progress: OptionUpdate<VideoCall>,
     pub external_url: OptionUpdate<String>,
@@ -2131,4 +2205,11 @@ struct PrepareSendMessageSuccess {
     mentions_disabled: bool,
     everyone_mentioned: bool,
     sender_user_type: UserType,
+}
+
+pub enum MinVisibleEventIndexResult {
+    Success(EventIndex),
+    UserLapsed,
+    UserSuspended,
+    UserNotInGroup,
 }

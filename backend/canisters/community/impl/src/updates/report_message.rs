@@ -40,53 +40,61 @@ fn build_c2c_args(args: &Args, state: &RuntimeState) -> Result<(c2c_report_messa
 
     let caller = state.env.caller();
 
-    if let Some(member) = state.data.members.get(caller) {
-        if member.suspended.value {
-            return Err(UserSuspended);
-        }
+    let Some(member) = state.data.members.get(caller) else {
+        return Err(UserNotInCommunity);
+    };
 
-        let user_id = member.user_id;
-
-        if let Some(channel) = state.data.channels.get(&args.channel_id) {
-            let chat = &channel.chat;
-
-            if let Some(channel_member) = chat.members.get(&user_id) {
-                if args.delete && !channel_member.role.can_delete_messages(&chat.permissions) {
-                    return Err(NotAuthorized);
-                }
-
-                if let Some(events_reader) = channel
-                    .chat
-                    .events
-                    .events_reader(channel_member.min_visible_event_index(), args.thread_root_message_index)
-                {
-                    if let Some(message) = events_reader.message(args.message_id.into(), Some(user_id)) {
-                        Ok((
-                            c2c_report_message::Args {
-                                reporter: user_id,
-                                chat_id: MultiUserChat::Channel(state.env.canister_id().into(), args.channel_id),
-                                thread_root_message_index: args.thread_root_message_index,
-                                message,
-                                already_deleted: args.delete,
-                                is_public: channel.chat.is_public.value && state.data.is_public,
-                            },
-                            state.data.group_index_canister_id,
-                        ))
-                    } else {
-                        Err(MessageNotFound)
-                    }
-                } else {
-                    Err(MessageNotFound)
-                }
-            } else {
-                Err(UserNotInChannel)
-            }
-        } else {
-            Err(ChannelNotFound)
-        }
-    } else {
-        Err(UserNotInCommunity)
+    if member.suspended.value {
+        return Err(UserSuspended);
+    } else if member.lapsed.value {
+        return Err(UserLapsed);
     }
+
+    let user_id = member.user_id;
+
+    let Some(channel) = state.data.channels.get(&args.channel_id) else {
+        return Err(ChannelNotFound);
+    };
+
+    let chat = &channel.chat;
+
+    let Some(channel_member) = chat.members.get(&user_id) else {
+        return Err(UserNotInChannel);
+    };
+
+    if channel_member.suspended.value {
+        return Err(UserSuspended);
+    } else if channel_member.lapsed.value {
+        return Err(UserLapsed);
+    }
+
+    if args.delete && !channel_member.role.can_delete_messages(&chat.permissions) {
+        return Err(NotAuthorized);
+    }
+
+    let Some(events_reader) = channel
+        .chat
+        .events
+        .events_reader(channel_member.min_visible_event_index(), args.thread_root_message_index)
+    else {
+        return Err(MessageNotFound);
+    };
+
+    let Some(message) = events_reader.message(args.message_id.into(), Some(user_id)) else {
+        return Err(MessageNotFound);
+    };
+
+    Ok((
+        c2c_report_message::Args {
+            reporter: user_id,
+            chat_id: MultiUserChat::Channel(state.env.canister_id().into(), args.channel_id),
+            thread_root_message_index: args.thread_root_message_index,
+            message,
+            already_deleted: args.delete,
+            is_public: channel.chat.is_public.value && state.data.is_public,
+        },
+        state.data.group_index_canister_id,
+    ))
 }
 
 fn delete_message(args: &Args, reporter: UserId, state: &mut RuntimeState) {

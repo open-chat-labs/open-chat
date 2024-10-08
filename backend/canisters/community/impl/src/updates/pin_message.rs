@@ -29,6 +29,8 @@ fn pin_message_impl(args: Args, pin: bool, state: &mut RuntimeState) -> Response
     if let Some(member) = state.data.members.get(caller) {
         if member.suspended.value {
             return UserSuspended;
+        } else if member.lapsed.value {
+            return UserLapsed;
         }
 
         let user_id = member.user_id;
@@ -51,6 +53,7 @@ fn pin_message_impl(args: Args, pin: bool, state: &mut RuntimeState) -> Response
                 PinUnpinMessageResult::NotAuthorized => NotAuthorized,
                 PinUnpinMessageResult::MessageNotFound => MessageNotFound,
                 PinUnpinMessageResult::UserSuspended => UserSuspended,
+                PinUnpinMessageResult::UserLapsed => UserLapsed,
                 PinUnpinMessageResult::UserNotInGroup => UserNotInChannel,
             }
         } else {

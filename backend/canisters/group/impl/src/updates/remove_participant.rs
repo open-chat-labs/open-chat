@@ -64,6 +64,8 @@ fn prepare(user_to_remove: UserId, block: bool, state: &RuntimeState) -> Result<
     if let Some(member) = state.data.get_member(caller) {
         if member.suspended.value {
             Err(UserSuspended)
+        } else if member.lapsed.value {
+            return Err(UserLapsed);
         } else if member.user_id == user_to_remove {
             Err(CannotRemoveSelf)
         } else {
@@ -104,7 +106,7 @@ fn commit(user_to_remove: UserId, block: bool, removed_by: UserId, state: &mut R
         .remove_member(removed_by, user_to_remove, block, state.env.now())
     {
         group_chat_core::RemoveMemberResult::Success => {
-            state.data.remove_principal(user_to_remove);
+            state.data.remove_user(user_to_remove);
 
             handle_activity_notification(state);
 
@@ -121,6 +123,7 @@ fn commit(user_to_remove: UserId, block: bool, removed_by: UserId, state: &mut R
             Success
         }
         group_chat_core::RemoveMemberResult::UserSuspended => UserSuspended,
+        group_chat_core::RemoveMemberResult::UserLapsed => UserLapsed,
         group_chat_core::RemoveMemberResult::UserNotInGroup => CallerNotInGroup,
         group_chat_core::RemoveMemberResult::TargetUserNotInGroup => UserNotInGroup,
         group_chat_core::RemoveMemberResult::NotAuthorized => NotAuthorized,

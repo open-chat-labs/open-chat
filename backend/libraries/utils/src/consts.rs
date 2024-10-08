@@ -1,5 +1,5 @@
 use candid::Principal;
-use types::{CanisterId, Cycles, UserId};
+use types::{CanisterId, Cycles, TimestampMillis, UserId};
 
 // This only applies to the 'top level' canisters (ie. not user + group canisters)
 pub fn min_cycles_balance(test_mode: bool) -> Cycles {
@@ -45,6 +45,8 @@ pub const MEMO_TRANSLATION_PAYMENT: [u8; 7] = [0x4f, 0x43, 0x5f, 0x54, 0x52, 0x4
 pub const MEMO_GROUP_IMPORT_INTO_COMMUNITY: [u8; 6] = [0x4f, 0x43, 0x5f, 0x47, 0x32, 0x43]; // OC_G2C
 pub const MEMO_CHIT_FOR_CHAT_AIRDROP: [u8; 6] = [0x4f, 0x43, 0x5f, 0x41, 0x49, 0x52]; // OC_AIR
 pub const MEMO_CHIT_FOR_CHAT_LOTTERY: [u8; 6] = [0x4f, 0x43, 0x5f, 0x4C, 0x4F, 0x54]; // OC_LOT
+
+pub const LIFETIME_DIAMOND_TIMESTAMP: TimestampMillis = 30000000000000; // This timestamp is in the year 2920
 
 #[cfg(test)]
 mod tests {
