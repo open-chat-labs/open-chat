@@ -101,7 +101,6 @@ where
         let mut batches = Vec::new();
 
         self.within_lock(|i| {
-
             let max_to_start = i.max_concurrency.saturating_sub(i.in_progress.len());
             while batches.len() < max_to_start {
                 if let Some(grouping_key) = i.queue.pop_front() {
