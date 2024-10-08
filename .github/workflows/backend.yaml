@@ -15,7 +15,7 @@ jobs:
     name: run fmt
     runs-on:
       - runs-on
-      - runner=2cpu-linux-x64
+      - runner=small
       - run-id=${{ github.run_id }}
     steps:
       - uses: actions/checkout@v4
@@ -34,7 +34,7 @@ jobs:
     name: run clippy
     runs-on:
       - runs-on
-      - runner=8cpu-linux-x64
+      - runner=medium
       - run-id=${{ github.run_id }}
     steps:
       - uses: actions/checkout@v4
@@ -60,7 +60,7 @@ jobs:
     name: run unit tests
     runs-on:
       - runs-on
-      - runner=8cpu-linux-x64
+      - runner=medium
       - run-id=${{ github.run_id }}
     steps:
       - uses: actions/checkout@v4
@@ -82,7 +82,7 @@ jobs:
     name: run integration tests
     runs-on:
       - runs-on
-      - runner=16cpu-linux-x64
+      - runner=large
       - run-id=${{ github.run_id }}
     steps:
       - uses: actions/checkout@v4
