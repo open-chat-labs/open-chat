@@ -68,11 +68,11 @@ impl<T: TimerJobItemGroup + 'static> GroupedTimerJobQueue<T>
 where
     <T as TimerJobItemGroup>::Key: Clone + Ord,
 {
-    pub fn enqueue(&self, grouping_key: T::Key, item: T::Item, run_immediately: bool) {
-        self.enqueue_many(grouping_key, vec![item], run_immediately)
+    pub fn enqueue(&self, grouping_key: T::Key, item: T::Item) {
+        self.enqueue_many(grouping_key, vec![item])
     }
 
-    pub fn enqueue_many(&self, grouping_key: T::Key, items: Vec<T::Item>, run_immediately: bool) {
+    pub fn enqueue_many(&self, grouping_key: T::Key, items: Vec<T::Item>) {
         self.within_lock(|i| match i.items_map.entry(grouping_key.clone()) {
             Vacant(e) => {
                 e.insert(VecDeque::from(items));
@@ -82,11 +82,7 @@ where
                 e.get_mut().extend(items);
             }
         });
-        if run_immediately {
-            self.run()
-        } else {
-            self.set_timer_if_required();
-        }
+        self.set_timer_if_required();
     }
 
     fn set_timer_if_required(&self) -> bool {

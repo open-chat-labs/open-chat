@@ -62,31 +62,23 @@ impl<T> TimerJobQueue<T>
 where
     T: TimerJobItem + 'static,
 {
-    pub fn enqueue(&self, item: T, run_immediately: bool) {
+    pub fn enqueue(&self, item: T) {
         self.within_lock(|i| i.queue.push_back(item));
-        self.run_immediately_or_set_timer_if_required(run_immediately);
+        self.set_timer_if_required();
     }
 
-    pub fn enqueue_front(&self, item: T, run_immediately: bool) {
+    pub fn enqueue_front(&self, item: T) {
         self.within_lock(|i| i.queue.push_front(item));
-        self.run_immediately_or_set_timer_if_required(run_immediately);
+        self.set_timer_if_required();
     }
 
-    pub fn enqueue_many(&self, items: impl Iterator<Item = T>, run_immediately: bool) {
+    pub fn enqueue_many(&self, items: impl Iterator<Item = T>) {
         self.within_lock(|i| {
             for item in items {
                 i.queue.push_back(item);
             }
         });
-        self.run_immediately_or_set_timer_if_required(run_immediately);
-    }
-
-    fn run_immediately_or_set_timer_if_required(&self, run_immediately: bool) {
-        if run_immediately {
-            self.run()
-        } else {
-            self.set_timer_if_required();
-        }
+        self.set_timer_if_required();
     }
 
     fn set_timer_if_required(&self) -> bool {

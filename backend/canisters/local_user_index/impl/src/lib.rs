@@ -136,13 +136,13 @@ impl RuntimeState {
     }
 
     pub fn push_event_to_user(&mut self, user_id: UserId, event: UserEvent) {
-        self.data.user_event_sync_queue.enqueue(user_id, event, true);
+        self.data.user_event_sync_queue.enqueue(user_id, event);
     }
 
     pub fn push_event_to_user_index(&mut self, event: UserIndexEvent) {
         self.data
             .user_index_event_sync_queue
-            .enqueue(self.data.user_index_canister_id, event, true);
+            .enqueue(self.data.user_index_canister_id, event);
     }
 
     pub fn push_oc_bot_message_to_user(&mut self, user_id: UserId, content: MessageContent, _mentioned: Vec<User>) {
@@ -306,7 +306,7 @@ fn deserialize_user_event_sync_queue<'de, D: Deserializer<'de>>(
 
     let new = GroupedTimerJobQueue::new(10);
     for (canister_id, events) in previous.take_all() {
-        new.enqueue_many(canister_id.into(), events, false);
+        new.enqueue_many(canister_id.into(), events);
     }
     Ok(new)
 }
@@ -318,7 +318,7 @@ fn deserialize_user_index_event_sync_queue<'de, D: Deserializer<'de>>(
 
     let new = GroupedTimerJobQueue::new(1);
     for (canister_id, events) in previous.take_all() {
-        new.enqueue_many(canister_id, events, false);
+        new.enqueue_many(canister_id, events);
     }
     Ok(new)
 }
