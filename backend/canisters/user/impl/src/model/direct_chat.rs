@@ -24,10 +24,6 @@ pub struct DirectChat {
 }
 
 impl DirectChat {
-    pub fn set_user_as_ic_controlled_bot(&mut self) {
-        self.user_type = UserType::OcControlledBot;
-    }
-
     pub fn new(
         them: UserId,
         user_type: UserType,
