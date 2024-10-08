@@ -7,7 +7,7 @@
 </script>
 
 <script lang="ts">
-    import { createEventDispatcher, afterUpdate, onMount, tick } from "svelte";
+    import { createEventDispatcher, afterUpdate, onMount } from "svelte";
     import PincodeInput from "./PincodeInput.svelte";
 
     export let length: number;
@@ -20,7 +20,7 @@
 
     onMount(() => {
         if (focusFirst) {
-            tick().then(() => focusNextInput(-1));
+            requestAnimationFrame(() => focusNextInput(-1));
         }
     });
 
