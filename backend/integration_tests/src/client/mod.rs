@@ -139,7 +139,14 @@ pub fn register_user_and_include_delegation(env: &mut PocketIc, canister_ids: &C
 
 pub fn register_diamond_user(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> User {
     let user = register_user(env, canister_ids);
-    upgrade_user(&user, env, canister_ids, controller, DiamondMembershipPlanDuration::OneMonth);
+    upgrade_user(
+        &user,
+        env,
+        canister_ids,
+        controller,
+        DiamondMembershipPlanDuration::OneMonth,
+        true,
+    );
     user
 }
 
@@ -149,10 +156,18 @@ pub fn upgrade_user(
     canister_ids: &CanisterIds,
     controller: Principal,
     duration: DiamondMembershipPlanDuration,
+    recurring: bool,
 ) {
     ledger::happy_path::transfer(env, controller, canister_ids.icp_ledger, user.user_id, 1_000_000_000);
 
-    user_index::happy_path::pay_for_diamond_membership(env, user.principal, canister_ids.user_index, duration, false, true);
+    user_index::happy_path::pay_for_diamond_membership(
+        env,
+        user.principal,
+        canister_ids.user_index,
+        duration,
+        false,
+        recurring,
+    );
 
     tick_many(env, 4);
 }

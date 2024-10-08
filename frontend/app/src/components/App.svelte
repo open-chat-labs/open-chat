@@ -20,6 +20,7 @@
         type DiamondMembershipFees,
         type ChatSummary,
         type ChatIdentifier,
+        type DexId,
         routeForChatIdentifier,
     } from "openchat-client";
     import { type UpdateMarketMakerConfigArgs, inititaliseLogger } from "openchat-client";
@@ -127,6 +128,7 @@
             reportedMessages,
         };
         (<any>window).platformOperator = {
+            addRemoveSwapProvider,
             setGroupUpgradeConcurrency,
             setCommunityUpgradeConcurrency,
             setUserUpgradeConcurrency,
@@ -280,6 +282,17 @@
                     );
                 }
             });
+    }
+
+    function addRemoveSwapProvider(swapProvider: DexId, add: boolean): void {
+        client.addRemoveSwapProvider(swapProvider, add).then((success) => {
+            if (success) {
+                const action = add ? "Added" : "Removed";
+                console.log(`${action} swap provider`, swapProvider);
+            } else {
+                console.log("Failed to add/remove swap provider");
+            }
+        });
     }
 
     function setGroupUpgradeConcurrency(value: number): void {

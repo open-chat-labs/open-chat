@@ -68,6 +68,7 @@ async fn prepare_airdrop(config: AirdropConfig, user_index_canister_id: Canister
             permissions_v2: None,
             events_ttl: OptionUpdate::NoChange,
             gate: OptionUpdate::SetToSome(AccessGate::Locked),
+            gate_config: OptionUpdate::SetToSome(AccessGate::Locked.into()),
             public: None,
             messages_visible_to_non_members: None,
             external_url: OptionUpdate::NoChange,

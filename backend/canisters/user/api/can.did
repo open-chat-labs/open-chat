@@ -214,11 +214,17 @@ type TokenSwapStatusArgs = record {
 type TokenSwapStatusResponse = variant {
     Success : record {
         started : TimestampMillis;
+        icrc2 : bool;
+        auto_withdrawals : bool;
         deposit_account : opt variant {
             Ok;
             Err : text;
         };
         transfer : opt variant {
+            Ok : nat64;
+            Err : text;
+        };
+        transfer_or_approval : opt variant {
             Ok : nat64;
             Err : text;
         };
@@ -333,6 +339,7 @@ type TipMessageResponse = variant {
     TransferFailed : text;
     ChatFrozen;
     UserSuspended;
+    UserLapsed;
     Retrying : text;
     PinRequired;
     PinIncorrect : Milliseconds;
@@ -420,6 +427,7 @@ type CreateGroupArgs = record {
     rules : Rules;
     events_ttl : opt Milliseconds;
     gate : opt AccessGate;
+    gate_config : opt AccessGateConfig;
 };
 
 type CreateGroupSuccessResult = record {
@@ -482,6 +490,7 @@ type CreateCommunityArgs = record {
     permissions : opt CommunityPermissions;
     rules : Rules;
     gate : opt AccessGate;
+    gate_config : opt AccessGateConfig;
     default_channels : vec text;
     default_channel_rules : opt Rules;
     primary_language : text;
@@ -534,6 +543,7 @@ type DeleteCommunityResponse = variant {
     Success;
     NotAuthorized;
     UserSuspended;
+    UserLapsed;
     CommunityFrozen;
     InternalError : text;
 };
@@ -700,6 +710,7 @@ type SendMessageWithTransferToChannelResponse = variant {
     TransferCannotBeToSelf;
     P2PSwapSetUpFailed : text;
     UserSuspended;
+    UserLapsed;
     CommunityFrozen;
     RulesNotAccepted;
     CommunityRulesNotAccepted;
@@ -744,6 +755,7 @@ type SendMessageWithTransferToGroupResponse = variant {
     TransferCannotBeToSelf;
     P2PSwapSetUpFailed : text;
     UserSuspended;
+    UserLapsed;
     ChatFrozen;
     RulesNotAccepted;
     Retrying : record { text; CompletedCryptoTransaction };

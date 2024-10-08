@@ -2826,6 +2826,7 @@ dependencies = [
  "candid",
  "chat_events",
  "event_store_producer",
+ "group_community_common",
  "itertools 0.13.0",
  "lazy_static",
  "msgpack",
@@ -2844,11 +2845,13 @@ dependencies = [
  "candid",
  "fire_and_forget_handler",
  "icrc-ledger-types",
+ "itertools 0.13.0",
  "msgpack",
  "serde",
  "serde_repr",
  "types",
  "user_canister",
+ "utils 0.1.0",
 ]
 
 [[package]]
@@ -4430,6 +4433,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ecc2af9a1119c51f12a14607e783cb977bde58bc069ff0c3da1095e635d70654"
 dependencies = [
  "cpufeatures",
+]
+
+[[package]]
+name = "kongswap_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "kongswap_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "ic-cdk 0.16.0",
+ "kongswap_canister",
+ "types",
 ]
 
 [[package]]
@@ -8339,6 +8362,8 @@ dependencies = [
  "icrc_ledger_canister_c2c_client",
  "identity_utils",
  "itertools 0.13.0",
+ "kongswap_canister",
+ "kongswap_canister_c2c_client",
  "ledger_utils",
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",

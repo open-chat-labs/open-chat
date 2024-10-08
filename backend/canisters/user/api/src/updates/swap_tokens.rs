@@ -20,7 +20,7 @@ pub struct Args {
 pub enum ExchangeArgs {
     ICPSwap(ICPSwapArgs),
     Sonic(SonicArgs),
-    KongSwap(SonicArgs),
+    KongSwap(KongSwapArgs),
 }
 
 impl ExchangeArgs {

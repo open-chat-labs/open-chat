@@ -115,7 +115,14 @@ fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
 
     let user = client::register_user(env, canister_ids);
 
-    client::upgrade_user(&user, env, canister_ids, *controller, DiamondMembershipPlanDuration::OneMonth);
+    client::upgrade_user(
+        &user,
+        env,
+        canister_ids,
+        *controller,
+        DiamondMembershipPlanDuration::OneMonth,
+        true,
+    );
 
     let one_month_millis = DiamondMembershipPlanDuration::OneMonth.as_millis();
     env.advance_time(Duration::from_millis(one_month_millis - (30 * MINUTE_IN_MS)));
@@ -170,6 +177,7 @@ fn referrer_awarded_chit_when_referred_gets_diamond() {
         canister_ids,
         *controller,
         DiamondMembershipPlanDuration::OneMonth,
+        true,
     );
 
     // Register user_b with referral from user_a
@@ -182,6 +190,7 @@ fn referrer_awarded_chit_when_referred_gets_diamond() {
         canister_ids,
         *controller,
         DiamondMembershipPlanDuration::OneMonth,
+        true,
     );
 
     tick_many(env, 3);
@@ -217,6 +226,7 @@ fn referrer_awarded_chit_when_referred_gets_diamond() {
         canister_ids,
         *controller,
         DiamondMembershipPlanDuration::Lifetime,
+        true,
     );
 
     tick_many(env, 3);
@@ -252,7 +262,14 @@ fn update_subscription_succeeds(disable: bool) {
 
     let user = client::register_user(env, canister_ids);
 
-    client::upgrade_user(&user, env, canister_ids, *controller, DiamondMembershipPlanDuration::OneMonth);
+    client::upgrade_user(
+        &user,
+        env,
+        canister_ids,
+        *controller,
+        DiamondMembershipPlanDuration::OneMonth,
+        true,
+    );
 
     client::user_index::update_diamond_membership_subscription(
         env,

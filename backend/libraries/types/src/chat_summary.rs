@@ -1,11 +1,10 @@
 use crate::{
-    AccessGate, BuildVersion, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupMember, GroupPermissions,
-    GroupRole, HydratedMention, Message, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis, UserId, Version,
-    MAX_RETURNED_MENTIONS,
+    AccessGate, AccessGateConfig, BuildVersion, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupMember,
+    GroupPermissions, GroupRole, HydratedMention, Message, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis, UserId,
+    Version,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
 use ts_export::ts_export;
 
 pub const MAX_THREADS_IN_SUMMARY: usize = 20;
@@ -74,6 +73,7 @@ pub struct GroupChatSummary {
     pub events_ttl: Option<Milliseconds>,
     pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
+    pub gate_config: Option<AccessGateConfig>,
     pub rules_accepted: bool,
     pub video_call_in_progress: Option<VideoCall>,
 }
@@ -127,6 +127,7 @@ pub struct PublicGroupSummary {
     pub events_ttl: Option<Milliseconds>,
     pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
+    pub gate_config: Option<AccessGateConfig>,
 }
 
 #[ts_export]
@@ -163,88 +164,10 @@ pub struct GroupCanisterGroupChatSummary {
     pub events_ttl: Option<Milliseconds>,
     pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
+    pub gate_config: Option<AccessGateConfig>,
     pub rules_accepted: bool,
     pub membership: Option<GroupMembership>,
     pub video_call_in_progress: Option<VideoCall>,
-}
-
-impl GroupCanisterGroupChatSummary {
-    pub fn merge(self, updates: GroupCanisterGroupChatSummaryUpdates) -> Self {
-        if self.chat_id != updates.chat_id {
-            panic!(
-                "Updates are not from the same chat. Original: {}. Updates: {}",
-                self.chat_id, updates.chat_id
-            );
-        }
-
-        // Mentions are ordered in ascending order of MessageIndex
-        let mentions_to_skip = (self.mentions.len() + updates.mentions.len()).saturating_sub(MAX_RETURNED_MENTIONS);
-        let mentions: Vec<_> = self
-            .mentions
-            .into_iter()
-            .chain(updates.mentions)
-            .skip(mentions_to_skip)
-            .collect();
-
-        let mut threads_set = HashSet::new();
-        // Threads are ordered in descending chronological order
-        let latest_threads = updates
-            .latest_threads
-            .into_iter()
-            .chain(self.latest_threads)
-            // We could use Itertools `unique_by` but I didn't want to add that dependency
-            .filter(|t| threads_set.insert(t.root_message_index))
-            .take(MAX_THREADS_IN_SUMMARY)
-            .collect();
-
-        let membership = GroupMembership {
-            joined: self.joined,
-            role: updates.role.unwrap_or(self.role),
-            mentions,
-            notifications_muted: updates.notifications_muted.unwrap_or(self.notifications_muted),
-            my_metrics: updates.my_metrics.unwrap_or(self.my_metrics),
-            latest_threads,
-            rules_accepted: updates.rules_accepted.unwrap_or(self.rules_accepted),
-        };
-
-        GroupCanisterGroupChatSummary {
-            chat_id: self.chat_id,
-            local_user_index_canister_id: self.local_user_index_canister_id,
-            last_updated: updates.last_updated,
-            name: updates.name.unwrap_or(self.name),
-            description: updates.description.unwrap_or(self.description),
-            subtype: updates.subtype.apply_to(self.subtype),
-            avatar_id: updates.avatar_id.apply_to(self.avatar_id),
-            is_public: updates.is_public.unwrap_or(self.is_public),
-            history_visible_to_new_joiners: self.history_visible_to_new_joiners,
-            messages_visible_to_non_members: updates
-                .messages_visible_to_non_members
-                .unwrap_or(self.messages_visible_to_non_members),
-            min_visible_event_index: self.min_visible_event_index,
-            min_visible_message_index: self.min_visible_message_index,
-            latest_message: updates.latest_message.or(self.latest_message),
-            latest_event_index: updates.latest_event_index.unwrap_or(self.latest_event_index),
-            latest_message_index: updates.latest_message_index,
-            joined: self.joined,
-            participant_count: updates.participant_count.unwrap_or(self.participant_count),
-            role: updates.role.unwrap_or(self.role),
-            mentions: membership.mentions.clone(),
-            wasm_version: updates.wasm_version.unwrap_or(self.wasm_version),
-            permissions_v2: updates.permissions_v2.unwrap_or(self.permissions_v2),
-            notifications_muted: membership.notifications_muted,
-            metrics: updates.metrics.unwrap_or(self.metrics),
-            my_metrics: membership.my_metrics.clone(),
-            latest_threads: membership.latest_threads.clone(),
-            frozen: updates.frozen.apply_to(self.frozen),
-            date_last_pinned: updates.date_last_pinned.or(self.date_last_pinned),
-            events_ttl: updates.events_ttl.apply_to(self.events_ttl),
-            events_ttl_last_updated: updates.events_ttl_last_updated.unwrap_or(self.events_ttl_last_updated),
-            gate: updates.gate.apply_to(self.gate),
-            rules_accepted: membership.rules_accepted,
-            membership: Some(membership),
-            video_call_in_progress: updates.video_call_in_progress.apply_to(self.video_call_in_progress),
-        }
-    }
 }
 
 #[ts_export]
@@ -283,6 +206,8 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub events_ttl_last_updated: Option<TimestampMillis>,
     #[ts(as = "crate::OptionUpdateAccessGate")]
     pub gate: OptionUpdate<AccessGate>,
+    #[ts(as = "crate::OptionUpdateAccessGateConfig")]
+    pub gate_config: OptionUpdate<AccessGateConfig>,
     pub rules_accepted: Option<bool>,
     pub membership: Option<GroupMembershipUpdates>,
     #[ts(as = "crate::OptionUpdateVideoCall")]
@@ -299,6 +224,7 @@ pub struct GroupMembership {
     pub my_metrics: ChatMetrics,
     pub latest_threads: Vec<GroupCanisterThreadDetails>,
     pub rules_accepted: bool,
+    pub lapsed: bool,
 }
 
 #[ts_export]
@@ -311,6 +237,7 @@ pub struct GroupMembershipUpdates {
     pub latest_threads: Vec<GroupCanisterThreadDetails>,
     pub unfollowed_threads: Vec<MessageIndex>,
     pub rules_accepted: Option<bool>,
+    pub lapsed: Option<bool>,
 }
 
 #[ts_export]

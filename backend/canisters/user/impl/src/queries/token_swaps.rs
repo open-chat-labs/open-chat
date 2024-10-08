@@ -20,10 +20,11 @@ fn token_swaps_impl(args: Args, state: &RuntimeState) -> Response {
         .map(|s| TokenSwap {
             args: s.args.clone(),
             started: s.started,
-            transfer: map_inner(&s.transfer),
-            notified_dex: map_inner(&s.notified_dex_at),
-            amount_swapped: map_inner(&s.amount_swapped),
-            withdrawn_from_dex: map_inner(&s.withdrawn_from_dex_at),
+            icrc2: s.icrc2,
+            transfer_or_approval: extract_inner(&s.transfer_or_approval),
+            notified_dex: extract_inner(&s.notified_dex_at),
+            amount_swapped: map_inner(&s.swap_result, |r| r.clone().map(|i| i.amount_out)),
+            withdrawn_from_dex: extract_inner(&s.withdrawn_from_dex_at),
             success: s.success.as_ref().map(|v| v.value),
         })
         .collect();
@@ -31,6 +32,13 @@ fn token_swaps_impl(args: Args, state: &RuntimeState) -> Response {
     Success(SuccessResult { total, swaps })
 }
 
-fn map_inner<T: Clone>(value: &Option<Timestamped<Result<T, String>>>) -> Option<Result<T, String>> {
+fn extract_inner<T: Clone>(value: &Option<Timestamped<Result<T, String>>>) -> Option<Result<T, String>> {
     value.as_ref().map(|v| v.value.clone())
+}
+
+fn map_inner<I: Clone, O, F: FnOnce(I) -> O>(
+    value: &Option<Timestamped<Result<I, String>>>,
+    f: F,
+) -> Option<Result<O, String>> {
+    value.as_ref().map(|v| v.value.clone().map(f))
 }

@@ -23,15 +23,15 @@ fn events_impl(args: Args, on_behalf_of: Option<Principal>, state: &RuntimeState
     }
 
     let caller = on_behalf_of.unwrap_or_else(|| state.env.caller());
-    let user_id = state.data.members.get(caller).map(|m| m.user_id);
 
-    if user_id.is_none() && (!state.data.is_public || state.data.has_payment_gate()) {
-        return UserNotInCommunity;
-    }
+    let member = match state.data.get_member_for_events(caller) {
+        Ok(member) => member,
+        Err(response) => return response,
+    };
 
     if let Some(channel) = state.data.channels.get(&args.channel_id) {
         match channel.chat.events(
-            user_id,
+            member.map(|m| m.user_id),
             args.thread_root_message_index,
             args.start_index,
             args.ascending,
@@ -41,6 +41,8 @@ fn events_impl(args: Args, on_behalf_of: Option<Principal>, state: &RuntimeState
             EventsResult::Success(response) => Success(response),
             EventsResult::UserNotInGroup => UserNotInChannel,
             EventsResult::ThreadNotFound => ThreadNotFound,
+            EventsResult::UserSuspended => UserSuspended,
+            EventsResult::UserLapsed => UserLapsed,
         }
     } else {
         ChannelNotFound

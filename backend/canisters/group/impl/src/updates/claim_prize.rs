@@ -63,6 +63,8 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
     if let Some(member) = state.data.get_member(caller) {
         if member.suspended.value {
             return Err(Box::new(UserSuspended));
+        } else if member.lapsed.value {
+            return Err(Box::new(UserLapsed));
         }
 
         let now = state.env.now();

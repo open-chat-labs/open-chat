@@ -6,10 +6,11 @@ import type { GroupMembershipUpdates } from "./GroupMembershipUpdates";
 import type { GroupPermissions } from "./GroupPermissions";
 import type { MessageIndex } from "./MessageIndex";
 import type { OptionUpdateAccessGate } from "./OptionUpdateAccessGate";
+import type { OptionUpdateAccessGateConfig } from "./OptionUpdateAccessGateConfig";
 import type { OptionUpdateGroupSubtype } from "./OptionUpdateGroupSubtype";
 import type { OptionUpdateString } from "./OptionUpdateString";
 import type { OptionUpdateU128 } from "./OptionUpdateU128";
 import type { OptionUpdateU64 } from "./OptionUpdateU64";
 import type { OptionUpdateVideoCall } from "./OptionUpdateVideoCall";
 
-export type CommunityCanisterChannelSummaryUpdates = { channel_id: bigint, last_updated: bigint, name?: string, description?: string, subtype: OptionUpdateGroupSubtype, avatar_id: OptionUpdateU128, is_public?: boolean, messages_visible_to_non_members?: boolean, latest_message?: EventWrapperMessage, latest_message_sender_display_name?: string, latest_event_index?: EventIndex, latest_message_index?: MessageIndex, member_count?: number, permissions_v2?: GroupPermissions, updated_events: Array<[MessageIndex | null, EventIndex, bigint]>, metrics?: ChatMetrics, date_last_pinned?: bigint, events_ttl: OptionUpdateU64, events_ttl_last_updated?: bigint, gate: OptionUpdateAccessGate, membership?: GroupMembershipUpdates, video_call_in_progress: OptionUpdateVideoCall, external_url: OptionUpdateString, };
+export type CommunityCanisterChannelSummaryUpdates = { channel_id: bigint, last_updated: bigint, name?: string, description?: string, subtype: OptionUpdateGroupSubtype, avatar_id: OptionUpdateU128, is_public?: boolean, messages_visible_to_non_members?: boolean, latest_message?: EventWrapperMessage, latest_message_sender_display_name?: string, latest_event_index?: EventIndex, latest_message_index?: MessageIndex, member_count?: number, permissions_v2?: GroupPermissions, updated_events: Array<[MessageIndex | null, EventIndex, bigint]>, metrics?: ChatMetrics, date_last_pinned?: bigint, events_ttl: OptionUpdateU64, events_ttl_last_updated?: bigint, gate: OptionUpdateAccessGate, gate_config: OptionUpdateAccessGateConfig, membership?: GroupMembershipUpdates, video_call_in_progress: OptionUpdateVideoCall, external_url: OptionUpdateString, };

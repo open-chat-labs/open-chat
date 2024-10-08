@@ -23,4 +23,5 @@ pub enum Response {
     TargetUserNotInChannel,
     CannotRemoveSelf,
     NotAuthorized,
+    UserLapsed,
 }

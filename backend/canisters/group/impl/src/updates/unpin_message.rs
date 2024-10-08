@@ -30,6 +30,7 @@ fn unpin_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             PinUnpinMessageResult::NotAuthorized => NotAuthorized,
             PinUnpinMessageResult::MessageNotFound => MessageNotFound,
             PinUnpinMessageResult::UserSuspended => UserSuspended,
+            PinUnpinMessageResult::UserLapsed => UserLapsed,
             PinUnpinMessageResult::UserNotInGroup => CallerNotInGroup,
         }
     } else {
