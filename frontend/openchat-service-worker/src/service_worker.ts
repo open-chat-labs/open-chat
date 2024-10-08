@@ -28,12 +28,15 @@ import {
     toTitleCase,
 } from "openchat-shared";
 import { ExpirationPlugin } from "workbox-expiration";
-import { pageCache, staticResourceCache } from "workbox-recipes";
+import { staticResourceCache } from "workbox-recipes";
 import { CustomCachePlugin } from "./cache_plugin";
+import { registerRoute } from "workbox-routing";
+import { NetworkFirst } from "workbox-strategies";
+import { CacheableResponsePlugin } from "workbox-cacheable-response";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-expect-error
-self.__WB_DISABLE_DEV_LOGS = false;
+self.__WB_DISABLE_DEV_LOGS = true;
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -63,22 +66,29 @@ staticResourceCache({
     ],
 });
 
-pageCache({
-    matchCallback: ({ request }) => {
-        console.debug("SW: pageCache matchCallback", request.mode === "navigate", request.url);
-        return request.mode === "navigate";
-    },
-    networkTimeoutSeconds: 3,
-    cacheName: "openchat_network_first",
-    plugins: [
-        {
-            cacheKeyWillBeUsed: async () => {
-                console.debug("SW: cacheKeyWillBeUsed");
-                return "openchat_document";
-            },
+const matchCallback = ({ request }: { request: Request }) => request.mode === "navigate";
+const networkTimeoutSeconds = 3;
+
+registerRoute(
+    matchCallback,
+    new NetworkFirst({
+        networkTimeoutSeconds,
+        cacheName: "openchat_network_first",
+        matchOptions: {
+            ignoreVary: true,
+            ignoreMethod: true,
+            ignoreSearch: true,
         },
-    ],
-});
+        plugins: [
+            new CacheableResponsePlugin({
+                statuses: [0, 200],
+            }),
+            {
+                cacheKeyWillBeUsed: async () => "openchat_document",
+            },
+        ],
+    }),
+);
 
 // Always install updated SW immediately
 self.addEventListener("install", (ev) => {
