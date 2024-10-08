@@ -105,9 +105,8 @@ where
             while batches.len() < max_to_start {
                 if let Some(grouping_key) = i.queue.pop_front() {
                     if let Occupied(mut e) = i.items_map.entry(grouping_key.clone()) {
-                        // If this key is already being processed, skip it and requeue it
+                        // If this key is already being processed, skip it
                         if !i.in_progress.insert(grouping_key.clone()) {
-                            i.queue.push_back(grouping_key);
                             continue;
                         }
 
