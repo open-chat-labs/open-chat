@@ -2320,6 +2320,8 @@ export type SetPinNumberResponse =
     | Success
     | PinNumberFailures
     | { kind: "too_short"; minLength: number }
-    | { kind: "too_long"; maxLength: number };
+    | { kind: "too_long"; maxLength: number }
+    | { kind: "delegation_too_old" }
+    | { kind: "malformed_signature" };
 
 export type PinNumberFailures = PinRequired | PinIncorrect | TooManyFailedPinAttempts;

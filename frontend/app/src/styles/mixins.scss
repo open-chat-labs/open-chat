@@ -157,6 +157,12 @@ $sp11: 192px;
     }
 }
 
+@mixin not-mobile() {
+    @include size-above(sm) {
+        @content;
+    }
+}
+
 @mixin size-below-n($n) {
     @media (max-width: ($n - 1)) {
         @content;

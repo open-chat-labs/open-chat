@@ -3012,6 +3012,12 @@ export function setPinNumberResponse(candid: ApiSetPinNumberResponse): SetPinNum
     if ("TooLong" in candid) {
         return { kind: "too_long", maxLength: candid.TooLong.max_length };
     }
+    if ("DelegationTooOld" in candid) {
+        return { kind: "delegation_too_old" };
+    }
+    if ("MalformedSignature" in candid) {
+        return { kind: "malformed_signature" };
+    }
 
     throw new UnsupportedValueError("Unexpected ApiSetPinNumberResponse type received", candid);
 }

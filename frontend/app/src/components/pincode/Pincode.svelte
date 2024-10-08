@@ -7,7 +7,7 @@
 </script>
 
 <script lang="ts">
-    import { createEventDispatcher, afterUpdate } from "svelte";
+    import { createEventDispatcher, afterUpdate, onMount, tick } from "svelte";
     import PincodeInput from "./PincodeInput.svelte";
 
     export let length: number;
@@ -16,6 +16,13 @@
     export let type: PincodeType = "alphanumeric";
     export let complete: boolean = false;
     export let selectTextOnFocus: boolean = false;
+    export let focusFirst: boolean = true;
+
+    onMount(() => {
+        if (focusFirst) {
+            tick().then(() => focusNextInput(-1));
+        }
+    });
 
     function initialise(length: number): PincodeChar[] {
         return [...Array(length).keys()].map((idx) => ({ idx, value: "" }));
@@ -31,22 +38,22 @@
         code = characters.map((char) => char.value || "");
     }
 
+    function getInputs() {
+        return ref?.querySelectorAll("input") ?? [];
+    }
+
     function focusNextInput(idx: number) {
-        const inputs = ref?.querySelectorAll("input");
-        if (inputs) {
-            const nextInput = inputs[idx + 1];
-            nextInput?.focus();
-        }
+        const inputs = getInputs();
+        const nextInput = inputs[idx + 1];
+        nextInput?.focus();
     }
 
     function clear(ev: CustomEvent<PincodeChar>) {
         if (!characters[ev.detail.idx].value) {
-            const inputs = ref?.querySelectorAll("input");
-            if (inputs) {
-                const prevInput = inputs[ev.detail.idx - 1];
-                prevInput?.focus();
-                prevInput?.select();
-            }
+            const inputs = getInputs();
+            const prevInput = inputs[ev.detail.idx - 1];
+            prevInput?.focus();
+            prevInput?.select();
         }
         characters = characters.map((char, i) => {
             if (i === ev.detail.idx) return { ...char, value: "" };
