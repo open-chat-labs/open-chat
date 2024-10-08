@@ -6,7 +6,7 @@ use ic_cdk_timers::TimerId;
 use std::time::Duration;
 use std::{cell::Cell, mem};
 use tracing::trace;
-use types::{AccessGateExpiryType, Milliseconds};
+use types::{AccessGateExpiryBehaviour, Milliseconds};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -62,9 +62,9 @@ fn run() {
                 continue;
             };
 
-            let expiry_gate_type: AccessGateExpiryType = gate_config.gate().into();
+            let expiry_gate_type: AccessGateExpiryBehaviour = gate_config.gate().into();
 
-            if matches!(expiry_gate_type, AccessGateExpiryType::UserLookup) {
+            if matches!(expiry_gate_type, AccessGateExpiryBehaviour::UserLookup) {
                 let mut check_gate_args = CheckGateArgs {
                     user_id: member.user_id,
                     diamond_membership_expires_at: None,
@@ -94,8 +94,9 @@ fn run() {
                             user_id: member.user_id,
                         });
                     }
+                    continue;
                 } else {
-                    // Add this member to the list of batchable actions
+                    // Add this member to the list of users to lookup
                     users_to_lookup.push(member.user_id);
 
                     if users_to_lookup.len() >= USER_DETAILS_BATCH_SIZE {
@@ -108,7 +109,7 @@ fn run() {
             }
 
             match expiry_gate_type {
-                AccessGateExpiryType::UserLookup | AccessGateExpiryType::Check => {
+                AccessGateExpiryBehaviour::UserLookup | AccessGateExpiryBehaviour::Check => {
                     check_gate_actions.push(ExpiringMemberActionDetails {
                         user_id: member.user_id,
                         channel_id: member.channel_id,
@@ -116,10 +117,10 @@ fn run() {
                         original_gate_expiry: gate_expiry,
                     });
                 }
-                AccessGateExpiryType::Lapse => {
+                AccessGateExpiryBehaviour::Lapse => {
                     state.data.chat.members.mark_member_lapsed(&member.user_id, now);
                 }
-                AccessGateExpiryType::Invalid => {
+                AccessGateExpiryBehaviour::Invalid => {
                     // Do nothing
                 }
             }

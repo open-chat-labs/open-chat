@@ -24,9 +24,9 @@ pub struct AccessGateConfigInternal {
 
 impl AccessGateConfigInternal {
     pub fn expiry(&self) -> Option<Milliseconds> {
-        let expiry_type: AccessGateExpiryType = self.gate().into();
+        let expiry_type: AccessGateExpiryBehaviour = self.gate().into();
         match expiry_type {
-            AccessGateExpiryType::Invalid => None,
+            AccessGateExpiryBehaviour::Invalid => None,
             _ => self.expiry,
         }
     }
@@ -158,7 +158,7 @@ pub enum AccessGateScope {
 }
 
 #[derive(Serialize, Deserialize, Eq, PartialEq)]
-pub enum AccessGateExpiryType {
+pub enum AccessGateExpiryBehaviour {
     UserLookup,
     Check,
     Lapse,
@@ -184,66 +184,69 @@ impl From<AccessGate> for AccessGateScope {
     }
 }
 
-impl From<&AccessGate> for AccessGateExpiryType {
+impl From<&AccessGate> for AccessGateExpiryBehaviour {
     fn from(value: &AccessGate) -> Self {
         if let AccessGate::Composite(gate) = value {
             if gate.inner.is_empty() {
-                return AccessGateExpiryType::Invalid;
+                return AccessGateExpiryBehaviour::Invalid;
             }
 
             if gate.and {
                 // If any immediately lapse then return lapse
-                if gate.inner.iter().any(|g| {
-                    let expiry_type: AccessGateExpiryType = g.into();
-                    matches!(expiry_type, AccessGateExpiryType::Lapse)
-                }) {
-                    return AccessGateExpiryType::Lapse;
+                if gate
+                    .inner
+                    .iter()
+                    .any(|g| matches!(AccessGateExpiryBehaviour::from(g), AccessGateExpiryBehaviour::Lapse))
+                {
+                    return AccessGateExpiryBehaviour::Lapse;
                 }
 
                 // If there are any user lookups then return user lookup
-                if gate.inner.iter().any(|g| {
-                    let expiry_type: AccessGateExpiryType = g.into();
-                    matches!(expiry_type, AccessGateExpiryType::UserLookup)
-                }) {
-                    return AccessGateExpiryType::UserLookup;
+                if gate
+                    .inner
+                    .iter()
+                    .any(|g| matches!(AccessGateExpiryBehaviour::from(g), AccessGateExpiryBehaviour::UserLookup))
+                {
+                    return AccessGateExpiryBehaviour::UserLookup;
                 }
 
-                AccessGateExpiryType::Check
+                AccessGateExpiryBehaviour::Check
             } else {
                 // If there are any "user lookups" then return user lookup
-                if gate.inner.iter().any(|g| {
-                    let expiry_type: AccessGateExpiryType = g.into();
-                    matches!(expiry_type, AccessGateExpiryType::UserLookup)
-                }) {
-                    return AccessGateExpiryType::UserLookup;
+                if gate
+                    .inner
+                    .iter()
+                    .any(|g| matches!(AccessGateExpiryBehaviour::from(g), AccessGateExpiryBehaviour::UserLookup))
+                {
+                    return AccessGateExpiryBehaviour::UserLookup;
                 }
 
                 // If there are any "checks" then return check
-                if gate.inner.iter().any(|g| {
-                    let expiry_type: AccessGateExpiryType = g.into();
-                    matches!(expiry_type, AccessGateExpiryType::UserLookup)
-                }) {
-                    return AccessGateExpiryType::UserLookup;
+                if gate
+                    .inner
+                    .iter()
+                    .any(|g| matches!(AccessGateExpiryBehaviour::from(g), AccessGateExpiryBehaviour::Check))
+                {
+                    return AccessGateExpiryBehaviour::Check;
                 }
 
-                AccessGateExpiryType::Lapse
+                AccessGateExpiryBehaviour::Lapse
             }
         } else {
-            let access_gate_type: AccessGateType = value.into();
-            access_gate_type.into()
+            AccessGateType::from(value).into()
         }
     }
 }
 
-impl From<AccessGateType> for AccessGateExpiryType {
+impl From<AccessGateType> for AccessGateExpiryBehaviour {
     fn from(value: AccessGateType) -> Self {
         match value {
             AccessGateType::DiamondMember | AccessGateType::LifetimeDiamondMember | AccessGateType::UniquePerson => {
-                AccessGateExpiryType::UserLookup
+                AccessGateExpiryBehaviour::UserLookup
             }
-            AccessGateType::Payment | AccessGateType::VerifiedCredential => AccessGateExpiryType::Lapse,
-            AccessGateType::SnsNeuron | AccessGateType::TokenBalance => AccessGateExpiryType::Check,
-            _ => AccessGateExpiryType::Invalid,
+            AccessGateType::Payment | AccessGateType::VerifiedCredential => AccessGateExpiryBehaviour::Lapse,
+            AccessGateType::SnsNeuron | AccessGateType::TokenBalance => AccessGateExpiryBehaviour::Check,
+            _ => AccessGateExpiryBehaviour::Invalid,
         }
     }
 }
@@ -281,7 +284,7 @@ impl From<&AccessGateNonComposite> for AccessGateType {
     }
 }
 
-impl From<&AccessGateNonComposite> for AccessGateExpiryType {
+impl From<&AccessGateNonComposite> for AccessGateExpiryBehaviour {
     fn from(value: &AccessGateNonComposite) -> Self {
         let gate_type: AccessGateType = value.into();
         gate_type.into()
@@ -297,9 +300,9 @@ impl AccessGateConfig {
                 return false;
             }
 
-            let expiry_type: AccessGateExpiryType = (&self.gate).into();
+            let expiry_type: AccessGateExpiryBehaviour = (&self.gate).into();
 
-            if matches!(expiry_type, AccessGateExpiryType::Invalid) {
+            if matches!(expiry_type, AccessGateExpiryBehaviour::Invalid) {
                 return false;
             }
         }
