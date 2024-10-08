@@ -97,12 +97,6 @@ where
         let mut items = Vec::new();
 
         self.within_lock(|i| {
-            if i.queue.is_empty() {
-                if let Some(timer_id) = i.timer_id.take() {
-                    ic_cdk_timers::clear_timer(timer_id);
-                }
-            }
-
             let max_to_start = i.max_concurrency.saturating_sub(i.in_progress);
             while items.len() < max_to_start {
                 if let Some(item) = i.queue.pop_front() {
@@ -113,6 +107,12 @@ where
             }
             let count = items.len();
             i.in_progress = i.in_progress.saturating_add(count);
+
+            if i.queue.is_empty() {
+                if let Some(timer_id) = i.timer_id.take() {
+                    ic_cdk_timers::clear_timer(timer_id);
+                }
+            }
         });
 
         if !items.is_empty() {

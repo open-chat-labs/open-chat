@@ -101,18 +101,14 @@ where
         let mut batches = Vec::new();
 
         self.within_lock(|i| {
-            if i.queue.is_empty() {
-                if let Some(timer_id) = i.timer_id.take() {
-                    ic_cdk_timers::clear_timer(timer_id);
-                }
-            }
 
             let max_to_start = i.max_concurrency.saturating_sub(i.in_progress.len());
             while batches.len() < max_to_start {
                 if let Some(grouping_key) = i.queue.pop_front() {
                     if let Occupied(mut e) = i.items_map.entry(grouping_key.clone()) {
-                        // If this key is already being processed, skip it
+                        // If this key is already being processed, skip it and requeue it
                         if !i.in_progress.insert(grouping_key.clone()) {
+                            i.queue.push_back(grouping_key);
                             continue;
                         }
 
@@ -132,6 +128,12 @@ where
                     }
                 } else {
                     break;
+                }
+            }
+
+            if i.queue.is_empty() {
+                if let Some(timer_id) = i.timer_id.take() {
+                    ic_cdk_timers::clear_timer(timer_id);
                 }
             }
         });
