@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1371](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1371-user_index)] - 2024-10-07
+
+### Changed
+
+- Clear wasm chunks once new wasm version has been set ([#6524](https://github.com/open-chat-labs/open-chat/pull/6524))
+
+### Removed
+
+- Remove unused fields from metrics ([#6525](https://github.com/open-chat-labs/open-chat/pull/6525))
+
 ## [[2.0.1368](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1368-user_index)] - 2024-10-02
 
 ### Added
@@ -17,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add `CanisterWasmBytes` to reduce duplication ([#6480](https://github.com/open-chat-labs/open-chat/pull/6480))
 - Log error if chunked User upgrade fails ([#6483](https://github.com/open-chat-labs/open-chat/pull/6483))
+- Add support for expiring access gates ([#6401](https://github.com/open-chat-labs/open-chat/pull/6401))
 
 ## [[2.0.1361](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1361-user_index)] - 2024-09-30
 

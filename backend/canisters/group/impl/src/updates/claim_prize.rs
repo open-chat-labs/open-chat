@@ -19,11 +19,13 @@ async fn claim_prize(args: Args) -> Response {
         Err(response) => return *response,
     };
 
+    let prize_amount = prepare_result.transaction.units();
+
     // Transfer the prize to the winner
     let result = process_transaction(prepare_result.transaction, prepare_result.group, true).await;
 
     match result {
-        Ok(completed_transaction) => {
+        Ok(Ok(completed_transaction)) => {
             // Claim the prize and send a message to the group
             if let Some(error_message) =
                 mutate_state(|state| commit(args, prepare_result.user_id, completed_transaction.clone(), state))
@@ -33,11 +35,14 @@ async fn claim_prize(args: Args) -> Response {
                 Success
             }
         }
-        Err(failed_transaction) => {
-            let amount = failed_transaction.units();
+        Ok(Err(failed_transaction)) => {
             // Rollback the prize reservation
-            let error_message = mutate_state(|state| rollback(args, prepare_result.user_id, amount, state));
+            let error_message = mutate_state(|state| rollback(args, prepare_result.user_id, prize_amount, true, state));
             TransferFailed(error_message, failed_transaction)
+        }
+        Err(error) => {
+            mutate_state(|state| rollback(args, prepare_result.user_id, prize_amount, false, state));
+            InternalError(format!("{error:?}"))
         }
     }
 }
@@ -58,6 +63,8 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
     if let Some(member) = state.data.get_member(caller) {
         if member.suspended.value {
             return Err(Box::new(UserSuspended));
+        } else if member.lapsed.value {
+            return Err(Box::new(UserLapsed));
         }
 
         let now = state.env.now();
@@ -77,6 +84,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
                 ReservePrizeResult::MessageNotFound => return Err(Box::new(MessageNotFound)),
                 ReservePrizeResult::PrizeFullyClaimed => return Err(Box::new(PrizeFullyClaimed)),
                 ReservePrizeResult::PrizeEnded => return Err(Box::new(PrizeEnded)),
+                ReservePrizeResult::LedgerError => return Err(Box::new(LedgerError)),
             };
 
         let transaction = create_pending_transaction(token, ledger, amount, fee, user_id, Some(&MEMO_PRIZE_CLAIM), now_nanos);
@@ -110,9 +118,14 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
     }
 }
 
-fn rollback(args: Args, user_id: UserId, amount: u128, state: &mut RuntimeState) -> String {
+fn rollback(args: Args, user_id: UserId, amount: u128, ledger_error: bool, state: &mut RuntimeState) -> String {
     let now = state.env.now();
-    match state.data.chat.events.unreserve_prize(args.message_id, user_id, amount, now) {
+    match state
+        .data
+        .chat
+        .events
+        .unreserve_prize(args.message_id, user_id, amount, ledger_error, now)
+    {
         chat_events::UnreservePrizeResult::Success => "prize reservation cancelled".to_string(),
         chat_events::UnreservePrizeResult::MessageNotFound => "prize message not found".to_string(),
         chat_events::UnreservePrizeResult::ReservationNotFound => "prize reservation not found".to_string(),

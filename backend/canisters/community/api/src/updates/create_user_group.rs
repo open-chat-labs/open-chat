@@ -21,6 +21,7 @@ pub enum Response {
     NotAuthorized,
     CommunityFrozen,
     UserSuspended,
+    UserLapsed,
 }
 
 #[ts_export(community, create_user_group)]

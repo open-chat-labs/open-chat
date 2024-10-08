@@ -14,6 +14,7 @@ fn main() {
     }
 
     generate_ts_method!(registry, add_message_filter);
+    generate_ts_method!(registry, add_remove_swap_provider);
     generate_ts_method!(registry, remove_message_filter);
     generate_ts_method!(registry, set_token_enabled);
     generate_ts_method!(registry, updates);

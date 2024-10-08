@@ -5,7 +5,7 @@ use pocket_ic::PocketIc;
 use std::ops::Deref;
 use test_case::test_case;
 use testing::rng::random_string;
-use types::{AccessGate, CommunityId, Rules};
+use types::{CommunityId, Rules};
 
 #[test_case(true)]
 #[test_case(false)]
@@ -33,9 +33,8 @@ fn create_channel_succeeds(is_public: bool) {
         .any(|c| c.channel_id == channel_id && c.is_public == is_public && c.name == channel_name));
 }
 
-#[test_case(true)]
-#[test_case(false)]
-fn existing_users_joined_to_new_public_channel(diamond_gate: bool) {
+#[test]
+fn existing_users_joined_to_new_public_channel() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -46,7 +45,7 @@ fn existing_users_joined_to_new_public_channel(diamond_gate: bool) {
 
     let TestData { user, community_id } = init_test_data(env, canister_ids, *controller, true);
 
-    let user2 = client::register_diamond_user(env, canister_ids, *controller);
+    let user2 = client::register_user(env, canister_ids);
     let user3 = client::register_user(env, canister_ids);
 
     client::local_user_index::happy_path::join_community(
@@ -79,7 +78,8 @@ fn existing_users_joined_to_new_public_channel(diamond_gate: bool) {
             messages_visible_to_non_members: None,
             permissions_v2: None,
             events_ttl: None,
-            gate: diamond_gate.then_some(AccessGate::DiamondMember),
+            gate: None,
+            gate_config: None,
             external_url: None,
         },
     );
@@ -94,11 +94,7 @@ fn existing_users_joined_to_new_public_channel(diamond_gate: bool) {
     let user3_summary = client::community::happy_path::summary(env, &user3, community_id);
 
     assert!(user2_summary.channels.iter().any(|c| c.channel_id == channel_id));
-
-    assert_eq!(
-        user3_summary.channels.iter().any(|c| c.channel_id == channel_id),
-        !diamond_gate
-    );
+    assert!(user3_summary.channels.iter().any(|c| c.channel_id == channel_id));
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal, public: bool) -> TestData {

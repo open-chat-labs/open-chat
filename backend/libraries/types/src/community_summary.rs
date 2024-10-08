@@ -1,7 +1,8 @@
 use crate::user_groups::UserGroupSummary;
 use crate::{
-    AccessGate, CanisterId, ChannelId, ChatMetrics, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates,
-    CommunityId, CommunityPermissions, CommunityRole, EventIndex, FrozenGroupInfo, OptionUpdate, TimestampMillis,
+    AccessGate, AccessGateConfig, CanisterId, ChannelId, ChatMetrics, CommunityCanisterChannelSummary,
+    CommunityCanisterChannelSummaryUpdates, CommunityId, CommunityPermissions, CommunityRole, EventIndex, FrozenGroupInfo,
+    OptionUpdate, TimestampMillis,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -22,6 +23,7 @@ pub struct CommunityCanisterCommunitySummary {
     pub permissions: CommunityPermissions,
     pub frozen: Option<FrozenGroupInfo>,
     pub gate: Option<AccessGate>,
+    pub gate_config: Option<AccessGateConfig>,
     pub primary_language: String,
     pub latest_event_index: EventIndex,
     pub channels: Vec<CommunityCanisterChannelSummary>,
@@ -38,6 +40,7 @@ pub struct CommunityMembership {
     pub role: CommunityRole,
     pub rules_accepted: bool,
     pub display_name: Option<String>,
+    pub lapsed: bool,
 }
 
 #[ts_export]
@@ -58,6 +61,8 @@ pub struct CommunityCanisterCommunitySummaryUpdates {
     pub frozen: OptionUpdate<FrozenGroupInfo>,
     #[ts(as = "crate::OptionUpdateAccessGate")]
     pub gate: OptionUpdate<AccessGate>,
+    #[ts(as = "crate::OptionUpdateAccessGateConfig")]
+    pub gate_config: OptionUpdate<AccessGateConfig>,
     pub primary_language: Option<String>,
     pub latest_event_index: Option<EventIndex>,
     pub channels_added: Vec<CommunityCanisterChannelSummary>,
@@ -76,4 +81,5 @@ pub struct CommunityMembershipUpdates {
     pub rules_accepted: Option<bool>,
     #[ts(as = "crate::OptionUpdateString")]
     pub display_name: OptionUpdate<String>,
+    pub lapsed: Option<bool>,
 }

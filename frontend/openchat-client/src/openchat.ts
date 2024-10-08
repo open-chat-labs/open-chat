@@ -5364,6 +5364,10 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => false);
     }
 
+    addRemoveSwapProvider(swapProvider: DexId, add: boolean): Promise<boolean> {
+        return this.sendRequest({ kind: "addRemoveSwapProvider", swapProvider, add });
+    }
+
     addMessageFilter(regex: string): Promise<boolean> {
         try {
             new RegExp(regex);

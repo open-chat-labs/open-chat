@@ -16,4 +16,6 @@ pub enum Response {
     Success,
     NotAuthorized,
     ChannelNotFound,
+    UserSuspended,
+    UserLapsed,
 }

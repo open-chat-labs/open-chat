@@ -26,6 +26,7 @@ type SendMessageResponse = variant {
     InvalidRequest : text;
     ThreadMessageNotFound;
     UserSuspended;
+    UserLapsed;
     ChatFrozen;
     RulesNotAccepted;
 };
@@ -51,6 +52,7 @@ type EditMessageResponse = variant {
     MessageNotFound;
     CallerNotInGroup;
     UserSuspended;
+    UserLapsed;
     ChatFrozen;
 };
 
@@ -90,6 +92,7 @@ type JoinVideoCallResponse = variant {
     GroupFrozen;
     UserNotInGroup;
     UserSuspended;
+    UserLapsed;
 };
 
 type SetVideoCallPresenceArgs = record {
@@ -105,6 +108,7 @@ type SetVideoCallPresenceResponse = variant {
     GroupFrozen;
     UserNotInGroup;
     UserSuspended;
+    UserLapsed;
 };
 
 type DeleteMessagesArgs = record {
@@ -120,6 +124,7 @@ type DeleteMessagesResponse = variant {
     CallerNotInGroup;
     MessageNotFound;
     UserSuspended;
+    UserLapsed;
     ChatFrozen;
     NotPlatformModerator;
     InternalError : text;
@@ -138,6 +143,7 @@ type UndeleteMessagesResponse = variant {
     CallerNotInGroup;
     MessageNotFound;
     UserSuspended;
+    UserLapsed;
     ChatFrozen;
 };
 
@@ -157,6 +163,7 @@ type RegisterPollVoteResponse = variant {
     OptionIndexOutOfRange;
     CallerNotInGroup;
     UserSuspended;
+    UserLapsed;
     ChatFrozen;
     UserCannotChangeVote;
 };
@@ -175,6 +182,7 @@ type AcceptP2PSwapResponse = variant {
     SwapNotFound;
     UserNotInGroup;
     UserSuspended;
+    UserLapsed;
     ChatFrozen;
     PinRequired;
     PinIncorrect : Milliseconds;
@@ -213,6 +221,7 @@ type AddReactionResponse = variant {
     CallerNotInGroup;
     NotAuthorized;
     UserSuspended;
+    UserLapsed;
     ChatFrozen;
 };
 
@@ -230,6 +239,7 @@ type RemoveReactionResponse = variant {
     CallerNotInGroup;
     NotAuthorized;
     UserSuspended;
+    UserLapsed;
     ChatFrozen;
 };
 
@@ -243,6 +253,7 @@ type ReportMessageResponse = variant {
     Success;
     ChatFrozen;
     UserSuspended;
+    UserLapsed;
     NotAuthorized;
     CallerNotInGroup;
     MessageNotFound;
@@ -265,6 +276,7 @@ type BlockUserResponse = variant {
     NotAuthorized;
     UserNotInGroup;
     UserSuspended;
+    UserLapsed;
     ChatFrozen;
 };
 
@@ -280,6 +292,7 @@ type UnblockUserResponse = variant {
     GroupNotPublic;
     NotAuthorized;
     UserSuspended;
+    UserLapsed;
     ChatFrozen;
 };
 
@@ -297,6 +310,7 @@ type RemoveParticipantResponse = variant {
     NotAuthorized;
     UserNotInGroup;
     UserSuspended;
+    UserLapsed;
     ChatFrozen;
 };
 
@@ -313,6 +327,7 @@ type ChangeRoleResponse = variant {
     UserNotInGroup;
     Invalid;
     UserSuspended;
+    UserLapsed;
     ChatFrozen;
     InternalError : text;
 };
@@ -325,6 +340,7 @@ type UpdateGroupV2Args = record {
     permissions_v2 : opt OptionalGroupPermissions;
     events_ttl : EventsTimeToLiveUpdate;
     gate : AccessGateUpdate;
+    gate_config : AccessGateConfigUpdate;
     public : opt bool;
     messages_visible_to_non_members: opt bool;    
     correlation_id : nat64;
@@ -347,6 +363,7 @@ type UpdateGroupV2Response = variant {
     RulesTooLong : FieldTooLongResult;
     RulesTooShort : FieldTooShortResult;
     UserSuspended;
+    UserLapsed;
     ChatFrozen;
 };
 
@@ -363,6 +380,7 @@ type PinMessageV2Response = variant {
     CallerNotInGroup;
     MessageNotFound;
     UserSuspended;
+    UserLapsed;
     ChatFrozen;
 };
 
@@ -378,6 +396,7 @@ type UnpinMessageResponse = variant {
     CallerNotInGroup;
     MessageNotFound;
     UserSuspended;
+    UserLapsed;
     ChatFrozen;
 };
 
@@ -395,6 +414,7 @@ type RegisterProposalVoteResponse = variant {
     ProposalNotFound;
     ProposalNotAcceptingVotes;
     UserSuspended;
+    UserLapsed;
     ChatFrozen;
     InternalError : text;
 };
@@ -404,6 +424,7 @@ type RegisterProposalVoteV2Response = variant {
     CallerNotInGroup;
     ProposalMessageNotFound;
     UserSuspended;
+    UserLapsed;
     ChatFrozen;
 };
 
@@ -416,13 +437,16 @@ type ClaimPrizeResponse = variant {
     Success;
     CallerNotInGroup;
     UserSuspended;
+    UserLapsed;
     ChatFrozen;
     MessageNotFound;
     AlreadyClaimed;
     PrizeFullyClaimed;
     PrizeEnded;
+    LedgerError;
     TransferFailed : record { text; FailedCryptoTransaction };
     FailedAfterTransfer : record { text; CompletedCryptoTransaction };
+    InternalError : text;
 };
 
 type ConvertIntoCommunityArgs = record {
@@ -441,6 +465,7 @@ type ConvertIntoCommunityResponse = variant {
     AlreadyImportingToAnotherCommunity;
     NotAuthorized;
     UserSuspended;
+    UserLapsed;
     ChatFrozen;
     InternalError : text;
 };
@@ -521,6 +546,8 @@ type EventsResponse = variant {
     Success : EventsSuccessResult;
     CallerNotInGroup;
     ThreadMessageNotFound;
+    UserSuspended;
+    UserLapsed;
     ReplicaNotUpToDateV2 : TimestampMillis;
 };
 
@@ -540,6 +567,8 @@ type MessagesByMessageIndexResponse = variant {
     Success : MessagesSuccessResult;
     CallerNotInGroup;
     ThreadMessageNotFound;
+    UserSuspended;
+    UserLapsed;
     ReplicaNotUpToDateV2 : TimestampMillis;
 };
 
@@ -662,6 +691,7 @@ type EnableInviteCodeResponse = variant {
     };
     NotAuthorized;
     UserSuspended;
+    UserLapsed;
     ChatFrozen;
 };
 
@@ -673,6 +703,7 @@ type DisableInviteCodeResponse = variant {
     Success;
     NotAuthorized;
     UserSuspended;
+    UserLapsed;
     ChatFrozen;
 };
 
@@ -686,6 +717,7 @@ type ResetInviteCodeResponse = variant {
     };
     NotAuthorized;
     UserSuspended;
+    UserLapsed;
     ChatFrozen;
 };
 
@@ -699,6 +731,7 @@ type FollowThreadResponse = variant {
     ThreadNotFound;
     UserNotInGroup;
     UserSuspended;
+    UserLapsed;
     GroupFrozen;
 };
 
@@ -712,6 +745,7 @@ type UnfollowThreadResponse = variant {
     ThreadNotFound;
     UserNotInGroup;
     UserSuspended;
+    UserLapsed;
     GroupFrozen;
 };
 
@@ -722,6 +756,8 @@ type CancelInvitesArgs = record {
 type CancelInvitesResponse = variant {
     Success;
     NotAuthorized;
+    UserSuspended;
+    UserLapsed;
 };
 
 service : {

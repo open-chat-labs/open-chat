@@ -216,7 +216,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
         },
 
         replies: {
-            bd: "var(--bd);",
+            bd: "var(--bd)",
         },
 
         currentChat: {
@@ -310,14 +310,6 @@ export function darkTheme(defaultTheme: Theme): Theme {
             ...defaultTheme.vote,
             maybe: {
                 color: "#666666",
-            },
-        },
-
-        markdown: {
-            fg: {
-                color: txt,
-                bright: txt,
-                muted: textBodyLight,
             },
         },
 

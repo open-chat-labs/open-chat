@@ -480,7 +480,11 @@ export const CommunityRole = Type.Union([
 ]);
 
 export type ExchangeId = Static<typeof ExchangeId>;
-export const ExchangeId = Type.Union([Type.Literal("ICPSwap"), Type.Literal("Sonic")]);
+export const ExchangeId = Type.Union([
+    Type.Literal("ICPSwap"),
+    Type.Literal("Sonic"),
+    Type.Literal("KongSwap"),
+]);
 
 export type ProposalDecisionStatus = Static<typeof ProposalDecisionStatus>;
 export const ProposalDecisionStatus = Type.Union([
@@ -1408,6 +1412,23 @@ export const RegistryNervousSystemSummary = Type.Object({
     is_nns: Type.Boolean(),
     proposal_rejection_fee: Type.BigInt(),
     submitting_proposals_enabled: Type.Boolean(),
+});
+
+export type RegistryAddRemoveSwapProviderResponse = Static<
+    typeof RegistryAddRemoveSwapProviderResponse
+>;
+export const RegistryAddRemoveSwapProviderResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("NotAuthorized"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
+export type RegistryAddRemoveSwapProviderArgs = Static<typeof RegistryAddRemoveSwapProviderArgs>;
+export const RegistryAddRemoveSwapProviderArgs = Type.Object({
+    swap_provider: ExchangeId,
+    add: Type.Boolean(),
 });
 
 export type RegistryUpdatesArgs = Static<typeof RegistryUpdatesArgs>;
@@ -2992,6 +3013,7 @@ export const RegistryUpdatesSuccessResult = Type.Object({
     nervous_system_details: Type.Array(RegistryNervousSystemSummary),
     message_filters_added: Type.Array(RegistryMessageFilterSummary),
     message_filters_removed: Type.Array(Type.BigInt()),
+    swap_providers: Type.Optional(Type.Array(ExchangeId)),
 });
 
 export type RegistryUpdatesResponse = Static<typeof RegistryUpdatesResponse>;
@@ -3361,6 +3383,9 @@ export const UserSwapTokensExchangeArgs = Type.Union([
     }),
     Type.Object({
         Sonic: UserSwapTokensICPSwapArgs,
+    }),
+    Type.Object({
+        KongSwap: UserSwapTokensICPSwapArgs,
     }),
 ]);
 

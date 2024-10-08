@@ -2,8 +2,8 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
-    AccessGate, Document, FieldTooLongResult, FieldTooShortResult, OptionUpdate, OptionalCommunityPermissions, UpdatedRules,
-    Version,
+    AccessGate, AccessGateConfig, Document, FieldTooLongResult, FieldTooShortResult, OptionUpdate,
+    OptionalCommunityPermissions, UpdatedRules, Version,
 };
 
 #[ts_export(community, update_community)]
@@ -19,6 +19,8 @@ pub struct Args {
     pub permissions: Option<OptionalCommunityPermissions>,
     #[ts(as = "types::OptionUpdateAccessGate")]
     pub gate: OptionUpdate<AccessGate>,
+    #[ts(as = "types::OptionUpdateAccessGateConfig")]
+    pub gate_config: OptionUpdate<AccessGateConfig>,
     pub public: Option<bool>,
     pub primary_language: Option<String>,
 }
@@ -43,6 +45,7 @@ pub enum Response {
     UserSuspended,
     CommunityFrozen,
     InvalidLanguage,
+    UserLapsed,
 }
 
 #[ts_export(community, update_community)]

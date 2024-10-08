@@ -473,6 +473,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const DeleteCommunityArgs = IDL.Record({ 'community_id' : CommunityId });
   const DeleteCommunityResponse = IDL.Variant({
+    'UserLapsed' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
@@ -1579,6 +1580,7 @@ export const idlFactory = ({ IDL }) => {
     'TextTooLong' : IDL.Nat32,
     'P2PSwapSetUpFailed' : IDL.Text,
     'PinIncorrect' : Milliseconds,
+    'UserLapsed' : IDL.Null,
     'UserNotInChannel' : CompletedCryptoTransaction,
     'PinRequired' : IDL.Null,
     'ChannelNotFound' : CompletedCryptoTransaction,
@@ -1622,6 +1624,7 @@ export const idlFactory = ({ IDL }) => {
     'TextTooLong' : IDL.Nat32,
     'P2PSwapSetUpFailed' : IDL.Text,
     'PinIncorrect' : Milliseconds,
+    'UserLapsed' : IDL.Null,
     'PinRequired' : IDL.Null,
     'CallerNotInGroup' : IDL.Opt(CompletedCryptoTransaction),
     'ChatFrozen' : IDL.Null,
@@ -1783,6 +1786,7 @@ export const idlFactory = ({ IDL }) => {
     'input_token' : TokenInfo,
     'exchange_args' : IDL.Variant({
       'Sonic' : ExchangeArgs,
+      'KongSwap' : ExchangeArgs,
       'ICPSwap' : ExchangeArgs,
     }),
     'output_token' : TokenInfo,
@@ -1812,6 +1816,7 @@ export const idlFactory = ({ IDL }) => {
     'Retrying' : IDL.Text,
     'PinIncorrect' : Milliseconds,
     'TransferNotToMessageSender' : IDL.Null,
+    'UserLapsed' : IDL.Null,
     'PinRequired' : IDL.Null,
     'MessageNotFound' : IDL.Null,
     'ChatNotFound' : IDL.Null,

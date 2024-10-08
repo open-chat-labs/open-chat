@@ -1499,7 +1499,11 @@ export function approveTransferResponse(
 
 export function apiExchangeArgs(
     args: ExchangeTokenSwapArgs,
+<<<<<<< HEAD
 ): { Sonic: ApiExchangeArgs } | { ICPSwap: ApiExchangeArgs } {
+=======
+): { Sonic: ApiExchangeArgs } | { ICPSwap: ApiExchangeArgs } | { KongSwap: ApiExchangeArgs } {
+>>>>>>> master
     const value = {
         swap_canister_id: Principal.fromText(args.swapCanisterId),
         zero_for_one: args.zeroForOne,
@@ -1511,6 +1515,10 @@ export function apiExchangeArgs(
     } else if (args.dex === "sonic") {
         return {
             Sonic: value,
+        };
+    } else if (args.dex === "kongswap") {
+        return {
+            KongSwap: value,
         };
     }
     throw new UnsupportedValueError("Unexpected dex", args.dex);

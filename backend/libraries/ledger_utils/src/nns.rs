@@ -1,4 +1,5 @@
 use crate::default_ledger_account;
+use ic_cdk::api::call::CallResult;
 use ic_ledger_types::{Memo, Timestamp, TransferArgs};
 use types::nns::Tokens;
 use types::{CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction};
@@ -6,7 +7,7 @@ use types::{CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction};
 pub async fn process_transaction(
     transaction: types::nns::PendingCryptoTransaction,
     sender: CanisterId,
-) -> Result<CompletedCryptoTransaction, FailedCryptoTransaction> {
+) -> CallResult<Result<CompletedCryptoTransaction, FailedCryptoTransaction>> {
     let memo = transaction.memo.unwrap_or(Memo(0));
     let fee = transaction.fee.unwrap_or(Tokens::DEFAULT_FEE);
 
@@ -27,8 +28,9 @@ pub async fn process_transaction(
         }),
     };
 
-    match icp_ledger_canister_c2c_client::transfer(transaction.ledger, &transfer_args).await {
-        Ok(Ok(block_index)) => Ok(CompletedCryptoTransaction::NNS(types::nns::CompletedCryptoTransaction {
+    let response = icp_ledger_canister_c2c_client::transfer(transaction.ledger, &transfer_args).await?;
+    match response {
+        Ok(block_index) => Ok(Ok(CompletedCryptoTransaction::NNS(types::nns::CompletedCryptoTransaction {
             ledger: transaction.ledger,
             token: transaction.token.clone(),
             amount: transaction.amount,
@@ -39,28 +41,21 @@ pub async fn process_transaction(
             created: transaction.created,
             transaction_hash: [0; 32],
             block_index,
-        })),
-        Ok(Err(transfer_error)) => {
+        }))),
+        Err(transfer_error) => {
             let error_message = format!("Transfer failed. {transfer_error:?}");
-            Err(error_message)
-        }
-        Err((code, msg)) => {
-            let error_message = format!("Transfer failed. {code:?}: {msg}");
-            Err(error_message)
+            Ok(Err(FailedCryptoTransaction::NNS(types::nns::FailedCryptoTransaction {
+                ledger: transaction.ledger,
+                token: transaction.token,
+                amount: transaction.amount,
+                fee,
+                from: types::nns::CryptoAccount::Account(from),
+                to: types::nns::CryptoAccount::Account(to),
+                memo,
+                created: transaction.created,
+                transaction_hash: [0; 32],
+                error_message,
+            })))
         }
     }
-    .map_err(|error| {
-        FailedCryptoTransaction::NNS(types::nns::FailedCryptoTransaction {
-            ledger: transaction.ledger,
-            token: transaction.token,
-            amount: transaction.amount,
-            fee,
-            from: types::nns::CryptoAccount::Account(from),
-            to: types::nns::CryptoAccount::Account(to),
-            memo,
-            created: transaction.created,
-            transaction_hash: [0; 32],
-            error_message: error,
-        })
-    })
 }

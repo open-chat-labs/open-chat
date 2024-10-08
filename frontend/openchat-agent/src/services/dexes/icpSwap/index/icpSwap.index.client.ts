@@ -3,14 +3,13 @@ import { idlFactory, type IcpSwapIndexService } from "./candid/idl";
 import { CandidService } from "../../../candidService";
 import type { TokenSwapPool } from "openchat-shared";
 import { getPoolsResponse } from "./mappers";
+import type { SwapIndexClient, SwapPoolClient } from "../../index";
+import { IcpSwapPoolClient } from "../pool/icpSwap.pool.client";
 
 const ICPSWAP_INDEX_CANISTER_ID = "4mmnk-kiaaa-aaaag-qbllq-cai";
-const TEN_MINUTES = 10 * 60 * 1000;
 
-export class IcpSwapIndexClient extends CandidService {
+export class IcpSwapIndexClient extends CandidService implements SwapIndexClient {
     private service: IcpSwapIndexService;
-    private pools: TokenSwapPool[] = []; // Cache the pools for 10 minutes
-    private poolsLastUpdated: number = 0;
 
     constructor(identity: Identity, agent: HttpAgent) {
         super(identity, agent, ICPSWAP_INDEX_CANISTER_ID);
@@ -18,14 +17,11 @@ export class IcpSwapIndexClient extends CandidService {
         this.service = this.createServiceClient<IcpSwapIndexService>(idlFactory);
     }
 
-    async getPools(): Promise<TokenSwapPool[]> {
-        const now = Date.now();
-        if (this.pools.length > 0 && now - this.poolsLastUpdated < TEN_MINUTES)
-            return Promise.resolve(this.pools);
+    getPoolClient(canisterId: string, token0: string, token1: string): SwapPoolClient {
+        return new IcpSwapPoolClient(this.identity, this.agent, canisterId, token0, token1);
+    }
 
-        const pools = await this.handleQueryResponse(this.service.getPools, getPoolsResponse);
-
-        this.poolsLastUpdated = now;
-        return (this.pools = pools);
+    getPools(): Promise<TokenSwapPool[]> {
+        return this.handleQueryResponse(this.service.getPools, getPoolsResponse);
     }
 }

@@ -974,6 +974,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "addRemoveSwapProvider":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.addRemoveSwapProvider(payload.swapProvider, payload.add),
+                );
+                break;
+
             case "addMessageFilter":
                 executeThenReply(payload, correlationId, agent.addMessageFilter(payload.regex));
                 break;

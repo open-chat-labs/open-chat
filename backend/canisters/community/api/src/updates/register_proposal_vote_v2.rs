@@ -18,4 +18,5 @@ pub enum Response {
     ChannelNotFound,
     UserNotInChannel,
     ProposalMessageNotFound,
+    UserLapsed,
 }

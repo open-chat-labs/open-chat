@@ -22,6 +22,8 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Some(member) = state.data.members.get(caller) {
         if member.suspended.value {
             return UserSuspended;
+        } else if member.lapsed.value {
+            return UserLapsed;
         }
 
         let now = state.env.now();
@@ -51,6 +53,7 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
                 UndeleteMessagesResult::MessageNotFound => MessageNotFound,
                 UndeleteMessagesResult::UserNotInGroup => UserNotInChannel,
                 UndeleteMessagesResult::UserSuspended => UserSuspended,
+                UndeleteMessagesResult::UserLapsed => UserLapsed,
             }
         } else {
             UserNotInChannel

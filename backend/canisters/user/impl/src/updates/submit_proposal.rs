@@ -23,8 +23,9 @@ async fn submit_proposal(args: Args) -> Response {
 
     // Make the crypto transfer
     let completed_transaction = match process_transaction(transaction, my_user_id.into(), false).await {
-        Ok(completed) => completed,
-        Err(failed) => return TransferFailed(failed.error_message),
+        Ok(Ok(completed)) => completed,
+        Ok(Err(failed)) => return TransferFailed(failed.error_message),
+        Err(error) => return InternalError(format!("{error:?}")),
     };
 
     let c2c_args = proposals_bot_canister::c2c_submit_proposal::Args {

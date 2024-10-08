@@ -25,4 +25,5 @@ pub enum Response {
     CommunityFrozen,
     NotPlatformModerator,
     InternalError(String),
+    UserLapsed,
 }

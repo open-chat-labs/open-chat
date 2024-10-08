@@ -41,12 +41,15 @@ ic-cdk-timers = { workspace = true }
 ic-certificate-verification = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
-icpswap_client = { path = "../../../libraries/icpswap_client" }
+icpswap_swap_pool_canister = { path = "../../../external_canisters/icpswap_swap_pool/api" }
+icpswap_swap_pool_canister_c2c_client = { path = "../../../external_canisters/icpswap_swap_pool/c2c_client" }
 icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_ledger/c2c_client" }
 icrc_ledger_canister = { path = "../../../external_canisters/icrc_ledger/api" }
 icrc-ledger-types = { workspace = true }
 identity_utils = { path = "../../../libraries/identity_utils" }
 itertools = { workspace = true }
+kongswap_canister = { path = "../../../external_canisters/kongswap/api" }
+kongswap_canister_c2c_client = { path = "../../../external_canisters/kongswap/c2c_client" }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 local_user_index_canister = { path = "../../local_user_index/api" }
 local_user_index_canister_c2c_client = { path = "../../local_user_index/c2c_client" }
@@ -64,7 +67,8 @@ serde = { workspace = true }
 serde_bytes = { workspace = true }
 sns_governance_canister = { path = "../../../external_canisters/sns_governance/api" }
 sns_governance_canister_c2c_client = { path = "../../../external_canisters/sns_governance/c2c_client" }
-sonic_client = { path = "../../../libraries/sonic_client" }
+sonic_canister = { path = "../../../external_canisters/sonic/api" }
+sonic_canister_c2c_client = { path = "../../../external_canisters/sonic/c2c_client" }
 stable_memory = { path = "../../../libraries/stable_memory" }
 storage_bucket_client = { path = "../../../libraries/storage_bucket_client" }
 tracing = { workspace = true }

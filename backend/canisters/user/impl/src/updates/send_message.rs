@@ -65,11 +65,12 @@ async fn send_message_v2(mut args: Args) -> Response {
             // We have to use `process_transaction_without_caller_check` because we may be within a
             // reply callback due to calling `c2c_lookup_user` earlier.
             completed_transfer = match process_transaction_without_caller_check(pending_transaction).await {
-                Ok(completed) => {
+                Ok(Ok(completed)) => {
                     c.transfer = CryptoTransaction::Completed(completed.clone());
                     Some(completed)
                 }
-                Err(failed) => return TransferFailed(failed.error_message().to_string()),
+                Ok(Err(failed)) => return TransferFailed(failed.error_message().to_string()),
+                Err(error) => return InternalError(format!("{error:?}")),
             };
         }
         MessageContentInitial::P2PSwap(p) => {
@@ -88,13 +89,14 @@ async fn send_message_v2(mut args: Args) -> Response {
                 Ok((swap_id, pending_transaction)) => {
                     (completed_transfer, p2p_swap_id) =
                         match process_transaction_without_caller_check(pending_transaction).await {
-                            Ok(completed) => {
+                            Ok(Ok(completed)) => {
                                 NotifyEscrowCanisterOfDepositJob::run(swap_id);
                                 (Some(completed), Some(swap_id))
                             }
-                            Err(failed) => {
+                            Ok(Err(failed)) => {
                                 return TransferFailed(failed.error_message().to_string());
                             }
+                            Err(error) => return InternalError(format!("{error:?}")),
                         };
                 }
                 Err(error) => return error.into(),
