@@ -156,11 +156,7 @@
                     {#if type.kind === "change"}
                         <div><Translatable resourceKey={i18nKey("pinNumber.newPin")} /></div>
                     {/if}
-                    <Pincode
-                        focusFirst={!showCurrentPin}
-                        type="numeric"
-                        length={6}
-                        bind:code={newPinArray} />
+                    <Pincode type="numeric" length={6} bind:code={newPinArray} />
                 </div>
             {/if}
             {#if errorMessage !== undefined}

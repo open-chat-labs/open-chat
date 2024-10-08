@@ -7,7 +7,7 @@
 </script>
 
 <script lang="ts">
-    import { createEventDispatcher, afterUpdate, onMount } from "svelte";
+    import { createEventDispatcher, afterUpdate } from "svelte";
     import PincodeInput from "./PincodeInput.svelte";
 
     export let length: number;
@@ -16,13 +16,6 @@
     export let type: PincodeType = "alphanumeric";
     export let complete: boolean = false;
     export let selectTextOnFocus: boolean = false;
-    export let focusFirst: boolean = true;
-
-    onMount(() => {
-        if (focusFirst) {
-            requestAnimationFrame(() => focusNextInput(-1));
-        }
-    });
 
     function initialise(length: number): PincodeChar[] {
         return [...Array(length).keys()].map((idx) => ({ idx, value: "" }));
