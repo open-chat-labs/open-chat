@@ -13,7 +13,10 @@ concurrency:
 jobs:
   fmt:
     name: run fmt
-    runs-on: ubuntu-latest
+    runs-on:
+      - runs-on
+      - runner=2cpu-linux-x64
+      - run-id=${{ github.run_id }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rs/toolchain@v1
@@ -29,7 +32,10 @@ jobs:
 
   clippy:
     name: run clippy
-    runs-on: ubuntu-latest
+    runs-on:
+      - runs-on
+      - runner=8cpu-linux-x64
+      - run-id=${{ github.run_id }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rs/toolchain@v1
@@ -52,7 +58,10 @@ jobs:
 
   unit_tests:
     name: run unit tests
-    runs-on: ubuntu-latest
+    runs-on:
+      - runs-on
+      - runner=8cpu-linux-x64
+      - run-id=${{ github.run_id }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rs/toolchain@v1
@@ -71,7 +80,10 @@ jobs:
 
   integration_tests:
     name: run integration tests
-    runs-on: ubuntu-latest
+    runs-on:
+      - runs-on
+      - runner=16cpu-linux-x64
+      - run-id=${{ github.run_id }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rs/toolchain@v1
