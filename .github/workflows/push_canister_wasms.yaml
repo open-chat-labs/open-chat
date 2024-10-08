@@ -9,7 +9,7 @@ name: Push canister wasms
 jobs:
   push_canister_wasms:
     name: Push canister wasms
-    runs-on: ubuntu-large
+    runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
