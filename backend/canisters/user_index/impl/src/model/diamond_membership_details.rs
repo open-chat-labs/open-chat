@@ -4,9 +4,7 @@ use types::{
     is_default, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration, DiamondMembershipStatus,
     DiamondMembershipStatusFull, DiamondMembershipSubscription, TimestampMillis,
 };
-use utils::time::DAY_IN_MS;
-
-const LIFETIME_TIMESTAMP: TimestampMillis = 30000000000000; // This timestamp is in the year 2920
+use utils::{consts::LIFETIME_DIAMOND_TIMESTAMP, time::DAY_IN_MS};
 
 #[derive(Serialize, Deserialize, Clone, Default)]
 pub struct DiamondMembershipDetailsInternal {
@@ -60,7 +58,7 @@ impl DiamondMembershipDetailsInternal {
 
     pub fn status(&self, now: TimestampMillis) -> DiamondMembershipStatus {
         match self.expires_at {
-            Some(ts) if ts > LIFETIME_TIMESTAMP => DiamondMembershipStatus::Lifetime,
+            Some(ts) if ts > LIFETIME_DIAMOND_TIMESTAMP => DiamondMembershipStatus::Lifetime,
             Some(ts) if ts > now => DiamondMembershipStatus::Active,
             _ => DiamondMembershipStatus::Inactive,
         }
@@ -80,7 +78,7 @@ impl DiamondMembershipDetailsInternal {
 
     pub fn status_full(&self, now: TimestampMillis) -> DiamondMembershipStatusFull {
         match self.expires_at {
-            Some(ts) if ts > LIFETIME_TIMESTAMP => DiamondMembershipStatusFull::Lifetime,
+            Some(ts) if ts > LIFETIME_DIAMOND_TIMESTAMP => DiamondMembershipStatusFull::Lifetime,
             Some(ts) if ts > now => DiamondMembershipStatusFull::Active(DiamondMembershipDetails {
                 expires_at: ts,
                 pay_in_chat: self.pay_in_chat,
@@ -99,7 +97,7 @@ impl DiamondMembershipDetailsInternal {
     }
 
     pub fn is_lifetime_diamond_member(&self) -> bool {
-        self.expires_at > Some(LIFETIME_TIMESTAMP)
+        self.expires_at > Some(LIFETIME_DIAMOND_TIMESTAMP)
     }
 
     #[allow(clippy::too_many_arguments)]

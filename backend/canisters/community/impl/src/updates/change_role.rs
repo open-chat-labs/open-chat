@@ -1,12 +1,14 @@
 use crate::{
     activity_notifications::handle_activity_notification,
+    jobs,
     model::{events::CommunityEventInternal, members::ChangeRoleResult},
     mutate_state, read_state, run_regular_jobs, RuntimeState,
 };
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::change_role::{Response::*, *};
-use types::{CanisterId, CommunityRoleChanged, UserId};
+use group_community_common::ExpiringMember;
+use types::{CanisterId, CommunityRole, CommunityRoleChanged, UserId};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 
 #[update(candid = true, msgpack = true)]
@@ -71,6 +73,8 @@ fn prepare(user_id: UserId, state: &RuntimeState) -> Result<PrepareResult, Respo
     if let Some(member) = state.data.members.get(caller) {
         if member.suspended.value {
             Err(UserSuspended)
+        } else if member.lapsed.value {
+            Err(UserLapsed)
         } else {
             Ok(PrepareResult {
                 caller_id: member.user_id,
@@ -100,7 +104,7 @@ fn change_role_impl(
     }
 
     let now = state.env.now();
-    let event = match state.data.members.change_role(
+    match state.data.members.change_role(
         caller_id,
         args.user_id,
         args.new_role,
@@ -109,23 +113,40 @@ fn change_role_impl(
         is_user_platform_moderator,
     ) {
         ChangeRoleResult::Success(r) => {
+            // Owners can't "lapse" so either add or remove user from expiry list if they lose or gain owner status
+            if let Some(gate_expiry) = state.data.gate_config.value.as_ref().and_then(|gc| gc.expiry()) {
+                if matches!(args.new_role, CommunityRole::Owner) {
+                    state.data.expiring_members.remove_member(args.user_id, None);
+                } else if matches!(r.prev_role, CommunityRole::Owner) {
+                    state.data.expiring_members.push(ExpiringMember {
+                        expires: now + gate_expiry,
+                        channel_id: None,
+                        user_id: args.user_id,
+                    });
+                }
+            }
+
             let event = CommunityRoleChanged {
                 user_ids: vec![args.user_id],
                 old_role: r.prev_role,
                 new_role: args.new_role,
                 changed_by: r.caller_id,
             };
-            CommunityEventInternal::RoleChanged(Box::new(event))
-        }
-        ChangeRoleResult::NotAuthorized => return NotAuthorized,
-        ChangeRoleResult::Invalid => return Invalid,
-        ChangeRoleResult::UserNotInCommunity => return UserNotInCommunity,
-        ChangeRoleResult::Unchanged => return Success,
-        ChangeRoleResult::TargetUserNotInCommunity => return TargetUserNotInCommunity,
-        ChangeRoleResult::UserSuspended => return UserSuspended,
-    };
+            state
+                .data
+                .events
+                .push_event(CommunityEventInternal::RoleChanged(Box::new(event)), now);
 
-    state.data.events.push_event(event, now);
-    handle_activity_notification(state);
-    Success
+            jobs::expire_members::start_job_if_required(state);
+
+            handle_activity_notification(state);
+            Success
+        }
+        ChangeRoleResult::NotAuthorized => NotAuthorized,
+        ChangeRoleResult::Invalid => Invalid,
+        ChangeRoleResult::UserNotInCommunity => UserNotInCommunity,
+        ChangeRoleResult::Unchanged => Success,
+        ChangeRoleResult::TargetUserNotInCommunity => TargetUserNotInCommunity,
+        ChangeRoleResult::UserSuspended => UserSuspended,
+    }
 }

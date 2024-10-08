@@ -34,6 +34,7 @@ pub enum Response {
     PinIncorrect(Milliseconds),
     TooManyFailedPinAttempts(Milliseconds),
     UserSuspended,
+    UserLapsed,
     Retrying(String),
     InternalError(String),
 }

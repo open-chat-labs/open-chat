@@ -25,6 +25,8 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Some(member) = state.data.members.get_by_user_id(&user_id) {
         if member.suspended.value {
             return UserSuspended;
+        } else if member.lapsed.value {
+            return UserLapsed;
         }
 
         if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
@@ -85,6 +87,7 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                 TipMessageResult::UserNotInGroup => ChannelNotFound,
                 TipMessageResult::NotAuthorized => NotAuthorized,
                 TipMessageResult::UserSuspended => UserSuspended,
+                TipMessageResult::UserLapsed => UserLapsed,
             }
         } else {
             ChannelNotFound

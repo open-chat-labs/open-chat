@@ -116,6 +116,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         internet_identity_canister_id: state.data.internet_identity_canister_id,
         avatar: args.avatar,
         gate: args.gate,
+        gate_config: args.gate_config,
         video_call_operators: state.data.video_call_operators.clone(),
         ic_root_key: state.data.ic_root_key.clone(),
         wasm_version: canister_wasm.version,

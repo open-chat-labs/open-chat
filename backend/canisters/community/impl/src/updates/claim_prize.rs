@@ -67,6 +67,8 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
 
     if member.suspended.value {
         return Err(Box::new(UserSuspended));
+    } else if member.lapsed.value {
+        return Err(Box::new(UserLapsed));
     }
 
     let channel = match state.data.channels.get_mut(&args.channel_id) {

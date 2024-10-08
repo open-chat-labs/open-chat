@@ -27,4 +27,5 @@ pub enum Response {
     PollNotFound,
     PollEnded,
     OptionIndexOutOfRange,
+    UserLapsed,
 }

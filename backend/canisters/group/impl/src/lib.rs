@@ -15,7 +15,8 @@ use group_chat_core::{
     AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, GroupRoleInternal, InvitedUsersResult, UserInvitation,
 };
 use group_community_common::{
-    Achievements, PaymentReceipts, PaymentRecipient, PendingPayment, PendingPaymentReason, PendingPaymentsQueue,
+    Achievements, ExpiringMemberActions, ExpiringMembers, PaymentReceipts, PaymentRecipient, PendingPayment,
+    PendingPaymentReason, PendingPaymentsQueue, UserCache,
 };
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use msgpack::serialize_then_unwrap;
@@ -28,10 +29,10 @@ use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use std::time::Duration;
 use types::{
-    AccessGate, BuildVersion, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Empty,
-    EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype, MessageIndex,
-    Milliseconds, MultiUserChat, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId, UserType,
-    MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
+    AccessGateConfigInternal, BuildVersion, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document,
+    Empty, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype,
+    MessageIndex, Milliseconds, MultiUserChat, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId,
+    UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
 };
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::env::Environment;
@@ -192,6 +193,7 @@ impl RuntimeState {
                 .rules_accepted
                 .as_ref()
                 .map_or(false, |version| version.value >= chat.rules.text.version),
+            lapsed: member.lapsed.value,
         };
 
         GroupCanisterGroupChatSummary {
@@ -224,7 +226,8 @@ impl RuntimeState {
             date_last_pinned: chat.date_last_pinned,
             events_ttl: events_ttl.value,
             events_ttl_last_updated: events_ttl.timestamp,
-            gate: chat.gate.value.clone(),
+            gate: chat.gate_config.value.as_ref().map(|gc| gc.gate.clone()),
+            gate_config: chat.gate_config.value.clone().map(|gc| gc.into()),
             rules_accepted: membership.rules_accepted,
             membership: Some(membership),
             video_call_in_progress: chat.events.video_call_in_progress().value.clone(),
@@ -462,6 +465,12 @@ struct Data {
     pub event_store_client: EventStoreClient<CdkRuntime>,
     #[serde(default)]
     achievements: Achievements,
+    #[serde(default)]
+    expiring_members: ExpiringMembers,
+    #[serde(default)]
+    expiring_member_actions: ExpiringMemberActions,
+    #[serde(default)]
+    user_cache: UserCache,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -496,7 +505,7 @@ impl Data {
         internet_identity_canister_id: CanisterId,
         test_mode: bool,
         permissions: Option<GroupPermissions>,
-        gate: Option<AccessGate>,
+        gate_config: Option<AccessGateConfigInternal>,
         video_call_operators: Vec<Principal>,
         ic_root_key: Vec<u8>,
         anonymized_chat_id: u128,
@@ -513,7 +522,7 @@ impl Data {
             history_visible_to_new_joiners,
             messages_visible_to_non_members,
             permissions.unwrap_or_default(),
-            gate,
+            gate_config,
             events_ttl,
             creator_user_type,
             anonymized_chat_id,
@@ -553,6 +562,9 @@ impl Data {
                 .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
                 .build(),
             achievements: Achievements::default(),
+            expiring_members: ExpiringMembers::default(),
+            expiring_member_actions: ExpiringMemberActions::default(),
+            user_cache: UserCache::default(),
         }
     }
 
@@ -622,17 +634,6 @@ impl Data {
             .and_then(|user_id| self.chat.invited_users.remove(&user_id, now))
     }
 
-    pub fn remove_principal(&mut self, user_id: UserId) {
-        if let Some(principal) = self
-            .principal_to_user_id_map
-            .iter()
-            .find(|(_, &u)| u == user_id)
-            .map(|(p, _)| *p)
-        {
-            self.principal_to_user_id_map.remove(&principal);
-        }
-    }
-
     pub fn record_instructions_count(&self, function_id: InstructionCountFunctionId, now: TimestampMillis) {
         let wasm_version = WASM_VERSION.with_borrow(|v| **v);
         let instructions_count = ic_cdk::api::instruction_counter();
@@ -670,6 +671,21 @@ impl Data {
         }
 
         false
+    }
+
+    pub fn remove_user(&mut self, user_id: UserId) {
+        if let Some(principal) = self
+            .principal_to_user_id_map
+            .iter()
+            .find(|(_, &u)| u == user_id)
+            .map(|(p, _)| *p)
+        {
+            self.principal_to_user_id_map.remove(&principal);
+        }
+
+        self.expiring_members.remove_member(user_id, None);
+        self.expiring_member_actions.remove_member(user_id, None);
+        self.user_cache.delete(user_id);
     }
 }
 

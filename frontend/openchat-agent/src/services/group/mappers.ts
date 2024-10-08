@@ -272,6 +272,9 @@ export function unblockUserResponse(candid: ApiUnblockUserResponse): UnblockUser
     if ("UserSuspended" in candid) {
         return "user_suspended";
     }
+    if ("UserLapsed" in candid) {
+        return "user_lapsed";
+    }
     if ("ChatFrozen" in candid) {
         return "chat_frozen";
     }
@@ -305,6 +308,9 @@ export function blockUserResponse(candid: ApiBlockUserResponse): BlockUserRespon
     }
     if ("UserSuspended" in candid) {
         return "user_suspended";
+    }
+    if ("UserLapsed" in candid) {
+        return "user_lapsed";
     }
     if ("ChatFrozen" in candid) {
         return "chat_frozen";
@@ -351,6 +357,9 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
     if ("UserSuspended" in candid) {
         return { kind: "user_suspended" };
     }
+    if ("UserLapsed" in candid) {
+        return { kind: "user_lapsed" };
+    }
     if ("ChatFrozen" in candid) {
         return { kind: "chat_frozen" };
     }
@@ -387,6 +396,8 @@ export async function getMessagesByMessageIndexResponse(
         "UserNotInChannel" in candid ||
         "ChannelNotFound" in candid ||
         "UserNotInCommunity" in candid ||
+        "UserSuspended" in candid ||
+        "UserLapsed" in candid ||
         "ThreadMessageNotFound" in candid
     ) {
         return "events_failed";

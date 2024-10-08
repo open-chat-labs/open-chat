@@ -2826,6 +2826,7 @@ dependencies = [
  "candid",
  "chat_events",
  "event_store_producer",
+ "group_community_common",
  "itertools 0.13.0",
  "lazy_static",
  "msgpack",
@@ -2844,11 +2845,13 @@ dependencies = [
  "candid",
  "fire_and_forget_handler",
  "icrc-ledger-types",
+ "itertools 0.13.0",
  "msgpack",
  "serde",
  "serde_repr",
  "types",
  "user_canister",
+ "utils 0.1.0",
 ]
 
 [[package]]

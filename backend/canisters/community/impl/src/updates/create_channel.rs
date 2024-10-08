@@ -3,15 +3,14 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_proposals_bot;
 use crate::model::channels::Channel;
 use crate::updates::c2c_join_channel::add_members_to_public_channel_unchecked;
-use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_join_community;
 use community_canister::create_channel::{Response::*, *};
 use group_chat_core::GroupChatCore;
 use rand::Rng;
-use std::collections::HashMap;
-use types::{AccessGate, MultiUserChat, TimestampMillis, UserId, UserType};
+use types::{MultiUserChat, UserType};
 use url::Url;
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
@@ -20,15 +19,10 @@ use utils::text_validation::{
 
 #[update(candid = true, msgpack = true)]
 #[trace]
-async fn create_channel(args: Args) -> Response {
+fn create_channel(args: Args) -> Response {
     run_regular_jobs();
 
-    let diamond_membership_expiry_dates: HashMap<_, _> = match get_diamond_membership_expiry_dates_if_needed(&args).await {
-        Ok(expiry_dates) => expiry_dates,
-        Err(response) => return response,
-    };
-
-    mutate_state(|state| create_channel_impl(args, false, diamond_membership_expiry_dates, state))
+    mutate_state(|state| create_channel_impl(args, false, state))
 }
 
 #[update(guard = "caller_is_proposals_bot", msgpack = true)]
@@ -63,16 +57,11 @@ fn c2c_create_proposals_channel(args: Args) -> Response {
             }
         }
 
-        create_channel_impl(args, true, HashMap::new(), state)
+        create_channel_impl(args, true, state)
     })
 }
 
-fn create_channel_impl(
-    args: Args,
-    is_proposals_channel: bool,
-    diamond_membership_expiry_dates: HashMap<UserId, TimestampMillis>,
-    state: &mut RuntimeState,
-) -> Response {
+fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut RuntimeState) -> Response {
     if state.data.is_frozen() {
         return CommunityFrozen;
     }
@@ -90,6 +79,8 @@ fn create_channel_impl(
     if let Some(member) = state.data.members.get_mut(caller) {
         if member.suspended.value {
             return UserSuspended;
+        } else if member.lapsed.value {
+            return UserLapsed;
         }
 
         let subtype = is_proposals_channel.then_some(args.subtype).flatten();
@@ -121,13 +112,14 @@ fn create_channel_impl(
             }
         } else if let Err(error) = validate_avatar(args.avatar.as_ref()) {
             AvatarTooBig(error)
-        } else if args.gate.as_ref().map(|g| !g.validate()).unwrap_or_default() {
+        } else if args.gate_config.as_ref().map(|g| !g.validate()).unwrap_or_default() {
             AccessGateInvalid
         } else if state.data.channels.is_name_taken(&args.name, None) {
             NameTaken
         } else {
             let now = state.env.now();
             let permissions = args.permissions_v2.unwrap_or_default();
+            let gate_config = if args.gate_config.is_some() { args.gate_config } else { args.gate.map(|g| g.into()) };
 
             let chat = GroupChatCore::new(
                 MultiUserChat::Channel(state.env.canister_id().into(), channel_id),
@@ -141,7 +133,7 @@ fn create_channel_impl(
                 args.history_visible_to_new_joiners,
                 messages_visible_to_non_members,
                 permissions,
-                args.gate.clone(),
+                gate_config.clone().map(|gc| gc.into()),
                 args.events_ttl,
                 member.user_type,
                 state.env.rng().gen(),
@@ -157,22 +149,8 @@ fn create_channel_impl(
                 date_imported: None,
             };
 
-            if args.is_public {
-                match args.gate {
-                    Some(AccessGate::DiamondMember) => {
-                        add_members_to_public_channel_unchecked(
-                            &mut channel,
-                            state
-                                .data
-                                .members
-                                .iter_mut()
-                                .filter(|m| diamond_membership_expiry_dates.get(&m.user_id).copied() > Some(now)),
-                            now,
-                        );
-                    }
-                    None => add_members_to_public_channel_unchecked(&mut channel, state.data.members.iter_mut(), now),
-                    _ => {}
-                }
+            if args.is_public && gate_config.is_none() {
+                add_members_to_public_channel_unchecked(&mut channel, state.data.members.iter_mut(), now);
             }
 
             state.data.channels.add(channel);
@@ -182,30 +160,5 @@ fn create_channel_impl(
         }
     } else {
         NotAuthorized
-    }
-}
-
-async fn get_diamond_membership_expiry_dates_if_needed(args: &Args) -> Result<HashMap<UserId, TimestampMillis>, Response> {
-    if let Some(AccessGate::DiamondMember) = &args.gate {
-        let (local_user_index_canister_id, user_ids) = read_state(|state| {
-            (
-                state.data.local_user_index_canister_id,
-                state.data.members.iter().map(|u| u.user_id).collect(),
-            )
-        });
-
-        match local_user_index_canister_c2c_client::c2c_diamond_membership_expiry_dates(
-            local_user_index_canister_id,
-            &local_user_index_canister::c2c_diamond_membership_expiry_dates::Args { user_ids },
-        )
-        .await
-        {
-            Ok(local_user_index_canister::c2c_diamond_membership_expiry_dates::Response::Success(expiry_dates)) => {
-                Ok(expiry_dates)
-            }
-            Err(error) => Err(InternalError(format!("{error:?}"))),
-        }
-    } else {
-        Ok(HashMap::new())
     }
 }

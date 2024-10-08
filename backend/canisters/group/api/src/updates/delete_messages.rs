@@ -20,6 +20,7 @@ pub enum Response {
     CallerNotInGroup,
     MessageNotFound,
     UserSuspended,
+    UserLapsed,
     ChatFrozen,
     NotPlatformModerator,
     InternalError(String),
