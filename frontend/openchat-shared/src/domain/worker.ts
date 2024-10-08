@@ -196,6 +196,7 @@ import type {
     ExternalAchievement,
 } from "./chit";
 import type { JsonnableDelegationChain } from "@dfinity/identity";
+import type { Verification } from "./wallet";
 
 /**
  * Worker request types
@@ -1752,7 +1753,7 @@ type CancelP2PSwap = {
 };
 
 type SetPinNumber = {
-    currentPin: string | undefined;
+    verification: Verification;
     newPin: string | undefined;
     kind: "setPinNumber";
 };

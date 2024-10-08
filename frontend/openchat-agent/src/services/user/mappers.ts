@@ -66,6 +66,7 @@ import type {
     ApiReferralStatus,
     ApiReferral,
     ApiWalletConfig,
+    ApiSignedDelegation,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -133,6 +134,7 @@ import type {
     ReferralStatus,
     Referral,
     WalletConfig,
+    Verification,
 } from "openchat-shared";
 import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
@@ -162,6 +164,7 @@ import type {
 } from "./candid/types";
 import type { PinNumberSettings } from "openchat-shared";
 import { pinNumberFailureResponse } from "../common/pinNumberErrorMapper";
+import { signedDelegation } from "../../utils/id";
 
 export function chitEventsResponse(candid: ApiChitEventsResponse): ChitEventsResponse {
     if ("Success" in candid) {
@@ -1534,4 +1537,17 @@ export function claimDailyChitResponse(candid: ApiClaimDailyChitResponse): Claim
         };
     }
     throw new UnsupportedValueError("Unexpected ApiClaimDailyChitResponse type received", candid);
+}
+
+export function apiVerification(
+    domain: Verification,
+): { PIN: string } | { Delegation: ApiSignedDelegation } | { None: null } {
+    switch (domain.kind) {
+        case "delegation_verification":
+            return { Delegation: signedDelegation(domain.delegation) };
+        case "no_verification":
+            return { None: null };
+        case "pin_verification":
+            return { PIN: domain.pin };
+    }
 }
