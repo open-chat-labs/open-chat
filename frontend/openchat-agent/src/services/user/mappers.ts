@@ -1499,11 +1499,7 @@ export function approveTransferResponse(
 
 export function apiExchangeArgs(
     args: ExchangeTokenSwapArgs,
-<<<<<<< HEAD
-): { Sonic: ApiExchangeArgs } | { ICPSwap: ApiExchangeArgs } {
-=======
 ): { Sonic: ApiExchangeArgs } | { ICPSwap: ApiExchangeArgs } | { KongSwap: ApiExchangeArgs } {
->>>>>>> master
     const value = {
         swap_canister_id: Principal.fromText(args.swapCanisterId),
         zero_for_one: args.zeroForOne,
