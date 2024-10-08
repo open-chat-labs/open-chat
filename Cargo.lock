@@ -152,7 +152,7 @@ dependencies = [
  "serde_json",
  "stable_memory",
  "testing",
- "timer_job_queue",
+ "timer_job_queues",
  "tracing",
  "types",
  "user_canister",
@@ -4635,6 +4635,7 @@ dependencies = [
  "serde_json",
  "sha256",
  "stable_memory",
+ "timer_job_queues",
  "tracing",
  "types",
  "user_canister",
@@ -7809,7 +7810,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "timer_job_queue"
+name = "timer_job_queues"
 version = "0.1.0"
 dependencies = [
  "futures",
@@ -8525,7 +8526,6 @@ dependencies = [
  "sha256",
  "sha3",
  "time",
- "timer_job_queue",
  "tracing",
  "types",
 ]
