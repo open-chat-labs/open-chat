@@ -17,6 +17,7 @@
         @include z-index("witch");
         background-color: black;
         background-image: url("/assets/witch.jpg");
+        background-image: url("/assets/zombie.png");
         background-repeat: no-repeat;
         background-size: cover;
         animation: shake 100ms linear infinite;
