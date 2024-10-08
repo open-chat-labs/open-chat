@@ -60,6 +60,13 @@
         let response = await client.tokenSwapStatus(swapId);
 
         if (response.kind === "success") {
+            if (response.amountSwapped?.kind === "ok" && response.amountSwapped?.value.kind === "ok") {
+                amountOut = client.formatTokens(
+                    response.amountSwapped.value.value,
+                    decimalsOut,
+                );
+            }
+
             if (response.withdrawnFromDex?.kind === "ok") {
                 const success =
                     response.amountSwapped?.kind === "ok" &&
@@ -76,10 +83,6 @@
                 notifyFinished(success ? "success" : "rateChanged");
             } else if (response.amountSwapped?.kind === "ok") {
                 if (response.amountSwapped.value.kind === "ok") {
-                    amountOut = client.formatTokens(
-                        response.amountSwapped.value.value,
-                        decimalsOut,
-                    );
                     updateSteps([
                         { label: "get", status: "done" },
                         { label: "deposit", status: "done" },
