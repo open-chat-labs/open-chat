@@ -1,9 +1,12 @@
-use crate::{activity_notifications::handle_activity_notification, mutate_state, read_state, run_regular_jobs, RuntimeState};
+use crate::{
+    activity_notifications::handle_activity_notification, jobs, mutate_state, read_state, run_regular_jobs, RuntimeState,
+};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use community_canister::add_members_to_channel::{Response::*, *};
 use group_chat_core::AddResult;
+use group_community_common::ExpiringMember;
 use types::{AddedToChannelNotification, ChannelId, EventIndex, MembersAdded, MessageIndex, Notification, UserId, UserType};
 
 #[update(candid = true, msgpack = true)]
@@ -53,6 +56,8 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     if let Some(member) = state.data.members.get(caller) {
         if member.suspended.value {
             return Err(UserSuspended);
+        } else if member.lapsed.value {
+            return Err(UserLapsed);
         }
 
         let user_id = member.user_id;
@@ -64,6 +69,8 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 let permissions = &channel.chat.permissions;
                 if !channel_member.role.can_add_members(permissions) {
                     return Err(NotAuthorized);
+                } else if channel_member.lapsed.value {
+                    return Err(UserLapsed);
                 }
 
                 let mut users_to_add = Vec::new();
@@ -128,6 +135,8 @@ fn commit(
         let mut users_added: Vec<UserId> = Vec::new();
         let mut users_limit_reached: Vec<UserId> = Vec::new();
 
+        let gate_expiry = channel.chat.gate_config.value.as_ref().and_then(|gc| gc.expiry());
+
         for (user_id, user_type) in users_to_add {
             match channel.chat.members.add(
                 user_id,
@@ -140,6 +149,14 @@ fn commit(
                 AddResult::Success(_) => {
                     users_added.push(user_id);
                     state.data.members.mark_member_joined_channel(&user_id, channel_id);
+
+                    if let Some(gate_expiry) = gate_expiry {
+                        state.data.expiring_members.push(ExpiringMember {
+                            expires: now + gate_expiry,
+                            channel_id: Some(channel_id),
+                            user_id,
+                        });
+                    }
                 }
                 AddResult::AlreadyInGroup => users_already_in_channel.push(user_id),
                 AddResult::MemberLimitReached(_) => users_limit_reached.push(user_id),
@@ -182,6 +199,8 @@ fn commit(
         });
 
         state.push_notification(users_added.clone(), notification);
+
+        jobs::expire_members::start_job_if_required(state);
 
         handle_activity_notification(state);
 

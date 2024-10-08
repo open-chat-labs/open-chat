@@ -1,6 +1,6 @@
 use crate::{
-    AccessGate, ChannelId, CommunityPermissions, CommunityRole, EventIndex, EventWrapper, GroupPermissions, GroupRole, Message,
-    MessageIndex, Milliseconds, TimestampMillis, UserId,
+    AccessGate, AccessGateConfig, ChannelId, CommunityPermissions, CommunityRole, EventIndex, EventWrapper, GroupPermissions,
+    GroupRole, Message, MessageIndex, Milliseconds, TimestampMillis, UserId,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -310,6 +310,7 @@ pub struct EventsTimeToLiveUpdated {
 pub struct GroupGateUpdated {
     pub updated_by: UserId,
     pub new_gate: Option<AccessGate>,
+    pub new_gate_config: Option<AccessGateConfig>,
 }
 
 #[ts_export]

@@ -3,6 +3,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::SetVideoCallPresenceResult;
 use group_canister::set_video_call_presence::{Response::*, *};
+use group_chat_core::MinVisibleEventIndexResult;
 use types::Achievement;
 
 #[update(candid = true, msgpack = true)]
@@ -20,41 +21,38 @@ pub(crate) fn set_video_call_presence_impl(args: Args, state: &mut RuntimeState)
 
     let caller = state.env.caller();
 
-    if let Some(member) = state.data.get_member(caller) {
-        if member.suspended.value {
-            return UserSuspended;
-        }
+    let Some(user_id) = state.data.lookup_user_id(caller) else {
+        return UserNotInGroup;
+    };
 
-        let now = state.env.now();
-        let user_id = member.user_id;
+    let now = state.env.now();
 
-        if let Some(min_visible_event_index) = state.data.chat.min_visible_event_index(Some(user_id)) {
-            match state.data.chat.events.set_video_call_presence(
-                user_id,
-                args.message_id,
-                args.presence,
-                min_visible_event_index,
-                now,
-            ) {
-                SetVideoCallPresenceResult::Success => {
-                    if args.new_achievement {
-                        state.data.achievements.notify_user(
-                            user_id,
-                            vec![Achievement::JoinedCall],
-                            &mut state.data.fire_and_forget_handler,
-                        );
-                    }
+    let min_visible_event_index = match state.data.chat.min_visible_event_index(Some(user_id)) {
+        MinVisibleEventIndexResult::Success(event_index) => event_index,
+        MinVisibleEventIndexResult::UserLapsed => return UserLapsed,
+        MinVisibleEventIndexResult::UserSuspended => return UserSuspended,
+        MinVisibleEventIndexResult::UserNotInGroup => return UserNotInGroup,
+    };
 
-                    handle_activity_notification(state);
-                    Success
-                }
-                SetVideoCallPresenceResult::MessageNotFound => MessageNotFound,
-                SetVideoCallPresenceResult::AlreadyEnded => AlreadyEnded,
+    match state
+        .data
+        .chat
+        .events
+        .set_video_call_presence(user_id, args.message_id, args.presence, min_visible_event_index, now)
+    {
+        SetVideoCallPresenceResult::Success => {
+            if args.new_achievement {
+                state.data.achievements.notify_user(
+                    user_id,
+                    vec![Achievement::JoinedCall],
+                    &mut state.data.fire_and_forget_handler,
+                );
             }
-        } else {
-            UserNotInGroup
+
+            handle_activity_notification(state);
+            Success
         }
-    } else {
-        UserNotInGroup
+        SetVideoCallPresenceResult::MessageNotFound => MessageNotFound,
+        SetVideoCallPresenceResult::AlreadyEnded => AlreadyEnded,
     }
 }

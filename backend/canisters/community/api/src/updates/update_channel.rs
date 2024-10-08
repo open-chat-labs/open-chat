@@ -2,7 +2,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
-    AccessGate, ChannelId, Document, FieldTooLongResult, FieldTooShortResult, Milliseconds, OptionUpdate,
+    AccessGate, AccessGateConfig, ChannelId, Document, FieldTooLongResult, FieldTooShortResult, Milliseconds, OptionUpdate,
     OptionalGroupPermissions, UpdatedRules, Version,
 };
 
@@ -20,6 +20,8 @@ pub struct Args {
     pub events_ttl: OptionUpdate<Milliseconds>,
     #[ts(as = "types::OptionUpdateAccessGate")]
     pub gate: OptionUpdate<AccessGate>,
+    #[ts(as = "types::OptionUpdateAccessGateConfig")]
+    pub gate_config: OptionUpdate<AccessGateConfig>,
     pub public: Option<bool>,
     pub messages_visible_to_non_members: Option<bool>,
     #[ts(as = "types::OptionUpdateString")]
@@ -46,6 +48,7 @@ pub enum Response {
     UserSuspended,
     ExternalUrlInvalid,
     CommunityFrozen,
+    UserLapsed,
 }
 
 #[ts_export(community, update_channel)]

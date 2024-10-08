@@ -26,4 +26,5 @@ pub enum Response {
     ProposalNotFound,
     ProposalNotAcceptingVotes,
     InternalError(String),
+    UserLapsed,
 }

@@ -4,6 +4,11 @@ export type AccessGateWithLevel = { level: Level } & AccessGate;
 
 export type AccessGate = LeafGate | CompositeGate;
 
+export type AccessGateConfig = {
+    gate: AccessGate;
+    expiry: bigint | undefined;
+};
+
 export type ActiveLeafGate = Exclude<LeafGate, NoGate>;
 
 export type PreprocessedGate = CredentialGate | PaymentGate | UniquePersonGate;

@@ -285,6 +285,7 @@ impl Channel {
                 .rules_accepted
                 .as_ref()
                 .map_or(false, |version| version.value >= chat.rules.text.version),
+            lapsed: m.lapsed.value,
         });
 
         Some(CommunityCanisterChannelSummary {
@@ -309,7 +310,8 @@ impl Channel {
             date_last_pinned: chat.date_last_pinned,
             events_ttl: events_ttl.value,
             events_ttl_last_updated: events_ttl.timestamp,
-            gate: chat.gate.value.clone(),
+            gate: chat.gate_config.value.as_ref().map(|gc| gc.gate.clone()),
+            gate_config: chat.gate_config.value.clone().map(|gc| gc.into()),
             membership,
             video_call_in_progress: chat.events.video_call_in_progress().value.clone(),
             is_invited,
@@ -372,6 +374,7 @@ impl Channel {
                 .as_ref()
                 .filter(|accepted| updates.rules_changed || accepted.timestamp > since)
                 .map(|accepted| accepted.value >= chat.rules.text.version),
+            lapsed: m.lapsed.if_set_after(since).copied(),
         });
 
         ChannelUpdates::Updated(CommunityCanisterChannelSummaryUpdates {
@@ -395,6 +398,7 @@ impl Channel {
             events_ttl: updates.events_ttl,
             events_ttl_last_updated: updates.events_ttl_last_updated,
             gate: updates.gate,
+            gate_config: updates.gate_config,
             membership,
             video_call_in_progress: updates.video_call_in_progress,
             external_url: updates.external_url,
@@ -417,8 +421,7 @@ impl Channel {
     }
 
     fn can_view_latest_message(&self, is_channel_member: bool, is_community_member: bool, is_community_public: bool) -> bool {
-        is_channel_member
-            || (self.chat.is_public.value && !self.chat.has_payment_gate() && (is_community_member || is_community_public))
+        is_channel_member || (self.chat.is_public.value && (is_community_member || is_community_public))
     }
 }
 
@@ -435,7 +438,8 @@ impl From<&Channel> for ChannelMatch {
             description: channel.chat.description.value.clone(),
             avatar_id: types::Document::id(&channel.chat.avatar),
             member_count: channel.chat.members.len(),
-            gate: channel.chat.gate.value.clone(),
+            gate: channel.chat.gate_config.value.as_ref().map(|gc| gc.gate.clone()),
+            gate_config: channel.chat.gate_config.value.clone().map(|gc| gc.into()),
             subtype: channel.chat.subtype.value.clone(),
         }
     }

@@ -23,6 +23,16 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         return NotAuthorized;
     }
 
+    let caller = state.env.caller();
+
+    let Some(member) = state.data.members.get(caller) else {
+        return NotAuthorized;
+    };
+
+    if member.suspended.value || member.lapsed.value {
+        return NotAuthorized;
+    }
+
     let Some(channel) = state.data.channels.get_mut(&args.channel_id) else {
         return NotAuthorized;
     };

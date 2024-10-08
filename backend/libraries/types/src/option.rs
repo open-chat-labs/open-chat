@@ -82,6 +82,7 @@ option_update!(OptionUpdateU64, u64);
 option_update!(OptionUpdateU128, u128);
 option_update!(OptionUpdateAccessGate, crate::AccessGate);
 option_update!(OptionUpdateDocument, crate::Document);
+option_update!(OptionUpdateAccessGateConfig, crate::AccessGateConfig);
 option_update!(OptionUpdateFrozenGroupInfo, crate::FrozenGroupInfo);
 option_update!(OptionUpdateGroupPermissionRole, crate::GroupPermissionRole);
 option_update!(OptionUpdateGroupSubtype, crate::GroupSubtype);

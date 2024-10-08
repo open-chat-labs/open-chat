@@ -25,4 +25,5 @@ pub enum Response {
     MessageNotFound,
     AlreadyReported,
     InternalError(String),
+    UserLapsed,
 }

@@ -34,6 +34,7 @@ import type {
     Offline,
     Success,
     SuccessNoUpdates,
+    UserLapsed,
     UserLimitReached,
     UserNotInChat,
     UserNotInCommunity,
@@ -126,6 +127,7 @@ export type AddMembersToChannelResponse =
     | Success
     | UserNotInCommunity
     | UserSuspended
+    | UserLapsed
     | CommunityFrozen
     | CommunityPublic
     | InternalError
@@ -321,6 +323,7 @@ export type SetMemberDisplayNameResponse =
     | "success"
     | "user_not_in_community"
     | "user_suspended"
+    | "user_lapsed"
     | "community_frozen"
     | "display_name_too_short"
     | "display_name_too_long"
