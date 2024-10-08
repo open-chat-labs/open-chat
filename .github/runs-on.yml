@@ -1,11 +1,11 @@
 runners:
   small:
-    ram: 2
-    family: c7
+    cpu: 2
+    family: m7
     image: ubuntu24-full-x64
   medium:
-    cpu: 8
-    family: c7
+    cpu: 4
+    family: m7
     image: ubuntu24-full-x64
   large:
     cpu: 16
