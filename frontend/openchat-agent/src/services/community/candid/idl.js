@@ -482,6 +482,7 @@ export const idlFactory = ({ IDL }) => {
     'width' : IDL.Nat32,
   });
   const PrizeContent = IDL.Record({
+    'winner_count' : IDL.Nat32,
     'token' : Cryptocurrency,
     'end_date' : TimestampMillis,
     'prizes_remaining' : IDL.Nat32,
@@ -489,6 +490,7 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'diamond_only' : IDL.Bool,
     'winners' : IDL.Vec(UserId),
+    'user_is_winner' : IDL.Bool,
   });
   const CustomMessageContent = IDL.Record({
     'data' : IDL.Vec(IDL.Nat8),

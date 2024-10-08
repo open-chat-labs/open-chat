@@ -86,19 +86,24 @@
 
 <style lang="scss">
     input {
-        width: 3rem;
+        width: 4rem;
         padding: 0.5rem 1rem;
         margin: 0;
         border: 0;
         border-radius: 0;
         text-align: center;
+        background-color: var(--input-bg);
+        color: var(--txt);
+        @include font(book, normal, fs-130);
+        border: var(--bw) solid var(--bd);
+        box-shadow: var(--input-sh);
+
+        @include mobile() {
+            width: 3rem;
+        }
     }
 
     input:focus {
         z-index: 1;
-    }
-
-    input:not(:last-of-type) {
-        border-right: 1px solid #e0e0e0;
     }
 </style>

@@ -1763,7 +1763,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.setPinNumber(payload.currentPin, payload.newPin),
+                    agent.setPinNumber(payload.verification, payload.newPin),
                 );
                 break;
 

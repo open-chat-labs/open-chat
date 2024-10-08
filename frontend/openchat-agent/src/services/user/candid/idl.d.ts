@@ -168,6 +168,7 @@ import {
     ReferralStatus,
     Referral,
     WalletConfig,
+    SignedDelegation
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -337,7 +338,8 @@ export {
     ClaimDailyChitResponse as ApiClaimDailyChitResponse,
     ReferralStatus as ApiReferralStatus,
     Referral as ApiReferral,
-    WalletConfig as ApiWalletConfig
+    WalletConfig as ApiWalletConfig,
+    SignedDelegation as ApiSignedDelegation
 };
 
 export const idlFactory: IDL.InterfaceFactory;

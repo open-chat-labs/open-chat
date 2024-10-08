@@ -214,6 +214,7 @@ import type {
     ExternalAchievement,
     ExternalAchievementsSuccess,
     ChitLeaderboardResponse,
+    Verification,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -3636,10 +3637,10 @@ export class OpenChatAgent extends EventTarget {
     }
 
     setPinNumber(
-        currentPin: string | undefined,
+        verification: Verification,
         newPin: string | undefined,
     ): Promise<SetPinNumberResponse> {
-        return this.userClient.setPinNumber(currentPin, newPin);
+        return this.userClient.setPinNumber(verification, newPin);
     }
 
     claimDailyChit(): Promise<ClaimDailyChitResponse> {
