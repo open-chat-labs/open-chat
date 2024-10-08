@@ -11,7 +11,7 @@ jobs:
     name: Push canister wasms
     runs-on:
       - runs-on
-      - runner=8cpu-linux-x64,
+      - runner=large
       - run-id=${{ github.run_id }}
     permissions:
       id-token: write

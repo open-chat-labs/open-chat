@@ -10,7 +10,7 @@ jobs:
     name: Build all in debug mode
     runs-on:
       - runs-on
-      - runner=8cpu-linux-x64,
+      - runner=large
       - run-id=${{ github.run_id }}
     steps:
       - uses: actions/checkout@v4
@@ -31,7 +31,7 @@ jobs:
     name: Build canister wasms
     runs-on:
       - runs-on
-      - runner=8cpu-linux-x64,
+      - runner=large
       - run-id=${{ github.run_id }}
     steps:
       - uses: actions/checkout@v4
