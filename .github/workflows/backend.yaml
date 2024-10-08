@@ -71,7 +71,7 @@ jobs:
 
   integration_tests:
     name: run integration tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-large
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rs/toolchain@v1

@@ -9,7 +9,7 @@ name: Run pre-release tests
 jobs:
   run_tests:
     name: Run pre-release tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-large
     steps:
       - uses: actions/checkout@v4
       - name: Wait for wasms to be built
