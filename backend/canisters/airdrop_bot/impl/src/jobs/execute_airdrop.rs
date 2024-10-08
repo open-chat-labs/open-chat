@@ -193,6 +193,6 @@ fn execute_airdrop(participants: Vec<(UserId, Chit)>, state: &mut RuntimeState) 
             })))
         }
 
-        state.data.pending_actions_queue.enqueue_many(actions.into_iter(), true);
+        state.data.pending_actions_queue.enqueue_many(actions.into_iter(), false);
     }
 }

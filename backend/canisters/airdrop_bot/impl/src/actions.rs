@@ -165,7 +165,7 @@ async fn handle_transfer_action(action: AirdropTransfer) -> Result<(), bool> {
                     airdrop_type: action.airdrop_type.clone(),
                 }));
 
-                state.data.pending_actions_queue.enqueue_front(message_action, true);
+                state.data.pending_actions_queue.enqueue_front(message_action, false);
 
                 match action.airdrop_type {
                     AirdropType::Lottery(LotteryAirdrop { position }) => {

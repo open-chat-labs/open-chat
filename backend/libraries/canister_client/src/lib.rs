@@ -53,7 +53,7 @@ pub async fn make_c2c_call_raw(
     let tracing_enabled = tracing::enabled!(Level::TRACE);
     if tracing_enabled {
         tracing::trace!(method_name, %canister_id, "Starting c2c call");
-        ic_cdk::print(format!("Making call to {canister_id} \"{method_name}\""));
+        ic_cdk::println!("Making call to {canister_id} \"{method_name}\"");
     }
 
     let response = ic_cdk::api::call::call_raw128(canister_id, method_name, payload_bytes, cycles).await;
