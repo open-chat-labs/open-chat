@@ -1,13 +1,16 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::UserId;
 
+#[ts_export(group, block_user)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub user_id: UserId,
     pub correlation_id: u64,
 }
 
+#[ts_export(group, block_user)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
@@ -19,6 +22,7 @@ pub enum Response {
     NotAuthorized,
     UserNotInGroup,
     UserSuspended,
+    UserLapsed,
     ChatFrozen,
 }
 
@@ -33,6 +37,7 @@ impl From<crate::remove_participant::Response> for Response {
             crate::remove_participant::Response::NotAuthorized => Response::NotAuthorized,
             crate::remove_participant::Response::UserNotInGroup => Response::UserNotInGroup,
             crate::remove_participant::Response::UserSuspended => Response::UserSuspended,
+            crate::remove_participant::Response::UserLapsed => Response::UserLapsed,
             crate::remove_participant::Response::ChatFrozen => Response::ChatFrozen,
         }
     }

@@ -2,6 +2,7 @@ use crate::mentions::Mentions;
 use crate::roles::GroupRoleInternal;
 use crate::AccessRulesInternal;
 use chat_events::ChatEvents;
+use group_community_common::{Member, Members};
 use serde::de::{SeqAccess, Visitor};
 use serde::ser::SerializeSeq;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -11,8 +12,8 @@ use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::fmt::Formatter;
 use types::{
-    is_default, is_empty_btreemap, is_empty_hashset, is_empty_slice, EventIndex, GroupMember, GroupPermissions,
-    HydratedMention, MessageIndex, TimestampMillis, Timestamped, UserId, UserType, Version, MAX_RETURNED_MENTIONS,
+    is_default, EventIndex, GroupMember, GroupPermissions, HydratedMention, MessageIndex, TimestampMillis, Timestamped, UserId,
+    UserType, Version, MAX_RETURNED_MENTIONS,
 };
 
 const MAX_MEMBERS_PER_GROUP: u32 = 100_000;
@@ -56,6 +57,7 @@ impl GroupMembers {
             rules_accepted: Some(Timestamped::new(Version::zero(), now)),
             is_bot: user_type.is_bot(),
             user_type,
+            lapsed: Timestamped::default(),
         };
 
         GroupMembers {
@@ -99,6 +101,7 @@ impl GroupMembers {
                         rules_accepted: None,
                         is_bot: user_type.is_bot(),
                         user_type,
+                        lapsed: Timestamped::new(false, now),
                     };
                     e.insert(member.clone());
                     self.updates.insert((now, user_id, MemberUpdate::Added));
@@ -202,6 +205,8 @@ impl GroupMembers {
             Some(p) => {
                 if p.suspended.value {
                     return ChangeRoleResult::UserSuspended;
+                } else if p.lapsed() {
+                    return ChangeRoleResult::UserLapsed;
                 }
                 // Platform moderators can always promote themselves to owner
                 if !(p.role.can_change_roles(new_role, permissions) || (is_caller_platform_moderator && new_role.is_owner())) {
@@ -292,6 +297,26 @@ impl GroupMembers {
     }
 }
 
+impl Members for GroupMembers {
+    type Member = GroupMemberInternal;
+
+    fn iter(&self) -> impl Iterator<Item = &GroupMemberInternal> {
+        self.iter()
+    }
+
+    fn iter_mut(&mut self) -> impl Iterator<Item = &mut GroupMemberInternal> {
+        self.iter_mut()
+    }
+
+    fn get_mut(&mut self, user_id: &UserId) -> Option<&mut GroupMemberInternal> {
+        self.get_mut(user_id)
+    }
+
+    fn get(&self, user_id: &UserId) -> Option<&GroupMemberInternal> {
+        self.get(user_id)
+    }
+}
+
 #[allow(clippy::large_enum_variant)]
 pub enum AddResult {
     Success(GroupMemberInternal),
@@ -308,6 +333,7 @@ pub enum ChangeRoleResult {
     Unchanged,
     Invalid,
     UserSuspended,
+    UserLapsed,
 }
 
 pub struct ChangeRoleSuccess {
@@ -320,17 +346,17 @@ pub struct GroupMemberInternal {
     pub user_id: UserId,
     #[serde(rename = "d")]
     pub date_added: TimestampMillis,
-    #[serde(rename = "r", alias = "r2", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "r", default, skip_serializing_if = "is_default")]
     pub role: Timestamped<GroupRoleInternal>,
     #[serde(rename = "n")]
     pub notifications_muted: Timestamped<bool>,
     #[serde(rename = "m", default, skip_serializing_if = "mentions_are_empty")]
     pub mentions: Mentions,
-    #[serde(rename = "t", default, skip_serializing_if = "is_empty_hashset")]
+    #[serde(rename = "t", default, skip_serializing_if = "HashSet::is_empty")]
     pub threads: HashSet<MessageIndex>,
-    #[serde(rename = "f", default, skip_serializing_if = "is_empty_slice")]
+    #[serde(rename = "f", default, skip_serializing_if = "Vec::is_empty")]
     pub unfollowed_threads: Vec<MessageIndex>,
-    #[serde(rename = "p", default, skip_serializing_if = "is_empty_btreemap")]
+    #[serde(rename = "p", default, skip_serializing_if = "BTreeMap::is_empty")]
     pub proposal_votes: BTreeMap<TimestampMillis, Vec<MessageIndex>>,
     #[serde(rename = "s", default, skip_serializing_if = "is_default")]
     pub suspended: Timestamped<bool>,
@@ -344,6 +370,8 @@ pub struct GroupMemberInternal {
     min_visible_event_index: EventIndex,
     #[serde(rename = "mm", default, skip_serializing_if = "is_default")]
     min_visible_message_index: MessageIndex,
+    #[serde(rename = "la", default, skip_serializing_if = "is_default")]
+    pub lapsed: Timestamped<bool>,
 }
 
 impl GroupMemberInternal {
@@ -354,6 +382,7 @@ impl GroupMemberInternal {
             self.notifications_muted.timestamp,
             self.suspended.timestamp,
             self.rules_accepted.as_ref().map(|r| r.timestamp).unwrap_or_default(),
+            self.lapsed.timestamp,
         ]
         .into_iter()
         .max()
@@ -406,12 +435,31 @@ impl GroupMemberInternal {
     }
 }
 
+impl Member for GroupMemberInternal {
+    fn user_id(&self) -> UserId {
+        self.user_id
+    }
+
+    fn is_owner(&self) -> bool {
+        self.role.is_owner()
+    }
+
+    fn lapsed(&self) -> bool {
+        self.lapsed.value
+    }
+
+    fn set_lapsed(&mut self, lapsed: Timestamped<bool>) {
+        self.lapsed = lapsed;
+    }
+}
+
 impl From<&GroupMemberInternal> for GroupMember {
-    fn from(p: &GroupMemberInternal) -> Self {
+    fn from(m: &GroupMemberInternal) -> Self {
         GroupMember {
-            user_id: p.user_id,
-            date_added: p.date_added,
-            role: p.role.value.into(),
+            user_id: m.user_id,
+            date_added: m.date_added,
+            role: m.role.value.into(),
+            lapsed: m.lapsed.value,
         }
     }
 }
@@ -478,6 +526,7 @@ mod tests {
             rules_accepted: Some(Timestamped::new(Version::zero(), 1)),
             is_bot: false,
             user_type: UserType::User,
+            lapsed: Timestamped::default(),
         };
 
         let member_bytes = msgpack::serialize_then_unwrap(&member);
@@ -508,12 +557,13 @@ mod tests {
             rules_accepted: Some(Timestamped::new(Version::zero(), 1)),
             is_bot: true,
             user_type: UserType::Bot,
+            lapsed: Timestamped::new(false, 1),
         };
 
         let member_bytes = msgpack::serialize_then_unwrap(&member);
         let member_bytes_len = member_bytes.len();
 
-        assert_eq!(member_bytes_len, 127);
+        assert_eq!(member_bytes_len, 137);
 
         let _deserialized: GroupMemberInternal = msgpack::deserialize_then_unwrap(&member_bytes);
     }

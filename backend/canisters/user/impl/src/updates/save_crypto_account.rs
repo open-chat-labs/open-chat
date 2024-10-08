@@ -6,7 +6,7 @@ use canister_tracing_macros::trace;
 use ic_ledger_types::AccountIdentifier;
 use user_canister::save_crypto_account::{Response::*, *};
 
-#[update(guard = "caller_is_owner", candid = true)]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 fn save_crypto_account(args: Args) -> Response {
     run_regular_jobs();

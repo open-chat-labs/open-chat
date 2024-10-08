@@ -8,7 +8,7 @@ use types::{Achievement, ChitEarned, ChitEarnedReason, UserId};
 use user_canister::claim_daily_chit::{Response::*, *};
 use utils::time::tomorrow;
 
-#[update(guard = "caller_is_owner", candid = true)]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 fn claim_daily_chit(_args: Args) -> Response {
     mutate_state(claim_daily_chit_impl)
@@ -90,7 +90,13 @@ fn chit_for_streak(days: u16) -> u32 {
     if days < 30 {
         return 500;
     }
-    600
+    if days < 100 {
+        return 600;
+    }
+    if days < 365 {
+        return 700;
+    }
+    800
 }
 
 #[derive(Serialize)]

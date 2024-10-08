@@ -50,6 +50,7 @@ pub mod happy_path {
         CanisterId, Chat, ChatId, CommunityId, Cryptocurrency, Empty, EventIndex, EventsResponse, MessageContentInitial,
         MessageId, Milliseconds, Reaction, Rules, TextContent, TimestampMillis, UserId, VideoCallType,
     };
+    use user_canister::set_pin_number::PinNumberVerification;
 
     pub fn send_text_message(
         env: &mut PocketIc,
@@ -132,6 +133,7 @@ pub mod happy_path {
                 rules: Rules::default(),
                 events_ttl: None,
                 gate: None,
+                gate_config: None,
             },
         );
 
@@ -162,6 +164,7 @@ pub mod happy_path {
                 permissions: None,
                 rules: Rules::default(),
                 gate: None,
+                gate_config: None,
                 default_channels,
                 default_channel_rules: None,
                 primary_language: "en".to_string(),
@@ -380,11 +383,12 @@ pub mod happy_path {
     }
 
     pub fn set_pin_number(env: &mut PocketIc, user: &User, current: Option<String>, new: Option<String>) {
+        let verification = current.map(PinNumberVerification::PIN).unwrap_or(PinNumberVerification::None);
         let response = super::set_pin_number(
             env,
             user.principal,
             user.canister(),
-            &user_canister::set_pin_number::Args { current, new },
+            &user_canister::set_pin_number::Args { verification, new },
         );
 
         assert!(matches!(response, user_canister::set_pin_number::Response::Success));

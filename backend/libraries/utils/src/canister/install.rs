@@ -5,7 +5,7 @@ use ic_cdk::api::call::{CallResult, RejectionCode};
 use ic_cdk::api::management_canister;
 use ic_cdk::api::management_canister::main::{CanisterInstallMode, ChunkHash, InstallChunkedCodeArgument, InstallCodeArgument};
 use tracing::{error, trace};
-use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, Hash};
+use types::{BuildVersion, CanisterId, CanisterWasm, CanisterWasmBytes, Cycles, Hash};
 
 pub struct CanisterToInstall<A: CandidType> {
     pub canister_id: CanisterId,
@@ -19,7 +19,7 @@ pub struct CanisterToInstall<A: CandidType> {
 }
 
 pub enum WasmToInstall {
-    Default(Vec<u8>),
+    Default(CanisterWasmBytes),
     Chunked(ChunkedWasmToInstall),
 }
 
@@ -58,7 +58,7 @@ pub async fn install<A: CandidType>(canister_to_install: CanisterToInstall<A>) -
         WasmToInstall::Default(wasm_module) => InstallCodeArgs::Default(InstallCodeArgument {
             mode,
             canister_id,
-            wasm_module,
+            wasm_module: wasm_module.into(),
             arg: candid::encode_one(canister_to_install.args).unwrap(),
         }),
         WasmToInstall::Chunked(wasm) => InstallCodeArgs::Chunked(InstallChunkedCodeArgument {

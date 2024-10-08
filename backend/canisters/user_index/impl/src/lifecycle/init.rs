@@ -17,8 +17,6 @@ fn init(args: Args) {
 
     let data = Data::new(
         args.governance_principals,
-        args.user_canister_wasm,
-        args.local_user_index_canister_wasm,
         args.group_index_canister_id,
         args.notifications_index_canister_id,
         args.identity_canister_id,

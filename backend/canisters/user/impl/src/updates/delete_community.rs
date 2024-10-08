@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use community_canister::c2c_delete_community;
 use user_canister::delete_community::{Response::*, *};
 
-#[update(guard = "caller_is_owner", candid = true)]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 async fn delete_community(args: Args) -> Response {
     run_regular_jobs();
@@ -25,6 +25,7 @@ async fn delete_community(args: Args) -> Response {
             c2c_delete_community::Response::NotAuthorized => NotAuthorized,
             c2c_delete_community::Response::CommunityFrozen => CommunityFrozen,
             c2c_delete_community::Response::UserSuspended => UserSuspended,
+            c2c_delete_community::Response::UserLapsed => UserLapsed,
             c2c_delete_community::Response::InternalError(error) => InternalError(error),
         },
         Err(error) => InternalError(format!("{error:?}")),

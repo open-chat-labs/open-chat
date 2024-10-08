@@ -4,7 +4,7 @@ use canister_api_macros::query;
 use chat_events::{MessageContentInternal, Reader};
 use user_canister::deleted_message::{Response::*, *};
 
-#[query(guard = "caller_is_owner", candid = true)]
+#[query(guard = "caller_is_owner", candid = true, msgpack = true)]
 fn deleted_message(args: Args) -> Response {
     read_state(|state| deleted_message_impl(args, state))
 }

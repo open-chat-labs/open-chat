@@ -1,7 +1,7 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{is_default, CanisterId, UserId};
+use types::{is_default, CanisterId, PushIfNotContains, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserPrincipals {
@@ -79,9 +79,7 @@ impl UserPrincipals {
         {
             false
         } else if let Some(user_principal) = self.user_principals.get_mut(user_principal_index as usize) {
-            if !user_principal.auth_principals.contains(&new_principal) {
-                user_principal.auth_principals.push(new_principal);
-            }
+            user_principal.auth_principals.push_if_not_contains(new_principal);
             self.auth_principals.insert(
                 new_principal,
                 AuthPrincipalInternal {

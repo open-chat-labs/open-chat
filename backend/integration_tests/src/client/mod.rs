@@ -8,7 +8,7 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::time::Duration;
 use testing::rng::random_internet_identity_principal;
-use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration};
+use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration, SignedDelegation};
 
 mod macros;
 
@@ -64,7 +64,12 @@ pub fn install_canister<P: CandidType>(
     payload: P,
 ) {
     env.advance_time(Duration::from_millis(1));
-    env.install_canister(canister_id, wasm.module, candid::encode_one(&payload).unwrap(), Some(sender))
+    env.install_canister(
+        canister_id,
+        wasm.module.into(),
+        candid::encode_one(&payload).unwrap(),
+        Some(sender),
+    )
 }
 
 pub fn execute_query<P: CandidType, R: CandidType + DeserializeOwned>(
@@ -123,23 +128,25 @@ pub fn register_user(env: &mut PocketIc, canister_ids: &CanisterIds) -> User {
 }
 
 pub fn register_user_with_referrer(env: &mut PocketIc, canister_ids: &CanisterIds, referral_code: Option<String>) -> User {
-    let (auth_principal, public_key) = random_internet_identity_principal();
-    let session_key = random::<[u8; 32]>().to_vec();
-    let create_identity_result =
-        identity::happy_path::create_identity(env, auth_principal, canister_ids.identity, public_key, session_key, true);
+    let (user, _) = register_user_internal(env, canister_ids, referral_code, false);
+    user
+}
 
-    local_user_index::happy_path::register_user_with_referrer(
-        env,
-        Principal::self_authenticating(&create_identity_result.user_key),
-        canister_ids.local_user_index,
-        create_identity_result.user_key,
-        referral_code,
-    )
+pub fn register_user_and_include_delegation(env: &mut PocketIc, canister_ids: &CanisterIds) -> (User, SignedDelegation) {
+    let (user, delegation) = register_user_internal(env, canister_ids, None, true);
+    (user, delegation.unwrap())
 }
 
 pub fn register_diamond_user(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> User {
     let user = register_user(env, canister_ids);
-    upgrade_user(&user, env, canister_ids, controller, DiamondMembershipPlanDuration::OneMonth);
+    upgrade_user(
+        &user,
+        env,
+        canister_ids,
+        controller,
+        DiamondMembershipPlanDuration::OneMonth,
+        true,
+    );
     user
 }
 
@@ -149,12 +156,60 @@ pub fn upgrade_user(
     canister_ids: &CanisterIds,
     controller: Principal,
     duration: DiamondMembershipPlanDuration,
+    recurring: bool,
 ) {
     ledger::happy_path::transfer(env, controller, canister_ids.icp_ledger, user.user_id, 1_000_000_000);
 
-    user_index::happy_path::pay_for_diamond_membership(env, user.principal, canister_ids.user_index, duration, false, true);
+    user_index::happy_path::pay_for_diamond_membership(
+        env,
+        user.principal,
+        canister_ids.user_index,
+        duration,
+        false,
+        recurring,
+    );
 
     tick_many(env, 4);
+}
+
+fn register_user_internal(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    referral_code: Option<String>,
+    get_delegation: bool,
+) -> (User, Option<SignedDelegation>) {
+    let (auth_principal, public_key) = random_internet_identity_principal();
+    let session_key = random::<[u8; 32]>().to_vec();
+    let create_identity_result = identity::happy_path::create_identity(
+        env,
+        auth_principal,
+        canister_ids.identity,
+        public_key,
+        session_key.clone(),
+        true,
+    );
+
+    let user = local_user_index::happy_path::register_user_with_referrer(
+        env,
+        Principal::self_authenticating(&create_identity_result.user_key),
+        canister_ids.local_user_index,
+        create_identity_result.user_key,
+        referral_code,
+    );
+
+    let delegation = if get_delegation {
+        Some(identity::happy_path::get_delegation(
+            env,
+            auth_principal,
+            canister_ids.identity,
+            session_key,
+            create_identity_result.expiration,
+        ))
+    } else {
+        None
+    };
+
+    (user, delegation)
 }
 
 fn unwrap_response<R: CandidType + DeserializeOwned>(response: Result<WasmResult, UserError>) -> R {

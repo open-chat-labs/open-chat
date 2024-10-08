@@ -1,7 +1,7 @@
 use crate::{delegation_signature_msg_hash, read_state, RuntimeState};
 use ic_cdk::query;
 use identity_canister::get_delegation::{Response::*, *};
-use identity_canister::{Delegation, SignedDelegation};
+use types::{Delegation, SignedDelegation};
 
 #[query]
 fn get_delegation(args: Args) -> Response {

@@ -5,7 +5,7 @@ use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStore
 use event_store_producer_cdk_runtime::CdkRuntime;
 use event_store_utils::EventDeduper;
 use jwt::{verify_jwt, Claims};
-use local_user_index_canister::GlobalUser;
+use local_user_index_canister::{ChildCanisterType, GlobalUser};
 use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
 use p256_key_pair::P256KeyPair;
@@ -15,7 +15,7 @@ use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
 use std::time::Duration;
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, ChannelLatestMessageIndex, ChatId, ChunkedCanisterWasm,
+    BuildVersion, CanisterId, CanisterWasm, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms,
     CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails,
     MessageContent, ReferralType, TimestampMillis, Timestamped, User, UserId, VerifiedCredentialGateArgs,
 };
@@ -239,7 +239,7 @@ impl RuntimeState {
             canister_upgrades_completed: canister_upgrades_metrics.completed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
-            user_wasm_version: self.data.user_canister_wasm_for_new_canisters.wasm.version,
+            user_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::User).wasm.version,
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
             user_upgrade_concurrency: self.data.user_upgrade_concurrency,
             user_events_queue_length: self.data.user_event_sync_queue.len(),
@@ -267,8 +267,7 @@ impl RuntimeState {
 struct Data {
     pub local_users: LocalUserMap,
     pub global_users: GlobalUserMap,
-    pub user_canister_wasm_for_new_canisters: ChunkedCanisterWasm,
-    pub user_canister_wasm_for_upgrades: ChunkedCanisterWasm,
+    pub child_canister_wasms: ChildCanisterWasms<ChildCanisterType>,
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub identity_canister_id: CanisterId,
@@ -295,7 +294,6 @@ struct Data {
     pub users_to_delete_queue: VecDeque<UserToDelete>,
     #[serde(with = "serde_bytes")]
     pub ic_root_key: Vec<u8>,
-    #[serde(default)]
     pub events_for_remote_users: Vec<(UserId, UserEvent)>,
 }
 
@@ -334,8 +332,7 @@ impl Data {
         Data {
             local_users: LocalUserMap::default(),
             global_users: GlobalUserMap::default(),
-            user_canister_wasm_for_new_canisters: user_canister_wasm.clone().into(),
-            user_canister_wasm_for_upgrades: user_canister_wasm.into(),
+            child_canister_wasms: ChildCanisterWasms::new(vec![(ChildCanisterType::User, user_canister_wasm)]),
             user_index_canister_id,
             group_index_canister_id,
             identity_canister_id,

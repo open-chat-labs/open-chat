@@ -1,11 +1,11 @@
-use std::{cmp::max_by, collections::HashSet};
-use types::{Milliseconds, UserId};
+use serde::{Deserialize, Serialize};
+use std::cmp::max_by;
 
 pub struct Query {
     pub tokens: Vec<Token>,
-    pub users: HashSet<UserId>,
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Token {
     pub value: String,
     pub value_lower: String,
@@ -25,11 +25,11 @@ impl Query {
     pub fn parse(free_text: String) -> Query {
         Query {
             tokens: parse_tokens(free_text),
-            users: HashSet::new(),
         }
     }
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Field {
     tokens: Vec<Token>,
     weight: f32,
@@ -44,10 +44,9 @@ impl Field {
     }
 }
 
-#[derive(Default)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct Document {
     fields: Vec<Field>,
-    age: Option<Milliseconds>,
 }
 
 impl Document {
@@ -56,9 +55,24 @@ impl Document {
         self
     }
 
-    pub fn set_age(&mut self, age: Milliseconds) -> &mut Document {
-        self.age = Some(age);
-        self
+    // Returns true if every token in the query matches the document, else false
+    pub fn is_match(&self, query: &Query) -> bool {
+        if query.tokens.is_empty() {
+            return false;
+        }
+        for token in query.tokens.iter() {
+            let mut matches = false;
+            for field in &self.fields {
+                if score_field_for_token(token, field) > 0.0 {
+                    matches = true;
+                    break;
+                }
+            }
+            if !matches {
+                return false;
+            }
+        }
+        true
     }
 
     // The search term is split into words and each word is matched against each field
@@ -74,22 +88,14 @@ impl Document {
         (self.calculate_score_internal(query) * 10000.0) as u32
     }
 
-    pub fn calculate_score_internal(&self, query: &Query) -> f32 {
+    fn calculate_score_internal(&self, query: &Query) -> f32 {
         let mut score = 0.0;
 
         for field in &self.fields {
             score += score_field(query, field);
         }
 
-        if score > 0.0 {
-            if let Some(age) = self.age {
-                score * calculate_age_boost(age)
-            } else {
-                score
-            }
-        } else {
-            0.0
-        }
+        score
     }
 }
 
@@ -107,11 +113,7 @@ fn score_field(query: &Query, field: &Field) -> f32 {
     // Average of token matches
     let score = total / (query.tokens.len() as f32);
 
-    if score > 0.0 {
-        score * field.weight
-    } else {
-        0.0
-    }
+    score * field.weight
 }
 
 fn score_field_for_token(search_token: &Token, field: &Field) -> f32 {
@@ -142,11 +144,6 @@ fn score_token_match(search_token: &Token, field_token: &Token) -> f32 {
 
 fn calculate_length_boost(x: f32) -> f32 {
     1.0 + 0.5 * (-x / 20.0).exp()
-}
-
-fn calculate_age_boost(age: Milliseconds) -> f32 {
-    let age_in_days = (age / (1000 * 60 * 60 * 24)) as f32;
-    1.0 + (-age_in_days / 20.0).exp()
 }
 
 fn parse_tokens(text: String) -> Vec<Token> {

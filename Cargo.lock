@@ -140,7 +140,9 @@ dependencies = [
  "ic-ledger-types",
  "ic-stable-structures",
  "icrc-ledger-types",
+ "icrc_ledger_canister",
  "icrc_ledger_canister_c2c_client",
+ "ledger_utils",
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",
  "msgpack",
@@ -150,6 +152,7 @@ dependencies = [
  "serde_json",
  "stable_memory",
  "testing",
+ "timer_job_queue",
  "tracing",
  "types",
  "user_canister",
@@ -1066,7 +1069,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "serde",
- "serde_tokenstream 0.2.0",
+ "serde_tokenstream 0.2.2",
  "syn 2.0.65",
 ]
 
@@ -1111,6 +1114,7 @@ dependencies = [
  "online_users_canister",
  "proposals_bot_canister",
  "registry_canister",
+ "sha256",
  "sign_in_with_email_canister",
  "storage_index_canister",
  "test_utils",
@@ -1187,6 +1191,8 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "clap 4.5.4",
+ "hex",
+ "sha256",
  "sns_governance_canister",
  "types",
 ]
@@ -1214,6 +1220,7 @@ dependencies = [
  "online_users_canister",
  "proposals_bot_canister",
  "registry_canister",
+ "sha256",
  "sign_in_with_email_canister",
  "storage_index_canister",
  "storage_index_canister_client",
@@ -1221,6 +1228,21 @@ dependencies = [
  "translations_canister",
  "types",
  "user_canister",
+ "user_index_canister",
+ "user_index_canister_client",
+]
+
+[[package]]
+name = "canister_wasm_chunks_uploader"
+version = "0.1.0"
+dependencies = [
+ "canister_agent_utils",
+ "clap 4.5.4",
+ "group_index_canister",
+ "group_index_canister_client",
+ "ic-agent",
+ "tokio",
+ "types",
  "user_index_canister",
  "user_index_canister_client",
 ]
@@ -2804,6 +2826,7 @@ dependencies = [
  "candid",
  "chat_events",
  "event_store_producer",
+ "group_community_common",
  "itertools 0.13.0",
  "lazy_static",
  "msgpack",
@@ -2822,11 +2845,13 @@ dependencies = [
  "candid",
  "fire_and_forget_handler",
  "icrc-ledger-types",
+ "itertools 0.13.0",
  "msgpack",
  "serde",
  "serde_repr",
  "types",
  "user_canister",
+ "utils 0.1.0",
 ]
 
 [[package]]
@@ -2834,6 +2859,7 @@ name = "group_index_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "candid_gen",
  "human_readable",
  "serde",
  "serde_bytes",
@@ -2882,6 +2908,7 @@ dependencies = [
  "group_canister",
  "group_canister_c2c_client",
  "group_index_canister",
+ "hex",
  "http_request",
  "human_readable",
  "ic-cdk 0.16.0",
@@ -2895,6 +2922,8 @@ dependencies = [
  "search",
  "serde",
  "serde_bytes",
+ "sha2 0.10.8",
+ "sha256",
  "stable_memory",
  "tracing",
  "types",
@@ -3178,6 +3207,7 @@ name = "human_readable"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "hex",
  "human_readable_derive",
  "serde",
  "serde_json",
@@ -3483,7 +3513,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "serde",
- "serde_tokenstream 0.2.0",
+ "serde_tokenstream 0.2.2",
  "syn 2.0.65",
 ]
 
@@ -3496,7 +3526,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "serde",
- "serde_tokenstream 0.2.0",
+ "serde_tokenstream 0.2.2",
  "syn 2.0.65",
 ]
 
@@ -3823,20 +3853,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "icpswap_client"
-version = "0.1.0"
-dependencies = [
- "candid",
- "ic-cdk 0.16.0",
- "icpswap_swap_pool_canister",
- "icpswap_swap_pool_canister_c2c_client",
- "icrc-ledger-types",
- "ledger_utils",
- "serde",
- "types",
-]
-
-[[package]]
 name = "icpswap_swap_pool_canister"
 version = "0.1.0"
 dependencies = [
@@ -3937,13 +3953,13 @@ dependencies = [
  "canister_tracing_macros",
  "http_request",
  "ic-captcha",
- "ic-cbor",
  "ic-cdk 0.16.0",
  "ic-cdk-timers",
  "ic-certificate-verification",
  "ic-certification",
  "ic-stable-structures",
  "identity_canister",
+ "identity_utils",
  "msgpack",
  "rand 0.8.5",
  "serde",
@@ -4040,6 +4056,16 @@ dependencies = [
  "subtle",
  "thiserror",
  "zeroize",
+]
+
+[[package]]
+name = "identity_utils"
+version = "0.1.0"
+dependencies = [
+ "ic-cbor",
+ "ic-certificate-verification",
+ "ic-certification",
+ "types",
 ]
 
 [[package]]
@@ -4191,6 +4217,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serial_test",
+ "sha256",
  "sign_in_with_email_canister",
  "storage_bucket_canister",
  "storage_index_canister",
@@ -4409,6 +4436,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "kongswap_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "kongswap_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "ic-cdk 0.16.0",
+ "kongswap_canister",
+ "types",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4428,6 +4475,7 @@ name = "ledger_utils"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "ic-cdk 0.16.0",
  "ic-ledger-types",
  "icp_ledger_canister_c2c_client",
  "icrc-ledger-types",
@@ -5225,6 +5273,7 @@ name = "online_users_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "candid_gen",
  "serde",
  "ts-rs",
  "ts_export",
@@ -6191,6 +6240,7 @@ name = "registry_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "candid_gen",
  "human_readable",
  "serde",
  "ts-rs",
@@ -6690,6 +6740,7 @@ dependencies = [
 name = "search"
 version = "0.1.0"
 dependencies = [
+ "serde",
  "types",
 ]
 
@@ -6752,9 +6803,9 @@ dependencies = [
 
 [[package]]
 name = "serde"
-version = "1.0.204"
+version = "1.0.210"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc76f558e0cbb2a839d37354c575f1dc3fdc6546b5be373ba43d95f231bf7c12"
+checksum = "c8e3592472072e6e22e0a54d5904d9febf8508f65fb8552499a1abc7d1078c3a"
 dependencies = [
  "serde_derive",
 ]
@@ -6790,9 +6841,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.204"
+version = "1.0.210"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e0cd7e117be63d3c3678776753929474f3b04a43a080c744d6b0ae2a8c28e222"
+checksum = "243902eda00fad750862fc144cea25caca5e20d615af0a81bee94ca738f1df1f"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -6812,12 +6863,13 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.117"
+version = "1.0.128"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "455182ea6142b14f93f4bc5320a2b31c1f266b66a4a5c858b013302a5d8cbfc3"
+checksum = "6ff5456707a1de34e7e37f2a6fd3d3f808c318259cbd01ab6377795054b483d8"
 dependencies = [
  "indexmap 2.2.3",
  "itoa",
+ "memchr",
  "ryu",
  "serde",
 ]
@@ -6846,9 +6898,9 @@ dependencies = [
 
 [[package]]
 name = "serde_tokenstream"
-version = "0.2.0"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a00ffd23fd882d096f09fcaae2a9de8329a328628e86027e049ee051dc1621f"
+checksum = "64060d864397305347a78851c51588fd283767e7e7589829e8121d65512340f1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -7272,21 +7324,6 @@ dependencies = [
  "canister_client",
  "ic-cdk 0.16.0",
  "sonic_canister",
- "types",
-]
-
-[[package]]
-name = "sonic_client"
-version = "0.1.0"
-dependencies = [
- "candid",
- "ic-cdk 0.16.0",
- "icrc-ledger-types",
- "ledger_utils",
- "serde",
- "sonic_canister",
- "sonic_canister_c2c_client",
- "tracing",
  "types",
 ]
 
@@ -7772,6 +7809,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "timer_job_queue"
+version = "0.1.0"
+dependencies = [
+ "futures",
+ "ic-cdk 0.16.0",
+ "ic-cdk-timers",
+ "serde",
+]
+
+[[package]]
 name = "tinyvec"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8097,6 +8144,7 @@ dependencies = [
 name = "ts_export"
 version = "0.1.0"
 dependencies = [
+ "serde",
  "ts-rs",
  "ts_export_macros",
 ]
@@ -8141,6 +8189,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "getrandom 0.2.15",
+ "hex",
  "ic-ledger-types",
  "ic_principal",
  "icrc-ledger-types",
@@ -8149,6 +8198,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serde_json",
+ "sha2 0.10.8",
  "ts-rs",
  "ts_export",
 ]
@@ -8302,13 +8352,18 @@ dependencies = [
  "http_request",
  "ic-cdk 0.16.0",
  "ic-cdk-timers",
+ "ic-certificate-verification",
  "ic-ledger-types",
  "ic-stable-structures",
- "icpswap_client",
+ "icpswap_swap_pool_canister",
+ "icpswap_swap_pool_canister_c2c_client",
  "icrc-ledger-types",
  "icrc_ledger_canister",
  "icrc_ledger_canister_c2c_client",
+ "identity_utils",
  "itertools 0.13.0",
+ "kongswap_canister",
+ "kongswap_canister_c2c_client",
  "ledger_utils",
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",
@@ -8326,7 +8381,8 @@ dependencies = [
  "serde_bytes",
  "sns_governance_canister",
  "sns_governance_canister_c2c_client",
- "sonic_client",
+ "sonic_canister",
+ "sonic_canister_c2c_client",
  "stable_memory",
  "storage_bucket_client",
  "tracing",
@@ -8343,6 +8399,7 @@ name = "user_index_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "candid_gen",
  "human_readable",
  "ic-ledger-types",
  "modclub_canister",
@@ -8398,6 +8455,7 @@ dependencies = [
  "futures",
  "group_canister",
  "group_canister_c2c_client",
+ "hex",
  "http_request",
  "human_readable",
  "ic-cdk 0.16.0",
@@ -8467,6 +8525,7 @@ dependencies = [
  "sha256",
  "sha3",
  "time",
+ "timer_job_queue",
  "tracing",
  "types",
 ]

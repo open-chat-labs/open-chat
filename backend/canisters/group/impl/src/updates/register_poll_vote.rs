@@ -1,12 +1,12 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{RegisterPollVoteArgs, RegisterPollVoteResult};
 use group_canister::register_poll_vote::{Response::*, *};
-use ic_cdk::update;
 use types::Achievement;
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn register_poll_vote(args: Args) -> Response {
     run_regular_jobs();
@@ -23,6 +23,8 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Some(member) = state.data.get_member(caller) {
         if member.suspended.value {
             return UserSuspended;
+        } else if member.lapsed.value {
+            return UserLapsed;
         }
 
         let now = state.env.now();

@@ -7,7 +7,7 @@ use community_canister::c2c_events_window::Args as C2CArgs;
 use community_canister::events_window::{Response::*, *};
 use group_chat_core::EventsResult;
 
-#[query(candid = true)]
+#[query(candid = true, msgpack = true)]
 fn events_window(args: Args) -> Response {
     read_state(|state| events_window_impl(args, None, state))
 }
@@ -23,15 +23,15 @@ fn events_window_impl(args: Args, on_behalf_of: Option<Principal>, state: &Runti
     }
 
     let caller = on_behalf_of.unwrap_or_else(|| state.env.caller());
-    let user_id = state.data.members.get(caller).map(|m| m.user_id);
 
-    if user_id.is_none() && (!state.data.is_public || state.data.has_payment_gate()) {
-        return UserNotInCommunity;
-    }
+    let member = match state.data.get_member_for_events(caller) {
+        Ok(member) => member,
+        Err(response) => return response,
+    };
 
     if let Some(channel) = state.data.channels.get(&args.channel_id) {
         match channel.chat.events_window(
-            user_id,
+            member.map(|m| m.user_id),
             args.thread_root_message_index,
             args.mid_point,
             args.max_messages,
@@ -40,6 +40,8 @@ fn events_window_impl(args: Args, on_behalf_of: Option<Principal>, state: &Runti
             EventsResult::Success(response) => Success(response),
             EventsResult::UserNotInGroup => UserNotInChannel,
             EventsResult::ThreadNotFound => ThreadNotFound,
+            EventsResult::UserSuspended => UserSuspended,
+            EventsResult::UserLapsed => UserLapsed,
         }
     } else {
         ChannelNotFound

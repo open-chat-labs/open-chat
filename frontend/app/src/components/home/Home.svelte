@@ -46,6 +46,7 @@
         routeForChatIdentifier,
         routeForMessage,
         UserSuspensionChanged,
+        RemoteVideoCallEndedEvent,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -102,6 +103,7 @@
     import ChitEarned from "./ChitEarned.svelte";
     import { chitPopup } from "../../stores/settings";
     import AccessGateEvaluator from "./access/AccessGateEvaluator.svelte";
+    import SetPinNumberModal from "./profile/SetPinNumberModal.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -254,6 +256,8 @@
             openThread(ev.detail);
         } else if (ev instanceof RemoteVideoCallStartedEvent) {
             remoteVideoCallStarted(ev);
+        } else if (ev instanceof RemoteVideoCallEndedEvent) {
+            remoteVideoCallEnded(ev);
         } else if (ev instanceof ThreadClosed) {
             closeThread();
         } else if (ev instanceof SendMessageFailed) {
@@ -287,10 +291,16 @@
         }
     }
 
+    function remoteVideoCallEnded(ev: RemoteVideoCallEndedEvent) {
+        if ($incomingVideoCall?.messageId === ev.detail.messageId) {
+            incomingVideoCall.set(undefined);
+        }
+    }
+
     function remoteVideoCallStarted(ev: RemoteVideoCallStartedEvent) {
         // If current user is already in the call, or has previously been in the call, or the call started more than an hour ago, exit
         if (
-            $activeVideoCall?.chatId === ev.detail.chatId ||
+            chatIdentifiersEqual($activeVideoCall?.chatId, ev.detail.chatId) ||
             ev.detail.currentUserIsParticipant ||
             Number(ev.detail.timestamp) < Date.now() - 60 * 60 * 1000
         ) {
@@ -1130,6 +1140,12 @@
         showProfileCard = undefined;
     }
 
+    let forgotPin = false;
+
+    function onForgotPin() {
+        forgotPin = true;
+    }
+
     function onPinNumberComplete(ev: CustomEvent<string>) {
         $pinNumberStore?.resolve(ev.detail);
     }
@@ -1328,9 +1344,19 @@
 
 {#if $rulesAcceptanceStore !== undefined}
     <AcceptRulesModal />
+{:else if forgotPin}
+    <Overlay>
+        <SetPinNumberModal
+            on:pinSet={onPinNumberComplete}
+            on:close={() => (forgotPin = false)}
+            type={{ kind: "forgot", while: { kind: "enter" } }} />
+    </Overlay>
 {:else if $pinNumberStore !== undefined}
     <Overlay>
-        <PinNumberModal on:close={onPinNumberClose} on:complete={onPinNumberComplete} />
+        <PinNumberModal
+            on:close={onPinNumberClose}
+            on:complete={onPinNumberComplete}
+            on:forgot={onForgotPin} />
     </Overlay>
 {/if}
 

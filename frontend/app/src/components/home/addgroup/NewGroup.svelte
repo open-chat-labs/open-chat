@@ -151,6 +151,7 @@
         if (resp.kind === "rules_too_short") return i18nKey("groupRulesTooShort");
         if (resp.kind === "rules_too_long") return i18nKey("groupRulesTooLong");
         if (resp.kind === "user_suspended") return i18nKey("userSuspended");
+        if (resp.kind === "user_lapsed") return i18nKey("userLapsed");
         if (resp.kind === "chat_frozen") return i18nKey("chatFrozen");
         if (resp.kind === "failure") return i18nKey("failure");
         if (resp.kind === "offline") return i18nKey("offlineError");

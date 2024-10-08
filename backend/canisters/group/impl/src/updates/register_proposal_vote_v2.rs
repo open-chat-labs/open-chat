@@ -1,11 +1,11 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::RecordProposalVoteResult;
 use group_canister::register_proposal_vote_v2::{Response::*, *};
-use ic_cdk::update;
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 fn register_proposal_vote_v2(args: Args) -> Response {
     run_regular_jobs();
@@ -27,6 +27,8 @@ fn register_proposal_vote_impl(args: Args, state: &mut RuntimeState) -> Response
 
     if member.suspended.value {
         return UserSuspended;
+    } else if member.lapsed.value {
+        return UserLapsed;
     }
 
     let min_visible_event_index = member.min_visible_event_index();

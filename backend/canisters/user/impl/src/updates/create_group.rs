@@ -13,7 +13,7 @@ use utils::text_validation::{
     validate_description, validate_group_name, validate_rules, NameValidationError, RulesValidationError,
 };
 
-#[update(guard = "caller_is_owner", candid = true)]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 async fn create_group(mut args: Args) -> Response {
     run_regular_jobs();
@@ -88,7 +88,7 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
         });
     } else if let Err(error) = validate_avatar(args.avatar.as_ref()) {
         Err(AvatarTooBig(error))
-    } else if args.gate.as_ref().map(|g| !g.validate()).unwrap_or_default() {
+    } else if args.gate_config.as_ref().map(|g| !g.validate()).unwrap_or_default() {
         Err(AccessGateInvalid)
     } else {
         let create_group_args = c2c_create_group::Args {
@@ -103,6 +103,7 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
             permissions_v2: args.permissions_v2,
             events_ttl: args.events_ttl,
             gate: args.gate,
+            gate_config: args.gate_config,
         };
         Ok(PrepareResult {
             group_index_canister_id: state.data.group_index_canister_id,

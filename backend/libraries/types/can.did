@@ -390,6 +390,7 @@ type CommunityMembership = record {
     role : CommunityRole;
     rules_accepted : bool;
     display_name : opt text;
+    lapsed : bool;
 };
 
 type UserGroup = record {
@@ -436,6 +437,7 @@ type GroupMembership = record {
     my_metrics : ChatMetrics;
     latest_threads : vec GroupCanisterThreadDetails;
     rules_accepted : bool;
+    lapsed : bool;
 };
 
 type CommunityCanisterCommunitySummaryUpdates = record {
@@ -466,6 +468,7 @@ type CommunityMembershipUpdates = record {
     role : opt CommunityRole;
     rules_accepted : opt bool;
     display_name : TextUpdate;
+    lapsed : opt bool;
 };
 
 type CommunityCanisterChannelSummaryUpdates = record {
@@ -503,6 +506,7 @@ type GroupMembershipUpdates = record {
     latest_threads : vec GroupCanisterThreadDetails;
     unfollowed_threads : vec MessageIndex;
     rules_accepted : opt bool;
+    lapsed : opt bool;
 };
 
 type SelectedGroupUpdates = record {
@@ -2063,4 +2067,10 @@ type ReferralStatus = variant {
     UniquePerson;
     LifetimeDiamond;
     Registered;
+};
+
+type ExchangeId = variant {
+    ICPSwap;
+    KongSwap;
+    Sonic;
 };

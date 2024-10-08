@@ -1,15 +1,15 @@
 use crate::updates::c2c_unfreeze_group::c2c_unfreeze_group_impl;
 use crate::{mutate_state, run_regular_jobs, CommunityBeingImportedInto, RuntimeState, StartImportIntoCommunityResult};
 use candid::Principal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::convert_into_community::{Response::*, *};
-use ic_cdk::update;
 use rand::Rng;
 use std::collections::HashMap;
 use types::{CanisterId, UserId};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn convert_into_community(args: Args) -> Response {
     run_regular_jobs();
@@ -69,6 +69,8 @@ fn prepare(state: &mut RuntimeState) -> Result<PrepareResult, Response> {
     if let Some(member) = state.data.get_member(caller) {
         if member.suspended.value {
             Err(UserSuspended)
+        } else if member.lapsed.value {
+            return Err(UserLapsed);
         } else if !member.role.is_owner() {
             Err(NotAuthorized)
         } else {
@@ -106,7 +108,8 @@ fn start_import(
                 rules: args.rules,
                 avatar: state.data.chat.avatar.value.clone(),
                 permissions: args.permissions,
-                gate: state.data.chat.gate.value.clone(),
+                gate: state.data.chat.gate_config.value.as_ref().map(|gc| gc.gate.clone()),
+                gate_config: state.data.chat.gate_config.value.clone().map(|gc| gc.into()),
                 primary_language: args.primary_language.unwrap_or_else(|| "en".to_string()),
                 history_visible_to_new_joiners: args.history_visible_to_new_joiners,
                 total_bytes: result.total_bytes,

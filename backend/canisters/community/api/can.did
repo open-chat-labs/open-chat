@@ -50,6 +50,8 @@ type EventsResponse = variant {
     UserNotInChannel;
     ChannelNotFound;
     ThreadNotFound;
+    UserSuspended;
+    UserLapsed;
     ReplicaNotUpToDateV2 : TimestampMillis;
 };
 
@@ -83,6 +85,17 @@ type LocalUserIndexResponse = variant {
     Success : CanisterId;
 };
 
+type LookupMembersArgs = record {
+    user_ids : vec UserId;
+};
+
+type LookupMembersResponse = variant {
+    Success : record {
+        members : vec CommunityMember;
+    };
+    PrivateCommunity;
+};
+
 type MessagesByMessageIndexArgs = record {
     channel_id : ChannelId;
     thread_root_message_index : opt MessageIndex;
@@ -96,6 +109,8 @@ type MessagesByMessageIndexResponse = variant {
     UserNotInChannel;
     ChannelNotFound;
     ThreadNotFound;
+    UserSuspended;
+    UserLapsed;
     ReplicaNotUpToDateV2 : TimestampMillis;
 };
 
@@ -144,14 +159,6 @@ type SelectedChannelUpdatesArgs = record {
     updates_since : TimestampMillis;
 };
 
-type SelectedChannelUpdatesResponse = variant {
-    Success : SelectedGroupUpdates;
-    SuccessNoUpdates;
-    PrivateCommunity;
-    ChannelNotFound;
-    PrivateChannel;
-};
-
 type SelectedChannelUpdatesV2Response = variant {
     Success : SelectedGroupUpdates;
     SuccessNoUpdates : TimestampMillis;
@@ -184,12 +191,6 @@ type SelectedInitialSuccess = record {
 type SelectedUpdatesArgs = record {
     invite_code : opt nat64;
     updates_since : TimestampMillis;
-};
-
-type SelectedUpdatesResponse = variant {
-    Success : SelectedUpdatesSuccess;
-    SuccessNoUpdates;
-    PrivateCommunity;
 };
 
 type SelectedUpdatesV2Response = variant {
@@ -314,6 +315,7 @@ type AcceptP2PSwapResponse = variant {
     UserNotInCommunity;
     UserNotInChannel;
     UserSuspended;
+    UserLapsed;
     ChatFrozen;
     PinRequired;
     PinIncorrect : Milliseconds;
@@ -346,6 +348,8 @@ type CancelInvitesResponse = variant {
     Success;
     NotAuthorized;
     ChannelNotFound;
+    UserSuspended;
+    UserLapsed;
 };
 
 type AddMembersToChannelArgs = record {
@@ -362,6 +366,7 @@ type AddMembersToChannelResponse = variant {
     CommunityFrozen;
     CommunityPublic;
     UserSuspended;
+    UserLapsed;
     UserNotInCommunity;
     UserNotInChannel;
     ChannelNotFound;
@@ -408,6 +413,7 @@ type AddReactionResponse = variant {
     UserNotInCommunity;
     UserNotInChannel;
     UserSuspended;
+    UserLapsed;
     CommunityFrozen;
 };
 
@@ -424,6 +430,7 @@ type BlockUserResponse = variant {
     NotAuthorized;
     TargetUserNotInCommunity;
     UserSuspended;
+    UserLapsed;
     CommunityFrozen;
     InternalError : text;
 };
@@ -439,6 +446,7 @@ type ChangeChannelRoleResponse = variant {
     CommunityFrozen;
     UserNotInCommunity;
     UserSuspended;
+    UserLapsed;
     ChannelNotFound;
     UserNotInChannel;
     TargetUserNotInChannel;
@@ -457,6 +465,7 @@ type ChangeRoleResponse = variant {
     NotAuthorized;
     TargetUserNotInCommunity;
     UserSuspended;
+    UserLapsed;
     Invalid;
     CommunityFrozen;
     InternalError : text;
@@ -473,13 +482,16 @@ type ClaimPrizeResponse = variant {
     UserNotInCommunity;
     UserNotInChannel;
     UserSuspended;
+    UserLapsed;
     CommunityFrozen;
     ChannelNotFound;
     AlreadyClaimed;
     PrizeFullyClaimed;
     PrizeEnded;
+    LedgerError;
     TransferFailed : record { text; FailedCryptoTransaction };
     FailedAfterTransfer : record { text; CompletedCryptoTransaction };
+    InternalError : text;
 };
 
 type CreateChannelArgs = record {
@@ -513,6 +525,7 @@ type CreateChannelResponse = variant {
     MaxChannelsCreated : nat32;
     NameTaken;
     UserSuspended;
+    UserLapsed;
     NotAuthorized;
     CommunityFrozen;
     ExternalUrlInvalid;
@@ -535,6 +548,7 @@ type CreateUserGroupResponse = variant {
     NotAuthorized;
     CommunityFrozen;
     UserSuspended;
+    UserLapsed;
 };
 
 type DeclineInvitationArgs = record {
@@ -556,6 +570,7 @@ type DeleteChannelResponse = variant {
     Success;
     CommunityFrozen;
     UserSuspended;
+    UserLapsed;
     UserNotInCommunity;
     ChannelNotFound;
     UserNotInChannel;
@@ -577,6 +592,7 @@ type DeleteMessagesResponse = variant {
     UserNotInCommunity;
     UserNotInChannel;
     UserSuspended;
+    UserLapsed;
     CommunityFrozen;
     NotPlatformModerator;
     InternalError : text;
@@ -591,12 +607,14 @@ type DeleteUserGroupsResponse = variant {
     NotAuthorized;
     CommunityFrozen;
     UserSuspended;
+    UserLapsed;
 };
 
 type DisableInviteCodeResponse = variant {
     Success;
     NotAuthorized;
     UserSuspended;
+    UserLapsed;
     CommunityFrozen;
 };
 
@@ -615,6 +633,7 @@ type EditMessageResponse = variant {
     UserNotInCommunity;
     UserNotInChannel;
     UserSuspended;
+    UserLapsed;
     CommunityFrozen;
     ChannelNotFound;
 };
@@ -625,6 +644,7 @@ type EnableInviteCodeResponse = variant {
     };
     NotAuthorized;
     UserSuspended;
+    UserLapsed;
     CommunityFrozen;
 };
 
@@ -653,6 +673,7 @@ type ImportGroupResponse = variant {
     UserNotInGroup;
     UserNotGroupOwner;
     UserSuspended;
+    UserLapsed;
     GroupNotFound;
     GroupAlreadyBeingImported;
     GroupImportingToAnotherCommunity;
@@ -673,6 +694,7 @@ type JoinVideoCallResponse = variant {
     CommunityFrozen;
     UserNotInCommunity;
     UserSuspended;
+    UserLapsed;
     ChannelNotFound;
     UserNotInChannel;
 };
@@ -701,6 +723,7 @@ type PinMessageResponse = variant {
     CommunityFrozen;
     UserNotInCommunity;
     UserSuspended;
+    UserLapsed;
     ChannelNotFound;
     UserNotInChannel;
     MessageNotFound;
@@ -722,6 +745,7 @@ type RegisterPollVoteResponse = variant {
     CommunityFrozen;
     UserNotInCommunity;
     UserSuspended;
+    UserLapsed;
     ChannelNotFound;
     UserNotInChannel;
     PollNotFound;
@@ -742,6 +766,7 @@ type RegisterProposalVoteResponse = variant {
     CommunityFrozen;
     UserNotInCommunity;
     UserSuspended;
+    UserLapsed;
     ChannelNotFound;
     UserNotInChannel;
     NoEligibleNeurons;
@@ -756,6 +781,7 @@ type RegisterProposalVoteV2Response = variant {
     CommunityFrozen;
     UserNotInCommunity;
     UserSuspended;
+    UserLapsed;
     ChannelNotFound;
     UserNotInChannel;
     ProposalMessageNotFound;
@@ -773,6 +799,7 @@ type RemoveMemberResponse = variant {
     NotAuthorized;
     TargetUserNotInCommunity;
     UserSuspended;
+    UserLapsed;
     CommunityFrozen;
     InternalError : text;
 };
@@ -788,6 +815,7 @@ type RemoveMemberFromChannelResponse = variant {
     UserNotInCommunity;
     TargetUserNotInCommunity;
     UserSuspended;
+    UserLapsed;
     ChannelNotFound;
     UserNotInChannel;
     TargetUserNotInChannel;
@@ -811,6 +839,7 @@ type RemoveReactionResponse = variant {
     UserNotInChannel;
     NotAuthorized;
     UserSuspended;
+    UserLapsed;
     CommunityFrozen;
 };
 
@@ -826,6 +855,7 @@ type ReportMessageResponse = variant {
     CommunityFrozen;
     UserNotInCommunity;
     UserSuspended;
+    UserLapsed;
     ChannelNotFound;
     NotAuthorized;
     UserNotInChannel;
@@ -862,6 +892,7 @@ type SendMessageResponse = variant {
     UserNotInCommunity;
     UserNotInChannel;
     UserSuspended;
+    UserLapsed;
     InvalidRequest : text;
     CommunityFrozen;
     RulesNotAccepted;
@@ -885,6 +916,7 @@ type SetMemberDisplayNameResponse = variant {
     CommunityFrozen;
     UserNotInCommunity;
     UserSuspended;
+    UserLapsed;
     DisplayNameInvalid;
     DisplayNameTooShort : nat16;
     DisplayNameTooLong : nat16;
@@ -904,6 +936,7 @@ type SetVideoCallPresenceResponse = variant {
     CommunityFrozen;
     UserNotInCommunity;
     UserSuspended;
+    UserLapsed;
     ChannelNotFound;
     UserNotInChannel;
 };
@@ -933,6 +966,7 @@ type ToggleMuteNotificationsResponse = variant {
     CommunityFrozen;
     UserNotInCommunity;
     UserSuspended;
+    UserLapsed;
     ChannelNotFound;
     UserNotInChannel;
 };
@@ -948,6 +982,7 @@ type UnblockUserResponse = variant {
     CommunityNotPublic;
     NotAuthorized;
     UserSuspended;
+    UserLapsed;
     CommunityFrozen;
 };
 
@@ -966,6 +1001,7 @@ type UndeleteMessagesResponse = variant {
     UserNotInCommunity;
     UserNotInChannel;
     UserSuspended;
+    UserLapsed;
     CommunityFrozen;
 };
 
@@ -1002,6 +1038,7 @@ type UpdateChannelResponse = variant {
     RulesTooLong : FieldTooLongResult;
     RulesTooShort : FieldTooShortResult;
     UserSuspended;
+    UserLapsed;
     CommunityFrozen;
     ExternalUrlInvalid;
 };
@@ -1037,6 +1074,7 @@ type UpdateCommunityResponse = variant {
     RulesTooLong : FieldTooLongResult;
     RulesTooShort : FieldTooShortResult;
     UserSuspended;
+    UserLapsed;
     CommunityFrozen;
     InvalidLanguage;
 };
@@ -1058,6 +1096,7 @@ type UpdateUserGroupResponse = variant {
     NotAuthorized;
     CommunityFrozen;
     UserSuspended;
+    UserLapsed;
 };
 
 type FollowThreadArgs = record {
@@ -1073,6 +1112,7 @@ type FollowThreadResponse = variant {
     UserNotInChannel;
     UserNotInCommunity;
     UserSuspended;
+    UserLapsed;
     CommunityFrozen;
 };
 
@@ -1089,6 +1129,7 @@ type UnfollowThreadResponse = variant {
     UserNotInChannel;
     UserNotInCommunity;
     UserSuspended;
+    UserLapsed;
     CommunityFrozen;
 };
 
@@ -1101,14 +1142,13 @@ service : {
     events_window : (EventsWindowArgs) -> (EventsResponse) query;
     explore_channels : (ExploreChannelsArgs) -> (ExploreChannelsResponse) query;
     invite_code : (EmptyArgs) -> (InviteCodeResponse) query;
+    lookup_members : (LookupMembersArgs) -> (LookupMembersResponse) query;
     local_user_index : (EmptyArgs) -> (LocalUserIndexResponse) query;
     messages_by_message_index : (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
     search_channel : (SearchChannelArgs) -> (SearchChannelResponse) query;
     selected_channel_initial : (SelectedChannelInitialArgs) -> (SelectedChannelInitialResponse) query;
-    selected_channel_updates : (SelectedChannelUpdatesArgs) -> (SelectedChannelUpdatesResponse) query;
     selected_channel_updates_v2 : (SelectedChannelUpdatesArgs) -> (SelectedChannelUpdatesV2Response) query;
     selected_initial : (SelectedInitialArgs) -> (SelectedInitialResponse) query;
-    selected_updates : (SelectedUpdatesArgs) -> (SelectedUpdatesResponse) query;
     selected_updates_v2 : (SelectedUpdatesArgs) -> (SelectedUpdatesV2Response) query;
     summary : (SummaryArgs) -> (SummaryResponse) query;
     summary_updates : (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;

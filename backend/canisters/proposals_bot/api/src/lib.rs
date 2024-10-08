@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{icrc1::Account, CanisterId};
 
-#[ts_export(proposals_bot, common)]
+#[ts_export(proposals_bot)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ProposalToSubmit {
     pub title: String,
@@ -12,7 +12,7 @@ pub struct ProposalToSubmit {
     pub action: ProposalToSubmitAction,
 }
 
-#[ts_export(proposals_bot, common)]
+#[ts_export(proposals_bot)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum ProposalToSubmitAction {
     Motion,
@@ -22,7 +22,7 @@ pub enum ProposalToSubmitAction {
     ExecuteGenericNervousSystemFunction(ExecuteGenericNervousSystemFunction),
 }
 
-#[ts_export(proposals_bot, common)]
+#[ts_export(proposals_bot)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct TransferSnsTreasuryFunds {
     pub treasury: Treasury,
@@ -31,14 +31,14 @@ pub struct TransferSnsTreasuryFunds {
     pub memo: Option<u64>,
 }
 
-#[ts_export(proposals_bot, common)]
+#[ts_export(proposals_bot)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum Treasury {
     ICP,
     SNS,
 }
 
-#[ts_export(proposals_bot, common)]
+#[ts_export(proposals_bot)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct UpgradeSnsControlledCanister {
     pub canister_id: CanisterId,
@@ -47,7 +47,7 @@ pub struct UpgradeSnsControlledCanister {
     pub mode: CanisterInstallMode,
 }
 
-#[ts_export(proposals_bot, common)]
+#[ts_export(proposals_bot)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum CanisterInstallMode {
     Install = 1,
@@ -65,7 +65,7 @@ impl From<CanisterInstallMode> for i32 {
     }
 }
 
-#[ts_export(proposals_bot, common)]
+#[ts_export(proposals_bot)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ExecuteGenericNervousSystemFunction {
     pub function_id: u64,

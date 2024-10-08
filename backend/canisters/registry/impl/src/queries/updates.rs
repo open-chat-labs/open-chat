@@ -3,7 +3,7 @@ use canister_api_macros::query;
 use canister_tracing_macros::trace;
 use registry_canister::updates::{Response::*, *};
 
-#[query(msgpack = true)]
+#[query(candid = true, msgpack = true)]
 #[trace]
 fn updates(args: Args) -> Response {
     read_state(|state| updates_impl(args, state))
@@ -15,6 +15,7 @@ fn updates_impl(args: Args, state: &RuntimeState) -> Response {
     let last_updated = [
         tokens_last_updated,
         state.data.nervous_systems.last_updated(),
+        state.data.swap_providers.timestamp,
         state.data.message_filters.last_updated(),
     ]
     .into_iter()
@@ -45,6 +46,11 @@ fn updates_impl(args: Args, state: &RuntimeState) -> Response {
                 .filter(|ns| ns.last_updated > updates_since)
                 .map(|ns| ns.into())
                 .collect(),
+            swap_providers: state
+                .data
+                .swap_providers
+                .if_set_after(updates_since)
+                .map(|p| p.iter().copied().collect()),
             message_filters_added: state.data.message_filters.added_since(updates_since),
             message_filters_removed: state.data.message_filters.removed_since(updates_since),
         })

@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
+hex = { workspace = true }
 human_readable_derive = { path = "../human_readable_derive" }
 serde = { workspace = true }
 serde_json = { workspace = true }

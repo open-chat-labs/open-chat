@@ -5,6 +5,7 @@ use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
 use group_canister::init::Args as InitGroupCanisterArgs;
 use local_group_index_canister::c2c_create_group::{Response::*, *};
+use local_group_index_canister::ChildCanisterType;
 use types::{BuildVersion, CanisterId, CanisterWasm, ChatId, Cycles, GroupCreatedEventPayload, UserId, UserType};
 use utils::canister;
 use utils::canister::CreateAndInstallError;
@@ -84,7 +85,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
     };
 
     let canister_id = state.data.canister_pool.pop();
-    let canister_wasm = state.data.group_canister_wasm_for_new_canisters.wasm.clone();
+    let canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::Group).wasm.clone();
     let local_user_index_canister_id = state.data.local_user_index_canister_id;
     let init_canister_args = group_canister::init::Args {
         is_public: args.is_public,
@@ -115,6 +116,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         internet_identity_canister_id: state.data.internet_identity_canister_id,
         avatar: args.avatar,
         gate: args.gate,
+        gate_config: args.gate_config,
         video_call_operators: state.data.video_call_operators.clone(),
         ic_root_key: state.data.ic_root_key.clone(),
         wasm_version: canister_wasm.version,

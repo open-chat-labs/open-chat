@@ -1,7 +1,9 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::ChannelMatch;
 
+#[ts_export(community, explore_channels)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub invite_code: Option<u64>,
@@ -10,6 +12,7 @@ pub struct Args {
     pub page_size: u8,
 }
 
+#[ts_export(community, explore_channels)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
@@ -19,6 +22,7 @@ pub enum Response {
     PrivateCommunity,
 }
 
+#[ts_export(community, explore_channels)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub matches: Vec<ChannelMatch>,

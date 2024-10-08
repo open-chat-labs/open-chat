@@ -2,6 +2,7 @@
 
 VERSION=$1
 CHANGELOG_PATH=$2
+DFX_IDENTITY=${3:-default}
 
 TITLE="Upgrade User canisters to $VERSION"
 CHANGELOG=`cat $CHANGELOG_PATH`
@@ -14,4 +15,4 @@ SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
 # Submit the proposal
-./make_upgrade_canister_proposal.sh $FUNCTION_ID $CANISTER_NAME "$VERSION" "$TITLE" "$CHANGELOG"
+./make_upgrade_canister_proposal.sh $FUNCTION_ID $CANISTER_NAME "$VERSION" "$TITLE" "$CHANGELOG" true $DFX_IDENTITY

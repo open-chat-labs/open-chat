@@ -28,16 +28,19 @@ generate_msgpack_update_call!(update_diamond_membership_subscription);
 generate_msgpack_update_call!(unsuspend_user);
 generate_update_call!(upgrade_local_user_index_canister_wasm);
 generate_update_call!(upgrade_user_canister_wasm);
+generate_update_call!(upload_wasm_chunk);
 
 pub mod happy_path {
     use candid::Principal;
     use pocket_ic::PocketIc;
+    use sha256::sha256;
     use std::collections::HashMap;
     use types::{
         CanisterId, CanisterWasm, Chit, Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration, Empty, UserId,
         UserSummary,
     };
     use user_index_canister::users::UserGroup;
+    use user_index_canister::ChildCanisterType;
 
     pub fn current_user(
         env: &PocketIc,
@@ -148,14 +151,22 @@ pub mod happy_path {
         user_index_canister_id: CanisterId,
         wasm: CanisterWasm,
     ) {
+        upload_wasm_in_chunks(
+            env,
+            sender,
+            user_index_canister_id,
+            &wasm.module,
+            ChildCanisterType::LocalUserIndex,
+        );
+
         let response = super::upgrade_local_user_index_canister_wasm(
             env,
             sender,
             user_index_canister_id,
             &user_index_canister::upgrade_local_user_index_canister_wasm::Args {
-                wasm,
+                version: wasm.version,
+                wasm_hash: sha256(&wasm.module),
                 filter: None,
-                use_for_new_canisters: None,
             },
         );
 
@@ -171,14 +182,16 @@ pub mod happy_path {
         user_index_canister_id: CanisterId,
         wasm: CanisterWasm,
     ) {
+        upload_wasm_in_chunks(env, sender, user_index_canister_id, &wasm.module, ChildCanisterType::User);
+
         let response = super::upgrade_user_canister_wasm(
             env,
             sender,
             user_index_canister_id,
             &user_index_canister::upgrade_user_canister_wasm::Args {
-                wasm,
+                version: wasm.version,
+                wasm_hash: sha256(&wasm.module),
                 filter: None,
-                use_for_new_canisters: None,
             },
         );
 
@@ -253,6 +266,31 @@ pub mod happy_path {
 
         match response {
             user_index_canister::users_chit::Response::Success(result) => users.into_iter().zip(result.chit).collect(),
+        }
+    }
+
+    fn upload_wasm_in_chunks(
+        env: &mut PocketIc,
+        sender: Principal,
+        user_index_canister_id: CanisterId,
+        wasm: &[u8],
+        canister_type: ChildCanisterType,
+    ) {
+        for (index, chunk) in wasm.chunks(1_000_000).enumerate() {
+            let response = super::upload_wasm_chunk(
+                env,
+                sender,
+                user_index_canister_id,
+                &user_index_canister::upload_wasm_chunk::Args {
+                    canister_type,
+                    chunk: chunk.to_vec().into(),
+                    index: index as u8,
+                },
+            );
+            assert!(matches!(
+                response,
+                user_index_canister::upload_wasm_chunk::Response::Success(_)
+            ));
         }
     }
 }

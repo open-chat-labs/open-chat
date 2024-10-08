@@ -185,6 +185,7 @@ type SwapTokensArgs = record {
     exchange_args : variant {
         ICPSwap : ExchangeArgs;
         Sonic : ExchangeArgs;
+        KongSwap : ExchangeArgs;
     };
     min_output_amount : nat;
     pin : opt text;
@@ -213,11 +214,17 @@ type TokenSwapStatusArgs = record {
 type TokenSwapStatusResponse = variant {
     Success : record {
         started : TimestampMillis;
+        icrc2 : bool;
+        auto_withdrawals : bool;
         deposit_account : opt variant {
             Ok;
             Err : text;
         };
         transfer : opt variant {
+            Ok : nat64;
+            Err : text;
+        };
+        transfer_or_approval : opt variant {
             Ok : nat64;
             Err : text;
         };
@@ -332,11 +339,12 @@ type TipMessageResponse = variant {
     TransferFailed : text;
     ChatFrozen;
     UserSuspended;
+    UserLapsed;
     Retrying : text;
     PinRequired;
     PinIncorrect : Milliseconds;
     TooManyFailedPinAttempts : Milliseconds;
-    InternalError : record { text; CompletedCryptoTransaction };
+    InternalError : text;
 };
 
 type MarkAchievementsSeenArgs = record {
@@ -535,6 +543,7 @@ type DeleteCommunityResponse = variant {
     Success;
     NotAuthorized;
     UserSuspended;
+    UserLapsed;
     CommunityFrozen;
     InternalError : text;
 };
@@ -637,8 +646,20 @@ type CancelMessageReminderResponse = variant {
 };
 
 type SetPinNumberArgs = record {
-    current : opt text;
     new : opt text;
+    verification : variant {
+        None;
+        PIN : text;
+        Delegation : SignedDelegation;
+    };
+};
+
+type SignedDelegation = record {
+    delegation : record {
+        pubkey : blob;
+        expiration : TimestampNanos;
+    };
+    signature : blob;
 };
 
 type SetPinNumberResponse = variant {
@@ -648,6 +669,8 @@ type SetPinNumberResponse = variant {
     PinRequired;
     PinIncorrect : Milliseconds;
     TooManyFailedPinAttempts : Milliseconds;
+    MalformedSignature : text;
+    DelegationTooOld;
 };
 
 type SendMessageWithTransferToChannelArgs = record {
@@ -687,6 +710,7 @@ type SendMessageWithTransferToChannelResponse = variant {
     TransferCannotBeToSelf;
     P2PSwapSetUpFailed : text;
     UserSuspended;
+    UserLapsed;
     CommunityFrozen;
     RulesNotAccepted;
     CommunityRulesNotAccepted;
@@ -694,6 +718,7 @@ type SendMessageWithTransferToChannelResponse = variant {
     PinRequired;
     PinIncorrect : Milliseconds;
     TooManyFailedPinAttempts : Milliseconds;
+    InternalError : text;
 };
 
 type SendMessageWithTransferToGroupArgs = record {
@@ -730,12 +755,14 @@ type SendMessageWithTransferToGroupResponse = variant {
     TransferCannotBeToSelf;
     P2PSwapSetUpFailed : text;
     UserSuspended;
+    UserLapsed;
     ChatFrozen;
     RulesNotAccepted;
     Retrying : record { text; CompletedCryptoTransaction };
     PinRequired;
     PinIncorrect : Milliseconds;
     TooManyFailedPinAttempts : Milliseconds;
+    InternalError : text;
 };
 
 type WithdrawCryptoArgs = record {
@@ -750,6 +777,7 @@ type WithdrawCryptoResponse = variant {
     PinRequired;
     PinIncorrect : Milliseconds;
     TooManyFailedPinAttempts : Milliseconds;
+    InternalError : text;
 };
 
 type PinChatV2Request = record {
@@ -1287,7 +1315,7 @@ service : {
     local_user_index : (EmptyArgs) -> (LocalUserIndexResponse) query;
     chit_events : (ChitEventsArgs) -> (ChitEventsResponse) query;
 
-    // cached_btc_address : (EmptyArgs) -> (CachedBtcAddressResponse) query;
-    // btc_address : (EmptyArgs) -> (BtcAddressResponse);
-    // retrieve_btc : (RetrieveBtcArgs) -> (RetrieveBtcResponse);
+    cached_btc_address : (EmptyArgs) -> (CachedBtcAddressResponse) query;
+    btc_address : (EmptyArgs) -> (BtcAddressResponse);
+    retrieve_btc : (RetrieveBtcArgs) -> (RetrieveBtcResponse);
 };

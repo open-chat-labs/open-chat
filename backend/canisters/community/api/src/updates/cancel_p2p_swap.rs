@@ -1,7 +1,9 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{ChannelId, MessageId, MessageIndex, SwapStatusError};
 
+#[ts_export(community, cancel_p2p_swap)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub channel_id: ChannelId,
@@ -9,6 +11,7 @@ pub struct Args {
     pub message_id: MessageId,
 }
 
+#[ts_export(community, cancel_p2p_swap)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,

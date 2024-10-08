@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1374](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1374-user)] - 2024-10-07
+
+### Added
+
+- Allow changing PIN number if signed in within last 5 minutes ([#6459](https://github.com/open-chat-labs/open-chat/pull/6459))
+- Re-add BTC methods now that we can support larger wasms ([#6462](https://github.com/open-chat-labs/open-chat/pull/6462))
+- Add MessagePack versions of all endpoints ([#6463](https://github.com/open-chat-labs/open-chat/pull/6463))
+- Integrate with KongSwap for performing token swaps ([#6508](https://github.com/open-chat-labs/open-chat/pull/6508))
+
+### Changed
+
+- Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
+- Simplify search logic and move it into `SearchIndex` struct ([#6465](https://github.com/open-chat-labs/open-chat/pull/6465))
+- Return owned values from `EventsMap` in prep for switch to stable memory ([#6469](https://github.com/open-chat-labs/open-chat/pull/6469))
+- Add serde default attribute in preparation for skipping serialization if default ([#6475](https://github.com/open-chat-labs/open-chat/pull/6475))
+- Refactor transfers to differentiate between transfers that failed due to c2c error vs transfer error ([#6500](https://github.com/open-chat-labs/open-chat/pull/6500))
+- Refactor ICPSwap and Sonic swap clients ([#6505](https://github.com/open-chat-labs/open-chat/pull/6505))
+- Award more daily CHIT when on 100 or 365 day streaks ([#6522](https://github.com/open-chat-labs/open-chat/pull/6522))
+- Add support for expiring access gates ([#6401](https://github.com/open-chat-labs/open-chat/pull/6401))
+
+### Fixed
+
+- Set user type correctly for OC controlled bots ([#6494](https://github.com/open-chat-labs/open-chat/pull/6494))
+
 ## [[2.0.1357](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1357-user)] - 2024-09-20
 
 ### Added

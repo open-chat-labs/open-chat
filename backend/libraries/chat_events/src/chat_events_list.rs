@@ -66,18 +66,28 @@ impl<M: EventsMap> ChatEventsList<M> {
         &self,
         event_key: EventKey,
         min_visible_event_index: EventIndex,
-    ) -> Option<&EventWrapperInternal<ChatEventInternal>> {
-        self.get(event_key, min_visible_event_index).and_then(|e| e.as_event())
+    ) -> Option<EventWrapperInternal<ChatEventInternal>> {
+        self.get(event_key, min_visible_event_index).and_then(|e| e.into_event())
     }
 
-    pub(crate) fn get_event_mut(
+    pub(crate) fn update_event<
+        F: FnOnce(&mut EventWrapperInternal<ChatEventInternal>) -> Result<T, UpdateEventError<E>>,
+        T,
+        E,
+    >(
         &mut self,
         event_key: EventKey,
-        min_visible_event_index: EventIndex,
-    ) -> Option<&mut EventWrapperInternal<ChatEventInternal>> {
-        self.event_index(event_key)
-            .filter(|e| *e >= min_visible_event_index)
-            .and_then(|e| self.events_map.get_mut(e))
+        update_event_fn: F,
+    ) -> Result<(T, EventIndex), UpdateEventError<E>> {
+        if let Some(mut event) = self.get_event(event_key, EventIndex::default()) {
+            update_event_fn(&mut event).map(|result| {
+                let event_index = event.index;
+                self.events_map.insert(event);
+                (result, event_index)
+            })
+        } else {
+            Err(UpdateEventError::NotFound)
+        }
     }
 
     pub(crate) fn is_accessible(&self, event_key: EventKey, min_visible_event_index: EventIndex) -> bool {
@@ -112,7 +122,7 @@ impl<M: EventsMap> ChatEventsList<M> {
             (min_visible_event_index, self.latest_event_index.unwrap_or_default())
         };
 
-        let iter = self.events_map.range(min..=max).map(|(_, e)| e);
+        let iter = self.events_map.range(min..=max);
 
         if ascending {
             Box::new(ChatEventsListIterator {
@@ -166,24 +176,29 @@ impl<M: EventsMap> ChatEventsList<M> {
 
     pub fn migrate_replies(&mut self, old: ChatInternal, new: ChatInternal) -> Vec<EventIndex> {
         let mut updated = Vec::new();
-        for event in self.events_map.values_mut() {
+        for mut event in self.events_map.iter() {
             if let Some(message) = event.event.as_message_mut() {
                 if let Some(r) = message.replies_to.as_mut() {
                     if let Some((chat, _)) = r.chat_if_other.as_mut() {
                         if *chat == old {
                             *chat = new;
-                            updated.push(event.index);
+                            updated.push(event);
                         }
                     }
                 }
             }
         }
-        updated
+
+        let updated_indexes = updated.iter().map(|e| e.index).collect();
+        for event in updated {
+            self.events_map.insert(event);
+        }
+        updated_indexes
     }
 
     pub(crate) fn event_count_since<F: Fn(&ChatEventInternal) -> bool>(&self, since: TimestampMillis, filter: &F) -> usize {
         self.events_map
-            .values()
+            .iter()
             .rev()
             .take_while(|e| e.timestamp > since)
             .filter(|e| filter(&e.event))
@@ -218,12 +233,8 @@ impl<M: EventsMap> ChatEventsList<M> {
         MessageIndex::from(self.message_event_indexes.len() as u32)
     }
 
-    pub fn last(&self) -> Option<&EventWrapperInternal<ChatEventInternal>> {
-        self.events_map.values().next_back()
-    }
-
-    pub fn last_mut(&mut self) -> Option<&mut EventWrapperInternal<ChatEventInternal>> {
-        self.events_map.values_mut().next_back()
+    pub fn last(&self) -> Option<EventWrapperInternal<ChatEventInternal>> {
+        self.events_map.iter().next_back()
     }
 
     pub fn len(&self) -> usize {
@@ -249,17 +260,22 @@ impl<M: EventsMap> ChatEventsList<M> {
     fn get_value_or_neighbours(
         &self,
         event_index: EventIndex,
-    ) -> Result<&EventWrapperInternal<ChatEventInternal>, (Option<EventIndex>, Option<EventIndex>)> {
+    ) -> Result<EventWrapperInternal<ChatEventInternal>, (Option<EventIndex>, Option<EventIndex>)> {
         let next_key = match self.events_map.range(event_index..).next() {
-            Some((k, v)) if *k == event_index => return Ok(v),
-            Some((k, _)) => Some(*k),
+            Some(v) if v.index == event_index => return Ok(v),
+            Some(v) => Some(v.index),
             None => None,
         };
 
-        let previous_key = self.events_map.range(..event_index).next_back().map(|(k, _)| *k);
+        let previous_key = self.events_map.range(..event_index).next_back().map(|e| e.index);
 
         Err((previous_key, next_key))
     }
+}
+
+pub enum UpdateEventError<E = ()> {
+    NoChange(E),
+    NotFound,
 }
 
 pub struct ChatEventsListReader<'r, M = BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>>> {
@@ -308,12 +324,12 @@ pub trait Reader {
         &self,
         start: Option<EventKey>,
         ascending: bool,
-    ) -> Box<dyn Iterator<Item = &EventWrapperInternal<ChatEventInternal>> + '_> {
-        Box::new(self.iter(start, ascending).filter_map(|e| e.as_event()))
+    ) -> Box<dyn Iterator<Item = EventWrapperInternal<ChatEventInternal>> + '_> {
+        Box::new(self.iter(start, ascending).filter_map(|e| e.into_event()))
     }
 
-    fn get_event(&self, event_key: EventKey) -> Option<&EventWrapperInternal<ChatEventInternal>> {
-        self.get(event_key).and_then(|e| e.as_event())
+    fn get_event(&self, event_key: EventKey) -> Option<EventWrapperInternal<ChatEventInternal>> {
+        self.get(event_key).and_then(|e| e.into_event())
     }
 
     fn get_by_indexes(&self, event_indexes: &[EventIndex], my_user_id: Option<UserId>) -> Vec<EventOrExpiredRange> {
@@ -365,24 +381,28 @@ pub trait Reader {
         self.cap_then_hydrate_events(combined, max_messages, max_events, my_user_id)
     }
 
-    fn message_internal(&self, event_key: EventKey) -> Option<&MessageInternal> {
-        self.get_event(event_key).and_then(|e| e.event.as_message())
+    fn message_internal(&self, event_key: EventKey) -> Option<MessageInternal> {
+        self.get_event(event_key).and_then(|e| e.event.into_message())
     }
 
     fn message(&self, event_key: EventKey, my_user_id: Option<UserId>) -> Option<Message> {
         self.message_internal(event_key).map(|m| m.hydrate(my_user_id))
     }
 
-    fn message_event_internal(&self, event_key: EventKey) -> Option<EventWrapper<&MessageInternal>> {
-        self.get_event(event_key)
-            .and_then(|e| e.event.as_message().map(|m| (e, m)))
-            .map(|(e, m)| EventWrapper {
-                index: e.index,
-                timestamp: e.timestamp,
-                correlation_id: e.correlation_id,
-                expires_at: e.expires_at,
-                event: m,
-            })
+    fn message_event_internal(&self, event_key: EventKey) -> Option<EventWrapper<MessageInternal>> {
+        self.get_event(event_key).and_then(|e| {
+            if let Some(m) = e.event.into_message() {
+                Some(EventWrapper {
+                    index: e.index,
+                    timestamp: e.timestamp,
+                    correlation_id: e.correlation_id,
+                    expires_at: e.expires_at,
+                    event: m,
+                })
+            } else {
+                None
+            }
+        })
     }
 
     fn message_event(&self, event_key: EventKey, my_user_id: Option<UserId>) -> Option<EventWrapper<Message>> {
@@ -408,36 +428,36 @@ pub trait Reader {
 
     fn hydrate_event(
         &self,
-        event: &EventWrapperInternal<ChatEventInternal>,
+        event: EventWrapperInternal<ChatEventInternal>,
         my_user_id: Option<UserId>,
     ) -> EventWrapper<ChatEvent> {
-        let event_data = match &event.event {
-            ChatEventInternal::DirectChatCreated(d) => ChatEvent::DirectChatCreated(*d),
+        let event_data = match event.event {
+            ChatEventInternal::DirectChatCreated(d) => ChatEvent::DirectChatCreated(d),
             ChatEventInternal::Message(m) => ChatEvent::Message(Box::new(m.hydrate(my_user_id))),
-            ChatEventInternal::GroupChatCreated(g) => ChatEvent::GroupChatCreated(*g.clone()),
-            ChatEventInternal::GroupNameChanged(g) => ChatEvent::GroupNameChanged(*g.clone()),
-            ChatEventInternal::GroupDescriptionChanged(g) => ChatEvent::GroupDescriptionChanged(*g.clone()),
-            ChatEventInternal::GroupRulesChanged(g) => ChatEvent::GroupRulesChanged(*g.clone()),
-            ChatEventInternal::AvatarChanged(g) => ChatEvent::AvatarChanged(*g.clone()),
-            ChatEventInternal::ParticipantsAdded(p) => ChatEvent::ParticipantsAdded(*p.clone()),
-            ChatEventInternal::ParticipantsRemoved(p) => ChatEvent::ParticipantsRemoved(*p.clone()),
-            ChatEventInternal::ParticipantJoined(p) => ChatEvent::ParticipantJoined(*p.clone()),
-            ChatEventInternal::ParticipantLeft(p) => ChatEvent::ParticipantLeft(*p.clone()),
-            ChatEventInternal::RoleChanged(r) => ChatEvent::RoleChanged(*r.clone()),
-            ChatEventInternal::UsersBlocked(u) => ChatEvent::UsersBlocked(*u.clone()),
-            ChatEventInternal::UsersUnblocked(u) => ChatEvent::UsersUnblocked(*u.clone()),
-            ChatEventInternal::MessagePinned(p) => ChatEvent::MessagePinned(*p.clone()),
-            ChatEventInternal::PermissionsChanged(p) => ChatEvent::PermissionsChanged(*p.clone()),
-            ChatEventInternal::MessageUnpinned(u) => ChatEvent::MessageUnpinned(*u.clone()),
-            ChatEventInternal::GroupVisibilityChanged(g) => ChatEvent::GroupVisibilityChanged(*g.clone()),
-            ChatEventInternal::GroupInviteCodeChanged(g) => ChatEvent::GroupInviteCodeChanged(*g.clone()),
-            ChatEventInternal::ChatFrozen(f) => ChatEvent::ChatFrozen(*f.clone()),
-            ChatEventInternal::ChatUnfrozen(u) => ChatEvent::ChatUnfrozen(*u.clone()),
-            ChatEventInternal::EventsTimeToLiveUpdated(u) => ChatEvent::EventsTimeToLiveUpdated(*u.clone()),
-            ChatEventInternal::GroupGateUpdated(g) => ChatEvent::GroupGateUpdated(*g.clone()),
-            ChatEventInternal::UsersInvited(e) => ChatEvent::UsersInvited(*e.clone()),
+            ChatEventInternal::GroupChatCreated(g) => ChatEvent::GroupChatCreated(*g),
+            ChatEventInternal::GroupNameChanged(g) => ChatEvent::GroupNameChanged(*g),
+            ChatEventInternal::GroupDescriptionChanged(g) => ChatEvent::GroupDescriptionChanged(*g),
+            ChatEventInternal::GroupRulesChanged(g) => ChatEvent::GroupRulesChanged(*g),
+            ChatEventInternal::AvatarChanged(g) => ChatEvent::AvatarChanged(*g),
+            ChatEventInternal::ParticipantsAdded(p) => ChatEvent::ParticipantsAdded(*p),
+            ChatEventInternal::ParticipantsRemoved(p) => ChatEvent::ParticipantsRemoved(*p),
+            ChatEventInternal::ParticipantJoined(p) => ChatEvent::ParticipantJoined(*p),
+            ChatEventInternal::ParticipantLeft(p) => ChatEvent::ParticipantLeft(*p),
+            ChatEventInternal::RoleChanged(r) => ChatEvent::RoleChanged(*r),
+            ChatEventInternal::UsersBlocked(u) => ChatEvent::UsersBlocked(*u),
+            ChatEventInternal::UsersUnblocked(u) => ChatEvent::UsersUnblocked(*u),
+            ChatEventInternal::MessagePinned(p) => ChatEvent::MessagePinned(*p),
+            ChatEventInternal::PermissionsChanged(p) => ChatEvent::PermissionsChanged(*p),
+            ChatEventInternal::MessageUnpinned(u) => ChatEvent::MessageUnpinned(*u),
+            ChatEventInternal::GroupVisibilityChanged(g) => ChatEvent::GroupVisibilityChanged(*g),
+            ChatEventInternal::GroupInviteCodeChanged(g) => ChatEvent::GroupInviteCodeChanged(*g),
+            ChatEventInternal::ChatFrozen(f) => ChatEvent::ChatFrozen(*f),
+            ChatEventInternal::ChatUnfrozen(u) => ChatEvent::ChatUnfrozen(*u),
+            ChatEventInternal::EventsTimeToLiveUpdated(u) => ChatEvent::EventsTimeToLiveUpdated(*u),
+            ChatEventInternal::GroupGateUpdated(g) => ChatEvent::GroupGateUpdated((*g).into()),
+            ChatEventInternal::UsersInvited(e) => ChatEvent::UsersInvited(*e),
             ChatEventInternal::MembersAddedToPublicChannel(m) => ChatEvent::MembersAddedToDefaultChannel(m.as_ref().into()),
-            ChatEventInternal::ExternalUrlUpdated(u) => ChatEvent::ExternalUrlUpdated(*u.clone()),
+            ChatEventInternal::ExternalUrlUpdated(u) => ChatEvent::ExternalUrlUpdated(*u),
             ChatEventInternal::Empty => ChatEvent::Empty,
         };
 
@@ -461,9 +481,9 @@ pub trait Reader {
             })
     }
 
-    fn cap_then_hydrate_events<'a>(
+    fn cap_then_hydrate_events(
         &self,
-        iterator: impl Iterator<Item = EventOrExpiredRangeInternal<'a>>,
+        iterator: impl Iterator<Item = EventOrExpiredRangeInternal>,
         max_messages: usize,
         max_events: usize,
         my_user_id: Option<UserId>,
@@ -523,10 +543,10 @@ impl<'r> Reader for ChatEventsListReader<'r> {
 }
 
 fn try_into_message_event(
-    event: &EventWrapperInternal<ChatEventInternal>,
+    event: EventWrapperInternal<ChatEventInternal>,
     my_user_id: Option<UserId>,
 ) -> Option<EventWrapper<Message>> {
-    let message = event.event.as_message()?;
+    let message = event.event.into_message()?;
 
     Some(EventWrapper {
         index: event.index,
@@ -545,8 +565,8 @@ struct ChatEventsListIterator<I> {
     complete: bool,
 }
 
-impl<'a, I: Iterator<Item = &'a EventWrapperInternal<ChatEventInternal>>> Iterator for ChatEventsListIterator<I> {
-    type Item = EventOrExpiredRangeInternal<'a>;
+impl<I: Iterator<Item = EventWrapperInternal<ChatEventInternal>>> Iterator for ChatEventsListIterator<I> {
+    type Item = EventOrExpiredRangeInternal;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.complete {
@@ -554,20 +574,21 @@ impl<'a, I: Iterator<Item = &'a EventWrapperInternal<ChatEventInternal>>> Iterat
         }
 
         let result = if let Some(next) = self.inner.next() {
+            let index = next.index;
             let result = if next.index == self.expected_next {
                 EventOrExpiredRangeInternal::Event(next)
             } else if self.ascending {
-                EventOrExpiredRangeInternal::ExpiredEventRange(self.expected_next, next.index.decr())
+                EventOrExpiredRangeInternal::ExpiredEventRange(self.expected_next, index.decr())
             } else {
-                EventOrExpiredRangeInternal::ExpiredEventRange(next.index.incr(), self.expected_next)
+                EventOrExpiredRangeInternal::ExpiredEventRange(index.incr(), self.expected_next)
             };
 
             if self.expected_next == self.end {
                 self.complete = true;
             } else if self.ascending {
-                self.expected_next = next.index.incr();
+                self.expected_next = index.incr();
             } else {
-                self.expected_next = next.index.decr();
+                self.expected_next = index.decr();
             }
 
             result
@@ -608,7 +629,7 @@ mod tests {
         let event_by_message_index = events_reader.get_event(EventKey::MessageIndex(10.into())).unwrap();
         let event_by_event_index = events_reader.get_event(event_by_message_index.index.into()).unwrap();
         let event_by_message_id = events_reader
-            .get_event(event_by_message_index.event.as_message().unwrap().message_id.into())
+            .get_event(event_by_message_index.event.into_message().unwrap().message_id.into())
             .unwrap();
 
         assert_eq!(event_by_message_index.index, event_by_event_index.index);

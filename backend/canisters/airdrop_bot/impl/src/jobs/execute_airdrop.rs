@@ -1,4 +1,4 @@
-use crate::model::pending_actions_queue::{Action, AirdropTransfer, AirdropType, LotteryAirdrop, MainAidrop};
+use crate::actions::{Action, AirdropTransfer, AirdropType, LotteryAirdrop, MainAirdrop};
 use crate::{mutate_state, read_state, RuntimeState};
 use airdrop_bot_canister::AirdropConfig;
 use ic_cdk_timers::TimerId;
@@ -8,8 +8,6 @@ use std::time::Duration;
 use tracing::{error, trace};
 use types::{AccessGate, CanisterId, Chit, GroupRole, OptionUpdate, UserId};
 use utils::time::MonthKey;
-
-use super::process_pending_actions;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -70,6 +68,7 @@ async fn prepare_airdrop(config: AirdropConfig, user_index_canister_id: Canister
             permissions_v2: None,
             events_ttl: OptionUpdate::NoChange,
             gate: OptionUpdate::SetToSome(AccessGate::Locked),
+            gate_config: OptionUpdate::SetToSome(AccessGate::Locked.into()),
             public: None,
             messages_visible_to_non_members: None,
             external_url: OptionUpdate::NoChange,
@@ -158,51 +157,43 @@ fn execute_airdrop(participants: Vec<(UserId, Chit)>, state: &mut RuntimeState) 
         // one at a time, from nth to 1st, spaced by a bunch of main airdrop messages.
 
         let mut lottery_winners = airdrop.outcome.lottery_winners.clone();
+        let mut actions = Vec::new();
 
         for (user_id, participant) in airdrop.outcome.participants.iter() {
             if state.data.pending_actions_queue.len() % 500 == 0 {
                 if let Some((user_id, prize)) = lottery_winners.pop() {
-                    state
-                        .data
-                        .pending_actions_queue
-                        .push_back(Action::Transfer(Box::new(AirdropTransfer {
-                            recipient: user_id,
-                            amount: prize.chat_won,
-                            airdrop_type: AirdropType::Lottery(LotteryAirdrop {
-                                position: lottery_winners.len(),
-                            }),
-                        })))
+                    actions.push(Action::Transfer(Box::new(AirdropTransfer {
+                        recipient: user_id,
+                        amount: prize.chat_won,
+                        airdrop_type: AirdropType::Lottery(LotteryAirdrop {
+                            position: lottery_winners.len(),
+                        }),
+                    })))
                 }
             }
 
             if let Some(prize) = &participant.prize {
-                state
-                    .data
-                    .pending_actions_queue
-                    .push_back(Action::Transfer(Box::new(AirdropTransfer {
-                        recipient: *user_id,
-                        amount: prize.chat_won,
-                        airdrop_type: AirdropType::Main(MainAidrop {
-                            chit: participant.chit,
-                            shares: participant.shares,
-                        }),
-                    })))
+                actions.push(Action::Transfer(Box::new(AirdropTransfer {
+                    recipient: *user_id,
+                    amount: prize.chat_won,
+                    airdrop_type: AirdropType::Main(MainAirdrop {
+                        chit: participant.chit,
+                        shares: participant.shares,
+                    }),
+                })))
             }
         }
 
         while let Some((user_id, prize)) = lottery_winners.pop() {
-            state
-                .data
-                .pending_actions_queue
-                .push_back(Action::Transfer(Box::new(AirdropTransfer {
-                    recipient: user_id,
-                    amount: prize.chat_won,
-                    airdrop_type: AirdropType::Lottery(LotteryAirdrop {
-                        position: lottery_winners.len(),
-                    }),
-                })))
+            actions.push(Action::Transfer(Box::new(AirdropTransfer {
+                recipient: user_id,
+                amount: prize.chat_won,
+                airdrop_type: AirdropType::Lottery(LotteryAirdrop {
+                    position: lottery_winners.len(),
+                }),
+            })))
         }
 
-        process_pending_actions::start_job_if_required(state, None);
+        state.data.pending_actions_queue.enqueue_many(actions.into_iter());
     }
 }

@@ -1,8 +1,8 @@
 use crate::{read_state, RuntimeState};
+use canister_api_macros::query;
 use group_canister::selected_updates_v2::{Response::*, *};
-use ic_cdk::query;
 
-#[query]
+#[query(candid = true, msgpack = true)]
 fn selected_updates_v2(args: Args) -> Response {
     read_state(|state| selected_updates_impl(args, state))
 }

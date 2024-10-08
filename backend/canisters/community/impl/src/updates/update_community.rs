@@ -1,22 +1,23 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::model::events::CommunityEventInternal;
-use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
+use crate::{jobs, mutate_state, read_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use chat_events::GroupGateUpdatedInternal;
 use community_canister::update_community::{Response::*, *};
 use group_index_canister::{c2c_make_community_private, c2c_update_community};
-use ic_cdk::update;
 use tracing::error;
 use types::{
-    AccessGate, AvatarChanged, BannerChanged, CanisterId, CommunityId, CommunityPermissions, CommunityPermissionsChanged,
-    CommunityVisibilityChanged, Document, GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged, GroupRulesChanged,
-    OptionUpdate, OptionalCommunityPermissions, PrimaryLanguageChanged, Timestamped, UserId,
+    AccessGateConfigInternal, AvatarChanged, BannerChanged, CanisterId, CommunityId, CommunityPermissions,
+    CommunityPermissionsChanged, CommunityVisibilityChanged, Document, GroupDescriptionChanged, GroupNameChanged,
+    GroupRulesChanged, OptionUpdate, OptionalCommunityPermissions, PrimaryLanguageChanged, Timestamped, UserId,
 };
 use utils::document_validation::{validate_avatar, validate_banner};
 use utils::text_validation::{
     validate_community_name, validate_description, validate_rules, NameValidationError, RulesValidationError,
 };
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn update_community(mut args: Args) -> Response {
     run_regular_jobs();
@@ -62,7 +63,8 @@ async fn update_community(mut args: Args) -> Response {
             description: prepare_result.description,
             avatar_id: prepare_result.avatar_id,
             banner_id: prepare_result.banner_id,
-            gate: prepare_result.gate,
+            gate: prepare_result.gate_config.as_ref().map(|gc| gc.gate.clone()),
+            gate_config: prepare_result.gate_config.map(|gc| gc.into()),
             primary_language: prepare_result.primary_language,
             channel_count: prepare_result.channel_count,
         };
@@ -101,7 +103,7 @@ struct PrepareResult {
     description: String,
     avatar_id: Option<u128>,
     banner_id: Option<u128>,
-    gate: Option<AccessGate>,
+    gate_config: Option<AccessGateConfigInternal>,
     primary_language: String,
     channel_count: u32,
 }
@@ -111,8 +113,8 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         return Err(CommunityFrozen);
     }
 
-    if let OptionUpdate::SetToSome(gate) = &args.gate {
-        if !gate.validate() {
+    if let OptionUpdate::SetToSome(gate_config) = &args.gate_config {
+        if !gate_config.validate() {
             return Err(AccessGateInvalid);
         }
     }
@@ -120,7 +122,13 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     let caller = state.env.caller();
     let avatar_update = args.avatar.as_ref().expand();
     let banner_update = args.banner.as_ref().expand();
-    let gate = args.gate.as_ref().apply_to(state.data.gate.value.as_ref());
+    let gate_config_updates = if args.gate_config.has_update() {
+        &args.gate_config.as_ref().map(|gc| gc.clone().into())
+    } else {
+        &args.gate.as_ref().map(|g| g.clone().into())
+    };
+
+    let gate_config = gate_config_updates.as_ref().apply_to(state.data.gate_config.value.as_ref());
 
     if let Some(name) = &args.name {
         if let Err(error) = validate_community_name(name, state.data.is_public) {
@@ -164,6 +172,8 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     if let Some(member) = state.data.members.get(caller) {
         if member.suspended.value {
             return Err(UserSuspended);
+        } else if member.lapsed.value {
+            return Err(UserLapsed);
         }
 
         let permissions = &state.data.permissions;
@@ -182,7 +192,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 description: args.description.as_ref().unwrap_or(&state.data.description).clone(),
                 avatar_id: avatar_update.map_or(Document::id(&state.data.avatar), |avatar| avatar.map(|a| a.id)),
                 banner_id: banner_update.map_or(Document::id(&state.data.banner), |banner| banner.map(|a| a.id)),
-                gate: gate.cloned(),
+                gate_config: gate_config.cloned(),
                 primary_language: args.primary_language.as_ref().unwrap_or(&state.data.primary_language).clone(),
                 channel_count: state.data.channels.public_channel_ids().len() as u32,
             })
@@ -301,14 +311,24 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
         );
     }
 
-    if let Some(gate) = args.gate.expand() {
-        if state.data.gate.value != gate {
-            state.data.gate = Timestamped::new(gate.clone(), now);
+    let gate_config_updates = if args.gate_config.has_update() {
+        args.gate_config.as_ref().map(|g| g.clone().into())
+    } else {
+        args.gate.as_ref().map(|g| g.clone().into())
+    };
+
+    if let Some(gate_config) = gate_config_updates.expand() {
+        if state.data.gate_config.value != gate_config {
+            let prev_gate_config = state.data.gate_config.clone();
+
+            state.data.gate_config = Timestamped::new(gate_config.clone(), now);
+
+            state.data.update_member_expiry(None, &prev_gate_config, now);
 
             state.data.events.push_event(
-                CommunityEventInternal::GateUpdated(Box::new(GroupGateUpdated {
+                CommunityEventInternal::GateUpdated(Box::new(GroupGateUpdatedInternal {
                     updated_by: my_user_id,
-                    new_gate: gate,
+                    new_gate_config: gate_config,
                 })),
                 state.env.now(),
             );
@@ -348,6 +368,8 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
                 .push_event(CommunityEventInternal::PrimaryLanguageChanged(Box::new(event)), now);
         }
     }
+
+    jobs::expire_members::restart_job(state);
 
     handle_activity_notification(state);
     result

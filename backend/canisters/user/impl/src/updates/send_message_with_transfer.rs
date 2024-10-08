@@ -7,6 +7,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::MessageContentInternal;
 use escrow_canister::deposit_subaccount;
+use ic_cdk::api::call::CallResult;
 use types::icrc1::Account;
 use types::{
     icrc1, Achievement, CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, MessageContentInitial, MessageId,
@@ -68,11 +69,12 @@ async fn send_message_with_transfer_to_channel(
     // Make the crypto transfer
     let (content, completed_transaction) = match process_transaction(args.content, pending_transaction, p2p_swap_id, now).await
     {
-        Ok((c, t)) => (c, t),
-        Err(error) => return TransferFailed(error),
+        Ok(Ok((c, t))) => (c, t),
+        Ok(Err(error)) => return TransferFailed(error),
+        Err(error) => return InternalError(format!("{error:?}")),
     };
 
-    let achievement = content.hydrate(None).to_achievement();
+    let achievement = content.content_type().achievement();
     let has_thread = args.thread_root_message_index.is_some();
     let quote_reply = args.replies_to.is_some();
 
@@ -112,6 +114,7 @@ async fn send_message_with_transfer_to_channel(
             Response::UserNotInChannel => UserNotInChannel(completed_transaction),
             Response::ChannelNotFound => ChannelNotFound(completed_transaction),
             Response::UserSuspended => UserSuspended,
+            Response::UserLapsed => UserLapsed,
             Response::CommunityFrozen => CommunityFrozen,
             Response::RulesNotAccepted => RulesNotAccepted,
             Response::CommunityRulesNotAccepted => CommunityRulesNotAccepted,
@@ -191,11 +194,12 @@ async fn send_message_with_transfer_to_group(
     // Make the crypto transfer
     let (content, completed_transaction) = match process_transaction(args.content, pending_transaction, p2p_swap_id, now).await
     {
-        Ok((c, t)) => (c, t),
-        Err(error) => return TransferFailed(error),
+        Ok(Ok((c, t))) => (c, t),
+        Ok(Err(error)) => return TransferFailed(error),
+        Err(error) => return InternalError(format!("{error:?}")),
     };
 
-    let achievement = content.hydrate(None).to_achievement();
+    let achievement = content.content_type().achievement();
     let has_thread = args.thread_root_message_index.is_some();
     let quote_reply = args.replies_to.is_some();
 
@@ -232,6 +236,7 @@ async fn send_message_with_transfer_to_group(
             }
             Response::CallerNotInGroup => CallerNotInGroup(Some(completed_transaction)),
             Response::UserSuspended => UserSuspended,
+            Response::UserLapsed => UserLapsed,
             Response::ChatFrozen => ChatFrozen,
             Response::RulesNotAccepted => RulesNotAccepted,
             Response::MessageEmpty
@@ -361,18 +366,19 @@ async fn process_transaction(
     pending_transaction: PendingCryptoTransaction,
     p2p_swap_id: Option<u32>,
     now: TimestampMillis,
-) -> Result<(MessageContentInternal, CompletedCryptoTransaction), String> {
+) -> CallResult<Result<(MessageContentInternal, CompletedCryptoTransaction), String>> {
     match crate::crypto::process_transaction(pending_transaction).await {
-        Ok(completed) => {
+        Ok(Ok(completed)) => {
             if let Some(id) = p2p_swap_id {
                 NotifyEscrowCanisterOfDepositJob::run(id);
             }
-            Ok((
+            Ok(Ok((
                 MessageContentInternal::new_with_transfer(content, completed.clone(), p2p_swap_id, now),
                 completed,
-            ))
+            )))
         }
-        Err(failed) => Err(failed.error_message().to_string()),
+        Ok(Err(failed)) => Ok(Err(failed.error_message().to_string())),
+        Err(error) => Err(error),
     }
 }
 

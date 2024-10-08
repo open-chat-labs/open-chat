@@ -1,12 +1,12 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, Reader, RecordProposalVoteResult};
 use community_canister::register_proposal_vote::{Response::*, *};
-use ic_cdk::update;
 use types::{CanisterId, ChannelId, ProposalId, UserId};
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn register_proposal_vote(args: Args) -> Response {
     run_regular_jobs();
@@ -63,6 +63,8 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
 
     if member.suspended.value {
         return Err(UserSuspended);
+    } else if member.lapsed.value {
+        return Err(UserLapsed);
     }
 
     let channel = match state.data.channels.get(&args.channel_id) {
@@ -75,6 +77,10 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         None => return Err(UserNotInChannel),
     };
 
+    if channel_member.lapsed.value {
+        return Err(UserLapsed);
+    }
+
     let min_visible_event_index = channel_member.min_visible_event_index();
 
     if let Some(proposal) = channel
@@ -82,7 +88,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         .events
         .visible_main_events_reader(min_visible_event_index)
         .message_internal(args.message_index.into())
-        .and_then(|m| if let MessageContentInternal::GovernanceProposal(p) = &m.content { Some(p) } else { None })
+        .and_then(|m| if let MessageContentInternal::GovernanceProposal(p) = m.content { Some(p) } else { None })
     {
         if let Some(vote) = proposal.votes.get(&member.user_id) {
             Err(AlreadyVoted(*vote))

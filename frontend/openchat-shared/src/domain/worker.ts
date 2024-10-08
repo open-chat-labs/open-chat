@@ -202,6 +202,7 @@ import type {
     ExternalAchievement,
 } from "./chit";
 import type { JsonnableDelegationChain } from "@dfinity/identity";
+import type { Verification } from "./wallet";
 
 /**
  * Worker request types
@@ -295,6 +296,7 @@ export type WorkerRequest =
     | DeleteFrozenGroup
     | AddHotGroupExclusion
     | RemoveHotGroupExclusion
+    | AddRemoveSwapProvider
     | AddMessageFilter
     | RemoveMessageFilter
     | SetTokenEnabled
@@ -1118,6 +1120,12 @@ type RemoveHotGroupExclusion = {
     kind: "removeHotGroupExclusion";
 };
 
+type AddRemoveSwapProvider = {
+    swapProvider: DexId;
+    add: boolean;
+    kind: "addRemoveSwapProvider";
+};
+
 type AddMessageFilter = {
     regex: string;
     kind: "addMessageFilter";
@@ -1751,7 +1759,7 @@ type CancelP2PSwap = {
 };
 
 type SetPinNumber = {
-    currentPin: string | undefined;
+    verification: Verification;
     newPin: string | undefined;
     kind: "setPinNumber";
 };
@@ -1949,6 +1957,8 @@ export type WorkerResult<T> = T extends Init
     ? AddHotGroupExclusionResponse
     : T extends RemoveHotGroupExclusion
     ? RemoveHotGroupExclusionResponse
+    : T extends AddRemoveSwapProvider
+    ? boolean
     : T extends AddMessageFilter
     ? boolean
     : T extends RemoveMessageFilter

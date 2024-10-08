@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 candid = { workspace = true }
 getrandom = { workspace = true }
+hex = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic_principal = { workspace = true }
 icrc-ledger-types = { workspace = true }
@@ -16,5 +17,6 @@ range-set = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serde_json.workspace = true
+sha2.workspace = true
 ts_export = { path = "../ts_export" }
 ts-rs.workspace = true

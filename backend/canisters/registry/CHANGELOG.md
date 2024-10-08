@@ -6,9 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1369](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1369-registry)] - 2024-10-04
+
+### Added
+
+- Reinstate some candid endpoints ([#6468](https://github.com/open-chat-labs/open-chat/pull/6468))
+- Add `add_remove_swap_provider` ([#6485](https://github.com/open-chat-labs/open-chat/pull/6485))
+
 ### Changed
 
 - When a token is added, disable existing token with the same ticker ([#6392](https://github.com/open-chat-labs/open-chat/pull/6392))
+- Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
+- Add serde default attribute in preparation for skipping serialization if default ([#6475](https://github.com/open-chat-labs/open-chat/pull/6475))
 
 ### Removed
 

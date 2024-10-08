@@ -29,3 +29,4 @@ pub mod unfreeze_group;
 pub mod upgrade_community_canister_wasm;
 pub mod upgrade_group_canister_wasm;
 pub mod upgrade_local_group_index_canister_wasm;
+pub mod upload_wasm_chunk;

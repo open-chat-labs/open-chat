@@ -8,11 +8,11 @@ use canister_api_macros::query;
 use community_canister::c2c_summary_updates::{Args as C2CArgs, Response as C2CResponse};
 use community_canister::summary_updates::{Response::*, *};
 use types::{
-    AccessGate, CommunityCanisterCommunitySummaryUpdates, CommunityMembershipUpdates, CommunityPermissions, EventIndex,
+    AccessGateConfig, CommunityCanisterCommunitySummaryUpdates, CommunityMembershipUpdates, CommunityPermissions, EventIndex,
     FrozenGroupInfo, OptionUpdate, TimestampMillis,
 };
 
-#[query(candid = true)]
+#[query(candid = true, msgpack = true)]
 fn summary_updates(args: Args) -> Response {
     read_state(|state| summary_updates_impl(args.updates_since, args.invite_code, None, state))
 }
@@ -115,6 +115,7 @@ fn summary_updates_impl(
                 Some(display_name) => OptionUpdate::SetToSome(display_name.clone()),
                 None => OptionUpdate::SetToNone,
             }),
+        lapsed: m.lapsed.if_set_after(updates_since).copied(),
     });
 
     let last_updated = [
@@ -139,7 +140,8 @@ fn summary_updates_impl(
         member_count: updates_from_events.members_changed.then_some(state.data.members.len()),
         permissions: updates_from_events.permissions,
         frozen: updates_from_events.frozen,
-        gate: updates_from_events.gate,
+        gate: updates_from_events.gate_config.as_ref().map(|gc| gc.gate.clone()),
+        gate_config: updates_from_events.gate_config,
         primary_language: updates_from_events.primary_language,
         latest_event_index: updates_from_events.latest_event_index,
         channels_added,
@@ -170,7 +172,7 @@ struct UpdatesFromEvents {
     permissions: Option<CommunityPermissions>,
     is_public: Option<bool>,
     frozen: OptionUpdate<FrozenGroupInfo>,
-    gate: OptionUpdate<AccessGate>,
+    gate_config: OptionUpdate<AccessGateConfig>,
     primary_language: Option<String>,
     rules_changed: bool,
 }
@@ -182,8 +184,8 @@ fn process_events(since: TimestampMillis, member: Option<&CommunityMemberInterna
         updates.frozen = OptionUpdate::from_update(data.frozen.value.clone());
     }
 
-    if data.gate.timestamp > since {
-        updates.gate = OptionUpdate::from_update(data.gate.value.clone());
+    if data.gate_config.timestamp > since {
+        updates.gate_config = OptionUpdate::from_update(data.gate_config.value.clone().map(|gc| gc.into()));
     }
 
     // Iterate through events starting from most recent

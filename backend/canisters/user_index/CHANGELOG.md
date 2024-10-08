@@ -6,14 +6,47 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1371](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1371-user_index)] - 2024-10-07
+
 ### Changed
 
-No auth check for `award_external_achievement` in test mode - ([#6397](https://github.com/open-chat-labs/open-chat/pull/6397))
+- Clear wasm chunks once new wasm version has been set ([#6524](https://github.com/open-chat-labs/open-chat/pull/6524))
+
+### Removed
+
+- Remove unused fields from metrics ([#6525](https://github.com/open-chat-labs/open-chat/pull/6525))
+
+## [[2.0.1368](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1368-user_index)] - 2024-10-02
+
+### Added
+
+- Expose counts of how many users have each streak badge ([#6492](https://github.com/open-chat-labs/open-chat/pull/6492))
+- Register `Konecta` external achievement ([#6493](https://github.com/open-chat-labs/open-chat/pull/6493))
+
+### Changed
+
+- Add `CanisterWasmBytes` to reduce duplication ([#6480](https://github.com/open-chat-labs/open-chat/pull/6480))
+- Log error if chunked User upgrade fails ([#6483](https://github.com/open-chat-labs/open-chat/pull/6483))
+- Add support for expiring access gates ([#6401](https://github.com/open-chat-labs/open-chat/pull/6401))
+
+## [[2.0.1361](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1361-user_index)] - 2024-09-30
+
+### Added
+
+- Support upgrading to large wasms by uploading in chunks ([#6453](https://github.com/open-chat-labs/open-chat/pull/6453))
+- Reinstate some candid endpoints ([#6468](https://github.com/open-chat-labs/open-chat/pull/6468))
+
+### Changed
+
+- No auth check for `award_external_achievement` in test mode ([#6397](https://github.com/open-chat-labs/open-chat/pull/6397))
+- Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
+- Add serde default attribute in preparation for skipping serialization if default ([#6475](https://github.com/open-chat-labs/open-chat/pull/6475))
 
 ### Removed
 
 - Remove deprecated candid endpoints ([#6396](https://github.com/open-chat-labs/open-chat/pull/6396))
 - Remove `create_challenge` ([#6409](https://github.com/open-chat-labs/open-chat/pull/6409))
+- Remove the unused `use_for_new_canisters` field from upgrade args ([#6452](https://github.com/open-chat-labs/open-chat/pull/6452))
 
 ### Fixed
 
@@ -25,7 +58,7 @@ No auth check for `award_external_achievement` in test mode - ([#6397](https://g
 
 - Extend `chit_leaderboard` to return all_time|this_month|last_month ([#6364](https://github.com/open-chat-labs/open-chat/pull/6364))
 - Add `register_external_achievement` to `inspect_message` ([#6374](https://github.com/open-chat-labs/open-chat/pull/6374))
-  
+
 ## [[2.0.1345](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1345-user_index)] - 2024-09-11
 
 ### Changed

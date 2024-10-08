@@ -2,18 +2,13 @@ use crate::{
     model::{events::CommunityEventInternal, members::CommunityMembers},
     read_state, RuntimeState,
 };
+use canister_api_macros::query;
 use community_canister::selected_updates_v2::{Response::*, *};
-use ic_cdk::query;
 use std::cell::LazyCell;
 use std::collections::HashSet;
 use types::UserId;
 
-#[query]
-fn selected_updates(args: Args) -> community_canister::selected_updates::Response {
-    read_state(|state| selected_updates_impl(args, state)).into()
-}
-
-#[query]
+#[query(candid = true, msgpack = true)]
 fn selected_updates_v2(args: Args) -> Response {
     read_state(|state| selected_updates_impl(args, state))
 }

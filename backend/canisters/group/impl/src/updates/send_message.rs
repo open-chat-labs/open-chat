@@ -179,7 +179,10 @@ fn process_send_message_result(
             if new_achievement {
                 state.data.achievements.notify_user(
                     sender,
-                    Achievement::from_message(false, &result.message_event.event, thread_root_message_index.is_some()),
+                    result
+                        .message_event
+                        .event
+                        .achievements(false, thread_root_message_index.is_some()),
                     &mut state.data.fire_and_forget_handler,
                 );
             }
@@ -206,6 +209,7 @@ fn process_send_message_result(
         SendMessageResult::NotAuthorized => NotAuthorized,
         SendMessageResult::UserNotInGroup => CallerNotInGroup,
         SendMessageResult::UserSuspended => UserSuspended,
+        SendMessageResult::UserLapsed => NotAuthorized,
         SendMessageResult::RulesNotAccepted => RulesNotAccepted,
         SendMessageResult::InvalidRequest(error) => InvalidRequest(error),
     }

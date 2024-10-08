@@ -3,15 +3,15 @@ use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{HashMap, HashSet};
-use std::ops::{Deref, DerefMut};
+use std::ops::DerefMut;
 use types::{
-    is_default, is_empty_slice, AvatarChanged, ChannelId, Chat, ChatId, ChatMetrics, CommunityId, Cryptocurrency, DeletedBy,
-    DirectChatCreated, EventIndex, EventWrapperInternal, EventsTimeToLiveUpdated, ExternalUrlUpdated, GroupCreated,
-    GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext,
-    GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, MemberJoined, MemberLeft, MembersAdded,
-    MembersAddedToDefaultChannel, MembersRemoved, Message, MessageContent, MessageId, MessageIndex, MessagePinned,
-    MessageUnpinned, MultiUserChat, PermissionsChanged, PushIfNotContains, Reaction, ReplyContext, RoleChanged, ThreadSummary,
-    TimestampMillis, Timestamped, Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
+    is_default, AccessGate, AccessGateConfigInternal, AvatarChanged, ChannelId, Chat, ChatId, ChatMetrics, CommunityId,
+    Cryptocurrency, DeletedBy, DirectChatCreated, EventIndex, EventWrapperInternal, EventsTimeToLiveUpdated,
+    ExternalUrlUpdated, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged,
+    GroupNameChanged, GroupReplyContext, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, MemberJoined, MemberLeft,
+    MembersAdded, MembersAddedToDefaultChannel, MembersRemoved, Message, MessageContent, MessageId, MessageIndex,
+    MessagePinned, MessageUnpinned, MultiUserChat, PermissionsChanged, PushIfNotContains, Reaction, ReplyContext, RoleChanged,
+    ThreadSummary, TimestampMillis, Timestamped, Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -61,7 +61,7 @@ pub enum ChatEventInternal {
     #[serde(rename = "ttl")]
     EventsTimeToLiveUpdated(Box<EventsTimeToLiveUpdated>),
     #[serde(rename = "gu")]
-    GroupGateUpdated(Box<GroupGateUpdated>),
+    GroupGateUpdated(Box<GroupGateUpdatedInternal>),
     #[serde(rename = "ui")]
     UsersInvited(Box<UsersInvited>),
     #[serde(rename = "adc")]
@@ -121,14 +121,6 @@ impl ChatEventInternal {
         matches!(self, ChatEventInternal::Message(_))
     }
 
-    pub fn as_message(&self) -> Option<&MessageInternal> {
-        if let ChatEventInternal::Message(m) = self {
-            Some(m.deref())
-        } else {
-            None
-        }
-    }
-
     pub fn as_message_mut(&mut self) -> Option<&mut MessageInternal> {
         if let ChatEventInternal::Message(m) = self {
             Some(m.deref_mut())
@@ -136,15 +128,23 @@ impl ChatEventInternal {
             None
         }
     }
+
+    pub fn into_message(self) -> Option<MessageInternal> {
+        if let ChatEventInternal::Message(m) = self {
+            Some(*m)
+        } else {
+            None
+        }
+    }
 }
 
-pub enum EventOrExpiredRangeInternal<'a> {
-    Event(&'a EventWrapperInternal<ChatEventInternal>),
+pub enum EventOrExpiredRangeInternal {
+    Event(EventWrapperInternal<ChatEventInternal>),
     ExpiredEventRange(EventIndex, EventIndex),
 }
 
-impl<'a> EventOrExpiredRangeInternal<'a> {
-    pub fn as_event(self) -> Option<&'a EventWrapperInternal<ChatEventInternal>> {
+impl EventOrExpiredRangeInternal {
+    pub fn into_event(self) -> Option<EventWrapperInternal<ChatEventInternal>> {
         if let EventOrExpiredRangeInternal::Event(event) = self {
             Some(event)
         } else {
@@ -173,9 +173,9 @@ pub struct MessageInternal {
     pub content: MessageContentInternal,
     #[serde(rename = "p", default, skip_serializing_if = "Option::is_none")]
     pub replies_to: Option<ReplyContextInternal>,
-    #[serde(rename = "r", default, skip_serializing_if = "is_empty_slice")]
+    #[serde(rename = "r", default, skip_serializing_if = "Vec::is_empty")]
     pub reactions: Vec<(Reaction, HashSet<UserId>)>,
-    #[serde(rename = "ti", default, skip_serializing_if = "is_empty_slice")]
+    #[serde(rename = "ti", default, skip_serializing_if = "Vec::is_empty")]
     pub tips: Tips,
     #[serde(rename = "e", default, skip_serializing_if = "Option::is_none")]
     pub last_edited: Option<TimestampMillis>,
@@ -190,12 +190,12 @@ pub struct MessageInternal {
 }
 
 impl MessageInternal {
-    pub fn hydrate(&self, my_user_id: Option<UserId>) -> Message {
+    pub fn hydrate(self, my_user_id: Option<UserId>) -> Message {
         Message {
             message_index: self.message_index,
             message_id: self.message_id,
             sender: self.sender,
-            content: if let Some(deleted_by) = self.deleted_by.clone() {
+            content: if let Some(deleted_by) = self.deleted_by {
                 MessageContent::Deleted(deleted_by.hydrate())
             } else {
                 self.content.hydrate(my_user_id)
@@ -315,6 +315,39 @@ impl From<DeletedBy> for DeletedByInternal {
 pub struct MembersAddedToPublicChannelInternal {
     #[serde(rename = "u")]
     pub user_ids: Vec<UserId>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct GroupGateUpdatedInternalPrevious {
+    pub updated_by: UserId,
+    pub new_gate: Option<AccessGate>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(from = "GroupGateUpdatedInternalPrevious")]
+pub struct GroupGateUpdatedInternal {
+    pub updated_by: UserId,
+    pub new_gate_config: Option<AccessGateConfigInternal>,
+}
+
+// TODO: Delete this after it is released
+impl From<GroupGateUpdatedInternalPrevious> for GroupGateUpdatedInternal {
+    fn from(value: GroupGateUpdatedInternalPrevious) -> Self {
+        GroupGateUpdatedInternal {
+            updated_by: value.updated_by,
+            new_gate_config: value.new_gate.map(|gc| gc.into()),
+        }
+    }
+}
+
+impl From<GroupGateUpdatedInternal> for GroupGateUpdated {
+    fn from(value: GroupGateUpdatedInternal) -> Self {
+        GroupGateUpdated {
+            updated_by: value.updated_by,
+            new_gate: value.new_gate_config.clone().map(|gc| gc.gate),
+            new_gate_config: value.new_gate_config.map(|gc| gc.into()),
+        }
+    }
 }
 
 impl From<&MembersAddedToPublicChannelInternal> for MembersAddedToDefaultChannel {

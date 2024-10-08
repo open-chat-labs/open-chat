@@ -66,6 +66,7 @@ import type {
     ApiReferralStatus,
     ApiReferral,
     ApiWalletConfig,
+    ApiSignedDelegation,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -133,6 +134,7 @@ import type {
     ReferralStatus,
     Referral,
     WalletConfig,
+    Verification,
 } from "openchat-shared";
 import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
@@ -162,6 +164,7 @@ import type {
 } from "./candid/types";
 import type { PinNumberSettings } from "openchat-shared";
 import { pinNumberFailureResponse } from "../common/pinNumberErrorMapper";
+import { signedDelegation } from "../../utils/id";
 
 export function chitEventsResponse(candid: ApiChitEventsResponse): ChitEventsResponse {
     if ("Success" in candid) {
@@ -442,7 +445,7 @@ export function achievementType(candid: ApiAchievement): Achievement {
 }
 
 export function saveCryptoAccountResponse(
-    candid: ApiSaveCryptoAccountResponse
+    candid: ApiSaveCryptoAccountResponse,
 ): SaveCryptoAccountResponse {
     if ("Success" in candid) {
         return CommonResponses.success();
@@ -455,7 +458,7 @@ export function saveCryptoAccountResponse(
 }
 
 export function savedCryptoAccountsResponse(
-    candid: ApiSavedCryptoAccountsResponse
+    candid: ApiSavedCryptoAccountsResponse,
 ): NamedAccount[] {
     if ("Success" in candid) {
         return candid.Success;
@@ -508,7 +511,7 @@ export function setBioResponse(candid: ApiSetBioResponse): SetBioResponse {
 
 export function searchDirectChatResponse(
     candid: ApiSearchDirectChatResponse,
-    chatId: DirectChatIdentifier
+    chatId: DirectChatIdentifier,
 ): SearchDirectChatResponse {
     if ("Success" in candid) {
         return {
@@ -528,7 +531,7 @@ export function searchDirectChatResponse(
     }
     throw new UnsupportedValueError(
         "Unknown UserIndex.ApiSearchMessagesResponse type received",
-        candid
+        candid,
     );
 }
 
@@ -553,7 +556,7 @@ export function deleteMessageResponse(candid: ApiDeleteMessageResponse): DeleteM
 }
 
 export function undeleteMessageResponse(
-    candid: ApiUndeleteMessageResponse
+    candid: ApiUndeleteMessageResponse,
 ): UndeleteMessageResponse {
     if ("Success" in candid) {
         if (candid.Success.messages.length == 0) {
@@ -601,7 +604,7 @@ export function unblockResponse(_candid: ApiUnblockUserResponse): UnblockUserRes
 }
 
 export function pinChatResponse(
-    candid: ApiPinChatResponse | ApiPinChatV2Response
+    candid: ApiPinChatResponse | ApiPinChatV2Response,
 ): PinChatResponse {
     if ("Success" in candid) {
         return "success";
@@ -612,7 +615,7 @@ export function pinChatResponse(
 }
 
 export function unpinChatResponse(
-    candid: ApiUnpinChatResponse | ApiUnpinV2ChatResponse
+    candid: ApiUnpinChatResponse | ApiUnpinV2ChatResponse,
 ): UnpinChatResponse {
     if ("Success" in candid) {
         return "success";
@@ -634,7 +637,7 @@ export function archiveChatResponse(candid: ApiArchiveUnarchiveChatsResponse): A
 export function sendMessageWithTransferToChannelResponse(
     candid: ApiSendMessageWithTransferToChannelResponse,
     sender: string,
-    recipient: string | undefined
+    recipient: string | undefined,
 ): SendMessageResponse {
     if ("Success" in candid) {
         return {
@@ -662,7 +665,7 @@ export function sendMessageWithTransferToChannelResponse(
 export function sendMessageWithTransferToGroupResponse(
     candid: ApiSendMessageWithTransferToGroupResponse,
     sender: string,
-    recipient: string | undefined
+    recipient: string | undefined,
 ): SendMessageResponse {
     if ("Success" in candid) {
         return {
@@ -690,7 +693,7 @@ export function sendMessageWithTransferToGroupResponse(
 export function sendMessageResponse(
     candid: ApiSendMessageResponse,
     sender: string,
-    recipient: string
+    recipient: string,
 ): SendMessageResponse {
     if ("Success" in candid) {
         return {
@@ -771,7 +774,7 @@ export function sendMessageResponse(
 }
 
 export function createCommunityResponse(
-    candid: ApiCreateCommunityResponse
+    candid: ApiCreateCommunityResponse,
 ): CreateCommunityResponse {
     if ("Success" in candid) {
         return { kind: "success", id: candid.Success.community_id.toString() };
@@ -787,7 +790,7 @@ export async function getEventsResponse(
     principal: Principal,
     candid: ApiEventsResponse,
     chatId: DirectChatIdentifier,
-    latestKnownUpdatePreRequest: bigint | undefined
+    latestKnownUpdatePreRequest: bigint | undefined,
 ): Promise<EventsResponse<ChatEvent>> {
     if ("Success" in candid) {
         await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
@@ -801,7 +804,7 @@ export async function getEventsResponse(
         throw ReplicaNotUpToDateError.byTimestamp(
             candid.ReplicaNotUpToDateV2,
             latestKnownUpdatePreRequest ?? BigInt(-1),
-            false
+            false,
         );
     }
 
@@ -824,7 +827,7 @@ function directChatsInitial(candid: ApiDirectChatsInitial): DirectChatsInitial {
 
 function userCanisterChannelSummary(
     candid: ApiUserCanisterChannelSummary,
-    communityId: string
+    communityId: string,
 ): UserCanisterChannelSummary {
     return {
         id: {
@@ -834,16 +837,19 @@ function userCanisterChannelSummary(
         },
         readByMeUpTo: optional(candid.read_by_me_up_to, identity),
         dateReadPinned: optional(candid.date_read_pinned, identity),
-        threadsRead: candid.threads_read.reduce((curr, next) => {
-            curr[next[0]] = next[1];
-            return curr;
-        }, {} as Record<number, number>),
+        threadsRead: candid.threads_read.reduce(
+            (curr, next) => {
+                curr[next[0]] = next[1];
+                return curr;
+            },
+            {} as Record<number, number>,
+        ),
         archived: candid.archived,
     };
 }
 
 function userCanisterCommunitySummary(
-    candid: ApiUserCanisterCommunitySummary
+    candid: ApiUserCanisterCommunitySummary,
 ): UserCanisterCommunitySummary {
     const communityId = candid.community_id.toString();
     return {
@@ -962,22 +968,25 @@ function pinNumberSettings(candid: ApiPinNumberSettings): PinNumberSettings {
 
 export function userCanisterChannelSummaryUpdates(
     candid: ApiUserCanisterChannelSummaryUpdates,
-    communityId: string
+    communityId: string,
 ): UserCanisterChannelSummaryUpdates {
     return {
         id: { kind: "channel", communityId, channelId: candid.channel_id.toString() },
         readByMeUpTo: optional(candid.read_by_me_up_to, identity),
         dateReadPinned: optional(candid.date_read_pinned, identity),
-        threadsRead: candid.threads_read.reduce((curr, next) => {
-            curr[next[0]] = next[1];
-            return curr;
-        }, {} as Record<number, number>),
+        threadsRead: candid.threads_read.reduce(
+            (curr, next) => {
+                curr[next[0]] = next[1];
+                return curr;
+            },
+            {} as Record<number, number>,
+        ),
         archived: optional(candid.archived, identity),
     };
 }
 
 export function userCanisterCommunitySummaryUpdates(
-    candid: ApiUserCanisterCommunitySummaryUpdates
+    candid: ApiUserCanisterCommunitySummaryUpdates,
 ): UserCanisterCommunitySummaryUpdates {
     const communityId = candid.community_id.toString();
     return {
@@ -985,7 +994,7 @@ export function userCanisterCommunitySummaryUpdates(
         index: optional(candid.index, identity),
         channels: candid.channels.map((c) => userCanisterChannelSummaryUpdates(c, communityId)),
         pinned: optional(candid.pinned, (p) =>
-            p.map((p) => ({ kind: "channel", communityId, channelId: p.toString() }))
+            p.map((p) => ({ kind: "channel", communityId, channelId: p.toString() })),
         ),
         archived: optional(candid.archived, identity),
     };
@@ -1010,7 +1019,7 @@ export function groupChatsUpdates(candid: ApiGroupChatsUpdates): GroupChatsUpdat
     return {
         added: candid.added.map(userCanisterGroupSummary),
         pinned: optional(candid.pinned, (p) =>
-            p.map((p) => ({ kind: "group_chat", groupId: p.toString() }))
+            p.map((p) => ({ kind: "group_chat", groupId: p.toString() })),
         ),
         updated: candid.updated.map(userCanisterGroupSummaryUpdates),
         removed: candid.removed.map((c) => c.toString()),
@@ -1021,14 +1030,14 @@ export function directChatsUpdates(candid: ApiDirectChatsUpdates): DirectChatsUp
     return {
         added: candid.added.map(directChatSummary),
         pinned: optional(candid.pinned, (p) =>
-            p.map((p) => ({ kind: "direct_chat", userId: p.toString() }))
+            p.map((p) => ({ kind: "direct_chat", userId: p.toString() })),
         ),
         updated: candid.updated.map(directChatSummaryUpdates),
     };
 }
 
 export function manageFavouritesResponse(
-    candid: ApiManageFavouriteChatsResponse
+    candid: ApiManageFavouriteChatsResponse,
 ): ManageFavouritesResponse {
     if ("Success" in candid) {
         return "success";
@@ -1074,15 +1083,18 @@ export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse 
 }
 
 function userCanisterGroupSummary(
-    summary: ApiUserCanisterGroupChatSummary
+    summary: ApiUserCanisterGroupChatSummary,
 ): UserCanisterGroupChatSummary {
     return {
         id: { kind: "group_chat", groupId: summary.chat_id.toString() },
         readByMeUpTo: optional(summary.read_by_me_up_to, identity),
-        threadsRead: summary.threads_read.reduce((curr, next) => {
-            curr[next[0]] = next[1];
-            return curr;
-        }, {} as Record<number, number>),
+        threadsRead: summary.threads_read.reduce(
+            (curr, next) => {
+                curr[next[0]] = next[1];
+                return curr;
+            },
+            {} as Record<number, number>,
+        ),
         archived: summary.archived,
         dateReadPinned: optional(summary.date_read_pinned, identity),
         localUserIndex: summary.local_user_index_canister_id.toString(),
@@ -1090,15 +1102,18 @@ function userCanisterGroupSummary(
 }
 
 function userCanisterGroupSummaryUpdates(
-    summary: ApiUserCanisterGroupChatSummaryUpdates
+    summary: ApiUserCanisterGroupChatSummaryUpdates,
 ): UserCanisterGroupChatSummaryUpdates {
     return {
         id: { kind: "group_chat", groupId: summary.chat_id.toString() },
         readByMeUpTo: optional(summary.read_by_me_up_to, identity),
-        threadsRead: summary.threads_read.reduce((curr, next) => {
-            curr[next[0]] = next[1];
-            return curr;
-        }, {} as Record<number, number>),
+        threadsRead: summary.threads_read.reduce(
+            (curr, next) => {
+                curr[next[0]] = next[1];
+                return curr;
+            },
+            {} as Record<number, number>,
+        ),
         archived: optional(summary.archived, identity),
         dateReadPinned: optional(summary.date_read_pinned, identity),
     };
@@ -1160,7 +1175,7 @@ function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
 }
 
 function failedNnsCryptoWithdrawal(
-    candid: ApiNnsFailedCryptoTransaction
+    candid: ApiNnsFailedCryptoTransaction,
 ): FailedCryptocurrencyWithdrawal {
     return {
         kind: "failed",
@@ -1174,7 +1189,7 @@ function failedNnsCryptoWithdrawal(
 }
 
 function failedIcrc1CryptoWithdrawal(
-    candid: ApiIcrc1FailedCryptoTransaction
+    candid: ApiIcrc1FailedCryptoTransaction,
 ): FailedCryptocurrencyWithdrawal {
     return {
         kind: "failed",
@@ -1188,7 +1203,7 @@ function failedIcrc1CryptoWithdrawal(
 }
 
 function completedNnsCryptoWithdrawal(
-    candid: ApiNnsCompletedCryptoTransaction
+    candid: ApiNnsCompletedCryptoTransaction,
 ): CompletedCryptocurrencyWithdrawal {
     return {
         kind: "completed",
@@ -1202,7 +1217,7 @@ function completedNnsCryptoWithdrawal(
 }
 
 function completedIcrc1CryptoWithdrawal(
-    candid: ApiIcrc1CompletedCryptoTransaction
+    candid: ApiIcrc1CompletedCryptoTransaction,
 ): CompletedCryptocurrencyWithdrawal {
     return {
         kind: "completed",
@@ -1216,7 +1231,7 @@ function completedIcrc1CryptoWithdrawal(
 }
 
 export function withdrawCryptoResponse(
-    candid: ApiWithdrawCryptoResponse
+    candid: ApiWithdrawCryptoResponse,
 ): WithdrawCryptocurrencyResponse {
     if (
         "PinRequired" in candid ||
@@ -1254,7 +1269,7 @@ function formatIcrc1Account(candid: ApiIcrc1Account): string {
 }
 
 export function deletedMessageResponse(
-    candid: ApiDeletedDirectMessageResponse
+    candid: ApiDeletedDirectMessageResponse,
 ): DeletedDirectMessageResponse {
     if ("Success" in candid) {
         return {
@@ -1279,12 +1294,12 @@ export function deletedMessageResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiDeletedDirectMessageResponse type received",
-        candid
+        candid,
     );
 }
 
 export function setMessageReminderResponse(
-    candid: ApiSetMessageReminderResponse
+    candid: ApiSetMessageReminderResponse,
 ): SetMessageReminderResponse {
     if ("Success" in candid) {
         return "success";
@@ -1304,7 +1319,7 @@ export function leaveCommunityResponse(candid: ApiLeaveCommunityResponse): Leave
 }
 
 export function deleteCommunityResponse(
-    candid: ApiDeleteCommunityResponse
+    candid: ApiDeleteCommunityResponse,
 ): DeleteCommunityResponse {
     if ("Success" in candid) {
         return "success";
@@ -1410,7 +1425,7 @@ export function swapTokensResponse(candid: ApiSwapTokensResponse): SwapTokensRes
 }
 
 export function tokenSwapStatusResponse(
-    candid: ApiTokenSwapStatusResponse
+    candid: ApiTokenSwapStatusResponse,
 ): TokenSwapStatusResponse {
     if ("Success" in candid) {
         return {
@@ -1445,7 +1460,7 @@ function result<T>(candid: { Ok: T } | { Err: string }): Result<T> {
 }
 
 function resultOfResult<T>(
-    candid: { Ok: { Ok: T } | { Err: string } } | { Err: string }
+    candid: { Ok: { Ok: T } | { Err: string } } | { Err: string },
 ): Result<Result<T>> {
     if ("Ok" in candid) {
         return {
@@ -1460,7 +1475,7 @@ function resultOfResult<T>(
 }
 
 export function approveTransferResponse(
-    candid: ApiApproveTransferResponse
+    candid: ApiApproveTransferResponse,
 ): ApproveTransferResponse {
     if ("Success" in candid) {
         return { kind: "success" };
@@ -1483,8 +1498,8 @@ export function approveTransferResponse(
 }
 
 export function apiExchangeArgs(
-    args: ExchangeTokenSwapArgs
-): { Sonic: ApiExchangeArgs } | { ICPSwap: ApiExchangeArgs } {
+    args: ExchangeTokenSwapArgs,
+): { Sonic: ApiExchangeArgs } | { ICPSwap: ApiExchangeArgs } | { KongSwap: ApiExchangeArgs } {
     const value = {
         swap_canister_id: Principal.fromText(args.swapCanisterId),
         zero_for_one: args.zeroForOne,
@@ -1496,6 +1511,10 @@ export function apiExchangeArgs(
     } else if (args.dex === "sonic") {
         return {
             Sonic: value,
+        };
+    } else if (args.dex === "kongswap") {
+        return {
+            KongSwap: value,
         };
     }
     throw new UnsupportedValueError("Unexpected dex", args.dex);
@@ -1518,4 +1537,17 @@ export function claimDailyChitResponse(candid: ApiClaimDailyChitResponse): Claim
         };
     }
     throw new UnsupportedValueError("Unexpected ApiClaimDailyChitResponse type received", candid);
+}
+
+export function apiVerification(
+    domain: Verification,
+): { PIN: string } | { Delegation: ApiSignedDelegation } | { None: null } {
+    switch (domain.kind) {
+        case "delegation_verification":
+            return { Delegation: signedDelegation(domain.delegation) };
+        case "no_verification":
+            return { None: null };
+        case "pin_verification":
+            return { PIN: domain.pin };
+    }
 }

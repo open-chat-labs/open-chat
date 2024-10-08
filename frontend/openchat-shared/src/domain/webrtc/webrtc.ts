@@ -9,7 +9,8 @@ export type WebRtcMessage =
     | RemoteUserReadMessage
     | RemoteUserRemovedMessage
     | RemoteUserUndeletedMessage
-    | RemoteVideoCallStarted;
+    | RemoteVideoCallStarted
+    | RemoteVideoCallEnded;
 
 type WebRtcMessageCommon = {
     id: ChatIdentifier;
@@ -19,6 +20,11 @@ type WebRtcMessageCommon = {
 
 export type RemoteVideoCallStarted = WebRtcMessageCommon & {
     kind: "remote_video_call_started";
+    messageId: bigint;
+};
+
+export type RemoteVideoCallEnded = WebRtcMessageCommon & {
+    kind: "remote_video_call_ended";
     messageId: bigint;
 };
 

@@ -12,6 +12,7 @@ export type AcceptP2PSwapResponse = {
     'TooManyFailedPinAttempts' : Milliseconds
   } |
   { 'PinIncorrect' : Milliseconds } |
+  { 'UserLapsed' : null } |
   { 'UserNotInGroup' : null } |
   { 'PinRequired' : null } |
   { 'ChatFrozen' : null } |
@@ -143,7 +144,8 @@ export interface AddReactionArgs {
   'thread_root_message_index' : [] | [MessageIndex],
   'reaction' : string,
 }
-export type AddReactionResponse = { 'MessageNotFound' : null } |
+export type AddReactionResponse = { 'UserLapsed' : null } |
+  { 'MessageNotFound' : null } |
   { 'NoChange' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
@@ -184,6 +186,7 @@ export interface BlobReference {
 export type BlockIndex = bigint;
 export interface BlockUserArgs { 'user_id' : UserId, 'correlation_id' : bigint }
 export type BlockUserResponse = { 'GroupNotPublic' : null } |
+  { 'UserLapsed' : null } |
   { 'UserNotInGroup' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
@@ -208,8 +211,10 @@ export interface CallParticipant {
   'joined' : TimestampMillis,
 }
 export interface CancelInvitesArgs { 'user_ids' : Array<UserId> }
-export type CancelInvitesResponse = { 'NotAuthorized' : null } |
-  { 'Success' : null };
+export type CancelInvitesResponse = { 'UserLapsed' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'UserSuspended' : null };
 export interface CancelP2PSwapArgs {
   'message_id' : MessageId,
   'thread_root_message_index' : [] | [MessageIndex],
@@ -233,6 +238,7 @@ export interface ChangeRoleArgs {
   'correlation_id' : bigint,
 }
 export type ChangeRoleResponse = { 'Invalid' : null } |
+  { 'UserLapsed' : null } |
   { 'UserNotInGroup' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
@@ -378,16 +384,19 @@ export interface ClaimPrizeArgs {
   'correlation_id' : bigint,
   'message_id' : MessageId,
 }
-export type ClaimPrizeResponse = { 'PrizeFullyClaimed' : null } |
+export type ClaimPrizeResponse = { 'UserLapsed' : null } |
+  { 'PrizeFullyClaimed' : null } |
   { 'MessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'AlreadyClaimed' : null } |
   { 'Success' : null } |
+  { 'LedgerError' : null } |
   { 'UserSuspended' : null } |
   { 'PrizeEnded' : null } |
   { 'FailedAfterTransfer' : [string, CompletedCryptoTransaction] } |
-  { 'TransferFailed' : [string, FailedCryptoTransaction] };
+  { 'TransferFailed' : [string, FailedCryptoTransaction] } |
+  { 'InternalError' : string };
 export interface CommunityCanisterChannelSummary {
   'latest_message_sender_display_name' : [] | [string],
   'channel_id' : ChannelId,
@@ -513,12 +522,14 @@ export interface CommunityMember {
 }
 export interface CommunityMembership {
   'role' : CommunityRole,
+  'lapsed' : boolean,
   'display_name' : [] | [string],
   'joined' : TimestampMillis,
   'rules_accepted' : boolean,
 }
 export interface CommunityMembershipUpdates {
   'role' : [] | [CommunityRole],
+  'lapsed' : [] | [boolean],
   'display_name' : TextUpdate,
   'rules_accepted' : [] | [boolean],
 }
@@ -548,9 +559,8 @@ export interface ConvertIntoCommunityArgs {
   'rules' : Rules,
   'primary_language' : [] | [string],
 }
-export type ConvertIntoCommunityResponse = {
-    'AlreadyImportingToAnotherCommunity' : null
-  } |
+export type ConvertIntoCommunityResponse = { 'UserLapsed' : null } |
+  { 'AlreadyImportingToAnotherCommunity' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
@@ -609,7 +619,8 @@ export interface DeleteMessagesArgs {
   'correlation_id' : bigint,
   'thread_root_message_index' : [] | [MessageIndex],
 }
-export type DeleteMessagesResponse = { 'MessageNotFound' : null } |
+export type DeleteMessagesResponse = { 'UserLapsed' : null } |
+  { 'MessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'Success' : null } |
@@ -717,7 +728,8 @@ export interface DirectReactionAddedNotification {
   'message_index' : MessageIndex,
 }
 export interface DisableInviteCodeArgs { 'correlation_id' : bigint }
-export type DisableInviteCodeResponse = { 'ChatFrozen' : null } |
+export type DisableInviteCodeResponse = { 'UserLapsed' : null } |
+  { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'UserSuspended' : null };
@@ -733,7 +745,8 @@ export type DocumentUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : Document };
 export type Duration = bigint;
-export type EditMessageResponse = { 'MessageNotFound' : null } |
+export type EditMessageResponse = { 'UserLapsed' : null } |
+  { 'MessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'Success' : null } |
@@ -748,7 +761,8 @@ export interface EditMessageV2Args {
 }
 export type EmptyArgs = {};
 export interface EnableInviteCodeArgs { 'correlation_id' : bigint }
-export type EnableInviteCodeResponse = { 'ChatFrozen' : null } |
+export type EnableInviteCodeResponse = { 'UserLapsed' : null } |
+  { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : { 'code' : bigint } } |
   { 'UserSuspended' : null };
@@ -771,9 +785,11 @@ export interface EventsByIndexArgs {
   'latest_known_update' : [] | [TimestampMillis],
 }
 export type EventsResponse = { 'ThreadMessageNotFound' : null } |
+  { 'UserLapsed' : null } |
   { 'CallerNotInGroup' : null } |
   { 'Success' : EventsSuccessResult } |
-  { 'ReplicaNotUpToDateV2' : TimestampMillis };
+  { 'ReplicaNotUpToDateV2' : TimestampMillis } |
+  { 'UserSuspended' : null };
 export interface EventsSuccessResult {
   'expired_message_ranges' : Array<[MessageIndex, MessageIndex]>,
   'chat_last_updated' : TimestampMillis,
@@ -795,6 +811,9 @@ export interface EventsWindowArgs {
   'thread_root_message_index' : [] | [MessageIndex],
   'latest_known_update' : [] | [TimestampMillis],
 }
+export type ExchangeId = { 'Sonic' : null } |
+  { 'KongSwap' : null } |
+  { 'ICPSwap' : null };
 export interface ExternalUrlUpdated {
   'new_url' : [] | [string],
   'updated_by' : UserId,
@@ -822,6 +841,7 @@ export interface FollowThreadArgs { 'thread_root_message_index' : MessageIndex }
 export type FollowThreadResponse = { 'ThreadNotFound' : null } |
   { 'GroupFrozen' : null } |
   { 'AlreadyFollowing' : null } |
+  { 'UserLapsed' : null } |
   { 'UserNotInGroup' : null } |
   { 'Success' : null } |
   { 'UserSuspended' : null };
@@ -1009,6 +1029,7 @@ export interface GroupMatch {
 export interface GroupMembership {
   'role' : GroupRole,
   'notifications_muted' : boolean,
+  'lapsed' : boolean,
   'joined' : TimestampMillis,
   'rules_accepted' : boolean,
   'latest_threads' : Array<GroupCanisterThreadDetails>,
@@ -1018,6 +1039,7 @@ export interface GroupMembership {
 export interface GroupMembershipUpdates {
   'role' : [] | [GroupRole],
   'notifications_muted' : [] | [boolean],
+  'lapsed' : [] | [boolean],
   'unfollowed_threads' : Uint32Array | number[],
   'rules_accepted' : [] | [boolean],
   'latest_threads' : Array<GroupCanisterThreadDetails>,
@@ -1267,6 +1289,7 @@ export interface JoinVideoCallArgs {
   'message_id' : MessageId,
 }
 export type JoinVideoCallResponse = { 'GroupFrozen' : null } |
+  { 'UserLapsed' : null } |
   { 'AlreadyEnded' : null } |
   { 'UserNotInGroup' : null } |
   { 'MessageNotFound' : null } |
@@ -1396,9 +1419,11 @@ export interface MessagesByMessageIndexArgs {
 export type MessagesByMessageIndexResponse = {
     'ThreadMessageNotFound' : null
   } |
+  { 'UserLapsed' : null } |
   { 'CallerNotInGroup' : null } |
   { 'Success' : MessagesSuccessResult } |
-  { 'ReplicaNotUpToDateV2' : TimestampMillis };
+  { 'ReplicaNotUpToDateV2' : TimestampMillis } |
+  { 'UserSuspended' : null };
 export interface MessagesSuccessResult {
   'messages' : Array<MessageEventWrapper>,
   'chat_last_updated' : TimestampMillis,
@@ -1610,6 +1635,7 @@ export interface PinMessageArgs {
   'message_index' : MessageIndex,
 }
 export type PinMessageV2Response = { 'MessageIndexOutOfRange' : null } |
+  { 'UserLapsed' : null } |
   { 'MessageNotFound' : null } |
   { 'NoChange' : null } |
   { 'CallerNotInGroup' : null } |
@@ -1727,6 +1753,7 @@ export interface RegisterPollVoteArgs {
   'message_index' : MessageIndex,
 }
 export type RegisterPollVoteResponse = { 'UserCannotChangeVote' : null } |
+  { 'UserLapsed' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'PollEnded' : null } |
@@ -1740,6 +1767,7 @@ export interface RegisterProposalVoteArgs {
 }
 export type RegisterProposalVoteResponse = { 'AlreadyVoted' : boolean } |
   { 'ProposalNotFound' : null } |
+  { 'UserLapsed' : null } |
   { 'ProposalMessageNotFound' : null } |
   { 'NoEligibleNeurons' : null } |
   { 'CallerNotInGroup' : null } |
@@ -1748,9 +1776,8 @@ export type RegisterProposalVoteResponse = { 'AlreadyVoted' : boolean } |
   { 'UserSuspended' : null } |
   { 'ProposalNotAcceptingVotes' : null } |
   { 'InternalError' : string };
-export type RegisterProposalVoteV2Response = {
-    'ProposalMessageNotFound' : null
-  } |
+export type RegisterProposalVoteV2Response = { 'UserLapsed' : null } |
+  { 'ProposalMessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'Success' : null } |
@@ -1761,7 +1788,8 @@ export interface RemoveParticipantArgs {
   'user_id' : UserId,
   'correlation_id' : bigint,
 }
-export type RemoveParticipantResponse = { 'UserNotInGroup' : null } |
+export type RemoveParticipantResponse = { 'UserLapsed' : null } |
+  { 'UserNotInGroup' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
@@ -1776,7 +1804,8 @@ export interface RemoveReactionArgs {
   'thread_root_message_index' : [] | [MessageIndex],
   'reaction' : string,
 }
-export type RemoveReactionResponse = { 'MessageNotFound' : null } |
+export type RemoveReactionResponse = { 'UserLapsed' : null } |
+  { 'MessageNotFound' : null } |
   { 'NoChange' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
@@ -1792,7 +1821,8 @@ export interface ReportMessageArgs {
   'message_id' : MessageId,
   'thread_root_message_index' : [] | [MessageIndex],
 }
-export type ReportMessageResponse = { 'AlreadyReported' : null } |
+export type ReportMessageResponse = { 'UserLapsed' : null } |
+  { 'AlreadyReported' : null } |
   { 'MessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
@@ -1813,7 +1843,8 @@ export interface ReserveP2PSwapSuccess {
   'created_by' : UserId,
 }
 export interface ResetInviteCodeArgs { 'correlation_id' : bigint }
-export type ResetInviteCodeResponse = { 'ChatFrozen' : null } |
+export type ResetInviteCodeResponse = { 'UserLapsed' : null } |
+  { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : { 'code' : bigint } } |
   { 'UserSuspended' : null };
@@ -1872,6 +1903,7 @@ export type SelectedUpdatesV2Response = { 'CallerNotInGroup' : null } |
   { 'SuccessNoUpdates' : TimestampMillis };
 export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'ThreadMessageNotFound' : null } |
+  { 'UserLapsed' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
@@ -1908,6 +1940,7 @@ export interface SetVideoCallPresenceArgs {
   'message_id' : MessageId,
 }
 export type SetVideoCallPresenceResponse = { 'GroupFrozen' : null } |
+  { 'UserLapsed' : null } |
   { 'AlreadyEnded' : null } |
   { 'UserNotInGroup' : null } |
   { 'MessageNotFound' : null } |
@@ -2061,6 +2094,7 @@ export interface UnblockUserArgs {
 }
 export type UnblockUserResponse = { 'GroupNotPublic' : null } |
   { 'CannotUnblockSelf' : null } |
+  { 'UserLapsed' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
@@ -2071,7 +2105,8 @@ export interface UndeleteMessagesArgs {
   'correlation_id' : bigint,
   'thread_root_message_index' : [] | [MessageIndex],
 }
-export type UndeleteMessagesResponse = { 'MessageNotFound' : null } |
+export type UndeleteMessagesResponse = { 'UserLapsed' : null } |
+  { 'MessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'Success' : { 'messages' : Array<Message> } } |
@@ -2081,6 +2116,7 @@ export interface UnfollowThreadArgs {
 }
 export type UnfollowThreadResponse = { 'ThreadNotFound' : null } |
   { 'GroupFrozen' : null } |
+  { 'UserLapsed' : null } |
   { 'UserNotInGroup' : null } |
   { 'NotFollowing' : null } |
   { 'Success' : null } |
@@ -2089,7 +2125,8 @@ export interface UnpinMessageArgs {
   'correlation_id' : bigint,
   'message_index' : MessageIndex,
 }
-export type UnpinMessageResponse = { 'MessageNotFound' : null } |
+export type UnpinMessageResponse = { 'UserLapsed' : null } |
+  { 'MessageNotFound' : null } |
   { 'NoChange' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
@@ -2113,6 +2150,7 @@ export type UpdateGroupV2Response = { 'NameReserved' : null } |
   { 'RulesTooLong' : FieldTooLongResult } |
   { 'DescriptionTooLong' : FieldTooLongResult } |
   { 'NameTooShort' : FieldTooShortResult } |
+  { 'UserLapsed' : null } |
   { 'AccessGateInvalid' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |

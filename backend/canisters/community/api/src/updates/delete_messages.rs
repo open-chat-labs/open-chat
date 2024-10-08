@@ -1,7 +1,9 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{ChannelId, MessageId, MessageIndex};
 
+#[ts_export(community, delete_messages)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub channel_id: ChannelId,
@@ -11,6 +13,7 @@ pub struct Args {
     pub new_achievement: bool,
 }
 
+#[ts_export(community, delete_messages)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
@@ -22,4 +25,5 @@ pub enum Response {
     CommunityFrozen,
     NotPlatformModerator,
     InternalError(String),
+    UserLapsed,
 }

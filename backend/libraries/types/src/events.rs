@@ -1,11 +1,10 @@
-use std::collections::HashMap;
-
 use crate::{
-    is_empty_hashmap, AccessGate, ChannelId, CommunityPermissions, CommunityRole, EventIndex, EventWrapper, GroupPermissions,
+    AccessGate, AccessGateConfig, ChannelId, CommunityPermissions, CommunityRole, EventIndex, EventWrapper, GroupPermissions,
     GroupRole, Message, MessageIndex, Milliseconds, TimestampMillis, UserId,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use ts_export::ts_export;
 
 #[ts_export]
@@ -162,7 +161,6 @@ pub struct MembersRemoved {
 pub struct CommunityMembersRemoved {
     pub user_ids: Vec<UserId>,
     pub removed_by: UserId,
-    #[serde(default, skip_serializing_if = "is_empty_hashmap")]
     pub referred_by: HashMap<UserId, UserId>,
 }
 
@@ -178,7 +176,6 @@ pub struct UsersBlocked {
 pub struct CommunityUsersBlocked {
     pub user_ids: Vec<UserId>,
     pub blocked_by: UserId,
-    #[serde(default, skip_serializing_if = "is_empty_hashmap")]
     pub referred_by: HashMap<UserId, UserId>,
 }
 
@@ -206,7 +203,6 @@ pub struct MemberLeft {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CommunityMemberLeft {
     pub user_id: UserId,
-    #[serde(default)]
     pub referred_by: Option<UserId>,
 }
 
@@ -314,6 +310,7 @@ pub struct EventsTimeToLiveUpdated {
 pub struct GroupGateUpdated {
     pub updated_by: UserId,
     pub new_gate: Option<AccessGate>,
+    pub new_gate_config: Option<AccessGateConfig>,
 }
 
 #[ts_export]

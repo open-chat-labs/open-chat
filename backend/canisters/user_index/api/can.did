@@ -1,0 +1,254 @@
+import "../../../libraries/types/can.did";
+
+type UserRegistrationCanisterResponse = variant {
+    Success : CanisterId;
+    NewRegistrationsClosed;
+};
+
+type PublicKeyResponse = variant {
+    Success : text;
+    NotInitialised;
+};
+
+type CheckUsernameArgs = record {
+    username : text;
+};
+
+type CheckUsernameResponse = variant {
+    Success;
+    UsernameTaken;
+    UsernameInvalid;
+    UsernameTooShort : nat16;
+    UsernameTooLong : nat16;
+};
+
+type CurrentUserResponse = variant {
+    Success : record {
+        user_id : UserId;
+        username : text;
+        date_created : TimestampMillis;
+        display_name : opt text;
+        canister_upgrade_status : CanisterUpgradeStatus;
+        avatar_id : opt nat;
+        wasm_version : BuildVersion;
+        icp_account : AccountIdentifier;
+        referrals : vec UserId;
+        is_platform_moderator : bool;
+        is_platform_operator : bool;
+        suspension_details : opt SuspensionDetails;
+        is_suspected_bot : bool;
+        diamond_membership_details : opt DiamondMembershipDetails;
+        diamond_membership_status : DiamondMembershipStatusFull;
+        moderation_flags_enabled : nat32;
+        is_unique_person : bool;
+    };
+    UserNotFound;
+};
+
+type UserArgs = record {
+    user_id : opt UserId;
+    username : opt text;
+};
+
+type UserResponse = variant {
+    Success : UserSummary;
+    UserNotFound;
+};
+
+type UsersArgs = record {
+    user_groups : vec record {
+        users : vec UserId;
+        updated_since : TimestampMillis;
+    };
+    users_suspended_since : opt TimestampMillis;
+};
+
+type UsersResponse = variant {
+    Success : record {
+        users : vec UserSummaryV2;
+        current_user : opt CurrentUserSummary;
+        deleted : vec UserId;
+        timestamp : TimestampMillis;
+    };
+};
+
+type SearchArgs = record {
+    search_term : text;
+    max_results : nat8;
+};
+
+type SearchResponse = variant {
+    Success : record {
+        users : vec UserSummary;
+        timestamp : TimestampMillis;
+    };
+};
+
+type UsersChitArgs = record {
+    users : vec UserId;
+    year : nat16;
+    month : nat8;
+};
+
+type UsersChitResponse = variant {
+    Success : record {
+        chit : vec Chit;
+    };
+};
+
+type DiamondMembershipFeesResponse = variant {
+    Success : vec record {
+        token : Cryptocurrency;
+        one_month : nat64;
+        three_months : nat64;
+        one_year : nat64;
+        lifetime : nat64;
+    };
+};
+
+type RegisterExternalAchievementArgs = record {
+    id : nat32;
+    name : text;
+    logo : text;
+    url : text;
+    canister_id : CanisterId;
+    chit_reward : nat32;
+    expires : TimestampMillis;
+    chit_budget : nat32;
+};
+
+type RegisterExternalAchievementResponse = variant {
+    Success;
+};
+
+type PlatformModeratorsResponse = variant {
+    Success : record {
+        users : vec UserId;
+    };
+};
+
+type PlatformModeratorsGroupResponse = variant {
+    Success : ChatId;
+};
+
+type PlatformOperatorsArgs = record {};
+
+type PlatformOperatorsResponse = variant {
+    Success : record {
+        users : vec UserId;
+    };
+};
+
+type ExternalAchievementsArgs = record {
+    updates_since : TimestampMillis;
+};
+
+type ExternalAchievementsResponse = variant {
+    Success : record {
+        last_updated: TimestampMillis;
+        achievements_added : vec ExternalAchievement;
+        achievements_removed : vec ExternalAchievement;
+    };
+    SuccessNoUpdates;
+};
+
+type ExternalAchievement = record {
+    id : nat32;
+    name : text;
+    url : text;
+    chit_reward : nat32;
+};
+
+type ReferralMetricsResponse = variant {
+    Success : record {
+        users_who_referred : nat32;
+        users_who_referred_paid_diamond : nat32;
+        users_who_referred_unpaid_diamond : nat32;
+        users_who_referred_90_percent_unpaid_diamond : nat32;
+        referrals_of_paid_diamond : nat32;
+        referrals_of_unpaid_diamond : nat32;
+        referrals_other : nat32;
+        icp_raised_by_referrals_to_paid_diamond : nat32;
+    };
+};
+
+type ReferralStats = record {
+    user_id : UserId;
+    username : text;
+    total_rewards_e8s : nat64;
+    diamond_members : nat32;
+    total_users : nat32;
+};
+
+type ChitLeaderboardResponse = variant {
+    SuccessV2 : record {
+        all_time : vec ChitUserBalance;
+        this_month : vec ChitUserBalance;
+        last_month : vec ChitUserBalance;
+    };
+};
+
+type ChitUserBalance = record {
+    user_id : UserId;
+    username : text;
+    balance : nat32;
+};
+
+type AddReferralCodesArgs = record {
+    referral_type : ReferralType;
+    codes : vec text;
+    expiry : opt TimestampMillis;
+};
+
+type ReferralType = variant {
+    BtcMiami;
+    User;
+};
+
+type AddReferralCodesResponse = variant {
+    Success;
+};
+
+type AwardExternalAchievementArgs = record {
+    achievement_id : nat32;
+    user_id : UserId;
+};
+
+type AwardExternalAchievementResponse = variant {
+    Success : record {
+        remaining_chit_budget : nat32;
+    };
+    InvalidCaller;
+    NotFound;
+    AlreadyAwarded;
+    InsufficientBudget;
+    Expired;
+};
+
+service : {
+    // Queries
+    check_username : (CheckUsernameArgs) -> (CheckUsernameResponse) query;
+    chit_leaderboard : (EmptyArgs) -> (ChitLeaderboardResponse) query;
+    current_user : (EmptyArgs) -> (CurrentUserResponse) query;
+    diamond_membership_fees : (EmptyArgs) -> (DiamondMembershipFeesResponse) query;
+    external_achievements : (ExternalAchievementsArgs) -> (ExternalAchievementsResponse) query;
+    platform_moderators : (EmptyArgs) -> (PlatformModeratorsResponse) query;
+    platform_moderators_group : (EmptyArgs) -> (PlatformModeratorsGroupResponse) query;
+    platform_operators : (PlatformOperatorsArgs) -> (PlatformOperatorsResponse) query;
+    public_key : (EmptyArgs) -> (PublicKeyResponse) query;
+    referral_metrics : (EmptyArgs) -> (ReferralMetricsResponse) query;
+    search : (SearchArgs) -> (SearchResponse) query;
+    user_registration_canister : (EmptyArgs) -> (UserRegistrationCanisterResponse) query;
+    user : (UserArgs) -> (UserResponse) query;
+    users_chit : (UsersChitArgs) -> (UsersChitResponse) query;
+    users : (UsersArgs) -> (UsersResponse) query;
+
+    // Only callable by SNS governance canister
+    register_external_achievement : (RegisterExternalAchievementArgs) -> (RegisterExternalAchievementResponse);
+
+    // Only callable by OC dev team dfx identity
+    add_referral_codes : (AddReferralCodesArgs) -> (AddReferralCodesResponse);
+
+    // Only callable by whitelisted canisters
+    award_external_achievement : (AwardExternalAchievementArgs) -> (AwardExternalAchievementResponse);
+};

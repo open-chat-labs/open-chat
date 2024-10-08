@@ -1,17 +1,17 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use candid::Principal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::enable_invite_code::{Response::*, *};
 use group_canister::reset_invite_code;
-use ic_cdk::update;
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
 use types::{GroupInviteCodeChange, GroupInviteCodeChanged};
 use utils::canister;
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn reset_invite_code(args: reset_invite_code::Args) -> reset_invite_code::Response {
     run_regular_jobs();
@@ -32,7 +32,7 @@ async fn reset_invite_code(args: reset_invite_code::Args) -> reset_invite_code::
     Success(SuccessResult { code })
 }
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn enable_invite_code(args: Args) -> Response {
     run_regular_jobs();

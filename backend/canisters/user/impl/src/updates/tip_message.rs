@@ -15,7 +15,7 @@ use user_canister::UserCanisterEvent;
 use utils::consts::MEMO_TIP;
 use utils::time::NANOS_PER_MILLISECOND;
 
-#[update(guard = "caller_is_owner", candid = true)]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 async fn tip_message(args: Args) -> Response {
     run_regular_jobs();
@@ -35,8 +35,10 @@ async fn tip_message(args: Args) -> Response {
         created: now_nanos,
     });
     // Make the crypto transfer
-    if let Err(failed) = process_transaction(pending_transfer).await {
-        return TransferFailed(failed.error_message().to_string());
+    match process_transaction(pending_transfer).await {
+        Ok(Ok(_)) => {}
+        Ok(Err(failed)) => return TransferFailed(failed.error_message().to_string()),
+        Err(error) => return InternalError(format!("{error:?}")),
     }
 
     mutate_state(|state| {
@@ -60,6 +62,7 @@ async fn tip_message(args: Args) -> Response {
                 Ok(Response::GroupFrozen) => ChatFrozen,
                 Ok(Response::UserNotInGroup) => ChatNotFound,
                 Ok(Response::UserSuspended) => UserSuspended,
+                Ok(Response::UserLapsed) => UserLapsed,
                 Err(error) => {
                     mutate_state(|state| fire_and_forget_c2c_tip_message(group_id.into(), &c2c_args, state));
                     Retrying(format!("{error:?}"))
@@ -76,6 +79,7 @@ async fn tip_message(args: Args) -> Response {
                 Ok(Response::NotAuthorized) => NotAuthorized,
                 Ok(Response::CommunityFrozen) => ChatFrozen,
                 Ok(Response::UserSuspended) => UserSuspended,
+                Ok(Response::UserLapsed) => UserLapsed,
                 Ok(Response::UserNotInCommunity | Response::ChannelNotFound) => ChatNotFound,
                 Err(error) => {
                     mutate_state(|state| fire_and_forget_c2c_tip_message(community_id.into(), &c2c_args, state));

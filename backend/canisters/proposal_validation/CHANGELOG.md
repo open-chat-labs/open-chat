@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1375](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1375-proposal_validation)] - 2024-10-07
+
 ## [[2.0.1123](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1123-proposal_validation)] - 2024-03-27
 
 ### Added

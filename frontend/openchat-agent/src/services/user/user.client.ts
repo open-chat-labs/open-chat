@@ -77,6 +77,7 @@ import type {
     ChitEventsResponse,
     ClaimDailyChitResponse,
     WalletConfig,
+    Verification,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -88,7 +89,6 @@ import {
     initialStateResponse,
     markReadResponse,
     searchDirectChatResponse,
-    sendMessageResponse,
     setAvatarResponse,
     setBioResponse,
     unblockResponse,
@@ -118,7 +118,9 @@ import {
     chitEventsResponse,
     claimDailyChitResponse,
     apiWalletConfig,
+    apiVerification,
 } from "./mappers";
+import { sendMessageResponse } from "./mappersV2";
 import {
     type Database,
     getCachedEvents,
@@ -151,9 +153,13 @@ import {
     setPinNumberResponse,
     apiMaybeAccessGateConfig,
 } from "../common/chatMappers";
+import {
+    apiMessageContent as apiMessageContentV2,
+    apiReplyContextArgs as apiReplyContextArgsV2,
+} from "../common/chatMappersV2";
 import { DataClient } from "../data/data.client";
 import { muteNotificationsResponse } from "../notifications/mappers";
-import { identity, toVoid } from "../../utils/mapping";
+import { identity, mapOptional, principalStringToBytes, toVoid } from "../../utils/mapping";
 import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
 import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING, ResponseTooLargeError } from "openchat-shared";
@@ -164,6 +170,7 @@ import {
 } from "../common/chunked";
 import type { SetPinNumberResponse } from "openchat-shared";
 import { setChitInfoInCache } from "../../utils/userCache";
+import { UserSendMessageArgs, UserSendMessageResponse } from "../../typebox";
 
 export class UserClient extends CandidService {
     private userService: UserService;
@@ -613,6 +620,7 @@ export class UserClient extends CandidService {
         messageFilterFailed: bigint | undefined,
         threadRootMessageIndex: number | undefined,
         pin: string | undefined,
+        onRequestAccepted: () => void,
     ): Promise<[SendMessageResponse, Message]> {
         removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
         return this.sendMessageToBackend(
@@ -621,6 +629,7 @@ export class UserClient extends CandidService {
             messageFilterFailed,
             threadRootMessageIndex,
             pin,
+            onRequestAccepted,
         )
             .then(
                 setCachedMessageFromSendResponse(
@@ -642,6 +651,7 @@ export class UserClient extends CandidService {
         messageFilterFailed: bigint | undefined,
         threadRootMessageIndex: number | undefined,
         pin: string | undefined,
+        onRequestAccepted: () => void,
     ): Promise<[SendMessageResponse, Message]> {
         const dataClient = new DataClient(this.identity, this.agent, this.config);
         const uploadContentPromise = event.event.forwarded
@@ -651,22 +661,26 @@ export class UserClient extends CandidService {
         return uploadContentPromise.then((content) => {
             const newContent = content ?? event.event.content;
             const req = {
-                content: apiMessageContent(newContent),
-                recipient: Principal.fromText(chatId.userId),
+                content: apiMessageContentV2(newContent),
+                recipient: principalStringToBytes(chatId.userId),
                 message_id: event.event.messageId,
-                replies_to: apiOptional(
-                    (replyContext) => apiReplyContextArgs(chatId, replyContext),
-                    event.event.repliesTo,
+                replies_to: mapOptional(event.event.repliesTo, (replyContext) =>
+                    apiReplyContextArgsV2(chatId, replyContext),
                 ),
                 forwarding: event.event.forwarded,
-                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-                message_filter_failed: apiOptional(identity, messageFilterFailed),
-                pin: apiOptional(identity, pin),
+                thread_root_message_index: threadRootMessageIndex,
+                message_filter_failed: messageFilterFailed,
+                pin,
                 correlation_id: generateUint64(),
                 block_level_markdown: event.event.blockLevelMarkdown,
             };
-            return this.handleResponse(this.userService.send_message_v2(req), (resp) =>
-                sendMessageResponse(resp, event.event.sender, chatId.userId),
+            return this.executeMsgpackUpdate(
+                "send_message_v2",
+                req,
+                (resp) => sendMessageResponse(resp, event.event.sender, chatId.userId),
+                UserSendMessageArgs,
+                UserSendMessageResponse,
+                onRequestAccepted,
             ).then((resp) => [resp, { ...event.event, content: newContent }]);
         });
     }
@@ -1385,12 +1399,12 @@ export class UserClient extends CandidService {
     }
 
     setPinNumber(
-        currentPin: string | undefined,
+        verification: Verification,
         newPin: string | undefined,
     ): Promise<SetPinNumberResponse> {
         return this.handleResponse(
             this.userService.set_pin_number({
-                current: apiOptional(identity, currentPin),
+                verification: apiVerification(verification),
                 new: apiOptional(identity, newPin),
             }),
             setPinNumberResponse,

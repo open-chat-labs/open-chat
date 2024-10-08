@@ -10,12 +10,13 @@ use crate::model::public_groups::PublicGroups;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use fire_and_forget_handler::FireAndForgetHandler;
+use group_index_canister::ChildCanisterType;
 use model::local_group_index_map::LocalGroupIndexMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{
-    AccessGate, BuildVersion, CanisterId, CanisterWasm, ChatId, CommunityId, Cycles, FrozenGroupInfo, Milliseconds,
+    AccessGate, BuildVersion, CanisterId, ChatId, ChildCanisterWasms, CommunityId, Cycles, FrozenGroupInfo, Milliseconds,
     TimestampMillis, Timestamped, UserId,
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
@@ -65,6 +66,11 @@ impl RuntimeState {
         self.data.public_communities.get(&caller).is_some() || self.data.private_communities.get(&caller).is_some()
     }
 
+    pub fn can_caller_upload_wasm_chunks(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.governance_principals.contains(&caller) || self.data.upload_wasm_chunks_whitelist.contains(&caller)
+    }
+
     pub fn metrics(&self) -> Metrics {
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
 
@@ -99,9 +105,23 @@ impl RuntimeState {
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
             governance_principals: self.data.governance_principals.iter().copied().collect(),
-            group_wasm_version: self.data.group_canister_wasm.version,
-            local_group_index_wasm_version: self.data.local_group_index_canister_wasm_for_new_canisters.version,
+            local_group_index_wasm_version: self
+                .data
+                .child_canister_wasms
+                .get(ChildCanisterType::LocalGroupIndex)
+                .wasm
+                .version,
+            group_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::Group).wasm.version,
+            community_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::Community).wasm.version,
             local_group_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
+            upload_wasm_chunks_whitelist: self.data.upload_wasm_chunks_whitelist.iter().copied().collect(),
+            wasm_chunks_uploaded: self
+                .data
+                .child_canister_wasms
+                .chunk_hashes()
+                .into_iter()
+                .map(|(c, h)| (*c, hex::encode(h)))
+                .collect(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
@@ -123,10 +143,7 @@ struct Data {
     pub deleted_communities: DeletedCommunities,
     pub public_group_and_community_names: PublicGroupAndCommunityNames,
     pub governance_principals: HashSet<Principal>,
-    pub group_canister_wasm: CanisterWasm,
-    pub community_canister_wasm: CanisterWasm,
-    pub local_group_index_canister_wasm_for_new_canisters: CanisterWasm,
-    pub local_group_index_canister_wasm_for_upgrades: CanisterWasm,
+    pub child_canister_wasms: ChildCanisterWasms<ChildCanisterType>,
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
@@ -141,6 +158,7 @@ struct Data {
     pub local_index_map: LocalGroupIndexMap,
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub video_call_operators: Vec<Principal>,
+    pub upload_wasm_chunks_whitelist: HashSet<Principal>,
     pub ic_root_key: Vec<u8>,
     pub rng_seed: [u8; 32],
 }
@@ -149,9 +167,6 @@ impl Data {
     #[allow(clippy::too_many_arguments)]
     fn new(
         governance_principals: Vec<Principal>,
-        group_canister_wasm: CanisterWasm,
-        community_canister_wasm: CanisterWasm,
-        local_group_index_canister_wasm: CanisterWasm,
         user_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
@@ -170,11 +185,8 @@ impl Data {
             private_communities: PrivateCommunities::default(),
             deleted_communities: DeletedCommunities::default(),
             public_group_and_community_names: PublicGroupAndCommunityNames::default(),
-            governance_principals: governance_principals.into_iter().collect(),
-            group_canister_wasm,
-            community_canister_wasm,
-            local_group_index_canister_wasm_for_new_canisters: local_group_index_canister_wasm.clone(),
-            local_group_index_canister_wasm_for_upgrades: local_group_index_canister_wasm,
+            governance_principals: governance_principals.iter().copied().collect(),
+            child_canister_wasms: ChildCanisterWasms::default(),
             user_index_canister_id,
             cycles_dispenser_canister_id,
             proposals_bot_user_id,
@@ -189,6 +201,7 @@ impl Data {
             local_index_map: LocalGroupIndexMap::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             video_call_operators,
+            upload_wasm_chunks_whitelist: HashSet::default(),
             ic_root_key,
             rng_seed: [0; 32],
         }
@@ -279,10 +292,7 @@ impl Default for Data {
             deleted_communities: DeletedCommunities::default(),
             public_group_and_community_names: PublicGroupAndCommunityNames::default(),
             governance_principals: HashSet::default(),
-            group_canister_wasm: CanisterWasm::default(),
-            community_canister_wasm: CanisterWasm::default(),
-            local_group_index_canister_wasm_for_new_canisters: CanisterWasm::default(),
-            local_group_index_canister_wasm_for_upgrades: CanisterWasm::default(),
+            child_canister_wasms: ChildCanisterWasms::default(),
             user_index_canister_id: Principal::anonymous(),
             cycles_dispenser_canister_id: Principal::anonymous(),
             proposals_bot_user_id: Principal::anonymous().into(),
@@ -297,6 +307,7 @@ impl Default for Data {
             local_index_map: LocalGroupIndexMap::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             video_call_operators: Vec::default(),
+            upload_wasm_chunks_whitelist: HashSet::default(),
             ic_root_key: Vec::new(),
             rng_seed: [0; 32],
         }
@@ -335,9 +346,12 @@ pub struct Metrics {
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
     pub canister_upgrades_pending: u64,
     pub canister_upgrades_in_progress: u64,
-    pub group_wasm_version: BuildVersion,
     pub local_group_index_wasm_version: BuildVersion,
+    pub group_wasm_version: BuildVersion,
+    pub community_wasm_version: BuildVersion,
     pub local_group_indexes: Vec<(CanisterId, LocalGroupIndex)>,
+    pub upload_wasm_chunks_whitelist: Vec<Principal>,
+    pub wasm_chunks_uploaded: Vec<(ChildCanisterType, String)>,
     pub canister_ids: CanisterIds,
 }
 

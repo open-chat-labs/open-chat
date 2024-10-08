@@ -107,7 +107,7 @@
 
     const bottom = () => {
         if (messagesDiv) {
-            if (reverseScroll) {
+            if ($reverseScroll) {
                 return 0;
             } else {
                 return messagesDiv.scrollHeight - messagesDiv.clientHeight;
@@ -118,7 +118,7 @@
 
     const fromBottom = () => {
         if (messagesDiv) {
-            if (reverseScroll) {
+            if ($reverseScroll) {
                 return -messagesDiv.scrollTop;
             } else {
                 return bottom() - messagesDiv.scrollTop;
@@ -129,7 +129,7 @@
 
     const fromTop = () => {
         if (messagesDiv) {
-            if (reverseScroll) {
+            if ($reverseScroll) {
                 return messagesDiv.scrollHeight - messagesDiv.clientHeight - fromBottom();
             } else {
                 return messagesDiv.scrollTop;
@@ -213,14 +213,14 @@
                     }
 
                     if (needsAdjustment) {
-                        if (reverseScroll && loadingNewMessages && !loadingPrevMessages) {
+                        if ($reverseScroll && loadingNewMessages && !loadingPrevMessages) {
                             await interruptScroll((el) => {
                                 if (previousScrollTop !== undefined) {
                                     el.scrollTop = previousScrollTop - scrollHeightDiff;
                                 }
                             });
                         }
-                        if (!reverseScroll && loadingPrevMessages && !loadingNewMessages) {
+                        if (!$reverseScroll && loadingPrevMessages && !loadingNewMessages) {
                             await interruptScroll((el) => {
                                 if (previousScrollTop !== undefined) {
                                     el.scrollTop = previousScrollTop + scrollHeightDiff;
@@ -233,7 +233,7 @@
                             scrollHeight: el.scrollHeight,
                             scrollHeightDiff,
                             scrollTopDiff,
-                            reverseRender: reverseScroll,
+                            reverseRender: $reverseScroll,
                         });
                     }
 
@@ -298,7 +298,7 @@
                 ...(messagesDiv?.querySelectorAll(".date-label[data-timestamp]:not(.floating)") ??
                     []),
             ];
-            if (!reverseScroll) {
+            if (!$reverseScroll) {
                 labels.reverse();
             }
             floatingTimestamp = undefined;
@@ -607,7 +607,7 @@
         if (!messageContextsEqual(context, messageContext)) return;
         await resetScroll(initialLoad);
         if (!messageContextsEqual(context, messageContext)) return;
-        if (reverseScroll) {
+        if ($reverseScroll) {
             // Seems like we *must* interrupt the scroll to stop runaway loading
             // even though we do not need to do any adjustment of the scrollTop in this direction.
             // This seems to help on chrome but not on safari (God help us).
@@ -710,7 +710,7 @@
     bind:clientHeight={messagesDivHeight}
     on:scroll={onUserScroll}
     class:interrupt
-    class:reverse={reverseScroll}
+    class:reverse={$reverseScroll}
     class={`scrollable-list ${rootSelector}`}>
     <slot {isAccepted} {isConfirmed} {isFailed} {isReadByMe} {messageObserver} {labelObserver} />
 </div>

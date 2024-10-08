@@ -3,7 +3,7 @@ use canister_api_macros::query;
 use group_index_canister::recommended_groups::{Response::*, *};
 use std::collections::HashSet;
 
-#[query(msgpack = true)]
+#[query(candid = true, msgpack = true)]
 fn recommended_groups(args: Args) -> Response {
     read_state(|state| recommended_groups_impl(args, state))
 }

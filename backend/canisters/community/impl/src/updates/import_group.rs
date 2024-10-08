@@ -4,7 +4,6 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::import_group::{Response::*, *};
 use group_index_canister::c2c_start_importing_group_into_community::Response as C2cResponse;
-use rand::Rng;
 use types::{CanisterId, ChannelId, ChatId, UserId};
 
 #[update(guard = "caller_is_proposals_bot", msgpack = true)]
@@ -49,12 +48,13 @@ async fn import_group_impl(group_id: ChatId, user_id: UserId, group_index_canist
     .await
     {
         Ok(C2cResponse::Success(total_bytes)) => mutate_state(|state| {
-            let channel_id = state.env.rng().gen();
+            let channel_id = state.generate_channel_id();
             commit_group_to_import(user_id, group_id, channel_id, total_bytes, false, state)
         }),
         Ok(C2cResponse::UserNotInGroup) => UserNotInGroup,
         Ok(C2cResponse::NotAuthorized) => UserNotGroupOwner,
         Ok(C2cResponse::UserSuspended) => UserSuspended,
+        Ok(C2cResponse::UserLapsed) => UserLapsed,
         Ok(C2cResponse::GroupNotFound) => GroupNotFound,
         Ok(C2cResponse::AlreadyImportingToAnotherCommunity) => GroupImportingToAnotherCommunity,
         Ok(C2cResponse::ChatFrozen) => GroupFrozen,

@@ -1,10 +1,10 @@
 use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::remove_reaction::{Response::*, *};
 use group_chat_core::AddRemoveReactionResult;
-use ic_cdk::update;
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 fn remove_reaction(args: Args) -> Response {
     run_regular_jobs();
@@ -35,6 +35,7 @@ fn remove_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
             AddRemoveReactionResult::UserNotInGroup => CallerNotInGroup,
             AddRemoveReactionResult::NotAuthorized => NotAuthorized,
             AddRemoveReactionResult::UserSuspended => UserSuspended,
+            AddRemoveReactionResult::UserLapsed => UserLapsed,
         }
     } else {
         CallerNotInGroup

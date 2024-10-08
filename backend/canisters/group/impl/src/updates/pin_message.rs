@@ -1,11 +1,11 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::pin_message_v2::{Response::*, *};
 use group_chat_core::PinUnpinMessageResult;
-use ic_cdk::update;
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 fn pin_message_v2(args: Args) -> Response {
     run_regular_jobs();
@@ -30,6 +30,7 @@ fn pin_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             PinUnpinMessageResult::NotAuthorized => NotAuthorized,
             PinUnpinMessageResult::MessageNotFound => MessageNotFound,
             PinUnpinMessageResult::UserSuspended => UserSuspended,
+            PinUnpinMessageResult::UserLapsed => UserLapsed,
             PinUnpinMessageResult::UserNotInGroup => CallerNotInGroup,
         }
     } else {

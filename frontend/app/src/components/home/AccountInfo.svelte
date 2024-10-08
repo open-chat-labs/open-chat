@@ -1,12 +1,11 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import QRCode from "../QRCode.svelte";
     import type { CreatedUser, OpenChat } from "openchat-client";
     import { ICP_SYMBOL } from "openchat-client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
-    import TruncatedPrincipal from "./TruncatedPrincipal.svelte";
+    import TruncatedAccount from "./TruncatedAccount.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -28,7 +27,7 @@
     <p class="your-account" class:centered>
         <Translatable resourceKey={i18nKey("tokenTransfer.yourAccount", { token: symbol })} />
     </p>
-    <TruncatedPrincipal {centered} principal={account} />
+    <TruncatedAccount {centered} {account} />
 </div>
 
 <style lang="scss">

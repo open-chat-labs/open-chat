@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use user_canister::unpin_chat_v2::{Response::*, *};
 use user_canister::ChatInList;
 
-#[update(guard = "caller_is_owner", candid = true)]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 fn unpin_chat_v2(args: Args) -> Response {
     run_regular_jobs();

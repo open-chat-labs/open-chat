@@ -7,7 +7,7 @@ use registry_canister::{MessageFilterSummary, NervousSystemDetails};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
+use types::{BuildVersion, CanisterId, Cycles, ExchangeId, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
 mod guards;
@@ -78,6 +78,8 @@ struct Data {
     tokens: Tokens,
     nervous_systems: NervousSystems,
     failed_sns_launches: HashSet<CanisterId>,
+    #[serde(default)]
+    swap_providers: Timestamped<HashSet<ExchangeId>>,
     message_filters: MessageFilters,
     #[serde(default)]
     total_supply: Timestamped<u128>,
@@ -105,6 +107,7 @@ impl Data {
             tokens: Tokens::default(),
             nervous_systems: NervousSystems::default(),
             failed_sns_launches: HashSet::new(),
+            swap_providers: Timestamped::default(),
             message_filters: MessageFilters::default(),
             total_supply: Timestamped::default(),
             circulating_supply: Timestamped::default(),

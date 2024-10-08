@@ -5,6 +5,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ledger_utils::default_ledger_account;
 use local_user_index_canister::register_user::{Response::*, *};
+use local_user_index_canister::ChildCanisterType;
 use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, MessageContentInitial, TextContent, UserId, UserType};
 use user_canister::init::Args as InitUserCanisterArgs;
 use user_canister::{Event as UserEvent, ReferredUserRegistered};
@@ -151,7 +152,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
     };
 
     let canister_id = state.data.canister_pool.pop();
-    let canister_wasm = state.data.user_canister_wasm_for_new_canisters.wasm.clone();
+    let canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::User).wasm.clone();
 
     let referred_by = referral_code
         .and_then(|c| c.user())

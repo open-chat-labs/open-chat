@@ -6,6 +6,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Clear wasm chunks once new wasm version has been set ([#6524](https://github.com/open-chat-labs/open-chat/pull/6524))
+- Add support for expiring access gates ([#6401](https://github.com/open-chat-labs/open-chat/pull/6401))
+
+### Removed
+
+- Remove `push_events_v2` which is no longer used ([#6502](https://github.com/open-chat-labs/open-chat/pull/6502))
+
+## [[2.0.1364](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1364-local_group_index)] - 2024-10-02
+
+### Changed
+
+- Add `CanisterWasmBytes` to reduce duplication ([#6480](https://github.com/open-chat-labs/open-chat/pull/6480))
+
+### Fixed
+
+- Fix chunked Community upgrades ([#6483](https://github.com/open-chat-labs/open-chat/pull/6483))
+
+## [[2.0.1363](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1363-local_group_index)] - 2024-09-30
+
+### Added
+
+- Support upgrading to large wasms by uploading in chunks ([#6453](https://github.com/open-chat-labs/open-chat/pull/6453))
+
+### Changed
+
+- Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
+
+### Removed
+
+- Remove the unused `use_for_new_canisters` field from upgrade args ([#6452](https://github.com/open-chat-labs/open-chat/pull/6452))
+
 ## [[2.0.1356](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1356-local_group_index)] - 2024-09-20
 
 ### Added

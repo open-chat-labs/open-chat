@@ -1,10 +1,12 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{Empty, GroupCanisterGroupChatSummary};
 
 pub type Args = Empty;
 
 // Allow the large size difference because essentially all responses are the large variant anyway
+#[ts_export(group, summary)]
 #[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
@@ -12,6 +14,7 @@ pub enum Response {
     CallerNotInGroup,
 }
 
+#[ts_export(group, summary)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub summary: GroupCanisterGroupChatSummary,

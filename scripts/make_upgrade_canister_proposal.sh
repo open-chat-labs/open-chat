@@ -17,6 +17,8 @@ CANISTER_NAME=$2
 VERSION=$3
 TITLE=$4
 CHANGELOG=$5
+CHUNKED=${6:-false}
+DFX_IDENTITY=${7:-default}
 
 TAG=v$VERSION-$CANISTER_NAME
 COMMIT_ID=$(git rev-list -n 1 tags/$TAG) || exit 1
@@ -67,9 +69,23 @@ if [ "$FUNCTION_ID" -ge "1000" ] ; then
     PROPOSAL_FILE=proposal.candid
     PROPOSAL_BUILDER_PATH=$PROPOSAL_BUILDER_FOLDER/$PROPOSAL_FILE
 
+    if [ "$CHUNKED" == "true" ] ; then
+      echo "Canister wasm chunks uploader building"
+      cargo build --package canister_wasm_chunks_uploader
+
+      echo "Canister wasm chunks uploader starting"
+      cargo run --package canister_wasm_chunks_uploader -- \
+        --url "https://ic0.app/" --dfx-identity $DFX_IDENTITY --user-index 4bkt6-4aaaa-aaaaf-aaaiq-cai \
+        --group-index 4ijyc-kiaaa-aaaaf-aaaja-cai --canister-to-upload $CANISTER_NAME --version $VERSION || exit 1
+
+      echo "Canister wasm chunks uploader completed"
+    fi
+
     # Build the proposal file
     cd $PROPOSAL_BUILDER_FOLDER
-    cargo run --quiet -- --title "$TITLE" --summary "$SUMMARY" --url "$URL" --function-id $FUNCTION_ID --wasm-path "$WASM_PATH" --version $VERSION > $PROPOSAL_FILE
+    cargo run --quiet -- \
+      --title "$TITLE" --summary "$SUMMARY" --url "$URL" --function-id $FUNCTION_ID --wasm-path "$WASM_PATH" \
+      --version $VERSION --chunked $CHUNKED > $PROPOSAL_FILE
 
     # cd back into root of OpenChat repo
     cd $SCRIPT_DIR/..

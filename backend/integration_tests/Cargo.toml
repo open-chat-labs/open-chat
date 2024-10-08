@@ -37,6 +37,7 @@ registry_canister = { path = "../canisters/registry/api" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serial_test = "2.0.0"
+sha256 = { path = "../libraries/sha256" }
 sign_in_with_email_canister = { workspace = true }
 sign_in_with_email_canister_test_utils = { workspace = true }
 storage_bucket_canister = { path = "../canisters/storage_bucket/api" }

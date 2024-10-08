@@ -1,12 +1,12 @@
 use crate::read_state;
 use crate::RuntimeState;
+use canister_api_macros::query;
 use community_canister::explore_channels::{Response::*, *};
-use ic_cdk::query;
 
 const MIN_TERM_LENGTH: u8 = 2;
 const MAX_TERM_LENGTH: u8 = 20;
 
-#[query]
+#[query(candid = true, msgpack = true)]
 fn explore_channels(args: Args) -> Response {
     read_state(|state| explore_channels_impl(args, state))
 }

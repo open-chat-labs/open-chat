@@ -427,12 +427,14 @@ export interface CommunityMember {
 }
 export interface CommunityMembership {
   'role' : CommunityRole,
+  'lapsed' : boolean,
   'display_name' : [] | [string],
   'joined' : TimestampMillis,
   'rules_accepted' : boolean,
 }
 export interface CommunityMembershipUpdates {
   'role' : [] | [CommunityRole],
+  'lapsed' : [] | [boolean],
   'display_name' : TextUpdate,
   'rules_accepted' : [] | [boolean],
 }
@@ -633,6 +635,9 @@ export interface EventsTimeToLiveUpdated {
   'new_ttl' : [] | [Milliseconds],
   'updated_by' : UserId,
 }
+export type ExchangeId = { 'Sonic' : null } |
+  { 'KongSwap' : null } |
+  { 'ICPSwap' : null };
 export interface ExternalUrlUpdated {
   'new_url' : [] | [string],
   'updated_by' : UserId,
@@ -855,6 +860,7 @@ export interface GroupMatch {
 export interface GroupMembership {
   'role' : GroupRole,
   'notifications_muted' : boolean,
+  'lapsed' : boolean,
   'joined' : TimestampMillis,
   'rules_accepted' : boolean,
   'latest_threads' : Array<GroupCanisterThreadDetails>,
@@ -864,6 +870,7 @@ export interface GroupMembership {
 export interface GroupMembershipUpdates {
   'role' : [] | [GroupRole],
   'notifications_muted' : [] | [boolean],
+  'lapsed' : [] | [boolean],
   'unfollowed_threads' : Uint32Array | number[],
   'rules_accepted' : [] | [boolean],
   'latest_threads' : Array<GroupCanisterThreadDetails>,

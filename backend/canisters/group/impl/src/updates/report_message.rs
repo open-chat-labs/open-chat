@@ -1,13 +1,13 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::Reader;
 use group_canister::report_message::{Response::*, *};
 use group_index_canister::c2c_report_message;
-use ic_cdk::update;
 use types::{CanisterId, MultiUserChat, UserId};
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn report_message(args: Args) -> Response {
     run_regular_jobs();
@@ -45,6 +45,8 @@ fn build_c2c_args(args: &Args, state: &RuntimeState) -> Result<(c2c_report_messa
 
         if member.suspended.value {
             return Err(UserSuspended);
+        } else if member.lapsed.value {
+            return Err(UserLapsed);
         }
 
         if args.delete && !member.role.can_delete_messages(&chat.permissions) {

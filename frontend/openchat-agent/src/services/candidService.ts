@@ -1,7 +1,10 @@
 import {
     Actor,
+    bufFromBufLike,
+    Certificate,
     HttpAgent,
     type Identity,
+    lookupResultToBuffer,
     polling,
     ReplicaTimeError,
     UpdateCallRejectedError,
@@ -99,6 +102,43 @@ export abstract class CandidService {
 
             if (onRequestAccepted !== undefined) {
                 onRequestAccepted();
+            }
+
+            if (response.body && response.body.certificate) {
+                const certTime = (this.agent as HttpAgent).replicaTime;
+                const certificate = await Certificate.create({
+                    certificate: bufFromBufLike(response.body.certificate),
+                    rootKey: this.agent.rootKey,
+                    canisterId: Principal.from(canisterId),
+                    certTime,
+                });
+                const path = [new TextEncoder().encode("request_status"), requestId];
+                const status = new TextDecoder().decode(
+                    lookupResultToBuffer(certificate.lookup([...path, "status"])),
+                );
+
+                switch (status) {
+                    case "replied": {
+                        const reply = lookupResultToBuffer(certificate.lookup([...path, "reply"]));
+                        if (reply) {
+                            return Promise.resolve(
+                                CandidService.processMsgpackResponse(
+                                    reply,
+                                    mapper,
+                                    responseValidator,
+                                ),
+                            );
+                        }
+                        break;
+                    }
+                    case "rejected":
+                        throw new UpdateCallRejectedError(
+                            canisterId,
+                            methodName,
+                            requestId,
+                            response,
+                        );
+                }
             }
 
             const { reply } = await this.sendRequestToCanister(() =>

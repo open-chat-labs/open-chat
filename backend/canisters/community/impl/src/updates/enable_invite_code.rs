@@ -2,16 +2,16 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::model::events::CommunityEventInternal;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use candid::Principal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::enable_invite_code::{Response::*, *};
 use community_canister::reset_invite_code;
-use ic_cdk::update;
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
 use types::{GroupInviteCodeChange, GroupInviteCodeChanged};
 use utils::canister;
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn reset_invite_code(_args: reset_invite_code::Args) -> reset_invite_code::Response {
     run_regular_jobs();
@@ -32,7 +32,7 @@ async fn reset_invite_code(_args: reset_invite_code::Args) -> reset_invite_code:
     Success(SuccessResult { code })
 }
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn enable_invite_code(_args: Args) -> Response {
     run_regular_jobs();
@@ -92,12 +92,14 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
     }
 
     let caller = state.env.caller();
-    if let Some(participant) = state.data.members.get(caller) {
-        if participant.suspended.value {
+    if let Some(member) = state.data.members.get(caller) {
+        if member.suspended.value {
             return Err(UserSuspended);
+        } else if member.lapsed.value {
+            return Err(UserLapsed);
         }
 
-        if participant.role.can_invite_users(&state.data.permissions) {
+        if member.role.can_invite_users(&state.data.permissions) {
             return Ok(PrepareResult {
                 caller,
                 code: state.data.invite_code,

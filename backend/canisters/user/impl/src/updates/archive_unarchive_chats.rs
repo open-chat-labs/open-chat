@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use types::{Chat, TimestampMillis, Timestamped};
 use user_canister::archive_unarchive_chats::{Response::*, *};
 
-#[update(guard = "caller_is_owner", candid = true)]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 fn archive_unarchive_chats(args: Args) -> Response {
     run_regular_jobs();

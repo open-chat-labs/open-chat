@@ -190,3 +190,8 @@ pub struct ExternalAchievementAwarded {
     pub name: String,
     pub chit_reward: u32,
 }
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum ChildCanisterType {
+    User,
+}

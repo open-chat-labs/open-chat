@@ -5,6 +5,7 @@ use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
 use types::{BuildVersion, CanisterId};
+use user_index_canister::ChildCanisterType;
 use utils::canister::{install, FailedUpgrade, WasmToInstall};
 
 type CanisterToUpgrade = utils::canister::CanisterToInstall<local_user_index_canister::post_upgrade::Args>;
@@ -59,7 +60,8 @@ fn try_get_next(state: &mut RuntimeState) -> GetNextResult {
         None => return GetNextResult::Continue,
     };
 
-    let new_wasm_version = state.data.local_user_index_canister_wasm_for_upgrades.version;
+    let new_wasm = &state.data.child_canister_wasms.get(ChildCanisterType::LocalUserIndex).wasm;
+    let new_wasm_version = new_wasm.version;
     let current_wasm_version = match state
         .data
         .local_index_map
@@ -74,13 +76,11 @@ fn try_get_next(state: &mut RuntimeState) -> GetNextResult {
         }
     };
 
-    let new_wasm = state.data.local_user_index_canister_wasm_for_upgrades.clone();
-
     GetNextResult::Success(CanisterToUpgrade {
         canister_id,
         current_wasm_version,
         new_wasm_version,
-        new_wasm: WasmToInstall::Default(new_wasm.module),
+        new_wasm: WasmToInstall::Default(new_wasm.module.clone()),
         deposit_cycles_if_needed: false,
         args: local_user_index_canister::post_upgrade::Args {
             wasm_version: new_wasm_version,

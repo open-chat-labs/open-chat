@@ -269,6 +269,7 @@ import type {
     ApiVideoCallParticipantsResponse as ApiChannelVideoCallParticipantsResponse,
     ApiUserGroup,
     ApiCommunityCanisterCommunitySummary,
+    ApiAccessGateConfig,
 } from "../community/candid/idl";
 import { ReplicaNotUpToDateError } from "../error";
 import { messageMatch } from "../user/mappers";
@@ -2334,6 +2335,9 @@ export function updateGroupResponse(
     if ("UserSuspended" in candid) {
         return { kind: "user_suspended" };
     }
+    if ("UserLapsed" in candid) {
+        return { kind: "user_lapsed" };
+    }
     if ("ChatFrozen" in candid) {
         return { kind: "chat_frozen" };
     }
@@ -2427,6 +2431,10 @@ export function createGroupResponse(
 
     if ("UserSuspended" in candid) {
         return { kind: "user_suspended" };
+    }
+
+    if ("UserLapsed" in candid) {
+        return { kind: "user_lapsed" };
     }
 
     if ("UnauthorizedToCreatePublicGroup" in candid) {
@@ -2834,6 +2842,9 @@ export function registerProposalVoteResponse(
     if ("UserSuspended" in candid) {
         return "user_suspended";
     }
+    if ("UserLapsed" in candid) {
+        return "user_lapsed";
+    }
     if ("ChatFrozen" in candid) {
         return "chat_frozen";
     }
@@ -2926,6 +2937,7 @@ export function acceptP2PSwapResponse(
     if ("SwapNotFound" in candid) return { kind: "swap_not_found" };
     if ("ChatFrozen" in candid) return { kind: "chat_frozen" };
     if ("UserSuspended" in candid) return { kind: "user_suspended" };
+    if ("UserLapsed" in candid) return { kind: "user_lapsed" };
     if ("InternalError" in candid) return { kind: "internal_error", text: candid.InternalError };
     if ("InsufficientFunds" in candid) return { kind: "insufficient_funds" };
     if ("InsufficientFunds" in candid) return { kind: "insufficient_funds" };
@@ -3023,6 +3035,12 @@ export function setPinNumberResponse(candid: ApiSetPinNumberResponse): SetPinNum
     }
     if ("TooLong" in candid) {
         return { kind: "too_long", maxLength: candid.TooLong.max_length };
+    }
+    if ("DelegationTooOld" in candid) {
+        return { kind: "delegation_too_old" };
+    }
+    if ("MalformedSignature" in candid) {
+        return { kind: "malformed_signature" };
     }
 
     throw new UnsupportedValueError("Unexpected ApiSetPinNumberResponse type received", candid);

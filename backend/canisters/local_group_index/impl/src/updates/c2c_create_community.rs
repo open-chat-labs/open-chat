@@ -5,6 +5,7 @@ use canister_tracing_macros::trace;
 use community_canister::init::Args as InitCommunityCanisterArgs;
 use event_store_producer::EventBuilder;
 use local_group_index_canister::c2c_create_community::{Response::*, *};
+use local_group_index_canister::ChildCanisterType;
 use types::{BuildVersion, CanisterId, CanisterWasm, CommunityCreatedEventPayload, CommunityId, Cycles, UserId, UserType};
 use utils::canister;
 use utils::canister::CreateAndInstallError;
@@ -86,7 +87,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
     };
 
     let canister_id = state.data.canister_pool.pop();
-    let canister_wasm = state.data.community_canister_wasm_for_new_canisters.wasm.clone();
+    let canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::Community).wasm.clone();
     let local_user_index_canister_id = state.data.local_user_index_canister_id;
     let init_canister_args = community_canister::init::Args {
         is_public: args.is_public,
@@ -109,6 +110,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         avatar: args.avatar,
         banner: args.banner,
         gate: args.gate,
+        gate_config: args.gate_config,
         default_channels: args.default_channels,
         default_channel_rules: args.default_channel_rules,
         source_group: args.source_group,

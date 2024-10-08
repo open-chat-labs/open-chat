@@ -1,7 +1,9 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{MessageId, MessageIndex, Reaction};
 
+#[ts_export(group, remove_reaction)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub thread_root_message_index: Option<MessageIndex>,
@@ -10,6 +12,7 @@ pub struct Args {
     pub correlation_id: u64,
 }
 
+#[ts_export(group, remove_reaction)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
@@ -18,5 +21,6 @@ pub enum Response {
     CallerNotInGroup,
     NotAuthorized,
     UserSuspended,
+    UserLapsed,
     ChatFrozen,
 }

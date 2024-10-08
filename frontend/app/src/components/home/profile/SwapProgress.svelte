@@ -7,6 +7,8 @@
     export let swapId: bigint;
     export let tokenIn: string;
     export let tokenOut: string;
+    export let ledgerIn: string;
+    export let ledgerOut: string;
     export let amountIn: string;
     export let decimalsOut: number;
     export let dex: string;
@@ -20,6 +22,7 @@
     let amountOut = "";
     let steps: Step[] = [{ label: "get", status: "doing" }];
     let result: Result = undefined;
+    let poller: Poller | undefined = undefined;
 
     $: fullSteps = steps.map((step) => ({ label: labelPrefix + step.label, status: step.status }));
 
@@ -37,85 +40,99 @@
     };
 
     onMount(() => {
-        const poller = new Poller(querySwapProgress, POLL_INTERVAL, POLL_INTERVAL, true);
+        poller = new Poller(querySwapProgress, POLL_INTERVAL, POLL_INTERVAL, true);
 
-        return () => poller.stop();
+        return () => poller?.stop();
     });
+
+    function notifyFinished(outcome: "success" | "rateChanged" | "insufficientFunds" | "error") {
+        dispatch("finished", { outcome, ledgerIn, ledgerOut });
+        poller?.stop();
+    }
+
+    function updateSteps(newSteps: Step[]) {
+        if (newSteps.length >= steps.length) {
+            steps = newSteps;
+        }
+    }
 
     async function querySwapProgress() {
         let response = await client.tokenSwapStatus(swapId);
 
         if (response.kind === "success") {
+            if (response.amountSwapped?.kind === "ok" && response.amountSwapped?.value.kind === "ok") {
+                amountOut = client.formatTokens(
+                    response.amountSwapped.value.value,
+                    decimalsOut,
+                );
+            }
+
             if (response.withdrawnFromDex?.kind === "ok") {
                 const success =
                     response.amountSwapped?.kind === "ok" &&
                     response.amountSwapped.value.kind === "ok";
 
-                steps = [
+                updateSteps([
                     { label: "get", status: "done" },
                     { label: "deposit", status: "done" },
                     { label: "notify", status: "done" },
                     { label: "swap", status: "done" },
                     { label: success ? "withdraw" : "refund", status: "done" },
-                ];
+                ]);
                 result = { label: success ? "done" : "failed", status: "done" };
-                dispatch("finished", success ? "success" : "rateChanged");
+                notifyFinished(success ? "success" : "rateChanged");
             } else if (response.amountSwapped?.kind === "ok") {
                 if (response.amountSwapped.value.kind === "ok") {
-                    amountOut = client.formatTokens(
-                        response.amountSwapped.value.value,
-                        decimalsOut,
-                    );
-                    steps = [
+                    updateSteps([
                         { label: "get", status: "done" },
                         { label: "deposit", status: "done" },
                         { label: "notify", status: "done" },
                         { label: "swap", status: "done" },
                         { label: "withdraw", status: "doing" },
-                    ];
+                    ]);
                     percent = 80;
                 } else {
-                    steps = [
+                    updateSteps([
                         { label: "get", status: "done" },
                         { label: "deposit", status: "done" },
                         { label: "notify", status: "done" },
                         { label: "swap", status: "failed" },
                         { label: "refund", status: "doing" },
-                    ];
+                    ]);
                     percent = undefined;
                 }
             } else if (response.notifyDex?.kind == "ok") {
-                steps = [
+                updateSteps([
                     { label: "get", status: "done" },
                     { label: "deposit", status: "done" },
                     { label: "notify", status: "done" },
                     { label: "swap", status: "doing" },
-                ];
+                ]);
                 percent = 60;
             } else if (response.transfer?.kind == "ok") {
-                steps = [
+                updateSteps([
                     { label: "get", status: "done" },
                     { label: "deposit", status: "done" },
                     { label: "notify", status: "doing" },
-                ];
+                ]);
                 percent = 40;
             } else if (response.transfer?.kind == "error") {
-                steps = [
+                updateSteps([
                     { label: "get", status: "done" },
                     { label: "deposit", status: "failed" },
-                ];
+                ]);
                 result = { label: "insufficientFunds", status: "failed" };
-                dispatch("finished", "insufficientFunds");
+                notifyFinished("insufficientFunds");
             } else if (response.depositAccount?.kind == "ok") {
-                steps = [
+                updateSteps([
                     { label: "get", status: "done" },
                     { label: "deposit", status: "doing" },
-                ];
+                ]);
                 percent = 20;
             } else if (response.depositAccount?.kind == "error") {
-                steps = [{ label: "get", status: "failed" }];
+                updateSteps([{ label: "get", status: "failed" }]);
                 result = { label: "error", status: "failed" };
-                dispatch("finished", "error");
+                notifyFinished("error");
             }
         }
     }

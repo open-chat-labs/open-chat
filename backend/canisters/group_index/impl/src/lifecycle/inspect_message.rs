@@ -23,6 +23,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "upgrade_community_canister_wasm"
         | "upgrade_group_canister_wasm"
         | "upgrade_local_group_index_canister_wasm" => state.is_caller_governance_principal(),
+        "upload_wasm_chunk" => state.can_caller_upload_wasm_chunks(),
         "add_hot_group_exclusion"
         | "delete_frozen_group"
         | "freeze_group"

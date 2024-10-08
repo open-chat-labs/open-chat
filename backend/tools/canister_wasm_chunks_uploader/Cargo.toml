@@ -1,0 +1,17 @@
+[package]
+name = "canister_wasm_chunks_uploader"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+canister_agent_utils = { path = "../../libraries/canister_agent_utils" }
+clap = { workspace = true, features = ["derive"] }
+group_index_canister = { path = "../../canisters/group_index/api" }
+group_index_canister_client = { path = "../../canisters/group_index/client" }
+ic-agent = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+types = { path = "../../libraries/types" }
+user_index_canister = { path = "../../canisters/user_index/api" }
+user_index_canister_client = { path = "../../canisters/user_index/client" }

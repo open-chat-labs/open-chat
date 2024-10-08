@@ -1,9 +1,41 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
+
+### Changed
+
+- Mark prize messages as having ledger error if transfers fail ([#6500](https://github.com/open-chat-labs/open-chat/pull/6500))
+- Make adding existing users to a new channel more efficient ([#6504](https://github.com/open-chat-labs/open-chat/pull/6504))
+- Further refactoring of adding multiple users to public channels ([#6506](https://github.com/open-chat-labs/open-chat/pull/6506))
+- Add support for expiring access gates ([#6401](https://github.com/open-chat-labs/open-chat/pull/6401))
+
+## [[2.0.1365](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1365-community)] - 2024-10-02
+
+### Added
+
+- Add MessagePack versions of all endpoints ([#6463](https://github.com/open-chat-labs/open-chat/pull/6463))
+- Add `lookup_members` endpoint ([#6472](https://github.com/open-chat-labs/open-chat/pull/6472))
+
+### Changed
+
+- Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
+- Simplify prize winner messages to reduce size (part 1) ([#6449](https://github.com/open-chat-labs/open-chat/pull/6449))
+- Generate new channel Ids as 32bit rather than 128bit ([#6464](https://github.com/open-chat-labs/open-chat/pull/6464))
+- Simplify search logic and move it into `SearchIndex` struct ([#6465](https://github.com/open-chat-labs/open-chat/pull/6465))
+- Return owned values from `EventsMap` in prep for switch to stable memory ([#6469](https://github.com/open-chat-labs/open-chat/pull/6469))
+- Add serde default attribute in preparation for skipping serialization if default ([#6475](https://github.com/open-chat-labs/open-chat/pull/6475))
+
+### Removed
+
+- Remove `selected_updates` now that everything uses the v2 version ([#6461](https://github.com/open-chat-labs/open-chat/pull/6461))
+
+### Fixed
+
+- Avoid pushing community event if no users invited ([#6477](https://github.com/open-chat-labs/open-chat/pull/6477))
 
 ## [[2.0.1351](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1351-community)] - 2024-09-20
 
@@ -106,7 +138,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Added support for a bunch more achievements ([#6033](https://github.com/open-chat-labs/open-chat/pull/6033))
-  
+
 ## [[2.0.1235](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1235-community)] - 2024-07-09
 
 ### Added
@@ -239,7 +271,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Simplify `start_video_call` responses ([#5479](https://github.com/open-chat-labs/open-chat/pull/5479))
 - Join video calls by `message_id` rather than `message_index` ([#5482](https://github.com/open-chat-labs/open-chat/pull/5482))
 - Unblock users from channels and block from community instead ([#5483](https://github.com/open-chat-labs/open-chat/pull/5483))
-- Add `start_video_call` permission  ([#5488](https://github.com/open-chat-labs/open-chat/pull/5488))
+- Add `start_video_call` permission ([#5488](https://github.com/open-chat-labs/open-chat/pull/5488))
 - Push message events from within `chat_events` ([#5494](https://github.com/open-chat-labs/open-chat/pull/5494))
 
 ### Fixed
@@ -357,7 +389,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [[2.0.945](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.945-community)] - 2023-11-24
 
-### Added 
+### Added
 
 - Support cancelling invites ([#4831](https://github.com/open-chat-labs/open-chat/pull/4831))
 
@@ -387,7 +419,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Extend `c2c_report_message` endpoint ([#4719](https://github.com/open-chat-labs/open-chat/pull/4719))
 - Don't collect reason or notes from reporter ([#4724](https://github.com/open-chat-labs/open-chat/pull/4724))
 - Improve `ReplicaNotUpToDate` check to avoid displaying outdated events ([#4727](https://github.com/open-chat-labs/open-chat/pull/4727))
-- Disallow leaving community if user is last owner of any channels ([#4731](https://github.com/open-chat-labs/open-chat/pull/4731)) 
+- Disallow leaving community if user is last owner of any channels ([#4731](https://github.com/open-chat-labs/open-chat/pull/4731))
 - Consolidate logic to update thread summaries ([#4736](https://github.com/open-chat-labs/open-chat/pull/4736))
 
 ## [[2.0.921](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.921-community)] - 2023-11-02

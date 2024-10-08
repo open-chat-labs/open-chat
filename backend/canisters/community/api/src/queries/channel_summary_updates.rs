@@ -1,7 +1,9 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{ChannelId, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, TimestampMillis};
 
+#[ts_export(community, channel_summary_updates)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub channel_id: ChannelId,
@@ -10,6 +12,7 @@ pub struct Args {
 }
 
 // Allow the large size difference because essentially all responses are the large variant anyway
+#[ts_export(community, channel_summary_updates)]
 #[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {

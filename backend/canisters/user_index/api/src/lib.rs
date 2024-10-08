@@ -1,4 +1,4 @@
-use candid::Principal;
+use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
     CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, MessageContent, MessageContentInitial, MessageId, MessageIndex,
@@ -87,4 +87,10 @@ pub struct ExternalAchievementInitial {
     pub chit_reward: u32,
     pub expires: TimestampMillis,
     pub chit_budget: u32,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum ChildCanisterType {
+    LocalUserIndex,
+    User,
 }

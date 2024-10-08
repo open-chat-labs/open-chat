@@ -11,7 +11,7 @@
         "TENOR_APIKEY",
         "CORS_APIKEY"
     ],
-    "pipeline": {
+    "tasks": {
         "deploy:prod": {
             "outputs": ["lib/**", "build/**"],
             "dependsOn": ["typecheck", "validate", "lint", "test:prod"]
@@ -24,7 +24,6 @@
             "outputs": ["lib/**", "build/**"],
             "dependsOn": ["typecheck", "validate", "lint", "test:testnet"]
         },
-
         "build:prod": {
             "outputs": ["lib/**", "build/**"],
             "dependsOn": ["^build", "openchat-service-worker#build", "openchat-worker#build"]
@@ -37,21 +36,17 @@
             "outputs": ["lib/**", "build/**"],
             "dependsOn": ["^build", "openchat-service-worker#build", "openchat-worker#build"]
         },
-
         "build": {
             "outputs": ["lib/**", "build/**"],
             "dependsOn": ["^build"]
         },
-
         "build:ci": {
             "outputs": ["lib/**", "build/**"],
             "dependsOn": ["build:prod", "typecheck", "validate", "lint", "test:prod"]
         },
-
         "verify": {
             "dependsOn": ["typecheck", "validate", "lint", "test:prod"]
         },
-
         "test:prod": {
             "dependsOn": ["build:prod", "^test"],
             "outputs": [],
@@ -67,7 +62,6 @@
             "outputs": [],
             "inputs": ["src/**/*.ts"]
         },
-
         "dev": {
             "cache": false,
             "persistent": true,

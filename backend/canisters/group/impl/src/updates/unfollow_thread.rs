@@ -1,10 +1,10 @@
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::unfollow_thread::{Response::*, *};
 use group_chat_core::UnfollowThreadResult;
-use ic_cdk::update;
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 fn unfollow_thread(args: Args) -> Response {
     run_regular_jobs();
@@ -35,5 +35,6 @@ fn unfollow_thread_impl(args: Args, state: &mut RuntimeState) -> Response {
         UnfollowThreadResult::ThreadNotFound => ThreadNotFound,
         UnfollowThreadResult::UserNotInGroup => UserNotInGroup,
         UnfollowThreadResult::UserSuspended => UserSuspended,
+        UnfollowThreadResult::UserLapsed => UserLapsed,
     }
 }

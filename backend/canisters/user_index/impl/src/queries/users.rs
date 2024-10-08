@@ -5,7 +5,7 @@ use types::{CurrentUserSummary, UserSummaryV2};
 use user_index_canister::users::{Response::*, *};
 use utils::time::MonthKey;
 
-#[query(msgpack = true)]
+#[query(candid = true, msgpack = true)]
 fn users(args: Args) -> Response {
     read_state(|state| users_impl(args, state))
 }

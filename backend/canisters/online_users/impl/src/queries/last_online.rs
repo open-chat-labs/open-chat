@@ -3,7 +3,7 @@ use canister_api_macros::query;
 use canister_tracing_macros::trace;
 use online_users_canister::last_online::{Response::*, *};
 
-#[query(msgpack = true)]
+#[query(candid = true, msgpack = true)]
 #[trace]
 fn last_online(args: Args) -> Response {
     read_state(|state| last_online_impl(args, state))

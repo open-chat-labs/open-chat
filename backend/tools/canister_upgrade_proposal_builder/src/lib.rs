@@ -1,9 +1,10 @@
 use candid::Encode;
 use clap::Parser;
+use sha256::sha256;
 use sns_governance_canister::types::{proposal, ExecuteGenericNervousSystemFunction, Proposal};
 use std::error::Error;
 use std::fs;
-use types::{BuildVersion, CanisterWasm, UpgradeCanisterWasmArgs};
+use types::{BuildVersion, CanisterWasm, UpgradeCanisterWasmArgs, UpgradeChunkedCanisterWasmArgs};
 
 /// Builds the binary encoded candid representation of an ExecuteGenericNervousSystemFunction proposal
 /// for upgrading a canister WASM
@@ -29,6 +30,9 @@ pub struct Config {
     #[arg(long)]
     pub wasm_path: std::path::PathBuf,
 
+    #[arg(long, action = clap::ArgAction::Set)]
+    pub chunked: bool,
+
     /// Version of the wasm module
     #[arg(long)]
     pub version: BuildVersion,
@@ -42,17 +46,23 @@ pub fn build(config: Config) -> Result<Vec<u8>, Box<dyn Error>> {
 
 fn create_proposal(config: Config) -> Result<Proposal, Box<dyn Error>> {
     let wasm_module = fs::read(config.wasm_path)?;
+    let wasm_hash = sha256(&wasm_module);
 
-    let args = UpgradeCanisterWasmArgs {
-        wasm: CanisterWasm {
+    let payload = if config.chunked {
+        Encode!(&UpgradeChunkedCanisterWasmArgs {
             version: config.version,
-            module: wasm_module,
-        },
-        filter: None,
-        use_for_new_canisters: None,
-    };
-
-    let payload = Encode!(&args)?;
+            wasm_hash,
+            filter: None,
+        })
+    } else {
+        Encode!(&UpgradeCanisterWasmArgs {
+            wasm: CanisterWasm {
+                version: config.version,
+                module: wasm_module.into(),
+            },
+            filter: None,
+        })
+    }?;
 
     let proposal = Proposal {
         title: config.title,

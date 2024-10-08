@@ -2,13 +2,14 @@ use crate::guards::caller_is_owner;
 use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
 use search::Query;
-use types::EventIndex;
+use std::collections::HashSet;
+use types::MessageIndex;
 use user_canister::search_messages::{Response::*, *};
 
 const MIN_TERM_LENGTH: u8 = 3;
 const MAX_TERM_LENGTH: u8 = 30;
 
-#[query(guard = "caller_is_owner", candid = true)]
+#[query(guard = "caller_is_owner", candid = true, msgpack = true)]
 fn search_messages(args: Args) -> Response {
     read_state(|state| search_messages_impl(args, state))
 }
@@ -35,7 +36,7 @@ fn search_messages_impl(args: Args, state: &RuntimeState) -> Response {
     let matches =
         direct_chat
             .events
-            .search_messages(state.env.now(), EventIndex::default(), &query, args.max_results, my_user_id);
+            .search_messages(MessageIndex::default(), query, HashSet::new(), args.max_results, my_user_id);
 
     Success(SuccessResult { matches })
 }

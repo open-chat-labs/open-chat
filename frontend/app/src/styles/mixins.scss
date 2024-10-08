@@ -157,6 +157,12 @@ $sp11: 192px;
     }
 }
 
+@mixin not-mobile() {
+    @include size-above(sm) {
+        @content;
+    }
+}
+
 @mixin size-below-n($n) {
     @media (max-width: ($n - 1)) {
         @content;
@@ -550,7 +556,7 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     padding: 2px;
     border-radius: 50%;
     backdrop-filter: blur(1px);
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.3);
     position: absolute;
     bottom: -2px;
     right: 2px;

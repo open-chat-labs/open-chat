@@ -1,16 +1,16 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, read_state, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_canister::remove_participant::{Response::*, *};
 use group_chat_core::GroupRoleInternal;
-use ic_cdk::update;
 use local_user_index_canister_c2c_client::{lookup_user, LookupUserError};
 use msgpack::serialize_then_unwrap;
 use types::{CanisterId, UserId};
 use user_canister::c2c_remove_from_group;
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn block_user(args: group_canister::block_user::Args) -> group_canister::block_user::Response {
     if !read_state(|state| state.data.chat.is_public.value) {
@@ -20,7 +20,7 @@ async fn block_user(args: group_canister::block_user::Args) -> group_canister::b
     remove_participant_impl(args.user_id, true).await.into()
 }
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn remove_participant(args: Args) -> Response {
     remove_participant_impl(args.user_id, false).await
@@ -64,6 +64,8 @@ fn prepare(user_to_remove: UserId, block: bool, state: &RuntimeState) -> Result<
     if let Some(member) = state.data.get_member(caller) {
         if member.suspended.value {
             Err(UserSuspended)
+        } else if member.lapsed.value {
+            return Err(UserLapsed);
         } else if member.user_id == user_to_remove {
             Err(CannotRemoveSelf)
         } else {
@@ -104,7 +106,7 @@ fn commit(user_to_remove: UserId, block: bool, removed_by: UserId, state: &mut R
         .remove_member(removed_by, user_to_remove, block, state.env.now())
     {
         group_chat_core::RemoveMemberResult::Success => {
-            state.data.remove_principal(user_to_remove);
+            state.data.remove_user(user_to_remove);
 
             handle_activity_notification(state);
 
@@ -121,6 +123,7 @@ fn commit(user_to_remove: UserId, block: bool, removed_by: UserId, state: &mut R
             Success
         }
         group_chat_core::RemoveMemberResult::UserSuspended => UserSuspended,
+        group_chat_core::RemoveMemberResult::UserLapsed => UserLapsed,
         group_chat_core::RemoveMemberResult::UserNotInGroup => CallerNotInGroup,
         group_chat_core::RemoveMemberResult::TargetUserNotInGroup => UserNotInGroup,
         group_chat_core::RemoveMemberResult::NotAuthorized => NotAuthorized,

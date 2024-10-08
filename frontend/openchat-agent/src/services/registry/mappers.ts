@@ -2,11 +2,13 @@ import type {
     NervousSystemSummary,
     RegistryUpdatesResponse,
     CryptocurrencyDetails,
+    DexId,
 } from "openchat-shared";
 import { mapOptional, principalBytesToString } from "../../utils/mapping";
 import { UnsupportedValueError } from "openchat-shared";
 import { buildTokenLogoUrl } from "../../utils/chat";
 import type {
+    ExchangeId as TExchangeId,
     RegistryNervousSystemSummary,
     RegistryTokenDetails,
     RegistryUpdatesResponse as TRegistryUpdatesResponse,
@@ -24,11 +26,11 @@ export function updatesResponse(
     }
     if ("Success" in value) {
         const communityId = "txydz-jyaaa-aaaaf-bifea-cai";
-        const channelId = "83973693511680025111877019856849080554";
-        const channelName = "September airdrop";
+        const channelId = "116038783899146119312635856055055056435";
+        const channelName = "October airdrop";
         const communityName = "CHIT for CHAT";
 
-      return {
+        return {
             kind: "success",
             lastUpdated: value.Success.last_updated,
             tokenDetails:
@@ -36,6 +38,7 @@ export function updatesResponse(
                     tokens.map((t) => tokenDetails(t, blobUrlPattern, registryCanisterId)),
                 ) ?? [],
             nervousSystemSummary: value.Success.nervous_system_details.map(nervousSystemSummary),
+            swapProviders: mapOptional(value.Success.swap_providers, (r) => r.map(swapProvider)),
             messageFiltersAdded: value.Success.message_filters_added,
             messageFiltersRemoved: value.Success.message_filters_removed,
             currentAirdropChannel: {
@@ -97,4 +100,11 @@ function nervousSystemSummary(value: RegistryNervousSystemSummary): NervousSyste
         proposalRejectionFee: value.proposal_rejection_fee,
         submittingProposalsEnabled: value.submitting_proposals_enabled,
     };
+}
+
+function swapProvider(value: TExchangeId): DexId {
+    if (value === "ICPSwap") return "icpswap";
+    if (value === "Sonic") return "sonic";
+    if (value === "KongSwap") return "kongswap";
+    throw new UnsupportedValueError("Unexpected ApiSwapProvider type received", value);
 }

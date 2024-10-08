@@ -7,7 +7,7 @@ use types::{CanisterId, Chat, EventIndex, UserId};
 use user_canister::report_message::{Response::*, *};
 use user_index_canister::c2c_report_message;
 
-#[update(guard = "caller_is_owner", candid = true)]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 async fn report_message(args: Args) -> Response {
     run_regular_jobs();

@@ -32,6 +32,7 @@
     export let showNoGate = false;
     export let level: Level;
     export let clickable = false;
+    export let button = false;
 
     const client = getContext<OpenChat>("client");
 
@@ -39,6 +40,7 @@
 
     $: tokenDetails = client.getTokenDetailsForAccessGate(gate);
     $: params = formatParams(gate, tokenDetails);
+    $: defaultColor = button ? "var(--button-txt)" : "var(--icon-txt)";
 
     function formatParams(
         gate: AccessGate,
@@ -99,7 +101,7 @@
     {#if gate.kind === "no_gate" && showNoGate}
         <TooltipWrapper {position} {align}>
             <div slot="target" class="open">
-                <ShieldLockOpenOutline size={$iconSize} color={"var(--button-txt)"} />
+                <ShieldLockOpenOutline size={$iconSize} color={defaultColor} />
             </div>
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
@@ -120,7 +122,7 @@
     {:else if gate.kind === "composite_gate"}
         <TooltipWrapper {position} {align}>
             <div slot="target" class="composite">
-                <VectorCombine size={$iconSize} color={"var(--button-txt)"} />
+                <VectorCombine size={$iconSize} color={defaultColor} />
             </div>
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
@@ -153,7 +155,7 @@
     {:else if gate.kind === "unique_person_gate"}
         <TooltipWrapper {position} {align}>
             <div slot="target" class="unique">
-                <AccountCheck size={$iconSize} color={"var(--button-txt)"} />
+                <AccountCheck size={$iconSize} color={defaultColor} />
             </div>
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
@@ -173,7 +175,7 @@
     {:else if gate.kind === "referred_by_member_gate"}
         <TooltipWrapper {position} {align}>
             <div slot="target" class="referred_by_member">
-                <AccountPlusOutline size={$iconSize} color={"var(--button-txt)"} />
+                <AccountPlusOutline size={$iconSize} color={defaultColor} />
             </div>
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>

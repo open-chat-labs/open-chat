@@ -14,11 +14,14 @@ generate_msgpack_update_call!(unfreeze_group);
 generate_update_call!(upgrade_community_canister_wasm);
 generate_update_call!(upgrade_group_canister_wasm);
 generate_update_call!(upgrade_local_group_index_canister_wasm);
+generate_update_call!(upload_wasm_chunk);
 
 pub mod happy_path {
     use crate::User;
     use candid::Principal;
+    use group_index_canister::ChildCanisterType;
     use pocket_ic::PocketIc;
+    use sha256::sha256;
     use types::{CanisterId, CanisterWasm, CommunityMatch, GroupMatch};
 
     pub fn explore_communities(env: &PocketIc, sender: &User, group_index_canister_id: CanisterId) -> Vec<CommunityMatch> {
@@ -67,14 +70,22 @@ pub mod happy_path {
         group_index_canister_id: CanisterId,
         wasm: CanisterWasm,
     ) {
+        upload_wasm_in_chunks(
+            env,
+            sender,
+            group_index_canister_id,
+            &wasm.module,
+            ChildCanisterType::LocalGroupIndex,
+        );
+
         let response = super::upgrade_local_group_index_canister_wasm(
             env,
             sender,
             group_index_canister_id,
             &group_index_canister::upgrade_local_group_index_canister_wasm::Args {
-                wasm,
+                version: wasm.version,
+                wasm_hash: sha256(&wasm.module),
                 filter: None,
-                use_for_new_canisters: None,
             },
         );
 
@@ -90,14 +101,16 @@ pub mod happy_path {
         group_index_canister_id: CanisterId,
         wasm: CanisterWasm,
     ) {
+        upload_wasm_in_chunks(env, sender, group_index_canister_id, &wasm.module, ChildCanisterType::Group);
+
         let response = super::upgrade_group_canister_wasm(
             env,
             sender,
             group_index_canister_id,
             &group_index_canister::upgrade_group_canister_wasm::Args {
-                wasm,
+                version: wasm.version,
+                wasm_hash: sha256(&wasm.module),
                 filter: None,
-                use_for_new_canisters: None,
             },
         );
 
@@ -113,14 +126,22 @@ pub mod happy_path {
         group_index_canister_id: CanisterId,
         wasm: CanisterWasm,
     ) {
+        upload_wasm_in_chunks(
+            env,
+            sender,
+            group_index_canister_id,
+            &wasm.module,
+            ChildCanisterType::Community,
+        );
+
         let response = super::upgrade_community_canister_wasm(
             env,
             sender,
             group_index_canister_id,
             &group_index_canister::upgrade_community_canister_wasm::Args {
-                wasm,
+                version: wasm.version,
+                wasm_hash: sha256(&wasm.module),
                 filter: None,
-                use_for_new_canisters: None,
             },
         );
 
@@ -153,5 +174,30 @@ pub mod happy_path {
             response,
             group_index_canister::add_local_group_index_canister::Response::Success
         ));
+    }
+
+    fn upload_wasm_in_chunks(
+        env: &mut PocketIc,
+        sender: Principal,
+        group_index_canister_id: CanisterId,
+        wasm: &[u8],
+        canister_type: ChildCanisterType,
+    ) {
+        for (index, chunk) in wasm.chunks(1_000_000).enumerate() {
+            let response = super::upload_wasm_chunk(
+                env,
+                sender,
+                group_index_canister_id,
+                &group_index_canister::upload_wasm_chunk::Args {
+                    canister_type,
+                    chunk: chunk.to_vec().into(),
+                    index: index as u8,
+                },
+            );
+            assert!(matches!(
+                response,
+                group_index_canister::upload_wasm_chunk::Response::Success(_)
+            ));
+        }
     }
 }

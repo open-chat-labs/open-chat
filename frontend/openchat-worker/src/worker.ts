@@ -209,7 +209,7 @@ self.addEventListener("unhandledrejection", (err: PromiseRejectionEvent) => {
 });
 
 self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) => {
-    logger?.debug("WORKER: received ", msg.data.kind, msg.data.correlationId);
+    (logger ?? console).debug("WORKER: received ", msg.data.kind, msg.data.correlationId);
     const payload = msg.data;
     const kind = payload.kind;
     const correlationId = payload.correlationId;
@@ -971,6 +971,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     payload,
                     correlationId,
                     agent.removeHotGroupExclusion(payload.chatId),
+                );
+                break;
+
+            case "addRemoveSwapProvider":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.addRemoveSwapProvider(payload.swapProvider, payload.add),
                 );
                 break;
 
@@ -1755,7 +1763,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.setPinNumber(payload.currentPin, payload.newPin),
+                    agent.setPinNumber(payload.verification, payload.newPin),
                 );
                 break;
 

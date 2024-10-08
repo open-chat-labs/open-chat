@@ -64,6 +64,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareResult, Respon
         history_visible_to_new_joiners: args.history_visible_to_new_joiners,
         permissions: args.permissions,
         gate: args.gate,
+        gate_config: args.gate_config,
         default_channels: Vec::new(),
         default_channel_rules: None,
         source_group: Some(SourceGroup {

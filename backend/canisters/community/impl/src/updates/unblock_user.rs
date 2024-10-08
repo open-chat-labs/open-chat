@@ -2,12 +2,12 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::model::events::CommunityEventInternal;
 use crate::updates::unblock_user::Response::*;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::unblock_user::*;
-use ic_cdk::update;
 use types::UsersUnblocked;
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 fn unblock_user(args: Args) -> Response {
     run_regular_jobs();
@@ -27,6 +27,8 @@ fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> Response {
     } else if let Some(caller_member) = state.data.members.get(caller) {
         if caller_member.suspended.value {
             return UserSuspended;
+        } else if caller_member.lapsed.value {
+            return UserLapsed;
         }
 
         let unblocked_by = caller_member.user_id;

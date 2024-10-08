@@ -4,7 +4,7 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use types::{
-    is_default, is_empty_slice, BotConfig, CyclesTopUp, CyclesTopUpInternal, PhoneNumber, RegistrationFee, SuspensionAction,
+    is_default, BotConfig, CyclesTopUp, CyclesTopUpInternal, PhoneNumber, RegistrationFee, SuspensionAction,
     SuspensionDuration, TimestampMillis, UniquePersonProof, UserId, UserSummary, UserSummaryStable, UserSummaryV2,
     UserSummaryVolatile, UserType,
 };
@@ -52,11 +52,11 @@ pub struct User {
     pub diamond_membership_details: DiamondMembershipDetailsInternal,
     #[serde(rename = "mf", default, skip_serializing_if = "is_default")]
     pub moderation_flags_enabled: u32,
-    #[serde(rename = "rm", default, skip_serializing_if = "is_empty_slice")]
+    #[serde(rename = "rm", default, skip_serializing_if = "Vec::is_empty")]
     pub reported_messages: Vec<u64>,
     #[serde(rename = "cm", default, skip_serializing_if = "is_default")]
     pub chit_per_month: BTreeMap<MonthKey, i32>,
-    #[serde(rename = "sk", alias = "s", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "sk", default, skip_serializing_if = "is_default")]
     pub streak: u16,
     #[serde(rename = "se", default, skip_serializing_if = "is_default")]
     pub streak_ends: TimestampMillis,

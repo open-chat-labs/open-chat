@@ -8,7 +8,7 @@ use types::TimestampNanos;
 use user_canister::approve_transfer::{Response::*, *};
 use utils::time::NANOS_PER_MILLISECOND;
 
-#[update(guard = "caller_is_owner", candid = true)]
+#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
 #[trace]
 async fn approve_transfer(args: Args) -> Response {
     run_regular_jobs();

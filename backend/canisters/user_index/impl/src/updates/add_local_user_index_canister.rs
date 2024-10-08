@@ -6,6 +6,7 @@ use local_user_index_canister::{Event, UserRegistered};
 use tracing::info;
 use types::{BuildVersion, CanisterId, CanisterWasm};
 use user_index_canister::add_local_user_index_canister::{Response::*, *};
+use user_index_canister::ChildCanisterType;
 use utils::canister::{install_basic, set_controllers};
 
 #[proposal(guard = "caller_is_governance_principal")]
@@ -37,12 +38,20 @@ struct PrepareResult {
 
 fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
     if !state.data.local_index_map.contains_key(&args.canister_id) {
+        let canister_wasm = state
+            .data
+            .child_canister_wasms
+            .get(ChildCanisterType::LocalUserIndex)
+            .wasm
+            .clone();
+        let wasm_version = canister_wasm.version;
+
         Ok(PrepareResult {
             this_canister_id: state.env.canister_id(),
-            canister_wasm: state.data.local_user_index_canister_wasm_for_new_canisters.clone(),
+            canister_wasm,
             init_args: local_user_index_canister::init::Args {
-                user_canister_wasm: state.data.user_canister_wasm.clone(),
-                wasm_version: state.data.local_user_index_canister_wasm_for_new_canisters.version,
+                user_canister_wasm: state.data.child_canister_wasms.get(ChildCanisterType::User).wasm.clone(),
+                wasm_version,
                 user_index_canister_id: state.env.canister_id(),
                 group_index_canister_id: state.data.group_index_canister_id,
                 identity_canister_id: state.data.identity_canister_id,

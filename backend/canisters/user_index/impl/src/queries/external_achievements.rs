@@ -4,7 +4,7 @@ use itertools::max;
 use types::TimestampMillis;
 use user_index_canister::external_achievements::{Response::*, *};
 
-#[query(msgpack = true)]
+#[query(candid = true, msgpack = true)]
 fn external_achievements(args: Args) -> Response {
     read_state(|state| external_achievements_impl(args, state))
 }

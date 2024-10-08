@@ -1,13 +1,13 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::timer_job_types::NotifyEscrowCanisterOfDepositJob;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::accept_p2p_swap::{Response::*, *};
-use ic_cdk::update;
 use icrc_ledger_types::icrc1::transfer::TransferError;
 use types::{AcceptSwapSuccess, Achievement, ChannelId, Chat, MessageId, MessageIndex, P2PSwapLocation, UserId};
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn accept_p2p_swap(args: Args) -> Response {
     run_regular_jobs();
@@ -78,6 +78,8 @@ fn reserve_p2p_swap(args: Args, state: &mut RuntimeState) -> Result<ReserveP2PSw
     if let Some(member) = state.data.members.get(caller) {
         if member.suspended.value {
             return Err(Box::new(UserSuspended));
+        } else if member.lapsed.value {
+            return Err(Box::new(UserLapsed));
         }
         let user_id = member.user_id;
 
@@ -86,6 +88,11 @@ fn reserve_p2p_swap(args: Args, state: &mut RuntimeState) -> Result<ReserveP2PSw
                 Some(m) => m,
                 _ => return Err(Box::new(UserNotInChannel)),
             };
+
+            if channel_member.lapsed.value {
+                return Err(Box::new(UserLapsed));
+            }
+
             let now = state.env.now();
 
             match channel.chat.events.reserve_p2p_swap(

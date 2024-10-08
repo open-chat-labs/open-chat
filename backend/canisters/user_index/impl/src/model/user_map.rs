@@ -4,7 +4,7 @@ use crate::model::user::User;
 use crate::DiamondMembershipUserMetrics;
 use candid::Principal;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::ops::RangeFrom;
 use tracing::info;
 use types::{BotConfig, CyclesTopUp, Milliseconds, SuspensionDuration, TimestampMillis, UniquePersonProof, UserId, UserType};
@@ -339,6 +339,17 @@ impl UserMap {
             }
         }
         metrics
+    }
+
+    pub fn streak_badge_metrics(&self, now: TimestampMillis) -> BTreeMap<u16, u32> {
+        let mut map = BTreeMap::new();
+        let streak_badges = [365u16, 100, 30, 14, 7, 3];
+
+        for streak in self.users.values().map(|u| u.streak(now)).filter(|s| *s >= 3) {
+            let key = streak_badges.iter().find(|s| streak >= **s).copied().unwrap();
+            *map.entry(key).or_default() += 1;
+        }
+        map
     }
 
     pub fn set_moderation_flags_enabled(&mut self, caller: &Principal, moderation_flags_enabled: u32) -> bool {

@@ -51,8 +51,8 @@ import type { CryptocurrencyContent } from "openchat-shared";
 import type { PrizeContent } from "openchat-shared";
 import type { P2PSwapContent } from "openchat-shared";
 
-const CACHE_VERSION = 113;
-const FIRST_MIGRATION = 104;
+const CACHE_VERSION = 115;
+const EARLIEST_SUPPORTED_MIGRATION = 115;
 const MAX_INDEX = 9999999999;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
@@ -138,70 +138,28 @@ export interface ChatSchema extends DBSchema {
 type MigrationFunction<T> = (
     db: IDBPDatabase<T>,
     principal: Principal,
-    transaction: IDBPTransaction<T, StoreNames<T>[], "versionchange">
+    transaction: IDBPTransaction<T, StoreNames<T>[], "versionchange">,
 ) => Promise<void>;
 
-async function clearChatsStore(
-    _db: IDBPDatabase<ChatSchema>,
-    _principal: Principal,
-    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">
-) {
-    await tx.objectStore("chats").clear();
-}
+// Leaving this here as an example - needs to be commented to keep the compiler happy
+// async function clearChatsStore(
+//     _db: IDBPDatabase<ChatSchema>,
+//     _principal: Principal,
+//     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+// ) {
+//     await tx.objectStore("chats").clear();
+// }
 
-async function clearEventsStore(
-    _db: IDBPDatabase<ChatSchema>,
-    _principal: Principal,
-    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">
-) {
-    await tx.objectStore("chat_events").clear();
-}
-
-async function clearCommunityDetails(
-    _db: IDBPDatabase<ChatSchema>,
-    _principal: Principal,
-    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">
-) {
-    await tx.objectStore("community_details").clear();
-}
-
-async function createExternalAchievementsStore(
+async function clearEverything(
     db: IDBPDatabase<ChatSchema>,
     _principal: Principal,
-    _tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">
+    _tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
 ) {
-    db.createObjectStore("externalAchievements");
+    nuke(db);
 }
 
 const migrations: Record<number, MigrationFunction<ChatSchema>> = {
-    105: clearChatsStore,
-    106: clearChatsStore,
-    107: async (
-        _db: IDBPDatabase<ChatSchema>,
-        principal: Principal,
-        tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">
-    ) => {
-        const key = principal.toString();
-        const store = tx.objectStore("chats");
-        const chatState = await store.get(key);
-        if (chatState) {
-            chatState.chitState.totalChitEarned = chatState.chitState.chitBalance;
-            await store.put(chatState, key);
-        }
-    },
-    108: async (
-        db: IDBPDatabase<ChatSchema>,
-        principal: Principal,
-        tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">
-    ) => {
-        await clearEventsStore(db, principal, tx);
-        await clearChatsStore(db, principal, tx);
-    },
-    109: clearChatsStore,
-    110: clearChatsStore,
-    111: clearChatsStore,
-    112: clearCommunityDetails,
-    113: createExternalAchievementsStore,
+    114: clearEverything,
 };
 
 async function migrate(
@@ -209,7 +167,7 @@ async function migrate(
     principal: Principal,
     from: number,
     to: number,
-    transaction: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">
+    transaction: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
 ) {
     for (let version = from + 1; version <= to; version++) {
         if (migrations[version]) {
@@ -300,7 +258,7 @@ export function openCache(principal: Principal): Database {
         upgrade(db, previousVersion, newVersion, transaction) {
             if (
                 previousVersion == null ||
-                previousVersion < FIRST_MIGRATION ||
+                previousVersion < EARLIEST_SUPPORTED_MIGRATION ||
                 newVersion == null
             ) {
                 nuke(db);
@@ -308,7 +266,7 @@ export function openCache(principal: Principal): Database {
                 console.debug(`DB: migrating database from ${previousVersion} to ${newVersion}`);
                 migrate(db, principal, previousVersion, newVersion, transaction).then(() => {
                     console.debug(
-                        `DB: migration from ${previousVersion} to ${newVersion} complete`
+                        `DB: migration from ${previousVersion} to ${newVersion} complete`,
                     );
                 });
             }
@@ -317,7 +275,7 @@ export function openCache(principal: Principal): Database {
 }
 
 export async function openDbAndGetCachedChats(
-    principal: Principal
+    principal: Principal,
 ): Promise<ChatStateFull | undefined> {
     const db = openCache(principal);
     if (db !== undefined) {
@@ -327,7 +285,7 @@ export async function openDbAndGetCachedChats(
 
 export async function getCachedChats(
     db: Database,
-    principal: Principal
+    principal: Principal,
 ): Promise<ChatStateFull | undefined> {
     return await (await db).get("chats", principal.toString());
 }
@@ -336,7 +294,7 @@ export async function setCachedChats(
     db: Database,
     principal: Principal,
     chatState: ChatStateFull,
-    updatedEvents: ChatMap<UpdatedEvent[]>
+    updatedEvents: ChatMap<UpdatedEvent[]>,
 ): Promise<void> {
     const directChats = chatState.directChats.map(makeChatSummarySerializable);
     const groupChats = chatState.groupChats.map(makeChatSummarySerializable);
@@ -358,7 +316,7 @@ export async function setCachedChats(
         return indexes.map((i) => {
             const key = createCacheKey(
                 { chatId, threadRootMessageIndex: i.threadRootMessageIndex },
-                i.eventIndex
+                i.eventIndex,
             );
             return i.threadRootMessageIndex === undefined
                 ? eventsStore.delete(key)
@@ -380,7 +338,7 @@ export async function getCachedEvents(
     ascending: boolean,
     maxEvents = MAX_EVENTS,
     maxMessages = MAX_MESSAGES,
-    maxMissing = 50
+    maxMissing = 50,
 ): Promise<[EventsSuccessResult<ChatEvent>, Set<number>]> {
     console.debug("CACHE: ", context, eventIndexRange, startIndex, ascending);
     const start = Date.now();
@@ -393,7 +351,7 @@ export async function getCachedEvents(
         ascending,
         maxEvents,
         maxMessages,
-        maxMissing
+        maxMissing,
     );
 
     if (missing.size === 0) {
@@ -420,7 +378,7 @@ export async function getCachedEventsWindowByMessageIndex(
     messageIndex: number,
     maxEvents = MAX_EVENTS,
     maxMessages = MAX_MESSAGES,
-    maxMissing = 50
+    maxMissing = 50,
 ): Promise<[EventsSuccessResult<ChatEvent>, Set<number>, boolean]> {
     const eventIndex = await getNearestCachedEventIndexForMessageIndex(db, context, messageIndex);
 
@@ -444,7 +402,7 @@ export async function getCachedEventsWindowByMessageIndex(
         eventIndex,
         maxEvents,
         maxMessages,
-        maxMissing
+        maxMissing,
     );
 
     return [events, missing, false];
@@ -457,7 +415,7 @@ export async function getCachedEventsWindow(
     startIndex: number,
     maxEvents = MAX_EVENTS,
     maxMessages = MAX_MESSAGES,
-    maxMissing = 50
+    maxMissing = 50,
 ): Promise<[EventsSuccessResult<ChatEvent>, Set<number>]> {
     console.debug("CACHE: window: ", eventIndexRange, startIndex);
     const start = Date.now();
@@ -476,8 +434,8 @@ export async function getCachedEventsWindow(
                 false,
                 maxEvents / 2,
                 maxMessages / 2,
-                maxMissing / 2
-            )
+                maxMissing / 2,
+            ),
         );
     }
     if (eventIndexRange[1] >= startIndex) {
@@ -490,8 +448,8 @@ export async function getCachedEventsWindow(
                 true,
                 maxEvents / 2,
                 maxMessages / 2,
-                maxMissing / 2
-            )
+                maxMissing / 2,
+            ),
         );
     }
 
@@ -519,7 +477,7 @@ export async function getCachedEventByIndex(
     db: IDBPDatabase<ChatSchema>,
     eventIndex: number,
     context: MessageContext,
-    now: number = Date.now()
+    now: number = Date.now(),
 ): Promise<EnhancedWrapper<ChatEvent> | ExpiredEventsRange | undefined> {
     const storeName =
         context.threadRootMessageIndex === undefined ? "chat_events" : "thread_events";
@@ -528,7 +486,7 @@ export async function getCachedEventByIndex(
 
     const event = processEventExpiry(
         await db.get(storeName, IDBKeyRange.bound(key, upperBound)),
-        now
+        now,
     );
 
     if (
@@ -543,7 +501,7 @@ export async function getCachedEventByIndex(
 export async function getCachedEventsByIndex(
     db: Database,
     eventIndexes: number[],
-    context: MessageContext
+    context: MessageContext,
 ): Promise<[EventsSuccessResult<ChatEvent>, Set<number>]> {
     const events: EnhancedWrapper<ChatEvent>[] = [];
     const expiredEventRanges: ExpiredEventsRange[] = [];
@@ -560,7 +518,7 @@ export async function getCachedEventsByIndex(
             } else {
                 expiredEventRanges.push(evt);
             }
-        })
+        }),
     );
     return [
         {
@@ -580,7 +538,7 @@ export async function getNearestCachedEventIndexForMessageIndex(
     db: Database,
     context: MessageContext,
     messageIndex: number,
-    iterations = 0
+    iterations = 0,
 ): Promise<number | undefined> {
     const eventIndex = await getCachedEventIndexByMessageIndex(db, context, messageIndex);
     if (eventIndex === undefined && iterations === 0 && messageIndex > 0) {
@@ -588,13 +546,13 @@ export async function getNearestCachedEventIndexForMessageIndex(
             "EV: we didn't find the event index for ",
             messageIndex,
             " recursing to look for event index for ",
-            messageIndex - 1
+            messageIndex - 1,
         );
         return getNearestCachedEventIndexForMessageIndex(
             db,
             context,
             messageIndex - 1,
-            iterations + 1
+            iterations + 1,
         );
     }
     return eventIndex;
@@ -603,7 +561,7 @@ export async function getNearestCachedEventIndexForMessageIndex(
 async function getCachedEventIndexByMessageIndex(
     db: Database,
     context: MessageContext,
-    messageIndex: number
+    messageIndex: number,
 ): Promise<number | undefined> {
     const store = context.threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
     const cacheKey = createCacheKey(context, messageIndex);
@@ -613,7 +571,7 @@ async function getCachedEventIndexByMessageIndex(
     const value = await resolvedDb.getFromIndex(
         store,
         "messageIdx",
-        IDBKeyRange.bound(cacheKey, cacheKeyUpperBound)
+        IDBKeyRange.bound(cacheKey, cacheKeyUpperBound),
     );
 
     if (
@@ -629,7 +587,7 @@ async function getCachedEventIndexByMessageIndex(
 
 export function mergeSuccessResponses(
     a: EventsSuccessResult<ChatEvent>,
-    b: EventsSuccessResult<ChatEvent>
+    b: EventsSuccessResult<ChatEvent>,
 ): EventsSuccessResult<ChatEvent> {
     return {
         events: [...a.events, ...b.events].sort((a, b) => getIndex(a) - getIndex(b)),
@@ -652,7 +610,7 @@ function makeSerialisable<T extends ChatEvent>(
     ev: EventWrapper<T>,
     chatId: ChatIdentifier,
     removeBlobs: boolean,
-    threadRootMessageIndex?: number
+    threadRootMessageIndex?: number,
 ): EnhancedWrapper<T> {
     if (ev.event.kind !== "message")
         return { ...ev, kind: "event", chatId: { ...chatId }, messageKey: undefined };
@@ -688,7 +646,7 @@ function removeBlobData<T extends MessageContent | DataContent>(content: T): T {
 
 function removeReplyContent(
     repliesTo: ReplyContext | undefined,
-    chatId: ChatIdentifier
+    chatId: ChatIdentifier,
 ): ReplyContext | undefined {
     if (repliesTo?.kind === "rehydrated_reply_context") {
         return {
@@ -706,7 +664,7 @@ export async function removeFailedMessage(
     db: Database,
     chatId: ChatIdentifier,
     messageId: bigint,
-    threadRootMessageIndex?: number
+    threadRootMessageIndex?: number,
 ): Promise<void> {
     const store =
         threadRootMessageIndex !== undefined ? "failed_thread_messages" : "failed_chat_messages";
@@ -717,7 +675,7 @@ export async function recordFailedMessage<T extends Message>(
     db: Database,
     chatId: ChatIdentifier,
     event: EventWrapper<T>,
-    threadRootMessageIndex?: number
+    threadRootMessageIndex?: number,
 ): Promise<void> {
     if (!canRetryMessage(event.event.content)) {
         return;
@@ -732,7 +690,7 @@ export async function recordFailedMessage<T extends Message>(
             ...makeSerialisable<T>(event, chatId, false, threadRootMessageIndex),
             messageKey: key,
         },
-        key
+        key,
     );
 }
 
@@ -757,7 +715,7 @@ function rebuildBlobUrls(content: MessageContent): MessageContent {
 }
 
 export async function loadFailedMessages(
-    db: Database
+    db: Database,
 ): Promise<MessageContextMap<Record<number, EventWrapper<Message>>>> {
     const chatMessages = await (await db).getAll("failed_chat_messages");
     const threadMessages = await (await db).getAll("failed_thread_messages");
@@ -780,7 +738,7 @@ export async function setCachedEvents(
     db: Database,
     chatId: ChatIdentifier,
     resp: EventsResponse<ChatEvent>,
-    threadRootMessageIndex: number | undefined
+    threadRootMessageIndex: number | undefined,
 ): Promise<void> {
     if (resp === "events_failed") return;
     const store = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
@@ -793,9 +751,9 @@ export async function setCachedEvents(
         eventStore
             .put(
                 makeSerialisable<ChatEvent>(event, chatId, true, threadRootMessageIndex),
-                createCacheKey({ chatId, threadRootMessageIndex }, event.index)
+                createCacheKey({ chatId, threadRootMessageIndex }, event.index),
             )
-            .then((_) => {})
+            .then((_) => {}),
     );
 
     // If there are any expired event ranges, insert the range details at either end of the range and delete all
@@ -815,9 +773,9 @@ export async function setCachedEvents(
                     eventStore.delete(
                         IDBKeyRange.bound(
                             createCacheKey({ chatId, threadRootMessageIndex }, range.start + 1),
-                            createCacheKey({ chatId, threadRootMessageIndex }, range.end - 1)
-                        )
-                    )
+                            createCacheKey({ chatId, threadRootMessageIndex }, range.end - 1),
+                        ),
+                    ),
                 );
             }
         }
@@ -830,7 +788,7 @@ export function setCachedMessageFromSendResponse(
     db: Database,
     chatId: ChatIdentifier,
     sentEvent: EventWrapper<Message>,
-    threadRootMessageIndex?: number
+    threadRootMessageIndex?: number,
 ): ([resp, message]: [SendMessageResponse, Message]) => [SendMessageResponse, Message] {
     return ([resp, message]: [SendMessageResponse, Message]) => {
         if (resp.kind !== "success" && resp.kind !== "transfer_success") {
@@ -850,7 +808,7 @@ export async function setCachedMessageIfNotExists(
     db: Database,
     chatId: ChatIdentifier,
     messageEvent: EventWrapper<Message>,
-    threadRootMessageIndex?: number
+    threadRootMessageIndex?: number,
 ): Promise<void> {
     const key = createCacheKey({ chatId, threadRootMessageIndex }, messageEvent.index);
     const store = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
@@ -861,7 +819,7 @@ export async function setCachedMessageIfNotExists(
     if ((await eventStore.count(key)) === 0) {
         await eventStore.add(
             makeSerialisable<Message>(messageEvent, chatId, true, threadRootMessageIndex),
-            key
+            key,
         );
     }
     await tx.done;
@@ -874,14 +832,14 @@ export function getCachePrimerTimestamps(db: Database): Promise<Record<string, b
 export async function setCachePrimerTimestamp(
     db: Database,
     chatId: ChatIdentifier,
-    timestamp: bigint
+    timestamp: bigint,
 ): Promise<void> {
     await (await db).put("cachePrimer", timestamp, chatIdentifierToString(chatId));
 }
 
 function messageToEvent(
     message: Message,
-    resp: SendMessageSuccess | TransferSuccess
+    resp: SendMessageSuccess | TransferSuccess,
 ): EventWrapper<Message> {
     let content = message.content;
 
@@ -934,14 +892,14 @@ function messageToEvent(
 
 export async function getCachedCommunityDetails(
     db: Database,
-    communityId: string
+    communityId: string,
 ): Promise<CommunityDetails | undefined> {
     return (await db).get("community_details", communityId);
 }
 
 export async function getCachedGroupDetails(
     db: Database,
-    chatId: string
+    chatId: string,
 ): Promise<GroupChatDetails | undefined> {
     return (await db).get("group_details", chatId);
 }
@@ -949,7 +907,7 @@ export async function getCachedGroupDetails(
 export async function setCachedCommunityDetails(
     db: Database,
     communityId: string,
-    communityDetails: CommunityDetails
+    communityDetails: CommunityDetails,
 ): Promise<void> {
     await (await db).put("community_details", communityDetails, communityId);
 }
@@ -957,7 +915,7 @@ export async function setCachedCommunityDetails(
 export async function setCachedGroupDetails(
     db: Database,
     chatId: string,
-    groupDetails: GroupChatDetails
+    groupDetails: GroupChatDetails,
 ): Promise<void> {
     await (await db).put("group_details", groupDetails, chatId);
 }
@@ -982,7 +940,7 @@ export function closeDb(): void {
 export async function loadMessagesByMessageIndex(
     db: Database,
     chatId: ChatIdentifier,
-    messagesIndexes: Set<number>
+    messagesIndexes: Set<number>,
 ): Promise<{ messageEvents: EventWrapper<Message>[]; missing: Set<number> }> {
     const resolvedDb = await db;
 
@@ -994,7 +952,7 @@ export async function loadMessagesByMessageIndex(
             const evt = await resolvedDb.getFromIndex(
                 "chat_events",
                 "messageIdx",
-                createCacheKey({ chatId }, msgIdx)
+                createCacheKey({ chatId }, msgIdx),
             );
             if (evt?.kind === "event" && evt.event.kind === "message") {
                 messages.push(evt as EventWrapper<Message>);
@@ -1002,7 +960,7 @@ export async function loadMessagesByMessageIndex(
             }
             missing.add(msgIdx);
             return undefined;
-        })
+        }),
     );
 
     return {
@@ -1035,7 +993,7 @@ function makeChatSummarySerializable<T extends ChatSummary>(chat: T): T {
 
 async function readAll<Name extends StoreNames<ChatSchema>>(
     db: Database,
-    storeName: Name
+    storeName: Name,
 ): Promise<Record<string, StoreValue<ChatSchema, Name>>> {
     const transaction = (await db).transaction([storeName]);
     const store = transaction.objectStore(storeName);
@@ -1060,7 +1018,7 @@ async function iterateCachedEvents(
     ascending: boolean,
     maxEvents: number,
     maxMessages: number,
-    maxMissing: number
+    maxMissing: number,
 ): Promise<[EnhancedWrapper<ChatEvent>[], ExpiredEventsRange[], Set<number>]> {
     const bound = ascending ? eventIndexRange[1] : eventIndexRange[0];
     const iterator = await EventsIterator.create(db, context, startIndex, ascending, bound);
@@ -1076,7 +1034,7 @@ async function iterateCachedEvents(
         if (next === undefined) {
             let remainingMissingCount = Math.min(
                 maxMessages - messageCount,
-                maxEvents - events.length
+                maxEvents - events.length,
             );
             if (ascending) {
                 for (let i = expectedNextIndex; i <= bound; i++) {
@@ -1160,7 +1118,7 @@ class EventsIterator {
             ("chat_events" | "thread_events")[],
             "chat_events" | "thread_events"
         > | null,
-        private onComplete?: () => Promise<void>
+        private onComplete?: () => Promise<void>,
     ) {
         this.now = Date.now();
         this.current = processEventExpiry(cursor?.value, this.now);
@@ -1171,7 +1129,7 @@ class EventsIterator {
         messageContext: MessageContext,
         startIndex: number,
         ascending: boolean,
-        bound: number
+        bound: number,
     ): Promise<EventsIterator> {
         if ((ascending && startIndex > bound) || (!ascending && startIndex < bound)) {
             throw new Error(
@@ -1180,7 +1138,7 @@ class EventsIterator {
                     startIndex,
                     ascending,
                     bound,
-                })}`
+                })}`,
             );
         }
 
@@ -1195,7 +1153,7 @@ class EventsIterator {
 
         const cursor = await store.openCursor(
             IDBKeyRange.bound(lower, upper),
-            ascending ? "next" : "prev"
+            ascending ? "next" : "prev",
         );
 
         return new EventsIterator(cursor, () => transaction.done);
@@ -1241,7 +1199,7 @@ class EventsIterator {
 
 function processEventExpiry(
     event: EnhancedWrapper<ChatEvent> | ExpiredEventsRange | undefined,
-    now: number
+    now: number,
 ): EnhancedWrapper<ChatEvent> | ExpiredEventsRange | undefined {
     if (
         event === undefined ||
@@ -1294,7 +1252,7 @@ async function runExpiredEventSweeper() {
         ) {
             const threadKey = value.messageKey.replace(/_0+/, "_"); // Remove the 0's which pad the message index
             promises.push(
-                threadEventsStore.delete(IDBKeyRange.bound(threadKey + "_", threadKey + "_Z"))
+                threadEventsStore.delete(IDBKeyRange.bound(threadKey + "_", threadKey + "_Z")),
             );
         }
 
@@ -1318,7 +1276,7 @@ export async function getCachedCurrentUser(principal: string): Promise<CreatedUs
 
 export async function mergeCachedCurrentUser(
     principal: string,
-    updated: CurrentUserSummary
+    updated: CurrentUserSummary,
 ): Promise<void> {
     if (db === undefined) return;
     const current = await getCachedCurrentUser(principal);
@@ -1335,7 +1293,7 @@ export async function setCachedCurrentUser(principal: string, user: CreatedUser)
 
 export async function setCurrentUserDiamondStatusInCache(
     principal: string,
-    diamondStatus: DiamondMembershipStatus
+    diamondStatus: DiamondMembershipStatus,
 ): Promise<void> {
     const user = await getCachedCurrentUser(principal);
     if (user === undefined || db === undefined) return;
@@ -1345,7 +1303,7 @@ export async function setCurrentUserDiamondStatusInCache(
             ...user,
             diamondStatus,
         },
-        principal
+        principal,
     );
 }
 
@@ -1356,7 +1314,7 @@ export async function getLocalUserIndexForUser(userId: string): Promise<string |
 
 export async function cacheLocalUserIndexForUser(
     userId: string,
-    localUserIndex: string
+    localUserIndex: string,
 ): Promise<string> {
     if (db === undefined) return localUserIndex;
     (await db).put("localUserIndex", localUserIndex, userId);
@@ -1385,7 +1343,7 @@ export async function getCachedExternalAchievements(): Promise<
 
 export async function setCachedExternalAchievements(
     lastUpdated: bigint,
-    achievements: ExternalAchievement[]
+    achievements: ExternalAchievement[],
 ): Promise<void> {
     if (db === undefined) return;
     (await db).put("externalAchievements", { lastUpdated, achievements }, "value");

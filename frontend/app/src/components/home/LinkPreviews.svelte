@@ -129,7 +129,7 @@
 
     function adjustScroll(wrapper: HTMLElement) {
         // if we are using reverse scroll rendering there is no need to adjust the scroll top when rendering previews
-        if (reverseScroll || $lowBandwidth) return;
+        if ($reverseScroll || $lowBandwidth) return;
 
         list = list || closestAncestor(wrapper, ".scrollable-list");
         if (list) {

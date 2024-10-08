@@ -23,7 +23,7 @@
     <LearnToEarn on:close={() => (learnToEarn = false)} />
 {/if}
 
-{#if balance > 0}
+{#if totalEarned > 0}
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div on:click={click} class={`balance ${size}`} class:me>

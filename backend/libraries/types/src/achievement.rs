@@ -1,4 +1,3 @@
-use crate::{Message, MessageIndex};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
@@ -159,29 +158,5 @@ impl Achievement {
             Achievement::Referred20thUser => 30000,
             Achievement::Referred50thUser => 50000,
         }
-    }
-
-    pub fn from_message(direct: bool, message: &Message, is_thread: bool) -> Vec<Achievement> {
-        let mut achievements = Vec::new();
-
-        if let Some(achievement) = message.content.to_achievement() {
-            achievements.push(achievement);
-        }
-
-        if direct {
-            achievements.push(Achievement::SentDirectMessage);
-        }
-
-        if message.forwarded {
-            achievements.push(Achievement::ForwardedMessage);
-        }
-
-        if message.replies_to.is_some() {
-            achievements.push(Achievement::QuoteReplied);
-        } else if is_thread && message.message_index == MessageIndex::from(0) {
-            achievements.push(Achievement::RepliedInThread);
-        }
-
-        achievements
     }
 }

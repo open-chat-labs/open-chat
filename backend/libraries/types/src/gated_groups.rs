@@ -3,9 +3,92 @@ use crate::{CanisterId, Milliseconds};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fmt::{Display, Formatter};
 use ts_export::ts_export;
 
 pub const SNS_FEE_SHARE_PERCENT: u128 = 2;
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct AccessGateConfig {
+    pub gate: AccessGate,
+    pub expiry: Option<Milliseconds>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[serde(from = "AccessGateCombined")]
+pub struct AccessGateConfigInternal {
+    pub gate: AccessGate,
+    pub expiry: Option<Milliseconds>,
+}
+
+impl AccessGateConfigInternal {
+    pub fn expiry(&self) -> Option<Milliseconds> {
+        let expiry_type: AccessGateExpiryBehaviour = self.gate().into();
+        match expiry_type {
+            AccessGateExpiryBehaviour::Invalid => None,
+            _ => self.expiry,
+        }
+    }
+
+    pub fn gate(&self) -> &AccessGate {
+        &self.gate
+    }
+}
+
+// TODO: Delete this after it is released
+impl From<AccessGate> for AccessGateConfig {
+    fn from(value: AccessGate) -> Self {
+        AccessGateConfig {
+            gate: value,
+            expiry: None,
+        }
+    }
+}
+
+// TODO: Delete this after it is released
+impl From<AccessGate> for AccessGateConfigInternal {
+    fn from(value: AccessGate) -> Self {
+        AccessGateConfigInternal {
+            gate: value,
+            expiry: None,
+        }
+    }
+}
+
+impl From<AccessGateConfigInternal> for AccessGateConfig {
+    fn from(value: AccessGateConfigInternal) -> Self {
+        AccessGateConfig {
+            gate: value.gate,
+            expiry: value.expiry,
+        }
+    }
+}
+
+impl From<AccessGateConfig> for AccessGateConfigInternal {
+    fn from(value: AccessGateConfig) -> Self {
+        AccessGateConfigInternal {
+            gate: value.gate,
+            expiry: value.expiry,
+        }
+    }
+}
+
+impl From<AccessGateCombined> for AccessGateConfigInternal {
+    fn from(value: AccessGateCombined) -> Self {
+        match value {
+            AccessGateCombined::AccessGateConfig(access_gate_config) => access_gate_config,
+            AccessGateCombined::Accessgate(access_gate) => access_gate.into(),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum AccessGateCombined {
+    AccessGateConfig(AccessGateConfigInternal),
+    Accessgate(AccessGate),
+}
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
@@ -22,6 +105,39 @@ pub enum AccessGate {
     ReferredByMember,
 }
 
+#[derive(Serialize, Deserialize, Eq, PartialEq)]
+pub enum AccessGateType {
+    DiamondMember,
+    LifetimeDiamondMember,
+    UniquePerson,
+    VerifiedCredential,
+    SnsNeuron,
+    Payment,
+    TokenBalance,
+    Composite,
+    Locked,
+    ReferredByMember,
+}
+
+impl Display for AccessGateType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let str = match self {
+            AccessGateType::DiamondMember => "diamond",
+            AccessGateType::LifetimeDiamondMember => "lifetime_diamond",
+            AccessGateType::UniquePerson => "unique_person",
+            AccessGateType::VerifiedCredential => "verified_credential",
+            AccessGateType::SnsNeuron => "sns_neuron",
+            AccessGateType::Payment => "payment",
+            AccessGateType::TokenBalance => "token_balance",
+            AccessGateType::Composite => "composite",
+            AccessGateType::Locked => "locked",
+            AccessGateType::ReferredByMember => "referred_by_member",
+        };
+
+        f.write_str(str)
+    }
+}
+
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum AccessGateNonComposite {
@@ -36,27 +152,162 @@ pub enum AccessGateNonComposite {
     ReferredByMember,
 }
 
-pub enum AccessGateType {
+pub enum AccessGateScope {
     Composite(CompositeGate),
     NonComposite(AccessGateNonComposite),
 }
 
-impl From<AccessGate> for AccessGateType {
+#[derive(Serialize, Deserialize, Eq, PartialEq)]
+pub enum AccessGateExpiryBehaviour {
+    UserLookup,
+    Check,
+    Lapse,
+    Invalid,
+}
+
+impl From<AccessGate> for AccessGateScope {
     fn from(value: AccessGate) -> Self {
         match value {
-            AccessGate::Composite(gate) => AccessGateType::Composite(gate),
-            AccessGate::DiamondMember => AccessGateType::NonComposite(AccessGateNonComposite::DiamondMember),
-            AccessGate::LifetimeDiamondMember => AccessGateType::NonComposite(AccessGateNonComposite::LifetimeDiamondMember),
-            AccessGate::UniquePerson => AccessGateType::NonComposite(AccessGateNonComposite::UniquePerson),
+            AccessGate::Composite(gate) => AccessGateScope::Composite(gate),
+            AccessGate::DiamondMember => AccessGateScope::NonComposite(AccessGateNonComposite::DiamondMember),
+            AccessGate::LifetimeDiamondMember => AccessGateScope::NonComposite(AccessGateNonComposite::LifetimeDiamondMember),
+            AccessGate::UniquePerson => AccessGateScope::NonComposite(AccessGateNonComposite::UniquePerson),
             AccessGate::VerifiedCredential(gate) => {
-                AccessGateType::NonComposite(AccessGateNonComposite::VerifiedCredential(gate))
+                AccessGateScope::NonComposite(AccessGateNonComposite::VerifiedCredential(gate))
             }
-            AccessGate::SnsNeuron(gate) => AccessGateType::NonComposite(AccessGateNonComposite::SnsNeuron(gate)),
-            AccessGate::Payment(gate) => AccessGateType::NonComposite(AccessGateNonComposite::Payment(gate)),
-            AccessGate::TokenBalance(gate) => AccessGateType::NonComposite(AccessGateNonComposite::TokenBalance(gate)),
-            AccessGate::Locked => AccessGateType::NonComposite(AccessGateNonComposite::Locked),
-            AccessGate::ReferredByMember => AccessGateType::NonComposite(AccessGateNonComposite::ReferredByMember),
+            AccessGate::SnsNeuron(gate) => AccessGateScope::NonComposite(AccessGateNonComposite::SnsNeuron(gate)),
+            AccessGate::Payment(gate) => AccessGateScope::NonComposite(AccessGateNonComposite::Payment(gate)),
+            AccessGate::TokenBalance(gate) => AccessGateScope::NonComposite(AccessGateNonComposite::TokenBalance(gate)),
+            AccessGate::Locked => AccessGateScope::NonComposite(AccessGateNonComposite::Locked),
+            AccessGate::ReferredByMember => AccessGateScope::NonComposite(AccessGateNonComposite::ReferredByMember),
         }
+    }
+}
+
+impl From<&AccessGate> for AccessGateExpiryBehaviour {
+    fn from(value: &AccessGate) -> Self {
+        if let AccessGate::Composite(gate) = value {
+            if gate.inner.is_empty() {
+                return AccessGateExpiryBehaviour::Invalid;
+            }
+
+            if gate.and {
+                // If any immediately lapse then return lapse
+                if gate
+                    .inner
+                    .iter()
+                    .any(|g| matches!(AccessGateExpiryBehaviour::from(g), AccessGateExpiryBehaviour::Lapse))
+                {
+                    return AccessGateExpiryBehaviour::Lapse;
+                }
+
+                // If there are any user lookups then return user lookup
+                if gate
+                    .inner
+                    .iter()
+                    .any(|g| matches!(AccessGateExpiryBehaviour::from(g), AccessGateExpiryBehaviour::UserLookup))
+                {
+                    return AccessGateExpiryBehaviour::UserLookup;
+                }
+
+                AccessGateExpiryBehaviour::Check
+            } else {
+                // If there are any "user lookups" then return user lookup
+                if gate
+                    .inner
+                    .iter()
+                    .any(|g| matches!(AccessGateExpiryBehaviour::from(g), AccessGateExpiryBehaviour::UserLookup))
+                {
+                    return AccessGateExpiryBehaviour::UserLookup;
+                }
+
+                // If there are any "checks" then return check
+                if gate
+                    .inner
+                    .iter()
+                    .any(|g| matches!(AccessGateExpiryBehaviour::from(g), AccessGateExpiryBehaviour::Check))
+                {
+                    return AccessGateExpiryBehaviour::Check;
+                }
+
+                AccessGateExpiryBehaviour::Lapse
+            }
+        } else {
+            AccessGateType::from(value).into()
+        }
+    }
+}
+
+impl From<AccessGateType> for AccessGateExpiryBehaviour {
+    fn from(value: AccessGateType) -> Self {
+        match value {
+            AccessGateType::DiamondMember | AccessGateType::LifetimeDiamondMember | AccessGateType::UniquePerson => {
+                AccessGateExpiryBehaviour::UserLookup
+            }
+            AccessGateType::Payment | AccessGateType::VerifiedCredential => AccessGateExpiryBehaviour::Lapse,
+            AccessGateType::SnsNeuron | AccessGateType::TokenBalance => AccessGateExpiryBehaviour::Check,
+            _ => AccessGateExpiryBehaviour::Invalid,
+        }
+    }
+}
+
+impl From<&AccessGate> for AccessGateType {
+    fn from(value: &AccessGate) -> Self {
+        match value {
+            AccessGate::DiamondMember => AccessGateType::DiamondMember,
+            AccessGate::LifetimeDiamondMember => AccessGateType::LifetimeDiamondMember,
+            AccessGate::UniquePerson => AccessGateType::UniquePerson,
+            AccessGate::VerifiedCredential(_) => AccessGateType::VerifiedCredential,
+            AccessGate::SnsNeuron(_) => AccessGateType::SnsNeuron,
+            AccessGate::Payment(_) => AccessGateType::Payment,
+            AccessGate::TokenBalance(_) => AccessGateType::TokenBalance,
+            AccessGate::Composite(_) => AccessGateType::Composite,
+            AccessGate::Locked => AccessGateType::Locked,
+            AccessGate::ReferredByMember => AccessGateType::ReferredByMember,
+        }
+    }
+}
+
+impl From<&AccessGateNonComposite> for AccessGateType {
+    fn from(value: &AccessGateNonComposite) -> Self {
+        match value {
+            AccessGateNonComposite::DiamondMember => AccessGateType::DiamondMember,
+            AccessGateNonComposite::LifetimeDiamondMember => AccessGateType::LifetimeDiamondMember,
+            AccessGateNonComposite::UniquePerson => AccessGateType::UniquePerson,
+            AccessGateNonComposite::VerifiedCredential(_) => AccessGateType::VerifiedCredential,
+            AccessGateNonComposite::SnsNeuron(_) => AccessGateType::SnsNeuron,
+            AccessGateNonComposite::Payment(_) => AccessGateType::Payment,
+            AccessGateNonComposite::TokenBalance(_) => AccessGateType::TokenBalance,
+            AccessGateNonComposite::Locked => AccessGateType::Locked,
+            AccessGateNonComposite::ReferredByMember => AccessGateType::ReferredByMember,
+        }
+    }
+}
+
+impl From<&AccessGateNonComposite> for AccessGateExpiryBehaviour {
+    fn from(value: &AccessGateNonComposite) -> Self {
+        let gate_type: AccessGateType = value.into();
+        gate_type.into()
+    }
+}
+
+impl AccessGateConfig {
+    pub fn validate(&self) -> bool {
+        pub const DAY_IN_MS: Milliseconds = 1000 * 60 * 60 * 24;
+
+        if let Some(expiry) = self.expiry {
+            if expiry < DAY_IN_MS {
+                return false;
+            }
+
+            let expiry_type: AccessGateExpiryBehaviour = (&self.gate).into();
+
+            if matches!(expiry_type, AccessGateExpiryBehaviour::Invalid) {
+                return false;
+            }
+        }
+
+        self.gate.validate()
     }
 }
 
@@ -74,19 +325,8 @@ impl AccessGate {
         matches!(self, AccessGate::Payment(_))
     }
 
-    pub fn gate_type(&self) -> &'static str {
-        match self {
-            AccessGate::DiamondMember => "diamond",
-            AccessGate::LifetimeDiamondMember => "lifetime_diamond",
-            AccessGate::UniquePerson => "unique_person",
-            AccessGate::VerifiedCredential(_) => "verified_credential",
-            AccessGate::SnsNeuron(_) => "sns_neuron",
-            AccessGate::Payment(_) => "payment",
-            AccessGate::TokenBalance(_) => "token_balance",
-            AccessGate::Composite(_) => "composite",
-            AccessGate::Locked => "locked",
-            AccessGate::ReferredByMember => "referred_by_member",
-        }
+    pub fn gate_type(&self) -> AccessGateType {
+        self.into()
     }
 }
 
@@ -151,6 +391,7 @@ pub enum GateCheckFailedReason {
     FailedVerifiedCredentialCheck(String),
     Locked,
     NotReferredByMember,
+    Unknown,
 }
 
 #[ts_export]
@@ -158,7 +399,6 @@ pub enum GateCheckFailedReason {
 pub struct VerifiedCredentialGateArgs {
     pub user_ii_principal: Principal,
     pub credential_jwt: String,
-    #[serde(default)]
     pub credential_jwts: Vec<String>,
     pub ii_origin: String,
 }

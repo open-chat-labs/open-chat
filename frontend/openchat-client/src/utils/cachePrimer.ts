@@ -22,7 +22,7 @@ import { get } from "svelte/store";
 import type { OpenChat } from "../openchat";
 import { runOnceIdle } from "./backgroundTasks";
 import { isProposalsChat } from "./chat";
-import { RemoteVideoCallStartedEvent } from "../events";
+import { RemoteVideoCallEndedEvent, RemoteVideoCallStartedEvent } from "../events";
 
 const BATCH_SIZE = 20;
 
@@ -35,6 +35,7 @@ export class CachePrimer {
         private userId: string,
         private userCanisterLocalUserIndex: string,
         private onVideoStart: (ev: RemoteVideoCallStartedEvent) => void,
+        private onVideoEnded: (ev: RemoteVideoCallEndedEvent) => void,
     ) {
         debug("initialized");
     }
@@ -81,17 +82,20 @@ export class CachePrimer {
                             e.event.kind === "message" &&
                             e.event.sender !== this.userId &&
                             e.event.content.kind === "video_call_content" &&
-                            e.event.content.callType === "default" &&
-                            e.event.content.ended === undefined
+                            e.event.content.callType === "default"
                         ) {
-                            this.onVideoStart(
-                                RemoteVideoCallStartedEvent.create(
-                                    request.context.chatId,
-                                    this.userId,
-                                    e.event as Message<VideoCallContent>,
-                                    e.timestamp,
-                                ),
-                            );
+                            if (e.event.content.ended === undefined) {
+                                this.onVideoStart(
+                                    RemoteVideoCallStartedEvent.create(
+                                        request.context.chatId,
+                                        this.userId,
+                                        e.event as Message<VideoCallContent>,
+                                        e.timestamp,
+                                    ),
+                                );
+                            } else {
+                                this.onVideoEnded(new RemoteVideoCallEndedEvent(e.event.messageId));
+                            }
                         }
                     });
                 }

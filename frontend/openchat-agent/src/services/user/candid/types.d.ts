@@ -556,12 +556,14 @@ export interface CommunityMember {
 }
 export interface CommunityMembership {
   'role' : CommunityRole,
+  'lapsed' : boolean,
   'display_name' : [] | [string],
   'joined' : TimestampMillis,
   'rules_accepted' : boolean,
 }
 export interface CommunityMembershipUpdates {
   'role' : [] | [CommunityRole],
+  'lapsed' : [] | [boolean],
   'display_name' : TextUpdate,
   'rules_accepted' : [] | [boolean],
 }
@@ -700,7 +702,8 @@ export interface CyclesRegistrationFee {
   'amount' : Cycles,
 }
 export interface DeleteCommunityArgs { 'community_id' : CommunityId }
-export type DeleteCommunityResponse = { 'NotAuthorized' : null } |
+export type DeleteCommunityResponse = { 'UserLapsed' : null } |
+  { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'UserSuspended' : null } |
   { 'CommunityFrozen' : null } |
@@ -915,6 +918,9 @@ export interface ExchangeArgs {
   'zero_for_one' : boolean,
   'swap_canister_id' : CanisterId,
 }
+export type ExchangeId = { 'Sonic' : null } |
+  { 'KongSwap' : null } |
+  { 'ICPSwap' : null };
 export interface ExternalUrlUpdated {
   'new_url' : [] | [string],
   'updated_by' : UserId,
@@ -1140,6 +1146,7 @@ export interface GroupMatch {
 export interface GroupMembership {
   'role' : GroupRole,
   'notifications_muted' : boolean,
+  'lapsed' : boolean,
   'joined' : TimestampMillis,
   'rules_accepted' : boolean,
   'latest_threads' : Array<GroupCanisterThreadDetails>,
@@ -1149,6 +1156,7 @@ export interface GroupMembership {
 export interface GroupMembershipUpdates {
   'role' : [] | [GroupRole],
   'notifications_muted' : [] | [boolean],
+  'lapsed' : [] | [boolean],
   'unfollowed_threads' : Uint32Array | number[],
   'rules_accepted' : [] | [boolean],
   'latest_threads' : Array<GroupCanisterThreadDetails>,
@@ -2100,6 +2108,7 @@ export type SendMessageWithTransferToChannelResponse = {
   { 'TextTooLong' : number } |
   { 'P2PSwapSetUpFailed' : string } |
   { 'PinIncorrect' : Milliseconds } |
+  { 'UserLapsed' : null } |
   { 'UserNotInChannel' : CompletedCryptoTransaction } |
   { 'PinRequired' : null } |
   { 'ChannelNotFound' : CompletedCryptoTransaction } |
@@ -2121,6 +2130,7 @@ export type SendMessageWithTransferToChannelResponse = {
   { 'InvalidRequest' : string } |
   { 'TransferCannotBeToSelf' : null } |
   { 'TransferFailed' : string } |
+  { 'InternalError' : string } |
   { 'RulesNotAccepted' : null } |
   { 'CryptocurrencyNotSupported' : Cryptocurrency };
 export interface SendMessageWithTransferToGroupArgs {
@@ -2145,6 +2155,7 @@ export type SendMessageWithTransferToGroupResponse = {
   { 'TextTooLong' : number } |
   { 'P2PSwapSetUpFailed' : string } |
   { 'PinIncorrect' : Milliseconds } |
+  { 'UserLapsed' : null } |
   { 'PinRequired' : null } |
   { 'CallerNotInGroup' : [] | [CompletedCryptoTransaction] } |
   { 'ChatFrozen' : null } |
@@ -2163,6 +2174,7 @@ export type SendMessageWithTransferToGroupResponse = {
   { 'InvalidRequest' : string } |
   { 'TransferCannotBeToSelf' : null } |
   { 'TransferFailed' : string } |
+  { 'InternalError' : string } |
   { 'RulesNotAccepted' : null } |
   { 'CryptocurrencyNotSupported' : Cryptocurrency };
 export interface SetAvatarArgs { 'avatar' : [] | [Document] }
@@ -2198,7 +2210,9 @@ export interface SetMessageReminderV2Args {
 }
 export interface SetPinNumberArgs {
   'new' : [] | [string],
-  'current' : [] | [string],
+  'verification' : { 'PIN' : string } |
+    { 'Delegation' : SignedDelegation } |
+    { 'None' : null },
 }
 export type SetPinNumberResponse = {
     'TooManyFailedPinAttempts' : Milliseconds
@@ -2207,7 +2221,16 @@ export type SetPinNumberResponse = {
   { 'PinIncorrect' : Milliseconds } |
   { 'TooShort' : FieldTooShortResult } |
   { 'PinRequired' : null } |
-  { 'Success' : null };
+  { 'Success' : null } |
+  { 'MalformedSignature' : string } |
+  { 'DelegationTooOld' : null };
+export interface SignedDelegation {
+  'signature' : Uint8Array | number[],
+  'delegation' : {
+    'pubkey' : Uint8Array | number[],
+    'expiration' : TimestampNanos,
+  },
+}
 export interface SnsNeuronGate {
   'min_stake_e8s' : [] | [bigint],
   'min_dissolve_delay' : [] | [Milliseconds],
@@ -2299,6 +2322,7 @@ export interface SwapTokensArgs {
   'swap_id' : bigint,
   'input_token' : TokenInfo,
   'exchange_args' : { 'Sonic' : ExchangeArgs } |
+    { 'KongSwap' : ExchangeArgs } |
     { 'ICPSwap' : ExchangeArgs },
   'output_token' : TokenInfo,
 }
@@ -2363,6 +2387,7 @@ export type TipMessageResponse = { 'TooManyFailedPinAttempts' : Milliseconds } |
   { 'Retrying' : string } |
   { 'PinIncorrect' : Milliseconds } |
   { 'TransferNotToMessageSender' : null } |
+  { 'UserLapsed' : null } |
   { 'PinRequired' : null } |
   { 'MessageNotFound' : null } |
   { 'ChatNotFound' : null } |
@@ -2372,7 +2397,7 @@ export type TipMessageResponse = { 'TooManyFailedPinAttempts' : Milliseconds } |
   { 'Success' : null } |
   { 'UserSuspended' : null } |
   { 'TransferFailed' : string } |
-  { 'InternalError' : [string, CompletedCryptoTransaction] } |
+  { 'InternalError' : string } |
   { 'CannotTipSelf' : null };
 export interface TokenBalanceGate {
   'min_balance' : bigint,
@@ -2390,14 +2415,17 @@ export type TokenSwapStatusResponse = { 'NotFound' : null } |
     'Success' : {
       'started' : TimestampMillis,
       'deposit_account' : [] | [{ 'Ok' : null } | { 'Err' : string }],
+      'transfer_or_approval' : [] | [{ 'Ok' : bigint } | { 'Err' : string }],
       'amount_swapped' : [] | [
         { 'Ok' : { 'Ok' : bigint } | { 'Err' : string } } |
           { 'Err' : string }
       ],
+      'icrc2' : boolean,
       'success' : [] | [boolean],
       'notify_dex' : [] | [{ 'Ok' : null } | { 'Err' : string }],
       'transfer' : [] | [{ 'Ok' : bigint } | { 'Err' : string }],
       'withdraw_from_dex' : [] | [{ 'Ok' : bigint } | { 'Err' : string }],
+      'auto_withdrawals' : boolean,
     }
   };
 export interface Tokens { 'e8s' : bigint }
@@ -2628,7 +2656,8 @@ export type WithdrawCryptoResponse = {
   { 'CurrencyNotSupported' : null } |
   { 'TransactionFailed' : FailedCryptoTransaction } |
   { 'PinRequired' : null } |
-  { 'Success' : CompletedCryptoTransaction };
+  { 'Success' : CompletedCryptoTransaction } |
+  { 'InternalError' : string };
 export interface _SERVICE {
   'accept_p2p_swap' : ActorMethod<[AcceptP2PSwapArgs], AcceptP2PSwapResponse>,
   'add_hot_group_exclusions' : ActorMethod<
@@ -2646,6 +2675,8 @@ export interface _SERVICE {
   >,
   'bio' : ActorMethod<[BioArgs], BioResponse>,
   'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
+  'btc_address' : ActorMethod<[EmptyArgs], BtcAddressResponse>,
+  'cached_btc_address' : ActorMethod<[EmptyArgs], CachedBtcAddressResponse>,
   'cancel_message_reminder' : ActorMethod<
     [CancelMessageReminderArgs],
     CancelMessageReminderResponse
@@ -2709,6 +2740,7 @@ export interface _SERVICE {
   'public_profile' : ActorMethod<[PublicProfileArgs], PublicProfileResponse>,
   'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
   'report_message' : ActorMethod<[ReportMessageArgs], ReportMessageResponse>,
+  'retrieve_btc' : ActorMethod<[RetrieveBtcArgs], RetrieveBtcResponse>,
   'save_crypto_account' : ActorMethod<
     [NamedAccount],
     SaveCryptoAccountResponse

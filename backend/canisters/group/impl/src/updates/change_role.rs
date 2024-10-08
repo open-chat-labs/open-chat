@@ -1,14 +1,15 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::updates::change_role::Response::*;
-use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
+use crate::{jobs, mutate_state, read_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::change_role::*;
 use group_chat_core::{ChangeRoleResult, GroupRoleInternal};
-use ic_cdk::update;
-use types::{CanisterId, UserId};
+use group_community_common::ExpiringMember;
+use types::{CanisterId, GroupRole, UserId};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 async fn change_role(args: Args) -> Response {
     run_regular_jobs();
@@ -99,7 +100,21 @@ fn change_role_impl(
         is_user_platform_moderator,
         now,
     ) {
-        ChangeRoleResult::Success(_) => {
+        ChangeRoleResult::Success(r) => {
+            // Owners can't "lapse" so either add or remove user from expiry list if they lose or gain owner status
+            if let Some(gate_expiry) = state.data.chat.gate_config.value.as_ref().and_then(|gc| gc.expiry()) {
+                if matches!(args.new_role, GroupRole::Owner) {
+                    state.data.expiring_members.remove_member(args.user_id, None);
+                } else if matches!(r.prev_role, GroupRoleInternal::Owner) {
+                    state.data.expiring_members.push(ExpiringMember {
+                        expires: now + gate_expiry,
+                        channel_id: None,
+                        user_id: args.user_id,
+                    });
+                }
+            }
+
+            jobs::expire_members::start_job_if_required(state);
             handle_activity_notification(state);
             Success
         }
@@ -109,5 +124,6 @@ fn change_role_impl(
         ChangeRoleResult::Unchanged => Success,
         ChangeRoleResult::Invalid => Invalid,
         ChangeRoleResult::UserSuspended => UserSuspended,
+        ChangeRoleResult::UserLapsed => UserLapsed,
     }
 }

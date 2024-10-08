@@ -1,10 +1,10 @@
 use crate::model::channels::ChannelUpdates;
 use crate::read_state;
 use crate::RuntimeState;
+use canister_api_macros::query;
 use community_canister::channel_summary_updates::{Response::*, *};
-use ic_cdk::query;
 
-#[query]
+#[query(candid = true, msgpack = true)]
 fn channel_summary_updates(args: Args) -> Response {
     read_state(|state| channel_summary_updates_impl(args, state))
 }

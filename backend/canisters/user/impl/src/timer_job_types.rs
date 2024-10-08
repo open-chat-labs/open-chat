@@ -243,7 +243,7 @@ impl Job for RemoveExpiredEventsJob {
 impl Job for ProcessTokenSwapJob {
     fn execute(self) {
         ic_cdk::spawn(async move {
-            process_token_swap(self.token_swap, self.attempt, self.debug).await;
+            process_token_swap(self.token_swap, None, self.attempt, self.debug).await;
         });
     }
 }

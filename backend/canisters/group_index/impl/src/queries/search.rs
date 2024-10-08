@@ -5,7 +5,7 @@ use group_index_canister::search::{Response::*, *};
 const MIN_TERM_LENGTH: u8 = 2;
 const MAX_TERM_LENGTH: u8 = 20;
 
-#[query(msgpack = true)]
+#[query(candid = true, msgpack = true)]
 fn search(args: Args) -> Response {
     read_state(|state| search_impl(args, state))
 }

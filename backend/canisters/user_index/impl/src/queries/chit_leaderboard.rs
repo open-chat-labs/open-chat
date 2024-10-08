@@ -2,7 +2,7 @@ use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
 use user_index_canister::chit_leaderboard::{Response::*, *};
 
-#[query(msgpack = true)]
+#[query(candid = true, msgpack = true)]
 fn chit_leaderboard(_args: Args) -> Response {
     read_state(chit_leaderboard_impl)
 }

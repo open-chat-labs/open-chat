@@ -12,9 +12,12 @@ async fn reclaim_swap_tokens(args: Args) -> Response {
 
     let result = match args.exchange_id {
         ExchangeId::ICPSwap => {
-            icpswap_client::withdraw(args.swap_canister_id, args.ledger_canister_id, args.amount, args.fee).await
+            crate::token_swaps::icpswap::withdraw(args.swap_canister_id, args.ledger_canister_id, args.amount, args.fee).await
         }
-        ExchangeId::Sonic => sonic_client::withdraw(args.swap_canister_id, args.ledger_canister_id, args.amount).await,
+        ExchangeId::Sonic => {
+            crate::token_swaps::sonic::withdraw(args.swap_canister_id, args.ledger_canister_id, args.amount).await
+        }
+        ExchangeId::KongSwap => unimplemented!(),
     };
 
     match result {

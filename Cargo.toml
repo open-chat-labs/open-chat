@@ -94,6 +94,8 @@ members = [
     "backend/external_canisters/icpswap_swap_pool/c2c_client",
     "backend/external_canisters/icrc_ledger/api",
     "backend/external_canisters/icrc_ledger/c2c_client",
+    "backend/external_canisters/kongswap/api",
+    "backend/external_canisters/kongswap/c2c_client",
     "backend/external_canisters/modclub/api",
     "backend/external_canisters/modclub/c2c_client",
     "backend/external_canisters/nns_governance/api",
@@ -133,7 +135,7 @@ members = [
     "backend/libraries/human_readable",
     "backend/libraries/human_readable_derive",
     "backend/libraries/icdex_client",
-    "backend/libraries/icpswap_client",
+    "backend/libraries/identity_utils",
     "backend/libraries/index_store",
     "backend/libraries/instruction_counts_log",
     "backend/libraries/json",
@@ -145,9 +147,9 @@ members = [
     "backend/libraries/storage_bucket_client",
     "backend/libraries/search",
     "backend/libraries/sha256",
-    "backend/libraries/sonic_client",
     "backend/libraries/stable_memory",
     "backend/libraries/testing",
+    "backend/libraries/timer_job_queue",
     "backend/libraries/ts_export",
     "backend/libraries/ts_export_macros",
     "backend/libraries/types",
@@ -159,6 +161,7 @@ members = [
     "backend/tools/canister_installer",
     "backend/tools/canister_upgrade_proposal_builder",
     "backend/tools/canister_upgrader",
+    "backend/tools/canister_wasm_chunks_uploader",
     "backend/tools/principal_generator",
     "backend/tools/translation_tool",
     "backend/tools/ts_exporter",
@@ -226,12 +229,12 @@ rand_core = "0.6.4"
 range-set = "0.0.11"
 regex-lite = "0.1.5"
 rmp-serde = "1.3.0"
-serde = "1.0.202"
-serde_bytes = "0.11.14"
+serde = "1.0.210"
+serde_bytes = "0.11.15"
 serde_cbor = "0.11.2"
-serde_json = "1.0.117"
+serde_json = "1.0.128"
 serde_repr = "0.1.19"
-serde_tokenstream = "0.2.0"
+serde_tokenstream = "0.2.2"
 sha2 = "0.10.8"
 sha3 = "0.10.8"
 sign_in_with_email_canister = { git = "https://github.com/open-chat-labs/ic-sign-in-with-email", rev = "v0.13.0" }

@@ -238,6 +238,7 @@ import {
 } from "./utils/media";
 import { mergeKeepingOnlyChanged } from "./utils/object";
 import {
+    createRemoteVideoEndedEvent,
     createRemoteVideoStartedEvent,
     filterWebRtcMessage,
     parseWebRtcMessage,
@@ -426,6 +427,7 @@ import type {
     AirdropChannelDetails,
     ChitLeaderboardResponse,
     AccessGateConfig,
+    Verification,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -4296,6 +4298,13 @@ export class OpenChat extends OpenChatAgentWorker {
             }
             return;
         }
+        if (msg.kind === "remote_video_call_ended") {
+            const ev = createRemoteVideoEndedEvent(msg);
+            if (ev) {
+                this.dispatchEvent(ev);
+            }
+            return;
+        }
         const fromChatId = filterWebRtcMessage(msg);
         if (fromChatId === undefined) return;
 
@@ -5368,6 +5377,10 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => false);
     }
 
+    addRemoveSwapProvider(swapProvider: DexId, add: boolean): Promise<boolean> {
+        return this.sendRequest({ kind: "addRemoveSwapProvider", swapProvider, add });
+    }
+
     addMessageFilter(regex: string): Promise<boolean> {
         try {
             new RegExp(regex);
@@ -5589,6 +5602,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     this,
                     this._liveState.user.userId,
                     chatsResponse.state.userCanisterLocalUserIndex,
+                    (ev) => this.dispatchEvent(ev),
                     (ev) => this.dispatchEvent(ev),
                 );
             }
@@ -6272,11 +6286,12 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private async updateRegistry(): Promise<void> {
+        let resolved = false;
         return new Promise((resolve) => {
             this.sendStreamRequest({
                 kind: "updateRegistry",
             })
-                .subscribe(([registry, updated], final) => {
+                .subscribe(([registry, updated]) => {
                     if (updated || Object.keys(get(cryptoLookup)).length === 0) {
                         this.currentAirdropChannel = registry.currentAirdropChannel;
                         const cryptoRecord = toRecord(registry.tokenDetails, (t) => t.ledger);
@@ -6306,7 +6321,9 @@ export class OpenChat extends OpenChatAgentWorker {
                         );
                     }
 
-                    if (final) {
+                    // make sure we only resolve once so that we don't end up waiting for the downstream fetch
+                    if (!resolved) {
+                        resolved = true;
                         resolve();
                     }
                 })
@@ -6326,7 +6343,7 @@ export class OpenChat extends OpenChatAgentWorker {
     private async refreshBalancesInSeries() {
         const config = this._liveState.walletConfig;
         for (const t of Object.values(get(cryptoLookup))) {
-            if (t.enabled && (config.kind === "auto_wallet" || config.tokens.has(t.ledger))) {
+            if (config.kind === "auto_wallet" || config.tokens.has(t.ledger)) {
                 await this.refreshAccountBalance(t.ledger);
             }
         }
@@ -6589,8 +6606,11 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => false);
     }
 
-    async ringOtherUsers(messageId: bigint) {
-        const chat = this._liveState.selectedChat;
+    private async sendVideoCallUsersWebRtcMessage(msg: WebRtcMessage, chatId: ChatIdentifier) {
+        const chat = this._liveState.allChats.get(chatId);
+        if (chat === undefined) {
+            throw new Error(`Unknown chat: ${chatId}`);
+        }
         let userIds: string[] = [];
         const me = this._liveState.user.userId;
         if (chat !== undefined) {
@@ -6611,14 +6631,21 @@ export class OpenChat extends OpenChatAgentWorker {
                         ),
                     ),
                 );
-                this.sendRtcMessage(userIds, {
-                    kind: "remote_video_call_started",
-                    id: chat.id,
-                    userId: me,
-                    messageId,
-                });
+                this.sendRtcMessage(userIds, msg);
             }
         }
+    }
+
+    async ringOtherUsers(chatId: ChatIdentifier, messageId: bigint) {
+        this.sendVideoCallUsersWebRtcMessage(
+            {
+                kind: "remote_video_call_started",
+                id: chatId,
+                userId: this._liveState.user.userId,
+                messageId,
+            },
+            chatId,
+        );
     }
 
     private getRoomAccessToken(
@@ -6698,10 +6725,21 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    endVideoCall(chatId: ChatIdentifier) {
+    endVideoCall(chatId: ChatIdentifier, messageId?: bigint) {
         const chat = this._liveState.allChats.get(chatId);
         if (chat === undefined) {
             throw new Error(`Unknown chat: ${chatId}`);
+        }
+        if (messageId !== undefined) {
+            this.sendVideoCallUsersWebRtcMessage(
+                {
+                    kind: "remote_video_call_ended",
+                    id: chatId,
+                    userId: this._liveState.user.userId,
+                    messageId,
+                },
+                chatId,
+            );
         }
         return this.getLocalUserIndex(chat).then((localUserIndex) => {
             return this.sendRequest({
@@ -6886,7 +6924,7 @@ export class OpenChat extends OpenChatAgentWorker {
         token: "eth" | "sol",
         address: string,
         signature: string,
-        connectWorker: boolean,
+        assumeIdentity: boolean,
     ): Promise<
         | { kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain }
         | { kind: "failure" }
@@ -6917,8 +6955,8 @@ export class OpenChat extends OpenChatAgentWorker {
                     getDelegationResponse.signature,
                 );
                 const delegation = identity.getDelegation();
-                await storeIdentity(this._authClientStorage, sessionKey, delegation);
-                if (connectWorker) {
+                if (assumeIdentity) {
+                    await storeIdentity(this._authClientStorage, sessionKey, delegation);
                     this.loadedAuthenticationIdentity(
                         identity,
                         token === "eth" ? AuthProvider.ETH : AuthProvider.SOL,
@@ -7416,12 +7454,12 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     setPinNumber(
-        currentPin: string | undefined,
+        verification: Verification,
         newPin: string | undefined,
     ): Promise<SetPinNumberResponse> {
         pinNumberFailureStore.set(undefined);
 
-        return this.sendRequest({ kind: "setPinNumber", currentPin, newPin }).then((resp) => {
+        return this.sendRequest({ kind: "setPinNumber", verification, newPin }).then((resp) => {
             if (resp.kind === "success") {
                 this.pinNumberRequiredStore.set(newPin !== undefined);
             } else if (

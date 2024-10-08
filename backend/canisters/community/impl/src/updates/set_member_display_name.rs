@@ -1,11 +1,11 @@
 use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::set_member_display_name::{Response::*, *};
-use ic_cdk::update;
 use types::Achievement;
 use utils::text_validation::{validate_display_name, UsernameValidationError};
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 fn set_member_display_name(args: Args) -> Response {
     run_regular_jobs();
@@ -23,6 +23,7 @@ fn set_member_display_name_impl(args: Args, state: &mut RuntimeState) -> Respons
 
     let user_id = match state.data.members.get(caller) {
         Some(member) if member.suspended.value => return UserSuspended,
+        Some(member) if member.lapsed.value => return UserLapsed,
         Some(member) => {
             if let Some(display_name) = args.display_name.as_ref() {
                 match validate_display_name(display_name) {

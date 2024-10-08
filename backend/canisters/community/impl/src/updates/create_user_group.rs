@@ -1,11 +1,11 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::create_user_group::{Response::*, *};
-use ic_cdk::update;
 use utils::text_validation::{validate_user_group_name, UsernameValidationError};
 
-#[update]
+#[update(candid = true, msgpack = true)]
 #[trace]
 fn create_user_group(args: Args) -> Response {
     run_regular_jobs();
@@ -22,6 +22,8 @@ fn create_user_group_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Some(member) = state.data.members.get_mut(caller) {
         if member.suspended.value {
             return UserSuspended;
+        } else if member.lapsed.value {
+            return UserLapsed;
         }
 
         if !member.role.can_manage_user_groups(&state.data.permissions) {

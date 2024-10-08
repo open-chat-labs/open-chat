@@ -1,7 +1,6 @@
-use crate::SignedDelegation;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::TimestampNanos;
+use types::{SignedDelegation, TimestampNanos};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {

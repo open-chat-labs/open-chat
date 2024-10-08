@@ -10,9 +10,9 @@ use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, PushMessageArgs, Reader};
 use rand::Rng;
 use types::{
-    Achievement, BlobReference, CanisterId, Chat, ChatId, CompletedCryptoTransaction, ContentValidationError,
-    CryptoTransaction, EventWrapper, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, P2PSwapLocation,
-    TimestampMillis, UserId, UserType,
+    BlobReference, CanisterId, Chat, ChatId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction,
+    EventWrapper, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, P2PSwapLocation, TimestampMillis,
+    UserId, UserType,
 };
 use user_canister::send_message_v2::{Response::*, *};
 use user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCanisterEvent};
@@ -65,11 +65,12 @@ async fn send_message_v2(mut args: Args) -> Response {
             // We have to use `process_transaction_without_caller_check` because we may be within a
             // reply callback due to calling `c2c_lookup_user` earlier.
             completed_transfer = match process_transaction_without_caller_check(pending_transaction).await {
-                Ok(completed) => {
+                Ok(Ok(completed)) => {
                     c.transfer = CryptoTransaction::Completed(completed.clone());
                     Some(completed)
                 }
-                Err(failed) => return TransferFailed(failed.error_message().to_string()),
+                Ok(Err(failed)) => return TransferFailed(failed.error_message().to_string()),
+                Err(error) => return InternalError(format!("{error:?}")),
             };
         }
         MessageContentInitial::P2PSwap(p) => {
@@ -88,13 +89,14 @@ async fn send_message_v2(mut args: Args) -> Response {
                 Ok((swap_id, pending_transaction)) => {
                     (completed_transfer, p2p_swap_id) =
                         match process_transaction_without_caller_check(pending_transaction).await {
-                            Ok(completed) => {
+                            Ok(Ok(completed)) => {
                                 NotifyEscrowCanisterOfDepositJob::run(swap_id);
                                 (Some(completed), Some(swap_id))
                             }
-                            Err(failed) => {
+                            Ok(Err(failed)) => {
                                 return TransferFailed(failed.error_message().to_string());
                             }
+                            Err(error) => return InternalError(format!("{error:?}")),
                         };
                 }
                 Err(error) => return error.into(),
@@ -292,7 +294,7 @@ fn send_message_impl(
 
         state
             .data
-            .award_achievements_and_notify(Achievement::from_message(true, &message_event.event, false), now)
+            .award_achievements_and_notify(message_event.event.achievements(true, false), now);
     }
 
     register_timer_jobs(

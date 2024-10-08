@@ -6,7 +6,7 @@ use user_index_canister::search::{Response::*, *};
 
 const MAX_SEARCH_TERM_LENGTH: usize = 25;
 
-#[query(msgpack = true)]
+#[query(candid = true, msgpack = true)]
 fn search(args: Args) -> Response {
     read_state(|state| search_impl(args, state))
 }
