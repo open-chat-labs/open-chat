@@ -35,6 +35,271 @@ export const OnlineUsersMarkAsOnlineResponse = Type.Union([
     }),
 ]);
 
+export type GroupSummaryUpdatesArgs = Static<typeof GroupSummaryUpdatesArgs>;
+export const GroupSummaryUpdatesArgs = Type.Object({
+    updates_since: Type.BigInt(),
+});
+
+export type GroupToggleMuteNotificationsArgs = Static<typeof GroupToggleMuteNotificationsArgs>;
+export const GroupToggleMuteNotificationsArgs = Type.Object({
+    mute: Type.Boolean(),
+});
+
+export type GroupToggleMuteNotificationsResponse = Static<
+    typeof GroupToggleMuteNotificationsResponse
+>;
+export const GroupToggleMuteNotificationsResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("CallerNotInGroup"),
+]);
+
+export type GroupCancelInvitesResponse = Static<typeof GroupCancelInvitesResponse>;
+export const GroupCancelInvitesResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+]);
+
+export type GroupSetVideoCallPresenceResponse = Static<typeof GroupSetVideoCallPresenceResponse>;
+export const GroupSetVideoCallPresenceResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("MessageNotFound"),
+    Type.Literal("AlreadyEnded"),
+    Type.Literal("GroupFrozen"),
+    Type.Literal("UserNotInGroup"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+]);
+
+export type GroupChangeRoleResponse = Static<typeof GroupChangeRoleResponse>;
+export const GroupChangeRoleResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("CallerNotInGroup"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("UserNotInGroup"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Literal("Invalid"),
+    Type.Literal("ChatFrozen"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
+export type GroupInviteCodeSuccessResult = Static<typeof GroupInviteCodeSuccessResult>;
+export const GroupInviteCodeSuccessResult = Type.Object({
+    code: Type.Optional(Type.BigInt()),
+});
+
+export type GroupInviteCodeResponse = Static<typeof GroupInviteCodeResponse>;
+export const GroupInviteCodeResponse = Type.Union([
+    Type.Object({
+        Success: GroupInviteCodeSuccessResult,
+    }),
+    Type.Literal("NotAuthorized"),
+]);
+
+export type GroupUnblockUserResponse = Static<typeof GroupUnblockUserResponse>;
+export const GroupUnblockUserResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("CallerNotInGroup"),
+    Type.Literal("CannotUnblockSelf"),
+    Type.Literal("GroupNotPublic"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Literal("ChatFrozen"),
+]);
+
+export type GroupUnfollowThreadResponse = Static<typeof GroupUnfollowThreadResponse>;
+export const GroupUnfollowThreadResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("NotFollowing"),
+    Type.Literal("ThreadNotFound"),
+    Type.Literal("UserNotInGroup"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Literal("GroupFrozen"),
+]);
+
+export type GroupDeleteMessagesResponse = Static<typeof GroupDeleteMessagesResponse>;
+export const GroupDeleteMessagesResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("CallerNotInGroup"),
+    Type.Literal("MessageNotFound"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Literal("ChatFrozen"),
+    Type.Literal("NotPlatformModerator"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
+export type GroupEnableInviteCodeArgs = Static<typeof GroupEnableInviteCodeArgs>;
+export const GroupEnableInviteCodeArgs = Type.Object({
+    correlation_id: Type.BigInt(),
+});
+
+export type GroupEnableInviteCodeSuccessResult = Static<typeof GroupEnableInviteCodeSuccessResult>;
+export const GroupEnableInviteCodeSuccessResult = Type.Object({
+    code: Type.BigInt(),
+});
+
+export type GroupRegisterProposalVoteResponse = Static<typeof GroupRegisterProposalVoteResponse>;
+export const GroupRegisterProposalVoteResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Object({
+        AlreadyVoted: Type.Boolean(),
+    }),
+    Type.Literal("CallerNotInGroup"),
+    Type.Literal("NoEligibleNeurons"),
+    Type.Literal("ProposalMessageNotFound"),
+    Type.Literal("ProposalNotFound"),
+    Type.Literal("ProposalNotAcceptingVotes"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Literal("ChatFrozen"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
+export type GroupDisableInviteCodeResponse = Static<typeof GroupDisableInviteCodeResponse>;
+export const GroupDisableInviteCodeResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Literal("ChatFrozen"),
+]);
+
+export type GroupDisableInviteCodeArgs = Static<typeof GroupDisableInviteCodeArgs>;
+export const GroupDisableInviteCodeArgs = Type.Object({
+    correlation_id: Type.BigInt(),
+});
+
+export type GroupPublicSummaryArgs = Static<typeof GroupPublicSummaryArgs>;
+export const GroupPublicSummaryArgs = Type.Object({
+    invite_code: Type.Optional(Type.BigInt()),
+});
+
+export type GroupRemoveReactionResponse = Static<typeof GroupRemoveReactionResponse>;
+export const GroupRemoveReactionResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("NoChange"),
+    Type.Literal("MessageNotFound"),
+    Type.Literal("CallerNotInGroup"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Literal("ChatFrozen"),
+]);
+
+export type GroupAddReactionResponse = Static<typeof GroupAddReactionResponse>;
+export const GroupAddReactionResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("NoChange"),
+    Type.Literal("InvalidReaction"),
+    Type.Literal("MessageNotFound"),
+    Type.Literal("CallerNotInGroup"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Literal("ChatFrozen"),
+]);
+
+export type GroupRulesArgs = Static<typeof GroupRulesArgs>;
+export const GroupRulesArgs = Type.Object({
+    invite_code: Type.Optional(Type.BigInt()),
+});
+
+export type GroupRulesSuccessResult = Static<typeof GroupRulesSuccessResult>;
+export const GroupRulesSuccessResult = Type.Object({
+    rules: Type.Optional(Type.String()),
+});
+
+export type GroupBlockUserResponse = Static<typeof GroupBlockUserResponse>;
+export const GroupBlockUserResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("CallerNotInGroup"),
+    Type.Literal("CannotBlockSelf"),
+    Type.Literal("CannotBlockUser"),
+    Type.Literal("GroupNotPublic"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("UserNotInGroup"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Literal("ChatFrozen"),
+]);
+
+export type GroupRemoveParticipantResponse = Static<typeof GroupRemoveParticipantResponse>;
+export const GroupRemoveParticipantResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("CallerNotInGroup"),
+    Type.Literal("CannotRemoveSelf"),
+    Type.Literal("CannotRemoveUser"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("UserNotInGroup"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Literal("ChatFrozen"),
+]);
+
+export type GroupDeclineInvitiationResponse = Static<typeof GroupDeclineInvitiationResponse>;
+export const GroupDeclineInvitiationResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("NotInvited"),
+]);
+
+export type GroupSelectedUpdatesArgs = Static<typeof GroupSelectedUpdatesArgs>;
+export const GroupSelectedUpdatesArgs = Type.Object({
+    updates_since: Type.BigInt(),
+});
+
+export type GroupReportMessageResponse = Static<typeof GroupReportMessageResponse>;
+export const GroupReportMessageResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Literal("ChatFrozen"),
+    Type.Literal("CallerNotInGroup"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("MessageNotFound"),
+    Type.Literal("AlreadyReported"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
+export type GroupEditMessageResponse = Static<typeof GroupEditMessageResponse>;
+export const GroupEditMessageResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("MessageNotFound"),
+    Type.Literal("CallerNotInGroup"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Literal("ChatFrozen"),
+]);
+
+export type GroupFollowThreadResponse = Static<typeof GroupFollowThreadResponse>;
+export const GroupFollowThreadResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("AlreadyFollowing"),
+    Type.Literal("ThreadNotFound"),
+    Type.Literal("UserNotInGroup"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Literal("GroupFrozen"),
+]);
+
 export type UserManageFavouriteChatsResponse = Static<typeof UserManageFavouriteChatsResponse>;
 export const UserManageFavouriteChatsResponse = Type.Union([
     Type.Literal("Success"),
@@ -72,6 +337,8 @@ export const UserTokenSwapStatusArgs = Type.Object({
 export type UserTokenSwapStatusTokenSwapStatus = Static<typeof UserTokenSwapStatusTokenSwapStatus>;
 export const UserTokenSwapStatusTokenSwapStatus = Type.Object({
     started: Type.BigInt(),
+    icrc2: Type.Boolean(),
+    auto_withdrawals: Type.Boolean(),
     deposit_account: Type.Union([
         Type.Object({
             Ok: Type.Null(),
@@ -82,6 +349,15 @@ export const UserTokenSwapStatusTokenSwapStatus = Type.Object({
         Type.Null(),
     ]),
     transfer: Type.Union([
+        Type.Object({
+            Ok: Type.BigInt(),
+        }),
+        Type.Object({
+            Err: Type.String(),
+        }),
+        Type.Null(),
+    ]),
+    transfer_or_approval: Type.Union([
         Type.Object({
             Ok: Type.BigInt(),
         }),
@@ -131,6 +407,36 @@ export type UserSwapTokensSuccessResult = Static<typeof UserSwapTokensSuccessRes
 export const UserSwapTokensSuccessResult = Type.Object({
     amount_out: Type.BigInt(),
 });
+
+export type UserTipMessageResponse = Static<typeof UserTipMessageResponse>;
+export const UserTipMessageResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("ChatNotFound"),
+    Type.Literal("MessageNotFound"),
+    Type.Literal("CannotTipSelf"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("TransferCannotBeZero"),
+    Type.Literal("TransferNotToMessageSender"),
+    Type.Object({
+        TransferFailed: Type.String(),
+    }),
+    Type.Literal("ChatFrozen"),
+    Type.Literal("PinRequired"),
+    Type.Object({
+        PinIncorrect: Type.BigInt(),
+    }),
+    Type.Object({
+        TooManyFailedPinAttempts: Type.BigInt(),
+    }),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Object({
+        Retrying: Type.String(),
+    }),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
 
 export type UserUnblockUserResponse = Static<typeof UserUnblockUserResponse>;
 export const UserUnblockUserResponse = Type.Union([
@@ -366,6 +672,7 @@ export const UserDeleteCommunityResponse = Type.Union([
     Type.Literal("Success"),
     Type.Literal("NotAuthorized"),
     Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
     Type.Literal("CommunityFrozen"),
     Type.Object({
         InternalError: Type.String(),
@@ -450,6 +757,9 @@ export const DiamondMembershipPlanDuration = Type.Union([
 
 export type EventIndex = Static<typeof EventIndex>;
 export const EventIndex = Type.Number();
+
+export type VoteOperation = Static<typeof VoteOperation>;
+export const VoteOperation = Type.Union([Type.Literal("RegisterVote"), Type.Literal("DeleteVote")]);
 
 export type SuspensionAction = Static<typeof SuspensionAction>;
 export const SuspensionAction = Type.Union([
@@ -562,6 +872,13 @@ export const ApproveError = Type.Union([
             message: Type.String(),
         }),
     }),
+]);
+
+export type VideoCallPresence = Static<typeof VideoCallPresence>;
+export const VideoCallPresence = Type.Union([
+    Type.Literal("Default"),
+    Type.Literal("Owner"),
+    Type.Literal("Hidden"),
 ]);
 
 export type ChatMetrics = Static<typeof ChatMetrics>;
@@ -829,6 +1146,15 @@ export const BuildVersion = Type.Object({
     patch: Type.Number(),
 });
 
+export type OptionUpdateGroupPermissionRole = Static<typeof OptionUpdateGroupPermissionRole>;
+export const OptionUpdateGroupPermissionRole = Type.Union([
+    Type.Literal("NoChange"),
+    Type.Literal("SetToNone"),
+    Type.Object({
+        SetToSome: GroupPermissionRole,
+    }),
+]);
+
 export type Cryptocurrency = Static<typeof Cryptocurrency>;
 export const Cryptocurrency = Type.Union([
     Type.Literal("InternetComputer"),
@@ -988,12 +1314,24 @@ export const BotConfig = Type.Object({
 export type Version = Static<typeof Version>;
 export const Version = Type.Number();
 
+export type OptionalCommunityPermissions = Static<typeof OptionalCommunityPermissions>;
+export const OptionalCommunityPermissions = Type.Object({
+    change_roles: Type.Optional(CommunityPermissionRole),
+    update_details: Type.Optional(CommunityPermissionRole),
+    invite_users: Type.Optional(CommunityPermissionRole),
+    remove_members: Type.Optional(CommunityPermissionRole),
+    create_public_channel: Type.Optional(CommunityPermissionRole),
+    create_private_channel: Type.Optional(CommunityPermissionRole),
+    manage_user_groups: Type.Optional(CommunityPermissionRole),
+});
+
 export type CommunityMembership = Static<typeof CommunityMembership>;
 export const CommunityMembership = Type.Object({
     joined: Type.BigInt(),
     role: CommunityRole,
     rules_accepted: Type.Boolean(),
     display_name: Type.Optional(Type.String()),
+    lapsed: Type.Boolean(),
 });
 
 export type VerifiedCredentialArgumentValue = Static<typeof VerifiedCredentialArgumentValue>;
@@ -1032,6 +1370,13 @@ export const CustomPermission = Type.Object({
 
 export type TSBytes = Static<typeof TSBytes>;
 export const TSBytes = Type.Uint8Array();
+
+export type UpdatedRules = Static<typeof UpdatedRules>;
+export const UpdatedRules = Type.Object({
+    text: Type.String(),
+    enabled: Type.Boolean(),
+    new_version: Type.Boolean(),
+});
 
 export type OptionUpdateString = Static<typeof OptionUpdateString>;
 export const OptionUpdateString = Type.Union([
@@ -1848,12 +2193,598 @@ export const LocalUserIndexGroupAndCommunitySummaryUpdatesSummaryUpdatesArgs = T
     updates_since: Type.Optional(Type.BigInt()),
 });
 
+export type CommunitySummaryUpdatesArgs = Static<typeof CommunitySummaryUpdatesArgs>;
+export const CommunitySummaryUpdatesArgs = Type.Object({
+    invite_code: Type.Optional(Type.BigInt()),
+    updates_since: Type.BigInt(),
+});
+
+export type CommunitySelectedChannelUpdatesArgs = Static<
+    typeof CommunitySelectedChannelUpdatesArgs
+>;
+export const CommunitySelectedChannelUpdatesArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    updates_since: Type.BigInt(),
+});
+
+export type CommunityLeaveChannelResponse = Static<typeof CommunityLeaveChannelResponse>;
+export const CommunityLeaveChannelResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("UserNotInChannel"),
+    Type.Literal("LastOwnerCannotLeave"),
+]);
+
+export type CommunityLeaveChannelArgs = Static<typeof CommunityLeaveChannelArgs>;
+export const CommunityLeaveChannelArgs = Type.Object({
+    channel_id: Type.BigInt(),
+});
+
+export type CommunityRemoveMemberResponse = Static<typeof CommunityRemoveMemberResponse>;
+export const CommunityRemoveMemberResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("CannotRemoveSelf"),
+    Type.Literal("CannotRemoveUser"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("TargetUserNotInCommunity"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("CommunityFrozen"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunityToggleMuteNotificationsResponse = Static<
+    typeof CommunityToggleMuteNotificationsResponse
+>;
+export const CommunityToggleMuteNotificationsResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("UserNotInChannel"),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunityToggleMuteNotificationsArgs = Static<
+    typeof CommunityToggleMuteNotificationsArgs
+>;
+export const CommunityToggleMuteNotificationsArgs = Type.Object({
+    channel_id: Type.Optional(Type.BigInt()),
+    mute: Type.Boolean(),
+});
+
+export type CommunityClaimPrizeArgs = Static<typeof CommunityClaimPrizeArgs>;
+export const CommunityClaimPrizeArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    message_id: MessageId,
+});
+
+export type CommunityCancelInvitesResponse = Static<typeof CommunityCancelInvitesResponse>;
+export const CommunityCancelInvitesResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunityDeleteMessageArgs = Static<typeof CommunityDeleteMessageArgs>;
+export const CommunityDeleteMessageArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_id: MessageId,
+});
+
+export type CommunityCreateUserGroupSuccessResult = Static<
+    typeof CommunityCreateUserGroupSuccessResult
+>;
+export const CommunityCreateUserGroupSuccessResult = Type.Object({
+    user_group_id: Type.Number(),
+});
+
+export type CommunityCreateUserGroupResponse = Static<typeof CommunityCreateUserGroupResponse>;
+export const CommunityCreateUserGroupResponse = Type.Union([
+    Type.Object({
+        Success: CommunityCreateUserGroupSuccessResult,
+    }),
+    Type.Object({
+        NameTooShort: FieldTooShortResult,
+    }),
+    Type.Object({
+        NameTooLong: FieldTooLongResult,
+    }),
+    Type.Literal("NameInvalid"),
+    Type.Literal("NameTaken"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunityJoinVideoCallArgs = Static<typeof CommunityJoinVideoCallArgs>;
+export const CommunityJoinVideoCallArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    message_id: MessageId,
+    new_achievement: Type.Boolean(),
+});
+
+export type CommunitySetVideoCallPresenceArgs = Static<typeof CommunitySetVideoCallPresenceArgs>;
+export const CommunitySetVideoCallPresenceArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    message_id: MessageId,
+    presence: VideoCallPresence,
+    new_achievement: Type.Boolean(),
+});
+
+export type CommunitySetVideoCallPresenceResponse = Static<
+    typeof CommunitySetVideoCallPresenceResponse
+>;
+export const CommunitySetVideoCallPresenceResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("MessageNotFound"),
+    Type.Literal("AlreadyEnded"),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("UserNotInChannel"),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunityRegisterPollVoteArgs = Static<typeof CommunityRegisterPollVoteArgs>;
+export const CommunityRegisterPollVoteArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_index: MessageIndex,
+    poll_option: Type.Number(),
+    operation: VoteOperation,
+    new_achievement: Type.Boolean(),
+});
+
+export type CommunityCancelP2pSwapArgs = Static<typeof CommunityCancelP2pSwapArgs>;
+export const CommunityCancelP2pSwapArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_id: MessageId,
+});
+
+export type CommunityUndeleteMessagesArgs = Static<typeof CommunityUndeleteMessagesArgs>;
+export const CommunityUndeleteMessagesArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_ids: Type.Array(MessageId),
+});
+
+export type CommunityChangeRoleResponse = Static<typeof CommunityChangeRoleResponse>;
+export const CommunityChangeRoleResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("TargetUserNotInCommunity"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("Invalid"),
+    Type.Literal("CommunityFrozen"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunitySelectedChannelInitialArgs = Static<
+    typeof CommunitySelectedChannelInitialArgs
+>;
+export const CommunitySelectedChannelInitialArgs = Type.Object({
+    channel_id: Type.BigInt(),
+});
+
+export type CommunityInviteCodeSuccessResult = Static<typeof CommunityInviteCodeSuccessResult>;
+export const CommunityInviteCodeSuccessResult = Type.Object({
+    code: Type.Optional(Type.BigInt()),
+});
+
+export type CommunityInviteCodeResponse = Static<typeof CommunityInviteCodeResponse>;
+export const CommunityInviteCodeResponse = Type.Union([
+    Type.Object({
+        Success: CommunityInviteCodeSuccessResult,
+    }),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("NotAuthorized"),
+]);
+
+export type CommunityUnblockUserResponse = Static<typeof CommunityUnblockUserResponse>;
+export const CommunityUnblockUserResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("CannotUnblockSelf"),
+    Type.Literal("CommunityNotPublic"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunityExploreChannelsArgs = Static<typeof CommunityExploreChannelsArgs>;
+export const CommunityExploreChannelsArgs = Type.Object({
+    invite_code: Type.Optional(Type.BigInt()),
+    search_term: Type.Optional(Type.String()),
+    page_index: Type.Number(),
+    page_size: Type.Number(),
+});
+
+export type CommunityChannelSummaryUpdatesArgs = Static<typeof CommunityChannelSummaryUpdatesArgs>;
+export const CommunityChannelSummaryUpdatesArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    invite_code: Type.Optional(Type.BigInt()),
+    updates_since: Type.BigInt(),
+});
+
+export type CommunityUpdateUserGroupResponse = Static<typeof CommunityUpdateUserGroupResponse>;
+export const CommunityUpdateUserGroupResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("UserGroupNotFound"),
+    Type.Object({
+        NameTooShort: FieldTooShortResult,
+    }),
+    Type.Object({
+        NameTooLong: FieldTooLongResult,
+    }),
+    Type.Literal("NameInvalid"),
+    Type.Literal("NameTaken"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunityEventsWindowArgs = Static<typeof CommunityEventsWindowArgs>;
+export const CommunityEventsWindowArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    thread_root_message_index: Type.Optional(MessageIndex),
+    mid_point: MessageIndex,
+    max_messages: Type.Number(),
+    max_events: Type.Number(),
+    latest_known_update: Type.Optional(Type.BigInt()),
+});
+
+export type CommunityUnfollowThreadArgs = Static<typeof CommunityUnfollowThreadArgs>;
+export const CommunityUnfollowThreadArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    thread_root_message_index: MessageIndex,
+});
+
+export type CommunityUnfollowThreadResponse = Static<typeof CommunityUnfollowThreadResponse>;
+export const CommunityUnfollowThreadResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("NotFollowing"),
+    Type.Literal("ThreadNotFound"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("UserNotInChannel"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunityDeleteMessagesResponse = Static<typeof CommunityDeleteMessagesResponse>;
+export const CommunityDeleteMessagesResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("MessageNotFound"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("UserNotInChannel"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("NotPlatformModerator"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunityDeleteMessagesArgs = Static<typeof CommunityDeleteMessagesArgs>;
+export const CommunityDeleteMessagesArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_ids: Type.Array(MessageId),
+    as_platform_moderator: Type.Optional(Type.Boolean()),
+    new_achievement: Type.Boolean(),
+});
+
+export type CommunityRemoveMemberFromChannelResponse = Static<
+    typeof CommunityRemoveMemberFromChannelResponse
+>;
+export const CommunityRemoveMemberFromChannelResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("TargetUserNotInCommunity"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("UserNotInChannel"),
+    Type.Literal("TargetUserNotInChannel"),
+    Type.Literal("CannotRemoveSelf"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunityEnableInviteCodeSuccessResult = Static<
+    typeof CommunityEnableInviteCodeSuccessResult
+>;
+export const CommunityEnableInviteCodeSuccessResult = Type.Object({
+    code: Type.BigInt(),
+});
+
+export type CommunityEnableInviteCodeResponse = Static<typeof CommunityEnableInviteCodeResponse>;
+export const CommunityEnableInviteCodeResponse = Type.Union([
+    Type.Object({
+        Success: CommunityEnableInviteCodeSuccessResult,
+    }),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunityRegisterProposalVoteArgs = Static<typeof CommunityRegisterProposalVoteArgs>;
+export const CommunityRegisterProposalVoteArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    message_index: MessageIndex,
+    adopt: Type.Boolean(),
+});
+
+export type CommunityRegisterProposalVoteResponse = Static<
+    typeof CommunityRegisterProposalVoteResponse
+>;
+export const CommunityRegisterProposalVoteResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Object({
+        AlreadyVoted: Type.Boolean(),
+    }),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("UserNotInChannel"),
+    Type.Literal("NoEligibleNeurons"),
+    Type.Literal("ProposalMessageNotFound"),
+    Type.Literal("ProposalNotFound"),
+    Type.Literal("ProposalNotAcceptingVotes"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunityDisableInviteCodeResponse = Static<typeof CommunityDisableInviteCodeResponse>;
+export const CommunityDisableInviteCodeResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunityChannelSummaryArgs = Static<typeof CommunityChannelSummaryArgs>;
+export const CommunityChannelSummaryArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    invite_code: Type.Optional(Type.BigInt()),
+});
+
+export type CommunityChangeChannelRoleResponse = Static<typeof CommunityChangeChannelRoleResponse>;
+export const CommunityChangeChannelRoleResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("UserNotInChannel"),
+    Type.Literal("TargetUserNotInChannel"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("Invalid"),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunityDeclineInvitationArgs = Static<typeof CommunityDeclineInvitationArgs>;
+export const CommunityDeclineInvitationArgs = Type.Object({
+    channel_id: Type.Optional(Type.BigInt()),
+});
+
+export type CommunityDeclineInvitationResponse = Static<typeof CommunityDeclineInvitationResponse>;
+export const CommunityDeclineInvitationResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("NotInvited"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("UserNotInCommunity"),
+]);
+
+export type CommunityMessagesByMessageIndexArgs = Static<
+    typeof CommunityMessagesByMessageIndexArgs
+>;
+export const CommunityMessagesByMessageIndexArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    thread_root_message_index: Type.Optional(MessageIndex),
+    messages: Type.Array(MessageIndex),
+    latest_known_update: Type.Optional(Type.BigInt()),
+});
+
+export type CommunityDeleteUserGroupsResponse = Static<typeof CommunityDeleteUserGroupsResponse>;
+export const CommunityDeleteUserGroupsResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunityDeleteUserGroupsArgs = Static<typeof CommunityDeleteUserGroupsArgs>;
+export const CommunityDeleteUserGroupsArgs = Type.Object({
+    user_group_ids: Type.Array(Type.Number()),
+});
+
+export type CommunityUpdateCommunitySuccessResult = Static<
+    typeof CommunityUpdateCommunitySuccessResult
+>;
+export const CommunityUpdateCommunitySuccessResult = Type.Object({
+    rules_version: Type.Optional(Version),
+});
+
+export type CommunityUpdateCommunityResponse = Static<typeof CommunityUpdateCommunityResponse>;
+export const CommunityUpdateCommunityResponse = Type.Union([
+    Type.Object({
+        SuccessV2: CommunityUpdateCommunitySuccessResult,
+    }),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Object({
+        NameTooShort: FieldTooShortResult,
+    }),
+    Type.Object({
+        NameTooLong: FieldTooLongResult,
+    }),
+    Type.Literal("NameReserved"),
+    Type.Object({
+        DescriptionTooLong: FieldTooLongResult,
+    }),
+    Type.Object({
+        AvatarTooBig: FieldTooLongResult,
+    }),
+    Type.Object({
+        BannerTooBig: FieldTooLongResult,
+    }),
+    Type.Literal("AccessGateInvalid"),
+    Type.Literal("NameTaken"),
+    Type.Literal("InternalError"),
+    Type.Object({
+        RulesTooLong: FieldTooLongResult,
+    }),
+    Type.Object({
+        RulesTooShort: FieldTooShortResult,
+    }),
+    Type.Literal("UserSuspended"),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("InvalidLanguage"),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunityRemoveReactionArgs = Static<typeof CommunityRemoveReactionArgs>;
+export const CommunityRemoveReactionArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_id: MessageId,
+    reaction: Reaction,
+});
+
+export type CommunityRemoveReactionResponse = Static<typeof CommunityRemoveReactionResponse>;
+export const CommunityRemoveReactionResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("NoChange"),
+    Type.Literal("MessageNotFound"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("UserNotInChannel"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunitySelectedInitialArgs = Static<typeof CommunitySelectedInitialArgs>;
+export const CommunitySelectedInitialArgs = Type.Object({
+    invite_code: Type.Optional(Type.BigInt()),
+});
+
+export type CommunityAddReactionArgs = Static<typeof CommunityAddReactionArgs>;
+export const CommunityAddReactionArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_id: MessageId,
+    reaction: Reaction,
+    username: Type.String(),
+    display_name: Type.Optional(Type.String()),
+    new_achievement: Type.Boolean(),
+});
+
+export type CommunityAddReactionResponse = Static<typeof CommunityAddReactionResponse>;
+export const CommunityAddReactionResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("NoChange"),
+    Type.Literal("InvalidReaction"),
+    Type.Literal("MessageNotFound"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("UserNotInChannel"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunityThreadPreviewsArgs = Static<typeof CommunityThreadPreviewsArgs>;
+export const CommunityThreadPreviewsArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    threads: Type.Array(MessageIndex),
+    latest_client_thread_update: Type.Optional(Type.BigInt()),
+});
+
+export type CommunityBlockUserResponse = Static<typeof CommunityBlockUserResponse>;
+export const CommunityBlockUserResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("CannotBlockSelf"),
+    Type.Literal("CannotBlockUser"),
+    Type.Literal("CommunityNotPublic"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("TargetUserNotInCommunity"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("CommunityFrozen"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunityPinMessageArgs = Static<typeof CommunityPinMessageArgs>;
+export const CommunityPinMessageArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    message_index: MessageIndex,
+});
+
+export type CommunityPinMessageResponse = Static<typeof CommunityPinMessageResponse>;
+export const CommunityPinMessageResponse = Type.Union([
+    Type.Object({
+        Success: PushEventResult,
+    }),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("UserNotInChannel"),
+    Type.Literal("MessageNotFound"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("NoChange"),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunityVideoCallParticipantsArgs = Static<typeof CommunityVideoCallParticipantsArgs>;
+export const CommunityVideoCallParticipantsArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    message_id: MessageId,
+    updated_since: Type.Optional(Type.BigInt()),
+});
+
 export type CommunitySendMessageSuccessResult = Static<typeof CommunitySendMessageSuccessResult>;
 export const CommunitySendMessageSuccessResult = Type.Object({
     event_index: EventIndex,
     message_index: MessageIndex,
     timestamp: Type.BigInt(),
-    expires_at: Type.Optional(Type.Union([Type.BigInt(), Type.Null()])),
+    expires_at: Type.Optional(Type.BigInt()),
 });
 
 export type CommunitySendMessageResponse = Static<typeof CommunitySendMessageResponse>;
@@ -1880,7 +2811,189 @@ export const CommunitySendMessageResponse = Type.Union([
     Type.Literal("CommunityFrozen"),
     Type.Literal("RulesNotAccepted"),
     Type.Literal("CommunityRulesNotAccepted"),
+    Type.Literal("UserLapsed"),
 ]);
+
+export type CommunityEventsByIndexArgs = Static<typeof CommunityEventsByIndexArgs>;
+export const CommunityEventsByIndexArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    thread_root_message_index: Type.Optional(MessageIndex),
+    events: Type.Array(EventIndex),
+    latest_known_update: Type.Optional(Type.BigInt()),
+});
+
+export type CommunityLocalUserIndexResponse = Static<typeof CommunityLocalUserIndexResponse>;
+export const CommunityLocalUserIndexResponse = Type.Object({
+    Success: TSBytes,
+});
+
+export type CommunityEventsArgs = Static<typeof CommunityEventsArgs>;
+export const CommunityEventsArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    thread_root_message_index: Type.Optional(MessageIndex),
+    start_index: EventIndex,
+    ascending: Type.Boolean(),
+    max_messages: Type.Number(),
+    max_events: Type.Number(),
+    latest_known_update: Type.Optional(Type.BigInt()),
+});
+
+export type CommunityAcceptP2pSwapArgs = Static<typeof CommunityAcceptP2pSwapArgs>;
+export const CommunityAcceptP2pSwapArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_id: MessageId,
+    pin: Type.Optional(Type.String()),
+    new_achievement: Type.Boolean(),
+});
+
+export type CommunityCreateChannelSuccessResult = Static<
+    typeof CommunityCreateChannelSuccessResult
+>;
+export const CommunityCreateChannelSuccessResult = Type.Object({
+    channel_id: Type.BigInt(),
+});
+
+export type CommunitySelectedUpdatesArgs = Static<typeof CommunitySelectedUpdatesArgs>;
+export const CommunitySelectedUpdatesArgs = Type.Object({
+    invite_code: Type.Optional(Type.BigInt()),
+    updates_since: Type.BigInt(),
+});
+
+export type CommunityImportGroupSuccessResult = Static<typeof CommunityImportGroupSuccessResult>;
+export const CommunityImportGroupSuccessResult = Type.Object({
+    channel_id: Type.BigInt(),
+    total_bytes: Type.BigInt(),
+});
+
+export type CommunityImportGroupResponse = Static<typeof CommunityImportGroupResponse>;
+export const CommunityImportGroupResponse = Type.Union([
+    Type.Object({
+        Success: CommunityImportGroupSuccessResult,
+    }),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("UserNotCommunityOwner"),
+    Type.Literal("UserNotInGroup"),
+    Type.Literal("UserNotGroupOwner"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("GroupNotFound"),
+    Type.Literal("GroupAlreadyBeingImported"),
+    Type.Literal("GroupImportingToAnotherCommunity"),
+    Type.Literal("GroupFrozen"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunityReportMessageArgs = Static<typeof CommunityReportMessageArgs>;
+export const CommunityReportMessageArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_id: MessageId,
+    delete: Type.Boolean(),
+});
+
+export type CommunityReportMessageResponse = Static<typeof CommunityReportMessageResponse>;
+export const CommunityReportMessageResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("UserNotInChannel"),
+    Type.Literal("MessageNotFound"),
+    Type.Literal("AlreadyReported"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunityEditMessageResponse = Static<typeof CommunityEditMessageResponse>;
+export const CommunityEditMessageResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("MessageNotFound"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("UserNotInChannel"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunityUpdateChannelSuccessResult = Static<
+    typeof CommunityUpdateChannelSuccessResult
+>;
+export const CommunityUpdateChannelSuccessResult = Type.Object({
+    rules_version: Type.Optional(Version),
+});
+
+export type CommunitySetMemberDisplayNameArgs = Static<typeof CommunitySetMemberDisplayNameArgs>;
+export const CommunitySetMemberDisplayNameArgs = Type.Object({
+    display_name: Type.Optional(Type.String()),
+    new_achievement: Type.Boolean(),
+});
+
+export type CommunitySetMemberDisplayNameResponse = Static<
+    typeof CommunitySetMemberDisplayNameResponse
+>;
+export const CommunitySetMemberDisplayNameResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("DisplayNameInvalid"),
+    Type.Object({
+        DisplayNameTooShort: Type.Number(),
+    }),
+    Type.Object({
+        DisplayNameTooLong: Type.Number(),
+    }),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunitySummaryArgs = Static<typeof CommunitySummaryArgs>;
+export const CommunitySummaryArgs = Type.Object({
+    invite_code: Type.Optional(Type.BigInt()),
+});
+
+export type CommunityFollowThreadResponse = Static<typeof CommunityFollowThreadResponse>;
+export const CommunityFollowThreadResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("AlreadyFollowing"),
+    Type.Literal("ThreadNotFound"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("UserNotInChannel"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunityFollowThreadArgs = Static<typeof CommunityFollowThreadArgs>;
+export const CommunityFollowThreadArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    thread_root_message_index: MessageIndex,
+});
+
+export type CommunityDeleteChannelResponse = Static<typeof CommunityDeleteChannelResponse>;
+export const CommunityDeleteChannelResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("UserNotInChannel"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunityDeleteChannelArgs = Static<typeof CommunityDeleteChannelArgs>;
+export const CommunityDeleteChannelArgs = Type.Object({
+    channel_id: Type.BigInt(),
+});
 
 export type NotificationsIndexPushSubscriptionResponse = Static<
     typeof NotificationsIndexPushSubscriptionResponse
@@ -2111,12 +3224,180 @@ export const ProposalsBotUpgradeSnsControlledCanister = Type.Object({
     mode: ProposalsBotCanisterInstallMode,
 });
 
+export type GroupConvertIntoCommunityArgs = Static<typeof GroupConvertIntoCommunityArgs>;
+export const GroupConvertIntoCommunityArgs = Type.Object({
+    rules: Rules,
+    permissions: Type.Optional(CommunityPermissions),
+    primary_language: Type.Optional(Type.String()),
+    history_visible_to_new_joiners: Type.Boolean(),
+});
+
+export type GroupClaimPrizeArgs = Static<typeof GroupClaimPrizeArgs>;
+export const GroupClaimPrizeArgs = Type.Object({
+    message_id: MessageId,
+    correlation_id: Type.BigInt(),
+});
+
+export type GroupJoinVideoCallArgs = Static<typeof GroupJoinVideoCallArgs>;
+export const GroupJoinVideoCallArgs = Type.Object({
+    message_id: MessageId,
+    new_achievement: Type.Boolean(),
+});
+
+export type GroupSetVideoCallPresenceArgs = Static<typeof GroupSetVideoCallPresenceArgs>;
+export const GroupSetVideoCallPresenceArgs = Type.Object({
+    message_id: MessageId,
+    presence: VideoCallPresence,
+    new_achievement: Type.Boolean(),
+});
+
+export type GroupDeletedMessageArgs = Static<typeof GroupDeletedMessageArgs>;
+export const GroupDeletedMessageArgs = Type.Object({
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_id: MessageId,
+});
+
+export type GroupRegisterPollVoteArgs = Static<typeof GroupRegisterPollVoteArgs>;
+export const GroupRegisterPollVoteArgs = Type.Object({
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_index: MessageIndex,
+    poll_option: Type.Number(),
+    operation: VoteOperation,
+    new_achievement: Type.Boolean(),
+    correlation_id: Type.BigInt(),
+});
+
+export type GroupCancelP2pSwapArgs = Static<typeof GroupCancelP2pSwapArgs>;
+export const GroupCancelP2pSwapArgs = Type.Object({
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_id: MessageId,
+});
+
+export type GroupUndeleteMessagesArgs = Static<typeof GroupUndeleteMessagesArgs>;
+export const GroupUndeleteMessagesArgs = Type.Object({
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_ids: Type.Array(MessageId),
+    correlation_id: Type.BigInt(),
+});
+
+export type GroupEventsWindowArgs = Static<typeof GroupEventsWindowArgs>;
+export const GroupEventsWindowArgs = Type.Object({
+    thread_root_message_index: Type.Optional(MessageIndex),
+    mid_point: MessageIndex,
+    max_messages: Type.Number(),
+    max_events: Type.Number(),
+    latest_known_update: Type.Optional(Type.BigInt()),
+});
+
+export type GroupUnfollowThreadArgs = Static<typeof GroupUnfollowThreadArgs>;
+export const GroupUnfollowThreadArgs = Type.Object({
+    thread_root_message_index: MessageIndex,
+});
+
+export type GroupDeleteMessagesArgs = Static<typeof GroupDeleteMessagesArgs>;
+export const GroupDeleteMessagesArgs = Type.Object({
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_ids: Type.Array(MessageId),
+    as_platform_moderator: Type.Optional(Type.Boolean()),
+    new_achievement: Type.Boolean(),
+    correlation_id: Type.BigInt(),
+});
+
+export type GroupEnableInviteCodeResponse = Static<typeof GroupEnableInviteCodeResponse>;
+export const GroupEnableInviteCodeResponse = Type.Union([
+    Type.Object({
+        Success: GroupEnableInviteCodeSuccessResult,
+    }),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Literal("ChatFrozen"),
+]);
+
+export type GroupUpdateGroupSuccessResult = Static<typeof GroupUpdateGroupSuccessResult>;
+export const GroupUpdateGroupSuccessResult = Type.Object({
+    rules_version: Type.Optional(Version),
+});
+
+export type GroupRegisterProposalVoteArgs = Static<typeof GroupRegisterProposalVoteArgs>;
+export const GroupRegisterProposalVoteArgs = Type.Object({
+    message_index: MessageIndex,
+    adopt: Type.Boolean(),
+});
+
+export type GroupMessagesByMessageIndexArgs = Static<typeof GroupMessagesByMessageIndexArgs>;
+export const GroupMessagesByMessageIndexArgs = Type.Object({
+    thread_root_message_index: Type.Optional(MessageIndex),
+    messages: Type.Array(MessageIndex),
+    latest_known_update: Type.Optional(Type.BigInt()),
+});
+
+export type GroupRemoveReactionArgs = Static<typeof GroupRemoveReactionArgs>;
+export const GroupRemoveReactionArgs = Type.Object({
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_id: MessageId,
+    reaction: Reaction,
+    correlation_id: Type.BigInt(),
+});
+
+export type GroupAddReactionArgs = Static<typeof GroupAddReactionArgs>;
+export const GroupAddReactionArgs = Type.Object({
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_id: MessageId,
+    reaction: Reaction,
+    username: Type.String(),
+    display_name: Type.Optional(Type.String()),
+    new_achievement: Type.Boolean(),
+    correlation_id: Type.BigInt(),
+});
+
+export type GroupThreadPreviewsArgs = Static<typeof GroupThreadPreviewsArgs>;
+export const GroupThreadPreviewsArgs = Type.Object({
+    threads: Type.Array(MessageIndex),
+    latest_client_thread_update: Type.Optional(Type.BigInt()),
+});
+
+export type GroupRulesResponse = Static<typeof GroupRulesResponse>;
+export const GroupRulesResponse = Type.Union([
+    Type.Object({
+        Success: GroupRulesSuccessResult,
+    }),
+    Type.Literal("NotAuthorized"),
+]);
+
+export type GroupPinMessageResponse = Static<typeof GroupPinMessageResponse>;
+export const GroupPinMessageResponse = Type.Union([
+    Type.Object({
+        Success: PushEventResult,
+    }),
+    Type.Literal("NoChange"),
+    Type.Literal("MessageIndexOutOfRange"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("CallerNotInGroup"),
+    Type.Literal("MessageNotFound"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Literal("ChatFrozen"),
+]);
+
+export type GroupPinMessageArgs = Static<typeof GroupPinMessageArgs>;
+export const GroupPinMessageArgs = Type.Object({
+    message_index: MessageIndex,
+    correlation_id: Type.BigInt(),
+});
+
+export type GroupVideoCallParticipantsArgs = Static<typeof GroupVideoCallParticipantsArgs>;
+export const GroupVideoCallParticipantsArgs = Type.Object({
+    message_id: MessageId,
+    updated_since: Type.Optional(Type.BigInt()),
+});
+
 export type GroupSendMessageSuccessResult = Static<typeof GroupSendMessageSuccessResult>;
 export const GroupSendMessageSuccessResult = Type.Object({
     event_index: EventIndex,
     message_index: MessageIndex,
     timestamp: Type.BigInt(),
-    expires_at: Type.Optional(Type.Union([Type.BigInt(), Type.Null()])),
+    expires_at: Type.Optional(Type.BigInt()),
 });
 
 export type GroupSendMessageResponse = Static<typeof GroupSendMessageResponse>;
@@ -2135,12 +3416,75 @@ export const GroupSendMessageResponse = Type.Union([
     Type.Literal("NotAuthorized"),
     Type.Literal("CallerNotInGroup"),
     Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
     Type.Object({
         InvalidRequest: Type.String(),
     }),
     Type.Literal("ChatFrozen"),
     Type.Literal("RulesNotAccepted"),
 ]);
+
+export type GroupEventsByIndexArgs = Static<typeof GroupEventsByIndexArgs>;
+export const GroupEventsByIndexArgs = Type.Object({
+    thread_root_message_index: Type.Optional(MessageIndex),
+    events: Type.Array(EventIndex),
+    latest_known_update: Type.Optional(Type.BigInt()),
+});
+
+export type GroupUnpinMessageArgs = Static<typeof GroupUnpinMessageArgs>;
+export const GroupUnpinMessageArgs = Type.Object({
+    message_index: MessageIndex,
+    correlation_id: Type.BigInt(),
+});
+
+export type GroupUnpinMessageResponse = Static<typeof GroupUnpinMessageResponse>;
+export const GroupUnpinMessageResponse = Type.Union([
+    Type.Object({
+        SuccessV2: PushEventResult,
+    }),
+    Type.Literal("NoChange"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("CallerNotInGroup"),
+    Type.Literal("MessageNotFound"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Literal("ChatFrozen"),
+]);
+
+export type GroupLocalUserIndexResponse = Static<typeof GroupLocalUserIndexResponse>;
+export const GroupLocalUserIndexResponse = Type.Object({
+    Success: TSBytes,
+});
+
+export type GroupEventsArgs = Static<typeof GroupEventsArgs>;
+export const GroupEventsArgs = Type.Object({
+    thread_root_message_index: Type.Optional(MessageIndex),
+    start_index: EventIndex,
+    ascending: Type.Boolean(),
+    max_messages: Type.Number(),
+    max_events: Type.Number(),
+    latest_known_update: Type.Optional(Type.BigInt()),
+});
+
+export type GroupAcceptP2pSwapArgs = Static<typeof GroupAcceptP2pSwapArgs>;
+export const GroupAcceptP2pSwapArgs = Type.Object({
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_id: MessageId,
+    pin: Type.Optional(Type.String()),
+    new_achievement: Type.Boolean(),
+});
+
+export type GroupReportMessageArgs = Static<typeof GroupReportMessageArgs>;
+export const GroupReportMessageArgs = Type.Object({
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_id: MessageId,
+    delete: Type.Boolean(),
+});
+
+export type GroupFollowThreadArgs = Static<typeof GroupFollowThreadArgs>;
+export const GroupFollowThreadArgs = Type.Object({
+    thread_root_message_index: MessageIndex,
+});
 
 export type UserSavedCryptoAccountsResponse = Static<typeof UserSavedCryptoAccountsResponse>;
 export const UserSavedCryptoAccountsResponse = Type.Object({
@@ -2365,6 +3709,13 @@ export const PaymentGate = Type.Object({
     fee: Type.BigInt(),
 });
 
+export type VersionedRules = Static<typeof VersionedRules>;
+export const VersionedRules = Type.Object({
+    text: Type.String(),
+    version: Version,
+    enabled: Type.Boolean(),
+});
+
 export type AccountICRC1 = Static<typeof AccountICRC1>;
 export const AccountICRC1 = Type.Object({
     owner: TSBytes,
@@ -2411,6 +3762,7 @@ export const CommunityMembershipUpdates = Type.Object({
     role: Type.Optional(CommunityRole),
     rules_accepted: Type.Optional(Type.Boolean()),
     display_name: OptionUpdateString,
+    lapsed: Type.Optional(Type.Boolean()),
 });
 
 export type GiphyContent = Static<typeof GiphyContent>;
@@ -2426,6 +3778,24 @@ export const SnsNeuronGate = Type.Object({
     governance_canister_id: TSBytes,
     min_stake_e8s: Type.Optional(Type.BigInt()),
     min_dissolve_delay: Type.Optional(Type.BigInt()),
+});
+
+export type OptionalMessagePermissions = Static<typeof OptionalMessagePermissions>;
+export const OptionalMessagePermissions = Type.Object({
+    default: Type.Optional(GroupPermissionRole),
+    text: OptionUpdateGroupPermissionRole,
+    image: OptionUpdateGroupPermissionRole,
+    video: OptionUpdateGroupPermissionRole,
+    audio: OptionUpdateGroupPermissionRole,
+    file: OptionUpdateGroupPermissionRole,
+    poll: OptionUpdateGroupPermissionRole,
+    crypto: OptionUpdateGroupPermissionRole,
+    giphy: OptionUpdateGroupPermissionRole,
+    prize: OptionUpdateGroupPermissionRole,
+    p2p_swap: OptionUpdateGroupPermissionRole,
+    video_call: OptionUpdateGroupPermissionRole,
+    custom_updated: Type.Array(CustomPermission),
+    custom_deleted: Type.Array(Type.String()),
 });
 
 export type Delegation = Static<typeof Delegation>;
@@ -2590,6 +3960,7 @@ export const GateCheckFailedReason = Type.Union([
     }),
     Type.Literal("Locked"),
     Type.Literal("NotReferredByMember"),
+    Type.Literal("Unknown"),
 ]);
 
 export type TokenInfo = Static<typeof TokenInfo>;
@@ -2646,6 +4017,17 @@ export const CompletedCryptoTransactionNNS = Type.Object({
     ]),
     block_index: Type.BigInt(),
 });
+
+export type OptionUpdateOptionalMessagePermissions = Static<
+    typeof OptionUpdateOptionalMessagePermissions
+>;
+export const OptionUpdateOptionalMessagePermissions = Type.Union([
+    Type.Literal("NoChange"),
+    Type.Literal("SetToNone"),
+    Type.Object({
+        SetToSome: OptionalMessagePermissions,
+    }),
+]);
 
 export type AccessTokenType = Static<typeof AccessTokenType>;
 export const AccessTokenType = Type.Union([
@@ -2753,6 +4135,22 @@ export const VerifiedCredentialGateArgs = Type.Object({
     credential_jwt: Type.String(),
     credential_jwts: Type.Array(Type.String()),
     ii_origin: Type.String(),
+});
+
+export type OptionalGroupPermissions = Static<typeof OptionalGroupPermissions>;
+export const OptionalGroupPermissions = Type.Object({
+    change_roles: Type.Optional(GroupPermissionRole),
+    update_group: Type.Optional(GroupPermissionRole),
+    invite_users: Type.Optional(GroupPermissionRole),
+    add_members: Type.Optional(GroupPermissionRole),
+    remove_members: Type.Optional(GroupPermissionRole),
+    delete_messages: Type.Optional(GroupPermissionRole),
+    pin_messages: Type.Optional(GroupPermissionRole),
+    react_to_messages: Type.Optional(GroupPermissionRole),
+    mention_all_members: Type.Optional(GroupPermissionRole),
+    start_video_call: Type.Optional(GroupPermissionRole),
+    message_permissions: Type.Optional(OptionalMessagePermissions),
+    thread_permissions: OptionUpdateOptionalMessagePermissions,
 });
 
 export type GovernanceProposalsSubtype = Static<typeof GovernanceProposalsSubtype>;
@@ -2866,6 +4264,16 @@ export const UsersBlocked = Type.Object({
     blocked_by: UserId,
 });
 
+export type CommunityMember = Static<typeof CommunityMember>;
+export const CommunityMember = Type.Object({
+    user_id: UserId,
+    date_added: Type.BigInt(),
+    role: CommunityRole,
+    display_name: Type.Optional(Type.String()),
+    referred_by: Type.Optional(UserId),
+    lapsed: Type.Boolean(),
+});
+
 export type User = Static<typeof User>;
 export const User = Type.Object({
     user_id: UserId,
@@ -2889,6 +4297,15 @@ export const ThreadSummary = Type.Object({
     latest_event_timestamp: Type.BigInt(),
 });
 
+export type OptionUpdateDocument = Static<typeof OptionUpdateDocument>;
+export const OptionUpdateDocument = Type.Union([
+    Type.Literal("NoChange"),
+    Type.Literal("SetToNone"),
+    Type.Object({
+        SetToSome: Document,
+    }),
+]);
+
 export type SuspensionDetails = Static<typeof SuspensionDetails>;
 export const SuspensionDetails = Type.Object({
     reason: Type.String(),
@@ -2906,6 +4323,13 @@ export const DiamondMembershipDetails = Type.Object({
 export type MemberLeft = Static<typeof MemberLeft>;
 export const MemberLeft = Type.Object({
     user_id: UserId,
+});
+
+export type UserGroupDetails = Static<typeof UserGroupDetails>;
+export const UserGroupDetails = Type.Object({
+    user_group_id: Type.Number(),
+    name: Type.String(),
+    members: Type.Array(UserId),
 });
 
 export type GroupIndexRecommendedGroupsArgs = Static<typeof GroupIndexRecommendedGroupsArgs>;
@@ -3288,6 +4712,241 @@ export const LocalUserIndexGroupAndCommunitySummaryUpdatesArgs = Type.Object({
     requests: Type.Array(LocalUserIndexGroupAndCommunitySummaryUpdatesSummaryUpdatesArgs),
 });
 
+export type CommunityRemoveMemberArgs = Static<typeof CommunityRemoveMemberArgs>;
+export const CommunityRemoveMemberArgs = Type.Object({
+    user_id: UserId,
+});
+
+export type CommunityCancelInvitesArgs = Static<typeof CommunityCancelInvitesArgs>;
+export const CommunityCancelInvitesArgs = Type.Object({
+    channel_id: Type.Optional(Type.BigInt()),
+    user_ids: Type.Array(UserId),
+});
+
+export type CommunityCreateUserGroupArgs = Static<typeof CommunityCreateUserGroupArgs>;
+export const CommunityCreateUserGroupArgs = Type.Object({
+    name: Type.String(),
+    user_ids: Type.Array(UserId),
+});
+
+export type CommunitySearchChannelArgs = Static<typeof CommunitySearchChannelArgs>;
+export const CommunitySearchChannelArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    search_term: Type.String(),
+    max_results: Type.Number(),
+    users: Type.Optional(Type.Array(UserId)),
+});
+
+export type CommunityChangeRoleArgs = Static<typeof CommunityChangeRoleArgs>;
+export const CommunityChangeRoleArgs = Type.Object({
+    user_id: UserId,
+    new_role: CommunityRole,
+});
+
+export type CommunityUnblockUserArgs = Static<typeof CommunityUnblockUserArgs>;
+export const CommunityUnblockUserArgs = Type.Object({
+    user_id: UserId,
+});
+
+export type CommunityUpdateUserGroupArgs = Static<typeof CommunityUpdateUserGroupArgs>;
+export const CommunityUpdateUserGroupArgs = Type.Object({
+    user_group_id: Type.Number(),
+    name: Type.Optional(Type.String()),
+    users_to_add: Type.Array(UserId),
+    users_to_remove: Type.Array(UserId),
+});
+
+export type CommunityRemoveMemberFromChannelArgs = Static<
+    typeof CommunityRemoveMemberFromChannelArgs
+>;
+export const CommunityRemoveMemberFromChannelArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    user_id: UserId,
+});
+
+export type CommunityCommunityMembersArgs = Static<typeof CommunityCommunityMembersArgs>;
+export const CommunityCommunityMembersArgs = Type.Object({
+    user_ids: Type.Array(UserId),
+});
+
+export type CommunityCommunityMembersSuccessResult = Static<
+    typeof CommunityCommunityMembersSuccessResult
+>;
+export const CommunityCommunityMembersSuccessResult = Type.Object({
+    members: Type.Array(CommunityMember),
+});
+
+export type CommunityAddMembersToChannelUserFailedError = Static<
+    typeof CommunityAddMembersToChannelUserFailedError
+>;
+export const CommunityAddMembersToChannelUserFailedError = Type.Object({
+    user_id: UserId,
+    error: Type.String(),
+});
+
+export type CommunityAddMembersToChannelArgs = Static<typeof CommunityAddMembersToChannelArgs>;
+export const CommunityAddMembersToChannelArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    user_ids: Type.Array(UserId),
+    added_by_name: Type.String(),
+    added_by_display_name: Type.Optional(Type.String()),
+});
+
+export type CommunityAddMembersToChannelPartialSuccessResult = Static<
+    typeof CommunityAddMembersToChannelPartialSuccessResult
+>;
+export const CommunityAddMembersToChannelPartialSuccessResult = Type.Object({
+    users_added: Type.Array(UserId),
+    users_already_in_channel: Type.Array(UserId),
+    users_limit_reached: Type.Array(UserId),
+    users_failed_with_error: Type.Array(CommunityAddMembersToChannelUserFailedError),
+});
+
+export type CommunityAddMembersToChannelFailedResult = Static<
+    typeof CommunityAddMembersToChannelFailedResult
+>;
+export const CommunityAddMembersToChannelFailedResult = Type.Object({
+    users_already_in_channel: Type.Array(UserId),
+    users_limit_reached: Type.Array(UserId),
+    users_failed_with_error: Type.Array(CommunityAddMembersToChannelUserFailedError),
+});
+
+export type CommunityChangeChannelRoleArgs = Static<typeof CommunityChangeChannelRoleArgs>;
+export const CommunityChangeChannelRoleArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    user_id: UserId,
+    new_role: GroupRole,
+});
+
+export type CommunitySelectedInitialSuccessResult = Static<
+    typeof CommunitySelectedInitialSuccessResult
+>;
+export const CommunitySelectedInitialSuccessResult = Type.Object({
+    timestamp: Type.BigInt(),
+    last_updated: Type.BigInt(),
+    latest_event_index: EventIndex,
+    members: Type.Array(CommunityMember),
+    blocked_users: Type.Array(UserId),
+    invited_users: Type.Array(UserId),
+    chat_rules: VersionedRules,
+    user_groups: Type.Array(UserGroupDetails),
+    referrals: Type.Array(UserId),
+});
+
+export type CommunityBlockUserArgs = Static<typeof CommunityBlockUserArgs>;
+export const CommunityBlockUserArgs = Type.Object({
+    user_id: UserId,
+});
+
+export type CommunityCreateChannelResponse = Static<typeof CommunityCreateChannelResponse>;
+export const CommunityCreateChannelResponse = Type.Union([
+    Type.Object({
+        Success: CommunityCreateChannelSuccessResult,
+    }),
+    Type.Object({
+        NameTooShort: FieldTooShortResult,
+    }),
+    Type.Object({
+        NameTooLong: FieldTooLongResult,
+    }),
+    Type.Literal("NameReserved"),
+    Type.Object({
+        DescriptionTooLong: FieldTooLongResult,
+    }),
+    Type.Object({
+        RulesTooShort: FieldTooShortResult,
+    }),
+    Type.Object({
+        RulesTooLong: FieldTooLongResult,
+    }),
+    Type.Object({
+        AvatarTooBig: FieldTooLongResult,
+    }),
+    Type.Literal("AccessGateInvalid"),
+    Type.Object({
+        MaxChannelsCreated: Type.Number(),
+    }),
+    Type.Literal("NameTaken"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("ExternalUrlInvalid"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunitySelectedUpdatesSuccessResult = Static<
+    typeof CommunitySelectedUpdatesSuccessResult
+>;
+export const CommunitySelectedUpdatesSuccessResult = Type.Object({
+    timestamp: Type.BigInt(),
+    last_updated: Type.BigInt(),
+    members_added_or_updated: Type.Array(CommunityMember),
+    members_removed: Type.Array(UserId),
+    blocked_users_added: Type.Array(UserId),
+    blocked_users_removed: Type.Array(UserId),
+    invited_users: Type.Optional(Type.Array(UserId)),
+    chat_rules: Type.Optional(VersionedRules),
+    user_groups: Type.Array(UserGroupDetails),
+    user_groups_deleted: Type.Array(Type.Number()),
+    referrals_added: Type.Array(UserId),
+    referrals_removed: Type.Array(UserId),
+});
+
+export type CommunitySelectedUpdatesResponse = Static<typeof CommunitySelectedUpdatesResponse>;
+export const CommunitySelectedUpdatesResponse = Type.Union([
+    Type.Object({
+        Success: CommunitySelectedUpdatesSuccessResult,
+    }),
+    Type.Object({
+        SuccessNoUpdates: Type.BigInt(),
+    }),
+    Type.Literal("PrivateCommunity"),
+]);
+
+export type CommunityImportGroupArgs = Static<typeof CommunityImportGroupArgs>;
+export const CommunityImportGroupArgs = Type.Object({
+    group_id: ChatId,
+});
+
+export type CommunityUpdateChannelResponse = Static<typeof CommunityUpdateChannelResponse>;
+export const CommunityUpdateChannelResponse = Type.Union([
+    Type.Object({
+        SuccessV2: CommunityUpdateChannelSuccessResult,
+    }),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("UserNotInChannel"),
+    Type.Object({
+        NameTooShort: FieldTooShortResult,
+    }),
+    Type.Object({
+        NameTooLong: FieldTooLongResult,
+    }),
+    Type.Literal("NameReserved"),
+    Type.Object({
+        DescriptionTooLong: FieldTooLongResult,
+    }),
+    Type.Object({
+        AvatarTooBig: FieldTooLongResult,
+    }),
+    Type.Literal("AccessGateInvalid"),
+    Type.Literal("NameTaken"),
+    Type.Object({
+        RulesTooLong: FieldTooLongResult,
+    }),
+    Type.Object({
+        RulesTooShort: FieldTooShortResult,
+    }),
+    Type.Literal("UserSuspended"),
+    Type.Literal("ExternalUrlInvalid"),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("UserLapsed"),
+]);
+
 export type StorageBucketDeleteFilesResponse = Static<typeof StorageBucketDeleteFilesResponse>;
 export const StorageBucketDeleteFilesResponse = Type.Object({
     success: Type.Array(Type.BigInt()),
@@ -3315,6 +4974,101 @@ export type OnlineUsersLastOnlineUserLastOnline = Static<
 export const OnlineUsersLastOnlineUserLastOnline = Type.Object({
     user_id: UserId,
     duration_since_last_online: Type.BigInt(),
+});
+
+export type GroupSearchMessagesArgs = Static<typeof GroupSearchMessagesArgs>;
+export const GroupSearchMessagesArgs = Type.Object({
+    search_term: Type.String(),
+    max_results: Type.Number(),
+    users: Type.Optional(Type.Array(UserId)),
+});
+
+export type GroupConvertIntoCommunitySuccessResult = Static<
+    typeof GroupConvertIntoCommunitySuccessResult
+>;
+export const GroupConvertIntoCommunitySuccessResult = Type.Object({
+    community_id: CommunityId,
+    channel_id: Type.BigInt(),
+});
+
+export type GroupConvertIntoCommunityResponse = Static<typeof GroupConvertIntoCommunityResponse>;
+export const GroupConvertIntoCommunityResponse = Type.Union([
+    Type.Object({
+        Success: GroupConvertIntoCommunitySuccessResult,
+    }),
+    Type.Literal("CallerNotInGroup"),
+    Type.Literal("AlreadyImportingToAnotherCommunity"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Literal("ChatFrozen"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
+export type GroupCancelInvitesArgs = Static<typeof GroupCancelInvitesArgs>;
+export const GroupCancelInvitesArgs = Type.Object({
+    user_ids: Type.Array(UserId),
+});
+
+export type GroupChangeRoleArgs = Static<typeof GroupChangeRoleArgs>;
+export const GroupChangeRoleArgs = Type.Object({
+    user_id: UserId,
+    new_role: GroupRole,
+    correlation_id: Type.BigInt(),
+});
+
+export type GroupUnblockUserArgs = Static<typeof GroupUnblockUserArgs>;
+export const GroupUnblockUserArgs = Type.Object({
+    user_id: UserId,
+    correlation_id: Type.BigInt(),
+});
+
+export type GroupUpdateGroupResponse = Static<typeof GroupUpdateGroupResponse>;
+export const GroupUpdateGroupResponse = Type.Union([
+    Type.Object({
+        SuccessV2: GroupUpdateGroupSuccessResult,
+    }),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("CallerNotInGroup"),
+    Type.Object({
+        NameTooShort: FieldTooShortResult,
+    }),
+    Type.Object({
+        NameTooLong: FieldTooLongResult,
+    }),
+    Type.Literal("NameReserved"),
+    Type.Object({
+        DescriptionTooLong: FieldTooLongResult,
+    }),
+    Type.Object({
+        RulesTooShort: FieldTooShortResult,
+    }),
+    Type.Object({
+        RulesTooLong: FieldTooLongResult,
+    }),
+    Type.Object({
+        AvatarTooBig: FieldTooLongResult,
+    }),
+    Type.Literal("AccessGateInvalid"),
+    Type.Literal("NameTaken"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Literal("ChatFrozen"),
+    Type.Literal("InternalError"),
+]);
+
+export type GroupBlockUserArgs = Static<typeof GroupBlockUserArgs>;
+export const GroupBlockUserArgs = Type.Object({
+    user_id: UserId,
+    correlation_id: Type.BigInt(),
+});
+
+export type GroupRemoveParticipantArgs = Static<typeof GroupRemoveParticipantArgs>;
+export const GroupRemoveParticipantArgs = Type.Object({
+    user_id: UserId,
+    correlation_id: Type.BigInt(),
 });
 
 export type UserSearchMessagesArgs = Static<typeof UserSearchMessagesArgs>;
@@ -3542,7 +5296,8 @@ export type UserTokenSwapsTokenSwap = Static<typeof UserTokenSwapsTokenSwap>;
 export const UserTokenSwapsTokenSwap = Type.Object({
     args: UserSwapTokensArgs,
     started: Type.BigInt(),
-    transfer: Type.Optional(
+    icrc2: Type.Boolean(),
+    transfer_or_approval: Type.Optional(
         Type.Union([
             Type.Object({
                 Ok: Type.BigInt(),
@@ -4033,6 +5788,14 @@ export const P2PSwapAccepted = Type.Object({
     token1_txn_in: Type.BigInt(),
 });
 
+export type GroupMember = Static<typeof GroupMember>;
+export const GroupMember = Type.Object({
+    user_id: UserId,
+    date_added: Type.BigInt(),
+    role: GroupRole,
+    lapsed: Type.Boolean(),
+});
+
 export type MessageUnpinned = Static<typeof MessageUnpinned>;
 export const MessageUnpinned = Type.Object({
     message_index: MessageIndex,
@@ -4143,6 +5906,13 @@ export const DeletedCommunityInfo = Type.Object({
     public: Type.Boolean(),
 });
 
+export type VideoCallParticipants = Static<typeof VideoCallParticipants>;
+export const VideoCallParticipants = Type.Object({
+    participants: Type.Array(CallParticipant),
+    hidden: Type.Array(CallParticipant),
+    last_updated: Type.BigInt(),
+});
+
 export type SwapStatusErrorCompleted = Static<typeof SwapStatusErrorCompleted>;
 export const SwapStatusErrorCompleted = Type.Object({
     accepted_by: UserId,
@@ -4197,6 +5967,21 @@ export const GroupVisibilityChanged = Type.Object({
     changed_by: UserId,
 });
 
+export type SelectedGroupUpdates = Static<typeof SelectedGroupUpdates>;
+export const SelectedGroupUpdates = Type.Object({
+    timestamp: Type.BigInt(),
+    last_updated: Type.BigInt(),
+    latest_event_index: EventIndex,
+    members_added_or_updated: Type.Array(GroupMember),
+    members_removed: Type.Array(UserId),
+    blocked_users_added: Type.Array(UserId),
+    blocked_users_removed: Type.Array(UserId),
+    invited_users: Type.Optional(Type.Array(UserId)),
+    pinned_messages_added: Type.Array(MessageIndex),
+    pinned_messages_removed: Type.Array(MessageIndex),
+    chat_rules: Type.Optional(VersionedRules),
+});
+
 export type GroupMembership = Static<typeof GroupMembership>;
 export const GroupMembership = Type.Object({
     joined: Type.BigInt(),
@@ -4206,6 +5991,7 @@ export const GroupMembership = Type.Object({
     my_metrics: ChatMetrics,
     latest_threads: Type.Array(GroupCanisterThreadDetails),
     rules_accepted: Type.Boolean(),
+    lapsed: Type.Boolean(),
 });
 
 export type OptionUpdateFrozenGroupInfo = Static<typeof OptionUpdateFrozenGroupInfo>;
@@ -4245,6 +6031,7 @@ export const GroupMembershipUpdates = Type.Object({
     latest_threads: Type.Array(GroupCanisterThreadDetails),
     unfollowed_threads: Type.Array(MessageIndex),
     rules_accepted: Type.Optional(Type.Boolean()),
+    lapsed: Type.Optional(Type.Boolean()),
 });
 
 export type DiamondMembershipStatusFull = Static<typeof DiamondMembershipStatusFull>;
@@ -4457,6 +6244,91 @@ export const LocalUserIndexReportMessageArgs = Type.Object({
     notes: Type.Optional(Type.String()),
 });
 
+export type CommunitySelectedChannelUpdatesResponse = Static<
+    typeof CommunitySelectedChannelUpdatesResponse
+>;
+export const CommunitySelectedChannelUpdatesResponse = Type.Union([
+    Type.Object({
+        Success: SelectedGroupUpdates,
+    }),
+    Type.Object({
+        SuccessNoUpdates: Type.BigInt(),
+    }),
+    Type.Literal("PrivateCommunity"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("PrivateChannel"),
+]);
+
+export type CommunitySelectedChannelInitialSuccessResult = Static<
+    typeof CommunitySelectedChannelInitialSuccessResult
+>;
+export const CommunitySelectedChannelInitialSuccessResult = Type.Object({
+    timestamp: Type.BigInt(),
+    last_updated: Type.BigInt(),
+    latest_event_index: EventIndex,
+    members: Type.Array(GroupMember),
+    blocked_users: Type.Array(UserId),
+    invited_users: Type.Array(UserId),
+    pinned_messages: Type.Array(MessageIndex),
+    chat_rules: VersionedRules,
+});
+
+export type CommunityCommunityMembersResponse = Static<typeof CommunityCommunityMembersResponse>;
+export const CommunityCommunityMembersResponse = Type.Union([
+    Type.Object({
+        Success: CommunityCommunityMembersSuccessResult,
+    }),
+    Type.Literal("PrivateCommunity"),
+]);
+
+export type CommunityAddMembersToChannelResponse = Static<
+    typeof CommunityAddMembersToChannelResponse
+>;
+export const CommunityAddMembersToChannelResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Object({
+        PartialSuccess: CommunityAddMembersToChannelPartialSuccessResult,
+    }),
+    Type.Object({
+        Failed: CommunityAddMembersToChannelFailedResult,
+    }),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("CommunityPublic"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("UserNotInChannel"),
+    Type.Literal("ChannelNotFound"),
+    Type.Object({
+        UserLimitReached: Type.Number(),
+    }),
+    Type.Literal("NotAuthorized"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
+export type CommunitySelectedInitialResponse = Static<typeof CommunitySelectedInitialResponse>;
+export const CommunitySelectedInitialResponse = Type.Union([
+    Type.Object({
+        Success: CommunitySelectedInitialSuccessResult,
+    }),
+    Type.Literal("PrivateCommunity"),
+]);
+
+export type CommunityVideoCallParticipantsResponse = Static<
+    typeof CommunityVideoCallParticipantsResponse
+>;
+export const CommunityVideoCallParticipantsResponse = Type.Union([
+    Type.Object({
+        Success: VideoCallParticipants,
+    }),
+    Type.Literal("VideoCallNotFound"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("UserNotInChannel"),
+    Type.Literal("ChannelNotFound"),
+]);
+
 export type ProposalsBotProposalToSubmitAction = Static<typeof ProposalsBotProposalToSubmitAction>;
 export const ProposalsBotProposalToSubmitAction = Type.Union([
     Type.Literal("Motion"),
@@ -4484,6 +6356,46 @@ export type OnlineUsersLastOnlineResponse = Static<typeof OnlineUsersLastOnlineR
 export const OnlineUsersLastOnlineResponse = Type.Object({
     Success: Type.Array(OnlineUsersLastOnlineUserLastOnline),
 });
+
+export type GroupSelectedInitialSuccessResult = Static<typeof GroupSelectedInitialSuccessResult>;
+export const GroupSelectedInitialSuccessResult = Type.Object({
+    timestamp: Type.BigInt(),
+    last_updated: Type.BigInt(),
+    latest_event_index: EventIndex,
+    participants: Type.Array(GroupMember),
+    blocked_users: Type.Array(UserId),
+    invited_users: Type.Array(UserId),
+    pinned_messages: Type.Array(MessageIndex),
+    chat_rules: VersionedRules,
+});
+
+export type GroupSelectedInitialResponse = Static<typeof GroupSelectedInitialResponse>;
+export const GroupSelectedInitialResponse = Type.Union([
+    Type.Object({
+        Success: GroupSelectedInitialSuccessResult,
+    }),
+    Type.Literal("CallerNotInGroup"),
+]);
+
+export type GroupVideoCallParticipantsResponse = Static<typeof GroupVideoCallParticipantsResponse>;
+export const GroupVideoCallParticipantsResponse = Type.Union([
+    Type.Object({
+        Success: VideoCallParticipants,
+    }),
+    Type.Literal("VideoCallNotFound"),
+    Type.Literal("CallerNotInGroup"),
+]);
+
+export type GroupSelectedUpdatesResponse = Static<typeof GroupSelectedUpdatesResponse>;
+export const GroupSelectedUpdatesResponse = Type.Union([
+    Type.Object({
+        Success: SelectedGroupUpdates,
+    }),
+    Type.Object({
+        SuccessNoUpdates: Type.BigInt(),
+    }),
+    Type.Literal("CallerNotInGroup"),
+]);
 
 export type UserManageFavouriteChatsArgs = Static<typeof UserManageFavouriteChatsArgs>;
 export const UserManageFavouriteChatsArgs = Type.Object({
@@ -4558,35 +6470,6 @@ export const UserTipMessageArgs = Type.Object({
     decimals: Type.Number(),
     pin: Type.Optional(Type.String()),
 });
-
-export type UserTipMessageResponse = Static<typeof UserTipMessageResponse>;
-export const UserTipMessageResponse = Type.Union([
-    Type.Literal("Success"),
-    Type.Literal("ChatNotFound"),
-    Type.Literal("MessageNotFound"),
-    Type.Literal("CannotTipSelf"),
-    Type.Literal("NotAuthorized"),
-    Type.Literal("TransferCannotBeZero"),
-    Type.Literal("TransferNotToMessageSender"),
-    Type.Object({
-        TransferFailed: Type.String(),
-    }),
-    Type.Literal("ChatFrozen"),
-    Type.Literal("PinRequired"),
-    Type.Object({
-        PinIncorrect: Type.BigInt(),
-    }),
-    Type.Object({
-        TooManyFailedPinAttempts: Type.BigInt(),
-    }),
-    Type.Literal("UserSuspended"),
-    Type.Object({
-        Retrying: Type.String(),
-    }),
-    Type.Object({
-        InternalError: Type.Tuple([Type.String(), CompletedCryptoTransaction]),
-    }),
-]);
 
 export type UserChatInList = Static<typeof UserChatInList>;
 export const UserChatInList = Type.Union([
@@ -5011,19 +6894,175 @@ export const LocalUserIndexChatEventsArgs = Type.Object({
     requests: Type.Array(LocalUserIndexChatEventsEventsArgs),
 });
 
-export type UserCreateGroupArgs = Static<typeof UserCreateGroupArgs>;
-export const UserCreateGroupArgs = Type.Object({
-    is_public: Type.Boolean(),
-    name: Type.String(),
-    description: Type.String(),
-    rules: Rules,
-    avatar: Type.Optional(Document),
-    history_visible_to_new_joiners: Type.Boolean(),
-    messages_visible_to_non_members: Type.Optional(Type.Boolean()),
-    permissions_v2: Type.Optional(GroupPermissions),
-    events_ttl: Type.Optional(Type.BigInt()),
-    gate: Type.Optional(AccessGate),
-});
+export type CommunityClaimPrizeResponse = Static<typeof CommunityClaimPrizeResponse>;
+export const CommunityClaimPrizeResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("MessageNotFound"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("UserNotInChannel"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("AlreadyClaimed"),
+    Type.Literal("PrizeFullyClaimed"),
+    Type.Literal("PrizeEnded"),
+    Type.Literal("LedgerError"),
+    Type.Object({
+        TransferFailed: Type.Tuple([Type.String(), FailedCryptoTransaction]),
+    }),
+    Type.Object({
+        FailedAfterTransfer: Type.Tuple([Type.String(), CompletedCryptoTransaction]),
+    }),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunityRegisterPollVoteResponse = Static<typeof CommunityRegisterPollVoteResponse>;
+export const CommunityRegisterPollVoteResponse = Type.Union([
+    Type.Object({
+        Success: PollVotes,
+    }),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("UserNotInChannel"),
+    Type.Literal("UserCannotChangeVote"),
+    Type.Literal("PollNotFound"),
+    Type.Literal("PollEnded"),
+    Type.Literal("OptionIndexOutOfRange"),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunityCancelP2pSwapResponse = Static<typeof CommunityCancelP2pSwapResponse>;
+export const CommunityCancelP2pSwapResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Object({
+        StatusError: SwapStatusError,
+    }),
+    Type.Literal("SwapNotFound"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("UserNotInChannel"),
+    Type.Literal("ChatFrozen"),
+]);
+
+export type CommunitySelectedChannelInitialResponse = Static<
+    typeof CommunitySelectedChannelInitialResponse
+>;
+export const CommunitySelectedChannelInitialResponse = Type.Union([
+    Type.Object({
+        Success: CommunitySelectedChannelInitialSuccessResult,
+    }),
+    Type.Literal("PrivateCommunity"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("PrivateChannel"),
+]);
+
+export type CommunityAcceptP2pSwapResponse = Static<typeof CommunityAcceptP2pSwapResponse>;
+export const CommunityAcceptP2pSwapResponse = Type.Union([
+    Type.Object({
+        Success: AcceptSwapSuccess,
+    }),
+    Type.Literal("InsufficientFunds"),
+    Type.Object({
+        StatusError: SwapStatusError,
+    }),
+    Type.Literal("SwapNotFound"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("UserNotInChannel"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("ChatFrozen"),
+    Type.Literal("PinRequired"),
+    Type.Object({
+        PinIncorrect: Type.BigInt(),
+    }),
+    Type.Object({
+        TooManyFailedPinAttempts: Type.BigInt(),
+    }),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+    Type.Literal("UserLapsed"),
+]);
+
+export type GroupClaimPrizeResponse = Static<typeof GroupClaimPrizeResponse>;
+export const GroupClaimPrizeResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("CallerNotInGroup"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Literal("ChatFrozen"),
+    Type.Literal("MessageNotFound"),
+    Type.Literal("AlreadyClaimed"),
+    Type.Literal("PrizeFullyClaimed"),
+    Type.Literal("PrizeEnded"),
+    Type.Literal("LedgerError"),
+    Type.Object({
+        TransferFailed: Type.Tuple([Type.String(), FailedCryptoTransaction]),
+    }),
+    Type.Object({
+        FailedAfterTransfer: Type.Tuple([Type.String(), CompletedCryptoTransaction]),
+    }),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
+export type GroupRegisterPollVoteResponse = Static<typeof GroupRegisterPollVoteResponse>;
+export const GroupRegisterPollVoteResponse = Type.Union([
+    Type.Object({
+        Success: PollVotes,
+    }),
+    Type.Literal("PollNotFound"),
+    Type.Literal("PollEnded"),
+    Type.Literal("OptionIndexOutOfRange"),
+    Type.Literal("UserCannotChangeVote"),
+    Type.Literal("CallerNotInGroup"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Literal("ChatFrozen"),
+]);
+
+export type GroupCancelP2pSwapResponse = Static<typeof GroupCancelP2pSwapResponse>;
+export const GroupCancelP2pSwapResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Object({
+        StatusError: SwapStatusError,
+    }),
+    Type.Literal("SwapNotFound"),
+    Type.Literal("UserNotInGroup"),
+    Type.Literal("ChatFrozen"),
+]);
+
+export type GroupAcceptP2pSwapResponse = Static<typeof GroupAcceptP2pSwapResponse>;
+export const GroupAcceptP2pSwapResponse = Type.Union([
+    Type.Object({
+        Success: AcceptSwapSuccess,
+    }),
+    Type.Literal("InsufficientFunds"),
+    Type.Object({
+        StatusError: SwapStatusError,
+    }),
+    Type.Literal("SwapNotFound"),
+    Type.Literal("UserNotInGroup"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Literal("ChatFrozen"),
+    Type.Literal("PinRequired"),
+    Type.Object({
+        PinIncorrect: Type.BigInt(),
+    }),
+    Type.Object({
+        TooManyFailedPinAttempts: Type.BigInt(),
+    }),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
 
 export type UserCancelP2pSwapResponse = Static<typeof UserCancelP2pSwapResponse>;
 export const UserCancelP2pSwapResponse = Type.Union([
@@ -5064,6 +7103,7 @@ export const UserSendMessageWithTransferToGroupResponse = Type.Union([
         P2PSwapSetUpFailed: Type.String(),
     }),
     Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
     Type.Literal("ChatFrozen"),
     Type.Literal("RulesNotAccepted"),
     Type.Object({
@@ -5075,6 +7115,9 @@ export const UserSendMessageWithTransferToGroupResponse = Type.Union([
     }),
     Type.Object({
         TooManyFailedPinAttempts: Type.BigInt(),
+    }),
+    Type.Object({
+        InternalError: Type.String(),
     }),
 ]);
 
@@ -5100,6 +7143,9 @@ export const UserWithdrawCryptoResponse = Type.Union([
     Type.Object({
         TooManyFailedPinAttempts: Type.BigInt(),
     }),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
 ]);
 
 export type UserArchiveUnarchiveChatsResponse = Static<typeof UserArchiveUnarchiveChatsResponse>;
@@ -5111,22 +7157,6 @@ export const UserArchiveUnarchiveChatsResponse = Type.Union([
     Type.Literal("Failure"),
     Type.Literal("UserSuspended"),
 ]);
-
-export type UserCreateCommunityArgs = Static<typeof UserCreateCommunityArgs>;
-export const UserCreateCommunityArgs = Type.Object({
-    is_public: Type.Boolean(),
-    name: Type.String(),
-    description: Type.String(),
-    rules: Rules,
-    avatar: Type.Optional(Document),
-    banner: Type.Optional(Document),
-    history_visible_to_new_joiners: Type.Boolean(),
-    permissions: Type.Optional(CommunityPermissions),
-    gate: Type.Optional(AccessGate),
-    default_channels: Type.Array(Type.String()),
-    default_channel_rules: Type.Optional(Rules),
-    primary_language: Type.String(),
-});
 
 export type UserSendMessageWithTransferToChannelResponse = Static<
     typeof UserSendMessageWithTransferToChannelResponse
@@ -5163,6 +7193,7 @@ export const UserSendMessageWithTransferToChannelResponse = Type.Union([
         P2PSwapSetUpFailed: Type.String(),
     }),
     Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
     Type.Literal("CommunityFrozen"),
     Type.Literal("RulesNotAccepted"),
     Type.Literal("CommunityRulesNotAccepted"),
@@ -5175,6 +7206,9 @@ export const UserSendMessageWithTransferToChannelResponse = Type.Union([
     }),
     Type.Object({
         TooManyFailedPinAttempts: Type.BigInt(),
+    }),
+    Type.Object({
+        InternalError: Type.String(),
     }),
 ]);
 
@@ -5311,19 +7345,10 @@ export const GroupMatch = Type.Object({
     subtype: Type.Optional(GroupSubtype),
 });
 
-export type CommunityMatch = Static<typeof CommunityMatch>;
-export const CommunityMatch = Type.Object({
-    id: CommunityId,
-    score: Type.Number(),
-    name: Type.String(),
-    description: Type.String(),
-    avatar_id: Type.Optional(Type.BigInt()),
-    banner_id: Type.Optional(Type.BigInt()),
-    member_count: Type.Number(),
-    channel_count: Type.Number(),
-    gate: Type.Optional(AccessGate),
-    moderation_flags: Type.Number(),
-    primary_language: Type.String(),
+export type AccessGateConfig = Static<typeof AccessGateConfig>;
+export const AccessGateConfig = Type.Object({
+    gate: AccessGate,
+    expiry: Type.Optional(Type.BigInt()),
 });
 
 export type MessageContentInitial = Static<typeof MessageContentInitial>;
@@ -5375,36 +7400,21 @@ export const MessageContentInitial = Type.Union([
     }),
 ]);
 
+export type OptionUpdateAccessGateConfig = Static<typeof OptionUpdateAccessGateConfig>;
+export const OptionUpdateAccessGateConfig = Type.Union([
+    Type.Literal("NoChange"),
+    Type.Literal("SetToNone"),
+    Type.Object({
+        SetToSome: AccessGateConfig,
+    }),
+]);
+
 export type GroupGateUpdated = Static<typeof GroupGateUpdated>;
 export const GroupGateUpdated = Type.Object({
     updated_by: UserId,
     new_gate: Type.Optional(AccessGate),
+    new_gate_config: Type.Optional(AccessGateConfig),
 });
-
-export type GroupIndexExploreCommunitiesSuccessResult = Static<
-    typeof GroupIndexExploreCommunitiesSuccessResult
->;
-export const GroupIndexExploreCommunitiesSuccessResult = Type.Object({
-    matches: Type.Array(CommunityMatch),
-    total: Type.Number(),
-});
-
-export type GroupIndexExploreCommunitiesResponse = Static<
-    typeof GroupIndexExploreCommunitiesResponse
->;
-export const GroupIndexExploreCommunitiesResponse = Type.Union([
-    Type.Object({
-        Success: GroupIndexExploreCommunitiesSuccessResult,
-    }),
-    Type.Object({
-        TermTooShort: Type.Number(),
-    }),
-    Type.Object({
-        TermTooLong: Type.Number(),
-    }),
-    Type.Literal("InvalidTerm"),
-    Type.Literal("InvalidFlags"),
-]);
 
 export type GroupIndexExploreGroupsSuccessResult = Static<
     typeof GroupIndexExploreGroupsSuccessResult
@@ -5428,6 +7438,54 @@ export const GroupIndexExploreGroupsResponse = Type.Union([
     Type.Literal("InvalidTerm"),
 ]);
 
+export type CommunityDeleteMessageSuccessResult = Static<
+    typeof CommunityDeleteMessageSuccessResult
+>;
+export const CommunityDeleteMessageSuccessResult = Type.Object({
+    content: MessageContent,
+});
+
+export type CommunitySearchChannelSuccessResult = Static<
+    typeof CommunitySearchChannelSuccessResult
+>;
+export const CommunitySearchChannelSuccessResult = Type.Object({
+    matches: Type.Array(MessageMatch),
+});
+
+export type CommunitySearchChannelResponse = Static<typeof CommunitySearchChannelResponse>;
+export const CommunitySearchChannelResponse = Type.Union([
+    Type.Object({
+        Success: CommunitySearchChannelSuccessResult,
+    }),
+    Type.Literal("InvalidTerm"),
+    Type.Object({
+        TermTooLong: Type.Number(),
+    }),
+    Type.Object({
+        TermTooShort: Type.Number(),
+    }),
+    Type.Object({
+        TooManyUsers: Type.Number(),
+    }),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("UserNotInChannel"),
+]);
+
+export type CommunityUpdateCommunityArgs = Static<typeof CommunityUpdateCommunityArgs>;
+export const CommunityUpdateCommunityArgs = Type.Object({
+    name: Type.Optional(Type.String()),
+    description: Type.Optional(Type.String()),
+    rules: Type.Optional(UpdatedRules),
+    avatar: OptionUpdateDocument,
+    banner: OptionUpdateDocument,
+    permissions: Type.Optional(OptionalCommunityPermissions),
+    gate: OptionUpdateAccessGate,
+    gate_config: OptionUpdateAccessGateConfig,
+    public: Type.Optional(Type.Boolean()),
+    primary_language: Type.Optional(Type.String()),
+});
+
 export type CommunitySendMessageArgs = Static<typeof CommunitySendMessageArgs>;
 export const CommunitySendMessageArgs = Type.Object({
     channel_id: Type.BigInt(),
@@ -5446,6 +7504,92 @@ export const CommunitySendMessageArgs = Type.Object({
     new_achievement: Type.Boolean(),
 });
 
+export type CommunityCreateChannelArgs = Static<typeof CommunityCreateChannelArgs>;
+export const CommunityCreateChannelArgs = Type.Object({
+    is_public: Type.Boolean(),
+    name: Type.String(),
+    description: Type.String(),
+    rules: Rules,
+    subtype: Type.Optional(GroupSubtype),
+    avatar: Type.Optional(Document),
+    history_visible_to_new_joiners: Type.Boolean(),
+    messages_visible_to_non_members: Type.Optional(Type.Boolean()),
+    permissions_v2: Type.Optional(GroupPermissions),
+    events_ttl: Type.Optional(Type.BigInt()),
+    gate: Type.Optional(AccessGate),
+    gate_config: Type.Optional(AccessGateConfig),
+    external_url: Type.Optional(Type.String()),
+});
+
+export type CommunityEditMessageArgs = Static<typeof CommunityEditMessageArgs>;
+export const CommunityEditMessageArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_id: MessageId,
+    content: MessageContentInitial,
+    block_level_markdown: Type.Optional(Type.Boolean()),
+    new_achievement: Type.Boolean(),
+});
+
+export type CommunityUpdateChannelArgs = Static<typeof CommunityUpdateChannelArgs>;
+export const CommunityUpdateChannelArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    name: Type.Optional(Type.String()),
+    description: Type.Optional(Type.String()),
+    rules: Type.Optional(UpdatedRules),
+    avatar: OptionUpdateDocument,
+    permissions_v2: Type.Optional(OptionalGroupPermissions),
+    events_ttl: OptionUpdateU64,
+    gate: OptionUpdateAccessGate,
+    gate_config: OptionUpdateAccessGateConfig,
+    public: Type.Optional(Type.Boolean()),
+    messages_visible_to_non_members: Type.Optional(Type.Boolean()),
+    external_url: OptionUpdateString,
+});
+
+export type GroupSearchMessagesSuccessResult = Static<typeof GroupSearchMessagesSuccessResult>;
+export const GroupSearchMessagesSuccessResult = Type.Object({
+    matches: Type.Array(MessageMatch),
+});
+
+export type GroupSearchMessagesResponse = Static<typeof GroupSearchMessagesResponse>;
+export const GroupSearchMessagesResponse = Type.Union([
+    Type.Object({
+        Success: GroupSearchMessagesSuccessResult,
+    }),
+    Type.Literal("InvalidTerm"),
+    Type.Object({
+        TermTooLong: Type.Number(),
+    }),
+    Type.Object({
+        TermTooShort: Type.Number(),
+    }),
+    Type.Object({
+        TooManyUsers: Type.Number(),
+    }),
+    Type.Literal("CallerNotInGroup"),
+]);
+
+export type GroupDeletedMessageSuccessResult = Static<typeof GroupDeletedMessageSuccessResult>;
+export const GroupDeletedMessageSuccessResult = Type.Object({
+    content: MessageContent,
+});
+
+export type GroupUpdateGroupArgs = Static<typeof GroupUpdateGroupArgs>;
+export const GroupUpdateGroupArgs = Type.Object({
+    name: Type.Optional(Type.String()),
+    description: Type.Optional(Type.String()),
+    rules: Type.Optional(UpdatedRules),
+    avatar: OptionUpdateDocument,
+    permissions_v2: Type.Optional(OptionalGroupPermissions),
+    events_ttl: OptionUpdateU64,
+    gate: OptionUpdateAccessGate,
+    gate_config: OptionUpdateAccessGateConfig,
+    public: Type.Optional(Type.Boolean()),
+    messages_visible_to_non_members: Type.Optional(Type.Boolean()),
+    correlation_id: Type.BigInt(),
+});
+
 export type GroupSendMessageArgs = Static<typeof GroupSendMessageArgs>;
 export const GroupSendMessageArgs = Type.Object({
     thread_root_message_index: Type.Optional(MessageIndex),
@@ -5459,6 +7603,16 @@ export const GroupSendMessageArgs = Type.Object({
     block_level_markdown: Type.Boolean(),
     rules_accepted: Type.Optional(Version),
     message_filter_failed: Type.Optional(Type.BigInt()),
+    new_achievement: Type.Boolean(),
+    correlation_id: Type.BigInt(),
+});
+
+export type GroupEditMessageArgs = Static<typeof GroupEditMessageArgs>;
+export const GroupEditMessageArgs = Type.Object({
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_id: MessageId,
+    content: MessageContentInitial,
+    block_level_markdown: Type.Optional(Type.Boolean()),
     new_achievement: Type.Boolean(),
     correlation_id: Type.BigInt(),
 });
@@ -5482,6 +7636,21 @@ export const UserSearchMessagesResponse = Type.Union([
     }),
     Type.Literal("ChatNotFound"),
 ]);
+
+export type UserCreateGroupArgs = Static<typeof UserCreateGroupArgs>;
+export const UserCreateGroupArgs = Type.Object({
+    is_public: Type.Boolean(),
+    name: Type.String(),
+    description: Type.String(),
+    rules: Rules,
+    avatar: Type.Optional(Document),
+    history_visible_to_new_joiners: Type.Boolean(),
+    messages_visible_to_non_members: Type.Optional(Type.Boolean()),
+    permissions_v2: Type.Optional(GroupPermissions),
+    events_ttl: Type.Optional(Type.BigInt()),
+    gate: Type.Optional(AccessGate),
+    gate_config: Type.Optional(AccessGateConfig),
+});
 
 export type UserDeletedMessageSuccessResult = Static<typeof UserDeletedMessageSuccessResult>;
 export const UserDeletedMessageSuccessResult = Type.Object({
@@ -5532,6 +7701,23 @@ export const UserSendMessageArgs = Type.Object({
     correlation_id: Type.BigInt(),
 });
 
+export type UserCreateCommunityArgs = Static<typeof UserCreateCommunityArgs>;
+export const UserCreateCommunityArgs = Type.Object({
+    is_public: Type.Boolean(),
+    name: Type.String(),
+    description: Type.String(),
+    rules: Rules,
+    avatar: Type.Optional(Document),
+    banner: Type.Optional(Document),
+    history_visible_to_new_joiners: Type.Boolean(),
+    permissions: Type.Optional(CommunityPermissions),
+    gate: Type.Optional(AccessGate),
+    gate_config: Type.Optional(AccessGateConfig),
+    default_channels: Type.Array(Type.String()),
+    default_channel_rules: Type.Optional(Rules),
+    primary_language: Type.String(),
+});
+
 export type UserSendMessageWithTransferToChannelArgs = Static<
     typeof UserSendMessageWithTransferToChannelArgs
 >;
@@ -5562,6 +7748,18 @@ export const UserEditMessageArgs = Type.Object({
     correlation_id: Type.BigInt(),
 });
 
+export type ChannelMatch = Static<typeof ChannelMatch>;
+export const ChannelMatch = Type.Object({
+    id: Type.BigInt(),
+    name: Type.String(),
+    description: Type.String(),
+    avatar_id: Type.Optional(Type.BigInt()),
+    member_count: Type.Number(),
+    gate: Type.Optional(AccessGate),
+    gate_config: Type.Optional(AccessGateConfig),
+    subtype: Type.Optional(GroupSubtype),
+});
+
 export type Message = Static<typeof Message>;
 export const Message = Type.Object({
     message_index: MessageIndex,
@@ -5575,6 +7773,22 @@ export const Message = Type.Object({
     edited: Type.Boolean(),
     forwarded: Type.Boolean(),
     block_level_markdown: Type.Boolean(),
+});
+
+export type CommunityMatch = Static<typeof CommunityMatch>;
+export const CommunityMatch = Type.Object({
+    id: CommunityId,
+    score: Type.Number(),
+    name: Type.String(),
+    description: Type.String(),
+    avatar_id: Type.Optional(Type.BigInt()),
+    banner_id: Type.Optional(Type.BigInt()),
+    member_count: Type.Number(),
+    channel_count: Type.Number(),
+    gate: Type.Optional(AccessGate),
+    gate_config: Type.Optional(AccessGateConfig),
+    moderation_flags: Type.Number(),
+    primary_language: Type.String(),
 });
 
 export type EventWrapperMessage = Static<typeof EventWrapperMessage>;
@@ -5695,10 +7909,121 @@ export const CommunityCanisterChannelSummaryUpdates = Type.Object({
     events_ttl: OptionUpdateU64,
     events_ttl_last_updated: Type.Optional(Type.BigInt()),
     gate: OptionUpdateAccessGate,
+    gate_config: OptionUpdateAccessGateConfig,
     membership: Type.Optional(GroupMembershipUpdates),
     video_call_in_progress: OptionUpdateVideoCall,
     external_url: OptionUpdateString,
 });
+
+export type GroupIndexExploreCommunitiesSuccessResult = Static<
+    typeof GroupIndexExploreCommunitiesSuccessResult
+>;
+export const GroupIndexExploreCommunitiesSuccessResult = Type.Object({
+    matches: Type.Array(CommunityMatch),
+    total: Type.Number(),
+});
+
+export type GroupIndexExploreCommunitiesResponse = Static<
+    typeof GroupIndexExploreCommunitiesResponse
+>;
+export const GroupIndexExploreCommunitiesResponse = Type.Union([
+    Type.Object({
+        Success: GroupIndexExploreCommunitiesSuccessResult,
+    }),
+    Type.Object({
+        TermTooShort: Type.Number(),
+    }),
+    Type.Object({
+        TermTooLong: Type.Number(),
+    }),
+    Type.Literal("InvalidTerm"),
+    Type.Literal("InvalidFlags"),
+]);
+
+export type CommunityDeleteMessageResponse = Static<typeof CommunityDeleteMessageResponse>;
+export const CommunityDeleteMessageResponse = Type.Union([
+    Type.Object({
+        Success: CommunityDeleteMessageSuccessResult,
+    }),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("UserNotInChannel"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("MessageNotFound"),
+    Type.Literal("MessageHardDeleted"),
+]);
+
+export type CommunityUndeleteMessagesSuccessResult = Static<
+    typeof CommunityUndeleteMessagesSuccessResult
+>;
+export const CommunityUndeleteMessagesSuccessResult = Type.Object({
+    messages: Type.Array(Message),
+});
+
+export type CommunityUndeleteMessagesResponse = Static<typeof CommunityUndeleteMessagesResponse>;
+export const CommunityUndeleteMessagesResponse = Type.Union([
+    Type.Object({
+        Success: CommunityUndeleteMessagesSuccessResult,
+    }),
+    Type.Literal("MessageNotFound"),
+    Type.Literal("GroupNotFound"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("UserNotInChannel"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("UserLapsed"),
+]);
+
+export type CommunityExploreChannelsSuccessResult = Static<
+    typeof CommunityExploreChannelsSuccessResult
+>;
+export const CommunityExploreChannelsSuccessResult = Type.Object({
+    matches: Type.Array(ChannelMatch),
+    total: Type.Number(),
+});
+
+export type CommunityExploreChannelsResponse = Static<typeof CommunityExploreChannelsResponse>;
+export const CommunityExploreChannelsResponse = Type.Union([
+    Type.Object({
+        Success: CommunityExploreChannelsSuccessResult,
+    }),
+    Type.Object({
+        TermTooShort: Type.Number(),
+    }),
+    Type.Object({
+        TermTooLong: Type.Number(),
+    }),
+    Type.Literal("InvalidTerm"),
+    Type.Literal("PrivateCommunity"),
+]);
+
+export type GroupDeletedMessageResponse = Static<typeof GroupDeletedMessageResponse>;
+export const GroupDeletedMessageResponse = Type.Union([
+    Type.Object({
+        Success: GroupDeletedMessageSuccessResult,
+    }),
+    Type.Literal("CallerNotInGroup"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("MessageNotFound"),
+    Type.Literal("MessageHardDeleted"),
+]);
+
+export type GroupUndeleteMessagesSuccessResult = Static<typeof GroupUndeleteMessagesSuccessResult>;
+export const GroupUndeleteMessagesSuccessResult = Type.Object({
+    messages: Type.Array(Message),
+});
+
+export type GroupUndeleteMessagesResponse = Static<typeof GroupUndeleteMessagesResponse>;
+export const GroupUndeleteMessagesResponse = Type.Union([
+    Type.Object({
+        Success: GroupUndeleteMessagesSuccessResult,
+    }),
+    Type.Literal("CallerNotInGroup"),
+    Type.Literal("MessageNotFound"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Literal("ChatFrozen"),
+]);
 
 export type UserUndeleteMessagesSuccessResult = Static<typeof UserUndeleteMessagesSuccessResult>;
 export const UserUndeleteMessagesSuccessResult = Type.Object({
@@ -5772,6 +8097,7 @@ export const GroupCanisterGroupChatSummary = Type.Object({
     events_ttl: Type.Optional(Type.BigInt()),
     events_ttl_last_updated: Type.BigInt(),
     gate: Type.Optional(AccessGate),
+    gate_config: Type.Optional(AccessGateConfig),
     rules_accepted: Type.Boolean(),
     membership: Type.Optional(GroupMembership),
     video_call_in_progress: Type.Optional(VideoCall),
@@ -5784,6 +8110,13 @@ export const EventWrapperChatEvent = Type.Object({
     correlation_id: Type.BigInt(),
     expires_at: Type.Optional(Type.BigInt()),
     event: ChatEvent,
+});
+
+export type ThreadPreview = Static<typeof ThreadPreview>;
+export const ThreadPreview = Type.Object({
+    root_message: EventWrapperMessage,
+    latest_replies: Type.Array(EventWrapperMessage),
+    total_replies: Type.Number(),
 });
 
 export type GroupCanisterGroupChatSummaryUpdates = Static<
@@ -5819,6 +8152,7 @@ export const GroupCanisterGroupChatSummaryUpdates = Type.Object({
     events_ttl: OptionUpdateU64,
     events_ttl_last_updated: Type.Optional(Type.BigInt()),
     gate: OptionUpdateAccessGate,
+    gate_config: OptionUpdateAccessGateConfig,
     rules_accepted: Type.Optional(Type.Boolean()),
     membership: Type.Optional(GroupMembershipUpdates),
     video_call_in_progress: OptionUpdateVideoCall,
@@ -5864,6 +8198,7 @@ export const PublicGroupSummary = Type.Object({
     events_ttl: Type.Optional(Type.BigInt()),
     events_ttl_last_updated: Type.BigInt(),
     gate: Type.Optional(AccessGate),
+    gate_config: Type.Optional(AccessGateConfig),
 });
 
 export type CommunityCanisterChannelSummary = Static<typeof CommunityCanisterChannelSummary>;
@@ -5890,6 +8225,7 @@ export const CommunityCanisterChannelSummary = Type.Object({
     events_ttl: Type.Optional(Type.BigInt()),
     events_ttl_last_updated: Type.BigInt(),
     gate: Type.Optional(AccessGate),
+    gate_config: Type.Optional(AccessGateConfig),
     membership: Type.Optional(GroupMembership),
     video_call_in_progress: Type.Optional(VideoCall),
     is_invited: Type.Optional(Type.Boolean()),
@@ -5934,6 +8270,134 @@ export const LocalUserIndexJoinGroupResponse = Type.Union([
     Type.Object({
         InternalError: Type.String(),
     }),
+]);
+
+export type CommunityChannelSummaryUpdatesResponse = Static<
+    typeof CommunityChannelSummaryUpdatesResponse
+>;
+export const CommunityChannelSummaryUpdatesResponse = Type.Union([
+    Type.Object({
+        SuccessAdded: CommunityCanisterChannelSummary,
+    }),
+    Type.Object({
+        SuccessUpdated: CommunityCanisterChannelSummaryUpdates,
+    }),
+    Type.Literal("SuccessNoUpdates"),
+    Type.Literal("PrivateCommunity"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("PrivateChannel"),
+]);
+
+export type CommunityChannelSummaryResponse = Static<typeof CommunityChannelSummaryResponse>;
+export const CommunityChannelSummaryResponse = Type.Union([
+    Type.Object({
+        Success: CommunityCanisterChannelSummary,
+    }),
+    Type.Literal("PrivateCommunity"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("PrivateChannel"),
+]);
+
+export type CommunityMessagesByMessageIndexResponse = Static<
+    typeof CommunityMessagesByMessageIndexResponse
+>;
+export const CommunityMessagesByMessageIndexResponse = Type.Union([
+    Type.Object({
+        Success: MessagesResponse,
+    }),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("UserNotInChannel"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("ThreadNotFound"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Object({
+        ReplicaNotUpToDateV2: Type.BigInt(),
+    }),
+]);
+
+export type CommunityThreadPreviewsSuccessResult = Static<
+    typeof CommunityThreadPreviewsSuccessResult
+>;
+export const CommunityThreadPreviewsSuccessResult = Type.Object({
+    threads: Type.Array(ThreadPreview),
+    timestamp: Type.BigInt(),
+});
+
+export type CommunityThreadPreviewsResponse = Static<typeof CommunityThreadPreviewsResponse>;
+export const CommunityThreadPreviewsResponse = Type.Union([
+    Type.Object({
+        Success: CommunityThreadPreviewsSuccessResult,
+    }),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("UserNotInChannel"),
+    Type.Object({
+        ReplicaNotUpToDate: Type.BigInt(),
+    }),
+]);
+
+export type GroupSummaryUpdatesSuccessResult = Static<typeof GroupSummaryUpdatesSuccessResult>;
+export const GroupSummaryUpdatesSuccessResult = Type.Object({
+    updates: GroupCanisterGroupChatSummaryUpdates,
+});
+
+export type GroupSummaryUpdatesResponse = Static<typeof GroupSummaryUpdatesResponse>;
+export const GroupSummaryUpdatesResponse = Type.Union([
+    Type.Object({
+        Success: GroupSummaryUpdatesSuccessResult,
+    }),
+    Type.Literal("SuccessNoUpdates"),
+    Type.Literal("CallerNotInGroup"),
+]);
+
+export type GroupMessagesByMessageIndexResponse = Static<
+    typeof GroupMessagesByMessageIndexResponse
+>;
+export const GroupMessagesByMessageIndexResponse = Type.Union([
+    Type.Object({
+        Success: MessagesResponse,
+    }),
+    Type.Literal("CallerNotInGroup"),
+    Type.Literal("ThreadMessageNotFound"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Object({
+        ReplicaNotUpToDateV2: Type.BigInt(),
+    }),
+]);
+
+export type GroupPublicSummarySuccessResult = Static<typeof GroupPublicSummarySuccessResult>;
+export const GroupPublicSummarySuccessResult = Type.Object({
+    summary: PublicGroupSummary,
+    is_invited: Type.Boolean(),
+});
+
+export type GroupPublicSummaryResponse = Static<typeof GroupPublicSummaryResponse>;
+export const GroupPublicSummaryResponse = Type.Union([
+    Type.Object({
+        Success: GroupPublicSummarySuccessResult,
+    }),
+    Type.Literal("NotAuthorized"),
+]);
+
+export type GroupThreadPreviewsSuccessResult = Static<typeof GroupThreadPreviewsSuccessResult>;
+export const GroupThreadPreviewsSuccessResult = Type.Object({
+    threads: Type.Array(ThreadPreview),
+    timestamp: Type.BigInt(),
+});
+
+export type GroupSummarySuccessResult = Static<typeof GroupSummarySuccessResult>;
+export const GroupSummarySuccessResult = Type.Object({
+    summary: GroupCanisterGroupChatSummary,
+});
+
+export type GroupSummaryResponse = Static<typeof GroupSummaryResponse>;
+export const GroupSummaryResponse = Type.Union([
+    Type.Object({
+        Success: GroupSummarySuccessResult,
+    }),
+    Type.Literal("CallerNotInGroup"),
 ]);
 
 export type UserInitialStateDirectChatsInitial = Static<typeof UserInitialStateDirectChatsInitial>;
@@ -5985,6 +8449,7 @@ export const CommunityCanisterCommunitySummary = Type.Object({
     permissions: CommunityPermissions,
     frozen: Type.Optional(FrozenGroupInfo),
     gate: Type.Optional(AccessGate),
+    gate_config: Type.Optional(AccessGateConfig),
     primary_language: Type.String(),
     latest_event_index: EventIndex,
     channels: Type.Array(CommunityCanisterChannelSummary),
@@ -6009,6 +8474,7 @@ export const CommunityCanisterCommunitySummaryUpdates = Type.Object({
     permissions: Type.Optional(CommunityPermissions),
     frozen: OptionUpdateFrozenGroupInfo,
     gate: OptionUpdateAccessGate,
+    gate_config: OptionUpdateAccessGateConfig,
     primary_language: Type.Optional(Type.String()),
     latest_event_index: Type.Optional(EventIndex),
     channels_added: Type.Array(CommunityCanisterChannelSummary),
@@ -6134,6 +8600,64 @@ export type LocalUserIndexGroupAndCommunitySummaryUpdatesResponse = Static<
 export const LocalUserIndexGroupAndCommunitySummaryUpdatesResponse = Type.Object({
     Success: Type.Array(LocalUserIndexGroupAndCommunitySummaryUpdatesSummaryUpdatesResponse),
 });
+
+export type CommunitySummaryUpdatesResponse = Static<typeof CommunitySummaryUpdatesResponse>;
+export const CommunitySummaryUpdatesResponse = Type.Union([
+    Type.Object({
+        Success: CommunityCanisterCommunitySummaryUpdates,
+    }),
+    Type.Literal("SuccessNoUpdates"),
+    Type.Literal("PrivateCommunity"),
+]);
+
+export type CommunityEventsResponse = Static<typeof CommunityEventsResponse>;
+export const CommunityEventsResponse = Type.Union([
+    Type.Object({
+        Success: EventsResponse,
+    }),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("UserNotInChannel"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("ThreadNotFound"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Object({
+        ReplicaNotUpToDateV2: Type.BigInt(),
+    }),
+]);
+
+export type CommunitySummaryResponse = Static<typeof CommunitySummaryResponse>;
+export const CommunitySummaryResponse = Type.Union([
+    Type.Object({
+        Success: CommunityCanisterCommunitySummary,
+    }),
+    Type.Literal("PrivateCommunity"),
+]);
+
+export type GroupThreadPreviewsResponse = Static<typeof GroupThreadPreviewsResponse>;
+export const GroupThreadPreviewsResponse = Type.Union([
+    Type.Object({
+        Success: GroupThreadPreviewsSuccessResult,
+    }),
+    Type.Literal("CallerNotInGroup"),
+    Type.Object({
+        ReplicaNotUpToDate: Type.BigInt(),
+    }),
+]);
+
+export type GroupEventsResponse = Static<typeof GroupEventsResponse>;
+export const GroupEventsResponse = Type.Union([
+    Type.Object({
+        Success: EventsResponse,
+    }),
+    Type.Literal("CallerNotInGroup"),
+    Type.Literal("ThreadMessageNotFound"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Object({
+        ReplicaNotUpToDateV2: Type.BigInt(),
+    }),
+]);
 
 export type UserEventsResponse = Static<typeof UserEventsResponse>;
 export const UserEventsResponse = Type.Union([
