@@ -7,7 +7,8 @@ use crate::model::hot_group_exclusions::HotGroupExclusions;
 use crate::model::p2p_swaps::P2PSwaps;
 use crate::model::pin_number::PinNumber;
 use crate::model::token_swaps::TokenSwaps;
-use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob, UserCanisterEventsBatch};
+use crate::model::user_canister_event_batch::UserCanisterEventBatch;
+use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
@@ -236,7 +237,7 @@ struct Data {
     pub token_swaps: TokenSwaps,
     pub p2p_swaps: P2PSwaps,
     #[serde(deserialize_with = "deserialize_user_canister_events_queue")]
-    pub user_canister_events_queue: GroupedTimerJobQueue<UserCanisterEventsBatch>,
+    pub user_canister_events_queue: GroupedTimerJobQueue<UserCanisterEventBatch>,
     pub video_call_operators: Vec<Principal>,
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub pin_number: PinNumber,
@@ -257,7 +258,7 @@ struct Data {
 
 fn deserialize_user_canister_events_queue<'de, D: Deserializer<'de>>(
     d: D,
-) -> Result<GroupedTimerJobQueue<UserCanisterEventsBatch>, D::Error> {
+) -> Result<GroupedTimerJobQueue<UserCanisterEventBatch>, D::Error> {
     let previous: CanisterEventSyncQueue<UserCanisterEvent> = CanisterEventSyncQueue::deserialize(d)?;
 
     let new = GroupedTimerJobQueue::new(10, false);
