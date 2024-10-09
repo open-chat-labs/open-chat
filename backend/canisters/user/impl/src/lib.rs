@@ -18,6 +18,7 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use model::chit::ChitEarnedEvents;
 use model::contacts::Contacts;
 use model::favourite_chats::FavouriteChats;
+use model::message_activity_events::MessageActivityEvents;
 use model::referrals::Referrals;
 use model::streak::Streak;
 use notifications_canister::c2c_push_notification;
@@ -243,17 +244,15 @@ struct Data {
     pub chit_events: ChitEarnedEvents,
     pub streak: Streak,
     pub achievements: HashSet<Achievement>,
-    #[serde(default)]
     pub external_achievements: HashSet<String>,
     pub achievements_last_seen: TimestampMillis,
     pub unique_person_proof: Option<UniquePersonProof>,
-    #[serde(default)]
     pub wallet_config: Timestamped<WalletConfig>,
     pub rng_seed: [u8; 32],
-    #[serde(default)]
     pub referred_by: Option<UserId>,
-    #[serde(default)]
     pub referrals: Referrals,
+    #[serde(default)]
+    pub message_activity_events: MessageActivityEvents,
 }
 
 impl Data {
@@ -321,6 +320,7 @@ impl Data {
             wallet_config: Timestamped::default(),
             referred_by,
             referrals: Referrals::default(),
+            message_activity_events: MessageActivityEvents::default(),
         }
     }
 

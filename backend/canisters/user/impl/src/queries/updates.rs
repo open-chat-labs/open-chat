@@ -60,7 +60,8 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         || state.data.favourite_chats.any_updated(updates_since)
         || state.data.communities.any_updated(updates_since)
         || state.data.chit_events.last_updated() > updates_since
-        || state.data.achievements_last_seen > updates_since;
+        || state.data.achievements_last_seen > updates_since
+        || state.data.message_activity_events.last_updated() > updates_since;
 
     // Short circuit prior to calling `ic0.time()` so that caching works effectively
     if !has_any_updates {
@@ -151,6 +152,8 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
     let next_daily_claim = if state.data.streak.can_claim(now) { today(now) } else { tomorrow(now) };
     let streak_ends = state.data.streak.ends();
     let is_unique_person = is_unique_person_updated.then_some(true);
+    let activity_feed =
+        (state.data.message_activity_events.last_updated() > updates_since).then(|| state.data.message_activity_events.summary());
 
     Success(SuccessResult {
         timestamp: now,
@@ -174,5 +177,6 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         is_unique_person,
         wallet_config,
         referrals,
+        message_activity_summary: activity_feed,
     })
 }

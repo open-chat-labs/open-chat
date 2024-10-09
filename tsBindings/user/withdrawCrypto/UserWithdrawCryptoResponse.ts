@@ -2,4 +2,4 @@
 import type { CompletedCryptoTransaction } from "../../shared/CompletedCryptoTransaction";
 import type { FailedCryptoTransaction } from "../../shared/FailedCryptoTransaction";
 
-export type UserWithdrawCryptoResponse = { "Success": CompletedCryptoTransaction } | { "TransactionFailed": FailedCryptoTransaction } | "CurrencyNotSupported" | "PinRequired" | { "PinIncorrect": bigint } | { "TooManyFailedPinAttempts": bigint };
+export type UserWithdrawCryptoResponse = { "Success": CompletedCryptoTransaction } | { "TransactionFailed": FailedCryptoTransaction } | "CurrencyNotSupported" | "PinRequired" | { "PinIncorrect": bigint } | { "TooManyFailedPinAttempts": bigint } | { "InternalError": string };

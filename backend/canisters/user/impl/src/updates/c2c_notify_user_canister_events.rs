@@ -1,4 +1,3 @@
-use crate::model::direct_chat::DirectChat;
 use crate::timer_job_types::{HardDeleteMessageContentJob, TimerJob};
 use crate::updates::c2c_send_messages::{get_sender_status, handle_message_impl, verify_user, HandleMessageArgs};
 use crate::updates::start_video_call::handle_start_video_call;
@@ -12,11 +11,13 @@ use chat_events::{
 use event_store_producer_cdk_runtime::CdkRuntime;
 use ledger_utils::format_crypto_amount_with_symbol;
 use types::{
-    Achievement, ChitEarned, ChitEarnedReason, DirectMessageTipped, DirectReactionAddedNotification, EventIndex, Notification,
-    UserId, UserType, VideoCallPresence,
+    Achievement, Chat, ChitEarned, ChitEarnedReason, DirectMessageTipped, DirectReactionAddedNotification, EventIndex,
+    Notification, P2PSwapStatus, UserId, UserType, VideoCallPresence,
 };
 use user_canister::c2c_notify_user_canister_events::{Response::*, *};
-use user_canister::{SendMessagesArgs, ToggleReactionArgs, UserCanisterEvent};
+use user_canister::{
+    MessageActivity, MessageActivityEvent, P2PSwapStatusChange, SendMessagesArgs, ToggleReactionArgs, UserCanisterEvent,
+};
 use utils::time::{HOUR_IN_MS, MINUTE_IN_MS};
 
 #[update(msgpack = true)]
@@ -88,9 +89,7 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
             }
         }
         UserCanisterEvent::P2PSwapStatusChange(c) => {
-            if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
-                chat.events.set_p2p_swap_status(None, c.message_id, c.status, now);
-            }
+            p2p_swap_change_status(*c, caller_user_id, state);
         }
         UserCanisterEvent::JoinVideoCall(c) => {
             if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
@@ -272,56 +271,79 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
             if matches!(
                 chat.events.add_reaction::<CdkRuntime>(add_remove_reaction_args, None),
                 AddRemoveReactionResult::Success(_)
-            ) && !state.data.suspended.value
-            {
-                if let Some((recipient, notification)) = build_notification(args, chat) {
-                    state.push_notification(recipient, notification);
-                }
-            }
+            ) {
+                if let Some(message_event) = chat
+                    .events
+                    .main_events_reader()
+                    .message_event_internal(args.message_id.into())
+                {
+                    if !state.data.suspended.value && !args.username.is_empty() && !chat.notifications_muted.value {
+                        let notification = Notification::DirectReactionAdded(DirectReactionAddedNotification {
+                            them: chat.them,
+                            thread_root_message_index,
+                            message_index: message_event.event.message_index,
+                            message_event_index: message_event.index,
+                            username: args.username,
+                            display_name: args.display_name,
+                            reaction: args.reaction,
+                            user_avatar_id: args.user_avatar_id,
+                        });
 
-            state.data.award_achievement_and_notify(Achievement::HadMessageReactedTo, now);
+                        state.push_notification(message_event.event.sender, notification);
+                    }
+
+                    state.data.message_activity_events.push(
+                        MessageActivityEvent {
+                            chat: Chat::Direct(caller_user_id.into()),
+                            thread_root_message_index,
+                            message_index: message_event.event.message_index,
+                            activity: MessageActivity::Reaction,
+                            timestamp: now,
+                            user_id: caller_user_id,
+                        },
+                        now,
+                    );
+                }
+
+                state.data.award_achievement_and_notify(Achievement::HadMessageReactedTo, now);
+            }
         } else {
             chat.events.remove_reaction(add_remove_reaction_args);
         }
     }
 }
 
-fn build_notification(
-    ToggleReactionArgs {
-        thread_root_message_id,
-        message_id,
-        reaction,
-        username,
-        display_name,
-        user_avatar_id,
-        ..
-    }: ToggleReactionArgs,
-    chat: &DirectChat,
-) -> Option<(UserId, Notification)> {
-    if username.is_empty() || chat.notifications_muted.value {
-        return None;
+fn p2p_swap_change_status(args: P2PSwapStatusChange, caller_user_id: UserId, state: &mut RuntimeState) {
+    let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) else {
+        return;
+    };
+
+    let now = state.env.now();
+    let completed = matches!(args.status, P2PSwapStatus::Completed(_));
+
+    chat.events.set_p2p_swap_status(None, args.message_id, args.status, now);
+
+    if completed {
+        if let Some(message_event) = chat
+            .events
+            .main_events_reader()
+            .message_event_internal(args.message_id.into())
+        {
+            let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
+
+            state.data.message_activity_events.push(
+                MessageActivityEvent {
+                    chat: Chat::Direct(caller_user_id.into()),
+                    thread_root_message_index,
+                    message_index: message_event.event.message_index,
+                    activity: MessageActivity::P2PSwapAccepted,
+                    timestamp: now,
+                    user_id: caller_user_id,
+                },
+                now,
+            );
+        }
     }
-
-    let thread_root_message_index = thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
-    let message_event = chat
-        .events
-        .events_reader(EventIndex::default(), thread_root_message_index)
-        .and_then(|reader| reader.message_event(message_id.into(), None))
-        .filter(|m| m.event.sender != chat.them)?;
-
-    Some((
-        message_event.event.sender,
-        Notification::DirectReactionAdded(DirectReactionAddedNotification {
-            them: chat.them,
-            thread_root_message_index,
-            message_index: message_event.event.message_index,
-            message_event_index: message_event.index,
-            username,
-            display_name,
-            reaction,
-            user_avatar_id,
-        }),
-    ))
 }
 
 fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, state: &mut RuntimeState) {
@@ -362,6 +384,18 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
                     user_avatar_id: args.user_avatar_id,
                 });
                 state.push_notification(my_user_id, notification);
+
+                state.data.message_activity_events.push(
+                    MessageActivityEvent {
+                        chat: Chat::Direct(caller_user_id.into()),
+                        thread_root_message_index,
+                        message_index: event.event.message_index,
+                        activity: MessageActivity::Tip,
+                        timestamp: now,
+                        user_id: caller_user_id,
+                    },
+                    now,
+                );
             }
 
             state.data.award_achievement_and_notify(Achievement::HadMessageTipped, now);

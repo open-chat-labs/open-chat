@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add support for expiring access gates ([#6401](https://github.com/open-chat-labs/open-chat/pull/6401))
+- Add support for a message activity feed ([#6539](https://github.com/open-chat-labs/open-chat/pull/6539))
+
 ## [[2.0.1374](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1374-user)] - 2024-10-07
 
 ### Added
@@ -24,7 +29,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Refactor transfers to differentiate between transfers that failed due to c2c error vs transfer error ([#6500](https://github.com/open-chat-labs/open-chat/pull/6500))
 - Refactor ICPSwap and Sonic swap clients ([#6505](https://github.com/open-chat-labs/open-chat/pull/6505))
 - Award more daily CHIT when on 100 or 365 day streaks ([#6522](https://github.com/open-chat-labs/open-chat/pull/6522))
-- Add support for expiring access gates ([#6401](https://github.com/open-chat-labs/open-chat/pull/6401))
 
 ### Fixed
 

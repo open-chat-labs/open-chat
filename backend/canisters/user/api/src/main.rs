@@ -4,6 +4,7 @@ use ts_export::generate_ts_method;
 
 #[allow(deprecated)]
 fn main() {
+    generate_candid_method!(user, message_activity_feed, query);
     generate_candid_method!(user, bio, query);
     generate_candid_method!(user, cached_btc_address, query);
     generate_candid_method!(user, chit_events, query);
@@ -46,6 +47,7 @@ fn main() {
     generate_candid_method!(user, leave_group, update);
     generate_candid_method!(user, manage_favourite_chats, update);
     generate_candid_method!(user, mark_achievements_seen, update);
+    generate_candid_method!(user, mark_message_activity_feed_read, update);
     generate_candid_method!(user, mark_read, update);
     generate_candid_method!(user, mute_notifications, update);
     generate_candid_method!(user, pin_chat_v2, update);
