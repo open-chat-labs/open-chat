@@ -391,7 +391,6 @@ pub enum GateCheckFailedReason {
     FailedVerifiedCredentialCheck(String),
     Locked,
     NotReferredByMember,
-    Unknown,
 }
 
 #[ts_export]
