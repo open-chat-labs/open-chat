@@ -9,7 +9,7 @@ fn message_activity_feed(args: Args) -> Response {
 }
 
 fn message_activity_feed_impl(args: Args, state: &RuntimeState) -> Response {
-    let events = state.data.message_activity_events.latest_events(args.since, args.max);
+    let events = state.data.message_activity_events.latest_events(args.since);
     let total = state.data.message_activity_events.len();
 
     Success(SuccessResult { events, total })

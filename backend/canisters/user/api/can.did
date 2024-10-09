@@ -1266,7 +1266,6 @@ type Referral = record {
 
 type MessageActivityFeedArgs = record {
     since : TimestampMillis;
-    max : nat32;
 };
 
 type MessageActivityFeedResponse = variant {

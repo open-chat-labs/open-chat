@@ -9,7 +9,6 @@ use crate::MessageActivityEvent;
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub since: TimestampMillis,
-    pub max: u32,
 }
 
 #[ts_export(user, activity_feed)]

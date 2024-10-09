@@ -47,13 +47,8 @@ impl MessageActivityEvents {
         }
     }
 
-    pub fn latest_events(&self, since: TimestampMillis, max: u32) -> Vec<MessageActivityEvent> {
-        self.events
-            .iter()
-            .take(max as usize)
-            .take_while(|e| e.timestamp > since)
-            .cloned()
-            .collect()
+    pub fn latest_events(&self, since: TimestampMillis) -> Vec<MessageActivityEvent> {
+        self.events.iter().take_while(|e| e.timestamp > since).cloned().collect()
     }
 
     pub fn len(&self) -> u32 {
