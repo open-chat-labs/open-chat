@@ -3,21 +3,20 @@ use crate::model::identity_link_requests::IdentityLinkRequests;
 use crate::model::salt::Salt;
 use crate::model::user_principals::UserPrincipals;
 use candid::Principal;
-use canister_sig_util::signature_map::{SignatureMap, LABEL_SIG};
-use canister_sig_util::CanisterSigPublicKey;
 use canister_state_macros::canister_state;
+use ic_canister_sig_creation::signature_map::{SignatureMap, LABEL_SIG};
+use ic_canister_sig_creation::CanisterSigPublicKey;
 use ic_cdk::api::set_certified_data;
 use serde::{Deserialize, Serialize};
 use sha256::sha256;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
-use types::{BuildVersion, CanisterId, Cycles, Delegation, Hash, TimestampMillis, Timestamped};
+use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
 use utils::consts::IC_ROOT_KEY;
 use utils::env::Environment;
 use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
 
 mod guards;
-mod hash;
 mod lifecycle;
 mod memory;
 mod model;
@@ -162,15 +161,6 @@ impl Data {
     pub fn requires_captcha(&self, originating_canister_id: &CanisterId) -> bool {
         !self.skip_captcha_whitelist.contains(originating_canister_id)
     }
-}
-
-fn delegation_signature_msg_hash(d: &Delegation) -> Hash {
-    use hash::Value;
-    let mut m = HashMap::new();
-    m.insert("pubkey", Value::Bytes(d.pubkey.as_slice()));
-    m.insert("expiration", Value::U64(d.expiration));
-    let map_hash = hash::hash_of_map(m);
-    hash::hash_with_domain(b"ic-request-auth-delegation", &map_hash)
 }
 
 fn extract_originating_canister(caller: Principal, public_key: &[u8]) -> Result<CanisterId, String> {
