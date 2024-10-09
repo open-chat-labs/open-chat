@@ -260,7 +260,7 @@ fn deserialize_user_canister_events_queue<'de, D: Deserializer<'de>>(
 ) -> Result<GroupedTimerJobQueue<UserCanisterEventsBatch>, D::Error> {
     let previous: CanisterEventSyncQueue<UserCanisterEvent> = CanisterEventSyncQueue::deserialize(d)?;
 
-    let new = GroupedTimerJobQueue::new(10);
+    let new = GroupedTimerJobQueue::new(10, false);
     for (canister_id, events) in previous.take_all() {
         new.enqueue_many(canister_id.into(), events);
     }
@@ -315,7 +315,7 @@ impl Data {
             next_event_expiry: None,
             token_swaps: TokenSwaps::default(),
             p2p_swaps: P2PSwaps::default(),
-            user_canister_events_queue: GroupedTimerJobQueue::new(10),
+            user_canister_events_queue: GroupedTimerJobQueue::new(10, false),
             video_call_operators,
             event_store_client: EventStoreClientBuilder::new(local_user_index_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))

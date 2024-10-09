@@ -304,7 +304,7 @@ fn deserialize_user_event_sync_queue<'de, D: Deserializer<'de>>(
 ) -> Result<GroupedTimerJobQueue<UserEventBatch>, D::Error> {
     let previous: CanisterEventSyncQueue<UserEvent> = CanisterEventSyncQueue::deserialize(d)?;
 
-    let new = GroupedTimerJobQueue::new(10);
+    let new = GroupedTimerJobQueue::new(10, false);
     for (canister_id, events) in previous.take_all() {
         new.enqueue_many(canister_id.into(), events);
     }
@@ -316,7 +316,7 @@ fn deserialize_user_index_event_sync_queue<'de, D: Deserializer<'de>>(
 ) -> Result<GroupedTimerJobQueue<UserIndexEventBatch>, D::Error> {
     let previous: CanisterEventSyncQueue<UserIndexEvent> = CanisterEventSyncQueue::deserialize(d)?;
 
-    let new = GroupedTimerJobQueue::new(1);
+    let new = GroupedTimerJobQueue::new(1, true);
     for (canister_id, events) in previous.take_all() {
         new.enqueue_many(canister_id, events);
     }
@@ -370,8 +370,8 @@ impl Data {
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
-            user_event_sync_queue: GroupedTimerJobQueue::new(10),
-            user_index_event_sync_queue: GroupedTimerJobQueue::new(1),
+            user_event_sync_queue: GroupedTimerJobQueue::new(10, false),
+            user_index_event_sync_queue: GroupedTimerJobQueue::new(1, true),
             test_mode,
             max_concurrent_canister_upgrades: 10,
             user_upgrade_concurrency: 10,

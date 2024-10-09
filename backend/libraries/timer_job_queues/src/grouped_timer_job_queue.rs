@@ -15,21 +15,34 @@ pub struct GroupedTimerJobQueue<T: TimerJobItemGroup> {
 }
 
 impl<T: TimerJobItemGroup> GroupedTimerJobQueue<T> {
-    pub fn new(max_concurrency: usize) -> Self {
+    pub fn new(max_concurrency: usize, defer_processing: bool) -> Self {
         Self {
             inner: Rc::new(Mutex::new(GroupedTimerJobQueueInner {
                 queue: VecDeque::new(),
                 items_map: BTreeMap::new(),
                 in_progress: BTreeSet::new(),
                 max_concurrency,
+                defer_processing,
                 timer_id: None,
             })),
             phantom: PhantomData,
         }
     }
 
+    pub fn max_concurrency(&self) -> usize {
+        self.within_lock(|i| i.max_concurrency)
+    }
+
     pub fn set_max_concurrency(&self, value: usize) {
         self.within_lock(|i| i.max_concurrency = value)
+    }
+
+    pub fn defer_processing(&self) -> bool {
+        self.within_lock(|i| i.defer_processing)
+    }
+
+    pub fn set_defer_processing(&self, value: bool) {
+        self.within_lock(|i| i.defer_processing = value)
     }
 
     pub fn clear(&self) {
@@ -60,6 +73,7 @@ struct GroupedTimerJobQueueInner<K: Clone + Ord, I> {
     items_map: BTreeMap<K, VecDeque<I>>,
     in_progress: BTreeSet<K>,
     max_concurrency: usize,
+    defer_processing: bool,
     #[serde(skip)]
     timer_id: Option<TimerId>,
 }
@@ -73,16 +87,24 @@ where
     }
 
     pub fn enqueue_many(&self, grouping_key: T::Key, items: Vec<T::Item>) {
-        self.within_lock(|i| match i.items_map.entry(grouping_key.clone()) {
-            Vacant(e) => {
-                e.insert(VecDeque::from(items));
-                i.queue.push_back(grouping_key);
+        let defer_processing = self.within_lock(|i| {
+            match i.items_map.entry(grouping_key.clone()) {
+                Vacant(e) => {
+                    e.insert(VecDeque::from(items));
+                    i.queue.push_back(grouping_key);
+                }
+                Occupied(mut e) => {
+                    e.get_mut().extend(items);
+                }
             }
-            Occupied(mut e) => {
-                e.get_mut().extend(items);
-            }
+            i.defer_processing
         });
-        self.set_timer_if_required();
+
+        if defer_processing {
+            self.set_timer_if_required();
+        } else {
+            self.run();
+        }
     }
 
     fn set_timer_if_required(&self) -> bool {
