@@ -30,7 +30,7 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
     }
 
     if let OptionUpdate::SetToSome(gate_config) = &args.gate_config {
-        if !gate_config.validate() {
+        if !gate_config.validate(state.data.test_mode) {
             return AccessGateInvalid;
         }
     }

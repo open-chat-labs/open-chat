@@ -112,7 +112,12 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
             }
         } else if let Err(error) = validate_avatar(args.avatar.as_ref()) {
             AvatarTooBig(error)
-        } else if args.gate_config.as_ref().map(|g| !g.validate()).unwrap_or_default() {
+        } else if args
+            .gate_config
+            .as_ref()
+            .map(|g| !g.validate(state.data.test_mode))
+            .unwrap_or_default()
+        {
             AccessGateInvalid
         } else if state.data.channels.is_name_taken(&args.name, None) {
             NameTaken

@@ -1404,7 +1404,6 @@ export const idlFactory = ({ IDL }) => {
   const LookupMembersArgs = IDL.Record({ 'user_ids' : IDL.Vec(UserId) });
   const CommunityMember = IDL.Record({
     'role' : CommunityRole,
-    'lapsed' : IDL.Bool,
     'referred_by' : IDL.Opt(UserId),
     'user_id' : UserId,
     'display_name' : IDL.Opt(IDL.Text),

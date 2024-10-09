@@ -1762,7 +1762,6 @@ export type P2PSwapStatus = { 'Reserved' : P2PSwapReserved } |
   { 'Expired' : P2PSwapExpired };
 export interface Participant {
   'role' : GroupRole,
-  'lapsed' : boolean,
   'user_id' : UserId,
   'date_added' : TimestampMillis,
 }
