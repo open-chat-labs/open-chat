@@ -1,4 +1,5 @@
 use crate::env::ENV;
+use crate::utils::tick_many;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use testing::rng::{random_delegated_principal, random_string};
@@ -55,7 +56,7 @@ fn register_user_with_duplicate_username_appends_suffix() {
         }
     }
 
-    env.tick();
+    tick_many(env, 3);
 
     let result = client::user_index::happy_path::users(env, first_user_principal.unwrap(), canister_ids.user_index, user_ids);
 
