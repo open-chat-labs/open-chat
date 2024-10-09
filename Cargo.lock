@@ -1140,23 +1140,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "canister_sig_util"
-version = "0.1.0"
-source = "git+https://github.com/dfinity/internet-identity?rev=719a8f9d81d00d86fe3fc08ba136fd96e0f609a2#719a8f9d81d00d86fe3fc08ba136fd96e0f609a2"
-dependencies = [
- "candid",
- "hex",
- "ic-cdk 0.13.5",
- "ic-certification",
- "ic-representation-independent-hash",
- "lazy_static",
- "serde",
- "serde_bytes",
- "serde_cbor",
- "sha2 0.10.8",
-]
-
-[[package]]
 name = "canister_state_macros"
 version = "0.1.0"
 
@@ -3654,7 +3637,7 @@ dependencies = [
 [[package]]
 name = "ic-verifiable-credentials"
 version = "0.1.0"
-source = "git+https://github.com/dfinity/verifiable-credentials-sdk?rev=5f21c3fe999df30f779586745f072fb115be53af#5f21c3fe999df30f779586745f072fb115be53af"
+source = "git+https://github.com/dfinity/verifiable-credentials-sdk?rev=d5e1bb0f8c0bf99ad565620e18dc402a9ac3317a#d5e1bb0f8c0bf99ad565620e18dc402a9ac3317a"
 dependencies = [
  "candid",
  "ic-canister-sig-creation",
@@ -3935,10 +3918,10 @@ dependencies = [
  "candid",
  "canister_api_macros",
  "canister_logger",
- "canister_sig_util",
  "canister_state_macros",
  "canister_tracing_macros",
  "http_request",
+ "ic-canister-sig-creation",
  "ic-captcha",
  "ic-cdk 0.16.0",
  "ic-cdk-timers",
