@@ -350,7 +350,6 @@
     },
     "dark": "Tối",
     "days": "Ngày",
-    "defaultMustBePublic": "Chỉ một kênh công khai mới có thể là kênh mặc định",
     "deleteFailed": "Không thể xóa tin nhắn này",
     "deleteGroup": "Xóa {level}",
     "deleteGroupFailure": "Không thể xóa {level}",

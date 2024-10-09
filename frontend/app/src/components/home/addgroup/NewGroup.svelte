@@ -178,7 +178,6 @@
         if (resp.kind === "rules_too_short") return i18nKey("groupRulesTooShort");
         if (resp.kind === "rules_too_long") return i18nKey("groupRulesTooLong");
         if (resp.kind === "user_suspended") return i18nKey("userSuspended");
-        if (resp.kind === "default_must_be_public") return i18nKey("defaultMustBePublic");
         if (resp.kind === "unauthorized_to_create_public_group")
             return i18nKey("unauthorizedToCreatePublicGroup");
         if (resp.kind === "access_gate_invalid") return i18nKey("access.gateInvalid");

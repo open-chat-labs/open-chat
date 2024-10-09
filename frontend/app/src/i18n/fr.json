@@ -350,7 +350,6 @@
     },
     "dark": "foncé",
     "days": "Jours",
-    "defaultMustBePublic": "Seul un canal public peut être un canal par défaut",
     "deleteFailed": "Impossible de supprimer votre message",
     "deleteGroup": "Supprimer {level}",
     "deleteGroupFailure": "Impossible de supprimer {level}",

@@ -350,7 +350,6 @@
     },
     "dark": "dunkel",
     "days": "Tage",
-    "defaultMustBePublic": "Nur ein öffentlicher Kanal kann ein Standardkanal sein",
     "deleteFailed": "Ihre Nachricht kann nicht gelöscht werden",
     "deleteGroup": "{level} löschen",
     "deleteGroupFailure": "{level} kann nicht gelöscht werden",

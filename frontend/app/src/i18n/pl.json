@@ -350,7 +350,6 @@
     },
     "dark": "ciemny",
     "days": "Dni",
-    "defaultMustBePublic": "Domyślnym może być tylko kanał publiczny",
     "deleteFailed": "Nie można usunąć wiadomości",
     "deleteGroup": "Usuń {level}",
     "deleteGroupFailure": "Nie można usunąć {level}",

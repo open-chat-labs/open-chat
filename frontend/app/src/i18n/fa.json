@@ -350,7 +350,6 @@
     },
     "dark": "تاریک",
     "days": "روزها",
-    "defaultMustBePublic": "فقط یک کانال عمومی می تواند پیش فرض باشد",
     "deleteFailed": "امکان حذف پیام شما وجود ندارد",
     "deleteGroup": "حذف {level}",
     "deleteGroupFailure": "امکان حذف {level} وجود ندارد",
