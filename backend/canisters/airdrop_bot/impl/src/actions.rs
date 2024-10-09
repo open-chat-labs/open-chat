@@ -4,7 +4,7 @@ use candid::Deserialize;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use rand::Rng;
 use serde::Serialize;
-use timer_job_queue::TimerJobItem;
+use timer_job_queues::TimerJobItem;
 use tracing::{error, info, trace};
 use types::icrc1::{self, Account};
 use types::{

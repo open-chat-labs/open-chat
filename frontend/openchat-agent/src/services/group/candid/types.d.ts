@@ -1643,6 +1643,7 @@ export interface PollVotes {
   'user' : Uint32Array | number[],
 }
 export interface PrizeContent {
+  'winner_count' : number,
   'token' : Cryptocurrency,
   'end_date' : TimestampMillis,
   'prizes_remaining' : number,
@@ -1650,6 +1651,7 @@ export interface PrizeContent {
   'caption' : [] | [string],
   'diamond_only' : boolean,
   'winners' : Array<UserId>,
+  'user_is_winner' : boolean,
 }
 export interface PrizeContentInitial {
   'prizes_v2' : Array<bigint>,

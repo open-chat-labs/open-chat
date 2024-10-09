@@ -1,3 +1,4 @@
+use crate::TimerJobItem;
 use ic_cdk_timers::TimerId;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::VecDeque;
@@ -5,10 +6,6 @@ use std::ops::DerefMut;
 use std::rc::Rc;
 use std::sync::Mutex;
 use std::time::Duration;
-
-pub trait TimerJobItem {
-    fn process(&self) -> impl std::future::Future<Output = Result<(), bool>> + Send;
-}
 
 pub struct TimerJobQueue<T> {
     inner: Rc<Mutex<TimerJobQueueInner<T>>>,
@@ -65,9 +62,28 @@ impl<T> TimerJobQueue<T>
 where
     T: TimerJobItem + 'static,
 {
-    pub fn start_job_if_required(&self) -> bool {
-        let should_start_job = self.within_lock(|i| i.timer_id.is_none() && !i.queue.is_empty());
-        if should_start_job {
+    pub fn enqueue(&self, item: T) {
+        self.within_lock(|i| i.queue.push_back(item));
+        self.set_timer_if_required();
+    }
+
+    pub fn enqueue_front(&self, item: T) {
+        self.within_lock(|i| i.queue.push_front(item));
+        self.set_timer_if_required();
+    }
+
+    pub fn enqueue_many(&self, items: impl Iterator<Item = T>) {
+        self.within_lock(|i| {
+            for item in items {
+                i.queue.push_back(item);
+            }
+        });
+        self.set_timer_if_required();
+    }
+
+    fn set_timer_if_required(&self) -> bool {
+        let should_set_timer = self.within_lock(|i| i.timer_id.is_none() && !i.queue.is_empty());
+        if should_set_timer {
             let clone = self.clone();
             let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, move || clone.run());
             self.within_lock(|i| i.timer_id = Some(timer_id));
@@ -77,35 +93,10 @@ where
         }
     }
 
-    pub fn enqueue(&self, item: T) {
-        self.within_lock(|i| i.queue.push_back(item));
-        self.start_job_if_required();
-    }
-
-    pub fn enqueue_front(&self, item: T) {
-        self.within_lock(|i| i.queue.push_front(item));
-        self.start_job_if_required();
-    }
-
-    pub fn enqueue_many(&self, items: impl Iterator<Item = T>) {
-        self.within_lock(|i| {
-            for item in items {
-                i.queue.push_back(item);
-            }
-        });
-        self.start_job_if_required();
-    }
-
     fn run(&self) {
         let mut items = Vec::new();
 
         self.within_lock(|i| {
-            if i.queue.is_empty() {
-                if let Some(timer_id) = i.timer_id.take() {
-                    ic_cdk_timers::clear_timer(timer_id);
-                }
-            }
-
             let max_to_start = i.max_concurrency.saturating_sub(i.in_progress);
             while items.len() < max_to_start {
                 if let Some(item) = i.queue.pop_front() {
@@ -116,6 +107,12 @@ where
             }
             let count = items.len();
             i.in_progress = i.in_progress.saturating_add(count);
+
+            if i.queue.is_empty() {
+                if let Some(timer_id) = i.timer_id.take() {
+                    ic_cdk_timers::clear_timer(timer_id);
+                }
+            }
         });
 
         if !items.is_empty() {
@@ -138,7 +135,7 @@ where
             }
             i.in_progress = i.in_progress.saturating_sub(1);
         });
-        self.start_job_if_required();
+        self.set_timer_if_required();
     }
 }
 
@@ -162,7 +159,7 @@ impl<'de, T: Deserialize<'de> + TimerJobItem + 'static> Deserialize<'de> for Tim
         let value = TimerJobQueue {
             inner: Rc::new(Mutex::new(inner)),
         };
-        value.start_job_if_required();
+        value.set_timer_if_required();
         Ok(value)
     }
 }

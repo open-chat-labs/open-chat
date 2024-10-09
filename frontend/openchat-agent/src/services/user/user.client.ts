@@ -77,6 +77,7 @@ import type {
     ChitEventsResponse,
     ClaimDailyChitResponse,
     WalletConfig,
+    Verification,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -117,6 +118,7 @@ import {
     chitEventsResponse,
     claimDailyChitResponse,
     apiWalletConfig,
+    apiVerification,
 } from "./mappers";
 import { sendMessageResponse } from "./mappersV2";
 import {
@@ -1394,12 +1396,12 @@ export class UserClient extends CandidService {
     }
 
     setPinNumber(
-        currentPin: string | undefined,
+        verification: Verification,
         newPin: string | undefined,
     ): Promise<SetPinNumberResponse> {
         return this.handleResponse(
             this.userService.set_pin_number({
-                current: apiOptional(identity, currentPin),
+                verification: apiVerification(verification),
                 new: apiOptional(identity, newPin),
             }),
             setPinNumberResponse,

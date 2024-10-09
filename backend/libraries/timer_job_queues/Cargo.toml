@@ -1,5 +1,5 @@
 [package]
-name = "timer_job_queue"
+name = "timer_job_queues"
 version = "0.1.0"
 edition = "2021"
 

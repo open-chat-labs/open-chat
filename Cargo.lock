@@ -152,7 +152,7 @@ dependencies = [
  "serde_json",
  "stable_memory",
  "testing",
- "timer_job_queue",
+ "timer_job_queues",
  "tracing",
  "types",
  "user_canister",
@@ -1923,19 +1923,6 @@ dependencies = [
  "darling_core 0.20.8",
  "quote",
  "syn 2.0.65",
-]
-
-[[package]]
-name = "dashmap"
-version = "5.5.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "978747c1d849a7d2ee5e8adc0159961c48fb7e5db2f06af6723b80123bb53856"
-dependencies = [
- "cfg-if",
- "hashbrown 0.14.3",
- "lock_api",
- "once_cell",
- "parking_lot_core",
 ]
 
 [[package]]
@@ -4216,7 +4203,6 @@ dependencies = [
  "registry_canister",
  "serde",
  "serde_bytes",
- "serial_test",
  "sha256",
  "sign_in_with_email_canister",
  "storage_bucket_canister",
@@ -4635,6 +4621,7 @@ dependencies = [
  "serde_json",
  "sha256",
  "stable_memory",
+ "timer_job_queues",
  "tracing",
  "types",
  "user_canister",
@@ -6951,31 +6938,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "serial_test"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e56dd856803e253c8f298af3f4d7eb0ae5e23a737252cd90bb4f3b435033b2d"
-dependencies = [
- "dashmap",
- "futures",
- "lazy_static",
- "log",
- "parking_lot",
- "serial_test_derive",
-]
-
-[[package]]
-name = "serial_test_derive"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "91d129178576168c589c9ec973feedf7d3126c01ac2bf08795109aa35b69fb8f"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.65",
-]
-
-[[package]]
 name = "sha2"
 version = "0.9.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7809,7 +7771,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "timer_job_queue"
+name = "timer_job_queues"
 version = "0.1.0"
 dependencies = [
  "futures",
@@ -8525,7 +8487,6 @@ dependencies = [
  "sha256",
  "sha3",
  "time",
- "timer_job_queue",
  "tracing",
  "types",
 ]

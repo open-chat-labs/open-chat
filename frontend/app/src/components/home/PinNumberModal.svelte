@@ -4,6 +4,8 @@
     import { i18nKey } from "../../i18n/i18n";
     import ModalContent from "../ModalContent.svelte";
     import Pincode from "../pincode/Pincode.svelte";
+    import ForgotPinLabel from "./ForgotPinLabel.svelte";
+    import { mobileWidth } from "../../stores/screenDimensions";
 
     const dispatch = createEventDispatcher();
 
@@ -17,7 +19,7 @@
     }
 </script>
 
-<ModalContent closeIcon hideFooter fitToContent fixedWidth={false} on:close>
+<ModalContent closeIcon hideFooter fitToContent={!mobileWidth} fixedWidth={false} on:close>
     <div slot="header">
         <Translatable resourceKey={i18nKey("pinNumber.enterPin")} />
     </div>
@@ -28,6 +30,7 @@
             </p>
         {/if}
         <Pincode type="numeric" length={6} bind:value={pin} on:complete={onPinComplete} />
+        <ForgotPinLabel on:forgot />
         {#if showError}
             <div class="error">
                 <Translatable resourceKey={i18nKey("pinNumber.invalid")} />

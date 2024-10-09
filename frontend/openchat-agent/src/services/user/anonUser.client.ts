@@ -6,6 +6,7 @@ import type {
     JoinVideoCallResponse,
     SetPinNumberResponse,
     SetVideoCallPresenceResponse,
+    Verification,
     VideoCallPresence,
     WalletConfig,
 } from "openchat-shared";
@@ -459,7 +460,7 @@ export class AnonUserClient {
     }
 
     setPinNumber(
-        _currentPin: string | undefined,
+        _verification: Verification,
         _newPin: string | undefined,
     ): Promise<SetPinNumberResponse> {
         throw new AnonymousOperationError();

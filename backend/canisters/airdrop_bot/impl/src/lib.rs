@@ -5,7 +5,7 @@ use model::airdrops::{Airdrops, AirdropsMetrics};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use timer_job_queue::TimerJobQueue;
+use timer_job_queues::TimerJobQueue;
 use types::{BuildVersion, CanisterId, ChannelId, CommunityId, Cycles, Document, TimestampMillis, Timestamped};
 use utils::env::Environment;
 

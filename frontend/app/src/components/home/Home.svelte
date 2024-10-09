@@ -103,6 +103,7 @@
     import ChitEarned from "./ChitEarned.svelte";
     import { chitPopup } from "../../stores/settings";
     import AccessGateEvaluator from "./access/AccessGateEvaluator.svelte";
+    import SetPinNumberModal from "./profile/SetPinNumberModal.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -1139,6 +1140,12 @@
         showProfileCard = undefined;
     }
 
+    let forgotPin = false;
+
+    function onForgotPin() {
+        forgotPin = true;
+    }
+
     function onPinNumberComplete(ev: CustomEvent<string>) {
         $pinNumberStore?.resolve(ev.detail);
     }
@@ -1337,9 +1344,19 @@
 
 {#if $rulesAcceptanceStore !== undefined}
     <AcceptRulesModal />
+{:else if forgotPin}
+    <Overlay>
+        <SetPinNumberModal
+            on:pinSet={onPinNumberComplete}
+            on:close={() => (forgotPin = false)}
+            type={{ kind: "forgot", while: { kind: "enter" } }} />
+    </Overlay>
 {:else if $pinNumberStore !== undefined}
     <Overlay>
-        <PinNumberModal on:close={onPinNumberClose} on:complete={onPinNumberComplete} />
+        <PinNumberModal
+            on:close={onPinNumberClose}
+            on:complete={onPinNumberComplete}
+            on:forgot={onForgotPin} />
     </Overlay>
 {/if}
 

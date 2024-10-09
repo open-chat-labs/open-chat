@@ -6,12 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add support for expiring access gates ([#6401](https://github.com/open-chat-labs/open-chat/pull/6401))
+
 ### Changed
 
 - Mark prize messages as having ledger error if transfers fail ([#6500](https://github.com/open-chat-labs/open-chat/pull/6500))
 - Make adding existing users to a new channel more efficient ([#6504](https://github.com/open-chat-labs/open-chat/pull/6504))
 - Further refactoring of adding multiple users to public channels ([#6506](https://github.com/open-chat-labs/open-chat/pull/6506))
-- Add support for expiring access gates ([#6401](https://github.com/open-chat-labs/open-chat/pull/6401))
 
 ## [[2.0.1365](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1365-community)] - 2024-10-02
 
