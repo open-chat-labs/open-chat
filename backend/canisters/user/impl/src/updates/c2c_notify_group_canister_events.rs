@@ -7,7 +7,7 @@ use user_canister::GroupCanisterEvent;
 
 #[update(guard = "caller_is_known_group_canister", msgpack = true)]
 #[trace]
-async fn c2c_notify_group_canister_events(args: Args) -> Response {
+fn c2c_notify_group_canister_events(args: Args) -> Response {
     run_regular_jobs();
 
     mutate_state(|state| c2c_notify_group_canister_events_impl(args, state))
