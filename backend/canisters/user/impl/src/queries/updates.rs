@@ -152,8 +152,8 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
     let next_daily_claim = if state.data.streak.can_claim(now) { today(now) } else { tomorrow(now) };
     let streak_ends = state.data.streak.ends();
     let is_unique_person = is_unique_person_updated.then_some(true);
-    let activity_feed =
-        (state.data.message_activity_events.last_updated() > updates_since).then(|| state.data.message_activity_events.summary());
+    let activity_feed = (state.data.message_activity_events.last_updated() > updates_since)
+        .then(|| state.data.message_activity_events.summary());
 
     Success(SuccessResult {
         timestamp: now,
