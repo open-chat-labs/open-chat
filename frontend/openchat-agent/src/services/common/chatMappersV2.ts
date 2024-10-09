@@ -72,9 +72,9 @@ import type {
     // GroupChatDetailsResponse,
     // Member,
     // GroupChatDetailsUpdatesResponse,
-    // EditMessageResponse,
+    EditMessageResponse,
     DeclineInvitationResponse,
-    // LeaveGroupResponse,
+    LeaveGroupResponse,
     DeleteMessageResponse,
     DeletedGroupMessageResponse,
     // UndeleteMessageResponse,
@@ -84,7 +84,7 @@ import type {
     // RegisterPollVoteResponse,
     JoinGroupResponse,
     // SearchGroupChatResponse,
-    // InviteCodeResponse,
+    InviteCodeResponse,
     EnableInviteCodeResponse,
     DisableInviteCodeResponse,
     ThreadSyncDetails,
@@ -179,6 +179,7 @@ import type {
     MessagePermissions as TMessagePermissions,
     MessageReminderContent as TMessageReminderContent,
     MessageReminderCreatedContent as TMessageReminderCreatedContent,
+    MessagesResponse as TMessagesResponse,
     MultiUserChat as TMultiUserChat,
     P2PSwapContent as TP2PSwapContent,
     P2PSwapContentInitial as TP2PSwapContentInitial,
@@ -229,6 +230,13 @@ import type {
     CommunityDisableInviteCodeResponse,
     GroupEnableInviteCodeResponse,
     CommunityEnableInviteCodeResponse,
+    UserEditMessageResponse,
+    GroupEditMessageResponse,
+    CommunityEditMessageResponse,
+    GroupInviteCodeResponse,
+    CommunityInviteCodeResponse,
+    UserLeaveGroupResponse,
+    CommunityLeaveChannelResponse,
 } from "../../typebox";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
@@ -2168,16 +2176,14 @@ export function groupSubtype(subtype: TGroupSubtype): GroupSubtype {
     };
 }
 
-// export function messagesSuccessResponse(
-//     candid: ApiMessagesSuccessResult,
-// ): EventsSuccessResult<Message> {
-//     return {
-//         events: candid.messages.map(messageEvent),
-//         expiredEventRanges: [],
-//         expiredMessageRanges: [],
-//         latestEventIndex: candid.latest_event_index,
-//     };
-// }
+export function messagesSuccessResponse(value: TMessagesResponse): EventsSuccessResult<Message> {
+    return {
+        events: value.messages.map(messageEvent),
+        expiredEventRanges: [],
+        expiredMessageRanges: [],
+        latestEventIndex: value.latest_event_index,
+    };
+}
 
 export function messageEvent(value: TEventWrapperMessage): EventWrapper<Message> {
     return {
@@ -2484,16 +2490,16 @@ export function deleteGroupResponse(
 //     };
 // }
 
-// export function editMessageResponse(
-//     candid: ApiEditMessageResponse | ApiEditChannelMessageResponse | ApiEditDirectMessageResponse,
-// ): EditMessageResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     } else {
-//         console.warn("EditMessageResponse failed with: ", candid);
-//         return "failure";
-//     }
-// }
+export function editMessageResponse(
+    value: UserEditMessageResponse | GroupEditMessageResponse | CommunityEditMessageResponse,
+): EditMessageResponse {
+    if (typeof value !== "string" && "Success" in value) {
+        return "success";
+    } else {
+        console.warn("EditMessageResponse failed with: ", value);
+        return "failure";
+    }
+}
 
 export function declineInvitationResponse(
     value: GroupDeclineInvitiationResponse | CommunityDeclineInvitationResponse,
@@ -2506,23 +2512,23 @@ export function declineInvitationResponse(
     }
 }
 
-// export function leaveGroupResponse(
-//     candid: ApiLeaveGroupResponse | ApiLeaveChannelResponse,
-// ): LeaveGroupResponse {
-//     if (
-//         "Success" in candid ||
-//         "GroupNotFound" in candid ||
-//         "CallerNotInGroup" in candid ||
-//         "UserNotInChannel" in candid ||
-//         "ChannelNotFound" in candid
-//     ) {
-//         return "success";
-//     }
-//     if ("OwnerCannotLeave" in candid || "LastOwnerCannotLeave" in candid) {
-//         return "owner_cannot_leave";
-//     }
-//     return "failure";
-// }
+export function leaveGroupResponse(
+    value: UserLeaveGroupResponse | CommunityLeaveChannelResponse,
+): LeaveGroupResponse {
+    if (
+        value === "Success" ||
+        value === "GroupNotFound" ||
+        value === "CallerNotInGroup" ||
+        value === "UserNotInChannel" ||
+        value === "ChannelNotFound"
+    ) {
+        return "success";
+    }
+    if (value === "LastOwnerCannotLeave") {
+        return "owner_cannot_leave";
+    }
+    return "failure";
+}
 
 export function deleteMessageResponse(
     value: GroupDeleteMessagesResponse | CommunityDeleteMessagesResponse,
@@ -2669,23 +2675,26 @@ export function joinGroupResponse(value: LocalUserIndexJoinGroupResponse): JoinG
 //     }
 // }
 
-// export function inviteCodeResponse(
-//     candid: ApiInviteCodeResponse | ApiCommunityInviteCodeResponse,
-// ): InviteCodeResponse {
-//     if ("Success" in candid) {
-//         return {
-//             kind: "success",
-//             code: optional(candid.Success.code, codeToText),
-//         };
-//     } else if ("NotAuthorized" in candid) {
-//         return {
-//             kind: "not_authorized",
-//         };
-//     } else {
-//         console.warn("InviteCode failed with ", candid);
-//         return CommonResponses.failure();
-//     }
-// }
+export function inviteCodeResponse(
+    value: GroupInviteCodeResponse | CommunityInviteCodeResponse,
+): InviteCodeResponse {
+    if (typeof value !== "string") {
+        if ("Success" in value) {
+            return {
+                kind: "success",
+                code: mapOptional(value.Success.code, codeToText),
+            };
+        }
+    }
+    if (value === "NotAuthorized") {
+        return {
+            kind: "not_authorized",
+        };
+    } else {
+        console.warn("InviteCode failed with ", value);
+        return CommonResponses.failure();
+    }
+}
 
 export function enableOrResetInviteCodeResponse(
     value: GroupEnableInviteCodeResponse | CommunityEnableInviteCodeResponse,

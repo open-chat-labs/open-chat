@@ -6,11 +6,11 @@ import {
     apiOptionUpdate,
     identity,
     mapOptional,
+    principalBytesToString,
     principalStringToBytes,
 } from "../../utils/mapping";
 import type { AgentConfig } from "../../config";
 import {
-    messagesByMessageIndexResponse,
     removeMemberResponse,
     removeMemberFromChannelResponse,
     summaryResponse,
@@ -42,16 +42,12 @@ import {
 import { Principal } from "@dfinity/principal";
 import {
     apiOptional,
-    apiMessageContent,
     apiAccessGate,
     pinMessageResponse,
     updateGroupResponse,
-    editMessageResponse,
-    inviteCodeResponse,
     unpinMessageResponse,
     groupDetailsResponse,
     groupDetailsUpdatesResponse,
-    leaveGroupResponse,
     undeleteMessageResponse,
     threadPreviewsResponse,
     registerPollVoteResponse,
@@ -69,7 +65,7 @@ import {
     apiMaybeAccessGate,
     addRemoveReactionResponse,
     apiGroupPermissions,
-    apiMessageContent as apiMessageContentV2,
+    apiMessageContent,
     apiUser as apiUserV2,
     changeRoleResponse as changeChannelRoleResponse,
     claimPrizeResponse,
@@ -79,7 +75,10 @@ import {
     deleteGroupResponse,
     deleteMessageResponse,
     disableInviteCodeResponse,
+    editMessageResponse,
     enableOrResetInviteCodeResponse,
+    inviteCodeResponse,
+    leaveGroupResponse,
 } from "../common/chatMappersV2";
 import type {
     AccessGate,
@@ -159,13 +158,9 @@ import {
     MAX_MISSING,
     ResponseTooLargeError,
 } from "openchat-shared";
-import {
-    apiOptionalGroupPermissions,
-    apiUpdatedRules,
-    getMessagesByMessageIndexResponse,
-} from "../group/mappers";
+import { apiOptionalGroupPermissions, apiUpdatedRules } from "../group/mappers";
+import { getEventsResponse, getMessagesByMessageIndexResponse } from "../group/mappersV2";
 import { DataClient } from "../data/data.client";
-import { getEventsResponse } from "../group/mappers";
 import {
     type Database,
     getCachedCommunityDetails,
@@ -213,7 +208,19 @@ import {
     CommunityDeleteMessagesArgs,
     CommunityDeleteMessagesResponse,
     CommunityDisableInviteCodeResponse,
+    CommunityEditMessageArgs,
+    CommunityEditMessageResponse,
     CommunityEnableInviteCodeResponse,
+    CommunityEventsArgs,
+    CommunityEventsByIndexArgs,
+    CommunityEventsResponse,
+    CommunityEventsWindowArgs,
+    CommunityInviteCodeResponse,
+    CommunityLeaveChannelArgs,
+    CommunityLeaveChannelResponse,
+    CommunityLocalUserIndexResponse,
+    CommunityMessagesByMessageIndexArgs,
+    CommunityMessagesByMessageIndexResponse,
     CommunityRemoveReactionArgs,
     CommunityRemoveReactionResponse,
     CommunitySendMessageArgs,
@@ -451,17 +458,19 @@ export class CommunityClient extends CandidService {
         return new DataClient(this.identity, this.agent, this.config)
             .uploadData(message.content, [chatId.communityId])
             .then((content) => {
-                return this.handleResponse(
-                    this.service.edit_message({
+                return this.executeMsgpackUpdate(
+                    "edit_message",
+                    {
                         channel_id: BigInt(chatId.channelId),
-                        thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                        thread_root_message_index: threadRootMessageIndex,
                         content: apiMessageContent(content ?? message.content),
                         message_id: message.messageId,
-                        block_level_markdown:
-                            blockLevelMarkdown === undefined ? [] : [blockLevelMarkdown],
+                        block_level_markdown: blockLevelMarkdown,
                         new_achievement: newAchievement,
-                    }),
+                    },
                     editMessageResponse,
+                    CommunityEditMessageArgs,
+                    CommunityEditMessageResponse,
                 );
             });
     }
@@ -549,19 +558,22 @@ export class CommunityClient extends CandidService {
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             channel_id: BigInt(chatId.channelId),
-            thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+            thread_root_message_index: threadRootMessageIndex,
             max_messages: MAX_MESSAGES,
             max_events: maxEvents,
             start_index: startIndex,
             ascending: ascending,
-            latest_known_update: apiOptional(identity, latestKnownUpdate),
-            latest_client_event_index: [] as [] | [number],
+            latest_known_update: latestKnownUpdate,
+            latest_client_event_index: undefined,
         };
-        return this.handleQueryResponse(
-            () => this.service.events(args),
+        return this.executeMsgpackQuery(
+            "events",
+            args,
             (res) => {
                 return getEventsResponse(this.principal, res, chatId, latestKnownUpdate);
             },
+            CommunityEventsArgs,
+            CommunityEventsResponse,
         );
     }
 
@@ -587,16 +599,19 @@ export class CommunityClient extends CandidService {
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             channel_id: BigInt(chatId.channelId),
-            thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-            events: new Uint32Array(eventIndexes),
-            latest_known_update: apiOptional(identity, latestKnownUpdate),
+            thread_root_message_index: threadRootMessageIndex,
+            events: eventIndexes,
+            latest_known_update: latestKnownUpdate,
             latest_client_event_index: [] as [] | [number],
         };
-        return this.handleQueryResponse(
-            () => this.service.events_by_index(args),
+        return this.executeMsgpackQuery(
+            "events_by_index",
+            args,
             (res) => {
                 return getEventsResponse(this.principal, res, chatId, latestKnownUpdate);
             },
+            CommunityEventsByIndexArgs,
+            CommunityEventsResponse,
         );
     }
 
@@ -678,16 +693,19 @@ export class CommunityClient extends CandidService {
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             channel_id: BigInt(chatId.channelId),
-            thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+            thread_root_message_index: threadRootMessageIndex,
             max_messages: MAX_MESSAGES,
             max_events: maxEvents,
             mid_point: messageIndex,
-            latest_known_update: apiOptional(identity, latestKnownUpdate),
-            latest_client_event_index: [] as [] | [number],
+            latest_known_update: latestKnownUpdate,
+            latest_client_event_index: undefined,
         };
-        return this.handleQueryResponse(
-            () => this.service.events_window(args),
+        return this.executeMsgpackQuery(
+            "events_window",
+            args,
             (res) => getEventsResponse(this.principal, res, chatId, latestKnownUpdate),
+            CommunityEventsWindowArgs,
+            CommunityEventsResponse,
         );
     }
 
@@ -702,7 +720,7 @@ export class CommunityClient extends CandidService {
 
             const resp = await this.getMessagesByMessageIndexFromBackend(
                 chatId,
-                fromCache.missing,
+                [...fromCache.missing],
                 latestKnownUpdate,
             ).then((resp) => this.setCachedEvents(chatId, resp));
 
@@ -725,23 +743,24 @@ export class CommunityClient extends CandidService {
 
     private getMessagesByMessageIndexFromBackend(
         chatId: ChannelIdentifier,
-        messageIndexes: Set<number>,
+        messageIndexes: number[],
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<Message>> {
-        const thread_root_message_index: [] = [];
         const args = {
             channel_id: BigInt(chatId.channelId),
-            thread_root_message_index,
-            messages: new Uint32Array(messageIndexes),
-            invite_code: apiOptional(textToCode, this.inviteCode),
-            latest_known_update: apiOptional(identity, latestKnownUpdate),
-            latest_client_event_index: [] as [] | [number],
+            thread_root_message_index: undefined,
+            messages: messageIndexes,
+            invite_code: mapOptional(this.inviteCode, textToCode),
+            latest_known_update: latestKnownUpdate,
+            latest_client_event_index: undefined,
         };
-        return this.handleQueryResponse(
-            () => this.service.messages_by_message_index(args),
+        return this.executeMsgpackQuery(
+            "messages_by_message_index",
+            args,
             (resp) =>
                 getMessagesByMessageIndexResponse(this.principal, resp, chatId, latestKnownUpdate),
-            args,
+            CommunityMessagesByMessageIndexArgs,
+            CommunityMessagesByMessageIndexResponse,
         );
     }
 
@@ -782,40 +801,34 @@ export class CommunityClient extends CandidService {
     }
 
     getInviteCode(): Promise<InviteCodeResponse> {
-        return this.handleResponse(this.service.invite_code({}), inviteCodeResponse);
+        return this.executeMsgpackQuery(
+            "invite_code",
+            {},
+            inviteCodeResponse,
+            TEmpty,
+            CommunityInviteCodeResponse,
+        );
     }
 
     leaveChannel(chatId: ChannelIdentifier): Promise<LeaveGroupResponse> {
-        return this.handleResponse(
-            this.service.leave_channel({
+        return this.executeMsgpackUpdate(
+            "leave_channel",
+            {
                 channel_id: BigInt(chatId.channelId),
-            }),
+            },
             leaveGroupResponse,
+            CommunityLeaveChannelArgs,
+            CommunityLeaveChannelResponse,
         );
     }
 
     localUserIndex(): Promise<string> {
-        return this.handleResponse(this.service.local_user_index({}), (resp) =>
-            resp.Success.toString(),
-        );
-    }
-
-    messagesByMessageIndex(
-        chatId: ChannelIdentifier,
-        messageIndexes: number[],
-        threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<Message>> {
-        const args = {
-            channel_id: BigInt(chatId.channelId),
-            messages: messageIndexes,
-            thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-            latest_known_update: apiOptional(identity, latestKnownUpdate),
-            latest_client_event_index: [] as [] | [number],
-        };
-        return this.handleQueryResponse(
-            () => this.service.messages_by_message_index(args),
-            (res) => messagesByMessageIndexResponse(this.principal, res, chatId, latestKnownUpdate),
+        return this.executeMsgpackQuery(
+            "local_user_index",
+            {},
+            (resp) => principalBytesToString(resp.Success),
+            TEmpty,
+            CommunityLocalUserIndexResponse,
         );
     }
 
@@ -1073,7 +1086,7 @@ export class CommunityClient extends CandidService {
             const newContent = content ?? event.event.content;
             const args = {
                 channel_id: BigInt(chatId.channelId),
-                content: apiMessageContentV2(newContent),
+                content: apiMessageContent(newContent),
                 message_id: event.event.messageId,
                 sender_name: senderName,
                 sender_display_name: senderDisplayName,

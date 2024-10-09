@@ -1,24 +1,28 @@
 import type {
+    CommunityEventsResponse,
+    CommunityMessagesByMessageIndexResponse,
     GroupCanisterGroupChatSummary as TGroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates as TGroupCanisterGroupChatSummaryUpdates,
+    GroupEventsResponse,
+    GroupMessagesByMessageIndexResponse,
     GroupSendMessageResponse,
 } from "../../typebox";
 import type {
-    // ChatEvent,
-    // EventsResponse,
+    ChatEvent,
+    EventsResponse,
     SendMessageResponse,
     // RemoveMemberResponse,
     // BlockUserResponse,
     // UnblockUserResponse,
     // MemberRole,
-    // Message,
+    Message,
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
     // GroupCanisterSummaryResponse,
     // GroupCanisterSummaryUpdatesResponse,
     // UpdatedEvent,
-    // ChatIdentifier,
-    // MultiUserChatIdentifier,
+    ChatIdentifier,
+    MultiUserChatIdentifier,
     // ConvertToCommunityResponse,
     // UpdatedRules,
     // FollowThreadResponse,
@@ -32,17 +36,20 @@ import {
 import {
     accessGate,
     chatMetrics,
+    eventsSuccessResponse,
     groupPermissions,
     groupSubtype,
     memberRole,
     mention,
     messageEvent,
+    messagesSuccessResponse,
     threadSyncDetails,
     updatedEvent,
 } from "../common/chatMappersV2";
-// import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
+import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { identity, mapOptional, optionUpdateV2, principalBytesToString } from "../../utils/mapping";
-// import { ReplicaNotUpToDateError } from "../error";
+import type { Principal } from "@dfinity/principal";
+import { ReplicaNotUpToDateError } from "../error";
 
 // export function apiRole(role: MemberRole): ApiRole | undefined {
 //     switch (role) {
@@ -343,62 +350,54 @@ export function sendMessageResponse(value: GroupSendMessageResponse): SendMessag
 //     }
 // }
 //
-// export async function getMessagesByMessageIndexResponse(
-//     principal: Principal,
-//     candid: ApiMessagesByMessageIndexResponse | ApiCommunityMessagesByMessageIndexResponse,
-//     chatId: MultiUserChatIdentifier,
-//     latestKnownUpdatePreRequest: bigint | undefined,
-// ): Promise<EventsResponse<Message>> {
-//     if ("Success" in candid) {
-//         await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
-//
-//         return messagesSuccessResponse(candid.Success);
-//     }
-//     if (
-//         "CallerNotInGroup" in candid ||
-//         "ThreadNotFound" in candid ||
-//         "UserNotInChannel" in candid ||
-//         "ChannelNotFound" in candid ||
-//         "UserNotInCommunity" in candid ||
-//         "ThreadMessageNotFound" in candid
-//     ) {
-//         return "events_failed";
-//     }
-//     if ("ReplicaNotUpToDateV2" in candid) {
-//         throw ReplicaNotUpToDateError.byTimestamp(
-//             candid.ReplicaNotUpToDateV2,
-//             latestKnownUpdatePreRequest ?? BigInt(-1),
-//             false,
-//         );
-//     }
-//     throw new UnsupportedValueError(
-//         "Unexpected ApiMessagesByMessageIndexResponse type received",
-//         candid,
-//     );
-// }
-//
-// export async function getEventsResponse(
-//     principal: Principal,
-//     candid: ApiEventsResponse | ApiCommunityEventsResponse,
-//     chatId: ChatIdentifier,
-//     latestKnownUpdatePreRequest: bigint | undefined,
-// ): Promise<EventsResponse<ChatEvent>> {
-//     if ("Success" in candid) {
-//         await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
-//
-//         return eventsSuccessResponse(candid.Success);
-//     }
-//     if ("ReplicaNotUpToDateV2" in candid) {
-//         throw ReplicaNotUpToDateError.byTimestamp(
-//             candid.ReplicaNotUpToDateV2,
-//             latestKnownUpdatePreRequest ?? BigInt(-1),
-//             false,
-//         );
-//     }
-//     console.warn("GetGroupChatEvents failed with ", candid);
-//     return "events_failed";
-// }
-//
+export async function getMessagesByMessageIndexResponse(
+    principal: Principal,
+    value: GroupMessagesByMessageIndexResponse | CommunityMessagesByMessageIndexResponse,
+    chatId: MultiUserChatIdentifier,
+    latestKnownUpdatePreRequest: bigint | undefined,
+): Promise<EventsResponse<Message>> {
+    if (typeof value !== "string") {
+        if ("Success" in value) {
+            await ensureReplicaIsUpToDate(principal, chatId, value.Success.chat_last_updated);
+
+            return messagesSuccessResponse(value.Success);
+        }
+        if ("ReplicaNotUpToDateV2" in value) {
+            throw ReplicaNotUpToDateError.byTimestamp(
+                value.ReplicaNotUpToDateV2,
+                latestKnownUpdatePreRequest ?? BigInt(-1),
+                false,
+            );
+        }
+    }
+    console.warn("MessagesByMessageIndex failed with ", value);
+    return "events_failed";
+}
+
+export async function getEventsResponse(
+    principal: Principal,
+    value: GroupEventsResponse | CommunityEventsResponse,
+    chatId: ChatIdentifier,
+    latestKnownUpdatePreRequest: bigint | undefined,
+): Promise<EventsResponse<ChatEvent>> {
+    if (typeof value !== "string") {
+        if ("Success" in value) {
+            await ensureReplicaIsUpToDate(principal, chatId, value.Success.chat_last_updated);
+
+            return eventsSuccessResponse(value.Success);
+        }
+        if ("ReplicaNotUpToDateV2" in value) {
+            throw ReplicaNotUpToDateError.byTimestamp(
+                value.ReplicaNotUpToDateV2,
+                latestKnownUpdatePreRequest ?? BigInt(-1),
+                false,
+            );
+        }
+    }
+    console.warn("GetGroupChatEvents failed with ", value);
+    return "events_failed";
+}
+
 // export function convertToCommunityReponse(
 //     candid: ApiConvertIntoCommunityResponse,
 // ): ConvertToCommunityResponse {
