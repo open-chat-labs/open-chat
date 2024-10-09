@@ -321,6 +321,9 @@ export function sendMessageResponse(value: GroupSendMessageResponse): SendMessag
     if (value === "UserSuspended") {
         return { kind: "user_suspended" };
     }
+    if (value === "UserLapsed") {
+        return { kind: "user_lapsed" };
+    }
     if (value === "ChatFrozen") {
         return { kind: "chat_frozen" };
     }
