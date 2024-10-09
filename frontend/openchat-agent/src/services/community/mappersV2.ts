@@ -47,7 +47,7 @@ import type {
 } from "../../typebox";
 import { mapOptional, optionUpdateV2, principalBytesToString } from "../../utils/mapping";
 import {
-    accessGate,
+    accessGateConfig,
     // apiCommunityPermissionRole,
     // apiOptional,
     chatMetrics,
@@ -348,7 +348,7 @@ export function communitySummaryUpdates(
         permissions: mapOptional(value.permissions, communityPermissions),
         channelsUpdated: value.channels_updated.map((c) => communityChannelUpdates(c, communityId)),
         metrics: mapOptional(value.metrics, chatMetrics),
-        gate: optionUpdateV2(value.gate, accessGate),
+        gateConfig: optionUpdateV2(value.gate_config, accessGateConfig),
         name: value.name,
         description: value.description,
         lastUpdated: value.last_updated,
@@ -391,7 +391,7 @@ export function communityChannelUpdates(
         metrics: mapOptional(value.metrics, chatMetrics),
         subtype: optionUpdateV2(value.subtype, groupSubtype),
         dateLastPinned: value.date_last_pinned,
-        gate: optionUpdateV2(value.gate, accessGate),
+        gateConfig: optionUpdateV2(value.gate_config, accessGateConfig),
         name: value.name,
         description: value.description,
         externalUrl: optionUpdateV2(value.external_url, identity),

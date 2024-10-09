@@ -49,7 +49,6 @@ import {
     apiOptional,
     apiPermissionRole,
     chatMetrics,
-    accessGate,
     groupPermissions,
     memberRole,
     groupSubtype,
