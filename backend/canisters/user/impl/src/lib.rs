@@ -18,6 +18,7 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use model::chit::ChitEarnedEvents;
 use model::contacts::Contacts;
 use model::favourite_chats::FavouriteChats;
+use model::message_activity_events::MessageActivityEvents;
 use model::referrals::Referrals;
 use model::streak::Streak;
 use notifications_canister::c2c_push_notification;
@@ -31,7 +32,7 @@ use types::{
     Achievement, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEarned, ChitEarnedReason, CommunityId,
     Cryptocurrency, Cycles, Document, Milliseconds, Notification, TimestampMillis, Timestamped, UniquePersonProof, UserId,
 };
-use user_canister::{NamedAccount, UserCanisterEvent, WalletConfig};
+use user_canister::{MessageActivityEvent, NamedAccount, UserCanisterEvent, WalletConfig};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
@@ -243,17 +244,15 @@ struct Data {
     pub chit_events: ChitEarnedEvents,
     pub streak: Streak,
     pub achievements: HashSet<Achievement>,
-    #[serde(default)]
     pub external_achievements: HashSet<String>,
     pub achievements_last_seen: TimestampMillis,
     pub unique_person_proof: Option<UniquePersonProof>,
-    #[serde(default)]
     pub wallet_config: Timestamped<WalletConfig>,
     pub rng_seed: [u8; 32],
-    #[serde(default)]
     pub referred_by: Option<UserId>,
-    #[serde(default)]
     pub referrals: Referrals,
+    #[serde(default)]
+    pub message_activity_events: MessageActivityEvents,
 }
 
 impl Data {
@@ -321,6 +320,7 @@ impl Data {
             wallet_config: Timestamped::default(),
             referred_by,
             referrals: Referrals::default(),
+            message_activity_events: MessageActivityEvents::default(),
         }
     }
 
@@ -425,6 +425,12 @@ impl Data {
             "c2c_notify_chit_msgpack".to_string(),
             msgpack::serialize_then_unwrap(args),
         );
+    }
+
+    pub fn push_message_activity(&mut self, event: MessageActivityEvent, now: TimestampMillis) {
+        if !self.blocked_users.contains(&event.user_id) {
+            self.message_activity_events.push(event, now);
+        }
     }
 }
 
