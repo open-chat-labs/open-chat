@@ -1,4 +1,4 @@
-import type { AccessControlled, AccessGate, VersionedRules } from "../access";
+import type { AccessControlled, AccessGate, AccessGateConfig, VersionedRules } from "../access";
 import type {
     GateCheckFailed,
     GateCheckFailedReason,
@@ -190,7 +190,7 @@ export type CommunityCanisterCommunitySummaryUpdates = {
     permissions: CommunityPermissions | undefined;
     channelsUpdated: CommunityCanisterChannelSummaryUpdates[];
     metrics: Metrics | undefined;
-    gate: OptionUpdate<AccessGate>;
+    gateConfig: OptionUpdate<AccessGateConfig>;
     name: string | undefined;
     description: string | undefined;
     lastUpdated: bigint;
@@ -214,7 +214,7 @@ export type CommunityCanisterChannelSummaryUpdates = {
     metrics: Metrics | undefined;
     subtype: OptionUpdate<GroupSubtype>;
     dateLastPinned: bigint | undefined;
-    gate: OptionUpdate<AccessGate>;
+    gateConfig: OptionUpdate<AccessGateConfig>;
     name: string | undefined;
     description: string | undefined;
     lastUpdated: bigint;

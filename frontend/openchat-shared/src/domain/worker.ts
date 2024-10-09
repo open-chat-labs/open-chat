@@ -123,13 +123,7 @@ import type {
     MemberRole,
     OptionalChatPermissions,
 } from "./permission";
-import type {
-    AccessGate,
-    AccessGateConfig,
-    Rules,
-    UpdatedRules,
-    VerifiedCredentialArgs,
-} from "./access";
+import type { AccessGateConfig, Rules, UpdatedRules, VerifiedCredentialArgs } from "./access";
 import type {
     AddMembersToChannelResponse,
     BlockCommunityUserResponse,

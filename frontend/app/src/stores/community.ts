@@ -23,7 +23,7 @@ export function createCandidateCommunity(id: string, index: number): CommunitySu
         memberCount: 0,
         avatar: {},
         banner: {},
-        gateConfig: { gate: { kind: "no_gate" } },
+        gateConfig: { gate: { kind: "no_gate" }, expiry: undefined },
         public: true,
         permissions: defaultPermissions,
         historyVisible: true,

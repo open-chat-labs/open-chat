@@ -1027,7 +1027,7 @@
                     threadPermissions: undefined,
                 },
                 rules: { ...defaultChatRules(level), newVersion: false },
-                gateConfig: { gate: { kind: "no_gate" } },
+                gateConfig: { gate: { kind: "no_gate" }, expiry: undefined },
                 level,
                 membership: {
                     ...nullMembership(),

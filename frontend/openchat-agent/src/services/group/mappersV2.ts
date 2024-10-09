@@ -30,7 +30,7 @@ import {
     UnsupportedValueError,
 } from "openchat-shared";
 import {
-    accessGate,
+    accessGateConfig,
     chatMetrics,
     groupPermissions,
     groupSubtype,
@@ -104,7 +104,10 @@ export function groupChatSummary(
         latestThreads: value.latest_threads.map(threadSyncDetails),
         frozen: value.frozen !== undefined,
         dateLastPinned: value.date_last_pinned,
-        gate: mapOptional(value.gate, accessGate) ?? { kind: "no_gate" },
+        gateConfig: mapOptional(value.gate_config, accessGateConfig) ?? {
+            gate: { kind: "no_gate" },
+            expiry: undefined,
+        },
         rulesAccepted: value.rules_accepted,
         eventsTTL: value.events_ttl,
         eventsTtlLastUpdated: value.events_ttl_last_updated,
@@ -160,7 +163,7 @@ export function groupChatSummaryUpdates(
         frozen: optionUpdateV2(value.frozen, (_) => true),
         updatedEvents: value.updated_events.map(updatedEvent),
         dateLastPinned: value.date_last_pinned,
-        gate: optionUpdateV2(value.gate, accessGate),
+        gateConfig: optionUpdateV2(value.gate_config, accessGateConfig),
         rulesAccepted: value.rules_accepted,
         eventsTTL: optionUpdateV2(value.events_ttl, identity),
         eventsTtlLastUpdated: value.events_ttl_last_updated,
@@ -326,6 +329,9 @@ export function sendMessageResponse(value: GroupSendMessageResponse): SendMessag
     }
     if (value === "RulesNotAccepted") {
         return { kind: "rules_not_accepted" };
+    }
+    if (value === "UserLapsed") {
+        return { kind: "user_lapsed" };
     }
 
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", value);

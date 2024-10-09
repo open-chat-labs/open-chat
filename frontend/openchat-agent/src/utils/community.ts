@@ -134,7 +134,10 @@ export function mergeCommunityUpdates(
                 u?.channels ?? [],
                 c?.channelsUpdated ?? [],
             ),
-            gate: applyOptionUpdate(community.gate, c?.gate) ?? { kind: "no_gate" },
+            gateConfig: applyOptionUpdate(community.gateConfig, c?.gateConfig) ?? {
+                gate: { kind: "no_gate" },
+                expiry: undefined,
+            },
             level: "community",
             public: c?.public ?? community.public,
             frozen: applyOptionUpdate(community.frozen, c?.frozen) ?? false,
@@ -208,7 +211,10 @@ function mergeChannelUpdates(
             blobReference: applyOptionUpdate(channel.blobReference, blobReferenceUpdate),
             dateLastPinned: c?.dateLastPinned ?? channel.dateLastPinned,
             dateReadPinned: u?.dateReadPinned ?? channel.dateReadPinned,
-            gate: applyOptionUpdate(channel.gate, c?.gate) ?? { kind: "no_gate" },
+            gateConfig: applyOptionUpdate(channel.gateConfig, c?.gateConfig) ?? {
+                gate: { kind: "no_gate" },
+                expiry: undefined,
+            },
             level: "channel",
             eventsTTL: applyOptionUpdate(channel.eventsTTL, c?.eventsTTL),
             eventsTtlLastUpdated: bigIntMax(

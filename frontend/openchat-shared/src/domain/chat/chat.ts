@@ -2,13 +2,7 @@ import type DRange from "drange";
 import type { DataContent } from "../data/data";
 import type { Referral, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
-import type {
-    AccessGate,
-    AccessControlled,
-    VersionedRules,
-    UpdatedRules,
-    AccessGateConfig,
-} from "../access";
+import type { AccessControlled, VersionedRules, UpdatedRules, AccessGateConfig } from "../access";
 import type {
     ChatPermissionRole,
     ChatPermissions,
@@ -1525,7 +1519,7 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     frozen: OptionUpdate<boolean>;
     updatedEvents: UpdatedEvent[];
     dateLastPinned: bigint | undefined;
-    gate: OptionUpdate<AccessGate>;
+    gateConfig: OptionUpdate<AccessGateConfig>;
     rulesAccepted: boolean | undefined;
     eventsTTL: OptionUpdate<bigint>;
     eventsTtlLastUpdated?: bigint;
@@ -1780,6 +1774,7 @@ export type GateCheckFailedReason =
     | "no_unique_person_proof"
     | "not_lifetime_diamond"
     | "locked"
+    | "unknown"
     | "not_referred_by_member";
 
 export type ChatFrozenEvent = {

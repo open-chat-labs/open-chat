@@ -4,30 +4,29 @@
     import { iconSize } from "../../../stores/iconSize";
     import { fade } from "svelte/transition";
     import AccessGateSummary from "./AccessGateSummary.svelte";
-    import type { AccessGate, Level } from "openchat-client";
+    import type { AccessGateConfig, Level } from "openchat-client";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import AlertBox from "../../AlertBox.svelte";
     import Checkbox from "../../Checkbox.svelte";
     import DurationPicker from "../DurationPicker.svelte";
 
-    export let gate: AccessGate;
+    export let gateConfig: AccessGateConfig;
     export let level: Level;
     export let valid: boolean;
-    export let evaluationInterval: bigint | undefined;
 
     let gateValid = true;
     let evaluationIntervalValid: boolean;
 
     $: {
-        valid = gateValid && (evaluationInterval !== undefined ? evaluationIntervalValid : true);
+        valid = gateValid && (gateConfig.expiry !== undefined ? evaluationIntervalValid : true);
     }
 
     function toggleEvaluationInterval() {
-        if (evaluationInterval === undefined) {
-            evaluationInterval = BigInt(1000 * 60 * 60 * 24 * 7 * 4 * 3); // default this to three months
+        if (gateConfig.expiry === undefined) {
+            gateConfig.expiry = BigInt(1000 * 60 * 60 * 24 * 7 * 4 * 3); // default this to three months
         } else {
-            evaluationInterval = undefined;
+            gateConfig.expiry = undefined;
         }
     }
 </script>
@@ -45,9 +44,9 @@
                 bind:valid={gateValid}
                 {level}
                 editable
-                bind:gate />
+                bind:gate={gateConfig.gate} />
         </div>
-        {#if gate.kind !== "no_gate"}
+        {#if gateConfig.gate.kind !== "no_gate"}
             <AlertBox>
                 <Translatable
                     resourceKey={i18nKey("access.bypassWarning", undefined, level, true)} />
@@ -56,14 +55,14 @@
     </div>
 </div>
 
-{#if gate.kind !== "no_gate"}
+{#if gateConfig.gate.kind !== "no_gate"}
     <div class="section">
         <Checkbox
             id="evaluation-interval"
             on:change={toggleEvaluationInterval}
             label={i18nKey("access.evaluationInterval")}
             align={"start"}
-            checked={evaluationInterval !== undefined}>
+            checked={gateConfig.expiry !== undefined}>
             <div class="section-title disappear">
                 <Translatable resourceKey={i18nKey("access.evaluationInterval")} />
             </div>
@@ -71,10 +70,10 @@
                 <Translatable resourceKey={i18nKey("access.evaluationIntervalInfo")} />
             </div>
             <div class="info">
-                {#if evaluationInterval !== undefined}
+                {#if gateConfig.expiry !== undefined}
                     <DurationPicker
                         bind:valid={evaluationIntervalValid}
-                        bind:milliseconds={evaluationInterval}
+                        bind:milliseconds={gateConfig.expiry}
                         unitFilter={(u) => !["minutes", "hours"].includes(u)} />
                 {/if}
             </div>

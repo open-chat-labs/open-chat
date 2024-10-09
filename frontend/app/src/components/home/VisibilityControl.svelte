@@ -29,13 +29,11 @@
     $: requiresUpgrade = !editing && !$isDiamond && candidate.level !== "channel";
     $: canChangeVisibility = !editing ? client.canChangeVisibility(candidate) : true;
 
-    $: console.log("Access gate valid: ", valid);
-
     function gateUpdated() {
         if (
             gateDirty &&
             candidate.kind === "candidate_group_chat" &&
-            candidate.gate.kind !== "no_gate"
+            candidate.gateConfig.gate.kind !== "no_gate"
         ) {
             candidate.messagesVisibleToNonMembers = false;
         }
@@ -48,7 +46,7 @@
         }
         if (candidate.kind === "candidate_group_chat") {
             candidate.messagesVisibleToNonMembers =
-                candidate.public && candidate.gate.kind === "no_gate";
+                candidate.public && candidate.gateConfig.gate.kind === "no_gate";
         }
     }
 
@@ -183,7 +181,7 @@
 {#if !requiresUpgrade}
     <AccessGateControl
         on:updated={gateUpdated}
-        bind:gate={candidate.gate}
+        bind:gateConfig={candidate.gateConfig}
         level={candidate.level}
         bind:valid />
 {/if}

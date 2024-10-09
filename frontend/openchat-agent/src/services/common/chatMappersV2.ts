@@ -138,6 +138,7 @@ import {
 import { toRecord2 } from "../../utils/list";
 import type {
     AccessGate as TAccessGate,
+    AccessGateConfig as TAccessGateConfig,
     AudioContent as TAudioContent,
     BlobReference as TBlobReference,
     CallParticipant as TCallParticipant,
@@ -1670,10 +1671,10 @@ export function credentialArguments(
 //     });
 // }
 
-// TODO - sort this out later
-export function accessGateConfig(value: TAccessGate): AccessGateConfig {
+export function accessGateConfig(value: TAccessGateConfig): AccessGateConfig {
     return {
-        gate: accessGate(value),
+        gate: accessGate(value.gate),
+        expiry: value.expiry,
     };
 }
 
@@ -1935,7 +1936,10 @@ export function groupChatSummary(value: TGroupCanisterGroupChatSummary): GroupCh
         frozen: value.frozen !== undefined,
         dateLastPinned: value.date_last_pinned,
         dateReadPinned: undefined,
-        gateConfig: mapOptional(value.gate, accessGateConfig) ?? { gate: { kind: "no_gate" } },
+        gateConfig: mapOptional(value.gate_config, accessGateConfig) ?? {
+            gate: { kind: "no_gate" },
+            expiry: undefined,
+        },
         level: "group",
         eventsTTL: value.events_ttl,
         eventsTtlLastUpdated: value.events_ttl_last_updated,
@@ -1984,7 +1988,10 @@ export function communitySummary(value: TCommunityCanisterCommunitySummary): Com
         },
         memberCount: value.member_count,
         frozen: value.frozen !== undefined,
-        gateConfig: mapOptional(value.gate, accessGateConfig) ?? { gate: { kind: "no_gate" } },
+        gateConfig: mapOptional(value.gate_config, accessGateConfig) ?? {
+            gate: { kind: "no_gate" },
+            expiry: undefined,
+        },
         level: "community",
         permissions: communityPermissions(value.permissions),
         membership: {
@@ -2046,7 +2053,10 @@ export function communityChannelSummary(
         frozen: false, // TODO - doesn't exist
         dateLastPinned: value.date_last_pinned,
         dateReadPinned: undefined,
-        gateConfig: mapOptional(value.gate, accessGateConfig) ?? { gate: { kind: "no_gate" } },
+        gateConfig: mapOptional(value.gate_config, accessGateConfig) ?? {
+            gate: { kind: "no_gate" },
+            expiry: undefined,
+        },
         level: "channel",
         eventsTTL: value.events_ttl,
         eventsTtlLastUpdated: value.events_ttl_last_updated,
@@ -2119,16 +2129,22 @@ export function gateCheckFailedReason(value: TGateCheckFailedReason): GateCheckF
     if (value === "Locked") {
         return "locked";
     }
-    if ("PaymentFailed" in value) {
-        console.warn("PaymentFailed: ", value);
-        return "payment_failed";
+    if (value === "Unknown") {
+        return "unknown";
     }
-    if ("InsufficientBalance" in value) {
-        return "insufficient_balance";
-    }
-    if ("FailedVerifiedCredentialCheck" in value) {
-        console.warn("FailedVerifiedCredentialCheck: ", value);
-        return "failed_verified_credential_check";
+
+    if (typeof value !== "string") {
+        if ("PaymentFailed" in value) {
+            console.warn("PaymentFailed: ", value);
+            return "payment_failed";
+        }
+        if ("InsufficientBalance" in value) {
+            return "insufficient_balance";
+        }
+        if ("FailedVerifiedCredentialCheck" in value) {
+            console.warn("FailedVerifiedCredentialCheck: ", value);
+            return "failed_verified_credential_check";
+        }
     }
     throw new UnsupportedValueError("Unexpected ApiGateCheckFailedReason type received", value);
 }

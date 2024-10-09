@@ -45,6 +45,7 @@
         "doYouHaveUniquePersonCredential": "IMPORTANT! Please confirm that you have verified your unique personhood via <a target='_blank' href='https://id.decideai.xyz'>the DecideAI website</a> _before_ you proceed.",
         "evaluationInterval": "Access gate evaluation interval",
         "evaluationIntervalInfo": "You may choose to enforce the periodic re-evaluation of your access gate. When a user's access lapses, they will not be able to interact with the group until they have re-evaluated that the access conditions are still met.",
+        "evaluationIntervalSummary": "Access gate will be evaluated every {interval}",
         "gate": "Access gate",
         "gateCheckFailed": "Access gate not met",
         "gateInvalid": "Access gate is invalid",

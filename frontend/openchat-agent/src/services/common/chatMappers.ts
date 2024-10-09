@@ -269,7 +269,6 @@ import type {
     ApiVideoCallParticipantsResponse as ApiChannelVideoCallParticipantsResponse,
     ApiUserGroup,
     ApiCommunityCanisterCommunitySummary,
-    ApiAccessGateConfig,
 } from "../community/candid/idl";
 import { ReplicaNotUpToDateError } from "../error";
 import { messageMatch } from "../user/mappers";
@@ -1783,10 +1782,10 @@ function apiCredentialArguments(
     });
 }
 
-// TODO - sort this out later
-export function accessGateConfig(candid: ApiAccessGate): AccessGateConfig {
+export function accessGateConfig(candid: ApiAccessGateConfig): AccessGateConfig {
     return {
-        gate: accessGate(candid),
+        gate: accessGate(candid.gate),
+        expiry: optional(candid.expiry, identity),
     };
 }
 
@@ -2056,7 +2055,10 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
         frozen: candid.frozen.length > 0,
         dateLastPinned: optional(candid.date_last_pinned, identity),
         dateReadPinned: undefined,
-        gateConfig: optional(candid.gate, accessGateConfig) ?? { gate: { kind: "no_gate" } },
+        gateConfig: optional(candid.gate_config, accessGateConfig) ?? {
+            gate: { kind: "no_gate" },
+            expiry: undefined,
+        },
         level: "group",
         eventsTTL: optional(candid.events_ttl, identity),
         eventsTtlLastUpdated: candid.events_ttl_last_updated,
@@ -2105,7 +2107,10 @@ export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): 
         },
         memberCount: candid.member_count,
         frozen: candid.frozen.length > 0,
-        gateConfig: optional(candid.gate, accessGateConfig) ?? { gate: { kind: "no_gate" } },
+        gateConfig: optional(candid.gate_config, accessGateConfig) ?? {
+            gate: { kind: "no_gate" },
+            expiry: undefined,
+        },
         level: "community",
         permissions: communityPermissions(candid.permissions),
         membership: {
@@ -2167,7 +2172,10 @@ export function communityChannelSummary(
         frozen: false, // TODO - doesn't exist
         dateLastPinned: optional(candid.date_last_pinned, identity),
         dateReadPinned: undefined,
-        gateConfig: optional(candid.gate, accessGateConfig) ?? { gate: { kind: "no_gate" } },
+        gateConfig: optional(candid.gate_config, accessGateConfig) ?? {
+            gate: { kind: "no_gate" },
+            expiry: undefined,
+        },
         level: "channel",
         eventsTTL: optional(candid.events_ttl, identity),
         eventsTtlLastUpdated: candid.events_ttl_last_updated,

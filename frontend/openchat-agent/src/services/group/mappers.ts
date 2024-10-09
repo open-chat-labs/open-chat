@@ -58,6 +58,7 @@ import {
     mention,
     eventsSuccessResponse,
     messagesSuccessResponse,
+    accessGateConfig,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { apiOptionUpdate, identity, optional, optionUpdate } from "../../utils/mapping";
@@ -124,7 +125,10 @@ export function groupChatSummary(
         latestThreads: candid.latest_threads.map(threadDetails),
         frozen: candid.frozen.length > 0,
         dateLastPinned: optional(candid.date_last_pinned, identity),
-        gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
+        gateConfig: optional(candid.gate_config, accessGateConfig) ?? {
+            gate: { kind: "no_gate" },
+            expiry: undefined,
+        },
         rulesAccepted: candid.rules_accepted,
         eventsTTL: optional(candid.events_ttl, identity),
         eventsTtlLastUpdated: candid.events_ttl_last_updated,
@@ -180,7 +184,7 @@ export function groupChatSummaryUpdates(
         frozen: optionUpdate(candid.frozen, (_) => true),
         updatedEvents: candid.updated_events.map(updatedEvent),
         dateLastPinned: optional(candid.date_last_pinned, identity),
-        gate: optionUpdate(candid.gate, accessGate),
+        gateConfig: optionUpdate(candid.gate_config, accessGateConfig),
         rulesAccepted: optional(candid.rules_accepted, identity),
         eventsTTL: optionUpdate(candid.events_ttl, identity),
         eventsTtlLastUpdated: optional(candid.events_ttl_last_updated, identity),

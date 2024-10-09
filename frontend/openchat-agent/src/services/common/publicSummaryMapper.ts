@@ -4,7 +4,7 @@ import type {
     ApiPublicSummaryResponse,
 } from "../../services/group/candid/idl";
 import { identity, optional } from "../../utils/mapping";
-import { apiGroupSubtype, accessGate, messageEvent } from "./chatMappers";
+import { apiGroupSubtype, messageEvent, accessGateConfig } from "./chatMappers";
 import {
     nullMembership,
     type GroupChatSummary,
@@ -58,7 +58,10 @@ export function publicGroupSummary(
         frozen: candid.frozen.length > 0,
         dateLastPinned: undefined,
         dateReadPinned: undefined,
-        gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
+        gateConfig: optional(candid.gate_config, accessGateConfig) ?? {
+            gate: { kind: "no_gate" },
+            expiry: undefined,
+        },
         level: "group",
         membership: nullMembership(),
         localUserIndex: candid.local_user_index_canister_id.toString(),

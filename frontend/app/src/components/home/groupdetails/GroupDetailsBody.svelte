@@ -23,6 +23,7 @@
     import DisappearingMessagesSummary from "../DisappearingMessagesSummary.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
+    import AccessGateExpiry from "../access/AccessGateExpiry.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -46,7 +47,7 @@
     function description(chat: MultiUserChat): string {
         let description = chat.description;
 
-        if (chat.subtype?.kind === "governance_proposals" ?? false) {
+        if (chat.subtype?.kind === "governance_proposals") {
             description = description.replace("{userId}", $currentUser.userId);
         }
 
@@ -136,7 +137,8 @@
             {#if !externalContent}
                 <DisappearingMessagesSummary ttl={chat.eventsTTL} />
             {/if}
-            <AccessGateSummary level={chat.level} editable={false} gate={chat.gate} />
+            <AccessGateSummary level={chat.level} editable={false} gate={chat.gateConfig.gate} />
+            <AccessGateExpiry expiry={chat.gateConfig.expiry} />
         </CollapsibleCard>
         {#if combinedRulesText.length > 0}
             <CollapsibleCard

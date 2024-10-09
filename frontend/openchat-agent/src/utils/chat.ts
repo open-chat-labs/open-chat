@@ -248,7 +248,10 @@ export function mergeGroupChatUpdates(
             blobReference: applyOptionUpdate(c.blobReference, blobReferenceUpdate),
             dateLastPinned: g?.dateLastPinned ?? c.dateLastPinned,
             dateReadPinned: u?.dateReadPinned ?? c.dateReadPinned,
-            gate: applyOptionUpdate(c.gate, g?.gate) ?? { kind: "no_gate" },
+            gateConfig: applyOptionUpdate(c.gateConfig, g?.gateConfig) ?? {
+                gate: { kind: "no_gate" },
+                expiry: undefined,
+            },
             level: "group",
             eventsTTL: applyOptionUpdate(c.eventsTTL, g?.eventsTTL),
             eventsTtlLastUpdated: bigIntMax(
@@ -320,11 +323,12 @@ export function mergeGroupChats(
                     : undefined,
             dateLastPinned: g.dateLastPinned,
             dateReadPinned: u?.dateReadPinned,
-            gate: g.gate,
+            gateConfig: g.gateConfig,
             level: "group",
             eventsTTL: g.eventsTTL,
             eventsTtlLastUpdated: g.eventsTtlLastUpdated,
             membership: {
+                lapsed: false, // FIXME
                 joined: g.joined,
                 role: g.myRole,
                 mentions: g.mentions,

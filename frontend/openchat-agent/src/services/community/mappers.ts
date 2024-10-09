@@ -75,6 +75,7 @@ import type {
 } from "./candid/idl";
 import {
     accessGate,
+    accessGateConfig,
     apiCommunityPermissionRole,
     apiOptional,
     chatMetrics,
@@ -378,7 +379,7 @@ export function communitySummaryUpdates(
             communityChannelUpdates(c, communityId),
         ),
         metrics: optional(candid.metrics, chatMetrics),
-        gate: optionUpdate(candid.gate, accessGate),
+        gateConfig: optionUpdate(candid.gate_config, accessGateConfig),
         name: optional(candid.name, identity),
         description: optional(candid.description, identity),
         lastUpdated: candid.last_updated,
@@ -421,7 +422,7 @@ export function communityChannelUpdates(
         metrics: optional(candid.metrics, chatMetrics),
         subtype: optionUpdate(candid.subtype, groupSubtype),
         dateLastPinned: optional(candid.date_last_pinned, identity),
-        gate: optionUpdate(candid.gate, accessGate),
+        gateConfig: optionUpdate(candid.gate_config, accessGateConfig),
         name: optional(candid.name, identity),
         description: optional(candid.description, identity),
         externalUrl: optionUpdate(candid.external_url, identity),
