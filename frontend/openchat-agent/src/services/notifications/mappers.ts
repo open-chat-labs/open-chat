@@ -33,19 +33,38 @@ import type {
     ApiDirectMessageTippedNotification,
     ApiNotificationCryptoTransferDetails,
 } from "./candid/idl";
-import type { ApiToggleMuteChannelNotificationsResponse } from "../community/candid/idl";
-import type { NotificationsIndexSubscriptionExistsResponse } from "../../typebox";
+import { ApiToggleMuteNotificationsResponse } from "../group/candid/idl";
+import type {
+    CommunityToggleMuteNotificationsResponse,
+    GroupToggleMuteNotificationsResponse,
+    NotificationsIndexSubscriptionExistsResponse,
+    UserMuteNotificationsResponse,
+} from "../../typebox";
 
 export function muteNotificationsResponse(
     candid:
         | ApiMuteNotificationsResponse
         | ApiUnmuteNotificationsResponse
-        | ApiToggleMuteChannelNotificationsResponse,
+        | ApiToggleMuteNotificationsResponse,
 ): ToggleMuteNotificationResponse {
     if ("Success" in candid) {
         return "success";
     } else {
         console.warn("MuteNotification failed with: ", candid);
+        return "failure";
+    }
+}
+
+export function toggleNotificationsResponse(
+    value:
+        | UserMuteNotificationsResponse
+        | GroupToggleMuteNotificationsResponse
+        | CommunityToggleMuteNotificationsResponse,
+): ToggleMuteNotificationResponse {
+    if (typeof value !== "string" && "Success" in value) {
+        return "success";
+    } else {
+        console.warn("MuteNotification failed with: ", value);
         return "failure";
     }
 }

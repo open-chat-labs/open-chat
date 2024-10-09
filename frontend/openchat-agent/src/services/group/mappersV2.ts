@@ -6,6 +6,9 @@ import type {
     GroupEventsResponse,
     GroupMessagesByMessageIndexResponse,
     GroupSendMessageResponse,
+    OptionalGroupPermissions as TOptionalGroupPermissions,
+    OptionalMessagePermissions as TOptionalMessagePermissions,
+    UpdatedRules as TUpdatedRules,
 } from "../../typebox";
 import type {
     ChatEvent,
@@ -24,10 +27,10 @@ import type {
     ChatIdentifier,
     MultiUserChatIdentifier,
     // ConvertToCommunityResponse,
-    // UpdatedRules,
+    UpdatedRules,
     // FollowThreadResponse,
-    // OptionalChatPermissions,
-    // OptionalMessagePermissions,
+    OptionalChatPermissions,
+    OptionalMessagePermissions,
 } from "openchat-shared";
 import {
     // CommonResponses,
@@ -35,6 +38,7 @@ import {
 } from "openchat-shared";
 import {
     accessGate,
+    apiPermissionRole,
     chatMetrics,
     eventsSuccessResponse,
     groupPermissions,
@@ -47,7 +51,13 @@ import {
     updatedEvent,
 } from "../common/chatMappersV2";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
-import { identity, mapOptional, optionUpdateV2, principalBytesToString } from "../../utils/mapping";
+import {
+    apiOptionUpdateV2,
+    identity,
+    mapOptional,
+    optionUpdateV2,
+    principalBytesToString,
+} from "../../utils/mapping";
 import type { Principal } from "@dfinity/principal";
 import { ReplicaNotUpToDateError } from "../error";
 
@@ -176,57 +186,56 @@ export function groupChatSummaryUpdates(
     };
 }
 
-// export function apiOptionalGroupPermissions(
-//     permissions: OptionalChatPermissions,
-// ): OptionalGroupPermissions {
-//     return {
-//         delete_messages: apiOptional(apiPermissionRole, permissions.deleteMessages),
-//         remove_members: apiOptional(apiPermissionRole, permissions.removeMembers),
-//         update_group: apiOptional(apiPermissionRole, permissions.updateGroup),
-//         invite_users: apiOptional(apiPermissionRole, permissions.inviteUsers),
-//         add_members: apiOptional(apiPermissionRole, permissions.addMembers),
-//         change_roles: apiOptional(apiPermissionRole, permissions.changeRoles),
-//         pin_messages: apiOptional(apiPermissionRole, permissions.pinMessages),
-//         react_to_messages: apiOptional(apiPermissionRole, permissions.reactToMessages),
-//         mention_all_members: apiOptional(apiPermissionRole, permissions.mentionAllMembers),
-//         start_video_call: apiOptional(apiPermissionRole, permissions.startVideoCall),
-//         message_permissions: apiOptional(
-//             apiOptionalMessagePermissions,
-//             permissions.messagePermissions,
-//         ),
-//         thread_permissions: apiOptionUpdate(
-//             apiOptionalMessagePermissions,
-//             permissions.threadPermissions,
-//         ),
-//     };
-// }
-//
-// function apiOptionalMessagePermissions(
-//     permissions: OptionalMessagePermissions,
-// ): ApiOptionalMessagePermissions {
-//     const custom_updated =
-//         permissions.memeFighter !== undefined && permissions.memeFighter !== "set_to_none"
-//             ? [{ subtype: "meme_fighter", role: apiPermissionRole(permissions.memeFighter.value) }]
-//             : [];
-//     const custom_deleted = permissions.memeFighter === "set_to_none" ? ["meme_fighter"] : [];
-//     return {
-//         default: apiOptional(apiPermissionRole, permissions.default),
-//         text: apiOptionUpdate(apiPermissionRole, permissions.text),
-//         image: apiOptionUpdate(apiPermissionRole, permissions.image),
-//         video: apiOptionUpdate(apiPermissionRole, permissions.video),
-//         audio: apiOptionUpdate(apiPermissionRole, permissions.audio),
-//         file: apiOptionUpdate(apiPermissionRole, permissions.file),
-//         poll: apiOptionUpdate(apiPermissionRole, permissions.poll),
-//         crypto: apiOptionUpdate(apiPermissionRole, permissions.crypto),
-//         giphy: apiOptionUpdate(apiPermissionRole, permissions.giphy),
-//         prize: apiOptionUpdate(apiPermissionRole, permissions.prize),
-//         p2p_swap: apiOptionUpdate(apiPermissionRole, permissions.p2pSwap),
-//         // p2p_trade: apiOptionUpdate(apiPermissionRole, undefined),
-//         video_call: apiOptionUpdate(apiPermissionRole, undefined),
-//         custom_updated,
-//         custom_deleted,
-//     };
-// }
+export function apiOptionalGroupPermissions(
+    permissions: OptionalChatPermissions,
+): TOptionalGroupPermissions {
+    return {
+        delete_messages: mapOptional(permissions.deleteMessages, apiPermissionRole),
+        remove_members: mapOptional(permissions.removeMembers, apiPermissionRole),
+        update_group: mapOptional(permissions.updateGroup, apiPermissionRole),
+        invite_users: mapOptional(permissions.inviteUsers, apiPermissionRole),
+        add_members: mapOptional(permissions.addMembers, apiPermissionRole),
+        change_roles: mapOptional(permissions.changeRoles, apiPermissionRole),
+        pin_messages: mapOptional(permissions.pinMessages, apiPermissionRole),
+        react_to_messages: mapOptional(permissions.reactToMessages, apiPermissionRole),
+        mention_all_members: mapOptional(permissions.mentionAllMembers, apiPermissionRole),
+        start_video_call: mapOptional(permissions.startVideoCall, apiPermissionRole),
+        message_permissions: mapOptional(
+            permissions.messagePermissions,
+            apiOptionalMessagePermissions,
+        ),
+        thread_permissions: apiOptionUpdateV2(
+            apiOptionalMessagePermissions,
+            permissions.threadPermissions,
+        ),
+    };
+}
+
+function apiOptionalMessagePermissions(
+    permissions: OptionalMessagePermissions,
+): TOptionalMessagePermissions {
+    const custom_updated =
+        permissions.memeFighter !== undefined && permissions.memeFighter !== "set_to_none"
+            ? [{ subtype: "meme_fighter", role: apiPermissionRole(permissions.memeFighter.value) }]
+            : [];
+    const custom_deleted = permissions.memeFighter === "set_to_none" ? ["meme_fighter"] : [];
+    return {
+        default: mapOptional(permissions.default, apiPermissionRole),
+        text: apiOptionUpdateV2(apiPermissionRole, permissions.text),
+        image: apiOptionUpdateV2(apiPermissionRole, permissions.image),
+        video: apiOptionUpdateV2(apiPermissionRole, permissions.video),
+        audio: apiOptionUpdateV2(apiPermissionRole, permissions.audio),
+        file: apiOptionUpdateV2(apiPermissionRole, permissions.file),
+        poll: apiOptionUpdateV2(apiPermissionRole, permissions.poll),
+        crypto: apiOptionUpdateV2(apiPermissionRole, permissions.crypto),
+        giphy: apiOptionUpdateV2(apiPermissionRole, permissions.giphy),
+        prize: apiOptionUpdateV2(apiPermissionRole, permissions.prize),
+        p2p_swap: apiOptionUpdateV2(apiPermissionRole, permissions.p2pSwap),
+        video_call: apiOptionUpdateV2(apiPermissionRole, undefined),
+        custom_updated,
+        custom_deleted,
+    };
+}
 //
 // export function unblockUserResponse(candid: ApiUnblockUserResponse): UnblockUserResponse {
 //     if ("Success" in candid) {
@@ -415,15 +424,15 @@ export async function getEventsResponse(
 //         return CommonResponses.failure();
 //     }
 // }
-//
-// export function apiUpdatedRules(rules: UpdatedRules): ApiUpdatedRules {
-//     return {
-//         text: rules.text,
-//         enabled: rules.enabled,
-//         new_version: rules.newVersion,
-//     };
-// }
-//
+
+export function apiUpdatedRules(rules: UpdatedRules): TUpdatedRules {
+    return {
+        text: rules.text,
+        enabled: rules.enabled,
+        new_version: rules.newVersion,
+    };
+}
+
 // export function followThreadResponse(
 //     candid: ApiFollowThreadResponse | ApiUnfollowThreadResponse,
 // ): FollowThreadResponse {

@@ -46,6 +46,7 @@ import type {
     ApiGroupSubtype,
     ApiPrizeWinnerContent,
     ApiAccessGate,
+    ApiAccessGateConfig,
     ApiMessageReminderCreated,
     ApiMessageReminder,
     ApiCustomMessageContent,
@@ -80,6 +81,7 @@ import type {
     ApiCallParticipant,
     ApiSetPinNumberResponse,
     ApiAccessGateNonComposite,
+    ApiCommunityPermissionRole,
 } from "../user/candid/idl";
 import type {
     Message,
@@ -129,15 +131,12 @@ import type {
     CommunityPermissions,
     ChatIdentifier,
     AddRemoveReactionResponse,
-    ChannelSummary,
-    CommunitySummary,
     GroupCanisterThreadDetails,
     Mention,
     EventWrapper,
     UpdateGroupResponse,
     CreateGroupResponse,
     MultiUserChatIdentifier,
-    ChannelIdentifier,
     GroupChatIdentifier,
     DeleteGroupResponse,
     PinMessageResponse,
@@ -162,7 +161,6 @@ import type {
     ResetInviteCodeResponse,
     ThreadSyncDetails,
     RegisterProposalVoteResponse,
-    UserGroupSummary,
     TipsReceived,
     PrizeContentInitial,
     ClaimPrizeResponse,
@@ -191,7 +189,6 @@ import {
     UnsupportedValueError,
     chatIdentifiersEqual,
     CommonResponses,
-    emptyChatMetrics,
     codeToText,
     CHAT_SYMBOL,
     CKBTC_SYMBOL,
@@ -235,41 +232,6 @@ import type {
     ApiJoinVideoCallResponse as ApiJoinGroupVideoCallResponse,
     ApiVideoCallParticipantsResponse as ApiGroupVideoCallParticipantsResponse,
 } from "../group/candid/idl";
-import type {
-    ApiCommunityPermissionRole,
-    ApiCommunityRole,
-    ApiAddReactionResponse as ApiAddChannelReactionResponse,
-    ApiRemoveReactionResponse as ApiRemoveChannelReactionResponse,
-    ApiCommunityCanisterChannelSummary,
-    ApiUpdateChannelResponse,
-    ApiCreateChannelResponse,
-    ApiDeleteChannelResponse,
-    ApiPinChannelMessageResponse,
-    ApiSelectedChannelInitialResponse,
-    ApiSelectedChannelUpdatesResponse,
-    ApiEditMessageResponse as ApiEditChannelMessageResponse,
-    ApiDeclineInvitationResponse as ApiDeclineChannelInvitationResponse,
-    ApiDeleteMessagesResponse as ApiDeleteChannelMessageResponse,
-    ApiLeaveChannelResponse,
-    ApiDeletedMessageResponse as ApiDeletedChannelMessageResponse,
-    ApiUndeleteMessagesResponse as ApiUndeleteChannelMessageResponse,
-    ApiThreadPreviewsResponse as ApiChannelThreadPreviewsResponse,
-    ApiRegisterPollVoteResponse as ApiRegisterChannelPollVoteResponse,
-    ApiChangeChannelRoleResponse,
-    ApiSearchChannelResponse,
-    ApiInviteCodeResponse as ApiCommunityInviteCodeResponse,
-    ApiDisableInviteCodeResponse as ApiCommunityDisableInviteCodeResponse,
-    ApiEnableInviteCodeResponse as ApiCommunityEnableInviteCodeResponse,
-    ApiRegisterProposalVoteResponse as ApiCommunityRegisterProposalVoteResponse,
-    ApiClaimPrizeResponse as ApiClaimChannelPrizeResponse,
-    ApiAcceptP2PSwapResponse as ApiCommunityAcceptP2PSwapResponse,
-    ApiCancelP2PSwapResponse as ApiCommunityCancelP2PSwapResponse,
-    ApiJoinVideoCallResponse as ApiJoinChannelVideoCallResponse,
-    ApiVideoCallParticipantsResponse as ApiChannelVideoCallParticipantsResponse,
-    ApiUserGroup,
-    ApiCommunityCanisterCommunitySummary,
-    ApiAccessGateConfig,
-} from "../community/candid/idl";
 import { ReplicaNotUpToDateError } from "../error";
 import { messageMatch } from "../user/mappers";
 import type { AcceptP2PSwapResponse } from "openchat-shared";
@@ -1249,7 +1211,7 @@ export function communityPermissions(candid: ApiCommunityPermissions): Community
 }
 
 export function communityPermissionRole(
-    candid: ApiCommunityPermissionRole | ApiCommunityRole,
+    candid: ApiCommunityPermissionRole,
 ): CommunityPermissionRole {
     if ("Owners" in candid) return "owner";
     if ("Admins" in candid) return "admin";
@@ -1368,7 +1330,7 @@ export function chatMetrics(candid: ApiChatMetrics): Metrics {
     };
 }
 
-export function memberRole(candid: ApiGroupRole | ApiCommunityRole): MemberRole {
+export function memberRole(candid: ApiGroupRole): MemberRole {
     if ("Admin" in candid) {
         return "admin";
     }
@@ -2056,118 +2018,6 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
     };
 }
 
-export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): CommunitySummary {
-    const communityId = candid.community_id.toString();
-    const localUserIndex = candid.local_user_index_canister_id.toString();
-    return {
-        kind: "community",
-        id: { kind: "community", communityId },
-        name: candid.name,
-        description: candid.description,
-        public: candid.is_public,
-        historyVisible: false,
-        latestEventIndex: candid.latest_event_index,
-        lastUpdated: candid.last_updated,
-        metrics: chatMetrics(candid.metrics),
-        avatar: {
-            blobReference: optional(candid.avatar_id, (blobId) => ({
-                blobId,
-                canisterId: candid.community_id.toString(),
-            })),
-        },
-        banner: {
-            blobReference: optional(candid.banner_id, (blobId) => ({
-                blobId,
-                canisterId: candid.community_id.toString(),
-            })),
-        },
-        memberCount: candid.member_count,
-        frozen: candid.frozen.length > 0,
-        gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
-        level: "community",
-        permissions: communityPermissions(candid.permissions),
-        membership: {
-            joined: optional(candid.membership, (m) => m.joined) ?? BigInt(0),
-            role: optional(candid.membership, (m) => memberRole(m.role)) ?? "none",
-            archived: false,
-            pinned: [],
-            index: 0,
-            displayName: optional(candid.membership, (m) => optional(m.display_name, identity)),
-            rulesAccepted: optional(candid.membership, (m) => m.rules_accepted) ?? false,
-        },
-        channels: candid.channels.map((c) => communityChannelSummary(c, communityId)),
-        primaryLanguage: candid.primary_language,
-        userGroups: new Map(candid.user_groups.map(userGroup)),
-        localUserIndex,
-        isInvited: optional(candid.is_invited, identity) ?? false,
-    };
-}
-
-export function userGroup(candid: ApiUserGroup): [number, UserGroupSummary] {
-    return [
-        candid.user_group_id,
-        {
-            kind: "user_group",
-            id: candid.user_group_id,
-            name: candid.name,
-            memberCount: candid.members,
-        },
-    ];
-}
-
-export function communityChannelSummary(
-    candid: ApiCommunityCanisterChannelSummary,
-    communityId: string,
-): ChannelSummary {
-    const latestMessage = optional(candid.latest_message, messageEvent);
-    return {
-        kind: "channel",
-        id: { kind: "channel", communityId, channelId: candid.channel_id.toString() },
-        latestMessage,
-        name: candid.name,
-        description: candid.description,
-        public: candid.is_public,
-        historyVisible: candid.history_visible_to_new_joiners,
-        minVisibleEventIndex: candid.min_visible_event_index,
-        minVisibleMessageIndex: candid.min_visible_message_index,
-        latestEventIndex: candid.latest_event_index,
-        latestMessageIndex: optional(candid.latest_message_index, identity),
-        lastUpdated: candid.last_updated,
-        blobReference: optional(candid.avatar_id, (blobId) => ({
-            blobId,
-            canisterId: communityId,
-        })),
-        memberCount: candid.member_count,
-        permissions: groupPermissions(candid.permissions_v2),
-        metrics: chatMetrics(candid.metrics),
-        subtype: optional(candid.subtype, apiGroupSubtype),
-        frozen: false, // TODO - doesn't exist
-        dateLastPinned: optional(candid.date_last_pinned, identity),
-        dateReadPinned: undefined,
-        gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
-        level: "channel",
-        eventsTTL: optional(candid.events_ttl, identity),
-        eventsTtlLastUpdated: candid.events_ttl_last_updated,
-        videoCallInProgress: optional(candid.video_call_in_progress, (v) => v.message_index),
-        membership: {
-            joined: optional(candid.membership, (m) => m.joined) ?? BigInt(0),
-            notificationsMuted: optional(candid.membership, (m) => m.notifications_muted) ?? false,
-            role: optional(candid.membership, (m) => memberRole(m.role)) ?? "none",
-            myMetrics:
-                optional(candid.membership, (m) => chatMetrics(m.my_metrics)) ?? emptyChatMetrics(),
-            readByMeUpTo: latestMessage?.event.messageIndex,
-            latestThreads:
-                optional(candid.membership, (m) => m.latest_threads.map(threadSyncDetails)) ?? [],
-            mentions: [],
-            archived: false,
-            rulesAccepted: optional(candid.membership, (m) => m.rules_accepted) ?? false,
-        },
-        isInvited: optional(candid.is_invited, identity) ?? false,
-        messagesVisibleToNonMembers: candid.messages_visible_to_non_members,
-        externalUrl: optional(candid.external_url, identity),
-    };
-}
-
 export function threadSyncDetails(candid: ApiGroupCanisterThreadDetails): ThreadSyncDetails {
     return {
         threadRootMessageIndex: candid.root_message_index,
@@ -2182,9 +2032,7 @@ export function addRemoveReactionResponse(
         | ApiAddDirectReactionResponse
         | ApiRemoveDirectReactionResponse
         | ApiAddGroupReactionResponse
-        | ApiRemoveGroupReactionResponse
-        | ApiAddChannelReactionResponse
-        | ApiRemoveChannelReactionResponse,
+        | ApiRemoveGroupReactionResponse,
 ): AddRemoveReactionResponse {
     if ("Success" in candid || "SuccessV2" in candid) {
         return CommonResponses.success();
@@ -2258,12 +2106,7 @@ export function expiredMessagesRange([start, end]: [number, number]): ExpiredMes
     };
 }
 
-export function updateGroupResponse(
-    candid: ApiUpdateGroupResponse | ApiUpdateChannelResponse,
-): UpdateGroupResponse {
-    if ("Success" in candid) {
-        return { kind: "success", rulesVersion: undefined };
-    }
+export function updateGroupResponse(candid: ApiUpdateGroupResponse): UpdateGroupResponse {
     if ("SuccessV2" in candid) {
         return {
             kind: "success",
@@ -2338,18 +2181,10 @@ export function updateGroupResponse(
 }
 
 export function createGroupResponse(
-    candid: ApiCreateGroupResponse | ApiCreateChannelResponse,
+    candid: ApiCreateGroupResponse,
     id: MultiUserChatIdentifier,
 ): CreateGroupResponse {
     if ("Success" in candid) {
-        if ("channel_id" in candid.Success && id.kind === "channel") {
-            const canisterId: ChannelIdentifier = {
-                kind: "channel",
-                communityId: id.communityId,
-                channelId: candid.Success.channel_id.toString(),
-            };
-            return { kind: "success", canisterId };
-        }
         if ("chat_id" in candid.Success && id.kind === "group_chat") {
             const canisterId: GroupChatIdentifier = {
                 kind: "group_chat",
@@ -2436,9 +2271,7 @@ export function createGroupResponse(
     throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", candid);
 }
 
-export function deleteGroupResponse(
-    candid: ApiDeleteGroupResponse | ApiDeleteChannelResponse,
-): DeleteGroupResponse {
+export function deleteGroupResponse(candid: ApiDeleteGroupResponse): DeleteGroupResponse {
     if ("Success" in candid) {
         return "success";
     } else {
@@ -2447,9 +2280,7 @@ export function deleteGroupResponse(
     }
 }
 
-export function pinMessageResponse(
-    candid: ApiPinMessageResponse | ApiPinChannelMessageResponse,
-): PinMessageResponse {
+export function pinMessageResponse(candid: ApiPinMessageResponse): PinMessageResponse {
     if ("Success" in candid) {
         return {
             kind: "success",
@@ -2464,10 +2295,8 @@ export function pinMessageResponse(
     }
 }
 
-export function unpinMessageResponse(
-    candid: ApiUnpinMessageResponse | ApiPinChannelMessageResponse,
-): UnpinMessageResponse {
-    if ("Success" in candid || "SuccessV2" in candid || "NoChange" in candid) {
+export function unpinMessageResponse(candid: ApiUnpinMessageResponse): UnpinMessageResponse {
+    if ("SuccessV2" in candid || "NoChange" in candid) {
         return "success";
     } else {
         console.warn("UnpinMessageResponse failed with: ", candid);
@@ -2475,9 +2304,7 @@ export function unpinMessageResponse(
     }
 }
 
-export function groupDetailsResponse(
-    candid: ApiSelectedInitialResponse | ApiSelectedChannelInitialResponse,
-): GroupChatDetailsResponse {
+export function groupDetailsResponse(candid: ApiSelectedInitialResponse): GroupChatDetailsResponse {
     if (
         "CallerNotInGroup" in candid ||
         "UserNotInChannel" in candid ||
@@ -2490,10 +2317,8 @@ export function groupDetailsResponse(
         return "failure";
     }
     if ("Success" in candid) {
-        const members =
-            "participants" in candid.Success ? candid.Success.participants : candid.Success.members;
         return {
-            members: members.map(member),
+            members: candid.Success.participants.map(member),
             blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
             invitedUsers: new Set(candid.Success.invited_users.map((u) => u.toString())),
             pinnedMessages: new Set(candid.Success.pinned_messages),
@@ -2505,7 +2330,7 @@ export function groupDetailsResponse(
 }
 
 export function groupDetailsUpdatesResponse(
-    candid: ApiSelectedUpdatesResponse | ApiSelectedChannelUpdatesResponse,
+    candid: ApiSelectedUpdatesResponse,
 ): GroupChatDetailsUpdatesResponse {
     if ("Success" in candid) {
         return {
@@ -2545,7 +2370,7 @@ export function member(candid: ApiParticipant): Member {
 }
 
 export function editMessageResponse(
-    candid: ApiEditMessageResponse | ApiEditChannelMessageResponse | ApiEditDirectMessageResponse,
+    candid: ApiEditMessageResponse | ApiEditDirectMessageResponse,
 ): EditMessageResponse {
     if ("Success" in candid) {
         return "success";
@@ -2556,7 +2381,7 @@ export function editMessageResponse(
 }
 
 export function declineInvitationResponse(
-    candid: ApiDeclineInvitationResponse | ApiDeclineChannelInvitationResponse,
+    candid: ApiDeclineInvitationResponse,
 ): DeclineInvitationResponse {
     if ("Success" in candid) {
         return "success";
@@ -2566,9 +2391,7 @@ export function declineInvitationResponse(
     }
 }
 
-export function leaveGroupResponse(
-    candid: ApiLeaveGroupResponse | ApiLeaveChannelResponse,
-): LeaveGroupResponse {
+export function leaveGroupResponse(candid: ApiLeaveGroupResponse): LeaveGroupResponse {
     if (
         "Success" in candid ||
         "GroupNotFound" in candid ||
@@ -2584,9 +2407,7 @@ export function leaveGroupResponse(
     return "failure";
 }
 
-export function deleteMessageResponse(
-    candid: ApiDeleteMessageResponse | ApiDeleteChannelMessageResponse,
-): DeleteMessageResponse {
+export function deleteMessageResponse(candid: ApiDeleteMessageResponse): DeleteMessageResponse {
     if ("Success" in candid) {
         return "success";
     } else {
@@ -2596,7 +2417,7 @@ export function deleteMessageResponse(
 }
 
 export function deletedMessageResponse(
-    candid: ApiDeletedGroupMessageResponse | ApiDeletedChannelMessageResponse,
+    candid: ApiDeletedGroupMessageResponse,
 ): DeletedGroupMessageResponse {
     if ("Success" in candid) {
         return {
@@ -2610,7 +2431,7 @@ export function deletedMessageResponse(
 }
 
 export function undeleteMessageResponse(
-    candid: ApiUndeleteMessageResponse | ApiUndeleteChannelMessageResponse,
+    candid: ApiUndeleteMessageResponse,
 ): UndeleteMessageResponse {
     if ("Success" in candid) {
         if (candid.Success.messages.length == 0) {
@@ -2628,7 +2449,7 @@ export function undeleteMessageResponse(
 }
 
 export function threadPreviewsResponse(
-    candid: ApiThreadPreviewsResponse | ApiChannelThreadPreviewsResponse,
+    candid: ApiThreadPreviewsResponse,
     chatId: ChatIdentifier,
     latestClientThreadUpdate: bigint | undefined,
 ): ThreadPreviewsResponse {
@@ -2660,9 +2481,7 @@ export function threadPreview(chatId: ChatIdentifier, candid: ApiThreadPreview):
     };
 }
 
-export function changeRoleResponse(
-    candid: ApiChangeRoleResponse | ApiChangeChannelRoleResponse,
-): ChangeRoleResponse {
+export function changeRoleResponse(candid: ApiChangeRoleResponse): ChangeRoleResponse {
     if ("Success" in candid) {
         return "success";
     } else {
@@ -2672,7 +2491,7 @@ export function changeRoleResponse(
 }
 
 export function registerPollVoteResponse(
-    candid: ApiRegisterPollVoteResponse | ApiRegisterChannelPollVoteResponse,
+    candid: ApiRegisterPollVoteResponse,
 ): RegisterPollVoteResponse {
     if ("Success" in candid) {
         return "success";
@@ -2694,7 +2513,7 @@ export function apiChatIdentifier(chatId: ChatIdentifier): ApiChat {
 }
 
 export function searchGroupChatResponse(
-    candid: ApiSearchGroupChatResponse | ApiSearchChannelResponse,
+    candid: ApiSearchGroupChatResponse,
     chatId: MultiUserChatIdentifier,
 ): SearchGroupChatResponse {
     if ("Success" in candid) {
@@ -2708,9 +2527,7 @@ export function searchGroupChatResponse(
     }
 }
 
-export function inviteCodeResponse(
-    candid: ApiInviteCodeResponse | ApiCommunityInviteCodeResponse,
-): InviteCodeResponse {
+export function inviteCodeResponse(candid: ApiInviteCodeResponse): InviteCodeResponse {
     if ("Success" in candid) {
         return {
             kind: "success",
@@ -2727,7 +2544,7 @@ export function inviteCodeResponse(
 }
 
 export function enableInviteCodeResponse(
-    candid: ApiEnableInviteCodeResponse | ApiCommunityEnableInviteCodeResponse,
+    candid: ApiEnableInviteCodeResponse,
 ): EnableInviteCodeResponse {
     if ("Success" in candid) {
         return {
@@ -2745,7 +2562,7 @@ export function enableInviteCodeResponse(
 }
 
 export function disableInviteCodeResponse(
-    candid: ApiDisableInviteCodeResponse | ApiCommunityDisableInviteCodeResponse,
+    candid: ApiDisableInviteCodeResponse,
 ): DisableInviteCodeResponse {
     if ("Success" in candid) {
         return "success";
@@ -2758,7 +2575,7 @@ export function disableInviteCodeResponse(
 }
 
 export function resetInviteCodeResponse(
-    candid: ApiResetInviteCodeResponse | ApiCommunityEnableInviteCodeResponse,
+    candid: ApiResetInviteCodeResponse,
 ): ResetInviteCodeResponse {
     if ("Success" in candid) {
         return {
@@ -2776,7 +2593,7 @@ export function resetInviteCodeResponse(
 }
 
 export function registerProposalVoteResponse(
-    candid: ApiGroupRegisterProposalVoteResponse | ApiCommunityRegisterProposalVoteResponse,
+    candid: ApiGroupRegisterProposalVoteResponse,
 ): RegisterProposalVoteResponse {
     if ("Success" in candid) {
         return "success";
@@ -2829,9 +2646,7 @@ export function registerProposalVoteResponse(
     );
 }
 
-export function claimPrizeResponse(
-    candid: ApiClaimGroupPrizeResponse | ApiClaimChannelPrizeResponse,
-): ClaimPrizeResponse {
+export function claimPrizeResponse(candid: ApiClaimGroupPrizeResponse): ClaimPrizeResponse {
     if ("Success" in candid) {
         return CommonResponses.success();
     } else {
@@ -2883,10 +2698,7 @@ export function statusError(
 }
 
 export function acceptP2PSwapResponse(
-    candid:
-        | ApiCommunityAcceptP2PSwapResponse
-        | ApiGroupAcceptP2PSwapResponse
-        | ApiUserAcceptP2PSwapResponse,
+    candid: ApiGroupAcceptP2PSwapResponse | ApiUserAcceptP2PSwapResponse,
 ): AcceptP2PSwapResponse {
     if ("Success" in candid) {
         return { kind: "success", token1TxnIn: candid.Success.token1_txn_in };
@@ -2918,10 +2730,7 @@ export function acceptP2PSwapResponse(
 }
 
 export function cancelP2PSwapResponse(
-    candid:
-        | ApiCommunityCancelP2PSwapResponse
-        | ApiGroupCancelP2PSwapResponse
-        | ApiUserCancelP2PSwapResponse,
+    candid: ApiGroupCancelP2PSwapResponse | ApiUserCancelP2PSwapResponse,
 ): CancelP2PSwapResponse {
     if ("Success" in candid) {
         return { kind: "success" };
@@ -2942,10 +2751,7 @@ export function cancelP2PSwapResponse(
 }
 
 export function joinVideoCallResponse(
-    candid:
-        | ApiJoinDirectVideoCallResponse
-        | ApiJoinGroupVideoCallResponse
-        | ApiJoinChannelVideoCallResponse,
+    candid: ApiJoinDirectVideoCallResponse | ApiJoinGroupVideoCallResponse,
 ): JoinVideoCallResponse {
     if ("Success" in candid) {
         return "success";
@@ -2977,7 +2783,7 @@ export function setVideoCallPresence(
 }
 
 export function videoCallParticipantsResponse(
-    candid: ApiGroupVideoCallParticipantsResponse | ApiChannelVideoCallParticipantsResponse,
+    candid: ApiGroupVideoCallParticipantsResponse,
 ): VideoCallParticipantsResponse {
     if ("Success" in candid) {
         return {

@@ -1238,16 +1238,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
-            case "toggleMuteCommunityNotifications":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent
-                        .communityClient(payload.communityId)
-                        .toggleMuteNotifications(payload.mute),
-                );
-                break;
-
             case "unblockCommunityUser":
                 executeThenReply(
                     payload,
