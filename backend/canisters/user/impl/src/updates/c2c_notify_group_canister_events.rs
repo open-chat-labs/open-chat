@@ -24,6 +24,6 @@ fn process_event(event: GroupCanisterEvent, state: &mut RuntimeState) {
     let now = state.env.now();
 
     match event {
-        GroupCanisterEvent::MessageActivity(event) => state.data.message_activity_events.push(event, now),
+        GroupCanisterEvent::MessageActivity(event) => state.data.push_message_activity(event, now),
     }
 }

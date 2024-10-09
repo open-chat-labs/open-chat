@@ -292,7 +292,7 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
                         state.push_notification(message_event.event.sender, notification);
                     }
 
-                    state.data.message_activity_events.push(
+                    state.data.push_message_activity(
                         MessageActivityEvent {
                             chat: Chat::Direct(caller_user_id.into()),
                             thread_root_message_index,
@@ -331,7 +331,7 @@ fn p2p_swap_change_status(args: P2PSwapStatusChange, caller_user_id: UserId, sta
         {
             let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
 
-            state.data.message_activity_events.push(
+            state.data.push_message_activity(
                 MessageActivityEvent {
                     chat: Chat::Direct(caller_user_id.into()),
                     thread_root_message_index,
@@ -385,7 +385,7 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
                 });
                 state.push_notification(my_user_id, notification);
 
-                state.data.message_activity_events.push(
+                state.data.push_message_activity(
                     MessageActivityEvent {
                         chat: Chat::Direct(caller_user_id.into()),
                         thread_root_message_index,

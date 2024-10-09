@@ -24,6 +24,6 @@ fn process_event(event: CommunityCanisterEvent, state: &mut RuntimeState) {
     let now = state.env.now();
 
     match event {
-        CommunityCanisterEvent::MessageActivity(event) => state.data.message_activity_events.push(event, now),
+        CommunityCanisterEvent::MessageActivity(event) => state.data.push_message_activity(event, now),
     }
 }

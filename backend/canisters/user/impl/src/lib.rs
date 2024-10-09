@@ -32,7 +32,7 @@ use types::{
     Achievement, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEarned, ChitEarnedReason, CommunityId,
     Cryptocurrency, Cycles, Document, Milliseconds, Notification, TimestampMillis, Timestamped, UniquePersonProof, UserId,
 };
-use user_canister::{NamedAccount, UserCanisterEvent, WalletConfig};
+use user_canister::{MessageActivityEvent, NamedAccount, UserCanisterEvent, WalletConfig};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
@@ -425,6 +425,12 @@ impl Data {
             "c2c_notify_chit_msgpack".to_string(),
             msgpack::serialize_then_unwrap(args),
         );
+    }
+
+    pub fn push_message_activity(&mut self, event: MessageActivityEvent, now: TimestampMillis) {
+        if !self.blocked_users.contains(&event.user_id) {
+            self.message_activity_events.push(event, now);
+        }
     }
 }
 

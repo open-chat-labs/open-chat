@@ -182,7 +182,7 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
     }
 
     if matches!(content, MessageContent::Crypto(_)) {
-        state.data.message_activity_events.push(
+        state.data.push_message_activity(
             MessageActivityEvent {
                 chat: Chat::Direct(chat_id),
                 thread_root_message_index,
