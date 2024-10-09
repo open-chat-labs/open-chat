@@ -20,6 +20,7 @@ for l in $(ls ${CARGO_HOME}/registry/src/)
 do
   export RUSTFLAGS="--remap-path-prefix ${CARGO_HOME}/registry/src/${l}=/cargo/registry/src/github ${RUSTFLAGS}"
 done
+
 cargo build --locked --target wasm32-unknown-unknown --release \
   --package airdrop_bot_canister_impl \
   --package community_canister_impl \
@@ -43,7 +44,7 @@ cargo build --locked --target wasm32-unknown-unknown --release \
   --package storage_index_canister_impl \
   --package translations_canister_impl \
   --package user_canister_impl \
-  --package user_index_canister_impl
+  --package user_index_canister_impl || exit 1
 
 echo Optimising wasms
 if ! cargo install --list | grep -Fxq "ic-wasm v0.8.0:"

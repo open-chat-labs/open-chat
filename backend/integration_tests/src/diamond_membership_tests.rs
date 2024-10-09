@@ -3,7 +3,6 @@ use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
 use crate::{client, TestEnv};
 use jwt::{verify_jwt, Claims};
-use serial_test::serial;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
@@ -18,7 +17,6 @@ use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
 #[test_case(true, true)]
 #[test_case(false, false)]
 #[test_case(false, true)]
-#[serial]
 fn can_upgrade_to_diamond(pay_in_chat: bool, lifetime: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
@@ -101,7 +99,6 @@ fn can_upgrade_to_diamond(pay_in_chat: bool, lifetime: bool) {
 
 #[test_case(false; "without_ledger_error")]
 #[test_case(true; "with_ledger_error")]
-#[serial]
 fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
@@ -159,7 +156,6 @@ fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
 }
 
 #[test]
-#[allow(dead_code)]
 fn referrer_awarded_chit_when_referred_gets_diamond() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
