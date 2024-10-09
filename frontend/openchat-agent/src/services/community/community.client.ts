@@ -2,11 +2,14 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import { idlFactory, type CommunityService } from "./candid/idl";
 import { CandidService } from "../candidService";
-import { apiOptionUpdate, identity, mapOptional } from "../../utils/mapping";
+import {
+    apiOptionUpdate,
+    identity,
+    mapOptional,
+    principalStringToBytes,
+} from "../../utils/mapping";
 import type { AgentConfig } from "../../config";
 import {
-    addMembersToChannelResponse,
-    blockUserResponse,
     messagesByMessageIndexResponse,
     removeMemberResponse,
     removeMemberFromChannelResponse,
@@ -15,13 +18,10 @@ import {
     toggleMuteNotificationsResponse,
     unblockUserResponse,
     updateCommunityResponse,
-    apiMemberRole,
-    apiCommunityRole,
     apiOptionalCommunityPermissions,
     exploreChannelsResponse,
     communityDetailsResponse,
     communityDetailsUpdatesResponse,
-    changeRoleResponse,
     communityChannelSummaryResponse,
     importGroupResponse,
     createUserGroupResponse,
@@ -31,37 +31,32 @@ import {
     followThreadResponse,
     reportMessageResponse,
 } from "./mappers";
-import { sendMessageResponse as sendMessageResponseV2 } from "./mappersV2";
+import {
+    addMembersToChannelResponse,
+    apiCommunityRole,
+    apiMemberRole,
+    blockUserResponse,
+    changeRoleResponse,
+    sendMessageResponse as sendMessageResponseV2,
+} from "./mappersV2";
 import { Principal } from "@dfinity/principal";
 import {
-    apiGroupPermissions,
-    apiMaybeAccessGate,
     apiOptional,
     apiMessageContent,
     apiAccessGate,
-    addRemoveReactionResponse,
     pinMessageResponse,
     updateGroupResponse,
-    createGroupResponse,
-    declineInvitationResponse,
-    deleteMessageResponse,
     editMessageResponse,
     inviteCodeResponse,
-    deleteGroupResponse,
     unpinMessageResponse,
     groupDetailsResponse,
     groupDetailsUpdatesResponse,
     leaveGroupResponse,
-    deletedMessageResponse,
     undeleteMessageResponse,
     threadPreviewsResponse,
-    changeRoleResponse as changeChannelRoleResponse,
     registerPollVoteResponse,
     searchGroupChatResponse,
-    disableInviteCodeResponse,
-    enableInviteCodeResponse,
     registerProposalVoteResponse,
-    claimPrizeResponse,
     acceptP2PSwapResponse,
     cancelP2PSwapResponse,
     joinVideoCallResponse,
@@ -71,8 +66,20 @@ import {
     apiAccessGateConfig,
 } from "../common/chatMappers";
 import {
+    apiMaybeAccessGate,
+    addRemoveReactionResponse,
+    apiGroupPermissions,
     apiMessageContent as apiMessageContentV2,
     apiUser as apiUserV2,
+    changeRoleResponse as changeChannelRoleResponse,
+    claimPrizeResponse,
+    createGroupResponse,
+    declineInvitationResponse,
+    deletedMessageResponse,
+    deleteGroupResponse,
+    deleteMessageResponse,
+    disableInviteCodeResponse,
+    enableOrResetInviteCodeResponse,
 } from "../common/chatMappersV2";
 import type {
     AccessGate,
@@ -182,7 +189,37 @@ import {
     chunkedChatEventsFromBackend,
     chunkedChatEventsWindowFromBackend,
 } from "../common/chunked";
-import { CommunitySendMessageArgs, CommunitySendMessageResponse } from "../../typebox";
+import {
+    CommunityAddMembersToChannelArgs,
+    CommunityAddMembersToChannelResponse,
+    CommunityAddReactionArgs,
+    CommunityAddReactionResponse,
+    CommunityBlockUserArgs,
+    CommunityBlockUserResponse,
+    CommunityChangeChannelRoleArgs,
+    CommunityChangeChannelRoleResponse,
+    CommunityChangeRoleArgs,
+    CommunityChangeRoleResponse,
+    CommunityClaimPrizeArgs,
+    CommunityClaimPrizeResponse,
+    CommunityCreateChannelArgs,
+    CommunityCreateChannelResponse,
+    CommunityDeclineInvitationArgs,
+    CommunityDeclineInvitationResponse,
+    CommunityDeleteChannelArgs,
+    CommunityDeleteChannelResponse,
+    CommunityDeletedMessageArgs,
+    CommunityDeletedMessageResponse,
+    CommunityDeleteMessagesArgs,
+    CommunityDeleteMessagesResponse,
+    CommunityDisableInviteCodeResponse,
+    CommunityEnableInviteCodeResponse,
+    CommunityRemoveReactionArgs,
+    CommunityRemoveReactionResponse,
+    CommunitySendMessageArgs,
+    CommunitySendMessageResponse,
+    Empty as TEmpty,
+} from "../../typebox";
 
 export class CommunityClient extends CandidService {
     private service: CommunityService;
@@ -201,12 +238,15 @@ export class CommunityClient extends CandidService {
     }
 
     claimPrize(channelId: string, messageId: bigint): Promise<ClaimPrizeResponse> {
-        return this.handleResponse(
-            this.service.claim_prize({
+        return this.executeMsgpackUpdate(
+            "claim_prize",
+            {
                 channel_id: BigInt(channelId),
                 message_id: messageId,
-            }),
+            },
             claimPrizeResponse,
+            CommunityClaimPrizeArgs,
+            CommunityClaimPrizeResponse,
         );
     }
 
@@ -216,14 +256,17 @@ export class CommunityClient extends CandidService {
         username: string,
         displayName: string | undefined,
     ): Promise<AddMembersToChannelResponse> {
-        return this.handleResponse(
-            this.service.add_members_to_channel({
+        return this.executeMsgpackUpdate(
+            "add_members_to_channel",
+            {
                 channel_id: BigInt(chatId.channelId),
-                user_ids: userIds.map((u) => Principal.fromText(u)),
+                user_ids: userIds.map(principalStringToBytes),
                 added_by_name: username,
-                added_by_display_name: apiOptional(identity, displayName),
-            }),
+                added_by_display_name: displayName,
+            },
             addMembersToChannelResponse,
+            CommunityAddMembersToChannelArgs,
+            CommunityAddMembersToChannelResponse,
         );
     }
 
@@ -236,26 +279,32 @@ export class CommunityClient extends CandidService {
         threadRootMessageIndex: number | undefined,
         newAchievement: boolean,
     ): Promise<AddRemoveReactionResponse> {
-        return this.handleResponse(
-            this.service.add_reaction({
+        return this.executeMsgpackUpdate(
+            "add_reaction",
+            {
                 channel_id: BigInt(chatId.channelId),
                 username,
-                display_name: apiOptional(identity, displayName),
+                display_name: displayName,
                 message_id: messageId,
-                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                thread_root_message_index: threadRootMessageIndex,
                 reaction,
                 new_achievement: newAchievement,
-            }),
+            },
             addRemoveReactionResponse,
+            CommunityAddReactionArgs,
+            CommunityAddReactionResponse,
         );
     }
 
     blockUser(userId: string): Promise<BlockCommunityUserResponse> {
-        return this.handleResponse(
-            this.service.block_user({
-                user_id: Principal.fromText(userId),
-            }),
+        return this.executeMsgpackUpdate(
+            "block_user",
+            {
+                user_id: principalStringToBytes(userId),
+            },
             blockUserResponse,
+            CommunityBlockUserArgs,
+            CommunityBlockUserResponse,
         );
     }
 
@@ -264,73 +313,81 @@ export class CommunityClient extends CandidService {
         userId: string,
         newRole: MemberRole,
     ): Promise<ChangeRoleResponse> {
-        return this.handleResponse(
-            this.service.change_channel_role({
+        return this.executeMsgpackUpdate(
+            "change_channel_role",
+            {
                 channel_id: BigInt(chatId.channelId),
-                user_id: Principal.fromText(userId),
+                user_id: principalStringToBytes(userId),
                 new_role: apiMemberRole(newRole),
-            }),
+            },
             changeChannelRoleResponse,
+            CommunityChangeChannelRoleArgs,
+            CommunityChangeChannelRoleResponse,
         );
     }
 
     changeRole(userId: string, newRole: MemberRole): Promise<ChangeCommunityRoleResponse> {
-        return this.handleResponse(
-            this.service.change_role({
-                user_id: Principal.fromText(userId),
+        return this.executeMsgpackUpdate(
+            "change_role",
+            {
+                user_id: principalStringToBytes(userId),
                 new_role: apiCommunityRole(newRole),
-            }),
+            },
             changeRoleResponse,
+            CommunityChangeRoleArgs,
+            CommunityChangeRoleResponse,
         );
     }
 
     createChannel(channel: CandidateChannel): Promise<CreateGroupResponse> {
-        return this.handleResponse(
-            this.service.create_channel({
+        return this.executeMsgpackUpdate(
+            "create_channel",
+            {
                 is_public: channel.public,
                 name: channel.name,
-                subtype: [],
-                events_ttl: apiOptional(identity, channel.eventsTTL),
+                events_ttl: channel.eventsTTL,
                 description: channel.description,
-                external_url: apiOptional(identity, channel.externalUrl),
+                external_url: channel.externalUrl,
                 history_visible_to_new_joiners: channel.historyVisible,
-                avatar: apiOptional(
-                    (data) => {
-                        return {
-                            id: DataClient.newBlobId(),
-                            data,
-                            mime_type: "image/jpg",
-                        };
-                    },
-                    channel.avatar?.blobData,
-                ),
-                permissions_v2: [apiGroupPermissions(channel.permissions)],
+                avatar: mapOptional(channel.avatar?.blobData, (data) => {
+                    return {
+                        id: DataClient.newBlobId(),
+                        data,
+                        mime_type: "image/jpg",
+                    };
+                }),
+                permissions_v2: apiGroupPermissions(channel.permissions),
                 rules: channel.rules,
                 gate: apiMaybeAccessGate(channel.gate),
-                messages_visible_to_non_members: apiOptional(
-                    identity,
-                    channel.messagesVisibleToNonMembers,
-                ),
-            }),
+                messages_visible_to_non_members: channel.messagesVisibleToNonMembers,
+            },
             (resp) => createGroupResponse(resp, channel.id),
+            CommunityCreateChannelArgs,
+            CommunityCreateChannelResponse,
         );
     }
 
     declineInvitation(chatId: ChannelIdentifier): Promise<DeclineInvitationResponse> {
-        return this.handleResponse(
-            this.service.decline_invitation({
-                channel_id: [BigInt(chatId.channelId)],
-            }),
+        return this.executeMsgpackUpdate(
+            "decline_invitation",
+            {
+                channel_id: BigInt(chatId.channelId),
+            },
             declineInvitationResponse,
+            CommunityDeclineInvitationArgs,
+            CommunityDeclineInvitationResponse,
         );
     }
 
     deleteChannel(chatId: ChannelIdentifier): Promise<DeleteGroupResponse> {
-        return this.handleResponse(
-            this.service.delete_channel({
+        return this.executeMsgpackUpdate(
+            "delete_channel",
+            {
                 channel_id: BigInt(chatId.channelId),
-            }),
+            },
             deleteGroupResponse,
+            CommunityDeleteChannelArgs,
+            CommunityDeleteChannelResponse,
         );
     }
 
@@ -339,13 +396,16 @@ export class CommunityClient extends CandidService {
         messageId: bigint,
         threadRootMessageIndex?: number,
     ): Promise<DeletedGroupMessageResponse> {
-        return this.handleResponse(
-            this.service.deleted_message({
+        return this.executeMsgpackQuery(
+            "deleted_message",
+            {
                 channel_id: BigInt(chatId.channelId),
                 message_id: messageId,
-                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-            }),
+                thread_root_message_index: threadRootMessageIndex,
+            },
             deletedMessageResponse,
+            CommunityDeletedMessageArgs,
+            CommunityDeletedMessageResponse,
         );
     }
 
@@ -356,20 +416,29 @@ export class CommunityClient extends CandidService {
         asPlatformModerator: boolean | undefined,
         newAchievement: boolean,
     ): Promise<DeleteMessageResponse> {
-        return this.handleResponse(
-            this.service.delete_messages({
+        return this.executeMsgpackUpdate(
+            "delete_messages",
+            {
                 channel_id: BigInt(chatId.channelId),
                 message_ids: messageIds,
-                as_platform_moderator: apiOptional(identity, asPlatformModerator),
-                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                as_platform_moderator: asPlatformModerator,
+                thread_root_message_index: threadRootMessageIndex,
                 new_achievement: newAchievement,
-            }),
+            },
             deleteMessageResponse,
+            CommunityDeleteMessagesArgs,
+            CommunityDeleteMessagesResponse,
         );
     }
 
     disableInviteCode(): Promise<DisableInviteCodeResponse> {
-        return this.handleResponse(this.service.disable_invite_code({}), disableInviteCodeResponse);
+        return this.executeMsgpackUpdate(
+            "disable_invite_code",
+            {},
+            disableInviteCodeResponse,
+            TEmpty,
+            CommunityDisableInviteCodeResponse,
+        );
     }
 
     editMessage(
@@ -398,7 +467,13 @@ export class CommunityClient extends CandidService {
     }
 
     enableInviteCode(): Promise<EnableInviteCodeResponse> {
-        return this.handleResponse(this.service.enable_invite_code({}), enableInviteCodeResponse);
+        return this.executeMsgpackUpdate(
+            "enable_invite_code",
+            {},
+            enableOrResetInviteCodeResponse,
+            TEmpty,
+            CommunityEnableInviteCodeResponse,
+        );
     }
 
     async events(
@@ -792,19 +867,28 @@ export class CommunityClient extends CandidService {
         reaction: string,
         threadRootMessageIndex: number | undefined,
     ): Promise<AddRemoveReactionResponse> {
-        return this.handleResponse(
-            this.service.remove_reaction({
+        return this.executeMsgpackUpdate(
+            "remove_reaction",
+            {
                 channel_id: BigInt(chatId.channelId),
                 message_id: messageId,
                 reaction,
-                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-            }),
+                thread_root_message_index: threadRootMessageIndex,
+            },
             addRemoveReactionResponse,
+            CommunityRemoveReactionArgs,
+            CommunityRemoveReactionResponse,
         );
     }
 
     resetInviteCode(): Promise<ResetInviteCodeResponse> {
-        return this.handleResponse(this.service.reset_invite_code({}), enableInviteCodeResponse);
+        return this.executeMsgpackUpdate(
+            "reset_invite_code",
+            {},
+            enableOrResetInviteCodeResponse,
+            TEmpty,
+            CommunityEnableInviteCodeResponse,
+        );
     }
 
     searchChannel(
@@ -1224,19 +1308,19 @@ export class CommunityClient extends CandidService {
                     gate === undefined
                         ? { NoChange: null }
                         : gate.kind === "no_gate"
-                          ? { SetToNone: null }
-                          : { SetToSome: apiAccessGate(gate) },
+                        ? { SetToNone: null }
+                        : { SetToSome: apiAccessGate(gate) },
                 gate_config:
                     gate === undefined
                         ? { NoChange: null }
                         : gate.kind === "no_gate"
-                          ? { SetToNone: null }
-                          : {
-                                SetToSome: apiAccessGateConfig({
-                                    gate,
-                                    expiry: undefined,
-                                }),
-                            },
+                        ? { SetToNone: null }
+                        : {
+                              SetToSome: apiAccessGateConfig({
+                                  gate,
+                                  expiry: undefined,
+                              }),
+                          },
                 avatar:
                     avatar === undefined
                         ? { NoChange: null }
@@ -1276,19 +1360,19 @@ export class CommunityClient extends CandidService {
                     gate === undefined
                         ? { NoChange: null }
                         : gate.kind === "no_gate"
-                          ? { SetToNone: null }
-                          : { SetToSome: apiAccessGate(gate) },
+                        ? { SetToNone: null }
+                        : { SetToSome: apiAccessGate(gate) },
                 gate_config:
                     gate === undefined
                         ? { NoChange: null }
                         : gate.kind === "no_gate"
-                          ? { SetToNone: null }
-                          : {
-                                SetToSome: apiAccessGateConfig({
-                                    gate,
-                                    expiry: undefined,
-                                }),
-                            },
+                        ? { SetToNone: null }
+                        : {
+                              SetToSome: apiAccessGateConfig({
+                                  gate,
+                                  expiry: undefined,
+                              }),
+                          },
                 avatar:
                     avatar === undefined
                         ? { NoChange: null }

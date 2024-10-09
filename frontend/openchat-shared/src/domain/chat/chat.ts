@@ -1591,7 +1591,6 @@ export type CreateGroupResponse =
     | UserLapsed
     | { kind: "access_gate_invalid" }
     | Offline
-    | DefaultMustBePublic
     | { kind: "external_url_invalid" };
 
 export type CreateGroupSuccess = {
@@ -1651,10 +1650,6 @@ export type UnauthorizedToCreatePublicGroup = {
 
 export type MemberLimitReached = {
     kind: "member_limit_reached";
-};
-
-export type DefaultMustBePublic = {
-    kind: "default_must_be_public";
 };
 
 export type EditMessageResponse = "success" | "failure";

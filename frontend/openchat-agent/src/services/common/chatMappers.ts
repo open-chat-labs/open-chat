@@ -2425,10 +2425,6 @@ export function createGroupResponse(
         return CommonResponses.communityFrozen();
     }
 
-    if ("DefaultMustBePublic" in candid) {
-        return { kind: "default_must_be_public" };
-    }
-
     if ("AccessGateInvalid" in candid) {
         return { kind: "access_gate_invalid" };
     }

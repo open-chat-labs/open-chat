@@ -1,7 +1,7 @@
 import type {
-    //     AddMembersToChannelResponse,
-    //     BlockCommunityUserResponse,
-    //     ChangeCommunityRoleResponse,
+    AddMembersToChannelResponse,
+    BlockCommunityUserResponse,
+    ChangeCommunityRoleResponse,
     //     ChannelIdentifier,
     //     ChannelMatch,
     //     ChannelMessageMatch,
@@ -21,7 +21,7 @@ import type {
     //     FollowThreadResponse,
     GroupMembershipUpdates,
     //     ImportGroupResponse,
-    //     MemberRole,
+    MemberRole,
     //     Message,
     //     RemoveMemberResponse,
     SendMessageResponse,
@@ -31,19 +31,24 @@ import type {
     //     UpdateCommunityResponse,
     //     UpdatedEvent,
     //     UpdateUserGroupResponse,
-    //     UserFailedError,
+    UserFailedError,
     //     UserGroupDetails,
 } from "openchat-shared";
-import {
-    CommonResponses,
-    // UnsupportedValueError
-} from "openchat-shared";
+import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import type {
     CommunityCanisterCommunitySummaryUpdates as TCommunityCanisterCommunitySummaryUpdates,
     CommunityCanisterChannelSummaryUpdates as TCommunityCanisterChannelSummaryUpdates,
     CommunityMembershipUpdates as TCommunityMembershipUpdates,
     CommunitySendMessageResponse,
     GroupMembershipUpdates as TGroupMembershipUpdates,
+    GroupRole as TGroupRole,
+    CommunityAddMembersToChannelResponse,
+    CommunityAddMembersToChannelFailedResult,
+    CommunityAddMembersToChannelUserFailedError,
+    CommunityAddMembersToChannelPartialSuccessResult,
+    CommunityBlockUserResponse,
+    CommunityRole as TCommunityRole,
+    CommunityChangeRoleResponse,
 } from "../../typebox";
 import { mapOptional, optionUpdateV2, principalBytesToString } from "../../utils/mapping";
 import {
@@ -71,100 +76,107 @@ import { identity } from "../../utils/mapping";
 // import { ReplicaNotUpToDateError } from "../error";
 // import type { ReportMessageResponse } from "./candid/types";
 //
-// export function addMembersToChannelResponse(
-//     candid: ApiAddMembersToChannelResponse,
-// ): AddMembersToChannelResponse {
-//     if ("Failed" in candid) {
-//         return addToChannelFailed(candid.Failed);
-//     }
-//     if ("UserNotInChannel" in candid) {
-//         return CommonResponses.userNotInChat();
-//     }
-//     if ("PartialSuccess" in candid) {
-//         return addToChannelPartialSuccess(candid.PartialSuccess);
-//     }
-//     if ("ChannelNotFound" in candid) {
-//         return CommonResponses.chatNotFound();
-//     }
-//     if ("UserLimitReached" in candid) {
-//         return CommonResponses.userLimitReached();
-//     }
-//     if ("NotAuthorized" in candid) {
-//         return CommonResponses.notAuthorized();
-//     }
-//     if ("Success" in candid) {
-//         return CommonResponses.success();
-//     }
-//     if ("UserNotInCommunity" in candid) {
-//         return CommonResponses.userNotInCommunity();
-//     }
-//     if ("UserSuspended" in candid) {
-//         return CommonResponses.userSuspended();
-//     }
-//     if ("CommunityFrozen" in candid) {
-//         return CommonResponses.communityFrozen();
-//     }
-//     if ("CommunityPublic" in candid) {
-//         return CommonResponses.communityPublic();
-//     }
-//     if ("InternalError" in candid) {
-//         return CommonResponses.internalError();
-//     }
-//     if ("CommunityPublic" in candid) {
-//         return CommonResponses.communityPublic();
-//     }
-//     throw new UnsupportedValueError(
-//         "Unexpected ApiAddMembersToChannelResponse type received",
-//         candid,
-//     );
-// }
-//
-// function addToChannelFailed(candid: ApiAddMembersToChannelFailed): AddMembersToChannelResponse {
-//     return {
-//         kind: "add_to_channel_failed",
-//         usersLimitReached: candid.users_limit_reached.map((u) => u.toString()),
-//         usersAlreadyInChannel: candid.users_already_in_channel.map((u) => u.toString()),
-//         usersFailedWithError: candid.users_failed_with_error.map(userFailedWithError),
-//     };
-// }
-//
-// function userFailedWithError(candid: ApiUserFailedError): UserFailedError {
-//     return {
-//         userId: candid.user_id.toString(),
-//         error: candid.error,
-//     };
-// }
-//
-// function addToChannelPartialSuccess(
-//     candid: ApiAddMembersToChannelPartialSuccess,
-// ): AddMembersToChannelResponse {
-//     return {
-//         kind: "add_to_channel_partial_success",
-//         usersLimitReached: candid.users_limit_reached.map((u) => u.toString()),
-//         usersAlreadyInChannel: candid.users_already_in_channel.map((u) => u.toString()),
-//         usersFailedWithError: candid.users_failed_with_error.map(userFailedWithError),
-//         usersAdded: candid.users_added.map((u) => u.toString()),
-//     };
-// }
-//
-// export function blockUserResponse(candid: ApiBlockUserResponse): BlockCommunityUserResponse {
-//     if ("Success" in candid) {
-//         return CommonResponses.success();
-//     } else {
-//         console.warn("BlockCommunityUser failed with ", candid);
-//         return CommonResponses.failure();
-//     }
-// }
-//
-// export function changeRoleResponse(candid: ApiChangeRoleResponse): ChangeCommunityRoleResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     } else {
-//         console.warn("Unexpected ApiChangeRoleResponse type received", candid);
-//         return "failure";
-//     }
-// }
-//
+export function addMembersToChannelResponse(
+    value: CommunityAddMembersToChannelResponse,
+): AddMembersToChannelResponse {
+    if (value === "Success") {
+        return CommonResponses.success();
+    }
+    if (value === "CommunityFrozen") {
+        return CommonResponses.communityFrozen();
+    }
+    if (value === "CommunityPublic") {
+        return CommonResponses.communityPublic();
+    }
+    if (value === "UserSuspended") {
+        return CommonResponses.userSuspended();
+    }
+    if (value === "UserLapsed") {
+        return CommonResponses.userLapsed();
+    }
+    if (value === "UserNotInCommunity") {
+        return CommonResponses.userNotInCommunity();
+    }
+    if (value === "UserNotInChannel") {
+        return CommonResponses.userNotInChat();
+    }
+    if (value === "ChannelNotFound") {
+        return CommonResponses.chatNotFound();
+    }
+    if (value === "NotAuthorized") {
+        return CommonResponses.notAuthorized();
+    }
+    if ("Failed" in value) {
+        return addToChannelFailed(value.Failed);
+    }
+    if ("PartialSuccess" in value) {
+        return addToChannelPartialSuccess(value.PartialSuccess);
+    }
+    if ("UserLimitReached" in value) {
+        return CommonResponses.userLimitReached();
+    }
+    if ("InternalError" in value) {
+        return CommonResponses.internalError();
+    }
+    if ("CommunityPublic" in value) {
+        return CommonResponses.communityPublic();
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiAddMembersToChannelResponse type received",
+        value,
+    );
+}
+
+function addToChannelFailed(
+    value: CommunityAddMembersToChannelFailedResult,
+): AddMembersToChannelResponse {
+    return {
+        kind: "add_to_channel_failed",
+        usersLimitReached: value.users_limit_reached.map(principalBytesToString),
+        usersAlreadyInChannel: value.users_already_in_channel.map(principalBytesToString),
+        usersFailedWithError: value.users_failed_with_error.map(userFailedWithError),
+    };
+}
+
+function userFailedWithError(value: CommunityAddMembersToChannelUserFailedError): UserFailedError {
+    return {
+        userId: principalBytesToString(value.user_id),
+        error: value.error,
+    };
+}
+
+function addToChannelPartialSuccess(
+    value: CommunityAddMembersToChannelPartialSuccessResult,
+): AddMembersToChannelResponse {
+    return {
+        kind: "add_to_channel_partial_success",
+        usersLimitReached: value.users_limit_reached.map(principalBytesToString),
+        usersAlreadyInChannel: value.users_already_in_channel.map(principalBytesToString),
+        usersFailedWithError: value.users_failed_with_error.map(userFailedWithError),
+        usersAdded: value.users_added.map(principalBytesToString),
+    };
+}
+
+export function blockUserResponse(value: CommunityBlockUserResponse): BlockCommunityUserResponse {
+    if (value === "Success") {
+        return CommonResponses.success();
+    } else {
+        console.warn("BlockCommunityUser failed with ", value);
+        return CommonResponses.failure();
+    }
+}
+
+export function changeRoleResponse(
+    value: CommunityChangeRoleResponse,
+): ChangeCommunityRoleResponse {
+    if (value === "Success") {
+        return "success";
+    } else {
+        console.warn("Unexpected ApiChangeRoleResponse type received", value);
+        return "failure";
+    }
+}
+
 // export async function messagesByMessageIndexResponse(
 //     principal: Principal,
 //     candid: ApiMessagesByMessageIndexResponse,
@@ -458,18 +470,18 @@ export function groupMembershipUpdates(value: TGroupMembershipUpdates): GroupMem
 //     }
 // }
 //
-// export function apiMemberRole(domain: MemberRole): ApiGroupRole {
-//     switch (domain) {
-//         case "owner":
-//             return { Owner: null };
-//         case "admin":
-//             return { Admin: null };
-//         case "moderator":
-//             return { Moderator: null };
-//         default:
-//             return { Participant: null };
-//     }
-// }
+export function apiMemberRole(domain: MemberRole): TGroupRole {
+    switch (domain) {
+        case "owner":
+            return "Owner";
+        case "admin":
+            return "Admin";
+        case "moderator":
+            return "Moderator";
+        default:
+            return "Participant";
+    }
+}
 //
 // export function communityRole(candid: ApiCommunityRole): MemberRole {
 //     if ("Member" in candid) {
@@ -483,18 +495,18 @@ export function groupMembershipUpdates(value: TGroupMembershipUpdates): GroupMem
 //     }
 //     throw new UnsupportedValueError("Unknown community role", candid);
 // }
-//
-// export function apiCommunityRole(newRole: MemberRole): ApiCommunityRole {
-//     switch (newRole) {
-//         case "owner":
-//             return { Owner: null };
-//         case "admin":
-//             return { Admin: null };
-//         default:
-//             return { Member: null };
-//     }
-// }
-//
+
+export function apiCommunityRole(newRole: MemberRole): TCommunityRole {
+    switch (newRole) {
+        case "owner":
+            return "Owner";
+        case "admin":
+            return "Admin";
+        default:
+            return "Member";
+    }
+}
+
 // export function apiOptionalCommunityPermissions(
 //     permissions: Partial<CommunityPermissions>,
 // ): ApiOptionalCommunityPermissions {
