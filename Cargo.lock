@@ -8330,6 +8330,7 @@ dependencies = [
  "sonic_canister_c2c_client",
  "stable_memory",
  "storage_bucket_client",
+ "timer_job_queues",
  "tracing",
  "types",
  "user_canister",
