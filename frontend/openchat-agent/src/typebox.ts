@@ -3960,7 +3960,6 @@ export const GateCheckFailedReason = Type.Union([
     }),
     Type.Literal("Locked"),
     Type.Literal("NotReferredByMember"),
-    Type.Literal("Unknown"),
 ]);
 
 export type TokenInfo = Static<typeof TokenInfo>;

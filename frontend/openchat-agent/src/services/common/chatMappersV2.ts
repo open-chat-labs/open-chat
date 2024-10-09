@@ -2108,9 +2108,6 @@ export function gateCheckFailedReason(value: TGateCheckFailedReason): GateCheckF
     if (value === "Locked") {
         return "locked";
     }
-    if (value === "Unknown") {
-        return "unknown";
-    }
     if ("PaymentFailed" in value) {
         console.warn("PaymentFailed: ", value);
         return "payment_failed";

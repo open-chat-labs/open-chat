@@ -1772,8 +1772,7 @@ export type GateCheckFailedReason =
     | "no_unique_person_proof"
     | "not_lifetime_diamond"
     | "locked"
-    | "not_referred_by_member"
-    | "unknown";
+    | "not_referred_by_member";
 
 export type ChatFrozenEvent = {
     kind: "chat_frozen";
