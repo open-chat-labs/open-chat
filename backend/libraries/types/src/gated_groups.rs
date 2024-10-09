@@ -292,11 +292,11 @@ impl From<&AccessGateNonComposite> for AccessGateExpiryBehaviour {
 }
 
 impl AccessGateConfig {
-    pub fn validate(&self) -> bool {
+    pub fn validate(&self, test_mode: bool) -> bool {
         pub const DAY_IN_MS: Milliseconds = 1000 * 60 * 60 * 24;
 
         if let Some(expiry) = self.expiry {
-            if expiry < DAY_IN_MS {
+            if !test_mode && expiry < DAY_IN_MS {
                 return false;
             }
 
