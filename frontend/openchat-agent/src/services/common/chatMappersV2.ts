@@ -2486,8 +2486,8 @@ export function groupDetailsResponse(
             "participants" in value.Success ? value.Success.participants : value.Success.members;
         return {
             members: members.map(member),
-            blockedUsers: new Set(value.Success.blocked_users.map((u) => u.toString())),
-            invitedUsers: new Set(value.Success.invited_users.map((u) => u.toString())),
+            blockedUsers: new Set(value.Success.blocked_users.map(principalBytesToString)),
+            invitedUsers: new Set(value.Success.invited_users.map(principalBytesToString)),
             pinnedMessages: new Set(value.Success.pinned_messages),
             rules: value.Success.chat_rules,
             timestamp: value.Success.timestamp,

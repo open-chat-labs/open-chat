@@ -299,7 +299,6 @@ export const idlFactory = ({ IDL }) => {
     'change_roles' : CommunityPermissionRole,
     'create_private_channel' : CommunityPermissionRole,
   });
-  const Rules = IDL.Record({ 'text' : IDL.Text, 'enabled' : IDL.Bool });
   const VerifiedCredentialGate = IDL.Record({
     'credential_arguments' : IDL.Vec(
       IDL.Tuple(
@@ -352,6 +351,11 @@ export const idlFactory = ({ IDL }) => {
     'Payment' : PaymentGate,
     'LifetimeDiamondMember' : IDL.Null,
   });
+  const AccessGateConfig = IDL.Record({
+    'gate' : AccessGate,
+    'expiry' : IDL.Opt(Milliseconds),
+  });
+  const Rules = IDL.Record({ 'text' : IDL.Text, 'enabled' : IDL.Bool });
   const Document = IDL.Record({
     'id' : IDL.Nat,
     'data' : IDL.Vec(IDL.Nat8),
@@ -360,6 +364,7 @@ export const idlFactory = ({ IDL }) => {
   const CreateCommunityArgs = IDL.Record({
     'is_public' : IDL.Bool,
     'permissions' : IDL.Opt(CommunityPermissions),
+    'gate_config' : IDL.Opt(AccessGateConfig),
     'default_channel_rules' : IDL.Opt(Rules),
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
@@ -443,6 +448,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const CreateGroupArgs = IDL.Record({
     'is_public' : IDL.Bool,
+    'gate_config' : IDL.Opt(AccessGateConfig),
     'permissions_v2' : IDL.Opt(GroupPermissions),
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
@@ -1092,6 +1098,7 @@ export const idlFactory = ({ IDL }) => {
   const GroupGateUpdated = IDL.Record({
     'updated_by' : UserId,
     'new_gate' : IDL.Opt(AccessGate),
+    'new_gate_config' : IDL.Opt(AccessGateConfig),
   });
   const GroupRole = IDL.Variant({
     'Participant' : IDL.Null,
@@ -1209,6 +1216,11 @@ export const idlFactory = ({ IDL }) => {
   const CommunitiesInitial = IDL.Record({
     'summaries' : IDL.Vec(UserCanisterCommunitySummary),
   });
+  const MessageActivitySummary = IDL.Record({
+    'read_up_to' : TimestampMillis,
+    'unread_count' : IDL.Nat32,
+    'latest_event' : TimestampMillis,
+  });
   const Referral = IDL.Record({
     'status' : ReferralStatus,
     'user_id' : UserId,
@@ -1295,6 +1307,7 @@ export const idlFactory = ({ IDL }) => {
       'communities' : CommunitiesInitial,
       'total_chit_earned' : IDL.Int32,
       'wallet_config' : WalletConfig,
+      'message_activity_summary' : MessageActivitySummary,
       'blocked_users' : IDL.Vec(UserId),
       'is_unique_person' : IDL.Bool,
       'referrals' : IDL.Vec(Referral),
@@ -1361,6 +1374,12 @@ export const idlFactory = ({ IDL }) => {
     'last_seen' : TimestampMillis,
   });
   const MarkAchievementsSeenResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const MarkMessageActivityFeedReadArgs = IDL.Record({
+    'read_up_to' : TimestampMillis,
+  });
+  const MarkMessageActivityFeedReadResponse = IDL.Variant({
+    'Success' : IDL.Null,
+  });
   const ThreadRead = IDL.Record({
     'root_message_index' : MessageIndex,
     'read_up_to' : MessageIndex,
@@ -1386,6 +1405,31 @@ export const idlFactory = ({ IDL }) => {
     'messages_read' : IDL.Vec(ChatMessagesRead),
   });
   const MarkReadResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const MessageActivityFeedArgs = IDL.Record({ 'since' : TimestampMillis });
+  const MessageActivity = IDL.Variant({
+    'Tip' : IDL.Null,
+    'ThreadReply' : IDL.Null,
+    'P2PSwapAccepted' : IDL.Null,
+    'PollVote' : IDL.Null,
+    'Mention' : IDL.Null,
+    'Crypto' : IDL.Null,
+    'QuoteReply' : IDL.Null,
+    'Reaction' : IDL.Null,
+  });
+  const MessageActivityEvent = IDL.Record({
+    'chat' : Chat,
+    'user_id' : UserId,
+    'timestamp' : TimestampMillis,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
+    'activity' : MessageActivity,
+    'message_index' : MessageIndex,
+  });
+  const MessageActivityFeedResponse = IDL.Variant({
+    'Success' : IDL.Record({
+      'total' : IDL.Nat32,
+      'events' : IDL.Vec(MessageActivityEvent),
+    }),
+  });
   const MessagesByMessageIndexArgs = IDL.Record({
     'messages' : IDL.Vec(MessageIndex),
     'user_id' : UserId,
@@ -1600,6 +1644,7 @@ export const idlFactory = ({ IDL }) => {
     'InvalidRequest' : IDL.Text,
     'TransferCannotBeToSelf' : IDL.Null,
     'TransferFailed' : IDL.Text,
+    'InternalError' : IDL.Text,
     'RulesNotAccepted' : IDL.Null,
     'CryptocurrencyNotSupported' : Cryptocurrency,
   });
@@ -1641,6 +1686,7 @@ export const idlFactory = ({ IDL }) => {
     'InvalidRequest' : IDL.Text,
     'TransferCannotBeToSelf' : IDL.Null,
     'TransferFailed' : IDL.Text,
+    'InternalError' : IDL.Text,
     'RulesNotAccepted' : IDL.Null,
     'CryptocurrencyNotSupported' : Cryptocurrency,
   });
@@ -1826,7 +1872,7 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
     'TransferFailed' : IDL.Text,
-    'InternalError' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
+    'InternalError' : IDL.Text,
     'CannotTipSelf' : IDL.Null,
   });
   const TokenSwapStatusArgs = IDL.Record({ 'swap_id' : IDL.Nat });
@@ -1837,12 +1883,16 @@ export const idlFactory = ({ IDL }) => {
       'deposit_account' : IDL.Opt(
         IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })
       ),
+      'transfer_or_approval' : IDL.Opt(
+        IDL.Variant({ 'Ok' : IDL.Nat64, 'Err' : IDL.Text })
+      ),
       'amount_swapped' : IDL.Opt(
         IDL.Variant({
           'Ok' : IDL.Variant({ 'Ok' : IDL.Nat, 'Err' : IDL.Text }),
           'Err' : IDL.Text,
         })
       ),
+      'icrc2' : IDL.Bool,
       'success' : IDL.Opt(IDL.Bool),
       'notify_dex' : IDL.Opt(
         IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })
@@ -1851,6 +1901,7 @@ export const idlFactory = ({ IDL }) => {
       'withdraw_from_dex' : IDL.Opt(
         IDL.Variant({ 'Ok' : IDL.Nat, 'Err' : IDL.Text })
       ),
+      'auto_withdrawals' : IDL.Bool,
     }),
   });
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
@@ -1968,6 +2019,7 @@ export const idlFactory = ({ IDL }) => {
       'username' : IDL.Opt(IDL.Text),
       'total_chit_earned' : IDL.Int32,
       'wallet_config' : IDL.Opt(WalletConfig),
+      'message_activity_summary' : IDL.Opt(MessageActivitySummary),
       'blocked_users' : IDL.Opt(IDL.Vec(UserId)),
       'is_unique_person' : IDL.Opt(IDL.Bool),
       'referrals' : IDL.Vec(Referral),
@@ -1996,6 +2048,7 @@ export const idlFactory = ({ IDL }) => {
     'TransactionFailed' : FailedCryptoTransaction,
     'PinRequired' : IDL.Null,
     'Success' : CompletedCryptoTransaction,
+    'InternalError' : IDL.Text,
   });
   return IDL.Service({
     'accept_p2p_swap' : IDL.Func(
@@ -2117,7 +2170,17 @@ export const idlFactory = ({ IDL }) => {
         [MarkAchievementsSeenResponse],
         [],
       ),
+    'mark_message_activity_feed_read' : IDL.Func(
+        [MarkMessageActivityFeedReadArgs],
+        [MarkMessageActivityFeedReadResponse],
+        [],
+      ),
     'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
+    'message_activity_feed' : IDL.Func(
+        [MessageActivityFeedArgs],
+        [MessageActivityFeedResponse],
+        ['query'],
+      ),
     'messages_by_message_index' : IDL.Func(
         [MessagesByMessageIndexArgs],
         [MessagesByMessageIndexResponse],

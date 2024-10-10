@@ -1,11 +1,21 @@
 import type {
     CommunityEventsResponse,
     CommunityMessagesByMessageIndexResponse,
+    GroupBlockUserResponse,
     GroupCanisterGroupChatSummary as TGroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates as TGroupCanisterGroupChatSummaryUpdates,
+    GroupConvertIntoCommunityResponse,
     GroupEventsResponse,
+    GroupFollowThreadResponse,
     GroupMessagesByMessageIndexResponse,
+    GroupRemoveParticipantResponse,
+    GroupReportMessageResponse,
+    GroupRole,
     GroupSendMessageResponse,
+    GroupSummaryResponse,
+    GroupSummaryUpdatesResponse,
+    GroupUnblockUserResponse,
+    GroupUnfollowThreadResponse,
     OptionalGroupPermissions as TOptionalGroupPermissions,
     OptionalMessagePermissions as TOptionalMessagePermissions,
     UpdatedRules as TUpdatedRules,
@@ -14,28 +24,24 @@ import type {
     ChatEvent,
     EventsResponse,
     SendMessageResponse,
-    // RemoveMemberResponse,
-    // BlockUserResponse,
-    // UnblockUserResponse,
-    // MemberRole,
+    RemoveMemberResponse,
+    BlockUserResponse,
+    UnblockUserResponse,
+    MemberRole,
     Message,
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
-    // GroupCanisterSummaryResponse,
-    // GroupCanisterSummaryUpdatesResponse,
-    // UpdatedEvent,
+    GroupCanisterSummaryResponse,
+    GroupCanisterSummaryUpdatesResponse,
     ChatIdentifier,
     MultiUserChatIdentifier,
-    // ConvertToCommunityResponse,
+    ConvertToCommunityResponse,
     UpdatedRules,
-    // FollowThreadResponse,
+    FollowThreadResponse,
     OptionalChatPermissions,
     OptionalMessagePermissions,
 } from "openchat-shared";
-import {
-    // CommonResponses,
-    UnsupportedValueError,
-} from "openchat-shared";
+import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
     accessGate,
     apiPermissionRole,
@@ -61,35 +67,33 @@ import {
 import type { Principal } from "@dfinity/principal";
 import { ReplicaNotUpToDateError } from "../error";
 
-// export function apiRole(role: MemberRole): ApiRole | undefined {
-//     switch (role) {
-//         case "admin":
-//             return { Admin: null };
-//         case "moderator":
-//             return { Moderator: null };
-//         case "member":
-//             return { Participant: null };
-//         case "owner":
-//             return { Owner: null };
-//         default:
-//             return undefined;
-//     }
-// }
-//
-// export function summaryResponse(
-//     candid: ApiGroupCanisterSummaryResponse,
-// ): GroupCanisterSummaryResponse {
-//     if ("Success" in candid) {
-//         return groupChatSummary(candid.Success.summary);
-//     }
-//     if ("CallerNotInGroup" in candid) {
-//         return { kind: "caller_not_in_group" };
-//     }
-//     throw new UnsupportedValueError(
-//         "Unexpected ApiGroupCanisterSummaryResponse type received",
-//         candid,
-//     );
-// }
+export function apiRole(role: MemberRole): GroupRole | undefined {
+    switch (role) {
+        case "admin":
+            return "Admin";
+        case "moderator":
+            return "Moderator";
+        case "member":
+            return "Participant";
+        case "owner":
+            return "Owner";
+        default:
+            return undefined;
+    }
+}
+
+export function summaryResponse(value: GroupSummaryResponse): GroupCanisterSummaryResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return groupChatSummary(value.Success.summary);
+    }
+    if (value === "CallerNotInGroup") {
+        return { kind: "caller_not_in_group" };
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiGroupCanisterSummaryResponse type received",
+        value,
+    );
+}
 
 export function groupChatSummary(
     value: TGroupCanisterGroupChatSummary,
@@ -131,23 +135,23 @@ export function groupChatSummary(
     };
 }
 
-// export function summaryUpdatesResponse(
-//     candid: ApiGroupCanisterSummaryUpdatesResponse,
-// ): GroupCanisterSummaryUpdatesResponse {
-//     if ("Success" in candid) {
-//         return groupChatSummaryUpdates(candid.Success.updates);
-//     }
-//     if ("SuccessNoUpdates" in candid) {
-//         return { kind: "success_no_updates" };
-//     }
-//     if ("CallerNotInGroup" in candid) {
-//         return { kind: "caller_not_in_group" };
-//     }
-//     throw new UnsupportedValueError(
-//         "Unexpected ApiGroupCanisterSummaryUpdatesResponse type received",
-//         candid,
-//     );
-// }
+export function summaryUpdatesResponse(
+    value: GroupSummaryUpdatesResponse,
+): GroupCanisterSummaryUpdatesResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return groupChatSummaryUpdates(value.Success.updates);
+    }
+    if (value === "SuccessNoUpdates") {
+        return { kind: "success_no_updates" };
+    }
+    if (value === "CallerNotInGroup") {
+        return { kind: "caller_not_in_group" };
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiGroupCanisterSummaryUpdatesResponse type received",
+        value,
+    );
+}
 
 export function groupChatSummaryUpdates(
     value: TGroupCanisterGroupChatSummaryUpdates,
@@ -236,65 +240,71 @@ function apiOptionalMessagePermissions(
         custom_deleted,
     };
 }
-//
-// export function unblockUserResponse(candid: ApiUnblockUserResponse): UnblockUserResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     }
-//     if ("GroupNotPublic" in candid) {
-//         return "group_not_public";
-//     }
-//     if ("CallerNotInGroup" in candid) {
-//         return "caller_not_in_group";
-//     }
-//     if ("NotAuthorized" in candid) {
-//         return "not_authorized";
-//     }
-//     if ("CannotUnblockSelf" in candid) {
-//         return "cannot_unblock_self";
-//     }
-//     if ("UserSuspended" in candid) {
-//         return "user_suspended";
-//     }
-//     if ("ChatFrozen" in candid) {
-//         return "chat_frozen";
-//     }
-//     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
-// }
-//
-// export function blockUserResponse(candid: ApiBlockUserResponse): BlockUserResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     }
-//     if ("GroupNotPublic" in candid) {
-//         return "group_not_public";
-//     }
-//     if ("UserNotInGroup" in candid) {
-//         return "user_not_in_group";
-//     }
-//     if ("CallerNotInGroup" in candid) {
-//         return "caller_not_in_group";
-//     }
-//     if ("NotAuthorized" in candid) {
-//         return "not_authorized";
-//     }
-//     if ("InternalError" in candid) {
-//         return "internal_error";
-//     }
-//     if ("CannotBlockSelf" in candid) {
-//         return "cannot_block_self";
-//     }
-//     if ("CannotBlockUser" in candid) {
-//         return "cannot_block_user";
-//     }
-//     if ("UserSuspended" in candid) {
-//         return "user_suspended";
-//     }
-//     if ("ChatFrozen" in candid) {
-//         return "chat_frozen";
-//     }
-//     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
-// }
+
+export function unblockUserResponse(value: GroupUnblockUserResponse): UnblockUserResponse {
+    if (value === "Success") {
+        return "success";
+    }
+    if (value === "GroupNotPublic") {
+        return "group_not_public";
+    }
+    if (value === "CallerNotInGroup") {
+        return "caller_not_in_group";
+    }
+    if (value === "NotAuthorized") {
+        return "not_authorized";
+    }
+    if (value === "CannotUnblockSelf") {
+        return "cannot_unblock_self";
+    }
+    if (value === "UserSuspended") {
+        return "user_suspended";
+    }
+    if (value === "UserLapsed") {
+        return "user_lapsed";
+    }
+    if (value === "ChatFrozen") {
+        return "chat_frozen";
+    }
+    throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", value);
+}
+
+export function blockUserResponse(value: GroupBlockUserResponse): BlockUserResponse {
+    if (value === "Success") {
+        return "success";
+    }
+    if (value === "GroupNotPublic") {
+        return "group_not_public";
+    }
+    if (value === "UserNotInGroup") {
+        return "user_not_in_group";
+    }
+    if (value === "CallerNotInGroup") {
+        return "caller_not_in_group";
+    }
+    if (value === "NotAuthorized") {
+        return "not_authorized";
+    }
+    if (value === "CannotBlockSelf") {
+        return "cannot_block_self";
+    }
+    if (value === "CannotBlockUser") {
+        return "cannot_block_user";
+    }
+    if (value === "UserSuspended") {
+        return "user_suspended";
+    }
+    if (value === "UserLapsed") {
+        return "user_lapsed";
+    }
+    if (value === "ChatFrozen") {
+        return "chat_frozen";
+    }
+    if (typeof value === "object" && "InternalError" in value) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", value);
+}
 //
 // // TODO fill this in
 // export function apiGateUpdate(): ApiGroupGateUpdate {
@@ -350,15 +360,15 @@ export function sendMessageResponse(value: GroupSendMessageResponse): SendMessag
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", value);
 }
 
-// export function removeMemberResponse(candid: ApiRemoveParticipantResponse): RemoveMemberResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     } else {
-//         console.warn("RemoveMember failed with ", candid);
-//         return "failure";
-//     }
-// }
-//
+export function removeMemberResponse(value: GroupRemoveParticipantResponse): RemoveMemberResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return "success";
+    } else {
+        console.warn("RemoveMember failed with ", value);
+        return "failure";
+    }
+}
+
 export async function getMessagesByMessageIndexResponse(
     principal: Principal,
     value: GroupMessagesByMessageIndexResponse | CommunityMessagesByMessageIndexResponse,
@@ -407,23 +417,23 @@ export async function getEventsResponse(
     return "events_failed";
 }
 
-// export function convertToCommunityReponse(
-//     candid: ApiConvertIntoCommunityResponse,
-// ): ConvertToCommunityResponse {
-//     if ("Success" in candid) {
-//         return {
-//             kind: "success",
-//             id: {
-//                 kind: "channel",
-//                 communityId: candid.Success.community_id.toString(),
-//                 channelId: candid.Success.channel_id.toString(),
-//             },
-//         };
-//     } else {
-//         console.warn("ConvertToCommunity failed with ", candid);
-//         return CommonResponses.failure();
-//     }
-// }
+export function convertToCommunityResponse(
+    value: GroupConvertIntoCommunityResponse,
+): ConvertToCommunityResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return {
+            kind: "success",
+            id: {
+                kind: "channel",
+                communityId: principalBytesToString(value.Success.community_id),
+                channelId: value.Success.channel_id.toString(),
+            },
+        };
+    } else {
+        console.warn("ConvertToCommunity failed with ", value);
+        return CommonResponses.failure();
+    }
+}
 
 export function apiUpdatedRules(rules: UpdatedRules): TUpdatedRules {
     return {
@@ -433,20 +443,20 @@ export function apiUpdatedRules(rules: UpdatedRules): TUpdatedRules {
     };
 }
 
-// export function followThreadResponse(
-//     candid: ApiFollowThreadResponse | ApiUnfollowThreadResponse,
-// ): FollowThreadResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     }
-//     if ("AlreadyFollowing" in candid || "NotFollowing" in candid) {
-//         return "unchanged";
-//     } else {
-//         console.warn("followThread failed with", candid);
-//         return "failed";
-//     }
-// }
-//
-// export function reportMessageResponse(candid: ReportMessageResponse): boolean {
-//     return "Success" in candid || "AlreadyReported" in candid;
-// }
+export function followThreadResponse(
+    value: GroupFollowThreadResponse | GroupUnfollowThreadResponse,
+): FollowThreadResponse {
+    if (value === "Success") {
+        return "success";
+    }
+    if (value === "AlreadyFollowing" || value === "NotFollowing") {
+        return "unchanged";
+    } else {
+        console.warn("followThread failed with", value);
+        return "failed";
+    }
+}
+
+export function reportMessageResponse(value: GroupReportMessageResponse): boolean {
+    return value === "Success" || value === "AlreadyReported";
+}

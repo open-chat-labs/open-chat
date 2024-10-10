@@ -135,6 +135,7 @@ import {
 import {
     apiCommunityPermissions,
     apiGroupPermissions,
+    apiAccessGate,
     apiMaybeAccessGate,
     apiMessageContent,
     editMessageResponse,
@@ -302,6 +303,10 @@ export class UserClient extends CandidService {
                 permissions: [apiCommunityPermissions(community.permissions)],
                 rules,
                 gate: apiMaybeAccessGate(community.gate),
+                gate_config: apiOptional(
+                    (g) => ({ gate: apiAccessGate(g), expiry: [] }),
+                    community.gate,
+                ),
                 default_channels: defaultChannels,
                 default_channel_rules: [defaultChannelRules],
                 primary_language: community.primaryLanguage,
@@ -330,6 +335,10 @@ export class UserClient extends CandidService {
                 permissions_v2: [apiGroupPermissions(group.permissions)],
                 rules: group.rules,
                 gate: apiMaybeAccessGate(group.gate),
+                gate_config: apiOptional(
+                    (g) => ({ gate: apiAccessGate(g), expiry: [] }),
+                    group.gate,
+                ),
                 events_ttl: apiOptional(identity, group.eventsTTL),
                 messages_visible_to_non_members: apiOptional(
                     identity,

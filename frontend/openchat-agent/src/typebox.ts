@@ -180,6 +180,18 @@ export const GroupDisableInviteCodeArgs = Type.Object({
     correlation_id: Type.BigInt(),
 });
 
+export type GroupRegisterProposalVoteV2Response = Static<
+    typeof GroupRegisterProposalVoteV2Response
+>;
+export const GroupRegisterProposalVoteV2Response = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("CallerNotInGroup"),
+    Type.Literal("ProposalMessageNotFound"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Literal("ChatFrozen"),
+]);
+
 export type GroupPublicSummaryArgs = Static<typeof GroupPublicSummaryArgs>;
 export const GroupPublicSummaryArgs = Type.Object({
     invite_code: Type.Optional(Type.BigInt()),
@@ -3359,6 +3371,12 @@ export const GroupMessagesByMessageIndexArgs = Type.Object({
     thread_root_message_index: Type.Optional(MessageIndex),
     messages: Type.Array(MessageIndex),
     latest_known_update: Type.Optional(Type.BigInt()),
+});
+
+export type GroupRegisterProposalVoteV2Args = Static<typeof GroupRegisterProposalVoteV2Args>;
+export const GroupRegisterProposalVoteV2Args = Type.Object({
+    message_index: MessageIndex,
+    adopt: Type.Boolean(),
 });
 
 export type GroupRemoveReactionArgs = Static<typeof GroupRemoveReactionArgs>;
