@@ -1714,7 +1714,7 @@ export class CommunityClient extends CandidService {
                 channel_id: mapOptional(channelId, (cid) => BigInt(cid)),
                 user_ids: userIds.map(principalStringToBytes),
             },
-            (value) => typeof value !== "string" && "Success" in value,
+            (value) => typeof value === "object" && "Success" in value,
             CommunityCancelInvitesArgs,
             CommunityCancelInvitesResponse,
         );

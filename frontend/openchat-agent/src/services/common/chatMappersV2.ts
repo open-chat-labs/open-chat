@@ -2202,7 +2202,7 @@ export function addRemoveReactionResponse(
     if (
         value === "Success" ||
         value === "NoChange" ||
-        (typeof value !== "string" && "SuccessV2" in value)
+        (typeof value === "object" && "SuccessV2" in value)
     ) {
         return CommonResponses.success();
     } else {
@@ -2340,7 +2340,7 @@ export function createGroupResponse(
     value: UserCreateGroupResponse | CommunityCreateChannelResponse,
     id: MultiUserChatIdentifier,
 ): CreateGroupResponse {
-    if (typeof value !== "string") {
+    if (typeof value === "object") {
         if ("Success" in value) {
             if ("channel_id" in value.Success && id.kind === "channel") {
                 const canisterId: ChannelIdentifier = {
@@ -2437,7 +2437,7 @@ export function deleteGroupResponse(
 export function pinMessageResponse(
     value: GroupPinMessageResponse | CommunityPinMessageResponse,
 ): PinMessageResponse {
-    if (typeof value !== "string" && "Success" in value) {
+    if (typeof value === "object" && "Success" in value) {
         return {
             kind: "success",
             eventIndex: value.Success.index,
@@ -2454,7 +2454,7 @@ export function pinMessageResponse(
 export function unpinMessageResponse(
     value: GroupUnpinMessageResponse | CommunityPinMessageResponse,
 ): UnpinMessageResponse {
-    if (typeof value !== "string") {
+    if (typeof value === "object") {
         if ("Success" in value || "SuccessV2" in value) {
             return "success";
         }
@@ -2499,7 +2499,7 @@ export function groupDetailsResponse(
 export function groupDetailsUpdatesResponse(
     value: GroupSelectedUpdatesResponse | CommunitySelectedChannelUpdatesResponse,
 ): GroupChatDetailsUpdatesResponse {
-    if (typeof value !== "string") {
+    if (typeof value === "object") {
         if ("Success" in value) {
             return {
                 kind: "success",
@@ -2542,7 +2542,7 @@ export function member(value: TGroupMember): Member {
 export function editMessageResponse(
     value: UserEditMessageResponse | GroupEditMessageResponse | CommunityEditMessageResponse,
 ): EditMessageResponse {
-    if (typeof value !== "string" && "Success" in value) {
+    if (typeof value === "object" && "Success" in value) {
         return "success";
     } else {
         console.warn("EditMessageResponse failed with: ", value);
@@ -2582,7 +2582,7 @@ export function leaveGroupResponse(
 export function deleteMessageResponse(
     value: GroupDeleteMessagesResponse | CommunityDeleteMessagesResponse,
 ): DeleteMessageResponse {
-    if (typeof value !== "string" && "Success" in value) {
+    if (typeof value === "object" && "Success" in value) {
         return "success";
     } else {
         console.warn("DeleteMessageResponse failed with: ", value);
@@ -2593,7 +2593,7 @@ export function deleteMessageResponse(
 export function deletedMessageResponse(
     value: GroupDeletedMessageResponse | CommunityDeletedMessageResponse,
 ): DeletedGroupMessageResponse {
-    if (typeof value !== "string" && "Success" in value) {
+    if (typeof value === "object" && "Success" in value) {
         return {
             kind: "success",
             content: messageContent(value.Success.content, "unknown"),
@@ -2607,7 +2607,7 @@ export function deletedMessageResponse(
 export function undeleteMessageResponse(
     value: GroupUndeleteMessagesResponse | CommunityUndeleteMessagesResponse,
 ): UndeleteMessageResponse {
-    if (typeof value !== "string" && "Success" in value) {
+    if (typeof value === "object" && "Success" in value) {
         if (value.Success.messages.length == 0) {
             return CommonResponses.failure();
         } else {
@@ -2669,7 +2669,7 @@ export function changeRoleResponse(
 export function registerPollVoteResponse(
     value: GroupRegisterPollVoteResponse | CommunityRegisterPollVoteResponse,
 ): RegisterPollVoteResponse {
-    if (typeof value !== "string" && "Success" in value) {
+    if (typeof value === "object" && "Success" in value) {
         return "success";
     } else {
         console.warn("RegisterPollVoteResponse failed with: ", value);
@@ -2691,7 +2691,7 @@ export function apiChatIdentifier(chatId: ChatIdentifier): TChat {
 }
 
 export function joinGroupResponse(value: LocalUserIndexJoinGroupResponse): JoinGroupResponse {
-    if (typeof value !== "string") {
+    if (typeof value === "object") {
         if ("Success" in value) {
             return { kind: "success", group: groupChatSummary(value.Success) };
         } else if ("AlreadyInGroupV2" in value) {
@@ -2715,7 +2715,7 @@ export function searchGroupChatResponse(
     value: GroupSearchMessagesResponse | CommunitySearchChannelResponse,
     chatId: MultiUserChatIdentifier,
 ): SearchGroupChatResponse {
-    if (typeof value !== "string" && "Success" in value) {
+    if (typeof value === "object" && "Success" in value) {
         return {
             kind: "success",
             matches: value.Success.matches.map((m) => messageMatch(m, chatId)),
@@ -2740,7 +2740,7 @@ export function messageMatch(value: TMessageMatch, chatId: ChatIdentifier): Mess
 export function inviteCodeResponse(
     value: GroupInviteCodeResponse | CommunityInviteCodeResponse,
 ): InviteCodeResponse {
-    if (typeof value !== "string") {
+    if (typeof value === "object") {
         if ("Success" in value) {
             return {
                 kind: "success",
@@ -2761,7 +2761,7 @@ export function inviteCodeResponse(
 export function enableOrResetInviteCodeResponse(
     value: GroupEnableInviteCodeResponse | CommunityEnableInviteCodeResponse,
 ): EnableInviteCodeResponse {
-    if (typeof value !== "string") {
+    if (typeof value === "object") {
         if ("Success" in value) {
             return {
                 kind: "success",
@@ -2780,7 +2780,7 @@ export function enableOrResetInviteCodeResponse(
 export function disableInviteCodeResponse(
     value: GroupDisableInviteCodeResponse | CommunityDisableInviteCodeResponse,
 ): DisableInviteCodeResponse {
-    if (typeof value !== "string") {
+    if (typeof value === "object") {
         if ("Success" in value) {
             return "success";
         } else if ("NotAuthorized" in value) {
@@ -2794,7 +2794,7 @@ export function disableInviteCodeResponse(
 export function registerProposalVoteResponse(
     value: GroupRegisterProposalVoteResponse | CommunityRegisterProposalVoteResponse,
 ): RegisterProposalVoteResponse {
-    if (typeof value !== "string") {
+    if (typeof value === "object") {
         if ("AlreadyVoted" in value) {
             return "already_voted";
         }
@@ -2939,7 +2939,7 @@ export function cancelP2PSwapResponse(
     if (value === "Success") {
         return { kind: "success" };
     }
-    if (typeof value !== "string" && "StatusError" in value) {
+    if (typeof value === "object" && "StatusError" in value) {
         return statusError(value.StatusError);
     }
     if (value === "ChatNotFound") return { kind: "chat_not_found" };
@@ -2960,7 +2960,7 @@ export function joinVideoCallResponse(
         | GroupSetVideoCallPresenceResponse
         | CommunitySetVideoCallPresenceResponse,
 ): JoinVideoCallResponse {
-    if (typeof value !== "string" && "Success") {
+    if (typeof value === "object" && "Success") {
         return "success";
     }
     if (value === "AlreadyEnded") {
@@ -2984,7 +2984,7 @@ export function apiVideoCallPresence(domain: VideoCallPresence): TVideoCallPrese
 export function setVideoCallPresence(
     value: GroupSetVideoCallPresenceResponse | CommunitySetVideoCallPresenceResponse,
 ): SetVideoCallPresenceResponse {
-    if (typeof value !== "string" && "Success" in value) return "success";
+    if (typeof value === "object" && "Success" in value) return "success";
     console.warn("SetVideoCallPresence failed with: ", value);
     return "failure";
 }
@@ -2992,7 +2992,7 @@ export function setVideoCallPresence(
 export function videoCallParticipantsResponse(
     value: GroupVideoCallParticipantsResponse | CommunityVideoCallParticipantsResponse,
 ): VideoCallParticipantsResponse {
-    if (typeof value !== "string" && "Success" in value) {
+    if (typeof value === "object" && "Success" in value) {
         return {
             kind: "success",
             participants: value.Success.participants.map(videoCallParticipant),

@@ -189,7 +189,7 @@ export function changeRoleResponse(
 }
 
 export function removeMemberResponse(value: CommunityRemoveMemberResponse): RemoveMemberResponse {
-    if (typeof value !== "string" && "Success" in value) {
+    if (typeof value === "object" && "Success" in value) {
         return "success";
     } else {
         console.warn("RemoveCommunityMember failed with", value);
@@ -200,7 +200,7 @@ export function removeMemberResponse(value: CommunityRemoveMemberResponse): Remo
 export function removeMemberFromChannelResponse(
     value: CommunityRemoveMemberFromChannelResponse,
 ): RemoveMemberResponse {
-    if (typeof value !== "string" && "Success" in value) {
+    if (typeof value === "object" && "Success" in value) {
         return "success";
     } else {
         console.warn("RemoveChannelMember failed with", value);
@@ -219,7 +219,7 @@ export function messageMatch(value: TMessageMatch): ChannelMessageMatch {
 }
 
 export function sendMessageResponse(value: CommunitySendMessageResponse): SendMessageResponse {
-    if (typeof value !== "string") {
+    if (typeof value === "object") {
         if ("Success" in value) {
             return {
                 kind: "success",
@@ -244,7 +244,7 @@ export function exploreChannelsResponse(
     value: CommunityExploreChannelsResponse,
     communityId: string,
 ): ExploreChannelsResponse {
-    if (typeof value !== "string" && "Success" in value) {
+    if (typeof value === "object" && "Success" in value) {
         return {
             kind: "success",
             matches: value.Success.matches.map((m) => channelMatch(m, communityId)),
@@ -276,7 +276,7 @@ export function communityChannelSummaryResponse(
     value: CommunityChannelSummaryResponse,
     communityId: string,
 ): ChannelSummaryResponse {
-    if (typeof value !== "string" && "Success") {
+    if (typeof value === "object" && "Success") {
         return communityChannelSummary(value.Success, communityId);
     } else {
         console.warn("CommunityChannelSummary failed with", value);
@@ -288,7 +288,7 @@ export function importGroupResponse(
     communityId: string,
     value: CommunityImportGroupResponse,
 ): ImportGroupResponse {
-    if (typeof value !== "string" && "Success" in value) {
+    if (typeof value === "object" && "Success" in value) {
         return {
             kind: "success",
             channelId: {
@@ -304,7 +304,7 @@ export function importGroupResponse(
 }
 
 export function summaryResponse(value: TCommunitySummaryResponse): CommunitySummaryResponse {
-    if (typeof value !== "string" && "Success" in value) {
+    if (typeof value === "object" && "Success" in value) {
         return communitySummary(value.Success);
     } else {
         console.warn("CommunitySummary failed with", value);
@@ -315,7 +315,7 @@ export function summaryResponse(value: TCommunitySummaryResponse): CommunitySumm
 export function summaryUpdatesResponse(
     value: TCommunitySummaryUpdatesResponse,
 ): CommunitySummaryUpdatesResponse {
-    if (typeof value !== "string" && "Success" in value) {
+    if (typeof value === "object" && "Success" in value) {
         return communitySummaryUpdates(value.Success);
     }
     if (value === "SuccessNoUpdates") {
@@ -416,7 +416,7 @@ export function groupMembershipUpdates(value: TGroupMembershipUpdates): GroupMem
 export function unblockUserResponse(
     value: CommunityUnblockUserResponse,
 ): UnblockCommunityUserResponse {
-    if (typeof value !== "string" && "Success" in value) {
+    if (typeof value === "object" && "Success" in value) {
         return CommonResponses.success();
     } else {
         console.warn("UnblockCommunityUser failed with", value);
@@ -498,7 +498,7 @@ export function apiOptionalCommunityPermissions(
 export function communityDetailsResponse(
     value: CommunitySelectedInitialResponse,
 ): CommunityDetailsResponse {
-    if (typeof value !== "string" && "Success" in value) {
+    if (typeof value === "object" && "Success" in value) {
         return {
             members: value.Success.members.map((m) => ({
                 role: memberRole(m.role),
@@ -533,7 +533,7 @@ export function userGroupDetails(value: TUserGroupDetails): [number, UserGroupDe
 export function communityDetailsUpdatesResponse(
     value: CommunitySelectedUpdatesResponse,
 ): CommunityDetailsUpdatesResponse {
-    if (typeof value !== "string") {
+    if (typeof value === "object") {
         if ("Success" in value) {
             return {
                 kind: "success",

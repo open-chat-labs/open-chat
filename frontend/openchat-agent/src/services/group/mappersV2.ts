@@ -302,7 +302,7 @@ function apiOptionalMessagePermissions(
 // }
 
 export function sendMessageResponse(value: GroupSendMessageResponse): SendMessageResponse {
-    if (typeof value !== "string") {
+    if (typeof value === "object") {
         if ("Success" in value) {
             return {
                 kind: "success",
@@ -365,7 +365,7 @@ export async function getMessagesByMessageIndexResponse(
     chatId: MultiUserChatIdentifier,
     latestKnownUpdatePreRequest: bigint | undefined,
 ): Promise<EventsResponse<Message>> {
-    if (typeof value !== "string") {
+    if (typeof value === "object") {
         if ("Success" in value) {
             await ensureReplicaIsUpToDate(principal, chatId, value.Success.chat_last_updated);
 
@@ -389,7 +389,7 @@ export async function getEventsResponse(
     chatId: ChatIdentifier,
     latestKnownUpdatePreRequest: bigint | undefined,
 ): Promise<EventsResponse<ChatEvent>> {
-    if (typeof value !== "string") {
+    if (typeof value === "object") {
         if ("Success" in value) {
             await ensureReplicaIsUpToDate(principal, chatId, value.Success.chat_last_updated);
 
