@@ -1,7 +1,7 @@
 use crate::jobs::import_groups::finalize_group_import;
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{mutate_state, read_state, Data};
+use crate::{read_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use community_canister::post_upgrade::Args;
@@ -9,7 +9,6 @@ use ic_cdk::post_upgrade;
 use instruction_counts_log::InstructionCountFunctionId;
 use stable_memory::get_reader;
 use tracing::info;
-use types::CanisterId;
 
 #[post_upgrade]
 #[trace]
@@ -31,15 +30,6 @@ fn post_upgrade(args: Args) {
     }
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
-
-    let windoge_community = CanisterId::from_text("ow6el-gyaaa-aaaar-av5na-cai").unwrap();
-    mutate_state(|state| {
-        if state.env.canister_id() == windoge_community {
-            for channel in state.data.channels.iter_mut() {
-                channel.chat.events.populate_search_index();
-            }
-        }
-    });
 
     read_state(|state| {
         let now = state.env.now();
