@@ -497,7 +497,7 @@ impl ChatEvents {
             Some(args.now),
             |message, _| Self::register_poll_vote_inner(message, &args),
         ) {
-            Ok((votes, existing_vote_removed)) => {
+            Ok((votes, existing_vote_removed, creator)) => {
                 match args.operation {
                     VoteOperation::RegisterVote => {
                         if !existing_vote_removed {
@@ -521,7 +521,7 @@ impl ChatEvents {
                     }
                 }
 
-                RegisterPollVoteResult::Success(votes)
+                RegisterPollVoteResult::Success(votes, creator)
             }
             Err(UpdateEventError::NoChange(result)) => result,
             Err(UpdateEventError::NotFound) => RegisterPollVoteResult::PollNotFound,
@@ -531,7 +531,7 @@ impl ChatEvents {
     fn register_poll_vote_inner(
         message: &mut MessageInternal,
         args: &RegisterPollVoteArgs,
-    ) -> Result<(PollVotes, bool), UpdateEventError<RegisterPollVoteResult>> {
+    ) -> Result<(PollVotes, bool, UserId), UpdateEventError<RegisterPollVoteResult>> {
         let MessageContentInternal::Poll(p) = &mut message.content else {
             return Err(UpdateEventError::NotFound);
         };
@@ -539,7 +539,9 @@ impl ChatEvents {
         let result = p.register_vote(args.user_id, args.option_index, args.operation);
 
         match result {
-            RegisterVoteResult::Success(existing_vote_removed) => Ok((p.votes(Some(args.user_id)), existing_vote_removed)),
+            RegisterVoteResult::Success(existing_vote_removed) => {
+                Ok((p.votes(Some(args.user_id)), existing_vote_removed, message.sender))
+            }
             RegisterVoteResult::SuccessNoChange => Err(UpdateEventError::NoChange(RegisterPollVoteResult::SuccessNoChange(
                 p.votes(Some(args.user_id)),
             ))),
@@ -2122,7 +2124,7 @@ impl ChatEvents {
             .and_then(|l| l.get_event(event_key, min_visible_event_index))
     }
 
-    fn message_internal(
+    pub fn message_internal(
         &self,
         min_visible_event_index: EventIndex,
         thread_root_message_index: Option<MessageIndex>,
@@ -2322,7 +2324,7 @@ pub struct RegisterPollVoteArgs {
 }
 
 pub enum RegisterPollVoteResult {
-    Success(PollVotes),
+    Success(PollVotes, UserId),
     SuccessNoChange(PollVotes),
     PollEnded,
     PollNotFound,

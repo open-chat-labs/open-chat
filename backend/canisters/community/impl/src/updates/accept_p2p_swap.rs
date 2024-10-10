@@ -35,11 +35,11 @@ async fn accept_p2p_swap(args: Args) -> Response {
 
             if new_achievement {
                 mutate_state(|state| {
-                    state.data.achievements.notify_user(
-                        user_id,
-                        vec![Achievement::AcceptedP2PSwapOffer],
-                        &mut state.data.fire_and_forget_handler,
-                    );
+                    state
+                        .data
+                        .notify_user_of_achievement(user_id, Achievement::AcceptedP2PSwapOffer);
+
+                    state.data.user_event_sync_queue.flush();
                 });
             }
 

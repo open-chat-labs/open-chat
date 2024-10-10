@@ -3,6 +3,8 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use user_canister::c2c_notify_achievement::{Response::*, *};
 
+// TODO: Remove this once groups/communities have been updated to use c2c_notify_group|community_canister_events
+
 #[update(msgpack = true)]
 #[trace]
 fn c2c_notify_achievement(args: Args) -> Response {

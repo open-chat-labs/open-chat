@@ -396,7 +396,7 @@ impl Data {
     }
 
     pub fn award_achievement(&mut self, achievement: Achievement, now: TimestampMillis) -> bool {
-        if self.achievements.insert(achievement.clone()) {
+        if self.achievements.insert(achievement) {
             let amount = achievement.chit_reward() as i32;
             self.chit_events.push(ChitEarned {
                 amount,
