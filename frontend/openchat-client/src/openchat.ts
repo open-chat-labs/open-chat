@@ -416,7 +416,6 @@ import type {
     ChitEventsResponse,
     GenerateChallengeResponse,
     ChallengeAttempt,
-    AccessGateWithLevel,
     PreprocessedGate,
     SubmitProofOfUniquePersonhoodResponse,
     Achievement,
@@ -428,6 +427,7 @@ import type {
     ChitLeaderboardResponse,
     AccessGateConfig,
     Verification,
+    AccessGateConfigWithLevel,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -4268,8 +4268,8 @@ export class OpenChat extends OpenChatAgentWorker {
     accessGatesForChat(
         chat: MultiUserChat,
         excludeInvited: boolean = false,
-    ): AccessGateWithLevel[] {
-        const gates: AccessGateWithLevel[] = [];
+    ): AccessGateConfigWithLevel[] {
+        const gateConfigs: AccessGateConfigWithLevel[] = [];
         const community =
             chat.kind === "channel" ? this.getCommunityForChannel(chat.id) : undefined;
         if (
@@ -4278,16 +4278,16 @@ export class OpenChat extends OpenChatAgentWorker {
             community.membership.role === "none" &&
             (!community.isInvited || !excludeInvited)
         ) {
-            gates.push({ level: "community", ...community.gateConfig.gate });
+            gateConfigs.push({ level: "community", ...community.gateConfig });
         }
         if (
             chat.gateConfig.gate.kind !== "no_gate" &&
             chat.membership.role === "none" &&
             (!chat.isInvited || !excludeInvited)
         ) {
-            gates.push({ level: chat.level, ...chat.gateConfig.gate });
+            gateConfigs.push({ level: chat.level, ...chat.gateConfig });
         }
-        return gates;
+        return gateConfigs;
     }
 
     private handleWebRtcMessage(msg: WebRtcMessage): void {

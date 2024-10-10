@@ -8,12 +8,15 @@
     import Translatable from "../../Translatable.svelte";
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import LinkAccounts from "../profile/LinkAccounts.svelte";
+    import AlertBox from "../../AlertBox.svelte";
+    import AccessGateExpiry from "./AccessGateExpiry.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     export let gate: CredentialGate;
     export let level: Level;
+    export let expiry: bigint | undefined;
 
     let failed = false;
     let verifying = false;
@@ -94,6 +97,11 @@
                     level,
                     true,
                 )} />
+            {#if expiry !== undefined}
+                <AlertBox>
+                    <AccessGateExpiry {expiry} />
+                </AlertBox>
+            {/if}
         {/if}
     </div>
     <div>

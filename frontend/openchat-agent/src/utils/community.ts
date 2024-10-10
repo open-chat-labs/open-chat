@@ -232,7 +232,7 @@ function mergeChannelUpdates(
                     c === undefined
                         ? channel.membership.mentions
                         : [...(c.membership?.mentions ?? []), ...channel.membership.mentions],
-                role: c?.membership?.role ?? channel.membership.role,
+                role: c?.membership?.myRole ?? channel.membership.role,
                 latestThreads: mergeThreads(
                     channel.membership.latestThreads,
                     c?.membership?.latestThreads ?? [],

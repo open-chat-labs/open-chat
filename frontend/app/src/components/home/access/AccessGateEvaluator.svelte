@@ -35,6 +35,7 @@
 
     export let gates: AccessGateWithLevel[];
     export let level: Level;
+    export let expiry: bigint | undefined;
 
     let result: IteratorResult<AccessGate>;
     let iterator = preprocessGates(gates, needsPreprocessing);
@@ -146,16 +147,19 @@
                     on:close={onClose}
                     on:credentialReceived={credentialReceived}
                     gate={currentGate}
+                    {expiry}
                     {level} />
             {:else if isUniquePersonGate(currentGate)}
                 <UniqueHumanGateEvaluator
                     on:credentialReceived={credentialReceived}
                     on:close={onClose}
+                    {expiry}
                     {level} />
             {:else if isPaymentGate(currentGate)}
                 <PaymentGateEvaluator
                     gate={currentGate}
                     {level}
+                    {expiry}
                     on:next={nextGate}
                     on:close={onClose} />
             {:else if isLifetimeDiamondGate(currentGate)}

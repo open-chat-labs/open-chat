@@ -1,6 +1,7 @@
 import type { Level } from "./structure";
 
 export type AccessGateWithLevel = { level: Level } & AccessGate;
+export type AccessGateConfigWithLevel = { level: Level } & AccessGateConfig;
 
 export type AccessGate = LeafGate | CompositeGate;
 

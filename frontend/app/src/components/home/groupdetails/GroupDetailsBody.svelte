@@ -138,7 +138,11 @@
                 <DisappearingMessagesSummary ttl={chat.eventsTTL} />
             {/if}
             <AccessGateSummary level={chat.level} editable={false} gate={chat.gateConfig.gate} />
-            <AccessGateExpiry expiry={chat.gateConfig.expiry} />
+            {#if chat.gateConfig.expiry !== undefined}
+                <div class="expiry">
+                    <AccessGateExpiry expiry={chat.gateConfig.expiry} />
+                </div>
+            {/if}
         </CollapsibleCard>
         {#if combinedRulesText.length > 0}
             <CollapsibleCard
@@ -250,5 +254,11 @@
                 margin-bottom: 0;
             }
         }
+    }
+
+    .expiry {
+        color: var(--txt-light);
+        @include font(book, normal, fs-90);
+        margin-top: $sp3;
     }
 </style>

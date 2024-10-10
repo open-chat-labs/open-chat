@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ONE_DAY, ONE_MONTH, ONE_WEEK, type OpenChat } from "openchat-client";
+    import { type OpenChat } from "openchat-client";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import { getContext } from "svelte";
@@ -43,18 +43,8 @@
 </script>
 
 {#if durationString !== undefined}
-    <div class="expiry">
-        <Translatable
-            resourceKey={i18nKey("access.evaluationIntervalSummary", {
-                interval: durationString,
-            })} />
-    </div>
+    <Translatable
+        resourceKey={i18nKey("access.evaluationIntervalSummary", {
+            interval: durationString,
+        })} />
 {/if}
-
-<style lang="scss">
-    .expiry {
-        margin-top: $sp3;
-        color: var(--txt-light);
-        @include font(light, normal, fs-90);
-    }
-</style>

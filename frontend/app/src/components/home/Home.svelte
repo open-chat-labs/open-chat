@@ -170,6 +170,7 @@
               group: MultiUserChat;
               select: boolean;
               gates: AccessGateWithLevel[];
+              expiry: bigint | undefined;
               level: Level;
           };
 
@@ -871,8 +872,21 @@
         const credentials = gateCheck?.credentials ?? [];
 
         if (gateCheck === undefined) {
-            const gates = client.accessGatesForChat(group, true);
+            const gateConfigs = client.accessGatesForChat(group, true);
+            const gates = gateConfigs.map((gc) => ({ level: gc.level, ...gc.gate }));
             const passed = client.doesUserMeetAccessGates(gates);
+
+            // TODO - this is not really right but I'm not sure how to deal with the possibility of
+            // having *two* expiries to deal with
+            const expiry = gateConfigs.reduce<bigint | undefined>((min, gc) => {
+                if (min === undefined) {
+                    return gc.expiry;
+                }
+                if (gc.expiry === undefined) {
+                    return min;
+                }
+                return BigInt(Math.min(Number(min), Number(gc.expiry)));
+            }, undefined);
 
             if (!passed) {
                 /**
@@ -885,6 +899,7 @@
                         group,
                         select,
                         gates,
+                        expiry,
                         level: group.level,
                     };
                     return Promise.resolve();
@@ -899,7 +914,8 @@
                     toastStore.showFailureToast(i18nKey("youreBlocked"));
                     joining = undefined;
                 } else if (resp.kind === "gate_check_failed") {
-                    const gates = client.accessGatesForChat(group);
+                    const gateConfigs = client.accessGatesForChat(group);
+                    const gates = gateConfigs.map((gc) => ({ level: gc.level, ...gc.gate }));
                     modal = { kind: "gate_check_failed", gates };
                 } else if (resp.kind !== "success") {
                     toastStore.showFailureToast(
@@ -1294,6 +1310,7 @@
             <AccessGateEvaluator
                 level={modal.level}
                 gates={modal.gates}
+                expiry={modal.expiry}
                 on:close={closeModal}
                 on:success={accessGatesEvaluated} />
         {:else if modal.kind === "new_group"}

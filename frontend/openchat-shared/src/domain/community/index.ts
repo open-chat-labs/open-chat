@@ -10,10 +10,9 @@ import type {
     ChannelIdentifier,
     GroupSubtype,
     EventWrapper,
-    GroupCanisterThreadDetails,
-    Mention,
     UpdatedEvent,
     CanisterNotFound,
+    GroupMembershipUpdates,
 } from "../chat";
 import type { DataContent } from "../data";
 import type { OptionUpdate } from "../optionUpdate";
@@ -235,17 +234,6 @@ export type CommunityCanisterChannelSummaryUpdates = {
 export type CommunityMembershipUpdates = {
     role: MemberRole | undefined;
     displayName: OptionUpdate<string>;
-    rulesAccepted: boolean | undefined;
-    lapsed: boolean | undefined;
-};
-
-export type GroupMembershipUpdates = {
-    role: MemberRole | undefined;
-    notificationsMuted: boolean | undefined;
-    latestThreads: GroupCanisterThreadDetails[];
-    unfollowedThreads: number[];
-    mentions: Mention[];
-    myMetrics: Metrics | undefined;
     rulesAccepted: boolean | undefined;
     lapsed: boolean | undefined;
 };

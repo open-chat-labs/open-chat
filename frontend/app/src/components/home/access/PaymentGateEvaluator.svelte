@@ -1,6 +1,6 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import type { PaymentGate, OpenChat, ResourceKey, Level } from "openchat-client";
+    import { type PaymentGate, type OpenChat, type ResourceKey, type Level } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
@@ -11,12 +11,15 @@
     import AccountInfo from "../AccountInfo.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Markdown from "../Markdown.svelte";
+    import AlertBox from "../../AlertBox.svelte";
+    import AccessGateExpiry from "./AccessGateExpiry.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     export let gate: PaymentGate;
     export let level: Level;
+    export let expiry: bigint | undefined;
 
     let error: ResourceKey | undefined = undefined;
     let balanceWithRefresh: BalanceWithRefresh;
@@ -89,6 +92,11 @@
     <p>
         <Markdown text={approvalMessage + " " + distributionMessage} />
     </p>
+    {#if expiry !== undefined}
+        <AlertBox>
+            <AccessGateExpiry {expiry} />
+        </AlertBox>
+    {/if}
     {#if errorMessage !== undefined}
         <div class="error">
             <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
