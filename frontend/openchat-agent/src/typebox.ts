@@ -2814,7 +2814,7 @@ export const CommunitySendMessageSuccessResult = Type.Object({
     event_index: EventIndex,
     message_index: MessageIndex,
     timestamp: Type.BigInt(),
-    expires_at: Type.Optional(Type.BigInt()),
+    expires_at: Type.Optional(Type.Union([Type.BigInt(), Type.Null()])),
 });
 
 export type CommunitySendMessageResponse = Static<typeof CommunitySendMessageResponse>;
@@ -3427,7 +3427,7 @@ export const GroupSendMessageSuccessResult = Type.Object({
     event_index: EventIndex,
     message_index: MessageIndex,
     timestamp: Type.BigInt(),
-    expires_at: Type.Optional(Type.BigInt()),
+    expires_at: Type.Optional(Type.Union([Type.BigInt(), Type.Null()])),
 });
 
 export type GroupSendMessageResponse = Static<typeof GroupSendMessageResponse>;
