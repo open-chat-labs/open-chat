@@ -15,3 +15,4 @@ pub mod referrals;
 pub mod streak;
 pub mod token_swaps;
 pub mod unread_message_index_map;
+pub mod user_canister_event_batch;

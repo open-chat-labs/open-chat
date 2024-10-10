@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add support for expiring access gates ([#6401](https://github.com/open-chat-labs/open-chat/pull/6401))
 - Add support for a message activity feed ([#6539](https://github.com/open-chat-labs/open-chat/pull/6539))
 
+### Changed
+
+- Use `GroupedTimerJobQueue` for pushing events between User canisters ([#6541](https://github.com/open-chat-labs/open-chat/pull/6539))
+
 ## [[2.0.1374](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1374-user)] - 2024-10-07
 
 ### Added

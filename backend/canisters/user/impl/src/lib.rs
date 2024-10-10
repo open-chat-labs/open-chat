@@ -7,6 +7,7 @@ use crate::model::hot_group_exclusions::HotGroupExclusions;
 use crate::model::p2p_swaps::P2PSwaps;
 use crate::model::pin_number::PinNumber;
 use crate::model::token_swaps::TokenSwaps;
+use crate::model::user_canister_event_batch::UserCanisterEventBatch;
 use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
@@ -22,12 +23,13 @@ use model::message_activity_events::MessageActivityEvents;
 use model::referrals::Referrals;
 use model::streak::Streak;
 use notifications_canister::c2c_push_notification;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_bytes::ByteBuf;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::ops::Deref;
 use std::time::Duration;
+use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     Achievement, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEarned, ChitEarnedReason, CommunityId,
     Cryptocurrency, Cycles, Document, Milliseconds, Notification, TimestampMillis, Timestamped, UniquePersonProof, UserId,
@@ -41,7 +43,6 @@ use utils::time::{today, tomorrow, DAY_IN_MS, MINUTE_IN_MS};
 mod crypto;
 mod governance_clients;
 mod guards;
-mod jobs;
 mod lifecycle;
 mod memory;
 mod model;
@@ -144,8 +145,7 @@ impl RuntimeState {
 
     pub fn push_user_canister_event(&mut self, canister_id: CanisterId, event: UserCanisterEvent) {
         if canister_id != OPENCHAT_BOT_USER_ID.into() && canister_id != self.env.canister_id() {
-            self.data.user_canister_events_queue.push(canister_id, event);
-            jobs::push_user_canister_events::try_run_now_for_canister(self, canister_id);
+            self.data.user_canister_events_queue.push(canister_id.into(), event);
         }
     }
 
@@ -236,7 +236,8 @@ struct Data {
     pub next_event_expiry: Option<TimestampMillis>,
     pub token_swaps: TokenSwaps,
     pub p2p_swaps: P2PSwaps,
-    pub user_canister_events_queue: CanisterEventSyncQueue<UserCanisterEvent>,
+    #[serde(deserialize_with = "deserialize_user_canister_events_queue")]
+    pub user_canister_events_queue: GroupedTimerJobQueue<UserCanisterEventBatch>,
     pub video_call_operators: Vec<Principal>,
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub pin_number: PinNumber,
@@ -253,6 +254,18 @@ struct Data {
     pub referrals: Referrals,
     #[serde(default)]
     pub message_activity_events: MessageActivityEvents,
+}
+
+fn deserialize_user_canister_events_queue<'de, D: Deserializer<'de>>(
+    d: D,
+) -> Result<GroupedTimerJobQueue<UserCanisterEventBatch>, D::Error> {
+    let previous: CanisterEventSyncQueue<UserCanisterEvent> = CanisterEventSyncQueue::deserialize(d)?;
+
+    let new = GroupedTimerJobQueue::new(10, false);
+    for (canister_id, events) in previous.take_all() {
+        new.push_many(canister_id.into(), events);
+    }
+    Ok(new)
 }
 
 impl Data {
@@ -303,7 +316,7 @@ impl Data {
             next_event_expiry: None,
             token_swaps: TokenSwaps::default(),
             p2p_swaps: P2PSwaps::default(),
-            user_canister_events_queue: CanisterEventSyncQueue::default(),
+            user_canister_events_queue: GroupedTimerJobQueue::new(10, false),
             video_call_operators,
             event_store_client: EventStoreClientBuilder::new(local_user_index_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
