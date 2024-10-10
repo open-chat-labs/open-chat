@@ -41,6 +41,7 @@
         userInfoOpen,
         renderPreviews,
         verificationSectionOpen,
+        accountsSectionOpen,
     } from "../../../stores/settings";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import Toggle from "../../Toggle.svelte";
@@ -60,6 +61,7 @@
     import VerifyHumanity from "./VerifyHumanity.svelte";
     import { uniquePersonGate } from "../../../utils/access";
     import ReferredUsersList from "./ReferredUsersList.svelte";
+    import LinkedAuthAccounts from "./LinkedAuthAccounts.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -396,6 +398,14 @@
                 </CollapsibleCard>
             </div>
         {/if}
+        <div class="linked-accounts">
+            <CollapsibleCard
+                on:toggle={accountsSectionOpen.toggle}
+                open={$accountsSectionOpen}
+                headerText={i18nKey("identity.linkedAccounts.section")}>
+                <LinkedAuthAccounts />
+            </CollapsibleCard>
+        </div>
         <div class="appearance">
             <CollapsibleCard
                 on:toggle={appearanceSectionOpen.toggle}

@@ -567,6 +567,8 @@
         "failure": {
             "alreadyLinked": "Siamo spiacenti ma sembra che l'identità Internet sia già collegata a un account OpenChat",
             "link": "Siamo spiacenti ma non siamo riusciti a collegare la tua identità Internet al tuo account OpenChat",
+            "login_approver": "Spiacenti, non siamo riusciti ad accedere al tuo attuale provider di autenticazione OpenChat",
+            "login_initiator": "Spiacenti, non siamo riusciti ad accedere al nuovo provider di autenticazione",
             "loginApprover": "Siamo spiacenti, non siamo riusciti ad accedere al tuo attuale provider di autenticazione OpenChat",
             "loginInitiator": "Siamo spiacenti, non siamo riusciti ad accedere all'identità Internet scelta",
             "pollingError": "Si è verificato un errore imprevisto durante l'attesa dell'accesso all'e-mail",
@@ -574,10 +576,19 @@
         },
         "humanityWarning": "Devi avere un'identità Internet associata al tuo account OpenChat per confermare la tua personalità unica. Se ti sei registrato utilizzando un altro provider dovrai creare e collegare un'identità Internet al tuo account OpenChat prima di procedere.",
         "link": "Collegamento",
+        "linkedAccounts": {
+            "currentAccount": "Attualmente connesso con questo preside",
+            "linkAdvice": "Per collegare un nuovo account Accedi al nuovo account che desideri collegare, quindi accedi al tuo account attuale e infine collega i due account.",
+            "linkAnother": "Collega un altro",
+            "section": "Account collegati",
+            "start": "Iniziare"
+        },
         "linkIdentity": "Collegamento Identità",
         "linkTwoIdentities": "Ora siamo pronti a collegare insieme le due identità.",
         "mismatch": "Questo non corrisponde all'entità con cui hai attualmente effettuato l'accesso. Sei sicuro di aver utilizzato lo stesso provider di autenticazione?",
         "proceed": "Procedere",
+        "signIn_approver": "Accedi con il provider di identità che stai utilizzando attualmente",
+        "signIn_initiator": "Accedi con il provider di identità che desideri collegare al tuo account OpenChat",
         "signInCurrent": "Accedi con il provider di identità che stai attualmente utilizzando",
         "signInNext": "Crea o accedi con l'identità Internet che desideri collegare al tuo account OpenChat",
         "tryAgain": "Riprova"

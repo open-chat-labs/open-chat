@@ -565,19 +565,30 @@
         "back": "Back",
         "credentialWarning": "You must have an Internet Identity associated with your OpenChat account to confirm your possession of the {name} credential. The credential issuer must be associated with the same Internet Identity. If you registered using another provider you will need to create and link an Internet Identity to your OpenChat account before proceeding.",
         "failure": {
-            "alreadyLinked": "Sorry but it looks like that Internet Identity is already linked to an OpenChat account",
-            "link": "Sorry but we were unable to link your Internet Identity to your OpenChat account",
+            "alreadyLinked": "Sorry but it looks like that principal is already linked to an OpenChat account",
+            "link": "Sorry but we were unable to link this principal to your OpenChat account",
+            "login_approver": "Sorry we were unable to sign into your current OpenChat authentication provider",
+            "login_initiator": "Sorry we were unable to sign into the new authentication provider",
             "loginApprover": "Sorry we were unable to sign into your current OpenChat authentication provider",
-            "loginInitiator": "Sorry we were unable to sign into your chosen Internet Identity",
+            "loginInitiator": "Sorry we were unable to sign into your chosen provider",
             "pollingError": "There was an unexpected error waiting for email signin",
             "principalMismatch": "It seems like you did not re-authenticate with the same provider that you are currently signed in with"
         },
         "humanityWarning": "You must have an Internet Identity associated with your OpenChat account to confirm your unique personhood. If you registered using another provider you will need to create and link an Internet Identity to your OpenChat account before proceeding.",
         "link": "Link",
+        "linkedAccounts": {
+            "currentAccount": "Currently signed in with this principal",
+            "linkAdvice": "To link a new account Sign into the new account you want to link, then sign into your current account and finally link the two accounts together.",
+            "linkAnother": "Link another",
+            "section": "Linked accounts",
+            "start": "Get started"
+        },
         "linkIdentity": "Link Identity",
         "linkTwoIdentities": "We are now ready to link the two identities together.",
         "mismatch": "This does not match the principal that you are currently signed in with. Are you sure you used the same authentication provider?",
         "proceed": "Proceed",
+        "signIn_approver": "Sign in with the identity provider that you are currently using",
+        "signIn_initiator": "Sign in with the identity provider that you would like to link to your OpenChat account",
         "signInCurrent": "Sign in with the identity provider that you are currently using",
         "signInNext": "Create or signin with the internet identity that you would like to link to your OpenChat account",
         "tryAgain": "Try again"
