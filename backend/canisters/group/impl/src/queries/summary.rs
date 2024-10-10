@@ -5,7 +5,7 @@ use canister_api_macros::query;
 use group_canister::c2c_summary::{Args as C2CArgs, Response as C2CResponse};
 use group_canister::summary::{Response::*, *};
 
-#[query(candid = true)]
+#[query(candid = true, msgpack = true)]
 fn summary(_: Args) -> Response {
     read_state(|state| summary_impl(None, state))
 }

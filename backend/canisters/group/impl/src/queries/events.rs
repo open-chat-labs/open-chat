@@ -7,7 +7,7 @@ use group_canister::c2c_events::Args as C2CArgs;
 use group_canister::events::{Response::*, *};
 use group_chat_core::EventsResult;
 
-#[query(candid = true)]
+#[query(candid = true, msgpack = true)]
 fn events(args: Args) -> Response {
     read_state(|state| events_impl(args, None, state))
 }
