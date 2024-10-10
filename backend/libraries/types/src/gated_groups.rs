@@ -77,7 +77,7 @@ impl From<AccessGateConfig> for AccessGateConfigInternal {
 impl From<AccessGateCombined> for AccessGateConfigInternal {
     fn from(value: AccessGateCombined) -> Self {
         match value {
-            AccessGateCombined::AccessGateConfig(access_gate_config) => access_gate_config,
+            AccessGateCombined::AccessGateConfig { gate, expiry } => AccessGateConfigInternal { gate, expiry },
             AccessGateCombined::Accessgate(access_gate) => access_gate.into(),
         }
     }
@@ -86,7 +86,7 @@ impl From<AccessGateCombined> for AccessGateConfigInternal {
 #[derive(Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum AccessGateCombined {
-    AccessGateConfig(AccessGateConfigInternal),
+    AccessGateConfig { gate: AccessGate, expiry: Option<Milliseconds> },
     Accessgate(AccessGate),
 }
 
