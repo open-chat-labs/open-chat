@@ -245,7 +245,7 @@ impl PendingCryptoTransaction {
     pub fn set_memo(mut self, memo: &[u8]) -> Self {
         match &mut self {
             PendingCryptoTransaction::NNS(t) => {
-                t.memo = Some(ic_ledger_types::Memo(u64_from_bytes(memo)));
+                t.memo = Some(u64_from_bytes(memo));
             }
             PendingCryptoTransaction::ICRC1(t) => {
                 assert!(memo.len() <= 32);
@@ -346,7 +346,7 @@ impl FailedCryptoTransaction {
 
 pub mod nns {
     use super::*;
-    use ic_ledger_types::{AccountIdentifier, BlockIndex, Memo};
+    use ic_ledger_types::AccountIdentifier;
 
     #[ts_export]
     #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -418,8 +418,7 @@ pub mod nns {
         pub amount: Tokens,
         pub to: UserOrAccount,
         pub fee: Option<Tokens>,
-        #[ts(as = "Option<u64>")]
-        pub memo: Option<Memo>,
+        pub memo: Option<u64>,
         pub created: TimestampNanos,
     }
 
@@ -433,12 +432,11 @@ pub mod nns {
         pub fee: Tokens,
         pub from: CryptoAccount,
         pub to: CryptoAccount,
-        #[ts(as = "u64")]
-        pub memo: Memo,
+        pub memo: u64,
         pub created: TimestampNanos,
         #[serde(default)]
         pub transaction_hash: TransactionHash,
-        pub block_index: BlockIndex,
+        pub block_index: u64,
     }
 
     #[ts_export]
@@ -451,8 +449,7 @@ pub mod nns {
         pub fee: Tokens,
         pub from: CryptoAccount,
         pub to: CryptoAccount,
-        #[ts(as = "u64")]
-        pub memo: Memo,
+        pub memo: u64,
         pub created: TimestampNanos,
         #[serde(default)]
         pub transaction_hash: TransactionHash,
@@ -716,7 +713,7 @@ impl From<icrc1::PendingCryptoTransaction> for nns::PendingCryptoTransaction {
                 &Subaccount(value.to.subaccount.unwrap_or_default()),
             )),
             fee: Some(Tokens::from_e8s(value.fee.try_into().unwrap())),
-            memo: value.memo.map(|m| ic_ledger_types::Memo(u64_from_bytes(m.0.as_slice()))),
+            memo: value.memo.map(|m| u64_from_bytes(m.0.as_slice())),
             created: value.created,
         }
     }
