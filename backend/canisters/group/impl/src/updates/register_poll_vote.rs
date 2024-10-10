@@ -23,6 +23,8 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Some(member) = state.data.get_member(caller) {
         if member.suspended.value {
             return UserSuspended;
+        } else if member.lapsed.value {
+            return UserLapsed;
         }
 
         let now = state.env.now();

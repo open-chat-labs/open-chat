@@ -426,6 +426,7 @@ import type {
     AirdropChannelDetails,
     ChitLeaderboardResponse,
     AuthenticationPrincipal,
+    Verification,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -5364,6 +5365,10 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => false);
     }
 
+    addRemoveSwapProvider(swapProvider: DexId, add: boolean): Promise<boolean> {
+        return this.sendRequest({ kind: "addRemoveSwapProvider", swapProvider, add });
+    }
+
     addMessageFilter(regex: string): Promise<boolean> {
         try {
             new RegExp(regex);
@@ -7437,12 +7442,12 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     setPinNumber(
-        currentPin: string | undefined,
+        verification: Verification,
         newPin: string | undefined,
     ): Promise<SetPinNumberResponse> {
         pinNumberFailureStore.set(undefined);
 
-        return this.sendRequest({ kind: "setPinNumber", currentPin, newPin }).then((resp) => {
+        return this.sendRequest({ kind: "setPinNumber", verification, newPin }).then((resp) => {
             if (resp.kind === "success") {
                 this.pinNumberRequiredStore.set(newPin !== undefined);
             } else if (

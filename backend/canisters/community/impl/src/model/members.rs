@@ -1,5 +1,6 @@
 use crate::model::user_groups::{UserGroup, UserGroups};
 use candid::Principal;
+use group_community_common::{Member, Members};
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
@@ -42,6 +43,7 @@ impl CommunityMembers {
             display_name: Timestamped::default(),
             referred_by: None,
             referrals: HashSet::new(),
+            lapsed: Timestamped::default(),
         };
 
         CommunityMembers {
@@ -84,6 +86,7 @@ impl CommunityMembers {
                         display_name: Timestamped::default(),
                         referred_by,
                         referrals: HashSet::new(),
+                        lapsed: Timestamped::default(),
                     };
                     e.insert(member.clone());
                     self.add_user_id(principal, user_id);
@@ -359,6 +362,26 @@ impl CommunityMembers {
     }
 }
 
+impl Members for CommunityMembers {
+    type Member = CommunityMemberInternal;
+
+    fn iter(&self) -> impl Iterator<Item = &CommunityMemberInternal> {
+        self.iter()
+    }
+
+    fn iter_mut(&mut self) -> impl Iterator<Item = &mut CommunityMemberInternal> {
+        self.iter_mut()
+    }
+
+    fn get_mut(&mut self, user_id: &UserId) -> Option<&mut CommunityMemberInternal> {
+        self.get_by_user_id_mut(user_id)
+    }
+
+    fn get(&self, user_id: &UserId) -> Option<&CommunityMemberInternal> {
+        self.get_by_user_id(user_id)
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct CommunityMemberInternal {
     pub user_id: UserId,
@@ -372,6 +395,8 @@ pub struct CommunityMemberInternal {
     display_name: Timestamped<Option<String>>,
     pub referred_by: Option<UserId>,
     pub referrals: HashSet<UserId>,
+    #[serde(default)]
+    pub lapsed: Timestamped<bool>,
 }
 
 impl CommunityMemberInternal {
@@ -409,6 +434,7 @@ impl CommunityMemberInternal {
             self.channels_removed.last().map(|c| c.timestamp).unwrap_or_default(),
             self.rules_accepted.as_ref().map(|r| r.timestamp).unwrap_or_default(),
             self.display_name.timestamp,
+            self.lapsed.timestamp,
         ]
         .into_iter()
         .max()
@@ -417,6 +443,24 @@ impl CommunityMemberInternal {
 
     pub fn display_name(&self) -> &Timestamped<Option<String>> {
         &self.display_name
+    }
+}
+
+impl Member for CommunityMemberInternal {
+    fn user_id(&self) -> UserId {
+        self.user_id
+    }
+
+    fn is_owner(&self) -> bool {
+        self.role.is_owner()
+    }
+
+    fn lapsed(&self) -> bool {
+        self.lapsed.value
+    }
+
+    fn set_lapsed(&mut self, lapsed: Timestamped<bool>) {
+        self.lapsed = lapsed;
     }
 }
 
@@ -443,25 +487,27 @@ pub struct ChangeRoleSuccessResult {
 }
 
 impl From<CommunityMemberInternal> for CommunityMember {
-    fn from(p: CommunityMemberInternal) -> Self {
+    fn from(m: CommunityMemberInternal) -> Self {
         CommunityMember {
-            user_id: p.user_id,
-            date_added: p.date_added,
-            role: p.role,
-            display_name: p.display_name.value,
-            referred_by: p.referred_by,
+            user_id: m.user_id,
+            date_added: m.date_added,
+            role: m.role,
+            display_name: m.display_name.value,
+            referred_by: m.referred_by,
+            lapsed: m.lapsed.value,
         }
     }
 }
 
 impl From<&CommunityMemberInternal> for CommunityMember {
-    fn from(p: &CommunityMemberInternal) -> Self {
+    fn from(m: &CommunityMemberInternal) -> Self {
         CommunityMember {
-            user_id: p.user_id,
-            date_added: p.date_added,
-            role: p.role,
-            display_name: p.display_name.value.clone(),
-            referred_by: p.referred_by,
+            user_id: m.user_id,
+            date_added: m.date_added,
+            role: m.role,
+            display_name: m.display_name.value.clone(),
+            referred_by: m.referred_by,
+            lapsed: m.lapsed.value,
         }
     }
 }

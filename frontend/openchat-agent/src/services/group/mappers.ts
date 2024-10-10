@@ -18,10 +18,6 @@ import type {
     ApiUnblockUserResponse,
 } from "./candid/idl";
 import type {
-    ApiEventsResponse as ApiCommunityEventsResponse,
-    ApiMessagesByMessageIndexResponse as ApiCommunityMessagesByMessageIndexResponse,
-} from "../community/candid/idl";
-import type {
     ChatEvent,
     EventsResponse,
     SendMessageResponse,
@@ -272,6 +268,9 @@ export function unblockUserResponse(candid: ApiUnblockUserResponse): UnblockUser
     if ("UserSuspended" in candid) {
         return "user_suspended";
     }
+    if ("UserLapsed" in candid) {
+        return "user_lapsed";
+    }
     if ("ChatFrozen" in candid) {
         return "chat_frozen";
     }
@@ -305,6 +304,9 @@ export function blockUserResponse(candid: ApiBlockUserResponse): BlockUserRespon
     }
     if ("UserSuspended" in candid) {
         return "user_suspended";
+    }
+    if ("UserLapsed" in candid) {
+        return "user_lapsed";
     }
     if ("ChatFrozen" in candid) {
         return "chat_frozen";
@@ -351,6 +353,9 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
     if ("UserSuspended" in candid) {
         return { kind: "user_suspended" };
     }
+    if ("UserLapsed" in candid) {
+        return { kind: "user_lapsed" };
+    }
     if ("ChatFrozen" in candid) {
         return { kind: "chat_frozen" };
     }
@@ -372,7 +377,7 @@ export function removeMemberResponse(candid: ApiRemoveParticipantResponse): Remo
 
 export async function getMessagesByMessageIndexResponse(
     principal: Principal,
-    candid: ApiMessagesByMessageIndexResponse | ApiCommunityMessagesByMessageIndexResponse,
+    candid: ApiMessagesByMessageIndexResponse,
     chatId: MultiUserChatIdentifier,
     latestKnownUpdatePreRequest: bigint | undefined,
 ): Promise<EventsResponse<Message>> {
@@ -387,6 +392,8 @@ export async function getMessagesByMessageIndexResponse(
         "UserNotInChannel" in candid ||
         "ChannelNotFound" in candid ||
         "UserNotInCommunity" in candid ||
+        "UserSuspended" in candid ||
+        "UserLapsed" in candid ||
         "ThreadMessageNotFound" in candid
     ) {
         return "events_failed";
@@ -406,7 +413,7 @@ export async function getMessagesByMessageIndexResponse(
 
 export async function getEventsResponse(
     principal: Principal,
-    candid: ApiEventsResponse | ApiCommunityEventsResponse,
+    candid: ApiEventsResponse,
     chatId: ChatIdentifier,
     latestKnownUpdatePreRequest: bigint | undefined,
 ): Promise<EventsResponse<ChatEvent>> {

@@ -24,8 +24,9 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Some(member) = state.data.members.get(caller) {
         if member.suspended.value {
             return UserSuspended;
+        } else if member.lapsed.value {
+            return UserLapsed;
         }
-
         let user_id = member.user_id;
         let new_achievement = args.new_achievement;
 
@@ -75,6 +76,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                 AddRemoveReactionResult::UserNotInGroup => UserNotInChannel,
                 AddRemoveReactionResult::NotAuthorized => NotAuthorized,
                 AddRemoveReactionResult::UserSuspended => UserSuspended,
+                AddRemoveReactionResult::UserLapsed => UserLapsed,
             }
         } else {
             ChannelNotFound

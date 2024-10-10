@@ -1,3 +1,4 @@
+use crate::token_swaps::swap_client::SwapSuccess;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::icrc1::Account;
@@ -12,8 +13,14 @@ pub struct TokenSwaps {
 }
 
 impl TokenSwaps {
-    pub fn push_new(&mut self, args: user_canister::swap_tokens::Args, now: TimestampMillis) -> TokenSwap {
-        let token_swap = TokenSwap::new(args, now);
+    pub fn push_new(
+        &mut self,
+        args: user_canister::swap_tokens::Args,
+        icrc2: bool,
+        auto_withdrawals: bool,
+        now: TimestampMillis,
+    ) -> TokenSwap {
+        let token_swap = TokenSwap::new(args, icrc2, auto_withdrawals, now);
         self.upsert(token_swap.clone());
         token_swap
     }
@@ -50,10 +57,16 @@ impl TokenSwaps {
 pub struct TokenSwap {
     pub args: user_canister::swap_tokens::Args,
     pub started: TimestampMillis,
+    #[serde(default)]
+    pub icrc2: bool,
+    #[serde(default)]
+    pub auto_withdrawals: bool,
     pub deposit_account: SwapSubtask<Account>,
-    pub transfer: SwapSubtask<u64>, // Block Index
+    #[serde(alias = "transfer")]
+    pub transfer_or_approval: SwapSubtask<u64>, // Block Index
     pub notified_dex_at: SwapSubtask,
-    pub amount_swapped: SwapSubtask<Result<u128, String>>,
+    #[serde(alias = "amount_swapped")]
+    pub swap_result: SwapSubtask<Result<SwapSuccess, String>>,
     pub withdrawn_from_dex_at: SwapSubtask<u128>,
     pub success: Option<Timestamped<bool>>,
 }
@@ -61,14 +74,16 @@ pub struct TokenSwap {
 type SwapSubtask<T = ()> = Option<Timestamped<Result<T, String>>>;
 
 impl TokenSwap {
-    pub fn new(args: user_canister::swap_tokens::Args, now: TimestampMillis) -> TokenSwap {
+    pub fn new(args: user_canister::swap_tokens::Args, icrc2: bool, auto_withdrawals: bool, now: TimestampMillis) -> TokenSwap {
         TokenSwap {
             args,
             started: now,
+            icrc2,
+            auto_withdrawals,
             deposit_account: None,
-            transfer: None,
+            transfer_or_approval: None,
             notified_dex_at: None,
-            amount_swapped: None,
+            swap_result: None,
             withdrawn_from_dex_at: None,
             success: None,
         }
@@ -79,10 +94,16 @@ impl From<TokenSwap> for TokenSwapStatus {
     fn from(value: TokenSwap) -> Self {
         TokenSwapStatus {
             started: value.started,
+            icrc2: value.icrc2,
+            auto_withdrawals: value.auto_withdrawals,
             deposit_account: value.deposit_account.map(|a| a.value.map(|_| ())),
-            transfer: value.transfer.map(|t| t.value),
+            transfer: value.transfer_or_approval.clone().map(|t| t.value),
+            transfer_or_approval: value.transfer_or_approval.map(|t| t.value),
             notify_dex: value.notified_dex_at.map(|t| t.value.map(|_| ())),
-            amount_swapped: value.amount_swapped.as_ref().map(|t| t.value.clone()),
+            amount_swapped: value
+                .swap_result
+                .as_ref()
+                .map(|t| t.value.clone().map(|r| r.map(|a| a.amount_out))),
             withdraw_from_dex: value.withdrawn_from_dex_at.map(|t| t.value),
             success: value.success.map(|t| t.value),
         }

@@ -5,7 +5,7 @@ use model::airdrops::{Airdrops, AirdropsMetrics};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use timer_job_queue::TimerJobQueue;
+use timer_job_queues::TimerJobQueue;
 use types::{BuildVersion, CanisterId, ChannelId, CommunityId, Cycles, Document, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
@@ -91,7 +91,7 @@ impl Data {
             avatar: Timestamped::default(),
             airdrops: Airdrops::default(),
             channels_joined: HashSet::default(),
-            pending_actions_queue: TimerJobQueue::new(10),
+            pending_actions_queue: TimerJobQueue::new(10, true),
             rng_seed: [0; 32],
             test_mode,
         }

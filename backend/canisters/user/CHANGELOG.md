@@ -8,9 +8,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Add support for expiring access gates ([#6401](https://github.com/open-chat-labs/open-chat/pull/6401))
+- Add support for a message activity feed ([#6539](https://github.com/open-chat-labs/open-chat/pull/6539))
+
+### Changed
+
+- Use `GroupedTimerJobQueue` for pushing events between User canisters ([#6541](https://github.com/open-chat-labs/open-chat/pull/6539))
+
+## [[2.0.1374](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1374-user)] - 2024-10-07
+
+### Added
+
 - Allow changing PIN number if signed in within last 5 minutes ([#6459](https://github.com/open-chat-labs/open-chat/pull/6459))
 - Re-add BTC methods now that we can support larger wasms ([#6462](https://github.com/open-chat-labs/open-chat/pull/6462))
 - Add MessagePack versions of all endpoints ([#6463](https://github.com/open-chat-labs/open-chat/pull/6463))
+- Integrate with KongSwap for performing token swaps ([#6508](https://github.com/open-chat-labs/open-chat/pull/6508))
 
 ### Changed
 
@@ -20,6 +32,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add serde default attribute in preparation for skipping serialization if default ([#6475](https://github.com/open-chat-labs/open-chat/pull/6475))
 - Refactor transfers to differentiate between transfers that failed due to c2c error vs transfer error ([#6500](https://github.com/open-chat-labs/open-chat/pull/6500))
 - Refactor ICPSwap and Sonic swap clients ([#6505](https://github.com/open-chat-labs/open-chat/pull/6505))
+- Award more daily CHIT when on 100 or 365 day streaks ([#6522](https://github.com/open-chat-labs/open-chat/pull/6522))
 
 ### Fixed
 

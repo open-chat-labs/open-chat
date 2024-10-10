@@ -134,6 +134,15 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
   });
+  const EmptyArgs = IDL.Record({});
+  const BtcAddressResponse = IDL.Variant({
+    'Success' : IDL.Text,
+    'InternalError' : IDL.Text,
+  });
+  const CachedBtcAddressResponse = IDL.Variant({
+    'NotFound' : IDL.Null,
+    'Success' : IDL.Text,
+  });
   const CancelMessageReminderArgs = IDL.Record({ 'reminder_id' : IDL.Nat64 });
   const CancelMessageReminderResponse = IDL.Variant({ 'Success' : IDL.Null });
   const CancelP2PSwapArgs = IDL.Record({
@@ -251,7 +260,6 @@ export const idlFactory = ({ IDL }) => {
       'events' : IDL.Vec(ChitEarned),
     }),
   });
-  const EmptyArgs = IDL.Record({});
   const ClaimDailyChitResponse = IDL.Variant({
     'AlreadyClaimed' : TimestampMillis,
     'Success' : IDL.Record({
@@ -465,6 +473,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const DeleteCommunityArgs = IDL.Record({ 'community_id' : CommunityId });
   const DeleteCommunityResponse = IDL.Variant({
+    'UserLapsed' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
@@ -630,6 +639,7 @@ export const idlFactory = ({ IDL }) => {
     'width' : IDL.Nat32,
   });
   const PrizeContent = IDL.Record({
+    'winner_count' : IDL.Nat32,
     'token' : Cryptocurrency,
     'end_date' : TimestampMillis,
     'prizes_remaining' : IDL.Nat32,
@@ -637,6 +647,7 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'diamond_only' : IDL.Bool,
     'winners' : IDL.Vec(UserId),
+    'user_is_winner' : IDL.Bool,
   });
   const CustomMessageContent = IDL.Record({
     'data' : IDL.Vec(IDL.Nat8),
@@ -1449,6 +1460,16 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
     'InternalError' : IDL.Text,
   });
+  const RetrieveBtcArgs = IDL.Record({
+    'address' : IDL.Text,
+    'amount' : IDL.Nat64,
+  });
+  const RetrieveBtcResponse = IDL.Variant({
+    'ApproveError' : IDL.Text,
+    'Success' : IDL.Nat64,
+    'RetrieveBtcError' : IDL.Text,
+    'InternalError' : IDL.Text,
+  });
   const NamedAccount = IDL.Record({ 'name' : IDL.Text, 'account' : IDL.Text });
   const SaveCryptoAccountResponse = IDL.Variant({
     'Invalid' : IDL.Null,
@@ -1559,6 +1580,7 @@ export const idlFactory = ({ IDL }) => {
     'TextTooLong' : IDL.Nat32,
     'P2PSwapSetUpFailed' : IDL.Text,
     'PinIncorrect' : Milliseconds,
+    'UserLapsed' : IDL.Null,
     'UserNotInChannel' : CompletedCryptoTransaction,
     'PinRequired' : IDL.Null,
     'ChannelNotFound' : CompletedCryptoTransaction,
@@ -1602,6 +1624,7 @@ export const idlFactory = ({ IDL }) => {
     'TextTooLong' : IDL.Nat32,
     'P2PSwapSetUpFailed' : IDL.Text,
     'PinIncorrect' : Milliseconds,
+    'UserLapsed' : IDL.Null,
     'PinRequired' : IDL.Null,
     'CallerNotInGroup' : IDL.Opt(CompletedCryptoTransaction),
     'ChatFrozen' : IDL.Null,
@@ -1667,9 +1690,20 @@ export const idlFactory = ({ IDL }) => {
     'ReminderDateInThePast' : IDL.Null,
     'UserSuspended' : IDL.Null,
   });
+  const SignedDelegation = IDL.Record({
+    'signature' : IDL.Vec(IDL.Nat8),
+    'delegation' : IDL.Record({
+      'pubkey' : IDL.Vec(IDL.Nat8),
+      'expiration' : TimestampNanos,
+    }),
+  });
   const SetPinNumberArgs = IDL.Record({
     'new' : IDL.Opt(IDL.Text),
-    'current' : IDL.Opt(IDL.Text),
+    'verification' : IDL.Variant({
+      'PIN' : IDL.Text,
+      'Delegation' : SignedDelegation,
+      'None' : IDL.Null,
+    }),
   });
   const SetPinNumberResponse = IDL.Variant({
     'TooManyFailedPinAttempts' : Milliseconds,
@@ -1678,6 +1712,8 @@ export const idlFactory = ({ IDL }) => {
     'TooShort' : FieldTooShortResult,
     'PinRequired' : IDL.Null,
     'Success' : IDL.Null,
+    'MalformedSignature' : IDL.Text,
+    'DelegationTooOld' : IDL.Null,
   });
   const StartVideoCallArgs = IDL.Record({
     'initiator_username' : IDL.Text,
@@ -1780,6 +1816,7 @@ export const idlFactory = ({ IDL }) => {
     'Retrying' : IDL.Text,
     'PinIncorrect' : Milliseconds,
     'TransferNotToMessageSender' : IDL.Null,
+    'UserLapsed' : IDL.Null,
     'PinRequired' : IDL.Null,
     'MessageNotFound' : IDL.Null,
     'ChatNotFound' : IDL.Null,
@@ -1984,6 +2021,12 @@ export const idlFactory = ({ IDL }) => {
       ),
     'bio' : IDL.Func([BioArgs], [BioResponse], ['query']),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
+    'btc_address' : IDL.Func([EmptyArgs], [BtcAddressResponse], []),
+    'cached_btc_address' : IDL.Func(
+        [EmptyArgs],
+        [CachedBtcAddressResponse],
+        ['query'],
+      ),
     'cancel_message_reminder' : IDL.Func(
         [CancelMessageReminderArgs],
         [CancelMessageReminderResponse],
@@ -2101,6 +2144,7 @@ export const idlFactory = ({ IDL }) => {
         [ReportMessageResponse],
         [],
       ),
+    'retrieve_btc' : IDL.Func([RetrieveBtcArgs], [RetrieveBtcResponse], []),
     'save_crypto_account' : IDL.Func(
         [NamedAccount],
         [SaveCryptoAccountResponse],

@@ -63,6 +63,8 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
 
     if member.suspended.value {
         return Err(UserSuspended);
+    } else if member.lapsed.value {
+        return Err(UserLapsed);
     }
 
     let min_visible_event_index = member.min_visible_event_index();

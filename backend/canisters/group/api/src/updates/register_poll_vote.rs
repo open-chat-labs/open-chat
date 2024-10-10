@@ -24,5 +24,6 @@ pub enum Response {
     UserCannotChangeVote,
     CallerNotInGroup,
     UserSuspended,
+    UserLapsed,
     ChatFrozen,
 }

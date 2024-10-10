@@ -214,6 +214,7 @@ import type {
     ExternalAchievement,
     ExternalAchievementsSuccess,
     ChitLeaderboardResponse,
+    Verification,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -3419,6 +3420,10 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.setDiamondMembershipFees(fees);
     }
 
+    addRemoveSwapProvider(swapProvider: DexId, add: boolean): Promise<boolean> {
+        return this._registryClient.addRemoveSwapProvider(swapProvider, add);
+    }
+
     addMessageFilter(regex: string): Promise<boolean> {
         return this._registryClient.addMessageFilter(regex);
     }
@@ -3632,10 +3637,10 @@ export class OpenChatAgent extends EventTarget {
     }
 
     setPinNumber(
-        currentPin: string | undefined,
+        verification: Verification,
         newPin: string | undefined,
     ): Promise<SetPinNumberResponse> {
-        return this.userClient.setPinNumber(currentPin, newPin);
+        return this.userClient.setPinNumber(verification, newPin);
     }
 
     claimDailyChit(): Promise<ClaimDailyChitResponse> {

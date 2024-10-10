@@ -71,6 +71,7 @@ pub mod happy_path {
                 permissions_v2: None,
                 events_ttl: None,
                 gate: None,
+                gate_config: None,
                 external_url: None,
             },
         );
@@ -104,7 +105,8 @@ pub mod happy_path {
                 messages_visible_to_non_members: None,
                 permissions_v2: None,
                 events_ttl: None,
-                gate: Some(gate),
+                gate: None,
+                gate_config: Some(gate.into()),
                 external_url: None,
             },
         );

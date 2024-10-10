@@ -104,7 +104,7 @@
             h2,
             h3,
             h4 {
-                color: var(--markdown-fg-bright);
+                color: "inherit";
             }
 
             h1,
@@ -249,7 +249,7 @@
         text-align: center;
         font-size: 3.5rem;
         line-height: 3.5rem;
-        color: var(--markdown-fg-bright);
+        color: "inherit";
         @include pop(300ms);
     }
 </style>

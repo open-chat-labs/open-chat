@@ -14,6 +14,7 @@ pub mod hasher;
 pub mod iterator_extensions;
 pub mod memory;
 pub mod mentions;
+pub mod min_heap;
 pub mod regular_jobs;
 pub mod text_validation;
 pub mod time;

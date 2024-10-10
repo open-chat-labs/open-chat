@@ -20,6 +20,7 @@ fn delete_user_groups_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
     match state.data.members.get(caller) {
         Some(m) if m.suspended.value => UserSuspended,
+        Some(m) if m.lapsed.value => UserLapsed,
         Some(m) if m.role.can_manage_user_groups(&state.data.permissions) => {
             let now = state.env.now();
 

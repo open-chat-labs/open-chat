@@ -58,6 +58,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
             AddRemoveReactionResult::UserNotInGroup => CallerNotInGroup,
             AddRemoveReactionResult::NotAuthorized => NotAuthorized,
             AddRemoveReactionResult::UserSuspended => UserSuspended,
+            AddRemoveReactionResult::UserLapsed => UserLapsed,
         }
     } else {
         CallerNotInGroup

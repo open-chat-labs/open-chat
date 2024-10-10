@@ -68,6 +68,7 @@ async fn prepare_airdrop(config: AirdropConfig, user_index_canister_id: Canister
             permissions_v2: None,
             events_ttl: OptionUpdate::NoChange,
             gate: OptionUpdate::SetToSome(AccessGate::Locked),
+            gate_config: OptionUpdate::SetToSome(AccessGate::Locked.into()),
             public: None,
             messages_visible_to_non_members: None,
             external_url: OptionUpdate::NoChange,
@@ -193,6 +194,6 @@ fn execute_airdrop(participants: Vec<(UserId, Chit)>, state: &mut RuntimeState) 
             })))
         }
 
-        state.data.pending_actions_queue.enqueue_many(actions.into_iter());
+        state.data.pending_actions_queue.push_many(actions.into_iter());
     }
 }

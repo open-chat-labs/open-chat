@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add support for expiring access gates ([#6401](https://github.com/open-chat-labs/open-chat/pull/6401))
+
+## [[2.0.1371](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1371-user_index)] - 2024-10-07
+
+### Changed
+
+- Clear wasm chunks once new wasm version has been set ([#6524](https://github.com/open-chat-labs/open-chat/pull/6524))
+
+### Removed
+
+- Remove unused fields from metrics ([#6525](https://github.com/open-chat-labs/open-chat/pull/6525))
+
 ## [[2.0.1368](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1368-user_index)] - 2024-10-02
 
 ### Added

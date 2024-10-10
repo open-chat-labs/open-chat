@@ -1,5 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 
 mod lifecycle;
 mod queries;
@@ -9,6 +10,7 @@ pub use lifecycle::*;
 pub use queries::*;
 pub use updates::*;
 
+#[ts_export(community)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum EventsResponse {
     Success(types::EventsResponse),
@@ -16,5 +18,7 @@ pub enum EventsResponse {
     UserNotInChannel,
     ChannelNotFound,
     ThreadNotFound,
+    UserSuspended,
+    UserLapsed,
     ReplicaNotUpToDateV2(types::TimestampMillis),
 }

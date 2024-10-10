@@ -56,5 +56,6 @@ fn initial_state_impl(state: &RuntimeState) -> Response {
         is_unique_person: state.data.unique_person_proof.is_some(),
         wallet_config: state.data.wallet_config.value.clone(),
         referrals: state.data.referrals.list(),
+        message_activity_summary: state.data.message_activity_events.summary(),
     })
 }

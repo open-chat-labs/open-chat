@@ -24,8 +24,10 @@ ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
+icrc_ledger_canister = { path = "../../../external_canisters/icrc_ledger/api" }
 icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_ledger/c2c_client" }
 icrc-ledger-types = { workspace = true }
+ledger_utils = { path = "../../../libraries/ledger_utils" }
 local_user_index_canister_c2c_client = { path = "../../local_user_index/c2c_client" }
 local_user_index_canister = { path = "../../local_user_index/api" }
 msgpack = { path = "../../../libraries/msgpack" }
@@ -35,7 +37,7 @@ serde_bytes = { workspace = true }
 serde_json = { workspace = true }
 stable_memory = { path = "../../../libraries/stable_memory" }
 testing = { path = "../../../libraries/testing" }
-timer_job_queue = { path = "../../../libraries/timer_job_queue" }
+timer_job_queues = { path = "../../../libraries/timer_job_queues" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_canister_c2c_client = { path = "../../user/c2c_client" }

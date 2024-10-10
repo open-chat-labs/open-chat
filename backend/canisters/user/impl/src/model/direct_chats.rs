@@ -14,14 +14,6 @@ pub struct DirectChats {
 }
 
 impl DirectChats {
-    pub fn set_user_type_for_oc_controlled_bots(&mut self, oc_controlled_bots: &[UserId]) {
-        for user_id in oc_controlled_bots {
-            if let Some(chat) = self.direct_chats.get_mut(&ChatId::from(*user_id)) {
-                chat.set_user_as_ic_controlled_bot();
-            }
-        }
-    }
-
     pub fn get(&self, chat_id: &ChatId) -> Option<&DirectChat> {
         self.direct_chats.get(chat_id)
     }

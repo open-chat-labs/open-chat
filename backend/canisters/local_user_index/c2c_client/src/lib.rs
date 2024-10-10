@@ -1,13 +1,16 @@
+use std::collections::HashMap;
+
 use candid::Principal;
 use canister_client::{generate_c2c_call, generate_candid_c2c_call};
 use ic_cdk::api::call::CallResult;
 use local_user_index_canister::*;
-use types::CanisterId;
+use types::{CanisterId, UserId};
 
 // Queries
 generate_c2c_call!(c2c_can_push_notifications);
 generate_c2c_call!(c2c_diamond_membership_expiry_dates);
 generate_c2c_call!(c2c_lookup_user);
+generate_c2c_call!(c2c_lookup_users);
 generate_c2c_call!(c2c_user_principals);
 generate_c2c_call!(chat_events);
 
@@ -59,4 +62,16 @@ pub async fn push_wasm_in_chunks(
         }
     }
     Ok(c2c_push_wasm_chunk::Response::Success)
+}
+
+pub async fn lookup_users(
+    user_ids: Vec<UserId>,
+    local_user_index_canister_id: CanisterId,
+) -> Result<HashMap<UserId, GlobalUser>, String> {
+    let args = c2c_lookup_users::Args { user_ids };
+
+    match crate::c2c_lookup_users(local_user_index_canister_id, &args).await {
+        Ok(c2c_lookup_users::Response::Success(users)) => Ok(users),
+        Err(error) => Err(format!("{error:?}")),
+    }
 }

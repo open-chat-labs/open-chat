@@ -83,6 +83,7 @@ import {
     SetBioResponse,
     GroupPermissions,
     PermissionRole,
+    CommunityPermissionRole,
     WithdrawCryptoResponse,
     SendMessageWithTransferToGroupArgs,
     SendMessageWithTransferToGroupResponse,
@@ -106,6 +107,7 @@ import {
     Icrc1Account,
     DeletedMessageResponse,
     AccessGate,
+    AccessGateConfig,
     AccessGateNonComposite,
     SetMessageReminderResponse,
     CustomMessageContent,
@@ -168,6 +170,7 @@ import {
     ReferralStatus,
     Referral,
     WalletConfig,
+    SignedDelegation,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -236,6 +239,7 @@ export {
     TotalPollVotes as ApiTotalPollVotes,
     GroupPermissions as ApiGroupPermissions,
     PermissionRole as ApiPermissionRole,
+    CommunityPermissionRole as ApiCommunityPermissionRole,
     WithdrawCryptoResponse as ApiWithdrawCryptoResponse,
     PrizeContent as ApiPrizeContent,
     PrizeWinnerContent as ApiPrizeWinnerContent,
@@ -268,6 +272,7 @@ export {
     SendMessageWithTransferToChannelArgs as ApiSendMessageWithTransferToChannelArgs,
     SendMessageWithTransferToChannelResponse as ApiSendMessageWithTransferToChannelResponse,
     AccessGate as ApiAccessGate,
+    AccessGateConfig as ApiAccessGateConfig,
     AccessGateNonComposite as ApiAccessGateNonComposite,
     SetMessageReminderResponse as ApiSetMessageReminderResponse,
     MessageReminder as ApiMessageReminder,
@@ -337,7 +342,8 @@ export {
     ClaimDailyChitResponse as ApiClaimDailyChitResponse,
     ReferralStatus as ApiReferralStatus,
     Referral as ApiReferral,
-    WalletConfig as ApiWalletConfig
+    WalletConfig as ApiWalletConfig,
+    SignedDelegation as ApiSignedDelegation,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

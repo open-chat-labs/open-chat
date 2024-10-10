@@ -31,22 +31,22 @@
         code = characters.map((char) => char.value || "");
     }
 
+    function getInputs() {
+        return ref?.querySelectorAll("input") ?? [];
+    }
+
     function focusNextInput(idx: number) {
-        const inputs = ref?.querySelectorAll("input");
-        if (inputs) {
-            const nextInput = inputs[idx + 1];
-            nextInput?.focus();
-        }
+        const inputs = getInputs();
+        const nextInput = inputs[idx + 1];
+        nextInput?.focus();
     }
 
     function clear(ev: CustomEvent<PincodeChar>) {
         if (!characters[ev.detail.idx].value) {
-            const inputs = ref?.querySelectorAll("input");
-            if (inputs) {
-                const prevInput = inputs[ev.detail.idx - 1];
-                prevInput?.focus();
-                prevInput?.select();
-            }
+            const inputs = getInputs();
+            const prevInput = inputs[ev.detail.idx - 1];
+            prevInput?.focus();
+            prevInput?.select();
         }
         characters = characters.map((char, i) => {
             if (i === ev.detail.idx) return { ...char, value: "" };

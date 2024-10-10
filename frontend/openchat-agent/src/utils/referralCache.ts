@@ -1,6 +1,6 @@
 import { deleteDB, openDB, type DBSchema, type IDBPDatabase } from "idb";
 
-const CACHE_VERSION = 1;
+const CACHE_VERSION = 2;
 
 let db: ReferralDatabase | undefined;
 

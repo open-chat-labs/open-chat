@@ -82,17 +82,15 @@ async fn accept_p2p_swap(args: Args) -> Response {
                     if let AcceptP2PSwapResult::Success(status) =
                         chat.events.accept_p2p_swap(my_user_id, None, args.message_id, index, now)
                     {
-                        state.data.user_canister_events_queue.push(
+                        let thread_root_message_id = args.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
+                        state.push_user_canister_event(
                             args.user_id.into(),
                             UserCanisterEvent::P2PSwapStatusChange(Box::new(P2PSwapStatusChange {
-                                thread_root_message_id: args
-                                    .thread_root_message_index
-                                    .map(|i| chat.main_message_index_to_id(i)),
+                                thread_root_message_id,
                                 message_id: args.message_id,
                                 status: P2PSwapStatus::Accepted(status),
                             })),
                         );
-                        crate::jobs::push_user_canister_events::start_job_if_required(state);
                         state
                             .data
                             .award_achievement_and_notify(Achievement::AcceptedP2PSwapOffer, now);
