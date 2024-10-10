@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1379](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1379-local_user_index)] - 2024-10-10
+
 ### Added
 
 - Add support for expiring access gates ([#6401](https://github.com/open-chat-labs/open-chat/pull/6401))

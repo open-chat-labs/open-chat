@@ -16,7 +16,7 @@ pub struct AccessGateConfig {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-// #[serde(from = "AccessGate")]
+#[serde(from = "AccessGate")]
 pub struct AccessGateConfigInternal {
     pub gate: AccessGate,
     pub expiry: Option<Milliseconds>,
