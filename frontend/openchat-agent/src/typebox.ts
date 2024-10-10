@@ -1338,7 +1338,6 @@ export const CommunityMembership = Type.Object({
     role: CommunityRole,
     rules_accepted: Type.Boolean(),
     display_name: Type.Optional(Type.String()),
-    lapsed: Type.Boolean(),
 });
 
 export type VerifiedCredentialArgumentValue = Static<typeof VerifiedCredentialArgumentValue>;
@@ -4300,7 +4299,6 @@ export const CommunityMember = Type.Object({
     role: CommunityRole,
     display_name: Type.Optional(Type.String()),
     referred_by: Type.Optional(UserId),
-    lapsed: Type.Boolean(),
 });
 
 export type User = Static<typeof User>;
@@ -5822,7 +5820,6 @@ export const GroupMember = Type.Object({
     user_id: UserId,
     date_added: Type.BigInt(),
     role: GroupRole,
-    lapsed: Type.Boolean(),
 });
 
 export type MessageUnpinned = Static<typeof MessageUnpinned>;
@@ -6020,7 +6017,6 @@ export const GroupMembership = Type.Object({
     my_metrics: ChatMetrics,
     latest_threads: Type.Array(GroupCanisterThreadDetails),
     rules_accepted: Type.Boolean(),
-    lapsed: Type.Boolean(),
 });
 
 export type OptionUpdateFrozenGroupInfo = Static<typeof OptionUpdateFrozenGroupInfo>;
