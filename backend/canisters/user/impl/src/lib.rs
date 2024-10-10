@@ -145,7 +145,7 @@ impl RuntimeState {
 
     pub fn push_user_canister_event(&mut self, canister_id: CanisterId, event: UserCanisterEvent) {
         if canister_id != OPENCHAT_BOT_USER_ID.into() && canister_id != self.env.canister_id() {
-            self.data.user_canister_events_queue.enqueue(canister_id.into(), event);
+            self.data.user_canister_events_queue.push(canister_id.into(), event);
         }
     }
 
@@ -263,7 +263,7 @@ fn deserialize_user_canister_events_queue<'de, D: Deserializer<'de>>(
 
     let new = GroupedTimerJobQueue::new(10, false);
     for (canister_id, events) in previous.take_all() {
-        new.enqueue_many(canister_id.into(), events);
+        new.push_many(canister_id.into(), events);
     }
     Ok(new)
 }

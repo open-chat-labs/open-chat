@@ -82,11 +82,11 @@ impl<T: TimerJobItemGroup + 'static> GroupedTimerJobQueue<T>
 where
     <T as TimerJobItemGroup>::Key: Clone + Ord,
 {
-    pub fn enqueue(&self, grouping_key: T::Key, item: T::Item) {
-        self.enqueue_many(grouping_key, vec![item])
+    pub fn push(&self, grouping_key: T::Key, item: T::Item) {
+        self.push_many(grouping_key, vec![item])
     }
 
-    pub fn enqueue_many(&self, grouping_key: T::Key, items: Vec<T::Item>) {
+    pub fn push_many(&self, grouping_key: T::Key, items: Vec<T::Item>) {
         let defer_processing = self.within_lock(|i| {
             match i.items_map.entry(grouping_key.clone()) {
                 Vacant(e) => {
@@ -133,18 +133,25 @@ where
                         }
 
                         let mut batch = T::new(grouping_key);
+                        let mut empty_batch = true;
                         let queue = e.get_mut();
-                        while !batch.is_full() {
+                        loop {
                             if let Some(next) = queue.pop_front() {
                                 batch.add(next);
+                                empty_batch = false;
                             } else {
+                                break;
+                            }
+                            if batch.is_full() {
                                 break;
                             }
                         }
                         if queue.is_empty() {
                             e.remove();
                         }
-                        batches.push(batch);
+                        if !empty_batch {
+                            batches.push(batch);
+                        }
                     }
                 } else {
                     break;

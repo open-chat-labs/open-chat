@@ -76,27 +76,28 @@ impl<T> TimerJobQueue<T>
 where
     T: TimerJobItem + 'static,
 {
-    pub fn enqueue(&self, item: T) {
-        self.enqueue_inner(|q| q.push_back(item));
+    pub fn push(&self, item: T) {
+        self.push_inner(|q| q.push_back(item));
     }
 
-    pub fn enqueue_front(&self, item: T) {
-        self.enqueue_inner(|q| q.push_front(item));
+    pub fn push_front(&self, item: T) {
+        self.push_inner(|q| q.push_front(item));
     }
 
-    pub fn enqueue_many(&self, items: impl Iterator<Item = T>) {
-        self.enqueue_inner(|q| {
+    pub fn push_many(&self, items: impl Iterator<Item = T>) {
+        self.push_inner(|q| {
             for item in items {
                 q.push_back(item);
             }
         });
     }
 
-    fn enqueue_inner<F: FnOnce(&mut VecDeque<T>)>(&self, f: F) {
+    fn push_inner<F: FnOnce(&mut VecDeque<T>)>(&self, f: F) {
         let defer_processing = self.within_lock(|i| {
             f(&mut i.queue);
             i.defer_processing
         });
+
         if defer_processing {
             self.set_timer_if_required();
         } else {
