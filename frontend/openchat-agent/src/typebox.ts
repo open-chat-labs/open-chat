@@ -306,6 +306,13 @@ export const UserManageFavouriteChatsResponse = Type.Union([
     Type.Literal("UserSuspended"),
 ]);
 
+export type UserMessageActivitySummary = Static<typeof UserMessageActivitySummary>;
+export const UserMessageActivitySummary = Type.Object({
+    read_up_to: Type.BigInt(),
+    latest_event: Type.BigInt(),
+    unread_count: Type.Number(),
+});
+
 export type UserMarkAchievementsSeenArgs = Static<typeof UserMarkAchievementsSeenArgs>;
 export const UserMarkAchievementsSeenArgs = Type.Object({
     last_seen: Type.BigInt(),
@@ -2614,6 +2621,29 @@ export const CommunityMessagesByMessageIndexArgs = Type.Object({
     latest_known_update: Type.Optional(Type.BigInt()),
 });
 
+export type CommunityRegisterProposalVoteV2Args = Static<
+    typeof CommunityRegisterProposalVoteV2Args
+>;
+export const CommunityRegisterProposalVoteV2Args = Type.Object({
+    channel_id: Type.BigInt(),
+    message_index: MessageIndex,
+    adopt: Type.Boolean(),
+});
+
+export type CommunityRegisterProposalVoteV2Response = Static<
+    typeof CommunityRegisterProposalVoteV2Response
+>;
+export const CommunityRegisterProposalVoteV2Response = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("UserNotInChannel"),
+    Type.Literal("ProposalMessageNotFound"),
+    Type.Literal("UserLapsed"),
+]);
+
 export type CommunityDeleteUserGroupsResponse = Static<typeof CommunityDeleteUserGroupsResponse>;
 export const CommunityDeleteUserGroupsResponse = Type.Union([
     Type.Literal("Success"),
@@ -2784,7 +2814,7 @@ export const CommunitySendMessageSuccessResult = Type.Object({
     event_index: EventIndex,
     message_index: MessageIndex,
     timestamp: Type.BigInt(),
-    expires_at: Type.Optional(Type.BigInt()),
+    expires_at: Type.Optional(Type.Union([Type.BigInt(), Type.Null()])),
 });
 
 export type CommunitySendMessageResponse = Static<typeof CommunitySendMessageResponse>;
@@ -3397,7 +3427,7 @@ export const GroupSendMessageSuccessResult = Type.Object({
     event_index: EventIndex,
     message_index: MessageIndex,
     timestamp: Type.BigInt(),
-    expires_at: Type.Optional(Type.BigInt()),
+    expires_at: Type.Optional(Type.Union([Type.BigInt(), Type.Null()])),
 });
 
 export type GroupSendMessageResponse = Static<typeof GroupSendMessageResponse>;
@@ -8692,6 +8722,7 @@ export const UserInitialStateSuccessResult = Type.Object({
     is_unique_person: Type.Boolean(),
     wallet_config: UserWalletConfig,
     referrals: Type.Array(UserReferral),
+    message_activity_summary: UserMessageActivitySummary,
 });
 
 export type UserInitialStateResponse = Static<typeof UserInitialStateResponse>;
@@ -8722,6 +8753,7 @@ export const UserUpdatesSuccessResult = Type.Object({
     is_unique_person: Type.Optional(Type.Boolean()),
     wallet_config: Type.Optional(UserWalletConfig),
     referrals: Type.Array(UserReferral),
+    message_activity_summary: Type.Optional(UserMessageActivitySummary),
 });
 
 export type UserUpdatesResponse = Static<typeof UserUpdatesResponse>;
