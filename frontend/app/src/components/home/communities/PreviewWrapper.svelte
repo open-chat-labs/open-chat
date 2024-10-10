@@ -3,7 +3,7 @@
     import Overlay from "../../Overlay.svelte";
     import { getContext, tick } from "svelte";
     import { toastStore } from "../../../stores/toast";
-    import type { AccessGateConfigWithLevel, GateCheckSucceeded, OpenChat } from "openchat-client";
+    import type { EnhancedAccessGate, GateCheckSucceeded, OpenChat } from "openchat-client";
     import { i18nKey } from "../../../i18n/i18n";
     import AccessGateEvaluator from "../access/AccessGateEvaluator.svelte";
 
@@ -25,8 +25,8 @@
     }
 
     let joiningCommunity = false;
-    let gateCheckFailed: AccessGateConfigWithLevel | undefined = undefined;
-    let checkingAccessGate: AccessGateConfigWithLevel | undefined = undefined;
+    let gateCheckFailed: EnhancedAccessGate | undefined = undefined;
+    let checkingAccessGate: EnhancedAccessGate | undefined = undefined;
 
     function joinCommunity() {
         if ($anonUser) {
@@ -46,9 +46,10 @@
     function doJoinCommunity(gateCheck: GateCheckSucceeded | undefined): Promise<void> {
         if (previewingCommunity && $selectedCommunity) {
             const credentials = gateCheck?.credentials ?? [];
-            const gateConfigWithLevel: AccessGateConfigWithLevel = {
-                ...$selectedCommunity.gateConfig,
+            const gateConfigWithLevel: EnhancedAccessGate = {
+                ...$selectedCommunity.gateConfig.gate,
                 level: "community",
+                expiry: $selectedCommunity.gateConfig.expiry,
             };
 
             if (gateCheck === undefined) {
@@ -99,8 +100,7 @@
     <Overlay dismissible on:close={closeModal}>
         <AccessGateEvaluator
             level={checkingAccessGate.level}
-            gates={[{ level: checkingAccessGate.level, ...checkingAccessGate.gate }]}
-            expiry={checkingAccessGate.expiry}
+            gates={[checkingAccessGate]}
             on:close={closeModal}
             on:success={accessGatesEvaluated} />
     </Overlay>
@@ -108,9 +108,7 @@
 
 {#if gateCheckFailed}
     <Overlay dismissible on:close={closeModal}>
-        <GateCheckFailed
-            on:close={closeModal}
-            gates={[{ level: gateCheckFailed.level, ...gateCheckFailed.gate }]} />
+        <GateCheckFailed on:close={closeModal} gates={[gateCheckFailed]} />
     </Overlay>
 {/if}
 

@@ -427,7 +427,7 @@ import type {
     ChitLeaderboardResponse,
     AccessGateConfig,
     Verification,
-    AccessGateConfigWithLevel,
+    EnhancedAccessGate,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -4265,11 +4265,8 @@ export class OpenChat extends OpenChatAgentWorker {
      * Note that we only return gates if we are not already a member.
      * We may also optionally exclude gates for things we are invited to in some scenariose
      */
-    accessGatesForChat(
-        chat: MultiUserChat,
-        excludeInvited: boolean = false,
-    ): AccessGateConfigWithLevel[] {
-        const gateConfigs: AccessGateConfigWithLevel[] = [];
+    accessGatesForChat(chat: MultiUserChat, excludeInvited: boolean = false): EnhancedAccessGate[] {
+        const gates: EnhancedAccessGate[] = [];
         const community =
             chat.kind === "channel" ? this.getCommunityForChannel(chat.id) : undefined;
         if (
@@ -4278,16 +4275,24 @@ export class OpenChat extends OpenChatAgentWorker {
             community.membership.role === "none" &&
             (!community.isInvited || !excludeInvited)
         ) {
-            gateConfigs.push({ level: "community", ...community.gateConfig });
+            gates.push({
+                level: "community",
+                expiry: community.gateConfig.expiry,
+                ...community.gateConfig.gate,
+            });
         }
         if (
             chat.gateConfig.gate.kind !== "no_gate" &&
             chat.membership.role === "none" &&
             (!chat.isInvited || !excludeInvited)
         ) {
-            gateConfigs.push({ level: chat.level, ...chat.gateConfig });
+            gates.push({
+                level: chat.level,
+                expiry: chat.gateConfig.expiry,
+                ...chat.gateConfig.gate,
+            });
         }
-        return gateConfigs;
+        return gates;
     }
 
     private handleWebRtcMessage(msg: WebRtcMessage): void {

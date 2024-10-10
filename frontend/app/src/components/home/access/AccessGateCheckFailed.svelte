@@ -1,12 +1,12 @@
 <script lang="ts">
     import ModalContent from "../../ModalContent.svelte";
-    import type { AccessGateWithLevel } from "openchat-client";
+    import type { EnhancedAccessGate } from "openchat-client";
     import AccessGateSummary from "./AccessGateSummary.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
 
-    export let gates: AccessGateWithLevel[];
+    export let gates: EnhancedAccessGate[];
 </script>
 
 <ModalContent fixedWidth={$mobileWidth} fitToContent={!$mobileWidth} on:close>

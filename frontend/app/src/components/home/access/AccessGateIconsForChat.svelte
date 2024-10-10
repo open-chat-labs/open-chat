@@ -1,8 +1,8 @@
 <script lang="ts">
-    import type { AccessGateWithLevel } from "openchat-client";
+    import type { EnhancedAccessGate } from "openchat-client";
     import AccessGateIcon from "./AccessGateIcon.svelte";
 
-    export let gates: AccessGateWithLevel[];
+    export let gates: EnhancedAccessGate[];
 </script>
 
 {#if gates.length > 0}

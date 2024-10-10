@@ -17,9 +17,8 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    export let gate: PaymentGate;
+    export let gate: PaymentGate & { expiry: bigint | undefined };
     export let level: Level;
-    export let expiry: bigint | undefined;
 
     let error: ResourceKey | undefined = undefined;
     let balanceWithRefresh: BalanceWithRefresh;
@@ -92,9 +91,9 @@
     <p>
         <Markdown text={approvalMessage + " " + distributionMessage} />
     </p>
-    {#if expiry !== undefined}
+    {#if gate.expiry !== undefined}
         <AlertBox>
-            <AccessGateExpiry {expiry} />
+            <AccessGateExpiry expiry={gate.expiry} />
         </AlertBox>
     {/if}
     {#if errorMessage !== undefined}

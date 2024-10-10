@@ -20,7 +20,7 @@
     $: isFrozen = client.isFrozen(chat.id);
     $: selectedCommunity = client.selectedCommunity;
     $: previewingCommunity = $selectedCommunity?.membership.role === "none";
-    $: gates = client.accessGatesForChat(chat).map((gc) => ({ level: gc.level, ...gc.gate }));
+    $: gates = client.accessGatesForChat(chat);
     $: locked = gates.some((g) => isLocked(g));
 
     $: console.log("Lapsed: ", lapsed);

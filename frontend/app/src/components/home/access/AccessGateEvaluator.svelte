@@ -11,7 +11,7 @@
         OpenChat,
         shouldPreprocessGate,
         type AccessGate,
-        type AccessGateWithLevel,
+        type EnhancedAccessGate,
         type LeafGate,
         type Level,
     } from "openchat-client";
@@ -33,13 +33,12 @@
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
-    export let gates: AccessGateWithLevel[];
+    export let gates: EnhancedAccessGate[];
     export let level: Level;
-    export let expiry: bigint | undefined;
 
-    let result: IteratorResult<AccessGate>;
+    let result: IteratorResult<EnhancedAccessGate>;
     let iterator = preprocessGates(gates, needsPreprocessing);
-    let currentGate: AccessGate | undefined;
+    let currentGate: EnhancedAccessGate | undefined;
     let credentials: string[] = [];
     let optionalGatesByIndex: Map<number, LeafGate> = new Map();
     $: optionalInvalid =
@@ -48,7 +47,7 @@
 
     onMount(nextGate);
 
-    function needsPreprocessing(gate: AccessGate): boolean {
+    function needsPreprocessing(gate: EnhancedAccessGate): boolean {
         if (isCompositeGate(gate) && gate.operator === "or") {
             return gate.gates.some((g) => shouldPreprocessGate(g));
         } else {
@@ -76,15 +75,18 @@
     }
 
     function* preprocessGates(
-        gates: AccessGate[],
-        predicate: (gate: AccessGate) => boolean,
-    ): Generator<AccessGate> {
+        gates: EnhancedAccessGate[],
+        predicate: (gate: EnhancedAccessGate) => boolean,
+    ): Generator<EnhancedAccessGate> {
         for (const gate of gates) {
             if (predicate(gate)) {
                 yield gate;
             }
             if (isCompositeGate(gate)) {
-                yield* preprocessGates(gate.gates, predicate);
+                yield* preprocessGates(
+                    gate.gates.map((g) => ({ ...g, level: gate.level, expiry: gate.expiry })),
+                    predicate,
+                );
             }
         }
     }
@@ -147,19 +149,17 @@
                     on:close={onClose}
                     on:credentialReceived={credentialReceived}
                     gate={currentGate}
-                    {expiry}
                     {level} />
             {:else if isUniquePersonGate(currentGate)}
                 <UniqueHumanGateEvaluator
                     on:credentialReceived={credentialReceived}
                     on:close={onClose}
-                    {expiry}
+                    expiry={currentGate.expiry}
                     {level} />
             {:else if isPaymentGate(currentGate)}
                 <PaymentGateEvaluator
                     gate={currentGate}
                     {level}
-                    {expiry}
                     on:next={nextGate}
                     on:close={onClose} />
             {:else if isLifetimeDiamondGate(currentGate)}

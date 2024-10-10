@@ -14,9 +14,8 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    export let gate: CredentialGate;
+    export let gate: CredentialGate & { expiry: bigint | undefined };
     export let level: Level;
-    export let expiry: bigint | undefined;
 
     let failed = false;
     let verifying = false;
@@ -97,9 +96,9 @@
                     level,
                     true,
                 )} />
-            {#if expiry !== undefined}
+            {#if gate.expiry !== undefined}
                 <AlertBox>
-                    <AccessGateExpiry {expiry} />
+                    <AccessGateExpiry expiry={gate.expiry} />
                 </AlertBox>
             {/if}
         {/if}
