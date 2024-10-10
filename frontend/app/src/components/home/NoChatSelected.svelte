@@ -14,7 +14,7 @@
     $: chatListScope = client.chatListScope;
     $: selectedCommunity = client.selectedCommunity;
     $: previewingCommunity = $selectedCommunity?.membership.role === "none";
-    $: locked = isLocked($selectedCommunity?.gate);
+    $: locked = isLocked($selectedCommunity?.gateConfig?.gate);
 
     $: [title, message] = getMessageForScope($chatListScope.kind);
 
@@ -54,7 +54,7 @@
                 language={$selectedCommunity.primaryLanguage}
                 flags={0}
                 header
-                gate={$selectedCommunity.gate}
+                gate={$selectedCommunity.gateConfig.gate}
                 avatar={$selectedCommunity.avatar} />
             <div class="join">
                 <Button

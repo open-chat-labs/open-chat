@@ -69,7 +69,7 @@
             banner={community.banner}
             avatar={community.avatar}
             memberCount={community.memberCount}
-            gate={community.gate}
+            gate={community.gateConfig.gate}
             language={community.primaryLanguage}
             flags={0}
             channelCount={0}

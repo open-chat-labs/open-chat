@@ -143,7 +143,7 @@
     $: privateCommunityPreview =
         $selectedCommunity !== undefined &&
         $selectedCommunity.membership.role === "none" &&
-        (!$selectedCommunity.public || $selectedCommunity.gate.kind !== "no_gate");
+        (!$selectedCommunity.public || $selectedCommunity.gateConfig.gate.kind !== "no_gate");
 
     $: privatePreview = privateCommunityPreview || privateChatPreview;
     $: isEmptyChat = chat.latestEventIndex <= 0 || privatePreview;
