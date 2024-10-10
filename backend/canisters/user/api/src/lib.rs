@@ -3,9 +3,9 @@ use chat_events::MessageContentInternal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
-    CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration,
-    EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds, P2PSwapStatus, PhoneNumber,
-    Reaction, ReferralStatus, SuspensionDuration, TimestampMillis, UniquePersonProof, User, UserId,
+    Achievement, CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId, Cryptocurrency,
+    DiamondMembershipPlanDuration, EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
+    P2PSwapStatus, PhoneNumber, Reaction, ReferralStatus, SuspensionDuration, TimestampMillis, UniquePersonProof, User, UserId,
 };
 
 mod lifecycle;
@@ -406,9 +406,11 @@ pub struct MessageActivitySummary {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum CommunityCanisterEvent {
     MessageActivity(MessageActivityEvent),
+    Achievement(Achievement),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum GroupCanisterEvent {
     MessageActivity(MessageActivityEvent),
+    Achievement(Achievement),
 }

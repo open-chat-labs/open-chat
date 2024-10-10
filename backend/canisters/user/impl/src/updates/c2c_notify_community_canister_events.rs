@@ -14,16 +14,21 @@ fn c2c_notify_community_canister_events(args: Args) -> Response {
 }
 
 fn c2c_notify_community_canister_events_impl(args: Args, state: &mut RuntimeState) -> Response {
-    for event in args.events {
-        process_event(event, state);
-    }
-    Success
-}
-
-fn process_event(event: CommunityCanisterEvent, state: &mut RuntimeState) {
     let now = state.env.now();
+    let mut awarded_achievement = false;
 
-    match event {
-        CommunityCanisterEvent::MessageActivity(event) => state.data.push_message_activity(event, now),
+    for event in args.events {
+        match event {
+            CommunityCanisterEvent::MessageActivity(event) => state.data.push_message_activity(event, now),
+            CommunityCanisterEvent::Achievement(achievement) => {
+                awarded_achievement |= state.data.award_achievement(achievement, now);
+            }
+        }
     }
+
+    if awarded_achievement {
+        state.data.notify_user_index_of_chit(now);
+    }
+
+    Success
 }
