@@ -2,11 +2,12 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::{Reader, TipMessageArgs};
+use chat_events::TipMessageArgs;
 use group_canister::c2c_tip_message::{Response::*, *};
 use group_chat_core::TipMessageResult;
 use ledger_utils::format_crypto_amount_with_symbol;
-use types::{Achievement, EventIndex, GroupMessageTipped, Notification};
+use types::{Achievement, Chat, EventIndex, GroupMessageTipped, Notification};
+use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
 #[update(msgpack = true)]
 #[trace]
@@ -41,23 +42,20 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
         .tip_message(tip_message_args, &mut state.data.event_store_client)
     {
         TipMessageResult::Success => {
-            if let Some((message_index, message_event_index)) = state
-                .data
-                .chat
-                .events
-                .events_reader(EventIndex::default(), args.thread_root_message_index)
-                .and_then(|r| {
-                    r.message_event_internal(args.message_id.into())
-                        .map(|e| (e.event.message_index, e.index))
-                })
-            {
+            if let Some((message, event_index)) = state.data.chat.events.message_internal(
+                EventIndex::default(),
+                args.thread_root_message_index,
+                args.message_id.into(),
+            ) {
+                let chat_id = state.env.canister_id().into();
+
                 state.push_notification(
                     vec![args.recipient],
                     Notification::GroupMessageTipped(GroupMessageTipped {
-                        chat_id: state.env.canister_id().into(),
+                        chat_id,
                         thread_root_message_index: args.thread_root_message_index,
-                        message_index,
-                        message_event_index,
+                        message_index: message.message_index,
+                        message_event_index: event_index,
                         group_name: state.data.chat.name.value.clone(),
                         tipped_by: user_id,
                         tipped_by_name: args.username,
@@ -66,13 +64,23 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                         group_avatar_id: state.data.chat.avatar.as_ref().map(|a| a.id),
                     }),
                 );
-            }
 
-            state.data.achievements.notify_user(
-                args.recipient,
-                vec![Achievement::HadMessageTipped],
-                &mut state.data.fire_and_forget_handler,
-            );
+                state
+                    .data
+                    .notify_user_of_achievement(args.recipient, Achievement::HadMessageTipped);
+
+                state.data.user_event_sync_queue.push(
+                    args.recipient,
+                    GroupCanisterEvent::MessageActivity(MessageActivityEvent {
+                        chat: Chat::Group(chat_id),
+                        thread_root_message_index: args.thread_root_message_index,
+                        message_index: message.message_index,
+                        activity: MessageActivity::Tip,
+                        timestamp: now,
+                        user_id,
+                    }),
+                );
+            }
 
             handle_activity_notification(state);
             Success

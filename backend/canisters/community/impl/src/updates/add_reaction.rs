@@ -2,10 +2,10 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::Reader;
 use community_canister::add_reaction::{Response::*, *};
-use group_chat_core::{AddRemoveReactionResult, GroupChatCore};
-use types::{Achievement, ChannelReactionAddedNotification, EventIndex, EventWrapper, Message, Notification, UserId};
+use group_chat_core::AddRemoveReactionResult;
+use types::{Achievement, ChannelReactionAddedNotification, Chat, EventIndex, Notification};
+use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
 #[update(candid = true, msgpack = true)]
 #[trace]
@@ -41,33 +41,63 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                 &mut state.data.event_store_client,
             ) {
                 AddRemoveReactionResult::Success(sender) => {
-                    if let Some(message) = should_push_notification(&args, user_id, &channel.chat) {
-                        push_notification(
-                            args,
-                            user_id,
-                            channel.chat.name.value.clone(),
-                            channel.chat.avatar.as_ref().map(|d| d.id),
-                            message,
-                            member.display_name().value.clone(),
-                            state,
+                    if let Some((message, event_index)) = channel.chat.events.message_internal(
+                        EventIndex::default(),
+                        args.thread_root_message_index,
+                        args.message_id.into(),
+                    ) {
+                        let community_id = state.env.canister_id().into();
+
+                        state.data.user_event_sync_queue.push(
+                            message.sender,
+                            CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
+                                chat: Chat::Channel(community_id, channel.id),
+                                thread_root_message_index: args.thread_root_message_index,
+                                message_index: message.message_index,
+                                activity: MessageActivity::Reaction,
+                                timestamp: now,
+                                user_id,
+                            }),
                         );
+
+                        if message.sender != user_id {
+                            let notifications_muted = channel
+                                .chat
+                                .members
+                                .get(&message.sender)
+                                .map_or(true, |m| m.notifications_muted.value || m.suspended.value);
+
+                            if !notifications_muted {
+                                let notification = Notification::ChannelReactionAdded(ChannelReactionAddedNotification {
+                                    community_id,
+                                    channel_id: args.channel_id,
+                                    thread_root_message_index: args.thread_root_message_index,
+                                    message_index: message.message_index,
+                                    message_event_index: event_index,
+                                    community_name: state.data.name.clone(),
+                                    channel_name: channel.chat.name.value.clone(),
+                                    added_by: user_id,
+                                    added_by_name: args.username,
+                                    added_by_display_name: member.display_name().value.clone().or(args.display_name),
+                                    reaction: args.reaction,
+                                    community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
+                                    channel_avatar_id: channel.chat.avatar.as_ref().map(|d| d.id),
+                                });
+
+                                state.push_notification(vec![message.sender], notification);
+                            }
+                        }
                     }
-                    handle_activity_notification(state);
 
                     if new_achievement {
-                        state.data.achievements.notify_user(
-                            user_id,
-                            vec![Achievement::ReactedToMessage],
-                            &mut state.data.fire_and_forget_handler,
-                        );
+                        state.data.notify_user_of_achievement(user_id, Achievement::ReactedToMessage);
                     }
 
-                    state.data.achievements.notify_user(
-                        sender,
-                        vec![Achievement::HadMessageReactedTo],
-                        &mut state.data.fire_and_forget_handler,
-                    );
+                    state
+                        .data
+                        .notify_user_of_achievement(sender, Achievement::HadMessageReactedTo);
 
+                    handle_activity_notification(state);
                     Success
                 }
                 AddRemoveReactionResult::NoChange => NoChange,
@@ -84,57 +114,4 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
     } else {
         UserNotInCommunity
     }
-}
-
-fn should_push_notification(args: &Args, user_id: UserId, chat: &GroupChatCore) -> Option<EventWrapper<Message>> {
-    let message = chat
-        .events
-        .events_reader(EventIndex::default(), args.thread_root_message_index)
-        // We pass in `None` in place of `my_user_id` because we don't want to hydrate
-        // the notification with data for the current user (eg. their poll votes).
-        .and_then(|events_reader| events_reader.message_event(args.message_id.into(), None))?;
-
-    let sender = message.event.sender;
-
-    if sender != user_id {
-        let notifications_muted = chat
-            .members
-            .get(&sender)
-            .map_or(true, |m| m.notifications_muted.value || m.suspended.value);
-
-        if !notifications_muted {
-            return Some(message);
-        }
-    }
-
-    None
-}
-
-fn push_notification(
-    args: Args,
-    user_id: UserId,
-    channel_name: String,
-    channel_avatar_id: Option<u128>,
-    message_event: EventWrapper<Message>,
-    member_display_name: Option<String>,
-    state: &mut RuntimeState,
-) {
-    let recipient = message_event.event.sender;
-    let notification = Notification::ChannelReactionAdded(ChannelReactionAddedNotification {
-        community_id: state.env.canister_id().into(),
-        channel_id: args.channel_id,
-        thread_root_message_index: args.thread_root_message_index,
-        message_index: message_event.event.message_index,
-        message_event_index: message_event.index,
-        community_name: state.data.name.clone(),
-        channel_name,
-        added_by: user_id,
-        added_by_name: args.username,
-        added_by_display_name: member_display_name.or(args.display_name),
-        reaction: args.reaction,
-        community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
-        channel_avatar_id,
-    });
-
-    state.push_notification(vec![recipient], notification);
 }

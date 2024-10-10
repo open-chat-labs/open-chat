@@ -14,9 +14,10 @@ use lazy_static::lazy_static;
 use regex_lite::Regex;
 use std::str::FromStr;
 use types::{
-    Achievement, ChannelId, ChannelMessageNotification, EventWrapper, Message, MessageContent, MessageIndex, Notification,
-    TimestampMillis, User, UserId, UserType, Version,
+    Achievement, ChannelId, ChannelMessageNotification, Chat, EventIndex, EventWrapper, Message, MessageContent, MessageIndex,
+    Notification, TimestampMillis, User, UserId, UserType, Version,
 };
+use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
 #[update(candid = true, msgpack = true)]
 #[trace]
@@ -206,9 +207,10 @@ fn process_send_message_result(
 ) -> Response {
     match result {
         SendMessageResult::Success(result) => {
-            let event_index = result.message_event.index;
-            let message_index = result.message_event.event.message_index;
-            let expires_at = result.message_event.expires_at;
+            let message_event = &result.message_event;
+            let event_index = message_event.index;
+            let message_index = message_event.event.message_index;
+            let expires_at = message_event.expires_at;
 
             // Exclude suspended members from notification
             let users_to_notify: Vec<UserId> = result
@@ -217,13 +219,15 @@ fn process_send_message_result(
                 .filter(|u| state.data.members.get_by_user_id(u).map_or(false, |m| !m.suspended.value))
                 .collect();
 
-            let content = &result.message_event.event.content;
+            let content = &message_event.event.content;
+            let community_id = state.env.canister_id().into();
+
             let notification = Notification::ChannelMessage(ChannelMessageNotification {
-                community_id: state.env.canister_id().into(),
+                community_id,
                 channel_id,
                 thread_root_message_index,
-                message_index: result.message_event.event.message_index,
-                event_index: result.message_event.index,
+                message_index: message_event.event.message_index,
+                event_index: message_event.index,
                 community_name: state.data.name.clone(),
                 channel_name,
                 sender,
@@ -238,34 +242,86 @@ fn process_send_message_result(
             });
             state.push_notification(users_to_notify, notification);
 
-            handle_activity_notification(state);
-
-            register_timer_jobs(
-                channel_id,
-                thread_root_message_index,
-                &result.message_event,
-                now,
-                &mut state.data,
-            );
+            register_timer_jobs(channel_id, thread_root_message_index, message_event, now, &mut state.data);
 
             if new_achievement {
-                state.data.achievements.notify_user(
-                    sender,
-                    result
-                        .message_event
-                        .event
-                        .achievements(false, thread_root_message_index.is_some()),
-                    &mut state.data.fire_and_forget_handler,
+                for a in result
+                    .message_event
+                    .event
+                    .achievements(false, thread_root_message_index.is_some())
+                {
+                    state.data.notify_user_of_achievement(sender, a);
+                }
+            }
+
+            let mut activity_events = Vec::new();
+
+            if let MessageContent::Crypto(c) = &message_event.event.content {
+                state
+                    .data
+                    .notify_user_of_achievement(c.recipient, Achievement::ReceivedCrypto);
+
+                activity_events.push((c.recipient, MessageActivity::Crypto, thread_root_message_index, message_index));
+            }
+
+            for user in mentioned {
+                activity_events.push((
+                    user.user_id,
+                    MessageActivity::Mention,
+                    thread_root_message_index,
+                    message_index,
+                ));
+            }
+
+            if let Some(channel) = state.data.channels.get(&channel_id) {
+                if let Some(replying_to_event_index) = message_event
+                    .event
+                    .replies_to
+                    .as_ref()
+                    .filter(|r| r.chat_if_other.is_none())
+                    .map(|r| r.event_index)
+                {
+                    if let Some((message, _)) = channel.chat.events.message_internal(
+                        EventIndex::default(),
+                        thread_root_message_index,
+                        replying_to_event_index.into(),
+                    ) {
+                        activity_events.push((
+                            message.sender,
+                            MessageActivity::QuoteReply,
+                            thread_root_message_index,
+                            message.message_index,
+                        ));
+                    }
+                }
+
+                if let Some(message_index) = thread_root_message_index {
+                    if let Some((message, _)) =
+                        channel
+                            .chat
+                            .events
+                            .message_internal(EventIndex::default(), None, message_index.into())
+                    {
+                        activity_events.push((message.sender, MessageActivity::ThreadReply, None, message.message_index));
+                    }
+                }
+            }
+
+            for (user_id, activity, thread_root_message_index, message_index) in activity_events {
+                state.data.user_event_sync_queue.push(
+                    user_id,
+                    CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
+                        chat: Chat::Channel(community_id, channel_id),
+                        thread_root_message_index,
+                        message_index,
+                        activity,
+                        timestamp: now,
+                        user_id: sender,
+                    }),
                 );
             }
 
-            if let MessageContent::Crypto(c) = &result.message_event.event.content {
-                state.data.achievements.notify_user(
-                    c.recipient,
-                    vec![Achievement::ReceivedCrypto],
-                    &mut state.data.fire_and_forget_handler,
-                );
-            }
+            handle_activity_notification(state);
 
             Success(SuccessResult {
                 event_index,

@@ -5,7 +5,8 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::accept_p2p_swap::{Response::*, *};
 use icrc_ledger_types::icrc1::transfer::TransferError;
-use types::{AcceptSwapSuccess, Achievement, Chat, MessageId, MessageIndex, P2PSwapLocation, UserId};
+use types::{AcceptSwapSuccess, Achievement, Chat, EventIndex, MessageId, MessageIndex, P2PSwapLocation, UserId};
+use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
 #[update(candid = true, msgpack = true)]
 #[trace]
@@ -33,11 +34,29 @@ async fn accept_p2p_swap(args: Args) -> Response {
 
             if new_achievement {
                 mutate_state(|state| {
-                    state.data.achievements.notify_user(
-                        user_id,
-                        vec![Achievement::AcceptedP2PSwapOffer],
-                        &mut state.data.fire_and_forget_handler,
-                    );
+                    state
+                        .data
+                        .notify_user_of_achievement(user_id, Achievement::AcceptedP2PSwapOffer);
+
+                    if let Some((message, _)) = state.data.chat.events.message_internal(
+                        EventIndex::default(),
+                        thread_root_message_index,
+                        message_id.into(),
+                    ) {
+                        state.data.user_event_sync_queue.push(
+                            message.sender,
+                            GroupCanisterEvent::MessageActivity(MessageActivityEvent {
+                                chat: Chat::Group(state.env.canister_id().into()),
+                                thread_root_message_index,
+                                message_index: message.message_index,
+                                activity: MessageActivity::P2PSwapAccepted,
+                                timestamp: state.env.now(),
+                                user_id,
+                            }),
+                        );
+                    }
+
+                    state.data.user_event_sync_queue.flush();
                 });
             }
 

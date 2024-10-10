@@ -103,23 +103,11 @@ where
         if defer_processing {
             self.set_timer_if_required();
         } else {
-            self.run();
+            self.flush();
         }
     }
 
-    fn set_timer_if_required(&self) -> bool {
-        let should_set_timer = self.within_lock(|i| i.timer_id.is_none() && !i.queue.is_empty());
-        if should_set_timer {
-            let clone = self.clone();
-            let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, move || clone.run());
-            self.within_lock(|i| i.timer_id = Some(timer_id));
-            true
-        } else {
-            false
-        }
-    }
-
-    fn run(&self) {
+    pub fn flush(&self) {
         let mut batches = Vec::new();
 
         self.within_lock(|i| {
@@ -171,6 +159,18 @@ where
         }
     }
 
+    fn set_timer_if_required(&self) -> bool {
+        let should_set_timer = self.within_lock(|i| i.timer_id.is_none() && !i.queue.is_empty());
+        if should_set_timer {
+            let clone = self.clone();
+            let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, move || clone.flush());
+            self.within_lock(|i| i.timer_id = Some(timer_id));
+            true
+        } else {
+            false
+        }
+    }
+
     async fn process_all_batches(self, batches: Vec<T>) {
         futures::future::join_all(batches.into_iter().map(|b| self.process_batch(b))).await;
     }
@@ -194,6 +194,12 @@ where
             }
         });
         self.set_timer_if_required();
+    }
+}
+
+impl<T: TimerJobItemGroup> Default for GroupedTimerJobQueue<T> {
+    fn default() -> Self {
+        GroupedTimerJobQueue::new(5, true)
     }
 }
 
