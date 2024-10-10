@@ -7,7 +7,7 @@ use types::{
     GroupCanisterGroupChatSummaryUpdates, GroupMembershipUpdates, OptionUpdate, TimestampMillis, MAX_THREADS_IN_SUMMARY,
 };
 
-#[query(candid = true)]
+#[query(candid = true, msgpack = true)]
 fn summary_updates(args: Args) -> Response {
     read_state(|state| summary_updates_impl(args.updates_since, None, state))
 }
