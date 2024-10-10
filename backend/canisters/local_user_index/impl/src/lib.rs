@@ -12,7 +12,7 @@ use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
 use p256_key_pair::P256KeyPair;
 use proof_of_unique_personhood::verify_proof_of_unique_personhood;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
 use std::time::Duration;
@@ -26,7 +26,6 @@ use user_canister::Event as UserEvent;
 use user_index_canister::Event as UserIndexEvent;
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
-use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
 use utils::env::Environment;
 use utils::time::MINUTE_IN_MS;
@@ -279,9 +278,7 @@ struct Data {
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
-    #[serde(deserialize_with = "deserialize_user_event_sync_queue")]
     pub user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
-    #[serde(deserialize_with = "deserialize_user_index_event_sync_queue")]
     pub user_index_event_sync_queue: GroupedTimerJobQueue<UserIndexEventBatch>,
     pub test_mode: bool,
     pub max_concurrent_canister_upgrades: u32,
@@ -297,30 +294,6 @@ struct Data {
     #[serde(with = "serde_bytes")]
     pub ic_root_key: Vec<u8>,
     pub events_for_remote_users: Vec<(UserId, UserEvent)>,
-}
-
-fn deserialize_user_event_sync_queue<'de, D: Deserializer<'de>>(
-    d: D,
-) -> Result<GroupedTimerJobQueue<UserEventBatch>, D::Error> {
-    let previous: CanisterEventSyncQueue<UserEvent> = CanisterEventSyncQueue::deserialize(d)?;
-
-    let new = GroupedTimerJobQueue::new(10, false);
-    for (canister_id, events) in previous.take_all() {
-        new.push_many(canister_id.into(), events);
-    }
-    Ok(new)
-}
-
-fn deserialize_user_index_event_sync_queue<'de, D: Deserializer<'de>>(
-    d: D,
-) -> Result<GroupedTimerJobQueue<UserIndexEventBatch>, D::Error> {
-    let previous: CanisterEventSyncQueue<UserIndexEvent> = CanisterEventSyncQueue::deserialize(d)?;
-
-    let new = GroupedTimerJobQueue::new(1, true);
-    for (canister_id, events) in previous.take_all() {
-        new.push_many(canister_id, events);
-    }
-    Ok(new)
 }
 
 #[derive(Serialize, Deserialize)]
