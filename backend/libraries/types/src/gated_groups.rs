@@ -16,7 +16,7 @@ pub struct AccessGateConfig {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-#[serde(from = "AccessGateCombined")]
+#[serde(from = "AccessGate")]
 pub struct AccessGateConfigInternal {
     pub gate: AccessGate,
     pub expiry: Option<Milliseconds>,
@@ -72,22 +72,6 @@ impl From<AccessGateConfig> for AccessGateConfigInternal {
             expiry: value.expiry,
         }
     }
-}
-
-impl From<AccessGateCombined> for AccessGateConfigInternal {
-    fn from(value: AccessGateCombined) -> Self {
-        match value {
-            AccessGateCombined::AccessGateConfig(access_gate_config) => access_gate_config,
-            AccessGateCombined::Accessgate(access_gate) => access_gate.into(),
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum AccessGateCombined {
-    AccessGateConfig(AccessGateConfigInternal),
-    Accessgate(AccessGate),
 }
 
 #[ts_export]
