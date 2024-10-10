@@ -8,10 +8,7 @@ name: Build caches
 jobs:
   build_all_debug:
     name: Build all in debug mode
-    runs-on:
-      - runs-on
-      - runner=medium
-      - run-id=${{ github.run_id }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rs/toolchain@v1
@@ -29,10 +26,7 @@ jobs:
 
   build_canister_wasms:
     name: Build canister wasms
-    runs-on:
-      - runs-on
-      - runner=large
-      - run-id=${{ github.run_id }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rs/toolchain@v1

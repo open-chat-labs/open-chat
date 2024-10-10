@@ -12,19 +12,32 @@ pub struct TimerJobQueue<T> {
 }
 
 impl<T> TimerJobQueue<T> {
-    pub fn new(max_concurrency: usize) -> Self {
+    pub fn new(max_concurrency: usize, defer_processing: bool) -> Self {
         Self {
             inner: Rc::new(Mutex::new(TimerJobQueueInner {
                 queue: VecDeque::new(),
                 in_progress: 0,
                 max_concurrency,
+                defer_processing,
                 timer_id: None,
             })),
         }
     }
 
+    pub fn max_concurrency(&self) -> usize {
+        self.within_lock(|i| i.max_concurrency)
+    }
+
     pub fn set_max_concurrency(&self, value: usize) {
         self.within_lock(|i| i.max_concurrency = value)
+    }
+
+    pub fn defer_processing(&self) -> bool {
+        self.within_lock(|i| i.defer_processing)
+    }
+
+    pub fn set_defer_processing(&self, value: bool) {
+        self.within_lock(|i| i.defer_processing = value)
     }
 
     pub fn clear(&self) {
@@ -54,6 +67,7 @@ struct TimerJobQueueInner<T> {
     queue: VecDeque<T>,
     in_progress: usize,
     max_concurrency: usize,
+    defer_processing: bool,
     #[serde(skip)]
     timer_id: Option<TimerId>,
 }
@@ -62,23 +76,33 @@ impl<T> TimerJobQueue<T>
 where
     T: TimerJobItem + 'static,
 {
-    pub fn enqueue(&self, item: T) {
-        self.within_lock(|i| i.queue.push_back(item));
-        self.set_timer_if_required();
+    pub fn push(&self, item: T) {
+        self.push_inner(|q| q.push_back(item));
     }
 
-    pub fn enqueue_front(&self, item: T) {
-        self.within_lock(|i| i.queue.push_front(item));
-        self.set_timer_if_required();
+    pub fn push_front(&self, item: T) {
+        self.push_inner(|q| q.push_front(item));
     }
 
-    pub fn enqueue_many(&self, items: impl Iterator<Item = T>) {
-        self.within_lock(|i| {
+    pub fn push_many(&self, items: impl Iterator<Item = T>) {
+        self.push_inner(|q| {
             for item in items {
-                i.queue.push_back(item);
+                q.push_back(item);
             }
         });
-        self.set_timer_if_required();
+    }
+
+    fn push_inner<F: FnOnce(&mut VecDeque<T>)>(&self, f: F) {
+        let defer_processing = self.within_lock(|i| {
+            f(&mut i.queue);
+            i.defer_processing
+        });
+
+        if defer_processing {
+            self.set_timer_if_required();
+        } else {
+            self.run();
+        }
     }
 
     fn set_timer_if_required(&self) -> bool {

@@ -88,15 +88,15 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
             }
 
             if let Some(status) = status_to_push_c2c {
-                state.data.user_canister_events_queue.push(
+                let thread_root_message_id = m.thread_root_message_index.map(|i| chat.main_message_index_to_id(i));
+                state.push_user_canister_event(
                     chat_id.into(),
                     UserCanisterEvent::P2PSwapStatusChange(Box::new(P2PSwapStatusChange {
-                        thread_root_message_id: m.thread_root_message_index.map(|i| chat.main_message_index_to_id(i)),
+                        thread_root_message_id,
                         message_id: m.message_id,
                         status,
                     })),
                 );
-                crate::jobs::push_user_canister_events::start_job_if_required(state);
             }
         }
     }

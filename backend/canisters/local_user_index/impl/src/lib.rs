@@ -136,13 +136,13 @@ impl RuntimeState {
     }
 
     pub fn push_event_to_user(&mut self, user_id: UserId, event: UserEvent) {
-        self.data.user_event_sync_queue.enqueue(user_id, event);
+        self.data.user_event_sync_queue.push(user_id, event);
     }
 
     pub fn push_event_to_user_index(&mut self, event: UserIndexEvent) {
         self.data
             .user_index_event_sync_queue
-            .enqueue(self.data.user_index_canister_id, event);
+            .push(self.data.user_index_canister_id, event);
     }
 
     pub fn push_oc_bot_message_to_user(&mut self, user_id: UserId, content: MessageContent, _mentioned: Vec<User>) {
@@ -304,9 +304,9 @@ fn deserialize_user_event_sync_queue<'de, D: Deserializer<'de>>(
 ) -> Result<GroupedTimerJobQueue<UserEventBatch>, D::Error> {
     let previous: CanisterEventSyncQueue<UserEvent> = CanisterEventSyncQueue::deserialize(d)?;
 
-    let new = GroupedTimerJobQueue::new(10);
+    let new = GroupedTimerJobQueue::new(10, false);
     for (canister_id, events) in previous.take_all() {
-        new.enqueue_many(canister_id.into(), events);
+        new.push_many(canister_id.into(), events);
     }
     Ok(new)
 }
@@ -316,9 +316,9 @@ fn deserialize_user_index_event_sync_queue<'de, D: Deserializer<'de>>(
 ) -> Result<GroupedTimerJobQueue<UserIndexEventBatch>, D::Error> {
     let previous: CanisterEventSyncQueue<UserIndexEvent> = CanisterEventSyncQueue::deserialize(d)?;
 
-    let new = GroupedTimerJobQueue::new(1);
+    let new = GroupedTimerJobQueue::new(1, true);
     for (canister_id, events) in previous.take_all() {
-        new.enqueue_many(canister_id, events);
+        new.push_many(canister_id, events);
     }
     Ok(new)
 }
@@ -370,8 +370,8 @@ impl Data {
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
-            user_event_sync_queue: GroupedTimerJobQueue::new(10),
-            user_index_event_sync_queue: GroupedTimerJobQueue::new(1),
+            user_event_sync_queue: GroupedTimerJobQueue::new(10, false),
+            user_index_event_sync_queue: GroupedTimerJobQueue::new(1, true),
             test_mode,
             max_concurrent_canister_upgrades: 10,
             user_upgrade_concurrency: 10,
