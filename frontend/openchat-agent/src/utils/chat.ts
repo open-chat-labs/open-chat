@@ -192,6 +192,7 @@ export function mergeDirectChatUpdates(
                 myMetrics: u.myMetrics ?? c.membership.myMetrics,
                 archived: u.archived ?? c.membership.archived,
                 rulesAccepted: false,
+                lapsed: false,
             },
         };
     });
@@ -263,22 +264,24 @@ export function mergeGroupChatUpdates(
                 mentions:
                     g === undefined
                         ? c.membership.mentions
-                        : [...g.mentions, ...c.membership.mentions],
-                role: g?.myRole ?? c.membership.role,
+                        : [...(g?.membership?.mentions ?? []), ...c.membership.mentions],
+                role: g?.membership?.myRole ?? c.membership.role,
                 latestThreads: mergeThreads(
                     c.membership.latestThreads,
-                    g?.latestThreads ?? [],
-                    g?.unfollowedThreads ?? [],
+                    g?.membership?.latestThreads ?? [],
+                    g?.membership?.unfollowedThreads ?? [],
                     u?.threadsRead ?? {},
                 ),
                 readByMeUpTo:
                     readByMeUpTo !== undefined && latestMessage !== undefined
                         ? Math.min(readByMeUpTo, latestMessage.event.messageIndex)
                         : readByMeUpTo,
-                notificationsMuted: g?.notificationsMuted ?? c.membership.notificationsMuted,
-                myMetrics: g?.myMetrics ?? c.membership.myMetrics,
+                notificationsMuted:
+                    g?.membership?.notificationsMuted ?? c.membership.notificationsMuted,
+                myMetrics: g?.membership?.myMetrics ?? c.membership.myMetrics,
                 archived: u?.archived ?? c.membership.archived,
-                rulesAccepted: g?.rulesAccepted ?? c.membership.rulesAccepted,
+                rulesAccepted: g?.membership?.rulesAccepted ?? c.membership.rulesAccepted,
+                lapsed: g?.membership?.lapsed ?? c.membership.lapsed,
             },
             localUserIndex: c.localUserIndex,
             videoCallInProgress: applyOptionUpdate(c.videoCallInProgress, g?.videoCallInProgress),

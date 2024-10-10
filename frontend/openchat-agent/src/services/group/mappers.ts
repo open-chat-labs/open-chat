@@ -16,6 +16,7 @@ import type {
     ApiOptionalMessagePermissions,
     ApiBlockUserResponse,
     ApiUnblockUserResponse,
+    ApiGroupMembershipUpdates,
 } from "./candid/idl";
 import type {
     ApiEventsResponse as ApiCommunityEventsResponse,
@@ -42,6 +43,7 @@ import type {
     FollowThreadResponse,
     OptionalChatPermissions,
     OptionalMessagePermissions,
+    GroupMembershipUpdates,
 } from "openchat-shared";
 import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
@@ -155,6 +157,21 @@ export function summaryUpdatesResponse(
     );
 }
 
+export function groupMembershipUpdates(candid: ApiGroupMembershipUpdates): GroupMembershipUpdates {
+    return {
+        myRole: optional(candid.role, memberRole),
+        mentions: candid.mentions
+            .filter((m) => m.thread_root_message_index.length === 0)
+            .map(mention),
+        notificationsMuted: optional(candid.notifications_muted, identity),
+        myMetrics: optional(candid.my_metrics, chatMetrics),
+        latestThreads: candid.latest_threads.map(threadDetails),
+        unfollowedThreads: Array.from(candid.unfollowed_threads),
+        rulesAccepted: optional(candid.rules_accepted, identity),
+        lapsed: optional(candid.lapsed, identity),
+    };
+}
+
 export function groupChatSummaryUpdates(
     candid: ApiGroupCanisterGroupChatSummaryUpdates,
 ): GroupCanisterGroupChatSummaryUpdates {
@@ -170,25 +187,17 @@ export function groupChatSummaryUpdates(
         latestEventIndex: optional(candid.latest_event_index, identity),
         latestMessageIndex: optional(candid.latest_message_index, identity),
         memberCount: optional(candid.participant_count, identity),
-        myRole: optional(candid.role, memberRole),
-        mentions: candid.mentions
-            .filter((m) => m.thread_root_message_index.length === 0)
-            .map(mention),
         permissions: optional(candid.permissions_v2, groupPermissions),
-        notificationsMuted: optional(candid.notifications_muted, identity),
         metrics: optional(candid.metrics, chatMetrics),
-        myMetrics: optional(candid.my_metrics, chatMetrics),
-        latestThreads: candid.latest_threads.map(threadDetails),
-        unfollowedThreads: Array.from(candid.unfollowed_threads),
         frozen: optionUpdate(candid.frozen, (_) => true),
         updatedEvents: candid.updated_events.map(updatedEvent),
         dateLastPinned: optional(candid.date_last_pinned, identity),
         gateConfig: optionUpdate(candid.gate_config, accessGateConfig),
-        rulesAccepted: optional(candid.rules_accepted, identity),
         eventsTTL: optionUpdate(candid.events_ttl, identity),
         eventsTtlLastUpdated: optional(candid.events_ttl_last_updated, identity),
         videoCallInProgress: optionUpdate(candid.video_call_in_progress, (v) => v.message_index),
         messagesVisibleToNonMembers: optional(candid.messages_visible_to_non_members, identity),
+        membership: optional(candid.membership, groupMembershipUpdates),
     };
 }
 

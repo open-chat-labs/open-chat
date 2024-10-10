@@ -232,14 +232,13 @@ export type CommunityCanisterChannelSummaryUpdates = {
     externalUrl: OptionUpdate<string>;
 };
 
-// FIXME - add lapsed
 export type CommunityMembershipUpdates = {
     role: MemberRole | undefined;
     displayName: OptionUpdate<string>;
     rulesAccepted: boolean | undefined;
+    lapsed: boolean | undefined;
 };
 
-// FIXME - add lapsed
 export type GroupMembershipUpdates = {
     role: MemberRole | undefined;
     notificationsMuted: boolean | undefined;
@@ -248,6 +247,7 @@ export type GroupMembershipUpdates = {
     mentions: Mention[];
     myMetrics: Metrics | undefined;
     rulesAccepted: boolean | undefined;
+    lapsed: boolean | undefined;
 };
 
 export type ChannelMatch = {

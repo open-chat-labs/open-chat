@@ -408,6 +408,7 @@ export function communityMembershipUpdates(
         role: optional(candid.role, memberRole),
         displayName: optionUpdate(candid.display_name, identity),
         rulesAccepted: optional(candid.rules_accepted, identity),
+        lapsed: optional(candid.lapsed, identity),
     };
 }
 
@@ -428,7 +429,7 @@ export function communityChannelUpdates(
         externalUrl: optionUpdate(candid.external_url, identity),
         lastUpdated: candid.last_updated,
         avatarId: optionUpdate(candid.avatar_id, identity),
-        membership: optional(candid.membership, GroupMembershipUpdates),
+        membership: optional(candid.membership, groupMembershipUpdates),
         updatedEvents: candid.updated_events.map(updatedEvent),
         latestEventIndex: optional(candid.latest_event_index, identity),
         latestMessageIndex: optional(candid.latest_message_index, identity),
@@ -453,9 +454,9 @@ function updatedEvent([threadRootMessageIndex, eventIndex, timestamp]: [
     };
 }
 
-export function GroupMembershipUpdates(candid: ApiGroupMembershipUpdates): GroupMembershipUpdates {
+export function groupMembershipUpdates(candid: ApiGroupMembershipUpdates): GroupMembershipUpdates {
     return {
-        role: optional(candid.role, memberRole),
+        myRole: optional(candid.role, memberRole),
         notificationsMuted: optional(candid.notifications_muted, identity),
         latestThreads: candid.latest_threads.map(threadDetails),
         unfollowedThreads: Array.from(candid.unfollowed_threads),
@@ -464,6 +465,7 @@ export function GroupMembershipUpdates(candid: ApiGroupMembershipUpdates): Group
             .map(mention),
         myMetrics: optional(candid.my_metrics, chatMetrics),
         rulesAccepted: optional(candid.rules_accepted, identity),
+        lapsed: optional(candid.lapsed, identity),
     };
 }
 

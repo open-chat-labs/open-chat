@@ -1,6 +1,7 @@
 import type {
     GroupCanisterGroupChatSummary as TGroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates as TGroupCanisterGroupChatSummaryUpdates,
+    GroupMembershipUpdates as TGroupMembershipUpdates,
     GroupSendMessageResponse,
 } from "../../typebox";
 import type {
@@ -14,6 +15,7 @@ import type {
     // Message,
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
+    GroupMembershipUpdates,
     // GroupCanisterSummaryResponse,
     // GroupCanisterSummaryUpdatesResponse,
     // UpdatedEvent,
@@ -135,6 +137,21 @@ export function groupChatSummary(
 //     );
 // }
 
+export function groupMembershipUpdates(value: TGroupMembershipUpdates): GroupMembershipUpdates {
+    return {
+        myRole: mapOptional(value.role, memberRole),
+        mentions: value.mentions
+            .filter((m) => m.thread_root_message_index === undefined)
+            .map(mention),
+        notificationsMuted: value.notifications_muted,
+        myMetrics: mapOptional(value.my_metrics, chatMetrics),
+        latestThreads: value.latest_threads.map(threadSyncDetails),
+        unfollowedThreads: Array.from(value.unfollowed_threads),
+        rulesAccepted: value.rules_accepted,
+        lapsed: value.lapsed,
+    };
+}
+
 export function groupChatSummaryUpdates(
     value: TGroupCanisterGroupChatSummaryUpdates,
 ): GroupCanisterGroupChatSummaryUpdates {
@@ -150,25 +167,17 @@ export function groupChatSummaryUpdates(
         latestEventIndex: value.latest_event_index,
         latestMessageIndex: value.latest_message_index,
         memberCount: value.participant_count,
-        myRole: mapOptional(value.role, memberRole),
-        mentions: value.mentions
-            .filter((m) => m.thread_root_message_index === undefined)
-            .map(mention),
         permissions: mapOptional(value.permissions_v2, groupPermissions),
-        notificationsMuted: value.notifications_muted,
         metrics: mapOptional(value.metrics, chatMetrics),
-        myMetrics: mapOptional(value.my_metrics, chatMetrics),
-        latestThreads: value.latest_threads.map(threadSyncDetails),
-        unfollowedThreads: Array.from(value.unfollowed_threads),
         frozen: optionUpdateV2(value.frozen, (_) => true),
         updatedEvents: value.updated_events.map(updatedEvent),
         dateLastPinned: value.date_last_pinned,
         gateConfig: optionUpdateV2(value.gate_config, accessGateConfig),
-        rulesAccepted: value.rules_accepted,
         eventsTTL: optionUpdateV2(value.events_ttl, identity),
         eventsTtlLastUpdated: value.events_ttl_last_updated,
         videoCallInProgress: optionUpdateV2(value.video_call_in_progress, (v) => v.message_index),
         messagesVisibleToNonMembers: value.messages_visible_to_non_members,
+        membership: mapOptional(value.membership, groupMembershipUpdates),
     };
 }
 

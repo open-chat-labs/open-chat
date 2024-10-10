@@ -128,6 +128,7 @@ export function mergeCommunityUpdates(
                     c?.membership?.displayName,
                 ),
                 rulesAccepted: c?.membership?.rulesAccepted ?? community.membership.rulesAccepted,
+                lapsed: c?.membership?.lapsed ?? community.membership.lapsed,
             },
             channels: mergeChannelUpdates(
                 currentChannels,
@@ -247,6 +248,7 @@ function mergeChannelUpdates(
                 myMetrics: c?.membership?.myMetrics ?? channel.membership.myMetrics,
                 archived: u?.archived ?? channel.membership.archived,
                 rulesAccepted: c?.membership?.rulesAccepted ?? channel.membership.rulesAccepted,
+                lapsed: c?.membership?.lapsed ?? channel.membership.lapsed,
             },
             isInvited: false,
             messagesVisibleToNonMembers:

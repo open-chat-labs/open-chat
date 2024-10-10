@@ -2072,7 +2072,7 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
             readByMeUpTo: latestMessage?.event.messageIndex,
             archived: false,
             rulesAccepted: candid.rules_accepted,
-            lapsed: true, // FIXME - fill this in
+            lapsed: false,
         },
         localUserIndex: candid.local_user_index_canister_id.toString(),
         isInvited: false, // this is only applicable when we are not a member
@@ -2192,7 +2192,7 @@ export function communityChannelSummary(
             mentions: [],
             archived: false,
             rulesAccepted: optional(candid.membership, (m) => m.rules_accepted) ?? false,
-            lapsed: true, // FIXME - fill this in
+            lapsed: optional(candid.membership, (m) => m.lapsed) ?? false,
         },
         isInvited: optional(candid.is_invited, identity) ?? false,
         messagesVisibleToNonMembers: candid.messages_visible_to_non_members,

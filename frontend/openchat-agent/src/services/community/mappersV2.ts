@@ -377,6 +377,7 @@ export function communityMembershipUpdates(
         role: mapOptional(value.role, memberRole),
         displayName: optionUpdateV2(value.display_name, identity),
         rulesAccepted: value.rules_accepted,
+        lapsed: value.lapsed,
     };
 }
 
@@ -412,7 +413,7 @@ export function communityChannelUpdates(
 
 export function groupMembershipUpdates(value: TGroupMembershipUpdates): GroupMembershipUpdates {
     return {
-        role: mapOptional(value.role, memberRole),
+        myRole: mapOptional(value.role, memberRole),
         notificationsMuted: value.notifications_muted,
         latestThreads: value.latest_threads.map(threadSyncDetails),
         unfollowedThreads: Array.from(value.unfollowed_threads),
@@ -421,6 +422,7 @@ export function groupMembershipUpdates(value: TGroupMembershipUpdates): GroupMem
             .map(mention),
         myMetrics: mapOptional(value.my_metrics, chatMetrics),
         rulesAccepted: value.rules_accepted,
+        lapsed: value.lapsed,
     };
 }
 

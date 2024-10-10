@@ -1508,23 +1508,28 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     latestEventIndex: number | undefined;
     latestMessageIndex: number | undefined;
     memberCount: number | undefined;
-    myRole: MemberRole | undefined;
-    mentions: Mention[];
     permissions: ChatPermissions | undefined;
-    notificationsMuted: boolean | undefined;
     metrics: Metrics | undefined;
-    myMetrics: Metrics | undefined;
-    latestThreads: GroupCanisterThreadDetails[];
-    unfollowedThreads: number[];
     frozen: OptionUpdate<boolean>;
     updatedEvents: UpdatedEvent[];
     dateLastPinned: bigint | undefined;
     gateConfig: OptionUpdate<AccessGateConfig>;
-    rulesAccepted: boolean | undefined;
     eventsTTL: OptionUpdate<bigint>;
     eventsTtlLastUpdated?: bigint;
     videoCallInProgress: OptionUpdate<number>;
     messagesVisibleToNonMembers?: boolean;
+    membership: GroupMembershipUpdates | undefined;
+};
+
+export type GroupMembershipUpdates = {
+    myRole: MemberRole | undefined;
+    notificationsMuted: boolean | undefined;
+    lapsed: boolean | undefined;
+    unfollowedThreads: number[];
+    rulesAccepted: boolean | undefined;
+    latestThreads: GroupCanisterThreadDetails[];
+    mentions: Mention[];
+    myMetrics: Metrics | undefined;
 };
 
 export type GroupCanisterThreadDetails = {
