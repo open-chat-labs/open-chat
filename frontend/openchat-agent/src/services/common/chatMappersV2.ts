@@ -55,45 +55,44 @@ import type {
     CommunityPermissionRole,
     CommunityPermissions,
     // ChatIdentifier,
-    // AddRemoveReactionResponse,
+    AddRemoveReactionResponse,
     ChannelSummary,
     CommunitySummary,
     // GroupCanisterThreadDetails,
     Mention,
     EventWrapper,
-    // UpdateGroupResponse,
-    // CreateGroupResponse,
-    // MultiUserChatIdentifier,
-    // ChannelIdentifier,
-    // GroupChatIdentifier,
-    // DeleteGroupResponse,
-    // PinMessageResponse,
-    // UnpinMessageResponse,
-    // GroupChatDetailsResponse,
-    // Member,
-    // GroupChatDetailsUpdatesResponse,
-    // EditMessageResponse,
-    // DeclineInvitationResponse,
-    // LeaveGroupResponse,
-    // DeleteMessageResponse,
-    // DeletedGroupMessageResponse,
-    // UndeleteMessageResponse,
-    // ThreadPreview,
-    // ThreadPreviewsResponse,
-    // ChangeRoleResponse,
-    // RegisterPollVoteResponse,
+    UpdateGroupResponse,
+    CreateGroupResponse,
+    MultiUserChatIdentifier,
+    ChannelIdentifier,
+    GroupChatIdentifier,
+    DeleteGroupResponse,
+    PinMessageResponse,
+    UnpinMessageResponse,
+    GroupChatDetailsResponse,
+    Member,
+    GroupChatDetailsUpdatesResponse,
+    EditMessageResponse,
+    DeclineInvitationResponse,
+    LeaveGroupResponse,
+    DeleteMessageResponse,
+    DeletedGroupMessageResponse,
+    UndeleteMessageResponse,
+    ThreadPreview,
+    ThreadPreviewsResponse,
+    ChangeRoleResponse,
+    RegisterPollVoteResponse,
     JoinGroupResponse,
-    // SearchGroupChatResponse,
-    // InviteCodeResponse,
-    // EnableInviteCodeResponse,
-    // DisableInviteCodeResponse,
-    // ResetInviteCodeResponse,
+    SearchGroupChatResponse,
+    InviteCodeResponse,
+    EnableInviteCodeResponse,
+    DisableInviteCodeResponse,
     ThreadSyncDetails,
-    // RegisterProposalVoteResponse,
+    RegisterProposalVoteResponse,
     UserGroupSummary,
     TipsReceived,
     PrizeContentInitial,
-    // ClaimPrizeResponse,
+    ClaimPrizeResponse,
     MessagePermissions,
     ExpiredEventsRange,
     ExpiredMessagesRange,
@@ -101,20 +100,23 @@ import type {
     P2PSwapContent,
     P2PSwapStatus,
     TokenInfo,
-    // CancelP2PSwapResponse,
+    CancelP2PSwapResponse,
     GroupInviteCodeChange,
     VideoCallContent,
-    // JoinVideoCallResponse,
+    JoinVideoCallResponse,
     VideoCallType,
-    // VideoCallPresence,
-    // SetVideoCallPresenceResponse,
-    // VideoCallParticipantsResponse,
+    VideoCallPresence,
+    SetVideoCallPresenceResponse,
+    VideoCallParticipantsResponse,
     VideoCallParticipant,
     LeafGate,
     ChatIdentifier,
     UpdatedEvent,
     User,
     DexId,
+    MessageMatch,
+    AcceptP2PSwapResponse,
+    AccessGateConfig,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -123,20 +125,21 @@ import {
     CommonResponses,
     chatIdentifiersEqual,
     emptyChatMetrics,
-    // codeToText,
+    codeToText,
     CHAT_SYMBOL,
     CKBTC_SYMBOL,
     ICP_SYMBOL,
     KINIC_SYMBOL,
     SNS1_SYMBOL,
 } from "openchat-shared";
-// import { messageMatch } from "../user/mappers";
-// import type { AcceptP2PSwapResponse } from "openchat-shared";
 // import type { SetPinNumberResponse } from "openchat-shared";
-// import { pinNumberFailureResponse } from "./pinNumberErrorMapper";
+import { pinNumberFailureResponseV2 } from "./pinNumberErrorMapper";
 import { toRecord2 } from "../../utils/list";
+import { ReplicaNotUpToDateError } from "../error";
 import type {
     AccessGate as TAccessGate,
+    AccessGateConfig as TAccessGateConfig,
+    AccessGateNonComposite as TAccessGateNonComposite,
     AudioContent as TAudioContent,
     BlobReference as TBlobReference,
     CallParticipant as TCallParticipant,
@@ -145,6 +148,7 @@ import type {
     ChatMetrics as TChatMetrics,
     CommunityCanisterChannelSummary as TCommunityCanisterChannelSummary,
     CommunityCanisterCommunitySummary as TCommunityCanisterCommunitySummary,
+    CommunityClaimPrizeResponse,
     CommunityPermissionRole as TCommunityPermissionRole,
     CommunityPermissions as TCommunityPermissions,
     CommunityRole as TCommunityRole,
@@ -165,6 +169,7 @@ import type {
     GiphyImageVariant as TGiphyImageVariant,
     GroupCanisterGroupChatSummary as TGroupCanisterGroupChatSummary,
     GroupCanisterThreadDetails as TGroupCanisterThreadDetails,
+    GroupClaimPrizeResponse,
     GroupPermissionRole as TGroupPermissionRole,
     GroupPermissions as TGroupPermissions,
     GroupRole as TGroupRole,
@@ -174,9 +179,11 @@ import type {
     Message as TMessage,
     MessageContent as TMessageContent,
     MessageContentInitial as TMessageContentInitial,
+    MessageMatch as TMessageMatch,
     MessagePermissions as TMessagePermissions,
     MessageReminderContent as TMessageReminderContent,
     MessageReminderCreatedContent as TMessageReminderCreatedContent,
+    MessagesResponse as TMessagesResponse,
     MultiUserChat as TMultiUserChat,
     P2PSwapContent as TP2PSwapContent,
     P2PSwapContentInitial as TP2PSwapContentInitial,
@@ -195,6 +202,7 @@ import type {
     ReplyContext as TReplyContext,
     ReportedMessage as TReportedMessage,
     TextContent as TTextContent,
+    ThreadPreview as TThreadPreview,
     ThreadSummary as TThreadSummary,
     TokenInfo as TTokenInfo,
     Tokens as TTokens,
@@ -203,8 +211,70 @@ import type {
     UserGroupSummary as TUserGroupSummary,
     VideoContent as TVideoContent,
     VideoCallContent as TVideoCallContent,
+    VideoCallPresence as TVideoCallPresence,
     VideoCallType as TVideoCallType,
     LocalUserIndexJoinGroupResponse,
+    UserAddReactionResponse,
+    UserRemoveReactionResponse,
+    GroupAddReactionResponse,
+    GroupRemoveReactionResponse,
+    CommunityAddReactionResponse,
+    CommunityRemoveReactionResponse,
+    GroupChangeRoleResponse,
+    CommunityChangeChannelRoleResponse,
+    UserCreateGroupResponse,
+    CommunityCreateChannelResponse,
+    GroupDeclineInvitiationResponse,
+    CommunityDeclineInvitationResponse,
+    UserDeleteGroupResponse,
+    CommunityDeleteChannelResponse,
+    GroupDeletedMessageResponse,
+    CommunityDeletedMessageResponse,
+    GroupDeleteMessagesResponse,
+    CommunityDeleteMessagesResponse,
+    GroupDisableInviteCodeResponse,
+    CommunityDisableInviteCodeResponse,
+    GroupEnableInviteCodeResponse,
+    CommunityEnableInviteCodeResponse,
+    UserEditMessageResponse,
+    GroupEditMessageResponse,
+    CommunityEditMessageResponse,
+    GroupInviteCodeResponse,
+    CommunityInviteCodeResponse,
+    UserLeaveGroupResponse,
+    CommunityLeaveChannelResponse,
+    GroupUnpinMessageResponse,
+    CommunityPinMessageResponse,
+    GroupPinMessageResponse,
+    GroupSearchMessagesResponse,
+    CommunitySearchChannelResponse,
+    GroupSelectedInitialResponse,
+    CommunitySelectedChannelInitialResponse,
+    GroupMember as TGroupMember,
+    GroupSelectedUpdatesResponse,
+    CommunitySelectedChannelUpdatesResponse,
+    GroupRegisterPollVoteResponse,
+    CommunityRegisterPollVoteResponse,
+    GroupVideoCallParticipantsResponse,
+    CommunityVideoCallParticipantsResponse,
+    CommunitySetVideoCallPresenceResponse,
+    GroupSetVideoCallPresenceResponse,
+    UserJoinVideoCallResponse,
+    UserCancelP2pSwapResponse,
+    GroupCancelP2pSwapResponse,
+    CommunityCancelP2pSwapResponse,
+    SwapStatusError as TSwapStatusError,
+    GroupUndeleteMessagesResponse,
+    CommunityUndeleteMessagesResponse,
+    GroupThreadPreviewsResponse,
+    CommunityThreadPreviewsResponse,
+    GroupRegisterProposalVoteResponse,
+    CommunityRegisterProposalVoteResponse,
+    UserAcceptP2pSwapResponse,
+    GroupAcceptP2pSwapResponse,
+    CommunityAcceptP2pSwapResponse,
+    GroupUpdateGroupResponse,
+    CommunityUpdateChannelResponse,
 } from "../../typebox";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
@@ -1199,74 +1269,71 @@ export function communityPermissionRole(
 //     };
 // }
 
-// export function apiCommunityPermissionRole(
-//     permissionRole: CommunityPermissionRole,
-// ): ApiCommunityPermissionRole {
-//     switch (permissionRole) {
-//         case "owner":
-//             return { Owners: null };
-//         case "admin":
-//             return { Admins: null };
-//         case "member":
-//             return { Members: null };
-//     }
-// }
+export function apiCommunityPermissionRole(
+    permissionRole: CommunityPermissionRole,
+): TCommunityPermissionRole {
+    switch (permissionRole) {
+        case "owner":
+            return "Owners";
+        case "admin":
+            return "Admins";
+        case "member":
+            return "Members";
+    }
+}
 
-// export function apiGroupPermissions(permissions: ChatPermissions): ApiGroupPermissions {
-//     return {
-//         change_roles: apiPermissionRole(permissions.changeRoles),
-//         update_group: apiPermissionRole(permissions.updateGroup),
-//         invite_users: apiPermissionRole(permissions.inviteUsers),
-//         add_members: apiPermissionRole(permissions.addMembers),
-//         remove_members: apiPermissionRole(permissions.removeMembers),
-//         delete_messages: apiPermissionRole(permissions.deleteMessages),
-//         pin_messages: apiPermissionRole(permissions.pinMessages),
-//         react_to_messages: apiPermissionRole(permissions.reactToMessages),
-//         mention_all_members: apiPermissionRole(permissions.mentionAllMembers),
-//         start_video_call: apiPermissionRole(permissions.startVideoCall),
-//         message_permissions: apiMessagePermissions(permissions.messagePermissions),
-//         thread_permissions: apiOptional(apiMessagePermissions, permissions.threadPermissions),
-//     };
-// }
-//
-// function apiMessagePermissions(permissions: MessagePermissions): ApiMessagePermissions {
-//     return {
-//         default: apiPermissionRole(permissions.default),
-//         text: apiOptional(apiPermissionRole, permissions.text),
-//         image: apiOptional(apiPermissionRole, permissions.image),
-//         video: apiOptional(apiPermissionRole, permissions.video),
-//         audio: apiOptional(apiPermissionRole, permissions.audio),
-//         file: apiOptional(apiPermissionRole, permissions.file),
-//         poll: apiOptional(apiPermissionRole, permissions.poll),
-//         crypto: apiOptional(apiPermissionRole, permissions.crypto),
-//         giphy: apiOptional(apiPermissionRole, permissions.giphy),
-//         prize: apiOptional(apiPermissionRole, permissions.prize),
-//         p2p_swap: apiOptional(apiPermissionRole, permissions.p2pSwap),
-//         video_call: apiOptional(apiPermissionRole, "none"),
-//         custom:
-//             permissions.memeFighter !== undefined
-//                 ? [{ subtype: "meme_fighter", role: apiPermissionRole(permissions.memeFighter) }]
-//                 : [],
-//     };
-// }
-//
-// export function apiPermissionRole(permissionRole: PermissionRole): ApiPermissionRole {
-//     switch (permissionRole) {
-//         case "none":
-//             return { None: null };
-//         case "owner":
-//             return { Owner: null };
-//         case "admin":
-//             return { Admins: null };
-//         case "moderator":
-//             return { Moderators: null };
-//         case "member":
-//             return { Members: null };
-//
-//         default:
-//             return { Members: null };
-//     }
-// }
+export function apiGroupPermissions(permissions: ChatPermissions): TGroupPermissions {
+    return {
+        change_roles: apiPermissionRole(permissions.changeRoles),
+        update_group: apiPermissionRole(permissions.updateGroup),
+        invite_users: apiPermissionRole(permissions.inviteUsers),
+        add_members: apiPermissionRole(permissions.addMembers),
+        remove_members: apiPermissionRole(permissions.removeMembers),
+        delete_messages: apiPermissionRole(permissions.deleteMessages),
+        pin_messages: apiPermissionRole(permissions.pinMessages),
+        react_to_messages: apiPermissionRole(permissions.reactToMessages),
+        mention_all_members: apiPermissionRole(permissions.mentionAllMembers),
+        start_video_call: apiPermissionRole(permissions.startVideoCall),
+        message_permissions: apiMessagePermissions(permissions.messagePermissions),
+        thread_permissions: mapOptional(permissions.threadPermissions, apiMessagePermissions),
+    };
+}
+
+function apiMessagePermissions(permissions: MessagePermissions): TMessagePermissions {
+    return {
+        default: apiPermissionRole(permissions.default),
+        text: mapOptional(permissions.text, apiPermissionRole),
+        image: mapOptional(permissions.image, apiPermissionRole),
+        video: mapOptional(permissions.video, apiPermissionRole),
+        audio: mapOptional(permissions.audio, apiPermissionRole),
+        file: mapOptional(permissions.file, apiPermissionRole),
+        poll: mapOptional(permissions.poll, apiPermissionRole),
+        crypto: mapOptional(permissions.crypto, apiPermissionRole),
+        giphy: mapOptional(permissions.giphy, apiPermissionRole),
+        prize: mapOptional(permissions.prize, apiPermissionRole),
+        p2p_swap: mapOptional(permissions.p2pSwap, apiPermissionRole),
+        video_call: mapOptional("none", apiPermissionRole),
+        custom:
+            permissions.memeFighter !== undefined
+                ? [{ subtype: "meme_fighter", role: apiPermissionRole(permissions.memeFighter) }]
+                : [],
+    };
+}
+
+export function apiPermissionRole(permissionRole: PermissionRole): TGroupPermissionRole {
+    switch (permissionRole) {
+        case "none":
+            return "None";
+        case "owner":
+            return "Owner";
+        case "admin":
+            return "Admins";
+        case "moderator":
+            return "Moderators";
+        default:
+            return "Members";
+    }
+}
 
 export function permissionRole(value: TGroupPermissionRole): PermissionRole {
     if (value === "None") return "none";
@@ -1520,126 +1587,123 @@ function apiAudioContent(domain: AudioContent): TAudioContent {
     };
 }
 
-// export function apiOptional<D, A>(mapper: (d: D) => A, domain: D | undefined): [] | [A] {
-//     return domain !== undefined ? [mapper(domain)] : [];
-// }
-//
-// export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
-//     if (domain.kind === "composite_gate") {
-//         return [
-//             {
-//                 Composite: {
-//                     inner: domain.gates.map(apiAccessGate),
-//                     and: domain.operator === "and",
-//                 },
-//             },
-//         ];
-//     }
-//     if (domain.kind === "no_gate") return [];
-//     if (domain.kind === "nft_gate") return []; // TODO
-//     if (domain.kind === "unique_person_gate") return [{ UniquePerson: null }];
-//     if (domain.kind === "diamond_gate") return [{ DiamondMember: null }];
-//     if (domain.kind === "locked_gate") return [{ Locked: null }];
-//     if (domain.kind === "credential_gate")
-//         return [
-//             {
-//                 VerifiedCredential: {
-//                     credential_name: domain.credential.credentialName,
-//                     issuer_canister_id: Principal.fromText(domain.credential.issuerCanisterId),
-//                     issuer_origin: domain.credential.issuerOrigin,
-//                     credential_type: domain.credential.credentialType,
-//                     credential_arguments: apiCredentialArguments(
-//                         domain.credential.credentialArguments,
-//                     ),
-//                 },
-//             },
-//         ];
-//     if (domain.kind === "neuron_gate") {
-//         return [
-//             {
-//                 SnsNeuron: {
-//                     governance_canister_id: Principal.fromText(domain.governanceCanister),
-//                     min_dissolve_delay: apiOptional(BigInt, domain.minDissolveDelay),
-//                     min_stake_e8s: apiOptional(BigInt, domain.minStakeE8s),
-//                 },
-//             },
-//         ];
-//     }
-//     if (domain.kind === "payment_gate") {
-//         return [
-//             {
-//                 Payment: {
-//                     ledger_canister_id: Principal.fromText(domain.ledgerCanister),
-//                     amount: domain.amount,
-//                     fee: domain.fee,
-//                 },
-//             },
-//         ];
-//     }
-//     if (domain.kind === "token_balance_gate") {
-//         return [
-//             {
-//                 TokenBalance: {
-//                     ledger_canister_id: Principal.fromText(domain.ledgerCanister),
-//                     min_balance: domain.minBalance,
-//                 },
-//             },
-//         ];
-//     }
-//     return [];
-// }
-//
-// export function apiAccessGate(domain: AccessGate): ApiAccessGate {
-//     if (domain.kind === "locked_gate") return { Locked: null };
-//     if (domain.kind === "diamond_gate") return { DiamondMember: null };
-//     if (domain.kind === "lifetime_diamond_gate") return { LifetimeDiamondMember: null };
-//     if (domain.kind === "unique_person_gate") return { UniquePerson: null };
-//     if (domain.kind === "credential_gate")
-//         return {
-//             VerifiedCredential: {
-//                 credential_name: domain.credential.credentialName,
-//                 issuer_canister_id: Principal.fromText(domain.credential.issuerCanisterId),
-//                 issuer_origin: domain.credential.issuerOrigin,
-//                 credential_type: domain.credential.credentialType,
-//                 credential_arguments: apiCredentialArguments(domain.credential.credentialArguments),
-//             },
-//         };
-//     if (domain.kind === "neuron_gate") {
-//         return {
-//             SnsNeuron: {
-//                 governance_canister_id: Principal.fromText(domain.governanceCanister),
-//                 min_dissolve_delay: apiOptional(BigInt, domain.minDissolveDelay),
-//                 min_stake_e8s: apiOptional(BigInt, domain.minStakeE8s),
-//             },
-//         };
-//     }
-//     if (domain.kind === "payment_gate") {
-//         return {
-//             Payment: {
-//                 ledger_canister_id: Principal.fromText(domain.ledgerCanister),
-//                 amount: domain.amount,
-//                 fee: domain.fee,
-//             },
-//         };
-//     }
-//     if (domain.kind === "token_balance_gate") {
-//         return {
-//             TokenBalance: {
-//                 ledger_canister_id: Principal.fromText(domain.ledgerCanister),
-//                 min_balance: domain.minBalance,
-//             },
-//         };
-//     }
-//     if (domain.kind === "composite_gate") {
-//         return {
-//             Composite: {
-//                 and: domain.operator === "and",
-//                 inner: domain.gates.map(apiAccessGate),
-//             },
-//         };
-//     }
-//     throw new Error(`Received a domain level group gate that we cannot parse: ${domain}`);
-// }
+export function apiMaybeAccessGate(domain: AccessGate): TAccessGate | undefined {
+    if (domain.kind === "composite_gate") {
+        return {
+            Composite: {
+                inner: domain.gates.map(apiLeafAccessGate),
+                and: domain.operator === "and",
+            },
+        };
+    }
+    if (domain.kind === "no_gate") return undefined;
+    if (domain.kind === "nft_gate") return undefined; // TODO
+    if (domain.kind === "unique_person_gate") return "UniquePerson";
+    if (domain.kind === "diamond_gate") return "DiamondMember";
+    if (domain.kind === "locked_gate") return "Locked";
+    if (domain.kind === "credential_gate") {
+        return {
+            VerifiedCredential: {
+                credential_name: domain.credential.credentialName,
+                issuer_canister_id: principalStringToBytes(domain.credential.issuerCanisterId),
+                issuer_origin: domain.credential.issuerOrigin,
+                credential_type: domain.credential.credentialType,
+                credential_arguments: apiCredentialArguments(domain.credential.credentialArguments),
+            },
+        };
+    }
+    if (domain.kind === "neuron_gate") {
+        return {
+            SnsNeuron: {
+                governance_canister_id: principalStringToBytes(domain.governanceCanister),
+                min_dissolve_delay: mapOptional(domain.minDissolveDelay, BigInt),
+                min_stake_e8s: mapOptional(domain.minStakeE8s, BigInt),
+            },
+        };
+    }
+    if (domain.kind === "payment_gate") {
+        return {
+            Payment: {
+                ledger_canister_id: principalStringToBytes(domain.ledgerCanister),
+                amount: domain.amount,
+                fee: domain.fee,
+            },
+        };
+    }
+    if (domain.kind === "token_balance_gate") {
+        return {
+            TokenBalance: {
+                ledger_canister_id: principalStringToBytes(domain.ledgerCanister),
+                min_balance: domain.minBalance,
+            },
+        };
+    }
+    return undefined;
+}
+
+export function apiAccessGateConfig(domain: AccessGateConfig): TAccessGateConfig {
+    return {
+        gate: apiAccessGate(domain.gate),
+        expiry: domain.expiry,
+    };
+}
+
+export function apiAccessGate(domain: AccessGate): TAccessGate {
+    if (domain.kind === "composite_gate") {
+        return {
+            Composite: {
+                and: domain.operator === "and",
+                inner: domain.gates.map(apiLeafAccessGate),
+            },
+        };
+    }
+    return apiLeafAccessGate(domain);
+}
+
+function apiLeafAccessGate(domain: AccessGate): TAccessGateNonComposite {
+    if (domain.kind === "locked_gate") return "Locked";
+    if (domain.kind === "diamond_gate") return "DiamondMember";
+    if (domain.kind === "lifetime_diamond_gate") return "LifetimeDiamondMember";
+    if (domain.kind === "unique_person_gate") return "UniquePerson";
+    if (domain.kind === "credential_gate")
+        return {
+            VerifiedCredential: {
+                credential_name: domain.credential.credentialName,
+                issuer_canister_id: principalStringToBytes(domain.credential.issuerCanisterId),
+                issuer_origin: domain.credential.issuerOrigin,
+                credential_type: domain.credential.credentialType,
+                credential_arguments: apiCredentialArguments(domain.credential.credentialArguments),
+            },
+        };
+    if (domain.kind === "neuron_gate") {
+        return {
+            SnsNeuron: {
+                governance_canister_id: principalStringToBytes(domain.governanceCanister),
+                min_dissolve_delay: mapOptional(domain.minDissolveDelay, BigInt),
+                min_stake_e8s: mapOptional(domain.minStakeE8s, BigInt),
+            },
+        };
+    }
+    if (domain.kind === "payment_gate") {
+        return {
+            Payment: {
+                ledger_canister_id: principalStringToBytes(domain.ledgerCanister),
+                amount: domain.amount,
+                fee: domain.fee,
+            },
+        };
+    }
+    if (domain.kind === "token_balance_gate") {
+        return {
+            TokenBalance: {
+                ledger_canister_id: principalStringToBytes(domain.ledgerCanister),
+                min_balance: domain.minBalance,
+            },
+        };
+    }
+
+    throw new Error(`Received a domain level group gate that we cannot parse: ${domain}`);
+}
 
 export function credentialArguments(
     value: [string, { String: string } | { Int: number }][],
@@ -1657,17 +1721,21 @@ export function credentialArguments(
     );
 }
 
-// function apiCredentialArguments(
-//     domain?: Record<string, string | number>,
-// ): [string, { String: string } | { Int: number }][] {
-//     return Object.entries(domain ?? {}).map(([k, v]) => {
-//         if (typeof v === "number") {
-//             return [k, { Int: v }];
-//         } else {
-//             return [k, { String: v }];
-//         }
-//     });
-// }
+function apiCredentialArguments(
+    domain?: Record<string, string | number>,
+): Record<string, { String: string } | { Int: number }> {
+    return toRecord2(
+        Object.entries(domain ?? {}),
+        ([k, _]) => k,
+        ([_, v]) => {
+            if (typeof v === "number") {
+                return { Int: v };
+            } else {
+                return { String: v };
+            }
+        },
+    );
+}
 
 export function accessGate(value: TAccessGate): AccessGate {
     if (value === "DiamondMember") {
@@ -1838,7 +1906,7 @@ export function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): TCr
 //         return {
 //             withdrawal: {
 //                 NNS: {
-//                     ledger: Principal.fromText(domain.ledger),
+//                     ledger: principalStringToBytes(domain.ledger),
 //                     token: apiToken(domain.token),
 //                     to: { Account: hexStringToBytes(domain.to) },
 //                     amount: apiICP(domain.amountE8s),
@@ -1853,9 +1921,9 @@ export function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): TCr
 //         return {
 //             withdrawal: {
 //                 ICRC1: {
-//                     ledger: Principal.fromText(domain.ledger),
+//                     ledger: principalStringToBytes(domain.ledger),
 //                     token: apiToken(domain.token),
-//                     to: { owner: Principal.fromText(domain.to), subaccount: [] },
+//                     to: { owner: principalStringToBytes(domain.to), subaccount: [] },
 //                     amount: domain.amountE8s,
 //                     fee: domain.feeE8s ?? BigInt(0),
 //                     memo: apiOptional(bigintToBytes, domain.memo),
@@ -2122,24 +2190,26 @@ export function gateCheckFailedReason(value: TGateCheckFailedReason): GateCheckF
     throw new UnsupportedValueError("Unexpected ApiGateCheckFailedReason type received", value);
 }
 
-// export function addRemoveReactionResponse(
-//     candid:
-//         | ApiAddDirectReactionResponse
-//         | ApiRemoveDirectReactionResponse
-//         | ApiAddGroupReactionResponse
-//         | ApiRemoveGroupReactionResponse
-//         | ApiAddChannelReactionResponse
-//         | ApiRemoveChannelReactionResponse,
-// ): AddRemoveReactionResponse {
-//     if ("Success" in candid || "SuccessV2" in candid) {
-//         return CommonResponses.success();
-//     } else if ("NoChange" in candid) {
-//         return CommonResponses.success();
-//     } else {
-//         console.warn("AddRemoveReaction failed with: ", candid);
-//         return CommonResponses.failure();
-//     }
-// }
+export function addRemoveReactionResponse(
+    value:
+        | UserAddReactionResponse
+        | UserRemoveReactionResponse
+        | GroupAddReactionResponse
+        | GroupRemoveReactionResponse
+        | CommunityAddReactionResponse
+        | CommunityRemoveReactionResponse,
+): AddRemoveReactionResponse {
+    if (
+        value === "Success" ||
+        value === "NoChange" ||
+        (typeof value === "object" && "SuccessV2" in value)
+    ) {
+        return CommonResponses.success();
+    } else {
+        console.warn("AddRemoveReaction failed with: ", value);
+        return CommonResponses.failure();
+    }
+}
 
 export function groupSubtype(subtype: TGroupSubtype): GroupSubtype {
     return {
@@ -2151,16 +2221,14 @@ export function groupSubtype(subtype: TGroupSubtype): GroupSubtype {
     };
 }
 
-// export function messagesSuccessResponse(
-//     candid: ApiMessagesSuccessResult,
-// ): EventsSuccessResult<Message> {
-//     return {
-//         events: candid.messages.map(messageEvent),
-//         expiredEventRanges: [],
-//         expiredMessageRanges: [],
-//         latestEventIndex: candid.latest_event_index,
-//     };
-// }
+export function messagesSuccessResponse(value: TMessagesResponse): EventsSuccessResult<Message> {
+    return {
+        events: value.messages.map(messageEvent),
+        expiredEventRanges: [],
+        expiredMessageRanges: [],
+        latestEventIndex: value.latest_event_index,
+    };
+}
 
 export function messageEvent(value: TEventWrapperMessage): EventWrapper<Message> {
     return {
@@ -2196,424 +2264,418 @@ export function expiredMessagesRange([start, end]: [number, number]): ExpiredMes
     };
 }
 
-// export function updateGroupResponse(
-//     candid: ApiUpdateGroupResponse | ApiUpdateChannelResponse,
-// ): UpdateGroupResponse {
-//     if ("Success" in candid) {
-//         return { kind: "success", rulesVersion: undefined };
-//     }
-//     if ("SuccessV2" in candid) {
-//         return {
-//             kind: "success",
-//             rulesVersion: optional(candid.SuccessV2.rules_version, identity),
-//         };
-//     }
-//
-//     console.log("Failed to update group: ", candid);
-//     if ("DescriptionTooLong" in candid) {
-//         return { kind: "desc_too_long" };
-//     }
-//     if ("NameTooLong" in candid) {
-//         return { kind: "name_too_long" };
-//     }
-//     if ("NameTooShort" in candid) {
-//         return { kind: "name_too_short" };
-//     }
-//     if ("NameReserved" in candid) {
-//         return { kind: "name_reserved" };
-//     }
-//     if ("Unchanged" in candid) {
-//         return { kind: "unchanged" };
-//     }
-//     if ("NotAuthorized" in candid) {
-//         return { kind: "not_authorized" };
-//     }
-//     if ("NameTaken" in candid) {
-//         return { kind: "name_taken" };
-//     }
-//     if ("InternalError" in candid) {
-//         return { kind: "internal_error" };
-//     }
-//     if ("CallerNotInGroup" in candid) {
-//         return { kind: "not_in_group" };
-//     }
-//     if ("AvatarTooBig" in candid) {
-//         return { kind: "avatar_too_big" };
-//     }
-//     if ("RulesTooLong" in candid) {
-//         return { kind: "rules_too_long" };
-//     }
-//     if ("RulesTooShort" in candid) {
-//         return { kind: "rules_too_short" };
-//     }
-//     if ("UserSuspended" in candid) {
-//         return { kind: "user_suspended" };
-//     }
-//     if ("ChatFrozen" in candid) {
-//         return { kind: "chat_frozen" };
-//     }
-//     if ("AccessGateInvalid" in candid) {
-//         return { kind: "access_gate_invalid" };
-//     }
-//     if (
-//         "AccessGateInvalid" in candid ||
-//         "UserNotInChannel" in candid ||
-//         "ChannelNotFound" in candid ||
-//         "UserNotInCommunity" in candid ||
-//         "CommunityFrozen" in candid ||
-//         "CannotMakeChannelPublic" in candid ||
-//         "CannotMakeGroupPublic" in candid ||
-//         "CannotMakeDefaultChannelPrivate" in candid ||
-//         "ExternalUrlInvalid" in candid
-//     ) {
-//         console.warn("UpdateGroupResponse failed with: ", candid);
-//         return { kind: "failure" };
-//     }
-//     throw new UnsupportedValueError("Unexpected ApiUpdateGroupResponse type received", candid);
-// }
+export function updateGroupResponse(
+    value: GroupUpdateGroupResponse | CommunityUpdateChannelResponse,
+): UpdateGroupResponse {
+    if (typeof value === "object") {
+        if ("SuccessV2" in value) {
+            return {
+                kind: "success",
+                rulesVersion: value.SuccessV2.rules_version,
+            };
+        }
+        if ("DescriptionTooLong" in value) {
+            return { kind: "desc_too_long" };
+        }
+        if ("NameTooLong" in value) {
+            return { kind: "name_too_long" };
+        }
+        if ("NameTooShort" in value) {
+            return { kind: "name_too_short" };
+        }
+        if ("AvatarTooBig" in value) {
+            return { kind: "avatar_too_big" };
+        }
+        if ("RulesTooLong" in value) {
+            return { kind: "rules_too_long" };
+        }
+        if ("RulesTooShort" in value) {
+            return { kind: "rules_too_short" };
+        }
+    }
 
-// export function createGroupResponse(
-//     candid: ApiCreateGroupResponse | ApiCreateChannelResponse,
-//     id: MultiUserChatIdentifier,
-// ): CreateGroupResponse {
-//     if ("Success" in candid) {
-//         if ("channel_id" in candid.Success && id.kind === "channel") {
-//             const canisterId: ChannelIdentifier = {
-//                 kind: "channel",
-//                 communityId: id.communityId,
-//                 channelId: candid.Success.channel_id.toString(),
-//             };
-//             return { kind: "success", canisterId };
-//         }
-//         if ("chat_id" in candid.Success && id.kind === "group_chat") {
-//             const canisterId: GroupChatIdentifier = {
-//                 kind: "group_chat",
-//                 groupId: candid.Success.chat_id.toString(),
-//             };
-//             return { kind: "success", canisterId };
-//         }
-//         throw new Error("Unexpected CreateGroup success response: " + candid.Success);
-//     }
-//
-//     if ("NameTaken" in candid) {
-//         return { kind: "group_name_taken" };
-//     }
-//
-//     if ("NameTooLong" in candid) {
-//         return { kind: "name_too_long" };
-//     }
-//
-//     if ("NameTooShort" in candid) {
-//         return { kind: "name_too_short" };
-//     }
-//
-//     if ("NameReserved" in candid) {
-//         return { kind: "name_reserved" };
-//     }
-//
-//     if ("DescriptionTooLong" in candid) {
-//         return { kind: "description_too_long" };
-//     }
-//
-//     if ("Throttled" in candid) {
-//         return { kind: "throttled" };
-//     }
-//
-//     if ("InternalError" in candid) {
-//         return { kind: "internal_error" };
-//     }
-//
-//     if ("AvatarTooBig" in candid) {
-//         return { kind: "avatar_too_big" };
-//     }
-//
-//     if ("MaxGroupsCreated" in candid || "MaxChannelsCreated" in candid) {
-//         // todo - make sure we handle this in the UI
-//         return { kind: "max_groups_created" };
-//     }
-//
-//     if ("RulesTooLong" in candid) {
-//         return { kind: "rules_too_long" };
-//     }
-//
-//     if ("RulesTooShort" in candid) {
-//         return { kind: "rules_too_short" };
-//     }
-//
-//     if ("UserSuspended" in candid) {
-//         return { kind: "user_suspended" };
-//     }
-//
-//     if ("UnauthorizedToCreatePublicGroup" in candid) {
-//         return { kind: "unauthorized_to_create_public_group" };
-//     }
-//
-//     if ("NotAuthorized" in candid) {
-//         return CommonResponses.notAuthorized();
-//     }
-//
-//     if ("CommunityFrozen" in candid) {
-//         return CommonResponses.communityFrozen();
-//     }
-//
-//     if ("DefaultMustBePublic" in candid) {
-//         return { kind: "default_must_be_public" };
-//     }
-//
-//     if ("AccessGateInvalid" in candid) {
-//         return { kind: "access_gate_invalid" };
-//     }
-//
-//     if ("ExternalUrlInvalid" in candid) {
-//         return { kind: "external_url_invalid" };
-//     }
-//
-//     throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", candid);
-// }
+    console.log("Failed to update group: ", value);
 
-// export function deleteGroupResponse(
-//     candid: ApiDeleteGroupResponse | ApiDeleteChannelResponse,
-// ): DeleteGroupResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     } else {
-//         console.warn("DeleteGroupResponse failed with: ", candid);
-//         return "failure";
-//     }
-// }
+    if (value === "NameReserved") {
+        return { kind: "name_reserved" };
+    }
+    if (value === "NotAuthorized") {
+        return { kind: "not_authorized" };
+    }
+    if (value === "NameTaken") {
+        return { kind: "name_taken" };
+    }
+    if (value === "CallerNotInGroup") {
+        return { kind: "not_in_group" };
+    }
+    if (value === "UserSuspended") {
+        return { kind: "user_suspended" };
+    }
+    if (value === "UserLapsed") {
+        return { kind: "user_lapsed" };
+    }
+    if (value === "ChatFrozen") {
+        return { kind: "chat_frozen" };
+    }
+    if (value === "AccessGateInvalid") {
+        return { kind: "access_gate_invalid" };
+    }
+    if (
+        value === "UserNotInChannel" ||
+        value === "ChannelNotFound" ||
+        value === "UserNotInCommunity" ||
+        value === "CommunityFrozen" ||
+        value === "ExternalUrlInvalid"
+    ) {
+        console.warn("UpdateGroupResponse failed with: ", value);
+        return { kind: "failure" };
+    }
+    if (value === "InternalError") {
+        return { kind: "internal_error" };
+    }
+    throw new UnsupportedValueError("Unexpected ApiUpdateGroupResponse type received", value);
+}
 
-// export function pinMessageResponse(
-//     candid: ApiPinMessageResponse | ApiPinChannelMessageResponse,
-// ): PinMessageResponse {
-//     if ("Success" in candid) {
-//         return {
-//             kind: "success",
-//             eventIndex: candid.Success.index,
-//             timestamp: candid.Success.timestamp,
-//         };
-//     } else if ("NoChange" in candid) {
-//         return CommonResponses.noChange();
-//     } else {
-//         console.warn("PinMessageResponse failed with: ", candid);
-//         return CommonResponses.failure();
-//     }
-// }
+export function createGroupResponse(
+    value: UserCreateGroupResponse | CommunityCreateChannelResponse,
+    id: MultiUserChatIdentifier,
+): CreateGroupResponse {
+    if (typeof value === "object") {
+        if ("Success" in value) {
+            if ("channel_id" in value.Success && id.kind === "channel") {
+                const canisterId: ChannelIdentifier = {
+                    kind: "channel",
+                    communityId: id.communityId,
+                    channelId: value.Success.channel_id.toString(),
+                };
+                return { kind: "success", canisterId };
+            }
+            if ("chat_id" in value.Success && id.kind === "group_chat") {
+                const canisterId: GroupChatIdentifier = {
+                    kind: "group_chat",
+                    groupId: principalBytesToString(value.Success.chat_id),
+                };
+                return { kind: "success", canisterId };
+            }
+            throw new Error("Unexpected CreateGroup success response: " + value.Success);
+        }
+        if ("NameTooLong" in value) {
+            return { kind: "name_too_long" };
+        }
+        if ("NameTooShort" in value) {
+            return { kind: "name_too_short" };
+        }
+        if ("DescriptionTooLong" in value) {
+            return { kind: "description_too_long" };
+        }
+        if ("InternalError" in value) {
+            return { kind: "internal_error" };
+        }
+        if ("RulesTooLong" in value) {
+            return { kind: "rules_too_long" };
+        }
+        if ("RulesTooShort" in value) {
+            return { kind: "rules_too_short" };
+        }
+        if ("AvatarTooBig" in value) {
+            return { kind: "avatar_too_big" };
+        }
+        if ("MaxGroupsCreated" in value || "MaxChannelsCreated" in value) {
+            // todo - make sure we handle this in the UI
+            return { kind: "max_groups_created" };
+        }
+    }
 
-// export function unpinMessageResponse(
-//     candid: ApiUnpinMessageResponse | ApiPinChannelMessageResponse,
-// ): UnpinMessageResponse {
-//     if ("Success" in candid || "SuccessV2" in candid || "NoChange" in candid) {
-//         return "success";
-//     } else {
-//         console.warn("UnpinMessageResponse failed with: ", candid);
-//         return "failure";
-//     }
-// }
+    if (value === "NameTaken") {
+        return { kind: "group_name_taken" };
+    }
+    if (value === "NameReserved") {
+        return { kind: "name_reserved" };
+    }
+    if (value === "Throttled") {
+        return { kind: "throttled" };
+    }
+    if (value === "UserSuspended") {
+        return { kind: "user_suspended" };
+    }
+    if (value === "UserLapsed") {
+        return { kind: "user_lapsed" };
+    }
+    if (value === "UnauthorizedToCreatePublicGroup") {
+        return { kind: "unauthorized_to_create_public_group" };
+    }
+    if (value === "NotAuthorized") {
+        return CommonResponses.notAuthorized();
+    }
+    if (value === "CommunityFrozen") {
+        return CommonResponses.communityFrozen();
+    }
+    if (value === "AccessGateInvalid") {
+        return { kind: "access_gate_invalid" };
+    }
+    if (value === "ExternalUrlInvalid") {
+        return { kind: "external_url_invalid" };
+    }
+    if (value === "InternalError") {
+        return { kind: "internal_error" };
+    }
 
-// export function groupDetailsResponse(
-//     candid: ApiSelectedInitialResponse | ApiSelectedChannelInitialResponse,
-// ): GroupChatDetailsResponse {
-//     if (
-//         "CallerNotInGroup" in candid ||
-//         "UserNotInChannel" in candid ||
-//         "UserNotInCommunity" in candid ||
-//         "PrivateCommunity" in candid ||
-//         "PrivateChannel" in candid ||
-//         "ChannelNotFound" in candid
-//     ) {
-//         console.warn("GetGroupDetails failed with ", candid);
-//         return "failure";
-//     }
-//     if ("Success" in candid) {
-//         const members =
-//             "participants" in candid.Success ? candid.Success.participants : candid.Success.members;
-//         return {
-//             members: members.map(member),
-//             blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
-//             invitedUsers: new Set(candid.Success.invited_users.map((u) => u.toString())),
-//             pinnedMessages: new Set(candid.Success.pinned_messages),
-//             rules: candid.Success.chat_rules,
-//             timestamp: candid.Success.timestamp,
-//         };
-//     }
-//     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
-// }
+    throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", value);
+}
 
-// export function groupDetailsUpdatesResponse(
-//     candid: ApiSelectedUpdatesResponse | ApiSelectedChannelUpdatesResponse,
-// ): GroupChatDetailsUpdatesResponse {
-//     if ("Success" in candid) {
-//         return {
-//             kind: "success",
-//             membersAddedOrUpdated: candid.Success.members_added_or_updated.map(member),
-//             membersRemoved: new Set(candid.Success.members_removed.map((u) => u.toString())),
-//             blockedUsersAdded: new Set(candid.Success.blocked_users_added.map((u) => u.toString())),
-//             blockedUsersRemoved: new Set(
-//                 candid.Success.blocked_users_removed.map((u) => u.toString()),
-//             ),
-//             pinnedMessagesAdded: new Set(candid.Success.pinned_messages_added),
-//             pinnedMessagesRemoved: new Set(candid.Success.pinned_messages_removed),
-//             rules: optional(candid.Success.chat_rules, identity),
-//             invitedUsers: optional(
-//                 candid.Success.invited_users,
-//                 (invited_users) => new Set(invited_users.map((u) => u.toString())),
-//             ),
-//             timestamp: candid.Success.timestamp,
-//         };
-//     } else if ("SuccessNoUpdates" in candid) {
-//         return {
-//             kind: "success_no_updates",
-//             timestamp: candid.SuccessNoUpdates,
-//         };
-//     } else {
-//         console.warn("Unexpected ApiSelectedUpdatesResponse type received", candid);
-//         return CommonResponses.failure();
-//     }
-// }
+export function deleteGroupResponse(
+    value: UserDeleteGroupResponse | CommunityDeleteChannelResponse,
+): DeleteGroupResponse {
+    if (value === "Success") {
+        return "success";
+    } else {
+        console.warn("DeleteGroupResponse failed with: ", value);
+        return "failure";
+    }
+}
 
-// export function member(value: TParticipant): Member {
-//     return {
-//         role: memberRole(value.role),
-//         userId: value.user_id.toString(),
-//         displayName: undefined,
-//     };
-// }
+export function pinMessageResponse(
+    value: GroupPinMessageResponse | CommunityPinMessageResponse,
+): PinMessageResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return {
+            kind: "success",
+            eventIndex: value.Success.index,
+            timestamp: value.Success.timestamp,
+        };
+    } else if (value === "NoChange") {
+        return CommonResponses.noChange();
+    } else {
+        console.warn("PinMessageResponse failed with: ", value);
+        return CommonResponses.failure();
+    }
+}
 
-// export function editMessageResponse(
-//     candid: ApiEditMessageResponse | ApiEditChannelMessageResponse | ApiEditDirectMessageResponse,
-// ): EditMessageResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     } else {
-//         console.warn("EditMessageResponse failed with: ", candid);
-//         return "failure";
-//     }
-// }
+export function unpinMessageResponse(
+    value: GroupUnpinMessageResponse | CommunityPinMessageResponse,
+): UnpinMessageResponse {
+    if (typeof value === "object") {
+        if ("Success" in value || "SuccessV2" in value) {
+            return "success";
+        }
+    }
+    if (value === "NoChange") {
+        return "success";
+    } else {
+        console.warn("UnpinMessageResponse failed with: ", value);
+        return "failure";
+    }
+}
 
-// export function declineInvitationResponse(
-//     candid: ApiDeclineInvitationResponse | ApiDeclineChannelInvitationResponse,
-// ): DeclineInvitationResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     } else {
-//         console.warn("DeclineInvitationResponse failed with: ", candid);
-//         return "failure";
-//     }
-// }
+export function groupDetailsResponse(
+    value: GroupSelectedInitialResponse | CommunitySelectedChannelInitialResponse,
+): GroupChatDetailsResponse {
+    if (
+        value === "CallerNotInGroup" ||
+        value === "PrivateCommunity" ||
+        value === "PrivateChannel" ||
+        value === "ChannelNotFound" ||
+        "UserNotInChannel" in value ||
+        "UserNotInCommunity" in value
+    ) {
+        console.warn("GetGroupDetails failed with ", value);
+        return "failure";
+    }
+    if ("Success" in value) {
+        const members =
+            "participants" in value.Success ? value.Success.participants : value.Success.members;
+        return {
+            members: members.map(member),
+            blockedUsers: new Set(value.Success.blocked_users.map((u) => u.toString())),
+            invitedUsers: new Set(value.Success.invited_users.map((u) => u.toString())),
+            pinnedMessages: new Set(value.Success.pinned_messages),
+            rules: value.Success.chat_rules,
+            timestamp: value.Success.timestamp,
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", value);
+}
 
-// export function leaveGroupResponse(
-//     candid: ApiLeaveGroupResponse | ApiLeaveChannelResponse,
-// ): LeaveGroupResponse {
-//     if (
-//         "Success" in candid ||
-//         "GroupNotFound" in candid ||
-//         "CallerNotInGroup" in candid ||
-//         "UserNotInChannel" in candid ||
-//         "ChannelNotFound" in candid
-//     ) {
-//         return "success";
-//     }
-//     if ("OwnerCannotLeave" in candid || "LastOwnerCannotLeave" in candid) {
-//         return "owner_cannot_leave";
-//     }
-//     return "failure";
-// }
+export function groupDetailsUpdatesResponse(
+    value: GroupSelectedUpdatesResponse | CommunitySelectedChannelUpdatesResponse,
+): GroupChatDetailsUpdatesResponse {
+    if (typeof value === "object") {
+        if ("Success" in value) {
+            return {
+                kind: "success",
+                membersAddedOrUpdated: value.Success.members_added_or_updated.map(member),
+                membersRemoved: new Set(value.Success.members_removed.map(principalBytesToString)),
+                blockedUsersAdded: new Set(
+                    value.Success.blocked_users_added.map(principalBytesToString),
+                ),
+                blockedUsersRemoved: new Set(
+                    value.Success.blocked_users_removed.map(principalBytesToString),
+                ),
+                pinnedMessagesAdded: new Set(value.Success.pinned_messages_added),
+                pinnedMessagesRemoved: new Set(value.Success.pinned_messages_removed),
+                rules: value.Success.chat_rules,
+                invitedUsers: mapOptional(
+                    value.Success.invited_users,
+                    (invited_users) => new Set(invited_users.map(principalBytesToString)),
+                ),
+                timestamp: value.Success.timestamp,
+            };
+        } else if ("SuccessNoUpdates" in value) {
+            return {
+                kind: "success_no_updates",
+                timestamp: value.SuccessNoUpdates,
+            };
+        }
+    }
+    console.warn("Unexpected ApiSelectedUpdatesResponse type received", value);
+    return CommonResponses.failure();
+}
 
-// export function deleteMessageResponse(
-//     candid: ApiDeleteMessageResponse | ApiDeleteChannelMessageResponse,
-// ): DeleteMessageResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     } else {
-//         console.warn("DeleteMessageResponse failed with: ", candid);
-//         return "failure";
-//     }
-// }
+export function member(value: TGroupMember): Member {
+    return {
+        role: memberRole(value.role),
+        userId: principalBytesToString(value.user_id),
+        displayName: undefined,
+    };
+}
 
-// export function deletedMessageResponse(
-//     candid: ApiDeletedGroupMessageResponse | ApiDeletedChannelMessageResponse,
-// ): DeletedGroupMessageResponse {
-//     if ("Success" in candid) {
-//         return {
-//             kind: "success",
-//             content: messageContent(candid.Success.content, "unknown"),
-//         };
-//     } else {
-//         console.warn("DeletedMessageResponse failed with: ", candid);
-//         return CommonResponses.failure();
-//     }
-// }
+export function editMessageResponse(
+    value: UserEditMessageResponse | GroupEditMessageResponse | CommunityEditMessageResponse,
+): EditMessageResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return "success";
+    } else {
+        console.warn("EditMessageResponse failed with: ", value);
+        return "failure";
+    }
+}
 
-// export function undeleteMessageResponse(
-//     value: TUndeleteMessageResponse | TUndeleteChannelMessageResponse,
-// ): UndeleteMessageResponse {
-//     if ("Success" in value) {
-//         if (value.Success.messages.length == 0) {
-//             return CommonResponses.failure();
-//         } else {
-//             return {
-//                 kind: "success",
-//                 message: message(value.Success.messages[0]),
-//             };
-//         }
-//     } else {
-//         console.warn("UndeleteMessageResponse failed with: ", value);
-//         return CommonResponses.failure();
-//     }
-// }
+export function declineInvitationResponse(
+    value: GroupDeclineInvitiationResponse | CommunityDeclineInvitationResponse,
+): DeclineInvitationResponse {
+    if (value === "Success") {
+        return "success";
+    } else {
+        console.warn("DeclineInvitationResponse failed with: ", value);
+        return "failure";
+    }
+}
 
-// export function threadPreviewsResponse(
-//     candid: ApiThreadPreviewsResponse | ApiChannelThreadPreviewsResponse,
-//     chatId: ChatIdentifier,
-//     latestClientThreadUpdate: bigint | undefined,
-// ): ThreadPreviewsResponse {
-//     if ("Success" in candid) {
-//         return {
-//             kind: "thread_previews_success",
-//             threads: candid.Success.threads.map((t) => threadPreview(chatId, t)),
-//         };
-//     }
-//     if ("ReplicaNotUpToDate" in candid) {
-//         throw ReplicaNotUpToDateError.byTimestamp(
-//             candid.ReplicaNotUpToDate,
-//             latestClientThreadUpdate ?? BigInt(-1),
-//             false,
-//         );
-//     }
-//     console.warn("ThreadPreviewsResponse failed with: ", candid);
-//     return CommonResponses.failure();
-// }
+export function leaveGroupResponse(
+    value: UserLeaveGroupResponse | CommunityLeaveChannelResponse,
+): LeaveGroupResponse {
+    if (
+        value === "Success" ||
+        value === "GroupNotFound" ||
+        value === "CallerNotInGroup" ||
+        value === "UserNotInChannel" ||
+        value === "ChannelNotFound"
+    ) {
+        return "success";
+    }
+    if (value === "LastOwnerCannotLeave") {
+        return "owner_cannot_leave";
+    }
+    return "failure";
+}
 
-// export function threadPreview(chatId: ChatIdentifier, value: TThreadPreview): ThreadPreview {
-//     return {
-//         chatId: { ...chatId },
-//         latestReplies: value.latest_replies.map(messageEvent).sort((e1, e2) => e1.index - e2.index),
-//         totalReplies: value.total_replies,
-//         rootMessage: messageEvent(value.root_message),
-//     };
-// }
+export function deleteMessageResponse(
+    value: GroupDeleteMessagesResponse | CommunityDeleteMessagesResponse,
+): DeleteMessageResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return "success";
+    } else {
+        console.warn("DeleteMessageResponse failed with: ", value);
+        return "failure";
+    }
+}
 
-// export function changeRoleResponse(
-//     candid: ApiChangeRoleResponse | ApiChangeChannelRoleResponse,
-// ): ChangeRoleResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     } else {
-//         console.warn("ChangeRoleResponse failed with: ", candid);
-//         return "failure";
-//     }
-// }
+export function deletedMessageResponse(
+    value: GroupDeletedMessageResponse | CommunityDeletedMessageResponse,
+): DeletedGroupMessageResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return {
+            kind: "success",
+            content: messageContent(value.Success.content, "unknown"),
+        };
+    } else {
+        console.warn("DeletedMessageResponse failed with: ", value);
+        return CommonResponses.failure();
+    }
+}
 
-// export function registerPollVoteResponse(
-//     candid: ApiRegisterPollVoteResponse | ApiRegisterChannelPollVoteResponse,
-// ): RegisterPollVoteResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     } else {
-//         console.warn("RegisterPollVoteResponse failed with: ", candid);
-//         return "failure";
-//     }
-// }
+export function undeleteMessageResponse(
+    value: GroupUndeleteMessagesResponse | CommunityUndeleteMessagesResponse,
+): UndeleteMessageResponse {
+    if (typeof value === "object" && "Success" in value) {
+        if (value.Success.messages.length == 0) {
+            return CommonResponses.failure();
+        } else {
+            return {
+                kind: "success",
+                message: message(value.Success.messages[0]),
+            };
+        }
+    } else {
+        console.warn("UndeleteMessageResponse failed with: ", value);
+        return CommonResponses.failure();
+    }
+}
+
+export function threadPreviewsResponse(
+    value: GroupThreadPreviewsResponse | CommunityThreadPreviewsResponse,
+    chatId: ChatIdentifier,
+    latestClientThreadUpdate: bigint | undefined,
+): ThreadPreviewsResponse {
+    if (typeof value === "object") {
+        if ("Success" in value) {
+            return {
+                kind: "thread_previews_success",
+                threads: value.Success.threads.map((t) => threadPreview(chatId, t)),
+            };
+        }
+        if ("ReplicaNotUpToDate" in value) {
+            throw ReplicaNotUpToDateError.byTimestamp(
+                value.ReplicaNotUpToDate,
+                latestClientThreadUpdate ?? BigInt(-1),
+                false,
+            );
+        }
+    }
+    console.warn("ThreadPreviewsResponse failed with: ", value);
+    return CommonResponses.failure();
+}
+
+export function threadPreview(chatId: ChatIdentifier, value: TThreadPreview): ThreadPreview {
+    return {
+        chatId: { ...chatId },
+        latestReplies: value.latest_replies.map(messageEvent).sort((e1, e2) => e1.index - e2.index),
+        totalReplies: value.total_replies,
+        rootMessage: messageEvent(value.root_message),
+    };
+}
+
+export function changeRoleResponse(
+    value: GroupChangeRoleResponse | CommunityChangeChannelRoleResponse,
+): ChangeRoleResponse {
+    if (value === "Success") {
+        return "success";
+    } else {
+        console.warn("ChangeRoleResponse failed with: ", value);
+        return "failure";
+    }
+}
+
+export function registerPollVoteResponse(
+    value: GroupRegisterPollVoteResponse | CommunityRegisterPollVoteResponse,
+): RegisterPollVoteResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return "success";
+    } else {
+        console.warn("RegisterPollVoteResponse failed with: ", value);
+        return "failure";
+    }
+}
 
 export function apiChatIdentifier(chatId: ChatIdentifier): TChat {
     switch (chatId.kind) {
@@ -2629,7 +2691,7 @@ export function apiChatIdentifier(chatId: ChatIdentifier): TChat {
 }
 
 export function joinGroupResponse(value: LocalUserIndexJoinGroupResponse): JoinGroupResponse {
-    if (typeof value !== "string") {
+    if (typeof value === "object") {
         if ("Success" in value) {
             return { kind: "success", group: groupChatSummary(value.Success) };
         } else if ("AlreadyInGroupV2" in value) {
@@ -2649,299 +2711,298 @@ export function joinGroupResponse(value: LocalUserIndexJoinGroupResponse): JoinG
     }
 }
 
-// export function searchGroupChatResponse(
-//     candid: ApiSearchGroupChatResponse | ApiSearchChannelResponse,
-//     chatId: MultiUserChatIdentifier,
-// ): SearchGroupChatResponse {
-//     if ("Success" in candid) {
-//         return {
-//             kind: "success",
-//             matches: candid.Success.matches.map((m) => messageMatch(m, chatId)),
-//         };
-//     } else {
-//         console.warn("SearchChat failed with ", candid);
-//         return CommonResponses.failure();
-//     }
-// }
+export function searchGroupChatResponse(
+    value: GroupSearchMessagesResponse | CommunitySearchChannelResponse,
+    chatId: MultiUserChatIdentifier,
+): SearchGroupChatResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return {
+            kind: "success",
+            matches: value.Success.matches.map((m) => messageMatch(m, chatId)),
+        };
+    } else {
+        console.warn("SearchChat failed with ", value);
+        return CommonResponses.failure();
+    }
+}
 
-// export function inviteCodeResponse(
-//     candid: ApiInviteCodeResponse | ApiCommunityInviteCodeResponse,
-// ): InviteCodeResponse {
-//     if ("Success" in candid) {
-//         return {
-//             kind: "success",
-//             code: optional(candid.Success.code, codeToText),
-//         };
-//     } else if ("NotAuthorized" in candid) {
-//         return {
-//             kind: "not_authorized",
-//         };
-//     } else {
-//         console.warn("InviteCode failed with ", candid);
-//         return CommonResponses.failure();
-//     }
-// }
+export function messageMatch(value: TMessageMatch, chatId: ChatIdentifier): MessageMatch {
+    const sender = principalBytesToString(value.sender);
+    return {
+        chatId,
+        messageIndex: value.message_index,
+        content: messageContent(value.content, sender),
+        sender,
+        score: value.score,
+    };
+}
 
-// export function enableInviteCodeResponse(
-//     candid: ApiEnableInviteCodeResponse | ApiCommunityEnableInviteCodeResponse,
-// ): EnableInviteCodeResponse {
-//     if ("Success" in candid) {
-//         return {
-//             kind: "success",
-//             code: codeToText(candid.Success.code),
-//         };
-//     } else if ("NotAuthorized" in candid) {
-//         return {
-//             kind: "not_authorized",
-//         };
-//     } else {
-//         console.warn("EnableInviteCode failed with");
-//         return CommonResponses.failure();
-//     }
-// }
+export function inviteCodeResponse(
+    value: GroupInviteCodeResponse | CommunityInviteCodeResponse,
+): InviteCodeResponse {
+    if (typeof value === "object") {
+        if ("Success" in value) {
+            return {
+                kind: "success",
+                code: mapOptional(value.Success.code, codeToText),
+            };
+        }
+    }
+    if (value === "NotAuthorized") {
+        return {
+            kind: "not_authorized",
+        };
+    } else {
+        console.warn("InviteCode failed with ", value);
+        return CommonResponses.failure();
+    }
+}
 
-// export function disableInviteCodeResponse(
-//     candid: ApiDisableInviteCodeResponse | ApiCommunityDisableInviteCodeResponse,
-// ): DisableInviteCodeResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     } else if ("NotAuthorized" in candid) {
-//         return "not_authorized";
-//     } else {
-//         console.warn("DisableInviteCode failed with ", candid);
-//         return "failure";
-//     }
-// }
+export function enableOrResetInviteCodeResponse(
+    value: GroupEnableInviteCodeResponse | CommunityEnableInviteCodeResponse,
+): EnableInviteCodeResponse {
+    if (typeof value === "object") {
+        if ("Success" in value) {
+            return {
+                kind: "success",
+                code: codeToText(value.Success.code),
+            };
+        } else if ("NotAuthorized" in value) {
+            return {
+                kind: "not_authorized",
+            };
+        }
+    }
+    console.warn("ResetInviteCode failed with ", value);
+    return CommonResponses.failure();
+}
 
-// export function resetInviteCodeResponse(
-//     candid: ApiResetInviteCodeResponse | ApiCommunityEnableInviteCodeResponse,
-// ): ResetInviteCodeResponse {
-//     if ("Success" in candid) {
-//         return {
-//             kind: "success",
-//             code: codeToText(candid.Success.code),
-//         };
-//     } else if ("NotAuthorized" in candid) {
-//         return {
-//             kind: "not_authorized",
-//         };
-//     } else {
-//         console.warn("ResetInviteCode failed with ", candid);
-//         return CommonResponses.failure();
-//     }
-// }
+export function disableInviteCodeResponse(
+    value: GroupDisableInviteCodeResponse | CommunityDisableInviteCodeResponse,
+): DisableInviteCodeResponse {
+    if (typeof value === "object") {
+        if ("Success" in value) {
+            return "success";
+        } else if ("NotAuthorized" in value) {
+            return "not_authorized";
+        }
+    }
+    console.warn("DisableInviteCode failed with ", value);
+    return "failure";
+}
 
-// export function registerProposalVoteResponse(
-//     candid: ApiGroupRegisterProposalVoteResponse | ApiCommunityRegisterProposalVoteResponse,
-// ): RegisterProposalVoteResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     }
-//     if ("AlreadyVoted" in candid) {
-//         return "already_voted";
-//     }
-//     if ("CallerNotInGroup" in candid) {
-//         return "caller_not_in_group";
-//     }
-//     if ("UserNotInChannel" in candid) {
-//         return "user_not_in_channel";
-//     }
-//     if ("ChannelNotFound" in candid) {
-//         return "channel_not_found";
-//     }
-//     if ("UserNotInCommunity" in candid) {
-//         return "user_not_in_community";
-//     }
-//     if ("CommunityFrozen" in candid) {
-//         return "community_frozen";
-//     }
-//     if ("NoEligibleNeurons" in candid) {
-//         return "no_eligible_neurons";
-//     }
-//     if ("ProposalNotAcceptingVotes" in candid) {
-//         return "proposal_not_accepting_votes";
-//     }
-//     if ("ProposalNotFound" in candid) {
-//         return "proposal_not_found";
-//     }
-//     if ("ProposalMessageNotFound" in candid) {
-//         return "proposal_message_not_found";
-//     }
-//     if ("UserSuspended" in candid) {
-//         return "user_suspended";
-//     }
-//     if ("ChatFrozen" in candid) {
-//         return "chat_frozen";
-//     }
-//     if ("InternalError" in candid) {
-//         return "internal_error";
-//     }
-//     throw new UnsupportedValueError(
-//         "Unexpected ApiRegisterProposalVoteResponse type received",
-//         candid,
-//     );
-// }
+export function registerProposalVoteResponse(
+    value: GroupRegisterProposalVoteResponse | CommunityRegisterProposalVoteResponse,
+): RegisterProposalVoteResponse {
+    if (typeof value === "object") {
+        if ("AlreadyVoted" in value) {
+            return "already_voted";
+        }
+        if ("InternalError" in value) {
+            return "internal_error";
+        }
+    }
+    if (value === "Success") {
+        return "success";
+    }
+    if (value === "CallerNotInGroup") {
+        return "caller_not_in_group";
+    }
+    if (value === "UserNotInChannel") {
+        return "user_not_in_channel";
+    }
+    if (value === "ChannelNotFound") {
+        return "channel_not_found";
+    }
+    if (value === "UserNotInCommunity") {
+        return "user_not_in_community";
+    }
+    if (value === "CommunityFrozen") {
+        return "community_frozen";
+    }
+    if (value === "NoEligibleNeurons") {
+        return "no_eligible_neurons";
+    }
+    if (value === "ProposalNotAcceptingVotes") {
+        return "proposal_not_accepting_votes";
+    }
+    if (value === "ProposalNotFound") {
+        return "proposal_not_found";
+    }
+    if (value === "ProposalMessageNotFound") {
+        return "proposal_message_not_found";
+    }
+    if (value === "UserSuspended") {
+        return "user_suspended";
+    }
+    if (value === "UserLapsed") {
+        return "user_lapsed";
+    }
+    if (value === "ChatFrozen") {
+        return "chat_frozen";
+    }
 
-// export function claimPrizeResponse(
-//     candid: ApiClaimGroupPrizeResponse | ApiClaimChannelPrizeResponse,
-// ): ClaimPrizeResponse {
-//     if ("Success" in candid) {
-//         return CommonResponses.success();
-//     } else {
-//         console.warn("ClaimPrize failed with ", candid);
-//         return CommonResponses.failure();
-//     }
-// }
+    throw new UnsupportedValueError(
+        "Unexpected ApiRegisterProposalVoteResponse type received",
+        value,
+    );
+}
 
-// export function statusError(
-//     candid: SwapStatusError,
-// ): AcceptP2PSwapResponse & CancelP2PSwapResponse {
-//     if ("Reserved" in candid) {
-//         return {
-//             kind: "already_reserved",
-//             reservedBy: candid.Reserved.reserved_by.toString(),
-//         };
-//     }
-//     if ("Accepted" in candid) {
-//         return {
-//             kind: "already_accepted",
-//             acceptedBy: candid.Accepted.accepted_by.toString(),
-//             token1TxnIn: candid.Accepted.token1_txn_in,
-//         };
-//     }
-//     if ("Completed" in candid) {
-//         const { accepted_by, token1_txn_in, token0_txn_out, token1_txn_out } = candid.Completed;
-//         return {
-//             kind: "already_completed",
-//             acceptedBy: accepted_by.toString(),
-//             token1TxnIn: token1_txn_in,
-//             token0TxnOut: token0_txn_out,
-//             token1TxnOut: token1_txn_out,
-//         };
-//     }
-//     if ("Cancelled" in candid) {
-//         return {
-//             kind: "swap_cancelled",
-//             token0TxnOut: optional(candid.Cancelled.token0_txn_out, identity),
-//         };
-//     }
-//     if ("Expired" in candid) {
-//         return {
-//             kind: "swap_expired",
-//             token0TxnOut: optional(candid.Expired.token0_txn_out, identity),
-//         };
-//     }
-//
-//     throw new UnsupportedValueError("Unexpected SwapStatusError type received", candid);
-// }
+export function claimPrizeResponse(
+    value: GroupClaimPrizeResponse | CommunityClaimPrizeResponse,
+): ClaimPrizeResponse {
+    if (value === "Success") {
+        return CommonResponses.success();
+    } else {
+        console.warn("ClaimPrize failed with ", value);
+        return CommonResponses.failure();
+    }
+}
 
-// export function acceptP2PSwapResponse(
-//     candid:
-//         | ApiCommunityAcceptP2PSwapResponse
-//         | ApiGroupAcceptP2PSwapResponse
-//         | ApiUserAcceptP2PSwapResponse,
-// ): AcceptP2PSwapResponse {
-//     if ("Success" in candid) {
-//         return { kind: "success", token1TxnIn: candid.Success.token1_txn_in };
-//     }
-//     if ("StatusError" in candid) {
-//         return statusError(candid.StatusError);
-//     }
-//     if (
-//         "PinRequired" in candid ||
-//         "PinIncorrect" in candid ||
-//         "TooManyFailedPinAttempts" in candid
-//     ) {
-//         return pinNumberFailureResponse(candid);
-//     }
-//     if ("ChatNotFound" in candid) return { kind: "chat_not_found" };
-//     if ("UserNotInGroup" in candid) return { kind: "user_not_in_group" };
-//     if ("UserNotInCommunity" in candid) return { kind: "user_not_in_community" };
-//     if ("UserNotInChannel" in candid) return { kind: "user_not_in_channel" };
-//     if ("ChannelNotFound" in candid) return { kind: "channel_not_found" };
-//     if ("SwapNotFound" in candid) return { kind: "swap_not_found" };
-//     if ("ChatFrozen" in candid) return { kind: "chat_frozen" };
-//     if ("UserSuspended" in candid) return { kind: "user_suspended" };
-//     if ("InternalError" in candid) return { kind: "internal_error", text: candid.InternalError };
-//     if ("InsufficientFunds" in candid) return { kind: "insufficient_funds" };
-//     if ("InsufficientFunds" in candid) return { kind: "insufficient_funds" };
-//
-//     throw new UnsupportedValueError("Unexpected ApiAcceptP2PSwapResponse type received", candid);
-// }
+export function statusError(
+    value: TSwapStatusError,
+): AcceptP2PSwapResponse & CancelP2PSwapResponse {
+    if ("Reserved" in value) {
+        return {
+            kind: "already_reserved",
+            reservedBy: principalBytesToString(value.Reserved.reserved_by),
+        };
+    }
+    if ("Accepted" in value) {
+        return {
+            kind: "already_accepted",
+            acceptedBy: principalBytesToString(value.Accepted.accepted_by),
+            token1TxnIn: value.Accepted.token1_txn_in,
+        };
+    }
+    if ("Completed" in value) {
+        const { accepted_by, token1_txn_in, token0_txn_out, token1_txn_out } = value.Completed;
+        return {
+            kind: "already_completed",
+            acceptedBy: principalBytesToString(accepted_by),
+            token1TxnIn: token1_txn_in,
+            token0TxnOut: token0_txn_out,
+            token1TxnOut: token1_txn_out,
+        };
+    }
+    if ("Cancelled" in value) {
+        return {
+            kind: "swap_cancelled",
+            token0TxnOut: value.Cancelled.token0_txn_out,
+        };
+    }
+    if ("Expired" in value) {
+        return {
+            kind: "swap_expired",
+            token0TxnOut: value.Expired.token0_txn_out,
+        };
+    }
 
-// export function cancelP2PSwapResponse(
-//     candid:
-//         | ApiCommunityCancelP2PSwapResponse
-//         | ApiGroupCancelP2PSwapResponse
-//         | ApiUserCancelP2PSwapResponse,
-// ): CancelP2PSwapResponse {
-//     if ("Success" in candid) {
-//         return { kind: "success" };
-//     }
-//     if ("StatusError" in candid) {
-//         return statusError(candid.StatusError);
-//     }
-//     if ("ChatNotFound" in candid) return { kind: "chat_not_found" };
-//     if ("UserNotInGroup" in candid) return { kind: "user_not_in_group" };
-//     if ("UserNotInCommunity" in candid) return { kind: "user_not_in_community" };
-//     if ("UserNotInChannel" in candid) return { kind: "user_not_in_channel" };
-//     if ("ChannelNotFound" in candid) return { kind: "channel_not_found" };
-//     if ("ChatFrozen" in candid) return { kind: "chat_frozen" };
-//     if ("SwapNotFound" in candid) return { kind: "swap_not_found" };
-//     if ("UserSuspended" in candid) return { kind: "user_suspended" };
-//
-//     throw new UnsupportedValueError("Unexpected ApiCancelP2PSwapResponse type received", candid);
-// }
+    throw new UnsupportedValueError("Unexpected SwapStatusError type received", value);
+}
 
-// export function joinVideoCallResponse(
-//     candid:
-//         | ApiJoinDirectVideoCallResponse
-//         | ApiJoinGroupVideoCallResponse
-//         | ApiJoinChannelVideoCallResponse,
-// ): JoinVideoCallResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     }
-//     if ("AlreadyEnded" in candid) {
-//         return "ended";
-//     }
-//     console.warn("JoinVideoCall failed with ", candid);
-//     return "failure";
-// }
+export function acceptP2PSwapResponse(
+    value: UserAcceptP2pSwapResponse | GroupAcceptP2pSwapResponse | CommunityAcceptP2pSwapResponse,
+): AcceptP2PSwapResponse {
+    if (typeof value === "object") {
+        if ("Success" in value) {
+            return { kind: "success", token1TxnIn: value.Success.token1_txn_in };
+        }
+        if ("StatusError" in value) {
+            return statusError(value.StatusError);
+        }
+        if ("InternalError" in value) {
+            return { kind: "internal_error", text: value.InternalError };
+        }
+        if ("PinIncorrect" in value || "TooManyFailedPinAttempts" in value) {
+            return pinNumberFailureResponseV2(value);
+        }
+    }
+    if (value === "ChatNotFound") return { kind: "chat_not_found" };
+    if (value === "UserNotInGroup") return { kind: "user_not_in_group" };
+    if (value === "UserNotInCommunity") return { kind: "user_not_in_community" };
+    if (value === "UserNotInChannel") return { kind: "user_not_in_channel" };
+    if (value === "ChannelNotFound") return { kind: "channel_not_found" };
+    if (value === "SwapNotFound") return { kind: "swap_not_found" };
+    if (value === "ChatFrozen") return { kind: "chat_frozen" };
+    if (value === "UserSuspended") return { kind: "user_suspended" };
+    if (value === "UserLapsed") return { kind: "user_lapsed" };
+    if (value === "InsufficientFunds") return { kind: "insufficient_funds" };
+    if (value === "PinRequired") return { kind: "pin_required" };
 
-// export function apiVideoCallPresence(domain: VideoCallPresence): ApiVideoCallPresence {
-//     switch (domain) {
-//         case "default":
-//             return { Default: null };
-//         case "hidden":
-//             return { Hidden: null };
-//         case "owner":
-//             return { Owner: null };
-//     }
-// }
+    throw new UnsupportedValueError("Unexpected ApiAcceptP2PSwapResponse type received", value);
+}
 
-// export function setVideoCallPresence(
-//     candid: ApiSetVideoCallPresenceResponse,
-// ): SetVideoCallPresenceResponse {
-//     if ("Success" in candid) return "success";
-//     console.warn("SetVideoCallPresence failed with: ", candid);
-//     return "failure";
-// }
+export function cancelP2PSwapResponse(
+    value: UserCancelP2pSwapResponse | GroupCancelP2pSwapResponse | CommunityCancelP2pSwapResponse,
+): CancelP2PSwapResponse {
+    if (value === "Success") {
+        return { kind: "success" };
+    }
+    if (typeof value === "object" && "StatusError" in value) {
+        return statusError(value.StatusError);
+    }
+    if (value === "ChatNotFound") return { kind: "chat_not_found" };
+    if (value === "UserNotInGroup") return { kind: "user_not_in_group" };
+    if (value === "UserNotInCommunity") return { kind: "user_not_in_community" };
+    if (value === "UserNotInChannel") return { kind: "user_not_in_channel" };
+    if (value === "ChannelNotFound") return { kind: "channel_not_found" };
+    if (value === "ChatFrozen") return { kind: "chat_frozen" };
+    if (value === "SwapNotFound") return { kind: "swap_not_found" };
+    if (value === "UserSuspended") return { kind: "user_suspended" };
 
-// export function videoCallParticipantsResponse(
-//     candid: ApiGroupVideoCallParticipantsResponse | ApiChannelVideoCallParticipantsResponse,
-// ): VideoCallParticipantsResponse {
-//     if ("Success" in candid) {
-//         return {
-//             kind: "success",
-//             participants: candid.Success.participants.map(videoCallParticipant),
-//             hidden: candid.Success.hidden.map(videoCallParticipant),
-//             lastUpdated: candid.Success.last_updated,
-//         };
-//     }
-//     console.warn("VideoCallParticipants failed with: ", candid);
-//     return CommonResponses.failure();
-// }
+    throw new UnsupportedValueError("Unexpected ApiCancelP2PSwapResponse type received", value);
+}
+
+export function joinVideoCallResponse(
+    value:
+        | UserJoinVideoCallResponse
+        | GroupSetVideoCallPresenceResponse
+        | CommunitySetVideoCallPresenceResponse,
+): JoinVideoCallResponse {
+    if (typeof value === "object" && "Success") {
+        return "success";
+    }
+    if (value === "AlreadyEnded") {
+        return "ended";
+    }
+    console.warn("JoinVideoCall failed with ", value);
+    return "failure";
+}
+
+export function apiVideoCallPresence(domain: VideoCallPresence): TVideoCallPresence {
+    switch (domain) {
+        case "default":
+            return "Default";
+        case "hidden":
+            return "Hidden";
+        case "owner":
+            return "Owner";
+    }
+}
+
+export function setVideoCallPresence(
+    value: GroupSetVideoCallPresenceResponse | CommunitySetVideoCallPresenceResponse,
+): SetVideoCallPresenceResponse {
+    if (typeof value === "object" && "Success" in value) return "success";
+    console.warn("SetVideoCallPresence failed with: ", value);
+    return "failure";
+}
+
+export function videoCallParticipantsResponse(
+    value: GroupVideoCallParticipantsResponse | CommunityVideoCallParticipantsResponse,
+): VideoCallParticipantsResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return {
+            kind: "success",
+            participants: value.Success.participants.map(videoCallParticipant),
+            hidden: value.Success.hidden.map(videoCallParticipant),
+            lastUpdated: value.Success.last_updated,
+        };
+    }
+    console.warn("VideoCallParticipants failed with: ", value);
+    return CommonResponses.failure();
+}
 
 // export function setPinNumberResponse(candid: ApiSetPinNumberResponse): SetPinNumberResponse {
 //     if ("Success" in candid) {

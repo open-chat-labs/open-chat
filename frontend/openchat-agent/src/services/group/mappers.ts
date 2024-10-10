@@ -18,10 +18,6 @@ import type {
     ApiUnblockUserResponse,
 } from "./candid/idl";
 import type {
-    ApiEventsResponse as ApiCommunityEventsResponse,
-    ApiMessagesByMessageIndexResponse as ApiCommunityMessagesByMessageIndexResponse,
-} from "../community/candid/idl";
-import type {
     ChatEvent,
     EventsResponse,
     SendMessageResponse,
@@ -381,7 +377,7 @@ export function removeMemberResponse(candid: ApiRemoveParticipantResponse): Remo
 
 export async function getMessagesByMessageIndexResponse(
     principal: Principal,
-    candid: ApiMessagesByMessageIndexResponse | ApiCommunityMessagesByMessageIndexResponse,
+    candid: ApiMessagesByMessageIndexResponse,
     chatId: MultiUserChatIdentifier,
     latestKnownUpdatePreRequest: bigint | undefined,
 ): Promise<EventsResponse<Message>> {
@@ -417,7 +413,7 @@ export async function getMessagesByMessageIndexResponse(
 
 export async function getEventsResponse(
     principal: Principal,
-    candid: ApiEventsResponse | ApiCommunityEventsResponse,
+    candid: ApiEventsResponse,
     chatId: ChatIdentifier,
     latestKnownUpdatePreRequest: bigint | undefined,
 ): Promise<EventsResponse<ChatEvent>> {

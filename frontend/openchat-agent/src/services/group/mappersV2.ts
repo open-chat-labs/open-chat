@@ -1,29 +1,36 @@
 import type {
+    CommunityEventsResponse,
+    CommunityMessagesByMessageIndexResponse,
     GroupCanisterGroupChatSummary as TGroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates as TGroupCanisterGroupChatSummaryUpdates,
+    GroupEventsResponse,
+    GroupMessagesByMessageIndexResponse,
     GroupSendMessageResponse,
+    OptionalGroupPermissions as TOptionalGroupPermissions,
+    OptionalMessagePermissions as TOptionalMessagePermissions,
+    UpdatedRules as TUpdatedRules,
 } from "../../typebox";
 import type {
-    // ChatEvent,
-    // EventsResponse,
+    ChatEvent,
+    EventsResponse,
     SendMessageResponse,
     // RemoveMemberResponse,
     // BlockUserResponse,
     // UnblockUserResponse,
     // MemberRole,
-    // Message,
+    Message,
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
     // GroupCanisterSummaryResponse,
     // GroupCanisterSummaryUpdatesResponse,
     // UpdatedEvent,
-    // ChatIdentifier,
-    // MultiUserChatIdentifier,
+    ChatIdentifier,
+    MultiUserChatIdentifier,
     // ConvertToCommunityResponse,
-    // UpdatedRules,
+    UpdatedRules,
     // FollowThreadResponse,
-    // OptionalChatPermissions,
-    // OptionalMessagePermissions,
+    OptionalChatPermissions,
+    OptionalMessagePermissions,
 } from "openchat-shared";
 import {
     // CommonResponses,
@@ -31,18 +38,28 @@ import {
 } from "openchat-shared";
 import {
     accessGate,
+    apiPermissionRole,
     chatMetrics,
+    eventsSuccessResponse,
     groupPermissions,
     groupSubtype,
     memberRole,
     mention,
     messageEvent,
+    messagesSuccessResponse,
     threadSyncDetails,
     updatedEvent,
 } from "../common/chatMappersV2";
-// import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
-import { identity, mapOptional, optionUpdateV2, principalBytesToString } from "../../utils/mapping";
-// import { ReplicaNotUpToDateError } from "../error";
+import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
+import {
+    apiOptionUpdateV2,
+    identity,
+    mapOptional,
+    optionUpdateV2,
+    principalBytesToString,
+} from "../../utils/mapping";
+import type { Principal } from "@dfinity/principal";
+import { ReplicaNotUpToDateError } from "../error";
 
 // export function apiRole(role: MemberRole): ApiRole | undefined {
 //     switch (role) {
@@ -169,57 +186,56 @@ export function groupChatSummaryUpdates(
     };
 }
 
-// export function apiOptionalGroupPermissions(
-//     permissions: OptionalChatPermissions,
-// ): OptionalGroupPermissions {
-//     return {
-//         delete_messages: apiOptional(apiPermissionRole, permissions.deleteMessages),
-//         remove_members: apiOptional(apiPermissionRole, permissions.removeMembers),
-//         update_group: apiOptional(apiPermissionRole, permissions.updateGroup),
-//         invite_users: apiOptional(apiPermissionRole, permissions.inviteUsers),
-//         add_members: apiOptional(apiPermissionRole, permissions.addMembers),
-//         change_roles: apiOptional(apiPermissionRole, permissions.changeRoles),
-//         pin_messages: apiOptional(apiPermissionRole, permissions.pinMessages),
-//         react_to_messages: apiOptional(apiPermissionRole, permissions.reactToMessages),
-//         mention_all_members: apiOptional(apiPermissionRole, permissions.mentionAllMembers),
-//         start_video_call: apiOptional(apiPermissionRole, permissions.startVideoCall),
-//         message_permissions: apiOptional(
-//             apiOptionalMessagePermissions,
-//             permissions.messagePermissions,
-//         ),
-//         thread_permissions: apiOptionUpdate(
-//             apiOptionalMessagePermissions,
-//             permissions.threadPermissions,
-//         ),
-//     };
-// }
-//
-// function apiOptionalMessagePermissions(
-//     permissions: OptionalMessagePermissions,
-// ): ApiOptionalMessagePermissions {
-//     const custom_updated =
-//         permissions.memeFighter !== undefined && permissions.memeFighter !== "set_to_none"
-//             ? [{ subtype: "meme_fighter", role: apiPermissionRole(permissions.memeFighter.value) }]
-//             : [];
-//     const custom_deleted = permissions.memeFighter === "set_to_none" ? ["meme_fighter"] : [];
-//     return {
-//         default: apiOptional(apiPermissionRole, permissions.default),
-//         text: apiOptionUpdate(apiPermissionRole, permissions.text),
-//         image: apiOptionUpdate(apiPermissionRole, permissions.image),
-//         video: apiOptionUpdate(apiPermissionRole, permissions.video),
-//         audio: apiOptionUpdate(apiPermissionRole, permissions.audio),
-//         file: apiOptionUpdate(apiPermissionRole, permissions.file),
-//         poll: apiOptionUpdate(apiPermissionRole, permissions.poll),
-//         crypto: apiOptionUpdate(apiPermissionRole, permissions.crypto),
-//         giphy: apiOptionUpdate(apiPermissionRole, permissions.giphy),
-//         prize: apiOptionUpdate(apiPermissionRole, permissions.prize),
-//         p2p_swap: apiOptionUpdate(apiPermissionRole, permissions.p2pSwap),
-//         // p2p_trade: apiOptionUpdate(apiPermissionRole, undefined),
-//         video_call: apiOptionUpdate(apiPermissionRole, undefined),
-//         custom_updated,
-//         custom_deleted,
-//     };
-// }
+export function apiOptionalGroupPermissions(
+    permissions: OptionalChatPermissions,
+): TOptionalGroupPermissions {
+    return {
+        delete_messages: mapOptional(permissions.deleteMessages, apiPermissionRole),
+        remove_members: mapOptional(permissions.removeMembers, apiPermissionRole),
+        update_group: mapOptional(permissions.updateGroup, apiPermissionRole),
+        invite_users: mapOptional(permissions.inviteUsers, apiPermissionRole),
+        add_members: mapOptional(permissions.addMembers, apiPermissionRole),
+        change_roles: mapOptional(permissions.changeRoles, apiPermissionRole),
+        pin_messages: mapOptional(permissions.pinMessages, apiPermissionRole),
+        react_to_messages: mapOptional(permissions.reactToMessages, apiPermissionRole),
+        mention_all_members: mapOptional(permissions.mentionAllMembers, apiPermissionRole),
+        start_video_call: mapOptional(permissions.startVideoCall, apiPermissionRole),
+        message_permissions: mapOptional(
+            permissions.messagePermissions,
+            apiOptionalMessagePermissions,
+        ),
+        thread_permissions: apiOptionUpdateV2(
+            apiOptionalMessagePermissions,
+            permissions.threadPermissions,
+        ),
+    };
+}
+
+function apiOptionalMessagePermissions(
+    permissions: OptionalMessagePermissions,
+): TOptionalMessagePermissions {
+    const custom_updated =
+        permissions.memeFighter !== undefined && permissions.memeFighter !== "set_to_none"
+            ? [{ subtype: "meme_fighter", role: apiPermissionRole(permissions.memeFighter.value) }]
+            : [];
+    const custom_deleted = permissions.memeFighter === "set_to_none" ? ["meme_fighter"] : [];
+    return {
+        default: mapOptional(permissions.default, apiPermissionRole),
+        text: apiOptionUpdateV2(apiPermissionRole, permissions.text),
+        image: apiOptionUpdateV2(apiPermissionRole, permissions.image),
+        video: apiOptionUpdateV2(apiPermissionRole, permissions.video),
+        audio: apiOptionUpdateV2(apiPermissionRole, permissions.audio),
+        file: apiOptionUpdateV2(apiPermissionRole, permissions.file),
+        poll: apiOptionUpdateV2(apiPermissionRole, permissions.poll),
+        crypto: apiOptionUpdateV2(apiPermissionRole, permissions.crypto),
+        giphy: apiOptionUpdateV2(apiPermissionRole, permissions.giphy),
+        prize: apiOptionUpdateV2(apiPermissionRole, permissions.prize),
+        p2p_swap: apiOptionUpdateV2(apiPermissionRole, permissions.p2pSwap),
+        video_call: apiOptionUpdateV2(apiPermissionRole, undefined),
+        custom_updated,
+        custom_deleted,
+    };
+}
 //
 // export function unblockUserResponse(candid: ApiUnblockUserResponse): UnblockUserResponse {
 //     if ("Success" in candid) {
@@ -286,7 +302,7 @@ export function groupChatSummaryUpdates(
 // }
 
 export function sendMessageResponse(value: GroupSendMessageResponse): SendMessageResponse {
-    if (typeof value !== "string") {
+    if (typeof value === "object") {
         if ("Success" in value) {
             return {
                 kind: "success",
@@ -343,62 +359,54 @@ export function sendMessageResponse(value: GroupSendMessageResponse): SendMessag
 //     }
 // }
 //
-// export async function getMessagesByMessageIndexResponse(
-//     principal: Principal,
-//     candid: ApiMessagesByMessageIndexResponse | ApiCommunityMessagesByMessageIndexResponse,
-//     chatId: MultiUserChatIdentifier,
-//     latestKnownUpdatePreRequest: bigint | undefined,
-// ): Promise<EventsResponse<Message>> {
-//     if ("Success" in candid) {
-//         await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
-//
-//         return messagesSuccessResponse(candid.Success);
-//     }
-//     if (
-//         "CallerNotInGroup" in candid ||
-//         "ThreadNotFound" in candid ||
-//         "UserNotInChannel" in candid ||
-//         "ChannelNotFound" in candid ||
-//         "UserNotInCommunity" in candid ||
-//         "ThreadMessageNotFound" in candid
-//     ) {
-//         return "events_failed";
-//     }
-//     if ("ReplicaNotUpToDateV2" in candid) {
-//         throw ReplicaNotUpToDateError.byTimestamp(
-//             candid.ReplicaNotUpToDateV2,
-//             latestKnownUpdatePreRequest ?? BigInt(-1),
-//             false,
-//         );
-//     }
-//     throw new UnsupportedValueError(
-//         "Unexpected ApiMessagesByMessageIndexResponse type received",
-//         candid,
-//     );
-// }
-//
-// export async function getEventsResponse(
-//     principal: Principal,
-//     candid: ApiEventsResponse | ApiCommunityEventsResponse,
-//     chatId: ChatIdentifier,
-//     latestKnownUpdatePreRequest: bigint | undefined,
-// ): Promise<EventsResponse<ChatEvent>> {
-//     if ("Success" in candid) {
-//         await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
-//
-//         return eventsSuccessResponse(candid.Success);
-//     }
-//     if ("ReplicaNotUpToDateV2" in candid) {
-//         throw ReplicaNotUpToDateError.byTimestamp(
-//             candid.ReplicaNotUpToDateV2,
-//             latestKnownUpdatePreRequest ?? BigInt(-1),
-//             false,
-//         );
-//     }
-//     console.warn("GetGroupChatEvents failed with ", candid);
-//     return "events_failed";
-// }
-//
+export async function getMessagesByMessageIndexResponse(
+    principal: Principal,
+    value: GroupMessagesByMessageIndexResponse | CommunityMessagesByMessageIndexResponse,
+    chatId: MultiUserChatIdentifier,
+    latestKnownUpdatePreRequest: bigint | undefined,
+): Promise<EventsResponse<Message>> {
+    if (typeof value === "object") {
+        if ("Success" in value) {
+            await ensureReplicaIsUpToDate(principal, chatId, value.Success.chat_last_updated);
+
+            return messagesSuccessResponse(value.Success);
+        }
+        if ("ReplicaNotUpToDateV2" in value) {
+            throw ReplicaNotUpToDateError.byTimestamp(
+                value.ReplicaNotUpToDateV2,
+                latestKnownUpdatePreRequest ?? BigInt(-1),
+                false,
+            );
+        }
+    }
+    console.warn("MessagesByMessageIndex failed with ", value);
+    return "events_failed";
+}
+
+export async function getEventsResponse(
+    principal: Principal,
+    value: GroupEventsResponse | CommunityEventsResponse,
+    chatId: ChatIdentifier,
+    latestKnownUpdatePreRequest: bigint | undefined,
+): Promise<EventsResponse<ChatEvent>> {
+    if (typeof value === "object") {
+        if ("Success" in value) {
+            await ensureReplicaIsUpToDate(principal, chatId, value.Success.chat_last_updated);
+
+            return eventsSuccessResponse(value.Success);
+        }
+        if ("ReplicaNotUpToDateV2" in value) {
+            throw ReplicaNotUpToDateError.byTimestamp(
+                value.ReplicaNotUpToDateV2,
+                latestKnownUpdatePreRequest ?? BigInt(-1),
+                false,
+            );
+        }
+    }
+    console.warn("GetGroupChatEvents failed with ", value);
+    return "events_failed";
+}
+
 // export function convertToCommunityReponse(
 //     candid: ApiConvertIntoCommunityResponse,
 // ): ConvertToCommunityResponse {
@@ -416,15 +424,15 @@ export function sendMessageResponse(value: GroupSendMessageResponse): SendMessag
 //         return CommonResponses.failure();
 //     }
 // }
-//
-// export function apiUpdatedRules(rules: UpdatedRules): ApiUpdatedRules {
-//     return {
-//         text: rules.text,
-//         enabled: rules.enabled,
-//         new_version: rules.newVersion,
-//     };
-// }
-//
+
+export function apiUpdatedRules(rules: UpdatedRules): TUpdatedRules {
+    return {
+        text: rules.text,
+        enabled: rules.enabled,
+        new_version: rules.newVersion,
+    };
+}
+
 // export function followThreadResponse(
 //     candid: ApiFollowThreadResponse | ApiUnfollowThreadResponse,
 // ): FollowThreadResponse {

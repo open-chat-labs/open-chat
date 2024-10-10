@@ -350,7 +350,6 @@
     },
     "dark": "темная",
     "days": "Дни",
-    "defaultMustBePublic": "Только общедоступный канал может быть каналом по умолчанию.",
     "deleteFailed": "Невозможно удалить ваше сообщение",
     "deleteGroup": "Удалить {level}",
     "deleteGroupFailure": "Не удалось удалить {level}",

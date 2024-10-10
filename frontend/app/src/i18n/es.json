@@ -350,7 +350,6 @@
     },
     "dark": "dark",
     "days": "Días",
-    "defaultMustBePublic": "Solo un canal público puede ser un canal predeterminado",
     "deleteFailed": "No se puede eliminar tu mensaje",
     "deleteGroup": "Eliminar {level}",
     "deleteGroupFailure": "No se puede eliminar {level}",

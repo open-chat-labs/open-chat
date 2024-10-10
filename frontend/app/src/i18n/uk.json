@@ -350,7 +350,6 @@
     },
     "dark": "темний",
     "days": "днів",
-    "defaultMustBePublic": "Лише загальнодоступний канал може бути стандартним",
     "deleteFailed": "Не вдалося видалити ваше повідомлення",
     "deleteGroup": "Видалити {level}",
     "deleteGroupFailure": "Не вдалося видалити {level}",

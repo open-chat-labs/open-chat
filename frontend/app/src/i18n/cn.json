@@ -350,7 +350,6 @@
     },
     "dark": "深色模式",
     "days": "天",
-    "defaultMustBePublic": "只能默认公共频道",
     "deleteFailed": "无法删除您的消息",
     "deleteGroup": "删除{level}",
     "deleteGroupFailure": "无法删除{level}",

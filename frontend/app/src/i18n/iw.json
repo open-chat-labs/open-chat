@@ -350,7 +350,6 @@
     },
     "dark": "אפל",
     "days": "ימים",
-    "defaultMustBePublic": "רק ערוץ ציבורי יכול להיות ברירת מחדל",
     "deleteFailed": "לא ניתן למחוק את ההודעה שלך",
     "deleteGroup": "מחק את {level}",
     "deleteGroupFailure": "לא ניתן למחוק את {level}",

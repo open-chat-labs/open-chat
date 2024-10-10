@@ -350,7 +350,6 @@
     },
     "dark": "dark",
     "days": "Days",
-    "defaultMustBePublic": "Only a public channel can be a default",
     "deleteFailed": "Unable to delete your message",
     "deleteGroup": "Delete {level}",
     "deleteGroupFailure": "Unable to delete {level}",

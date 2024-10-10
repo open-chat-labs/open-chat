@@ -2275,13 +2275,6 @@ export const CommunityCancelInvitesResponse = Type.Union([
     Type.Literal("UserLapsed"),
 ]);
 
-export type CommunityDeleteMessageArgs = Static<typeof CommunityDeleteMessageArgs>;
-export const CommunityDeleteMessageArgs = Type.Object({
-    channel_id: Type.BigInt(),
-    thread_root_message_index: Type.Optional(MessageIndex),
-    message_id: MessageId,
-});
-
 export type CommunityCreateUserGroupSuccessResult = Static<
     typeof CommunityCreateUserGroupSuccessResult
 >;
@@ -2337,6 +2330,13 @@ export const CommunitySetVideoCallPresenceResponse = Type.Union([
     Type.Literal("UserNotInChannel"),
     Type.Literal("UserLapsed"),
 ]);
+
+export type CommunityDeletedMessageArgs = Static<typeof CommunityDeletedMessageArgs>;
+export const CommunityDeletedMessageArgs = Type.Object({
+    channel_id: Type.BigInt(),
+    thread_root_message_index: Type.Optional(MessageIndex),
+    message_id: MessageId,
+});
 
 export type CommunityRegisterPollVoteArgs = Static<typeof CommunityRegisterPollVoteArgs>;
 export const CommunityRegisterPollVoteArgs = Type.Object({
@@ -7437,12 +7437,25 @@ export const GroupIndexExploreGroupsResponse = Type.Union([
     Type.Literal("InvalidTerm"),
 ]);
 
-export type CommunityDeleteMessageSuccessResult = Static<
-    typeof CommunityDeleteMessageSuccessResult
+export type CommunityDeletedMessageSuccessResult = Static<
+    typeof CommunityDeletedMessageSuccessResult
 >;
-export const CommunityDeleteMessageSuccessResult = Type.Object({
+export const CommunityDeletedMessageSuccessResult = Type.Object({
     content: MessageContent,
 });
+
+export type CommunityDeletedMessageResponse = Static<typeof CommunityDeletedMessageResponse>;
+export const CommunityDeletedMessageResponse = Type.Union([
+    Type.Object({
+        Success: CommunityDeletedMessageSuccessResult,
+    }),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("UserNotInChannel"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("MessageNotFound"),
+    Type.Literal("MessageHardDeleted"),
+]);
 
 export type CommunitySearchChannelSuccessResult = Static<
     typeof CommunitySearchChannelSuccessResult
@@ -7937,19 +7950,6 @@ export const GroupIndexExploreCommunitiesResponse = Type.Union([
     }),
     Type.Literal("InvalidTerm"),
     Type.Literal("InvalidFlags"),
-]);
-
-export type CommunityDeleteMessageResponse = Static<typeof CommunityDeleteMessageResponse>;
-export const CommunityDeleteMessageResponse = Type.Union([
-    Type.Object({
-        Success: CommunityDeleteMessageSuccessResult,
-    }),
-    Type.Literal("UserNotInCommunity"),
-    Type.Literal("ChannelNotFound"),
-    Type.Literal("UserNotInChannel"),
-    Type.Literal("NotAuthorized"),
-    Type.Literal("MessageNotFound"),
-    Type.Literal("MessageHardDeleted"),
 ]);
 
 export type CommunityUndeleteMessagesSuccessResult = Static<

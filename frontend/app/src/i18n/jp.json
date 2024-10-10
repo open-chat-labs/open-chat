@@ -350,7 +350,6 @@
     },
     "dark": "ダーク",
     "days": "日々",
-    "defaultMustBePublic": "デフォルトにできるのはパブリック チャネルのみです",
     "deleteFailed": "メッセージを削除することができません",
     "deleteGroup": "{level}を削除",
     "deleteGroupFailure": "{level} を削除できません",

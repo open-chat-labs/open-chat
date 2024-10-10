@@ -350,7 +350,6 @@
     },
     "dark": "अँधेरा",
     "days": "दिन",
-    "defaultMustBePublic": "केवल एक सार्वजनिक चैनल ही डिफ़ॉल्ट हो सकता है",
     "deleteFailed": "आपका संदेश हटाने में असमर्थ",
     "deleteGroup": "हटाएं {level}",
     "deleteGroupFailure": "{level} को हटाने में असमर्थ",
