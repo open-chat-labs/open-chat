@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Reduce size of some message types when serialized ([#6559](https://github.com/open-chat-labs/open-chat/pull/6559))
+
 ## [[2.0.1378](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1378-community)] - 2024-10-10
 
 ### Fixed
