@@ -2577,6 +2577,7 @@ export function member(candid: ApiParticipant): Member {
         role: memberRole(candid.role),
         userId: candid.user_id.toString(),
         displayName: undefined,
+        lapsed: candid.lapsed,
     };
 }
 

@@ -1302,6 +1302,7 @@ export type Member = {
     role: MemberRole;
     userId: string;
     displayName: string | undefined;
+    lapsed: boolean;
 };
 
 export type FullMember = Member & UserSummary;
@@ -1327,6 +1328,7 @@ export type GroupChatDetails = {
  * All properties are optional but individual derived stores can provide their own default values
  */
 export type ChatSpecificState = {
+    lapsedMembers: Set<string>;
     members: Member[];
     membersMap: Map<string, Member>;
     blockedUsers: Set<string>;

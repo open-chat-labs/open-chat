@@ -89,6 +89,7 @@ export type CommunitySpecificState = {
     userGroups: Map<number, UserGroupDetails>;
     members: Map<string, Member>;
     blockedUsers: Set<string>;
+    lapsedMembers: Set<string>;
     invitedUsers: Set<string>;
     referrals: Set<string>;
     rules?: VersionedRules;

@@ -143,6 +143,7 @@ import {
     selectedMessageContext,
     currentChatMembersMap,
     hideMessagesFromDirectBlocked,
+    currentChatLapsedMembers,
 } from "./stores/chat";
 import {
     cryptoBalance,
@@ -496,6 +497,7 @@ import {
     communityStateStore,
     currentCommunityBlockedUsers,
     currentCommunityInvitedUsers,
+    currentCommunityLapsedMembers,
     currentCommunityMembers,
     currentCommunityReferrals,
     currentCommunityRules,
@@ -2430,6 +2432,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     role: "member",
                     userId,
                     displayName: undefined,
+                    lapsed: false,
                 });
                 return new Map(ms);
                 return ms;
@@ -2457,6 +2460,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     role: "member",
                     userId,
                     displayName: undefined,
+                    lapsed: false,
                 },
             ]);
         }
@@ -3045,12 +3049,18 @@ export class OpenChat extends OpenChatAgentWorker {
             communityLastUpdated: community.lastUpdated,
         }).catch(() => "failure");
         if (resp !== "failure") {
+            const [lapsed, members] = partition(resp.members, (m) => m.lapsed);
             communityStateStore.setProp(
                 community.id,
                 "members",
-                new Map(resp.members.map((m) => [m.userId, m])),
+                new Map(members.map((m) => [m.userId, m])),
             );
             communityStateStore.setProp(community.id, "blockedUsers", resp.blockedUsers);
+            communityStateStore.setProp(
+                community.id,
+                "lapsedMembers",
+                new Set(lapsed.map((m) => m.userId)),
+            );
             communityStateStore.setProp(community.id, "invitedUsers", resp.invitedUsers);
             communityStateStore.setProp(community.id, "rules", resp.rules);
             communityStateStore.setProp(community.id, "userGroups", resp.userGroups);
@@ -3068,7 +3078,10 @@ export class OpenChat extends OpenChatAgentWorker {
                 chatLastUpdated: serverChat.lastUpdated,
             }).catch(() => "failure");
             if (resp !== "failure") {
-                chatStateStore.setProp(serverChat.id, "members", resp.members);
+                const members = resp.members.filter((m) => !m.lapsed);
+                const lapsed = new Set(resp.members.filter((m) => m.lapsed).map((m) => m.userId));
+                chatStateStore.setProp(serverChat.id, "lapsedMembers", lapsed);
+                chatStateStore.setProp(serverChat.id, "members", members);
                 chatStateStore.setProp(
                     serverChat.id,
                     "membersMap",
@@ -7683,6 +7696,7 @@ export class OpenChat extends OpenChatAgentWorker {
     currentChatMembers = currentChatMembers;
     currentChatMembersMap = currentChatMembersMap;
     currentChatBlockedUsers = currentChatBlockedUsers;
+    currentChatLapsedMembers = currentChatLapsedMembers;
     currentChatInvitedUsers = currentChatInvitedUsers;
     hideMessagesFromDirectBlocked = hideMessagesFromDirectBlocked;
     chatStateStore = chatStateStore;
@@ -7746,6 +7760,7 @@ export class OpenChat extends OpenChatAgentWorker {
     currentCommunityMembers = currentCommunityMembers;
     currentCommunityRules = currentCommunityRules;
     currentCommunityBlockedUsers = currentCommunityBlockedUsers;
+    currentCommunityLapsedMembers = currentCommunityLapsedMembers;
     currentCommunityReferrals = currentCommunityReferrals;
     currentCommunityInvitedUsers = currentCommunityInvitedUsers;
     currentCommunityUserGroups = currentCommunityUserGroups;

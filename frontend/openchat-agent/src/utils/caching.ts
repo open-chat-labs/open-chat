@@ -149,6 +149,23 @@ async function clearChatsStore(
     await tx.objectStore("chats").clear();
 }
 
+async function clearGroupDetails(
+    _db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
+    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    await tx.objectStore("group_details").clear();
+}
+
+async function clearChatAndGroups(
+    _db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
+    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    await clearChatsStore(_db, _principal, tx);
+    await clearGroupDetails(_db, _principal, tx);
+}
+
 // async function clearEverything(
 //     db: IDBPDatabase<ChatSchema>,
 //     _principal: Principal,
@@ -158,7 +175,7 @@ async function clearChatsStore(
 // }
 
 const migrations: Record<number, MigrationFunction<ChatSchema>> = {
-    116: clearChatsStore,
+    116: clearChatAndGroups,
 };
 
 async function migrate(

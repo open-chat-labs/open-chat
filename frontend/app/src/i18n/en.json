@@ -52,7 +52,8 @@
         "join": "Join",
         "lapsed": {
             "label": "Membership lapsed",
-            "rejoin": "Re-join {level}"
+            "rejoin": "Re-join {level}",
+            "user": "Lapsed"
         },
         "lifetimeDiamondGateInfo": "Only users with lifetime Diamond membership will be allowed to join",
         "lifetimeDiamondGateInfo2": "In order to join this {level} you are required to have lifetime Diamond membership.",

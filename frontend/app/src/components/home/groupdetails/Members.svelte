@@ -27,6 +27,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { trimLeadingAtSymbol } from "../../../utils/user";
     import ButtonGroup from "../../ButtonGroup.svelte";
+    import User from "./User.svelte";
 
     const MAX_SEARCH_RESULTS = 255; // irritatingly this is a nat8 in the candid
     const client = getContext<OpenChat>("client");
@@ -36,6 +37,7 @@
     export let invited: Set<string>;
     export let members: MemberType[];
     export let blocked: Set<string>;
+    export let lapsed: Set<string>;
     export let initialUsergroup: number | undefined = undefined;
     export let showHeader = true;
 
@@ -51,12 +53,12 @@
         .filter((u) => matchesSearch(searchTermLower, u) && u.userId !== userId)
         .sort(compareMembers);
     $: blockedUsers = matchingUsers(searchTermLower, $userStore, blocked);
+    $: lapsedMembers = matchingUsers(searchTermLower, $userStore, lapsed);
     $: invitedUsers = matchingUsers(searchTermLower, $userStore, invited);
     $: showBlocked = blockedUsers.length > 0;
     $: showInvited = invitedUsers.length > 0;
+    $: showLapsed = lapsedMembers.length > 0;
     $: canInvite = client.canInviteUsers(collection.id);
-    //$: platformModerator = client.platformModerator;
-    //$: canPromoteMyselfToOwner = me !== undefined && me.role !== "owner" && $platformModerator;
     $: canPromoteMyselfToOwner = false;
 
     function matchingUsers(term: string, users: UserLookup, ids: Set<string>): UserSummary[] {
@@ -72,7 +74,7 @@
     let searchTermEntered = "";
     let id = collection.id;
     let membersList: VirtualList;
-    let memberView: "members" | "blocked" | "invited" = "members";
+    let memberView: "members" | "blocked" | "invited" | "lapsed" = "members";
     let selectedTab: "users" | "groups" = "users";
 
     $: searchTerm = trimLeadingAtSymbol(searchTermEntered);
@@ -155,7 +157,7 @@
         return 0;
     }
 
-    function setView(v: "members" | "blocked" | "invited"): void {
+    function setView(v: "members" | "blocked" | "invited" | "lapsed"): void {
         memberView = v;
     }
 
@@ -214,7 +216,7 @@
             placeholder={i18nKey("search")} />
     </div>
 
-    {#if showBlocked || showInvited}
+    {#if showBlocked || showInvited || showLapsed}
         <div class="member-section-selector">
             <ButtonGroup align="fill">
                 <SelectionButton
@@ -232,6 +234,12 @@
                         title={$_("blocked")}
                         on:click={() => setView("blocked")}
                         selected={memberView === "blocked"} />
+                {/if}
+                {#if showLapsed}
+                    <SelectionButton
+                        title={$_("access.lapsed.user")}
+                        on:click={() => setView("lapsed")}
+                        selected={memberView === "lapsed"} />
                 {/if}
             </ButtonGroup>
         </div>
@@ -283,7 +291,17 @@
     {:else if memberView === "invited"}
         <div use:menuCloser class="user-list">
             {#each invitedUsers as user}
-                <InvitedUser {user} {searchTerm} canUninviteUser={client.canInviteUsers(collection.id)} on:cancelInvite />
+                <InvitedUser
+                    {user}
+                    {searchTerm}
+                    canUninviteUser={client.canInviteUsers(collection.id)}
+                    on:cancelInvite />
+            {/each}
+        </div>
+    {:else if memberView === "lapsed"}
+        <div use:menuCloser class="user-list">
+            {#each lapsedMembers as user}
+                <User {user} {searchTerm} />
             {/each}
         </div>
     {/if}
