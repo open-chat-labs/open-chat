@@ -1,8 +1,8 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
     Achievement, CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, Cryptocurrency,
-    MessageIndex, Milliseconds, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapExpired, P2PSwapReserved,
-    P2PSwapStatus, ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId, UserType, VideoCallType,
+    MessageIndex, Milliseconds, P2PSwapStatus, ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId, UserType,
+    VideoCallType,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -714,97 +714,6 @@ pub struct VideoCallContent {
 pub struct CallParticipant {
     pub user_id: UserId,
     pub joined: TimestampMillis,
-}
-
-impl P2PSwapContent {
-    pub fn new(
-        swap_id: u32,
-        content: P2PSwapContentInitial,
-        transfer: CompletedCryptoTransaction,
-        now: TimestampMillis,
-    ) -> P2PSwapContent {
-        P2PSwapContent {
-            swap_id,
-            token0: content.token0,
-            token0_amount: content.token0_amount,
-            token1: content.token1,
-            token1_amount: content.token1_amount,
-            expires_at: now + content.expires_in,
-            caption: content.caption,
-            token0_txn_in: transfer.index(),
-            status: P2PSwapStatus::Open,
-        }
-    }
-
-    pub fn reserve(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
-        if let P2PSwapStatus::Open = self.status {
-            if now < self.expires_at {
-                self.status = P2PSwapStatus::Reserved(P2PSwapReserved { reserved_by: user_id });
-                return true;
-            } else {
-                self.status = P2PSwapStatus::Expired(P2PSwapExpired { token0_txn_out: None });
-            }
-        }
-
-        false
-    }
-
-    pub fn unreserve(&mut self, user_id: UserId) -> bool {
-        if let P2PSwapStatus::Reserved(r) = &self.status {
-            if r.reserved_by == user_id {
-                self.status = P2PSwapStatus::Open;
-                return true;
-            }
-        }
-        false
-    }
-
-    pub fn accept(&mut self, user_id: UserId, token1_txn_in: u64) -> bool {
-        if let P2PSwapStatus::Reserved(a) = &self.status {
-            if a.reserved_by == user_id {
-                self.status = P2PSwapStatus::Accepted(P2PSwapAccepted {
-                    accepted_by: user_id,
-                    token1_txn_in,
-                });
-                return true;
-            }
-        }
-        false
-    }
-
-    pub fn complete(&mut self, user_id: UserId, token0_txn_out: u64, token1_txn_out: u64) -> Option<P2PSwapCompleted> {
-        if let P2PSwapStatus::Accepted(a) = &self.status {
-            if a.accepted_by == user_id {
-                let status = P2PSwapCompleted {
-                    accepted_by: user_id,
-                    token1_txn_in: a.token1_txn_in,
-                    token0_txn_out,
-                    token1_txn_out,
-                };
-                self.status = P2PSwapStatus::Completed(status.clone());
-                return Some(status);
-            }
-        }
-        None
-    }
-
-    pub fn cancel(&mut self) -> bool {
-        if matches!(self.status, P2PSwapStatus::Open) {
-            self.status = P2PSwapStatus::Cancelled(P2PSwapCancelled { token0_txn_out: None });
-            true
-        } else {
-            false
-        }
-    }
-
-    pub fn mark_expired(&mut self) -> bool {
-        if matches!(self.status, P2PSwapStatus::Open) {
-            self.status = P2PSwapStatus::Expired(P2PSwapExpired { token0_txn_out: None });
-            true
-        } else {
-            false
-        }
-    }
 }
 
 #[ts_export]

@@ -44,7 +44,6 @@ pub struct ChatEvents {
     last_updated_timestamps: LastUpdatedTimestamps,
     video_call_in_progress: Timestamped<Option<VideoCall>>,
     anonymized_id: String,
-    #[serde(default)]
     search_index: SearchIndex,
 }
 
@@ -1083,7 +1082,7 @@ impl ChatEvents {
         min_visible_event_index: EventIndex,
     ) -> Option<P2PSwapContent> {
         self.message_internal(min_visible_event_index, thread_root_message_index, message_id.into())
-            .and_then(|(m, _)| if let MessageContentInternal::P2PSwap(p) = m.content { Some(p) } else { None })
+            .and_then(|(m, _)| if let MessageContentInternal::P2PSwap(p) = m.content { Some(p.into()) } else { None })
     }
 
     pub fn reserve_p2p_swap(
@@ -1119,7 +1118,7 @@ impl ChatEvents {
 
         if content.reserve(user_id, now) {
             Ok(ReserveP2PSwapSuccess {
-                content: content.clone(),
+                content: content.clone().into(),
                 created: message_timestamp,
                 created_by: message.sender,
             })

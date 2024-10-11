@@ -8,7 +8,7 @@ pub async fn process_transaction(
     transaction: types::nns::PendingCryptoTransaction,
     sender: CanisterId,
 ) -> CallResult<Result<CompletedCryptoTransaction, FailedCryptoTransaction>> {
-    let memo = transaction.memo.unwrap_or(Memo(0));
+    let memo = transaction.memo.unwrap_or_default();
     let fee = transaction.fee.unwrap_or(Tokens::DEFAULT_FEE);
 
     let from = default_ledger_account(sender);
@@ -18,7 +18,7 @@ pub async fn process_transaction(
     };
 
     let transfer_args = TransferArgs {
-        memo,
+        memo: Memo(memo),
         amount: transaction.amount.into(),
         fee: fee.into(),
         from_subaccount: None,

@@ -219,7 +219,7 @@ fn send_message_impl(
     let sender: UserId = this_canister_id.into();
     let recipient = args.recipient;
     let content = if let Some(transfer) = completed_transfer.clone() {
-        MessageContentInternal::new_with_transfer(args.content.clone(), transfer, p2p_swap_id, now)
+        MessageContentInternal::new_with_transfer(args.content.clone(), transfer.into(), p2p_swap_id, now)
     } else {
         args.content.into()
     };

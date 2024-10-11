@@ -5,6 +5,7 @@ use canister_tracing_macros::trace;
 use chat_events::ReservePrizeResult;
 use community_canister::claim_prize::{Response::*, *};
 use ledger_utils::{create_pending_transaction, process_transaction};
+use tracing::error;
 use types::{CanisterId, CompletedCryptoTransaction, PendingCryptoTransaction, UserId};
 use utils::consts::MEMO_PRIZE_CLAIM;
 
@@ -36,6 +37,7 @@ async fn claim_prize(args: Args) -> Response {
             }
         }
         Ok(Err(failed_transaction)) => {
+            error!(?failed_transaction, "Prize claim failed with ledger error");
             // Rollback the prize reservation
             let error_message = mutate_state(|state| rollback(args, prepare_result.user_id, prize_amount, true, state));
             TransferFailed(error_message, failed_transaction)
