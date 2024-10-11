@@ -791,6 +791,7 @@ impl From<CompletedCryptoTransaction> for CompletedCryptoTransactionInternal {
 mod nns {
     use super::*;
     use ic_ledger_types::AccountIdentifier;
+    use serde::Deserializer;
     use types::nns::{CryptoAccount, Tokens};
 
     #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -825,9 +826,9 @@ mod nns {
         pub ledger: CanisterId,
         #[serde(rename = "k", alias = "token")]
         pub token: Cryptocurrency,
-        #[serde(rename = "a", alias = "amount")]
+        #[serde(rename = "a", alias = "amount", deserialize_with = "deserialize_amount")]
         pub amount: u64,
-        #[serde(rename = "e", alias = "fee")]
+        #[serde(rename = "e", alias = "fee", deserialize_with = "deserialize_amount")]
         pub fee: u64,
         #[serde(rename = "f", alias = "from")]
         pub from: CryptoAccountInternal,
@@ -841,6 +842,27 @@ mod nns {
         pub transaction_hash: TransactionHash,
         #[serde(rename = "i", alias = "block_index")]
         pub block_index: u64,
+    }
+
+    fn deserialize_amount<'de, D: Deserializer<'de>>(d: D) -> Result<u64, D::Error> {
+        let amount = AmountCombined::deserialize(d)?;
+        Ok(amount.into())
+    }
+
+    #[derive(Serialize, Deserialize, Clone, Debug)]
+    #[serde(untagged)]
+    pub enum AmountCombined {
+        Old { e8s: u64 },
+        New(u64),
+    }
+
+    impl From<AmountCombined> for u64 {
+        fn from(value: AmountCombined) -> Self {
+            match value {
+                AmountCombined::Old { e8s } => e8s,
+                AmountCombined::New(a) => a,
+            }
+        }
     }
 
     impl From<CompletedCryptoTransactionInternal> for types::nns::CompletedCryptoTransaction {
