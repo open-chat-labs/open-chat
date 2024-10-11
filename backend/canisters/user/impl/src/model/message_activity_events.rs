@@ -43,7 +43,7 @@ impl MessageActivityEvents {
         MessageActivitySummary {
             read_up_to: self.read_up_to,
             unread_count,
-            latest_event: self.events.front().map_or(0, |e| e.timestamp),
+            latest_event_timestamp: self.events.front().map_or(0, |e| e.timestamp),
         }
     }
 

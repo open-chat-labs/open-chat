@@ -6,6 +6,7 @@ generate_query_call!(chit_events);
 generate_query_call!(events);
 generate_query_call!(events_by_index);
 generate_query_call!(initial_state);
+generate_query_call!(message_activity_feed);
 generate_query_call!(saved_crypto_accounts);
 generate_query_call!(updates);
 
@@ -297,6 +298,23 @@ pub mod happy_path {
         }
     }
 
+    pub fn message_activity_feed(
+        env: &PocketIc,
+        user: &User,
+        since: TimestampMillis,
+    ) -> user_canister::message_activity_feed::SuccessResult {
+        let response = super::message_activity_feed(
+            env,
+            user.principal,
+            user.canister(),
+            &user_canister::message_activity_feed::Args { since },
+        );
+
+        match response {
+            user_canister::message_activity_feed::Response::Success(success_result) => success_result,
+        }
+    }
+
     #[allow(clippy::too_many_arguments)]
     pub fn tip_message(
         env: &mut PocketIc,
@@ -326,7 +344,10 @@ pub mod happy_path {
             },
         );
 
-        assert!(matches!(response, user_canister::tip_message::Response::Success))
+        match response {
+            user_canister::tip_message::Response::Success => (),
+            response => panic!("'tip_message' error: {response:?}"),
+        }
     }
 
     pub fn start_video_call(

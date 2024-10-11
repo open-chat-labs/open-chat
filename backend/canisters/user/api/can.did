@@ -997,7 +997,7 @@ type UpdatesResponse = variant {
 
 type MessageActivitySummary = record {
     read_up_to : TimestampMillis;
-    latest_event : TimestampMillis;
+    latest_event_timestamp : TimestampMillis;
     unread_count : nat32;
 };
 

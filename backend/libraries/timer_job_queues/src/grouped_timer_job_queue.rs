@@ -197,12 +197,6 @@ where
     }
 }
 
-impl<T: TimerJobItemGroup> Default for GroupedTimerJobQueue<T> {
-    fn default() -> Self {
-        GroupedTimerJobQueue::new(5, true)
-    }
-}
-
 impl<T: TimerJobItemGroup> Clone for GroupedTimerJobQueue<T> {
     fn clone(&self) -> Self {
         Self {

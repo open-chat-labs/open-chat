@@ -44,8 +44,8 @@ pub mod happy_path {
     use testing::rng::random_message_id;
     use types::{
         ChatId, EventIndex, EventsResponse, GroupCanisterGroupChatSummary, GroupCanisterGroupChatSummaryUpdates, GroupRole,
-        MessageContentInitial, MessageId, MessageIndex, Milliseconds, PollVotes, TextContent, TimestampMillis, UserId,
-        VideoCallType, VoteOperation,
+        MessageContentInitial, MessageId, MessageIndex, Milliseconds, PollVotes, Reaction, TextContent, TimestampMillis,
+        UserId, VideoCallType, VoteOperation,
     };
 
     pub fn send_text_message(
@@ -410,5 +410,29 @@ pub mod happy_path {
             group_canister::block_user::Response::Success => {}
             response => panic!("'block_user' error: {response:?}"),
         }
+    }
+
+    pub fn add_reaction(
+        env: &mut PocketIc,
+        sender: &User,
+        group_chat_id: ChatId,
+        reaction: impl ToString,
+        message_id: MessageId,
+    ) {
+        let response = super::add_reaction(
+            env,
+            sender.principal,
+            group_chat_id.into(),
+            &group_canister::add_reaction::Args {
+                thread_root_message_index: None,
+                message_id,
+                reaction: Reaction::new(reaction.to_string()),
+                correlation_id: 0,
+                username: sender.username(),
+                display_name: None,
+                new_achievement: false,
+            },
+        );
+        assert!(matches!(response, group_canister::add_reaction::Response::Success));
     }
 }

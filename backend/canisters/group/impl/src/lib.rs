@@ -474,12 +474,16 @@ struct Data {
     expiring_member_actions: ExpiringMemberActions,
     #[serde(default)]
     user_cache: UserCache,
-    #[serde(default)]
+    #[serde(default = "default_user_event_sync_queue")]
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
     InstructionCountsLog::init(get_instruction_counts_index_memory(), get_instruction_counts_data_memory())
+}
+
+fn default_user_event_sync_queue() -> GroupedTimerJobQueue<UserEventBatch> {
+    GroupedTimerJobQueue::new(5, true)
 }
 
 #[allow(clippy::too_many_arguments)]

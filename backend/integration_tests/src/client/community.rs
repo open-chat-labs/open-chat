@@ -45,7 +45,7 @@ pub mod happy_path {
     use types::{
         AccessGate, ChannelId, ChatId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
         CommunityCanisterCommunitySummaryUpdates, CommunityId, CommunityRole, EventIndex, EventsResponse, GroupRole,
-        MessageContentInitial, MessageId, MessageIndex, Rules, TextContent, TimestampMillis, UserId,
+        MessageContentInitial, MessageId, MessageIndex, Reaction, Rules, TextContent, TimestampMillis, UserId,
     };
 
     pub fn create_channel(
@@ -491,5 +491,30 @@ pub mod happy_path {
             community_canister::import_group::Response::Success(r) => r,
             response => panic!("'import_group' error: {response:?}"),
         }
+    }
+
+    pub fn add_reaction(
+        env: &mut PocketIc,
+        sender: &User,
+        community_id: CommunityId,
+        channel_id: ChannelId,
+        reaction: impl ToString,
+        message_id: MessageId,
+    ) {
+        let response = super::add_reaction(
+            env,
+            sender.principal,
+            community_id.into(),
+            &community_canister::add_reaction::Args {
+                channel_id,
+                thread_root_message_index: None,
+                message_id,
+                reaction: Reaction::new(reaction.to_string()),
+                username: sender.username(),
+                display_name: None,
+                new_achievement: false,
+            },
+        );
+        assert!(matches!(response, community_canister::add_reaction::Response::Success));
     }
 }
