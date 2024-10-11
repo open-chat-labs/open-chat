@@ -7603,8 +7603,9 @@ export class OpenChat extends OpenChatAgentWorker {
             .then((resp) => {
                 const iiPrincipals = resp
                     .filter(
-                        ({ originatingCanister }) =>
-                            originatingCanister === process.env.INTERNET_IDENTITY_CANISTER_ID,
+                        ({ originatingCanister, isIIPrincipal }) =>
+                            originatingCanister === process.env.INTERNET_IDENTITY_CANISTER_ID &&
+                            isIIPrincipal,
                     )
                     .map((p) => p.principal);
                 if (iiPrincipals.length === 0) {
