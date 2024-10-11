@@ -50,6 +50,10 @@
         "gateCheckFailed": "Access gate not met",
         "gateInvalid": "Access gate is invalid",
         "join": "Join",
+        "lapsed": {
+            "label": "Membership lapsed",
+            "rejoin": "Re-join {level}"
+        },
         "lifetimeDiamondGateInfo": "Only users with lifetime Diamond membership will be allowed to join",
         "lifetimeDiamondGateInfo2": "In order to join this {level} you are required to have lifetime Diamond membership.",
         "lifetimeDiamondMember": "Lifetime Diamond membership",

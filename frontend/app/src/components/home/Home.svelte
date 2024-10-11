@@ -841,7 +841,7 @@
         // that we are actually already a member of this group, so we should double check here
         // that we actually *need* to join the group
         let chat = $chatSummariesStore.get(group.id);
-        if (chat === undefined || chat.membership.role === "none") {
+        if (chat === undefined || chat.membership.role === "none" || chat.membership.lapsed) {
             doJoinGroup(group, select, undefined);
         }
     }

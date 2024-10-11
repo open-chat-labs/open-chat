@@ -23,8 +23,6 @@
     $: gates = client.accessGatesForChat(chat);
     $: locked = gates.some((g) => isLocked(g));
 
-    $: console.log("Lapsed: ", lapsed);
-
     let freezingInProgress = false;
 
     function joinGroup() {
@@ -73,6 +71,11 @@
     <div class="gate">
         <AccessGateIconsForChat {gates} />
     </div>
+    {#if lapsed}
+        <div class="lapsed">
+            <Translatable resourceKey={i18nKey("access.lapsed.label")} />
+        </div>
+    {/if}
     {#if $platformModerator}
         {#if isFrozen}
             <Button loading={freezingInProgress} secondary small on:click={unfreezeGroup}>
@@ -84,9 +87,11 @@
             </Button>
         {/if}
     {/if}
-    <Button secondary small on:click={cancelPreview}>
-        <Translatable resourceKey={i18nKey("leave")} />
-    </Button>
+    {#if !lapsed}
+        <Button secondary small on:click={cancelPreview}>
+            <Translatable resourceKey={i18nKey("leave")} />
+        </Button>
+    {/if}
     <Button
         loading={joining !== undefined}
         disabled={locked || joining !== undefined}
@@ -95,7 +100,9 @@
         <Translatable
             resourceKey={locked
                 ? i18nKey("access.lockedGate", undefined, chat.level, true)
-                : i18nKey("joinGroup", undefined, chat.level, true)} />
+                : lapsed
+                  ? i18nKey("access.lapsed.rejoin", undefined, chat.level, true)
+                  : i18nKey("joinGroup", undefined, chat.level, true)} />
     </Button>
 </div>
 
@@ -116,5 +123,9 @@
             position: absolute;
             left: 0;
         }
+    }
+
+    .lapsed {
+        @include font(bold, normal, fs-100);
     }
 </style>

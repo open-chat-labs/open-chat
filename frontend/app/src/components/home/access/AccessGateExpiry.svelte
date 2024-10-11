@@ -3,7 +3,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import { getContext } from "svelte";
-    import { msToDays, msToMonths, msToWeeks } from "../../../utils/time";
+    import { msToDays, msToMinutes, msToMonths, msToWeeks } from "../../../utils/time";
 
     type DurationData = {
         total: number;
@@ -27,6 +27,9 @@
         if (duration === undefined) return undefined;
 
         // TODO - pluralisation & i18n
+        if (duration.minutes > 0) {
+            return `${msToMinutes(duration.total)} minutes`;
+        }
 
         if (duration.days > 0) {
             return `${msToDays(duration.total)} days`;

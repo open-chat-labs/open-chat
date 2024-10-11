@@ -4262,7 +4262,7 @@ export class OpenChat extends OpenChatAgentWorker {
     /**
      * When joining a channel it is possible that both the channel & the community
      * have access gates so we need to work out all applicable gates for the chat
-     * Note that we only return gates if we are not already a member.
+     * Note that we only return gates if we are not already a member (or our membership is lapsed).
      * We may also optionally exclude gates for things we are invited to in some scenariose
      */
     accessGatesForChat(chat: MultiUserChat, excludeInvited: boolean = false): EnhancedAccessGate[] {
@@ -4272,7 +4272,7 @@ export class OpenChat extends OpenChatAgentWorker {
         if (
             community !== undefined &&
             community.gateConfig.gate.kind !== "no_gate" &&
-            community.membership.role === "none" &&
+            (community.membership.role === "none" || community.membership.lapsed) &&
             (!community.isInvited || !excludeInvited)
         ) {
             gates.push({
@@ -4283,7 +4283,7 @@ export class OpenChat extends OpenChatAgentWorker {
         }
         if (
             chat.gateConfig.gate.kind !== "no_gate" &&
-            chat.membership.role === "none" &&
+            (chat.membership.role === "none" || chat.membership.lapsed) &&
             (!chat.isInvited || !excludeInvited)
         ) {
             gates.push({
