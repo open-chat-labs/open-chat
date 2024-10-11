@@ -373,7 +373,7 @@ async fn process_transaction(
                 NotifyEscrowCanisterOfDepositJob::run(id);
             }
             Ok(Ok((
-                MessageContentInternal::new_with_transfer(content, completed.clone(), p2p_swap_id, now),
+                MessageContentInternal::new_with_transfer(content, completed.clone().into(), p2p_swap_id, now),
                 completed,
             )))
         }

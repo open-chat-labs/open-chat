@@ -9,6 +9,7 @@ edition = "2021"
 candid = { workspace = true }
 event_store_producer = { workspace = true, features = ["json"] }
 hex = { workspace = true }
+ic-ledger-types = { workspace = true }
 itertools = { workspace = true }
 ledger_utils = { path = "../ledger_utils" }
 rand = { workspace = true }

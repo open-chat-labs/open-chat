@@ -2,18 +2,21 @@ use crate::DeletedByInternal;
 use ledger_utils::{create_pending_transaction, format_crypto_amount};
 use search::Document;
 use serde::{Deserialize, Serialize};
+use serde_bytes::ByteBuf;
 use std::collections::{HashMap, HashSet};
+use types::icrc1::CryptoAccount;
 use types::{
     is_default, AudioContent, BlobReference, CallParticipant, CanisterId, CompletedCryptoTransaction,
-    ContentWithCaptionEventPayload, CryptoContent, CryptoContentEventPayload, CryptoTransaction, CustomContent, FileContent,
-    FileContentEventPayload, GiphyContent, GiphyImageVariant, GovernanceProposalContentEventPayload, ImageContent,
+    ContentWithCaptionEventPayload, CryptoContent, CryptoContentEventPayload, CryptoTransaction, Cryptocurrency, CustomContent,
+    FileContent, FileContentEventPayload, GiphyContent, GiphyImageVariant, GovernanceProposalContentEventPayload, ImageContent,
     ImageOrVideoContentEventPayload, MessageContent, MessageContentEventPayload, MessageContentInitial, MessageContentType,
     MessageIndex, MessageReminderContent, MessageReminderContentEventPayload, MessageReminderCreatedContent, MessageReport,
-    P2PSwapContent, P2PSwapContentEventPayload, PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload,
+    P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapContent, P2PSwapContentEventPayload, P2PSwapContentInitial,
+    P2PSwapExpired, P2PSwapReserved, P2PSwapStatus, PendingCryptoTransaction, PollConfig, PollContent, PollContentEventPayload,
     PollVotes, PrizeContent, PrizeContentEventPayload, PrizeContentInitial, PrizeWinnerContent, PrizeWinnerContentEventPayload,
     Proposal, ProposalContent, RegisterVoteResult, ReportedMessage, ReportedMessageContentEventPayload, TextContent,
-    TextContentEventPayload, ThumbnailData, TimestampMillis, TimestampNanos, TotalVotes, UserId, VideoCallContent,
-    VideoCallPresence, VideoCallType, VideoContent, VoteOperation,
+    TextContentEventPayload, ThumbnailData, TimestampMillis, TimestampNanos, TokenInfo, TotalVotes, TransactionHash, UserId,
+    VideoCallContent, VideoCallPresence, VideoCallType, VideoContent, VoteOperation,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -49,7 +52,7 @@ pub enum MessageContentInternal {
     #[serde(rename = "rm")]
     ReportedMessage(ReportedMessageInternal),
     #[serde(rename = "p2p")]
-    P2PSwap(P2PSwapContent),
+    P2PSwap(P2PSwapContentInternal),
     #[serde(rename = "vc")]
     VideoCall(VideoCallContentInternal),
     #[serde(rename = "cu")]
@@ -59,7 +62,7 @@ pub enum MessageContentInternal {
 impl MessageContentInternal {
     pub fn new_with_transfer(
         content: MessageContentInitial,
-        transfer: CompletedCryptoTransaction,
+        transfer: CompletedCryptoTransactionInternal,
         p2p_swap_id: Option<u32>,
         now: TimestampMillis,
     ) -> MessageContentInternal {
@@ -71,7 +74,7 @@ impl MessageContentInternal {
             }),
             MessageContentInitial::Prize(c) => MessageContentInternal::Prize(PrizeContentInternal::new(c, transfer)),
             MessageContentInitial::P2PSwap(c) => {
-                MessageContentInternal::P2PSwap(P2PSwapContent::new(p2p_swap_id.unwrap(), c, transfer, now))
+                MessageContentInternal::P2PSwap(P2PSwapContentInternal::new(p2p_swap_id.unwrap(), c, transfer.index(), now))
             }
             _ => unreachable!("Message must include a crypto transfer"),
         }
@@ -94,7 +97,7 @@ impl MessageContentInternal {
             MessageContentInternal::MessageReminderCreated(r) => MessageContent::MessageReminderCreated(r.hydrate(my_user_id)),
             MessageContentInternal::MessageReminder(r) => MessageContent::MessageReminder(r.hydrate(my_user_id)),
             MessageContentInternal::ReportedMessage(r) => MessageContent::ReportedMessage(r.hydrate(my_user_id)),
-            MessageContentInternal::P2PSwap(p) => MessageContent::P2PSwap(p.clone()),
+            MessageContentInternal::P2PSwap(p) => MessageContent::P2PSwap(p.hydrate(my_user_id)),
             MessageContentInternal::VideoCall(c) => MessageContent::VideoCall(c.hydrate()),
             MessageContentInternal::Custom(c) => MessageContent::Custom(c.hydrate(my_user_id)),
         }
@@ -133,25 +136,25 @@ impl MessageContentInternal {
         match self {
             MessageContentInternal::Image(i) => {
                 if let Some(br) = i.blob_reference.clone() {
-                    references.push(br);
+                    references.push(br.into());
                 }
             }
             MessageContentInternal::Video(v) => {
                 if let Some(br) = v.video_blob_reference.clone() {
-                    references.push(br);
+                    references.push(br.into());
                 }
                 if let Some(br) = v.image_blob_reference.clone() {
-                    references.push(br);
+                    references.push(br.into());
                 }
             }
             MessageContentInternal::Audio(a) => {
                 if let Some(br) = a.blob_reference.clone() {
-                    references.push(br)
+                    references.push(br.into())
                 }
             }
             MessageContentInternal::File(f) => {
                 if let Some(br) = f.blob_reference.clone() {
-                    references.push(br);
+                    references.push(br.into());
                 }
             }
             MessageContentInternal::Text(_)
@@ -377,7 +380,7 @@ pub struct ImageContentInternal {
     #[serde(rename = "m")]
     pub mime_type: String,
     #[serde(rename = "b", default, skip_serializing_if = "Option::is_none")]
-    pub blob_reference: Option<BlobReference>,
+    pub blob_reference: Option<BlobReferenceInternal>,
 }
 
 impl From<ImageContent> for ImageContentInternal {
@@ -388,7 +391,7 @@ impl From<ImageContent> for ImageContentInternal {
             thumbnail_data: value.thumbnail_data,
             caption: value.caption,
             mime_type: value.mime_type,
-            blob_reference: value.blob_reference,
+            blob_reference: value.blob_reference.map(|r| r.into()),
         }
     }
 }
@@ -403,7 +406,7 @@ impl MessageContentInternalSubtype for ImageContentInternal {
             thumbnail_data: self.thumbnail_data,
             caption: self.caption,
             mime_type: self.mime_type,
-            blob_reference: self.blob_reference,
+            blob_reference: self.blob_reference.map(|r| r.into()),
         }
     }
 }
@@ -421,9 +424,9 @@ pub struct VideoContentInternal {
     #[serde(rename = "m")]
     pub mime_type: String,
     #[serde(rename = "i", default, skip_serializing_if = "Option::is_none")]
-    pub image_blob_reference: Option<BlobReference>,
+    pub image_blob_reference: Option<BlobReferenceInternal>,
     #[serde(rename = "v", default, skip_serializing_if = "Option::is_none")]
-    pub video_blob_reference: Option<BlobReference>,
+    pub video_blob_reference: Option<BlobReferenceInternal>,
 }
 
 impl From<VideoContent> for VideoContentInternal {
@@ -434,8 +437,8 @@ impl From<VideoContent> for VideoContentInternal {
             thumbnail_data: value.thumbnail_data,
             caption: value.caption,
             mime_type: value.mime_type,
-            image_blob_reference: value.image_blob_reference,
-            video_blob_reference: value.video_blob_reference,
+            image_blob_reference: value.image_blob_reference.map(|r| r.into()),
+            video_blob_reference: value.video_blob_reference.map(|r| r.into()),
         }
     }
 }
@@ -450,8 +453,8 @@ impl MessageContentInternalSubtype for VideoContentInternal {
             thumbnail_data: self.thumbnail_data,
             caption: self.caption,
             mime_type: self.mime_type,
-            image_blob_reference: self.image_blob_reference,
-            video_blob_reference: self.video_blob_reference,
+            image_blob_reference: self.image_blob_reference.map(|r| r.into()),
+            video_blob_reference: self.video_blob_reference.map(|r| r.into()),
         }
     }
 }
@@ -463,7 +466,7 @@ pub struct AudioContentInternal {
     #[serde(rename = "m")]
     pub mime_type: String,
     #[serde(rename = "b", default, skip_serializing_if = "Option::is_none")]
-    pub blob_reference: Option<BlobReference>,
+    pub blob_reference: Option<BlobReferenceInternal>,
 }
 
 impl From<AudioContent> for AudioContentInternal {
@@ -471,7 +474,7 @@ impl From<AudioContent> for AudioContentInternal {
         AudioContentInternal {
             caption: value.caption,
             mime_type: value.mime_type,
-            blob_reference: value.blob_reference,
+            blob_reference: value.blob_reference.map(|r| r.into()),
         }
     }
 }
@@ -483,7 +486,7 @@ impl MessageContentInternalSubtype for AudioContentInternal {
         AudioContent {
             caption: self.caption,
             mime_type: self.mime_type,
-            blob_reference: self.blob_reference,
+            blob_reference: self.blob_reference.map(|r| r.into()),
         }
     }
 }
@@ -499,7 +502,7 @@ pub struct FileContentInternal {
     #[serde(rename = "f")]
     pub file_size: u32,
     #[serde(rename = "b", default, skip_serializing_if = "Option::is_none")]
-    pub blob_reference: Option<BlobReference>,
+    pub blob_reference: Option<BlobReferenceInternal>,
 }
 
 impl From<FileContent> for FileContentInternal {
@@ -509,7 +512,7 @@ impl From<FileContent> for FileContentInternal {
             caption: value.caption,
             mime_type: value.mime_type,
             file_size: value.file_size,
-            blob_reference: value.blob_reference,
+            blob_reference: value.blob_reference.map(|r| r.into()),
         }
     }
 }
@@ -523,7 +526,7 @@ impl MessageContentInternalSubtype for FileContentInternal {
             caption: self.caption,
             mime_type: self.mime_type,
             file_size: self.file_size,
-            blob_reference: self.blob_reference,
+            blob_reference: self.blob_reference.map(|r| r.into()),
         }
     }
 }
@@ -531,7 +534,7 @@ impl MessageContentInternalSubtype for FileContentInternal {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct PollContentInternal {
     #[serde(rename = "c")]
-    pub config: PollConfig,
+    pub config: PollConfigInternal,
     #[serde(rename = "v")]
     pub votes: HashMap<u32, Vec<UserId>>,
     #[serde(rename = "e")]
@@ -541,7 +544,7 @@ pub struct PollContentInternal {
 impl From<PollContent> for PollContentInternal {
     fn from(value: PollContent) -> Self {
         PollContentInternal {
-            config: value.config,
+            config: value.config.into(),
             votes: HashMap::new(),
             ended: false,
         }
@@ -554,7 +557,7 @@ impl MessageContentInternalSubtype for PollContentInternal {
     fn hydrate(self, my_user_id: Option<UserId>) -> Self::ContentType {
         PollContent {
             votes: self.votes(my_user_id),
-            config: self.config,
+            config: self.config.into(),
             ended: self.ended,
         }
     }
@@ -634,11 +637,72 @@ impl PollContentInternal {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct PollConfigInternal {
+    #[serde(rename = "t", alias = "text")]
+    pub text: Option<String>,
+    #[serde(rename = "o", alias = "options")]
+    pub options: Vec<String>,
+    #[serde(rename = "e", alias = "end_date", skip_serializing_if = "Option::is_none")]
+    pub end_date: Option<TimestampMillis>,
+    #[serde(rename = "a", alias = "anonymous", default, skip_serializing_if = "is_default")]
+    pub anonymous: bool,
+    #[serde(
+        rename = "b",
+        alias = "show_votes_before_end_date",
+        default,
+        skip_serializing_if = "is_default"
+    )]
+    pub show_votes_before_end_date: bool,
+    #[serde(
+        rename = "m",
+        alias = "allow_multiple_votes_per_user",
+        default,
+        skip_serializing_if = "is_default"
+    )]
+    pub allow_multiple_votes_per_user: bool,
+    #[serde(
+        rename = "c",
+        alias = "allow_user_to_change_vote",
+        default,
+        skip_serializing_if = "is_default"
+    )]
+    pub allow_user_to_change_vote: bool,
+}
+
+impl From<PollConfig> for PollConfigInternal {
+    fn from(value: PollConfig) -> Self {
+        PollConfigInternal {
+            text: value.text,
+            options: value.options,
+            end_date: value.end_date,
+            anonymous: value.anonymous,
+            show_votes_before_end_date: value.show_votes_before_end_date,
+            allow_multiple_votes_per_user: value.allow_multiple_votes_per_user,
+            allow_user_to_change_vote: value.allow_user_to_change_vote,
+        }
+    }
+}
+
+impl From<PollConfigInternal> for PollConfig {
+    fn from(value: PollConfigInternal) -> Self {
+        PollConfig {
+            text: value.text,
+            options: value.options,
+            end_date: value.end_date,
+            anonymous: value.anonymous,
+            show_votes_before_end_date: value.show_votes_before_end_date,
+            allow_multiple_votes_per_user: value.allow_multiple_votes_per_user,
+            allow_user_to_change_vote: value.allow_user_to_change_vote,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct CryptoContentInternal {
     #[serde(rename = "r")]
     pub recipient: UserId,
     #[serde(rename = "t")]
-    pub transfer: CompletedCryptoTransaction,
+    pub transfer: CompletedCryptoTransactionInternal,
     #[serde(rename = "c", default, skip_serializing_if = "Option::is_none")]
     pub caption: Option<String>,
 }
@@ -649,15 +713,349 @@ impl MessageContentInternalSubtype for CryptoContentInternal {
     fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
         CryptoContent {
             recipient: self.recipient,
-            transfer: CryptoTransaction::Completed(self.transfer),
+            transfer: CryptoTransaction::Completed(self.transfer.into()),
             caption: self.caption,
         }
     }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum CompletedCryptoTransactionInternal {
+    NNS(nns::CompletedCryptoTransactionInternal),
+    ICRC1(icrc1::CompletedCryptoTransactionInternal),
+    ICRC2(icrc2::CompletedCryptoTransactionInternal),
+}
+
+impl CompletedCryptoTransactionInternal {
+    pub fn ledger_canister_id(&self) -> CanisterId {
+        match self {
+            CompletedCryptoTransactionInternal::NNS(t) => t.ledger,
+            CompletedCryptoTransactionInternal::ICRC1(t) => t.ledger,
+            CompletedCryptoTransactionInternal::ICRC2(t) => t.ledger,
+        }
+    }
+
+    pub fn token(&self) -> Cryptocurrency {
+        match self {
+            CompletedCryptoTransactionInternal::NNS(t) => t.token.clone(),
+            CompletedCryptoTransactionInternal::ICRC1(t) => t.token.clone(),
+            CompletedCryptoTransactionInternal::ICRC2(t) => t.token.clone(),
+        }
+    }
+
+    pub fn units(&self) -> u128 {
+        match self {
+            CompletedCryptoTransactionInternal::NNS(t) => t.amount as u128,
+            CompletedCryptoTransactionInternal::ICRC1(t) => t.amount,
+            CompletedCryptoTransactionInternal::ICRC2(t) => t.amount,
+        }
+    }
+
+    pub fn fee(&self) -> u128 {
+        match self {
+            CompletedCryptoTransactionInternal::NNS(t) => t.fee as u128,
+            CompletedCryptoTransactionInternal::ICRC1(t) => t.fee,
+            CompletedCryptoTransactionInternal::ICRC2(t) => t.fee,
+        }
+    }
+
+    pub fn index(&self) -> u64 {
+        match self {
+            CompletedCryptoTransactionInternal::NNS(t) => t.block_index,
+            CompletedCryptoTransactionInternal::ICRC1(t) => t.block_index,
+            CompletedCryptoTransactionInternal::ICRC2(t) => t.block_index,
+        }
+    }
+}
+
+impl From<CompletedCryptoTransactionInternal> for CompletedCryptoTransaction {
+    fn from(value: CompletedCryptoTransactionInternal) -> Self {
+        match value {
+            CompletedCryptoTransactionInternal::NNS(t) => CompletedCryptoTransaction::NNS(t.into()),
+            CompletedCryptoTransactionInternal::ICRC1(t) => CompletedCryptoTransaction::ICRC1(t.into()),
+            CompletedCryptoTransactionInternal::ICRC2(t) => CompletedCryptoTransaction::ICRC2(t.into()),
+        }
+    }
+}
+
+impl From<CompletedCryptoTransaction> for CompletedCryptoTransactionInternal {
+    fn from(value: CompletedCryptoTransaction) -> Self {
+        match value {
+            CompletedCryptoTransaction::NNS(t) => CompletedCryptoTransactionInternal::NNS(t.into()),
+            CompletedCryptoTransaction::ICRC1(t) => CompletedCryptoTransactionInternal::ICRC1(t.into()),
+            CompletedCryptoTransaction::ICRC2(t) => CompletedCryptoTransactionInternal::ICRC2(t.into()),
+        }
+    }
+}
+
+mod nns {
+    use super::*;
+    use ic_ledger_types::AccountIdentifier;
+    use types::nns::{CryptoAccount, Tokens};
+
+    #[derive(Serialize, Deserialize, Clone, Debug)]
+    pub enum CryptoAccountInternal {
+        #[serde(rename = "m", alias = "Mint")]
+        Mint,
+        #[serde(rename = "a", alias = "Account")]
+        Account(AccountIdentifier),
+    }
+
+    impl From<CryptoAccountInternal> for CryptoAccount {
+        fn from(value: CryptoAccountInternal) -> Self {
+            match value {
+                CryptoAccountInternal::Account(a) => CryptoAccount::Account(a),
+                CryptoAccountInternal::Mint => CryptoAccount::Mint,
+            }
+        }
+    }
+
+    impl From<CryptoAccount> for CryptoAccountInternal {
+        fn from(value: CryptoAccount) -> Self {
+            match value {
+                CryptoAccount::Account(a) => CryptoAccountInternal::Account(a),
+                CryptoAccount::Mint => CryptoAccountInternal::Mint,
+            }
+        }
+    }
+
+    #[derive(Serialize, Deserialize, Clone, Debug)]
+    pub struct CompletedCryptoTransactionInternal {
+        #[serde(rename = "l", alias = "ledger")]
+        pub ledger: CanisterId,
+        #[serde(rename = "k", alias = "token")]
+        pub token: Cryptocurrency,
+        #[serde(rename = "a", alias = "amount")]
+        pub amount: u64,
+        #[serde(rename = "e", alias = "fee")]
+        pub fee: u64,
+        #[serde(rename = "f", alias = "from")]
+        pub from: CryptoAccountInternal,
+        #[serde(rename = "t", alias = "to")]
+        pub to: CryptoAccountInternal,
+        #[serde(rename = "m", alias = "memo")]
+        pub memo: u64,
+        #[serde(rename = "c", alias = "created")]
+        pub created: TimestampNanos,
+        #[serde(rename = "h", alias = "transaction_hash")]
+        pub transaction_hash: TransactionHash,
+        #[serde(rename = "i", alias = "block_index")]
+        pub block_index: u64,
+    }
+
+    impl From<CompletedCryptoTransactionInternal> for types::nns::CompletedCryptoTransaction {
+        fn from(value: CompletedCryptoTransactionInternal) -> Self {
+            Self {
+                ledger: value.ledger,
+                token: value.token,
+                amount: Tokens::from_e8s(value.amount),
+                fee: Tokens::from_e8s(value.fee),
+                from: value.from.into(),
+                to: value.to.into(),
+                memo: value.memo,
+                created: value.created,
+                transaction_hash: value.transaction_hash,
+                block_index: value.block_index,
+            }
+        }
+    }
+
+    impl From<types::nns::CompletedCryptoTransaction> for CompletedCryptoTransactionInternal {
+        fn from(value: types::nns::CompletedCryptoTransaction) -> Self {
+            Self {
+                ledger: value.ledger,
+                token: value.token,
+                amount: value.amount.e8s(),
+                fee: value.fee.e8s(),
+                from: value.from.into(),
+                to: value.to.into(),
+                memo: value.memo,
+                created: value.created,
+                transaction_hash: value.transaction_hash,
+                block_index: value.block_index,
+            }
+        }
+    }
+}
+
+mod icrc1 {
+    use super::*;
+    use candid::Principal;
+    use types::icrc1::Account;
+
+    #[derive(Serialize, Deserialize, Clone, Debug)]
+    pub struct AccountInternal {
+        #[serde(rename = "o", alias = "owner")]
+        owner: Principal,
+        #[serde(rename = "s", alias = "subaccount", skip_serializing_if = "Option::is_none")]
+        subaccount: Option<[u8; 32]>,
+    }
+
+    impl From<AccountInternal> for Account {
+        fn from(value: AccountInternal) -> Self {
+            Account {
+                owner: value.owner,
+                subaccount: value.subaccount,
+            }
+        }
+    }
+
+    impl From<Account> for AccountInternal {
+        fn from(value: Account) -> Self {
+            AccountInternal {
+                owner: value.owner,
+                subaccount: value.subaccount,
+            }
+        }
+    }
+
+    #[derive(Serialize, Deserialize, Clone, Debug)]
+    pub enum CryptoAccountInternal {
+        #[serde(rename = "m", alias = "Mint")]
+        Mint,
+        #[serde(rename = "a", alias = "Account")]
+        Account(AccountInternal),
+    }
+
+    impl From<CryptoAccountInternal> for CryptoAccount {
+        fn from(value: CryptoAccountInternal) -> Self {
+            match value {
+                CryptoAccountInternal::Account(a) => CryptoAccount::Account(a.into()),
+                CryptoAccountInternal::Mint => CryptoAccount::Mint,
+            }
+        }
+    }
+
+    impl From<CryptoAccount> for CryptoAccountInternal {
+        fn from(value: CryptoAccount) -> Self {
+            match value {
+                CryptoAccount::Account(a) => CryptoAccountInternal::Account(a.into()),
+                CryptoAccount::Mint => CryptoAccountInternal::Mint,
+            }
+        }
+    }
+
+    #[derive(Serialize, Deserialize, Clone, Debug)]
+    pub struct CompletedCryptoTransactionInternal {
+        #[serde(rename = "l", alias = "ledger")]
+        pub ledger: CanisterId,
+        #[serde(rename = "k", alias = "token")]
+        pub token: Cryptocurrency,
+        #[serde(rename = "a", alias = "amount")]
+        pub amount: u128,
+        #[serde(rename = "f", alias = "from")]
+        pub from: CryptoAccountInternal,
+        #[serde(rename = "t", alias = "to")]
+        pub to: CryptoAccountInternal,
+        #[serde(rename = "e", alias = "fee")]
+        pub fee: u128,
+        #[serde(rename = "m", alias = "memo", skip_serializing_if = "Option::is_none")]
+        pub memo: Option<ByteBuf>,
+        #[serde(rename = "c", alias = "created")]
+        pub created: TimestampNanos,
+        #[serde(rename = "i", alias = "block_index")]
+        pub block_index: u64,
+    }
+
+    impl From<CompletedCryptoTransactionInternal> for types::icrc1::CompletedCryptoTransaction {
+        fn from(value: CompletedCryptoTransactionInternal) -> Self {
+            Self {
+                ledger: value.ledger,
+                token: value.token,
+                amount: value.amount,
+                from: value.from.into(),
+                to: value.to.into(),
+                fee: value.fee,
+                memo: value.memo.map(|m| m.into()),
+                created: value.created,
+                block_index: value.block_index,
+            }
+        }
+    }
+
+    impl From<types::icrc1::CompletedCryptoTransaction> for CompletedCryptoTransactionInternal {
+        fn from(value: types::icrc1::CompletedCryptoTransaction) -> Self {
+            Self {
+                ledger: value.ledger,
+                token: value.token,
+                amount: value.amount,
+                from: value.from.into(),
+                to: value.to.into(),
+                fee: value.fee,
+                memo: value.memo.map(|m| m.0),
+                created: value.created,
+                block_index: value.block_index,
+            }
+        }
+    }
+}
+
+mod icrc2 {
+    use super::*;
+    use crate::message_content_internal::icrc1::CryptoAccountInternal;
+
+    #[derive(Serialize, Deserialize, Clone, Debug)]
+    pub struct CompletedCryptoTransactionInternal {
+        #[serde(rename = "l", alias = "ledger")]
+        pub ledger: CanisterId,
+        #[serde(rename = "k", alias = "token")]
+        pub token: Cryptocurrency,
+        #[serde(rename = "a", alias = "amount")]
+        pub amount: u128,
+        #[serde(rename = "s", alias = "spender")]
+        pub spender: UserId,
+        #[serde(rename = "f", alias = "from")]
+        pub from: CryptoAccountInternal,
+        #[serde(rename = "t", alias = "to")]
+        pub to: CryptoAccountInternal,
+        #[serde(rename = "e", alias = "fee")]
+        pub fee: u128,
+        #[serde(rename = "m", alias = "memo", skip_serializing_if = "Option::is_none")]
+        pub memo: Option<ByteBuf>,
+        #[serde(rename = "c", alias = "created")]
+        pub created: TimestampNanos,
+        #[serde(rename = "i", alias = "block_index")]
+        pub block_index: u64,
+    }
+
+    impl From<CompletedCryptoTransactionInternal> for types::icrc2::CompletedCryptoTransaction {
+        fn from(value: CompletedCryptoTransactionInternal) -> Self {
+            Self {
+                ledger: value.ledger,
+                token: value.token,
+                amount: value.amount,
+                spender: value.spender,
+                from: value.from.into(),
+                to: value.to.into(),
+                fee: value.fee,
+                memo: value.memo.map(|m| m.into()),
+                created: value.created,
+                block_index: value.block_index,
+            }
+        }
+    }
+
+    impl From<types::icrc2::CompletedCryptoTransaction> for CompletedCryptoTransactionInternal {
+        fn from(value: types::icrc2::CompletedCryptoTransaction) -> Self {
+            Self {
+                ledger: value.ledger,
+                token: value.token,
+                amount: value.amount,
+                spender: value.spender,
+                from: value.from.into(),
+                to: value.to.into(),
+                fee: value.fee,
+                memo: value.memo.map(|m| m.0),
+                created: value.created,
+                block_index: value.block_index,
+            }
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct GiphyContentInternal {
-    #[serde(rename = "c", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "c", skip_serializing_if = "Option::is_none")]
     pub caption: Option<String>,
     #[serde(rename = "t")]
     pub title: String,
@@ -766,7 +1164,7 @@ pub struct PrizeContentInternal {
     #[serde(rename = "w")]
     pub winners: HashSet<UserId>,
     #[serde(rename = "t")]
-    pub transaction: CompletedCryptoTransaction,
+    pub transaction: CompletedCryptoTransactionInternal,
     #[serde(rename = "e")]
     pub end_date: TimestampMillis,
     #[serde(rename = "c", default, skip_serializing_if = "Option::is_none")]
@@ -780,7 +1178,7 @@ pub struct PrizeContentInternal {
 }
 
 impl PrizeContentInternal {
-    pub fn new(content: PrizeContentInitial, transaction: CompletedCryptoTransaction) -> PrizeContentInternal {
+    pub fn new(content: PrizeContentInitial, transaction: CompletedCryptoTransactionInternal) -> PrizeContentInternal {
         PrizeContentInternal {
             prizes_remaining: content.prizes_v2,
             reservations: HashSet::new(),
@@ -967,6 +1365,159 @@ impl From<ReportedMessage> for ReportedMessageInternal {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct P2PSwapContentInternal {
+    #[serde(rename = "i", alias = "swap_id")]
+    pub swap_id: u32,
+    #[serde(rename = "t0", alias = "token0")]
+    pub token0: TokenInfo,
+    #[serde(rename = "a0", alias = "token0_amount")]
+    pub token0_amount: u128,
+    #[serde(rename = "t1", alias = "token1")]
+    pub token1: TokenInfo,
+    #[serde(rename = "a1", alias = "token1_amount")]
+    pub token1_amount: u128,
+    #[serde(rename = "e", alias = "expires_at")]
+    pub expires_at: TimestampMillis,
+    #[serde(rename = "c", alias = "caption", skip_serializing_if = "Option::is_none")]
+    pub caption: Option<String>,
+    #[serde(rename = "tx0", alias = "token0_txn_in")]
+    pub token0_txn_in: u64,
+    #[serde(rename = "s", alias = "status")]
+    pub status: P2PSwapStatus,
+}
+
+impl P2PSwapContentInternal {
+    pub fn new(
+        swap_id: u32,
+        content: P2PSwapContentInitial,
+        token0_txn_in: u64,
+        now: TimestampMillis,
+    ) -> P2PSwapContentInternal {
+        P2PSwapContentInternal {
+            swap_id,
+            token0: content.token0,
+            token0_amount: content.token0_amount,
+            token1: content.token1,
+            token1_amount: content.token1_amount,
+            expires_at: now + content.expires_in,
+            caption: content.caption,
+            token0_txn_in,
+            status: P2PSwapStatus::Open,
+        }
+    }
+
+    pub fn reserve(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
+        if let P2PSwapStatus::Open = self.status {
+            if now < self.expires_at {
+                self.status = P2PSwapStatus::Reserved(P2PSwapReserved { reserved_by: user_id });
+                return true;
+            } else {
+                self.status = P2PSwapStatus::Expired(P2PSwapExpired { token0_txn_out: None });
+            }
+        }
+
+        false
+    }
+
+    pub fn unreserve(&mut self, user_id: UserId) -> bool {
+        if let P2PSwapStatus::Reserved(r) = &self.status {
+            if r.reserved_by == user_id {
+                self.status = P2PSwapStatus::Open;
+                return true;
+            }
+        }
+        false
+    }
+
+    pub fn accept(&mut self, user_id: UserId, token1_txn_in: u64) -> bool {
+        if let P2PSwapStatus::Reserved(a) = &self.status {
+            if a.reserved_by == user_id {
+                self.status = P2PSwapStatus::Accepted(P2PSwapAccepted {
+                    accepted_by: user_id,
+                    token1_txn_in,
+                });
+                return true;
+            }
+        }
+        false
+    }
+
+    pub fn complete(&mut self, user_id: UserId, token0_txn_out: u64, token1_txn_out: u64) -> Option<P2PSwapCompleted> {
+        if let P2PSwapStatus::Accepted(a) = &self.status {
+            if a.accepted_by == user_id {
+                let status = P2PSwapCompleted {
+                    accepted_by: user_id,
+                    token1_txn_in: a.token1_txn_in,
+                    token0_txn_out,
+                    token1_txn_out,
+                };
+                self.status = P2PSwapStatus::Completed(status.clone());
+                return Some(status);
+            }
+        }
+        None
+    }
+
+    pub fn cancel(&mut self) -> bool {
+        if matches!(self.status, P2PSwapStatus::Open) {
+            self.status = P2PSwapStatus::Cancelled(P2PSwapCancelled { token0_txn_out: None });
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn mark_expired(&mut self) -> bool {
+        if matches!(self.status, P2PSwapStatus::Open) {
+            self.status = P2PSwapStatus::Expired(P2PSwapExpired { token0_txn_out: None });
+            true
+        } else {
+            false
+        }
+    }
+}
+
+impl MessageContentInternalSubtype for P2PSwapContentInternal {
+    type ContentType = P2PSwapContent;
+
+    fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
+        self.into()
+    }
+}
+
+impl From<P2PSwapContentInternal> for P2PSwapContent {
+    fn from(value: P2PSwapContentInternal) -> Self {
+        Self {
+            swap_id: value.swap_id,
+            token0: value.token0,
+            token0_amount: value.token0_amount,
+            token1: value.token1,
+            token1_amount: value.token1_amount,
+            expires_at: value.expires_at,
+            caption: value.caption,
+            token0_txn_in: value.token0_txn_in,
+            status: value.status,
+        }
+    }
+}
+
+impl From<P2PSwapContent> for P2PSwapContentInternal {
+    fn from(value: P2PSwapContent) -> Self {
+        Self {
+            swap_id: value.swap_id,
+            token0: value.token0,
+            token0_amount: value.token0_amount,
+            token1: value.token1,
+            token1_amount: value.token1_amount,
+            expires_at: value.expires_at,
+            caption: value.caption,
+            token0_txn_in: value.token0_txn_in,
+            status: value.status,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct VideoCallContentInternal {
     #[serde(rename = "t", default, skip_serializing_if = "is_default")]
     pub call_type: VideoCallType,
@@ -1049,6 +1600,32 @@ impl MessageContentInternalSubtype for CustomContentInternal {
     }
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BlobReferenceInternal {
+    #[serde(rename = "c", alias = "canister_id")]
+    pub canister_id: CanisterId,
+    #[serde(rename = "b", alias = "blob_id")]
+    pub blob_id: u128,
+}
+
+impl From<BlobReferenceInternal> for BlobReference {
+    fn from(value: BlobReferenceInternal) -> Self {
+        BlobReference {
+            canister_id: value.canister_id,
+            blob_id: value.blob_id,
+        }
+    }
+}
+
+impl From<BlobReference> for BlobReferenceInternal {
+    fn from(value: BlobReference) -> Self {
+        BlobReferenceInternal {
+            canister_id: value.canister_id,
+            blob_id: value.blob_id,
+        }
+    }
+}
+
 impl From<MessageContentInitial> for MessageContentInternal {
     fn from(value: MessageContentInitial) -> Self {
         match value {
@@ -1068,7 +1645,7 @@ impl From<MessageContentInitial> for MessageContentInternal {
                 if let CryptoTransaction::Completed(transfer) = c.transfer {
                     MessageContentInternal::Crypto(CryptoContentInternal {
                         recipient: c.recipient,
-                        transfer,
+                        transfer: transfer.into(),
                         caption: c.caption,
                     })
                 } else {

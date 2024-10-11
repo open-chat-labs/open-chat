@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Mark prize messages as having ledger error if transfers fail ([#6500](https://github.com/open-chat-labs/open-chat/pull/6500))
 - Add missing MessagePack endpoints ([#6547](https://github.com/open-chat-labs/open-chat/pull/6547))
+- Reduce size of some message types when serialized ([#6559](https://github.com/open-chat-labs/open-chat/pull/6559))
 - Log details whenever a prize claim results in a ledger error ([#6560](https://github.com/open-chat-labs/open-chat/pull/6560))
 
 ## [[2.0.1366](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1366-group)] - 2024-10-02
