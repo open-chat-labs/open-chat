@@ -2542,7 +2542,7 @@ export function member(value: TGroupMember): Member {
 export function editMessageResponse(
     value: UserEditMessageResponse | GroupEditMessageResponse | CommunityEditMessageResponse,
 ): EditMessageResponse {
-    if (typeof value === "object" && "Success" in value) {
+    if (value === "Success") {
         return "success";
     } else {
         console.warn("EditMessageResponse failed with: ", value);
