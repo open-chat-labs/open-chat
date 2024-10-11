@@ -1,6 +1,7 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use tracing::info;
 use types::{is_default, CanisterId, PushIfNotContains, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
@@ -45,6 +46,8 @@ impl UserPrincipals {
             if let Some(user_principal) = self.user_principals.get_mut(details.user_principal_index as usize) {
                 if !user_principal.auth_principals.contains(principal) {
                     user_principal.auth_principals.push(*principal);
+                    let user_id = user_principal.user_id.map(|u| u.to_string());
+                    info!(user_id, "Missing principal link added");
                     count += 1;
                 }
             }
