@@ -258,7 +258,7 @@ impl PublicCommunityInfo {
             banner_id: self.banner_id,
             member_count: self.activity.member_count,
             channel_count: self.activity.channel_count,
-            gate: self.gate_config.as_ref().map(|gc| gc.gate.clone().into()),
+            gate: self.gate_config.as_ref().map(|gc| gc.gate.clone()),
             gate_config: self.gate_config.as_ref().map(|gc| gc.clone().into()),
             moderation_flags: self.moderation_flags.bits(),
             primary_language: self.primary_language.clone(),
