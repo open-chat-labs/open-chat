@@ -5,7 +5,8 @@ use search::{Document, Query};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
-    AccessGate, AccessGateConfig, CommunityId, CommunityMatch, FrozenCommunityInfo, PublicCommunityActivity, TimestampMillis,
+    AccessGate, AccessGateConfig, AccessGateConfigInternal, CommunityId, CommunityMatch, FrozenCommunityInfo,
+    PublicCommunityActivity, TimestampMillis,
 };
 
 #[derive(Serialize, Deserialize, Default)]
@@ -47,7 +48,7 @@ impl PublicCommunities {
                 description,
                 avatar_id,
                 banner_id,
-                gate_config,
+                gate_config.map(|gc| gc.into()),
                 primary_language,
                 channel_count,
                 created,
@@ -115,7 +116,7 @@ impl PublicCommunities {
                 community.description = description;
                 community.avatar_id = avatar_id;
                 community.banner_id = banner_id;
-                community.gate_config = gate_config;
+                community.gate_config = gate_config.map(|gc| gc.into());
                 UpdateCommunityResult::Success
             }
         }
@@ -150,7 +151,7 @@ pub struct PublicCommunityInfo {
     activity: PublicCommunityActivity,
     hotness_score: u32,
     #[serde(alias = "gate")]
-    gate_config: Option<AccessGateConfig>,
+    gate_config: Option<AccessGateConfigInternal>,
     moderation_flags: ModerationFlags,
     primary_language: String,
 }
@@ -168,7 +169,7 @@ impl PublicCommunityInfo {
         description: String,
         avatar_id: Option<u128>,
         banner_id: Option<u128>,
-        gate_config: Option<AccessGateConfig>,
+        gate_config: Option<AccessGateConfigInternal>,
         primary_language: String,
         channel_count: u32,
         now: TimestampMillis,
@@ -257,8 +258,8 @@ impl PublicCommunityInfo {
             banner_id: self.banner_id,
             member_count: self.activity.member_count,
             channel_count: self.activity.channel_count,
-            gate: self.gate_config.as_ref().map(|gc| gc.gate.clone()),
-            gate_config: self.gate_config.clone(),
+            gate: self.gate_config.as_ref().map(|gc| gc.gate.clone().into()),
+            gate_config: self.gate_config.as_ref().map(|gc| gc.clone().into()),
             moderation_flags: self.moderation_flags.bits(),
             primary_language: self.primary_language.clone(),
         }
