@@ -11,6 +11,7 @@
     import {
         AuthProvider,
         InMemoryAuthClientStorage,
+        type AuthenticationPrincipal,
         type OpenChat,
         type ResourceKey,
     } from "openchat-client";
@@ -33,6 +34,8 @@
 
     export let explanations: ResourceKey[];
     export let iiPrincipal: string | undefined;
+    export let linkInternetIdentity = true;
+    export let onProceed: () => void = () => dispatch("proceed");
 
     type IdentityDetail = {
         key: ECDSAKeyIdentity;
@@ -49,24 +52,31 @@
     };
     type LinkStage = ApproverIdentity | InitiatorIdentity | ReadyToLink;
 
+    type ProviderStep =
+        | "choose_provider"
+        | "choose_eth_wallet"
+        | "choose_sol_wallet"
+        | "signing_in_with_email";
+
     let error: string | undefined;
     let emailSigninHandler = new EmailSigninHandler(client, "account_linking", false);
     let step: "explain" | "linking" = "explain";
     let substep: LinkStage = { kind: "initiator" };
     let emailInvalid = false;
     let email = "";
-    let approverStep:
-        | "choose_provider"
-        | "choose_eth_wallet"
-        | "choose_sol_wallet"
-        | "signing_in_with_email" = "choose_provider";
+    let providerStep: ProviderStep = "choose_provider";
     let linking = false;
     let loggingInInitiator = false;
     let verificationCode: string | undefined = undefined;
+    let accounts: (AuthenticationPrincipal & { provider: AuthProvider })[] = [];
 
     $: selectedAuthProviderStore = client.selectedAuthProviderStore;
+    $: currentProvider =
+        accounts.find((a) => a.principal === client.AuthPrincipal)?.provider ??
+        $selectedAuthProviderStore;
 
     onMount(() => {
+        client.getAuthenticationPrincipals().then((a) => (accounts = a));
         emailSigninHandler.addEventListener("email_signin_event", emailEvent);
         return () => {
             emailSigninHandler.removeEventListener("email_signin_event", emailEvent);
@@ -88,11 +98,11 @@
         step = "linking";
     }
 
-    // This is where we login in with the provider that we are currently signed in with (which can be any provider type)
-    async function loginApprover(ev: CustomEvent<AuthProvider>) {
-        if (substep.kind !== "approver") return;
+    // This is called both for the initiator and the approver
+    async function loginProvider(ev: CustomEvent<AuthProvider>) {
+        if (substep.kind === "ready_to_link") return;
 
-        const { initiator } = substep;
+        const generalError = `identity.failure.login_${substep.kind}`;
 
         const provider = ev.detail;
         if (emailInvalid && provider === AuthProvider.EMAIL) {
@@ -100,11 +110,10 @@
         }
 
         localStorage.setItem(configKeys.selectedAuthEmail, email);
-        selectedAuthProviderStore.set(provider);
         error = undefined;
 
         if (provider === AuthProvider.EMAIL) {
-            approverStep = "signing_in_with_email";
+            providerStep = "signing_in_with_email";
             emailSigninHandler.generateMagicLink(email).then((resp) => {
                 if (resp.kind === "success") {
                     verificationCode = resp.code;
@@ -114,13 +123,13 @@
                     console.debug("generateMagicLink failed_to_send_email", resp.error);
                     error = "loginDialog.failedToSendEmail";
                 } else {
-                    error = "identity.failure.loginApprover";
+                    error = generalError;
                 }
             });
         } else if (provider === AuthProvider.ETH) {
-            approverStep = "choose_eth_wallet";
+            providerStep = "choose_eth_wallet";
         } else if (provider === AuthProvider.SOL) {
-            approverStep = "choose_sol_wallet";
+            providerStep = "choose_sol_wallet";
         } else {
             // This is the II / NFID case
             const identity = await ECDSAKeyIdentity.generate();
@@ -137,94 +146,83 @@
                             const delegation = await storage.get("delegation");
                             if (delegation) {
                                 const principal = c.getIdentity().getPrincipal().toString();
-                                if (principal !== client.AuthPrincipal) {
-                                    error = "Principal mismatch";
+                                if (
+                                    substep.kind === "approver" &&
+                                    principal !== client.AuthPrincipal
+                                ) {
+                                    error = "identity.failure.principalMismatch";
                                 } else {
-                                    substep = {
-                                        kind: "ready_to_link",
-                                        initiator,
-                                        approver: {
-                                            key: identity,
-                                            delegation: DelegationChain.fromJSON(delegation),
-                                            provider,
-                                        },
-                                    };
+                                    if (substep.kind === "initiator") {
+                                        iiPrincipal = principal;
+                                        substep = {
+                                            kind: "approver",
+                                            initiator: {
+                                                key: identity,
+                                                delegation: DelegationChain.fromJSON(delegation),
+                                                provider: AuthProvider.II,
+                                            },
+                                        };
+                                    } else if (substep.kind === "approver") {
+                                        substep = {
+                                            kind: "ready_to_link",
+                                            initiator: substep.initiator,
+                                            approver: {
+                                                key: identity,
+                                                delegation: DelegationChain.fromJSON(delegation),
+                                                provider,
+                                            },
+                                        };
+                                    }
                                 }
                             }
                         },
                         onError: (err) => {
-                            console.log("Failed to log into approver: ", err);
-                            error = "identity.failure.loginApprover";
+                            console.log(`Failed to log into ${substep.kind}: `, err);
+                            error = generalError;
                         },
                     });
                 })
                 .catch((err) => {
-                    console.log("Failed to log into approver: ", err);
-                    error = "identity.failure.loginApprover";
+                    console.log(`Failed to log into ${substep.kind}: `, err);
+                    error = generalError;
                 });
         }
     }
 
     // This is where we login in with the Internet Identity that we want to link to our existing OC account aka the Initiator
-    async function loginInitiator() {
-        if (substep.kind !== "initiator") return;
-
-        error = undefined;
-        loggingInInitiator = true;
-
-        const identity = await ECDSAKeyIdentity.generate();
-        const storage = new InMemoryAuthClientStorage();
-        const authClient = AuthClient.create({
-            storage,
-            identity: identity,
-        });
-        authClient
-            .then((c) => {
-                c.login({
-                    ...client.getAuthClientOptions(AuthProvider.II),
-                    onSuccess: async () => {
-                        iiPrincipal = c.getIdentity().getPrincipal().toString();
-                        const delegation = await storage.get("delegation");
-                        if (delegation) {
-                            substep = {
-                                kind: "approver",
-                                initiator: {
-                                    key: identity,
-                                    delegation: DelegationChain.fromJSON(delegation),
-                                    provider: AuthProvider.II,
-                                },
-                            };
-                        }
-                        loggingInInitiator = false;
-                    },
-                    onError: (err) => {
-                        error = "identity.failure.loginInitiator";
-                        console.warn("Failed to log into initiator: ", err);
-                        loggingInInitiator = false;
-                    },
-                });
-            })
-            .catch((err) => {
-                console.log("Failed to log into initiator: ", err);
-                error = "identity.failure.loginInitiator";
-                loggingInInitiator = false;
-            });
+    async function loginInternetIdentity() {
+        return loginProvider(
+            new CustomEvent("loginProvider", {
+                detail: AuthProvider.II,
+            }),
+        );
     }
 
     function authComplete(
         provider: AuthProvider.ETH | AuthProvider.SOL | AuthProvider.EMAIL,
         ev: CustomEvent<{ kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain }>,
     ) {
-        if (substep.kind !== "approver") return;
-        substep = {
-            kind: "ready_to_link",
-            initiator: substep.initiator,
-            approver: {
-                key: ev.detail.key,
-                delegation: ev.detail.delegation,
-                provider,
-            },
-        };
+        providerStep = "choose_provider";
+        if (substep.kind === "approver") {
+            substep = {
+                kind: "ready_to_link",
+                initiator: substep.initiator,
+                approver: {
+                    key: ev.detail.key,
+                    delegation: ev.detail.delegation,
+                    provider,
+                },
+            };
+        } else if (substep.kind === "initiator") {
+            substep = {
+                kind: "approver",
+                initiator: {
+                    key: ev.detail.key,
+                    delegation: ev.detail.delegation,
+                    provider,
+                },
+            };
+        }
     }
 
     // Link the two identities that we have built together
@@ -236,13 +234,19 @@
         error = undefined;
         linking = true;
         client
-            .linkIdentities(initiator.key, initiator.delegation, initiator.provider === AuthProvider.II, approver.key, approver.delegation)
+            .linkIdentities(
+                initiator.key,
+                initiator.delegation,
+                initiator.provider === AuthProvider.II,
+                approver.key,
+                approver.delegation,
+            )
             .then((resp) => {
                 if (resp === "success") {
-                    dispatch("proceed");
+                    onProceed();
                 } else if (resp === "already_linked_to_principal") {
                     console.log("Identity already linked by you: ", resp);
-                    dispatch("proceed");
+                    error = "identity.failure.alreadyLinked";
                 } else if (resp === "already_registered") {
                     console.log("Identity already linked by someone else: ", resp);
                     error = "identity.failure.alreadyLinked";
@@ -266,7 +270,7 @@
 
     function reset() {
         emailSigninHandler.stopPolling();
-        approverStep = "choose_provider";
+        providerStep = "choose_provider";
         error = undefined;
         step = "explain";
         substep = { kind: "initiator" };
@@ -296,69 +300,72 @@
             {/each}
         </AlertBox>
     {:else if step === "linking"}
-        {#if substep.kind === "approver"}
-            {#if approverStep === "choose_provider"}
-                <div class="info center">
-                    <Translatable resourceKey={i18nKey("identity.signInCurrent")} />
-                </div>
-                <ChooseSignInOption
-                    mode={"signin"}
-                    bind:emailInvalid
-                    bind:email
-                    on:login={loginApprover} />
-            {:else if approverStep === "choose_eth_wallet"}
-                <div class="eth-options">
-                    {#await import("../SigninWithEth.svelte")}
-                        <div class="loading">...</div>
-                    {:then { default: SigninWithEth }}
-                        <SigninWithEth
-                            assumeIdentity={false}
-                            on:connected={(ev) => authComplete(AuthProvider.ETH, ev)} />
-                    {/await}
-                </div>
-            {:else if approverStep === "choose_sol_wallet"}
-                <div class="sol-options">
-                    {#await import("../SigninWithSol.svelte")}
-                        <div class="loading">...</div>
-                    {:then { default: SigninWithSol }}
-                        <SigninWithSol
-                            assumeIdentity={false}
-                            on:connected={(ev) => authComplete(AuthProvider.SOL, ev)} />
-                    {/await}
-                </div>
-            {:else if approverStep === "signing_in_with_email"}
-                <EmailSigninFeedback
-                    code={verificationCode}
-                    polling={$emailSigninHandler}
-                    on:copy={(ev) => emailSigninHandler.copyCode(ev.detail)} />
-                {#if error !== undefined}
-                    <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
-                {/if}
-            {/if}
-        {:else if substep.kind === "initiator"}
-            <div class="info">
-                <Translatable resourceKey={i18nKey("identity.signInNext")} />
-            </div>
-            <Button
-                loading={loggingInInitiator}
-                disabled={loggingInInitiator}
-                on:click={loginInitiator}>
-                <span class="link-ii-logo">
-                    <InternetIdentityLogo />
-                </span>
-                <Translatable resourceKey={i18nKey("loginDialog.signin")} /></Button>
-        {:else if substep.kind === "ready_to_link"}
+        {#if substep.kind === "ready_to_link"}
             <div class="info">
                 <Translatable resourceKey={i18nKey("identity.linkTwoIdentities")} />
             </div>
             <div class="identities">
-                <SignInOption hollow provider={AuthProvider.II} name={i18nKey(AuthProvider.II)} />
+                <SignInOption
+                    hollow
+                    provider={substep.initiator.provider}
+                    name={i18nKey(substep.initiator.provider)} />
                 <ArrowRightBoldOutline size={$iconSize} color={"var(--icon-txt)"} />
                 <SignInOption
                     hollow
                     provider={substep.approver.provider}
                     name={i18nKey(substep.approver.provider)} />
             </div>
+        {:else if substep.kind === "initiator" && linkInternetIdentity}
+            <div class="info">
+                <Translatable resourceKey={i18nKey("identity.signInNext")} />
+            </div>
+            <Button
+                loading={loggingInInitiator}
+                disabled={loggingInInitiator}
+                on:click={loginInternetIdentity}>
+                <span class="link-ii-logo">
+                    <InternetIdentityLogo />
+                </span>
+                <Translatable resourceKey={i18nKey("loginDialog.signin")} /></Button>
+        {:else if providerStep === "choose_provider"}
+            <div class="info center">
+                <Translatable resourceKey={i18nKey(`identity.signIn_${substep.kind}`)} />
+            </div>
+            <ChooseSignInOption
+                mode={"signin"}
+                {currentProvider}
+                showMore={substep.kind === "initiator"}
+                bind:emailInvalid
+                bind:email
+                on:login={loginProvider} />
+        {:else if providerStep === "choose_eth_wallet"}
+            <div class="eth-options">
+                {#await import("../SigninWithEth.svelte")}
+                    <div class="loading">...</div>
+                {:then { default: SigninWithEth }}
+                    <SigninWithEth
+                        assumeIdentity={false}
+                        on:connected={(ev) => authComplete(AuthProvider.ETH, ev)} />
+                {/await}
+            </div>
+        {:else if providerStep === "choose_sol_wallet"}
+            <div class="sol-options">
+                {#await import("../SigninWithSol.svelte")}
+                    <div class="loading">...</div>
+                {:then { default: SigninWithSol }}
+                    <SigninWithSol
+                        assumeIdentity={false}
+                        on:connected={(ev) => authComplete(AuthProvider.SOL, ev)} />
+                {/await}
+            </div>
+        {:else if providerStep === "signing_in_with_email"}
+            <EmailSigninFeedback
+                code={verificationCode}
+                polling={$emailSigninHandler}
+                on:copy={(ev) => emailSigninHandler.copyCode(ev.detail)} />
+            {#if error !== undefined}
+                <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
+            {/if}
         {/if}
     {/if}
 </div>
@@ -371,19 +378,21 @@
             <Button secondary on:click={reset}
                 ><Translatable resourceKey={i18nKey("identity.tryAgain")} /></Button>
         {:else if step === "explain"}
-            <Button on:click={initiateLinking}>
-                <span class="link-ii-logo">
-                    <InternetIdentityLogo />
-                </span>
-                <Translatable resourceKey={i18nKey("identity.link")} /></Button>
+            {#if linkInternetIdentity}
+                <Button on:click={initiateLinking}>
+                    <span class="link-ii-logo">
+                        <InternetIdentityLogo />
+                    </span>
+                    <Translatable resourceKey={i18nKey("identity.link")} /></Button>
+            {:else}
+                <Button on:click={initiateLinking}>
+                    <Translatable resourceKey={i18nKey("identity.linkedAccounts.start")} /></Button>
+            {/if}
         {:else if step === "linking"}
             <Button secondary on:click={reset}
                 ><Translatable resourceKey={i18nKey("identity.back")} /></Button>
             {#if substep.kind === "ready_to_link"}
                 <Button loading={linking} disabled={linking} on:click={linkIdentities}>
-                    <span class="link-ii-logo">
-                        <InternetIdentityLogo />
-                    </span>
                     <Translatable resourceKey={i18nKey("identity.link")} /></Button>
             {/if}
         {/if}

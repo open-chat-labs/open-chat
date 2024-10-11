@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Reduce size of some message types when serialized ([#6559](https://github.com/open-chat-labs/open-chat/pull/6559))
+- Log details whenever a prize claim results in a ledger error ([#6560](https://github.com/open-chat-labs/open-chat/pull/6560))
+
+## [[2.0.1378](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1378-community)] - 2024-10-10
+
+### Fixed
+
+- Fix video calls in communities ([#6554](https://github.com/open-chat-labs/open-chat/pull/6554))
+
+## [[2.0.1377](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1377-community)] - 2024-10-10
+
 ### Added
 
 - Add support for expiring access gates ([#6401](https://github.com/open-chat-labs/open-chat/pull/6401))

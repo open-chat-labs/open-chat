@@ -44,22 +44,10 @@ pub struct ChatEvents {
     last_updated_timestamps: LastUpdatedTimestamps,
     video_call_in_progress: Timestamped<Option<VideoCall>>,
     anonymized_id: String,
-    #[serde(default)]
     search_index: SearchIndex,
 }
 
 impl ChatEvents {
-    // TODO remove this
-    pub fn populate_search_index(&mut self) {
-        for event in self.main.iter(None, true, EventIndex::default()) {
-            if let EventOrExpiredRangeInternal::Event(e) = event {
-                if let ChatEventInternal::Message(m) = &e.event {
-                    self.search_index.push(m.message_index, m.sender, Document::from(&m.content));
-                }
-            }
-        }
-    }
-
     pub fn new_direct_chat(
         them: UserId,
         events_ttl: Option<Milliseconds>,
@@ -1096,7 +1084,7 @@ impl ChatEvents {
         min_visible_event_index: EventIndex,
     ) -> Option<P2PSwapContent> {
         self.message_internal(min_visible_event_index, thread_root_message_index, message_id.into())
-            .and_then(|(m, _)| if let MessageContentInternal::P2PSwap(p) = m.content { Some(p) } else { None })
+            .and_then(|(m, _)| if let MessageContentInternal::P2PSwap(p) = m.content { Some(p.into()) } else { None })
     }
 
     pub fn reserve_p2p_swap(
@@ -1132,7 +1120,7 @@ impl ChatEvents {
 
         if content.reserve(user_id, now) {
             Ok(ReserveP2PSwapSuccess {
-                content: content.clone(),
+                content: content.clone().into(),
                 created: message_timestamp,
                 created_by: message.sender,
             })

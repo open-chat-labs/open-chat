@@ -1295,6 +1295,7 @@ dependencies = [
  "candid",
  "event_store_producer",
  "hex",
+ "ic-ledger-types",
  "itertools 0.13.0",
  "ledger_utils",
  "msgpack",

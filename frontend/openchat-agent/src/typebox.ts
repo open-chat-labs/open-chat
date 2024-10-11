@@ -180,6 +180,18 @@ export const GroupDisableInviteCodeArgs = Type.Object({
     correlation_id: Type.BigInt(),
 });
 
+export type GroupRegisterProposalVoteV2Response = Static<
+    typeof GroupRegisterProposalVoteV2Response
+>;
+export const GroupRegisterProposalVoteV2Response = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("CallerNotInGroup"),
+    Type.Literal("ProposalMessageNotFound"),
+    Type.Literal("UserSuspended"),
+    Type.Literal("UserLapsed"),
+    Type.Literal("ChatFrozen"),
+]);
+
 export type GroupPublicSummaryArgs = Static<typeof GroupPublicSummaryArgs>;
 export const GroupPublicSummaryArgs = Type.Object({
     invite_code: Type.Optional(Type.BigInt()),
@@ -305,13 +317,6 @@ export const UserManageFavouriteChatsResponse = Type.Union([
     Type.Literal("Success"),
     Type.Literal("UserSuspended"),
 ]);
-
-export type UserMessageActivitySummary = Static<typeof UserMessageActivitySummary>;
-export const UserMessageActivitySummary = Type.Object({
-    read_up_to: Type.BigInt(),
-    latest_event: Type.BigInt(),
-    unread_count: Type.Number(),
-});
 
 export type UserMarkAchievementsSeenArgs = Static<typeof UserMarkAchievementsSeenArgs>;
 export const UserMarkAchievementsSeenArgs = Type.Object({
@@ -1338,7 +1343,6 @@ export const CommunityMembership = Type.Object({
     role: CommunityRole,
     rules_accepted: Type.Boolean(),
     display_name: Type.Optional(Type.String()),
-    lapsed: Type.Boolean(),
 });
 
 export type VerifiedCredentialArgumentValue = Static<typeof VerifiedCredentialArgumentValue>;
@@ -2814,7 +2818,7 @@ export const CommunitySendMessageSuccessResult = Type.Object({
     event_index: EventIndex,
     message_index: MessageIndex,
     timestamp: Type.BigInt(),
-    expires_at: Type.Optional(Type.Union([Type.BigInt(), Type.Null()])),
+    expires_at: Type.Optional(Type.BigInt()),
 });
 
 export type CommunitySendMessageResponse = Static<typeof CommunitySendMessageResponse>;
@@ -3362,6 +3366,12 @@ export const GroupMessagesByMessageIndexArgs = Type.Object({
     latest_known_update: Type.Optional(Type.BigInt()),
 });
 
+export type GroupRegisterProposalVoteV2Args = Static<typeof GroupRegisterProposalVoteV2Args>;
+export const GroupRegisterProposalVoteV2Args = Type.Object({
+    message_index: MessageIndex,
+    adopt: Type.Boolean(),
+});
+
 export type GroupRemoveReactionArgs = Static<typeof GroupRemoveReactionArgs>;
 export const GroupRemoveReactionArgs = Type.Object({
     thread_root_message_index: Type.Optional(MessageIndex),
@@ -3427,7 +3437,7 @@ export const GroupSendMessageSuccessResult = Type.Object({
     event_index: EventIndex,
     message_index: MessageIndex,
     timestamp: Type.BigInt(),
-    expires_at: Type.Optional(Type.Union([Type.BigInt(), Type.Null()])),
+    expires_at: Type.Optional(Type.BigInt()),
 });
 
 export type GroupSendMessageResponse = Static<typeof GroupSendMessageResponse>;
@@ -4300,7 +4310,6 @@ export const CommunityMember = Type.Object({
     role: CommunityRole,
     display_name: Type.Optional(Type.String()),
     referred_by: Type.Optional(UserId),
-    lapsed: Type.Boolean(),
 });
 
 export type User = Static<typeof User>;
@@ -5822,7 +5831,6 @@ export const GroupMember = Type.Object({
     user_id: UserId,
     date_added: Type.BigInt(),
     role: GroupRole,
-    lapsed: Type.Boolean(),
 });
 
 export type MessageUnpinned = Static<typeof MessageUnpinned>;
@@ -6020,7 +6028,6 @@ export const GroupMembership = Type.Object({
     my_metrics: ChatMetrics,
     latest_threads: Type.Array(GroupCanisterThreadDetails),
     rules_accepted: Type.Boolean(),
-    lapsed: Type.Boolean(),
 });
 
 export type OptionUpdateFrozenGroupInfo = Static<typeof OptionUpdateFrozenGroupInfo>;
@@ -8722,7 +8729,6 @@ export const UserInitialStateSuccessResult = Type.Object({
     is_unique_person: Type.Boolean(),
     wallet_config: UserWalletConfig,
     referrals: Type.Array(UserReferral),
-    message_activity_summary: UserMessageActivitySummary,
 });
 
 export type UserInitialStateResponse = Static<typeof UserInitialStateResponse>;
@@ -8753,7 +8759,6 @@ export const UserUpdatesSuccessResult = Type.Object({
     is_unique_person: Type.Optional(Type.Boolean()),
     wallet_config: Type.Optional(UserWalletConfig),
     referrals: Type.Array(UserReferral),
-    message_activity_summary: Type.Optional(UserMessageActivitySummary),
 });
 
 export type UserUpdatesResponse = Static<typeof UserUpdatesResponse>;

@@ -171,6 +171,7 @@ import {
     Referral,
     WalletConfig,
     SignedDelegation,
+    MessageEventWrapper,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -344,6 +345,7 @@ export {
     Referral as ApiReferral,
     WalletConfig as ApiWalletConfig,
     SignedDelegation as ApiSignedDelegation,
+    MessageEventWrapper as ApiMessageEventWrapper,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

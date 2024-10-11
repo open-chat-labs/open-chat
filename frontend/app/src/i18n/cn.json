@@ -567,6 +567,8 @@
         "failure": {
             "alreadyLinked": "抱歉，但 Internet Identity 似乎已链接到 OpenChat 帐户",
             "link": "抱歉，我们无法将您的互联网身份链接到您的 OpenChat 帐户",
+            "login_approver": "抱歉，我们无法登录您当前的 OpenChat 身份验证提供商",
+            "login_initiator": "抱歉，我们无法登录新的身份验证提供商",
             "loginApprover": "抱歉，我们无法登录您当前的 OpenChat 身份验证提供商",
             "loginInitiator": "抱歉，我们无法登录您选择的互联网身份",
             "pollingError": "等待电子邮件登录时出现意外错误",
@@ -574,10 +576,19 @@
         },
         "humanityWarning": "您必须拥有与您的 OpenChat 帐户关联的互联网身份，以确认您的唯一身份。如果您使用其他提供商注册，则需要创建互联网身份并将其链接到您的 OpenChat 帐户，然后才能继续。",
         "link": "关联",
+        "linkedAccounts": {
+            "currentAccount": "当前以该主体身份登录",
+            "linkAdvice": "要链接新帐户，请登录要链接的新帐户，然后登录当前帐户，最后将两个帐户链接在一起。",
+            "linkAnother": "链接另一个",
+            "section": "关联账户",
+            "start": "开始使用"
+        },
         "linkIdentity": "链接标识",
         "linkTwoIdentities": "我们现在准备将这两种身份联系在一起。",
         "mismatch": "这与您当前登录的主体不匹配。您确定使用了相同的身份验证提供程序吗？",
         "proceed": "继续",
+        "signIn_approver": "使用您当前正在使用的身份提供商登录",
+        "signIn_initiator": "使用您想要链接到 OpenChat 帐户的身份提供商登录",
         "signInCurrent": "使用您当前正在使用的身份提供商登录",
         "signInNext": "创建或使用您想要链接到 OpenChat 帐户的互联网身份登录",
         "tryAgain": "再试一次"

@@ -33,7 +33,6 @@ import type {
     ApiDirectMessageTippedNotification,
     ApiNotificationCryptoTransferDetails,
 } from "./candid/idl";
-import { ApiToggleMuteNotificationsResponse } from "../group/candid/idl";
 import type {
     CommunityToggleMuteNotificationsResponse,
     GroupToggleMuteNotificationsResponse,
@@ -42,10 +41,7 @@ import type {
 } from "../../typebox";
 
 export function muteNotificationsResponse(
-    candid:
-        | ApiMuteNotificationsResponse
-        | ApiUnmuteNotificationsResponse
-        | ApiToggleMuteNotificationsResponse,
+    candid: ApiMuteNotificationsResponse | ApiUnmuteNotificationsResponse,
 ): ToggleMuteNotificationResponse {
     if ("Success" in candid) {
         return "success";

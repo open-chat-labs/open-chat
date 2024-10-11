@@ -17,6 +17,7 @@ export const configKeys = {
     referralSection: "openchat_referral_section",
     storageSection: "openchat_storage_section",
     verificationSectionOpen: "openchat_verification_section",
+    accountsSectionOpen: "openchat_accounts_section",
     userStatsSection: "openchat_user_stats_section",
     userAdvancedSection: "openchat_user_advanced_section",
     groupInfoSection: "openchat_group_info_section",
