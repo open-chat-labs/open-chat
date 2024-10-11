@@ -33,6 +33,13 @@ export type AccessGate = { 'UniquePerson' : null } |
   { 'DiamondMember' : null } |
   { 'Payment' : PaymentGate } |
   { 'LifetimeDiamondMember' : null };
+export interface AccessGateConfig {
+  'gate' : AccessGate,
+  'expiry' : [] | [Milliseconds],
+}
+export type AccessGateConfigUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : AccessGateConfig };
 export type AccessGateNonComposite = { 'UniquePerson' : null } |
   { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'ReferredByMember' : null } |
@@ -250,6 +257,7 @@ export interface CanisterWasm {
 export type ChannelId = bigint;
 export interface ChannelMatch {
   'id' : ChannelId,
+  'gate_config' : [] | [AccessGateConfig],
   'subtype' : [] | [GroupSubtype],
   'gate' : [] | [AccessGate],
   'name' : string,
@@ -427,6 +435,7 @@ export interface CommunityCanisterChannelSummary {
   'latest_message_sender_display_name' : [] | [string],
   'channel_id' : ChannelId,
   'is_public' : boolean,
+  'gate_config' : [] | [AccessGateConfig],
   'is_invited' : [] | [boolean],
   'video_call_in_progress' : [] | [VideoCall],
   'metrics' : ChatMetrics,
@@ -455,6 +464,7 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'latest_message_sender_display_name' : [] | [string],
   'channel_id' : ChannelId,
   'is_public' : [] | [boolean],
+  'gate_config' : AccessGateConfigUpdate,
   'video_call_in_progress' : VideoCallUpdates,
   'metrics' : [] | [ChatMetrics],
   'subtype' : GroupSubtypeUpdate,
@@ -479,6 +489,7 @@ export interface CommunityCanisterChannelSummaryUpdates {
 export interface CommunityCanisterCommunitySummary {
   'is_public' : boolean,
   'permissions' : CommunityPermissions,
+  'gate_config' : [] | [AccessGateConfig],
   'community_id' : CommunityId,
   'is_invited' : [] | [boolean],
   'metrics' : ChatMetrics,
@@ -500,6 +511,7 @@ export interface CommunityCanisterCommunitySummary {
 export interface CommunityCanisterCommunitySummaryUpdates {
   'is_public' : [] | [boolean],
   'permissions' : [] | [CommunityPermissions],
+  'gate_config' : AccessGateConfigUpdate,
   'community_id' : CommunityId,
   'channels_updated' : Array<CommunityCanisterChannelSummaryUpdates>,
   'metrics' : [] | [ChatMetrics],
@@ -522,6 +534,7 @@ export interface CommunityCanisterCommunitySummaryUpdates {
 export type CommunityId = CanisterId;
 export interface CommunityMatch {
   'id' : CommunityId,
+  'gate_config' : [] | [AccessGateConfig],
   'channel_count' : number,
   'gate' : [] | [AccessGate],
   'name' : string,
@@ -535,6 +548,7 @@ export interface CommunityMatch {
 }
 export interface CommunityMember {
   'role' : CommunityRole,
+  'lapsed' : boolean,
   'referred_by' : [] | [UserId],
   'user_id' : UserId,
   'display_name' : [] | [string],
@@ -542,12 +556,14 @@ export interface CommunityMember {
 }
 export interface CommunityMembership {
   'role' : CommunityRole,
+  'lapsed' : boolean,
   'display_name' : [] | [string],
   'joined' : TimestampMillis,
   'rules_accepted' : boolean,
 }
 export interface CommunityMembershipUpdates {
   'role' : [] | [CommunityRole],
+  'lapsed' : [] | [boolean],
   'display_name' : TextUpdate,
   'rules_accepted' : [] | [boolean],
 }
@@ -583,6 +599,7 @@ export type ContactsResponse = { 'Success' : { 'contacts' : Array<Contact> } };
 export interface CreateCommunityArgs {
   'is_public' : boolean,
   'permissions' : [] | [CommunityPermissions],
+  'gate_config' : [] | [AccessGateConfig],
   'default_channel_rules' : [] | [Rules],
   'gate' : [] | [AccessGate],
   'name' : string,
@@ -614,6 +631,7 @@ export type CreateCommunityResponse = { 'DefaultChannelsInvalid' : null } |
 export interface CreateCommunitySuccessResult { 'community_id' : CommunityId }
 export interface CreateGroupArgs {
   'is_public' : boolean,
+  'gate_config' : [] | [AccessGateConfig],
   'permissions_v2' : [] | [GroupPermissions],
   'gate' : [] | [AccessGate],
   'name' : string,
@@ -900,6 +918,9 @@ export interface ExchangeArgs {
   'zero_for_one' : boolean,
   'swap_canister_id' : CanisterId,
 }
+export type ExchangeId = { 'Sonic' : null } |
+  { 'KongSwap' : null } |
+  { 'ICPSwap' : null };
 export interface ExternalUrlUpdated {
   'new_url' : [] | [string],
   'updated_by' : UserId,
@@ -968,6 +989,7 @@ export interface GovernanceProposalsSubtype {
 }
 export interface GroupCanisterGroupChatSummary {
   'is_public' : boolean,
+  'gate_config' : [] | [AccessGateConfig],
   'video_call_in_progress' : [] | [VideoCall],
   'metrics' : ChatMetrics,
   'subtype' : [] | [GroupSubtype],
@@ -1003,6 +1025,7 @@ export interface GroupCanisterGroupChatSummary {
 }
 export interface GroupCanisterGroupChatSummaryUpdates {
   'is_public' : [] | [boolean],
+  'gate_config' : AccessGateConfigUpdate,
   'video_call_in_progress' : VideoCallUpdates,
   'metrics' : [] | [ChatMetrics],
   'subtype' : GroupSubtypeUpdate,
@@ -1046,6 +1069,7 @@ export interface GroupChatCreated {
 }
 export interface GroupChatSummary {
   'is_public' : boolean,
+  'gate_config' : [] | [AccessGateConfig],
   'video_call_in_progress' : [] | [VideoCall],
   'metrics' : ChatMetrics,
   'subtype' : [] | [GroupSubtype],
@@ -1100,6 +1124,7 @@ export interface GroupFrozen { 'frozen_by' : UserId, 'reason' : [] | [string] }
 export interface GroupGateUpdated {
   'updated_by' : UserId,
   'new_gate' : [] | [AccessGate],
+  'new_gate_config' : [] | [AccessGateConfig],
 }
 export type GroupInviteCodeChange = { 'Enabled' : null } |
   { 'Disabled' : null } |
@@ -1120,6 +1145,7 @@ export interface GroupMatch {
 export interface GroupMembership {
   'role' : GroupRole,
   'notifications_muted' : boolean,
+  'lapsed' : boolean,
   'joined' : TimestampMillis,
   'rules_accepted' : boolean,
   'latest_threads' : Array<GroupCanisterThreadDetails>,
@@ -1129,6 +1155,7 @@ export interface GroupMembership {
 export interface GroupMembershipUpdates {
   'role' : [] | [GroupRole],
   'notifications_muted' : [] | [boolean],
+  'lapsed' : [] | [boolean],
   'unfollowed_threads' : Uint32Array | number[],
   'rules_accepted' : [] | [boolean],
   'latest_threads' : Array<GroupCanisterThreadDetails>,
@@ -1374,6 +1401,7 @@ export type InitialStateResponse = {
       'communities' : CommunitiesInitial,
       'total_chit_earned' : number,
       'wallet_config' : WalletConfig,
+      'message_activity_summary' : MessageActivitySummary,
       'blocked_users' : Array<UserId>,
       'is_unique_person' : boolean,
       'referrals' : Array<Referral>,
@@ -1437,6 +1465,10 @@ export type ManageFavouriteChatsResponse = { 'Success' : null } |
 export interface ManualWallet { 'tokens' : Array<CanisterId> }
 export interface MarkAchievementsSeenArgs { 'last_seen' : TimestampMillis }
 export type MarkAchievementsSeenResponse = { 'Success' : null };
+export interface MarkMessageActivityFeedReadArgs {
+  'read_up_to' : TimestampMillis,
+}
+export type MarkMessageActivityFeedReadResponse = { 'Success' : null };
 export interface MarkReadArgs {
   'community_messages_read' : Array<CommunityMessagesRead>,
   'messages_read' : Array<ChatMessagesRead>,
@@ -1463,6 +1495,31 @@ export interface Message {
   'replies_to' : [] | [ReplyContext],
   'reactions' : Array<[string, Array<UserId>]>,
   'message_index' : MessageIndex,
+}
+export type MessageActivity = { 'Tip' : null } |
+  { 'ThreadReply' : null } |
+  { 'P2PSwapAccepted' : null } |
+  { 'PollVote' : null } |
+  { 'Mention' : null } |
+  { 'Crypto' : null } |
+  { 'QuoteReply' : null } |
+  { 'Reaction' : null };
+export interface MessageActivityEvent {
+  'chat' : Chat,
+  'user_id' : UserId,
+  'timestamp' : TimestampMillis,
+  'thread_root_message_index' : [] | [MessageIndex],
+  'activity' : MessageActivity,
+  'message_index' : MessageIndex,
+}
+export interface MessageActivityFeedArgs { 'since' : TimestampMillis }
+export type MessageActivityFeedResponse = {
+    'Success' : { 'total' : number, 'events' : Array<MessageActivityEvent> }
+  };
+export interface MessageActivitySummary {
+  'read_up_to' : TimestampMillis,
+  'unread_count' : number,
+  'latest_event' : TimestampMillis,
 }
 export type MessageContent = { 'VideoCall' : VideoCallContent } |
   { 'ReportedMessage' : ReportedMessage } |
@@ -1741,6 +1798,7 @@ export type P2PSwapStatus = { 'Reserved' : P2PSwapReserved } |
   { 'Expired' : P2PSwapExpired };
 export interface Participant {
   'role' : GroupRole,
+  'lapsed' : boolean,
   'user_id' : UserId,
   'date_added' : TimestampMillis,
 }
@@ -1882,6 +1940,7 @@ export type ProposalToSubmitAction = { 'UpgradeSnsToNextVersion' : null } |
   { 'Motion' : null };
 export interface PublicGroupSummary {
   'is_public' : boolean,
+  'gate_config' : [] | [AccessGateConfig],
   'subtype' : [] | [GroupSubtype],
   'gate' : [] | [AccessGate],
   'name' : string,
@@ -2100,6 +2159,7 @@ export type SendMessageWithTransferToChannelResponse = {
   { 'InvalidRequest' : string } |
   { 'TransferCannotBeToSelf' : null } |
   { 'TransferFailed' : string } |
+  { 'InternalError' : string } |
   { 'RulesNotAccepted' : null } |
   { 'CryptocurrencyNotSupported' : Cryptocurrency };
 export interface SendMessageWithTransferToGroupArgs {
@@ -2143,6 +2203,7 @@ export type SendMessageWithTransferToGroupResponse = {
   { 'InvalidRequest' : string } |
   { 'TransferCannotBeToSelf' : null } |
   { 'TransferFailed' : string } |
+  { 'InternalError' : string } |
   { 'RulesNotAccepted' : null } |
   { 'CryptocurrencyNotSupported' : Cryptocurrency };
 export interface SetAvatarArgs { 'avatar' : [] | [Document] }
@@ -2365,7 +2426,7 @@ export type TipMessageResponse = { 'TooManyFailedPinAttempts' : Milliseconds } |
   { 'Success' : null } |
   { 'UserSuspended' : null } |
   { 'TransferFailed' : string } |
-  { 'InternalError' : [string, CompletedCryptoTransaction] } |
+  { 'InternalError' : string } |
   { 'CannotTipSelf' : null };
 export interface TokenBalanceGate {
   'min_balance' : bigint,
@@ -2383,14 +2444,17 @@ export type TokenSwapStatusResponse = { 'NotFound' : null } |
     'Success' : {
       'started' : TimestampMillis,
       'deposit_account' : [] | [{ 'Ok' : null } | { 'Err' : string }],
+      'transfer_or_approval' : [] | [{ 'Ok' : bigint } | { 'Err' : string }],
       'amount_swapped' : [] | [
         { 'Ok' : { 'Ok' : bigint } | { 'Err' : string } } |
           { 'Err' : string }
       ],
+      'icrc2' : boolean,
       'success' : [] | [boolean],
       'notify_dex' : [] | [{ 'Ok' : null } | { 'Err' : string }],
       'transfer' : [] | [{ 'Ok' : bigint } | { 'Err' : string }],
       'withdraw_from_dex' : [] | [{ 'Ok' : bigint } | { 'Err' : string }],
+      'auto_withdrawals' : boolean,
     }
   };
 export interface Tokens { 'e8s' : bigint }
@@ -2434,6 +2498,7 @@ export type UpdatesResponse = {
       'username' : [] | [string],
       'total_chit_earned' : number,
       'wallet_config' : [] | [WalletConfig],
+      'message_activity_summary' : [] | [MessageActivitySummary],
       'blocked_users' : [] | [Array<UserId>],
       'is_unique_person' : [] | [boolean],
       'referrals' : Array<Referral>,
@@ -2621,7 +2686,8 @@ export type WithdrawCryptoResponse = {
   { 'CurrencyNotSupported' : null } |
   { 'TransactionFailed' : FailedCryptoTransaction } |
   { 'PinRequired' : null } |
-  { 'Success' : CompletedCryptoTransaction };
+  { 'Success' : CompletedCryptoTransaction } |
+  { 'InternalError' : string };
 export interface _SERVICE {
   'accept_p2p_swap' : ActorMethod<[AcceptP2PSwapArgs], AcceptP2PSwapResponse>,
   'add_hot_group_exclusions' : ActorMethod<
@@ -2691,7 +2757,15 @@ export interface _SERVICE {
     [MarkAchievementsSeenArgs],
     MarkAchievementsSeenResponse
   >,
+  'mark_message_activity_feed_read' : ActorMethod<
+    [MarkMessageActivityFeedReadArgs],
+    MarkMessageActivityFeedReadResponse
+  >,
   'mark_read' : ActorMethod<[MarkReadArgs], MarkReadResponse>,
+  'message_activity_feed' : ActorMethod<
+    [MessageActivityFeedArgs],
+    MessageActivityFeedResponse
+  >,
   'messages_by_message_index' : ActorMethod<
     [MessagesByMessageIndexArgs],
     MessagesByMessageIndexResponse
