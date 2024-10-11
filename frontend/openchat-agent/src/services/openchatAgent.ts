@@ -2287,7 +2287,6 @@ export class OpenChatAgent extends EventTarget {
                     messageId,
                     reaction,
                     threadRootMessageIndex,
-                    newAchievement,
                 );
 
             case "channel":
