@@ -318,13 +318,6 @@ export const UserManageFavouriteChatsResponse = Type.Union([
     Type.Literal("UserSuspended"),
 ]);
 
-export type UserMessageActivitySummary = Static<typeof UserMessageActivitySummary>;
-export const UserMessageActivitySummary = Type.Object({
-    read_up_to: Type.BigInt(),
-    latest_event: Type.BigInt(),
-    unread_count: Type.Number(),
-});
-
 export type UserMarkAchievementsSeenArgs = Static<typeof UserMarkAchievementsSeenArgs>;
 export const UserMarkAchievementsSeenArgs = Type.Object({
     last_seen: Type.BigInt(),
@@ -2825,7 +2818,7 @@ export const CommunitySendMessageSuccessResult = Type.Object({
     event_index: EventIndex,
     message_index: MessageIndex,
     timestamp: Type.BigInt(),
-    expires_at: Type.Optional(Type.Union([Type.BigInt(), Type.Null()])),
+    expires_at: Type.Optional(Type.BigInt()),
 });
 
 export type CommunitySendMessageResponse = Static<typeof CommunitySendMessageResponse>;
@@ -3444,7 +3437,7 @@ export const GroupSendMessageSuccessResult = Type.Object({
     event_index: EventIndex,
     message_index: MessageIndex,
     timestamp: Type.BigInt(),
-    expires_at: Type.Optional(Type.Union([Type.BigInt(), Type.Null()])),
+    expires_at: Type.Optional(Type.BigInt()),
 });
 
 export type GroupSendMessageResponse = Static<typeof GroupSendMessageResponse>;
@@ -8736,7 +8729,6 @@ export const UserInitialStateSuccessResult = Type.Object({
     is_unique_person: Type.Boolean(),
     wallet_config: UserWalletConfig,
     referrals: Type.Array(UserReferral),
-    message_activity_summary: UserMessageActivitySummary,
 });
 
 export type UserInitialStateResponse = Static<typeof UserInitialStateResponse>;
@@ -8767,7 +8759,6 @@ export const UserUpdatesSuccessResult = Type.Object({
     is_unique_person: Type.Optional(Type.Boolean()),
     wallet_config: Type.Optional(UserWalletConfig),
     referrals: Type.Array(UserReferral),
-    message_activity_summary: Type.Optional(UserMessageActivitySummary),
 });
 
 export type UserUpdatesResponse = Static<typeof UserUpdatesResponse>;
