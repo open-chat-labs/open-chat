@@ -983,7 +983,7 @@ export class CommunityClient extends CandidService {
             {
                 channel_id: BigInt(chatId.channelId),
                 max_results: maxResults,
-                users: users.length > 0 ? users.map(principalStringToBytes) : undefined,
+                users: users.map(principalStringToBytes),
                 search_term: searchTerm,
             },
             (resp) => searchGroupChatResponse(resp, chatId),
