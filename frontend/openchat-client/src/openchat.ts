@@ -425,6 +425,7 @@ import type {
     WalletConfig,
     AirdropChannelDetails,
     ChitLeaderboardResponse,
+    AuthenticationPrincipal,
     Verification,
 } from "openchat-shared";
 import {
@@ -6859,7 +6860,7 @@ export class OpenChat extends OpenChatAgentWorker {
         userKey: Uint8Array,
         sessionKey: ECDSAKeyIdentity,
         expiration: bigint,
-        connectToWorker: boolean,
+        assumeIdentity: boolean,
     ): Promise<
         | { kind: "success"; key: ECDSAKeyIdentity; delegation: DelegationChain }
         | { kind: "error"; error: string }
@@ -6880,8 +6881,8 @@ export class OpenChat extends OpenChatAgentWorker {
                 getDelegationResponse.signature,
             );
             const delegation = identity.getDelegation();
-            await storeIdentity(this._authClientStorage, sessionKey, delegation);
-            if (connectToWorker) {
+            if (assumeIdentity) {
+                await storeIdentity(this._authClientStorage, sessionKey, delegation);
                 this.loadedAuthenticationIdentity(identity, AuthProvider.EMAIL);
             }
             return {
@@ -7563,6 +7564,38 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
+    private authProviderFromAuthPrincipal(principal: AuthenticationPrincipal): AuthProvider {
+        if (principal.originatingCanister === this.config.signInWithEthereumCanister) {
+            return AuthProvider.ETH;
+        } else if (principal.originatingCanister === this.config.signInWithSolanaCanister) {
+            return AuthProvider.SOL;
+        } else if (principal.originatingCanister === this.config.signInWithEmailCanister) {
+            return AuthProvider.EMAIL;
+        } else if (principal.originatingCanister === process.env.INTERNET_IDENTITY_CANISTER_ID) {
+            if (principal.isIIPrincipal) {
+                return AuthProvider.II;
+            } else {
+                return AuthProvider.NFID;
+            }
+        }
+        return AuthProvider.II;
+    }
+
+    getAuthenticationPrincipals(): Promise<
+        (AuthenticationPrincipal & { provider: AuthProvider })[]
+    > {
+        return this.sendRequest({
+            kind: "getAuthenticationPrincipals",
+        }).then((principals) => {
+            return principals.map((p) => {
+                return {
+                    ...p,
+                    provider: this.authProviderFromAuthPrincipal(p),
+                };
+            });
+        });
+    }
+
     getLinkedIIPrincipal(): Promise<string | undefined> {
         return this.sendRequest({
             kind: "getAuthenticationPrincipals",
@@ -7570,8 +7603,9 @@ export class OpenChat extends OpenChatAgentWorker {
             .then((resp) => {
                 const iiPrincipals = resp
                     .filter(
-                        ({ originatingCanister }) =>
-                            originatingCanister === process.env.INTERNET_IDENTITY_CANISTER_ID,
+                        ({ originatingCanister, isIIPrincipal }) =>
+                            originatingCanister === process.env.INTERNET_IDENTITY_CANISTER_ID &&
+                            isIIPrincipal,
                     )
                     .map((p) => p.principal);
                 if (iiPrincipals.length === 0) {
