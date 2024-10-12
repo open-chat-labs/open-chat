@@ -331,16 +331,15 @@ export function mergeGroupChats(
             eventsTTL: g.eventsTTL,
             eventsTtlLastUpdated: g.eventsTtlLastUpdated,
             membership: {
-                lapsed: false, // FIXME
-                joined: g.joined,
-                role: g.myRole,
-                mentions: g.mentions,
-                latestThreads: mergeThreads([], g.latestThreads, [], u?.threadsRead ?? {}),
-                myMetrics: g.myMetrics,
-                notificationsMuted: g.notificationsMuted,
+                ...g.membership,
+                latestThreads: mergeThreads(
+                    [],
+                    g.membership.latestThreads,
+                    [],
+                    u?.threadsRead ?? {},
+                ),
                 readByMeUpTo: u?.readByMeUpTo,
                 archived: u?.archived ?? false,
-                rulesAccepted: g.rulesAccepted,
             },
             localUserIndex: g.localUserIndex,
             videoCallInProgress: g.videoCallInProgress,

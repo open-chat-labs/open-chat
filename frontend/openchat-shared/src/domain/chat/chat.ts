@@ -1475,22 +1475,27 @@ export type GroupCanisterGroupChatSummary = AccessControlled &
         latestMessage: EventWrapper<Message> | undefined;
         latestEventIndex: number;
         latestMessageIndex: number | undefined;
-        joined: bigint;
-        myRole: MemberRole;
         memberCount: number;
-        mentions: Mention[];
-        notificationsMuted: boolean;
         metrics: Metrics;
-        myMetrics: Metrics;
-        latestThreads: GroupCanisterThreadDetails[];
         dateLastPinned: bigint | undefined;
-        rulesAccepted: boolean;
         eventsTTL?: bigint;
         eventsTtlLastUpdated: bigint;
         localUserIndex: string;
         videoCallInProgress?: number;
         messagesVisibleToNonMembers: boolean;
+        membership: GroupCanisterGroupMembership;
     };
+
+export type GroupCanisterGroupMembership = {
+    role: ChatPermissionRole;
+    notificationsMuted: boolean;
+    lapsed: boolean;
+    joined: bigint;
+    rulesAccepted: boolean;
+    latestThreads: ThreadSyncDetails[];
+    mentions: Mention[];
+    myMetrics: Metrics;
+};
 
 export type UpdatedEvent = {
     eventIndex: number;

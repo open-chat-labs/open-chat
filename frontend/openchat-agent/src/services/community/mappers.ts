@@ -599,6 +599,7 @@ export function userGroupDetails(candid: ApiUserGroupDetails): [number, UserGrou
 export function communityDetailsUpdatesResponse(
     candid: ApiSelectedUpdatesResponse,
 ): CommunityDetailsUpdatesResponse {
+    console.log("Community details updates: ", candid);
     if ("Success" in candid) {
         return {
             kind: "success",

@@ -1953,7 +1953,7 @@ export function groupChatSummary(value: TGroupCanisterGroupChatSummary): GroupCh
             readByMeUpTo: latestMessage?.event.messageIndex,
             archived: false,
             rulesAccepted: value.rules_accepted,
-            lapsed: false, // FIXME - fill this in
+            lapsed: value.membership?.lapsed ?? false,
         },
         localUserIndex: principalBytesToString(value.local_user_index_canister_id),
         isInvited: false, // this is only applicable when we are not a member
@@ -2002,7 +2002,7 @@ export function communitySummary(value: TCommunityCanisterCommunitySummary): Com
             index: 0,
             displayName: mapOptional(value.membership, (m) => m.display_name),
             rulesAccepted: mapOptional(value.membership, (m) => m.rules_accepted) ?? false,
-            lapsed: true, // FIXME - fill this in
+            lapsed: mapOptional(value.membership, (m) => m.lapsed) ?? false,
         },
         channels: value.channels.map((c) => communityChannelSummary(c, communityId)),
         primaryLanguage: value.primary_language,

@@ -45,7 +45,7 @@ import type {
     OptionalMessagePermissions,
     GroupMembershipUpdates,
 } from "openchat-shared";
-import { CommonResponses, UnsupportedValueError } from "openchat-shared";
+import { CommonResponses, emptyChatMetrics, UnsupportedValueError } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import {
     apiOptional,
@@ -113,29 +113,41 @@ export function groupChatSummary(
         latestMessage: optional(candid.latest_message, messageEvent),
         latestEventIndex: candid.latest_event_index,
         latestMessageIndex: optional(candid.latest_message_index, identity),
-        joined: candid.joined,
         memberCount: candid.participant_count,
-        myRole: memberRole(candid.role),
-        mentions: candid.mentions
-            .filter((m) => m.thread_root_message_index.length === 0)
-            .map(mention),
         permissions: groupPermissions(candid.permissions_v2),
-        notificationsMuted: candid.notifications_muted,
         metrics: chatMetrics(candid.metrics),
-        myMetrics: chatMetrics(candid.my_metrics),
-        latestThreads: candid.latest_threads.map(threadDetails),
         frozen: candid.frozen.length > 0,
         dateLastPinned: optional(candid.date_last_pinned, identity),
         gateConfig: optional(candid.gate_config, accessGateConfig) ?? {
             gate: { kind: "no_gate" },
             expiry: undefined,
         },
-        rulesAccepted: candid.rules_accepted,
         eventsTTL: optional(candid.events_ttl, identity),
         eventsTtlLastUpdated: candid.events_ttl_last_updated,
         localUserIndex: candid.local_user_index_canister_id.toString(),
         videoCallInProgress: optional(candid.video_call_in_progress, (v) => v.message_index),
         messagesVisibleToNonMembers: candid.messages_visible_to_non_members,
+        membership: optional(candid.membership, (m) => ({
+            joined: m.joined,
+            role: memberRole(m.role),
+            notificationsMuted: m.notifications_muted,
+            lapsed: m.lapsed,
+            rulesAccepted: m.rules_accepted,
+            latestThreads: m.latest_threads.map(threadDetails),
+            mentions: m.mentions
+                .filter((m) => m.thread_root_message_index.length === 0)
+                .map(mention),
+            myMetrics: chatMetrics(m.my_metrics),
+        })) ?? {
+            joined: 0n,
+            role: "none",
+            mentions: [],
+            latestThreads: [],
+            myMetrics: emptyChatMetrics(),
+            notificationsMuted: false,
+            rulesAccepted: false,
+            lapsed: false,
+        },
     };
 }
 

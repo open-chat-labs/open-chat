@@ -2121,7 +2121,7 @@ export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): 
             index: 0,
             displayName: optional(candid.membership, (m) => optional(m.display_name, identity)),
             rulesAccepted: optional(candid.membership, (m) => m.rules_accepted) ?? false,
-            lapsed: true, // FIXME - fill this in
+            lapsed: optional(candid.membership, (m) => m.lapsed) ?? false,
         },
         channels: candid.channels.map((c) => communityChannelSummary(c, communityId)),
         primaryLanguage: candid.primary_language,
@@ -2543,6 +2543,7 @@ export function groupDetailsResponse(
 export function groupDetailsUpdatesResponse(
     candid: ApiSelectedUpdatesResponse | ApiSelectedChannelUpdatesResponse,
 ): GroupChatDetailsUpdatesResponse {
+    console.log("Group details updated: ", candid);
     if ("Success" in candid) {
         return {
             kind: "success",

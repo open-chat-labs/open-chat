@@ -69,6 +69,8 @@
     $: multiUserChat = selectedChat as Readable<MultiUserChat>;
     $: empty = $rightPanelHistory.length === 0;
 
+    $: console.log("LapsedMembers: ", $currentCommunityLapsed, $currentChatLapsedMembers);
+
     function searchUsers(term: string): Promise<[UserSummary[], UserSummary[]]> {
         const canInvite =
             $selectedCommunity !== undefined && client.canInviteUsers($selectedCommunity.id);

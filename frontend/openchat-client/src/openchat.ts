@@ -21,6 +21,7 @@ import {
     canCreatePublicChannel,
     canCreatePrivateChannel,
     canManageUserGroups,
+    isCommunityLapsed,
 } from "./utils/community";
 import {
     buildUserAvatarUrl,
@@ -1926,9 +1927,21 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.multiUserChatPredicate(chatId, isPreviewing);
     }
 
-    isLapsed(chatId: ChatIdentifier): boolean {
-        if (chatId.kind === "direct_chat") return false;
-        return this.multiUserChatPredicate(chatId, isLapsed);
+    isLapsed(id: ChatIdentifier | CommunityIdentifier): boolean {
+        if (id.kind === "direct_chat") {
+            return false;
+        } else if (id.kind === "channel") {
+            return (
+                this.communityPredicate(
+                    { kind: "community", communityId: id.communityId },
+                    isCommunityLapsed,
+                ) || this.multiUserChatPredicate(id, isLapsed)
+            );
+        } else if (id.kind === "community") {
+            return this.communityPredicate(id, isCommunityLapsed);
+        } else {
+            return this.multiUserChatPredicate(id, isLapsed);
+        }
     }
 
     isFrozen(chatId: ChatIdentifier): boolean {
