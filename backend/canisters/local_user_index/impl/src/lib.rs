@@ -1,4 +1,6 @@
 use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
+use crate::model::user_event_batch::UserEventBatch;
+use crate::model::user_index_event_batch::UserIndexEventBatch;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
@@ -14,6 +16,7 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
 use std::time::Duration;
+use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms,
     CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails,
@@ -23,7 +26,6 @@ use user_canister::Event as UserEvent;
 use user_index_canister::Event as UserIndexEvent;
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
-use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
 use utils::env::Environment;
 use utils::time::MINUTE_IN_MS;
@@ -133,16 +135,13 @@ impl RuntimeState {
     }
 
     pub fn push_event_to_user(&mut self, user_id: UserId, event: UserEvent) {
-        self.data.user_event_sync_queue.push(user_id.into(), event);
-        jobs::sync_events_to_user_canisters::try_run_now(self);
+        self.data.user_event_sync_queue.push(user_id, event);
     }
 
     pub fn push_event_to_user_index(&mut self, event: UserIndexEvent) {
         self.data
             .user_index_event_sync_queue
             .push(self.data.user_index_canister_id, event);
-
-        jobs::sync_events_to_user_index_canister::try_run_now(self);
     }
 
     pub fn push_oc_bot_message_to_user(&mut self, user_id: UserId, content: MessageContent, _mentioned: Vec<User>) {
@@ -279,8 +278,8 @@ struct Data {
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
-    pub user_event_sync_queue: CanisterEventSyncQueue<UserEvent>,
-    pub user_index_event_sync_queue: CanisterEventSyncQueue<UserIndexEvent>,
+    pub user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
+    pub user_index_event_sync_queue: GroupedTimerJobQueue<UserIndexEventBatch>,
     pub test_mode: bool,
     pub max_concurrent_canister_upgrades: u32,
     pub user_upgrade_concurrency: u32,
@@ -344,8 +343,8 @@ impl Data {
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
-            user_event_sync_queue: CanisterEventSyncQueue::default(),
-            user_index_event_sync_queue: CanisterEventSyncQueue::default(),
+            user_event_sync_queue: GroupedTimerJobQueue::new(10, false),
+            user_index_event_sync_queue: GroupedTimerJobQueue::new(1, true),
             test_mode,
             max_concurrent_canister_upgrades: 10,
             user_upgrade_concurrency: 10,

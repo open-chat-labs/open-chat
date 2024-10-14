@@ -1230,36 +1230,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
-            case "channelMessagesByMessageIndex":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent
-                        .communityClient(payload.chatId.communityId)
-                        .messagesByMessageIndex(
-                            payload.chatId,
-                            payload.messageIndexes,
-                            payload.threadRootMessageIndex,
-                            payload.latestKnownUpdate,
-                        ),
-                );
-                break;
-
             case "removeCommunityMember":
                 executeThenReply(
                     payload,
                     correlationId,
                     agent.communityClient(payload.id.communityId).removeMember(payload.userId),
-                );
-                break;
-
-            case "toggleMuteCommunityNotifications":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent
-                        .communityClient(payload.communityId)
-                        .toggleMuteNotifications(payload.mute),
                 );
                 break;
 

@@ -91,7 +91,12 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
         Err(AvatarTooBig(error))
     } else if let Err(error) = validate_banner(args.banner.as_ref()) {
         Err(BannerTooBig(error))
-    } else if args.gate_config.as_ref().map(|g| !g.validate()).unwrap_or_default() {
+    } else if args
+        .gate_config
+        .as_ref()
+        .map(|g| !g.validate(state.data.test_mode))
+        .unwrap_or_default()
+    {
         Err(AccessGateInvalid)
     } else if !default_channels_valid(&args.default_channels) {
         Err(DefaultChannelsInvalid)

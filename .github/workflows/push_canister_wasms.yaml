@@ -9,10 +9,7 @@ name: Push canister wasms
 jobs:
   push_canister_wasms:
     name: Push canister wasms
-    runs-on:
-      - runs-on
-      - runner=large
-      - run-id=${{ github.run_id }}
+    runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read

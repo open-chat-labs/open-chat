@@ -350,7 +350,6 @@
     },
     "dark": "dark",
     "days": "Días",
-    "defaultMustBePublic": "Solo un canal público puede ser un canal predeterminado",
     "deleteFailed": "No se puede eliminar tu mensaje",
     "deleteGroup": "Eliminar {level}",
     "deleteGroupFailure": "No se puede eliminar {level}",
@@ -568,6 +567,8 @@
         "failure": {
             "alreadyLinked": "Lo sentimos, pero parece que Internet Identity ya está vinculado a una cuenta de OpenChat.",
             "link": "Lo sentimos, pero no pudimos vincular su identidad de Internet a su cuenta de OpenChat.",
+            "login_approver": "Lo sentimos, no pudimos iniciar sesión en su proveedor de autenticación OpenChat actual",
+            "login_initiator": "Lo sentimos, no pudimos iniciar sesión en el nuevo proveedor de autenticación.",
             "loginApprover": "Lo sentimos, no pudimos iniciar sesión en su proveedor de autenticación OpenChat actual.",
             "loginInitiator": "Lo sentimos, no pudimos iniciar sesión en su identidad de Internet elegida.",
             "pollingError": "Se produjo un error inesperado al esperar el inicio de sesión del correo electrónico.",
@@ -575,10 +576,19 @@
         },
         "humanityWarning": "Debe tener una identidad de Internet asociada con su cuenta de OpenChat para confirmar su personalidad única. Si se registró con otro proveedor, deberá crear y vincular una identidad de Internet a su cuenta de OpenChat antes de continuar.",
         "link": "Enlace",
+        "linkedAccounts": {
+            "currentAccount": "Actualmente conectado con este director",
+            "linkAdvice": "Para vincular una nueva cuenta Inicie sesión en la nueva cuenta que desea vincular, luego inicie sesión en su cuenta actual y finalmente vincule las dos cuentas.",
+            "linkAnother": "Enlazar otro",
+            "section": "Cuentas vinculadas",
+            "start": "Empezar"
+        },
         "linkIdentity": "Identidad del enlace",
         "linkTwoIdentities": "Ahora estamos listos para vincular las dos identidades.",
         "mismatch": "Esto no coincide con el principal con el que inició sesión actualmente. ¿Está seguro de que utilizó el mismo proveedor de autenticación?",
         "proceed": "Proceder",
+        "signIn_approver": "Inicie sesión con el proveedor de identidad que esté utilizando actualmente",
+        "signIn_initiator": "Inicie sesión con el proveedor de identidad que desea vincular a su cuenta de OpenChat",
         "signInCurrent": "Inicie sesión con el proveedor de identidad que está utilizando actualmente",
         "signInNext": "Cree o inicie sesión con la identidad de Internet que desea vincular a su cuenta de OpenChat.",
         "tryAgain": "Intentar otra vez"

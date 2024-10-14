@@ -65,7 +65,7 @@ export function apiCallType(domain: VideoCallType): TVideoCallType {
 }
 
 export function accessTokenResponse(value: LocalUserIndexAccessTokenResponse): string | undefined {
-    if (typeof value !== "string" && "Success" in value) {
+    if (typeof value === "object" && "Success" in value) {
         return value.Success;
     }
     console.warn("Unable to get access token: ", value);
@@ -233,7 +233,7 @@ export function joinChannelResponse(
     value: LocalUserIndexJoinChannelResponse,
     communityId: string,
 ): JoinGroupResponse {
-    if (typeof value !== "string") {
+    if (typeof value === "object") {
         if ("Success" in value) {
             return { kind: "success", group: communityChannelSummary(value.Success, communityId) };
         } else if ("AlreadyInChannel" in value) {
@@ -332,7 +332,7 @@ export function inviteUsersResponse(
 export function joinCommunityResponse(
     value: LocalUserIndexJoinCommunityResponse,
 ): JoinCommunityResponse {
-    if (typeof value !== "string") {
+    if (typeof value === "object") {
         if ("Success" in value) {
             return { kind: "success", community: communitySummary(value.Success) };
         } else if ("AlreadyInCommunity" in value) {

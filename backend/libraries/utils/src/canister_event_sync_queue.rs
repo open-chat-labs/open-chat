@@ -130,6 +130,10 @@ impl<T> CanisterEventSyncQueue<T> {
         self.events.insert(canister_id, merged_events);
     }
 
+    pub fn take_all(self) -> HashMap<CanisterId, Vec<T>> {
+        self.events
+    }
+
     fn take_events(&mut self, canister_id: CanisterId) -> Option<(Vec<T>, bool)> {
         if let Occupied(mut e) = self.events.entry(canister_id) {
             let vec = e.get_mut();

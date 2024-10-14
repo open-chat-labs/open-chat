@@ -690,7 +690,7 @@ export function sendMessageResponse(
     sender: string,
     recipient: string,
 ): SendMessageResponse {
-    if (typeof value !== "string") {
+    if (typeof value === "object") {
         if ("Success" in value) {
             return {
                 kind: "success",

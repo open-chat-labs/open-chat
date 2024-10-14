@@ -350,7 +350,6 @@
     },
     "dark": "ciemny",
     "days": "Dni",
-    "defaultMustBePublic": "Domyślnym może być tylko kanał publiczny",
     "deleteFailed": "Nie można usunąć wiadomości",
     "deleteGroup": "Usuń {level}",
     "deleteGroupFailure": "Nie można usunąć {level}",
@@ -568,6 +567,8 @@
         "failure": {
             "alreadyLinked": "Przepraszamy, ale wygląda na to, że tożsamość internetowa jest już połączona z kontem OpenChat",
             "link": "Przepraszamy, ale nie udało nam się połączyć Twojej tożsamości internetowej z kontem OpenChat",
+            "login_approver": "Przepraszamy, nie udało nam się zalogować do Twojego obecnego dostawcy uwierzytelniania OpenChat",
+            "login_initiator": "Przepraszamy, nie udało nam się zalogować do nowego dostawcy uwierzytelniania",
             "loginApprover": "Przepraszamy, nie mogliśmy zalogować się do Twojego obecnego dostawcy uwierzytelniania OpenChat",
             "loginInitiator": "Przepraszamy, nie mogliśmy zalogować się do wybranej tożsamości internetowej",
             "pollingError": "Wystąpił nieoczekiwany błąd podczas oczekiwania na logowanie e-mailem",
@@ -575,10 +576,19 @@
         },
         "humanityWarning": "Aby potwierdzić swoją wyjątkową osobowość, musisz mieć tożsamość internetową powiązaną z kontem OpenChat. Jeśli zarejestrowałeś się przy użyciu innego dostawcy, przed kontynuowaniem będziesz musiał utworzyć tożsamość internetową i połączyć ją ze swoim kontem OpenChat.",
         "link": "Połączyć",
+        "linkedAccounts": {
+            "currentAccount": "Obecnie zalogowany z tym podmiotem",
+            "linkAdvice": "Aby połączyć nowe konto Zaloguj się na nowe konto, które chcesz połączyć, następnie zaloguj się na swoje bieżące konto i na koniec połącz oba konta.",
+            "linkAnother": "Połącz z innym",
+            "section": "Połączone konta",
+            "start": "Zacznij"
+        },
         "linkIdentity": "Tożsamość łącza",
         "linkTwoIdentities": "Jesteśmy teraz gotowi połączyć ze sobą obie tożsamości.",
         "mismatch": "To nie jest zgodne z podmiotem zabezpieczeń, za pomocą którego jesteś aktualnie zalogowany. Czy na pewno korzystałeś z usług tego samego dostawcy uwierzytelniania?",
         "proceed": "Przystępować",
+        "signIn_approver": "Zaloguj się przy użyciu aktualnie używanego dostawcy tożsamości",
+        "signIn_initiator": "Zaloguj się przy użyciu dostawcy tożsamości, którego chcesz połączyć ze swoim kontem OpenChat",
         "signInCurrent": "Zaloguj się przy użyciu dostawcy tożsamości, którego aktualnie używasz",
         "signInNext": "Utwórz lub zaloguj się przy użyciu tożsamości internetowej, którą chcesz połączyć ze swoim kontem OpenChat",
         "tryAgain": "Spróbuj ponownie"

@@ -11,7 +11,8 @@ jobs:
     name: Run pre-release tests
     runs-on:
       - runs-on
-      - runner=large
+      - runner=16cpu-linux-x64
+      - family=m7i
       - run-id=${{ github.run_id }}
     steps:
       - uses: actions/checkout@v4

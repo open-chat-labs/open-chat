@@ -1,4 +1,6 @@
-use crate::{delegation_signature_msg_hash, read_state, RuntimeState};
+use crate::{read_state, RuntimeState};
+use ic_canister_sig_creation::signature_map::CanisterSigInputs;
+use ic_canister_sig_creation::{delegation_signature_msg, DELEGATION_SIG_DOMAIN};
 use ic_cdk::query;
 use identity_canister::get_delegation::{Response::*, *};
 use types::{Delegation, SignedDelegation};
@@ -15,14 +17,21 @@ fn get_delegation_impl(args: Args, state: &RuntimeState) -> Response {
         panic!("Caller not recognised");
     };
 
-    let delegation = Delegation {
-        pubkey: args.session_key,
-        expiration: args.expiration,
-    };
-    let message_hash = delegation_signature_msg_hash(&delegation);
     let seed = state.data.calculate_seed(user.index);
 
-    if let Ok(signature) = state.data.signature_map.get_signature_as_cbor(&seed, message_hash, None) {
+    if let Ok(signature) = state.data.signature_map.get_signature_as_cbor(
+        &CanisterSigInputs {
+            domain: DELEGATION_SIG_DOMAIN,
+            seed: &seed,
+            message: &delegation_signature_msg(&args.session_key, args.expiration, None),
+        },
+        None,
+    ) {
+        let delegation = Delegation {
+            pubkey: args.session_key,
+            expiration: args.expiration,
+        };
+
         Success(SignedDelegation { delegation, signature })
     } else {
         NotFound

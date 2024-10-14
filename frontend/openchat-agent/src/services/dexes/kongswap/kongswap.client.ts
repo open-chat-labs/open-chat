@@ -5,7 +5,7 @@ import type { TokenSwapPool } from "openchat-shared";
 import { swapAmountsResponse, tokensResponse } from "./mappers";
 import type { SwapIndexClient, SwapPoolClient } from "../index";
 
-const KONG_SWAP_CANISTER_ID = "3xwpq-ziaaa-aaaah-qcn4a-cai";
+const KONG_SWAP_CANISTER_ID = "2ipq2-uqaaa-aaaar-qailq-cai";
 
 export class KongSwapClient extends CandidService implements SwapIndexClient, SwapPoolClient {
     private service: KongSwapService;

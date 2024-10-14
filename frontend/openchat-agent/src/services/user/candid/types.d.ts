@@ -1465,6 +1465,10 @@ export type ManageFavouriteChatsResponse = { 'Success' : null } |
 export interface ManualWallet { 'tokens' : Array<CanisterId> }
 export interface MarkAchievementsSeenArgs { 'last_seen' : TimestampMillis }
 export type MarkAchievementsSeenResponse = { 'Success' : null };
+export interface MarkMessageActivityFeedReadArgs {
+  'read_up_to' : TimestampMillis,
+}
+export type MarkMessageActivityFeedReadResponse = { 'Success' : null };
 export interface MarkReadArgs {
   'community_messages_read' : Array<CommunityMessagesRead>,
   'messages_read' : Array<ChatMessagesRead>,
@@ -1491,6 +1495,31 @@ export interface Message {
   'replies_to' : [] | [ReplyContext],
   'reactions' : Array<[string, Array<UserId>]>,
   'message_index' : MessageIndex,
+}
+export type MessageActivity = { 'Tip' : null } |
+  { 'ThreadReply' : null } |
+  { 'P2PSwapAccepted' : null } |
+  { 'PollVote' : null } |
+  { 'Mention' : null } |
+  { 'Crypto' : null } |
+  { 'QuoteReply' : null } |
+  { 'Reaction' : null };
+export interface MessageActivityEvent {
+  'chat' : Chat,
+  'user_id' : UserId,
+  'timestamp' : TimestampMillis,
+  'thread_root_message_index' : [] | [MessageIndex],
+  'activity' : MessageActivity,
+  'message_index' : MessageIndex,
+}
+export interface MessageActivityFeedArgs { 'since' : TimestampMillis }
+export type MessageActivityFeedResponse = {
+    'Success' : { 'total' : number, 'events' : Array<MessageActivityEvent> }
+  };
+export interface MessageActivitySummary {
+  'read_up_to' : TimestampMillis,
+  'unread_count' : number,
+  'latest_event' : TimestampMillis,
 }
 export type MessageContent = { 'VideoCall' : VideoCallContent } |
   { 'ReportedMessage' : ReportedMessage } |
@@ -2727,7 +2756,15 @@ export interface _SERVICE {
     [MarkAchievementsSeenArgs],
     MarkAchievementsSeenResponse
   >,
+  'mark_message_activity_feed_read' : ActorMethod<
+    [MarkMessageActivityFeedReadArgs],
+    MarkMessageActivityFeedReadResponse
+  >,
   'mark_read' : ActorMethod<[MarkReadArgs], MarkReadResponse>,
+  'message_activity_feed' : ActorMethod<
+    [MessageActivityFeedArgs],
+    MessageActivityFeedResponse
+  >,
   'messages_by_message_index' : ActorMethod<
     [MessagesByMessageIndexArgs],
     MessagesByMessageIndexResponse

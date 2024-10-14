@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1381](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1381-identity)] - 2024-10-11
+
+### Changed
+
+- Switch from using `canister_sig_util` to `ic-canister-sig-creation` ([#6537](https://github.com/open-chat-labs/open-chat/pull/6537)) 
+
+### Fixed
+
+- Add missing principal links to the 2 way mapping ([#6562](https://github.com/open-chat-labs/open-chat/pull/6562))
+
 ## [[2.0.1373](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1373-identity)] - 2024-10-07
 
 ### Changed

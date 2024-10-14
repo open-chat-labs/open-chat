@@ -23,7 +23,7 @@ for l in $(ls ${CARGO_HOME}/registry/src/)
 do
   export RUSTFLAGS="--remap-path-prefix ${CARGO_HOME}/registry/src/${l}=/cargo/registry/src/github ${RUSTFLAGS}"
 done
-cargo build --locked --target wasm32-unknown-unknown --release --package $PACKAGE
+cargo build --locked --target wasm32-unknown-unknown --release --package $PACKAGE || exit 1
 
 echo Optimising wasm
 if ! cargo install --list | grep -Fxq "ic-wasm v0.8.0:"

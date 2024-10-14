@@ -350,7 +350,6 @@
     },
     "dark": "dunkel",
     "days": "Tage",
-    "defaultMustBePublic": "Nur ein öffentlicher Kanal kann ein Standardkanal sein",
     "deleteFailed": "Ihre Nachricht kann nicht gelöscht werden",
     "deleteGroup": "{level} löschen",
     "deleteGroupFailure": "{level} kann nicht gelöscht werden",
@@ -568,6 +567,8 @@
         "failure": {
             "alreadyLinked": "Es tut uns leid, aber es sieht so aus, als ob diese Internetidentität bereits mit einem OpenChat-Konto verknüpft ist.",
             "link": "Es ist uns leider nicht gelungen, Ihre Internetidentität mit Ihrem OpenChat-Konto zu verknüpfen.",
+            "login_approver": "Leider konnten wir uns nicht bei Ihrem aktuellen OpenChat-Authentifizierungsanbieter anmelden",
+            "login_initiator": "Leider konnten wir uns nicht beim neuen Authentifizierungsanbieter anmelden",
             "loginApprover": "Leider konnten wir uns nicht bei Ihrem aktuellen OpenChat-Authentifizierungsanbieter anmelden",
             "loginInitiator": "Leider konnten wir uns nicht mit Ihrer gewählten Internetidentität anmelden",
             "pollingError": "Beim Warten auf die E-Mail-Anmeldung ist ein unerwarteter Fehler aufgetreten",
@@ -575,10 +576,19 @@
         },
         "humanityWarning": "Sie müssen über eine Internetidentität verfügen, die mit Ihrem OpenChat-Konto verknüpft ist, um Ihre eindeutige Identität zu bestätigen. Wenn Sie sich über einen anderen Anbieter registriert haben, müssen Sie eine Internetidentität erstellen und mit Ihrem OpenChat-Konto verknüpfen, bevor Sie fortfahren können.",
         "link": "Verknüpfung",
+        "linkedAccounts": {
+            "currentAccount": "Derzeit mit diesem Auftraggeber angemeldet",
+            "linkAdvice": "So verknüpfen Sie ein neues Konto: Melden Sie sich bei dem neuen Konto an, das Sie verknüpfen möchten, melden Sie sich dann bei Ihrem aktuellen Konto an und verknüpfen Sie schließlich die beiden Konten miteinander.",
+            "linkAnother": "Einen anderen Link setzen",
+            "section": "Verknüpfte Konten",
+            "start": "Erste Schritte"
+        },
         "linkIdentity": "Link-Identität",
         "linkTwoIdentities": "Jetzt sind wir bereit, die beiden Identitäten miteinander zu verknüpfen.",
         "mismatch": "Dies stimmt nicht mit dem Principal überein, mit dem Sie derzeit angemeldet sind. Sind Sie sicher, dass Sie denselben Authentifizierungsanbieter verwendet haben?",
         "proceed": "Fortfahren",
+        "signIn_approver": "Melden Sie sich mit dem Identitätsanbieter an, den Sie aktuell verwenden",
+        "signIn_initiator": "Melden Sie sich mit dem Identitätsanbieter an, den Sie mit Ihrem OpenChat-Konto verknüpfen möchten",
         "signInCurrent": "Melden Sie sich mit dem Identitätsanbieter an, den Sie aktuell verwenden",
         "signInNext": "Erstellen Sie die Internetidentität, die Sie mit Ihrem OpenChat-Konto verknüpfen möchten, oder melden Sie sich damit an.",
         "tryAgain": "Versuchen Sie es erneut"

@@ -2,4 +2,4 @@
 import type { AccountICRC1 } from "../shared/AccountICRC1";
 import type { ProposalsBotTreasury } from "./ProposalsBotTreasury";
 
-export type ProposalsBotTransferSnsTreasuryFunds = { treasury: ProposalsBotTreasury, amount: bigint, to: AccountICRC1, memo?: bigint, };
+export type ProposalsBotTransferSnsTreasuryFunds = { treasury: ProposalsBotTreasury, amount: bigint, to: AccountICRC1, memo?: bigint | undefined, };

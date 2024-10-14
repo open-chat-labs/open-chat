@@ -350,7 +350,6 @@
     },
     "dark": "Tối",
     "days": "Ngày",
-    "defaultMustBePublic": "Chỉ một kênh công khai mới có thể là kênh mặc định",
     "deleteFailed": "Không thể xóa tin nhắn này",
     "deleteGroup": "Xóa {level}",
     "deleteGroupFailure": "Không thể xóa {level}",
@@ -568,6 +567,8 @@
         "failure": {
             "alreadyLinked": "Xin lỗi nhưng có vẻ như Internet Identity đã được liên kết với tài khoản OpenChat",
             "link": "Rất tiếc, chúng tôi không thể liên kết Internet Identity với tài khoản OpenChat của bạn",
+            "login_approver": "Xin lỗi, chúng tôi không thể đăng nhập vào nhà cung cấp xác thực OpenChat hiện tại của bạn",
+            "login_initiator": "Xin lỗi, chúng tôi không thể đăng nhập vào nhà cung cấp xác thực mới",
             "loginApprover": "Rất tiếc, chúng tôi không thể đăng nhập vào nhà cung cấp xác thực OpenChat hiện tại của bạn",
             "loginInitiator": "Rất tiếc, chúng tôi không thể đăng nhập vào Internet Identity mà bạn đã chọn",
             "pollingError": "Đã xảy ra lỗi không mong muốn khi chờ đăng nhập email",
@@ -575,10 +576,19 @@
         },
         "humanityWarning": "Bạn phải có Internet Identity được liên kết với tài khoản OpenChat của mình để xác nhận nhân dạng duy nhất của bạn. Nếu bạn đã đăng ký bằng nhà cung cấp khác, bạn sẽ cần tạo và liên kết Internet Identity với tài khoản OpenChat của mình trước khi tiếp tục.",
         "link": "liên kết",
+        "linkedAccounts": {
+            "currentAccount": "Hiện đang đăng nhập với hiệu trưởng này",
+            "linkAdvice": "Để liên kết tài khoản mới Đăng nhập vào tài khoản mới mà bạn muốn liên kết, sau đó đăng nhập vào tài khoản hiện tại và cuối cùng liên kết hai tài khoản với nhau.",
+            "linkAnother": "Liên kết khác",
+            "section": "Tài khoản được liên kết",
+            "start": "Bắt đầu"
+        },
         "linkIdentity": "Nhận dạng liên kết",
         "linkTwoIdentities": "Bây giờ chúng ta đã sẵn sàng liên kết hai danh tính với nhau.",
         "mismatch": "Điều này không khớp với số tiền gốc mà bạn hiện đang đăng nhập. Bạn có chắc chắn mình đã sử dụng cùng một nhà cung cấp xác thực không?",
         "proceed": "Tiếp tục",
+        "signIn_approver": "Đăng nhập bằng nhà cung cấp danh tính mà bạn hiện đang sử dụng",
+        "signIn_initiator": "Đăng nhập bằng nhà cung cấp danh tính mà bạn muốn liên kết với tài khoản OpenChat của mình",
         "signInCurrent": "Đăng nhập bằng nhà cung cấp danh tính mà bạn hiện đang sử dụng",
         "signInNext": "Tạo hoặc đăng nhập bằng danh tính internet mà bạn muốn liên kết với tài khoản OpenChat của mình",
         "tryAgain": "Thử lại"

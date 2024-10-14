@@ -4,7 +4,7 @@ use candid::Deserialize;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use rand::Rng;
 use serde::Serialize;
-use timer_job_queue::TimerJobItem;
+use timer_job_queues::TimerJobItem;
 use tracing::{error, info, trace};
 use types::icrc1::{self, Account};
 use types::{
@@ -165,7 +165,7 @@ async fn handle_transfer_action(action: AirdropTransfer) -> Result<(), bool> {
                     airdrop_type: action.airdrop_type.clone(),
                 }));
 
-                state.data.pending_actions_queue.enqueue_front(message_action);
+                state.data.pending_actions_queue.push_front(message_action);
 
                 match action.airdrop_type {
                     AirdropType::Lottery(LotteryAirdrop { position }) => {

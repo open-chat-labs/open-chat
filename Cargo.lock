@@ -152,7 +152,7 @@ dependencies = [
  "serde_json",
  "stable_memory",
  "testing",
- "timer_job_queue",
+ "timer_job_queues",
  "tracing",
  "types",
  "user_canister",
@@ -1140,23 +1140,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "canister_sig_util"
-version = "0.1.0"
-source = "git+https://github.com/dfinity/internet-identity?rev=719a8f9d81d00d86fe3fc08ba136fd96e0f609a2#719a8f9d81d00d86fe3fc08ba136fd96e0f609a2"
-dependencies = [
- "candid",
- "hex",
- "ic-cdk 0.13.5",
- "ic-certification",
- "ic-representation-independent-hash",
- "lazy_static",
- "serde",
- "serde_bytes",
- "serde_cbor",
- "sha2 0.10.8",
-]
-
-[[package]]
 name = "canister_state_macros"
 version = "0.1.0"
 
@@ -1312,6 +1295,7 @@ dependencies = [
  "candid",
  "event_store_producer",
  "hex",
+ "ic-ledger-types",
  "itertools 0.13.0",
  "ledger_utils",
  "msgpack",
@@ -1923,19 +1907,6 @@ dependencies = [
  "darling_core 0.20.8",
  "quote",
  "syn 2.0.65",
-]
-
-[[package]]
-name = "dashmap"
-version = "5.5.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "978747c1d849a7d2ee5e8adc0159961c48fb7e5db2f06af6723b80123bb53856"
-dependencies = [
- "cfg-if",
- "hashbrown 0.14.3",
- "lock_api",
- "once_cell",
- "parking_lot_core",
 ]
 
 [[package]]
@@ -3667,7 +3638,7 @@ dependencies = [
 [[package]]
 name = "ic-verifiable-credentials"
 version = "0.1.0"
-source = "git+https://github.com/dfinity/verifiable-credentials-sdk?rev=5f21c3fe999df30f779586745f072fb115be53af#5f21c3fe999df30f779586745f072fb115be53af"
+source = "git+https://github.com/dfinity/verifiable-credentials-sdk?rev=d5e1bb0f8c0bf99ad565620e18dc402a9ac3317a#d5e1bb0f8c0bf99ad565620e18dc402a9ac3317a"
 dependencies = [
  "candid",
  "ic-canister-sig-creation",
@@ -3948,10 +3919,10 @@ dependencies = [
  "candid",
  "canister_api_macros",
  "canister_logger",
- "canister_sig_util",
  "canister_state_macros",
  "canister_tracing_macros",
  "http_request",
+ "ic-canister-sig-creation",
  "ic-captcha",
  "ic-cdk 0.16.0",
  "ic-cdk-timers",
@@ -4216,7 +4187,6 @@ dependencies = [
  "registry_canister",
  "serde",
  "serde_bytes",
- "serial_test",
  "sha256",
  "sign_in_with_email_canister",
  "storage_bucket_canister",
@@ -4635,6 +4605,7 @@ dependencies = [
  "serde_json",
  "sha256",
  "stable_memory",
+ "timer_job_queues",
  "tracing",
  "types",
  "user_canister",
@@ -6951,31 +6922,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "serial_test"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e56dd856803e253c8f298af3f4d7eb0ae5e23a737252cd90bb4f3b435033b2d"
-dependencies = [
- "dashmap",
- "futures",
- "lazy_static",
- "log",
- "parking_lot",
- "serial_test_derive",
-]
-
-[[package]]
-name = "serial_test_derive"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "91d129178576168c589c9ec973feedf7d3126c01ac2bf08795109aa35b69fb8f"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.65",
-]
-
-[[package]]
 name = "sha2"
 version = "0.9.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7809,7 +7755,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "timer_job_queue"
+name = "timer_job_queues"
 version = "0.1.0"
 dependencies = [
  "futures",
@@ -8122,7 +8068,7 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 [[package]]
 name = "ts-rs"
 version = "9.0.1"
-source = "git+https://github.com/hpeebles/ts-rs?rev=7b402398a066b33f2bc27e1771fb2c2318f402c4#7b402398a066b33f2bc27e1771fb2c2318f402c4"
+source = "git+https://github.com/hpeebles/ts-rs?rev=c8f7385697df0764fca3b5d7b8e22b967fb16c10#c8f7385697df0764fca3b5d7b8e22b967fb16c10"
 dependencies = [
  "lazy_static",
  "thiserror",
@@ -8132,7 +8078,7 @@ dependencies = [
 [[package]]
 name = "ts-rs-macros"
 version = "9.0.1"
-source = "git+https://github.com/hpeebles/ts-rs?rev=7b402398a066b33f2bc27e1771fb2c2318f402c4#7b402398a066b33f2bc27e1771fb2c2318f402c4"
+source = "git+https://github.com/hpeebles/ts-rs?rev=c8f7385697df0764fca3b5d7b8e22b967fb16c10#c8f7385697df0764fca3b5d7b8e22b967fb16c10"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -8385,6 +8331,7 @@ dependencies = [
  "sonic_canister_c2c_client",
  "stable_memory",
  "storage_bucket_client",
+ "timer_job_queues",
  "tracing",
  "types",
  "user_canister",
@@ -8525,7 +8472,6 @@ dependencies = [
  "sha256",
  "sha3",
  "time",
- "timer_job_queue",
  "tracing",
  "types",
 ]

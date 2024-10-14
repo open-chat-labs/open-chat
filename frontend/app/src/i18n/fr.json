@@ -350,7 +350,6 @@
     },
     "dark": "foncé",
     "days": "Jours",
-    "defaultMustBePublic": "Seul un canal public peut être un canal par défaut",
     "deleteFailed": "Impossible de supprimer votre message",
     "deleteGroup": "Supprimer {level}",
     "deleteGroupFailure": "Impossible de supprimer {level}",
@@ -568,6 +567,8 @@
         "failure": {
             "alreadyLinked": "Désolé mais il semble que cette identité Internet soit déjà liée à un compte OpenChat",
             "link": "Désolé mais nous n'avons pas pu associer votre identité Internet à votre compte OpenChat",
+            "login_approver": "Désolé, nous n'avons pas pu nous connecter à votre fournisseur d'authentification OpenChat actuel",
+            "login_initiator": "Désolé, nous n'avons pas pu nous connecter au nouveau fournisseur d'authentification",
             "loginApprover": "Désolé, nous n'avons pas pu nous connecter à votre fournisseur d'authentification OpenChat actuel.",
             "loginInitiator": "Désolé, nous n'avons pas pu vous connecter à l'identité Internet que vous avez choisie.",
             "pollingError": "Une erreur inattendue s'est produite lors de l'attente de la connexion par e-mail",
@@ -575,10 +576,19 @@
         },
         "humanityWarning": "Vous devez avoir une identité Internet associée à votre compte OpenChat pour confirmer votre personnalité unique. Si vous vous êtes inscrit auprès d'un autre fournisseur, vous devrez créer et lier une identité Internet à votre compte OpenChat avant de continuer.",
         "link": "Lien",
+        "linkedAccounts": {
+            "currentAccount": "Actuellement connecté avec ce principal",
+            "linkAdvice": "Pour lier un nouveau compte Connectez-vous au nouveau compte que vous souhaitez lier, puis connectez-vous à votre compte actuel et enfin associez les deux comptes ensemble.",
+            "linkAnother": "Lier un autre",
+            "section": "Comptes liés",
+            "start": "Commencer"
+        },
         "linkIdentity": "Identité du lien",
         "linkTwoIdentities": "Nous sommes désormais prêts à lier les deux identités.",
         "mismatch": "Cela ne correspond pas au compte principal avec lequel vous êtes actuellement connecté. Êtes-vous sûr d'avoir utilisé le même fournisseur d'authentification ?",
         "proceed": "Procéder",
+        "signIn_approver": "Connectez-vous avec le fournisseur d'identité que vous utilisez actuellement",
+        "signIn_initiator": "Connectez-vous avec le fournisseur d'identité que vous souhaitez lier à votre compte OpenChat",
         "signInCurrent": "Connectez-vous avec le fournisseur d'identité que vous utilisez actuellement",
         "signInNext": "Créez ou connectez-vous avec l'identité Internet que vous souhaitez associer à votre compte OpenChat",
         "tryAgain": "Essayer à nouveau"

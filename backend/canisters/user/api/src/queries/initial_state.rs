@@ -1,4 +1,4 @@
-use crate::{Referral, WalletConfig};
+use crate::{MessageActivitySummary, Referral, WalletConfig};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
@@ -38,6 +38,7 @@ pub struct SuccessResult {
     pub is_unique_person: bool,
     pub wallet_config: WalletConfig,
     pub referrals: Vec<Referral>,
+    pub message_activity_summary: MessageActivitySummary,
 }
 
 #[ts_export(user, initial_state)]

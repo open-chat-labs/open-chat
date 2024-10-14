@@ -83,6 +83,7 @@ import {
     SetBioResponse,
     GroupPermissions,
     PermissionRole,
+    CommunityPermissionRole,
     WithdrawCryptoResponse,
     SendMessageWithTransferToGroupArgs,
     SendMessageWithTransferToGroupResponse,
@@ -169,7 +170,8 @@ import {
     ReferralStatus,
     Referral,
     WalletConfig,
-    SignedDelegation
+    SignedDelegation,
+    MessageEventWrapper,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -238,6 +240,7 @@ export {
     TotalPollVotes as ApiTotalPollVotes,
     GroupPermissions as ApiGroupPermissions,
     PermissionRole as ApiPermissionRole,
+    CommunityPermissionRole as ApiCommunityPermissionRole,
     WithdrawCryptoResponse as ApiWithdrawCryptoResponse,
     PrizeContent as ApiPrizeContent,
     PrizeWinnerContent as ApiPrizeWinnerContent,
@@ -341,7 +344,8 @@ export {
     ReferralStatus as ApiReferralStatus,
     Referral as ApiReferral,
     WalletConfig as ApiWalletConfig,
-    SignedDelegation as ApiSignedDelegation
+    SignedDelegation as ApiSignedDelegation,
+    MessageEventWrapper as ApiMessageEventWrapper,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

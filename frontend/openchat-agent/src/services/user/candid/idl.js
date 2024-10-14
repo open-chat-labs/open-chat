@@ -1368,6 +1368,12 @@ export const idlFactory = ({ IDL }) => {
     'last_seen' : TimestampMillis,
   });
   const MarkAchievementsSeenResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const MarkMessageActivityFeedReadArgs = IDL.Record({
+    'read_up_to' : TimestampMillis,
+  });
+  const MarkMessageActivityFeedReadResponse = IDL.Variant({
+    'Success' : IDL.Null,
+  });
   const ThreadRead = IDL.Record({
     'root_message_index' : MessageIndex,
     'read_up_to' : MessageIndex,
@@ -1393,6 +1399,31 @@ export const idlFactory = ({ IDL }) => {
     'messages_read' : IDL.Vec(ChatMessagesRead),
   });
   const MarkReadResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const MessageActivityFeedArgs = IDL.Record({ 'since' : TimestampMillis });
+  const MessageActivity = IDL.Variant({
+    'Tip' : IDL.Null,
+    'ThreadReply' : IDL.Null,
+    'P2PSwapAccepted' : IDL.Null,
+    'PollVote' : IDL.Null,
+    'Mention' : IDL.Null,
+    'Crypto' : IDL.Null,
+    'QuoteReply' : IDL.Null,
+    'Reaction' : IDL.Null,
+  });
+  const MessageActivityEvent = IDL.Record({
+    'chat' : Chat,
+    'user_id' : UserId,
+    'timestamp' : TimestampMillis,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
+    'activity' : MessageActivity,
+    'message_index' : MessageIndex,
+  });
+  const MessageActivityFeedResponse = IDL.Variant({
+    'Success' : IDL.Record({
+      'total' : IDL.Nat32,
+      'events' : IDL.Vec(MessageActivityEvent),
+    }),
+  });
   const MessagesByMessageIndexArgs = IDL.Record({
     'messages' : IDL.Vec(MessageIndex),
     'user_id' : UserId,
@@ -2132,7 +2163,17 @@ export const idlFactory = ({ IDL }) => {
         [MarkAchievementsSeenResponse],
         [],
       ),
+    'mark_message_activity_feed_read' : IDL.Func(
+        [MarkMessageActivityFeedReadArgs],
+        [MarkMessageActivityFeedReadResponse],
+        [],
+      ),
     'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
+    'message_activity_feed' : IDL.Func(
+        [MessageActivityFeedArgs],
+        [MessageActivityFeedResponse],
+        ['query'],
+      ),
     'messages_by_message_index' : IDL.Func(
         [MessagesByMessageIndexArgs],
         [MessagesByMessageIndexResponse],

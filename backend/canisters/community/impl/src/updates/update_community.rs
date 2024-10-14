@@ -114,7 +114,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     }
 
     if let OptionUpdate::SetToSome(gate_config) = &args.gate_config {
-        if !gate_config.validate() {
+        if !gate_config.validate(state.data.test_mode) {
             return Err(AccessGateInvalid);
         }
     }

@@ -49,7 +49,7 @@ mod process_pending_actions {
                                 fee: transfer_args.fee.into(),
                                 from: nns::CryptoAccount::Account(default_ledger_account(this_canister_id)),
                                 to: nns::CryptoAccount::Account(transfer_args.to),
-                                memo: transfer_args.memo,
+                                memo: transfer_args.memo.0,
                                 created: transfer_args.created_at_time.map_or(0, |t| t.timestamp_nanos / 1_000_000),
                                 transaction_hash,
                                 block_index,

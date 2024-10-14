@@ -7,7 +7,7 @@ use group_canister::c2c_events_by_index::Args as C2CArgs;
 use group_canister::events_by_index::{Response::*, *};
 use group_chat_core::EventsResult;
 
-#[query(candid = true)]
+#[query(candid = true, msgpack = true)]
 fn events_by_index(args: Args) -> Response {
     read_state(|state| events_by_index_impl(args, None, state))
 }

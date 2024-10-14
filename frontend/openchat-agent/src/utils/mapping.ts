@@ -44,6 +44,15 @@ export function apiOptionUpdate<A, B>(
     return { SetToSome: mapper(domain.value) };
 }
 
+export function apiOptionUpdateV2<A, B>(
+    mapper: (a: A) => B,
+    domain: OptionUpdate<A>,
+): ApiOptionUpdateV2<B> {
+    if (domain === undefined) return "NoChange";
+    if (domain === "set_to_none") return "SetToNone";
+    return { SetToSome: mapper(domain.value) };
+}
+
 export function identity<T>(x: T): T {
     return x;
 }

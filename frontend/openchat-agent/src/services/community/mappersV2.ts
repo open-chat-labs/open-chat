@@ -1,236 +1,226 @@
 import type {
-    //     AddMembersToChannelResponse,
-    //     BlockCommunityUserResponse,
-    //     ChangeCommunityRoleResponse,
-    //     ChannelIdentifier,
-    //     ChannelMatch,
-    //     ChannelMessageMatch,
-    //     ChannelSummaryResponse,
+    AddMembersToChannelResponse,
+    BlockCommunityUserResponse,
+    ChangeCommunityRoleResponse,
+    ChannelMatch,
+    ChannelMessageMatch,
+    ChannelSummaryResponse,
     CommunityCanisterChannelSummaryUpdates,
     CommunityCanisterCommunitySummaryUpdates,
-    //     CommunityDetailsResponse,
-    //     CommunityDetailsUpdatesResponse,
+    CommunityDetailsResponse,
+    CommunityDetailsUpdatesResponse,
     CommunityMembershipUpdates,
-    //     CommunityPermissions,
-    //     CommunitySummaryResponse,
-    //     CommunitySummaryUpdatesResponse,
-    //     CreateUserGroupResponse,
-    //     DeleteUserGroupsResponse,
-    //     EventsResponse,
-    //     ExploreChannelsResponse,
-    //     FollowThreadResponse,
+    CommunityPermissions,
+    CommunitySummaryResponse,
+    CommunitySummaryUpdatesResponse,
+    CreateUserGroupResponse,
+    DeleteUserGroupsResponse,
+    ExploreChannelsResponse,
+    FollowThreadResponse,
     GroupMembershipUpdates,
-    //     ImportGroupResponse,
-    //     MemberRole,
-    //     Message,
-    //     RemoveMemberResponse,
+    ImportGroupResponse,
+    MemberRole,
+    RemoveMemberResponse,
     SendMessageResponse,
-    //     SetMemberDisplayNameResponse,
-    //     ToggleMuteCommunityNotificationsResponse,
-    //     UnblockCommunityUserResponse,
-    //     UpdateCommunityResponse,
-    //     UpdatedEvent,
-    //     UpdateUserGroupResponse,
-    //     UserFailedError,
-    //     UserGroupDetails,
+    SetMemberDisplayNameResponse,
+    UnblockCommunityUserResponse,
+    UpdateCommunityResponse,
+    UpdateUserGroupResponse,
+    UserFailedError,
+    UserGroupDetails,
 } from "openchat-shared";
-import {
-    CommonResponses,
-    // UnsupportedValueError
-} from "openchat-shared";
+import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import type {
+    ChannelMatch as TChannelMatch,
     CommunityCanisterCommunitySummaryUpdates as TCommunityCanisterCommunitySummaryUpdates,
     CommunityCanisterChannelSummaryUpdates as TCommunityCanisterChannelSummaryUpdates,
     CommunityMembershipUpdates as TCommunityMembershipUpdates,
     CommunitySendMessageResponse,
+    CommunityAddMembersToChannelResponse,
+    CommunityAddMembersToChannelFailedResult,
+    CommunityAddMembersToChannelUserFailedError,
+    CommunityAddMembersToChannelPartialSuccessResult,
+    CommunityBlockUserResponse,
+    CommunityRole as TCommunityRole,
+    CommunityChangeRoleResponse,
+    CommunityRemoveMemberResponse,
+    CommunityRemoveMemberFromChannelResponse,
+    CommunitySelectedInitialResponse,
     GroupMembershipUpdates as TGroupMembershipUpdates,
+    GroupRole as TGroupRole,
+    MessageMatch as TMessageMatch,
+    UserGroupDetails as TUserGroupDetails,
+    CommunitySelectedUpdatesResponse,
+    CommunityChannelSummaryResponse,
+    CommunityImportGroupResponse,
+    CommunitySummaryResponse as TCommunitySummaryResponse,
+    CommunitySummaryUpdatesResponse as TCommunitySummaryUpdatesResponse,
+    CommunityExploreChannelsResponse,
+    CommunityUnblockUserResponse,
+    CommunityUpdateCommunityResponse,
+    OptionalCommunityPermissions as TOptionalCommunityPermissions,
+    CommunityCreateUserGroupResponse,
+    CommunityReportMessageResponse,
+    CommunityFollowThreadResponse,
+    CommunityUnfollowThreadResponse,
+    CommunitySetMemberDisplayNameResponse,
+    CommunityDeleteUserGroupsResponse,
+    CommunityUpdateUserGroupResponse,
 } from "../../typebox";
 import { mapOptional, optionUpdateV2, principalBytesToString } from "../../utils/mapping";
 import {
     accessGateConfig,
-    // apiCommunityPermissionRole,
-    // apiOptional,
+    accessGate,
+    apiCommunityPermissionRole,
     chatMetrics,
     communityChannelSummary,
     communityPermissions,
-    // communitySummary,
+    communitySummary,
     groupPermissions,
     groupSubtype,
     memberRole,
     mention,
-    // messageContent,
+    messageContent,
     messageEvent,
-    // messagesSuccessResponse,
     threadSyncDetails,
     updatedEvent,
     userGroup,
 } from "../common/chatMappersV2";
 import { identity } from "../../utils/mapping";
-// import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
-// import type { Principal } from "@dfinity/principal";
-// import { ReplicaNotUpToDateError } from "../error";
-// import type { ReportMessageResponse } from "./candid/types";
-//
-// export function addMembersToChannelResponse(
-//     candid: ApiAddMembersToChannelResponse,
-// ): AddMembersToChannelResponse {
-//     if ("Failed" in candid) {
-//         return addToChannelFailed(candid.Failed);
-//     }
-//     if ("UserNotInChannel" in candid) {
-//         return CommonResponses.userNotInChat();
-//     }
-//     if ("PartialSuccess" in candid) {
-//         return addToChannelPartialSuccess(candid.PartialSuccess);
-//     }
-//     if ("ChannelNotFound" in candid) {
-//         return CommonResponses.chatNotFound();
-//     }
-//     if ("UserLimitReached" in candid) {
-//         return CommonResponses.userLimitReached();
-//     }
-//     if ("NotAuthorized" in candid) {
-//         return CommonResponses.notAuthorized();
-//     }
-//     if ("Success" in candid) {
-//         return CommonResponses.success();
-//     }
-//     if ("UserNotInCommunity" in candid) {
-//         return CommonResponses.userNotInCommunity();
-//     }
-//     if ("UserSuspended" in candid) {
-//         return CommonResponses.userSuspended();
-//     }
-//     if ("CommunityFrozen" in candid) {
-//         return CommonResponses.communityFrozen();
-//     }
-//     if ("CommunityPublic" in candid) {
-//         return CommonResponses.communityPublic();
-//     }
-//     if ("InternalError" in candid) {
-//         return CommonResponses.internalError();
-//     }
-//     if ("CommunityPublic" in candid) {
-//         return CommonResponses.communityPublic();
-//     }
-//     throw new UnsupportedValueError(
-//         "Unexpected ApiAddMembersToChannelResponse type received",
-//         candid,
-//     );
-// }
-//
-// function addToChannelFailed(candid: ApiAddMembersToChannelFailed): AddMembersToChannelResponse {
-//     return {
-//         kind: "add_to_channel_failed",
-//         usersLimitReached: candid.users_limit_reached.map((u) => u.toString()),
-//         usersAlreadyInChannel: candid.users_already_in_channel.map((u) => u.toString()),
-//         usersFailedWithError: candid.users_failed_with_error.map(userFailedWithError),
-//     };
-// }
-//
-// function userFailedWithError(candid: ApiUserFailedError): UserFailedError {
-//     return {
-//         userId: candid.user_id.toString(),
-//         error: candid.error,
-//     };
-// }
-//
-// function addToChannelPartialSuccess(
-//     candid: ApiAddMembersToChannelPartialSuccess,
-// ): AddMembersToChannelResponse {
-//     return {
-//         kind: "add_to_channel_partial_success",
-//         usersLimitReached: candid.users_limit_reached.map((u) => u.toString()),
-//         usersAlreadyInChannel: candid.users_already_in_channel.map((u) => u.toString()),
-//         usersFailedWithError: candid.users_failed_with_error.map(userFailedWithError),
-//         usersAdded: candid.users_added.map((u) => u.toString()),
-//     };
-// }
-//
-// export function blockUserResponse(candid: ApiBlockUserResponse): BlockCommunityUserResponse {
-//     if ("Success" in candid) {
-//         return CommonResponses.success();
-//     } else {
-//         console.warn("BlockCommunityUser failed with ", candid);
-//         return CommonResponses.failure();
-//     }
-// }
-//
-// export function changeRoleResponse(candid: ApiChangeRoleResponse): ChangeCommunityRoleResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     } else {
-//         console.warn("Unexpected ApiChangeRoleResponse type received", candid);
-//         return "failure";
-//     }
-// }
-//
-// export async function messagesByMessageIndexResponse(
-//     principal: Principal,
-//     candid: ApiMessagesByMessageIndexResponse,
-//     chatId: ChannelIdentifier,
-//     latestKnownUpdatePreRequest: bigint | undefined,
-// ): Promise<EventsResponse<Message>> {
-//     if ("Success" in candid) {
-//         await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
-//
-//         return messagesSuccessResponse(candid.Success);
-//     }
-//     if (
-//         "CallerNotInGroup" in candid ||
-//         "ThreadMessageNotFound" in candid ||
-//         "ThreadNotFound" in candid ||
-//         "ChannelNotFound" in candid ||
-//         "UserNotInChannel" in candid ||
-//         "UserNotInCommunity" in candid
-//     ) {
-//         return "events_failed";
-//     }
-//     if ("ReplicaNotUpToDateV2" in candid) {
-//         throw ReplicaNotUpToDateError.byTimestamp(
-//             candid.ReplicaNotUpToDateV2,
-//             latestKnownUpdatePreRequest ?? BigInt(-1),
-//             false,
-//         );
-//     }
-//     throw new UnsupportedValueError(
-//         "Unexpected ApiMessagesByMessageIndexResponse type received",
-//         candid,
-//     );
-// }
-//
-// export function removeMemberResponse(candid: ApiRemoveMemberResponse): RemoveMemberResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     } else {
-//         console.warn("RemoveCommunityMember failed with", candid);
-//         return "failure";
-//     }
-// }
-//
-// export function removeMemberFromChannelResponse(
-//     candid: ApiRemoveMemberFromChannelResponse,
-// ): RemoveMemberResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     } else {
-//         console.warn("RemoveChannelMember failed with", candid);
-//         return "failure";
-//     }
-// }
-//
-// export function messageMatch(candid: ApiMessageMatch): ChannelMessageMatch {
-//     const sender = candid.sender.toString();
-//     return {
-//         content: messageContent(candid.content, sender),
-//         sender,
-//         score: candid.score,
-//         messageIndex: candid.message_index,
-//     };
-// }
+
+export function addMembersToChannelResponse(
+    value: CommunityAddMembersToChannelResponse,
+): AddMembersToChannelResponse {
+    if (value === "Success") {
+        return CommonResponses.success();
+    }
+    if (value === "CommunityFrozen") {
+        return CommonResponses.communityFrozen();
+    }
+    if (value === "CommunityPublic") {
+        return CommonResponses.communityPublic();
+    }
+    if (value === "UserSuspended") {
+        return CommonResponses.userSuspended();
+    }
+    if (value === "UserLapsed") {
+        return CommonResponses.userLapsed();
+    }
+    if (value === "UserNotInCommunity") {
+        return CommonResponses.userNotInCommunity();
+    }
+    if (value === "UserNotInChannel") {
+        return CommonResponses.userNotInChat();
+    }
+    if (value === "ChannelNotFound") {
+        return CommonResponses.chatNotFound();
+    }
+    if (value === "NotAuthorized") {
+        return CommonResponses.notAuthorized();
+    }
+    if ("Failed" in value) {
+        return addToChannelFailed(value.Failed);
+    }
+    if ("PartialSuccess" in value) {
+        return addToChannelPartialSuccess(value.PartialSuccess);
+    }
+    if ("UserLimitReached" in value) {
+        return CommonResponses.userLimitReached();
+    }
+    if ("InternalError" in value) {
+        return CommonResponses.internalError();
+    }
+    if ("CommunityPublic" in value) {
+        return CommonResponses.communityPublic();
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiAddMembersToChannelResponse type received",
+        value,
+    );
+}
+
+function addToChannelFailed(
+    value: CommunityAddMembersToChannelFailedResult,
+): AddMembersToChannelResponse {
+    return {
+        kind: "add_to_channel_failed",
+        usersLimitReached: value.users_limit_reached.map(principalBytesToString),
+        usersAlreadyInChannel: value.users_already_in_channel.map(principalBytesToString),
+        usersFailedWithError: value.users_failed_with_error.map(userFailedWithError),
+    };
+}
+
+function userFailedWithError(value: CommunityAddMembersToChannelUserFailedError): UserFailedError {
+    return {
+        userId: principalBytesToString(value.user_id),
+        error: value.error,
+    };
+}
+
+function addToChannelPartialSuccess(
+    value: CommunityAddMembersToChannelPartialSuccessResult,
+): AddMembersToChannelResponse {
+    return {
+        kind: "add_to_channel_partial_success",
+        usersLimitReached: value.users_limit_reached.map(principalBytesToString),
+        usersAlreadyInChannel: value.users_already_in_channel.map(principalBytesToString),
+        usersFailedWithError: value.users_failed_with_error.map(userFailedWithError),
+        usersAdded: value.users_added.map(principalBytesToString),
+    };
+}
+
+export function blockUserResponse(value: CommunityBlockUserResponse): BlockCommunityUserResponse {
+    if (value === "Success") {
+        return CommonResponses.success();
+    } else {
+        console.warn("BlockCommunityUser failed with ", value);
+        return CommonResponses.failure();
+    }
+}
+
+export function changeRoleResponse(
+    value: CommunityChangeRoleResponse,
+): ChangeCommunityRoleResponse {
+    if (value === "Success") {
+        return "success";
+    } else {
+        console.warn("Unexpected ApiChangeRoleResponse type received", value);
+        return "failure";
+    }
+}
+
+export function removeMemberResponse(value: CommunityRemoveMemberResponse): RemoveMemberResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return "success";
+    } else {
+        console.warn("RemoveCommunityMember failed with", value);
+        return "failure";
+    }
+}
+
+export function removeMemberFromChannelResponse(
+    value: CommunityRemoveMemberFromChannelResponse,
+): RemoveMemberResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return "success";
+    } else {
+        console.warn("RemoveChannelMember failed with", value);
+        return "failure";
+    }
+}
+
+export function messageMatch(value: TMessageMatch): ChannelMessageMatch {
+    const sender = principalBytesToString(value.sender);
+    return {
+        content: messageContent(value.content, sender),
+        sender,
+        score: value.score,
+        messageIndex: value.message_index,
+    };
+}
 
 export function sendMessageResponse(value: CommunitySendMessageResponse): SendMessageResponse {
-    if (typeof value !== "string") {
+    if (typeof value === "object") {
         if ("Success" in value) {
             return {
                 kind: "success",
@@ -251,92 +241,92 @@ export function sendMessageResponse(value: CommunitySendMessageResponse): SendMe
     }
 }
 
-// export function exploreChannelsResponse(
-//     candid: ApiExploreChannelsResponse,
-//     communityId: string,
-// ): ExploreChannelsResponse {
-//     if ("Success" in candid) {
-//         return {
-//             kind: "success",
-//             matches: candid.Success.matches.map((m) => channelMatch(m, communityId)),
-//             total: candid.Success.total,
-//         };
-//     } else {
-//         console.warn("ExploreChannels failed with", candid);
-//         return CommonResponses.failure();
-//     }
-// }
-//
-// export function channelMatch(candid: ApiChannelMatch, communityId: string): ChannelMatch {
-//     return {
-//         id: { kind: "channel", communityId, channelId: candid.id.toString() },
-//         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
-//         name: candid.name,
-//         description: candid.description,
-//         memberCount: candid.member_count,
-//         avatar: {
-//             blobReference: optional(candid.avatar_id, (blobId) => ({
-//                 blobId,
-//                 canisterId: communityId,
-//             })),
-//         },
-//     };
-// }
-//
-// export function communityChannelSummaryResponse(
-//     candid: ApiChannelSummaryResponse,
-//     communityId: string,
-// ): ChannelSummaryResponse {
-//     if ("Success" in candid) {
-//         return communityChannelSummary(candid.Success, communityId);
-//     } else {
-//         console.warn("CommunityChannelSummary failed with", candid);
-//         return CommonResponses.failure();
-//     }
-// }
-//
-// export function importGroupResponse(
-//     communityId: string,
-//     candid: ApiImportGroupResponse,
-// ): ImportGroupResponse {
-//     if ("Success" in candid) {
-//         return {
-//             kind: "success",
-//             channelId: {
-//                 kind: "channel",
-//                 communityId,
-//                 channelId: candid.Success.channel_id.toString(),
-//             },
-//         };
-//     } else {
-//         console.warn("ImportGroup failed with", candid);
-//         return CommonResponses.failure();
-//     }
-// }
-//
-// export function summaryResponse(candid: ApiSummaryResponse): CommunitySummaryResponse {
-//     if ("Success" in candid) {
-//         return communitySummary(candid.Success);
-//     } else {
-//         console.warn("CommunitySummary failed with", candid);
-//         return CommonResponses.failure();
-//     }
-// }
-//
-// export function summaryUpdatesResponse(
-//     candid: ApiSummaryUpdatesResponse,
-// ): CommunitySummaryUpdatesResponse {
-//     if ("Success" in candid) {
-//         return communitySummaryUpdates(candid.Success);
-//     }
-//     if ("SuccessNoUpdates" in candid) {
-//         return CommonResponses.successNoUpdates();
-//     }
-//     if ("PrivateCommunity" in candid) {
-//         return CommonResponses.failure();
-//     }
-//     throw new UnsupportedValueError("invalid ApiSummaryUpdatesResponse received", candid);
-// }
+export function exploreChannelsResponse(
+    value: CommunityExploreChannelsResponse,
+    communityId: string,
+): ExploreChannelsResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return {
+            kind: "success",
+            matches: value.Success.matches.map((m) => channelMatch(m, communityId)),
+            total: value.Success.total,
+        };
+    } else {
+        console.warn("ExploreChannels failed with", value);
+        return CommonResponses.failure();
+    }
+}
+
+export function channelMatch(value: TChannelMatch, communityId: string): ChannelMatch {
+    return {
+        id: { kind: "channel", communityId, channelId: value.id.toString() },
+        gate: mapOptional(value.gate, accessGate) ?? { kind: "no_gate" },
+        name: value.name,
+        description: value.description,
+        memberCount: value.member_count,
+        avatar: {
+            blobReference: mapOptional(value.avatar_id, (blobId) => ({
+                blobId,
+                canisterId: communityId,
+            })),
+        },
+    };
+}
+
+export function communityChannelSummaryResponse(
+    value: CommunityChannelSummaryResponse,
+    communityId: string,
+): ChannelSummaryResponse {
+    if (typeof value === "object" && "Success") {
+        return communityChannelSummary(value.Success, communityId);
+    } else {
+        console.warn("CommunityChannelSummary failed with", value);
+        return CommonResponses.failure();
+    }
+}
+
+export function importGroupResponse(
+    communityId: string,
+    value: CommunityImportGroupResponse,
+): ImportGroupResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return {
+            kind: "success",
+            channelId: {
+                kind: "channel",
+                communityId,
+                channelId: value.Success.channel_id.toString(),
+            },
+        };
+    } else {
+        console.warn("ImportGroup failed with", value);
+        return CommonResponses.failure();
+    }
+}
+
+export function summaryResponse(value: TCommunitySummaryResponse): CommunitySummaryResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return communitySummary(value.Success);
+    } else {
+        console.warn("CommunitySummary failed with", value);
+        return CommonResponses.failure();
+    }
+}
+
+export function summaryUpdatesResponse(
+    value: TCommunitySummaryUpdatesResponse,
+): CommunitySummaryUpdatesResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return communitySummaryUpdates(value.Success);
+    }
+    if (value === "SuccessNoUpdates") {
+        return CommonResponses.successNoUpdates();
+    }
+    if (value === "PrivateCommunity") {
+        return CommonResponses.failure();
+    }
+    throw new UnsupportedValueError("invalid ApiSummaryUpdatesResponse received", value);
+}
 
 export function communitySummaryUpdates(
     value: TCommunityCanisterCommunitySummaryUpdates,
@@ -426,52 +416,43 @@ export function groupMembershipUpdates(value: TGroupMembershipUpdates): GroupMem
     };
 }
 
-// export function toggleMuteNotificationsResponse(
-//     candid: ApiToggleMuteNotificationsResponse,
-// ): ToggleMuteCommunityNotificationsResponse {
-//     if ("Success" in candid) {
-//         return CommonResponses.success();
-//     } else {
-//         console.warn("ToggleMuteCommunityNotifications failed with", candid);
-//         return CommonResponses.failure();
-//     }
-// }
-//
-// export function unblockUserResponse(candid: ApiUnblockUserResponse): UnblockCommunityUserResponse {
-//     if ("Success" in candid) {
-//         return CommonResponses.success();
-//     } else {
-//         console.warn("UnblockCommunityUser failed with", candid);
-//         return CommonResponses.failure();
-//     }
-// }
-//
-// export function updateCommunityResponse(
-//     candid: ApiUpdateCommunityResponse,
-// ): UpdateCommunityResponse {
-//     if ("SuccessV2" in candid) {
-//         return {
-//             kind: "success",
-//             rulesVersion: optional(candid.SuccessV2.rules_version, identity),
-//         };
-//     } else {
-//         console.warn("UpdateCommunity failed with", candid);
-//         return CommonResponses.failure();
-//     }
-// }
-//
-// export function apiMemberRole(domain: MemberRole): ApiGroupRole {
-//     switch (domain) {
-//         case "owner":
-//             return { Owner: null };
-//         case "admin":
-//             return { Admin: null };
-//         case "moderator":
-//             return { Moderator: null };
-//         default:
-//             return { Participant: null };
-//     }
-// }
+export function unblockUserResponse(
+    value: CommunityUnblockUserResponse,
+): UnblockCommunityUserResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return CommonResponses.success();
+    } else {
+        console.warn("UnblockCommunityUser failed with", value);
+        return CommonResponses.failure();
+    }
+}
+
+export function updateCommunityResponse(
+    value: CommunityUpdateCommunityResponse,
+): UpdateCommunityResponse {
+    if (typeof value === "object" && "SuccessV2" in value) {
+        return {
+            kind: "success",
+            rulesVersion: value.SuccessV2.rules_version,
+        };
+    } else {
+        console.warn("UpdateCommunity failed with", value);
+        return CommonResponses.failure();
+    }
+}
+
+export function apiMemberRole(domain: MemberRole): TGroupRole {
+    switch (domain) {
+        case "owner":
+            return "Owner";
+        case "admin":
+            return "Admin";
+        case "moderator":
+            return "Moderator";
+        default:
+            return "Participant";
+    }
+}
 //
 // export function communityRole(candid: ApiCommunityRole): MemberRole {
 //     if ("Member" in candid) {
@@ -485,199 +466,212 @@ export function groupMembershipUpdates(value: TGroupMembershipUpdates): GroupMem
 //     }
 //     throw new UnsupportedValueError("Unknown community role", candid);
 // }
-//
-// export function apiCommunityRole(newRole: MemberRole): ApiCommunityRole {
-//     switch (newRole) {
-//         case "owner":
-//             return { Owner: null };
-//         case "admin":
-//             return { Admin: null };
-//         default:
-//             return { Member: null };
-//     }
-// }
-//
-// export function apiOptionalCommunityPermissions(
-//     permissions: Partial<CommunityPermissions>,
-// ): ApiOptionalCommunityPermissions {
-//     return {
-//         create_public_channel: apiOptional(
-//             apiCommunityPermissionRole,
-//             permissions.createPublicChannel,
-//         ),
-//         update_details: apiOptional(apiCommunityPermissionRole, permissions.updateDetails),
-//         remove_members: apiOptional(apiCommunityPermissionRole, permissions.removeMembers),
-//         invite_users: apiOptional(apiCommunityPermissionRole, permissions.inviteUsers),
-//         change_roles: apiOptional(apiCommunityPermissionRole, permissions.changeRoles),
-//         create_private_channel: apiOptional(
-//             apiCommunityPermissionRole,
-//             permissions.createPrivateChannel,
-//         ),
-//         manage_user_groups: apiOptional(apiCommunityPermissionRole, permissions.manageUserGroups),
-//     };
-// }
-//
-// export function communityDetailsResponse(
-//     candid: ApiSelectedInitialResponse,
-// ): CommunityDetailsResponse {
-//     if ("Success" in candid) {
-//         return {
-//             members: candid.Success.members.map((m) => ({
-//                 role: memberRole(m.role),
-//                 userId: m.user_id.toString(),
-//                 displayName: optional(m.display_name, identity),
-//             })),
-//             blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
-//             invitedUsers: new Set(candid.Success.invited_users.map((u) => u.toString())),
-//             rules: candid.Success.chat_rules,
-//             lastUpdated: candid.Success.timestamp,
-//             userGroups: new Map(candid.Success.user_groups.map(userGroupDetails)),
-//             referrals: new Set(candid.Success.referrals.map((u) => u.toString())),
-//         };
-//     } else {
-//         console.warn("CommunityDetails failed with", candid);
-//         return "failure";
-//     }
-// }
-//
-// export function userGroupDetails(candid: ApiUserGroupDetails): [number, UserGroupDetails] {
-//     return [
-//         candid.user_group_id,
-//         {
-//             id: candid.user_group_id,
-//             kind: "user_group",
-//             members: new Set<string>(candid.members.map((m) => m.toString())),
-//             name: candid.name,
-//         },
-//     ];
-// }
-//
-// export function communityDetailsUpdatesResponse(
-//     candid: ApiSelectedUpdatesResponse,
-// ): CommunityDetailsUpdatesResponse {
-//     if ("Success" in candid) {
-//         return {
-//             kind: "success",
-//             membersAddedOrUpdated: candid.Success.members_added_or_updated.map((m) => ({
-//                 role: memberRole(m.role),
-//                 userId: m.user_id.toString(),
-//                 displayName: optional(m.display_name, identity),
-//             })),
-//             membersRemoved: new Set(candid.Success.members_removed.map((u) => u.toString())),
-//             blockedUsersAdded: new Set(candid.Success.blocked_users_added.map((u) => u.toString())),
-//             blockedUsersRemoved: new Set(
-//                 candid.Success.blocked_users_removed.map((u) => u.toString()),
-//             ),
-//             rules: optional(candid.Success.chat_rules, identity),
-//             invitedUsers: optional(
-//                 candid.Success.invited_users,
-//                 (invited_users) => new Set(invited_users.map((u) => u.toString())),
-//             ),
-//             lastUpdated: candid.Success.timestamp,
-//             userGroups: candid.Success.user_groups.map(userGroupDetails).map(([_, g]) => g),
-//             userGroupsDeleted: new Set(candid.Success.user_groups_deleted),
-//             referralsRemoved: new Set(candid.Success.referrals_removed.map((u) => u.toString())),
-//             referralsAdded: new Set(candid.Success.referrals_added.map((u) => u.toString())),
-//         };
-//     } else if ("SuccessNoUpdates" in candid) {
-//         return {
-//             kind: "success_no_updates",
-//             lastUpdated: candid.SuccessNoUpdates,
-//         };
-//     } else {
-//         console.warn("Unexpected ApiSelectedUpdatesResponse type received", candid);
-//         return CommonResponses.failure();
-//     }
-// }
-//
-// export function createUserGroupResponse(
-//     candid: ApiCreateUserGroupResponse,
-// ): CreateUserGroupResponse {
-//     if ("Success" in candid) {
-//         return {
-//             kind: "success",
-//             userGroupId: candid.Success.user_group_id,
-//         };
-//     } else if ("NameTaken" in candid) {
-//         return {
-//             kind: "name_taken",
-//         };
-//     } else {
-//         console.warn("CreateUserGroup failed with", candid);
-//         return CommonResponses.failure();
-//     }
-// }
-//
-// export function updateUserGroupResponse(
-//     candid: ApiUpdateUserGroupResponse,
-// ): UpdateUserGroupResponse {
-//     if ("Success" in candid) {
-//         return CommonResponses.success();
-//     } else if ("NameTaken" in candid) {
-//         return {
-//             kind: "name_taken",
-//         };
-//     } else {
-//         console.warn("UpdateUserGroup failed with", candid);
-//         return CommonResponses.failure();
-//     }
-// }
-//
-// export function deleteUserGroupsResponse(
-//     candid: ApiDeleteUserGroupsResponse,
-// ): DeleteUserGroupsResponse {
-//     if ("Success" in candid) {
-//         return CommonResponses.success();
-//     } else {
-//         console.warn("DeleteUserGroups failed with", candid);
-//         return CommonResponses.failure();
-//     }
-// }
-//
-// export function setMemberDisplayNameResponse(
-//     candid: ApiSetMemberDisplayNameResponse,
-// ): SetMemberDisplayNameResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     }
-//     if ("UserNotInCommunity" in candid) {
-//         return "user_not_in_community";
-//     }
-//     if ("UserSuspended" in candid) {
-//         return "user_suspended";
-//     }
-//     if ("CommunityFrozen" in candid) {
-//         return "community_frozen";
-//     }
-//     if ("DisplayNameTooShort" in candid) {
-//         return "display_name_too_short";
-//     }
-//     if ("DisplayNameTooLong" in candid) {
-//         return "display_name_too_long";
-//     }
-//     if ("DisplayNameInvalid" in candid) {
-//         return "display_name_invalid";
-//     }
-//     throw new UnsupportedValueError(
-//         "Unexpected ApiSetMemberDisplayNameResponse type received",
-//         candid,
-//     );
-// }
-//
-// export function followThreadResponse(
-//     candid: ApiFollowThreadResponse | ApiUnfollowThreadResponse,
-// ): FollowThreadResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     }
-//     if ("AlreadyFollowing" in candid || "NotFollowing" in candid) {
-//         return "unchanged";
-//     } else {
-//         console.warn("followThread failed with", candid);
-//         return "failed";
-//     }
-// }
-//
-// export function reportMessageResponse(candid: ReportMessageResponse): boolean {
-//     return "Success" in candid || "AlreadyReported" in candid;
-// }
+
+export function apiCommunityRole(newRole: MemberRole): TCommunityRole {
+    switch (newRole) {
+        case "owner":
+            return "Owner";
+        case "admin":
+            return "Admin";
+        default:
+            return "Member";
+    }
+}
+
+export function apiOptionalCommunityPermissions(
+    permissions: Partial<CommunityPermissions>,
+): TOptionalCommunityPermissions {
+    return {
+        create_public_channel: mapOptional(
+            permissions.createPublicChannel,
+            apiCommunityPermissionRole,
+        ),
+        update_details: mapOptional(permissions.updateDetails, apiCommunityPermissionRole),
+        remove_members: mapOptional(permissions.removeMembers, apiCommunityPermissionRole),
+        invite_users: mapOptional(permissions.inviteUsers, apiCommunityPermissionRole),
+        change_roles: mapOptional(permissions.changeRoles, apiCommunityPermissionRole),
+        create_private_channel: mapOptional(
+            permissions.createPrivateChannel,
+            apiCommunityPermissionRole,
+        ),
+        manage_user_groups: mapOptional(permissions.manageUserGroups, apiCommunityPermissionRole),
+    };
+}
+
+export function communityDetailsResponse(
+    value: CommunitySelectedInitialResponse,
+): CommunityDetailsResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return {
+            members: value.Success.members.map((m) => ({
+                role: memberRole(m.role),
+                userId: principalBytesToString(m.user_id),
+                displayName: m.display_name,
+                lapsed: m.lapsed,
+            })),
+            blockedUsers: new Set(value.Success.blocked_users.map(principalBytesToString)),
+            invitedUsers: new Set(value.Success.invited_users.map(principalBytesToString)),
+            rules: value.Success.chat_rules,
+            lastUpdated: value.Success.timestamp,
+            userGroups: new Map(value.Success.user_groups.map(userGroupDetails)),
+            referrals: new Set(value.Success.referrals.map((u) => u.toString())),
+        };
+    } else {
+        console.warn("CommunityDetails failed with", value);
+        return "failure";
+    }
+}
+
+export function userGroupDetails(value: TUserGroupDetails): [number, UserGroupDetails] {
+    return [
+        value.user_group_id,
+        {
+            id: value.user_group_id,
+            kind: "user_group",
+            members: new Set<string>(value.members.map(principalBytesToString)),
+            name: value.name,
+        },
+    ];
+}
+
+export function communityDetailsUpdatesResponse(
+    value: CommunitySelectedUpdatesResponse,
+): CommunityDetailsUpdatesResponse {
+    if (typeof value === "object") {
+        if ("Success" in value) {
+            return {
+                kind: "success",
+                membersAddedOrUpdated: value.Success.members_added_or_updated.map((m) => ({
+                    role: memberRole(m.role),
+                    userId: principalBytesToString(m.user_id),
+                    displayName: m.display_name,
+                    lapsed: m.lapsed,
+                })),
+                membersRemoved: new Set(value.Success.members_removed.map(principalBytesToString)),
+                blockedUsersAdded: new Set(
+                    value.Success.blocked_users_added.map(principalBytesToString),
+                ),
+                blockedUsersRemoved: new Set(
+                    value.Success.blocked_users_removed.map(principalBytesToString),
+                ),
+                rules: value.Success.chat_rules,
+                invitedUsers: mapOptional(
+                    value.Success.invited_users,
+                    (invited_users) => new Set(invited_users.map(principalBytesToString)),
+                ),
+                lastUpdated: value.Success.timestamp,
+                userGroups: value.Success.user_groups.map(userGroupDetails).map(([_, g]) => g),
+                userGroupsDeleted: new Set(value.Success.user_groups_deleted),
+                referralsRemoved: new Set(
+                    value.Success.referrals_removed.map(principalBytesToString),
+                ),
+                referralsAdded: new Set(value.Success.referrals_added.map(principalBytesToString)),
+            };
+        } else if ("SuccessNoUpdates" in value) {
+            return {
+                kind: "success_no_updates",
+                lastUpdated: value.SuccessNoUpdates,
+            };
+        }
+    }
+    console.warn("Unexpected ApiSelectedUpdatesResponse type received", value);
+    return CommonResponses.failure();
+}
+
+export function createUserGroupResponse(
+    value: CommunityCreateUserGroupResponse,
+): CreateUserGroupResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return {
+            kind: "success",
+            userGroupId: value.Success.user_group_id,
+        };
+    }
+    if (value === "NameTaken") {
+        return {
+            kind: "name_taken",
+        };
+    } else {
+        console.warn("CreateUserGroup failed with", value);
+        return CommonResponses.failure();
+    }
+}
+
+export function updateUserGroupResponse(
+    value: CommunityUpdateUserGroupResponse,
+): UpdateUserGroupResponse {
+    if (value === "Success") {
+        return CommonResponses.success();
+    } else if (value === "NameTaken") {
+        return {
+            kind: "name_taken",
+        };
+    } else {
+        console.warn("UpdateUserGroup failed with", value);
+        return CommonResponses.failure();
+    }
+}
+
+export function deleteUserGroupsResponse(
+    value: CommunityDeleteUserGroupsResponse,
+): DeleteUserGroupsResponse {
+    if (value === "Success") {
+        return CommonResponses.success();
+    } else {
+        console.warn("DeleteUserGroups failed with", value);
+        return CommonResponses.failure();
+    }
+}
+
+export function setMemberDisplayNameResponse(
+    value: CommunitySetMemberDisplayNameResponse,
+): SetMemberDisplayNameResponse {
+    if (value === "Success") {
+        return "success";
+    }
+    if (typeof value === "object") {
+        if ("DisplayNameTooShort" in value) {
+            return "display_name_too_short";
+        }
+        if ("DisplayNameTooLong" in value) {
+            return "display_name_too_long";
+        }
+    }
+    if (value === "UserNotInCommunity") {
+        return "user_not_in_community";
+    }
+    if (value === "UserSuspended") {
+        return "user_suspended";
+    }
+    if (value === "UserLapsed") {
+        return "user_lapsed";
+    }
+    if (value === "CommunityFrozen") {
+        return "community_frozen";
+    }
+    if (value === "DisplayNameInvalid") {
+        return "display_name_invalid";
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiSetMemberDisplayNameResponse type received",
+        value,
+    );
+}
+
+export function followThreadResponse(
+    value: CommunityFollowThreadResponse | CommunityUnfollowThreadResponse,
+): FollowThreadResponse {
+    if (value === "Success") {
+        return "success";
+    }
+    if (value === "AlreadyFollowing" || value === "NotFollowing") {
+        return "unchanged";
+    } else {
+        console.warn("followThread failed with", value);
+        return "failed";
+    }
+}
+
+export function reportMessageResponse(value: CommunityReportMessageResponse): boolean {
+    return value === "Success" || value === "AlreadyReported";
+}

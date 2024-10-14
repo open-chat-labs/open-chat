@@ -17,7 +17,7 @@ generate_update_call!(register_user);
 generate_update_call!(report_message_v2);
 
 pub mod happy_path {
-    use crate::utils::principal_to_username;
+    use crate::utils::{principal_to_username, tick_many};
     use crate::User;
     use candid::Principal;
     use pocket_ic::PocketIc;
@@ -45,7 +45,7 @@ pub mod happy_path {
             },
         );
 
-        env.tick();
+        tick_many(env, 3);
 
         match response {
             local_user_index_canister::register_user::Response::Success(res) => User {
