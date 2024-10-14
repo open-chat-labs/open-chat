@@ -121,7 +121,11 @@ fn delete_group_message(
         correlation_id: 0,
         new_achievement: false,
     };
-    fire_and_forget_handler.send(canister_id, "delete_messages_msgpack".to_string(), Encode!(&args).unwrap());
+    fire_and_forget_handler.send(
+        canister_id,
+        "delete_messages_msgpack".to_string(),
+        msgpack::serialize_then_unwrap(&args),
+    );
 }
 
 fn should_suspend_sender(sender: UserId, outcome: &ReportOutcome, state: &RuntimeState) -> Option<SuspensionDetails> {
