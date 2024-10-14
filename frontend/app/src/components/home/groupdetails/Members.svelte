@@ -19,14 +19,12 @@
         LARGE_GROUP_THRESHOLD,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
-    import SelectionButton from "../SelectionButton.svelte";
     import InvitedUser from "./InvitedUser.svelte";
     import { menuCloser } from "../../../actions/closeMenu";
     import UserGroups from "../communities/details/UserGroups.svelte";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { trimLeadingAtSymbol } from "../../../utils/user";
-    import ButtonGroup from "../../ButtonGroup.svelte";
     import User from "./User.svelte";
 
     const MAX_SEARCH_RESULTS = 255; // irritatingly this is a nat8 in the candid
@@ -217,31 +215,51 @@
     </div>
 
     {#if showBlocked || showInvited || showLapsed}
-        <div class="member-section-selector">
-            <ButtonGroup align="fill">
-                <SelectionButton
-                    title={$_("members")}
-                    on:click={() => setView("members")}
-                    selected={memberView === "members"} />
-                {#if showInvited}
-                    <SelectionButton
-                        title={$_("invited")}
-                        on:click={() => setView("invited")}
-                        selected={memberView === "invited"} />
-                {/if}
-                {#if showBlocked}
-                    <SelectionButton
-                        title={$_("blocked")}
-                        on:click={() => setView("blocked")}
-                        selected={memberView === "blocked"} />
-                {/if}
-                {#if showLapsed}
-                    <SelectionButton
-                        title={$_("access.lapsed.user")}
-                        on:click={() => setView("lapsed")}
-                        selected={memberView === "lapsed"} />
-                {/if}
-            </ButtonGroup>
+        <div class="tabs">
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <div
+                tabindex="0"
+                role="button"
+                on:click={() => setView("members")}
+                class:selected={memberView === "members"}
+                class="tab sub">
+                <Translatable resourceKey={i18nKey("members")} />
+            </div>
+            {#if showInvited}
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <div
+                    tabindex="0"
+                    role="button"
+                    on:click={() => setView("invited")}
+                    class:selected={memberView === "invited"}
+                    class="tab sub">
+                    <Translatable resourceKey={i18nKey("invited")} />
+                </div>
+            {/if}
+
+            {#if showBlocked}
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <div
+                    tabindex="0"
+                    role="button"
+                    on:click={() => setView("blocked")}
+                    class:selected={memberView === "blocked"}
+                    class="tab sub">
+                    <Translatable resourceKey={i18nKey("blocked")} />
+                </div>
+            {/if}
+
+            {#if showLapsed}
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <div
+                    tabindex="0"
+                    role="button"
+                    on:click={() => setView("lapsed")}
+                    class:selected={memberView === "lapsed"}
+                    class="tab sub">
+                    <Translatable resourceKey={i18nKey("access.lapsed.user")} />
+                </div>
+            {/if}
         </div>
     {/if}
 
@@ -361,6 +379,10 @@
             &.selected {
                 color: var(--txt);
                 border-bottom: 3px solid var(--txt);
+
+                &.sub {
+                    border-bottom: 3px solid var(--accent);
+                }
             }
         }
     }
