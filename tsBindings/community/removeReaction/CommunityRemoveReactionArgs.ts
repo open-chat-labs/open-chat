@@ -3,4 +3,4 @@ import type { MessageId } from "../../shared/MessageId";
 import type { MessageIndex } from "../../shared/MessageIndex";
 import type { Reaction } from "../../shared/Reaction";
 
-export type CommunityRemoveReactionArgs = { channel_id: bigint, thread_root_message_index?: MessageIndex, message_id: MessageId, reaction: Reaction, };
+export type CommunityRemoveReactionArgs = { channel_id: bigint, thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, reaction: Reaction, };

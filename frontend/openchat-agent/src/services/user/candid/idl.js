@@ -1216,11 +1216,6 @@ export const idlFactory = ({ IDL }) => {
   const CommunitiesInitial = IDL.Record({
     'summaries' : IDL.Vec(UserCanisterCommunitySummary),
   });
-  const MessageActivitySummary = IDL.Record({
-    'read_up_to' : TimestampMillis,
-    'unread_count' : IDL.Nat32,
-    'latest_event' : TimestampMillis,
-  });
   const Referral = IDL.Record({
     'status' : ReferralStatus,
     'user_id' : UserId,
@@ -1307,7 +1302,6 @@ export const idlFactory = ({ IDL }) => {
       'communities' : CommunitiesInitial,
       'total_chit_earned' : IDL.Int32,
       'wallet_config' : WalletConfig,
-      'message_activity_summary' : MessageActivitySummary,
       'blocked_users' : IDL.Vec(UserId),
       'is_unique_person' : IDL.Bool,
       'referrals' : IDL.Vec(Referral),
@@ -2019,7 +2013,6 @@ export const idlFactory = ({ IDL }) => {
       'username' : IDL.Opt(IDL.Text),
       'total_chit_earned' : IDL.Int32,
       'wallet_config' : IDL.Opt(WalletConfig),
-      'message_activity_summary' : IDL.Opt(MessageActivitySummary),
       'blocked_users' : IDL.Opt(IDL.Vec(UserId)),
       'is_unique_person' : IDL.Opt(IDL.Bool),
       'referrals' : IDL.Vec(Referral),
