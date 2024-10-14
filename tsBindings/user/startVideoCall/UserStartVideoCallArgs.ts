@@ -3,4 +3,4 @@ import type { MessageId } from "../../shared/MessageId";
 import type { UserId } from "../../shared/UserId";
 import type { VideoCallType } from "../../shared/VideoCallType";
 
-export type UserStartVideoCallArgs = { message_id: MessageId, initiator: UserId, initiator_username: string, initiator_display_name?: string, initiator_avatar_id?: bigint, max_duration?: bigint, call_type: VideoCallType, };
+export type UserStartVideoCallArgs = { message_id: MessageId, initiator: UserId, initiator_username: string, initiator_display_name?: string | undefined, initiator_avatar_id?: bigint | undefined, max_duration?: bigint | undefined, call_type: VideoCallType, };

@@ -2,5 +2,6 @@
 import type { CommunityCanisterChannelSummary } from "../../shared/CommunityCanisterChannelSummary";
 import type { CommunityCanisterCommunitySummary } from "../../shared/CommunityCanisterCommunitySummary";
 import type { GateCheckFailedReason } from "../../shared/GateCheckFailedReason";
+import type { TSNumberWithDefault } from "../../shared/TSNumberWithDefault";
 
-export type LocalUserIndexJoinChannelResponse = { "Success": CommunityCanisterChannelSummary } | { "SuccessJoinedCommunity": CommunityCanisterCommunitySummary } | { "AlreadyInChannel": CommunityCanisterChannelSummary } | { "GateCheckFailed": GateCheckFailedReason } | "CommunityNotFound" | "CommunityNotPublic" | "ChannelNotFound" | { "MemberLimitReached": number } | "UserBlocked" | "UserSuspended" | "CommunityFrozen" | "NotInvited" | { "InternalError": string };
+export type LocalUserIndexJoinChannelResponse = { "Success": CommunityCanisterChannelSummary } | { "SuccessJoinedCommunity": CommunityCanisterCommunitySummary } | { "AlreadyInChannel": CommunityCanisterChannelSummary } | { "GateCheckFailed": GateCheckFailedReason } | "CommunityNotFound" | "CommunityNotPublic" | "ChannelNotFound" | { "MemberLimitReached": TSNumberWithDefault } | "UserBlocked" | "UserSuspended" | "CommunityFrozen" | "NotInvited" | { "InternalError": string };

@@ -2,4 +2,8 @@
 import type { MessageId } from "../../shared/MessageId";
 import type { MessageIndex } from "../../shared/MessageIndex";
 
-export type CommunityUndeleteMessagesArgs = { channel_id: bigint, thread_root_message_index?: MessageIndex, message_ids: Array<MessageId>, };
+export type CommunityUndeleteMessagesArgs = { channel_id: bigint, thread_root_message_index?: MessageIndex | undefined, 
+/**
+ * @default []
+ */
+message_ids: Array<MessageId>, };

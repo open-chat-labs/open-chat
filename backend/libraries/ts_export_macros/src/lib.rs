@@ -2,7 +2,7 @@ use proc_macro::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 use std::fmt::Write;
 use syn::punctuated::Punctuated;
-use syn::{parse_macro_input, parse_quote, Attribute, Field, Ident, Item, Token, Type};
+use syn::{parse_macro_input, parse_quote, Attribute, Field, Ident, Item, PathSegment, Token, Type};
 
 struct MethodAttribute {
     canister_name: String,
@@ -104,32 +104,92 @@ fn insert_field_attributes(field: &mut Field, is_tuple: bool) {
                 || PRINCIPAL_ALIASES.iter().any(|a| type_path.path.segments[0].ident == a)
             {
                 field.attrs.push(parse_quote!( #[ts(as = "ts_export::TSBytes")] ));
-            }
-            if let Some(_skip_serializing_if) = skip_serializing_if_default(&type_path.path.segments[0].ident.to_string()) {
+            } else if let Some(Defaults {
+                func,
+                default_override,
+                type_override,
+            }) = skip_serializing_if_default(&type_path.path.segments[0])
+            {
                 field.attrs.push(parse_quote!( #[serde(default)] ));
+                field.attrs.push(parse_quote!( #[serde(skip_serializing_if = #func)]));
 
-                // Uncomment this once canisters have been upgraded to add the serde(default) attribute
-                // field
-                //     .attrs
-                //     .push(parse_quote!( #[serde(skip_serializing_if = #skip_serializing_if)]))
+                if let Some(default_override) = default_override {
+                    let doc_comment = format!(" @default {default_override}");
+                    field.attrs.push(parse_quote!( #[doc = #doc_comment]));
+                }
+                if let Some(type_override) = type_override {
+                    field.attrs.push(parse_quote!( #[ts(as = #type_override)]));
+                }
             }
         }
     }
 }
 
-fn skip_serializing_if_default(s: &str) -> Option<&str> {
-    match s {
-        "Vec" => Some("Vec::is_empty"),
-        "BTreeMap" => Some("BTreeMap::is_empty"),
-        "BTreeSet" => Some("BTreeSet::is_empty"),
-        "HashMap" => Some("HashMap::is_empty"),
-        "HashSet" => Some("HashSet::is_empty"),
-        "OptionUpdate" => Some("OptionUpdate::is_empty"),
-        "bool" | "usize" | "u8" | "u16" | "u32" | "u64" | "u128" | "isize" | "i8" | "i16" | "i32" | "i64" | "i128"
-        | "CommunityRole" | "EventIndex" | "GroupRole" | "MessageIndex" | "Milliseconds" | "Nanoseconds"
-        | "TimestampMillis" | "TimestampNanos" => Some("ts_export::is_default"),
+fn skip_serializing_if_default(path_segment: &PathSegment) -> Option<Defaults> {
+    match path_segment.ident.to_string().as_str() {
+        "Vec" => Some(Defaults {
+            func: "Vec::is_empty",
+            default_override: Some("[]"),
+            type_override: None,
+        }),
+        "BTreeMap" => Some(Defaults {
+            func: "BTreeMap::is_empty",
+            default_override: Some("{}"),
+            type_override: None,
+        }),
+        "BTreeSet" => Some(Defaults {
+            func: "BTreeSet::is_empty",
+            default_override: Some("[]"),
+            type_override: None,
+        }),
+        "HashMap" => Some(Defaults {
+            func: "HashMap::is_empty",
+            default_override: Some("{}"),
+            type_override: None,
+        }),
+        "HashSet" => Some(Defaults {
+            func: "HashSet::is_empty",
+            default_override: Some("[]"),
+            type_override: None,
+        }),
+        "OptionUpdate" => Some(Defaults {
+            func: "OptionUpdate::is_empty",
+            default_override: None,
+            type_override: None,
+        }),
+        "GroupRole" | "CommunityRole" => Some(Defaults {
+            func: "ts_export::is_default",
+            default_override: None,
+            type_override: None,
+        }),
+        "bool" => Some(Defaults {
+            func: "ts_export::is_default",
+            default_override: None,
+            type_override: Some("ts_export::TSBoolWithDefault"),
+        }),
+        "i8" | "i16" | "i32" | "u8" | "u16" | "u32" | "f8" | "f16" | "f32" | "f64" | "EventIndex" | "MessageIndex" => {
+            Some(Defaults {
+                func: "ts_export::is_default",
+                default_override: None,
+                type_override: Some("ts_export::TSNumberWithDefault"),
+            })
+        }
+        // TODO: Sort out how to make Typebox work with BigInts as default values
+        "i64" | "i128" | "u64" | "u128" | "Milliseconds" | "Nanoseconds" | "Nat" | "TimestampMillis" | "TimestampNanos" => {
+            Some(Defaults {
+                func: "ts_export::is_default",
+                default_override: None,
+                type_override: Some("ts_export::TSBigIntWithDefault"),
+            })
+        }
         _ => None,
     }
+}
+
+struct Defaults {
+    func: &'static str,
+    default_override: Option<&'static str>,
+    type_override: Option<&'static str>,
 }
 
 fn get_method_attribute(inputs: Vec<String>) -> MethodAttribute {

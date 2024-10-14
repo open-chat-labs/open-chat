@@ -2,4 +2,8 @@
 import type { TSBytes } from "./TSBytes";
 import type { VerifiedCredentialArgumentValue } from "./VerifiedCredentialArgumentValue";
 
-export type VerifiedCredentialGate = { issuer_canister_id: TSBytes, issuer_origin: string, credential_type: string, credential_name: string, credential_arguments: Record<string, VerifiedCredentialArgumentValue>, };
+export type VerifiedCredentialGate = { issuer_canister_id: TSBytes, issuer_origin: string, credential_type: string, credential_name: string, 
+/**
+ * @default {}
+ */
+credential_arguments: Record<string, VerifiedCredentialArgumentValue>, };
