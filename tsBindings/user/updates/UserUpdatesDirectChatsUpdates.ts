@@ -3,16 +3,4 @@ import type { ChatId } from "../../shared/ChatId";
 import type { DirectChatSummary } from "../../shared/DirectChatSummary";
 import type { DirectChatSummaryUpdates } from "../../shared/DirectChatSummaryUpdates";
 
-export type UserUpdatesDirectChatsUpdates = { 
-/**
- * @default []
- */
-added: Array<DirectChatSummary>, 
-/**
- * @default []
- */
-updated: Array<DirectChatSummaryUpdates>, 
-/**
- * @default []
- */
-removed: Array<ChatId>, pinned?: Array<ChatId> | undefined, };
+export type UserUpdatesDirectChatsUpdates = { added: Array<DirectChatSummary>, updated: Array<DirectChatSummaryUpdates>, removed: Array<ChatId>, pinned?: Array<ChatId> | undefined, };
