@@ -2,4 +2,4 @@
 import type { LocalUserIndexChatEventsEventsArgsInner } from "./LocalUserIndexChatEventsEventsArgsInner";
 import type { LocalUserIndexChatEventsEventsContext } from "./LocalUserIndexChatEventsEventsContext";
 
-export type LocalUserIndexChatEventsEventsArgs = { context: LocalUserIndexChatEventsEventsContext, args: LocalUserIndexChatEventsEventsArgsInner, latest_known_update?: bigint, };
+export type LocalUserIndexChatEventsEventsArgs = { context: LocalUserIndexChatEventsEventsContext, args: LocalUserIndexChatEventsEventsArgsInner, latest_known_update?: bigint | undefined, };

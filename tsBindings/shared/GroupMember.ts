@@ -2,4 +2,4 @@
 import type { GroupRole } from "./GroupRole";
 import type { UserId } from "./UserId";
 
-export type GroupMember = { user_id: UserId, date_added: bigint, role: GroupRole, };
+export type GroupMember = { user_id: UserId, date_added: bigint, role: GroupRole, lapsed: boolean, };

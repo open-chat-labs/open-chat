@@ -2,4 +2,4 @@
 import type { P2PSwapStatus } from "./P2PSwapStatus";
 import type { TokenInfo } from "./TokenInfo";
 
-export type P2PSwapContent = { swap_id: number, token0: TokenInfo, token0_amount: bigint, token1: TokenInfo, token1_amount: bigint, expires_at: bigint, caption?: string, token0_txn_in: bigint, status: P2PSwapStatus, };
+export type P2PSwapContent = { swap_id: number, token0: TokenInfo, token0_amount: bigint, token1: TokenInfo, token1_amount: bigint, expires_at: bigint, caption?: string | undefined, token0_txn_in: bigint, status: P2PSwapStatus, };

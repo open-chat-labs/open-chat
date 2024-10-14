@@ -2,4 +2,4 @@
 import type { MessageId } from "../../shared/MessageId";
 import type { MessageIndex } from "../../shared/MessageIndex";
 
-export type CommunityAcceptP2pSwapArgs = { channel_id: bigint, thread_root_message_index?: MessageIndex, message_id: MessageId, pin?: string, new_achievement: boolean, };
+export type CommunityAcceptP2pSwapArgs = { channel_id: bigint, thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, pin?: string | undefined, new_achievement: boolean, };
