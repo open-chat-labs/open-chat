@@ -17,5 +17,22 @@ import type { OptionUpdateGroupSubtype } from "./OptionUpdateGroupSubtype";
 import type { OptionUpdateU128 } from "./OptionUpdateU128";
 import type { OptionUpdateU64 } from "./OptionUpdateU64";
 import type { OptionUpdateVideoCall } from "./OptionUpdateVideoCall";
+import type { TSBigIntWithDefault } from "./TSBigIntWithDefault";
 
-export type GroupCanisterGroupChatSummaryUpdates = { chat_id: ChatId, last_updated: bigint, name?: string | undefined, description?: string | undefined, subtype: OptionUpdateGroupSubtype, avatar_id: OptionUpdateU128, latest_message?: EventWrapperMessage | undefined, latest_event_index?: EventIndex | undefined, latest_message_index?: MessageIndex | undefined, participant_count?: number | undefined, role?: GroupRole | undefined, mentions: Array<HydratedMention>, wasm_version?: BuildVersion | undefined, permissions_v2?: GroupPermissions | undefined, updated_events: Array<[MessageIndex | null, EventIndex, bigint]>, metrics?: ChatMetrics | undefined, my_metrics?: ChatMetrics | undefined, is_public?: boolean | undefined, messages_visible_to_non_members?: boolean | undefined, latest_threads: Array<GroupCanisterThreadDetails>, unfollowed_threads: Array<MessageIndex>, notifications_muted?: boolean | undefined, frozen: OptionUpdateFrozenGroupInfo, date_last_pinned?: bigint | undefined, events_ttl: OptionUpdateU64, events_ttl_last_updated?: bigint | undefined, gate: OptionUpdateAccessGate, gate_config: OptionUpdateAccessGateConfig, rules_accepted?: boolean | undefined, membership?: GroupMembershipUpdates | undefined, video_call_in_progress: OptionUpdateVideoCall, };
+export type GroupCanisterGroupChatSummaryUpdates = { chat_id: ChatId, last_updated: TSBigIntWithDefault, name?: string | undefined, description?: string | undefined, subtype: OptionUpdateGroupSubtype, avatar_id: OptionUpdateU128, latest_message?: EventWrapperMessage | undefined, latest_event_index?: EventIndex | undefined, latest_message_index?: MessageIndex | undefined, participant_count?: number | undefined, role?: GroupRole | undefined, 
+/**
+ * @default []
+ */
+mentions: Array<HydratedMention>, wasm_version?: BuildVersion | undefined, permissions_v2?: GroupPermissions | undefined, 
+/**
+ * @default []
+ */
+updated_events: Array<[MessageIndex | null, EventIndex, bigint]>, metrics?: ChatMetrics | undefined, my_metrics?: ChatMetrics | undefined, is_public?: boolean | undefined, messages_visible_to_non_members?: boolean | undefined, 
+/**
+ * @default []
+ */
+latest_threads: Array<GroupCanisterThreadDetails>, 
+/**
+ * @default []
+ */
+unfollowed_threads: Array<MessageIndex>, notifications_muted?: boolean | undefined, frozen: OptionUpdateFrozenGroupInfo, date_last_pinned?: bigint | undefined, events_ttl: OptionUpdateU64, events_ttl_last_updated?: bigint | undefined, gate: OptionUpdateAccessGate, gate_config: OptionUpdateAccessGateConfig, rules_accepted?: boolean | undefined, membership?: GroupMembershipUpdates | undefined, video_call_in_progress: OptionUpdateVideoCall, };

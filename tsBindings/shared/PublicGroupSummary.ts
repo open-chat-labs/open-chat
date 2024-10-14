@@ -3,11 +3,13 @@ import type { AccessGate } from "./AccessGate";
 import type { AccessGateConfig } from "./AccessGateConfig";
 import type { BuildVersion } from "./BuildVersion";
 import type { ChatId } from "./ChatId";
-import type { EventIndex } from "./EventIndex";
 import type { EventWrapperMessage } from "./EventWrapperMessage";
 import type { FrozenGroupInfo } from "./FrozenGroupInfo";
 import type { GroupSubtype } from "./GroupSubtype";
 import type { MessageIndex } from "./MessageIndex";
+import type { TSBigIntWithDefault } from "./TSBigIntWithDefault";
+import type { TSBoolWithDefault } from "./TSBoolWithDefault";
 import type { TSBytes } from "./TSBytes";
+import type { TSNumberWithDefault } from "./TSNumberWithDefault";
 
-export type PublicGroupSummary = { chat_id: ChatId, local_user_index_canister_id: TSBytes, last_updated: bigint, name: string, description: string, subtype?: GroupSubtype | undefined, history_visible_to_new_joiners: boolean, messages_visible_to_non_members: boolean, avatar_id?: bigint | undefined, latest_message?: EventWrapperMessage | undefined, latest_event_index: EventIndex, latest_message_index?: MessageIndex | undefined, participant_count: number, wasm_version: BuildVersion, is_public: boolean, frozen?: FrozenGroupInfo | undefined, events_ttl?: bigint | undefined, events_ttl_last_updated: bigint, gate?: AccessGate | undefined, gate_config?: AccessGateConfig | undefined, };
+export type PublicGroupSummary = { chat_id: ChatId, local_user_index_canister_id: TSBytes, last_updated: TSBigIntWithDefault, name: string, description: string, subtype?: GroupSubtype | undefined, history_visible_to_new_joiners: TSBoolWithDefault, messages_visible_to_non_members: TSBoolWithDefault, avatar_id?: bigint | undefined, latest_message?: EventWrapperMessage | undefined, latest_event_index: TSNumberWithDefault, latest_message_index?: MessageIndex | undefined, participant_count: TSNumberWithDefault, wasm_version: BuildVersion, is_public: TSBoolWithDefault, frozen?: FrozenGroupInfo | undefined, events_ttl?: bigint | undefined, events_ttl_last_updated: TSBigIntWithDefault, gate?: AccessGate | undefined, gate_config?: AccessGateConfig | undefined, };

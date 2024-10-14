@@ -3,4 +3,8 @@ import type { ChatId } from "../../shared/ChatId";
 import type { MessageIndex } from "../../shared/MessageIndex";
 import type { UserMarkReadThreadRead } from "./UserMarkReadThreadRead";
 
-export type UserMarkReadChatMessagesRead = { chat_id: ChatId, read_up_to?: MessageIndex | undefined, threads: Array<UserMarkReadThreadRead>, date_read_pinned?: bigint | undefined, };
+export type UserMarkReadChatMessagesRead = { chat_id: ChatId, read_up_to?: MessageIndex | undefined, 
+/**
+ * @default []
+ */
+threads: Array<UserMarkReadThreadRead>, date_read_pinned?: bigint | undefined, };
