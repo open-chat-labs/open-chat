@@ -2,20 +2,4 @@
 import type { CommunityAddMembersToChannelUserFailedError } from "./CommunityAddMembersToChannelUserFailedError";
 import type { UserId } from "../../shared/UserId";
 
-export type CommunityAddMembersToChannelPartialSuccessResult = { 
-/**
- * @default []
- */
-users_added: Array<UserId>, 
-/**
- * @default []
- */
-users_already_in_channel: Array<UserId>, 
-/**
- * @default []
- */
-users_limit_reached: Array<UserId>, 
-/**
- * @default []
- */
-users_failed_with_error: Array<CommunityAddMembersToChannelUserFailedError>, };
+export type CommunityAddMembersToChannelPartialSuccessResult = { users_added: Array<UserId>, users_already_in_channel: Array<UserId>, users_limit_reached: Array<UserId>, users_failed_with_error: Array<CommunityAddMembersToChannelUserFailedError>, };

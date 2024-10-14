@@ -4,13 +4,6 @@ import type { CanisterUpgradeStatus } from "../../shared/CanisterUpgradeStatus";
 import type { DiamondMembershipDetails } from "../../shared/DiamondMembershipDetails";
 import type { DiamondMembershipStatusFull } from "../../shared/DiamondMembershipStatusFull";
 import type { SuspensionDetails } from "../../shared/SuspensionDetails";
-import type { TSBigIntWithDefault } from "../../shared/TSBigIntWithDefault";
-import type { TSBoolWithDefault } from "../../shared/TSBoolWithDefault";
-import type { TSNumberWithDefault } from "../../shared/TSNumberWithDefault";
 import type { UserId } from "../../shared/UserId";
 
-export type UserIndexCurrentUserSuccessResult = { user_id: UserId, username: string, date_created: TSBigIntWithDefault, display_name?: string | undefined, avatar_id?: bigint | undefined, canister_upgrade_status: CanisterUpgradeStatus, wasm_version: BuildVersion, icp_account: [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number], 
-/**
- * @default []
- */
-referrals: Array<UserId>, is_platform_moderator: TSBoolWithDefault, is_platform_operator: TSBoolWithDefault, suspension_details?: SuspensionDetails | undefined, is_suspected_bot: TSBoolWithDefault, diamond_membership_details?: DiamondMembershipDetails | undefined, diamond_membership_status: DiamondMembershipStatusFull, moderation_flags_enabled: TSNumberWithDefault, is_unique_person: TSBoolWithDefault, };
+export type UserIndexCurrentUserSuccessResult = { user_id: UserId, username: string, date_created: bigint, display_name?: string | undefined, avatar_id?: bigint | undefined, canister_upgrade_status: CanisterUpgradeStatus, wasm_version: BuildVersion, icp_account: [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number], referrals: Array<UserId>, is_platform_moderator: boolean, is_platform_operator: boolean, suspension_details?: SuspensionDetails | undefined, is_suspected_bot: boolean, diamond_membership_details?: DiamondMembershipDetails | undefined, diamond_membership_status: DiamondMembershipStatusFull, moderation_flags_enabled: number, is_unique_person: boolean, };

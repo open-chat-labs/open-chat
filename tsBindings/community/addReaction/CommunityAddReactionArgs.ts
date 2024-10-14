@@ -2,6 +2,5 @@
 import type { MessageId } from "../../shared/MessageId";
 import type { MessageIndex } from "../../shared/MessageIndex";
 import type { Reaction } from "../../shared/Reaction";
-import type { TSBoolWithDefault } from "../../shared/TSBoolWithDefault";
 
-export type CommunityAddReactionArgs = { channel_id: bigint, thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, reaction: Reaction, username: string, display_name?: string | undefined, new_achievement: TSBoolWithDefault, };
+export type CommunityAddReactionArgs = { channel_id: bigint, thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, reaction: Reaction, username: string, display_name?: string | undefined, new_achievement: boolean, };

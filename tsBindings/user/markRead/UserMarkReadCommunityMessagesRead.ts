@@ -2,8 +2,4 @@
 import type { CommunityId } from "../../shared/CommunityId";
 import type { UserMarkReadChannelMessagesRead } from "./UserMarkReadChannelMessagesRead";
 
-export type UserMarkReadCommunityMessagesRead = { community_id: CommunityId, 
-/**
- * @default []
- */
-channels_read: Array<UserMarkReadChannelMessagesRead>, };
+export type UserMarkReadCommunityMessagesRead = { community_id: CommunityId, channels_read: Array<UserMarkReadChannelMessagesRead>, };

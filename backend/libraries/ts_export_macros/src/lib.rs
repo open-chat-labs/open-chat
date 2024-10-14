@@ -105,21 +105,21 @@ fn insert_field_attributes(field: &mut Field, is_tuple: bool) {
             {
                 field.attrs.push(parse_quote!( #[ts(as = "ts_export::TSBytes")] ));
             } else if let Some(Defaults {
-                func,
-                default_override,
-                type_override,
+                func: _,
+                default_override: _,
+                type_override: _,
             }) = skip_serializing_if_default(&type_path.path.segments[0])
             {
                 field.attrs.push(parse_quote!( #[serde(default)] ));
-                field.attrs.push(parse_quote!( #[serde(skip_serializing_if = #func)]));
-
-                if let Some(default_override) = default_override {
-                    let doc_comment = format!(" @default {default_override}");
-                    field.attrs.push(parse_quote!( #[doc = #doc_comment]));
-                }
-                if let Some(type_override) = type_override {
-                    field.attrs.push(parse_quote!( #[ts(as = #type_override)]));
-                }
+                // field.attrs.push(parse_quote!( #[serde(skip_serializing_if = #func)]));
+                //
+                // if let Some(default_override) = default_override {
+                //     let doc_comment = format!(" @default {default_override}");
+                //     field.attrs.push(parse_quote!( #[doc = #doc_comment]));
+                // }
+                // if let Some(type_override) = type_override {
+                //     field.attrs.push(parse_quote!( #[ts(as = #type_override)]));
+                // }
             }
         }
     }
@@ -186,6 +186,7 @@ fn skip_serializing_if_default(path_segment: &PathSegment) -> Option<Defaults> {
     }
 }
 
+#[allow(dead_code)]
 struct Defaults {
     func: &'static str,
     default_override: Option<&'static str>,
