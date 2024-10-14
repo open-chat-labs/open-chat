@@ -14,10 +14,11 @@ use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::AccessRulesInternal;
 use group_community_common::{
-    Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, Members, PaymentReceipts, PaymentRecipient,
+    Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, Member, Members, PaymentReceipts, PaymentRecipient,
     PendingPayment, PendingPaymentReason, PendingPaymentsQueue, UserCache,
 };
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
+use model::events::CommunityEventInternal;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
@@ -30,8 +31,9 @@ use std::ops::Deref;
 use std::time::Duration;
 use types::{
     AccessGate, AccessGateConfigInternal, BuildVersion, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary,
-    CommunityMembership, CommunityPermissions, CommunityRole, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo,
-    Milliseconds, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId, UserType,
+    CommunityMemberLapsed, CommunityMemberUnlapsed, CommunityMembership, CommunityPermissions, CommunityRole, Cryptocurrency,
+    Cycles, Document, Empty, FrozenGroupInfo, Milliseconds, Notification, PaymentGate, Rules, TimestampMillis, Timestamped,
+    UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use utils::env::Environment;
@@ -573,13 +575,38 @@ impl Data {
         }
     }
 
-    pub fn mark_member_lapsed(&mut self, user_id: UserId, channel_id: Option<ChannelId>, now: TimestampMillis) {
+    pub fn update_lapsed(&mut self, user_id: UserId, channel_id: Option<ChannelId>, lapsed: bool, now: TimestampMillis) {
         if let Some(channel_id) = channel_id {
             if let Some(channel) = self.channels.get_mut(&channel_id) {
-                channel.chat.members.mark_member_lapsed(&user_id, now);
+                channel.chat.members.update_lapsed(user_id, lapsed, now);
+            }
+        } else if let Some(member) = self.members.get_by_user_id_mut(&user_id) {
+            if member.set_lapsed(lapsed, now) {
+                let event = if lapsed {
+                    CommunityEventInternal::MemberLapsed(Box::new(CommunityMemberLapsed { user_id: member.user_id }))
+                } else {
+                    CommunityEventInternal::MemberUnlapsed(Box::new(CommunityMemberUnlapsed { user_id: member.user_id }))
+                };
+
+                self.events.push_event(event, now);
+            }
+        }
+    }
+
+    pub fn unlapse_all(&mut self, channel_id: Option<ChannelId>, now: TimestampMillis) {
+        if let Some(channel_id) = channel_id {
+            if let Some(channel) = self.channels.get_mut(&channel_id) {
+                channel.chat.members.unlapse_all(now);
             }
         } else {
-            self.members.mark_member_lapsed(&user_id, now);
+            for member in self.members.iter_mut() {
+                if member.set_lapsed(false, now) {
+                    self.events.push_event(
+                        CommunityEventInternal::MemberUnlapsed(Box::new(CommunityMemberUnlapsed { user_id: member.user_id })),
+                        now,
+                    );
+                }
+            }
         }
     }
 
@@ -601,13 +628,7 @@ impl Data {
             } else {
                 // If the access gate has been removed then clear lapsed status of members
                 if new_gate_config.is_none() {
-                    if let Some(channel_id) = channel_id {
-                        if let Some(channel) = self.channels.get_mut(&channel_id) {
-                            channel.chat.members.clear_lapsed(now);
-                        }
-                    } else {
-                        self.members.clear_lapsed(now);
-                    }
+                    self.unlapse_all(channel_id, now);
                 }
 
                 // There is no expiring gate any longer so remove the expiring members

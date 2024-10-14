@@ -208,6 +208,18 @@ pub struct CommunityMemberLeft {
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CommunityMemberLapsed {
+    pub user_id: UserId,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CommunityMemberUnlapsed {
+    pub user_id: UserId,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct RoleChanged {
     pub user_ids: Vec<UserId>,
     pub changed_by: UserId,

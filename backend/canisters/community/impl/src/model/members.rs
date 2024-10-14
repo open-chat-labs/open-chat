@@ -365,18 +365,6 @@ impl CommunityMembers {
 impl Members for CommunityMembers {
     type Member = CommunityMemberInternal;
 
-    fn iter(&self) -> impl Iterator<Item = &CommunityMemberInternal> {
-        self.iter()
-    }
-
-    fn iter_mut(&mut self) -> impl Iterator<Item = &mut CommunityMemberInternal> {
-        self.iter_mut()
-    }
-
-    fn get_mut(&mut self, user_id: &UserId) -> Option<&mut CommunityMemberInternal> {
-        self.get_by_user_id_mut(user_id)
-    }
-
     fn get(&self, user_id: &UserId) -> Option<&CommunityMemberInternal> {
         self.get_by_user_id(user_id)
     }
@@ -459,8 +447,13 @@ impl Member for CommunityMemberInternal {
         self.lapsed.value
     }
 
-    fn set_lapsed(&mut self, lapsed: Timestamped<bool>) {
-        self.lapsed = lapsed;
+    fn set_lapsed(&mut self, lapsed: bool, timestamp: TimestampMillis) -> bool {
+        if lapsed != self.lapsed.value {
+            self.lapsed = Timestamped::new(lapsed, timestamp);
+            true
+        } else {
+            false
+        }
     }
 }
 

@@ -265,6 +265,26 @@ pub mod happy_path {
         }
     }
 
+    pub fn selected_updates(
+        env: &PocketIc,
+        sender: Principal,
+        group_chat_id: ChatId,
+        updates_since: TimestampMillis,
+    ) -> Option<types::SelectedGroupUpdates> {
+        let response = super::selected_updates_v2(
+            env,
+            sender,
+            group_chat_id.into(),
+            &group_canister::selected_updates_v2::Args { updates_since },
+        );
+
+        match response {
+            group_canister::selected_updates_v2::Response::Success(result) => Some(result),
+            group_canister::selected_updates_v2::Response::SuccessNoUpdates(_) => None,
+            response => panic!("'selected_updates_v2' error: {response:?}"),
+        }
+    }
+
     pub fn summary(env: &PocketIc, sender: &User, group_chat_id: ChatId) -> GroupCanisterGroupChatSummary {
         let response = super::summary(env, sender.principal, group_chat_id.into(), &group_canister::summary::Args {});
 

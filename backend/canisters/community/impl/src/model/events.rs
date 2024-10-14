@@ -3,11 +3,11 @@ use chat_events::GroupGateUpdatedInternal;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use types::{
-    AvatarChanged, BannerChanged, ChannelDeleted, ChannelId, ChatId, CommunityMemberLeft, CommunityMembersRemoved,
-    CommunityPermissionsChanged, CommunityRoleChanged, CommunityUsersBlocked, CommunityVisibilityChanged,
-    DefaultChannelsChanged, EventIndex, EventWrapper, GroupCreated, GroupDescriptionChanged, GroupFrozen,
-    GroupInviteCodeChanged, GroupNameChanged, GroupRulesChanged, GroupUnfrozen, MemberJoined, PrimaryLanguageChanged,
-    TimestampMillis, UserId, UsersInvited, UsersUnblocked,
+    AvatarChanged, BannerChanged, ChannelDeleted, ChannelId, ChatId, CommunityMemberLapsed, CommunityMemberLeft,
+    CommunityMemberUnlapsed, CommunityMembersRemoved, CommunityPermissionsChanged, CommunityRoleChanged, CommunityUsersBlocked,
+    CommunityVisibilityChanged, DefaultChannelsChanged, EventIndex, EventWrapper, GroupCreated, GroupDescriptionChanged,
+    GroupFrozen, GroupInviteCodeChanged, GroupNameChanged, GroupRulesChanged, GroupUnfrozen, MemberJoined,
+    PrimaryLanguageChanged, TimestampMillis, UserId, UsersInvited, UsersUnblocked,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -29,6 +29,8 @@ pub enum CommunityEventInternal {
     MemberJoined(Box<MemberJoined>),
     MembersRemoved(Box<CommunityMembersRemoved>),
     MemberLeft(Box<CommunityMemberLeft>),
+    MemberLapsed(Box<CommunityMemberLapsed>),
+    MemberUnlapsed(Box<CommunityMemberUnlapsed>),
     RoleChanged(Box<CommunityRoleChanged>),
     UsersBlocked(Box<CommunityUsersBlocked>),
     UsersUnblocked(Box<UsersUnblocked>),

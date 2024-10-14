@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Ensure members marked as lapsed in updates queries ([#6573](https://github.com/open-chat-labs/open-chat/pull/6573))
+
 ## [[2.0.1380](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1380-group)] - 2024-10-11
 
 ### Added

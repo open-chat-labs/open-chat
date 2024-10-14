@@ -118,7 +118,7 @@ fn run() {
                     });
                 }
                 AccessGateExpiryBehaviour::Lapse => {
-                    state.data.chat.members.mark_member_lapsed(&member.user_id, now);
+                    state.data.chat.members.update_lapsed(member.user_id, true, now);
                 }
                 AccessGateExpiryBehaviour::Invalid => {
                     // Do nothing
