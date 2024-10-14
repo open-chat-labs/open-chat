@@ -3,14 +3,7 @@ import type { MessageContentInitial } from "../../shared/MessageContentInitial";
 import type { MessageId } from "../../shared/MessageId";
 import type { MessageIndex } from "../../shared/MessageIndex";
 import type { ReplyContext } from "../../shared/ReplyContext";
+import type { TSBoolWithDefault } from "../../shared/TSBoolWithDefault";
 import type { UserId } from "../../shared/UserId";
 
-export type UserSendMessageArgs = { recipient: UserId, thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, content: MessageContentInitial, replies_to?: ReplyContext | undefined, 
-/**
- * @default false
- */
-forwarding: boolean, 
-/**
- * @default false
- */
-block_level_markdown: boolean, message_filter_failed?: bigint | undefined, pin?: string | undefined, correlation_id: bigint, };
+export type UserSendMessageArgs = { recipient: UserId, thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, content: MessageContentInitial, replies_to?: ReplyContext | undefined, forwarding: TSBoolWithDefault, block_level_markdown: TSBoolWithDefault, message_filter_failed?: bigint | undefined, pin?: string | undefined, correlation_id: bigint, };

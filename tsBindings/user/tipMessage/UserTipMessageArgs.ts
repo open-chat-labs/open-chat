@@ -4,10 +4,7 @@ import type { Cryptocurrency } from "../../shared/Cryptocurrency";
 import type { MessageId } from "../../shared/MessageId";
 import type { MessageIndex } from "../../shared/MessageIndex";
 import type { TSBytes } from "../../shared/TSBytes";
+import type { TSNumberWithDefault } from "../../shared/TSNumberWithDefault";
 import type { UserId } from "../../shared/UserId";
 
-export type UserTipMessageArgs = { chat: Chat, recipient: UserId, thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, ledger: TSBytes, token: Cryptocurrency, amount: bigint, fee: bigint, 
-/**
- * @default 0
- */
-decimals: number, pin?: string | undefined, };
+export type UserTipMessageArgs = { chat: Chat, recipient: UserId, thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, ledger: TSBytes, token: Cryptocurrency, amount: bigint, fee: bigint, decimals: TSNumberWithDefault, pin?: string | undefined, };

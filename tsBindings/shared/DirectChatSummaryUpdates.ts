@@ -11,12 +11,4 @@ export type DirectChatSummaryUpdates = { chat_id: ChatId, last_updated: bigint, 
 /**
  * @default []
  */
-updated_events: Array<[EventIndex, bigint]>, metrics?: ChatMetrics | undefined, my_metrics?: ChatMetrics | undefined, archived?: boolean | undefined, 
-/**
- * @default NoChange
- */
-events_ttl: OptionUpdateU64, events_ttl_last_updated?: bigint | undefined, 
-/**
- * @default NoChange
- */
-video_call_in_progress: OptionUpdateVideoCall, };
+updated_events: Array<[EventIndex, bigint]>, metrics?: ChatMetrics | undefined, my_metrics?: ChatMetrics | undefined, archived?: boolean | undefined, events_ttl: OptionUpdateU64, events_ttl_last_updated?: bigint | undefined, video_call_in_progress: OptionUpdateVideoCall, };

@@ -3,51 +3,7 @@ import type { CustomPermission } from "./CustomPermission";
 import type { GroupPermissionRole } from "./GroupPermissionRole";
 import type { OptionUpdateGroupPermissionRole } from "./OptionUpdateGroupPermissionRole";
 
-export type OptionalMessagePermissions = { default?: GroupPermissionRole | undefined, 
-/**
- * @default NoChange
- */
-text: OptionUpdateGroupPermissionRole, 
-/**
- * @default NoChange
- */
-image: OptionUpdateGroupPermissionRole, 
-/**
- * @default NoChange
- */
-video: OptionUpdateGroupPermissionRole, 
-/**
- * @default NoChange
- */
-audio: OptionUpdateGroupPermissionRole, 
-/**
- * @default NoChange
- */
-file: OptionUpdateGroupPermissionRole, 
-/**
- * @default NoChange
- */
-poll: OptionUpdateGroupPermissionRole, 
-/**
- * @default NoChange
- */
-crypto: OptionUpdateGroupPermissionRole, 
-/**
- * @default NoChange
- */
-giphy: OptionUpdateGroupPermissionRole, 
-/**
- * @default NoChange
- */
-prize: OptionUpdateGroupPermissionRole, 
-/**
- * @default NoChange
- */
-p2p_swap: OptionUpdateGroupPermissionRole, 
-/**
- * @default NoChange
- */
-video_call: OptionUpdateGroupPermissionRole, 
+export type OptionalMessagePermissions = { default?: GroupPermissionRole | undefined, text: OptionUpdateGroupPermissionRole, image: OptionUpdateGroupPermissionRole, video: OptionUpdateGroupPermissionRole, audio: OptionUpdateGroupPermissionRole, file: OptionUpdateGroupPermissionRole, poll: OptionUpdateGroupPermissionRole, crypto: OptionUpdateGroupPermissionRole, giphy: OptionUpdateGroupPermissionRole, prize: OptionUpdateGroupPermissionRole, p2p_swap: OptionUpdateGroupPermissionRole, video_call: OptionUpdateGroupPermissionRole, 
 /**
  * @default []
  */

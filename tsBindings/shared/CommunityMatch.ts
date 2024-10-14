@@ -2,21 +2,6 @@
 import type { AccessGate } from "./AccessGate";
 import type { AccessGateConfig } from "./AccessGateConfig";
 import type { CommunityId } from "./CommunityId";
+import type { TSNumberWithDefault } from "./TSNumberWithDefault";
 
-export type CommunityMatch = { id: CommunityId, 
-/**
- * @default 0
- */
-score: number, name: string, description: string, avatar_id?: bigint | undefined, banner_id?: bigint | undefined, 
-/**
- * @default 0
- */
-member_count: number, 
-/**
- * @default 0
- */
-channel_count: number, gate?: AccessGate | undefined, gate_config?: AccessGateConfig | undefined, 
-/**
- * @default 0
- */
-moderation_flags: number, primary_language: string, };
+export type CommunityMatch = { id: CommunityId, score: TSNumberWithDefault, name: string, description: string, avatar_id?: bigint | undefined, banner_id?: bigint | undefined, member_count: TSNumberWithDefault, channel_count: TSNumberWithDefault, gate?: AccessGate | undefined, gate_config?: AccessGateConfig | undefined, moderation_flags: TSNumberWithDefault, primary_language: string, };

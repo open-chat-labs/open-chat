@@ -3,29 +3,14 @@ import type { ChatMetrics } from "./ChatMetrics";
 import type { GroupCanisterThreadDetails } from "./GroupCanisterThreadDetails";
 import type { GroupRole } from "./GroupRole";
 import type { HydratedMention } from "./HydratedMention";
+import type { TSBoolWithDefault } from "./TSBoolWithDefault";
 
-export type GroupMembership = { joined: bigint, 
-/**
- * @default Participant
- */
-role: GroupRole, 
+export type GroupMembership = { joined: bigint, role: GroupRole, 
 /**
  * @default []
  */
-mentions: Array<HydratedMention>, 
-/**
- * @default false
- */
-notifications_muted: boolean, my_metrics: ChatMetrics, 
+mentions: Array<HydratedMention>, notifications_muted: TSBoolWithDefault, my_metrics: ChatMetrics, 
 /**
  * @default []
  */
-latest_threads: Array<GroupCanisterThreadDetails>, 
-/**
- * @default false
- */
-rules_accepted: boolean, 
-/**
- * @default false
- */
-lapsed: boolean, };
+latest_threads: Array<GroupCanisterThreadDetails>, rules_accepted: TSBoolWithDefault, lapsed: TSBoolWithDefault, };

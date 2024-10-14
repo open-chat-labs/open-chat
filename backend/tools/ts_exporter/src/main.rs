@@ -1,4 +1,5 @@
 use regex_lite::{Regex, RegexBuilder};
+use std::cmp::min;
 use std::collections::{HashSet, VecDeque};
 use std::fs;
 use std::io::Write;
@@ -6,6 +7,7 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::sync::LazyLock;
 
+const DOC_COMMENTS_PREFIX: &str = r"/**";
 const EXPORT_PREFIX: &str = "export type ";
 
 fn main() {
@@ -41,7 +43,7 @@ fn main() {
 
         if next.dependencies.iter().all(|d| types_available.contains(d)) {
             types_available.insert(next.name);
-            writeln!(output, "{}", next.line).unwrap();
+            writeln!(output, "{}", next.contents).unwrap();
         } else if next.iterations < 50 {
             next.iterations += 1;
             remaining.push_back(next);
@@ -76,13 +78,15 @@ fn recurse_files(path: impl AsRef<Path>, suffix: &str) -> Vec<PathBuf> {
 
 fn extract_exports(file: impl AsRef<Path>) -> ParsedExport {
     let contents: String = fs::read_to_string(&file).unwrap_or_else(|e| panic!("{e}. Path: {}", file.as_ref().display()));
-    let start_index = contents.find(EXPORT_PREFIX).unwrap();
+    let comments_start = contents.find(DOC_COMMENTS_PREFIX).unwrap_or(usize::MAX);
+    let type_start = contents.find(EXPORT_PREFIX).unwrap();
+    let start_index = min(comments_start, type_start);
     ParsedExport::from_str(&contents[start_index..]).unwrap()
 }
 
 #[derive(Debug)]
 struct ParsedExport {
-    line: String,
+    contents: String,
     name: String,
     dependencies: Vec<String>,
     iterations: usize,
@@ -91,22 +95,21 @@ struct ParsedExport {
 impl FromStr for ParsedExport {
     type Err = ();
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let s = s.trim();
-
-        if !s.starts_with(EXPORT_PREFIX) {
+    fn from_str(contents: &str) -> Result<Self, Self::Err> {
+        let contents = contents.trim().to_string();
+        let type_start = contents.find(EXPORT_PREFIX).unwrap();
+        let type_string = &contents[type_start..];
+        if !type_string.starts_with(EXPORT_PREFIX) {
             return Err(());
         }
 
-        let line = s.to_string();
-
-        let (left, right) = s[EXPORT_PREFIX.len()..].split_once('=').unwrap();
+        let (left, right) = type_string[EXPORT_PREFIX.len()..].split_once('=').unwrap();
 
         let name = left.trim().to_string();
         let dependencies = Vec::from_iter(extract_dependencies(right.trim().to_string()));
 
         Ok(ParsedExport {
-            line,
+            contents,
             name,
             dependencies,
             iterations: 0,

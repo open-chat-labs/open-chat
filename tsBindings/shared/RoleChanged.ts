@@ -6,12 +6,4 @@ export type RoleChanged = {
 /**
  * @default []
  */
-user_ids: Array<UserId>, changed_by: UserId, 
-/**
- * @default Participant
- */
-old_role: GroupRole, 
-/**
- * @default Participant
- */
-new_role: GroupRole, };
+user_ids: Array<UserId>, changed_by: UserId, old_role: GroupRole, new_role: GroupRole, };

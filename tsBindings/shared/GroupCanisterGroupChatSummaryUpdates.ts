@@ -18,15 +18,7 @@ import type { OptionUpdateU128 } from "./OptionUpdateU128";
 import type { OptionUpdateU64 } from "./OptionUpdateU64";
 import type { OptionUpdateVideoCall } from "./OptionUpdateVideoCall";
 
-export type GroupCanisterGroupChatSummaryUpdates = { chat_id: ChatId, last_updated: bigint, name?: string | undefined, description?: string | undefined, 
-/**
- * @default NoChange
- */
-subtype: OptionUpdateGroupSubtype, 
-/**
- * @default NoChange
- */
-avatar_id: OptionUpdateU128, latest_message?: EventWrapperMessage | undefined, latest_event_index?: EventIndex | undefined, latest_message_index?: MessageIndex | undefined, participant_count?: number | undefined, role?: GroupRole | undefined, 
+export type GroupCanisterGroupChatSummaryUpdates = { chat_id: ChatId, last_updated: bigint, name?: string | undefined, description?: string | undefined, subtype: OptionUpdateGroupSubtype, avatar_id: OptionUpdateU128, latest_message?: EventWrapperMessage | undefined, latest_event_index?: EventIndex | undefined, latest_message_index?: MessageIndex | undefined, participant_count?: number | undefined, role?: GroupRole | undefined, 
 /**
  * @default []
  */
@@ -42,24 +34,4 @@ latest_threads: Array<GroupCanisterThreadDetails>,
 /**
  * @default []
  */
-unfollowed_threads: Array<MessageIndex>, notifications_muted?: boolean | undefined, 
-/**
- * @default NoChange
- */
-frozen: OptionUpdateFrozenGroupInfo, date_last_pinned?: bigint | undefined, 
-/**
- * @default NoChange
- */
-events_ttl: OptionUpdateU64, events_ttl_last_updated?: bigint | undefined, 
-/**
- * @default NoChange
- */
-gate: OptionUpdateAccessGate, 
-/**
- * @default NoChange
- */
-gate_config: OptionUpdateAccessGateConfig, rules_accepted?: boolean | undefined, membership?: GroupMembershipUpdates | undefined, 
-/**
- * @default NoChange
- */
-video_call_in_progress: OptionUpdateVideoCall, };
+unfollowed_threads: Array<MessageIndex>, notifications_muted?: boolean | undefined, frozen: OptionUpdateFrozenGroupInfo, date_last_pinned?: bigint | undefined, events_ttl: OptionUpdateU64, events_ttl_last_updated?: bigint | undefined, gate: OptionUpdateAccessGate, gate_config: OptionUpdateAccessGateConfig, rules_accepted?: boolean | undefined, membership?: GroupMembershipUpdates | undefined, video_call_in_progress: OptionUpdateVideoCall, };

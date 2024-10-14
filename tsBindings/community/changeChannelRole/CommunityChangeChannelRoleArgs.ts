@@ -2,8 +2,4 @@
 import type { GroupRole } from "../../shared/GroupRole";
 import type { UserId } from "../../shared/UserId";
 
-export type CommunityChangeChannelRoleArgs = { channel_id: bigint, user_id: UserId, 
-/**
- * @default Participant
- */
-new_role: GroupRole, };
+export type CommunityChangeChannelRoleArgs = { channel_id: bigint, user_id: UserId, new_role: GroupRole, };

@@ -3,8 +3,4 @@ import type { GroupPermissionRole } from "./GroupPermissionRole";
 import type { OptionUpdateOptionalMessagePermissions } from "./OptionUpdateOptionalMessagePermissions";
 import type { OptionalMessagePermissions } from "./OptionalMessagePermissions";
 
-export type OptionalGroupPermissions = { change_roles?: GroupPermissionRole | undefined, update_group?: GroupPermissionRole | undefined, invite_users?: GroupPermissionRole | undefined, add_members?: GroupPermissionRole | undefined, remove_members?: GroupPermissionRole | undefined, delete_messages?: GroupPermissionRole | undefined, pin_messages?: GroupPermissionRole | undefined, react_to_messages?: GroupPermissionRole | undefined, mention_all_members?: GroupPermissionRole | undefined, start_video_call?: GroupPermissionRole | undefined, message_permissions?: OptionalMessagePermissions | undefined, 
-/**
- * @default NoChange
- */
-thread_permissions: OptionUpdateOptionalMessagePermissions, };
+export type OptionalGroupPermissions = { change_roles?: GroupPermissionRole | undefined, update_group?: GroupPermissionRole | undefined, invite_users?: GroupPermissionRole | undefined, add_members?: GroupPermissionRole | undefined, remove_members?: GroupPermissionRole | undefined, delete_messages?: GroupPermissionRole | undefined, pin_messages?: GroupPermissionRole | undefined, react_to_messages?: GroupPermissionRole | undefined, mention_all_members?: GroupPermissionRole | undefined, start_video_call?: GroupPermissionRole | undefined, message_permissions?: OptionalMessagePermissions | undefined, thread_permissions: OptionUpdateOptionalMessagePermissions, };

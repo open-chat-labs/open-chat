@@ -2,9 +2,6 @@
 import type { AccessGate } from "./AccessGate";
 import type { ChatId } from "./ChatId";
 import type { GroupSubtype } from "./GroupSubtype";
+import type { TSNumberWithDefault } from "./TSNumberWithDefault";
 
-export type GroupMatch = { id: ChatId, name: string, description: string, avatar_id?: bigint | undefined, 
-/**
- * @default 0
- */
-member_count: number, gate?: AccessGate | undefined, subtype?: GroupSubtype | undefined, };
+export type GroupMatch = { id: ChatId, name: string, description: string, avatar_id?: bigint | undefined, member_count: TSNumberWithDefault, gate?: AccessGate | undefined, subtype?: GroupSubtype | undefined, };
