@@ -6,9 +6,18 @@ import type { CommunityCanisterChannelSummary } from "./CommunityCanisterChannel
 import type { CommunityId } from "./CommunityId";
 import type { CommunityMembership } from "./CommunityMembership";
 import type { CommunityPermissions } from "./CommunityPermissions";
-import type { EventIndex } from "./EventIndex";
 import type { FrozenGroupInfo } from "./FrozenGroupInfo";
+import type { TSBoolWithDefault } from "./TSBoolWithDefault";
 import type { TSBytes } from "./TSBytes";
+import type { TSNumberWithDefault } from "./TSNumberWithDefault";
 import type { UserGroupSummary } from "./UserGroupSummary";
 
-export type CommunityCanisterCommunitySummary = { community_id: CommunityId, local_user_index_canister_id: TSBytes, last_updated: bigint, name: string, description: string, avatar_id?: bigint | undefined, banner_id?: bigint | undefined, is_public: boolean, member_count: number, permissions: CommunityPermissions, frozen?: FrozenGroupInfo | undefined, gate?: AccessGate | undefined, gate_config?: AccessGateConfig | undefined, primary_language: string, latest_event_index: EventIndex, channels: Array<CommunityCanisterChannelSummary>, membership?: CommunityMembership | undefined, user_groups: Array<UserGroupSummary>, is_invited?: boolean | undefined, metrics: ChatMetrics, };
+export type CommunityCanisterCommunitySummary = { community_id: CommunityId, local_user_index_canister_id: TSBytes, last_updated: bigint, name: string, description: string, avatar_id?: bigint | undefined, banner_id?: bigint | undefined, is_public: TSBoolWithDefault, member_count: TSNumberWithDefault, permissions: CommunityPermissions, frozen?: FrozenGroupInfo | undefined, gate?: AccessGate | undefined, gate_config?: AccessGateConfig | undefined, primary_language: string, latest_event_index: TSNumberWithDefault, 
+/**
+ * @default []
+ */
+channels: Array<CommunityCanisterChannelSummary>, membership?: CommunityMembership | undefined, 
+/**
+ * @default []
+ */
+user_groups: Array<UserGroupSummary>, is_invited?: boolean | undefined, metrics: ChatMetrics, };

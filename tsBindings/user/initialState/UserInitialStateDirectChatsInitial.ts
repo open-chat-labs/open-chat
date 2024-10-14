@@ -2,4 +2,12 @@
 import type { ChatId } from "../../shared/ChatId";
 import type { DirectChatSummary } from "../../shared/DirectChatSummary";
 
-export type UserInitialStateDirectChatsInitial = { summaries: Array<DirectChatSummary>, pinned: Array<ChatId>, };
+export type UserInitialStateDirectChatsInitial = { 
+/**
+ * @default []
+ */
+summaries: Array<DirectChatSummary>, 
+/**
+ * @default []
+ */
+pinned: Array<ChatId>, };

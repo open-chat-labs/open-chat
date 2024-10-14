@@ -2,5 +2,6 @@
 import type { MessageId } from "../../shared/MessageId";
 import type { MessageIndex } from "../../shared/MessageIndex";
 import type { Reaction } from "../../shared/Reaction";
+import type { TSBoolWithDefault } from "../../shared/TSBoolWithDefault";
 
-export type GroupAddReactionArgs = { thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, reaction: Reaction, username: string, display_name?: string | undefined, new_achievement: boolean, correlation_id: bigint, };
+export type GroupAddReactionArgs = { thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, reaction: Reaction, username: string, display_name?: string | undefined, new_achievement: TSBoolWithDefault, correlation_id: bigint, };

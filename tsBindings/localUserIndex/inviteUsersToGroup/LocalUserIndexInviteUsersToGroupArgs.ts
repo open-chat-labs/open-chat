@@ -2,4 +2,8 @@
 import type { ChatId } from "../../shared/ChatId";
 import type { UserId } from "../../shared/UserId";
 
-export type LocalUserIndexInviteUsersToGroupArgs = { group_id: ChatId, user_ids: Array<UserId>, caller_username: string, correlation_id: bigint, };
+export type LocalUserIndexInviteUsersToGroupArgs = { group_id: ChatId, 
+/**
+ * @default []
+ */
+user_ids: Array<UserId>, caller_username: string, correlation_id: bigint, };

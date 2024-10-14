@@ -2,4 +2,8 @@
 import type { EventIndex } from "../../shared/EventIndex";
 import type { MessageIndex } from "../../shared/MessageIndex";
 
-export type GroupEventsByIndexArgs = { thread_root_message_index?: MessageIndex | undefined, events: Array<EventIndex>, latest_known_update?: bigint | undefined, };
+export type GroupEventsByIndexArgs = { thread_root_message_index?: MessageIndex | undefined, 
+/**
+ * @default []
+ */
+events: Array<EventIndex>, latest_known_update?: bigint | undefined, };

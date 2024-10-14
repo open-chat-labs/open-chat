@@ -2,4 +2,8 @@
 import type { MessageId } from "../../shared/MessageId";
 import type { MessageIndex } from "../../shared/MessageIndex";
 
-export type GroupUndeleteMessagesArgs = { thread_root_message_index?: MessageIndex | undefined, message_ids: Array<MessageId>, correlation_id: bigint, };
+export type GroupUndeleteMessagesArgs = { thread_root_message_index?: MessageIndex | undefined, 
+/**
+ * @default []
+ */
+message_ids: Array<MessageId>, correlation_id: bigint, };

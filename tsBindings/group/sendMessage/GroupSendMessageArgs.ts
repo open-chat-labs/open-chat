@@ -3,7 +3,12 @@ import type { GroupReplyContext } from "../../shared/GroupReplyContext";
 import type { MessageContentInitial } from "../../shared/MessageContentInitial";
 import type { MessageId } from "../../shared/MessageId";
 import type { MessageIndex } from "../../shared/MessageIndex";
+import type { TSBoolWithDefault } from "../../shared/TSBoolWithDefault";
 import type { User } from "../../shared/User";
 import type { Version } from "../../shared/Version";
 
-export type GroupSendMessageArgs = { thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, content: MessageContentInitial, sender_name: string, sender_display_name?: string | undefined, replies_to?: GroupReplyContext | undefined, mentioned: Array<User>, forwarding: boolean, block_level_markdown: boolean, rules_accepted?: Version | undefined, message_filter_failed?: bigint | undefined, new_achievement: boolean, correlation_id: bigint, };
+export type GroupSendMessageArgs = { thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, content: MessageContentInitial, sender_name: string, sender_display_name?: string | undefined, replies_to?: GroupReplyContext | undefined, 
+/**
+ * @default []
+ */
+mentioned: Array<User>, forwarding: TSBoolWithDefault, block_level_markdown: TSBoolWithDefault, rules_accepted?: Version | undefined, message_filter_failed?: bigint | undefined, new_achievement: TSBoolWithDefault, correlation_id: bigint, };
