@@ -2,4 +2,4 @@
 import type { BlobReference } from "./BlobReference";
 import type { ThumbnailData } from "./ThumbnailData";
 
-export type ImageContent = { width: number, height: number, thumbnail_data: ThumbnailData, caption?: string, mime_type: string, blob_reference?: BlobReference, };
+export type ImageContent = { width: number, height: number, thumbnail_data: ThumbnailData, caption?: string | undefined, mime_type: string, blob_reference?: BlobReference | undefined, };

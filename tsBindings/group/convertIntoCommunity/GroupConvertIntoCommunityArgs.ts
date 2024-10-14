@@ -2,4 +2,4 @@
 import type { CommunityPermissions } from "../../shared/CommunityPermissions";
 import type { Rules } from "../../shared/Rules";
 
-export type GroupConvertIntoCommunityArgs = { rules: Rules, permissions?: CommunityPermissions, primary_language?: string, history_visible_to_new_joiners: boolean, };
+export type GroupConvertIntoCommunityArgs = { rules: Rules, permissions?: CommunityPermissions | undefined, primary_language?: string | undefined, history_visible_to_new_joiners: boolean, };

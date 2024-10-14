@@ -2,4 +2,4 @@
 import type { AccountICRC1 } from "../../shared/AccountICRC1";
 import type { TSBytes } from "../../shared/TSBytes";
 
-export type UserApproveTransferArgs = { spender: AccountICRC1, ledger_canister_id: TSBytes, amount: bigint, expires_in?: bigint, pin?: string, };
+export type UserApproveTransferArgs = { spender: AccountICRC1, ledger_canister_id: TSBytes, amount: bigint, expires_in?: bigint | undefined, pin?: string | undefined, };
