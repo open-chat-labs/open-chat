@@ -1505,6 +1505,11 @@ export function apiOptional<D, A>(mapper: (d: D) => A, domain: D | undefined): [
     return domain !== undefined ? [mapper(domain)] : [];
 }
 
+export function apiMaybeAccessGateConfig(domain: AccessGate): [] | [ApiAccessGateConfig] {
+    const gate = apiMaybeAccessGate(domain);
+    return gate.length === 0 ? [] : [{ gate: gate[0], expiry: [] }];
+}
+
 export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
     if (domain.kind === "composite_gate") {
         return [

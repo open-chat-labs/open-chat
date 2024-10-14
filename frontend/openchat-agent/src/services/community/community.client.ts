@@ -1417,19 +1417,19 @@ export class CommunityClient extends CandidService {
                     gate === undefined
                         ? "NoChange"
                         : gate.kind === "no_gate"
-                        ? "SetToNone"
-                        : { SetToSome: apiAccessGate(gate) },
+                          ? "SetToNone"
+                          : { SetToSome: apiAccessGate(gate) },
                 gate_config:
                     gate === undefined
                         ? "NoChange"
                         : gate.kind === "no_gate"
-                        ? "SetToNone"
-                        : {
-                              SetToSome: apiAccessGateConfig({
-                                  gate,
-                                  expiry: undefined,
-                              }),
-                          },
+                          ? "SetToNone"
+                          : {
+                                SetToSome: apiAccessGateConfig({
+                                    gate,
+                                    expiry: undefined,
+                                }),
+                            },
                 avatar:
                     avatar === undefined
                         ? "NoChange"
@@ -1472,19 +1472,19 @@ export class CommunityClient extends CandidService {
                     gate === undefined
                         ? "NoChange"
                         : gate.kind === "no_gate"
-                        ? "SetToNone"
-                        : { SetToSome: apiAccessGate(gate) },
+                          ? "SetToNone"
+                          : { SetToSome: apiAccessGate(gate) },
                 gate_config:
                     gate === undefined
                         ? "NoChange"
                         : gate.kind === "no_gate"
-                        ? "SetToNone"
-                        : {
-                              SetToSome: apiAccessGateConfig({
-                                  gate,
-                                  expiry: undefined,
-                              }),
-                          },
+                          ? "SetToNone"
+                          : {
+                                SetToSome: apiAccessGateConfig({
+                                    gate,
+                                    expiry: undefined,
+                                }),
+                            },
                 avatar:
                     avatar === undefined
                         ? "NoChange"
