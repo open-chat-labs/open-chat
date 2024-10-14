@@ -31,7 +31,7 @@ fn selected_channel_initial_impl(args: Args, state: &RuntimeState) -> Response {
 
         let mut members = Vec::new();
         let mut basic_members = Vec::new();
-        for member in chat.members.iter().map(|m| GroupMember::from(m)) {
+        for member in chat.members.iter().map(GroupMember::from) {
             if matches!(member.role, GroupRole::Participant) && !member.lapsed {
                 basic_members.push(member.user_id);
             } else {

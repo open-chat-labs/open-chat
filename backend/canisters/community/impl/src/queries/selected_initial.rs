@@ -27,7 +27,7 @@ fn selected_initial_impl(args: Args, state: &RuntimeState) -> Response {
 
     let mut members = Vec::new();
     let mut basic_members = Vec::new();
-    for member in state.data.members.iter().map(|m| CommunityMember::from(m)) {
+    for member in state.data.members.iter().map(CommunityMember::from) {
         if matches!(member.role, CommunityRole::Member) && member.display_name.is_none() && !member.lapsed {
             basic_members.push(member.user_id);
         } else {
