@@ -8,7 +8,6 @@ use crate::{
     timer_job_types::{SetUserSuspended, TimerJob},
     RuntimeState,
 };
-use candid::Encode;
 use canister_tracing_macros::trace;
 use fire_and_forget_handler::FireAndForgetHandler;
 use ic_cdk::update;
