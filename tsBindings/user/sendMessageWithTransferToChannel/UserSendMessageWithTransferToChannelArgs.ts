@@ -7,4 +7,4 @@ import type { MessageIndex } from "../../shared/MessageIndex";
 import type { User } from "../../shared/User";
 import type { Version } from "../../shared/Version";
 
-export type UserSendMessageWithTransferToChannelArgs = { community_id: CommunityId, channel_id: bigint, thread_root_message_index?: MessageIndex, message_id: MessageId, content: MessageContentInitial, sender_name: string, sender_display_name?: string, replies_to?: GroupReplyContext, mentioned: Array<User>, block_level_markdown: boolean, community_rules_accepted?: Version, channel_rules_accepted?: Version, message_filter_failed?: bigint, pin?: string, };
+export type UserSendMessageWithTransferToChannelArgs = { community_id: CommunityId, channel_id: bigint, thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, content: MessageContentInitial, sender_name: string, sender_display_name?: string | undefined, replies_to?: GroupReplyContext | undefined, mentioned: Array<User>, block_level_markdown: boolean, community_rules_accepted?: Version | undefined, channel_rules_accepted?: Version | undefined, message_filter_failed?: bigint | undefined, pin?: string | undefined, };

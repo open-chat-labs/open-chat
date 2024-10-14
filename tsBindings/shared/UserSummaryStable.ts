@@ -2,4 +2,4 @@
 import type { BotConfig } from "./BotConfig";
 import type { DiamondMembershipStatus } from "./DiamondMembershipStatus";
 
-export type UserSummaryStable = { username: string, display_name?: string, avatar_id?: bigint, is_bot: boolean, suspended: boolean, diamond_membership_status: DiamondMembershipStatus, is_unique_person: boolean, bot_config?: BotConfig, };
+export type UserSummaryStable = { username: string, display_name?: string | undefined, avatar_id?: bigint | undefined, is_bot: boolean, suspended: boolean, diamond_membership_status: DiamondMembershipStatus, is_unique_person: boolean, bot_config?: BotConfig | undefined, };

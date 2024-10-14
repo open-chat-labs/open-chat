@@ -4,4 +4,4 @@ import type { MessageIndex } from "../../shared/MessageIndex";
 import type { Reaction } from "../../shared/Reaction";
 import type { UserId } from "../../shared/UserId";
 
-export type UserRemoveReactionArgs = { user_id: UserId, thread_root_message_index?: MessageIndex, message_id: MessageId, reaction: Reaction, correlation_id: bigint, };
+export type UserRemoveReactionArgs = { user_id: UserId, thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, reaction: Reaction, correlation_id: bigint, };

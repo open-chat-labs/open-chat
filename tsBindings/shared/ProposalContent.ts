@@ -2,4 +2,4 @@
 import type { Proposal } from "./Proposal";
 import type { TSBytes } from "./TSBytes";
 
-export type ProposalContent = { governance_canister_id: TSBytes, proposal: Proposal, my_vote?: boolean, };
+export type ProposalContent = { governance_canister_id: TSBytes, proposal: Proposal, my_vote?: boolean | undefined, };

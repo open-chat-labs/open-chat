@@ -2,4 +2,4 @@
 import type { TokenInfo } from "../../shared/TokenInfo";
 import type { UserSwapTokensExchangeArgs } from "./UserSwapTokensExchangeArgs";
 
-export type UserSwapTokensArgs = { swap_id: bigint, input_token: TokenInfo, output_token: TokenInfo, input_amount: bigint, exchange_args: UserSwapTokensExchangeArgs, min_output_amount: bigint, pin?: string, };
+export type UserSwapTokensArgs = { swap_id: bigint, input_token: TokenInfo, output_token: TokenInfo, input_amount: bigint, exchange_args: UserSwapTokensExchangeArgs, min_output_amount: bigint, pin?: string | undefined, };
