@@ -3,8 +3,9 @@ use candid::Principal;
 use group_community_common::{Member, Members};
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::collections::hash_map::Entry::Vacant;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap, HashSet};
 use types::{
     ChannelId, CommunityMember, CommunityPermissions, CommunityRole, TimestampMillis, Timestamped, UserId, UserType, Version,
 };
@@ -21,6 +22,7 @@ pub struct CommunityMembers {
     blocked: HashSet<UserId>,
     admin_count: u32,
     owner_count: u32,
+    updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
 }
 
 impl CommunityMembers {
@@ -54,6 +56,7 @@ impl CommunityMembers {
             blocked: HashSet::new(),
             admin_count: 0,
             owner_count: 1,
+            updates: BTreeSet::new(),
         }
     }
 
@@ -360,6 +363,45 @@ impl CommunityMembers {
             self.display_names_last_updated = now;
         }
     }
+
+    pub fn updated_lapsed(&mut self, user_id: UserId, lapsed: bool, now: TimestampMillis) {
+        if let Some(member) = self.members.get_mut(&user_id) {
+            if member.set_lapsed(lapsed, now) {
+                self.updates.insert((
+                    now,
+                    user_id,
+                    if lapsed { MemberUpdate::Lapsed } else { MemberUpdate::Unlapsed },
+                ));
+            }
+        }
+    }
+
+    pub fn unlapse_all(&mut self, now: TimestampMillis) {
+        for member in self.members.values_mut() {
+            if member.set_lapsed(false, now) {
+                self.updates.insert((now, member.user_id, MemberUpdate::Unlapsed));
+            }
+        }
+    }
+
+    pub fn iter_latest_updates(&self, since: TimestampMillis) -> impl Iterator<Item = (UserId, MemberUpdate)> + '_ {
+        self.updates
+            .iter()
+            .rev()
+            .take_while(move |(ts, _, _)| *ts > since)
+            .map(|(_, user_id, update)| (*user_id, *update))
+    }
+
+    pub fn last_updated(&self) -> TimestampMillis {
+        [
+            self.user_groups_last_updated(),
+            self.display_names_last_updated(),
+            self.updates.iter().next_back().map_or(0, |(ts, _, _)| *ts),
+        ]
+        .into_iter()
+        .max()
+        .unwrap()
+    }
 }
 
 impl Members for CommunityMembers {
@@ -503,4 +545,11 @@ impl From<&CommunityMemberInternal> for CommunityMember {
             lapsed: m.lapsed.value,
         }
     }
+}
+
+#[derive(Serialize_repr, Deserialize_repr, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
+#[repr(u8)]
+pub enum MemberUpdate {
+    Lapsed = 1,
+    Unlapsed = 2,
 }

@@ -1,5 +1,8 @@
 use crate::{
-    model::{events::CommunityEventInternal, members::CommunityMembers},
+    model::{
+        events::CommunityEventInternal,
+        members::{CommunityMembers, MemberUpdate},
+    },
     read_state, RuntimeState,
 };
 use canister_api_macros::query;
@@ -84,12 +87,6 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
                     user_updates_handler.mark_member_updated(&mut result, *user_id, false, false);
                 }
             }
-            CommunityEventInternal::MemberLapsed(e) => {
-                user_updates_handler.mark_member_updated(&mut result, e.user_id, false, false);
-            }
-            CommunityEventInternal::MemberUnlapsed(e) => {
-                user_updates_handler.mark_member_updated(&mut result, e.user_id, false, false);
-            }
             CommunityEventInternal::UsersBlocked(e) => {
                 for user_id in e.user_ids.iter() {
                     let referral = is_my_referral(e.referred_by.get(user_id).copied(), &my_user_id);
@@ -113,6 +110,14 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
                 }
             }
             _ => {}
+        }
+    }
+
+    for (user_id, update) in state.data.members.iter_latest_updates(args.updates_since) {
+        match update {
+            MemberUpdate::Lapsed | MemberUpdate::Unlapsed => {
+                user_updates_handler.mark_member_updated(&mut result, user_id, false, false);
+            }
         }
     }
 

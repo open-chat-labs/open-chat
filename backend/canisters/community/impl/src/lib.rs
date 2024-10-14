@@ -14,11 +14,10 @@ use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::AccessRulesInternal;
 use group_community_common::{
-    Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, Member, Members, PaymentReceipts, PaymentRecipient,
+    Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, Members, PaymentReceipts, PaymentRecipient,
     PendingPayment, PendingPaymentReason, PendingPaymentsQueue, UserCache,
 };
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
-use model::events::CommunityEventInternal;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
@@ -31,9 +30,8 @@ use std::ops::Deref;
 use std::time::Duration;
 use types::{
     AccessGate, AccessGateConfigInternal, BuildVersion, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary,
-    CommunityMemberLapsed, CommunityMemberUnlapsed, CommunityMembership, CommunityPermissions, CommunityRole, Cryptocurrency,
-    Cycles, Document, Empty, FrozenGroupInfo, Milliseconds, Notification, PaymentGate, Rules, TimestampMillis, Timestamped,
-    UserId, UserType,
+    CommunityMembership, CommunityPermissions, CommunityRole, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo,
+    Milliseconds, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use utils::env::Environment;
@@ -512,8 +510,7 @@ impl Data {
         [
             self.invited_users.last_updated(),
             self.events.latest_event_timestamp(),
-            self.members.user_groups_last_updated(),
-            self.members.display_names_last_updated(),
+            self.members.last_updated(),
         ]
         .into_iter()
         .max()
@@ -580,16 +577,8 @@ impl Data {
             if let Some(channel) = self.channels.get_mut(&channel_id) {
                 channel.chat.members.update_lapsed(user_id, lapsed, now);
             }
-        } else if let Some(member) = self.members.get_by_user_id_mut(&user_id) {
-            if member.set_lapsed(lapsed, now) {
-                let event = if lapsed {
-                    CommunityEventInternal::MemberLapsed(Box::new(CommunityMemberLapsed { user_id: member.user_id }))
-                } else {
-                    CommunityEventInternal::MemberUnlapsed(Box::new(CommunityMemberUnlapsed { user_id: member.user_id }))
-                };
-
-                self.events.push_event(event, now);
-            }
+        } else {
+            self.members.updated_lapsed(user_id, lapsed, now);
         }
     }
 
@@ -599,14 +588,7 @@ impl Data {
                 channel.chat.members.unlapse_all(now);
             }
         } else {
-            for member in self.members.iter_mut() {
-                if member.set_lapsed(false, now) {
-                    self.events.push_event(
-                        CommunityEventInternal::MemberUnlapsed(Box::new(CommunityMemberUnlapsed { user_id: member.user_id })),
-                        now,
-                    );
-                }
-            }
+            self.members.unlapse_all(now);
         }
     }
 

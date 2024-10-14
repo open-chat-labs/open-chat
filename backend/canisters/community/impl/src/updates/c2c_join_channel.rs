@@ -327,10 +327,12 @@ pub(crate) fn join_channel_unchecked(
 
     if matches!(result, AddResult::AlreadyInGroup) {
         let member = channel.chat.members.get(&community_member.user_id).unwrap();
-        return AddResult::Success(AddMemberSuccess {
-            member: member.clone(),
-            unlapse: true,
-        });
+        if member.lapsed() {
+            return AddResult::Success(AddMemberSuccess {
+                member: member.clone(),
+                unlapse: true,
+            });
+        }
     }
 
     if !matches!(result, AddResult::Success(_)) {
