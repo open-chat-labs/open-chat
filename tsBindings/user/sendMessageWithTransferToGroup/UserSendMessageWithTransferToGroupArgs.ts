@@ -4,6 +4,7 @@ import type { GroupReplyContext } from "../../shared/GroupReplyContext";
 import type { MessageContentInitial } from "../../shared/MessageContentInitial";
 import type { MessageId } from "../../shared/MessageId";
 import type { MessageIndex } from "../../shared/MessageIndex";
+import type { TSBigIntWithDefault } from "../../shared/TSBigIntWithDefault";
 import type { TSBoolWithDefault } from "../../shared/TSBoolWithDefault";
 import type { User } from "../../shared/User";
 import type { Version } from "../../shared/Version";
@@ -12,4 +13,4 @@ export type UserSendMessageWithTransferToGroupArgs = { group_id: ChatId, thread_
 /**
  * @default []
  */
-mentioned: Array<User>, block_level_markdown: TSBoolWithDefault, correlation_id: bigint, rules_accepted?: Version | undefined, message_filter_failed?: bigint | undefined, pin?: string | undefined, };
+mentioned: Array<User>, block_level_markdown: TSBoolWithDefault, correlation_id: TSBigIntWithDefault, rules_accepted?: Version | undefined, message_filter_failed?: bigint | undefined, pin?: string | undefined, };

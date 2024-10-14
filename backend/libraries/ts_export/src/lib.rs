@@ -14,6 +14,15 @@ pub struct TSBytes {}
 #[ts(type = "number")]
 pub struct TSNumberWithDefault {}
 
+// We set the default to 'BigIntZero' rather than `BigInt(0)`, because using `BigInt(0)` results
+// in a JSON error: "TypeError: Do not know how to serialize a BigInt".
+// We then replace `BigIntZero` with `BigInt(0)` once the Typebox types have been generated.
+#[ts_export]
+#[doc = " @default BigIntZero"]
+#[derive(Serialize, Deserialize)]
+#[ts(type = "bigint")]
+pub struct TSBigIntWithDefault {}
+
 #[ts_export]
 #[doc = " @default false"]
 #[derive(Serialize, Deserialize)]

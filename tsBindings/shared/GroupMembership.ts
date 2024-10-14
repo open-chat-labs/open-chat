@@ -3,9 +3,10 @@ import type { ChatMetrics } from "./ChatMetrics";
 import type { GroupCanisterThreadDetails } from "./GroupCanisterThreadDetails";
 import type { GroupRole } from "./GroupRole";
 import type { HydratedMention } from "./HydratedMention";
+import type { TSBigIntWithDefault } from "./TSBigIntWithDefault";
 import type { TSBoolWithDefault } from "./TSBoolWithDefault";
 
-export type GroupMembership = { joined: bigint, role: GroupRole, 
+export type GroupMembership = { joined: TSBigIntWithDefault, role: GroupRole, 
 /**
  * @default []
  */

@@ -12,8 +12,9 @@ import type { OptionUpdateString } from "./OptionUpdateString";
 import type { OptionUpdateU128 } from "./OptionUpdateU128";
 import type { OptionUpdateU64 } from "./OptionUpdateU64";
 import type { OptionUpdateVideoCall } from "./OptionUpdateVideoCall";
+import type { TSBigIntWithDefault } from "./TSBigIntWithDefault";
 
-export type CommunityCanisterChannelSummaryUpdates = { channel_id: bigint, last_updated: bigint, name?: string | undefined, description?: string | undefined, subtype: OptionUpdateGroupSubtype, avatar_id: OptionUpdateU128, is_public?: boolean | undefined, messages_visible_to_non_members?: boolean | undefined, latest_message?: EventWrapperMessage | undefined, latest_message_sender_display_name?: string | undefined, latest_event_index?: EventIndex | undefined, latest_message_index?: MessageIndex | undefined, member_count?: number | undefined, permissions_v2?: GroupPermissions | undefined, 
+export type CommunityCanisterChannelSummaryUpdates = { channel_id: bigint, last_updated: TSBigIntWithDefault, name?: string | undefined, description?: string | undefined, subtype: OptionUpdateGroupSubtype, avatar_id: OptionUpdateU128, is_public?: boolean | undefined, messages_visible_to_non_members?: boolean | undefined, latest_message?: EventWrapperMessage | undefined, latest_message_sender_display_name?: string | undefined, latest_event_index?: EventIndex | undefined, latest_message_index?: MessageIndex | undefined, member_count?: number | undefined, permissions_v2?: GroupPermissions | undefined, 
 /**
  * @default []
  */

@@ -3,6 +3,7 @@ import type { GroupReplyContext } from "../../shared/GroupReplyContext";
 import type { MessageContentInitial } from "../../shared/MessageContentInitial";
 import type { MessageId } from "../../shared/MessageId";
 import type { MessageIndex } from "../../shared/MessageIndex";
+import type { TSBigIntWithDefault } from "../../shared/TSBigIntWithDefault";
 import type { TSBoolWithDefault } from "../../shared/TSBoolWithDefault";
 import type { User } from "../../shared/User";
 import type { Version } from "../../shared/Version";
@@ -11,4 +12,4 @@ export type GroupSendMessageArgs = { thread_root_message_index?: MessageIndex | 
 /**
  * @default []
  */
-mentioned: Array<User>, forwarding: TSBoolWithDefault, block_level_markdown: TSBoolWithDefault, rules_accepted?: Version | undefined, message_filter_failed?: bigint | undefined, new_achievement: TSBoolWithDefault, correlation_id: bigint, };
+mentioned: Array<User>, forwarding: TSBoolWithDefault, block_level_markdown: TSBoolWithDefault, rules_accepted?: Version | undefined, message_filter_failed?: bigint | undefined, new_achievement: TSBoolWithDefault, correlation_id: TSBigIntWithDefault, };

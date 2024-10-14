@@ -6,8 +6,9 @@ import type { EventWrapperMessage } from "./EventWrapperMessage";
 import type { MessageIndex } from "./MessageIndex";
 import type { OptionUpdateU64 } from "./OptionUpdateU64";
 import type { OptionUpdateVideoCall } from "./OptionUpdateVideoCall";
+import type { TSBigIntWithDefault } from "./TSBigIntWithDefault";
 
-export type DirectChatSummaryUpdates = { chat_id: ChatId, last_updated: bigint, latest_message?: EventWrapperMessage | undefined, latest_event_index?: EventIndex | undefined, latest_message_index?: MessageIndex | undefined, read_by_me_up_to?: MessageIndex | undefined, read_by_them_up_to?: MessageIndex | undefined, notifications_muted?: boolean | undefined, 
+export type DirectChatSummaryUpdates = { chat_id: ChatId, last_updated: TSBigIntWithDefault, latest_message?: EventWrapperMessage | undefined, latest_event_index?: EventIndex | undefined, latest_message_index?: MessageIndex | undefined, read_by_me_up_to?: MessageIndex | undefined, read_by_them_up_to?: MessageIndex | undefined, notifications_muted?: boolean | undefined, 
 /**
  * @default []
  */

@@ -20,5 +20,7 @@ cd frontend/openchat-agent
 
 npm run typebox
 
-awk '{sub(/import { Type, Static/,"import { Type, type Static")}1' ./src/typebox.ts > ./tmp.ts
+awk '{sub(/import { Type, Static }/,"import { Type, type Static }")}1' ./src/typebox.ts > ./tmp.ts
+mv tmp.ts ./src/typebox.ts
+awk '{sub(/"BigIntZero"/,"BigInt(0)")}1' ./src/typebox.ts > ./tmp.ts
 mv tmp.ts ./src/typebox.ts

@@ -4,11 +4,12 @@ import type { CanisterUpgradeStatus } from "../../shared/CanisterUpgradeStatus";
 import type { DiamondMembershipDetails } from "../../shared/DiamondMembershipDetails";
 import type { DiamondMembershipStatusFull } from "../../shared/DiamondMembershipStatusFull";
 import type { SuspensionDetails } from "../../shared/SuspensionDetails";
+import type { TSBigIntWithDefault } from "../../shared/TSBigIntWithDefault";
 import type { TSBoolWithDefault } from "../../shared/TSBoolWithDefault";
 import type { TSNumberWithDefault } from "../../shared/TSNumberWithDefault";
 import type { UserId } from "../../shared/UserId";
 
-export type UserIndexCurrentUserSuccessResult = { user_id: UserId, username: string, date_created: bigint, display_name?: string | undefined, avatar_id?: bigint | undefined, canister_upgrade_status: CanisterUpgradeStatus, wasm_version: BuildVersion, icp_account: [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number], 
+export type UserIndexCurrentUserSuccessResult = { user_id: UserId, username: string, date_created: TSBigIntWithDefault, display_name?: string | undefined, avatar_id?: bigint | undefined, canister_upgrade_status: CanisterUpgradeStatus, wasm_version: BuildVersion, icp_account: [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number], 
 /**
  * @default []
  */

@@ -167,15 +167,21 @@ fn skip_serializing_if_default(path_segment: &PathSegment) -> Option<Defaults> {
             default_override: None,
             type_override: Some("ts_export::TSBoolWithDefault"),
         }),
-        "i8" | "i16" | "i32" | "u8" | "u16" | "u32" | "EventIndex" | "MessageIndex" => Some(Defaults {
-            func: "ts_export::is_default",
-            default_override: None,
-            type_override: Some("ts_export::TSNumberWithDefault"),
-        }),
+        "i8" | "i16" | "i32" | "u8" | "u16" | "u32" | "f8" | "f16" | "f32" | "f64" | "EventIndex" | "MessageIndex" => {
+            Some(Defaults {
+                func: "ts_export::is_default",
+                default_override: None,
+                type_override: Some("ts_export::TSNumberWithDefault"),
+            })
+        }
         // TODO: Sort out how to make Typebox work with BigInts as default values
-        // "i64" | "i128" | "u64" | "u128" | "Milliseconds" | "Nanoseconds" | "Nat" | "TimestampMillis" | "TimestampNanos" => {
-        // ...
-        // }
+        "i64" | "i128" | "u64" | "u128" | "Milliseconds" | "Nanoseconds" | "Nat" | "TimestampMillis" | "TimestampNanos" => {
+            Some(Defaults {
+                func: "ts_export::is_default",
+                default_override: None,
+                type_override: Some("ts_export::TSBigIntWithDefault"),
+            })
+        }
         _ => None,
     }
 }

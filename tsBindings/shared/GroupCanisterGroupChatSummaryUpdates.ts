@@ -17,8 +17,9 @@ import type { OptionUpdateGroupSubtype } from "./OptionUpdateGroupSubtype";
 import type { OptionUpdateU128 } from "./OptionUpdateU128";
 import type { OptionUpdateU64 } from "./OptionUpdateU64";
 import type { OptionUpdateVideoCall } from "./OptionUpdateVideoCall";
+import type { TSBigIntWithDefault } from "./TSBigIntWithDefault";
 
-export type GroupCanisterGroupChatSummaryUpdates = { chat_id: ChatId, last_updated: bigint, name?: string | undefined, description?: string | undefined, subtype: OptionUpdateGroupSubtype, avatar_id: OptionUpdateU128, latest_message?: EventWrapperMessage | undefined, latest_event_index?: EventIndex | undefined, latest_message_index?: MessageIndex | undefined, participant_count?: number | undefined, role?: GroupRole | undefined, 
+export type GroupCanisterGroupChatSummaryUpdates = { chat_id: ChatId, last_updated: TSBigIntWithDefault, name?: string | undefined, description?: string | undefined, subtype: OptionUpdateGroupSubtype, avatar_id: OptionUpdateU128, latest_message?: EventWrapperMessage | undefined, latest_event_index?: EventIndex | undefined, latest_message_index?: MessageIndex | undefined, participant_count?: number | undefined, role?: GroupRole | undefined, 
 /**
  * @default []
  */

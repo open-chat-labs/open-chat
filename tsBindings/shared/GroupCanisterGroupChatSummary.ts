@@ -13,12 +13,13 @@ import type { GroupRole } from "./GroupRole";
 import type { GroupSubtype } from "./GroupSubtype";
 import type { HydratedMention } from "./HydratedMention";
 import type { MessageIndex } from "./MessageIndex";
+import type { TSBigIntWithDefault } from "./TSBigIntWithDefault";
 import type { TSBoolWithDefault } from "./TSBoolWithDefault";
 import type { TSBytes } from "./TSBytes";
 import type { TSNumberWithDefault } from "./TSNumberWithDefault";
 import type { VideoCall } from "./VideoCall";
 
-export type GroupCanisterGroupChatSummary = { chat_id: ChatId, local_user_index_canister_id: TSBytes, last_updated: bigint, name: string, description: string, subtype?: GroupSubtype | undefined, avatar_id?: bigint | undefined, is_public: TSBoolWithDefault, history_visible_to_new_joiners: TSBoolWithDefault, messages_visible_to_non_members: TSBoolWithDefault, min_visible_event_index: TSNumberWithDefault, min_visible_message_index: TSNumberWithDefault, latest_message?: EventWrapperMessage | undefined, latest_event_index: TSNumberWithDefault, latest_message_index?: MessageIndex | undefined, joined: bigint, participant_count: TSNumberWithDefault, role: GroupRole, 
+export type GroupCanisterGroupChatSummary = { chat_id: ChatId, local_user_index_canister_id: TSBytes, last_updated: TSBigIntWithDefault, name: string, description: string, subtype?: GroupSubtype | undefined, avatar_id?: bigint | undefined, is_public: TSBoolWithDefault, history_visible_to_new_joiners: TSBoolWithDefault, messages_visible_to_non_members: TSBoolWithDefault, min_visible_event_index: TSNumberWithDefault, min_visible_message_index: TSNumberWithDefault, latest_message?: EventWrapperMessage | undefined, latest_event_index: TSNumberWithDefault, latest_message_index?: MessageIndex | undefined, joined: TSBigIntWithDefault, participant_count: TSNumberWithDefault, role: GroupRole, 
 /**
  * @default []
  */
@@ -26,4 +27,4 @@ mentions: Array<HydratedMention>, wasm_version: BuildVersion, permissions_v2: Gr
 /**
  * @default []
  */
-latest_threads: Array<GroupCanisterThreadDetails>, frozen?: FrozenGroupInfo | undefined, date_last_pinned?: bigint | undefined, events_ttl?: bigint | undefined, events_ttl_last_updated: bigint, gate?: AccessGate | undefined, gate_config?: AccessGateConfig | undefined, rules_accepted: TSBoolWithDefault, membership?: GroupMembership | undefined, video_call_in_progress?: VideoCall | undefined, };
+latest_threads: Array<GroupCanisterThreadDetails>, frozen?: FrozenGroupInfo | undefined, date_last_pinned?: bigint | undefined, events_ttl?: bigint | undefined, events_ttl_last_updated: TSBigIntWithDefault, gate?: AccessGate | undefined, gate_config?: AccessGateConfig | undefined, rules_accepted: TSBoolWithDefault, membership?: GroupMembership | undefined, video_call_in_progress?: VideoCall | undefined, };
