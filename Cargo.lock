@@ -8069,7 +8069,7 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 [[package]]
 name = "ts-rs"
 version = "9.0.1"
-source = "git+https://github.com/hpeebles/ts-rs?rev=7b402398a066b33f2bc27e1771fb2c2318f402c4#7b402398a066b33f2bc27e1771fb2c2318f402c4"
+source = "git+https://github.com/hpeebles/ts-rs?rev=c8f7385697df0764fca3b5d7b8e22b967fb16c10#c8f7385697df0764fca3b5d7b8e22b967fb16c10"
 dependencies = [
  "lazy_static",
  "thiserror",
@@ -8079,7 +8079,7 @@ dependencies = [
 [[package]]
 name = "ts-rs-macros"
 version = "9.0.1"
-source = "git+https://github.com/hpeebles/ts-rs?rev=7b402398a066b33f2bc27e1771fb2c2318f402c4#7b402398a066b33f2bc27e1771fb2c2318f402c4"
+source = "git+https://github.com/hpeebles/ts-rs?rev=c8f7385697df0764fca3b5d7b8e22b967fb16c10#c8f7385697df0764fca3b5d7b8e22b967fb16c10"
 dependencies = [
  "proc-macro2",
  "quote",

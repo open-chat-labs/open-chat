@@ -2,4 +2,4 @@
 import type { MessageIndex } from "../../shared/MessageIndex";
 import type { VoteOperation } from "../../shared/VoteOperation";
 
-export type CommunityRegisterPollVoteArgs = { channel_id: bigint, thread_root_message_index?: MessageIndex, message_index: MessageIndex, poll_option: number, operation: VoteOperation, new_achievement: boolean, };
+export type CommunityRegisterPollVoteArgs = { channel_id: bigint, thread_root_message_index?: MessageIndex | undefined, message_index: MessageIndex, poll_option: number, operation: VoteOperation, new_achievement: boolean, };

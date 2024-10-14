@@ -3,4 +3,4 @@ import type { AccessGate } from "./AccessGate";
 import type { AccessGateConfig } from "./AccessGateConfig";
 import type { GroupSubtype } from "./GroupSubtype";
 
-export type ChannelMatch = { id: bigint, name: string, description: string, avatar_id?: bigint, member_count: number, gate?: AccessGate, gate_config?: AccessGateConfig, subtype?: GroupSubtype, };
+export type ChannelMatch = { id: bigint, name: string, description: string, avatar_id?: bigint | undefined, member_count: number, gate?: AccessGate | undefined, gate_config?: AccessGateConfig | undefined, subtype?: GroupSubtype | undefined, };
