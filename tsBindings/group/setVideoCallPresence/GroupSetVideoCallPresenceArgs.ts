@@ -2,4 +2,8 @@
 import type { MessageId } from "../../shared/MessageId";
 import type { VideoCallPresence } from "../../shared/VideoCallPresence";
 
-export type GroupSetVideoCallPresenceArgs = { message_id: MessageId, presence: VideoCallPresence, new_achievement: boolean, };
+export type GroupSetVideoCallPresenceArgs = { message_id: MessageId, presence: VideoCallPresence, 
+/**
+ * @default false
+ */
+new_achievement: boolean, };

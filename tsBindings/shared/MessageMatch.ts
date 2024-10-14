@@ -3,4 +3,12 @@ import type { MessageContent } from "./MessageContent";
 import type { MessageIndex } from "./MessageIndex";
 import type { UserId } from "./UserId";
 
-export type MessageMatch = { sender: UserId, message_index: MessageIndex, content: MessageContent, score: number, };
+export type MessageMatch = { sender: UserId, 
+/**
+ * @default 0
+ */
+message_index: MessageIndex, content: MessageContent, 
+/**
+ * @default 0
+ */
+score: number, };

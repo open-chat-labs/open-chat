@@ -104,31 +104,48 @@ fn insert_field_attributes(field: &mut Field, is_tuple: bool) {
                 || PRINCIPAL_ALIASES.iter().any(|a| type_path.path.segments[0].ident == a)
             {
                 field.attrs.push(parse_quote!( #[ts(as = "ts_export::TSBytes")] ));
-            }
-            if let Some(_skip_serializing_if) = skip_serializing_if_default(&type_path.path.segments[0].ident.to_string()) {
+            } else if let Some(Defaults { func, default }) =
+                skip_serializing_if_default(&type_path.path.segments[0].ident.to_string())
+            {
+                let doc_comment = format!(" @default {default}");
+                field.attrs.push(parse_quote!( #[doc = #doc_comment]));
                 field.attrs.push(parse_quote!( #[serde(default)] ));
-
-                // Uncomment this once canisters have been upgraded to add the serde(default) attribute
-                // field
-                //     .attrs
-                //     .push(parse_quote!( #[serde(skip_serializing_if = #skip_serializing_if)]))
+                field.attrs.push(parse_quote!( #[serde(skip_serializing_if = #func)]))
             }
         }
     }
 }
 
-fn skip_serializing_if_default(s: &str) -> Option<&str> {
+fn skip_serializing_if_default(s: &str) -> Option<Defaults> {
     match s {
-        "Vec" => Some("Vec::is_empty"),
-        "BTreeMap" => Some("BTreeMap::is_empty"),
-        "BTreeSet" => Some("BTreeSet::is_empty"),
-        "HashMap" => Some("HashMap::is_empty"),
-        "HashSet" => Some("HashSet::is_empty"),
-        "OptionUpdate" => Some("OptionUpdate::is_empty"),
-        "bool" | "usize" | "u8" | "u16" | "u32" | "u64" | "u128" | "isize" | "i8" | "i16" | "i32" | "i64" | "i128"
-        | "CommunityRole" | "EventIndex" | "GroupRole" | "MessageIndex" | "Milliseconds" | "Nanoseconds"
-        | "TimestampMillis" | "TimestampNanos" => Some("ts_export::is_default"),
+        "Vec" => Some(Defaults::new("Vec::is_empty", "[]")),
+        "BTreeMap" => Some(Defaults::new("BTreeMap::is_empty", "{}")),
+        "BTreeSet" => Some(Defaults::new("BTreeSet::is_empty", "[]")),
+        "HashMap" => Some(Defaults::new("HashMap::is_empty", "{}")),
+        "HashSet" => Some(Defaults::new("HashSet::is_empty", "[]")),
+        "OptionUpdate" => Some(Defaults::new("OptionUpdate::is_empty", "NoChange")),
+        "bool" => Some(Defaults::new("ts_export::is_default", "false")),
+        "CommunityRole" => Some(Defaults::new("ts_export::is_default", "Member")),
+        "GroupRole" => Some(Defaults::new("ts_export::is_default", "Participant")),
+        "i8" | "i16" | "i32" | "u8" | "u16" | "u32" | "EventIndex" | "MessageIndex" => {
+            Some(Defaults::new("ts_export::is_default", "0"))
+        }
+        // TODO: Sort out how to make Typebox work with BigInts as default values
+        // "i64" | "i128" | "u64" | "u128" | "Milliseconds" | "Nanoseconds" | "Nat" | "TimestampMillis" | "TimestampNanos" => {
+        //     Some(Defaults::new("ts_export::is_default", "BigInt(0)"))
+        // }
         _ => None,
+    }
+}
+
+struct Defaults {
+    func: &'static str,
+    default: &'static str,
+}
+
+impl Defaults {
+    fn new(func: &'static str, default: &'static str) -> Defaults {
+        Defaults { func, default }
     }
 }
 

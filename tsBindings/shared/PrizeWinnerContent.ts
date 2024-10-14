@@ -3,4 +3,8 @@ import type { CompletedCryptoTransaction } from "./CompletedCryptoTransaction";
 import type { MessageIndex } from "./MessageIndex";
 import type { UserId } from "./UserId";
 
-export type PrizeWinnerContent = { winner: UserId, transaction: CompletedCryptoTransaction, prize_message: MessageIndex, };
+export type PrizeWinnerContent = { winner: UserId, transaction: CompletedCryptoTransaction, 
+/**
+ * @default 0
+ */
+prize_message: MessageIndex, };

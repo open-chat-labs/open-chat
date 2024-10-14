@@ -2,4 +2,8 @@
 import type { OptionUpdateString } from "../../shared/OptionUpdateString";
 import type { UserId } from "../../shared/UserId";
 
-export type UserSetContactOptionalContact = { user_id: UserId, nickname: OptionUpdateString, };
+export type UserSetContactOptionalContact = { user_id: UserId, 
+/**
+ * @default NoChange
+ */
+nickname: OptionUpdateString, };

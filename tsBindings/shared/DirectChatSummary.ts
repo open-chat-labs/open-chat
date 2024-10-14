@@ -6,4 +6,20 @@ import type { MessageIndex } from "./MessageIndex";
 import type { UserId } from "./UserId";
 import type { VideoCall } from "./VideoCall";
 
-export type DirectChatSummary = { them: UserId, last_updated: bigint, latest_message: EventWrapperMessage, latest_event_index: EventIndex, latest_message_index: MessageIndex, date_created: bigint, read_by_me_up_to?: MessageIndex | undefined, read_by_them_up_to?: MessageIndex | undefined, notifications_muted: boolean, metrics: ChatMetrics, my_metrics: ChatMetrics, archived: boolean, events_ttl?: bigint | undefined, events_ttl_last_updated: bigint, video_call_in_progress?: VideoCall | undefined, };
+export type DirectChatSummary = { them: UserId, last_updated: bigint, latest_message: EventWrapperMessage, 
+/**
+ * @default 0
+ */
+latest_event_index: EventIndex, 
+/**
+ * @default 0
+ */
+latest_message_index: MessageIndex, date_created: bigint, read_by_me_up_to?: MessageIndex | undefined, read_by_them_up_to?: MessageIndex | undefined, 
+/**
+ * @default false
+ */
+notifications_muted: boolean, metrics: ChatMetrics, my_metrics: ChatMetrics, 
+/**
+ * @default false
+ */
+archived: boolean, events_ttl?: bigint | undefined, events_ttl_last_updated: bigint, video_call_in_progress?: VideoCall | undefined, };

@@ -17,4 +17,52 @@ import type { MessageIndex } from "./MessageIndex";
 import type { TSBytes } from "./TSBytes";
 import type { VideoCall } from "./VideoCall";
 
-export type GroupCanisterGroupChatSummary = { chat_id: ChatId, local_user_index_canister_id: TSBytes, last_updated: bigint, name: string, description: string, subtype?: GroupSubtype | undefined, avatar_id?: bigint | undefined, is_public: boolean, history_visible_to_new_joiners: boolean, messages_visible_to_non_members: boolean, min_visible_event_index: EventIndex, min_visible_message_index: MessageIndex, latest_message?: EventWrapperMessage | undefined, latest_event_index: EventIndex, latest_message_index?: MessageIndex | undefined, joined: bigint, participant_count: number, role: GroupRole, mentions: Array<HydratedMention>, wasm_version: BuildVersion, permissions_v2: GroupPermissions, notifications_muted: boolean, metrics: ChatMetrics, my_metrics: ChatMetrics, latest_threads: Array<GroupCanisterThreadDetails>, frozen?: FrozenGroupInfo | undefined, date_last_pinned?: bigint | undefined, events_ttl?: bigint | undefined, events_ttl_last_updated: bigint, gate?: AccessGate | undefined, gate_config?: AccessGateConfig | undefined, rules_accepted: boolean, membership?: GroupMembership | undefined, video_call_in_progress?: VideoCall | undefined, };
+export type GroupCanisterGroupChatSummary = { chat_id: ChatId, local_user_index_canister_id: TSBytes, last_updated: bigint, name: string, description: string, subtype?: GroupSubtype | undefined, avatar_id?: bigint | undefined, 
+/**
+ * @default false
+ */
+is_public: boolean, 
+/**
+ * @default false
+ */
+history_visible_to_new_joiners: boolean, 
+/**
+ * @default false
+ */
+messages_visible_to_non_members: boolean, 
+/**
+ * @default 0
+ */
+min_visible_event_index: EventIndex, 
+/**
+ * @default 0
+ */
+min_visible_message_index: MessageIndex, latest_message?: EventWrapperMessage | undefined, 
+/**
+ * @default 0
+ */
+latest_event_index: EventIndex, latest_message_index?: MessageIndex | undefined, joined: bigint, 
+/**
+ * @default 0
+ */
+participant_count: number, 
+/**
+ * @default Participant
+ */
+role: GroupRole, 
+/**
+ * @default []
+ */
+mentions: Array<HydratedMention>, wasm_version: BuildVersion, permissions_v2: GroupPermissions, 
+/**
+ * @default false
+ */
+notifications_muted: boolean, metrics: ChatMetrics, my_metrics: ChatMetrics, 
+/**
+ * @default []
+ */
+latest_threads: Array<GroupCanisterThreadDetails>, frozen?: FrozenGroupInfo | undefined, date_last_pinned?: bigint | undefined, events_ttl?: bigint | undefined, events_ttl_last_updated: bigint, gate?: AccessGate | undefined, gate_config?: AccessGateConfig | undefined, 
+/**
+ * @default false
+ */
+rules_accepted: boolean, membership?: GroupMembership | undefined, video_call_in_progress?: VideoCall | undefined, };

@@ -6,4 +6,20 @@ import type { MessageIndex } from "../../shared/MessageIndex";
 import type { User } from "../../shared/User";
 import type { Version } from "../../shared/Version";
 
-export type CommunitySendMessageArgs = { channel_id: bigint, thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, content: MessageContentInitial, sender_name: string, sender_display_name?: string | undefined, replies_to?: GroupReplyContext | undefined, mentioned: Array<User>, forwarding: boolean, block_level_markdown: boolean, community_rules_accepted?: Version | undefined, channel_rules_accepted?: Version | undefined, message_filter_failed?: bigint | undefined, new_achievement: boolean, };
+export type CommunitySendMessageArgs = { channel_id: bigint, thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, content: MessageContentInitial, sender_name: string, sender_display_name?: string | undefined, replies_to?: GroupReplyContext | undefined, 
+/**
+ * @default []
+ */
+mentioned: Array<User>, 
+/**
+ * @default false
+ */
+forwarding: boolean, 
+/**
+ * @default false
+ */
+block_level_markdown: boolean, community_rules_accepted?: Version | undefined, channel_rules_accepted?: Version | undefined, message_filter_failed?: bigint | undefined, 
+/**
+ * @default false
+ */
+new_achievement: boolean, };

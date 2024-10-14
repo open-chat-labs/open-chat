@@ -2,4 +2,8 @@
 import type { MessageId } from "../../shared/MessageId";
 import type { MessageIndex } from "../../shared/MessageIndex";
 
-export type CommunityReportMessageArgs = { channel_id: bigint, thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, delete: boolean, };
+export type CommunityReportMessageArgs = { channel_id: bigint, thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, 
+/**
+ * @default false
+ */
+delete: boolean, };

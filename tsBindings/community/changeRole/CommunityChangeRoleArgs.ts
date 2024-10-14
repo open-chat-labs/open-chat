@@ -2,4 +2,8 @@
 import type { CommunityRole } from "../../shared/CommunityRole";
 import type { UserId } from "../../shared/UserId";
 
-export type CommunityChangeRoleArgs = { user_id: UserId, new_role: CommunityRole, };
+export type CommunityChangeRoleArgs = { user_id: UserId, 
+/**
+ * @default Member
+ */
+new_role: CommunityRole, };

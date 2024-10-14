@@ -5,4 +5,32 @@ import type { MessageIndex } from "./MessageIndex";
 import type { UserId } from "./UserId";
 import type { VersionedRules } from "./VersionedRules";
 
-export type SelectedGroupUpdates = { timestamp: bigint, last_updated: bigint, latest_event_index: EventIndex, members_added_or_updated: Array<GroupMember>, members_removed: Array<UserId>, blocked_users_added: Array<UserId>, blocked_users_removed: Array<UserId>, invited_users?: Array<UserId> | undefined, pinned_messages_added: Array<MessageIndex>, pinned_messages_removed: Array<MessageIndex>, chat_rules?: VersionedRules | undefined, };
+export type SelectedGroupUpdates = { timestamp: bigint, last_updated: bigint, 
+/**
+ * @default 0
+ */
+latest_event_index: EventIndex, 
+/**
+ * @default []
+ */
+members_added_or_updated: Array<GroupMember>, 
+/**
+ * @default []
+ */
+members_removed: Array<UserId>, 
+/**
+ * @default []
+ */
+blocked_users_added: Array<UserId>, 
+/**
+ * @default []
+ */
+blocked_users_removed: Array<UserId>, invited_users?: Array<UserId> | undefined, 
+/**
+ * @default []
+ */
+pinned_messages_added: Array<MessageIndex>, 
+/**
+ * @default []
+ */
+pinned_messages_removed: Array<MessageIndex>, chat_rules?: VersionedRules | undefined, };

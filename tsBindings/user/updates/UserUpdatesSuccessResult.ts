@@ -12,4 +12,36 @@ import type { UserUpdatesFavouriteChatsUpdates } from "./UserUpdatesFavouriteCha
 import type { UserUpdatesGroupChatsUpdates } from "./UserUpdatesGroupChatsUpdates";
 import type { UserWalletConfig } from "../UserWalletConfig";
 
-export type UserUpdatesSuccessResult = { timestamp: bigint, username?: string | undefined, display_name: OptionUpdateString, direct_chats: UserUpdatesDirectChatsUpdates, group_chats: UserUpdatesGroupChatsUpdates, favourite_chats: UserUpdatesFavouriteChatsUpdates, communities: UserUpdatesCommunitiesUpdates, avatar_id: OptionUpdateU128, blocked_users?: Array<UserId> | undefined, suspended?: boolean | undefined, pin_number_settings: OptionUpdatePinNumberSettings, achievements: Array<ChitEarned>, achievements_last_seen?: bigint | undefined, total_chit_earned: number, chit_balance: number, streak: number, streak_ends: bigint, next_daily_claim: bigint, is_unique_person?: boolean | undefined, wallet_config?: UserWalletConfig | undefined, referrals: Array<UserReferral>, message_activity_summary?: UserMessageActivitySummary | undefined, };
+export type UserUpdatesSuccessResult = { timestamp: bigint, username?: string | undefined, 
+/**
+ * @default NoChange
+ */
+display_name: OptionUpdateString, direct_chats: UserUpdatesDirectChatsUpdates, group_chats: UserUpdatesGroupChatsUpdates, favourite_chats: UserUpdatesFavouriteChatsUpdates, communities: UserUpdatesCommunitiesUpdates, 
+/**
+ * @default NoChange
+ */
+avatar_id: OptionUpdateU128, blocked_users?: Array<UserId> | undefined, suspended?: boolean | undefined, 
+/**
+ * @default NoChange
+ */
+pin_number_settings: OptionUpdatePinNumberSettings, 
+/**
+ * @default []
+ */
+achievements: Array<ChitEarned>, achievements_last_seen?: bigint | undefined, 
+/**
+ * @default 0
+ */
+total_chit_earned: number, 
+/**
+ * @default 0
+ */
+chit_balance: number, 
+/**
+ * @default 0
+ */
+streak: number, streak_ends: bigint, next_daily_claim: bigint, is_unique_person?: boolean | undefined, wallet_config?: UserWalletConfig | undefined, 
+/**
+ * @default []
+ */
+referrals: Array<UserReferral>, message_activity_summary?: UserMessageActivitySummary | undefined, };

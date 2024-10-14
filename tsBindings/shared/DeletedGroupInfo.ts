@@ -2,4 +2,8 @@
 import type { ChatId } from "./ChatId";
 import type { UserId } from "./UserId";
 
-export type DeletedGroupInfo = { id: ChatId, timestamp: bigint, deleted_by: UserId, group_name: string, name: string, public: boolean, };
+export type DeletedGroupInfo = { id: ChatId, timestamp: bigint, deleted_by: UserId, group_name: string, name: string, 
+/**
+ * @default false
+ */
+public: boolean, };

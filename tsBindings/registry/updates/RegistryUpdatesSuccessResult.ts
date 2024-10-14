@@ -4,4 +4,16 @@ import type { RegistryMessageFilterSummary } from "../RegistryMessageFilterSumma
 import type { RegistryNervousSystemSummary } from "../RegistryNervousSystemSummary";
 import type { RegistryTokenDetails } from "../RegistryTokenDetails";
 
-export type RegistryUpdatesSuccessResult = { last_updated: bigint, token_details?: Array<RegistryTokenDetails> | undefined, nervous_system_details: Array<RegistryNervousSystemSummary>, message_filters_added: Array<RegistryMessageFilterSummary>, message_filters_removed: Array<bigint>, swap_providers?: Array<ExchangeId> | undefined, };
+export type RegistryUpdatesSuccessResult = { last_updated: bigint, token_details?: Array<RegistryTokenDetails> | undefined, 
+/**
+ * @default []
+ */
+nervous_system_details: Array<RegistryNervousSystemSummary>, 
+/**
+ * @default []
+ */
+message_filters_added: Array<RegistryMessageFilterSummary>, 
+/**
+ * @default []
+ */
+message_filters_removed: Array<bigint>, swap_providers?: Array<ExchangeId> | undefined, };

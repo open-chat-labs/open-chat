@@ -2,4 +2,12 @@
 import type { CommunityRole } from "./CommunityRole";
 import type { UserId } from "./UserId";
 
-export type CommunityMember = { user_id: UserId, date_added: bigint, role: CommunityRole, display_name?: string | undefined, referred_by?: UserId | undefined, lapsed: boolean, };
+export type CommunityMember = { user_id: UserId, date_added: bigint, 
+/**
+ * @default Member
+ */
+role: CommunityRole, display_name?: string | undefined, referred_by?: UserId | undefined, 
+/**
+ * @default false
+ */
+lapsed: boolean, };

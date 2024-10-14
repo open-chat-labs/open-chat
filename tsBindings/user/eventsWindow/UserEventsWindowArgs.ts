@@ -2,4 +2,16 @@
 import type { MessageIndex } from "../../shared/MessageIndex";
 import type { UserId } from "../../shared/UserId";
 
-export type UserEventsWindowArgs = { user_id: UserId, thread_root_message_index?: MessageIndex | undefined, mid_point: MessageIndex, max_messages: number, max_events: number, latest_known_update?: bigint | undefined, };
+export type UserEventsWindowArgs = { user_id: UserId, thread_root_message_index?: MessageIndex | undefined, 
+/**
+ * @default 0
+ */
+mid_point: MessageIndex, 
+/**
+ * @default 0
+ */
+max_messages: number, 
+/**
+ * @default 0
+ */
+max_events: number, latest_known_update?: bigint | undefined, };

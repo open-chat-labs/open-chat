@@ -3,4 +3,20 @@ import type { AccessGate } from "./AccessGate";
 import type { AccessGateConfig } from "./AccessGateConfig";
 import type { CommunityId } from "./CommunityId";
 
-export type CommunityMatch = { id: CommunityId, score: number, name: string, description: string, avatar_id?: bigint | undefined, banner_id?: bigint | undefined, member_count: number, channel_count: number, gate?: AccessGate | undefined, gate_config?: AccessGateConfig | undefined, moderation_flags: number, primary_language: string, };
+export type CommunityMatch = { id: CommunityId, 
+/**
+ * @default 0
+ */
+score: number, name: string, description: string, avatar_id?: bigint | undefined, banner_id?: bigint | undefined, 
+/**
+ * @default 0
+ */
+member_count: number, 
+/**
+ * @default 0
+ */
+channel_count: number, gate?: AccessGate | undefined, gate_config?: AccessGateConfig | undefined, 
+/**
+ * @default 0
+ */
+moderation_flags: number, primary_language: string, };

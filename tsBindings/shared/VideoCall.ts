@@ -2,4 +2,8 @@
 import type { MessageIndex } from "./MessageIndex";
 import type { VideoCallType } from "./VideoCallType";
 
-export type VideoCall = { message_index: MessageIndex, call_type: VideoCallType, };
+export type VideoCall = { 
+/**
+ * @default 0
+ */
+message_index: MessageIndex, call_type: VideoCallType, };

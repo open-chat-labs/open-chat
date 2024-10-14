@@ -10,4 +10,24 @@ import type { GroupSubtype } from "./GroupSubtype";
 import type { MessageIndex } from "./MessageIndex";
 import type { TSBytes } from "./TSBytes";
 
-export type PublicGroupSummary = { chat_id: ChatId, local_user_index_canister_id: TSBytes, last_updated: bigint, name: string, description: string, subtype?: GroupSubtype | undefined, history_visible_to_new_joiners: boolean, messages_visible_to_non_members: boolean, avatar_id?: bigint | undefined, latest_message?: EventWrapperMessage | undefined, latest_event_index: EventIndex, latest_message_index?: MessageIndex | undefined, participant_count: number, wasm_version: BuildVersion, is_public: boolean, frozen?: FrozenGroupInfo | undefined, events_ttl?: bigint | undefined, events_ttl_last_updated: bigint, gate?: AccessGate | undefined, gate_config?: AccessGateConfig | undefined, };
+export type PublicGroupSummary = { chat_id: ChatId, local_user_index_canister_id: TSBytes, last_updated: bigint, name: string, description: string, subtype?: GroupSubtype | undefined, 
+/**
+ * @default false
+ */
+history_visible_to_new_joiners: boolean, 
+/**
+ * @default false
+ */
+messages_visible_to_non_members: boolean, avatar_id?: bigint | undefined, latest_message?: EventWrapperMessage | undefined, 
+/**
+ * @default 0
+ */
+latest_event_index: EventIndex, latest_message_index?: MessageIndex | undefined, 
+/**
+ * @default 0
+ */
+participant_count: number, wasm_version: BuildVersion, 
+/**
+ * @default false
+ */
+is_public: boolean, frozen?: FrozenGroupInfo | undefined, events_ttl?: bigint | undefined, events_ttl_last_updated: bigint, gate?: AccessGate | undefined, gate_config?: AccessGateConfig | undefined, };

@@ -2,4 +2,8 @@
 import type { StorageIndexProjectedAllowance } from "../StorageIndexProjectedAllowance";
 import type { TSBytes } from "../../shared/TSBytes";
 
-export type StorageIndexAllocationBucketSuccessResult = { canister_id: TSBytes, file_id: bigint, chunk_size: number, byte_limit: bigint, bytes_used: bigint, bytes_used_after_upload: bigint, projected_allowance: StorageIndexProjectedAllowance, };
+export type StorageIndexAllocationBucketSuccessResult = { canister_id: TSBytes, file_id: bigint, 
+/**
+ * @default 0
+ */
+chunk_size: number, byte_limit: bigint, bytes_used: bigint, bytes_used_after_upload: bigint, projected_allowance: StorageIndexProjectedAllowance, };

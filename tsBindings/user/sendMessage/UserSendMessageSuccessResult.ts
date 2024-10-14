@@ -3,4 +3,12 @@ import type { ChatId } from "../../shared/ChatId";
 import type { EventIndex } from "../../shared/EventIndex";
 import type { MessageIndex } from "../../shared/MessageIndex";
 
-export type UserSendMessageSuccessResult = { chat_id: ChatId, event_index: EventIndex, message_index: MessageIndex, timestamp: bigint, expires_at?: bigint | undefined, };
+export type UserSendMessageSuccessResult = { chat_id: ChatId, 
+/**
+ * @default 0
+ */
+event_index: EventIndex, 
+/**
+ * @default 0
+ */
+message_index: MessageIndex, timestamp: bigint, expires_at?: bigint | undefined, };

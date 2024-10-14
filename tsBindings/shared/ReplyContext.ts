@@ -3,4 +3,8 @@ import type { Chat } from "./Chat";
 import type { EventIndex } from "./EventIndex";
 import type { MessageIndex } from "./MessageIndex";
 
-export type ReplyContext = { chat_if_other?: [Chat, MessageIndex | null] | undefined, event_index: EventIndex, };
+export type ReplyContext = { chat_if_other?: [Chat, MessageIndex | null] | undefined, 
+/**
+ * @default 0
+ */
+event_index: EventIndex, };

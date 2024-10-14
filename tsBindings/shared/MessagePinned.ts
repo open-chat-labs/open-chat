@@ -2,4 +2,8 @@
 import type { MessageIndex } from "./MessageIndex";
 import type { UserId } from "./UserId";
 
-export type MessagePinned = { message_index: MessageIndex, pinned_by: UserId, };
+export type MessagePinned = { 
+/**
+ * @default 0
+ */
+message_index: MessageIndex, pinned_by: UserId, };

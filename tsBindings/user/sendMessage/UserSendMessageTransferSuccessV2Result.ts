@@ -4,4 +4,12 @@ import type { CompletedCryptoTransaction } from "../../shared/CompletedCryptoTra
 import type { EventIndex } from "../../shared/EventIndex";
 import type { MessageIndex } from "../../shared/MessageIndex";
 
-export type UserSendMessageTransferSuccessV2Result = { chat_id: ChatId, event_index: EventIndex, message_index: MessageIndex, timestamp: bigint, expires_at?: bigint | undefined, transfer: CompletedCryptoTransaction, };
+export type UserSendMessageTransferSuccessV2Result = { chat_id: ChatId, 
+/**
+ * @default 0
+ */
+event_index: EventIndex, 
+/**
+ * @default 0
+ */
+message_index: MessageIndex, timestamp: bigint, expires_at?: bigint | undefined, transfer: CompletedCryptoTransaction, };

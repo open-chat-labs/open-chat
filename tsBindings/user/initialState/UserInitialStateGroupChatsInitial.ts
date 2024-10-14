@@ -2,4 +2,12 @@
 import type { ChatId } from "../../shared/ChatId";
 import type { UserGroupChatSummary } from "../UserGroupChatSummary";
 
-export type UserInitialStateGroupChatsInitial = { summaries: Array<UserGroupChatSummary>, pinned: Array<ChatId>, };
+export type UserInitialStateGroupChatsInitial = { 
+/**
+ * @default []
+ */
+summaries: Array<UserGroupChatSummary>, 
+/**
+ * @default []
+ */
+pinned: Array<ChatId>, };

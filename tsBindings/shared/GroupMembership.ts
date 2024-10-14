@@ -4,4 +4,28 @@ import type { GroupCanisterThreadDetails } from "./GroupCanisterThreadDetails";
 import type { GroupRole } from "./GroupRole";
 import type { HydratedMention } from "./HydratedMention";
 
-export type GroupMembership = { joined: bigint, role: GroupRole, mentions: Array<HydratedMention>, notifications_muted: boolean, my_metrics: ChatMetrics, latest_threads: Array<GroupCanisterThreadDetails>, rules_accepted: boolean, lapsed: boolean, };
+export type GroupMembership = { joined: bigint, 
+/**
+ * @default Participant
+ */
+role: GroupRole, 
+/**
+ * @default []
+ */
+mentions: Array<HydratedMention>, 
+/**
+ * @default false
+ */
+notifications_muted: boolean, my_metrics: ChatMetrics, 
+/**
+ * @default []
+ */
+latest_threads: Array<GroupCanisterThreadDetails>, 
+/**
+ * @default false
+ */
+rules_accepted: boolean, 
+/**
+ * @default false
+ */
+lapsed: boolean, };

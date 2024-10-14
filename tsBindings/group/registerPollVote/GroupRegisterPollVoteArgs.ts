@@ -2,4 +2,16 @@
 import type { MessageIndex } from "../../shared/MessageIndex";
 import type { VoteOperation } from "../../shared/VoteOperation";
 
-export type GroupRegisterPollVoteArgs = { thread_root_message_index?: MessageIndex | undefined, message_index: MessageIndex, poll_option: number, operation: VoteOperation, new_achievement: boolean, correlation_id: bigint, };
+export type GroupRegisterPollVoteArgs = { thread_root_message_index?: MessageIndex | undefined, 
+/**
+ * @default 0
+ */
+message_index: MessageIndex, 
+/**
+ * @default 0
+ */
+poll_option: number, operation: VoteOperation, 
+/**
+ * @default false
+ */
+new_achievement: boolean, correlation_id: bigint, };

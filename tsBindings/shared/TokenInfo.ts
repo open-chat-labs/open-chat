@@ -2,4 +2,8 @@
 import type { Cryptocurrency } from "./Cryptocurrency";
 import type { TSBytes } from "./TSBytes";
 
-export type TokenInfo = { token: Cryptocurrency, ledger: TSBytes, decimals: number, fee: bigint, };
+export type TokenInfo = { token: Cryptocurrency, ledger: TSBytes, 
+/**
+ * @default 0
+ */
+decimals: number, fee: bigint, };

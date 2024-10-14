@@ -3,4 +3,8 @@ import type { MessageContentInitial } from "../../shared/MessageContentInitial";
 import type { MessageId } from "../../shared/MessageId";
 import type { MessageIndex } from "../../shared/MessageIndex";
 
-export type CommunityEditMessageArgs = { channel_id: bigint, thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, content: MessageContentInitial, block_level_markdown?: boolean | undefined, new_achievement: boolean, };
+export type CommunityEditMessageArgs = { channel_id: bigint, thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, content: MessageContentInitial, block_level_markdown?: boolean | undefined, 
+/**
+ * @default false
+ */
+new_achievement: boolean, };

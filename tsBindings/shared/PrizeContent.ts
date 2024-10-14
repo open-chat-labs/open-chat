@@ -2,4 +2,28 @@
 import type { Cryptocurrency } from "./Cryptocurrency";
 import type { UserId } from "./UserId";
 
-export type PrizeContent = { prizes_remaining: number, prizes_pending: number, winners: Array<UserId>, winner_count: number, user_is_winner: boolean, token: Cryptocurrency, end_date: bigint, caption?: string | undefined, diamond_only: boolean, };
+export type PrizeContent = { 
+/**
+ * @default 0
+ */
+prizes_remaining: number, 
+/**
+ * @default 0
+ */
+prizes_pending: number, 
+/**
+ * @default []
+ */
+winners: Array<UserId>, 
+/**
+ * @default 0
+ */
+winner_count: number, 
+/**
+ * @default false
+ */
+user_is_winner: boolean, token: Cryptocurrency, end_date: bigint, caption?: string | undefined, 
+/**
+ * @default false
+ */
+diamond_only: boolean, };

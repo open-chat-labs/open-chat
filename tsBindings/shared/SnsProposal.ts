@@ -3,4 +3,12 @@ import type { ProposalDecisionStatus } from "./ProposalDecisionStatus";
 import type { ProposalRewardStatus } from "./ProposalRewardStatus";
 import type { Tally } from "./Tally";
 
-export type SnsProposal = { id: bigint, action: bigint, proposer: [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number], created: bigint, title: string, summary: string, url: string, status: ProposalDecisionStatus, reward_status: ProposalRewardStatus, tally: Tally, deadline: bigint, payload_text_rendering?: string | undefined, minimum_yes_proportion_of_total: number, minimum_yes_proportion_of_exercised: number, last_updated: bigint, };
+export type SnsProposal = { id: bigint, action: bigint, proposer: [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number], created: bigint, title: string, summary: string, url: string, status: ProposalDecisionStatus, reward_status: ProposalRewardStatus, tally: Tally, deadline: bigint, payload_text_rendering?: string | undefined, 
+/**
+ * @default 0
+ */
+minimum_yes_proportion_of_total: number, 
+/**
+ * @default 0
+ */
+minimum_yes_proportion_of_exercised: number, last_updated: bigint, };

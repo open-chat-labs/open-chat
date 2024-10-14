@@ -8,4 +8,24 @@ import type { ThreadSummary } from "./ThreadSummary";
 import type { Tips } from "./Tips";
 import type { UserId } from "./UserId";
 
-export type Message = { message_index: MessageIndex, message_id: MessageId, sender: UserId, content: MessageContent, replies_to?: ReplyContext | undefined, reactions: Array<[Reaction, Array<UserId>]>, tips: Tips, thread_summary?: ThreadSummary | undefined, edited: boolean, forwarded: boolean, block_level_markdown: boolean, };
+export type Message = { 
+/**
+ * @default 0
+ */
+message_index: MessageIndex, message_id: MessageId, sender: UserId, content: MessageContent, replies_to?: ReplyContext | undefined, 
+/**
+ * @default []
+ */
+reactions: Array<[Reaction, Array<UserId>]>, tips: Tips, thread_summary?: ThreadSummary | undefined, 
+/**
+ * @default false
+ */
+edited: boolean, 
+/**
+ * @default false
+ */
+forwarded: boolean, 
+/**
+ * @default false
+ */
+block_level_markdown: boolean, };

@@ -11,4 +11,36 @@ import type { UserMessageActivitySummary } from "../UserMessageActivitySummary";
 import type { UserReferral } from "../UserReferral";
 import type { UserWalletConfig } from "../UserWalletConfig";
 
-export type UserInitialStateSuccessResult = { timestamp: bigint, direct_chats: UserInitialStateDirectChatsInitial, group_chats: UserInitialStateGroupChatsInitial, favourite_chats: UserInitialStateFavouriteChatsInitial, communities: UserInitialStateCommunitiesInitial, avatar_id?: bigint | undefined, blocked_users: Array<UserId>, suspended: boolean, pin_number_settings?: PinNumberSettings | undefined, local_user_index_canister_id: TSBytes, achievements: Array<ChitEarned>, achievements_last_seen: bigint, total_chit_earned: number, chit_balance: number, streak: number, streak_ends: bigint, next_daily_claim: bigint, is_unique_person: boolean, wallet_config: UserWalletConfig, referrals: Array<UserReferral>, message_activity_summary: UserMessageActivitySummary, };
+export type UserInitialStateSuccessResult = { timestamp: bigint, direct_chats: UserInitialStateDirectChatsInitial, group_chats: UserInitialStateGroupChatsInitial, favourite_chats: UserInitialStateFavouriteChatsInitial, communities: UserInitialStateCommunitiesInitial, avatar_id?: bigint | undefined, 
+/**
+ * @default []
+ */
+blocked_users: Array<UserId>, 
+/**
+ * @default false
+ */
+suspended: boolean, pin_number_settings?: PinNumberSettings | undefined, local_user_index_canister_id: TSBytes, 
+/**
+ * @default []
+ */
+achievements: Array<ChitEarned>, achievements_last_seen: bigint, 
+/**
+ * @default 0
+ */
+total_chit_earned: number, 
+/**
+ * @default 0
+ */
+chit_balance: number, 
+/**
+ * @default 0
+ */
+streak: number, streak_ends: bigint, next_daily_claim: bigint, 
+/**
+ * @default false
+ */
+is_unique_person: boolean, wallet_config: UserWalletConfig, 
+/**
+ * @default []
+ */
+referrals: Array<UserReferral>, message_activity_summary: UserMessageActivitySummary, };

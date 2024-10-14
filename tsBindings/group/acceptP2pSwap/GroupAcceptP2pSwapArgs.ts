@@ -2,4 +2,8 @@
 import type { MessageId } from "../../shared/MessageId";
 import type { MessageIndex } from "../../shared/MessageIndex";
 
-export type GroupAcceptP2pSwapArgs = { thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, pin?: string | undefined, new_achievement: boolean, };
+export type GroupAcceptP2pSwapArgs = { thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, pin?: string | undefined, 
+/**
+ * @default false
+ */
+new_achievement: boolean, };

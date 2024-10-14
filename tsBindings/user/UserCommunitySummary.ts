@@ -3,4 +3,20 @@ import type { CommunityId } from "../shared/CommunityId";
 import type { TSBytes } from "../shared/TSBytes";
 import type { UserChannelSummary } from "./UserChannelSummary";
 
-export type UserCommunitySummary = { community_id: CommunityId, local_user_index_canister_id: TSBytes, channels: Array<UserChannelSummary>, index: number, archived: boolean, pinned: Array<bigint>, };
+export type UserCommunitySummary = { community_id: CommunityId, local_user_index_canister_id: TSBytes, 
+/**
+ * @default []
+ */
+channels: Array<UserChannelSummary>, 
+/**
+ * @default 0
+ */
+index: number, 
+/**
+ * @default false
+ */
+archived: boolean, 
+/**
+ * @default []
+ */
+pinned: Array<bigint>, };

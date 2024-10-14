@@ -3,4 +3,20 @@ import type { EventIndex } from "../../shared/EventIndex";
 import type { MessageIndex } from "../../shared/MessageIndex";
 import type { UserId } from "../../shared/UserId";
 
-export type UserEventsArgs = { user_id: UserId, thread_root_message_index?: MessageIndex | undefined, start_index: EventIndex, ascending: boolean, max_messages: number, max_events: number, latest_known_update?: bigint | undefined, };
+export type UserEventsArgs = { user_id: UserId, thread_root_message_index?: MessageIndex | undefined, 
+/**
+ * @default 0
+ */
+start_index: EventIndex, 
+/**
+ * @default false
+ */
+ascending: boolean, 
+/**
+ * @default 0
+ */
+max_messages: number, 
+/**
+ * @default 0
+ */
+max_events: number, latest_known_update?: bigint | undefined, };

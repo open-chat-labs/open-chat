@@ -3,4 +3,8 @@ import type { ProposalDecisionStatus } from "./ProposalDecisionStatus";
 import type { ProposalRewardStatus } from "./ProposalRewardStatus";
 import type { Tally } from "./Tally";
 
-export type NnsProposal = { id: bigint, topic: number, proposer: bigint, created: bigint, title: string, summary: string, url: string, status: ProposalDecisionStatus, reward_status: ProposalRewardStatus, tally: Tally, deadline: bigint, payload_text_rendering?: string | undefined, last_updated: bigint, };
+export type NnsProposal = { id: bigint, 
+/**
+ * @default 0
+ */
+topic: number, proposer: bigint, created: bigint, title: string, summary: string, url: string, status: ProposalDecisionStatus, reward_status: ProposalRewardStatus, tally: Tally, deadline: bigint, payload_text_rendering?: string | undefined, last_updated: bigint, };

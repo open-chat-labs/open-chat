@@ -2,4 +2,16 @@
 import type { EventIndex } from "./EventIndex";
 import type { MessageIndex } from "./MessageIndex";
 
-export type GroupCanisterThreadDetails = { root_message_index: MessageIndex, latest_event: EventIndex, latest_message: MessageIndex, last_updated: bigint, };
+export type GroupCanisterThreadDetails = { 
+/**
+ * @default 0
+ */
+root_message_index: MessageIndex, 
+/**
+ * @default 0
+ */
+latest_event: EventIndex, 
+/**
+ * @default 0
+ */
+latest_message: MessageIndex, last_updated: bigint, };

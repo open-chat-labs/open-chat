@@ -2,4 +2,12 @@
 import type { EventIndex } from "./EventIndex";
 import type { EventWrapperMessage } from "./EventWrapperMessage";
 
-export type MessagesResponse = { messages: Array<EventWrapperMessage>, latest_event_index: EventIndex, chat_last_updated: bigint, };
+export type MessagesResponse = { 
+/**
+ * @default []
+ */
+messages: Array<EventWrapperMessage>, 
+/**
+ * @default 0
+ */
+latest_event_index: EventIndex, chat_last_updated: bigint, };

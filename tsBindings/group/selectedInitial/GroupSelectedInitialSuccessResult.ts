@@ -5,4 +5,24 @@ import type { MessageIndex } from "../../shared/MessageIndex";
 import type { UserId } from "../../shared/UserId";
 import type { VersionedRules } from "../../shared/VersionedRules";
 
-export type GroupSelectedInitialSuccessResult = { timestamp: bigint, last_updated: bigint, latest_event_index: EventIndex, participants: Array<GroupMember>, blocked_users: Array<UserId>, invited_users: Array<UserId>, pinned_messages: Array<MessageIndex>, chat_rules: VersionedRules, };
+export type GroupSelectedInitialSuccessResult = { timestamp: bigint, last_updated: bigint, 
+/**
+ * @default 0
+ */
+latest_event_index: EventIndex, 
+/**
+ * @default []
+ */
+participants: Array<GroupMember>, 
+/**
+ * @default []
+ */
+blocked_users: Array<UserId>, 
+/**
+ * @default []
+ */
+invited_users: Array<UserId>, 
+/**
+ * @default []
+ */
+pinned_messages: Array<MessageIndex>, chat_rules: VersionedRules, };

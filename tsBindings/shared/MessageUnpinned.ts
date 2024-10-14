@@ -2,4 +2,12 @@
 import type { MessageIndex } from "./MessageIndex";
 import type { UserId } from "./UserId";
 
-export type MessageUnpinned = { message_index: MessageIndex, unpinned_by: UserId, due_to_message_deleted: boolean, };
+export type MessageUnpinned = { 
+/**
+ * @default 0
+ */
+message_index: MessageIndex, unpinned_by: UserId, 
+/**
+ * @default false
+ */
+due_to_message_deleted: boolean, };

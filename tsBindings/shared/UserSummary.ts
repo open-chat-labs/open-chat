@@ -2,4 +2,32 @@
 import type { DiamondMembershipStatus } from "./DiamondMembershipStatus";
 import type { UserId } from "./UserId";
 
-export type UserSummary = { user_id: UserId, username: string, display_name?: string | undefined, avatar_id?: bigint | undefined, is_bot: boolean, suspended: boolean, diamond_member: boolean, diamond_membership_status: DiamondMembershipStatus, total_chit_earned: number, chit_balance: number, streak: number, is_unique_person: boolean, };
+export type UserSummary = { user_id: UserId, username: string, display_name?: string | undefined, avatar_id?: bigint | undefined, 
+/**
+ * @default false
+ */
+is_bot: boolean, 
+/**
+ * @default false
+ */
+suspended: boolean, 
+/**
+ * @default false
+ */
+diamond_member: boolean, diamond_membership_status: DiamondMembershipStatus, 
+/**
+ * @default 0
+ */
+total_chit_earned: number, 
+/**
+ * @default 0
+ */
+chit_balance: number, 
+/**
+ * @default 0
+ */
+streak: number, 
+/**
+ * @default false
+ */
+is_unique_person: boolean, };

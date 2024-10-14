@@ -2,4 +2,8 @@
 import type { GroupRole } from "../../shared/GroupRole";
 import type { UserId } from "../../shared/UserId";
 
-export type GroupChangeRoleArgs = { user_id: UserId, new_role: GroupRole, correlation_id: bigint, };
+export type GroupChangeRoleArgs = { user_id: UserId, 
+/**
+ * @default Participant
+ */
+new_role: GroupRole, correlation_id: bigint, };

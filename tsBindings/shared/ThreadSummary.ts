@@ -2,4 +2,20 @@
 import type { EventIndex } from "./EventIndex";
 import type { UserId } from "./UserId";
 
-export type ThreadSummary = { participant_ids: Array<UserId>, followed_by_me: boolean, reply_count: number, latest_event_index: EventIndex, latest_event_timestamp: bigint, };
+export type ThreadSummary = { 
+/**
+ * @default []
+ */
+participant_ids: Array<UserId>, 
+/**
+ * @default false
+ */
+followed_by_me: boolean, 
+/**
+ * @default 0
+ */
+reply_count: number, 
+/**
+ * @default 0
+ */
+latest_event_index: EventIndex, latest_event_timestamp: bigint, };

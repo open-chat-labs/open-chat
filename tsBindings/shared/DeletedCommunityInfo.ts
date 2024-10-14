@@ -2,4 +2,8 @@
 import type { CommunityId } from "./CommunityId";
 import type { UserId } from "./UserId";
 
-export type DeletedCommunityInfo = { id: CommunityId, timestamp: bigint, deleted_by: UserId, name: string, public: boolean, };
+export type DeletedCommunityInfo = { id: CommunityId, timestamp: bigint, deleted_by: UserId, name: string, 
+/**
+ * @default false
+ */
+public: boolean, };

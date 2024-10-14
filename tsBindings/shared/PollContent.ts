@@ -2,4 +2,8 @@
 import type { PollConfig } from "./PollConfig";
 import type { PollVotes } from "./PollVotes";
 
-export type PollContent = { config: PollConfig, votes: PollVotes, ended: boolean, };
+export type PollContent = { config: PollConfig, votes: PollVotes, 
+/**
+ * @default false
+ */
+ended: boolean, };

@@ -2,4 +2,16 @@
 import type { GroupRole } from "./GroupRole";
 import type { UserId } from "./UserId";
 
-export type RoleChanged = { user_ids: Array<UserId>, changed_by: UserId, old_role: GroupRole, new_role: GroupRole, };
+export type RoleChanged = { 
+/**
+ * @default []
+ */
+user_ids: Array<UserId>, changed_by: UserId, 
+/**
+ * @default Participant
+ */
+old_role: GroupRole, 
+/**
+ * @default Participant
+ */
+new_role: GroupRole, };

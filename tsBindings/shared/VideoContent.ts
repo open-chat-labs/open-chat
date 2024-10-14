@@ -2,4 +2,12 @@
 import type { BlobReference } from "./BlobReference";
 import type { ThumbnailData } from "./ThumbnailData";
 
-export type VideoContent = { width: number, height: number, thumbnail_data: ThumbnailData, caption?: string | undefined, mime_type: string, image_blob_reference?: BlobReference | undefined, video_blob_reference?: BlobReference | undefined, };
+export type VideoContent = { 
+/**
+ * @default 0
+ */
+width: number, 
+/**
+ * @default 0
+ */
+height: number, thumbnail_data: ThumbnailData, caption?: string | undefined, mime_type: string, image_blob_reference?: BlobReference | undefined, video_blob_reference?: BlobReference | undefined, };

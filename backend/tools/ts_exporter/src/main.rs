@@ -18,7 +18,7 @@ fn main() {
     }
 
     let input_files = recurse_files(&ts_bindings_dir, ".ts");
-    let all_exports: Vec<_> = input_files.into_iter().flat_map(extract_exports).collect();
+    let all_exports: Vec<_> = input_files.into_iter().map(extract_exports).collect();
 
     let mut types_available: HashSet<_> = [
         "bigint",
@@ -74,12 +74,10 @@ fn recurse_files(path: impl AsRef<Path>, suffix: &str) -> Vec<PathBuf> {
     files
 }
 
-fn extract_exports(file: impl AsRef<Path>) -> Vec<ParsedExport> {
-    fs::read_to_string(&file)
-        .unwrap_or_else(|e| panic!("{e}. Path: {}", file.as_ref().display()))
-        .lines()
-        .filter_map(|l| ParsedExport::from_str(l).ok())
-        .collect()
+fn extract_exports(file: impl AsRef<Path>) -> ParsedExport {
+    let contents: String = fs::read_to_string(&file).unwrap_or_else(|e| panic!("{e}. Path: {}", file.as_ref().display()));
+    let start_index = contents.find(EXPORT_PREFIX).unwrap();
+    ParsedExport::from_str(&contents[start_index..]).unwrap()
 }
 
 #[derive(Debug)]
@@ -116,7 +114,8 @@ impl FromStr for ParsedExport {
     }
 }
 
-const PATTERNS_TO_REMOVE: [&str; 3] = [" ", "Array<", "Record<"];
+const PATTERNS_TO_REMOVE: [&str; 4] = ["\n", " ", "Array<", "Record<"];
+static DOC_COMMENTS_REGEX: LazyLock<Regex> = LazyLock::new(|| RegexBuilder::new(r"\/\*\*.+?\*\/").build().unwrap());
 static KEY_REGEX: LazyLock<Regex> = LazyLock::new(|| RegexBuilder::new(r"\w+\??:").build().unwrap());
 static LITERAL_REGEX: LazyLock<Regex> = LazyLock::new(|| RegexBuilder::new(r#"\"\w+\""#).build().unwrap());
 static WORD_REGEX: LazyLock<Regex> = LazyLock::new(|| RegexBuilder::new(r"\w+").build().unwrap());
@@ -126,6 +125,7 @@ fn extract_dependencies(mut value: String) -> HashSet<String> {
         value = value.replace(pattern, "");
     }
 
+    value = DOC_COMMENTS_REGEX.replace_all(&value, "").to_string();
     value = KEY_REGEX.replace_all(&value, "").to_string();
     value = LITERAL_REGEX.replace_all(&value, "").to_string();
 
