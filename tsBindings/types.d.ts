@@ -97,6 +97,9 @@ export type VideoCallPresence = "Default" | "Owner" | "Hidden";
 export type ChatMetrics = { text_messages: bigint, image_messages: bigint, video_messages: bigint, audio_messages: bigint, file_messages: bigint, polls: bigint, poll_votes: bigint, icp_messages: bigint, sns1_messages: bigint, ckbtc_messages: bigint, chat_messages: bigint, kinic_messages: bigint, deleted_messages: bigint, giphy_messages: bigint, prize_messages: bigint, prize_winner_messages: bigint, replies: bigint, edits: bigint, reactions: bigint, proposals: bigint, reported_messages: bigint, message_reminders: bigint, custom_type_messages: bigint, last_active: bigint, };
 export type VideoCallType = "Broadcast" | "Default";
 export type VideoCall = { message_index: TSNumberWithDefault, call_type: VideoCallType, };
+/**
+ * @default Participant
+ */
 export type GroupRole = "Owner" | "Admin" | "Moderator" | "Participant";
 export type GroupPermissionRole = "None" | "Owner" | "Admins" | "Moderators" | "Members";
 export type AcceptSwapSuccess = { token1_txn_in: bigint, };

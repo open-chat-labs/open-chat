@@ -157,6 +157,11 @@ fn skip_serializing_if_default(path_segment: &PathSegment) -> Option<Defaults> {
             default_override: None,
             type_override: None,
         }),
+        "GroupRole" | "CommunityRole" => Some(Defaults {
+            func: "ts_export::is_default",
+            default_override: None,
+            type_override: None,
+        }),
         "bool" => Some(Defaults {
             func: "ts_export::is_default",
             default_override: None,

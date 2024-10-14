@@ -782,12 +782,15 @@ export const VideoCall = Type.Object({
 });
 
 export type GroupRole = Static<typeof GroupRole>;
-export const GroupRole = Type.Union([
-    Type.Literal("Owner"),
-    Type.Literal("Admin"),
-    Type.Literal("Moderator"),
-    Type.Literal("Participant"),
-]);
+export const GroupRole = Type.Union(
+    [
+        Type.Literal("Owner"),
+        Type.Literal("Admin"),
+        Type.Literal("Moderator"),
+        Type.Literal("Participant"),
+    ],
+    { default: "Participant" },
+);
 
 export type GroupPermissionRole = Static<typeof GroupPermissionRole>;
 export const GroupPermissionRole = Type.Union([
