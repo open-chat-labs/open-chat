@@ -2,6 +2,7 @@
 import type { MessageContentInitial } from "../../shared/MessageContentInitial";
 import type { MessageId } from "../../shared/MessageId";
 import type { MessageIndex } from "../../shared/MessageIndex";
+import type { TSBigIntWithDefault } from "../../shared/TSBigIntWithDefault";
 import type { UserId } from "../../shared/UserId";
 
-export type UserEditMessageArgs = { user_id: UserId, thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, content: MessageContentInitial, block_level_markdown?: boolean | undefined, correlation_id: bigint, };
+export type UserEditMessageArgs = { user_id: UserId, thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, content: MessageContentInitial, block_level_markdown?: boolean | undefined, correlation_id: TSBigIntWithDefault, };

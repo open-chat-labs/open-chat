@@ -3,8 +3,9 @@ import type { ChatId } from "../../shared/ChatId";
 import type { CommunityId } from "../../shared/CommunityId";
 import type { DeletedCommunityInfo } from "../../shared/DeletedCommunityInfo";
 import type { DeletedGroupInfo } from "../../shared/DeletedGroupInfo";
+import type { TSBigIntWithDefault } from "../../shared/TSBigIntWithDefault";
 
-export type GroupIndexActiveGroupsSuccessResult = { timestamp: bigint, 
+export type GroupIndexActiveGroupsSuccessResult = { timestamp: TSBigIntWithDefault, 
 /**
  * @default []
  */

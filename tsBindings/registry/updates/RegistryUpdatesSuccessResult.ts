@@ -3,8 +3,9 @@ import type { ExchangeId } from "../../shared/ExchangeId";
 import type { RegistryMessageFilterSummary } from "../RegistryMessageFilterSummary";
 import type { RegistryNervousSystemSummary } from "../RegistryNervousSystemSummary";
 import type { RegistryTokenDetails } from "../RegistryTokenDetails";
+import type { TSBigIntWithDefault } from "../../shared/TSBigIntWithDefault";
 
-export type RegistryUpdatesSuccessResult = { last_updated: bigint, token_details?: Array<RegistryTokenDetails> | undefined, 
+export type RegistryUpdatesSuccessResult = { last_updated: TSBigIntWithDefault, token_details?: Array<RegistryTokenDetails> | undefined, 
 /**
  * @default []
  */
