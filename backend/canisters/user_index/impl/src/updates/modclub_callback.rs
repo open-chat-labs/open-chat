@@ -101,7 +101,11 @@ fn delete_channel_message(
         as_platform_moderator: Some(true),
         new_achievement: false,
     };
-    fire_and_forget_handler.send(canister_id, "delete_messages_msgpack".to_string(), Encode!(&args).unwrap());
+    fire_and_forget_handler.send(
+        canister_id,
+        "delete_messages_msgpack".to_string(),
+        msgpack::serialize_then_unwrap(&args),
+    );
 }
 
 fn delete_group_message(
