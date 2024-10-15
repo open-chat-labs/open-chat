@@ -366,7 +366,11 @@ export function mergeLocalSummaryUpdates(
     for (const [chatId, localUpdate] of localUpdates.entries()) {
         if (localUpdate.added !== undefined && scopeMatchesChat(scope, localUpdate.added)) {
             const current = merged.get(chatId);
-            if (current === undefined || (current.kind === "group_chat" && isPreviewing(current))) {
+            if (
+                current === undefined ||
+                isLapsed(current) ||
+                (current.kind === "group_chat" && isPreviewing(current))
+            ) {
                 merged.set(chatId, localUpdate.added);
             }
         }

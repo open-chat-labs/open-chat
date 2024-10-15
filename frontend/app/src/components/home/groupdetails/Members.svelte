@@ -1,4 +1,8 @@
 <script lang="ts">
+    import Alarm from "svelte-material-icons/Alarm.svelte";
+    import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
+    import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
+    import Cancel from "svelte-material-icons/Cancel.svelte";
     import { _ } from "svelte-i18n";
     import Search from "../../Search.svelte";
     import Member from "./Member.svelte";
@@ -50,19 +54,24 @@
     $: fullMembers = knownUsers
         .filter((u) => matchesSearch(searchTermLower, u) && u.userId !== userId)
         .sort(compareMembers);
-    $: blockedUsers = matchingUsers(searchTermLower, $userStore, blocked);
-    $: lapsedMembers = matchingUsers(searchTermLower, $userStore, lapsed);
-    $: invitedUsers = matchingUsers(searchTermLower, $userStore, invited);
+    $: blockedUsers = matchingUsers(searchTermLower, $userStore, blocked, true);
+    $: lapsedMembers = matchingUsers(searchTermLower, $userStore, lapsed, true);
+    $: invitedUsers = matchingUsers(searchTermLower, $userStore, invited, true);
     $: showBlocked = blockedUsers.length > 0;
     $: showInvited = invitedUsers.length > 0;
     $: showLapsed = lapsedMembers.length > 0;
     $: canInvite = client.canInviteUsers(collection.id);
     $: canPromoteMyselfToOwner = false;
 
-    function matchingUsers(term: string, users: UserLookup, ids: Set<string>): UserSummary[] {
+    function matchingUsers(
+        term: string,
+        users: UserLookup,
+        ids: Set<string>,
+        includeMe = false,
+    ): UserSummary[] {
         return Array.from(ids).reduce((matching, id) => {
             const user = users.get(id);
-            if (user && matchesSearch(term, user) && user.userId !== userId) {
+            if (user && matchesSearch(term, user) && (user.userId !== userId || includeMe)) {
                 matching.push(user);
             }
             return matching;
@@ -223,6 +232,10 @@
                 on:click={() => setView("members")}
                 class:selected={memberView === "members"}
                 class="tab sub">
+                <AccountMultiple
+                    size={"0.9em"}
+                    viewBox={"0 -2 24 24"}
+                    color={memberView === "members" ? "var(--txt)" : "var(--txt-light)"} />
                 <Translatable resourceKey={i18nKey("members")} />
             </div>
             {#if showInvited}
@@ -233,6 +246,10 @@
                     on:click={() => setView("invited")}
                     class:selected={memberView === "invited"}
                     class="tab sub">
+                    <AccountPlusOutline
+                        size={"0.9em"}
+                        viewBox={"0 -2 24 24"}
+                        color={memberView === "invited" ? "var(--txt)" : "var(--txt-light)"} />
                     <Translatable resourceKey={i18nKey("invited")} />
                 </div>
             {/if}
@@ -245,6 +262,10 @@
                     on:click={() => setView("blocked")}
                     class:selected={memberView === "blocked"}
                     class="tab sub">
+                    <Cancel
+                        size={"0.9em"}
+                        viewBox={"0 -2 24 24"}
+                        color={memberView === "blocked" ? "var(--txt)" : "var(--txt-light)"} />
                     <Translatable resourceKey={i18nKey("blocked")} />
                 </div>
             {/if}
@@ -257,6 +278,10 @@
                     on:click={() => setView("lapsed")}
                     class:selected={memberView === "lapsed"}
                     class="tab sub">
+                    <Alarm
+                        size={"0.9em"}
+                        viewBox={"0 -2 24 24"}
+                        color={memberView === "lapsed" ? "var(--txt)" : "var(--txt-light)"} />
                     <Translatable resourceKey={i18nKey("access.lapsed.user")} />
                 </div>
             {/if}
@@ -300,6 +325,7 @@
         <div use:menuCloser class="user-list">
             {#each blockedUsers as user}
                 <BlockedUser
+                    me={user.userId === userId}
                     {user}
                     {searchTerm}
                     canUnblockUser={client.canUnblockUsers(collection.id)}
@@ -310,6 +336,7 @@
         <div use:menuCloser class="user-list">
             {#each invitedUsers as user}
                 <InvitedUser
+                    me={user.userId === userId}
                     {user}
                     {searchTerm}
                     canUninviteUser={client.canInviteUsers(collection.id)}
@@ -319,7 +346,7 @@
     {:else if memberView === "lapsed"}
         <div use:menuCloser class="user-list">
             {#each lapsedMembers as user}
-                <User {user} {searchTerm} />
+                <User me={user.userId === userId} {user} {searchTerm} />
             {/each}
         </div>
     {/if}
