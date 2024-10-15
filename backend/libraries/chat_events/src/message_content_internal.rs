@@ -1263,7 +1263,7 @@ pub struct PrizeWinnerContentInternal {
     pub winner: UserId,
     #[serde(rename = "l")]
     pub ledger: CanisterId,
-    #[serde(rename = "t")]
+    #[serde(rename = "s")]
     pub token_symbol: String,
     #[serde(rename = "a")]
     pub amount: u128,
