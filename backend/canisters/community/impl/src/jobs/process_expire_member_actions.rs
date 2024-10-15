@@ -129,7 +129,7 @@ fn handle_gate_check_result(details: ExpiringMemberActionDetails, result: CheckI
 
     if matches!(result, CheckIfPassesGateResult::Failed(_)) && expiry_increase == 0 {
         // Membership lapsed
-        state.data.mark_member_lapsed(details.user_id, details.channel_id, now);
+        state.data.update_lapsed(details.user_id, details.channel_id, true, now);
         return;
     }
 

@@ -3407,10 +3407,12 @@ export class OpenChat extends OpenChatAgentWorker {
                 : undefined;
         let newLatestMessage: EventWrapper<Message> | undefined = undefined;
 
+        const anyFailedMessages = failedMessagesStore.has(context);
+
         for (const event of newEvents) {
             if (event.event.kind === "message") {
                 const { messageIndex, messageId } = event.event;
-                if (failedMessagesStore.delete(context, messageId)) {
+                if (anyFailedMessages && failedMessagesStore.delete(context, messageId)) {
                     this.sendRequest({
                         kind: "deleteFailedMessage",
                         chatId,

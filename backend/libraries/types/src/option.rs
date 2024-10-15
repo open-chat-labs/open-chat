@@ -68,6 +68,7 @@ impl<T> OptionUpdate<T> {
 macro_rules! option_update {
     ($name:ident, $event_type:ty) => {
         #[ts_export]
+        #[doc = " @default NoChange"]
         #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
         pub enum $name {
             NoChange,

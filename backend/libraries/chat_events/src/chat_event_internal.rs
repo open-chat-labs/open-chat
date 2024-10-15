@@ -324,20 +324,9 @@ pub struct GroupGateUpdatedInternalPrevious {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(from = "GroupGateUpdatedInternalPrevious")]
 pub struct GroupGateUpdatedInternal {
     pub updated_by: UserId,
     pub new_gate_config: Option<AccessGateConfigInternal>,
-}
-
-// TODO: Delete this after it is released
-impl From<GroupGateUpdatedInternalPrevious> for GroupGateUpdatedInternal {
-    fn from(value: GroupGateUpdatedInternalPrevious) -> Self {
-        GroupGateUpdatedInternal {
-            updated_by: value.updated_by,
-            new_gate_config: value.new_gate.map(|gc| gc.into()),
-        }
-    }
 }
 
 impl From<GroupGateUpdatedInternal> for GroupGateUpdated {

@@ -802,11 +802,10 @@ export const SubscriptionKeys = Type.Object({
 });
 
 export type CommunityRole = Static<typeof CommunityRole>;
-export const CommunityRole = Type.Union([
-    Type.Literal("Owner"),
-    Type.Literal("Admin"),
-    Type.Literal("Member"),
-]);
+export const CommunityRole = Type.Union(
+    [Type.Literal("Owner"), Type.Literal("Admin"), Type.Literal("Member")],
+    { default: "Member" },
+);
 
 export type ExchangeId = Static<typeof ExchangeId>;
 export const ExchangeId = Type.Union([
@@ -832,13 +831,16 @@ export const CanisterUpgradeStatus = Type.Union([
 ]);
 
 export type OptionUpdateU128 = Static<typeof OptionUpdateU128>;
-export const OptionUpdateU128 = Type.Union([
-    Type.Literal("NoChange"),
-    Type.Literal("SetToNone"),
-    Type.Object({
-        SetToSome: Type.BigInt(),
-    }),
-]);
+export const OptionUpdateU128 = Type.Union(
+    [
+        Type.Literal("NoChange"),
+        Type.Literal("SetToNone"),
+        Type.Object({
+            SetToSome: Type.BigInt(),
+        }),
+    ],
+    { default: "NoChange" },
+);
 
 export type SwapStatusErrorExpired = Static<typeof SwapStatusErrorExpired>;
 export const SwapStatusErrorExpired = Type.Object({
@@ -938,12 +940,15 @@ export const VideoCall = Type.Object({
 });
 
 export type GroupRole = Static<typeof GroupRole>;
-export const GroupRole = Type.Union([
-    Type.Literal("Owner"),
-    Type.Literal("Admin"),
-    Type.Literal("Moderator"),
-    Type.Literal("Participant"),
-]);
+export const GroupRole = Type.Union(
+    [
+        Type.Literal("Owner"),
+        Type.Literal("Admin"),
+        Type.Literal("Moderator"),
+        Type.Literal("Participant"),
+    ],
+    { default: "Participant" },
+);
 
 export type GroupPermissionRole = Static<typeof GroupPermissionRole>;
 export const GroupPermissionRole = Type.Union([
@@ -960,13 +965,16 @@ export const AcceptSwapSuccess = Type.Object({
 });
 
 export type OptionUpdateU64 = Static<typeof OptionUpdateU64>;
-export const OptionUpdateU64 = Type.Union([
-    Type.Literal("NoChange"),
-    Type.Literal("SetToNone"),
-    Type.Object({
-        SetToSome: Type.BigInt(),
-    }),
-]);
+export const OptionUpdateU64 = Type.Union(
+    [
+        Type.Literal("NoChange"),
+        Type.Literal("SetToNone"),
+        Type.Object({
+            SetToSome: Type.BigInt(),
+        }),
+    ],
+    { default: "NoChange" },
+);
 
 export type GroupCanisterThreadDetails = Static<typeof GroupCanisterThreadDetails>;
 export const GroupCanisterThreadDetails = Type.Object({
@@ -994,13 +1002,16 @@ export const SubscriptionInfo = Type.Object({
 });
 
 export type OptionUpdateVideoCall = Static<typeof OptionUpdateVideoCall>;
-export const OptionUpdateVideoCall = Type.Union([
-    Type.Literal("NoChange"),
-    Type.Literal("SetToNone"),
-    Type.Object({
-        SetToSome: VideoCall,
-    }),
-]);
+export const OptionUpdateVideoCall = Type.Union(
+    [
+        Type.Literal("NoChange"),
+        Type.Literal("SetToNone"),
+        Type.Object({
+            SetToSome: VideoCall,
+        }),
+    ],
+    { default: "NoChange" },
+);
 
 export type UserSummaryVolatile = Static<typeof UserSummaryVolatile>;
 export const UserSummaryVolatile = Type.Object({
@@ -1025,13 +1036,16 @@ export const ProposalRewardStatus = Type.Union([
 ]);
 
 export type OptionUpdatePinNumberSettings = Static<typeof OptionUpdatePinNumberSettings>;
-export const OptionUpdatePinNumberSettings = Type.Union([
-    Type.Literal("NoChange"),
-    Type.Literal("SetToNone"),
-    Type.Object({
-        SetToSome: PinNumberSettings,
-    }),
-]);
+export const OptionUpdatePinNumberSettings = Type.Union(
+    [
+        Type.Literal("NoChange"),
+        Type.Literal("SetToNone"),
+        Type.Object({
+            SetToSome: PinNumberSettings,
+        }),
+    ],
+    { default: "NoChange" },
+);
 
 export type CommunityPermissions = Static<typeof CommunityPermissions>;
 export const CommunityPermissions = Type.Object({
@@ -1166,13 +1180,16 @@ export const BuildVersion = Type.Object({
 });
 
 export type OptionUpdateGroupPermissionRole = Static<typeof OptionUpdateGroupPermissionRole>;
-export const OptionUpdateGroupPermissionRole = Type.Union([
-    Type.Literal("NoChange"),
-    Type.Literal("SetToNone"),
-    Type.Object({
-        SetToSome: GroupPermissionRole,
-    }),
-]);
+export const OptionUpdateGroupPermissionRole = Type.Union(
+    [
+        Type.Literal("NoChange"),
+        Type.Literal("SetToNone"),
+        Type.Object({
+            SetToSome: GroupPermissionRole,
+        }),
+    ],
+    { default: "NoChange" },
+);
 
 export type Cryptocurrency = Static<typeof Cryptocurrency>;
 export const Cryptocurrency = Type.Union([
@@ -1398,13 +1415,16 @@ export const UpdatedRules = Type.Object({
 });
 
 export type OptionUpdateString = Static<typeof OptionUpdateString>;
-export const OptionUpdateString = Type.Union([
-    Type.Literal("NoChange"),
-    Type.Literal("SetToNone"),
-    Type.Object({
-        SetToSome: Type.String(),
-    }),
-]);
+export const OptionUpdateString = Type.Union(
+    [
+        Type.Literal("NoChange"),
+        Type.Literal("SetToNone"),
+        Type.Object({
+            SetToSome: Type.String(),
+        }),
+    ],
+    { default: "NoChange" },
+);
 
 export type DiamondMembershipStatus = Static<typeof DiamondMembershipStatus>;
 export const DiamondMembershipStatus = Type.Union([
@@ -4071,13 +4091,16 @@ export const CompletedCryptoTransactionNNS = Type.Object({
 export type OptionUpdateOptionalMessagePermissions = Static<
     typeof OptionUpdateOptionalMessagePermissions
 >;
-export const OptionUpdateOptionalMessagePermissions = Type.Union([
-    Type.Literal("NoChange"),
-    Type.Literal("SetToNone"),
-    Type.Object({
-        SetToSome: OptionalMessagePermissions,
-    }),
-]);
+export const OptionUpdateOptionalMessagePermissions = Type.Union(
+    [
+        Type.Literal("NoChange"),
+        Type.Literal("SetToNone"),
+        Type.Object({
+            SetToSome: OptionalMessagePermissions,
+        }),
+    ],
+    { default: "NoChange" },
+);
 
 export type AccessTokenType = Static<typeof AccessTokenType>;
 export const AccessTokenType = Type.Union([
@@ -4348,13 +4371,16 @@ export const ThreadSummary = Type.Object({
 });
 
 export type OptionUpdateDocument = Static<typeof OptionUpdateDocument>;
-export const OptionUpdateDocument = Type.Union([
-    Type.Literal("NoChange"),
-    Type.Literal("SetToNone"),
-    Type.Object({
-        SetToSome: Document,
-    }),
-]);
+export const OptionUpdateDocument = Type.Union(
+    [
+        Type.Literal("NoChange"),
+        Type.Literal("SetToNone"),
+        Type.Object({
+            SetToSome: Document,
+        }),
+    ],
+    { default: "NoChange" },
+);
 
 export type SuspensionDetails = Static<typeof SuspensionDetails>;
 export const SuspensionDetails = Type.Object({
@@ -6059,13 +6085,16 @@ export const GroupMembership = Type.Object({
 });
 
 export type OptionUpdateFrozenGroupInfo = Static<typeof OptionUpdateFrozenGroupInfo>;
-export const OptionUpdateFrozenGroupInfo = Type.Union([
-    Type.Literal("NoChange"),
-    Type.Literal("SetToNone"),
-    Type.Object({
-        SetToSome: FrozenGroupInfo,
-    }),
-]);
+export const OptionUpdateFrozenGroupInfo = Type.Union(
+    [
+        Type.Literal("NoChange"),
+        Type.Literal("SetToNone"),
+        Type.Object({
+            SetToSome: FrozenGroupInfo,
+        }),
+    ],
+    { default: "NoChange" },
+);
 
 export type ProposalContent = Static<typeof ProposalContent>;
 export const ProposalContent = Type.Object({
@@ -6110,13 +6139,16 @@ export const DiamondMembershipStatusFull = Type.Union([
 ]);
 
 export type OptionUpdateGroupSubtype = Static<typeof OptionUpdateGroupSubtype>;
-export const OptionUpdateGroupSubtype = Type.Union([
-    Type.Literal("NoChange"),
-    Type.Literal("SetToNone"),
-    Type.Object({
-        SetToSome: GroupSubtype,
-    }),
-]);
+export const OptionUpdateGroupSubtype = Type.Union(
+    [
+        Type.Literal("NoChange"),
+        Type.Literal("SetToNone"),
+        Type.Object({
+            SetToSome: GroupSubtype,
+        }),
+    ],
+    { default: "NoChange" },
+);
 
 export type GroupIndexActiveGroupsSuccessResult = Static<
     typeof GroupIndexActiveGroupsSuccessResult
@@ -7330,13 +7362,16 @@ export const PrizeContentInitial = Type.Object({
 });
 
 export type OptionUpdateAccessGate = Static<typeof OptionUpdateAccessGate>;
-export const OptionUpdateAccessGate = Type.Union([
-    Type.Literal("NoChange"),
-    Type.Literal("SetToNone"),
-    Type.Object({
-        SetToSome: AccessGate,
-    }),
-]);
+export const OptionUpdateAccessGate = Type.Union(
+    [
+        Type.Literal("NoChange"),
+        Type.Literal("SetToNone"),
+        Type.Object({
+            SetToSome: AccessGate,
+        }),
+    ],
+    { default: "NoChange" },
+);
 
 export type MessageContent = Static<typeof MessageContent>;
 export const MessageContent = Type.Union([
@@ -7471,13 +7506,16 @@ export const MessageContentInitial = Type.Union([
 ]);
 
 export type OptionUpdateAccessGateConfig = Static<typeof OptionUpdateAccessGateConfig>;
-export const OptionUpdateAccessGateConfig = Type.Union([
-    Type.Literal("NoChange"),
-    Type.Literal("SetToNone"),
-    Type.Object({
-        SetToSome: AccessGateConfig,
-    }),
-]);
+export const OptionUpdateAccessGateConfig = Type.Union(
+    [
+        Type.Literal("NoChange"),
+        Type.Literal("SetToNone"),
+        Type.Object({
+            SetToSome: AccessGateConfig,
+        }),
+    ],
+    { default: "NoChange" },
+);
 
 export type GroupGateUpdated = Static<typeof GroupGateUpdated>;
 export const GroupGateUpdated = Type.Object({

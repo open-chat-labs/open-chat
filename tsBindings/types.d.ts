@@ -88,10 +88,16 @@ export type VoteOperation = "RegisterVote" | "DeleteVote";
 export type SuspensionAction = { "Unsuspend": bigint } | { "Delete": bigint };
 export type SwapStatusErrorCancelled = { token0_txn_out?: bigint | undefined, };
 export type SubscriptionKeys = { p256dh: string, auth: string, };
+/**
+ * @default Member
+ */
 export type CommunityRole = "Owner" | "Admin" | "Member";
 export type ExchangeId = "ICPSwap" | "Sonic" | "KongSwap";
 export type ProposalDecisionStatus = "Unspecified" | "Open" | "Rejected" | "Adopted" | "Executed" | "Failed";
 export type CanisterUpgradeStatus = "InProgress" | "NotRequired";
+/**
+ * @default NoChange
+ */
 export type OptionUpdateU128 = "NoChange" | "SetToNone" | { "SetToSome": bigint };
 export type SwapStatusErrorExpired = { token0_txn_out?: bigint | undefined, };
 export type PinNumberSettings = { length: number, attempts_blocked_until?: bigint | undefined, };
@@ -100,18 +106,30 @@ export type VideoCallPresence = "Default" | "Owner" | "Hidden";
 export type ChatMetrics = { text_messages: bigint, image_messages: bigint, video_messages: bigint, audio_messages: bigint, file_messages: bigint, polls: bigint, poll_votes: bigint, icp_messages: bigint, sns1_messages: bigint, ckbtc_messages: bigint, chat_messages: bigint, kinic_messages: bigint, deleted_messages: bigint, giphy_messages: bigint, prize_messages: bigint, prize_winner_messages: bigint, replies: bigint, edits: bigint, reactions: bigint, proposals: bigint, reported_messages: bigint, message_reminders: bigint, custom_type_messages: bigint, last_active: bigint, };
 export type VideoCallType = "Broadcast" | "Default";
 export type VideoCall = { message_index: MessageIndex, call_type: VideoCallType, };
+/**
+ * @default Participant
+ */
 export type GroupRole = "Owner" | "Admin" | "Moderator" | "Participant";
 export type GroupPermissionRole = "None" | "Owner" | "Admins" | "Moderators" | "Members";
 export type AcceptSwapSuccess = { token1_txn_in: bigint, };
+/**
+ * @default NoChange
+ */
 export type OptionUpdateU64 = "NoChange" | "SetToNone" | { "SetToSome": bigint };
 export type GroupCanisterThreadDetails = { root_message_index: MessageIndex, latest_event: EventIndex, latest_message: MessageIndex, last_updated: bigint, };
 export type Tokens = { e8s: bigint, };
 export type Rules = { text: string, enabled: boolean, };
 export type SubscriptionInfo = { endpoint: string, keys: SubscriptionKeys, };
+/**
+ * @default NoChange
+ */
 export type OptionUpdateVideoCall = "NoChange" | "SetToNone" | { "SetToSome": VideoCall };
 export type UserSummaryVolatile = { total_chit_earned: number, chit_balance: number, streak: number, };
 export type CommunityPermissionRole = "Owners" | "Admins" | "Members";
 export type ProposalRewardStatus = "Unspecified" | "AcceptVotes" | "ReadyToSettle" | "Settled";
+/**
+ * @default NoChange
+ */
 export type OptionUpdatePinNumberSettings = "NoChange" | "SetToNone" | { "SetToSome": PinNumberSettings };
 export type CommunityPermissions = { change_roles: CommunityPermissionRole, update_details: CommunityPermissionRole, invite_users: CommunityPermissionRole, remove_members: CommunityPermissionRole, create_public_channel: CommunityPermissionRole, create_private_channel: CommunityPermissionRole, manage_user_groups: CommunityPermissionRole, };
 export type FieldTooLongResult = { length_provided: number, max_length: number, };
@@ -123,6 +141,9 @@ export type ThumbnailData = string;
 export type GroupReplyContext = { event_index: EventIndex, };
 export type PushEventResult = { index: EventIndex, timestamp: bigint, expires_at?: bigint | undefined, };
 export type BuildVersion = { major: number, minor: number, patch: number, };
+/**
+ * @default NoChange
+ */
 export type OptionUpdateGroupPermissionRole = "NoChange" | "SetToNone" | { "SetToSome": GroupPermissionRole };
 export type Cryptocurrency = "InternetComputer" | "SNS1" | "CKBTC" | "CHAT" | "KINIC" | { "Other": string };
 export type ChitEarnedReason = "DailyClaim" | { "Achievement": Achievement } | { "ExternalAchievement": string } | { "Referral": ReferralStatus } | "MemeContestWinner";
@@ -145,6 +166,9 @@ export type MessageId = bigint;
 export type CustomPermission = { subtype: string, role: GroupPermissionRole, };
 export type TSBytes = Uint8Array;
 export type UpdatedRules = { text: string, enabled: boolean, new_version: boolean, };
+/**
+ * @default NoChange
+ */
 export type OptionUpdateString = "NoChange" | "SetToNone" | { "SetToSome": string };
 export type DiamondMembershipStatus = "Inactive" | "Active" | "Lifetime";
 export type PollConfig = { text?: string | undefined, options: Array<string>, end_date?: bigint | undefined, anonymous: boolean, show_votes_before_end_date: boolean, allow_multiple_votes_per_user: boolean, allow_user_to_change_vote: boolean, };
@@ -406,6 +430,9 @@ export type TokenBalanceGate = { ledger_canister_id: TSBytes, min_balance: bigin
 export type GateCheckFailedReason = "NotDiamondMember" | "NotLifetimeDiamondMember" | "NoUniquePersonProof" | "NoSnsNeuronsFound" | "NoSnsNeuronsWithRequiredStakeFound" | "NoSnsNeuronsWithRequiredDissolveDelayFound" | { "PaymentFailed": TransferFromError } | { "InsufficientBalance": bigint } | { "FailedVerifiedCredentialCheck": string } | "Locked" | "NotReferredByMember";
 export type TokenInfo = { token: Cryptocurrency, ledger: TSBytes, decimals: number, fee: bigint, };
 export type CompletedCryptoTransactionNNS = { ledger: TSBytes, token: Cryptocurrency, amount: Tokens, fee: Tokens, from: CryptoAccountNNS, to: CryptoAccountNNS, memo: bigint, created: bigint, transaction_hash: [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number], block_index: bigint, };
+/**
+ * @default NoChange
+ */
 export type OptionUpdateOptionalMessagePermissions = "NoChange" | "SetToNone" | { "SetToSome": OptionalMessagePermissions };
 export type AccessTokenType = { "StartVideoCallV2": VideoCallAccessTokenArgs } | "JoinVideoCall" | "MarkVideoCallAsEnded";
 export type PendingCryptoTransactionICRC2 = { ledger: TSBytes, token: Cryptocurrency, amount: bigint, from: AccountICRC1, to: AccountICRC1, fee: bigint, memo?: TSBytes | undefined, created: bigint, };
@@ -425,6 +452,9 @@ export type CommunityMember = { user_id: UserId, date_added: bigint, role: Commu
 export type User = { user_id: UserId, username: string, };
 export type MessageReport = { reported_by: UserId, timestamp: bigint, reason_code: number, notes?: string | undefined, };
 export type ThreadSummary = { participant_ids: Array<UserId>, followed_by_me: boolean, reply_count: number, latest_event_index: EventIndex, latest_event_timestamp: bigint, };
+/**
+ * @default NoChange
+ */
 export type OptionUpdateDocument = "NoChange" | "SetToNone" | { "SetToSome": Document };
 export type SuspensionDetails = { reason: string, action: SuspensionAction, suspended_by: UserId, };
 export type DiamondMembershipDetails = { expires_at: bigint, pay_in_chat: boolean, subscription: DiamondMembershipSubscription, };
@@ -619,12 +649,18 @@ export type RoleChanged = { user_ids: Array<UserId>, changed_by: UserId, old_rol
 export type GroupVisibilityChanged = { public?: boolean | undefined, messages_visible_to_non_members?: boolean | undefined, changed_by: UserId, };
 export type SelectedGroupUpdates = { timestamp: bigint, last_updated: bigint, latest_event_index: EventIndex, members_added_or_updated: Array<GroupMember>, members_removed: Array<UserId>, blocked_users_added: Array<UserId>, blocked_users_removed: Array<UserId>, invited_users?: Array<UserId> | undefined, pinned_messages_added: Array<MessageIndex>, pinned_messages_removed: Array<MessageIndex>, chat_rules?: VersionedRules | undefined, };
 export type GroupMembership = { joined: bigint, role: GroupRole, mentions: Array<HydratedMention>, notifications_muted: boolean, my_metrics: ChatMetrics, latest_threads: Array<GroupCanisterThreadDetails>, rules_accepted: boolean, lapsed: boolean, };
+/**
+ * @default NoChange
+ */
 export type OptionUpdateFrozenGroupInfo = "NoChange" | "SetToNone" | { "SetToSome": FrozenGroupInfo };
 export type ProposalContent = { governance_canister_id: TSBytes, proposal: Proposal, my_vote?: boolean | undefined, };
 export type ReplyContext = { chat_if_other?: [Chat, MessageIndex | null] | undefined, event_index: EventIndex, };
 export type ReportedMessage = { reports: Array<MessageReport>, count: number, };
 export type GroupMembershipUpdates = { role?: GroupRole | undefined, mentions: Array<HydratedMention>, notifications_muted?: boolean | undefined, my_metrics?: ChatMetrics | undefined, latest_threads: Array<GroupCanisterThreadDetails>, unfollowed_threads: Array<MessageIndex>, rules_accepted?: boolean | undefined, lapsed?: boolean | undefined, };
 export type DiamondMembershipStatusFull = "Inactive" | { "Active": DiamondMembershipDetails } | "Lifetime";
+/**
+ * @default NoChange
+ */
 export type OptionUpdateGroupSubtype = "NoChange" | "SetToNone" | { "SetToSome": GroupSubtype };
 export type GroupIndexActiveGroupsSuccessResult = { timestamp: bigint, active_groups: Array<ChatId>, active_communities: Array<CommunityId>, deleted_groups: Array<DeletedGroupInfo>, deleted_communities: Array<DeletedCommunityInfo>, };
 export type UserIndexPlatformModeratorsResponse = { "Success": UserIndexPlatformModeratorsSuccessResult };
@@ -717,12 +753,18 @@ export type UserAcceptP2pSwapResponse = { "Success": AcceptSwapSuccess } | "Chat
 export type PollContent = { config: PollConfig, votes: PollVotes, ended: boolean, };
 export type CryptoContent = { recipient: UserId, transfer: CryptoTransaction, caption?: string | undefined, };
 export type PrizeContentInitial = { prizes_v2: Array<bigint>, transfer: CryptoTransaction, end_date: bigint, caption?: string | undefined, diamond_only: boolean, };
+/**
+ * @default NoChange
+ */
 export type OptionUpdateAccessGate = "NoChange" | "SetToNone" | { "SetToSome": AccessGate };
 export type MessageContent = { "Text": TextContent } | { "Image": ImageContent } | { "Video": VideoContent } | { "Audio": AudioContent } | { "File": FileContent } | { "Poll": PollContent } | { "Crypto": CryptoContent } | { "Deleted": DeletedBy } | { "Giphy": GiphyContent } | { "GovernanceProposal": ProposalContent } | { "Prize": PrizeContent } | { "PrizeWinner": PrizeWinnerContent } | { "MessageReminderCreated": MessageReminderCreatedContent } | { "MessageReminder": MessageReminderContent } | { "ReportedMessage": ReportedMessage } | { "P2PSwap": P2PSwapContent } | { "VideoCall": VideoCallContent } | { "Custom": CustomContent };
 export type MessageMatch = { sender: UserId, message_index: MessageIndex, content: MessageContent, score: number, };
 export type GroupMatch = { id: ChatId, name: string, description: string, avatar_id?: bigint | undefined, member_count: number, gate?: AccessGate | undefined, subtype?: GroupSubtype | undefined, };
 export type AccessGateConfig = { gate: AccessGate, expiry?: bigint | undefined, };
 export type MessageContentInitial = { "Text": TextContent } | { "Image": ImageContent } | { "Video": VideoContent } | { "Audio": AudioContent } | { "File": FileContent } | { "Poll": PollContent } | { "Crypto": CryptoContent } | { "Deleted": DeletedBy } | { "Giphy": GiphyContent } | { "GovernanceProposal": ProposalContent } | { "Prize": PrizeContentInitial } | { "MessageReminderCreated": MessageReminderCreatedContent } | { "MessageReminder": MessageReminderContent } | { "P2PSwap": P2PSwapContentInitial } | { "Custom": CustomContent };
+/**
+ * @default NoChange
+ */
 export type OptionUpdateAccessGateConfig = "NoChange" | "SetToNone" | { "SetToSome": AccessGateConfig };
 export type GroupGateUpdated = { updated_by: UserId, new_gate?: AccessGate | undefined, new_gate_config?: AccessGateConfig | undefined, };
 export type GroupIndexExploreGroupsSuccessResult = { matches: Array<GroupMatch>, total: number, };
