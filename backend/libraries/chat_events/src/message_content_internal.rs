@@ -1278,21 +1278,21 @@ pub struct PrizeWinnerContentInternal {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 struct PrizeWinnerContentInternalCombined {
     #[serde(rename = "w")]
-    pub winner: UserId,
+    winner: UserId,
     #[serde(rename = "l")]
-    pub ledger: Option<CanisterId>,
+    ledger: Option<CanisterId>,
     #[serde(rename = "s")]
-    pub token_symbol: Option<String>,
+    token_symbol: Option<String>,
     #[serde(rename = "t")]
     transaction: Option<CompletedCryptoTransaction>,
     #[serde(rename = "a")]
-    pub amount: Option<u128>,
+    amount: Option<u128>,
     #[serde(rename = "f")]
-    pub fee: Option<u128>,
+    fee: Option<u128>,
     #[serde(rename = "i")]
-    pub block_index: Option<u64>,
+    block_index: Option<u64>,
     #[serde(rename = "m")]
-    pub prize_message: MessageIndex,
+    prize_message: MessageIndex,
 }
 
 impl From<PrizeWinnerContentInternalCombined> for PrizeWinnerContentInternal {
