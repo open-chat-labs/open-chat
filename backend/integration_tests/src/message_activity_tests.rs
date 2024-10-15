@@ -363,8 +363,8 @@ fn vote_on_poll_and_check_activity_feed(chat_type: ChatType) {
 }
 
 #[test_case(ChatType::Direct)]
-// #[test_case(ChatType::Group)]
-//#[test_case(ChatType::Channel)]
+#[test_case(ChatType::Group)]
+#[test_case(ChatType::Channel)]
 fn accept_p2p_swap_and_check_activity_feed(chat_type: ChatType) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
