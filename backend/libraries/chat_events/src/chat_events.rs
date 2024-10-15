@@ -961,10 +961,10 @@ impl ChatEvents {
                         content: MessageContentInternal::PrizeWinner(PrizeWinnerContentInternal {
                             winner,
                             ledger: transaction.ledger_canister_id(),
+                            token_symbol: transaction.token().token_symbol().to_string(),
                             amount: transaction.units(),
                             fee: transaction.fee(),
                             block_index: transaction.index(),
-                            transaction,
                             prize_message: message_index,
                         }),
                         mentioned: Vec::new(),

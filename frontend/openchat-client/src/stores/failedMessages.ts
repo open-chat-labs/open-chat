@@ -38,9 +38,10 @@ function createFailedMessagesStore() {
             }
             return false;
         },
-        initialise(data: FailedMessages) {
+        initialise: (data: FailedMessages) => {
             store.clear(data);
         },
+        has: store.has
     };
 }
 

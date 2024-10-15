@@ -1,17 +1,18 @@
 use crate::client::user_index;
 use crate::env::ENV;
-use crate::utils::tick_many;
+use crate::utils::{now_millis, tick_many};
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
-use event_store_canister::Milliseconds;
+use event_store_canister::{Milliseconds, TimestampMillis};
 use pocket_ic::PocketIc;
+use std::collections::HashMap;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use testing::rng::random_string;
 use types::{
     AccessGate, AccessGateConfig, AccessGateNonComposite, ChannelId, ChatId, CommunityId, CompositeGate,
-    DiamondMembershipPlanDuration, OptionUpdate, TokenBalanceGate,
+    DiamondMembershipPlanDuration, OptionUpdate, TokenBalanceGate, UserId,
 };
 
 const DAY_IN_MS: Milliseconds = 24 * 60 * 60 * 1000;
@@ -103,6 +104,7 @@ fn remove_gate_unlapses_members(container_type: ContainerType) {
         init_test_data(env, canister_ids, *controller, gate_config, num_users, container_type, false);
 
     // Move the time forward so that the users' diamond membership expires + the gate expiry
+    let mut timestamp = now_millis(env);
     env.advance_time(Duration::from_millis(46 * DAY_IN_MS));
     tick_many(env, 5);
 
@@ -111,12 +113,33 @@ fn remove_gate_unlapses_members(container_type: ContainerType) {
         assert!(has_user_lapsed(env, user, &container));
     }
 
+    // Assert that users marked as lapsed in updates query
+    if let Some(members_added_or_updated) = get_updated_members(env, owner.principal, &container, timestamp) {
+        for user in users.iter() {
+            assert!(members_added_or_updated.get(&user.user_id).copied().unwrap_or_default());
+        }
+    } else {
+        panic!("Expected memebers to have been updated");
+    }
+
+    timestamp = now_millis(env);
+    env.advance_time(Duration::from_millis(DAY_IN_MS));
+
     // Remove the gate
     update_container_gate(env, owner.principal, &container, None);
 
     for user in users.iter() {
         // Assert that users are no longer lapsed
         assert!(!has_user_lapsed(env, user, &container));
+    }
+
+    // Assert that users marked as unlapsed in updates query
+    if let Some(members_added_or_updated) = get_updated_members(env, owner.principal, &container, timestamp) {
+        for user in users.iter() {
+            assert!(!members_added_or_updated.get(&user.user_id).unwrap());
+        }
+    } else {
+        panic!("Expected members to have been updated");
     }
 }
 
@@ -623,6 +646,47 @@ fn register_and_join(
     join_container(env, owner, &user, canister_ids, container, invite);
 
     user
+}
+
+fn get_updated_members(
+    env: &mut PocketIc,
+    sender: Principal,
+    container: &Container,
+    updates_since: TimestampMillis,
+) -> Option<HashMap<UserId, bool>> {
+    match container {
+        Container::Community(community_id) => {
+            let results = client::community::happy_path::selected_updates(env, sender, *community_id, updates_since);
+            results.map(|result| {
+                result
+                    .members_added_or_updated
+                    .iter()
+                    .map(|m| (m.user_id, m.lapsed))
+                    .collect()
+            })
+        }
+        Container::Channel(community_id, channel_id) => {
+            let results =
+                client::community::happy_path::selected_channel_updates(env, sender, *community_id, *channel_id, updates_since);
+            results.map(|result| {
+                result
+                    .members_added_or_updated
+                    .iter()
+                    .map(|m| (m.user_id, m.lapsed))
+                    .collect()
+            })
+        }
+        Container::Group(group_id) => {
+            let results = client::group::happy_path::selected_updates(env, sender, *group_id, updates_since);
+            results.map(|result| {
+                result
+                    .members_added_or_updated
+                    .iter()
+                    .map(|m| (m.user_id, m.lapsed))
+                    .collect()
+            })
+        }
+    }
 }
 
 fn init_test_data(

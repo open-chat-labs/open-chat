@@ -5,6 +5,5 @@ import type { Document } from "../../shared/Document";
 import type { GroupPermissions } from "../../shared/GroupPermissions";
 import type { GroupSubtype } from "../../shared/GroupSubtype";
 import type { Rules } from "../../shared/Rules";
-import type { TSBoolWithDefault } from "../../shared/TSBoolWithDefault";
 
-export type CommunityCreateChannelArgs = { is_public: TSBoolWithDefault, name: string, description: string, rules: Rules, subtype?: GroupSubtype | undefined, avatar?: Document | undefined, history_visible_to_new_joiners: TSBoolWithDefault, messages_visible_to_non_members?: boolean | undefined, permissions_v2?: GroupPermissions | undefined, events_ttl?: bigint | undefined, gate?: AccessGate | undefined, gate_config?: AccessGateConfig | undefined, external_url?: string | undefined, };
+export type CommunityCreateChannelArgs = { is_public: boolean, name: string, description: string, rules: Rules, subtype?: GroupSubtype | undefined, avatar?: Document | undefined, history_visible_to_new_joiners: boolean, messages_visible_to_non_members?: boolean | undefined, permissions_v2?: GroupPermissions | undefined, events_ttl?: bigint | undefined, gate?: AccessGate | undefined, gate_config?: AccessGateConfig | undefined, external_url?: string | undefined, };

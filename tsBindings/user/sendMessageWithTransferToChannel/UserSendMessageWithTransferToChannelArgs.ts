@@ -4,12 +4,7 @@ import type { GroupReplyContext } from "../../shared/GroupReplyContext";
 import type { MessageContentInitial } from "../../shared/MessageContentInitial";
 import type { MessageId } from "../../shared/MessageId";
 import type { MessageIndex } from "../../shared/MessageIndex";
-import type { TSBoolWithDefault } from "../../shared/TSBoolWithDefault";
 import type { User } from "../../shared/User";
 import type { Version } from "../../shared/Version";
 
-export type UserSendMessageWithTransferToChannelArgs = { community_id: CommunityId, channel_id: bigint, thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, content: MessageContentInitial, sender_name: string, sender_display_name?: string | undefined, replies_to?: GroupReplyContext | undefined, 
-/**
- * @default []
- */
-mentioned: Array<User>, block_level_markdown: TSBoolWithDefault, community_rules_accepted?: Version | undefined, channel_rules_accepted?: Version | undefined, message_filter_failed?: bigint | undefined, pin?: string | undefined, };
+export type UserSendMessageWithTransferToChannelArgs = { community_id: CommunityId, channel_id: bigint, thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, content: MessageContentInitial, sender_name: string, sender_display_name?: string | undefined, replies_to?: GroupReplyContext | undefined, mentioned: Array<User>, block_level_markdown: boolean, community_rules_accepted?: Version | undefined, channel_rules_accepted?: Version | undefined, message_filter_failed?: bigint | undefined, pin?: string | undefined, };

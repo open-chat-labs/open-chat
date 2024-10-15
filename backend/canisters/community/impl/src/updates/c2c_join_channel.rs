@@ -13,7 +13,7 @@ use gated_groups::{
     check_if_passes_gate, check_if_passes_gate_synchronously, CheckGateArgs, CheckIfPassesGateResult,
     CheckVerifiedCredentialGateArgs,
 };
-use group_chat_core::AddResult;
+use group_chat_core::{AddMemberSuccess, AddResult};
 use group_community_common::{ExpiringMember, Member};
 use types::{
     AccessGate, AccessGateConfigInternal, ChannelId, MemberJoined, TimestampMillis, UniquePersonProof,
@@ -229,7 +229,7 @@ fn commit(
 
     let now = state.env.now();
     match join_channel_unchecked(channel, member, state.data.is_public, true, now) {
-        AddResult::Success(_) => {
+        AddResult::Success(result) => {
             let summary = channel
                 .summary(Some(user_id), true, state.data.is_public, &state.data.members)
                 .unwrap();
@@ -247,6 +247,10 @@ fn commit(
                 state.queue_access_gate_payments(gate);
             }
 
+            if result.unlapse {
+                state.data.update_lapsed(user_id, Some(channel_id), false, now);
+            }
+
             state
                 .data
                 .user_cache
@@ -259,6 +263,8 @@ fn commit(
             Success(Box::new(summary))
         }
         AddResult::AlreadyInGroup => {
+            channel.chat.members.update_lapsed(user_id, false, now);
+
             let summary = channel
                 .summary(Some(user_id), true, state.data.is_public, &state.data.members)
                 .unwrap();
@@ -320,9 +326,12 @@ pub(crate) fn join_channel_unchecked(
     );
 
     if matches!(result, AddResult::AlreadyInGroup) {
-        let member = channel.chat.members.get_mut(&community_member.user_id).unwrap();
-        if member.clear_lapsed(now) {
-            return AddResult::Success(member.clone());
+        let member = channel.chat.members.get(&community_member.user_id).unwrap();
+        if member.lapsed() {
+            return AddResult::Success(AddMemberSuccess {
+                member: member.clone(),
+                unlapse: true,
+            });
         }
     }
 

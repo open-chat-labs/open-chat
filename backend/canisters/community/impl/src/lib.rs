@@ -521,8 +521,7 @@ impl Data {
         [
             self.invited_users.last_updated(),
             self.events.latest_event_timestamp(),
-            self.members.user_groups_last_updated(),
-            self.members.display_names_last_updated(),
+            self.members.last_updated(),
         ]
         .into_iter()
         .max()
@@ -584,13 +583,23 @@ impl Data {
         }
     }
 
-    pub fn mark_member_lapsed(&mut self, user_id: UserId, channel_id: Option<ChannelId>, now: TimestampMillis) {
+    pub fn update_lapsed(&mut self, user_id: UserId, channel_id: Option<ChannelId>, lapsed: bool, now: TimestampMillis) {
         if let Some(channel_id) = channel_id {
             if let Some(channel) = self.channels.get_mut(&channel_id) {
-                channel.chat.members.mark_member_lapsed(&user_id, now);
+                channel.chat.members.update_lapsed(user_id, lapsed, now);
             }
         } else {
-            self.members.mark_member_lapsed(&user_id, now);
+            self.members.updated_lapsed(user_id, lapsed, now);
+        }
+    }
+
+    pub fn unlapse_all(&mut self, channel_id: Option<ChannelId>, now: TimestampMillis) {
+        if let Some(channel_id) = channel_id {
+            if let Some(channel) = self.channels.get_mut(&channel_id) {
+                channel.chat.members.unlapse_all(now);
+            }
+        } else {
+            self.members.unlapse_all(now);
         }
     }
 
@@ -612,13 +621,7 @@ impl Data {
             } else {
                 // If the access gate has been removed then clear lapsed status of members
                 if new_gate_config.is_none() {
-                    if let Some(channel_id) = channel_id {
-                        if let Some(channel) = self.channels.get_mut(&channel_id) {
-                            channel.chat.members.clear_lapsed(now);
-                        }
-                    } else {
-                        self.members.clear_lapsed(now);
-                    }
+                    self.unlapse_all(channel_id, now);
                 }
 
                 // There is no expiring gate any longer so remove the expiring members

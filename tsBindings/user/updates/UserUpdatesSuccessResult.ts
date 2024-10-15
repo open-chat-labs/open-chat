@@ -3,8 +3,6 @@ import type { ChitEarned } from "../../shared/ChitEarned";
 import type { OptionUpdatePinNumberSettings } from "../../shared/OptionUpdatePinNumberSettings";
 import type { OptionUpdateString } from "../../shared/OptionUpdateString";
 import type { OptionUpdateU128 } from "../../shared/OptionUpdateU128";
-import type { TSBigIntWithDefault } from "../../shared/TSBigIntWithDefault";
-import type { TSNumberWithDefault } from "../../shared/TSNumberWithDefault";
 import type { UserId } from "../../shared/UserId";
 import type { UserMessageActivitySummary } from "../UserMessageActivitySummary";
 import type { UserReferral } from "../UserReferral";
@@ -14,12 +12,4 @@ import type { UserUpdatesFavouriteChatsUpdates } from "./UserUpdatesFavouriteCha
 import type { UserUpdatesGroupChatsUpdates } from "./UserUpdatesGroupChatsUpdates";
 import type { UserWalletConfig } from "../UserWalletConfig";
 
-export type UserUpdatesSuccessResult = { timestamp: TSBigIntWithDefault, username?: string | undefined, display_name: OptionUpdateString, direct_chats: UserUpdatesDirectChatsUpdates, group_chats: UserUpdatesGroupChatsUpdates, favourite_chats: UserUpdatesFavouriteChatsUpdates, communities: UserUpdatesCommunitiesUpdates, avatar_id: OptionUpdateU128, blocked_users?: Array<UserId> | undefined, suspended?: boolean | undefined, pin_number_settings: OptionUpdatePinNumberSettings, 
-/**
- * @default []
- */
-achievements: Array<ChitEarned>, achievements_last_seen?: bigint | undefined, total_chit_earned: TSNumberWithDefault, chit_balance: TSNumberWithDefault, streak: TSNumberWithDefault, streak_ends: TSBigIntWithDefault, next_daily_claim: TSBigIntWithDefault, is_unique_person?: boolean | undefined, wallet_config?: UserWalletConfig | undefined, 
-/**
- * @default []
- */
-referrals: Array<UserReferral>, message_activity_summary?: UserMessageActivitySummary | undefined, };
+export type UserUpdatesSuccessResult = { timestamp: bigint, username?: string | undefined, display_name: OptionUpdateString, direct_chats: UserUpdatesDirectChatsUpdates, group_chats: UserUpdatesGroupChatsUpdates, favourite_chats: UserUpdatesFavouriteChatsUpdates, communities: UserUpdatesCommunitiesUpdates, avatar_id: OptionUpdateU128, blocked_users?: Array<UserId> | undefined, suspended?: boolean | undefined, pin_number_settings: OptionUpdatePinNumberSettings, achievements: Array<ChitEarned>, achievements_last_seen?: bigint | undefined, total_chit_earned: number, chit_balance: number, streak: number, streak_ends: bigint, next_daily_claim: bigint, is_unique_person?: boolean | undefined, wallet_config?: UserWalletConfig | undefined, referrals: Array<UserReferral>, message_activity_summary?: UserMessageActivitySummary | undefined, };

@@ -7,6 +7,7 @@ generate_query_call!(events);
 generate_query_call!(events_by_index);
 generate_query_call!(search_channel);
 generate_query_call!(selected_channel_initial);
+generate_query_call!(selected_channel_updates_v2);
 generate_query_call!(selected_initial);
 generate_query_call!(selected_updates_v2);
 generate_query_call!(summary);
@@ -450,13 +451,13 @@ pub mod happy_path {
 
     pub fn selected_updates(
         env: &PocketIc,
-        sender: &User,
+        sender: Principal,
         community_id: CommunityId,
         updates_since: TimestampMillis,
     ) -> Option<community_canister::selected_updates_v2::SuccessResult> {
         let response = super::selected_updates_v2(
             env,
-            sender.principal,
+            sender,
             community_id.into(),
             &community_canister::selected_updates_v2::Args {
                 invite_code: None,
@@ -509,6 +510,30 @@ pub mod happy_path {
         match response {
             community_canister::selected_channel_initial::Response::Success(result) => result,
             response => panic!("'selected_channel_initial' error: {response:?}"),
+        }
+    }
+
+    pub fn selected_channel_updates(
+        env: &PocketIc,
+        sender: Principal,
+        community_id: CommunityId,
+        channel_id: ChannelId,
+        updates_since: TimestampMillis,
+    ) -> Option<types::SelectedGroupUpdates> {
+        let response = super::selected_channel_updates_v2(
+            env,
+            sender,
+            community_id.into(),
+            &community_canister::selected_channel_updates_v2::Args {
+                channel_id,
+                updates_since,
+            },
+        );
+
+        match response {
+            community_canister::selected_channel_updates_v2::Response::Success(result) => Some(result),
+            community_canister::selected_channel_updates_v2::Response::SuccessNoUpdates(_) => None,
+            response => panic!("'selected_channel_updates_v2' error: {response:?}"),
         }
     }
 

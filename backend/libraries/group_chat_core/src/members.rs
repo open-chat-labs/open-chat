@@ -37,6 +37,8 @@ pub enum MemberUpdate {
     RoleChanged = 3,
     Blocked = 4,
     Unblocked = 5,
+    Lapsed = 6,
+    Unlapsed = 7,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -105,7 +107,7 @@ impl GroupMembers {
                     };
                     e.insert(member.clone());
                     self.updates.insert((now, user_id, MemberUpdate::Added));
-                    AddResult::Success(member)
+                    AddResult::Success(AddMemberSuccess { member, unlapse: false })
                 }
                 _ => AddResult::AlreadyInGroup,
             }
@@ -265,6 +267,35 @@ impl GroupMembers {
         ChangeRoleResult::Success(ChangeRoleSuccess { prev_role })
     }
 
+    pub fn unlapse_all(&mut self, now: TimestampMillis) {
+        for m in self.members.values_mut() {
+            if m.set_lapsed(false, now) {
+                self.updates.insert((now, m.user_id, MemberUpdate::Unlapsed));
+            }
+        }
+    }
+
+    pub fn update_lapsed(&mut self, user_id: UserId, lapse: bool, now: TimestampMillis) {
+        let Some(member) = self.get_mut(&user_id) else {
+            return;
+        };
+
+        let updated = if lapse {
+            // Owners can't lapse
+            !member.is_owner() && member.set_lapsed(true, now)
+        } else {
+            member.set_lapsed(false, now)
+        };
+
+        if updated {
+            self.updates.insert((
+                now,
+                user_id,
+                if lapse { MemberUpdate::Lapsed } else { MemberUpdate::Unlapsed },
+            ));
+        }
+    }
+
     pub fn owner_count(&self) -> u32 {
         self.owner_count
     }
@@ -295,22 +326,14 @@ impl GroupMembers {
             .take_while(move |(ts, _, _)| *ts > since)
             .map(|(_, user_id, update)| (*user_id, *update))
     }
+
+    pub fn last_updated(&self) -> Option<TimestampMillis> {
+        self.updates.iter().next_back().map(|(ts, _, _)| *ts)
+    }
 }
 
 impl Members for GroupMembers {
     type Member = GroupMemberInternal;
-
-    fn iter(&self) -> impl Iterator<Item = &GroupMemberInternal> {
-        self.iter()
-    }
-
-    fn iter_mut(&mut self) -> impl Iterator<Item = &mut GroupMemberInternal> {
-        self.iter_mut()
-    }
-
-    fn get_mut(&mut self, user_id: &UserId) -> Option<&mut GroupMemberInternal> {
-        self.get_mut(user_id)
-    }
 
     fn get(&self, user_id: &UserId) -> Option<&GroupMemberInternal> {
         self.get(user_id)
@@ -319,10 +342,15 @@ impl Members for GroupMembers {
 
 #[allow(clippy::large_enum_variant)]
 pub enum AddResult {
-    Success(GroupMemberInternal),
+    Success(AddMemberSuccess),
     AlreadyInGroup,
     MemberLimitReached(u32),
     Blocked,
+}
+
+pub struct AddMemberSuccess {
+    pub member: GroupMemberInternal,
+    pub unlapse: bool,
 }
 
 pub enum ChangeRoleResult {
@@ -448,8 +476,13 @@ impl Member for GroupMemberInternal {
         self.lapsed.value
     }
 
-    fn set_lapsed(&mut self, lapsed: Timestamped<bool>) {
-        self.lapsed = lapsed;
+    fn set_lapsed(&mut self, lapsed: bool, timestamp: TimestampMillis) -> bool {
+        if lapsed != self.lapsed.value {
+            self.lapsed = Timestamped::new(lapsed, timestamp);
+            true
+        } else {
+            false
+        }
     }
 }
 

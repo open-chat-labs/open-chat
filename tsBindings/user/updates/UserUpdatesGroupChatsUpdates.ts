@@ -3,16 +3,4 @@ import type { ChatId } from "../../shared/ChatId";
 import type { UserGroupChatSummary } from "../UserGroupChatSummary";
 import type { UserGroupChatSummaryUpdates } from "../UserGroupChatSummaryUpdates";
 
-export type UserUpdatesGroupChatsUpdates = { 
-/**
- * @default []
- */
-added: Array<UserGroupChatSummary>, 
-/**
- * @default []
- */
-updated: Array<UserGroupChatSummaryUpdates>, 
-/**
- * @default []
- */
-removed: Array<ChatId>, pinned?: Array<ChatId> | undefined, };
+export type UserUpdatesGroupChatsUpdates = { added: Array<UserGroupChatSummary>, updated: Array<UserGroupChatSummaryUpdates>, removed: Array<ChatId>, pinned?: Array<ChatId> | undefined, };

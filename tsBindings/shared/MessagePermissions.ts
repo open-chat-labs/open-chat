@@ -2,8 +2,4 @@
 import type { CustomPermission } from "./CustomPermission";
 import type { GroupPermissionRole } from "./GroupPermissionRole";
 
-export type MessagePermissions = { default: GroupPermissionRole, text?: GroupPermissionRole | undefined, image?: GroupPermissionRole | undefined, video?: GroupPermissionRole | undefined, audio?: GroupPermissionRole | undefined, file?: GroupPermissionRole | undefined, poll?: GroupPermissionRole | undefined, crypto?: GroupPermissionRole | undefined, giphy?: GroupPermissionRole | undefined, prize?: GroupPermissionRole | undefined, p2p_swap?: GroupPermissionRole | undefined, video_call?: GroupPermissionRole | undefined, 
-/**
- * @default []
- */
-custom: Array<CustomPermission>, };
+export type MessagePermissions = { default: GroupPermissionRole, text?: GroupPermissionRole | undefined, image?: GroupPermissionRole | undefined, video?: GroupPermissionRole | undefined, audio?: GroupPermissionRole | undefined, file?: GroupPermissionRole | undefined, poll?: GroupPermissionRole | undefined, crypto?: GroupPermissionRole | undefined, giphy?: GroupPermissionRole | undefined, prize?: GroupPermissionRole | undefined, p2p_swap?: GroupPermissionRole | undefined, video_call?: GroupPermissionRole | undefined, custom: Array<CustomPermission>, };

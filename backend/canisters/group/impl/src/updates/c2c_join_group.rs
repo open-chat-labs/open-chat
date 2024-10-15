@@ -7,7 +7,7 @@ use chat_events::ChatEventInternal;
 use gated_groups::{check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult, CheckVerifiedCredentialGateArgs};
 use group_canister::c2c_join_group::{Response::*, *};
 use group_chat_core::AddResult;
-use group_community_common::{ExpiringMember, Member};
+use group_community_common::ExpiringMember;
 use types::{AccessGate, AccessGateConfigInternal, MemberJoined, UsersUnblocked};
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
@@ -125,7 +125,7 @@ fn c2c_join_group_impl(args: Args, state: &mut RuntimeState) -> Response {
         mute_notifications: state.data.chat.is_public.value,
         user_type: args.user_type,
     }) {
-        AddResult::Success(member) => {
+        AddResult::Success(result) => {
             let invitation = state.data.chat.invited_users.remove(&args.user_id, now);
 
             let event = MemberJoined {
@@ -140,7 +140,7 @@ fn c2c_join_group_impl(args: Args, state: &mut RuntimeState) -> Response {
 
             new_event = true;
 
-            let summary = state.summary(&member);
+            let summary = state.summary(&result.member);
 
             // If there is a payment gate on this group then queue payments to owner(s) and treasury
             if let Some(AccessGate::Payment(gate)) = state.data.chat.gate_config.value.as_ref().map(|gc| gc.gate.clone()) {
@@ -150,8 +150,7 @@ fn c2c_join_group_impl(args: Args, state: &mut RuntimeState) -> Response {
             Success(Box::new(summary))
         }
         AddResult::AlreadyInGroup => {
-            let member = state.data.chat.members.get_mut(&args.user_id).unwrap();
-            member.clear_lapsed(now);
+            state.data.chat.members.update_lapsed(args.user_id, false, now);
 
             let member = state.data.chat.members.get(&args.user_id).unwrap();
             let summary = state.summary(member);

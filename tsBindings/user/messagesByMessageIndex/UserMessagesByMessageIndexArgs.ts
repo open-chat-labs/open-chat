@@ -2,8 +2,4 @@
 import type { MessageIndex } from "../../shared/MessageIndex";
 import type { UserId } from "../../shared/UserId";
 
-export type UserMessagesByMessageIndexArgs = { user_id: UserId, thread_root_message_index?: MessageIndex | undefined, 
-/**
- * @default []
- */
-messages: Array<MessageIndex>, latest_known_update?: bigint | undefined, };
+export type UserMessagesByMessageIndexArgs = { user_id: UserId, thread_root_message_index?: MessageIndex | undefined, messages: Array<MessageIndex>, latest_known_update?: bigint | undefined, };
