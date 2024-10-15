@@ -22,6 +22,7 @@ pub struct CommunityMembers {
     blocked: HashSet<UserId>,
     admin_count: u32,
     owner_count: u32,
+    #[serde(default)]
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
 }
 
