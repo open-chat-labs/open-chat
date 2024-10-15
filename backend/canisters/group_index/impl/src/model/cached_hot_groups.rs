@@ -47,7 +47,6 @@ pub struct CachedPublicGroupSummary {
     pub participant_count: u32,
     pub events_ttl: Option<Milliseconds>,
     pub events_ttl_last_updated: TimestampMillis,
-    #[serde(alias = "gate")]
     pub gate_config: Option<AccessGateConfig>,
 }
 
