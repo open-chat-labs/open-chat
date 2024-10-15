@@ -51,7 +51,7 @@ import type { CryptocurrencyContent } from "openchat-shared";
 import type { PrizeContent } from "openchat-shared";
 import type { P2PSwapContent } from "openchat-shared";
 
-const CACHE_VERSION = 115;
+const CACHE_VERSION = 116;
 const EARLIEST_SUPPORTED_MIGRATION = 115;
 const MAX_INDEX = 9999999999;
 
@@ -150,6 +150,22 @@ type MigrationFunction<T> = (
 //     await tx.objectStore("chats").clear();
 // }
 
+async function clearGroupDetailsStore(
+    _db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
+    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    await tx.objectStore("group_details").clear();
+}
+
+async function clearCommunityDetailsStore(
+    _db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
+    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    await tx.objectStore("community_details").clear();
+}
+
 async function clearEverything(
     db: IDBPDatabase<ChatSchema>,
     _principal: Principal,
@@ -159,7 +175,13 @@ async function clearEverything(
 }
 
 const migrations: Record<number, MigrationFunction<ChatSchema>> = {
-    114: clearEverything,
+    115: clearEverything,
+    116: async (db, principal, transaction) => {
+        await Promise.all([
+            clearGroupDetailsStore(db, principal, transaction),
+            clearCommunityDetailsStore(db, principal, transaction)
+        ])
+    },
 };
 
 async function migrate(

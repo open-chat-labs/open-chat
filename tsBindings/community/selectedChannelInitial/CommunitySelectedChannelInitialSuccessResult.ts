@@ -5,4 +5,4 @@ import type { MessageIndex } from "../../shared/MessageIndex";
 import type { UserId } from "../../shared/UserId";
 import type { VersionedRules } from "../../shared/VersionedRules";
 
-export type CommunitySelectedChannelInitialSuccessResult = { timestamp: bigint, last_updated: bigint, latest_event_index: EventIndex, members: Array<GroupMember>, blocked_users: Array<UserId>, invited_users: Array<UserId>, pinned_messages: Array<MessageIndex>, chat_rules: VersionedRules, };
+export type CommunitySelectedChannelInitialSuccessResult = { timestamp: bigint, last_updated: bigint, latest_event_index: EventIndex, members: Array<GroupMember>, basic_members: Array<UserId>, blocked_users: Array<UserId>, invited_users: Array<UserId>, pinned_messages: Array<MessageIndex>, chat_rules: VersionedRules, };
