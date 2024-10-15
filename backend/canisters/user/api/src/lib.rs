@@ -370,7 +370,7 @@ pub struct MessageActivityEvent {
     pub message_index: MessageIndex,
     pub activity: MessageActivity,
     pub timestamp: TimestampMillis,
-    pub user_id: UserId,
+    pub user_id: Option<UserId>,
 }
 
 impl MessageActivityEvent {

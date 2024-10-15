@@ -441,7 +441,7 @@ impl Data {
     }
 
     pub fn push_message_activity(&mut self, event: MessageActivityEvent, now: TimestampMillis) {
-        if !self.blocked_users.contains(&event.user_id) {
+        if event.user_id.map_or(true, |user_id| !self.blocked_users.contains(&user_id)) {
             self.message_activity_events.push(event, now);
         }
     }

@@ -77,7 +77,7 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                         message_index: message.message_index,
                         activity: MessageActivity::Tip,
                         timestamp: now,
-                        user_id,
+                        user_id: Some(user_id),
                     }),
                 );
             }

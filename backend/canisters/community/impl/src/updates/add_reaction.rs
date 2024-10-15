@@ -56,7 +56,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                                 message_index: message.message_index,
                                 activity: MessageActivity::Reaction,
                                 timestamp: now,
-                                user_id,
+                                user_id: Some(user_id),
                             }),
                         );
 

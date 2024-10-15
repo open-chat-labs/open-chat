@@ -54,7 +54,7 @@ async fn accept_p2p_swap(args: Args) -> Response {
                             message_index: message.message_index,
                             activity: MessageActivity::P2PSwapAccepted,
                             timestamp: state.env.now(),
-                            user_id,
+                            user_id: Some(user_id),
                         }),
                     );
                 }

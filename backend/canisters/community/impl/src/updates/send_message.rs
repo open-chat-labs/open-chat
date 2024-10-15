@@ -316,7 +316,7 @@ fn process_send_message_result(
                         message_index,
                         activity,
                         timestamp: now,
-                        user_id: sender,
+                        user_id: Some(sender),
                     }),
                 );
             }

@@ -523,11 +523,11 @@ fn multiple_events_on_one_message_and_check_activity_feed(chat_type: ChatType) {
 
     let event = &feed.events[0];
     assert_eq!(event.activity, MessageActivity::Tip);
-    assert_eq!(event.user_id, them.user_id);
+    assert_eq!(event.user_id, Some(them.user_id));
 
     let event = &feed.events[1];
     assert_eq!(event.activity, MessageActivity::Reaction);
-    assert_eq!(event.user_id, them.user_id);
+    assert_eq!(event.user_id, Some(them.user_id));
 }
 
 fn check_updates(env: &mut PocketIc, start: TimestampMillis, us: &User, them: &User, expected_activity: MessageActivity) {
@@ -539,7 +539,7 @@ fn check_updates(env: &mut PocketIc, start: TimestampMillis, us: &User, them: &U
 
     let event = &feed.events[0];
     assert_eq!(event.activity, expected_activity);
-    assert_eq!(event.user_id, them.user_id);
+    assert_eq!(event.user_id, Some(them.user_id));
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal, chat_type: ChatType) -> TestData {

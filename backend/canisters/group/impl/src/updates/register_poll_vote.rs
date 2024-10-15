@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{RegisterPollVoteArgs, RegisterPollVoteResult};
 use group_canister::register_poll_vote::{Response::*, *};
-use types::{Achievement, Chat};
+use types::{Achievement, Chat, TotalVotes};
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
 #[update(candid = true, msgpack = true)]
@@ -57,7 +57,7 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> Response {
                         message_index: args.message_index,
                         activity: MessageActivity::PollVote,
                         timestamp: now,
-                        user_id,
+                        user_id: matches!(votes.total, TotalVotes::Visible(_)).then_some(user_id),
                     }),
                 );
 
