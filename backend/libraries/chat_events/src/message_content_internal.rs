@@ -1,4 +1,5 @@
 use crate::DeletedByInternal;
+use candid::Principal;
 use ledger_utils::{create_pending_transaction, format_crypto_amount};
 use search::Document;
 use serde::{Deserialize, Serialize};
@@ -227,8 +228,8 @@ impl MessageContentInternal {
                 diamond_only: c.diamond_only,
             }),
             MessageContentInternal::PrizeWinner(c) => MessageContentEventPayload::PrizeWinner(PrizeWinnerContentEventPayload {
-                token: c.transaction.token().token_symbol().to_string(),
-                amount: c.transaction.units(),
+                token: c.token_symbol.clone(),
+                amount: c.amount,
             }),
             MessageContentInternal::MessageReminderCreated(c) => {
                 MessageContentEventPayload::MessageReminderCreated(MessageReminderContentEventPayload {
@@ -319,7 +320,7 @@ impl From<&MessageContentInternal> for Document {
                 try_add_caption(&mut document, c.caption.as_ref())
             }
             MessageContentInternal::PrizeWinner(c) => {
-                document.add_field(c.transaction.token().token_symbol().to_string(), 1.0, false);
+                document.add_field(c.token_symbol.clone(), 1.0, false);
             }
             MessageContentInternal::MessageReminderCreated(r) => try_add_caption(&mut document, r.notes.as_ref()),
             MessageContentInternal::MessageReminder(r) => try_add_caption(&mut document, r.notes.as_ref()),
@@ -1256,32 +1257,79 @@ impl MessageContentInternalSubtype for PrizeContentInternal {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(from = "PrizeWinnerContentInternalPrevious")]
+#[serde(from = "PrizeWinnerContentInternalCombined")]
 pub struct PrizeWinnerContentInternal {
     #[serde(rename = "w")]
     pub winner: UserId,
     #[serde(rename = "l")]
     pub ledger: CanisterId,
+    #[serde(rename = "t")]
+    pub token_symbol: String,
     #[serde(rename = "a")]
     pub amount: u128,
     #[serde(rename = "f")]
     pub fee: u128,
     #[serde(rename = "i")]
     pub block_index: u64,
-    #[serde(rename = "t")]
-    pub transaction: CompletedCryptoTransaction,
     #[serde(rename = "m")]
     pub prize_message: MessageIndex,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct PrizeWinnerContentInternalPrevious {
+#[serde(untagged)]
+enum PrizeWinnerContentInternalCombined {
+    Old(PrizeWinnerContentInternalPrevious),
+    New {
+        #[serde(rename = "w")]
+        winner: UserId,
+        #[serde(rename = "l")]
+        ledger: CanisterId,
+        #[serde(rename = "t")]
+        token_symbol: String,
+        #[serde(rename = "a")]
+        amount: u128,
+        #[serde(rename = "f")]
+        fee: u128,
+        #[serde(rename = "i")]
+        block_index: u64,
+        #[serde(rename = "m")]
+        prize_message: MessageIndex,
+    },
+}
+
+impl From<PrizeWinnerContentInternalCombined> for PrizeWinnerContentInternal {
+    fn from(value: PrizeWinnerContentInternalCombined) -> Self {
+        match value {
+            PrizeWinnerContentInternalCombined::Old(p) => p.into(),
+            PrizeWinnerContentInternalCombined::New {
+                winner,
+                ledger,
+                token_symbol,
+                amount,
+                fee,
+                block_index,
+                prize_message,
+            } => PrizeWinnerContentInternal {
+                winner,
+                ledger,
+                token_symbol,
+                amount,
+                fee,
+                block_index,
+                prize_message,
+            },
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+struct PrizeWinnerContentInternalPrevious {
     #[serde(rename = "w")]
-    pub winner: UserId,
+    winner: UserId,
     #[serde(rename = "t")]
-    pub transaction: CompletedCryptoTransaction,
+    transaction: CompletedCryptoTransaction,
     #[serde(rename = "m")]
-    pub prize_message: MessageIndex,
+    prize_message: MessageIndex,
 }
 
 impl From<PrizeWinnerContentInternalPrevious> for PrizeWinnerContentInternal {
@@ -1289,10 +1337,10 @@ impl From<PrizeWinnerContentInternalPrevious> for PrizeWinnerContentInternal {
         PrizeWinnerContentInternal {
             winner: value.winner,
             ledger: value.transaction.ledger_canister_id(),
+            token_symbol: value.transaction.token().token_symbol().to_string(),
             amount: value.transaction.units(),
             fee: value.transaction.fee(),
             block_index: value.transaction.index(),
-            transaction: value.transaction,
             prize_message: value.prize_message,
         }
     }
@@ -1301,10 +1349,28 @@ impl From<PrizeWinnerContentInternalPrevious> for PrizeWinnerContentInternal {
 impl MessageContentInternalSubtype for PrizeWinnerContentInternal {
     type ContentType = PrizeWinnerContent;
 
-    fn hydrate(self, _my_user_id: Option<UserId>) -> Self::ContentType {
+    fn hydrate(self, my_user_id: Option<UserId>) -> Self::ContentType {
         PrizeWinnerContent {
             winner: self.winner,
-            transaction: self.transaction,
+            transaction: CompletedCryptoTransaction::ICRC1(types::icrc1::CompletedCryptoTransaction {
+                ledger: self.ledger,
+                token: Cryptocurrency::Other(self.token_symbol.clone()),
+                amount: self.amount,
+                from: types::icrc1::Account {
+                    owner: Principal::anonymous(),
+                    subaccount: None,
+                }
+                .into(),
+                to: types::icrc1::Account {
+                    owner: my_user_id.map(|u| u.into()).unwrap_or(Principal::anonymous()),
+                    subaccount: None,
+                }
+                .into(),
+                fee: self.fee,
+                memo: None,
+                created: 0,
+                block_index: self.block_index,
+            }),
             prize_message: self.prize_message,
         }
     }
