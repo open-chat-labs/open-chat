@@ -28,10 +28,10 @@ fn post_upgrade(args: Args) {
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
-    ic_cdk_timers::set_timer(Duration::ZERO, || ic_cdk::spawn(refund_user()));
+    ic_cdk_timers::set_timer(Duration::ZERO, || ic_cdk::spawn(refund_users()));
 }
 
-async fn refund_user() {
+async fn refund_users() {
     let principal = Principal::from_text("ioprk-aqaaa-aaaaf-atcza-cai").unwrap();
     let _ = icrc_ledger_canister_c2c_client::icrc1_transfer(
         CHAT.ledger_canister_id().unwrap(),
@@ -42,6 +42,20 @@ async fn refund_user() {
             created_at_time: None,
             memo: None,
             amount: 1825800000u64.into(),
+        },
+    )
+    .await;
+
+    let principal = Principal::from_text("jsxih-jaaaa-aaaaf-a4ndq-cai").unwrap();
+    let _ = icrc_ledger_canister_c2c_client::icrc1_transfer(
+        CHAT.ledger_canister_id().unwrap(),
+        &icrc1_transfer::Args {
+            from_subaccount: Some(convert_to_subaccount(&principal).0),
+            to: principal.into(),
+            fee: None,
+            created_at_time: None,
+            memo: None,
+            amount: 1077900000u64.into(),
         },
     )
     .await;
