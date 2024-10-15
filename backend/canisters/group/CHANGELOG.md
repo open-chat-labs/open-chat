@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Reduce size of responses by only returning UserIds for basic members ([#6577](https://github.com/open-chat-labs/open-chat/pull/6577))
 - Remove `transaction` from serialized PrizeWinner messages ([#6578](https://github.com/open-chat-labs/open-chat/pull/6578))
 
+### Fixed
+
+- Fix case where GroupIndex wasn't being notified about gate change ([#6581](https://github.com/open-chat-labs/open-chat/pull/6581))
+
 ## [[2.0.1380](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1380-group)] - 2024-10-11
 
 ### Added
