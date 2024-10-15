@@ -53,9 +53,7 @@
         embeddedContent,
     );
     $: editing = !chatIdentifierUnset(candidateGroup.id);
-    $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: stepIndex = steps.findIndex((s) => s.key === step) ?? 0;
-    $: left = stepIndex * (actualWidth - padding);
     $: canEditPermissions = !editing ? true : client.canChangePermissions(candidateGroup.id);
     $: canEditDisappearingMessages = !editing
         ? true
@@ -340,15 +338,17 @@
     <div class="body" slot="body">
         <StageHeader {steps} enabled on:step={changeStep} {step} />
         <div class="wrapper">
-            <div class="sections" style={`left: -${left}px`}>
-                <div class="details" class:visible={step === "details"}>
+            {#if step === "details"}
+                <div class="details">
                     <GroupDetails
                         {embeddedContent}
                         bind:valid={detailsValid}
                         {busy}
                         bind:candidateGroup />
                 </div>
-                <div class="visibility" class:visible={step === "visibility"}>
+            {/if}
+            {#if step === "visibility"}
+                <div class="visibility">
                     <VisibilityControl
                         {embeddedContent}
                         on:upgrade
@@ -359,16 +359,18 @@
                         bind:candidate={candidateGroup}
                         {gateDirty} />
                 </div>
-                {#if !embeddedContent}
-                    <div class="rules" class:visible={step === "rules"}>
-                        <RulesEditor
-                            bind:valid={rulesValid}
-                            level={candidateGroup.level}
-                            bind:rules={candidateGroup.rules}
-                            {editing} />
-                    </div>
-                {/if}
-                <div use:menuCloser class="permissions" class:visible={step === "permissions"}>
+            {/if}
+            {#if !embeddedContent && step === "rules"}
+                <div class="rules">
+                    <RulesEditor
+                        bind:valid={rulesValid}
+                        level={candidateGroup.level}
+                        bind:rules={candidateGroup.rules}
+                        {editing} />
+                </div>
+            {/if}
+            {#if step === "permissions"}
+                <div use:menuCloser class="permissions">
                     {#if canEditPermissions}
                         <GroupPermissionsEditor
                             {embeddedContent}
@@ -386,15 +388,15 @@
                             isChannel={candidateGroup.id.kind === "channel"} />
                     {/if}
                 </div>
-                {#if !editing && !hideInviteUsers}
-                    <div class="members" class:visible={step === "invite"}>
-                        <ChooseMembers
-                            userLookup={searchUsers}
-                            bind:members={candidateGroup.members}
-                            {busy} />
-                    </div>
-                {/if}
-            </div>
+            {/if}
+            {#if !editing && !hideInviteUsers && step === "invite"}
+                <div class="members">
+                    <ChooseMembers
+                        userLookup={searchUsers}
+                        bind:members={candidateGroup.members}
+                        {busy} />
+                </div>
+            {/if}
         </div>
     </div>
     <span class="footer" slot="footer">
@@ -494,23 +496,12 @@
 
     .wrapper {
         width: 100%;
-        overflow: hidden;
         height: 550px;
-        position: relative;
+        display: flex;
+        @include nice-scrollbar();
 
         @include mobile() {
             height: 400px;
-        }
-    }
-
-    .sections {
-        display: flex;
-        transition: left 250ms ease-in-out;
-        position: relative;
-        gap: $sp5;
-        height: 100%;
-        @include mobile() {
-            gap: $sp4;
         }
     }
 
@@ -519,13 +510,6 @@
     .rules,
     .members,
     .permissions {
-        flex: 0 0 100%;
-        visibility: hidden;
-        transition: visibility 250ms ease-in-out;
-        @include nice-scrollbar();
-
-        &.visible {
-            visibility: visible;
-        }
+        width: 100%;
     }
 </style>

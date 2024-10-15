@@ -2,8 +2,4 @@
 import type { CommunityId } from "../../shared/CommunityId";
 import type { UserId } from "../../shared/UserId";
 
-export type LocalUserIndexInviteUsersToChannelArgs = { community_id: CommunityId, channel_id: bigint, 
-/**
- * @default []
- */
-user_ids: Array<UserId>, caller_username: string, };
+export type LocalUserIndexInviteUsersToChannelArgs = { community_id: CommunityId, channel_id: bigint, user_ids: Array<UserId>, caller_username: string, };

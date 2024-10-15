@@ -98,7 +98,7 @@ async fn prepare_airdrop(config: AirdropConfig, user_index_canister_id: Canister
     )
     .await
     {
-        Ok(community_canister::selected_channel_initial::Response::Success(success)) => success.members,
+        Ok(community_canister::selected_channel_initial::Response::Success(success)) => success.members(),
         Ok(resp) => {
             error!(?resp, "Failed to get channel members");
             return;

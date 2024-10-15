@@ -23,6 +23,7 @@ pub struct SuccessResult {
     pub last_updated: TimestampMillis,
     pub latest_event_index: EventIndex,
     pub members: Vec<CommunityMember>,
+    pub basic_members: Vec<UserId>,
     pub blocked_users: Vec<UserId>,
     pub invited_users: Vec<UserId>,
     pub chat_rules: VersionedRules,

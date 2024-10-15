@@ -2,8 +2,4 @@
 import type { CommunityId } from "../shared/CommunityId";
 import type { UserChannelSummaryUpdates } from "./UserChannelSummaryUpdates";
 
-export type UserCommunitySummaryUpdates = { community_id: CommunityId, 
-/**
- * @default []
- */
-channels: Array<UserChannelSummaryUpdates>, index?: number | undefined, archived?: boolean | undefined, pinned?: Array<bigint> | undefined, };
+export type UserCommunitySummaryUpdates = { community_id: CommunityId, channels: Array<UserChannelSummaryUpdates>, index?: number | undefined, archived?: boolean | undefined, pinned?: Array<bigint> | undefined, };

@@ -36,6 +36,7 @@ export function createMessageContextSpecificObjectStore<T>(init: () => T) {
         update: (context: MessageContext, fn: (data: T) => T) =>
             updateDataForMessageContext(store, context, fn, init()),
         set: (context: MessageContext, data: T) => setDataForMessageContext(store, context, data),
+        has: (context: MessageContext) => storeValue.has(context),
         delete: (context: MessageContext) => {
             if (storeValue.has(context)) {
                 store.update((state) => {

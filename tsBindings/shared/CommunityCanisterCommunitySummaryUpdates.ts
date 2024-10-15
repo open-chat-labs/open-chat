@@ -10,27 +10,6 @@ import type { OptionUpdateAccessGate } from "./OptionUpdateAccessGate";
 import type { OptionUpdateAccessGateConfig } from "./OptionUpdateAccessGateConfig";
 import type { OptionUpdateFrozenGroupInfo } from "./OptionUpdateFrozenGroupInfo";
 import type { OptionUpdateU128 } from "./OptionUpdateU128";
-import type { TSBigIntWithDefault } from "./TSBigIntWithDefault";
 import type { UserGroupSummary } from "./UserGroupSummary";
 
-export type CommunityCanisterCommunitySummaryUpdates = { community_id: CommunityId, last_updated: TSBigIntWithDefault, name?: string | undefined, description?: string | undefined, avatar_id: OptionUpdateU128, banner_id: OptionUpdateU128, is_public?: boolean | undefined, member_count?: number | undefined, permissions?: CommunityPermissions | undefined, frozen: OptionUpdateFrozenGroupInfo, gate: OptionUpdateAccessGate, gate_config: OptionUpdateAccessGateConfig, primary_language?: string | undefined, latest_event_index?: EventIndex | undefined, 
-/**
- * @default []
- */
-channels_added: Array<CommunityCanisterChannelSummary>, 
-/**
- * @default []
- */
-channels_updated: Array<CommunityCanisterChannelSummaryUpdates>, 
-/**
- * @default []
- */
-channels_removed: Array<bigint>, membership?: CommunityMembershipUpdates | undefined, 
-/**
- * @default []
- */
-user_groups: Array<UserGroupSummary>, 
-/**
- * @default []
- */
-user_groups_deleted: Array<number>, metrics?: ChatMetrics | undefined, };
+export type CommunityCanisterCommunitySummaryUpdates = { community_id: CommunityId, last_updated: bigint, name?: string | undefined, description?: string | undefined, avatar_id: OptionUpdateU128, banner_id: OptionUpdateU128, is_public?: boolean | undefined, member_count?: number | undefined, permissions?: CommunityPermissions | undefined, frozen: OptionUpdateFrozenGroupInfo, gate: OptionUpdateAccessGate, gate_config: OptionUpdateAccessGateConfig, primary_language?: string | undefined, latest_event_index?: EventIndex | undefined, channels_added: Array<CommunityCanisterChannelSummary>, channels_updated: Array<CommunityCanisterChannelSummaryUpdates>, channels_removed: Array<bigint>, membership?: CommunityMembershipUpdates | undefined, user_groups: Array<UserGroupSummary>, user_groups_deleted: Array<number>, metrics?: ChatMetrics | undefined, };

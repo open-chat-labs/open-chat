@@ -3,16 +3,4 @@ import type { CommunityId } from "../../shared/CommunityId";
 import type { UserCommunitySummary } from "../UserCommunitySummary";
 import type { UserCommunitySummaryUpdates } from "../UserCommunitySummaryUpdates";
 
-export type UserUpdatesCommunitiesUpdates = { 
-/**
- * @default []
- */
-added: Array<UserCommunitySummary>, 
-/**
- * @default []
- */
-updated: Array<UserCommunitySummaryUpdates>, 
-/**
- * @default []
- */
-removed: Array<CommunityId>, };
+export type UserUpdatesCommunitiesUpdates = { added: Array<UserCommunitySummary>, updated: Array<UserCommunitySummaryUpdates>, removed: Array<CommunityId>, };
