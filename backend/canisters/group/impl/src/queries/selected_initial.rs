@@ -20,9 +20,9 @@ fn selected_initial_impl(state: &RuntimeState) -> Response {
         for member in chat.members.iter().map(GroupMember::from) {
             if matches!(member.role, GroupRole::Participant) && !member.lapsed {
                 basic_members.push(member.user_id);
-            } else {
-                members.push(member);
             }
+            // Once website is upgraded, only push to `members` if not added to `basic_members`
+            members.push(member);
         }
 
         Success(SuccessResult {
