@@ -1281,7 +1281,7 @@ type MessageActivityEvent = record {
     message_index : MessageIndex;
     activity : MessageActivity;
     timestamp : TimestampMillis;
-    user_id : UserId;
+    user_id : opt UserId;
 };
 
 type MessageActivity = variant {
