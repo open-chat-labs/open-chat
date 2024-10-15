@@ -2,6 +2,5 @@
 import type { CommunityCreateChannelSuccessResult } from "./CommunityCreateChannelSuccessResult";
 import type { FieldTooLongResult } from "../../shared/FieldTooLongResult";
 import type { FieldTooShortResult } from "../../shared/FieldTooShortResult";
-import type { TSNumberWithDefault } from "../../shared/TSNumberWithDefault";
 
-export type CommunityCreateChannelResponse = { "Success": CommunityCreateChannelSuccessResult } | { "NameTooShort": FieldTooShortResult } | { "NameTooLong": FieldTooLongResult } | "NameReserved" | { "DescriptionTooLong": FieldTooLongResult } | { "RulesTooShort": FieldTooShortResult } | { "RulesTooLong": FieldTooLongResult } | { "AvatarTooBig": FieldTooLongResult } | "AccessGateInvalid" | { "MaxChannelsCreated": TSNumberWithDefault } | "NameTaken" | "UserSuspended" | "NotAuthorized" | "CommunityFrozen" | "ExternalUrlInvalid" | { "InternalError": string } | "UserLapsed";
+export type CommunityCreateChannelResponse = { "Success": CommunityCreateChannelSuccessResult } | { "NameTooShort": FieldTooShortResult } | { "NameTooLong": FieldTooLongResult } | "NameReserved" | { "DescriptionTooLong": FieldTooLongResult } | { "RulesTooShort": FieldTooShortResult } | { "RulesTooLong": FieldTooLongResult } | { "AvatarTooBig": FieldTooLongResult } | "AccessGateInvalid" | { "MaxChannelsCreated": number } | "NameTaken" | "UserSuspended" | "NotAuthorized" | "CommunityFrozen" | "ExternalUrlInvalid" | { "InternalError": string } | "UserLapsed";

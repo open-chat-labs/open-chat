@@ -135,7 +135,6 @@ import {
 import {
     apiCommunityPermissions,
     apiGroupPermissions,
-    apiAccessGate,
     apiMaybeAccessGate,
     apiMessageContent,
     editMessageResponse,
@@ -152,6 +151,7 @@ import {
     cancelP2PSwapResponse,
     joinVideoCallResponse,
     setPinNumberResponse,
+    apiMaybeAccessGateConfig,
 } from "../common/chatMappers";
 import {
     apiMessageContent as apiMessageContentV2,
@@ -303,10 +303,7 @@ export class UserClient extends CandidService {
                 permissions: [apiCommunityPermissions(community.permissions)],
                 rules,
                 gate: apiMaybeAccessGate(community.gate),
-                gate_config: apiOptional(
-                    (g) => ({ gate: apiAccessGate(g), expiry: [] }),
-                    community.gate,
-                ),
+                gate_config: apiMaybeAccessGateConfig(community.gate),
                 default_channels: defaultChannels,
                 default_channel_rules: [defaultChannelRules],
                 primary_language: community.primaryLanguage,
@@ -335,10 +332,7 @@ export class UserClient extends CandidService {
                 permissions_v2: [apiGroupPermissions(group.permissions)],
                 rules: group.rules,
                 gate: apiMaybeAccessGate(group.gate),
-                gate_config: apiOptional(
-                    (g) => ({ gate: apiAccessGate(g), expiry: [] }),
-                    group.gate,
-                ),
+                gate_config: apiMaybeAccessGateConfig(group.gate),
                 events_ttl: apiOptional(identity, group.eventsTTL),
                 messages_visible_to_non_members: apiOptional(
                     identity,

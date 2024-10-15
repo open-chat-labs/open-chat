@@ -144,6 +144,7 @@ type SelectedChannelInitialResponse = variant {
         last_updated : TimestampMillis;
         latest_event_index : EventIndex;
         members : vec Participant;
+        basic_members : vec UserId;
         blocked_users : vec UserId;
         invited_users : vec UserId;
         pinned_messages : vec MessageIndex;
@@ -181,6 +182,7 @@ type SelectedInitialSuccess = record {
     last_updated : TimestampMillis;
     latest_event_index : EventIndex;
     members : vec CommunityMember;
+    basic_members : vec UserId;
     blocked_users : vec UserId;
     invited_users : vec UserId;
     chat_rules : VersionedRules;

@@ -2,8 +2,6 @@
 import type { DiamondMembershipDetails } from "./DiamondMembershipDetails";
 import type { DiamondMembershipStatusFull } from "./DiamondMembershipStatusFull";
 import type { SuspensionDetails } from "./SuspensionDetails";
-import type { TSBoolWithDefault } from "./TSBoolWithDefault";
-import type { TSNumberWithDefault } from "./TSNumberWithDefault";
 import type { UserId } from "./UserId";
 
-export type CurrentUserSummary = { user_id: UserId, username: string, display_name?: string | undefined, avatar_id?: bigint | undefined, is_bot: TSBoolWithDefault, is_platform_moderator: TSBoolWithDefault, is_platform_operator: TSBoolWithDefault, suspension_details?: SuspensionDetails | undefined, is_suspected_bot: TSBoolWithDefault, diamond_membership_details?: DiamondMembershipDetails | undefined, diamond_membership_status: DiamondMembershipStatusFull, moderation_flags_enabled: TSNumberWithDefault, is_unique_person: TSBoolWithDefault, };
+export type CurrentUserSummary = { user_id: UserId, username: string, display_name?: string | undefined, avatar_id?: bigint | undefined, is_bot: boolean, is_platform_moderator: boolean, is_platform_operator: boolean, suspension_details?: SuspensionDetails | undefined, is_suspected_bot: boolean, diamond_membership_details?: DiamondMembershipDetails | undefined, diamond_membership_status: DiamondMembershipStatusFull, moderation_flags_enabled: number, is_unique_person: boolean, };
