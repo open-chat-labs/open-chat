@@ -156,10 +156,14 @@ impl GroupChatCore {
     }
 
     pub fn details_last_updated(&self) -> TimestampMillis {
-        max(
+        [
             self.events.last_updated().unwrap_or_default(),
             self.invited_users.last_updated(),
-        )
+            self.members.last_updated().unwrap_or_default(),
+        ]
+        .into_iter()
+        .max()
+        .unwrap()
     }
 
     pub fn last_updated(&self, user_id: Option<UserId>) -> TimestampMillis {
@@ -313,7 +317,7 @@ impl GroupChatCore {
         let mut users_blocked_or_unblocked = HashSet::new();
         for (user_id, update) in self.members.iter_latest_updates(since) {
             match update {
-                MemberUpdate::Added | MemberUpdate::RoleChanged => {
+                MemberUpdate::Added | MemberUpdate::RoleChanged | MemberUpdate::Lapsed | MemberUpdate::Unlapsed => {
                     if users_added_updated_or_removed.insert(user_id) {
                         if let Some(member) = self.members.get(&user_id) {
                             result.members_added_or_updated.push(member.into());

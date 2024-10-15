@@ -1553,6 +1553,7 @@ dependencies = [
  "search",
  "serde",
  "serde_bytes",
+ "serde_repr",
  "stable_memory",
  "storage_bucket_client",
  "tracing",

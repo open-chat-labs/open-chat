@@ -5,7 +5,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::update_group_v2::*;
 use group_chat_core::UpdateResult;
-use group_community_common::{ExpiringMember, Member, Members};
+use group_community_common::{ExpiringMember, Member};
 use group_index_canister::{c2c_make_private, c2c_update_group};
 use tracing::error;
 use types::{AccessGateConfigInternal, CanisterId, ChatId, Document, OptionUpdate, TimestampMillis, UserId};
@@ -206,7 +206,7 @@ pub fn update_member_expiry(data: &mut Data, prev_gate_config: &Option<AccessGat
 
             // If the access gate has been removed then clear lapsed status of members
             if new_gate_config.is_none() {
-                data.chat.members.clear_lapsed(now);
+                data.chat.members.unlapse_all(now);
             }
         }
     } else if let Some(new_gate_expiry) = new_gate_expiry {
