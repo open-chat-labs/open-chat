@@ -13,6 +13,7 @@ generate_query_call!(summary);
 generate_query_call!(summary_updates);
 
 // Updates
+generate_update_call!(accept_p2p_swap);
 generate_update_call!(add_reaction);
 generate_update_call!(block_user);
 generate_update_call!(cancel_invites);
@@ -27,6 +28,7 @@ generate_update_call!(edit_message);
 generate_update_call!(enable_invite_code);
 generate_update_call!(import_group);
 generate_update_call!(leave_channel);
+generate_update_call!(register_poll_vote);
 generate_update_call!(remove_member);
 generate_update_call!(remove_member_from_channel);
 generate_update_call!(remove_reaction);
@@ -38,14 +40,15 @@ generate_update_call!(update_community);
 generate_update_call!(update_user_group);
 
 pub mod happy_path {
-    use crate::User;
+    use crate::{client::user, User};
     use candid::Principal;
     use pocket_ic::PocketIc;
     use testing::rng::random_message_id;
     use types::{
         AccessGate, ChannelId, ChatId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
-        CommunityCanisterCommunitySummaryUpdates, CommunityId, CommunityRole, EventIndex, EventsResponse, GroupRole,
-        MessageContentInitial, MessageId, MessageIndex, Reaction, Rules, TextContent, TimestampMillis, UserId,
+        CommunityCanisterCommunitySummaryUpdates, CommunityId, CommunityRole, EventIndex, EventsResponse, GroupReplyContext,
+        GroupRole, MessageContentInitial, MessageId, MessageIndex, PollVotes, Reaction, Rules, TextContent, TimestampMillis,
+        UserId, VoteOperation,
     };
 
     pub fn create_channel(
@@ -164,6 +167,81 @@ pub mod happy_path {
         match response {
             community_canister::send_message::Response::Success(result) => result,
             response => panic!("'send_message' error: {response:?}"),
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn send_message(
+        env: &mut PocketIc,
+        sender: &User,
+        community_id: CommunityId,
+        channel_id: ChannelId,
+        thread_root_message_index: Option<MessageIndex>,
+        content: MessageContentInitial,
+        replies_to: Option<GroupReplyContext>,
+        message_id: Option<MessageId>,
+    ) -> community_canister::send_message::SuccessResult {
+        let response = super::send_message(
+            env,
+            sender.principal,
+            community_id.into(),
+            &community_canister::send_message::Args {
+                channel_id,
+                thread_root_message_index,
+                message_id: message_id.unwrap_or_else(random_message_id),
+                content,
+                sender_name: sender.username(),
+                sender_display_name: None,
+                replies_to,
+                mentioned: Vec::new(),
+                forwarding: false,
+                block_level_markdown: false,
+                community_rules_accepted: None,
+                channel_rules_accepted: None,
+                message_filter_failed: None,
+                new_achievement: false,
+            },
+        );
+
+        match response {
+            community_canister::send_message::Response::Success(result) => result,
+            response => panic!("'send_message' error: {response:?}"),
+        }
+    }
+
+    pub fn send_message_with_transfer(
+        env: &mut PocketIc,
+        community_id: CommunityId,
+        channel_id: ChannelId,
+        sender: &User,
+        content: MessageContentInitial,
+        message_id: Option<MessageId>,
+    ) -> user_canister::send_message_with_transfer_to_channel::SuccessResult {
+        let response = user::send_message_with_transfer_to_channel(
+            env,
+            sender.principal,
+            sender.user_id.into(),
+            &user_canister::send_message_with_transfer_to_channel::Args {
+                channel_id,
+                thread_root_message_index: None,
+                message_id: message_id.unwrap_or_else(random_message_id),
+                content,
+                replies_to: None,
+                block_level_markdown: false,
+                message_filter_failed: None,
+                sender_name: sender.username(),
+                sender_display_name: None,
+                mentioned: Vec::new(),
+                community_rules_accepted: None,
+                channel_rules_accepted: None,
+                community_id,
+                pin: None,
+            },
+        );
+
+        match response {
+            user_canister::send_message_with_transfer_to_channel::Response::Success(result) => result,
+            response => panic!("'send_message_with_transfer_to_channel' error: {response:?}"),
         }
     }
 
@@ -516,5 +594,59 @@ pub mod happy_path {
             },
         );
         assert!(matches!(response, community_canister::add_reaction::Response::Success));
+    }
+
+    pub fn register_poll_vote(
+        env: &mut PocketIc,
+        sender: &User,
+        community_id: CommunityId,
+        channel_id: ChannelId,
+        message_index: MessageIndex,
+        poll_option: u32,
+    ) -> PollVotes {
+        let response = super::register_poll_vote(
+            env,
+            sender.principal,
+            community_id.into(),
+            &community_canister::register_poll_vote::Args {
+                channel_id,
+                thread_root_message_index: None,
+                message_index,
+                poll_option,
+                operation: VoteOperation::RegisterVote,
+                new_achievement: false,
+            },
+        );
+
+        match response {
+            community_canister::register_poll_vote::Response::Success(result) => result,
+            response => panic!("'register_poll_vote' error: {response:?}"),
+        }
+    }
+
+    pub fn accept_p2p_swap(
+        env: &mut PocketIc,
+        sender: &User,
+        community_id: CommunityId,
+        channel_id: ChannelId,
+        message_id: MessageId,
+    ) {
+        let response = super::accept_p2p_swap(
+            env,
+            sender.principal,
+            community_id.into(),
+            &community_canister::accept_p2p_swap::Args {
+                channel_id,
+                thread_root_message_index: None,
+                message_id,
+                pin: None,
+                new_achievement: false,
+            },
+        );
+
+        match response {
+            community_canister::accept_p2p_swap::Response::Success(_) => {}
+            response => panic!("'accept_p2p_swap' error: {response:?}"),
+        }
     }
 }

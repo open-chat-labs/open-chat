@@ -28,6 +28,7 @@ generate_update_call!(end_video_call);
 generate_update_call!(join_video_call);
 generate_update_call!(leave_community);
 generate_update_call!(leave_group);
+generate_update_call!(mark_message_activity_feed_read);
 generate_update_call!(mark_read);
 generate_update_call!(mute_notifications);
 generate_update_call!(remove_reaction);
@@ -49,7 +50,8 @@ pub mod happy_path {
     use testing::rng::random_message_id;
     use types::{
         CanisterId, Chat, ChatId, CommunityId, Cryptocurrency, Empty, EventIndex, EventsResponse, MessageContentInitial,
-        MessageId, Milliseconds, Reaction, Rules, TextContent, TimestampMillis, UserId, VideoCallType,
+        MessageId, MessageIndex, Milliseconds, Reaction, ReplyContext, Rules, TextContent, TimestampMillis, UserId,
+        VideoCallType,
     };
     use user_canister::set_pin_number::PinNumberVerification;
 
@@ -80,6 +82,40 @@ pub mod happy_path {
 
         match response {
             user_canister::send_message_v2::Response::Success(result) => result,
+            response => panic!("'send_message' error: {response:?}"),
+        }
+    }
+
+    pub fn send_message(
+        env: &mut PocketIc,
+        sender: &User,
+        recipient: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        content: MessageContentInitial,
+        replies_to: Option<ReplyContext>,
+        message_id: Option<MessageId>,
+    ) -> user_canister::send_message_v2::SuccessResult {
+        let response = super::send_message_v2(
+            env,
+            sender.principal,
+            sender.canister(),
+            &user_canister::send_message_v2::Args {
+                recipient,
+                thread_root_message_index,
+                message_id: message_id.unwrap_or_else(random_message_id),
+                content,
+                replies_to,
+                forwarding: false,
+                block_level_markdown: false,
+                message_filter_failed: None,
+                correlation_id: 0,
+                pin: None,
+            },
+        );
+
+        match response {
+            user_canister::send_message_v2::Response::Success(result) => result,
+            user_canister::send_message_v2::Response::TransferSuccessV2(result) => result.into(),
             response => panic!("'send_message' error: {response:?}"),
         }
     }
@@ -447,5 +483,24 @@ pub mod happy_path {
             user_canister::claim_daily_chit::Response::Success(result) => result,
             response => panic!("'claim_daily_chit' error: {response:?}"),
         }
+    }
+
+    pub fn accept_p2p_swap(env: &mut PocketIc, sender: &User, user_id: UserId, message_id: MessageId) {
+        let accept_offer_response = super::accept_p2p_swap(
+            env,
+            sender.principal,
+            sender.canister(),
+            &user_canister::accept_p2p_swap::Args {
+                thread_root_message_index: None,
+                message_id,
+                pin: None,
+                user_id,
+            },
+        );
+
+        assert!(matches!(
+            accept_offer_response,
+            user_canister::accept_p2p_swap::Response::Success(_)
+        ));
     }
 }
