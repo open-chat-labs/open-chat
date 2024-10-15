@@ -498,6 +498,7 @@ type SelectedInitialSuccess = record {
     last_updated : TimestampMillis;
     latest_event_index : EventIndex;
     participants : vec Participant;
+    basic_members : vec UserId;
     blocked_users : vec UserId;
     invited_users : vec UserId;
     pinned_messages : vec MessageIndex;
