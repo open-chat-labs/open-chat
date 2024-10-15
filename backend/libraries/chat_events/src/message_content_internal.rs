@@ -1275,6 +1275,7 @@ pub struct PrizeWinnerContentInternal {
     pub prize_message: MessageIndex,
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(untagged)]
 enum PrizeWinnerContentInternalCombined {
