@@ -1275,73 +1275,41 @@ pub struct PrizeWinnerContentInternal {
     pub prize_message: MessageIndex,
 }
 
-#[allow(clippy::large_enum_variant)]
 #[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(untagged)]
-enum PrizeWinnerContentInternalCombined {
-    Old(PrizeWinnerContentInternalPrevious),
-    New {
-        #[serde(rename = "w")]
-        winner: UserId,
-        #[serde(rename = "l")]
-        ledger: CanisterId,
-        #[serde(rename = "t")]
-        token_symbol: String,
-        #[serde(rename = "a")]
-        amount: u128,
-        #[serde(rename = "f")]
-        fee: u128,
-        #[serde(rename = "i")]
-        block_index: u64,
-        #[serde(rename = "m")]
-        prize_message: MessageIndex,
-    },
-}
-
-impl From<PrizeWinnerContentInternalCombined> for PrizeWinnerContentInternal {
-    fn from(value: PrizeWinnerContentInternalCombined) -> Self {
-        match value {
-            PrizeWinnerContentInternalCombined::Old(p) => p.into(),
-            PrizeWinnerContentInternalCombined::New {
-                winner,
-                ledger,
-                token_symbol,
-                amount,
-                fee,
-                block_index,
-                prize_message,
-            } => PrizeWinnerContentInternal {
-                winner,
-                ledger,
-                token_symbol,
-                amount,
-                fee,
-                block_index,
-                prize_message,
-            },
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-struct PrizeWinnerContentInternalPrevious {
+struct PrizeWinnerContentInternalCombined {
     #[serde(rename = "w")]
     winner: UserId,
+    #[serde(rename = "l")]
+    ledger: Option<CanisterId>,
+    #[serde(rename = "s")]
+    token_symbol: Option<String>,
     #[serde(rename = "t")]
-    transaction: CompletedCryptoTransaction,
+    transaction: Option<CompletedCryptoTransaction>,
+    #[serde(rename = "a")]
+    amount: Option<u128>,
+    #[serde(rename = "f")]
+    fee: Option<u128>,
+    #[serde(rename = "i")]
+    block_index: Option<u64>,
     #[serde(rename = "m")]
     prize_message: MessageIndex,
 }
 
-impl From<PrizeWinnerContentInternalPrevious> for PrizeWinnerContentInternal {
-    fn from(value: PrizeWinnerContentInternalPrevious) -> Self {
+impl From<PrizeWinnerContentInternalCombined> for PrizeWinnerContentInternal {
+    fn from(value: PrizeWinnerContentInternalCombined) -> Self {
         PrizeWinnerContentInternal {
             winner: value.winner,
-            ledger: value.transaction.ledger_canister_id(),
-            token_symbol: value.transaction.token().token_symbol().to_string(),
-            amount: value.transaction.units(),
-            fee: value.transaction.fee(),
-            block_index: value.transaction.index(),
+            ledger: value
+                .ledger
+                .unwrap_or_else(|| value.transaction.as_ref().unwrap().ledger_canister_id()),
+            token_symbol: value
+                .token_symbol
+                .unwrap_or_else(|| value.transaction.as_ref().unwrap().token().token_symbol().to_string()),
+            amount: value.amount.unwrap_or_else(|| value.transaction.as_ref().unwrap().units()),
+            fee: value.fee.unwrap_or_else(|| value.transaction.as_ref().unwrap().fee()),
+            block_index: value
+                .block_index
+                .unwrap_or_else(|| value.transaction.as_ref().unwrap().index()),
             prize_message: value.prize_message,
         }
     }
