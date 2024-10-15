@@ -10,47 +10,48 @@ fn external_achievements(args: Args) -> Response {
 }
 
 fn external_achievements_impl(args: Args, state: &RuntimeState) -> Response {
+    let mut added_or_updated = Vec::new();
     let mut achievements_added = Vec::new();
-    let mut achievements_removed = Vec::new();
-    let mut latest_update: TimestampMillis = 0;
-    let now = state.env.now();
+    let mut last_updated: TimestampMillis = 0;
 
     for (id, achievement) in state.data.external_achievements.iter() {
         let add = achievement.registered > args.updates_since;
-        let remove = (achievement.expires <= now && achievement.expires > args.updates_since)
-            || achievement.budget_exhausted.map_or(false, |ts| ts > args.updates_since);
+        let updated = achievement.budget_exhausted.map_or(false, |ts| ts > args.updates_since);
 
-        latest_update = max([
-            latest_update,
+        last_updated = max([
+            last_updated,
             achievement.registered,
             achievement.expires,
             achievement.budget_exhausted.unwrap_or_default(),
         ])
         .unwrap();
 
-        if add ^ remove {
+        if add || updated {
             let a = ExternalAchievement {
                 id: *id,
                 name: achievement.name.clone(),
                 url: achievement.url.clone(),
                 chit_reward: achievement.chit_reward,
+                expires: achievement.expires,
+                budget_exhausted: achievement.budget_exhausted.is_some(),
             };
 
             if add {
-                achievements_added.push(a);
-            } else {
-                achievements_removed.push(a);
+                achievements_added.push(a.clone());
             }
+
+            added_or_updated.push(a);
         }
     }
 
-    if achievements_added.is_empty() && achievements_removed.is_empty() {
+    if added_or_updated.is_empty() {
         SuccessNoUpdates
     } else {
         Success(SuccessResult {
-            last_updated: latest_update,
+            last_updated,
+            added_or_updated,
             achievements_added,
-            achievements_removed,
+            achievements_removed: Vec::new(),
         })
     }
 }
