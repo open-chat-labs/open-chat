@@ -38,7 +38,11 @@ async fn update_group_v2(mut args: Args) -> Response {
             Err(_) => return InternalError,
         }
     } else if prepare_result.is_public
-        && (args.name.is_some() || args.description.is_some() || args.avatar.has_update() || args.public == Some(true))
+        && (args.name.is_some()
+            || args.description.is_some()
+            || args.avatar.has_update()
+            || args.public == Some(true)
+            || args.gate.has_update())
     {
         let c2c_update_group_args = c2c_update_group::Args {
             name: prepare_result.name,
