@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Ensure members marked as lapsed in updates queries ([#6573](https://github.com/open-chat-labs/open-chat/pull/6573))
 - Reduce size of responses by only returning UserIds for basic members ([#6577](https://github.com/open-chat-labs/open-chat/pull/6577))
 - Remove `transaction` from serialized PrizeWinner messages ([#6578](https://github.com/open-chat-labs/open-chat/pull/6578))
+- Push activity to users using `GroupedTimerJobQueue` ([#6552](https://github.com/open-chat-labs/open-chat/pull/6552))
 
 ### Fixed
 
@@ -28,7 +29,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add missing MessagePack endpoints ([#6547](https://github.com/open-chat-labs/open-chat/pull/6547))
 - Reduce size of some message types when serialized ([#6559](https://github.com/open-chat-labs/open-chat/pull/6559))
 - Log details whenever a prize claim results in a ledger error ([#6560](https://github.com/open-chat-labs/open-chat/pull/6560))
-- Push activity to users using `GroupedTimerJobQueue` ([#6552](https://github.com/open-chat-labs/open-chat/pull/6552))
 
 ## [[2.0.1366](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1366-group)] - 2024-10-02
 
