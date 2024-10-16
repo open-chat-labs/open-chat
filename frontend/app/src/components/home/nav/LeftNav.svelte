@@ -357,7 +357,6 @@
 
     .middle {
         flex: auto;
-        overflow-x: hidden;
         @include nice-scrollbar();
     }
 
