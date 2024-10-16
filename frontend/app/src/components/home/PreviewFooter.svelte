@@ -19,7 +19,8 @@
     $: platformModerator = client.platformModerator;
     $: isFrozen = client.isFrozen(chat.id);
     $: selectedCommunity = client.selectedCommunity;
-    $: previewingCommunity = $selectedCommunity?.membership.role === "none";
+    $: previewingCommunity =
+        $selectedCommunity?.membership.role === "none" || $selectedCommunity?.membership.lapsed;
     $: gates = client.accessGatesForChat(chat);
     $: locked = gates.some((g) => isLocked(g));
 

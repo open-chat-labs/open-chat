@@ -13,7 +13,8 @@
 
     $: chatListScope = client.chatListScope;
     $: selectedCommunity = client.selectedCommunity;
-    $: previewingCommunity = $selectedCommunity?.membership.role === "none";
+    $: previewingCommunity =
+        $selectedCommunity?.membership.role === "none" || $selectedCommunity?.membership.lapsed;
     $: locked = isLocked($selectedCommunity?.gateConfig?.gate);
 
     $: [title, message] = getMessageForScope($chatListScope.kind);

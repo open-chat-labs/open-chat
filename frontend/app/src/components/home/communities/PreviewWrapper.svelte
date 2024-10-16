@@ -12,7 +12,8 @@
     $: anonUser = client.anonUser;
     $: identityState = client.identityState;
     $: selectedCommunity = client.selectedCommunity;
-    $: previewingCommunity = $selectedCommunity?.membership.role === "none";
+    $: previewingCommunity =
+        $selectedCommunity?.membership.role === "none" || $selectedCommunity?.membership.lapsed;
 
     $: {
         if (

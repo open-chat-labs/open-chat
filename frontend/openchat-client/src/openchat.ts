@@ -5352,10 +5352,10 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     maskChatMessages(chat: ChatSummary): boolean {
-        // notAMember && (private || !messagesVisibleToNonMembers)
+        // notANonLapsedMember && (private || !messagesVisibleToNonMembers)
         return (
             this.isMultiUserChat(chat) &&
-            chat.membership.role === "none" &&
+            (chat.membership.role === "none" || this.isLapsed(chat.id)) &&
             (!chat.public || !chat.messagesVisibleToNonMembers)
         );
     }
