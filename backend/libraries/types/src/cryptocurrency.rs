@@ -1,6 +1,6 @@
 use crate::nns::{Tokens, UserOrAccount};
 use crate::{CanisterId, TimestampNanos, UserId};
-use candid::{CandidType, Nat, Principal};
+use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, Subaccount};
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
@@ -659,88 +659,6 @@ pub mod icrc2 {
         TemporarilyUnavailable,
         GenericError { error_code: u128, message: String },
     }
-
-    impl From<icrc_ledger_types::icrc2::approve::ApproveError> for ApproveError {
-        fn from(value: icrc_ledger_types::icrc2::approve::ApproveError) -> Self {
-            match value {
-                icrc_ledger_types::icrc2::approve::ApproveError::BadFee { expected_fee } => ApproveError::BadFee {
-                    expected_fee: nat_to_u128(expected_fee),
-                },
-                icrc_ledger_types::icrc2::approve::ApproveError::InsufficientFunds { balance } => {
-                    ApproveError::InsufficientFunds {
-                        balance: nat_to_u128(balance),
-                    }
-                }
-                icrc_ledger_types::icrc2::approve::ApproveError::AllowanceChanged { current_allowance } => {
-                    ApproveError::AllowanceChanged {
-                        current_allowance: nat_to_u128(current_allowance),
-                    }
-                }
-                icrc_ledger_types::icrc2::approve::ApproveError::Expired { ledger_time } => {
-                    ApproveError::Expired { ledger_time }
-                }
-                icrc_ledger_types::icrc2::approve::ApproveError::TooOld => ApproveError::TooOld,
-                icrc_ledger_types::icrc2::approve::ApproveError::CreatedInFuture { ledger_time } => {
-                    ApproveError::CreatedInFuture { ledger_time }
-                }
-                icrc_ledger_types::icrc2::approve::ApproveError::Duplicate { duplicate_of } => ApproveError::Duplicate {
-                    duplicate_of: nat_to_u128(duplicate_of),
-                },
-                icrc_ledger_types::icrc2::approve::ApproveError::TemporarilyUnavailable => ApproveError::TemporarilyUnavailable,
-                icrc_ledger_types::icrc2::approve::ApproveError::GenericError { error_code, message } => {
-                    ApproveError::GenericError {
-                        error_code: nat_to_u128(error_code),
-                        message,
-                    }
-                }
-            }
-        }
-    }
-
-    impl From<icrc_ledger_types::icrc2::transfer_from::TransferFromError> for TransferFromError {
-        fn from(value: icrc_ledger_types::icrc2::transfer_from::TransferFromError) -> Self {
-            match value {
-                icrc_ledger_types::icrc2::transfer_from::TransferFromError::BadFee { expected_fee } => {
-                    TransferFromError::BadFee {
-                        expected_fee: nat_to_u128(expected_fee),
-                    }
-                }
-                icrc_ledger_types::icrc2::transfer_from::TransferFromError::BadBurn { min_burn_amount } => {
-                    TransferFromError::BadBurn {
-                        min_burn_amount: nat_to_u128(min_burn_amount),
-                    }
-                }
-                icrc_ledger_types::icrc2::transfer_from::TransferFromError::InsufficientFunds { balance } => {
-                    TransferFromError::InsufficientFunds {
-                        balance: nat_to_u128(balance),
-                    }
-                }
-                icrc_ledger_types::icrc2::transfer_from::TransferFromError::InsufficientAllowance { allowance } => {
-                    TransferFromError::InsufficientAllowance {
-                        allowance: nat_to_u128(allowance),
-                    }
-                }
-                icrc_ledger_types::icrc2::transfer_from::TransferFromError::TooOld => TransferFromError::TooOld,
-                icrc_ledger_types::icrc2::transfer_from::TransferFromError::CreatedInFuture { ledger_time } => {
-                    TransferFromError::CreatedInFuture { ledger_time }
-                }
-                icrc_ledger_types::icrc2::transfer_from::TransferFromError::Duplicate { duplicate_of } => {
-                    TransferFromError::Duplicate {
-                        duplicate_of: nat_to_u128(duplicate_of),
-                    }
-                }
-                icrc_ledger_types::icrc2::transfer_from::TransferFromError::TemporarilyUnavailable => {
-                    TransferFromError::TemporarilyUnavailable
-                }
-                icrc_ledger_types::icrc2::transfer_from::TransferFromError::GenericError { error_code, message } => {
-                    TransferFromError::GenericError {
-                        error_code: nat_to_u128(error_code),
-                        message,
-                    }
-                }
-            }
-        }
-    }
 }
 
 impl From<icrc1::PendingCryptoTransaction> for nns::PendingCryptoTransaction {
@@ -765,8 +683,4 @@ fn u64_from_bytes(bytes: &[u8]) -> u64 {
     let mut u64_bytes = [0u8; 8];
     u64_bytes[(8 - bytes.len())..].copy_from_slice(bytes);
     u64::from_be_bytes(u64_bytes)
-}
-
-fn nat_to_u128(value: Nat) -> u128 {
-    value.0.try_into().unwrap()
 }

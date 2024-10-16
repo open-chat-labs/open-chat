@@ -3870,6 +3870,7 @@ dependencies = [
  "icrc-ledger-types",
  "serde",
  "serde_bytes",
+ "types",
 ]
 
 [[package]]
