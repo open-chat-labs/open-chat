@@ -57,7 +57,7 @@ export function toggleNotificationsResponse(
         | GroupToggleMuteNotificationsResponse
         | CommunityToggleMuteNotificationsResponse,
 ): ToggleMuteNotificationResponse {
-    if (typeof value === "object" && "Success" in value) {
+    if (value === "Success") {
         return "success";
     } else {
         console.warn("MuteNotification failed with: ", value);

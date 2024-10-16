@@ -146,6 +146,7 @@ type ExternalAchievementsArgs = record {
 type ExternalAchievementsResponse = variant {
     Success : record {
         last_updated: TimestampMillis;
+        added_or_updated : vec ExternalAchievement;
         achievements_added : vec ExternalAchievement;
         achievements_removed : vec ExternalAchievement;
     };
@@ -157,6 +158,8 @@ type ExternalAchievement = record {
     name : text;
     url : text;
     chit_reward : nat32;
+    expires : TimestampMillis;
+    budget_exhausted : bool;
 };
 
 type ReferralMetricsResponse = variant {
