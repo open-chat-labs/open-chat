@@ -29,7 +29,6 @@
 
     onMount(() => {
         const duration = client.durationFromMilliseconds(Number(milliseconds));
-        console.log("Duration: ", duration);
         const { days, hours, minutes, weeks, months, total } = duration;
 
         if (minutes > 0) {
