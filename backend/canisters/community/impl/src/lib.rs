@@ -321,7 +321,6 @@ struct Data {
     avatar: Option<Document>,
     banner: Option<Document>,
     permissions: CommunityPermissions,
-    #[serde(alias = "gate")]
     gate_config: Timestamped<Option<AccessGateConfigInternal>>,
     primary_language: String,
     user_index_canister_id: CanisterId,
@@ -357,11 +356,8 @@ struct Data {
     ic_root_key: Vec<u8>,
     event_store_client: EventStoreClient<CdkRuntime>,
     achievements: Achievements,
-    #[serde(default)]
     expiring_members: ExpiringMembers,
-    #[serde(default)]
     expiring_member_actions: ExpiringMemberActions,
-    #[serde(default)]
     user_cache: UserCache,
     #[serde(default = "default_user_event_sync_queue")]
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,

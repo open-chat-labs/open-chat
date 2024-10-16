@@ -15,7 +15,6 @@ const MAX_MEMBERS_PER_COMMUNITY: u32 = 100_000;
 #[derive(Serialize, Deserialize)]
 pub struct CommunityMembers {
     members: HashMap<UserId, CommunityMemberInternal>,
-    display_names_last_updated: TimestampMillis,
     user_groups: UserGroups,
     // This includes the userIds of community members and also users invited to the community
     principal_to_user_id_map: HashMap<Principal, UserId>,
@@ -50,7 +49,6 @@ impl CommunityMembers {
 
         CommunityMembers {
             members: vec![(creator_user_id, member)].into_iter().collect(),
-            display_names_last_updated: now,
             user_groups: UserGroups::default(),
             principal_to_user_id_map: vec![(creator_principal, creator_user_id)].into_iter().collect(),
             blocked: HashSet::new(),
@@ -252,10 +250,6 @@ impl CommunityMembers {
         self.user_groups.last_updated()
     }
 
-    pub fn display_names_last_updated(&self) -> TimestampMillis {
-        self.display_names_last_updated
-    }
-
     pub fn update_user_principal(&mut self, old_principal: Principal, new_principal: Principal) {
         if let Some(user_id) = self.principal_to_user_id_map.remove(&old_principal) {
             self.principal_to_user_id_map.insert(new_principal, user_id);
@@ -360,7 +354,7 @@ impl CommunityMembers {
     pub fn set_display_name(&mut self, user_id: UserId, display_name: Option<String>, now: TimestampMillis) {
         if let Some(member) = self.members.get_mut(&user_id) {
             member.display_name = Timestamped::new(display_name, now);
-            self.display_names_last_updated = now;
+            self.updates.insert((now, user_id, MemberUpdate::DisplayNameChanged));
         }
     }
 
@@ -395,7 +389,6 @@ impl CommunityMembers {
     pub fn last_updated(&self) -> TimestampMillis {
         [
             self.user_groups_last_updated(),
-            self.display_names_last_updated(),
             self.updates.iter().next_back().map_or(0, |(ts, _, _)| *ts),
         ]
         .into_iter()
@@ -552,4 +545,5 @@ impl From<&CommunityMemberInternal> for CommunityMember {
 pub enum MemberUpdate {
     Lapsed = 1,
     Unlapsed = 2,
+    DisplayNameChanged = 3,
 }
