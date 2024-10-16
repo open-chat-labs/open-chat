@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Fix AirdropBot upgrade ([#6591](https://github.com/open-chat-labs/open-chat/pull/6591))
+- Fix AirdropBot upgrade (2nd attempt) ([#6592](https://github.com/open-chat-labs/open-chat/pull/6592))
 
 ## [[2.0.1314](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1314-airdrop_bot)] - 2024-09-02
 
