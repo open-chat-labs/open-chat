@@ -103,23 +103,11 @@ where
         if defer_processing {
             self.set_timer_if_required();
         } else {
-            self.run();
+            self.flush();
         }
     }
 
-    fn set_timer_if_required(&self) -> bool {
-        let should_set_timer = self.within_lock(|i| i.timer_id.is_none() && !i.queue.is_empty());
-        if should_set_timer {
-            let clone = self.clone();
-            let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, move || clone.run());
-            self.within_lock(|i| i.timer_id = Some(timer_id));
-            true
-        } else {
-            false
-        }
-    }
-
-    fn run(&self) {
+    pub fn flush(&self) {
         let mut batches = Vec::new();
 
         self.within_lock(|i| {
@@ -168,6 +156,18 @@ where
         if !batches.is_empty() {
             let clone = self.clone();
             ic_cdk::spawn(clone.process_all_batches(batches));
+        }
+    }
+
+    fn set_timer_if_required(&self) -> bool {
+        let should_set_timer = self.within_lock(|i| i.timer_id.is_none() && !i.queue.is_empty());
+        if should_set_timer {
+            let clone = self.clone();
+            let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, move || clone.flush());
+            self.within_lock(|i| i.timer_id = Some(timer_id));
+            true
+        } else {
+            false
         }
     }
 

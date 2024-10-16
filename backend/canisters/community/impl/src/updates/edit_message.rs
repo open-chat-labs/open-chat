@@ -57,16 +57,11 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Response {
         Some(&mut state.data.event_store_client),
     ) {
         EditMessageResult::Success => {
-            handle_activity_notification(state);
-
             if args.new_achievement {
-                state.data.achievements.notify_user(
-                    sender,
-                    vec![Achievement::EditedMessage],
-                    &mut state.data.fire_and_forget_handler,
-                );
+                state.data.notify_user_of_achievement(sender, Achievement::EditedMessage);
             }
 
+            handle_activity_notification(state);
             Success
         }
         EditMessageResult::NotAuthorized => MessageNotFound,

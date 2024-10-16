@@ -4,7 +4,8 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{RegisterPollVoteArgs, RegisterPollVoteResult};
 use group_canister::register_poll_vote::{Response::*, *};
-use types::Achievement;
+use types::{Achievement, Chat, TotalVotes};
+use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
 #[update(candid = true, msgpack = true)]
 #[trace]
@@ -43,14 +44,22 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> Response {
         });
 
         match result {
-            RegisterPollVoteResult::Success(votes) => {
+            RegisterPollVoteResult::Success(votes, creator) => {
                 if args.new_achievement {
-                    state.data.achievements.notify_user(
-                        user_id,
-                        vec![Achievement::VotedOnPoll],
-                        &mut state.data.fire_and_forget_handler,
-                    );
+                    state.data.notify_user_of_achievement(user_id, Achievement::VotedOnPoll);
                 }
+
+                state.data.user_event_sync_queue.push(
+                    creator,
+                    GroupCanisterEvent::MessageActivity(MessageActivityEvent {
+                        chat: Chat::Group(state.env.canister_id().into()),
+                        thread_root_message_index: args.thread_root_message_index,
+                        message_index: args.message_index,
+                        activity: MessageActivity::PollVote,
+                        timestamp: now,
+                        user_id: matches!(votes.total, TotalVotes::Visible(_)).then_some(user_id),
+                    }),
+                );
 
                 handle_activity_notification(state);
                 Success(votes)

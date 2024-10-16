@@ -1,6 +1,6 @@
 use crate::nns::{Tokens, UserOrAccount};
 use crate::{CanisterId, TimestampNanos, UserId};
-use candid::{CandidType, Nat, Principal};
+use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, Subaccount};
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
@@ -629,76 +629,35 @@ pub mod icrc2 {
     #[ts_export]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
     pub enum ApproveError {
-        BadFee {
-            #[ts(as = "u128")]
-            expected_fee: Nat,
-        },
+        BadFee { expected_fee: u128 },
         // The caller does not have enough funds to pay the approval fee.
-        InsufficientFunds {
-            #[ts(as = "u128")]
-            balance: Nat,
-        },
+        InsufficientFunds { balance: u128 },
         // The caller specified the [expected_allowance] field, and the current
         // allowance did not match the given value.
-        AllowanceChanged {
-            #[ts(as = "u128")]
-            current_allowance: Nat,
-        },
+        AllowanceChanged { current_allowance: u128 },
         // The approval request expired before the ledger had a chance to apply it.
-        Expired {
-            ledger_time: u64,
-        },
+        Expired { ledger_time: u64 },
         TooOld,
-        CreatedInFuture {
-            ledger_time: u64,
-        },
-        Duplicate {
-            #[ts(as = "u128")]
-            duplicate_of: Nat,
-        },
+        CreatedInFuture { ledger_time: u64 },
+        Duplicate { duplicate_of: u128 },
         TemporarilyUnavailable,
-        GenericError {
-            #[ts(as = "u128")]
-            error_code: Nat,
-            message: String,
-        },
+        GenericError { error_code: u128, message: String },
     }
 
     #[ts_export]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
     pub enum TransferFromError {
-        BadFee {
-            #[ts(as = "u128")]
-            expected_fee: Nat,
-        },
-        BadBurn {
-            #[ts(as = "u128")]
-            min_burn_amount: Nat,
-        },
+        BadFee { expected_fee: u128 },
+        BadBurn { min_burn_amount: u128 },
         // The [from] account does not hold enough funds for the transfer.
-        InsufficientFunds {
-            #[ts(as = "u128")]
-            balance: Nat,
-        },
+        InsufficientFunds { balance: u128 },
         // The caller exceeded its allowance.
-        InsufficientAllowance {
-            #[ts(as = "u128")]
-            allowance: Nat,
-        },
+        InsufficientAllowance { allowance: u128 },
         TooOld,
-        CreatedInFuture {
-            ledger_time: u64,
-        },
-        Duplicate {
-            #[ts(as = "u128")]
-            duplicate_of: Nat,
-        },
+        CreatedInFuture { ledger_time: u64 },
+        Duplicate { duplicate_of: u128 },
         TemporarilyUnavailable,
-        GenericError {
-            #[ts(as = "u128")]
-            error_code: Nat,
-            message: String,
-        },
+        GenericError { error_code: u128, message: String },
     }
 }
 

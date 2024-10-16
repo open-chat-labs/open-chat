@@ -299,7 +299,7 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
                             message_index: message_event.event.message_index,
                             activity: MessageActivity::Reaction,
                             timestamp: now,
-                            user_id: caller_user_id,
+                            user_id: Some(caller_user_id),
                         },
                         now,
                     );
@@ -338,7 +338,7 @@ fn p2p_swap_change_status(args: P2PSwapStatusChange, caller_user_id: UserId, sta
                     message_index: message_event.event.message_index,
                     activity: MessageActivity::P2PSwapAccepted,
                     timestamp: now,
-                    user_id: caller_user_id,
+                    user_id: Some(caller_user_id),
                 },
                 now,
             );
@@ -392,7 +392,7 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
                         message_index: event.event.message_index,
                         activity: MessageActivity::Tip,
                         timestamp: now,
-                        user_id: caller_user_id,
+                        user_id: Some(caller_user_id),
                     },
                     now,
                 );

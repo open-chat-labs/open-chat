@@ -5,7 +5,8 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::accept_p2p_swap::{Response::*, *};
 use icrc_ledger_types::icrc1::transfer::TransferError;
-use types::{AcceptSwapSuccess, Achievement, ChannelId, Chat, MessageId, MessageIndex, P2PSwapLocation, UserId};
+use types::{AcceptSwapSuccess, Achievement, ChannelId, Chat, EventIndex, MessageId, MessageIndex, P2PSwapLocation, UserId};
+use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
 #[update(candid = true, msgpack = true)]
 #[trace]
@@ -33,15 +34,37 @@ async fn accept_p2p_swap(args: Args) -> Response {
                 transaction_index,
             );
 
-            if new_achievement {
-                mutate_state(|state| {
-                    state.data.achievements.notify_user(
-                        user_id,
-                        vec![Achievement::AcceptedP2PSwapOffer],
-                        &mut state.data.fire_and_forget_handler,
-                    );
-                });
-            }
+            mutate_state(|state| {
+                if new_achievement {
+                    state
+                        .data
+                        .notify_user_of_achievement(user_id, Achievement::AcceptedP2PSwapOffer);
+                }
+
+                if let Some(channel) = state.data.channels.get(&channel_id) {
+                    if let Some((message, _)) = channel.chat.events.message_internal(
+                        EventIndex::default(),
+                        thread_root_message_index,
+                        message_id.into(),
+                    ) {
+                        let community_id = state.env.canister_id().into();
+
+                        state.data.user_event_sync_queue.push(
+                            message.sender,
+                            CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
+                                chat: Chat::Channel(community_id, channel.id),
+                                thread_root_message_index,
+                                message_index: message.message_index,
+                                activity: MessageActivity::P2PSwapAccepted,
+                                timestamp: state.env.now(),
+                                user_id: Some(user_id),
+                            }),
+                        );
+                    }
+                }
+
+                handle_activity_notification(state);
+            });
 
             Success(AcceptSwapSuccess {
                 token1_txn_in: transaction_index,
