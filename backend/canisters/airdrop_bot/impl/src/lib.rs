@@ -70,9 +70,14 @@ struct Data {
     pub avatar: Timestamped<Option<Document>>,
     pub airdrops: Airdrops,
     pub channels_joined: HashSet<(CommunityId, ChannelId)>,
+    #[serde(skip_deserializing, default = "default_pending_actions_queue")]
     pub pending_actions_queue: TimerJobQueue<Action>,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
+}
+
+fn default_pending_actions_queue() -> TimerJobQueue<Action> {
+    TimerJobQueue::new(10, true)
 }
 
 impl Data {

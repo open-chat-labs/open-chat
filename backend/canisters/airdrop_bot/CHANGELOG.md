@@ -11,6 +11,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
 - Introduce `TimerJobQueue` and use it for distributing airdrops ([#6498](https://github.com/open-chat-labs/open-chat/pull/6498))
 - Refund user who sent tokens to the AirdropBot ([#6521](https://github.com/open-chat-labs/open-chat/pull/6521))
+- Refund CHAT to another user who sent some to the AirdropBot ([#6583](https://github.com/open-chat-labs/open-chat/pull/6583))
+
+### Fixed
+
+- Fix AirdropBot upgrade ([#6591](https://github.com/open-chat-labs/open-chat/pull/6591))
+- Fix AirdropBot upgrade (2nd attempt) ([#6592](https://github.com/open-chat-labs/open-chat/pull/6592))
 
 ## [[2.0.1314](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1314-airdrop_bot)] - 2024-09-02
 

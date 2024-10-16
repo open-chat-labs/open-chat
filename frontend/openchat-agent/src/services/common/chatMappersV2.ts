@@ -2515,9 +2515,23 @@ export function groupDetailsResponse(
     }
     if ("Success" in value) {
         const members =
-            "participants" in value.Success ? value.Success.participants : value.Success.members;
+            ("participants" in value.Success ? value.Success.participants : value.Success.members).map(member);
+
+        const basicMembers = "basic_members" in value.Success ? value.Success.basic_members : [];
+        const membersSet = new Set<string>();
+        members.forEach((m) => membersSet.add(m.userId));
+        for (const id of basicMembers) {
+            const userId = principalBytesToString(id);
+            if (membersSet.add(userId)) {
+                members.push({
+                    role: "member",
+                    userId,
+                    displayName: undefined,
+                });
+            }
+        }
         return {
-            members: members.map(member),
+            members,
             blockedUsers: new Set(value.Success.blocked_users.map(principalBytesToString)),
             invitedUsers: new Set(value.Success.invited_users.map(principalBytesToString)),
             pinnedMessages: new Set(value.Success.pinned_messages),

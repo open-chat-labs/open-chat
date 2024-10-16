@@ -5,4 +5,4 @@ import type { UserGroupDetails } from "../../shared/UserGroupDetails";
 import type { UserId } from "../../shared/UserId";
 import type { VersionedRules } from "../../shared/VersionedRules";
 
-export type CommunitySelectedInitialSuccessResult = { timestamp: bigint, last_updated: bigint, latest_event_index: EventIndex, members: Array<CommunityMember>, blocked_users: Array<UserId>, invited_users: Array<UserId>, chat_rules: VersionedRules, user_groups: Array<UserGroupDetails>, referrals: Array<UserId>, };
+export type CommunitySelectedInitialSuccessResult = { timestamp: bigint, last_updated: bigint, latest_event_index: EventIndex, members: Array<CommunityMember>, basic_members: Array<UserId>, blocked_users: Array<UserId>, invited_users: Array<UserId>, chat_rules: VersionedRules, user_groups: Array<UserGroupDetails>, referrals: Array<UserId>, };

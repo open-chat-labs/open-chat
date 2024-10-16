@@ -453,19 +453,6 @@ export function apiMemberRole(domain: MemberRole): TGroupRole {
             return "Participant";
     }
 }
-//
-// export function communityRole(candid: ApiCommunityRole): MemberRole {
-//     if ("Member" in candid) {
-//         return "member";
-//     }
-//     if ("Admin" in candid) {
-//         return "admin";
-//     }
-//     if ("Owner" in candid) {
-//         return "owner";
-//     }
-//     throw new UnsupportedValueError("Unknown community role", candid);
-// }
 
 export function apiCommunityRole(newRole: MemberRole): TCommunityRole {
     switch (newRole) {
@@ -503,12 +490,21 @@ export function communityDetailsResponse(
 ): CommunityDetailsResponse {
     if (typeof value === "object" && "Success" in value) {
         return {
-            members: value.Success.members.map((m) => ({
-                role: memberRole(m.role),
-                userId: principalBytesToString(m.user_id),
-                displayName: m.display_name,
-                lapsed: m.lapsed,
-            })),
+            members: value.Success.members
+                .map((m) => ({
+                    role: memberRole(m.role),
+                    userId: principalBytesToString(m.user_id),
+                    displayName: m.display_name,
+                    lapsed: m.lapsed,
+                }))
+                .concat(
+                    value.Success.basic_members.map((id) => ({
+                        role: "member",
+                        userId: principalBytesToString(id),
+                        displayName: undefined,
+                        lapsed: false,
+                    })),
+                ),
             blockedUsers: new Set(value.Success.blocked_users.map(principalBytesToString)),
             invitedUsers: new Set(value.Success.invited_users.map(principalBytesToString)),
             rules: value.Success.chat_rules,
