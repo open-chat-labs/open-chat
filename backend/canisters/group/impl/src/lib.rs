@@ -19,6 +19,7 @@ use group_community_common::{
     PendingPaymentReason, PendingPaymentsQueue, UserCache,
 };
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
+use model::user_event_batch::UserEventBatch;
 use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
@@ -28,12 +29,14 @@ use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use std::time::Duration;
+use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    AccessGateConfigInternal, BuildVersion, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document,
-    Empty, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype,
-    MessageIndex, Milliseconds, MultiUserChat, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId,
-    UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
+    AccessGateConfigInternal, Achievement, BuildVersion, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles,
+    Document, Empty, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions,
+    GroupSubtype, MessageIndex, Milliseconds, MultiUserChat, Notification, PaymentGate, Rules, TimestampMillis, Timestamped,
+    UserId, UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
 };
+use user_canister::GroupCanisterEvent;
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
@@ -471,10 +474,16 @@ struct Data {
     expiring_member_actions: ExpiringMemberActions,
     #[serde(default)]
     user_cache: UserCache,
+    #[serde(default = "default_user_event_sync_queue")]
+    user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
     InstructionCountsLog::init(get_instruction_counts_index_memory(), get_instruction_counts_data_memory())
+}
+
+fn default_user_event_sync_queue() -> GroupedTimerJobQueue<UserEventBatch> {
+    GroupedTimerJobQueue::new(5, true)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -565,6 +574,7 @@ impl Data {
             expiring_members: ExpiringMembers::default(),
             expiring_member_actions: ExpiringMemberActions::default(),
             user_cache: UserCache::default(),
+            user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
         }
     }
 
@@ -686,6 +696,13 @@ impl Data {
         self.expiring_members.remove_member(user_id, None);
         self.expiring_member_actions.remove_member(user_id, None);
         self.user_cache.delete(user_id);
+    }
+
+    pub fn notify_user_of_achievement(&mut self, user_id: UserId, achievement: Achievement) {
+        if self.achievements.award(user_id, achievement).is_some() {
+            self.user_event_sync_queue
+                .push(user_id, GroupCanisterEvent::Achievement(achievement));
+        }
     }
 }
 

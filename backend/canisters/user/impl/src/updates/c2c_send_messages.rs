@@ -189,7 +189,7 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
                 message_index: message_event.event.message_index,
                 activity: MessageActivity::Crypto,
                 timestamp: args.now,
-                user_id: args.sender,
+                user_id: Some(args.sender),
             },
             args.now,
         );

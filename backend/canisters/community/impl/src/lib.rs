@@ -18,6 +18,7 @@ use group_community_common::{
     PendingPayment, PendingPaymentReason, PendingPaymentsQueue, UserCache,
 };
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
+use model::user_event_batch::UserEventBatch;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
@@ -28,12 +29,15 @@ use serde_bytes::ByteBuf;
 use std::cell::RefCell;
 use std::ops::Deref;
 use std::time::Duration;
+use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    AccessGate, AccessGateConfigInternal, BuildVersion, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary,
-    CommunityMembership, CommunityPermissions, CommunityRole, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo,
-    Milliseconds, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId, UserType,
+    AccessGate, AccessGateConfigInternal, Achievement, BuildVersion, CanisterId, ChannelId, ChatMetrics,
+    CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, CommunityRole, Cryptocurrency, Cycles,
+    Document, Empty, FrozenGroupInfo, Milliseconds, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId,
+    UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
+use user_canister::CommunityCanisterEvent;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
 use utils::time::MINUTE_IN_MS;
@@ -355,6 +359,12 @@ struct Data {
     expiring_members: ExpiringMembers,
     expiring_member_actions: ExpiringMemberActions,
     user_cache: UserCache,
+    #[serde(default = "default_user_event_sync_queue")]
+    user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
+}
+
+fn default_user_event_sync_queue() -> GroupedTimerJobQueue<UserEventBatch> {
+    GroupedTimerJobQueue::new(5, true)
 }
 
 impl Data {
@@ -455,6 +465,7 @@ impl Data {
             expiring_members: ExpiringMembers::default(),
             expiring_member_actions: ExpiringMemberActions::default(),
             user_cache: UserCache::default(),
+            user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
         }
     }
 
@@ -664,6 +675,13 @@ impl Data {
         }
 
         Ok(member)
+    }
+
+    pub fn notify_user_of_achievement(&mut self, user_id: UserId, achievement: Achievement) {
+        if self.achievements.award(user_id, achievement).is_some() {
+            self.user_event_sync_queue
+                .push(user_id, CommunityCanisterEvent::Achievement(achievement));
+        }
     }
 }
 

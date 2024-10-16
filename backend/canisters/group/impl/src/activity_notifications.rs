@@ -9,6 +9,8 @@ use utils::time::{DAY_IN_MS, HOUR_IN_MS};
 
 // If needed, notify the group index canister that there has been activity in this group
 pub(crate) fn handle_activity_notification(state: &mut RuntimeState) {
+    state.data.user_event_sync_queue.flush();
+
     let now = state.env.now();
 
     if let Some(mark_active_duration) = state.data.activity_notification_state.notify_if_required(now) {

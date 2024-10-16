@@ -37,15 +37,16 @@ generate_update_call!(unpin_message);
 generate_update_call!(update_group_v2);
 
 pub mod happy_path {
+    use crate::client::user;
     use crate::env::VIDEO_CALL_OPERATOR;
     use crate::User;
     use candid::Principal;
     use pocket_ic::PocketIc;
     use testing::rng::random_message_id;
     use types::{
-        ChatId, EventIndex, EventsResponse, GroupCanisterGroupChatSummary, GroupCanisterGroupChatSummaryUpdates, GroupRole,
-        MessageContentInitial, MessageId, MessageIndex, Milliseconds, PollVotes, TextContent, TimestampMillis, UserId,
-        VideoCallType, VoteOperation,
+        ChatId, EventIndex, EventsResponse, GroupCanisterGroupChatSummary, GroupCanisterGroupChatSummaryUpdates,
+        GroupReplyContext, GroupRole, MessageContentInitial, MessageId, MessageIndex, Milliseconds, PollVotes, Reaction,
+        TextContent, TimestampMillis, UserId, VideoCallType, VoteOperation,
     };
 
     pub fn send_text_message(
@@ -80,6 +81,76 @@ pub mod happy_path {
         match response {
             group_canister::send_message_v2::Response::Success(result) => result,
             response => panic!("'send_message' error: {response:?}"),
+        }
+    }
+
+    pub fn send_message(
+        env: &mut PocketIc,
+        sender: &User,
+        group_chat_id: ChatId,
+        thread_root_message_index: Option<MessageIndex>,
+        content: MessageContentInitial,
+        replies_to: Option<GroupReplyContext>,
+        message_id: Option<MessageId>,
+    ) -> group_canister::send_message_v2::SuccessResult {
+        let response = super::send_message_v2(
+            env,
+            sender.principal,
+            group_chat_id.into(),
+            &group_canister::send_message_v2::Args {
+                thread_root_message_index,
+                message_id: message_id.unwrap_or_else(random_message_id),
+                content,
+                sender_name: sender.username(),
+                sender_display_name: None,
+                replies_to,
+                mentioned: Vec::new(),
+                forwarding: false,
+                block_level_markdown: false,
+                rules_accepted: None,
+                message_filter_failed: None,
+                new_achievement: false,
+                correlation_id: 0,
+            },
+        );
+
+        match response {
+            group_canister::send_message_v2::Response::Success(result) => result,
+            response => panic!("'send_message' error: {response:?}"),
+        }
+    }
+
+    pub fn send_message_with_transfer(
+        env: &mut PocketIc,
+        group_chat_id: ChatId,
+        sender: &User,
+        content: MessageContentInitial,
+        message_id: Option<MessageId>,
+    ) -> user_canister::send_message_with_transfer_to_group::SuccessResult {
+        let response = user::send_message_with_transfer_to_group(
+            env,
+            sender.principal,
+            sender.user_id.into(),
+            &user_canister::send_message_with_transfer_to_group::Args {
+                thread_root_message_index: None,
+                message_id: message_id.unwrap_or_else(random_message_id),
+                content,
+                replies_to: None,
+                block_level_markdown: false,
+                message_filter_failed: None,
+                correlation_id: 0,
+                sender_name: sender.username(),
+                sender_display_name: None,
+                mentioned: Vec::new(),
+                rules_accepted: None,
+                group_id: group_chat_id,
+                pin: None,
+            },
+        );
+
+        match response {
+            user_canister::send_message_with_transfer_to_group::Response::Success(result) => result,
+            response => panic!("'send_message_with_transfer_to_group' error: {response:?}"),
         }
     }
 
@@ -429,6 +500,49 @@ pub mod happy_path {
         match response {
             group_canister::block_user::Response::Success => {}
             response => panic!("'block_user' error: {response:?}"),
+        }
+    }
+
+    pub fn add_reaction(
+        env: &mut PocketIc,
+        sender: &User,
+        group_chat_id: ChatId,
+        reaction: impl ToString,
+        message_id: MessageId,
+    ) {
+        let response = super::add_reaction(
+            env,
+            sender.principal,
+            group_chat_id.into(),
+            &group_canister::add_reaction::Args {
+                thread_root_message_index: None,
+                message_id,
+                reaction: Reaction::new(reaction.to_string()),
+                correlation_id: 0,
+                username: sender.username(),
+                display_name: None,
+                new_achievement: false,
+            },
+        );
+        assert!(matches!(response, group_canister::add_reaction::Response::Success));
+    }
+
+    pub fn accept_p2p_swap(env: &mut PocketIc, sender: &User, group_id: ChatId, message_id: MessageId) {
+        let response = super::accept_p2p_swap(
+            env,
+            sender.principal,
+            group_id.into(),
+            &group_canister::accept_p2p_swap::Args {
+                thread_root_message_index: None,
+                message_id,
+                pin: None,
+                new_achievement: false,
+            },
+        );
+
+        match response {
+            group_canister::accept_p2p_swap::Response::Success(_) => {}
+            response => panic!("'accept_p2p_swap' error: {response:?}"),
         }
     }
 }

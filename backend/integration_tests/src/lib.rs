@@ -28,6 +28,7 @@ mod identity_tests;
 mod join_group_tests;
 mod last_online_date_tests;
 mod mentions_tests;
+mod message_activity_tests;
 mod notification_tests;
 mod p2p_swap_tests;
 mod pin_number_tests;

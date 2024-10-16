@@ -65,3 +65,15 @@ pub struct TransferSuccessV2Result {
     pub expires_at: Option<TimestampMillis>,
     pub transfer: CompletedCryptoTransaction,
 }
+
+impl From<TransferSuccessV2Result> for SuccessResult {
+    fn from(value: TransferSuccessV2Result) -> Self {
+        SuccessResult {
+            chat_id: value.chat_id,
+            event_index: value.event_index,
+            message_index: value.message_index,
+            timestamp: value.timestamp,
+            expires_at: value.expires_at,
+        }
+    }
+}

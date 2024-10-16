@@ -583,7 +583,7 @@ impl GroupChatCore {
         message_id: MessageId,
         content: MessageContentInitial,
         replies_to: Option<GroupReplyContext>,
-        mentioned: Vec<UserId>,
+        mentioned: &[UserId],
         forwarding: bool,
         rules_accepted: Option<Version>,
         suppressed: bool,
@@ -640,7 +640,7 @@ impl GroupChatCore {
         message_id: MessageId,
         content: MessageContentInternal,
         replies_to: Option<GroupReplyContext>,
-        mentioned: Vec<UserId>,
+        mentioned: &[UserId],
         forwarding: bool,
         rules_accepted: Option<Version>,
         suppressed: bool,
@@ -689,7 +689,7 @@ impl GroupChatCore {
             thread_root_message_index,
             message_id,
             content,
-            mentioned: if !suppressed { mentioned.clone() } else { Vec::new() },
+            mentioned: if !suppressed { mentioned.to_vec() } else { Vec::new() },
             replies_to: replies_to.as_ref().map(|r| r.into()),
             forwarded: forwarding,
             sender_is_bot: sender_user_type.is_bot(),
@@ -701,7 +701,7 @@ impl GroupChatCore {
         let message_event = self.events.push_message(push_message_args, Some(event_store_client));
         let message_index = message_event.event.message_index;
 
-        let mut mentions: HashSet<_> = mentioned.into_iter().chain(user_being_replied_to).collect();
+        let mut mentions: HashSet<_> = mentioned.iter().copied().chain(user_being_replied_to).collect();
 
         let mut users_to_notify = HashSet::new();
 
