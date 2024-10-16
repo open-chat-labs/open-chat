@@ -33,7 +33,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
     match validate_caller(state) {
         Ok(Caller { user_id, user_type }) => {
             let now = state.env.now();
-
+            let mentioned: Vec<_> = args.mentioned.iter().map(|u| u.user_id).collect();
             let result = state.data.chat.validate_and_send_message(
                 user_id,
                 user_type,
@@ -41,7 +41,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                 args.message_id,
                 args.content,
                 args.replies_to,
-                &args.mentioned.iter().map(|u| u.user_id).collect(),
+                &mentioned,
                 args.forwarding,
                 args.rules_accepted,
                 args.message_filter_failed.is_some(),
@@ -76,13 +76,14 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
             }
 
             let now = state.env.now();
+            let mentioned: Vec<_> = args.mentioned.iter().map(|u| u.user_id).collect();
             let result = state.data.chat.send_message(
                 user_id,
                 args.thread_root_message_index,
                 args.message_id,
                 args.content,
                 args.replies_to,
-                &args.mentioned.iter().map(|u| u.user_id).collect(),
+                &mentioned,
                 args.forwarding,
                 args.rules_accepted,
                 args.message_filter_failed.is_some(),
