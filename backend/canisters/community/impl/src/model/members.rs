@@ -21,9 +21,7 @@ pub struct CommunityMembers {
     blocked: HashSet<UserId>,
     admin_count: u32,
     owner_count: u32,
-    // TODO: Remove pub after release
-    #[serde(default)]
-    pub updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
+    updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
 }
 
 impl CommunityMembers {
