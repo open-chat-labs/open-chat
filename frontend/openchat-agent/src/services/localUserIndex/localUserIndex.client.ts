@@ -302,7 +302,10 @@ export class LocalUserIndexClient extends CandidService {
                 verified_credential_args: mapOptional(credentialArgs, apiVerifiedCredentialArgs),
                 referred_by: mapOptional(referredBy, principalStringToBytes),
             },
-            (resp) => joinChannelResponse(resp, id.communityId),
+            (resp) => {
+                console.log("Join channel response: ", resp);
+                return joinChannelResponse(resp, id.communityId);
+            },
             LocalUserIndexJoinChannelArgs,
             LocalUserIndexJoinChannelResponse,
         );

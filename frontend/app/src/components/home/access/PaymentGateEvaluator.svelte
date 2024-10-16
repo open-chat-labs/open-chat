@@ -65,7 +65,11 @@
         if (insufficientFunds) {
             balanceWithRefresh.refresh();
         } else {
-            dispatch("next");
+            dispatch("approvePayment", {
+                ledger: token.ledger,
+                amount: gate.amount,
+                approvalFee: token.transferFee,
+            });
         }
     }
 </script>

@@ -256,8 +256,13 @@ export abstract class CandidService {
         validator: Resp,
     ): Out {
         const response = Packer.unpack(new Uint8Array(responseBytes));
-        const validated = CandidService.validate(response, validator);
-        return mapper(validated);
+        try {
+            const validated = CandidService.validate(response, validator);
+            return mapper(validated);
+        } catch (err) {
+            console.error("Validation failed for response: ", response);
+            throw err;
+        }
     }
 
     constructor(

@@ -431,6 +431,9 @@ import type {
     AccessGateConfig,
     Verification,
     EnhancedAccessGate,
+    PaymentGate,
+    PaymentGateApproval,
+    PaymentGateApprovals,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -482,6 +485,7 @@ import {
     isCompositeGate,
     shouldPreprocessGate,
     deletedUser,
+    waitAll,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -1412,45 +1416,44 @@ export class OpenChat extends OpenChatAgentWorker {
         );
     }
 
-    async approveAccessGatePayment(
-        group: MultiUserChat | CommunitySummary,
+    async approveAccessGatePayments(
+        entity: MultiUserChat | CommunitySummary,
+        approvals: PaymentGateApprovals,
     ): Promise<ApproveAccessGatePaymentResponse> {
-        // If there is no payment gate then do nothing
-        if (!isPaymentGate(group.gateConfig.gate)) {
-            // If this is a channel there might still be a payment gate on the community
-            if (group.kind === "channel") {
-                return this.approveAccessGatePayment(
-                    this._liveState.communities.get({
-                        kind: "community",
-                        communityId: group.id.communityId,
-                    })!,
-                );
-            } else {
-                return CommonResponses.success();
-            }
-        }
-
-        // If there is a payment gateway then first call the user's canister to get an
-        // approval for the group/community to transfer the payment
-        const spender = group.kind === "group_chat" ? group.id.groupId : group.id.communityId;
-
-        const token = this.getTokenDetailsForAccessGate(group.gateConfig.gate);
-
-        if (token === undefined) {
-            return CommonResponses.failure();
-        }
+        if (approvals.size === 0) return CommonResponses.success();
 
         let pin: string | undefined = undefined;
-
         if (this._liveState.pinNumberRequired) {
             pin = await this.promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
+        const spender = entity.kind === "group_chat" ? entity.id.groupId : entity.id.communityId;
+
+        const results = await Promise.all(
+            [...approvals.entries()].map(([ledger, approval]) =>
+                this.approveAccessGatePayment(spender, ledger, approval, pin),
+            ),
+        );
+
+        if (results.every((r) => r.kind === "success")) {
+            return CommonResponses.success();
+        }
+
+        // TODO - this might be a bit shit
+        return results[0];
+    }
+
+    async approveAccessGatePayment(
+        spender: string,
+        ledger: string,
+        { amount, approvalFee }: PaymentGateApproval,
+        pin: string | undefined,
+    ): Promise<ApproveAccessGatePaymentResponse> {
         return this.sendRequest({
             kind: "approveTransfer",
             spender,
-            ledger: group.gateConfig.gate.ledgerCanister,
-            amount: group.gateConfig.gate.amount - token.transferFee, // The user should pay only the amount not amount+fee so it is a round number
+            ledger,
+            amount: amount - approvalFee, // The user should pay only the amount not amount+fee so it is a round number
             expiresIn: BigInt(5 * 60 * 1000), // Allow 5 mins for the join_group call before the approval expires
             pin,
         })
@@ -1471,8 +1474,12 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => CommonResponses.failure());
     }
 
-    async joinGroup(chat: MultiUserChat, credentials: string[]): Promise<ClientJoinGroupResponse> {
-        const approveResponse = await this.approveAccessGatePayment(chat);
+    async joinGroup(
+        chat: MultiUserChat,
+        credentials: string[],
+        paymentApprovals: PaymentGateApprovals,
+    ): Promise<ClientJoinGroupResponse> {
+        const approveResponse = await this.approveAccessGatePayments(chat, paymentApprovals);
         if (approveResponse.kind !== "success") {
             return approveResponse;
         }
@@ -7152,8 +7159,9 @@ export class OpenChat extends OpenChatAgentWorker {
     async joinCommunity(
         community: CommunitySummary,
         credentials: string[],
+        paymentApprovals: PaymentGateApprovals,
     ): Promise<ClientJoinCommunityResponse> {
-        const approveResponse = await this.approveAccessGatePayment(community);
+        const approveResponse = await this.approveAccessGatePayments(community, paymentApprovals);
         if (approveResponse.kind !== "success") {
             return approveResponse;
         }

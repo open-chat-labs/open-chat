@@ -13,7 +13,7 @@
         type AccessGate,
         type EnhancedAccessGate,
         type LeafGate,
-        type Level,
+        type PaymentGateApprovals,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
@@ -39,6 +39,7 @@
     let iterator = preprocessGates(gates, needsPreprocessing);
     let currentGate: EnhancedAccessGate | undefined;
     let credentials: string[] = [];
+    let paymentApprovals: PaymentGateApprovals = new Map();
     let optionalGatesByIndex: Map<number, LeafGate> = new Map();
     $: optionalInvalid =
         currentGate?.kind === "composite_gate" &&
@@ -69,7 +70,7 @@
             }
         } else {
             currentGate = undefined;
-            dispatch("success", { credentials });
+            dispatch("success", { credentials, paymentApprovals });
         }
     }
 
@@ -88,6 +89,24 @@
                 );
             }
         }
+    }
+
+    function approvePayment({
+        detail: { ledger, amount, approvalFee },
+    }: CustomEvent<{ ledger: string; amount: bigint; approvalFee: bigint }>) {
+        const existing = paymentApprovals.get(ledger);
+        if (existing !== undefined) {
+            // if we already have an approval pending for this ledger we add on the amount
+            // but there will only be one fee
+            existing.amount += amount;
+            paymentApprovals.set(ledger, existing);
+        } else {
+            paymentApprovals.set(ledger, {
+                amount,
+                approvalFee,
+            });
+        }
+        nextGate();
     }
 
     function credentialReceived(ev: CustomEvent<string>) {
@@ -159,7 +178,7 @@
                 <PaymentGateEvaluator
                     gate={currentGate}
                     level={currentGate.level}
-                    on:next={nextGate}
+                    on:approvePayment={approvePayment}
                     on:close={onClose} />
             {:else if isLifetimeDiamondGate(currentGate)}
                 <DiamondGateEvaluator

@@ -70,6 +70,10 @@ export type NeuronGate = {
     minDissolveDelay?: number;
 };
 
+export type PaymentGateApproval = { amount: bigint; approvalFee: bigint };
+
+export type PaymentGateApprovals = Map<string, PaymentGateApproval>;
+
 export type PaymentGate = {
     kind: "payment_gate";
     ledgerCanister: string;
@@ -191,4 +195,4 @@ If you break the rules you might be blocked and/or have your message(s) deleted.
     };
 }
 
-export type GateCheckSucceeded = { credentials: string[] };
+export type GateCheckSucceeded = { credentials: string[]; paymentApprovals: PaymentGateApprovals };

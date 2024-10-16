@@ -46,6 +46,7 @@
     function doJoinCommunity(gateCheck: GateCheckSucceeded | undefined): Promise<void> {
         if (previewingCommunity && $selectedCommunity) {
             const credentials = gateCheck?.credentials ?? [];
+            const paymentApprovals = gateCheck?.paymentApprovals ?? new Map();
             const gateConfigWithLevel: EnhancedAccessGate = {
                 ...$selectedCommunity.gateConfig.gate,
                 level: "community",
@@ -77,7 +78,7 @@
             joiningCommunity = true;
 
             return client
-                .joinCommunity($selectedCommunity, credentials)
+                .joinCommunity($selectedCommunity, credentials, paymentApprovals)
                 .then((resp) => {
                     if (resp.kind === "gate_check_failed") {
                         gateCheckFailed = gateConfigWithLevel;

@@ -869,6 +869,7 @@
     ): Promise<void> {
         joining = group;
         const credentials = gateCheck?.credentials ?? [];
+        const paymentApprovals = gateCheck?.paymentApprovals ?? new Map();
 
         if (gateCheck === undefined) {
             const gates = client.accessGatesForChat(group, true);
@@ -893,7 +894,7 @@
         }
 
         return client
-            .joinGroup(group, credentials)
+            .joinGroup(group, credentials, paymentApprovals)
             .then((resp) => {
                 if (resp.kind === "blocked") {
                     toastStore.showFailureToast(i18nKey("youreBlocked"));
