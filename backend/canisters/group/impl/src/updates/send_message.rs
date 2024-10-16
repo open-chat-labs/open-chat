@@ -8,9 +8,10 @@ use group_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse}
 use group_canister::send_message_v2::{Response::*, *};
 use group_chat_core::SendMessageResult;
 use types::{
-    Achievement, EventWrapper, GroupMessageNotification, Message, MessageContent, MessageIndex, Notification, TimestampMillis,
-    User, UserId, UserType,
+    Achievement, Chat, EventIndex, EventWrapper, GroupMessageNotification, Message, MessageContent, MessageIndex, Notification,
+    TimestampMillis, User, UserId, UserType,
 };
+use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
 #[update(candid = true, msgpack = true)]
 #[trace]
@@ -32,7 +33,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
     match validate_caller(state) {
         Ok(Caller { user_id, user_type }) => {
             let now = state.env.now();
-
+            let mentioned: Vec<_> = args.mentioned.iter().map(|u| u.user_id).collect();
             let result = state.data.chat.validate_and_send_message(
                 user_id,
                 user_type,
@@ -40,7 +41,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                 args.message_id,
                 args.content,
                 args.replies_to,
-                args.mentioned.iter().map(|u| u.user_id).collect(),
+                &mentioned,
                 args.forwarding,
                 args.rules_accepted,
                 args.message_filter_failed.is_some(),
@@ -75,13 +76,14 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
             }
 
             let now = state.env.now();
+            let mentioned: Vec<_> = args.mentioned.iter().map(|u| u.user_id).collect();
             let result = state.data.chat.send_message(
                 user_id,
                 args.thread_root_message_index,
                 args.message_id,
                 args.content,
                 args.replies_to,
-                args.mentioned.iter().map(|u| u.user_id).collect(),
+                &mentioned,
                 args.forwarding,
                 args.rules_accepted,
                 args.message_filter_failed.is_some(),
@@ -150,15 +152,18 @@ fn process_send_message_result(
 ) -> Response {
     match result {
         SendMessageResult::Success(result) => {
-            let event_index = result.message_event.index;
-            let message_index = result.message_event.event.message_index;
-            let expires_at = result.message_event.expires_at;
+            let message_event = &result.message_event;
+            let event_index = message_event.index;
+            let message_index = message_event.event.message_index;
+            let expires_at = message_event.expires_at;
 
-            register_timer_jobs(thread_root_message_index, &result.message_event, now, &mut state.data);
+            register_timer_jobs(thread_root_message_index, message_event, now, &mut state.data);
 
-            let content = &result.message_event.event.content;
+            let content = &message_event.event.content;
+            let chat_id = state.env.canister_id().into();
+
             let notification = Notification::GroupMessage(GroupMessageNotification {
-                chat_id: state.env.canister_id().into(),
+                chat_id,
                 thread_root_message_index,
                 message_index,
                 event_index,
@@ -174,26 +179,79 @@ fn process_send_message_result(
             });
             state.push_notification(result.users_to_notify, notification);
 
-            handle_activity_notification(state);
-
             if new_achievement {
-                state.data.achievements.notify_user(
-                    sender,
-                    result
-                        .message_event
-                        .event
-                        .achievements(false, thread_root_message_index.is_some()),
-                    &mut state.data.fire_and_forget_handler,
+                for a in message_event.event.achievements(false, thread_root_message_index.is_some()) {
+                    state.data.notify_user_of_achievement(sender, a);
+                }
+            }
+
+            let mut activity_events = Vec::new();
+
+            if let MessageContent::Crypto(c) = content {
+                state
+                    .data
+                    .notify_user_of_achievement(c.recipient, Achievement::ReceivedCrypto);
+
+                activity_events.push((c.recipient, MessageActivity::Crypto, thread_root_message_index, message_index));
+            }
+
+            for user in mentioned {
+                activity_events.push((
+                    user.user_id,
+                    MessageActivity::Mention,
+                    thread_root_message_index,
+                    message_index,
+                ));
+            }
+
+            if let Some(replying_to_event_index) = message_event
+                .event
+                .replies_to
+                .as_ref()
+                .filter(|r| r.chat_if_other.is_none())
+                .map(|r| r.event_index)
+            {
+                if let Some((message, _)) = state.data.chat.events.message_internal(
+                    EventIndex::default(),
+                    thread_root_message_index,
+                    replying_to_event_index.into(),
+                ) {
+                    activity_events.push((
+                        message.sender,
+                        MessageActivity::QuoteReply,
+                        thread_root_message_index,
+                        message.message_index,
+                    ));
+                }
+            }
+
+            if let Some(message_index) = thread_root_message_index {
+                if let Some((message, _)) =
+                    state
+                        .data
+                        .chat
+                        .events
+                        .message_internal(EventIndex::default(), None, message_index.into())
+                {
+                    activity_events.push((message.sender, MessageActivity::ThreadReply, None, message.message_index));
+                }
+            }
+
+            for (user_id, activity, thread_root_message_index, message_index) in activity_events {
+                state.data.user_event_sync_queue.push(
+                    user_id,
+                    GroupCanisterEvent::MessageActivity(MessageActivityEvent {
+                        chat: Chat::Group(chat_id),
+                        thread_root_message_index,
+                        message_index,
+                        activity,
+                        timestamp: now,
+                        user_id: Some(sender),
+                    }),
                 );
             }
 
-            if let MessageContent::Crypto(c) = &result.message_event.event.content {
-                state.data.achievements.notify_user(
-                    c.recipient,
-                    vec![Achievement::ReceivedCrypto],
-                    &mut state.data.fire_and_forget_handler,
-                );
-            }
+            handle_activity_notification(state);
 
             Success(SuccessResult {
                 event_index,

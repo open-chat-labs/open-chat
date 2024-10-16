@@ -42,11 +42,7 @@ pub(crate) fn set_video_call_presence_impl(args: Args, state: &mut RuntimeState)
     {
         SetVideoCallPresenceResult::Success => {
             if args.new_achievement {
-                state.data.achievements.notify_user(
-                    user_id,
-                    vec![Achievement::JoinedCall],
-                    &mut state.data.fire_and_forget_handler,
-                );
+                state.data.notify_user_of_achievement(user_id, Achievement::JoinedCall);
             }
 
             handle_activity_notification(state);

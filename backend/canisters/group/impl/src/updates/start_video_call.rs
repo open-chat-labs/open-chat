@@ -52,7 +52,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
             .collect(),
         }),
         None,
-        Vec::new(),
+        &Vec::new(),
         false,
         None,
         false,

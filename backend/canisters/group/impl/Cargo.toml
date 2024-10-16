@@ -52,6 +52,7 @@ serde = { workspace = true }
 serde_bytes = { workspace = true }
 stable_memory = { path = "../../../libraries/stable_memory" }
 storage_bucket_client = { path = "../../../libraries/storage_bucket_client" }
+timer_job_queues = { path = "../../../libraries/timer_job_queues" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_canister = { path = "../../user/api" }

@@ -17,7 +17,7 @@ use std::collections::{HashMap, HashSet};
 use std::mem;
 use std::ops::DerefMut;
 use types::{
-    AcceptP2PSwapResult, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, CompleteP2PSwapResult,
+    AcceptP2PSwapResult, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, ChatType, CompleteP2PSwapResult,
     CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventWrapperInternal,
     EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention,
     Mention, Message, MessageContentInitial, MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex,
@@ -138,7 +138,7 @@ impl ChatEvents {
         if let Some(client) = event_store_client.as_mut() {
             let event_payload = MessageEventPayload {
                 message_type: args.content.content_type().to_string(),
-                chat_type: self.chat.chat_type().to_string(),
+                chat_type: ChatType::from(&self.chat).to_string(),
                 chat_id: self.anonymized_id.clone(),
                 thread: args.thread_root_message_index.is_some(),
                 sender_is_bot: args.sender_is_bot,
@@ -298,7 +298,7 @@ impl ChatEvents {
                     let new_length = message.content.text_length();
                     let payload = MessageEditedEventPayload {
                         message_type: message.content.content_type().to_string(),
-                        chat_type: chat.chat_type().to_string(),
+                        chat_type: ChatType::from(&chat).to_string(),
                         chat_id: anonymized_id,
                         thread: args.thread_root_message_index.is_some(),
                         already_edited,
@@ -497,7 +497,7 @@ impl ChatEvents {
             Some(args.now),
             |message, _| Self::register_poll_vote_inner(message, &args),
         ) {
-            Ok((votes, existing_vote_removed)) => {
+            Ok((votes, existing_vote_removed, creator)) => {
                 match args.operation {
                     VoteOperation::RegisterVote => {
                         if !existing_vote_removed {
@@ -521,7 +521,7 @@ impl ChatEvents {
                     }
                 }
 
-                RegisterPollVoteResult::Success(votes)
+                RegisterPollVoteResult::Success(votes, creator)
             }
             Err(UpdateEventError::NoChange(result)) => result,
             Err(UpdateEventError::NotFound) => RegisterPollVoteResult::PollNotFound,
@@ -531,7 +531,7 @@ impl ChatEvents {
     fn register_poll_vote_inner(
         message: &mut MessageInternal,
         args: &RegisterPollVoteArgs,
-    ) -> Result<(PollVotes, bool), UpdateEventError<RegisterPollVoteResult>> {
+    ) -> Result<(PollVotes, bool, UserId), UpdateEventError<RegisterPollVoteResult>> {
         let MessageContentInternal::Poll(p) = &mut message.content else {
             return Err(UpdateEventError::NotFound);
         };
@@ -539,7 +539,9 @@ impl ChatEvents {
         let result = p.register_vote(args.user_id, args.option_index, args.operation);
 
         match result {
-            RegisterVoteResult::Success(existing_vote_removed) => Ok((p.votes(Some(args.user_id)), existing_vote_removed)),
+            RegisterVoteResult::Success(existing_vote_removed) => {
+                Ok((p.votes(Some(args.user_id)), existing_vote_removed, message.sender))
+            }
             RegisterVoteResult::SuccessNoChange => Err(UpdateEventError::NoChange(RegisterPollVoteResult::SuccessNoChange(
                 p.votes(Some(args.user_id)),
             ))),
@@ -750,7 +752,7 @@ impl ChatEvents {
         if let Some(client) = event_store_client {
             let payload = ReactionAddedEventPayload {
                 message_type: message.content.content_type().to_string(),
-                chat_type: chat.chat_type().to_string(),
+                chat_type: ChatType::from(&chat).to_string(),
                 chat_id: anonymized_id.clone(),
                 thread: args.thread_root_message_index.is_some(),
             };
@@ -871,7 +873,7 @@ impl ChatEvents {
                     .with_source(chat.canister_id().to_string(), true)
                     .with_json_payload(&MessageTippedEventPayload {
                         message_type,
-                        chat_type: chat.chat_type().to_string(),
+                        chat_type: ChatType::from(&chat).to_string(),
                         chat_id: anonymized_id.clone(),
                         thread: args.thread_root_message_index.is_some(),
                         token: args.token.token_symbol().to_string(),
@@ -1226,7 +1228,7 @@ impl ChatEvents {
                 token0_amount: content.token0_amount,
                 token1: content.token1.token.token_symbol().to_string(),
                 token1_amount: content.token1_amount,
-                chat_type: chat.chat_type().to_string(),
+                chat_type: ChatType::from(&chat).to_string(),
                 chat_id: anonymized_id.clone(),
             };
 
@@ -1972,7 +1974,7 @@ impl ChatEvents {
                     EventBuilder::new("video_call_ended", now)
                         .with_source(chat.canister_id().to_string(), true)
                         .with_json_payload(&VideoCallEndedEventPayload {
-                            chat_type: chat.chat_type().to_string(),
+                            chat_type: ChatType::from(&chat).to_string(),
                             chat_id: anonymized_id,
                             participants,
                             hidden,
@@ -2122,7 +2124,7 @@ impl ChatEvents {
             .and_then(|l| l.get_event(event_key, min_visible_event_index))
     }
 
-    fn message_internal(
+    pub fn message_internal(
         &self,
         min_visible_event_index: EventIndex,
         thread_root_message_index: Option<MessageIndex>,
@@ -2227,12 +2229,6 @@ fn add_to_metrics<F: FnMut(&mut ChatMetricsInternal)>(
     user_metrics.last_active = max(user_metrics.last_active, timestamp);
 }
 
-#[derive(Serialize, Deserialize)]
-enum ChatType {
-    Direct,
-    Group,
-}
-
 pub struct PushMessageArgs {
     pub sender: UserId,
     pub thread_root_message_index: Option<MessageIndex>,
@@ -2322,7 +2318,7 @@ pub struct RegisterPollVoteArgs {
 }
 
 pub enum RegisterPollVoteResult {
-    Success(PollVotes),
+    Success(PollVotes, UserId),
     SuccessNoChange(PollVotes),
     PollEnded,
     PollNotFound,

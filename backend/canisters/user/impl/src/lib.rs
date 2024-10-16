@@ -396,7 +396,7 @@ impl Data {
     }
 
     pub fn award_achievement(&mut self, achievement: Achievement, now: TimestampMillis) -> bool {
-        if self.achievements.insert(achievement.clone()) {
+        if self.achievements.insert(achievement) {
             let amount = achievement.chit_reward() as i32;
             self.chit_events.push(ChitEarned {
                 amount,
@@ -441,7 +441,7 @@ impl Data {
     }
 
     pub fn push_message_activity(&mut self, event: MessageActivityEvent, now: TimestampMillis) {
-        if !self.blocked_users.contains(&event.user_id) {
+        if event.user_id.map_or(true, |user_id| !self.blocked_users.contains(&user_id)) {
             self.message_activity_events.push(event, now);
         }
     }

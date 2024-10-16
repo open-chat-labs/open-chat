@@ -370,7 +370,7 @@ pub struct MessageActivityEvent {
     pub message_index: MessageIndex,
     pub activity: MessageActivity,
     pub timestamp: TimestampMillis,
-    pub user_id: UserId,
+    pub user_id: Option<UserId>,
 }
 
 impl MessageActivityEvent {
@@ -383,7 +383,7 @@ impl MessageActivityEvent {
 }
 
 #[ts_export(user)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Eq, PartialEq, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Eq, PartialEq, Debug)]
 pub enum MessageActivity {
     Mention,
     Reaction,
@@ -399,7 +399,7 @@ pub enum MessageActivity {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct MessageActivitySummary {
     pub read_up_to: TimestampMillis,
-    pub latest_event: TimestampMillis,
+    pub latest_event_timestamp: TimestampMillis,
     pub unread_count: u32,
 }
 
