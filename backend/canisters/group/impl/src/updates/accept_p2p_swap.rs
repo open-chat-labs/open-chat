@@ -59,7 +59,7 @@ async fn accept_p2p_swap(args: Args) -> Response {
                     );
                 }
 
-                state.data.user_event_sync_queue.flush();
+                handle_activity_notification(state);
             });
 
             Success(AcceptSwapSuccess {
