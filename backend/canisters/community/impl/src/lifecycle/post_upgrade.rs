@@ -1,8 +1,7 @@
 use crate::jobs::import_groups::finalize_group_import;
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::model::members::MemberUpdate;
-use crate::{mutate_state, read_state, Data};
+use crate::{read_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use community_canister::post_upgrade::Args;
@@ -29,25 +28,6 @@ fn post_upgrade(args: Args) {
     for group_id in completed_imports {
         finalize_group_import(group_id);
     }
-
-    // TODO: Delete after release
-    mutate_state(|state| {
-        let updated_members: Vec<_> = state
-            .data
-            .members
-            .iter()
-            .map(|m| (m.user_id, m.display_name().timestamp))
-            .filter(|(_, ts)| *ts > 0)
-            .collect();
-
-        for (user_id, timestamp) in updated_members {
-            state
-                .data
-                .members
-                .updates
-                .insert((timestamp, user_id, MemberUpdate::DisplayNameChanged));
-        }
-    });
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
