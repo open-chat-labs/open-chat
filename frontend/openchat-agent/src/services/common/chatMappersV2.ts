@@ -2514,8 +2514,9 @@ export function groupDetailsResponse(
         return "failure";
     }
     if ("Success" in value) {
-        const members =
-            ("participants" in value.Success ? value.Success.participants : value.Success.members).map(member);
+        const members = (
+            "participants" in value.Success ? value.Success.participants : value.Success.members
+        ).map(member);
 
         const basicMembers = "basic_members" in value.Success ? value.Success.basic_members : [];
         const membersSet = new Set<string>();
@@ -2527,6 +2528,7 @@ export function groupDetailsResponse(
                     role: "member",
                     userId,
                     displayName: undefined,
+                    lapsed: false,
                 });
             }
         }

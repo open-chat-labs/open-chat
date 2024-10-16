@@ -431,7 +431,6 @@ import type {
     AccessGateConfig,
     Verification,
     EnhancedAccessGate,
-    PaymentGate,
     PaymentGateApproval,
     PaymentGateApprovals,
 } from "openchat-shared";
@@ -485,7 +484,6 @@ import {
     isCompositeGate,
     shouldPreprocessGate,
     deletedUser,
-    waitAll,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
