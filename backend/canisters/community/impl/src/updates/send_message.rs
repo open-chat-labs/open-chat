@@ -56,7 +56,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             args.message_id,
             args.content,
             args.replies_to,
-            users_mentioned.all_users_mentioned,
+            &users_mentioned.all_users_mentioned,
             args.forwarding,
             args.channel_rules_accepted,
             args.message_filter_failed.is_some(),
@@ -75,8 +75,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             channel.chat.name.value.clone(),
             channel.chat.avatar.as_ref().map(|d| d.id),
             args.thread_root_message_index,
-            users_mentioned.mentioned_directly,
-            users_mentioned.user_groups_mentioned,
+            users_mentioned,
             args.new_achievement,
             now,
             state,
@@ -111,7 +110,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
             args.message_id,
             args.content,
             args.replies_to,
-            users_mentioned.all_users_mentioned,
+            &users_mentioned.all_users_mentioned,
             args.forwarding,
             args.channel_rules_accepted,
             args.message_filter_failed.is_some(),
@@ -130,8 +129,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
             channel.chat.name.value.clone(),
             channel.chat.avatar.as_ref().map(|d| d.id),
             args.thread_root_message_index,
-            users_mentioned.mentioned_directly,
-            users_mentioned.user_groups_mentioned,
+            users_mentioned,
             false,
             now,
             state,
@@ -199,8 +197,7 @@ fn process_send_message_result(
     channel_name: String,
     channel_avatar_id: Option<u128>,
     thread_root_message_index: Option<MessageIndex>,
-    mentioned: Vec<User>,
-    user_groups_mentioned: Vec<(u32, String)>,
+    users_mentioned: UsersMentioned,
     new_achievement: bool,
     now: TimestampMillis,
     state: &mut RuntimeState,
@@ -234,11 +231,12 @@ fn process_send_message_result(
                 sender_name: sender_username,
                 sender_display_name,
                 message_type: content.message_type(),
-                message_text: content.notification_text(&mentioned, &user_groups_mentioned),
+                message_text: content
+                    .notification_text(&users_mentioned.mentioned_directly, &users_mentioned.user_groups_mentioned),
                 image_url: content.notification_image_url(),
                 community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
                 channel_avatar_id,
-                crypto_transfer: content.notification_crypto_transfer_details(&mentioned),
+                crypto_transfer: content.notification_crypto_transfer_details(&users_mentioned.mentioned_directly),
             });
             state.push_notification(users_to_notify, notification);
 
@@ -264,13 +262,8 @@ fn process_send_message_result(
                 activity_events.push((c.recipient, MessageActivity::Crypto, thread_root_message_index, message_index));
             }
 
-            for user in mentioned {
-                activity_events.push((
-                    user.user_id,
-                    MessageActivity::Mention,
-                    thread_root_message_index,
-                    message_index,
-                ));
+            for user_id in users_mentioned.all_users_mentioned {
+                activity_events.push((user_id, MessageActivity::Mention, thread_root_message_index, message_index));
             }
 
             if let Some(channel) = state.data.channels.get(&channel_id) {

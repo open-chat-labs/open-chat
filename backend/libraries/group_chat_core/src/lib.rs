@@ -583,7 +583,7 @@ impl GroupChatCore {
         message_id: MessageId,
         content: MessageContentInitial,
         replies_to: Option<GroupReplyContext>,
-        mentioned: Vec<UserId>,
+        mentioned: &Vec<UserId>,
         forwarding: bool,
         rules_accepted: Option<Version>,
         suppressed: bool,
@@ -640,7 +640,7 @@ impl GroupChatCore {
         message_id: MessageId,
         content: MessageContentInternal,
         replies_to: Option<GroupReplyContext>,
-        mentioned: Vec<UserId>,
+        mentioned: &Vec<UserId>,
         forwarding: bool,
         rules_accepted: Option<Version>,
         suppressed: bool,
@@ -701,7 +701,7 @@ impl GroupChatCore {
         let message_event = self.events.push_message(push_message_args, Some(event_store_client));
         let message_index = message_event.event.message_index;
 
-        let mut mentions: HashSet<_> = mentioned.into_iter().chain(user_being_replied_to).collect();
+        let mut mentions: HashSet<_> = mentioned.into_iter().copied().chain(user_being_replied_to).collect();
 
         let mut users_to_notify = HashSet::new();
 
