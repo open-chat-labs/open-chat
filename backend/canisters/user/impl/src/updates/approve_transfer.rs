@@ -36,7 +36,7 @@ async fn approve_transfer(args: Args) -> Response {
     .await
     {
         Ok(Ok(_)) => Success,
-        Ok(Err(err)) => ApproveError(err),
+        Ok(Err(err)) => ApproveError(err.into()),
         Err(error) => InternalError(format!("{error:?}")),
     }
 }

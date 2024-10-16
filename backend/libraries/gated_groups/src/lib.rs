@@ -298,7 +298,7 @@ async fn try_transfer_from(
     .await
     {
         Ok(Ok(_)) => CheckIfPassesGateResult::Success,
-        Ok(Err(err)) => CheckIfPassesGateResult::Failed(GateCheckFailedReason::PaymentFailed(err)),
+        Ok(Err(err)) => CheckIfPassesGateResult::Failed(GateCheckFailedReason::PaymentFailed(err.into())),
         Err(error) => CheckIfPassesGateResult::InternalError(format!("Error calling 'try_transfer_from': {error:?}")),
     }
 }
