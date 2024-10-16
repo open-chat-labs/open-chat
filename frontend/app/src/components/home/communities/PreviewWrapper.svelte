@@ -99,7 +99,6 @@
 {#if checkingAccessGate}
     <Overlay dismissible on:close={closeModal}>
         <AccessGateEvaluator
-            level={checkingAccessGate.level}
             gates={[checkingAccessGate]}
             on:close={closeModal}
             on:success={accessGatesEvaluated} />

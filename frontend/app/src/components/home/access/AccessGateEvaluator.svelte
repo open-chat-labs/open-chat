@@ -34,7 +34,6 @@
     const client = getContext<OpenChat>("client");
 
     export let gates: EnhancedAccessGate[];
-    export let level: Level;
 
     let result: IteratorResult<EnhancedAccessGate>;
     let iterator = preprocessGates(gates, needsPreprocessing);
@@ -138,7 +137,7 @@
                             id={`subgate_${i}`}>
                             <AccessGateSummary
                                 editable={false}
-                                {level}
+                                level={currentGate.level}
                                 showNoGate={false}
                                 gate={subgate} />
                         </Radio>
@@ -149,28 +148,28 @@
                     on:close={onClose}
                     on:credentialReceived={credentialReceived}
                     gate={currentGate}
-                    {level} />
+                    level={currentGate.level} />
             {:else if isUniquePersonGate(currentGate)}
                 <UniqueHumanGateEvaluator
                     on:credentialReceived={credentialReceived}
                     on:close={onClose}
                     expiry={currentGate.expiry}
-                    {level} />
+                    level={currentGate.level} />
             {:else if isPaymentGate(currentGate)}
                 <PaymentGateEvaluator
                     gate={currentGate}
-                    {level}
+                    level={currentGate.level}
                     on:next={nextGate}
                     on:close={onClose} />
             {:else if isLifetimeDiamondGate(currentGate)}
                 <DiamondGateEvaluator
-                    {level}
+                    level={currentGate.level}
                     lifetime
                     on:credentialReceived={credentialReceived}
                     on:cancel={onClose} />
             {:else if isDiamondGate(currentGate)}
                 <DiamondGateEvaluator
-                    {level}
+                    level={currentGate.level}
                     lifetime={false}
                     on:credentialReceived={credentialReceived}
                     on:cancel={onClose} />

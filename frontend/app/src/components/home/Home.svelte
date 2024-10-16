@@ -1292,7 +1292,6 @@
             <GateCheckFailed on:close={closeModal} gates={modal.gates} />
         {:else if modal.kind === "evaluating_access_gates"}
             <AccessGateEvaluator
-                level={modal.level}
                 gates={modal.gates}
                 on:close={closeModal}
                 on:success={accessGatesEvaluated} />

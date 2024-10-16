@@ -1,4 +1,5 @@
 <script lang="ts">
+    import Alarm from "svelte-material-icons/Alarm.svelte";
     import AccountCheck from "svelte-material-icons/AccountCheck.svelte";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
     import VectorCombine from "svelte-material-icons/VectorCombine.svelte";
@@ -24,6 +25,7 @@
     import BlueDiamond from "../../icons/BlueDiamond.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import AccessGateBuilder from "./AccessGateBuilder.svelte";
+    import AccessGateExpiry from "./AccessGateExpiry.svelte";
 
     export let gate: AccessGate;
     export let position: Position = "top";
@@ -33,6 +35,7 @@
     export let level: Level;
     export let clickable = false;
     export let button = false;
+    export let expiry: bigint | undefined = undefined;
 
     const client = getContext<OpenChat>("client");
 
@@ -240,6 +243,19 @@
             </div>
         </TooltipWrapper>
     {/if}
+
+    {#if expiry !== undefined}
+        <TooltipWrapper {position} {align}>
+            <div slot="target" class="expiry">
+                <Alarm size={"0.9em"} viewBox={"0 0 24 24"} color={"var(--icon-txt)"} />
+            </div>
+            <div let:position let:align slot="tooltip">
+                <TooltipPopup {position} {align}>
+                    <AccessGateExpiry {expiry} />
+                </TooltipPopup>
+            </div>
+        </TooltipWrapper>
+    {/if}
 </div>
 
 <style lang="scss">
@@ -274,5 +290,21 @@
         width: $size;
         height: $size;
         background-image: url("/assets/locked.svg");
+    }
+
+    .wrapper {
+        display: flex;
+        gap: $sp2;
+        align-items: center;
+    }
+
+    .expiry {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        background-color: var(--icon-hv);
+        border-radius: 50%;
     }
 </style>
