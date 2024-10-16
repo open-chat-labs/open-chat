@@ -629,76 +629,117 @@ pub mod icrc2 {
     #[ts_export]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
     pub enum ApproveError {
-        BadFee {
-            #[ts(as = "u128")]
-            expected_fee: Nat,
-        },
+        BadFee { expected_fee: u128 },
         // The caller does not have enough funds to pay the approval fee.
-        InsufficientFunds {
-            #[ts(as = "u128")]
-            balance: Nat,
-        },
+        InsufficientFunds { balance: u128 },
         // The caller specified the [expected_allowance] field, and the current
         // allowance did not match the given value.
-        AllowanceChanged {
-            #[ts(as = "u128")]
-            current_allowance: Nat,
-        },
+        AllowanceChanged { current_allowance: u128 },
         // The approval request expired before the ledger had a chance to apply it.
-        Expired {
-            ledger_time: u64,
-        },
+        Expired { ledger_time: u64 },
         TooOld,
-        CreatedInFuture {
-            ledger_time: u64,
-        },
-        Duplicate {
-            #[ts(as = "u128")]
-            duplicate_of: Nat,
-        },
+        CreatedInFuture { ledger_time: u64 },
+        Duplicate { duplicate_of: u128 },
         TemporarilyUnavailable,
-        GenericError {
-            #[ts(as = "u128")]
-            error_code: Nat,
-            message: String,
-        },
+        GenericError { error_code: u128, message: String },
     }
 
     #[ts_export]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
     pub enum TransferFromError {
-        BadFee {
-            #[ts(as = "u128")]
-            expected_fee: Nat,
-        },
-        BadBurn {
-            #[ts(as = "u128")]
-            min_burn_amount: Nat,
-        },
+        BadFee { expected_fee: u128 },
+        BadBurn { min_burn_amount: u128 },
         // The [from] account does not hold enough funds for the transfer.
-        InsufficientFunds {
-            #[ts(as = "u128")]
-            balance: Nat,
-        },
+        InsufficientFunds { balance: u128 },
         // The caller exceeded its allowance.
-        InsufficientAllowance {
-            #[ts(as = "u128")]
-            allowance: Nat,
-        },
+        InsufficientAllowance { allowance: u128 },
         TooOld,
-        CreatedInFuture {
-            ledger_time: u64,
-        },
-        Duplicate {
-            #[ts(as = "u128")]
-            duplicate_of: Nat,
-        },
+        CreatedInFuture { ledger_time: u64 },
+        Duplicate { duplicate_of: u128 },
         TemporarilyUnavailable,
-        GenericError {
-            #[ts(as = "u128")]
-            error_code: Nat,
-            message: String,
-        },
+        GenericError { error_code: u128, message: String },
+    }
+
+    impl From<icrc_ledger_types::icrc2::approve::ApproveError> for ApproveError {
+        fn from(value: icrc_ledger_types::icrc2::approve::ApproveError) -> Self {
+            match value {
+                icrc_ledger_types::icrc2::approve::ApproveError::BadFee { expected_fee } => ApproveError::BadFee {
+                    expected_fee: nat_to_u128(expected_fee),
+                },
+                icrc_ledger_types::icrc2::approve::ApproveError::InsufficientFunds { balance } => {
+                    ApproveError::InsufficientFunds {
+                        balance: nat_to_u128(balance),
+                    }
+                }
+                icrc_ledger_types::icrc2::approve::ApproveError::AllowanceChanged { current_allowance } => {
+                    ApproveError::AllowanceChanged {
+                        current_allowance: nat_to_u128(current_allowance),
+                    }
+                }
+                icrc_ledger_types::icrc2::approve::ApproveError::Expired { ledger_time } => {
+                    ApproveError::Expired { ledger_time }
+                }
+                icrc_ledger_types::icrc2::approve::ApproveError::TooOld => ApproveError::TooOld,
+                icrc_ledger_types::icrc2::approve::ApproveError::CreatedInFuture { ledger_time } => {
+                    ApproveError::CreatedInFuture { ledger_time }
+                }
+                icrc_ledger_types::icrc2::approve::ApproveError::Duplicate { duplicate_of } => ApproveError::Duplicate {
+                    duplicate_of: nat_to_u128(duplicate_of),
+                },
+                icrc_ledger_types::icrc2::approve::ApproveError::TemporarilyUnavailable => ApproveError::TemporarilyUnavailable,
+                icrc_ledger_types::icrc2::approve::ApproveError::GenericError { error_code, message } => {
+                    ApproveError::GenericError {
+                        error_code: nat_to_u128(error_code),
+                        message,
+                    }
+                }
+            }
+        }
+    }
+
+    impl From<icrc_ledger_types::icrc2::transfer_from::TransferFromError> for TransferFromError {
+        fn from(value: icrc_ledger_types::icrc2::transfer_from::TransferFromError) -> Self {
+            match value {
+                icrc_ledger_types::icrc2::transfer_from::TransferFromError::BadFee { expected_fee } => {
+                    TransferFromError::BadFee {
+                        expected_fee: nat_to_u128(expected_fee),
+                    }
+                }
+                icrc_ledger_types::icrc2::transfer_from::TransferFromError::BadBurn { min_burn_amount } => {
+                    TransferFromError::BadBurn {
+                        min_burn_amount: nat_to_u128(min_burn_amount),
+                    }
+                }
+                icrc_ledger_types::icrc2::transfer_from::TransferFromError::InsufficientFunds { balance } => {
+                    TransferFromError::InsufficientFunds {
+                        balance: nat_to_u128(balance),
+                    }
+                }
+                icrc_ledger_types::icrc2::transfer_from::TransferFromError::InsufficientAllowance { allowance } => {
+                    TransferFromError::InsufficientAllowance {
+                        allowance: nat_to_u128(allowance),
+                    }
+                }
+                icrc_ledger_types::icrc2::transfer_from::TransferFromError::TooOld => TransferFromError::TooOld,
+                icrc_ledger_types::icrc2::transfer_from::TransferFromError::CreatedInFuture { ledger_time } => {
+                    TransferFromError::CreatedInFuture { ledger_time }
+                }
+                icrc_ledger_types::icrc2::transfer_from::TransferFromError::Duplicate { duplicate_of } => {
+                    TransferFromError::Duplicate {
+                        duplicate_of: nat_to_u128(duplicate_of),
+                    }
+                }
+                icrc_ledger_types::icrc2::transfer_from::TransferFromError::TemporarilyUnavailable => {
+                    TransferFromError::TemporarilyUnavailable
+                }
+                icrc_ledger_types::icrc2::transfer_from::TransferFromError::GenericError { error_code, message } => {
+                    TransferFromError::GenericError {
+                        error_code: nat_to_u128(error_code),
+                        message,
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -724,4 +765,8 @@ fn u64_from_bytes(bytes: &[u8]) -> u64 {
     let mut u64_bytes = [0u8; 8];
     u64_bytes[(8 - bytes.len())..].copy_from_slice(bytes);
     u64::from_be_bytes(u64_bytes)
+}
+
+fn nat_to_u128(value: Nat) -> u128 {
+    value.0.try_into().unwrap()
 }
