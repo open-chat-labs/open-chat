@@ -1,3 +1,4 @@
+use crate::activity_notifications::handle_activity_notification;
 use crate::jobs::process_expire_member_actions;
 use crate::{mutate_state, RuntimeState};
 use gated_groups::{check_if_passes_gate_synchronously, CheckGateArgs, CheckIfPassesGateResult};
@@ -47,6 +48,7 @@ fn run() {
         let now = state.env.now();
         let mut users_to_lookup = Vec::new();
         let mut check_gate_actions = Vec::new();
+        let mut any_lapsed = false;
 
         loop {
             let Some(member) = state.data.expiring_members.pop_if_expires_before(now) else {
@@ -120,6 +122,7 @@ fn run() {
                 }
                 AccessGateExpiryBehaviour::Lapse => {
                     state.data.chat.members.update_lapsed(member.user_id, true, now);
+                    any_lapsed = true;
                 }
                 AccessGateExpiryBehaviour::Invalid => {
                     // Do nothing
@@ -141,6 +144,10 @@ fn run() {
                 .data
                 .expiring_member_actions
                 .push(ExpiringMemberAction::AsyncGateCheck(action));
+        }
+
+        if any_lapsed {
+            handle_activity_notification(state);
         }
 
         process_expire_member_actions::start_job_if_required(state);
