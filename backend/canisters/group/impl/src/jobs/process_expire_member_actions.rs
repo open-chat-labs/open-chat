@@ -1,5 +1,5 @@
 use super::expire_members;
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{activity_notifications::handle_activity_notification, mutate_state, read_state, RuntimeState};
 use gated_groups::{check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult};
 use group_community_common::{ExpiringMember, ExpiringMemberAction, ExpiringMemberActionDetails, Members};
 use ic_cdk_timers::TimerId;
@@ -130,6 +130,7 @@ fn handle_gate_check_result(details: ExpiringMemberActionDetails, result: CheckI
     if matches!(result, CheckIfPassesGateResult::Failed(_)) && expiry_increase == 0 {
         // Membership lapsed
         state.data.chat.members.update_lapsed(details.user_id, true, now);
+        handle_activity_notification(state);
         return;
     }
 
