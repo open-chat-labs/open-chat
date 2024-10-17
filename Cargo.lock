@@ -1295,6 +1295,7 @@ dependencies = [
  "candid",
  "event_store_producer",
  "hex",
+ "ic-cdk 0.16.0",
  "ic-ledger-types",
  "ic-stable-structures",
  "itertools 0.13.0",
@@ -1305,6 +1306,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "sha2 0.10.8",
+ "tracing",
  "types",
 ]
 

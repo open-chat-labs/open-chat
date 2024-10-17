@@ -14,9 +14,10 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::mem;
 use std::ops::DerefMut;
+use tracing::{info, trace};
 use types::{
     AcceptP2PSwapResult, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, ChatType, CompleteP2PSwapResult,
     CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventWrapperInternal,
@@ -36,7 +37,7 @@ const MEMO_PRIZE_REFUND: [u8; 8] = [0x4f, 0x43, 0x5f, 0x50, 0x52, 0x5a, 0x52, 0x
 pub struct ChatEvents {
     chat: Chat,
     main: ChatEventsList,
-    threads: HashMap<MessageIndex, ChatEventsList>,
+    threads: BTreeMap<MessageIndex, ChatEventsList>,
     metrics: ChatMetricsInternal,
     per_user_metrics: HashMap<UserId, ChatMetricsInternal>,
     frozen: bool,
@@ -46,11 +47,65 @@ pub struct ChatEvents {
     video_call_in_progress: Timestamped<Option<VideoCall>>,
     anonymized_id: String,
     search_index: SearchIndex,
+    #[serde(default = "default_next_event_to_migrate_to_stable_memory")]
+    next_event_to_migrate_to_stable_memory: Option<(Option<MessageIndex>, EventIndex)>,
+}
+
+fn default_next_event_to_migrate_to_stable_memory() -> Option<(Option<MessageIndex>, EventIndex)> {
+    Some((None, EventIndex::default()))
 }
 
 impl ChatEvents {
     pub fn init_stable_storage(memory: Memory) {
         stable_storage::init(memory)
+    }
+
+    pub fn set_stable_memory_key_prefixes(&mut self) {
+        self.main.set_stable_memory_prefix(self.chat, None);
+        for (message_index, events) in self.threads.iter_mut() {
+            events.set_stable_memory_prefix(self.chat, Some(*message_index));
+        }
+    }
+
+    pub fn migrate_next_batch_of_events_to_stable_storage(&mut self) -> usize {
+        if self.next_event_to_migrate_to_stable_memory.is_none() {
+            return 0;
+        };
+
+        let mut total_count = 0;
+        while ic_cdk::api::instruction_counter() < 5_000_000_000 {
+            let (next_thread_root_message_index, next_event_index) = self.next_event_to_migrate_to_stable_memory.unwrap();
+
+            let (thread_root_message_index, events_list) = if let Some(message_index) = next_thread_root_message_index {
+                if let Some((index, next)) = self.threads.range_mut(message_index..).next() {
+                    (Some(*index), next)
+                } else {
+                    self.next_event_to_migrate_to_stable_memory = None;
+                    info!(chat = ?self.chat, total_count, "Finished migrating events to stable memory");
+                    return total_count;
+                }
+            } else {
+                (None, &mut self.main)
+            };
+
+            let (count, next_event_index) = events_list.migrate_events_to_stable_memory(next_event_index, 100);
+            if let Some(event_index) = next_event_index {
+                self.next_event_to_migrate_to_stable_memory = Some((thread_root_message_index, event_index));
+            } else {
+                self.next_event_to_migrate_to_stable_memory = Some((
+                    Some(thread_root_message_index.map_or(MessageIndex::default(), |m| m.incr())),
+                    EventIndex::default(),
+                ));
+            }
+            total_count += count;
+        }
+        trace!(
+            chat = ?self.chat,
+            total_count,
+            next = ?self.next_event_to_migrate_to_stable_memory,
+            "Migrated events to stable memory"
+        );
+        total_count
     }
 
     pub fn new_direct_chat(
@@ -63,7 +118,7 @@ impl ChatEvents {
         let mut events = ChatEvents {
             chat,
             main: ChatEventsList::new(chat, None),
-            threads: HashMap::new(),
+            threads: BTreeMap::new(),
             metrics: ChatMetricsInternal::default(),
             per_user_metrics: HashMap::new(),
             frozen: false,
@@ -73,6 +128,7 @@ impl ChatEvents {
             video_call_in_progress: Timestamped::default(),
             anonymized_id: hex::encode(anonymized_id.to_be_bytes()),
             search_index: SearchIndex::default(),
+            next_event_to_migrate_to_stable_memory: None,
         };
 
         events.push_event(None, ChatEventInternal::DirectChatCreated(DirectChatCreated {}), 0, now);
@@ -93,7 +149,7 @@ impl ChatEvents {
         let mut events = ChatEvents {
             chat,
             main: ChatEventsList::new(chat, None),
-            threads: HashMap::new(),
+            threads: BTreeMap::new(),
             metrics: ChatMetricsInternal::default(),
             per_user_metrics: HashMap::new(),
             frozen: false,
@@ -103,6 +159,7 @@ impl ChatEvents {
             video_call_in_progress: Timestamped::default(),
             anonymized_id: hex::encode(anonymized_id.to_be_bytes()),
             search_index: SearchIndex::default(),
+            next_event_to_migrate_to_stable_memory: None,
         };
 
         events.push_event(

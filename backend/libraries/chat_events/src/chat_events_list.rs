@@ -23,6 +23,25 @@ pub struct ChatEventsList<M = BTreeMap<EventIndex, EventWrapperInternal<ChatEven
 }
 
 impl<M: EventsMap, MStable: EventsMap> ChatEventsList<M, MStable> {
+    pub fn set_stable_memory_prefix(&mut self, chat: Chat, thread_root_message_index: Option<MessageIndex>) {
+        self.stable_events_map = MStable::new(chat, thread_root_message_index);
+    }
+
+    pub fn migrate_events_to_stable_memory(&mut self, start: EventIndex, max_events: usize) -> (usize, Option<EventIndex>) {
+        let mut count = 0;
+        let mut next_event_index = start;
+        for event in self.events_map.range(start..).take(max_events) {
+            count += 1;
+            next_event_index = event.index.incr();
+            self.stable_events_map.insert(event);
+        }
+        if Some(next_event_index) > self.latest_event_index {
+            (count, None)
+        } else {
+            (count, Some(next_event_index))
+        }
+    }
+
     pub fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
         ChatEventsList {
             events_map: M::new(chat, thread_root_message_index),

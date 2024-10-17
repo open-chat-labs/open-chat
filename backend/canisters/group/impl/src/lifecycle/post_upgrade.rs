@@ -15,7 +15,8 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
-    let (data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) = msgpack::deserialize(reader).unwrap();
+    let (mut data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) = msgpack::deserialize(reader).unwrap();
+    data.chat.events.set_stable_memory_key_prefixes();
 
     canister_logger::init_with_logs(data.test_mode, logs, traces);
 
