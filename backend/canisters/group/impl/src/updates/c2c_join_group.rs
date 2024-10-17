@@ -34,48 +34,48 @@ fn is_permitted_to_join(
 ) -> Result<Option<(AccessGateConfigInternal, CheckGateArgs)>, Response> {
     let caller = state.env.caller();
 
-    // If the call is from the user index then we skip the checks
-    if caller == state.data.user_index_canister_id {
-        Ok(None)
-    } else if state.data.is_frozen() {
-        Err(ChatFrozen)
-    } else if let Some(limit) = state.data.chat.members.user_limit_reached() {
-        Err(ParticipantLimitReached(limit))
-    } else if state.data.get_invitation(args.principal).is_some() {
-        Ok(None)
-    } else {
-        if let Some(member) = state.data.chat.members.get(&args.user_id) {
-            if !member.lapsed.value {
-                let summary = state.summary(member);
-                return Err(AlreadyInGroupV2(Box::new(summary)));
-            }
-        } else if !state.data.chat.is_public.value && !state.data.is_invite_code_valid(args.invite_code) {
-            return Err(NotInvited);
-        }
-
-        Ok(state.data.chat.gate_config.as_ref().map(|gc| {
-            (
-                gc.clone(),
-                CheckGateArgs {
-                    user_id: args.user_id,
-                    diamond_membership_expires_at: args.diamond_membership_expires_at,
-                    this_canister: state.env.canister_id(),
-                    is_unique_person: args.unique_person_proof.is_some(),
-                    verified_credential_args: args.verified_credential_args.as_ref().map(|vc| {
-                        CheckVerifiedCredentialGateArgs {
-                            user_ii_principal: vc.user_ii_principal,
-                            credential_jwts: vc.credential_jwts(),
-                            ic_root_key: state.data.ic_root_key.clone(),
-                            ii_canister_id: state.data.internet_identity_canister_id,
-                            ii_origin: vc.ii_origin.clone(),
-                        }
-                    }),
-                    referred_by_member: false,
-                    now: state.env.now(),
-                },
-            )
-        }))
+    if state.data.is_frozen() {
+        return Err(ChatFrozen);
     }
+
+    if let Some(member) = state.data.chat.members.get(&args.user_id) {
+        if !member.lapsed.value {
+            let summary = state.summary(member);
+            return Err(AlreadyInGroupV2(Box::new(summary)));
+        }
+    } else if state.data.chat.members.is_blocked(&args.user_id) {
+        return Err(Blocked);
+    } else if let Some(limit) = state.data.chat.members.user_limit_reached() {
+        return Err(ParticipantLimitReached(limit));
+    } else if caller == state.data.user_index_canister_id || state.data.get_invitation(args.principal).is_some() {
+        return Ok(None);
+    } else if !state.data.chat.is_public.value && !state.data.is_invite_code_valid(args.invite_code) {
+        return Err(NotInvited);
+    }
+
+    Ok(state.data.chat.gate_config.as_ref().map(|gc| {
+        (
+            gc.clone(),
+            CheckGateArgs {
+                user_id: args.user_id,
+                diamond_membership_expires_at: args.diamond_membership_expires_at,
+                this_canister: state.env.canister_id(),
+                is_unique_person: args.unique_person_proof.is_some(),
+                verified_credential_args: args
+                    .verified_credential_args
+                    .as_ref()
+                    .map(|vc| CheckVerifiedCredentialGateArgs {
+                        user_ii_principal: vc.user_ii_principal,
+                        credential_jwts: vc.credential_jwts(),
+                        ic_root_key: state.data.ic_root_key.clone(),
+                        ii_canister_id: state.data.internet_identity_canister_id,
+                        ii_origin: vc.ii_origin.clone(),
+                    }),
+                referred_by_member: false,
+                now: state.env.now(),
+            },
+        )
+    }))
 }
 
 fn c2c_join_group_impl(args: Args, state: &mut RuntimeState) -> Response {
