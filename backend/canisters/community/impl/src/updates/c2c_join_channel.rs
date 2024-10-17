@@ -169,8 +169,6 @@ fn is_permitted_to_join(
                 Err(UserBlocked)
             } else if channel.chat.invited_users.get(&member.user_id).is_some() {
                 Ok(None)
-            } else if !channel.chat.is_public.value {
-                Err(NotInvited)
             } else {
                 if let Some(channel_member) = channel.chat.members.get(&member.user_id) {
                     if !member.lapsed() && !channel_member.lapsed() {
@@ -180,6 +178,8 @@ fn is_permitted_to_join(
                                 .unwrap(),
                         )));
                     }
+                } else if !channel.chat.is_public.value {
+                    return Err(NotInvited);
                 }
 
                 Ok(channel.chat.gate_config.as_ref().map(|g| {

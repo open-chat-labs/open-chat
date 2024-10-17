@@ -43,14 +43,14 @@ fn is_permitted_to_join(
         Err(ParticipantLimitReached(limit))
     } else if state.data.get_invitation(args.principal).is_some() {
         Ok(None)
-    } else if !state.data.chat.is_public.value && !state.data.is_invite_code_valid(args.invite_code) {
-        Err(NotInvited)
     } else {
         if let Some(member) = state.data.chat.members.get(&args.user_id) {
             if !member.lapsed.value {
                 let summary = state.summary(member);
                 return Err(AlreadyInGroupV2(Box::new(summary)));
             }
+        } else if !state.data.chat.is_public.value && !state.data.is_invite_code_valid(args.invite_code) {
+            return Err(NotInvited);
         }
 
         Ok(state.data.chat.gate_config.as_ref().map(|gc| {

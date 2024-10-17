@@ -66,13 +66,13 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(Acc
         Err(MemberLimitReached(limit))
     } else if state.data.is_invited(args.principal) {
         Ok(None)
-    } else if !state.data.is_public && !state.data.is_invite_code_valid(args.invite_code) {
-        Err(NotInvited)
     } else {
         if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
             if !member.lapsed.value {
                 return Err(AlreadyInCommunity(Box::new(state.summary(Some(member), None))));
             }
+        } else if !state.data.is_public && !state.data.is_invite_code_valid(args.invite_code) {
+            return Err(NotInvited);
         }
 
         Ok(state.data.gate_config.as_ref().map(|g| {
