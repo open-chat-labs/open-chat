@@ -1,4 +1,3 @@
-use crate::memory::get_chat_events_memory;
 use crate::{mutate_state, regular_jobs, Data, RuntimeState, WASM_VERSION};
 use std::time::Duration;
 use tracing::trace;
@@ -23,8 +22,6 @@ fn init_env(rng_seed: [u8; 32]) -> Box<CanisterEnv> {
 }
 
 fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: BuildVersion) {
-    chat_events::ChatEvents::init_stable_storage(get_chat_events_memory());
-
     let now = env.now();
     let regular_jobs = regular_jobs::build();
     let state = RuntimeState::new(env, data, regular_jobs);

@@ -1,4 +1,5 @@
 use crate::lifecycle::{init_env, init_state};
+use crate::memory::get_chat_events_memory;
 use crate::{mutate_state, openchat_bot, Data};
 use canister_tracing_macros::trace;
 use ic_cdk::init;
@@ -10,6 +11,7 @@ use utils::env::Environment;
 #[trace]
 fn init(args: Args) {
     canister_logger::init(args.test_mode);
+    chat_events::ChatEvents::init_stable_storage(get_chat_events_memory());
 
     let env = init_env([0; 32]);
     let now = env.now();
