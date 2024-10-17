@@ -1,4 +1,5 @@
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
+use crate::stable_storage::ChatEventsStableStorage;
 use crate::{ChatEventInternal, ChatInternal, EventKey, EventOrExpiredRangeInternal, EventsMap, MessageInternal};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -6,20 +7,33 @@ use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::ops::Deref;
 use types::{
-    ChatEvent, EventIndex, EventOrExpiredRange, EventWrapper, EventWrapperInternal, HydratedMention, Mention, Message,
+    Chat, ChatEvent, EventIndex, EventOrExpiredRange, EventWrapper, EventWrapperInternal, HydratedMention, Mention, Message,
     MessageId, MessageIndex, TimestampMillis, UserId,
 };
 
-#[derive(Serialize, Deserialize, Default)]
-pub struct ChatEventsList<M = BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>>> {
+#[derive(Serialize, Deserialize)]
+pub struct ChatEventsList<M = BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>>, MStable = ChatEventsStableStorage>
+{
     events_map: M,
+    stable_events_map: MStable,
     message_id_map: HashMap<MessageId, EventIndex>,
     message_event_indexes: Vec<EventIndex>,
     latest_event_index: Option<EventIndex>,
     latest_event_timestamp: Option<TimestampMillis>,
 }
 
-impl<M: EventsMap> ChatEventsList<M> {
+impl<M: EventsMap, MStable: EventsMap> ChatEventsList<M, MStable> {
+    pub fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
+        ChatEventsList {
+            events_map: M::new(chat, thread_root_message_index),
+            stable_events_map: MStable::new(chat, thread_root_message_index),
+            message_id_map: HashMap::new(),
+            message_event_indexes: Vec::new(),
+            latest_event_index: None,
+            latest_event_timestamp: None,
+        }
+    }
+
     pub(crate) fn push_event(
         &mut self,
         event: ChatEventInternal,
@@ -235,14 +249,6 @@ impl<M: EventsMap> ChatEventsList<M> {
 
     pub fn last(&self) -> Option<EventWrapperInternal<ChatEventInternal>> {
         self.events_map.iter().next_back()
-    }
-
-    pub fn len(&self) -> usize {
-        self.events_map.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.events_map.is_empty()
     }
 
     pub fn contains_message_id(&self, message_id: MessageId) -> bool {

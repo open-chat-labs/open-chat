@@ -2,6 +2,7 @@ use crate::chat_events_list::Reader;
 use crate::expiring_events::ExpiringEvents;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::search_index::SearchIndex;
+use crate::stable_storage::Memory;
 use crate::*;
 use candid::Principal;
 use event_store_producer::{EventBuilder, EventStoreClient, Runtime};
@@ -48,15 +49,20 @@ pub struct ChatEvents {
 }
 
 impl ChatEvents {
+    pub fn init_stable_storage(memory: Memory) {
+        stable_storage::init(memory)
+    }
+
     pub fn new_direct_chat(
         them: UserId,
         events_ttl: Option<Milliseconds>,
         anonymized_id: u128,
         now: TimestampMillis,
     ) -> ChatEvents {
+        let chat = Chat::Direct(them.into());
         let mut events = ChatEvents {
-            chat: Chat::Direct(them.into()),
-            main: ChatEventsList::default(),
+            chat,
+            main: ChatEventsList::new(chat, None),
             threads: HashMap::new(),
             metrics: ChatMetricsInternal::default(),
             per_user_metrics: HashMap::new(),
@@ -83,9 +89,10 @@ impl ChatEvents {
         anonymized_id: u128,
         now: TimestampMillis,
     ) -> ChatEvents {
+        let chat = chat.into();
         let mut events = ChatEvents {
-            chat: chat.into(),
-            main: ChatEventsList::default(),
+            chat,
+            main: ChatEventsList::new(chat, None),
             threads: HashMap::new(),
             metrics: ChatMetricsInternal::default(),
             per_user_metrics: HashMap::new(),
@@ -128,7 +135,9 @@ impl ChatEvents {
         mut event_store_client: Option<&mut EventStoreClient<R>>,
     ) -> EventWrapper<Message> {
         let events_list = if let Some(root_message_index) = args.thread_root_message_index {
-            self.threads.entry(root_message_index).or_default()
+            self.threads
+                .entry(root_message_index)
+                .or_insert_with(|| ChatEventsList::new(self.chat, Some(root_message_index)))
         } else {
             &mut self.main
         };
@@ -1650,7 +1659,10 @@ impl ChatEvents {
         correlation_id: u64,
         now: TimestampMillis,
     ) -> EventIndex {
-        let events = self.threads.entry(thread_root_message_index).or_default();
+        let events = self
+            .threads
+            .entry(thread_root_message_index)
+            .or_insert_with(|| ChatEventsList::new(self.chat, Some(thread_root_message_index)));
         events.push_event(event, correlation_id, None, now)
     }
 

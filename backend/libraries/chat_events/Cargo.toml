@@ -10,8 +10,10 @@ candid = { workspace = true }
 event_store_producer = { workspace = true, features = ["json"] }
 hex = { workspace = true }
 ic-ledger-types = { workspace = true }
+ic-stable-structures = { workspace = true }
 itertools = { workspace = true }
 ledger_utils = { path = "../ledger_utils" }
+msgpack = { path = "../msgpack" }
 rand = { workspace = true }
 search = { path = "../search" }
 serde = { workspace = true }

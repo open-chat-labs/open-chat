@@ -1296,6 +1296,7 @@ dependencies = [
  "event_store_producer",
  "hex",
  "ic-ledger-types",
+ "ic-stable-structures",
  "itertools 0.13.0",
  "ledger_utils",
  "msgpack",
@@ -3592,9 +3593,8 @@ dependencies = [
 
 [[package]]
 name = "ic-stable-structures"
-version = "0.6.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07e2282054c8ddf0cb2a7abf5c174c373917b4345c9a096ae4aa7f7185cdcdc7"
+version = "0.6.5"
+source = "git+https://github.com/hpeebles/stable-structures?rev=c8cdb408e8a6217788aab82d994cb359e79bfcea#c8cdb408e8a6217788aab82d994cb359e79bfcea"
 dependencies = [
  "ic_principal",
 ]

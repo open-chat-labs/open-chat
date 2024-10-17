@@ -7,6 +7,7 @@ mod expiring_events;
 mod last_updated_timestamps;
 mod message_content_internal;
 mod search_index;
+mod stable_storage;
 
 pub use crate::chat_event_internal::*;
 pub use crate::chat_events::*;
