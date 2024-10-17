@@ -110,6 +110,10 @@ impl RuntimeState {
                 internet_identity: self.data.internet_identity_canister_id,
             },
             group_upgrades_failed: group_upgrades_metrics.failed,
+            canisters_pending_events_migration_to_stable_memory: self
+                .data
+                .canisters_pending_events_migration_to_stable_memory
+                .len() as u32,
             community_upgrades_failed: community_upgrades_metrics.failed,
         }
     }
@@ -229,6 +233,7 @@ pub struct Metrics {
     pub event_store_client_info: EventStoreClientInfo,
     pub canister_ids: CanisterIds,
     pub group_upgrades_failed: Vec<FailedUpgradeCount>,
+    pub canisters_pending_events_migration_to_stable_memory: u32,
     pub community_upgrades_failed: Vec<FailedUpgradeCount>,
 }
 

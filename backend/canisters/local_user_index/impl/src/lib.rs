@@ -257,6 +257,10 @@ impl RuntimeState {
                 internet_identity: self.data.internet_identity_canister_id,
             },
             oc_secret_key_initialized: self.data.oc_key_pair.is_initialised(),
+            canisters_pending_events_migration_to_stable_memory: self
+                .data
+                .canisters_pending_events_migration_to_stable_memory
+                .len() as u32,
             canister_upgrades_failed: canister_upgrades_metrics.failed,
         }
     }
@@ -393,6 +397,7 @@ pub struct Metrics {
     pub event_store_client_info: EventStoreClientInfo,
     pub canister_ids: CanisterIds,
     pub oc_secret_key_initialized: bool,
+    pub canisters_pending_events_migration_to_stable_memory: u32,
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
 }
 
