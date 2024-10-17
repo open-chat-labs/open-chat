@@ -1,3 +1,5 @@
+use std::cmp::max;
+
 use crate::model::channels::ChannelUpdates;
 use crate::model::events::CommunityEventInternal;
 use crate::model::members::CommunityMemberInternal;
@@ -65,12 +67,9 @@ fn summary_updates_impl(
         (channels_with_updates, Vec::new())
     };
 
-    if channels_with_updates.is_empty()
-        && channels_removed.is_empty()
-        && state.data.events.latest_event_timestamp() <= updates_since
-        && state.data.members.user_groups_last_updated() <= updates_since
-        && member_last_updated <= updates_since
-    {
+    let community_last_updated = max(member_last_updated, state.data.details_last_updated());
+
+    if channels_with_updates.is_empty() && channels_removed.is_empty() && community_last_updated <= updates_since {
         return SuccessNoUpdates;
     }
 
@@ -118,16 +117,12 @@ fn summary_updates_impl(
         lapsed: m.lapsed.if_set_after(updates_since).copied(),
     });
 
-    let last_updated = [
-        member_last_updated,
-        state.data.events.latest_event_timestamp(),
-        state.data.members.user_groups_last_updated(),
-    ]
-    .into_iter()
-    .chain(channels_added.iter().map(|c| c.last_updated))
-    .chain(channels_updated.iter().map(|c| c.last_updated))
-    .max()
-    .unwrap_or_default();
+    let last_updated = [community_last_updated]
+        .into_iter()
+        .chain(channels_added.iter().map(|c| c.last_updated))
+        .chain(channels_updated.iter().map(|c| c.last_updated))
+        .max()
+        .unwrap_or_default();
 
     Success(CommunityCanisterCommunitySummaryUpdates {
         community_id: state.env.canister_id().into(),
