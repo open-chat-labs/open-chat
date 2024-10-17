@@ -55,51 +55,49 @@ pub(crate) async fn join_community(args: Args) -> Response {
 fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(AccessGate, CheckGateArgs)>, Response> {
     let caller = state.env.caller();
 
-    // If the call is from the user index then we skip the checks
-    if caller == state.data.user_index_canister_id {
-        Ok(None)
-    } else if state.data.members.is_blocked(&args.user_id) {
-        Err(UserBlocked)
-    } else if state.data.is_frozen() {
-        Err(CommunityFrozen)
-    } else if let Some(limit) = state.data.members.user_limit_reached() {
-        Err(MemberLimitReached(limit))
-    } else if state.data.is_invited(args.principal) {
-        Ok(None)
-    } else if !state.data.is_public && !state.data.is_invite_code_valid(args.invite_code) {
-        Err(NotInvited)
-    } else {
-        if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
-            if !member.lapsed.value {
-                return Err(AlreadyInCommunity(Box::new(state.summary(Some(member), None))));
-            }
-        }
-
-        Ok(state.data.gate_config.as_ref().map(|g| {
-            (
-                g.gate.clone(),
-                CheckGateArgs {
-                    user_id: args.user_id,
-                    diamond_membership_expires_at: args.diamond_membership_expires_at,
-                    this_canister: state.env.canister_id(),
-                    is_unique_person: args.unique_person_proof.is_some(),
-                    verified_credential_args: args.verified_credential_args.as_ref().map(|vc| {
-                        CheckVerifiedCredentialGateArgs {
-                            user_ii_principal: vc.user_ii_principal,
-                            credential_jwts: vc.credential_jwts(),
-                            ic_root_key: state.data.ic_root_key.clone(),
-                            ii_canister_id: state.data.internet_identity_canister_id,
-                            ii_origin: vc.ii_origin.clone(),
-                        }
-                    }),
-                    referred_by_member: args
-                        .referred_by
-                        .map_or(false, |user_id| state.data.members.get_by_user_id(&user_id).is_some()),
-                    now: state.env.now(),
-                },
-            )
-        }))
+    if state.data.is_frozen() {
+        return Err(CommunityFrozen);
     }
+
+    if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
+        if !member.lapsed.value {
+            return Err(AlreadyInCommunity(Box::new(state.summary(Some(member), None))));
+        }
+    } else if state.data.members.is_blocked(&args.user_id) {
+        return Err(UserBlocked);
+    } else if let Some(limit) = state.data.members.user_limit_reached() {
+        return Err(MemberLimitReached(limit));
+    } else if caller == state.data.user_index_canister_id || state.data.is_invited(args.principal) {
+        return Ok(None);
+    } else if !state.data.is_public && !state.data.is_invite_code_valid(args.invite_code) {
+        return Err(NotInvited);
+    }
+
+    Ok(state.data.gate_config.as_ref().map(|g| {
+        (
+            g.gate.clone(),
+            CheckGateArgs {
+                user_id: args.user_id,
+                diamond_membership_expires_at: args.diamond_membership_expires_at,
+                this_canister: state.env.canister_id(),
+                is_unique_person: args.unique_person_proof.is_some(),
+                verified_credential_args: args
+                    .verified_credential_args
+                    .as_ref()
+                    .map(|vc| CheckVerifiedCredentialGateArgs {
+                        user_ii_principal: vc.user_ii_principal,
+                        credential_jwts: vc.credential_jwts(),
+                        ic_root_key: state.data.ic_root_key.clone(),
+                        ii_canister_id: state.data.internet_identity_canister_id,
+                        ii_origin: vc.ii_origin.clone(),
+                    }),
+                referred_by_member: args
+                    .referred_by
+                    .map_or(false, |user_id| state.data.members.get_by_user_id(&user_id).is_some()),
+                now: state.env.now(),
+            },
+        )
+    }))
 }
 
 pub(crate) fn join_community_impl(args: &Args, state: &mut RuntimeState) -> Result<Vec<ChannelId>, Response> {
