@@ -9,6 +9,10 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         get_document(requested_avatar_id, state.data.avatar.as_ref(), "avatar")
     }
 
+    fn get_errors_impl(since: Option<TimestampMillis>) -> HttpResponse {
+        encode_logs(canister_logger::export_errors(), since.unwrap_or(0))
+    }
+
     fn get_logs_impl(since: Option<TimestampMillis>) -> HttpResponse {
         encode_logs(canister_logger::export_logs(), since.unwrap_or(0))
     }
@@ -30,6 +34,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
     match extract_route(&request.url) {
         Route::Avatar(requested_avatar_id) => read_state(|state| get_avatar_impl(requested_avatar_id, state)),
         Route::Logs(since) => get_logs_impl(since),
+        Route::Errors(since) => get_errors_impl(since),
         Route::Traces(since) => get_traces_impl(since),
         Route::Metrics => read_state(get_metrics_impl),
         Route::Other(path, _) if path == "admins" => read_state(get_admins),
