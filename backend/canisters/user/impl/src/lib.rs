@@ -236,7 +236,6 @@ struct Data {
     pub next_event_expiry: Option<TimestampMillis>,
     pub token_swaps: TokenSwaps,
     pub p2p_swaps: P2PSwaps,
-    #[serde(deserialize_with = "deserialize_user_canister_events_queue")]
     pub user_canister_events_queue: GroupedTimerJobQueue<UserCanisterEventBatch>,
     pub video_call_operators: Vec<Principal>,
     pub event_store_client: EventStoreClient<CdkRuntime>,
@@ -252,20 +251,7 @@ struct Data {
     pub rng_seed: [u8; 32],
     pub referred_by: Option<UserId>,
     pub referrals: Referrals,
-    #[serde(default)]
     pub message_activity_events: MessageActivityEvents,
-}
-
-fn deserialize_user_canister_events_queue<'de, D: Deserializer<'de>>(
-    d: D,
-) -> Result<GroupedTimerJobQueue<UserCanisterEventBatch>, D::Error> {
-    let previous: CanisterEventSyncQueue<UserCanisterEvent> = CanisterEventSyncQueue::deserialize(d)?;
-
-    let new = GroupedTimerJobQueue::new(10, false);
-    for (canister_id, events) in previous.take_all() {
-        new.push_many(canister_id.into(), events);
-    }
-    Ok(new)
 }
 
 impl Data {
