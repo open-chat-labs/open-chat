@@ -70,7 +70,6 @@ import type {
 import { mapOptional, optionUpdateV2, principalBytesToString } from "../../utils/mapping";
 import {
     accessGateConfig,
-    accessGate,
     apiCommunityPermissionRole,
     chatMetrics,
     communityChannelSummary,

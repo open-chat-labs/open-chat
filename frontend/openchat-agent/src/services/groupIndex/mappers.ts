@@ -17,7 +17,7 @@ import type {
 } from "openchat-shared";
 import { UnsupportedValueError } from "openchat-shared";
 import { publicGroupSummary } from "../common/publicSummaryMapperV2";
-import { accessGate, accessGateConfig, groupSubtype } from "../common/chatMappersV2";
+import { accessGateConfig, groupSubtype } from "../common/chatMappersV2";
 import type {
     CommunityMatch as TCommunityMatch,
     GroupIndexActiveGroupsResponse,
