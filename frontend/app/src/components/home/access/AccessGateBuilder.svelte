@@ -7,6 +7,7 @@
         isLeafGate,
         isCompositeGate,
         OpenChat,
+        type AccessGateConfig,
     } from "openchat-client";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
@@ -31,11 +32,14 @@
     import AccessGateIcon from "./AccessGateIcon.svelte";
     import TooltipWrapper from "../../TooltipWrapper.svelte";
     import TooltipPopup from "../../TooltipPopup.svelte";
+    import Checkbox from "../../Checkbox.svelte";
+    import DurationPicker from "../DurationPicker.svelte";
+    import AccessGateExpiry from "./AccessGateExpiry.svelte";
 
     const MAX_GATES = 5;
     const client = getContext<OpenChat>("client");
 
-    export let gate: AccessGate;
+    export let gateConfig: AccessGateConfig;
     export let editable: boolean;
     export let level: Level;
     export let valid: boolean;
@@ -43,42 +47,48 @@
     let gateValidity: boolean[] = [];
     let selectedGateIndex: number | undefined = undefined;
     let gateBindings: GateBinding[] = getGateBindings(level);
+    let evaluationIntervalValid: boolean;
+
     $: nervousSystemLookup = client.nervousSystemLookup;
     $: cryptoLookup = client.cryptoLookup;
     $: nsLedgers = new Set(Object.values($nervousSystemLookup).map((d) => d.ledgerCanisterId));
     $: neuronGateBindings = getNeuronGateBindings($nervousSystemLookup);
     $: paymentGateBindings = getPaymentGateBindings($cryptoLookup, nsLedgers);
     $: balanceGateBindings = getBalanceGateBindings($cryptoLookup);
-    $: canAdd = isLeafGate(gate) || gate.gates.length < MAX_GATES;
+    $: canAdd = isLeafGate(gateConfig.gate) || gateConfig.gate.gates.length < MAX_GATES;
     $: title = !editable ? i18nKey("access.readonlyTitle") : i18nKey("access.title");
 
     $: {
-        valid = gateValidity.every((v) => v);
+        valid =
+            gateValidity.every((v) => v) &&
+            (gateConfig.expiry !== undefined ? !editable || evaluationIntervalValid : true);
     }
 
     function addLeaf() {
         const newGate: AccessGate = { kind: "no_gate" };
-        if (gate.kind === "composite_gate") {
-            gate.gates.push(newGate);
+        if (gateConfig.gate.kind === "composite_gate") {
+            gateConfig.gate.gates.push(newGate);
         } else {
-            gate = {
+            gateConfig.gate = {
                 kind: "composite_gate",
-                gates: [gate, newGate],
+                gates: [gateConfig.gate, newGate],
                 operator: "and",
             };
         }
-        gate = gate;
-        selectedGateIndex = gate.gates.length - 1;
+        gateConfig = gateConfig;
+        if (isCompositeGate(gateConfig.gate)) {
+            selectedGateIndex = gateConfig.gate.gates.length - 1;
+        }
     }
 
     function deleteGate(idx: number) {
-        if (isCompositeGate(gate)) {
-            gate.gates.splice(idx, 1);
+        if (isCompositeGate(gateConfig.gate)) {
+            gateConfig.gate.gates.splice(idx, 1);
             gateValidity.splice(idx, 1);
-            if (gate.gates.length === 1) {
-                gate = gate.gates[0];
+            if (gateConfig.gate.gates.length === 1) {
+                gateConfig.gate = gateConfig.gate.gates[0];
             }
-            gate = gate;
+            gateConfig = gateConfig;
             gateValidity = gateValidity;
         }
     }
@@ -86,6 +96,14 @@
     function getGateText(gate: AccessGate) {
         const label = gateLabel[gate.kind];
         return label ? i18nKey(label) : i18nKey("access.unknownGate");
+    }
+
+    function toggleEvaluationInterval() {
+        if (gateConfig.expiry === undefined) {
+            gateConfig.expiry = BigInt(1000 * 60 * 60 * 24 * 7 * 4 * 3); // default this to three months
+        } else {
+            gateConfig.expiry = undefined;
+        }
     }
 </script>
 
@@ -95,25 +113,28 @@
             <Translatable resourceKey={title} />
         </div>
         <div class="body access-gate-builder" slot="body">
-            {#if isLeafGate(gate)}
+            {#if isLeafGate(gateConfig.gate)}
                 <LeafGateBuilder
                     {gateBindings}
                     {neuronGateBindings}
                     {paymentGateBindings}
                     {balanceGateBindings}
                     allowNone
-                    bind:gate
+                    bind:gate={gateConfig.gate}
                     {editable}
                     {level}
                     bind:valid={gateValidity[0]} />
-            {:else if isCompositeGate(gate)}
-                {#each gate.gates as subgate, i (`${subgate.kind} + ${i}`)}
+            {:else if isCompositeGate(gateConfig.gate)}
+                {#each gateConfig.gate.gates as subgate, i (`${subgate.kind} + ${i}`)}
                     <CollapsibleCard
                         transition={false}
                         open={selectedGateIndex === i}
                         on:opened={() => (selectedGateIndex = i)}>
                         <div class="sub-header" slot="titleSlot" class:invalid={!gateValidity[i]}>
-                            <AccessGateIcon {level} showNoGate gate={subgate} />
+                            <AccessGateIcon
+                                {level}
+                                showNoGate
+                                gateConfig={{ expiry: undefined, gate: subgate }} />
                             <Translatable resourceKey={getGateText(subgate)} />
                             {#if editable}
                                 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -159,13 +180,58 @@
                     </div>
                 </div>
             {/if}
+
+            {#if gateConfig.gate.kind !== "no_gate"}
+                {#if editable}
+                    <div class="section expiry">
+                        <Checkbox
+                            id="evaluation-interval"
+                            on:change={toggleEvaluationInterval}
+                            label={i18nKey("access.evaluationInterval")}
+                            align={"start"}
+                            checked={gateConfig.expiry !== undefined}>
+                            <div class="section-title disappear">
+                                <Translatable resourceKey={i18nKey("access.evaluationInterval")} />
+                            </div>
+                            <div class="info">
+                                <Translatable
+                                    resourceKey={i18nKey(
+                                        "access.evaluationIntervalInfo",
+                                        undefined,
+                                        level,
+                                        true,
+                                    )} />
+                            </div>
+                            <div class="info">
+                                {#if gateConfig.expiry !== undefined}
+                                    <!-- <DurationPicker
+                                    bind:valid={evaluationIntervalValid}
+                                    bind:milliseconds={gateConfig.expiry}
+                                    unitFilter={(u) => !["minutes", "hours"].includes(u)} /> -->
+
+                                    <DurationPicker
+                                        bind:valid={evaluationIntervalValid}
+                                        bind:milliseconds={gateConfig.expiry} />
+                                {/if}
+                            </div>
+                        </Checkbox>
+                    </div>
+                {:else if gateConfig.expiry !== undefined}
+                    <div class="section expiry">
+                        <AccessGateExpiry expiry={gateConfig.expiry} />
+                    </div>
+                {/if}
+            {/if}
         </div>
 
         <div let:onClose slot="footer">
             <div class="access-gate-builder footer">
-                {#if isCompositeGate(gate)}
+                {#if isCompositeGate(gateConfig.gate)}
                     <div class="operator">
-                        <Select disabled={!editable} margin={false} bind:value={gate.operator}>
+                        <Select
+                            disabled={!editable}
+                            margin={false}
+                            bind:value={gateConfig.gate.operator}>
                             <option value={"and"}
                                 ><Translatable resourceKey={i18nKey("access.and")} /></option>
                             <option value={"or"}
@@ -233,5 +299,15 @@
             position: relative;
             top: $sp2;
         }
+    }
+
+    .section.expiry {
+        margin-top: $sp4;
+    }
+
+    .info {
+        @include font(book, normal, fs-80, 22);
+        color: var(--txt-light);
+        margin-bottom: $sp3;
     }
 </style>

@@ -17,7 +17,7 @@ import type {
 } from "openchat-shared";
 import { UnsupportedValueError } from "openchat-shared";
 import { publicGroupSummary } from "../common/publicSummaryMapperV2";
-import { accessGate, groupSubtype } from "../common/chatMappersV2";
+import { accessGate, accessGateConfig, groupSubtype } from "../common/chatMappersV2";
 import type {
     CommunityMatch as TCommunityMatch,
     GroupIndexActiveGroupsResponse,
@@ -322,7 +322,10 @@ function communityMatch(value: TCommunityMatch): CommunityMatch {
         },
         memberCount: value.member_count,
         channelCount: value.channel_count,
-        gate: mapOptional(value.gate, accessGate) ?? { kind: "no_gate" },
+        gateConfig: mapOptional(value.gate_config, accessGateConfig) ?? {
+            expiry: undefined,
+            gate: { kind: "no_gate" },
+        },
         flags: value.moderation_flags,
         primaryLanguage: value.primary_language === "" ? "en" : value.primary_language,
     };

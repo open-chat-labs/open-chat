@@ -1,4 +1,4 @@
-import type { AccessGate } from "../access";
+import type { AccessGate, AccessGateConfig } from "../access";
 import type {
     ChatIdentifier,
     GroupChatIdentifier,
@@ -24,7 +24,7 @@ export interface CommunityMatch {
     banner: DataContent;
     memberCount: number;
     channelCount: number;
-    gate: AccessGate;
+    gateConfig: AccessGateConfig;
     flags: number;
     primaryLanguage: string;
 }

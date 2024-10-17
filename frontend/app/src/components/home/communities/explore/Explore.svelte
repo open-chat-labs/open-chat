@@ -244,7 +244,7 @@
                             banner={community.banner}
                             memberCount={community.memberCount}
                             channelCount={community.channelCount}
-                            gate={community.gate}
+                            gateConfig={community.gateConfig}
                             language={community.primaryLanguage}
                             flags={community.flags} />
                     </CommunityCardLink>

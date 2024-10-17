@@ -77,7 +77,7 @@
         <AccessGateSummary
             editable={false}
             level={community.level}
-            gate={community.gateConfig.gate} />
+            gateConfig={community.gateConfig} />
         {#if community.gateConfig.expiry !== undefined}
             <div class="expiry">
                 <AccessGateExpiry expiry={community.gateConfig.expiry} />

@@ -84,11 +84,7 @@
     </div>
     <Footer align="end">
         <div class="gate">
-            <AccessGateIcon
-                clickable
-                level={group.level}
-                gate={group.gateConfig.gate}
-                expiry={group.gateConfig.expiry} />
+            <AccessGateIcon clickable level={group.level} gateConfig={group.gateConfig} />
         </div>
         {#if member}
             <Button tiny on:click={() => leaveGroup(group)}

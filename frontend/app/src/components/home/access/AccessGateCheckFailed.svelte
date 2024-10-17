@@ -13,7 +13,10 @@
     <div slot="header"><Translatable resourceKey={i18nKey("access.gateCheckFailed")} /></div>
     <div class="body" slot="body">
         {#each gates as gate}
-            <AccessGateSummary editable={false} {gate} level={gate.level} />
+            <AccessGateSummary
+                editable={false}
+                gateConfig={{ expiry: gate.expiry, gate }}
+                level={gate.level} />
         {/each}
     </div>
 </ModalContent>

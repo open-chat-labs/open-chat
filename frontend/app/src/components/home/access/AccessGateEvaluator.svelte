@@ -10,7 +10,6 @@
         isDiamondGate,
         OpenChat,
         shouldPreprocessGate,
-        type AccessGate,
         type EnhancedAccessGate,
         type LeafGate,
         type PaymentGateApprovals,
@@ -55,15 +54,26 @@
         }
     }
 
+    function leafGatesMatch(a: LeafGate, b: LeafGate) {
+        return JSON.stringify(a) === JSON.stringify(b);
+    }
+
     function nextGate() {
         result = iterator.next();
         if (!result.done) {
             currentGate = result.value;
             if (isCompositeGate(currentGate) && currentGate.operator === "or") {
-                optionalGatesByIndex = new Map(currentGate.gates.map((g, i) => [i, g]));
+                optionalGatesByIndex = new Map(
+                    currentGate.gates.map((g, i) => [
+                        i,
+                        { ...g, level: currentGate?.level, expiry: currentGate?.expiry },
+                    ]),
+                );
             }
             if (isLeafGate(currentGate)) {
-                const found = [...optionalGatesByIndex.values()].find((g) => g === currentGate);
+                const found = [...optionalGatesByIndex.values()].find((g) =>
+                    leafGatesMatch(g, currentGate as LeafGate),
+                );
                 if (found || client.doesUserMeetAccessGate(currentGate)) {
                     nextGate();
                 }
@@ -114,11 +124,13 @@
         nextGate();
     }
 
-    function toggleIndex(i: number, parent: AccessGate | undefined) {
+    function toggleIndex(i: number, parent: EnhancedAccessGate | undefined) {
         if (parent === undefined || !isCompositeGate(parent)) return;
 
         const found = optionalGatesByIndex.has(i);
-        optionalGatesByIndex = new Map(parent.gates.map((g, i) => [i, g]));
+        optionalGatesByIndex = new Map(
+            parent.gates.map((g, i) => [i, { ...g, level: parent.level, expiry: parent.expiry }]),
+        );
         if (found) {
             optionalGatesByIndex.delete(i);
         }
@@ -158,7 +170,7 @@
                                 editable={false}
                                 level={currentGate.level}
                                 showNoGate={false}
-                                gate={subgate} />
+                                gateConfig={{ expiry: undefined, gate: subgate }} />
                         </Radio>
                     </div>
                 {/each}

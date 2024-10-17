@@ -57,7 +57,7 @@
                         small
                         position={"bottom"}
                         align={"middle"}
-                        gate={channel.gate} />
+                        gateConfig={channel.gateConfig} />
                 </div>
             </div>
         </div>

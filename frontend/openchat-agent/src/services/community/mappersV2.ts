@@ -260,7 +260,10 @@ export function exploreChannelsResponse(
 export function channelMatch(value: TChannelMatch, communityId: string): ChannelMatch {
     return {
         id: { kind: "channel", communityId, channelId: value.id.toString() },
-        gate: mapOptional(value.gate, accessGate) ?? { kind: "no_gate" },
+        gateConfig: mapOptional(value.gate_config, accessGateConfig) ?? {
+            expiry: undefined,
+            gate: { kind: "no_gate" },
+        },
         name: value.name,
         description: value.description,
         memberCount: value.member_count,

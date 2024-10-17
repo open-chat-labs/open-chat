@@ -137,7 +137,7 @@
             {#if !externalContent}
                 <DisappearingMessagesSummary ttl={chat.eventsTTL} />
             {/if}
-            <AccessGateSummary level={chat.level} editable={false} gate={chat.gateConfig.gate} />
+            <AccessGateSummary level={chat.level} editable={false} gateConfig={chat.gateConfig} />
             {#if chat.gateConfig.expiry !== undefined}
                 <div class="expiry">
                     <AccessGateExpiry expiry={chat.gateConfig.expiry} />

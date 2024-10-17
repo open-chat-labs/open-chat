@@ -55,7 +55,7 @@
                 language={$selectedCommunity.primaryLanguage}
                 flags={0}
                 header
-                gate={$selectedCommunity.gateConfig.gate}
+                gateConfig={$selectedCommunity.gateConfig}
                 avatar={$selectedCommunity.avatar} />
             <div class="join">
                 <Button

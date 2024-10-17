@@ -1,4 +1,4 @@
-import type { AccessControlled, AccessGate, AccessGateConfig, VersionedRules } from "../access";
+import type { AccessControlled, AccessGateConfig, VersionedRules } from "../access";
 import type {
     GateCheckFailed,
     GateCheckFailedReason,
@@ -241,7 +241,7 @@ export type CommunityMembershipUpdates = {
 
 export type ChannelMatch = {
     id: ChannelIdentifier;
-    gate: AccessGate;
+    gateConfig: AccessGateConfig;
     name: string;
     description: string;
     avatar: DataContent;
