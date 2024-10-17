@@ -73,7 +73,7 @@ impl ChatEvents {
         };
 
         let mut total_count = 0;
-        while ic_cdk::api::instruction_counter() < 5_000_000_000 {
+        while ic_cdk::api::instruction_counter() < 1_000_000_000 {
             let (next_thread_root_message_index, next_event_index) = self.next_event_to_migrate_to_stable_memory.unwrap();
 
             let (thread_root_message_index, events_list) = if let Some(message_index) = next_thread_root_message_index {
