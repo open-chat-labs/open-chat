@@ -1,3 +1,4 @@
+pub mod c2c_mark_events_migrated_to_stable_memory;
 pub mod c2c_notify_low_balance;
 pub mod c2c_notify_user_index_events;
 pub mod c2c_push_wasm_chunk;
