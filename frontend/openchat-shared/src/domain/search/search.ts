@@ -1,4 +1,4 @@
-import type { AccessGate, AccessGateConfig } from "../access";
+import type { AccessGateConfig } from "../access";
 import type {
     ChatIdentifier,
     GroupChatIdentifier,
