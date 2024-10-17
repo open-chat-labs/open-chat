@@ -1,11 +1,13 @@
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::stable_storage::ChatEventsStableStorage;
-use crate::{ChatEventInternal, ChatInternal, EventKey, EventOrExpiredRangeInternal, EventsMap, MessageInternal};
+use crate::{
+    ChatEventInternal, ChatEventsMap, ChatInternal, EventKey, EventOrExpiredRangeInternal, EventsMap, MessageInternal,
+};
 use candid::Principal;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use types::{
     Chat, ChatEvent, EventIndex, EventOrExpiredRange, EventWrapper, EventWrapperInternal, HydratedMention, Mention, Message,
@@ -13,26 +15,23 @@ use types::{
 };
 
 #[derive(Serialize, Deserialize)]
-pub struct ChatEventsList<
-    M: EventsMap = BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>>,
-    MStable: EventsMap = ChatEventsStableStorage,
-> {
-    events_map: M,
+pub struct ChatEventsList {
+    events_map: ChatEventsMap,
     #[serde(default = "default_state_events_map")]
-    stable_events_map: MStable,
+    stable_events_map: ChatEventsStableStorage,
     message_id_map: HashMap<MessageId, EventIndex>,
     message_event_indexes: Vec<EventIndex>,
     latest_event_index: Option<EventIndex>,
     latest_event_timestamp: Option<TimestampMillis>,
 }
 
-fn default_state_events_map<M: EventsMap>() -> M {
-    M::new(Chat::Direct(Principal::anonymous().into()), None)
+fn default_state_events_map() -> ChatEventsStableStorage {
+    ChatEventsStableStorage::new(Chat::Direct(Principal::anonymous().into()), None)
 }
 
-impl<M: EventsMap, MStable: EventsMap> ChatEventsList<M, MStable> {
+impl ChatEventsList {
     pub fn set_stable_memory_prefix(&mut self, chat: Chat, thread_root_message_index: Option<MessageIndex>) {
-        self.stable_events_map = MStable::new(chat, thread_root_message_index);
+        self.stable_events_map = ChatEventsStableStorage::new(chat, thread_root_message_index);
     }
 
     pub fn migrate_events_to_stable_memory(&mut self, start: EventIndex, max_events: usize) -> (usize, Option<EventIndex>) {
@@ -52,8 +51,8 @@ impl<M: EventsMap, MStable: EventsMap> ChatEventsList<M, MStable> {
 
     pub fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
         ChatEventsList {
-            events_map: M::new(chat, thread_root_message_index),
-            stable_events_map: MStable::new(chat, thread_root_message_index),
+            events_map: ChatEventsMap::default(),
+            stable_events_map: ChatEventsStableStorage::new(chat, thread_root_message_index),
             message_id_map: HashMap::new(),
             message_event_indexes: Vec::new(),
             latest_event_index: None,
@@ -317,33 +316,33 @@ pub enum UpdateEventError<E = ()> {
     NotFound,
 }
 
-pub struct ChatEventsListReader<'r, M: EventsMap = BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>>> {
-    events_list: &'r ChatEventsList<M>,
+pub struct ChatEventsListReader<'r> {
+    events_list: &'r ChatEventsList,
     last_updated_timestamps: &'r LastUpdatedTimestamps,
     min_visible_event_index: EventIndex,
 }
 
-impl<'r, M: EventsMap> Deref for ChatEventsListReader<'r, M> {
-    type Target = ChatEventsList<M>;
+impl<'r> Deref for ChatEventsListReader<'r> {
+    type Target = ChatEventsList;
 
     fn deref(&self) -> &Self::Target {
         self.events_list
     }
 }
 
-impl<'r, M: EventsMap + 'r> ChatEventsListReader<'r, M> {
+impl<'r> ChatEventsListReader<'r> {
     pub(crate) fn new(
-        events_list: &'r ChatEventsList<M>,
+        events_list: &'r ChatEventsList,
         last_updated_timestamps: &'r LastUpdatedTimestamps,
-    ) -> ChatEventsListReader<'r, M> {
+    ) -> ChatEventsListReader<'r> {
         Self::with_min_visible_event_index(events_list, last_updated_timestamps, EventIndex::default())
     }
 
     pub(crate) fn with_min_visible_event_index(
-        events_list: &'r ChatEventsList<M>,
+        events_list: &'r ChatEventsList,
         last_updated_timestamps: &'r LastUpdatedTimestamps,
         min_visible_event_index: EventIndex,
-    ) -> ChatEventsListReader<'r, M> {
+    ) -> ChatEventsListReader<'r> {
         ChatEventsListReader {
             events_list,
             last_updated_timestamps,

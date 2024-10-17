@@ -58,13 +58,7 @@ pub struct ChatEventsStableStorage {
 }
 
 impl ChatEventsStableStorage {
-    fn key(&self, event_index: EventIndex) -> Key {
-        Key::new(self.prefix.clone(), event_index)
-    }
-}
-
-impl EventsMap for ChatEventsStableStorage {
-    fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
+    pub fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
         let prefix = match (chat, thread_root_message_index) {
             (Chat::Direct(c), None) => KeyPrefix::DirectChat(DirectChatKeyPrefix::new(Principal::from(c).into())),
             (Chat::Direct(c), Some(m)) => {
@@ -78,6 +72,12 @@ impl EventsMap for ChatEventsStableStorage {
         ChatEventsStableStorage { prefix }
     }
 
+    fn key(&self, event_index: EventIndex) -> Key {
+        Key::new(self.prefix.clone(), event_index)
+    }
+}
+
+impl EventsMap for ChatEventsStableStorage {
     fn get(&self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
         let key = self.key(event_index);
         with_map(|m| m.get(&key)).map(|v| v.into())
