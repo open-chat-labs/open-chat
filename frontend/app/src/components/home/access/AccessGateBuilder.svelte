@@ -204,14 +204,10 @@
                             </div>
                             <div class="info">
                                 {#if gateConfig.expiry !== undefined}
-                                    <!-- <DurationPicker
-                                    bind:valid={evaluationIntervalValid}
-                                    bind:milliseconds={gateConfig.expiry}
-                                    unitFilter={(u) => !["minutes", "hours"].includes(u)} /> -->
-
                                     <DurationPicker
                                         bind:valid={evaluationIntervalValid}
-                                        bind:milliseconds={gateConfig.expiry} />
+                                        bind:milliseconds={gateConfig.expiry}
+                                        unitFilter={(u) => !["minutes", "hours"].includes(u)} />
                                 {/if}
                             </div>
                         </Checkbox>
