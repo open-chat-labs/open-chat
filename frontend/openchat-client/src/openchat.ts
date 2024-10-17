@@ -5670,9 +5670,10 @@ export class OpenChat extends OpenChatAgentWorker {
                 const updatedCommunity = chatsResponse.state.communities.find(
                     (c) => c.id.communityId === selectedCommunity.id.communityId,
                 );
+
                 if (
                     updatedCommunity !== undefined &&
-                    updatedCommunity.latestEventIndex > selectedCommunity.latestEventIndex
+                    updatedCommunity.lastUpdated > selectedCommunity.lastUpdated
                 ) {
                     this.loadCommunityDetails(updatedCommunity);
                 }
