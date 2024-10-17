@@ -500,6 +500,8 @@
         height: 550px;
         display: flex;
         @include nice-scrollbar();
+        overflow-y: scroll;
+        scrollbar-gutter: stable;
 
         @include mobile() {
             height: 400px;
