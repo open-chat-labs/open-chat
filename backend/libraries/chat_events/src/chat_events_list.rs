@@ -77,8 +77,8 @@ impl<M: EventsMap, MStable: EventsMap> ChatEventsList<M, MStable> {
             expires_at,
             event,
         };
-        self.events_map.insert(event_wrapper.clone());
-        self.stable_events_map.insert(event_wrapper);
+        self.stable_events_map.insert(event_wrapper.clone());
+        self.events_map.insert(event_wrapper);
 
         self.latest_event_index = Some(event_index);
         self.latest_event_timestamp = Some(now);
@@ -118,8 +118,8 @@ impl<M: EventsMap, MStable: EventsMap> ChatEventsList<M, MStable> {
         if let Some(mut event) = self.get_event(event_key, EventIndex::default()) {
             update_event_fn(&mut event).map(|result| {
                 let event_index = event.index;
-                self.events_map.insert(event.clone());
-                self.stable_events_map.insert(event);
+                self.stable_events_map.insert(event.clone());
+                self.events_map.insert(event);
                 (result, event_index)
             })
         } else {
@@ -228,8 +228,8 @@ impl<M: EventsMap, MStable: EventsMap> ChatEventsList<M, MStable> {
 
         let updated_indexes = updated.iter().map(|e| e.index).collect();
         for event in updated {
-            self.events_map.insert(event.clone());
-            self.stable_events_map.insert(event);
+            self.stable_events_map.insert(event.clone());
+            self.events_map.insert(event);
         }
         updated_indexes
     }
@@ -244,6 +244,7 @@ impl<M: EventsMap, MStable: EventsMap> ChatEventsList<M, MStable> {
     }
 
     pub fn remove(&mut self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
+        self.stable_events_map.remove(event_index);
         self.events_map.remove(event_index)
     }
 
