@@ -4,9 +4,8 @@ use crate::stable_storage::key::{
 };
 use crate::{ChatEventInternal, EventsMap};
 use candid::Principal;
-use ic_stable_structures::memory_manager::VirtualMemory;
 use ic_stable_structures::storable::Bound;
-use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, Storable};
+use ic_stable_structures::{StableBTreeMap, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::cell::RefCell;
@@ -17,7 +16,11 @@ use types::{Chat, EventIndex, EventWrapperInternal, MessageIndex, MAX_EVENT_INDE
 
 mod key;
 
-pub type Memory = VirtualMemory<DefaultMemoryImpl>;
+#[cfg(not(test))]
+pub type Memory = ic_stable_structures::memory_manager::VirtualMemory<ic_stable_structures::DefaultMemoryImpl>;
+
+#[cfg(test)]
+pub type Memory = ic_stable_structures::VectorMemory;
 
 struct ChatEventsStableStorageInner {
     map: StableBTreeMap<Key, Value, Memory>,
@@ -69,8 +72,8 @@ impl EventsMap for ChatEventsStableStorage {
             }
             (Chat::Group(_), None) => KeyPrefix::GroupChat(GroupChatKeyPrefix::default()),
             (Chat::Group(_), Some(m)) => KeyPrefix::GroupChatThread(GroupChatThreadKeyPrefix::new(m)),
-            (Chat::Channel(_, c), None) => KeyPrefix::Channel(ChannelKeyPrefix::new(c.into())),
-            (Chat::Channel(_, c), Some(m)) => KeyPrefix::ChannelThread(ChannelThreadKeyPrefix::new(c.into(), m)),
+            (Chat::Channel(_, c), None) => KeyPrefix::Channel(ChannelKeyPrefix::new(c)),
+            (Chat::Channel(_, c), Some(m)) => KeyPrefix::ChannelThread(ChannelThreadKeyPrefix::new(c, m)),
         };
         ChatEventsStableStorage { prefix }
     }

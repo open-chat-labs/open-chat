@@ -32,10 +32,8 @@ fn build_chat_metrics(env: &dyn Environment, data: &mut Data) {
 fn migrate_chat_events_to_stable_memory(_: &dyn Environment, data: &mut Data) {
     for channel in data.channels.iter_mut() {
         let count_migrated = channel.chat.events.migrate_next_batch_of_events_to_stable_storage();
-        if count_migrated > 0 {
-            if ic_cdk::api::instruction_counter() > 5_000_000_000 {
-                return;
-            }
+        if count_migrated > 0 && ic_cdk::api::instruction_counter() > 5_000_000_000 {
+            return;
         }
     }
 }

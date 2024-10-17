@@ -36,10 +36,8 @@ fn retry_deleting_files(_: &dyn Environment, _: &mut Data) {
 fn migrate_chat_events_to_stable_memory(_: &dyn Environment, data: &mut Data) {
     for chat in data.direct_chats.iter_mut() {
         let count_migrated = chat.events.migrate_next_batch_of_events_to_stable_storage();
-        if count_migrated > 0 {
-            if ic_cdk::api::instruction_counter() > 5_000_000_000 {
-                return;
-            }
+        if count_migrated > 0 && ic_cdk::api::instruction_counter() > 5_000_000_000 {
+            return;
         }
     }
 }

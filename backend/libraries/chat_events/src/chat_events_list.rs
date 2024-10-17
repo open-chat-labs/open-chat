@@ -684,7 +684,10 @@ mod tests {
 
         let event_indexes: Vec<usize> = results.iter().map(|e| e.as_event().unwrap().index.into()).collect();
 
-        assert_eq!(event_indexes, (0..events_reader.len()).collect_vec());
+        assert_eq!(
+            event_indexes,
+            (0..=events_reader.latest_event_index().unwrap().into()).collect_vec()
+        );
     }
 
     #[test]
@@ -696,7 +699,10 @@ mod tests {
 
         let event_indexes: Vec<usize> = results.iter().map(|e| e.as_event().unwrap().index.into()).collect();
 
-        assert_eq!(event_indexes, (0..events_reader.len()).rev().collect_vec());
+        assert_eq!(
+            event_indexes,
+            (0..=events_reader.latest_event_index().unwrap().into()).rev().collect_vec()
+        );
     }
 
     #[test]
@@ -718,7 +724,10 @@ mod tests {
 
         let event_indexes: Vec<usize> = results.iter().map(|e| e.as_event().unwrap().index.into()).collect();
 
-        assert_eq!(event_indexes, (first.index.into()..events_reader.len()).collect_vec());
+        assert_eq!(
+            event_indexes,
+            (usize::from(first.index)..=events_reader.latest_event_index().unwrap().into()).collect_vec()
+        );
     }
 
     #[test]
@@ -790,6 +799,7 @@ mod tests {
     }
 
     fn setup_events(events_ttl: Option<Milliseconds>) -> ChatEvents {
+        ChatEvents::init_stable_storage(ic_stable_structures::VectorMemory::default());
         let mut events = ChatEvents::new_direct_chat(Principal::from_slice(&[1]).into(), events_ttl, random(), 1);
 
         push_events(&mut events, 0);
