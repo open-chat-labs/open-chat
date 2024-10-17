@@ -101,9 +101,9 @@ impl ChatEvents {
         }
         trace!(
             chat = ?self.chat,
-            total_count,
+            count = total_count,
             next = ?self.next_event_to_migrate_to_stable_memory,
-            "Migrated events to stable memory"
+            "Migrated batch of events to stable memory"
         );
         (total_count, false)
     }

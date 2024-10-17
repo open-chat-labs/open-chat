@@ -1,6 +1,7 @@
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::stable_storage::ChatEventsStableStorage;
 use crate::{ChatEventInternal, ChatInternal, EventKey, EventOrExpiredRangeInternal, EventsMap, MessageInternal};
+use candid::Principal;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
@@ -12,14 +13,21 @@ use types::{
 };
 
 #[derive(Serialize, Deserialize)]
-pub struct ChatEventsList<M = BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>>, MStable = ChatEventsStableStorage>
-{
+pub struct ChatEventsList<
+    M: EventsMap = BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>>,
+    MStable: EventsMap = ChatEventsStableStorage,
+> {
     events_map: M,
+    #[serde(default = "default_state_events_map")]
     stable_events_map: MStable,
     message_id_map: HashMap<MessageId, EventIndex>,
     message_event_indexes: Vec<EventIndex>,
     latest_event_index: Option<EventIndex>,
     latest_event_timestamp: Option<TimestampMillis>,
+}
+
+fn default_state_events_map<M: EventsMap>() -> M {
+    M::new(Chat::Direct(Principal::anonymous().into()), None)
 }
 
 impl<M: EventsMap, MStable: EventsMap> ChatEventsList<M, MStable> {
@@ -309,13 +317,13 @@ pub enum UpdateEventError<E = ()> {
     NotFound,
 }
 
-pub struct ChatEventsListReader<'r, M = BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>>> {
+pub struct ChatEventsListReader<'r, M: EventsMap = BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>>> {
     events_list: &'r ChatEventsList<M>,
     last_updated_timestamps: &'r LastUpdatedTimestamps,
     min_visible_event_index: EventIndex,
 }
 
-impl<'r, M> Deref for ChatEventsListReader<'r, M> {
+impl<'r, M: EventsMap> Deref for ChatEventsListReader<'r, M> {
     type Target = ChatEventsList<M>;
 
     fn deref(&self) -> &Self::Target {
