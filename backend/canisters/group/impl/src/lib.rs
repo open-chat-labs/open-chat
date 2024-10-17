@@ -420,6 +420,7 @@ impl RuntimeState {
                 .unwrap_or_default(),
             event_store_client_info: self.data.event_store_client.info(),
             timer_jobs: self.data.timer_jobs.len() as u32,
+            stable_memory_event_migration_complete: self.data.stable_memory_event_migration_complete,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -737,6 +738,7 @@ pub struct Metrics {
     pub serialized_chat_state_bytes: u64,
     pub event_store_client_info: EventStoreClientInfo,
     pub timer_jobs: u32,
+    pub stable_memory_event_migration_complete: bool,
     pub canister_ids: CanisterIds,
 }
 
