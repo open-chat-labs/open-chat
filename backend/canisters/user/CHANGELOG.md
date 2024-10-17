@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add support for expiring access gates ([#6401](https://github.com/open-chat-labs/open-chat/pull/6401))
 - Add support for a message activity feed ([#6539](https://github.com/open-chat-labs/open-chat/pull/6539))
+- Add an error log with http endpoint ([#6607](https://github.com/open-chat-labs/open-chat/pull/6607))
 
 ### Changed
 

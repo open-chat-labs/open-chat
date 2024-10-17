@@ -16,6 +16,7 @@ use tracing_subscriber::Registry;
 
 thread_local! {
     static INITIALIZED: Cell<bool> = Cell::default();
+    static ERRORS: RefCell<LogBuffer> = RefCell::new(LogBuffer::default());
     static LOG: RefCell<LogBuffer> = RefCell::new(LogBuffer::default());
     static TRACE: RefCell<LogBuffer> = RefCell::new(LogBuffer::default());
 }
@@ -25,8 +26,17 @@ pub fn init(enable_trace: bool) {
         panic!("Logger already initialized");
     }
 
+    let error_layer = Layer::default()
+        .with_writer((|| LogWriter::new(Level::ERROR)).with_max_level(Level::ERROR))
+        .json()
+        .with_timer(Timer {})
+        .with_file(true)
+        .with_line_number(true)
+        .with_current_span(false)
+        .with_span_list(false);
+
     let log_layer = Layer::default()
-        .with_writer((|| LogWriter::new(false)).with_max_level(Level::INFO))
+        .with_writer((|| LogWriter::new(Level::INFO)).with_max_level(Level::INFO))
         .json()
         .with_timer(Timer {})
         .with_file(true)
@@ -36,7 +46,7 @@ pub fn init(enable_trace: bool) {
 
     if enable_trace {
         let trace_layer = Layer::default()
-            .with_writer(|| LogWriter::new(true))
+            .with_writer(|| LogWriter::new(Level::TRACE))
             .json()
             .with_timer(Timer {})
             .with_file(true)
@@ -44,9 +54,9 @@ pub fn init(enable_trace: bool) {
             .with_current_span(false)
             .with_span_events(FmtSpan::ENTER);
 
-        Registry::default().with(log_layer).with(trace_layer).init();
+        Registry::default().with(error_layer).with(log_layer).with(trace_layer).init();
     } else {
-        Registry::default().with(log_layer).init();
+        Registry::default().with(error_layer).with(log_layer).init();
     }
 }
 
@@ -99,6 +109,10 @@ impl Default for LogBuffer {
     }
 }
 
+pub fn export_errors() -> Vec<LogEntry> {
+    ERRORS.with_borrow(|l| l.iter().cloned().collect())
+}
+
 pub fn export_logs() -> Vec<LogEntry> {
     LOG.with_borrow(|l| l.iter().cloned().collect())
 }
@@ -114,14 +128,14 @@ pub struct LogEntry {
 }
 
 struct LogWriter {
-    trace: bool,
+    level: Level,
     buffer: Vec<u8>,
 }
 
 impl LogWriter {
-    fn new(trace: bool) -> LogWriter {
+    fn new(level: Level) -> LogWriter {
         LogWriter {
-            trace,
+            level,
             buffer: Vec::new(),
         }
     }
@@ -142,7 +156,14 @@ impl Write for LogWriter {
             message: json,
         };
 
-        let sink = if self.trace { &TRACE } else { &LOG };
+        let sink = if self.level == Level::TRACE {
+            &TRACE
+        } else if self.level == Level::INFO {
+            &LOG
+        } else {
+            &ERRORS
+        };
+
         sink.with_borrow_mut(|s| s.append(log_entry));
         Ok(())
     }

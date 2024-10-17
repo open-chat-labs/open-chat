@@ -7,6 +7,7 @@ pub enum Route {
     ChannelAvatar((ChannelId, Option<u128>)),
     File(u128),
     Logs(Option<TimestampMillis>),
+    Errors(Option<TimestampMillis>),
     Traces(Option<TimestampMillis>),
     Metrics,
     Other(String, HashMap<String, String>),
@@ -46,6 +47,10 @@ pub fn extract_route(path: &str) -> Route {
                     }
                 }
             }
+        }
+        "errors" => {
+            let since = parts.get(1).and_then(|p| u64::from_str(p).ok());
+            return Route::Errors(since);
         }
         "logs" => {
             let since = parts.get(1).and_then(|p| u64::from_str(p).ok());
