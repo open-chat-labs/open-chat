@@ -8,6 +8,7 @@ use local_group_index_canister::ChildCanisterType;
 use model::local_group_map::LocalGroupMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
+use std::collections::HashSet;
 use std::time::Duration;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChildCanisterWasms, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId,
@@ -142,6 +143,8 @@ struct Data {
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
     pub rng_seed: [u8; 32],
+    #[serde(default)]
+    pub canisters_pending_events_migration_to_stable_memory: HashSet<CanisterId>,
 }
 
 impl Data {
@@ -194,6 +197,7 @@ impl Data {
                 .with_flush_delay(Duration::from_millis(MINUTE_IN_MS))
                 .build(),
             event_deduper: EventDeduper::default(),
+            canisters_pending_events_migration_to_stable_memory: HashSet::new(),
         }
     }
 }

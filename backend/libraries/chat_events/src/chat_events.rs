@@ -67,9 +67,9 @@ impl ChatEvents {
         }
     }
 
-    pub fn migrate_next_batch_of_events_to_stable_storage(&mut self) -> usize {
+    pub fn migrate_next_batch_of_events_to_stable_storage(&mut self) -> (usize, bool) {
         if self.next_event_to_migrate_to_stable_memory.is_none() {
-            return 0;
+            return (0, true);
         };
 
         let mut total_count = 0;
@@ -82,7 +82,7 @@ impl ChatEvents {
                 } else {
                     self.next_event_to_migrate_to_stable_memory = None;
                     info!(chat = ?self.chat, total_count, "Finished migrating events to stable memory");
-                    return total_count;
+                    return (total_count, true);
                 }
             } else {
                 (None, &mut self.main)
@@ -105,7 +105,7 @@ impl ChatEvents {
             next = ?self.next_event_to_migrate_to_stable_memory,
             "Migrated events to stable memory"
         );
-        total_count
+        (total_count, false)
     }
 
     pub fn new_direct_chat(

@@ -361,6 +361,8 @@ struct Data {
     user_cache: UserCache,
     #[serde(default = "default_user_event_sync_queue")]
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
+    #[serde(default)]
+    stable_memory_event_migration_complete: bool,
 }
 
 fn default_user_event_sync_queue() -> GroupedTimerJobQueue<UserEventBatch> {
@@ -466,6 +468,7 @@ impl Data {
             expiring_member_actions: ExpiringMemberActions::default(),
             user_cache: UserCache::default(),
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
+            stable_memory_event_migration_complete: true,
         }
     }
 

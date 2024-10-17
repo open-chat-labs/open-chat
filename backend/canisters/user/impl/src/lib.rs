@@ -254,6 +254,8 @@ struct Data {
     pub referrals: Referrals,
     #[serde(default)]
     pub message_activity_events: MessageActivityEvents,
+    #[serde(default)]
+    stable_memory_event_migration_complete: bool,
 }
 
 fn deserialize_user_canister_events_queue<'de, D: Deserializer<'de>>(
@@ -334,6 +336,7 @@ impl Data {
             referred_by,
             referrals: Referrals::default(),
             message_activity_events: MessageActivityEvents::default(),
+            stable_memory_event_migration_complete: true,
         }
     }
 
