@@ -44,7 +44,7 @@
         "diamondMember": "Diamond-Mitgliedschaft",
         "doYouHaveUniquePersonCredential": "WICHTIG! Bitte bestätigen Sie, dass Sie Ihre einzigartige Persönlichkeit über <a target='_blank' href='https://id.decideai.xyz'>die DecideAI-Website</a> verifiziert haben, _bevor_ Sie fortfahren.",
         "evaluationInterval": "Auswertungsintervall des Zugangstors",
-        "evaluationIntervalInfo": "Sie können die regelmäßige Neubewertung Ihres Zugriffstors erzwingen. Wenn der Zugriff eines Benutzers erlischt, kann er nicht mehr mit der Gruppe interagieren, bis er erneut überprüft hat, ob die Zugriffsbedingungen noch erfüllt sind.",
+        "evaluationIntervalInfo": "Sie können die regelmäßige Neubewertung Ihres Zugangstors erzwingen. Wenn der Zugriff eines Mitglieds erlischt, kann es nicht mehr mit {level} interagieren, bis es erneut überprüft hat, ob die Zugriffsbedingungen noch erfüllt sind.",
         "evaluationIntervalSummary": "Dieses Zugangstor wird alle {interval} neu bewertet.",
         "gate": "Zugangstor",
         "gateCheckFailed": "Zugangstor nicht erreicht",

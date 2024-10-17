@@ -44,7 +44,7 @@
         "diamondMember": "钻石会员",
         "doYouHaveUniquePersonCredential": "重要提示！在继续操作之前，请确认您已通过<a target='_blank' href='https://id.decideai.xyz'>DecideAI 网站</a>验证了您的独特身份。",
         "evaluationInterval": "出入门评估间隔",
-        "evaluationIntervalInfo": "您可以选择强制定期重新评估您的访问权限。当用户的访问权限失效时，他们将无法与群组互动，直到他们重新评估访问条件仍然满足为止。",
+        "evaluationIntervalInfo": "您可以选择强制定期重新评估您的访问权限。当成员的访问权限失效时，他们将无法与 {level} 互动，直到他们重新评估访问条件仍然满足为止。",
         "evaluationIntervalSummary": "此通道门将每 {interval} 次重新评估一次",
         "gate": "门禁",
         "gateCheckFailed": "未满足访问门禁",

@@ -67,14 +67,24 @@
                 <Translatable resourceKey={i18nKey("access.evaluationInterval")} />
             </div>
             <div class="info">
-                <Translatable resourceKey={i18nKey("access.evaluationIntervalInfo")} />
+                <Translatable
+                    resourceKey={i18nKey(
+                        "access.evaluationIntervalInfo",
+                        undefined,
+                        level,
+                        true,
+                    )} />
             </div>
             <div class="info">
                 {#if gateConfig.expiry !== undefined}
-                    <DurationPicker
+                    <!-- <DurationPicker
                         bind:valid={evaluationIntervalValid}
                         bind:milliseconds={gateConfig.expiry}
-                        unitFilter={(u) => !["minutes", "hours"].includes(u)} />
+                        unitFilter={(u) => !["minutes", "hours"].includes(u)} /> -->
+
+                    <DurationPicker
+                        bind:valid={evaluationIntervalValid}
+                        bind:milliseconds={gateConfig.expiry} />
                 {/if}
             </div>
         </Checkbox>

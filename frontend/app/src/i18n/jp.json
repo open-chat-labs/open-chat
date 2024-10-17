@@ -44,7 +44,7 @@
         "diamondMember": "ダイヤモンド会員",
         "doYouHaveUniquePersonCredential": "重要! 続行する前に、 <a target='_blank' href='https://id.decideai.xyz'>DecideAI Web サイト</a>を通じて自分の固有の人物であることを確認しておいてください。",
         "evaluationInterval": "アクセスゲート評価間隔",
-        "evaluationIntervalInfo": "アクセス ゲートの定期的な再評価を強制することもできます。ユーザーのアクセスが失効すると、アクセス条件がまだ満たされていることを再評価するまで、そのユーザーはグループとやり取りできなくなります。",
+        "evaluationIntervalInfo": "アクセス ゲートの定期的な再評価を強制することもできます。メンバーのアクセスが失効すると、アクセス条件がまだ満たされていることを再評価するまで、メンバーは {level} とやり取りできなくなります。",
         "evaluationIntervalSummary": "このアクセスゲートは{interval}ごとに再評価されます",
         "gate": "アクセスゲート",
         "gateCheckFailed": "アクセスゲートが満たされていません",

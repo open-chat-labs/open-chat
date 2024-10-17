@@ -44,7 +44,7 @@
         "diamondMember": "Członkostwo diamentowe",
         "doYouHaveUniquePersonCredential": "WAŻNY! Przed kontynuowaniem potwierdź, że zweryfikowałeś swoją wyjątkową osobowość za pośrednictwem <a target='_blank' href='https://id.decideai.xyz'>witryny DecideAI</a> .",
         "evaluationInterval": "Interwał oceny bramy dostępowej",
-        "evaluationIntervalInfo": "Możesz zdecydować się na wymuszenie okresowej ponownej oceny swojej bramki dostępu. Gdy dostęp użytkownika wygaśnie, nie będzie on mógł wchodzić w interakcję z grupą, dopóki nie dokona ponownej oceny, czy warunki dostępu są nadal spełnione.",
+        "evaluationIntervalInfo": "Możesz zdecydować się na wymuszenie okresowej ponownej oceny swojej bramki dostępu. Gdy dostęp członka wygaśnie, nie będzie on mógł wchodzić w interakcję z {level}, dopóki nie dokona ponownej oceny, czy warunki dostępu są nadal spełnione.",
         "evaluationIntervalSummary": "Ta bramka dostępowa będzie ponownie oceniana co {interval}",
         "gate": "Brama dostępowa",
         "gateCheckFailed": "Brama dostępu nie została spełniona",

@@ -44,7 +44,7 @@
         "diamondMember": "Adhésion Diamant",
         "doYouHaveUniquePersonCredential": "IMPORTANT! Veuillez confirmer que vous avez vérifié votre personnalité unique via <a target='_blank' href='https://id.decideai.xyz'>le site Web DecideAI</a> _avant_ de continuer.",
         "evaluationInterval": "Intervalle d'évaluation de la porte d'accès",
-        "evaluationIntervalInfo": "Vous pouvez choisir d'appliquer la réévaluation périodique de votre portail d'accès. Lorsque l'accès d'un utilisateur expire, il ne pourra pas interagir avec le groupe tant qu'il n'aura pas réévalué que les conditions d'accès sont toujours remplies.",
+        "evaluationIntervalInfo": "Vous pouvez choisir d'appliquer la réévaluation périodique de votre portail d'accès. Lorsque l'accès d'un membre expire, il ne pourra pas interagir avec {level} tant qu'il n'aura pas réévalué que les conditions d'accès sont toujours remplies.",
         "evaluationIntervalSummary": "Cette porte d'accès sera réévaluée tous les {interval}",
         "gate": "Porte d'accès",
         "gateCheckFailed": "Porte d'accès non rencontrée",

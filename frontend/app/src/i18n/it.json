@@ -44,7 +44,7 @@
         "diamondMember": "Adesione diamante",
         "doYouHaveUniquePersonCredential": "IMPORTANTE! Conferma di aver verificato la tua personalità unica tramite <a target='_blank' href='https://id.decideai.xyz'>il sito web DecideAI</a> _prima_ di procedere.",
         "evaluationInterval": "Intervallo di valutazione del gate di accesso",
-        "evaluationIntervalInfo": "Puoi scegliere di imporre la rivalutazione periodica del tuo gate di accesso. Quando l'accesso di un utente scade, non sarà in grado di interagire con il gruppo finché non avrà rivalutato che le condizioni di accesso sono ancora soddisfatte.",
+        "evaluationIntervalInfo": "Puoi scegliere di imporre la rivalutazione periodica del tuo gate di accesso. Quando l'accesso di un membro scade, non sarà in grado di interagire con {level} finché non avrà rivalutato che le condizioni di accesso sono ancora soddisfatte.",
         "evaluationIntervalSummary": "Questo gate di accesso verrà rivalutato ogni {interval}",
         "gate": "Cancello di accesso",
         "gateCheckFailed": "Cancello di accesso non rispettato",

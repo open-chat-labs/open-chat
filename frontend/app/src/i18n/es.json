@@ -44,7 +44,7 @@
         "diamondMember": "Membresía Diamante",
         "doYouHaveUniquePersonCredential": "¡IMPORTANTE! Confirme que ha verificado su personalidad única a través <a target='_blank' href='https://id.decideai.xyz'>del sitio web de DecideAI</a> _antes_ de continuar.",
         "evaluationInterval": "Intervalo de evaluación de la puerta de acceso",
-        "evaluationIntervalInfo": "Puede optar por aplicar la reevaluación periódica de su puerta de acceso. Cuando el acceso de un usuario caduque, no podrá interactuar con el grupo hasta que haya reevaluado que las condiciones de acceso aún se cumplen.",
+        "evaluationIntervalInfo": "Puede optar por aplicar la reevaluación periódica de su puerta de acceso. Cuando el acceso de un miembro caduque, no podrá interactuar con {level} hasta que haya reevaluado que las condiciones de acceso aún se cumplan.",
         "evaluationIntervalSummary": "Esta puerta de acceso se volverá a evaluar cada {interval}",
         "gate": "Puerta de acceso",
         "gateCheckFailed": "Puerta de acceso no cumplida",

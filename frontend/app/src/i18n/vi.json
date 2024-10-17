@@ -44,7 +44,7 @@
         "diamondMember": "thành viên kim cương",
         "doYouHaveUniquePersonCredential": "QUAN TRỌNG! Vui lòng xác nhận rằng bạn đã xác minh tư cách cá nhân duy nhất của mình thông qua <a target='_blank' href='https://id.decideai.xyz'>trang web DecisionAI</a> _trước khi_ bạn tiếp tục.",
         "evaluationInterval": "Khoảng thời gian đánh giá cổng truy cập",
-        "evaluationIntervalInfo": "Bạn có thể chọn thực thi đánh giá lại định kỳ cổng truy cập của mình. Khi quyền truy cập của người dùng hết hạn, họ sẽ không thể tương tác với nhóm cho đến khi họ đánh giá lại rằng các điều kiện truy cập vẫn được đáp ứng.",
+        "evaluationIntervalInfo": "Bạn có thể chọn thực thi đánh giá lại định kỳ cổng truy cập của mình. Khi quyền truy cập của thành viên hết hạn, họ sẽ không thể tương tác với {level} cho đến khi họ đánh giá lại rằng các điều kiện truy cập vẫn được đáp ứng.",
         "evaluationIntervalSummary": "Cổng truy cập này sẽ được đánh giá lại sau mỗi {interval}",
         "gate": "cổng ra vào",
         "gateCheckFailed": "Cổng truy cập không được đáp ứng",
