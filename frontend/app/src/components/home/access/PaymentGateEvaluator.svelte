@@ -1,6 +1,12 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import { type PaymentGate, type OpenChat, type ResourceKey, type Level } from "openchat-client";
+    import {
+        type PaymentGate,
+        type OpenChat,
+        type ResourceKey,
+        type Level,
+        type PaymentGateApprovals,
+    } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
@@ -19,6 +25,7 @@
 
     export let gate: PaymentGate & { expiry: bigint | undefined };
     export let level: Level;
+    export let paymentApprovals: PaymentGateApprovals;
 
     let error: ResourceKey | undefined = undefined;
     let balanceWithRefresh: BalanceWithRefresh;
@@ -27,7 +34,12 @@
     $: user = client.user;
     $: token = client.getTokenDetailsForAccessGate(gate)!;
     $: cryptoBalanceStore = client.cryptoBalance;
-    $: cryptoBalance = $cryptoBalanceStore[token.ledger] ?? BigInt(0);
+    $: originalBalance = $cryptoBalanceStore[token.ledger] ?? BigInt(0);
+    $: cryptoBalance = balanceAfterCurrentCommitments(
+        token.ledger,
+        paymentApprovals,
+        originalBalance,
+    );
     $: insufficientFunds = cryptoBalance < gate.amount;
     $: approvalMessage = interpolate(
         $_,
@@ -46,6 +58,14 @@
         i18nKey("access.paymentDistributionMessage", undefined, level, true),
     );
     $: errorMessage = error !== undefined ? error : $pinNumberErrorMessageStore;
+
+    function balanceAfterCurrentCommitments(
+        ledger: string,
+        approvals: PaymentGateApprovals,
+        balance: bigint,
+    ) {
+        return balance - (approvals.get(ledger)?.amount ?? 0n);
+    }
 
     function onStartRefreshingBalance() {
         refreshingBalance = true;

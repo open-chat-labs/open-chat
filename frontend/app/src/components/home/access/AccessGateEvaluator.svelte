@@ -176,6 +176,7 @@
                     level={currentGate.level} />
             {:else if isPaymentGate(currentGate)}
                 <PaymentGateEvaluator
+                    {paymentApprovals}
                     gate={currentGate}
                     level={currentGate.level}
                     on:approvePayment={approvePayment}

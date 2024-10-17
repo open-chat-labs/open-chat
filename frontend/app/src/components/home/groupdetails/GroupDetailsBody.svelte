@@ -214,7 +214,7 @@
         display: flex;
         flex-direction: column;
         gap: $sp3;
-        padding: $sp3 $sp5 0 $sp5;
+        padding: $sp3 $sp4 0 $sp4;
 
         @include mobile() {
             padding: $sp3 $sp4 0 $sp4;
