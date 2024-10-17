@@ -47,6 +47,10 @@ export function canChangeCommunityPermissions({ membership }: CommunitySummary):
     return hasOwnerRights(membership.role);
 }
 
+export function isCommunityLapsed({ membership }: CommunitySummary): boolean {
+    return membership.lapsed;
+}
+
 export function canDeleteCommunity({ membership }: CommunitySummary): boolean {
     return hasOwnerRights(membership.role);
 }

@@ -32,7 +32,7 @@
     $: chatListScope = client.chatListScope;
     $: chatSummariesStore = client.chatSummariesStore;
     $: member = $chatSummariesStore.has(group.id);
-    $: locked = isLocked(group.gate);
+    $: locked = isLocked(group.gateConfig.gate);
 
     function dismiss({ id }: GroupChatSummary) {
         dispatch("dismissRecommendation", id);
@@ -84,7 +84,7 @@
     </div>
     <Footer align="end">
         <div class="gate">
-            <AccessGateIcon clickable level={group.level} gate={group.gate} />
+            <AccessGateIcon clickable level={group.level} gateConfig={group.gateConfig} />
         </div>
         {#if member}
             <Button tiny on:click={() => leaveGroup(group)}

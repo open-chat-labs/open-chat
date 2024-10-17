@@ -32,7 +32,7 @@
             banner={$selectedCommunity.banner}
             avatar={$selectedCommunity.avatar}
             memberCount={$selectedCommunity.memberCount}
-            gate={$selectedCommunity.gate}
+            gateConfig={$selectedCommunity.gateConfig}
             language={$selectedCommunity.primaryLanguage}
             flags={0}
             channelCount={0}

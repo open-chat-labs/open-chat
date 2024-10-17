@@ -54,10 +54,12 @@
     $: currentChatMembers = client.currentChatMembers;
     $: currentChatInvited = client.currentChatInvitedUsers;
     $: currentChatBlocked = client.currentChatBlockedUsers;
+    $: currentChatLapsedMembers = client.currentChatLapsedMembers;
     $: currentChatPinnedMessages = client.currentChatPinnedMessages;
     $: currentCommunityMembers = client.currentCommunityMembers;
     $: currentCommunityInvited = client.currentCommunityInvitedUsers;
     $: currentCommunityBlocked = client.currentCommunityBlockedUsers;
+    $: currentCommunityLapsed = client.currentCommunityLapsedMembers;
     $: selectedCommunity = client.selectedCommunity;
     $: eventsStore = client.eventsStore;
     $: userStore = client.userStore;
@@ -148,19 +150,18 @@
                 .then((resp) => {
                     if (resp) {
                         popRightPanelHistory();
-                            if ($multiUserChat?.public ?? false) {
-                                toastStore.showSuccessToast(i18nKey("group.usersInvited"));
-                            }
-
+                        if ($multiUserChat?.public ?? false) {
+                            toastStore.showSuccessToast(i18nKey("group.usersInvited"));
+                        }
                     } else {
                         toastStore.showFailureToast(
-                                i18nKey(
-                                    "group.inviteUsersFailed",
-                                    undefined,
-                                    $multiUserChat.level,
-                                    true,
-                                ),
-                            );
+                            i18nKey(
+                                "group.inviteUsersFailed",
+                                undefined,
+                                $multiUserChat.level,
+                                true,
+                            ),
+                        );
                     }
                 })
                 .catch((err) => {
@@ -462,6 +463,7 @@
                 invited={$currentCommunityInvited}
                 members={[...$currentCommunityMembers.values()]}
                 blocked={$currentCommunityBlocked}
+                lapsed={$currentCommunityLapsed}
                 initialUsergroup={lastState.userGroupId}
                 on:close={popRightPanelHistory}
                 on:blockUser={onBlockCommunityUser}
@@ -470,8 +472,7 @@
                 on:showInviteUsers={showInviteCommunityUsers}
                 on:removeMember={onRemoveCommunityMember}
                 on:changeRole={onChangeCommunityRole}
-                on:cancelInvite={onCancelCommunityInvite}
-                />
+                on:cancelInvite={onCancelCommunityInvite} />
         {/if}
     {:else if lastState.kind === "invite_group_users" && $multiUserChat !== undefined}
         {#if $multiUserChat.kind === "channel" && $selectedCommunity !== undefined}
@@ -505,13 +506,14 @@
             invited={$currentChatInvited}
             members={$currentChatMembers}
             blocked={$currentChatBlocked}
+            lapsed={$currentChatLapsedMembers}
             on:close={popRightPanelHistory}
             on:blockUser={onBlockGroupUser}
             on:unblockUser={onUnblockGroupUser}
             on:chatWith
             on:showInviteUsers={showInviteGroupUsers}
             on:removeMember={onRemoveGroupMember}
-            on:changeRole={onChangeGroupRole} 
+            on:changeRole={onChangeGroupRole}
             on:cancelInvite={onCancelGroupInvite} />
     {:else if lastState.kind === "show_group_members" && $selectedChatId !== undefined && $multiUserChat !== undefined && $multiUserChat.kind === "channel" && $selectedCommunity !== undefined}
         <ChannelOrCommunityMembers
@@ -530,7 +532,7 @@
             on:showInviteGroupUsers={showInviteGroupUsers}
             on:changeGroupRole={onChangeGroupRole}
             on:close={popRightPanelHistory}
-            on:chatWith 
+            on:chatWith
             on:cancelGroupInvite={onCancelGroupInvite}
             on:cancelCommunityInvite={onCancelCommunityInvite} />
     {:else if lastState.kind === "show_pinned" && $selectedChatId !== undefined && ($selectedChatId.kind === "group_chat" || $selectedChatId.kind === "channel") && $multiUserChat !== undefined}

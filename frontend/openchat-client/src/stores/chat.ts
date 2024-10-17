@@ -81,6 +81,7 @@ export const selectedChatId = derived(selectedMessageContext, ($messageContext) 
 export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>(
     selectedChatId,
     () => ({
+        lapsedMembers: new Set<string>(),
         members: [],
         membersMap: new Map(),
         blockedUsers: new Set<string>(),
@@ -146,6 +147,13 @@ export const currentChatMembersMap = createDerivedPropStore<ChatSpecificState, "
     chatStateStore,
     "membersMap",
     () => new Map(),
+);
+
+export const currentChatLapsedMembers = createDerivedPropStore<ChatSpecificState, "lapsedMembers">(
+    chatStateStore,
+    "lapsedMembers",
+    () => new Set<string>(),
+    setsAreEqual,
 );
 
 export const currentChatBlockedUsers = createDerivedPropStore<ChatSpecificState, "blockedUsers">(

@@ -179,7 +179,7 @@
 
     beforeUpdate(() => {
         if (previousScope === $chatListScope && view !== "chats" && previousView === "chats") {
-            chatsScrollTop = chatListElement.scrollTop;
+            chatsScrollTop = chatListElement?.scrollTop;
         }
     });
 

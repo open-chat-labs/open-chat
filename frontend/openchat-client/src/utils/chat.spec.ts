@@ -58,11 +58,12 @@ const defaultGroupChat: GroupChatSummary = {
     frozen: false,
     dateLastPinned: undefined,
     dateReadPinned: undefined,
-    gate: { kind: "no_gate" },
+    gateConfig: { gate: { kind: "no_gate" }, expiry: undefined },
     level: "group",
     eventsTTL: undefined,
     eventsTtlLastUpdated: BigInt(0),
     membership: {
+        lapsed: false,
         archived: false,
         mentions: [],
         notificationsMuted: false,

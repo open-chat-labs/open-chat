@@ -4,12 +4,12 @@
     import { iconSize } from "../../../stores/iconSize";
     import { fade } from "svelte/transition";
     import AccessGateSummary from "./AccessGateSummary.svelte";
-    import type { AccessGate, Level } from "openchat-client";
+    import type { AccessGateConfig, Level } from "openchat-client";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import AlertBox from "../../AlertBox.svelte";
 
-    export let gate: AccessGate;
+    export let gateConfig: AccessGateConfig;
     export let level: Level;
     export let valid: boolean;
 </script>
@@ -21,9 +21,15 @@
     <div class="section">
         <div class="section-title">{$_("access.chooseGate")}</div>
         <div class="choose-gate">
-            <AccessGateSummary on:updated showNoGate={true} bind:valid {level} editable bind:gate />
+            <AccessGateSummary
+                on:updated
+                showNoGate={true}
+                bind:valid
+                {level}
+                editable
+                bind:gateConfig />
         </div>
-        {#if gate.kind !== "no_gate"}
+        {#if gateConfig.gate.kind !== "no_gate"}
             <AlertBox>
                 <Translatable
                     resourceKey={i18nKey("access.bypassWarning", undefined, level, true)} />
@@ -56,7 +62,7 @@
     }
 
     .section {
-        margin-bottom: $sp6;
+        margin-bottom: $sp4;
     }
 
     .choose-gate {

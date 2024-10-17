@@ -1,6 +1,12 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import type { PaymentGate, OpenChat, ResourceKey, Level } from "openchat-client";
+    import {
+        type PaymentGate,
+        type OpenChat,
+        type ResourceKey,
+        type Level,
+        type PaymentGateApprovals,
+    } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
@@ -11,12 +17,15 @@
     import AccountInfo from "../AccountInfo.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Markdown from "../Markdown.svelte";
+    import AlertBox from "../../AlertBox.svelte";
+    import AccessGateExpiry from "./AccessGateExpiry.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    export let gate: PaymentGate;
+    export let gate: PaymentGate & { expiry: bigint | undefined };
     export let level: Level;
+    export let paymentApprovals: PaymentGateApprovals;
 
     let error: ResourceKey | undefined = undefined;
     let balanceWithRefresh: BalanceWithRefresh;
@@ -25,7 +34,12 @@
     $: user = client.user;
     $: token = client.getTokenDetailsForAccessGate(gate)!;
     $: cryptoBalanceStore = client.cryptoBalance;
-    $: cryptoBalance = $cryptoBalanceStore[token.ledger] ?? BigInt(0);
+    $: originalBalance = $cryptoBalanceStore[token.ledger] ?? BigInt(0);
+    $: cryptoBalance = balanceAfterCurrentCommitments(
+        token.ledger,
+        paymentApprovals,
+        originalBalance,
+    );
     $: insufficientFunds = cryptoBalance < gate.amount;
     $: approvalMessage = interpolate(
         $_,
@@ -45,6 +59,14 @@
     );
     $: errorMessage = error !== undefined ? error : $pinNumberErrorMessageStore;
 
+    function balanceAfterCurrentCommitments(
+        ledger: string,
+        approvals: PaymentGateApprovals,
+        balance: bigint,
+    ) {
+        return balance - (approvals.get(ledger)?.amount ?? 0n);
+    }
+
     function onStartRefreshingBalance() {
         refreshingBalance = true;
     }
@@ -63,7 +85,11 @@
         if (insufficientFunds) {
             balanceWithRefresh.refresh();
         } else {
-            dispatch("next");
+            dispatch("approvePayment", {
+                ledger: token.ledger,
+                amount: gate.amount,
+                approvalFee: token.transferFee,
+            });
         }
     }
 </script>
@@ -89,6 +115,11 @@
     <p>
         <Markdown text={approvalMessage + " " + distributionMessage} />
     </p>
+    {#if gate.expiry !== undefined}
+        <AlertBox>
+            <AccessGateExpiry expiry={gate.expiry} />
+        </AlertBox>
+    {/if}
     {#if errorMessage !== undefined}
         <div class="error">
             <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>

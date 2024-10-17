@@ -3,7 +3,7 @@
 <script lang="ts">
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import Pound from "svelte-material-icons/Pound.svelte";
-    import type { AccessGate, DataContent, OpenChat } from "openchat-client";
+    import type { AccessGateConfig, DataContent, OpenChat } from "openchat-client";
     import Avatar from "../../../Avatar.svelte";
     import IntersectionObserver from "../../IntersectionObserver.svelte";
     import { _ } from "svelte-i18n";
@@ -25,7 +25,7 @@
     export let memberCount: number;
     export let channelCount: number;
     export let header = false;
-    export let gate: AccessGate;
+    export let gateConfig: AccessGateConfig;
     export let language: string;
     export let flags: number;
 
@@ -56,7 +56,7 @@
                     level={"community"}
                     position={"bottom"}
                     align={"end"}
-                    {gate} />
+                    {gateConfig} />
             </div>
             <div class="avatar">
                 <Avatar

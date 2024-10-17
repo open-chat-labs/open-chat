@@ -19,6 +19,7 @@ import type {
     OptionalGroupPermissions as TOptionalGroupPermissions,
     OptionalMessagePermissions as TOptionalMessagePermissions,
     UpdatedRules as TUpdatedRules,
+    GroupMembershipUpdates as TGroupMembershipUpdates,
 } from "../../typebox";
 import type {
     ChatEvent,
@@ -40,10 +41,11 @@ import type {
     FollowThreadResponse,
     OptionalChatPermissions,
     OptionalMessagePermissions,
+    GroupMembershipUpdates,
 } from "openchat-shared";
-import { CommonResponses, UnsupportedValueError } from "openchat-shared";
+import { CommonResponses, emptyChatMetrics, UnsupportedValueError } from "openchat-shared";
 import {
-    accessGate,
+    accessGateConfig,
     apiPermissionRole,
     chatMetrics,
     eventsSuccessResponse,
@@ -112,26 +114,41 @@ export function groupChatSummary(
         latestMessage: mapOptional(value.latest_message, messageEvent),
         latestEventIndex: value.latest_event_index,
         latestMessageIndex: value.latest_message_index,
-        joined: value.joined,
         memberCount: value.participant_count,
-        myRole: memberRole(value.role),
-        mentions: value.mentions
-            .filter((m) => m.thread_root_message_index !== undefined)
-            .map(mention),
         permissions: groupPermissions(value.permissions_v2),
-        notificationsMuted: value.notifications_muted,
         metrics: chatMetrics(value.metrics),
-        myMetrics: chatMetrics(value.my_metrics),
-        latestThreads: value.latest_threads.map(threadSyncDetails),
         frozen: value.frozen !== undefined,
         dateLastPinned: value.date_last_pinned,
-        gate: mapOptional(value.gate, accessGate) ?? { kind: "no_gate" },
-        rulesAccepted: value.rules_accepted,
+        gateConfig: mapOptional(value.gate_config, accessGateConfig) ?? {
+            gate: { kind: "no_gate" },
+            expiry: undefined,
+        },
         eventsTTL: value.events_ttl,
         eventsTtlLastUpdated: value.events_ttl_last_updated,
         localUserIndex: principalBytesToString(value.local_user_index_canister_id),
         videoCallInProgress: mapOptional(value.video_call_in_progress, (v) => v.message_index),
         messagesVisibleToNonMembers: value.messages_visible_to_non_members,
+        membership: mapOptional(value.membership, (m) => ({
+            joined: m.joined,
+            role: memberRole(m.role),
+            notificationsMuted: m.notifications_muted,
+            lapsed: m.lapsed,
+            rulesAccepted: m.rules_accepted,
+            latestThreads: m.latest_threads.map(threadSyncDetails),
+            mentions: m.mentions
+                .filter((m) => m.thread_root_message_index !== undefined)
+                .map(mention),
+            myMetrics: chatMetrics(m.my_metrics),
+        })) ?? {
+            joined: 0n,
+            role: "none",
+            mentions: [],
+            latestThreads: [],
+            myMetrics: emptyChatMetrics(),
+            notificationsMuted: false,
+            rulesAccepted: false,
+            lapsed: false,
+        },
     };
 }
 
@@ -153,6 +170,21 @@ export function summaryUpdatesResponse(
     );
 }
 
+export function groupMembershipUpdates(value: TGroupMembershipUpdates): GroupMembershipUpdates {
+    return {
+        myRole: mapOptional(value.role, memberRole),
+        mentions: value.mentions
+            .filter((m) => m.thread_root_message_index === undefined)
+            .map(mention),
+        notificationsMuted: value.notifications_muted,
+        myMetrics: mapOptional(value.my_metrics, chatMetrics),
+        latestThreads: value.latest_threads.map(threadSyncDetails),
+        unfollowedThreads: Array.from(value.unfollowed_threads),
+        rulesAccepted: value.rules_accepted,
+        lapsed: value.lapsed,
+    };
+}
+
 export function groupChatSummaryUpdates(
     value: TGroupCanisterGroupChatSummaryUpdates,
 ): GroupCanisterGroupChatSummaryUpdates {
@@ -168,25 +200,17 @@ export function groupChatSummaryUpdates(
         latestEventIndex: value.latest_event_index,
         latestMessageIndex: value.latest_message_index,
         memberCount: value.participant_count,
-        myRole: mapOptional(value.role, memberRole),
-        mentions: value.mentions
-            .filter((m) => m.thread_root_message_index === undefined)
-            .map(mention),
         permissions: mapOptional(value.permissions_v2, groupPermissions),
-        notificationsMuted: value.notifications_muted,
         metrics: mapOptional(value.metrics, chatMetrics),
-        myMetrics: mapOptional(value.my_metrics, chatMetrics),
-        latestThreads: value.latest_threads.map(threadSyncDetails),
-        unfollowedThreads: Array.from(value.unfollowed_threads),
         frozen: optionUpdateV2(value.frozen, (_) => true),
         updatedEvents: value.updated_events.map(updatedEvent),
         dateLastPinned: value.date_last_pinned,
-        gate: optionUpdateV2(value.gate, accessGate),
-        rulesAccepted: value.rules_accepted,
+        gateConfig: optionUpdateV2(value.gate_config, accessGateConfig),
         eventsTTL: optionUpdateV2(value.events_ttl, identity),
         eventsTtlLastUpdated: value.events_ttl_last_updated,
         videoCallInProgress: optionUpdateV2(value.video_call_in_progress, (v) => v.message_index),
         messagesVisibleToNonMembers: value.messages_visible_to_non_members,
+        membership: mapOptional(value.membership, groupMembershipUpdates),
     };
 }
 
@@ -355,6 +379,9 @@ export function sendMessageResponse(value: GroupSendMessageResponse): SendMessag
     }
     if (value === "RulesNotAccepted") {
         return { kind: "rules_not_accepted" };
+    }
+    if (value === "UserLapsed") {
+        return { kind: "user_lapsed" };
     }
 
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", value);

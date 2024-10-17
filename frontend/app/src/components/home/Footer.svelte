@@ -28,6 +28,7 @@
 
     export let blocked: boolean;
     export let preview: boolean;
+    export let lapsed: boolean;
     export let joining: MultiUserChat | undefined;
     export let chat: ChatSummary;
     export let attachment: AttachmentContent | undefined;
@@ -140,6 +141,7 @@
         {externalContent}
         {mode}
         {preview}
+        {lapsed}
         {blocked}
         {joining}
         {attachment}

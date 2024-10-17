@@ -4,31 +4,48 @@
     import Select from "../Select.svelte";
     import { _ } from "svelte-i18n";
     import type { OpenChat } from "openchat-client";
+    import { msToDays, msToHours, msToMinutes, msToMonths, msToWeeks } from "../../utils/time";
 
     const ONE_MINUTE = 1000 * 60;
     const ONE_HOUR = ONE_MINUTE * 60;
     const ONE_DAY = ONE_HOUR * 24;
+    const ONE_WEEK = ONE_DAY * 7;
+    const ONE_MONTH = ONE_WEEK * 4;
     const client = getContext<OpenChat>("client");
+
+    type DurationUnit = "minutes" | "hours" | "days" | "weeks" | "months";
 
     export let valid = true;
     export let milliseconds: bigint = BigInt(ONE_HOUR);
     export let disabled = false;
+    export let unitFilter = (_: DurationUnit) => true;
 
     let initialised = false;
     let amount: string;
-    let unit: "minutes" | "hours" | "days";
+    let unit: DurationUnit;
+
+    $: allUnits = ["minutes", "hours", "days", "weeks", "months"] as DurationUnit[];
+    $: supportedDurations = allUnits.filter(unitFilter);
 
     onMount(() => {
-        const { days, hours, minutes } = client.durationFromMilliseconds(Number(milliseconds));
-        if (days > 0) {
-            amount = days.toString();
-            unit = "days";
-        } else if (hours > 0) {
-            amount = hours.toString();
-            unit = "hours";
-        } else if (minutes > 0) {
-            amount = minutes.toString();
+        const duration = client.durationFromMilliseconds(Number(milliseconds));
+        const { days, hours, minutes, weeks, months, total } = duration;
+
+        if (minutes > 0) {
+            amount = msToMinutes(total).toString();
             unit = "minutes";
+        } else if (hours > 0) {
+            amount = msToHours(total).toString();
+            unit = "hours";
+        } else if (days > 0) {
+            amount = msToDays(total).toString();
+            unit = "days";
+        } else if (weeks > 0) {
+            amount = msToWeeks(total).toString();
+            unit = "weeks";
+        } else if (months > 0) {
+            amount = msToMonths(total).toString();
+            unit = "months";
         }
         initialised = true;
     });
@@ -42,6 +59,12 @@
         }
         valid = true;
         switch (unit) {
+            case "months":
+                milliseconds = BigInt(ONE_MONTH * ttlNum);
+                break;
+            case "weeks":
+                milliseconds = BigInt(ONE_WEEK * ttlNum);
+                break;
             case "minutes":
                 milliseconds = BigInt(ONE_MINUTE * ttlNum);
                 break;
@@ -66,9 +89,9 @@
 
     <div class="units">
         <Select {disabled} margin={false} on:change={() => updateAmount(amount)} bind:value={unit}>
-            <option value={"minutes"}>{$_("minutes")}</option>
-            <option value={"hours"}>{$_("hours")}</option>
-            <option value={"days"}>{$_("days")}</option>
+            {#each supportedDurations as duration}
+                <option value={duration}>{$_(duration)}</option>
+            {/each}
         </Select>
     </div>
 </div>

@@ -2,7 +2,7 @@ import type DRange from "drange";
 import type { DataContent } from "../data/data";
 import type { Referral, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
-import type { AccessGate, AccessControlled, VersionedRules, UpdatedRules } from "../access";
+import type { AccessControlled, VersionedRules, UpdatedRules, AccessGateConfig } from "../access";
 import type {
     ChatPermissionRole,
     ChatPermissions,
@@ -674,7 +674,7 @@ export type LocalChatSummaryUpdates = {
               public?: boolean;
               permissions?: OptionalChatPermissions;
               frozen?: boolean;
-              gate?: AccessGate;
+              gateConfig?: AccessGateConfig;
               notificationsMuted?: boolean;
               archived?: boolean;
               rulesAccepted?: boolean;
@@ -1302,6 +1302,7 @@ export type Member = {
     role: MemberRole;
     userId: string;
     displayName: string | undefined;
+    lapsed: boolean;
 };
 
 export type FullMember = Member & UserSummary;
@@ -1327,6 +1328,7 @@ export type GroupChatDetails = {
  * All properties are optional but individual derived stores can provide their own default values
  */
 export type ChatSpecificState = {
+    lapsedMembers: Set<string>;
     members: Member[];
     membersMap: Map<string, Member>;
     blockedUsers: Set<string>;
@@ -1433,6 +1435,7 @@ export function nullMembership(): ChatMembership {
         readByMeUpTo: undefined,
         archived: false,
         rulesAccepted: false,
+        lapsed: false,
     };
 }
 
@@ -1446,6 +1449,7 @@ export type ChatMembership = {
     readByMeUpTo: number | undefined;
     archived: boolean;
     rulesAccepted: boolean;
+    lapsed: boolean;
 };
 
 export type GroupCanisterSummaryResponse =
@@ -1471,22 +1475,27 @@ export type GroupCanisterGroupChatSummary = AccessControlled &
         latestMessage: EventWrapper<Message> | undefined;
         latestEventIndex: number;
         latestMessageIndex: number | undefined;
-        joined: bigint;
-        myRole: MemberRole;
         memberCount: number;
-        mentions: Mention[];
-        notificationsMuted: boolean;
         metrics: Metrics;
-        myMetrics: Metrics;
-        latestThreads: GroupCanisterThreadDetails[];
         dateLastPinned: bigint | undefined;
-        rulesAccepted: boolean;
         eventsTTL?: bigint;
         eventsTtlLastUpdated: bigint;
         localUserIndex: string;
         videoCallInProgress?: number;
         messagesVisibleToNonMembers: boolean;
+        membership: GroupCanisterGroupMembership;
     };
+
+export type GroupCanisterGroupMembership = {
+    role: ChatPermissionRole;
+    notificationsMuted: boolean;
+    lapsed: boolean;
+    joined: bigint;
+    rulesAccepted: boolean;
+    latestThreads: ThreadSyncDetails[];
+    mentions: Mention[];
+    myMetrics: Metrics;
+};
 
 export type UpdatedEvent = {
     eventIndex: number;
@@ -1506,23 +1515,28 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     latestEventIndex: number | undefined;
     latestMessageIndex: number | undefined;
     memberCount: number | undefined;
-    myRole: MemberRole | undefined;
-    mentions: Mention[];
     permissions: ChatPermissions | undefined;
-    notificationsMuted: boolean | undefined;
     metrics: Metrics | undefined;
-    myMetrics: Metrics | undefined;
-    latestThreads: GroupCanisterThreadDetails[];
-    unfollowedThreads: number[];
     frozen: OptionUpdate<boolean>;
     updatedEvents: UpdatedEvent[];
     dateLastPinned: bigint | undefined;
-    gate: OptionUpdate<AccessGate>;
-    rulesAccepted: boolean | undefined;
+    gateConfig: OptionUpdate<AccessGateConfig>;
     eventsTTL: OptionUpdate<bigint>;
     eventsTtlLastUpdated?: bigint;
     videoCallInProgress: OptionUpdate<number>;
     messagesVisibleToNonMembers?: boolean;
+    membership: GroupMembershipUpdates | undefined;
+};
+
+export type GroupMembershipUpdates = {
+    myRole: MemberRole | undefined;
+    notificationsMuted: boolean | undefined;
+    lapsed: boolean | undefined;
+    unfollowedThreads: number[];
+    rulesAccepted: boolean | undefined;
+    latestThreads: GroupCanisterThreadDetails[];
+    mentions: Mention[];
+    myMetrics: Metrics | undefined;
 };
 
 export type GroupCanisterThreadDetails = {

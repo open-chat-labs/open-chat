@@ -1,4 +1,5 @@
 <script lang="ts">
+    import Alarm from "svelte-material-icons/Alarm.svelte";
     import AccountCheck from "svelte-material-icons/AccountCheck.svelte";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
     import VectorCombine from "svelte-material-icons/VectorCombine.svelte";
@@ -14,6 +15,7 @@
         type CryptocurrencyDetails,
         isBalanceGate,
         type Level,
+        type AccessGateConfig,
     } from "openchat-client";
     import { getContext } from "svelte";
     import type { Alignment, Position } from "../../../utils/alignment";
@@ -24,8 +26,9 @@
     import BlueDiamond from "../../icons/BlueDiamond.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import AccessGateBuilder from "./AccessGateBuilder.svelte";
+    import AccessGateExpiry from "./AccessGateExpiry.svelte";
 
-    export let gate: AccessGate;
+    export let gateConfig: AccessGateConfig;
     export let position: Position = "top";
     export let align: Alignment = "start";
     export let small = false;
@@ -38,8 +41,8 @@
 
     let showDetail = false;
 
-    $: tokenDetails = client.getTokenDetailsForAccessGate(gate);
-    $: params = formatParams(gate, tokenDetails);
+    $: tokenDetails = client.getTokenDetailsForAccessGate(gateConfig.gate);
+    $: params = formatParams(gateConfig.gate, tokenDetails);
     $: defaultColor = button ? "var(--button-txt)" : "var(--icon-txt)";
 
     function formatParams(
@@ -91,14 +94,14 @@
         valid={true}
         {level}
         on:close={() => (showDetail = false)}
-        {gate}
+        {gateConfig}
         editable={false} />
 {/if}
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div on:click={onClick} class="wrapper">
-    {#if gate.kind === "no_gate" && showNoGate}
+    {#if gateConfig.gate.kind === "no_gate" && showNoGate}
         <TooltipWrapper {position} {align}>
             <div slot="target" class="open">
                 <ShieldLockOpenOutline size={$iconSize} color={defaultColor} />
@@ -109,7 +112,7 @@
                 </TooltipPopup>
             </div>
         </TooltipWrapper>
-    {:else if gate.kind === "locked_gate"}
+    {:else if gateConfig.gate.kind === "locked_gate"}
         <TooltipWrapper {position} {align}>
             <div slot="target" class="locked"></div>
             <div let:position let:align slot="tooltip">
@@ -119,7 +122,7 @@
                 </TooltipPopup>
             </div>
         </TooltipWrapper>
-    {:else if gate.kind === "composite_gate"}
+    {:else if gateConfig.gate.kind === "composite_gate"}
         <TooltipWrapper {position} {align}>
             <div slot="target" class="composite">
                 <VectorCombine size={$iconSize} color={defaultColor} />
@@ -130,7 +133,7 @@
                 </TooltipPopup>
             </div>
         </TooltipWrapper>
-    {:else if gate.kind === "diamond_gate"}
+    {:else if gateConfig.gate.kind === "diamond_gate"}
         <TooltipWrapper {position} {align}>
             <div slot="target" class="diamond">
                 <BlueDiamond />
@@ -141,7 +144,7 @@
                 </TooltipPopup>
             </div>
         </TooltipWrapper>
-    {:else if gate.kind === "lifetime_diamond_gate"}
+    {:else if gateConfig.gate.kind === "lifetime_diamond_gate"}
         <TooltipWrapper {position} {align}>
             <div slot="target" class="diamond">
                 <GoldDiamond />
@@ -152,7 +155,7 @@
                 </TooltipPopup>
             </div>
         </TooltipWrapper>
-    {:else if gate.kind === "unique_person_gate"}
+    {:else if gateConfig.gate.kind === "unique_person_gate"}
         <TooltipWrapper {position} {align}>
             <div slot="target" class="unique">
                 <AccountCheck size={$iconSize} color={defaultColor} />
@@ -163,16 +166,16 @@
                 </TooltipPopup>
             </div>
         </TooltipWrapper>
-    {:else if gate.kind === "credential_gate"}
+    {:else if gateConfig.gate.kind === "credential_gate"}
         <TooltipWrapper {position} {align}>
             <div slot="target" class="credential">🔒️</div>
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
-                    <CredentialGatePopup {gate} />
+                    <CredentialGatePopup gate={gateConfig.gate} />
                 </TooltipPopup>
             </div>
         </TooltipWrapper>
-    {:else if gate.kind === "referred_by_member_gate"}
+    {:else if gateConfig.gate.kind === "referred_by_member_gate"}
         <TooltipWrapper {position} {align}>
             <div slot="target" class="referred_by_member">
                 <AccountPlusOutline size={$iconSize} color={defaultColor} />
@@ -183,7 +186,7 @@
                 </TooltipPopup>
             </div>
         </TooltipWrapper>
-    {:else if isNeuronGate(gate)}
+    {:else if isNeuronGate(gateConfig.gate)}
         <TooltipWrapper {position} {align}>
             <img slot="target" class="icon" class:small src={tokenDetails?.logo} />
             <div let:position let:align slot="tooltip">
@@ -199,7 +202,7 @@
                 </TooltipPopup>
             </div>
         </TooltipWrapper>
-    {:else if isPaymentGate(gate)}
+    {:else if isPaymentGate(gateConfig.gate)}
         <TooltipWrapper {position} {align}>
             <img slot="target" class="icon" class:small src={tokenDetails?.logo} />
             <div let:position let:align slot="tooltip">
@@ -215,7 +218,7 @@
                 </TooltipPopup>
             </div>
         </TooltipWrapper>
-    {:else if isBalanceGate(gate)}
+    {:else if isBalanceGate(gateConfig.gate)}
         <TooltipWrapper {position} {align}>
             <img slot="target" class="icon" class:small src={tokenDetails?.logo} />
             <div let:position let:align slot="tooltip">
@@ -228,7 +231,7 @@
                                     ? {
                                           token: tokenDetails.symbol,
                                           n: client.formatTokens(
-                                              gate.minBalance,
+                                              gateConfig.gate.minBalance,
                                               tokenDetails?.decimals ?? 8,
                                           ),
                                       }
@@ -236,6 +239,19 @@
                             )} />
                     </p>
                     <p class="params">{params}</p>
+                </TooltipPopup>
+            </div>
+        </TooltipWrapper>
+    {/if}
+
+    {#if gateConfig.expiry !== undefined}
+        <TooltipWrapper {position} {align}>
+            <div slot="target" class="expiry">
+                <Alarm size={"0.9em"} color={defaultColor} />
+            </div>
+            <div let:position let:align slot="tooltip">
+                <TooltipPopup {position} {align}>
+                    <AccessGateExpiry expiry={gateConfig.expiry} />
                 </TooltipPopup>
             </div>
         </TooltipWrapper>
@@ -274,5 +290,21 @@
         width: $size;
         height: $size;
         background-image: url("/assets/locked.svg");
+    }
+
+    .wrapper {
+        display: flex;
+        gap: $sp2;
+        align-items: center;
+    }
+
+    .expiry {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        background-color: var(--icon-hv);
+        border-radius: 50%;
     }
 </style>

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type AccessGate, type Level } from "openchat-client";
+    import { type AccessGate, type AccessGateConfig, type Level } from "openchat-client";
     import AccessGateIcon from "./AccessGateIcon.svelte";
     import { gateLabel } from "../../../utils/access";
     import { i18nKey } from "../../../i18n/i18n";
@@ -10,7 +10,7 @@
 
     const dispatch = createEventDispatcher();
 
-    export let gate: AccessGate;
+    export let gateConfig: AccessGateConfig;
     export let editable: boolean;
     export let level: Level;
     export let valid: boolean = true;
@@ -18,7 +18,7 @@
 
     let showDetail = false;
 
-    $: gateText = getGateText(gate);
+    $: gateText = getGateText(gateConfig.gate);
 
     function open(e: Event) {
         e.preventDefault();
@@ -46,15 +46,15 @@
 </script>
 
 {#if showDetail}
-    <AccessGateBuilder bind:valid {level} on:close={close} bind:gate {editable} />
+    <AccessGateBuilder bind:valid {level} on:close={close} bind:gateConfig {editable} />
 {/if}
 
-{#if gate.kind !== "no_gate" || showNoGate}
+{#if gateConfig.gate.kind !== "no_gate" || showNoGate}
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div class:invalid={!valid} on:click={open} class:editable class="summary">
         <div class="icon">
-            <AccessGateIcon button {level} showNoGate {gate} />
+            <AccessGateIcon button {level} showNoGate {gateConfig} />
         </div>
         <div class="name">
             {#if gateText !== undefined}

@@ -34,7 +34,6 @@ import type {
     EventWrapper,
     OptionUpdate,
     ClaimPrizeResponse,
-    AccessGate,
     DeclineInvitationResponse,
     EventsSuccessResult,
     ChatEvent,
@@ -50,6 +49,7 @@ import type {
     SetVideoCallPresenceResponse,
     VideoCallPresence,
     VideoCallParticipantsResponse,
+    AccessGateConfig,
 } from "openchat-shared";
 import {
     DestinationInvalidError,
@@ -645,7 +645,7 @@ export class GroupClient extends CandidService {
         permissions?: OptionalChatPermissions,
         avatar?: Uint8Array,
         eventsTimeToLiveMs?: OptionUpdate<bigint>,
-        gate?: AccessGate,
+        gateConfig?: AccessGateConfig,
         isPublic?: boolean,
         messagesVisibleToNonMembers?: boolean,
     ): Promise<UpdateGroupResponse> {
@@ -669,23 +669,18 @@ export class GroupClient extends CandidService {
                 rules: mapOptional(rules, apiUpdatedRules),
                 events_ttl: apiOptionUpdateV2(identity, eventsTimeToLiveMs),
                 correlation_id: generateUint64(),
-                gate:
-                    gate === undefined
-                        ? "NoChange"
-                        : gate.kind === "no_gate"
-                        ? "SetToNone"
-                        : { SetToSome: apiAccessGate(gate) },
                 gate_config:
-                    gate === undefined
+                    gateConfig === undefined
                         ? "NoChange"
-                        : gate.kind === "no_gate"
-                        ? "SetToNone"
-                        : {
-                              SetToSome: apiAccessGateConfig({
-                                  gate,
-                                  expiry: undefined,
-                              }),
-                          },
+                        : gateConfig.gate.kind === "no_gate"
+                          ? "SetToNone"
+                          : { SetToSome: apiAccessGateConfig(gateConfig) },
+                gate:
+                    gateConfig === undefined
+                        ? "NoChange"
+                        : gateConfig.gate.kind === "no_gate"
+                          ? "SetToNone"
+                          : { SetToSome: apiAccessGate(gateConfig.gate) },
                 messages_visible_to_non_members: messagesVisibleToNonMembers,
             },
             updateGroupResponse,

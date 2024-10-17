@@ -147,7 +147,6 @@ import type {
     ProposalVoteDetails,
     SetMessageReminderResponse,
     DeclineInvitationResponse,
-    AccessGate,
     JoinCommunityResponse,
     GroupSearchResponse,
     ChatIdentifier,
@@ -214,6 +213,7 @@ import type {
     ExternalAchievement,
     ExternalAchievementsSuccess,
     ChitLeaderboardResponse,
+    AccessGateConfig,
     Verification,
 } from "openchat-shared";
 import {
@@ -763,7 +763,7 @@ export class OpenChatAgent extends EventTarget {
         permissions?: OptionalChatPermissions,
         avatar?: Uint8Array,
         eventsTimeToLive?: OptionUpdate<bigint>,
-        gate?: AccessGate,
+        gateConfig?: AccessGateConfig,
         isPublic?: boolean,
         messagesVisibleToNonMembers?: boolean,
         externalUrl?: string,
@@ -779,7 +779,7 @@ export class OpenChatAgent extends EventTarget {
                     permissions,
                     avatar,
                     eventsTimeToLive,
-                    gate,
+                    gateConfig,
                     isPublic,
                     messagesVisibleToNonMembers,
                 );
@@ -792,7 +792,7 @@ export class OpenChatAgent extends EventTarget {
                     permissions,
                     avatar,
                     eventsTimeToLive,
-                    gate,
+                    gateConfig,
                     isPublic,
                     messagesVisibleToNonMembers,
                     externalUrl,

@@ -128,13 +128,17 @@ export function mergeCommunityUpdates(
                     c?.membership?.displayName,
                 ),
                 rulesAccepted: c?.membership?.rulesAccepted ?? community.membership.rulesAccepted,
+                lapsed: c?.membership?.lapsed ?? community.membership.lapsed,
             },
             channels: mergeChannelUpdates(
                 currentChannels,
                 u?.channels ?? [],
                 c?.channelsUpdated ?? [],
             ),
-            gate: applyOptionUpdate(community.gate, c?.gate) ?? { kind: "no_gate" },
+            gateConfig: applyOptionUpdate(community.gateConfig, c?.gateConfig) ?? {
+                gate: { kind: "no_gate" },
+                expiry: undefined,
+            },
             level: "community",
             public: c?.public ?? community.public,
             frozen: applyOptionUpdate(community.frozen, c?.frozen) ?? false,
@@ -208,7 +212,10 @@ function mergeChannelUpdates(
             blobReference: applyOptionUpdate(channel.blobReference, blobReferenceUpdate),
             dateLastPinned: c?.dateLastPinned ?? channel.dateLastPinned,
             dateReadPinned: u?.dateReadPinned ?? channel.dateReadPinned,
-            gate: applyOptionUpdate(channel.gate, c?.gate) ?? { kind: "no_gate" },
+            gateConfig: applyOptionUpdate(channel.gateConfig, c?.gateConfig) ?? {
+                gate: { kind: "no_gate" },
+                expiry: undefined,
+            },
             level: "channel",
             eventsTTL: applyOptionUpdate(channel.eventsTTL, c?.eventsTTL),
             eventsTtlLastUpdated: bigIntMax(
@@ -225,7 +232,7 @@ function mergeChannelUpdates(
                     c === undefined
                         ? channel.membership.mentions
                         : [...(c.membership?.mentions ?? []), ...channel.membership.mentions],
-                role: c?.membership?.role ?? channel.membership.role,
+                role: c?.membership?.myRole ?? channel.membership.role,
                 latestThreads: mergeThreads(
                     channel.membership.latestThreads,
                     c?.membership?.latestThreads ?? [],
@@ -241,6 +248,7 @@ function mergeChannelUpdates(
                 myMetrics: c?.membership?.myMetrics ?? channel.membership.myMetrics,
                 archived: u?.archived ?? channel.membership.archived,
                 rulesAccepted: c?.membership?.rulesAccepted ?? channel.membership.rulesAccepted,
+                lapsed: c?.membership?.lapsed ?? channel.membership.lapsed,
             },
             isInvited: false,
             messagesVisibleToNonMembers:

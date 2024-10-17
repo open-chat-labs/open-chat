@@ -16,7 +16,7 @@ class LocalChatSummaryUpdatesStore extends LocalUpdatesStore<
 
     markAdded(summary: ChatSummary): void {
         this.applyUpdate(summary.id, (_) => ({
-            added: summary,
+            added: { ...summary, membership: { ...summary.membership, lapsed: false } },
             removedAtTimestamp: undefined,
         }));
     }

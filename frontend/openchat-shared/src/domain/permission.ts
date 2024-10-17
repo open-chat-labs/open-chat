@@ -36,6 +36,7 @@ export type Permissioned<T> = {
 export type HasMembershipRole = {
     membership: {
         role: MemberRole;
+        lapsed: boolean;
     };
 };
 

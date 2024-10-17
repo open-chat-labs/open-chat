@@ -71,9 +71,9 @@ import {
     unpinMessageResponse,
     updateGroupResponse,
     videoCallParticipantsResponse,
+    apiMaybeAccessGateConfig,
 } from "../common/chatMappersV2";
 import type {
-    AccessGate,
     AddMembersToChannelResponse,
     BlockCommunityUserResponse,
     CandidateChannel,
@@ -139,6 +139,7 @@ import type {
     VideoCallPresence,
     SetVideoCallPresenceResponse,
     VideoCallParticipantsResponse,
+    AccessGateConfig,
 } from "openchat-shared";
 import {
     textToCode,
@@ -421,7 +422,8 @@ export class CommunityClient extends CandidService {
                 }),
                 permissions_v2: apiGroupPermissions(channel.permissions),
                 rules: channel.rules,
-                gate: apiMaybeAccessGate(channel.gate),
+                gate_config: apiMaybeAccessGateConfig(channel.gateConfig),
+                gate: apiMaybeAccessGate(channel.gateConfig.gate),
                 messages_visible_to_non_members: channel.messagesVisibleToNonMembers,
             },
             (resp) => createGroupResponse(resp, channel.id),
@@ -1397,7 +1399,7 @@ export class CommunityClient extends CandidService {
         permissions?: OptionalChatPermissions,
         avatar?: Uint8Array,
         eventsTimeToLiveMs?: OptionUpdate<bigint>,
-        gate?: AccessGate,
+        gateConfig?: AccessGateConfig,
         isPublic?: boolean,
         messagesVisibleToNonMembers?: boolean,
         externalUrl?: string,
@@ -1414,21 +1416,18 @@ export class CommunityClient extends CandidService {
                 public: isPublic,
                 events_ttl: apiOptionUpdateV2(identity, eventsTimeToLiveMs),
                 gate:
-                    gate === undefined
+                    gateConfig === undefined
                         ? "NoChange"
-                        : gate.kind === "no_gate"
+                        : gateConfig.gate.kind === "no_gate"
                           ? "SetToNone"
-                          : { SetToSome: apiAccessGate(gate) },
+                          : { SetToSome: apiAccessGate(gateConfig.gate) },
                 gate_config:
-                    gate === undefined
+                    gateConfig === undefined
                         ? "NoChange"
-                        : gate.kind === "no_gate"
+                        : gateConfig.gate.kind === "no_gate"
                           ? "SetToNone"
                           : {
-                                SetToSome: apiAccessGateConfig({
-                                    gate,
-                                    expiry: undefined,
-                                }),
+                                SetToSome: apiAccessGateConfig(gateConfig),
                             },
                 avatar:
                     avatar === undefined
@@ -1455,7 +1454,7 @@ export class CommunityClient extends CandidService {
         permissions?: Partial<CommunityPermissions>,
         avatar?: Uint8Array,
         banner?: Uint8Array,
-        gate?: AccessGate,
+        gateConfig?: AccessGateConfig,
         isPublic?: boolean,
         primaryLanguage?: string,
     ): Promise<UpdateCommunityResponse> {
@@ -1469,21 +1468,18 @@ export class CommunityClient extends CandidService {
                 public: isPublic,
                 primary_language: primaryLanguage,
                 gate:
-                    gate === undefined
+                    gateConfig === undefined
                         ? "NoChange"
-                        : gate.kind === "no_gate"
+                        : gateConfig.gate.kind === "no_gate"
                           ? "SetToNone"
-                          : { SetToSome: apiAccessGate(gate) },
+                          : { SetToSome: apiAccessGate(gateConfig.gate) },
                 gate_config:
-                    gate === undefined
+                    gateConfig === undefined
                         ? "NoChange"
-                        : gate.kind === "no_gate"
+                        : gateConfig.gate.kind === "no_gate"
                           ? "SetToNone"
                           : {
-                                SetToSome: apiAccessGateConfig({
-                                    gate,
-                                    expiry: undefined,
-                                }),
+                                SetToSome: apiAccessGateConfig(gateConfig),
                             },
                 avatar:
                     avatar === undefined

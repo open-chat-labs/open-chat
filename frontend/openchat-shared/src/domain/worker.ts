@@ -123,7 +123,7 @@ import type {
     MemberRole,
     OptionalChatPermissions,
 } from "./permission";
-import type { AccessGate, Rules, UpdatedRules, VerifiedCredentialArgs } from "./access";
+import type { AccessGateConfig, Rules, UpdatedRules, VerifiedCredentialArgs } from "./access";
 import type {
     AddMembersToChannelResponse,
     BlockCommunityUserResponse,
@@ -921,7 +921,7 @@ type UpdateGroup = {
     permissions?: OptionalChatPermissions;
     avatar?: Uint8Array;
     eventsTimeToLive?: OptionUpdate<bigint>;
-    gate?: AccessGate;
+    gateConfig?: AccessGateConfig;
     isPublic?: boolean;
     kind: "updateGroup";
     messagesVisibleToNonMembers?: boolean;
@@ -1669,7 +1669,7 @@ type UpdateCommunity = {
     permissions?: Partial<CommunityPermissions>;
     avatar?: Uint8Array;
     banner?: Uint8Array;
-    gate?: AccessGate;
+    gateConfig?: AccessGateConfig;
     isPublic?: boolean;
     primaryLanguage?: string;
 };
