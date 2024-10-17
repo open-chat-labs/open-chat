@@ -2596,7 +2596,7 @@ export function leaveGroupResponse(
 export function deleteMessageResponse(
     value: GroupDeleteMessagesResponse | CommunityDeleteMessagesResponse,
 ): DeleteMessageResponse {
-    if (typeof value === "object" && "Success" in value) {
+    if (value === "Success") {
         return "success";
     } else {
         console.warn("DeleteMessageResponse failed with: ", value);

@@ -163,46 +163,44 @@ fn is_permitted_to_join(
         }
 
         if let Some(channel) = state.data.channels.get(&channel_id) {
-            if let Some(limit) = channel.chat.members.user_limit_reached() {
-                Err(MemberLimitReached(limit))
-            } else if channel.chat.members.is_blocked(&member.user_id) {
-                Err(UserBlocked)
-            } else if channel.chat.invited_users.get(&member.user_id).is_some() {
-                Ok(None)
-            } else if !channel.chat.is_public.value {
-                Err(NotInvited)
-            } else {
-                if let Some(channel_member) = channel.chat.members.get(&member.user_id) {
-                    if !member.lapsed() && !channel_member.lapsed() {
-                        return Err(AlreadyInChannel(Box::new(
-                            channel
-                                .summary(Some(channel_member.user_id), true, state.data.is_public, &state.data.members)
-                                .unwrap(),
-                        )));
-                    }
+            if let Some(channel_member) = channel.chat.members.get(&member.user_id) {
+                if !member.lapsed() && !channel_member.lapsed() {
+                    return Err(AlreadyInChannel(Box::new(
+                        channel
+                            .summary(Some(channel_member.user_id), true, state.data.is_public, &state.data.members)
+                            .unwrap(),
+                    )));
                 }
-
-                Ok(channel.chat.gate_config.as_ref().map(|g| {
-                    (
-                        g.clone(),
-                        CheckGateArgs {
-                            user_id: member.user_id,
-                            diamond_membership_expires_at,
-                            this_canister: state.env.canister_id(),
-                            is_unique_person: unique_person_proof.is_some(),
-                            verified_credential_args: verified_credential_args.map(|vc| CheckVerifiedCredentialGateArgs {
-                                user_ii_principal: vc.user_ii_principal,
-                                credential_jwts: vc.credential_jwts(),
-                                ic_root_key: state.data.ic_root_key.clone(),
-                                ii_canister_id: state.data.internet_identity_canister_id,
-                                ii_origin: vc.ii_origin,
-                            }),
-                            referred_by_member: false,
-                            now: state.env.now(),
-                        },
-                    )
-                }))
+            } else if let Some(limit) = channel.chat.members.user_limit_reached() {
+                return Err(MemberLimitReached(limit));
+            } else if channel.chat.members.is_blocked(&member.user_id) {
+                return Err(UserBlocked);
+            } else if channel.chat.invited_users.get(&member.user_id).is_some() {
+                return Ok(None);
+            } else if !channel.chat.is_public.value {
+                return Err(NotInvited);
             }
+
+            Ok(channel.chat.gate_config.as_ref().map(|g| {
+                (
+                    g.clone(),
+                    CheckGateArgs {
+                        user_id: member.user_id,
+                        diamond_membership_expires_at,
+                        this_canister: state.env.canister_id(),
+                        is_unique_person: unique_person_proof.is_some(),
+                        verified_credential_args: verified_credential_args.map(|vc| CheckVerifiedCredentialGateArgs {
+                            user_ii_principal: vc.user_ii_principal,
+                            credential_jwts: vc.credential_jwts(),
+                            ic_root_key: state.data.ic_root_key.clone(),
+                            ii_canister_id: state.data.internet_identity_canister_id,
+                            ii_origin: vc.ii_origin,
+                        }),
+                        referred_by_member: false,
+                        now: state.env.now(),
+                    },
+                )
+            }))
         } else {
             Err(ChannelNotFound)
         }

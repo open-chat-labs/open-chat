@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Push activity to users using `GroupedTimerJobQueue` ([#6552](https://github.com/open-chat-labs/open-chat/pull/6552))
 - Return `u128` rather than `Nat` for ICRC2 ledger errors ([#6597](https://github.com/open-chat-labs/open-chat/pull/6597))
+- Lapsed members don't need to be re-invited ([#6602](https://github.com/open-chat-labs/open-chat/pull/6602))
+- Community summary updated if details updated ([#6606](https://github.com/open-chat-labs/open-chat/pull/6606))
 
 ## [[2.0.1391](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1391-community)] - 2024-10-15
 
