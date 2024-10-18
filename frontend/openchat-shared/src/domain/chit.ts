@@ -75,6 +75,7 @@ export const achievements = [
     "voted_on_poll",
     "enabled_disappearing_messages",
     "joined_gated_group_or_community",
+    "set_pin",
     "set_community_access_gate",
     "had_message_tipped",
     "swapped_from_wallet",

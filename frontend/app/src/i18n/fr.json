@@ -702,6 +702,7 @@
         "set_community_display_name": "Définir un nom d'affichage pour la communauté",
         "set_display_name": "Mettez à jour votre nom d'affichage",
         "set_group_access_gate": "Définir une porte d'accès à un groupe/canal",
+        "set_pin": "Définissez un code PIN sur votre portefeuille",
         "showChitPopup": "Informez-moi de mes réalisations",
         "started_call": "Démarrer un appel vidéo",
         "streak_100": "Réalisez une séquence de 100 jours",
