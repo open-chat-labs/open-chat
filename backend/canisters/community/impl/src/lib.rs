@@ -293,6 +293,7 @@ impl RuntimeState {
             instruction_counts: self.data.instruction_counts_log.iter().collect(),
             event_store_client_info: self.data.event_store_client.info(),
             timer_jobs: self.data.timer_jobs.len() as u32,
+            stable_memory_event_migration_complete: self.data.stable_memory_event_migration_complete,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -361,6 +362,8 @@ struct Data {
     user_cache: UserCache,
     #[serde(default = "default_user_event_sync_queue")]
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
+    #[serde(default)]
+    stable_memory_event_migration_complete: bool,
 }
 
 fn default_user_event_sync_queue() -> GroupedTimerJobQueue<UserEventBatch> {
@@ -466,6 +469,7 @@ impl Data {
             expiring_member_actions: ExpiringMemberActions::default(),
             user_cache: UserCache::default(),
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
+            stable_memory_event_migration_complete: true,
         }
     }
 
@@ -709,6 +713,7 @@ pub struct Metrics {
     pub instruction_counts: Vec<InstructionCountEntry>,
     pub event_store_client_info: EventStoreClientInfo,
     pub timer_jobs: u32,
+    pub stable_memory_event_migration_complete: bool,
     pub canister_ids: CanisterIds,
 }
 

@@ -113,6 +113,10 @@ impl DerefMut for Tips {
 }
 
 impl Tips {
+    pub fn new(tips: Vec<(CanisterId, Vec<(UserId, u128)>)>) -> Tips {
+        Tips(tips)
+    }
+
     pub fn push(&mut self, ledger: CanisterId, user_id: UserId, amount: u128) {
         if let Some((_, tips)) = self.iter_mut().find(|(c, _)| *c == ledger) {
             if let Some((_, total)) = tips.iter_mut().find(|(u, _)| *u == user_id) {

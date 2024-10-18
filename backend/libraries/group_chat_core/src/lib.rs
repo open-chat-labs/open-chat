@@ -1222,7 +1222,7 @@ impl GroupChatCore {
                     // If there is only an initial "group created" event then allow these users
                     // to see the "group created" event by starting min_visible_* at zero
                     let events_reader = self.events.main_events_reader();
-                    if events_reader.len() > 1 {
+                    if events_reader.latest_event_index().unwrap_or_default() > EventIndex::from(1) {
                         min_visible_event_index = events_reader.next_event_index();
                         min_visible_message_index = events_reader.next_message_index();
                     }

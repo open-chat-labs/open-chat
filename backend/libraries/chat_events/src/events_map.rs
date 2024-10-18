@@ -1,4 +1,5 @@
 use crate::ChatEventInternal;
+use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::ops::RangeBounds;
 use types::{EventIndex, EventWrapperInternal};
@@ -12,39 +13,32 @@ pub trait EventsMap {
         range: R,
     ) -> Box<dyn DoubleEndedIterator<Item = EventWrapperInternal<ChatEventInternal>> + '_>;
     fn iter(&self) -> Box<dyn DoubleEndedIterator<Item = EventWrapperInternal<ChatEventInternal>> + '_>;
-    fn len(&self) -> usize;
-    fn is_empty(&self) -> bool;
 }
 
-impl EventsMap for BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>> {
+#[derive(Serialize, Deserialize, Default)]
+pub struct ChatEventsMap(BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>>);
+
+impl EventsMap for ChatEventsMap {
     fn get(&self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
-        self.get(&event_index).cloned()
+        self.0.get(&event_index).cloned()
     }
 
     fn insert(&mut self, event: EventWrapperInternal<ChatEventInternal>) {
-        self.insert(event.index, event);
+        self.0.insert(event.index, event);
     }
 
     fn remove(&mut self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
-        self.remove(&event_index)
+        self.0.remove(&event_index)
     }
 
     fn range<R: RangeBounds<EventIndex>>(
         &self,
         range: R,
     ) -> Box<dyn DoubleEndedIterator<Item = EventWrapperInternal<ChatEventInternal>> + '_> {
-        Box::new(self.range(range).map(|(_, e)| e.clone()))
+        Box::new(self.0.range(range).map(|(_, e)| e.clone()))
     }
 
     fn iter(&self) -> Box<dyn DoubleEndedIterator<Item = EventWrapperInternal<ChatEventInternal>> + '_> {
-        Box::new(self.values().cloned())
-    }
-
-    fn len(&self) -> usize {
-        self.len()
-    }
-
-    fn is_empty(&self) -> bool {
-        self.is_empty()
+        Box::new(self.0.values().cloned())
     }
 }

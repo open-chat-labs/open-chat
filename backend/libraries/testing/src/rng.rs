@@ -1,12 +1,12 @@
 use crate::NNS_INTERNET_IDENTITY_CANISTER_ID;
 use candid::Principal;
 use rand::{random, RngCore};
-use types::{CanisterId, MessageId};
+use types::CanisterId;
 
-pub fn random_principal() -> Principal {
-    let random_bytes = rand::thread_rng().next_u32().to_ne_bytes();
+pub fn random_principal<T: From<Principal>>() -> T {
+    let random_bytes = rand::thread_rng().next_u64().to_ne_bytes();
 
-    Principal::from_slice(&random_bytes)
+    Principal::from_slice(&random_bytes).into()
 }
 
 pub fn random_internet_identity_principal() -> (Principal, Vec<u8>) {
@@ -29,6 +29,12 @@ pub fn random_string() -> String {
     rand::thread_rng().next_u32().to_string()
 }
 
-pub fn random_message_id() -> MessageId {
-    random()
+pub fn random_u32<T: From<u32>>() -> T {
+    let value: u32 = random();
+    value.into()
+}
+
+pub fn random_u128<T: From<u128>>() -> T {
+    let value: u128 = random();
+    value.into()
 }

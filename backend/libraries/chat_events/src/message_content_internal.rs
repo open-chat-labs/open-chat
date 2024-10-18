@@ -789,7 +789,7 @@ impl From<CompletedCryptoTransaction> for CompletedCryptoTransactionInternal {
     }
 }
 
-mod nns {
+pub(crate) mod nns {
     use super::*;
     use ic_ledger_types::AccountIdentifier;
     use serde::Deserializer;
@@ -901,7 +901,7 @@ mod nns {
     }
 }
 
-mod icrc1 {
+pub(crate) mod icrc1 {
     use super::*;
     use candid::Principal;
     use types::icrc1::Account;
@@ -909,9 +909,9 @@ mod icrc1 {
     #[derive(Serialize, Deserialize, Clone, Debug)]
     pub struct AccountInternal {
         #[serde(rename = "o", alias = "owner")]
-        owner: Principal,
+        pub owner: Principal,
         #[serde(rename = "s", alias = "subaccount", skip_serializing_if = "Option::is_none")]
-        subaccount: Option<[u8; 32]>,
+        pub subaccount: Option<[u8; 32]>,
     }
 
     impl From<AccountInternal> for Account {
@@ -1013,7 +1013,7 @@ mod icrc1 {
     }
 }
 
-mod icrc2 {
+pub(crate) mod icrc2 {
     use super::*;
     use crate::message_content_internal::icrc1::CryptoAccountInternal;
 
