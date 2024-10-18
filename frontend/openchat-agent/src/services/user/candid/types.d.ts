@@ -1401,6 +1401,7 @@ export type InitialStateResponse = {
       'communities' : CommunitiesInitial,
       'total_chit_earned' : number,
       'wallet_config' : WalletConfig,
+      'message_activity_summary' : MessageActivitySummary,
       'blocked_users' : Array<UserId>,
       'is_unique_person' : boolean,
       'referrals' : Array<Referral>,
@@ -1505,7 +1506,7 @@ export type MessageActivity = { 'Tip' : null } |
   { 'Reaction' : null };
 export interface MessageActivityEvent {
   'chat' : Chat,
-  'user_id' : UserId,
+  'user_id' : [] | [UserId],
   'timestamp' : TimestampMillis,
   'thread_root_message_index' : [] | [MessageIndex],
   'activity' : MessageActivity,
@@ -1516,9 +1517,9 @@ export type MessageActivityFeedResponse = {
     'Success' : { 'total' : number, 'events' : Array<MessageActivityEvent> }
   };
 export interface MessageActivitySummary {
+  'latest_event_timestamp' : TimestampMillis,
   'read_up_to' : TimestampMillis,
   'unread_count' : number,
-  'latest_event' : TimestampMillis,
 }
 export type MessageContent = { 'VideoCall' : VideoCallContent } |
   { 'ReportedMessage' : ReportedMessage } |
@@ -2497,6 +2498,7 @@ export type UpdatesResponse = {
       'username' : [] | [string],
       'total_chit_earned' : number,
       'wallet_config' : [] | [WalletConfig],
+      'message_activity_summary' : [] | [MessageActivitySummary],
       'blocked_users' : [] | [Array<UserId>],
       'is_unique_person' : [] | [boolean],
       'referrals' : Array<Referral>,

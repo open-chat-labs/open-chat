@@ -1155,7 +1155,32 @@ export type InitialStateResponse = {
     totalChitEarned: number;
     referrals: Referral[];
     walletConfig: WalletConfig;
+    messageActivitySummary: MessageActivitySummary;
 };
+
+export type MessageActivitySummary = {
+    readUpTo: bigint;
+    latestEventTimestamp: bigint;
+    unreadCount: number;
+};
+
+export type MessageActivityEvent = {
+    messageContext: MessageContext;
+    messageIndex: number;
+    activity: MessageActivity;
+    timestamp: bigint;
+    userId: string;
+};
+
+export type MessageActivity =
+    | "mention"
+    | "reaction"
+    | "quote_reply"
+    | "thread_reply"
+    | "tip"
+    | "crypto"
+    | "poll_vote"
+    | "p2p_swap_accepted";
 
 export type PinNumberSettings = {
     length: number;
@@ -1199,6 +1224,7 @@ export type UpdatesSuccessResponse = {
     totalChitEarned: number;
     referrals: Referral[];
     walletConfig: WalletConfig | undefined;
+    messageActivitySummary: MessageActivitySummary | undefined;
 };
 
 export type DirectChatsUpdates = {

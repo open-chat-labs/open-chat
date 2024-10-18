@@ -67,6 +67,7 @@ import type {
     ApiReferral,
     ApiWalletConfig,
     ApiSignedDelegation,
+    ApiMessageActivitySummary,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -135,6 +136,7 @@ import type {
     Referral,
     WalletConfig,
     Verification,
+    MessageActivitySummary,
 } from "openchat-shared";
 import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
@@ -919,9 +921,18 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
             totalChitEarned: result.total_chit_earned,
             referrals: result.referrals.map(referral),
             walletConfig: walletConfig(result.wallet_config),
+            messageActivitySummary: messageActivitySummary(result.message_activity_summary),
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
+}
+
+function messageActivitySummary(candid: ApiMessageActivitySummary): MessageActivitySummary {
+    return {
+        readUpTo: candid.read_up_to,
+        latestEventTimestamp: candid.latest_event_timestamp,
+        unreadCount: candid.unread_count,
+    };
 }
 
 function referral(candid: ApiReferral): Referral {
@@ -1070,6 +1081,10 @@ export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse 
             totalChitEarned: result.total_chit_earned,
             referrals: result.referrals.map(referral),
             walletConfig: optional(result.wallet_config, walletConfig),
+            messageActivitySummary: optional(
+                result.message_activity_summary,
+                messageActivitySummary,
+            ),
         };
     }
 

@@ -1457,4 +1457,13 @@ export class UserClient extends CandidService {
             toVoid,
         );
     }
+
+    markActivityFeedRead(timestamp: bigint): Promise<void> {
+        return this.handleResponse(
+            this.userService.mark_message_activity_feed_read({
+                read_up_to: timestamp,
+            }),
+            toVoid,
+        );
+    }
 }

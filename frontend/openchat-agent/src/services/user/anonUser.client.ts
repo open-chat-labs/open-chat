@@ -123,6 +123,11 @@ export class AnonUserClient {
             totalChitEarned: 0,
             referrals: [],
             walletConfig: { kind: "auto_wallet", minDollarValue: 1 },
+            messageActivitySummary: {
+                readUpTo: 0n,
+                latestEventTimestamp: 0n,
+                unreadCount: 0,
+            },
         });
     }
 
@@ -479,6 +484,10 @@ export class AnonUserClient {
     }
 
     configureWallet(_walletConfig: WalletConfig): Promise<void> {
+        throw new AnonymousOperationError();
+    }
+
+    markActivityFeedRead(_timestamp: bigint): Promise<void> {
         throw new AnonymousOperationError();
     }
 }
