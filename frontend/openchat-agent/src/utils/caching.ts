@@ -51,7 +51,7 @@ import type { CryptocurrencyContent } from "openchat-shared";
 import type { PrizeContent } from "openchat-shared";
 import type { P2PSwapContent } from "openchat-shared";
 
-const CACHE_VERSION = 116;
+const CACHE_VERSION = 117;
 const EARLIEST_SUPPORTED_MIGRATION = 115;
 const MAX_INDEX = 9999999999;
 
@@ -141,14 +141,13 @@ type MigrationFunction<T> = (
     transaction: IDBPTransaction<T, StoreNames<T>[], "versionchange">,
 ) => Promise<void>;
 
-// Leaving this here as an example - needs to be commented to keep the compiler happy
-// async function clearChatsStore(
-//     _db: IDBPDatabase<ChatSchema>,
-//     _principal: Principal,
-//     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
-// ) {
-//     await tx.objectStore("chats").clear();
-// }
+async function clearChatsStore(
+    _db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
+    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    await tx.objectStore("chats").clear();
+}
 
 async function clearGroupDetailsStore(
     _db: IDBPDatabase<ChatSchema>,
@@ -174,14 +173,24 @@ async function clearEverything(
     nuke(db);
 }
 
+async function clearChatAndGroups(
+    _db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
+    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    await clearChatsStore(_db, _principal, tx);
+    await clearGroupDetailsStore(_db, _principal, tx);
+}
+
 const migrations: Record<number, MigrationFunction<ChatSchema>> = {
     115: clearEverything,
     116: async (db, principal, transaction) => {
         await Promise.all([
             clearGroupDetailsStore(db, principal, transaction),
-            clearCommunityDetailsStore(db, principal, transaction)
-        ])
+            clearCommunityDetailsStore(db, principal, transaction),
+        ]);
     },
+    117: clearChatAndGroups,
 };
 
 async function migrate(

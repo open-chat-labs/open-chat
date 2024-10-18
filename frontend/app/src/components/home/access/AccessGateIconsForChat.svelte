@@ -1,14 +1,17 @@
 <script lang="ts">
-    import type { AccessGateWithLevel } from "openchat-client";
+    import type { EnhancedAccessGate } from "openchat-client";
     import AccessGateIcon from "./AccessGateIcon.svelte";
 
-    export let gates: AccessGateWithLevel[];
+    export let gates: EnhancedAccessGate[];
 </script>
 
 {#if gates.length > 0}
     <div class="icons">
         {#each gates as gate, i}
-            <AccessGateIcon clickable level={gate.level} {gate} />
+            <AccessGateIcon
+                clickable
+                level={gate.level}
+                gateConfig={{ expiry: gate.expiry, gate }} />
             {#if gates.length > 1 && i < gates.length - 1}
                 <span>&</span>
             {/if}

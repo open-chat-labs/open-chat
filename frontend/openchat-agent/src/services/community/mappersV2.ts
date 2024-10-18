@@ -69,7 +69,7 @@ import type {
 } from "../../typebox";
 import { mapOptional, optionUpdateV2, principalBytesToString } from "../../utils/mapping";
 import {
-    accessGate,
+    accessGateConfig,
     apiCommunityPermissionRole,
     chatMetrics,
     communityChannelSummary,
@@ -259,7 +259,10 @@ export function exploreChannelsResponse(
 export function channelMatch(value: TChannelMatch, communityId: string): ChannelMatch {
     return {
         id: { kind: "channel", communityId, channelId: value.id.toString() },
-        gate: mapOptional(value.gate, accessGate) ?? { kind: "no_gate" },
+        gateConfig: mapOptional(value.gate_config, accessGateConfig) ?? {
+            expiry: undefined,
+            gate: { kind: "no_gate" },
+        },
         name: value.name,
         description: value.description,
         memberCount: value.member_count,
@@ -337,7 +340,7 @@ export function communitySummaryUpdates(
         permissions: mapOptional(value.permissions, communityPermissions),
         channelsUpdated: value.channels_updated.map((c) => communityChannelUpdates(c, communityId)),
         metrics: mapOptional(value.metrics, chatMetrics),
-        gate: optionUpdateV2(value.gate, accessGate),
+        gateConfig: optionUpdateV2(value.gate_config, accessGateConfig),
         name: value.name,
         description: value.description,
         lastUpdated: value.last_updated,
@@ -366,6 +369,7 @@ export function communityMembershipUpdates(
         role: mapOptional(value.role, memberRole),
         displayName: optionUpdateV2(value.display_name, identity),
         rulesAccepted: value.rules_accepted,
+        lapsed: value.lapsed,
     };
 }
 
@@ -380,7 +384,7 @@ export function communityChannelUpdates(
         metrics: mapOptional(value.metrics, chatMetrics),
         subtype: optionUpdateV2(value.subtype, groupSubtype),
         dateLastPinned: value.date_last_pinned,
-        gate: optionUpdateV2(value.gate, accessGate),
+        gateConfig: optionUpdateV2(value.gate_config, accessGateConfig),
         name: value.name,
         description: value.description,
         externalUrl: optionUpdateV2(value.external_url, identity),
@@ -401,7 +405,7 @@ export function communityChannelUpdates(
 
 export function groupMembershipUpdates(value: TGroupMembershipUpdates): GroupMembershipUpdates {
     return {
-        role: mapOptional(value.role, memberRole),
+        myRole: mapOptional(value.role, memberRole),
         notificationsMuted: value.notifications_muted,
         latestThreads: value.latest_threads.map(threadSyncDetails),
         unfollowedThreads: Array.from(value.unfollowed_threads),
@@ -410,6 +414,7 @@ export function groupMembershipUpdates(value: TGroupMembershipUpdates): GroupMem
             .map(mention),
         myMetrics: mapOptional(value.my_metrics, chatMetrics),
         rulesAccepted: value.rules_accepted,
+        lapsed: value.lapsed,
     };
 }
 
@@ -487,15 +492,21 @@ export function communityDetailsResponse(
 ): CommunityDetailsResponse {
     if (typeof value === "object" && "Success" in value) {
         return {
-            members: value.Success.members.map((m) => ({
-                role: memberRole(m.role),
-                userId: principalBytesToString(m.user_id),
-                displayName: m.display_name,
-            })).concat(value.Success.basic_members.map((id) => ({
-                role: "member",
-                userId: principalBytesToString(id),
-                displayName: undefined
-            }))),
+            members: value.Success.members
+                .map((m) => ({
+                    role: memberRole(m.role),
+                    userId: principalBytesToString(m.user_id),
+                    displayName: m.display_name,
+                    lapsed: m.lapsed,
+                }))
+                .concat(
+                    value.Success.basic_members.map((id) => ({
+                        role: "member",
+                        userId: principalBytesToString(id),
+                        displayName: undefined,
+                        lapsed: false,
+                    })),
+                ),
             blockedUsers: new Set(value.Success.blocked_users.map(principalBytesToString)),
             invitedUsers: new Set(value.Success.invited_users.map(principalBytesToString)),
             rules: value.Success.chat_rules,
@@ -532,6 +543,7 @@ export function communityDetailsUpdatesResponse(
                     role: memberRole(m.role),
                     userId: principalBytesToString(m.user_id),
                     displayName: m.display_name,
+                    lapsed: m.lapsed,
                 })),
                 membersRemoved: new Set(value.Success.members_removed.map(principalBytesToString)),
                 blockedUsersAdded: new Set(

@@ -19,13 +19,14 @@
     export let user: UserSummary;
     export let canUnblockUser: boolean = false;
     export let searchTerm: string = "";
+    export let me = false;
 
     function unblockUser() {
         dispatch("unblockUser", user);
     }
 </script>
 
-<User {user} {searchTerm}>
+<User {me} {user} {searchTerm}>
     {#if canUnblockUser}
         <span class="menu">
             <MenuIcon position={"bottom"} align={"end"}>

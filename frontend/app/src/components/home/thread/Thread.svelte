@@ -392,6 +392,7 @@
         user={$user}
         joining={undefined}
         preview={false}
+        lapsed={false}
         mode={"thread"}
         {blocked}
         on:joinGroup

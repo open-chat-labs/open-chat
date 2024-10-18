@@ -192,6 +192,7 @@ export function mergeDirectChatUpdates(
                 myMetrics: u.myMetrics ?? c.membership.myMetrics,
                 archived: u.archived ?? c.membership.archived,
                 rulesAccepted: false,
+                lapsed: false,
             },
         };
     });
@@ -248,7 +249,10 @@ export function mergeGroupChatUpdates(
             blobReference: applyOptionUpdate(c.blobReference, blobReferenceUpdate),
             dateLastPinned: g?.dateLastPinned ?? c.dateLastPinned,
             dateReadPinned: u?.dateReadPinned ?? c.dateReadPinned,
-            gate: applyOptionUpdate(c.gate, g?.gate) ?? { kind: "no_gate" },
+            gateConfig: applyOptionUpdate(c.gateConfig, g?.gateConfig) ?? {
+                gate: { kind: "no_gate" },
+                expiry: undefined,
+            },
             level: "group",
             eventsTTL: applyOptionUpdate(c.eventsTTL, g?.eventsTTL),
             eventsTtlLastUpdated: bigIntMax(
@@ -260,22 +264,24 @@ export function mergeGroupChatUpdates(
                 mentions:
                     g === undefined
                         ? c.membership.mentions
-                        : [...g.mentions, ...c.membership.mentions],
-                role: g?.myRole ?? c.membership.role,
+                        : [...(g?.membership?.mentions ?? []), ...c.membership.mentions],
+                role: g?.membership?.myRole ?? c.membership.role,
                 latestThreads: mergeThreads(
                     c.membership.latestThreads,
-                    g?.latestThreads ?? [],
-                    g?.unfollowedThreads ?? [],
+                    g?.membership?.latestThreads ?? [],
+                    g?.membership?.unfollowedThreads ?? [],
                     u?.threadsRead ?? {},
                 ),
                 readByMeUpTo:
                     readByMeUpTo !== undefined && latestMessage !== undefined
                         ? Math.min(readByMeUpTo, latestMessage.event.messageIndex)
                         : readByMeUpTo,
-                notificationsMuted: g?.notificationsMuted ?? c.membership.notificationsMuted,
-                myMetrics: g?.myMetrics ?? c.membership.myMetrics,
+                notificationsMuted:
+                    g?.membership?.notificationsMuted ?? c.membership.notificationsMuted,
+                myMetrics: g?.membership?.myMetrics ?? c.membership.myMetrics,
                 archived: u?.archived ?? c.membership.archived,
-                rulesAccepted: g?.rulesAccepted ?? c.membership.rulesAccepted,
+                rulesAccepted: g?.membership?.rulesAccepted ?? c.membership.rulesAccepted,
+                lapsed: g?.membership?.lapsed ?? c.membership.lapsed,
             },
             localUserIndex: c.localUserIndex,
             videoCallInProgress: applyOptionUpdate(c.videoCallInProgress, g?.videoCallInProgress),
@@ -320,20 +326,20 @@ export function mergeGroupChats(
                     : undefined,
             dateLastPinned: g.dateLastPinned,
             dateReadPinned: u?.dateReadPinned,
-            gate: g.gate,
+            gateConfig: g.gateConfig,
             level: "group",
             eventsTTL: g.eventsTTL,
             eventsTtlLastUpdated: g.eventsTtlLastUpdated,
             membership: {
-                joined: g.joined,
-                role: g.myRole,
-                mentions: g.mentions,
-                latestThreads: mergeThreads([], g.latestThreads, [], u?.threadsRead ?? {}),
-                myMetrics: g.myMetrics,
-                notificationsMuted: g.notificationsMuted,
+                ...g.membership,
+                latestThreads: mergeThreads(
+                    [],
+                    g.membership.latestThreads,
+                    [],
+                    u?.threadsRead ?? {},
+                ),
                 readByMeUpTo: u?.readByMeUpTo,
                 archived: u?.archived ?? false,
-                rulesAccepted: g.rulesAccepted,
             },
             localUserIndex: g.localUserIndex,
             videoCallInProgress: g.videoCallInProgress,
