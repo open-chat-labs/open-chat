@@ -25,3 +25,4 @@ types = { path = "../types" }
 
 [dev-dependencies]
 msgpack = { path = "../msgpack" }
+testing = { path = "../testing" }

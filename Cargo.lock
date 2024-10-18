@@ -1306,6 +1306,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "sha2 0.10.8",
+ "testing",
  "tracing",
  "types",
 ]

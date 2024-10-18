@@ -16,6 +16,9 @@ use types::{Chat, EventIndex, EventWrapperInternal, MessageIndex, MAX_EVENT_INDE
 
 mod key;
 
+#[cfg(test)]
+mod tests;
+
 #[cfg(not(test))]
 pub type Memory = ic_stable_structures::memory_manager::VirtualMemory<ic_stable_structures::DefaultMemoryImpl>;
 
