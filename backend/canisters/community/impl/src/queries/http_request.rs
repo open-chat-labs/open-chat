@@ -25,6 +25,10 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         get_document(requested_banner_id, state.data.banner.as_ref(), "banner")
     }
 
+    fn get_errors_impl(since: Option<TimestampMillis>) -> HttpResponse {
+        encode_logs(canister_logger::export_errors(), since.unwrap_or(0))
+    }
+
     fn get_logs_impl(since: Option<TimestampMillis>) -> HttpResponse {
         encode_logs(canister_logger::export_logs(), since.unwrap_or(0))
     }
@@ -58,6 +62,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
             read_state(|state| get_channel_avatar_impl(channel_id, requested_avatar_id, state))
         }
         Route::Banner(requested_banner_id) => read_state(|state| get_banner_impl(requested_banner_id, state)),
+        Route::Errors(since) => get_errors_impl(since),
         Route::Logs(since) => get_logs_impl(since),
         Route::Traces(since) => get_traces_impl(since),
         Route::Metrics => read_state(get_metrics_impl),
