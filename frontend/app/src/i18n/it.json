@@ -702,6 +702,7 @@
         "set_community_display_name": "Imposta un nome visualizzato per la community",
         "set_display_name": "Aggiorna il tuo nome visualizzato",
         "set_group_access_gate": "Imposta un gate di accesso al gruppo/canale",
+        "set_pin": "Imposta un codice PIN sul tuo portafoglio",
         "showChitPopup": "Avvisami dei miei risultati",
         "started_call": "Avvia una videochiamata",
         "streak_100": "Ottieni una serie di 100 giorni",

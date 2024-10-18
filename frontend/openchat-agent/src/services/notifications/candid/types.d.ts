@@ -52,6 +52,7 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'AppointedGroupOwner' : null } |
   { 'OwnGroupWithTenDiamondMembers' : null } |
   { 'JoinedGatedGroupOrCommunity' : null } |
+  { 'SetPin' : null } |
   { 'JoinedGroup' : null } |
   { 'StartedCall' : null } |
   { 'ChosenAsGroupOwner' : null } |
