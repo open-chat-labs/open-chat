@@ -215,6 +215,7 @@ import type {
     ExternalAchievementsSuccess,
     ChitLeaderboardResponse,
     Verification,
+    MessageActivitySummary,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -1656,6 +1657,7 @@ export class OpenChatAgent extends EventTarget {
         let chitState: ChitState;
         let referrals: Referral[];
         let walletConfig: WalletConfig;
+        let messageActivitySummary: MessageActivitySummary;
 
         let latestActiveGroupsCheck = BigInt(0);
         let latestUserCanisterUpdates: bigint;
@@ -1701,6 +1703,7 @@ export class OpenChatAgent extends EventTarget {
             };
             referrals = userResponse.referrals;
             walletConfig = userResponse.walletConfig;
+            messageActivitySummary = userResponse.messageActivitySummary;
             anyUpdates = true;
         } else {
             directChats = current.directChats;
@@ -1730,6 +1733,7 @@ export class OpenChatAgent extends EventTarget {
             chitState = current.chitState;
             referrals = current.referrals;
             walletConfig = current.walletConfig;
+            messageActivitySummary = current.messageActivitySummary;
 
             if (userResponse.kind === "success") {
                 directChats = userResponse.directChats.added.concat(
@@ -1786,6 +1790,8 @@ export class OpenChatAgent extends EventTarget {
                     )
                     .concat(userResponse.referrals);
                 walletConfig = userResponse.walletConfig ?? current.walletConfig;
+                messageActivitySummary =
+                    userResponse.messageActivitySummary ?? current.messageActivitySummary;
                 anyUpdates = true;
             }
         }
@@ -1965,6 +1971,7 @@ export class OpenChatAgent extends EventTarget {
             chitState,
             referrals,
             walletConfig,
+            messageActivitySummary,
         };
 
         const updatedEvents = getUpdatedEvents(directChatUpdates, groupUpdates, communityUpdates);

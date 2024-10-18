@@ -989,6 +989,7 @@ export type ChatStateFull = {
     chitState: ChitState;
     referrals: Referral[];
     walletConfig: WalletConfig;
+    messageActivitySummary: MessageActivitySummary;
 };
 
 export type ChitState = {
