@@ -1587,6 +1587,17 @@ function apiAudioContent(domain: AudioContent): TAudioContent {
     };
 }
 
+export function apiMaybeAccessGateConfig(domain: AccessGateConfig): TAccessGateConfig | undefined {
+    const gate = apiMaybeAccessGate(domain.gate);
+    if (gate === undefined) {
+        return undefined;
+    }
+    return {
+        gate,
+        expiry: domain.expiry,
+    };
+}
+
 export function apiMaybeAccessGate(domain: AccessGate): TAccessGate | undefined {
     if (domain.kind === "composite_gate") {
         return {
@@ -1735,6 +1746,13 @@ function apiCredentialArguments(
             }
         },
     );
+}
+
+export function accessGateConfig(value: TAccessGateConfig): AccessGateConfig {
+    return {
+        gate: accessGate(value.gate),
+        expiry: value.expiry,
+    };
 }
 
 export function accessGate(value: TAccessGate): AccessGate {
@@ -1995,7 +2013,10 @@ export function groupChatSummary(value: TGroupCanisterGroupChatSummary): GroupCh
         frozen: value.frozen !== undefined,
         dateLastPinned: value.date_last_pinned,
         dateReadPinned: undefined,
-        gate: mapOptional(value.gate, accessGate) ?? { kind: "no_gate" },
+        gateConfig: mapOptional(value.gate_config, accessGateConfig) ?? {
+            gate: { kind: "no_gate" },
+            expiry: undefined,
+        },
         level: "group",
         eventsTTL: value.events_ttl,
         eventsTtlLastUpdated: value.events_ttl_last_updated,
@@ -2009,6 +2030,7 @@ export function groupChatSummary(value: TGroupCanisterGroupChatSummary): GroupCh
             readByMeUpTo: latestMessage?.event.messageIndex,
             archived: false,
             rulesAccepted: value.rules_accepted,
+            lapsed: value.membership?.lapsed ?? false,
         },
         localUserIndex: principalBytesToString(value.local_user_index_canister_id),
         isInvited: false, // this is only applicable when we are not a member
@@ -2043,7 +2065,10 @@ export function communitySummary(value: TCommunityCanisterCommunitySummary): Com
         },
         memberCount: value.member_count,
         frozen: value.frozen !== undefined,
-        gate: mapOptional(value.gate, accessGate) ?? { kind: "no_gate" },
+        gateConfig: mapOptional(value.gate_config, accessGateConfig) ?? {
+            gate: { kind: "no_gate" },
+            expiry: undefined,
+        },
         level: "community",
         permissions: communityPermissions(value.permissions),
         membership: {
@@ -2054,6 +2079,7 @@ export function communitySummary(value: TCommunityCanisterCommunitySummary): Com
             index: 0,
             displayName: mapOptional(value.membership, (m) => m.display_name),
             rulesAccepted: mapOptional(value.membership, (m) => m.rules_accepted) ?? false,
+            lapsed: mapOptional(value.membership, (m) => m.lapsed) ?? false,
         },
         channels: value.channels.map((c) => communityChannelSummary(c, communityId)),
         primaryLanguage: value.primary_language,
@@ -2104,7 +2130,10 @@ export function communityChannelSummary(
         frozen: false, // TODO - doesn't exist
         dateLastPinned: value.date_last_pinned,
         dateReadPinned: undefined,
-        gate: mapOptional(value.gate, accessGate) ?? { kind: "no_gate" },
+        gateConfig: mapOptional(value.gate_config, accessGateConfig) ?? {
+            gate: { kind: "no_gate" },
+            expiry: undefined,
+        },
         level: "channel",
         eventsTTL: value.events_ttl,
         eventsTtlLastUpdated: value.events_ttl_last_updated,
@@ -2123,6 +2152,7 @@ export function communityChannelSummary(
             mentions: [],
             archived: false,
             rulesAccepted: mapOptional(value.membership, (m) => m.rules_accepted) ?? false,
+            lapsed: mapOptional(value.membership, (m) => m.lapsed) ?? false,
         },
         isInvited: value.is_invited ?? false,
         messagesVisibleToNonMembers: value.messages_visible_to_non_members,
@@ -2176,16 +2206,18 @@ export function gateCheckFailedReason(value: TGateCheckFailedReason): GateCheckF
     if (value === "Locked") {
         return "locked";
     }
-    if ("PaymentFailed" in value) {
-        console.warn("PaymentFailed: ", value);
-        return "payment_failed";
-    }
-    if ("InsufficientBalance" in value) {
-        return "insufficient_balance";
-    }
-    if ("FailedVerifiedCredentialCheck" in value) {
-        console.warn("FailedVerifiedCredentialCheck: ", value);
-        return "failed_verified_credential_check";
+    if (typeof value !== "string") {
+        if ("PaymentFailed" in value) {
+            console.warn("PaymentFailed: ", value);
+            return "payment_failed";
+        }
+        if ("InsufficientBalance" in value) {
+            return "insufficient_balance";
+        }
+        if ("FailedVerifiedCredentialCheck" in value) {
+            console.warn("FailedVerifiedCredentialCheck: ", value);
+            return "failed_verified_credential_check";
+        }
     }
     throw new UnsupportedValueError("Unexpected ApiGateCheckFailedReason type received", value);
 }
@@ -2482,8 +2514,9 @@ export function groupDetailsResponse(
         return "failure";
     }
     if ("Success" in value) {
-        const members =
-            ("participants" in value.Success ? value.Success.participants : value.Success.members).map(member);
+        const members = (
+            "participants" in value.Success ? value.Success.participants : value.Success.members
+        ).map(member);
 
         const basicMembers = "basic_members" in value.Success ? value.Success.basic_members : [];
         const membersSet = new Set<string>();
@@ -2495,6 +2528,7 @@ export function groupDetailsResponse(
                     role: "member",
                     userId,
                     displayName: undefined,
+                    lapsed: false,
                 });
             }
         }
@@ -2550,6 +2584,7 @@ export function member(value: TGroupMember): Member {
         role: memberRole(value.role),
         userId: principalBytesToString(value.user_id),
         displayName: undefined,
+        lapsed: value.lapsed,
     };
 }
 

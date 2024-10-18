@@ -1185,6 +1185,7 @@ function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
             readByMeUpTo: optional(candid.read_by_me_up_to, identity),
             archived: candid.archived,
             rulesAccepted: false,
+            lapsed: false,
         },
     };
 }

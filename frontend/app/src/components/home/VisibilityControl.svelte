@@ -33,7 +33,7 @@
         if (
             gateDirty &&
             candidate.kind === "candidate_group_chat" &&
-            candidate.gate.kind !== "no_gate"
+            candidate.gateConfig.gate.kind !== "no_gate"
         ) {
             candidate.messagesVisibleToNonMembers = false;
         }
@@ -46,7 +46,7 @@
         }
         if (candidate.kind === "candidate_group_chat") {
             candidate.messagesVisibleToNonMembers =
-                candidate.public && candidate.gate.kind === "no_gate";
+                candidate.public && candidate.gateConfig.gate.kind === "no_gate";
         }
     }
 
@@ -181,7 +181,7 @@
 {#if !requiresUpgrade}
     <AccessGateControl
         on:updated={gateUpdated}
-        bind:gate={candidate.gate}
+        bind:gateConfig={candidate.gateConfig}
         level={candidate.level}
         bind:valid />
 {/if}

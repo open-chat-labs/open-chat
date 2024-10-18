@@ -3,7 +3,7 @@
     import Overlay from "../../Overlay.svelte";
     import { getContext, tick } from "svelte";
     import { toastStore } from "../../../stores/toast";
-    import type { AccessGateWithLevel, GateCheckSucceeded, OpenChat } from "openchat-client";
+    import type { EnhancedAccessGate, GateCheckSucceeded, OpenChat } from "openchat-client";
     import { i18nKey } from "../../../i18n/i18n";
     import AccessGateEvaluator from "../access/AccessGateEvaluator.svelte";
 
@@ -12,7 +12,8 @@
     $: anonUser = client.anonUser;
     $: identityState = client.identityState;
     $: selectedCommunity = client.selectedCommunity;
-    $: previewingCommunity = $selectedCommunity?.membership.role === "none";
+    $: previewingCommunity =
+        $selectedCommunity?.membership.role === "none" || $selectedCommunity?.membership.lapsed;
 
     $: {
         if (
@@ -25,8 +26,8 @@
     }
 
     let joiningCommunity = false;
-    let gateCheckFailed: AccessGateWithLevel | undefined = undefined;
-    let checkingAccessGate: AccessGateWithLevel | undefined = undefined;
+    let gateCheckFailed: EnhancedAccessGate | undefined = undefined;
+    let checkingAccessGate: EnhancedAccessGate | undefined = undefined;
 
     function joinCommunity() {
         if ($anonUser) {
@@ -46,14 +47,20 @@
     function doJoinCommunity(gateCheck: GateCheckSucceeded | undefined): Promise<void> {
         if (previewingCommunity && $selectedCommunity) {
             const credentials = gateCheck?.credentials ?? [];
-            const gateWithLevel: AccessGateWithLevel = {
-                ...$selectedCommunity.gate,
+            const paymentApprovals = gateCheck?.paymentApprovals ?? new Map();
+            const gateConfigWithLevel: EnhancedAccessGate = {
+                ...$selectedCommunity.gateConfig.gate,
                 level: "community",
+                expiry: $selectedCommunity.gateConfig.expiry,
             };
 
             if (gateCheck === undefined) {
-                if ($selectedCommunity.gate.kind !== "no_gate" && !$selectedCommunity.isInvited) {
-                    const gates = [$selectedCommunity.gate];
+                if (
+                    $selectedCommunity.gateConfig.gate.kind !== "no_gate" &&
+                    !$selectedCommunity.isInvited
+                ) {
+                    const gateConfigs = [$selectedCommunity.gateConfig];
+                    const gates = gateConfigs.map((gc) => gc.gate);
                     const passed = client.doesUserMeetAccessGates(gates);
                     if (!passed) {
                         /**
@@ -61,7 +68,7 @@
                          * pre-processing.
                          */
                         if (client.gatePreprocessingRequired(gates)) {
-                            checkingAccessGate = gateWithLevel;
+                            checkingAccessGate = gateConfigWithLevel;
                             return Promise.resolve();
                         }
                     }
@@ -72,10 +79,10 @@
             joiningCommunity = true;
 
             return client
-                .joinCommunity($selectedCommunity, credentials)
+                .joinCommunity($selectedCommunity, credentials, paymentApprovals)
                 .then((resp) => {
                     if (resp.kind === "gate_check_failed") {
-                        gateCheckFailed = gateWithLevel;
+                        gateCheckFailed = gateConfigWithLevel;
                     } else if (resp.kind !== "success") {
                         toastStore.showFailureToast(i18nKey("communities.errors.joinFailed"));
                     }
@@ -94,7 +101,6 @@
 {#if checkingAccessGate}
     <Overlay dismissible on:close={closeModal}>
         <AccessGateEvaluator
-            level={checkingAccessGate.level}
             gates={[checkingAccessGate]}
             on:close={closeModal}
             on:success={accessGatesEvaluated} />

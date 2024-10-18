@@ -1,4 +1,8 @@
 <script lang="ts">
+    import Alarm from "svelte-material-icons/Alarm.svelte";
+    import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
+    import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
+    import Cancel from "svelte-material-icons/Cancel.svelte";
     import { _ } from "svelte-i18n";
     import Search from "../../Search.svelte";
     import Member from "./Member.svelte";
@@ -19,14 +23,13 @@
         LARGE_GROUP_THRESHOLD,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
-    import SelectionButton from "../SelectionButton.svelte";
     import InvitedUser from "./InvitedUser.svelte";
     import { menuCloser } from "../../../actions/closeMenu";
     import UserGroups from "../communities/details/UserGroups.svelte";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { trimLeadingAtSymbol } from "../../../utils/user";
-    import ButtonGroup from "../../ButtonGroup.svelte";
+    import User from "./User.svelte";
 
     const MAX_SEARCH_RESULTS = 255; // irritatingly this is a nat8 in the candid
     const client = getContext<OpenChat>("client");
@@ -36,6 +39,7 @@
     export let invited: Set<string>;
     export let members: MemberType[];
     export let blocked: Set<string>;
+    export let lapsed: Set<string>;
     export let initialUsergroup: number | undefined = undefined;
     export let showHeader = true;
 
@@ -50,19 +54,24 @@
     $: fullMembers = knownUsers
         .filter((u) => matchesSearch(searchTermLower, u) && u.userId !== userId)
         .sort(compareMembers);
-    $: blockedUsers = matchingUsers(searchTermLower, $userStore, blocked);
-    $: invitedUsers = matchingUsers(searchTermLower, $userStore, invited);
+    $: blockedUsers = matchingUsers(searchTermLower, $userStore, blocked, true);
+    $: lapsedMembers = matchingUsers(searchTermLower, $userStore, lapsed, true);
+    $: invitedUsers = matchingUsers(searchTermLower, $userStore, invited, true);
     $: showBlocked = blockedUsers.length > 0;
     $: showInvited = invitedUsers.length > 0;
+    $: showLapsed = lapsedMembers.length > 0;
     $: canInvite = client.canInviteUsers(collection.id);
-    //$: platformModerator = client.platformModerator;
-    //$: canPromoteMyselfToOwner = me !== undefined && me.role !== "owner" && $platformModerator;
     $: canPromoteMyselfToOwner = false;
 
-    function matchingUsers(term: string, users: UserLookup, ids: Set<string>): UserSummary[] {
+    function matchingUsers(
+        term: string,
+        users: UserLookup,
+        ids: Set<string>,
+        includeMe = false,
+    ): UserSummary[] {
         return Array.from(ids).reduce((matching, id) => {
             const user = users.get(id);
-            if (user && matchesSearch(term, user) && user.userId !== userId) {
+            if (user && matchesSearch(term, user) && (user.userId !== userId || includeMe)) {
                 matching.push(user);
             }
             return matching;
@@ -72,7 +81,7 @@
     let searchTermEntered = "";
     let id = collection.id;
     let membersList: VirtualList;
-    let memberView: "members" | "blocked" | "invited" = "members";
+    let memberView: "members" | "blocked" | "invited" | "lapsed" = "members";
     let selectedTab: "users" | "groups" = "users";
 
     $: searchTerm = trimLeadingAtSymbol(searchTermEntered);
@@ -155,7 +164,7 @@
         return 0;
     }
 
-    function setView(v: "members" | "blocked" | "invited"): void {
+    function setView(v: "members" | "blocked" | "invited" | "lapsed"): void {
         memberView = v;
     }
 
@@ -214,26 +223,68 @@
             placeholder={i18nKey("search")} />
     </div>
 
-    {#if showBlocked || showInvited}
-        <div class="member-section-selector">
-            <ButtonGroup align="fill">
-                <SelectionButton
-                    title={$_("members")}
-                    on:click={() => setView("members")}
-                    selected={memberView === "members"} />
-                {#if showInvited}
-                    <SelectionButton
-                        title={$_("invited")}
-                        on:click={() => setView("invited")}
-                        selected={memberView === "invited"} />
-                {/if}
-                {#if showBlocked}
-                    <SelectionButton
-                        title={$_("blocked")}
-                        on:click={() => setView("blocked")}
-                        selected={memberView === "blocked"} />
-                {/if}
-            </ButtonGroup>
+    {#if showBlocked || showInvited || showLapsed}
+        <div class="tabs">
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <div
+                tabindex="0"
+                role="button"
+                on:click={() => setView("members")}
+                class:selected={memberView === "members"}
+                class="tab sub">
+                <AccountMultiple
+                    size={"0.9em"}
+                    viewBox={"0 -2 24 24"}
+                    color={memberView === "members" ? "var(--txt)" : "var(--txt-light)"} />
+                <Translatable resourceKey={i18nKey("members")} />
+            </div>
+            {#if showInvited}
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <div
+                    tabindex="0"
+                    role="button"
+                    on:click={() => setView("invited")}
+                    class:selected={memberView === "invited"}
+                    class="tab sub">
+                    <AccountPlusOutline
+                        size={"0.9em"}
+                        viewBox={"0 -2 24 24"}
+                        color={memberView === "invited" ? "var(--txt)" : "var(--txt-light)"} />
+                    <Translatable resourceKey={i18nKey("invited")} />
+                </div>
+            {/if}
+
+            {#if showBlocked}
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <div
+                    tabindex="0"
+                    role="button"
+                    on:click={() => setView("blocked")}
+                    class:selected={memberView === "blocked"}
+                    class="tab sub">
+                    <Cancel
+                        size={"0.9em"}
+                        viewBox={"0 -2 24 24"}
+                        color={memberView === "blocked" ? "var(--txt)" : "var(--txt-light)"} />
+                    <Translatable resourceKey={i18nKey("blocked")} />
+                </div>
+            {/if}
+
+            {#if showLapsed}
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <div
+                    tabindex="0"
+                    role="button"
+                    on:click={() => setView("lapsed")}
+                    class:selected={memberView === "lapsed"}
+                    class="tab sub">
+                    <Alarm
+                        size={"0.9em"}
+                        viewBox={"0 -2 24 24"}
+                        color={memberView === "lapsed" ? "var(--txt)" : "var(--txt-light)"} />
+                    <Translatable resourceKey={i18nKey("access.lapsed.user")} />
+                </div>
+            {/if}
         </div>
     {/if}
 
@@ -274,6 +325,7 @@
         <div use:menuCloser class="user-list">
             {#each blockedUsers as user}
                 <BlockedUser
+                    me={user.userId === userId}
                     {user}
                     {searchTerm}
                     canUnblockUser={client.canUnblockUsers(collection.id)}
@@ -283,7 +335,18 @@
     {:else if memberView === "invited"}
         <div use:menuCloser class="user-list">
             {#each invitedUsers as user}
-                <InvitedUser {user} {searchTerm} canUninviteUser={client.canInviteUsers(collection.id)} on:cancelInvite />
+                <InvitedUser
+                    me={user.userId === userId}
+                    {user}
+                    {searchTerm}
+                    canUninviteUser={client.canInviteUsers(collection.id)}
+                    on:cancelInvite />
+            {/each}
+        </div>
+    {:else if memberView === "lapsed"}
+        <div use:menuCloser class="user-list">
+            {#each lapsedMembers as user}
+                <User me={user.userId === userId} {user} {searchTerm} />
             {/each}
         </div>
     {/if}
@@ -343,6 +406,10 @@
             &.selected {
                 color: var(--txt);
                 border-bottom: 3px solid var(--txt);
+
+                &.sub {
+                    border-bottom: 3px solid var(--accent);
+                }
             }
         }
     }

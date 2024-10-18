@@ -14,11 +14,13 @@
 
     export let chat: MultiUserChat;
     export let joining: MultiUserChat | undefined;
+    export let lapsed: boolean;
 
     $: platformModerator = client.platformModerator;
     $: isFrozen = client.isFrozen(chat.id);
     $: selectedCommunity = client.selectedCommunity;
-    $: previewingCommunity = $selectedCommunity?.membership.role === "none";
+    $: previewingCommunity =
+        $selectedCommunity?.membership.role === "none" || $selectedCommunity?.membership.lapsed;
     $: gates = client.accessGatesForChat(chat);
     $: locked = gates.some((g) => isLocked(g));
 
@@ -70,6 +72,11 @@
     <div class="gate">
         <AccessGateIconsForChat {gates} />
     </div>
+    {#if lapsed}
+        <div class="lapsed">
+            <Translatable resourceKey={i18nKey("access.lapsed.label")} />
+        </div>
+    {/if}
     {#if $platformModerator}
         {#if isFrozen}
             <Button loading={freezingInProgress} secondary small on:click={unfreezeGroup}>
@@ -81,9 +88,11 @@
             </Button>
         {/if}
     {/if}
-    <Button secondary small on:click={cancelPreview}>
-        <Translatable resourceKey={i18nKey("leave")} />
-    </Button>
+    {#if !lapsed}
+        <Button secondary small on:click={cancelPreview}>
+            <Translatable resourceKey={i18nKey("leave")} />
+        </Button>
+    {/if}
     <Button
         loading={joining !== undefined}
         disabled={locked || joining !== undefined}
@@ -92,7 +101,9 @@
         <Translatable
             resourceKey={locked
                 ? i18nKey("access.lockedGate", undefined, chat.level, true)
-                : i18nKey("joinGroup", undefined, chat.level, true)} />
+                : lapsed
+                  ? i18nKey("access.lapsed.rejoin", undefined, chat.level, true)
+                  : i18nKey("joinGroup", undefined, chat.level, true)} />
     </Button>
 </div>
 
@@ -113,5 +124,9 @@
             position: absolute;
             left: 0;
         }
+    }
+
+    .lapsed {
+        @include font(bold, normal, fs-100);
     }
 </style>
