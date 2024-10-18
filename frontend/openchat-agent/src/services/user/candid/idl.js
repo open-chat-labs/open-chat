@@ -1524,8 +1524,6 @@ export const idlFactory = ({ IDL }) => {
     'search_term' : IDL.Text,
   });
   const MessageMatch = IDL.Record({
-    'content' : MessageContent,
-    'sender' : UserId,
     'score' : IDL.Nat32,
     'message_index' : MessageIndex,
   });

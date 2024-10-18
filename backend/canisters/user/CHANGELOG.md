@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add an error log with http endpoint ([#6608](https://github.com/open-chat-labs/open-chat/pull/6608))
 
+### Changed
+
+- Make searching messages more efficient ([#6612](https://github.com/open-chat-labs/open-chat/pull/6612))
+
 ## [[2.0.1395](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1395-user)] - 2024-10-16
 
 ### Added

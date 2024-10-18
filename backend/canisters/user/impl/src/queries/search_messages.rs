@@ -30,13 +30,11 @@ fn search_messages_impl(args: Args, state: &RuntimeState) -> Response {
         Some(dc) => dc,
     };
 
-    let my_user_id = state.env.canister_id().into();
     let query = Query::parse(args.search_term);
 
-    let matches =
-        direct_chat
-            .events
-            .search_messages(MessageIndex::default(), query, HashSet::new(), args.max_results, my_user_id);
+    let matches = direct_chat
+        .events
+        .search_messages(MessageIndex::default(), query, HashSet::new(), args.max_results);
 
     Success(SuccessResult { matches })
 }

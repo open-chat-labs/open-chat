@@ -848,8 +848,6 @@ type MessageContent = variant {
 
 type MessageMatch = record {
     message_index : MessageIndex;
-    content : MessageContent;
-    sender : UserId;
     score : nat32;
 };
 
