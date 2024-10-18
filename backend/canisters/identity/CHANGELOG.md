@@ -6,11 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add an error log with http endpoint ([#6608](https://github.com/open-chat-labs/open-chat/pull/6608))
+
 ## [[2.0.1381](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1381-identity)] - 2024-10-11
 
 ### Changed
 
-- Switch from using `canister_sig_util` to `ic-canister-sig-creation` ([#6537](https://github.com/open-chat-labs/open-chat/pull/6537)) 
+- Switch from using `canister_sig_util` to `ic-canister-sig-creation` ([#6537](https://github.com/open-chat-labs/open-chat/pull/6537))
 
 ### Fixed
 
@@ -21,7 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
-- Extract certificate handling code into `identity_utils` ([#6459](https://github.com/open-chat-labs/open-chat/pull/6459)) 
+- Extract certificate handling code into `identity_utils` ([#6459](https://github.com/open-chat-labs/open-chat/pull/6459))
 - Add serde default attribute in preparation for skipping serialization if default ([#6475](https://github.com/open-chat-labs/open-chat/pull/6475))
 - Run check to ensure auth principal <-> user principal maps are in sync ([#6512](https://github.com/open-chat-labs/open-chat/pull/6512))
 

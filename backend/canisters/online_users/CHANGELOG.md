@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Reinstate some candid endpoints ([#6468](https://github.com/open-chat-labs/open-chat/pull/6468))
+- Add an error log with http endpoint ([#6608](https://github.com/open-chat-labs/open-chat/pull/6608))
 
 ### Changed
 

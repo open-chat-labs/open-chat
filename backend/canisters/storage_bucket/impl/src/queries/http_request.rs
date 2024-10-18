@@ -13,6 +13,10 @@ const CACHE_HEADER_VALUE: &str = "public, max-age=100000000, immutable";
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
+    fn get_errors_impl(since: Option<TimestampMillis>) -> HttpResponse {
+        encode_logs(canister_logger::export_errors(), since.unwrap_or(0))
+    }
+
     fn get_logs_impl(since: Option<TimestampMillis>) -> HttpResponse {
         encode_logs(canister_logger::export_logs(), since.unwrap_or(0))
     }
@@ -27,6 +31,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
 
     match extract_route(&request.url) {
         Route::File(file_id) => read_state(|state| start_streaming_file(file_id, state)),
+        Route::Errors(since) => get_errors_impl(since),
         Route::Logs(since) => get_logs_impl(since),
         Route::Traces(since) => get_traces_impl(since),
         Route::Metrics => read_state(get_metrics_impl),
