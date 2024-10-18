@@ -13,5 +13,6 @@ pub struct CommunityMember {
     pub role: CommunityRole,
     pub display_name: Option<String>,
     pub referred_by: Option<UserId>,
+    #[ts(skip_if_default)]
     pub lapsed: bool,
 }

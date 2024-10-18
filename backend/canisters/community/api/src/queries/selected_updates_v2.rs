@@ -24,14 +24,22 @@ pub enum Response {
 pub struct SuccessResult {
     pub timestamp: TimestampMillis,
     pub last_updated: TimestampMillis,
+    #[ts(skip_if_default)]
     pub members_added_or_updated: Vec<CommunityMember>,
+    #[ts(skip_if_default)]
     pub members_removed: Vec<UserId>,
+    #[ts(skip_if_default)]
     pub blocked_users_added: Vec<UserId>,
+    #[ts(skip_if_default)]
     pub blocked_users_removed: Vec<UserId>,
     pub invited_users: Option<Vec<UserId>>,
     pub chat_rules: Option<VersionedRules>,
+    #[ts(skip_if_default)]
     pub user_groups: Vec<UserGroupDetails>,
+    #[ts(skip_if_default)]
     pub user_groups_deleted: Vec<u32>,
+    #[ts(skip_if_default)]
     pub referrals_added: Vec<UserId>,
+    #[ts(skip_if_default)]
     pub referrals_removed: Vec<UserId>,
 }
