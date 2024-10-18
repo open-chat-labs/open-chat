@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Add an error log with http endpoint ([#6607](https://github.com/open-chat-labs/open-chat/pull/6607))
+- Add an error log with http endpoint ([#6608](https://github.com/open-chat-labs/open-chat/pull/6608))
 
 ### Changed
 
