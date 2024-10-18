@@ -1324,7 +1324,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.userClient.addToFavourites(payload.chatId),
+                    agent.userClient.manageFavouriteChats([payload.chatId], []),
                 );
                 break;
 
@@ -1332,7 +1332,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.userClient.removeFromFavourites(payload.chatId),
+                    agent.userClient.manageFavouriteChats([], [payload.chatId]),
                 );
                 break;
 

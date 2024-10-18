@@ -1,16 +1,4 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
-import { Principal } from "@dfinity/principal";
-import type {
-    ApiChannelMessagesRead,
-    ApiChat,
-    ApiChatInList,
-    ApiChatMessagesRead,
-    ApiMarkReadArgs,
-    ApiSendMessageWithTransferToChannelArgs,
-    ApiSendMessageWithTransferToGroupArgs,
-    UserService,
-} from "./candid/idl";
-import { idlFactory } from "./candid/idl";
 import type {
     InitialStateResponse,
     UpdatesResponse,
@@ -81,23 +69,20 @@ import type {
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
-    blockResponse,
     deleteMessageResponse,
     undeleteMessageResponse,
     getEventsResponse,
     getUpdatesResponse,
     initialStateResponse,
-    markReadResponse,
     searchDirectChatResponse,
     setAvatarResponse,
     setBioResponse,
-    unblockResponse,
     withdrawCryptoResponse,
+    sendMessageResponse,
     sendMessageWithTransferToChannelResponse,
     sendMessageWithTransferToGroupResponse,
     publicProfileResponse,
     pinChatResponse,
-    unpinChatResponse,
     archiveChatResponse,
     deletedMessageResponse,
     setMessageReminderResponse,
@@ -119,8 +104,7 @@ import {
     claimDailyChitResponse,
     apiWalletConfig,
     apiVerification,
-} from "./mappers";
-import { sendMessageResponse } from "./mappersV2";
+} from "./mappersV2";
 import {
     type Database,
     getCachedEvents,
@@ -138,7 +122,6 @@ import {
     apiMaybeAccessGate,
     apiMessageContent,
     editMessageResponse,
-    apiOptional,
     apiPendingCryptocurrencyWithdrawal,
     apiReplyContextArgs,
     addRemoveReactionResponse,
@@ -152,28 +135,136 @@ import {
     joinVideoCallResponse,
     setPinNumberResponse,
     apiMaybeAccessGateConfig,
-} from "../common/chatMappers";
-import {
-    apiMessageContent as apiMessageContentV2,
-    apiReplyContextArgs as apiReplyContextArgsV2,
 } from "../common/chatMappersV2";
 import { DataClient } from "../data/data.client";
-import { muteNotificationsResponse } from "../notifications/mappers";
-import { identity, mapOptional, principalStringToBytes, toVoid } from "../../utils/mapping";
+import {
+    mapOptional,
+    principalBytesToString,
+    principalStringToBytes,
+    toVoid,
+} from "../../utils/mapping";
 import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
 import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING, ResponseTooLargeError } from "openchat-shared";
-import type { EditMessageV2Args } from "./candid/types";
 import {
     chunkedChatEventsFromBackend,
     chunkedChatEventsWindowFromBackend,
 } from "../common/chunked";
 import type { SetPinNumberResponse } from "openchat-shared";
 import { setChitInfoInCache } from "../../utils/userCache";
-import { UserSendMessageArgs, UserSendMessageResponse } from "../../typebox";
+import {
+    Empty as TEmpty,
+    UserAcceptP2pSwapArgs,
+    UserAcceptP2pSwapResponse,
+    UserAddHotGroupExclusionsArgs,
+    UserAddHotGroupExclusionsResponse,
+    UserAddReactionArgs,
+    UserAddReactionResponse,
+    UserApproveTransferArgs,
+    UserApproveTransferResponse,
+    UserArchiveUnarchiveChatsArgs,
+    UserArchiveUnarchiveChatsResponse,
+    UserBioResponse,
+    UserBlockUserArgs,
+    UserBlockUserResponse,
+    UserCancelMessageReminderArgs,
+    UserCancelMessageReminderResponse,
+    UserCancelP2pSwapArgs,
+    UserCancelP2pSwapResponse,
+    UserChatInList,
+    UserChitEventsArgs,
+    UserChitEventsResponse,
+    UserClaimDailyChitResponse,
+    UserConfigureWalletArgs,
+    UserConfigureWalletResponse,
+    UserCreateCommunityArgs,
+    UserCreateCommunityResponse,
+    UserCreateGroupArgs,
+    UserCreateGroupResponse,
+    UserDeleteCommunityArgs,
+    UserDeleteCommunityResponse,
+    UserDeleteDirectChatArgs,
+    UserDeleteDirectChatResponse,
+    UserDeletedMessageArgs,
+    UserDeletedMessageResponse,
+    UserDeleteGroupArgs,
+    UserDeleteGroupResponse,
+    UserDeleteMessagesArgs,
+    UserDeleteMessagesResponse,
+    UserEditMessageArgs,
+    UserEditMessageResponse,
+    UserEventsArgs,
+    UserEventsByIndexArgs,
+    UserEventsResponse,
+    UserEventsWindowArgs,
+    UserInitialStateResponse,
+    UserJoinVideoCallArgs,
+    UserJoinVideoCallResponse,
+    UserLeaveCommunityArgs,
+    UserLeaveCommunityResponse,
+    UserLeaveGroupArgs,
+    UserLeaveGroupResponse,
+    UserLocalUserIndexResponse,
+    UserManageFavouriteChatsArgs,
+    UserManageFavouriteChatsResponse,
+    UserMarkAchievementsSeenArgs,
+    UserMarkAchievementsSeenResponse,
+    UserMarkReadArgs,
+    UserMarkReadChannelMessagesRead,
+    UserMarkReadChatMessagesRead,
+    UserMarkReadResponse,
+    UserMuteNotificationsArgs,
+    UserMuteNotificationsResponse,
+    UserNamedAccount,
+    UserPinChatArgs,
+    UserPinChatResponse,
+    UserPublicProfileResponse,
+    UserRemoveReactionArgs,
+    UserRemoveReactionResponse,
+    UserReportMessageArgs,
+    UserReportMessageResponse,
+    UserSaveCryptoAccountResponse,
+    UserSavedCryptoAccountsResponse,
+    UserSearchMessagesArgs,
+    UserSearchMessagesResponse,
+    UserSendMessageArgs,
+    UserSendMessageResponse,
+    UserSendMessageWithTransferToChannelArgs,
+    UserSendMessageWithTransferToChannelResponse,
+    UserSendMessageWithTransferToGroupArgs,
+    UserSendMessageWithTransferToGroupResponse,
+    UserSetAvatarArgs,
+    UserSetAvatarResponse,
+    UserSetBioArgs,
+    UserSetBioResponse,
+    UserSetCommunityIndexesArgs,
+    UserSetCommunityIndexesResponse,
+    UserSetMessageReminderArgs,
+    UserSetMessageReminderResponse,
+    UserSetPinNumberArgs,
+    UserSetPinNumberResponse,
+    UserSubmitProposalArgs,
+    UserSubmitProposalResponse,
+    UserSwapTokensArgs,
+    UserSwapTokensResponse,
+    UserTipMessageArgs,
+    UserTipMessageResponse,
+    UserTokenSwapStatusArgs,
+    UserTokenSwapStatusResponse,
+    UserUnblockUserArgs,
+    UserUnblockUserResponse,
+    UserUndeleteMessagesArgs,
+    UserUndeleteMessagesResponse,
+    UserUnpinChatArgs,
+    UserUnpinChatResponse,
+    UserUpdatesArgs,
+    UserUpdatesResponse,
+    UserWithdrawCryptoArgs,
+    UserWithdrawCryptoResponse,
+} from "../../typebox";
+import { toggleNotificationsResponse } from "../notifications/mappers";
 
 export class UserClient extends CandidService {
-    private userService: UserService;
     userId: string;
     private chatId: DirectChatIdentifier;
 
@@ -187,7 +278,6 @@ export class UserClient extends CandidService {
         super(identity, agent, userId);
         this.userId = userId;
         this.chatId = { kind: "direct_chat", userId: userId };
-        this.userService = this.createServiceClient<UserService>(idlFactory);
     }
 
     private setCachedEvents(
@@ -226,34 +316,29 @@ export class UserClient extends CandidService {
         }
     }
 
-    addToFavourites(chatId: ChatIdentifier): Promise<ManageFavouritesResponse> {
-        return this.handleResponse(
-            this.userService.manage_favourite_chats({
-                to_add: [apiChatIdentifier(chatId)],
-                to_remove: [],
-            }),
+    manageFavouriteChats(
+        toAdd: ChatIdentifier[],
+        toRemove: ChatIdentifier[],
+    ): Promise<ManageFavouritesResponse> {
+        return this.executeMsgpackUpdate(
+            "manage_favourite_chats",
+            {
+                to_add: toAdd.map(apiChatIdentifier),
+                to_remove: toRemove.map(apiChatIdentifier),
+            },
             manageFavouritesResponse,
-        );
-    }
-
-    removeFromFavourites(chatId: ChatIdentifier): Promise<ManageFavouritesResponse> {
-        return this.handleResponse(
-            this.userService.manage_favourite_chats({
-                to_add: [],
-                to_remove: [apiChatIdentifier(chatId)],
-            }),
-            manageFavouritesResponse,
+            UserManageFavouriteChatsArgs,
+            UserManageFavouriteChatsResponse,
         );
     }
 
     getInitialState(): Promise<InitialStateResponse> {
-        const args = {
-            disable_cache: apiOptional(identity, true),
-        };
-        return this.handleQueryResponse(
-            () => this.userService.initial_state(args),
+        return this.executeMsgpackQuery(
+            "initial_state",
+            {},
             initialStateResponse,
-            args,
+            TEmpty,
+            UserInitialStateResponse,
         );
     }
 
@@ -261,10 +346,12 @@ export class UserClient extends CandidService {
         const args = {
             updates_since: updatesSince,
         };
-        return this.handleQueryResponse(
-            () => this.userService.updates(args),
-            getUpdatesResponse,
+        return this.executeMsgpackQuery(
+            "updates",
             args,
+            getUpdatesResponse,
+            UserUpdatesArgs,
+            UserUpdatesResponse,
         );
     }
 
@@ -274,90 +361,90 @@ export class UserClient extends CandidService {
         defaultChannels: string[],
         defaultChannelRules: Rules,
     ): Promise<CreateCommunityResponse> {
-        return this.handleResponse(
-            this.userService.create_community({
+        return this.executeMsgpackUpdate(
+            "create_community",
+            {
                 is_public: community.public,
                 name: community.name,
                 description: community.description,
                 history_visible_to_new_joiners: community.historyVisible,
-                avatar: apiOptional(
-                    (data) => {
-                        return {
-                            id: DataClient.newBlobId(),
-                            data,
-                            mime_type: "image/jpg",
-                        };
-                    },
-                    community.avatar?.blobData,
-                ),
-                banner: apiOptional(
-                    (data) => {
-                        return {
-                            id: DataClient.newBlobId(),
-                            data,
-                            mime_type: "image/jpg",
-                        };
-                    },
-                    community.banner?.blobData,
-                ),
-                permissions: [apiCommunityPermissions(community.permissions)],
+                avatar: mapOptional(community.avatar?.blobData, (data) => {
+                    return {
+                        id: DataClient.newBlobId(),
+                        data,
+                        mime_type: "image/jpg",
+                    };
+                }),
+                banner: mapOptional(community.banner?.blobData, (data) => {
+                    return {
+                        id: DataClient.newBlobId(),
+                        data,
+                        mime_type: "image/jpg",
+                    };
+                }),
+                permissions: apiCommunityPermissions(community.permissions),
                 rules,
                 gate_config: apiMaybeAccessGateConfig(community.gateConfig),
                 gate: apiMaybeAccessGate(community.gateConfig.gate),
                 default_channels: defaultChannels,
-                default_channel_rules: [defaultChannelRules],
+                default_channel_rules: defaultChannelRules,
                 primary_language: community.primaryLanguage,
-            }),
+            },
             createCommunityResponse,
+            UserCreateCommunityArgs,
+            UserCreateCommunityResponse,
         );
     }
 
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse> {
-        return this.handleResponse(
-            this.userService.create_group({
+        return this.executeMsgpackUpdate(
+            "create_group",
+            {
                 is_public: group.public,
                 name: group.name,
                 description: group.description,
                 history_visible_to_new_joiners: group.historyVisible,
-                avatar: apiOptional(
-                    (data) => {
-                        return {
-                            id: DataClient.newBlobId(),
-                            data,
-                            mime_type: "image/jpg",
-                        };
-                    },
-                    group.avatar?.blobData,
-                ),
-                permissions_v2: [apiGroupPermissions(group.permissions)],
+                avatar: mapOptional(group.avatar?.blobData, (data) => {
+                    return {
+                        id: DataClient.newBlobId(),
+                        data,
+                        mime_type: "image/jpg",
+                    };
+                }),
+                permissions_v2: apiGroupPermissions(group.permissions),
                 rules: group.rules,
                 gate: apiMaybeAccessGate(group.gateConfig.gate),
                 gate_config: apiMaybeAccessGateConfig(group.gateConfig),
-                events_ttl: apiOptional(identity, group.eventsTTL),
-                messages_visible_to_non_members: apiOptional(
-                    identity,
-                    group.messagesVisibleToNonMembers,
-                ),
-            }),
+                events_ttl: group.eventsTTL,
+                messages_visible_to_non_members: group.messagesVisibleToNonMembers,
+            },
             (resp) => createGroupResponse(resp, group.id),
+            UserCreateGroupArgs,
+            UserCreateGroupResponse,
         );
     }
 
     deleteGroup(chatId: string): Promise<DeleteGroupResponse> {
-        return this.handleResponse(
-            this.userService.delete_group({
-                chat_id: Principal.fromText(chatId),
-            }),
+        return this.executeMsgpackUpdate(
+            "delete_group",
+            {
+                chat_id: principalStringToBytes(chatId),
+            },
             deleteGroupResponse,
+            UserDeleteGroupArgs,
+            UserDeleteGroupResponse,
         );
     }
 
     deleteCommunity(id: CommunityIdentifier): Promise<DeleteCommunityResponse> {
-        return this.handleResponse(
-            this.userService.delete_community({
-                community_id: Principal.fromText(id.communityId),
-            }),
+        return this.executeMsgpackUpdate(
+            "delete_community",
+            {
+                community_id: principalStringToBytes(id.communityId),
+            },
             deleteCommunityResponse,
+            UserDeleteCommunityArgs,
+            UserDeleteCommunityResponse,
         );
     }
 
@@ -382,16 +469,18 @@ export class UserClient extends CandidService {
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
-            thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-            user_id: Principal.fromText(chatId.userId),
-            events: new Uint32Array(eventIndexes),
-            latest_known_update: apiOptional(identity, latestKnownUpdate),
-            latest_client_event_index: [] as [] | [number],
+            thread_root_message_index: threadRootMessageIndex,
+            user_id: principalStringToBytes(chatId.userId),
+            events: eventIndexes,
+            latest_known_update: latestKnownUpdate,
+            latest_client_event_index: undefined,
         };
-        return this.handleQueryResponse(
-            () => this.userService.events_by_index(args),
-            (resp) => getEventsResponse(this.principal, resp, chatId, latestKnownUpdate),
+        return this.executeMsgpackQuery(
+            "events_by_index",
             args,
+            (resp) => getEventsResponse(this.principal, resp, chatId, latestKnownUpdate),
+            UserEventsByIndexArgs,
+            UserEventsResponse,
         );
     }
 
@@ -461,20 +550,20 @@ export class UserClient extends CandidService {
         latestKnownUpdate: bigint | undefined,
         maxEvents: number = MAX_EVENTS,
     ): Promise<EventsResponse<ChatEvent>> {
-        const thread_root_message_index: [] = [];
         const args = {
-            thread_root_message_index,
-            user_id: Principal.fromText(chatId.userId),
+            thread_root_message_index: undefined,
+            user_id: principalStringToBytes(chatId.userId),
             max_messages: MAX_MESSAGES,
             max_events: maxEvents,
             mid_point: messageIndex,
-            latest_known_update: apiOptional(identity, latestKnownUpdate),
-            latest_client_event_index: [] as [] | [number],
+            latest_known_update: latestKnownUpdate,
         };
-        return this.handleQueryResponse(
-            () => this.userService.events_window(args),
-            (resp) => getEventsResponse(this.principal, resp, chatId, latestKnownUpdate),
+        return this.executeMsgpackQuery(
+            "events_window",
             args,
+            (resp) => getEventsResponse(this.principal, resp, chatId, latestKnownUpdate),
+            UserEventsWindowArgs,
+            UserEventsResponse,
         );
     }
 
@@ -550,34 +639,39 @@ export class UserClient extends CandidService {
         maxEvents: number = MAX_EVENTS,
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
-            thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-            user_id: Principal.fromText(chatId.userId),
+            thread_root_message_index: threadRootMessageIndex,
+            user_id: principalStringToBytes(chatId.userId),
             max_messages: MAX_MESSAGES,
             max_events: maxEvents,
             start_index: startIndex,
             ascending: ascending,
-            latest_known_update: apiOptional(identity, latestKnownUpdate),
-            latest_client_event_index: [] as [] | [number],
+            latest_known_update: latestKnownUpdate,
+            latest_client_event_index: undefined,
         };
 
-        return this.handleQueryResponse(
-            () => this.userService.events(args),
-            (resp) => getEventsResponse(this.principal, resp, chatId, latestKnownUpdate),
+        return this.executeMsgpackQuery(
+            "events",
             args,
+            (resp) => getEventsResponse(this.principal, resp, chatId, latestKnownUpdate),
+            UserEventsArgs,
+            UserEventsResponse,
         );
     }
 
     setAvatar(bytes: Uint8Array): Promise<BlobReference> {
         const blobId = DataClient.newBlobId();
-        return this.handleResponse(
-            this.userService.set_avatar({
-                avatar: apiOptional(identity, {
+        return this.executeMsgpackUpdate(
+            "set_avatar",
+            {
+                avatar: {
                     id: blobId,
                     data: bytes,
                     mime_type: "image/jpg",
-                }),
-            }),
+                },
+            },
             setAvatarResponse,
+            UserSetAvatarArgs,
+            UserSetAvatarResponse,
         ).then((resp) => {
             if (resp === "success") {
                 return {
@@ -598,18 +692,20 @@ export class UserClient extends CandidService {
         return new DataClient(this.identity, this.agent, this.config)
             .uploadData(message.content, [this.userId, recipientId])
             .then((content) => {
-                const req: EditMessageV2Args = {
+                const req = {
                     content: apiMessageContent(content ?? message.content),
-                    user_id: Principal.fromText(recipientId),
-                    thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                    user_id: principalStringToBytes(recipientId),
+                    thread_root_message_index: threadRootMessageIndex,
                     message_id: message.messageId,
                     correlation_id: generateUint64(),
-                    block_level_markdown:
-                        blockLevelMarkdown === undefined ? [] : [blockLevelMarkdown],
+                    block_level_markdown: blockLevelMarkdown,
                 };
-                return this.handleResponse(
-                    this.userService.edit_message_v2(req),
+                return this.executeMsgpackUpdate(
+                    "edit_message_v2",
+                    req,
                     editMessageResponse,
+                    UserEditMessageArgs,
+                    UserEditMessageResponse,
                 );
             });
     }
@@ -661,11 +757,11 @@ export class UserClient extends CandidService {
         return uploadContentPromise.then((content) => {
             const newContent = content ?? event.event.content;
             const req = {
-                content: apiMessageContentV2(newContent),
+                content: apiMessageContent(newContent),
                 recipient: principalStringToBytes(chatId.userId),
                 message_id: event.event.messageId,
                 replies_to: mapOptional(event.event.repliesTo, (replyContext) =>
-                    apiReplyContextArgsV2(chatId, replyContext),
+                    apiReplyContextArgs(chatId, replyContext),
                 ),
                 forwarding: event.event.forwarded,
                 thread_root_message_index: threadRootMessageIndex,
@@ -725,44 +821,52 @@ export class UserClient extends CandidService {
     ): Promise<[SendMessageResponse, Message]> {
         const content = apiMessageContent(event.event.content);
 
-        const req: ApiSendMessageWithTransferToGroupArgs = {
-            thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+        const req = {
+            thread_root_message_index: threadRootMessageIndex,
             content,
             sender_name: sender.username,
-            sender_display_name: apiOptional(identity, sender.displayName),
-            rules_accepted: apiOptional(identity, rulesAccepted),
+            sender_display_name: sender.displayName,
+            rules_accepted: rulesAccepted,
             mentioned: [],
             message_id: event.event.messageId,
-            group_id: Principal.fromText(groupId.groupId),
-            replies_to: apiOptional(
-                (replyContext) => apiReplyContextArgs(groupId, replyContext),
-                event.event.repliesTo,
+            group_id: principalStringToBytes(groupId.groupId),
+            replies_to: mapOptional(event.event.repliesTo, (replyContext) =>
+                apiReplyContextArgs(groupId, replyContext),
             ),
             block_level_markdown: true,
-            message_filter_failed: apiOptional(identity, messageFilterFailed),
-            pin: apiOptional(identity, pin),
+            message_filter_failed: messageFilterFailed,
+            pin,
             correlation_id: generateUint64(),
         };
-        return this.handleResponse(
-            this.userService.send_message_with_transfer_to_group(req),
+        return this.executeMsgpackUpdate(
+            "send_message_with_transfer_to_group",
+            req,
             (resp) => sendMessageWithTransferToGroupResponse(resp, event.event.sender, recipientId),
+            UserSendMessageWithTransferToGroupArgs,
+            UserSendMessageWithTransferToGroupResponse,
         ).then((resp) => [resp, event.event]);
     }
 
     loadSavedCryptoAccounts(): Promise<NamedAccount[]> {
-        return this.handleQueryResponse(
-            () => this.userService.saved_crypto_accounts({}),
+        return this.executeMsgpackUpdate(
+            "saved_crypto_accounts",
+            {},
             savedCryptoAccountsResponse,
+            TEmpty,
+            UserSavedCryptoAccountsResponse,
         );
     }
 
     saveCryptoAccount({ name, account }: NamedAccount): Promise<SaveCryptoAccountResponse> {
-        return this.handleResponse(
-            this.userService.save_crypto_account({
+        return this.executeMsgpackUpdate(
+            "save_crypto_account",
+            {
                 name,
                 account,
-            }),
+            },
             saveCryptoAccountResponse,
+            UserNamedAccount,
+            UserSaveCryptoAccountResponse,
         );
     }
 
@@ -809,66 +913,80 @@ export class UserClient extends CandidService {
     ): Promise<[SendMessageResponse, Message]> {
         const content = apiMessageContent(event.event.content);
 
-        const req: ApiSendMessageWithTransferToChannelArgs = {
-            thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+        const req = {
+            thread_root_message_index: threadRootMessageIndex,
             content,
             sender_name: sender.username,
-            sender_display_name: apiOptional(identity, sender.displayName),
+            sender_display_name: sender.displayName,
             mentioned: [],
             message_id: event.event.messageId,
-            community_id: Principal.fromText(id.communityId),
+            community_id: principalStringToBytes(id.communityId),
             channel_id: BigInt(id.channelId),
-            replies_to: apiOptional(
-                (replyContext) => apiReplyContextArgs(id, replyContext),
-                event.event.repliesTo,
+            replies_to: mapOptional(event.event.repliesTo, (replyContext) =>
+                apiReplyContextArgs(id, replyContext),
             ),
             block_level_markdown: true,
-            community_rules_accepted: apiOptional(identity, communityRulesAccepted),
-            channel_rules_accepted: apiOptional(identity, channelRulesAccepted),
-            message_filter_failed: apiOptional(identity, messageFilterFailed),
-            pin: apiOptional(identity, pin),
+            community_rules_accepted: communityRulesAccepted,
+            channel_rules_accepted: channelRulesAccepted,
+            message_filter_failed: messageFilterFailed,
+            pin,
         };
-        return this.handleResponse(
-            this.userService.send_message_with_transfer_to_channel(req),
+        return this.executeMsgpackUpdate(
+            "send_message_with_transfer_to_channel",
+            req,
             (resp) =>
                 sendMessageWithTransferToChannelResponse(resp, event.event.sender, recipientId),
+            UserSendMessageWithTransferToChannelArgs,
+            UserSendMessageWithTransferToChannelResponse,
         ).then((resp) => [resp, event.event]);
     }
 
     blockUser(userId: string): Promise<BlockUserResponse> {
-        return this.handleResponse(
-            this.userService.block_user({
-                user_id: Principal.fromText(userId),
-            }),
-            blockResponse,
+        return this.executeMsgpackUpdate(
+            "block_user",
+            {
+                user_id: principalStringToBytes(userId),
+            },
+            (_) => "success",
+            UserBlockUserArgs,
+            UserBlockUserResponse,
         );
     }
 
     unblockUser(userId: string): Promise<UnblockUserResponse> {
-        return this.handleResponse(
-            this.userService.unblock_user({
-                user_id: Principal.fromText(userId),
-            }),
-            unblockResponse,
+        return this.executeMsgpackUpdate(
+            "unblock_user",
+            {
+                user_id: principalStringToBytes(userId),
+            },
+            (_) => "success",
+            UserUnblockUserArgs,
+            UserUnblockUserResponse,
         );
     }
 
     leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
-        return this.handleResponse(
-            this.userService.leave_group({
-                chat_id: Principal.fromText(chatId),
+        return this.executeMsgpackUpdate(
+            "leave_group",
+            {
+                chat_id: principalStringToBytes(chatId),
                 correlation_id: generateUint64(),
-            }),
+            },
             leaveGroupResponse,
+            UserLeaveGroupArgs,
+            UserLeaveGroupResponse,
         );
     }
 
     leaveCommunity(id: CommunityIdentifier): Promise<LeaveCommunityResponse> {
-        return this.handleResponse(
-            this.userService.leave_community({
-                community_id: Principal.fromText(id.communityId),
-            }),
+        return this.executeMsgpackUpdate(
+            "leave_community",
+            {
+                community_id: principalStringToBytes(id.communityId),
+            },
             leaveCommunityResponse,
+            UserLeaveCommunityArgs,
+            UserLeaveCommunityResponse,
         );
     }
 
@@ -879,13 +997,13 @@ export class UserClient extends CandidService {
         dateReadPinned: bigint | undefined,
     ) {
         return {
-            chat_id: Principal.fromText(chatId),
-            read_up_to: apiOptional(identity, readUpTo),
+            chat_id: principalStringToBytes(chatId),
+            read_up_to: readUpTo,
             threads: threads.map((t) => ({
                 root_message_index: t.threadRootMessageIndex,
                 read_up_to: t.readUpTo,
             })),
-            date_read_pinned: apiOptional(identity, dateReadPinned),
+            date_read_pinned: dateReadPinned,
         };
     }
 
@@ -897,18 +1015,18 @@ export class UserClient extends CandidService {
     ) {
         return {
             channel_id: BigInt(channelId),
-            read_up_to: apiOptional(identity, readUpTo),
+            read_up_to: readUpTo,
             threads: threads.map((t) => ({
                 root_message_index: t.threadRootMessageIndex,
                 read_up_to: t.readUpTo,
             })),
-            date_read_pinned: apiOptional(identity, dateReadPinned),
+            date_read_pinned: dateReadPinned,
         };
     }
 
-    private markMessageArgs(req: MarkReadRequest): ApiMarkReadArgs {
-        const community: Record<string, ApiChannelMessagesRead[]> = {};
-        const chat: ApiChatMessagesRead[] = [];
+    private markMessageArgs(req: MarkReadRequest): UserMarkReadArgs {
+        const community: Record<string, UserMarkReadChannelMessagesRead[]> = {};
+        const chat: UserMarkReadChatMessagesRead[] = [];
 
         req.forEach(({ chatId, readUpTo, threads, dateReadPinned }) => {
             if (chatId.kind === "direct_chat") {
@@ -930,16 +1048,19 @@ export class UserClient extends CandidService {
         return {
             messages_read: chat,
             community_messages_read: Object.entries(community).map(([communityId, read]) => ({
-                community_id: Principal.fromText(communityId),
+                community_id: principalStringToBytes(communityId),
                 channels_read: read,
             })),
         };
     }
 
     markMessagesRead(request: MarkReadRequest): Promise<MarkReadResponse> {
-        return this.handleResponse(
-            this.userService.mark_read(this.markMessageArgs(request)),
-            markReadResponse,
+        return this.executeMsgpackUpdate(
+            "mark_read",
+            this.markMessageArgs(request),
+            (_) => "success",
+            UserMarkReadArgs,
+            UserMarkReadResponse,
         );
     }
 
@@ -950,23 +1071,23 @@ export class UserClient extends CandidService {
         decimals: number,
         pin: string | undefined,
     ): Promise<TipMessageResponse> {
-        return this.handleResponse(
-            this.userService.tip_message({
+        return this.executeMsgpackUpdate(
+            "tip_message",
+            {
                 chat: apiChatIdentifier(messageContext.chatId),
                 message_id: messageId,
                 fee: transfer.feeE8s ?? 0n,
                 decimals,
                 token: apiToken(transfer.token),
-                recipient: Principal.fromText(transfer.recipient),
-                ledger: Principal.fromText(transfer.ledger),
+                recipient: principalStringToBytes(transfer.recipient),
+                ledger: principalStringToBytes(transfer.ledger),
                 amount: transfer.amountE8s,
-                thread_root_message_index: apiOptional(
-                    identity,
-                    messageContext.threadRootMessageIndex,
-                ),
-                pin: apiOptional(identity, pin),
-            }),
+                thread_root_message_index: messageContext.threadRootMessageIndex,
+                pin,
+            },
             tipMessageResponse,
+            UserTipMessageArgs,
+            UserTipMessageResponse,
         );
     }
 
@@ -975,18 +1096,19 @@ export class UserClient extends CandidService {
         messageId: bigint,
         reaction: string,
         threadRootMessageIndex: number | undefined,
-        newAchievement: boolean,
     ): Promise<AddRemoveReactionResponse> {
-        return this.handleResponse(
-            this.userService.add_reaction({
-                user_id: Principal.fromText(otherUserId),
-                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+        return this.executeMsgpackUpdate(
+            "add_reaction",
+            {
+                user_id: principalStringToBytes(otherUserId),
+                thread_root_message_index: threadRootMessageIndex,
                 message_id: messageId,
                 reaction,
                 correlation_id: generateUint64(),
-            }),
+            },
             addRemoveReactionResponse,
-            newAchievement,
+            UserAddReactionArgs,
+            UserAddReactionResponse,
         );
     }
 
@@ -996,15 +1118,18 @@ export class UserClient extends CandidService {
         reaction: string,
         threadRootMessageIndex?: number,
     ): Promise<AddRemoveReactionResponse> {
-        return this.handleResponse(
-            this.userService.remove_reaction({
-                user_id: Principal.fromText(otherUserId),
-                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+        return this.executeMsgpackUpdate(
+            "remove_reaction",
+            {
+                user_id: principalStringToBytes(otherUserId),
+                thread_root_message_index: threadRootMessageIndex,
                 message_id: messageId,
                 reaction,
                 correlation_id: generateUint64(),
-            }),
+            },
             addRemoveReactionResponse,
+            UserRemoveReactionArgs,
+            UserRemoveReactionResponse,
         );
     }
 
@@ -1013,14 +1138,17 @@ export class UserClient extends CandidService {
         messageId: bigint,
         threadRootMessageIndex?: number,
     ): Promise<DeleteMessageResponse> {
-        return this.handleResponse(
-            this.userService.delete_messages({
-                user_id: Principal.fromText(otherUserId),
-                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+        return this.executeMsgpackUpdate(
+            "delete_messages",
+            {
+                user_id: principalStringToBytes(otherUserId),
+                thread_root_message_index: threadRootMessageIndex,
                 message_ids: [messageId],
                 correlation_id: generateUint64(),
-            }),
+            },
             deleteMessageResponse,
+            UserDeleteMessagesArgs,
+            UserDeleteMessagesResponse,
         );
     }
 
@@ -1029,14 +1157,17 @@ export class UserClient extends CandidService {
         messageId: bigint,
         threadRootMessageIndex?: number,
     ): Promise<UndeleteMessageResponse> {
-        return this.handleResponse(
-            this.userService.undelete_messages({
-                user_id: Principal.fromText(otherUserId),
-                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+        return this.executeMsgpackUpdate(
+            "undelete_messages",
+            {
+                user_id: principalStringToBytes(otherUserId),
+                thread_root_message_index: threadRootMessageIndex,
                 message_ids: [messageId],
                 correlation_id: generateUint64(),
-            }),
+            },
             undeleteMessageResponse,
+            UserUndeleteMessagesArgs,
+            UserUndeleteMessagesResponse,
         );
     }
 
@@ -1046,14 +1177,16 @@ export class UserClient extends CandidService {
         maxResults: number,
     ): Promise<SearchDirectChatResponse> {
         const args = {
-            user_id: Principal.fromText(chatId.userId),
+            user_id: principalStringToBytes(chatId.userId),
             search_term: searchTerm,
             max_results: maxResults,
         };
-        return this.handleQueryResponse(
-            () => this.userService.search_messages(args),
-            (res) => searchDirectChatResponse(res, chatId),
+        return this.executeMsgpackQuery(
+            "search_messages",
             args,
+            (res) => searchDirectChatResponse(res, chatId),
+            UserSearchMessagesArgs,
+            UserSearchMessagesResponse,
         );
     }
 
@@ -1061,49 +1194,59 @@ export class UserClient extends CandidService {
         chatId: string,
         muted: boolean,
     ): Promise<ToggleMuteNotificationResponse> {
-        if (muted) {
-            return this.handleResponse(
-                this.userService.mute_notifications({
-                    chat_id: Principal.fromText(chatId),
-                }),
-                muteNotificationsResponse,
-            );
-        } else {
-            return this.handleResponse(
-                this.userService.unmute_notifications({
-                    chat_id: Principal.fromText(chatId),
-                }),
-                muteNotificationsResponse,
-            );
-        }
+        const args = {
+            chat_id: principalStringToBytes(chatId),
+        };
+        return this.executeMsgpackUpdate(
+            muted ? "mute_notifications" : "unmute_notifications",
+            args,
+            toggleNotificationsResponse,
+            UserMuteNotificationsArgs,
+            UserMuteNotificationsResponse,
+        );
     }
 
     dismissRecommendation(chatId: string): Promise<void> {
-        return this.handleResponse(
-            this.userService.add_hot_group_exclusions({
-                duration: [],
-                groups: [Principal.fromText(chatId)],
-            }),
+        return this.executeMsgpackUpdate(
+            "add_hot_group_exclusions",
+            {
+                duration: undefined,
+                groups: [principalStringToBytes(chatId)],
+            },
             toVoid,
+            UserAddHotGroupExclusionsArgs,
+            UserAddHotGroupExclusionsResponse,
         );
     }
 
     getBio(): Promise<string> {
-        return this.handleQueryResponse(
-            () => this.userService.bio({}),
-            (candid) => candid.Success,
+        return this.executeMsgpackQuery(
+            "bio",
+            {},
+            (value) => value.Success,
+            TEmpty,
+            UserBioResponse,
         );
     }
 
     getPublicProfile(): Promise<PublicProfile> {
-        return this.handleQueryResponse(
-            () => this.userService.public_profile({}),
+        return this.executeMsgpackQuery(
+            "public_profile",
+            {},
             publicProfileResponse,
+            TEmpty,
+            UserPublicProfileResponse,
         );
     }
 
     setBio(bio: string): Promise<SetBioResponse> {
-        return this.handleResponse(this.userService.set_bio({ text: bio }), setBioResponse);
+        return this.executeMsgpackUpdate(
+            "set_bio",
+            { text: bio },
+            setBioResponse,
+            UserSetBioArgs,
+            UserSetBioResponse,
+        );
     }
 
     withdrawCryptocurrency(
@@ -1111,40 +1254,30 @@ export class UserClient extends CandidService {
         pin: string | undefined,
     ): Promise<WithdrawCryptocurrencyResponse> {
         const req = apiPendingCryptocurrencyWithdrawal(domain, pin);
-        return this.handleResponse(
-            this.userService.withdraw_crypto_v2(req),
+        return this.executeMsgpackUpdate(
+            "withdraw_crypto_v2",
+            req,
             withdrawCryptoResponse,
+            UserWithdrawCryptoArgs,
+            UserWithdrawCryptoResponse,
         );
     }
 
-    private toChat(chatId: ChatIdentifier): ApiChat {
-        switch (chatId.kind) {
-            case "direct_chat":
-                return { Direct: Principal.fromText(chatId.userId) };
-            case "group_chat":
-                return { Group: Principal.fromText(chatId.groupId) };
-            case "channel":
-                return {
-                    Channel: [Principal.fromText(chatId.communityId), BigInt(chatId.channelId)],
-                };
-        }
-    }
-
-    private toChatInList(chatId: ChatIdentifier, favourite: boolean): ApiChatInList {
+    private toChatInList(chatId: ChatIdentifier, favourite: boolean): UserChatInList {
         if (favourite) {
             return {
-                Favourite: this.toChat(chatId),
+                Favourite: apiChatIdentifier(chatId),
             };
         } else {
             switch (chatId.kind) {
-                case "direct_chat":
-                    return { Direct: Principal.fromText(chatId.userId) };
                 case "group_chat":
-                    return { Group: Principal.fromText(chatId.groupId) };
+                    return { Group: principalStringToBytes(chatId.groupId) };
+                case "direct_chat":
+                    return { Direct: principalStringToBytes(chatId.userId) };
                 case "channel":
                     return {
                         Community: [
-                            Principal.fromText(chatId.communityId),
+                            principalStringToBytes(chatId.communityId),
                             BigInt(chatId.channelId),
                         ],
                     };
@@ -1153,51 +1286,65 @@ export class UserClient extends CandidService {
     }
 
     pinChat(chatId: ChatIdentifier, favourite: boolean): Promise<PinChatResponse> {
-        return this.handleResponse(
-            this.userService.pin_chat_v2({
+        return this.executeMsgpackUpdate(
+            "pin_chat_v2",
+            {
                 chat: this.toChatInList(chatId, favourite),
-            }),
-
+            },
             pinChatResponse,
+            UserPinChatArgs,
+            UserPinChatResponse,
         );
     }
 
     unpinChat(chatId: ChatIdentifier, favourite: boolean): Promise<UnpinChatResponse> {
-        return this.handleResponse(
-            this.userService.unpin_chat_v2({
+        return this.executeMsgpackUpdate(
+            "unpin_chat_v2",
+            {
                 chat: this.toChatInList(chatId, favourite),
-            }),
-            unpinChatResponse,
+            },
+            pinChatResponse,
+            UserUnpinChatArgs,
+            UserUnpinChatResponse,
         );
     }
 
     archiveChat(chatId: ChatIdentifier): Promise<ArchiveChatResponse> {
-        return this.handleResponse(
-            this.userService.archive_unarchive_chats({
+        return this.executeMsgpackUpdate(
+            "archive_unarchive_chats",
+            {
                 to_archive: [apiChatIdentifier(chatId)],
                 to_unarchive: [],
-            }),
+            },
             archiveChatResponse,
+            UserArchiveUnarchiveChatsArgs,
+            UserArchiveUnarchiveChatsResponse,
         );
     }
 
     unarchiveChat(chatId: ChatIdentifier): Promise<ArchiveChatResponse> {
-        return this.handleResponse(
-            this.userService.archive_unarchive_chats({
-                to_unarchive: [apiChatIdentifier(chatId)],
+        return this.executeMsgpackUpdate(
+            "archive_unarchive_chats",
+            {
                 to_archive: [],
-            }),
+                to_unarchive: [apiChatIdentifier(chatId)],
+            },
             archiveChatResponse,
+            UserArchiveUnarchiveChatsArgs,
+            UserArchiveUnarchiveChatsResponse,
         );
     }
 
     getDeletedMessage(userId: string, messageId: bigint): Promise<DeletedDirectMessageResponse> {
-        return this.handleResponse(
-            this.userService.deleted_message({
-                user_id: Principal.fromText(userId),
+        return this.executeMsgpackQuery(
+            "deleted_message",
+            {
+                user_id: principalStringToBytes(userId),
                 message_id: messageId,
-            }),
+            },
             deletedMessageResponse,
+            UserDeletedMessageArgs,
+            UserDeletedMessageResponse,
         );
     }
 
@@ -1208,35 +1355,43 @@ export class UserClient extends CandidService {
         notes?: string,
         threadRootMessageIndex?: number,
     ): Promise<SetMessageReminderResponse> {
-        return this.handleResponse(
-            this.userService.set_message_reminder_v2({
+        return this.executeMsgpackUpdate(
+            "set_message_reminder_v2",
+            {
                 chat: apiChatIdentifier(chatId),
-                notes: apiOptional(identity, notes),
+                notes,
                 remind_at: BigInt(remindAt),
-                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                thread_root_message_index: threadRootMessageIndex,
                 event_index: eventIndex,
-            }),
+            },
             setMessageReminderResponse,
+            UserSetMessageReminderArgs,
+            UserSetMessageReminderResponse,
         );
     }
 
     cancelMessageReminder(reminderId: bigint): Promise<boolean> {
-        return this.handleResponse(
-            this.userService.cancel_message_reminder({
+        return this.executeMsgpackUpdate(
+            "cancel_message_reminder",
+            {
                 reminder_id: reminderId,
-            }),
+            },
             (_) => true,
+            UserCancelMessageReminderArgs,
+            UserCancelMessageReminderResponse,
         );
     }
 
     setCommunityIndexes(communityIndexes: Record<string, number>): Promise<boolean> {
-        const indexes: [Principal, number][] = Object.entries(communityIndexes).map(([id, idx]) => [
-            Principal.fromText(id),
-            idx,
-        ]);
-        return this.handleResponse(
-            this.userService.set_community_indexes({ indexes }),
+        const indexes: [Uint8Array, number][] = Object.entries(communityIndexes).map(
+            ([id, idx]) => [principalStringToBytes(id), idx],
+        );
+        return this.executeMsgpackUpdate(
+            "set_community_indexes",
+            { indexes },
             (_) => true,
+            UserSetCommunityIndexesArgs,
+            UserSetCommunityIndexesResponse,
         );
     }
 
@@ -1248,16 +1403,19 @@ export class UserClient extends CandidService {
         proposalRejectionFee: bigint,
         transactionFee: bigint,
     ): Promise<SubmitProposalResponse> {
-        return this.handleResponse(
-            this.userService.submit_proposal({
-                governance_canister_id: Principal.fromText(governanceCanisterId),
+        return this.executeMsgpackUpdate(
+            "submit_proposal",
+            {
+                governance_canister_id: principalStringToBytes(governanceCanisterId),
                 proposal: proposalToSubmit(proposal),
-                ledger: Principal.fromText(ledger),
+                ledger: principalStringToBytes(ledger),
                 token: apiToken(token),
                 proposal_rejection_fee: proposalRejectionFee,
                 transaction_fee: transactionFee,
-            }),
+            },
             submitProposalResponse,
+            UserSubmitProposalArgs,
+            UserSubmitProposalResponse,
         );
     }
 
@@ -1267,14 +1425,17 @@ export class UserClient extends CandidService {
         messageId: bigint,
         deleteMessage: boolean,
     ): Promise<boolean> {
-        return this.handleResponse(
-            this.userService.report_message({
-                them: Principal.fromText(chatId.userId),
+        return this.executeMsgpackUpdate(
+            "report_message",
+            {
+                them: principalStringToBytes(chatId.userId),
                 message_id: messageId,
                 delete: deleteMessage,
-                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-            }),
+                thread_root_message_index: threadRootMessageIndex,
+            },
             reportMessageResponse,
+            UserReportMessageArgs,
+            UserReportMessageResponse,
         );
     }
 
@@ -1287,27 +1448,30 @@ export class UserClient extends CandidService {
         exchangeArgs: ExchangeTokenSwapArgs,
         pin: string | undefined,
     ): Promise<SwapTokensResponse> {
-        return this.handleResponse(
-            this.userService.swap_tokens({
+        return this.executeMsgpackUpdate(
+            "swap_tokens",
+            {
                 swap_id: swapId,
                 input_token: {
                     token: apiToken(inputToken.symbol),
-                    ledger: Principal.fromText(inputToken.ledger),
+                    ledger: principalStringToBytes(inputToken.ledger),
                     decimals: inputToken.decimals,
                     fee: inputToken.transferFee,
                 },
                 output_token: {
                     token: apiToken(outputToken.symbol),
-                    ledger: Principal.fromText(outputToken.ledger),
+                    ledger: principalStringToBytes(outputToken.ledger),
                     decimals: outputToken.decimals,
                     fee: outputToken.transferFee,
                 },
                 input_amount: amountIn,
                 exchange_args: apiExchangeArgs(exchangeArgs),
                 min_output_amount: minAmountOut,
-                pin: apiOptional(identity, pin),
-            }),
+                pin,
+            },
             swapTokensResponse,
+            UserSwapTokensArgs,
+            UserSwapTokensResponse,
         );
     }
 
@@ -1315,10 +1479,12 @@ export class UserClient extends CandidService {
         const args = {
             swap_id: swapId,
         };
-        return this.handleQueryResponse(
-            () => this.userService.token_swap_status(args),
-            tokenSwapStatusResponse,
+        return this.executeMsgpackQuery(
+            "token_swap_status",
             args,
+            tokenSwapStatusResponse,
+            UserTokenSwapStatusArgs,
+            UserTokenSwapStatusResponse,
         );
     }
 
@@ -1329,28 +1495,34 @@ export class UserClient extends CandidService {
         expiresIn: bigint | undefined,
         pin: string | undefined,
     ): Promise<ApproveTransferResponse> {
-        return this.handleResponse(
-            this.userService.approve_transfer({
+        return this.executeMsgpackUpdate(
+            "approve_transfer",
+            {
                 spender: {
-                    owner: Principal.fromText(spender),
-                    subaccount: [],
+                    owner: principalStringToBytes(spender),
+                    subaccount: undefined,
                 },
-                ledger_canister_id: Principal.fromText(ledger),
+                ledger_canister_id: principalStringToBytes(ledger),
                 amount,
-                expires_in: apiOptional(identity, expiresIn),
-                pin: apiOptional(identity, pin),
-            }),
+                expires_in: expiresIn,
+                pin,
+            },
             approveTransferResponse,
+            UserApproveTransferArgs,
+            UserApproveTransferResponse,
         );
     }
 
     deleteDirectChat(userId: string, blockUser: boolean): Promise<boolean> {
-        return this.handleResponse(
-            this.userService.delete_direct_chat({
-                user_id: Principal.fromText(userId),
+        return this.executeMsgpackUpdate(
+            "delete_direct_chat",
+            {
+                user_id: principalStringToBytes(userId),
                 block_user: blockUser,
-            }),
-            (resp) => "Success" in resp,
+            },
+            (resp) => resp === "Success",
+            UserDeleteDirectChatArgs,
+            UserDeleteDirectChatResponse,
         );
     }
 
@@ -1360,41 +1532,53 @@ export class UserClient extends CandidService {
         messageId: bigint,
         pin: string | undefined,
     ): Promise<AcceptP2PSwapResponse> {
-        return this.handleResponse(
-            this.userService.accept_p2p_swap({
-                user_id: Principal.fromText(userId),
+        return this.executeMsgpackUpdate(
+            "accept_p2p_swap",
+            {
+                user_id: principalStringToBytes(userId),
                 message_id: messageId,
-                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-                pin: apiOptional(identity, pin),
-            }),
+                thread_root_message_index: threadRootMessageIndex,
+                pin,
+            },
             acceptP2PSwapResponse,
+            UserAcceptP2pSwapArgs,
+            UserAcceptP2pSwapResponse,
         );
     }
 
     cancelP2PSwap(userId: string, messageId: bigint): Promise<CancelP2PSwapResponse> {
-        return this.handleResponse(
-            this.userService.cancel_p2p_swap({
-                user_id: Principal.fromText(userId),
+        return this.executeMsgpackUpdate(
+            "cancel_p2p_swap",
+            {
+                user_id: principalStringToBytes(userId),
                 message_id: messageId,
-            }),
+            },
             cancelP2PSwapResponse,
+            UserCancelP2pSwapArgs,
+            UserCancelP2pSwapResponse,
         );
     }
 
     joinVideoCall(userId: string, messageId: bigint): Promise<JoinVideoCallResponse> {
-        return this.handleResponse(
-            this.userService.join_video_call({
-                user_id: Principal.fromText(userId),
+        return this.executeMsgpackUpdate(
+            "join_video_call",
+            {
+                user_id: principalStringToBytes(userId),
                 message_id: messageId,
-            }),
+            },
             joinVideoCallResponse,
+            UserJoinVideoCallArgs,
+            UserJoinVideoCallResponse,
         );
     }
 
     localUserIndex(): Promise<string> {
-        return this.handleQueryResponse(
-            () => this.userService.local_user_index({}),
-            (resp) => resp.Success.toString(),
+        return this.executeMsgpackQuery(
+            "local_user_index",
+            {},
+            (resp) => principalBytesToString(resp.Success),
+            TEmpty,
+            UserLocalUserIndexResponse,
         );
     }
 
@@ -1402,44 +1586,55 @@ export class UserClient extends CandidService {
         verification: Verification,
         newPin: string | undefined,
     ): Promise<SetPinNumberResponse> {
-        return this.handleResponse(
-            this.userService.set_pin_number({
+        return this.executeMsgpackUpdate(
+            "set_pin_number",
+            {
                 verification: apiVerification(verification),
-                new: apiOptional(identity, newPin),
-            }),
+                new: newPin,
+            },
             setPinNumberResponse,
+            UserSetPinNumberArgs,
+            UserSetPinNumberResponse,
         );
     }
 
     chitEvents({ from, to, max, ascending }: ChitEventsRequest): Promise<ChitEventsResponse> {
-        return this.handleQueryResponse(
-            () =>
-                this.userService.chit_events({
-                    from: apiOptional(identity, from),
-                    to: apiOptional(identity, to),
-                    max,
-                    ascending,
-                    skip: [],
-                }),
+        return this.executeMsgpackQuery(
+            "chit_events",
+            {
+                from,
+                to,
+                max,
+                ascending,
+                skip: undefined,
+            },
             chitEventsResponse,
+            UserChitEventsArgs,
+            UserChitEventsResponse,
         );
     }
 
     markAchievementsSeen(lastSeen: bigint): Promise<void> {
-        return this.handleResponse(
-            this.userService.mark_achievements_seen({
+        return this.executeMsgpackUpdate(
+            "mark_achievements_seen",
+            {
                 last_seen: lastSeen,
-            }),
+            },
             (res) => {
                 console.log("Set Achievements Last seen", lastSeen, res);
             },
+            UserMarkAchievementsSeenArgs,
+            UserMarkAchievementsSeenResponse,
         );
     }
 
     claimDailyChit(): Promise<ClaimDailyChitResponse> {
-        return this.handleQueryResponse(
-            () => this.userService.claim_daily_chit({}),
+        return this.executeMsgpackUpdate(
+            "claim_daily_chit",
+            {},
             claimDailyChitResponse,
+            TEmpty,
+            UserClaimDailyChitResponse,
         ).then((res) => {
             if (res.kind === "success") {
                 // Note this only updates the users db, the chats db will be updated by the updates loop
@@ -1450,11 +1645,14 @@ export class UserClient extends CandidService {
     }
 
     configureWallet(walletConfig: WalletConfig): Promise<void> {
-        return this.handleResponse(
-            this.userService.configure_wallet({
+        return this.executeMsgpackUpdate(
+            "configure_wallet",
+            {
                 config: apiWalletConfig(walletConfig),
-            }),
+            },
             toVoid,
+            UserConfigureWalletArgs,
+            UserConfigureWalletResponse,
         );
     }
 }

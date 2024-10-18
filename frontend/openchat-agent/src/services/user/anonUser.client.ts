@@ -82,11 +82,10 @@ export class AnonUserClient {
         return new AnonUserClient();
     }
 
-    addToFavourites(_chatId: ChatIdentifier): Promise<ManageFavouritesResponse> {
-        return Promise.resolve("success");
-    }
-
-    removeFromFavourites(_chatId: ChatIdentifier): Promise<ManageFavouritesResponse> {
+    manageFavouriteChats(
+        _toAdd: ChatIdentifier[],
+        _toRemove: ChatIdentifier[],
+    ): Promise<ManageFavouritesResponse> {
         return Promise.resolve("success");
     }
 

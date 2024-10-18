@@ -2,7 +2,7 @@ import type { Identity } from "@dfinity/agent";
 import { AuthClient, IdbStorage } from "@dfinity/auth-client";
 import type { DelegationChain } from "@dfinity/identity";
 import type { Principal } from "@dfinity/principal";
-import type { SignedDelegation } from "../services/user/candid/types";
+import { SignedDelegation as TSignedDelegation } from "../typebox";
 
 const auth = AuthClient.create({
     idleOptions: {
@@ -28,7 +28,7 @@ export function getPrincipal(): Promise<Principal> {
     });
 }
 
-export function signedDelegation(chain: DelegationChain): SignedDelegation {
+export function signedDelegation(chain: DelegationChain): TSignedDelegation {
     const delegation = chain.delegations[0];
     return {
         signature: new Uint8Array(delegation.signature),
