@@ -65,11 +65,16 @@ pub struct CommunityCanisterCommunitySummaryUpdates {
     pub gate_config: OptionUpdate<AccessGateConfig>,
     pub primary_language: Option<String>,
     pub latest_event_index: Option<EventIndex>,
+    #[ts(skip_if_default)]
     pub channels_added: Vec<CommunityCanisterChannelSummary>,
+    #[ts(skip_if_default)]
     pub channels_updated: Vec<CommunityCanisterChannelSummaryUpdates>,
+    #[ts(skip_if_default)]
     pub channels_removed: Vec<ChannelId>,
     pub membership: Option<CommunityMembershipUpdates>,
+    #[ts(skip_if_default)]
     pub user_groups: Vec<UserGroupSummary>,
+    #[ts(skip_if_default)]
     pub user_groups_deleted: Vec<u32>,
     pub metrics: Option<ChatMetrics>,
 }

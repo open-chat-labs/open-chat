@@ -187,15 +187,19 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub latest_message_index: Option<MessageIndex>,
     pub participant_count: Option<u32>,
     pub role: Option<GroupRole>,
+    #[ts(skip_if_default)]
     pub mentions: Vec<HydratedMention>,
     pub wasm_version: Option<BuildVersion>,
     pub permissions_v2: Option<GroupPermissions>,
+    #[ts(skip_if_default)]
     pub updated_events: Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>, // (Thread root message index, event index, timestamp)
     pub metrics: Option<ChatMetrics>,
     pub my_metrics: Option<ChatMetrics>,
     pub is_public: Option<bool>,
     pub messages_visible_to_non_members: Option<bool>,
+    #[ts(skip_if_default)]
     pub latest_threads: Vec<GroupCanisterThreadDetails>,
+    #[ts(skip_if_default)]
     pub unfollowed_threads: Vec<MessageIndex>,
     pub notifications_muted: Option<bool>,
     #[ts(as = "crate::OptionUpdateFrozenGroupInfo")]

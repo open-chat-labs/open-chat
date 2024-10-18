@@ -15,10 +15,15 @@ pub struct CommunityCanisterChannelSummary {
     pub description: String,
     pub subtype: Option<GroupSubtype>,
     pub avatar_id: Option<u128>,
+    #[ts(skip_if_default)]
     pub is_public: bool,
+    #[ts(skip_if_default)]
     pub history_visible_to_new_joiners: bool,
+    #[ts(skip_if_default)]
     pub messages_visible_to_non_members: bool,
+    #[ts(skip_if_default)]
     pub min_visible_event_index: EventIndex,
+    #[ts(skip_if_default)]
     pub min_visible_message_index: MessageIndex,
     #[ts(as = "Option<crate::EventWrapperMessage>")]
     pub latest_message: Option<EventWrapper<Message>>,

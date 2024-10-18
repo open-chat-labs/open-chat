@@ -24,9 +24,13 @@ pub struct SuccessResult {
     pub latest_event_index: EventIndex,
     pub members: Vec<CommunityMember>,
     pub basic_members: Vec<UserId>,
+    #[ts(skip_if_default)]
     pub blocked_users: Vec<UserId>,
+    #[ts(skip_if_default)]
     pub invited_users: Vec<UserId>,
     pub chat_rules: VersionedRules,
+    #[ts(skip_if_default)]
     pub user_groups: Vec<UserGroupDetails>,
+    #[ts(skip_if_default)]
     pub referrals: Vec<UserId>,
 }

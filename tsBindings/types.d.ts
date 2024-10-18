@@ -32,7 +32,7 @@ export type GroupReportMessageResponse = "Success" | "UserSuspended" | "UserLaps
 export type GroupEditMessageResponse = "Success" | "MessageNotFound" | "CallerNotInGroup" | "UserSuspended" | "UserLapsed" | "ChatFrozen";
 export type GroupFollowThreadResponse = "Success" | "AlreadyFollowing" | "ThreadNotFound" | "UserNotInGroup" | "UserSuspended" | "UserLapsed" | "GroupFrozen";
 export type UserManageFavouriteChatsResponse = "Success" | "UserSuspended";
-export type UserMessageActivitySummary = { read_up_to: bigint, latest_event: bigint, unread_count: number, };
+export type UserMessageActivitySummary = { read_up_to: bigint, latest_event_timestamp: bigint, unread_count: number, };
 export type UserMarkAchievementsSeenArgs = { last_seen: bigint, };
 export type UserMarkAchievementsSeenResponse = "Success";
 export type UserBioResponse = { "Success": string };
@@ -92,6 +92,10 @@ export type CommunityRole = "Owner" | "Admin" | "Member";
 export type ExchangeId = "ICPSwap" | "Sonic" | "KongSwap";
 export type ProposalDecisionStatus = "Unspecified" | "Open" | "Rejected" | "Adopted" | "Executed" | "Failed";
 export type CanisterUpgradeStatus = "InProgress" | "NotRequired";
+/**
+ * @default 0
+ */
+export type TSNumberWithDefault = number;
 /**
  * @default NoChange
  */
@@ -164,6 +168,10 @@ export type UpdatedRules = { text: string, enabled: boolean, new_version: boolea
  * @default NoChange
  */
 export type OptionUpdateString = "NoChange" | "SetToNone" | { "SetToSome": string };
+/**
+ * @default false
+ */
+export type TSBoolWithDefault = boolean;
 export type DiamondMembershipStatus = "Inactive" | "Active" | "Lifetime";
 export type PollConfig = { text?: string | undefined, options: Array<string>, end_date?: bigint | undefined, anonymous: boolean, show_votes_before_end_date: boolean, allow_multiple_votes_per_user: boolean, allow_user_to_change_vote: boolean, };
 export type Tally = { yes: bigint, no: bigint, total: bigint, timestamp: bigint, };
@@ -215,7 +223,7 @@ export type UserIndexSetModerationFlagsArgs = { moderation_flags_enabled: number
 export type UserIndexSetModerationFlagsResponse = "Success";
 export type UserIndexSetUserUpgradeConcurrencyArgs = { value: number, };
 export type UserIndexSetUserUpgradeConcurrencyResponse = "Success";
-export type UserIndexExternalAchievementsExternalAchievement = { id: number, name: string, url: string, chit_reward: number, };
+export type UserIndexExternalAchievementsExternalAchievement = { id: number, name: string, url: string, chit_reward: number, expires: bigint, budget_exhausted: boolean, };
 export type UserIndexExternalAchievementsArgs = { updates_since: bigint, };
 export type UserIndexReferralMetricsReferralMetrics = { users_who_referred: number, users_who_referred_paid_diamond: number, users_who_referred_unpaid_diamond: number, users_who_referred_90_percent_unpaid_diamond: number, referrals_of_paid_diamond: number, referrals_of_unpaid_diamond: number, referrals_other: number, icp_raised_by_referrals_to_paid_diamond: number, };
 export type UserIndexPayForDiamondMembershipSuccessResult = { expires_at: bigint, pay_in_chat: boolean, subscription: DiamondMembershipSubscription, proof_jwt: string, };
@@ -442,7 +450,7 @@ export type GovernanceProposalsSubtype = { is_nns: boolean, governance_canister_
 export type FailedCryptoTransactionNNS = { ledger: TSBytes, token: Cryptocurrency, amount: Tokens, fee: Tokens, from: CryptoAccountNNS, to: CryptoAccountNNS, memo: bigint, created: bigint, transaction_hash: [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number], error_message: string, };
 export type SnsProposal = { id: bigint, action: bigint, proposer: [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number], created: bigint, title: string, summary: string, url: string, status: ProposalDecisionStatus, reward_status: ProposalRewardStatus, tally: Tally, deadline: bigint, payload_text_rendering?: string | undefined, minimum_yes_proportion_of_total: number, minimum_yes_proportion_of_exercised: number, last_updated: bigint, };
 export type UsersBlocked = { user_ids: Array<UserId>, blocked_by: UserId, };
-export type CommunityMember = { user_id: UserId, date_added: bigint, role: CommunityRole, display_name?: string | undefined, referred_by?: UserId | undefined, lapsed: boolean, };
+export type CommunityMember = { user_id: UserId, date_added: bigint, role: CommunityRole, display_name?: string | undefined, referred_by?: UserId | undefined, lapsed: TSBoolWithDefault, };
 export type User = { user_id: UserId, username: string, };
 export type MessageReport = { reported_by: UserId, timestamp: bigint, reason_code: number, notes?: string | undefined, };
 export type ThreadSummary = { participant_ids: Array<UserId>, followed_by_me: boolean, reply_count: number, latest_event_index: EventIndex, latest_event_timestamp: bigint, };
@@ -479,7 +487,7 @@ export type UserIndexPlatformOperatorsResponse = { "Success": UserIndexPlatformO
 export type UserIndexPlatformModeratorsSuccessResult = { users: Array<UserId>, };
 export type UserIndexSuspectedBotsSuccessResult = { users: Array<UserId>, };
 export type UserIndexSuspectedBotsArgs = { after?: UserId | undefined, count: number, };
-export type UserIndexExternalAchievementsSuccessResult = { last_updated: bigint, achievements_added: Array<UserIndexExternalAchievementsExternalAchievement>, achievements_removed: Array<UserIndexExternalAchievementsExternalAchievement>, };
+export type UserIndexExternalAchievementsSuccessResult = { last_updated: bigint, added_or_updated: Array<UserIndexExternalAchievementsExternalAchievement>, achievements_added: Array<UserIndexExternalAchievementsExternalAchievement>, achievements_removed: Array<UserIndexExternalAchievementsExternalAchievement>, };
 export type UserIndexExternalAchievementsResponse = { "Success": UserIndexExternalAchievementsSuccessResult } | "SuccessNoUpdates";
 export type UserIndexUserArgs = { user_id?: UserId | undefined, username?: string | undefined, };
 export type UserIndexReferralMetricsResponse = { "Success": UserIndexReferralMetricsReferralMetrics };
@@ -516,10 +524,58 @@ export type CommunityAddMembersToChannelArgs = { channel_id: bigint, user_ids: A
 export type CommunityAddMembersToChannelPartialSuccessResult = { users_added: Array<UserId>, users_already_in_channel: Array<UserId>, users_limit_reached: Array<UserId>, users_failed_with_error: Array<CommunityAddMembersToChannelUserFailedError>, };
 export type CommunityAddMembersToChannelFailedResult = { users_already_in_channel: Array<UserId>, users_limit_reached: Array<UserId>, users_failed_with_error: Array<CommunityAddMembersToChannelUserFailedError>, };
 export type CommunityChangeChannelRoleArgs = { channel_id: bigint, user_id: UserId, new_role: GroupRole, };
-export type CommunitySelectedInitialSuccessResult = { timestamp: bigint, last_updated: bigint, latest_event_index: EventIndex, members: Array<CommunityMember>, basic_members: Array<UserId>, blocked_users: Array<UserId>, invited_users: Array<UserId>, chat_rules: VersionedRules, user_groups: Array<UserGroupDetails>, referrals: Array<UserId>, };
+export type CommunitySelectedInitialSuccessResult = { timestamp: bigint, last_updated: bigint, latest_event_index: EventIndex, members: Array<CommunityMember>, basic_members: Array<UserId>, 
+/**
+ * @default []
+ */
+blocked_users: Array<UserId>, 
+/**
+ * @default []
+ */
+invited_users: Array<UserId>, chat_rules: VersionedRules, 
+/**
+ * @default []
+ */
+user_groups: Array<UserGroupDetails>, 
+/**
+ * @default []
+ */
+referrals: Array<UserId>, };
 export type CommunityBlockUserArgs = { user_id: UserId, };
 export type CommunityCreateChannelResponse = { "Success": CommunityCreateChannelSuccessResult } | { "NameTooShort": FieldTooShortResult } | { "NameTooLong": FieldTooLongResult } | "NameReserved" | { "DescriptionTooLong": FieldTooLongResult } | { "RulesTooShort": FieldTooShortResult } | { "RulesTooLong": FieldTooLongResult } | { "AvatarTooBig": FieldTooLongResult } | "AccessGateInvalid" | { "MaxChannelsCreated": number } | "NameTaken" | "UserSuspended" | "NotAuthorized" | "CommunityFrozen" | "ExternalUrlInvalid" | { "InternalError": string } | "UserLapsed";
-export type CommunitySelectedUpdatesSuccessResult = { timestamp: bigint, last_updated: bigint, members_added_or_updated: Array<CommunityMember>, members_removed: Array<UserId>, blocked_users_added: Array<UserId>, blocked_users_removed: Array<UserId>, invited_users?: Array<UserId> | undefined, chat_rules?: VersionedRules | undefined, user_groups: Array<UserGroupDetails>, user_groups_deleted: Array<number>, referrals_added: Array<UserId>, referrals_removed: Array<UserId>, };
+export type CommunitySelectedUpdatesSuccessResult = { timestamp: bigint, last_updated: bigint, 
+/**
+ * @default []
+ */
+members_added_or_updated: Array<CommunityMember>, 
+/**
+ * @default []
+ */
+members_removed: Array<UserId>, 
+/**
+ * @default []
+ */
+blocked_users_added: Array<UserId>, 
+/**
+ * @default []
+ */
+blocked_users_removed: Array<UserId>, invited_users?: Array<UserId> | undefined, chat_rules?: VersionedRules | undefined, 
+/**
+ * @default []
+ */
+user_groups: Array<UserGroupDetails>, 
+/**
+ * @default []
+ */
+user_groups_deleted: Array<number>, 
+/**
+ * @default []
+ */
+referrals_added: Array<UserId>, 
+/**
+ * @default []
+ */
+referrals_removed: Array<UserId>, };
 export type CommunitySelectedUpdatesResponse = { "Success": CommunitySelectedUpdatesSuccessResult } | { "SuccessNoUpdates": bigint } | "PrivateCommunity";
 export type CommunityImportGroupArgs = { group_id: ChatId, };
 export type CommunityUpdateChannelResponse = { "SuccessV2": CommunityUpdateChannelSuccessResult } | "NotAuthorized" | "UserNotInCommunity" | "ChannelNotFound" | "UserNotInChannel" | { "NameTooShort": FieldTooShortResult } | { "NameTooLong": FieldTooLongResult } | "NameReserved" | { "DescriptionTooLong": FieldTooLongResult } | { "AvatarTooBig": FieldTooLongResult } | "AccessGateInvalid" | "NameTaken" | { "RulesTooLong": FieldTooLongResult } | { "RulesTooShort": FieldTooShortResult } | "UserSuspended" | "ExternalUrlInvalid" | "CommunityFrozen" | "UserLapsed";
@@ -559,8 +615,32 @@ export type UserInitialStateCommunitiesInitial = { summaries: Array<UserCommunit
 export type UserInitialStateGroupChatsInitial = { summaries: Array<UserGroupChatSummary>, pinned: Array<ChatId>, };
 export type UserDeleteMessagesArgs = { user_id: UserId, thread_root_message_index?: MessageIndex | undefined, message_ids: Array<MessageId>, correlation_id: bigint, };
 export type UserHotGroupExclusionsResponse = { "Success": Array<ChatId> };
-export type UserUpdatesGroupChatsUpdates = { added: Array<UserGroupChatSummary>, updated: Array<UserGroupChatSummaryUpdates>, removed: Array<ChatId>, pinned?: Array<ChatId> | undefined, };
-export type UserUpdatesCommunitiesUpdates = { added: Array<UserCommunitySummary>, updated: Array<UserCommunitySummaryUpdates>, removed: Array<CommunityId>, };
+export type UserUpdatesGroupChatsUpdates = { 
+/**
+ * @default []
+ */
+added: Array<UserGroupChatSummary>, 
+/**
+ * @default []
+ */
+updated: Array<UserGroupChatSummaryUpdates>, 
+/**
+ * @default []
+ */
+removed: Array<ChatId>, pinned?: Array<ChatId> | undefined, };
+export type UserUpdatesCommunitiesUpdates = { 
+/**
+ * @default []
+ */
+added: Array<UserCommunitySummary>, 
+/**
+ * @default []
+ */
+updated: Array<UserCommunitySummaryUpdates>, 
+/**
+ * @default []
+ */
+removed: Array<CommunityId>, };
 export type UserLeaveGroupArgs = { chat_id: ChatId, correlation_id: bigint, };
 export type UserMuteNotificationsArgs = { chat_id: ChatId, };
 export type UserMessagesByMessageIndexArgs = { user_id: UserId, thread_root_message_index?: MessageIndex | undefined, messages: Array<MessageIndex>, latest_known_update?: bigint | undefined, };
@@ -680,7 +760,7 @@ export type CommunityVideoCallParticipantsResponse = { "Success": VideoCallParti
 export type ProposalsBotProposalToSubmitAction = "Motion" | { "TransferSnsTreasuryFunds": ProposalsBotTransferSnsTreasuryFunds } | "UpgradeSnsToNextVersion" | { "UpgradeSnsControlledCanister": ProposalsBotUpgradeSnsControlledCanister } | { "ExecuteGenericNervousSystemFunction": ProposalsBotExecuteGenericNervousSystemFunction };
 export type ProposalsBotProposalToSubmit = { title: string, summary: string, url: string, action: ProposalsBotProposalToSubmitAction, };
 export type OnlineUsersLastOnlineResponse = { "Success": Array<OnlineUsersLastOnlineUserLastOnline> };
-export type GroupSelectedInitialSuccessResult = { timestamp: bigint, last_updated: bigint, latest_event_index: EventIndex, participants: Array<GroupMember>, blocked_users: Array<UserId>, invited_users: Array<UserId>, pinned_messages: Array<MessageIndex>, chat_rules: VersionedRules, };
+export type GroupSelectedInitialSuccessResult = { timestamp: bigint, last_updated: bigint, latest_event_index: EventIndex, participants: Array<GroupMember>, basic_members: Array<UserId>, blocked_users: Array<UserId>, invited_users: Array<UserId>, pinned_messages: Array<MessageIndex>, chat_rules: VersionedRules, };
 export type GroupSelectedInitialResponse = { "Success": GroupSelectedInitialSuccessResult } | "CallerNotInGroup";
 export type GroupVideoCallParticipantsResponse = { "Success": VideoCallParticipants } | "VideoCallNotFound" | "CallerNotInGroup";
 export type GroupSelectedUpdatesResponse = { "Success": SelectedGroupUpdates } | { "SuccessNoUpdates": bigint } | "CallerNotInGroup";
@@ -810,10 +890,26 @@ export type MessagesResponse = { messages: Array<EventWrapperMessage>, latest_ev
 export type GroupCanisterGroupChatSummary = { chat_id: ChatId, local_user_index_canister_id: TSBytes, last_updated: bigint, name: string, description: string, subtype?: GroupSubtype | undefined, avatar_id?: bigint | undefined, is_public: boolean, history_visible_to_new_joiners: boolean, messages_visible_to_non_members: boolean, min_visible_event_index: EventIndex, min_visible_message_index: MessageIndex, latest_message?: EventWrapperMessage | undefined, latest_event_index: EventIndex, latest_message_index?: MessageIndex | undefined, joined: bigint, participant_count: number, role: GroupRole, mentions: Array<HydratedMention>, wasm_version: BuildVersion, permissions_v2: GroupPermissions, notifications_muted: boolean, metrics: ChatMetrics, my_metrics: ChatMetrics, latest_threads: Array<GroupCanisterThreadDetails>, frozen?: FrozenGroupInfo | undefined, date_last_pinned?: bigint | undefined, events_ttl?: bigint | undefined, events_ttl_last_updated: bigint, gate?: AccessGate | undefined, gate_config?: AccessGateConfig | undefined, rules_accepted: boolean, membership?: GroupMembership | undefined, video_call_in_progress?: VideoCall | undefined, };
 export type EventWrapperChatEvent = { index: EventIndex, timestamp: bigint, correlation_id: bigint, expires_at?: bigint | undefined, event: ChatEvent, };
 export type ThreadPreview = { root_message: EventWrapperMessage, latest_replies: Array<EventWrapperMessage>, total_replies: number, };
-export type GroupCanisterGroupChatSummaryUpdates = { chat_id: ChatId, last_updated: bigint, name?: string | undefined, description?: string | undefined, subtype: OptionUpdateGroupSubtype, avatar_id: OptionUpdateU128, latest_message?: EventWrapperMessage | undefined, latest_event_index?: EventIndex | undefined, latest_message_index?: MessageIndex | undefined, participant_count?: number | undefined, role?: GroupRole | undefined, mentions: Array<HydratedMention>, wasm_version?: BuildVersion | undefined, permissions_v2?: GroupPermissions | undefined, updated_events: Array<[MessageIndex | null, EventIndex, bigint]>, metrics?: ChatMetrics | undefined, my_metrics?: ChatMetrics | undefined, is_public?: boolean | undefined, messages_visible_to_non_members?: boolean | undefined, latest_threads: Array<GroupCanisterThreadDetails>, unfollowed_threads: Array<MessageIndex>, notifications_muted?: boolean | undefined, frozen: OptionUpdateFrozenGroupInfo, date_last_pinned?: bigint | undefined, events_ttl: OptionUpdateU64, events_ttl_last_updated?: bigint | undefined, gate: OptionUpdateAccessGate, gate_config: OptionUpdateAccessGateConfig, rules_accepted?: boolean | undefined, membership?: GroupMembershipUpdates | undefined, video_call_in_progress: OptionUpdateVideoCall, };
+export type GroupCanisterGroupChatSummaryUpdates = { chat_id: ChatId, last_updated: bigint, name?: string | undefined, description?: string | undefined, subtype: OptionUpdateGroupSubtype, avatar_id: OptionUpdateU128, latest_message?: EventWrapperMessage | undefined, latest_event_index?: EventIndex | undefined, latest_message_index?: MessageIndex | undefined, participant_count?: number | undefined, role?: GroupRole | undefined, 
+/**
+ * @default []
+ */
+mentions: Array<HydratedMention>, wasm_version?: BuildVersion | undefined, permissions_v2?: GroupPermissions | undefined, 
+/**
+ * @default []
+ */
+updated_events: Array<[MessageIndex | null, EventIndex, bigint]>, metrics?: ChatMetrics | undefined, my_metrics?: ChatMetrics | undefined, is_public?: boolean | undefined, messages_visible_to_non_members?: boolean | undefined, 
+/**
+ * @default []
+ */
+latest_threads: Array<GroupCanisterThreadDetails>, 
+/**
+ * @default []
+ */
+unfollowed_threads: Array<MessageIndex>, notifications_muted?: boolean | undefined, frozen: OptionUpdateFrozenGroupInfo, date_last_pinned?: bigint | undefined, events_ttl: OptionUpdateU64, events_ttl_last_updated?: bigint | undefined, gate: OptionUpdateAccessGate, gate_config: OptionUpdateAccessGateConfig, rules_accepted?: boolean | undefined, membership?: GroupMembershipUpdates | undefined, video_call_in_progress: OptionUpdateVideoCall, };
 export type DirectChatSummaryUpdates = { chat_id: ChatId, last_updated: bigint, latest_message?: EventWrapperMessage | undefined, latest_event_index?: EventIndex | undefined, latest_message_index?: MessageIndex | undefined, read_by_me_up_to?: MessageIndex | undefined, read_by_them_up_to?: MessageIndex | undefined, notifications_muted?: boolean | undefined, updated_events: Array<[EventIndex, bigint]>, metrics?: ChatMetrics | undefined, my_metrics?: ChatMetrics | undefined, archived?: boolean | undefined, events_ttl: OptionUpdateU64, events_ttl_last_updated?: bigint | undefined, video_call_in_progress: OptionUpdateVideoCall, };
 export type PublicGroupSummary = { chat_id: ChatId, local_user_index_canister_id: TSBytes, last_updated: bigint, name: string, description: string, subtype?: GroupSubtype | undefined, history_visible_to_new_joiners: boolean, messages_visible_to_non_members: boolean, avatar_id?: bigint | undefined, latest_message?: EventWrapperMessage | undefined, latest_event_index: EventIndex, latest_message_index?: MessageIndex | undefined, participant_count: number, wasm_version: BuildVersion, is_public: boolean, frozen?: FrozenGroupInfo | undefined, events_ttl?: bigint | undefined, events_ttl_last_updated: bigint, gate?: AccessGate | undefined, gate_config?: AccessGateConfig | undefined, };
-export type CommunityCanisterChannelSummary = { channel_id: bigint, last_updated: bigint, name: string, description: string, subtype?: GroupSubtype | undefined, avatar_id?: bigint | undefined, is_public: boolean, history_visible_to_new_joiners: boolean, messages_visible_to_non_members: boolean, min_visible_event_index: EventIndex, min_visible_message_index: MessageIndex, latest_message?: EventWrapperMessage | undefined, latest_message_sender_display_name?: string | undefined, latest_event_index: EventIndex, latest_message_index?: MessageIndex | undefined, member_count: number, permissions_v2: GroupPermissions, metrics: ChatMetrics, date_last_pinned?: bigint | undefined, events_ttl?: bigint | undefined, events_ttl_last_updated: bigint, gate?: AccessGate | undefined, gate_config?: AccessGateConfig | undefined, membership?: GroupMembership | undefined, video_call_in_progress?: VideoCall | undefined, is_invited?: boolean | undefined, external_url?: string | undefined, };
+export type CommunityCanisterChannelSummary = { channel_id: bigint, last_updated: bigint, name: string, description: string, subtype?: GroupSubtype | undefined, avatar_id?: bigint | undefined, is_public: TSBoolWithDefault, history_visible_to_new_joiners: TSBoolWithDefault, messages_visible_to_non_members: TSBoolWithDefault, min_visible_event_index: TSNumberWithDefault, min_visible_message_index: TSNumberWithDefault, latest_message?: EventWrapperMessage | undefined, latest_message_sender_display_name?: string | undefined, latest_event_index: EventIndex, latest_message_index?: MessageIndex | undefined, member_count: number, permissions_v2: GroupPermissions, metrics: ChatMetrics, date_last_pinned?: bigint | undefined, events_ttl?: bigint | undefined, events_ttl_last_updated: bigint, gate?: AccessGate | undefined, gate_config?: AccessGateConfig | undefined, membership?: GroupMembership | undefined, video_call_in_progress?: VideoCall | undefined, is_invited?: boolean | undefined, external_url?: string | undefined, };
 export type GroupIndexRecommendedGroupsSuccessResult = { groups: Array<PublicGroupSummary>, };
 export type GroupIndexRecommendedGroupsResponse = { "Success": GroupIndexRecommendedGroupsSuccessResult };
 export type LocalUserIndexJoinGroupResponse = { "Success": GroupCanisterGroupChatSummary } | "AlreadyInGroup" | { "AlreadyInGroupV2": GroupCanisterGroupChatSummary } | { "GateCheckFailed": GateCheckFailedReason } | "GroupNotFound" | "GroupNotPublic" | "NotInvited" | { "ParticipantLimitReached": number } | "Blocked" | "UserSuspended" | "ChatFrozen" | { "InternalError": string };
@@ -831,11 +927,43 @@ export type GroupThreadPreviewsSuccessResult = { threads: Array<ThreadPreview>, 
 export type GroupSummarySuccessResult = { summary: GroupCanisterGroupChatSummary, };
 export type GroupSummaryResponse = { "Success": GroupSummarySuccessResult } | "CallerNotInGroup";
 export type UserInitialStateDirectChatsInitial = { summaries: Array<DirectChatSummary>, pinned: Array<ChatId>, };
-export type UserUpdatesDirectChatsUpdates = { added: Array<DirectChatSummary>, updated: Array<DirectChatSummaryUpdates>, removed: Array<ChatId>, pinned?: Array<ChatId> | undefined, };
+export type UserUpdatesDirectChatsUpdates = { 
+/**
+ * @default []
+ */
+added: Array<DirectChatSummary>, 
+/**
+ * @default []
+ */
+updated: Array<DirectChatSummaryUpdates>, 
+/**
+ * @default []
+ */
+removed: Array<ChatId>, pinned?: Array<ChatId> | undefined, };
 export type UserMessagesByMessageIndexResponse = { "Success": MessagesResponse } | "ChatNotFound" | "ThreadMessageNotFound" | { "ReplicaNotUpToDateV2": bigint };
 export type EventsResponse = { events: Array<EventWrapperChatEvent>, expired_event_ranges: Array<[EventIndex, EventIndex]>, expired_message_ranges: Array<[MessageIndex, MessageIndex]>, latest_event_index: EventIndex, chat_last_updated: bigint, };
 export type CommunityCanisterCommunitySummary = { community_id: CommunityId, local_user_index_canister_id: TSBytes, last_updated: bigint, name: string, description: string, avatar_id?: bigint | undefined, banner_id?: bigint | undefined, is_public: boolean, member_count: number, permissions: CommunityPermissions, frozen?: FrozenGroupInfo | undefined, gate?: AccessGate | undefined, gate_config?: AccessGateConfig | undefined, primary_language: string, latest_event_index: EventIndex, channels: Array<CommunityCanisterChannelSummary>, membership?: CommunityMembership | undefined, user_groups: Array<UserGroupSummary>, is_invited?: boolean | undefined, metrics: ChatMetrics, };
-export type CommunityCanisterCommunitySummaryUpdates = { community_id: CommunityId, last_updated: bigint, name?: string | undefined, description?: string | undefined, avatar_id: OptionUpdateU128, banner_id: OptionUpdateU128, is_public?: boolean | undefined, member_count?: number | undefined, permissions?: CommunityPermissions | undefined, frozen: OptionUpdateFrozenGroupInfo, gate: OptionUpdateAccessGate, gate_config: OptionUpdateAccessGateConfig, primary_language?: string | undefined, latest_event_index?: EventIndex | undefined, channels_added: Array<CommunityCanisterChannelSummary>, channels_updated: Array<CommunityCanisterChannelSummaryUpdates>, channels_removed: Array<bigint>, membership?: CommunityMembershipUpdates | undefined, user_groups: Array<UserGroupSummary>, user_groups_deleted: Array<number>, metrics?: ChatMetrics | undefined, };
+export type CommunityCanisterCommunitySummaryUpdates = { community_id: CommunityId, last_updated: bigint, name?: string | undefined, description?: string | undefined, avatar_id: OptionUpdateU128, banner_id: OptionUpdateU128, is_public?: boolean | undefined, member_count?: number | undefined, permissions?: CommunityPermissions | undefined, frozen: OptionUpdateFrozenGroupInfo, gate: OptionUpdateAccessGate, gate_config: OptionUpdateAccessGateConfig, primary_language?: string | undefined, latest_event_index?: EventIndex | undefined, 
+/**
+ * @default []
+ */
+channels_added: Array<CommunityCanisterChannelSummary>, 
+/**
+ * @default []
+ */
+channels_updated: Array<CommunityCanisterChannelSummaryUpdates>, 
+/**
+ * @default []
+ */
+channels_removed: Array<bigint>, membership?: CommunityMembershipUpdates | undefined, 
+/**
+ * @default []
+ */
+user_groups: Array<UserGroupSummary>, 
+/**
+ * @default []
+ */
+user_groups_deleted: Array<number>, metrics?: ChatMetrics | undefined, };
 export type LocalUserIndexChatEventsEventsResponse = { "Success": EventsResponse } | "NotFound" | { "ReplicaNotUpToDate": bigint } | { "InternalError": string };
 export type LocalUserIndexChatEventsSuccessResult = { responses: Array<LocalUserIndexChatEventsEventsResponse>, timestamp: bigint, };
 export type LocalUserIndexChatEventsResponse = { "Success": LocalUserIndexChatEventsSuccessResult };
@@ -851,5 +979,13 @@ export type GroupEventsResponse = { "Success": EventsResponse } | "CallerNotInGr
 export type UserEventsResponse = { "Success": EventsResponse } | "ChatNotFound" | "ThreadMessageNotFound" | { "ReplicaNotUpToDateV2": bigint };
 export type UserInitialStateSuccessResult = { timestamp: bigint, direct_chats: UserInitialStateDirectChatsInitial, group_chats: UserInitialStateGroupChatsInitial, favourite_chats: UserInitialStateFavouriteChatsInitial, communities: UserInitialStateCommunitiesInitial, avatar_id?: bigint | undefined, blocked_users: Array<UserId>, suspended: boolean, pin_number_settings?: PinNumberSettings | undefined, local_user_index_canister_id: TSBytes, achievements: Array<ChitEarned>, achievements_last_seen: bigint, total_chit_earned: number, chit_balance: number, streak: number, streak_ends: bigint, next_daily_claim: bigint, is_unique_person: boolean, wallet_config: UserWalletConfig, referrals: Array<UserReferral>, message_activity_summary: UserMessageActivitySummary, };
 export type UserInitialStateResponse = { "Success": UserInitialStateSuccessResult };
-export type UserUpdatesSuccessResult = { timestamp: bigint, username?: string | undefined, display_name: OptionUpdateString, direct_chats: UserUpdatesDirectChatsUpdates, group_chats: UserUpdatesGroupChatsUpdates, favourite_chats: UserUpdatesFavouriteChatsUpdates, communities: UserUpdatesCommunitiesUpdates, avatar_id: OptionUpdateU128, blocked_users?: Array<UserId> | undefined, suspended?: boolean | undefined, pin_number_settings: OptionUpdatePinNumberSettings, achievements: Array<ChitEarned>, achievements_last_seen?: bigint | undefined, total_chit_earned: number, chit_balance: number, streak: number, streak_ends: bigint, next_daily_claim: bigint, is_unique_person?: boolean | undefined, wallet_config?: UserWalletConfig | undefined, referrals: Array<UserReferral>, message_activity_summary?: UserMessageActivitySummary | undefined, };
+export type UserUpdatesSuccessResult = { timestamp: bigint, username?: string | undefined, display_name: OptionUpdateString, direct_chats: UserUpdatesDirectChatsUpdates, group_chats: UserUpdatesGroupChatsUpdates, favourite_chats: UserUpdatesFavouriteChatsUpdates, communities: UserUpdatesCommunitiesUpdates, avatar_id: OptionUpdateU128, blocked_users?: Array<UserId> | undefined, suspended?: boolean | undefined, pin_number_settings: OptionUpdatePinNumberSettings, 
+/**
+ * @default []
+ */
+achievements: Array<ChitEarned>, achievements_last_seen?: bigint | undefined, total_chit_earned: number, chit_balance: number, streak: number, streak_ends: bigint, next_daily_claim: bigint, is_unique_person?: boolean | undefined, wallet_config?: UserWalletConfig | undefined, 
+/**
+ * @default []
+ */
+referrals: Array<UserReferral>, message_activity_summary?: UserMessageActivitySummary | undefined, };
 export type UserUpdatesResponse = { "Success": UserUpdatesSuccessResult } | "SuccessNoUpdates";

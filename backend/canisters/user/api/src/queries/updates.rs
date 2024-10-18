@@ -38,6 +38,7 @@ pub struct SuccessResult {
     pub suspended: Option<bool>,
     #[ts(as = "types::OptionUpdatePinNumberSettings")]
     pub pin_number_settings: OptionUpdate<PinNumberSettings>,
+    #[ts(skip_if_default)]
     pub achievements: Vec<ChitEarned>,
     pub achievements_last_seen: Option<TimestampMillis>,
     pub total_chit_earned: i32,
@@ -47,6 +48,7 @@ pub struct SuccessResult {
     pub next_daily_claim: TimestampMillis,
     pub is_unique_person: Option<bool>,
     pub wallet_config: Option<WalletConfig>,
+    #[ts(skip_if_default)]
     pub referrals: Vec<Referral>,
     pub message_activity_summary: Option<MessageActivitySummary>,
 }
@@ -54,8 +56,11 @@ pub struct SuccessResult {
 #[ts_export(user, updates)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct DirectChatsUpdates {
+    #[ts(skip_if_default)]
     pub added: Vec<DirectChatSummary>,
+    #[ts(skip_if_default)]
     pub updated: Vec<DirectChatSummaryUpdates>,
+    #[ts(skip_if_default)]
     pub removed: Vec<ChatId>,
     pub pinned: Option<Vec<ChatId>>,
 }
@@ -63,8 +68,11 @@ pub struct DirectChatsUpdates {
 #[ts_export(user, updates)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupChatsUpdates {
+    #[ts(skip_if_default)]
     pub added: Vec<crate::GroupChatSummary>,
+    #[ts(skip_if_default)]
     pub updated: Vec<crate::GroupChatSummaryUpdates>,
+    #[ts(skip_if_default)]
     pub removed: Vec<ChatId>,
     pub pinned: Option<Vec<ChatId>>,
 }
@@ -72,8 +80,11 @@ pub struct GroupChatsUpdates {
 #[ts_export(user, updates)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CommunitiesUpdates {
+    #[ts(skip_if_default)]
     pub added: Vec<crate::CommunitySummary>,
+    #[ts(skip_if_default)]
     pub updated: Vec<crate::CommunitySummaryUpdates>,
+    #[ts(skip_if_default)]
     pub removed: Vec<CommunityId>,
 }
 

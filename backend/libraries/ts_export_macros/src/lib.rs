@@ -104,91 +104,88 @@ fn insert_field_attributes(field: &mut Field, is_tuple: bool) {
                 || PRINCIPAL_ALIASES.iter().any(|a| type_path.path.segments[0].ident == a)
             {
                 field.attrs.push(parse_quote!( #[ts(as = "ts_export::TSBytes")] ));
-            } else if let Some(Defaults {
-                func: _,
-                default_override: _,
-                type_override: _,
-            }) = skip_serializing_if_default(&type_path.path.segments[0])
-            {
+            }
+            if field.attrs.iter().any(contains_skip_if_default) {
+                let Defaults {
+                    skip_if_func: _,
+                    default_override,
+                    type_override,
+                } = extract_defaults(&type_path.path.segments[0]);
+
                 field.attrs.push(parse_quote!( #[serde(default)] ));
-                // field.attrs.push(parse_quote!( #[serde(skip_serializing_if = #func)]));
-                //
-                // if let Some(default_override) = default_override {
-                //     let doc_comment = format!(" @default {default_override}");
-                //     field.attrs.push(parse_quote!( #[doc = #doc_comment]));
-                // }
-                // if let Some(type_override) = type_override {
-                //     field.attrs.push(parse_quote!( #[ts(as = #type_override)]));
-                // }
+                // field.attrs.push(parse_quote!( #[serde(skip_serializing_if = #skip_if_func)]));
+
+                if let Some(default_override) = default_override {
+                    let doc_comment = format!(" @default {default_override}");
+                    field.attrs.push(parse_quote!( #[doc = #doc_comment]));
+                }
+                if let Some(type_override) = type_override {
+                    field.attrs.push(parse_quote!( #[ts(as = #type_override)]));
+                }
             }
         }
     }
 }
 
-fn skip_serializing_if_default(path_segment: &PathSegment) -> Option<Defaults> {
+fn extract_defaults(path_segment: &PathSegment) -> Defaults {
     match path_segment.ident.to_string().as_str() {
-        "Vec" => Some(Defaults {
-            func: "Vec::is_empty",
+        "Vec" => Defaults {
+            skip_if_func: "Vec::is_empty",
             default_override: Some("[]"),
             type_override: None,
-        }),
-        "BTreeMap" => Some(Defaults {
-            func: "BTreeMap::is_empty",
+        },
+        "BTreeMap" => Defaults {
+            skip_if_func: "BTreeMap::is_empty",
             default_override: Some("{}"),
             type_override: None,
-        }),
-        "BTreeSet" => Some(Defaults {
-            func: "BTreeSet::is_empty",
+        },
+        "BTreeSet" => Defaults {
+            skip_if_func: "BTreeSet::is_empty",
             default_override: Some("[]"),
             type_override: None,
-        }),
-        "HashMap" => Some(Defaults {
-            func: "HashMap::is_empty",
+        },
+        "HashMap" => Defaults {
+            skip_if_func: "HashMap::is_empty",
             default_override: Some("{}"),
             type_override: None,
-        }),
-        "HashSet" => Some(Defaults {
-            func: "HashSet::is_empty",
+        },
+        "HashSet" => Defaults {
+            skip_if_func: "HashSet::is_empty",
             default_override: Some("[]"),
             type_override: None,
-        }),
-        "OptionUpdate" => Some(Defaults {
-            func: "OptionUpdate::is_empty",
+        },
+        "OptionUpdate" => Defaults {
+            skip_if_func: "OptionUpdate::is_empty",
             default_override: None,
             type_override: None,
-        }),
-        "GroupRole" | "CommunityRole" => Some(Defaults {
-            func: "ts_export::is_default",
-            default_override: None,
-            type_override: None,
-        }),
-        "bool" => Some(Defaults {
-            func: "ts_export::is_default",
+        },
+        "bool" => Defaults {
+            skip_if_func: "ts_export::is_default",
             default_override: None,
             type_override: Some("ts_export::TSBoolWithDefault"),
-        }),
+        },
         "i8" | "i16" | "i32" | "u8" | "u16" | "u32" | "f8" | "f16" | "f32" | "f64" | "EventIndex" | "MessageIndex" => {
-            Some(Defaults {
-                func: "ts_export::is_default",
+            Defaults {
+                skip_if_func: "ts_export::is_default",
                 default_override: None,
                 type_override: Some("ts_export::TSNumberWithDefault"),
-            })
+            }
         }
         // TODO: Sort out how to make Typebox work with BigInts as default values
         "i64" | "i128" | "u64" | "u128" | "Milliseconds" | "Nanoseconds" | "Nat" | "TimestampMillis" | "TimestampNanos" => {
-            Some(Defaults {
-                func: "ts_export::is_default",
+            Defaults {
+                skip_if_func: "ts_export::is_default",
                 default_override: None,
                 type_override: Some("ts_export::TSBigIntWithDefault"),
-            })
+            }
         }
-        _ => None,
+        _ => panic!("'skip_if_default' not implemented for this type"),
     }
 }
 
 #[allow(dead_code)]
 struct Defaults {
-    func: &'static str,
+    skip_if_func: &'static str,
     default_override: Option<&'static str>,
     type_override: Option<&'static str>,
 }
@@ -229,4 +226,15 @@ fn convert_case(s: &str, start_with_capital: bool) -> String {
 
 fn is_using_serde_bytes(attr: &Attribute) -> bool {
     attr.into_token_stream().to_string().contains("serde_bytes")
+}
+
+fn contains_skip_if_default(attribute: &Attribute) -> bool {
+    if let Ok(list) = attribute.meta.require_list() {
+        if let Some(ident) = list.path.get_ident() {
+            if ident == "ts" {
+                return list.tokens.to_token_stream().to_string().contains("skip_if_default");
+            }
+        }
+    }
+    false
 }
