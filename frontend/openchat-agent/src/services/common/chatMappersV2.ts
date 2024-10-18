@@ -2776,12 +2776,9 @@ export function searchGroupChatResponse(
 }
 
 export function messageMatch(value: TMessageMatch, chatId: ChatIdentifier): MessageMatch {
-    const sender = principalBytesToString(value.sender);
     return {
         chatId,
         messageIndex: value.message_index,
-        content: messageContent(value.content, sender),
-        sender,
         score: value.score,
     };
 }
