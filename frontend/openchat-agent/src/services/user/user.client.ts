@@ -78,6 +78,7 @@ import type {
     ClaimDailyChitResponse,
     WalletConfig,
     Verification,
+    MessageActivityFeedResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -119,6 +120,7 @@ import {
     claimDailyChitResponse,
     apiWalletConfig,
     apiVerification,
+    messageActivityFeedResponse,
 } from "./mappers";
 import { sendMessageResponse } from "./mappersV2";
 import {
@@ -1464,6 +1466,16 @@ export class UserClient extends CandidService {
                 read_up_to: timestamp,
             }),
             toVoid,
+        );
+    }
+
+    messageActivityFeed(since: bigint): Promise<MessageActivityFeedResponse> {
+        return this.handleQueryResponse(
+            () =>
+                this.userService.message_activity_feed({
+                    since,
+                }),
+            messageActivityFeedResponse,
         );
     }
 }

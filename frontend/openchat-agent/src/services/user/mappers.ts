@@ -68,6 +68,9 @@ import type {
     ApiWalletConfig,
     ApiSignedDelegation,
     ApiMessageActivitySummary,
+    ApiMessageActivityFeedResponse,
+    ApiMessageActivityEvent,
+    ApiMessageActivity,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -137,6 +140,10 @@ import type {
     WalletConfig,
     Verification,
     MessageActivitySummary,
+    MessageActivityFeedResponse,
+    MessageActivityEvent,
+    MessageActivity,
+    MessageContext,
 } from "openchat-shared";
 import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
@@ -1566,4 +1573,88 @@ export function apiVerification(
         case "pin_verification":
             return { PIN: domain.pin };
     }
+}
+
+export function messageActivityFeedResponse(
+    candid: ApiMessageActivityFeedResponse,
+): MessageActivityFeedResponse {
+    if ("Success" in candid) {
+        return {
+            total: candid.Success.total,
+            events: candid.Success.events.map(messageActivityEvent),
+        };
+    }
+    return {
+        total: 0,
+        events: [],
+    };
+}
+
+export function messageActivityEvent(candid: ApiMessageActivityEvent): MessageActivityEvent {
+    return {
+        messageContext: messageContext(
+            candid.chat,
+            optional(candid.thread_root_message_index, identity),
+        ),
+        messageIndex: candid.message_index,
+        activity: messageActivity(candid.activity),
+        timestamp: candid.timestamp,
+        userId: optional(candid.user_id, (u) => u.toString()),
+    };
+}
+
+export function chatIdentifier(chat: ApiChat): ChatIdentifier {
+    if ("Direct" in chat) {
+        return { kind: "direct_chat", userId: chat.Direct.toString() };
+    }
+    if ("Group" in chat) {
+        return { kind: "group_chat", groupId: chat.Group.toString() };
+    }
+    if ("Channel" in chat) {
+        const [communityId, channelId] = chat.Channel;
+        return {
+            kind: "channel",
+            communityId: communityId.toString(),
+            channelId: channelId.toString(),
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiChat type received", chat);
+}
+
+export function messageContext(
+    chat: ApiChat,
+    threadRootMessageIndex: number | undefined,
+): MessageContext {
+    return {
+        chatId: chatIdentifier(chat),
+        threadRootMessageIndex,
+    };
+}
+
+export function messageActivity(candid: ApiMessageActivity): MessageActivity {
+    if ("Tip" in candid) {
+        return "tip";
+    }
+    if ("ThreadReply" in candid) {
+        return "thread_reply";
+    }
+    if ("P2PSwapAccepted" in candid) {
+        return "p2p_swap_accepted";
+    }
+    if ("PollVote" in candid) {
+        return "poll_vote";
+    }
+    if ("Mention" in candid) {
+        return "mention";
+    }
+    if ("Crypto" in candid) {
+        return "crypto";
+    }
+    if ("QuoteReply" in candid) {
+        return "quote_reply";
+    }
+    if ("Reaction" in candid) {
+        return "reaction";
+    }
+    throw new UnsupportedValueError("Unexpect type of ApiMessageActivity received", candid);
 }

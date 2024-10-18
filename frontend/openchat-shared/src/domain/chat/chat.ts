@@ -1170,7 +1170,7 @@ export type MessageActivityEvent = {
     messageIndex: number;
     activity: MessageActivity;
     timestamp: bigint;
-    userId: string;
+    userId: string | undefined;
 };
 
 export type MessageActivity =
@@ -1182,6 +1182,11 @@ export type MessageActivity =
     | "crypto"
     | "poll_vote"
     | "p2p_swap_accepted";
+
+export type MessageActivityFeedResponse = {
+    total: number;
+    events: MessageActivityEvent[];
+};
 
 export type PinNumberSettings = {
     length: number;

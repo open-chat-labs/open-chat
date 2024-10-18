@@ -173,6 +173,9 @@ import {
     SignedDelegation,
     MessageEventWrapper,
     MessageActivitySummary,
+    MessageActivityFeedResponse,
+    MessageActivity,
+    MessageActivityEvent,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -347,7 +350,10 @@ export {
     WalletConfig as ApiWalletConfig,
     SignedDelegation as ApiSignedDelegation,
     MessageEventWrapper as ApiMessageEventWrapper,
-    MessageActivitySummary as ApiMessageActivitySummary
+    MessageActivitySummary as ApiMessageActivitySummary,
+    MessageActivityFeedResponse as ApiMessageActivityFeedResponse,
+    MessageActivity as ApiMessageActivity,
+    MessageActivityEvent as ApiMessageActivityEvent
 };
 
 export const idlFactory: IDL.InterfaceFactory;

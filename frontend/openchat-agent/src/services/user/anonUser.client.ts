@@ -4,6 +4,7 @@ import type {
     ChitEventsResponse,
     ClaimDailyChitResponse,
     JoinVideoCallResponse,
+    MessageActivityFeedResponse,
     SetPinNumberResponse,
     SetVideoCallPresenceResponse,
     Verification,
@@ -488,6 +489,10 @@ export class AnonUserClient {
     }
 
     markActivityFeedRead(_timestamp: bigint): Promise<void> {
+        throw new AnonymousOperationError();
+    }
+
+    messageActivityFeed(_since: bigint): Promise<MessageActivityFeedResponse> {
         throw new AnonymousOperationError();
     }
 }
