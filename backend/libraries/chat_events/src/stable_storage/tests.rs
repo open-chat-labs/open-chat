@@ -1,7 +1,7 @@
 use crate::message_content_internal::icrc1::AccountInternal;
 use crate::stable_storage::tests::test_values::{
-    AUDIO, CRYPTO, CUSTOM, DELETED, FILE, GIPHY, GOVERNANCE_PROPOSAL, IMAGE, MESSAGE_REMINDER, MESSAGE_REMINDER_CREATED,
-    P2P_SWAP, POLL, PRIZE, PRIZE_WINNER, REPORTED_MESSAGE, TEXT, VIDEO, VIDEO_CALL,
+    AUDIO1, CRYPTO1, CUSTOM1, DELETED1, FILE1, GIPHY1, GOVERNANCE_PROPOSAL1, IMAGE1, MESSAGE_REMINDER1,
+    MESSAGE_REMINDER_CREATED1, P2P_SWAP1, POLL1, PRIZE1, PRIZE_WINNER1, REPORTED_MESSAGE1, TEXT1, VIDEO1, VIDEO_CALL1,
 };
 use crate::stable_storage::Value;
 use crate::{
@@ -29,7 +29,7 @@ fn text_content() {
     let content = MessageContentInternal::Text(TextContentInternal { text: random_string() });
     let bytes = generate_then_serialize_value(content);
     assert!(matches!(test_deserialization(&bytes), MessageContentInternal::Text(_)));
-    assert!(matches!(test_deserialization(TEXT), MessageContentInternal::Text(_)));
+    assert!(matches!(test_deserialization(TEXT1), MessageContentInternal::Text(_)));
 }
 
 #[test]
@@ -47,7 +47,7 @@ fn image_content() {
     });
     let bytes = generate_then_serialize_value(content);
     assert!(matches!(test_deserialization(&bytes), MessageContentInternal::Image(_)));
-    assert!(matches!(test_deserialization(IMAGE), MessageContentInternal::Image(_)));
+    assert!(matches!(test_deserialization(IMAGE1), MessageContentInternal::Image(_)));
 }
 
 #[test]
@@ -69,7 +69,7 @@ fn video_content() {
     });
     let bytes = generate_then_serialize_value(content);
     assert!(matches!(test_deserialization(&bytes), MessageContentInternal::Video(_)));
-    assert!(matches!(test_deserialization(VIDEO), MessageContentInternal::Video(_)));
+    assert!(matches!(test_deserialization(VIDEO1), MessageContentInternal::Video(_)));
 }
 
 #[test]
@@ -84,7 +84,7 @@ fn audio_content() {
     });
     let bytes = generate_then_serialize_value(content);
     assert!(matches!(test_deserialization(&bytes), MessageContentInternal::Audio(_)));
-    assert!(matches!(test_deserialization(AUDIO), MessageContentInternal::Audio(_)));
+    assert!(matches!(test_deserialization(AUDIO1), MessageContentInternal::Audio(_)));
 }
 
 #[test]
@@ -101,7 +101,7 @@ fn file_content() {
     });
     let bytes = generate_then_serialize_value(content);
     assert!(matches!(test_deserialization(&bytes), MessageContentInternal::File(_)));
-    assert!(matches!(test_deserialization(FILE), MessageContentInternal::File(_)));
+    assert!(matches!(test_deserialization(FILE1), MessageContentInternal::File(_)));
 }
 
 #[test]
@@ -123,7 +123,7 @@ fn poll_content() {
     });
     let bytes = generate_then_serialize_value(content);
     assert!(matches!(test_deserialization(&bytes), MessageContentInternal::Poll(_)));
-    assert!(matches!(test_deserialization(POLL), MessageContentInternal::Poll(_)));
+    assert!(matches!(test_deserialization(POLL1), MessageContentInternal::Poll(_)));
 }
 
 #[test]
@@ -151,7 +151,7 @@ fn crypto_content() {
     });
     let bytes = generate_then_serialize_value(content);
     assert!(matches!(test_deserialization(&bytes), MessageContentInternal::Crypto(_)));
-    assert!(matches!(test_deserialization(CRYPTO), MessageContentInternal::Crypto(_)));
+    assert!(matches!(test_deserialization(CRYPTO1), MessageContentInternal::Crypto(_)));
 }
 
 #[test]
@@ -162,7 +162,7 @@ fn deleted_content() {
     });
     let bytes = generate_then_serialize_value(content);
     assert!(matches!(test_deserialization(&bytes), MessageContentInternal::Deleted(_)));
-    assert!(matches!(test_deserialization(DELETED), MessageContentInternal::Deleted(_)));
+    assert!(matches!(test_deserialization(DELETED1), MessageContentInternal::Deleted(_)));
 }
 
 #[test]
@@ -185,7 +185,7 @@ fn giphy_content() {
     });
     let bytes = generate_then_serialize_value(content);
     assert!(matches!(test_deserialization(&bytes), MessageContentInternal::Giphy(_)));
-    assert!(matches!(test_deserialization(GIPHY), MessageContentInternal::Giphy(_)));
+    assert!(matches!(test_deserialization(GIPHY1), MessageContentInternal::Giphy(_)));
 }
 
 #[test]
@@ -224,7 +224,7 @@ fn governance_proposal() {
         MessageContentInternal::GovernanceProposal(_)
     ));
     assert!(matches!(
-        test_deserialization(GOVERNANCE_PROPOSAL),
+        test_deserialization(GOVERNANCE_PROPOSAL1),
         MessageContentInternal::GovernanceProposal(_)
     ));
 }
@@ -259,7 +259,7 @@ fn prize_content() {
     });
     let bytes = generate_then_serialize_value(content);
     assert!(matches!(test_deserialization(&bytes), MessageContentInternal::Prize(_)));
-    assert!(matches!(test_deserialization(PRIZE), MessageContentInternal::Prize(_)));
+    assert!(matches!(test_deserialization(PRIZE1), MessageContentInternal::Prize(_)));
 }
 
 #[test]
@@ -276,7 +276,7 @@ fn prize_winner_content() {
     let bytes = generate_then_serialize_value(content);
     assert!(matches!(test_deserialization(&bytes), MessageContentInternal::PrizeWinner(_)));
     assert!(matches!(
-        test_deserialization(PRIZE_WINNER),
+        test_deserialization(PRIZE_WINNER1),
         MessageContentInternal::PrizeWinner(_)
     ));
 }
@@ -295,7 +295,7 @@ fn message_reminder_created_content() {
         MessageContentInternal::MessageReminderCreated(_)
     ));
     assert!(matches!(
-        test_deserialization(MESSAGE_REMINDER_CREATED),
+        test_deserialization(MESSAGE_REMINDER_CREATED1),
         MessageContentInternal::MessageReminderCreated(_)
     ));
 }
@@ -312,7 +312,7 @@ fn message_reminder_content() {
         MessageContentInternal::MessageReminder(_)
     ));
     assert!(matches!(
-        test_deserialization(MESSAGE_REMINDER),
+        test_deserialization(MESSAGE_REMINDER1),
         MessageContentInternal::MessageReminder(_)
     ));
 }
@@ -333,7 +333,7 @@ fn reported_message_content() {
         MessageContentInternal::ReportedMessage(_)
     ));
     assert!(matches!(
-        test_deserialization(REPORTED_MESSAGE),
+        test_deserialization(REPORTED_MESSAGE1),
         MessageContentInternal::ReportedMessage(_)
     ));
 }
@@ -368,7 +368,7 @@ fn p2p_swap_content() {
     });
     let bytes = generate_then_serialize_value(content);
     assert!(matches!(test_deserialization(&bytes), MessageContentInternal::P2PSwap(_)));
-    assert!(matches!(test_deserialization(P2P_SWAP), MessageContentInternal::P2PSwap(_)));
+    assert!(matches!(test_deserialization(P2P_SWAP1), MessageContentInternal::P2PSwap(_)));
 }
 
 #[test]
@@ -408,7 +408,7 @@ fn video_call_content() {
     let bytes = generate_then_serialize_value(content);
     assert!(matches!(test_deserialization(&bytes), MessageContentInternal::VideoCall(_)));
     assert!(matches!(
-        test_deserialization(VIDEO_CALL),
+        test_deserialization(VIDEO_CALL1),
         MessageContentInternal::VideoCall(_)
     ));
 }
@@ -421,7 +421,7 @@ fn custom_content() {
     });
     let bytes = generate_then_serialize_value(content);
     assert!(matches!(test_deserialization(&bytes), MessageContentInternal::Custom(_)));
-    assert!(matches!(test_deserialization(CUSTOM), MessageContentInternal::Custom(_)));
+    assert!(matches!(test_deserialization(CUSTOM1), MessageContentInternal::Custom(_)));
 }
 
 fn test_deserialization(bytes: &[u8]) -> MessageContentInternal {
