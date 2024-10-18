@@ -8,6 +8,7 @@
     import ArrowRight from "svelte-material-icons/ArrowExpandRight.svelte";
     import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
+    import BellRingOutline from "svelte-material-icons/BellRingOutline.svelte";
     import {
         AvatarSize,
         type CommunitySummary,
@@ -29,6 +30,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { now } from "../../../stores/time";
     import LighteningBolt from "./LighteningBolt.svelte";
+    import { activityFeedShowing } from "../../../stores/activity";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -58,6 +60,7 @@
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
     let scrollingSection: HTMLElement;
+    let navWrapper: HTMLElement;
 
     // we don't want drag n drop to monkey around with the key
     type CommunityItem = CommunitySummary & { _id: string };
@@ -99,9 +102,17 @@
         communityItems = e.detail.items;
     }
 
+    function resetScroll(el: HTMLElement | undefined) {
+        if (el) {
+            el.scrollLeft = 0;
+        }
+    }
+
     function handleDndFinalize(e: CustomEvent<DndEvent<CommunityItem>>) {
         dragging = false;
         communityItems = e.detail.items;
+        resetScroll(navWrapper);
+        resetScroll(scrollingSection);
         client.updateCommunityIndexes(reindex(e.detail.items));
     }
 
@@ -142,11 +153,16 @@
             navOpen.set(false);
         }
     }
+
+    function showActivityFeed() {
+        // so what does this do?
+        activityFeedShowing.set(true);
+    }
 </script>
 
 <svelte:body on:click={closeIfOpen} />
 
-<section class="nav" class:open={$navOpen} class:rtl={$rtlStore}>
+<section bind:this={navWrapper} class="nav" class:open={$navOpen} class:rtl={$rtlStore}>
     <div class="top">
         <LeftNavItem separator label={i18nKey("communities.mainMenu")}>
             <div class="hover logo">
@@ -203,13 +219,21 @@
         {/if}
         {#if !$anonUser}
             <LeftNavItem
-                separator
                 label={i18nKey(
                     claimChitAvailable ? "dailyChit.extendStreak" : "dailyChit.viewStreak",
                 )}
                 on:click={() => dispatch("claimDailyChit")}>
                 <div class="hover streak">
                     <LighteningBolt enabled={claimChitAvailable} />
+                </div>
+            </LeftNavItem>
+            <LeftNavItem
+                separator
+                label={i18nKey("activity.navLabel")}
+                unread={{ muted: 0, unmuted: 5, mentions: false }}
+                on:click={showActivityFeed}>
+                <div class="hover activity">
+                    <BellRingOutline size={iconSize} color={"var(--icon-txt)"} />
                 </div>
             </LeftNavItem>
         {/if}

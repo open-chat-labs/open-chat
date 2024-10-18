@@ -99,6 +99,10 @@
     "account": "Account",
     "accounts": "Accounts",
     "accountSuspended": "Account suspended",
+    "activity": {
+        "navLabel": "Activity feed",
+        "title": "Activity feed"
+    },
     "addedBy": "{changedBy} added {changed} to the {level}",
     "admin": "admin",
     "advanced": "Advanced",
