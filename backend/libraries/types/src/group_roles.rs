@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 
 #[ts_export]
-#[doc = " @default Participant"]
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Default, Eq, PartialEq)]
 pub enum GroupRole {
     Owner,
