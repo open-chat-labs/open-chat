@@ -29,7 +29,7 @@ const FRAME_ANCESTORS = [
     "https://pre.konecta.one", //konecta pre-register
     "https://konecta.one", //konecta website/webapp
     "https://y7mum-taaaa-aaaag-qklxq-cai.icp0.io", // konecta pre-register test env
-    "https://dragonwizards.club" // dragon paladin wizard web2 test
+    "https://e4tvt-6yaaa-aaaao-a3sdq-cai.icp0.io/lair" // dragon paladin wizard
 ];
 
 type InboundXFrameMessage = UpdateTheme | ChangeRoute | OverrideSettings | Logout;
