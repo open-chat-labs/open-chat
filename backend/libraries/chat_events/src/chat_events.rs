@@ -17,7 +17,7 @@ use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::mem;
 use std::ops::DerefMut;
-use tracing::{info, trace};
+use tracing::info;
 use types::{
     AcceptP2PSwapResult, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, ChatType, CompleteP2PSwapResult,
     CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventWrapperInternal,
@@ -99,7 +99,7 @@ impl ChatEvents {
             }
             total_count += count;
         }
-        trace!(
+        info!(
             chat = ?self.chat,
             count = total_count,
             next = ?self.next_event_to_migrate_to_stable_memory,
