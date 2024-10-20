@@ -15,7 +15,7 @@ use crate::{
 use ic_stable_structures::Storable;
 use rand::random;
 use std::borrow::Cow;
-use testing::rng::{random_principal, random_string, random_u128, random_u32};
+use testing::rng::{random_from_principal, random_from_u128, random_from_u32, random_principal, random_string};
 use types::{
     Cryptocurrency, EventIndex, EventWrapperInternal, MessageReport, P2PSwapCompleted, P2PSwapStatus, Proposal,
     ProposalDecisionStatus, ProposalRewardStatus, Reaction, SnsProposal, Tally, ThumbnailData, Timestamped, Tips, TokenInfo,
@@ -116,7 +116,7 @@ fn poll_content() {
             allow_multiple_votes_per_user: true,
             allow_user_to_change_vote: true,
         },
-        votes: [(random(), vec![random_principal(), random_principal()])]
+        votes: [(random(), vec![random_from_principal(), random_from_principal()])]
             .into_iter()
             .collect(),
         ended: true,
@@ -129,7 +129,7 @@ fn poll_content() {
 #[test]
 fn crypto_content() {
     let content = MessageContentInternal::Crypto(CryptoContentInternal {
-        recipient: random_principal(),
+        recipient: random_from_principal(),
         transfer: CompletedCryptoTransactionInternal::ICRC1(crate::icrc1::CompletedCryptoTransactionInternal {
             ledger: random_principal(),
             token: Cryptocurrency::CHAT,
@@ -143,7 +143,7 @@ fn crypto_content() {
                 subaccount: Some(random()),
             }),
             fee: random(),
-            memo: Some(random_u128::<u128>().to_be_bytes().to_vec().into()),
+            memo: Some(random_from_u128::<u128>().to_be_bytes().to_vec().into()),
             created: random(),
             block_index: random(),
         }),
@@ -157,7 +157,7 @@ fn crypto_content() {
 #[test]
 fn deleted_content() {
     let content = MessageContentInternal::Deleted(DeletedByInternal {
-        deleted_by: random_principal(),
+        deleted_by: random_from_principal(),
         timestamp: random(),
     });
     let bytes = generate_then_serialize_value(content);
@@ -214,7 +214,7 @@ fn governance_proposal() {
             minimum_yes_proportion_of_exercised: random(),
             last_updated: random(),
         }),
-        votes: [(random_principal(), true), (random_principal(), false)]
+        votes: [(random_from_principal(), true), (random_from_principal(), false)]
             .into_iter()
             .collect(),
     });
@@ -233,10 +233,10 @@ fn governance_proposal() {
 fn prize_content() {
     let content = MessageContentInternal::Prize(PrizeContentInternal {
         prizes_remaining: vec![random(), random(), random()],
-        reservations: [random_principal(), random_principal(), random_principal()]
+        reservations: [random_from_principal(), random_from_principal(), random_from_principal()]
             .into_iter()
             .collect(),
-        winners: [random_principal(), random_principal(), random_principal()]
+        winners: [random_from_principal(), random_from_principal(), random_from_principal()]
             .into_iter()
             .collect(),
         transaction: CompletedCryptoTransactionInternal::NNS(crate::nns::CompletedCryptoTransactionInternal {
@@ -265,13 +265,13 @@ fn prize_content() {
 #[test]
 fn prize_winner_content() {
     let content = MessageContentInternal::PrizeWinner(PrizeWinnerContentInternal {
-        winner: random_principal(),
+        winner: random_from_principal(),
         ledger: random_principal(),
         token_symbol: random_string(),
         amount: random(),
         fee: random(),
         block_index: random(),
-        prize_message: random_u32(),
+        prize_message: random_from_u32(),
     });
     let bytes = generate_then_serialize_value(content);
     assert!(matches!(test_deserialization(&bytes), MessageContentInternal::PrizeWinner(_)));
@@ -321,7 +321,7 @@ fn message_reminder_content() {
 fn reported_message_content() {
     let content = MessageContentInternal::ReportedMessage(ReportedMessageInternal {
         reports: vec![MessageReport {
-            reported_by: random_principal(),
+            reported_by: random_from_principal(),
             timestamp: random(),
             reason_code: random(),
             notes: Some(random_string()),
@@ -360,7 +360,7 @@ fn p2p_swap_content() {
         caption: Some(random_string()),
         token0_txn_in: random(),
         status: P2PSwapStatus::Completed(P2PSwapCompleted {
-            accepted_by: random_principal(),
+            accepted_by: random_from_principal(),
             token1_txn_in: random(),
             token0_txn_out: random(),
             token1_txn_out: random(),
@@ -378,7 +378,7 @@ fn video_call_content() {
         ended: Some(random()),
         participants: [
             (
-                random_principal(),
+                random_from_principal(),
                 CallParticipantInternal {
                     joined: random(),
                     last_updated: Some(random()),
@@ -386,7 +386,7 @@ fn video_call_content() {
                 },
             ),
             (
-                random_principal(),
+                random_from_principal(),
                 CallParticipantInternal {
                     joined: random(),
                     last_updated: Some(random()),
@@ -394,7 +394,7 @@ fn video_call_content() {
                 },
             ),
             (
-                random_principal(),
+                random_from_principal(),
                 CallParticipantInternal {
                     joined: random(),
                     last_updated: Some(random()),
@@ -440,39 +440,47 @@ fn generate_then_serialize_value(content: MessageContentInternal) -> Vec<u8> {
 
 fn generate_value(content: MessageContentInternal) -> Value {
     EventWrapperInternal {
-        index: random_u32(),
+        index: random_from_u32(),
         timestamp: random(),
         expires_at: Some(random()),
         correlation_id: random(),
         event: ChatEventInternal::Message(Box::new(MessageInternal {
-            message_index: random_u32(),
-            message_id: random_u128(),
-            sender: random_principal(),
+            message_index: random_from_u32(),
+            message_id: random_from_u128(),
+            sender: random_from_principal(),
             content,
             replies_to: Some(ReplyContextInternal {
-                event_index: random_u32(),
-                chat_if_other: Some((ChatInternal::Channel(random_principal(), random()), Some(random_u32()))),
+                event_index: random_from_u32(),
+                chat_if_other: Some((
+                    ChatInternal::Channel(random_from_principal(), random()),
+                    Some(random_from_u32()),
+                )),
             }),
             reactions: vec![(
                 Reaction::new(random_string()),
-                [random_principal(), random_principal(), random_principal()]
+                [random_from_principal(), random_from_principal(), random_from_principal()]
                     .into_iter()
                     .collect(),
             )],
             tips: Tips::new(vec![(
                 random_principal(),
-                vec![(random_principal(), random_u128()), (random_principal(), random_u128())],
+                vec![
+                    (random_from_principal(), random_from_u128()),
+                    (random_from_principal(), random_from_u128()),
+                ],
             )]),
             last_edited: Some(random()),
             deleted_by: Some(DeletedByInternal {
-                deleted_by: random_principal(),
+                deleted_by: random_from_principal(),
                 timestamp: random(),
             }),
             thread_summary: Some(ThreadSummaryInternal {
-                participant_ids: vec![random_principal(), random_principal(), random_principal()],
-                follower_ids: [(random_principal(), Timestamped::new(true, random()))].into_iter().collect(),
+                participant_ids: vec![random_from_principal(), random_from_principal(), random_from_principal()],
+                follower_ids: [(random_from_principal(), Timestamped::new(true, random()))]
+                    .into_iter()
+                    .collect(),
                 reply_count: random(),
-                latest_event_index: random_u32(),
+                latest_event_index: random_from_u32(),
                 latest_event_timestamp: random(),
             }),
             forwarded: true,

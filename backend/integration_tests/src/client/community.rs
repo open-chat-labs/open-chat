@@ -44,7 +44,7 @@ pub mod happy_path {
     use crate::{client::user, User};
     use candid::Principal;
     use pocket_ic::PocketIc;
-    use testing::rng::random_message_id;
+    use testing::rng::random_from_u128;
     use types::{
         AccessGate, ChannelId, ChatId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
         CommunityCanisterCommunitySummaryUpdates, CommunityId, CommunityRole, EventIndex, EventsResponse, GroupReplyContext,
@@ -150,7 +150,7 @@ pub mod happy_path {
             &community_canister::send_message::Args {
                 channel_id,
                 thread_root_message_index,
-                message_id: message_id.unwrap_or_else(random_message_id),
+                message_id: message_id.unwrap_or_else(random_from_u128),
                 content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
                 sender_name: sender.username(),
                 sender_display_name: None,
@@ -189,7 +189,7 @@ pub mod happy_path {
             &community_canister::send_message::Args {
                 channel_id,
                 thread_root_message_index,
-                message_id: message_id.unwrap_or_else(random_message_id),
+                message_id: message_id.unwrap_or_else(random_from_u128),
                 content,
                 sender_name: sender.username(),
                 sender_display_name: None,
@@ -225,7 +225,7 @@ pub mod happy_path {
             &user_canister::send_message_with_transfer_to_channel::Args {
                 channel_id,
                 thread_root_message_index: None,
-                message_id: message_id.unwrap_or_else(random_message_id),
+                message_id: message_id.unwrap_or_else(random_from_u128),
                 content,
                 replies_to: None,
                 block_level_markdown: false,

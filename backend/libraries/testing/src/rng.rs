@@ -3,7 +3,11 @@ use candid::Principal;
 use rand::{random, RngCore};
 use types::CanisterId;
 
-pub fn random_principal<T: From<Principal>>() -> T {
+pub fn random_principal() -> Principal {
+    random_from_principal()
+}
+
+pub fn random_from_principal<T: From<Principal>>() -> T {
     let random_bytes = rand::thread_rng().next_u64().to_ne_bytes();
 
     Principal::from_slice(&random_bytes).into()
@@ -29,12 +33,12 @@ pub fn random_string() -> String {
     rand::thread_rng().next_u32().to_string()
 }
 
-pub fn random_u32<T: From<u32>>() -> T {
+pub fn random_from_u32<T: From<u32>>() -> T {
     let value: u32 = random();
     value.into()
 }
 
-pub fn random_u128<T: From<u128>>() -> T {
+pub fn random_from_u128<T: From<u128>>() -> T {
     let value: u128 = random();
     value.into()
 }

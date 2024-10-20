@@ -81,6 +81,10 @@ impl ChatEvents {
                     (Some(*index), next)
                 } else {
                     self.next_event_to_migrate_to_stable_memory = None;
+                    self.main.set_read_events_from_stable_memory(true);
+                    for events_list in self.threads.values_mut() {
+                        events_list.set_read_events_from_stable_memory(true);
+                    }
                     info!(chat = ?self.chat, total_count, "Finished migrating events to stable memory");
                     return (total_count, true);
                 }

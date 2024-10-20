@@ -2,7 +2,7 @@ use crate::env::ENV;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use test_case::test_case;
-use testing::rng::random_message_id;
+use testing::rng::random_from_u128;
 use types::{ChatEvent, MessageContentInitial, TextContent};
 
 #[test]
@@ -13,7 +13,7 @@ fn edit_message_succeeds() {
     let user1 = client::register_user(env, canister_ids);
     let user2 = client::register_user(env, canister_ids);
 
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
 
     let send_message_result = client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", Some(message_id));
 
@@ -52,7 +52,7 @@ fn update_block_level_markdown_succeeds(starting_value: bool) {
     let user1 = client::register_user(env, canister_ids);
     let user2 = client::register_user(env, canister_ids);
 
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
 
     let user_canister::send_message_v2::Response::Success(send_message_result) = client::user::send_message_v2(
         env,

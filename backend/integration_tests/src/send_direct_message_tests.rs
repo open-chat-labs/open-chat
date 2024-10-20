@@ -3,7 +3,7 @@ use crate::env::ENV;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
-use testing::rng::random_message_id;
+use testing::rng::random_from_u128;
 use types::{ChatEvent, EventIndex, MessageContent, MessageContentInitial, TextContent};
 
 #[test]
@@ -38,7 +38,7 @@ fn empty_message_fails() {
     let send_message_args = user_canister::send_message_v2::Args {
         recipient: user2.user_id,
         thread_root_message_index: None,
-        message_id: random_message_id(),
+        message_id: random_from_u128(),
         content: MessageContentInitial::Text(TextContent { text: String::default() }),
         replies_to: None,
         forwarding: false,
@@ -64,7 +64,7 @@ fn text_too_long_fails() {
     let send_message_args = user_canister::send_message_v2::Args {
         recipient: user2.user_id,
         thread_root_message_index: None,
-        message_id: random_message_id(),
+        message_id: random_from_u128(),
         content: MessageContentInitial::Text(TextContent {
             text: (0..10001).map(|_| '1').collect(),
         }),

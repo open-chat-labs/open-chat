@@ -5,7 +5,7 @@ use pocket_ic::PocketIc;
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::time::{Duration, SystemTime};
-use testing::rng::random_message_id;
+use testing::rng::random_from_u128;
 use types::{ChatEvent, ChatId, MessageContent, MessageContentInitial, PollConfig, PollContent, PollVotes, TotalVotes};
 
 #[test]
@@ -110,7 +110,7 @@ fn polls_ended_correctly() {
         group.into(),
         &group_canister::send_message_v2::Args {
             thread_root_message_index: None,
-            message_id: random_message_id(),
+            message_id: random_from_u128(),
             content: MessageContentInitial::Poll(PollContent {
                 config: poll_config2,
                 votes: PollVotes {
@@ -238,7 +238,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, poll_config: P
         group.into(),
         &group_canister::send_message_v2::Args {
             thread_root_message_index: None,
-            message_id: random_message_id(),
+            message_id: random_from_u128(),
             content: MessageContentInitial::Poll(PollContent {
                 config: poll_config,
                 votes: PollVotes {

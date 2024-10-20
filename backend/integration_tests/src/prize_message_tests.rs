@@ -4,7 +4,7 @@ use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
-use testing::rng::{random_message_id, random_string};
+use testing::rng::{random_from_u128, random_string};
 use types::{
     icrc1, ChatEvent, CryptoTransaction, Cryptocurrency, EventIndex, MessageContent, MessageContentInitial, OptionUpdate,
     PendingCryptoTransaction, PrizeContentInitial,
@@ -34,7 +34,7 @@ fn prize_messages_can_be_claimed_successfully() {
     let prizes = [100000, 200000];
     let token = Cryptocurrency::InternetComputer;
     let fee = token.fee().unwrap();
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
 
     let send_message_response = client::user::send_message_with_transfer_to_group(
         env,
@@ -139,7 +139,7 @@ fn unclaimed_prizes_get_refunded(case: u32) {
     let prizes = [100000, 200000];
     let token = Cryptocurrency::InternetComputer;
     let fee = token.fee().unwrap();
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
 
     client::user::send_message_with_transfer_to_group(
         env,
@@ -222,7 +222,7 @@ fn old_transactions_fixed_by_updating_created_date() {
     let prizes = [100_000];
     let token = Cryptocurrency::InternetComputer;
     let fee = token.fee().unwrap();
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
 
     let send_message_response = client::user::send_message_with_transfer_to_group(
         env,

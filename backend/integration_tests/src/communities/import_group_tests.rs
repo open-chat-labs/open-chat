@@ -5,7 +5,7 @@ use candid::Principal;
 use itertools::Itertools;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
-use testing::rng::{random_message_id, random_string};
+use testing::rng::{random_from_u128, random_string};
 use types::{
     icrc1, ChatId, CommunityId, CryptoTransaction, Cryptocurrency, MessageContentInitial, PendingCryptoTransaction,
     PrizeContentInitial,
@@ -170,7 +170,7 @@ fn pending_prizes_transferred_to_community() {
 
     let token = Cryptocurrency::InternetComputer;
     let fee = token.fee().unwrap();
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
     let prizes = vec![100000; 2];
     let amount_to_transfer = prizes.iter().sum::<u128>() + fee * prizes.len() as u128;
 
