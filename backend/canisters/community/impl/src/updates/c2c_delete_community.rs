@@ -53,6 +53,8 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
     if let Some(member) = state.data.members.get(caller) {
         if member.suspended.value {
             Err(UserSuspended)
+        } else if member.lapsed.value {
+            Err(UserLapsed)
         } else if !member.role.can_delete_community() {
             Err(NotAuthorized)
         } else {

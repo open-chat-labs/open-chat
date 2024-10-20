@@ -184,7 +184,8 @@ fn community_referral_added_and_removed() {
     assert!(response1.referrals.contains(&user2.user_id));
 
     // Check the referral has been added - method 2
-    let response2 = client::community::happy_path::selected_updates(env, &user1, community_id, 0).expect("Expected updates");
+    let response2 =
+        client::community::happy_path::selected_updates(env, user1.principal, community_id, 0).expect("Expected updates");
     assert!(response2.referrals_added.contains(&user2.user_id));
     assert!(response2.referrals_removed.is_empty());
 
@@ -208,7 +209,7 @@ fn community_referral_added_and_removed() {
     assert!(response3.referrals.is_empty());
 
     // Check the referral has been removed - method 2
-    let response4 = client::community::happy_path::selected_updates(env, &user1, community_id, response1.timestamp)
+    let response4 = client::community::happy_path::selected_updates(env, user1.principal, community_id, response1.timestamp)
         .expect("Expected updates");
     assert!(response4.referrals_added.is_empty());
     assert!(response4.referrals_removed.contains(&user2.user_id));
@@ -240,6 +241,8 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
         community_id,
         None,
     );
+
+    tick_many(env, 3);
 
     TestData {
         user1,

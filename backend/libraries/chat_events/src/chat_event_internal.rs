@@ -5,13 +5,13 @@ use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{HashMap, HashSet};
 use std::ops::DerefMut;
 use types::{
-    is_default, AvatarChanged, ChannelId, Chat, ChatId, ChatMetrics, CommunityId, Cryptocurrency, DeletedBy, DirectChatCreated,
-    EventIndex, EventWrapperInternal, EventsTimeToLiveUpdated, ExternalUrlUpdated, GroupCreated, GroupDescriptionChanged,
-    GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged,
-    GroupUnfrozen, GroupVisibilityChanged, MemberJoined, MemberLeft, MembersAdded, MembersAddedToDefaultChannel,
-    MembersRemoved, Message, MessageContent, MessageId, MessageIndex, MessagePinned, MessageUnpinned, MultiUserChat,
-    PermissionsChanged, PushIfNotContains, Reaction, ReplyContext, RoleChanged, ThreadSummary, TimestampMillis, Timestamped,
-    Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
+    is_default, AccessGate, AccessGateConfigInternal, AvatarChanged, ChannelId, Chat, ChatId, ChatMetrics, CommunityId,
+    Cryptocurrency, DeletedBy, DirectChatCreated, EventIndex, EventWrapperInternal, EventsTimeToLiveUpdated,
+    ExternalUrlUpdated, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged,
+    GroupNameChanged, GroupReplyContext, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, MemberJoined, MemberLeft,
+    MembersAdded, MembersAddedToDefaultChannel, MembersRemoved, Message, MessageContent, MessageId, MessageIndex,
+    MessagePinned, MessageUnpinned, MultiUserChat, PermissionsChanged, PushIfNotContains, Reaction, ReplyContext, RoleChanged,
+    ThreadSummary, TimestampMillis, Timestamped, Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -61,7 +61,7 @@ pub enum ChatEventInternal {
     #[serde(rename = "ttl")]
     EventsTimeToLiveUpdated(Box<EventsTimeToLiveUpdated>),
     #[serde(rename = "gu")]
-    GroupGateUpdated(Box<GroupGateUpdated>),
+    GroupGateUpdated(Box<GroupGateUpdatedInternal>),
     #[serde(rename = "ui")]
     UsersInvited(Box<UsersInvited>),
     #[serde(rename = "adc")]
@@ -315,6 +315,28 @@ impl From<DeletedBy> for DeletedByInternal {
 pub struct MembersAddedToPublicChannelInternal {
     #[serde(rename = "u")]
     pub user_ids: Vec<UserId>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct GroupGateUpdatedInternalPrevious {
+    pub updated_by: UserId,
+    pub new_gate: Option<AccessGate>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct GroupGateUpdatedInternal {
+    pub updated_by: UserId,
+    pub new_gate_config: Option<AccessGateConfigInternal>,
+}
+
+impl From<GroupGateUpdatedInternal> for GroupGateUpdated {
+    fn from(value: GroupGateUpdatedInternal) -> Self {
+        GroupGateUpdated {
+            updated_by: value.updated_by,
+            new_gate: value.new_gate_config.clone().map(|gc| gc.gate),
+            new_gate_config: value.new_gate_config.map(|gc| gc.into()),
+        }
+    }
 }
 
 impl From<&MembersAddedToPublicChannelInternal> for MembersAddedToDefaultChannel {

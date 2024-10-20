@@ -1,3 +1,5 @@
+use std::cmp::max;
+
 use crate::model::channels::ChannelUpdates;
 use crate::model::events::CommunityEventInternal;
 use crate::model::members::CommunityMemberInternal;
@@ -8,7 +10,7 @@ use canister_api_macros::query;
 use community_canister::c2c_summary_updates::{Args as C2CArgs, Response as C2CResponse};
 use community_canister::summary_updates::{Response::*, *};
 use types::{
-    AccessGate, CommunityCanisterCommunitySummaryUpdates, CommunityMembershipUpdates, CommunityPermissions, EventIndex,
+    AccessGateConfig, CommunityCanisterCommunitySummaryUpdates, CommunityMembershipUpdates, CommunityPermissions, EventIndex,
     FrozenGroupInfo, OptionUpdate, TimestampMillis,
 };
 
@@ -65,12 +67,9 @@ fn summary_updates_impl(
         (channels_with_updates, Vec::new())
     };
 
-    if channels_with_updates.is_empty()
-        && channels_removed.is_empty()
-        && state.data.events.latest_event_timestamp() <= updates_since
-        && state.data.members.user_groups_last_updated() <= updates_since
-        && member_last_updated <= updates_since
-    {
+    let community_last_updated = max(member_last_updated, state.data.details_last_updated());
+
+    if channels_with_updates.is_empty() && channels_removed.is_empty() && community_last_updated <= updates_since {
         return SuccessNoUpdates;
     }
 
@@ -115,18 +114,15 @@ fn summary_updates_impl(
                 Some(display_name) => OptionUpdate::SetToSome(display_name.clone()),
                 None => OptionUpdate::SetToNone,
             }),
+        lapsed: m.lapsed.if_set_after(updates_since).copied(),
     });
 
-    let last_updated = [
-        member_last_updated,
-        state.data.events.latest_event_timestamp(),
-        state.data.members.user_groups_last_updated(),
-    ]
-    .into_iter()
-    .chain(channels_added.iter().map(|c| c.last_updated))
-    .chain(channels_updated.iter().map(|c| c.last_updated))
-    .max()
-    .unwrap_or_default();
+    let last_updated = [community_last_updated]
+        .into_iter()
+        .chain(channels_added.iter().map(|c| c.last_updated))
+        .chain(channels_updated.iter().map(|c| c.last_updated))
+        .max()
+        .unwrap_or_default();
 
     Success(CommunityCanisterCommunitySummaryUpdates {
         community_id: state.env.canister_id().into(),
@@ -139,7 +135,8 @@ fn summary_updates_impl(
         member_count: updates_from_events.members_changed.then_some(state.data.members.len()),
         permissions: updates_from_events.permissions,
         frozen: updates_from_events.frozen,
-        gate: updates_from_events.gate,
+        gate: updates_from_events.gate_config.as_ref().map(|gc| gc.gate.clone()),
+        gate_config: updates_from_events.gate_config,
         primary_language: updates_from_events.primary_language,
         latest_event_index: updates_from_events.latest_event_index,
         channels_added,
@@ -170,7 +167,7 @@ struct UpdatesFromEvents {
     permissions: Option<CommunityPermissions>,
     is_public: Option<bool>,
     frozen: OptionUpdate<FrozenGroupInfo>,
-    gate: OptionUpdate<AccessGate>,
+    gate_config: OptionUpdate<AccessGateConfig>,
     primary_language: Option<String>,
     rules_changed: bool,
 }
@@ -182,8 +179,8 @@ fn process_events(since: TimestampMillis, member: Option<&CommunityMemberInterna
         updates.frozen = OptionUpdate::from_update(data.frozen.value.clone());
     }
 
-    if data.gate.timestamp > since {
-        updates.gate = OptionUpdate::from_update(data.gate.value.clone());
+    if data.gate_config.timestamp > since {
+        updates.gate_config = OptionUpdate::from_update(data.gate_config.value.clone().map(|gc| gc.into()));
     }
 
     // Iterate through events starting from most recent

@@ -2,7 +2,7 @@ import type DRange from "drange";
 import type { DataContent } from "../data/data";
 import type { Referral, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
-import type { AccessGate, AccessControlled, VersionedRules, UpdatedRules } from "../access";
+import type { AccessControlled, VersionedRules, UpdatedRules, AccessGateConfig } from "../access";
 import type {
     ChatPermissionRole,
     ChatPermissions,
@@ -25,6 +25,7 @@ import type {
     TransferFailed,
     InternalError,
     Offline,
+    UserLapsed,
 } from "../response";
 import { emptyChatMetrics } from "../../utils";
 import type {
@@ -673,7 +674,7 @@ export type LocalChatSummaryUpdates = {
               public?: boolean;
               permissions?: OptionalChatPermissions;
               frozen?: boolean;
-              gate?: AccessGate;
+              gateConfig?: AccessGateConfig;
               notificationsMuted?: boolean;
               archived?: boolean;
               rulesAccepted?: boolean;
@@ -1301,6 +1302,7 @@ export type Member = {
     role: MemberRole;
     userId: string;
     displayName: string | undefined;
+    lapsed: boolean;
 };
 
 export type FullMember = Member & UserSummary;
@@ -1326,6 +1328,7 @@ export type GroupChatDetails = {
  * All properties are optional but individual derived stores can provide their own default values
  */
 export type ChatSpecificState = {
+    lapsedMembers: Set<string>;
     members: Member[];
     membersMap: Map<string, Member>;
     blockedUsers: Set<string>;
@@ -1432,6 +1435,7 @@ export function nullMembership(): ChatMembership {
         readByMeUpTo: undefined,
         archived: false,
         rulesAccepted: false,
+        lapsed: false,
     };
 }
 
@@ -1445,6 +1449,7 @@ export type ChatMembership = {
     readByMeUpTo: number | undefined;
     archived: boolean;
     rulesAccepted: boolean;
+    lapsed: boolean;
 };
 
 export type GroupCanisterSummaryResponse =
@@ -1470,22 +1475,27 @@ export type GroupCanisterGroupChatSummary = AccessControlled &
         latestMessage: EventWrapper<Message> | undefined;
         latestEventIndex: number;
         latestMessageIndex: number | undefined;
-        joined: bigint;
-        myRole: MemberRole;
         memberCount: number;
-        mentions: Mention[];
-        notificationsMuted: boolean;
         metrics: Metrics;
-        myMetrics: Metrics;
-        latestThreads: GroupCanisterThreadDetails[];
         dateLastPinned: bigint | undefined;
-        rulesAccepted: boolean;
         eventsTTL?: bigint;
         eventsTtlLastUpdated: bigint;
         localUserIndex: string;
         videoCallInProgress?: number;
         messagesVisibleToNonMembers: boolean;
+        membership: GroupCanisterGroupMembership;
     };
+
+export type GroupCanisterGroupMembership = {
+    role: ChatPermissionRole;
+    notificationsMuted: boolean;
+    lapsed: boolean;
+    joined: bigint;
+    rulesAccepted: boolean;
+    latestThreads: ThreadSyncDetails[];
+    mentions: Mention[];
+    myMetrics: Metrics;
+};
 
 export type UpdatedEvent = {
     eventIndex: number;
@@ -1505,23 +1515,28 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     latestEventIndex: number | undefined;
     latestMessageIndex: number | undefined;
     memberCount: number | undefined;
-    myRole: MemberRole | undefined;
-    mentions: Mention[];
     permissions: ChatPermissions | undefined;
-    notificationsMuted: boolean | undefined;
     metrics: Metrics | undefined;
-    myMetrics: Metrics | undefined;
-    latestThreads: GroupCanisterThreadDetails[];
-    unfollowedThreads: number[];
     frozen: OptionUpdate<boolean>;
     updatedEvents: UpdatedEvent[];
     dateLastPinned: bigint | undefined;
-    gate: OptionUpdate<AccessGate>;
-    rulesAccepted: boolean | undefined;
+    gateConfig: OptionUpdate<AccessGateConfig>;
     eventsTTL: OptionUpdate<bigint>;
     eventsTtlLastUpdated?: bigint;
     videoCallInProgress: OptionUpdate<number>;
     messagesVisibleToNonMembers?: boolean;
+    membership: GroupMembershipUpdates | undefined;
+};
+
+export type GroupMembershipUpdates = {
+    myRole: MemberRole | undefined;
+    notificationsMuted: boolean | undefined;
+    lapsed: boolean | undefined;
+    unfollowedThreads: number[];
+    rulesAccepted: boolean | undefined;
+    latestThreads: GroupCanisterThreadDetails[];
+    mentions: Mention[];
+    myMetrics: Metrics | undefined;
 };
 
 export type GroupCanisterThreadDetails = {
@@ -1587,9 +1602,9 @@ export type CreateGroupResponse =
     | NotAuthorised
     | CommunityFrozen
     | UserSuspended
+    | UserLapsed
     | { kind: "access_gate_invalid" }
     | Offline
-    | DefaultMustBePublic
     | { kind: "external_url_invalid" };
 
 export type CreateGroupSuccess = {
@@ -1651,10 +1666,6 @@ export type MemberLimitReached = {
     kind: "member_limit_reached";
 };
 
-export type DefaultMustBePublic = {
-    kind: "default_must_be_public";
-};
-
 export type EditMessageResponse = "success" | "failure";
 
 export type SendMessageResponse =
@@ -1677,6 +1688,7 @@ export type SendMessageResponse =
     | NotAuthorised
     | ThreadMessageNotFound
     | UserSuspended
+    | UserLapsed
     | Failure
     | ChatFrozen
     | RulesNotAccepted
@@ -1867,6 +1879,7 @@ export type BlockUserResponse =
     | "cannot_block_self"
     | "cannot_block_user"
     | "user_suspended"
+    | "user_lapsed"
     | "chat_frozen"
     | "offline";
 
@@ -1877,6 +1890,7 @@ export type UnblockUserResponse =
     | "caller_not_in_group"
     | "not_authorized"
     | "user_suspended"
+    | "user_lapsed"
     | "chat_frozen"
     | "offline";
 
@@ -1926,6 +1940,7 @@ export type UpdateGroupResponse =
     | { kind: "rules_too_short" }
     | { kind: "rules_too_long" }
     | { kind: "user_suspended" }
+    | { kind: "user_lapsed" }
     | { kind: "chat_frozen" }
     | { kind: "internal_error" }
     | { kind: "failure" }
@@ -1937,6 +1952,7 @@ export type UpdatePermissionsResponse =
     | "not_authorized"
     | "not_in_group"
     | "user_suspended"
+    | "user_lapsed"
     | "chat_frozen"
     | "offline";
 
@@ -2058,6 +2074,7 @@ export type RegisterProposalVoteResponse =
     | "proposal_not_accepting_votes"
     | "chat_frozen"
     | "user_suspended"
+    | "user_lapsed"
     | "internal_error"
     | "offline";
 
@@ -2258,6 +2275,7 @@ export type AcceptP2PSwapResponse =
     | { kind: "channel_not_found" }
     | { kind: "chat_not_found" }
     | { kind: "user_suspended" }
+    | { kind: "user_lapsed" }
     | { kind: "user_not_in_group" }
     | { kind: "user_not_in_community" }
     | { kind: "user_not_in_channel" }
@@ -2311,6 +2329,8 @@ export type SetPinNumberResponse =
     | Success
     | PinNumberFailures
     | { kind: "too_short"; minLength: number }
-    | { kind: "too_long"; maxLength: number };
+    | { kind: "too_long"; maxLength: number }
+    | { kind: "delegation_too_old" }
+    | { kind: "malformed_signature" };
 
 export type PinNumberFailures = PinRequired | PinIncorrect | TooManyFailedPinAttempts;

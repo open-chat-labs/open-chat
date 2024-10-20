@@ -52,7 +52,23 @@ pub fn caller_is_known_group_or_community_canister() -> Result<(), String> {
     if read_state(|state| state.is_caller_known_group_canister() || state.is_caller_known_community_canister()) {
         Ok(())
     } else {
+        Err("Caller is not a known group or community canister".to_owned())
+    }
+}
+
+pub fn caller_is_known_group_canister() -> Result<(), String> {
+    if read_state(|state| state.is_caller_known_group_canister()) {
+        Ok(())
+    } else {
         Err("Caller is not a known group canister".to_owned())
+    }
+}
+
+pub fn caller_is_known_community_canister() -> Result<(), String> {
+    if read_state(|state| state.is_caller_known_community_canister()) {
+        Ok(())
+    } else {
+        Err("Caller is not a known community canister".to_owned())
     }
 }
 

@@ -1,4 +1,5 @@
 use candid::Principal;
+use ic_cdk::api::call::CallResult;
 use ic_ledger_types::{AccountIdentifier, Subaccount, DEFAULT_SUBACCOUNT};
 use sha2::{Digest, Sha256};
 use types::{
@@ -34,16 +35,18 @@ pub async fn process_transaction(
     transaction: PendingCryptoTransaction,
     sender: CanisterId,
     retry_if_bad_fee: bool,
-) -> Result<CompletedCryptoTransaction, FailedCryptoTransaction> {
+) -> CallResult<Result<CompletedCryptoTransaction, FailedCryptoTransaction>> {
     match transaction {
         PendingCryptoTransaction::NNS(t) => nns::process_transaction(t, sender).await,
         PendingCryptoTransaction::ICRC1(t) => match icrc1::process_transaction(t, sender, retry_if_bad_fee).await {
-            Ok(c) => Ok(c.into()),
-            Err(f) => Err(f.into()),
+            Ok(Ok(c)) => Ok(Ok(c.into())),
+            Ok(Err(c)) => Ok(Err(c.into())),
+            Err(e) => Err(e),
         },
         PendingCryptoTransaction::ICRC2(t) => match icrc2::process_transaction(t, sender).await {
-            Ok(c) => Ok(c.into()),
-            Err(f) => Err(f.into()),
+            Ok(Ok(c)) => Ok(Ok(c.into())),
+            Ok(Err(c)) => Ok(Err(c.into())),
+            Err(e) => Err(e),
         },
     }
 }
@@ -53,7 +56,7 @@ pub fn default_ledger_account(principal: Principal) -> AccountIdentifier {
 }
 
 pub fn convert_to_subaccount(principal: &Principal) -> Subaccount {
-    let mut subaccount = [0; std::mem::size_of::<Subaccount>()];
+    let mut subaccount = [0; size_of::<Subaccount>()];
     let bytes = principal.as_slice();
     subaccount[0] = bytes.len().try_into().unwrap();
     subaccount[1..1 + bytes.len()].copy_from_slice(bytes);

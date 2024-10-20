@@ -1,7 +1,7 @@
 use crate::{CanisterId, ChannelId, ChatId, CommunityId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use std::fmt::Debug;
+use std::fmt::{Debug, Display, Formatter};
 use ts_export::ts_export;
 
 #[ts_export]
@@ -20,13 +20,33 @@ impl Chat {
             Chat::Channel(c, _) => c.into(),
         }
     }
+}
 
-    pub fn chat_type(&self) -> &'static str {
-        match self {
-            Chat::Direct(_) => "direct",
-            Chat::Group(_) => "group",
-            Chat::Channel(..) => "channel",
+pub enum ChatType {
+    Direct,
+    Group,
+    Channel,
+}
+
+impl From<&Chat> for ChatType {
+    fn from(value: &Chat) -> Self {
+        match value {
+            Chat::Direct(_) => ChatType::Direct,
+            Chat::Group(_) => ChatType::Group,
+            Chat::Channel(_, _) => ChatType::Channel,
         }
+    }
+}
+
+impl Display for ChatType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let str = match self {
+            ChatType::Direct => "direct",
+            ChatType::Group => "group",
+            ChatType::Channel => "channel",
+        };
+
+        f.write_str(str)
     }
 }
 

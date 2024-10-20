@@ -3,4 +3,4 @@ import type { CryptoAccountICRC1 } from "./CryptoAccountICRC1";
 import type { Cryptocurrency } from "./Cryptocurrency";
 import type { TSBytes } from "./TSBytes";
 
-export type CompletedCryptoTransactionICRC1 = { ledger: TSBytes, token: Cryptocurrency, amount: bigint, from: CryptoAccountICRC1, to: CryptoAccountICRC1, fee: bigint, memo?: TSBytes, created: bigint, block_index: bigint, };
+export type CompletedCryptoTransactionICRC1 = { ledger: TSBytes, token: Cryptocurrency, amount: bigint, from: CryptoAccountICRC1, to: CryptoAccountICRC1, fee: bigint, memo?: TSBytes | undefined, created: bigint, block_index: bigint, };

@@ -19,4 +19,5 @@ pub enum Response {
     ChannelNotFound,
     UserNotInChannel,
     NotAuthorized,
+    UserLapsed,
 }

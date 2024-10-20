@@ -1,4 +1,5 @@
-use crate::updates::c2c_join_channel::join_channel_unchecked;
+use crate::jobs;
+use crate::updates::c2c_join_channel::add_members_to_public_channel_unchecked;
 use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -28,8 +29,8 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
         }
     }
 
-    if let OptionUpdate::SetToSome(gate) = &args.gate {
-        if !gate.validate() {
+    if let OptionUpdate::SetToSome(gate_config) = &args.gate_config {
+        if !gate_config.validate(state.data.test_mode) {
             return AccessGateInvalid;
         }
     }
@@ -45,6 +46,12 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
 
         if let Some(member) = state.data.members.get(caller) {
             let now = state.env.now();
+            let gate_config_updates =
+                if args.gate_config.has_update() { args.gate_config } else { args.gate.map(|g| g.into()) };
+            let has_gate_config_updates = gate_config_updates.has_update();
+
+            let prev_gate_config = channel.chat.gate_config.value.clone();
+
             match channel.chat.update(
                 member.user_id,
                 args.name,
@@ -52,7 +59,7 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                 args.rules,
                 args.avatar,
                 args.permissions_v2,
-                args.gate,
+                gate_config_updates.map(|gc| gc.into()),
                 args.public,
                 args.messages_visible_to_non_members,
                 args.events_ttl,
@@ -60,24 +67,36 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                 now,
             ) {
                 UpdateResult::Success(result) => {
-                    if channel.chat.is_public.value && channel.chat.gate.is_none() {
-                        // If the channel has just been made public or had its gate removed, join
+                    if channel.chat.is_public.value && channel.chat.gate_config.is_none() {
+                        // If the channel has just been made public or had its gate removed, add
                         // existing community members to the channel
-                        if result.newly_public || matches!(result.gate_update, OptionUpdate::SetToNone) {
-                            for m in state.data.members.iter_mut() {
-                                if !m.channels_removed.iter().any(|c| c.value == channel.id) {
-                                    join_channel_unchecked(channel, m, true, now);
-                                }
-                            }
+                        if result.newly_public || matches!(result.gate_config_update, OptionUpdate::SetToNone) {
+                            let channel_id = channel.id;
+                            add_members_to_public_channel_unchecked(
+                                channel,
+                                state
+                                    .data
+                                    .members
+                                    .iter_mut()
+                                    .filter(|m| !m.channels_removed.iter().any(|c| c.value == channel_id)),
+                                now,
+                            );
                         }
                     }
 
+                    if has_gate_config_updates {
+                        state.data.update_member_expiry(Some(args.channel_id), &prev_gate_config, now);
+                        jobs::expire_members::restart_job(state);
+                    }
+
                     handle_activity_notification(state);
+
                     SuccessV2(SuccessResult {
                         rules_version: result.rules_version,
                     })
                 }
                 UpdateResult::UserSuspended => UserSuspended,
+                UpdateResult::UserLapsed => UserLapsed,
                 UpdateResult::UserNotInGroup => UserNotInChannel,
                 UpdateResult::NotAuthorized => NotAuthorized,
                 UpdateResult::NameTooShort(v) => NameTooShort(v),

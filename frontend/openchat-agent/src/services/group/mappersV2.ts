@@ -1,78 +1,101 @@
 import type {
+    CommunityEventsResponse,
+    CommunityMessagesByMessageIndexResponse,
+    GroupBlockUserResponse,
     GroupCanisterGroupChatSummary as TGroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates as TGroupCanisterGroupChatSummaryUpdates,
+    GroupConvertIntoCommunityResponse,
+    GroupEventsResponse,
+    GroupFollowThreadResponse,
+    GroupMessagesByMessageIndexResponse,
+    GroupRemoveParticipantResponse,
+    GroupReportMessageResponse,
+    GroupRole,
     GroupSendMessageResponse,
+    GroupSummaryResponse,
+    GroupSummaryUpdatesResponse,
+    GroupUnblockUserResponse,
+    GroupUnfollowThreadResponse,
+    OptionalGroupPermissions as TOptionalGroupPermissions,
+    OptionalMessagePermissions as TOptionalMessagePermissions,
+    UpdatedRules as TUpdatedRules,
+    GroupMembershipUpdates as TGroupMembershipUpdates,
 } from "../../typebox";
 import type {
-    // ChatEvent,
-    // EventsResponse,
+    ChatEvent,
+    EventsResponse,
     SendMessageResponse,
-    // RemoveMemberResponse,
-    // BlockUserResponse,
-    // UnblockUserResponse,
-    // MemberRole,
-    // Message,
+    RemoveMemberResponse,
+    BlockUserResponse,
+    UnblockUserResponse,
+    MemberRole,
+    Message,
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
-    // GroupCanisterSummaryResponse,
-    // GroupCanisterSummaryUpdatesResponse,
-    // UpdatedEvent,
-    // ChatIdentifier,
-    // MultiUserChatIdentifier,
-    // ConvertToCommunityResponse,
-    // UpdatedRules,
-    // FollowThreadResponse,
-    // OptionalChatPermissions,
-    // OptionalMessagePermissions,
+    GroupCanisterSummaryResponse,
+    GroupCanisterSummaryUpdatesResponse,
+    ChatIdentifier,
+    MultiUserChatIdentifier,
+    ConvertToCommunityResponse,
+    UpdatedRules,
+    FollowThreadResponse,
+    OptionalChatPermissions,
+    OptionalMessagePermissions,
+    GroupMembershipUpdates,
 } from "openchat-shared";
+import { CommonResponses, emptyChatMetrics, UnsupportedValueError } from "openchat-shared";
 import {
-    // CommonResponses,
-    UnsupportedValueError,
-} from "openchat-shared";
-import {
-    accessGate,
+    accessGateConfig,
+    apiPermissionRole,
     chatMetrics,
+    eventsSuccessResponse,
     groupPermissions,
     groupSubtype,
     memberRole,
     mention,
     messageEvent,
+    messagesSuccessResponse,
     threadSyncDetails,
     updatedEvent,
 } from "../common/chatMappersV2";
-// import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
-import { identity, mapOptional, optionUpdateV2, principalBytesToString } from "../../utils/mapping";
-// import { ReplicaNotUpToDateError } from "../error";
+import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
+import {
+    apiOptionUpdateV2,
+    identity,
+    mapOptional,
+    optionUpdateV2,
+    principalBytesToString,
+} from "../../utils/mapping";
+import type { Principal } from "@dfinity/principal";
+import { ReplicaNotUpToDateError } from "../error";
 
-// export function apiRole(role: MemberRole): ApiRole | undefined {
-//     switch (role) {
-//         case "admin":
-//             return { Admin: null };
-//         case "moderator":
-//             return { Moderator: null };
-//         case "member":
-//             return { Participant: null };
-//         case "owner":
-//             return { Owner: null };
-//         default:
-//             return undefined;
-//     }
-// }
-//
-// export function summaryResponse(
-//     candid: ApiGroupCanisterSummaryResponse,
-// ): GroupCanisterSummaryResponse {
-//     if ("Success" in candid) {
-//         return groupChatSummary(candid.Success.summary);
-//     }
-//     if ("CallerNotInGroup" in candid) {
-//         return { kind: "caller_not_in_group" };
-//     }
-//     throw new UnsupportedValueError(
-//         "Unexpected ApiGroupCanisterSummaryResponse type received",
-//         candid,
-//     );
-// }
+export function apiRole(role: MemberRole): GroupRole | undefined {
+    switch (role) {
+        case "admin":
+            return "Admin";
+        case "moderator":
+            return "Moderator";
+        case "member":
+            return "Participant";
+        case "owner":
+            return "Owner";
+        default:
+            return undefined;
+    }
+}
+
+export function summaryResponse(value: GroupSummaryResponse): GroupCanisterSummaryResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return groupChatSummary(value.Success.summary);
+    }
+    if (value === "CallerNotInGroup") {
+        return { kind: "caller_not_in_group" };
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiGroupCanisterSummaryResponse type received",
+        value,
+    );
+}
 
 export function groupChatSummary(
     value: TGroupCanisterGroupChatSummary,
@@ -91,46 +114,76 @@ export function groupChatSummary(
         latestMessage: mapOptional(value.latest_message, messageEvent),
         latestEventIndex: value.latest_event_index,
         latestMessageIndex: value.latest_message_index,
-        joined: value.joined,
         memberCount: value.participant_count,
-        myRole: memberRole(value.role),
-        mentions: value.mentions
-            .filter((m) => m.thread_root_message_index !== undefined)
-            .map(mention),
         permissions: groupPermissions(value.permissions_v2),
-        notificationsMuted: value.notifications_muted,
         metrics: chatMetrics(value.metrics),
-        myMetrics: chatMetrics(value.my_metrics),
-        latestThreads: value.latest_threads.map(threadSyncDetails),
         frozen: value.frozen !== undefined,
         dateLastPinned: value.date_last_pinned,
-        gate: mapOptional(value.gate, accessGate) ?? { kind: "no_gate" },
-        rulesAccepted: value.rules_accepted,
+        gateConfig: mapOptional(value.gate_config, accessGateConfig) ?? {
+            gate: { kind: "no_gate" },
+            expiry: undefined,
+        },
         eventsTTL: value.events_ttl,
         eventsTtlLastUpdated: value.events_ttl_last_updated,
         localUserIndex: principalBytesToString(value.local_user_index_canister_id),
         videoCallInProgress: mapOptional(value.video_call_in_progress, (v) => v.message_index),
         messagesVisibleToNonMembers: value.messages_visible_to_non_members,
+        membership: mapOptional(value.membership, (m) => ({
+            joined: m.joined,
+            role: memberRole(m.role),
+            notificationsMuted: m.notifications_muted,
+            lapsed: m.lapsed,
+            rulesAccepted: m.rules_accepted,
+            latestThreads: m.latest_threads.map(threadSyncDetails),
+            mentions: m.mentions
+                .filter((m) => m.thread_root_message_index !== undefined)
+                .map(mention),
+            myMetrics: chatMetrics(m.my_metrics),
+        })) ?? {
+            joined: 0n,
+            role: "none",
+            mentions: [],
+            latestThreads: [],
+            myMetrics: emptyChatMetrics(),
+            notificationsMuted: false,
+            rulesAccepted: false,
+            lapsed: false,
+        },
     };
 }
 
-// export function summaryUpdatesResponse(
-//     candid: ApiGroupCanisterSummaryUpdatesResponse,
-// ): GroupCanisterSummaryUpdatesResponse {
-//     if ("Success" in candid) {
-//         return groupChatSummaryUpdates(candid.Success.updates);
-//     }
-//     if ("SuccessNoUpdates" in candid) {
-//         return { kind: "success_no_updates" };
-//     }
-//     if ("CallerNotInGroup" in candid) {
-//         return { kind: "caller_not_in_group" };
-//     }
-//     throw new UnsupportedValueError(
-//         "Unexpected ApiGroupCanisterSummaryUpdatesResponse type received",
-//         candid,
-//     );
-// }
+export function summaryUpdatesResponse(
+    value: GroupSummaryUpdatesResponse,
+): GroupCanisterSummaryUpdatesResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return groupChatSummaryUpdates(value.Success.updates);
+    }
+    if (value === "SuccessNoUpdates") {
+        return { kind: "success_no_updates" };
+    }
+    if (value === "CallerNotInGroup") {
+        return { kind: "caller_not_in_group" };
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiGroupCanisterSummaryUpdatesResponse type received",
+        value,
+    );
+}
+
+export function groupMembershipUpdates(value: TGroupMembershipUpdates): GroupMembershipUpdates {
+    return {
+        myRole: mapOptional(value.role, memberRole),
+        mentions: value.mentions
+            .filter((m) => m.thread_root_message_index === undefined)
+            .map(mention),
+        notificationsMuted: value.notifications_muted,
+        myMetrics: mapOptional(value.my_metrics, chatMetrics),
+        latestThreads: value.latest_threads.map(threadSyncDetails),
+        unfollowedThreads: Array.from(value.unfollowed_threads),
+        rulesAccepted: value.rules_accepted,
+        lapsed: value.lapsed,
+    };
+}
 
 export function groupChatSummaryUpdates(
     value: TGroupCanisterGroupChatSummaryUpdates,
@@ -147,138 +200,135 @@ export function groupChatSummaryUpdates(
         latestEventIndex: value.latest_event_index,
         latestMessageIndex: value.latest_message_index,
         memberCount: value.participant_count,
-        myRole: mapOptional(value.role, memberRole),
-        mentions: value.mentions
-            .filter((m) => m.thread_root_message_index === undefined)
-            .map(mention),
         permissions: mapOptional(value.permissions_v2, groupPermissions),
-        notificationsMuted: value.notifications_muted,
         metrics: mapOptional(value.metrics, chatMetrics),
-        myMetrics: mapOptional(value.my_metrics, chatMetrics),
-        latestThreads: value.latest_threads.map(threadSyncDetails),
-        unfollowedThreads: Array.from(value.unfollowed_threads),
         frozen: optionUpdateV2(value.frozen, (_) => true),
         updatedEvents: value.updated_events.map(updatedEvent),
         dateLastPinned: value.date_last_pinned,
-        gate: optionUpdateV2(value.gate, accessGate),
-        rulesAccepted: value.rules_accepted,
+        gateConfig: optionUpdateV2(value.gate_config, accessGateConfig),
         eventsTTL: optionUpdateV2(value.events_ttl, identity),
         eventsTtlLastUpdated: value.events_ttl_last_updated,
         videoCallInProgress: optionUpdateV2(value.video_call_in_progress, (v) => v.message_index),
         messagesVisibleToNonMembers: value.messages_visible_to_non_members,
+        membership: mapOptional(value.membership, groupMembershipUpdates),
     };
 }
 
-// export function apiOptionalGroupPermissions(
-//     permissions: OptionalChatPermissions,
-// ): OptionalGroupPermissions {
-//     return {
-//         delete_messages: apiOptional(apiPermissionRole, permissions.deleteMessages),
-//         remove_members: apiOptional(apiPermissionRole, permissions.removeMembers),
-//         update_group: apiOptional(apiPermissionRole, permissions.updateGroup),
-//         invite_users: apiOptional(apiPermissionRole, permissions.inviteUsers),
-//         add_members: apiOptional(apiPermissionRole, permissions.addMembers),
-//         change_roles: apiOptional(apiPermissionRole, permissions.changeRoles),
-//         pin_messages: apiOptional(apiPermissionRole, permissions.pinMessages),
-//         react_to_messages: apiOptional(apiPermissionRole, permissions.reactToMessages),
-//         mention_all_members: apiOptional(apiPermissionRole, permissions.mentionAllMembers),
-//         start_video_call: apiOptional(apiPermissionRole, permissions.startVideoCall),
-//         message_permissions: apiOptional(
-//             apiOptionalMessagePermissions,
-//             permissions.messagePermissions,
-//         ),
-//         thread_permissions: apiOptionUpdate(
-//             apiOptionalMessagePermissions,
-//             permissions.threadPermissions,
-//         ),
-//     };
-// }
-//
-// function apiOptionalMessagePermissions(
-//     permissions: OptionalMessagePermissions,
-// ): ApiOptionalMessagePermissions {
-//     const custom_updated =
-//         permissions.memeFighter !== undefined && permissions.memeFighter !== "set_to_none"
-//             ? [{ subtype: "meme_fighter", role: apiPermissionRole(permissions.memeFighter.value) }]
-//             : [];
-//     const custom_deleted = permissions.memeFighter === "set_to_none" ? ["meme_fighter"] : [];
-//     return {
-//         default: apiOptional(apiPermissionRole, permissions.default),
-//         text: apiOptionUpdate(apiPermissionRole, permissions.text),
-//         image: apiOptionUpdate(apiPermissionRole, permissions.image),
-//         video: apiOptionUpdate(apiPermissionRole, permissions.video),
-//         audio: apiOptionUpdate(apiPermissionRole, permissions.audio),
-//         file: apiOptionUpdate(apiPermissionRole, permissions.file),
-//         poll: apiOptionUpdate(apiPermissionRole, permissions.poll),
-//         crypto: apiOptionUpdate(apiPermissionRole, permissions.crypto),
-//         giphy: apiOptionUpdate(apiPermissionRole, permissions.giphy),
-//         prize: apiOptionUpdate(apiPermissionRole, permissions.prize),
-//         p2p_swap: apiOptionUpdate(apiPermissionRole, permissions.p2pSwap),
-//         // p2p_trade: apiOptionUpdate(apiPermissionRole, undefined),
-//         video_call: apiOptionUpdate(apiPermissionRole, undefined),
-//         custom_updated,
-//         custom_deleted,
-//     };
-// }
-//
-// export function unblockUserResponse(candid: ApiUnblockUserResponse): UnblockUserResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     }
-//     if ("GroupNotPublic" in candid) {
-//         return "group_not_public";
-//     }
-//     if ("CallerNotInGroup" in candid) {
-//         return "caller_not_in_group";
-//     }
-//     if ("NotAuthorized" in candid) {
-//         return "not_authorized";
-//     }
-//     if ("CannotUnblockSelf" in candid) {
-//         return "cannot_unblock_self";
-//     }
-//     if ("UserSuspended" in candid) {
-//         return "user_suspended";
-//     }
-//     if ("ChatFrozen" in candid) {
-//         return "chat_frozen";
-//     }
-//     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
-// }
-//
-// export function blockUserResponse(candid: ApiBlockUserResponse): BlockUserResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     }
-//     if ("GroupNotPublic" in candid) {
-//         return "group_not_public";
-//     }
-//     if ("UserNotInGroup" in candid) {
-//         return "user_not_in_group";
-//     }
-//     if ("CallerNotInGroup" in candid) {
-//         return "caller_not_in_group";
-//     }
-//     if ("NotAuthorized" in candid) {
-//         return "not_authorized";
-//     }
-//     if ("InternalError" in candid) {
-//         return "internal_error";
-//     }
-//     if ("CannotBlockSelf" in candid) {
-//         return "cannot_block_self";
-//     }
-//     if ("CannotBlockUser" in candid) {
-//         return "cannot_block_user";
-//     }
-//     if ("UserSuspended" in candid) {
-//         return "user_suspended";
-//     }
-//     if ("ChatFrozen" in candid) {
-//         return "chat_frozen";
-//     }
-//     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
-// }
+export function apiOptionalGroupPermissions(
+    permissions: OptionalChatPermissions,
+): TOptionalGroupPermissions {
+    return {
+        delete_messages: mapOptional(permissions.deleteMessages, apiPermissionRole),
+        remove_members: mapOptional(permissions.removeMembers, apiPermissionRole),
+        update_group: mapOptional(permissions.updateGroup, apiPermissionRole),
+        invite_users: mapOptional(permissions.inviteUsers, apiPermissionRole),
+        add_members: mapOptional(permissions.addMembers, apiPermissionRole),
+        change_roles: mapOptional(permissions.changeRoles, apiPermissionRole),
+        pin_messages: mapOptional(permissions.pinMessages, apiPermissionRole),
+        react_to_messages: mapOptional(permissions.reactToMessages, apiPermissionRole),
+        mention_all_members: mapOptional(permissions.mentionAllMembers, apiPermissionRole),
+        start_video_call: mapOptional(permissions.startVideoCall, apiPermissionRole),
+        message_permissions: mapOptional(
+            permissions.messagePermissions,
+            apiOptionalMessagePermissions,
+        ),
+        thread_permissions: apiOptionUpdateV2(
+            apiOptionalMessagePermissions,
+            permissions.threadPermissions,
+        ),
+    };
+}
+
+function apiOptionalMessagePermissions(
+    permissions: OptionalMessagePermissions,
+): TOptionalMessagePermissions {
+    const custom_updated =
+        permissions.memeFighter !== undefined && permissions.memeFighter !== "set_to_none"
+            ? [{ subtype: "meme_fighter", role: apiPermissionRole(permissions.memeFighter.value) }]
+            : [];
+    const custom_deleted = permissions.memeFighter === "set_to_none" ? ["meme_fighter"] : [];
+    return {
+        default: mapOptional(permissions.default, apiPermissionRole),
+        text: apiOptionUpdateV2(apiPermissionRole, permissions.text),
+        image: apiOptionUpdateV2(apiPermissionRole, permissions.image),
+        video: apiOptionUpdateV2(apiPermissionRole, permissions.video),
+        audio: apiOptionUpdateV2(apiPermissionRole, permissions.audio),
+        file: apiOptionUpdateV2(apiPermissionRole, permissions.file),
+        poll: apiOptionUpdateV2(apiPermissionRole, permissions.poll),
+        crypto: apiOptionUpdateV2(apiPermissionRole, permissions.crypto),
+        giphy: apiOptionUpdateV2(apiPermissionRole, permissions.giphy),
+        prize: apiOptionUpdateV2(apiPermissionRole, permissions.prize),
+        p2p_swap: apiOptionUpdateV2(apiPermissionRole, permissions.p2pSwap),
+        video_call: apiOptionUpdateV2(apiPermissionRole, undefined),
+        custom_updated,
+        custom_deleted,
+    };
+}
+
+export function unblockUserResponse(value: GroupUnblockUserResponse): UnblockUserResponse {
+    if (value === "Success") {
+        return "success";
+    }
+    if (value === "GroupNotPublic") {
+        return "group_not_public";
+    }
+    if (value === "CallerNotInGroup") {
+        return "caller_not_in_group";
+    }
+    if (value === "NotAuthorized") {
+        return "not_authorized";
+    }
+    if (value === "CannotUnblockSelf") {
+        return "cannot_unblock_self";
+    }
+    if (value === "UserSuspended") {
+        return "user_suspended";
+    }
+    if (value === "UserLapsed") {
+        return "user_lapsed";
+    }
+    if (value === "ChatFrozen") {
+        return "chat_frozen";
+    }
+    throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", value);
+}
+
+export function blockUserResponse(value: GroupBlockUserResponse): BlockUserResponse {
+    if (value === "Success") {
+        return "success";
+    }
+    if (value === "GroupNotPublic") {
+        return "group_not_public";
+    }
+    if (value === "UserNotInGroup") {
+        return "user_not_in_group";
+    }
+    if (value === "CallerNotInGroup") {
+        return "caller_not_in_group";
+    }
+    if (value === "NotAuthorized") {
+        return "not_authorized";
+    }
+    if (value === "CannotBlockSelf") {
+        return "cannot_block_self";
+    }
+    if (value === "CannotBlockUser") {
+        return "cannot_block_user";
+    }
+    if (value === "UserSuspended") {
+        return "user_suspended";
+    }
+    if (value === "UserLapsed") {
+        return "user_lapsed";
+    }
+    if (value === "ChatFrozen") {
+        return "chat_frozen";
+    }
+    if (typeof value === "object" && "InternalError" in value) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", value);
+}
 //
 // // TODO fill this in
 // export function apiGateUpdate(): ApiGroupGateUpdate {
@@ -286,7 +336,7 @@ export function groupChatSummaryUpdates(
 // }
 
 export function sendMessageResponse(value: GroupSendMessageResponse): SendMessageResponse {
-    if (typeof value !== "string") {
+    if (typeof value === "object") {
         if ("Success" in value) {
             return {
                 kind: "success",
@@ -321,121 +371,119 @@ export function sendMessageResponse(value: GroupSendMessageResponse): SendMessag
     if (value === "UserSuspended") {
         return { kind: "user_suspended" };
     }
+    if (value === "UserLapsed") {
+        return { kind: "user_lapsed" };
+    }
     if (value === "ChatFrozen") {
         return { kind: "chat_frozen" };
     }
     if (value === "RulesNotAccepted") {
         return { kind: "rules_not_accepted" };
     }
+    if (value === "UserLapsed") {
+        return { kind: "user_lapsed" };
+    }
 
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", value);
 }
 
-// export function removeMemberResponse(candid: ApiRemoveParticipantResponse): RemoveMemberResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     } else {
-//         console.warn("RemoveMember failed with ", candid);
-//         return "failure";
-//     }
-// }
-//
-// export async function getMessagesByMessageIndexResponse(
-//     principal: Principal,
-//     candid: ApiMessagesByMessageIndexResponse | ApiCommunityMessagesByMessageIndexResponse,
-//     chatId: MultiUserChatIdentifier,
-//     latestKnownUpdatePreRequest: bigint | undefined,
-// ): Promise<EventsResponse<Message>> {
-//     if ("Success" in candid) {
-//         await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
-//
-//         return messagesSuccessResponse(candid.Success);
-//     }
-//     if (
-//         "CallerNotInGroup" in candid ||
-//         "ThreadNotFound" in candid ||
-//         "UserNotInChannel" in candid ||
-//         "ChannelNotFound" in candid ||
-//         "UserNotInCommunity" in candid ||
-//         "ThreadMessageNotFound" in candid
-//     ) {
-//         return "events_failed";
-//     }
-//     if ("ReplicaNotUpToDateV2" in candid) {
-//         throw ReplicaNotUpToDateError.byTimestamp(
-//             candid.ReplicaNotUpToDateV2,
-//             latestKnownUpdatePreRequest ?? BigInt(-1),
-//             false,
-//         );
-//     }
-//     throw new UnsupportedValueError(
-//         "Unexpected ApiMessagesByMessageIndexResponse type received",
-//         candid,
-//     );
-// }
-//
-// export async function getEventsResponse(
-//     principal: Principal,
-//     candid: ApiEventsResponse | ApiCommunityEventsResponse,
-//     chatId: ChatIdentifier,
-//     latestKnownUpdatePreRequest: bigint | undefined,
-// ): Promise<EventsResponse<ChatEvent>> {
-//     if ("Success" in candid) {
-//         await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
-//
-//         return eventsSuccessResponse(candid.Success);
-//     }
-//     if ("ReplicaNotUpToDateV2" in candid) {
-//         throw ReplicaNotUpToDateError.byTimestamp(
-//             candid.ReplicaNotUpToDateV2,
-//             latestKnownUpdatePreRequest ?? BigInt(-1),
-//             false,
-//         );
-//     }
-//     console.warn("GetGroupChatEvents failed with ", candid);
-//     return "events_failed";
-// }
-//
-// export function convertToCommunityReponse(
-//     candid: ApiConvertIntoCommunityResponse,
-// ): ConvertToCommunityResponse {
-//     if ("Success" in candid) {
-//         return {
-//             kind: "success",
-//             id: {
-//                 kind: "channel",
-//                 communityId: candid.Success.community_id.toString(),
-//                 channelId: candid.Success.channel_id.toString(),
-//             },
-//         };
-//     } else {
-//         console.warn("ConvertToCommunity failed with ", candid);
-//         return CommonResponses.failure();
-//     }
-// }
-//
-// export function apiUpdatedRules(rules: UpdatedRules): ApiUpdatedRules {
-//     return {
-//         text: rules.text,
-//         enabled: rules.enabled,
-//         new_version: rules.newVersion,
-//     };
-// }
-//
-// export function followThreadResponse(
-//     candid: ApiFollowThreadResponse | ApiUnfollowThreadResponse,
-// ): FollowThreadResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     }
-//     if ("AlreadyFollowing" in candid || "NotFollowing" in candid) {
-//         return "unchanged";
-//     } else {
-//         console.warn("followThread failed with", candid);
-//         return "failed";
-//     }
-// }
-//
-// export function reportMessageResponse(candid: ReportMessageResponse): boolean {
-//     return "Success" in candid || "AlreadyReported" in candid;
-// }
+export function removeMemberResponse(value: GroupRemoveParticipantResponse): RemoveMemberResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return "success";
+    } else {
+        console.warn("RemoveMember failed with ", value);
+        return "failure";
+    }
+}
+
+export async function getMessagesByMessageIndexResponse(
+    principal: Principal,
+    value: GroupMessagesByMessageIndexResponse | CommunityMessagesByMessageIndexResponse,
+    chatId: MultiUserChatIdentifier,
+    latestKnownUpdatePreRequest: bigint | undefined,
+): Promise<EventsResponse<Message>> {
+    if (typeof value === "object") {
+        if ("Success" in value) {
+            await ensureReplicaIsUpToDate(principal, chatId, value.Success.chat_last_updated);
+
+            return messagesSuccessResponse(value.Success);
+        }
+        if ("ReplicaNotUpToDateV2" in value) {
+            throw ReplicaNotUpToDateError.byTimestamp(
+                value.ReplicaNotUpToDateV2,
+                latestKnownUpdatePreRequest ?? BigInt(-1),
+                false,
+            );
+        }
+    }
+    console.warn("MessagesByMessageIndex failed with ", value);
+    return "events_failed";
+}
+
+export async function getEventsResponse(
+    principal: Principal,
+    value: GroupEventsResponse | CommunityEventsResponse,
+    chatId: ChatIdentifier,
+    latestKnownUpdatePreRequest: bigint | undefined,
+): Promise<EventsResponse<ChatEvent>> {
+    if (typeof value === "object") {
+        if ("Success" in value) {
+            await ensureReplicaIsUpToDate(principal, chatId, value.Success.chat_last_updated);
+
+            return eventsSuccessResponse(value.Success);
+        }
+        if ("ReplicaNotUpToDateV2" in value) {
+            throw ReplicaNotUpToDateError.byTimestamp(
+                value.ReplicaNotUpToDateV2,
+                latestKnownUpdatePreRequest ?? BigInt(-1),
+                false,
+            );
+        }
+    }
+    console.warn("GetGroupChatEvents failed with ", value);
+    return "events_failed";
+}
+
+export function convertToCommunityResponse(
+    value: GroupConvertIntoCommunityResponse,
+): ConvertToCommunityResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return {
+            kind: "success",
+            id: {
+                kind: "channel",
+                communityId: principalBytesToString(value.Success.community_id),
+                channelId: value.Success.channel_id.toString(),
+            },
+        };
+    } else {
+        console.warn("ConvertToCommunity failed with ", value);
+        return CommonResponses.failure();
+    }
+}
+
+export function apiUpdatedRules(rules: UpdatedRules): TUpdatedRules {
+    return {
+        text: rules.text,
+        enabled: rules.enabled,
+        new_version: rules.newVersion,
+    };
+}
+
+export function followThreadResponse(
+    value: GroupFollowThreadResponse | GroupUnfollowThreadResponse,
+): FollowThreadResponse {
+    if (value === "Success") {
+        return "success";
+    }
+    if (value === "AlreadyFollowing" || value === "NotFollowing") {
+        return "unchanged";
+    } else {
+        console.warn("followThread failed with", value);
+        return "failed";
+    }
+}
+
+export function reportMessageResponse(value: GroupReportMessageResponse): boolean {
+    return value === "Success" || value === "AlreadyReported";
+}

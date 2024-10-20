@@ -15,6 +15,13 @@ export type AccessGate = { 'UniquePerson' : null } |
   { 'DiamondMember' : null } |
   { 'Payment' : PaymentGate } |
   { 'LifetimeDiamondMember' : null };
+export interface AccessGateConfig {
+  'gate' : AccessGate,
+  'expiry' : [] | [Milliseconds],
+}
+export type AccessGateConfigUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : AccessGateConfig };
 export type AccessGateNonComposite = { 'UniquePerson' : null } |
   { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'ReferredByMember' : null } |
@@ -52,6 +59,7 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'AppointedGroupOwner' : null } |
   { 'OwnGroupWithTenDiamondMembers' : null } |
   { 'JoinedGatedGroupOrCommunity' : null } |
+  { 'SetPin' : null } |
   { 'JoinedGroup' : null } |
   { 'StartedCall' : null } |
   { 'ChosenAsGroupOwner' : null } |
@@ -176,6 +184,7 @@ export interface CanisterWasm {
 export type ChannelId = bigint;
 export interface ChannelMatch {
   'id' : ChannelId,
+  'gate_config' : [] | [AccessGateConfig],
   'subtype' : [] | [GroupSubtype],
   'gate' : [] | [AccessGate],
   'name' : string,
@@ -310,6 +319,7 @@ export interface CommunityCanisterChannelSummary {
   'latest_message_sender_display_name' : [] | [string],
   'channel_id' : ChannelId,
   'is_public' : boolean,
+  'gate_config' : [] | [AccessGateConfig],
   'is_invited' : [] | [boolean],
   'video_call_in_progress' : [] | [VideoCall],
   'metrics' : ChatMetrics,
@@ -338,6 +348,7 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'latest_message_sender_display_name' : [] | [string],
   'channel_id' : ChannelId,
   'is_public' : [] | [boolean],
+  'gate_config' : AccessGateConfigUpdate,
   'video_call_in_progress' : VideoCallUpdates,
   'metrics' : [] | [ChatMetrics],
   'subtype' : GroupSubtypeUpdate,
@@ -362,6 +373,7 @@ export interface CommunityCanisterChannelSummaryUpdates {
 export interface CommunityCanisterCommunitySummary {
   'is_public' : boolean,
   'permissions' : CommunityPermissions,
+  'gate_config' : [] | [AccessGateConfig],
   'community_id' : CommunityId,
   'is_invited' : [] | [boolean],
   'metrics' : ChatMetrics,
@@ -383,6 +395,7 @@ export interface CommunityCanisterCommunitySummary {
 export interface CommunityCanisterCommunitySummaryUpdates {
   'is_public' : [] | [boolean],
   'permissions' : [] | [CommunityPermissions],
+  'gate_config' : AccessGateConfigUpdate,
   'community_id' : CommunityId,
   'channels_updated' : Array<CommunityCanisterChannelSummaryUpdates>,
   'metrics' : [] | [ChatMetrics],
@@ -405,6 +418,7 @@ export interface CommunityCanisterCommunitySummaryUpdates {
 export type CommunityId = CanisterId;
 export interface CommunityMatch {
   'id' : CommunityId,
+  'gate_config' : [] | [AccessGateConfig],
   'channel_count' : number,
   'gate' : [] | [AccessGate],
   'name' : string,
@@ -418,6 +432,7 @@ export interface CommunityMatch {
 }
 export interface CommunityMember {
   'role' : CommunityRole,
+  'lapsed' : boolean,
   'referred_by' : [] | [UserId],
   'user_id' : UserId,
   'display_name' : [] | [string],
@@ -425,12 +440,14 @@ export interface CommunityMember {
 }
 export interface CommunityMembership {
   'role' : CommunityRole,
+  'lapsed' : boolean,
   'display_name' : [] | [string],
   'joined' : TimestampMillis,
   'rules_accepted' : boolean,
 }
 export interface CommunityMembershipUpdates {
   'role' : [] | [CommunityRole],
+  'lapsed' : [] | [boolean],
   'display_name' : TextUpdate,
   'rules_accepted' : [] | [boolean],
 }
@@ -616,6 +633,9 @@ export interface EventsTimeToLiveUpdated {
   'new_ttl' : [] | [Milliseconds],
   'updated_by' : UserId,
 }
+export type ExchangeId = { 'Sonic' : null } |
+  { 'KongSwap' : null } |
+  { 'ICPSwap' : null };
 export interface ExternalUrlUpdated {
   'new_url' : [] | [string],
   'updated_by' : UserId,
@@ -676,6 +696,7 @@ export interface GovernanceProposalsSubtype {
 }
 export interface GroupCanisterGroupChatSummary {
   'is_public' : boolean,
+  'gate_config' : [] | [AccessGateConfig],
   'video_call_in_progress' : [] | [VideoCall],
   'metrics' : ChatMetrics,
   'subtype' : [] | [GroupSubtype],
@@ -711,6 +732,7 @@ export interface GroupCanisterGroupChatSummary {
 }
 export interface GroupCanisterGroupChatSummaryUpdates {
   'is_public' : [] | [boolean],
+  'gate_config' : AccessGateConfigUpdate,
   'video_call_in_progress' : VideoCallUpdates,
   'metrics' : [] | [ChatMetrics],
   'subtype' : GroupSubtypeUpdate,
@@ -754,6 +776,7 @@ export interface GroupChatCreated {
 }
 export interface GroupChatSummary {
   'is_public' : boolean,
+  'gate_config' : [] | [AccessGateConfig],
   'video_call_in_progress' : [] | [VideoCall],
   'metrics' : ChatMetrics,
   'subtype' : [] | [GroupSubtype],
@@ -798,6 +821,7 @@ export interface GroupFrozen { 'frozen_by' : UserId, 'reason' : [] | [string] }
 export interface GroupGateUpdated {
   'updated_by' : UserId,
   'new_gate' : [] | [AccessGate],
+  'new_gate_config' : [] | [AccessGateConfig],
 }
 export type GroupInviteCodeChange = { 'Enabled' : null } |
   { 'Disabled' : null } |
@@ -808,6 +832,7 @@ export interface GroupInviteCodeChanged {
 }
 export interface GroupMatch {
   'id' : ChatId,
+  'gate_config' : [] | [AccessGateConfig],
   'subtype' : [] | [GroupSubtype],
   'gate' : [] | [AccessGate],
   'name' : string,
@@ -818,6 +843,7 @@ export interface GroupMatch {
 export interface GroupMembership {
   'role' : GroupRole,
   'notifications_muted' : boolean,
+  'lapsed' : boolean,
   'joined' : TimestampMillis,
   'rules_accepted' : boolean,
   'latest_threads' : Array<GroupCanisterThreadDetails>,
@@ -827,6 +853,7 @@ export interface GroupMembership {
 export interface GroupMembershipUpdates {
   'role' : [] | [GroupRole],
   'notifications_muted' : [] | [boolean],
+  'lapsed' : [] | [boolean],
   'unfollowed_threads' : Uint32Array | number[],
   'rules_accepted' : [] | [boolean],
   'latest_threads' : Array<GroupCanisterThreadDetails>,
@@ -1351,6 +1378,7 @@ export type P2PSwapStatus = { 'Reserved' : P2PSwapReserved } |
   { 'Expired' : P2PSwapExpired };
 export interface Participant {
   'role' : GroupRole,
+  'lapsed' : boolean,
   'user_id' : UserId,
   'date_added' : TimestampMillis,
 }
@@ -1418,6 +1446,7 @@ export interface PollVotes {
   'user' : Uint32Array | number[],
 }
 export interface PrizeContent {
+  'winner_count' : number,
   'token' : Cryptocurrency,
   'end_date' : TimestampMillis,
   'prizes_remaining' : number,
@@ -1425,6 +1454,7 @@ export interface PrizeContent {
   'caption' : [] | [string],
   'diamond_only' : boolean,
   'winners' : Array<UserId>,
+  'user_is_winner' : boolean,
 }
 export interface PrizeContentInitial {
   'prizes_v2' : Array<bigint>,
@@ -1472,6 +1502,7 @@ export type ProposedResponse = { 'NotAuthorized' : null } |
 export interface ProposedSuccessResult { 'records' : Array<Record> }
 export interface PublicGroupSummary {
   'is_public' : boolean,
+  'gate_config' : [] | [AccessGateConfig],
   'subtype' : [] | [GroupSubtype],
   'gate' : [] | [AccessGate],
   'name' : string,

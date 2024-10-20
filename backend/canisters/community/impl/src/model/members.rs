@@ -1,9 +1,11 @@
 use crate::model::user_groups::{UserGroup, UserGroups};
 use candid::Principal;
+use group_community_common::{Member, Members};
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::collections::hash_map::Entry::Vacant;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap, HashSet};
 use types::{
     ChannelId, CommunityMember, CommunityPermissions, CommunityRole, TimestampMillis, Timestamped, UserId, UserType, Version,
 };
@@ -13,13 +15,13 @@ const MAX_MEMBERS_PER_COMMUNITY: u32 = 100_000;
 #[derive(Serialize, Deserialize)]
 pub struct CommunityMembers {
     members: HashMap<UserId, CommunityMemberInternal>,
-    display_names_last_updated: TimestampMillis,
     user_groups: UserGroups,
     // This includes the userIds of community members and also users invited to the community
     principal_to_user_id_map: HashMap<Principal, UserId>,
     blocked: HashSet<UserId>,
     admin_count: u32,
     owner_count: u32,
+    updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
 }
 
 impl CommunityMembers {
@@ -42,16 +44,17 @@ impl CommunityMembers {
             display_name: Timestamped::default(),
             referred_by: None,
             referrals: HashSet::new(),
+            lapsed: Timestamped::default(),
         };
 
         CommunityMembers {
             members: vec![(creator_user_id, member)].into_iter().collect(),
-            display_names_last_updated: now,
             user_groups: UserGroups::default(),
             principal_to_user_id_map: vec![(creator_principal, creator_user_id)].into_iter().collect(),
             blocked: HashSet::new(),
             admin_count: 0,
             owner_count: 1,
+            updates: BTreeSet::new(),
         }
     }
 
@@ -84,6 +87,7 @@ impl CommunityMembers {
                         display_name: Timestamped::default(),
                         referred_by,
                         referrals: HashSet::new(),
+                        lapsed: Timestamped::default(),
                     };
                     e.insert(member.clone());
                     self.add_user_id(principal, user_id);
@@ -246,10 +250,6 @@ impl CommunityMembers {
         self.user_groups.last_updated()
     }
 
-    pub fn display_names_last_updated(&self) -> TimestampMillis {
-        self.display_names_last_updated
-    }
-
     pub fn update_user_principal(&mut self, old_principal: Principal, new_principal: Principal) {
         if let Some(user_id) = self.principal_to_user_id_map.remove(&old_principal) {
             self.principal_to_user_id_map.insert(new_principal, user_id);
@@ -354,8 +354,54 @@ impl CommunityMembers {
     pub fn set_display_name(&mut self, user_id: UserId, display_name: Option<String>, now: TimestampMillis) {
         if let Some(member) = self.members.get_mut(&user_id) {
             member.display_name = Timestamped::new(display_name, now);
-            self.display_names_last_updated = now;
+            self.updates.insert((now, user_id, MemberUpdate::DisplayNameChanged));
         }
+    }
+
+    pub fn updated_lapsed(&mut self, user_id: UserId, lapsed: bool, now: TimestampMillis) {
+        if let Some(member) = self.members.get_mut(&user_id) {
+            if member.set_lapsed(lapsed, now) {
+                self.updates.insert((
+                    now,
+                    user_id,
+                    if lapsed { MemberUpdate::Lapsed } else { MemberUpdate::Unlapsed },
+                ));
+            }
+        }
+    }
+
+    pub fn unlapse_all(&mut self, now: TimestampMillis) {
+        for member in self.members.values_mut() {
+            if member.set_lapsed(false, now) {
+                self.updates.insert((now, member.user_id, MemberUpdate::Unlapsed));
+            }
+        }
+    }
+
+    pub fn iter_latest_updates(&self, since: TimestampMillis) -> impl Iterator<Item = (UserId, MemberUpdate)> + '_ {
+        self.updates
+            .iter()
+            .rev()
+            .take_while(move |(ts, _, _)| *ts > since)
+            .map(|(_, user_id, update)| (*user_id, *update))
+    }
+
+    pub fn last_updated(&self) -> TimestampMillis {
+        [
+            self.user_groups_last_updated(),
+            self.updates.iter().next_back().map_or(0, |(ts, _, _)| *ts),
+        ]
+        .into_iter()
+        .max()
+        .unwrap()
+    }
+}
+
+impl Members for CommunityMembers {
+    type Member = CommunityMemberInternal;
+
+    fn get(&self, user_id: &UserId) -> Option<&CommunityMemberInternal> {
+        self.get_by_user_id(user_id)
     }
 }
 
@@ -372,6 +418,8 @@ pub struct CommunityMemberInternal {
     display_name: Timestamped<Option<String>>,
     pub referred_by: Option<UserId>,
     pub referrals: HashSet<UserId>,
+    #[serde(default)]
+    pub lapsed: Timestamped<bool>,
 }
 
 impl CommunityMemberInternal {
@@ -409,6 +457,7 @@ impl CommunityMemberInternal {
             self.channels_removed.last().map(|c| c.timestamp).unwrap_or_default(),
             self.rules_accepted.as_ref().map(|r| r.timestamp).unwrap_or_default(),
             self.display_name.timestamp,
+            self.lapsed.timestamp,
         ]
         .into_iter()
         .max()
@@ -417,6 +466,29 @@ impl CommunityMemberInternal {
 
     pub fn display_name(&self) -> &Timestamped<Option<String>> {
         &self.display_name
+    }
+}
+
+impl Member for CommunityMemberInternal {
+    fn user_id(&self) -> UserId {
+        self.user_id
+    }
+
+    fn is_owner(&self) -> bool {
+        self.role.is_owner()
+    }
+
+    fn lapsed(&self) -> bool {
+        self.lapsed.value
+    }
+
+    fn set_lapsed(&mut self, lapsed: bool, timestamp: TimestampMillis) -> bool {
+        if lapsed != self.lapsed.value {
+            self.lapsed = Timestamped::new(lapsed, timestamp);
+            true
+        } else {
+            false
+        }
     }
 }
 
@@ -443,25 +515,35 @@ pub struct ChangeRoleSuccessResult {
 }
 
 impl From<CommunityMemberInternal> for CommunityMember {
-    fn from(p: CommunityMemberInternal) -> Self {
+    fn from(m: CommunityMemberInternal) -> Self {
         CommunityMember {
-            user_id: p.user_id,
-            date_added: p.date_added,
-            role: p.role,
-            display_name: p.display_name.value,
-            referred_by: p.referred_by,
+            user_id: m.user_id,
+            date_added: m.date_added,
+            role: m.role,
+            display_name: m.display_name.value,
+            referred_by: m.referred_by,
+            lapsed: m.lapsed.value,
         }
     }
 }
 
 impl From<&CommunityMemberInternal> for CommunityMember {
-    fn from(p: &CommunityMemberInternal) -> Self {
+    fn from(m: &CommunityMemberInternal) -> Self {
         CommunityMember {
-            user_id: p.user_id,
-            date_added: p.date_added,
-            role: p.role,
-            display_name: p.display_name.value.clone(),
-            referred_by: p.referred_by,
+            user_id: m.user_id,
+            date_added: m.date_added,
+            role: m.role,
+            display_name: m.display_name.value.clone(),
+            referred_by: m.referred_by,
+            lapsed: m.lapsed.value,
         }
     }
+}
+
+#[derive(Serialize_repr, Deserialize_repr, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
+#[repr(u8)]
+pub enum MemberUpdate {
+    Lapsed = 1,
+    Unlapsed = 2,
+    DisplayNameChanged = 3,
 }

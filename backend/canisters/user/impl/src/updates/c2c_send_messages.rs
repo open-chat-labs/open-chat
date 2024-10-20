@@ -5,10 +5,10 @@ use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextI
 use ic_cdk::update;
 use rand::Rng;
 use types::{
-    CanisterId, DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Notification, TimestampMillis, User,
-    UserId, UserType,
+    CanisterId, Chat, DirectMessageNotification, EventWrapper, Message, MessageContent, MessageId, MessageIndex, Notification,
+    TimestampMillis, User, UserId, UserType,
 };
-use user_canister::C2CReplyContext;
+use user_canister::{C2CReplyContext, MessageActivity, MessageActivityEvent};
 
 #[update]
 #[trace]
@@ -156,12 +156,13 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
         args.push_message_sent_event.then_some(&mut state.data.event_store_client),
     );
 
+    let content = &message_event.event.content;
+
     if args.sender_user_type.is_bot() {
         chat.mark_read_up_to(message_event.event.message_index, false, args.now);
     }
 
     if !args.mute_notification && !chat.notifications_muted.value && !state.data.suspended.value {
-        let content = &message_event.event.content;
         let notification = Notification::DirectMessage(DirectMessageNotification {
             sender: args.sender,
             thread_root_message_index,
@@ -178,6 +179,20 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
         let recipient = state.env.canister_id().into();
 
         state.push_notification(recipient, notification);
+    }
+
+    if matches!(content, MessageContent::Crypto(_)) {
+        state.data.push_message_activity(
+            MessageActivityEvent {
+                chat: Chat::Direct(chat_id),
+                thread_root_message_index,
+                message_index: message_event.event.message_index,
+                activity: MessageActivity::Crypto,
+                timestamp: args.now,
+                user_id: Some(args.sender),
+            },
+            args.now,
+        );
     }
 
     register_timer_jobs(

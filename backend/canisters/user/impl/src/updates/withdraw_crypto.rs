@@ -21,7 +21,8 @@ async fn withdraw_crypto_v2(args: Args) -> Response {
     }
 
     match process_transaction(args.withdrawal.set_memo(&MEMO_SEND)).await {
-        Ok(completed_withdrawal) => Success(completed_withdrawal),
-        Err(failed_withdrawal) => TransactionFailed(failed_withdrawal),
+        Ok(Ok(completed_withdrawal)) => Success(completed_withdrawal),
+        Ok(Err(failed_withdrawal)) => TransactionFailed(failed_withdrawal),
+        Err(error) => InternalError(format!("{error:?}")),
     }
 }

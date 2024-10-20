@@ -1,13 +1,15 @@
-use crate::model::pending_actions_queue::{Action, PendingActionsQueue};
+use crate::actions::Action;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use model::airdrops::{Airdrops, AirdropsMetrics};
 use serde::{Deserialize, Serialize};
+use std::cell::RefCell;
 use std::collections::HashSet;
-use std::{cell::RefCell, time::Duration};
+use timer_job_queues::TimerJobQueue;
 use types::{BuildVersion, CanisterId, ChannelId, CommunityId, Cycles, Document, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
+mod actions;
 mod guards;
 mod jobs;
 mod lifecycle;
@@ -39,15 +41,6 @@ impl RuntimeState {
         self.data.admins.contains(&caller)
     }
 
-    pub fn enqueue_pending_action(&mut self, action: Action, after: Option<Duration>, push_front: bool) {
-        if push_front {
-            self.data.pending_actions_queue.push_front(action);
-        } else {
-            self.data.pending_actions_queue.push_back(action);
-        }
-        jobs::process_pending_actions::start_job_if_required(self, after);
-    }
-
     pub fn metrics(&self) -> Metrics {
         Metrics {
             heap_memory_used: utils::memory::heap(),
@@ -77,7 +70,7 @@ struct Data {
     pub avatar: Timestamped<Option<Document>>,
     pub airdrops: Airdrops,
     pub channels_joined: HashSet<(CommunityId, ChannelId)>,
-    pub pending_actions_queue: PendingActionsQueue,
+    pub pending_actions_queue: TimerJobQueue<Action>,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -98,7 +91,7 @@ impl Data {
             avatar: Timestamped::default(),
             airdrops: Airdrops::default(),
             channels_joined: HashSet::default(),
-            pending_actions_queue: PendingActionsQueue::default(),
+            pending_actions_queue: TimerJobQueue::new(10, true),
             rng_seed: [0; 32],
             test_mode,
         }

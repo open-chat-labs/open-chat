@@ -27,7 +27,8 @@ pub struct SuccessResult {
 pub struct TokenSwap {
     pub args: crate::swap_tokens::Args,
     pub started: TimestampMillis,
-    pub transfer: Option<Result<u64, String>>,
+    pub icrc2: bool,
+    pub transfer_or_approval: Option<Result<u64, String>>,
     pub notified_dex: Option<Result<(), String>>,
     pub amount_swapped: Option<Result<Result<u128, String>, String>>,
     pub withdrawn_from_dex: Option<Result<u128, String>>,

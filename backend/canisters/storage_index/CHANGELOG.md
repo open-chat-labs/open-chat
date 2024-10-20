@@ -1,4 +1,5 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
@@ -8,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Expose MessagePack versions of StorageIndex APIs ([#6318](https://github.com/open-chat-labs/open-chat/pull/6318))
+- Add an error log with http endpoint ([#6608](https://github.com/open-chat-labs/open-chat/pull/6608))
 
 ### Changed
 

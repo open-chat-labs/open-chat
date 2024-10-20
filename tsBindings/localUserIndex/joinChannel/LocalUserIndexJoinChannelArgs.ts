@@ -3,4 +3,4 @@ import type { CommunityId } from "../../shared/CommunityId";
 import type { UserId } from "../../shared/UserId";
 import type { VerifiedCredentialGateArgs } from "../../shared/VerifiedCredentialGateArgs";
 
-export type LocalUserIndexJoinChannelArgs = { community_id: CommunityId, channel_id: bigint, invite_code?: bigint, referred_by?: UserId, verified_credential_args?: VerifiedCredentialGateArgs, };
+export type LocalUserIndexJoinChannelArgs = { community_id: CommunityId, channel_id: bigint, invite_code?: bigint | undefined, referred_by?: UserId | undefined, verified_credential_args?: VerifiedCredentialGateArgs | undefined, };

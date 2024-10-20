@@ -530,7 +530,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.permissions,
                         payload.avatar,
                         payload.eventsTimeToLive,
-                        payload.gate,
+                        payload.gateConfig,
                         payload.isPublic,
                         payload.messagesVisibleToNonMembers,
                         payload.externalUrl,
@@ -974,6 +974,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "addRemoveSwapProvider":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.addRemoveSwapProvider(payload.swapProvider, payload.add),
+                );
+                break;
+
             case "addMessageFilter":
                 executeThenReply(payload, correlationId, agent.addMessageFilter(payload.regex));
                 break;
@@ -1222,36 +1230,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
-            case "channelMessagesByMessageIndex":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent
-                        .communityClient(payload.chatId.communityId)
-                        .messagesByMessageIndex(
-                            payload.chatId,
-                            payload.messageIndexes,
-                            payload.threadRootMessageIndex,
-                            payload.latestKnownUpdate,
-                        ),
-                );
-                break;
-
             case "removeCommunityMember":
                 executeThenReply(
                     payload,
                     correlationId,
                     agent.communityClient(payload.id.communityId).removeMember(payload.userId),
-                );
-                break;
-
-            case "toggleMuteCommunityNotifications":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent
-                        .communityClient(payload.communityId)
-                        .toggleMuteNotifications(payload.mute),
                 );
                 break;
 
@@ -1276,7 +1259,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                             payload.permissions,
                             payload.avatar,
                             payload.banner,
-                            payload.gate,
+                            payload.gateConfig,
                             payload.isPublic,
                             payload.primaryLanguage,
                         ),
@@ -1755,7 +1738,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.setPinNumber(payload.currentPin, payload.newPin),
+                    agent.setPinNumber(payload.verification, payload.newPin),
                 );
                 break;
 

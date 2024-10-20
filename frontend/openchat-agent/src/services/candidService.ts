@@ -234,7 +234,7 @@ export abstract class CandidService {
         }
     }
 
-    private static validate<T extends TSchema>(value: unknown, validator: T): T {
+    private static validate<T extends TSchema>(value: unknown, validator: T): Static<T> {
         try {
             return Value.Parse(validator, value);
         } catch (err) {
@@ -252,12 +252,17 @@ export abstract class CandidService {
 
     private static processMsgpackResponse<Resp extends TSchema, Out>(
         responseBytes: ArrayBuffer,
-        mapper: (from: Resp) => Out,
+        mapper: (from: Static<Resp>) => Out,
         validator: Resp,
     ): Out {
         const response = Packer.unpack(new Uint8Array(responseBytes));
-        const validated = CandidService.validate(response, validator);
-        return mapper(validated);
+        try {
+            const validated = CandidService.validate(response, validator);
+            return mapper(validated);
+        } catch (err) {
+            console.error("Validation failed for response: ", response);
+            throw err;
+        }
     }
 
     constructor(

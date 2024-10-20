@@ -1,11 +1,12 @@
 use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
 use crate::{client, TestEnv};
-use airdrop_bot_canister::{set_airdrop, AirdropAlgorithm, V1Algorithm, V2Algorithm};
+use airdrop_bot_canister::{AirdropAlgorithm, V1Algorithm, V2Algorithm};
 use itertools::Itertools;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
+use testing::rng::random_string;
 use types::{AccessGate, ChatEvent, CryptoContent, EventIndex, GroupRole, Message, MessageContent, UserId};
 use utils::time::MonthKey;
 
@@ -24,7 +25,8 @@ fn airdrop_end_to_end(v2: bool) {
     // Create 1 owner and 5 other users
     // Owner creates the airdrop community
     // Join each other user to the community
-    // Owner creates a public airdrop channel gated by diamond - the 5 users will be added automatically
+    // Owner creates a public airdrop channel gated by diamond
+    // The users join the channel
     // Transfer 63,001 CHAT to the airdrop_bot canister
     // Owner invites the airdrop_bot to the channel
     //
@@ -33,25 +35,13 @@ fn airdrop_end_to_end(v2: bool) {
     let owner = client::register_diamond_user(env, canister_ids, *controller);
 
     let community_id =
-        client::user::happy_path::create_community(env, &owner, "CHIT for CHAT airdrops", true, vec!["General".to_string()]);
+        client::user::happy_path::create_community(env, &owner, &random_string(), true, vec!["General".to_string()]);
 
     let users: Vec<_> = (0..5)
         .map(|_| client::register_diamond_user(env, canister_ids, *controller))
         .collect();
 
     env.tick();
-
-    for user in users.iter() {
-        client::local_user_index::happy_path::join_community(
-            env,
-            user.principal,
-            canister_ids.local_user_index,
-            community_id,
-            None,
-        );
-    }
-
-    tick_many(env, 10);
 
     let channel_id = client::community::happy_path::create_gated_channel(
         env,
@@ -61,6 +51,18 @@ fn airdrop_end_to_end(v2: bool) {
         "July airdrop".to_string(),
         AccessGate::DiamondMember,
     );
+
+    for user in users.iter() {
+        client::local_user_index::happy_path::join_channel(
+            env,
+            user.principal,
+            canister_ids.local_user_index,
+            community_id,
+            channel_id,
+        );
+    }
+
+    tick_many(env, 10);
 
     client::ledger::happy_path::transfer(
         env,
@@ -115,7 +117,7 @@ fn airdrop_end_to_end(v2: bool) {
         },
     );
 
-    assert!(matches!(response, set_airdrop::Response::Success));
+    assert!(matches!(response, airdrop_bot_canister::set_airdrop::Response::Success));
 
     tick_many(env, 3);
 
@@ -131,7 +133,7 @@ fn airdrop_end_to_end(v2: bool) {
     );
 
     // Advance time to just after the airdrop is due
-    env.advance_time(Duration::from_millis(1000 + start_airdrop - now_millis(env)));
+    env.advance_time(Duration::from_millis(1000 + start_airdrop.saturating_sub(now_millis(env))));
 
     tick_many(env, 30);
 

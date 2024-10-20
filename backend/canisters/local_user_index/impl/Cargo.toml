@@ -46,6 +46,7 @@ satoshi_dice_canister = { path = "../../../bots/examples/satoshi_dice/api" }
 satoshi_dice_canister_c2c_client = { path = "../../../bots/examples/satoshi_dice/c2c_client" }
 sha256 = { path = "../../../libraries/sha256" }
 stable_memory = { path = "../../../libraries/stable_memory" }
+timer_job_queues = { path = "../../../libraries/timer_job_queues" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_canister = { path = "../../user/api" }

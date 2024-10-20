@@ -10,10 +10,9 @@
         isDiamondGate,
         OpenChat,
         shouldPreprocessGate,
-        type AccessGate,
-        type AccessGateWithLevel,
+        type EnhancedAccessGate,
         type LeafGate,
-        type Level,
+        type PaymentGateApprovals,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
@@ -33,13 +32,13 @@
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
-    export let gates: AccessGateWithLevel[];
-    export let level: Level;
+    export let gates: EnhancedAccessGate[];
 
-    let result: IteratorResult<AccessGate>;
+    let result: IteratorResult<EnhancedAccessGate>;
     let iterator = preprocessGates(gates, needsPreprocessing);
-    let currentGate: AccessGate | undefined;
+    let currentGate: EnhancedAccessGate | undefined;
     let credentials: string[] = [];
+    let paymentApprovals: PaymentGateApprovals = new Map();
     let optionalGatesByIndex: Map<number, LeafGate> = new Map();
     $: optionalInvalid =
         currentGate?.kind === "composite_gate" &&
@@ -47,7 +46,7 @@
 
     onMount(nextGate);
 
-    function needsPreprocessing(gate: AccessGate): boolean {
+    function needsPreprocessing(gate: EnhancedAccessGate): boolean {
         if (isCompositeGate(gate) && gate.operator === "or") {
             return gate.gates.some((g) => shouldPreprocessGate(g));
         } else {
@@ -55,37 +54,69 @@
         }
     }
 
+    function leafGatesMatch(a: LeafGate, b: LeafGate) {
+        return JSON.stringify(a) === JSON.stringify(b);
+    }
+
     function nextGate() {
         result = iterator.next();
         if (!result.done) {
             currentGate = result.value;
             if (isCompositeGate(currentGate) && currentGate.operator === "or") {
-                optionalGatesByIndex = new Map(currentGate.gates.map((g, i) => [i, g]));
+                optionalGatesByIndex = new Map(
+                    currentGate.gates.map((g, i) => [
+                        i,
+                        { ...g, level: currentGate?.level, expiry: currentGate?.expiry },
+                    ]),
+                );
             }
             if (isLeafGate(currentGate)) {
-                const found = [...optionalGatesByIndex.values()].find((g) => g === currentGate);
+                const found = [...optionalGatesByIndex.values()].find((g) =>
+                    leafGatesMatch(g, currentGate as LeafGate),
+                );
                 if (found || client.doesUserMeetAccessGate(currentGate)) {
                     nextGate();
                 }
             }
         } else {
             currentGate = undefined;
-            dispatch("success", { credentials });
+            dispatch("success", { credentials, paymentApprovals });
         }
     }
 
     function* preprocessGates(
-        gates: AccessGate[],
-        predicate: (gate: AccessGate) => boolean,
-    ): Generator<AccessGate> {
+        gates: EnhancedAccessGate[],
+        predicate: (gate: EnhancedAccessGate) => boolean,
+    ): Generator<EnhancedAccessGate> {
         for (const gate of gates) {
             if (predicate(gate)) {
                 yield gate;
             }
             if (isCompositeGate(gate)) {
-                yield* preprocessGates(gate.gates, predicate);
+                yield* preprocessGates(
+                    gate.gates.map((g) => ({ ...g, level: gate.level, expiry: gate.expiry })),
+                    predicate,
+                );
             }
         }
+    }
+
+    function approvePayment({
+        detail: { ledger, amount, approvalFee },
+    }: CustomEvent<{ ledger: string; amount: bigint; approvalFee: bigint }>) {
+        const existing = paymentApprovals.get(ledger);
+        if (existing !== undefined) {
+            // if we already have an approval pending for this ledger we add on the amount
+            // but there will only be one fee
+            existing.amount += amount;
+            paymentApprovals.set(ledger, existing);
+        } else {
+            paymentApprovals.set(ledger, {
+                amount,
+                approvalFee,
+            });
+        }
+        nextGate();
     }
 
     function credentialReceived(ev: CustomEvent<string>) {
@@ -93,11 +124,13 @@
         nextGate();
     }
 
-    function toggleIndex(i: number, parent: AccessGate | undefined) {
+    function toggleIndex(i: number, parent: EnhancedAccessGate | undefined) {
         if (parent === undefined || !isCompositeGate(parent)) return;
 
         const found = optionalGatesByIndex.has(i);
-        optionalGatesByIndex = new Map(parent.gates.map((g, i) => [i, g]));
+        optionalGatesByIndex = new Map(
+            parent.gates.map((g, i) => [i, { ...g, level: parent.level, expiry: parent.expiry }]),
+        );
         if (found) {
             optionalGatesByIndex.delete(i);
         }
@@ -135,9 +168,9 @@
                             id={`subgate_${i}`}>
                             <AccessGateSummary
                                 editable={false}
-                                {level}
+                                level={currentGate.level}
                                 showNoGate={false}
-                                gate={subgate} />
+                                gateConfig={{ expiry: undefined, gate: subgate }} />
                         </Radio>
                     </div>
                 {/each}
@@ -146,27 +179,29 @@
                     on:close={onClose}
                     on:credentialReceived={credentialReceived}
                     gate={currentGate}
-                    {level} />
+                    level={currentGate.level} />
             {:else if isUniquePersonGate(currentGate)}
                 <UniqueHumanGateEvaluator
                     on:credentialReceived={credentialReceived}
                     on:close={onClose}
-                    {level} />
+                    expiry={currentGate.expiry}
+                    level={currentGate.level} />
             {:else if isPaymentGate(currentGate)}
                 <PaymentGateEvaluator
+                    {paymentApprovals}
                     gate={currentGate}
-                    {level}
-                    on:next={nextGate}
+                    level={currentGate.level}
+                    on:approvePayment={approvePayment}
                     on:close={onClose} />
             {:else if isLifetimeDiamondGate(currentGate)}
                 <DiamondGateEvaluator
-                    {level}
+                    level={currentGate.level}
                     lifetime
                     on:credentialReceived={credentialReceived}
                     on:cancel={onClose} />
             {:else if isDiamondGate(currentGate)}
                 <DiamondGateEvaluator
-                    {level}
+                    level={currentGate.level}
                     lifetime={false}
                     on:credentialReceived={credentialReceived}
                     on:cancel={onClose} />

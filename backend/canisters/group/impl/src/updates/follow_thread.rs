@@ -35,5 +35,6 @@ fn follow_thread_impl(args: Args, state: &mut RuntimeState) -> Response {
         FollowThreadResult::ThreadNotFound => ThreadNotFound,
         FollowThreadResult::UserNotInGroup => UserNotInGroup,
         FollowThreadResult::UserSuspended => UserSuspended,
+        FollowThreadResult::UserLapsed => UserLapsed,
     }
 }

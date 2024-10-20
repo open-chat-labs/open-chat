@@ -2,4 +2,4 @@
 import type { CommunitySendMessageSuccessResult } from "./CommunitySendMessageSuccessResult";
 import type { InvalidPollReason } from "../../shared/InvalidPollReason";
 
-export type CommunitySendMessageResponse = { "Success": CommunitySendMessageSuccessResult } | "ChannelNotFound" | "ThreadMessageNotFound" | "MessageEmpty" | { "TextTooLong": number } | { "InvalidPoll": InvalidPollReason } | "NotAuthorized" | "UserNotInCommunity" | "UserNotInChannel" | "UserSuspended" | { "InvalidRequest": string } | "CommunityFrozen" | "RulesNotAccepted" | "CommunityRulesNotAccepted";
+export type CommunitySendMessageResponse = { "Success": CommunitySendMessageSuccessResult } | "ChannelNotFound" | "ThreadMessageNotFound" | "MessageEmpty" | { "TextTooLong": number } | { "InvalidPoll": InvalidPollReason } | "NotAuthorized" | "UserNotInCommunity" | "UserNotInChannel" | "UserSuspended" | { "InvalidRequest": string } | "CommunityFrozen" | "RulesNotAccepted" | "CommunityRulesNotAccepted" | "UserLapsed";

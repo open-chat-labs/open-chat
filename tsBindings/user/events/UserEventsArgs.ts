@@ -3,4 +3,4 @@ import type { EventIndex } from "../../shared/EventIndex";
 import type { MessageIndex } from "../../shared/MessageIndex";
 import type { UserId } from "../../shared/UserId";
 
-export type UserEventsArgs = { user_id: UserId, thread_root_message_index?: MessageIndex, start_index: EventIndex, ascending: boolean, max_messages: number, max_events: number, latest_known_update?: bigint, };
+export type UserEventsArgs = { user_id: UserId, thread_root_message_index?: MessageIndex | undefined, start_index: EventIndex, ascending: boolean, max_messages: number, max_events: number, latest_known_update?: bigint | undefined, };

@@ -2,4 +2,4 @@
 import type { MessageIndex } from "../../shared/MessageIndex";
 import type { UserMarkReadThreadRead } from "./UserMarkReadThreadRead";
 
-export type UserMarkReadChannelMessagesRead = { channel_id: bigint, read_up_to?: MessageIndex, threads: Array<UserMarkReadThreadRead>, date_read_pinned?: bigint, };
+export type UserMarkReadChannelMessagesRead = { channel_id: bigint, read_up_to?: MessageIndex | undefined, threads: Array<UserMarkReadThreadRead>, date_read_pinned?: bigint | undefined, };

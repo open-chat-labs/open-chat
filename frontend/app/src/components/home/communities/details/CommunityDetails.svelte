@@ -18,6 +18,7 @@
     import { i18nKey } from "../../../../i18n/i18n";
     import Translatable from "../../../Translatable.svelte";
     import ReferredUsersList from "../../profile/ReferredUsersList.svelte";
+    import AccessGateExpiry from "../../access/AccessGateExpiry.svelte";
 
     export let community: CommunitySummary;
     export let rules: Rules | undefined;
@@ -73,7 +74,15 @@
                 {/if}
             {/if}
         </div>
-        <AccessGateSummary editable={false} level={community.level} gate={community.gate} />
+        <AccessGateSummary
+            editable={false}
+            level={community.level}
+            gateConfig={community.gateConfig} />
+        {#if community.gateConfig.expiry !== undefined}
+            <div class="expiry">
+                <AccessGateExpiry expiry={community.gateConfig.expiry} />
+            </div>
+        {/if}
     </CollapsibleCard>
     {#if rules !== undefined && rules.enabled}
         <CollapsibleCard
@@ -124,5 +133,11 @@
         @include mobile() {
             margin: 0 $sp3;
         }
+    }
+
+    .expiry {
+        color: var(--txt-light);
+        @include font(book, normal, fs-90);
+        margin-top: $sp3;
     }
 </style>

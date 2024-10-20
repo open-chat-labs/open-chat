@@ -77,6 +77,7 @@ import type {
     ChitEventsResponse,
     ClaimDailyChitResponse,
     WalletConfig,
+    Verification,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -117,6 +118,7 @@ import {
     chitEventsResponse,
     claimDailyChitResponse,
     apiWalletConfig,
+    apiVerification,
 } from "./mappers";
 import { sendMessageResponse } from "./mappersV2";
 import {
@@ -149,6 +151,7 @@ import {
     cancelP2PSwapResponse,
     joinVideoCallResponse,
     setPinNumberResponse,
+    apiMaybeAccessGateConfig,
 } from "../common/chatMappers";
 import {
     apiMessageContent as apiMessageContentV2,
@@ -299,7 +302,8 @@ export class UserClient extends CandidService {
                 ),
                 permissions: [apiCommunityPermissions(community.permissions)],
                 rules,
-                gate: apiMaybeAccessGate(community.gate),
+                gate_config: apiMaybeAccessGateConfig(community.gateConfig),
+                gate: apiMaybeAccessGate(community.gateConfig.gate),
                 default_channels: defaultChannels,
                 default_channel_rules: [defaultChannelRules],
                 primary_language: community.primaryLanguage,
@@ -327,7 +331,8 @@ export class UserClient extends CandidService {
                 ),
                 permissions_v2: [apiGroupPermissions(group.permissions)],
                 rules: group.rules,
-                gate: apiMaybeAccessGate(group.gate),
+                gate: apiMaybeAccessGate(group.gateConfig.gate),
+                gate_config: apiMaybeAccessGateConfig(group.gateConfig),
                 events_ttl: apiOptional(identity, group.eventsTTL),
                 messages_visible_to_non_members: apiOptional(
                     identity,
@@ -1394,12 +1399,12 @@ export class UserClient extends CandidService {
     }
 
     setPinNumber(
-        currentPin: string | undefined,
+        verification: Verification,
         newPin: string | undefined,
     ): Promise<SetPinNumberResponse> {
         return this.handleResponse(
             this.userService.set_pin_number({
-                current: apiOptional(identity, currentPin),
+                verification: apiVerification(verification),
                 new: apiOptional(identity, newPin),
             }),
             setPinNumberResponse,

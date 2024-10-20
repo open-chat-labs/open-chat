@@ -23,6 +23,9 @@ pub enum Response {
     AlreadyClaimed,
     PrizeFullyClaimed,
     PrizeEnded,
+    LedgerError,
     TransferFailed(String, FailedCryptoTransaction),
     FailedAfterTransfer(String, CompletedCryptoTransaction),
+    InternalError(String),
+    UserLapsed,
 }

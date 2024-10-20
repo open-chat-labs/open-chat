@@ -1,5 +1,8 @@
 use crate::{
-    model::{events::CommunityEventInternal, members::CommunityMembers},
+    model::{
+        events::CommunityEventInternal,
+        members::{CommunityMembers, MemberUpdate},
+    },
     read_state, RuntimeState,
 };
 use canister_api_macros::query;
@@ -110,9 +113,11 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         }
     }
 
-    for member in data.members.iter() {
-        if member.display_name().timestamp > args.updates_since {
-            user_updates_handler.mark_member_updated(&mut result, member.user_id, false, false);
+    for (user_id, update) in state.data.members.iter_latest_updates(args.updates_since) {
+        match update {
+            MemberUpdate::Lapsed | MemberUpdate::Unlapsed | MemberUpdate::DisplayNameChanged => {
+                user_updates_handler.mark_member_updated(&mut result, user_id, false, false);
+            }
         }
     }
 

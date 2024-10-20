@@ -1,8 +1,16 @@
 import { emptyChatMetrics } from "../../utils/chat";
 import { mapOptional, principalBytesToString } from "../../utils/mapping";
-import { accessGate, groupSubtype, messageEvent } from "./chatMappersV2";
-import { nullMembership, type GroupChatSummary } from "openchat-shared";
-import type { PublicGroupSummary as TPublicGroupSummary } from "../../typebox";
+import { accessGateConfig, groupSubtype, messageEvent } from "./chatMappersV2";
+import {
+    nullMembership,
+    type GroupChatSummary,
+    type PublicGroupSummaryResponse,
+    CommonResponses,
+} from "openchat-shared";
+import type {
+    GroupPublicSummaryResponse,
+    PublicGroupSummary as TPublicGroupSummary,
+} from "../../typebox";
 
 export function publicGroupSummary(
     value: TPublicGroupSummary,
@@ -51,7 +59,10 @@ export function publicGroupSummary(
         frozen: value.frozen !== undefined,
         dateLastPinned: undefined,
         dateReadPinned: undefined,
-        gate: mapOptional(value.gate, accessGate) ?? { kind: "no_gate" },
+        gateConfig: mapOptional(value.gate_config, accessGateConfig) ?? {
+            gate: { kind: "no_gate" },
+            expiry: undefined,
+        },
         level: "group",
         membership: nullMembership(),
         localUserIndex: principalBytesToString(value.local_user_index_canister_id),
@@ -60,16 +71,16 @@ export function publicGroupSummary(
     };
 }
 
-// export function publicSummaryResponse(
-//     candid: ApiPublicSummaryResponse,
-// ): PublicGroupSummaryResponse {
-//     if ("Success" in candid) {
-//         return {
-//             kind: "success",
-//             group: publicGroupSummary(candid.Success.summary, candid.Success.is_invited),
-//         };
-//     } else {
-//         console.warn("ApiPublicSummaryResponse failed with ", candid);
-//         return CommonResponses.failure();
-//     }
-// }
+export function publicSummaryResponse(
+    value: GroupPublicSummaryResponse,
+): PublicGroupSummaryResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return {
+            kind: "success",
+            group: publicGroupSummary(value.Success.summary, value.Success.is_invited),
+        };
+    } else {
+        console.warn("ApiPublicSummaryResponse failed with ", value);
+        return CommonResponses.failure();
+    }
+}

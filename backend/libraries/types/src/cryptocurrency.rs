@@ -1,6 +1,6 @@
 use crate::nns::{Tokens, UserOrAccount};
 use crate::{CanisterId, TimestampNanos, UserId};
-use candid::{CandidType, Nat, Principal};
+use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, Subaccount};
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
@@ -245,7 +245,7 @@ impl PendingCryptoTransaction {
     pub fn set_memo(mut self, memo: &[u8]) -> Self {
         match &mut self {
             PendingCryptoTransaction::NNS(t) => {
-                t.memo = Some(ic_ledger_types::Memo(u64_from_bytes(memo)));
+                t.memo = Some(u64_from_bytes(memo));
             }
             PendingCryptoTransaction::ICRC1(t) => {
                 assert!(memo.len() <= 32);
@@ -346,7 +346,7 @@ impl FailedCryptoTransaction {
 
 pub mod nns {
     use super::*;
-    use ic_ledger_types::{AccountIdentifier, BlockIndex, Memo};
+    use ic_ledger_types::AccountIdentifier;
 
     #[ts_export]
     #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -418,8 +418,7 @@ pub mod nns {
         pub amount: Tokens,
         pub to: UserOrAccount,
         pub fee: Option<Tokens>,
-        #[ts(as = "Option<u64>")]
-        pub memo: Option<Memo>,
+        pub memo: Option<u64>,
         pub created: TimestampNanos,
     }
 
@@ -433,12 +432,11 @@ pub mod nns {
         pub fee: Tokens,
         pub from: CryptoAccount,
         pub to: CryptoAccount,
-        #[ts(as = "u64")]
-        pub memo: Memo,
+        pub memo: u64,
         pub created: TimestampNanos,
         #[serde(default)]
         pub transaction_hash: TransactionHash,
-        pub block_index: BlockIndex,
+        pub block_index: u64,
     }
 
     #[ts_export]
@@ -451,8 +449,7 @@ pub mod nns {
         pub fee: Tokens,
         pub from: CryptoAccount,
         pub to: CryptoAccount,
-        #[ts(as = "u64")]
-        pub memo: Memo,
+        pub memo: u64,
         pub created: TimestampNanos,
         #[serde(default)]
         pub transaction_hash: TransactionHash,
@@ -632,76 +629,35 @@ pub mod icrc2 {
     #[ts_export]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
     pub enum ApproveError {
-        BadFee {
-            #[ts(as = "u128")]
-            expected_fee: Nat,
-        },
+        BadFee { expected_fee: u128 },
         // The caller does not have enough funds to pay the approval fee.
-        InsufficientFunds {
-            #[ts(as = "u128")]
-            balance: Nat,
-        },
+        InsufficientFunds { balance: u128 },
         // The caller specified the [expected_allowance] field, and the current
         // allowance did not match the given value.
-        AllowanceChanged {
-            #[ts(as = "u128")]
-            current_allowance: Nat,
-        },
+        AllowanceChanged { current_allowance: u128 },
         // The approval request expired before the ledger had a chance to apply it.
-        Expired {
-            ledger_time: u64,
-        },
+        Expired { ledger_time: u64 },
         TooOld,
-        CreatedInFuture {
-            ledger_time: u64,
-        },
-        Duplicate {
-            #[ts(as = "u128")]
-            duplicate_of: Nat,
-        },
+        CreatedInFuture { ledger_time: u64 },
+        Duplicate { duplicate_of: u128 },
         TemporarilyUnavailable,
-        GenericError {
-            #[ts(as = "u128")]
-            error_code: Nat,
-            message: String,
-        },
+        GenericError { error_code: u128, message: String },
     }
 
     #[ts_export]
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
     pub enum TransferFromError {
-        BadFee {
-            #[ts(as = "u128")]
-            expected_fee: Nat,
-        },
-        BadBurn {
-            #[ts(as = "u128")]
-            min_burn_amount: Nat,
-        },
+        BadFee { expected_fee: u128 },
+        BadBurn { min_burn_amount: u128 },
         // The [from] account does not hold enough funds for the transfer.
-        InsufficientFunds {
-            #[ts(as = "u128")]
-            balance: Nat,
-        },
+        InsufficientFunds { balance: u128 },
         // The caller exceeded its allowance.
-        InsufficientAllowance {
-            #[ts(as = "u128")]
-            allowance: Nat,
-        },
+        InsufficientAllowance { allowance: u128 },
         TooOld,
-        CreatedInFuture {
-            ledger_time: u64,
-        },
-        Duplicate {
-            #[ts(as = "u128")]
-            duplicate_of: Nat,
-        },
+        CreatedInFuture { ledger_time: u64 },
+        Duplicate { duplicate_of: u128 },
         TemporarilyUnavailable,
-        GenericError {
-            #[ts(as = "u128")]
-            error_code: Nat,
-            message: String,
-        },
+        GenericError { error_code: u128, message: String },
     }
 }
 
@@ -716,7 +672,7 @@ impl From<icrc1::PendingCryptoTransaction> for nns::PendingCryptoTransaction {
                 &Subaccount(value.to.subaccount.unwrap_or_default()),
             )),
             fee: Some(Tokens::from_e8s(value.fee.try_into().unwrap())),
-            memo: value.memo.map(|m| ic_ledger_types::Memo(u64_from_bytes(m.0.as_slice()))),
+            memo: value.memo.map(|m| u64_from_bytes(m.0.as_slice())),
             created: value.created,
         }
     }

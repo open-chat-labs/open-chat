@@ -1,7 +1,8 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{is_default, CanisterId, UserId};
+use tracing::info;
+use types::{is_default, CanisterId, PushIfNotContains, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserPrincipals {
@@ -39,6 +40,21 @@ struct AuthPrincipalInternal {
 }
 
 impl UserPrincipals {
+    pub fn add_missing_principal_links(&mut self) -> u32 {
+        let mut count = 0;
+        for (principal, details) in self.auth_principals.iter() {
+            if let Some(user_principal) = self.user_principals.get_mut(details.user_principal_index as usize) {
+                if !user_principal.auth_principals.contains(principal) {
+                    user_principal.auth_principals.push(*principal);
+                    let user_id = user_principal.user_id.map(|u| u.to_string());
+                    info!(user_id, "Missing principal link added");
+                    count += 1;
+                }
+            }
+        }
+        count
+    }
+
     pub fn push(
         &mut self,
         index: u32,
@@ -79,9 +95,7 @@ impl UserPrincipals {
         {
             false
         } else if let Some(user_principal) = self.user_principals.get_mut(user_principal_index as usize) {
-            if !user_principal.auth_principals.contains(&new_principal) {
-                user_principal.auth_principals.push(new_principal);
-            }
+            user_principal.auth_principals.push_if_not_contains(new_principal);
             self.auth_principals.insert(
                 new_principal,
                 AuthPrincipalInternal {

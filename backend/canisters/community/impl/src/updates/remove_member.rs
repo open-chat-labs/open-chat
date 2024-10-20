@@ -73,6 +73,8 @@ fn prepare(user_id: UserId, block: bool, state: &RuntimeState) -> Result<Prepare
     if let Some(member) = state.data.members.get(caller) {
         if member.suspended.value {
             Err(UserSuspended)
+        } else if member.lapsed.value {
+            Err(UserLapsed)
         } else if member.user_id == user_id {
             Err(CannotRemoveSelf)
         } else {
@@ -110,11 +112,8 @@ fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeS
     let now = state.env.now();
 
     // Remove the user from the community
-    let removed_member = state.data.members.remove(&user_id, now);
+    let removed_member = state.data.remove_user_from_community(user_id, now);
     let removed = removed_member.is_some();
-
-    // Remove the user from each group they are a member of
-    state.data.channels.leave_all_channels(user_id, now);
 
     let blocked = block && state.data.members.block(user_id);
 

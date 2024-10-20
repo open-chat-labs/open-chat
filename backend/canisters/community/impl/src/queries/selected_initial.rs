@@ -1,6 +1,7 @@
 use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
 use community_canister::selected_initial::{Response::*, *};
+use types::{CommunityMember, CommunityRole};
 
 #[query(candid = true, msgpack = true)]
 fn selected_initial(args: Args) -> Response {
@@ -24,11 +25,22 @@ fn selected_initial_impl(args: Args, state: &RuntimeState) -> Response {
         .get(caller)
         .map_or(Vec::new(), |m| m.referrals.iter().copied().collect());
 
+    let mut members = Vec::new();
+    let mut basic_members = Vec::new();
+    for member in state.data.members.iter().map(CommunityMember::from) {
+        if matches!(member.role, CommunityRole::Member) && member.display_name.is_none() && !member.lapsed {
+            basic_members.push(member.user_id);
+        } else {
+            members.push(member);
+        }
+    }
+
     Success(SuccessResult {
         timestamp: last_updated,
         last_updated,
         latest_event_index: data.events.latest_event_index(),
-        members: data.members.iter().map(|m| m.into()).collect(),
+        members,
+        basic_members,
         blocked_users: data.members.blocked(),
         invited_users: data.invited_users.users(),
         chat_rules: data.rules.clone().into(),

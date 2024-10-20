@@ -19,4 +19,5 @@ pub enum Response {
     PinRequired,
     PinIncorrect(Milliseconds),
     TooManyFailedPinAttempts(Milliseconds),
+    InternalError(String),
 }

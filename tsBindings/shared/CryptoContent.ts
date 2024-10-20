@@ -2,4 +2,4 @@
 import type { CryptoTransaction } from "./CryptoTransaction";
 import type { UserId } from "./UserId";
 
-export type CryptoContent = { recipient: UserId, transfer: CryptoTransaction, caption?: string, };
+export type CryptoContent = { recipient: UserId, transfer: CryptoTransaction, caption?: string | undefined, };

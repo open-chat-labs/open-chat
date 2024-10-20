@@ -6,9 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add an error log with http endpoint ([#6608](https://github.com/open-chat-labs/open-chat/pull/6608))
+
+## [[2.0.1379](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1379-local_user_index)] - 2024-10-10
+
+### Added
+
+- Add support for expiring access gates ([#6401](https://github.com/open-chat-labs/open-chat/pull/6401))
+
+### Changed
+
+- Implement `GroupedTimerJobQueue` and use it for pushing user events ([#6528](https://github.com/open-chat-labs/open-chat/pull/6528))
+
+## [[2.0.1372](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1372-local_user_index)] - 2024-10-07
+
 ### Changed
 
 - Add `CanisterWasmBytes` to reduce duplication ([#6480](https://github.com/open-chat-labs/open-chat/pull/6480))
+- Clear wasm chunks once new wasm version has been set ([#6524](https://github.com/open-chat-labs/open-chat/pull/6524))
+
+### Removed
+
+- Remove `push_events_v2` which is no longer used ([#6502](https://github.com/open-chat-labs/open-chat/pull/6502))
 
 ## [[2.0.1362](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1362-local_user_index)] - 2024-09-30
 

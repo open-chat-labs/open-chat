@@ -2,12 +2,6 @@ SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR
 
-didc bind ../../backend/canisters/community/api/can.did -t ts > ./src/services/community/candid/types.d.ts
-didc bind ../../backend/canisters/community/api/can.did -t js > ./src/services/community/candid/idl.js
-
-didc bind ../../backend/canisters/group/api/can.did -t ts > ./src/services/group/candid/types.d.ts
-didc bind ../../backend/canisters/group/api/can.did -t js > ./src/services/group/candid/idl.js
-
 didc bind ../../backend/canisters/identity/api/can.did -t ts > ./src/services/identity/candid/types.d.ts
 didc bind ../../backend/canisters/identity/api/can.did -t js > ./src/services/identity/candid/idl.js
 
@@ -34,6 +28,9 @@ didc bind ./src/services/dexes/icpSwap/index/candid/can.did -t js > ./src/servic
 
 didc bind ./src/services/dexes/icpSwap/pool/candid/can.did -t ts > ./src/services/dexes/icpSwap/pool/candid/types.d.ts
 didc bind ./src/services/dexes/icpSwap/pool/candid/can.did -t js > ./src/services/dexes/icpSwap/pool/candid/idl.js
+
+didc bind ./src/services/dexes/kongswap/candid/can.did -t ts > ./src/services/dexes/kongswap/candid/types.d.ts
+didc bind ./src/services/dexes/kongswap/candid/can.did -t js > ./src/services/dexes/kongswap/candid/idl.js
 
 didc bind ./src/services/dexes/sonic/swaps/candid/can.did -t ts > ./src/services/dexes/sonic/swaps/candid/types.d.ts
 didc bind ./src/services/dexes/sonic/swaps/candid/can.did -t js > ./src/services/dexes/sonic/swaps/candid/idl.js

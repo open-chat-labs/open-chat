@@ -3,4 +3,4 @@ import type { MessageId } from "../../shared/MessageId";
 import type { MessageIndex } from "../../shared/MessageIndex";
 import type { UserId } from "../../shared/UserId";
 
-export type UserDeleteMessagesArgs = { user_id: UserId, thread_root_message_index?: MessageIndex, message_ids: Array<MessageId>, correlation_id: bigint, };
+export type UserDeleteMessagesArgs = { user_id: UserId, thread_root_message_index?: MessageIndex | undefined, message_ids: Array<MessageId>, correlation_id: bigint, };

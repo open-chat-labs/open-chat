@@ -26,6 +26,8 @@ fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> Response {
     } else if let Some(caller_member) = state.data.get_member(caller) {
         if caller_member.suspended.value {
             return UserSuspended;
+        } else if caller_member.lapsed.value {
+            return UserLapsed;
         }
 
         let unblocked_by = caller_member.user_id;

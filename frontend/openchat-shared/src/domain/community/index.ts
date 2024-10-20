@@ -1,4 +1,4 @@
-import type { AccessControlled, AccessGate, VersionedRules } from "../access";
+import type { AccessControlled, AccessGateConfig, VersionedRules } from "../access";
 import type {
     GateCheckFailed,
     GateCheckFailedReason,
@@ -10,10 +10,9 @@ import type {
     ChannelIdentifier,
     GroupSubtype,
     EventWrapper,
-    GroupCanisterThreadDetails,
-    Mention,
     UpdatedEvent,
     CanisterNotFound,
+    GroupMembershipUpdates,
 } from "../chat";
 import type { DataContent } from "../data";
 import type { OptionUpdate } from "../optionUpdate";
@@ -34,6 +33,7 @@ import type {
     Offline,
     Success,
     SuccessNoUpdates,
+    UserLapsed,
     UserLimitReached,
     UserNotInChat,
     UserNotInCommunity,
@@ -50,6 +50,7 @@ export type CommunityMembership = {
     index: number;
     displayName: string | undefined;
     rulesAccepted: boolean;
+    lapsed: boolean;
 };
 
 export type CommunityIdentifier = {
@@ -88,6 +89,7 @@ export type CommunitySpecificState = {
     userGroups: Map<number, UserGroupDetails>;
     members: Map<string, Member>;
     blockedUsers: Set<string>;
+    lapsedMembers: Set<string>;
     invitedUsers: Set<string>;
     referrals: Set<string>;
     rules?: VersionedRules;
@@ -126,6 +128,7 @@ export type AddMembersToChannelResponse =
     | Success
     | UserNotInCommunity
     | UserSuspended
+    | UserLapsed
     | CommunityFrozen
     | CommunityPublic
     | InternalError
@@ -187,7 +190,7 @@ export type CommunityCanisterCommunitySummaryUpdates = {
     permissions: CommunityPermissions | undefined;
     channelsUpdated: CommunityCanisterChannelSummaryUpdates[];
     metrics: Metrics | undefined;
-    gate: OptionUpdate<AccessGate>;
+    gateConfig: OptionUpdate<AccessGateConfig>;
     name: string | undefined;
     description: string | undefined;
     lastUpdated: bigint;
@@ -211,7 +214,7 @@ export type CommunityCanisterChannelSummaryUpdates = {
     metrics: Metrics | undefined;
     subtype: OptionUpdate<GroupSubtype>;
     dateLastPinned: bigint | undefined;
-    gate: OptionUpdate<AccessGate>;
+    gateConfig: OptionUpdate<AccessGateConfig>;
     name: string | undefined;
     description: string | undefined;
     lastUpdated: bigint;
@@ -233,21 +236,12 @@ export type CommunityMembershipUpdates = {
     role: MemberRole | undefined;
     displayName: OptionUpdate<string>;
     rulesAccepted: boolean | undefined;
-};
-
-export type GroupMembershipUpdates = {
-    role: MemberRole | undefined;
-    notificationsMuted: boolean | undefined;
-    latestThreads: GroupCanisterThreadDetails[];
-    unfollowedThreads: number[];
-    mentions: Mention[];
-    myMetrics: Metrics | undefined;
-    rulesAccepted: boolean | undefined;
+    lapsed: boolean | undefined;
 };
 
 export type ChannelMatch = {
     id: ChannelIdentifier;
-    gate: AccessGate;
+    gateConfig: AccessGateConfig;
     name: string;
     description: string;
     avatar: DataContent;
@@ -321,6 +315,7 @@ export type SetMemberDisplayNameResponse =
     | "success"
     | "user_not_in_community"
     | "user_suspended"
+    | "user_lapsed"
     | "community_frozen"
     | "display_name_too_short"
     | "display_name_too_long"

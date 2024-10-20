@@ -3,4 +3,4 @@ import type { CurrentUserSummary } from "../../shared/CurrentUserSummary";
 import type { UserId } from "../../shared/UserId";
 import type { UserSummaryV2 } from "../../shared/UserSummaryV2";
 
-export type UserIndexUsersResult = { users: Array<UserSummaryV2>, current_user?: CurrentUserSummary, deleted: Array<UserId>, timestamp: bigint, };
+export type UserIndexUsersResult = { users: Array<UserSummaryV2>, current_user?: CurrentUserSummary | undefined, deleted: Array<UserId>, timestamp: bigint, };

@@ -14,9 +14,10 @@ use sha2::{Digest, Sha256};
 use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{HashMap, HashSet};
+use std::mem;
 use std::ops::DerefMut;
 use types::{
-    AcceptP2PSwapResult, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, CompleteP2PSwapResult,
+    AcceptP2PSwapResult, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, ChatType, CompleteP2PSwapResult,
     CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventWrapperInternal,
     EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention,
     Mention, Message, MessageContentInitial, MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex,
@@ -43,22 +44,10 @@ pub struct ChatEvents {
     last_updated_timestamps: LastUpdatedTimestamps,
     video_call_in_progress: Timestamped<Option<VideoCall>>,
     anonymized_id: String,
-    #[serde(default)]
     search_index: SearchIndex,
 }
 
 impl ChatEvents {
-    // TODO remove this
-    pub fn populate_search_index(&mut self) {
-        for event in self.main.iter(None, true, EventIndex::default()) {
-            if let EventOrExpiredRangeInternal::Event(e) = event {
-                if let ChatEventInternal::Message(m) = &e.event {
-                    self.search_index.push(m.message_index, m.sender, Document::from(&m.content));
-                }
-            }
-        }
-    }
-
     pub fn new_direct_chat(
         them: UserId,
         events_ttl: Option<Milliseconds>,
@@ -149,7 +138,7 @@ impl ChatEvents {
         if let Some(client) = event_store_client.as_mut() {
             let event_payload = MessageEventPayload {
                 message_type: args.content.content_type().to_string(),
-                chat_type: self.chat.chat_type().to_string(),
+                chat_type: ChatType::from(&self.chat).to_string(),
                 chat_id: self.anonymized_id.clone(),
                 thread: args.thread_root_message_index.is_some(),
                 sender_is_bot: args.sender_is_bot,
@@ -309,7 +298,7 @@ impl ChatEvents {
                     let new_length = message.content.text_length();
                     let payload = MessageEditedEventPayload {
                         message_type: message.content.content_type().to_string(),
-                        chat_type: chat.chat_type().to_string(),
+                        chat_type: ChatType::from(&chat).to_string(),
                         chat_id: anonymized_id,
                         thread: args.thread_root_message_index.is_some(),
                         already_edited,
@@ -508,7 +497,7 @@ impl ChatEvents {
             Some(args.now),
             |message, _| Self::register_poll_vote_inner(message, &args),
         ) {
-            Ok((votes, existing_vote_removed)) => {
+            Ok((votes, existing_vote_removed, creator)) => {
                 match args.operation {
                     VoteOperation::RegisterVote => {
                         if !existing_vote_removed {
@@ -532,7 +521,7 @@ impl ChatEvents {
                     }
                 }
 
-                RegisterPollVoteResult::Success(votes)
+                RegisterPollVoteResult::Success(votes, creator)
             }
             Err(UpdateEventError::NoChange(result)) => result,
             Err(UpdateEventError::NotFound) => RegisterPollVoteResult::PollNotFound,
@@ -542,7 +531,7 @@ impl ChatEvents {
     fn register_poll_vote_inner(
         message: &mut MessageInternal,
         args: &RegisterPollVoteArgs,
-    ) -> Result<(PollVotes, bool), UpdateEventError<RegisterPollVoteResult>> {
+    ) -> Result<(PollVotes, bool, UserId), UpdateEventError<RegisterPollVoteResult>> {
         let MessageContentInternal::Poll(p) = &mut message.content else {
             return Err(UpdateEventError::NotFound);
         };
@@ -550,7 +539,9 @@ impl ChatEvents {
         let result = p.register_vote(args.user_id, args.option_index, args.operation);
 
         match result {
-            RegisterVoteResult::Success(existing_vote_removed) => Ok((p.votes(Some(args.user_id)), existing_vote_removed)),
+            RegisterVoteResult::Success(existing_vote_removed) => {
+                Ok((p.votes(Some(args.user_id)), existing_vote_removed, message.sender))
+            }
             RegisterVoteResult::SuccessNoChange => Err(UpdateEventError::NoChange(RegisterPollVoteResult::SuccessNoChange(
                 p.votes(Some(args.user_id)),
             ))),
@@ -761,7 +752,7 @@ impl ChatEvents {
         if let Some(client) = event_store_client {
             let payload = ReactionAddedEventPayload {
                 message_type: message.content.content_type().to_string(),
-                chat_type: chat.chat_type().to_string(),
+                chat_type: ChatType::from(&chat).to_string(),
                 chat_id: anonymized_id.clone(),
                 thread: args.thread_root_message_index.is_some(),
             };
@@ -882,7 +873,7 @@ impl ChatEvents {
                     .with_source(chat.canister_id().to_string(), true)
                     .with_json_payload(&MessageTippedEventPayload {
                         message_type,
-                        chat_type: chat.chat_type().to_string(),
+                        chat_type: ChatType::from(&chat).to_string(),
                         chat_id: anonymized_id.clone(),
                         thread: args.thread_root_message_index.is_some(),
                         token: args.token.token_symbol().to_string(),
@@ -931,6 +922,10 @@ impl ChatEvents {
             return Err(UpdateEventError::NoChange(ReservePrizeResult::AlreadyClaimed));
         }
 
+        if content.ledger_error {
+            return Err(UpdateEventError::NoChange(ReservePrizeResult::LedgerError));
+        }
+
         // Pop the last prize and reserve it
         let amount = content.prizes_remaining.pop().expect("some prizes_remaining");
         let token = content.transaction.token();
@@ -966,10 +961,10 @@ impl ChatEvents {
                         content: MessageContentInternal::PrizeWinner(PrizeWinnerContentInternal {
                             winner,
                             ledger: transaction.ledger_canister_id(),
+                            token_symbol: transaction.token().token_symbol().to_string(),
                             amount: transaction.units(),
                             fee: transaction.fee(),
                             block_index: transaction.index(),
-                            transaction,
                             prize_message: message_index,
                         }),
                         mentioned: Vec::new(),
@@ -1009,10 +1004,11 @@ impl ChatEvents {
         message_id: MessageId,
         user_id: UserId,
         amount: u128,
+        ledger_error: bool,
         now: TimestampMillis,
     ) -> UnreservePrizeResult {
         match self.update_message(None, message_id.into(), EventIndex::default(), Some(now), |message, _| {
-            Self::unreserve_prize_inner(message, user_id, amount)
+            Self::unreserve_prize_inner(message, user_id, amount, ledger_error)
         }) {
             Ok(_) => UnreservePrizeResult::Success,
             Err(UpdateEventError::NoChange(_)) => UnreservePrizeResult::ReservationNotFound,
@@ -1020,10 +1016,19 @@ impl ChatEvents {
         }
     }
 
-    fn unreserve_prize_inner(message: &mut MessageInternal, user_id: UserId, amount: u128) -> Result<(), UpdateEventError> {
+    fn unreserve_prize_inner(
+        message: &mut MessageInternal,
+        user_id: UserId,
+        amount: u128,
+        ledger_error: bool,
+    ) -> Result<(), UpdateEventError> {
         let MessageContentInternal::Prize(content) = &mut message.content else {
             return Err(UpdateEventError::NotFound);
         };
+
+        if ledger_error {
+            content.ledger_error = true;
+        }
 
         // Remove the reservation
         if content.reservations.remove(&user_id) {
@@ -1079,7 +1084,7 @@ impl ChatEvents {
         min_visible_event_index: EventIndex,
     ) -> Option<P2PSwapContent> {
         self.message_internal(min_visible_event_index, thread_root_message_index, message_id.into())
-            .and_then(|(m, _)| if let MessageContentInternal::P2PSwap(p) = m.content { Some(p) } else { None })
+            .and_then(|(m, _)| if let MessageContentInternal::P2PSwap(p) = m.content { Some(p.into()) } else { None })
     }
 
     pub fn reserve_p2p_swap(
@@ -1115,7 +1120,7 @@ impl ChatEvents {
 
         if content.reserve(user_id, now) {
             Ok(ReserveP2PSwapSuccess {
-                content: content.clone(),
+                content: content.clone().into(),
                 created: message_timestamp,
                 created_by: message.sender,
             })
@@ -1223,7 +1228,7 @@ impl ChatEvents {
                 token0_amount: content.token0_amount,
                 token1: content.token1.token.token_symbol().to_string(),
                 token1_amount: content.token1_amount,
-                chat_type: chat.chat_type().to_string(),
+                chat_type: ChatType::from(&chat).to_string(),
                 chat_id: anonymized_id.clone(),
             };
 
@@ -1813,14 +1818,18 @@ impl ChatEvents {
         )
     }
 
-    pub fn mark_member_added_to_public_channel(&mut self, user_id: UserId, now: TimestampMillis) {
+    pub fn mark_members_added_to_public_channel(&mut self, mut user_ids: Vec<UserId>, now: TimestampMillis) {
+        if user_ids.is_empty() {
+            return;
+        }
+
         if let Some(last_event_index) = self.latest_event_index() {
             if self
                 .update_event(None, last_event_index.into(), EventIndex::default(), Some(now), |event| {
                     // If the last event is of type `MembersAddedToPublicChannel` then add this user_id to that
                     // event and mark the event as updated, else push a new event
                     if let ChatEventInternal::MembersAddedToPublicChannel(m) = &mut event.event {
-                        m.user_ids.push(user_id);
+                        m.user_ids.extend(mem::take(&mut user_ids));
                         event.timestamp = now;
                         Ok(())
                     } else {
@@ -1834,9 +1843,7 @@ impl ChatEvents {
         }
 
         self.push_main_event(
-            ChatEventInternal::MembersAddedToPublicChannel(Box::new(MembersAddedToPublicChannelInternal {
-                user_ids: vec![user_id],
-            })),
+            ChatEventInternal::MembersAddedToPublicChannel(Box::new(MembersAddedToPublicChannelInternal { user_ids })),
             0,
             now,
         );
@@ -1967,7 +1974,7 @@ impl ChatEvents {
                     EventBuilder::new("video_call_ended", now)
                         .with_source(chat.canister_id().to_string(), true)
                         .with_json_payload(&VideoCallEndedEventPayload {
-                            chat_type: chat.chat_type().to_string(),
+                            chat_type: ChatType::from(&chat).to_string(),
                             chat_id: anonymized_id,
                             participants,
                             hidden,
@@ -2117,7 +2124,7 @@ impl ChatEvents {
             .and_then(|l| l.get_event(event_key, min_visible_event_index))
     }
 
-    fn message_internal(
+    pub fn message_internal(
         &self,
         min_visible_event_index: EventIndex,
         thread_root_message_index: Option<MessageIndex>,
@@ -2222,12 +2229,6 @@ fn add_to_metrics<F: FnMut(&mut ChatMetricsInternal)>(
     user_metrics.last_active = max(user_metrics.last_active, timestamp);
 }
 
-#[derive(Serialize, Deserialize)]
-enum ChatType {
-    Direct,
-    Group,
-}
-
 pub struct PushMessageArgs {
     pub sender: UserId,
     pub thread_root_message_index: Option<MessageIndex>,
@@ -2317,7 +2318,7 @@ pub struct RegisterPollVoteArgs {
 }
 
 pub enum RegisterPollVoteResult {
-    Success(PollVotes),
+    Success(PollVotes, UserId),
     SuccessNoChange(PollVotes),
     PollEnded,
     PollNotFound,
@@ -2377,6 +2378,7 @@ pub enum ReservePrizeResult {
     AlreadyClaimed,
     PrizeFullyClaimed,
     PrizeEnded,
+    LedgerError,
 }
 
 #[allow(clippy::large_enum_variant)]

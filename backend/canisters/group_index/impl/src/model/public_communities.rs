@@ -4,7 +4,10 @@ use crate::MARK_ACTIVE_DURATION;
 use search::{Document, Query};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{AccessGate, CommunityId, CommunityMatch, FrozenCommunityInfo, PublicCommunityActivity, TimestampMillis};
+use types::{
+    AccessGate, AccessGateConfig, AccessGateConfigInternal, CommunityId, CommunityMatch, FrozenCommunityInfo,
+    PublicCommunityActivity, TimestampMillis,
+};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct PublicCommunities {
@@ -32,7 +35,7 @@ impl PublicCommunities {
         description: String,
         avatar_id: Option<u128>,
         banner_id: Option<u128>,
-        gate: Option<AccessGate>,
+        gate_config: Option<AccessGateConfig>,
         primary_language: String,
         channel_count: u32,
         created: TimestampMillis,
@@ -45,7 +48,7 @@ impl PublicCommunities {
                 description,
                 avatar_id,
                 banner_id,
-                gate,
+                gate_config.map(|gc| gc.into()),
                 primary_language,
                 channel_count,
                 created,
@@ -104,7 +107,7 @@ impl PublicCommunities {
         description: String,
         avatar_id: Option<u128>,
         banner_id: Option<u128>,
-        gate: Option<AccessGate>,
+        gate_config: Option<AccessGateConfig>,
     ) -> UpdateCommunityResult {
         match self.communities.get_mut(community_id) {
             None => UpdateCommunityResult::CommunityNotFound,
@@ -113,7 +116,7 @@ impl PublicCommunities {
                 community.description = description;
                 community.avatar_id = avatar_id;
                 community.banner_id = banner_id;
-                community.gate = gate;
+                community.gate_config = gate_config.map(|gc| gc.into());
                 UpdateCommunityResult::Success
             }
         }
@@ -147,7 +150,8 @@ pub struct PublicCommunityInfo {
     banner_id: Option<u128>,
     activity: PublicCommunityActivity,
     hotness_score: u32,
-    gate: Option<AccessGate>,
+    #[serde(alias = "gate")]
+    gate_config: Option<AccessGateConfigInternal>,
     moderation_flags: ModerationFlags,
     primary_language: String,
 }
@@ -165,7 +169,7 @@ impl PublicCommunityInfo {
         description: String,
         avatar_id: Option<u128>,
         banner_id: Option<u128>,
-        gate: Option<AccessGate>,
+        gate_config: Option<AccessGateConfigInternal>,
         primary_language: String,
         channel_count: u32,
         now: TimestampMillis,
@@ -176,7 +180,7 @@ impl PublicCommunityInfo {
             description,
             avatar_id,
             banner_id,
-            gate,
+            gate_config,
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
             activity: PublicCommunityActivity::new(channel_count, now),
@@ -241,7 +245,7 @@ impl PublicCommunityInfo {
     }
 
     pub fn gate(&self) -> Option<&AccessGate> {
-        self.gate.as_ref()
+        self.gate_config.as_ref().map(|gc| &gc.gate)
     }
 
     pub fn to_match(&self, score: u32) -> CommunityMatch {
@@ -254,7 +258,8 @@ impl PublicCommunityInfo {
             banner_id: self.banner_id,
             member_count: self.activity.member_count,
             channel_count: self.activity.channel_count,
-            gate: self.gate.clone(),
+            gate: self.gate_config.as_ref().map(|gc| gc.gate.clone()),
+            gate_config: self.gate_config.as_ref().map(|gc| gc.clone().into()),
             moderation_flags: self.moderation_flags.bits(),
             primary_language: self.primary_language.clone(),
         }

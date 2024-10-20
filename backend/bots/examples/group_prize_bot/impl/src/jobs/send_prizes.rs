@@ -156,7 +156,7 @@ async fn transfer_prize_funds_to_group(
     };
 
     match icrc1::process_transaction(pending_transaction, group, true).await {
-        Ok(completed_transaction) => mutate_state(|state| {
+        Ok(Ok(completed_transaction)) => mutate_state(|state| {
             let completed_transaction = CompletedCryptoTransaction::from(completed_transaction);
             state.data.prizes_sent.push(Prize {
                 group,
@@ -164,7 +164,8 @@ async fn transfer_prize_funds_to_group(
             });
             Ok(completed_transaction)
         }),
-        Err(failed_transaction) => Err(format!("{failed_transaction:?}")),
+        Ok(Err(failed_transaction)) => Err(format!("{failed_transaction:?}")),
+        Err(error) => Err(format!("{error:?}")),
     }
 }
 
@@ -206,6 +207,7 @@ async fn send_prize_message_to_group(
             Response::Success(_) => Ok(()),
             Response::CallerNotInGroup => Err("Bot not in group".to_string()),
             Response::UserSuspended => Err("Bot suspended".to_string()),
+            Response::UserLapsed => Err("Bot lapsed".to_string()),
             Response::ChatFrozen => Err("Group frozen".to_string()),
             Response::MessageEmpty
             | Response::RulesNotAccepted

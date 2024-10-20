@@ -123,7 +123,7 @@ import type {
     MemberRole,
     OptionalChatPermissions,
 } from "./permission";
-import type { AccessGate, Rules, UpdatedRules, VerifiedCredentialArgs } from "./access";
+import type { AccessGateConfig, Rules, UpdatedRules, VerifiedCredentialArgs } from "./access";
 import type {
     AddMembersToChannelResponse,
     BlockCommunityUserResponse,
@@ -196,6 +196,7 @@ import type {
     ExternalAchievement,
 } from "./chit";
 import type { JsonnableDelegationChain } from "@dfinity/identity";
+import type { Verification } from "./wallet";
 
 /**
  * Worker request types
@@ -289,6 +290,7 @@ export type WorkerRequest =
     | DeleteFrozenGroup
     | AddHotGroupExclusion
     | RemoveHotGroupExclusion
+    | AddRemoveSwapProvider
     | AddMessageFilter
     | RemoveMessageFilter
     | SetTokenEnabled
@@ -919,7 +921,7 @@ type UpdateGroup = {
     permissions?: OptionalChatPermissions;
     avatar?: Uint8Array;
     eventsTimeToLive?: OptionUpdate<bigint>;
-    gate?: AccessGate;
+    gateConfig?: AccessGateConfig;
     isPublic?: boolean;
     kind: "updateGroup";
     messagesVisibleToNonMembers?: boolean;
@@ -1110,6 +1112,12 @@ type AddHotGroupExclusion = {
 type RemoveHotGroupExclusion = {
     chatId: GroupChatIdentifier;
     kind: "removeHotGroupExclusion";
+};
+
+type AddRemoveSwapProvider = {
+    swapProvider: DexId;
+    add: boolean;
+    kind: "addRemoveSwapProvider";
 };
 
 type AddMessageFilter = {
@@ -1661,7 +1669,7 @@ type UpdateCommunity = {
     permissions?: Partial<CommunityPermissions>;
     avatar?: Uint8Array;
     banner?: Uint8Array;
-    gate?: AccessGate;
+    gateConfig?: AccessGateConfig;
     isPublic?: boolean;
     primaryLanguage?: string;
 };
@@ -1745,7 +1753,7 @@ type CancelP2PSwap = {
 };
 
 type SetPinNumber = {
-    currentPin: string | undefined;
+    verification: Verification;
     newPin: string | undefined;
     kind: "setPinNumber";
 };
@@ -1943,6 +1951,8 @@ export type WorkerResult<T> = T extends Init
     ? AddHotGroupExclusionResponse
     : T extends RemoveHotGroupExclusion
     ? RemoveHotGroupExclusionResponse
+    : T extends AddRemoveSwapProvider
+    ? boolean
     : T extends AddMessageFilter
     ? boolean
     : T extends RemoveMessageFilter

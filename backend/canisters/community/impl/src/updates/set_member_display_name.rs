@@ -23,6 +23,7 @@ fn set_member_display_name_impl(args: Args, state: &mut RuntimeState) -> Respons
 
     let user_id = match state.data.members.get(caller) {
         Some(member) if member.suspended.value => return UserSuspended,
+        Some(member) if member.lapsed.value => return UserLapsed,
         Some(member) => {
             if let Some(display_name) = args.display_name.as_ref() {
                 match validate_display_name(display_name) {
@@ -40,11 +41,9 @@ fn set_member_display_name_impl(args: Args, state: &mut RuntimeState) -> Respons
     state.data.members.set_display_name(user_id, args.display_name, now);
 
     if args.new_achievement {
-        state.data.achievements.notify_user(
-            user_id,
-            vec![Achievement::SetCommunityDisplayName],
-            &mut state.data.fire_and_forget_handler,
-        );
+        state
+            .data
+            .notify_user_of_achievement(user_id, Achievement::SetCommunityDisplayName);
     }
 
     handle_activity_notification(state);

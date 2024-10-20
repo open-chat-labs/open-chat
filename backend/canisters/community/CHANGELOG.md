@@ -6,6 +6,55 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Only deserialize from old log state ([#6616](https://github.com/open-chat-labs/open-chat/pull/6616))
+
+## [[2.0.1397](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1397-community)] - 2024-10-18
+
+### Added
+
+- Add an error log with http endpoint ([#6608](https://github.com/open-chat-labs/open-chat/pull/6608))
+
+### Changed
+
+- Push activity to users using `GroupedTimerJobQueue` ([#6552](https://github.com/open-chat-labs/open-chat/pull/6552))
+- Return `u128` rather than `Nat` for ICRC2 ledger errors ([#6597](https://github.com/open-chat-labs/open-chat/pull/6597))
+- Lapsed members don't need to be re-invited ([#6602](https://github.com/open-chat-labs/open-chat/pull/6602))
+- Community summary updated if details updated ([#6606](https://github.com/open-chat-labs/open-chat/pull/6606))
+
+## [[2.0.1391](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1391-community)] - 2024-10-15
+
+### Changed
+
+- Reduce size of some message types when serialized ([#6559](https://github.com/open-chat-labs/open-chat/pull/6559))
+- Log details whenever a prize claim results in a ledger error ([#6560](https://github.com/open-chat-labs/open-chat/pull/6560))
+- Ensure members marked as lapsed in updates queries ([#6573](https://github.com/open-chat-labs/open-chat/pull/6573))
+- Reduce size of responses by only returning UserIds for basic members ([#6577](https://github.com/open-chat-labs/open-chat/pull/6577))
+- Remove `transaction` from serialized PrizeWinner messages ([#6578](https://github.com/open-chat-labs/open-chat/pull/6578))
+- Handle display name changes more efficiently ([#6585](https://github.com/open-chat-labs/open-chat/pull/6585))
+
+## [[2.0.1378](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1378-community)] - 2024-10-10
+
+### Fixed
+
+- Fix video calls in communities ([#6554](https://github.com/open-chat-labs/open-chat/pull/6554))
+
+## [[2.0.1377](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1377-community)] - 2024-10-10
+
+### Added
+
+- Add support for expiring access gates ([#6401](https://github.com/open-chat-labs/open-chat/pull/6401))
+
+### Changed
+
+- Mark prize messages as having ledger error if transfers fail ([#6500](https://github.com/open-chat-labs/open-chat/pull/6500))
+- Make adding existing users to a new channel more efficient ([#6504](https://github.com/open-chat-labs/open-chat/pull/6504))
+- Further refactoring of adding multiple users to public channels ([#6506](https://github.com/open-chat-labs/open-chat/pull/6506))
+- Populate search index for Windoge98 community which failed previous upgrade ([#6549](https://github.com/open-chat-labs/open-chat/pull/6549))
+
+## [[2.0.1365](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1365-community)] - 2024-10-02
+
 ### Added
 
 - Add MessagePack versions of all endpoints ([#6463](https://github.com/open-chat-labs/open-chat/pull/6463))

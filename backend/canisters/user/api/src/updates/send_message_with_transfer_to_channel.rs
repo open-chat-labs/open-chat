@@ -41,6 +41,7 @@ pub enum Response {
     TransferCannotBeToSelf,
     P2PSwapSetUpFailed(String),
     UserSuspended,
+    UserLapsed,
     CommunityFrozen,
     RulesNotAccepted,
     CommunityRulesNotAccepted,
@@ -48,6 +49,7 @@ pub enum Response {
     PinRequired,
     PinIncorrect(Milliseconds),
     TooManyFailedPinAttempts(Milliseconds),
+    InternalError(String),
 }
 
 #[ts_export(user, send_message_with_transfer_to_channel)]

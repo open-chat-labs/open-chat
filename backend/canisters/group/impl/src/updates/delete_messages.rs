@@ -93,20 +93,17 @@ fn delete_messages_impl(user_id: UserId, args: Args, state: &mut RuntimeState) -
                 );
             }
 
-            handle_activity_notification(state);
-
             if args.new_achievement {
-                state.data.achievements.notify_user(
-                    user_id,
-                    vec![Achievement::DeletedMessage],
-                    &mut state.data.fire_and_forget_handler,
-                );
+                state.data.notify_user_of_achievement(user_id, Achievement::DeletedMessage);
             }
+
+            handle_activity_notification(state);
 
             Success
         }
         DeleteMessagesResult::MessageNotFound => MessageNotFound,
         DeleteMessagesResult::UserNotInGroup => CallerNotInGroup,
         DeleteMessagesResult::UserSuspended => UserSuspended,
+        DeleteMessagesResult::UserLapsed => UserLapsed,
     }
 }

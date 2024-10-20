@@ -8,14 +8,17 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use chat_events::ChatMetricsInternal;
+use community_canister::EventsResponse;
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::AccessRulesInternal;
 use group_community_common::{
-    Achievements, PaymentReceipts, PaymentRecipient, PendingPayment, PendingPaymentReason, PendingPaymentsQueue,
+    Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, Members, PaymentReceipts, PaymentRecipient,
+    PendingPayment, PendingPaymentReason, PendingPaymentsQueue, UserCache,
 };
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
+use model::user_event_batch::UserEventBatch;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
@@ -26,12 +29,15 @@ use serde_bytes::ByteBuf;
 use std::cell::RefCell;
 use std::ops::Deref;
 use std::time::Duration;
+use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    AccessGate, BuildVersion, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
-    CommunityPermissions, CommunityRole, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, Milliseconds, Notification,
-    PaymentGate, Rules, TimestampMillis, Timestamped, UserId, UserType,
+    AccessGate, AccessGateConfigInternal, Achievement, BuildVersion, CanisterId, ChannelId, ChatMetrics,
+    CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, CommunityRole, Cryptocurrency, Cycles,
+    Document, Empty, FrozenGroupInfo, Milliseconds, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId,
+    UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
+use user_canister::CommunityCanisterEvent;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
 use utils::time::MINUTE_IN_MS;
@@ -167,6 +173,7 @@ impl RuntimeState {
                     .as_ref()
                     .map_or(false, |version| version.value >= self.data.rules.text.version),
                 display_name: m.display_name().value.clone(),
+                lapsed: m.lapsed.value,
             };
 
             // Return all the channels that the user is a member of
@@ -214,7 +221,8 @@ impl RuntimeState {
             member_count: data.members.len(),
             permissions: data.permissions.clone(),
             frozen: data.frozen.value.clone(),
-            gate: data.gate.value.clone(),
+            gate: data.gate_config.value.as_ref().map(|gc| gc.gate.clone()),
+            gate_config: data.gate_config.value.clone().map(|gc| gc.into()),
             primary_language: data.primary_language.clone(),
             channels,
             membership,
@@ -313,7 +321,7 @@ struct Data {
     avatar: Option<Document>,
     banner: Option<Document>,
     permissions: CommunityPermissions,
-    gate: Timestamped<Option<AccessGate>>,
+    gate_config: Timestamped<Option<AccessGateConfigInternal>>,
     primary_language: String,
     user_index_canister_id: CanisterId,
     local_user_index_canister_id: CanisterId,
@@ -348,6 +356,15 @@ struct Data {
     ic_root_key: Vec<u8>,
     event_store_client: EventStoreClient<CdkRuntime>,
     achievements: Achievements,
+    expiring_members: ExpiringMembers,
+    expiring_member_actions: ExpiringMemberActions,
+    user_cache: UserCache,
+    #[serde(default = "default_user_event_sync_queue")]
+    user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
+}
+
+fn default_user_event_sync_queue() -> GroupedTimerJobQueue<UserEventBatch> {
+    GroupedTimerJobQueue::new(5, true)
 }
 
 impl Data {
@@ -373,7 +390,7 @@ impl Data {
         proposals_bot_user_id: UserId,
         escrow_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
-        gate: Option<AccessGate>,
+        gate: Option<AccessGateConfigInternal>,
         default_channels: Vec<String>,
         default_channel_rules: Option<Rules>,
         mark_active_duration: Milliseconds,
@@ -410,7 +427,7 @@ impl Data {
             avatar,
             banner,
             permissions,
-            gate: Timestamped::new(gate, now),
+            gate_config: Timestamped::new(gate, now),
             primary_language,
             user_index_canister_id,
             local_user_index_canister_id,
@@ -445,6 +462,10 @@ impl Data {
                 .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
                 .build(),
             achievements: Achievements::default(),
+            expiring_members: ExpiringMembers::default(),
+            expiring_member_actions: ExpiringMemberActions::default(),
+            user_cache: UserCache::default(),
+            user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
         }
     }
 
@@ -496,8 +517,7 @@ impl Data {
         [
             self.invited_users.last_updated(),
             self.events.latest_event_timestamp(),
-            self.members.user_groups_last_updated(),
-            self.members.display_names_last_updated(),
+            self.members.last_updated(),
         ]
         .into_iter()
         .max()
@@ -505,10 +525,10 @@ impl Data {
     }
 
     pub fn has_payment_gate(&self) -> bool {
-        self.gate
+        self.gate_config
             .value
             .as_ref()
-            .map(|g| matches!(g, AccessGate::Payment(_)))
+            .map(|g| matches!(g.gate, AccessGate::Payment(_)))
             .unwrap_or_default()
     }
 
@@ -522,7 +542,7 @@ impl Data {
         }
     }
 
-    fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {
+    pub fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {
         if self.invite_code_enabled {
             if let Some(provided_code) = invite_code {
                 if let Some(stored_code) = self.invite_code {
@@ -532,6 +552,136 @@ impl Data {
         }
 
         false
+    }
+
+    pub fn remove_user_from_community(&mut self, user_id: UserId, now: TimestampMillis) -> Option<CommunityMemberInternal> {
+        let removed = self.members.remove(&user_id, now);
+        self.channels.leave_all_channels(user_id, now);
+        self.expiring_members.remove_member(user_id, None);
+        self.expiring_member_actions.remove_member(user_id, None);
+        self.user_cache.delete(user_id);
+        removed
+    }
+
+    pub fn remove_user_from_channel(&mut self, user_id: UserId, channel_id: ChannelId, now: TimestampMillis) {
+        self.members.mark_member_left_channel(&user_id, channel_id, now);
+        self.expiring_members.remove_member(user_id, Some(channel_id));
+        self.expiring_member_actions.remove_member(user_id, Some(channel_id));
+    }
+
+    fn can_member_lapse(&self, user_id: &UserId, channel_id: Option<ChannelId>) -> bool {
+        if let Some(channel_id) = channel_id {
+            self.channels
+                .get(&channel_id)
+                .map_or(false, |c| c.chat.members.can_member_lapse(user_id))
+        } else {
+            self.members.can_member_lapse(user_id)
+        }
+    }
+
+    pub fn update_lapsed(&mut self, user_id: UserId, channel_id: Option<ChannelId>, lapsed: bool, now: TimestampMillis) {
+        if let Some(channel_id) = channel_id {
+            if let Some(channel) = self.channels.get_mut(&channel_id) {
+                channel.chat.members.update_lapsed(user_id, lapsed, now);
+            }
+        } else {
+            self.members.updated_lapsed(user_id, lapsed, now);
+        }
+    }
+
+    pub fn unlapse_all(&mut self, channel_id: Option<ChannelId>, now: TimestampMillis) {
+        if let Some(channel_id) = channel_id {
+            if let Some(channel) = self.channels.get_mut(&channel_id) {
+                channel.chat.members.unlapse_all(now);
+            }
+        } else {
+            self.members.unlapse_all(now);
+        }
+    }
+
+    pub fn update_member_expiry(
+        &mut self,
+        channel_id: Option<ChannelId>,
+        prev_gate_config: &Option<AccessGateConfigInternal>,
+        now: TimestampMillis,
+    ) {
+        let prev_gate_expiry = prev_gate_config.as_ref().and_then(|gc| gc.expiry());
+        let new_gate_config = self.get_access_gate_config(channel_id);
+        let new_gate_expiry = new_gate_config.and_then(|gc| gc.expiry());
+
+        if let Some(prev_gate_expiry) = prev_gate_expiry {
+            if let Some(new_gate_expiry) = new_gate_expiry {
+                // If there is also a new expiring gate then update the expiry schedule of members if necessary
+                self.expiring_members
+                    .change_gate_expiry(channel_id, new_gate_expiry as i64 - prev_gate_expiry as i64);
+            } else {
+                // If the access gate has been removed then clear lapsed status of members
+                if new_gate_config.is_none() {
+                    self.unlapse_all(channel_id, now);
+                }
+
+                // There is no expiring gate any longer so remove the expiring members
+                self.expiring_members.remove_gate(channel_id);
+                self.expiring_member_actions.remove_gate(channel_id);
+            }
+        } else if let Some(new_gate_expiry) = new_gate_expiry {
+            // Else if the new gate has an expiry then add members to the expiry schedule.
+            let mut user_ids = Vec::new();
+
+            if let Some(channel_id) = channel_id {
+                if let Some(channel) = self.channels.get_mut(&channel_id) {
+                    user_ids = channel.chat.members.iter().map(|m| m.user_id).collect();
+                }
+            } else {
+                user_ids = self.members.iter().map(|m| m.user_id).collect();
+            }
+
+            for user_id in user_ids {
+                if self.can_member_lapse(&user_id, channel_id) {
+                    self.expiring_members.push(ExpiringMember {
+                        expires: now + new_gate_expiry,
+                        channel_id,
+                        user_id,
+                    });
+                }
+            }
+        }
+    }
+
+    pub fn get_access_gate_config(&self, channel_id: Option<ChannelId>) -> Option<&AccessGateConfigInternal> {
+        if let Some(channel_id) = channel_id {
+            self.channels
+                .get(&channel_id)
+                .and_then(|channel| channel.chat.gate_config.value.as_ref())
+        } else {
+            self.gate_config.value.as_ref()
+        }
+    }
+
+    pub fn get_member_for_events(&self, caller: Principal) -> Result<Option<&CommunityMemberInternal>, EventsResponse> {
+        let hidden_for_non_members = !self.is_public || self.has_payment_gate();
+        let member = self.members.get(caller);
+
+        if hidden_for_non_members {
+            if let Some(member) = member {
+                if member.suspended.value {
+                    return Err(EventsResponse::UserSuspended);
+                } else if member.lapsed.value {
+                    return Err(EventsResponse::UserLapsed);
+                }
+            } else {
+                return Err(EventsResponse::UserNotInCommunity);
+            }
+        }
+
+        Ok(member)
+    }
+
+    pub fn notify_user_of_achievement(&mut self, user_id: UserId, achievement: Achievement) {
+        if self.achievements.award(user_id, achievement).is_some() {
+            self.user_event_sync_queue
+                .push(user_id, CommunityCanisterEvent::Achievement(achievement));
+        }
     }
 }
 

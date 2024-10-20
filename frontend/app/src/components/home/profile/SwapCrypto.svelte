@@ -161,12 +161,28 @@
         error = undefined;
         result = undefined;
 
-        swapId = random128();
+        const ledgerInLocal = ledgerIn;
+        const ledgerOutLocal = ledgerOut!;
+        const bestQuoteLocal = bestQuote;
 
-        let minAmountOut = (bestQuote[1] * BigInt(98)) / BigInt(100);
+        let minAmountOut = (bestQuoteLocal[1] * BigInt(98)) / BigInt(100);
 
-        client
-            .swapTokens(swapId, ledgerIn, ledgerOut!, amountIn, minAmountOut, bestQuote[0])
+        client.refreshAccountBalance(ledgerIn)
+            .then((balance) => {
+                if (balance < amountIn) {
+                    error = $_("tokenSwap.progress.insufficientFunds");
+                    result = "insufficientFunds";
+                    return false;
+                } else {
+                    return true;
+                }
+            }).then((balanceCheckSuccess) => {
+                if (balanceCheckSuccess) {
+                    swapId = random128();
+                    return client
+                        .swapTokens(swapId, ledgerInLocal, ledgerOutLocal, amountIn, minAmountOut, bestQuoteLocal[0])
+                }
+            })
             .catch(() => (swapId = undefined))
             .finally(() => (busy = false));
     }
@@ -178,6 +194,9 @@
 
             case "sonic":
                 return "Sonic";
+
+            case "kongswap":
+                return "KongSwap";
         }
     }
 
@@ -193,14 +212,18 @@
     }
 
     function onSwapFinished(
-        ev: CustomEvent<"success" | "rateChanged" | "insufficientFunds" | "error">,
+        ev: CustomEvent<{
+            outcome: "success" | "rateChanged" | "insufficientFunds" | "error",
+            ledgerIn: string,
+            ledgerOut: string
+        }>,
     ) {
         busy = false;
         state = "finished";
-        result = ev.detail;
+        result = ev.detail.outcome;
 
-        client.refreshAccountBalance(ledgerIn);
-        client.refreshAccountBalance(ledgerOut!);
+        client.refreshAccountBalance(ev.detail.ledgerIn);
+        client.refreshAccountBalance(ev.detail.ledgerOut);
     }
 
     function onPrimaryClick() {
@@ -275,6 +298,8 @@
                     {swapId}
                     tokenIn={detailsIn.symbol}
                     tokenOut={detailsOut.symbol}
+                    ledgerIn={detailsIn.ledger}
+                    ledgerOut={detailsOut.ledger}
                     amountIn={amountInText}
                     decimalsOut={detailsOut.decimals}
                     dex={dexName(bestQuote[0])}

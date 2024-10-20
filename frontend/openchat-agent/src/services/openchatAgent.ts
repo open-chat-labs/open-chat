@@ -147,7 +147,6 @@ import type {
     ProposalVoteDetails,
     SetMessageReminderResponse,
     DeclineInvitationResponse,
-    AccessGate,
     JoinCommunityResponse,
     GroupSearchResponse,
     ChatIdentifier,
@@ -214,6 +213,8 @@ import type {
     ExternalAchievement,
     ExternalAchievementsSuccess,
     ChitLeaderboardResponse,
+    AccessGateConfig,
+    Verification,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -277,6 +278,7 @@ export class OpenChatAgent extends EventTarget {
     private _dexesAgent: DexesAgent;
     private _groupInvite: GroupInvite | undefined;
     private _communityInvite: CommunityInvite | undefined;
+    private _registryValue: RegistryValue | undefined;
     private db: Database;
     private _logger: Logger;
     public translationsClient: TranslationsClient;
@@ -761,7 +763,7 @@ export class OpenChatAgent extends EventTarget {
         permissions?: OptionalChatPermissions,
         avatar?: Uint8Array,
         eventsTimeToLive?: OptionUpdate<bigint>,
-        gate?: AccessGate,
+        gateConfig?: AccessGateConfig,
         isPublic?: boolean,
         messagesVisibleToNonMembers?: boolean,
         externalUrl?: string,
@@ -777,7 +779,7 @@ export class OpenChatAgent extends EventTarget {
                     permissions,
                     avatar,
                     eventsTimeToLive,
-                    gate,
+                    gateConfig,
                     isPublic,
                     messagesVisibleToNonMembers,
                 );
@@ -790,7 +792,7 @@ export class OpenChatAgent extends EventTarget {
                     permissions,
                     avatar,
                     eventsTimeToLive,
-                    gate,
+                    gateConfig,
                     isPublic,
                     messagesVisibleToNonMembers,
                     externalUrl,
@@ -3123,6 +3125,7 @@ export class OpenChatAgent extends EventTarget {
             const current = await getCachedRegistry();
             const isOffline = offline();
             if (current !== undefined) {
+                this._registryValue = current;
                 resolve([current, false], isOffline);
             }
 
@@ -3143,6 +3146,7 @@ export class OpenChatAgent extends EventTarget {
                                 ],
                                 (ns) => ns.governanceCanisterId,
                             ),
+                            swapProviders: updates.swapProviders ?? current?.swapProviders ?? [],
                             messageFilters: [
                                 ...(current?.messageFilters ?? []),
                                 ...updates.messageFiltersAdded,
@@ -3150,6 +3154,7 @@ export class OpenChatAgent extends EventTarget {
                             currentAirdropChannel: updates.currentAirdropChannel,
                         };
                         setCachedRegistry(updated);
+                        this._registryValue = updated;
                         resolve([updated, true], true);
                     } else if (updates.kind === "success_no_updates" && current !== undefined) {
                         resolve([current, false], true);
@@ -3293,7 +3298,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     canSwap(tokenLedgers: Set<string>): Promise<Set<string>> {
-        return this._dexesAgent.canSwap(tokenLedgers);
+        return this._dexesAgent.canSwap(tokenLedgers, this.swapProviders());
     }
 
     getTokenSwaps(
@@ -3301,7 +3306,7 @@ export class OpenChatAgent extends EventTarget {
         outputTokenLedgers: string[],
     ): Promise<Record<string, DexId[]>> {
         return this._dexesAgent
-            .getSwapPools(inputTokenLedger, new Set(outputTokenLedgers))
+            .getSwapPools(inputTokenLedger, new Set(outputTokenLedgers), this.swapProviders())
             .then((pools) => {
                 return pools.reduce(swapReducer, {} as Record<string, DexId[]>);
             });
@@ -3324,7 +3329,7 @@ export class OpenChatAgent extends EventTarget {
         amountIn: bigint,
     ): Promise<[DexId, bigint][]> {
         return this._dexesAgent
-            .quoteSwap(inputTokenLedger, outputTokenLedger, amountIn)
+            .quoteSwap(inputTokenLedger, outputTokenLedger, amountIn, this.swapProviders())
             .then((quotes) => {
                 // Sort the quotes by amount descending so the first quote is the best
                 quotes.sort(compare);
@@ -3355,7 +3360,11 @@ export class OpenChatAgent extends EventTarget {
         pin: string | undefined,
     ): Promise<SwapTokensResponse> {
         return this._dexesAgent
-            .getSwapPools(inputTokenDetails.ledger, new Set([outputTokenDetails.ledger]))
+            .getSwapPools(
+                inputTokenDetails.ledger,
+                new Set([outputTokenDetails.ledger]),
+                this.swapProviders(),
+            )
             .then((pools) => {
                 const pool = pools.find((p) => p.dex === dex);
 
@@ -3385,6 +3394,10 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.tokenSwapStatus(swapId);
     }
 
+    private swapProviders(): DexId[] {
+        return this._registryValue?.swapProviders ?? [];
+    }
+
     approveTransfer(
         spender: string,
         ledger: string,
@@ -3405,6 +3418,10 @@ export class OpenChatAgent extends EventTarget {
 
     setDiamondMembershipFees(fees: DiamondMembershipFees[]): Promise<boolean> {
         return this._userIndexClient.setDiamondMembershipFees(fees);
+    }
+
+    addRemoveSwapProvider(swapProvider: DexId, add: boolean): Promise<boolean> {
+        return this._registryClient.addRemoveSwapProvider(swapProvider, add);
     }
 
     addMessageFilter(regex: string): Promise<boolean> {
@@ -3620,10 +3637,10 @@ export class OpenChatAgent extends EventTarget {
     }
 
     setPinNumber(
-        currentPin: string | undefined,
+        verification: Verification,
         newPin: string | undefined,
     ): Promise<SetPinNumberResponse> {
-        return this.userClient.setPinNumber(currentPin, newPin);
+        return this.userClient.setPinNumber(verification, newPin);
     }
 
     claimDailyChit(): Promise<ClaimDailyChitResponse> {

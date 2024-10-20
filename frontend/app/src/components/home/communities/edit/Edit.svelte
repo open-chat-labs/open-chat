@@ -64,11 +64,9 @@
     $: bannerDirty = editing && candidate.banner.blobUrl !== original.banner.blobUrl;
     $: visDirty = editing && candidate.public !== original.public;
     $: infoDirty = nameDirty || descDirty || avatarDirty || bannerDirty || languageDirty;
-    $: gateDirty = client.hasAccessGateChanged(candidate.gate, original.gate);
+    $: gateDirty = client.hasAccessGateChanged(candidate.gateConfig, original.gateConfig);
     $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty;
-    $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: stepIndex = steps.findIndex((s) => s.key === step) ?? 0;
-    $: left = stepIndex * (actualWidth - padding);
     $: valid = detailsValid && channelsValid && rulesValid && visibilityValid;
 
     function getSteps(
@@ -96,7 +94,10 @@
         candidate = {
             ...original,
             permissions: { ...original.permissions },
-            gate: { ...original.gate },
+            gateConfig: {
+                gate: { ...original.gateConfig.gate },
+                expiry: original.gateConfig.expiry,
+            },
         };
         candidateRules = { ...originalRules, newVersion: false };
     });
@@ -155,7 +156,7 @@
                     permissionsDirty ? candidate.permissions : undefined,
                     avatarDirty ? candidate.avatar.blobData : undefined,
                     bannerDirty ? candidate.banner.blobData : undefined,
-                    gateDirty ? candidate.gate : undefined,
+                    gateDirty ? candidate.gateConfig : undefined,
                     candidate.public !== original.public ? candidate.public : undefined,
                     languageDirty ? candidate.primaryLanguage : undefined,
                 )
@@ -205,11 +206,13 @@
     <div class="body" slot="body">
         <StageHeader {steps} enabled on:step={changeStep} {step} />
         <div class="wrapper">
-            <div class="sections" style={`left: -${left}px`}>
-                <div class="details" class:visible={step === "details"}>
+            {#if step === "details"}
+                <div class="details">
                     <Details bind:valid={detailsValid} bind:busy bind:candidate />
                 </div>
-                <div class="visibility" class:visible={step === "visibility"}>
+            {/if}
+            {#if step === "visibility"}
+                <div class="visibility">
                     <VisibilityControl
                         canEditDisappearingMessages={false}
                         bind:candidate
@@ -218,14 +221,18 @@
                         {gateDirty}
                         history={false} />
                 </div>
-                <div class="rules" class:visible={step === "rules"}>
+            {/if}
+            {#if step === "rules"}
+                <div class="rules">
                     <RulesEditor
                         bind:valid={rulesValid}
                         level={candidate.level}
                         bind:rules={candidateRules}
                         {editing} />
                 </div>
-                <div use:menuCloser class="permissions" class:visible={step === "permissions"}>
+            {/if}
+            {#if step === "permissions"}
+                <div use:menuCloser class="permissions">
                     {#if canEditPermissions}
                         <PermissionsEditor bind:permissions={candidate.permissions} />
                     {:else}
@@ -234,15 +241,19 @@
                             permissions={candidate.permissions} />
                     {/if}
                 </div>
-                {#if !editing}
-                    <div class="channels" class:visible={step === "channels"}>
+            {/if}
+            {#if !editing}
+                {#if step === "channels"}
+                    <div class="channels">
                         <ChooseChannels bind:valid={channelsValid} bind:channels />
                     </div>
-                    <div class="members" class:visible={step === "invite"}>
+                {/if}
+                {#if step === "invite"}
+                    <div class="members">
                         <ChooseMembers userLookup={searchUsers} bind:members {busy} />
                     </div>
                 {/if}
-            </div>
+            {/if}
         </div>
     </div>
     <span class="footer" slot="footer">
@@ -345,20 +356,11 @@
         overflow: hidden;
         height: 600px;
         position: relative;
+        display: flex;
+        @include nice-scrollbar();
 
         @include mobile() {
             height: 400px;
-        }
-    }
-
-    .sections {
-        display: flex;
-        transition: left 250ms ease-in-out;
-        position: relative;
-        gap: $sp5;
-        height: 100%;
-        @include mobile() {
-            gap: $sp4;
         }
     }
 
@@ -368,13 +370,6 @@
     .members,
     .channels,
     .permissions {
-        flex: 0 0 100%;
-        visibility: hidden;
-        transition: visibility 250ms ease-in-out;
-        @include nice-scrollbar();
-
-        &.visible {
-            visibility: visible;
-        }
+        width: 100%;
     }
 </style>

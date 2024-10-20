@@ -1,8 +1,13 @@
 import type { Level } from "./structure";
 
-export type AccessGateWithLevel = { level: Level } & AccessGate;
+export type EnhancedAccessGate = { level: Level; expiry: bigint | undefined } & AccessGate;
 
 export type AccessGate = LeafGate | CompositeGate;
+
+export type AccessGateConfig = {
+    gate: AccessGate;
+    expiry: bigint | undefined;
+};
 
 export type ActiveLeafGate = Exclude<LeafGate, NoGate>;
 
@@ -64,6 +69,10 @@ export type NeuronGate = {
     minStakeE8s?: number;
     minDissolveDelay?: number;
 };
+
+export type PaymentGateApproval = { amount: bigint; approvalFee: bigint };
+
+export type PaymentGateApprovals = Map<string, PaymentGateApproval>;
 
 export type PaymentGate = {
     kind: "payment_gate";
@@ -149,7 +158,7 @@ export type LifetimeDiamondGate = { kind: "lifetime_diamond_gate" };
 export type UniquePersonGate = { kind: "unique_person_gate" };
 
 export type AccessControlled = {
-    gate: AccessGate;
+    gateConfig: AccessGateConfig;
     public: boolean;
     frozen: boolean;
     historyVisible: boolean;
@@ -186,4 +195,4 @@ If you break the rules you might be blocked and/or have your message(s) deleted.
     };
 }
 
-export type GateCheckSucceeded = { credentials: string[] };
+export type GateCheckSucceeded = { credentials: string[]; paymentApprovals: PaymentGateApprovals };

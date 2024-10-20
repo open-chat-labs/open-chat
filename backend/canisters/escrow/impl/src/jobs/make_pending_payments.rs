@@ -52,7 +52,7 @@ async fn process_payment(pending_payment: PendingPayment) {
     };
 
     match make_transfer(pending_payment.token_info.ledger, &args, true).await {
-        Ok(block_index) => {
+        Ok(Ok(block_index)) => {
             mutate_state(|state| {
                 if let Some(swap) = state.data.swaps.get_mut(pending_payment.swap_id) {
                     let transfer = CompletedCryptoTransaction {
@@ -95,13 +95,12 @@ async fn process_payment(pending_payment: PendingPayment) {
                 }
             });
         }
-        Err((_, retry)) => {
-            if retry {
-                mutate_state(|state| {
-                    state.data.pending_payments_queue.push(pending_payment);
-                    start_job_if_required(state);
-                });
-            }
+        Ok(Err(_)) => {}
+        Err(_) => {
+            mutate_state(|state| {
+                state.data.pending_payments_queue.push(pending_payment);
+                start_job_if_required(state);
+            });
         }
     }
 }

@@ -3,7 +3,6 @@ use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
 use crate::{client, TestEnv};
 use jwt::{verify_jwt, Claims};
-use serial_test::serial;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
@@ -18,7 +17,6 @@ use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
 #[test_case(true, true)]
 #[test_case(false, false)]
 #[test_case(false, true)]
-#[serial]
 fn can_upgrade_to_diamond(pay_in_chat: bool, lifetime: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
@@ -101,7 +99,6 @@ fn can_upgrade_to_diamond(pay_in_chat: bool, lifetime: bool) {
 
 #[test_case(false; "without_ledger_error")]
 #[test_case(true; "with_ledger_error")]
-#[serial]
 fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
@@ -115,7 +112,14 @@ fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
 
     let user = client::register_user(env, canister_ids);
 
-    client::upgrade_user(&user, env, canister_ids, *controller, DiamondMembershipPlanDuration::OneMonth);
+    client::upgrade_user(
+        &user,
+        env,
+        canister_ids,
+        *controller,
+        DiamondMembershipPlanDuration::OneMonth,
+        true,
+    );
 
     let one_month_millis = DiamondMembershipPlanDuration::OneMonth.as_millis();
     env.advance_time(Duration::from_millis(one_month_millis - (30 * MINUTE_IN_MS)));
@@ -152,7 +156,6 @@ fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
 }
 
 #[test]
-#[allow(dead_code)]
 fn referrer_awarded_chit_when_referred_gets_diamond() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
@@ -170,6 +173,7 @@ fn referrer_awarded_chit_when_referred_gets_diamond() {
         canister_ids,
         *controller,
         DiamondMembershipPlanDuration::OneMonth,
+        true,
     );
 
     // Register user_b with referral from user_a
@@ -182,6 +186,7 @@ fn referrer_awarded_chit_when_referred_gets_diamond() {
         canister_ids,
         *controller,
         DiamondMembershipPlanDuration::OneMonth,
+        true,
     );
 
     tick_many(env, 3);
@@ -217,6 +222,7 @@ fn referrer_awarded_chit_when_referred_gets_diamond() {
         canister_ids,
         *controller,
         DiamondMembershipPlanDuration::Lifetime,
+        true,
     );
 
     tick_many(env, 3);
@@ -252,7 +258,14 @@ fn update_subscription_succeeds(disable: bool) {
 
     let user = client::register_user(env, canister_ids);
 
-    client::upgrade_user(&user, env, canister_ids, *controller, DiamondMembershipPlanDuration::OneMonth);
+    client::upgrade_user(
+        &user,
+        env,
+        canister_ids,
+        *controller,
+        DiamondMembershipPlanDuration::OneMonth,
+        true,
+    );
 
     client::user_index::update_diamond_membership_subscription(
         env,

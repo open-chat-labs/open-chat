@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Achievement {
     JoinedGroup,
     JoinedCommunity,
@@ -40,7 +40,6 @@ pub enum Achievement {
     DeletedMessage,
     ForwardedMessage,
     ProvedUniquePersonhood,
-
     ReceivedCrypto,
     HadMessageReactedTo,
     HadMessageTipped,
@@ -59,8 +58,6 @@ pub enum Achievement {
     SwappedFromWallet,
     FavouritedChat,
     FollowedThread,
-    SuggestedTranslation,
-    TranslationAccepted,
     AppointedGroupModerator,
     AppointedGroupAdmin,
     AppointedGroupOwner,
@@ -70,7 +67,10 @@ pub enum Achievement {
     SetGroupAccessGate,
     SetCommunityAccessGate,
     JoinedGatedGroupOrCommunity,
+    SetPin,
 
+    SuggestedTranslation,
+    TranslationAccepted,
     ChangedTheme,
     EnabledDisappearingMessages,
     OwnGroupWithOneDiamondMember,
@@ -130,6 +130,7 @@ impl Achievement {
             Achievement::QuoteReplied => 1500,
             Achievement::EditedMessage => 1000,
             Achievement::DeletedMessage => 700,
+            Achievement::SetPin => 1500,
             Achievement::ForwardedMessage => 2000,
             Achievement::PinnedMessage => 2000,
             Achievement::FavouritedChat => 2000,

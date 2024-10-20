@@ -94,6 +94,8 @@ members = [
     "backend/external_canisters/icpswap_swap_pool/c2c_client",
     "backend/external_canisters/icrc_ledger/api",
     "backend/external_canisters/icrc_ledger/c2c_client",
+    "backend/external_canisters/kongswap/api",
+    "backend/external_canisters/kongswap/c2c_client",
     "backend/external_canisters/modclub/api",
     "backend/external_canisters/modclub/c2c_client",
     "backend/external_canisters/nns_governance/api",
@@ -133,7 +135,6 @@ members = [
     "backend/libraries/human_readable",
     "backend/libraries/human_readable_derive",
     "backend/libraries/icdex_client",
-    "backend/libraries/icpswap_client",
     "backend/libraries/identity_utils",
     "backend/libraries/index_store",
     "backend/libraries/instruction_counts_log",
@@ -146,9 +147,9 @@ members = [
     "backend/libraries/storage_bucket_client",
     "backend/libraries/search",
     "backend/libraries/sha256",
-    "backend/libraries/sonic_client",
     "backend/libraries/stable_memory",
     "backend/libraries/testing",
+    "backend/libraries/timer_job_queues",
     "backend/libraries/ts_export",
     "backend/libraries/ts_export_macros",
     "backend/libraries/types",
@@ -176,7 +177,6 @@ aws-types = "1.1.5"
 base64 = "0.22.1"
 bitflags = { version = "2.4.1", features = ["serde"] }
 candid = "0.10.10"
-canister_sig_util = { git = "https://github.com/dfinity/internet-identity", rev = "719a8f9d81d00d86fe3fc08ba136fd96e0f609a2" }
 ciborium = "0.2.2"
 clap = "4.5.4"
 ct-codecs = "1.1.1"
@@ -193,6 +193,7 @@ getrandom = { version = "0.2.15", features = ["custom"] }
 hex = "0.4.3"
 hmac-sha256 = { version = "1.1.7", features = ["traits010"] }
 ic-agent = "0.37.1"
+ic-canister-sig-creation = "1.1.0"
 ic-captcha = "1.0.0"
 ic-cbor = "2.5.0"
 ic-cdk = "0.16.0"
@@ -205,7 +206,7 @@ ic_principal = "0.1.1"
 ic-stable-structures = "0.6.4"
 ic-transport-types = "0.37.1"
 ic-utils = "0.37.0"
-ic-verifiable-credentials = { git = "https://github.com/dfinity/verifiable-credentials-sdk", rev = "5f21c3fe999df30f779586745f072fb115be53af" }
+ic-verifiable-credentials = { git = "https://github.com/dfinity/verifiable-credentials-sdk", rev = "d5e1bb0f8c0bf99ad565620e18dc402a9ac3317a" }
 icrc-ledger-types = "0.1.5"
 ic0 = "0.23.0"
 itertools = "0.13.0"
@@ -261,4 +262,4 @@ debug = false
 [patch.crates-io]
 ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "f20bca1b4210b37effcb3c5d82adbb05c6647cbd" }
 rmp-serde = { git = "https://github.com/hpeebles/msgpack-rust", rev = "832a3f48e67eea56c869715ae6e1045583dd011b" }
-ts-rs = { git = "https://github.com/hpeebles/ts-rs", rev = "7b402398a066b33f2bc27e1771fb2c2318f402c4" }
+ts-rs = { git = "https://github.com/hpeebles/ts-rs", rev = "c8f7385697df0764fca3b5d7b8e22b967fb16c10" }

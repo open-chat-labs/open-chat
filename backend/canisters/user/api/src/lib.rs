@@ -3,9 +3,9 @@ use chat_events::MessageContentInternal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
-    CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration,
-    EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds, P2PSwapStatus, PhoneNumber,
-    Reaction, ReferralStatus, SuspensionDuration, TimestampMillis, UniquePersonProof, User, UserId,
+    Achievement, CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId, Cryptocurrency,
+    DiamondMembershipPlanDuration, EventIndex, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
+    P2PSwapStatus, PhoneNumber, Reaction, ReferralStatus, SuspensionDuration, TimestampMillis, UniquePersonProof, User, UserId,
 };
 
 mod lifecycle;
@@ -356,8 +356,61 @@ pub struct Referrals {
     pub referrals: Vec<Referral>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ExternalAchievementAwarded {
     pub name: String,
     pub chit_reward: u32,
+}
+
+#[ts_export(user)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct MessageActivityEvent {
+    pub chat: Chat,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_index: MessageIndex,
+    pub activity: MessageActivity,
+    pub timestamp: TimestampMillis,
+    pub user_id: Option<UserId>,
+}
+
+impl MessageActivityEvent {
+    pub fn matches(&self, event: &MessageActivityEvent) -> bool {
+        self.chat == event.chat
+            && self.thread_root_message_index == event.thread_root_message_index
+            && self.message_index == event.message_index
+            && self.activity == event.activity
+    }
+}
+
+#[ts_export(user)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Eq, PartialEq, Debug)]
+pub enum MessageActivity {
+    Mention,
+    Reaction,
+    QuoteReply,
+    ThreadReply,
+    Tip,
+    Crypto,
+    PollVote,
+    P2PSwapAccepted,
+}
+
+#[ts_export(user)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct MessageActivitySummary {
+    pub read_up_to: TimestampMillis,
+    pub latest_event_timestamp: TimestampMillis,
+    pub unread_count: u32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum CommunityCanisterEvent {
+    MessageActivity(MessageActivityEvent),
+    Achievement(Achievement),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum GroupCanisterEvent {
+    MessageActivity(MessageActivityEvent),
+    Achievement(Achievement),
 }

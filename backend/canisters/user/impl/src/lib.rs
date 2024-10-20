@@ -7,6 +7,7 @@ use crate::model::hot_group_exclusions::HotGroupExclusions;
 use crate::model::p2p_swaps::P2PSwaps;
 use crate::model::pin_number::PinNumber;
 use crate::model::token_swaps::TokenSwaps;
+use crate::model::user_canister_event_batch::UserCanisterEventBatch;
 use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
@@ -18,6 +19,7 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use model::chit::ChitEarnedEvents;
 use model::contacts::Contacts;
 use model::favourite_chats::FavouriteChats;
+use model::message_activity_events::MessageActivityEvents;
 use model::referrals::Referrals;
 use model::streak::Streak;
 use notifications_canister::c2c_push_notification;
@@ -27,12 +29,12 @@ use std::cell::RefCell;
 use std::collections::HashSet;
 use std::ops::Deref;
 use std::time::Duration;
+use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     Achievement, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEarned, ChitEarnedReason, CommunityId,
     Cryptocurrency, Cycles, Document, Milliseconds, Notification, TimestampMillis, Timestamped, UniquePersonProof, UserId,
 };
-use user_canister::{NamedAccount, UserCanisterEvent, WalletConfig};
-use utils::canister_event_sync_queue::CanisterEventSyncQueue;
+use user_canister::{MessageActivityEvent, NamedAccount, UserCanisterEvent, WalletConfig};
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
 use utils::time::{today, tomorrow, DAY_IN_MS, MINUTE_IN_MS};
@@ -40,7 +42,6 @@ use utils::time::{today, tomorrow, DAY_IN_MS, MINUTE_IN_MS};
 mod crypto;
 mod governance_clients;
 mod guards;
-mod jobs;
 mod lifecycle;
 mod memory;
 mod model;
@@ -143,8 +144,7 @@ impl RuntimeState {
 
     pub fn push_user_canister_event(&mut self, canister_id: CanisterId, event: UserCanisterEvent) {
         if canister_id != OPENCHAT_BOT_USER_ID.into() && canister_id != self.env.canister_id() {
-            self.data.user_canister_events_queue.push(canister_id, event);
-            jobs::push_user_canister_events::try_run_now_for_canister(self, canister_id);
+            self.data.user_canister_events_queue.push(canister_id.into(), event);
         }
     }
 
@@ -235,7 +235,7 @@ struct Data {
     pub next_event_expiry: Option<TimestampMillis>,
     pub token_swaps: TokenSwaps,
     pub p2p_swaps: P2PSwaps,
-    pub user_canister_events_queue: CanisterEventSyncQueue<UserCanisterEvent>,
+    pub user_canister_events_queue: GroupedTimerJobQueue<UserCanisterEventBatch>,
     pub video_call_operators: Vec<Principal>,
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub pin_number: PinNumber,
@@ -243,17 +243,14 @@ struct Data {
     pub chit_events: ChitEarnedEvents,
     pub streak: Streak,
     pub achievements: HashSet<Achievement>,
-    #[serde(default)]
     pub external_achievements: HashSet<String>,
     pub achievements_last_seen: TimestampMillis,
     pub unique_person_proof: Option<UniquePersonProof>,
-    #[serde(default)]
     pub wallet_config: Timestamped<WalletConfig>,
     pub rng_seed: [u8; 32],
-    #[serde(default)]
     pub referred_by: Option<UserId>,
-    #[serde(default)]
     pub referrals: Referrals,
+    pub message_activity_events: MessageActivityEvents,
 }
 
 impl Data {
@@ -304,7 +301,7 @@ impl Data {
             next_event_expiry: None,
             token_swaps: TokenSwaps::default(),
             p2p_swaps: P2PSwaps::default(),
-            user_canister_events_queue: CanisterEventSyncQueue::default(),
+            user_canister_events_queue: GroupedTimerJobQueue::new(10, false),
             video_call_operators,
             event_store_client: EventStoreClientBuilder::new(local_user_index_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_millis(5 * MINUTE_IN_MS))
@@ -321,6 +318,7 @@ impl Data {
             wallet_config: Timestamped::default(),
             referred_by,
             referrals: Referrals::default(),
+            message_activity_events: MessageActivityEvents::default(),
         }
     }
 
@@ -383,7 +381,7 @@ impl Data {
     }
 
     pub fn award_achievement(&mut self, achievement: Achievement, now: TimestampMillis) -> bool {
-        if self.achievements.insert(achievement.clone()) {
+        if self.achievements.insert(achievement) {
             let amount = achievement.chit_reward() as i32;
             self.chit_events.push(ChitEarned {
                 amount,
@@ -425,6 +423,12 @@ impl Data {
             "c2c_notify_chit_msgpack".to_string(),
             msgpack::serialize_then_unwrap(args),
         );
+    }
+
+    pub fn push_message_activity(&mut self, event: MessageActivityEvent, now: TimestampMillis) {
+        if event.user_id.map_or(true, |user_id| !self.blocked_users.contains(&user_id)) {
+            self.message_activity_events.push(event, now);
+        }
     }
 }
 

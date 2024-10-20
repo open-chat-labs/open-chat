@@ -18,9 +18,11 @@
     $: currentChatMembers = client.currentChatMembers;
     $: currentChatInvited = client.currentChatInvitedUsers;
     $: currentChatBlocked = client.currentChatBlockedUsers;
+    $: currentChatLapsed = client.currentChatLapsedMembers;
     $: currentCommunityMembers = client.currentCommunityMembers;
     $: currentCommunityInvited = client.currentCommunityInvitedUsers;
     $: currentCommunityBlocked = client.currentCommunityBlockedUsers;
+    $: currentCommunityLapsed = client.currentCommunityLapsedMembers;
     $: canInvite =
         selectedTab === "community"
             ? client.canInviteUsers(community.id)
@@ -103,6 +105,7 @@
         invited={$currentCommunityInvited}
         members={[...$currentCommunityMembers.values()]}
         blocked={$currentCommunityBlocked}
+        lapsed={$currentCommunityLapsed}
         on:close
         on:blockUser={onBlockCommunityUser}
         on:unblockUser={onUnblockCommunityUser}
@@ -120,6 +123,7 @@
         invited={$currentChatInvited}
         members={$currentChatMembers}
         blocked={$currentChatBlocked}
+        lapsed={$currentChatLapsed}
         on:close
         on:blockUser={onBlockGroupUser}
         on:unblockUser={onUnblockGroupUser}

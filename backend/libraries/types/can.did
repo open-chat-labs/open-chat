@@ -286,6 +286,7 @@ type GroupChatSummary = record {
     events_ttl : opt Milliseconds;
     events_ttl_last_updated : TimestampMillis;
     gate : opt AccessGate;
+    gate_config : opt AccessGateConfig;
     rules_accepted : bool;
     video_call_in_progress : opt VideoCall;
 };
@@ -321,6 +322,7 @@ type GroupCanisterGroupChatSummary = record {
     events_ttl : opt Milliseconds;
     events_ttl_last_updated : TimestampMillis;
     gate : opt AccessGate;
+    gate_config : opt AccessGateConfig;
     rules_accepted : bool;
     membership : opt GroupMembership;
     video_call_in_progress : opt VideoCall;
@@ -354,6 +356,7 @@ type GroupCanisterGroupChatSummaryUpdates = record {
     events_ttl : EventsTimeToLiveUpdate;
     events_ttl_last_updated : opt TimestampMillis;
     gate : AccessGateUpdate;
+    gate_config : AccessGateConfigUpdate;
     rules_accepted : opt bool;
     membership : opt GroupMembershipUpdates;
     video_call_in_progress : VideoCallUpdates;
@@ -371,6 +374,7 @@ type CommunityCanisterCommunitySummary = record {
     permissions : CommunityPermissions;
     frozen : opt FrozenGroupInfo;
     gate : opt AccessGate;
+    gate_config : opt AccessGateConfig;
     primary_language : text;
     last_updated : TimestampMillis;
     latest_event_index : EventIndex;
@@ -386,6 +390,7 @@ type CommunityMembership = record {
     role : CommunityRole;
     rules_accepted : bool;
     display_name : opt text;
+    lapsed : bool;
 };
 
 type UserGroup = record {
@@ -417,6 +422,7 @@ type CommunityCanisterChannelSummary = record {
     events_ttl : opt Milliseconds;
     events_ttl_last_updated : TimestampMillis;
     gate : opt AccessGate;
+    gate_config : opt AccessGateConfig;
     membership : opt GroupMembership;
     video_call_in_progress : opt VideoCall;
     is_invited : opt bool;
@@ -431,6 +437,7 @@ type GroupMembership = record {
     my_metrics : ChatMetrics;
     latest_threads : vec GroupCanisterThreadDetails;
     rules_accepted : bool;
+    lapsed : bool;
 };
 
 type CommunityCanisterCommunitySummaryUpdates = record {
@@ -445,6 +452,7 @@ type CommunityCanisterCommunitySummaryUpdates = record {
     permissions : opt CommunityPermissions;
     frozen : FrozenGroupUpdate;
     gate : AccessGateUpdate;
+    gate_config : AccessGateConfigUpdate;
     primary_language : opt text;
     latest_event_index : opt EventIndex;
     channels_added : vec CommunityCanisterChannelSummary;
@@ -460,6 +468,7 @@ type CommunityMembershipUpdates = record {
     role : opt CommunityRole;
     rules_accepted : opt bool;
     display_name : TextUpdate;
+    lapsed : opt bool;
 };
 
 type CommunityCanisterChannelSummaryUpdates = record {
@@ -483,6 +492,7 @@ type CommunityCanisterChannelSummaryUpdates = record {
     events_ttl : EventsTimeToLiveUpdate;
     events_ttl_last_updated : opt TimestampMillis;
     gate : AccessGateUpdate;
+    gate_config : AccessGateConfigUpdate;
     membership : opt GroupMembershipUpdates;
     video_call_in_progress : VideoCallUpdates;
     external_url : TextUpdate;
@@ -496,6 +506,7 @@ type GroupMembershipUpdates = record {
     latest_threads : vec GroupCanisterThreadDetails;
     unfollowed_threads : vec MessageIndex;
     rules_accepted : opt bool;
+    lapsed : opt bool;
 };
 
 type SelectedGroupUpdates = record {
@@ -750,6 +761,7 @@ type PublicGroupSummary = record {
     events_ttl : opt Milliseconds;
     events_ttl_last_updated : TimestampMillis;
     gate : opt AccessGate;
+    gate_config : opt AccessGateConfig;
     wasm_version : BuildVersion;
 };
 
@@ -872,6 +884,7 @@ type Participant = record {
     user_id : UserId;
     date_added : TimestampMillis;
     role : GroupRole;
+    lapsed : bool;
 };
 
 type ParticipantJoined = record {
@@ -1530,6 +1543,11 @@ type DiamondMembershipStatusFull = variant {
     Lifetime;
 };
 
+type AccessGateConfig = record {
+    gate : AccessGate;
+    expiry : opt Milliseconds;
+};
+
 type AccessGate = variant {
     DiamondMember;
     LifetimeDiamondMember;
@@ -1564,9 +1582,16 @@ type AccessGateUpdate = variant {
     SetToSome : AccessGate;
 };
 
+type AccessGateConfigUpdate = variant {
+    NoChange;
+    SetToNone;
+    SetToSome : AccessGateConfig;
+};
+
 type GroupGateUpdated = record {
     updated_by : UserId;
     new_gate : opt AccessGate;
+    new_gate_config : opt AccessGateConfig;
 };
 
 type ExternalUrlUpdated = record {
@@ -1753,6 +1778,7 @@ type CommunityMatch = record {
     member_count : nat32;
     channel_count : nat32;
     gate : opt AccessGate;
+    gate_config : opt AccessGateConfig;
     moderation_flags : nat32;
     primary_language : text;
 };
@@ -1774,6 +1800,7 @@ type ChannelMatch = record {
     avatar_id : opt nat;
     member_count : nat32;
     gate : opt AccessGate;
+    gate_config : opt AccessGateConfig;
     subtype : opt GroupSubtype;
 };
 
@@ -1789,6 +1816,7 @@ type CommunityMember = record {
     role : CommunityRole;
     display_name : opt text;
     referred_by : opt UserId;
+    lapsed : bool;
 };
 
 type PermissionRoleUpdate = variant {
@@ -1993,7 +2021,7 @@ type Achievement = variant {
     ReceivedCrypto;
     HadMessageReactedTo;
     HadMessageTipped;
-    JoinedCall;
+    JoinedCall; 
     ProvedUniquePersonhood;
     SetCommunityDisplayName;
     ChangedTheme;
@@ -2014,6 +2042,7 @@ type Achievement = variant {
     SetGroupAccessGate;
     SetCommunityAccessGate;
     JoinedGatedGroupOrCommunity;
+    SetPin;
     OwnGroupWithOneDiamondMember;
     OwnGroupWithTenDiamondMembers;
     OwnGroupWithOneHundredDiamondMembers;
@@ -2040,4 +2069,8 @@ type ReferralStatus = variant {
     Registered;
 };
 
-type ExchangeId = variant { Sonic; KongSwap; ICPSwap };
+type ExchangeId = variant {
+    ICPSwap;
+    KongSwap;
+    Sonic;
+};

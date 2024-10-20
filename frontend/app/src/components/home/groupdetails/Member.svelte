@@ -71,6 +71,7 @@
     user={member}
     {me}
     {searchTerm}
+    lapsed={member.lapsed}
     role={member.role === "moderator" || member.role === "admin" || member.role === "owner"
         ? member.role
         : undefined}>

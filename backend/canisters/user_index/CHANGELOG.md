@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add an error log with http endpoint ([#6608](https://github.com/open-chat-labs/open-chat/pull/6608))
+
+### Changed
+
+- Don't remove external achievements on expiry ([#6588](https://github.com/open-chat-labs/open-chat/pull/6588))
+
+## [[2.0.1384](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1384-user_index)] - 2024-10-11
+
+### Added
+
+- Add support for expiring access gates ([#6401](https://github.com/open-chat-labs/open-chat/pull/6401))
+
+## [[2.0.1371](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1371-user_index)] - 2024-10-07
+
+### Changed
+
+- Clear wasm chunks once new wasm version has been set ([#6524](https://github.com/open-chat-labs/open-chat/pull/6524))
+
+### Removed
+
+- Remove unused fields from metrics ([#6525](https://github.com/open-chat-labs/open-chat/pull/6525))
+
+## [[2.0.1368](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1368-user_index)] - 2024-10-02
+
+### Added
+
+- Expose counts of how many users have each streak badge ([#6492](https://github.com/open-chat-labs/open-chat/pull/6492))
+- Register `Konecta` external achievement ([#6493](https://github.com/open-chat-labs/open-chat/pull/6493))
+
 ### Changed
 
 - Add `CanisterWasmBytes` to reduce duplication ([#6480](https://github.com/open-chat-labs/open-chat/pull/6480))
@@ -40,7 +71,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Extend `chit_leaderboard` to return all_time|this_month|last_month ([#6364](https://github.com/open-chat-labs/open-chat/pull/6364))
 - Add `register_external_achievement` to `inspect_message` ([#6374](https://github.com/open-chat-labs/open-chat/pull/6374))
-  
+
 ## [[2.0.1345](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1345-user_index)] - 2024-09-11
 
 ### Changed

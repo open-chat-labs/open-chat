@@ -30,7 +30,7 @@
         UpdatedRules,
         ResourceKey,
         NervousSystemDetails,
-        AccessGateWithLevel,
+        EnhancedAccessGate,
         GateCheckSucceeded,
     } from "openchat-client";
     import {
@@ -103,6 +103,7 @@
     import ChitEarned from "./ChitEarned.svelte";
     import { chitPopup } from "../../stores/settings";
     import AccessGateEvaluator from "./access/AccessGateEvaluator.svelte";
+    import SetPinNumberModal from "./profile/SetPinNumberModal.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -155,7 +156,7 @@
         | { kind: "no_access" }
         | { kind: "new_group"; embeddedContent: boolean; candidate: CandidateGroupChat }
         | { kind: "wallet" }
-        | { kind: "gate_check_failed"; gates: AccessGateWithLevel[] }
+        | { kind: "gate_check_failed"; gates: EnhancedAccessGate[] }
         | { kind: "hall_of_fame" }
         | { kind: "edit_community"; community: CommunitySummary; communityRules: Rules }
         | { kind: "make_proposal"; chat: MultiUserChat; nervousSystem: NervousSystemDetails }
@@ -168,7 +169,7 @@
               kind: "evaluating_access_gates";
               group: MultiUserChat;
               select: boolean;
-              gates: AccessGateWithLevel[];
+              gates: EnhancedAccessGate[];
               level: Level;
           };
 
@@ -840,7 +841,7 @@
         // that we are actually already a member of this group, so we should double check here
         // that we actually *need* to join the group
         let chat = $chatSummariesStore.get(group.id);
-        if (chat === undefined || chat.membership.role === "none") {
+        if (chat === undefined || chat.membership.role === "none" || client.isLapsed(chat.id)) {
             doJoinGroup(group, select, undefined);
         }
     }
@@ -868,6 +869,7 @@
     ): Promise<void> {
         joining = group;
         const credentials = gateCheck?.credentials ?? [];
+        const paymentApprovals = gateCheck?.paymentApprovals ?? new Map();
 
         if (gateCheck === undefined) {
             const gates = client.accessGatesForChat(group, true);
@@ -892,7 +894,7 @@
         }
 
         return client
-            .joinGroup(group, credentials)
+            .joinGroup(group, credentials, paymentApprovals)
             .then((resp) => {
                 if (resp.kind === "blocked") {
                     toastStore.showFailureToast(i18nKey("youreBlocked"));
@@ -1026,7 +1028,7 @@
                     threadPermissions: undefined,
                 },
                 rules: { ...defaultChatRules(level), newVersion: false },
-                gate: { kind: "no_gate" },
+                gateConfig: { gate: { kind: "no_gate" }, expiry: undefined },
                 level,
                 membership: {
                     ...nullMembership(),
@@ -1059,7 +1061,7 @@
                     blobUrl: chat.blobUrl,
                     blobData: chat.blobData,
                 },
-                gate: chat.gate,
+                gateConfig: chat.gateConfig,
                 level,
                 membership: chat.membership,
                 eventsTTL: chat.eventsTTL,
@@ -1137,6 +1139,12 @@
             }),
         );
         showProfileCard = undefined;
+    }
+
+    let forgotPin = false;
+
+    function onForgotPin() {
+        forgotPin = true;
     }
 
     function onPinNumberComplete(ev: CustomEvent<string>) {
@@ -1285,7 +1293,6 @@
             <GateCheckFailed on:close={closeModal} gates={modal.gates} />
         {:else if modal.kind === "evaluating_access_gates"}
             <AccessGateEvaluator
-                level={modal.level}
                 gates={modal.gates}
                 on:close={closeModal}
                 on:success={accessGatesEvaluated} />
@@ -1337,9 +1344,19 @@
 
 {#if $rulesAcceptanceStore !== undefined}
     <AcceptRulesModal />
+{:else if forgotPin}
+    <Overlay>
+        <SetPinNumberModal
+            on:pinSet={onPinNumberComplete}
+            on:close={() => (forgotPin = false)}
+            type={{ kind: "forgot", while: { kind: "enter" } }} />
+    </Overlay>
 {:else if $pinNumberStore !== undefined}
     <Overlay>
-        <PinNumberModal on:close={onPinNumberClose} on:complete={onPinNumberComplete} />
+        <PinNumberModal
+            on:close={onPinNumberClose}
+            on:complete={onPinNumberComplete}
+            on:forgot={onForgotPin} />
     </Overlay>
 {/if}
 

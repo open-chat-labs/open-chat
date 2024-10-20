@@ -7,7 +7,7 @@ use group_canister::c2c_events_window::Args as C2CArgs;
 use group_canister::events_window::{Response::*, *};
 use group_chat_core::EventsResult;
 
-#[query(candid = true)]
+#[query(candid = true, msgpack = true)]
 fn events_window(args: Args) -> Response {
     read_state(|state| events_window_impl(args, None, state))
 }
@@ -35,5 +35,7 @@ fn events_window_impl(args: Args, on_behalf_of: Option<Principal>, state: &Runti
         EventsResult::Success(response) => Success(response),
         EventsResult::UserNotInGroup => CallerNotInGroup,
         EventsResult::ThreadNotFound => ThreadMessageNotFound,
+        EventsResult::UserSuspended => UserSuspended,
+        EventsResult::UserLapsed => UserLapsed,
     }
 }
