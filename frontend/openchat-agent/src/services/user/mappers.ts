@@ -936,8 +936,8 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
 
 function messageActivitySummary(candid: ApiMessageActivitySummary): MessageActivitySummary {
     return {
-        readUpTo: candid.read_up_to,
-        latestEventTimestamp: candid.latest_event_timestamp,
+        readUpToTimestamp: candid.read_up_to,
+        latestTimestamp: candid.latest_event_timestamp,
         unreadCount: candid.unread_count,
     };
 }
@@ -1600,6 +1600,7 @@ export function messageActivityEvent(candid: ApiMessageActivityEvent): MessageAc
         activity: messageActivity(candid.activity),
         timestamp: candid.timestamp,
         userId: optional(candid.user_id, (u) => u.toString()),
+        message: undefined,
     };
 }
 

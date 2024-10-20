@@ -72,6 +72,7 @@ import type {
     SetPinNumberResponse,
     AcceptedRules,
     ChitState,
+    MessageActivityFeedResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -398,7 +399,12 @@ export type WorkerRequest =
     | ClearCachedData
     | SetCommunityReferral
     | GetExternalAchievements
-    | CancelInvites;
+    | CancelInvites
+    | MessageActivityFeed;
+
+type MessageActivityFeed = {
+    kind: "messageActivityFeed";
+};
 
 type GetExternalAchievements = {
     kind: "getExternalAchievements";
@@ -1466,7 +1472,8 @@ export type WorkerResponseInner =
     | ChitEventsResponse
     | SubmitProofOfUniquePersonhoodResponse
     | AuthenticationPrincipalsResponse
-    | ExternalAchievement[];
+    | ExternalAchievement[]
+    | MessageActivityFeedResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -2155,4 +2162,6 @@ export type WorkerResult<T> = T extends Init
     ? ExternalAchievement[]
     : T extends CancelInvites
     ? boolean
+    : T extends MessageActivityFeed
+    ? MessageActivityFeedResponse
     : never;

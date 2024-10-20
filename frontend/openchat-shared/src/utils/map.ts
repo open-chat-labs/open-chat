@@ -14,6 +14,13 @@ export class SafeMap<K, V> {
         protected _map: Map<string, V> = new Map<string, V>(),
     ) {}
 
+    map<A>(fn: (key: K, val: V) => A): SafeMap<K, A> {
+        const mapped = [...this._map.entries()].map(([k, v]) => {
+            return [k, fn(this.fromString(k), v)] as [string, A];
+        });
+        return new SafeMap<K, A>(this.toString, this.fromString, new Map<string, A>(mapped));
+    }
+
     merge(other: SafeMap<K, V>): SafeMap<K, V> {
         other.forEach((val, key) => {
             this.set(key, val);

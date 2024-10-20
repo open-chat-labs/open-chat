@@ -45,6 +45,7 @@
     $: selectedCommunity = client.selectedCommunity;
     $: chatListScope = client.chatListScope;
     $: unreadDirectCounts = client.unreadDirectCounts;
+    $: unreadActivityCount = client.unreadActivityCount;
     $: directVideoCallCounts = client.directVideoCallCounts;
     $: groupVideoCallCounts = client.groupVideoCallCounts;
     $: favouritesVideoCallCounts = client.favouritesVideoCallCounts;
@@ -230,7 +231,7 @@
             <LeftNavItem
                 separator
                 label={i18nKey("activity.navLabel")}
-                unread={{ muted: 0, unmuted: 5, mentions: false }}
+                unread={{ muted: 0, unmuted: $unreadActivityCount, mentions: false }}
                 on:click={showActivityFeed}>
                 <div class="hover activity">
                     <BellRingOutline size={iconSize} color={"var(--icon-txt)"} />

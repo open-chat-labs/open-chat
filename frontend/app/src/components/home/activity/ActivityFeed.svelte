@@ -5,7 +5,7 @@
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import { _ } from "svelte-i18n";
     import { OpenChat } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import SectionHeader from "../../SectionHeader.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import Translatable from "../../Translatable.svelte";
@@ -20,6 +20,12 @@
     const dispatch = createEventDispatcher();
 
     let canMarkAllRead = true;
+
+    onMount(() => {
+        client.messageActivityFeed().then((resp) => {
+            console.log("MessageActivity", resp);
+        });
+    });
 </script>
 
 <SectionHeader slim border={false}>

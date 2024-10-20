@@ -1823,6 +1823,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "messageActivityFeed":
+                executeThenReply(payload, correlationId, agent.messageActivityFeed());
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }

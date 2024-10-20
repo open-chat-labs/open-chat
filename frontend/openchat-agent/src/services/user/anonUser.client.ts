@@ -125,8 +125,8 @@ export class AnonUserClient {
             referrals: [],
             walletConfig: { kind: "auto_wallet", minDollarValue: 1 },
             messageActivitySummary: {
-                readUpTo: 0n,
-                latestEventTimestamp: 0n,
+                readUpToTimestamp: 0n,
+                latestTimestamp: 0n,
                 unreadCount: 0,
             },
         });

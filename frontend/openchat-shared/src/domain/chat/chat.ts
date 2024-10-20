@@ -1160,8 +1160,8 @@ export type InitialStateResponse = {
 };
 
 export type MessageActivitySummary = {
-    readUpTo: bigint;
-    latestEventTimestamp: bigint;
+    readUpToTimestamp: bigint;
+    latestTimestamp: bigint;
     unreadCount: number;
 };
 
@@ -1171,6 +1171,7 @@ export type MessageActivityEvent = {
     activity: MessageActivity;
     timestamp: bigint;
     userId: string | undefined;
+    message: Message | undefined;
 };
 
 export type MessageActivity =
