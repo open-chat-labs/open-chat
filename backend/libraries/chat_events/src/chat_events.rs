@@ -187,6 +187,10 @@ impl ChatEvents {
 
     pub fn set_chat(&mut self, chat: Chat) {
         self.chat = chat;
+        self.main.set_stable_memory_prefix(chat, None);
+        for (message_index, events_list) in self.threads.iter_mut() {
+            events_list.set_stable_memory_prefix(chat, Some(*message_index));
+        }
     }
 
     pub fn read_events_as_bytes_from_stable_memory(
