@@ -1167,6 +1167,8 @@ export type MessageActivitySummary = {
 
 export type MessageActivityEvent = {
     messageContext: MessageContext;
+    eventId: number;
+    messageId: bigint;
     messageIndex: number;
     activity: MessageActivity;
     timestamp: bigint;

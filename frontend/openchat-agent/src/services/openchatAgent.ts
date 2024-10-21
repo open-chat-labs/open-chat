@@ -234,7 +234,6 @@ import {
     getOrAdd,
     waitAll,
     MessageMap,
-    MessageContextMap,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { AsyncMessageContextMap } from "../utils/messageContext";
@@ -3787,75 +3786,53 @@ export class OpenChatAgent extends EventTarget {
         };
     }
 
-    async hydrateActivityFeedEvents(activityEvents: MessageActivityEvent[]): Promise<unknown> {
-        // group the events by chat ChatMap<Set<number>>
-        const activityEventsByChat = activityEvents.reduce((map, event) => {
-            const idx = map.get(event.messageContext.chatId) ?? new Set();
-            idx.add(event.messageIndex);
-            map.set(event.messageContext.chatId, idx);
+    async hydrateActivityFeedEvents(
+        activityEvents: MessageActivityEvent[],
+    ): Promise<MessageActivityEvent[]> {
+        const eventsIdsByMessageContext = activityEvents.reduce((map, event) => {
+            const eventIds = map.get(event.messageContext) ?? [];
+            eventIds.push(event.eventId);
+            map.set(event.messageContext, eventIds);
             return map;
-        }, new ChatMap<Set<number>>());
+        }, new AsyncMessageContextMap<number>());
 
-        const messageMap = activityEvents.reduce((map, event) => {
+        const messagesByMessageContext = await eventsIdsByMessageContext.asyncMap((ctx, idxs) => {
+            const chatId = ctx.chatId;
+            const chatKind = chatId.kind;
+
+            if (chatKind === "direct_chat") {
+                return this.userClient
+                    .chatEventsByIndex(idxs, chatId, ctx.threadRootMessageIndex, undefined)
+                    .then((resp) => this.messagesFromEventsResponse(ctx, resp));
+            } else if (chatKind === "group_chat") {
+                const client = this.getGroupClient(chatId.groupId);
+                return client
+                    .chatEventsByIndex(idxs, ctx.threadRootMessageIndex, undefined)
+                    .then((resp) => this.messagesFromEventsResponse(ctx, resp));
+            } else if (chatKind === "channel") {
+                const client = this.communityClient(chatId.communityId);
+                return client
+                    .eventsByIndex(chatId, idxs, ctx.threadRootMessageIndex, undefined)
+                    .then((resp) => this.messagesFromEventsResponse(ctx, resp));
+            } else {
+                throw new UnsupportedValueError("unknown chatid kind supplied", chatId);
+            }
+        });
+
+        const activityEventsByMessageId = activityEvents.reduce((map, event) => {
             map.set(event.messageId, event);
             return map;
         }, new MessageMap<MessageActivityEvent>());
 
-        // const messageMap = activityEvents.reduce((map, event) => {
-        //     map.set(event.messageContext, event);
-        //     return map;
-        // }, new MessageContextMap<MessageActivityEvent>());
-
-        const promiseMap = activityEventsByChat.map((key, val) => {
-            return this.getMessagesByMessageIndex(key, val).then((resp) => {
-                if (resp !== "events_failed") {
-                    // we have a list of messages at this point
-                    // foreach message add it to the corresponding message activity event
-                    resp.events.forEach((ev) => {
-                        const activityEvent = messageMap.get(ev.event.messageId);
-                        if (activityEvent !== undefined) {
-                            activityEvent.message = ev.event;
-                        }
-                    });
+        messagesByMessageContext.forEach((events) => {
+            events.forEach((ev) => {
+                const activityEv = activityEventsByMessageId.get(ev.event.messageId);
+                if (activityEv !== undefined) {
+                    activityEv.message = ev.event;
                 }
             });
         });
 
-        // TODO - we've got to stich this all together which is a bit nasty
-
-        return {};
-    }
-
-    getMessagesByMessageIndex(
-        chatId: ChatIdentifier,
-        messageIndexes: Set<number>,
-    ): Promise<EventsResponse<Message>> {
-        switch (chatId.kind) {
-            case "group_chat":
-                return this.rehydrateEventResponse(
-                    chatId,
-                    this.getGroupClient(chatId.groupId).getMessagesByMessageIndex(
-                        messageIndexes,
-                        undefined,
-                    ),
-                    undefined,
-                    undefined,
-                );
-            case "channel":
-                return this.rehydrateEventResponse(
-                    chatId,
-                    this.communityClient(chatId.communityId).getMessagesByMessageIndex(
-                        chatId,
-                        messageIndexes,
-                        undefined,
-                    ),
-                    undefined,
-                    undefined,
-                );
-
-            case "direct_chat":
-                // TODO
-                return Promise.resolve("events_failed");
-        }
+        return activityEvents;
     }
 }

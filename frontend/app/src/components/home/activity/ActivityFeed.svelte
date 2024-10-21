@@ -4,7 +4,7 @@
     import Kebab from "svelte-material-icons/DotsVertical.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import { _ } from "svelte-i18n";
-    import { OpenChat } from "openchat-client";
+    import { OpenChat, routeForMessage, type MessageActivityEvent } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import SectionHeader from "../../SectionHeader.svelte";
     import { iconSize } from "../../../stores/iconSize";
@@ -15,15 +15,19 @@
     import Menu from "../../Menu.svelte";
     import MenuItem from "../../MenuItem.svelte";
     import { activityFeedShowing } from "../../../stores/activity";
+    import { menuCloser } from "../../../actions/closeMenu";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     let canMarkAllRead = true;
 
+    let activityEvents: MessageActivityEvent[] = [];
+
     onMount(() => {
         client.messageActivityFeed().then((resp) => {
             console.log("MessageActivity", resp);
+            activityEvents = resp.events;
         });
     });
 </script>
@@ -69,8 +73,44 @@
     </div>
 </SectionHeader>
 
+<div use:menuCloser class="body">
+    {#each activityEvents as event}
+        <div class="activity-event">
+            <a href={routeForMessage("none", event.messageContext, event.messageIndex)}
+                >{JSON.stringify(event, null, 4)}</a>
+        </div>
+    {/each}
+</div>
+
 <style lang="scss">
     .header {
         @include left_panel_header();
+    }
+    .activity-event {
+        position: relative;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: $sp4;
+        margin-bottom: 0;
+        cursor: pointer;
+        transition:
+            background-color ease-in-out 100ms,
+            border-color ease-in-out 100ms;
+        user-select: none;
+
+        @include mobile() {
+            padding: $sp3 toRem(10);
+        }
+
+        @media (hover: hover) {
+            &:hover {
+                background-color: var(--chatSummary-hv);
+            }
+        }
+
+        &.selected {
+            background-color: var(--chatSummary-bg-selected);
+        }
     }
 </style>

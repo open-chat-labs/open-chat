@@ -1596,7 +1596,9 @@ export function messageActivityEvent(candid: ApiMessageActivityEvent): MessageAc
             candid.chat,
             optional(candid.thread_root_message_index, identity),
         ),
+        eventId: 0, // TODO - fill this in
         messageIndex: candid.message_index,
+        messageId: 0n, // TODO - fill this in
         activity: messageActivity(candid.activity),
         timestamp: candid.timestamp,
         userId: optional(candid.user_id, (u) => u.toString()),
