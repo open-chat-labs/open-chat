@@ -284,7 +284,7 @@ fn process_send_message_result(
                             message.sender,
                             MessageActivity::QuoteReply,
                             thread_root_message_index,
-                            message.message_index,
+                            message_index,
                         ));
                     }
                 }
@@ -296,7 +296,12 @@ fn process_send_message_result(
                             .events
                             .message_internal(EventIndex::default(), None, message_index.into())
                     {
-                        activity_events.push((message.sender, MessageActivity::ThreadReply, None, message.message_index));
+                        activity_events.push((
+                            message.sender,
+                            MessageActivity::ThreadReply,
+                            thread_root_message_index,
+                            message_index,
+                        ));
                     }
                 }
             }
