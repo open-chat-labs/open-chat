@@ -83,7 +83,7 @@ import {
     userGroup,
 } from "../common/chatMappersV2";
 import { identity } from "../../utils/mapping";
-import { mapCommonResponses, mapCommonResponsesKind } from "../common/commonResponseMapper";
+import { mapCommonResponses } from "../common/commonResponseMapper";
 
 export function addMembersToChannelResponse(
     value: CommunityAddMembersToChannelResponse,
@@ -99,7 +99,12 @@ export function addMembersToChannelResponse(
             return CommonResponses.userLimitReached();
         }
     }
-    return mapCommonResponsesKind(value, "AddMembersToChannel") as AddMembersToChannelResponse;
+    return {
+        kind: mapCommonResponses(value, "AddMembersToChannel") as Exclude<
+            "offline",
+            AddMembersToChannelResponse["kind"]
+        >,
+    };
 }
 
 function addToChannelFailed(

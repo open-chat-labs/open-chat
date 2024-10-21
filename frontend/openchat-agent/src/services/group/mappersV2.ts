@@ -68,7 +68,7 @@ import {
 } from "../../utils/mapping";
 import type { Principal } from "@dfinity/principal";
 import { ReplicaNotUpToDateError } from "../error";
-import { mapCommonResponses, mapCommonResponsesKind } from "../common/commonResponseMapper";
+import { mapCommonResponses } from "../common/commonResponseMapper";
 
 export function apiRole(role: MemberRole): GroupRole | undefined {
     switch (role) {
@@ -89,10 +89,12 @@ export function summaryResponse(value: GroupSummaryResponse): GroupCanisterSumma
     if (typeof value === "object" && "Success" in value) {
         return groupChatSummary(value.Success.summary);
     }
-    return mapCommonResponsesKind(value, "GroupSummaryResponse") as Exclude<
-        GroupCanisterSummaryResponse,
-        GroupCanisterGroupChatSummary
-    >;
+    return {
+        kind: mapCommonResponses(value, "GroupSummaryResponse") as Exclude<
+            GroupCanisterSummaryResponse,
+            GroupCanisterGroupChatSummary
+        >["kind"],
+    };
 }
 
 export function groupChatSummary(
@@ -156,10 +158,12 @@ export function summaryUpdatesResponse(
     if (typeof value === "object" && "Success" in value) {
         return groupChatSummaryUpdates(value.Success.updates);
     }
-    return mapCommonResponsesKind(value, "GroupSummaryUpdates") as Exclude<
-        GroupCanisterSummaryUpdatesResponse,
-        GroupCanisterGroupChatSummaryUpdates
-    >;
+    return {
+        kind: mapCommonResponses(value, "GroupSummaryUpdates") as Exclude<
+            GroupCanisterSummaryUpdatesResponse,
+            GroupCanisterGroupChatSummaryUpdates
+        >["kind"],
+    };
 }
 
 export function groupMembershipUpdates(value: TGroupMembershipUpdates): GroupMembershipUpdates {
@@ -301,7 +305,12 @@ export function sendMessageResponse(value: GroupSendMessageResponse): SendMessag
     if (value === "RulesNotAccepted") {
         return { kind: "rules_not_accepted" };
     }
-    return mapCommonResponsesKind(value, "GroupSendMessage") as SendMessageResponse;
+    return {
+        kind: mapCommonResponses(value, "GroupSendMessage") as Exclude<
+            "message_throttled",
+            SendMessageResponse["kind"]
+        >,
+    };
 }
 
 export function removeMemberResponse(value: GroupRemoveParticipantResponse): RemoveMemberResponse {

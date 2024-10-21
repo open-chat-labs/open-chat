@@ -154,7 +154,7 @@ import { Principal } from "@dfinity/principal";
 import type { PinNumberSettings } from "openchat-shared";
 import { pinNumberFailureResponseV2 } from "../common/pinNumberErrorMapper";
 import { signedDelegation } from "../../utils/id";
-import { mapCommonResponses, mapCommonResponsesKind } from "../common/commonResponseMapper";
+import { mapCommonResponses } from "../common/commonResponseMapper";
 
 export function chitEventsResponse(value: UserChitEventsResponse): ChitEventsResponse {
     if ("Success" in value) {
@@ -1174,7 +1174,12 @@ export function deletedMessageResponse(
     if (value === "MessageHardDeleted") {
         return { kind: "message_hard_deleted" };
     }
-    return mapCommonResponsesKind(value, "DeletedMessage") as DeletedDirectMessageResponse;
+    return {
+        kind: mapCommonResponses(value, "DeletedMessage") as Exclude<
+            "offline",
+            DeletedDirectMessageResponse["kind"]
+        >,
+    };
 }
 
 export function setMessageReminderResponse(

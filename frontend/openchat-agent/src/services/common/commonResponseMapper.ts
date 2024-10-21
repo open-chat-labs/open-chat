@@ -1,13 +1,5 @@
 import { UnsupportedValueError } from "openchat-shared";
 
-export function mapCommonResponsesKind(
-    value: CommonCanisterResponse,
-    name: string,
-): { kind: CommonResponse } {
-    const kind = mapCommonResponses(value, name);
-    return { kind };
-}
-
 export function mapCommonResponses(value: CommonCanisterResponse, name: string): CommonResponse {
     if (typeof value === "string") {
         switch (value) {
