@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Make searching by user and term require matching both + make more efficient ([#6612](https://github.com/open-chat-labs/open-chat/pull/6612))
+- Fixes to activity feed ([#6627](https://github.com/open-chat-labs/open-chat/pull/6627))
 
 ## [[2.0.1400](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1400-community)] - 2024-10-18
 
