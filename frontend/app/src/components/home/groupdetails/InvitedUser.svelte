@@ -19,13 +19,14 @@
     export let user: UserSummary;
     export let canUninviteUser: boolean = false;
     export let searchTerm: string = "";
+    export let me = false;
 
     function cancelInvite() {
         dispatch("cancelInvite", user.userId);
     }
 </script>
 
-<User {user} {searchTerm}>
+<User {me} {user} {searchTerm}>
     {#if canUninviteUser}
         <span class="menu">
             <MenuIcon position={"bottom"} align={"end"}>

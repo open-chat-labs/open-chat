@@ -88,9 +88,6 @@ export type VoteOperation = "RegisterVote" | "DeleteVote";
 export type SuspensionAction = { "Unsuspend": bigint } | { "Delete": bigint };
 export type SwapStatusErrorCancelled = { token0_txn_out?: bigint | undefined, };
 export type SubscriptionKeys = { p256dh: string, auth: string, };
-/**
- * @default Member
- */
 export type CommunityRole = "Owner" | "Admin" | "Member";
 export type ExchangeId = "ICPSwap" | "Sonic" | "KongSwap";
 export type ProposalDecisionStatus = "Unspecified" | "Open" | "Rejected" | "Adopted" | "Executed" | "Failed";
@@ -106,9 +103,6 @@ export type VideoCallPresence = "Default" | "Owner" | "Hidden";
 export type ChatMetrics = { text_messages: bigint, image_messages: bigint, video_messages: bigint, audio_messages: bigint, file_messages: bigint, polls: bigint, poll_votes: bigint, icp_messages: bigint, sns1_messages: bigint, ckbtc_messages: bigint, chat_messages: bigint, kinic_messages: bigint, deleted_messages: bigint, giphy_messages: bigint, prize_messages: bigint, prize_winner_messages: bigint, replies: bigint, edits: bigint, reactions: bigint, proposals: bigint, reported_messages: bigint, message_reminders: bigint, custom_type_messages: bigint, last_active: bigint, };
 export type VideoCallType = "Broadcast" | "Default";
 export type VideoCall = { message_index: MessageIndex, call_type: VideoCallType, };
-/**
- * @default Participant
- */
 export type GroupRole = "Owner" | "Admin" | "Moderator" | "Participant";
 export type GroupPermissionRole = "None" | "Owner" | "Admins" | "Moderators" | "Members";
 export type AcceptSwapSuccess = { token1_txn_in: bigint, };
@@ -135,7 +129,7 @@ export type CommunityPermissions = { change_roles: CommunityPermissionRole, upda
 export type FieldTooLongResult = { length_provided: number, max_length: number, };
 export type Chit = { balance: number, streak: number, };
 export type GiphyImageVariant = { width: number, height: number, url: string, mime_type: string, };
-export type Achievement = "JoinedGroup" | "JoinedCommunity" | "SentDirectMessage" | "ReceivedDirectMessage" | "SetAvatar" | "SetBio" | "SetDisplayName" | "UpgradedToDiamond" | "UpgradedToGoldDiamond" | "Streak3" | "Streak7" | "Streak14" | "Streak30" | "Streak100" | "Streak365" | "SentPoll" | "SentText" | "SentImage" | "SentVideo" | "SentAudio" | "SentFile" | "SentGiphy" | "SentPrize" | "SentMeme" | "SentCrypto" | "SentP2PSwapOffer" | "StartedCall" | "ReactedToMessage" | "EditedMessage" | "RepliedInThread" | "QuoteReplied" | "TippedMessage" | "DeletedMessage" | "ForwardedMessage" | "ProvedUniquePersonhood" | "ReceivedCrypto" | "HadMessageReactedTo" | "HadMessageTipped" | "VotedOnPoll" | "SentReminder" | "JoinedCall" | "AcceptedP2PSwapOffer" | "SetCommunityDisplayName" | "Referred1stUser" | "Referred3rdUser" | "Referred10thUser" | "Referred20thUser" | "Referred50thUser" | "PinnedMessage" | "SwappedFromWallet" | "FavouritedChat" | "FollowedThread" | "SuggestedTranslation" | "TranslationAccepted" | "AppointedGroupModerator" | "AppointedGroupAdmin" | "AppointedGroupOwner" | "ChosenAsGroupModerator" | "ChosenAsGroupAdmin" | "ChosenAsGroupOwner" | "SetGroupAccessGate" | "SetCommunityAccessGate" | "JoinedGatedGroupOrCommunity" | "ChangedTheme" | "EnabledDisappearingMessages" | "OwnGroupWithOneDiamondMember" | "OwnGroupWithTenDiamondMembers" | "OwnGroupWithOneHundredDiamondMembers" | "OwnGroupWithOneThousandDiamondMembers" | "DirectChats5" | "DirectChats10" | "DirectChats20";
+export type Achievement = "JoinedGroup" | "JoinedCommunity" | "SentDirectMessage" | "ReceivedDirectMessage" | "SetAvatar" | "SetBio" | "SetDisplayName" | "UpgradedToDiamond" | "UpgradedToGoldDiamond" | "Streak3" | "Streak7" | "Streak14" | "Streak30" | "Streak100" | "Streak365" | "SentPoll" | "SentText" | "SentImage" | "SentVideo" | "SentAudio" | "SentFile" | "SentGiphy" | "SentPrize" | "SentMeme" | "SentCrypto" | "SentP2PSwapOffer" | "StartedCall" | "ReactedToMessage" | "EditedMessage" | "RepliedInThread" | "QuoteReplied" | "TippedMessage" | "DeletedMessage" | "ForwardedMessage" | "ProvedUniquePersonhood" | "ReceivedCrypto" | "HadMessageReactedTo" | "HadMessageTipped" | "VotedOnPoll" | "SentReminder" | "JoinedCall" | "AcceptedP2PSwapOffer" | "SetCommunityDisplayName" | "Referred1stUser" | "Referred3rdUser" | "Referred10thUser" | "Referred20thUser" | "Referred50thUser" | "PinnedMessage" | "SwappedFromWallet" | "FavouritedChat" | "FollowedThread" | "AppointedGroupModerator" | "AppointedGroupAdmin" | "AppointedGroupOwner" | "ChosenAsGroupModerator" | "ChosenAsGroupAdmin" | "ChosenAsGroupOwner" | "SetGroupAccessGate" | "SetCommunityAccessGate" | "JoinedGatedGroupOrCommunity" | "SetPin" | "SuggestedTranslation" | "TranslationAccepted" | "ChangedTheme" | "EnabledDisappearingMessages" | "OwnGroupWithOneDiamondMember" | "OwnGroupWithTenDiamondMembers" | "OwnGroupWithOneHundredDiamondMembers" | "OwnGroupWithOneThousandDiamondMembers" | "DirectChats5" | "DirectChats10" | "DirectChats20";
 export type Empty = Record<string, never>;
 export type ThumbnailData = string;
 export type GroupReplyContext = { event_index: EventIndex, };

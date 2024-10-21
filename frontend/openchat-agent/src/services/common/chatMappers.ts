@@ -1505,9 +1505,17 @@ export function apiOptional<D, A>(mapper: (d: D) => A, domain: D | undefined): [
     return domain !== undefined ? [mapper(domain)] : [];
 }
 
-export function apiMaybeAccessGateConfig(domain: AccessGate): [] | [ApiAccessGateConfig] {
-    const gate = apiMaybeAccessGate(domain);
-    return gate.length === 0 ? [] : [{ gate: gate[0], expiry: [] }];
+export function apiMaybeAccessGateConfig(domain: AccessGateConfig): [] | [ApiAccessGateConfig] {
+    const gate = apiMaybeAccessGate(domain.gate);
+    if (gate.length === 0) {
+        return [];
+    }
+    return [
+        {
+            gate: gate[0],
+            expiry: apiOptional(identity, domain.expiry),
+        },
+    ];
 }
 
 export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
@@ -1667,6 +1675,13 @@ function apiCredentialArguments(
             return [k, { String: v }];
         }
     });
+}
+
+export function accessGateConfig(candid: ApiAccessGateConfig): AccessGateConfig {
+    return {
+        gate: accessGate(candid.gate),
+        expiry: optional(candid.expiry, identity),
+    };
 }
 
 export function accessGate(candid: ApiAccessGate): AccessGate {

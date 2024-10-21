@@ -29,6 +29,7 @@ const FRAME_ANCESTORS = [
     "https://pre.konecta.one", //konecta pre-register
     "https://konecta.one", //konecta website/webapp
     "https://y7mum-taaaa-aaaag-qklxq-cai.icp0.io", // konecta pre-register test env
+    "https://e4tvt-6yaaa-aaaao-a3sdq-cai.icp0.io", // dragon paladin wizard
     "https://dragonwizards.club", // dragon paladin wizard web2 test
     "https://ic-vc.com", // ICVC via domain
     "https://mnc6b-aaaaa-aaaap-qhnrq-cai.icp0.io" // ICVC via canister ID

@@ -1,6 +1,6 @@
 import { emptyChatMetrics } from "../../utils/chat";
 import { mapOptional, principalBytesToString } from "../../utils/mapping";
-import { accessGate, groupSubtype, messageEvent } from "./chatMappersV2";
+import { accessGateConfig, groupSubtype, messageEvent } from "./chatMappersV2";
 import {
     nullMembership,
     type GroupChatSummary,
@@ -59,7 +59,10 @@ export function publicGroupSummary(
         frozen: value.frozen !== undefined,
         dateLastPinned: undefined,
         dateReadPinned: undefined,
-        gate: mapOptional(value.gate, accessGate) ?? { kind: "no_gate" },
+        gateConfig: mapOptional(value.gate_config, accessGateConfig) ?? {
+            gate: { kind: "no_gate" },
+            expiry: undefined,
+        },
         level: "group",
         membership: nullMembership(),
         localUserIndex: principalBytesToString(value.local_user_index_canister_id),

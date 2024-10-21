@@ -251,6 +251,8 @@ struct Data {
     pub rng_seed: [u8; 32],
     pub referred_by: Option<UserId>,
     pub referrals: Referrals,
+    // TODO: Remove skip_deserializing after release
+    #[serde(default, skip_deserializing)]
     pub message_activity_events: MessageActivityEvents,
     #[serde(default)]
     stable_memory_event_migration_complete: bool,

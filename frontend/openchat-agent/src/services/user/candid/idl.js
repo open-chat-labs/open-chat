@@ -179,6 +179,7 @@ export const idlFactory = ({ IDL }) => {
     'AppointedGroupOwner' : IDL.Null,
     'OwnGroupWithTenDiamondMembers' : IDL.Null,
     'JoinedGatedGroupOrCommunity' : IDL.Null,
+    'SetPin' : IDL.Null,
     'JoinedGroup' : IDL.Null,
     'StartedCall' : IDL.Null,
     'ChosenAsGroupOwner' : IDL.Null,

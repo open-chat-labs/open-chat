@@ -45,6 +45,7 @@
     export let chat: ChatSummary;
     export let blocked: boolean;
     export let preview: boolean;
+    export let lapsed: boolean;
     export let messageAction: MessageAction = undefined;
     export let joining: MultiUserChat | undefined;
     export let attachment: AttachmentContent | undefined;
@@ -558,8 +559,8 @@
         <div class="blocked">
             {$_("userIsBlocked")}
         </div>
-    {:else if preview && chat.kind !== "direct_chat"}
-        <PreviewFooter {joining} {chat} on:joinGroup on:upgrade />
+    {:else if (preview || lapsed) && chat.kind !== "direct_chat"}
+        <PreviewFooter {lapsed} {joining} {chat} on:joinGroup on:upgrade />
     {:else if externalContent}
         <div class="disclaimer">
             <Alert size={$iconSize} color={"var(--warn"} />

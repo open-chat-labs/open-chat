@@ -15,10 +15,11 @@ fn pre_upgrade() {
     let mut state = take_state();
     state.data.rng_seed = state.env.rng().gen();
 
+    let errors = canister_logger::export_errors();
     let logs = canister_logger::export_logs();
     let traces = canister_logger::export_traces();
 
-    let stable_state = (&state.data, logs, traces);
+    let stable_state = (&state.data, errors, logs, traces);
 
     let mut memory = get_upgrades_memory();
     let writer = get_writer(&mut memory);

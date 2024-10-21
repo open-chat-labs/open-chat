@@ -267,6 +267,9 @@ export function achievementType(candid: ApiAchievement): Achievement {
     if ("JoinedGatedGroupOrCommunity" in candid) {
         return "joined_gated_group_or_community";
     }
+    if ("SetPin" in candid) {
+        return "set_pin";
+    }
     if ("StartedCall" in candid) {
         return "started_call";
     }
@@ -1170,6 +1173,7 @@ function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
             readByMeUpTo: optional(candid.read_by_me_up_to, identity),
             archived: candid.archived,
             rulesAccepted: false,
+            lapsed: false,
         },
     };
 }

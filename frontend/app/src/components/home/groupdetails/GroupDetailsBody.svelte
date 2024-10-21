@@ -23,6 +23,7 @@
     import DisappearingMessagesSummary from "../DisappearingMessagesSummary.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
+    import AccessGateExpiry from "../access/AccessGateExpiry.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -46,7 +47,7 @@
     function description(chat: MultiUserChat): string {
         let description = chat.description;
 
-        if (chat.subtype?.kind === "governance_proposals" ?? false) {
+        if (chat.subtype?.kind === "governance_proposals") {
             description = description.replace("{userId}", $currentUser.userId);
         }
 
@@ -136,7 +137,12 @@
             {#if !externalContent}
                 <DisappearingMessagesSummary ttl={chat.eventsTTL} />
             {/if}
-            <AccessGateSummary level={chat.level} editable={false} gate={chat.gate} />
+            <AccessGateSummary level={chat.level} editable={false} gateConfig={chat.gateConfig} />
+            {#if chat.gateConfig.expiry !== undefined}
+                <div class="expiry">
+                    <AccessGateExpiry expiry={chat.gateConfig.expiry} />
+                </div>
+            {/if}
         </CollapsibleCard>
         {#if combinedRulesText.length > 0}
             <CollapsibleCard
@@ -208,7 +214,7 @@
         display: flex;
         flex-direction: column;
         gap: $sp3;
-        padding: $sp3 $sp5 0 $sp5;
+        padding: $sp3 $sp4 0 $sp4;
 
         @include mobile() {
             padding: $sp3 $sp4 0 $sp4;
@@ -248,5 +254,11 @@
                 margin-bottom: 0;
             }
         }
+    }
+
+    .expiry {
+        color: var(--txt-light);
+        @include font(book, normal, fs-90);
+        margin-top: $sp3;
     }
 </style>

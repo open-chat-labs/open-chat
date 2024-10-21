@@ -21,7 +21,9 @@ fn post_upgrade(args: Args) {
         chat.events.set_stable_memory_key_prefixes();
     }
 
-    canister_logger::init_with_logs(data.test_mode, logs, traces);
+    // TODO: After release change this to
+    // let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) = msgpack::deserialize(reader).unwrap();
+    canister_logger::init_with_logs(data.test_mode, Vec::new(), logs, traces);
 
     let env = init_env(data.rng_seed);
     init_state(env, data, args.wasm_version);

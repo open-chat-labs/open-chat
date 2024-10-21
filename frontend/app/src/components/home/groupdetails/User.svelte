@@ -21,6 +21,7 @@
     export let searchTerm: string = "";
     export let role: string | undefined = undefined;
     export let profile = true;
+    export let lapsed = false;
 
     // if search term is !== "", split the username into three parts [prefix, match, postfix]
 

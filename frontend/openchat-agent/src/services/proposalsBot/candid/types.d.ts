@@ -59,6 +59,7 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'AppointedGroupOwner' : null } |
   { 'OwnGroupWithTenDiamondMembers' : null } |
   { 'JoinedGatedGroupOrCommunity' : null } |
+  { 'SetPin' : null } |
   { 'JoinedGroup' : null } |
   { 'StartedCall' : null } |
   { 'ChosenAsGroupOwner' : null } |
@@ -819,6 +820,7 @@ export interface GroupInviteCodeChanged {
 }
 export interface GroupMatch {
   'id' : ChatId,
+  'gate_config' : [] | [AccessGateConfig],
   'subtype' : [] | [GroupSubtype],
   'gate' : [] | [AccessGate],
   'name' : string,

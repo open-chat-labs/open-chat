@@ -360,14 +360,9 @@ struct Data {
     expiring_members: ExpiringMembers,
     expiring_member_actions: ExpiringMemberActions,
     user_cache: UserCache,
-    #[serde(default = "default_user_event_sync_queue")]
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
     #[serde(default)]
     stable_memory_event_migration_complete: bool,
-}
-
-fn default_user_event_sync_queue() -> GroupedTimerJobQueue<UserEventBatch> {
-    GroupedTimerJobQueue::new(5, true)
 }
 
 impl Data {

@@ -802,10 +802,11 @@ export const SubscriptionKeys = Type.Object({
 });
 
 export type CommunityRole = Static<typeof CommunityRole>;
-export const CommunityRole = Type.Union(
-    [Type.Literal("Owner"), Type.Literal("Admin"), Type.Literal("Member")],
-    { default: "Member" },
-);
+export const CommunityRole = Type.Union([
+    Type.Literal("Owner"),
+    Type.Literal("Admin"),
+    Type.Literal("Member"),
+]);
 
 export type ExchangeId = Static<typeof ExchangeId>;
 export const ExchangeId = Type.Union([
@@ -940,15 +941,12 @@ export const VideoCall = Type.Object({
 });
 
 export type GroupRole = Static<typeof GroupRole>;
-export const GroupRole = Type.Union(
-    [
-        Type.Literal("Owner"),
-        Type.Literal("Admin"),
-        Type.Literal("Moderator"),
-        Type.Literal("Participant"),
-    ],
-    { default: "Participant" },
-);
+export const GroupRole = Type.Union([
+    Type.Literal("Owner"),
+    Type.Literal("Admin"),
+    Type.Literal("Moderator"),
+    Type.Literal("Participant"),
+]);
 
 export type GroupPermissionRole = Static<typeof GroupPermissionRole>;
 export const GroupPermissionRole = Type.Union([
@@ -1132,8 +1130,6 @@ export const Achievement = Type.Union([
     Type.Literal("SwappedFromWallet"),
     Type.Literal("FavouritedChat"),
     Type.Literal("FollowedThread"),
-    Type.Literal("SuggestedTranslation"),
-    Type.Literal("TranslationAccepted"),
     Type.Literal("AppointedGroupModerator"),
     Type.Literal("AppointedGroupAdmin"),
     Type.Literal("AppointedGroupOwner"),
@@ -1143,6 +1139,9 @@ export const Achievement = Type.Union([
     Type.Literal("SetGroupAccessGate"),
     Type.Literal("SetCommunityAccessGate"),
     Type.Literal("JoinedGatedGroupOrCommunity"),
+    Type.Literal("SetPin"),
+    Type.Literal("SuggestedTranslation"),
+    Type.Literal("TranslationAccepted"),
     Type.Literal("ChangedTheme"),
     Type.Literal("EnabledDisappearingMessages"),
     Type.Literal("OwnGroupWithOneDiamondMember"),
