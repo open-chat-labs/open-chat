@@ -24,6 +24,7 @@ import type {
     Permissioned,
 } from "../permission";
 import type {
+    ChannelNotFound,
     ChatNotFound,
     CommunityFrozen,
     CommunityPublic,
@@ -35,7 +36,7 @@ import type {
     SuccessNoUpdates,
     UserLapsed,
     UserLimitReached,
-    UserNotInChat,
+    UserNotInChannel,
     UserNotInCommunity,
     UserSuspended,
 } from "../response";
@@ -121,8 +122,8 @@ export interface AddMembersToChannelPartialSuccess {
 export type AddMembersToChannelResponse =
     | AddMembersToChannelFailed
     | AddMembersToChannelPartialSuccess
-    | UserNotInChat
-    | ChatNotFound
+    | UserNotInChannel
+    | ChannelNotFound
     | UserLimitReached
     | NotAuthorised
     | Success
@@ -130,7 +131,6 @@ export type AddMembersToChannelResponse =
     | UserSuspended
     | UserLapsed
     | CommunityFrozen
-    | CommunityPublic
     | InternalError
     | Offline
     | CommunityPublic;
@@ -140,7 +140,7 @@ export type BlockCommunityUserResponse = Success | Failure | Offline;
 export type ChangeCommunityRoleResponse = "success" | "failure" | "offline";
 
 export type DeleteChannelResponse =
-    | UserNotInChat
+    | UserNotInChannel
     | ChatNotFound
     | NotAuthorised
     | Success

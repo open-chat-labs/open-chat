@@ -90,10 +90,7 @@ export function summaryResponse(value: GroupSummaryResponse): GroupCanisterSumma
         return groupChatSummary(value.Success.summary);
     }
     return {
-        kind: mapCommonResponses(value, "GroupSummaryResponse") as Exclude<
-            GroupCanisterSummaryResponse,
-            GroupCanisterGroupChatSummary
-        >["kind"],
+        kind: mapCommonResponses(value, "GroupSummaryResponse"),
     };
 }
 
@@ -159,10 +156,7 @@ export function summaryUpdatesResponse(
         return groupChatSummaryUpdates(value.Success.updates);
     }
     return {
-        kind: mapCommonResponses(value, "GroupSummaryUpdates") as Exclude<
-            GroupCanisterSummaryUpdatesResponse,
-            GroupCanisterGroupChatSummaryUpdates
-        >["kind"],
+        kind: mapCommonResponses(value, "GroupSummaryUpdates"),
     };
 }
 
@@ -265,7 +259,7 @@ export function unblockUserResponse(value: GroupUnblockUserResponse): UnblockUse
     if (value === "CannotUnblockSelf") {
         return "cannot_unblock_self";
     }
-    return mapCommonResponses(value, "GroupUnblockUser") as UnblockUserResponse;
+    return mapCommonResponses(value, "GroupUnblockUser");
 }
 
 export function blockUserResponse(value: GroupBlockUserResponse): BlockUserResponse {
@@ -275,7 +269,7 @@ export function blockUserResponse(value: GroupBlockUserResponse): BlockUserRespo
     if (value === "CannotBlockUser") {
         return "cannot_block_user";
     }
-    return mapCommonResponses(value, "GroupBlockUser") as BlockUserResponse;
+    return mapCommonResponses(value, "GroupBlockUser");
 }
 
 export function sendMessageResponse(value: GroupSendMessageResponse): SendMessageResponse {

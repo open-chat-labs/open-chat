@@ -100,10 +100,7 @@ export function addMembersToChannelResponse(
         }
     }
     return {
-        kind: mapCommonResponses(value, "AddMembersToChannel") as Exclude<
-            "offline",
-            AddMembersToChannelResponse["kind"]
-        >,
+        kind: mapCommonResponses(value, "AddMembersToChannel"),
     };
 }
 

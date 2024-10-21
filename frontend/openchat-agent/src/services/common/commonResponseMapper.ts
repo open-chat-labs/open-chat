@@ -167,4 +167,6 @@ export type MapCommonResponseResult<T extends CommonCanisterResponse> = T extend
     ? "user_not_in_group"
     : T extends "UserSuspended"
     ? "user_suspended"
+    : T extends { InternalError: string }
+    ? "internal_error"
     : never;
