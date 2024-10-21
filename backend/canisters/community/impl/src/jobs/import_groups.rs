@@ -1,10 +1,12 @@
 use crate::activity_notifications::extract_activity;
 use crate::model::channels::Channel;
 use crate::model::events::{CommunityEventInternal, GroupImportedInternal};
+use crate::model::groups_being_imported::{GroupToImport, GroupToImportAction};
 use crate::model::members::AddResult;
 use crate::timer_job_types::{FinalizeGroupImportJob, ProcessGroupImportChannelMembersJob, TimerJob};
 use crate::updates::c2c_join_channel::{add_members_to_public_channel_unchecked, join_channel_unchecked};
 use crate::{mutate_state, read_state, RuntimeState};
+use chat_events::ChatEvents;
 use group_canister::c2c_export_group::{Args, Response};
 use group_chat_core::GroupChatCore;
 use ic_cdk_timers::TimerId;
@@ -41,57 +43,94 @@ fn run() {
     }
 }
 
-fn next_batch(state: &mut RuntimeState) -> Vec<(ChatId, u64)> {
+fn next_batch(state: &mut RuntimeState) -> Vec<GroupToImport> {
     let now = state.env.now();
     state.data.groups_being_imported.next_batch(now)
 }
 
-async fn import_groups(groups: Vec<(ChatId, u64)>) {
-    futures::future::join_all(groups.into_iter().map(|(g, i)| import_group(g, i))).await;
+async fn import_groups(groups: Vec<GroupToImport>) {
+    futures::future::join_all(groups.into_iter().map(import_group)).await;
     read_state(start_job_if_required);
 }
 
-async fn import_group(group_id: ChatId, from: u64) {
-    info!(%group_id, from, "'import_group' starting");
-    match group_canister_c2c_client::c2c_export_group(
-        group_id.into(),
-        &Args {
-            from,
-            page_size: PAGE_SIZE,
-        },
-    )
-    .await
-    {
-        Ok(Response::Success(bytes)) => {
-            mutate_state(|state| {
-                if state.data.groups_being_imported.mark_batch_complete(&group_id, &bytes) {
-                    let now = state.env.now();
+async fn import_group(group: GroupToImport) {
+    let group_id = group.group_id;
+    let action = group.action;
+    info!(%group_id, ?action, "'import_group' starting");
+    match action {
+        GroupToImportAction::Core(from) => {
+            match group_canister_c2c_client::c2c_export_group(
+                group_id.into(),
+                &Args {
+                    from,
+                    page_size: PAGE_SIZE,
+                },
+            )
+            .await
+            {
+                Ok(Response::Success(bytes)) => {
+                    mutate_state(|state| {
+                        if state.data.groups_being_imported.mark_batch_complete(&group_id, &bytes) {
+                            let now = state.env.now();
 
-                    state.data.timer_jobs.enqueue_job(
-                        TimerJob::FinalizeGroupImport(FinalizeGroupImportJob { group_id }),
-                        now,
-                        now,
-                    );
+                            state.data.timer_jobs.enqueue_job(
+                                TimerJob::FinalizeGroupImport(FinalizeGroupImportJob { group_id }),
+                                now,
+                                now,
+                            );
 
-                    // We set a timer to trigger an upgrade in case deserializing the group requires
-                    // more instructions than are allowed in a normal update call
-                    ic_cdk_timers::set_timer(Duration::from_secs(10), move || trigger_upgrade_to_finalize_import(group_id));
+                            // We set a timer to trigger an upgrade in case deserializing the group requires
+                            // more instructions than are allowed in a normal update call
+                            ic_cdk_timers::set_timer(Duration::from_secs(10), move || {
+                                trigger_upgrade_to_finalize_import(group_id)
+                            });
 
-                    info!(%group_id, "Group data imported");
+                            info!(%group_id, "Group data imported");
+                        }
+                    });
                 }
-            });
+                Err(error) => {
+                    mutate_state(|state| {
+                        if error.1.contains("violated contract") {
+                            state.data.groups_being_imported.take(&group_id);
+                        } else {
+                            state
+                                .data
+                                .groups_being_imported
+                                .mark_batch_failed(&group_id, format!("{error:?}"));
+                        }
+                    });
+                }
+            }
         }
-        Err(error) => {
-            mutate_state(|state| {
-                if error.1.contains("violated contract") {
-                    state.data.groups_being_imported.take(&group_id);
-                } else {
-                    state
-                        .data
-                        .groups_being_imported
-                        .mark_batch_failed(&group_id, format!("{error:?}"));
+        GroupToImportAction::Events(channel_id, after) => {
+            match group_canister_c2c_client::c2c_export_group_events(
+                group_id.into(),
+                &group_canister::c2c_export_group_events::Args { after },
+            )
+            .await
+            {
+                Ok(group_canister::c2c_export_group_events::Response::Success(result)) => {
+                    mutate_state(|state| {
+                        if let Some((up_to, _)) = result.events.last() {
+                            state.data.groups_being_imported.mark_events_batch_complete(&group_id, *up_to);
+                        }
+                        if result.finished {
+                            state.data.groups_being_imported.mark_events_import_complete(&group_id);
+                        }
+                        ChatEvents::import_events(Chat::Channel(state.env.canister_id().into(), channel_id), result.events);
+                        info!(%group_id, "Group events imported");
+                    });
                 }
-            });
+                Err(error) => {
+                    mutate_state(|state| {
+                        state
+                            .data
+                            .groups_being_imported
+                            .mark_batch_failed(&group_id, format!("{error:?}"));
+                    });
+                }
+            }
         }
     }
 }

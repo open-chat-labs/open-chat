@@ -1,8 +1,9 @@
+use candid::Principal;
 use ic_stable_structures::storable::Bound;
 use ic_stable_structures::Storable;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::borrow::Cow;
-use types::{CanisterId, ChannelId, EventIndex, MessageIndex, UserId};
+use types::{CanisterId, ChannelId, Chat, EventIndex, MessageIndex, UserId};
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub struct Key {
@@ -53,9 +54,50 @@ impl Key {
     pub fn event_index(&self) -> EventIndex {
         self.event_index
     }
+
+    pub fn thread_root_message_index(&self) -> Option<MessageIndex> {
+        self.prefix.thread_root_message_index()
+    }
+
+    pub fn matches_chat(&self, chat: Chat) -> bool {
+        self.prefix.matches_chat(chat)
+    }
 }
 
 impl KeyPrefix {
+    pub fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> KeyPrefix {
+        match (chat, thread_root_message_index) {
+            (Chat::Direct(c), None) => KeyPrefix::DirectChat(DirectChatKeyPrefix::new(Principal::from(c).into())),
+            (Chat::Direct(c), Some(m)) => {
+                KeyPrefix::DirectChatThread(DirectChatThreadKeyPrefix::new(Principal::from(c).into(), m))
+            }
+            (Chat::Group(_), None) => KeyPrefix::GroupChat(GroupChatKeyPrefix::default()),
+            (Chat::Group(_), Some(m)) => KeyPrefix::GroupChatThread(GroupChatThreadKeyPrefix::new(m)),
+            (Chat::Channel(_, c), None) => KeyPrefix::Channel(ChannelKeyPrefix::new(c)),
+            (Chat::Channel(_, c), Some(m)) => KeyPrefix::ChannelThread(ChannelThreadKeyPrefix::new(c, m)),
+        }
+    }
+
+    pub fn matches_chat(&self, chat: Chat) -> bool {
+        match self {
+            KeyPrefix::DirectChat(k) => matches!(chat, Chat::Direct(c) if CanisterId::from(c) == k.user_id.0),
+            KeyPrefix::GroupChat(_) => matches!(chat, Chat::Group(_)),
+            KeyPrefix::Channel(k) => matches!(chat, Chat::Channel(_, c) if c == u128::from(k.channel_id)),
+            KeyPrefix::DirectChatThread(k) => matches!(chat, Chat::Direct(c) if CanisterId::from(c) == k.user_id.0),
+            KeyPrefix::GroupChatThread(_) => matches!(chat, Chat::Group(_)),
+            KeyPrefix::ChannelThread(k) => matches!(chat, Chat::Channel(_, c) if c == u128::from(k.channel_id)),
+        }
+    }
+
+    pub fn thread_root_message_index(&self) -> Option<MessageIndex> {
+        match self {
+            KeyPrefix::DirectChat(_) | KeyPrefix::GroupChat(_) | KeyPrefix::Channel(_) => None,
+            KeyPrefix::DirectChatThread(k) => Some(k.thread_root_message_index.into()),
+            KeyPrefix::GroupChatThread(k) => Some(k.thread_root_message_index.into()),
+            KeyPrefix::ChannelThread(k) => Some(k.thread_root_message_index.into()),
+        }
+    }
+
     fn key_type(&self) -> KeyType {
         match self {
             KeyPrefix::DirectChat(_) => KeyType::DirectChat,

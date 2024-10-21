@@ -1,12 +1,9 @@
-use crate::stable_storage::key::{
-    ChannelKeyPrefix, ChannelThreadKeyPrefix, DirectChatKeyPrefix, DirectChatThreadKeyPrefix, GroupChatKeyPrefix,
-    GroupChatThreadKeyPrefix, Key, KeyPrefix,
-};
+use crate::stable_storage::key::{Key, KeyPrefix};
 use crate::{ChatEventInternal, EventsMap};
-use candid::Principal;
 use ic_stable_structures::storable::Bound;
 use ic_stable_structures::{StableBTreeMap, Storable};
 use serde::{Deserialize, Serialize};
+use serde_bytes::ByteBuf;
 use std::borrow::Cow;
 use std::cell::RefCell;
 use std::cmp::min;
@@ -39,6 +36,46 @@ pub fn init(memory: Memory) {
     MAP.set(Some(ChatEventsStableStorageInner::init(memory)));
 }
 
+// Used to efficiently read all events from stable memory when migrating a group into a community
+pub fn read_events_as_bytes(
+    chat: Chat,
+    after: Option<(Option<MessageIndex>, EventIndex)>,
+    max_bytes: usize,
+) -> Vec<((Option<MessageIndex>, EventIndex), ByteBuf)> {
+    let key = match after {
+        None => Key::new(KeyPrefix::new(chat, None), EventIndex::default()),
+        Some((thread_root_message_index, event_index)) => {
+            Key::new(KeyPrefix::new(chat, thread_root_message_index), event_index.incr())
+        }
+    };
+    with_map(|m| {
+        let mut total_bytes = 0;
+        m.range(key..)
+            .take_while(|(k, v)| {
+                if !k.matches_chat(chat) {
+                    return false;
+                }
+                total_bytes += v.0.len();
+                total_bytes < max_bytes
+            })
+            .map(|(k, v)| ((k.thread_root_message_index(), k.event_index()), v.0.into()))
+            .collect()
+    })
+}
+
+pub fn write_events_as_bytes(chat: Chat, events: Vec<((Option<MessageIndex>, EventIndex), ByteBuf)>) {
+    with_map_mut(|m| {
+        for ((thread_root_message_index, event_index), bytes) in events {
+            let prefix = KeyPrefix::new(chat, thread_root_message_index);
+            let key = Key::new(prefix, event_index);
+            let value = Value(bytes.into_vec());
+            // Check the event is valid. We could remove this once we're more confident
+            let _ = EventWrapperInternal::from(&value);
+            m.insert(key, value);
+        }
+    });
+}
+
 impl ChatEventsStableStorageInner {
     fn init(memory: Memory) -> ChatEventsStableStorageInner {
         ChatEventsStableStorageInner {
@@ -62,17 +99,9 @@ pub struct ChatEventsStableStorage {
 
 impl ChatEventsStableStorage {
     pub fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
-        let prefix = match (chat, thread_root_message_index) {
-            (Chat::Direct(c), None) => KeyPrefix::DirectChat(DirectChatKeyPrefix::new(Principal::from(c).into())),
-            (Chat::Direct(c), Some(m)) => {
-                KeyPrefix::DirectChatThread(DirectChatThreadKeyPrefix::new(Principal::from(c).into(), m))
-            }
-            (Chat::Group(_), None) => KeyPrefix::GroupChat(GroupChatKeyPrefix::default()),
-            (Chat::Group(_), Some(m)) => KeyPrefix::GroupChatThread(GroupChatThreadKeyPrefix::new(m)),
-            (Chat::Channel(_, c), None) => KeyPrefix::Channel(ChannelKeyPrefix::new(c)),
-            (Chat::Channel(_, c), Some(m)) => KeyPrefix::ChannelThread(ChannelThreadKeyPrefix::new(c, m)),
-        };
-        ChatEventsStableStorage { prefix }
+        ChatEventsStableStorage {
+            prefix: KeyPrefix::new(chat, thread_root_message_index),
+        }
     }
 
     fn key(&self, event_index: EventIndex) -> Key {
@@ -108,7 +137,7 @@ impl ChatEventsStableStorage {
 
 impl EventsMap for ChatEventsStableStorage {
     fn get(&self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
-        self.get_internal(event_index).map(|v| v.into())
+        self.get_internal(event_index).map(|v| (&v).into())
     }
 
     fn insert(&mut self, event: EventWrapperInternal<ChatEventInternal>) {
@@ -118,7 +147,7 @@ impl EventsMap for ChatEventsStableStorage {
 
     fn remove(&mut self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
         let key = self.key(event_index);
-        with_map_mut(|m| m.remove(&key)).map(|v| v.into())
+        with_map_mut(|m| m.remove(&key)).map(|v| (&v).into())
     }
 
     fn range<R: RangeBounds<EventIndex>>(
@@ -149,8 +178,8 @@ impl Storable for Value {
     const BOUND: Bound = Bound::Unbounded;
 }
 
-impl From<Value> for EventWrapperInternal<ChatEventInternal> {
-    fn from(value: Value) -> Self {
+impl From<&Value> for EventWrapperInternal<ChatEventInternal> {
+    fn from(value: &Value) -> Self {
         msgpack::deserialize_then_unwrap(value.0.as_ref())
     }
 }
@@ -229,13 +258,13 @@ impl Iterator for EventIter {
     type Item = EventWrapperInternal<ChatEventInternal>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next().map(|(_, v)| v.into())
+        self.iter.next().map(|(_, v)| (&v).into())
     }
 }
 
 impl DoubleEndedIterator for EventIter {
     fn next_back(&mut self) -> Option<Self::Item> {
-        self.iter.next_back().map(|(_, v)| v.into())
+        self.iter.next_back().map(|(_, v)| (&v).into())
     }
 }
 

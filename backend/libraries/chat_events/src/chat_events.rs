@@ -11,6 +11,7 @@ use rand::rngs::StdRng;
 use rand::Rng;
 use search::{Document, Query};
 use serde::{Deserialize, Serialize};
+use serde_bytes::ByteBuf;
 use sha2::{Digest, Sha256};
 use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
@@ -58,6 +59,10 @@ fn default_next_event_to_migrate_to_stable_memory() -> Option<(Option<MessageInd
 impl ChatEvents {
     pub fn init_stable_storage(memory: Memory) {
         stable_storage::init(memory)
+    }
+
+    pub fn import_events(chat: Chat, events: Vec<((Option<MessageIndex>, EventIndex), ByteBuf)>) {
+        stable_storage::write_events_as_bytes(chat, events);
     }
 
     pub fn set_stable_memory_key_prefixes(&mut self) {
@@ -182,6 +187,13 @@ impl ChatEvents {
 
     pub fn set_chat(&mut self, chat: Chat) {
         self.chat = chat;
+    }
+
+    pub fn read_events_as_bytes_from_stable_memory(
+        &self,
+        after: Option<(Option<MessageIndex>, EventIndex)>,
+    ) -> Vec<((Option<MessageIndex>, EventIndex), ByteBuf)> {
+        stable_storage::read_events_as_bytes(self.chat, after, 1_000_000)
     }
 
     pub fn iter_recently_updated_events(
