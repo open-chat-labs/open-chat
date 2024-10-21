@@ -43,7 +43,7 @@ import type {
     OptionalMessagePermissions,
     GroupMembershipUpdates,
 } from "openchat-shared";
-import { CommonResponses, emptyChatMetrics, UnsupportedValueError } from "openchat-shared";
+import { CommonResponses, emptyChatMetrics } from "openchat-shared";
 import {
     accessGateConfig,
     apiPermissionRole,
@@ -68,6 +68,7 @@ import {
 } from "../../utils/mapping";
 import type { Principal } from "@dfinity/principal";
 import { ReplicaNotUpToDateError } from "../error";
+import { mapCommonResponses, mapCommonResponsesKind } from "../common/commonResponseMapper";
 
 export function apiRole(role: MemberRole): GroupRole | undefined {
     switch (role) {
@@ -88,13 +89,10 @@ export function summaryResponse(value: GroupSummaryResponse): GroupCanisterSumma
     if (typeof value === "object" && "Success" in value) {
         return groupChatSummary(value.Success.summary);
     }
-    if (value === "CallerNotInGroup") {
-        return { kind: "caller_not_in_group" };
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiGroupCanisterSummaryResponse type received",
-        value,
-    );
+    return mapCommonResponsesKind(value, "GroupSummaryResponse") as Exclude<
+        GroupCanisterSummaryResponse,
+        GroupCanisterGroupChatSummary
+    >;
 }
 
 export function groupChatSummary(
@@ -158,16 +156,10 @@ export function summaryUpdatesResponse(
     if (typeof value === "object" && "Success" in value) {
         return groupChatSummaryUpdates(value.Success.updates);
     }
-    if (value === "SuccessNoUpdates") {
-        return { kind: "success_no_updates" };
-    }
-    if (value === "CallerNotInGroup") {
-        return { kind: "caller_not_in_group" };
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiGroupCanisterSummaryUpdatesResponse type received",
-        value,
-    );
+    return mapCommonResponsesKind(value, "GroupSummaryUpdates") as Exclude<
+        GroupCanisterSummaryUpdatesResponse,
+        GroupCanisterGroupChatSummaryUpdates
+    >;
 }
 
 export function groupMembershipUpdates(value: TGroupMembershipUpdates): GroupMembershipUpdates {
@@ -266,74 +258,21 @@ function apiOptionalMessagePermissions(
 }
 
 export function unblockUserResponse(value: GroupUnblockUserResponse): UnblockUserResponse {
-    if (value === "Success") {
-        return "success";
-    }
-    if (value === "GroupNotPublic") {
-        return "group_not_public";
-    }
-    if (value === "CallerNotInGroup") {
-        return "caller_not_in_group";
-    }
-    if (value === "NotAuthorized") {
-        return "not_authorized";
-    }
     if (value === "CannotUnblockSelf") {
         return "cannot_unblock_self";
     }
-    if (value === "UserSuspended") {
-        return "user_suspended";
-    }
-    if (value === "UserLapsed") {
-        return "user_lapsed";
-    }
-    if (value === "ChatFrozen") {
-        return "chat_frozen";
-    }
-    throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", value);
+    return mapCommonResponses(value, "GroupUnblockUser") as UnblockUserResponse;
 }
 
 export function blockUserResponse(value: GroupBlockUserResponse): BlockUserResponse {
-    if (value === "Success") {
-        return "success";
-    }
-    if (value === "GroupNotPublic") {
-        return "group_not_public";
-    }
-    if (value === "UserNotInGroup") {
-        return "user_not_in_group";
-    }
-    if (value === "CallerNotInGroup") {
-        return "caller_not_in_group";
-    }
-    if (value === "NotAuthorized") {
-        return "not_authorized";
-    }
     if (value === "CannotBlockSelf") {
         return "cannot_block_self";
     }
     if (value === "CannotBlockUser") {
         return "cannot_block_user";
     }
-    if (value === "UserSuspended") {
-        return "user_suspended";
-    }
-    if (value === "UserLapsed") {
-        return "user_lapsed";
-    }
-    if (value === "ChatFrozen") {
-        return "chat_frozen";
-    }
-    if (typeof value === "object" && "InternalError" in value) {
-        return "internal_error";
-    }
-    throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", value);
+    return mapCommonResponses(value, "GroupBlockUser") as BlockUserResponse;
 }
-//
-// // TODO fill this in
-// export function apiGateUpdate(): ApiGroupGateUpdate {
-//     return { NoChange: null };
-// }
 
 export function sendMessageResponse(value: GroupSendMessageResponse): SendMessageResponse {
     if (typeof value === "object") {
@@ -356,35 +295,13 @@ export function sendMessageResponse(value: GroupSendMessageResponse): SendMessag
             return { kind: "invalid_poll" };
         }
     }
-    if (value === "CallerNotInGroup") {
-        return { kind: "not_in_group" };
-    }
     if (value === "MessageEmpty") {
         return { kind: "message_empty" };
-    }
-    if (value === "NotAuthorized") {
-        return { kind: "not_authorized" };
-    }
-    if (value === "ThreadMessageNotFound") {
-        return { kind: "thread_message_not_found" };
-    }
-    if (value === "UserSuspended") {
-        return { kind: "user_suspended" };
-    }
-    if (value === "UserLapsed") {
-        return { kind: "user_lapsed" };
-    }
-    if (value === "ChatFrozen") {
-        return { kind: "chat_frozen" };
     }
     if (value === "RulesNotAccepted") {
         return { kind: "rules_not_accepted" };
     }
-    if (value === "UserLapsed") {
-        return { kind: "user_lapsed" };
-    }
-
-    throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", value);
+    return mapCommonResponsesKind(value, "GroupSendMessage") as SendMessageResponse;
 }
 
 export function removeMemberResponse(value: GroupRemoveParticipantResponse): RemoveMemberResponse {
