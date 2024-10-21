@@ -594,7 +594,7 @@ export function setMemberDisplayNameResponse(
     if (value === "DisplayNameInvalid") {
         return "display_name_invalid";
     }
-    return mapCommonResponses(value, "SetMemberDisplayName") as SetMemberDisplayNameResponse;
+    return mapCommonResponses(value, "SetMemberDisplayName");
 }
 
 export function followThreadResponse(

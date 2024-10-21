@@ -1,6 +1,13 @@
 import { UnsupportedValueError } from "openchat-shared";
 
-export function mapCommonResponses(value: CommonCanisterResponse, name: string): CommonResponse {
+export function mapCommonResponses<T extends CommonCanisterResponse>(
+    value: T,
+    name: string,
+): MapCommonResponseResult<T> {
+    return mapCommonResponsesInner(value, name) as MapCommonResponseResult<T>;
+}
+
+function mapCommonResponsesInner(value: CommonCanisterResponse, name: string): CommonResponse {
     if (typeof value === "string") {
         switch (value) {
             case "Success":
@@ -110,3 +117,54 @@ export type CommonResponse =
     | "user_not_in_community"
     | "user_not_in_group"
     | "user_suspended";
+
+// prettier-ignore
+export type MapCommonResponseResult<T extends CommonCanisterResponse> = T extends "Success"
+    ? "success"
+    : T extends "SuccessV2"
+    ? "success"
+    : T extends "SuccessNoUpdates"
+    ? "success_no_updates"
+    : T extends "AlreadyEnded"
+    ? "already_ended"
+    : T extends "CallerNotInGroup"
+    ? "caller_not_in_group"
+    : T extends "ChannelNotFound"
+    ? "channel_not_found"
+    : T extends "ChatFrozen"
+    ? "chat_frozen"
+    : T extends "ChatNotFound"
+    ? "chat_not_found"
+    : T extends "CommunityFrozen"
+    ? "community_frozen"
+    : T extends "CommunityPublic"
+    ? "community_public"
+    : T extends "GroupFrozen"
+    ? "group_frozen"
+    : T extends "GroupNotPublic"
+    ? "group_not_public"
+    : T extends "InternalError"
+    ? "internal_error"
+    : T extends "Invalid"
+    ? "invalid"
+    : T extends "MessageNotFound"
+    ? "message_not_found"
+    : T extends "NotAuthorized"
+    ? "not_authorized"
+    : T extends "ThreadMessageNotFound"
+    ? "thread_message_not_found"
+    : T extends "ThreadNotFound"
+    ? "thread_not_found"
+    : T extends "UserLapsed"
+    ? "user_lapsed"
+    : T extends "UserNotFound"
+    ? "user_not_found"
+    : T extends "UserNotInChannel"
+    ? "user_not_in_channel"
+    : T extends "UserNotInCommunity"
+    ? "user_not_in_community"
+    : T extends "UserNotInGroup"
+    ? "user_not_in_group"
+    : T extends "UserSuspended"
+    ? "user_suspended"
+    : never;

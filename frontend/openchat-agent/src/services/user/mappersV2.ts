@@ -427,7 +427,7 @@ export function setBioResponse(value: UserSetBioResponse): SetBioResponse {
     if (typeof value === "object" && "TooLong" in value) {
         return "bio_too_long";
     }
-    return mapCommonResponses(value, "SetBio") as SetBioResponse;
+    return mapCommonResponses(value, "SetBio");
 }
 
 export function searchDirectChatResponse(
@@ -1175,10 +1175,7 @@ export function deletedMessageResponse(
         return { kind: "message_hard_deleted" };
     }
     return {
-        kind: mapCommonResponses(value, "DeletedMessage") as Exclude<
-            "offline",
-            DeletedDirectMessageResponse["kind"]
-        >,
+        kind: mapCommonResponses(value, "DeletedMessage"),
     };
 }
 

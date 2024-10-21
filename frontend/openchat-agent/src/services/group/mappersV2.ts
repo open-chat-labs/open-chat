@@ -306,10 +306,7 @@ export function sendMessageResponse(value: GroupSendMessageResponse): SendMessag
         return { kind: "rules_not_accepted" };
     }
     return {
-        kind: mapCommonResponses(value, "GroupSendMessage") as Exclude<
-            "message_throttled",
-            SendMessageResponse["kind"]
-        >,
+        kind: mapCommonResponses(value, "GroupSendMessage"),
     };
 }
 
