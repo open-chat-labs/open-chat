@@ -207,6 +207,7 @@ fn process_send_message_result(
             let message_event = &result.message_event;
             let event_index = message_event.index;
             let message_index = message_event.event.message_index;
+            let message_id = message_event.event.message_id;
             let expires_at = message_event.expires_at;
 
             // Exclude suspended members from notification
@@ -307,6 +308,8 @@ fn process_send_message_result(
                         chat: Chat::Channel(community_id, channel_id),
                         thread_root_message_index,
                         message_index,
+                        message_id,
+                        event_index,
                         activity,
                         timestamp: now,
                         user_id: Some(sender),

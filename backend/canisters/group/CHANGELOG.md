@@ -10,6 +10,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Add `message_id` and `event_index` to `MessageActivityEvent` ([#6623](https://github.com/open-chat-labs/open-chat/pull/6623))
+
+## [[2.0.1401](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1401-group)] - 2024-10-18
+
+### Changed
+
 - Only deserialize from old log state ([#6616](https://github.com/open-chat-labs/open-chat/pull/6616))
 
 ## [[2.0.1398](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1398-group)] - 2024-10-18

@@ -155,6 +155,7 @@ fn process_send_message_result(
             let message_event = &result.message_event;
             let event_index = message_event.index;
             let message_index = message_event.event.message_index;
+            let message_id = message_event.event.message_id;
             let expires_at = message_event.expires_at;
 
             register_timer_jobs(thread_root_message_index, message_event, now, &mut state.data);
@@ -244,6 +245,8 @@ fn process_send_message_result(
                         chat: Chat::Group(chat_id),
                         thread_root_message_index,
                         message_index,
+                        message_id,
+                        event_index,
                         activity,
                         timestamp: now,
                         user_id: Some(sender),
