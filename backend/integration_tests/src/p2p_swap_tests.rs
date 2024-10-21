@@ -560,7 +560,7 @@ fn deposit_refunded_if_swap_expires() {
     );
 }
 
-fn verify_swap_status<F: FnOnce(&P2PSwapStatus) -> bool>(event: ChatEvent, predicate: F) {
+pub(crate) fn verify_swap_status<F: FnOnce(&P2PSwapStatus) -> bool>(event: ChatEvent, predicate: F) {
     let ChatEvent::Message(m) = event else {
         panic!("Event is not a message. Event: {event:?}")
     };
