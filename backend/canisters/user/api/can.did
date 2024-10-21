@@ -1279,6 +1279,8 @@ type MessageActivityEvent = record {
     chat : Chat;
     thread_root_message_index : opt MessageIndex;
     message_index : MessageIndex;
+    message_id : MessageId;
+    event_index : EventIndex;
     activity : MessageActivity;
     timestamp : TimestampMillis;
     user_id : opt UserId;

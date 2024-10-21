@@ -297,6 +297,8 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
                             chat: Chat::Direct(caller_user_id.into()),
                             thread_root_message_index,
                             message_index: message_event.event.message_index,
+                            message_id: message_event.event.message_id,
+                            event_index: message_event.index,
                             activity: MessageActivity::Reaction,
                             timestamp: now,
                             user_id: Some(caller_user_id),
@@ -336,6 +338,8 @@ fn p2p_swap_change_status(args: P2PSwapStatusChange, caller_user_id: UserId, sta
                     chat: Chat::Direct(caller_user_id.into()),
                     thread_root_message_index,
                     message_index: message_event.event.message_index,
+                    message_id: message_event.event.message_id,
+                    event_index: message_event.index,
                     activity: MessageActivity::P2PSwapAccepted,
                     timestamp: now,
                     user_id: Some(caller_user_id),
@@ -368,7 +372,7 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
                 .tip_message::<CdkRuntime>(tip_message_args, EventIndex::default(), None),
             TipMessageResult::Success
         ) {
-            if let Some(event) = chat
+            if let Some(message_event) = chat
                 .events
                 .main_events_reader()
                 .message_event_internal(args.message_id.into())
@@ -376,8 +380,8 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
                 let notification = Notification::DirectMessageTipped(DirectMessageTipped {
                     them: caller_user_id,
                     thread_root_message_index,
-                    message_index: event.event.message_index,
-                    message_event_index: event.index,
+                    message_index: message_event.event.message_index,
+                    message_event_index: message_event.index,
                     username: args.username,
                     display_name: args.display_name,
                     tip: format_crypto_amount_with_symbol(args.amount, args.decimals, args.token.token_symbol()),
@@ -389,7 +393,9 @@ fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, stat
                     MessageActivityEvent {
                         chat: Chat::Direct(caller_user_id.into()),
                         thread_root_message_index,
-                        message_index: event.event.message_index,
+                        message_index: message_event.event.message_index,
+                        message_id: message_event.event.message_id,
+                        event_index: message_event.index,
                         activity: MessageActivity::Tip,
                         timestamp: now,
                         user_id: Some(caller_user_id),

@@ -276,6 +276,9 @@ export function achievementType(candid: ApiAchievement): Achievement {
     if ("JoinedGatedGroupOrCommunity" in candid) {
         return "joined_gated_group_or_community";
     }
+    if ("SetPin" in candid) {
+        return "set_pin";
+    }
     if ("StartedCall" in candid) {
         return "started_call";
     }

@@ -2021,7 +2021,7 @@ type Achievement = variant {
     ReceivedCrypto;
     HadMessageReactedTo;
     HadMessageTipped;
-    JoinedCall;
+    JoinedCall; 
     ProvedUniquePersonhood;
     SetCommunityDisplayName;
     ChangedTheme;
@@ -2042,6 +2042,7 @@ type Achievement = variant {
     SetGroupAccessGate;
     SetCommunityAccessGate;
     JoinedGatedGroupOrCommunity;
+    SetPin;
     OwnGroupWithOneDiamondMember;
     OwnGroupWithTenDiamondMembers;
     OwnGroupWithOneHundredDiamondMembers;

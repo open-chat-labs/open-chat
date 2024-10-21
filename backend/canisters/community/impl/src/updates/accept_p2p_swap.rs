@@ -42,7 +42,7 @@ async fn accept_p2p_swap(args: Args) -> Response {
                 }
 
                 if let Some(channel) = state.data.channels.get(&channel_id) {
-                    if let Some((message, _)) = channel.chat.events.message_internal(
+                    if let Some((message, event_index)) = channel.chat.events.message_internal(
                         EventIndex::default(),
                         thread_root_message_index,
                         message_id.into(),
@@ -55,6 +55,8 @@ async fn accept_p2p_swap(args: Args) -> Response {
                                 chat: Chat::Channel(community_id, channel.id),
                                 thread_root_message_index,
                                 message_index: message.message_index,
+                                message_id: message.message_id,
+                                event_index,
                                 activity: MessageActivity::P2PSwapAccepted,
                                 timestamp: state.env.now(),
                                 user_id: Some(user_id),
