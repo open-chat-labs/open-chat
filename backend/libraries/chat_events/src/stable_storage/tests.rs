@@ -425,12 +425,12 @@ fn custom_content() {
 }
 
 fn test_deserialization(bytes: &[u8]) -> MessageContentInternal {
-    let value = Value::from_bytes(Cow::Borrowed(bytes));
-    assert!(value.0.index > EventIndex::default());
-    if let ChatEventInternal::Message(m) = value.0.event {
+    let value = EventWrapperInternal::from(&Value::from_bytes(Cow::Borrowed(bytes)));
+    assert!(value.index > EventIndex::default());
+    if let ChatEventInternal::Message(m) = value.event {
         m.content
     } else {
-        panic!("{:?}", value.0);
+        panic!("{:?}", value);
     }
 }
 
