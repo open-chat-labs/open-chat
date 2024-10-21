@@ -7,7 +7,9 @@ use chat_events::MessageContentInternal;
 use ledger_utils::process_transaction;
 use serde::{Deserialize, Serialize};
 use tracing::error;
-use types::{BlobReference, CanisterId, ChannelId, ChatId, MessageId, MessageIndex, P2PSwapStatus, PendingCryptoTransaction, UserId};
+use types::{
+    BlobReference, CanisterId, ChannelId, ChatId, MessageId, MessageIndex, P2PSwapStatus, PendingCryptoTransaction, UserId,
+};
 use utils::consts::MEMO_PRIZE_REFUND;
 use utils::time::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 
@@ -215,10 +217,12 @@ impl Job for HardDeleteMessageContentJob {
                         }
                         MessageContentInternal::P2PSwap(swap) => {
                             if matches!(swap.status, P2PSwapStatus::Open) {
-                                follow_on_jobs.push(TimerJob::CancelP2PSwapInEscrowCanister(CancelP2PSwapInEscrowCanisterJob {
-                                    swap_id: swap.swap_id,
-                                    attempt: 0,
-                                }));
+                                follow_on_jobs.push(TimerJob::CancelP2PSwapInEscrowCanister(
+                                    CancelP2PSwapInEscrowCanisterJob {
+                                        swap_id: swap.swap_id,
+                                        attempt: 0,
+                                    },
+                                ));
                             }
                         }
                         _ => {}
