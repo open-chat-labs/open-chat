@@ -49,6 +49,10 @@ impl Key {
     pub fn new(prefix: KeyPrefix, event_index: EventIndex) -> Key {
         Key { prefix, event_index }
     }
+
+    pub fn event_index(&self) -> EventIndex {
+        self.event_index
+    }
 }
 
 impl KeyPrefix {
