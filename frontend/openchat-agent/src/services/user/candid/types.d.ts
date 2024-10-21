@@ -77,7 +77,6 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'AppointedGroupOwner' : null } |
   { 'OwnGroupWithTenDiamondMembers' : null } |
   { 'JoinedGatedGroupOrCommunity' : null } |
-  { 'SetPin' : null } |
   { 'JoinedGroup' : null } |
   { 'StartedCall' : null } |
   { 'ChosenAsGroupOwner' : null } |
@@ -105,6 +104,7 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'SentPrize' : null } |
   { 'FollowedThread' : null } |
   { 'SetBio' : null } |
+  { 'SetPin' : null } |
   { 'OwnGroupWithOneThousandDiamondMembers' : null } |
   { 'SentP2PSwapOffer' : null } |
   { 'QuoteReplied' : null } |
@@ -1136,7 +1136,6 @@ export interface GroupInviteCodeChanged {
 }
 export interface GroupMatch {
   'id' : ChatId,
-  'gate_config' : [] | [AccessGateConfig],
   'subtype' : [] | [GroupSubtype],
   'gate' : [] | [AccessGate],
   'name' : string,
@@ -1510,6 +1509,8 @@ export interface MessageActivityEvent {
   'chat' : Chat,
   'user_id' : [] | [UserId],
   'timestamp' : TimestampMillis,
+  'message_id' : MessageId,
+  'event_index' : EventIndex,
   'thread_root_message_index' : [] | [MessageIndex],
   'activity' : MessageActivity,
   'message_index' : MessageIndex,

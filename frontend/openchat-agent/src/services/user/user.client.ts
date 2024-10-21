@@ -1460,10 +1460,11 @@ export class UserClient extends CandidService {
         );
     }
 
-    markActivityFeedRead(timestamp: bigint): Promise<void> {
+    markActivityFeedRead(readUpTo: bigint): Promise<void> {
+        console.log("Marking activity read up to: ", readUpTo);
         return this.handleResponse(
             this.userService.mark_message_activity_feed_read({
-                read_up_to: timestamp,
+                read_up_to: readUpTo,
             }),
             toVoid,
         );

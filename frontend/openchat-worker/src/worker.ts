@@ -1827,6 +1827,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.messageActivityFeed());
                 break;
 
+            case "markActivityFeedRead":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.markActivityFeedRead(payload.readUpTo),
+                );
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }

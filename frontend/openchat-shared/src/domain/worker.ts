@@ -400,7 +400,13 @@ export type WorkerRequest =
     | SetCommunityReferral
     | GetExternalAchievements
     | CancelInvites
-    | MessageActivityFeed;
+    | MessageActivityFeed
+    | MarkActivityFeedRead;
+
+type MarkActivityFeedRead = {
+    kind: "markActivityFeedRead";
+    readUpTo: bigint;
+};
 
 type MessageActivityFeed = {
     kind: "messageActivityFeed";
@@ -2164,4 +2170,6 @@ export type WorkerResult<T> = T extends Init
     ? boolean
     : T extends MessageActivityFeed
     ? MessageActivityFeedResponse
+    : T extends MarkActivityFeedRead
+    ? void
     : never;

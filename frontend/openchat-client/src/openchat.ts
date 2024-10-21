@@ -1443,6 +1443,13 @@ export class OpenChat extends OpenChatAgentWorker {
         return results[0];
     }
 
+    markActivityFeedRead(readUpTo: bigint) {
+        return this.sendRequest({
+            kind: "markActivityFeedRead",
+            readUpTo,
+        });
+    }
+
     messageActivityFeed(): Promise<MessageActivityFeedResponse> {
         return this.sendRequest({
             kind: "messageActivityFeed",

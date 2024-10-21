@@ -3751,6 +3751,10 @@ export class OpenChatAgent extends EventTarget {
         };
     }
 
+    markActivityFeedRead(readUpTo: bigint): Promise<void> {
+        return this.userClient.markActivityFeedRead(readUpTo);
+    }
+
     async messageActivityFeed(): Promise<MessageActivityFeedResponse> {
         // load what we have from the cache
         const cachedEvents = await getActivityFeedEvents();
@@ -3774,65 +3778,74 @@ export class OpenChatAgent extends EventTarget {
         // combine the cached events and the new events
         const combined = [...result.events, ...cachedEvents];
 
+        setActivityFeedEvents(combined.slice(0, 1000));
+
+        const rehydrated = await this.hydrateActivityFeedEvents(combined);
+
         console.log("Combined activity events: ", combined);
 
         // make sure we don't cache more than 1000 events
-        setActivityFeedEvents(combined.slice(0, 1000));
 
         // return the combined results
         return {
             total: result.total,
-            events: combined,
+            events: rehydrated,
         };
     }
 
     async hydrateActivityFeedEvents(
         activityEvents: MessageActivityEvent[],
     ): Promise<MessageActivityEvent[]> {
-        const eventsIdsByMessageContext = activityEvents.reduce((map, event) => {
-            const eventIds = map.get(event.messageContext) ?? [];
-            eventIds.push(event.eventId);
-            map.set(event.messageContext, eventIds);
+        const eventIndexesByMessageContext = activityEvents.reduce((map, event) => {
+            const eventIndexes = map.get(event.messageContext) ?? [];
+            eventIndexes.push(event.eventIndex);
+            map.set(event.messageContext, eventIndexes);
             return map;
         }, new AsyncMessageContextMap<number>());
 
-        const messagesByMessageContext = await eventsIdsByMessageContext.asyncMap((ctx, idxs) => {
-            const chatId = ctx.chatId;
-            const chatKind = chatId.kind;
+        const messagesByMessageContext = await eventIndexesByMessageContext.asyncMap(
+            (ctx, idxs) => {
+                const chatId = ctx.chatId;
+                const chatKind = chatId.kind;
 
-            if (chatKind === "direct_chat") {
-                return this.userClient
-                    .chatEventsByIndex(idxs, chatId, ctx.threadRootMessageIndex, undefined)
-                    .then((resp) => this.messagesFromEventsResponse(ctx, resp));
-            } else if (chatKind === "group_chat") {
-                const client = this.getGroupClient(chatId.groupId);
-                return client
-                    .chatEventsByIndex(idxs, ctx.threadRootMessageIndex, undefined)
-                    .then((resp) => this.messagesFromEventsResponse(ctx, resp));
-            } else if (chatKind === "channel") {
-                const client = this.communityClient(chatId.communityId);
-                return client
-                    .eventsByIndex(chatId, idxs, ctx.threadRootMessageIndex, undefined)
-                    .then((resp) => this.messagesFromEventsResponse(ctx, resp));
-            } else {
-                throw new UnsupportedValueError("unknown chatid kind supplied", chatId);
-            }
-        });
+                if (chatKind === "direct_chat") {
+                    return this.userClient
+                        .chatEventsByIndex(idxs, chatId, ctx.threadRootMessageIndex, undefined)
+                        .then((resp) => this.messagesFromEventsResponse(ctx, resp));
+                } else if (chatKind === "group_chat") {
+                    const client = this.getGroupClient(chatId.groupId);
+                    return client
+                        .chatEventsByIndex(idxs, ctx.threadRootMessageIndex, undefined)
+                        .then((resp) => this.messagesFromEventsResponse(ctx, resp));
+                } else if (chatKind === "channel") {
+                    const client = this.communityClient(chatId.communityId);
+                    return client
+                        .eventsByIndex(chatId, idxs, ctx.threadRootMessageIndex, undefined)
+                        .then((resp) => this.messagesFromEventsResponse(ctx, resp));
+                } else {
+                    throw new UnsupportedValueError("unknown chatid kind supplied", chatId);
+                }
+            },
+        );
 
         const activityEventsByMessageId = activityEvents.reduce((map, event) => {
             map.set(event.messageId, event);
             return map;
         }, new MessageMap<MessageActivityEvent>());
 
+        const hydrated: MessageActivityEvent[] = [];
         messagesByMessageContext.forEach((events) => {
             events.forEach((ev) => {
                 const activityEv = activityEventsByMessageId.get(ev.event.messageId);
                 if (activityEv !== undefined) {
-                    activityEv.message = ev.event;
+                    hydrated.push({
+                        ...activityEv,
+                        message: ev.event,
+                    });
                 }
             });
         });
 
-        return activityEvents;
+        return hydrated;
     }
 }

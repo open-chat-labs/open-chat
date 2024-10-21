@@ -28,6 +28,10 @@
         client.messageActivityFeed().then((resp) => {
             console.log("MessageActivity", resp);
             activityEvents = resp.events;
+
+            if (activityEvents.length > 0) {
+                client.markActivityFeedRead(activityEvents[0].timestamp);
+            }
         });
     });
 </script>
@@ -85,6 +89,12 @@
 <style lang="scss">
     .header {
         @include left_panel_header();
+    }
+    .body {
+        overflow: auto;
+        flex: auto;
+        @include nice-scrollbar();
+        position: relative;
     }
     .activity-event {
         position: relative;
