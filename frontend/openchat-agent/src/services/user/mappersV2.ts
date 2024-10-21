@@ -154,6 +154,7 @@ import { Principal } from "@dfinity/principal";
 import type { PinNumberSettings } from "openchat-shared";
 import { pinNumberFailureResponseV2 } from "../common/pinNumberErrorMapper";
 import { signedDelegation } from "../../utils/id";
+import { mapCommonResponses } from "../common/commonResponseMapper";
 
 export function chitEventsResponse(value: UserChitEventsResponse): ChitEventsResponse {
     if ("Success" in value) {
@@ -423,16 +424,10 @@ export function publicProfileResponse(value: UserPublicProfileResponse): PublicP
 }
 
 export function setBioResponse(value: UserSetBioResponse): SetBioResponse {
-    if (value === "Success") {
-        return "success";
-    }
-    if (value === "UserSuspended") {
-        return "user_suspended";
-    }
     if (typeof value === "object" && "TooLong" in value) {
         return "bio_too_long";
     }
-    throw new UnsupportedValueError(`Unexpected ApiSetBioResponse type received`, value);
+    return mapCommonResponses(value, "SetBio");
 }
 
 export function searchDirectChatResponse(
@@ -767,7 +762,7 @@ function communitiesInitial(value: UserInitialStateCommunitiesInitial): Communit
     };
 }
 
-function chatIndentifier(value: TChat): ChatIdentifier {
+function chatIdentifier(value: TChat): ChatIdentifier {
     if ("Group" in value) {
         return { kind: "group_chat", groupId: principalBytesToString(value.Group) };
     }
@@ -788,8 +783,8 @@ function favouriteChatsInitial(
     value: UserInitialStateFavouriteChatsInitial,
 ): FavouriteChatsInitial {
     return {
-        chats: value.chats.map(chatIndentifier),
-        pinned: value.pinned.map(chatIndentifier),
+        chats: value.chats.map(chatIdentifier),
+        pinned: value.pinned.map(chatIdentifier),
     };
 }
 
@@ -909,8 +904,8 @@ export function favouriteChatsUpdates(
     value: UserUpdatesFavouriteChatsUpdates,
 ): FavouriteChatsUpdates {
     return {
-        chats: mapOptional(value.chats, (c) => c.map(chatIndentifier)),
-        pinned: mapOptional(value.pinned, (c) => c.map(chatIndentifier)),
+        chats: mapOptional(value.chats, (c) => c.map(chatIdentifier)),
+        pinned: mapOptional(value.pinned, (c) => c.map(chatIdentifier)),
     };
 }
 
@@ -1176,22 +1171,12 @@ export function deletedMessageResponse(
             };
         }
     }
-    if (value === "ChatNotFound") {
-        return { kind: "chat_not_found" };
-    }
-    if (value === "NotAuthorized") {
-        return { kind: "not_authorized" };
-    }
-    if (value === "MessageNotFound") {
-        return { kind: "message_not_found" };
-    }
     if (value === "MessageHardDeleted") {
         return { kind: "message_hard_deleted" };
     }
-    throw new UnsupportedValueError(
-        "Unexpected ApiDeletedDirectMessageResponse type received",
-        value,
-    );
+    return {
+        kind: mapCommonResponses(value, "DeletedMessage"),
+    };
 }
 
 export function setMessageReminderResponse(
