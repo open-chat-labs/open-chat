@@ -702,6 +702,7 @@
         "set_community_display_name": "コミュニティの表示名を設定する",
         "set_display_name": "表示名を更新する",
         "set_group_access_gate": "グループ/チャンネルアクセスゲートを設定する",
+        "set_pin": "ウォレットにPIN番号を設定する",
         "showChitPopup": "私の成果を通知する",
         "started_call": "ビデオ通話を開始する",
         "streak_100": "100日連続達成",

@@ -39,7 +39,7 @@ async fn accept_p2p_swap(args: Args) -> Response {
                         .notify_user_of_achievement(user_id, Achievement::AcceptedP2PSwapOffer);
                 }
 
-                if let Some((message, _)) =
+                if let Some((message, event_index)) =
                     state
                         .data
                         .chat
@@ -52,6 +52,8 @@ async fn accept_p2p_swap(args: Args) -> Response {
                             chat: Chat::Group(state.env.canister_id().into()),
                             thread_root_message_index,
                             message_index: message.message_index,
+                            message_id: message.message_id,
+                            event_index,
                             activity: MessageActivity::P2PSwapAccepted,
                             timestamp: state.env.now(),
                             user_id: Some(user_id),

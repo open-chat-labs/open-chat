@@ -702,6 +702,7 @@
         "set_community_display_name": "Set a community display name",
         "set_display_name": "Update your display name",
         "set_group_access_gate": "Set a group/channel access gate",
+        "set_pin": "Set a pin number on your wallet",
         "showChitPopup": "Notify me of my achievements",
         "started_call": "Start a video call",
         "streak_100": "Achieve a 100 day streak",
