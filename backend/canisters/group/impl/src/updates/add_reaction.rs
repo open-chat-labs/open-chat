@@ -66,21 +66,23 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                                 }),
                             );
                         }
-                    }
 
-                    state.data.user_event_sync_queue.push(
-                        sender,
-                        GroupCanisterEvent::MessageActivity(MessageActivityEvent {
-                            chat: Chat::Group(chat_id),
-                            thread_root_message_index,
-                            message_index: message.message_index,
-                            message_id: message.message_id,
-                            event_index,
-                            activity: MessageActivity::Reaction,
-                            timestamp: state.env.now(),
-                            user_id: Some(user_id),
-                        }),
-                    );
+                        if state.data.chat.members.contains(&sender) {
+                            state.data.user_event_sync_queue.push(
+                                sender,
+                                GroupCanisterEvent::MessageActivity(MessageActivityEvent {
+                                    chat: Chat::Group(chat_id),
+                                    thread_root_message_index,
+                                    message_index: message.message_index,
+                                    message_id: message.message_id,
+                                    event_index,
+                                    activity: MessageActivity::Reaction,
+                                    timestamp: state.env.now(),
+                                    user_id: Some(user_id),
+                                }),
+                            );
+                        }
+                    }
                 }
 
                 if args.new_achievement {

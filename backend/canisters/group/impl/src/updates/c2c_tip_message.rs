@@ -47,41 +47,45 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                 args.thread_root_message_index,
                 args.message_id.into(),
             ) {
-                let chat_id = state.env.canister_id().into();
+                if user_id != args.recipient {
+                    let chat_id = state.env.canister_id().into();
 
-                state.push_notification(
-                    vec![args.recipient],
-                    Notification::GroupMessageTipped(GroupMessageTipped {
-                        chat_id,
-                        thread_root_message_index: args.thread_root_message_index,
-                        message_index: message.message_index,
-                        message_event_index: event_index,
-                        group_name: state.data.chat.name.value.clone(),
-                        tipped_by: user_id,
-                        tipped_by_name: args.username,
-                        tipped_by_display_name: args.display_name,
-                        tip: format_crypto_amount_with_symbol(args.amount, args.decimals, args.token.token_symbol()),
-                        group_avatar_id: state.data.chat.avatar.as_ref().map(|a| a.id),
-                    }),
-                );
+                    state.push_notification(
+                        vec![args.recipient],
+                        Notification::GroupMessageTipped(GroupMessageTipped {
+                            chat_id,
+                            thread_root_message_index: args.thread_root_message_index,
+                            message_index: message.message_index,
+                            message_event_index: event_index,
+                            group_name: state.data.chat.name.value.clone(),
+                            tipped_by: user_id,
+                            tipped_by_name: args.username,
+                            tipped_by_display_name: args.display_name,
+                            tip: format_crypto_amount_with_symbol(args.amount, args.decimals, args.token.token_symbol()),
+                            group_avatar_id: state.data.chat.avatar.as_ref().map(|a| a.id),
+                        }),
+                    );
 
-                state
-                    .data
-                    .notify_user_of_achievement(args.recipient, Achievement::HadMessageTipped);
+                    if state.data.chat.members.contains(&args.recipient) {
+                        state.data.user_event_sync_queue.push(
+                            args.recipient,
+                            GroupCanisterEvent::MessageActivity(MessageActivityEvent {
+                                chat: Chat::Group(chat_id),
+                                thread_root_message_index: args.thread_root_message_index,
+                                message_index: message.message_index,
+                                message_id: message.message_id,
+                                event_index,
+                                activity: MessageActivity::Tip,
+                                timestamp: now,
+                                user_id: Some(user_id),
+                            }),
+                        );
+                    }
 
-                state.data.user_event_sync_queue.push(
-                    args.recipient,
-                    GroupCanisterEvent::MessageActivity(MessageActivityEvent {
-                        chat: Chat::Group(chat_id),
-                        thread_root_message_index: args.thread_root_message_index,
-                        message_index: message.message_index,
-                        message_id: message.message_id,
-                        event_index,
-                        activity: MessageActivity::Tip,
-                        timestamp: now,
-                        user_id: Some(user_id),
-                    }),
-                );
+                    state
+                        .data
+                        .notify_user_of_achievement(args.recipient, Achievement::HadMessageTipped);
+                }
             }
 
             handle_activity_notification(state);

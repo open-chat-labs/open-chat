@@ -51,43 +51,47 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                         args.thread_root_message_index,
                         args.message_id.into(),
                     ) {
-                        let community_id = state.env.canister_id().into();
+                        if user_id != args.recipient {
+                            let community_id = state.env.canister_id().into();
 
-                        state.data.user_event_sync_queue.push(
-                            message.sender,
-                            CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
-                                chat: Chat::Channel(community_id, channel.id),
+                            if channel.chat.members.contains(&message.sender) {
+                                state.data.user_event_sync_queue.push(
+                                    message.sender,
+                                    CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
+                                        chat: Chat::Channel(community_id, channel.id),
+                                        thread_root_message_index: args.thread_root_message_index,
+                                        message_index: message.message_index,
+                                        message_id: message.message_id,
+                                        event_index,
+                                        activity: MessageActivity::Tip,
+                                        timestamp: now,
+                                        user_id: Some(user_id),
+                                    }),
+                                );
+                            }
+
+                            let notification = Notification::ChannelMessageTipped(ChannelMessageTipped {
+                                community_id,
+                                channel_id: channel.id,
                                 thread_root_message_index: args.thread_root_message_index,
                                 message_index: message.message_index,
-                                message_id: message.message_id,
-                                event_index,
-                                activity: MessageActivity::Tip,
-                                timestamp: now,
-                                user_id: Some(user_id),
-                            }),
-                        );
+                                message_event_index: event_index,
+                                community_name: state.data.name.clone(),
+                                channel_name: channel.chat.name.value.clone(),
+                                tipped_by: user_id,
+                                tipped_by_name: args.username,
+                                tipped_by_display_name: args.display_name,
+                                tip: format_crypto_amount_with_symbol(args.amount, args.decimals, args.token.token_symbol()),
+                                community_avatar_id: state.data.avatar.as_ref().map(|a| a.id),
+                                channel_avatar_id: channel.chat.avatar.as_ref().map(|a| a.id),
+                            });
+                            state.push_notification(vec![args.recipient], notification);
 
-                        let notification = Notification::ChannelMessageTipped(ChannelMessageTipped {
-                            community_id,
-                            channel_id: channel.id,
-                            thread_root_message_index: args.thread_root_message_index,
-                            message_index: message.message_index,
-                            message_event_index: event_index,
-                            community_name: state.data.name.clone(),
-                            channel_name: channel.chat.name.value.clone(),
-                            tipped_by: user_id,
-                            tipped_by_name: args.username,
-                            tipped_by_display_name: args.display_name,
-                            tip: format_crypto_amount_with_symbol(args.amount, args.decimals, args.token.token_symbol()),
-                            community_avatar_id: state.data.avatar.as_ref().map(|a| a.id),
-                            channel_avatar_id: channel.chat.avatar.as_ref().map(|a| a.id),
-                        });
-                        state.push_notification(vec![args.recipient], notification);
+                            state
+                                .data
+                                .notify_user_of_achievement(args.recipient, Achievement::HadMessageTipped);
+                        }
                     }
-
-                    state
-                        .data
-                        .notify_user_of_achievement(args.recipient, Achievement::HadMessageTipped);
 
                     handle_activity_notification(state);
                     Success
