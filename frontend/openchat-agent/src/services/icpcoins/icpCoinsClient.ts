@@ -6,7 +6,7 @@ import { getLatestResponse } from "./mappers";
 
 const ICPCOINS_CANISTER_ID = "u45jl-liaaa-aaaam-abppa-cai";
 
-export class ICPCoinsClient extends CandidService {
+export class IcpCoinsClient extends CandidService {
     private service: ICPCoinsService;
 
     constructor(identity: Identity, agent: HttpAgent) {
