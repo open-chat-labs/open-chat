@@ -179,6 +179,7 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
                 chat,
                 date_imported: None, // This is only set once everything is complete
             });
+            state.data.stable_memory_event_migration_complete = false;
 
             state.data.timer_jobs.enqueue_job(
                 TimerJob::ProcessGroupImportChannelMembers(ProcessGroupImportChannelMembersJob {
