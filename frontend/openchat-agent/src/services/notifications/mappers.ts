@@ -16,10 +16,6 @@ import type {
 } from "openchat-shared";
 import { identity, optional } from "../../utils/mapping";
 import type {
-    ApiMuteNotificationsResponse,
-    ApiUnmuteNotificationsResponse,
-} from "../user/candid/idl";
-import type {
     ApiNotification,
     ApiAddedToChannelNotification,
     ApiChannelMessageNotification,
@@ -39,17 +35,6 @@ import type {
     NotificationsIndexSubscriptionExistsResponse,
     UserMuteNotificationsResponse,
 } from "../../typebox";
-
-export function muteNotificationsResponse(
-    candid: ApiMuteNotificationsResponse | ApiUnmuteNotificationsResponse,
-): ToggleMuteNotificationResponse {
-    if ("Success" in candid) {
-        return "success";
-    } else {
-        console.warn("MuteNotification failed with: ", candid);
-        return "failure";
-    }
-}
 
 export function toggleNotificationsResponse(
     value:
