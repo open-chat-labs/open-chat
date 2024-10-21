@@ -75,6 +75,8 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                         chat: Chat::Group(chat_id),
                         thread_root_message_index: args.thread_root_message_index,
                         message_index: message.message_index,
+                        message_id: message.message_id,
+                        event_index,
                         activity: MessageActivity::Tip,
                         timestamp: now,
                         user_id: Some(user_id),

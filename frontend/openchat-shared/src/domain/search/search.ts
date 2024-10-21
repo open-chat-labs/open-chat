@@ -3,7 +3,6 @@ import type {
     ChatIdentifier,
     GroupChatIdentifier,
     GroupSubtype,
-    MessageContent,
 } from "../chat/chat";
 import type { ChannelMatch, CommunityIdentifier } from "../community";
 import type { DataContent } from "../data/data";
@@ -32,8 +31,6 @@ export interface CommunityMatch {
 export type MessageMatch = {
     chatId: ChatIdentifier;
     messageIndex: number;
-    content: MessageContent;
-    sender: string;
     score: number;
 };
 

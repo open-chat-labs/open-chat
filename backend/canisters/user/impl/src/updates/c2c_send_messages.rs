@@ -187,6 +187,8 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
                 chat: Chat::Direct(chat_id),
                 thread_root_message_index,
                 message_index: message_event.event.message_index,
+                message_id: message_event.event.message_id,
+                event_index: message_event.index,
                 activity: MessageActivity::Crypto,
                 timestamp: args.now,
                 user_id: Some(args.sender),

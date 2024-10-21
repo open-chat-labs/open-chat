@@ -570,7 +570,7 @@ impl GroupChatCore {
 
         let matches = self
             .events
-            .search_messages(member.min_visible_message_index(), query, users, max_results, user_id);
+            .search_messages(member.min_visible_message_index(), query, users, max_results);
 
         Success(matches)
     }
