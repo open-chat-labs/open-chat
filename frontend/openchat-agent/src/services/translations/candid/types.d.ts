@@ -1166,8 +1166,6 @@ export interface MessageIndexRange {
   'start' : MessageIndex,
 }
 export interface MessageMatch {
-  'content' : MessageContent,
-  'sender' : UserId,
   'score' : number,
   'message_index' : MessageIndex,
 }

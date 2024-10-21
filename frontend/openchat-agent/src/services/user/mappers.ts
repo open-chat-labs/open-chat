@@ -539,12 +539,9 @@ export function searchDirectChatResponse(
 }
 
 export function messageMatch(candid: ApiMessageMatch, chatId: ChatIdentifier): MessageMatch {
-    const sender = candid.sender.toString();
     return {
         chatId,
         messageIndex: candid.message_index,
-        content: messageContent(candid.content, sender),
-        sender,
         score: candid.score,
     };
 }
