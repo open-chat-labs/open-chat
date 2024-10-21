@@ -203,7 +203,7 @@ ic-certificate-verification = "2.4.0"
 ic-certification = "2.5.0"
 ic-ledger-types = "0.13.0"
 ic_principal = "0.1.1"
-ic-stable-structures = "0.6.4"
+ic-stable-structures = "0.6.5"
 ic-transport-types = "0.37.1"
 ic-utils = "0.37.0"
 ic-verifiable-credentials = { git = "https://github.com/dfinity/verifiable-credentials-sdk", rev = "d5e1bb0f8c0bf99ad565620e18dc402a9ac3317a" }
@@ -261,5 +261,6 @@ debug = false
 
 [patch.crates-io]
 ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "f20bca1b4210b37effcb3c5d82adbb05c6647cbd" }
+ic-stable-structures = { git = "https://github.com/hpeebles/stable-structures", rev = "c8cdb408e8a6217788aab82d994cb359e79bfcea" }
 rmp-serde = { git = "https://github.com/hpeebles/msgpack-rust", rev = "832a3f48e67eea56c869715ae6e1045583dd011b" }
 ts-rs = { git = "https://github.com/hpeebles/ts-rs", rev = "c8f7385697df0764fca3b5d7b8e22b967fb16c10" }

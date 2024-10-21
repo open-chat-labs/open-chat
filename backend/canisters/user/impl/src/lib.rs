@@ -198,6 +198,7 @@ impl RuntimeState {
             next_daily_claim: if self.data.streak.can_claim(now) { today(now) } else { tomorrow(now) },
             achievements: self.data.achievements.iter().cloned().collect(),
             unique_person_proof: self.data.unique_person_proof.is_some(),
+            stable_memory_event_migration_complete: self.data.stable_memory_event_migration_complete,
         }
     }
 }
@@ -253,6 +254,8 @@ struct Data {
     // TODO: Remove skip_deserializing after release
     #[serde(default, skip_deserializing)]
     pub message_activity_events: MessageActivityEvents,
+    #[serde(default)]
+    stable_memory_event_migration_complete: bool,
 }
 
 impl Data {
@@ -321,6 +324,7 @@ impl Data {
             referred_by,
             referrals: Referrals::default(),
             message_activity_events: MessageActivityEvents::default(),
+            stable_memory_event_migration_complete: true,
         }
     }
 
@@ -458,6 +462,7 @@ pub struct Metrics {
     pub next_daily_claim: TimestampMillis,
     pub achievements: Vec<Achievement>,
     pub unique_person_proof: bool,
+    pub stable_memory_event_migration_complete: bool,
 }
 
 fn run_regular_jobs() {

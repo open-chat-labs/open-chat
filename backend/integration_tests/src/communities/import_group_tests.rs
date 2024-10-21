@@ -5,9 +5,9 @@ use candid::Principal;
 use itertools::Itertools;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
-use testing::rng::{random_message_id, random_string};
+use testing::rng::{random_from_u128, random_string};
 use types::{
-    icrc1, ChatId, CommunityId, CryptoTransaction, Cryptocurrency, MessageContentInitial, PendingCryptoTransaction,
+    icrc1, ChatId, CommunityId, CryptoTransaction, Cryptocurrency, EventIndex, MessageContentInitial, PendingCryptoTransaction,
     PrizeContentInitial,
 };
 use user_canister::mark_read::ChatMessagesRead;
@@ -44,7 +44,7 @@ fn import_group_succeeds() {
 
     let import_group_response = client::community::happy_path::import_group(env, user1.principal, community_id, group_id);
 
-    tick_many(env, 10);
+    tick_many(env, 20);
 
     let expected_channel_names: Vec<_> = default_channels.into_iter().chain([group_name]).sorted().collect();
 
@@ -80,6 +80,18 @@ fn import_group_succeeds() {
     let selected_channel_initial =
         client::community::happy_path::selected_channel_initial(env, &user1, community_id, import_group_response.channel_id);
     assert!(selected_channel_initial.blocked_users.is_empty());
+
+    let events = client::community::happy_path::events(
+        env,
+        &user1,
+        community_id,
+        import_group_response.channel_id,
+        EventIndex::default(),
+        true,
+        100,
+        100,
+    );
+    assert!(events.events.len() > 10);
 
     // Check that the group has been deleted
     assert!(!env.canister_exists(group_id.into()));
@@ -170,7 +182,7 @@ fn pending_prizes_transferred_to_community() {
 
     let token = Cryptocurrency::InternetComputer;
     let fee = token.fee().unwrap();
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
     let prizes = vec![100000; 2];
     let amount_to_transfer = prizes.iter().sum::<u128>() + fee * prizes.len() as u128;
 

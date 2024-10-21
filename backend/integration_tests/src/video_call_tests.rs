@@ -4,7 +4,7 @@ use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
-use testing::rng::{random_message_id, random_string};
+use testing::rng::{random_from_u128, random_string};
 use types::{ChatEvent, MessageContent, VideoCallContent};
 use utils::time::HOUR_IN_MS;
 
@@ -21,7 +21,7 @@ fn start_join_end_video_call_in_direct_chat_succeeds(manually_end_video_call: bo
 
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
     let user2 = client::register_user(env, canister_ids);
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
     let max_duration = HOUR_IN_MS;
 
     client::user::happy_path::start_video_call(env, &user1, user2.user_id, message_id, Some(max_duration));
@@ -117,7 +117,7 @@ fn start_join_end_video_call_in_group_chat_succeeds(manually_end_video_call: boo
     let group = client::user::happy_path::create_group(env, &user1, random_string().as_str(), true, true);
     client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group);
 
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
     let max_duration = HOUR_IN_MS;
 
     client::group::happy_path::start_video_call(env, &user1, group, message_id, Some(max_duration));

@@ -4,7 +4,7 @@ use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use test_case::test_case;
-use testing::rng::{random_message_id, random_string};
+use testing::rng::{random_from_u128, random_string};
 use types::{ChatId, GroupPermissionRole, MessageContentInitial, OptionalGroupPermissions, TextContent};
 
 #[test_case(false; "By userId")]
@@ -37,7 +37,7 @@ fn mention_users_succeeds(mention_everyone: bool) {
         group_id.into(),
         &group_canister::send_message_v2::Args {
             thread_root_message_index: None,
-            message_id: random_message_id(),
+            message_id: random_from_u128(),
             content: MessageContentInitial::Text(TextContent { text }),
             sender_name: user1.username(),
             sender_display_name: None,
@@ -109,7 +109,7 @@ fn mention_everyone_only_succeeds_if_authorized(authorized: bool) {
         group_id.into(),
         &group_canister::send_message_v2::Args {
             thread_root_message_index: None,
-            message_id: random_message_id(),
+            message_id: random_from_u128(),
             content: MessageContentInitial::Text(TextContent {
                 text: "Hello @everyone!".to_string(),
             }),

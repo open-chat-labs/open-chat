@@ -11,6 +11,7 @@ generate_c2c_call!(c2c_create_community);
 generate_c2c_call!(c2c_create_group);
 generate_c2c_call!(c2c_delete_community);
 generate_c2c_call!(c2c_delete_group);
+generate_c2c_call!(c2c_mark_events_migrated_to_stable_memory);
 generate_c2c_call!(c2c_notify_low_balance);
 generate_c2c_call!(c2c_push_wasm_chunk);
 generate_c2c_call!(c2c_set_community_upgrade_concurrency);

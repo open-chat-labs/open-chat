@@ -6,7 +6,7 @@ use itertools::Itertools;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
-use testing::rng::{random_message_id, random_string};
+use testing::rng::{random_from_u128, random_string};
 use types::{CanisterId, MessageContentInitial, TextContent, TimestampMillis, UserId};
 
 #[test]
@@ -51,7 +51,7 @@ fn suspend_user() {
         &user_canister::send_message_v2::Args {
             recipient: user2.user_id,
             thread_root_message_index: None,
-            message_id: random_message_id(),
+            message_id: random_from_u128(),
             content: MessageContentInitial::Text(TextContent { text: "123".to_string() }),
             replies_to: None,
             forwarding: false,
@@ -72,7 +72,7 @@ fn suspend_user() {
         group_id.into(),
         &group_canister::send_message_v2::Args {
             thread_root_message_index: None,
-            message_id: random_message_id(),
+            message_id: random_from_u128(),
             sender_name: user1.username(),
             sender_display_name: None,
             content: MessageContentInitial::Text(TextContent { text: "123".to_string() }),
@@ -98,7 +98,7 @@ fn suspend_user() {
         &community_canister::send_message::Args {
             channel_id,
             thread_root_message_index: None,
-            message_id: random_message_id(),
+            message_id: random_from_u128(),
             sender_name: user1.username(),
             sender_display_name: None,
             content: MessageContentInitial::Text(TextContent { text: "123".to_string() }),
@@ -136,7 +136,7 @@ fn suspend_user() {
         &user_canister::send_message_v2::Args {
             recipient: user2.user_id,
             thread_root_message_index: None,
-            message_id: random_message_id(),
+            message_id: random_from_u128(),
             content: MessageContentInitial::Text(TextContent { text: "123".to_string() }),
             replies_to: None,
             forwarding: false,
@@ -157,7 +157,7 @@ fn suspend_user() {
         group_id.into(),
         &group_canister::send_message_v2::Args {
             thread_root_message_index: None,
-            message_id: random_message_id(),
+            message_id: random_from_u128(),
             sender_name: user1.username(),
             sender_display_name: None,
             content: MessageContentInitial::Text(TextContent { text: "123".to_string() }),
@@ -183,7 +183,7 @@ fn suspend_user() {
         &community_canister::send_message::Args {
             channel_id,
             thread_root_message_index: None,
-            message_id: random_message_id(),
+            message_id: random_from_u128(),
             sender_name: user1.username(),
             sender_display_name: None,
             content: MessageContentInitial::Text(TextContent { text: "123".to_string() }),

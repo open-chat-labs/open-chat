@@ -3,7 +3,7 @@ use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
-use testing::rng::{random_message_id, random_string};
+use testing::rng::{random_from_u128, random_string};
 use types::{ChatEvent, MessageContent};
 use utils::time::MINUTE_IN_MS;
 
@@ -15,7 +15,7 @@ fn delete_direct_message_succeeds() {
     let user1 = client::register_user(env, canister_ids);
     let user2 = client::register_user(env, canister_ids);
 
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
 
     let send_message_response =
         client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", Some(message_id));
@@ -61,7 +61,7 @@ fn delete_their_direct_message_succeeds() {
     let user1 = client::register_user(env, canister_ids);
     let user2 = client::register_user(env, canister_ids);
 
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
 
     let send_message_response =
         client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", Some(message_id));
@@ -108,7 +108,7 @@ fn delete_group_message_succeeds() {
     let user = client::register_user(env, canister_ids);
     let group = client::user::happy_path::create_group(env, &user, &random_string(), false, false);
 
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
 
     let send_message_response = client::group::happy_path::send_text_message(env, &user, group, None, "TEXT", Some(message_id));
 
@@ -147,7 +147,7 @@ fn delete_then_undelete_direct_message(delay: bool) {
     let user1 = client::register_user(env, canister_ids);
     let user2 = client::register_user(env, canister_ids);
 
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
 
     let send_message_response =
         client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", Some(message_id));
@@ -224,7 +224,7 @@ fn delete_then_undelete_group_message(delay: bool) {
     let user = client::register_user(env, canister_ids);
     let group = client::user::happy_path::create_group(env, &user, &random_string(), false, false);
 
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
 
     let send_message_response = client::group::happy_path::send_text_message(env, &user, group, None, "TEXT", Some(message_id));
 
@@ -295,7 +295,7 @@ fn platform_operators_can_delete_messages(is_platform_moderator: bool) {
     let group = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
     client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group);
 
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
 
     client::group::happy_path::send_text_message(env, &user1, group, None, "TEXT", Some(message_id));
 

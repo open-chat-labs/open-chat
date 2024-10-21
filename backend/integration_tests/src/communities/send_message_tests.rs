@@ -9,7 +9,7 @@ use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
-use testing::rng::{random_message_id, random_string};
+use testing::rng::{random_from_u128, random_string};
 use types::{
     CanisterId, ChannelId, ChatEvent, CommunityId, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContent,
     MessageContentInitial, OptionUpdate, PrizeContentInitial, TextContent, UpdatedRules, Version,
@@ -79,7 +79,7 @@ fn send_crypto_in_channel(with_c2c_error: bool) {
             community_id,
             channel_id,
             thread_root_message_index: None,
-            message_id: random_message_id(),
+            message_id: random_from_u128(),
             content: MessageContentInitial::Crypto(CryptoContent {
                 recipient: user2.user_id,
                 transfer: CryptoTransaction::Pending(create_pending_transaction(
@@ -170,7 +170,7 @@ fn send_prize_in_channel() {
             community_id,
             channel_id,
             thread_root_message_index: None,
-            message_id: random_message_id(),
+            message_id: random_from_u128(),
             content: MessageContentInitial::Prize(PrizeContentInitial {
                 transfer: CryptoTransaction::Pending(create_pending_transaction(
                     Cryptocurrency::InternetComputer,
@@ -682,7 +682,7 @@ fn send_dummy_message_with_rules(
         &community_canister::send_message::Args {
             channel_id,
             thread_root_message_index: None,
-            message_id: random_message_id(),
+            message_id: random_from_u128(),
             content: MessageContentInitial::Text(TextContent { text: "123".to_string() }),
             sender_name: sender.username(),
             sender_display_name: None,

@@ -4,7 +4,7 @@ use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
-use testing::rng::{random_message_id, random_string};
+use testing::rng::{random_from_u128, random_string};
 use types::{Chat, ChatEvent, Cryptocurrency};
 
 #[test]
@@ -19,7 +19,7 @@ fn tip_direct_message_succeeds() {
 
     let TestData { user1, user2 } = init_test_data(env, canister_ids, *controller);
 
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
     let tip_amount = 1_0000_0000;
 
     let event_index =
@@ -77,7 +77,7 @@ fn tip_group_message_succeeds() {
     let TestData { user1, user2 } = init_test_data(env, canister_ids, *controller);
 
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
     let tip_amount = 1_0000_0000;
 
     client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
@@ -127,7 +127,7 @@ fn tip_channel_message_succeeds() {
 
     let community_id = client::user::happy_path::create_community(env, &user1, &random_string(), true, vec![random_string()]);
     let channel_id = client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string());
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
     let tip_amount = 1_0000_0000;
 
     client::local_user_index::happy_path::join_channel(
@@ -189,7 +189,7 @@ fn tip_group_message_retries_if_c2c_call_fails() {
     let TestData { user1, user2 } = init_test_data(env, canister_ids, *controller);
 
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
     let tip_amount = 1_0000_0000;
 
     client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
@@ -257,7 +257,7 @@ fn tip_channel_message_retries_if_c2c_call_fails() {
 
     let community_id = client::user::happy_path::create_community(env, &user1, &random_string(), true, vec![random_string()]);
     let channel_id = client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string());
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
     let tip_amount = 1_0000_0000;
 
     client::local_user_index::happy_path::join_channel(

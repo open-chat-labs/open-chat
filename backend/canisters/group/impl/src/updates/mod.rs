@@ -2,6 +2,7 @@ pub mod accept_p2p_swap;
 pub mod add_reaction;
 pub mod c2c_delete_group;
 pub mod c2c_export_group;
+pub mod c2c_export_group_events;
 pub mod c2c_freeze_group;
 pub mod c2c_invite_users;
 pub mod c2c_join_group;
