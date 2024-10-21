@@ -3,7 +3,6 @@ import type {
     BlockCommunityUserResponse,
     ChangeCommunityRoleResponse,
     ChannelMatch,
-    ChannelMessageMatch,
     ChannelSummaryResponse,
     CommunityCanisterChannelSummaryUpdates,
     CommunityCanisterCommunitySummaryUpdates,
@@ -48,7 +47,6 @@ import type {
     CommunitySelectedInitialResponse,
     GroupMembershipUpdates as TGroupMembershipUpdates,
     GroupRole as TGroupRole,
-    MessageMatch as TMessageMatch,
     UserGroupDetails as TUserGroupDetails,
     CommunitySelectedUpdatesResponse,
     CommunityChannelSummaryResponse,
@@ -79,7 +77,6 @@ import {
     groupSubtype,
     memberRole,
     mention,
-    messageContent,
     messageEvent,
     threadSyncDetails,
     updatedEvent,
@@ -206,16 +203,6 @@ export function removeMemberFromChannelResponse(
         console.warn("RemoveChannelMember failed with", value);
         return "failure";
     }
-}
-
-export function messageMatch(value: TMessageMatch): ChannelMessageMatch {
-    const sender = principalBytesToString(value.sender);
-    return {
-        content: messageContent(value.content, sender),
-        sender,
-        score: value.score,
-        messageIndex: value.message_index,
-    };
 }
 
 export function sendMessageResponse(value: CommunitySendMessageResponse): SendMessageResponse {
