@@ -283,6 +283,9 @@ impl ChatEvents {
             let old_length = message.content.text_length();
             message.content = args.content.into();
 
+            let message_index = message.message_index;
+            let document = Document::from(&message.content);
+
             if edited {
                 if let Some(block_level_markdown) = block_level_markdown_update {
                     message.block_level_markdown = block_level_markdown;
@@ -290,9 +293,6 @@ impl ChatEvents {
 
                 let already_edited = message.last_edited.is_some();
                 message.last_edited = Some(args.now);
-
-                let message_index = message.message_index;
-                let document = Document::from(&message.content);
 
                 if let Some(client) = event_store_client {
                     let new_length = message.content.text_length();
@@ -314,9 +314,8 @@ impl ChatEvents {
                             .build(),
                     )
                 }
-
-                return Ok((message_index, document));
             }
+            return Ok((message_index, document));
         }
 
         Err(UpdateEventError::NoChange(EditMessageResult::Success))
