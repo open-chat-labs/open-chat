@@ -390,7 +390,6 @@ pub enum MessageActivity {
     Mention,
     Reaction,
     QuoteReply,
-    ThreadReply,
     Tip,
     Crypto,
     PollVote,

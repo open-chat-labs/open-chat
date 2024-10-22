@@ -220,20 +220,6 @@ fn process_send_message_result(
                 }
             }
 
-            if let Some(message_index) = thread_root_message_index {
-                if let Some((message, _)) =
-                    state
-                        .data
-                        .chat
-                        .events
-                        .message_internal(EventIndex::default(), None, message_index.into())
-                {
-                    if message.sender != sender && state.data.chat.members.contains(&message.sender) {
-                        activity_events.push((message.sender, MessageActivity::ThreadReply));
-                    }
-                }
-            }
-
             for (user_id, activity) in activity_events {
                 state.data.user_event_sync_queue.push(
                     user_id,
