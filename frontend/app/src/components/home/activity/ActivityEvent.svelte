@@ -157,7 +157,7 @@
 
     function goToEventContext() {
         activityFeedShowing.set(false);
-        page(routeForMessageContext("none", event.messageContext));
+        page(routeForMessageContext("none", event.messageContext, true));
     }
 </script>
 

@@ -1,6 +1,7 @@
 export const ONLINE_THRESHOLD = 120;
 export const MAX_MESSAGES = 100;
 export const MAX_EVENTS = 500;
+export const MAX_ACTIVITY_EVENTS = 1000;
 export const MAX_MISSING = 30;
 export const OPENCHAT_VIDEO_CALL_USER_ID =
     "wp3oc-ig6b4-6xvef-yoj27-qt3kw-u2xmp-qbvuv-2grco-s2ndy-wv3ud-7qe";

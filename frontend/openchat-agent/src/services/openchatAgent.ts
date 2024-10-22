@@ -234,7 +234,7 @@ import {
     getOrAdd,
     waitAll,
     MessageMap,
-    SafeMap,
+    MAX_ACTIVITY_EVENTS,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { AsyncMessageContextMap } from "../utils/messageContext";
@@ -3774,15 +3774,17 @@ export class OpenChatAgent extends EventTarget {
 
     async messageActivityFeed(): Promise<MessageActivityFeedResponse> {
         const cachedEvents = await getActivityFeedEvents();
+
         const since = cachedEvents[0]?.timestamp ?? 0n;
-        const result = await this.userClient.messageActivityFeed(since);
-        console.log("Backend activity events: ", result);
-        const combined = [...result.events, ...cachedEvents];
+
+        const server = await this.userClient.messageActivityFeed(since);
+
+        const combined = [...server.events, ...cachedEvents];
 
         // first sort ascending
         combined.sort((a, b) => Number(a.timestamp) - Number(b.timestamp));
 
-        // dedupe by overwriting earlier events
+        // dedupe by overwriting earlier events with the same activity type and event index
         const deduped = combined.reduce((map, ev) => {
             map.set(`${ev.activity}_${ev.eventIndex}`, ev);
             return map;
@@ -3793,17 +3795,11 @@ export class OpenChatAgent extends EventTarget {
             (a, b) => Number(b.timestamp) - Number(a.timestamp),
         );
 
-        setActivityFeedEvents(sorted.slice(0, 1000));
+        setActivityFeedEvents(sorted.slice(0, MAX_ACTIVITY_EVENTS));
 
         const rehydrated = await this.hydrateActivityFeedEvents(sorted);
-
-        console.log("Combined activity events: ", sorted, rehydrated);
-
-        // make sure we don't cache more than 1000 events
-
-        // return the combined results
         return {
-            total: result.total,
+            total: server.total,
             events: rehydrated,
         };
     }
@@ -3811,6 +3807,7 @@ export class OpenChatAgent extends EventTarget {
     async hydrateActivityFeedEvents(
         activityEvents: MessageActivityEvent[],
     ): Promise<MessageActivityEvent[]> {
+        // partition the events by message context
         const eventIndexesByMessageContext = activityEvents.reduce((map, event) => {
             const eventIndexes = map.get(event.messageContext) ?? [];
             eventIndexes.push(event.eventIndex);
@@ -3818,6 +3815,7 @@ export class OpenChatAgent extends EventTarget {
             return map;
         }, new AsyncMessageContextMap<number>());
 
+        // look up all the messages correlated with the activity events (mostly this will come from the cache)
         const messagesByMessageContext = await eventIndexesByMessageContext.asyncMap(
             (ctx, idxs) => {
                 const chatId = ctx.chatId;
@@ -3843,11 +3841,13 @@ export class OpenChatAgent extends EventTarget {
             },
         );
 
+        // organise the messages into a lookup so we can stitch things back together easily
         const messageLookup = [...messagesByMessageContext.values()].reduce((lookup, events) => {
             events.forEach((ev) => lookup.set(ev.event.messageId, ev.event));
             return lookup;
         }, new MessageMap<Message>());
 
+        // tie it all together
         return activityEvents.map((ev) => {
             const message = messageLookup.get(ev.messageId);
             return {

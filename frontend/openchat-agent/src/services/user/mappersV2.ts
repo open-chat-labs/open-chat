@@ -191,7 +191,7 @@ export function messageActivityEvent(value: UserMessageActivityEvent): MessageAc
         messageId: value.message_id,
         activity: messageActivity(value.activity),
         timestamp: value.timestamp,
-        userId: mapOptional(value.user_id, (u) => u.toString()),
+        userId: mapOptional(value.user_id, principalBytesToString),
         message: undefined,
     };
 }
