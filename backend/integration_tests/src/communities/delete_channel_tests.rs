@@ -1,10 +1,9 @@
+use crate::client::community::CHAT_EVENTS_MEMORY_ID;
 use crate::env::ENV;
+use crate::stable_memory::count_stable_memory_event_keys;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
-use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
-use ic_stable_structures::{StableBTreeMap, VectorMemory};
 use pocket_ic::PocketIc;
-use std::cell::RefCell;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
@@ -66,39 +65,33 @@ fn stable_memory_garbage_collected_after_deleting_channel() {
         ..
     } = init_test_data(env, canister_ids, *controller);
 
-    assert_eq!(count_stable_memory_event_keys(env.get_stable_memory(community_id.into())), 4);
+    assert_eq!(count_stable_memory_event_keys(env, community_id, CHAT_EVENTS_MEMORY_ID), 4);
 
     for _ in 0..100 {
         client::community::happy_path::send_text_message(env, &user1, community_id, channel_id1, None, random_string(), None);
     }
 
-    assert_eq!(
-        count_stable_memory_event_keys(env.get_stable_memory(community_id.into())),
-        104
-    );
+    assert_eq!(count_stable_memory_event_keys(env, community_id, CHAT_EVENTS_MEMORY_ID), 104);
 
     for _ in 0..80 {
         client::community::happy_path::send_text_message(env, &user1, community_id, channel_id2, None, random_string(), None);
     }
 
-    assert_eq!(
-        count_stable_memory_event_keys(env.get_stable_memory(community_id.into())),
-        184
-    );
+    assert_eq!(count_stable_memory_event_keys(env, community_id, CHAT_EVENTS_MEMORY_ID), 184);
 
     client::community::happy_path::delete_channel(env, user1.principal, community_id, channel_id1);
 
     env.advance_time(Duration::from_secs(60));
     env.tick();
 
-    assert_eq!(count_stable_memory_event_keys(env.get_stable_memory(community_id.into())), 82);
+    assert_eq!(count_stable_memory_event_keys(env, community_id, CHAT_EVENTS_MEMORY_ID), 82);
 
     client::community::happy_path::delete_channel(env, user1.principal, community_id, channel_id2);
 
     env.advance_time(Duration::from_secs(60));
     env.tick();
 
-    assert_eq!(count_stable_memory_event_keys(env.get_stable_memory(community_id.into())), 0);
+    assert_eq!(count_stable_memory_event_keys(env, community_id, CHAT_EVENTS_MEMORY_ID), 0);
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
@@ -127,14 +120,6 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
         channel_id1,
         channel_id2,
     }
-}
-
-fn count_stable_memory_event_keys(stable_memory: Vec<u8>) -> u64 {
-    let memory = VectorMemory::new(RefCell::new(stable_memory));
-    let memory_manager = MemoryManager::init(memory);
-    let chat_events_memory = memory_manager.get(MemoryId::new(3));
-    let map: StableBTreeMap<Vec<u8>, Vec<u8>, VirtualMemory<VectorMemory>> = StableBTreeMap::load(chat_events_memory);
-    map.len()
 }
 
 struct TestData {

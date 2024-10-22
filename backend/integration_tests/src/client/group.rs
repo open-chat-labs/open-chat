@@ -1,5 +1,8 @@
 use crate::{generate_query_call, generate_update_call};
 use group_canister::*;
+use ic_stable_structures::memory_manager::MemoryId;
+
+pub const CHAT_EVENTS_MEMORY_ID: MemoryId = MemoryId::new(3);
 
 // Queries
 generate_query_call!(events);
