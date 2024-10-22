@@ -1,14 +1,15 @@
 <script lang="ts">
-    import { AvatarSize, OpenChat, type NamedAccount } from "openchat-client";
+    import { AvatarSize, OpenChat, type NamedAccount, type CreatedUser } from "openchat-client";
     import { getContext } from "svelte";
     import Avatar from "../../Avatar.svelte";
 
     const client = getContext<OpenChat>("client");
     export let address: string | undefined;
     export let accounts: Record<string, NamedAccount>;
+    export let currentUser: CreatedUser;
 
     $: userStore = client.userStore;
-    $: user = address ? $userStore.get(address) : undefined;
+    $: user = address === currentUser.cryptoAccount ? $userStore.get(currentUser.userId) : address ? $userStore.get(address) : undefined;
 </script>
 
 {#if address !== undefined}

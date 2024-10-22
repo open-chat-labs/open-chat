@@ -260,14 +260,16 @@ fn process_send_message_result(
                     .data
                     .notify_user_of_achievement(c.recipient, Achievement::ReceivedCrypto);
 
-                activity_events.push((c.recipient, MessageActivity::Crypto, thread_root_message_index, message_index));
-            }
-
-            for user_id in users_mentioned.all_users_mentioned {
-                activity_events.push((user_id, MessageActivity::Mention, thread_root_message_index, message_index));
+                activity_events.push((c.recipient, MessageActivity::Crypto));
             }
 
             if let Some(channel) = state.data.channels.get(&channel_id) {
+                for user_id in users_mentioned.all_users_mentioned {
+                    if user_id != sender && channel.chat.members.contains(&user_id) {
+                        activity_events.push((user_id, MessageActivity::Mention));
+                    }
+                }
+
                 if let Some(replying_to_event_index) = message_event
                     .event
                     .replies_to
@@ -280,12 +282,9 @@ fn process_send_message_result(
                         thread_root_message_index,
                         replying_to_event_index.into(),
                     ) {
-                        activity_events.push((
-                            message.sender,
-                            MessageActivity::QuoteReply,
-                            thread_root_message_index,
-                            message.message_index,
-                        ));
+                        if message.sender != sender && channel.chat.members.contains(&message.sender) {
+                            activity_events.push((message.sender, MessageActivity::QuoteReply));
+                        }
                     }
                 }
 
@@ -296,12 +295,14 @@ fn process_send_message_result(
                             .events
                             .message_internal(EventIndex::default(), None, message_index.into())
                     {
-                        activity_events.push((message.sender, MessageActivity::ThreadReply, None, message.message_index));
+                        if message.sender != sender && channel.chat.members.contains(&message.sender) {
+                            activity_events.push((message.sender, MessageActivity::ThreadReply));
+                        }
                     }
                 }
             }
 
-            for (user_id, activity, thread_root_message_index, message_index) in activity_events {
+            for (user_id, activity) in activity_events {
                 state.data.user_event_sync_queue.push(
                     user_id,
                     CommunityCanisterEvent::MessageActivity(MessageActivityEvent {

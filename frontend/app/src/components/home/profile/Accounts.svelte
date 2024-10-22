@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { EnhancedTokenDetails, OpenChat } from "openchat-client";
+    import { type EnhancedTokenDetails, ICP_SYMBOL, type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
@@ -206,7 +206,7 @@
                                         {/if}
                                     {/await}
                                 {/if}
-                                {#if snsLedgers.has(token.ledger)}
+                                {#if token.symbol === ICP_SYMBOL || snsLedgers.has(token.ledger)}
                                     <MenuItem on:click={() => showTransactions(token)}>
                                         <ViewList
                                             size={$iconSize}
