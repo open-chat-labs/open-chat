@@ -5,19 +5,19 @@ use types::TimestampMillis;
 
 use crate::MessageActivityEvent;
 
-#[ts_export(user, activity_feed)]
+#[ts_export(user, message_activity_feed)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub since: TimestampMillis,
 }
 
-#[ts_export(user, activity_feed)]
+#[ts_export(user, message_activity_feed)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
 }
 
-#[ts_export(user, activity_feed)]
+#[ts_export(user, message_activity_feed)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub events: Vec<MessageActivityEvent>,
