@@ -29,7 +29,7 @@
     type LoadingMore<T> = { kind: "loading_more"; data: T };
     type RemoteData = RD<AccountTransactions, string> | LoadingMore<AccountTransactions>;
 
-    let transationData: RemoteData = { kind: "loading" };
+    let transactionData: RemoteData = { kind: "loading" };
     let accounts: NamedAccount[] = [];
     $: accountLookup = toRecord(accounts, (a) => a.account);
     $: cryptoLookup = client.cryptoLookup;
@@ -40,8 +40,9 @@
             .filter((ns) => !ns.isNns)
             .map((ns) => ns.ledgerCanisterId),
     );
-    $: moreAvailable = moreTransactionsAvailable(transationData);
-    $: loading = transationData.kind === "loading" || transationData.kind === "loading_more";
+    $: moreAvailable = moreTransactionsAvailable(transactionData);
+    $: loading = transactionData.kind === "loading" || transactionData.kind === "loading_more";
+    $: currentUser = client.user;
 
     function moreTransactionsAvailable(trans: RemoteData): boolean {
         if (trans.kind !== "success") return false;
@@ -52,7 +53,7 @@
 
     onMount(async () => {
         accounts = await client.loadSavedCryptoAccounts();
-        loadTransations();
+        loadTransactions();
     });
 
     function url(id: bigint): string {
@@ -67,10 +68,10 @@
     }
 
     function ledgerSelected(ev: CustomEvent<{ ledger: string; urlFormat: string }>): void {
-        transationData = { kind: "idle" };
+        transactionData = { kind: "idle" };
         ledger = ev.detail.ledger;
         urlFormat = ev.detail.urlFormat;
-        loadTransations();
+        loadTransactions();
     }
 
     function translateMemo(trans: AccountTransaction): ResourceKey {
@@ -93,38 +94,38 @@
         }
     }
 
-    function loadTransations() {
+    function loadTransactions() {
         const nervousSystem = Object.values($nervousSystemLookup).find(
             (n) => n.ledgerCanisterId === ledger,
         );
         const ledgerIndex = nervousSystem?.indexCanisterId;
         if (ledgerIndex !== undefined) {
             let start = undefined;
-            if (transationData.kind === "success") {
+            if (transactionData.kind === "success") {
                 start =
-                    transationData.data.transactions[transationData.data.transactions.length - 1]
+                    transactionData.data.transactions[transactionData.data.transactions.length - 1]
                         .id - 1n;
-                transationData = { kind: "loading_more", data: transationData.data };
+                transactionData = { kind: "loading_more", data: transactionData.data };
             } else {
-                transationData = { kind: "loading" };
+                transactionData = { kind: "loading" };
             }
             client
                 .getAccountTransactions(ledgerIndex, start)
                 .then((result) => {
                     if (result.kind === "failure") {
-                        transationData = { kind: "idle" };
+                        transactionData = { kind: "idle" };
                         toastStore.showFailureToast(i18nKey("cryptoAccount.transactionError"));
                     } else {
-                        if (transationData.kind === "loading") {
-                            transationData = { kind: "success", data: result };
+                        if (transactionData.kind === "loading") {
+                            transactionData = { kind: "success", data: result };
                         }
-                        if (transationData.kind === "loading_more") {
-                            transationData = {
+                        if (transactionData.kind === "loading_more") {
+                            transactionData = {
                                 kind: "success",
                                 data: {
                                     oldestTransactionId: result.oldestTransactionId,
                                     transactions: [
-                                        ...transationData.data.transactions,
+                                        ...transactionData.data.transactions,
                                         ...result.transactions,
                                     ],
                                 },
@@ -134,12 +135,12 @@
                 })
                 .catch((err) => {
                     console.warn("Error loading transactions: ", err);
-                    transationData = { kind: "idle" };
+                    transactionData = { kind: "idle" };
                     toastStore.showFailureToast(i18nKey("cryptoAccount.transactionError"));
                 });
         } else {
             toastStore.showFailureToast(i18nKey("cryptoAccount.transactionError"));
-            transationData = { kind: "idle" };
+            transactionData = { kind: "idle" };
             console.warn("Could not find ledger index for ledger", ledger, $nervousSystemLookup);
         }
     }
@@ -191,8 +192,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {#if transationData.kind === "success" || transationData.kind === "loading_more"}
-                        {#each transationData.data.transactions as transaction (transaction.id)}
+                    {#if transactionData.kind === "success" || transactionData.kind === "loading_more"}
+                        {#each transactionData.data.transactions as transaction (transaction.id)}
                             <tr on:click={() => openDashboard(transaction.id)}>
                                 <td>{transaction.id}</td>
                                 <td
@@ -206,16 +207,18 @@
                                 <td class="truncate">
                                     <TransactionEndpoint
                                         accounts={accountLookup}
-                                        address={transaction.from} />
+                                        address={transaction.from}
+                                        currentUser={$currentUser} />
                                 </td>
                                 <td class="truncate">
                                     <TransactionEndpoint
                                         accounts={accountLookup}
-                                        address={transaction.to} />
+                                        address={transaction.to}
+                                        currentUser={$currentUser} />
                                 </td>
                             </tr>
                         {/each}
-                    {:else if transationData.kind === "loading"}
+                    {:else if transactionData.kind === "loading"}
                         <div class="loading">
                             <FancyLoader />
                         </div>
@@ -229,7 +232,7 @@
             <ButtonGroup>
                 <Button
                     secondary
-                    on:click={() => loadTransations()}
+                    on:click={() => loadTransactions()}
                     disabled={!moreAvailable && !loading}
                     {loading}
                     small={!$mobileWidth}

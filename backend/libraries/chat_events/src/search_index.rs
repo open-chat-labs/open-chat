@@ -26,7 +26,9 @@ impl SearchIndex {
         self.map
             .range(min_visible_message_index..)
             .rev()
-            .filter(move |(_, (sender, doc))| users.contains(sender) || doc.is_match(&query))
+            .filter(move |(_, (sender, doc))| {
+                (users.is_empty() || users.contains(sender)) && (query.tokens.is_empty() || doc.is_match(&query))
+            })
             .map(|(id, _)| *id)
     }
 }

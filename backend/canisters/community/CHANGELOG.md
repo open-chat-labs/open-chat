@@ -6,10 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add more achievements ([#6631](https://github.com/open-chat-labs/open-chat/pull/6631))
+
 ### Changed
 
-- Add `message_id` and `event_index` to `MessageActivityEvent` ([#6623](https://github.com/open-chat-labs/open-chat/pull/6623))
 - Copy chat events into stable memory ([#6603](https://github.com/open-chat-labs/open-chat/pull/6603))
+- Make searching by user and term require matching both + make more efficient ([#6612](https://github.com/open-chat-labs/open-chat/pull/6612))
+- Add `message_id` and `event_index` to `MessageActivityEvent` ([#6623](https://github.com/open-chat-labs/open-chat/pull/6623))
+- Fixes to activity feed ([#6627](https://github.com/open-chat-labs/open-chat/pull/6627))
+
+### Fixed
+
+- Refund P2P swap early if message is deleted ([#6626](https://github.com/open-chat-labs/open-chat/pull/6626))
 
 ## [[2.0.1400](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1400-community)] - 2024-10-18
 

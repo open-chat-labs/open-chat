@@ -9,9 +9,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add an error log with http endpoint ([#6608](https://github.com/open-chat-labs/open-chat/pull/6608))
+- Add more achievements ([#6631](https://github.com/open-chat-labs/open-chat/pull/6631))
 
 ### Changed
 
+- Make searching messages more efficient ([#6612](https://github.com/open-chat-labs/open-chat/pull/6612))
 - Add `message_id` and `event_index` to `MessageActivityEvent` ([#6623](https://github.com/open-chat-labs/open-chat/pull/6623))
 - Copy chat events into stable memory ([#6603](https://github.com/open-chat-labs/open-chat/pull/6603))
 

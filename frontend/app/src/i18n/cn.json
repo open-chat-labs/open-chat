@@ -670,6 +670,7 @@
         "owned_group_with_100_diamond_members": "拥有一个拥有 100 名经过验证的成员的群组/社区",
         "owned_group_with_1000_diamond_members": "拥有一个拥有 1000 名经过验证的成员的群组/社区",
         "percentageComplete": "{perc}% 完成",
+        "pinned_chat": "将聊天固定到列表顶部",
         "pinned_message": "置顶消息",
         "proved_unique_personhood": "证明你独特的人性",
         "quote_replied": "引用回复消息",

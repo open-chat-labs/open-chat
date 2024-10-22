@@ -3,7 +3,6 @@ import type {
     BlockCommunityUserResponse,
     ChangeCommunityRoleResponse,
     ChannelMatch,
-    ChannelMessageMatch,
     ChannelSummaryResponse,
     CommunityCanisterChannelSummaryUpdates,
     CommunityCanisterCommunitySummaryUpdates,
@@ -48,7 +47,6 @@ import type {
     CommunitySelectedInitialResponse,
     GroupMembershipUpdates as TGroupMembershipUpdates,
     GroupRole as TGroupRole,
-    MessageMatch as TMessageMatch,
     UserGroupDetails as TUserGroupDetails,
     CommunitySelectedUpdatesResponse,
     CommunityChannelSummaryResponse,
@@ -79,63 +77,31 @@ import {
     groupSubtype,
     memberRole,
     mention,
-    messageContent,
     messageEvent,
     threadSyncDetails,
     updatedEvent,
     userGroup,
 } from "../common/chatMappersV2";
 import { identity } from "../../utils/mapping";
+import { mapCommonResponses } from "../common/commonResponseMapper";
 
 export function addMembersToChannelResponse(
     value: CommunityAddMembersToChannelResponse,
 ): AddMembersToChannelResponse {
-    if (value === "Success") {
-        return CommonResponses.success();
+    if (typeof value === "object") {
+        if ("PartialSuccess" in value) {
+            return addToChannelPartialSuccess(value.PartialSuccess);
+        }
+        if ("Failed" in value) {
+            return addToChannelFailed(value.Failed);
+        }
+        if ("UserLimitReached" in value) {
+            return CommonResponses.userLimitReached();
+        }
     }
-    if (value === "CommunityFrozen") {
-        return CommonResponses.communityFrozen();
-    }
-    if (value === "CommunityPublic") {
-        return CommonResponses.communityPublic();
-    }
-    if (value === "UserSuspended") {
-        return CommonResponses.userSuspended();
-    }
-    if (value === "UserLapsed") {
-        return CommonResponses.userLapsed();
-    }
-    if (value === "UserNotInCommunity") {
-        return CommonResponses.userNotInCommunity();
-    }
-    if (value === "UserNotInChannel") {
-        return CommonResponses.userNotInChat();
-    }
-    if (value === "ChannelNotFound") {
-        return CommonResponses.chatNotFound();
-    }
-    if (value === "NotAuthorized") {
-        return CommonResponses.notAuthorized();
-    }
-    if ("Failed" in value) {
-        return addToChannelFailed(value.Failed);
-    }
-    if ("PartialSuccess" in value) {
-        return addToChannelPartialSuccess(value.PartialSuccess);
-    }
-    if ("UserLimitReached" in value) {
-        return CommonResponses.userLimitReached();
-    }
-    if ("InternalError" in value) {
-        return CommonResponses.internalError();
-    }
-    if ("CommunityPublic" in value) {
-        return CommonResponses.communityPublic();
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiAddMembersToChannelResponse type received",
-        value,
-    );
+    return {
+        kind: mapCommonResponses(value, "AddMembersToChannel"),
+    };
 }
 
 function addToChannelFailed(
@@ -206,16 +172,6 @@ export function removeMemberFromChannelResponse(
         console.warn("RemoveChannelMember failed with", value);
         return "failure";
     }
-}
-
-export function messageMatch(value: TMessageMatch): ChannelMessageMatch {
-    const sender = principalBytesToString(value.sender);
-    return {
-        content: messageContent(value.content, sender),
-        sender,
-        score: value.score,
-        messageIndex: value.message_index,
-    };
 }
 
 export function sendMessageResponse(value: CommunitySendMessageResponse): SendMessageResponse {
@@ -624,9 +580,6 @@ export function deleteUserGroupsResponse(
 export function setMemberDisplayNameResponse(
     value: CommunitySetMemberDisplayNameResponse,
 ): SetMemberDisplayNameResponse {
-    if (value === "Success") {
-        return "success";
-    }
     if (typeof value === "object") {
         if ("DisplayNameTooShort" in value) {
             return "display_name_too_short";
@@ -635,25 +588,10 @@ export function setMemberDisplayNameResponse(
             return "display_name_too_long";
         }
     }
-    if (value === "UserNotInCommunity") {
-        return "user_not_in_community";
-    }
-    if (value === "UserSuspended") {
-        return "user_suspended";
-    }
-    if (value === "UserLapsed") {
-        return "user_lapsed";
-    }
-    if (value === "CommunityFrozen") {
-        return "community_frozen";
-    }
     if (value === "DisplayNameInvalid") {
         return "display_name_invalid";
     }
-    throw new UnsupportedValueError(
-        "Unexpected ApiSetMemberDisplayNameResponse type received",
-        value,
-    );
+    return mapCommonResponses(value, "SetMemberDisplayName");
 }
 
 export function followThreadResponse(

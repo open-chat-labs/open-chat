@@ -1,689 +1,587 @@
-// import type {
-//     ApiEventsResponse,
-//     ApiSendMessageResponse,
-//     ApiBlockUserResponse,
-//     ApiUnblockUserResponse,
-//     ApiMarkReadResponse,
-//     ApiSetAvatarResponse,
-//     ApiDeleteMessageResponse,
-//     ApiUndeleteMessageResponse,
-//     ApiSearchDirectChatResponse,
-//     ApiMessageMatch,
-//     ApiInitialStateResponse,
-//     ApiUpdatesResponse,
-//     ApiSetBioResponse,
-//     ApiWithdrawCryptoResponse,
-//     ApiSendMessageWithTransferToGroupResponse,
-//     ApiPublicProfileResponse,
-//     ApiPinChatResponse,
-//     ApiUnpinChatResponse,
-//     ApiDirectChatSummary,
-//     ApiUserCanisterGroupChatSummary,
-//     ApiUserCanisterGroupChatSummaryUpdates,
-//     ApiNnsFailedCryptoTransaction,
-//     ApiNnsCompletedCryptoTransaction,
-//     ApiIcrc1FailedCryptoTransaction,
-//     ApiIcrc1CompletedCryptoTransaction,
-//     ApiIcrc1Account,
-//     ApiDirectChatSummaryUpdates,
-//     ApiDeletedDirectMessageResponse,
-//     ApiSetMessageReminderResponse,
-//     ApiCreateCommunityResponse,
-//     ApiGroupChatsInitial,
-//     ApiDirectChatsInitial,
-//     ApiCommunitiesInitial,
-//     ApiUserCanisterCommunitySummary,
-//     ApiUserCanisterChannelSummary,
-//     ApiFavouriteChatsInitial,
-//     ApiChat,
-//     ApiCommunitiesUpdates,
-//     ApiUserCanisterCommunitySummaryUpdates,
-//     ApiUserCanisterChannelSummaryUpdates,
-//     ApiFavouriteChatsUpdates,
-//     ApiGroupChatsUpdates,
-//     ApiDirectChatsUpdates,
-//     ApiManageFavouriteChatsResponse,
-//     ApiPinChatV2Response,
-//     ApiUnpinV2ChatResponse,
-//     ApiLeaveCommunityResponse,
-//     ApiDeleteCommunityResponse,
-//     ApiArchiveUnarchiveChatsResponse,
-//     ApiSendMessageWithTransferToChannelResponse,
-//     ApiTipMessageResponse,
-//     ApiSavedCryptoAccountsResponse,
-//     ApiSaveCryptoAccountResponse,
-//     ApiSubmitProposalResponse,
-//     ApiSwapTokensResponse,
-//     ApiTokenSwapStatusResponse,
-//     ApiApproveTransferResponse,
-//     ApiPinNumberSettings,
-//     ApiExchangeArgs,
-//     ApiChitEventsResponse,
-//     ApiChitEarned,
-//     ApiChitEarnedReason,
-//     ApiAchievement,
-//     ApiClaimDailyChitResponse,
-//     ApiReferralStatus,
-//     ApiReferral,
-//     ApiWalletConfig,
-// } from "./candid/idl";
-import type { UserSendMessageResponse } from "../../typebox";
 import type {
-    //     EventsResponse,
-    //     ChatEvent,
+    AccountICRC1,
+    Achievement as TAchievement,
+    Chat as TChat,
+    ChitEarned as TChitEarned,
+    ChitEarnedReason as TChitEarnedReason,
+    CompletedCryptoTransactionICRC1,
+    CompletedCryptoTransactionNNS,
+    DirectChatSummary as TDirectChatSummary,
+    DirectChatSummaryUpdates as TDirectChatSummaryUpdates,
+    FailedCryptoTransactionICRC1,
+    FailedCryptoTransactionNNS,
+    PinNumberSettings as TPinNumberSettings,
+    ProposalsBotProposalToSubmit,
+    ProposalsBotProposalToSubmitAction,
+    ReferralStatus as TReferralStatus,
+    UserApproveTransferResponse,
+    UserArchiveUnarchiveChatsResponse,
+    UserChannelSummary,
+    UserChannelSummaryUpdates,
+    UserChitEventsResponse,
+    UserClaimDailyChitResponse,
+    UserCommunitySummary,
+    UserCommunitySummaryUpdates,
+    UserCreateCommunityResponse,
+    UserDeleteCommunityResponse,
+    UserDeletedMessageResponse,
+    UserDeleteMessagesResponse,
+    UserEventsResponse,
+    UserGroupChatSummary,
+    UserGroupChatSummaryUpdates,
+    UserInitialStateCommunitiesInitial,
+    UserInitialStateDirectChatsInitial,
+    UserInitialStateFavouriteChatsInitial,
+    UserInitialStateGroupChatsInitial,
+    UserInitialStateResponse,
+    UserLeaveCommunityResponse,
+    UserManageFavouriteChatsResponse,
+    UserPinChatResponse,
+    UserPublicProfileResponse,
+    UserReferral,
+    UserReportMessageResponse,
+    UserSaveCryptoAccountResponse,
+    UserSavedCryptoAccountsResponse,
+    UserSearchMessagesResponse,
+    UserSendMessageResponse,
+    UserSendMessageWithTransferToChannelResponse,
+    UserSendMessageWithTransferToGroupResponse,
+    UserSetAvatarResponse,
+    UserSetBioResponse,
+    UserSetMessageReminderResponse,
+    UserSetPinNumberPinNumberVerification,
+    UserSubmitProposalResponse,
+    UserSwapTokensExchangeArgs,
+    UserSwapTokensResponse,
+    UserTipMessageResponse,
+    UserTokenSwapStatusResponse,
+    UserUndeleteMessagesResponse,
+    UserUnpinChatResponse,
+    UserUpdatesCommunitiesUpdates,
+    UserUpdatesDirectChatsUpdates,
+    UserUpdatesFavouriteChatsUpdates,
+    UserUpdatesGroupChatsUpdates,
+    UserUpdatesResponse,
+    UserWalletConfig,
+    UserWithdrawCryptoResponse,
+} from "../../typebox";
+import type {
+    EventsResponse,
+    ChatEvent,
     SendMessageResponse,
-    //     BlockUserResponse,
-    //     UnblockUserResponse,
-    //     MarkReadResponse,
-    //     SetAvatarResponse,
-    //     DeleteMessageResponse,
-    //     UndeleteMessageResponse,
-    //     InitialStateResponse,
-    //     UpdatesResponse,
-    //     DirectChatSummary,
-    //     UserCanisterGroupChatSummary,
-    //     UserCanisterGroupChatSummaryUpdates,
-    //     WithdrawCryptocurrencyResponse,
-    //     FailedCryptocurrencyWithdrawal,
-    //     CompletedCryptocurrencyWithdrawal,
-    //     PublicProfile,
-    //     ArchiveChatResponse,
-    //     MessageMatch,
-    //     PinChatResponse,
-    //     SearchDirectChatResponse,
-    //     SetBioResponse,
-    //     UnpinChatResponse,
-    //     DirectChatSummaryUpdates,
-    //     DeletedDirectMessageResponse,
-    //     UpdatedEvent,
-    //     SetMessageReminderResponse,
-    //     CreateCommunityResponse,
-    //     GroupChatsInitial,
-    //     DirectChatsInitial,
-    //     CommunitiesInitial,
-    //     UserCanisterCommunitySummary,
-    //     UserCanisterChannelSummary,
-    //     FavouriteChatsInitial,
-    //     ChatIdentifier,
-    //     CommunitiesUpdates,
-    //     UserCanisterCommunitySummaryUpdates,
-    //     UserCanisterChannelSummaryUpdates,
-    //     FavouriteChatsUpdates,
-    //     GroupChatsUpdates,
-    //     DirectChatsUpdates,
-    //     DirectChatIdentifier,
-    //     ManageFavouritesResponse,
-    //     LeaveCommunityResponse,
-    //     DeleteCommunityResponse,
-    //     TipMessageResponse,
-    //     NamedAccount,
-    //     SaveCryptoAccountResponse,
-    //     CandidateProposal,
-    //     CandidateProposalAction,
-    //     SubmitProposalResponse,
-    //     SwapTokensResponse,
-    //     TokenSwapStatusResponse,
-    //     Result,
-    //     ApproveTransferResponse,
-    //     ExchangeTokenSwapArgs,
-    //     ChitEventsResponse,
-    //     ChitEarned,
-    //     ChitEarnedReason,
-    //     Achievement,
-    //     ClaimDailyChitResponse,
-    //     ReferralStatus,
-    //     Referral,
-    //     WalletConfig,
+    SetAvatarResponse,
+    DeleteMessageResponse,
+    UndeleteMessageResponse,
+    InitialStateResponse,
+    UpdatesResponse,
+    DirectChatSummary,
+    UserCanisterGroupChatSummary,
+    UserCanisterGroupChatSummaryUpdates,
+    WithdrawCryptocurrencyResponse,
+    FailedCryptocurrencyWithdrawal,
+    CompletedCryptocurrencyWithdrawal,
+    PublicProfile,
+    ArchiveChatResponse,
+    PinChatResponse,
+    SearchDirectChatResponse,
+    SetBioResponse,
+    DirectChatSummaryUpdates,
+    DeletedDirectMessageResponse,
+    UpdatedEvent,
+    SetMessageReminderResponse,
+    CreateCommunityResponse,
+    GroupChatsInitial,
+    DirectChatsInitial,
+    CommunitiesInitial,
+    UserCanisterCommunitySummary,
+    UserCanisterChannelSummary,
+    FavouriteChatsInitial,
+    ChatIdentifier,
+    CommunitiesUpdates,
+    UserCanisterCommunitySummaryUpdates,
+    UserCanisterChannelSummaryUpdates,
+    FavouriteChatsUpdates,
+    GroupChatsUpdates,
+    DirectChatsUpdates,
+    DirectChatIdentifier,
+    ManageFavouritesResponse,
+    LeaveCommunityResponse,
+    DeleteCommunityResponse,
+    TipMessageResponse,
+    NamedAccount,
+    SaveCryptoAccountResponse,
+    CandidateProposal,
+    CandidateProposalAction,
+    SubmitProposalResponse,
+    SwapTokensResponse,
+    TokenSwapStatusResponse,
+    Result,
+    ApproveTransferResponse,
+    ExchangeTokenSwapArgs,
+    ChitEventsResponse,
+    ChitEarned,
+    ChitEarnedReason,
+    Achievement,
+    ClaimDailyChitResponse,
+    ReferralStatus,
+    Referral,
+    WalletConfig,
+    Verification,
 } from "openchat-shared";
+import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
-    // nullMembership, CommonResponses,
-    UnsupportedValueError,
-} from "openchat-shared";
-import { mapOptional } from "../../utils/mapping";
-import { completedCryptoTransfer } from "../common/chatMappersV2";
-// import {
-//     chatMetrics,
-//     completedCryptoTransfer,
-//     message,
-//     messageContent,
-//     apiOptional,
-//     messageEvent,
-//     eventsSuccessResponse,
-// } from "../common/chatMappers";
-// import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
-// import { ReplicaNotUpToDateError } from "../error";
-// import { Principal } from "@dfinity/principal";
-// import type {
-//     ProposalToSubmit,
-//     ProposalToSubmitAction,
-//     ReportMessageResponse,
-// } from "./candid/types";
-// import type { PinNumberSettings } from "openchat-shared";
+    bytesToBigint,
+    bytesToHexString,
+    hexStringToBytes,
+    identity,
+    mapOptional,
+    optionUpdateV2,
+    principalBytesToString,
+    principalStringToBytes,
+} from "../../utils/mapping";
+import {
+    chatMetrics,
+    completedCryptoTransfer,
+    message,
+    messageContent,
+    messageMatch,
+    messageEvent,
+    eventsSuccessResponse,
+} from "../common/chatMappersV2";
+import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
+import { ReplicaNotUpToDateError } from "../error";
+import { Principal } from "@dfinity/principal";
+import type { PinNumberSettings } from "openchat-shared";
 import { pinNumberFailureResponseV2 } from "../common/pinNumberErrorMapper";
-//
-// export function chitEventsResponse(candid: ApiChitEventsResponse): ChitEventsResponse {
-//     if ("Success" in candid) {
-//         return {
-//             events: candid.Success.events.map(chitEarned),
-//             total: candid.Success.total,
-//         };
-//     } else {
-//         console.warn("chitEventsResponse failed with: ", candid);
-//         return {
-//             events: [],
-//             total: 0,
-//         };
-//     }
-// }
-//
-// export function chitEarned(candid: ApiChitEarned): ChitEarned {
-//     return {
-//         amount: candid.amount,
-//         timestamp: candid.timestamp,
-//         reason: chitEarnedReason(candid.reason),
-//     };
-// }
-//
-// export function chitEarnedReason(candid: ApiChitEarnedReason): ChitEarnedReason {
-//     if ("DailyClaim" in candid) {
-//         return { kind: "daily_claim" };
-//     }
-//     if ("Achievement" in candid) {
-//         return { kind: "achievement_unlocked", type: achievementType(candid.Achievement) };
-//     }
-//     if ("Referral" in candid) {
-//         return { kind: "referral", type: referralStatus(candid.Referral) };
-//     }
-//     if ("MemeContestWinner" in candid) {
-//         return { kind: "meme_contest_winner" };
-//     }
-//     if ("ExternalAchievement" in candid) {
-//         return { kind: "external_achievement_unlocked", name: candid.ExternalAchievement };
-//     }
-//     throw new UnsupportedValueError("Unexpected ApiChitEarnedReason encountered", candid);
-// }
-//
-// export function referralStatus(candid: ApiReferralStatus): ReferralStatus {
-//     if ("Registered" in candid) {
-//         return "registered";
-//     }
-//     if ("Diamond" in candid) {
-//         return "diamond";
-//     }
-//     if ("UniquePerson" in candid) {
-//         return "unique_person";
-//     }
-//     if ("LifetimeDiamond" in candid) {
-//         return "lifetime_diamond";
-//     }
-//     throw new UnsupportedValueError("Unexpected ApiReferralStatus encountered", candid);
-// }
-//
-// export function achievementType(candid: ApiAchievement): Achievement {
-//     if ("AppointedGroupModerator" in candid) {
-//         return "appointed_group_mod";
-//     }
-//     if ("DirectChats5" in candid) {
-//         return "direct_chat_5";
-//     }
-//     if ("ChangedTheme" in candid) {
-//         return "changed_theme";
-//     }
-//     if ("ChosenAsGroupModerator" in candid) {
-//         return "appointed_as_group_mod";
-//     }
-//     if ("FavouritedChat" in candid) {
-//         return "favourited_chat";
-//     }
-//     if ("AppointedGroupAdmin" in candid) {
-//         return "appointed_group_admin";
-//     }
-//     if ("HadMessageReactedTo" in candid) {
-//         return "received_reaction";
-//     }
-//     if ("VotedOnPoll" in candid) {
-//         return "voted_on_poll";
-//     }
-//     if ("ChosenAsGroupAdmin" in candid) {
-//         return "appointed_as_group_admin";
-//     }
-//     if ("OwnGroupWithOneHundredDiamondMembers" in candid) {
-//         return "owned_group_with_100_diamond_members";
-//     }
-//     if ("SetCommunityDisplayName" in candid) {
-//         return "set_community_display_name";
-//     }
-//     if ("AppointedGroupOwner" in candid) {
-//         return "appointed_group_owner";
-//     }
-//     if ("OwnGroupWithTenDiamondMembers" in candid) {
-//         return "owned_group_with_10_diamond_members";
-//     }
-//     if ("JoinedGatedGroupOrCommunity" in candid) {
-//         return "joined_gated_group_or_community";
-//     }
-//     if ("StartedCall" in candid) {
-//         return "started_call";
-//     }
-//     if ("ChosenAsGroupOwner" in candid) {
-//         return "appointed_as_group_owner";
-//     }
-//     if ("TippedMessage" in candid) {
-//         return "tipped_message";
-//     }
-//     if ("SentGiphy" in candid) {
-//         return "sent_giphy";
-//     }
-//     if ("SetCommunityAccessGate" in candid) {
-//         return "set_community_access_gate";
-//     }
-//     if ("HadMessageTipped" in candid) {
-//         return "had_message_tipped";
-//     }
-//     if ("SwappedFromWallet" in candid) {
-//         return "swapped_from_wallet";
-//     }
-//     if ("EditedMessage" in candid) {
-//         return "edited_message";
-//     }
-//     if ("ReactedToMessage" in candid) {
-//         return "reacted_to_message";
-//     }
-//     if ("AcceptedP2PSwapOffer" in candid) {
-//         return "accepted_swap_offer";
-//     }
-//     if ("JoinedCall" in candid) {
-//         return "joined_call";
-//     }
-//     if ("SentImage" in candid) {
-//         return "sent_image";
-//     }
-//     if ("EnabledDisappearingMessages" in candid) {
-//         return "enabled_disappearing_messages";
-//     }
-//     if ("ForwardedMessage" in candid) {
-//         return "forwarded_message";
-//     }
-//     if ("SentPrize" in candid) {
-//         return "sent_prize";
-//     }
-//     if ("FollowedThread" in candid) {
-//         return "followed_thread";
-//     }
-//     if ("SentReminder" in candid) {
-//         return "sent_reminder";
-//     }
-//     if ("ProvedUniquePersonhood" in candid) {
-//         return "proved_unique_personhood";
-//     }
-//     if ("DeletedMessage" in candid) {
-//         return "deleted_message";
-//     }
-//     if ("SentText" in candid) {
-//         return "sent_text";
-//     }
-//     if ("OwnGroupWithOneThousandDiamondMembers" in candid) {
-//         return "owned_group_with_1000_diamond_members";
-//     }
-//     if ("SentP2PSwapOffer" in candid) {
-//         return "sent_swap_offer";
-//     }
-//     if ("QuoteReplied" in candid) {
-//         return "quote_replied";
-//     }
-//     if ("OwnGroupWithOneDiamondMember" in candid) {
-//         return "owned_group_with_1_diamond_member";
-//     }
-//     if ("SentCrypto" in candid) {
-//         return "sent_crypto";
-//     }
-//     if ("PinnedMessage" in candid) {
-//         return "pinned_message";
-//     }
-//     if ("ReceivedCrypto" in candid) {
-//         return "received_crypto";
-//     }
-//     if ("TranslationAccepted" in candid) {
-//         return "translation_accepted";
-//     }
-//     if ("RepliedInThread" in candid) {
-//         return "replied_in_thread";
-//     }
-//     if ("DirectChats10" in candid) {
-//         return "direct_chats_10";
-//     }
-//     if ("DirectChats20" in candid) {
-//         return "direct_chats_20";
-//     }
-//     if ("SetGroupAccessGate" in candid) {
-//         return "set_group_access_gate";
-//     }
-//     if ("SentFile" in candid) {
-//         return "sent_file";
-//     }
-//     if ("SentMeme" in candid) {
-//         return "sent_meme";
-//     }
-//     if ("SentPoll" in candid) {
-//         return "sent_poll";
-//     }
-//     if ("SentAudio" in candid) {
-//         return "sent_audio";
-//     }
-//     if ("SuggestedTranslation" in candid) {
-//         return "suggested_translation";
-//     }
-//     if ("SentVideo" in candid) {
-//         return "sent_video";
-//     }
-//     if ("JoinedCommunity" in candid) {
-//         return "joined_community";
-//     }
-//     if ("JoinedGroup" in candid) {
-//         return "joined_group";
-//     }
-//     if ("Streak14" in candid) {
-//         return "streak_14";
-//     }
-//     if ("Streak30" in candid) {
-//         return "streak_30";
-//     }
-//     if ("UpgradedToDiamond" in candid) {
-//         return "upgraded_to_diamond";
-//     }
-//     if ("ReceivedDirectMessage" in candid) {
-//         return "received_direct_message";
-//     }
-//     if ("SetDisplayName" in candid) {
-//         return "set_display_name";
-//     }
-//     if ("SetBio" in candid) {
-//         return "set_bio";
-//     }
-//     if ("Streak3" in candid) {
-//         return "streak_3";
-//     }
-//     if ("Streak7" in candid) {
-//         return "streak_7";
-//     }
-//     if ("Streak100" in candid) {
-//         return "streak_100";
-//     }
-//     if ("Streak365" in candid) {
-//         return "streak_365";
-//     }
-//     if ("UpgradedToGoldDiamond" in candid) {
-//         return "upgrade_to_gold_diamond";
-//     }
-//     if ("SentDirectMessage" in candid) {
-//         return "sent_direct_message";
-//     }
-//     if ("SetAvatar" in candid) {
-//         return "set_avatar";
-//     }
-//     if ("Referred1stUser" in candid) {
-//         return "referred_1st_user";
-//     }
-//     if ("Referred3rdUser" in candid) {
-//         return "referred_3rd_user";
-//     }
-//     if ("Referred10thUser" in candid) {
-//         return "referred_10th_user";
-//     }
-//     if ("Referred20thUser" in candid) {
-//         return "referred_20th_user";
-//     }
-//     if ("Referred50thUser" in candid) {
-//         return "referred_50th_user";
-//     }
-//     throw new UnsupportedValueError("Unexpected ApiAchievement received", candid);
-// }
-//
-// export function saveCryptoAccountResponse(
-//     candid: ApiSaveCryptoAccountResponse
-// ): SaveCryptoAccountResponse {
-//     if ("Success" in candid) {
-//         return CommonResponses.success();
-//     } else if ("NameTaken" in candid) {
-//         return { kind: "name_taken" };
-//     } else {
-//         console.warn("saveCryptoAccountResponse failed with: ", candid);
-//         return CommonResponses.failure();
-//     }
-// }
-//
-// export function savedCryptoAccountsResponse(
-//     candid: ApiSavedCryptoAccountsResponse
-// ): NamedAccount[] {
-//     if ("Success" in candid) {
-//         return candid.Success;
-//     }
-//     return [];
-// }
-//
-// export function tipMessageResponse(candid: ApiTipMessageResponse): TipMessageResponse {
-//     if ("Success" in candid || "Retrying" in candid) {
-//         return CommonResponses.success();
-//     }
-//
-//     if (
-//         "PinRequired" in candid ||
-//         "PinIncorrect" in candid ||
-//         "TooManyFailedPinAttempts" in candid
-//     ) {
-//         return pinNumberFailureResponse(candid);
-//     }
-//
-//     console.warn("tipMessage failed with: ", candid);
-//     return CommonResponses.failure();
-// }
-//
-// export function publicProfileResponse(candid: ApiPublicProfileResponse): PublicProfile {
-//     const profile = candid.Success;
-//     return {
-//         username: profile.username,
-//         displayName: optional(profile.display_name, identity),
-//         avatarId: optional(profile.avatar_id, identity),
-//         bio: profile.bio,
-//         isPremium: profile.is_premium,
-//         phoneIsVerified: profile.phone_is_verified,
-//         created: profile.created,
-//     };
-// }
-//
-// export function setBioResponse(candid: ApiSetBioResponse): SetBioResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     }
-//     if ("TooLong" in candid) {
-//         return "bio_too_long";
-//     }
-//     if ("UserSuspended" in candid) {
-//         return "user_suspended";
-//     }
-//     throw new UnsupportedValueError(`Unexpected ApiSetBioResponse type received`, candid);
-// }
-//
-// export function searchDirectChatResponse(
-//     candid: ApiSearchDirectChatResponse,
-//     chatId: DirectChatIdentifier
-// ): SearchDirectChatResponse {
-//     if ("Success" in candid) {
-//         return {
-//             kind: "success",
-//             matches: candid.Success.matches.map((m) => messageMatch(m, chatId)),
-//         };
-//     }
-//     if ("TermTooShort" in candid || "TermTooLong" in candid || "InvalidTerm" in candid) {
-//         return {
-//             kind: "term_invalid",
-//         };
-//     }
-//     if ("ChatNotFound" in candid) {
-//         return {
-//             kind: "chat_not_found",
-//         };
-//     }
-//     throw new UnsupportedValueError(
-//         "Unknown UserIndex.ApiSearchMessagesResponse type received",
-//         candid
-//     );
-// }
-//
-// export function messageMatch(candid: ApiMessageMatch, chatId: ChatIdentifier): MessageMatch {
-//     const sender = candid.sender.toString();
-//     return {
-//         chatId,
-//         messageIndex: candid.message_index,
-//         content: messageContent(candid.content, sender),
-//         sender,
-//         score: candid.score,
-//     };
-// }
-//
-// export function deleteMessageResponse(candid: ApiDeleteMessageResponse): DeleteMessageResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     } else {
-//         console.warn("Unexpected ApiDeleteMessageResponse type received", candid);
-//         return "failure";
-//     }
-// }
-//
-// export function undeleteMessageResponse(
-//     candid: ApiUndeleteMessageResponse
-// ): UndeleteMessageResponse {
-//     if ("Success" in candid) {
-//         if (candid.Success.messages.length == 0) {
-//             return CommonResponses.failure();
-//         } else {
-//             return {
-//                 kind: "success",
-//                 message: message(candid.Success.messages[0]),
-//             };
-//         }
-//     } else {
-//         console.warn("Unexpected ApiUndeleteMessageResponse type received", candid);
-//         return CommonResponses.failure();
-//     }
-// }
-//
-// export function setAvatarResponse(candid: ApiSetAvatarResponse): SetAvatarResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     }
-//     if ("AvatarTooBig" in candid) {
-//         return "avatar_too_big";
-//     }
-//     if ("UserSuspended" in candid) {
-//         return "user_suspended";
-//     }
-//     if ("InternalError" in candid) {
-//         return "internal_error";
-//     }
-//     throw new UnsupportedValueError("Unexpected ApiSetAvatarResponse type received", candid);
-// }
-//
-// export function markReadResponse(_candid: ApiMarkReadResponse): MarkReadResponse {
-//     // currently only one success type which makes mapping this a bit redundant but I'll
-//     // leave the pattern in place in case we have other return types in the future.
-//     return "success";
-// }
-//
-// export function blockResponse(_candid: ApiBlockUserResponse): BlockUserResponse {
-//     return "success";
-// }
-//
-// export function unblockResponse(_candid: ApiUnblockUserResponse): UnblockUserResponse {
-//     return "success";
-// }
-//
-// export function pinChatResponse(
-//     candid: ApiPinChatResponse | ApiPinChatV2Response
-// ): PinChatResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     } else {
-//         console.warn("Unexpected ApiPinChatResponse type received", candid);
-//         return "failure";
-//     }
-// }
-//
-// export function unpinChatResponse(
-//     candid: ApiUnpinChatResponse | ApiUnpinV2ChatResponse
-// ): UnpinChatResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     } else {
-//         console.warn("Unexpected ApiUnpinChatResponse type received", candid);
-//         return "failure";
-//     }
-// }
-//
-// export function archiveChatResponse(candid: ApiArchiveUnarchiveChatsResponse): ArchiveChatResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     } else {
-//         console.warn("Archive/Unarchive chat failed with ", candid);
-//         return "failure";
-//     }
-// }
-//
-// export function sendMessageWithTransferToChannelResponse(
-//     candid: ApiSendMessageWithTransferToChannelResponse,
-//     sender: string,
-//     recipient: string | undefined
-// ): SendMessageResponse {
-//     if ("Success" in candid) {
-//         return {
-//             kind: "transfer_success",
-//             timestamp: candid.Success.timestamp,
-//             messageIndex: candid.Success.message_index,
-//             eventIndex: candid.Success.event_index,
-//             expiresAt: optional(candid.Success.expires_at, Number),
-//             transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient ?? ""),
-//         };
-//     }
-//
-//     if (
-//         "PinRequired" in candid ||
-//         "PinIncorrect" in candid ||
-//         "TooManyFailedPinAttempts" in candid
-//     ) {
-//         return pinNumberFailureResponse(candid);
-//     }
-//
-//     console.warn("SendMessageWithTransferToChannel failed with", candid);
-//     return CommonResponses.failure();
-// }
-//
-// export function sendMessageWithTransferToGroupResponse(
-//     candid: ApiSendMessageWithTransferToGroupResponse,
-//     sender: string,
-//     recipient: string | undefined
-// ): SendMessageResponse {
-//     if ("Success" in candid) {
-//         return {
-//             kind: "transfer_success",
-//             timestamp: candid.Success.timestamp,
-//             messageIndex: candid.Success.message_index,
-//             eventIndex: candid.Success.event_index,
-//             expiresAt: optional(candid.Success.expires_at, Number),
-//             transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient ?? ""),
-//         };
-//     }
-//
-//     if (
-//         "PinRequired" in candid ||
-//         "PinIncorrect" in candid ||
-//         "TooManyFailedPinAttempts" in candid
-//     ) {
-//         return pinNumberFailureResponse(candid);
-//     }
-//
-//     console.warn("SendMessageWithTransferToGroup failed with", candid);
-//     return CommonResponses.failure();
-// }
+import { signedDelegation } from "../../utils/id";
+import { mapCommonResponses } from "../common/commonResponseMapper";
+
+export function chitEventsResponse(value: UserChitEventsResponse): ChitEventsResponse {
+    if ("Success" in value) {
+        return {
+            events: value.Success.events.map(chitEarned),
+            total: value.Success.total,
+        };
+    } else {
+        console.warn("chitEventsResponse failed with: ", value);
+        return {
+            events: [],
+            total: 0,
+        };
+    }
+}
+
+export function chitEarned(value: TChitEarned): ChitEarned {
+    return {
+        amount: value.amount,
+        timestamp: value.timestamp,
+        reason: chitEarnedReason(value.reason),
+    };
+}
+
+export function chitEarnedReason(value: TChitEarnedReason): ChitEarnedReason {
+    if (value === "DailyClaim") {
+        return { kind: "daily_claim" };
+    }
+    if (value === "MemeContestWinner") {
+        return { kind: "meme_contest_winner" };
+    }
+    if (typeof value === "object") {
+        if ("Achievement" in value) {
+            return { kind: "achievement_unlocked", type: achievementType(value.Achievement) };
+        }
+        if ("Referral" in value) {
+            return { kind: "referral", type: referralStatus(value.Referral) };
+        }
+        if ("ExternalAchievement" in value) {
+            return { kind: "external_achievement_unlocked", name: value.ExternalAchievement };
+        }
+    }
+
+    throw new UnsupportedValueError("Unexpected ApiChitEarnedReason encountered", value);
+}
+
+export function referralStatus(value: TReferralStatus): ReferralStatus {
+    if (value === "Registered") {
+        return "registered";
+    }
+    if (value === "Diamond") {
+        return "diamond";
+    }
+    if (value === "UniquePerson") {
+        return "unique_person";
+    }
+    if (value === "LifetimeDiamond") {
+        return "lifetime_diamond";
+    }
+    throw new UnsupportedValueError("Unexpected ApiReferralStatus encountered", value);
+}
+
+export function achievementType(value: TAchievement): Achievement {
+    switch (value) {
+        case "AppointedGroupModerator":
+            return "appointed_group_mod";
+        case "DirectChats5":
+            return "direct_chat_5";
+        case "ChangedTheme":
+            return "changed_theme";
+        case "ChosenAsGroupModerator":
+            return "appointed_as_group_mod";
+        case "FavouritedChat":
+            return "favourited_chat";
+        case "AppointedGroupAdmin":
+            return "appointed_group_admin";
+        case "HadMessageReactedTo":
+            return "received_reaction";
+        case "VotedOnPoll":
+            return "voted_on_poll";
+        case "ChosenAsGroupAdmin":
+            return "appointed_as_group_admin";
+        case "OwnGroupWithOneHundredDiamondMembers":
+            return "owned_group_with_100_diamond_members";
+        case "SetCommunityDisplayName":
+            return "set_community_display_name";
+        case "AppointedGroupOwner":
+            return "appointed_group_owner";
+        case "OwnGroupWithTenDiamondMembers":
+            return "owned_group_with_10_diamond_members";
+        case "JoinedGatedGroupOrCommunity":
+            return "joined_gated_group_or_community";
+        case "PinnedChat":
+            return "pinned_chat";
+        case "StartedCall":
+            return "started_call";
+        case "ChosenAsGroupOwner":
+            return "appointed_as_group_owner";
+        case "TippedMessage":
+            return "tipped_message";
+        case "SentGiphy":
+            return "sent_giphy";
+        case "SetCommunityAccessGate":
+            return "set_community_access_gate";
+        case "HadMessageTipped":
+            return "had_message_tipped";
+        case "SwappedFromWallet":
+            return "swapped_from_wallet";
+        case "EditedMessage":
+            return "edited_message";
+        case "ReactedToMessage":
+            return "reacted_to_message";
+        case "AcceptedP2PSwapOffer":
+            return "accepted_swap_offer";
+        case "JoinedCall":
+            return "joined_call";
+        case "SentImage":
+            return "sent_image";
+        case "EnabledDisappearingMessages":
+            return "enabled_disappearing_messages";
+        case "ForwardedMessage":
+            return "forwarded_message";
+        case "SentPrize":
+            return "sent_prize";
+        case "FollowedThread":
+            return "followed_thread";
+        case "SentReminder":
+            return "sent_reminder";
+        case "ProvedUniquePersonhood":
+            return "proved_unique_personhood";
+        case "DeletedMessage":
+            return "deleted_message";
+        case "SentText":
+            return "sent_text";
+        case "OwnGroupWithOneThousandDiamondMembers":
+            return "owned_group_with_1000_diamond_members";
+        case "SentP2PSwapOffer":
+            return "sent_swap_offer";
+        case "QuoteReplied":
+            return "quote_replied";
+        case "OwnGroupWithOneDiamondMember":
+            return "owned_group_with_1_diamond_member";
+        case "SentCrypto":
+            return "sent_crypto";
+        case "PinnedMessage":
+            return "pinned_message";
+        case "ReceivedCrypto":
+            return "received_crypto";
+        case "TranslationAccepted":
+            return "translation_accepted";
+        case "RepliedInThread":
+            return "replied_in_thread";
+        case "DirectChats10":
+            return "direct_chats_10";
+        case "DirectChats20":
+            return "direct_chats_20";
+        case "SetGroupAccessGate":
+            return "set_group_access_gate";
+        case "SentFile":
+            return "sent_file";
+        case "SentMeme":
+            return "sent_meme";
+        case "SentPoll":
+            return "sent_poll";
+        case "SentAudio":
+            return "sent_audio";
+        case "SuggestedTranslation":
+            return "suggested_translation";
+        case "SentVideo":
+            return "sent_video";
+        case "JoinedCommunity":
+            return "joined_community";
+        case "JoinedGroup":
+            return "joined_group";
+        case "Streak14":
+            return "streak_14";
+        case "Streak30":
+            return "streak_30";
+        case "UpgradedToDiamond":
+            return "upgraded_to_diamond";
+        case "ReceivedDirectMessage":
+            return "received_direct_message";
+        case "SetDisplayName":
+            return "set_display_name";
+        case "SetBio":
+            return "set_bio";
+        case "Streak3":
+            return "streak_3";
+        case "Streak7":
+            return "streak_7";
+        case "Streak100":
+            return "streak_100";
+        case "Streak365":
+            return "streak_365";
+        case "UpgradedToGoldDiamond":
+            return "upgrade_to_gold_diamond";
+        case "SentDirectMessage":
+            return "sent_direct_message";
+        case "SetAvatar":
+            return "set_avatar";
+        case "Referred1stUser":
+            return "referred_1st_user";
+        case "Referred3rdUser":
+            return "referred_3rd_user";
+        case "Referred10thUser":
+            return "referred_10th_user";
+        case "Referred20thUser":
+            return "referred_20th_user";
+        case "Referred50thUser":
+            return "referred_50th_user";
+        case "SetPin":
+            return "set_pin";
+        default:
+            throw new UnsupportedValueError("Unexpected ApiAchievement received", value);
+    }
+}
+
+export function saveCryptoAccountResponse(
+    value: UserSaveCryptoAccountResponse,
+): SaveCryptoAccountResponse {
+    if (value === "Success") {
+        return CommonResponses.success();
+    } else if (value === "NameTaken") {
+        return { kind: "name_taken" };
+    } else {
+        console.warn("saveCryptoAccountResponse failed with: ", value);
+        return CommonResponses.failure();
+    }
+}
+
+export function savedCryptoAccountsResponse(
+    value: UserSavedCryptoAccountsResponse,
+): NamedAccount[] {
+    if ("Success" in value) {
+        return value.Success;
+    }
+    return [];
+}
+
+export function tipMessageResponse(value: UserTipMessageResponse): TipMessageResponse {
+    if (value === "Success") {
+        return CommonResponses.success();
+    }
+    if (value === "PinRequired") {
+        return pinNumberFailureResponseV2(value);
+    }
+
+    if (typeof value === "object") {
+        if ("PinIncorrect" in value || "TooManyFailedPinAttempts" in value) {
+            return pinNumberFailureResponseV2(value);
+        }
+    }
+
+    console.warn("tipMessage failed with: ", value);
+    return CommonResponses.failure();
+}
+
+export function publicProfileResponse(value: UserPublicProfileResponse): PublicProfile {
+    const profile = value.Success;
+    return {
+        username: profile.username,
+        displayName: profile.display_name,
+        avatarId: profile.avatar_id,
+        bio: profile.bio,
+        isPremium: profile.is_premium,
+        phoneIsVerified: profile.phone_is_verified,
+        created: profile.created,
+    };
+}
+
+export function setBioResponse(value: UserSetBioResponse): SetBioResponse {
+    if (typeof value === "object" && "TooLong" in value) {
+        return "bio_too_long";
+    }
+    return mapCommonResponses(value, "SetBio");
+}
+
+export function searchDirectChatResponse(
+    value: UserSearchMessagesResponse,
+    chatId: DirectChatIdentifier,
+): SearchDirectChatResponse {
+    if (typeof value === "object") {
+        if ("Success" in value) {
+            return {
+                kind: "success",
+                matches: value.Success.matches.map((m) => messageMatch(m, chatId)),
+            };
+        }
+        if ("TermTooShort" in value || "TermTooLong" in value) {
+            return {
+                kind: "term_invalid",
+            };
+        }
+    }
+    if (value === "ChatNotFound") {
+        return {
+            kind: "chat_not_found",
+        };
+    }
+    if (value === "InvalidTerm") {
+        return {
+            kind: "term_invalid",
+        };
+    }
+    throw new UnsupportedValueError(
+        "Unknown UserIndex.ApiSearchMessagesResponse type received",
+        value,
+    );
+}
+
+export function deleteMessageResponse(value: UserDeleteMessagesResponse): DeleteMessageResponse {
+    if (value === "Success") {
+        return "success";
+    } else {
+        console.warn("Unexpected ApiDeleteMessageResponse type received", value);
+        return "failure";
+    }
+}
+
+export function undeleteMessageResponse(
+    value: UserUndeleteMessagesResponse,
+): UndeleteMessageResponse {
+    if (typeof value === "object" && "Success" in value) {
+        if (value.Success.messages.length == 0) {
+            return CommonResponses.failure();
+        } else {
+            return {
+                kind: "success",
+                message: message(value.Success.messages[0]),
+            };
+        }
+    } else {
+        console.warn("Unexpected ApiUndeleteMessageResponse type received", value);
+        return CommonResponses.failure();
+    }
+}
+
+export function setAvatarResponse(value: UserSetAvatarResponse): SetAvatarResponse {
+    if (value === "Success") {
+        return "success";
+    }
+    if (value === "UserSuspended") {
+        return "user_suspended";
+    }
+    if (typeof value === "object" && "AvatarTooBig" in value) {
+        return "avatar_too_big";
+    }
+    throw new UnsupportedValueError("Unexpected ApiSetAvatarResponse type received", value);
+}
+
+export function pinChatResponse(
+    value: UserPinChatResponse | UserUnpinChatResponse,
+): PinChatResponse {
+    if (value === "Success") {
+        return "success";
+    } else {
+        console.warn("Unexpected ApiPinChatResponse type received", value);
+        return "failure";
+    }
+}
+
+export function archiveChatResponse(value: UserArchiveUnarchiveChatsResponse): ArchiveChatResponse {
+    if (value === "Success") {
+        return "success";
+    } else {
+        console.warn("Archive/Unarchive chat failed with ", value);
+        return "failure";
+    }
+}
+
+export function sendMessageWithTransferToChannelResponse(
+    value: UserSendMessageWithTransferToChannelResponse,
+    sender: string,
+    recipient: string | undefined,
+): SendMessageResponse {
+    if (typeof value === "object") {
+        if ("Success" in value) {
+            return {
+                kind: "transfer_success",
+                timestamp: value.Success.timestamp,
+                messageIndex: value.Success.message_index,
+                eventIndex: value.Success.event_index,
+                expiresAt: mapOptional(value.Success.expires_at, Number),
+                transfer: completedCryptoTransfer(value.Success.transfer, sender, recipient ?? ""),
+            };
+        }
+
+        if ("PinIncorrect" in value || "TooManyFailedPinAttempts" in value) {
+            return pinNumberFailureResponseV2(value);
+        }
+    }
+    if (value === "PinRequired") {
+        return pinNumberFailureResponseV2(value);
+    }
+
+    console.warn("SendMessageWithTransferToChannel failed with", value);
+    return CommonResponses.failure();
+}
+
+export function sendMessageWithTransferToGroupResponse(
+    value: UserSendMessageWithTransferToGroupResponse,
+    sender: string,
+    recipient: string | undefined,
+): SendMessageResponse {
+    if (typeof value === "object") {
+        if ("Success" in value) {
+            return {
+                kind: "transfer_success",
+                timestamp: value.Success.timestamp,
+                messageIndex: value.Success.message_index,
+                eventIndex: value.Success.event_index,
+                expiresAt: mapOptional(value.Success.expires_at, Number),
+                transfer: completedCryptoTransfer(value.Success.transfer, sender, recipient ?? ""),
+            };
+        }
+
+        if ("PinIncorrect" in value || "TooManyFailedPinAttempts" in value) {
+            return pinNumberFailureResponseV2(value);
+        }
+    }
+    if (value === "PinRequired") {
+        return pinNumberFailureResponseV2(value);
+    }
+
+    console.warn("SendMessageWithTransferToGroup failed with", value);
+    return CommonResponses.failure();
+}
 
 export function sendMessageResponse(
     value: UserSendMessageResponse,
@@ -761,752 +659,814 @@ export function sendMessageResponse(
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", value);
 }
 
-// export function createCommunityResponse(
-//     candid: ApiCreateCommunityResponse
-// ): CreateCommunityResponse {
-//     if ("Success" in candid) {
-//         return { kind: "success", id: candid.Success.community_id.toString() };
-//     } else if ("NameTaken" in candid) {
-//         return { kind: "name_taken" };
-//     } else {
-//         console.warn("CreateCommunit failed with", candid);
-//         return CommonResponses.failure();
-//     }
-// }
-//
-// export async function getEventsResponse(
-//     principal: Principal,
-//     candid: ApiEventsResponse,
-//     chatId: DirectChatIdentifier,
-//     latestKnownUpdatePreRequest: bigint | undefined
-// ): Promise<EventsResponse<ChatEvent>> {
-//     if ("Success" in candid) {
-//         await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
-//
-//         return eventsSuccessResponse(candid.Success);
-//     }
-//     if ("ChatNotFound" in candid || "ThreadMessageNotFound" in candid) {
-//         return "events_failed";
-//     }
-//     if ("ReplicaNotUpToDateV2" in candid) {
-//         throw ReplicaNotUpToDateError.byTimestamp(
-//             candid.ReplicaNotUpToDateV2,
-//             latestKnownUpdatePreRequest ?? BigInt(-1),
-//             false
-//         );
-//     }
-//
-//     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
-// }
-//
-// function groupChatsInitial(candid: ApiGroupChatsInitial): GroupChatsInitial {
-//     return {
-//         summaries: candid.summaries.map(userCanisterGroupSummary),
-//         pinned: candid.pinned.map((c) => ({ kind: "group_chat", groupId: c.toString() })),
-//     };
-// }
-//
-// function directChatsInitial(candid: ApiDirectChatsInitial): DirectChatsInitial {
-//     return {
-//         summaries: candid.summaries.map(directChatSummary),
-//         pinned: candid.pinned.map((c) => ({ kind: "direct_chat", userId: c.toString() })),
-//     };
-// }
-//
-// function userCanisterChannelSummary(
-//     candid: ApiUserCanisterChannelSummary,
-//     communityId: string
-// ): UserCanisterChannelSummary {
-//     return {
-//         id: {
-//             kind: "channel",
-//             communityId: communityId,
-//             channelId: candid.channel_id.toString(),
-//         },
-//         readByMeUpTo: optional(candid.read_by_me_up_to, identity),
-//         dateReadPinned: optional(candid.date_read_pinned, identity),
-//         threadsRead: candid.threads_read.reduce((curr, next) => {
-//             curr[next[0]] = next[1];
-//             return curr;
-//         }, {} as Record<number, number>),
-//         archived: candid.archived,
-//     };
-// }
-//
-// function userCanisterCommunitySummary(
-//     candid: ApiUserCanisterCommunitySummary
-// ): UserCanisterCommunitySummary {
-//     const communityId = candid.community_id.toString();
-//     return {
-//         id: { kind: "community", communityId },
-//         index: candid.index,
-//         channels: candid.channels.map((c) => userCanisterChannelSummary(c, communityId)),
-//         pinned: candid.pinned.map((p) => ({
-//             kind: "channel",
-//             communityId,
-//             channelId: p.toString(),
-//         })),
-//         archived: candid.archived,
-//         localUserIndex: candid.local_user_index_canister_id.toString(),
-//     };
-// }
-//
-// function communitiesInitial(candid: ApiCommunitiesInitial): CommunitiesInitial {
-//     return {
-//         summaries: candid.summaries.map(userCanisterCommunitySummary),
-//     };
-// }
-//
-// function chatIndentifier(candid: ApiChat): ChatIdentifier {
-//     if ("Group" in candid) {
-//         return { kind: "group_chat", groupId: candid.Group.toString() };
-//     }
-//     if ("Direct" in candid) {
-//         return { kind: "direct_chat", userId: candid.Direct.toString() };
-//     }
-//     if ("Channel" in candid) {
-//         return {
-//             kind: "channel",
-//             communityId: candid.Channel[0].toString(),
-//             channelId: candid.Channel[1].toString(),
-//         };
-//     }
-//     throw new UnsupportedValueError("Unexpected ApiChat type received", candid);
-// }
-//
-// function favouriteChatsInitial(candid: ApiFavouriteChatsInitial): FavouriteChatsInitial {
-//     return {
-//         chats: candid.chats.map(chatIndentifier),
-//         pinned: candid.pinned.map(chatIndentifier),
-//     };
-// }
-//
-// export function initialStateResponse(candid: ApiInitialStateResponse): InitialStateResponse {
-//     if ("Success" in candid) {
-//         const result = candid.Success;
-//         return {
-//             blockedUsers: result.blocked_users.map((u) => u.toString()),
-//             communities: communitiesInitial(candid.Success.communities),
-//             groupChats: groupChatsInitial(candid.Success.group_chats),
-//             favouriteChats: favouriteChatsInitial(candid.Success.favourite_chats),
-//             avatarId: optional(result.avatar_id, identity),
-//             directChats: directChatsInitial(candid.Success.direct_chats),
-//             timestamp: result.timestamp,
-//             suspended: result.suspended,
-//             pinNumberSettings: optional(result.pin_number_settings, pinNumberSettings),
-//             localUserIndex: result.local_user_index_canister_id.toString(),
-//             achievementsLastSeen: result.achievements_last_seen,
-//             achievements: result.achievements.map(chitEarned),
-//             streakEnds: result.streak_ends,
-//             streak: result.streak,
-//             nextDailyClaim: result.next_daily_claim,
-//             chitBalance: result.chit_balance,
-//             totalChitEarned: result.total_chit_earned,
-//             referrals: result.referrals.map(referral),
-//             walletConfig: walletConfig(result.wallet_config),
-//         };
-//     }
-//     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
-// }
-//
-// function referral(candid: ApiReferral): Referral {
-//     return {
-//         userId: candid.user_id.toString(),
-//         status: referralStatus(candid.status),
-//     };
-// }
-//
-// export function apiWalletConfig(domain: WalletConfig): ApiWalletConfig {
-//     switch (domain.kind) {
-//         case "auto_wallet": {
-//             return { Auto: { min_cents_visible: Math.round(domain.minDollarValue * 100) } };
-//         }
-//         case "manual_wallet": {
-//             return { Manual: { tokens: [...domain.tokens].map((t) => Principal.fromText(t)) } };
-//         }
-//     }
-//     throw new UnsupportedValueError("Unexpected WalletConfig value received", domain);
-// }
-//
-// function walletConfig(candid: ApiWalletConfig): WalletConfig {
-//     if ("Auto" in candid) {
-//         return {
-//             kind: "auto_wallet",
-//             minDollarValue: candid.Auto.min_cents_visible / 100,
-//         };
-//     }
-//     if ("Manual" in candid) {
-//         return {
-//             kind: "manual_wallet",
-//             tokens: new Set<string>(candid.Manual.tokens.map((p) => p.toString())),
-//         };
-//     }
-//     throw new UnsupportedValueError("Unexpected ApiWalletConfig value received", candid);
-// }
-//
-// function pinNumberSettings(candid: ApiPinNumberSettings): PinNumberSettings {
-//     return {
-//         length: candid.length,
-//         attemptsBlockedUntil: optional(candid.attempts_blocked_until, identity),
-//     };
-// }
-//
-// export function userCanisterChannelSummaryUpdates(
-//     candid: ApiUserCanisterChannelSummaryUpdates,
-//     communityId: string
-// ): UserCanisterChannelSummaryUpdates {
-//     return {
-//         id: { kind: "channel", communityId, channelId: candid.channel_id.toString() },
-//         readByMeUpTo: optional(candid.read_by_me_up_to, identity),
-//         dateReadPinned: optional(candid.date_read_pinned, identity),
-//         threadsRead: candid.threads_read.reduce((curr, next) => {
-//             curr[next[0]] = next[1];
-//             return curr;
-//         }, {} as Record<number, number>),
-//         archived: optional(candid.archived, identity),
-//     };
-// }
-//
-// export function userCanisterCommunitySummaryUpdates(
-//     candid: ApiUserCanisterCommunitySummaryUpdates
-// ): UserCanisterCommunitySummaryUpdates {
-//     const communityId = candid.community_id.toString();
-//     return {
-//         id: { kind: "community", communityId },
-//         index: optional(candid.index, identity),
-//         channels: candid.channels.map((c) => userCanisterChannelSummaryUpdates(c, communityId)),
-//         pinned: optional(candid.pinned, (p) =>
-//             p.map((p) => ({ kind: "channel", communityId, channelId: p.toString() }))
-//         ),
-//         archived: optional(candid.archived, identity),
-//     };
-// }
-//
-// export function communitiesUpdates(candid: ApiCommunitiesUpdates): CommunitiesUpdates {
-//     return {
-//         added: candid.added.map(userCanisterCommunitySummary),
-//         updated: candid.updated.map(userCanisterCommunitySummaryUpdates),
-//         removed: candid.removed.map((c) => c.toString()),
-//     };
-// }
-//
-// export function favouriteChatsUpdates(candid: ApiFavouriteChatsUpdates): FavouriteChatsUpdates {
-//     return {
-//         chats: optional(candid.chats, (c) => c.map(chatIndentifier)),
-//         pinned: optional(candid.pinned, (c) => c.map(chatIndentifier)),
-//     };
-// }
-//
-// export function groupChatsUpdates(candid: ApiGroupChatsUpdates): GroupChatsUpdates {
-//     return {
-//         added: candid.added.map(userCanisterGroupSummary),
-//         pinned: optional(candid.pinned, (p) =>
-//             p.map((p) => ({ kind: "group_chat", groupId: p.toString() }))
-//         ),
-//         updated: candid.updated.map(userCanisterGroupSummaryUpdates),
-//         removed: candid.removed.map((c) => c.toString()),
-//     };
-// }
-//
-// export function directChatsUpdates(candid: ApiDirectChatsUpdates): DirectChatsUpdates {
-//     return {
-//         added: candid.added.map(directChatSummary),
-//         pinned: optional(candid.pinned, (p) =>
-//             p.map((p) => ({ kind: "direct_chat", userId: p.toString() }))
-//         ),
-//         updated: candid.updated.map(directChatSummaryUpdates),
-//     };
-// }
-//
-// export function manageFavouritesResponse(
-//     candid: ApiManageFavouriteChatsResponse
-// ): ManageFavouritesResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     } else {
-//         console.warn("ApiManageFavouriteChatsResponse failure response", candid);
-//         return "failure";
-//     }
-// }
-//
-// export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse {
-//     if ("Success" in candid) {
-//         const result = candid.Success;
-//         return {
-//             kind: "success",
-//             timestamp: result.timestamp,
-//             blockedUsers: optional(result.blocked_users, (b) => b.map((u) => u.toString())),
-//             communities: communitiesUpdates(result.communities),
-//             favouriteChats: favouriteChatsUpdates(result.favourite_chats),
-//             groupChats: groupChatsUpdates(result.group_chats),
-//             avatarId: optionUpdate(result.avatar_id, identity),
-//             directChats: directChatsUpdates(result.direct_chats),
-//             suspended: optional(result.suspended, identity),
-//             pinNumberSettings: optionUpdate(result.pin_number_settings, pinNumberSettings),
-//             achievementsLastSeen: optional(result.achievements_last_seen, identity),
-//             achievements: result.achievements.map(chitEarned),
-//             streakEnds: result.streak_ends,
-//             streak: result.streak,
-//             nextDailyClaim: result.next_daily_claim,
-//             chitBalance: result.chit_balance,
-//             totalChitEarned: result.total_chit_earned,
-//             referrals: result.referrals.map(referral),
-//             walletConfig: optional(result.wallet_config, walletConfig),
-//         };
-//     }
-//
-//     if ("SuccessNoUpdates" in candid) {
-//         return {
-//             kind: "success_no_updates",
-//         };
-//     }
-//
-//     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
-// }
-//
-// function userCanisterGroupSummary(
-//     summary: ApiUserCanisterGroupChatSummary
-// ): UserCanisterGroupChatSummary {
-//     return {
-//         id: { kind: "group_chat", groupId: summary.chat_id.toString() },
-//         readByMeUpTo: optional(summary.read_by_me_up_to, identity),
-//         threadsRead: summary.threads_read.reduce((curr, next) => {
-//             curr[next[0]] = next[1];
-//             return curr;
-//         }, {} as Record<number, number>),
-//         archived: summary.archived,
-//         dateReadPinned: optional(summary.date_read_pinned, identity),
-//         localUserIndex: summary.local_user_index_canister_id.toString(),
-//     };
-// }
-//
-// function userCanisterGroupSummaryUpdates(
-//     summary: ApiUserCanisterGroupChatSummaryUpdates
-// ): UserCanisterGroupChatSummaryUpdates {
-//     return {
-//         id: { kind: "group_chat", groupId: summary.chat_id.toString() },
-//         readByMeUpTo: optional(summary.read_by_me_up_to, identity),
-//         threadsRead: summary.threads_read.reduce((curr, next) => {
-//             curr[next[0]] = next[1];
-//             return curr;
-//         }, {} as Record<number, number>),
-//         archived: optional(summary.archived, identity),
-//         dateReadPinned: optional(summary.date_read_pinned, identity),
-//     };
-// }
-//
-// function directChatSummaryUpdates(candid: ApiDirectChatSummaryUpdates): DirectChatSummaryUpdates {
-//     return {
-//         kind: "direct_chat",
-//         id: { kind: "direct_chat", userId: candid.chat_id.toString() },
-//         readByMeUpTo: optional(candid.read_by_me_up_to, identity),
-//         readByThemUpTo: optional(candid.read_by_them_up_to, identity),
-//         lastUpdated: candid.last_updated,
-//         latestMessage: optional(candid.latest_message, messageEvent),
-//         latestEventIndex: optional(candid.latest_event_index, identity),
-//         latestMessageIndex: optional(candid.latest_message_index, identity),
-//         notificationsMuted: optional(candid.notifications_muted, identity),
-//         updatedEvents: candid.updated_events.map(updatedEvent),
-//         eventsTTL: optionUpdate(candid.events_ttl, identity),
-//         eventsTtlLastUpdated: optional(candid.events_ttl_last_updated, identity),
-//         metrics: optional(candid.metrics, chatMetrics),
-//         myMetrics: optional(candid.my_metrics, chatMetrics),
-//         archived: optional(candid.archived, identity),
-//         videoCallInProgress: optionUpdate(candid.video_call_in_progress, (v) => v.message_index),
-//     };
-// }
-//
-// function updatedEvent([eventIndex, timestamp]: [number, bigint]): UpdatedEvent {
-//     return {
-//         eventIndex,
-//         timestamp,
-//     };
-// }
-//
-// function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
-//     return {
-//         id: { kind: "direct_chat", userId: candid.them.toString() },
-//         kind: "direct_chat",
-//         latestMessage: messageEvent(candid.latest_message),
-//         them: { kind: "direct_chat", userId: candid.them.toString() },
-//         latestEventIndex: candid.latest_event_index,
-//         latestMessageIndex: candid.latest_message_index,
-//         lastUpdated: candid.last_updated,
-//         readByThemUpTo: optional(candid.read_by_them_up_to, identity),
-//         dateCreated: candid.date_created,
-//         eventsTTL: undefined,
-//         eventsTtlLastUpdated: BigInt(0),
-//         metrics: chatMetrics(candid.metrics),
-//         videoCallInProgress: optional(candid.video_call_in_progress, (v) => v.message_index),
-//         membership: {
-//             ...nullMembership(),
-//             role: "owner",
-//             myMetrics: chatMetrics(candid.my_metrics),
-//             notificationsMuted: candid.notifications_muted,
-//             readByMeUpTo: optional(candid.read_by_me_up_to, identity),
-//             archived: candid.archived,
-//             rulesAccepted: false,
-//         },
-//     };
-// }
-//
-// function failedNnsCryptoWithdrawal(
-//     candid: ApiNnsFailedCryptoTransaction
-// ): FailedCryptocurrencyWithdrawal {
-//     return {
-//         kind: "failed",
-//         ledger: candid.ledger.toString(),
-//         to: "Account" in candid.to ? bytesToHexString(candid.to.Account) : "",
-//         amountE8s: candid.amount.e8s,
-//         feeE8s: candid.fee.e8s,
-//         memo: candid.memo,
-//         errorMessage: candid.error_message,
-//     };
-// }
-//
-// function failedIcrc1CryptoWithdrawal(
-//     candid: ApiIcrc1FailedCryptoTransaction
-// ): FailedCryptocurrencyWithdrawal {
-//     return {
-//         kind: "failed",
-//         ledger: candid.ledger.toString(),
-//         to: "Account" in candid.to ? formatIcrc1Account(candid.to.Account) : "",
-//         amountE8s: candid.amount,
-//         feeE8s: candid.fee,
-//         memo: optional(candid.memo, bytesToBigint) ?? BigInt(0),
-//         errorMessage: candid.error_message,
-//     };
-// }
-//
-// function completedNnsCryptoWithdrawal(
-//     candid: ApiNnsCompletedCryptoTransaction
-// ): CompletedCryptocurrencyWithdrawal {
-//     return {
-//         kind: "completed",
-//         ledger: candid.ledger.toString(),
-//         to: "Account" in candid.to ? bytesToHexString(candid.to.Account) : "",
-//         amountE8s: candid.amount.e8s,
-//         feeE8s: candid.fee.e8s,
-//         memo: candid.memo,
-//         blockIndex: candid.block_index,
-//     };
-// }
-//
-// function completedIcrc1CryptoWithdrawal(
-//     candid: ApiIcrc1CompletedCryptoTransaction
-// ): CompletedCryptocurrencyWithdrawal {
-//     return {
-//         kind: "completed",
-//         ledger: candid.ledger.toString(),
-//         to: "Account" in candid.to ? formatIcrc1Account(candid.to.Account) : "",
-//         amountE8s: candid.amount,
-//         feeE8s: candid.fee,
-//         memo: optional(candid.memo, bytesToBigint) ?? BigInt(0),
-//         blockIndex: candid.block_index,
-//     };
-// }
-//
-// export function withdrawCryptoResponse(
-//     candid: ApiWithdrawCryptoResponse
-// ): WithdrawCryptocurrencyResponse {
-//     if (
-//         "PinRequired" in candid ||
-//         "PinIncorrect" in candid ||
-//         "TooManyFailedPinAttempts" in candid
-//     ) {
-//         return pinNumberFailureResponse(candid);
-//     }
-//     if ("CurrencyNotSupported" in candid) {
-//         return { kind: "currency_not_supported" };
-//     }
-//     if ("TransactionFailed" in candid) {
-//         if ("NNS" in candid.TransactionFailed) {
-//             return failedNnsCryptoWithdrawal(candid.TransactionFailed.NNS);
-//         } else if ("ICRC1" in candid.TransactionFailed) {
-//             return failedIcrc1CryptoWithdrawal(candid.TransactionFailed.ICRC1);
-//         }
-//     }
-//     if ("Success" in candid) {
-//         if ("NNS" in candid.Success) {
-//             return completedNnsCryptoWithdrawal(candid.Success.NNS);
-//         } else if ("ICRC1" in candid.Success) {
-//             return completedIcrc1CryptoWithdrawal(candid.Success.ICRC1);
-//         }
-//     }
-//
-//     throw new Error("Unexpected ApiWithdrawCryptocurrencyResponse type received");
-// }
-//
-// function formatIcrc1Account(candid: ApiIcrc1Account): string {
-//     const owner = candid.owner.toString();
-//     const subaccount = optional(candid.subaccount, bytesToHexString);
-//
-//     return subaccount !== undefined ? `${owner}:${subaccount}` : owner;
-// }
-//
-// export function deletedMessageResponse(
-//     candid: ApiDeletedDirectMessageResponse
-// ): DeletedDirectMessageResponse {
-//     if ("Success" in candid) {
-//         return {
-//             kind: "success",
-//             content: messageContent(candid.Success.content, "unknown"),
-//         };
-//     }
-//     if ("ChatNotFound" in candid) {
-//         return { kind: "chat_not_found" };
-//     }
-//     if ("NotAuthorized" in candid) {
-//         return { kind: "not_authorized" };
-//     }
-//     if ("MessageNotFound" in candid) {
-//         return { kind: "message_not_found" };
-//     }
-//     if ("MessageNotDeleted" in candid) {
-//         return { kind: "message_not_deleted" };
-//     }
-//     if ("MessageHardDeleted" in candid) {
-//         return { kind: "message_hard_deleted" };
-//     }
-//     throw new UnsupportedValueError(
-//         "Unexpected ApiDeletedDirectMessageResponse type received",
-//         candid
-//     );
-// }
-//
-// export function setMessageReminderResponse(
-//     candid: ApiSetMessageReminderResponse
-// ): SetMessageReminderResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     } else {
-//         console.warn("SetMessageReminder failed with", candid);
-//         return "failure";
-//     }
-// }
-//
-// export function leaveCommunityResponse(candid: ApiLeaveCommunityResponse): LeaveCommunityResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     } else {
-//         console.warn("LeaveCommunity failed with", candid);
-//         return "failure";
-//     }
-// }
-//
-// export function deleteCommunityResponse(
-//     candid: ApiDeleteCommunityResponse
-// ): DeleteCommunityResponse {
-//     if ("Success" in candid) {
-//         return "success";
-//     } else {
-//         console.warn("DeleteCommunity failed with", candid);
-//         return "failure";
-//     }
-// }
-//
-// export function proposalToSubmit(proposal: CandidateProposal): ProposalToSubmit {
-//     return {
-//         title: proposal.title,
-//         url: proposal.url ?? "",
-//         summary: proposal.summary,
-//         action: proposalAction(proposal.action),
-//     };
-// }
-//
-// function proposalAction(action: CandidateProposalAction): ProposalToSubmitAction {
-//     switch (action.kind) {
-//         case "motion":
-//             return { Motion: null };
-//         case "transfer_sns_funds":
-//             return {
-//                 TransferSnsTreasuryFunds: {
-//                     to: {
-//                         owner: Principal.fromText(action.recipient.owner),
-//                         subaccount: apiOptional(hexStringToBytes, action.recipient.subaccount),
-//                     },
-//                     amount: action.amount,
-//                     memo: [],
-//                     treasury: action.treasury === "ICP" ? { ICP: null } : { SNS: null },
-//                 },
-//             };
-//         case "upgrade_sns_to_next_version":
-//             return { UpgradeSnsToNextVersion: null };
-//         case "execute_generic_nervous_system_function":
-//             return {
-//                 ExecuteGenericNervousSystemFunction: {
-//                     function_id: action.functionId,
-//                     payload: action.payload,
-//                 },
-//             };
-//     }
-// }
-//
-// export function submitProposalResponse(candid: ApiSubmitProposalResponse): SubmitProposalResponse {
-//     if ("Success" in candid) {
-//         return { kind: "success" };
-//     }
-//     if ("Retrying" in candid) {
-//         return { kind: "retrying", error: candid.Retrying };
-//     }
-//     if ("TransferFailed" in candid) {
-//         return { kind: "transfer_failed", error: candid.TransferFailed };
-//     }
-//     if ("InternalError" in candid) {
-//         return { kind: "internal_error", error: candid.InternalError };
-//     }
-//     if ("GovernanceCanisterNotSupported" in candid) {
-//         return { kind: "governance_canister_not_supported" };
-//     }
-//     if ("UserSuspended" in candid) {
-//         return { kind: "user_suspended" };
-//     }
-//     if ("InsufficientPayment" in candid) {
-//         return { kind: "insufficient_payment" };
-//     }
-//     throw new UnsupportedValueError("Unexpected ApiSubmitProposalResponse type received", candid);
-// }
-//
-// export function reportMessageResponse(candid: ReportMessageResponse): boolean {
-//     return "Success" in candid || "AlreadyReported" in candid;
-// }
-//
-// export function swapTokensResponse(candid: ApiSwapTokensResponse): SwapTokensResponse {
-//     if ("Success" in candid) {
-//         return {
-//             kind: "success",
-//             amountOut: candid.Success.amount_out,
-//         };
-//     }
-//     if ("SwapFailed" in candid) {
-//         return {
-//             kind: "swap_failed",
-//         };
-//     }
-//     if ("InternalError" in candid) {
-//         return {
-//             kind: "internal_error",
-//             error: candid.InternalError,
-//         };
-//     }
-//     if (
-//         "PinRequired" in candid ||
-//         "PinIncorrect" in candid ||
-//         "TooManyFailedPinAttempts" in candid
-//     ) {
-//         return pinNumberFailureResponse(candid);
-//     }
-//
-//     throw new UnsupportedValueError("Unexpected ApiSwapTokensResponse type received", candid);
-// }
-//
-// export function tokenSwapStatusResponse(
-//     candid: ApiTokenSwapStatusResponse
-// ): TokenSwapStatusResponse {
-//     if ("Success" in candid) {
-//         return {
-//             kind: "success",
-//             started: candid.Success.started,
-//             depositAccount: optional(candid.Success.deposit_account, result),
-//             transfer: optional(candid.Success.transfer, result),
-//             notifyDex: optional(candid.Success.notify_dex, result),
-//             amountSwapped: optional(candid.Success.amount_swapped, resultOfResult),
-//             withdrawnFromDex: optional(candid.Success.withdraw_from_dex, result),
-//         };
-//     }
-//     if ("NotFound" in candid) {
-//         return {
-//             kind: "not_found",
-//         };
-//     }
-//     throw new UnsupportedValueError("Unexpected ApiTokenSwapStatusResponse type received", candid);
-// }
-//
-// function result<T>(candid: { Ok: T } | { Err: string }): Result<T> {
-//     if ("Ok" in candid) {
-//         return {
-//             kind: "ok",
-//             value: candid.Ok,
-//         };
-//     }
-//     return {
-//         kind: "error",
-//         error: candid.Err,
-//     };
-// }
-//
-// function resultOfResult<T>(
-//     candid: { Ok: { Ok: T } | { Err: string } } | { Err: string }
-// ): Result<Result<T>> {
-//     if ("Ok" in candid) {
-//         return {
-//             kind: "ok",
-//             value: result(candid.Ok),
-//         };
-//     }
-//     return {
-//         kind: "error",
-//         error: candid.Err,
-//     };
-// }
-//
-// export function approveTransferResponse(
-//     candid: ApiApproveTransferResponse
-// ): ApproveTransferResponse {
-//     if ("Success" in candid) {
-//         return { kind: "success" };
-//     }
-//     if ("InternalError" in candid) {
-//         return { kind: "internal_error", error: candid.InternalError };
-//     }
-//     if ("ApproveError" in candid) {
-//         return { kind: "approve_error", error: JSON.stringify(candid.ApproveError) };
-//     }
-//     if (
-//         "PinRequired" in candid ||
-//         "PinIncorrect" in candid ||
-//         "TooManyFailedPinAttempts" in candid
-//     ) {
-//         return pinNumberFailureResponse(candid);
-//     }
-//
-//     throw new UnsupportedValueError("Unexpected ApiApproveTransferResponse type received", candid);
-// }
-//
-// export function apiExchangeArgs(
-//     args: ExchangeTokenSwapArgs
-// ): { Sonic: ApiExchangeArgs } | { ICPSwap: ApiExchangeArgs } {
-//     const value = {
-//         swap_canister_id: Principal.fromText(args.swapCanisterId),
-//         zero_for_one: args.zeroForOne,
-//     };
-//     if (args.dex === "icpswap") {
-//         return {
-//             ICPSwap: value,
-//         };
-//     } else if (args.dex === "sonic") {
-//         return {
-//             Sonic: value,
-//         };
-//     }
-//     throw new UnsupportedValueError("Unexpected dex", args.dex);
-// }
-//
-// export function claimDailyChitResponse(candid: ApiClaimDailyChitResponse): ClaimDailyChitResponse {
-//     if ("Success" in candid) {
-//         return {
-//             kind: "success",
-//             streak: candid.Success.streak,
-//             chitBalance: candid.Success.chit_balance,
-//             chitEarned: candid.Success.chit_earned,
-//             nextDailyChitClaim: candid.Success.next_claim,
-//         };
-//     }
-//     if ("AlreadyClaimed" in candid) {
-//         return {
-//             kind: "already_claimed",
-//             nextDailyChitClaim: candid.AlreadyClaimed,
-//         };
-//     }
-//     throw new UnsupportedValueError("Unexpected ApiClaimDailyChitResponse type received", candid);
-// }
+export function createCommunityResponse(
+    value: UserCreateCommunityResponse,
+): CreateCommunityResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return { kind: "success", id: principalBytesToString(value.Success.community_id) };
+    } else if (value === "NameTaken") {
+        return { kind: "name_taken" };
+    } else {
+        console.warn("CreateCommunity failed with", value);
+        return CommonResponses.failure();
+    }
+}
+
+export async function getEventsResponse(
+    principal: Principal,
+    value: UserEventsResponse,
+    chatId: DirectChatIdentifier,
+    latestKnownUpdatePreRequest: bigint | undefined,
+): Promise<EventsResponse<ChatEvent>> {
+    if (typeof value === "object") {
+        if ("Success" in value) {
+            await ensureReplicaIsUpToDate(principal, chatId, value.Success.chat_last_updated);
+
+            return eventsSuccessResponse(value.Success);
+        }
+        if ("ReplicaNotUpToDateV2" in value) {
+            throw ReplicaNotUpToDateError.byTimestamp(
+                value.ReplicaNotUpToDateV2,
+                latestKnownUpdatePreRequest ?? BigInt(-1),
+                false,
+            );
+        }
+    }
+    if (value === "ChatNotFound" || value === "ThreadMessageNotFound") {
+        return "events_failed";
+    }
+
+    throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", value);
+}
+
+function groupChatsInitial(value: UserInitialStateGroupChatsInitial): GroupChatsInitial {
+    return {
+        summaries: value.summaries.map(userCanisterGroupSummary),
+        pinned: value.pinned.map((c) => ({
+            kind: "group_chat",
+            groupId: principalBytesToString(c),
+        })),
+    };
+}
+
+function directChatsInitial(value: UserInitialStateDirectChatsInitial): DirectChatsInitial {
+    return {
+        summaries: value.summaries.map(directChatSummary),
+        pinned: value.pinned.map((c) => ({
+            kind: "direct_chat",
+            userId: principalBytesToString(c),
+        })),
+    };
+}
+
+function userCanisterChannelSummary(
+    value: UserChannelSummary,
+    communityId: string,
+): UserCanisterChannelSummary {
+    return {
+        id: {
+            kind: "channel",
+            communityId: communityId,
+            channelId: value.channel_id.toString(),
+        },
+        readByMeUpTo: value.read_by_me_up_to,
+        dateReadPinned: value.date_read_pinned,
+        threadsRead: Object.entries(value.threads_read).reduce(
+            (curr, next) => {
+                curr[Number(next[0])] = next[1];
+                return curr;
+            },
+            {} as Record<number, number>,
+        ),
+        archived: value.archived,
+    };
+}
+
+function userCanisterCommunitySummary(value: UserCommunitySummary): UserCanisterCommunitySummary {
+    const communityId = principalBytesToString(value.community_id);
+    return {
+        id: { kind: "community", communityId },
+        index: value.index,
+        channels: value.channels.map((c) => userCanisterChannelSummary(c, communityId)),
+        pinned: value.pinned.map((p) => ({
+            kind: "channel",
+            communityId,
+            channelId: p.toString(),
+        })),
+        archived: value.archived,
+        localUserIndex: principalBytesToString(value.local_user_index_canister_id),
+    };
+}
+
+function communitiesInitial(value: UserInitialStateCommunitiesInitial): CommunitiesInitial {
+    return {
+        summaries: value.summaries.map(userCanisterCommunitySummary),
+    };
+}
+
+function chatIdentifier(value: TChat): ChatIdentifier {
+    if ("Group" in value) {
+        return { kind: "group_chat", groupId: principalBytesToString(value.Group) };
+    }
+    if ("Direct" in value) {
+        return { kind: "direct_chat", userId: principalBytesToString(value.Direct) };
+    }
+    if ("Channel" in value) {
+        return {
+            kind: "channel",
+            communityId: principalBytesToString(value.Channel[0]),
+            channelId: value.Channel[1].toString(),
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiChat type received", value);
+}
+
+function favouriteChatsInitial(
+    value: UserInitialStateFavouriteChatsInitial,
+): FavouriteChatsInitial {
+    return {
+        chats: value.chats.map(chatIdentifier),
+        pinned: value.pinned.map(chatIdentifier),
+    };
+}
+
+export function initialStateResponse(value: UserInitialStateResponse): InitialStateResponse {
+    if ("Success" in value) {
+        const result = value.Success;
+        return {
+            blockedUsers: result.blocked_users.map(principalBytesToString),
+            communities: communitiesInitial(value.Success.communities),
+            groupChats: groupChatsInitial(value.Success.group_chats),
+            favouriteChats: favouriteChatsInitial(value.Success.favourite_chats),
+            avatarId: result.avatar_id,
+            directChats: directChatsInitial(value.Success.direct_chats),
+            timestamp: result.timestamp,
+            suspended: result.suspended,
+            pinNumberSettings: mapOptional(result.pin_number_settings, pinNumberSettings),
+            localUserIndex: principalBytesToString(result.local_user_index_canister_id),
+            achievementsLastSeen: result.achievements_last_seen,
+            achievements: result.achievements.map(chitEarned),
+            streakEnds: result.streak_ends,
+            streak: result.streak,
+            nextDailyClaim: result.next_daily_claim,
+            chitBalance: result.chit_balance,
+            totalChitEarned: result.total_chit_earned,
+            referrals: result.referrals.map(referral),
+            walletConfig: walletConfig(result.wallet_config),
+        };
+    }
+    throw new Error(`Unexpected ApiUpdatesResponse type received: ${value}`);
+}
+
+function referral(value: UserReferral): Referral {
+    return {
+        userId: principalBytesToString(value.user_id),
+        status: referralStatus(value.status),
+    };
+}
+
+export function apiWalletConfig(domain: WalletConfig): UserWalletConfig {
+    switch (domain.kind) {
+        case "auto_wallet": {
+            return { Auto: { min_cents_visible: Math.round(domain.minDollarValue * 100) } };
+        }
+        case "manual_wallet": {
+            return { Manual: { tokens: [...domain.tokens].map(principalStringToBytes) } };
+        }
+    }
+    throw new UnsupportedValueError("Unexpected WalletConfig value received", domain);
+}
+
+function walletConfig(value: UserWalletConfig): WalletConfig {
+    if ("Auto" in value) {
+        return {
+            kind: "auto_wallet",
+            minDollarValue: value.Auto.min_cents_visible / 100,
+        };
+    }
+    if ("Manual" in value) {
+        return {
+            kind: "manual_wallet",
+            tokens: new Set<string>(value.Manual.tokens.map(principalBytesToString)),
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiWalletConfig value received", value);
+}
+
+function pinNumberSettings(value: TPinNumberSettings): PinNumberSettings {
+    return {
+        length: value.length,
+        attemptsBlockedUntil: value.attempts_blocked_until,
+    };
+}
+
+export function userCanisterChannelSummaryUpdates(
+    value: UserChannelSummaryUpdates,
+    communityId: string,
+): UserCanisterChannelSummaryUpdates {
+    return {
+        id: { kind: "channel", communityId, channelId: value.channel_id.toString() },
+        readByMeUpTo: value.read_by_me_up_to,
+        dateReadPinned: value.date_read_pinned,
+        threadsRead: Object.entries(value.threads_read).reduce(
+            (curr, next) => {
+                curr[Number(next[0])] = next[1];
+                return curr;
+            },
+            {} as Record<number, number>,
+        ),
+        archived: value.archived,
+    };
+}
+
+export function userCanisterCommunitySummaryUpdates(
+    value: UserCommunitySummaryUpdates,
+): UserCanisterCommunitySummaryUpdates {
+    const communityId = principalBytesToString(value.community_id);
+    return {
+        id: { kind: "community", communityId },
+        index: value.index,
+        channels: value.channels.map((c) => userCanisterChannelSummaryUpdates(c, communityId)),
+        pinned: mapOptional(value.pinned, (p) =>
+            p.map((p) => ({ kind: "channel", communityId, channelId: p.toString() })),
+        ),
+        archived: value.archived,
+    };
+}
+
+export function communitiesUpdates(value: UserUpdatesCommunitiesUpdates): CommunitiesUpdates {
+    return {
+        added: value.added.map(userCanisterCommunitySummary),
+        updated: value.updated.map(userCanisterCommunitySummaryUpdates),
+        removed: value.removed.map(principalBytesToString),
+    };
+}
+
+export function favouriteChatsUpdates(
+    value: UserUpdatesFavouriteChatsUpdates,
+): FavouriteChatsUpdates {
+    return {
+        chats: mapOptional(value.chats, (c) => c.map(chatIdentifier)),
+        pinned: mapOptional(value.pinned, (c) => c.map(chatIdentifier)),
+    };
+}
+
+export function groupChatsUpdates(value: UserUpdatesGroupChatsUpdates): GroupChatsUpdates {
+    return {
+        added: value.added.map(userCanisterGroupSummary),
+        pinned: mapOptional(value.pinned, (p) =>
+            p.map((p) => ({ kind: "group_chat", groupId: principalBytesToString(p) })),
+        ),
+        updated: value.updated.map(userCanisterGroupSummaryUpdates),
+        removed: value.removed.map((c) => c.toString()),
+    };
+}
+
+export function directChatsUpdates(value: UserUpdatesDirectChatsUpdates): DirectChatsUpdates {
+    return {
+        added: value.added.map(directChatSummary),
+        pinned: mapOptional(value.pinned, (p) =>
+            p.map((p) => ({ kind: "direct_chat", userId: principalBytesToString(p) })),
+        ),
+        updated: value.updated.map(directChatSummaryUpdates),
+    };
+}
+
+export function manageFavouritesResponse(
+    value: UserManageFavouriteChatsResponse,
+): ManageFavouritesResponse {
+    if (value === "Success") {
+        return "success";
+    } else {
+        console.warn("ApiManageFavouriteChatsResponse failure response", value);
+        return "failure";
+    }
+}
+
+export function getUpdatesResponse(value: UserUpdatesResponse): UpdatesResponse {
+    if (value === "SuccessNoUpdates") {
+        return {
+            kind: "success_no_updates",
+        };
+    }
+    if ("Success" in value) {
+        const result = value.Success;
+        return {
+            kind: "success",
+            timestamp: result.timestamp,
+            blockedUsers: mapOptional(result.blocked_users, (b) => b.map(principalBytesToString)),
+            communities: communitiesUpdates(result.communities),
+            favouriteChats: favouriteChatsUpdates(result.favourite_chats),
+            groupChats: groupChatsUpdates(result.group_chats),
+            avatarId: optionUpdateV2(result.avatar_id, identity),
+            directChats: directChatsUpdates(result.direct_chats),
+            suspended: result.suspended,
+            pinNumberSettings: optionUpdateV2(result.pin_number_settings, pinNumberSettings),
+            achievementsLastSeen: result.achievements_last_seen,
+            achievements: result.achievements.map(chitEarned),
+            streakEnds: result.streak_ends,
+            streak: result.streak,
+            nextDailyClaim: result.next_daily_claim,
+            chitBalance: result.chit_balance,
+            totalChitEarned: result.total_chit_earned,
+            referrals: result.referrals.map(referral),
+            walletConfig: mapOptional(result.wallet_config, walletConfig),
+        };
+    }
+
+    throw new Error(`Unexpected ApiUpdatesResponse type received: ${value}`);
+}
+
+function userCanisterGroupSummary(summary: UserGroupChatSummary): UserCanisterGroupChatSummary {
+    return {
+        id: { kind: "group_chat", groupId: principalBytesToString(summary.chat_id) },
+        readByMeUpTo: summary.read_by_me_up_to,
+        threadsRead: Object.entries(summary.threads_read).reduce(
+            (curr, next) => {
+                curr[Number(next[0])] = next[1];
+                return curr;
+            },
+            {} as Record<number, number>,
+        ),
+        archived: summary.archived,
+        dateReadPinned: summary.date_read_pinned,
+        localUserIndex: principalBytesToString(summary.local_user_index_canister_id),
+    };
+}
+
+function userCanisterGroupSummaryUpdates(
+    summary: UserGroupChatSummaryUpdates,
+): UserCanisterGroupChatSummaryUpdates {
+    return {
+        id: { kind: "group_chat", groupId: principalBytesToString(summary.chat_id) },
+        readByMeUpTo: summary.read_by_me_up_to,
+        threadsRead: Object.entries(summary.threads_read).reduce(
+            (curr, next) => {
+                curr[Number(next[0])] = next[1];
+                return curr;
+            },
+            {} as Record<number, number>,
+        ),
+        archived: summary.archived,
+        dateReadPinned: summary.date_read_pinned,
+    };
+}
+
+function directChatSummaryUpdates(value: TDirectChatSummaryUpdates): DirectChatSummaryUpdates {
+    return {
+        kind: "direct_chat",
+        id: { kind: "direct_chat", userId: principalBytesToString(value.chat_id) },
+        readByMeUpTo: value.read_by_me_up_to,
+        readByThemUpTo: value.read_by_them_up_to,
+        lastUpdated: value.last_updated,
+        latestMessage: mapOptional(value.latest_message, messageEvent),
+        latestEventIndex: value.latest_event_index,
+        latestMessageIndex: value.latest_message_index,
+        notificationsMuted: value.notifications_muted,
+        updatedEvents: value.updated_events.map(updatedEvent),
+        eventsTTL: optionUpdateV2(value.events_ttl, identity),
+        eventsTtlLastUpdated: value.events_ttl_last_updated,
+        metrics: mapOptional(value.metrics, chatMetrics),
+        myMetrics: mapOptional(value.my_metrics, chatMetrics),
+        archived: value.archived,
+        videoCallInProgress: optionUpdateV2(value.video_call_in_progress, (v) => v.message_index),
+    };
+}
+
+function updatedEvent([eventIndex, timestamp]: [number, bigint]): UpdatedEvent {
+    return {
+        eventIndex,
+        timestamp,
+    };
+}
+
+function directChatSummary(value: TDirectChatSummary): DirectChatSummary {
+    return {
+        id: { kind: "direct_chat", userId: principalBytesToString(value.them) },
+        kind: "direct_chat",
+        latestMessage: messageEvent(value.latest_message),
+        them: { kind: "direct_chat", userId: principalBytesToString(value.them) },
+        latestEventIndex: value.latest_event_index,
+        latestMessageIndex: value.latest_message_index,
+        lastUpdated: value.last_updated,
+        readByThemUpTo: value.read_by_them_up_to,
+        dateCreated: value.date_created,
+        eventsTTL: undefined,
+        eventsTtlLastUpdated: BigInt(0),
+        metrics: chatMetrics(value.metrics),
+        videoCallInProgress: mapOptional(value.video_call_in_progress, (v) => v.message_index),
+        membership: {
+            ...nullMembership(),
+            role: "owner",
+            myMetrics: chatMetrics(value.my_metrics),
+            notificationsMuted: value.notifications_muted,
+            readByMeUpTo: value.read_by_me_up_to,
+            archived: value.archived,
+            rulesAccepted: false,
+        },
+    };
+}
+
+function failedNnsCryptoWithdrawal(
+    value: FailedCryptoTransactionNNS,
+): FailedCryptocurrencyWithdrawal {
+    return {
+        kind: "failed",
+        ledger: principalBytesToString(value.ledger),
+        to: value.to !== "Mint" ? bytesToHexString(value.to.Account) : "",
+        amountE8s: value.amount.e8s,
+        feeE8s: value.fee.e8s,
+        memo: value.memo,
+        errorMessage: value.error_message,
+    };
+}
+
+function failedIcrc1CryptoWithdrawal(
+    value: FailedCryptoTransactionICRC1,
+): FailedCryptocurrencyWithdrawal {
+    return {
+        kind: "failed",
+        ledger: principalBytesToString(value.ledger),
+        to: value.to !== "Mint" ? formatIcrc1Account(value.to.Account) : "",
+        amountE8s: value.amount,
+        feeE8s: value.fee,
+        memo: mapOptional(value.memo, bytesToBigint) ?? BigInt(0),
+        errorMessage: value.error_message,
+    };
+}
+
+function completedNnsCryptoWithdrawal(
+    value: CompletedCryptoTransactionNNS,
+): CompletedCryptocurrencyWithdrawal {
+    return {
+        kind: "completed",
+        ledger: principalBytesToString(value.ledger),
+        to: value.to !== "Mint" ? bytesToHexString(value.to.Account) : "",
+        amountE8s: value.amount.e8s,
+        feeE8s: value.fee.e8s,
+        memo: value.memo,
+        blockIndex: value.block_index,
+    };
+}
+
+function completedIcrc1CryptoWithdrawal(
+    value: CompletedCryptoTransactionICRC1,
+): CompletedCryptocurrencyWithdrawal {
+    return {
+        kind: "completed",
+        ledger: principalBytesToString(value.ledger),
+        to: value.to !== "Mint" ? formatIcrc1Account(value.to.Account) : "",
+        amountE8s: value.amount,
+        feeE8s: value.fee,
+        memo: mapOptional(value.memo, bytesToBigint) ?? BigInt(0),
+        blockIndex: value.block_index,
+    };
+}
+
+export function withdrawCryptoResponse(
+    value: UserWithdrawCryptoResponse,
+): WithdrawCryptocurrencyResponse {
+    if (typeof value === "object") {
+        if ("PinIncorrect" in value || "TooManyFailedPinAttempts" in value) {
+            return pinNumberFailureResponseV2(value);
+        }
+        if ("TransactionFailed" in value) {
+            if ("NNS" in value.TransactionFailed) {
+                return failedNnsCryptoWithdrawal(value.TransactionFailed.NNS);
+            } else if ("ICRC1" in value.TransactionFailed) {
+                return failedIcrc1CryptoWithdrawal(value.TransactionFailed.ICRC1);
+            }
+        }
+        if ("Success" in value) {
+            if ("NNS" in value.Success) {
+                return completedNnsCryptoWithdrawal(value.Success.NNS);
+            } else if ("ICRC1" in value.Success) {
+                return completedIcrc1CryptoWithdrawal(value.Success.ICRC1);
+            }
+        }
+    }
+    if (value === "PinRequired") {
+        return pinNumberFailureResponseV2(value);
+    }
+    if (value === "CurrencyNotSupported") {
+        return { kind: "currency_not_supported" };
+    }
+
+    throw new Error("Unexpected ApiWithdrawCryptocurrencyResponse type received");
+}
+
+function formatIcrc1Account(value: AccountICRC1): string {
+    const owner = principalBytesToString(value.owner);
+    const subaccount = mapOptional(value.subaccount, bytesToHexString);
+
+    return subaccount !== undefined ? `${owner}:${subaccount}` : owner;
+}
+
+export function deletedMessageResponse(
+    value: UserDeletedMessageResponse,
+): DeletedDirectMessageResponse {
+    if (typeof value === "object") {
+        if ("Success" in value) {
+            return {
+                kind: "success",
+                content: messageContent(value.Success.content, "unknown"),
+            };
+        }
+    }
+    if (value === "MessageHardDeleted") {
+        return { kind: "message_hard_deleted" };
+    }
+    return {
+        kind: mapCommonResponses(value, "DeletedMessage"),
+    };
+}
+
+export function setMessageReminderResponse(
+    value: UserSetMessageReminderResponse,
+): SetMessageReminderResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return "success";
+    } else {
+        console.warn("SetMessageReminder failed with", value);
+        return "failure";
+    }
+}
+
+export function leaveCommunityResponse(value: UserLeaveCommunityResponse): LeaveCommunityResponse {
+    if (value === "Success") {
+        return "success";
+    } else {
+        console.warn("LeaveCommunity failed with", value);
+        return "failure";
+    }
+}
+
+export function deleteCommunityResponse(
+    value: UserDeleteCommunityResponse,
+): DeleteCommunityResponse {
+    if (value === "Success") {
+        return "success";
+    } else {
+        console.warn("DeleteCommunity failed with", value);
+        return "failure";
+    }
+}
+
+export function proposalToSubmit(proposal: CandidateProposal): ProposalsBotProposalToSubmit {
+    return {
+        title: proposal.title,
+        url: proposal.url ?? "",
+        summary: proposal.summary,
+        action: proposalAction(proposal.action),
+    };
+}
+
+function proposalAction(action: CandidateProposalAction): ProposalsBotProposalToSubmitAction {
+    switch (action.kind) {
+        case "motion":
+            return "Motion";
+        case "transfer_sns_funds":
+            return {
+                TransferSnsTreasuryFunds: {
+                    to: {
+                        owner: principalStringToBytes(action.recipient.owner),
+                        subaccount: mapOptional(
+                            action.recipient.subaccount,
+                            (s) =>
+                                [...hexStringToBytes(s)] as [
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                    number,
+                                ],
+                        ),
+                    },
+                    amount: action.amount,
+                    memo: undefined,
+                    treasury: action.treasury,
+                },
+            };
+        case "upgrade_sns_to_next_version":
+            return "UpgradeSnsToNextVersion";
+        case "execute_generic_nervous_system_function":
+            return {
+                ExecuteGenericNervousSystemFunction: {
+                    function_id: action.functionId,
+                    payload: action.payload,
+                },
+            };
+    }
+}
+
+export function submitProposalResponse(value: UserSubmitProposalResponse): SubmitProposalResponse {
+    if (value === "Success") {
+        return { kind: "success" };
+    }
+    if (value === "GovernanceCanisterNotSupported") {
+        return { kind: "governance_canister_not_supported" };
+    }
+    if (value === "UserSuspended") {
+        return { kind: "user_suspended" };
+    }
+    if (typeof value === "object") {
+        if ("Retrying" in value) {
+            return { kind: "retrying", error: value.Retrying };
+        }
+        if ("InsufficientPayment" in value) {
+            return { kind: "insufficient_payment" };
+        }
+        if ("TransferFailed" in value) {
+            return { kind: "transfer_failed", error: value.TransferFailed };
+        }
+        if ("InternalError" in value) {
+            return { kind: "internal_error", error: value.InternalError };
+        }
+    }
+    throw new UnsupportedValueError("Unexpected ApiSubmitProposalResponse type received", value);
+}
+
+export function reportMessageResponse(value: UserReportMessageResponse): boolean {
+    return value === "Success" || value === "AlreadyReported";
+}
+
+export function swapTokensResponse(value: UserSwapTokensResponse): SwapTokensResponse {
+    if (typeof value === "object") {
+        if ("Success" in value) {
+            return {
+                kind: "success",
+                amountOut: value.Success.amount_out,
+            };
+        }
+        if ("InternalError" in value) {
+            return {
+                kind: "internal_error",
+                error: value.InternalError,
+            };
+        }
+        if ("PinIncorrect" in value || "TooManyFailedPinAttempts" in value) {
+            return pinNumberFailureResponseV2(value);
+        }
+    }
+    if (value === "SwapFailed") {
+        return {
+            kind: "swap_failed",
+        };
+    }
+    if (value === "PinRequired") {
+        return pinNumberFailureResponseV2(value);
+    }
+    throw new UnsupportedValueError("Unexpected ApiSwapTokensResponse type received", value);
+}
+
+export function tokenSwapStatusResponse(
+    value: UserTokenSwapStatusResponse,
+): TokenSwapStatusResponse {
+    if (typeof value === "object" && "Success" in value) {
+        return {
+            kind: "success",
+            started: value.Success.started,
+            depositAccount: mapOptional(value.Success.deposit_account, result),
+            transfer: mapOptional(value.Success.transfer, result),
+            notifyDex: mapOptional(value.Success.notify_dex, result),
+            amountSwapped: mapOptional(value.Success.amount_swapped, resultOfResult),
+            withdrawnFromDex: mapOptional(value.Success.withdraw_from_dex, result),
+        };
+    }
+    if (value === "NotFound") {
+        return {
+            kind: "not_found",
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiTokenSwapStatusResponse type received", value);
+}
+
+function result<T>(value: { Ok: T } | { Err: string }): Result<T> {
+    if ("Ok" in value) {
+        return {
+            kind: "ok",
+            value: value.Ok,
+        };
+    }
+    return {
+        kind: "error",
+        error: value.Err,
+    };
+}
+
+function resultOfResult<T>(
+    value: { Ok: { Ok: T } | { Err: string } } | { Err: string },
+): Result<Result<T>> {
+    if ("Ok" in value) {
+        return {
+            kind: "ok",
+            value: result(value.Ok),
+        };
+    }
+    return {
+        kind: "error",
+        error: value.Err,
+    };
+}
+
+export function approveTransferResponse(
+    value: UserApproveTransferResponse,
+): ApproveTransferResponse {
+    if (value === "Success") {
+        return { kind: "success" };
+    }
+    if (typeof value === "object") {
+        if ("InternalError" in value) {
+            return { kind: "internal_error", error: value.InternalError };
+        }
+        if ("ApproveError" in value) {
+            return { kind: "approve_error", error: JSON.stringify(value.ApproveError) };
+        }
+        if ("PinIncorrect" in value || "TooManyFailedPinAttempts" in value) {
+            return pinNumberFailureResponseV2(value);
+        }
+    }
+    if (value === "PinRequired") {
+        return pinNumberFailureResponseV2(value);
+    }
+
+    throw new UnsupportedValueError("Unexpected ApiApproveTransferResponse type received", value);
+}
+
+export function apiExchangeArgs(args: ExchangeTokenSwapArgs): UserSwapTokensExchangeArgs {
+    const value = {
+        swap_canister_id: principalStringToBytes(args.swapCanisterId),
+        zero_for_one: args.zeroForOne,
+    };
+    if (args.dex === "icpswap") {
+        return {
+            ICPSwap: value,
+        };
+    } else if (args.dex === "kongswap") {
+        return {
+            KongSwap: value,
+        };
+    } else if (args.dex === "sonic") {
+        return {
+            Sonic: value,
+        };
+    }
+    throw new UnsupportedValueError("Unexpected dex", args.dex);
+}
+
+export function claimDailyChitResponse(value: UserClaimDailyChitResponse): ClaimDailyChitResponse {
+    if ("Success" in value) {
+        return {
+            kind: "success",
+            streak: value.Success.streak,
+            chitBalance: value.Success.chit_balance,
+            chitEarned: value.Success.chit_earned,
+            nextDailyChitClaim: value.Success.next_claim,
+        };
+    }
+    if ("AlreadyClaimed" in value) {
+        return {
+            kind: "already_claimed",
+            nextDailyChitClaim: value.AlreadyClaimed,
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiClaimDailyChitResponse type received", value);
+}
+
+export function apiVerification(domain: Verification): UserSetPinNumberPinNumberVerification {
+    switch (domain.kind) {
+        case "delegation_verification":
+            return { Delegation: signedDelegation(domain.delegation) };
+        case "no_verification":
+            return "None";
+        case "pin_verification":
+            return { PIN: domain.pin };
+    }
+}

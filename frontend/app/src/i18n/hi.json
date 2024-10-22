@@ -670,6 +670,7 @@
         "owned_group_with_100_diamond_members": "100 सत्यापित सदस्यों वाले समूह/समुदाय का स्वामित्व",
         "owned_group_with_1000_diamond_members": "1000 सत्यापित सदस्यों वाले समूह/समुदाय का स्वामित्व",
         "percentageComplete": "{perc}% पूर्ण",
+        "pinned_chat": "किसी चैट को सूची के शीर्ष पर पिन करें",
         "pinned_message": "संदेश पिन करें",
         "proved_unique_personhood": "अपनी अद्वितीय मानवता साबित करें",
         "quote_replied": "संदेश का उत्तर उद्धृत करें",

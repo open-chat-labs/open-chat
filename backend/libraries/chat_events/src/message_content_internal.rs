@@ -1257,7 +1257,6 @@ impl MessageContentInternalSubtype for PrizeContentInternal {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(from = "PrizeWinnerContentInternalCombined")]
 pub struct PrizeWinnerContentInternal {
     #[serde(rename = "w")]
     pub winner: UserId,
@@ -1273,46 +1272,6 @@ pub struct PrizeWinnerContentInternal {
     pub block_index: u64,
     #[serde(rename = "m")]
     pub prize_message: MessageIndex,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-struct PrizeWinnerContentInternalCombined {
-    #[serde(rename = "w")]
-    winner: UserId,
-    #[serde(rename = "l")]
-    ledger: Option<CanisterId>,
-    #[serde(rename = "s")]
-    token_symbol: Option<String>,
-    #[serde(rename = "t")]
-    transaction: Option<CompletedCryptoTransaction>,
-    #[serde(rename = "a")]
-    amount: Option<u128>,
-    #[serde(rename = "f")]
-    fee: Option<u128>,
-    #[serde(rename = "i")]
-    block_index: Option<u64>,
-    #[serde(rename = "m")]
-    prize_message: MessageIndex,
-}
-
-impl From<PrizeWinnerContentInternalCombined> for PrizeWinnerContentInternal {
-    fn from(value: PrizeWinnerContentInternalCombined) -> Self {
-        PrizeWinnerContentInternal {
-            winner: value.winner,
-            ledger: value
-                .ledger
-                .unwrap_or_else(|| value.transaction.as_ref().unwrap().ledger_canister_id()),
-            token_symbol: value
-                .token_symbol
-                .unwrap_or_else(|| value.transaction.as_ref().unwrap().token().token_symbol().to_string()),
-            amount: value.amount.unwrap_or_else(|| value.transaction.as_ref().unwrap().units()),
-            fee: value.fee.unwrap_or_else(|| value.transaction.as_ref().unwrap().fee()),
-            block_index: value
-                .block_index
-                .unwrap_or_else(|| value.transaction.as_ref().unwrap().index()),
-            prize_message: value.prize_message,
-        }
-    }
 }
 
 impl MessageContentInternalSubtype for PrizeWinnerContentInternal {

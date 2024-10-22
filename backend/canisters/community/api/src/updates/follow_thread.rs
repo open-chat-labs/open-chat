@@ -8,6 +8,7 @@ use types::{ChannelId, MessageIndex};
 pub struct Args {
     pub channel_id: ChannelId,
     pub thread_root_message_index: MessageIndex,
+    pub new_achievement: bool,
 }
 
 #[ts_export(community, follow_thread)]

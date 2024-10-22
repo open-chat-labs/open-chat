@@ -321,7 +321,7 @@ export const UserManageFavouriteChatsResponse = Type.Union([
 export type UserMessageActivitySummary = Static<typeof UserMessageActivitySummary>;
 export const UserMessageActivitySummary = Type.Object({
     read_up_to: Type.BigInt(),
-    latest_event: Type.BigInt(),
+    latest_event_timestamp: Type.BigInt(),
     unread_count: Type.Number(),
 });
 
@@ -1126,23 +1126,24 @@ export const Achievement = Type.Union([
     Type.Literal("Referred10thUser"),
     Type.Literal("Referred20thUser"),
     Type.Literal("Referred50thUser"),
-    Type.Literal("PinnedMessage"),
-    Type.Literal("SwappedFromWallet"),
-    Type.Literal("FavouritedChat"),
     Type.Literal("FollowedThread"),
+    Type.Literal("FavouritedChat"),
+    Type.Literal("SetPin"),
+    Type.Literal("SwappedFromWallet"),
+    Type.Literal("PinnedChat"),
+    Type.Literal("JoinedGatedGroupOrCommunity"),
+    Type.Literal("PinnedMessage"),
+    Type.Literal("SetGroupAccessGate"),
+    Type.Literal("SetCommunityAccessGate"),
     Type.Literal("AppointedGroupModerator"),
     Type.Literal("AppointedGroupAdmin"),
     Type.Literal("AppointedGroupOwner"),
     Type.Literal("ChosenAsGroupModerator"),
     Type.Literal("ChosenAsGroupAdmin"),
     Type.Literal("ChosenAsGroupOwner"),
-    Type.Literal("SetGroupAccessGate"),
-    Type.Literal("SetCommunityAccessGate"),
-    Type.Literal("JoinedGatedGroupOrCommunity"),
-    Type.Literal("SetPin"),
+    Type.Literal("ChangedTheme"),
     Type.Literal("SuggestedTranslation"),
     Type.Literal("TranslationAccepted"),
-    Type.Literal("ChangedTheme"),
     Type.Literal("EnabledDisappearingMessages"),
     Type.Literal("OwnGroupWithOneDiamondMember"),
     Type.Literal("OwnGroupWithTenDiamondMembers"),
@@ -1328,6 +1329,12 @@ export const TransferFromError = Type.Union([
         }),
     }),
 ]);
+
+export type MessageMatch = Static<typeof MessageMatch>;
+export const MessageMatch = Type.Object({
+    message_index: MessageIndex,
+    score: Type.Number(),
+});
 
 export type DirectChatCreated = Static<typeof DirectChatCreated>;
 export const DirectChatCreated = Type.Record(Type.String(), Type.Never());
@@ -1951,6 +1958,8 @@ export const UserIndexExternalAchievementsExternalAchievement = Type.Object({
     name: Type.String(),
     url: Type.String(),
     chit_reward: Type.Number(),
+    expires: Type.BigInt(),
+    budget_exhausted: Type.Boolean(),
 });
 
 export type UserIndexExternalAchievementsArgs = Static<typeof UserIndexExternalAchievementsArgs>;
@@ -2392,6 +2401,33 @@ export const CommunityCancelP2pSwapArgs = Type.Object({
     thread_root_message_index: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
     message_id: MessageId,
 });
+
+export type CommunitySearchChannelSuccessResult = Static<
+    typeof CommunitySearchChannelSuccessResult
+>;
+export const CommunitySearchChannelSuccessResult = Type.Object({
+    matches: Type.Array(MessageMatch),
+});
+
+export type CommunitySearchChannelResponse = Static<typeof CommunitySearchChannelResponse>;
+export const CommunitySearchChannelResponse = Type.Union([
+    Type.Object({
+        Success: CommunitySearchChannelSuccessResult,
+    }),
+    Type.Literal("InvalidTerm"),
+    Type.Object({
+        TermTooLong: Type.Number(),
+    }),
+    Type.Object({
+        TermTooShort: Type.Number(),
+    }),
+    Type.Object({
+        TooManyUsers: Type.Number(),
+    }),
+    Type.Literal("UserNotInCommunity"),
+    Type.Literal("ChannelNotFound"),
+    Type.Literal("UserNotInChannel"),
+]);
 
 export type CommunityUndeleteMessagesArgs = Static<typeof CommunityUndeleteMessagesArgs>;
 export const CommunityUndeleteMessagesArgs = Type.Object({
@@ -3037,6 +3073,7 @@ export type CommunityFollowThreadArgs = Static<typeof CommunityFollowThreadArgs>
 export const CommunityFollowThreadArgs = Type.Object({
     channel_id: Type.BigInt(),
     thread_root_message_index: MessageIndex,
+    new_achievement: Type.Boolean(),
 });
 
 export type CommunityDeleteChannelResponse = Static<typeof CommunityDeleteChannelResponse>;
@@ -3284,6 +3321,29 @@ export const ProposalsBotUpgradeSnsControlledCanister = Type.Object({
     new_canister_wasm: TSBytes,
     mode: ProposalsBotCanisterInstallMode,
 });
+
+export type GroupSearchMessagesSuccessResult = Static<typeof GroupSearchMessagesSuccessResult>;
+export const GroupSearchMessagesSuccessResult = Type.Object({
+    matches: Type.Array(MessageMatch),
+});
+
+export type GroupSearchMessagesResponse = Static<typeof GroupSearchMessagesResponse>;
+export const GroupSearchMessagesResponse = Type.Union([
+    Type.Object({
+        Success: GroupSearchMessagesSuccessResult,
+    }),
+    Type.Literal("InvalidTerm"),
+    Type.Object({
+        TermTooLong: Type.Number(),
+    }),
+    Type.Object({
+        TermTooShort: Type.Number(),
+    }),
+    Type.Object({
+        TooManyUsers: Type.Number(),
+    }),
+    Type.Literal("CallerNotInGroup"),
+]);
 
 export type GroupConvertIntoCommunityArgs = Static<typeof GroupConvertIntoCommunityArgs>;
 export const GroupConvertIntoCommunityArgs = Type.Object({
@@ -3551,7 +3611,28 @@ export const GroupReportMessageArgs = Type.Object({
 export type GroupFollowThreadArgs = Static<typeof GroupFollowThreadArgs>;
 export const GroupFollowThreadArgs = Type.Object({
     thread_root_message_index: MessageIndex,
+    new_achievement: Type.Boolean(),
 });
+
+export type UserSearchMessagesSuccessResult = Static<typeof UserSearchMessagesSuccessResult>;
+export const UserSearchMessagesSuccessResult = Type.Object({
+    matches: Type.Array(MessageMatch),
+});
+
+export type UserSearchMessagesResponse = Static<typeof UserSearchMessagesResponse>;
+export const UserSearchMessagesResponse = Type.Union([
+    Type.Object({
+        Success: UserSearchMessagesSuccessResult,
+    }),
+    Type.Literal("InvalidTerm"),
+    Type.Object({
+        TermTooLong: Type.Number(),
+    }),
+    Type.Object({
+        TermTooShort: Type.Number(),
+    }),
+    Type.Literal("ChatNotFound"),
+]);
 
 export type UserSavedCryptoAccountsResponse = Static<typeof UserSavedCryptoAccountsResponse>;
 export const UserSavedCryptoAccountsResponse = Type.Object({
@@ -4590,6 +4671,7 @@ export type UserIndexExternalAchievementsSuccessResult = Static<
 >;
 export const UserIndexExternalAchievementsSuccessResult = Type.Object({
     last_updated: Type.BigInt(),
+    added_or_updated: Type.Array(UserIndexExternalAchievementsExternalAchievement),
     achievements_added: Type.Array(UserIndexExternalAchievementsExternalAchievement),
     achievements_removed: Type.Array(UserIndexExternalAchievementsExternalAchievement),
 });
@@ -6464,6 +6546,7 @@ export const GroupSelectedInitialSuccessResult = Type.Object({
     last_updated: Type.BigInt(),
     latest_event_index: EventIndex,
     participants: Type.Array(GroupMember),
+    basic_members: Type.Array(UserId),
     blocked_users: Type.Array(UserId),
     invited_users: Type.Array(UserId),
     pinned_messages: Type.Array(MessageIndex),
@@ -7432,14 +7515,6 @@ export const MessageContent = Type.Union([
     }),
 ]);
 
-export type MessageMatch = Static<typeof MessageMatch>;
-export const MessageMatch = Type.Object({
-    sender: UserId,
-    message_index: MessageIndex,
-    content: MessageContent,
-    score: Type.Number(),
-});
-
 export type GroupMatch = Static<typeof GroupMatch>;
 export const GroupMatch = Type.Object({
     id: ChatId,
@@ -7567,33 +7642,6 @@ export const CommunityDeletedMessageResponse = Type.Union([
     Type.Literal("MessageHardDeleted"),
 ]);
 
-export type CommunitySearchChannelSuccessResult = Static<
-    typeof CommunitySearchChannelSuccessResult
->;
-export const CommunitySearchChannelSuccessResult = Type.Object({
-    matches: Type.Array(MessageMatch),
-});
-
-export type CommunitySearchChannelResponse = Static<typeof CommunitySearchChannelResponse>;
-export const CommunitySearchChannelResponse = Type.Union([
-    Type.Object({
-        Success: CommunitySearchChannelSuccessResult,
-    }),
-    Type.Literal("InvalidTerm"),
-    Type.Object({
-        TermTooLong: Type.Number(),
-    }),
-    Type.Object({
-        TermTooShort: Type.Number(),
-    }),
-    Type.Object({
-        TooManyUsers: Type.Number(),
-    }),
-    Type.Literal("UserNotInCommunity"),
-    Type.Literal("ChannelNotFound"),
-    Type.Literal("UserNotInChannel"),
-]);
-
 export type CommunityUpdateCommunityArgs = Static<typeof CommunityUpdateCommunityArgs>;
 export const CommunityUpdateCommunityArgs = Type.Object({
     name: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
@@ -7669,29 +7717,6 @@ export const CommunityUpdateChannelArgs = Type.Object({
     external_url: OptionUpdateString,
 });
 
-export type GroupSearchMessagesSuccessResult = Static<typeof GroupSearchMessagesSuccessResult>;
-export const GroupSearchMessagesSuccessResult = Type.Object({
-    matches: Type.Array(MessageMatch),
-});
-
-export type GroupSearchMessagesResponse = Static<typeof GroupSearchMessagesResponse>;
-export const GroupSearchMessagesResponse = Type.Union([
-    Type.Object({
-        Success: GroupSearchMessagesSuccessResult,
-    }),
-    Type.Literal("InvalidTerm"),
-    Type.Object({
-        TermTooLong: Type.Number(),
-    }),
-    Type.Object({
-        TermTooShort: Type.Number(),
-    }),
-    Type.Object({
-        TooManyUsers: Type.Number(),
-    }),
-    Type.Literal("CallerNotInGroup"),
-]);
-
 export type GroupDeletedMessageSuccessResult = Static<typeof GroupDeletedMessageSuccessResult>;
 export const GroupDeletedMessageSuccessResult = Type.Object({
     content: MessageContent,
@@ -7738,26 +7763,6 @@ export const GroupEditMessageArgs = Type.Object({
     new_achievement: Type.Boolean(),
     correlation_id: Type.BigInt(),
 });
-
-export type UserSearchMessagesSuccessResult = Static<typeof UserSearchMessagesSuccessResult>;
-export const UserSearchMessagesSuccessResult = Type.Object({
-    matches: Type.Array(MessageMatch),
-});
-
-export type UserSearchMessagesResponse = Static<typeof UserSearchMessagesResponse>;
-export const UserSearchMessagesResponse = Type.Union([
-    Type.Object({
-        Success: UserSearchMessagesSuccessResult,
-    }),
-    Type.Literal("InvalidTerm"),
-    Type.Object({
-        TermTooLong: Type.Number(),
-    }),
-    Type.Object({
-        TermTooShort: Type.Number(),
-    }),
-    Type.Literal("ChatNotFound"),
-]);
 
 export type UserCreateGroupArgs = Static<typeof UserCreateGroupArgs>;
 export const UserCreateGroupArgs = Type.Object({

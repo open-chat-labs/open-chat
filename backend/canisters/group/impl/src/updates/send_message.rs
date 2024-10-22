@@ -193,16 +193,13 @@ fn process_send_message_result(
                     .data
                     .notify_user_of_achievement(c.recipient, Achievement::ReceivedCrypto);
 
-                activity_events.push((c.recipient, MessageActivity::Crypto, thread_root_message_index, message_index));
+                activity_events.push((c.recipient, MessageActivity::Crypto));
             }
 
             for user in mentioned {
-                activity_events.push((
-                    user.user_id,
-                    MessageActivity::Mention,
-                    thread_root_message_index,
-                    message_index,
-                ));
+                if user.user_id != sender && state.data.chat.members.contains(&user.user_id) {
+                    activity_events.push((user.user_id, MessageActivity::Mention));
+                }
             }
 
             if let Some(replying_to_event_index) = message_event
@@ -217,12 +214,9 @@ fn process_send_message_result(
                     thread_root_message_index,
                     replying_to_event_index.into(),
                 ) {
-                    activity_events.push((
-                        message.sender,
-                        MessageActivity::QuoteReply,
-                        thread_root_message_index,
-                        message.message_index,
-                    ));
+                    if message.sender != sender && state.data.chat.members.contains(&message.sender) {
+                        activity_events.push((message.sender, MessageActivity::QuoteReply));
+                    }
                 }
             }
 
@@ -234,11 +228,13 @@ fn process_send_message_result(
                         .events
                         .message_internal(EventIndex::default(), None, message_index.into())
                 {
-                    activity_events.push((message.sender, MessageActivity::ThreadReply, None, message.message_index));
+                    if message.sender != sender && state.data.chat.members.contains(&message.sender) {
+                        activity_events.push((message.sender, MessageActivity::ThreadReply));
+                    }
                 }
             }
 
-            for (user_id, activity, thread_root_message_index, message_index) in activity_events {
+            for (user_id, activity) in activity_events {
                 state.data.user_event_sync_queue.push(
                     user_id,
                     GroupCanisterEvent::MessageActivity(MessageActivityEvent {

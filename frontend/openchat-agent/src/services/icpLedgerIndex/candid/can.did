@@ -1,0 +1,47 @@
+type Account = record { owner : principal; subaccount : opt vec nat8 };
+type GetAccountTransactionsArgs = record {
+    account : Account;
+    // The txid of the last transaction seen by the client.
+    // If None then the results will start from the most recent
+    // txid. If set then the results will start from the next
+    // most recent txid after start (start won't be included).
+    start : opt nat;
+    // Maximum number of transactions to fetch.
+    max_results : nat;
+};
+type GetAccountIdentifierTransactionsError = record { message : text };
+type GetAccountIdentifierTransactionsResponse = record {
+  balance : nat64;
+  transactions : vec TransactionWithId;
+  oldest_tx_id : opt nat64;
+};
+type Operation = variant {
+  Approve : record {
+    fee : Tokens;
+    from : text;
+    allowance : Tokens;
+    expires_at : opt TimeStamp;
+    spender : text;
+    expected_allowance : opt Tokens;
+  };
+  Burn : record { from : text; amount : Tokens; spender : opt text };
+  Mint : record { to : text; amount : Tokens };
+  Transfer : record { to : text; fee : Tokens; from : text; amount : Tokens; spender : opt text };
+};
+type GetAccountIdentifierTransactionsResult = variant {
+  Ok : GetAccountIdentifierTransactionsResponse;
+  Err : GetAccountIdentifierTransactionsError;
+};
+type TimeStamp = record { timestamp_nanos : nat64 };
+type Tokens = record { e8s : nat64 };
+type Transaction = record {
+  memo : nat64;
+  icrc1_memo : opt vec nat8;
+  operation : Operation;
+  created_at_time : opt TimeStamp;
+  timestamp : opt TimeStamp;
+};
+type TransactionWithId = record { id : nat64; transaction : Transaction };
+service : {
+  get_account_transactions : (GetAccountTransactionsArgs) -> (GetAccountIdentifierTransactionsResult) query;
+}

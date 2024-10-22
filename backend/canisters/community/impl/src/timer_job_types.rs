@@ -7,7 +7,9 @@ use chat_events::MessageContentInternal;
 use ledger_utils::process_transaction;
 use serde::{Deserialize, Serialize};
 use tracing::error;
-use types::{BlobReference, CanisterId, ChannelId, ChatId, MessageId, MessageIndex, PendingCryptoTransaction, UserId};
+use types::{
+    BlobReference, CanisterId, ChannelId, ChatId, MessageId, MessageIndex, P2PSwapStatus, PendingCryptoTransaction, UserId,
+};
 use utils::consts::MEMO_PRIZE_REFUND;
 use utils::time::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 
@@ -180,37 +182,50 @@ impl Job for HardDeleteMessageContentJob {
                         });
                         ic_cdk::spawn(storage_bucket_client::delete_files(files_to_delete));
                     }
-                    if let MessageContentInternal::Prize(mut prize) = content {
-                        if let Some(message_index) = channel
-                            .chat
-                            .events
-                            .message_ids(self.thread_root_message_index, self.message_id.into())
-                            .map(|(_, m, _)| m)
-                        {
-                            // If there was already a job queued up to refund the prize, cancel it, and make the refund
-                            if state
-                                .data
-                                .timer_jobs
-                                .cancel_job(|job| {
-                                    if let TimerJob::RefundPrize(j) = job {
-                                        j.thread_root_message_index == self.thread_root_message_index
-                                            && j.message_index == message_index
-                                    } else {
-                                        false
-                                    }
-                                })
-                                .is_some()
+                    match content {
+                        MessageContentInternal::Prize(mut prize) => {
+                            if let Some(message_index) = channel
+                                .chat
+                                .events
+                                .message_ids(self.thread_root_message_index, self.message_id.into())
+                                .map(|(_, m, _)| m)
                             {
-                                if let Some(pending_transaction) =
-                                    prize.prize_refund(sender, &MEMO_PRIZE_REFUND, state.env.now_nanos())
+                                // If there was already a job queued up to refund the prize, cancel it, and make the refund
+                                if state
+                                    .data
+                                    .timer_jobs
+                                    .cancel_job(|job| {
+                                        if let TimerJob::RefundPrize(j) = job {
+                                            j.thread_root_message_index == self.thread_root_message_index
+                                                && j.message_index == message_index
+                                        } else {
+                                            false
+                                        }
+                                    })
+                                    .is_some()
                                 {
-                                    follow_on_jobs.push(TimerJob::MakeTransfer(MakeTransferJob {
-                                        pending_transaction,
-                                        attempt: 0,
-                                    }));
+                                    if let Some(pending_transaction) =
+                                        prize.prize_refund(sender, &MEMO_PRIZE_REFUND, state.env.now_nanos())
+                                    {
+                                        follow_on_jobs.push(TimerJob::MakeTransfer(MakeTransferJob {
+                                            pending_transaction,
+                                            attempt: 0,
+                                        }));
+                                    }
                                 }
                             }
                         }
+                        MessageContentInternal::P2PSwap(swap) => {
+                            if matches!(swap.status, P2PSwapStatus::Open) {
+                                follow_on_jobs.push(TimerJob::CancelP2PSwapInEscrowCanister(
+                                    CancelP2PSwapInEscrowCanisterJob {
+                                        swap_id: swap.swap_id,
+                                        attempt: 0,
+                                    },
+                                ));
+                            }
+                        }
+                        _ => {}
                     }
                 }
             }

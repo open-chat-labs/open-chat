@@ -1,7 +1,8 @@
 import type { GateCheckFailed, PinNumberFailures } from "./chat";
 import type { UserNotFound } from "./user";
 
-export type UserNotInChat = { kind: "user_not_in_chat" };
+export type UserNotInChannel = { kind: "user_not_in_channel" };
+export type ChannelNotFound = { kind: "channel_not_found" };
 export type ChatNotFound = { kind: "chat_not_found" };
 export type UserLimitReached = { kind: "user_limit_reached" };
 export type Success = { kind: "success" };
@@ -54,7 +55,7 @@ export type TransferFailed = {
 };
 
 export const CommonResponses = {
-    userNotInChat: (): UserNotInChat => ({ kind: "user_not_in_chat" }) as UserNotInChat,
+    userNotInChannel: (): UserNotInChannel => ({ kind: "user_not_in_channel" }) as UserNotInChannel,
     chatNotFound: (): ChatNotFound => ({ kind: "chat_not_found" }) as ChatNotFound,
     userLimitReached: (): UserLimitReached => ({ kind: "user_limit_reached" }) as UserLimitReached,
     notAuthorized: (): NotAuthorised => ({ kind: "not_authorized" }) as NotAuthorised,

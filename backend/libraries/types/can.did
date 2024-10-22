@@ -848,8 +848,6 @@ type MessageContent = variant {
 
 type MessageMatch = record {
     message_index : MessageIndex;
-    content : MessageContent;
-    sender : UserId;
     score : nat32;
 };
 
@@ -2042,6 +2040,7 @@ type Achievement = variant {
     SetGroupAccessGate;
     SetCommunityAccessGate;
     JoinedGatedGroupOrCommunity;
+    PinnedChat;
     SetPin;
     OwnGroupWithOneDiamondMember;
     OwnGroupWithTenDiamondMembers;

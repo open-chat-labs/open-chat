@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { EnhancedTokenDetails, OpenChat } from "openchat-client";
+    import { type EnhancedTokenDetails, ICP_SYMBOL, type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
@@ -37,6 +37,8 @@
     let swappableTokensPromise = client.swappableTokens();
 
     $: accountsSorted = client.walletTokensSorted;
+    $: walletConfig = client.walletConfigStore;
+    $: manualWalletConfig = $walletConfig.kind === "manual_wallet";
     $: nervousSystemLookup = client.nervousSystemLookup;
     $: snsLedgers = new Set<string>(
         Object.values($nervousSystemLookup)
@@ -204,7 +206,7 @@
                                         {/if}
                                     {/await}
                                 {/if}
-                                {#if snsLedgers.has(token.ledger)}
+                                {#if token.symbol === ICP_SYMBOL || snsLedgers.has(token.ledger)}
                                     <MenuItem on:click={() => showTransactions(token)}>
                                         <ViewList
                                             size={$iconSize}
@@ -218,16 +220,18 @@
                                         </div>
                                     </MenuItem>
                                 {/if}
-                                <MenuItem on:click={() => removeFromWallet(token.ledger)}>
-                                    <HeartRemoveOutline
-                                        size={$iconSize}
-                                        color={"var(--icon-inverted-txt)"}
-                                        slot="icon" />
-                                    <div slot="text">
-                                        <Translatable
-                                            resourceKey={i18nKey("cryptoAccount.remove")} />
-                                    </div>
-                                </MenuItem>
+                                {#if manualWalletConfig}
+                                    <MenuItem on:click={() => removeFromWallet(token.ledger)}>
+                                        <HeartRemoveOutline
+                                            size={$iconSize}
+                                            color={"var(--icon-inverted-txt)"}
+                                            slot="icon" />
+                                        <div slot="text">
+                                            <Translatable
+                                                resourceKey={i18nKey("cryptoAccount.remove")} />
+                                        </div>
+                                    </MenuItem>
+                                {/if}
                             </Menu>
                         </span>
                     </MenuIcon>
