@@ -57,7 +57,6 @@ pub enum Achievement {
     FavouritedChat,
     SetPin,
     SwappedFromWallet,
-
     PinnedChat,
 
     JoinedGatedGroupOrCommunity,
