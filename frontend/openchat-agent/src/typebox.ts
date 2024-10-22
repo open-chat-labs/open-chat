@@ -427,6 +427,11 @@ export const UserSwapTokensSuccessResult = Type.Object({
     amount_out: Type.BigInt(),
 });
 
+export type UserMessageActivityFeedArgs = Static<typeof UserMessageActivityFeedArgs>;
+export const UserMessageActivityFeedArgs = Type.Object({
+    since: Type.BigInt(),
+});
+
 export type UserTipMessageResponse = Static<typeof UserTipMessageResponse>;
 export const UserTipMessageResponse = Type.Union([
     Type.Literal("Success"),
@@ -605,6 +610,17 @@ export const UserTokenSwapsArgs = Type.Object({
     max_results: Type.Number(),
 });
 
+export type UserMessageActivity = Static<typeof UserMessageActivity>;
+export const UserMessageActivity = Type.Union([
+    Type.Literal("Mention"),
+    Type.Literal("Reaction"),
+    Type.Literal("QuoteReply"),
+    Type.Literal("Tip"),
+    Type.Literal("Crypto"),
+    Type.Literal("PollVote"),
+    Type.Literal("P2PSwapAccepted"),
+]);
+
 export type UserBlockUserResponse = Static<typeof UserBlockUserResponse>;
 export const UserBlockUserResponse = Type.Union([
     Type.Literal("Success"),
@@ -738,6 +754,18 @@ export const UserEditMessageResponse = Type.Union([
     Type.Literal("UserBlocked"),
     Type.Literal("UserSuspended"),
 ]);
+
+export type UserMarkMessageActivityFeedReadResponse = Static<
+    typeof UserMarkMessageActivityFeedReadResponse
+>;
+export const UserMarkMessageActivityFeedReadResponse = Type.Literal("Success");
+
+export type UserMarkMessageActivityFeedReadArgs = Static<
+    typeof UserMarkMessageActivityFeedReadArgs
+>;
+export const UserMarkMessageActivityFeedReadArgs = Type.Object({
+    read_up_to: Type.BigInt(),
+});
 
 export type UserUnpinChatResponse = Static<typeof UserUnpinChatResponse>;
 export const UserUnpinChatResponse = Type.Union([
@@ -6587,6 +6615,18 @@ export const UserManageFavouriteChatsArgs = Type.Object({
     to_remove: Type.Array(Chat),
 });
 
+export type UserMessageActivityEvent = Static<typeof UserMessageActivityEvent>;
+export const UserMessageActivityEvent = Type.Object({
+    chat: Chat,
+    thread_root_message_index: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
+    message_index: MessageIndex,
+    message_id: MessageId,
+    event_index: EventIndex,
+    activity: UserMessageActivity,
+    timestamp: Type.BigInt(),
+    user_id: Type.Optional(Type.Union([UserId, Type.Undefined()])),
+});
+
 export type UserCreateGroupResponse = Static<typeof UserCreateGroupResponse>;
 export const UserCreateGroupResponse = Type.Union([
     Type.Object({
@@ -6639,6 +6679,19 @@ export type UserSetPinNumberArgs = Static<typeof UserSetPinNumberArgs>;
 export const UserSetPinNumberArgs = Type.Object({
     new: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
     verification: UserSetPinNumberPinNumberVerification,
+});
+
+export type UserMessageActivityFeedSuccessResult = Static<
+    typeof UserMessageActivityFeedSuccessResult
+>;
+export const UserMessageActivityFeedSuccessResult = Type.Object({
+    events: Type.Array(UserMessageActivityEvent),
+    total: Type.Number(),
+});
+
+export type UserMessageActivityFeedResponse = Static<typeof UserMessageActivityFeedResponse>;
+export const UserMessageActivityFeedResponse = Type.Object({
+    Success: UserMessageActivityFeedSuccessResult,
 });
 
 export type UserTipMessageArgs = Static<typeof UserTipMessageArgs>;
