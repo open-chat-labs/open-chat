@@ -11,6 +11,7 @@
     export let text: string;
     export let inline: boolean = true;
     export let oneLine: boolean = false;
+    export let twoLine: boolean = false;
     export let suppressLinks: boolean = false;
 
     let sanitized = "unsafe";
@@ -81,7 +82,13 @@
     }
 </script>
 
-<p class="markdown-wrapper" class:inline class:oneLine class:suppressLinks class:singleEmoji>
+<p
+    class="markdown-wrapper"
+    class:inline
+    class:oneLine
+    class:twoLine
+    class:suppressLinks
+    class:singleEmoji>
     {@html sanitized}
 </p>
 
@@ -241,6 +248,14 @@
             display: block;
             @include ellipsis();
             word-wrap: break-word;
+        }
+
+        &.twoLine {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            white-space: unset;
         }
     }
 

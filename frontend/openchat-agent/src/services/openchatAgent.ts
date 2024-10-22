@@ -234,6 +234,7 @@ import {
     getOrAdd,
     waitAll,
     MessageMap,
+    SafeMap,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { AsyncMessageContextMap } from "../utils/messageContext";
@@ -3756,33 +3757,31 @@ export class OpenChatAgent extends EventTarget {
     }
 
     async messageActivityFeed(): Promise<MessageActivityFeedResponse> {
-        // load what we have from the cache
         const cachedEvents = await getActivityFeedEvents();
-
-        // sort in descending order
-        cachedEvents.sort((a, b) => Number(b.timestamp) - Number(a.timestamp));
-
-        console.log("Cached activity events: ", cachedEvents);
-
-        // find the timestamp of the most recent event we have
         const since = cachedEvents[0]?.timestamp ?? 0n;
-
-        // load since that latest timestamp
-        console.log("Getting activity events since ", new Date(Number(since)));
-
         const result = await this.userClient.messageActivityFeed(since);
-
-        // make sure the new events are in the right order
-        result.events.sort((a, b) => Number(b.timestamp) - Number(a.timestamp));
-
-        // combine the cached events and the new events
+        console.log("Backend activity events: ", result);
         const combined = [...result.events, ...cachedEvents];
 
-        setActivityFeedEvents(combined.slice(0, 1000));
+        // first sort ascending
+        combined.sort((a, b) => Number(a.timestamp) - Number(b.timestamp));
 
-        const rehydrated = await this.hydrateActivityFeedEvents(combined);
+        // dedupe by overwriting earlier events
+        const deduped = combined.reduce((map, ev) => {
+            map.set(`${ev.activity}_${ev.eventIndex}`, ev);
+            return map;
+        }, new Map<string, MessageActivityEvent>());
 
-        console.log("Combined activity events: ", combined);
+        // then sort descending
+        const sorted = [...deduped.values()].sort(
+            (a, b) => Number(b.timestamp) - Number(a.timestamp),
+        );
+
+        setActivityFeedEvents(sorted.slice(0, 1000));
+
+        const rehydrated = await this.hydrateActivityFeedEvents(sorted);
+
+        console.log("Combined activity events: ", sorted, rehydrated);
 
         // make sure we don't cache more than 1000 events
 
@@ -3828,24 +3827,17 @@ export class OpenChatAgent extends EventTarget {
             },
         );
 
-        const activityEventsByMessageId = activityEvents.reduce((map, event) => {
-            map.set(event.messageId, event);
-            return map;
-        }, new MessageMap<MessageActivityEvent>());
+        const messageLookup = [...messagesByMessageContext.values()].reduce((lookup, events) => {
+            events.forEach((ev) => lookup.set(ev.event.messageId, ev.event));
+            return lookup;
+        }, new MessageMap<Message>());
 
-        const hydrated: MessageActivityEvent[] = [];
-        messagesByMessageContext.forEach((events) => {
-            events.forEach((ev) => {
-                const activityEv = activityEventsByMessageId.get(ev.event.messageId);
-                if (activityEv !== undefined) {
-                    hydrated.push({
-                        ...activityEv,
-                        message: ev.event,
-                    });
-                }
-            });
+        return activityEvents.map((ev) => {
+            const message = messageLookup.get(ev.messageId);
+            return {
+                ...ev,
+                message,
+            };
         });
-
-        return hydrated;
     }
 }

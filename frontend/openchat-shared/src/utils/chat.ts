@@ -291,10 +291,13 @@ export function routeForMessage(
 export function routeForMessageContext(
     scope: ChatListScope["kind"],
     { chatId, threadRootMessageIndex }: MessageContext,
+    open = false,
 ): string {
     return threadRootMessageIndex === undefined
         ? routeForChatIdentifier(scope, chatId)
-        : `${routeForChatIdentifier(scope, chatId)}/${threadRootMessageIndex}`;
+        : `${routeForChatIdentifier(scope, chatId)}/${threadRootMessageIndex}${
+              open ? "?open=true" : ""
+          }`;
 }
 
 export function routeForChatIdentifier(scope: ChatListScope["kind"], id: ChatIdentifier): string {
