@@ -46,19 +46,21 @@ async fn accept_p2p_swap(args: Args) -> Response {
                         .events
                         .message_internal(EventIndex::default(), thread_root_message_index, message_id.into())
                 {
-                    state.data.user_event_sync_queue.push(
-                        message.sender,
-                        GroupCanisterEvent::MessageActivity(MessageActivityEvent {
-                            chat: Chat::Group(state.env.canister_id().into()),
-                            thread_root_message_index,
-                            message_index: message.message_index,
-                            message_id: message.message_id,
-                            event_index,
-                            activity: MessageActivity::P2PSwapAccepted,
-                            timestamp: state.env.now(),
-                            user_id: Some(user_id),
-                        }),
-                    );
+                    if state.data.chat.members.contains(&message.sender) {
+                        state.data.user_event_sync_queue.push(
+                            message.sender,
+                            GroupCanisterEvent::MessageActivity(MessageActivityEvent {
+                                chat: Chat::Group(state.env.canister_id().into()),
+                                thread_root_message_index,
+                                message_index: message.message_index,
+                                message_id: message.message_id,
+                                event_index,
+                                activity: MessageActivity::P2PSwapAccepted,
+                                timestamp: state.env.now(),
+                                user_id: Some(user_id),
+                            }),
+                        );
+                    }
                 }
 
                 handle_activity_notification(state);
