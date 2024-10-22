@@ -1,6 +1,7 @@
 use timer_job_queues::{TimerJobItem, TimerJobItemGroup};
 use types::UserId;
 use user_canister::GroupCanisterEvent;
+use utils::canister::should_retry_failed_c2c_call;
 
 pub struct UserEventBatch {
     user_id: UserId,
@@ -47,7 +48,10 @@ impl TimerJobItem for UserEventBatch {
 
         match response {
             Ok(user_canister::c2c_notify_group_canister_events::Response::Success) => Ok(()),
-            Err(_) => Err(true),
+            Err((code, msg)) => {
+                let retry = should_retry_failed_c2c_call(code, &msg);
+                Err(retry)
+            }
         }
     }
 }

@@ -11,6 +11,7 @@ use types::{
     BotMessage, CanisterId, ChannelId, CommunityId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction,
     Cryptocurrency, MessageContentInitial, UserId,
 };
+use utils::canister::should_retry_failed_c2c_call;
 use utils::consts::{MEMO_CHIT_FOR_CHAT_AIRDROP, MEMO_CHIT_FOR_CHAT_LOTTERY};
 use utils::time::{MonthKey, MONTHS};
 
@@ -75,7 +76,10 @@ async fn join_channel(community_id: CommunityId, channel_id: ChannelId) -> Resul
     .await
     {
         Ok(community_canister::local_user_index::Response::Success(canister_id)) => canister_id,
-        Err(_) => return Err(true),
+        Err((code, msg)) => {
+            let retry = should_retry_failed_c2c_call(code, &msg);
+            return Err(retry);
+        }
     };
 
     match local_user_index_canister_c2c_client::join_channel(
@@ -229,9 +233,10 @@ async fn handle_main_message_action(action: AirdropMessage) -> Result<(), bool> 
             error!(?args, ?resp, "Failed to send DM");
             Err(false)
         }
-        Err(error) => {
-            error!(?args, ?error, "Failed to send DM");
-            Err(true)
+        Err((code, msg)) => {
+            let retry = should_retry_failed_c2c_call(code, &msg);
+            error!(?args, ?code, msg, "Failed to send DM");
+            Err(retry)
         }
     }
 }
@@ -292,9 +297,10 @@ async fn handle_lottery_message_action(action: AirdropMessage) -> Result<(), boo
             error!(?args, ?resp, "Failed to send lottery message");
             Err(false)
         }
-        Err(error) => {
-            error!(?args, ?error, "Failed to send lottery message");
-            Err(true)
+        Err((code, msg)) => {
+            error!(?args, ?code, msg, "Failed to send lottery message");
+            let retry = should_retry_failed_c2c_call(code, &msg);
+            Err(retry)
         }
     }
 }
