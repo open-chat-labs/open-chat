@@ -162,7 +162,9 @@
     }
 
     function showActivityFeed() {
-        // so what does this do?
+        if ($pathParams.kind === "communities_route") {
+            page("/");
+        }
         activityFeedShowing.set(true);
     }
 </script>
