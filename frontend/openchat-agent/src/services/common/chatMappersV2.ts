@@ -2,6 +2,7 @@ import {
     bigintToBytes,
     bytesToBigint,
     bytesToHexString,
+    hexStringToBytes,
     identity,
     mapOptional,
     principalBytesToString,
@@ -39,7 +40,7 @@ import type {
     Reaction,
     ChatPermissions,
     PermissionRole,
-    // PendingCryptocurrencyWithdrawal,
+    PendingCryptocurrencyWithdrawal,
     Metrics,
     MemberRole,
     GroupSubtype,
@@ -54,7 +55,7 @@ import type {
     GateCheckFailedReason,
     CommunityPermissionRole,
     CommunityPermissions,
-    // ChatIdentifier,
+    ChatIdentifier,
     AddRemoveReactionResponse,
     ChannelSummary,
     CommunitySummary,
@@ -110,13 +111,13 @@ import type {
     VideoCallParticipantsResponse,
     VideoCallParticipant,
     LeafGate,
-    ChatIdentifier,
     UpdatedEvent,
     User,
     DexId,
     MessageMatch,
     AcceptP2PSwapResponse,
     AccessGateConfig,
+    SetPinNumberResponse,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -124,15 +125,15 @@ import {
     UnsupportedValueError,
     CommonResponses,
     chatIdentifiersEqual,
-    emptyChatMetrics,
     codeToText,
+    emptyChatMetrics,
+    isAccountIdentifierValid,
     CHAT_SYMBOL,
     CKBTC_SYMBOL,
     ICP_SYMBOL,
     KINIC_SYMBOL,
     SNS1_SYMBOL,
 } from "openchat-shared";
-// import type { SetPinNumberResponse } from "openchat-shared";
 import { pinNumberFailureResponseV2 } from "./pinNumberErrorMapper";
 import { toRecord2 } from "../../utils/list";
 import { ReplicaNotUpToDateError } from "../error";
@@ -146,36 +147,88 @@ import type {
     Chat as TChat,
     ChatEvent as TChatEvent,
     ChatMetrics as TChatMetrics,
+    CommunityAcceptP2pSwapResponse,
+    CommunityAddReactionResponse,
+    CommunityCancelP2pSwapResponse,
     CommunityCanisterChannelSummary as TCommunityCanisterChannelSummary,
     CommunityCanisterCommunitySummary as TCommunityCanisterCommunitySummary,
+    CommunityChangeChannelRoleResponse,
     CommunityClaimPrizeResponse,
+    CommunityCreateChannelResponse,
+    CommunityDeclineInvitationResponse,
+    CommunityDeleteChannelResponse,
+    CommunityDeleteMessagesResponse,
+    CommunityDeletedMessageResponse,
+    CommunityDisableInviteCodeResponse,
+    CommunityEditMessageResponse,
+    CommunityEnableInviteCodeResponse,
+    CommunityInviteCodeResponse,
+    CommunityLeaveChannelResponse,
     CommunityPermissionRole as TCommunityPermissionRole,
     CommunityPermissions as TCommunityPermissions,
+    CommunityPinMessageResponse,
+    CommunityRegisterPollVoteResponse,
+    CommunityRegisterProposalVoteResponse,
+    CommunityRemoveReactionResponse,
     CommunityRole as TCommunityRole,
+    CommunitySearchChannelResponse,
+    CommunitySelectedChannelInitialResponse,
+    CommunitySelectedChannelUpdatesResponse,
+    CommunitySetVideoCallPresenceResponse,
+    CommunityThreadPreviewsResponse,
+    CommunityUndeleteMessagesResponse,
+    CommunityUpdateChannelResponse,
+    CommunityVideoCallParticipantsResponse,
     CompletedCryptoTransaction as TCompletedCryptoTransaction,
-    Cryptocurrency as TCryptocurrency,
     CryptoContent as TCryptoContent,
     CryptoTransaction as TCryptoTransaction,
+    Cryptocurrency as TCryptocurrency,
     CustomContent as TCustomContent,
     DeletedBy as TDeletedBy,
-    EventsResponse as TEventsResponse,
     EventWrapperChatEvent as TEventWrapperChatEvent,
     EventWrapperMessage as TEventWrapperMessage,
+    EventsResponse as TEventsResponse,
     ExchangeId as TExchangeId,
     FailedCryptoTransaction as TFailedCryptoTransaction,
     FileContent as TFileContent,
     GateCheckFailedReason as TGateCheckFailedReason,
     GiphyContent as TGiphyContent,
     GiphyImageVariant as TGiphyImageVariant,
+    GroupAcceptP2pSwapResponse,
+    GroupAddReactionResponse,
+    GroupCancelP2pSwapResponse,
     GroupCanisterGroupChatSummary as TGroupCanisterGroupChatSummary,
     GroupCanisterThreadDetails as TGroupCanisterThreadDetails,
+    GroupChangeRoleResponse,
     GroupClaimPrizeResponse,
+    GroupDeclineInvitiationResponse,
+    GroupDeleteMessagesResponse,
+    GroupDeletedMessageResponse,
+    GroupDisableInviteCodeResponse,
+    GroupEditMessageResponse,
+    GroupEnableInviteCodeResponse,
+    GroupInviteCodeResponse,
+    GroupMember as TGroupMember,
     GroupPermissionRole as TGroupPermissionRole,
     GroupPermissions as TGroupPermissions,
+    GroupPinMessageResponse,
+    GroupRegisterPollVoteResponse,
+    GroupRegisterProposalVoteResponse,
+    GroupRemoveReactionResponse,
     GroupRole as TGroupRole,
+    GroupSearchMessagesResponse,
+    GroupSelectedInitialResponse,
+    GroupSelectedUpdatesResponse,
+    GroupSetVideoCallPresenceResponse,
     GroupSubtype as TGroupSubtype,
-    ImageContent as TImageContent,
+    GroupThreadPreviewsResponse,
+    GroupUndeleteMessagesResponse,
+    GroupUnpinMessageResponse,
+    GroupUpdateGroupResponse,
+    GroupVideoCallParticipantsResponse,
     HydratedMention as TMention,
+    ImageContent as TImageContent,
+    LocalUserIndexJoinGroupResponse,
     Message as TMessage,
     MessageContent as TMessageContent,
     MessageContentInitial as TMessageContentInitial,
@@ -201,6 +254,7 @@ import type {
     ProposalRewardStatus as TProposalRewardStatus,
     ReplyContext as TReplyContext,
     ReportedMessage as TReportedMessage,
+    SwapStatusError as TSwapStatusError,
     TextContent as TTextContent,
     ThreadPreview as TThreadPreview,
     ThreadSummary as TThreadSummary,
@@ -208,73 +262,22 @@ import type {
     Tokens as TTokens,
     TotalVotes as TTotalVotes,
     User as TUser,
+    UserAcceptP2pSwapResponse,
+    UserAddReactionResponse,
+    UserCancelP2pSwapResponse,
+    UserCreateGroupResponse,
+    UserDeleteGroupResponse,
+    UserEditMessageResponse,
     UserGroupSummary as TUserGroupSummary,
-    VideoContent as TVideoContent,
+    UserJoinVideoCallResponse,
+    UserLeaveGroupResponse,
+    UserRemoveReactionResponse,
+    UserSetPinNumberResponse,
+    UserWithdrawCryptoArgs,
     VideoCallContent as TVideoCallContent,
     VideoCallPresence as TVideoCallPresence,
     VideoCallType as TVideoCallType,
-    LocalUserIndexJoinGroupResponse,
-    UserAddReactionResponse,
-    UserRemoveReactionResponse,
-    GroupAddReactionResponse,
-    GroupRemoveReactionResponse,
-    CommunityAddReactionResponse,
-    CommunityRemoveReactionResponse,
-    GroupChangeRoleResponse,
-    CommunityChangeChannelRoleResponse,
-    UserCreateGroupResponse,
-    CommunityCreateChannelResponse,
-    GroupDeclineInvitiationResponse,
-    CommunityDeclineInvitationResponse,
-    UserDeleteGroupResponse,
-    CommunityDeleteChannelResponse,
-    GroupDeletedMessageResponse,
-    CommunityDeletedMessageResponse,
-    GroupDeleteMessagesResponse,
-    CommunityDeleteMessagesResponse,
-    GroupDisableInviteCodeResponse,
-    CommunityDisableInviteCodeResponse,
-    GroupEnableInviteCodeResponse,
-    CommunityEnableInviteCodeResponse,
-    UserEditMessageResponse,
-    GroupEditMessageResponse,
-    CommunityEditMessageResponse,
-    GroupInviteCodeResponse,
-    CommunityInviteCodeResponse,
-    UserLeaveGroupResponse,
-    CommunityLeaveChannelResponse,
-    GroupUnpinMessageResponse,
-    CommunityPinMessageResponse,
-    GroupPinMessageResponse,
-    GroupSearchMessagesResponse,
-    CommunitySearchChannelResponse,
-    GroupSelectedInitialResponse,
-    CommunitySelectedChannelInitialResponse,
-    GroupMember as TGroupMember,
-    GroupSelectedUpdatesResponse,
-    CommunitySelectedChannelUpdatesResponse,
-    GroupRegisterPollVoteResponse,
-    CommunityRegisterPollVoteResponse,
-    GroupVideoCallParticipantsResponse,
-    CommunityVideoCallParticipantsResponse,
-    CommunitySetVideoCallPresenceResponse,
-    GroupSetVideoCallPresenceResponse,
-    UserJoinVideoCallResponse,
-    UserCancelP2pSwapResponse,
-    GroupCancelP2pSwapResponse,
-    CommunityCancelP2pSwapResponse,
-    SwapStatusError as TSwapStatusError,
-    GroupUndeleteMessagesResponse,
-    CommunityUndeleteMessagesResponse,
-    GroupThreadPreviewsResponse,
-    CommunityThreadPreviewsResponse,
-    GroupRegisterProposalVoteResponse,
-    CommunityRegisterProposalVoteResponse,
-    UserAcceptP2pSwapResponse,
-    GroupAcceptP2pSwapResponse,
-    CommunityAcceptP2pSwapResponse,
-    GroupUpdateGroupResponse,
-    CommunityUpdateChannelResponse,
+    VideoContent as TVideoContent,
 } from "../../typebox";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
@@ -1255,19 +1258,19 @@ export function communityPermissionRole(
     return "member";
 }
 
-// export function apiCommunityPermissions(
-//     permissions: CommunityPermissions,
-// ): ApiCommunityPermissions {
-//     return {
-//         create_public_channel: apiCommunityPermissionRole(permissions.createPublicChannel),
-//         update_details: apiCommunityPermissionRole(permissions.updateDetails),
-//         invite_users: apiCommunityPermissionRole(permissions.inviteUsers),
-//         remove_members: apiCommunityPermissionRole(permissions.removeMembers),
-//         change_roles: apiCommunityPermissionRole(permissions.changeRoles),
-//         create_private_channel: apiCommunityPermissionRole(permissions.createPrivateChannel),
-//         manage_user_groups: apiCommunityPermissionRole(permissions.manageUserGroups),
-//     };
-// }
+export function apiCommunityPermissions(
+    permissions: CommunityPermissions,
+): TCommunityPermissions {
+    return {
+        create_public_channel: apiCommunityPermissionRole(permissions.createPublicChannel),
+        update_details: apiCommunityPermissionRole(permissions.updateDetails),
+        invite_users: apiCommunityPermissionRole(permissions.inviteUsers),
+        remove_members: apiCommunityPermissionRole(permissions.removeMembers),
+        change_roles: apiCommunityPermissionRole(permissions.changeRoles),
+        create_private_channel: apiCommunityPermissionRole(permissions.createPrivateChannel),
+        manage_user_groups: apiCommunityPermissionRole(permissions.manageUserGroups),
+    };
+}
 
 export function apiCommunityPermissionRole(
     permissionRole: CommunityPermissionRole,
@@ -1916,42 +1919,77 @@ export function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): TCr
     throw new Error("Transaction is not of type 'Pending': " + JSON.stringify(domain));
 }
 
-// export function apiPendingCryptocurrencyWithdrawal(
-//     domain: PendingCryptocurrencyWithdrawal,
-//     pin: string | undefined,
-// ): WithdrawCryptoArgs {
-//     if (domain.token === ICP_SYMBOL && isAccountIdentifierValid(domain.to)) {
-//         return {
-//             withdrawal: {
-//                 NNS: {
-//                     ledger: principalStringToBytes(domain.ledger),
-//                     token: apiToken(domain.token),
-//                     to: { Account: hexStringToBytes(domain.to) },
-//                     amount: apiICP(domain.amountE8s),
-//                     fee: [],
-//                     memo: apiOptional(identity, domain.memo),
-//                     created: domain.createdAtNanos,
-//                 },
-//             },
-//             pin: apiOptional(identity, pin),
-//         };
-//     } else {
-//         return {
-//             withdrawal: {
-//                 ICRC1: {
-//                     ledger: principalStringToBytes(domain.ledger),
-//                     token: apiToken(domain.token),
-//                     to: { owner: principalStringToBytes(domain.to), subaccount: [] },
-//                     amount: domain.amountE8s,
-//                     fee: domain.feeE8s ?? BigInt(0),
-//                     memo: apiOptional(bigintToBytes, domain.memo),
-//                     created: domain.createdAtNanos,
-//                 },
-//             },
-//             pin: apiOptional(identity, pin),
-//         };
-//     }
-// }
+export function apiPendingCryptocurrencyWithdrawal(
+    domain: PendingCryptocurrencyWithdrawal,
+    pin: string | undefined,
+): UserWithdrawCryptoArgs {
+    if (domain.token === ICP_SYMBOL && isAccountIdentifierValid(domain.to)) {
+        return {
+            withdrawal: {
+                NNS: {
+                    ledger: principalStringToBytes(domain.ledger),
+                    token: apiToken(domain.token),
+                    to: {
+                        Account: [...hexStringToBytes(domain.to)] as [
+                            number,
+                            number,
+                            number,
+                            number,
+                            number,
+                            number,
+                            number,
+                            number,
+                            number,
+                            number,
+                            number,
+                            number,
+                            number,
+                            number,
+                            number,
+                            number,
+                            number,
+                            number,
+                            number,
+                            number,
+                            number,
+                            number,
+                            number,
+                            number,
+                            number,
+                            number,
+                            number,
+                            number,
+                            number,
+                            number,
+                            number,
+                            number,
+                        ],
+                    },
+                    amount: apiICP(domain.amountE8s),
+                    fee: undefined,
+                    memo: domain.memo,
+                    created: domain.createdAtNanos,
+                },
+            },
+            pin,
+        };
+    } else {
+        return {
+            withdrawal: {
+                ICRC1: {
+                    ledger: principalStringToBytes(domain.ledger),
+                    token: apiToken(domain.token),
+                    to: { owner: principalStringToBytes(domain.to), subaccount: undefined },
+                    amount: domain.amountE8s,
+                    fee: domain.feeE8s ?? BigInt(0),
+                    memo: mapOptional(domain.memo, bigintToBytes),
+                    created: domain.createdAtNanos,
+                },
+            },
+            pin,
+        };
+    }
+}
 
 export function proposalVote(vote: number): boolean | undefined {
     if (vote === 1) return true;
@@ -2776,12 +2814,9 @@ export function searchGroupChatResponse(
 }
 
 export function messageMatch(value: TMessageMatch, chatId: ChatIdentifier): MessageMatch {
-    const sender = principalBytesToString(value.sender);
     return {
         chatId,
         messageIndex: value.message_index,
-        content: messageContent(value.content, sender),
-        sender,
         score: value.score,
     };
 }
@@ -3053,26 +3088,34 @@ export function videoCallParticipantsResponse(
     return CommonResponses.failure();
 }
 
-// export function setPinNumberResponse(candid: ApiSetPinNumberResponse): SetPinNumberResponse {
-//     if ("Success" in candid) {
-//         return CommonResponses.success();
-//     }
-//     if (
-//         "PinRequired" in candid ||
-//         "PinIncorrect" in candid ||
-//         "TooManyFailedPinAttempts" in candid
-//     ) {
-//         return pinNumberFailureResponse(candid);
-//     }
-//     if ("TooShort" in candid) {
-//         return { kind: "too_short", minLength: candid.TooShort.min_length };
-//     }
-//     if ("TooLong" in candid) {
-//         return { kind: "too_long", maxLength: candid.TooLong.max_length };
-//     }
-//
-//     throw new UnsupportedValueError("Unexpected ApiSetPinNumberResponse type received", candid);
-// }
+export function setPinNumberResponse(value: UserSetPinNumberResponse): SetPinNumberResponse {
+    if (value === "Success") {
+        return CommonResponses.success();
+    }
+    if (typeof value === "object") {
+        if ("PinIncorrect" in value || "TooManyFailedPinAttempts" in value) {
+            return pinNumberFailureResponseV2(value);
+        }
+        if ("TooShort" in value) {
+            return { kind: "too_short", minLength: value.TooShort.min_length };
+        }
+        if ("TooLong" in value) {
+            return { kind: "too_long", maxLength: value.TooLong.max_length };
+        }
+
+        if ("MalformedSignature" in value) {
+            return { kind: "malformed_signature" };
+        }
+    }
+    if (value === "PinRequired") {
+        return { kind: "pin_required" };
+    }
+    if (value === "DelegationTooOld") {
+        return { kind: "delegation_too_old" };
+    }
+
+    throw new UnsupportedValueError("Unexpected ApiSetPinNumberResponse type received", value);
+}
 
 export function apiDexId(dex: DexId): TExchangeId {
     switch (dex) {

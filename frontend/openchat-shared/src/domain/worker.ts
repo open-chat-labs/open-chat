@@ -1717,6 +1717,7 @@ type FollowThread = {
     chatId: ChatIdentifier;
     threadRootMessageIndex: number;
     follow: boolean;
+    newAchievement: boolean;
     kind: "followThread";
 };
 

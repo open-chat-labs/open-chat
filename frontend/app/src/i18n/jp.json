@@ -670,6 +670,7 @@
         "owned_group_with_100_diamond_members": "100人の認証済みメンバーを持つグループ/コミュニティを所有している",
         "owned_group_with_1000_diamond_members": "1000人の認証済みメンバーを持つグループ/コミュニティを所有している",
         "percentageComplete": "{perc}% 完了",
+        "pinned_chat": "チャットをリストの一番上に固定する",
         "pinned_message": "メッセージをピン留めする",
         "proved_unique_personhood": "あなたのユニークな人間性を証明しましょう",
         "quote_replied": "メッセージに引用返信する",

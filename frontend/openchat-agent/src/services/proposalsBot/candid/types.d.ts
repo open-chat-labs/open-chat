@@ -51,6 +51,7 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'FavouritedChat' : null } |
   { 'AppointedGroupAdmin' : null } |
   { 'HadMessageReactedTo' : null } |
+  { 'PinnedChat' : null } |
   { 'VotedOnPoll' : null } |
   { 'ChosenAsGroupAdmin' : null } |
   { 'OwnGroupWithOneHundredDiamondMembers' : null } |
@@ -1163,8 +1164,6 @@ export interface MessageIndexRange {
   'start' : MessageIndex,
 }
 export interface MessageMatch {
-  'content' : MessageContent,
-  'sender' : UserId,
   'score' : number,
   'message_index' : MessageIndex,
 }

@@ -283,6 +283,9 @@ impl ChatEvents {
             let old_length = message.content.text_length();
             message.content = args.content.into();
 
+            let message_index = message.message_index;
+            let document = Document::from(&message.content);
+
             if edited {
                 if let Some(block_level_markdown) = block_level_markdown_update {
                     message.block_level_markdown = block_level_markdown;
@@ -290,9 +293,6 @@ impl ChatEvents {
 
                 let already_edited = message.last_edited.is_some();
                 message.last_edited = Some(args.now);
-
-                let message_index = message.message_index;
-                let document = Document::from(&message.content);
 
                 if let Some(client) = event_store_client {
                     let new_length = message.content.text_length();
@@ -314,9 +314,8 @@ impl ChatEvents {
                             .build(),
                     )
                 }
-
-                return Ok((message_index, document));
             }
+            return Ok((message_index, document));
         }
 
         Err(UpdateEventError::NoChange(EditMessageResult::Success))
@@ -349,7 +348,7 @@ impl ChatEvents {
             Some(args.now),
             |message, _| Self::delete_message_inner(message, &args),
         ) {
-            Ok(sender) => {
+            Ok((sender, message_index)) => {
                 if sender != args.caller {
                     add_to_metrics(
                         &mut self.metrics,
@@ -366,6 +365,9 @@ impl ChatEvents {
                     |m| incr(&mut m.deleted_messages),
                     args.now,
                 );
+                if args.thread_root_message_index.is_none() {
+                    self.search_index.remove(message_index);
+                }
                 DeleteMessageResult::Success(sender)
             }
             Err(UpdateEventError::NoChange(result)) => result,
@@ -376,7 +378,7 @@ impl ChatEvents {
     fn delete_message_inner(
         message: &mut MessageInternal,
         args: &DeleteUndeleteMessageArgs,
-    ) -> Result<UserId, UpdateEventError<DeleteMessageResult>> {
+    ) -> Result<(UserId, MessageIndex), UpdateEventError<DeleteMessageResult>> {
         use DeleteMessageResult::*;
 
         if message.sender == args.caller || args.is_admin {
@@ -390,7 +392,7 @@ impl ChatEvents {
                     deleted_by: args.caller,
                     timestamp: args.now,
                 });
-                Ok(sender)
+                Ok((sender, message.message_index))
             }
         } else {
             Err(UpdateEventError::NoChange(NotAuthorized))
@@ -405,7 +407,7 @@ impl ChatEvents {
             Some(args.now),
             |message, _| Self::undelete_message_inner(message, &args),
         ) {
-            Ok(sender) => {
+            Ok((sender, message_index, document)) => {
                 if sender != args.caller {
                     add_to_metrics(
                         &mut self.metrics,
@@ -422,6 +424,9 @@ impl ChatEvents {
                     |m| decr(&mut m.deleted_messages),
                     args.now,
                 );
+                if args.thread_root_message_index.is_none() {
+                    self.search_index.push(message_index, sender, document);
+                }
                 UndeleteMessageResult::Success
             }
             Err(UpdateEventError::NoChange(result)) => result,
@@ -432,7 +437,7 @@ impl ChatEvents {
     fn undelete_message_inner(
         message: &mut MessageInternal,
         args: &DeleteUndeleteMessageArgs,
-    ) -> Result<UserId, UpdateEventError<UndeleteMessageResult>> {
+    ) -> Result<(UserId, MessageIndex, Document), UpdateEventError<UndeleteMessageResult>> {
         use UndeleteMessageResult::*;
 
         let Some(deleted_by) = message.deleted_by.as_ref().map(|db| db.deleted_by) else {
@@ -446,7 +451,7 @@ impl ChatEvents {
                 _ => {
                     let sender = message.sender;
                     message.deleted_by = None;
-                    Ok(sender)
+                    Ok((sender, message.message_index, Document::from(&message.content)))
                 }
             }
         } else {
@@ -460,16 +465,13 @@ impl ChatEvents {
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
     ) -> Option<(MessageContentInternal, UserId)> {
-        if let Ok((content, sender, message_index)) = self.update_message(
+        if let Ok((content, sender)) = self.update_message(
             thread_root_message_index,
             message_id.into(),
             EventIndex::default(),
             None,
             |message, _| Self::remove_deleted_message_content_inner(message),
         ) {
-            if thread_root_message_index.is_none() {
-                self.search_index.remove(message_index);
-            }
             Some((content, sender))
         } else {
             None
@@ -478,7 +480,7 @@ impl ChatEvents {
 
     fn remove_deleted_message_content_inner(
         message: &mut MessageInternal,
-    ) -> Result<(MessageContentInternal, UserId, MessageIndex), UpdateEventError> {
+    ) -> Result<(MessageContentInternal, UserId), UpdateEventError> {
         let Some(deleted_by) = message.deleted_by.clone() else {
             return Err(UpdateEventError::NoChange(()));
         };
@@ -486,7 +488,7 @@ impl ChatEvents {
         let content = std::mem::replace(&mut message.content, MessageContentInternal::Deleted(deleted_by));
         let sender = message.sender;
 
-        Ok((content, sender, message.message_index))
+        Ok((content, sender))
     }
 
     pub fn register_poll_vote(&mut self, args: RegisterPollVoteArgs) -> RegisterPollVoteResult {
@@ -1622,19 +1624,10 @@ impl ChatEvents {
         query: Query,
         users: HashSet<UserId>,
         max_results: u8,
-        my_user_id: UserId,
     ) -> Vec<MessageMatch> {
-        let reader = self.main_events_reader();
         self.search_index
             .search_messages(min_visible_message_index, query, users)
-            .filter_map(|m| reader.message_internal(m.into()))
-            .filter(|m| m.deleted_by.is_none())
-            .map(|message| MessageMatch {
-                message_index: message.message_index,
-                sender: message.sender,
-                content: message.content.hydrate(Some(my_user_id)),
-                score: 1,
-            })
+            .map(|message_index| MessageMatch { message_index, score: 1 })
             .take(max_results as usize)
             .collect()
     }

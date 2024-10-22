@@ -670,6 +670,7 @@
         "owned_group_with_100_diamond_members": "Володів групою/спільнотою зі 100 підтвердженими учасниками",
         "owned_group_with_1000_diamond_members": "Володів групою/спільнотою з 1000 перевірених учасників",
         "percentageComplete": "{perc}% виконано",
+        "pinned_chat": "Закріпіть чат у верхній частині списку",
         "pinned_message": "Закріпити повідомлення",
         "proved_unique_personhood": "Доведіть свою унікальну людяність",
         "quote_replied": "Цитувати відповідь на повідомлення",

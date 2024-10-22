@@ -47,21 +47,23 @@ async fn accept_p2p_swap(args: Args) -> Response {
                         thread_root_message_index,
                         message_id.into(),
                     ) {
-                        let community_id = state.env.canister_id().into();
+                        if channel.chat.members.contains(&message.sender) {
+                            let community_id = state.env.canister_id().into();
 
-                        state.data.user_event_sync_queue.push(
-                            message.sender,
-                            CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
-                                chat: Chat::Channel(community_id, channel.id),
-                                thread_root_message_index,
-                                message_index: message.message_index,
-                                message_id: message.message_id,
-                                event_index,
-                                activity: MessageActivity::P2PSwapAccepted,
-                                timestamp: state.env.now(),
-                                user_id: Some(user_id),
-                            }),
-                        );
+                            state.data.user_event_sync_queue.push(
+                                message.sender,
+                                CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
+                                    chat: Chat::Channel(community_id, channel.id),
+                                    thread_root_message_index,
+                                    message_index: message.message_index,
+                                    message_id: message.message_id,
+                                    event_index,
+                                    activity: MessageActivity::P2PSwapAccepted,
+                                    timestamp: state.env.now(),
+                                    user_id: Some(user_id),
+                                }),
+                            );
+                        }
                     }
                 }
 
