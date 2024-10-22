@@ -848,7 +848,7 @@ export class UserClient extends CandidService {
     }
 
     loadSavedCryptoAccounts(): Promise<NamedAccount[]> {
-        return this.executeMsgpackUpdate(
+        return this.executeMsgpackQuery(
             "saved_crypto_accounts",
             {},
             savedCryptoAccountsResponse,

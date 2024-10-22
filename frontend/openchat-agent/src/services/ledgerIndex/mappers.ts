@@ -2,7 +2,7 @@ import { identity, optional } from "../../utils/mapping";
 import type {
     ApiAccount,
     ApiGetTransactions,
-    ApiGetTransationsResult,
+    ApiGetTransactionsResult,
     ApiTransactionWithId,
 } from "./candid/idl";
 import {
@@ -12,7 +12,7 @@ import {
     UnsupportedValueError,
 } from "openchat-shared";
 
-export function accountTransactions(candid: ApiGetTransationsResult): AccountTransactionResult {
+export function accountTransactions(candid: ApiGetTransactionsResult): AccountTransactionResult {
     if ("Err" in candid) {
         return CommonResponses.failure();
     }
