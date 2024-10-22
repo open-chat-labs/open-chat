@@ -724,6 +724,7 @@ type ResetInviteCodeResponse = variant {
 
 type FollowThreadArgs = record {
     thread_root_message_index : MessageIndex;
+    new_achievement : bool;
 };
 
 type FollowThreadResponse = variant {

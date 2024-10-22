@@ -1440,6 +1440,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.chatId,
                         payload.threadRootMessageIndex,
                         payload.follow,
+                        payload.newAchievement,
                     ),
                 );
                 break;

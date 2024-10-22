@@ -3,6 +3,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::follow_thread::{Response::*, *};
 use group_chat_core::FollowThreadResult;
+use types::Achievement;
 
 #[update(candid = true, msgpack = true)]
 #[trace]
@@ -30,6 +31,10 @@ fn follow_thread_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
         match channel.chat.follow_thread(user_id, args.thread_root_message_index, now) {
             FollowThreadResult::Success => {
+                if args.new_achievement {
+                    state.data.notify_user_of_achievement(user_id, Achievement::FollowedThread);
+                }
+
                 state.data.mark_community_updated_in_user_canister(user_id);
                 Success
             }

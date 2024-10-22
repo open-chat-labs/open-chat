@@ -51,6 +51,7 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'FavouritedChat' : null } |
   { 'AppointedGroupAdmin' : null } |
   { 'HadMessageReactedTo' : null } |
+  { 'PinnedChat' : null } |
   { 'VotedOnPoll' : null } |
   { 'ChosenAsGroupAdmin' : null } |
   { 'OwnGroupWithOneHundredDiamondMembers' : null } |
@@ -59,7 +60,6 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'AppointedGroupOwner' : null } |
   { 'OwnGroupWithTenDiamondMembers' : null } |
   { 'JoinedGatedGroupOrCommunity' : null } |
-  { 'SetPin' : null } |
   { 'JoinedGroup' : null } |
   { 'StartedCall' : null } |
   { 'ChosenAsGroupOwner' : null } |
@@ -87,6 +87,7 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'SentPrize' : null } |
   { 'FollowedThread' : null } |
   { 'SetBio' : null } |
+  { 'SetPin' : null } |
   { 'OwnGroupWithOneThousandDiamondMembers' : null } |
   { 'SentP2PSwapOffer' : null } |
   { 'QuoteReplied' : null } |

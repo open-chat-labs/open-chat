@@ -670,6 +670,7 @@
         "owned_group_with_100_diamond_members": "Era propietario de un grupo/comunidad con 100 miembros verificados.",
         "owned_group_with_1000_diamond_members": "Poseía un grupo/comunidad con 1000 miembros verificados",
         "percentageComplete": "{perc} % completado",
+        "pinned_chat": "Fijar un chat en la parte superior de la lista",
         "pinned_message": "Fijar un mensaje",
         "proved_unique_personhood": "Demuestra tu humanidad única",
         "quote_replied": "Citar respuesta a un mensaje",

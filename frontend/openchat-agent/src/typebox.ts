@@ -1126,23 +1126,24 @@ export const Achievement = Type.Union([
     Type.Literal("Referred10thUser"),
     Type.Literal("Referred20thUser"),
     Type.Literal("Referred50thUser"),
-    Type.Literal("PinnedMessage"),
-    Type.Literal("SwappedFromWallet"),
-    Type.Literal("FavouritedChat"),
     Type.Literal("FollowedThread"),
+    Type.Literal("FavouritedChat"),
+    Type.Literal("SetPin"),
+    Type.Literal("SwappedFromWallet"),
+    Type.Literal("PinnedChat"),
+    Type.Literal("JoinedGatedGroupOrCommunity"),
+    Type.Literal("PinnedMessage"),
+    Type.Literal("SetGroupAccessGate"),
+    Type.Literal("SetCommunityAccessGate"),
     Type.Literal("AppointedGroupModerator"),
     Type.Literal("AppointedGroupAdmin"),
     Type.Literal("AppointedGroupOwner"),
     Type.Literal("ChosenAsGroupModerator"),
     Type.Literal("ChosenAsGroupAdmin"),
     Type.Literal("ChosenAsGroupOwner"),
-    Type.Literal("SetGroupAccessGate"),
-    Type.Literal("SetCommunityAccessGate"),
-    Type.Literal("JoinedGatedGroupOrCommunity"),
-    Type.Literal("SetPin"),
+    Type.Literal("ChangedTheme"),
     Type.Literal("SuggestedTranslation"),
     Type.Literal("TranslationAccepted"),
-    Type.Literal("ChangedTheme"),
     Type.Literal("EnabledDisappearingMessages"),
     Type.Literal("OwnGroupWithOneDiamondMember"),
     Type.Literal("OwnGroupWithTenDiamondMembers"),
@@ -3072,6 +3073,7 @@ export type CommunityFollowThreadArgs = Static<typeof CommunityFollowThreadArgs>
 export const CommunityFollowThreadArgs = Type.Object({
     channel_id: Type.BigInt(),
     thread_root_message_index: MessageIndex,
+    new_achievement: Type.Boolean(),
 });
 
 export type CommunityDeleteChannelResponse = Static<typeof CommunityDeleteChannelResponse>;
@@ -3609,6 +3611,7 @@ export const GroupReportMessageArgs = Type.Object({
 export type GroupFollowThreadArgs = Static<typeof GroupFollowThreadArgs>;
 export const GroupFollowThreadArgs = Type.Object({
     thread_root_message_index: MessageIndex,
+    new_achievement: Type.Boolean(),
 });
 
 export type UserSearchMessagesSuccessResult = Static<typeof UserSearchMessagesSuccessResult>;
