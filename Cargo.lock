@@ -4176,6 +4176,7 @@ dependencies = [
  "group_index_canister",
  "ic-cdk 0.16.0",
  "ic-ledger-types",
+ "ic-stable-structures",
  "icrc-ledger-types",
  "icrc_ledger_canister",
  "identity_canister",

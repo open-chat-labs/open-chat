@@ -24,6 +24,7 @@ generate_update_call!(change_role);
 generate_update_call!(claim_prize);
 generate_update_call!(create_channel);
 generate_update_call!(create_user_group);
+generate_update_call!(delete_channel);
 generate_update_call!(delete_messages);
 generate_update_call!(delete_user_groups);
 generate_update_call!(edit_message);
@@ -132,6 +133,19 @@ pub mod happy_path {
 
         if !matches!(response, community_canister::leave_channel::Response::Success) {
             panic!("'leave_channel' error: {response:?}")
+        }
+    }
+
+    pub fn delete_channel(env: &mut PocketIc, sender: Principal, community_id: CommunityId, channel_id: ChannelId) {
+        let response = super::delete_channel(
+            env,
+            sender,
+            community_id.into(),
+            &community_canister::delete_channel::Args { channel_id },
+        );
+
+        if !matches!(response, community_canister::delete_channel::Response::Success) {
+            panic!("'delete_channel' error: {response:?}")
         }
     }
 

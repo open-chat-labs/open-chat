@@ -6,7 +6,7 @@ use candid::Principal;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
-use testing::rng::{random_message_id, random_string};
+use testing::rng::{random_from_u128, random_string};
 use types::{Cryptocurrency, MessageContentInitial, P2PSwapContentInitial, P2PSwapStatus};
 use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
 
@@ -53,7 +53,7 @@ fn p2p_swap_in_channel_succeeds() {
         11_000_000_000,
     );
 
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
 
     let send_message_response = client::user::send_message_with_transfer_to_channel(
         env,
@@ -169,7 +169,7 @@ fn cancel_p2p_swap_in_channel_succeeds(delete_message: bool) {
         original_chat_balance,
     );
 
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
 
     let send_message_response = client::user::send_message_with_transfer_to_channel(
         env,
