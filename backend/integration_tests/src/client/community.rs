@@ -1,5 +1,8 @@
 use crate::{generate_query_call, generate_update_call};
 use community_canister::*;
+use ic_stable_structures::memory_manager::MemoryId;
+
+pub const CHAT_EVENTS_MEMORY_ID: MemoryId = MemoryId::new(3);
 
 // Queries
 generate_query_call!(channel_summary);
@@ -24,6 +27,7 @@ generate_update_call!(change_role);
 generate_update_call!(claim_prize);
 generate_update_call!(create_channel);
 generate_update_call!(create_user_group);
+generate_update_call!(delete_channel);
 generate_update_call!(delete_messages);
 generate_update_call!(delete_user_groups);
 generate_update_call!(edit_message);
@@ -45,7 +49,7 @@ pub mod happy_path {
     use crate::{client::user, User};
     use candid::Principal;
     use pocket_ic::PocketIc;
-    use testing::rng::random_message_id;
+    use testing::rng::random_from_u128;
     use types::{
         AccessGate, ChannelId, ChatId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
         CommunityCanisterCommunitySummaryUpdates, CommunityId, CommunityRole, EventIndex, EventsResponse, GroupReplyContext,
@@ -135,6 +139,19 @@ pub mod happy_path {
         }
     }
 
+    pub fn delete_channel(env: &mut PocketIc, sender: Principal, community_id: CommunityId, channel_id: ChannelId) {
+        let response = super::delete_channel(
+            env,
+            sender,
+            community_id.into(),
+            &community_canister::delete_channel::Args { channel_id },
+        );
+
+        if !matches!(response, community_canister::delete_channel::Response::Success) {
+            panic!("'delete_channel' error: {response:?}")
+        }
+    }
+
     pub fn send_text_message(
         env: &mut PocketIc,
         sender: &User,
@@ -151,7 +168,7 @@ pub mod happy_path {
             &community_canister::send_message::Args {
                 channel_id,
                 thread_root_message_index,
-                message_id: message_id.unwrap_or_else(random_message_id),
+                message_id: message_id.unwrap_or_else(random_from_u128),
                 content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
                 sender_name: sender.username(),
                 sender_display_name: None,
@@ -190,7 +207,7 @@ pub mod happy_path {
             &community_canister::send_message::Args {
                 channel_id,
                 thread_root_message_index,
-                message_id: message_id.unwrap_or_else(random_message_id),
+                message_id: message_id.unwrap_or_else(random_from_u128),
                 content,
                 sender_name: sender.username(),
                 sender_display_name: None,
@@ -226,7 +243,7 @@ pub mod happy_path {
             &user_canister::send_message_with_transfer_to_channel::Args {
                 channel_id,
                 thread_root_message_index: None,
-                message_id: message_id.unwrap_or_else(random_message_id),
+                message_id: message_id.unwrap_or_else(random_from_u128),
                 content,
                 replies_to: None,
                 block_level_markdown: false,

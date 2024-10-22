@@ -4,6 +4,7 @@ use crate::{
 };
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use chat_events::{ChannelKeyPrefix, ChannelThreadKeyPrefix, KeyPrefix};
 use community_canister::delete_channel::{Response::*, *};
 use types::{ChannelDeleted, ChannelId};
 
@@ -49,6 +50,22 @@ fn delete_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Respo
 
     let now = state.env.now();
     let channel = state.data.channels.delete(channel_id).expect("Channel should exist");
+
+    state
+        .data
+        .stable_memory_keys_to_garbage_collect
+        .push(KeyPrefix::Channel(ChannelKeyPrefix::new(channel_id)));
+
+    for message_index in channel.chat.events.thread_keys() {
+        state
+            .data
+            .stable_memory_keys_to_garbage_collect
+            .push(KeyPrefix::ChannelThread(ChannelThreadKeyPrefix::new(
+                channel_id,
+                message_index,
+            )));
+    }
+    crate::jobs::garbage_collect_stable_memory::start_job_if_required(state);
 
     state.data.events.push_event(
         CommunityEventInternal::ChannelDeleted(Box::new(ChannelDeleted {

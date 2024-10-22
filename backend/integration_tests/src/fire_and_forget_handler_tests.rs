@@ -4,7 +4,7 @@ use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
-use testing::rng::random_message_id;
+use testing::rng::random_from_u128;
 use types::ChatEvent;
 
 #[test_case(1)]
@@ -16,7 +16,7 @@ fn retries_after_failures(failures: usize) {
 
     let user1 = client::register_user(env, canister_ids);
     let user2 = client::register_user(env, canister_ids);
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
 
     let send_message_result = client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", Some(message_id));
     env.tick();

@@ -1,25 +1,72 @@
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
-use crate::{ChatEventInternal, ChatInternal, EventKey, EventOrExpiredRangeInternal, EventsMap, MessageInternal};
+use crate::stable_storage::ChatEventsStableStorage;
+use crate::{
+    ChatEventInternal, ChatEventsMap, ChatInternal, EventKey, EventOrExpiredRangeInternal, EventsMap, MessageInternal,
+};
+use candid::Principal;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
-use std::collections::{BTreeMap, HashMap, HashSet};
-use std::ops::Deref;
+use std::collections::{HashMap, HashSet};
+use std::ops::{Deref, RangeBounds};
 use types::{
-    ChatEvent, EventIndex, EventOrExpiredRange, EventWrapper, EventWrapperInternal, HydratedMention, Mention, Message,
+    Chat, ChatEvent, EventIndex, EventOrExpiredRange, EventWrapper, EventWrapperInternal, HydratedMention, Mention, Message,
     MessageId, MessageIndex, TimestampMillis, UserId,
 };
 
-#[derive(Serialize, Deserialize, Default)]
-pub struct ChatEventsList<M = BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>>> {
-    events_map: M,
+#[derive(Serialize, Deserialize)]
+pub struct ChatEventsList {
+    events_map: ChatEventsMap,
+    #[serde(default = "default_state_events_map")]
+    stable_events_map: ChatEventsStableStorage,
     message_id_map: HashMap<MessageId, EventIndex>,
     message_event_indexes: Vec<EventIndex>,
     latest_event_index: Option<EventIndex>,
     latest_event_timestamp: Option<TimestampMillis>,
+    #[serde(default)]
+    read_events_from_stable_memory: bool,
 }
 
-impl<M: EventsMap> ChatEventsList<M> {
+fn default_state_events_map() -> ChatEventsStableStorage {
+    ChatEventsStableStorage::new(Chat::Direct(Principal::anonymous().into()), None)
+}
+
+impl ChatEventsList {
+    pub fn set_stable_memory_prefix(&mut self, chat: Chat, thread_root_message_index: Option<MessageIndex>) {
+        self.stable_events_map = ChatEventsStableStorage::new(chat, thread_root_message_index);
+    }
+
+    pub fn set_read_events_from_stable_memory(&mut self, value: bool) {
+        self.read_events_from_stable_memory = value;
+    }
+
+    pub fn migrate_events_to_stable_memory(&mut self, start: EventIndex, max_events: usize) -> (usize, Option<EventIndex>) {
+        let mut count = 0;
+        let mut next_event_index = start;
+        for event in self.events_map.range(start..).take(max_events) {
+            count += 1;
+            next_event_index = event.index.incr();
+            self.stable_events_map.insert(event);
+        }
+        if Some(next_event_index) > self.latest_event_index {
+            (count, None)
+        } else {
+            (count, Some(next_event_index))
+        }
+    }
+
+    pub fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
+        ChatEventsList {
+            events_map: ChatEventsMap::default(),
+            stable_events_map: ChatEventsStableStorage::new(chat, thread_root_message_index),
+            message_id_map: HashMap::new(),
+            message_event_indexes: Vec::new(),
+            latest_event_index: None,
+            latest_event_timestamp: None,
+            read_events_from_stable_memory: true,
+        }
+    }
+
     pub(crate) fn push_event(
         &mut self,
         event: ChatEventInternal,
@@ -37,13 +84,16 @@ impl<M: EventsMap> ChatEventsList<M> {
             self.message_event_indexes.push(event_index);
         }
 
-        self.events_map.insert(EventWrapperInternal {
+        let event_wrapper = EventWrapperInternal {
             index: event_index,
             timestamp: now,
             correlation_id,
             expires_at,
             event,
-        });
+        };
+        self.stable_events_map.insert(event_wrapper.clone());
+        self.events_map.insert(event_wrapper);
+
         self.latest_event_index = Some(event_index);
         self.latest_event_timestamp = Some(now);
 
@@ -82,6 +132,7 @@ impl<M: EventsMap> ChatEventsList<M> {
         if let Some(mut event) = self.get_event(event_key, EventIndex::default()) {
             update_event_fn(&mut event).map(|result| {
                 let event_index = event.index;
+                self.stable_events_map.insert(event.clone());
                 self.events_map.insert(event);
                 (result, event_index)
             })
@@ -122,7 +173,7 @@ impl<M: EventsMap> ChatEventsList<M> {
             (min_visible_event_index, self.latest_event_index.unwrap_or_default())
         };
 
-        let iter = self.events_map.range(min..=max);
+        let iter = self.range_internal(min..=max);
 
         if ascending {
             Box::new(ChatEventsListIterator {
@@ -176,7 +227,7 @@ impl<M: EventsMap> ChatEventsList<M> {
 
     pub fn migrate_replies(&mut self, old: ChatInternal, new: ChatInternal) -> Vec<EventIndex> {
         let mut updated = Vec::new();
-        for mut event in self.events_map.iter() {
+        for mut event in self.iter_internal() {
             if let Some(message) = event.event.as_message_mut() {
                 if let Some(r) = message.replies_to.as_mut() {
                     if let Some((chat, _)) = r.chat_if_other.as_mut() {
@@ -191,14 +242,14 @@ impl<M: EventsMap> ChatEventsList<M> {
 
         let updated_indexes = updated.iter().map(|e| e.index).collect();
         for event in updated {
+            self.stable_events_map.insert(event.clone());
             self.events_map.insert(event);
         }
         updated_indexes
     }
 
     pub(crate) fn event_count_since<F: Fn(&ChatEventInternal) -> bool>(&self, since: TimestampMillis, filter: &F) -> usize {
-        self.events_map
-            .iter()
+        self.iter_internal()
             .rev()
             .take_while(|e| e.timestamp > since)
             .filter(|e| filter(&e.event))
@@ -206,6 +257,7 @@ impl<M: EventsMap> ChatEventsList<M> {
     }
 
     pub fn remove(&mut self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
+        self.stable_events_map.remove(event_index);
         self.events_map.remove(event_index)
     }
 
@@ -234,15 +286,7 @@ impl<M: EventsMap> ChatEventsList<M> {
     }
 
     pub fn last(&self) -> Option<EventWrapperInternal<ChatEventInternal>> {
-        self.events_map.iter().next_back()
-    }
-
-    pub fn len(&self) -> usize {
-        self.events_map.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.events_map.is_empty()
+        self.iter_internal().next_back()
     }
 
     pub fn contains_message_id(&self, message_id: MessageId) -> bool {
@@ -261,15 +305,33 @@ impl<M: EventsMap> ChatEventsList<M> {
         &self,
         event_index: EventIndex,
     ) -> Result<EventWrapperInternal<ChatEventInternal>, (Option<EventIndex>, Option<EventIndex>)> {
-        let next_key = match self.events_map.range(event_index..).next() {
+        let next_key = match self.range_internal(event_index..).next() {
             Some(v) if v.index == event_index => return Ok(v),
             Some(v) => Some(v.index),
             None => None,
         };
-
-        let previous_key = self.events_map.range(..event_index).next_back().map(|e| e.index);
+        let previous_key = self.range_internal(..event_index).next_back().map(|e| e.index);
 
         Err((previous_key, next_key))
+    }
+
+    fn iter_internal(&self) -> Box<dyn DoubleEndedIterator<Item = EventWrapperInternal<ChatEventInternal>> + '_> {
+        if self.read_events_from_stable_memory {
+            self.stable_events_map.iter()
+        } else {
+            self.events_map.iter()
+        }
+    }
+
+    fn range_internal<R: RangeBounds<EventIndex>>(
+        &self,
+        range: R,
+    ) -> Box<dyn DoubleEndedIterator<Item = EventWrapperInternal<ChatEventInternal>> + '_> {
+        if self.read_events_from_stable_memory {
+            self.stable_events_map.range(range)
+        } else {
+            self.events_map.range(range)
+        }
     }
 }
 
@@ -278,33 +340,33 @@ pub enum UpdateEventError<E = ()> {
     NotFound,
 }
 
-pub struct ChatEventsListReader<'r, M = BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>>> {
-    events_list: &'r ChatEventsList<M>,
+pub struct ChatEventsListReader<'r> {
+    events_list: &'r ChatEventsList,
     last_updated_timestamps: &'r LastUpdatedTimestamps,
     min_visible_event_index: EventIndex,
 }
 
-impl<'r, M> Deref for ChatEventsListReader<'r, M> {
-    type Target = ChatEventsList<M>;
+impl<'r> Deref for ChatEventsListReader<'r> {
+    type Target = ChatEventsList;
 
     fn deref(&self) -> &Self::Target {
         self.events_list
     }
 }
 
-impl<'r, M: EventsMap + 'r> ChatEventsListReader<'r, M> {
+impl<'r> ChatEventsListReader<'r> {
     pub(crate) fn new(
-        events_list: &'r ChatEventsList<M>,
+        events_list: &'r ChatEventsList,
         last_updated_timestamps: &'r LastUpdatedTimestamps,
-    ) -> ChatEventsListReader<'r, M> {
+    ) -> ChatEventsListReader<'r> {
         Self::with_min_visible_event_index(events_list, last_updated_timestamps, EventIndex::default())
     }
 
     pub(crate) fn with_min_visible_event_index(
-        events_list: &'r ChatEventsList<M>,
+        events_list: &'r ChatEventsList,
         last_updated_timestamps: &'r LastUpdatedTimestamps,
         min_visible_event_index: EventIndex,
-    ) -> ChatEventsListReader<'r, M> {
+    ) -> ChatEventsListReader<'r> {
         ChatEventsListReader {
             events_list,
             last_updated_timestamps,
@@ -654,7 +716,10 @@ mod tests {
 
         let event_indexes: Vec<usize> = results.iter().map(|e| e.as_event().unwrap().index.into()).collect();
 
-        assert_eq!(event_indexes, (0..events_reader.len()).collect_vec());
+        assert_eq!(
+            event_indexes,
+            (0..=events_reader.latest_event_index().unwrap().into()).collect_vec()
+        );
     }
 
     #[test]
@@ -666,7 +731,10 @@ mod tests {
 
         let event_indexes: Vec<usize> = results.iter().map(|e| e.as_event().unwrap().index.into()).collect();
 
-        assert_eq!(event_indexes, (0..events_reader.len()).rev().collect_vec());
+        assert_eq!(
+            event_indexes,
+            (0..=events_reader.latest_event_index().unwrap().into()).rev().collect_vec()
+        );
     }
 
     #[test]
@@ -688,7 +756,10 @@ mod tests {
 
         let event_indexes: Vec<usize> = results.iter().map(|e| e.as_event().unwrap().index.into()).collect();
 
-        assert_eq!(event_indexes, (first.index.into()..events_reader.len()).collect_vec());
+        assert_eq!(
+            event_indexes,
+            (usize::from(first.index)..=events_reader.latest_event_index().unwrap().into()).collect_vec()
+        );
     }
 
     #[test]
@@ -760,6 +831,7 @@ mod tests {
     }
 
     fn setup_events(events_ttl: Option<Milliseconds>) -> ChatEvents {
+        ChatEvents::init_stable_storage(ic_stable_structures::VectorMemory::default());
         let mut events = ChatEvents::new_direct_chat(Principal::from_slice(&[1]).into(), events_ttl, random(), 1);
 
         push_events(&mut events, 0);

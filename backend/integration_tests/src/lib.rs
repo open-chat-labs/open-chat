@@ -43,6 +43,7 @@ mod send_crypto_tests;
 mod send_direct_message_tests;
 mod set_message_reminder_tests;
 mod setup;
+mod stable_memory;
 mod storage;
 mod storage_tests;
 mod suspend_user_tests;

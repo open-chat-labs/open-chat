@@ -1,4 +1,6 @@
+use crate::client::group::CHAT_EVENTS_MEMORY_ID;
 use crate::env::ENV;
+use crate::stable_memory::count_stable_memory_event_keys;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
@@ -204,4 +206,50 @@ fn expired_event_and_message_ranges_are_correct() {
     assert!(!events_response2.events.is_empty());
     assert_eq!(events_response2.expired_event_ranges, expected_expired_event_ranges);
     assert_eq!(events_response2.expired_message_ranges, expected_expired_message_ranges);
+}
+
+#[test]
+fn stable_memory_garbage_collected_after_messages_disappear() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let user = client::register_user(env, canister_ids);
+    let group_id = client::user::happy_path::create_group(env, &user, &random_string(), false, true);
+
+    client::group::update_group_v2(
+        env,
+        user.principal,
+        group_id.into(),
+        &group_canister::update_group_v2::Args {
+            events_ttl: OptionUpdate::SetToSome(1000),
+            ..Default::default()
+        },
+    );
+
+    for _ in 0..5 {
+        let result = client::group::happy_path::send_text_message(env, &user, group_id, None, random_string(), None);
+
+        for _ in 0..5 {
+            client::group::happy_path::send_text_message(
+                env,
+                &user,
+                group_id,
+                Some(result.message_index),
+                random_string(),
+                None,
+            );
+        }
+    }
+
+    assert_eq!(count_stable_memory_event_keys(env, group_id, CHAT_EVENTS_MEMORY_ID), 32);
+
+    // Tick once to expire the messages
+    env.advance_time(Duration::from_secs(2));
+    env.tick();
+
+    // Tick again to garbage collect stable memory
+    env.advance_time(Duration::from_secs(60));
+    env.tick();
+
+    assert_eq!(count_stable_memory_event_keys(env, group_id, CHAT_EVENTS_MEMORY_ID), 2);
 }

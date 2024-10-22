@@ -1,6 +1,7 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::Data;
+use crate::{mutate_state, Data};
+use candid::Principal;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
@@ -26,4 +27,11 @@ fn post_upgrade(args: Args) {
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
+
+    mutate_state(|state| {
+        state
+            .data
+            .canisters_pending_events_migration_to_stable_memory
+            .extend(state.data.local_users.iter().map(|(u, _)| Principal::from(*u)));
+    })
 }

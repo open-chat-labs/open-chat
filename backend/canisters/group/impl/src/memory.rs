@@ -6,6 +6,7 @@ use ic_stable_structures::{
 const UPGRADES: MemoryId = MemoryId::new(0);
 const INSTRUCTION_COUNTS_INDEX: MemoryId = MemoryId::new(1);
 const INSTRUCTION_COUNTS_DATA: MemoryId = MemoryId::new(2);
+const CHAT_EVENTS: MemoryId = MemoryId::new(3);
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
@@ -24,6 +25,10 @@ pub fn get_instruction_counts_index_memory() -> Memory {
 
 pub fn get_instruction_counts_data_memory() -> Memory {
     get_memory(INSTRUCTION_COUNTS_DATA)
+}
+
+pub fn get_chat_events_memory() -> Memory {
+    get_memory(CHAT_EVENTS)
 }
 
 fn get_memory(id: MemoryId) -> Memory {
