@@ -368,7 +368,9 @@ pub struct MessageActivityEvent {
     pub chat: Chat,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_index: MessageIndex,
+    #[serde(default)]
     pub message_id: MessageId,
+    #[serde(default)]
     pub event_index: EventIndex,
     pub activity: MessageActivity,
     pub timestamp: TimestampMillis,
