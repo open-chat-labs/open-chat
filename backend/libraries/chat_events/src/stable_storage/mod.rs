@@ -9,7 +9,7 @@ use std::cell::RefCell;
 use std::cmp::min;
 use std::collections::VecDeque;
 use std::ops::RangeBounds;
-use types::{Chat, EventIndex, EventWrapperInternal, MessageIndex, MAX_EVENT_INDEX, MIN_EVENT_INDEX};
+use types::{Chat, EventContext, EventIndex, EventWrapperInternal, MessageIndex, MAX_EVENT_INDEX, MIN_EVENT_INDEX};
 
 pub mod key;
 
@@ -60,16 +60,13 @@ pub fn garbage_collect(prefix: KeyPrefix) -> Result<u32, u32> {
 }
 
 // Used to efficiently read all events from stable memory when migrating a group into a community
-pub fn read_events_as_bytes(
-    chat: Chat,
-    after: Option<(Option<MessageIndex>, EventIndex)>,
-    max_bytes: usize,
-) -> Vec<((Option<MessageIndex>, EventIndex), ByteBuf)> {
+pub fn read_events_as_bytes(chat: Chat, after: Option<EventContext>, max_bytes: usize) -> Vec<(EventContext, ByteBuf)> {
     let key = match after {
         None => Key::new(KeyPrefix::new(chat, None), EventIndex::default()),
-        Some((thread_root_message_index, event_index)) => {
-            Key::new(KeyPrefix::new(chat, thread_root_message_index), event_index.incr())
-        }
+        Some(EventContext {
+            thread_root_message_index,
+            event_index,
+        }) => Key::new(KeyPrefix::new(chat, thread_root_message_index), event_index.incr()),
     };
     with_map(|m| {
         let mut total_bytes = 0;
@@ -81,16 +78,16 @@ pub fn read_events_as_bytes(
                 total_bytes += v.0.len();
                 total_bytes < max_bytes
             })
-            .map(|(k, v)| ((k.thread_root_message_index(), k.event_index()), v.0.into()))
+            .map(|(k, v)| (EventContext::new(k.thread_root_message_index(), k.event_index()), v.0.into()))
             .collect()
     })
 }
 
-pub fn write_events_as_bytes(chat: Chat, events: Vec<((Option<MessageIndex>, EventIndex), ByteBuf)>) {
+pub fn write_events_as_bytes(chat: Chat, events: Vec<(EventContext, ByteBuf)>) {
     with_map_mut(|m| {
-        for ((thread_root_message_index, event_index), bytes) in events {
-            let prefix = KeyPrefix::new(chat, thread_root_message_index);
-            let key = Key::new(prefix, event_index);
+        for (context, bytes) in events {
+            let prefix = KeyPrefix::new(chat, context.thread_root_message_index);
+            let key = Key::new(prefix, context.event_index);
             let value = Value(bytes.into_vec());
             // Check the event is valid. We could remove this once we're more confident
             let _ = EventWrapperInternal::from(&value);

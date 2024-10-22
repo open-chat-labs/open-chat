@@ -384,3 +384,18 @@ pub struct VideoCallEndedEventPayload {
     pub hidden: u32,
     pub duration_secs: u32,
 }
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct EventContext {
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub event_index: EventIndex,
+}
+
+impl EventContext {
+    pub fn new(thread_root_message_index: Option<MessageIndex>, event_index: EventIndex) -> EventContext {
+        EventContext {
+            thread_root_message_index,
+            event_index,
+        }
+    }
+}

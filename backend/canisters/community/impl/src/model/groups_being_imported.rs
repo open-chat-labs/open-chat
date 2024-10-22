@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
-use types::{ChannelId, ChatId, EventIndex, MessageIndex, TimestampMillis, Timestamped, UserId};
+use types::{ChannelId, ChatId, EventContext, TimestampMillis, Timestamped, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct GroupsBeingImported {
@@ -15,7 +15,7 @@ pub struct GroupToImport {
 
 #[derive(Debug)]
 pub enum GroupToImportAction {
-    Events(ChannelId, Option<(Option<MessageIndex>, EventIndex)>),
+    Events(ChannelId, Option<EventContext>),
     Core(u64),
 }
 
@@ -50,7 +50,7 @@ impl GroupsBeingImported {
                 let action = if group.events_imported {
                     GroupToImportAction::Core(group.bytes.len() as u64)
                 } else {
-                    GroupToImportAction::Events(group.channel_id, group.events_imported_up_to)
+                    GroupToImportAction::Events(group.channel_id, group.events_imported_up_to.clone())
                 };
                 batch.push(GroupToImport {
                     group_id: *chat_id,
@@ -73,7 +73,7 @@ impl GroupsBeingImported {
         }
     }
 
-    pub fn mark_events_batch_complete(&mut self, group_id: &ChatId, up_to: (Option<MessageIndex>, EventIndex)) {
+    pub fn mark_events_batch_complete(&mut self, group_id: &ChatId, up_to: EventContext) {
         if let Some(group) = self.groups.get_mut(group_id) {
             group.current_batch_started = None;
             group.error_message = None;
@@ -121,7 +121,7 @@ pub struct GroupBeingImported {
     current_batch_started: Option<TimestampMillis>,
     #[serde(default)]
     events_imported: bool,
-    events_imported_up_to: Option<(Option<MessageIndex>, EventIndex)>,
+    events_imported_up_to: Option<EventContext>,
     total_bytes: u64,
     #[serde(with = "serde_bytes")]
     bytes: Vec<u8>,

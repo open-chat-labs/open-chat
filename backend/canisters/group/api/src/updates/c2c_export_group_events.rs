@@ -1,11 +1,11 @@
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::fmt::{Debug, Formatter};
-use types::{EventIndex, MessageIndex};
+use types::EventContext;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub after: Option<(Option<MessageIndex>, EventIndex)>,
+    pub after: Option<EventContext>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -15,7 +15,7 @@ pub enum Response {
 
 #[derive(Serialize, Deserialize)]
 pub struct SuccessResult {
-    pub events: Vec<((Option<MessageIndex>, EventIndex), ByteBuf)>,
+    pub events: Vec<(EventContext, ByteBuf)>,
     pub finished: bool,
 }
 

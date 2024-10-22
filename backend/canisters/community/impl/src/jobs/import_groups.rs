@@ -113,7 +113,10 @@ async fn import_group(group: GroupToImport) {
                 Ok(group_canister::c2c_export_group_events::Response::Success(result)) => {
                     mutate_state(|state| {
                         if let Some((up_to, _)) = result.events.last() {
-                            state.data.groups_being_imported.mark_events_batch_complete(&group_id, *up_to);
+                            state
+                                .data
+                                .groups_being_imported
+                                .mark_events_batch_complete(&group_id, up_to.clone());
                         }
                         if result.finished {
                             state.data.groups_being_imported.mark_events_import_complete(&group_id);

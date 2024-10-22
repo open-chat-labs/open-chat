@@ -22,14 +22,14 @@ use std::ops::DerefMut;
 use tracing::info;
 use types::{
     AcceptP2PSwapResult, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, ChatType, CompleteP2PSwapResult,
-    CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventWrapperInternal,
-    EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention,
-    Mention, Message, MessageContentInitial, MessageEditedEventPayload, MessageEventPayload, MessageId, MessageIndex,
-    MessageMatch, MessageReport, MessageTippedEventPayload, Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapCompleted,
-    P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate,
-    PushEventResult, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess,
-    TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants,
-    VideoCallPresence, VoteOperation,
+    CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventContext, EventIndex, EventWrapper,
+    EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash,
+    HydratedMention, Mention, Message, MessageContentInitial, MessageEditedEventPayload, MessageEventPayload, MessageId,
+    MessageIndex, MessageMatch, MessageReport, MessageTippedEventPayload, Milliseconds, MultiUserChat, P2PSwapAccepted,
+    P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes,
+    ProposalUpdate, PushEventResult, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapResult,
+    ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload,
+    VideoCallParticipants, VideoCallPresence, VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -50,11 +50,11 @@ pub struct ChatEvents {
     anonymized_id: String,
     search_index: SearchIndex,
     #[serde(default = "default_next_event_to_migrate_to_stable_memory")]
-    next_event_to_migrate_to_stable_memory: Option<(Option<MessageIndex>, EventIndex)>,
+    next_event_to_migrate_to_stable_memory: Option<EventContext>,
 }
 
-fn default_next_event_to_migrate_to_stable_memory() -> Option<(Option<MessageIndex>, EventIndex)> {
-    Some((None, EventIndex::default()))
+fn default_next_event_to_migrate_to_stable_memory() -> Option<EventContext> {
+    Some(EventContext::default())
 }
 
 impl ChatEvents {
@@ -62,7 +62,7 @@ impl ChatEvents {
         stable_storage::init(memory)
     }
 
-    pub fn import_events(chat: Chat, events: Vec<((Option<MessageIndex>, EventIndex), ByteBuf)>) {
+    pub fn import_events(chat: Chat, events: Vec<(EventContext, ByteBuf)>) {
         stable_storage::write_events_as_bytes(chat, events);
     }
 
@@ -84,7 +84,10 @@ impl ChatEvents {
 
         let mut total_count = 0;
         while ic_cdk::api::instruction_counter() < 1_000_000_000 {
-            let (next_thread_root_message_index, next_event_index) = self.next_event_to_migrate_to_stable_memory.unwrap();
+            let EventContext {
+                thread_root_message_index: next_thread_root_message_index,
+                event_index: next_event_index,
+            } = self.next_event_to_migrate_to_stable_memory.clone().unwrap();
 
             let (thread_root_message_index, events_list) = if let Some(message_index) = next_thread_root_message_index {
                 if let Some((index, next)) = self.threads.range_mut(message_index..).next() {
@@ -104,12 +107,15 @@ impl ChatEvents {
 
             let (count, next_event_index) = events_list.migrate_events_to_stable_memory(next_event_index, 100);
             if let Some(event_index) = next_event_index {
-                self.next_event_to_migrate_to_stable_memory = Some((thread_root_message_index, event_index));
+                self.next_event_to_migrate_to_stable_memory = Some(EventContext {
+                    thread_root_message_index,
+                    event_index,
+                });
             } else {
-                self.next_event_to_migrate_to_stable_memory = Some((
-                    Some(thread_root_message_index.map_or(MessageIndex::default(), |m| m.incr())),
-                    EventIndex::default(),
-                ));
+                self.next_event_to_migrate_to_stable_memory = Some(EventContext {
+                    thread_root_message_index: Some(thread_root_message_index.map_or(MessageIndex::default(), |m| m.incr())),
+                    event_index: EventIndex::default(),
+                });
             }
             total_count += count;
         }
@@ -198,10 +204,7 @@ impl ChatEvents {
         }
     }
 
-    pub fn read_events_as_bytes_from_stable_memory(
-        &self,
-        after: Option<(Option<MessageIndex>, EventIndex)>,
-    ) -> Vec<((Option<MessageIndex>, EventIndex), ByteBuf)> {
+    pub fn read_events_as_bytes_from_stable_memory(&self, after: Option<EventContext>) -> Vec<(EventContext, ByteBuf)> {
         stable_storage::read_events_as_bytes(self.chat, after, 1_000_000)
     }
 
