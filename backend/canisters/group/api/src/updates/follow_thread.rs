@@ -7,6 +7,7 @@ use types::MessageIndex;
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub thread_root_message_index: MessageIndex,
+    pub new_achievement: bool,
 }
 
 #[ts_export(group, follow_thread)]

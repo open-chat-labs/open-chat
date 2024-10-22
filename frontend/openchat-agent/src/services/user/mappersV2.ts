@@ -247,6 +247,8 @@ export function achievementType(value: TAchievement): Achievement {
             return "owned_group_with_10_diamond_members";
         case "JoinedGatedGroupOrCommunity":
             return "joined_gated_group_or_community";
+        case "PinnedChat":
+            return "pinned_chat";
         case "StartedCall":
             return "started_call";
         case "ChosenAsGroupOwner":

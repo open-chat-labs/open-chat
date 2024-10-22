@@ -1600,11 +1600,14 @@ export class OpenChat extends OpenChatAgentWorker {
             followedByMe: follow,
         });
 
+        const newAchievement = !this._liveState.globalState.achievements.has("pinned_chat");
+
         return this.sendRequest({
             kind: "followThread",
             chatId,
             threadRootMessageIndex,
             follow,
+            newAchievement,
         })
             .then((resp) => {
                 if (resp === "failed") {

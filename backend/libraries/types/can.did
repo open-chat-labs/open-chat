@@ -2040,6 +2040,7 @@ type Achievement = variant {
     SetGroupAccessGate;
     SetCommunityAccessGate;
     JoinedGatedGroupOrCommunity;
+    PinnedChat;
     SetPin;
     OwnGroupWithOneDiamondMember;
     OwnGroupWithTenDiamondMembers;

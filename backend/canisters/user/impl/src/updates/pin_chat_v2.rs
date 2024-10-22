@@ -2,6 +2,7 @@ use crate::guards::caller_is_owner;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use types::Achievement;
 use user_canister::pin_chat_v2::{Response::*, *};
 use user_canister::ChatInList;
 
@@ -34,6 +35,8 @@ fn pin_chat_impl(args: Args, state: &mut RuntimeState) -> Response {
             }
         }
     }
+
+    state.data.award_achievement_and_notify(Achievement::PinnedChat, now);
 
     Success
 }

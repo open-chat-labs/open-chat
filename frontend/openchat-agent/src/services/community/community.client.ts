@@ -1573,10 +1573,12 @@ export class CommunityClient extends CandidService {
         channelId: string,
         threadRootMessageIndex: number,
         follow: boolean,
+        newAchievement: boolean,
     ): Promise<FollowThreadResponse> {
         const args = {
             channel_id: BigInt(channelId),
             thread_root_message_index: threadRootMessageIndex,
+            new_achievement: newAchievement,
         };
         return this.executeMsgpackUpdate(
             follow ? "follow_thread" : "unfollow_thread",

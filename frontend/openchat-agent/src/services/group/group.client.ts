@@ -1150,9 +1150,14 @@ export class GroupClient extends CandidService {
         );
     }
 
-    followThread(threadRootMessageIndex: number, follow: boolean): Promise<FollowThreadResponse> {
+    followThread(
+        threadRootMessageIndex: number,
+        follow: boolean,
+        newAchievement: boolean,
+    ): Promise<FollowThreadResponse> {
         const args = {
             thread_root_message_index: threadRootMessageIndex,
+            new_achievement: newAchievement,
         };
         return this.executeMsgpackUpdate(
             follow ? "follow_thread" : "unfollow_thread",

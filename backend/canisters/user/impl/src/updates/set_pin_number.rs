@@ -4,7 +4,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use identity_utils::extract_certificate;
-use types::{FieldTooLongResult, FieldTooShortResult};
+use types::{Achievement, FieldTooLongResult, FieldTooShortResult};
 use user_canister::set_pin_number::{Response::*, *};
 use utils::time::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 
@@ -67,5 +67,8 @@ fn set_pin_number_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 
     state.data.pin_number.set(args.new, now);
+
+    state.data.award_achievement_and_notify(Achievement::SetPin, now);
+
     Success
 }

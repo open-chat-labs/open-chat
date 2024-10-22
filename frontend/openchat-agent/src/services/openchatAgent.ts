@@ -3240,6 +3240,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: ChatIdentifier,
         threadRootMessageIndex: number,
         follow: boolean,
+        newAchievement: boolean,
     ): Promise<FollowThreadResponse> {
         if (offline()) return Promise.resolve("offline");
 
@@ -3248,9 +3249,14 @@ export class OpenChatAgent extends EventTarget {
                 chatId.channelId,
                 threadRootMessageIndex,
                 follow,
+                newAchievement,
             );
         } else if (chatId.kind === "group_chat") {
-            return this.getGroupClient(chatId.groupId).followThread(threadRootMessageIndex, follow);
+            return this.getGroupClient(chatId.groupId).followThread(
+                threadRootMessageIndex,
+                follow,
+                newAchievement,
+            );
         } else {
             throw new Error("followThread not implemented for direct chats");
         }
