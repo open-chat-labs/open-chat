@@ -76,7 +76,10 @@ async fn join_channel(community_id: CommunityId, channel_id: ChannelId) -> Resul
     .await
     {
         Ok(community_canister::local_user_index::Response::Success(canister_id)) => canister_id,
-        Err(_) => return Err(true),
+        Err((code, msg)) => {
+            let retry = should_retry_failed_c2c_call(code, &msg);
+            return Err(retry);
+        }
     };
 
     match local_user_index_canister_c2c_client::join_channel(
