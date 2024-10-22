@@ -75,12 +75,37 @@
         return all.size;
     }
 
+    function numberOfPeopleTipping(msg: Message | undefined): number {
+        if (msg === undefined) return 1;
+        const all = Object.entries(msg.tips).reduce((s, [_, tips]) => {
+            Object.keys(tips).forEach((u) => s.add(u));
+            return s;
+        }, new Set<string>());
+        return all.size;
+    }
+
+    function numberOfPeopleVoting(msg: Message | undefined): number {
+        if (msg === undefined || msg.content.kind !== "poll_content") return 1;
+        const content = msg.content;
+        if (content.votes.total.kind === "anonymous_poll_votes") {
+            return Object.values(content.votes.total.votes).reduce((total, n) => total + n, 0);
+        } else if (content.votes.total.kind === "hidden_poll_votes") {
+            return content.votes.total.votes;
+        } else if (content.votes.total.kind === "visible_poll_votes") {
+            return Object.values(content.votes.total.votes).reduce(
+                (total, n) => total + n.length,
+                0,
+            );
+        }
+        return 1;
+    }
+
     function buildEventSummary(event: MessageActivityEvent, username: string) {
         switch (event.activity) {
             case "reaction":
-                const num = numberOfPeopleReacting(event.message);
-                if (num > 1) {
-                    return i18nKey("activity.reactionPlus", { username, number: num - 1 });
+                const numReactors = numberOfPeopleReacting(event.message);
+                if (numReactors > 1) {
+                    return i18nKey("activity.reactionPlus", { username, number: numReactors - 1 });
                 } else {
                     return i18nKey("activity.reaction", { username });
                 }
@@ -91,11 +116,21 @@
             case "thread_reply":
                 return i18nKey("activity.threadReply", { username });
             case "tip":
-                return i18nKey("activity.tip", { username });
+                const numTippers = numberOfPeopleTipping(event.message);
+                if (numTippers > 1) {
+                    return i18nKey("activity.tipPlus", { username, number: numTippers - 1 });
+                } else {
+                    return i18nKey("activity.tip", { username });
+                }
             case "crypto":
                 return i18nKey("activity.crypto", { username });
             case "poll_vote":
-                return i18nKey("activity.pollVote", { username });
+                const numVoters = numberOfPeopleVoting(event.message);
+                if (numVoters > 1) {
+                    return i18nKey("activity.pollVotePlus", { username, number: numVoters - 1 });
+                } else {
+                    return i18nKey("activity.pollVote", { username });
+                }
             case "p2p_swap_accepted":
                 return i18nKey("activity.p2pSwapAccepted", { username });
         }
@@ -109,7 +144,7 @@
 
     function goToEventContext() {
         activityFeedShowing.set(false);
-        page(routeForMessageContext("none", event.messageContext, true));
+        page(routeForMessageContext("none", event.messageContext));
     }
 </script>
 
@@ -123,7 +158,6 @@
             {client.formatMessageDate(event.timestamp, $_("today"), $_("yesterday"), true, true)}
         </div>
     </div>
-
     <div class="body">
         <div class="avatar">
             <Avatar
@@ -198,9 +232,10 @@
     }
 
     .body {
-        padding: $sp4;
+        padding: $sp3 $sp4 $sp4 $sp4;
         display: flex;
         align-items: flex-start;
+        gap: 12px;
 
         @include mobile() {
             padding: $sp3 toRem(10);
@@ -218,7 +253,6 @@
         flex-direction: column;
         justify-content: center;
         overflow: hidden;
-        padding: 0 0 0 12px;
 
         .name-date {
             display: flex;

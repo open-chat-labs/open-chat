@@ -117,8 +117,10 @@
         "quoteReply": "{username} quote replied to your message",
         "threadReply": "{username} replied to your message in a thread",
         "tip": "{username} left a tip on your message",
+        "tipPlus": "{username} and {number} others left a tip on your message",
         "crypto": "{username} sent you a crytpo message",
         "pollVote": "{username} voted on your poll message",
+        "pollVotePlus": "{username} and {number} others voted on your poll message",
         "p2pSwapAccepted": "Your swap offer was accepted by {username}"
     },
     "addedBy": "{changedBy} added {changed} to the {level}",

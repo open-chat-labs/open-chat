@@ -16,21 +16,29 @@
 
     const client = getContext<OpenChat>("client");
     let selectedEvent: MessageActivityEvent | undefined = undefined;
-
     let activityEvents: MessageActivityEvent[] = [];
+    let initialised = false;
 
-    // TODO we want to get this to re-load if we find that we have new stuff
+    onMount(loadActivity);
 
-    onMount(() => {
+    $: global = client.globalStateStore;
+
+    $: {
+        if (initialised && $global.messageActivitySummary.unreadCount > 0) {
+            loadActivity();
+        }
+    }
+
+    function loadActivity() {
+        console.log("Loading activity");
         client.messageActivityFeed().then((resp) => {
-            console.log("MessageActivity", resp);
             activityEvents = resp.events;
-
             if (activityEvents.length > 0) {
                 client.markActivityFeedRead(activityEvents[0].timestamp);
             }
+            initialised = true;
         });
-    });
+    }
 
     function selectEvent(ev: MessageActivityEvent) {
         selectedEvent = ev;

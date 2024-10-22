@@ -126,26 +126,32 @@
     }
 
     function viewProfile() {
+        activityFeedShowing.set(false);
         dispatch("profile");
     }
 
     function exploreCommunities() {
+        activityFeedShowing.set(false);
         page("/communities");
     }
 
     function directChats() {
+        activityFeedShowing.set(false);
         page("/user");
     }
 
     function groupChats() {
+        activityFeedShowing.set(false);
         page("/group");
     }
 
     function favouriteChats() {
+        activityFeedShowing.set(false);
         page("/favourite");
     }
 
     function selectCommunity(community: CommunitySummary) {
+        activityFeedShowing.set(false);
         page(`/community/${community.id.communityId}`);
     }
 
@@ -230,6 +236,7 @@
             </LeftNavItem>
             <LeftNavItem
                 separator
+                selected={$activityFeedShowing}
                 label={i18nKey("activity.navLabel")}
                 unread={{ muted: 0, unmuted: $unreadActivityCount, mentions: false }}
                 on:click={showActivityFeed}>
