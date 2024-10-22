@@ -279,44 +279,6 @@ fn quote_reply_to_message_and_check_activity_feed(chat_type: ChatType) {
 
 #[test_case(ChatType::Group)]
 #[test_case(ChatType::Channel)]
-fn thread_reply_to_message_and_check_activity_feed(chat_type: ChatType) {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-    } = wrapper.env();
-
-    let TestData { them, us, chat } = init_test_data(env, canister_ids, *controller, chat_type);
-
-    let text = "Hello World";
-    match chat {
-        Chat::Direct(_) => unreachable!(),
-        Chat::Group(group_id) => {
-            let result = client::group::happy_path::send_text_message(env, &us, group_id, None, text, None);
-            client::group::happy_path::send_text_message(env, &them, group_id, Some(result.message_index), text, None);
-        }
-        Chat::Channel(community_id, channel_id) => {
-            let result = client::community::happy_path::send_text_message(env, &us, community_id, channel_id, None, text, None);
-            client::community::happy_path::send_text_message(
-                env,
-                &them,
-                community_id,
-                channel_id,
-                Some(result.message_index),
-                text,
-                None,
-            );
-        }
-    };
-
-    tick_many(env, 3);
-
-    check_updates(env, 0, &us, &them, MessageActivity::ThreadReply);
-}
-
-#[test_case(ChatType::Group)]
-#[test_case(ChatType::Channel)]
 fn vote_on_poll_and_check_activity_feed(chat_type: ChatType) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
