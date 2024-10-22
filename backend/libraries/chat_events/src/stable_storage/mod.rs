@@ -11,7 +11,7 @@ use std::collections::VecDeque;
 use std::ops::RangeBounds;
 use types::{Chat, EventIndex, EventWrapperInternal, MessageIndex, MAX_EVENT_INDEX, MIN_EVENT_INDEX};
 
-mod key;
+pub mod key;
 
 #[cfg(test)]
 mod tests;
@@ -34,6 +34,29 @@ thread_local! {
 
 pub fn init(memory: Memory) {
     MAP.set(Some(ChatEventsStableStorageInner::init(memory)));
+}
+
+pub fn garbage_collect(prefix: KeyPrefix) -> Result<u32, u32> {
+    let start = Key::new(prefix.clone(), EventIndex::default());
+    let mut count = 0;
+    with_map_mut(|m| {
+        // If < 1B instructions have been used so far, delete another 100 keys, or exit if complete
+        while ic_cdk::api::instruction_counter() < 1_000_000_000 {
+            for _ in 0..100 {
+                if let Some((key, _)) = m.range(&start..).next() {
+                    if *key.prefix() == prefix {
+                        m.remove(&key);
+                        count += 1;
+                    } else {
+                        return Ok(count);
+                    }
+                } else {
+                    return Ok(count);
+                }
+            }
+        }
+        Err(count)
+    })
 }
 
 // Used to efficiently read all events from stable memory when migrating a group into a community

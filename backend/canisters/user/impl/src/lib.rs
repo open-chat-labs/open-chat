@@ -12,7 +12,7 @@ use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use chat_events::OPENCHAT_BOT_USER_ID;
+use chat_events::{KeyPrefix, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -42,6 +42,7 @@ use utils::time::{today, tomorrow, DAY_IN_MS, MINUTE_IN_MS};
 mod crypto;
 mod governance_clients;
 mod guards;
+mod jobs;
 mod lifecycle;
 mod memory;
 mod model;
@@ -256,6 +257,8 @@ struct Data {
     pub message_activity_events: MessageActivityEvents,
     #[serde(default)]
     stable_memory_event_migration_complete: bool,
+    #[serde(default)]
+    stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
 }
 
 impl Data {
@@ -325,6 +328,7 @@ impl Data {
             referrals: Referrals::default(),
             message_activity_events: MessageActivityEvents::default(),
             stable_memory_event_migration_complete: true,
+            stable_memory_keys_to_garbage_collect: Vec::new(),
         }
     }
 

@@ -7,7 +7,7 @@ use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use chat_events::ChatMetricsInternal;
+use chat_events::{ChannelThreadKeyPrefix, ChatMetricsInternal, KeyPrefix};
 use community_canister::EventsResponse;
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
@@ -244,7 +244,16 @@ impl RuntimeState {
                 }
             }
             prize_refunds.extend(result.prize_refunds);
+            for (message_index, _) in result.threads {
+                self.data
+                    .stable_memory_keys_to_garbage_collect
+                    .push(KeyPrefix::ChannelThread(ChannelThreadKeyPrefix::new(
+                        channel.id,
+                        message_index,
+                    )));
+            }
         }
+        jobs::garbage_collect_stable_memory::start_job_if_required(self);
 
         self.data.next_event_expiry = next_event_expiry;
         if let Some(expiry) = self.data.next_event_expiry {
@@ -363,6 +372,8 @@ struct Data {
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
     #[serde(default)]
     stable_memory_event_migration_complete: bool,
+    #[serde(default)]
+    stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
 }
 
 impl Data {
@@ -465,6 +476,7 @@ impl Data {
             user_cache: UserCache::default(),
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
             stable_memory_event_migration_complete: true,
+            stable_memory_keys_to_garbage_collect: Vec::new(),
         }
     }
 

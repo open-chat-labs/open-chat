@@ -7,7 +7,7 @@ use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use chat_events::Reader;
+use chat_events::{GroupChatThreadKeyPrefix, KeyPrefix, Reader};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -366,6 +366,12 @@ impl RuntimeState {
                 now,
             );
         }
+        for (message_index, _) in result.threads {
+            self.data
+                .stable_memory_keys_to_garbage_collect
+                .push(KeyPrefix::GroupChatThread(GroupChatThreadKeyPrefix::new(message_index)));
+        }
+        jobs::garbage_collect_stable_memory::start_job_if_required(self);
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -474,6 +480,8 @@ struct Data {
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
     #[serde(default)]
     stable_memory_event_migration_complete: bool,
+    #[serde(default)]
+    stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -570,6 +578,7 @@ impl Data {
             user_cache: UserCache::default(),
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
             stable_memory_event_migration_complete: true,
+            stable_memory_keys_to_garbage_collect: Vec::new(),
         }
     }
 

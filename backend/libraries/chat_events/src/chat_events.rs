@@ -2,6 +2,7 @@ use crate::chat_events_list::Reader;
 use crate::expiring_events::ExpiringEvents;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::search_index::SearchIndex;
+use crate::stable_storage::key::KeyPrefix;
 use crate::stable_storage::Memory;
 use crate::*;
 use candid::Principal;
@@ -63,6 +64,10 @@ impl ChatEvents {
 
     pub fn import_events(chat: Chat, events: Vec<((Option<MessageIndex>, EventIndex), ByteBuf)>) {
         stable_storage::write_events_as_bytes(chat, events);
+    }
+
+    pub fn garbage_collect_stable_memory(prefix: KeyPrefix) -> Result<u32, u32> {
+        stable_storage::garbage_collect(prefix)
     }
 
     pub fn set_stable_memory_key_prefixes(&mut self) {
@@ -204,6 +209,10 @@ impl ChatEvents {
         &self,
     ) -> impl Iterator<Item = (Option<MessageIndex>, EventIndex, TimestampMillis)> + '_ {
         self.last_updated_timestamps.iter()
+    }
+
+    pub fn thread_keys(&self) -> impl Iterator<Item = MessageIndex> + '_ {
+        self.threads.keys().copied()
     }
 
     pub fn push_message<R: Runtime + Send + 'static>(
