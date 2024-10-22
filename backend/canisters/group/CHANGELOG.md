@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Fix removing link previews ([#6633](https://github.com/open-chat-labs/open-chat/pull/6633))
+- Fix deserialization during upgrade ([#6639](https://github.com/open-chat-labs/open-chat/pull/6639))
 
 ## [[2.0.1401](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1401-group)] - 2024-10-18
 
