@@ -1180,7 +1180,6 @@ export type MessageActivity =
     | "mention"
     | "reaction"
     | "quote_reply"
-    | "thread_reply"
     | "tip"
     | "crypto"
     | "poll_vote"

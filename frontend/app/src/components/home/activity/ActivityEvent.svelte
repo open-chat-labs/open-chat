@@ -5,7 +5,7 @@
         routeForMessageContext,
         type MessageContext,
     } from "openchat-client";
-    import type { Message, MessageActivityEvent } from "openchat-client";
+    import type { Message, MessageActivityEvent, ResourceKey } from "openchat-client";
     import Avatar from "../../Avatar.svelte";
     import Markdown from "../Markdown.svelte";
     import { _ } from "svelte-i18n";
@@ -69,19 +69,26 @@
         return undefined;
     }
 
-    function numberOfPeopleReacting(msg: Message | undefined): number {
-        if (msg === undefined) return 1;
-        const all = new Set(msg.reactions.flatMap((r) => [...r.userIds]));
-        return all.size;
+    function otherReactors(ev: MessageActivityEvent): Set<string> {
+        if (ev.message === undefined) return new Set();
+        return new Set(
+            ev.message.reactions.flatMap((r) => {
+                return [...r.userIds]
+                    .filter((u) => u !== ev.userId)
+                    .map((u) => buildDisplayName($userStore, u, u === userId));
+            }),
+        );
     }
 
-    function numberOfPeopleTipping(msg: Message | undefined): number {
-        if (msg === undefined) return 1;
-        const all = Object.entries(msg.tips).reduce((s, [_, tips]) => {
-            Object.keys(tips).forEach((u) => s.add(u));
-            return s;
-        }, new Set<string>());
-        return all.size;
+    function otherTippers(ev: MessageActivityEvent): Set<string> {
+        if (ev.message === undefined) return new Set();
+        return new Set(
+            Object.values(ev.message.tips).flatMap((tips) => {
+                return Object.keys(tips)
+                    .filter((u) => u !== ev.userId)
+                    .map((u) => buildDisplayName($userStore, u, u === userId));
+            }),
+        );
     }
 
     function numberOfPeopleVoting(msg: Message | undefined): number {
@@ -100,34 +107,40 @@
         return 1;
     }
 
+    function pluraliseMessage(
+        root: "tip" | "reaction",
+        username: string,
+        others: Set<string>,
+    ): ResourceKey {
+        switch (others.size) {
+            case 0:
+                return i18nKey(`activity.${root}One`, { username });
+            case 1:
+                return i18nKey(`activity.${root}Two`, {
+                    username,
+                    other: [...others][0],
+                });
+            default:
+                return i18nKey(`activity.${root}N`, { username, n: others.size });
+        }
+    }
+
     function buildEventSummary(event: MessageActivityEvent, username: string) {
         switch (event.activity) {
             case "reaction":
-                const numReactors = numberOfPeopleReacting(event.message);
-                if (numReactors > 1) {
-                    return i18nKey("activity.reactionPlus", { username, number: numReactors - 1 });
-                } else {
-                    return i18nKey("activity.reaction", { username });
-                }
+                return pluraliseMessage("reaction", username, otherReactors(event));
             case "mention":
                 return i18nKey("activity.mention", { username });
             case "quote_reply":
                 return i18nKey("activity.quoteReply", { username });
-            case "thread_reply":
-                return i18nKey("activity.threadReply", { username });
             case "tip":
-                const numTippers = numberOfPeopleTipping(event.message);
-                if (numTippers > 1) {
-                    return i18nKey("activity.tipPlus", { username, number: numTippers - 1 });
-                } else {
-                    return i18nKey("activity.tip", { username });
-                }
+                return pluraliseMessage("tip", username, otherTippers(event));
             case "crypto":
                 return i18nKey("activity.crypto", { username });
             case "poll_vote":
                 const numVoters = numberOfPeopleVoting(event.message);
                 if (numVoters > 1) {
-                    return i18nKey("activity.pollVotePlus", { username, number: numVoters - 1 });
+                    return i18nKey("activity.pollVoteN", { username, number: numVoters - 1 });
                 } else {
                     return i18nKey("activity.pollVote", { username });
                 }

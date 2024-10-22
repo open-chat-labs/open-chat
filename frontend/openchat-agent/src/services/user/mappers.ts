@@ -1641,9 +1641,6 @@ export function messageActivity(candid: ApiMessageActivity): MessageActivity {
     if ("Tip" in candid) {
         return "tip";
     }
-    if ("ThreadReply" in candid) {
-        return "thread_reply";
-    }
     if ("P2PSwapAccepted" in candid) {
         return "p2p_swap_accepted";
     }
