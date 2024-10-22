@@ -16,6 +16,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `message_id` and `event_index` to `MessageActivityEvent` ([#6623](https://github.com/open-chat-labs/open-chat/pull/6623))
 - Fixes to activity feed ([#6627](https://github.com/open-chat-labs/open-chat/pull/6627))
 
+### Fixed
+
+- Fix removing link previews ([#6633](https://github.com/open-chat-labs/open-chat/pull/6633))
+
 ## [[2.0.1401](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1401-group)] - 2024-10-18
 
 ### Changed
