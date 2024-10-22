@@ -239,7 +239,8 @@ import {
 } from "../utils/community";
 import { AnonUserClient } from "./user/anonUser.client";
 import { excludeLatestKnownUpdateIfBeforeFix } from "./common/replicaUpToDateChecker";
-import { ICPCoinsClient } from "./icpcoins/icpcoins.client";
+import { IcpCoinsClient } from "./icpcoins/icpCoinsClient";
+import { IcpLedgerIndexClient } from "./icpLedgerIndex/icpLedgerIndex.client";
 import { TranslationsClient } from "./translations/translations.client";
 import { CkbtcMinterClient } from "./ckbtcMinter/ckbtcMinter";
 import { SignInWithEmailClient } from "./signInWithEmail/signInWithEmail.client";
@@ -271,7 +272,7 @@ export class OpenChatAgent extends EventTarget {
     private _ledgerIndexClients: Record<string, LedgerIndexClient>;
     private _groupClients: Record<string, GroupClient>;
     private _communityClients: Record<string, CommunityClient>;
-    private _icpcoinsClient: ICPCoinsClient;
+    private _icpcoinsClient: IcpCoinsClient;
     private _signInWithEmailClient: SignInWithEmailClient;
     private _signInWithEthereumClient: SignInWithEthereumClient;
     private _signInWithSolanaClient: SignInWithSolanaClient;
@@ -324,7 +325,7 @@ export class OpenChatAgent extends EventTarget {
             config.blobUrlPattern,
         );
         this._dataClient = new DataClient(identity, this._agent, config);
-        this._icpcoinsClient = new ICPCoinsClient(identity, this._agent);
+        this._icpcoinsClient = new IcpCoinsClient(identity, this._agent);
         this.translationsClient = new TranslationsClient(
             identity,
             this._agent,
@@ -2575,6 +2576,16 @@ export class OpenChatAgent extends EventTarget {
         principal: string,
         fromId?: bigint,
     ): Promise<AccountTransactionResult> {
+        const icpLedgerIndex = this._registryValue?.nervousSystemSummary.find((ns) => ns.isNns)
+            ?.indexCanisterId;
+
+        if (ledgerIndex === icpLedgerIndex) {
+            return new IcpLedgerIndexClient(
+                this.identity,
+                this._agent,
+                ledgerIndex,
+            ).getAccountTransactions(principal, fromId);
+        }
         return this.getLedgerIndexClient(ledgerIndex).getAccountTransactions(principal, fromId);
     }
 
