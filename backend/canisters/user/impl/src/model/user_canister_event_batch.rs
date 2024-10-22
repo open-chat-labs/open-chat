@@ -3,6 +3,7 @@ use serde::Serialize;
 use timer_job_queues::{TimerJobItem, TimerJobItemGroup};
 use types::UserId;
 use user_canister::UserCanisterEvent;
+use utils::canister::should_retry_failed_c2c_call;
 
 #[derive(Serialize, Deserialize)]
 pub struct UserCanisterEventBatch {
@@ -22,7 +23,10 @@ impl TimerJobItem for UserCanisterEventBatch {
 
         match response {
             Ok(_) => Ok(()),
-            Err(_) => Err(true),
+            Err((code, msg)) => {
+                let retry = should_retry_failed_c2c_call(code, &msg);
+                Err(retry)
+            }
         }
     }
 }
