@@ -4,6 +4,7 @@ use ic_stable_structures::{
 };
 
 const UPGRADES: MemoryId = MemoryId::new(0);
+const CHAT_EVENTS: MemoryId = MemoryId::new(3);
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
@@ -14,6 +15,10 @@ thread_local! {
 
 pub fn get_upgrades_memory() -> Memory {
     get_memory(UPGRADES)
+}
+
+pub fn get_chat_events_memory() -> Memory {
+    get_memory(CHAT_EVENTS)
 }
 
 fn get_memory(id: MemoryId) -> Memory {

@@ -17,7 +17,7 @@ group_canister = { path = "../canisters/group/api" }
 group_index_canister = { path = "../canisters/group_index/api" }
 ic-cdk = { workspace = true }
 ic-ledger-types = { workspace = true }
-pocket-ic = { workspace = true }
+ic-stable-structures = { workspace = true }
 icrc_ledger_canister = { path = "../external_canisters/icrc_ledger/api" }
 icrc-ledger-types = { workspace = true }
 identity_canister = { path = "../canisters/identity/api" }
@@ -31,6 +31,7 @@ msgpack = { path = "../libraries/msgpack" }
 notifications_canister = { path = "../canisters/notifications/api" }
 notifications_index_canister = { path = "../canisters/notifications_index/api" }
 online_users_canister = { path = "../canisters/online_users/api" }
+pocket-ic = { workspace = true }
 proposals_bot_canister = { path = "../canisters/proposals_bot/api" }
 rand = { workspace = true }
 registry_canister = { path = "../canisters/registry/api" }

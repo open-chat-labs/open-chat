@@ -1,5 +1,8 @@
 use crate::{generate_query_call, generate_update_call};
 use group_canister::*;
+use ic_stable_structures::memory_manager::MemoryId;
+
+pub const CHAT_EVENTS_MEMORY_ID: MemoryId = MemoryId::new(3);
 
 // Queries
 generate_query_call!(events);
@@ -42,7 +45,7 @@ pub mod happy_path {
     use crate::User;
     use candid::Principal;
     use pocket_ic::PocketIc;
-    use testing::rng::random_message_id;
+    use testing::rng::random_from_u128;
     use types::{
         ChatId, EventIndex, EventsResponse, GroupCanisterGroupChatSummary, GroupCanisterGroupChatSummaryUpdates,
         GroupReplyContext, GroupRole, MessageContentInitial, MessageId, MessageIndex, Milliseconds, PollVotes, Reaction,
@@ -63,7 +66,7 @@ pub mod happy_path {
             group_chat_id.into(),
             &group_canister::send_message_v2::Args {
                 thread_root_message_index,
-                message_id: message_id.unwrap_or_else(random_message_id),
+                message_id: message_id.unwrap_or_else(random_from_u128),
                 content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
                 sender_name: sender.username(),
                 sender_display_name: None,
@@ -99,7 +102,7 @@ pub mod happy_path {
             group_chat_id.into(),
             &group_canister::send_message_v2::Args {
                 thread_root_message_index,
-                message_id: message_id.unwrap_or_else(random_message_id),
+                message_id: message_id.unwrap_or_else(random_from_u128),
                 content,
                 sender_name: sender.username(),
                 sender_display_name: None,
@@ -133,7 +136,7 @@ pub mod happy_path {
             sender.user_id.into(),
             &user_canister::send_message_with_transfer_to_group::Args {
                 thread_root_message_index: None,
-                message_id: message_id.unwrap_or_else(random_message_id),
+                message_id: message_id.unwrap_or_else(random_from_u128),
                 content,
                 replies_to: None,
                 block_level_markdown: false,
