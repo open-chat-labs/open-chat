@@ -60,7 +60,7 @@ impl RuntimeState {
 
     pub fn push_event_to_buckets(&mut self, event: EventToSync) {
         self.data.buckets.sync_event(event);
-        jobs::sync_buckets::start_job_if_required(self);
+        jobs::sync_buckets::start_job_if_required(&self.data);
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -174,6 +174,7 @@ impl Data {
             }
 
             self.files.add(file, bucket);
+            jobs::sync_buckets::start_job_if_required(self);
             Ok(())
         } else {
             Err(FileRejected {
@@ -199,6 +200,7 @@ impl Data {
             bucket.sync_state.enqueue(EventToSync::UserAdded(*user_id))
         }
         self.buckets.add_bucket(bucket, release_creation_lock);
+        jobs::sync_buckets::start_job_if_required(self);
     }
 }
 
