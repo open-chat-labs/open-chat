@@ -34,8 +34,7 @@ async fn send_message_v2(mut args: Args) -> Response {
             };
             let user_type =
                 match local_user_index_canister_c2c_client::c2c_lookup_user(local_user_index_canister_id, &c2c_args).await {
-                    Ok(local_user_index_canister::c2c_lookup_user::Response::Success(result)) if result.is_bot => UserType::Bot,
-                    Ok(local_user_index_canister::c2c_lookup_user::Response::Success(_)) => UserType::User,
+                    Ok(local_user_index_canister::c2c_lookup_user::Response::Success(result)) => result.user_type,
                     Ok(local_user_index_canister::c2c_lookup_user::Response::UserNotFound) => return RecipientNotFound,
                     Err(error) => return InternalError(format!("{error:?}")),
                 };

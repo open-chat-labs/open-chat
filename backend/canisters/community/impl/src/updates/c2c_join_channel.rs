@@ -34,6 +34,7 @@ async fn c2c_join_channel(args: Args) -> Response {
     }) {
         check_gate_then_join_channel(&args).await
     } else {
+        #[allow(deprecated)]
         match join_community(community_canister::c2c_join_community::Args {
             user_id: args.user_id,
             principal: args.principal,
