@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Maintain set of which canisters have not yet migrated all events to stable memory ([#6603](https://github.com/open-chat-labs/open-chat/pull/6603))
 - Avoid using `heartbeat` to upgrade Group canisters ([#6643](https://github.com/open-chat-labs/open-chat/pull/6643))
+- Avoid using `heartbeat` to upgrade Community canisters ([#6644](https://github.com/open-chat-labs/open-chat/pull/6644))
 
 ## [[2.0.1383](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1383-local_group_index)] - 2024-10-11
 
