@@ -156,9 +156,8 @@ export type ExternalAchievementsResponse =
 
 export type ExternalAchievementsSuccess = {
     kind: "success";
-    achievementsRemoved: ExternalAchievement[];
+    addedOrUpdated: ExternalAchievement[];
     lastUpdated: bigint;
-    achievementsAdded: ExternalAchievement[];
 };
 
 export type ExternalAchievement = {
@@ -166,4 +165,6 @@ export type ExternalAchievement = {
     url: string;
     name: string;
     chitReward: number;
+    expires: bigint;
+    budgetExhausted: boolean;
 };

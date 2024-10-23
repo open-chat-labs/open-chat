@@ -20,6 +20,7 @@
     import ExternalLink from "../../landingpages/ExternalLink.svelte";
     import TooltipWrapper from "../../TooltipWrapper.svelte";
     import TooltipPopup from "../../TooltipPopup.svelte";
+    import { now } from "../../../stores/time";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -91,6 +92,10 @@
     $: [externalAchieved, externalNotAchieved] = client.partition(externalAchievements, (a) => {
         return $globalState.achievements.has(a.name);
     });
+
+    $: validExternalNotAchieved = externalNotAchieved.filter(
+        (a) => !a.budgetExhausted && BigInt($now) < a.expires,
+    );
 
     function filter(achievement: Achievement): boolean {
         return enabled.has(achievement) || $globalState.achievements.has(achievement);
@@ -207,7 +212,7 @@
             {/if}
             {#if selectedTab === "external"}
                 <div class="list">
-                    {#if externalNotAchieved.length === 0}
+                    {#if validExternalNotAchieved.length === 0}
                         <div class="empty">
                             <div class="emoji">😎</div>
                             <div class="msg">
@@ -216,7 +221,7 @@
                             </div>
                         </div>
                     {:else}
-                        {#each externalNotAchieved as achievement}
+                        {#each validExternalNotAchieved as achievement}
                             <div class="achievement external">
                                 <div class="external icon">
                                     <img

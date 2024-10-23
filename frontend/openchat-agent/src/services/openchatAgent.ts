@@ -3748,18 +3748,15 @@ export class OpenChatAgent extends EventTarget {
         if (cached === undefined) {
             return {
                 lastUpdated: updates.lastUpdated,
-                achievements: updates.achievementsAdded,
+                achievements: updates.addedOrUpdated,
             };
         }
 
         const { achievements } = cached;
 
         const map = toRecord(achievements, (a) => a.id);
-        updates.achievementsRemoved.forEach((a) => {
+        updates.addedOrUpdated.forEach((a) => {
             map[a.id] = a;
-        });
-        updates.achievementsRemoved.forEach((a) => {
-            delete map[a.id];
         });
 
         return {
