@@ -713,7 +713,12 @@ impl GroupChatCore {
                     .visible_main_events_reader(min_visible_event_index)
                     .message_internal(root_message_index.into())
             }) {
-                if thread_root_message.sender != sender {
+                if thread_root_message.sender != sender
+                    && self
+                        .members
+                        .get(&thread_root_message.sender)
+                        .map_or(false, |m| !m.user_type.is_bot())
+                {
                     users_to_notify.insert(thread_root_message.sender);
                 }
 
@@ -731,7 +736,11 @@ impl GroupChatCore {
                 }
             }
 
-            for member in self.members.iter_mut().filter(|m| !m.suspended.value && m.user_id != sender) {
+            for member in self
+                .members
+                .iter_mut()
+                .filter(|m| !m.suspended.value && m.user_id != sender && !m.user_type.is_bot())
+            {
                 let mentioned = !mentions_disabled && (everyone_mentioned || mentions.contains(&member.user_id));
 
                 if mentioned {
