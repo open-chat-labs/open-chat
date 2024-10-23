@@ -162,6 +162,7 @@ fn process_send_message_result(
 
             let content = &message_event.event.content;
             let chat_id = state.env.canister_id().into();
+            let sender_is_human = state.data.chat.members.get(&sender).map_or(false, |m| !m.user_type.is_bot());
 
             let notification = Notification::GroupMessage(GroupMessageNotification {
                 chat_id,
@@ -180,7 +181,7 @@ fn process_send_message_result(
             });
             state.push_notification(result.users_to_notify, notification);
 
-            if new_achievement {
+            if new_achievement && sender_is_human {
                 for a in message_event.event.achievements(false, thread_root_message_index.is_some()) {
                     state.data.notify_user_of_achievement(sender, a);
                 }
@@ -189,15 +190,30 @@ fn process_send_message_result(
             let mut activity_events = Vec::new();
 
             if let MessageContent::Crypto(c) = content {
-                state
+                if state
                     .data
-                    .notify_user_of_achievement(c.recipient, Achievement::ReceivedCrypto);
+                    .chat
+                    .members
+                    .get(&c.recipient)
+                    .map_or(false, |m| !m.user_type.is_bot())
+                {
+                    state
+                        .data
+                        .notify_user_of_achievement(c.recipient, Achievement::ReceivedCrypto);
 
-                activity_events.push((c.recipient, MessageActivity::Crypto));
+                    activity_events.push((c.recipient, MessageActivity::Crypto));
+                }
             }
 
             for user in mentioned {
-                if user.user_id != sender && state.data.chat.members.contains(&user.user_id) {
+                if user.user_id != sender
+                    && state
+                        .data
+                        .chat
+                        .members
+                        .get(&user.user_id)
+                        .map_or(false, |m| !m.user_type.is_bot())
+                {
                     activity_events.push((user.user_id, MessageActivity::Mention));
                 }
             }
@@ -214,7 +230,14 @@ fn process_send_message_result(
                     thread_root_message_index,
                     replying_to_event_index.into(),
                 ) {
-                    if message.sender != sender && state.data.chat.members.contains(&message.sender) {
+                    if message.sender != sender
+                        && state
+                            .data
+                            .chat
+                            .members
+                            .get(&message.sender)
+                            .map_or(false, |m| !m.user_type.is_bot())
+                    {
                         activity_events.push((message.sender, MessageActivity::QuoteReply));
                     }
                 }

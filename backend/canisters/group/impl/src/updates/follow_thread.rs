@@ -20,7 +20,7 @@ fn follow_thread_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let caller = state.env.caller();
 
-    let user_id = match state.data.lookup_user_id(caller) {
+    let (user_id, is_bot) = match state.data.get_member(caller).map(|m| (m.user_id, m.user_type.is_bot())) {
         Some(uid) => uid,
         None => return UserNotInGroup,
     };
@@ -29,7 +29,7 @@ fn follow_thread_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     match state.data.chat.follow_thread(user_id, args.thread_root_message_index, now) {
         FollowThreadResult::Success => {
-            if args.new_achievement {
+            if args.new_achievement && !is_bot {
                 state.data.notify_user_of_achievement(user_id, Achievement::FollowedThread);
             }
 

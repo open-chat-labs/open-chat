@@ -210,15 +210,26 @@ fn process_send_message_result(
             let message_id = message_event.event.message_id;
             let expires_at = message_event.expires_at;
 
-            // Exclude suspended members from notification
+            // Exclude suspended members and bots from notification
             let users_to_notify: Vec<UserId> = result
                 .users_to_notify
                 .into_iter()
-                .filter(|u| state.data.members.get_by_user_id(u).map_or(false, |m| !m.suspended.value))
+                .filter(|u| {
+                    state
+                        .data
+                        .members
+                        .get_by_user_id(u)
+                        .map_or(false, |m| !m.suspended.value && !m.user_type.is_bot())
+                })
                 .collect();
 
             let content = &message_event.event.content;
             let community_id = state.env.canister_id().into();
+            let sender_is_human = state
+                .data
+                .members
+                .get_by_user_id(&sender)
+                .map_or(false, |m| !m.user_type.is_bot());
 
             let notification = Notification::ChannelMessage(ChannelMessageNotification {
                 community_id,
@@ -243,7 +254,7 @@ fn process_send_message_result(
 
             register_timer_jobs(channel_id, thread_root_message_index, message_event, now, &mut state.data);
 
-            if new_achievement {
+            if new_achievement && sender_is_human {
                 for a in result
                     .message_event
                     .event
@@ -256,16 +267,24 @@ fn process_send_message_result(
             let mut activity_events = Vec::new();
 
             if let MessageContent::Crypto(c) = &message_event.event.content {
-                state
+                let recipient_is_human = state
                     .data
-                    .notify_user_of_achievement(c.recipient, Achievement::ReceivedCrypto);
+                    .members
+                    .get_by_user_id(&c.recipient)
+                    .map_or(false, |m| !m.user_type.is_bot());
 
-                activity_events.push((c.recipient, MessageActivity::Crypto));
+                if recipient_is_human {
+                    state
+                        .data
+                        .notify_user_of_achievement(c.recipient, Achievement::ReceivedCrypto);
+
+                    activity_events.push((c.recipient, MessageActivity::Crypto));
+                }
             }
 
             if let Some(channel) = state.data.channels.get(&channel_id) {
                 for user_id in users_mentioned.all_users_mentioned {
-                    if user_id != sender && channel.chat.members.contains(&user_id) {
+                    if user_id != sender && channel.chat.members.get(&user_id).map_or(false, |m| !m.user_type.is_bot()) {
                         activity_events.push((user_id, MessageActivity::Mention));
                     }
                 }
@@ -282,7 +301,13 @@ fn process_send_message_result(
                         thread_root_message_index,
                         replying_to_event_index.into(),
                     ) {
-                        if message.sender != sender && channel.chat.members.contains(&message.sender) {
+                        if message.sender != sender
+                            && channel
+                                .chat
+                                .members
+                                .get(&message.sender)
+                                .map_or(false, |m| !m.user_type.is_bot())
+                        {
                             activity_events.push((message.sender, MessageActivity::QuoteReply));
                         }
                     }
