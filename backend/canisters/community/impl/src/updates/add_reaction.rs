@@ -51,21 +51,19 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                             if message.sender != user_id && !sender.is_bot {
                                 let community_id = state.env.canister_id().into();
 
-                                if channel.chat.members.contains(&message.sender) {
-                                    state.data.user_event_sync_queue.push(
-                                        message.sender,
-                                        CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
-                                            chat: Chat::Channel(community_id, channel.id),
-                                            thread_root_message_index: args.thread_root_message_index,
-                                            message_index: message.message_index,
-                                            message_id: message.message_id,
-                                            event_index,
-                                            activity: MessageActivity::Reaction,
-                                            timestamp: now,
-                                            user_id: Some(user_id),
-                                        }),
-                                    );
-                                }
+                                state.data.user_event_sync_queue.push(
+                                    message.sender,
+                                    CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
+                                        chat: Chat::Channel(community_id, channel.id),
+                                        thread_root_message_index: args.thread_root_message_index,
+                                        message_index: message.message_index,
+                                        message_id: message.message_id,
+                                        event_index,
+                                        activity: MessageActivity::Reaction,
+                                        timestamp: now,
+                                        user_id: Some(user_id),
+                                    }),
+                                );
 
                                 let notifications_muted = channel
                                     .chat
