@@ -71,15 +71,22 @@ impl Buckets {
         }
     }
 
-    pub fn pop_args_for_next_sync(&mut self) -> Vec<(CanisterId, c2c_sync_index::Args)> {
-        self.iter_mut()
-            .filter_map(|bucket| {
-                bucket
-                    .sync_state
-                    .pop_args_for_next_sync()
-                    .map(|args| (bucket.canister_id, args))
-            })
-            .collect()
+    pub fn pop_args_for_next_sync(&mut self) -> Option<Vec<(CanisterId, c2c_sync_index::Args)>> {
+        let all_empty = !self.iter().any(|b| !b.sync_state.is_empty());
+        if all_empty {
+            None
+        } else {
+            Some(
+                self.iter_mut()
+                    .filter_map(|bucket| {
+                        bucket
+                            .sync_state
+                            .pop_args_for_next_sync()
+                            .map(|args| (bucket.canister_id, args))
+                    })
+                    .collect(),
+            )
+        }
     }
 
     pub fn set_full(&mut self, canister_id: CanisterId, full: bool) {
