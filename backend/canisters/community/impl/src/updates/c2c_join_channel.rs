@@ -11,13 +11,12 @@ use chat_events::ChatEventInternal;
 use community_canister::c2c_join_channel::{Response::*, *};
 use gated_groups::{
     check_if_passes_gate, check_if_passes_gate_synchronously, CheckGateArgs, CheckIfPassesGateResult,
-    CheckVerifiedCredentialGateArgs,
+    CheckVerifiedCredentialGateArgs, GatePayment,
 };
 use group_chat_core::{AddMemberSuccess, AddResult};
 use group_community_common::{ExpiringMember, Member};
 use types::{
-    AccessGate, AccessGateConfigInternal, ChannelId, MemberJoined, TimestampMillis, UniquePersonProof,
-    VerifiedCredentialGateArgs,
+    AccessGateConfigInternal, ChannelId, MemberJoined, TimestampMillis, UniquePersonProof, VerifiedCredentialGateArgs,
 };
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
@@ -34,6 +33,7 @@ async fn c2c_join_channel(args: Args) -> Response {
     }) {
         check_gate_then_join_channel(&args).await
     } else {
+        #[allow(deprecated)]
         match join_community(community_canister::c2c_join_community::Args {
             user_id: args.user_id,
             principal: args.principal,
@@ -93,10 +93,10 @@ pub(crate) fn join_channel_synchronously(
     }) {
         Ok(None) => {}
         Ok(Some((gate_config, args))) => {
-            if !matches!(
-                check_if_passes_gate_synchronously(gate_config.gate, args),
-                Some(CheckIfPassesGateResult::Success)
-            ) {
+            if !check_if_passes_gate_synchronously(gate_config.gate, args)
+                .map(|r| r.success())
+                .unwrap_or_default()
+            {
                 return;
             }
         }
@@ -109,13 +109,14 @@ pub(crate) fn join_channel_synchronously(
             user_principal,
             diamond_membership_expires_at,
             is_unique_person,
+            Vec::new(),
             state,
         )
     });
 }
 
 async fn check_gate_then_join_channel(args: &Args) -> Response {
-    match read_state(|state| {
+    let payments = match read_state(|state| {
         is_permitted_to_join(
             args.channel_id,
             args.principal,
@@ -126,11 +127,11 @@ async fn check_gate_then_join_channel(args: &Args) -> Response {
         )
     }) {
         Ok(Some((gate_config, check_gate_args))) => match check_if_passes_gate(gate_config.gate, check_gate_args).await {
-            CheckIfPassesGateResult::Success => {}
+            CheckIfPassesGateResult::Success(payments) => payments,
             CheckIfPassesGateResult::Failed(reason) => return GateCheckFailed(reason),
             CheckIfPassesGateResult::InternalError(error) => return InternalError(error),
         },
-        Ok(None) => {}
+        Ok(None) => Vec::new(),
         Err(response) => return response,
     };
 
@@ -140,6 +141,7 @@ async fn check_gate_then_join_channel(args: &Args) -> Response {
             args.principal,
             args.diamond_membership_expires_at,
             args.unique_person_proof.is_some(),
+            payments,
             state,
         )
     })
@@ -214,6 +216,7 @@ fn commit(
     user_principal: Principal,
     diamond_membership_expires_at: Option<TimestampMillis>,
     is_unique_person: bool,
+    payments: Vec<GatePayment>,
     state: &mut RuntimeState,
 ) -> Response {
     let Some(member) = state.data.members.get_mut(user_principal) else {
@@ -241,8 +244,8 @@ fn commit(
             }
 
             // If there is a payment gate on this channel then queue payments to *community* owner(s) and treasury
-            if let Some(AccessGate::Payment(gate)) = channel.chat.gate_config.value.as_ref().map(|gc| gc.gate.clone()) {
-                state.queue_access_gate_payments(gate);
+            for payment in payments {
+                state.queue_access_gate_payments(payment);
             }
 
             if result.unlapse {

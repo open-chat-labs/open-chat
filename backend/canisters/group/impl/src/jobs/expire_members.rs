@@ -1,7 +1,7 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::jobs::process_expire_member_actions;
 use crate::{mutate_state, RuntimeState};
-use gated_groups::{check_if_passes_gate_synchronously, CheckGateArgs, CheckIfPassesGateResult};
+use gated_groups::{check_if_passes_gate_synchronously, CheckGateArgs};
 use group_community_common::{ExpiringMember, ExpiringMemberAction, ExpiringMemberActionDetails, Members};
 use ic_cdk_timers::TimerId;
 use std::time::Duration;
@@ -83,10 +83,9 @@ fn run() {
                     check_gate_args.is_unique_person = cached_details.is_unique_person;
                 }
 
-                let passes_gate = matches!(
-                    check_if_passes_gate_synchronously(gate_config.gate().clone(), check_gate_args),
-                    Some(CheckIfPassesGateResult::Success)
-                );
+                let passes_gate = check_if_passes_gate_synchronously(gate_config.gate().clone(), check_gate_args)
+                    .map(|r| r.success())
+                    .unwrap_or_default();
 
                 if passes_gate {
                     // Queue up the next check

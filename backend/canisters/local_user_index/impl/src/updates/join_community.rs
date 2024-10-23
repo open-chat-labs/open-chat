@@ -10,13 +10,14 @@ async fn join_community(args: Args) -> Response {
     let user_details =
         mutate_state(|state| state.get_calling_user_and_process_credentials(args.verified_credential_args.as_ref()));
 
+    #[allow(deprecated)]
     let c2c_args = community_canister::c2c_join_community::Args {
         user_id: user_details.user_id,
         principal: user_details.principal,
         invite_code: args.invite_code,
         referred_by: args.referred_by,
         is_platform_moderator: user_details.is_platform_moderator,
-        is_bot: user_details.is_bot,
+        is_bot: user_details.user_type.is_bot(),
         user_type: user_details.user_type,
         diamond_membership_expires_at: user_details.diamond_membership_expires_at,
         verified_credential_args: args.verified_credential_args,

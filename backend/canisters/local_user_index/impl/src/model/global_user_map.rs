@@ -104,19 +104,17 @@ impl GlobalUserMap {
     }
 
     fn hydrate_user(&self, user_id: UserId, principal: Principal) -> GlobalUser {
-        let is_bot = self.bots.contains(&user_id);
-        let user_type = if !is_bot {
-            UserType::User
-        } else if self.oc_controlled_bot_users.contains(&user_id) {
+        let user_type = if self.oc_controlled_bot_users.contains(&user_id) {
             UserType::OcControlledBot
-        } else {
+        } else if self.bots.contains(&user_id) {
             UserType::Bot
+        } else {
+            UserType::User
         };
 
         GlobalUser {
             user_id,
             principal,
-            is_bot,
             is_platform_moderator: self.platform_moderators.contains(&user_id),
             diamond_membership_expires_at: self.diamond_membership_expiry_dates.get(&user_id).copied(),
             unique_person_proof: self.unique_person_proofs.get(&user_id).cloned(),
