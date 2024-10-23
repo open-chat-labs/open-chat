@@ -18,6 +18,7 @@
     import { activityFeedShowing } from "../../../stores/activity";
     import page from "page";
     import Translatable from "../../Translatable.svelte";
+    import ActivityIcon from "./ActivityIcon.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -179,14 +180,13 @@
                 url={client.userAvatarUrl(sender)}
                 userId={event.userId}
                 size={AvatarSize.Default} />
+            <ActivityIcon activity={event.activity} />
         </div>
         <div class="details">
-            <div class="name-date">
-                <div class="event-sumary">
-                    <h4>
-                        <Markdown text={interpolate($_, eventSummary)} />
-                    </h4>
-                </div>
+            <div class="event-sumary">
+                <h4>
+                    <Markdown text={interpolate($_, eventSummary)} />
+                </h4>
             </div>
             <div class="chat-msg">
                 {#if event.message !== undefined}
@@ -272,23 +272,14 @@
         justify-content: center;
         overflow: hidden;
 
-        .name-date {
-            display: flex;
-            margin-bottom: $sp1;
-
-            .event-sumary {
-                h4 {
-                    @include font(medium, normal, fs-100);
-                    display: flex;
-                    flex-direction: row;
-                    gap: $sp2;
-                }
-
+        .event-sumary {
+            h4 {
+                @include font(medium, normal, fs-100);
                 display: flex;
-                align-items: center;
+                flex-direction: row;
                 gap: $sp2;
-                flex: auto;
             }
+            margin-bottom: $sp1;
         }
 
         .chat-msg {
