@@ -27,7 +27,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Response {
 
         let now = state.env.now();
         let sender = member.user_id;
-        let is_bot = member.is_bot;
+        let is_bot = member.user_type.is_bot();
 
         let edit_message_args = EditMessageArgs {
             sender,
