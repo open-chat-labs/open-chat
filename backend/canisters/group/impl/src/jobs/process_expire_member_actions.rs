@@ -135,10 +135,7 @@ fn handle_gate_check_result(details: ExpiringMemberActionDetails, result: CheckI
     }
 
     // In all other cases re-queue the check
-    let expiry = match result {
-        CheckIfPassesGateResult::Success => curr_gate_expiry,
-        _ => expiry_increase,
-    };
+    let expiry = if result.success() { curr_gate_expiry } else { expiry_increase };
 
     state.data.expiring_members.push(ExpiringMember {
         expires: now + expiry,

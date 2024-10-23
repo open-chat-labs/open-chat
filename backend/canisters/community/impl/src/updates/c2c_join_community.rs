@@ -7,7 +7,9 @@ use crate::{jobs, mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_join_community::{Response::*, *};
-use gated_groups::{check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult, CheckVerifiedCredentialGateArgs};
+use gated_groups::{
+    check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult, CheckVerifiedCredentialGateArgs, GatePayment,
+};
 use group_community_common::{ExpiringMember, Member};
 use types::{AccessGate, ChannelId, MemberJoined, UsersUnblocked};
 
@@ -20,17 +22,17 @@ async fn c2c_join_community(args: Args) -> Response {
 }
 
 pub(crate) async fn join_community(args: Args) -> Response {
-    match read_state(|state| is_permitted_to_join(&args, state)) {
+    let payments = match read_state(|state| is_permitted_to_join(&args, state)) {
         Ok(Some((gate, check_gate_args))) => match check_if_passes_gate(gate, check_gate_args).await {
-            CheckIfPassesGateResult::Success => {}
+            CheckIfPassesGateResult::Success(payments) => payments,
             CheckIfPassesGateResult::Failed(reason) => return GateCheckFailed(reason),
             CheckIfPassesGateResult::InternalError(error) => return InternalError(error),
         },
-        Ok(None) => {}
+        Ok(None) => Vec::new(),
         Err(response) => return response,
     };
 
-    match mutate_state(|state| join_community_impl(&args, state)) {
+    match mutate_state(|state| join_community_impl(&args, payments, state)) {
         Ok(public_channel_ids) => {
             for c in public_channel_ids {
                 join_channel_synchronously(
@@ -100,7 +102,11 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(Acc
     }))
 }
 
-pub(crate) fn join_community_impl(args: &Args, state: &mut RuntimeState) -> Result<Vec<ChannelId>, Response> {
+pub(crate) fn join_community_impl(
+    args: &Args,
+    payments: Vec<GatePayment>,
+    state: &mut RuntimeState,
+) -> Result<Vec<ChannelId>, Response> {
     let now = state.env.now();
 
     // Unblock "platform moderator" if necessary
@@ -157,8 +163,8 @@ pub(crate) fn join_community_impl(args: &Args, state: &mut RuntimeState) -> Resu
     }
 
     // If there is a payment gate on this community then queue payments to owner(s) and treasury
-    if let Some(AccessGate::Payment(gate)) = state.data.gate_config.value.as_ref().map(|gc| gc.gate.clone()) {
-        state.queue_access_gate_payments(gate);
+    for payment in payments {
+        state.queue_access_gate_payments(payment);
     }
 
     if let Some(gate_expiry) = state.data.gate_config.value.as_ref().and_then(|gc| gc.expiry()) {

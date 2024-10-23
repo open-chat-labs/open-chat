@@ -1,9 +1,11 @@
 use crate::env::ENV;
+use crate::utils::tick_many;
 use crate::{client, TestEnv};
+use candid::Principal;
 use std::ops::Deref;
 use test_case::test_case;
 use testing::rng::random_string;
-use types::{AccessGate, AccessGateNonComposite, CompositeGate, GateCheckFailedReason, Rules, TokenBalanceGate};
+use types::{AccessGate, AccessGateNonComposite, CompositeGate, GateCheckFailedReason, PaymentGate, Rules, TokenBalanceGate};
 
 #[test_case(true, false; "diamond_member")]
 #[test_case(false, false; "not_diamond_member")]
@@ -254,4 +256,81 @@ fn public_group_composite_gate_check(is_diamond: bool, has_sufficient_balance: b
             local_user_index_canister::join_group::Response::GateCheckFailed(_)
         ));
     }
+}
+
+#[test_case(true)]
+#[test_case(false)]
+fn owner_receives_transfer_after_user_joins_via_payment_gate(composite_gate: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let user1 = client::register_diamond_user(env, canister_ids, *controller);
+    let user2 = client::register_user(env, canister_ids);
+
+    let original_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, Principal::from(user1.user_id));
+
+    let group_name = random_string();
+    let amount = 1_0000_0000;
+    let fee = 10_000;
+
+    let payment_gate = PaymentGate {
+        ledger_canister_id: canister_ids.icp_ledger,
+        amount,
+        fee,
+    };
+
+    let gate = if composite_gate {
+        AccessGate::Composite(CompositeGate {
+            inner: vec![
+                AccessGateNonComposite::DiamondMember,
+                AccessGateNonComposite::Payment(payment_gate),
+            ],
+            and: false,
+        })
+    } else {
+        AccessGate::Payment(payment_gate)
+    };
+
+    let group_id = match client::user::create_group(
+        env,
+        user1.principal,
+        user1.user_id.into(),
+        &user_canister::create_group::Args {
+            is_public: true,
+            name: group_name.clone(),
+            description: format!("{group_name}_description"),
+            avatar: None,
+            history_visible_to_new_joiners: true,
+            permissions_v2: None,
+            rules: Rules::default(),
+            events_ttl: None,
+            gate: None,
+            gate_config: Some(gate.into()),
+            messages_visible_to_non_members: None,
+        },
+    ) {
+        user_canister::create_group::Response::Success(result) => result.chat_id,
+        response => panic!("'create_group' error: {response:?}"),
+    };
+
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user2.user_id, amount);
+    client::ledger::happy_path::approve(
+        env,
+        user2.user_id.into(),
+        canister_ids.icp_ledger,
+        Principal::from(group_id),
+        amount - fee,
+    );
+    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
+
+    tick_many(env, 3);
+
+    let balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, Principal::from(user1.user_id));
+
+    assert_eq!(balance - original_balance, (amount * 98) / 100);
 }
