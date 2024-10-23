@@ -16,8 +16,12 @@ pub(crate) fn migrate_events_to_stable_memory_impl(data: &mut Data, notify: bool
         return true;
     }
     let finished = data.chat.events.migrate_next_batch_of_events_to_stable_storage();
-    if finished && notify {
-        ic_cdk::spawn(notify_migration_to_stable_memory_complete(data.local_group_index_canister_id));
+    if finished {
+        if notify {
+            ic_cdk::spawn(notify_migration_to_stable_memory_complete(data.local_group_index_canister_id));
+        } else {
+            data.stable_memory_event_migration_complete = true;
+        }
     }
     finished
 }

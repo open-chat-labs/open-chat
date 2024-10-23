@@ -23,6 +23,8 @@ pub(crate) fn migrate_events_to_stable_memory_impl(data: &mut Data, notify: bool
     }
     if notify {
         ic_cdk::spawn(notify_migration_to_stable_memory_complete(data.local_group_index_canister_id));
+    } else {
+        data.stable_memory_event_migration_complete = true;
     }
     true
 }
