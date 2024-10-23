@@ -1,5 +1,5 @@
-use crate::{mutate_state, Data};
-use types::{CanisterId, Empty};
+use crate::updates::c2c_migrate_events_to_stable_memory::migrate_events_to_stable_memory_impl;
+use crate::Data;
 use utils::env::Environment;
 use utils::regular_jobs::{RegularJob, RegularJobs};
 use utils::time::MINUTE_IN_MS;
@@ -31,26 +31,5 @@ fn build_chat_metrics(env: &dyn Environment, data: &mut Data) {
 }
 
 fn migrate_chat_events_to_stable_memory(_: &dyn Environment, data: &mut Data) {
-    if data.stable_memory_event_migration_complete {
-        return;
-    }
-    for channel in data.channels.iter_mut() {
-        let (count_migrated, finished) = channel.chat.events.migrate_next_batch_of_events_to_stable_storage();
-        if !finished {
-            return;
-        }
-        if count_migrated > 0 && ic_cdk::api::instruction_counter() > 5_000_000_000 {
-            return;
-        }
-    }
-    ic_cdk::spawn(notify_migration_to_stable_memory_complete(data.local_group_index_canister_id));
-}
-
-async fn notify_migration_to_stable_memory_complete(local_group_index: CanisterId) {
-    if local_group_index_canister_c2c_client::c2c_mark_events_migrated_to_stable_memory(local_group_index, &Empty {})
-        .await
-        .is_ok()
-    {
-        mutate_state(|state| state.data.stable_memory_event_migration_complete = true);
-    }
+    migrate_events_to_stable_memory_impl(data, true);
 }

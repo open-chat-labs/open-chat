@@ -8,6 +8,7 @@ pub mod c2c_invite_users_to_channel;
 pub mod c2c_join_channel;
 pub mod c2c_join_community;
 pub mod c2c_leave_community;
+pub mod c2c_migrate_events_to_stable_memory;
 pub mod c2c_notify_p2p_swap_status_change;
 pub mod c2c_set_user_suspended;
 pub mod c2c_tip_message;
