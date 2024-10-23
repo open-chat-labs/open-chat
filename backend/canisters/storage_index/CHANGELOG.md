@@ -16,6 +16,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
 - Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
 - Add serde default attribute in preparation for skipping serialization if default ([#6475](https://github.com/open-chat-labs/open-chat/pull/6475))
+- Avoid using `heartbeat` to ensure enough active StorageBucket canisters ([#6646](https://github.com/open-chat-labs/open-chat/pull/6646))
+- Avoid using `heartbeat` to upgrade StorageBucket canisters ([#6647](https://github.com/open-chat-labs/open-chat/pull/6647))
 
 ## [[2.0.1324](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1324-storage_index)] - 2024-09-03
 

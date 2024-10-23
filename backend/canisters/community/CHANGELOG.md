@@ -8,14 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Copy chat events into stable memory ([#6603](https://github.com/open-chat-labs/open-chat/pull/6603))
 - Add more achievements ([#6631](https://github.com/open-chat-labs/open-chat/pull/6631))
 
 ### Changed
 
-- Copy chat events into stable memory ([#6603](https://github.com/open-chat-labs/open-chat/pull/6603))
 - Make searching by user and term require matching both + make more efficient ([#6612](https://github.com/open-chat-labs/open-chat/pull/6612))
 - Add `message_id` and `event_index` to `MessageActivityEvent` ([#6623](https://github.com/open-chat-labs/open-chat/pull/6623))
 - Fixes to activity feed ([#6627](https://github.com/open-chat-labs/open-chat/pull/6627))
+- Allow LocalGroupIndex to trigger migration of chat events to stable memory ([#6642](https://github.com/open-chat-labs/open-chat/pull/6642))
 
 ### Fixed
 
