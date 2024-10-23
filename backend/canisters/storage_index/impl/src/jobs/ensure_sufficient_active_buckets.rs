@@ -2,7 +2,7 @@ use crate::model::buckets::BucketRecord;
 use crate::{mutate_state, RuntimeState, MIN_CYCLES_BALANCE};
 use std::time::Duration;
 use tracing::error;
-use types::{CanisterWasm, Cycles, Milliseconds};
+use types::{CanisterWasm, Cycles};
 use utils::canister::create_and_install;
 use utils::canister_timers::run_now_then_interval;
 use utils::consts::CREATE_CANISTER_CYCLES_FEE;

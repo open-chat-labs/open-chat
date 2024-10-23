@@ -1,10 +1,9 @@
 use crate::{mutate_state, RuntimeState};
 use ic_cdk::heartbeat;
 use storage_bucket_canister::c2c_sync_index::{Args, Response, SuccessResult};
-use types::{BuildVersion, CanisterId, Cycles};
+use types::{BuildVersion, CanisterId};
 
 const MAX_CONCURRENT_CANISTER_UPGRADES: usize = 1;
-const MIN_CYCLES_BALANCE: Cycles = 60_000_000_000_000; // 60T
 
 #[heartbeat]
 fn heartbeat() {
