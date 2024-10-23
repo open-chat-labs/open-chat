@@ -7,7 +7,6 @@ use utils::env::canister::CanisterEnv;
 use utils::env::Environment;
 use utils::time::MINUTE_IN_MS;
 
-mod heartbeat;
 mod init;
 mod post_upgrade;
 mod pre_upgrade;

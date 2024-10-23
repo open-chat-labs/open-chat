@@ -55,6 +55,10 @@ impl BucketSyncState {
         }
     }
 
+    pub fn is_empty(&self) -> bool {
+        !self.in_progress && self.queue.is_empty() && self.args_to_retry.is_none()
+    }
+
     pub fn mark_sync_completed(&mut self) {
         self.in_progress = false;
     }

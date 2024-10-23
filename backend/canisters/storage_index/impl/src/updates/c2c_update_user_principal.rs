@@ -15,10 +15,7 @@ fn c2c_update_user_principal_impl(args: Args, state: &mut RuntimeState) -> Respo
     if let Some(user) = state.data.users.remove(&args.old_principal) {
         state.data.users.insert(args.new_principal, user);
         state.data.files.update_user_principal(args.old_principal, args.new_principal);
-        state
-            .data
-            .buckets
-            .sync_event(EventToSync::UserIdUpdated(args.old_principal, args.new_principal));
+        state.push_event_to_buckets(EventToSync::UserIdUpdated(args.old_principal, args.new_principal));
     }
 
     Response::Success
