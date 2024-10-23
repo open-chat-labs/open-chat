@@ -16,7 +16,8 @@ pub fn start_job() {
 }
 
 fn run() {
-    match mutate_state(prepare) {
+    let prepare_response = mutate_state(prepare);
+    match prepare_response {
         DoNothing => (),
         CyclesBalanceTooLow => error!("Cycles balance too low to add a new bucket"),
         CreateBucket(args) => {
