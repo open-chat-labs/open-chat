@@ -18,6 +18,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fixes to activity feed ([#6627](https://github.com/open-chat-labs/open-chat/pull/6627))
 - Allow LocalGroupIndex to trigger migration of chat events to stable memory ([#6642](https://github.com/open-chat-labs/open-chat/pull/6642))
 
+### Removed
+
+- Remove `is_bot` which has been supplanted by `user_type` ([#6650](https://github.com/open-chat-labs/open-chat/pull/6650))
+
 ### Fixed
 
 - Refund P2P swap early if message is deleted ([#6626](https://github.com/open-chat-labs/open-chat/pull/6626))

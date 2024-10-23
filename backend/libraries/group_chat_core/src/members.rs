@@ -57,7 +57,6 @@ impl GroupMembers {
             proposal_votes: BTreeMap::default(),
             suspended: Timestamped::default(),
             rules_accepted: Some(Timestamped::new(Version::zero(), now)),
-            is_bot: user_type.is_bot(),
             user_type,
             lapsed: Timestamped::default(),
         };
@@ -101,7 +100,6 @@ impl GroupMembers {
                         proposal_votes: BTreeMap::default(),
                         suspended: Timestamped::default(),
                         rules_accepted: None,
-                        is_bot: user_type.is_bot(),
                         user_type,
                         lapsed: Timestamped::new(false, now),
                     };
@@ -390,8 +388,6 @@ pub struct GroupMemberInternal {
     pub suspended: Timestamped<bool>,
     #[serde(rename = "ra", default, skip_serializing_if = "is_default")]
     pub rules_accepted: Option<Timestamped<Version>>,
-    #[serde(rename = "b", default, skip_serializing_if = "is_default")]
-    pub is_bot: bool,
     #[serde(rename = "ut", default, skip_serializing_if = "is_default")]
     pub user_type: UserType,
     #[serde(rename = "me", default, skip_serializing_if = "is_default")]
@@ -455,7 +451,7 @@ impl GroupMemberInternal {
 
     pub fn check_rules(&self, rules: &AccessRulesInternal) -> bool {
         !rules.enabled
-            || self.is_bot
+            || self.user_type.is_bot()
             || (self
                 .rules_accepted
                 .as_ref()
@@ -557,7 +553,6 @@ mod tests {
             min_visible_event_index: 0.into(),
             min_visible_message_index: 0.into(),
             rules_accepted: Some(Timestamped::new(Version::zero(), 1)),
-            is_bot: false,
             user_type: UserType::User,
             lapsed: Timestamped::default(),
         };
@@ -588,7 +583,6 @@ mod tests {
             min_visible_event_index: 1.into(),
             min_visible_message_index: 1.into(),
             rules_accepted: Some(Timestamped::new(Version::zero(), 1)),
-            is_bot: true,
             user_type: UserType::Bot,
             lapsed: Timestamped::new(false, 1),
         };
@@ -596,7 +590,7 @@ mod tests {
         let member_bytes = msgpack::serialize_then_unwrap(&member);
         let member_bytes_len = member_bytes.len();
 
-        assert_eq!(member_bytes_len, 137);
+        assert_eq!(member_bytes_len, 134);
 
         let _deserialized: GroupMemberInternal = msgpack::deserialize_then_unwrap(&member_bytes);
     }

@@ -13,6 +13,7 @@ pub struct Args {
     pub correlation_id: u64,
     pub is_platform_moderator: bool,
     #[deprecated]
+    #[serde(default)]
     pub is_bot: bool,
     pub user_type: UserType,
     pub diamond_membership_expires_at: Option<TimestampMillis>,
