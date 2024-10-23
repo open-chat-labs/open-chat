@@ -17,6 +17,7 @@
     import Link from "../../Link.svelte";
     import { activityFeedShowing } from "../../../stores/activity";
     import page from "page";
+    import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -188,7 +189,11 @@
                 </div>
             </div>
             <div class="chat-msg">
-                <Markdown text={lastMessage} oneLine twoLine suppressLinks />
+                {#if event.message !== undefined}
+                    <Markdown text={lastMessage} oneLine twoLine suppressLinks />
+                {:else}
+                    <Translatable resourceKey={i18nKey("activity.missingMessage")} />
+                {/if}
             </div>
             {#if event.activity === "reaction" && event.message !== undefined && event.message.reactions.length > 0}
                 <div class="message-reactions">

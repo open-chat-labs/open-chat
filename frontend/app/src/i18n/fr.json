@@ -111,6 +111,7 @@
         "anon": "Un utilisateur anonyme",
         "crypto": "{username} vous a envoyé un message cryptographique",
         "mention": "{username} vous a mentionné",
+        "missingMessage": "Contenu du message indisponible",
         "navLabel": "Flux d'activité",
         "p2pSwapAccepted": "Votre offre d'échange a été acceptée par {username}",
         "pollVote": "{username} a voté sur votre message de sondage",

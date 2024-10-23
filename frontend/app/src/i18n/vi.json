@@ -111,6 +111,7 @@
         "anon": "Một người dùng ẩn danh",
         "crypto": "{username} đã gửi cho bạn một tin nhắn mật mã",
         "mention": "{username} đã đề cập đến bạn",
+        "missingMessage": "Nội dung tin nhắn không khả dụng",
         "navLabel": "Nguồn cấp dữ liệu hoạt động",
         "p2pSwapAccepted": "Đề nghị hoán đổi của bạn đã được chấp nhận bởi {username}",
         "pollVote": "{username} đã bỏ phiếu cho tin nhắn thăm dò của bạn",

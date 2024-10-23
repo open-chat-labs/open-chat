@@ -111,6 +111,7 @@
         "anon": "匿名用户",
         "crypto": "{username} 向您发送了一条加密消息",
         "mention": "{username} 提到了你",
+        "missingMessage": "消息内容不可用",
         "navLabel": "活动动态",
         "p2pSwapAccepted": "您的掉期报价已被 {username} 接受",
         "pollVote": "{username} 对您的投票消息进行了投票",

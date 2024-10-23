@@ -111,6 +111,7 @@
         "anon": "Анонімний користувач",
         "crypto": "{username} надіслав вам повідомлення Crytpo",
         "mention": "{username} згадав вас",
+        "missingMessage": "Вміст повідомлення недоступний",
         "navLabel": "Стрічка активності",
         "p2pSwapAccepted": "Ваша пропозиція обміну була прийнята {username}",
         "pollVote": "{username} проголосували у вашому опитуванні",

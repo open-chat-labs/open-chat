@@ -111,6 +111,7 @@
         "anon": "משתמש אנונימי",
         "crypto": "{username} שלח לך הודעת crytpo",
         "mention": "{username} הזכיר אותך",
+        "missingMessage": "תוכן ההודעה אינו זמין",
         "navLabel": "הזנת פעילות",
         "p2pSwapAccepted": "הצעת ההחלפה שלך התקבלה על ידי {username}",
         "pollVote": "{username} הצביע על הודעת הסקר שלך",

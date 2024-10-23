@@ -111,6 +111,7 @@
         "anon": "An anonymous user",
         "crypto": "{username} sent you a crytpo message",
         "mention": "{username} mentioned you",
+        "missingMessage": "Message content unavailable",
         "navLabel": "Activity feed",
         "p2pSwapAccepted": "Your swap offer was accepted by {username}",
         "pollVote": "{username} voted on your poll message",

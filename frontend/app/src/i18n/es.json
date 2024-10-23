@@ -111,6 +111,7 @@
         "anon": "Un usuario anónimo",
         "crypto": "{username} te envió un mensaje de cripto",
         "mention": "{username} te mencionó",
+        "missingMessage": "Contenido del mensaje no disponible",
         "navLabel": "Canal de actividades",
         "p2pSwapAccepted": "Su oferta de intercambio fue aceptada por {username}",
         "pollVote": "{username} votó en tu mensaje de encuesta",
