@@ -40,7 +40,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                     args.message_id.into(),
                 ) {
                     if let Some(sender) = state.data.chat.members.get(&message.sender) {
-                        if message.sender != user_id && !sender.is_bot {
+                        if message.sender != user_id && !sender.user_type.is_bot() {
                             let chat_id = state.env.canister_id().into();
 
                             let notifications_muted = state
