@@ -63,7 +63,7 @@ impl ChatEventsList {
             message_event_indexes: Vec::new(),
             latest_event_index: None,
             latest_event_timestamp: None,
-            read_events_from_stable_memory: true,
+            read_events_from_stable_memory: false,
         }
     }
 
