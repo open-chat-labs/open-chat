@@ -28,6 +28,7 @@ fn upgrade_bucket_canister_wasm_impl(args: Args, state: &mut RuntimeState) -> Re
         for canister_id in canisters_to_upgrade {
             state.data.canisters_requiring_upgrade.enqueue(canister_id, false);
         }
+        crate::jobs::upgrade_buckets::start_job_if_required(state);
         state.data.canisters_requiring_upgrade.clear_failed(BuildVersion {
             major: version.major,
             minor: version.minor,
