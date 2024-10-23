@@ -126,11 +126,10 @@ impl RuntimeState {
 
         let owner_count = owners.len() as u128;
         let owner_share = (payment.amount * (100 - SNS_FEE_SHARE_PERCENT) / 100) / owner_count;
-        let amount = owner_share.saturating_sub(payment.fee);
-        if amount > 0 {
+        if owner_share > payment.fee {
             for owner in owners {
                 self.data.pending_payments_queue.push(PendingPayment {
-                    amount,
+                    amount: owner_share,
                     fee: payment.fee,
                     ledger_canister: payment.ledger_canister_id,
                     recipient: PaymentRecipient::Member(owner),
