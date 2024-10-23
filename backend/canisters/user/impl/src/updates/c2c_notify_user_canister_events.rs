@@ -277,7 +277,11 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
                     .main_events_reader()
                     .message_event_internal(args.message_id.into())
                 {
-                    if !state.data.suspended.value && !args.username.is_empty() && !chat.notifications_muted.value {
+                    if !state.data.suspended.value
+                        && !args.username.is_empty()
+                        && !chat.notifications_muted.value
+                        && !chat.user_type.is_bot()
+                    {
                         let notification = Notification::DirectReactionAdded(DirectReactionAddedNotification {
                             them: chat.them,
                             thread_root_message_index,

@@ -21,6 +21,7 @@ async fn delete_messages(args: Args) -> Response {
         caller,
         user_id,
         user_index_canister_id,
+        is_bot,
     } = match read_state(prepare) {
         Ok(ok) => ok,
         Err(response) => return response,
@@ -34,33 +35,36 @@ async fn delete_messages(args: Args) -> Response {
         }
     }
 
-    mutate_state(|state| delete_messages_impl(user_id, args, state))
+    mutate_state(|state| delete_messages_impl(user_id, is_bot, args, state))
 }
 
 struct PrepareResult {
     caller: Principal,
     user_id: UserId,
     user_index_canister_id: CanisterId,
+    is_bot: bool,
 }
 
 fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
     let caller = state.env.caller();
-    let user_id = if let Some(user_id) = state.data.lookup_user_id(caller) {
-        user_id
-    } else if caller == state.data.user_index_canister_id {
-        OPENCHAT_BOT_USER_ID
-    } else {
-        return Err(CallerNotInGroup);
-    };
+    let (user_id, is_bot) =
+        if let Some((user_id, is_bot)) = state.data.get_member(caller).map(|m| (m.user_id, m.user_type.is_bot())) {
+            (user_id, is_bot)
+        } else if caller == state.data.user_index_canister_id {
+            (OPENCHAT_BOT_USER_ID, true)
+        } else {
+            return Err(CallerNotInGroup);
+        };
 
     Ok(PrepareResult {
         caller,
         user_id,
         user_index_canister_id: state.data.user_index_canister_id,
+        is_bot,
     })
 }
 
-fn delete_messages_impl(user_id: UserId, args: Args, state: &mut RuntimeState) -> Response {
+fn delete_messages_impl(user_id: UserId, is_bot: bool, args: Args, state: &mut RuntimeState) -> Response {
     if state.data.is_frozen() {
         return ChatFrozen;
     }
@@ -93,7 +97,7 @@ fn delete_messages_impl(user_id: UserId, args: Args, state: &mut RuntimeState) -
                 );
             }
 
-            if args.new_achievement {
+            if args.new_achievement && !is_bot {
                 state.data.notify_user_of_achievement(user_id, Achievement::DeletedMessage);
             }
 

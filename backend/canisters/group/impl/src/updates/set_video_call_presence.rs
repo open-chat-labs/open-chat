@@ -21,7 +21,7 @@ pub(crate) fn set_video_call_presence_impl(args: Args, state: &mut RuntimeState)
 
     let caller = state.env.caller();
 
-    let Some(user_id) = state.data.lookup_user_id(caller) else {
+    let Some((user_id, is_bot)) = state.data.get_member(caller).map(|m| (m.user_id, m.user_type.is_bot())) else {
         return UserNotInGroup;
     };
 
@@ -41,7 +41,7 @@ pub(crate) fn set_video_call_presence_impl(args: Args, state: &mut RuntimeState)
         .set_video_call_presence(user_id, args.message_id, args.presence, min_visible_event_index, now)
     {
         SetVideoCallPresenceResult::Success => {
-            if args.new_achievement {
+            if args.new_achievement && !is_bot {
                 state.data.notify_user_of_achievement(user_id, Achievement::JoinedCall);
             }
 
