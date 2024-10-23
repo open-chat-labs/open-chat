@@ -4,28 +4,30 @@ use crate::{jobs, mutate_state, read_state, run_regular_jobs, AddMemberArgs, Run
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
-use gated_groups::{check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult, CheckVerifiedCredentialGateArgs};
+use gated_groups::{
+    check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult, CheckVerifiedCredentialGateArgs, GatePayment,
+};
 use group_canister::c2c_join_group::{Response::*, *};
 use group_chat_core::AddResult;
 use group_community_common::ExpiringMember;
-use types::{AccessGate, AccessGateConfigInternal, MemberJoined, UsersUnblocked};
+use types::{AccessGateConfigInternal, MemberJoined, UsersUnblocked};
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
 async fn c2c_join_group(args: Args) -> Response {
     run_regular_jobs();
 
-    match read_state(|state| is_permitted_to_join(&args, state)) {
+    let payments = match read_state(|state| is_permitted_to_join(&args, state)) {
         Ok(Some((gate_config, check_gate_args))) => match check_if_passes_gate(gate_config.gate, check_gate_args).await {
-            CheckIfPassesGateResult::Success => {}
+            CheckIfPassesGateResult::Success(payments) => payments,
             CheckIfPassesGateResult::Failed(reason) => return GateCheckFailed(reason),
             CheckIfPassesGateResult::InternalError(error) => return InternalError(error),
         },
-        Ok(None) => {}
+        Ok(None) => Vec::new(),
         Err(response) => return response,
     };
 
-    mutate_state(|state| c2c_join_group_impl(args, state))
+    mutate_state(|state| c2c_join_group_impl(args, payments, state))
 }
 
 fn is_permitted_to_join(
@@ -78,7 +80,7 @@ fn is_permitted_to_join(
     }))
 }
 
-fn c2c_join_group_impl(args: Args, state: &mut RuntimeState) -> Response {
+fn c2c_join_group_impl(args: Args, payments: Vec<GatePayment>, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
     let min_visible_event_index;
     let min_visible_message_index;
@@ -143,8 +145,8 @@ fn c2c_join_group_impl(args: Args, state: &mut RuntimeState) -> Response {
             let summary = state.summary(&result.member);
 
             // If there is a payment gate on this group then queue payments to owner(s) and treasury
-            if let Some(AccessGate::Payment(gate)) = state.data.chat.gate_config.value.as_ref().map(|gc| gc.gate.clone()) {
-                state.queue_access_gate_payments(gate);
+            for payment in payments {
+                state.queue_access_gate_payments(payment);
             }
 
             Success(Box::new(summary))

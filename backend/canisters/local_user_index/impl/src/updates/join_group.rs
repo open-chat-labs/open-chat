@@ -20,7 +20,7 @@ async fn join_group(args: Args) -> Response {
         invite_code: args.invite_code,
         correlation_id: args.correlation_id,
         is_platform_moderator: user_details.is_platform_moderator,
-        is_bot: user_details.is_bot,
+        is_bot: user_details.user_type.is_bot(),
         user_type: user_details.user_type,
         diamond_membership_expires_at: user_details.diamond_membership_expires_at,
         verified_credential_args: args.verified_credential_args.clone(),

@@ -42,7 +42,7 @@ fn run() {
 
 fn next_batch(state: &mut RuntimeState) -> Option<Vec<CanisterToUpgrade>> {
     if state.data.event_store_client.info().events_pending > 100000 {
-        return None;
+        return Some(Vec::new());
     }
 
     let count_in_progress = state.data.canisters_requiring_upgrade.count_in_progress();

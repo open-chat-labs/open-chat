@@ -8,20 +8,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Copy chat events into stable memory ([#6603](https://github.com/open-chat-labs/open-chat/pull/6603))
 - Add more achievements ([#6631](https://github.com/open-chat-labs/open-chat/pull/6631))
 
 ### Changed
 
-- Copy chat events into stable memory ([#6603](https://github.com/open-chat-labs/open-chat/pull/6603))
 - Make searching by user and term require matching both + make more efficient ([#6612](https://github.com/open-chat-labs/open-chat/pull/6612))
 - Add `message_id` and `event_index` to `MessageActivityEvent` ([#6623](https://github.com/open-chat-labs/open-chat/pull/6623))
 - Fixes to activity feed ([#6627](https://github.com/open-chat-labs/open-chat/pull/6627))
+- Allow LocalGroupIndex to trigger migration of chat events to stable memory ([#6642](https://github.com/open-chat-labs/open-chat/pull/6642))
+
+### Removed
+
+- Remove `is_bot` which has been supplanted by `user_type` ([#6650](https://github.com/open-chat-labs/open-chat/pull/6650))
 
 ### Fixed
 
 - Refund P2P swap early if message is deleted ([#6626](https://github.com/open-chat-labs/open-chat/pull/6626))
 - Fix removing link previews ([#6633](https://github.com/open-chat-labs/open-chat/pull/6633))
 - Determine whether c2c call should be retried based on response error ([#6640](https://github.com/open-chat-labs/open-chat/pull/6640))
+- Fix owners not receiving payments for composite payment gates ([#6652](https://github.com/open-chat-labs/open-chat/pull/6652))
 
 ## [[2.0.1400](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1400-community)] - 2024-10-18
 

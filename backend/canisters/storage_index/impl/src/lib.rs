@@ -15,6 +15,7 @@ use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
 
 mod guards;
+mod jobs;
 mod lifecycle;
 mod memory;
 mod model;
