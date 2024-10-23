@@ -11,6 +11,7 @@ use chat_events::{GroupChatThreadKeyPrefix, KeyPrefix, Reader};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
+use gated_groups::GatePayment;
 use group_chat_core::{
     AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, GroupRoleInternal, InvitedUsersResult, UserInvitation,
 };
@@ -33,8 +34,8 @@ use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     AccessGateConfigInternal, Achievement, BuildVersion, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles,
     Document, Empty, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions,
-    GroupSubtype, MessageIndex, Milliseconds, MultiUserChat, Notification, PaymentGate, Rules, TimestampMillis, Timestamped,
-    UserId, UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
+    GroupSubtype, MessageIndex, Milliseconds, MultiUserChat, Notification, Rules, TimestampMillis, Timestamped, UserId,
+    UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
 };
 use user_canister::GroupCanisterEvent;
 use utils::consts::OPENCHAT_BOT_USER_ID;
@@ -124,9 +125,7 @@ impl RuntimeState {
         }
     }
 
-    pub fn queue_access_gate_payments(&mut self, gate: PaymentGate) {
-        // The amount available is the gate amount less the approval fee and the transfer_from fee
-        let amount_available = gate.amount - 2 * gate.fee;
+    pub fn queue_access_gate_payments(&mut self, payment: GatePayment) {
         // Queue a payment to each owner less the fee
         let owners: Vec<UserId> = self
             .data
@@ -138,14 +137,14 @@ impl RuntimeState {
             .collect();
 
         let owner_count = owners.len() as u128;
-        let owner_share = (amount_available * (100 - SNS_FEE_SHARE_PERCENT) / 100) / owner_count;
-        let amount = owner_share.saturating_sub(gate.fee);
+        let owner_share = (payment.amount * (100 - SNS_FEE_SHARE_PERCENT) / 100) / owner_count;
+        let amount = owner_share.saturating_sub(payment.fee);
         if amount > 0 {
             for owner in owners {
                 self.data.pending_payments_queue.push(PendingPayment {
                     amount,
-                    fee: gate.fee,
-                    ledger_canister: gate.ledger_canister_id,
+                    fee: payment.fee,
+                    ledger_canister: payment.ledger_canister_id,
                     recipient: PaymentRecipient::Member(owner),
                     reason: PendingPaymentReason::AccessGate,
                 });
@@ -153,13 +152,13 @@ impl RuntimeState {
         }
 
         // Queue the remainder to the treasury less the fee
-        let treasury_share = amount_available.saturating_sub(owner_share * owner_count);
-        let amount = treasury_share.saturating_sub(gate.fee);
+        let treasury_share = payment.amount.saturating_sub(owner_share * owner_count);
+        let amount = treasury_share.saturating_sub(payment.fee);
         if amount > 0 {
             self.data.pending_payments_queue.push(PendingPayment {
                 amount,
-                fee: gate.fee,
-                ledger_canister: gate.ledger_canister_id,
+                fee: payment.fee,
+                ledger_canister: payment.ledger_canister_id,
                 recipient: PaymentRecipient::Treasury,
                 reason: PendingPaymentReason::AccessGate,
             });

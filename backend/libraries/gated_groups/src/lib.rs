@@ -13,14 +13,20 @@ use utils::consts::MEMO_JOINING_FEE;
 use utils::time::{DAY_IN_MS, NANOS_PER_MILLISECOND};
 
 pub enum CheckIfPassesGateResult {
-    Success,
+    Success(Vec<GatePayment>),
     Failed(GateCheckFailedReason),
     InternalError(String),
 }
 
+pub struct GatePayment {
+    pub ledger_canister_id: CanisterId,
+    pub amount: u128,
+    pub fee: u128,
+}
+
 impl CheckIfPassesGateResult {
     pub fn success(&self) -> bool {
-        matches!(self, CheckIfPassesGateResult::Success)
+        matches!(self, CheckIfPassesGateResult::Success(_))
     }
 }
 
@@ -97,7 +103,7 @@ fn check_non_composite_gate_synchronously(
 
 fn check_referred_by_member_gate(referred_by_member: bool) -> CheckIfPassesGateResult {
     if referred_by_member {
-        CheckIfPassesGateResult::Success
+        CheckIfPassesGateResult::Success(Vec::new())
     } else {
         CheckIfPassesGateResult::Failed(GateCheckFailedReason::NotReferredByMember)
     }
@@ -108,7 +114,7 @@ fn check_diamond_member_gate(
     now: TimestampMillis,
 ) -> CheckIfPassesGateResult {
     if diamond_membership_expires_at > Some(now) {
-        CheckIfPassesGateResult::Success
+        CheckIfPassesGateResult::Success(Vec::new())
     } else {
         CheckIfPassesGateResult::Failed(GateCheckFailedReason::NotDiamondMember)
     }
@@ -120,7 +126,7 @@ fn check_lifetime_diamond_member_gate(
 ) -> CheckIfPassesGateResult {
     // Check diamond membership expires in > 100 years
     if diamond_membership_expires_at > Some(now + 100 * 365 * DAY_IN_MS) {
-        CheckIfPassesGateResult::Success
+        CheckIfPassesGateResult::Success(Vec::new())
     } else {
         CheckIfPassesGateResult::Failed(GateCheckFailedReason::NotLifetimeDiamondMember)
     }
@@ -128,7 +134,7 @@ fn check_lifetime_diamond_member_gate(
 
 fn check_unique_person_gate(is_unique_person: bool) -> CheckIfPassesGateResult {
     if is_unique_person {
-        CheckIfPassesGateResult::Success
+        CheckIfPassesGateResult::Success(Vec::new())
     } else {
         CheckIfPassesGateResult::Failed(GateCheckFailedReason::NoUniquePersonProof)
     }
@@ -145,7 +151,7 @@ fn check_verified_credential_gate(
         ));
     };
 
-    CheckIfPassesGateResult::Success
+    CheckIfPassesGateResult::Success(Vec::new())
 
     // let vc_flow_signers = VcFlowSigners {
     //     ii_canister_id: args.ii_canister_id,
@@ -198,13 +204,21 @@ async fn check_composite_gate(gate: CompositeGate, args: CheckGateArgs) -> Check
     }
 
     let count = gate.inner.len();
+    let mut all_transfers = Vec::new();
     for (index, inner) in gate.inner.into_iter().enumerate() {
         let last = index + 1 == count;
-        let result = Box::new(check_non_composite_gate(inner, args.clone()).await);
-        let success = result.success();
-
-        if (gate.and && !success) || (!gate.and && success) || last {
-            return *result;
+        match check_non_composite_gate(inner, args.clone()).await {
+            CheckIfPassesGateResult::Success(transfers) => {
+                all_transfers.extend(transfers);
+                if !gate.and || last {
+                    return CheckIfPassesGateResult::Success(all_transfers);
+                }
+            }
+            result => {
+                if gate.and || last {
+                    return result;
+                }
+            }
         }
     }
 
@@ -269,7 +283,7 @@ async fn check_sns_neuron_gate(gate: &SnsNeuronGate, user_id: UserId) -> CheckIf
                 }
             }
 
-            CheckIfPassesGateResult::Success
+            CheckIfPassesGateResult::Success(Vec::new())
         }
         Err(error) => CheckIfPassesGateResult::InternalError(format!("Error calling 'list_neurons': {error:?}")),
     }
@@ -282,22 +296,23 @@ async fn try_transfer_from(
     now: TimestampMillis,
 ) -> CheckIfPassesGateResult {
     let from: Principal = user_id.into();
-    match icrc_ledger_canister_c2c_client::icrc2_transfer_from(
-        gate.ledger_canister_id,
-        &TransferFromArgs {
-            spender_subaccount: None,
-            from: from.into(),
-            to: this_canister_id.into(),
-            // The amount the gate amount less the approval fee and the transfer_from fee
-            amount: (gate.amount - 2 * gate.fee).into(),
-            fee: Some(gate.fee.into()),
-            memo: Some(MEMO_JOINING_FEE.to_vec().into()),
-            created_at_time: Some(now * NANOS_PER_MILLISECOND),
-        },
-    )
-    .await
-    {
-        Ok(Ok(_)) => CheckIfPassesGateResult::Success,
+    let amount = gate.amount - 2 * gate.fee;
+    let transfer_args = TransferFromArgs {
+        spender_subaccount: None,
+        from: from.into(),
+        to: this_canister_id.into(),
+        // The amount the gate amount less the approval fee and the transfer_from fee
+        amount: amount.into(),
+        fee: Some(gate.fee.into()),
+        memo: Some(MEMO_JOINING_FEE.to_vec().into()),
+        created_at_time: Some(now * NANOS_PER_MILLISECOND),
+    };
+    match icrc_ledger_canister_c2c_client::icrc2_transfer_from(gate.ledger_canister_id, &transfer_args).await {
+        Ok(Ok(_)) => CheckIfPassesGateResult::Success(vec![GatePayment {
+            ledger_canister_id: gate.ledger_canister_id,
+            amount: gate.amount,
+            fee: gate.fee,
+        }]),
         Ok(Err(err)) => CheckIfPassesGateResult::Failed(GateCheckFailedReason::PaymentFailed(err)),
         Err(error) => CheckIfPassesGateResult::InternalError(format!("Error calling 'try_transfer_from': {error:?}")),
     }
@@ -305,7 +320,7 @@ async fn try_transfer_from(
 
 async fn check_token_balance_gate(gate: &TokenBalanceGate, user_id: UserId) -> CheckIfPassesGateResult {
     match icrc_ledger_canister_c2c_client::icrc1_balance_of(gate.ledger_canister_id, &Account::from(user_id)).await {
-        Ok(balance) if balance >= gate.min_balance => CheckIfPassesGateResult::Success,
+        Ok(balance) if balance >= gate.min_balance => CheckIfPassesGateResult::Success(Vec::new()),
         Ok(balance) => {
             CheckIfPassesGateResult::Failed(GateCheckFailedReason::InsufficientBalance(balance.0.try_into().unwrap()))
         }
