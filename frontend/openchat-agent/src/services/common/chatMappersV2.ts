@@ -1258,9 +1258,7 @@ export function communityPermissionRole(
     return "member";
 }
 
-export function apiCommunityPermissions(
-    permissions: CommunityPermissions,
-): TCommunityPermissions {
+export function apiCommunityPermissions(permissions: CommunityPermissions): TCommunityPermissions {
     return {
         create_public_channel: apiCommunityPermissionRole(permissions.createPublicChannel),
         update_details: apiCommunityPermissionRole(permissions.updateDetails),
@@ -3044,7 +3042,7 @@ export function joinVideoCallResponse(
         | GroupSetVideoCallPresenceResponse
         | CommunitySetVideoCallPresenceResponse,
 ): JoinVideoCallResponse {
-    if (typeof value === "object" && "Success") {
+    if (value === "Success") {
         return "success";
     }
     if (value === "AlreadyEnded") {
