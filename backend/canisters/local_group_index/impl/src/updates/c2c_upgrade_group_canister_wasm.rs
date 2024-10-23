@@ -83,6 +83,7 @@ fn commit(args: Args, wasm: CanisterWasm, chunks: Vec<Hash>, state: &mut Runtime
     {
         state.data.groups_requiring_upgrade.enqueue(canister_id, false);
     }
+    crate::jobs::upgrade_groups::start_job_if_required(state);
 
     state.data.groups_requiring_upgrade.clear_failed(BuildVersion {
         major: version.major,
