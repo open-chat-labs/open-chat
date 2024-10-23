@@ -160,12 +160,10 @@ pub struct DeleteUser {
     pub triggered_by_user: bool,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct GlobalUser {
     pub user_id: UserId,
     pub principal: Principal,
-    #[serde(default)]
-    pub is_bot: bool,
     #[serde(default)]
     pub is_platform_moderator: bool,
     pub diamond_membership_expires_at: Option<TimestampMillis>,
