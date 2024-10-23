@@ -1,4 +1,4 @@
-use crate::{init_state as set_state, mutate_state, Data, RuntimeState, WASM_VERSION};
+use crate::{mutate_state, Data, RuntimeState, WASM_VERSION};
 use std::time::Duration;
 use tracing::{info, trace};
 use types::{BuildVersion, CanisterId, Cycles, Timestamped};
@@ -26,7 +26,8 @@ fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: BuildVersion)
     let now = env.now();
     let state = RuntimeState::new(env, data);
 
-    set_state(state);
+    crate::jobs::start(&state);
+    crate::init_state(state);
     WASM_VERSION.set(Timestamped::new(wasm_version, now));
 }
 
