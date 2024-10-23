@@ -1,5 +1,5 @@
 use crate::lifecycle::{init_env, init_state};
-use crate::memory::get_upgrades_memory;
+use crate::memory::{get_chat_events_memory, get_upgrades_memory};
 use crate::Data;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
@@ -11,10 +11,15 @@ use user_canister::post_upgrade::Args;
 #[post_upgrade]
 #[trace]
 fn post_upgrade(args: Args) {
+    chat_events::ChatEvents::init_stable_storage(get_chat_events_memory());
+
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
-    let (data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) = msgpack::deserialize(reader).unwrap();
+    let (mut data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) = msgpack::deserialize(reader).unwrap();
+    for chat in data.direct_chats.iter_mut() {
+        chat.events.set_stable_memory_key_prefixes();
+    }
 
     // TODO: After release change this to
     // let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) = msgpack::deserialize(reader).unwrap();

@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
-use testing::rng::{random_message_id, random_string};
+use testing::rng::{random_from_u128, random_string};
 use types::{
     Chat, ChatType, CryptoContent, CryptoTransaction, Cryptocurrency, GroupReplyContext, MessageContentInitial,
     P2PSwapContentInitial, PendingCryptoTransaction, PollConfig, PollContent, PollVotes, TextContent, TotalVotes,
@@ -30,7 +30,7 @@ fn react_to_message_and_check_activity_feed(chat_type: ChatType) {
     let TestData { them, us, chat } = init_test_data(env, canister_ids, *controller, chat_type);
 
     let text = "Hello World";
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
     let reaction = "😀";
 
     // Send a text message from us then they react to it
@@ -67,7 +67,7 @@ fn mention_user_and_check_activity_feed(chat_type: ChatType) {
     let TestData { them, us, chat } = init_test_data(env, canister_ids, *controller, chat_type);
 
     let text = format!("Hello @UserId({})!", us.user_id);
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
     let content = MessageContentInitial::Text(TextContent { text });
     let mentioned = vec![(&us).into()];
 
@@ -104,7 +104,7 @@ fn mention_user_and_check_activity_feed(chat_type: ChatType) {
                 &community_canister::send_message::Args {
                     channel_id,
                     thread_root_message_index: None,
-                    message_id: random_message_id(),
+                    message_id: random_from_u128(),
                     content,
                     sender_name: them.username(),
                     sender_display_name: None,
@@ -140,7 +140,7 @@ fn tip_message_and_check_activity_feed(chat_type: ChatType) {
     let TestData { them, us, chat } = init_test_data(env, canister_ids, *controller, chat_type);
 
     let text = "Hello World";
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
 
     // Send a text message from us then they tip it
     match chat {
@@ -353,7 +353,7 @@ fn accept_p2p_swap_and_check_activity_feed(chat_type: ChatType) {
         11_000_000_000,
     );
 
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
     let content = MessageContentInitial::P2PSwap(P2PSwapContentInitial {
         token0: Cryptocurrency::InternetComputer.try_into().unwrap(),
         token0_amount: 1_000_000_000,
@@ -445,7 +445,7 @@ fn multiple_events_on_one_message_and_check_activity_feed(chat_type: ChatType) {
     let TestData { them, us, chat } = init_test_data(env, canister_ids, *controller, chat_type);
 
     let text = "Hello World";
-    let message_id = random_message_id();
+    let message_id = random_from_u128();
     let reaction = "😀";
 
     // Send a text message from us then they react to it

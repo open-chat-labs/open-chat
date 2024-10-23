@@ -5,7 +5,7 @@ use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
-use testing::rng::{random_message_id, random_principal, random_string};
+use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
     ChatEvent, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContent, MessageContentInitial,
     PendingCryptoTransaction,
@@ -75,7 +75,7 @@ fn send_direct_message_with_transfer_succeeds(with_c2c_error: bool, icrc2: bool)
         &user_canister::send_message_v2::Args {
             recipient: user2.user_id,
             thread_root_message_index: None,
-            message_id: random_message_id(),
+            message_id: random_from_u128(),
             content: MessageContentInitial::Crypto(CryptoContent {
                 recipient: user2.user_id,
                 transfer: CryptoTransaction::Pending(transaction),
@@ -185,7 +185,7 @@ fn send_message_with_transfer_to_group_succeeds(with_c2c_error: bool, icrc2: boo
         &user_canister::send_message_with_transfer_to_group::Args {
             group_id,
             thread_root_message_index: None,
-            message_id: random_message_id(),
+            message_id: random_from_u128(),
             content: MessageContentInitial::Crypto(CryptoContent {
                 recipient: user2.user_id,
                 transfer: CryptoTransaction::Pending(transaction),

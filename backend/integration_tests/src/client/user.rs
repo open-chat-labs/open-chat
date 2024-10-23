@@ -47,7 +47,7 @@ pub mod happy_path {
     use crate::env::VIDEO_CALL_OPERATOR;
     use crate::User;
     use pocket_ic::PocketIc;
-    use testing::rng::random_message_id;
+    use testing::rng::random_from_u128;
     use types::{
         CanisterId, Chat, ChatId, CommunityId, Cryptocurrency, Empty, EventIndex, EventsResponse, MessageContentInitial,
         MessageId, MessageIndex, Milliseconds, Reaction, ReplyContext, Rules, TextContent, TimestampMillis, UserId,
@@ -69,7 +69,7 @@ pub mod happy_path {
             &user_canister::send_message_v2::Args {
                 recipient,
                 thread_root_message_index: None,
-                message_id: message_id.unwrap_or_else(random_message_id),
+                message_id: message_id.unwrap_or_else(random_from_u128),
                 content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
                 replies_to: None,
                 forwarding: false,
@@ -102,7 +102,7 @@ pub mod happy_path {
             &user_canister::send_message_v2::Args {
                 recipient,
                 thread_root_message_index,
-                message_id: message_id.unwrap_or_else(random_message_id),
+                message_id: message_id.unwrap_or_else(random_from_u128),
                 content,
                 replies_to,
                 forwarding: false,
