@@ -13,9 +13,7 @@ thread_local! {
 }
 
 pub(crate) fn start_job_if_required(data: &Data) -> bool {
-    if TIMER_ID.get().is_none()
-        && (data.canisters_requiring_upgrade.count_pending() > 0 || data.canisters_requiring_upgrade.count_in_progress() > 0)
-    {
+    if TIMER_ID.get().is_none() && data.buckets.iter().any(|b| !b.sync_state.is_empty()) {
         let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
         TIMER_ID.set(Some(timer_id));
         trace!("'sync_buckets' job started");

@@ -1,7 +1,9 @@
 use crate::model::buckets::BucketRecord;
 use crate::{mutate_state, RuntimeState, MIN_CYCLES_BALANCE};
+use ic_cdk_timers::TimerId;
+use std::cell::Cell;
 use std::time::Duration;
-use tracing::error;
+use tracing::{error, trace};
 use types::{CanisterWasm, Cycles};
 use utils::canister::create_and_install;
 use utils::canister_timers::run_now_then_interval;
@@ -9,15 +11,25 @@ use utils::consts::CREATE_CANISTER_CYCLES_FEE;
 use utils::time::MINUTE_IN_MS;
 use PrepareResponse::*;
 
+thread_local! {
+    static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
+}
+
 const BUCKET_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = 25_000_000_000_000; // 25T;
 
-pub fn start_job() {
-    run_now_then_interval(Duration::from_millis(5 * MINUTE_IN_MS), run);
+pub fn start_job_if_required(state: &RuntimeState) -> bool {
+    if TIMER_ID.get().is_none() && !state.data.bucket_canister_wasm.module.is_empty() {
+        let timer_id = run_now_then_interval(Duration::from_millis(5 * MINUTE_IN_MS), run);
+        TIMER_ID.set(Some(timer_id));
+        trace!("'ensure_sufficient_active_buckets' job started");
+        true
+    } else {
+        false
+    }
 }
 
 fn run() {
-    let prepare_response = mutate_state(prepare);
-    match prepare_response {
+    match mutate_state(prepare) {
         DoNothing => (),
         CyclesBalanceTooLow => error!("Cycles balance too low to add a new bucket"),
         CreateBucket(args) => {
@@ -39,7 +51,7 @@ enum PrepareResponse {
 }
 
 fn prepare(state: &mut RuntimeState) -> PrepareResponse {
-    if !state.data.buckets.try_to_acquire_creation_lock() {
+    if state.data.bucket_canister_wasm.module.is_empty() || !state.data.buckets.try_to_acquire_creation_lock() {
         return DoNothing;
     }
 
