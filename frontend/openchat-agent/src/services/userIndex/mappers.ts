@@ -506,9 +506,8 @@ export function externalAchievementsResponse(
     if ("Success" in value) {
         return {
             kind: "success",
-            achievementsRemoved: value.Success.achievements_removed.map(externalAchievement),
+            addedOrUpdated: value.Success.added_or_updated.map(externalAchievement),
             lastUpdated: value.Success.last_updated,
-            achievementsAdded: value.Success.achievements_added.map(externalAchievement),
         };
     }
     throw new UnsupportedValueError("Unexpected ExternalAchievementsResponse type received", value);
@@ -522,5 +521,7 @@ function externalAchievement(
         url: value.url,
         name: value.name,
         chitReward: value.chit_reward,
+        expires: value.expires,
+        budgetExhausted: value.budget_exhausted,
     };
 }
