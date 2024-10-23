@@ -47,6 +47,7 @@ fn c2c_create_proposals_channel(args: Args) -> Response {
                 verified_credential_args: None,
                 unique_person_proof: None,
             },
+            Vec::new(),
             state,
         )
         .err()
