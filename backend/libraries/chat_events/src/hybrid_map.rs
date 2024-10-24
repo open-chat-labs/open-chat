@@ -25,16 +25,6 @@ pub struct HybridMap<MSlow> {
     max_events_in_fast_map: u32,
 }
 
-impl<MSlow> HybridMap<MSlow> {
-    fn fast_start(&self) -> EventIndex {
-        self.fast.keys().next().copied().unwrap_or_default()
-    }
-
-    fn fast_end(&self) -> EventIndex {
-        self.fast.keys().last().copied().unwrap_or_default()
-    }
-}
-
 impl<MSlow: EventsMap> EventsMap for HybridMap<MSlow> {
     fn get(&self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
         if event_index > self.latest_event_index {
@@ -81,12 +71,10 @@ impl<MSlow: EventsMap> EventsMap for HybridMap<MSlow> {
 }
 
 struct Iter<'a, MSlow: EventsMap> {
+    map: &'a HybridMap<MSlow>,
+    fast_start: EventIndex,
     next: EventIndex,
     next_back: EventIndex,
-    fast_start: EventIndex,
-    fast_end: EventIndex,
-    fast: &'a BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>>,
-    slow: &'a MSlow,
     fast_forward_iter: Option<Box<dyn DoubleEndedIterator<Item = EventWrapperInternal<ChatEventInternal>> + 'a>>,
     fast_backward_iter: Option<Box<dyn DoubleEndedIterator<Item = EventWrapperInternal<ChatEventInternal>> + 'a>>,
     slow_forward_iter: Option<Box<dyn DoubleEndedIterator<Item = EventWrapperInternal<ChatEventInternal>> + 'a>>,
@@ -115,12 +103,10 @@ impl<'a, MSlow: EventsMap> Iter<'a, MSlow> {
             next_back = map.latest_event_index;
         }
         Iter {
+            map,
+            fast_start: map.fast.keys().next().copied().unwrap_or_default(),
             next,
             next_back,
-            fast_start: map.fast_start(),
-            fast_end: map.fast_end(),
-            fast: &map.fast,
-            slow: &map.slow,
             fast_forward_iter: None,
             fast_backward_iter: None,
             slow_forward_iter: None,
@@ -131,12 +117,10 @@ impl<'a, MSlow: EventsMap> Iter<'a, MSlow> {
 
     fn empty(map: &'a HybridMap<MSlow>) -> Self {
         Self {
+            map,
+            fast_start: EventIndex::default(),
             next: EventIndex::default(),
             next_back: EventIndex::default(),
-            fast_start: EventIndex::default(),
-            fast_end: EventIndex::default(),
-            fast: &map.fast,
-            slow: &map.slow,
             fast_forward_iter: None,
             fast_backward_iter: None,
             slow_forward_iter: None,
@@ -150,20 +134,22 @@ impl<MSlow: EventsMap> Iterator for Iter<'_, MSlow> {
     type Item = EventWrapperInternal<ChatEventInternal>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.finished || self.next > self.fast_end {
+        if self.finished || self.next > self.map.latest_event_index {
             set_last_read_from_slow(false);
             return None;
         }
         let next = if self.next >= self.fast_start {
             set_last_read_from_slow(false);
             if self.fast_forward_iter.is_none() {
-                self.fast_forward_iter = Some(Box::new(self.fast.range(self.next..=self.next_back).map(|(_, e)| e.clone())));
+                self.fast_forward_iter = Some(Box::new(
+                    self.map.fast.range(self.next..=self.next_back).map(|(_, e)| e.clone()),
+                ));
             }
             self.fast_forward_iter.as_mut().unwrap().next()
         } else {
             set_last_read_from_slow(true);
             if self.slow_forward_iter.is_none() {
-                self.slow_forward_iter = Some(self.slow.range(self.next..=self.next_back));
+                self.slow_forward_iter = Some(self.map.slow.range(self.next..=self.next_back));
             }
             self.slow_forward_iter.as_mut().unwrap().next()
         };
@@ -187,13 +173,15 @@ impl<MSlow: EventsMap> DoubleEndedIterator for Iter<'_, MSlow> {
         let next = if self.fast_start <= self.next_back {
             set_last_read_from_slow(false);
             if self.fast_backward_iter.is_none() {
-                self.fast_backward_iter = Some(Box::new(self.fast.range(self.next..=self.next_back).map(|(_, e)| e.clone())));
+                self.fast_backward_iter = Some(Box::new(
+                    self.map.fast.range(self.next..=self.next_back).map(|(_, e)| e.clone()),
+                ));
             }
             self.fast_backward_iter.as_mut().unwrap().next_back()
         } else {
             set_last_read_from_slow(true);
             if self.slow_backward_iter.is_none() {
-                self.slow_backward_iter = Some(self.slow.range(self.next..=self.next_back));
+                self.slow_backward_iter = Some(self.map.slow.range(self.next..=self.next_back));
             }
             self.slow_backward_iter.as_mut().unwrap().next_back()
         };
@@ -240,12 +228,54 @@ fn iter() {
 }
 
 #[test]
+fn iter_with_removed() {
+    let mut map = setup_map();
+
+    for i in 0u32..10 {
+        map.remove(EventIndex::from(5 + (10 * i)));
+    }
+
+    let mut expected = EventIndex::default();
+    for event in map.iter() {
+        if u32::from(expected) % 10 == 5 {
+            expected = expected.incr();
+        }
+        assert_eq!(event.index, expected);
+        assert_eq!(LAST_READ_FROM_SLOW.get(), event.index < EventIndex::from(90));
+        expected = expected.incr();
+    }
+    assert_eq!(expected, 100.into());
+    assert!(!LAST_READ_FROM_SLOW.get());
+}
+
+#[test]
 fn iter_rev() {
     let map = setup_map();
 
     let mut expected = EventIndex::from(100);
     for event in map.iter().rev() {
         expected = expected.decr();
+        assert_eq!(event.index, expected);
+        assert_eq!(LAST_READ_FROM_SLOW.get(), event.index < EventIndex::from(90));
+    }
+    assert_eq!(expected, 0.into());
+    assert!(!LAST_READ_FROM_SLOW.get());
+}
+
+#[test]
+fn iter_rev_with_removed() {
+    let mut map = setup_map();
+
+    for i in 0u32..10 {
+        map.remove(EventIndex::from(5 + (10 * i)));
+    }
+
+    let mut expected = EventIndex::from(100);
+    for event in map.iter().rev() {
+        expected = expected.decr();
+        if u32::from(expected) % 10 == 5 {
+            expected = expected.decr();
+        }
         assert_eq!(event.index, expected);
         assert_eq!(LAST_READ_FROM_SLOW.get(), event.index < EventIndex::from(90));
     }
