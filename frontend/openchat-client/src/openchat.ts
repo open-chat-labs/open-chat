@@ -1661,7 +1661,7 @@ export class OpenChat extends OpenChatAgentWorker {
         } else if (chat?.id?.kind === "channel") {
             const community = this.getCommunityForChannel(chat?.id);
             if (community !== undefined) {
-                return community.avatar.blobUrl ?? "/assets/group.svg";
+                return this.communityAvatarUrl(community.id.communityId, community.avatar);
             }
         }
         return "/assets/group.svg";
