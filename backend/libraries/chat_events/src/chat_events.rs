@@ -71,6 +71,13 @@ impl ChatEvents {
         stable_storage::init(memory)
     }
 
+    pub fn init_maps(&mut self) {
+        self.main.init_hybrid_map(self.chat, None);
+        for (message_index, thread) in self.threads.iter_mut() {
+            thread.init_hybrid_map(self.chat, Some(*message_index));
+        }
+    }
+
     pub fn import_events(chat: Chat, events: Vec<(EventContext, ByteBuf)>) {
         stable_storage::write_events_as_bytes(chat, events);
     }

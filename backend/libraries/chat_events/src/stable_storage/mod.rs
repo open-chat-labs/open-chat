@@ -160,6 +160,10 @@ impl ChatEventsStableStorage {
 }
 
 impl EventsMap for ChatEventsStableStorage {
+    fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
+        ChatEventsStableStorage::new(chat, thread_root_message_index)
+    }
+
     fn get(&self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
         self.get_internal(event_index).map(|v| (&v).into())
     }

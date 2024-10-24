@@ -28,6 +28,7 @@ fn post_upgrade(args: Args) {
     if data.chat.events.thread_messages_to_update_in_stable_memory_len() > 0 {
         data.stable_memory_event_migration_complete = false;
     }
+    data.chat.events.init_maps();
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
