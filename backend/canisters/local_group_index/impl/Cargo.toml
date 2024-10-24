@@ -21,6 +21,7 @@ event_store_producer = { workspace = true }
 event_store_producer_cdk_runtime = { workspace = true }
 event_store_utils = { workspace = true }
 group_canister = { path = "../../group/api" }
+group_canister_c2c_client = { path = "../../group/c2c_client" }
 futures = { workspace = true }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }

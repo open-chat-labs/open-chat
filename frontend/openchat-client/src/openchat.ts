@@ -1645,7 +1645,11 @@ export class OpenChat extends OpenChatAgentWorker {
         return getContentAsFormattedText(formatter, content, get(cryptoLookup));
     }
 
-    groupAvatarUrl<T extends { blobUrl?: string; subtype?: GroupSubtype }>(chat?: T): string {
+    groupAvatarUrl(chat?: {
+        id: MultiUserChatIdentifier;
+        blobUrl?: string;
+        subtype?: GroupSubtype;
+    }): string {
         if (chat?.blobUrl !== undefined) {
             return chat.blobUrl;
         } else if (chat?.subtype?.kind === "governance_proposals") {
@@ -1653,6 +1657,11 @@ export class OpenChat extends OpenChatAgentWorker {
             const snsLogo = this.getSnsLogo(chat.subtype.governanceCanisterId);
             if (snsLogo !== undefined) {
                 return snsLogo;
+            }
+        } else if (chat?.id?.kind === "channel") {
+            const community = this.getCommunityForChannel(chat?.id);
+            if (community !== undefined) {
+                return this.communityAvatarUrl(community.id.communityId, community.avatar);
             }
         }
         return "/assets/group.svg";
