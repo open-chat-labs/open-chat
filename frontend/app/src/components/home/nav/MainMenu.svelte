@@ -57,10 +57,6 @@
         <Home size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
         <span slot="text">Home page</span>
     </MenuItem>
-    <MenuItem href="https://tokenterminal.com/terminal/projects/openchat">
-        <ChartLine size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-        <span slot="text">Metrics</span>
-    </MenuItem>
     <MenuItem on:click={() => page("/features")}>
         <InformationOutline size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
         <span slot="text">Features</span>
@@ -88,6 +84,10 @@
     <MenuItem on:click={() => page("/guidelines")}>
         <Security size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
         <span slot="text">Guidelines</span>
+    </MenuItem>
+    <MenuItem href="https://tokenterminal.com/terminal/projects/openchat">
+        <ChartLine size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+        <span slot="text">Metrics</span>
     </MenuItem>
     {#if admin}
         <MenuItem separator />
