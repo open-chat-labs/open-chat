@@ -25,4 +25,5 @@ types = { path = "../types" }
 
 [dev-dependencies]
 msgpack = { path = "../msgpack" }
+test-case = { workspace = true }
 testing = { path = "../testing" }

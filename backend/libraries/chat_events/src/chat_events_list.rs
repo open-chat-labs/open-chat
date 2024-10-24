@@ -1,8 +1,10 @@
+use crate::hybrid_map::HybridMap;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::stable_storage::ChatEventsStableStorage;
 use crate::{
     ChatEventInternal, ChatEventsMap, ChatInternal, EventKey, EventOrExpiredRangeInternal, EventsMap, MessageInternal,
 };
+use candid::Principal;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
@@ -16,7 +18,8 @@ use types::{
 #[derive(Serialize, Deserialize)]
 pub struct ChatEventsList {
     events_map: ChatEventsMap,
-    stable_events_map: ChatEventsStableStorage,
+    #[serde(skip_deserializing, default = "default_stable_events_map")]
+    stable_events_map: HybridMap<ChatEventsStableStorage>,
     message_id_map: HashMap<MessageId, EventIndex>,
     message_event_indexes: Vec<EventIndex>,
     latest_event_index: Option<EventIndex>,
@@ -24,9 +27,20 @@ pub struct ChatEventsList {
     read_events_from_stable_memory: bool,
 }
 
+fn default_stable_events_map() -> HybridMap<ChatEventsStableStorage> {
+    HybridMap::new(Chat::Group(Principal::anonymous().into()), None)
+}
+
 impl ChatEventsList {
+    pub fn init_hybrid_map(&mut self, chat: Chat, thread_root_message_index: Option<MessageIndex>) {
+        self.stable_events_map = HybridMap::new(chat, thread_root_message_index);
+        self.stable_events_map
+            .populate_fast_map(&self.events_map, self.latest_event_index.unwrap_or_default());
+    }
+
     pub fn set_stable_memory_prefix(&mut self, chat: Chat, thread_root_message_index: Option<MessageIndex>) {
-        self.stable_events_map = ChatEventsStableStorage::new(chat, thread_root_message_index);
+        self.stable_events_map
+            .set_stable_memory_prefix(chat, thread_root_message_index);
     }
 
     pub fn set_read_events_from_stable_memory(&mut self, value: bool) {
@@ -51,7 +65,7 @@ impl ChatEventsList {
     pub fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
         ChatEventsList {
             events_map: ChatEventsMap::default(),
-            stable_events_map: ChatEventsStableStorage::new(chat, thread_root_message_index),
+            stable_events_map: HybridMap::new(chat, thread_root_message_index),
             message_id_map: HashMap::new(),
             message_event_indexes: Vec::new(),
             latest_event_index: None,
