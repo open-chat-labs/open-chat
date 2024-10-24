@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Expose count of Group/Community canisters per build version ([#6659](https://github.com/open-chat-labs/open-chat/pull/6659))
+
 ### Changed
 
 - Avoid using `heartbeat` to upgrade Group canisters ([#6643](https://github.com/open-chat-labs/open-chat/pull/6643))
