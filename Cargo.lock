@@ -4525,6 +4525,7 @@ dependencies = [
  "event_store_utils",
  "futures",
  "group_canister",
+ "group_canister_c2c_client",
  "http_request",
  "ic-cdk 0.16.0",
  "ic-cdk-timers",
