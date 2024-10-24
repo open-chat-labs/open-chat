@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Don't remove external achievements on expiry ([#6588](https://github.com/open-chat-labs/open-chat/pull/6588))
+- Allow external achievements to be updated ([#6672](https://github.com/open-chat-labs/open-chat/pull/6672))
 
 ### Fixed
 
