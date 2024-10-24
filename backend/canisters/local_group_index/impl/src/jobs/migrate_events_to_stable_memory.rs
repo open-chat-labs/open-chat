@@ -31,6 +31,10 @@ fn run() {
 }
 
 fn next(state: &mut RuntimeState) -> Option<CanisterId> {
+    if state.data.canisters_pending_events_migration_to_stable_memory.is_empty() {
+        return None;
+    }
+
     let len = state.data.canisters_pending_events_migration_to_stable_memory.len();
     let random: usize = state.env.rng().gen_range(0..len);
 
