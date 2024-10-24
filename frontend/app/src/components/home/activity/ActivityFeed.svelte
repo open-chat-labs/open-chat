@@ -2,7 +2,12 @@
     import Close from "svelte-material-icons/Close.svelte";
     import BellRingOutline from "svelte-material-icons/BellRingOutline.svelte";
     import { _ } from "svelte-i18n";
-    import { OpenChat, routeForMessage, type MessageActivityEvent } from "openchat-client";
+    import {
+        messageContextToString,
+        OpenChat,
+        routeForMessage,
+        type MessageActivityEvent,
+    } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import SectionHeader from "../../SectionHeader.svelte";
     import { iconSize } from "../../../stores/iconSize";
@@ -13,6 +18,7 @@
     import { menuCloser } from "../../../actions/closeMenu";
     import page from "page";
     import ActivityEvent from "./ActivityEvent.svelte";
+    import VirtualList from "../../VirtualList.svelte";
 
     const client = getContext<OpenChat>("client");
     let selectedEvent: MessageActivityEvent | undefined = undefined;
@@ -44,6 +50,12 @@
         selectedEvent = ev;
         page(routeForMessage("none", ev.messageContext, ev.messageIndex));
     }
+
+    function eventKey(event: MessageActivityEvent): string {
+        return `${messageContextToString(event.messageContext)}_${event.eventIndex}_${
+            event.activity
+        }`;
+    }
 </script>
 
 <SectionHeader slim border={false}>
@@ -63,12 +75,12 @@
 </SectionHeader>
 
 <div use:menuCloser class="body">
-    {#each activityEvents as event}
+    <VirtualList keyFn={eventKey} items={activityEvents} let:item>
         <ActivityEvent
-            {event}
-            selected={selectedEvent === event}
-            on:click={() => selectEvent(event)} />
-    {/each}
+            event={item}
+            selected={selectedEvent === item}
+            on:click={() => selectEvent(item)} />
+    </VirtualList>
 </div>
 
 <style lang="scss">
