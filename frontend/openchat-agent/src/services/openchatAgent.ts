@@ -235,6 +235,7 @@ import {
     waitAll,
     MessageMap,
     MAX_ACTIVITY_EVENTS,
+    messageContextToString,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { AsyncMessageContextMap } from "../utils/messageContext";
@@ -3781,9 +3782,12 @@ export class OpenChatAgent extends EventTarget {
         // first sort ascending
         combined.sort((a, b) => Number(a.timestamp) - Number(b.timestamp));
 
-        // dedupe by overwriting earlier events with the same activity type and event index
+        // dedupe by overwriting earlier events with the same context, activity type and event index
         const deduped = combined.reduce((map, ev) => {
-            map.set(`${ev.activity}_${ev.eventIndex}`, ev);
+            map.set(
+                `${messageContextToString(ev.messageContext)}_${ev.activity}_${ev.eventIndex}`,
+                ev,
+            );
             return map;
         }, new Map<string, MessageActivityEvent>());
 
