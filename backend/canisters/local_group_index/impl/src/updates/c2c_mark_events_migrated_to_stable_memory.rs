@@ -12,5 +12,8 @@ fn c2c_mark_events_migrated_to_stable_memory(_args: Args) {
 
 fn c2c_mark_events_migrated_to_stable_memory_impl(state: &mut RuntimeState) {
     let caller = state.env.caller();
-    state.data.canisters_pending_events_migration_to_stable_memory.remove(&caller);
+    state
+        .data
+        .canisters_pending_events_migration_to_stable_memory
+        .retain(|c| *c != caller);
 }
