@@ -7,6 +7,7 @@ import {
     lookupResultToBuffer,
     polling,
     ReplicaTimeError,
+    QueryCallRejectedError,
     UpdateCallRejectedError,
 } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
@@ -19,7 +20,6 @@ import {
 } from "openchat-shared";
 import { ReplicaNotUpToDateError, toCanisterResponseError } from "./error";
 import { type Options, Packr } from "msgpackr";
-import { identity } from "../utils/mapping";
 import type { Static, TSchema } from "@sinclair/typebox";
 import { Value } from "@sinclair/typebox/value";
 
@@ -57,24 +57,31 @@ export abstract class CandidService {
     ): Promise<Out> {
         const payload = CandidService.prepareMsgpackArgs(args, requestValidator);
 
-        const response = await this.handleQueryResponse(
+        return await this.handleQueryResponse(
             () =>
                 this.agent.query(this.canisterId, {
                     methodName: methodName + "_msgpack",
                     arg: payload,
                 }),
-            identity,
+            (resp) => {
+                if (resp.status === "replied") {
+                    return Promise.resolve(
+                        CandidService.processMsgpackResponse(
+                            resp.reply.arg,
+                            mapper,
+                            responseValidator,
+                        ),
+                    );
+                } else {
+                    throw new QueryCallRejectedError(
+                        Principal.fromText(this.canisterId),
+                        methodName,
+                        resp,
+                    );
+                }
+            },
             args,
         );
-        if (response.status === "replied") {
-            return Promise.resolve(
-                CandidService.processMsgpackResponse(response.reply.arg, mapper, responseValidator),
-            );
-        } else {
-            throw new Error(
-                `query rejected. Code: ${response.reject_code}. Message: ${response.reject_message}`,
-            );
-        }
     }
 
     protected async executeMsgpackUpdate<In extends TSchema, Resp extends TSchema, Out>(
