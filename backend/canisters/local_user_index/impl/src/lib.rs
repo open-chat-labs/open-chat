@@ -246,12 +246,7 @@ impl RuntimeState {
             users_to_delete_queue_length: self.data.users_to_delete_queue.len(),
             referral_codes: self.data.referral_codes.metrics(now),
             event_store_client_info,
-            user_versions: self
-                .data
-                .local_users
-                .iter()
-                .map(|u| u.1.wasm_version.clone())
-                .count_per_value(),
+            user_versions: self.data.local_users.iter().map(|u| u.1.wasm_version).count_per_value(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,

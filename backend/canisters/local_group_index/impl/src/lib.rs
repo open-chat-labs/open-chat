@@ -100,18 +100,8 @@ impl RuntimeState {
             max_concurrent_community_upgrades: self.data.max_concurrent_community_upgrades,
             community_upgrade_concurrency: self.data.community_upgrade_concurrency,
             event_store_client_info,
-            group_versions: self
-                .data
-                .local_groups
-                .iter()
-                .map(|g| g.1.wasm_version.clone())
-                .count_per_value(),
-            community_versions: self
-                .data
-                .local_communities
-                .iter()
-                .map(|c| c.1.wasm_version.clone())
-                .count_per_value(),
+            group_versions: self.data.local_groups.iter().map(|g| g.1.wasm_version).count_per_value(),
+            community_versions: self.data.local_communities.iter().map(|c| c.1.wasm_version).count_per_value(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
