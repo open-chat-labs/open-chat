@@ -1,8 +1,9 @@
+use crate::stable_storage::ChatEventsStableStorage;
 use crate::{ChatEventInternal, EventsMap};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::ops::RangeBounds;
-use types::{EventIndex, EventWrapperInternal, MAX_EVENT_INDEX, MIN_EVENT_INDEX};
+use types::{Chat, EventIndex, EventWrapperInternal, MessageIndex, MAX_EVENT_INDEX, MIN_EVENT_INDEX};
 
 #[cfg(test)]
 thread_local! {
@@ -24,7 +25,37 @@ pub struct HybridMap<MSlow> {
     max_events_in_fast_map: u32,
 }
 
+impl<MSlow> HybridMap<MSlow> {
+    // TODO: Remove this once everything is migrated over
+    pub fn populate_fast_map<M: EventsMap>(&mut self, map: &M, latest_event_index: EventIndex) {
+        for event in map.iter().rev().take(self.max_events_in_fast_map as usize) {
+            self.fast.insert(event.index, event);
+        }
+        self.latest_event_index = latest_event_index;
+    }
+
+    fn fast_enabled(&self) -> bool {
+        self.max_events_in_fast_map > 0
+    }
+}
+
+impl HybridMap<ChatEventsStableStorage> {
+    pub fn set_stable_memory_prefix(&mut self, chat: Chat, thread_root_message_index: Option<MessageIndex>) {
+        self.slow = ChatEventsStableStorage::new(chat, thread_root_message_index);
+    }
+}
+
 impl<MSlow: EventsMap> EventsMap for HybridMap<MSlow> {
+    fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
+        HybridMap {
+            fast: BTreeMap::new(),
+            slow: MSlow::new(chat, thread_root_message_index),
+            latest_event_index: EventIndex::default(),
+            // Don't store thread events on the heap
+            max_events_in_fast_map: if thread_root_message_index.is_none() { 1000 } else { 0 },
+        }
+    }
+
     fn get(&self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
         if event_index > self.latest_event_index {
             set_last_read_from_slow(false);
@@ -42,11 +73,13 @@ impl<MSlow: EventsMap> EventsMap for HybridMap<MSlow> {
         if event.index > self.latest_event_index {
             self.latest_event_index = event.index;
         }
-        let fast_cut_off = EventIndex::from(u32::from(self.latest_event_index).saturating_sub(self.max_events_in_fast_map));
-        if event.index >= fast_cut_off {
-            self.fast.insert(event.index, event.clone());
-            while self.fast.len() > self.max_events_in_fast_map as usize {
-                self.fast.pop_first();
+        if self.fast_enabled() {
+            let fast_cut_off = EventIndex::from(u32::from(self.latest_event_index).saturating_sub(self.max_events_in_fast_map));
+            if event.index >= fast_cut_off {
+                self.fast.insert(event.index, event.clone());
+                while self.fast.len() > self.max_events_in_fast_map as usize {
+                    self.fast.pop_first();
+                }
             }
         }
         self.slow.insert(event);
@@ -103,7 +136,11 @@ impl<'a, MSlow: EventsMap> Iter<'a, MSlow> {
         }
         Iter {
             map,
-            fast_start: map.fast.keys().next().copied().unwrap_or_default(),
+            fast_start: if map.fast_enabled() {
+                map.fast.keys().next().copied().unwrap_or_default()
+            } else {
+                MAX_EVENT_INDEX
+            },
             next,
             next_back,
             fast_forward_iter: None,
@@ -201,39 +238,49 @@ impl<MSlow: EventsMap> DoubleEndedIterator for Iter<'_, MSlow> {
 mod tests {
     use super::*;
     use crate::ChatEventsMap;
+    use test_case::test_case;
 
-    #[test]
-    fn get() {
-        let map = setup_map();
+    #[test_case(true)]
+    #[test_case(false)]
+    fn get(fast_map_enabled: bool) {
+        let map = setup_map(fast_map_enabled);
 
         for i in 0u32..100 {
             let index = i.into();
             let event = map.get(index).unwrap();
             assert_eq!(event.index, index);
-            assert_eq!(LAST_READ_FROM_SLOW.get(), event.index < EventIndex::from(90));
+            assert_eq!(
+                LAST_READ_FROM_SLOW.get(),
+                !fast_map_enabled || event.index < EventIndex::from(90)
+            );
         }
 
         assert!(map.get(100.into()).is_none());
         assert!(!LAST_READ_FROM_SLOW.get());
     }
 
-    #[test]
-    fn iter() {
-        let map = setup_map();
+    #[test_case(true)]
+    #[test_case(false)]
+    fn iter(fast_map_enabled: bool) {
+        let map = setup_map(fast_map_enabled);
 
         let mut expected = EventIndex::default();
         for event in map.iter() {
             assert_eq!(event.index, expected);
-            assert_eq!(LAST_READ_FROM_SLOW.get(), event.index < EventIndex::from(90));
+            assert_eq!(
+                LAST_READ_FROM_SLOW.get(),
+                !fast_map_enabled || event.index < EventIndex::from(90)
+            );
             expected = expected.incr();
         }
         assert_eq!(expected, 100.into());
         assert!(!LAST_READ_FROM_SLOW.get());
     }
 
-    #[test]
-    fn iter_with_removed() {
-        let mut map = setup_map();
+    #[test_case(true)]
+    #[test_case(false)]
+    fn iter_with_removed(fast_map_enabled: bool) {
+        let mut map = setup_map(fast_map_enabled);
 
         for i in 0u32..10 {
             map.remove(EventIndex::from(5 + (10 * i)));
@@ -245,30 +292,38 @@ mod tests {
                 expected = expected.incr();
             }
             assert_eq!(event.index, expected);
-            assert_eq!(LAST_READ_FROM_SLOW.get(), event.index < EventIndex::from(90));
+            assert_eq!(
+                LAST_READ_FROM_SLOW.get(),
+                !fast_map_enabled || event.index < EventIndex::from(90)
+            );
             expected = expected.incr();
         }
         assert_eq!(expected, 100.into());
         assert!(!LAST_READ_FROM_SLOW.get());
     }
 
-    #[test]
-    fn iter_rev() {
-        let map = setup_map();
+    #[test_case(true)]
+    #[test_case(false)]
+    fn iter_rev(fast_map_enabled: bool) {
+        let map = setup_map(fast_map_enabled);
 
         let mut expected = EventIndex::from(100);
         for event in map.iter().rev() {
             expected = expected.decr();
             assert_eq!(event.index, expected);
-            assert_eq!(LAST_READ_FROM_SLOW.get(), event.index < EventIndex::from(90));
+            assert_eq!(
+                LAST_READ_FROM_SLOW.get(),
+                !fast_map_enabled || event.index < EventIndex::from(90)
+            );
         }
         assert_eq!(expected, 0.into());
         assert!(!LAST_READ_FROM_SLOW.get());
     }
 
-    #[test]
-    fn iter_rev_with_removed() {
-        let mut map = setup_map();
+    #[test_case(true)]
+    #[test_case(false)]
+    fn iter_rev_with_removed(fast_map_enabled: bool) {
+        let mut map = setup_map(fast_map_enabled);
 
         for i in 0u32..10 {
             map.remove(EventIndex::from(5 + (10 * i)));
@@ -281,31 +336,39 @@ mod tests {
                 expected = expected.decr();
             }
             assert_eq!(event.index, expected);
-            assert_eq!(LAST_READ_FROM_SLOW.get(), event.index < EventIndex::from(90));
+            assert_eq!(
+                LAST_READ_FROM_SLOW.get(),
+                !fast_map_enabled || event.index < EventIndex::from(90)
+            );
         }
         assert_eq!(expected, 0.into());
         assert!(!LAST_READ_FROM_SLOW.get());
     }
 
-    #[test]
-    fn range() {
-        let map = setup_map();
+    #[test_case(true)]
+    #[test_case(false)]
+    fn range(fast_map_enabled: bool) {
+        let map = setup_map(fast_map_enabled);
 
         let start = EventIndex::from(5);
         let end = EventIndex::from(95);
         let mut expected = start;
         for event in map.range(start..=end) {
             assert_eq!(event.index, expected);
-            assert_eq!(LAST_READ_FROM_SLOW.get(), event.index < EventIndex::from(90));
+            assert_eq!(
+                LAST_READ_FROM_SLOW.get(),
+                !fast_map_enabled || event.index < EventIndex::from(90)
+            );
             expected = expected.incr();
         }
         assert_eq!(expected, end.incr());
         assert!(!LAST_READ_FROM_SLOW.get());
     }
 
-    #[test]
-    fn range_rev() {
-        let map = setup_map();
+    #[test_case(true)]
+    #[test_case(false)]
+    fn range_rev(fast_map_enabled: bool) {
+        let map = setup_map(fast_map_enabled);
 
         let start = EventIndex::from(5);
         let end = EventIndex::from(95);
@@ -313,15 +376,19 @@ mod tests {
         for event in map.range(start..end).rev() {
             expected = expected.decr();
             assert_eq!(event.index, expected);
-            assert_eq!(LAST_READ_FROM_SLOW.get(), event.index < EventIndex::from(90));
+            assert_eq!(
+                LAST_READ_FROM_SLOW.get(),
+                !fast_map_enabled || event.index < EventIndex::from(90)
+            );
         }
         assert_eq!(expected, start);
         assert!(!LAST_READ_FROM_SLOW.get());
     }
 
-    #[test]
-    fn iter_both_ends() {
-        let map = setup_map();
+    #[test_case(true)]
+    #[test_case(false)]
+    fn iter_both_ends(fast_map_enabled: bool) {
+        let map = setup_map(fast_map_enabled);
 
         let mut iter = map.iter();
         for i in 0u32..50 {
@@ -331,18 +398,21 @@ mod tests {
 
             let event = iter.next_back().unwrap();
             assert_eq!(event.index, EventIndex::from(99 - i));
-            assert_eq!(LAST_READ_FROM_SLOW.get(), event.index < EventIndex::from(90));
+            assert_eq!(
+                LAST_READ_FROM_SLOW.get(),
+                !fast_map_enabled || event.index < EventIndex::from(90)
+            );
         }
         assert!(iter.next().is_none());
         assert!(!LAST_READ_FROM_SLOW.get());
     }
 
-    fn setup_map() -> HybridMap<ChatEventsMap> {
+    fn setup_map(fast_map_enabled: bool) -> HybridMap<ChatEventsMap> {
         let mut map = HybridMap {
             fast: BTreeMap::new(),
             slow: ChatEventsMap::default(),
             latest_event_index: EventIndex::default(),
-            max_events_in_fast_map: 10,
+            max_events_in_fast_map: if fast_map_enabled { 10 } else { 0 },
         };
 
         for i in 0u32..100 {
