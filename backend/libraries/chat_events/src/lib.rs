@@ -4,6 +4,7 @@ mod chat_events_list;
 pub mod deep_message_links;
 mod events_map;
 mod expiring_events;
+mod hybrid_map;
 mod last_updated_timestamps;
 mod message_content_internal;
 mod search_index;
