@@ -222,6 +222,7 @@ fn get() {
     }
 
     assert!(map.get(100.into()).is_none());
+    assert!(!LAST_READ_FROM_SLOW.get());
 }
 
 #[test]
@@ -235,6 +236,7 @@ fn iter() {
         expected = expected.incr();
     }
     assert_eq!(expected, 100.into());
+    assert!(!LAST_READ_FROM_SLOW.get());
 }
 
 #[test]
@@ -248,6 +250,7 @@ fn iter_rev() {
         assert_eq!(LAST_READ_FROM_SLOW.get(), event.index < EventIndex::from(90));
     }
     assert_eq!(expected, 0.into());
+    assert!(!LAST_READ_FROM_SLOW.get());
 }
 
 #[test]
@@ -263,6 +266,7 @@ fn range() {
         expected = expected.incr();
     }
     assert_eq!(expected, end.incr());
+    assert!(!LAST_READ_FROM_SLOW.get());
 }
 
 #[test]
@@ -278,6 +282,7 @@ fn range_rev() {
         assert_eq!(LAST_READ_FROM_SLOW.get(), event.index < EventIndex::from(90));
     }
     assert_eq!(expected, start);
+    assert!(!LAST_READ_FROM_SLOW.get());
 }
 
 #[test]
@@ -295,6 +300,7 @@ fn iter_both_ends() {
         assert_eq!(LAST_READ_FROM_SLOW.get(), event.index < EventIndex::from(90));
     }
     assert!(iter.next().is_none());
+    assert!(!LAST_READ_FROM_SLOW.get());
 }
 
 fn setup_map() -> HybridMap<ChatEventsMap> {
