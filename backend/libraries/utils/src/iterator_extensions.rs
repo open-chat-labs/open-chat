@@ -1,5 +1,5 @@
 use std::cmp::{Ordering, Reverse};
-use std::collections::BinaryHeap;
+use std::collections::{BTreeMap, BinaryHeap};
 use std::iter::Iterator;
 use std::vec::IntoIter;
 
@@ -43,6 +43,18 @@ pub trait IteratorExtensions: Iterator {
         #[allow(clippy::needless_collect)]
         let vec: Vec<_> = top.into_sorted_vec().into_iter().map(|g| g.item).collect();
         vec.into_iter()
+    }
+
+    fn count_per_value(self) -> BTreeMap<Self::Item, u32>
+    where
+        Self: Sized,
+        Self::Item: Ord + PartialOrd + Eq + PartialEq,
+    {
+        let mut map = BTreeMap::new();
+        for item in self {
+            *map.entry(item).or_default() += 1;
+        }
+        map
     }
 }
 

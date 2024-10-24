@@ -14,7 +14,7 @@ use p256_key_pair::P256KeyPair;
 use proof_of_unique_personhood::verify_proof_of_unique_personhood;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
@@ -28,6 +28,7 @@ use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
 use utils::env::Environment;
+use utils::iterator_extensions::IteratorExtensions;
 use utils::time::MINUTE_IN_MS;
 
 mod guards;
@@ -245,6 +246,12 @@ impl RuntimeState {
             users_to_delete_queue_length: self.data.users_to_delete_queue.len(),
             referral_codes: self.data.referral_codes.metrics(now),
             event_store_client_info,
+            user_versions: self
+                .data
+                .local_users
+                .iter()
+                .map(|u| u.1.wasm_version.to_string())
+                .count_per_value(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -395,6 +402,7 @@ pub struct Metrics {
     pub users_to_delete_queue_length: usize,
     pub referral_codes: HashMap<ReferralType, ReferralTypeMetrics>,
     pub event_store_client_info: EventStoreClientInfo,
+    pub user_versions: BTreeMap<String, u32>,
     pub canister_ids: CanisterIds,
     pub oc_secret_key_initialized: bool,
     pub canisters_pending_events_migration_to_stable_memory: u32,

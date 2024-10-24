@@ -90,7 +90,7 @@
             searching = true;
             const lowercase = term.toLowerCase();
             try {
-                let response = await client.searchChat(chat.id, lowercase, mentions, 50);
+                let response = await client.searchChat(chat.id, lowercase, mentions, 200);
                 if (response.kind === "success") {
                     matches = filterAndSortMatches(response.matches);
                     if (matches.length > 0) {
