@@ -145,22 +145,14 @@ impl ChatEventsList {
         min_visible_event_index: EventIndex,
     ) -> Box<dyn Iterator<Item = EventOrExpiredRangeInternal> + '_> {
         let (min, max) = if let Some(start) = start {
-            match self.get(start, min_visible_event_index) {
-                Some(EventOrExpiredRangeInternal::Event(event_index)) => {
-                    if ascending {
-                        (event_index.index, self.latest_event_index.unwrap_or_default())
-                    } else {
-                        (min_visible_event_index, event_index.index)
-                    }
+            if let Some(index) = self.event_index(start) {
+                if ascending {
+                    (index, self.latest_event_index.unwrap_or_default())
+                } else {
+                    (min_visible_event_index, index)
                 }
-                Some(EventOrExpiredRangeInternal::ExpiredEventRange(from, to)) => {
-                    if ascending {
-                        (from, self.latest_event_index.unwrap_or_default())
-                    } else {
-                        (min_visible_event_index, to)
-                    }
-                }
-                None => return Box::new(std::iter::empty()),
+            } else {
+                return Box::new(std::iter::empty());
             }
         } else {
             (min_visible_event_index, self.latest_event_index.unwrap_or_default())
