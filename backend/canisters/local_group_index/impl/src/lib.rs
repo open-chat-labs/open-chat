@@ -148,7 +148,6 @@ struct Data {
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
     pub rng_seed: [u8; 32],
-    #[serde(default)]
     pub canisters_pending_events_migration_to_stable_memory: HashSet<CanisterId>,
 }
 
