@@ -6,7 +6,7 @@ use types::{EventIndex, EventWrapperInternal, MAX_EVENT_INDEX, MIN_EVENT_INDEX};
 
 #[cfg(test)]
 thread_local! {
-    static LAST_READ_FROM_SLOW: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+    static LAST_READ_FROM_SLOW: std::cell::Cell<bool> = std::cell::Cell::default();
 }
 
 fn set_last_read_from_slow(_value: bool) {
