@@ -3,7 +3,6 @@ use crate::stable_storage::ChatEventsStableStorage;
 use crate::{
     ChatEventInternal, ChatEventsMap, ChatInternal, EventKey, EventOrExpiredRangeInternal, EventsMap, MessageInternal,
 };
-use candid::Principal;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
@@ -17,18 +16,12 @@ use types::{
 #[derive(Serialize, Deserialize)]
 pub struct ChatEventsList {
     events_map: ChatEventsMap,
-    #[serde(default = "default_state_events_map")]
     stable_events_map: ChatEventsStableStorage,
     message_id_map: HashMap<MessageId, EventIndex>,
     message_event_indexes: Vec<EventIndex>,
     latest_event_index: Option<EventIndex>,
     latest_event_timestamp: Option<TimestampMillis>,
-    #[serde(default)]
     read_events_from_stable_memory: bool,
-}
-
-fn default_state_events_map() -> ChatEventsStableStorage {
-    ChatEventsStableStorage::new(Chat::Direct(Principal::anonymous().into()), None)
 }
 
 impl ChatEventsList {

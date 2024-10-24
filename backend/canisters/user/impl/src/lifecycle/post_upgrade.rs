@@ -16,14 +16,10 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
-    let (mut data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) = msgpack::deserialize(reader).unwrap();
-    for chat in data.direct_chats.iter_mut() {
-        chat.events.set_stable_memory_key_prefixes();
-    }
+    let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
+        msgpack::deserialize(reader).unwrap();
 
-    // TODO: After release change this to
-    // let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) = msgpack::deserialize(reader).unwrap();
-    canister_logger::init_with_logs(data.test_mode, Vec::new(), logs, traces);
+    canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
     let env = init_env(data.rng_seed);
     init_state(env, data, args.wasm_version);
