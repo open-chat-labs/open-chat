@@ -24,8 +24,7 @@ fn add_or_update_users_impl(args: Args, state: &mut RuntimeState) -> Response {
                     delete_oldest_if_limit_exceeded: true,
                 },
             );
-
-            state.data.buckets.sync_event(EventToSync::UserAdded(user_config.user_id));
+            state.push_event_to_buckets(EventToSync::UserAdded(user_config.user_id));
         }
     }
 

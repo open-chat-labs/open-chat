@@ -13,6 +13,6 @@ fn remove_user(args: Args) -> Response {
 
 fn remove_user_impl(args: Args, state: &mut RuntimeState) -> Response {
     state.data.users.remove(&args.user_id);
-    state.data.buckets.sync_event(EventToSync::UserRemoved(args.user_id));
+    state.push_event_to_buckets(EventToSync::UserRemoved(args.user_id));
     Response::Success
 }

@@ -198,7 +198,7 @@
         cursor: zoom-in;
         &.zoomed {
             cursor: zoom-out;
-            border-bottom-left-radius: 0;
+            border-bottom-left-radius: var(--modal-rd);
         }
 
         &.rtl {
@@ -206,7 +206,7 @@
             left: unset;
             border-radius: $radius 0 $radius 0;
             &.zoomed {
-                border-bottom-right-radius: 0;
+                border-bottom-right-radius: var(--modal-rd);
             }
         }
 
@@ -220,6 +220,10 @@
 
     img.zoomable:not(.zoomed) {
         cursor: zoom-in;
+    }
+
+    img.zoomed {
+        border-radius: var(--modal-rd);
     }
 
     img:not(.zoomed) {
