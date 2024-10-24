@@ -66,6 +66,7 @@ import type {
     ClaimDailyChitResponse,
     WalletConfig,
     Verification,
+    MessageActivityFeedResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -104,6 +105,7 @@ import {
     claimDailyChitResponse,
     apiWalletConfig,
     apiVerification,
+    messageActivityFeedResponse,
 } from "./mappersV2";
 import {
     type Database,
@@ -261,6 +263,10 @@ import {
     UserUpdatesResponse,
     UserWithdrawCryptoArgs,
     UserWithdrawCryptoResponse,
+    UserMarkMessageActivityFeedReadArgs,
+    UserMarkMessageActivityFeedReadResponse,
+    UserMessageActivityFeedArgs,
+    UserMessageActivityFeedResponse,
 } from "../../typebox";
 import { toggleNotificationsResponse } from "../notifications/mappers";
 
@@ -1653,6 +1659,26 @@ export class UserClient extends CandidService {
             toVoid,
             UserConfigureWalletArgs,
             UserConfigureWalletResponse,
+        );
+    }
+
+    markActivityFeedRead(readUpTo: bigint): Promise<void> {
+        return this.executeMsgpackUpdate(
+            "mark_message_activity_feed_read",
+            { read_up_to: readUpTo },
+            toVoid,
+            UserMarkMessageActivityFeedReadArgs,
+            UserMarkMessageActivityFeedReadResponse,
+        );
+    }
+
+    messageActivityFeed(since: bigint): Promise<MessageActivityFeedResponse> {
+        return this.executeMsgpackQuery(
+            "message_activity_feed",
+            { since },
+            messageActivityFeedResponse,
+            UserMessageActivityFeedArgs,
+            UserMessageActivityFeedResponse,
         );
     }
 }

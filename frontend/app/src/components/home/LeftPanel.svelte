@@ -3,6 +3,8 @@
     import { rtlStore } from "../../stores/rtl";
     import { currentTheme } from "../../theme/themes";
     import { layoutStore } from "../../stores/layout";
+    import { activityFeedShowing } from "../../stores/activity";
+    import ActivityFeed from "./activity/ActivityFeed.svelte";
 </script>
 
 <section
@@ -10,24 +12,28 @@
     class:rtl={$rtlStore}
     class:halloween={$currentTheme.name === "halloween"}>
     <div class="chat-list">
-        <ChatList
-            on:chatWith
-            on:halloffame
-            on:newGroup
-            on:profile
-            on:logout
-            on:unarchiveChat
-            on:wallet
-            on:upgrade
-            on:toggleMuteNotifications
-            on:communityDetails
-            on:leaveCommunity
-            on:deleteCommunity
-            on:editCommunity
-            on:leaveGroup
-            on:askToSpeak
-            on:hangup
-            on:newChannel />
+        {#if $activityFeedShowing}
+            <ActivityFeed />
+        {:else}
+            <ChatList
+                on:chatWith
+                on:halloffame
+                on:newGroup
+                on:profile
+                on:logout
+                on:unarchiveChat
+                on:wallet
+                on:upgrade
+                on:toggleMuteNotifications
+                on:communityDetails
+                on:leaveCommunity
+                on:deleteCommunity
+                on:editCommunity
+                on:leaveGroup
+                on:askToSpeak
+                on:hangup
+                on:newChannel />
+        {/if}
     </div>
 </section>
 

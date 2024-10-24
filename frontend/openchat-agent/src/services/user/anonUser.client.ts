@@ -4,6 +4,7 @@ import type {
     ChitEventsResponse,
     ClaimDailyChitResponse,
     JoinVideoCallResponse,
+    MessageActivityFeedResponse,
     SetPinNumberResponse,
     SetVideoCallPresenceResponse,
     Verification,
@@ -122,6 +123,11 @@ export class AnonUserClient {
             totalChitEarned: 0,
             referrals: [],
             walletConfig: { kind: "auto_wallet", minDollarValue: 1 },
+            messageActivitySummary: {
+                readUpToTimestamp: 0n,
+                latestTimestamp: 0n,
+                unreadCount: 0,
+            },
         });
     }
 
@@ -478,6 +484,14 @@ export class AnonUserClient {
     }
 
     configureWallet(_walletConfig: WalletConfig): Promise<void> {
+        throw new AnonymousOperationError();
+    }
+
+    markActivityFeedRead(_timestamp: bigint): Promise<void> {
+        throw new AnonymousOperationError();
+    }
+
+    messageActivityFeed(_since: bigint): Promise<MessageActivityFeedResponse> {
         throw new AnonymousOperationError();
     }
 }

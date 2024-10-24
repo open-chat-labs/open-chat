@@ -15,6 +15,8 @@ import {
     clearCache,
     getCachedExternalAchievements,
     setCachedExternalAchievements,
+    getActivityFeedEvents,
+    setActivityFeedEvents,
 } from "../utils/caching";
 import { isMainnet } from "../utils/network";
 import { getAllUsers, clearCache as clearUserCache } from "../utils/userCache";
@@ -215,6 +217,9 @@ import type {
     ChitLeaderboardResponse,
     AccessGateConfig,
     Verification,
+    MessageActivitySummary,
+    MessageActivityFeedResponse,
+    MessageActivityEvent,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -228,6 +233,9 @@ import {
     Stream,
     getOrAdd,
     waitAll,
+    MessageMap,
+    MAX_ACTIVITY_EVENTS,
+    messageContextToString,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { AsyncMessageContextMap } from "../utils/messageContext";
@@ -1657,6 +1665,7 @@ export class OpenChatAgent extends EventTarget {
         let chitState: ChitState;
         let referrals: Referral[];
         let walletConfig: WalletConfig;
+        let messageActivitySummary: MessageActivitySummary;
 
         let latestActiveGroupsCheck = BigInt(0);
         let latestUserCanisterUpdates: bigint;
@@ -1702,6 +1711,7 @@ export class OpenChatAgent extends EventTarget {
             };
             referrals = userResponse.referrals;
             walletConfig = userResponse.walletConfig;
+            messageActivitySummary = userResponse.messageActivitySummary;
             anyUpdates = true;
         } else {
             directChats = current.directChats;
@@ -1731,6 +1741,7 @@ export class OpenChatAgent extends EventTarget {
             chitState = current.chitState;
             referrals = current.referrals;
             walletConfig = current.walletConfig;
+            messageActivitySummary = current.messageActivitySummary;
 
             if (userResponse.kind === "success") {
                 directChats = userResponse.directChats.added.concat(
@@ -1787,6 +1798,8 @@ export class OpenChatAgent extends EventTarget {
                     )
                     .concat(userResponse.referrals);
                 walletConfig = userResponse.walletConfig ?? current.walletConfig;
+                messageActivitySummary =
+                    userResponse.messageActivitySummary ?? current.messageActivitySummary;
                 anyUpdates = true;
             }
         }
@@ -1966,6 +1979,7 @@ export class OpenChatAgent extends EventTarget {
             chitState,
             referrals,
             walletConfig,
+            messageActivitySummary,
         };
 
         const updatedEvents = getUpdatedEvents(directChatUpdates, groupUpdates, communityUpdates);
@@ -3750,5 +3764,97 @@ export class OpenChatAgent extends EventTarget {
             lastUpdated: updates.lastUpdated,
             achievements: Object.values(map),
         };
+    }
+
+    markActivityFeedRead(readUpTo: bigint): Promise<void> {
+        return this.userClient.markActivityFeedRead(readUpTo);
+    }
+
+    async messageActivityFeed(): Promise<MessageActivityFeedResponse> {
+        const cachedEvents = await getActivityFeedEvents();
+
+        const since = cachedEvents[0]?.timestamp ?? 0n;
+
+        const server = await this.userClient.messageActivityFeed(since);
+
+        const combined = [...cachedEvents, ...server.events];
+
+        // first sort ascending
+        combined.sort((a, b) => Number(a.timestamp) - Number(b.timestamp));
+
+        // dedupe by overwriting earlier events with the same context, activity type and event index
+        const deduped = combined.reduce((map, ev) => {
+            map.set(
+                `${messageContextToString(ev.messageContext)}_${ev.activity}_${ev.eventIndex}`,
+                ev,
+            );
+            return map;
+        }, new Map<string, MessageActivityEvent>());
+
+        // then sort descending
+        const sorted = [...deduped.values()].sort(
+            (a, b) => Number(b.timestamp) - Number(a.timestamp),
+        );
+
+        setActivityFeedEvents(sorted.slice(0, MAX_ACTIVITY_EVENTS));
+
+        const rehydrated = await this.hydrateActivityFeedEvents(sorted);
+        return {
+            total: server.total,
+            events: rehydrated,
+        };
+    }
+
+    async hydrateActivityFeedEvents(
+        activityEvents: MessageActivityEvent[],
+    ): Promise<MessageActivityEvent[]> {
+        // partition the events by message context
+        const eventIndexesByMessageContext = activityEvents.reduce((map, event) => {
+            const eventIndexes = map.get(event.messageContext) ?? [];
+            eventIndexes.push(event.eventIndex);
+            map.set(event.messageContext, eventIndexes);
+            return map;
+        }, new AsyncMessageContextMap<number>());
+
+        // look up all the messages correlated with the activity events (mostly this will come from the cache)
+        const messagesByMessageContext = await eventIndexesByMessageContext.asyncMap(
+            (ctx, idxs) => {
+                const chatId = ctx.chatId;
+                const chatKind = chatId.kind;
+
+                if (chatKind === "direct_chat") {
+                    return this.userClient
+                        .chatEventsByIndex(idxs, chatId, ctx.threadRootMessageIndex, undefined)
+                        .then((resp) => this.messagesFromEventsResponse(ctx, resp));
+                } else if (chatKind === "group_chat") {
+                    const client = this.getGroupClient(chatId.groupId);
+                    return client
+                        .chatEventsByIndex(idxs, ctx.threadRootMessageIndex, undefined)
+                        .then((resp) => this.messagesFromEventsResponse(ctx, resp));
+                } else if (chatKind === "channel") {
+                    const client = this.communityClient(chatId.communityId);
+                    return client
+                        .eventsByIndex(chatId, idxs, ctx.threadRootMessageIndex, undefined)
+                        .then((resp) => this.messagesFromEventsResponse(ctx, resp));
+                } else {
+                    throw new UnsupportedValueError("unknown chatid kind supplied", chatId);
+                }
+            },
+        );
+
+        // organise the messages into a lookup so we can stitch things back together easily
+        const messageLookup = [...messagesByMessageContext.values()].reduce((lookup, events) => {
+            events.forEach((ev) => lookup.set(ev.event.messageId, ev.event));
+            return lookup;
+        }, new MessageMap<Message>());
+
+        // tie it all together
+        return activityEvents.map((ev) => {
+            const message = messageLookup.get(ev.messageId);
+            return {
+                ...ev,
+                message,
+            };
+        });
     }
 }

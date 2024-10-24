@@ -64,6 +64,10 @@ import type {
     UserUpdatesResponse,
     UserWalletConfig,
     UserWithdrawCryptoResponse,
+    UserMessageActivityFeedResponse,
+    UserMessageActivityEvent,
+    UserMessageActivity,
+    UserMessageActivitySummary,
 } from "../../typebox";
 import type {
     EventsResponse,
@@ -127,6 +131,11 @@ import type {
     Referral,
     WalletConfig,
     Verification,
+    MessageActivityFeedResponse,
+    MessageActivityEvent,
+    MessageContext,
+    MessageActivity,
+    MessageActivitySummary,
 } from "openchat-shared";
 import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
@@ -155,6 +164,72 @@ import type { PinNumberSettings } from "openchat-shared";
 import { pinNumberFailureResponseV2 } from "../common/pinNumberErrorMapper";
 import { signedDelegation } from "../../utils/id";
 import { mapCommonResponses } from "../common/commonResponseMapper";
+
+export function messageActivityFeedResponse(
+    value: UserMessageActivityFeedResponse,
+): MessageActivityFeedResponse {
+    if ("Success" in value) {
+        return {
+            total: value.Success.total,
+            events: value.Success.events.map(messageActivityEvent),
+        };
+    }
+    return {
+        total: 0,
+        events: [],
+    };
+}
+
+export function messageActivityEvent(value: UserMessageActivityEvent): MessageActivityEvent {
+    return {
+        messageContext: messageContext(
+            value.chat,
+            mapOptional(value.thread_root_message_index, identity),
+        ),
+        eventIndex: value.event_index,
+        messageIndex: value.message_index,
+        messageId: value.message_id,
+        activity: messageActivity(value.activity),
+        timestamp: value.timestamp,
+        userId: mapOptional(value.user_id, principalBytesToString),
+        message: undefined,
+    };
+}
+
+export function messageContext(
+    chat: TChat,
+    threadRootMessageIndex: number | undefined,
+): MessageContext {
+    return {
+        chatId: chatIdentifier(chat),
+        threadRootMessageIndex,
+    };
+}
+
+export function messageActivity(value: UserMessageActivity): MessageActivity {
+    if ("Tip" === value) {
+        return "tip";
+    }
+    if ("P2PSwapAccepted" === value) {
+        return "p2p_swap_accepted";
+    }
+    if ("PollVote" === value) {
+        return "poll_vote";
+    }
+    if ("Mention" === value) {
+        return "mention";
+    }
+    if ("Crypto" === value) {
+        return "crypto";
+    }
+    if ("QuoteReply" === value) {
+        return "quote_reply";
+    }
+    if ("Reaction" === value) {
+        return "reaction";
+    }
+    throw new UnsupportedValueError("Unexpect type of ApiMessageActivity received", value);
+}
 
 export function chitEventsResponse(value: UserChitEventsResponse): ChitEventsResponse {
     if ("Success" in value) {
@@ -813,9 +888,18 @@ export function initialStateResponse(value: UserInitialStateResponse): InitialSt
             totalChitEarned: result.total_chit_earned,
             referrals: result.referrals.map(referral),
             walletConfig: walletConfig(result.wallet_config),
+            messageActivitySummary: messageActivitySummary(result.message_activity_summary),
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${value}`);
+}
+
+function messageActivitySummary(value: UserMessageActivitySummary): MessageActivitySummary {
+    return {
+        readUpToTimestamp: value.read_up_to,
+        latestTimestamp: value.latest_event_timestamp,
+        unreadCount: value.unread_count,
+    };
 }
 
 function referral(value: UserReferral): Referral {
@@ -971,6 +1055,10 @@ export function getUpdatesResponse(value: UserUpdatesResponse): UpdatesResponse 
             totalChitEarned: result.total_chit_earned,
             referrals: result.referrals.map(referral),
             walletConfig: mapOptional(result.wallet_config, walletConfig),
+            messageActivitySummary: mapOptional(
+                result.message_activity_summary,
+                messageActivitySummary,
+            ),
         };
     }
 

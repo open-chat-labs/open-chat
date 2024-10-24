@@ -35,6 +35,7 @@ import type {
     TransferSuccess,
     CurrentUserSummary,
     ExternalAchievement,
+    MessageActivityEvent,
 } from "openchat-shared";
 import {
     canRetryMessage,
@@ -51,7 +52,7 @@ import type { CryptocurrencyContent } from "openchat-shared";
 import type { PrizeContent } from "openchat-shared";
 import type { P2PSwapContent } from "openchat-shared";
 
-const CACHE_VERSION = 117;
+const CACHE_VERSION = 118;
 const EARLIEST_SUPPORTED_MIGRATION = 115;
 const MAX_INDEX = 9999999999;
 
@@ -133,6 +134,11 @@ export interface ChatSchema extends DBSchema {
             achievements: ExternalAchievement[];
         };
     };
+
+    activityFeed: {
+        key: string;
+        value: MessageActivityEvent[];
+    };
 }
 
 type MigrationFunction<T> = (
@@ -140,6 +146,17 @@ type MigrationFunction<T> = (
     principal: Principal,
     transaction: IDBPTransaction<T, StoreNames<T>[], "versionchange">,
 ) => Promise<void>;
+
+async function createActivityFeed(
+    db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
+    _tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    if (db.objectStoreNames.contains("activityFeed")) {
+        db.deleteObjectStore("activityFeed");
+    }
+    db.createObjectStore("activityFeed");
+}
 
 async function clearChatsStore(
     _db: IDBPDatabase<ChatSchema>,
@@ -191,6 +208,12 @@ const migrations: Record<number, MigrationFunction<ChatSchema>> = {
         ]);
     },
     117: clearChatAndGroups,
+    118: async (db, principal, tx) => {
+        await Promise.all([
+            clearChatsStore(db, principal, tx),
+            createActivityFeed(db, principal, tx),
+        ]);
+    },
 };
 
 async function migrate(
@@ -245,6 +268,9 @@ function nuke(db: IDBPDatabase<ChatSchema>) {
     if (db.objectStoreNames.contains("externalAchievements")) {
         db.deleteObjectStore("externalAchievements");
     }
+    if (db.objectStoreNames.contains("activityFeed")) {
+        db.deleteObjectStore("activityFeed");
+    }
     const chatEvents = db.createObjectStore("chat_events");
     chatEvents.createIndex("messageIdx", "messageKey");
     chatEvents.createIndex("expiresAt", "expiresAt");
@@ -259,6 +285,7 @@ function nuke(db: IDBPDatabase<ChatSchema>) {
     db.createObjectStore("currentUser");
     db.createObjectStore("localUserIndex");
     db.createObjectStore("externalAchievements");
+    db.createObjectStore("activityFeed");
 }
 
 function padMessageIndex(i: number): string {
@@ -1378,4 +1405,15 @@ export async function setCachedExternalAchievements(
 ): Promise<void> {
     if (db === undefined) return;
     (await db).put("externalAchievements", { lastUpdated, achievements }, "value");
+}
+
+export async function getActivityFeedEvents(): Promise<MessageActivityEvent[]> {
+    if (db === undefined) return [];
+    const result = await (await db).get("activityFeed", "value");
+    return result ?? [];
+}
+
+export async function setActivityFeedEvents(activity: MessageActivityEvent[]): Promise<void> {
+    if (db === undefined) return;
+    (await db).put("activityFeed", activity, "value");
 }

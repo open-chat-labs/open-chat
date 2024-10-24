@@ -851,7 +851,6 @@ export interface GroupInviteCodeChanged {
 }
 export interface GroupMatch {
   'id' : ChatId,
-  'gate_config' : [] | [AccessGateConfig],
   'subtype' : [] | [GroupSubtype],
   'gate' : [] | [AccessGate],
   'name' : string,

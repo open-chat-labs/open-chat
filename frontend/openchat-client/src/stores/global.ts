@@ -11,6 +11,7 @@ import type {
     EventWrapper,
     GroupChatSummary,
     Message,
+    MessageActivitySummary,
     Referral,
     WalletConfig,
 } from "openchat-shared";
@@ -32,6 +33,7 @@ export type GlobalState = {
     pinnedChats: PinnedByScope;
     achievements: Set<string>;
     referrals: Referral[];
+    messageActivitySummary: MessageActivitySummary;
 };
 
 export const chitStateStore = immutableStore<ChitState>({
@@ -59,6 +61,11 @@ export const globalStateStore = immutableStore<GlobalState>({
     },
     achievements: new Set(),
     referrals: [],
+    messageActivitySummary: {
+        readUpToTimestamp: 0n,
+        latestTimestamp: 0n,
+        unreadCount: 0,
+    },
 });
 
 export const pinnedChatsStore = derived(globalStateStore, ($global) => $global.pinnedChats);
@@ -219,6 +226,10 @@ export const unreadDirectCounts = derived(
     },
 );
 
+export const unreadActivityCount = derived([globalStateStore], ([$global]) => {
+    return $global.messageActivitySummary.unreadCount;
+});
+
 export const directVideoCallCounts = derived([globalStateStore], ([$global]) => {
     return videoCallsInProgressForChats($global.directChats.values());
 });
@@ -342,6 +353,7 @@ export function setGlobalState(
     chitState: ChitState,
     referrals: Referral[],
     walletConfig: WalletConfig,
+    messageActivitySummary: MessageActivitySummary,
 ): void {
     const [channels, directChats, groupChats] = partitionChats(allChats);
 
@@ -353,6 +365,7 @@ export function setGlobalState(
         pinnedChats,
         achievements,
         referrals,
+        messageActivitySummary,
     };
     Object.entries(channels).forEach(([communityId, channels]) => {
         const id: CommunityIdentifier = { kind: "community", communityId };

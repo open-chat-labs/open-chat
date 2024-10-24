@@ -88,7 +88,11 @@ export function mergeLocalUpdates(
     for (const [chatId, localUpdate] of localUpdates.entries()) {
         if (localUpdate.added !== undefined) {
             const current = merged.get(chatId);
-            if (current === undefined || current.membership.role === "none") {
+            if (
+                current === undefined ||
+                current.membership.role === "none" ||
+                current.membership.lapsed
+            ) {
                 merged.set(chatId, localUpdate.added);
             }
         }

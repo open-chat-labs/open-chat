@@ -433,6 +433,7 @@ import type {
     EnhancedAccessGate,
     PaymentGateApproval,
     PaymentGateApprovals,
+    MessageActivityFeedResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -528,6 +529,7 @@ import {
     favouritesVideoCallCounts,
     communityChannelVideoCallCounts,
     chitStateStore,
+    unreadActivityCount,
 } from "./stores/global";
 import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpdates";
 import { hasFlag, moderationFlags } from "./stores/flagStore";
@@ -1439,6 +1441,20 @@ export class OpenChat extends OpenChatAgentWorker {
 
         // TODO - this might be a bit shit
         return results[0];
+    }
+
+    markActivityFeedRead(readUpTo: bigint) {
+        return this.sendRequest({
+            kind: "markActivityFeedRead",
+            readUpTo,
+        });
+    }
+
+    messageActivityFeed(): Promise<MessageActivityFeedResponse> {
+        return this.sendRequest({
+            kind: "messageActivityFeed",
+            since: this._liveState.globalState.messageActivitySummary.readUpToTimestamp,
+        });
     }
 
     async approveAccessGatePayment(
@@ -5715,6 +5731,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 chatsResponse.state.chitState,
                 chatsResponse.state.referrals,
                 chatsResponse.state.walletConfig,
+                chatsResponse.state.messageActivitySummary,
             );
 
             const selectedChatId = this._liveState.selectedChatId;
@@ -7830,6 +7847,7 @@ export class OpenChat extends OpenChatAgentWorker {
     unreadGroupCounts = unreadGroupCounts;
     groupVideoCallCounts = groupVideoCallCounts;
     unreadDirectCounts = unreadDirectCounts;
+    unreadActivityCount = unreadActivityCount;
     directVideoCallCounts = directVideoCallCounts;
     favouritesVideoCallCounts = favouritesVideoCallCounts;
     unreadFavouriteCounts = unreadFavouriteCounts;
