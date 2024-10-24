@@ -64,30 +64,32 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     match result {
         RegisterPollVoteResult::Success(votes, creator) => {
-            if channel.chat.members.get(&creator).map_or(false, |m| !m.user_type.is_bot()) {
-                if let Some((message, event_index)) = channel.chat.events.message_internal(
-                    EventIndex::default(),
-                    args.thread_root_message_index,
-                    args.message_index.into(),
-                ) {
-                    state.data.user_event_sync_queue.push(
-                        creator,
-                        CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
-                            chat: Chat::Channel(state.env.canister_id().into(), channel.id),
-                            thread_root_message_index: args.thread_root_message_index,
-                            message_index: message.message_index,
-                            message_id: message.message_id,
-                            event_index,
-                            activity: MessageActivity::PollVote,
-                            timestamp: now,
-                            user_id: matches!(votes.total, TotalVotes::Visible(_)).then_some(user_id),
-                        }),
-                    );
+            if creator != user_id {
+                if channel.chat.members.get(&creator).map_or(false, |m| !m.user_type.is_bot()) {
+                    if let Some((message, event_index)) = channel.chat.events.message_internal(
+                        EventIndex::default(),
+                        args.thread_root_message_index,
+                        args.message_index.into(),
+                    ) {
+                        state.data.user_event_sync_queue.push(
+                            creator,
+                            CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
+                                chat: Chat::Channel(state.env.canister_id().into(), channel.id),
+                                thread_root_message_index: args.thread_root_message_index,
+                                message_index: message.message_index,
+                                message_id: message.message_id,
+                                event_index,
+                                activity: MessageActivity::PollVote,
+                                timestamp: now,
+                                user_id: matches!(votes.total, TotalVotes::Visible(_)).then_some(user_id),
+                            }),
+                        );
+                    }
                 }
-            }
 
-            if args.new_achievement && !member.user_type.is_bot() {
-                state.data.notify_user_of_achievement(user_id, Achievement::VotedOnPoll);
+                if args.new_achievement && !member.user_type.is_bot() {
+                    state.data.notify_user_of_achievement(user_id, Achievement::VotedOnPoll);
+                }
             }
 
             handle_activity_notification(state);

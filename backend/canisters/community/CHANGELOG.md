@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Prevent `activity` when voting on your own poll ([#6675](https://github.com/open-chat-labs/open-chat/pull/6675))
+
 ## [[2.0.1409](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1409-community)] - 2024-10-24
 
 ### Added
