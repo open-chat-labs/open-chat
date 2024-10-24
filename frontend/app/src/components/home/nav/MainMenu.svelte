@@ -5,6 +5,7 @@
     import AccountSettings from "svelte-material-icons/AccountSettingsOutline.svelte";
     import CogOutline from "svelte-material-icons/CogOutline.svelte";
     import Home from "svelte-material-icons/Home.svelte";
+    import ChartLine from "svelte-material-icons/ChartLine.svelte";
     import Road from "svelte-material-icons/RoadVariant.svelte";
     import Note from "svelte-material-icons/NoteTextOutline.svelte";
     import Graph from "svelte-material-icons/GraphOutline.svelte";
@@ -55,6 +56,10 @@
     <MenuItem on:click={() => page("/home")}>
         <Home size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
         <span slot="text">Home page</span>
+    </MenuItem>
+    <MenuItem href="https://tokenterminal.com/terminal/projects/openchat">
+        <ChartLine size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+        <span slot="text">Metrics</span>
     </MenuItem>
     <MenuItem on:click={() => page("/features")}>
         <InformationOutline size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
