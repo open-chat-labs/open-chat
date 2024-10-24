@@ -24,7 +24,7 @@ pub struct ExternalAchievementInternal {
 }
 
 impl ExternalAchievements {
-    // This will either a register a new external achievement or update an existing entry with the same id
+    // This will either register a new external achievement or update an existing entry with the same id
     pub fn register(&mut self, achievement: ExternalAchievementInitial, now: TimestampMillis) -> bool {
         if self
             .achievements
