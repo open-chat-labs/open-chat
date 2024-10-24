@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add an error log with http endpoint ([#6608](https://github.com/open-chat-labs/open-chat/pull/6608))
 - Add more achievements ([#6631](https://github.com/open-chat-labs/open-chat/pull/6631))
+- Expose count of User canisters per build version ([#6659](https://github.com/open-chat-labs/open-chat/pull/6659))
 
 ### Changed
 

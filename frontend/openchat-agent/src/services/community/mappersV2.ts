@@ -155,7 +155,7 @@ export function changeRoleResponse(
 }
 
 export function removeMemberResponse(value: CommunityRemoveMemberResponse): RemoveMemberResponse {
-    if (typeof value === "object" && "Success" in value) {
+    if (value === "Success") {
         return "success";
     } else {
         console.warn("RemoveCommunityMember failed with", value);
@@ -166,7 +166,7 @@ export function removeMemberResponse(value: CommunityRemoveMemberResponse): Remo
 export function removeMemberFromChannelResponse(
     value: CommunityRemoveMemberFromChannelResponse,
 ): RemoveMemberResponse {
-    if (typeof value === "object" && "Success" in value) {
+    if (value === "Success") {
         return "success";
     } else {
         console.warn("RemoveChannelMember failed with", value);
@@ -235,7 +235,7 @@ export function communityChannelSummaryResponse(
     value: CommunityChannelSummaryResponse,
     communityId: string,
 ): ChannelSummaryResponse {
-    if (typeof value === "object" && "Success") {
+    if (typeof value === "object" && "Success" in value) {
         return communityChannelSummary(value.Success, communityId);
     } else {
         console.warn("CommunityChannelSummary failed with", value);
@@ -377,7 +377,7 @@ export function groupMembershipUpdates(value: TGroupMembershipUpdates): GroupMem
 export function unblockUserResponse(
     value: CommunityUnblockUserResponse,
 ): UnblockCommunityUserResponse {
-    if (typeof value === "object" && "Success" in value) {
+    if (value === "Success") {
         return CommonResponses.success();
     } else {
         console.warn("UnblockCommunityUser failed with", value);

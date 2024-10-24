@@ -2862,12 +2862,10 @@ export function enableOrResetInviteCodeResponse(
 export function disableInviteCodeResponse(
     value: GroupDisableInviteCodeResponse | CommunityDisableInviteCodeResponse,
 ): DisableInviteCodeResponse {
-    if (typeof value === "object") {
-        if ("Success" in value) {
-            return "success";
-        } else if ("NotAuthorized" in value) {
-            return "not_authorized";
-        }
+    if (value === "Success") {
+        return "success";
+    } else if (value === "NotAuthorized") {
+        return "not_authorized";
     }
     console.warn("DisableInviteCode failed with ", value);
     return "failure";
