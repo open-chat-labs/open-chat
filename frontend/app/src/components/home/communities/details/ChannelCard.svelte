@@ -31,7 +31,9 @@
 
 <div class="details" on:click={() => selectChannel(channel)}>
     <div class="avatar">
-        <Avatar url={client.groupAvatarUrl(channel.avatar)} size={AvatarSize.Default} />
+        <Avatar
+            url={client.groupAvatarUrl({ id: channel.id, ...channel.avatar })}
+            size={AvatarSize.Default} />
     </div>
     <div class="channel-text">
         <h3 class="channel-name">
