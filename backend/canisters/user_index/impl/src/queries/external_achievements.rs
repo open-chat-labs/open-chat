@@ -21,7 +21,6 @@ fn external_achievements_impl(args: Args, state: &RuntimeState) -> Response {
         last_updated = max([
             last_updated,
             achievement.registered,
-            achievement.expires,
             achievement.budget_exhausted.unwrap_or_default(),
         ])
         .unwrap();
