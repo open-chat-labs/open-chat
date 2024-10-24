@@ -24,6 +24,7 @@ generate_c2c_call!(c2c_freeze_group);
 generate_c2c_call!(c2c_invite_users);
 generate_c2c_call!(c2c_join_group);
 generate_c2c_call!(c2c_leave_group);
+generate_c2c_call!(c2c_migrate_events_to_stable_memory);
 generate_c2c_call!(c2c_report_message_v2);
 generate_c2c_call!(c2c_send_message);
 generate_c2c_call!(c2c_set_user_suspended);
