@@ -33,7 +33,7 @@ class LocalCommunitySummaryUpdatesStore extends LocalUpdatesStore<
 
     markAdded(summary: CommunitySummary): void {
         this.applyUpdate(summary.id, (_) => ({
-            added: summary,
+            added: { ...summary, membership: { ...summary.membership, lapsed: false } },
             removedAtTimestamp: undefined,
         }));
     }
