@@ -22,6 +22,7 @@
     export let voters: string[] | undefined;
     export let numVotes: number;
     export let showVotes: boolean;
+    export let me: boolean;
 
     let longPressed: boolean = false;
 
@@ -70,7 +71,7 @@
 
 <TooltipWrapper bind:longPressed position={"right"} align={"middle"} enable={showVotes}>
     <div slot="target" class:readonly class="answer-text" class:finished on:click={onClick}>
-        <Progress bg={"button"} {percent}>
+        <Progress bg={me ? "accent" : "button"} {percent}>
             <div class="label">
                 <span>{answer}</span>
                 {#if voted}

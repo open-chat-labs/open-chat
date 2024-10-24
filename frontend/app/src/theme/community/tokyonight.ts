@@ -30,6 +30,7 @@ export function getTheme(base: Theme): Theme {
     base.collapsible.closed.header.txt = txt;
     base.collapsible.open.header.arrow = white;
     base.accent = raspberry;
+    base.progress.fill = lightPurple;
     base.panel.left.bg = veryDarkGray;
     base.panel.right.modal = lighterDarkGray;
     base.modal.bd = darkGray;
