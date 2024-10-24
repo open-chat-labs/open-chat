@@ -1712,7 +1712,7 @@ export class CommunityClient extends CandidService {
                 channel_id: mapOptional(channelId, (cid) => BigInt(cid)),
                 user_ids: userIds.map(principalStringToBytes),
             },
-            (value) => typeof value === "object" && "Success" in value,
+            (value) => value === "Success",
             CommunityCancelInvitesArgs,
             CommunityCancelInvitesResponse,
         );

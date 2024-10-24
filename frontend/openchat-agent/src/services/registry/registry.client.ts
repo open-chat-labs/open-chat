@@ -73,7 +73,7 @@ export class RegistryClient extends CandidService {
         return this.executeMsgpackUpdate(
             "remove_message_filter",
             { id },
-            (resp) => typeof resp !== "string" && "Success" in resp,
+            (resp) => typeof resp === "object" && "Success" in resp,
             RegistryRemoveMessageFilterArgs,
             RegistryAddMessageFilterResponse,
         );
@@ -86,7 +86,7 @@ export class RegistryClient extends CandidService {
                 ledger_canister_id: principalStringToBytes(ledger),
                 enabled,
             },
-            (resp) => typeof resp !== "string" && "Success" in resp,
+            (resp) => resp === "Success",
             RegistrySetTokenEnabledArgs,
             RegistrySetTokenEnabledResponse,
         );

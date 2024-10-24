@@ -305,7 +305,7 @@ export function sendMessageResponse(value: GroupSendMessageResponse): SendMessag
 }
 
 export function removeMemberResponse(value: GroupRemoveParticipantResponse): RemoveMemberResponse {
-    if (typeof value === "object" && "Success" in value) {
+    if (value === "Success") {
         return "success";
     } else {
         console.warn("RemoveMember failed with ", value);
