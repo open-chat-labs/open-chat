@@ -37,6 +37,7 @@ export interface Theme {
 
     progress: {
         bd: string;
+        fill: string;
     };
 
     unread: {

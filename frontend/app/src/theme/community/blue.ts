@@ -53,6 +53,7 @@ export function getTheme(): Theme {
 
         progress: {
             bd: "rgba(255,255,255,0.2)",
+            fill: "var(--accent)",
         },
 
         collapsible: {

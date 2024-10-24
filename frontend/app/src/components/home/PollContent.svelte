@@ -120,6 +120,7 @@
                 voted={votedFor(i)}
                 {txtColor}
                 {myUserId}
+                {me}
                 voters={voters(i)}
                 numVotes={voteCount(i)}
                 {showVotes} />

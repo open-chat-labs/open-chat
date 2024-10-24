@@ -31,6 +31,7 @@ export function getTheme(base: Theme): Theme {
     base.disabledTxt = txt70;
     base.placeholder = txt60;
     base.progress.bd = "rgba(0,0,0,0.2)";
+    base.progress.fill = powderBlue;
     base.collapsible.closed.header.txt = txt70;
     base.timeline.txt = black;
     base.time.txt = txt60;

@@ -134,7 +134,6 @@
 <style lang="scss">
     .noselect {
         @include no_user_select();
-        display: inline-flex;
 
         &.fill {
             width: 100%;
