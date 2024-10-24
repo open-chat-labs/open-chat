@@ -100,8 +100,18 @@ impl RuntimeState {
             max_concurrent_community_upgrades: self.data.max_concurrent_community_upgrades,
             community_upgrade_concurrency: self.data.community_upgrade_concurrency,
             event_store_client_info,
-            group_versions: self.data.local_groups.iter().map(|g| g.1.wasm_version).count_per_value(),
-            community_versions: self.data.local_communities.iter().map(|c| c.1.wasm_version).count_per_value(),
+            group_versions: self
+                .data
+                .local_groups
+                .iter()
+                .map(|g| g.1.wasm_version.to_string())
+                .count_per_value(),
+            community_versions: self
+                .data
+                .local_communities
+                .iter()
+                .map(|c| c.1.wasm_version.to_string())
+                .count_per_value(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -234,8 +244,8 @@ pub struct Metrics {
     pub max_concurrent_community_upgrades: u32,
     pub community_upgrade_concurrency: u32,
     pub event_store_client_info: EventStoreClientInfo,
-    pub group_versions: BTreeMap<BuildVersion, u32>,
-    pub community_versions: BTreeMap<BuildVersion, u32>,
+    pub group_versions: BTreeMap<String, u32>,
+    pub community_versions: BTreeMap<String, u32>,
     pub canister_ids: CanisterIds,
     pub group_upgrades_failed: Vec<FailedUpgradeCount>,
     pub canisters_pending_events_migration_to_stable_memory: u32,
