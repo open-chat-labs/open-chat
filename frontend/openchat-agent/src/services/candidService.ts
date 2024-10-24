@@ -7,6 +7,7 @@ import {
     lookupResultToBuffer,
     polling,
     ReplicaTimeError,
+    QueryCallRejectedError,
     UpdateCallRejectedError,
 } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
@@ -72,8 +73,10 @@ export abstract class CandidService {
                         ),
                     );
                 } else {
-                    throw new Error(
-                        `query rejected. Code: ${resp.reject_code}. Message: ${resp.reject_message}`,
+                    throw new QueryCallRejectedError(
+                        Principal.fromText(this.canisterId),
+                        methodName,
+                        resp,
                     );
                 }
             },
