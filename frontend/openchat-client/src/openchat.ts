@@ -4995,7 +4995,7 @@ export class OpenChat extends OpenChatAgentWorker {
         chatId: ChatIdentifier,
         searchTerm: string,
         userIds: string[],
-        maxResults = 10,
+        maxResults: number,
     ): Promise<SearchDirectChatResponse | SearchGroupChatResponse> {
         switch (chatId.kind) {
             case "channel":
