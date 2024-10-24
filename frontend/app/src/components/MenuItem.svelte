@@ -1,4 +1,5 @@
 <script lang="ts">
+    export let href: string | undefined = undefined;
     export let disabled: boolean = false;
     export let selected: boolean = false;
     export let warning: boolean = false;
@@ -16,7 +17,10 @@
 {:else if separator}
     <hr class="separator" />
 {:else}
-    <div
+    <a
+        {href}
+        target="_blank"
+        rel="noreferrer"
         class:unpadded
         tabindex="0"
         class="menu-item"
@@ -28,7 +32,7 @@
             <slot name="icon" />
         </span>
         <slot name="text" />
-    </div>
+    </a>
 {/if}
 
 <style lang="scss">
