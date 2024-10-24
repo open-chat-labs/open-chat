@@ -14,9 +14,9 @@ use types::{
 };
 
 #[derive(Serialize, Deserialize)]
-pub struct ChatEventsList {
+pub struct ChatEventsList<MStable = ChatEventsStableStorage> {
     events_map: ChatEventsMap,
-    stable_events_map: ChatEventsStableStorage,
+    stable_events_map: MStable,
     message_id_map: HashMap<MessageId, EventIndex>,
     message_event_indexes: Vec<EventIndex>,
     latest_event_index: Option<EventIndex>,
@@ -24,9 +24,9 @@ pub struct ChatEventsList {
     read_events_from_stable_memory: bool,
 }
 
-impl ChatEventsList {
+impl<MStable: EventsMap> ChatEventsList<MStable> {
     pub fn set_stable_memory_prefix(&mut self, chat: Chat, thread_root_message_index: Option<MessageIndex>) {
-        self.stable_events_map = ChatEventsStableStorage::new(chat, thread_root_message_index);
+        self.stable_events_map = MStable::new(chat, thread_root_message_index);
     }
 
     pub fn set_read_events_from_stable_memory(&mut self, value: bool) {
@@ -51,7 +51,7 @@ impl ChatEventsList {
     pub fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
         ChatEventsList {
             events_map: ChatEventsMap::default(),
-            stable_events_map: ChatEventsStableStorage::new(chat, thread_root_message_index),
+            stable_events_map: MStable::new(chat, thread_root_message_index),
             message_id_map: HashMap::new(),
             message_event_indexes: Vec::new(),
             latest_event_index: None,

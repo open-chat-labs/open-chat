@@ -2,7 +2,7 @@ use crate::{ChatEventInternal, EventsMap};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::ops::RangeBounds;
-use types::{EventIndex, EventWrapperInternal, MAX_EVENT_INDEX, MIN_EVENT_INDEX};
+use types::{Chat, EventIndex, EventWrapperInternal, MessageIndex, MAX_EVENT_INDEX, MIN_EVENT_INDEX};
 
 #[cfg(test)]
 thread_local! {
@@ -25,6 +25,15 @@ pub struct HybridMap<MSlow> {
 }
 
 impl<MSlow: EventsMap> EventsMap for HybridMap<MSlow> {
+    fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
+        HybridMap {
+            fast: BTreeMap::new(),
+            slow: MSlow::new(chat, thread_root_message_index),
+            latest_event_index: EventIndex::default(),
+            max_events_in_fast_map: 1000,
+        }
+    }
+
     fn get(&self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
         if event_index > self.latest_event_index {
             set_last_read_from_slow(false);
