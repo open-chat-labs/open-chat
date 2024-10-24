@@ -3777,7 +3777,7 @@ export class OpenChatAgent extends EventTarget {
 
         const server = await this.userClient.messageActivityFeed(since);
 
-        const combined = [...server.events, ...cachedEvents];
+        const combined = [...cachedEvents, ...server.events];
 
         // first sort ascending
         combined.sort((a, b) => Number(a.timestamp) - Number(b.timestamp));
