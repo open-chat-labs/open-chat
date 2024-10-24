@@ -15,11 +15,10 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
-    let (data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) = msgpack::deserialize(reader).unwrap();
+    let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
+        msgpack::deserialize(reader).unwrap();
 
-    // TODO: After release change this to
-    // let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) = msgpack::deserialize(reader).unwrap();
-    canister_logger::init_with_logs(data.test_mode, Vec::new(), logs, traces);
+    canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
     let env = init_env(data.rng_seed, data.oc_key_pair.is_initialised());
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id, data.test_mode);
