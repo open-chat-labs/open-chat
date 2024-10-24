@@ -8,7 +8,7 @@ use local_group_index_canister::ChildCanisterType;
 use model::local_group_map::LocalGroupMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 use std::time::Duration;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChildCanisterWasms, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId,
@@ -17,6 +17,7 @@ use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
 use utils::env::Environment;
+use utils::iterator_extensions::IteratorExtensions;
 use utils::time::MINUTE_IN_MS;
 
 mod guards;
@@ -99,6 +100,18 @@ impl RuntimeState {
             max_concurrent_community_upgrades: self.data.max_concurrent_community_upgrades,
             community_upgrade_concurrency: self.data.community_upgrade_concurrency,
             event_store_client_info,
+            group_versions: self
+                .data
+                .local_groups
+                .iter()
+                .map(|g| g.1.wasm_version.clone())
+                .count_per_value(),
+            community_versions: self
+                .data
+                .local_communities
+                .iter()
+                .map(|c| c.1.wasm_version.clone())
+                .count_per_value(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -232,6 +245,8 @@ pub struct Metrics {
     pub max_concurrent_community_upgrades: u32,
     pub community_upgrade_concurrency: u32,
     pub event_store_client_info: EventStoreClientInfo,
+    pub group_versions: BTreeMap<BuildVersion, u32>,
+    pub community_versions: BTreeMap<BuildVersion, u32>,
     pub canister_ids: CanisterIds,
     pub group_upgrades_failed: Vec<FailedUpgradeCount>,
     pub canisters_pending_events_migration_to_stable_memory: u32,
