@@ -56,6 +56,12 @@ impl NervousSystems {
             .and_then(|ns| ns.neuron_id_for_submitting_proposals)
     }
 
+    pub fn mark_disabled(&mut self, governance_canister_id: &CanisterId) {
+        if let Some(ns) = self.nervous_systems.get_mut(governance_canister_id) {
+            ns.disabled = true;
+        }
+    }
+
     pub fn validate_submit_proposal_payment(
         &self,
         governance_canister_id: &CanisterId,
@@ -99,7 +105,10 @@ impl NervousSystems {
         self.nervous_systems
             .values_mut()
             .filter(|ns| {
-                ns.proposals_to_be_pushed.queue.is_empty() && !ns.proposals_to_be_pushed.in_progress && !ns.sync_in_progress
+                !ns.disabled
+                    && ns.proposals_to_be_pushed.queue.is_empty()
+                    && !ns.proposals_to_be_pushed.in_progress
+                    && !ns.sync_in_progress
             })
             .map(|ns| {
                 ns.sync_in_progress = true;
@@ -331,6 +340,8 @@ pub struct NervousSystem {
     min_dissolve_delay_to_vote: Milliseconds,
     proposal_rejection_fee: u64,
     proposal_messages: BTreeMap<ProposalId, (MessageIndex, MessageId)>,
+    #[serde(default)]
+    disabled: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -368,6 +379,7 @@ impl NervousSystem {
             min_dissolve_delay_to_vote: nervous_system.min_dissolve_delay_to_vote,
             proposal_rejection_fee: nervous_system.proposal_rejection_fee,
             proposal_messages: BTreeMap::new(),
+            disabled: false,
         }
     }
 
@@ -506,6 +518,7 @@ impl From<&NervousSystem> for NervousSystemMetrics {
             min_neuron_stake: ns.min_neuron_stake,
             min_dissolve_delay_to_vote: ns.min_dissolve_delay_to_vote,
             proposal_rejection_fee: ns.proposal_rejection_fee,
+            disabled: ns.disabled,
         }
     }
 }

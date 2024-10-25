@@ -72,7 +72,7 @@ async fn fetch_payload_rendering_if_required(governance_canister_id: CanisterId,
                     }
                 }
                 Err(error) => {
-                    mark_proposal_pushed(governance_canister_id, proposal, None, None);
+                    mark_proposal_pushed(governance_canister_id, proposal, Err(error.0));
                     return Err(error);
                 }
             }
@@ -102,18 +102,14 @@ async fn push_group_proposal(governance_canister_id: CanisterId, group_id: ChatI
         correlation_id: 0,
     };
 
-    let response = group_canister_c2c_client::c2c_send_message(group_id.into(), &send_message_args).await;
+    let canister_id = group_id.into();
+    let response = group_canister_c2c_client::c2c_send_message(canister_id, &send_message_args).await;
 
-    if let Ok(group_canister::c2c_send_message::Response::Success(result)) = &response {
-        mark_proposal_pushed(governance_canister_id, proposal, Some(message_id), Some(result.message_index));
-    } else {
-        mark_proposal_pushed(
-            governance_canister_id,
-            proposal,
-            is_success(response, group_id.into()).then_some(message_id),
-            None,
-        );
-    }
+    mark_proposal_pushed(
+        governance_canister_id,
+        proposal,
+        extract_group_result(message_id, response, canister_id),
+    );
 }
 
 async fn push_channel_proposal(
@@ -143,52 +139,78 @@ async fn push_channel_proposal(
         message_filter_failed: None,
     };
 
-    let response = community_canister_c2c_client::c2c_send_message(community_id.into(), &send_message_args).await;
+    let canister_id = community_id.into();
+    let response = community_canister_c2c_client::c2c_send_message(canister_id, &send_message_args).await;
 
-    if let Ok(community_canister::c2c_send_message::Response::Success(result)) = &response {
-        mark_proposal_pushed(governance_canister_id, proposal, Some(message_id), Some(result.message_index));
-    } else {
-        mark_proposal_pushed(
-            governance_canister_id,
-            proposal,
-            is_success(response, community_id.into()).then_some(message_id),
-            None,
-        );
-    }
+    mark_proposal_pushed(
+        governance_canister_id,
+        proposal,
+        extract_channel_result(message_id, response, canister_id),
+    );
 }
 
 fn mark_proposal_pushed(
     governance_canister_id: CanisterId,
     proposal: Proposal,
-    message_id_if_success: Option<MessageId>,
-    message_index_if_known: Option<MessageIndex>,
+    result: Result<(MessageId, Option<MessageIndex>), RejectionCode>,
 ) {
     mutate_state(|state| {
-        if let Some(message_id) = message_id_if_success {
-            state.data.nervous_systems.mark_proposal_pushed(
-                &governance_canister_id,
-                proposal,
-                message_id,
-                message_index_if_known,
-            );
-        } else {
-            state
-                .data
-                .nervous_systems
-                .mark_proposal_push_failed(&governance_canister_id, proposal);
+        match result {
+            Ok((message_id, message_index)) => {
+                state
+                    .data
+                    .nervous_systems
+                    .mark_proposal_pushed(&governance_canister_id, proposal, message_id, message_index);
+            }
+            Err(code) => {
+                state
+                    .data
+                    .nervous_systems
+                    .mark_proposal_push_failed(&governance_canister_id, proposal);
+
+                if code == RejectionCode::DestinationInvalid {
+                    state.data.nervous_systems.mark_disabled(&governance_canister_id);
+                }
+            }
         }
         start_job_if_required(state);
     });
 }
 
-fn is_success<T: Debug>(response: CallResult<T>, canister_id: CanisterId) -> bool {
+fn extract_channel_result(
+    message_id: MessageId,
+    response: CallResult<community_canister::c2c_send_message::Response>,
+    canister_id: CanisterId,
+) -> Result<(MessageId, Option<MessageIndex>), RejectionCode> {
+    match response {
+        Ok(community_canister::c2c_send_message::Response::Success(result)) => Ok((message_id, Some(result.message_index))),
+        other => extract_result_inner(message_id, other, canister_id),
+    }
+}
+
+fn extract_group_result(
+    message_id: MessageId,
+    response: CallResult<group_canister::c2c_send_message::Response>,
+    canister_id: CanisterId,
+) -> Result<(MessageId, Option<MessageIndex>), RejectionCode> {
+    match response {
+        Ok(group_canister::c2c_send_message::Response::Success(result)) => Ok((message_id, Some(result.message_index))),
+        other => extract_result_inner(message_id, other, canister_id),
+    }
+}
+
+fn extract_result_inner<T: Debug>(
+    message_id: MessageId,
+    response: CallResult<T>,
+    canister_id: CanisterId,
+) -> Result<(MessageId, Option<MessageIndex>), RejectionCode> {
     match response {
         // If the messageId has already been used, treat that as success
-        Err((code, error)) if code == RejectionCode::CanisterError && error.contains("MessageId") => true,
-        Err(_) => false,
+        Err((code, error)) if code == RejectionCode::CanisterError && error.contains("MessageId") => Ok((message_id, None)),
+        Err((code, _)) => Err(code),
         _ => {
             error!(?response, %canister_id, "Failed to push proposal");
-            false
+            Err(RejectionCode::CanisterError)
         }
     }
 }
