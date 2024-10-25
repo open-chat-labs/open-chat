@@ -42,17 +42,16 @@ pub fn garbage_collect(prefix: KeyPrefix) -> Result<u32, u32> {
     with_map_mut(|m| {
         // If < 1B instructions have been used so far, delete another 100 keys, or exit if complete
         while ic_cdk::api::instruction_counter() < 1_000_000_000 {
-            for _ in 0..100 {
-                if let Some((key, _)) = m.range(&start..).next() {
-                    if *key.prefix() == prefix {
-                        m.remove(&key);
-                        count += 1;
-                    } else {
-                        return Ok(count);
-                    }
-                } else {
-                    return Ok(count);
-                }
+            let keys: Vec<_> = m
+                .range(&start..)
+                .map(|(k, _)| k)
+                .take_while(|k| *k.prefix() == prefix)
+                .take(100)
+                .collect();
+
+            count += keys.len() as u32;
+            for key in keys {
+                m.remove(&key);
             }
         }
         Err(count)
