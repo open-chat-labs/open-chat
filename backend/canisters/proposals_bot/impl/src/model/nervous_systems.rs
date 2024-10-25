@@ -120,14 +120,14 @@ impl NervousSystems {
     pub fn any_proposals_to_push(&self) -> bool {
         self.nervous_systems
             .values()
-            .any(|ns| !ns.proposals_to_be_pushed.queue.is_empty())
+            .any(|ns| !ns.disabled && !ns.proposals_to_be_pushed.queue.is_empty())
     }
 
     pub fn dequeue_next_proposal_to_push(&mut self) -> Option<ProposalToPush> {
         for ns in self
             .nervous_systems
             .values_mut()
-            .filter(|n| !n.proposals_to_be_pushed.in_progress)
+            .filter(|ns| !ns.disabled && !ns.proposals_to_be_pushed.in_progress)
         {
             if let Some((_, p)) = ns.proposals_to_be_pushed.queue.pop_first() {
                 ns.proposals_to_be_pushed.in_progress = true;
@@ -164,13 +164,15 @@ impl NervousSystems {
     pub fn any_proposals_to_update(&self) -> bool {
         self.nervous_systems
             .values()
-            .any(|ns| !ns.proposals_to_be_updated.pending.is_empty())
+            .any(|ns| !ns.disabled && !ns.proposals_to_be_updated.pending.is_empty())
     }
 
     pub fn dequeue_next_proposals_to_update(&mut self) -> Option<ProposalsToUpdate> {
         self.nervous_systems
             .values_mut()
-            .find(|ns| !ns.proposals_to_be_updated.pending.is_empty() && !ns.proposals_to_be_updated.in_progress)
+            .find(|ns| {
+                !ns.disabled && !ns.proposals_to_be_updated.pending.is_empty() && !ns.proposals_to_be_updated.in_progress
+            })
             .map(|ns| {
                 ns.proposals_to_be_updated.in_progress = true;
                 let proposals = std::mem::take(&mut ns.proposals_to_be_updated.pending)
@@ -385,6 +387,10 @@ impl NervousSystem {
 
     pub fn chat_id(&self) -> MultiUserChat {
         self.chat_id
+    }
+
+    pub fn disabled(&self) -> bool {
+        self.disabled
     }
 
     pub fn process_proposal(&mut self, proposal: Proposal, finished: bool) {
