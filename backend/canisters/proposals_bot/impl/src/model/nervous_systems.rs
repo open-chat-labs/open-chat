@@ -56,6 +56,12 @@ impl NervousSystems {
             .and_then(|ns| ns.neuron_id_for_submitting_proposals)
     }
 
+    pub fn mark_disabled(&mut self, governance_canister_id: &CanisterId) {
+        if let Some(ns) = self.nervous_systems.get_mut(governance_canister_id) {
+            ns.disabled = true;
+        }
+    }
+
     pub fn validate_submit_proposal_payment(
         &self,
         governance_canister_id: &CanisterId,
@@ -99,7 +105,10 @@ impl NervousSystems {
         self.nervous_systems
             .values_mut()
             .filter(|ns| {
-                ns.proposals_to_be_pushed.queue.is_empty() && !ns.proposals_to_be_pushed.in_progress && !ns.sync_in_progress
+                !ns.disabled
+                    && ns.proposals_to_be_pushed.queue.is_empty()
+                    && !ns.proposals_to_be_pushed.in_progress
+                    && !ns.sync_in_progress
             })
             .map(|ns| {
                 ns.sync_in_progress = true;
@@ -111,14 +120,14 @@ impl NervousSystems {
     pub fn any_proposals_to_push(&self) -> bool {
         self.nervous_systems
             .values()
-            .any(|ns| !ns.proposals_to_be_pushed.queue.is_empty())
+            .any(|ns| !ns.disabled && !ns.proposals_to_be_pushed.queue.is_empty())
     }
 
     pub fn dequeue_next_proposal_to_push(&mut self) -> Option<ProposalToPush> {
         for ns in self
             .nervous_systems
             .values_mut()
-            .filter(|n| !n.proposals_to_be_pushed.in_progress)
+            .filter(|ns| !ns.disabled && !ns.proposals_to_be_pushed.in_progress)
         {
             if let Some((_, p)) = ns.proposals_to_be_pushed.queue.pop_first() {
                 ns.proposals_to_be_pushed.in_progress = true;
@@ -155,13 +164,15 @@ impl NervousSystems {
     pub fn any_proposals_to_update(&self) -> bool {
         self.nervous_systems
             .values()
-            .any(|ns| !ns.proposals_to_be_updated.pending.is_empty())
+            .any(|ns| !ns.disabled && !ns.proposals_to_be_updated.pending.is_empty())
     }
 
     pub fn dequeue_next_proposals_to_update(&mut self) -> Option<ProposalsToUpdate> {
         self.nervous_systems
             .values_mut()
-            .find(|ns| !ns.proposals_to_be_updated.pending.is_empty() && !ns.proposals_to_be_updated.in_progress)
+            .find(|ns| {
+                !ns.disabled && !ns.proposals_to_be_updated.pending.is_empty() && !ns.proposals_to_be_updated.in_progress
+            })
             .map(|ns| {
                 ns.proposals_to_be_updated.in_progress = true;
                 let proposals = std::mem::take(&mut ns.proposals_to_be_updated.pending)
@@ -331,6 +342,8 @@ pub struct NervousSystem {
     min_dissolve_delay_to_vote: Milliseconds,
     proposal_rejection_fee: u64,
     proposal_messages: BTreeMap<ProposalId, (MessageIndex, MessageId)>,
+    #[serde(default)]
+    disabled: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -368,11 +381,16 @@ impl NervousSystem {
             min_dissolve_delay_to_vote: nervous_system.min_dissolve_delay_to_vote,
             proposal_rejection_fee: nervous_system.proposal_rejection_fee,
             proposal_messages: BTreeMap::new(),
+            disabled: false,
         }
     }
 
     pub fn chat_id(&self) -> MultiUserChat {
         self.chat_id
+    }
+
+    pub fn disabled(&self) -> bool {
+        self.disabled
     }
 
     pub fn process_proposal(&mut self, proposal: Proposal, finished: bool) {
@@ -506,6 +524,7 @@ impl From<&NervousSystem> for NervousSystemMetrics {
             min_neuron_stake: ns.min_neuron_stake,
             min_dissolve_delay_to_vote: ns.min_dissolve_delay_to_vote,
             proposal_rejection_fee: ns.proposal_rejection_fee,
+            disabled: ns.disabled,
         }
     }
 }

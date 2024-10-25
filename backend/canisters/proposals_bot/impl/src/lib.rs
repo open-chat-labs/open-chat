@@ -150,6 +150,7 @@ pub struct NervousSystemMetrics {
     pub min_neuron_stake: u64,
     pub min_dissolve_delay_to_vote: Milliseconds,
     pub proposal_rejection_fee: u64,
+    pub disabled: bool,
 }
 
 #[derive(Serialize, Debug)]
