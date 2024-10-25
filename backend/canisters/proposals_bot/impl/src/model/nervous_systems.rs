@@ -518,6 +518,7 @@ impl From<&NervousSystem> for NervousSystemMetrics {
             min_neuron_stake: ns.min_neuron_stake,
             min_dissolve_delay_to_vote: ns.min_dissolve_delay_to_vote,
             proposal_rejection_fee: ns.proposal_rejection_fee,
+            disabled: ns.disabled,
         }
     }
 }
