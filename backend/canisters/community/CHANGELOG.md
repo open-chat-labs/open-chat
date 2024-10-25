@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Avoid extra key lookup when iterating over events ([#6680](https://github.com/open-chat-labs/open-chat/pull/6680))
 
+### Fixed
+
+- Expose `import_group` over msgpack ([#6681](https://github.com/open-chat-labs/open-chat/pull/6681))
+
 ## [[2.0.1414](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1414-community)] - 2024-10-24
 
 ### Fixed
