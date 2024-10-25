@@ -1450,11 +1450,22 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    messageActivityFeed(): Promise<MessageActivityFeedResponse> {
-        return this.sendRequest({
+    async messageActivityFeed(): Promise<MessageActivityFeedResponse> {
+        const feed = await this.sendRequest({
             kind: "messageActivityFeed",
             since: this._liveState.globalState.messageActivitySummary.readUpToTimestamp,
         });
+
+        const userIds = new Set<string>();
+        for (const event of feed.events) {
+            if (event.userId !== undefined) {
+                userIds.add(event.userId);
+            }
+        }
+
+        await this.getMissingUsers(userIds);
+
+        return feed;
     }
 
     async approveAccessGatePayment(
