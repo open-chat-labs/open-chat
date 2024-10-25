@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
 - Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
 - Mark proposals group disabled if it has been deleted ([#6683](https://github.com/open-chat-labs/open-chat/pull/6683))
+- Check `disabled` flag for all operations not just checking for updates ([#6684](https://github.com/open-chat-labs/open-chat/pull/6684))
 
 ## [[2.0.1307](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1307-proposals_bot)] - 2024-08-26
 
