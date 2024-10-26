@@ -377,9 +377,9 @@ pub struct GroupMemberInternal {
     pub mentions: Mentions,
     #[serde(rename = "t", default, skip_serializing_if = "HashSet::is_empty")]
     pub threads: HashSet<MessageIndex>,
-    #[serde(rename = "ft", default, skip_serializing_if = "TimestampedSet::is_empty")]
+    #[serde(rename = "tf", default, skip_serializing_if = "TimestampedSet::is_empty")]
     pub followed_threads: TimestampedSet<MessageIndex>,
-    #[serde(rename = "ut", default, skip_serializing_if = "TimestampedSet::is_empty")]
+    #[serde(rename = "tu", default, skip_serializing_if = "TimestampedSet::is_empty")]
     pub unfollowed_threads: TimestampedSet<MessageIndex>,
     #[serde(rename = "p", default, skip_serializing_if = "BTreeMap::is_empty")]
     pub proposal_votes: BTreeMap<TimestampMillis, Vec<MessageIndex>>,
@@ -592,7 +592,7 @@ mod tests {
         let member_bytes = msgpack::serialize_then_unwrap(&member);
         let member_bytes_len = member_bytes.len();
 
-        assert_eq!(member_bytes_len, 134);
+        assert_eq!(member_bytes_len, 160);
 
         let _deserialized: GroupMemberInternal = msgpack::deserialize_then_unwrap(&member_bytes);
     }

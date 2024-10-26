@@ -5,15 +5,17 @@ use types::TimestampMillis;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct TimestampedSet<T: Hash + Ord> {
+    #[serde(rename = "m")]
     map: HashMap<T, TimestampMillis>,
-    by_last_updated: BTreeSet<(TimestampMillis, T)>,
+    #[serde(rename = "t")]
+    by_timestamp: BTreeSet<(TimestampMillis, T)>,
 }
 
 impl<T: Hash + Ord> TimestampedSet<T> {
     pub fn new() -> TimestampedSet<T> {
         TimestampedSet {
             map: HashMap::new(),
-            by_last_updated: BTreeSet::new(),
+            by_timestamp: BTreeSet::new(),
         }
     }
 
@@ -33,13 +35,13 @@ impl<T: Hash + Ord + Clone> TimestampedSet<T> {
 
     pub fn insert(&mut self, value: T, timestamp: TimestampMillis) {
         self.remove(value.clone());
-        self.by_last_updated.insert((timestamp, value.clone()));
+        self.by_timestamp.insert((timestamp, value.clone()));
         self.map.insert(value, timestamp);
     }
 
     pub fn remove(&mut self, value: T) -> Option<TimestampMillis> {
         if let Some(ts) = self.map.remove(&value) {
-            self.by_last_updated.remove(&(ts, value));
+            self.by_timestamp.remove(&(ts, value));
             Some(ts)
         } else {
             None
@@ -47,11 +49,11 @@ impl<T: Hash + Ord + Clone> TimestampedSet<T> {
     }
 
     pub fn iter(&self) -> impl DoubleEndedIterator<Item = (&T, TimestampMillis)> {
-        self.by_last_updated.iter().map(|(ts, v)| (v, *ts))
+        self.by_timestamp.iter().map(|(ts, v)| (v, *ts))
     }
 
     pub fn updated_since(&self, since: TimestampMillis) -> impl Iterator<Item = (&T, TimestampMillis)> {
-        self.by_last_updated
+        self.by_timestamp
             .iter()
             .rev()
             .take_while(move |(k, _)| *k > since)
@@ -59,7 +61,7 @@ impl<T: Hash + Ord + Clone> TimestampedSet<T> {
     }
 
     pub fn last_updated(&self) -> Option<TimestampMillis> {
-        self.by_last_updated.iter().next_back().map(|(ts, _)| *ts)
+        self.by_timestamp.iter().next_back().map(|(ts, _)| *ts)
     }
 }
 
@@ -89,11 +91,11 @@ mod tests {
 
         set.insert(1, 2);
         assert_eq!(set.map.len(), 1);
-        assert_eq!(set.by_last_updated.len(), 1);
+        assert_eq!(set.by_timestamp.len(), 1);
 
         set.insert(1, 4);
         assert_eq!(set.map.len(), 1);
-        assert_eq!(set.by_last_updated.len(), 1);
+        assert_eq!(set.by_timestamp.len(), 1);
 
         assert_eq!(set.get(&1).unwrap(), 4);
     }
@@ -107,7 +109,7 @@ mod tests {
         }
 
         assert_eq!(set.map.len(), 100);
-        assert_eq!(set.by_last_updated.len(), 100);
+        assert_eq!(set.by_timestamp.len(), 100);
 
         let results: Vec<_> = set.updated_since(90).map(|(i, _)| *i).collect();
         let expected: Vec<TimestampMillis> = (91..100).rev().collect();
