@@ -49,18 +49,17 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
             .events
             .user_metrics(&member.user_id, Some(updates_since))
             .map(|m| m.hydrate()),
-        latest_threads: chat.events.latest_threads(
-            member.min_visible_event_index(),
-            member.threads.iter(),
-            Some(updates_since),
-            MAX_THREADS_IN_SUMMARY,
-            member.user_id,
-        ),
-        unfollowed_threads: chat.events.unfollowed_threads_since(
-            member.unfollowed_threads.iter(),
-            updates_since,
-            member.user_id,
-        ),
+        latest_threads: member
+            .followed_threads
+            .updated_since(updates_since)
+            .filter_map(|(i, _)| state.data.chat.events.thread_details(i))
+            .take(MAX_THREADS_IN_SUMMARY)
+            .collect(),
+        unfollowed_threads: member
+            .unfollowed_threads
+            .updated_since(updates_since)
+            .map(|(i, _)| *i)
+            .collect(),
         rules_accepted: member
             .rules_accepted
             .as_ref()

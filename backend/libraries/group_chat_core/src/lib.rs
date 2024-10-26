@@ -19,9 +19,8 @@ use types::{
     GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent,
     MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned,
     MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions,
-    PermissionsChanged, PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview,
-    TimestampMillis, Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version, Versioned,
-    VersionedRules, VideoCall,
+    PermissionsChanged, PushEventResult, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis,
+    Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall,
 };
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::document_validation::validate_avatar;
@@ -706,60 +705,50 @@ impl GroupChatCore {
         let mut users_to_notify = HashSet::new();
 
         if !suppressed {
-            let mut thread_followers: Option<Vec<UserId>> = None;
-
-            if let Some(thread_root_message) = thread_root_message_index.and_then(|root_message_index| {
-                self.events
+            if let Some(root_message_index) = thread_root_message_index {
+                if let Some((root_message_sender, thread_summary)) = self
+                    .events
                     .visible_main_events_reader(min_visible_event_index)
                     .message_internal(root_message_index.into())
-            }) {
-                if thread_root_message.sender != sender
-                    && self
-                        .members
-                        .get(&thread_root_message.sender)
-                        .map_or(false, |m| !m.user_type.is_bot())
+                    .and_then(|m| m.thread_summary.map(|s| (m.sender, s)))
                 {
-                    users_to_notify.insert(thread_root_message.sender);
-                }
+                    for follower in thread_summary.followers {
+                        if let Some(member) = self.members.get_mut(&follower) {
+                            // Bump the thread timestamp for all followers
+                            member.followed_threads.insert(root_message_index, now);
+                            if !member.user_type.is_bot() && !member.notifications_muted.value {
+                                users_to_notify.insert(member.user_id);
+                            }
+                        }
+                    }
 
-                if let Some(thread_summary) = thread_root_message.thread_summary {
-                    thread_followers = Some(thread_summary.participants_and_followers(false));
-
-                    let is_first_reply = thread_summary.reply_count == 1;
-                    if is_first_reply {
-                        mentions.insert(thread_root_message.sender);
+                    let is_first_reply = message_index == MessageIndex::default();
+                    if !mentions_disabled && is_first_reply && root_message_sender != sender {
+                        mentions.insert(root_message_sender);
                     }
                 }
+            } else {
+                for member in self
+                    .members
+                    .iter_mut()
+                    .filter(|m| !m.suspended.value && m.user_id != sender && !m.user_type.is_bot())
+                {
+                    let mentioned = !mentions_disabled && (everyone_mentioned || mentions.contains(&member.user_id));
+                    if mentioned {
+                        // Mention this member
+                        member.mentions.add(thread_root_message_index, message_index, now);
+                    }
 
-                for user_id in mentions.iter().copied().chain([sender]) {
-                    self.members.add_thread(&user_id, thread_root_message.message_index);
-                }
-            }
-
-            for member in self
-                .members
-                .iter_mut()
-                .filter(|m| !m.suspended.value && m.user_id != sender && !m.user_type.is_bot())
-            {
-                let mentioned = !mentions_disabled && (everyone_mentioned || mentions.contains(&member.user_id));
-
-                if mentioned {
-                    // Mention this member
-                    member.mentions.add(thread_root_message_index, message_index, now);
-                }
-
-                let notification_candidate = thread_followers.as_ref().map_or(true, |ps| ps.contains(&member.user_id));
-
-                if mentioned || (notification_candidate && !member.notifications_muted.value) {
-                    // Notify this member
-                    users_to_notify.insert(member.user_id);
+                    if mentioned || !member.notifications_muted.value {
+                        users_to_notify.insert(member.user_id);
+                    }
                 }
             }
         }
 
         Success(SendMessageSuccess {
             message_event,
-            users_to_notify: users_to_notify.into_iter().collect(),
+            users_to_notify: users_to_notify.iter().copied().collect(),
         })
     }
 
@@ -1706,8 +1695,8 @@ impl GroupChatCore {
             .follow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)
         {
             chat_events::FollowThreadResult::Success => {
-                member.unfollowed_threads.retain(|i| *i != thread_root_message_index);
-                member.threads.insert(thread_root_message_index);
+                member.followed_threads.insert(thread_root_message_index, now);
+                member.unfollowed_threads.remove(thread_root_message_index);
                 Success
             }
             chat_events::FollowThreadResult::AlreadyFollowing => AlreadyFollowing,
@@ -1738,8 +1727,8 @@ impl GroupChatCore {
             .unfollow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)
         {
             chat_events::UnfollowThreadResult::Success => {
-                member.threads.remove(&thread_root_message_index);
-                member.unfollowed_threads.push_if_not_contains(thread_root_message_index);
+                member.followed_threads.remove(thread_root_message_index);
+                member.unfollowed_threads.insert(thread_root_message_index, now);
                 Success
             }
             chat_events::UnfollowThreadResult::NotFollowing => NotFollowing,
@@ -1750,11 +1739,11 @@ impl GroupChatCore {
     pub fn remove_expired_events(&mut self, now: TimestampMillis) -> RemoveExpiredEventsResult {
         let result = self.events.remove_expired_events(now);
 
-        for (thread_root_message_index, users) in result.threads.iter() {
-            for user_id in users {
+        for thread in result.threads.iter() {
+            for user_id in thread.followers.iter() {
                 if let Some(member) = self.members.get_mut(user_id) {
-                    member.threads.remove(thread_root_message_index);
-                    member.unfollowed_threads.retain(|&m| m != *thread_root_message_index);
+                    member.threads.remove(&thread.root_message_index);
+                    member.followed_threads.remove(thread.root_message_index);
                 }
             }
         }

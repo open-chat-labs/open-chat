@@ -1,7 +1,6 @@
 use crate::{incr, MessageContentInternal};
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
-use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{HashMap, HashSet};
 use std::ops::DerefMut;
 use types::{
@@ -349,8 +348,24 @@ impl From<&MembersAddedToPublicChannelInternal> for MembersAddedToDefaultChannel
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct ThreadSummaryInternal {
-    #[serde(rename = "i")]
-    pub participant_ids: Vec<UserId>,
+    #[serde(rename = "p")]
+    pub participants: Vec<UserId>,
+    #[serde(default, rename = "f2")]
+    pub followers: HashSet<UserId>,
+    #[serde(rename = "r")]
+    pub reply_count: u32,
+    #[serde(rename = "e")]
+    pub latest_event_index: EventIndex,
+    #[serde(rename = "t")]
+    pub latest_event_timestamp: TimestampMillis,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct ThreadSummaryInternalCombined {
+    #[serde(rename = "p", alias = "i")]
+    pub participants: Vec<UserId>,
+    #[serde(default, rename = "f2")]
+    pub followers: HashSet<UserId>,
     #[serde(default, rename = "f")]
     pub follower_ids: HashMap<UserId, Timestamped<bool>>,
     #[serde(rename = "r")]
@@ -361,11 +376,33 @@ pub struct ThreadSummaryInternal {
     pub latest_event_timestamp: TimestampMillis,
 }
 
+impl From<ThreadSummaryInternalCombined> for ThreadSummaryInternal {
+    fn from(value: ThreadSummaryInternalCombined) -> Self {
+        let mut followers: HashSet<_> = value.participants.iter().copied().collect();
+        for (user_id, following) in value.follower_ids {
+            if following.value {
+                followers.insert(user_id);
+            } else {
+                followers.remove(&user_id);
+            }
+        }
+        followers.extend(value.followers);
+
+        ThreadSummaryInternal {
+            participants: value.participants,
+            followers,
+            reply_count: value.reply_count,
+            latest_event_index: value.latest_event_index,
+            latest_event_timestamp: value.latest_event_timestamp,
+        }
+    }
+}
+
 impl ThreadSummaryInternal {
     pub fn hydrate(&self, my_user_id: Option<UserId>) -> ThreadSummary {
         ThreadSummary {
-            participant_ids: self.participant_ids.clone(),
-            followed_by_me: my_user_id.map_or(false, |u| self.follower_ids.get(&u).map_or(false, |t| t.value)),
+            participant_ids: self.participants.clone(),
+            followed_by_me: my_user_id.map_or(false, |u| self.followers.contains(&u)),
             reply_count: self.reply_count,
             latest_event_index: self.latest_event_index,
             latest_event_timestamp: self.latest_event_timestamp,
@@ -382,54 +419,13 @@ impl ThreadSummaryInternal {
         self.latest_event_index = latest_event_index;
         self.latest_event_timestamp = now;
         self.reply_count += 1;
-        self.participant_ids.push_if_not_contains(sender);
-        self.follower_ids.remove(&sender);
+        self.participants.push_if_not_contains(sender);
+        self.followers.insert(sender);
 
         // If a user is mentioned in a thread they automatically become a follower
         for user_id in mentioned_users {
-            if !self.participant_ids.contains(user_id) {
-                self.set_follow(*user_id, now, true);
-            }
+            self.followers.insert(*user_id);
         }
-    }
-
-    pub fn set_follow(&mut self, user_id: UserId, now: TimestampMillis, follow: bool) -> bool {
-        if self.participant_ids.contains(&user_id) {
-            return false;
-        }
-
-        let new_entry = Timestamped::new(follow, now);
-        match self.follower_ids.entry(user_id) {
-            Occupied(mut e) => {
-                if e.get().value == follow {
-                    false
-                } else {
-                    e.insert(new_entry);
-                    true
-                }
-            }
-            Vacant(e) => {
-                e.insert(new_entry);
-                true
-            }
-        }
-    }
-
-    pub fn participants_and_followers(&self, include_unfollowed: bool) -> Vec<UserId> {
-        self.participant_ids
-            .iter()
-            .copied()
-            .chain(
-                self.follower_ids
-                    .iter()
-                    .filter(|(_, t)| include_unfollowed || t.value)
-                    .map(|(user_id, _)| *user_id),
-            )
-            .collect()
-    }
-
-    pub fn get_follower(&self, user_id: UserId) -> Option<Timestamped<bool>> {
-        self.follower_ids.get(&user_id).cloned()
     }
 }
 
@@ -629,7 +625,7 @@ mod tests {
         TextContentInternal, ThreadSummaryInternal,
     };
     use candid::Principal;
-    use std::collections::{HashMap, HashSet};
+    use std::collections::HashSet;
     use types::{EventWrapperInternal, Reaction, Tips};
 
     #[test]
@@ -690,8 +686,8 @@ mod tests {
                 timestamp: 1,
             }),
             thread_summary: Some(ThreadSummaryInternal {
-                participant_ids: vec![principal.into()],
-                follower_ids: HashMap::new(),
+                participants: vec![principal.into()],
+                followers: HashSet::new(),
                 reply_count: 1,
                 latest_event_index: 1.into(),
                 latest_event_timestamp: 1,

@@ -15,6 +15,7 @@ use types::{
     is_default, EventIndex, GroupMember, GroupPermissions, HydratedMention, MessageIndex, TimestampMillis, Timestamped, UserId,
     UserType, Version, MAX_RETURNED_MENTIONS,
 };
+use utils::timestamped_set::TimestampedSet;
 
 const MAX_MEMBERS_PER_GROUP: u32 = 100_000;
 
@@ -53,7 +54,8 @@ impl GroupMembers {
             notifications_muted: Timestamped::new(false, now),
             mentions: Mentions::default(),
             threads: HashSet::new(),
-            unfollowed_threads: Vec::new(),
+            followed_threads: TimestampedSet::new(),
+            unfollowed_threads: TimestampedSet::new(),
             proposal_votes: BTreeMap::default(),
             suspended: Timestamped::default(),
             rules_accepted: Some(Timestamped::new(Version::zero(), now)),
@@ -96,7 +98,8 @@ impl GroupMembers {
                         notifications_muted: Timestamped::new(notifications_muted, now),
                         mentions: Mentions::default(),
                         threads: HashSet::new(),
-                        unfollowed_threads: Vec::new(),
+                        followed_threads: TimestampedSet::new(),
+                        unfollowed_threads: TimestampedSet::new(),
                         proposal_votes: BTreeMap::default(),
                         suspended: Timestamped::default(),
                         rules_accepted: None,
@@ -306,12 +309,6 @@ impl GroupMembers {
         self.moderator_count
     }
 
-    pub fn add_thread(&mut self, user_id: &UserId, root_message_index: MessageIndex) {
-        if let Some(p) = self.get_mut(user_id) {
-            p.threads.insert(root_message_index);
-        }
-    }
-
     pub fn has_membership_changed(&self, since: TimestampMillis) -> bool {
         self.iter_latest_updates(since)
             .any(|(_, u)| matches!(u, MemberUpdate::Added | MemberUpdate::Removed))
@@ -380,8 +377,10 @@ pub struct GroupMemberInternal {
     pub mentions: Mentions,
     #[serde(rename = "t", default, skip_serializing_if = "HashSet::is_empty")]
     pub threads: HashSet<MessageIndex>,
-    #[serde(rename = "f", default, skip_serializing_if = "Vec::is_empty")]
-    pub unfollowed_threads: Vec<MessageIndex>,
+    #[serde(rename = "ft", default, skip_serializing_if = "TimestampedSet::is_empty")]
+    pub followed_threads: TimestampedSet<MessageIndex>,
+    #[serde(rename = "ut", default, skip_serializing_if = "TimestampedSet::is_empty")]
+    pub unfollowed_threads: TimestampedSet<MessageIndex>,
     #[serde(rename = "p", default, skip_serializing_if = "BTreeMap::is_empty")]
     pub proposal_votes: BTreeMap<TimestampMillis, Vec<MessageIndex>>,
     #[serde(rename = "s", default, skip_serializing_if = "is_default")]
@@ -537,6 +536,7 @@ mod tests {
     use candid::Principal;
     use std::collections::{BTreeMap, HashSet};
     use types::{Timestamped, UserType, Version};
+    use utils::timestamped_set::TimestampedSet;
 
     #[test]
     fn serialize_with_max_defaults() {
@@ -547,7 +547,8 @@ mod tests {
             notifications_muted: Timestamped::new(true, 1),
             mentions: Mentions::default(),
             threads: HashSet::new(),
-            unfollowed_threads: Vec::new(),
+            followed_threads: TimestampedSet::default(),
+            unfollowed_threads: TimestampedSet::default(),
             proposal_votes: BTreeMap::new(),
             suspended: Timestamped::default(),
             min_visible_event_index: 0.into(),
@@ -577,7 +578,8 @@ mod tests {
             notifications_muted: Timestamped::new(true, 1),
             mentions,
             threads: HashSet::from([1.into()]),
-            unfollowed_threads: vec![1.into()],
+            followed_threads: [(1.into(), 1)].into_iter().collect(),
+            unfollowed_threads: [(1.into(), 1)].into_iter().collect(),
             proposal_votes: BTreeMap::from([(1, vec![1.into()])]),
             suspended: Timestamped::new(true, 1),
             min_visible_event_index: 1.into(),

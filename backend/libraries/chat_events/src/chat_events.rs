@@ -58,6 +58,10 @@ fn default_next_event_to_migrate_to_stable_memory() -> Option<EventContext> {
 }
 
 impl ChatEvents {
+    pub fn update_event_in_stable_memory(&mut self, event_key: EventKey) {
+        self.main.update_event_in_stable_memory(event_key);
+    }
+
     pub fn init_stable_storage(memory: Memory) {
         stable_storage::init(memory)
     }
@@ -218,6 +222,17 @@ impl ChatEvents {
 
     pub fn thread_keys(&self) -> impl Iterator<Item = MessageIndex> + '_ {
         self.threads.keys().copied()
+    }
+
+    pub fn thread_details(&self, thread_root_message_index: &MessageIndex) -> Option<GroupCanisterThreadDetails> {
+        self.threads
+            .get(thread_root_message_index)
+            .map(|t| GroupCanisterThreadDetails {
+                root_message_index: *thread_root_message_index,
+                latest_event: t.latest_event_index().unwrap_or_default(),
+                latest_message: t.latest_message_index().unwrap_or_default(),
+                last_updated: t.latest_event_timestamp().unwrap_or_default(),
+            })
     }
 
     pub fn push_message<R: Runtime + Send + 'static>(
@@ -1579,7 +1594,7 @@ impl ChatEvents {
 
         match self.update_thread_summary(
             thread_root_message_index,
-            |t| t.set_follow(user_id, now, true),
+            |t| t.followers.insert(user_id),
             min_visible_event_index,
             false,
             now,
@@ -1601,7 +1616,7 @@ impl ChatEvents {
 
         match self.update_thread_summary(
             thread_root_message_index,
-            |t| t.set_follow(user_id, now, false),
+            |t| t.followers.remove(&user_id),
             min_visible_event_index,
             false,
             now,
@@ -1805,30 +1820,18 @@ impl ChatEvents {
 
     pub fn latest_threads<'a>(
         &self,
-        min_visible_event_index: EventIndex,
         root_message_indexes: impl Iterator<Item = &'a MessageIndex>,
+        followed_threads: &HashMap<MessageIndex, TimestampMillis>,
         updated_since: Option<TimestampMillis>,
         max_threads: usize,
-        my_user_id: UserId,
     ) -> Vec<GroupCanisterThreadDetails> {
         root_message_indexes
             .filter_map(|root_message_index| {
                 self.threads.get(root_message_index).and_then(|thread_events| {
                     let mut last_updated = thread_events.latest_event_timestamp()?;
                     let latest_event = thread_events.latest_event_index()?;
-                    let follower = self
-                        .main
-                        .get_event((*root_message_index).into(), min_visible_event_index)?
-                        .event
-                        .into_message()?
-                        .thread_summary
-                        .as_ref()?
-                        .get_follower(my_user_id);
-
-                    if let Some(follower) = follower {
-                        if follower.value {
-                            last_updated = last_updated.max(follower.timestamp);
-                        }
+                    if let Some(followed_timestamp) = followed_threads.get(root_message_index) {
+                        last_updated = last_updated.max(*followed_timestamp);
                     }
 
                     updated_since
@@ -1844,35 +1847,6 @@ impl ChatEvents {
             .sorted_unstable_by_key(|t| Reverse(t.last_updated))
             .take(max_threads)
             .collect()
-    }
-
-    pub fn unfollowed_threads_since<'a>(
-        &self,
-        root_message_indexes: impl DoubleEndedIterator<Item = &'a MessageIndex>,
-        updated_since: TimestampMillis,
-        my_user_id: UserId,
-    ) -> Vec<MessageIndex> {
-        let mut unfollowed = Vec::new();
-
-        for message_index in root_message_indexes.rev().copied() {
-            if let Some(wrapped_event) = self.main.get_event(message_index.into(), EventIndex::default()) {
-                if let Some(message) = wrapped_event.event.into_message() {
-                    if let Some(thread_summary) = message.thread_summary.as_ref() {
-                        if let Some(follower) = thread_summary.get_follower(my_user_id) {
-                            if follower.timestamp <= updated_since {
-                                break;
-                            }
-
-                            if !follower.value {
-                                unfollowed.push(message_index);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        unfollowed
     }
 
     pub fn message_ids(
@@ -1958,9 +1932,10 @@ impl ChatEvents {
                 if let ChatEventInternal::Message(m) = event.event {
                     if let Some(thread) = m.thread_summary {
                         self.threads.remove(&m.message_index);
-                        result
-                            .threads
-                            .push((m.message_index, thread.participants_and_followers(true)));
+                        result.threads.push(ExpiredThread {
+                            root_message_index: m.message_index,
+                            followers: thread.followers,
+                        });
                     }
                     if let MessageContentInternal::Prize(mut p) = m.content {
                         if let Some(refund) = p.prize_refund(m.sender, &MEMO_PRIZE_REFUND, now * 1_000_000) {
@@ -2505,8 +2480,13 @@ pub enum UnfollowThreadResult {
 #[derive(Default)]
 pub struct RemoveExpiredEventsResult {
     pub events: Vec<EventIndex>,
-    pub threads: Vec<(MessageIndex, Vec<UserId>)>,
+    pub threads: Vec<ExpiredThread>,
     pub prize_refunds: Vec<PendingCryptoTransaction>,
+}
+
+pub struct ExpiredThread {
+    pub root_message_index: MessageIndex,
+    pub followers: HashSet<UserId>,
 }
 
 #[derive(Copy, Clone)]

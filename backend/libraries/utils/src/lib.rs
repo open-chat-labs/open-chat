@@ -19,3 +19,4 @@ pub mod regular_jobs;
 pub mod text_validation;
 pub mod time;
 pub mod timestamped_map;
+pub mod timestamped_set;

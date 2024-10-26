@@ -241,12 +241,12 @@ impl RuntimeState {
                 }
             }
             prize_refunds.extend(result.prize_refunds);
-            for (message_index, _) in result.threads {
+            for thread in result.threads {
                 self.data
                     .stable_memory_keys_to_garbage_collect
                     .push(KeyPrefix::ChannelThread(ChannelThreadKeyPrefix::new(
                         channel.id,
-                        message_index,
+                        thread.root_message_index,
                     )));
             }
         }

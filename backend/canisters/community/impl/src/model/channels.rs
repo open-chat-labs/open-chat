@@ -274,13 +274,13 @@ impl Channel {
                 .user_metrics(&m.user_id, None)
                 .map(|m| m.hydrate())
                 .unwrap_or_default(),
-            latest_threads: chat.events.latest_threads(
-                min_visible_event_index,
-                m.threads.iter(),
-                None,
-                MAX_THREADS_IN_SUMMARY,
-                m.user_id,
-            ),
+            latest_threads: m
+                .followed_threads
+                .iter()
+                .rev()
+                .filter_map(|(i, _)| self.chat.events.thread_details(i))
+                .take(MAX_THREADS_IN_SUMMARY)
+                .collect(),
             rules_accepted: m
                 .rules_accepted
                 .as_ref()
@@ -358,17 +358,13 @@ impl Channel {
             mentions: updates.mentions,
             notifications_muted: m.notifications_muted.if_set_after(since).cloned(),
             my_metrics: self.chat.events.user_metrics(&m.user_id, Some(since)).map(|m| m.hydrate()),
-            latest_threads: self.chat.events.latest_threads(
-                m.min_visible_event_index(),
-                m.threads.iter(),
-                Some(since),
-                MAX_THREADS_IN_SUMMARY,
-                m.user_id,
-            ),
-            unfollowed_threads: self
-                .chat
-                .events
-                .unfollowed_threads_since(m.unfollowed_threads.iter(), since, m.user_id),
+            latest_threads: m
+                .followed_threads
+                .updated_since(since)
+                .filter_map(|(i, _)| self.chat.events.thread_details(i))
+                .take(MAX_THREADS_IN_SUMMARY)
+                .collect(),
+            unfollowed_threads: m.unfollowed_threads.updated_since(since).map(|(i, _)| *i).collect(),
             rules_accepted: m
                 .rules_accepted
                 .as_ref()
