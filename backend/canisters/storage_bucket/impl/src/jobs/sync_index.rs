@@ -45,12 +45,8 @@ async fn send_to_index(storage_index_canister_id: CanisterId, args: Args) {
     let response = storage_index_canister_c2c_client::c2c_sync_bucket(storage_index_canister_id, &args).await;
     mutate_state(|state| {
         match response {
-            Ok(Response::Success(result)) => {
-                mutate_state(|state| handle_success(result, state));
-            }
-            Err(_) => {
-                mutate_state(|state| handle_error(args, state));
-            }
+            Ok(Response::Success(result)) => handle_success(result, state),
+            Err(_) => handle_error(args, state),
         }
         start_job_if_required(&state.data);
     });
