@@ -50,6 +50,14 @@ impl IndexSyncState {
         }
     }
 
+    pub fn in_progress(&self) -> bool {
+        self.in_progress
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.queue.is_empty() && !self.in_progress && self.args_to_retry.is_none()
+    }
+
     pub fn mark_sync_completed(&mut self) {
         self.in_progress = false;
     }
