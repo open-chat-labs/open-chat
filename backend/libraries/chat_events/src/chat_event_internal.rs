@@ -351,7 +351,7 @@ impl From<&MembersAddedToPublicChannelInternal> for MembersAddedToDefaultChannel
 pub struct ThreadSummaryInternal {
     #[serde(rename = "p")]
     pub participants: Vec<UserId>,
-    #[serde(default, rename = "f2")]
+    #[serde(rename = "f")]
     pub followers: HashSet<UserId>,
     #[serde(rename = "r")]
     pub reply_count: u32,
@@ -361,33 +361,43 @@ pub struct ThreadSummaryInternal {
     pub latest_event_timestamp: TimestampMillis,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(Serialize, Deserialize)]
+#[serde(untagged)]
+enum Followers {
+    Old(HashMap<UserId, Timestamped<bool>>),
+    New(HashSet<UserId>),
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct ThreadSummaryInternalCombined {
     #[serde(rename = "p", alias = "i")]
-    pub participants: Vec<UserId>,
-    #[serde(default, rename = "f2")]
-    pub followers: HashSet<UserId>,
-    #[serde(default, rename = "f")]
-    pub follower_ids: HashMap<UserId, Timestamped<bool>>,
+    participants: Vec<UserId>,
+    #[serde(rename = "f")]
+    followers: Followers,
     #[serde(rename = "r")]
-    pub reply_count: u32,
+    reply_count: u32,
     #[serde(rename = "e")]
-    pub latest_event_index: EventIndex,
+    latest_event_index: EventIndex,
     #[serde(rename = "t")]
-    pub latest_event_timestamp: TimestampMillis,
+    latest_event_timestamp: TimestampMillis,
 }
 
 impl From<ThreadSummaryInternalCombined> for ThreadSummaryInternal {
     fn from(value: ThreadSummaryInternalCombined) -> Self {
-        let mut followers: HashSet<_> = value.participants.iter().copied().collect();
-        for (user_id, following) in value.follower_ids {
-            if following.value {
-                followers.insert(user_id);
-            } else {
-                followers.remove(&user_id);
+        let followers = match value.followers {
+            Followers::Old(map) => {
+                let mut followers: HashSet<_> = value.participants.iter().copied().collect();
+                for (user_id, following) in map {
+                    if following.value {
+                        followers.insert(user_id);
+                    } else {
+                        followers.remove(&user_id);
+                    }
+                }
+                followers
             }
-        }
-        followers.extend(value.followers);
+            Followers::New(set) => set,
+        };
 
         ThreadSummaryInternal {
             participants: value.participants,
@@ -710,7 +720,7 @@ mod tests {
         let event_bytes = msgpack::serialize_then_unwrap(&event);
         let event_bytes_len = event_bytes.len();
 
-        assert_eq!(message_bytes_len, 166);
+        assert_eq!(message_bytes_len, 165);
         assert_eq!(event_bytes_len, message_bytes_len + 18);
 
         let _deserialized: EventWrapperInternal<ChatEventInternal> = msgpack::deserialize_then_unwrap(&event_bytes);
