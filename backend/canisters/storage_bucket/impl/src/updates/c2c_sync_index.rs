@@ -46,7 +46,7 @@ fn c2c_sync_index_impl(args: Args, state: &mut RuntimeState) -> Response {
         let excess = files_removed.split_off(MAX_EVENTS_TO_SYNC_PER_BATCH);
 
         for removed in excess {
-            state.data.index_sync_state.enqueue(EventToSync::FileRemoved(removed));
+            state.data.push_event_to_index(EventToSync::FileRemoved(removed));
         }
     }
 

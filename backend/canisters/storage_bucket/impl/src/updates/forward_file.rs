@@ -30,7 +30,7 @@ fn forward_file_impl(args: Args, state: &mut RuntimeState) -> Response {
             let user = state.data.users.get_mut(&caller).unwrap();
             let file_id = f.file_id;
             user.set_file_status(file_id, FileStatusInternal::Complete(IndexSyncComplete::No));
-            state.data.index_sync_state.enqueue(EventToSync::FileAdded(f));
+            state.data.push_event_to_index(EventToSync::FileAdded(f));
             Success(file_id)
         }
         // TODO Add this back in once we support access tokens
