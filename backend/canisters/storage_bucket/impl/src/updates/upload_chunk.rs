@@ -49,6 +49,7 @@ fn upload_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
             }
             if let Some(file_added) = r.file_added {
                 state.data.push_event_to_index(EventToSync::FileAdded(file_added));
+                crate::jobs::remove_expired_files::start_job_if_required(state);
             }
             Success
         }

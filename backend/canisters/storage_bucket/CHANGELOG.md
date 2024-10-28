@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
 - Add serde default attribute in preparation for skipping serialization if default ([#6475](https://github.com/open-chat-labs/open-chat/pull/6475))
 - Avoid using `heartbeat` to sync events to StorageIndex canister ([#6688](https://github.com/open-chat-labs/open-chat/pull/6688))
+- Avoid using `heartbeat` to remove expired files ([#6689](https://github.com/open-chat-labs/open-chat/pull/6689))
 
 ## [[2.0.1325](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1325-storage_bucket)] - 2024-09-03
 
