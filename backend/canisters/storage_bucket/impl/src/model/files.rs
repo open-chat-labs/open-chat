@@ -294,6 +294,10 @@ impl Files {
         files_removed
     }
 
+    pub fn next_expiry(&self) -> Option<TimestampMillis> {
+        self.expiration_queue.keys().copied().next()
+    }
+
     pub fn data_size(&self, hash: &Hash) -> Option<u64> {
         self.blobs.data_size(hash)
     }

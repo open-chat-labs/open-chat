@@ -31,6 +31,7 @@ fn forward_file_impl(args: Args, state: &mut RuntimeState) -> Response {
             let file_id = f.file_id;
             user.set_file_status(file_id, FileStatusInternal::Complete(IndexSyncComplete::No));
             state.data.push_event_to_index(EventToSync::FileAdded(f));
+            crate::jobs::remove_expired_files::start_job_if_required(state);
             Success(file_id)
         }
         // TODO Add this back in once we support access tokens
