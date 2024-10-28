@@ -745,7 +745,7 @@ impl GroupChatCore {
 
                 if mentioned {
                     // Mention this member
-                    member.mentions.add(thread_root_message_index, message_index, now);
+                    member.mentions.add(thread_root_message_index, message_index, message_id, now);
                 }
 
                 let notification_candidate = thread_followers.as_ref().map_or(true, |ps| ps.contains(&member.user_id));

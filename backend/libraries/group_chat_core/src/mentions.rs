@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
-use types::{Mention, MessageIndex, PushIfNotContains, TimestampMillis};
+use types::{Mention, MessageId, MessageIndex, PushIfNotContains, TimestampMillis};
 
 type MainMessageIndex = MessageIndex;
 type ThreadMessageIndex = MessageIndex;
@@ -17,6 +17,8 @@ struct MentionInternal {
     thread_root_message_index: Option<MessageIndex>,
     #[serde(rename = "i")]
     message_index: MessageIndex,
+    #[serde(rename = "d", default)]
+    message_id: MessageId,
 }
 
 impl Mentions {
@@ -24,6 +26,7 @@ impl Mentions {
         &mut self,
         thread_root_message_index: Option<MessageIndex>,
         message_index: MessageIndex,
+        message_id: MessageId,
         now: TimestampMillis,
     ) -> bool {
         let (main_message_index, thread_message_index) = if let Some(root_message_index) = thread_root_message_index {
@@ -39,6 +42,7 @@ impl Mentions {
                 .push_if_not_contains(MentionInternal {
                     thread_root_message_index,
                     message_index,
+                    message_id,
                 });
             true
         } else {
@@ -56,6 +60,7 @@ impl Mentions {
                     timestamp: *t,
                     thread_root_message_index: mention.thread_root_message_index,
                     message_index: mention.message_index,
+                    message_id: mention.message_id,
                 })
             })
     }

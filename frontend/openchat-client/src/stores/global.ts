@@ -152,11 +152,11 @@ function combinedUnreadCountForChats(chats: (ChatSummary | undefined)[]): Combin
             if (chat === undefined) return counts;
 
             const muted = chat.membership.notificationsMuted;
-            const mentions = hasUnreadMentions(chat);
             const unreadMessages = messagesRead.unreadMessageCount(
                 chat.id,
                 chat.latestMessage?.event.messageIndex,
             );
+            const mentions = unreadMessages > 0 && hasUnreadMentions(chat);
             const unreadThreads = messagesRead.staleThreadCountForChat(
                 chat.id,
                 chat.membership.latestThreads,

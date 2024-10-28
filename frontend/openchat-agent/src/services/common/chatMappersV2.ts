@@ -2312,7 +2312,6 @@ export function mention(value: TMention): Mention {
         messageId: value.message_id,
         messageIndex: value.message_index,
         eventIndex: value.event_index,
-        mentionedBy: principalBytesToString(value.mentioned_by),
     };
 }
 
