@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Improve efficiency of calculating latest threads per user ([#6687](https://github.com/open-chat-labs/open-chat/pull/6687))
+
+## [[2.0.1415](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1415-community)] - 2024-10-25
+
+### Changed
+
 - Avoid extra key lookup when iterating over events ([#6680](https://github.com/open-chat-labs/open-chat/pull/6680))
 
 ### Fixed
