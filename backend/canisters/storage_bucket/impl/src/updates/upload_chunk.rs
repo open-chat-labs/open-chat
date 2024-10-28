@@ -48,7 +48,7 @@ fn upload_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
                 user.set_file_status(file_id, FileStatusInternal::Complete(index_sync_complete));
             }
             if let Some(file_added) = r.file_added {
-                state.data.index_sync_state.enqueue(EventToSync::FileAdded(file_added));
+                state.data.push_event_to_index(EventToSync::FileAdded(file_added));
             }
             Success
         }
@@ -72,7 +72,7 @@ fn upload_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
             // this match statement will never have been reached so the file reference will not have
             // been added to the index canister.
             if hm.chunk_count > 1 {
-                state.data.index_sync_state.enqueue(EventToSync::FileRemoved(FileRemoved {
+                state.data.push_event_to_index(EventToSync::FileRemoved(FileRemoved {
                     file_id,
                     meta_data: hm.meta_data,
                 }));

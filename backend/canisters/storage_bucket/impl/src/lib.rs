@@ -100,10 +100,15 @@ impl Data {
         let result = self.files.remove(caller, file_id);
 
         if let RemoveFileResult::Success(f) = &result {
-            self.index_sync_state.enqueue(EventToSync::FileRemoved(f.clone()));
+            self.push_event_to_index(EventToSync::FileRemoved(f.clone()));
         }
 
         result
+    }
+
+    pub fn push_event_to_index(&mut self, event_to_sync: EventToSync) {
+        self.index_sync_state.enqueue(event_to_sync);
+        jobs::sync_index::start_job_if_required(self);
     }
 }
 
