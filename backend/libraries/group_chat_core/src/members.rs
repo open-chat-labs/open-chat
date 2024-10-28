@@ -530,7 +530,7 @@ mod tests {
     use crate::roles::GroupRoleInternal;
     use crate::{GroupMemberInternal, Mentions};
     use candid::Principal;
-    use std::collections::{BTreeMap, HashSet};
+    use std::collections::BTreeMap;
     use types::{Timestamped, UserType, Version};
     use utils::timestamped_set::TimestampedSet;
 
@@ -542,7 +542,6 @@ mod tests {
             role: Timestamped::new(GroupRoleInternal::Member, 0),
             notifications_muted: Timestamped::new(true, 1),
             mentions: Mentions::default(),
-            threads: HashSet::new(),
             followed_threads: TimestampedSet::default(),
             unfollowed_threads: TimestampedSet::default(),
             proposal_votes: BTreeMap::new(),
@@ -573,7 +572,6 @@ mod tests {
             role: Timestamped::new(GroupRoleInternal::Owner, 1),
             notifications_muted: Timestamped::new(true, 1),
             mentions,
-            threads: HashSet::from([1.into()]),
             followed_threads: [(1.into(), 1)].into_iter().collect(),
             unfollowed_threads: [(1.into(), 1)].into_iter().collect(),
             proposal_votes: BTreeMap::from([(1, vec![1.into()])]),
@@ -588,7 +586,7 @@ mod tests {
         let member_bytes = msgpack::serialize_then_unwrap(&member);
         let member_bytes_len = member_bytes.len();
 
-        assert_eq!(member_bytes_len, 160);
+        assert_eq!(member_bytes_len, 156);
 
         let _deserialized: GroupMemberInternal = msgpack::deserialize_then_unwrap(&member_bytes);
     }
