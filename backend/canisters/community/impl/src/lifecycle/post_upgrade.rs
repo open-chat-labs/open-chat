@@ -24,6 +24,7 @@ fn post_upgrade(args: Args) {
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
     for channel in data.channels.iter_mut() {
+        channel.chat.link_threads_to_members();
         if channel.chat.events.init_thread_messages_to_update_in_stable_memory() {
             data.stable_memory_event_migration_complete = false;
         }

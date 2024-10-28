@@ -53,7 +53,6 @@ impl GroupMembers {
             min_visible_message_index: MessageIndex::default(),
             notifications_muted: Timestamped::new(false, now),
             mentions: Mentions::default(),
-            threads: HashSet::new(),
             followed_threads: TimestampedSet::new(),
             unfollowed_threads: TimestampedSet::new(),
             proposal_votes: BTreeMap::default(),
@@ -97,7 +96,6 @@ impl GroupMembers {
                         min_visible_message_index,
                         notifications_muted: Timestamped::new(notifications_muted, now),
                         mentions: Mentions::default(),
-                        threads: HashSet::new(),
                         followed_threads: TimestampedSet::new(),
                         unfollowed_threads: TimestampedSet::new(),
                         proposal_votes: BTreeMap::default(),
@@ -375,8 +373,6 @@ pub struct GroupMemberInternal {
     pub notifications_muted: Timestamped<bool>,
     #[serde(rename = "m", default, skip_serializing_if = "mentions_are_empty")]
     pub mentions: Mentions,
-    #[serde(rename = "t", default, skip_serializing_if = "HashSet::is_empty")]
-    pub threads: HashSet<MessageIndex>,
     #[serde(rename = "tf", default, skip_serializing_if = "TimestampedSet::is_empty")]
     pub followed_threads: TimestampedSet<MessageIndex>,
     #[serde(rename = "tu", default, skip_serializing_if = "TimestampedSet::is_empty")]
