@@ -14,7 +14,7 @@ use search::{Document, Query};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use sha2::{Digest, Sha256};
-use std::cmp::{max, Reverse};
+use std::cmp::{max, min, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::mem;
@@ -92,7 +92,11 @@ impl ChatEvents {
         let mut total_count = 0;
         if !self.thread_messages_to_update_in_stable_memory.is_empty() {
             while ic_cdk::api::instruction_counter() < 1_000_000_000 {
-                let batch: Vec<_> = self.thread_messages_to_update_in_stable_memory.drain(..100).collect();
+                let batch: Vec<_> = self
+                    .thread_messages_to_update_in_stable_memory
+                    .drain(..min(100, self.thread_messages_to_update_in_stable_memory.len()))
+                    .collect();
+
                 let count = batch.len();
                 for message_index in batch {
                     self.update_event_in_stable_memory(message_index.into());
