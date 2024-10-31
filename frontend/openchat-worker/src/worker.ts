@@ -1825,7 +1825,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "messageActivityFeed":
-                executeThenReply(payload, correlationId, agent.messageActivityFeed());
+                streamReplies(payload, correlationId, agent.messageActivityFeed());
                 break;
 
             case "markActivityFeedRead":

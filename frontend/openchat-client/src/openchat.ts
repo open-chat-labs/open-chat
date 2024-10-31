@@ -434,6 +434,7 @@ import type {
     PaymentGateApproval,
     PaymentGateApprovals,
     MessageActivityFeedResponse,
+    Stream,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -1450,22 +1451,20 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    async messageActivityFeed(): Promise<MessageActivityFeedResponse> {
-        const feed = await this.sendRequest({
+    messageActivityFeed(): Stream<MessageActivityFeedResponse> {
+        return this.sendStreamRequest({
             kind: "messageActivityFeed",
             since: this._liveState.globalState.messageActivitySummary.readUpToTimestamp,
-        });
-
-        const userIds = new Set<string>();
-        for (const event of feed.events) {
-            if (event.userId !== undefined) {
-                userIds.add(event.userId);
+        }).subscribe((response) => {
+            const userIds = new Set<string>();
+            for (const event of response.events) {
+                if (event.userId !== undefined) {
+                    userIds.add(event.userId);
+                }
             }
-        }
-
-        await this.getMissingUsers(userIds);
-
-        return feed;
+            this.getMissingUsers(userIds);
+            return response;
+        });
     }
 
     async approveAccessGatePayment(

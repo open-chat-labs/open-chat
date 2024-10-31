@@ -212,11 +212,11 @@
 <style lang="scss">
     :root {
         --offset: -20px;
-        --margin-top: -28px;
+        --margin-top: -24px;
         --scale: 2.5;
         @include mobile() {
             --offset: -18px;
-            --margin-top: -25px;
+            --margin-top: -22px;
             --scale: 2;
         }
     }

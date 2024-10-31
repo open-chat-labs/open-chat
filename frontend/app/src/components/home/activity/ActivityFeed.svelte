@@ -38,9 +38,9 @@
     }
 
     function loadActivity() {
-        client.messageActivityFeed().then((resp) => {
+        client.messageActivityFeed().subscribe((resp, final) => {
             activityEvents.set(resp.events);
-            if ($activityEvents.length > 0) {
+            if ($activityEvents.length > 0 && final) {
                 client.markActivityFeedRead($activityEvents[0].timestamp);
             }
         });
