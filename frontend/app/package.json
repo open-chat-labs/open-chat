@@ -69,7 +69,6 @@
         "@metamask/sdk": "^0.28.4",
         "@solana/wallet-adapter-wallets": "^0.19.32",
         "@solana/web3.js": "^1.91.8",
-        "@sveltejs/svelte-virtual-list": "^3.0.1",
         "@wagmi/chains": "^1.8.0",
         "@wagmi/connectors": "^5.1.10",
         "@wagmi/core": "^2.13.5",
