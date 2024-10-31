@@ -130,12 +130,15 @@
 {/if}
 
 <table>
-    <tr>
-        <th class="token-header"><Translatable resourceKey={i18nKey("cryptoAccount.token")} /></th>
-        <th class="balance-header" colspan="2">
-            <MultiToggle options={conversionOptions} bind:selected={selectedConversion} />
-        </th>
-    </tr>
+    <thead>
+        <tr>
+            <th class="token-header"
+                ><Translatable resourceKey={i18nKey("cryptoAccount.token")} /></th>
+            <th class="balance-header" colspan="2">
+                <MultiToggle options={conversionOptions} bind:selected={selectedConversion} />
+            </th>
+        </tr>
+    </thead>
     {#each $accountsSorted as token}
         <tr>
             <td width="99%">

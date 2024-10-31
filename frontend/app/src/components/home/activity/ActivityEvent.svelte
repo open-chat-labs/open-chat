@@ -37,9 +37,9 @@
         : $_("activity.anon");
     $: lastMessage = formatLatestMessage(event, messageUsername);
     $: eventSummary = buildEventSummary(event, eventUsername);
+    $: communities = client.communities;
     $: chatName = getChatName(event.messageContext);
     $: tips = event?.message?.tips ? Object.entries(event.message.tips) : [];
-    $: communities = client.communities;
 
     function getChatName(ctx: MessageContext): string | undefined {
         const chat = client.lookupChatSummary(ctx.chatId);

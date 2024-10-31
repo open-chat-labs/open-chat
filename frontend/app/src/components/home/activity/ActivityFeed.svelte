@@ -36,7 +36,6 @@
     }
 
     function loadActivity() {
-        console.log("Loading activity");
         client.messageActivityFeed().then((resp) => {
             activityEvents = resp.events;
             if (activityEvents.length > 0) {
