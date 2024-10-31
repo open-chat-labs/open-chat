@@ -6,15 +6,16 @@
         messageContextToString,
         OpenChat,
         routeForMessage,
+        type GlobalState,
         type MessageActivityEvent,
     } from "openchat-client";
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import SectionHeader from "../../SectionHeader.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import HoverIcon from "../../HoverIcon.svelte";
-    import { activityFeedShowing } from "../../../stores/activity";
+    import { activityEvents, activityFeedShowing } from "../../../stores/activity";
     import { menuCloser } from "../../../actions/closeMenu";
     import page from "page";
     import ActivityEvent from "./ActivityEvent.svelte";
@@ -22,27 +23,26 @@
 
     const client = getContext<OpenChat>("client");
     let selectedEvent: MessageActivityEvent | undefined = undefined;
-    let activityEvents: MessageActivityEvent[] = [];
-    let initialised = false;
-
-    onMount(loadActivity);
 
     $: global = client.globalStateStore;
 
     $: {
-        if (initialised && $global.messageActivitySummary.unreadCount > 0) {
+        if (!uptodate($global, $activityEvents)) {
             loadActivity();
         }
     }
 
+    function uptodate({ messageActivitySummary }: GlobalState, events: MessageActivityEvent[]) {
+        const latest = events[0]?.timestamp;
+        return messageActivitySummary.latestTimestamp <= latest;
+    }
+
     function loadActivity() {
-        console.log("Loading activity");
         client.messageActivityFeed().then((resp) => {
-            activityEvents = resp.events;
-            if (activityEvents.length > 0) {
-                client.markActivityFeedRead(activityEvents[0].timestamp);
+            activityEvents.set(resp.events);
+            if ($activityEvents.length > 0) {
+                client.markActivityFeedRead($activityEvents[0].timestamp);
             }
-            initialised = true;
         });
     }
 
@@ -75,7 +75,7 @@
 </SectionHeader>
 
 <div use:menuCloser class="body">
-    <VirtualList keyFn={eventKey} items={activityEvents} let:item>
+    <VirtualList keyFn={eventKey} items={$activityEvents} let:item>
         <ActivityEvent
             event={item}
             selected={selectedEvent === item}
