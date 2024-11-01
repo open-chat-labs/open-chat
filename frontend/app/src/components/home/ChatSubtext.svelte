@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { ChatSummary, OpenChat } from "openchat-client";
+    import { userStore } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { now } from "../../stores/time";
@@ -14,7 +15,6 @@
     export let chat: ChatSummary;
     export let clickableMembers = false;
 
-    $: userStore = client.userStore;
     $: userId = chat.kind === "direct_chat" ? chat.them.userId : "";
     $: isBot = $userStore.get(userId)?.kind === "bot";
     $: isSuspended = $userStore.get(userId)?.suspended ?? false;

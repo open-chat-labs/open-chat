@@ -4,12 +4,12 @@
     import TextArea from "../TextArea.svelte";
     import Markdown from "./Markdown.svelte";
     import type { OpenChat, ReportedMessageContent } from "openchat-client";
+    import { userStore } from "openchat-client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
 
     export let content: ReportedMessageContent;
     const client = getContext<OpenChat>("client");
-    $: userStore = client.userStore;
 
     let index = 0;
 

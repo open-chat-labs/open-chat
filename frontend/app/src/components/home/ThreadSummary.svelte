@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { ChatIdentifier, OpenChat, ThreadSummary } from "openchat-client";
+    import { userStore } from "openchat-client";
     import { AvatarSize } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";
@@ -18,7 +19,6 @@
     export let threadRootMessageIndex: number;
 
     $: messagesRead = client.messagesRead;
-    $: userStore = client.userStore;
     $: threadsFollowedByMeStore = client.threadsFollowedByMeStore;
     $: isFollowedByMe = $threadsFollowedByMeStore.get(chatId)?.has(threadRootMessageIndex) ?? false;
     $: lastMessageIndex = threadSummary.numberOfReplies - 1; //using this as a surrogate for message index for now

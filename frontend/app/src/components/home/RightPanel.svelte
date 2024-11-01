@@ -18,6 +18,7 @@
         MultiUserChatIdentifier,
         Level,
     } from "openchat-client";
+    import { userStore } from "openchat-client";
     import { toastStore } from "../../stores/toast";
     import { createEventDispatcher, getContext } from "svelte";
     import type { Readable } from "svelte/store";
@@ -62,7 +63,6 @@
     $: currentCommunityLapsed = client.currentCommunityLapsedMembers;
     $: selectedCommunity = client.selectedCommunity;
     $: eventsStore = client.eventsStore;
-    $: userStore = client.userStore;
     $: user = $userStore.get($currentUser.userId) ?? client.nullUser("unknown");
     $: lastState = $rightPanelHistory[$rightPanelHistory.length - 1] ?? { kind: "no_panel" };
     $: modal = !$fullWidth;

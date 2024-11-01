@@ -11,11 +11,10 @@
     import { cubicInOut } from "svelte/easing";
     import Avatar from "../../Avatar.svelte";
     import { getContext } from "svelte";
-    import { AvatarSize, type OpenChat } from "openchat-client";
+    import { AvatarSize, type OpenChat, userStore } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
 
-    $: userStore = client.userStore;
     $: requests = $activeVideoCall?.accessRequests ?? [];
 
     function approve(request: RequestToSpeak) {

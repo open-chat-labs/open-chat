@@ -3,6 +3,7 @@
 <script lang="ts">
     import Link from "../../Link.svelte";
     import type { CreatedUser, Message, MultiUserChatIdentifier, OpenChat } from "openchat-client";
+    import { userStore } from "openchat-client";
     import ChatMessageContent from "../ChatMessageContent.svelte";
     import RepliesTo from "../RepliesTo.svelte";
     import Avatar from "../../Avatar.svelte";
@@ -28,7 +29,6 @@
     $: sender = $userStore.get(senderId);
     $: communityMembers = client.currentCommunityMembers;
     $: username = client.getDisplayName(sender, $communityMembers);
-    $: userStore = client.userStore;
     $: deleted = msg.content.kind === "deleted_content";
     $: fill = client.fillMessage(msg);
     $: me = user.userId === senderId;

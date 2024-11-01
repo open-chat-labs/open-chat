@@ -6,6 +6,7 @@
         OpenChat,
         AvatarSize,
         chatIdentifiersEqual,
+        userStore,
     } from "openchat-client";
     import {
         activeVideoCall,
@@ -36,7 +37,6 @@
 
     $: selectedChatId = client.selectedChatId;
     $: communities = client.communities;
-    $: userStore = client.userStore;
     $: show =
         $activeVideoCall?.chatId !== undefined &&
         (!chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatId) ||

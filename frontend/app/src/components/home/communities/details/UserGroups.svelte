@@ -10,6 +10,7 @@
         UserLookup,
         UserSummary,
     } from "openchat-client";
+    import { userStore } from "openchat-client";
     import Plus from "svelte-material-icons/Plus.svelte";
     import { iconSize } from "../../../../stores/iconSize";
     import { getContext, onMount } from "svelte";
@@ -35,7 +36,6 @@
     let communityUsersList: UserSummary[] = [];
 
     $: searchTermLower = searchTerm.toLowerCase();
-    $: userStore = client.userStore;
     $: communityMembers = client.currentCommunityMembers;
     $: userGroupsMap = client.currentCommunityUserGroups;
     $: userGroups = [...$userGroupsMap.values()];

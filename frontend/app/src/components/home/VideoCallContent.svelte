@@ -5,6 +5,7 @@
         OpenChat,
         chatIdentifiersEqual,
         type VideoCallContent,
+        userStore,
     } from "openchat-client";
     import Avatar from "../Avatar.svelte";
     import { createEventDispatcher, getContext } from "svelte";
@@ -23,7 +24,6 @@
 
     $: selectedChat = client.selectedChatStore;
     $: communityMembers = client.currentCommunityMembers;
-    $: userStore = client.userStore;
     $: user = client.user;
     $: displayName = client.getDisplayNameById(senderId, $communityMembers);
     $: incall =

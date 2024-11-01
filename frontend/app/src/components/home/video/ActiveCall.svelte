@@ -9,6 +9,7 @@
         type ChatIdentifier,
         type AccessTokenType,
         NoMeetingToJoin,
+        userStore,
     } from "openchat-client";
     import {
         activeVideoCall,
@@ -40,7 +41,6 @@
 
     $: selectedChat = client.selectedChatStore;
     $: communities = client.communities;
-    $: userStore = client.userStore;
     $: user = client.user;
     $: chat = normaliseChatSummary($selectedChat, $activeVideoCall?.chatId);
     $: threadOpen = $activeVideoCall?.threadOpen ?? false;

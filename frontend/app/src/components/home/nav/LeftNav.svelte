@@ -14,6 +14,7 @@
         type CommunitySummary,
         type OpenChat,
         emptyCombinedUnreadCounts,
+        userStore,
     } from "openchat-client";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { communityListScrollTop } from "../../../stores/scrollPos";
@@ -38,7 +39,6 @@
 
     $: chitState = client.chitStateStore;
     $: createdUser = client.user;
-    $: userStore = client.userStore;
     $: user = $userStore.get($createdUser.userId);
     $: avatarSize = $mobileWidth ? AvatarSize.Small : AvatarSize.Default;
     $: communities = client.communitiesList;
