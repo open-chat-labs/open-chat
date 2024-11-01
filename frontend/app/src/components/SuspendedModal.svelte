@@ -1,13 +1,9 @@
 <script lang="ts">
-    import { getContext } from "svelte";
     import ModalContent from "./ModalContent.svelte";
-    import type { OpenChat } from "openchat-client";
+    import { currentUser as user } from "openchat-client";
     import Markdown from "./home/Markdown.svelte";
     import Translatable from "./Translatable.svelte";
     import { i18nKey } from "../i18n/i18n";
-
-    const client = getContext<OpenChat>("client");
-    $: user = client.user;
 
     function buildNoticeText(): string {
         const suspensionDetails = $user.suspensionDetails!;

@@ -22,6 +22,18 @@
         type AttachmentContent,
         LEDGER_CANISTER_ICP,
         type MessageContent,
+        currentUser as user,
+        suspendedUser,
+        currentChatTextContent,
+        currentChatReplyingTo,
+        currentChatPinnedMessages,
+        currentChatAttachment,
+        currentChatEditingEvent,
+        draftMessagesStore,
+        lastCryptoSent,
+        messagesRead,
+        blockedUsers as directlyBlockedUsers,
+        communities,
     } from "openchat-client";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
@@ -67,23 +79,11 @@
     let removeLinkPreviewDetails: { event: EventWrapper<Message>; url: string } | undefined =
         undefined;
 
-    $: user = client.user;
-    $: suspendedUser = client.suspendedUser;
     $: showChatHeader = !$mobileWidth || !$framed;
     $: messageContext = { chatId: chat.id };
-    $: currentChatTextContent = client.currentChatTextContent;
-    $: currentChatReplyingTo = client.currentChatReplyingTo;
-    $: currentChatPinnedMessages = client.currentChatPinnedMessages;
-    $: currentChatAttachment = client.currentChatAttachment;
-    $: currentChatEditingEvent = client.currentChatEditingEvent;
-    $: draftMessagesStore = client.draftMessagesStore;
-    $: lastCryptoSent = client.lastCryptoSent;
-    $: messagesRead = client.messagesRead;
-    $: directlyBlockedUsers = client.blockedUsers;
     $: showFooter = !showSearchHeader && !$suspendedUser;
     $: blocked = isBlocked(chat, $directlyBlockedUsers);
     $: frozen = isFrozen(chat);
-    $: communities = client.communities;
     $: canSendAny = client.canSendMessage(chat.id, "message");
     $: preview = client.isPreviewing(chat.id);
     $: lapsed = client.isLapsed(chat.id);

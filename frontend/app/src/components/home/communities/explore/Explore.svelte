@@ -30,6 +30,13 @@
         communitySearchTerm,
     } from "../../../../stores/search";
     import Fab from "../../../Fab.svelte";
+    import {
+        anonUser,
+        offlineStore,
+        identityState,
+        isDiamond,
+        moderationFlags,
+    } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -39,13 +46,9 @@
     let scrollableElement: HTMLElement | null;
     let initialised = false;
 
-    $: anonUser = client.anonUser;
     $: pageSize = calculatePageSize($screenWidth);
     $: more = $communitySearchStore.total > $communitySearchStore.results.length;
-    $: isDiamond = client.isDiamond;
     $: loading = searching && $communitySearchStore.results.length === 0;
-    $: offlineStore = client.offlineStore;
-    $: identityState = client.identityState;
 
     $: {
         if (
@@ -57,15 +60,12 @@
         }
     }
 
-    let filters = derived(
-        [communityFiltersStore, client.moderationFlags],
-        ([communityFilters, flags]) => {
-            return {
-                languages: Array.from(communityFilters.languages),
-                flags,
-            };
-        },
-    );
+    let filters = derived([communityFiltersStore, moderationFlags], ([communityFilters, flags]) => {
+        return {
+            languages: Array.from(communityFilters.languages),
+            flags,
+        };
+    });
 
     function calculatePageSize(width: ScreenWidth): number {
         // make sure we get even rows of results

@@ -14,6 +14,7 @@
         type AuthenticationPrincipal,
         type OpenChat,
         type ResourceKey,
+        selectedAuthProviderStore,
     } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import ChooseSignInOption from "./ChooseSignInOption.svelte";
@@ -70,7 +71,6 @@
     let verificationCode: string | undefined = undefined;
     let accounts: (AuthenticationPrincipal & { provider: AuthProvider })[] = [];
 
-    $: selectedAuthProviderStore = client.selectedAuthProviderStore;
     $: currentProvider =
         accounts.find((a) => a.principal === client.AuthPrincipal)?.provider ??
         $selectedAuthProviderStore;

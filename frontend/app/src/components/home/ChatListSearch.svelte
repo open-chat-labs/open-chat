@@ -8,6 +8,7 @@
         ResourceKey,
         UserSummary,
     } from "openchat-client";
+    import { chatListScopeStore as chatListScope } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
     import { trimLeadingAtSymbol } from "../../utils/user";
 
@@ -20,7 +21,6 @@
 
     let searching: boolean = false;
 
-    $: chatListScope = client.chatListScope;
     $: placeholder = getPlaceholder($chatListScope.kind);
 
     onMount(() => {

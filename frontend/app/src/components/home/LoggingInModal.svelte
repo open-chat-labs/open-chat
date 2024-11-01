@@ -2,7 +2,13 @@
     import ModalContent from "../ModalContent.svelte";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
-    import { AuthProvider, type OpenChat } from "openchat-client";
+    import {
+        AuthProvider,
+        type OpenChat,
+        anonUser,
+        identityState,
+        selectedAuthProviderStore,
+    } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
@@ -28,9 +34,6 @@
     let emailSigninHandler = new EmailSigninHandler(client, "registration", true);
 
     $: restrictTo = new Set($querystring.getAll("auth"));
-    $: anonUser = client.anonUser;
-    $: identityState = client.identityState;
-    $: selectedAuthProviderStore = client.selectedAuthProviderStore;
     $: loggingInWithEmail =
         state === "logging-in" && $selectedAuthProviderStore === AuthProvider.EMAIL;
     $: loggingInWithEth = state === "logging-in" && $selectedAuthProviderStore === AuthProvider.ETH;

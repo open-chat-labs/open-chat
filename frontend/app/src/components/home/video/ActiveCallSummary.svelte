@@ -7,6 +7,8 @@
         AvatarSize,
         chatIdentifiersEqual,
         userStore,
+        selectedChatId,
+        communities,
     } from "openchat-client";
     import {
         activeVideoCall,
@@ -35,8 +37,6 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    $: selectedChatId = client.selectedChatId;
-    $: communities = client.communities;
     $: show =
         $activeVideoCall?.chatId !== undefined &&
         (!chatIdentifiersEqual($activeVideoCall.chatId, $selectedChatId) ||

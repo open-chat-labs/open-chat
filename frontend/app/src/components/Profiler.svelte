@@ -1,11 +1,6 @@
 <script lang="ts">
-    import type { OpenChat } from "openchat-client";
-    import { getContext } from "svelte";
+    import { profileStore } from "openchat-client";
     import Select from "./Select.svelte";
-
-    const client = getContext<OpenChat>("client");
-
-    $: profileStore = client.profileStore;
 
     let selectedMethod: string = "";
     let dragging = false;
@@ -29,7 +24,7 @@
         ([min, max], x) => {
             return [Math.min(min, x), Math.max(max, x)];
         },
-        [Number.MAX_VALUE, Number.MIN_VALUE]
+        [Number.MAX_VALUE, Number.MIN_VALUE],
     );
 
     $: range = max - min;

@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher } from "svelte";
     import { eventListScrolling } from "../../stores/scrollPos";
-    import type { OpenChat } from "openchat-client";
+    import { offlineStore } from "openchat-client";
 
     type LinkInfo = {
         url: string;
@@ -11,7 +11,6 @@
     };
 
     const dispatch = createEventDispatcher();
-    const client = getContext<OpenChat>("client");
 
     export let url: string;
     export let intersecting: boolean;
@@ -19,8 +18,6 @@
 
     let previewWrapper: HTMLElement;
     let previewPromise: Promise<LinkInfo> | undefined = undefined;
-
-    $: offlineStore = client.offlineStore;
 
     $: {
         if (intersecting && !$eventListScrolling && !rendered && !$offlineStore) {

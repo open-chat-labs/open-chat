@@ -6,6 +6,9 @@
         toRecord,
         type AccountTransaction,
         type ResourceKey,
+        cryptoLookup,
+        nervousSystemLookup,
+        currentUser,
     } from "openchat-client";
     import type { RemoteData as RD } from "../../../utils/remoteData";
     import { createEventDispatcher, getContext, onMount } from "svelte";
@@ -32,9 +35,7 @@
     let transactionData: RemoteData = { kind: "loading" };
     let accounts: NamedAccount[] = [];
     $: accountLookup = toRecord(accounts, (a) => a.account);
-    $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
-    $: nervousSystemLookup = client.nervousSystemLookup;
     $: snsLedgers = new Set<string>(
         Object.values($nervousSystemLookup)
             .filter((ns) => !ns.isNns)
@@ -42,7 +43,6 @@
     );
     $: moreAvailable = moreTransactionsAvailable(transactionData);
     $: loading = transactionData.kind === "loading" || transactionData.kind === "loading_more";
-    $: currentUser = client.user;
 
     function moreTransactionsAvailable(trans: RemoteData): boolean {
         if (trans.kind !== "success") return false;

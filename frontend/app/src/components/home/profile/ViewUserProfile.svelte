@@ -12,6 +12,15 @@
         type CommunitySummary,
         type OpenChat,
         type ResourceKey,
+        currentUser as createdUser,
+        platformModerator,
+        selectedChatStore as selectedChat,
+        blockedUsers,
+        currentChatBlockedUsers,
+        currentCommunityBlockedUsers,
+        selectedCommunity,
+        currentCommunityMembers as communityMembers,
+        currentChatMembersMap as chatMembersMap,
     } from "openchat-client";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
@@ -42,8 +51,6 @@
     let lastOnline: number | undefined;
 
     $: diamondStatus = user?.diamondStatus;
-    $: createdUser = client.user;
-    $: platformModerator = client.platformModerator;
     $: me = userId === $createdUser.userId;
     $: isSuspended = user?.suspended ?? false;
     $: modal = $mobileWidth;
@@ -57,13 +64,6 @@
             : "/assets/unknownUserAvatar.svg";
     $: joined =
         profile !== undefined ? `${$_("joined")} ${formatDate(profile.created)}` : undefined;
-    $: selectedChat = client.selectedChatStore;
-    $: blockedUsers = client.blockedUsers;
-    $: currentChatBlockedUsers = client.currentChatBlockedUsers;
-    $: currentCommunityBlockedUsers = client.currentCommunityBlockedUsers;
-    $: selectedCommunity = client.selectedCommunity;
-    $: communityMembers = client.currentCommunityMembers;
-    $: chatMembersMap = client.currentChatMembersMap;
     $: displayName = client.getDisplayName(
         {
             userId,

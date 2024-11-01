@@ -1,16 +1,16 @@
 <script lang="ts">
     import SendIcon from "svelte-material-icons/Send.svelte";
     import EmailIcon from "svelte-material-icons/EmailOutline.svelte";
-    import { AuthProvider, type OpenChat } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { AuthProvider } from "openchat-client";
+    import { createEventDispatcher } from "svelte";
     import { configKeys } from "../../../utils/config";
     import Input from "../../Input.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Button from "../../Button.svelte";
     import Translatable from "../../Translatable.svelte";
     import SignInOption from "./SignInOption.svelte";
+    import { selectedAuthProviderStore } from "openchat-client";
 
-    const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     export let mode: "signin" | "signup" = "signin";
@@ -20,7 +20,6 @@
     export let currentProvider: AuthProvider | undefined = undefined;
     export let showMore = false;
 
-    $: selectedAuthProviderStore = client.selectedAuthProviderStore;
     $: options = buildOptions(currentProvider ?? $selectedAuthProviderStore, mode, restrictTo);
     $: showAllOptions =
         (currentProvider ?? $selectedAuthProviderStore) === undefined ||

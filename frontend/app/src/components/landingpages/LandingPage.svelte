@@ -15,7 +15,7 @@
         pathParams,
     } from "../../routes";
     import { getContext } from "svelte";
-    import { type CreatedUser, type OpenChat } from "openchat-client";
+    import { type CreatedUser, type OpenChat, identityState } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import Register from "../register/Register.svelte";
     import BlogPage from "./BlogPage.svelte";
@@ -26,7 +26,6 @@
 
     const client = getContext<OpenChat>("client");
 
-    $: identityState = client.identityState;
     $: showMenu = showMenuForLandingRoute($pathParams);
 
     function logout() {

@@ -23,7 +23,13 @@
         type DexId,
         routeForChatIdentifier,
     } from "openchat-client";
-    import { type UpdateMarketMakerConfigArgs, inititaliseLogger } from "openchat-client";
+    import {
+        type UpdateMarketMakerConfigArgs,
+        inititaliseLogger,
+        anonUser,
+        identityState,
+        chatListScopeStore as chatListScope,
+    } from "openchat-client";
     import {
         isCanisterUrl,
         isLandingPageRoute,
@@ -95,10 +101,7 @@
 
     setContext<OpenChat>("client", client);
 
-    $: chatListScope = client.chatListScope;
-    $: identityState = client.identityState;
     $: landingPageRoute = isLandingPageRoute($pathParams);
-    $: anonUser = client.anonUser;
     $: homeRoute = $pathParams.kind === "home_route";
     $: showLandingPage =
         landingPageRoute ||

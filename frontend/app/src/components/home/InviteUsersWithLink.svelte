@@ -19,6 +19,7 @@
         type MultiUserChat,
         type MultiUserChatIdentifier,
         type ResourceKey,
+        currentUser as user,
     } from "openchat-client";
     import { canShare, shareLink } from "../../utils/share";
     import Markdown from "./Markdown.svelte";
@@ -39,7 +40,6 @@
     let loading = false;
     let confirmReset = false;
 
-    $: user = client.user;
     $: link = getLink(container.id, code);
     $: spinner = loading && code === undefined;
 

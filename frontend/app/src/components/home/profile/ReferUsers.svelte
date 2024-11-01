@@ -1,6 +1,5 @@
 <script lang="ts">
-    import { getContext } from "svelte";
-    import type { OpenChat } from "openchat-client";
+    import { currentUser as user } from "openchat-client";
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import QRCode from "../../QRCode.svelte";
@@ -11,9 +10,6 @@
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
 
-    const client = getContext<OpenChat>("client");
-
-    $: user = client.user;
     $: link = `${window.location.origin}/?ref=${$user.userId}`;
 
     function onCopy() {
