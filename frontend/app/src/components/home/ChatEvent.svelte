@@ -17,6 +17,7 @@
         type ChatType,
         routeForChatIdentifier,
         type Level,
+        userStore,
     } from "openchat-client";
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
     import GroupRulesChangedEvent from "./GroupRulesChangedEvent.svelte";
@@ -74,7 +75,6 @@
         event.event.content.kind === "message_reminder_created_content" &&
         event.event.content.hidden;
     $: typing = client.typing;
-    $: userStore = client.userStore;
     $: {
         userSummary = {
             kind: "user",

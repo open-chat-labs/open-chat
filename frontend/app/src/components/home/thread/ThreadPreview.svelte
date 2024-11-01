@@ -7,6 +7,7 @@
         routeForChatIdentifier,
         type MultiUserChat,
         routeForMessageContext,
+        userStore,
     } from "openchat-client";
     import { pop } from "../../../utils/transition";
     import { _ } from "svelte-i18n";
@@ -29,7 +30,6 @@
 
     $: user = client.user;
     $: chatListScope = client.chatListScope;
-    $: userStore = client.userStore;
     $: chatSummariesStore = client.chatSummariesStore;
     $: messagesRead = client.messagesRead;
     $: missingMessages = thread.totalReplies - thread.latestReplies.length;

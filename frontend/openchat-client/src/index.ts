@@ -8,7 +8,6 @@ export { ONE_GB } from "./stores/storage";
 export { FilteredProposals } from "./stores/filteredProposals";
 export type { MessageReadState } from "./stores/markRead";
 export type { TypersByKey } from "./stores/typing";
-export { OPENCHAT_BOT_USER_ID } from "./stores/user";
 export { immutableStore } from "./stores/immutable";
 export type { Dimensions } from "./utils/media";
 export { toRecord } from "./utils/list";

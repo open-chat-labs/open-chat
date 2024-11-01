@@ -19,6 +19,7 @@
         chatIdentifiersEqual,
         type ChatIdentifier,
         routeForChatIdentifier,
+        userStore,
     } from "openchat-client";
     import InitialGroupMessage from "./InitialGroupMessage.svelte";
     import page from "page";
@@ -60,7 +61,6 @@
     $: focusMessageIndex = client.focusMessageIndex;
     $: chatStateStore = client.chatStateStore;
     $: chatListScope = client.chatListScope;
-    $: userStore = client.userStore;
     $: showAvatar = initialised && shouldShowAvatar(chat, events[0]?.index);
     $: selectedCommunity = client.selectedCommunity;
     $: messageContext = { chatId: chat.id, threadRootMessageIndex: undefined };

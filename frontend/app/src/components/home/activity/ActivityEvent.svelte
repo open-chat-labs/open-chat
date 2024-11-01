@@ -4,6 +4,7 @@
         OpenChat,
         routeForMessageContext,
         type MessageContext,
+        userStore,
     } from "openchat-client";
     import type { Message, MessageActivityEvent, ResourceKey } from "openchat-client";
     import Avatar from "../../Avatar.svelte";
@@ -27,7 +28,6 @@
 
     $: user = client.user;
     $: userId = $user.userId;
-    $: userStore = client.userStore;
     $: sender = event.userId ? $userStore.get(event.userId) : undefined;
     $: eventUsername = event.userId
         ? buildDisplayName($userStore, event.userId, event.userId === userId)

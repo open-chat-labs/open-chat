@@ -8,6 +8,7 @@
         CommunitySummary,
         DiamondMembershipStatus,
     } from "openchat-client";
+    import { userStore } from "openchat-client";
     import Delete from "svelte-material-icons/Delete.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import Heart from "svelte-material-icons/Heart.svelte";
@@ -60,7 +61,6 @@
     $: blockedUsers = client.blockedUsers;
     $: messagesRead = client.messagesRead;
     $: typersByContext = client.typersByContext;
-    $: userStore = client.userStore;
     $: favouritesStore = client.favouritesStore;
     $: menuColour = "var(--icon-txt)";
     $: externalContent = chatSummary.kind === "channel" && chatSummary.externalUrl !== undefined;

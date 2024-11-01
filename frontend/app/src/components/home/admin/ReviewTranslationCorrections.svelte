@@ -16,6 +16,7 @@
         RejectReason,
         TranslationCorrection,
     } from "openchat-client";
+    import { userStore } from "openchat-client";
     import { getContext, onDestroy, onMount } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
     import { toastStore } from "../../../stores/toast";
@@ -31,7 +32,6 @@
     let refreshing = false;
     let processing = new Set<bigint>();
 
-    $: userStore = client.userStore;
     $: formattedBalance = client.formatTokens(chatBalance, 8);
 
     onMount(async () => {

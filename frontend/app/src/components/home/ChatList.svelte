@@ -17,6 +17,7 @@
         emptyCombinedUnreadCounts,
         chatIdentifierToString,
         type CombinedUnreadCounts,
+        userStore,
     } from "openchat-client";
     import { afterUpdate, beforeUpdate, createEventDispatcher, getContext, tick } from "svelte";
     import SearchResult from "./SearchResult.svelte";
@@ -63,7 +64,6 @@
         $selectedCommunity?.membership.role === "none" &&
         $selectedChatId === undefined;
     $: chatSummariesListStore = client.chatSummariesListStore;
-    $: userStore = client.userStore;
     $: user = $userStore.get($createdUser.userId);
     $: lowercaseSearch = searchTerm.toLowerCase();
     $: showExploreGroups =

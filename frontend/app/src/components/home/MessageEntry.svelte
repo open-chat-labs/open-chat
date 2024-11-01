@@ -25,7 +25,7 @@
         UserOrUserGroup,
         AttachmentContent,
     } from "openchat-client";
-    import { allQuestions, chatIdentifiersEqual } from "openchat-client";
+    import { allQuestions, chatIdentifiersEqual, userStore } from "openchat-client";
     import { enterSend } from "../../stores/settings";
     import MessageActions from "./MessageActions.svelte";
     import { addQueryStringParam } from "../../utils/urls";
@@ -85,7 +85,6 @@
     let textboxId = Symbol();
 
     $: throttleDeadline = client.throttleDeadline;
-    $: userStore = client.userStore;
     $: userGroups = client.currentCommunityUserGroups;
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && attachment === undefined;
     $: cryptoLookup = client.cryptoLookup;

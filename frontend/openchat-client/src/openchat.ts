@@ -189,7 +189,6 @@ import { byContext, isTyping, typing } from "./stores/typing";
 import { unconfirmed, unconfirmedReadByThem } from "./stores/unconfirmed";
 import {
     openChatBotUser,
-    OPENCHAT_BOT_USER_ID,
     proposalsBotUser,
     specialUsers,
     userStore,
@@ -200,7 +199,6 @@ import {
     platformModerator,
     platformOperator,
     videoCallBotUser,
-    AIRDROP_BOT_USER_ID,
     airdropBotUser,
 } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
@@ -486,6 +484,8 @@ import {
     isCompositeGate,
     shouldPreprocessGate,
     deletedUser,
+    OPENCHAT_BOT_USER_ID,
+    AIRDROP_BOT_USER_ID,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -511,7 +511,6 @@ import {
     nextCommunityIndex,
     removeCommunityPreview,
     selectedCommunity,
-    userGroupSummaries,
 } from "./stores/community";
 import {
     globalStateStore,
@@ -7777,7 +7776,6 @@ export class OpenChat extends OpenChatAgentWorker {
     percentageStorageUsed = percentageStorageUsed;
     storageStore = storageStore;
     storageInGb = storageInGb;
-    userStore = userStore;
     userCreatedStore = userCreatedStore;
     selectedAuthProviderStore = selectedAuthProviderStore;
     messagesRead = messagesRead;
@@ -7840,7 +7838,6 @@ export class OpenChat extends OpenChatAgentWorker {
     diamondStatus = diamondStatus;
     selectedThreadRootMessageIndex = selectedThreadRootMessageIndex;
     selectedMessageContext = selectedMessageContext;
-    userGroupSummaries = userGroupSummaries;
     offlineStore = offlineStore;
     pinNumberRequiredStore = pinNumberRequiredStore;
     capturePinNumberStore = capturePinNumberStore;

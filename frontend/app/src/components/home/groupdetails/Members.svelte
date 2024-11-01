@@ -21,6 +21,7 @@
         type MultiUserChatIdentifier,
         chatIdentifiersEqual,
         LARGE_GROUP_THRESHOLD,
+        userStore,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import InvitedUser from "./InvitedUser.svelte";
@@ -47,7 +48,6 @@
 
     $: user = client.user;
     $: userId = $user.userId;
-    $: userStore = client.userStore;
     $: knownUsers = getKnownUsers($userStore, members);
     $: largeGroup = members.length > LARGE_GROUP_THRESHOLD;
     $: me = knownUsers.find((u) => u.userId === userId);
