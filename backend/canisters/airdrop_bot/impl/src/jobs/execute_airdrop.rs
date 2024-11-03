@@ -160,7 +160,7 @@ fn execute_airdrop(participants: Vec<(UserId, Chit)>, state: &mut RuntimeState) 
         let mut actions = Vec::new();
 
         for (user_id, participant) in airdrop.outcome.participants.iter() {
-            if state.data.pending_actions_queue.len() % 500 == 0 {
+            if actions.len() % 500 == 0 {
                 if let Some((user_id, prize)) = lottery_winners.pop() {
                     actions.push(Action::Transfer(Box::new(AirdropTransfer {
                         recipient: user_id,
