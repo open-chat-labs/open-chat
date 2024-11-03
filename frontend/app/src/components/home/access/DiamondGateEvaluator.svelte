@@ -2,19 +2,19 @@
     import {
         LEDGER_CANISTER_CHAT,
         LEDGER_CANISTER_ICP,
-        OpenChat,
         type Level,
+        cryptoBalance,
+        cryptoLookup,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Diamond from "../../icons/Diamond.svelte";
     import CryptoSelector from "../CryptoSelector.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import Payment from "../upgrade/Payment.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher } from "svelte";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
 
-    const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     export let lifetime: boolean;
@@ -25,8 +25,6 @@
     let confirming = false;
     let confirmed = false;
 
-    $: cryptoBalance = client.cryptoBalance;
-    $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = {
         symbol: $cryptoLookup[ledger],
         balance: $cryptoBalance[ledger] ?? BigInt(0),

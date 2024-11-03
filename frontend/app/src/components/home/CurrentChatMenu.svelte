@@ -27,6 +27,11 @@
         chatIdentifiersEqual,
         type ChatSummary,
         type OpenChat,
+        platformModerator,
+        isDiamond,
+        favouritesStore,
+        messagesRead,
+        isProposalGroup,
     } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { notificationsSupported } from "../../utils/notifications";
@@ -48,11 +53,6 @@
     export let showSuspendUserModal = false;
     export let hasPinned: boolean;
 
-    $: platformModerator = client.platformModerator;
-    $: isDiamond = client.isDiamond;
-    $: favouritesStore = client.favouritesStore;
-    $: messagesRead = client.messagesRead;
-    $: isProposalGroup = client.isProposalGroup;
     $: governanceCanisterId =
         selectedChatSummary.kind !== "direct_chat" &&
         selectedChatSummary.subtype?.kind === "governance_proposals"

@@ -6,7 +6,7 @@
         OpenChat,
         TypersByKey,
     } from "openchat-client";
-    import { AvatarSize, UserStatus, userStore } from "openchat-client";
+    import { AvatarSize, UserStatus, userStore, byContext } from "openchat-client";
     import Avatar from "../../Avatar.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import { rtlStore } from "../../../stores/rtl";
@@ -29,7 +29,6 @@
     export let rootEvent: EventWrapper<Message>;
     export let threadRootMessageIndex: number;
 
-    $: byContext = client.typersByContext;
     $: chat = normaliseChatSummary($now, chatSummary, $byContext);
 
     function close() {

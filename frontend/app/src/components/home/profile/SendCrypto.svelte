@@ -2,6 +2,11 @@
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import TokenInput from "../TokenInput.svelte";
     import type { NamedAccount, OpenChat, ResourceKey } from "openchat-client";
+    import {
+        currentUser as user,
+        cryptoBalance as cryptoBalanceStore,
+        cryptoLookup,
+    } from "openchat-client";
     import { ICP_SYMBOL } from "openchat-client";
     import Input from "../../Input.svelte";
     import { _ } from "svelte-i18n";
@@ -40,10 +45,7 @@
     let saveAccountElement: SaveAccount;
     let balanceWithRefresh: BalanceWithRefresh;
 
-    $: user = client.user;
-    $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
-    $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
     $: account = tokenDetails.symbol === ICP_SYMBOL ? $user.cryptoAccount : $user.userId;
     $: transferFees = tokenDetails.transferFee;

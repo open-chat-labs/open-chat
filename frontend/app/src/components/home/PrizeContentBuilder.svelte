@@ -28,6 +28,12 @@
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
     import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
+    import {
+        currentUser as user,
+        lastCryptoSent,
+        cryptoBalance as cryptoBalanceStore,
+        cryptoLookup,
+    } from "openchat-client";
 
     const ONE_HOUR = 1000 * 60 * 60;
     const ONE_DAY = ONE_HOUR * 24;
@@ -55,11 +61,7 @@
     let tokenInputState: "ok" | "zero" | "too_low" | "too_high";
     let sending = false;
 
-    $: user = client.user;
-    $: lastCryptoSent = client.lastCryptoSent;
-    $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
-    $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
     $: symbol = tokenDetails.symbol;
     $: howToBuyUrl = tokenDetails.howToBuyUrl;

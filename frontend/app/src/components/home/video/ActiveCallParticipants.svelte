@@ -5,6 +5,7 @@
         type OpenChat,
         type UserSummary,
         chatIdentifiersEqual,
+        currentUser as user,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
     import ActiveCallParticipantsHeader from "./ActiveCallParticipantsHeader.svelte";
@@ -32,8 +33,6 @@
 
     let demoted = new Set<string>();
     let loading = false;
-
-    $: user = client.user;
 
     let selectedTab: "presenters" | "viewers" = "presenters";
     let videoParticipants: MappedParticipants = {

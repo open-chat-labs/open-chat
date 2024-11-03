@@ -3,16 +3,21 @@
     import ModalContent from "../../ModalContent.svelte";
     import Features from "./Features.svelte";
     import Payment from "./Payment.svelte";
-    import type { OpenChat } from "openchat-client";
-    import { LEDGER_CANISTER_CHAT, LEDGER_CANISTER_ICP } from "openchat-client";
-    import { getContext, onMount } from "svelte";
+    import {
+        LEDGER_CANISTER_CHAT,
+        LEDGER_CANISTER_ICP,
+        isDiamond,
+        canExtendDiamond,
+        cryptoBalance,
+        cryptoLookup,
+    } from "openchat-client";
+    import { onMount } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import Diamond from "../../icons/Diamond.svelte";
     import CryptoSelector from "../CryptoSelector.svelte";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
 
-    const client = getContext<OpenChat>("client");
     let ledger: string =
         process.env.NODE_ENV === "production" ? LEDGER_CANISTER_CHAT : LEDGER_CANISTER_ICP;
 
@@ -22,10 +27,6 @@
     let confirmed = false;
     let refreshingBalance = false;
 
-    $: isDiamond = client.isDiamond;
-    $: canExtendDiamond = client.canExtendDiamond;
-    $: cryptoBalance = client.cryptoBalance;
-    $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = {
         symbol: $cryptoLookup[ledger],
         balance: $cryptoBalance[ledger] ?? BigInt(0),

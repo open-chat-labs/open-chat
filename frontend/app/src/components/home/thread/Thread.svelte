@@ -30,6 +30,19 @@
     import { i18nKey } from "../../../i18n/i18n";
     import P2PSwapContentBuilder from "../P2PSwapContentBuilder.svelte";
     import AreYouSure from "../../AreYouSure.svelte";
+    import {
+        currentUser as user,
+        focusThreadMessageIndex as focusMessageIndex,
+        lastCryptoSent,
+        draftMessagesStore,
+        unconfirmed,
+        messagesRead,
+        currentChatBlockedUsers,
+        threadEvents,
+        failedMessagesStore,
+        expandedDeletedMessages,
+        threadsFollowedByMeStore,
+    } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
 
@@ -51,15 +64,6 @@
     let removeLinkPreviewDetails: { event: EventWrapper<Message>; url: string } | undefined =
         undefined;
 
-    $: user = client.user;
-    $: focusMessageIndex = client.focusThreadMessageIndex;
-    $: lastCryptoSent = client.lastCryptoSent;
-    $: draftMessagesStore = client.draftMessagesStore;
-    $: unconfirmed = client.unconfirmed;
-    $: messagesRead = client.messagesRead;
-    $: currentChatBlockedUsers = client.currentChatBlockedUsers;
-    $: threadEvents = client.threadEvents;
-    $: failedMessagesStore = client.failedMessagesStore;
     $: threadRootMessageIndex = rootEvent.event.messageIndex;
     $: messageContext = { chatId: chat.id, threadRootMessageIndex };
     $: threadRootMessage = rootEvent.event;
@@ -73,7 +77,6 @@
     $: editingEvent = derived(draftMessage, (d) => d.editingEvent);
     $: canSendAny = client.canSendMessage(chat.id, "thread");
     $: canReact = client.canReactToMessages(chat.id);
-    $: expandedDeletedMessages = client.expandedDeletedMessages;
     $: atRoot = $threadEvents.length === 0 || $threadEvents[0]?.index === 0;
     $: events = atRoot ? [rootEvent, ...$threadEvents] : $threadEvents;
     $: timeline = client.groupEvents(
@@ -85,7 +88,6 @@
     $: readonly = client.isChatReadOnly(chat.id);
     $: thread = rootEvent.event.thread;
     $: loading = !initialised && $threadEvents.length === 0 && thread !== undefined;
-    $: threadsFollowedByMeStore = client.threadsFollowedByMeStore;
     $: isFollowedByMe =
         $threadsFollowedByMeStore.get(chat.id)?.has(threadRootMessageIndex) ?? false;
 

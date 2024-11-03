@@ -8,6 +8,7 @@
         routeForMessage,
         type GlobalState,
         type MessageActivityEvent,
+        globalStateStore as global,
     } from "openchat-client";
     import { getContext } from "svelte";
     import SectionHeader from "../../SectionHeader.svelte";
@@ -23,8 +24,6 @@
 
     const client = getContext<OpenChat>("client");
     let selectedEvent: MessageActivityEvent | undefined = undefined;
-
-    $: global = client.globalStateStore;
 
     $: {
         if (!uptodate($global, $activityEvents)) {

@@ -2,6 +2,11 @@
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import TokenInput from "../TokenInput.svelte";
     import type { DexId, InterpolationValues, OpenChat, ResourceKey } from "openchat-client";
+    import {
+        enhancedCryptoLookup as cryptoLookup,
+        exchangeRatesLookupStore as exchangeRatesLookup,
+        cryptoBalance as cryptoBalanceStore,
+    } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Markdown from "../Markdown.svelte";
     import { random128 } from "openchat-shared";
@@ -45,16 +50,19 @@
     let warnValueUnknown = false;
     let warnValueDropped = false;
 
-    $: cryptoLookup = client.enhancedCryptoLookup;
     $: detailsIn = $cryptoLookup[ledgerIn];
     $: detailsOut = ledgerOut !== undefined ? $cryptoLookup[ledgerOut] : undefined;
     $: anySwapsAvailable = Object.keys(swaps).length > 0 && detailsOut !== undefined;
     $: swapping = state === "swap" && busy;
     $: amountInText = client.formatTokens(amountIn, detailsIn.decimals);
-    $: exchangeRatesLookup = client.exchangeRatesLookupStore;
     $: {
         valid =
-            anySwapsAvailable && validAmount && (state === "swap" ? (bestQuote !== undefined && userAcceptedWarning || (!warnValueUnknown && !warnValueDropped)) : true);
+            anySwapsAvailable &&
+            validAmount &&
+            (state === "swap"
+                ? (bestQuote !== undefined && userAcceptedWarning) ||
+                  (!warnValueUnknown && !warnValueDropped)
+                : true);
     }
 
     $: title =
@@ -65,7 +73,6 @@
                   tokenOut: detailsOut!.symbol,
               });
 
-    $: cryptoBalanceStore = client.cryptoBalance;
     $: balanceIn = $cryptoBalanceStore[ledgerIn];
     $: remainingBalance =
         amountIn > BigInt(0) ? balanceIn - amountIn - detailsIn.transferFee : balanceIn;
@@ -118,15 +125,16 @@
                         amountIn,
                         $exchangeRatesLookup[detailsIn.symbol.toLowerCase()]?.toUSD,
                         detailsIn.decimals,
-                    );    
+                    );
                     const usdOutText = calculateDollarAmount(
                         bestQuote[1],
                         $exchangeRatesLookup[detailsOut!.symbol.toLowerCase()]?.toUSD,
                         detailsOut!.decimals,
                     );
-                    
+
                     warnValueUnknown = usdInText === "???" || usdOutText === "???";
-                    warnValueDropped = !warnValueUnknown && Number(usdOutText) < 0.9 * Number(usdInText);
+                    warnValueDropped =
+                        !warnValueUnknown && Number(usdOutText) < 0.9 * Number(usdInText);
 
                     swapMessageValues = {
                         amountIn: amountInText,
@@ -167,7 +175,8 @@
 
         let minAmountOut = (bestQuoteLocal[1] * BigInt(98)) / BigInt(100);
 
-        client.refreshAccountBalance(ledgerIn)
+        client
+            .refreshAccountBalance(ledgerIn)
             .then((balance) => {
                 if (balance < amountIn) {
                     error = $_("tokenSwap.progress.insufficientFunds");
@@ -176,11 +185,18 @@
                 } else {
                     return true;
                 }
-            }).then((balanceCheckSuccess) => {
+            })
+            .then((balanceCheckSuccess) => {
                 if (balanceCheckSuccess) {
                     swapId = random128();
-                    return client
-                        .swapTokens(swapId, ledgerInLocal, ledgerOutLocal, amountIn, minAmountOut, bestQuoteLocal[0])
+                    return client.swapTokens(
+                        swapId,
+                        ledgerInLocal,
+                        ledgerOutLocal,
+                        amountIn,
+                        minAmountOut,
+                        bestQuoteLocal[0],
+                    );
                 }
             })
             .catch(() => (swapId = undefined))
@@ -213,9 +229,9 @@
 
     function onSwapFinished(
         ev: CustomEvent<{
-            outcome: "success" | "rateChanged" | "insufficientFunds" | "error",
-            ledgerIn: string,
-            ledgerOut: string
+            outcome: "success" | "rateChanged" | "insufficientFunds" | "error";
+            ledgerIn: string;
+            ledgerOut: string;
         }>,
     ) {
         busy = false;
@@ -310,13 +326,17 @@
         {#if state === "swap" && !swapping}
             <div>{$_("tokenSwap.bestQuote", { values: swapMessageValues })}</div>
             <Markdown text={$_("tokenSwap.youWillReceive", { values: swapMessageValues })} />
-            
+
             {#if warnValueDropped || warnValueUnknown}
                 <div class="warning">
                     {#if warnValueDropped}
-                        <div>{$_("tokenSwap.warningValueDropped", { values: swapMessageValues })}</div>
+                        <div>
+                            {$_("tokenSwap.warningValueDropped", { values: swapMessageValues })}
+                        </div>
                     {:else}
-                        <div>{$_("tokenSwap.warningValueUnknown", { values: swapMessageValues })}</div>
+                        <div>
+                            {$_("tokenSwap.warningValueUnknown", { values: swapMessageValues })}
+                        </div>
                     {/if}
                     <Toggle
                         id="confirm-understanding"
@@ -419,5 +439,5 @@
         display: flex;
         flex-direction: column;
         gap: $sp4;
-    }    
+    }
 </style>

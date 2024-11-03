@@ -5,6 +5,8 @@
         routeForMessageContext,
         type MessageContext,
         userStore,
+        currentUser as user,
+        communities,
     } from "openchat-client";
     import type { Message, MessageActivityEvent, ResourceKey } from "openchat-client";
     import Avatar from "../../Avatar.svelte";
@@ -26,7 +28,6 @@
     export let event: MessageActivityEvent;
     export let selected: boolean;
 
-    $: user = client.user;
     $: userId = $user.userId;
     $: sender = event.userId ? $userStore.get(event.userId) : undefined;
     $: eventUsername = event.userId
@@ -37,7 +38,6 @@
         : $_("activity.anon");
     $: lastMessage = formatLatestMessage(event, messageUsername);
     $: eventSummary = buildEventSummary(event, eventUsername);
-    $: communities = client.communities;
     $: chatName = getChatName(event.messageContext);
     $: tips = event?.message?.tips ? Object.entries(event.message.tips) : [];
 

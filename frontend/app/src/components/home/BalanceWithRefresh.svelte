@@ -5,6 +5,7 @@
     import { _ } from "svelte-i18n";
     import type { OpenChat, ResourceKey } from "openchat-client";
     import Translatable from "../Translatable.svelte";
+    import { enhancedCryptoLookup as cryptoLookup } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -19,7 +20,6 @@
     export let refreshing = false;
     export let conversion: "none" | "usd" | "icp" | "btc" | "eth" = "none";
 
-    $: cryptoLookup = client.enhancedCryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
     $: symbol = tokenDetails.symbol;
     $: formattedValue =

@@ -25,7 +25,15 @@
         UserOrUserGroup,
         AttachmentContent,
     } from "openchat-client";
-    import { allQuestions, chatIdentifiersEqual, userStore } from "openchat-client";
+    import {
+        allQuestions,
+        chatIdentifiersEqual,
+        userStore,
+        throttleDeadline,
+        currentCommunityUserGroups as userGroups,
+        cryptoLookup,
+        anonUser,
+    } from "openchat-client";
     import { enterSend } from "../../stores/settings";
     import MessageActions from "./MessageActions.svelte";
     import { addQueryStringParam } from "../../utils/urls";
@@ -84,15 +92,11 @@
     // Update this to force a new textbox instance to be created
     let textboxId = Symbol();
 
-    $: throttleDeadline = client.throttleDeadline;
-    $: userGroups = client.currentCommunityUserGroups;
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && attachment === undefined;
-    $: cryptoLookup = client.cryptoLookup;
     $: tokens = Object.values($cryptoLookup)
         .map((t) => t.symbol.toLowerCase())
         .join("|");
     $: tokenMatchRegex = new RegExp(`^\/(${tokens}) *(\\d*[.,]?\\d*)$`);
-    $: anonUser = client.anonUser;
     $: canSendAny = !$anonUser && client.canSendMessage(chat.id, mode);
     $: permittedMessages = client.permittedMessages(chat.id, mode);
     $: canEnterText =

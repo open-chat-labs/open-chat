@@ -3,7 +3,11 @@
     import Menu from "../Menu.svelte";
     import VirtualList from "../VirtualList.svelte";
     import type { OpenChat, UserOrUserGroup } from "openchat-client";
-    import { userStore } from "openchat-client";
+    import {
+        userStore,
+        currentUser,
+        currentCommunityMembers as communityMembers,
+    } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import Avatar from "../Avatar.svelte";
     import { AvatarSize } from "openchat-client";
@@ -24,8 +28,6 @@
     let index = 0;
     let usersAndGroups: UserOrUserGroup[] = [];
 
-    $: currentUser = client.user;
-    $: communityMembers = client.currentCommunityMembers;
     $: itemHeight = $mobileWidth ? 53 : 55;
     $: borderWidth = direction === "up" ? 2 : 3;
     $: maxHeight =

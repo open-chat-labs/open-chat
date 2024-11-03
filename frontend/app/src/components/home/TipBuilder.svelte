@@ -12,6 +12,12 @@
         OpenChat,
         PendingCryptocurrencyTransfer,
     } from "openchat-client";
+    import {
+        lastCryptoSent,
+        cryptoBalance as cryptoBalanceStore,
+        cryptoLookup,
+        exchangeRatesLookupStore as exchangeRatesLookup,
+    } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import AccountInfo from "./AccountInfo.svelte";
     import ModalContent from "../ModalContent.svelte";
@@ -51,10 +57,6 @@
     let validAmount: boolean = false;
     let draftAmount = 0n;
 
-    $: lastCryptoSent = client.lastCryptoSent;
-    $: cryptoBalanceStore = client.cryptoBalance;
-    $: cryptoLookup = client.cryptoLookup;
-    $: exchangeRatesLookup = client.exchangeRatesLookupStore;
     $: tokenDetails = $cryptoLookup[ledger];
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? 0n;
     $: exchangeRate = to2SigFigs(
