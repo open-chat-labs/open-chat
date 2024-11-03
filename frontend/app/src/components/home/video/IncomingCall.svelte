@@ -101,7 +101,7 @@
                 </div>
                 <div class="btns">
                     <TooltipWrapper position={"top"} align={"middle"}>
-                        <div slot="target" on:click={cancel} class="btn ignore">
+                        <div role="button" slot="target" on:click={cancel} class="btn ignore">
                             <PhoneHangup size={$iconSize} color={"var(--txt)"} />
                         </div>
                         <div let:position let:align slot="tooltip">
@@ -111,7 +111,7 @@
                         </div>
                     </TooltipWrapper>
                     <TooltipWrapper position={"top"} align={"middle"}>
-                        <div slot="target" on:click={join} class="btn join">
+                        <div role="button" slot="target" on:click={join} class="btn join">
                             <Phone size={$iconSize} color={"var(--txt)"} />
                         </div>
                         <div let:position let:align slot="tooltip">

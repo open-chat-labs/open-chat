@@ -85,12 +85,4 @@
             cursor: pointer;
         }
     }
-
-    .fake {
-        position: absolute;
-        bottom: 20px;
-        left: 20px;
-        padding: 10px;
-        z-index: 1000;
-    }
 </style>

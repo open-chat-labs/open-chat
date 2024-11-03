@@ -456,7 +456,8 @@
     <div
         class:fixed={burstFixed}
         class="burst-wrapper"
-        style={`background-image: url(${burstUrl})`} />
+        style={`background-image: url(${burstUrl})`}>
+    </div>
 {/if}
 
 <Head />
