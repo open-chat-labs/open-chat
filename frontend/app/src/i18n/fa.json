@@ -109,7 +109,7 @@
     "accountSuspended": "حساب معلق شده است",
     "activity": {
         "anon": "یک کاربر ناشناس",
-        "crypto": "{username} یک پیام crytpo برای شما ارسال کرد",
+        "crypto": "{username} یک پیام رمزنگاری برای شما ارسال کرد",
         "mention": "{username} از شما نام برد",
         "missingMessage": "محتوای پیام در دسترس نیست",
         "navLabel": "فید فعالیت",

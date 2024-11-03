@@ -109,7 +109,7 @@
     "accountSuspended": "חשבון מושעה",
     "activity": {
         "anon": "משתמש אנונימי",
-        "crypto": "{username} שלח לך הודעת crytpo",
+        "crypto": "{username} שלח לך הודעת קריפטו",
         "mention": "{username} הזכיר אותך",
         "missingMessage": "תוכן ההודעה אינו זמין",
         "navLabel": "הזנת פעילות",

@@ -109,7 +109,7 @@
     "accountSuspended": "Account suspended",
     "activity": {
         "anon": "An anonymous user",
-        "crypto": "{username} sent you a crytpo message",
+        "crypto": "{username} sent you a crypto message",
         "mention": "{username} mentioned you",
         "missingMessage": "Message content unavailable",
         "navLabel": "Activity feed",

@@ -109,7 +109,7 @@
     "accountSuspended": "Рахунок Підвісні",
     "activity": {
         "anon": "Анонімний користувач",
-        "crypto": "{username} надіслав вам повідомлення Crytpo",
+        "crypto": "{username} надіслав вам шифроване повідомлення",
         "mention": "{username} згадав вас",
         "missingMessage": "Вміст повідомлення недоступний",
         "navLabel": "Стрічка активності",

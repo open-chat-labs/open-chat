@@ -109,7 +109,7 @@
     "accountSuspended": "アカウントが一時停止",
     "activity": {
         "anon": "匿名ユーザー",
-        "crypto": "{username} があなたに crypto メッセージを送信しました",
+        "crypto": "{username} が暗号メッセージを送信しました",
         "mention": "{username} さんがあなたに言及しました",
         "missingMessage": "メッセージの内容が利用できません",
         "navLabel": "アクティビティフィード",

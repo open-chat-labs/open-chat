@@ -109,7 +109,7 @@
     "accountSuspended": "Toàn khoản bị đình chỉ",
     "activity": {
         "anon": "Một người dùng ẩn danh",
-        "crypto": "{username} đã gửi cho bạn một tin nhắn mật mã",
+        "crypto": "{username} đã gửi cho bạn một tin nhắn mã hóa",
         "mention": "{username} đã đề cập đến bạn",
         "missingMessage": "Nội dung tin nhắn không khả dụng",
         "navLabel": "Nguồn cấp dữ liệu hoạt động",
