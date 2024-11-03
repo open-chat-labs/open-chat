@@ -1,7 +1,7 @@
 <script lang="ts">
     import { getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
-    import { AvatarSize } from "openchat-client";
+    import { AvatarSize, userStore } from "openchat-client";
     import Avatar from "../../Avatar.svelte";
     import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
     import { i18nKey } from "../../../i18n/i18n";
@@ -13,8 +13,6 @@
     const client = getContext<OpenChat>("client");
 
     export let referrals: Set<string>;
-
-    $: userStore = client.userStore;
 
     function showUserProfile(ev: Event, userId: string) {
         ev.target?.dispatchEvent(

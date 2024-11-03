@@ -55,32 +55,32 @@ function extractIdTests(form: "short" | "long", url: string) {
 }
 
 describe("twitter link", () => {
-    describe("with qs params", () => {
+    test("with qs params", () => {
         const match =
             "https://twitter.com/stephhegarty/status/1564531848209915904?s=20&t=53i6PnUJwXK3K-Qy03-SbQ".match(
-                twitterLinkRegex()
+                twitterLinkRegex(),
             );
         expect(match![3]).toEqual("1564531848209915904");
     });
-    describe("without qs params", () => {
+    test("without qs params", () => {
         const match = "https://twitter.com/stephhegarty/status/1564531848209915904".match(
-            twitterLinkRegex()
+            twitterLinkRegex(),
         );
         expect(match![3]).toEqual("1564531848209915904");
     });
 });
 
 describe("x.com link", () => {
-    describe("with qs params", () => {
+    test("with qs params", () => {
         const match =
             "https://x.com/stephhegarty/status/1564531848209915904?s=20&t=53i6PnUJwXK3K-Qy03-SbQ".match(
-                twitterLinkRegex()
+                twitterLinkRegex(),
             );
         expect(match![3]).toEqual("1564531848209915904");
     });
-    describe("without qs params", () => {
+    test("without qs params", () => {
         const match = "https://x.com/stephhegarty/status/1564531848209915904".match(
-            twitterLinkRegex()
+            twitterLinkRegex(),
         );
         expect(match![3]).toEqual("1564531848209915904");
     });

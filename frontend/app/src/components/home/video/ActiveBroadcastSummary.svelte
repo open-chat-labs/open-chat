@@ -1,5 +1,12 @@
 <script lang="ts">
-    import { chatIdentifiersEqual, routeForMessage, type OpenChat } from "openchat-client";
+    import {
+        chatIdentifiersEqual,
+        routeForMessage,
+        type OpenChat,
+        chatListScopeStore as chatListScope,
+        selectedChatStore as selectedChat,
+        selectedMessageContext,
+    } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
@@ -10,9 +17,6 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    $: chatListScope = client.chatListScope;
-    $: selectedChat = client.selectedChatStore;
-    $: selectedMessageContext = client.selectedMessageContext;
     $: hasCall = $selectedChat !== undefined && $selectedChat.videoCallInProgress !== undefined;
     $: isPublic = $selectedChat !== undefined && !client.isChatPrivate($selectedChat);
     $: show = hasCall && isPublic && !incall;

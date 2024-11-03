@@ -5,7 +5,7 @@
     import Menu from "../../Menu.svelte";
     import MenuItem from "../../MenuItem.svelte";
     import { iconSize } from "../../../stores/iconSize";
-    import { AvatarSize, OpenChat } from "openchat-client";
+    import { AvatarSize, OpenChat, userStore } from "openchat-client";
     import Avatar from "../../Avatar.svelte";
     import type { Theme } from "../../../theme/types";
     import { createEventDispatcher, getContext } from "svelte";
@@ -19,8 +19,6 @@
     export let otherThemes: Theme[];
     export let label: ResourceKey;
     export let align: Alignment;
-
-    $: userStore = client.userStore;
 
     function onSelect(name: string) {
         dispatch("select", name);

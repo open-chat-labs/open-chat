@@ -6,6 +6,8 @@
         type ChannelMatch,
         type OpenChat,
         routeForChatIdentifier,
+        chatListScopeStore as chatListScope,
+        selectedCommunity,
     } from "openchat-client";
     import { mobileWidth } from "../../../../stores/screenDimensions";
     import { getContext } from "svelte";
@@ -17,8 +19,6 @@
     export let channel: ChannelMatch;
 
     const client = getContext<OpenChat>("client");
-    $: selectedCommunity = client.selectedCommunity;
-    $: chatListScope = client.chatListScope;
 
     function selectChannel(match: ChannelMatch) {
         if ($selectedCommunity === undefined) return;

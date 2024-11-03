@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { EnhancedReplyContext, CreatedUser, OpenChat } from "openchat-client";
+    import { currentCommunityMembers as communityMembers } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import { createEventDispatcher, getContext } from "svelte";
@@ -18,7 +19,6 @@
 
     $: me = replyingTo.sender?.userId === user?.userId;
 
-    $: communityMembers = client.currentCommunityMembers;
     $: displayName = me
         ? client.toTitleCase($_("you"))
         : client.getDisplayName(replyingTo.sender, $communityMembers);

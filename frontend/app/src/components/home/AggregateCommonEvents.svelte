@@ -2,6 +2,7 @@
 
 <script lang="ts">
     import type { ChatIdentifier, Level, OpenChat, UserLookup, UserSummary } from "openchat-client";
+    import { userStore } from "openchat-client";
     import { getContext, onDestroy, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Markdown from "./Markdown.svelte";
@@ -19,7 +20,6 @@
 
     const client = getContext<OpenChat>("client");
 
-    $: userStore = client.userStore;
     $: joinedText = buildJoinedText($userStore, joined);
     $: deletedText =
         messagesDeleted.length > 0

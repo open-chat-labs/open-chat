@@ -11,6 +11,7 @@
     import { createEventDispatcher, getContext, tick } from "svelte";
     import page from "page";
     import type { OpenChat } from "openchat-client";
+    import { identityState, anonUser } from "openchat-client";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
 
@@ -19,8 +20,6 @@
 
     export let canMarkAllRead: boolean;
 
-    $: identityState = client.identityState;
-    $: anonUser = client.anonUser;
     $: {
         if (
             $identityState.kind === "logged_in" &&

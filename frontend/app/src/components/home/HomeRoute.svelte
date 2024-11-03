@@ -1,15 +1,11 @@
 <script lang="ts">
     import Home from "./Home.svelte";
-    import { getContext } from "svelte";
-    import type { OpenChat } from "openchat-client";
+    import { identityState, chatsLoading } from "openchat-client";
     import FancyLoader from "../icons/FancyLoader.svelte";
     import LandingPage from "../landingpages/LandingPage.svelte";
 
     export let showLandingPage: boolean;
 
-    const client = getContext<OpenChat>("client");
-    $: identityState = client.identityState;
-    $: chatsLoading = client.chatsLoading;
     $: showLoader =
         $identityState.kind !== "registering" &&
         $identityState.kind !== "challenging" &&

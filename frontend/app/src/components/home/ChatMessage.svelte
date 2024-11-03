@@ -16,6 +16,12 @@
         type ChatIdentifier,
         type ChatType,
         routeForMessage,
+        translationStore,
+        chatListScopeStore as chatListScope,
+        undeletingMessagesStore,
+        currentCommunityMembers as communityMembers,
+        currentChatMembersMap as chatMembersMap,
+        currentChatBlockedUsers,
     } from "openchat-client";
     import EmojiPicker from "./EmojiPicker.svelte";
     import Avatar from "../Avatar.svelte";
@@ -118,13 +124,11 @@
 
     $: maxWidthFraction = $screenWidth === ScreenWidth.ExtraLarge ? 0.7 : 0.8;
     $: canTip = !me && confirmed && !inert && !failed;
-    $: chatListScope = client.chatListScope;
     $: inThread = threadRootMessage !== undefined;
     $: threadRootMessageIndex =
         threadRootMessage?.messageId === msg.messageId
             ? undefined
             : threadRootMessage?.messageIndex;
-    $: translationStore = client.translationStore;
     $: mediaDimensions = extractDimensions(msg.content);
     $: fill = client.fillMessage(msg);
     $: showAvatar = $screenWidth !== ScreenWidth.ExtraExtraSmall;
@@ -141,16 +145,12 @@
         collapsed;
     $: canEdit =
         me && supportsEdit && !msg.deleted && !crypto && !poll && !isPrize && !isMemeFighter;
-    $: undeletingMessagesStore = client.undeletingMessagesStore;
     $: undeleting = $undeletingMessagesStore.has(msg.messageId);
     $: showChatMenu = (!inert || canRevealDeleted || canRevealBlocked) && !readonly;
     $: canUndelete = msg.deleted && msg.content.kind !== "deleted_content";
-    $: communityMembers = client.currentCommunityMembers;
-    $: chatMembersMap = client.currentChatMembersMap;
     $: senderDisplayName = client.getDisplayName(sender, $communityMembers);
     $: messageContext = { chatId, threadRootMessageIndex };
     $: tips = msg.tips ? Object.entries(msg.tips) : [];
-    $: currentChatBlockedUsers = client.currentChatBlockedUsers;
     $: canBlockUser = canBlockUsers && !$currentChatBlockedUsers.has(msg.sender);
     $: canRevealBlocked = msg.content.kind === "blocked_content";
     $: deletedByMe = msg.content.kind === "deleted_content" && msg.content.deletedBy == user.userId;

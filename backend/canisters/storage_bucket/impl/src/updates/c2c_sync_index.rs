@@ -60,5 +60,7 @@ fn c2c_sync_index_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
     }
 
+    crate::jobs::remove_expired_files::start_job_if_required(state);
+
     Success(SuccessResult { files_removed })
 }

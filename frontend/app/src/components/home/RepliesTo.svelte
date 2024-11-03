@@ -7,6 +7,9 @@
         routeForChatIdentifier,
         chatIdentifiersEqual,
         type ChatIdentifier,
+        currentUser,
+        chatListScopeStore as chatListScope,
+        currentCommunityMembers as communityMembers,
     } from "openchat-client";
     import { rtlStore } from "../../stores/rtl";
     import Link from "../Link.svelte";
@@ -25,12 +28,9 @@
 
     let debug = false;
 
-    $: currentUser = client.user;
-    $: chatListScope = client.chatListScope;
     $: me = repliesTo.senderId === $currentUser.userId;
     $: isTextContent = repliesTo.content?.kind === "text_content";
     $: isP2PSwap = repliesTo.content.kind === "p2p_swap_content";
-    $: communityMembers = client.currentCommunityMembers;
     $: displayName = me
         ? client.toTitleCase($_("you"))
         : client.getDisplayNameById(repliesTo.senderId, $communityMembers);

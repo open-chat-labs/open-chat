@@ -34,5 +34,9 @@ fn delete_files_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
     }
 
+    if !success.is_empty() {
+        crate::jobs::remove_expired_files::start_job_if_required(state);
+    }
+
     Response { success, failures }
 }

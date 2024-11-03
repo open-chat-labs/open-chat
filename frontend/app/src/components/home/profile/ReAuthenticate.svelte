@@ -7,6 +7,7 @@
         InMemoryAuthClientStorage,
         type OpenChat,
         type ResourceKey,
+        selectedAuthProviderStore,
     } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import ChooseSignInOption from "./ChooseSignInOption.svelte";
@@ -35,8 +36,6 @@
         | "choose_sol_wallet"
         | "signing_in_with_email" = "choose_provider";
     let verificationCode: string | undefined = undefined;
-
-    $: selectedAuthProviderStore = client.selectedAuthProviderStore;
 
     onMount(() => {
         emailSigninHandler.addEventListener("email_signin_event", emailEvent);

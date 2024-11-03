@@ -6,7 +6,7 @@ export function clamp(min: number, max: number, val: number): number {
 
 export const swipe: Action<HTMLElement, { threshold: number }> = (
     node,
-    param = { threshold: 20 }
+    param: { threshold: number } = { threshold: 20 },
 ): ActionReturn<{ threshold: number }> => {
     let start = 0;
     let end = 0;
@@ -31,7 +31,7 @@ export const swipe: Action<HTMLElement, { threshold: number }> = (
                 bubbles: true,
                 cancelable: true,
                 detail: { diffx },
-            })
+            }),
         );
     }
 
