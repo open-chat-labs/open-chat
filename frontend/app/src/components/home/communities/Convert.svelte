@@ -6,6 +6,7 @@
         type OpenChat,
         type ChatListScope,
         defaultChatRules,
+        chatListScopeStore as chatListScope,
     } from "openchat-client";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
@@ -23,8 +24,6 @@
     const client = getContext<OpenChat>("client");
 
     export let group: GroupChatSummary | undefined;
-
-    $: chatListScope = client.chatListScope;
 
     let scope: ChatListScope["kind"] | undefined;
 

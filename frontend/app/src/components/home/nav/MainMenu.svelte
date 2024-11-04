@@ -19,15 +19,13 @@
     import page from "page";
     import { createEventDispatcher, getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
+    import { anonUser, platformOperator, canExtendDiamond } from "openchat-client";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    $: platformOperator = client.platformOperator;
-    $: canExtendDiamond = client.canExtendDiamond;
-    $: anonUser = client.anonUser;
     $: admin = $platformOperator;
 </script>
 

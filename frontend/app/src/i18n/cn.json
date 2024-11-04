@@ -109,7 +109,7 @@
     "accountSuspended": "帐户暂停",
     "activity": {
         "anon": "匿名用户",
-        "crypto": "{username} 向您发送了一条加密消息",
+        "crypto": "{username} 向您发送了一条加密货币消息",
         "mention": "{username} 提到了你",
         "missingMessage": "消息内容不可用",
         "navLabel": "活动动态",

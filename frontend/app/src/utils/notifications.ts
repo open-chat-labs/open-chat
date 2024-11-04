@@ -3,6 +3,7 @@ import {
     type OpenChat,
     type ChatIdentifier,
     routeForChatIdentifier,
+    notificationStatus,
 } from "openchat-client";
 import page from "page";
 
@@ -46,7 +47,7 @@ export async function subscribeToNotifications(
         }
     });
 
-    client.notificationStatus.subscribe((status) => {
+    notificationStatus.subscribe((status) => {
         switch (status) {
             case "granted":
                 trySubscribe(client);

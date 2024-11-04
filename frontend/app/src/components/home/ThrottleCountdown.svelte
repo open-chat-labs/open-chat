@@ -4,10 +4,7 @@
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { now500 } from "../../stores/time";
-    import { getContext } from "svelte";
-    import type { OpenChat } from "openchat-client";
-
-    const client = getContext<OpenChat>("client");
+    import { throttleDeadline } from "openchat-client";
 
     export let deadline: number;
 
@@ -18,7 +15,7 @@
         seconds = Math.floor((deadline - $now500) / 1000);
         percent = Math.floor((seconds / 60) * 100);
         if (deadline <= $now500) {
-            client.throttleDeadline.set(0);
+            throttleDeadline.set(0);
         }
     }
 </script>

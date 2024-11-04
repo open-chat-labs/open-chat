@@ -109,7 +109,7 @@
     "accountSuspended": "Konto zawieszone",
     "activity": {
         "anon": "Użytkownik anonimowy",
-        "crypto": "{username} wysłał Ci wiadomość kryptograficzną",
+        "crypto": "{username} wysłał Ci wiadomość z kryptowalutą",
         "mention": "{username} wspomniał o Tobie",
         "missingMessage": "Treść wiadomości jest niedostępna",
         "navLabel": "Kanał aktywności",

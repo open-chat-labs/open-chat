@@ -526,13 +526,12 @@ pub trait Reader {
     }
 
     fn hydrate_mention(&self, mention: &Mention) -> Option<HydratedMention> {
-        self.message_event_internal(mention.message_index.into())
-            .map(|e| HydratedMention {
+        self.event_index(mention.message_index.into())
+            .map(|event_index| HydratedMention {
                 thread_root_message_index: mention.thread_root_message_index,
-                message_id: e.event.message_id,
-                message_index: e.event.message_index,
-                event_index: e.index,
-                mentioned_by: e.event.sender,
+                message_id: mention.message_id,
+                message_index: mention.message_index,
+                event_index,
             })
     }
 

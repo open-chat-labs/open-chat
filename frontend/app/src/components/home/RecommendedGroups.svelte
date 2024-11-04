@@ -5,6 +5,7 @@
         type MultiUserChat,
         type OpenChat,
         chatIdentifiersEqual,
+        chatListScopeStore as chatListScope,
     } from "openchat-client";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import SectionHeader from "../SectionHeader.svelte";
@@ -27,7 +28,6 @@
     export let joining: MultiUserChat | undefined;
 
     const client = getContext<OpenChat>("client");
-    $: chatListScope = client.chatListScope;
 
     let hotGroups: RemoteData<GroupChatSummary[], string> = { kind: "idle" };
 

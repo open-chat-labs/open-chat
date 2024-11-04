@@ -5,11 +5,9 @@
     import type { Theme } from "../../theme/types";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import { getContext, onMount } from "svelte";
-    import type { OpenChat } from "openchat-client";
+    import { onMount } from "svelte";
     import PrivatePreview from "./PrivatePreview.svelte";
-
-    const client = getContext<OpenChat>("client");
+    import { currentUser as user } from "openchat-client";
 
     export let externalUrl: string;
     export let frozen: boolean;
@@ -20,7 +18,6 @@
     let error = false;
 
     $: origin = new URL(externalUrl).origin;
-    $: user = client.user;
 
     $: {
         updateTheme($currentTheme);

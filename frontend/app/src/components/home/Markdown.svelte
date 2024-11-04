@@ -1,27 +1,34 @@
-<svelte:options immutable />
-
 <script lang="ts">
     import { marked } from "marked";
     import { getContext } from "svelte";
     import type { OpenChat, UserGroupSummary } from "openchat-client";
+    import { userStore, userGroupSummaries as userGroups } from "openchat-client";
     import { DOMPurifyDefault, DOMPurifyOneLine } from "../../utils/domPurify";
     import { isSingleEmoji } from "../../utils/emojis";
 
     const client = getContext<OpenChat>("client");
-    export let text: string;
-    export let inline: boolean = true;
-    export let oneLine: boolean = false;
-    export let twoLine: boolean = false;
-    export let suppressLinks: boolean = false;
+    interface Props {
+        text: string;
+        inline?: boolean;
+        oneLine?: boolean;
+        twoLine?: boolean;
+        suppressLinks?: boolean;
+    }
 
-    let sanitized = "unsafe";
+    let {
+        text,
+        inline = true,
+        oneLine = false,
+        twoLine = false,
+        suppressLinks = false,
+    }: Props = $props();
 
-    $: singleEmoji = isSingleEmoji(text);
-    $: userStore = client.userStore;
-    $: userGroups = client.userGroupSummaries;
-    $: options = {
+    let sanitized = $state("unsafe");
+
+    let singleEmoji = $derived(isSingleEmoji(text));
+    let options = $derived({
         breaks: !oneLine,
-    };
+    });
 
     function replaceUserIds(text: string): string {
         return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
@@ -56,7 +63,7 @@
         });
     }
 
-    $: {
+    $effect(() => {
         let parsed = replaceEveryone(
             replaceUserGroupIds(
                 replaceUserIds(replaceDatetimes(client.stripLinkDisabledMarker(text))),
@@ -79,7 +86,7 @@
         } catch (err: any) {
             client.logError("Error sanitizing message content: ", err);
         }
-    }
+    });
 </script>
 
 <p

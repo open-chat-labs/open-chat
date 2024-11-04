@@ -564,7 +564,7 @@ mod tests {
     #[test]
     fn serialize_with_no_defaults() {
         let mut mentions = Mentions::default();
-        mentions.add(Some(1.into()), 1.into(), 1);
+        mentions.add(Some(1.into()), 1.into(), 1.into(), 1);
 
         let member = GroupMemberInternal {
             user_id: Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap().into(),

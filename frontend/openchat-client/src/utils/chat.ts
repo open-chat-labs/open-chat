@@ -62,12 +62,13 @@ import {
     messageContextsEqual,
     OPENCHAT_VIDEO_CALL_AVATAR_URL,
     OPENCHAT_VIDEO_CALL_USER_ID,
+    OPENCHAT_BOT_USER_ID,
+    OPENCHAT_BOT_AVATAR_URL,
 } from "openchat-shared";
 import { distinctBy, groupWhile, toRecordFiltered } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import DRange from "drange";
-import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID } from "../stores/user";
 import Identicon from "identicon.js";
 import md5 from "md5";
 import { rtcConnectionsManager } from "../utils/rtcConnectionsManager";
@@ -280,6 +281,7 @@ function messageMentionsUser(
     userId: string,
     msg: EventWrapper<Message>,
 ): boolean {
+    if (msg.event.sender === userId) return false;
     const txt = getContentAsFormattedText(formatter, msg.event.content, get(cryptoLookup));
     return txt.indexOf(`@UserId(${userId})`) >= 0;
 }
@@ -295,7 +297,6 @@ function mentionsFromMessages(
                 messageId: msg.event.messageId,
                 messageIndex: msg.event.messageIndex,
                 eventIndex: msg.index,
-                mentionedBy: msg.event.sender,
             });
         }
         return mentions;

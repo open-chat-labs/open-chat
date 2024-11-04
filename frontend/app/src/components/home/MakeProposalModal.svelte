@@ -11,6 +11,8 @@
         type OpenChat,
         type ResourceKey,
         type Treasury,
+        currentUser as user,
+        cryptoBalance as cryptoBalanceStore,
     } from "openchat-client";
     import { isPrincipalValid, isSubAccountValid, isUrl } from "openchat-shared";
     import { iconSize } from "../../stores/iconSize";
@@ -66,10 +68,8 @@
     let refreshingBalance = false;
     let balanceWithRefresh: BalanceWithRefresh;
 
-    $: user = client.user;
     $: tokenDetails = nervousSystem.token;
     $: ledger = tokenDetails.ledger;
-    $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
     $: symbol = tokenDetails.symbol;
     $: howToBuyUrl = tokenDetails.howToBuyUrl;

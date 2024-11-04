@@ -9,6 +9,7 @@
         MultiUserChatIdentifier,
         OpenChat,
     } from "openchat-client";
+    import { currentUser as user, messagesRead } from "openchat-client";
     import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
@@ -26,9 +27,6 @@
 
     let unread: boolean = false;
     let messagesDiv: HTMLDivElement | undefined;
-
-    $: user = client.user;
-    $: messagesRead = client.messagesRead;
 
     let messages: RemoteData<EventWrapper<Message>[][], string> = { kind: "idle" };
 

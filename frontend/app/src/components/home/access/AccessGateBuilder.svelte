@@ -6,8 +6,9 @@
         type Level,
         isLeafGate,
         isCompositeGate,
-        OpenChat,
         type AccessGateConfig,
+        nervousSystemLookup,
+        cryptoLookup,
     } from "openchat-client";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
@@ -27,7 +28,6 @@
         getPaymentGateBindings,
         type GateBinding,
     } from "../../../utils/access";
-    import { getContext } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
     import AccessGateIcon from "./AccessGateIcon.svelte";
     import TooltipWrapper from "../../TooltipWrapper.svelte";
@@ -37,7 +37,6 @@
     import AccessGateExpiry from "./AccessGateExpiry.svelte";
 
     const MAX_GATES = 5;
-    const client = getContext<OpenChat>("client");
 
     export let gateConfig: AccessGateConfig;
     export let editable: boolean;
@@ -49,8 +48,6 @@
     let gateBindings: GateBinding[] = getGateBindings(level);
     let evaluationIntervalValid: boolean;
 
-    $: nervousSystemLookup = client.nervousSystemLookup;
-    $: cryptoLookup = client.cryptoLookup;
     $: nsLedgers = new Set(Object.values($nervousSystemLookup).map((d) => d.ledgerCanisterId));
     $: neuronGateBindings = getNeuronGateBindings($nervousSystemLookup);
     $: paymentGateBindings = getPaymentGateBindings($cryptoLookup, nsLedgers);

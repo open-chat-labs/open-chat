@@ -6,6 +6,18 @@
         AvatarSize,
         type ModerationFlag,
         ModerationFlags,
+        hideMessagesFromDirectBlocked,
+        moderationFlags,
+        communities,
+        communitiesList,
+        anonUser,
+        suspendedUser,
+        userMetrics,
+        notificationStatus,
+        isDiamond,
+        isLifetimeDiamond,
+        canExtendDiamond,
+        globalStateStore as globalState,
     } from "openchat-client";
     import { isTouchDevice } from "../../../utils/devices";
     import Close from "svelte-material-icons/Close.svelte";
@@ -85,32 +97,21 @@
     let selectedCommunityId = "";
     let verifying = false;
 
-    $: hideMessagesFromDirectBlocked = client.hideMessagesFromDirectBlocked;
     $: originalUsername = user?.username ?? "";
     $: originalDisplayName = user?.displayName ?? undefined;
-    $: moderationFlags = client.moderationFlags;
     $: adultEnabled = client.hasModerationFlag($moderationFlags, ModerationFlags.Adult);
     $: offensiveEnabled = client.hasModerationFlag($moderationFlags, ModerationFlags.Offensive);
     $: underReviewEnabled = client.hasModerationFlag($moderationFlags, ModerationFlags.UnderReview);
-    $: communities = client.communities;
-    $: communitiesList = client.communitiesList;
     $: selectedCommunity = $communities.get({
         kind: "community",
         communityId: selectedCommunityId,
     });
-    $: anonUser = client.anonUser;
-    $: suspendedUser = client.suspendedUser;
     $: readonly = $suspendedUser || $anonUser;
     $: verified = user.isUniquePerson;
 
     //@ts-ignore
     let version = window.OPENCHAT_WEBSITE_VERSION;
 
-    $: userMetrics = client.userMetrics;
-    $: notificationStatus = client.notificationStatus;
-    $: isDiamond = client.isDiamond;
-    $: isLifetimeDiamond = client.isLifetimeDiamond;
-    $: canExtendDiamond = client.canExtendDiamond;
     $: {
         setLocale(selectedLocale);
     }
@@ -126,7 +127,6 @@
         !saving &&
         !readonly;
     $: canEditTranslations = !$locale?.startsWith("en");
-    $: globalState = client.globalStateStore;
     $: referrals = $globalState.referrals;
     $: referredUserIds = new Set(referrals.map((r) => r.userId));
 
