@@ -25,6 +25,14 @@ pub struct ChatEventsList {
 }
 
 impl ChatEventsList {
+    pub fn update_event_in_stable_memory(&mut self, event_key: EventKey) {
+        if let Some(event_index) = self.event_index(event_key) {
+            if let Some(event) = self.events_map.get(event_index) {
+                self.stable_events_map.insert(event);
+            }
+        }
+    }
+
     pub fn set_stable_memory_prefix(&mut self, chat: Chat, thread_root_message_index: Option<MessageIndex>) {
         self.stable_events_map = ChatEventsStableStorage::new(chat, thread_root_message_index);
     }

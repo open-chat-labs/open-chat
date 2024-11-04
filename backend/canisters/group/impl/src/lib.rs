@@ -183,13 +183,13 @@ impl RuntimeState {
                 .user_metrics(&member.user_id, None)
                 .map(|m| m.hydrate())
                 .unwrap_or_default(),
-            latest_threads: chat.events.latest_threads(
-                min_visible_event_index,
-                member.threads.iter(),
-                None,
-                MAX_THREADS_IN_SUMMARY,
-                member.user_id,
-            ),
+            latest_threads: member
+                .followed_threads
+                .iter()
+                .rev()
+                .filter_map(|(i, _)| self.data.chat.events.thread_details(i))
+                .take(MAX_THREADS_IN_SUMMARY)
+                .collect(),
             rules_accepted: member
                 .rules_accepted
                 .as_ref()
@@ -364,10 +364,12 @@ impl RuntimeState {
                 now,
             );
         }
-        for (message_index, _) in result.threads {
+        for thread in result.threads {
             self.data
                 .stable_memory_keys_to_garbage_collect
-                .push(KeyPrefix::GroupChatThread(GroupChatThreadKeyPrefix::new(message_index)));
+                .push(KeyPrefix::GroupChatThread(GroupChatThreadKeyPrefix::new(
+                    thread.root_message_index,
+                )));
         }
         jobs::garbage_collect_stable_memory::start_job_if_required(self);
     }
