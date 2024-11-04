@@ -99,6 +99,14 @@ impl GlobalUserMap {
         self.user_id_to_principal.len()
     }
 
+    pub fn bots(&self) -> &HashSet<UserId> {
+        &self.bots
+    }
+
+    pub fn oc_controlled_bots(&self) -> &HashSet<UserId> {
+        &self.oc_controlled_bot_users
+    }
+
     pub fn is_diamond_member(&self, user_id: &UserId, now: TimestampMillis) -> bool {
         self.diamond_membership_expiry_date(user_id).is_some_and(|t| t > now)
     }
