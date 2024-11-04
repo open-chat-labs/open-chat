@@ -604,9 +604,9 @@
         "link": "Enlace",
         "linkedAccounts": {
             "currentAccount": "Actualmente conectado con este director",
-            "linkAdvice": "Para vincular una nueva cuenta Inicie sesión en la nueva cuenta que desea vincular, luego inicie sesión en su cuenta actual y finalmente vincule las dos cuentas.",
-            "linkAnother": "Enlazar otro",
-            "section": "Cuentas vinculadas",
+            "linkAdvice": "Para agregar un nuevo proveedor de inicio de sesión, primero inicie sesión con el nuevo proveedor que desea agregar, luego inicie sesión con su proveedor actual y, finalmente, vincule los dos.",
+            "linkAnother": "Agregar otro",
+            "section": "Proveedores de inicio de sesión",
             "start": "Empezar"
         },
         "linkIdentity": "Identidad del enlace",

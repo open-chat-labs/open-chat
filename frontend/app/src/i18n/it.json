@@ -604,9 +604,9 @@
         "link": "Collegamento",
         "linkedAccounts": {
             "currentAccount": "Attualmente connesso con questo preside",
-            "linkAdvice": "Per collegare un nuovo account Accedi al nuovo account che desideri collegare, quindi accedi al tuo account attuale e infine collega i due account.",
-            "linkAnother": "Collega un altro",
-            "section": "Account collegati",
+            "linkAdvice": "Per aggiungere un nuovo provider di accesso, accedi prima con il nuovo provider che desideri aggiungere, poi accedi con il tuo provider attuale e infine collega i due.",
+            "linkAnother": "Aggiungine un altro",
+            "section": "Provider di accesso",
             "start": "Iniziare"
         },
         "linkIdentity": "Collegamento Identità",

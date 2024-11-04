@@ -604,9 +604,9 @@
         "link": "Link",
         "linkedAccounts": {
             "currentAccount": "Currently signed in with this principal",
-            "linkAdvice": "To link a new account Sign into the new account you want to link, then sign into your current account and finally link the two accounts together.",
-            "linkAnother": "Link another",
-            "section": "Linked accounts",
+            "linkAdvice": "To add a new sign-in provider, first sign-in with the new provider you want to add, then sign-in with your current provider and finally link the two together.",
+            "linkAnother": "Add another",
+            "section": "Sign-in providers",
             "start": "Get started"
         },
         "linkIdentity": "Link Identity",
