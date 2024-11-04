@@ -298,18 +298,23 @@
 <style lang="scss">
     $accent: var(--prize);
 
-    :global(.swap .bottom .accept button) {
-        &:not(.disabled) {
+    .swap .bottom .accept {
+        :global(button:not(.disabled)) {
             border: 1px solid $accent !important;
         }
-        min-height: 45px !important;
-        min-width: unset !important;
 
-        &:not(.disabled):hover,
-        &.loading {
+        :global(button:not(.disabled):hover) {
             background-color: $accent;
             color: var(--button-txt);
         }
+
+        :global(button.loading) {
+            background-color: $accent;
+            color: var(--button-txt);
+        }
+
+        min-height: 45px !important;
+        min-width: unset !important;
     }
 
     .swap {
