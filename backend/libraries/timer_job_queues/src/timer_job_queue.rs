@@ -28,7 +28,7 @@ impl<T> TimerJobQueue<T> {
         self.within_lock(|i| i.max_concurrency)
     }
 
-    pub fn set_max_concurrency(&self, value: usize) {
+    pub fn set_max_concurrency(&mut self, value: usize) {
         self.within_lock(|i| i.max_concurrency = value)
     }
 
@@ -36,11 +36,11 @@ impl<T> TimerJobQueue<T> {
         self.within_lock(|i| i.defer_processing)
     }
 
-    pub fn set_defer_processing(&self, value: bool) {
+    pub fn set_defer_processing(&mut self, value: bool) {
         self.within_lock(|i| i.defer_processing = value)
     }
 
-    pub fn clear(&self) {
+    pub fn clear(&mut self) {
         self.within_lock(|i| i.queue.clear())
     }
 

@@ -91,7 +91,7 @@ impl Data {
             avatar: Timestamped::default(),
             airdrops: Airdrops::default(),
             channels_joined: HashSet::default(),
-            pending_actions_queue: TimerJobQueue::new(10, true),
+            pending_actions_queue: TimerJobQueue::new(20, true),
             rng_seed: [0; 32],
             test_mode,
         }
