@@ -9,9 +9,9 @@ type OnStreamEnd = () => void;
  * if the final chunk of data has been received.
  */
 export class Stream<T> {
-    private onResult?: OnStreamResult<T>;
-    private onError?: OnStreamError;
-    private onEnd?: OnStreamEnd;
+    private onResult: OnStreamResult<T>[] = [];
+    private onError: OnStreamError[] = [];
+    private onEnd: OnStreamEnd[] = [];
 
     constructor(
         initialiser: (
@@ -21,57 +21,29 @@ export class Stream<T> {
     ) {
         initialiser(
             (val: T, final: boolean) => {
-                if (this.onResult) {
-                    this.onResult(val, final);
-                }
-                if (final && this.onEnd) {
-                    this.onEnd();
+                this.onResult.forEach((f) => f(val, final));
+                if (final) {
+                    this.onEnd.forEach((f) => f());
                 }
             },
             (reason?: unknown) => {
-                if (this.onError) {
-                    this.onError(reason);
-                }
+                this.onError.forEach((f) => f(reason));
             },
         );
     }
 
     subscribe(onResult: OnStreamResult<T>): Stream<T> {
-        const existing = this.onResult;
-        if (existing === undefined) {
-            this.onResult = onResult;
-        } else {
-            this.onResult = (value, final) => {
-                existing(value, final);
-                onResult(value, final);
-            };
-        }
+        this.onResult.push(onResult);
         return this;
     }
 
     catch(onError: OnStreamError): Stream<T> {
-        const existing = this.onError;
-        if (existing === undefined) {
-            this.onError = onError;
-        } else {
-            this.onError = (reason) => {
-                existing(reason);
-                onError(reason);
-            };
-        }
+        this.onError.push(onError);
         return this;
     }
 
     finally(onEnd: OnStreamEnd): Stream<T> {
-        const existing = this.onEnd;
-        if (existing === undefined) {
-            this.onEnd = onEnd;
-        } else {
-            this.onEnd = () => {
-                existing();
-                onEnd();
-            };
-        }
+        this.onEnd.push(onEnd);
         return this;
     }
 }
