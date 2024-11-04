@@ -1358,10 +1358,11 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     messageActivityFeed(): Stream<MessageActivityFeedResponse> {
-        return this.sendStreamRequest({
+        const stream = this.sendStreamRequest({
             kind: "messageActivityFeed",
             since: this._liveState.globalState.messageActivitySummary.readUpToTimestamp,
-        }).subscribe((response) => {
+        });
+        stream.subscribe((response) => {
             const userIds = new Set<string>();
             for (const event of response.events) {
                 if (event.userId !== undefined) {
@@ -1370,6 +1371,7 @@ export class OpenChat extends OpenChatAgentWorker {
             }
             this.getMissingUsers(userIds);
         });
+        return stream;
     }
 
     async approveAccessGatePayment(
@@ -3552,8 +3554,8 @@ export class OpenChat extends OpenChatAgentWorker {
                 },
                 undefined,
                 isCryptoMessage ? 2 * DEFAULT_WORKER_TIMEOUT : undefined,
-            )
-                .subscribe((response) => {
+            ).subscribe(
+                (response) => {
                     if (response === "accepted") {
                         unconfirmed.markAccepted(messageContext, eventWrapper.event.messageId);
                         return;
@@ -3612,8 +3614,8 @@ export class OpenChat extends OpenChatAgentWorker {
                     }
 
                     resolve(resp);
-                })
-                .catch(() => {
+                },
+                () => {
                     this.onSendMessageFailure(
                         chatId,
                         eventWrapper.event.messageId,
@@ -3624,7 +3626,8 @@ export class OpenChat extends OpenChatAgentWorker {
                     );
 
                     return resolve(CommonResponses.failure());
-                });
+                },
+            );
         });
     }
 
@@ -4586,21 +4589,19 @@ export class OpenChat extends OpenChatAgentWorker {
     getCurrentUser(): Promise<CurrentUserResponse> {
         return new Promise((resolve, reject) => {
             let resolved = false;
-            this.sendStreamRequest({ kind: "getCurrentUser" })
-                .subscribe((user) => {
-                    if (user.kind === "created_user") {
-                        userCreatedStore.set(true);
-                        currentUser.set(user);
-                        this.setDiamondStatus(user.diamondStatus);
-                    }
-                    if (!resolved) {
-                        // we want to resolve the promise with the first response from the stream so that
-                        // we are not waiting unnecessarily
-                        resolve(user);
-                        resolved = true;
-                    }
-                })
-                .catch(reject);
+            this.sendStreamRequest({ kind: "getCurrentUser" }).subscribe((user) => {
+                if (user.kind === "created_user") {
+                    userCreatedStore.set(true);
+                    currentUser.set(user);
+                    this.setDiamondStatus(user.diamondStatus);
+                }
+                if (!resolved) {
+                    // we want to resolve the promise with the first response from the stream so that
+                    // we are not waiting unnecessarily
+                    resolve(user);
+                    resolved = true;
+                }
+            }, reject);
         });
     }
 
@@ -5745,22 +5746,23 @@ export class OpenChat extends OpenChatAgentWorker {
             this.sendStreamRequest({
                 kind: "getUpdates",
                 initialLoad,
-            })
-                .subscribe(async (resp) => {
+            }).subscribe(
+                async (resp) => {
                     await this.handleChatsResponse(
                         updateRegistryTask,
                         !this._liveState.chatsInitialised,
                         resp as UpdatesResult,
                     );
                     chatsLoading.set(!this._liveState.chatsInitialised);
-                })
-                .catch((err) => {
+                },
+                (err) => {
                     console.warn("getUpdates threw an error: ", err);
                     resolve();
-                })
-                .finally(() => {
+                },
+                () => {
                     resolve();
-                });
+                },
+            );
         });
     }
 
@@ -6274,8 +6276,8 @@ export class OpenChat extends OpenChatAgentWorker {
         return new Promise((resolve) => {
             this.sendStreamRequest({
                 kind: "updateRegistry",
-            })
-                .subscribe(([registry, updated]) => {
+            }).subscribe(
+                ([registry, updated]) => {
                     if (updated || Object.keys(get(cryptoLookup)).length === 0) {
                         this.currentAirdropChannel = registry.currentAirdropChannel;
                         const cryptoRecord = toRecord(registry.tokenDetails, (t) => t.ledger);
@@ -6310,11 +6312,12 @@ export class OpenChat extends OpenChatAgentWorker {
                         resolved = true;
                         resolve();
                     }
-                })
-                .catch((err) => {
+                },
+                (err) => {
                     console.warn(`Failed to update the registry: ${err}`);
                     resolve();
-                });
+                },
+            );
         });
     }
 

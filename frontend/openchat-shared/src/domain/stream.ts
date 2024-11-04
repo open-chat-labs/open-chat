@@ -2,6 +2,12 @@ type OnStreamResult<T> = (result: T, final: boolean) => void;
 type OnStreamError = (reason?: unknown) => void;
 type OnStreamEnd = () => void;
 
+type Subscription<T> = {
+    onResult?: OnStreamResult<T>;
+    onError?: OnStreamError;
+    onEnd?: OnStreamEnd;
+};
+
 /**
  * This class offers a Promise-like interface but replaces `then` with `subscribe`.
  * The function passed into subscribe will then be called each time new data is available.
@@ -9,9 +15,7 @@ type OnStreamEnd = () => void;
  * if the final chunk of data has been received.
  */
 export class Stream<T> {
-    private onResult: OnStreamResult<T>[] = [];
-    private onError: OnStreamError[] = [];
-    private onEnd: OnStreamEnd[] = [];
+    private subscriptions: Subscription<T>[] = [];
 
     constructor(
         initialiser: (
@@ -21,29 +25,30 @@ export class Stream<T> {
     ) {
         initialiser(
             (val: T, final: boolean) => {
-                this.onResult.forEach((f) => f(val, final));
-                if (final) {
-                    this.onEnd.forEach((f) => f());
-                }
+                this.subscriptions.forEach((s) => {
+                    if (s.onResult) {
+                        s.onResult(val, final);
+                    }
+                    if (final && s.onEnd) {
+                        s.onEnd();
+                    }
+                });
             },
             (reason?: unknown) => {
-                this.onError.forEach((f) => f(reason));
+                this.subscriptions.forEach((s) => {
+                    if (s.onError) {
+                        s.onError(reason);
+                    }
+                });
             },
         );
     }
 
-    subscribe(onResult: OnStreamResult<T>): Stream<T> {
-        this.onResult.push(onResult);
-        return this;
-    }
-
-    catch(onError: OnStreamError): Stream<T> {
-        this.onError.push(onError);
-        return this;
-    }
-
-    finally(onEnd: OnStreamEnd): Stream<T> {
-        this.onEnd.push(onEnd);
-        return this;
+    subscribe(onResult?: OnStreamResult<T>, onError?: OnStreamError, onEnd?: OnStreamEnd) {
+        this.subscriptions.push({
+            onResult,
+            onError,
+            onEnd,
+        });
     }
 }
