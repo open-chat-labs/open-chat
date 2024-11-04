@@ -718,7 +718,7 @@ impl GroupChatCore {
         let message_event = self.events.push_message(push_message_args, Some(event_store_client));
         let message_index = message_event.event.message_index;
 
-        let mut mentions: HashSet<_> = mentioned.iter().copied().chain(user_being_replied_to).collect();
+        let mentions: HashSet<_> = mentioned.iter().copied().chain(user_being_replied_to).collect();
 
         let mut users_to_notify = HashSet::new();
 
@@ -730,19 +730,29 @@ impl GroupChatCore {
                     .message_internal(root_message_index.into())
                     .and_then(|m| m.thread_summary.map(|s| (m.sender, s)))
                 {
+                    let is_first_reply = message_index == MessageIndex::default();
                     for follower in thread_summary.followers {
-                        if let Some(member) = self.members.get_mut(&follower) {
+                        if let Some(member) = self
+                            .members
+                            .get_mut(&follower)
+                            .filter(|m| !m.suspended.value && m.user_id != sender && !m.user_type.is_bot())
+                        {
                             // Bump the thread timestamp for all followers
                             member.followed_threads.insert(root_message_index, now);
-                            if !member.user_type.is_bot() && !member.notifications_muted.value {
+
+                            let mentioned = !mentions_disabled
+                                && (mentions.contains(&member.user_id)
+                                    || (is_first_reply && member.user_id == root_message_sender));
+
+                            if mentioned {
+                                // Mention this member
+                                member.mentions.add(thread_root_message_index, message_index, message_id, now);
+                            }
+
+                            if mentioned || !member.notifications_muted.value {
                                 users_to_notify.insert(member.user_id);
                             }
                         }
-                    }
-
-                    let is_first_reply = message_index == MessageIndex::default();
-                    if !mentions_disabled && is_first_reply && root_message_sender != sender {
-                        mentions.insert(root_message_sender);
                     }
                 }
             } else {
@@ -754,7 +764,7 @@ impl GroupChatCore {
                     let mentioned = !mentions_disabled && (everyone_mentioned || mentions.contains(&member.user_id));
                     if mentioned {
                         // Mention this member
-                        member.mentions.add(thread_root_message_index, message_index, now);
+                        member.mentions.add(thread_root_message_index, message_index, message_id, now);
                     }
 
                     if mentioned || !member.notifications_muted.value {

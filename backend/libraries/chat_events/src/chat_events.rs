@@ -333,8 +333,14 @@ impl ChatEvents {
         if let Some(root_message_index) = args.thread_root_message_index {
             let _ = self.update_thread_summary(
                 root_message_index,
-                |t| {
-                    t.mark_message_added(args.sender, &args.mentioned, push_event_result.index, args.now);
+                |thread_summary, root_message_sender| {
+                    thread_summary.mark_message_added(
+                        args.sender,
+                        &args.mentioned,
+                        root_message_sender,
+                        push_event_result.index,
+                        args.now,
+                    );
                     true
                 },
                 EventIndex::default(),
@@ -1622,7 +1628,7 @@ impl ChatEvents {
 
         match self.update_thread_summary(
             thread_root_message_index,
-            |t| t.followers.insert(user_id),
+            |t, _| t.followers.insert(user_id),
             min_visible_event_index,
             false,
             now,
@@ -1644,7 +1650,7 @@ impl ChatEvents {
 
         match self.update_thread_summary(
             thread_root_message_index,
-            |t| t.followers.remove(&user_id),
+            |t, _| t.followers.remove(&user_id),
             min_visible_event_index,
             false,
             now,
@@ -1655,7 +1661,7 @@ impl ChatEvents {
         }
     }
 
-    fn update_thread_summary<F: FnOnce(&mut ThreadSummaryInternal) -> bool>(
+    fn update_thread_summary<F: FnOnce(&mut ThreadSummaryInternal, UserId) -> bool>(
         &mut self,
         thread_root_message_index: MessageIndex,
         update_fn: F,
@@ -1672,7 +1678,7 @@ impl ChatEvents {
         )
     }
 
-    fn update_thread_summary_inner<F: FnOnce(&mut ThreadSummaryInternal) -> bool>(
+    fn update_thread_summary_inner<F: FnOnce(&mut ThreadSummaryInternal, UserId) -> bool>(
         root_message: &mut MessageInternal,
         create_if_not_exists: bool,
         update_fn: F,
@@ -1685,7 +1691,7 @@ impl ChatEvents {
             return Err(UpdateEventError::NotFound);
         };
 
-        if update_fn(summary) {
+        if update_fn(summary, root_message.sender) {
             Ok(())
         } else {
             Err(UpdateEventError::NoChange(()))

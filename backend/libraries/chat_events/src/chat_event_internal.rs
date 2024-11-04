@@ -424,6 +424,7 @@ impl ThreadSummaryInternal {
         &mut self,
         sender: UserId,
         mentioned_users: &[UserId],
+        root_message_sender: UserId,
         latest_event_index: EventIndex,
         now: TimestampMillis,
     ) {
@@ -436,6 +437,11 @@ impl ThreadSummaryInternal {
         // If a user is mentioned in a thread they automatically become a follower
         for user_id in mentioned_users {
             self.followers.insert(*user_id);
+        }
+
+        let is_first_message = self.reply_count == 1;
+        if is_first_message {
+            self.followers.insert(root_message_sender);
         }
     }
 }
