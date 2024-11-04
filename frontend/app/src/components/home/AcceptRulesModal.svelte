@@ -1,15 +1,15 @@
 <script lang="ts">
     import AreYouSure from "../AreYouSure.svelte";
     import { getContext } from "svelte";
-    import { type OpenChat } from "openchat-client";
+    import {
+        type OpenChat,
+        currentChatRules,
+        currentCommunityRules,
+        captureRulesAcceptanceStore as rulesAcceptanceStore,
+    } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
-
-    let currentChatRules = client.currentChatRules;
-    let currentCommunityRules = client.currentCommunityRules;
-
-    $: rulesAcceptanceStore = client.captureRulesAcceptanceStore;
 
     function onAction(accepted: boolean): Promise<void> {
         $rulesAcceptanceStore?.resolve(accepted);

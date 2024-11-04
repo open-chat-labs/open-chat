@@ -23,6 +23,7 @@ import type { OpenChat } from "../openchat";
 import { runOnceIdle } from "./backgroundTasks";
 import { isProposalsChat } from "./chat";
 import { RemoteVideoCallEndedEvent, RemoteVideoCallStartedEvent } from "../events";
+import { selectedChatId } from "../stores";
 
 const BATCH_SIZE = 20;
 
@@ -156,7 +157,7 @@ export class CachePrimer {
         const args = [] as ChatEventsArgs[];
 
         if (
-            !chatIdentifiersEqual(get(this.api.selectedChatId), chat.id) &&
+            !chatIdentifiersEqual(get(selectedChatId), chat.id) &&
             messagesRead.unreadMessageCount(chat.id, chat.latestMessageIndex) > MAX_MESSAGES / 2
         ) {
             const firstUnreadMessage = messagesRead.getFirstUnreadMessageIndex(

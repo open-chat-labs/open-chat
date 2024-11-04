@@ -7,6 +7,9 @@
         type MultiUserChat,
         type OpenChat,
         routeForChatIdentifier,
+        suspendedUser,
+        chatListScopeStore as chatListScope,
+        chatSummariesStore,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Markdown from "./Markdown.svelte";
@@ -28,9 +31,6 @@
     export let group: GroupChatSummary;
     export let joining: MultiUserChat | undefined;
 
-    $: suspendedUser = client.suspendedUser;
-    $: chatListScope = client.chatListScope;
-    $: chatSummariesStore = client.chatSummariesStore;
     $: member = $chatSummariesStore.has(group.id);
     $: locked = isLocked(group.gateConfig.gate);
 

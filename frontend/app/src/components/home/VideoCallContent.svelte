@@ -5,6 +5,10 @@
         OpenChat,
         chatIdentifiersEqual,
         type VideoCallContent,
+        userStore,
+        selectedChatStore as selectedChat,
+        currentCommunityMembers as communityMembers,
+        currentUser as user,
     } from "openchat-client";
     import Avatar from "../Avatar.svelte";
     import { createEventDispatcher, getContext } from "svelte";
@@ -21,10 +25,6 @@
     export let timestamp: bigint | undefined;
     export let senderId: string;
 
-    $: selectedChat = client.selectedChatStore;
-    $: communityMembers = client.currentCommunityMembers;
-    $: userStore = client.userStore;
-    $: user = client.user;
     $: displayName = client.getDisplayNameById(senderId, $communityMembers);
     $: incall =
         $activeVideoCall !== undefined &&

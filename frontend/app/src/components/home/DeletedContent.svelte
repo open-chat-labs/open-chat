@@ -2,7 +2,12 @@
 
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import { OPENCHAT_BOT_USER_ID, type DeletedContent, type OpenChat } from "openchat-client";
+    import {
+        OPENCHAT_BOT_USER_ID,
+        type DeletedContent,
+        type OpenChat,
+        currentCommunityMembers as communityMembers,
+    } from "openchat-client";
     import { getContext } from "svelte";
     import Markdown from "./Markdown.svelte";
     import Translatable from "../Translatable.svelte";
@@ -15,7 +20,6 @@
 
     $: date = new Date(Number(content.timestamp));
     $: timestampStr = `${client.toLongDateString(date)} @ ${client.toShortTimeString(date)}`;
-    $: communityMembers = client.currentCommunityMembers;
     $: username = client.getDisplayNameById(content.deletedBy, $communityMembers);
 </script>
 

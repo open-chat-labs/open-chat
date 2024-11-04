@@ -4,13 +4,14 @@
     import { getContext } from "svelte";
     import { toastStore } from "../../../stores/toast";
     import type { OpenChat, ThreadPreview } from "openchat-client";
+    import {
+        selectedChatId,
+        threadsByChatStore as threadsByChat,
+        serverChatSummariesStore,
+    } from "openchat-client";
     import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
-
-    $: selectedChatId = client.selectedChatId;
-    $: threadsByChat = client.threadsByChatStore;
-    $: serverChatSummariesStore = client.serverChatSummariesStore;
 
     let threads: ThreadPreview[] = [];
     let observer: IntersectionObserver = new IntersectionObserver(() => {});

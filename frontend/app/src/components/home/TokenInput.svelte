@@ -1,6 +1,7 @@
 <script lang="ts">
     import { getContext, onMount } from "svelte";
     import { type OpenChat } from "openchat-client";
+    import { cryptoLookup, exchangeRatesLookupStore as exchangeRatesLookup } from "openchat-client";
     import Alert from "svelte-material-icons/Alert.svelte";
     import { iconSize } from "../../stores/iconSize";
     import Legend from "../Legend.svelte";
@@ -23,11 +24,9 @@
 
     let inputElement: HTMLInputElement;
 
-    $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
     $: symbol = tokenDetails?.symbol;
     $: tokenDecimals = tokenDetails?.decimals;
-    $: exchangeRatesLookup = client.exchangeRatesLookupStore;
     $: amountInUsd =
         tokenDetails !== undefined && showDollarAmount
             ? calculateDollarAmount(
@@ -67,7 +66,7 @@
         const inputAmount = Math.round(Number(value) * Math.pow(10, tokenDecimals));
         if (!isNaN(inputAmount)) {
             const [integral, fractional] = value.split(".");
-            let units = BigInt(integral) * (BigInt(10) ** BigInt(tokenDecimals));
+            let units = BigInt(integral) * BigInt(10) ** BigInt(tokenDecimals);
 
             if (fractional !== undefined) {
                 units += BigInt(fractional.padEnd(tokenDecimals, "0"));

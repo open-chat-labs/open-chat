@@ -21,6 +21,8 @@
         type UserSummary,
         type Level,
         type ResourceKey,
+        chatListScopeStore as chatListScope,
+        selectedCommunity,
     } from "openchat-client";
     import StageHeader from "../StageHeader.svelte";
     import { createEventDispatcher, getContext, tick } from "svelte";
@@ -58,7 +60,6 @@
     $: canEditDisappearingMessages = !editing
         ? true
         : client.hasOwnerRights(candidateGroup.membership.role);
-    $: selectedCommunity = client.selectedCommunity;
 
     $: permissionsDirty = client.haveGroupPermissionsChanged(
         originalGroup.permissions,
@@ -89,7 +90,6 @@
         gateDirty ||
         ttlDirty ||
         messagesVisibleToNonMembersDirty;
-    $: chatListScope = client.chatListScope;
     $: hideInviteUsers = candidateGroup.level === "channel" && candidateGroup.public;
     $: valid = detailsValid && visibilityValid && rulesValid;
 

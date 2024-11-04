@@ -1,8 +1,9 @@
 import type { UserLookup } from "./user";
 import { extractUserIdsFromMentions, missingUserIds } from "./user.utils";
+import { vi } from "vitest";
 
 const now = Date.now();
-jest.setSystemTime(now);
+vi.setSystemTime(now);
 
 const lookup: UserLookup = new Map([
     [

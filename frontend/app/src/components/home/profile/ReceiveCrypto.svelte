@@ -4,28 +4,24 @@
     import ErrorMessage from "../../ErrorMessage.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher } from "svelte";
     import AccountInfo from "../AccountInfo.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
-    import type { OpenChat } from "openchat-client";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
+    import { currentUser as user, cryptoLookup, cryptoBalance } from "openchat-client";
 
     export let ledger: string;
 
-    const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     let error: string | undefined = undefined;
 
-    $: user = client.user;
-    $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
     $: symbol = tokenDetails.symbol;
     $: howToBuyUrl = tokenDetails.howToBuyUrl;
     $: title = i18nKey(`cryptoAccount.receiveToken`, { symbol });
-    $: cryptoBalance = client.cryptoBalance;
 
     function onBalanceRefreshed() {
         error = undefined;

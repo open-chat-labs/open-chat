@@ -4,6 +4,9 @@
         OpenChat,
         routeForMessageContext,
         type MessageContext,
+        userStore,
+        currentUser as user,
+        communities,
     } from "openchat-client";
     import type { Message, MessageActivityEvent, ResourceKey } from "openchat-client";
     import Avatar from "../../Avatar.svelte";
@@ -25,9 +28,7 @@
     export let event: MessageActivityEvent;
     export let selected: boolean;
 
-    $: user = client.user;
     $: userId = $user.userId;
-    $: userStore = client.userStore;
     $: sender = event.userId ? $userStore.get(event.userId) : undefined;
     $: eventUsername = event.userId
         ? buildDisplayName($userStore, event.userId, event.userId === userId)
@@ -39,7 +40,6 @@
     $: eventSummary = buildEventSummary(event, eventUsername);
     $: chatName = getChatName(event.messageContext);
     $: tips = event?.message?.tips ? Object.entries(event.message.tips) : [];
-    $: communities = client.communities;
 
     function getChatName(ctx: MessageContext): string | undefined {
         const chat = client.lookupChatSummary(ctx.chatId);

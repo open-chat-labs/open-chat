@@ -16,6 +16,7 @@
     import Menu from "../../Menu.svelte";
     import MenuItem from "../../MenuItem.svelte";
     import type { CommunitySummary, OpenChat } from "openchat-client";
+    import { chatSummariesListStore } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import { rightPanelHistory } from "../../../stores/rightPanel";
     import { i18nKey } from "../../../i18n/i18n";
@@ -35,7 +36,6 @@
     $: canEdit = member && client.canEditCommunity(community.id);
     $: canInvite = member && client.canInviteUsers(community.id);
     $: canCreateChannel = member && client.canCreateChannel(community.id);
-    $: chatSummariesListStore = client.chatSummariesListStore;
     $: isCommunityMuted = $chatSummariesListStore.every((c) => c.membership.notificationsMuted);
 
     function leaveCommunity() {

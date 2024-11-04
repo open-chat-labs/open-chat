@@ -90,6 +90,7 @@
     }
 
     input[type="range"]::-moz-range-thumb {
+        appearance: none;
         -webkit-appearance: none;
         pointer-events: all;
         width: $thumbSize;

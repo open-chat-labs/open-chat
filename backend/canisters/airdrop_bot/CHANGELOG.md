@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Determine whether c2c call should be retried based on response error ([#6640](https://github.com/open-chat-labs/open-chat/pull/6640))
+- Fix delay between airdrop lottery winners ([#6697](https://github.com/open-chat-labs/open-chat/pull/6697))
 
 ## [[2.0.1394](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1394-airdrop_bot)] - 2024-10-16
 

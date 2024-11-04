@@ -9,6 +9,10 @@
         type ChatIdentifier,
         type AccessTokenType,
         NoMeetingToJoin,
+        userStore,
+        selectedChatStore as selectedChat,
+        currentUser as user,
+        communities,
     } from "openchat-client";
     import {
         activeVideoCall,
@@ -38,10 +42,6 @@
 
     const client = getContext<OpenChat>("client");
 
-    $: selectedChat = client.selectedChatStore;
-    $: communities = client.communities;
-    $: userStore = client.userStore;
-    $: user = client.user;
     $: chat = normaliseChatSummary($selectedChat, $activeVideoCall?.chatId);
     $: threadOpen = $activeVideoCall?.threadOpen ?? false;
     $: participantsOpen = $activeVideoCall?.participantsOpen ?? false;

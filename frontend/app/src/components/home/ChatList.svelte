@@ -17,6 +17,17 @@
         emptyCombinedUnreadCounts,
         chatIdentifierToString,
         type CombinedUnreadCounts,
+        userStore,
+        currentUser as createdUser,
+        selectedChatId,
+        chatListScopeStore as chatListScope,
+        numberOfThreadsStore,
+        selectedCommunity,
+        chatSummariesListStore,
+        unreadDirectCounts,
+        unreadGroupCounts,
+        unreadFavouriteCounts,
+        unreadCommunityChannelCounts,
     } from "openchat-client";
     import { afterUpdate, beforeUpdate, createEventDispatcher, getContext, tick } from "svelte";
     import SearchResult from "./SearchResult.svelte";
@@ -53,17 +64,10 @@
 
     const dispatch = createEventDispatcher();
 
-    $: createdUser = client.user;
-    $: selectedChatId = client.selectedChatId;
-    $: chatListScope = client.chatListScope;
-    $: numberOfThreadsStore = client.numberOfThreadsStore;
-    $: selectedCommunity = client.selectedCommunity;
     $: showPreview =
         $mobileWidth &&
         $selectedCommunity?.membership.role === "none" &&
         $selectedChatId === undefined;
-    $: chatSummariesListStore = client.chatSummariesListStore;
-    $: userStore = client.userStore;
     $: user = $userStore.get($createdUser.userId);
     $: lowercaseSearch = searchTerm.toLowerCase();
     $: showExploreGroups =
@@ -71,10 +75,6 @@
         !$exploreGroupsDismissed &&
         !searchResultsAvailable;
     $: showBrowseChannnels = $chatListScope.kind === "community";
-    $: unreadDirectCounts = client.unreadDirectCounts;
-    $: unreadGroupCounts = client.unreadGroupCounts;
-    $: unreadFavouriteCounts = client.unreadFavouriteCounts;
-    $: unreadCommunityChannelCounts = client.unreadCommunityChannelCounts;
     $: view = "chats" as "chats" | "threads";
 
     let unreadCounts = emptyCombinedUnreadCounts();

@@ -1,5 +1,10 @@
 <script lang="ts">
-    import { OpenChat, type ChitEarned } from "openchat-client";
+    import {
+        OpenChat,
+        type ChitEarned,
+        chitStateStore as chitState,
+        currentUser as user,
+    } from "openchat-client";
     import { getContext } from "svelte";
     import Calendar, {
         title as monthTitle,
@@ -18,8 +23,6 @@
     const client = getContext<OpenChat>("client");
     let events: ChitEarned[] = [];
 
-    $: chitState = client.chitStateStore;
-    $: user = client.user;
     $: streak = client.getStreak($user.userId);
     $: totalEarned = events.reduce((total, ev) => {
         const eventDate = new Date(Number(ev.timestamp));

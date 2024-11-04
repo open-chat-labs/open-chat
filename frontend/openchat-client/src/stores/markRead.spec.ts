@@ -6,6 +6,7 @@ import {
     type GroupChatIdentifier,
     type Message,
 } from "openchat-shared";
+import { vi } from "vitest";
 
 const abcId: GroupChatIdentifier = { kind: "group_chat", groupId: "abc" };
 
@@ -36,7 +37,7 @@ describe("mark messages read", () => {
     }
 
     beforeEach(() => {
-        jest.useFakeTimers();
+        vi.useFakeTimers();
         const mockedUnconfirmed = new MessageContextMap<UnconfirmedState>();
         unconfirmed.clear(mockedUnconfirmed);
         if (markRead.waiting.get({ chatId: abcId }) !== undefined) {

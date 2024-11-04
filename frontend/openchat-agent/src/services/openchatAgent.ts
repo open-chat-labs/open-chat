@@ -3770,39 +3770,51 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.markActivityFeedRead(readUpTo);
     }
 
-    async messageActivityFeed(): Promise<MessageActivityFeedResponse> {
-        const cachedEvents = await getActivityFeedEvents();
+    messageActivityFeed(): Stream<MessageActivityFeedResponse> {
+        return new Stream(async (resolve, reject) => {
+            const cachedEvents = await getActivityFeedEvents();
 
-        const since = cachedEvents[0]?.timestamp ?? 0n;
+            const since = cachedEvents[0]?.timestamp ?? 0n;
 
-        const server = await this.userClient.messageActivityFeed(since);
+            const server = await this.userClient.messageActivityFeed(since);
 
-        const combined = [...cachedEvents, ...server.events];
+            const combined = [...cachedEvents, ...server.events];
 
-        // first sort ascending
-        combined.sort((a, b) => Number(a.timestamp) - Number(b.timestamp));
+            // first sort ascending
+            combined.sort((a, b) => Number(a.timestamp) - Number(b.timestamp));
 
-        // dedupe by overwriting earlier events with the same context, activity type and event index
-        const deduped = combined.reduce((map, ev) => {
-            map.set(
-                `${messageContextToString(ev.messageContext)}_${ev.activity}_${ev.eventIndex}`,
-                ev,
+            // dedupe by overwriting earlier events with the same context, activity type and event index
+            const deduped = combined.reduce((map, ev) => {
+                map.set(
+                    `${messageContextToString(ev.messageContext)}_${ev.activity}_${ev.eventIndex}`,
+                    ev,
+                );
+                return map;
+            }, new Map<string, MessageActivityEvent>());
+
+            // then sort descending
+            const sorted = [...deduped.values()].sort(
+                (a, b) => Number(b.timestamp) - Number(a.timestamp),
             );
-            return map;
-        }, new Map<string, MessageActivityEvent>());
 
-        // then sort descending
-        const sorted = [...deduped.values()].sort(
-            (a, b) => Number(b.timestamp) - Number(a.timestamp),
-        );
+            setActivityFeedEvents(sorted.slice(0, MAX_ACTIVITY_EVENTS));
 
-        setActivityFeedEvents(sorted.slice(0, MAX_ACTIVITY_EVENTS));
+            resolve({ total: server.total, events: sorted }, false);
 
-        const rehydrated = await this.hydrateActivityFeedEvents(sorted);
-        return {
-            total: server.total,
-            events: rehydrated,
-        };
+            const rehydrated = await this.hydrateActivityFeedEvents(sorted).catch((err) => {
+                console.error("Error rehydrating activity feed: ", err);
+                reject(err);
+                return sorted;
+            });
+
+            resolve(
+                {
+                    total: server.total,
+                    events: rehydrated,
+                },
+                true,
+            );
+        });
     }
 
     async hydrateActivityFeedEvents(

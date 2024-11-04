@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext } from "svelte";
-    import { OpenChat } from "openchat-client";
+    import { createEventDispatcher } from "svelte";
+    import { identityState, chatListScopeStore as chatListScope } from "openchat-client";
     import MenuItem from "../MenuItem.svelte";
     import InformationOutline from "svelte-material-icons/InformationOutline.svelte";
     import Road from "svelte-material-icons/RoadVariant.svelte";
@@ -16,12 +16,9 @@
     import { iconSize } from "../../stores/iconSize";
 
     const dispatch = createEventDispatcher();
-    const client = getContext<OpenChat>("client");
 
     export let showBlog: boolean;
 
-    $: identityState = client.identityState;
-    $: chatListScope = client.chatListScope;
     $: path = $location;
 
     function launch() {

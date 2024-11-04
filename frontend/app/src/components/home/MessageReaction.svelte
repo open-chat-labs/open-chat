@@ -2,6 +2,7 @@
     import { _ } from "svelte-i18n";
     import type { NativeEmoji } from "emoji-picker-element/shared";
     import type { OpenChat, UserLookup } from "openchat-client";
+    import { userStore } from "openchat-client";
     import { getContext, onMount, createEventDispatcher } from "svelte";
     import { emojiDatabase } from "../../utils/emojis";
     import TooltipWrapper from "../TooltipWrapper.svelte";
@@ -19,7 +20,6 @@
     let reactionCode = "unknown";
     let longPressed: boolean = false;
 
-    $: userStore = client.userStore;
     $: selected = myUserId !== undefined ? userIds.has(myUserId) : false;
     $: usernames = buildReactionUsernames($userStore, userIds, myUserId);
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AvatarSize, type OpenChat } from "openchat-client";
+    import { AvatarSize, type OpenChat, userStore, cryptoLookup } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
@@ -15,9 +15,7 @@
     let longPressed: boolean = false;
 
     $: userTipsList = Object.entries(userTips);
-    $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
-    $: userStore = client.userStore;
     $: totalAmount = userTipsList.reduce((n, [_, amount]) => n + amount, BigInt(0));
 
     function onClick() {
