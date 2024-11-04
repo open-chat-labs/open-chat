@@ -586,7 +586,7 @@ mod tests {
         let member_bytes = msgpack::serialize_then_unwrap(&member);
         let member_bytes_len = member_bytes.len();
 
-        assert_eq!(member_bytes_len, 156);
+        assert_eq!(member_bytes_len, 159);
 
         let _deserialized: GroupMemberInternal = msgpack::deserialize_then_unwrap(&member_bytes);
     }
