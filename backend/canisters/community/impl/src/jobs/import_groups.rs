@@ -253,7 +253,7 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
                             for channel_id in public_channel_ids.iter() {
                                 if let Some(channel) = state.data.channels.get_mut(channel_id) {
                                     if channel.chat.gate_config.is_none() {
-                                        join_channel_unchecked(channel, member, true, true, now);
+                                        join_channel_unchecked(channel, member, state.data.is_public, true, now);
                                     }
                                 }
                             }
@@ -308,7 +308,7 @@ fn add_community_members_to_channel_if_public(channel_id: ChannelId, state: &mut
         // If this is a public channel, add all community members to it
         if channel.chat.is_public.value && channel.chat.gate_config.value.is_none() {
             let now = state.env.now();
-            add_members_to_public_channel_unchecked(channel, state.data.members.iter_mut(), now);
+            add_members_to_public_channel_unchecked(channel, state.data.is_public, state.data.members.iter_mut(), now);
         }
     }
 }
