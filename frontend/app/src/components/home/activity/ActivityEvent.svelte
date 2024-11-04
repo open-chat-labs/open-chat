@@ -74,7 +74,7 @@
     function otherReactors(ev: MessageActivityEvent): Set<string> {
         if (ev.message === undefined) return new Set();
         return new Set(
-            ev.message.reactions.flatMap((r) => [...r.userIds].filter((u) => u !== ev.userId))
+            ev.message.reactions.flatMap((r) => [...r.userIds].filter((u) => u !== ev.userId && u !== userId))
         );
     }
 
