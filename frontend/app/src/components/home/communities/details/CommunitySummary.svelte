@@ -1,15 +1,18 @@
 <script lang="ts">
     import CommunityCard from "../explore/CommunityCard.svelte";
     import CommunityDetails from "./CommunityDetails.svelte";
-    import { type OpenChat, defaultChatRules } from "openchat-client";
+    import {
+        type OpenChat,
+        defaultChatRules,
+        selectedCommunity,
+        currentCommunityRules,
+        currentCommunityReferrals,
+    } from "openchat-client";
     import CommunityDetailsHeader from "./CommunityDetailsHeader.svelte";
     import { getContext } from "svelte";
 
     const client = getContext<OpenChat>("client");
 
-    $: selectedCommunity = client.selectedCommunity;
-    $: currentCommunityRules = client.currentCommunityRules;
-    $: currentCommunityReferrals = client.currentCommunityReferrals;
     $: rules = $currentCommunityRules ?? defaultChatRules("community");
 
     $: canDelete =

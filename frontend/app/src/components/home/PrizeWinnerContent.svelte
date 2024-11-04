@@ -1,6 +1,7 @@
 <script lang="ts">
     import Markdown from "./Markdown.svelte";
     import type { OpenChat, PrizeWinnerContent } from "openchat-client";
+    import { userStore, currentUser as user, cryptoLookup } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import SpinningToken from "../icons/SpinningToken.svelte";
@@ -10,9 +11,6 @@
 
     export let content: PrizeWinnerContent;
 
-    $: user = client.user;
-    $: userStore = client.userStore;
-    $: cryptoLookup = client.cryptoLookup;
     $: logo = $cryptoLookup[content.transaction.ledger]?.logo ?? "";
     $: tokenDetails = $cryptoLookup[content.transaction.ledger];
     $: symbol = tokenDetails.symbol;

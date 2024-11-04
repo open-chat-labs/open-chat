@@ -4,7 +4,11 @@
     import { translatable } from "../actions/translatable";
     import type { ResourceKey } from "openchat-client";
 
-    export let resourceKey: ResourceKey;
+    interface Props {
+        resourceKey: ResourceKey;
+    }
+
+    let { resourceKey }: Props = $props();
 </script>
 
 <span use:translatable={{ key: resourceKey }}>

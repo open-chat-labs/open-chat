@@ -22,7 +22,17 @@
     import MenuItem from "../MenuItem.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { _ } from "svelte-i18n";
-    import { chatIdentifiersEqual, type ChatSummary, type OpenChat } from "openchat-client";
+    import {
+        userStore,
+        chatIdentifiersEqual,
+        type ChatSummary,
+        type OpenChat,
+        platformModerator,
+        isDiamond,
+        favouritesStore,
+        messagesRead,
+        isProposalGroup,
+    } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { notificationsSupported } from "../../utils/notifications";
     import { toastStore } from "../../stores/toast";
@@ -43,11 +53,6 @@
     export let showSuspendUserModal = false;
     export let hasPinned: boolean;
 
-    $: platformModerator = client.platformModerator;
-    $: isDiamond = client.isDiamond;
-    $: favouritesStore = client.favouritesStore;
-    $: messagesRead = client.messagesRead;
-    $: isProposalGroup = client.isProposalGroup;
     $: governanceCanisterId =
         selectedChatSummary.kind !== "direct_chat" &&
         selectedChatSummary.subtype?.kind === "governance_proposals"
@@ -56,7 +61,6 @@
     $: canMakeProposals =
         client.tryGetNervousSystem(governanceCanisterId)?.submittingProposalsEnabled ?? false;
     $: userId = selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them.userId : "";
-    $: userStore = client.userStore;
     $: isBot = $userStore.get(userId)?.kind === "bot";
     $: isSuspended = $userStore.get(userId)?.suspended ?? false;
     $: lastState = $rightPanelHistory[$rightPanelHistory.length - 1] ?? { kind: "no_panel" };

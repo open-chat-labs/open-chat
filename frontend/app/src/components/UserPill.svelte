@@ -3,7 +3,7 @@
     import Close from "svelte-material-icons/Close.svelte";
     import { createEventDispatcher, getContext } from "svelte";
     import type { OpenChat, UserOrUserGroup } from "openchat-client";
-    import { AvatarSize } from "openchat-client";
+    import { AvatarSize, currentCommunityMembers as communityMembers } from "openchat-client";
     const dispatch = createEventDispatcher();
 
     const client = getContext<OpenChat>("client");
@@ -16,7 +16,6 @@
             : client.userAvatarUrl(userOrGroup);
     $: userId = client.userOrUserGroupId(userOrGroup);
 
-    $: communityMembers = client.currentCommunityMembers;
     $: name = client.userOrUserGroupName(userOrGroup);
     $: displayName =
         userOrGroup.kind === "user_group" || userOrGroup.kind === "everyone"

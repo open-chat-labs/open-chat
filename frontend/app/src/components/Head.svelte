@@ -7,6 +7,11 @@
         type UserLookup,
         routeForChatIdentifier,
         type ChatListScope,
+        userStore,
+        chatListScopeStore,
+        globalUnreadCount,
+        selectedChatStore,
+        selectedCommunity,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { mobileOperatingSystem } from "../utils/devices";
@@ -16,13 +21,8 @@
 
     let viewPortContent = "width=device-width, initial-scale=1";
 
-    $: userStore = client.userStore;
-    $: chatListScope = client.chatListScope;
-    $: selectedChatStore = client.selectedChatStore;
-    $: selectedCommunity = client.selectedCommunity;
-    $: globalUnreadCount = client.globalUnreadCount;
     $: details = getDetails(
-        $chatListScope,
+        $chatListScopeStore,
         $location,
         $userStore,
         $globalUnreadCount,

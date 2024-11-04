@@ -1,14 +1,11 @@
 <script lang="ts">
     import Link from "./Link.svelte";
     import Launch from "./Launch.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
-    import type { OpenChat } from "openchat-client";
+    import { createEventDispatcher } from "svelte";
+    import { identityState } from "openchat-client";
     import { location } from "../../routes";
 
     export let showBlog: boolean;
-
-    const client = getContext<OpenChat>("client");
-    $: identityState = client.identityState;
 
     const dispatch = createEventDispatcher();
     $: path = $location;

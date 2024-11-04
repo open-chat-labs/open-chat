@@ -7,6 +7,7 @@
     import TooltipPopup from "../TooltipPopup.svelte";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import type { OpenChat, UserLookup } from "openchat-client";
+    import { userStore } from "openchat-client";
     import { getContext, createEventDispatcher } from "svelte";
 
     const client = getContext<OpenChat>("client");
@@ -26,7 +27,6 @@
 
     let longPressed: boolean = false;
 
-    $: userStore = client.userStore;
     $: usernames = buildPollUsernames($userStore, voters, myUserId);
 
     function buildPollUsernames(

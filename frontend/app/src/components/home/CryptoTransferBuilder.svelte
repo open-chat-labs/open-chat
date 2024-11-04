@@ -2,6 +2,13 @@
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import type { ChatSummary, OpenChat, UserSummary } from "openchat-client";
+    import {
+        userStore,
+        currentUser as user,
+        lastCryptoSent,
+        cryptoBalance as cryptoBalanceStore,
+        enhancedCryptoLookup as cryptoLookup,
+    } from "openchat-client";
     import type { CryptocurrencyContent, MessageContext } from "openchat-shared";
     import TokenInput from "./TokenInput.svelte";
     import Overlay from "../Overlay.svelte";
@@ -42,12 +49,7 @@
     let validAmount: boolean = false;
     let sending = false;
 
-    $: user = client.user;
-    $: lastCryptoSent = client.lastCryptoSent;
-    $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
-    $: userStore = client.userStore;
-    $: cryptoLookup = client.enhancedCryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
     $: symbol = tokenDetails.symbol;
     $: howToBuyUrl = tokenDetails.howToBuyUrl;

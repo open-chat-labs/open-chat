@@ -4,6 +4,12 @@
         routeForChatIdentifier,
         type OpenChat,
         type TypersByKey,
+        userStore,
+        byContext as typersByContext,
+        selectedChatId,
+        selectedCommunity,
+        chatListScopeStore as chatListScope,
+        anonUser,
     } from "openchat-client";
     import page from "page";
     import { mobileWidth } from "../../stores/screenDimensions";
@@ -40,17 +46,11 @@
 
     let showSuspendUserModal = false;
 
-    $: typersByContext = client.typersByContext;
-    $: userStore = client.userStore;
     $: userId = selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them.userId : "";
     $: isMultiUser =
         selectedChatSummary.kind === "group_chat" || selectedChatSummary.kind === "channel";
     $: isBot = $userStore.get(userId)?.kind === "bot";
     $: hasUserProfile = !isMultiUser && !isBot;
-    $: selectedChatId = client.selectedChatId;
-    $: selectedCommunity = client.selectedCommunity;
-    $: chatListScope = client.chatListScope;
-    $: anonUser = client.anonUser;
 
     function clearSelection() {
         dispatch("clearSelection");

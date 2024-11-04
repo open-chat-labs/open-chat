@@ -1,12 +1,8 @@
 <script lang="ts">
-    import { chatIdentifiersEqual, type OpenChat } from "openchat-client";
-    import { getContext } from "svelte";
+    import { chatIdentifiersEqual, selectedChatId } from "openchat-client";
     import { activeVideoCall } from "../../../stores/video";
     import { mobileWidth } from "../../../stores/screenDimensions";
 
-    const client = getContext<OpenChat>("client");
-
-    $: selectedChatId = client.selectedChatId;
     $: show =
         $mobileWidth &&
         $activeVideoCall?.chatId !== undefined &&

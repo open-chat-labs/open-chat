@@ -66,9 +66,15 @@
             .chitLeaderboard()
             .then((result) => {
                 switch (mode) {
-                    case "all-time": leaders = result.allTime; break;
-                    case "last-month": leaders = result.lastMonth; break;
-                    case "this-month": leaders = result.thisMonth; break;
+                    case "all-time":
+                        leaders = result.allTime;
+                        break;
+                    case "last-month":
+                        leaders = result.lastMonth;
+                        break;
+                    case "this-month":
+                        leaders = result.thisMonth;
+                        break;
                 }
 
                 leaders = leaders.slice(0, 10);
@@ -123,15 +129,17 @@
                     class:selected={mode === "all-time"}>
                     {$_("halloffame.allTime")}
                 </div>
-            </div>        
+            </div>
             <div class="scoreboard-container">
                 <table cellpadding="3px" class="scoreboard">
                     <thead class="table-header">
-                        {#if !$mobileWidth}
-                            <th class="rank">#</th>
-                        {/if}
-                        <th class="username">{$_("halloffame.username")}</th>
-                        <th class="balance">CHIT</th>
+                        <tr>
+                            {#if !$mobileWidth}
+                                <th class="rank">#</th>
+                            {/if}
+                            <th class="username">{$_("halloffame.username")}</th>
+                            <th class="balance">CHIT</th>
+                        </tr>
                     </thead>
                     <tbody>
                         {#each leaders as leader, i}
@@ -312,5 +320,5 @@
                 border-bottom: 2px solid var(--txt);
             }
         }
-    }    
+    }
 </style>

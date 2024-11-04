@@ -11,6 +11,8 @@
         E8S_PER_TOKEN,
         type DiamondMembershipFees,
         type ResourceKey,
+        cryptoLookup,
+        currentUser as user,
     } from "openchat-client";
     import AccountInfo from "../AccountInfo.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
@@ -80,12 +82,10 @@
         kind: "idle",
     };
 
-    $: user = client.user;
     $: icpBalance = accountBalance / E8S_PER_TOKEN; //balance in the user's account expressed as ICP
     $: toPayE8s = amountInE8s(tokenDetails.symbol, diamondFees, selectedOption);
     $: toPay = amount(toPayE8s);
     $: insufficientFunds = toPay - icpBalance > 0.0001; //we need to account for the fact that js cannot do maths
-    $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
     $: howToBuyUrl = tokenDetails.howToBuyUrl;
     $: selectedDuration = indexToDuration[selectedOption?.index ?? 0] ?? "one_month";

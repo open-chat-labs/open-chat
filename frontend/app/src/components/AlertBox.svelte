@@ -1,8 +1,14 @@
 <script lang="ts">
+    import type { Snippet } from "svelte";
     import Alert from "svelte-material-icons/Alert.svelte";
     import { iconSize } from "../stores/iconSize";
 
-    export let icon: boolean = true;
+    type Props = {
+        icon?: boolean;
+        children?: Snippet
+    }
+
+    let { icon = true, children }: Props = $props();
 </script>
 
 <div class="alert-box">
@@ -12,7 +18,7 @@
         </div>
     {/if}
     <div class="alert-txt">
-        <slot />
+        {@render children?.()}
     </div>
 </div>
 

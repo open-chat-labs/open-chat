@@ -7,13 +7,12 @@
     import { browseChannels } from "../../../../stores/settings";
     import { i18nKey } from "../../../../i18n/i18n";
     import Translatable from "../../../Translatable.svelte";
+    import { selectedCommunity, chatSummariesListStore } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
 
     export let searchTerm: string;
 
-    $: selectedCommunity = client.selectedCommunity;
-    $: chatSummariesListStore = client.chatSummariesListStore;
     $: selectedCommunityId = $selectedCommunity?.id.communityId;
 
     let searching = false;

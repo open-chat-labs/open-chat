@@ -2,6 +2,7 @@ import type { UserLookup, UserSummary } from "openchat-shared";
 import { init, addMessages, _ } from "svelte-i18n";
 import { buildUsernameList, compareUsername } from "./user";
 import { get } from "svelte/store";
+import { vi } from "vitest";
 
 addMessages("en", {
     you: "you",
@@ -12,7 +13,7 @@ addMessages("en", {
 });
 
 const now = Date.now();
-jest.setSystemTime(now);
+vi.setSystemTime(now);
 init({
     fallbackLocale: "en",
 });

@@ -11,6 +11,11 @@
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
+    import {
+        currentUser as user,
+        cryptoBalance as cryptoBalanceStore,
+        enhancedCryptoLookup as cryptoLookup,
+    } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -24,10 +29,7 @@
     let error: string | undefined = undefined;
     let balanceWithRefresh: BalanceWithRefresh;
 
-    $: user = client.user;
-    $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoBalance = $cryptoBalanceStore[ledger1] ?? BigInt(0);
-    $: cryptoLookup = client.enhancedCryptoLookup;
     $: tokenDetails0 = $cryptoLookup[ledger0];
     $: tokenDetails1 = $cryptoLookup[ledger1];
     $: symbol0 = tokenDetails0.symbol;

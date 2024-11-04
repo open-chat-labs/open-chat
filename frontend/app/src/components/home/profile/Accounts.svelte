@@ -1,5 +1,12 @@
 <script lang="ts">
-    import { type EnhancedTokenDetails, ICP_SYMBOL, type OpenChat } from "openchat-client";
+    import {
+        type EnhancedTokenDetails,
+        ICP_SYMBOL,
+        type OpenChat,
+        walletTokensSorted as accountsSorted,
+        walletConfigStore as walletConfig,
+        nervousSystemLookup,
+    } from "openchat-client";
     import { getContext } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
@@ -36,10 +43,7 @@
     let transactionsFormat: string;
     let swappableTokensPromise = client.swappableTokens();
 
-    $: accountsSorted = client.walletTokensSorted;
-    $: walletConfig = client.walletConfigStore;
     $: manualWalletConfig = $walletConfig.kind === "manual_wallet";
-    $: nervousSystemLookup = client.nervousSystemLookup;
     $: snsLedgers = new Set<string>(
         Object.values($nervousSystemLookup)
             .filter((ns) => !ns.isNns)
@@ -130,12 +134,15 @@
 {/if}
 
 <table>
-    <tr>
-        <th class="token-header"><Translatable resourceKey={i18nKey("cryptoAccount.token")} /></th>
-        <th class="balance-header" colspan="2">
-            <MultiToggle options={conversionOptions} bind:selected={selectedConversion} />
-        </th>
-    </tr>
+    <thead>
+        <tr>
+            <th class="token-header"
+                ><Translatable resourceKey={i18nKey("cryptoAccount.token")} /></th>
+            <th class="balance-header" colspan="2">
+                <MultiToggle options={conversionOptions} bind:selected={selectedConversion} />
+            </th>
+        </tr>
+    </thead>
     {#each $accountsSorted as token}
         <tr>
             <td width="99%">

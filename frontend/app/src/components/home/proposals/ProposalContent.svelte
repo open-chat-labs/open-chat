@@ -8,6 +8,8 @@
         type ProposalContent,
         ProposalDecisionStatus,
         type RegisterProposalVoteResponse,
+        currentUser as user,
+        proposalTopicsStore,
     } from "openchat-client";
     import Markdown from "../Markdown.svelte";
     import { now } from "../../../stores/time";
@@ -47,10 +49,8 @@
     let showNeuronInfo = false;
     let showPayload = false;
 
-    $: user = client.user;
     $: rootCanister =
         client.tryGetNervousSystem(content.governanceCanisterId)?.rootCanisterId ?? "";
-    $: proposalTopicsStore = client.proposalTopicsStore;
     $: isNns = content.proposal.kind === "nns";
     $: voteStatus =
         $proposalVotes.get(messageId) ??

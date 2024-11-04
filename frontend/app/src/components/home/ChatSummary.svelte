@@ -8,6 +8,18 @@
         CommunitySummary,
         DiamondMembershipStatus,
     } from "openchat-client";
+    import {
+        userStore,
+        currentUser as user,
+        suspendedUser,
+        selectedChatId,
+        chatListScopeStore as chatListScope,
+        blockedUsers,
+        messagesRead,
+        byContext as typersByContext,
+        favouritesStore,
+        communities,
+    } from "openchat-client";
     import Delete from "svelte-material-icons/Delete.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import Heart from "svelte-material-icons/Heart.svelte";
@@ -51,17 +63,7 @@
     export let selected: boolean;
     export let visible: boolean;
 
-    $: user = client.user;
     $: userId = $user.userId;
-    $: suspendedUser = client.suspendedUser;
-
-    $: selectedChatId = client.selectedChatId;
-    $: chatListScope = client.chatListScope;
-    $: blockedUsers = client.blockedUsers;
-    $: messagesRead = client.messagesRead;
-    $: typersByContext = client.typersByContext;
-    $: userStore = client.userStore;
-    $: favouritesStore = client.favouritesStore;
     $: menuColour = "var(--icon-txt)";
     $: externalContent = chatSummary.kind === "channel" && chatSummary.externalUrl !== undefined;
 
@@ -304,7 +306,6 @@
     }
 
     $: displayDate = client.getDisplayDate(chatSummary);
-    $: communities = client.communities;
     $: community =
         chatSummary.kind === "channel"
             ? $communities.get({ kind: "community", communityId: chatSummary.id.communityId })
