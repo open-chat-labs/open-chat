@@ -1591,7 +1591,6 @@ export type GovernanceProposalsSubtype = {
 export type Mention = {
     messageId: bigint;
     eventIndex: number;
-    mentionedBy: string;
     messageIndex: number;
 };
 

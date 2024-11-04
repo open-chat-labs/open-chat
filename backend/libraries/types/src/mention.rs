@@ -1,4 +1,4 @@
-use crate::{EventIndex, MessageId, MessageIndex, TimestampMillis, UserId};
+use crate::{EventIndex, MessageId, MessageIndex, TimestampMillis};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
@@ -12,13 +12,12 @@ pub struct HydratedMention {
     pub message_id: MessageId,
     pub message_index: MessageIndex,
     pub event_index: EventIndex,
-    pub mentioned_by: UserId,
 }
 
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct Mention {
     pub timestamp: TimestampMillis,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_index: MessageIndex,
+    pub message_id: MessageId,
 }

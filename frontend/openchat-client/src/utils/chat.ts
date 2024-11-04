@@ -281,6 +281,7 @@ function messageMentionsUser(
     userId: string,
     msg: EventWrapper<Message>,
 ): boolean {
+    if (msg.event.sender === userId) return false;
     const txt = getContentAsFormattedText(formatter, msg.event.content, get(cryptoLookup));
     return txt.indexOf(`@UserId(${userId})`) >= 0;
 }
@@ -296,7 +297,6 @@ function mentionsFromMessages(
                 messageId: msg.event.messageId,
                 messageIndex: msg.event.messageIndex,
                 eventIndex: msg.index,
-                mentionedBy: msg.event.sender,
             });
         }
         return mentions;

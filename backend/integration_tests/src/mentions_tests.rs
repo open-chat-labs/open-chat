@@ -31,13 +31,15 @@ fn mention_users_succeeds(mention_everyone: bool) {
         format!("Hello @UserId({}) and @UserId({})!", user2.user_id, user3.user_id)
     };
 
+    let message_id = random_from_u128();
+
     let send_message_response = client::group::send_message_v2(
         env,
         user1.principal,
         group_id.into(),
         &group_canister::send_message_v2::Args {
             thread_root_message_index: None,
-            message_id: random_from_u128(),
+            message_id,
             content: MessageContentInitial::Text(TextContent { text }),
             sender_name: user1.username(),
             sender_display_name: None,
@@ -61,13 +63,13 @@ fn mention_users_succeeds(mention_everyone: bool) {
     assert_eq!(user2_summary.mentions.len(), 1);
     let mention = user2_summary.mentions.first().unwrap();
     assert_eq!(mention.message_index, 0.into());
-    assert_eq!(mention.mentioned_by, user1.user_id);
+    assert_eq!(mention.message_id, message_id);
 
     let user3_summary = client::group::happy_path::summary(env, &user3, group_id);
     assert_eq!(user3_summary.mentions.len(), 1);
     let mention = user3_summary.mentions.first().unwrap();
     assert_eq!(mention.message_index, 0.into());
-    assert_eq!(mention.mentioned_by, user1.user_id);
+    assert_eq!(mention.message_id, message_id);
 }
 
 #[test_case(true; "authorized")]
@@ -103,13 +105,15 @@ fn mention_everyone_only_succeeds_if_authorized(authorized: bool) {
         );
     }
 
+    let message_id = random_from_u128();
+
     let send_message_response = client::group::send_message_v2(
         env,
         user2.principal,
         group_id.into(),
         &group_canister::send_message_v2::Args {
             thread_root_message_index: None,
-            message_id: random_from_u128(),
+            message_id,
             content: MessageContentInitial::Text(TextContent {
                 text: "Hello @everyone!".to_string(),
             }),
@@ -137,7 +141,7 @@ fn mention_everyone_only_succeeds_if_authorized(authorized: bool) {
         assert_eq!(user1_summary.mentions.len(), 1);
         let mention = user1_summary.mentions.first().unwrap();
         assert_eq!(mention.message_index, 0.into());
-        assert_eq!(mention.mentioned_by, user2.user_id);
+        assert_eq!(mention.message_id, message_id);
     } else {
         assert!(user1_summary.mentions.is_empty())
     }

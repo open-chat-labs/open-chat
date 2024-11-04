@@ -76,7 +76,7 @@ import {
     groupPermissions,
     groupSubtype,
     memberRole,
-    mention,
+    mentions,
     messageEvent,
     threadSyncDetails,
     updatedEvent,
@@ -365,9 +365,7 @@ export function groupMembershipUpdates(value: TGroupMembershipUpdates): GroupMem
         notificationsMuted: value.notifications_muted,
         latestThreads: value.latest_threads.map(threadSyncDetails),
         unfollowedThreads: Array.from(value.unfollowed_threads),
-        mentions: value.mentions
-            .filter((m) => m.thread_root_message_index === undefined)
-            .map(mention),
+        mentions: mentions(value.mentions),
         myMetrics: mapOptional(value.my_metrics, chatMetrics),
         rulesAccepted: value.rules_accepted,
         lapsed: value.lapsed,
