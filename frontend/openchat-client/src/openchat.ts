@@ -1369,7 +1369,6 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
             }
             this.getMissingUsers(userIds);
-            return response;
         });
     }
 

@@ -37,17 +37,41 @@ export class Stream<T> {
     }
 
     subscribe(onResult: OnStreamResult<T>): Stream<T> {
-        this.onResult = onResult;
+        const existing = this.onResult;
+        if (existing === undefined) {
+            this.onResult = onResult;
+        } else {
+            this.onResult = (value, final) => {
+                existing(value, final);
+                onResult(value, final);
+            };
+        }
         return this;
     }
 
     catch(onError: OnStreamError): Stream<T> {
-        this.onError = onError;
+        const existing = this.onError;
+        if (existing === undefined) {
+            this.onError = onError;
+        } else {
+            this.onError = (reason) => {
+                existing(reason);
+                onError(reason);
+            };
+        }
         return this;
     }
 
     finally(onEnd: OnStreamEnd): Stream<T> {
-        this.onEnd = onEnd;
+        const existing = this.onEnd;
+        if (existing === undefined) {
+            this.onEnd = onEnd;
+        } else {
+            this.onEnd = () => {
+                existing();
+                onEnd();
+            };
+        }
         return this;
     }
 }
