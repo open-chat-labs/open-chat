@@ -7,14 +7,13 @@ use crate::stable_storage::Memory;
 use crate::*;
 use candid::Principal;
 use event_store_producer::{EventBuilder, EventStoreClient, Runtime};
-use itertools::Itertools;
 use rand::rngs::StdRng;
 use rand::Rng;
 use search::{Document, Query};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use sha2::{Digest, Sha256};
-use std::cmp::{max, min, Reverse};
+use std::cmp::{max, min};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::mem;
@@ -1850,37 +1849,6 @@ impl ChatEvents {
         } else {
             false
         }
-    }
-
-    pub fn latest_threads<'a>(
-        &self,
-        root_message_indexes: impl Iterator<Item = &'a MessageIndex>,
-        followed_threads: &HashMap<MessageIndex, TimestampMillis>,
-        updated_since: Option<TimestampMillis>,
-        max_threads: usize,
-    ) -> Vec<GroupCanisterThreadDetails> {
-        root_message_indexes
-            .filter_map(|root_message_index| {
-                self.threads.get(root_message_index).and_then(|thread_events| {
-                    let mut last_updated = thread_events.latest_event_timestamp()?;
-                    let latest_event = thread_events.latest_event_index()?;
-                    if let Some(followed_timestamp) = followed_threads.get(root_message_index) {
-                        last_updated = last_updated.max(*followed_timestamp);
-                    }
-
-                    updated_since
-                        .map_or(true, |since| last_updated > since)
-                        .then_some(GroupCanisterThreadDetails {
-                            root_message_index: *root_message_index,
-                            latest_event,
-                            latest_message: thread_events.latest_message_index().unwrap_or_default(),
-                            last_updated,
-                        })
-                })
-            })
-            .sorted_unstable_by_key(|t| Reverse(t.last_updated))
-            .take(max_threads)
-            .collect()
     }
 
     pub fn message_ids(
