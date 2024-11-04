@@ -44,11 +44,7 @@ export class Stream<T> {
         );
     }
 
-    subscribe(onResult?: OnStreamResult<T>, onError?: OnStreamError, onEnd?: OnStreamEnd) {
-        this.subscriptions.push({
-            onResult,
-            onError,
-            onEnd,
-        });
+    subscribe(subscription: Subscription<T>) {
+        this.subscriptions.push(subscription);
     }
 }

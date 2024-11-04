@@ -1362,14 +1362,16 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "messageActivityFeed",
             since: this._liveState.globalState.messageActivitySummary.readUpToTimestamp,
         });
-        stream.subscribe((response) => {
-            const userIds = new Set<string>();
-            for (const event of response.events) {
-                if (event.userId !== undefined) {
-                    userIds.add(event.userId);
+        stream.subscribe({
+            onResult: (response) => {
+                const userIds = new Set<string>();
+                for (const event of response.events) {
+                    if (event.userId !== undefined) {
+                        userIds.add(event.userId);
+                    }
                 }
-            }
-            this.getMissingUsers(userIds);
+                this.getMissingUsers(userIds);
+            },
         });
         return stream;
     }
@@ -3554,8 +3556,8 @@ export class OpenChat extends OpenChatAgentWorker {
                 },
                 undefined,
                 isCryptoMessage ? 2 * DEFAULT_WORKER_TIMEOUT : undefined,
-            ).subscribe(
-                (response) => {
+            ).subscribe({
+                onResult: (response) => {
                     if (response === "accepted") {
                         unconfirmed.markAccepted(messageContext, eventWrapper.event.messageId);
                         return;
@@ -3615,7 +3617,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
                     resolve(resp);
                 },
-                () => {
+                onError: () => {
                     this.onSendMessageFailure(
                         chatId,
                         eventWrapper.event.messageId,
@@ -3627,7 +3629,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
                     return resolve(CommonResponses.failure());
                 },
-            );
+            });
         });
     }
 
@@ -4589,19 +4591,22 @@ export class OpenChat extends OpenChatAgentWorker {
     getCurrentUser(): Promise<CurrentUserResponse> {
         return new Promise((resolve, reject) => {
             let resolved = false;
-            this.sendStreamRequest({ kind: "getCurrentUser" }).subscribe((user) => {
-                if (user.kind === "created_user") {
-                    userCreatedStore.set(true);
-                    currentUser.set(user);
-                    this.setDiamondStatus(user.diamondStatus);
-                }
-                if (!resolved) {
-                    // we want to resolve the promise with the first response from the stream so that
-                    // we are not waiting unnecessarily
-                    resolve(user);
-                    resolved = true;
-                }
-            }, reject);
+            this.sendStreamRequest({ kind: "getCurrentUser" }).subscribe({
+                onResult: (user) => {
+                    if (user.kind === "created_user") {
+                        userCreatedStore.set(true);
+                        currentUser.set(user);
+                        this.setDiamondStatus(user.diamondStatus);
+                    }
+                    if (!resolved) {
+                        // we want to resolve the promise with the first response from the stream so that
+                        // we are not waiting unnecessarily
+                        resolve(user);
+                        resolved = true;
+                    }
+                },
+                onError: reject,
+            });
         });
     }
 
@@ -5746,8 +5751,8 @@ export class OpenChat extends OpenChatAgentWorker {
             this.sendStreamRequest({
                 kind: "getUpdates",
                 initialLoad,
-            }).subscribe(
-                async (resp) => {
+            }).subscribe({
+                onResult: async (resp) => {
                     await this.handleChatsResponse(
                         updateRegistryTask,
                         !this._liveState.chatsInitialised,
@@ -5755,14 +5760,14 @@ export class OpenChat extends OpenChatAgentWorker {
                     );
                     chatsLoading.set(!this._liveState.chatsInitialised);
                 },
-                (err) => {
+                onError: (err) => {
                     console.warn("getUpdates threw an error: ", err);
                     resolve();
                 },
-                () => {
+                onEnd: () => {
                     resolve();
                 },
-            );
+            });
         });
     }
 
@@ -6276,8 +6281,8 @@ export class OpenChat extends OpenChatAgentWorker {
         return new Promise((resolve) => {
             this.sendStreamRequest({
                 kind: "updateRegistry",
-            }).subscribe(
-                ([registry, updated]) => {
+            }).subscribe({
+                onResult: ([registry, updated]) => {
                     if (updated || Object.keys(get(cryptoLookup)).length === 0) {
                         this.currentAirdropChannel = registry.currentAirdropChannel;
                         const cryptoRecord = toRecord(registry.tokenDetails, (t) => t.ledger);
@@ -6313,11 +6318,11 @@ export class OpenChat extends OpenChatAgentWorker {
                         resolve();
                     }
                 },
-                (err) => {
+                onError: (err) => {
                     console.warn(`Failed to update the registry: ${err}`);
                     resolve();
                 },
-            );
+            });
         });
     }
 
