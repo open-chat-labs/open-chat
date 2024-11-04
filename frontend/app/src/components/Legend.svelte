@@ -2,9 +2,13 @@
     import Translatable from "./Translatable.svelte";
     import type { ResourceKey } from "openchat-client";
 
-    export let label: ResourceKey;
-    export let rules: ResourceKey | undefined = undefined;
-    export let required = false;
+    interface Props {
+        label: ResourceKey;
+        rules?: ResourceKey | undefined;
+        required?: boolean;
+    }
+
+    let { label, rules = undefined, required = false }: Props = $props();
 </script>
 
 <div class="legend">
