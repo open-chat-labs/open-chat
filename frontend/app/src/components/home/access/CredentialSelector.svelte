@@ -13,23 +13,16 @@
     const MIN_LENGTH = 1;
     const MAX_LENGTH = 50;
 
-    export let gate: CredentialGate;
-    export let valid: boolean;
-    export let editable: boolean;
+    interface Props {
+        gate: CredentialGate;
+        valid: boolean;
+        editable: boolean;
+    }
 
-    let selectedCredentialIssuer: Credential;
-    let credentialArguments: [string, string][] = [];
+    let { gate = $bindable(), valid = $bindable(), editable }: Props = $props();
 
-    // I'm going to bin the predefined credentials for now because we don't really have any that make sense.
-    // If / when we do have them I think we will just have a pop up that you select from and it populates the form
-    // and from there it's exactly the same as a custom credential.
-
-    $: originValid = validateOrigin(selectedCredentialIssuer?.issuerOrigin);
-    $: nameValid = stringValid(selectedCredentialIssuer?.credentialName);
-    $: canisterValid = validateCanister(selectedCredentialIssuer?.issuerCanisterId);
-    $: typeValid = stringValid(selectedCredentialIssuer?.credentialType);
-    $: argsValid = validateArguments(credentialArguments);
-    $: valid = argsValid && originValid && nameValid && canisterValid && typeValid;
+    let selectedCredentialIssuer: Credential = $state(gate.credential);
+    let credentialArguments: [string, string][] = $state([]);
 
     function validateArguments(args: [string, string][]): boolean {
         return args.every(([k, v]) => {
@@ -99,6 +92,19 @@
     function deleteArgument(name: string) {
         credentialArguments = credentialArguments.filter(([k]) => k !== name);
     }
+
+    let originValid = $derived(validateOrigin(selectedCredentialIssuer?.issuerOrigin));
+    let nameValid = $derived(stringValid(selectedCredentialIssuer?.credentialName));
+    let canisterValid = $derived(validateCanister(selectedCredentialIssuer?.issuerCanisterId));
+    let typeValid = $derived(stringValid(selectedCredentialIssuer?.credentialType));
+    let argsValid = $derived(validateArguments(credentialArguments));
+
+    $effect(() => {
+        const isValid = argsValid && originValid && nameValid && canisterValid && typeValid;
+        if (isValid !== valid) {
+            valid = isValid;
+        }
+    });
 </script>
 
 {#if selectedCredentialIssuer}
@@ -142,13 +148,13 @@
         maxlength={MAX_LENGTH}
         placeholder={i18nKey("access.credential.credentialTypePlaceholder")} />
 
-    {#each credentialArguments as [name, value]}
+    {#each credentialArguments as arg}
         <div class="argument">
             <div class="argument-name">
                 <Legend required={editable} label={i18nKey("access.credential.argumentName")} />
                 <Input
-                    bind:value={name}
-                    invalid={!stringValid(name)}
+                    bind:value={arg[0]}
+                    invalid={!stringValid(arg[0])}
                     on:change={sync}
                     disabled={!editable}
                     minlength={MIN_LENGTH}
@@ -158,8 +164,8 @@
             <div class="argument-value">
                 <Legend required={editable} label={i18nKey("access.credential.argumentValue")} />
                 <Input
-                    bind:value
-                    invalid={!stringValid(value)}
+                    bind:value={arg[1]}
+                    invalid={!stringValid(arg[1])}
                     on:change={sync}
                     disabled={!editable}
                     minlength={MIN_LENGTH}
@@ -167,7 +173,7 @@
                     placeholder={i18nKey("access.credential.argumentValuePlaceholder")} />
             </div>
             {#if editable}
-                <div on:click={() => deleteArgument(name)} class="delete-icon">
+                <div onclick={() => deleteArgument(arg[0])} class="delete-icon">
                     <Delete size={$iconSize} color={"var(--icon-txt)"} />
                 </div>
             {/if}
