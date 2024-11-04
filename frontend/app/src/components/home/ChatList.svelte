@@ -469,6 +469,12 @@
         display: flex;
         flex-direction: column;
 
+        h4 {
+            display: flex;
+            align-items: center;
+            gap: $sp2;
+        }
+
         .username {
             font-weight: 200;
             color: var(--txt-light);
