@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 import svelte from "rollup-plugin-svelte";
-import sveltePreprocess from "svelte-preprocess";
+import { sveltePreprocess } from "svelte-preprocess";
 import commonjs from "@rollup/plugin-commonjs";
 import html from "@rollup/plugin-html";
 import resolve from "@rollup/plugin-node-resolve";

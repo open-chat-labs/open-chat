@@ -22,7 +22,7 @@
         paymentGateFolder,
         type GateBinding,
     } from "../../../utils/access";
-    import { afterUpdate, getContext, onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
     import Legend from "../../Legend.svelte";
     import Input from "../../Input.svelte";
     import CredentialSelector from "./CredentialSelector.svelte";
@@ -30,45 +30,39 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let gate: AccessGate;
-    export let editable: boolean;
-    export let level: Level;
-    export let valid: boolean;
-    export let allowNone: boolean;
-    export let neuronGateBindings: GateBinding[];
-    export let paymentGateBindings: GateBinding[];
-    export let balanceGateBindings: GateBinding[];
-    export let gateBindings: GateBinding[];
-
-    let selectedGateKey: string | undefined = undefined;
-    let selectedNeuronGateKey: string | undefined = undefined;
-    let selectedPaymentGateKey: string | undefined = undefined;
-    let selectedBalanceGateKey: string | undefined = undefined;
-    let minDissolveDelay = client.getMinDissolveDelayDays(gate) ?? "";
-    let minStake = client.getMinStakeInTokens(gate) ?? "";
-    let minBalanceText = initialMinBalance(gate);
-    let amountText = initialPaymentAmount(gate);
-    let credentialIssuerValid = true;
-
-    $: candidateTokenDetails = client.getTokenDetailsForAccessGate(gate);
-    $: amount = amountFromText(amountText, candidateTokenDetails);
-    $: invalidAmount = amount === undefined || amount < minPayment;
-    $: minBalance = amountFromText(minBalanceText, candidateTokenDetails);
-    $: minPayment = (candidateTokenDetails?.transferFee ?? BigInt(0)) * BigInt(100);
-    $: invalidMinBalance = minBalance === undefined || minBalance < minPayment;
-    $: invalidDissolveDelay = minDissolveDelay !== "" && isNaN(Number(minDissolveDelay));
-    $: invalidMinStake = minStake !== "" && isNaN(Number(minStake));
-    $: {
-        valid =
-            !(!allowNone && selectedGateKey === "no_gate") &&
-            !(
-                selectedGateKey === "neuron_gate_folder" &&
-                (invalidDissolveDelay || invalidMinStake)
-            ) &&
-            !(selectedGateKey === "payment_gate_folder" && invalidAmount) &&
-            !(selectedGateKey === "balance_gate_folder" && invalidMinBalance) &&
-            credentialIssuerValid;
+    interface Props {
+        gate: AccessGate;
+        editable: boolean;
+        level: Level;
+        allowNone: boolean;
+        valid: boolean;
+        neuronGateBindings: GateBinding[];
+        paymentGateBindings: GateBinding[];
+        balanceGateBindings: GateBinding[];
+        gateBindings: GateBinding[];
     }
+
+    let {
+        gate = $bindable(),
+        editable,
+        level,
+        allowNone,
+        valid = $bindable(),
+        neuronGateBindings,
+        paymentGateBindings,
+        balanceGateBindings,
+        gateBindings,
+    }: Props = $props();
+
+    let selectedGateKey: string | undefined = $state(undefined);
+    let selectedNeuronGateKey: string | undefined = $state(undefined);
+    let selectedPaymentGateKey: string | undefined = $state(undefined);
+    let selectedBalanceGateKey: string | undefined = $state(undefined);
+    let minDissolveDelay = $state(client.getMinDissolveDelayDays(gate) ?? "");
+    let minStake = $state(client.getMinStakeInTokens(gate) ?? "");
+    let minBalanceText = $state(initialMinBalance(gate));
+    let amountText = $state(initialPaymentAmount(gate));
+    let credentialIssuerValid = $state(true);
 
     function initialPaymentAmount(gate: AccessGate): string {
         if (isPaymentGate(gate)) {
@@ -180,25 +174,61 @@
         }
     });
 
-    afterUpdate(() => {
+    let candidateTokenDetails = $derived(client.getTokenDetailsForAccessGate(gate));
+    let amount = $derived(amountFromText(amountText, candidateTokenDetails));
+    let minPayment = $derived((candidateTokenDetails?.transferFee ?? BigInt(0)) * BigInt(100));
+    let invalidAmount = $derived(amount === undefined || amount < minPayment);
+    let minBalance = $derived(amountFromText(minBalanceText, candidateTokenDetails));
+    let invalidMinBalance = $derived(minBalance === undefined || minBalance < minPayment);
+    let invalidDissolveDelay = $derived(minDissolveDelay !== "" && isNaN(Number(minDissolveDelay)));
+    let invalidMinStake = $derived(minStake !== "" && isNaN(Number(minStake)));
+    let isValid = $derived.by(() => {
+        return (
+            !(!allowNone && selectedGateKey === "no_gate") &&
+            !(
+                selectedGateKey === "neuron_gate_folder" &&
+                (invalidDissolveDelay || invalidMinStake)
+            ) &&
+            !(selectedGateKey === "payment_gate_folder" && invalidAmount) &&
+            !(selectedGateKey === "balance_gate_folder" && invalidMinBalance) &&
+            credentialIssuerValid
+        );
+    });
+
+    $effect(() => {
+        if (isValid !== valid) {
+            valid = isValid;
+        }
+    });
+
+    $effect(() => {
         if (isNeuronGate(gate)) {
-            gate = {
-                ...gate,
-                minDissolveDelay:
-                    minDissolveDelay !== "" && !invalidDissolveDelay
-                        ? Number(minDissolveDelay) * 24 * 60 * 60 * 1000
-                        : undefined,
-                minStakeE8s:
-                    minStake !== "" && !invalidMinStake
-                        ? Number(minStake) * Math.pow(10, candidateTokenDetails?.decimals ?? 8)
-                        : undefined,
-            };
-        } else if (isPaymentGate(gate) && amount !== undefined) {
+            const delay =
+                minDissolveDelay !== "" && !invalidDissolveDelay
+                    ? Number(minDissolveDelay) * 24 * 60 * 60 * 1000
+                    : undefined;
+            const stake =
+                minStake !== "" && !invalidMinStake
+                    ? Number(minStake) * Math.pow(10, candidateTokenDetails?.decimals ?? 8)
+                    : undefined;
+
+            if (delay !== gate.minDissolveDelay || stake !== gate.minStakeE8s) {
+                gate = {
+                    ...gate,
+                    minDissolveDelay: delay,
+                    minStakeE8s: stake,
+                };
+            }
+        } else if (isPaymentGate(gate) && amount !== undefined && amount !== gate.amount) {
             gate = {
                 ...gate,
                 amount,
             };
-        } else if (isBalanceGate(gate) && minBalance !== undefined) {
+        } else if (
+            isBalanceGate(gate) &&
+            minBalance !== undefined &&
+            minBalance !== gate.minBalance
+        ) {
             gate = {
                 ...gate,
                 minBalance,
@@ -217,7 +247,7 @@
                 invalid={!allowNone && selectedGateKey === "no_gate"}
                 disabled={!editable}
                 margin={false}
-                on:change={updateGate}
+                onchange={updateGate}
                 bind:value={selectedGateKey}>
                 {#each gateBindings as gate}
                     <option disabled={!gate.enabled} value={gate.key}
@@ -232,7 +262,7 @@
             <Select
                 disabled={!editable}
                 margin={false}
-                on:change={updateGate}
+                onchange={updateGate}
                 bind:value={selectedNeuronGateKey}>
                 {#each neuronGateBindings as g}
                     <option disabled={!g.enabled} value={g.key}>{g.label}</option>
@@ -261,7 +291,7 @@
             <Select
                 disabled={!editable}
                 margin={false}
-                on:change={updateGate}
+                onchange={updateGate}
                 bind:value={selectedPaymentGateKey}>
                 {#each paymentGateBindings as g}
                     <option disabled={!g.enabled} value={g.key}>{g.label}</option>
@@ -281,7 +311,7 @@
             <Select
                 disabled={!editable}
                 margin={false}
-                on:change={updateGate}
+                onchange={updateGate}
                 bind:value={selectedBalanceGateKey}>
                 {#each balanceGateBindings as g}
                     <option disabled={!g.enabled} value={g.key}>{g.label}</option>
