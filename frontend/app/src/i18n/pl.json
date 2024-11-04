@@ -604,9 +604,9 @@
         "link": "Połączyć",
         "linkedAccounts": {
             "currentAccount": "Obecnie zalogowany z tym podmiotem",
-            "linkAdvice": "Aby połączyć nowe konto Zaloguj się na nowe konto, które chcesz połączyć, następnie zaloguj się na swoje bieżące konto i na koniec połącz oba konta.",
-            "linkAnother": "Połącz z innym",
-            "section": "Połączone konta",
+            "linkAdvice": "Aby dodać nowego dostawcę usług logowania, najpierw zaloguj się u nowego dostawcy, którego chcesz dodać, następnie u bieżącego dostawcy i na końcu połącz oba dostawcy.",
+            "linkAnother": "Dodaj kolejny",
+            "section": "Dostawcy logowania",
             "start": "Zacznij"
         },
         "linkIdentity": "Tożsamość łącza",

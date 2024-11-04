@@ -604,9 +604,9 @@
         "link": "Verknüpfung",
         "linkedAccounts": {
             "currentAccount": "Derzeit mit diesem Auftraggeber angemeldet",
-            "linkAdvice": "So verknüpfen Sie ein neues Konto: Melden Sie sich bei dem neuen Konto an, das Sie verknüpfen möchten, melden Sie sich dann bei Ihrem aktuellen Konto an und verknüpfen Sie schließlich die beiden Konten miteinander.",
-            "linkAnother": "Einen anderen Link setzen",
-            "section": "Verknüpfte Konten",
+            "linkAdvice": "Um einen neuen Anmeldeanbieter hinzuzufügen, melden Sie sich zuerst bei dem neuen Anbieter an, den Sie hinzufügen möchten. Melden Sie sich dann bei Ihrem aktuellen Anbieter an und verknüpfen Sie die beiden schließlich miteinander.",
+            "linkAnother": "Weitere hinzufügen",
+            "section": "Anmeldeanbieter",
             "start": "Erste Schritte"
         },
         "linkIdentity": "Link-Identität",

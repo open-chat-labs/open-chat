@@ -604,9 +604,9 @@
         "link": "关联",
         "linkedAccounts": {
             "currentAccount": "当前以该主体身份登录",
-            "linkAdvice": "要链接新帐户，请登录要链接的新帐户，然后登录当前帐户，最后将两个帐户链接在一起。",
-            "linkAnother": "链接另一个",
-            "section": "关联账户",
+            "linkAdvice": "要添加新的登录提供商，请先使用您要添加的新提供商登录，然后使用您当前的提供商登录，最后将两者链接在一起。",
+            "linkAnother": "添加另一个",
+            "section": "登录提供商",
             "start": "开始使用"
         },
         "linkIdentity": "链接标识",

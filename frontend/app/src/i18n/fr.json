@@ -604,9 +604,9 @@
         "link": "Lien",
         "linkedAccounts": {
             "currentAccount": "Actuellement connecté avec ce principal",
-            "linkAdvice": "Pour lier un nouveau compte Connectez-vous au nouveau compte que vous souhaitez lier, puis connectez-vous à votre compte actuel et enfin associez les deux comptes ensemble.",
-            "linkAnother": "Lier un autre",
-            "section": "Comptes liés",
+            "linkAdvice": "Pour ajouter un nouveau fournisseur de connexion, connectez-vous d'abord avec le nouveau fournisseur que vous souhaitez ajouter, puis connectez-vous avec votre fournisseur actuel et enfin associez les deux.",
+            "linkAnother": "Ajouter un autre",
+            "section": "Fournisseurs de connexion",
             "start": "Commencer"
         },
         "linkIdentity": "Identité du lien",
