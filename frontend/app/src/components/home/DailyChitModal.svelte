@@ -4,7 +4,11 @@
     import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import { fade } from "svelte/transition";
     import ModalContent from "../ModalContent.svelte";
-    import { type AirdropChannelDetails, type OpenChat } from "openchat-client";
+    import {
+        type AirdropChannelDetails,
+        type OpenChat,
+        chitStateStore as chitState,
+    } from "openchat-client";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import ButtonGroup from "../ButtonGroup.svelte";
@@ -31,7 +35,6 @@
     let airdropChannel: AirdropChannelDetails | undefined = undefined;
     let isMemberOfAirdropChannel = false;
 
-    $: chitState = client.chitStateStore;
     $: available = $chitState.nextDailyChitClaim < $now500;
     $: streak = $chitState.streakEnds < $now500 ? 0 : $chitState.streak;
     $: percent = calculatePercentage(streak);

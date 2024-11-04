@@ -7,7 +7,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import { createEventDispatcher, getContext } from "svelte";
-    import { AvatarSize, type OpenChat, userStore } from "openchat-client";
+    import { AvatarSize, type OpenChat, userStore, communities } from "openchat-client";
     import {
         incomingVideoCall,
         ringtoneUrls,
@@ -23,7 +23,6 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    $: communities = client.communities;
     $: chat = normaliseChatSummary($incomingVideoCall);
 
     function normaliseChatSummary(call: IncomingVideoCall | undefined) {
@@ -102,7 +101,7 @@
                 </div>
                 <div class="btns">
                     <TooltipWrapper position={"top"} align={"middle"}>
-                        <div slot="target" on:click={cancel} class="btn ignore">
+                        <div role="button" slot="target" on:click={cancel} class="btn ignore">
                             <PhoneHangup size={$iconSize} color={"var(--txt)"} />
                         </div>
                         <div let:position let:align slot="tooltip">
@@ -112,7 +111,7 @@
                         </div>
                     </TooltipWrapper>
                     <TooltipWrapper position={"top"} align={"middle"}>
-                        <div slot="target" on:click={join} class="btn join">
+                        <div role="button" slot="target" on:click={join} class="btn join">
                             <Phone size={$iconSize} color={"var(--txt)"} />
                         </div>
                         <div let:position let:align slot="tooltip">

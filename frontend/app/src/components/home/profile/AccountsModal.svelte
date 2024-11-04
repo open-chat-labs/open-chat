@@ -1,7 +1,7 @@
 <script lang="ts">
     import Hamburger from "svelte-material-icons/Menu.svelte";
     import TuneVertical from "svelte-material-icons/TuneVertical.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher } from "svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import ModalContent from "../../ModalContent.svelte";
     import ShieldPlusIcon from "svelte-material-icons/ShieldPlus.svelte";
@@ -12,7 +12,6 @@
     import Button from "../../Button.svelte";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import type { OpenChat } from "openchat-client";
     import MenuIcon from "../../MenuIcon.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Menu from "../../Menu.svelte";
@@ -24,8 +23,8 @@
     import ManageAccounts from "./ManageAccounts.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import type { PinOperation } from "../../../stores/pinNumber";
+    import { pinNumberRequiredStore } from "openchat-client";
 
-    const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     let pinAction: PinOperation | undefined = undefined;
@@ -38,8 +37,6 @@
         { id: "btc", label: "BTC" },
         { id: "eth", label: "ETH" },
     ];
-
-    $: pinNumberRequiredStore = client.pinNumberRequiredStore;
 </script>
 
 <ModalContent on:close>

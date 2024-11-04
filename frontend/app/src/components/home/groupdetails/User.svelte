@@ -2,10 +2,9 @@
 
 <script lang="ts">
     import Avatar from "../../Avatar.svelte";
-    // import { _ } from "svelte-i18n";
     import { createEventDispatcher, getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
-    import { AvatarSize } from "openchat-client";
+    import { AvatarSize, currentCommunityMembers as communityMembers } from "openchat-client";
     import FilteredUsername from "../../FilteredUsername.svelte";
     import type { UserSummary } from "openchat-shared";
     import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
@@ -27,7 +26,6 @@
 
     let hovering = false;
 
-    $: communityMembers = client.currentCommunityMembers;
     $: displayName = client.getDisplayName(user, $communityMembers);
 
     function onClick(ev: Event) {

@@ -1,5 +1,17 @@
 <script lang="ts">
-    import { OpenChat, type ChannelSummary, type CommunitySummary } from "openchat-client";
+    import {
+        OpenChat,
+        type ChannelSummary,
+        type CommunitySummary,
+        currentChatMembers,
+        currentChatInvitedUsers as currentChatInvited,
+        currentChatBlockedUsers as currentChatBlocked,
+        currentChatLapsedMembers as currentChatLapsed,
+        currentCommunityMembers,
+        currentCommunityInvitedUsers as currentCommunityInvited,
+        currentCommunityBlockedUsers as currentCommunityBlocked,
+        currentCommunityLapsedMembers as currentCommunityLapsed,
+    } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Members from "./groupdetails/Members.svelte";
@@ -15,14 +27,6 @@
     export let community: CommunitySummary;
     export let selectedTab: "community" | "channel" = "channel";
 
-    $: currentChatMembers = client.currentChatMembers;
-    $: currentChatInvited = client.currentChatInvitedUsers;
-    $: currentChatBlocked = client.currentChatBlockedUsers;
-    $: currentChatLapsed = client.currentChatLapsedMembers;
-    $: currentCommunityMembers = client.currentCommunityMembers;
-    $: currentCommunityInvited = client.currentCommunityInvitedUsers;
-    $: currentCommunityBlocked = client.currentCommunityBlockedUsers;
-    $: currentCommunityLapsed = client.currentCommunityLapsedMembers;
     $: canInvite =
         selectedTab === "community"
             ? client.canInviteUsers(community.id)

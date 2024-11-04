@@ -20,6 +20,21 @@
         type ChatIdentifier,
         routeForChatIdentifier,
         userStore,
+        currentUser as user,
+        isProposalGroup,
+        currentChatEditingEvent,
+        currentChatPinnedMessages,
+        messagesRead,
+        unconfirmedReadByThem,
+        unconfirmed,
+        failedMessagesStore,
+        userGroupKeys,
+        draftMessagesStore,
+        focusMessageIndex,
+        chatStateStore,
+        chatListScopeStore as chatListScope,
+        selectedCommunity,
+        expandedDeletedMessages,
     } from "openchat-client";
     import InitialGroupMessage from "./InitialGroupMessage.svelte";
     import page from "page";
@@ -48,21 +63,7 @@
     export let filteredProposals: FilteredProposals | undefined;
     export let privateChatPreview: boolean;
 
-    $: user = client.user;
-    $: isProposalGroup = client.isProposalGroup;
-    $: currentChatEditingEvent = client.currentChatEditingEvent;
-    $: currentChatPinnedMessages = client.currentChatPinnedMessages;
-    $: messagesRead = client.messagesRead;
-    $: unconfirmedReadByThem = client.unconfirmedReadByThem;
-    $: unconfirmed = client.unconfirmed;
-    $: failedMessagesStore = client.failedMessagesStore;
-    $: userGroupKeys = client.userGroupKeys;
-    $: draftMessagesStore = client.draftMessagesStore;
-    $: focusMessageIndex = client.focusMessageIndex;
-    $: chatStateStore = client.chatStateStore;
-    $: chatListScope = client.chatListScope;
     $: showAvatar = initialised && shouldShowAvatar(chat, events[0]?.index);
-    $: selectedCommunity = client.selectedCommunity;
     $: messageContext = { chatId: chat.id, threadRootMessageIndex: undefined };
 
     // treat this as if it might be null so we don't get errors when it's unmounted
@@ -129,8 +130,6 @@
         });
         return firstKey;
     }
-
-    $: expandedDeletedMessages = client.expandedDeletedMessages;
 
     $: timeline = client.groupEvents(
         $reverseScroll ? [...events].reverse() : events,

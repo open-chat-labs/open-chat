@@ -18,6 +18,8 @@
         routeForChatIdentifier,
         type Level,
         userStore,
+        chatListScopeStore,
+        typing,
     } from "openchat-client";
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
     import GroupRulesChangedEvent from "./GroupRulesChangedEvent.svelte";
@@ -66,7 +68,6 @@
 
     let userSummary: UserSummary | undefined = undefined;
 
-    $: chatListScope = client.chatListScope;
     $: levelType = (chatType === "channel" ? "channel" : "group") as Level;
     $: level = $_(`level.${levelType}`).toLowerCase();
     $: messageContext = { chatId, threadRootMessageIndex: threadRootMessage?.messageIndex };
@@ -74,7 +75,6 @@
         event.event.kind === "message" &&
         event.event.content.kind === "message_reminder_created_content" &&
         event.event.content.hidden;
-    $: typing = client.typing;
     $: {
         userSummary = {
             kind: "user",
@@ -111,7 +111,7 @@
         if (event.event.kind === "message") {
             if (event.event.thread !== undefined) {
                 page(
-                    `${routeForChatIdentifier($chatListScope.kind, chatId)}/${
+                    `${routeForChatIdentifier($chatListScopeStore.kind, chatId)}/${
                         event.event.messageIndex
                     }`,
                 );

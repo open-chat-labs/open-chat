@@ -2,7 +2,12 @@
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Checkbox from "../Checkbox.svelte";
-    import { type OpenChat, type CandidateGroupChat, type CommunitySummary } from "openchat-client";
+    import {
+        type OpenChat,
+        type CandidateGroupChat,
+        type CommunitySummary,
+        isDiamond,
+    } from "openchat-client";
     import Radio from "../Radio.svelte";
     import { createEventDispatcher, getContext } from "svelte";
     import Button from "../Button.svelte";
@@ -25,7 +30,6 @@
     let disappearingMessages =
         candidate.kind === "candidate_group_chat" && candidate.eventsTTL !== undefined;
 
-    $: isDiamond = client.isDiamond;
     $: requiresUpgrade = !editing && !$isDiamond && candidate.level !== "channel";
     $: canChangeVisibility = !editing ? client.canChangeVisibility(candidate) : true;
 

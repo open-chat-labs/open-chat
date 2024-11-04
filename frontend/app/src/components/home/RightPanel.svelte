@@ -18,7 +18,6 @@
         MultiUserChatIdentifier,
         Level,
     } from "openchat-client";
-    import { userStore } from "openchat-client";
     import { toastStore } from "../../stores/toast";
     import { createEventDispatcher, getContext } from "svelte";
     import type { Readable } from "svelte/store";
@@ -38,6 +37,23 @@
     import ChannelOrCommunityMembers from "./ChannelOrCommunityMembers.svelte";
     import ChannelOrCommunitySummary from "./ChannelOrCommunitySummary.svelte";
     import ChannelOrCommunityInvite from "./ChannelOrCommunityInvite.svelte";
+    import {
+        userStore,
+        currentUser,
+        selectedChatId,
+        selectedChatStore as selectedChat,
+        currentChatMembers,
+        currentChatInvitedUsers as currentChatInvited,
+        currentChatBlockedUsers as currentChatBlocked,
+        currentChatLapsedMembers,
+        currentChatPinnedMessages,
+        currentCommunityMembers,
+        currentCommunityInvitedUsers as currentCommunityInvited,
+        currentCommunityBlockedUsers as currentCommunityBlocked,
+        currentCommunityLapsedMembers as currentCommunityLapsed,
+        selectedCommunity,
+        eventsStore,
+    } from "openchat-client";
 
     const dispatch = createEventDispatcher();
 
@@ -49,20 +65,6 @@
     let resizing = false;
     let resizedWidth = "7";
 
-    $: currentUser = client.user;
-    $: selectedChatId = client.selectedChatId;
-    $: selectedChat = client.selectedChatStore;
-    $: currentChatMembers = client.currentChatMembers;
-    $: currentChatInvited = client.currentChatInvitedUsers;
-    $: currentChatBlocked = client.currentChatBlockedUsers;
-    $: currentChatLapsedMembers = client.currentChatLapsedMembers;
-    $: currentChatPinnedMessages = client.currentChatPinnedMessages;
-    $: currentCommunityMembers = client.currentCommunityMembers;
-    $: currentCommunityInvited = client.currentCommunityInvitedUsers;
-    $: currentCommunityBlocked = client.currentCommunityBlockedUsers;
-    $: currentCommunityLapsed = client.currentCommunityLapsedMembers;
-    $: selectedCommunity = client.selectedCommunity;
-    $: eventsStore = client.eventsStore;
     $: user = $userStore.get($currentUser.userId) ?? client.nullUser("unknown");
     $: lastState = $rightPanelHistory[$rightPanelHistory.length - 1] ?? { kind: "no_panel" };
     $: modal = !$fullWidth;

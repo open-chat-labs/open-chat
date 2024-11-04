@@ -7,16 +7,16 @@
     import { toastStore, ToastType } from "../stores/toast";
     import { iconSize } from "../stores/iconSize";
     import Translatable from "./Translatable.svelte";
-    import { OpenChat, type ChatIdentifier, routeForChatIdentifier } from "openchat-client";
-    import { getContext } from "svelte";
+    import {
+        type ChatIdentifier,
+        routeForChatIdentifier,
+        draftMessagesStore,
+    } from "openchat-client";
     import { i18nKey, interpolate } from "../i18n/i18n";
     import page from "page";
     import TooltipWrapper from "./TooltipWrapper.svelte";
     import TooltipPopup from "./TooltipPopup.svelte";
 
-    const client = getContext<OpenChat>("client");
-
-    $: draftMessagesStore = client.draftMessagesStore;
     $: reactiveResourceKey = $toastStore?.resourceKey;
 
     function report() {

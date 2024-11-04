@@ -8,6 +8,10 @@
         type MultiUserChat,
         routeForMessageContext,
         userStore,
+        currentUser as user,
+        chatListScopeStore as chatListScope,
+        chatSummariesStore,
+        messagesRead,
     } from "openchat-client";
     import { pop } from "../../../utils/transition";
     import { _ } from "svelte-i18n";
@@ -28,10 +32,6 @@
     export let thread: ThreadPreview;
     export let observer: IntersectionObserver;
 
-    $: user = client.user;
-    $: chatListScope = client.chatListScope;
-    $: chatSummariesStore = client.chatSummariesStore;
-    $: messagesRead = client.messagesRead;
     $: missingMessages = thread.totalReplies - thread.latestReplies.length;
     $: threadRootMessageIndex = thread.rootMessage.event.messageIndex;
     $: chat = $chatSummariesStore.get(thread.chatId) as MultiUserChat | undefined;

@@ -8,6 +8,12 @@
         P2PSwapContent,
         ResourceKey,
     } from "openchat-client";
+    import {
+        currentUser as user,
+        cryptoLookup,
+        isDiamond,
+        exchangeRatesLookupStore as exchangeRatesLookup,
+    } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Clock from "svelte-material-icons/Clock.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
@@ -43,8 +49,6 @@
     let confirming = false;
     let showDetails = false;
 
-    $: user = client.user;
-    $: cryptoLookup = client.cryptoLookup;
     $: fromDetails = $cryptoLookup[content.token0.ledger];
     $: toDetails = $cryptoLookup[content.token1.ledger];
     $: finished = $now500 >= Number(content.expiresAt);
@@ -61,8 +65,6 @@
     $: fromAmount = client.formatTokens(content.token0Amount, content.token0.decimals);
     $: toAmount = client.formatTokens(content.token1Amount, content.token1.decimals);
     $: buttonDisabled = content.status.kind !== "p2p_swap_open" || reply || pinned;
-    $: isDiamond = client.isDiamond;
-    $: exchangeRatesLookup = client.exchangeRatesLookupStore;
     $: fromAmountInUsd = calculateDollarAmount(
         content.token0Amount,
         $exchangeRatesLookup[fromDetails.symbol.toLowerCase()]?.toUSD,

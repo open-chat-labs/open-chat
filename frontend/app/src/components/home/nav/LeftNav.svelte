@@ -9,13 +9,6 @@
     import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import BellRingOutline from "svelte-material-icons/BellRingOutline.svelte";
-    import {
-        AvatarSize,
-        type CommunitySummary,
-        type OpenChat,
-        emptyCombinedUnreadCounts,
-        userStore,
-    } from "openchat-client";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { communityListScrollTop } from "../../../stores/scrollPos";
     import { pathParams } from "../../../routes";
@@ -32,31 +25,38 @@
     import { now } from "../../../stores/time";
     import LighteningBolt from "./LighteningBolt.svelte";
     import { activityFeedShowing } from "../../../stores/activity";
+    import {
+        AvatarSize,
+        type CommunitySummary,
+        type OpenChat,
+        emptyCombinedUnreadCounts,
+        userStore,
+        chitStateStore as chitState,
+        currentUser as createdUser,
+        communitiesList as communities,
+        selectedCommunity,
+        chatListScopeStore as chatListScope,
+        unreadDirectCounts,
+        unreadActivityCount,
+        directVideoCallCounts,
+        groupVideoCallCounts,
+        favouritesVideoCallCounts,
+        unreadGroupCounts,
+        unreadFavouriteCounts,
+        unreadCommunityChannelCounts,
+        communityChannelVideoCallCounts,
+        anonUser,
+        globalStateStore as globalState,
+    } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
     const flipDurationMs = 300;
 
-    $: chitState = client.chitStateStore;
-    $: createdUser = client.user;
     $: user = $userStore.get($createdUser.userId);
     $: avatarSize = $mobileWidth ? AvatarSize.Small : AvatarSize.Default;
-    $: communities = client.communitiesList;
-    $: selectedCommunity = client.selectedCommunity;
-    $: chatListScope = client.chatListScope;
-    $: unreadDirectCounts = client.unreadDirectCounts;
-    $: unreadActivityCount = client.unreadActivityCount;
-    $: directVideoCallCounts = client.directVideoCallCounts;
-    $: groupVideoCallCounts = client.groupVideoCallCounts;
-    $: favouritesVideoCallCounts = client.favouritesVideoCallCounts;
-    $: unreadGroupCounts = client.unreadGroupCounts;
-    $: unreadFavouriteCounts = client.unreadFavouriteCounts;
-    $: unreadCommunityChannelCounts = client.unreadCommunityChannelCounts;
-    $: communityChannelVideoCallCounts = client.communityChannelVideoCallCounts;
     $: communityExplorer = $pathParams.kind === "communities_route";
-    $: anonUser = client.anonUser;
     $: selectedCommunityId = $selectedCommunity?.id.communityId;
-    $: globalState = client.globalStateStore;
     $: claimChitAvailable = $chitState.nextDailyChitClaim < $now;
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store

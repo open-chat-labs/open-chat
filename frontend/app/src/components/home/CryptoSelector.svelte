@@ -1,13 +1,13 @@
 <script lang="ts">
-    import type { EnhancedTokenDetails, OpenChat } from "openchat-client";
+    import type { EnhancedTokenDetails } from "openchat-client";
+    import { cryptoLookup, cryptoTokensSorted } from "openchat-client";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { iconSize } from "../../stores/iconSize";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher } from "svelte";
     import MenuIcon from "../MenuIcon.svelte";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
 
-    const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     export let ledger: string | undefined;
@@ -16,8 +16,6 @@
     let selecting = false;
     let ignoreClick = false;
 
-    $: cryptoLookup = client.cryptoLookup;
-    $: cryptoTokensSorted = client.cryptoTokensSorted;
     $: cryptoTokensFiltered = $cryptoTokensSorted.filter((t) => t.enabled && filter(t));
 
     $: {

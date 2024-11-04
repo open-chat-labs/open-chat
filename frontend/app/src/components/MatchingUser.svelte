@@ -1,6 +1,7 @@
 <script lang="ts">
     import { AvatarSize } from "openchat-client";
     import type { UserSummary } from "openchat-client";
+    import { currentUser as createdUser } from "openchat-client";
     import Avatar from "./Avatar.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher, getContext } from "svelte";
@@ -16,8 +17,6 @@
     export let compact = false;
 
     const dispatch = createEventDispatcher();
-
-    $: createdUser = client.user;
 
     function onSelect(user: UserSummary) {
         dispatch("onSelect", user);

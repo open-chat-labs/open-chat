@@ -18,6 +18,9 @@
         SendingMessage,
         SentMessage,
         messageContextsEqual,
+        currentUser as user,
+        unconfirmed,
+        failedMessagesStore,
     } from "openchat-client";
     import { menuStore } from "../../stores/menu";
     import { tooltipStore } from "../../stores/tooltip";
@@ -74,10 +77,7 @@
     let heightObserver: MutationObserver;
     let messageReadTimers: Record<number, number> = {};
 
-    $: user = client.user;
     $: userId = $user.userId;
-    $: unconfirmed = client.unconfirmed;
-    $: failedMessagesStore = client.failedMessagesStore;
     $: threadSummary = threadRootEvent?.event.thread;
     $: messageContext = {
         chatId: chat.id,

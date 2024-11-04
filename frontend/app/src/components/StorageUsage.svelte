@@ -1,15 +1,13 @@
 <script lang="ts">
     import Progress from "./Progress.svelte";
-    import { getContext } from "svelte";
-    import type { OpenChat } from "openchat-client";
+    import {
+        storageInGb,
+        storageStore,
+        percentageStorageRemaining,
+        percentageStorageUsed,
+    } from "openchat-client";
     import { i18nKey } from "../i18n/i18n";
     import Translatable from "./Translatable.svelte";
-
-    const client = getContext<OpenChat>("client");
-    $: percentageStorageRemaining = client.percentageStorageRemaining;
-    $: percentageStorageUsed = client.percentageStorageUsed;
-    $: storageStore = client.storageStore;
-    $: storageInGb = client.storageInGb;
 </script>
 
 <!-- don't display anything if the user hasn't got any storage -->

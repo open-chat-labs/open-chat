@@ -2,6 +2,7 @@
     import Button from "../Button.svelte";
     import Diamond from "../icons/Diamond.svelte";
     import type { ChatIdentifier, OpenChat, PrizeContent } from "openchat-client";
+    import { currentUser as user, isDiamond, cryptoLookup } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Clock from "svelte-material-icons/Clock.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
@@ -23,8 +24,6 @@
     export let messageId: bigint;
     export let me: boolean;
 
-    $: user = client.user;
-    $: cryptoLookup = client.cryptoLookup;
     $: logo =
         Object.values($cryptoLookup).find(
             (t) => t.symbol.toLowerCase() === content.token.toLowerCase(),
@@ -38,7 +37,6 @@
     $: timeRemaining = finished
         ? $_("prizes.finished")
         : client.formatTimeRemaining($now500, Number(content.endDate));
-    $: isDiamond = client.isDiamond;
 
     let progressWidth = 0;
 

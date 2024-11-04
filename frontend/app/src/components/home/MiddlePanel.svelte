@@ -9,26 +9,23 @@
         chatIdentifiersEqual,
         type ChatIdentifier,
         type MultiUserChat,
-        type OpenChat,
+        selectedChatStore,
+        selectedChatId,
+        eventsStore,
+        filteredProposalsStore,
     } from "openchat-client";
     import { pathParams } from "../../routes";
-    import { getContext, tick } from "svelte";
+    import { tick } from "svelte";
     import { currentTheme } from "../../theme/themes";
     import { layoutStore, type Layout, rightPanelWidth } from "../../stores/layout";
     import Loading from "../Loading.svelte";
     import { activeVideoCall, type ActiveVideoCall } from "../../stores/video";
-
-    const client = getContext<OpenChat>("client");
 
     export let joining: MultiUserChat | undefined;
     export let currentChatMessages: CurrentChatMessages | undefined;
 
     let middlePanel: HTMLElement;
 
-    $: selectedChatStore = client.selectedChatStore;
-    $: selectedChatId = client.selectedChatId;
-    $: eventsStore = client.eventsStore;
-    $: filteredProposalsStore = client.filteredProposalsStore;
     $: noChat = $pathParams.kind !== "global_chat_selected_route";
 
     $: {

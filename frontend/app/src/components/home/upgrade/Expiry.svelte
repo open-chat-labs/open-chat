@@ -5,12 +5,12 @@
     import { _, locale } from "svelte-i18n";
     import Translatable from "../../Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import { diamondStatus } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
 
     export let extendBy: DiamondMembershipDuration | undefined = undefined;
 
-    $: diamondStatus = client.diamondStatus;
     $: extendByMs = durationToMs(extendBy);
 
     let expiresIn: string | undefined = undefined;

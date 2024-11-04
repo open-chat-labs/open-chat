@@ -7,6 +7,9 @@
         OpenChat,
         type CryptocurrencyDetails,
         type WalletConfig,
+        walletConfigStore as walletConfig,
+        cryptoTokensSorted as accountsSorted,
+        cryptoLookup,
     } from "openchat-client";
     import Toggle from "../../Toggle.svelte";
     import Search from "../../Search.svelte";
@@ -27,9 +30,6 @@
     let searching = false;
 
     $: valid = config.kind === "manual_wallet" || !isNaN(Number(config.minDollarValue));
-    $: walletConfig = client.walletConfigStore;
-    $: accountsSorted = client.cryptoTokensSorted;
-    $: cryptoLookup = client.cryptoLookup;
     $: defaultLedgers = getDefaultLedgers($cryptoLookup);
     $: searchTermLower = searchTerm.toLowerCase();
     $: filteredTokens = $accountsSorted.filter(

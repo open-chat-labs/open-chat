@@ -119,6 +119,7 @@
             on:click={onClick}
             on:dblclick|stopPropagation={onDoubleClick}
             on:error={() => (imgElement.src = normalised.fallback)}
+            class="unzoomed"
             class:landscape
             class:fill
             class:withCaption
@@ -218,7 +219,7 @@
         color: #fff;
     }
 
-    img.zoomable:not(.zoomed) {
+    img.zoomable.unzoomed {
         cursor: zoom-in;
     }
 
@@ -226,7 +227,7 @@
         border-radius: var(--modal-rd);
     }
 
-    img:not(.zoomed) {
+    img.unzoomed {
         width: 100%;
         display: block;
 
