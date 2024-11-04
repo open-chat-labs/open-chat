@@ -109,7 +109,7 @@
     "accountSuspended": "Konto gesperrt",
     "activity": {
         "anon": "Ein anonymer Benutzer",
-        "crypto": "{username} hat dir eine Kryptonachricht gesendet",
+        "crypto": "{username} hat Ihnen eine Kryptowährungsnachricht gesendet",
         "mention": "{username} hat dich erwähnt",
         "missingMessage": "Nachrichteninhalt nicht verfügbar",
         "navLabel": "Aktivitäten Feed",

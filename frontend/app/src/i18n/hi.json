@@ -109,7 +109,7 @@
     "accountSuspended": "खाता निलंबित कर दिया गया है",
     "activity": {
         "anon": "एक अनाम उपयोगकर्ता",
-        "crypto": "{username} ने आपको क्रिप्टो संदेश भेजा है",
+        "crypto": "{username} ने आपको क्रिप्टोकरेंसी संदेश भेजा है",
         "mention": "{username} ने आपका उल्लेख किया",
         "missingMessage": "संदेश सामग्री अनुपलब्ध",
         "navLabel": "गतिविधि फ़ीड",
