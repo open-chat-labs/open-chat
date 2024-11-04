@@ -732,25 +732,23 @@ impl GroupChatCore {
                 {
                     let is_first_reply = message_index == MessageIndex::default();
                     for follower in thread_summary.followers {
-                        if let Some(member) = self
-                            .members
-                            .get_mut(&follower)
-                            .filter(|m| !m.suspended.value && m.user_id != sender && !m.user_type.is_bot())
-                        {
+                        if let Some(member) = self.members.get_mut(&follower) {
                             // Bump the thread timestamp for all followers
                             member.followed_threads.insert(root_message_index, now);
 
-                            let mentioned = !mentions_disabled
-                                && (mentions.contains(&member.user_id)
-                                    || (is_first_reply && member.user_id == root_message_sender));
+                            if member.user_id != sender && !member.user_type.is_bot() && !member.suspended.value {
+                                let mentioned = !mentions_disabled
+                                    && (mentions.contains(&member.user_id)
+                                        || (is_first_reply && member.user_id == root_message_sender));
 
-                            if mentioned {
-                                // Mention this member
-                                member.mentions.add(thread_root_message_index, message_index, message_id, now);
-                            }
+                                if mentioned {
+                                    // Mention this member
+                                    member.mentions.add(thread_root_message_index, message_index, message_id, now);
+                                }
 
-                            if mentioned || !member.notifications_muted.value {
-                                users_to_notify.insert(member.user_id);
+                                if mentioned || !member.notifications_muted.value {
+                                    users_to_notify.insert(member.user_id);
+                                }
                             }
                         }
                     }
@@ -759,7 +757,7 @@ impl GroupChatCore {
                 for member in self
                     .members
                     .iter_mut()
-                    .filter(|m| !m.suspended.value && m.user_id != sender && !m.user_type.is_bot())
+                    .filter(|m| m.user_id != sender && !m.user_type.is_bot() && !m.suspended.value)
                 {
                     let mentioned = !mentions_disabled && (everyone_mentioned || mentions.contains(&member.user_id));
                     if mentioned {
