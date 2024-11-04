@@ -3,6 +3,7 @@
     import { createEventDispatcher, getContext } from "svelte";
     import type { OpenChat, MultiUserChat } from "openchat-client";
     import GroupDetailsBody from "./GroupDetailsBody.svelte";
+    import { currentChatRules } from "openchat-client";
 
     const dispatch = createEventDispatcher();
 
@@ -12,7 +13,6 @@
     export let memberCount: number;
 
     $: canEdit = client.canEditGroupDetails(chat.id);
-    $: currentChatRules = client.currentChatRules;
 
     function editGroup() {
         if (canEdit) {

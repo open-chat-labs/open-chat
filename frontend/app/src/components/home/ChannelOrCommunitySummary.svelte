@@ -4,6 +4,9 @@
         OpenChat,
         type ChannelSummary,
         type CommunitySummary,
+        currentChatRules,
+        currentCommunityRules,
+        currentCommunityReferrals,
     } from "openchat-client";
     import ScopeToggle from "./communities/ScopeToggle.svelte";
     import { createEventDispatcher, getContext } from "svelte";
@@ -23,9 +26,6 @@
 
     $: canEditCommunity = client.canEditCommunity(community.id);
     $: canEditChannel = client.canEditGroupDetails(channel.id);
-    $: currentChatRules = client.currentChatRules;
-    $: currentCommunityRules = client.currentCommunityRules;
-    $: currentCommunityReferrals = client.currentCommunityReferrals;
     $: rules = $currentCommunityRules ?? defaultChatRules("community");
     $: canDeleteCommunity = client.canDeleteCommunity(community.id);
     $: canInviteToCommunity = client.canInviteUsers(community.id);

@@ -3,6 +3,7 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import type { CryptocurrencyContent, OpenChat } from "openchat-client";
+    import { currentUser as user, cryptoLookup } from "openchat-client";
     import Markdown from "./Markdown.svelte";
     import { getContext } from "svelte";
     import Translatable from "../Translatable.svelte";
@@ -15,8 +16,6 @@
     export let reply: boolean = false;
     export let senderId: string;
 
-    $: user = client.user;
-    $: cryptoLookup = client.cryptoLookup;
     $: logo = $cryptoLookup[content.transfer.ledger].logo;
     $: transferText = client.buildCryptoTransferText($_, $user.userId, senderId, content, me);
     $: transactionLinkText = client.buildTransactionLink($_, content.transfer);

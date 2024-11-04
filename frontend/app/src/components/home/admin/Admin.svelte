@@ -5,14 +5,9 @@
     import SectionHeader from "../../SectionHeader.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import OperatorFunctions from "./OperatorFunctions.svelte";
-    import { getContext } from "svelte";
-    import type { OpenChat } from "openchat-client";
+    import { platformOperator } from "openchat-client";
     import Button from "../../Button.svelte";
     import page from "page";
-
-    const client = getContext<OpenChat>("client");
-
-    $: platformOperator = client.platformOperator;
 
     let selectedTab: "translations" | "operator" = "translations";
 

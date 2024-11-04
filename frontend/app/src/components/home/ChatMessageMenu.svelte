@@ -34,6 +34,12 @@
         type ChatIdentifier,
         type Message,
         type OpenChat,
+        lastCryptoSent,
+        currentUser as user,
+        translationStore,
+        isDiamond,
+        cryptoLookup,
+        threadsFollowedByMeStore,
     } from "openchat-client";
     import { toastStore } from "../../stores/toast";
     import * as shareFunctions from "../../utils/share";
@@ -75,7 +81,6 @@
 
     let menuIcon: MenuIcon;
 
-    $: lastCryptoSent = client.lastCryptoSent;
     $: canRemind =
         msg.content.kind !== "message_reminder_content" &&
         msg.content.kind !== "message_reminder_created_content";
@@ -85,16 +90,11 @@
         (canDelete || me) &&
         !inert &&
         !(msg.content.kind === "video_call_content" && msg.content.ended === undefined);
-    $: user = client.user;
     $: inThread = threadRootMessage !== undefined;
-    $: translationStore = client.translationStore;
-    $: isDiamond = client.isDiamond;
-    $: cryptoLookup = client.cryptoLookup;
     $: threadRootMessageIndex =
         msg.messageId === threadRootMessage?.messageId
             ? undefined
             : threadRootMessage?.messageIndex;
-    $: threadsFollowedByMeStore = client.threadsFollowedByMeStore;
     $: isFollowedByMe =
         threadRootMessage !== undefined &&
         ($threadsFollowedByMeStore.get(chatId)?.has(threadRootMessage.messageIndex) ?? false);

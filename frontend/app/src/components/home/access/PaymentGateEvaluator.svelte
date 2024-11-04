@@ -6,6 +6,8 @@
         type ResourceKey,
         type Level,
         type PaymentGateApprovals,
+        currentUser as user,
+        cryptoBalance as cryptoBalanceStore,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
@@ -31,9 +33,7 @@
     let balanceWithRefresh: BalanceWithRefresh;
     let refreshingBalance = false;
 
-    $: user = client.user;
     $: token = client.getTokenDetailsForAccessGate(gate)!;
-    $: cryptoBalanceStore = client.cryptoBalance;
     $: originalBalance = $cryptoBalanceStore[token.ledger] ?? BigInt(0);
     $: cryptoBalance = balanceAfterCurrentCommitments(
         token.ledger,

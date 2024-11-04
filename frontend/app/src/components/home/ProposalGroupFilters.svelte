@@ -17,6 +17,7 @@
     } from "../../stores/proposalSections";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
+    import { proposalTopicsStore, filteredProposalsStore } from "openchat-client";
 
     export let selectedChat: ChatSummary;
 
@@ -38,8 +39,6 @@
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
-    $: proposalTopicsStore = client.proposalTopicsStore;
-    $: filteredProposalsStore = client.filteredProposalsStore;
     $: topics = [...$proposalTopicsStore];
     $: groupTopics =
         selectedChat.kind !== "direct_chat" &&

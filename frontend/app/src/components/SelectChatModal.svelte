@@ -12,6 +12,7 @@
         MultiUserChat,
         OpenChat,
     } from "openchat-client";
+    import { userStore, selectedChatId, globalStateStore as globalState } from "openchat-client";
     import Avatar from "./Avatar.svelte";
     import CollapsibleCard from "./CollapsibleCard.svelte";
     import { AvatarSize, chatIdentifiersEqual } from "openchat-client";
@@ -72,9 +73,6 @@
     };
 
     $: searchTermLower = searchTerm.toLowerCase();
-    $: userStore = client.userStore;
-    $: selectedChatId = client.selectedChatId;
-    $: globalState = client.globalStateStore;
 
     let initialGlobalState: GlobalState | undefined = undefined;
 

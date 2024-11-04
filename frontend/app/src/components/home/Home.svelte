@@ -47,6 +47,23 @@
         routeForMessage,
         UserSuspensionChanged,
         RemoteVideoCallEndedEvent,
+        currentUser as user,
+        suspendedUser,
+        anonUser,
+        identityState,
+        chatSummariesListStore,
+        chatSummariesStore,
+        selectedChatStore,
+        selectedChatId,
+        chatsInitialised,
+        draftMessagesStore,
+        chatStateStore,
+        chatListScopeStore as chatListScope,
+        currentCommunityRules,
+        communities,
+        offlineStore,
+        capturePinNumberStore as pinNumberStore,
+        captureRulesAcceptanceStore as rulesAcceptanceStore,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -182,21 +199,7 @@
     let creatingThread = false;
     let currentChatMessages: CurrentChatMessages | undefined;
 
-    $: user = client.user;
-    $: suspendedUser = client.suspendedUser;
-    $: anonUser = client.anonUser;
-    $: identityState = client.identityState;
-    $: chatSummariesListStore = client.chatSummariesListStore;
-    $: chatSummariesStore = client.chatSummariesStore;
-    $: selectedChatStore = client.selectedChatStore;
-    $: selectedChatId = client.selectedChatId;
-    $: chatsInitialised = client.chatsInitialised;
-    $: draftMessagesStore = client.draftMessagesStore;
-    $: chatStateStore = client.chatStateStore;
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
-    $: chatListScope = client.chatListScope;
-    $: currentCommunityRules = client.currentCommunityRules;
-    $: communities = client.communities;
 
     $: selectedMultiUserChat =
         $selectedChatStore?.kind === "group_chat" || $selectedChatStore?.kind === "channel"
@@ -207,9 +210,6 @@
             ? selectedMultiUserChat.subtype?.governanceCanisterId
             : undefined;
     $: nervousSystem = client.tryGetNervousSystem(governanceCanisterId);
-    $: offlineStore = client.offlineStore;
-    $: pinNumberStore = client.capturePinNumberStore;
-    $: rulesAcceptanceStore = client.captureRulesAcceptanceStore;
     $: {
         if ($identityState.kind === "registering") {
             modal = { kind: "registering" };

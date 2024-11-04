@@ -1,7 +1,13 @@
 <script lang="ts">
     import { createEventDispatcher, getContext } from "svelte";
     import Button from "../Button.svelte";
-    import { isLocked, type MultiUserChat, type OpenChat } from "openchat-client";
+    import {
+        isLocked,
+        type MultiUserChat,
+        type OpenChat,
+        platformModerator,
+        selectedCommunity,
+    } from "openchat-client";
     import { toastStore } from "../../stores/toast";
     import page from "page";
     import { routeForScope } from "../../routes";
@@ -16,9 +22,7 @@
     export let joining: MultiUserChat | undefined;
     export let lapsed: boolean;
 
-    $: platformModerator = client.platformModerator;
     $: isFrozen = client.isFrozen(chat.id);
-    $: selectedCommunity = client.selectedCommunity;
     $: previewingCommunity =
         $selectedCommunity?.membership.role === "none" || $selectedCommunity?.membership.lapsed;
     $: gates = client.accessGatesForChat(chat);

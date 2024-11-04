@@ -7,6 +7,8 @@
         achievements,
         type Achievement,
         type ExternalAchievement,
+        currentUser as user,
+        globalStateStore as globalState,
     } from "openchat-client";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
@@ -76,8 +78,6 @@
 
     let selectedTab: "todo" | "done" | "external" = "todo";
 
-    $: user = client.user;
-    $: globalState = client.globalStateStore;
     $: filtered = [...achievements].filter(filter);
     $: [internalAchieved, internalNotAchieved] = client.partition(filtered, (a) =>
         $globalState.achievements.has(a),

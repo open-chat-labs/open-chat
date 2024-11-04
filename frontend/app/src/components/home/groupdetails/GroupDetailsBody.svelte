@@ -18,7 +18,13 @@
     import AdvancedSection from "./AdvancedSection.svelte";
     import InviteUsersWithLink from "../InviteUsersWithLink.svelte";
     import type { OpenChat, MultiUserChat } from "openchat-client";
-    import { AvatarSize } from "openchat-client";
+    import {
+        AvatarSize,
+        currentUser,
+        selectedCommunity,
+        currentChatRules,
+        currentCommunityRules,
+    } from "openchat-client";
     import AccessGateSummary from "../access/AccessGateSummary.svelte";
     import DisappearingMessagesSummary from "../DisappearingMessagesSummary.svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -30,14 +36,10 @@
     export let chat: MultiUserChat;
     export let memberCount: number;
 
-    $: currentUser = client.user;
     $: canSend = client.canSendMessage(chat.id, "any");
     $: canInvite =
         client.canInviteUsers(chat.id) && (chat.kind !== "channel" || !client.isChatPrivate(chat));
     $: avatarSrc = client.groupAvatarUrl(chat);
-    $: selectedCommunity = client.selectedCommunity;
-    $: currentChatRules = client.currentChatRules;
-    $: currentCommunityRules = client.currentCommunityRules;
     $: combinedRulesText = canSend
         ? client.combineRulesText($currentChatRules, $currentCommunityRules)
         : "";

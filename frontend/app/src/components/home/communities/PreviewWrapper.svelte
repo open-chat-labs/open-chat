@@ -4,14 +4,12 @@
     import { getContext, tick } from "svelte";
     import { toastStore } from "../../../stores/toast";
     import type { EnhancedAccessGate, GateCheckSucceeded, OpenChat } from "openchat-client";
+    import { anonUser, identityState, selectedCommunity } from "openchat-client";
     import { i18nKey } from "../../../i18n/i18n";
     import AccessGateEvaluator from "../access/AccessGateEvaluator.svelte";
 
     const client = getContext<OpenChat>("client");
 
-    $: anonUser = client.anonUser;
-    $: identityState = client.identityState;
-    $: selectedCommunity = client.selectedCommunity;
     $: previewingCommunity =
         $selectedCommunity?.membership.role === "none" || $selectedCommunity?.membership.lapsed;
 

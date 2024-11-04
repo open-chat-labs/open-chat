@@ -18,6 +18,11 @@
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
     import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
+    import {
+        enhancedCryptoLookup as cryptoLookup,
+        lastCryptoSent,
+        isDiamond,
+    } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -37,8 +42,6 @@
     let confirming = false;
     let sending = false;
 
-    $: cryptoLookup = client.enhancedCryptoLookup;
-    $: lastCryptoSent = client.lastCryptoSent;
     $: fromDetails = $cryptoLookup[fromLedger];
     $: toDetails = $cryptoLookup[toLedger];
     $: totalFees = fromDetails.transferFee * BigInt(2);
@@ -46,7 +49,6 @@
         fromAmount > 0n ? fromDetails.balance - fromAmount - totalFees : fromDetails.balance;
     $: minAmount = fromDetails.transferFee * BigInt(10);
     $: valid = error === undefined && fromAmountValid && toAmountValid;
-    $: isDiamond = client.isDiamond;
     $: errorMessage = error !== undefined ? i18nKey(error) : $pinNumberErrorMessageStore;
 
     $: {

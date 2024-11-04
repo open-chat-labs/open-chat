@@ -7,7 +7,7 @@ import {
     type AuthClientStorage,
     IdbStorage,
 } from "@dfinity/auth-client";
-import { get, writable, type Readable } from "svelte/store";
+import { get } from "svelte/store";
 import DRange from "drange";
 import {
     canChangeRoles as canChangeCommunityRoles,
@@ -64,7 +64,6 @@ import {
     canConvertToCommunity,
     canImportToCommunity,
     buildIdenticonUrl,
-    isEventKindHidden,
     getMessageText,
     diffGroupPermissions,
     canSendDirectMessage,
@@ -76,6 +75,7 @@ import {
     canStartVideoCalls,
     buildBlobUrl,
     isLapsed,
+    isEventKindHidden,
 } from "./utils/chat";
 import {
     buildUsernameList,
@@ -90,47 +90,18 @@ import { showTrace } from "./utils/profiling";
 import { CachePrimer } from "./utils/cachePrimer";
 import { Poller } from "./utils/poller";
 import { RecentlyActiveUsersTracker } from "./utils/recentlyActiveUsersTracker";
-import { selectedAuthProviderStore } from "./stores/authProviders";
 import { blockedUsers } from "./stores/blockedUsers";
 import { undeletingMessagesStore } from "./stores/undeletingMessages";
 import {
     chatsInitialised,
     chatsLoading,
     chatStateStore,
-    chatSummariesListStore,
-    chatSummariesStore,
     clearSelectedChat,
-    userMetrics,
     createDirectChat,
-    currentChatBlockedUsers,
-    currentChatInvitedUsers,
-    currentChatDraftMessage,
-    currentChatEditingEvent,
-    currentChatAttachment,
-    currentChatMembers,
-    currentChatPinnedMessages,
-    currentChatReplyingTo,
-    currentChatRules,
-    currentChatTextContent,
-    eventsStore,
-    focusMessageIndex,
-    expandedDeletedMessages,
-    isProposalGroup,
     nextEventAndMessageIndexes,
-    numberOfThreadsStore,
-    proposalTopicsStore,
-    selectedChatId,
-    selectedChatStore,
-    selectedServerChatStore,
-    serverChatSummariesStore,
     setSelectedChat,
-    threadsByChatStore,
-    threadsFollowedByMeStore,
-    userGroupKeys,
     threadServerEventsStore,
-    threadEvents,
     nextEventAndMessageIndexesForThread,
-    selectedThreadRootMessageIndex,
     clearServerEvents,
     confirmedEventIndexesLoaded,
     addGroupPreview,
@@ -140,27 +111,17 @@ import {
     isContiguous,
     confirmedThreadEventIndexesLoadedStore,
     isContiguousInThread,
-    focusThreadMessageIndex,
     selectedMessageContext,
-    currentChatMembersMap,
-    hideMessagesFromDirectBlocked,
-    currentChatLapsedMembers,
 } from "./stores/chat";
 import {
     cryptoBalance,
     cryptoLookup,
-    cryptoTokensSorted,
-    enhancedCryptoLookup,
     exchangeRatesLookupStore,
-    lastCryptoSent,
     nervousSystemLookup,
-    walletConfigStore,
-    walletTokensSorted,
 } from "./stores/crypto";
 import {
     disableAllProposalFilters,
     enableAllProposalFilters,
-    filteredProposalsStore,
     toggleProposalFilter,
     toggleProposalFilterMessageExpansion,
 } from "./stores/filteredProposals";
@@ -171,36 +132,21 @@ import { messagesRead, startMessagesReadTracker } from "./stores/markRead";
 import {
     askForNotificationPermission,
     initNotificationStores,
-    notificationStatus,
     setSoftDisabled,
 } from "./stores/notifications";
-import { profileStore } from "./stores/profiling";
 import { recommendedGroupExclusions } from "./stores/recommendedGroupExclusions";
 import { proposalTallies } from "./stores/proposalTallies";
-import {
-    percentageStorageRemaining,
-    percentageStorageUsed,
-    storageInGb,
-    storageStore,
-    updateStorageLimit,
-} from "./stores/storage";
-import { translationStore } from "./stores/translation";
-import { byContext, isTyping, typing } from "./stores/typing";
+import { storageStore, updateStorageLimit } from "./stores/storage";
+import { isTyping, typing } from "./stores/typing";
 import { unconfirmed, unconfirmedReadByThem } from "./stores/unconfirmed";
 import {
     openChatBotUser,
-    OPENCHAT_BOT_USER_ID,
     proposalsBotUser,
     specialUsers,
     userStore,
     currentUser,
     anonymousUserSummary,
-    anonUser,
-    suspendedUser,
-    platformModerator,
-    platformOperator,
     videoCallBotUser,
-    AIRDROP_BOT_USER_ID,
     airdropBotUser,
 } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
@@ -434,6 +380,7 @@ import type {
     PaymentGateApproval,
     PaymentGateApprovals,
     MessageActivityFeedResponse,
+    Stream,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -485,58 +432,31 @@ import {
     isCompositeGate,
     shouldPreprocessGate,
     deletedUser,
+    OPENCHAT_BOT_USER_ID,
+    AIRDROP_BOT_USER_ID,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
-import {
-    canExtendDiamond,
-    diamondStatus,
-    isDiamond,
-    diamondDurationToMs,
-    isLifetimeDiamond,
-} from "./stores/diamond";
+import { diamondDurationToMs } from "./stores/diamond";
 import {
     addCommunityPreview,
-    communities,
-    communitiesList,
     communityPreviewsStore,
     communityStateStore,
-    currentCommunityBlockedUsers,
-    currentCommunityInvitedUsers,
-    currentCommunityLapsedMembers,
-    currentCommunityMembers,
-    currentCommunityReferrals,
-    currentCommunityRules,
-    currentCommunityUserGroups,
     nextCommunityIndex,
     removeCommunityPreview,
-    selectedCommunity,
-    userGroupSummaries,
 } from "./stores/community";
 import {
     globalStateStore,
-    favouritesStore,
     setGlobalState,
     updateSummaryWithConfirmedMessage,
     chatListScopeStore,
-    unreadGroupCounts,
-    unreadDirectCounts,
-    unreadFavouriteCounts,
-    unreadCommunityChannelCounts,
-    globalUnreadCount,
-    mergeCombinedUnreadCounts,
-    groupVideoCallCounts,
-    directVideoCallCounts,
-    favouritesVideoCallCounts,
-    communityChannelVideoCallCounts,
     chitStateStore,
-    unreadActivityCount,
+    mergeCombinedUnreadCounts,
 } from "./stores/global";
 import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpdates";
-import { hasFlag, moderationFlags } from "./stores/flagStore";
+import { hasFlag } from "./stores/flagStore";
 import { hasOwnerRights } from "./utils/permissions";
 import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 import { verifyCredential } from "./utils/credentials";
-import { offlineStore } from "./stores/network";
 import { messageFiltersStore, type MessageFilter } from "./stores/messageFilters";
 import { draftMessagesStore } from "./stores/draftMessages";
 import {
@@ -559,15 +479,12 @@ import { captureRulesAcceptanceStore } from "./stores/rules";
 import type { SetPinNumberResponse } from "openchat-shared";
 import type { PinNumberFailures, MessageFormatter } from "openchat-shared";
 import { canRetryMessage, isTransfer } from "openchat-shared";
-import {
-    initialiseMostRecentSentMessageTimes,
-    shouldThrottle,
-    throttleDeadline,
-} from "./stores/throttling";
+import { initialiseMostRecentSentMessageTimes, shouldThrottle } from "./stores/throttling";
 import { storeEmailSignInSession } from "openchat-shared";
 import { getEmailSignInSession } from "openchat-shared";
 import { removeEmailSignInSession } from "openchat-shared";
 import { localGlobalUpdates } from "./stores/localGlobalUpdates";
+import { identityState } from "./stores/identity";
 
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
@@ -588,7 +505,6 @@ export class OpenChat extends OpenChatAgentWorker {
     private _authPrincipal: string | undefined;
     private _ocIdentity: Identity | undefined;
     private _liveState: LiveState;
-    private _identityState = writable<IdentityState>({ kind: "loading_user" });
     private _logger: Logger;
     private _lastOnlineDatesPending = new Set<string>();
     private _lastOnlineDatesPromise: Promise<Record<string, number>> | undefined;
@@ -604,11 +520,6 @@ export class OpenChat extends OpenChatAgentWorker {
         new RecentlyActiveUsersTracker();
 
     currentAirdropChannel: AirdropChannelDetails | undefined = undefined;
-    user = currentUser;
-    anonUser = anonUser;
-    suspendedUser = suspendedUser;
-    platformModerator = platformModerator;
-    platformOperator = platformOperator;
 
     constructor(config: OpenChatConfig) {
         super(config);
@@ -686,20 +597,16 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     clearPostLoginState() {
-        this._identityState.update((state) => ({ ...state, postLogin: undefined }));
+        identityState.update((state) => ({ ...state, postLogin: undefined }));
     }
 
     updateIdentityState(newState: IdentityState) {
-        this._identityState.update((previous) => {
+        identityState.update((previous) => {
             return {
                 ...newState,
                 postLogin: newState.postLogin ?? previous.postLogin,
             };
         });
-    }
-
-    get identityState(): Readable<IdentityState> {
-        return this._identityState;
     }
 
     private async loadedAuthenticationIdentity(
@@ -939,7 +846,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     onCreatedUser(user: CreatedUser): void {
-        this.user.set(user);
+        currentUser.set(user);
         this.setDiamondStatus(user.diamondStatus);
         initialiseMostRecentSentMessageTimes(this._liveState.isDiamond);
         const id = this._ocIdentity;
@@ -1055,7 +962,7 @@ export class OpenChat extends OpenChatAgentWorker {
         threadRootMessageIndex: number,
         latestMessageIndex: number,
     ): number {
-        return this.messagesRead.unreadThreadMessageCount(
+        return messagesRead.unreadThreadMessageCount(
             chatId,
             threadRootMessageIndex,
             latestMessageIndex,
@@ -1063,15 +970,15 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     unreadMessageCount(chatId: ChatIdentifier, latestMessageIndex: number | undefined): number {
-        return this.messagesRead.unreadMessageCount(chatId, latestMessageIndex);
+        return messagesRead.unreadMessageCount(chatId, latestMessageIndex);
     }
 
     unreadPinned(chatId: MultiUserChatIdentifier, dateLastPinned: bigint | undefined): boolean {
-        return this.messagesRead.unreadPinned(chatId, dateLastPinned);
+        return messagesRead.unreadPinned(chatId, dateLastPinned);
     }
 
     markThreadRead(chatId: ChatIdentifier, threadRootMessageIndex: number, readUpTo: number): void {
-        this.messagesRead.markReadUpTo({ chatId, threadRootMessageIndex }, readUpTo);
+        messagesRead.markReadUpTo({ chatId, threadRootMessageIndex }, readUpTo);
     }
 
     markMessageRead(
@@ -1079,11 +986,11 @@ export class OpenChat extends OpenChatAgentWorker {
         messageIndex: number,
         messageId: bigint | undefined,
     ): void {
-        if (this.messagesRead.isRead(context, messageIndex, messageId)) {
+        if (messagesRead.isRead(context, messageIndex, messageId)) {
             return;
         }
 
-        this.messagesRead.markMessageRead(context, messageIndex, messageId);
+        messagesRead.markMessageRead(context, messageIndex, messageId);
 
         const selectedChat = this._liveState.selectedChat;
         if (
@@ -1102,7 +1009,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     markPinnedMessagesRead(chatId: ChatIdentifier, dateLastPinned: bigint): void {
-        this.messagesRead.markPinnedMessagesRead(chatId, dateLastPinned);
+        messagesRead.markPinnedMessagesRead(chatId, dateLastPinned);
     }
 
     isMessageRead(
@@ -1110,7 +1017,7 @@ export class OpenChat extends OpenChatAgentWorker {
         messageIndex: number,
         messageId: bigint | undefined,
     ): boolean {
-        return this.messagesRead.isRead(context, messageIndex, messageId);
+        return messagesRead.isRead(context, messageIndex, messageId);
     }
 
     private sendRtcMessage(userIds: string[], message: WebRtcMessage): void {
@@ -1450,22 +1357,20 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    async messageActivityFeed(): Promise<MessageActivityFeedResponse> {
-        const feed = await this.sendRequest({
+    messageActivityFeed(): Stream<MessageActivityFeedResponse> {
+        return this.sendStreamRequest({
             kind: "messageActivityFeed",
             since: this._liveState.globalState.messageActivitySummary.readUpToTimestamp,
-        });
-
-        const userIds = new Set<string>();
-        for (const event of feed.events) {
-            if (event.userId !== undefined) {
-                userIds.add(event.userId);
+        }).subscribe((response) => {
+            const userIds = new Set<string>();
+            for (const event of response.events) {
+                if (event.userId !== undefined) {
+                    userIds.add(event.userId);
+                }
             }
-        }
-
-        await this.getMissingUsers(userIds);
-
-        return feed;
+            this.getMissingUsers(userIds);
+            return response;
+        });
     }
 
     async approveAccessGatePayment(
@@ -4686,7 +4591,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 .subscribe((user) => {
                     if (user.kind === "created_user") {
                         userCreatedStore.set(true);
-                        this.user.set(user);
+                        currentUser.set(user);
                         this.setDiamondStatus(user.diamondStatus);
                     }
                     if (!resolved) {
@@ -5172,7 +5077,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     userStore.setUpdated(allOtherUsers, resp.serverTimestamp);
                 }
                 if (resp.currentUser) {
-                    this.user.update((u) => {
+                    currentUser.update((u) => {
                         return resp.currentUser ? updateCreatedUser(u, resp.currentUser) : u;
                     });
                 }
@@ -5231,7 +5136,7 @@ export class OpenChat extends OpenChatAgentWorker {
     setUsername(userId: string, username: string): Promise<SetUsernameResponse> {
         return this.sendRequest({ kind: "setUsername", userId, username }).then((resp) => {
             if (resp === "success") {
-                this.user.update((user) => ({
+                currentUser.update((user) => ({
                     ...user,
                     username,
                 }));
@@ -5247,7 +5152,7 @@ export class OpenChat extends OpenChatAgentWorker {
     ): Promise<SetDisplayNameResponse> {
         return this.sendRequest({ kind: "setDisplayName", userId, displayName }).then((resp) => {
             if (resp === "success") {
-                this.user.update((user) => ({
+                currentUser.update((user) => ({
                     ...user,
                     displayName,
                 }));
@@ -6142,7 +6047,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     () => {
                         this.getCurrentUser().then((user) => {
                             if (user.kind === "created_user") {
-                                this.user.set(user);
+                                currentUser.set(user);
                             } else {
                                 this.logout();
                             }
@@ -6184,7 +6089,7 @@ export class OpenChat extends OpenChatAgentWorker {
         })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    this.user.update((user) => ({
+                    currentUser.update((user) => ({
                         ...user,
                         diamondStatus: resp.status,
                     }));
@@ -6271,7 +6176,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     setModerationFlags(flags: number): Promise<number> {
         const previousValue = this._liveState.user.moderationFlagsEnabled;
-        this.user.update((user) => ({
+        currentUser.update((user) => ({
             ...user,
             moderationFlagsEnabled: flags,
         }));
@@ -6282,7 +6187,7 @@ export class OpenChat extends OpenChatAgentWorker {
         })
             .then((resp) => (resp === "success" ? flags : previousValue))
             .catch(() => {
-                this.user.update((user) => ({
+                currentUser.update((user) => ({
                     ...user,
                     moderationFlagsEnabled: previousValue,
                 }));
@@ -7178,7 +7083,7 @@ export class OpenChat extends OpenChatAgentWorker {
         })
             .then((resp) => {
                 if (resp.kind === "success") {
-                    this.user.update((user) => ({
+                    currentUser.update((user) => ({
                         ...user,
                         isUniquePerson: true,
                     }));
@@ -7542,7 +7447,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         return this.sendRequest({ kind: "setPinNumber", verification, newPin }).then((resp) => {
             if (resp.kind === "success") {
-                this.pinNumberRequiredStore.set(newPin !== undefined);
+                pinNumberRequiredStore.set(newPin !== undefined);
             } else if (
                 resp.kind === "pin_incorrect" ||
                 resp.kind === "pin_required" ||
@@ -7620,7 +7525,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         return this.sendRequest({ kind: "claimDailyChit" }).then((resp) => {
             if (resp.kind === "success") {
-                this.chitStateStore.update((state) => ({
+                chitStateStore.update((state) => ({
                     chitBalance: resp.chitBalance,
                     streakEnds: resp.nextDailyChitClaim + BigInt(1000 * 60 * 60 * 24),
                     streak: resp.streak,
@@ -7633,7 +7538,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     streak: resp.streak,
                 }));
             } else if (resp.kind === "already_claimed") {
-                this.chitStateStore.update((state) => ({
+                chitStateStore.update((state) => ({
                     ...state,
                     nextDailyChitClaim: resp.nextDailyChitClaim,
                 }));
@@ -7769,112 +7674,6 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => false);
     }
 
-    /**
-     * Reactive state provided in the form of svelte stores
-     */
-    walletConfigStore = walletConfigStore;
-    profileStore = profileStore;
-    percentageStorageRemaining = percentageStorageRemaining;
-    percentageStorageUsed = percentageStorageUsed;
-    storageStore = storageStore;
-    storageInGb = storageInGb;
-    userStore = userStore;
-    userCreatedStore = userCreatedStore;
-    selectedAuthProviderStore = selectedAuthProviderStore;
-    messagesRead = messagesRead;
-    threadsFollowedByMeStore = threadsFollowedByMeStore;
-    threadsByChatStore = threadsByChatStore;
-    serverChatSummariesStore = serverChatSummariesStore;
-    chatSummariesStore = chatSummariesStore;
-    typersByContext = byContext;
-    typing = typing;
-    selectedChatId = selectedChatId;
-    currentChatMembers = currentChatMembers;
-    currentChatMembersMap = currentChatMembersMap;
-    currentChatBlockedUsers = currentChatBlockedUsers;
-    currentChatLapsedMembers = currentChatLapsedMembers;
-    currentChatInvitedUsers = currentChatInvitedUsers;
-    hideMessagesFromDirectBlocked = hideMessagesFromDirectBlocked;
-    chatStateStore = chatStateStore;
-    unconfirmed = unconfirmed;
-    failedMessagesStore = failedMessagesStore;
-    cryptoLookup = cryptoLookup;
-    cryptoTokensSorted = cryptoTokensSorted;
-    walletTokensSorted = walletTokensSorted;
-    enhancedCryptoLookup = enhancedCryptoLookup;
-    nervousSystemLookup = nervousSystemLookup;
-    exchangeRatesLookupStore = exchangeRatesLookupStore;
-    lastCryptoSent = lastCryptoSent;
-    draftMessagesStore = draftMessagesStore;
-    translationStore = translationStore;
-    eventsStore = eventsStore;
-    selectedChatStore = selectedChatStore;
-    currentChatPinnedMessages = currentChatPinnedMessages;
-    currentChatRules = currentChatRules;
-    proposalTopicsStore = proposalTopicsStore;
-    filteredProposalsStore = filteredProposalsStore;
-    cryptoBalance = cryptoBalance;
-    selectedServerChatStore = selectedServerChatStore;
-    chatSummariesListStore = chatSummariesListStore;
-    chatsLoading = chatsLoading;
-    chatsInitialised = chatsInitialised;
-    currentChatDraftMessage = currentChatDraftMessage;
-    blockedUsers = blockedUsers;
-    undeletingMessagesStore = undeletingMessagesStore;
-    focusMessageIndex = focusMessageIndex;
-    focusThreadMessageIndex = focusThreadMessageIndex;
-    expandedDeletedMessages = expandedDeletedMessages;
-    userGroupKeys = userGroupKeys;
-    unconfirmedReadByThem = unconfirmedReadByThem;
-    currentChatReplyingTo = currentChatReplyingTo;
-    currentChatEditingEvent = currentChatEditingEvent;
-    isProposalGroup = isProposalGroup;
-    currentChatAttachment = currentChatAttachment;
-    currentChatTextContent = currentChatTextContent;
-    numberOfThreadsStore = numberOfThreadsStore;
-    notificationStatus = notificationStatus;
-    userMetrics = userMetrics;
-    threadEvents = threadEvents;
-    isDiamond = isDiamond;
-    isLifetimeDiamond = isLifetimeDiamond;
-    canExtendDiamond = canExtendDiamond;
-    diamondStatus = diamondStatus;
-    selectedThreadRootMessageIndex = selectedThreadRootMessageIndex;
-    selectedMessageContext = selectedMessageContext;
-    userGroupSummaries = userGroupSummaries;
-    offlineStore = offlineStore;
-    pinNumberRequiredStore = pinNumberRequiredStore;
-    capturePinNumberStore = capturePinNumberStore;
-    captureRulesAcceptanceStore = captureRulesAcceptanceStore;
-    throttleDeadline = throttleDeadline;
-
-    // current community stores
-    chatListScope = chatListScopeStore;
-    selectedCommunity = selectedCommunity;
-    communities = communities;
-    communitiesList = communitiesList;
-    currentCommunityMembers = currentCommunityMembers;
-    currentCommunityRules = currentCommunityRules;
-    currentCommunityBlockedUsers = currentCommunityBlockedUsers;
-    currentCommunityLapsedMembers = currentCommunityLapsedMembers;
-    currentCommunityReferrals = currentCommunityReferrals;
-    currentCommunityInvitedUsers = currentCommunityInvitedUsers;
-    currentCommunityUserGroups = currentCommunityUserGroups;
-    communityStateStore = communityStateStore;
-    favouritesStore = favouritesStore;
-    globalStateStore = globalStateStore;
-    chitStateStore = chitStateStore;
-    unreadGroupCounts = unreadGroupCounts;
-    groupVideoCallCounts = groupVideoCallCounts;
-    unreadDirectCounts = unreadDirectCounts;
-    unreadActivityCount = unreadActivityCount;
-    directVideoCallCounts = directVideoCallCounts;
-    favouritesVideoCallCounts = favouritesVideoCallCounts;
-    unreadFavouriteCounts = unreadFavouriteCounts;
-    unreadCommunityChannelCounts = unreadCommunityChannelCounts;
-    communityChannelVideoCallCounts = communityChannelVideoCallCounts;
-    globalUnreadCount = globalUnreadCount;
-    mergeCombinedUnreadCounts = mergeCombinedUnreadCounts;
-    moderationFlags = moderationFlags;
     isEventKindHidden = isEventKindHidden;
+    mergeCombinedUnreadCounts = mergeCombinedUnreadCounts;
 }
