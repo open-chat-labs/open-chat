@@ -227,15 +227,15 @@
             </LeftNavItem>
         {/if}
         {#if !$anonUser}
-            <LeftNavItem
-                label={i18nKey(
-                    claimChitAvailable ? "dailyChit.extendStreak" : "dailyChit.viewStreak",
-                )}
-                on:click={() => dispatch("claimDailyChit")}>
-                <div class="hover streak">
-                    <LighteningBolt enabled={claimChitAvailable} />
-                </div>
-            </LeftNavItem>
+            {#if claimChitAvailable}
+                <LeftNavItem
+                    label={i18nKey("dailyChit.extendStreak")}
+                    on:click={() => dispatch("claimDailyChit")}>
+                    <div class="hover streak">
+                        <LighteningBolt enabled />
+                    </div>
+                </LeftNavItem>
+            {/if}
             <LeftNavItem
                 separator
                 selected={$activityFeedShowing}
