@@ -38,7 +38,7 @@
             maxlength={max}
             countdown
             invalid={editingChannel.name.length < min || editingChannel.name.length > max}
-            on:blur={stopEditing}
+            onblur={stopEditing}
             on:enter={stopEditing}
             placeholder={i18nKey("communities.updateChannelPlaceholder")}>
             <div class="hash">
