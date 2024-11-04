@@ -109,7 +109,7 @@
     "accountSuspended": "Compte suspendu",
     "activity": {
         "anon": "Un utilisateur anonyme",
-        "crypto": "{username} vous a envoyé un message cryptographique",
+        "crypto": "{username} vous a envoyé un message de crypto-monnaie",
         "mention": "{username} vous a mentionné",
         "missingMessage": "Contenu du message indisponible",
         "navLabel": "Flux d'activité",
