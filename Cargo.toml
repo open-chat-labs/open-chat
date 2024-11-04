@@ -206,7 +206,7 @@ ic_principal = "0.1.1"
 ic-stable-structures = "0.6.5"
 ic-transport-types = "0.37.1"
 ic-utils = "0.37.0"
-ic-verifiable-credentials = { git = "https://github.com/dfinity/verifiable-credentials-sdk", rev = "d5e1bb0f8c0bf99ad565620e18dc402a9ac3317a" }
+ic-verifiable-credentials = "1.0.1"
 icrc-ledger-types = "0.1.5"
 ic0 = "0.23.0"
 itertools = "0.13.0"

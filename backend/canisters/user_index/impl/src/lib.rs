@@ -277,6 +277,7 @@ impl RuntimeState {
                 translations: self.data.translations_canister_id,
                 event_relay: event_relay_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
+                website: self.data.website_canister_id,
             },
             oc_public_key: self.data.oc_key_pair.public_key_pem().to_string(),
             empty_users: self.data.empty_users.len(),
@@ -360,6 +361,8 @@ struct Data {
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
     pub nns_governance_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
+    #[serde(default = "website_canister_id")]
+    pub website_canister_id: CanisterId,
     pub platform_moderators_group: Option<ChatId>,
     pub reported_messages: ReportedMessages,
     pub fire_and_forget_handler: FireAndForgetHandler,
@@ -380,6 +383,10 @@ struct Data {
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
 }
 
+fn website_canister_id() -> CanisterId {
+    CanisterId::from_text("6hsbt-vqaaa-aaaaf-aaafq-cai").unwrap()
+}
+
 impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -397,6 +404,7 @@ impl Data {
         nns_governance_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
         translations_canister_id: CanisterId,
+        website_canister_id: CanisterId,
         video_call_operators: Vec<Principal>,
         ic_root_key: Vec<u8>,
         test_mode: bool,
@@ -435,6 +443,7 @@ impl Data {
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             nns_governance_canister_id,
             internet_identity_canister_id,
+            website_canister_id,
             platform_moderators_group: None,
             nns_8_year_neuron: None,
             reported_messages: ReportedMessages::default(),
@@ -561,6 +570,7 @@ impl Default for Data {
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             nns_governance_canister_id: Principal::anonymous(),
             internet_identity_canister_id: Principal::anonymous(),
+            website_canister_id: Principal::anonymous(),
             platform_moderators_group: None,
             reported_messages: ReportedMessages::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
@@ -703,4 +713,5 @@ pub struct CanisterIds {
     pub translations: CanisterId,
     pub event_relay: CanisterId,
     pub internet_identity: CanisterId,
+    pub website: CanisterId,
 }

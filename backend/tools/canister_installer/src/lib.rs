@@ -83,6 +83,7 @@ async fn install_service_canisters_impl(
         nns_governance_canister_id: canister_ids.nns_governance,
         internet_identity_canister_id: canister_ids.nns_internet_identity,
         translations_canister_id: canister_ids.translations,
+        website_canister_id: canister_ids.website,
         video_call_operators: video_call_operators.clone(),
         ic_root_key: agent.read_root_key(),
         wasm_version: version,

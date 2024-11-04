@@ -55,6 +55,7 @@ EVENT_STORE_CANISTER_ID=$(dfx canister --network $NETWORK id event_store)
 SIGN_IN_WITH_EMAIL_CANISTER_ID=$(dfx canister --network $NETWORK id sign_in_with_email)
 SIGN_IN_WITH_ETHEREUM_CANISTER_ID=$(dfx canister --network $NETWORK id sign_in_with_ethereum)
 SIGN_IN_WITH_SOLANA_CANISTER_ID=$(dfx canister --network $NETWORK id sign_in_with_solana)
+WEBSITE_CANISTER_ID=$(dfx canister --network $NETWORK id website)
 
 cargo run \
   --manifest-path backend/tools/canister_installer/Cargo.toml -- \
@@ -90,4 +91,5 @@ cargo run \
   --nns-cmc $NNS_CMC_CANISTER_ID \
   --nns-sns-wasm $NNS_SNS_WASM_CANISTER_ID \
   --nns-index $NNS_INDEX_CANISTER_ID \
+  --website $WEBSITE_CANISTER_ID \
 

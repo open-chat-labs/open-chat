@@ -82,6 +82,7 @@ impl RuntimeState {
                 if let Ok(unique_person_proof) = verify_proof_of_unique_personhood(
                     credential_args.user_ii_principal,
                     self.data.internet_identity_canister_id,
+                    self.data.website_canister_id,
                     jwt,
                     &self.data.ic_root_key,
                     now,
@@ -262,6 +263,7 @@ impl RuntimeState {
                 escrow: self.data.escrow_canister_id,
                 event_relay: event_relay_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
+                website: self.data.website_canister_id,
             },
             oc_secret_key_initialized: self.data.oc_key_pair.is_initialised(),
             canisters_pending_events_migration_to_stable_memory: self
@@ -286,6 +288,8 @@ struct Data {
     pub cycles_dispenser_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
+    #[serde(default = "website_canister_id")]
+    pub website_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
@@ -307,6 +311,10 @@ struct Data {
     pub events_for_remote_users: Vec<(UserId, UserEvent)>,
     #[serde(default)]
     pub canisters_pending_events_migration_to_stable_memory: Vec<CanisterId>,
+}
+
+fn website_canister_id() -> CanisterId {
+    CanisterId::from_text("6hsbt-vqaaa-aaaaf-aaafq-cai").unwrap()
 }
 
 #[derive(Serialize, Deserialize)]
@@ -335,6 +343,7 @@ impl Data {
         escrow_canister_id: CanisterId,
         event_relay_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
+        website_canister_id: CanisterId,
         canister_pool_target_size: u16,
         video_call_operators: Vec<Principal>,
         oc_secret_key_der: Option<Vec<u8>>,
@@ -353,6 +362,7 @@ impl Data {
             cycles_dispenser_canister_id,
             escrow_canister_id,
             internet_identity_canister_id,
+            website_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
@@ -420,4 +430,5 @@ pub struct CanisterIds {
     pub escrow: CanisterId,
     pub event_relay: CanisterId,
     pub internet_identity: CanisterId,
+    pub website: CanisterId,
 }
