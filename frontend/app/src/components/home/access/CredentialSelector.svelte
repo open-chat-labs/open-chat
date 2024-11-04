@@ -100,8 +100,10 @@
     let argsValid = $derived(validateArguments(credentialArguments));
 
     $effect(() => {
-        valid = argsValid && originValid && nameValid && canisterValid && typeValid;
-        console.log("Credential is valid: ", valid);
+        const isValid = argsValid && originValid && nameValid && canisterValid && typeValid;
+        if (isValid !== valid) {
+            valid = isValid;
+        }
     });
 </script>
 
