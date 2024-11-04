@@ -25,6 +25,14 @@ pub struct ChatEventsList {
 }
 
 impl ChatEventsList {
+    pub fn update_event_in_stable_memory(&mut self, event_key: EventKey) {
+        if let Some(event_index) = self.event_index(event_key) {
+            if let Some(event) = self.events_map.get(event_index) {
+                self.stable_events_map.insert(event);
+            }
+        }
+    }
+
     pub fn set_stable_memory_prefix(&mut self, chat: Chat, thread_root_message_index: Option<MessageIndex>) {
         self.stable_events_map = ChatEventsStableStorage::new(chat, thread_root_message_index);
     }
@@ -518,13 +526,12 @@ pub trait Reader {
     }
 
     fn hydrate_mention(&self, mention: &Mention) -> Option<HydratedMention> {
-        self.message_event_internal(mention.message_index.into())
-            .map(|e| HydratedMention {
+        self.event_index(mention.message_index.into())
+            .map(|event_index| HydratedMention {
                 thread_root_message_index: mention.thread_root_message_index,
-                message_id: e.event.message_id,
-                message_index: e.event.message_index,
-                event_index: e.index,
-                mentioned_by: e.event.sender,
+                message_id: mention.message_id,
+                message_index: mention.message_index,
+                event_index,
             })
     }
 

@@ -424,6 +424,7 @@ export type VerifiedCredentialGate = { issuer_canister_id: TSBytes, issuer_origi
 export type NnsProposal = { id: bigint, topic: number, proposer: bigint, created: bigint, title: string, summary: string, url: string, status: ProposalDecisionStatus, reward_status: ProposalRewardStatus, tally: Tally, deadline: bigint, payload_text_rendering?: string | undefined, last_updated: bigint, };
 export type BlobReference = { canister_id: TSBytes, blob_id: bigint, };
 export type PendingCryptoTransactionICRC1 = { ledger: TSBytes, token: Cryptocurrency, amount: bigint, to: AccountICRC1, fee: bigint, memo?: TSBytes | undefined, created: bigint, };
+export type HydratedMention = { thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, message_index: MessageIndex, event_index: EventIndex, };
 export type DiamondMembershipFees = { chat_fees: DiamondMembershipFeesByDuration, icp_fees: DiamondMembershipFeesByDuration, };
 export type Document = { id: bigint, mime_type: string, data: TSBytes, };
 export type FileContent = { name: string, caption?: string | undefined, mime_type: string, file_size: number, blob_reference?: BlobReference | undefined, };
@@ -446,10 +447,12 @@ export type ImageContent = { width: number, height: number, thumbnail_data: Thum
 export type UserId = TSBytes;
 export type CommunityId = TSBytes;
 export type CompletedCryptoTransactionICRC1 = { ledger: TSBytes, token: Cryptocurrency, amount: bigint, from: CryptoAccountICRC1, to: CryptoAccountICRC1, fee: bigint, memo?: TSBytes | undefined, created: bigint, block_index: bigint, };
+export type GroupMembership = { joined: bigint, role: GroupRole, mentions: Array<HydratedMention>, notifications_muted: boolean, my_metrics: ChatMetrics, latest_threads: Array<GroupCanisterThreadDetails>, rules_accepted: boolean, lapsed: boolean, };
 export type UserOrAccount = { "User": UserId } | { "Account": [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number] };
 export type VerifiedCredentialGateArgs = { user_ii_principal: TSBytes, credential_jwt: string, credential_jwts: Array<string>, ii_origin: string, };
 export type OptionalGroupPermissions = { change_roles?: GroupPermissionRole | undefined, update_group?: GroupPermissionRole | undefined, invite_users?: GroupPermissionRole | undefined, add_members?: GroupPermissionRole | undefined, remove_members?: GroupPermissionRole | undefined, delete_messages?: GroupPermissionRole | undefined, pin_messages?: GroupPermissionRole | undefined, react_to_messages?: GroupPermissionRole | undefined, mention_all_members?: GroupPermissionRole | undefined, start_video_call?: GroupPermissionRole | undefined, message_permissions?: OptionalMessagePermissions | undefined, thread_permissions: OptionUpdateOptionalMessagePermissions, };
 export type GovernanceProposalsSubtype = { is_nns: boolean, governance_canister_id: TSBytes, };
+export type GroupMembershipUpdates = { role?: GroupRole | undefined, mentions: Array<HydratedMention>, notifications_muted?: boolean | undefined, my_metrics?: ChatMetrics | undefined, latest_threads: Array<GroupCanisterThreadDetails>, unfollowed_threads: Array<MessageIndex>, rules_accepted?: boolean | undefined, lapsed?: boolean | undefined, };
 export type FailedCryptoTransactionNNS = { ledger: TSBytes, token: Cryptocurrency, amount: Tokens, fee: Tokens, from: CryptoAccountNNS, to: CryptoAccountNNS, memo: bigint, created: bigint, transaction_hash: [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number], error_message: string, };
 export type SnsProposal = { id: bigint, action: bigint, proposer: [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number], created: bigint, title: string, summary: string, url: string, status: ProposalDecisionStatus, reward_status: ProposalRewardStatus, tally: Tally, deadline: bigint, payload_text_rendering?: string | undefined, minimum_yes_proportion_of_total: number, minimum_yes_proportion_of_exercised: number, last_updated: bigint, };
 export type UsersBlocked = { user_ids: Array<UserId>, blocked_by: UserId, };
@@ -616,7 +619,6 @@ export type GroupDescriptionChanged = { new_description: string, previous_descri
 export type PrizeContent = { prizes_remaining: number, prizes_pending: number, winners: Array<UserId>, winner_count: number, user_is_winner: boolean, token: Cryptocurrency, end_date: bigint, caption?: string | undefined, diamond_only: boolean, };
 export type GroupRulesChanged = { enabled: boolean, prev_enabled: boolean, changed_by: UserId, };
 export type GroupCreated = { name: string, description: string, created_by: UserId, };
-export type HydratedMention = { thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, message_index: MessageIndex, event_index: EventIndex, mentioned_by: UserId, };
 export type UserSummaryV2 = { user_id: UserId, stable?: UserSummaryStable | undefined, volatile?: UserSummaryVolatile | undefined, };
 export type ExternalUrlUpdated = { updated_by: UserId, new_url?: string | undefined, };
 export type DeletedGroupInfo = { id: ChatId, timestamp: bigint, deleted_by: UserId, group_name: string, name: string, public: boolean, };
@@ -653,7 +655,6 @@ export type MemberJoined = { user_id: UserId, invited_by?: UserId | undefined, }
 export type RoleChanged = { user_ids: Array<UserId>, changed_by: UserId, old_role: GroupRole, new_role: GroupRole, };
 export type GroupVisibilityChanged = { public?: boolean | undefined, messages_visible_to_non_members?: boolean | undefined, changed_by: UserId, };
 export type SelectedGroupUpdates = { timestamp: bigint, last_updated: bigint, latest_event_index: EventIndex, members_added_or_updated: Array<GroupMember>, members_removed: Array<UserId>, blocked_users_added: Array<UserId>, blocked_users_removed: Array<UserId>, invited_users?: Array<UserId> | undefined, pinned_messages_added: Array<MessageIndex>, pinned_messages_removed: Array<MessageIndex>, chat_rules?: VersionedRules | undefined, };
-export type GroupMembership = { joined: bigint, role: GroupRole, mentions: Array<HydratedMention>, notifications_muted: boolean, my_metrics: ChatMetrics, latest_threads: Array<GroupCanisterThreadDetails>, rules_accepted: boolean, lapsed: boolean, };
 /**
  * @default NoChange
  */
@@ -661,7 +662,6 @@ export type OptionUpdateFrozenGroupInfo = "NoChange" | "SetToNone" | { "SetToSom
 export type ProposalContent = { governance_canister_id: TSBytes, proposal: Proposal, my_vote?: boolean | undefined, };
 export type ReplyContext = { chat_if_other?: [Chat, MessageIndex | null] | undefined, event_index: EventIndex, };
 export type ReportedMessage = { reports: Array<MessageReport>, count: number, };
-export type GroupMembershipUpdates = { role?: GroupRole | undefined, mentions: Array<HydratedMention>, notifications_muted?: boolean | undefined, my_metrics?: ChatMetrics | undefined, latest_threads: Array<GroupCanisterThreadDetails>, unfollowed_threads: Array<MessageIndex>, rules_accepted?: boolean | undefined, lapsed?: boolean | undefined, };
 export type DiamondMembershipStatusFull = "Inactive" | { "Active": DiamondMembershipDetails } | "Lifetime";
 /**
  * @default NoChange

@@ -7,14 +7,13 @@ use crate::stable_storage::Memory;
 use crate::*;
 use candid::Principal;
 use event_store_producer::{EventBuilder, EventStoreClient, Runtime};
-use itertools::Itertools;
 use rand::rngs::StdRng;
 use rand::Rng;
 use search::{Document, Query};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use sha2::{Digest, Sha256};
-use std::cmp::{max, Reverse};
+use std::cmp::{max, min};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::mem;
@@ -51,6 +50,8 @@ pub struct ChatEvents {
     search_index: SearchIndex,
     #[serde(default = "default_next_event_to_migrate_to_stable_memory")]
     next_event_to_migrate_to_stable_memory: Option<EventContext>,
+    #[serde(default)]
+    thread_messages_to_update_in_stable_memory: Vec<MessageIndex>,
 }
 
 fn default_next_event_to_migrate_to_stable_memory() -> Option<EventContext> {
@@ -58,6 +59,15 @@ fn default_next_event_to_migrate_to_stable_memory() -> Option<EventContext> {
 }
 
 impl ChatEvents {
+    pub fn init_thread_messages_to_update_in_stable_memory(&mut self) -> bool {
+        self.thread_messages_to_update_in_stable_memory = self.threads.keys().copied().collect();
+        !self.thread_messages_to_update_in_stable_memory.is_empty()
+    }
+
+    pub fn update_event_in_stable_memory(&mut self, event_key: EventKey) {
+        self.main.update_event_in_stable_memory(event_key);
+    }
+
     pub fn init_stable_storage(memory: Memory) {
         stable_storage::init(memory)
     }
@@ -78,11 +88,30 @@ impl ChatEvents {
     }
 
     pub fn migrate_next_batch_of_events_to_stable_storage(&mut self) -> bool {
+        let mut total_count = 0;
+        if !self.thread_messages_to_update_in_stable_memory.is_empty() {
+            while ic_cdk::api::instruction_counter() < 1_000_000_000 {
+                let batch: Vec<_> = self
+                    .thread_messages_to_update_in_stable_memory
+                    .drain(..min(100, self.thread_messages_to_update_in_stable_memory.len()))
+                    .collect();
+
+                let count = batch.len();
+                for message_index in batch {
+                    self.update_event_in_stable_memory(message_index.into());
+                }
+                info!(chat = ?self.chat, count, "Updated threads in stable memory");
+                total_count += count;
+                if self.thread_messages_to_update_in_stable_memory.is_empty() {
+                    break;
+                }
+            }
+        }
+
         if self.next_event_to_migrate_to_stable_memory.is_none() {
             return true;
         };
 
-        let mut total_count = 0;
         while ic_cdk::api::instruction_counter() < 1_000_000_000 {
             let EventContext {
                 thread_root_message_index: next_thread_root_message_index,
@@ -151,6 +180,7 @@ impl ChatEvents {
             anonymized_id: hex::encode(anonymized_id.to_be_bytes()),
             search_index: SearchIndex::default(),
             next_event_to_migrate_to_stable_memory: None,
+            thread_messages_to_update_in_stable_memory: Vec::new(),
         };
 
         events.push_event(None, ChatEventInternal::DirectChatCreated(DirectChatCreated {}), 0, now);
@@ -182,6 +212,7 @@ impl ChatEvents {
             anonymized_id: hex::encode(anonymized_id.to_be_bytes()),
             search_index: SearchIndex::default(),
             next_event_to_migrate_to_stable_memory: None,
+            thread_messages_to_update_in_stable_memory: Vec::new(),
         };
 
         events.push_event(
@@ -218,6 +249,17 @@ impl ChatEvents {
 
     pub fn thread_keys(&self) -> impl Iterator<Item = MessageIndex> + '_ {
         self.threads.keys().copied()
+    }
+
+    pub fn thread_details(&self, thread_root_message_index: &MessageIndex) -> Option<GroupCanisterThreadDetails> {
+        self.threads
+            .get(thread_root_message_index)
+            .map(|t| GroupCanisterThreadDetails {
+                root_message_index: *thread_root_message_index,
+                latest_event: t.latest_event_index().unwrap_or_default(),
+                latest_message: t.latest_message_index().unwrap_or_default(),
+                last_updated: t.latest_event_timestamp().unwrap_or_default(),
+            })
     }
 
     pub fn push_message<R: Runtime + Send + 'static>(
@@ -290,8 +332,14 @@ impl ChatEvents {
         if let Some(root_message_index) = args.thread_root_message_index {
             let _ = self.update_thread_summary(
                 root_message_index,
-                |t| {
-                    t.mark_message_added(args.sender, &args.mentioned, push_event_result.index, args.now);
+                |thread_summary, root_message_sender| {
+                    thread_summary.mark_message_added(
+                        args.sender,
+                        &args.mentioned,
+                        root_message_sender,
+                        push_event_result.index,
+                        args.now,
+                    );
                     true
                 },
                 EventIndex::default(),
@@ -1579,7 +1627,7 @@ impl ChatEvents {
 
         match self.update_thread_summary(
             thread_root_message_index,
-            |t| t.set_follow(user_id, now, true),
+            |t, _| t.followers.insert(user_id),
             min_visible_event_index,
             false,
             now,
@@ -1601,7 +1649,7 @@ impl ChatEvents {
 
         match self.update_thread_summary(
             thread_root_message_index,
-            |t| t.set_follow(user_id, now, false),
+            |t, _| t.followers.remove(&user_id),
             min_visible_event_index,
             false,
             now,
@@ -1612,7 +1660,7 @@ impl ChatEvents {
         }
     }
 
-    fn update_thread_summary<F: FnOnce(&mut ThreadSummaryInternal) -> bool>(
+    fn update_thread_summary<F: FnOnce(&mut ThreadSummaryInternal, UserId) -> bool>(
         &mut self,
         thread_root_message_index: MessageIndex,
         update_fn: F,
@@ -1629,7 +1677,7 @@ impl ChatEvents {
         )
     }
 
-    fn update_thread_summary_inner<F: FnOnce(&mut ThreadSummaryInternal) -> bool>(
+    fn update_thread_summary_inner<F: FnOnce(&mut ThreadSummaryInternal, UserId) -> bool>(
         root_message: &mut MessageInternal,
         create_if_not_exists: bool,
         update_fn: F,
@@ -1642,7 +1690,7 @@ impl ChatEvents {
             return Err(UpdateEventError::NotFound);
         };
 
-        if update_fn(summary) {
+        if update_fn(summary, root_message.sender) {
             Ok(())
         } else {
             Err(UpdateEventError::NoChange(()))
@@ -1803,78 +1851,6 @@ impl ChatEvents {
         }
     }
 
-    pub fn latest_threads<'a>(
-        &self,
-        min_visible_event_index: EventIndex,
-        root_message_indexes: impl Iterator<Item = &'a MessageIndex>,
-        updated_since: Option<TimestampMillis>,
-        max_threads: usize,
-        my_user_id: UserId,
-    ) -> Vec<GroupCanisterThreadDetails> {
-        root_message_indexes
-            .filter_map(|root_message_index| {
-                self.threads.get(root_message_index).and_then(|thread_events| {
-                    let mut last_updated = thread_events.latest_event_timestamp()?;
-                    let latest_event = thread_events.latest_event_index()?;
-                    let follower = self
-                        .main
-                        .get_event((*root_message_index).into(), min_visible_event_index)?
-                        .event
-                        .into_message()?
-                        .thread_summary
-                        .as_ref()?
-                        .get_follower(my_user_id);
-
-                    if let Some(follower) = follower {
-                        if follower.value {
-                            last_updated = last_updated.max(follower.timestamp);
-                        }
-                    }
-
-                    updated_since
-                        .map_or(true, |since| last_updated > since)
-                        .then_some(GroupCanisterThreadDetails {
-                            root_message_index: *root_message_index,
-                            latest_event,
-                            latest_message: thread_events.latest_message_index().unwrap_or_default(),
-                            last_updated,
-                        })
-                })
-            })
-            .sorted_unstable_by_key(|t| Reverse(t.last_updated))
-            .take(max_threads)
-            .collect()
-    }
-
-    pub fn unfollowed_threads_since<'a>(
-        &self,
-        root_message_indexes: impl DoubleEndedIterator<Item = &'a MessageIndex>,
-        updated_since: TimestampMillis,
-        my_user_id: UserId,
-    ) -> Vec<MessageIndex> {
-        let mut unfollowed = Vec::new();
-
-        for message_index in root_message_indexes.rev().copied() {
-            if let Some(wrapped_event) = self.main.get_event(message_index.into(), EventIndex::default()) {
-                if let Some(message) = wrapped_event.event.into_message() {
-                    if let Some(thread_summary) = message.thread_summary.as_ref() {
-                        if let Some(follower) = thread_summary.get_follower(my_user_id) {
-                            if follower.timestamp <= updated_since {
-                                break;
-                            }
-
-                            if !follower.value {
-                                unfollowed.push(message_index);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        unfollowed
-    }
-
     pub fn message_ids(
         &self,
         thread_root_message_index: Option<MessageIndex>,
@@ -1958,9 +1934,10 @@ impl ChatEvents {
                 if let ChatEventInternal::Message(m) = event.event {
                     if let Some(thread) = m.thread_summary {
                         self.threads.remove(&m.message_index);
-                        result
-                            .threads
-                            .push((m.message_index, thread.participants_and_followers(true)));
+                        result.threads.push(ExpiredThread {
+                            root_message_index: m.message_index,
+                            followers: thread.followers,
+                        });
                     }
                     if let MessageContentInternal::Prize(mut p) = m.content {
                         if let Some(refund) = p.prize_refund(m.sender, &MEMO_PRIZE_REFUND, now * 1_000_000) {
@@ -2505,8 +2482,13 @@ pub enum UnfollowThreadResult {
 #[derive(Default)]
 pub struct RemoveExpiredEventsResult {
     pub events: Vec<EventIndex>,
-    pub threads: Vec<(MessageIndex, Vec<UserId>)>,
+    pub threads: Vec<ExpiredThread>,
     pub prize_refunds: Vec<PendingCryptoTransaction>,
+}
+
+pub struct ExpiredThread {
+    pub root_message_index: MessageIndex,
+    pub followers: HashSet<UserId>,
 }
 
 #[derive(Copy, Clone)]

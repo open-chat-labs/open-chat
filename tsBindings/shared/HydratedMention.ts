@@ -2,6 +2,5 @@
 import type { EventIndex } from "./EventIndex";
 import type { MessageId } from "./MessageId";
 import type { MessageIndex } from "./MessageIndex";
-import type { UserId } from "./UserId";
 
-export type HydratedMention = { thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, message_index: MessageIndex, event_index: EventIndex, mentioned_by: UserId, };
+export type HydratedMention = { thread_root_message_index?: MessageIndex | undefined, message_id: MessageId, message_index: MessageIndex, event_index: EventIndex, };
