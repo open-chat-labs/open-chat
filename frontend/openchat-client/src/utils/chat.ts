@@ -60,6 +60,7 @@ import {
     getContentAsFormattedText,
     getContentAsText,
     messageContextsEqual,
+    random64,
     OPENCHAT_VIDEO_CALL_AVATAR_URL,
     OPENCHAT_VIDEO_CALL_USER_ID,
     OPENCHAT_BOT_USER_ID,
@@ -67,7 +68,6 @@ import {
 } from "openchat-shared";
 import { distinctBy, groupWhile, toRecordFiltered } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
-import { v1 as uuidv1 } from "uuid";
 import DRange from "drange";
 import Identicon from "identicon.js";
 import md5 from "md5";
@@ -96,10 +96,6 @@ export function isLapsed(chat: ChatSummary): boolean {
 
 export function isFrozen(thing: AccessControlled): boolean {
     return thing.frozen;
-}
-
-export function newMessageId(): bigint {
-    return BigInt(parseInt(uuidv1().replace(/-/g, ""), 16));
 }
 
 export function isUpToDate(chat: ChatSummary, events: EventWrapper<ChatEvent>[]): boolean {
@@ -265,7 +261,7 @@ export function createMessage(
         content,
         sender: userId,
         repliesTo: replyingTo,
-        messageId: newMessageId(),
+        messageId: random64(),
         messageIndex,
         reactions: [],
         tips: {},
