@@ -236,16 +236,18 @@
                     </div>
                 </LeftNavItem>
             {/if}
-            <LeftNavItem
-                separator
-                selected={$activityFeedShowing}
-                label={i18nKey("activity.navLabel")}
-                unread={{ muted: 0, unmuted: $unreadActivityCount, mentions: false }}
-                on:click={showActivityFeed}>
-                <div class="hover activity">
-                    <BellRingOutline size={iconSize} color={"var(--icon-txt)"} />
-                </div>
-            </LeftNavItem>
+            {#if $globalState.messageActivitySummary.latestTimestamp > 0n}
+                <LeftNavItem
+                    separator
+                    selected={$activityFeedShowing}
+                    label={i18nKey("activity.navLabel")}
+                    unread={{ muted: 0, unmuted: $unreadActivityCount, mentions: false }}
+                    on:click={showActivityFeed}>
+                    <div class="hover activity">
+                        <BellRingOutline size={iconSize} color={"var(--icon-txt)"} />
+                    </div>
+                </LeftNavItem>
+            {/if}
         {/if}
     </div>
 

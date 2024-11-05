@@ -193,15 +193,7 @@ export class OpenChatAgentWorker extends EventTarget {
         connecting = false,
         timeout: number = DEFAULT_WORKER_TIMEOUT,
     ): Stream<WorkerResult<Req>> {
-        if (!connecting && !this._connectedToWorker) {
-            throw new Error("WORKER_CLIENT: the client is not yet connected to the worker");
-        }
-        const correlationId = random128().toString();
-        this._worker.postMessage({
-            ...req,
-            correlationId,
-        });
-        return new Stream<WorkerResult<Req>>(this.responseHandler(req, correlationId, timeout));
+        return new Stream<WorkerResult<Req>>(this.sendRequestInternal(req, connecting, timeout));
     }
 
     async sendRequest<Req extends WorkerRequest>(
@@ -209,6 +201,14 @@ export class OpenChatAgentWorker extends EventTarget {
         connecting = false,
         timeout: number = DEFAULT_WORKER_TIMEOUT,
     ): Promise<WorkerResult<Req>> {
+        return new Promise<WorkerResult<Req>>(this.sendRequestInternal(req, connecting, timeout));
+    }
+
+    private sendRequestInternal<Req extends WorkerRequest, T>(
+        req: Req,
+        connecting: boolean,
+        timeout: number,
+    ): (resolve: (val: T, final: boolean) => void, reject: (reason?: unknown) => void) => void {
         if (!connecting && !this._connectedToWorker) {
             throw new Error("WORKER_CLIENT: the client is not yet connected to the worker");
         }
@@ -217,6 +217,6 @@ export class OpenChatAgentWorker extends EventTarget {
             ...req,
             correlationId,
         });
-        return new Promise<WorkerResult<Req>>(this.responseHandler(req, correlationId, timeout));
+        return this.responseHandler(req, correlationId, timeout);
     }
 }

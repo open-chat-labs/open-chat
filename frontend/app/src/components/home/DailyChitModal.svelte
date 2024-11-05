@@ -108,7 +108,7 @@
 <ModalContent closeIcon on:close={close}>
     <div class="header" slot="header">
         <div class="leaderboard">
-            <HoverIcon on:click={leaderboard}>
+            <HoverIcon onclick={leaderboard}>
                 <TrophyOutline size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </div>
