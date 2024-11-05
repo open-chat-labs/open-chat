@@ -470,7 +470,9 @@ type ConvertIntoCommunityResponse = variant {
     InternalError : text;
 };
 
-type SummaryArgs = record {};
+type SummaryArgs = record {
+    on_behalf_of: opt UserId;
+};
 
 type SummaryResponse = variant {
     Success : record {
@@ -480,6 +482,7 @@ type SummaryResponse = variant {
 };
 
 type SummaryUpdatesArgs = record {
+    on_behalf_of: opt UserId;
     updates_since : TimestampMillis;
 };
 

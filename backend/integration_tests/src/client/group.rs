@@ -360,7 +360,12 @@ pub mod happy_path {
     }
 
     pub fn summary(env: &PocketIc, sender: &User, group_chat_id: ChatId) -> GroupCanisterGroupChatSummary {
-        let response = super::summary(env, sender.principal, group_chat_id.into(), &group_canister::summary::Args {});
+        let response = super::summary(
+            env,
+            sender.principal,
+            group_chat_id.into(),
+            &group_canister::summary::Args { on_behalf_of: None },
+        );
 
         match response {
             group_canister::summary::Response::Success(result) => result.summary,
@@ -378,7 +383,10 @@ pub mod happy_path {
             env,
             sender.principal,
             group_chat_id.into(),
-            &group_canister::summary_updates::Args { updates_since },
+            &group_canister::summary_updates::Args {
+                on_behalf_of: None,
+                updates_since,
+            },
         );
 
         match response {

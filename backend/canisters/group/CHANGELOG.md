@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improve efficiency of calculating latest threads per user ([#6687](https://github.com/open-chat-labs/open-chat/pull/6687))
 - Avoid iterating over chat events to load mentions ([#6690](https://github.com/open-chat-labs/open-chat/pull/6690))
 - Read events from stable memory once migration is complete ([#6722](https://github.com/open-chat-labs/open-chat/pull/6722))
+- Consolidate `summary` and `c2c_summary` args ([#6723](https://github.com/open-chat-labs/open-chat/pull/6723))
 
 ## [[2.0.1408](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1408-group)] - 2024-10-24
 

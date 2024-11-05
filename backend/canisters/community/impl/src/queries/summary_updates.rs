@@ -7,7 +7,6 @@ use crate::RuntimeState;
 use crate::{read_state, Data};
 use candid::Principal;
 use canister_api_macros::query;
-use community_canister::c2c_summary_updates::{Args as C2CArgs, Response as C2CResponse};
 use community_canister::summary_updates::{Response::*, *};
 use types::{
     AccessGateConfig, CommunityCanisterCommunitySummaryUpdates, CommunityMembershipUpdates, CommunityPermissions, EventIndex,
@@ -16,11 +15,11 @@ use types::{
 
 #[query(candid = true, msgpack = true)]
 fn summary_updates(args: Args) -> Response {
-    read_state(|state| summary_updates_impl(args.updates_since, args.invite_code, None, state))
+    read_state(|state| summary_updates_impl(args.updates_since, args.invite_code, args.on_behalf_of, state))
 }
 
 #[query(msgpack = true)]
-fn c2c_summary_updates(args: C2CArgs) -> C2CResponse {
+fn c2c_summary_updates(args: Args) -> Response {
     read_state(|state| summary_updates_impl(args.updates_since, args.invite_code, args.on_behalf_of, state))
 }
 

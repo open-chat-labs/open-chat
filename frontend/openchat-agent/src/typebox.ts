@@ -301,6 +301,9 @@ export const GroupEditMessageResponse = Type.Union([
     Type.Literal("ChatFrozen"),
 ]);
 
+export type GroupSummaryArgs = Static<typeof GroupSummaryArgs>;
+export const GroupSummaryArgs = Type.Object({});
+
 export type GroupFollowThreadResponse = Static<typeof GroupFollowThreadResponse>;
 export const GroupFollowThreadResponse = Type.Union([
     Type.Literal("Success"),
