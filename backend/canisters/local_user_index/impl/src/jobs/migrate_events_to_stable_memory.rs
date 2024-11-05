@@ -1,3 +1,7 @@
+#![allow(dead_code)]
+#![allow(unused_imports)]
+#![allow(unused_variables)]
+
 use crate::{mutate_state, RuntimeState};
 use ic_cdk_timers::TimerId;
 use rand::Rng;
