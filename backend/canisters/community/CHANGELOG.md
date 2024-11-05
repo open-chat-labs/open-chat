@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Avoid iterating over chat events to load mentions ([#6690](https://github.com/open-chat-labs/open-chat/pull/6690))
 - Public channels of private communities unmuted by default ([#6708](https://github.com/open-chat-labs/open-chat/pull/6708))
 - Read events from stable memory once migration is complete ([#6722](https://github.com/open-chat-labs/open-chat/pull/6722))
+- Consolidate `summary` and `c2c_summary` args ([#6723](https://github.com/open-chat-labs/open-chat/pull/6723))
 
 ## [[2.0.1415](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1415-community)] - 2024-10-25
 

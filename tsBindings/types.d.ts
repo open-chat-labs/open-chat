@@ -30,6 +30,7 @@ export type GroupDeclineInvitiationResponse = "Success" | "NotInvited";
 export type GroupSelectedUpdatesArgs = { updates_since: bigint, };
 export type GroupReportMessageResponse = "Success" | "UserSuspended" | "UserLapsed" | "ChatFrozen" | "CallerNotInGroup" | "NotAuthorized" | "MessageNotFound" | "AlreadyReported" | { "InternalError": string };
 export type GroupEditMessageResponse = "Success" | "MessageNotFound" | "CallerNotInGroup" | "UserSuspended" | "UserLapsed" | "ChatFrozen";
+export type GroupSummaryArgs = {  };
 export type GroupFollowThreadResponse = "Success" | "AlreadyFollowing" | "ThreadNotFound" | "UserNotInGroup" | "UserSuspended" | "UserLapsed" | "GroupFrozen";
 export type UserManageFavouriteChatsResponse = "Success" | "UserSuspended";
 export type UserMessageActivitySummary = { read_up_to: bigint, latest_event_timestamp: bigint, unread_count: number, };
