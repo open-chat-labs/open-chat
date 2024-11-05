@@ -9,8 +9,7 @@ use types::{CanisterId, Cryptocurrency, TimestampNanos};
 use user_index_canister::register_external_achievement::{Response::*, *};
 use user_index_canister::ExternalAchievementInitial;
 
-const CHIT_PER_CHAT: u128 = 5000;
-const E8S_PER_CHAT: u128 = 100_000_000;
+const CHAT_FEE_PER_CHIT_AWARD: u128 = 20_000; // 1/5000th of a CHAT
 const MIN_REWARD: u32 = 5000;
 const MIN_AWARDS: u32 = 200;
 
@@ -27,7 +26,7 @@ async fn register_external_achievement(args: Args) -> Response {
     let payment_block_index = if !result.test_mode {
         // Try to make the CHAT transfer from the given user's wallet
         let from: Principal = args.submitted_by.into();
-        let amount = ((chit_budget as u128) * E8S_PER_CHAT).div_ceil(CHIT_PER_CHAT);
+        let amount = (chit_budget as u128) * CHAT_FEE_PER_CHIT_AWARD;
         let transfer_args = TransferFromArgs {
             spender_subaccount: None,
             from: from.into(),
