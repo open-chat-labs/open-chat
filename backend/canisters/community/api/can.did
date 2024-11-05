@@ -235,6 +235,7 @@ type ChannelSummaryResponse = variant {
 };
 
 type SummaryArgs = record {
+    on_behalf_of: opt UserId;
     invite_code : opt nat64;
 };
 
@@ -259,6 +260,7 @@ type ChannelSummaryUpdatesResponse = variant {
 };
 
 type SummaryUpdatesArgs = record {
+    on_behalf_of: opt UserId;
     invite_code : opt nat64;
     updates_since : TimestampMillis;
 };
