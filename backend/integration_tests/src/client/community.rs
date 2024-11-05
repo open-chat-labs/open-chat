@@ -419,7 +419,10 @@ pub mod happy_path {
             env,
             sender.principal,
             community_id.into(),
-            &community_canister::summary::Args { invite_code: None },
+            &community_canister::summary::Args {
+                on_behalf_of: None,
+                invite_code: None,
+            },
         );
 
         match response {
@@ -439,6 +442,7 @@ pub mod happy_path {
             sender.principal,
             community_id.into(),
             &community_canister::summary_updates::Args {
+                on_behalf_of: None,
                 invite_code: None,
                 updates_since,
             },
