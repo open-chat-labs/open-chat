@@ -1,4 +1,4 @@
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::CommunityCanisterCommunitySummary;
@@ -6,6 +6,8 @@ use types::CommunityCanisterCommunitySummary;
 #[ts_export(community, summary)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
+    #[ts(skip)]
+    pub on_behalf_of: Option<Principal>,
     pub invite_code: Option<u64>,
 }
 
