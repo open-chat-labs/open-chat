@@ -9,7 +9,7 @@
         "build:testnet": "sh ./build_testnet.sh",
         "dev": "sh ./build_dev.sh -w",
         "start": "sirv public --no-clear",
-        "validate": "svelte-check --threshold error",
+        "validate": "svelte-check --threshold warning",
         "lint": "eslint ./src --fix",
         "format": "prettier --config .prettierrc './src/**/*.ts' --write",
         "typecheck": "tsc --noEmit",

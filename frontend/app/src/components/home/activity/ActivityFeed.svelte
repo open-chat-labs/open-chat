@@ -66,7 +66,7 @@
             <h4 class="name"><Translatable resourceKey={i18nKey("activity.title")} /></h4>
         </div>
         <span class="menu">
-            <HoverIcon on:click={() => activityFeedShowing.set(false)}>
+            <HoverIcon onclick={() => activityFeedShowing.set(false)}>
                 <Close size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </span>

@@ -6,17 +6,29 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let url: string | undefined;
-    export let showStatus: boolean | undefined = false;
-    export let userId: string | undefined = undefined;
-    export let size: AvatarSize = AvatarSize.Default;
-    export let blocked: boolean = false;
-    export let statusBorder = "white";
-    export let selected = false;
+    interface Props {
+        url: string | undefined;
+        showStatus?: boolean | undefined;
+        userId?: string | undefined;
+        size?: AvatarSize;
+        blocked?: boolean;
+        statusBorder?: string;
+        selected?: boolean;
+    }
 
-    let userStatus = UserStatus.None;
-    let userStatusUserId: string | undefined = undefined;
-    $: {
+    let {
+        url,
+        showStatus = false,
+        userId = undefined,
+        size = AvatarSize.Default,
+        blocked = false,
+        statusBorder = "white",
+        selected = false,
+    }: Props = $props();
+
+    let userStatus = $state(UserStatus.None);
+    let userStatusUserId: string | undefined = $state(undefined);
+    $effect(() => {
         if (!showStatus || userId !== userStatusUserId) {
             userStatus = UserStatus.None;
             userStatusUserId = userId;
@@ -28,7 +40,7 @@
                 }
             });
         }
-    }
+    });
 </script>
 
 <div
@@ -39,9 +51,10 @@
     class:default={size === AvatarSize.Default}
     class:large={size === AvatarSize.Large}
     class:blocked>
-    <img class="avatar-image" src={url} loading="lazy" />
+    <img alt="Avatar" class="avatar-image" src={url} loading="lazy" />
     {#if userStatus === UserStatus.Online}
-        <div class:rtl={$rtlStore} class="online" style={`box-shadow: ${statusBorder} 0 0 0 2px`} />
+        <div class:rtl={$rtlStore} class="online" style={`box-shadow: ${statusBorder} 0 0 0 2px`}>
+        </div>
     {/if}
 </div>
 

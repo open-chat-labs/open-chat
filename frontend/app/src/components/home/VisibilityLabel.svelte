@@ -6,7 +6,7 @@
 </script>
 
 <div class="visibility">
-    <div class={`img ${isPublic ? "public" : "private"}`} />
+    <div class={`img ${isPublic ? "public" : "private"}`}></div>
     <div class="name">
         <Translatable resourceKey={i18nKey(isPublic ? "access.public" : "access.private")} />
     </div>
