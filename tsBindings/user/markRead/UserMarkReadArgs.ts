@@ -2,4 +2,4 @@
 import type { UserMarkReadChatMessagesRead } from "./UserMarkReadChatMessagesRead";
 import type { UserMarkReadCommunityMessagesRead } from "./UserMarkReadCommunityMessagesRead";
 
-export type UserMarkReadArgs = { messages_read: Array<UserMarkReadChatMessagesRead>, community_messages_read: Array<UserMarkReadCommunityMessagesRead>, };
+export type UserMarkReadArgs = { messages_read: Array<UserMarkReadChatMessagesRead>, community_messages_read: Array<UserMarkReadCommunityMessagesRead>, message_activity_feed?: bigint | undefined, };

@@ -59,5 +59,9 @@ fn mark_read_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
     }
 
+    if let Some(read_up_to) = args.message_activity_feed {
+        state.data.message_activity_events.mark_read_up_to(read_up_to, now);
+    }
+
     Success
 }

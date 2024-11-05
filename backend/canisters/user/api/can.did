@@ -366,6 +366,7 @@ type MarkMessageActivityFeedReadResponse = variant {
 type MarkReadArgs = record {
     messages_read : vec ChatMessagesRead;
     community_messages_read : vec CommunityMessagesRead;
+    message_activity_feed: opt TimestampMillis;
 };
 
 type ChatMessagesRead = record {

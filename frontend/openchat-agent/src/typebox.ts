@@ -6864,6 +6864,7 @@ export type UserMarkReadArgs = Static<typeof UserMarkReadArgs>;
 export const UserMarkReadArgs = Type.Object({
     messages_read: Type.Array(UserMarkReadChatMessagesRead),
     community_messages_read: Type.Array(UserMarkReadCommunityMessagesRead),
+    message_activity_feed: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
 });
 
 export type UserChitEventsResponse = Static<typeof UserChitEventsResponse>;

@@ -8,6 +8,7 @@ use types::{ChannelId, ChatId, CommunityId, MessageIndex, TimestampMillis};
 pub struct Args {
     pub messages_read: Vec<ChatMessagesRead>,
     pub community_messages_read: Vec<CommunityMessagesRead>,
+    pub message_activity_feed: Option<TimestampMillis>,
 }
 
 #[ts_export(user, mark_read)]
