@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import type { Subscriber, Unsubscriber } from "svelte/store";
+import { type Subscriber, type Unsubscriber, writable } from "svelte/store";
 import {
     ChatMap,
     MessageContextMap,
@@ -412,6 +412,7 @@ export class MessageReadTracker {
 }
 
 export const messagesRead = new MessageReadTracker();
+export const messageActivityFeedReadUpToLocally = writable<bigint>();
 
 let networkUnsub: Unsubscriber | undefined;
 
