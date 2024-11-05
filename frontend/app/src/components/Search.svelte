@@ -50,6 +50,8 @@
         use:translatable={{ key: placeholder }}
         placeholder={interpolate($_, placeholder)} />
     {#if searchTerm !== ""}
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
         <span on:click={clearSearch} class="icon close"
             ><Close size={$iconSize} color={"var(--icon-txt)"} /></span>
     {:else}

@@ -5,6 +5,7 @@
     export let fit = false;
 </script>
 
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
     on:contextmenu|preventDefault
     transition:fade|local={{ duration: 100 }}
