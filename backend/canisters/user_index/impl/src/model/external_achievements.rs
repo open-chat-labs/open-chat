@@ -21,19 +21,14 @@ pub struct ExternalAchievementInternal {
     pub remaining_chit_budget: u32,
     pub budget_exhausted: Option<TimestampMillis>,
     pub awarded: HashSet<UserId>,
+    #[serde(default)]
+    pub submitted_by: Option<UserId>,
+    #[serde(default)]
+    pub payment_block_index: Option<u64>,
 }
 
 impl ExternalAchievements {
-    // This will either register a new external achievement or update an existing entry with the same id
-    pub fn register(&mut self, achievement: ExternalAchievementInitial, now: TimestampMillis) -> bool {
-        if self
-            .achievements
-            .iter()
-            .any(|(id, a)| a.name == achievement.name && *id != achievement.id)
-        {
-            return false;
-        }
-
+    pub fn set(&mut self, achievement: ExternalAchievementInitial, now: TimestampMillis) {
         self.achievements.insert(
             achievement.id,
             ExternalAchievementInternal {
@@ -48,12 +43,10 @@ impl ExternalAchievements {
                 remaining_chit_budget: achievement.chit_budget,
                 budget_exhausted: None,
                 awarded: HashSet::new(),
+                submitted_by: Some(achievement.submitted_by),
+                payment_block_index: achievement.payment_block_index,
             },
         );
-
-        // TODO: Create a timer to delete the awarded users HashSet once the achievement has expired
-
-        true
     }
 
     pub fn award(
@@ -121,6 +114,7 @@ impl ExternalAchievements {
                 remaining_chit_budget: a.remaining_chit_budget,
                 budget_exhausted: a.budget_exhausted,
                 awarded: a.awarded.len(),
+                payment_block_index: a.payment_block_index,
             })
             .collect()
     }
@@ -155,4 +149,5 @@ pub struct ExternalAchievementMetrics {
     pub remaining_chit_budget: u32,
     pub budget_exhausted: Option<TimestampMillis>,
     pub awarded: usize,
+    pub payment_block_index: Option<u64>,
 }
