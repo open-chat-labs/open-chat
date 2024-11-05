@@ -15,7 +15,10 @@ type Subscription<T> = {
  * if the final chunk of data has been received.
  */
 export class Stream<T> {
-    private subscriptions: Subscription<T>[] = [];
+    private subscribed = false;
+    private onResult?: OnStreamResult<T>;
+    private onError?: OnStreamError;
+    private onEnd?: OnStreamEnd;
 
     constructor(
         initialiser: (
@@ -25,26 +28,28 @@ export class Stream<T> {
     ) {
         initialiser(
             (val: T, final: boolean) => {
-                this.subscriptions.forEach((s) => {
-                    if (s.onResult) {
-                        s.onResult(val, final);
-                    }
-                    if (final && s.onEnd) {
-                        s.onEnd();
-                    }
-                });
+                if (this.onResult) {
+                    this.onResult(val, final);
+                }
+                if (final && this.onEnd) {
+                    this.onEnd();
+                }
             },
             (reason?: unknown) => {
-                this.subscriptions.forEach((s) => {
-                    if (s.onError) {
-                        s.onError(reason);
-                    }
-                });
+                if (this.onError) {
+                    this.onError(reason);
+                }
             },
         );
     }
 
     subscribe(subscription: Subscription<T>) {
-        this.subscriptions.push(subscription);
+        if (this.subscribed) {
+            throw new Error("Already subscribed");
+        }
+        this.subscribed = true;
+        this.onResult = subscription.onResult;
+        this.onError = subscription.onError;
+        this.onEnd = subscription.onEnd;
     }
 }
