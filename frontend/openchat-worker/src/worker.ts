@@ -159,8 +159,8 @@ function streamReplies(
     chain: Stream<WorkerResponseInner>,
 ) {
     const start = Date.now();
-    chain
-        .subscribe((value, final) => {
+    chain.subscribe({
+        onResult: (value, final) => {
             console.debug(
                 `WORKER: sending streamed reply ${Date.now() - start}ms after subscribing`,
                 correlationId,
@@ -169,8 +169,9 @@ function streamReplies(
                 final,
             );
             sendResponse(correlationId, value, final);
-        })
-        .catch(sendError(correlationId, payload));
+        },
+        onError: sendError(correlationId, payload),
+    });
 }
 
 function executeThenReply(
