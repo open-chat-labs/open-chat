@@ -108,7 +108,7 @@
                 <div class="emoji-header">
                     <h4><Translatable resourceKey={i18nKey("pickEmoji")} /></h4>
                     <span title={$_("close")} class="close-emoji">
-                        <HoverIcon on:click={() => (messageAction = undefined)}>
+                        <HoverIcon onclick={() => (messageAction = undefined)}>
                             <Close size={$iconSize} color={"var(--icon-txt)"} />
                         </HoverIcon>
                     </span>

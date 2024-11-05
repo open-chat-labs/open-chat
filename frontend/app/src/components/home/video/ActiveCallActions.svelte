@@ -132,7 +132,7 @@
 {:else}
     <div class:joining={$activeVideoCall?.status === "joining"} class="actions">
         {#if !$hasPresence && $activeVideoCall?.status !== "joining"}
-            <HoverIcon on:click={() => dispatch("askToSpeak")}>
+            <HoverIcon onclick={() => dispatch("askToSpeak")}>
                 <HandFrontLeft
                     title={$_("videoCall.askToSpeak")}
                     size={$iconSize}
@@ -140,26 +140,26 @@
             </HoverIcon>
         {/if}
         {#if $activeVideoCall?.messageId !== undefined && $activeVideoCall.chatId.kind !== "direct_chat"}
-            <HoverIcon title={$_("videoCall.showParticipants")} on:click={toggleParticipants}>
+            <HoverIcon title={$_("videoCall.showParticipants")} onclick={toggleParticipants}>
                 <AccountMultiple
                     size={$iconSize}
                     color={participantsOpen ? "var(--icon-selected)" : "var(--icon-txt)"} />
             </HoverIcon>
         {/if}
         {#if chat.chatId && chat.messageIndex !== undefined}
-            <HoverIcon title={$_("videoCall.chat")} on:click={toggleThread}>
+            <HoverIcon title={$_("videoCall.chat")} onclick={toggleThread}>
                 <MessageOutline
                     size={$iconSize}
                     color={threadOpen ? "var(--icon-selected)" : "var(--icon-txt)"} />
             </HoverIcon>
         {/if}
-        <HoverIcon on:click={() => dispatch("minimise")}>
+        <HoverIcon onclick={() => dispatch("minimise")}>
             <WindowMinimize size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
-        <HoverIcon on:click={() => dispatch("toggleFullScreen")}>
+        <HoverIcon onclick={() => dispatch("toggleFullScreen")}>
             <WindowMaximize size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
-        <HoverIcon title={$_("videoCall.leave")} on:click={() => dispatch("hangup")}>
+        <HoverIcon title={$_("videoCall.leave")} onclick={() => dispatch("hangup")}>
             <PhoneHangup size={$iconSize} color={"var(--vote-no-color)"} />
         </HoverIcon>
     </div>

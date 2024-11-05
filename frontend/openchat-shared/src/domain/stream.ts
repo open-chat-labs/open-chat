@@ -2,6 +2,12 @@ type OnStreamResult<T> = (result: T, final: boolean) => void;
 type OnStreamError = (reason?: unknown) => void;
 type OnStreamEnd = () => void;
 
+type Subscription<T> = {
+    onResult?: OnStreamResult<T>;
+    onError?: OnStreamError;
+    onEnd?: OnStreamEnd;
+};
+
 /**
  * This class offers a Promise-like interface but replaces `then` with `subscribe`.
  * The function passed into subscribe will then be called each time new data is available.
@@ -9,6 +15,7 @@ type OnStreamEnd = () => void;
  * if the final chunk of data has been received.
  */
 export class Stream<T> {
+    private subscribed = false;
     private onResult?: OnStreamResult<T>;
     private onError?: OnStreamError;
     private onEnd?: OnStreamEnd;
@@ -36,18 +43,13 @@ export class Stream<T> {
         );
     }
 
-    subscribe(onResult: OnStreamResult<T>): Stream<T> {
-        this.onResult = onResult;
-        return this;
-    }
-
-    catch(onError: OnStreamError): Stream<T> {
-        this.onError = onError;
-        return this;
-    }
-
-    finally(onEnd: OnStreamEnd): Stream<T> {
-        this.onEnd = onEnd;
-        return this;
+    subscribe(subscription: Subscription<T>) {
+        if (this.subscribed) {
+            throw new Error("Already subscribed");
+        }
+        this.subscribed = true;
+        this.onResult = subscription.onResult;
+        this.onError = subscription.onError;
+        this.onEnd = subscription.onEnd;
     }
 }
