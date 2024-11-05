@@ -148,12 +148,12 @@
         const direct = global.directChats.values().map((d) => ({
             ...d,
             name: buildDisplayName($userStore, d.them.userId, false)
-        })).sort(compare);
+        }));
 
-        const group = global.groupChats.values().sort(compare);
-        const channels = global.communities.values().flatMap((c) => c.channels).sort(compare);
+        const group = global.groupChats.values();
+        const channels = global.communities.values().flatMap((c) => c.channels);
         const all = [...group, ...direct, ...channels];
-        const favs = all.filter((c) => global.favourites.has(c.id)).sort(compare);
+        const favs = all.filter((c) => global.favourites.has(c.id));
         try {
             const directChats = await targetsFromChatList(now, direct, selectedChatId);
             const groupChats = await targetsFromChatList(now, group, selectedChatId);
