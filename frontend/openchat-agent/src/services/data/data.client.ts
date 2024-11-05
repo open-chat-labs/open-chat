@@ -1,6 +1,5 @@
 import type { HttpAgent, Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import { v1 as uuidv1 } from "uuid";
 import { sha3_256 } from "js-sha3";
 import type { AgentConfig } from "../../config";
 import { buildBlobUrl } from "../../utils/chat";
@@ -35,7 +34,7 @@ export class DataClient extends EventTarget {
     }
 
     static newBlobId(): bigint {
-        return BigInt(parseInt(uuidv1().replace(/-/g, ""), 16));
+        return random128();
     }
 
     storageStatus(): Promise<StorageStatus> {
