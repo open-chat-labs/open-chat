@@ -131,6 +131,7 @@ fn read_up_to_data_maintained_after_import() {
                 date_read_pinned: None,
             }],
             community_messages_read: Vec::new(),
+            message_activity_feed: None,
         },
     );
 
