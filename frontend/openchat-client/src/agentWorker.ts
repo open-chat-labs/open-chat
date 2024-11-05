@@ -9,10 +9,10 @@ import {
     type WorkerResult,
     type ConnectToWorkerResponse,
     AuthProvider,
+    random128,
+    Stream,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
-import { v4 } from "uuid";
-import { Stream } from "openchat-shared";
 
 export const DEFAULT_WORKER_TIMEOUT = 1000 * 90;
 
@@ -196,7 +196,7 @@ export class OpenChatAgentWorker extends EventTarget {
         if (!connecting && !this._connectedToWorker) {
             throw new Error("WORKER_CLIENT: the client is not yet connected to the worker");
         }
-        const correlationId = v4();
+        const correlationId = random128().toString();
         this._worker.postMessage({
             ...req,
             correlationId,
@@ -212,7 +212,7 @@ export class OpenChatAgentWorker extends EventTarget {
         if (!connecting && !this._connectedToWorker) {
             throw new Error("WORKER_CLIENT: the client is not yet connected to the worker");
         }
-        const correlationId = v4();
+        const correlationId = random128().toString();
         this._worker.postMessage({
             ...req,
             correlationId,
