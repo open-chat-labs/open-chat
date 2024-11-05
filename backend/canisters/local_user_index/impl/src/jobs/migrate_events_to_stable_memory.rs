@@ -15,7 +15,7 @@ thread_local! {
 }
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
-    // Disable this until groups and communities are upgraded
+    // Disable this until users are upgraded
     false
 
     // if TIMER_ID.get().is_none() && !state.data.canisters_pending_events_migration_to_stable_memory.is_empty() {
