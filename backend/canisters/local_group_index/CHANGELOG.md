@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Repopulate event migration queue because threads also need to be handled ([#6704](https://github.com/open-chat-labs/open-chat/pull/6704))
 - Increase the max cycles required during upgrades ([#6725](https://github.com/open-chat-labs/open-chat/pull/6725))
+- Increase size of cycles top-ups ([#6727](https://github.com/open-chat-labs/open-chat/pull/6727))
 
 ## [[2.0.1410](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1410-local_group_index)] - 2024-10-24
 
