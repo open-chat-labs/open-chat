@@ -108,13 +108,14 @@ type DiamondMembershipFeesResponse = variant {
 
 type RegisterExternalAchievementArgs = record {
     id : nat32;
+    submitted_by : UserId;
     name : text;
     logo : text;
     url : text;
     canister_id : CanisterId;
     chit_reward : nat32;
     expires : TimestampMillis;
-    chit_budget : nat32;
+    max_awards : nat32;
 };
 
 type RegisterExternalAchievementResponse = variant {
