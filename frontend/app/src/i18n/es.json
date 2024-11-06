@@ -368,7 +368,7 @@
         "claim": "¡Reclama CHIT!",
         "comeback": "Vuelve en {time}",
         "extendStreak": "Extender racha",
-        "hideWhenClaimed": "Ocultar el icono de comprobante de reclamo ⚡️ después de reclamar cada día",
+        "hideWhenClaimed": "Ocultar el icono de CHIT de reclamo ⚡️ después de reclamar cada día",
         "info": "¡Cuanto más tiempo mantengas tu racha, más CHIT diario podrás reclamar!",
         "title": "Mantén tu racha",
         "utcInfo": "Las rachas de CHIT y las ventanas de reclamo se representan usando UTC, por lo que puede resultarle más claro ver su calendario en UTC en lugar de su zona horaria local.",
