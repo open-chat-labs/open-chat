@@ -1,7 +1,3 @@
-#![allow(dead_code)]
-#![allow(unused_imports)]
-#![allow(unused_variables)]
-
 use crate::{mutate_state, RuntimeState};
 use ic_cdk_timers::TimerId;
 use rand::Rng;
@@ -16,16 +12,15 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     // Disable this until users are upgraded
-    false
-
-    // if TIMER_ID.get().is_none() && !state.data.canisters_pending_events_migration_to_stable_memory.is_empty() {
-    //     let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
-    //     TIMER_ID.set(Some(timer_id));
-    //     trace!("'migrate_events_to_stable_memory' job started");
-    //     true
-    // } else {
-    //     false
-    // }
+    let enabled = false;
+    if enabled && TIMER_ID.get().is_none() && !state.data.canisters_pending_events_migration_to_stable_memory.is_empty() {
+        let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
+        TIMER_ID.set(Some(timer_id));
+        trace!("'migrate_events_to_stable_memory' job started");
+        true
+    } else {
+        false
+    }
 }
 
 fn run() {
