@@ -18,16 +18,8 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
-    let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
+    let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
-
-    assert!(data.stable_memory_event_migration_complete);
-
-    for channel in data.channels.iter_mut() {
-        if channel.chat.events.thread_messages_to_update_in_stable_memory_len() > 0 {
-            data.stable_memory_event_migration_complete = false;
-        }
-    }
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
