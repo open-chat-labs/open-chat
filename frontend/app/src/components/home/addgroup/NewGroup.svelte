@@ -284,17 +284,18 @@
                         });
                     step = "details";
                 } else if (!hideInviteUsers) {
-                    onGroupCreated(resp.canisterId);
                     optionallyInviteUsers(resp.canisterId).catch((_err) => {
                         toastStore.showFailureToast(i18nKey("inviteUsersFailed"));
                         step = "details";
                     });
+                    onGroupCreated(resp.canisterId);
                 } else {
                     onGroupCreated(resp.canisterId);
                 }
             })
-            .catch((_err) => {
+            .catch((err) => {
                 toastStore.showFailureToast(i18nKey("groupCreationFailed"));
+                console.error("Error creating group: ", err);
                 step = "details";
             })
             .finally(() => (busy = false));
