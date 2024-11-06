@@ -9,8 +9,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Consolidate `summary` and `c2c_summary` args ([#6723](https://github.com/open-chat-labs/open-chat/pull/6723))
-- Remove events from heap ([#6729](https://github.com/open-chat-labs/open-chat/pull/6729))
 - Fix case where some thread messages were not updated in stable memory ([#6736](https://github.com/open-chat-labs/open-chat/pull/6736))
+- Remove events from heap ([#6748](https://github.com/open-chat-labs/open-chat/pull/6748))
 
 ### Fixed
 

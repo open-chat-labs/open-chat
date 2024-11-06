@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Remove events from heap ([#6729](https://github.com/open-chat-labs/open-chat/pull/6729))
+- Remove events from heap ([#6748](https://github.com/open-chat-labs/open-chat/pull/6748))
 
 ## [[2.0.1431](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1431-community)] - 2024-11-06
 
