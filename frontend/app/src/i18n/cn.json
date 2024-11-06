@@ -368,7 +368,7 @@
         "claim": "索取 CHIT！",
         "comeback": "回到 {time}",
         "extendStreak": "延长连胜",
-        "hideWhenClaimed": "每天领取后隐藏领取筹码图标⚡️",
+        "hideWhenClaimed": "每天领取后隐藏领取 CHIT 图标⚡️",
         "info": "您维持连续记录的时间越长，您每天可领取的 CHIT 就越多！",
         "title": "保持连胜",
         "utcInfo": "CHIT 连续性和领取窗口使用 UTC 表示，因此您可能会发现以 UTC 而不是当地时区查看日历更清楚。",
