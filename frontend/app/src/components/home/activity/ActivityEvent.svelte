@@ -151,8 +151,7 @@
     function formatLatestMessage(event: MessageActivityEvent, username: string): string {
         if (event.message === undefined) return "TODO - not sure what this means";
         const latestMessageText = client.getContentAsText($_, event.message.content);
-        const formatted = `${username}: ${latestMessageText}`;
-        return formatted;
+        return `${username}: ${latestMessageText}`;
     }
 
     function goToEventContext() {
