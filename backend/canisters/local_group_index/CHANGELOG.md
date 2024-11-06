@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Expose which canisters are pending migration to stable memory in metrics ([#6742](https://github.com/open-chat-labs/open-chat/pull/6742))
+
 ## [[2.0.1428](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1428-local_group_index)] - 2024-11-06
 
 ### Changed
