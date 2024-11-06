@@ -73,7 +73,6 @@
         try {
             if (inline) {
                 parsed = marked.parseInline(parsed, options) as string;
-                console.log("Parsed text: ", parsed);
             } else {
                 parsed = marked.parse(parsed, options) as string;
             }
@@ -84,7 +83,6 @@
         const domPurify = oneLine ? DOMPurifyOneLine : DOMPurifyDefault;
         try {
             sanitized = domPurify.sanitize(parsed);
-            console.log("Sanitized text: ", sanitized);
         } catch (err: any) {
             client.logError("Error sanitizing message content: ", err);
         }
