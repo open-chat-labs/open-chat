@@ -25,6 +25,7 @@
     import { now } from "../../../stores/time";
     import LighteningBolt from "./LighteningBolt.svelte";
     import { activityFeedShowing } from "../../../stores/activity";
+    import { hideChitIcon } from "../../../stores/settings";
     import {
         AvatarSize,
         type CommunitySummary,
@@ -227,12 +228,14 @@
             </LeftNavItem>
         {/if}
         {#if !$anonUser}
-            {#if claimChitAvailable}
+            {#if claimChitAvailable || !$hideChitIcon}
                 <LeftNavItem
-                    label={i18nKey("dailyChit.extendStreak")}
+                    label={i18nKey(
+                        claimChitAvailable ? "dailyChit.extendStreak" : "dailyChit.viewStreak",
+                    )}
                     on:click={() => dispatch("claimDailyChit")}>
                     <div class="hover streak">
-                        <LighteningBolt enabled />
+                        <LighteningBolt enabled={claimChitAvailable} />
                     </div>
                 </LeftNavItem>
             {/if}

@@ -31,7 +31,7 @@ impl Environment for CanisterEnv {
     }
 
     fn cycles_balance(&self) -> Cycles {
-        ic_cdk::api::canister_balance().into()
+        ic_cdk::api::canister_balance128()
     }
 
     fn rng(&mut self) -> &mut StdRng {

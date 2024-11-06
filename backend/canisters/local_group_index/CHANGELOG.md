@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1427](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1427-local_group_index)] - 2024-11-06
+
 ### Added
 
 - Trigger migrating Group/Community events to stable memory using canister timer job ([#6671](https://github.com/open-chat-labs/open-chat/pull/6671))
@@ -14,6 +16,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Repopulate event migration queue because threads also need to be handled ([#6704](https://github.com/open-chat-labs/open-chat/pull/6704))
 - Increase the max cycles required during upgrades ([#6725](https://github.com/open-chat-labs/open-chat/pull/6725))
+- Increase size of cycles top-ups ([#6727](https://github.com/open-chat-labs/open-chat/pull/6727))
+- Temporarily disable job to trigger event migration ([#6730](https://github.com/open-chat-labs/open-chat/pull/6730))
+- Increase reserved cycles limit for the Windoge98 community ([#6732](https://github.com/open-chat-labs/open-chat/pull/6732))
 
 ## [[2.0.1410](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1410-local_group_index)] - 2024-10-24
 

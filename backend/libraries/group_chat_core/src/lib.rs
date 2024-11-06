@@ -65,24 +65,6 @@ pub struct GroupChatCore {
 
 #[allow(clippy::too_many_arguments)]
 impl GroupChatCore {
-    pub fn link_threads_to_members(&mut self) {
-        let reader = self.events.main_events_reader();
-        for root_message_index in self.events.thread_keys() {
-            if let Some(thread_summary) = reader
-                .message_internal(root_message_index.into())
-                .and_then(|m| m.thread_summary)
-            {
-                for user_id in thread_summary.followers.iter() {
-                    if let Some(member) = self.members.get_mut(user_id) {
-                        member
-                            .followed_threads
-                            .insert(root_message_index, thread_summary.latest_event_timestamp);
-                    }
-                }
-            }
-        }
-    }
-
     pub fn new(
         chat: MultiUserChat,
         created_by: UserId,

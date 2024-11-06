@@ -74,7 +74,9 @@
     function otherReactors(ev: MessageActivityEvent): Set<string> {
         if (ev.message === undefined) return new Set();
         return new Set(
-            ev.message.reactions.flatMap((r) => [...r.userIds].filter((u) => u !== ev.userId && u !== userId))
+            ev.message.reactions.flatMap((r) =>
+                [...r.userIds].filter((u) => u !== ev.userId && u !== userId),
+            ),
         );
     }
 
@@ -82,8 +84,7 @@
         if (ev.message === undefined) return new Set();
         return new Set(
             Object.values(ev.message.tips).flatMap((tips) => {
-                return Object.keys(tips)
-                    .filter((u) => u !== ev.userId)
+                return Object.keys(tips).filter((u) => u !== ev.userId);
             }),
         );
     }

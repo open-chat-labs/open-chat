@@ -16,7 +16,7 @@
     import ChitBalance from "./ChitBalance.svelte";
     import Toggle from "../../Toggle.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import { chitPopup, utcMode } from "../../../stores/settings";
+    import { chitPopup, hideChitIcon, utcMode } from "../../../stores/settings";
     import Translatable from "../../Translatable.svelte";
     import { menuCloser } from "../../../actions/closeMenu";
 
@@ -130,6 +130,13 @@
         on:change={() => chitPopup.set(!$chitPopup)}
         label={i18nKey("learnToEarn.showChitPopup")}
         checked={$chitPopup} />
+
+    <Toggle
+        id={"hide-chit-icon"}
+        small
+        on:change={() => hideChitIcon.set(!$hideChitIcon)}
+        label={i18nKey("dailyChit.hideWhenClaimed")}
+        checked={$hideChitIcon} />
 </div>
 
 <style lang="scss">
