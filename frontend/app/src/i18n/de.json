@@ -677,6 +677,7 @@
         "followed_thread": "Einem Thread folgen",
         "forwarded_message": "Weiterleiten einer Nachricht",
         "had_message_tipped": "Einen Nachrichtentipp erhalten",
+        "hideWhenClaimed": "Anspruchsbeleg-Symbol ⚡️ nach jedem Anspruch ausblenden",
         "joined_call": "An einem Anruf teilnehmen",
         "joined_community": "Treten Sie einer Community bei",
         "joined_gated_group_or_community": "Einer geschlossenen Gruppe/einem geschlossenen Kanal beitreten",

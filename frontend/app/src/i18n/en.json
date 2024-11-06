@@ -677,6 +677,7 @@
         "followed_thread": "Follow a thread",
         "forwarded_message": "Forward a message",
         "had_message_tipped": "Receive a message tip",
+        "hideWhenClaimed": "Hide claim chit icon ⚡️ after claiming each day",
         "joined_call": "Join a call",
         "joined_community": "Join a community",
         "joined_gated_group_or_community": "Join a gated group/channel",

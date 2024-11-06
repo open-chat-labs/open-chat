@@ -677,6 +677,7 @@
         "followed_thread": "Seguir un hilo",
         "forwarded_message": "Reenviar un mensaje",
         "had_message_tipped": "Recibir un mensaje de sugerencia",
+        "hideWhenClaimed": "Ocultar el icono de comprobante de reclamo ⚡️ después de reclamar cada día",
         "joined_call": "Únase a una llamada",
         "joined_community": "Únase a una comunidad",
         "joined_gated_group_or_community": "Únase a un grupo/canal cerrado",

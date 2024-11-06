@@ -677,6 +677,7 @@
         "followed_thread": "Theo dõi một chủ đề",
         "forwarded_message": "Chuyển tiếp tin nhắn",
         "had_message_tipped": "Nhận một mẹo tin nhắn",
+        "hideWhenClaimed": "Ẩn biểu tượng yêu cầu ⚡️ sau khi yêu cầu mỗi ngày",
         "joined_call": "Tham gia cuộc gọi",
         "joined_community": "Tham gia một cộng đồng",
         "joined_gated_group_or_community": "Tham gia một nhóm/kênh có cổng",

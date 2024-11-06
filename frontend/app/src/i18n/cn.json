@@ -677,6 +677,7 @@
         "followed_thread": "关注话题",
         "forwarded_message": "转发消息",
         "had_message_tipped": "收到消息提示",
+        "hideWhenClaimed": "每天领取后隐藏领取筹码图标⚡️",
         "joined_call": "加入通话",
         "joined_community": "加入社区",
         "joined_gated_group_or_community": "加入门控群组/频道",

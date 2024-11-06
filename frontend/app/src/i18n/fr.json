@@ -677,6 +677,7 @@
         "followed_thread": "Suivre un fil",
         "forwarded_message": "Transférer un message",
         "had_message_tipped": "Recevoir un message d'astuce",
+        "hideWhenClaimed": "Masquer l'icône de réclamation ⚡️ après avoir réclamé chaque jour",
         "joined_call": "Rejoindre un appel",
         "joined_community": "Rejoignez une communauté",
         "joined_gated_group_or_community": "Rejoignez un groupe/canal fermé",

@@ -677,6 +677,7 @@
         "followed_thread": "スレッドをフォローする",
         "forwarded_message": "メッセージを転送する",
         "had_message_tipped": "メッセージのヒントを受け取る",
+        "hideWhenClaimed": "毎日請求した後、請求チットアイコン⚡️を非表示にします",
         "joined_call": "通話に参加する",
         "joined_community": "コミュニティに参加する",
         "joined_gated_group_or_community": "ゲート付きグループ/チャンネルに参加する",
