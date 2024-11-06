@@ -13,7 +13,7 @@ use search::{Document, Query};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use sha2::{Digest, Sha256};
-use std::cmp::{max, min};
+use std::cmp::max;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::mem;
@@ -50,8 +50,6 @@ pub struct ChatEvents {
     search_index: SearchIndex,
     #[serde(default = "default_next_event_to_migrate_to_stable_memory")]
     next_event_to_migrate_to_stable_memory: Option<EventContext>,
-    #[serde(default)]
-    thread_messages_to_update_in_stable_memory: Vec<MessageIndex>,
 }
 
 fn default_next_event_to_migrate_to_stable_memory() -> Option<EventContext> {
@@ -59,11 +57,6 @@ fn default_next_event_to_migrate_to_stable_memory() -> Option<EventContext> {
 }
 
 impl ChatEvents {
-    pub fn init_thread_messages_to_update_in_stable_memory(&mut self) -> bool {
-        self.thread_messages_to_update_in_stable_memory = self.threads.keys().copied().collect();
-        !self.thread_messages_to_update_in_stable_memory.is_empty()
-    }
-
     pub fn update_event_in_stable_memory(&mut self, event_key: EventKey) {
         self.main.update_event_in_stable_memory(event_key);
     }
@@ -88,30 +81,11 @@ impl ChatEvents {
     }
 
     pub fn migrate_next_batch_of_events_to_stable_storage(&mut self) -> bool {
-        let mut total_count = 0;
-        if !self.thread_messages_to_update_in_stable_memory.is_empty() {
-            while ic_cdk::api::instruction_counter() < 1_000_000_000 {
-                let batch: Vec<_> = self
-                    .thread_messages_to_update_in_stable_memory
-                    .drain(..min(100, self.thread_messages_to_update_in_stable_memory.len()))
-                    .collect();
-
-                let count = batch.len();
-                for message_index in batch {
-                    self.update_event_in_stable_memory(message_index.into());
-                }
-                info!(chat = ?self.chat, count, "Updated threads in stable memory");
-                total_count += count;
-                if self.thread_messages_to_update_in_stable_memory.is_empty() {
-                    break;
-                }
-            }
-        }
-
         if self.next_event_to_migrate_to_stable_memory.is_none() {
             return true;
         };
 
+        let mut total_count = 0;
         while ic_cdk::api::instruction_counter() < 1_000_000_000 {
             let EventContext {
                 thread_root_message_index: next_thread_root_message_index,
@@ -180,7 +154,6 @@ impl ChatEvents {
             anonymized_id: hex::encode(anonymized_id.to_be_bytes()),
             search_index: SearchIndex::default(),
             next_event_to_migrate_to_stable_memory: None,
-            thread_messages_to_update_in_stable_memory: Vec::new(),
         };
 
         events.push_event(None, ChatEventInternal::DirectChatCreated(DirectChatCreated {}), 0, now);
@@ -212,7 +185,6 @@ impl ChatEvents {
             anonymized_id: hex::encode(anonymized_id.to_be_bytes()),
             search_index: SearchIndex::default(),
             next_event_to_migrate_to_stable_memory: None,
-            thread_messages_to_update_in_stable_memory: Vec::new(),
         };
 
         events.push_event(
