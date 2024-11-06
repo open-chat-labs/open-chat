@@ -266,7 +266,6 @@ impl RuntimeState {
                 internet_identity: self.data.internet_identity_canister_id,
             },
             oc_secret_key_initialized: self.data.oc_key_pair.is_initialised(),
-
             canisters_pending_events_migration_to_stable_memory_count: self
                 .data
                 .canisters_pending_events_migration_to_stable_memory
