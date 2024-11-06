@@ -266,10 +266,17 @@ impl RuntimeState {
                 internet_identity: self.data.internet_identity_canister_id,
             },
             oc_secret_key_initialized: self.data.oc_key_pair.is_initialised(),
-            canisters_pending_events_migration_to_stable_memory: self
+            canisters_pending_events_migration_to_stable_memory_count: self
                 .data
                 .canisters_pending_events_migration_to_stable_memory
                 .len() as u32,
+            canisters_pending_events_migration_to_stable_memory: self
+                .data
+                .canisters_pending_events_migration_to_stable_memory
+                .iter()
+                .copied()
+                .take(20)
+                .collect(),
             canister_upgrades_failed: canister_upgrades_metrics.failed,
         }
     }
@@ -409,7 +416,8 @@ pub struct Metrics {
     pub user_versions: BTreeMap<String, u32>,
     pub canister_ids: CanisterIds,
     pub oc_secret_key_initialized: bool,
-    pub canisters_pending_events_migration_to_stable_memory: u32,
+    pub canisters_pending_events_migration_to_stable_memory_count: u32,
+    pub canisters_pending_events_migration_to_stable_memory: Vec<CanisterId>,
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
 }
 
