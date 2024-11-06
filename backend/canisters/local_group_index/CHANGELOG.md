@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Enable job to trigger migrating events to stable memory for communities ([#6738](https://github.com/open-chat-labs/open-chat/pull/6738))
+
 ## [[2.0.1427](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1427-local_group_index)] - 2024-11-06
 
 ### Added

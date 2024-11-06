@@ -11,7 +11,9 @@ thread_local! {
 }
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
-    if TIMER_ID.get().is_none() && !state.data.canisters_pending_events_migration_to_stable_memory.is_empty() {
+    // Disable this until users are upgraded
+    let enabled = false;
+    if enabled && TIMER_ID.get().is_none() && !state.data.canisters_pending_events_migration_to_stable_memory.is_empty() {
         let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
         TIMER_ID.set(Some(timer_id));
         trace!("'migrate_events_to_stable_memory' job started");
@@ -46,7 +48,7 @@ fn next(state: &mut RuntimeState) -> Option<CanisterId> {
 }
 
 async fn migrate_events(canister_id: CanisterId) {
-    if let Ok(true) = group_canister_c2c_client::c2c_migrate_events_to_stable_memory(canister_id, &Empty {}).await {
+    if let Ok(true) = user_canister_c2c_client::c2c_migrate_events_to_stable_memory(canister_id, &Empty {}).await {
         mutate_state(|state| {
             state
                 .data

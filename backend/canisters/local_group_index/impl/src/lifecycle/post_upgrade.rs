@@ -21,12 +21,8 @@ fn post_upgrade(args: Args) {
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
-    data.canisters_pending_events_migration_to_stable_memory = data
-        .local_groups
-        .iter()
-        .map(|(g, _)| Principal::from(*g))
-        .chain(data.local_communities.iter().map(|(c, _)| Principal::from(*c)))
-        .collect();
+    data.canisters_pending_events_migration_to_stable_memory =
+        data.local_communities.iter().map(|(c, _)| Principal::from(*c)).collect();
 
     let env = init_env(data.rng_seed);
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id, data.test_mode);
