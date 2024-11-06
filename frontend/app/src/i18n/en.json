@@ -368,6 +368,7 @@
         "claim": "Claim CHIT!",
         "comeback": "Come back in {time}",
         "extendStreak": "Extend streak",
+        "hideWhenClaimed": "Hide claim CHIT icon ⚡️ after claiming each day",
         "info": "The longer you maintain your streak the more daily CHIT you can claim!",
         "title": "Maintain your streak",
         "utcInfo": "CHIT streaks and claim windows are represented using UTC so you may find it clearer to view your calendar in UTC rather than your local timezone.",

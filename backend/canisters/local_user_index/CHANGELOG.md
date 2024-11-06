@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Increase the max cycles required during upgrades ([#6725](https://github.com/open-chat-labs/open-chat/pull/6725))
+- Increase size of cycles top-ups ([#6727](https://github.com/open-chat-labs/open-chat/pull/6727))
+
+## [[2.0.1422](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1422-local_user_index)] - 2024-11-05
+
 ### Added
 
 - Trigger migrating User events to stable memory using canister timer job ([#6671](https://github.com/open-chat-labs/open-chat/pull/6671))
@@ -13,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Expose `bot_user_count` and `oc_controlled_bots` in metrics ([#6709](https://github.com/open-chat-labs/open-chat/pull/6709))
+- Temporarily disable job to trigger migrating events to stable memory ([#6721](https://github.com/open-chat-labs/open-chat/pull/6721))
 
 ## [[2.0.1411](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1411-local_user_index)] - 2024-10-24
 

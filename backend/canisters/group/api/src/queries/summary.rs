@@ -1,9 +1,14 @@
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{Empty, GroupCanisterGroupChatSummary};
+use types::GroupCanisterGroupChatSummary;
 
-pub type Args = Empty;
+#[ts_export(group, summary)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct Args {
+    #[ts(skip)]
+    pub on_behalf_of: Option<Principal>,
+}
 
 // Allow the large size difference because essentially all responses are the large variant anyway
 #[ts_export(group, summary)]

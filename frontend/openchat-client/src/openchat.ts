@@ -128,7 +128,11 @@ import {
 import { lastOnlineDates } from "./stores/lastOnlineDates";
 import { localChatSummaryUpdates } from "./stores/localChatSummaryUpdates";
 import { localMessageUpdates } from "./stores/localMessageUpdates";
-import { messagesRead, startMessagesReadTracker } from "./stores/markRead";
+import {
+    messageActivityFeedReadUpToLocally,
+    messagesRead,
+    startMessagesReadTracker,
+} from "./stores/markRead";
 import {
     askForNotificationPermission,
     initNotificationStores,
@@ -1350,6 +1354,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     markActivityFeedRead(readUpTo: bigint) {
+        messageActivityFeedReadUpToLocally.set(readUpTo);
         return this.sendRequest({
             kind: "markActivityFeedRead",
             readUpTo,

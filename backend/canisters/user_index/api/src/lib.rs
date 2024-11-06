@@ -87,6 +87,8 @@ pub struct ExternalAchievementInitial {
     pub chit_reward: u32,
     pub expires: TimestampMillis,
     pub chit_budget: u32,
+    pub submitted_by: UserId,
+    pub payment_block_index: Option<u64>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]

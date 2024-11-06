@@ -368,6 +368,7 @@
         "claim": "Yêu cầu CHIT!",
         "comeback": "Hãy quay lại trong {time}",
         "extendStreak": "Kéo dài vệt",
+        "hideWhenClaimed": "Ẩn biểu tượng CHIT yêu cầu ⚡️ sau khi yêu cầu mỗi ngày",
         "info": "Bạn duy trì chuỗi của mình càng lâu thì bạn càng có thể yêu cầu nhiều CHIT hàng ngày hơn!",
         "title": "Duy trì thành tích của bạn",
         "utcInfo": "Các chuỗi CHIT và khoảng thời gian xác nhận quyền sở hữu được thể hiện bằng UTC nên bạn có thể thấy lịch của mình theo UTC rõ ràng hơn thay vì múi giờ địa phương.",
