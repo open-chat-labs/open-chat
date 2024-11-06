@@ -368,6 +368,7 @@
         "claim": "Réclamez CHIT !",
         "comeback": "Revenez dans {time}",
         "extendStreak": "Prolonger la séquence",
+        "hideWhenClaimed": "Masquer l'icône de réclamation ⚡️ après avoir réclamé chaque jour",
         "info": "Plus vous maintenez votre séquence longtemps, plus vous pouvez réclamer de CHIT quotidien !",
         "title": "Maintenez votre séquence",
         "utcInfo": "Les séquences CHIT et les fenêtres de réclamation sont représentées en UTC afin que vous puissiez trouver plus clair d'afficher votre calendrier en UTC plutôt que dans votre fuseau horaire local.",
