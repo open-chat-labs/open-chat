@@ -368,6 +368,7 @@
         "claim": "Richiedi CHIT!",
         "comeback": "Torna tra {time}",
         "extendStreak": "Estendi la serie",
+        "hideWhenClaimed": "Nascondi l'icona del buono di richiesta ⚡️ dopo aver effettuato la richiesta ogni giorno",
         "info": "Più a lungo mantieni la tua serie, più CHIT giornalieri puoi richiedere!",
         "title": "Mantieni la tua serie",
         "utcInfo": "Le serie CHIT e le finestre di reclamo sono rappresentate utilizzando l'UTC, quindi potresti trovare più chiaro visualizzare il tuo calendario in UTC anziché nel fuso orario locale.",

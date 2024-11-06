@@ -368,6 +368,7 @@
         "claim": "Fordern Sie CHIT an!",
         "comeback": "Kommen Sie in {time} wieder",
         "extendStreak": "Serie verlängern",
+        "hideWhenClaimed": "Anspruchsbeleg-Symbol ⚡️ nach jedem Anspruch ausblenden",
         "info": "Je länger Sie Ihre Serie aufrechterhalten, desto mehr CHIT können Sie täglich beanspruchen!",
         "title": "Behalten Sie Ihre Serie bei",
         "utcInfo": "CHIT-Streaks und Anspruchsfenster werden mithilfe der UTC dargestellt, daher ist es für Sie möglicherweise übersichtlicher, Ihren Kalender in UTC statt in Ihrer lokalen Zeitzone anzuzeigen.",
