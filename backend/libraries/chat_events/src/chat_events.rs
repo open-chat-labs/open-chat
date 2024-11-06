@@ -52,6 +52,10 @@ pub struct ChatEvents {
 }
 
 impl ChatEvents {
+    pub fn thread_messages_to_update_in_stable_memory_len(&self) -> usize {
+        self.thread_messages_to_update_in_stable_memory.len()
+    }
+
     pub fn update_event_in_stable_memory(&mut self, event_key: EventKey) {
         self.main.update_event_in_stable_memory(event_key);
     }
