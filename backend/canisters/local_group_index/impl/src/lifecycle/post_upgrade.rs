@@ -31,13 +31,15 @@ fn post_upgrade(args: Args) {
         .chain(data.local_communities.iter().map(|(c, _)| Principal::from(*c)))
         .collect();
 
+    if !data.test_mode {
+        ic_cdk_timers::set_timer(Duration::ZERO, || ic_cdk::spawn(increase_reserved_cycles_limit()));
+    }
+
     let env = init_env(data.rng_seed);
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id, data.test_mode);
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
-
-    ic_cdk_timers::set_timer(Duration::ZERO, || ic_cdk::spawn(increase_reserved_cycles_limit()));
 }
 
 async fn increase_reserved_cycles_limit() {
