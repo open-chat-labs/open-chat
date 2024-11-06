@@ -13,11 +13,12 @@ use search::{Document, Query};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use sha2::{Digest, Sha256};
-use std::cmp::max;
+use std::cmp::{max, min};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::mem;
 use std::ops::DerefMut;
+use tracing::info;
 use types::{
     AcceptP2PSwapResult, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, ChatType, CompleteP2PSwapResult,
     CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventContext, EventIndex, EventWrapper,
@@ -47,6 +48,7 @@ pub struct ChatEvents {
     video_call_in_progress: Timestamped<Option<VideoCall>>,
     anonymized_id: String,
     search_index: SearchIndex,
+    thread_messages_to_update_in_stable_memory: Vec<MessageIndex>,
 }
 
 impl ChatEvents {
@@ -74,7 +76,6 @@ impl ChatEvents {
     }
 
     pub fn migrate_next_batch_of_events_to_stable_storage(&mut self) -> bool {
-        let mut total_count = 0;
         while !self.thread_messages_to_update_in_stable_memory.is_empty() {
             if ic_cdk::api::instruction_counter() > 1_000_000_000 {
                 return false;
@@ -90,58 +91,9 @@ impl ChatEvents {
                 self.update_event_in_stable_memory(message_index.into());
             }
             info!(chat = ?self.chat, count, "Updated threads in stable memory");
-            total_count += count;
         }
 
-        if self.next_event_to_migrate_to_stable_memory.is_none() {
-            return true;
-        };
-
-        while ic_cdk::api::instruction_counter() < 1_000_000_000 {
-            let EventContext {
-                thread_root_message_index: next_thread_root_message_index,
-                event_index: next_event_index,
-            } = self.next_event_to_migrate_to_stable_memory.clone().unwrap();
-
-            let (thread_root_message_index, events_list) = if let Some(message_index) = next_thread_root_message_index {
-                if let Some((index, next)) = self.threads.range_mut(message_index..).next() {
-                    (Some(*index), next)
-                } else {
-                    self.next_event_to_migrate_to_stable_memory = None;
-                    self.main.set_read_events_from_stable_memory(true);
-                    for events_list in self.threads.values_mut() {
-                        events_list.set_read_events_from_stable_memory(true);
-                    }
-                    info!(chat = ?self.chat, total_count, "Finished migrating events to stable memory");
-                    return true;
-                }
-            } else {
-                (None, &mut self.main)
-            };
-
-            let (count, next_event_index) = events_list.migrate_events_to_stable_memory(next_event_index, 100);
-            if let Some(event_index) = next_event_index {
-                self.next_event_to_migrate_to_stable_memory = Some(EventContext {
-                    thread_root_message_index,
-                    event_index,
-                });
-            } else {
-                self.next_event_to_migrate_to_stable_memory = Some(EventContext {
-                    thread_root_message_index: Some(thread_root_message_index.map_or(MessageIndex::default(), |m| m.incr())),
-                    event_index: EventIndex::default(),
-                });
-            }
-            total_count += count;
-        }
-        if total_count > 0 {
-            info!(
-                chat = ?self.chat,
-                count = total_count,
-                next = ?self.next_event_to_migrate_to_stable_memory,
-                "Migrated batch of events to stable memory"
-            );
-        }
-        false
+        true
     }
 
     pub fn new_direct_chat(
@@ -164,6 +116,7 @@ impl ChatEvents {
             video_call_in_progress: Timestamped::default(),
             anonymized_id: hex::encode(anonymized_id.to_be_bytes()),
             search_index: SearchIndex::default(),
+            thread_messages_to_update_in_stable_memory: Vec::new(),
         };
 
         events.push_event(None, ChatEventInternal::DirectChatCreated(DirectChatCreated {}), 0, now);
@@ -194,6 +147,7 @@ impl ChatEvents {
             video_call_in_progress: Timestamped::default(),
             anonymized_id: hex::encode(anonymized_id.to_be_bytes()),
             search_index: SearchIndex::default(),
+            thread_messages_to_update_in_stable_memory: Vec::new(),
         };
 
         events.push_event(
