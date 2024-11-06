@@ -44,7 +44,7 @@
         return text.replace(/@UserGroup\(([\d]+)\)/g, (match, p1) => {
             const u = userGroups.get(Number(p1));
             if (u !== undefined) {
-                return `[**@${u.name}**](?usergroup=${u.id})`;
+                return `**[@${u.name}](?usergroup=${u.id})**`;
             } else {
                 console.warn("Unable to find user group: ", match);
                 return `**@unknown_user_group**`;
@@ -73,6 +73,7 @@
         try {
             if (inline) {
                 parsed = marked.parseInline(parsed, options) as string;
+                console.log("Parsed text: ", parsed);
             } else {
                 parsed = marked.parse(parsed, options) as string;
             }
@@ -83,6 +84,7 @@
         const domPurify = oneLine ? DOMPurifyOneLine : DOMPurifyDefault;
         try {
             sanitized = domPurify.sanitize(parsed);
+            console.log("Sanitized text: ", sanitized);
         } catch (err: any) {
             client.logError("Error sanitizing message content: ", err);
         }
