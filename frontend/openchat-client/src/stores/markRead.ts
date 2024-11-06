@@ -329,7 +329,21 @@ export class MessageReadTracker {
     markAllRead(chat: ChatSummary) {
         const latestMessageIndex = chat.latestMessage?.event.messageIndex;
         if (latestMessageIndex !== undefined) {
-            this.markReadUpTo({ chatId: chat.id }, latestMessageIndex);
+            if (!this.isRead({ chatId: chat.id }, latestMessageIndex, undefined)) {
+                this.markReadUpTo({ chatId: chat.id }, latestMessageIndex);
+            }
+
+            if (chat.kind !== "direct_chat") {
+                for (const thread of chat.membership.latestThreads) {
+                    const context = {
+                        chatId: chat.id,
+                        threadRootMessageIndex: thread.threadRootMessageIndex,
+                    };
+                    if (!this.isRead(context, thread.latestMessageIndex, undefined)) {
+                        this.markReadUpTo(context, thread.latestMessageIndex);
+                    }
+                }
+            }
         }
     }
 

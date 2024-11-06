@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Consolidate `summary` and `c2c_summary` args ([#6723](https://github.com/open-chat-labs/open-chat/pull/6723))
 - Fix case where some thread messages were not updated in stable memory ([#6736](https://github.com/open-chat-labs/open-chat/pull/6736))
 
+### Fixed
+
+- Fix migrating to stable memory for chats with disappearing messages ([#6746](https://github.com/open-chat-labs/open-chat/pull/6746))
+
 ## [[2.0.1423](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1423-community)] - 2024-11-05
 
 ### Changed

@@ -200,9 +200,7 @@ impl<MSlow: EventsMap> DoubleEndedIterator for Iter<'_, MSlow> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::stable_storage::{ChatEventsStableStorage, Memory};
-    use candid::Principal;
-    use types::Chat;
+    use crate::ChatEventsMap;
 
     #[test]
     fn get() {
@@ -339,12 +337,10 @@ mod tests {
         assert!(!LAST_READ_FROM_SLOW.get());
     }
 
-    fn setup_map() -> HybridMap<ChatEventsStableStorage> {
-        crate::stable_storage::init(Memory::default());
-
+    fn setup_map() -> HybridMap<ChatEventsMap> {
         let mut map = HybridMap {
             fast: BTreeMap::new(),
-            slow: ChatEventsStableStorage::new(Chat::Direct(Principal::anonymous().into()), None),
+            slow: ChatEventsMap::default(),
             latest_event_index: EventIndex::default(),
             max_events_in_fast_map: 10,
         };
