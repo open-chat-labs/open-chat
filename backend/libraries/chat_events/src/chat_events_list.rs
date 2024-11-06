@@ -49,7 +49,7 @@ impl ChatEventsList {
             next_event_index = event.index.incr();
             self.stable_events_map.insert(event);
         }
-        if Some(next_event_index) > self.latest_event_index {
+        if count < max_events || Some(next_event_index) > self.latest_event_index {
             (count, None)
         } else {
             (count, Some(next_event_index))
