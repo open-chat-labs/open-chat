@@ -1292,7 +1292,7 @@
         "none": "ніхто",
         "owner": "Власники"
     },
-    "roleChanged": "{changedBy} змінив роль {changed} з {oldRole} на {newRole}",
+    "roleChanged": "{changedBy} змінив роль {changed} на {newRole}",
     "rules": {
         "accept": "прийняти",
         "acceptTitle": "Правила чату",
@@ -1655,5 +1655,5 @@
     "yourAccountIsSuspended": "Ваш обліковий запис призупинено",
     "yourChats": "Ваші чати",
     "youreBlocked": "Вибачте, вас заблокували в цій групі",
-    "yourRoleChanged": "{changedBy} змінив вашу роль з {oldRole} на {newRole}"
+    "yourRoleChanged": "{changedBy} змінив вашу роль на {newRole}"
 }

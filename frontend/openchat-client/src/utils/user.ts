@@ -94,7 +94,7 @@ export function nullUser(username: string): UserSummary {
 }
 
 export function compareUsername(u1: UserSummary, u2: UserSummary): number {
-    return u1.username === u2.username ? 0 : u2.username < u1.username ? 1 : -1;
+    return u1.username.localeCompare(u2.username, undefined, { sensitivity: "accent" });
 }
 
 export function compareIsNotYouThenUsername(
@@ -106,7 +106,7 @@ export function compareIsNotYouThenUsername(
         if (u1IsYou !== u2IsYou) {
             return u1IsYou ? 1 : -1;
         }
-        return u1.username === u2.username ? 0 : u2.username < u1.username ? 1 : -1;
+        return compareUsername(u1, u2);
     };
 }
 

@@ -1292,7 +1292,7 @@
         "none": "没有人",
         "owner": "拥有者"
     },
-    "roleChanged": "{changedBy} 将 {changed} 的角色从 {oldRole} 更改为 {newRole}",
+    "roleChanged": "{changedBy} 将 {changed} 的角色更改为 {newRole}",
     "rules": {
         "accept": "接受",
         "acceptTitle": "聊天规则",
@@ -1655,5 +1655,5 @@
     "yourAccountIsSuspended": "您的账户暂时无法使用",
     "yourChats": "您的聊天",
     "youreBlocked": "抱歉 - 您已被该群聊加入黑名单",
-    "yourRoleChanged": "{changedBy} 将您的角色从 {oldRole} 更改为 {newRole}"
+    "yourRoleChanged": "{changedBy} 将您的角色更改为 {newRole}"
 }

@@ -1292,7 +1292,7 @@
         "none": "אף אחד",
         "owner": "בעלים"
     },
-    "roleChanged": "{changedBy} שינה את התפקיד של {changed} מ-{oldRole} ל-{newRole}",
+    "roleChanged": "{changedBy} שינה את התפקיד של {changed} ל-{newRole}",
     "rules": {
         "accept": "לְקַבֵּל",
         "acceptTitle": "כללי צ'אט",
@@ -1655,5 +1655,5 @@
     "yourAccountIsSuspended": "החשבון שלך מושעה",
     "yourChats": "הצ'אטים שלך",
     "youreBlocked": "מצטערים - נחסמת מהקבוצה הזו",
-    "yourRoleChanged": "{changedBy} שינה את התפקיד שלך מ-{oldRole} ל-{newRole}"
+    "yourRoleChanged": "{changedBy} שינה את התפקיד שלך ל-{newRole}"
 }

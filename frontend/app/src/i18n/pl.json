@@ -1292,7 +1292,7 @@
         "none": "Nikt",
         "owner": "Właściciele"
     },
-    "roleChanged": "{changedBy} zmienił rolę {changed} z {oldRole} na {newRole}",
+    "roleChanged": "{changedBy} zmienił rolę {changed} na {newRole}",
     "rules": {
         "accept": "Zaakceptować",
         "acceptTitle": "Zasady czatu",
@@ -1655,5 +1655,5 @@
     "yourAccountIsSuspended": "Twoje konto jest zawieszone",
     "yourChats": "Twoje czaty",
     "youreBlocked": "Przepraszamy - zostałeś zablokowany w tej grupie",
-    "yourRoleChanged": "{changedBy} zmienił Twoją rolę z {oldRole} na {newRole}"
+    "yourRoleChanged": "{changedBy} zmienił(a) Twoją rolę na {newRole}"
 }

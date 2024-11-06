@@ -700,9 +700,12 @@ function reduceJoinedOrLeft(
     }
 
     return events.reduce((previous: EventWrapper<ChatEvent>[], e: EventWrapper<ChatEvent>) => {
+        let newEvent = e;
+
         if (
             isEventKindHidden(e.event.kind) ||
             e.event.kind === "member_joined" ||
+            e.event.kind === "role_changed" ||
             (e.event.kind === "message" &&
                 messageIsHidden(e.event, myUserId, expandedDeletedMessages))
         ) {
@@ -712,6 +715,7 @@ function reduceJoinedOrLeft(
                     kind: "aggregate_common_events",
                     usersJoined: new Set(),
                     usersLeft: new Set(),
+                    rolesChanged: new Map(),
                     messagesDeleted: [],
                 };
             } else {
@@ -732,16 +736,48 @@ function reduceJoinedOrLeft(
                 }
             } else if (e.event.kind === "message") {
                 agg.messagesDeleted.push(e.event.messageIndex);
+            } else if (e.event.kind === "role_changed") {
+                let changedByMap = agg.rolesChanged.get(e.event.changedBy);
+
+                if (changedByMap === undefined) {
+                    changedByMap = new Map();
+                    agg.rolesChanged.set(e.event.changedBy, changedByMap);
+                }
+
+                let newRoleSet = changedByMap.get(e.event.newRole);
+
+                if (newRoleSet === undefined) {
+                    newRoleSet = new Set();
+                    changedByMap.set(e.event.newRole, newRoleSet);
+                }
+
+                const newRole = e.event.newRole;
+
+                e.event.userIds.forEach((userId) => {
+                    // Seeing as we are visting the events in reverse order, only add
+                    // a user if it isn't already in another set
+                    if (
+                        [...changedByMap.entries()]
+                            .filter(([role, _]) => role !== newRole)
+                            .every(([_, users]) => !users.has(userId))
+                    ) {
+                        newRoleSet.add(userId);
+                    }
+                });
+
+                if (newRoleSet.size === 0) {
+                    changedByMap.delete(e.event.newRole);
+                }
             }
 
-            previous.push({
+            newEvent = {
                 event: agg,
                 timestamp: e.timestamp,
                 index: e.index,
-            });
-        } else {
-            previous.push(e);
+            };
         }
+
+        previous.push(newEvent);
 
         return previous;
     }, []);

@@ -1292,7 +1292,7 @@
         "none": "Nessuno",
         "owner": "Proprietari"
     },
-    "roleChanged": "{changedBy} ha cambiato il ruolo di {changed} da {oldRole} a {newRole}",
+    "roleChanged": "{changedBy} ha cambiato il ruolo di {changed} in {newRole}",
     "rules": {
         "accept": "Accettare",
         "acceptTitle": "Regole della chat",
@@ -1655,5 +1655,5 @@
     "yourAccountIsSuspended": "Il tuo account è sospeso",
     "yourChats": "Le tue chat",
     "youreBlocked": "Siamo spiacenti, sei stato bloccato da questo gruppo",
-    "yourRoleChanged": "{changedBy} ha cambiato il tuo ruolo da {oldRole} a {newRole}"
+    "yourRoleChanged": "{changedBy} ha cambiato il tuo ruolo in {newRole}"
 }
