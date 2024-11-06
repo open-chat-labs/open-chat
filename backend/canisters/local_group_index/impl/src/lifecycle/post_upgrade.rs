@@ -4,10 +4,13 @@ use crate::Data;
 use candid::Principal;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
+use ic_cdk::api::management_canister::main::{CanisterSettings, UpdateSettingsArgument};
 use ic_cdk::post_upgrade;
 use local_group_index_canister::post_upgrade::Args;
 use stable_memory::get_reader;
+use std::time::Duration;
 use tracing::info;
+use types::CanisterId;
 use utils::cycles::init_cycles_dispenser_client;
 
 #[post_upgrade]
@@ -33,4 +36,18 @@ fn post_upgrade(args: Args) {
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
+
+    ic_cdk_timers::set_timer(Duration::ZERO, || ic_cdk::spawn(increase_reserved_cycles_limit()));
+}
+
+async fn increase_reserved_cycles_limit() {
+    ic_cdk::api::management_canister::main::update_settings(UpdateSettingsArgument {
+        canister_id: CanisterId::from_text("ow6el-gyaaa-aaaar-av5na-cai").unwrap(),
+        settings: CanisterSettings {
+            reserved_cycles_limit: Some(10_000_000_000_000u128.into()),
+            ..Default::default()
+        },
+    })
+    .await
+    .unwrap();
 }
