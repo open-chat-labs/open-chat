@@ -25,7 +25,7 @@
     import { now } from "../../../stores/time";
     import LighteningBolt from "./LighteningBolt.svelte";
     import { activityFeedShowing } from "../../../stores/activity";
-    import { hideChitIcon } from "../../stores/settings";
+    import { hideChitIcon } from "../../../stores/settings";
     import {
         AvatarSize,
         type CommunitySummary,
