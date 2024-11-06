@@ -13,6 +13,13 @@ export type ActiveLeafGate = Exclude<LeafGate, NoGate>;
 
 export type PreprocessedGate = CredentialGate | PaymentGate | UniquePersonGate;
 
+export type MergeableAccessGate =
+    | DiamondGate
+    | LifetimeDiamondGate
+    | UniquePersonGate
+    | LockedGate
+    | ReferredByMemberGate;
+
 export type LeafGate =
     | NoGate
     | NeuronGate

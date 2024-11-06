@@ -3,7 +3,7 @@ type OnStreamError = (reason?: unknown) => void;
 type OnStreamEnd = () => void;
 
 type Subscription<T> = {
-    onResult?: OnStreamResult<T>;
+    onResult: OnStreamResult<T>;
     onError?: OnStreamError;
     onEnd?: OnStreamEnd;
 };

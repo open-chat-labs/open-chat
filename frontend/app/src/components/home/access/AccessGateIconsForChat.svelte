@@ -1,18 +1,25 @@
 <script lang="ts">
     import type { EnhancedAccessGate } from "openchat-client";
     import AccessGateIcon from "./AccessGateIcon.svelte";
+    import { mergeAccessGates } from "../../../utils/access";
 
-    export let gates: EnhancedAccessGate[];
+    interface Props {
+        gates: EnhancedAccessGate[];
+    }
+
+    let { gates }: Props = $props();
+
+    let merged = $derived(mergeAccessGates(...gates));
 </script>
 
 {#if gates.length > 0}
     <div class="icons">
-        {#each gates as gate, i}
+        {#each merged as gate, i}
             <AccessGateIcon
                 clickable
                 level={gate.level}
                 gateConfig={{ expiry: gate.expiry, gate }} />
-            {#if gates.length > 1 && i < gates.length - 1}
+            {#if merged.length > 1 && i < merged.length - 1}
                 <span>&</span>
             {/if}
         {/each}
