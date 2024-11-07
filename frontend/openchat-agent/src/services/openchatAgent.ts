@@ -3829,7 +3829,7 @@ export class OpenChatAgent extends EventTarget {
         );
 
         const anyMissing = [...missing.values()].some((s) => s.size > 0);
-        callback(withCachedMessages, anyMissing);
+        callback(withCachedMessages, !anyMissing);
 
         if (anyMissing) {
             this.getMessagesByMessageContext(
