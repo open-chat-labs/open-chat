@@ -749,19 +749,20 @@ function reduceJoinedOrLeft(
                     [...changedByMap.values()].flatMap((users) => Array.from(users)),
                 );
 
-                const existing = changedByMap.get(e.event.newRole) ?? new Set();
-
                 // Only add users who have not already had their role changed
-                let updated = false;
-                for (const userId of e.event.userIds) {
-                    if (!alreadyChanged.has(userId)) {
-                        existing.add(userId);
-                        updated = true;
-                    }
-                }
+                const usersToAdd = e.event.userIds.filter((userId) => !alreadyChanged.has(userId));
 
-                if (updated) {
-                    changedByMap.set(e.event.newRole, existing);
+                if (usersToAdd.length > 0) {
+                    let newRoleSet = changedByMap.get(e.event.newRole);
+
+                    if (newRoleSet === undefined) {
+                        newRoleSet = new Set();
+                        changedByMap.set(e.event.newRole, newRoleSet);
+                    }
+
+                    for (const userId of usersToAdd) {
+                        newRoleSet.add(userId);
+                    }
                 }
             }
 
