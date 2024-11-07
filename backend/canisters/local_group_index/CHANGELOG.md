@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Re-queue all canisters to ensure all have fully migrated ([#6760](https://github.com/open-chat-labs/open-chat/pull/6760))
+
+## [[2.0.1432](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1432-local_group_index)] - 2024-11-06
+
+### Changed
+
 - Re-enable job to trigger migrating events to stable memory ([#6747](https://github.com/open-chat-labs/open-chat/pull/6747))
 
 ## [[2.0.1428](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1428-local_group_index)] - 2024-11-06
