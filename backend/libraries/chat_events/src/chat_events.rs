@@ -76,7 +76,7 @@ impl ChatEvents {
     }
 
     pub fn migrate_next_batch_of_events_to_stable_storage(&mut self) -> bool {
-        self.thread_messages_to_update_in_stable_memory.is_empty() && self.next_event_to_migrate_to_stable_memory.is_some()
+        self.thread_messages_to_update_in_stable_memory.is_empty() && self.next_event_to_migrate_to_stable_memory.is_none()
     }
 
     pub fn new_direct_chat(
