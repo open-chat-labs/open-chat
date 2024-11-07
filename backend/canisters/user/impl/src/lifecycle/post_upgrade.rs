@@ -19,6 +19,9 @@ fn post_upgrade(args: Args) {
     let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
 
+    // Only proceed with removing events from the heap if the stable memory migration is complete
+    assert!(data.stable_memory_event_migration_complete);
+
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
     let env = init_env(data.rng_seed);
