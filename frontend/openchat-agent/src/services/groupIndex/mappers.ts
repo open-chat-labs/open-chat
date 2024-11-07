@@ -14,6 +14,8 @@ import type {
     ActiveGroupsResponse,
     ExploreCommunitiesResponse,
     ChannelIdentifier,
+    FreezeCommunityResponse,
+    UnfreezeCommunityResponse,
 } from "openchat-shared";
 import { UnsupportedValueError } from "openchat-shared";
 import { publicGroupSummary } from "../common/publicSummaryMapperV2";
@@ -33,6 +35,8 @@ import type {
     GroupIndexSetCommunityUpgradeConcurrencyResponse,
     GroupIndexUnfreezeGroupResponse,
     GroupMatch as TGroupMatch,
+    GroupIndexFreezeCommunityResponse,
+    GroupIndexUnfreezeCommunityResponse,
 } from "../../typebox";
 
 export function activeGroupsResponse(value: GroupIndexActiveGroupsResponse): ActiveGroupsResponse {
@@ -148,6 +152,50 @@ export function freezeGroupResponse(value: GroupIndexFreezeGroupResponse): Freez
         return "internal_error";
     }
     throw new UnsupportedValueError("Unexpected ApiFreezeGroupResponse type received", value);
+}
+
+export function freezeCommunityResponse(
+    value: GroupIndexFreezeCommunityResponse,
+): FreezeCommunityResponse {
+    console.log("FreezeCommunityResponse: ", value);
+    if (value === "CommunityAlreadyFrozen") {
+        return "community_already_frozen";
+    }
+    if (value === "CommunityNotFound") {
+        return "community_not_found";
+    }
+    if (value === "NotAuthorized") {
+        return "not_authorized";
+    }
+    if ("Success" in value) {
+        return "success";
+    }
+    if ("InternalError" in value) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError("Unexpected ApiFreezeCommunityResponse type received", value);
+}
+
+export function unfreezeCommunityResponse(
+    value: GroupIndexUnfreezeCommunityResponse,
+): UnfreezeCommunityResponse {
+    console.log("UnfreezeCommunityResponse: ", value);
+    if (value === "CommunityNotFrozen") {
+        return "community_not_frozen";
+    }
+    if (value === "CommunityNotFound") {
+        return "community_not_found";
+    }
+    if (value === "NotAuthorized") {
+        return "not_authorized";
+    }
+    if ("Success" in value) {
+        return "success";
+    }
+    if ("InternalError" in value) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError("Unexpected ApiUnfreezeCommunityResponse type received", value);
 }
 
 export function unfreezeGroupResponse(

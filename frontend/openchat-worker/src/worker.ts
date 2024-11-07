@@ -955,6 +955,18 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.unfreezeGroup(payload.chatId));
                 break;
 
+            case "freezeCommunity":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.freezeCommunity(payload.id, payload.reason),
+                );
+                break;
+
+            case "unfreezeCommunity":
+                executeThenReply(payload, correlationId, agent.unfreezeCommunity(payload.id));
+                break;
+
             case "deleteFrozenGroup":
                 executeThenReply(payload, correlationId, agent.deleteFrozenGroup(payload.chatId));
                 break;

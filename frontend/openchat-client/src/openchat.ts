@@ -1907,6 +1907,10 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.multiUserChatPredicate(chatId, isFrozen);
     }
 
+    isCommunityFrozen(id: CommunityIdentifier): boolean {
+        return this.communityPredicate(id, isFrozen);
+    }
+
     isOpenChatBot(userId: string): boolean {
         return userId === OPENCHAT_BOT_USER_ID;
     }
@@ -5326,6 +5330,30 @@ export class OpenChat extends OpenChatAgentWorker {
 
     markThreadSummaryUpdated(threadRootMessageId: bigint, summary: Partial<ThreadSummary>): void {
         localMessageUpdates.markThreadSummaryUpdated(threadRootMessageId, summary);
+    }
+
+    freezeCommunity(id: CommunityIdentifier, reason: string | undefined): Promise<boolean> {
+        return this.sendRequest({ kind: "freezeCommunity", id, reason })
+            .then((resp) => {
+                if (resp === "success") {
+                    // this.onChatFrozen(chatId, resp);
+                    return true;
+                }
+                return false;
+            })
+            .catch(() => false);
+    }
+
+    unfreezeCommunity(id: CommunityIdentifier): Promise<boolean> {
+        return this.sendRequest({ kind: "unfreezeCommunity", id })
+            .then((resp) => {
+                if (resp === "success") {
+                    // this.onChatFrozen(chatId, resp);
+                    return true;
+                }
+                return false;
+            })
+            .catch(() => false);
     }
 
     freezeGroup(chatId: GroupChatIdentifier, reason: string | undefined): Promise<boolean> {

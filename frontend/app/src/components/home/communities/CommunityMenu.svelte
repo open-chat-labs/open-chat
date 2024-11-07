@@ -1,4 +1,6 @@
 <script lang="ts">
+    import CancelIcon from "svelte-material-icons/Cancel.svelte";
+    import TickIcon from "svelte-material-icons/Check.svelte";
     import MenuIcon from "../../MenuIcon.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import BellOff from "svelte-material-icons/BellOff.svelte";
@@ -16,12 +18,13 @@
     import Menu from "../../Menu.svelte";
     import MenuItem from "../../MenuItem.svelte";
     import type { CommunitySummary, OpenChat } from "openchat-client";
-    import { chatSummariesListStore } from "openchat-client";
+    import { chatSummariesListStore, platformModerator } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import { rightPanelHistory } from "../../../stores/rightPanel";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import { notificationsSupported } from "../../../utils/notifications";
+    import { toastStore } from "../../../stores/toast";
 
     const client = getContext<OpenChat>("client");
 
@@ -86,6 +89,26 @@
 
     function muteAllChannels() {
         client.muteAllChannels(community.id);
+    }
+
+    function freezeCommunity() {
+        client.freezeCommunity(community.id, undefined).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast(i18nKey("failedToFreezeCommunity"));
+            } else {
+                toastStore.showSuccessToast(i18nKey("communityFrozen"));
+            }
+        });
+    }
+
+    function unfreezeCommunity() {
+        client.unfreezeCommunity(community.id).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast(i18nKey("failedToUnfreezeCommunity"));
+            } else {
+                toastStore.showSuccessToast(i18nKey("communityUnfrozen"));
+            }
+        });
     }
 </script>
 
@@ -171,6 +194,23 @@
                         <LocationExit size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
                         <div slot="text">
                             <Translatable resourceKey={i18nKey("communities.leave")} />
+                        </div>
+                    </MenuItem>
+                {/if}
+            {/if}
+            {#if $platformModerator}
+                {#if client.isCommunityFrozen(community.id)}
+                    <MenuItem warning on:click={unfreezeCommunity}>
+                        <TickIcon size={$iconSize} color={"var(--menu-warn"} slot="icon" />
+                        <div slot="text">
+                            <Translatable resourceKey={i18nKey("unfreezeCommunity")} />
+                        </div>
+                    </MenuItem>
+                {:else}
+                    <MenuItem warning on:click={freezeCommunity}>
+                        <CancelIcon size={$iconSize} color={"var(--menu-warn"} slot="icon" />
+                        <div slot="text">
+                            <Translatable resourceKey={i18nKey("freezeCommunity")} />
                         </div>
                     </MenuItem>
                 {/if}
