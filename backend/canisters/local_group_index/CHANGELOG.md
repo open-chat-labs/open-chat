@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1435](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1435-local_group_index)] - 2024-11-07
+
 ### Changed
 
 - Re-queue all canisters to ensure all have fully migrated ([#6760](https://github.com/open-chat-labs/open-chat/pull/6760))
