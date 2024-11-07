@@ -3828,10 +3828,10 @@ export class OpenChatAgent extends EventTarget {
             "cached",
         );
 
-        const numberOfMissing = [...missing.values()].reduce((total, s) => total + s.size, 0);
-        callback(withCachedMessages, numberOfMissing === 0);
+        const anyMissing = [...missing.values()].some((s) => s.size > 0);
+        callback(withCachedMessages, anyMissing);
 
-        if (numberOfMissing > 0) {
+        if (anyMissing) {
             this.getMessagesByMessageContext(
                 new AsyncMessageContextMap(missing.map((_, v) => [...v]).toMap()),
                 withCachedMessages,
