@@ -76,7 +76,7 @@ function transaction(candid: ApiTransactionWithId): AccountTransaction {
             from: account(approve.from),
             expectedAllowance: optional(approve.expected_allowance, identity),
             expiredAt: optional(approve.expires_at, identity),
-            spender: optional(approve.spender, account),
+            spender: account(approve.spender),
         };
     }
 
