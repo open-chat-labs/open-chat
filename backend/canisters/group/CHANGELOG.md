@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Reduce size of metrics in memory ([#6765](https://github.com/open-chat-labs/open-chat/pull/6765))
+
 ### Removed
 
 - Remove events from being stored on the heap ([#6758](https://github.com/open-chat-labs/open-chat/pull/6758))
