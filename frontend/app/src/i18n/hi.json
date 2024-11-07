@@ -1292,7 +1292,7 @@
         "none": "कोई नहीं",
         "owner": "मालिकों"
     },
-    "roleChanged": "{changedBy} ने {changed} की भूमिका को {oldRole} से बदलकर {newRole} कर दिया",
+    "roleChanged": "{changedBy} ने {changed} की भूमिका बदलकर {newRole} कर दी",
     "rules": {
         "accept": "स्वीकार करना",
         "acceptTitle": "चैट नियम",
@@ -1655,5 +1655,5 @@
     "yourAccountIsSuspended": "तुम्हारा खाता निलंबित है",
     "yourChats": "आपकी चैट",
     "youreBlocked": "क्षमा करें - आपको इस समूह से ब्लॉक कर दिया गया है",
-    "yourRoleChanged": "{changedBy} ने आपकी भूमिका को {oldRole} से बदलकर {newRole} कर दिया"
+    "yourRoleChanged": "{changedBy} ने आपकी भूमिका बदलकर {newRole} कर दी है"
 }

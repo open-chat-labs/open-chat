@@ -747,6 +747,7 @@ export type AggregateCommonEvents = {
     kind: "aggregate_common_events";
     usersJoined: Set<string>;
     usersLeft: Set<string>;
+    rolesChanged: Map<string, Map<MemberRole, Set<string>>>;
     messagesDeleted: number[];
 };
 

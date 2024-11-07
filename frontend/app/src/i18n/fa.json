@@ -1292,7 +1292,7 @@
         "none": "هيچ كس",
         "owner": "صاحبان"
     },
-    "roleChanged": "{changedBy} نقش {changed} را از {oldRole} به {newRole} تغییر داد",
+    "roleChanged": "{changedBy} نقش {changed} را به {newRole} تغییر داد",
     "rules": {
         "accept": "تایید کنید",
         "acceptTitle": "قوانین چت",
@@ -1655,5 +1655,5 @@
     "yourAccountIsSuspended": "حساب شما به حالت تعلیق درآمده",
     "yourChats": "چت های شما",
     "youreBlocked": "با عرض پوزش - شما از این گروه مسدود شده اید",
-    "yourRoleChanged": "{changedBy} نقش شما را از {oldRole} به {newRole} تغییر داد"
+    "yourRoleChanged": "{changedBy} نقش شما را به {newRole} تغییر داد"
 }
