@@ -3800,18 +3800,21 @@ export class OpenChatAgent extends EventTarget {
 
             setActivityFeedEvents(sorted.slice(0, MAX_ACTIVITY_EVENTS));
 
-            this.hydrateActivityFeedEvents(sorted, (hydrated, final) => {
-                console.log("Hydration callback: ", hydrated, final);
-                resolve({ total: server.total, events: hydrated }, final);
-            });
+            this.hydrateActivityFeedEvents(sorted, (hydrated, final) =>
+                resolve({ total: server.total, events: hydrated }, final),
+            );
         });
     }
 
+    /**
+     * Hydration is a two phase process. First we load all the messages that we have in the cache
+     * and resolve. Secondly we then optionally load any missing messages from the backend and
+     * resolve again.
+     */
     async hydrateActivityFeedEvents(
         activityEvents: MessageActivityEvent[],
         callback: (events: MessageActivityEvent[], final: boolean) => void,
     ) {
-        // partition the events by message context
         const eventIndexesByMessageContext = activityEvents.reduce((map, event) => {
             const eventIndexes = map.get(event.messageContext) ?? [];
             eventIndexes.push(event.eventIndex);
@@ -3819,40 +3822,29 @@ export class OpenChatAgent extends EventTarget {
             return map;
         }, new AsyncMessageContextMap<number>());
 
-        const [cachedMessageLookup, missing] = await this.getMessagesByMessageContext(
+        const [withCachedMessages, missing] = await this.getMessagesByMessageContext(
             eventIndexesByMessageContext,
+            activityEvents,
             "cached",
         );
 
         const numberOfMissing = [...missing.values()].reduce((total, s) => total + s.size, 0);
-        const hydrated = activityEvents.map((ev) => ({
-            ...ev,
-            message: cachedMessageLookup.get(ev.messageId),
-        }));
-
-        console.log("Missing messages: ", missing);
-
-        callback(hydrated, numberOfMissing === 0);
+        callback(withCachedMessages, numberOfMissing === 0);
 
         if (numberOfMissing > 0) {
-            const [serverMessageLookup] = await this.getMessagesByMessageContext(
+            this.getMessagesByMessageContext(
                 new AsyncMessageContextMap(missing.map((_, v) => [...v]).toMap()),
+                withCachedMessages,
                 "missing",
-            );
-            callback(
-                hydrated.map((ev) => ({
-                    ...ev,
-                    message: ev.message ?? serverMessageLookup.get(ev.messageId),
-                })),
-                true,
-            );
+            ).then(([withServerMessages]) => callback(withServerMessages, true));
         }
     }
 
     async getMessagesByMessageContext(
         eventIndexesByMessageContext: AsyncMessageContextMap<number>,
+        activityEvents: MessageActivityEvent[],
         mode: "cached" | "missing",
-    ): Promise<[MessageMap<Message>, MessageContextMap<Set<number>>]> {
+    ): Promise<[MessageActivityEvent[], MessageContextMap<Set<number>>]> {
         const allMissing = new MessageContextMap<Set<number>>();
 
         const messagesByMessageContext = await eventIndexesByMessageContext.asyncMap(
@@ -3928,11 +3920,17 @@ export class OpenChatAgent extends EventTarget {
                 }
             },
         );
+
+        const lookup = [...messagesByMessageContext.values()].reduce((lookup, events) => {
+            events.forEach((ev) => lookup.set(ev.event.messageId, ev.event));
+            return lookup;
+        }, new MessageMap<Message>());
+
         return [
-            [...messagesByMessageContext.values()].reduce((lookup, events) => {
-                events.forEach((ev) => lookup.set(ev.event.messageId, ev.event));
-                return lookup;
-            }, new MessageMap<Message>()),
+            activityEvents.map((ev) => ({
+                ...ev,
+                message: ev.message ?? lookup.get(ev.messageId),
+            })),
             allMissing,
         ];
     }
