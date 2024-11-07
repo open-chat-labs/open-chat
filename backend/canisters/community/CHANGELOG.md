@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1433](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1433-community)] - 2024-11-07
+
 ### Changed
 
 - Restart migration job if threads need to be updated ([#6757](https://github.com/open-chat-labs/open-chat/pull/6757))
