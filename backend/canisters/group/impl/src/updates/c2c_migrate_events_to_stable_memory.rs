@@ -8,10 +8,7 @@ use types::{CanisterId, Empty};
 #[update(guard = "caller_is_group_index_or_local_group_index", msgpack = true)]
 #[trace]
 fn c2c_migrate_events_to_stable_memory(_args: Args) -> Response {
-    mutate_state(|state| {
-        utils::cycles::check_cycles_balance(state.data.local_user_index_canister_id);
-        migrate_events_to_stable_memory_impl(&mut state.data, false)
-    })
+    mutate_state(|state| migrate_events_to_stable_memory_impl(&mut state.data, false))
 }
 
 pub(crate) fn migrate_events_to_stable_memory_impl(data: &mut Data, notify: bool) -> bool {
