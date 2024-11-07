@@ -1292,7 +1292,7 @@
         "none": "誰でもない",
         "owner": "所有者"
     },
-    "roleChanged": "{changedBy}は、{changed}の役割を{oldRole}から{newRole}に変更しました",
+    "roleChanged": "{changedBy} は {changed} の役割を {newRole} に変更しました",
     "rules": {
         "accept": "承認",
         "acceptTitle": "チャットのルール",
@@ -1655,5 +1655,5 @@
     "yourAccountIsSuspended": "あなたのアカウントが停止されました",
     "yourChats": "あなたのチャット",
     "youreBlocked": "申し訳ございませんが、あなたはこのグループからブロックされています",
-    "yourRoleChanged": "{changedBy}が役割を{oldRole}から{newRole}に変更しました"
+    "yourRoleChanged": "{changedBy} があなたの役割を {newRole} に変更しました"
 }

@@ -1,9 +1,17 @@
 <svelte:options immutable />
 
 <script lang="ts">
-    import type { ChatIdentifier, Level, OpenChat, UserLookup, UserSummary } from "openchat-client";
+    import type {
+        ChatIdentifier,
+        MemberRole,
+        Level,
+        OpenChat,
+        UserLookup,
+        UserSummary,
+    } from "openchat-client";
     import { userStore } from "openchat-client";
     import { getContext, onDestroy, onMount } from "svelte";
+    import { buildDisplayName } from "../../utils/user";
     import { _ } from "svelte-i18n";
     import Markdown from "./Markdown.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
@@ -12,6 +20,7 @@
     export let user: UserSummary | undefined;
     export let joined: Set<string>;
     export let messagesDeleted: number[];
+    export let rolesChanged: Map<string, Map<MemberRole, Set<string>>>;
     export let observer: IntersectionObserver;
     export let readByMe: boolean;
     export let level: Level;
@@ -27,6 +36,7 @@
                 ? $_("oneMessageDeleted")
                 : $_("nMessagesDeleted", { values: { number: messagesDeleted.length } })
             : undefined;
+    $: roleChangedTextList = buildRoleChangedTextList($userStore, rolesChanged);
 
     onMount(() => {
         if (!readByMe && deletedMessagesElement) {
@@ -59,7 +69,7 @@
                     i18nKey(
                         "userJoined",
                         {
-                            username: buildUserList(userStore, userIds),
+                            username: buildUserList(userStore, Array.from(userIds)),
                         },
                         level,
                         true,
@@ -68,11 +78,43 @@
               : undefined;
     }
 
-    function buildUserList(userStore: UserLookup, userIds: Set<string>): string {
+    function buildRoleChangedTextList(
+        userStore: UserLookup,
+        rolesChanged: Map<string, Map<MemberRole, Set<string>>>,
+    ): string[] {
+        return [...rolesChanged.entries()].flatMap(([changedBy, changedByMap]) => {
+            const me = changedBy === user?.userId;
+            const changedByStr = buildDisplayName(userStore, changedBy, me);
+
+            return [...changedByMap.entries()].flatMap(([newRole, userIds]) =>
+                buildRoleChangedText(userStore, changedByStr, newRole, Array.from(userIds)),
+            );
+        });
+    }
+
+    function buildRoleChangedText(
+        userStore: UserLookup,
+        changedBy: string,
+        newRole: MemberRole,
+        userIds: string[],
+    ): string {
+        const meChanged = userIds.length == 1 && userIds[0] === user?.userId;
+        const members = buildUserList(userStore, userIds);
+
+        return $_(meChanged ? "yourRoleChanged" : "roleChanged", {
+            values: {
+                changed: members,
+                changedBy,
+                newRole: $_(newRole),
+            },
+        });
+    }
+
+    function buildUserList(userStore: UserLookup, userIds: string[]): string {
         return client.getMembersString(
             user!,
             userStore,
-            Array.from(userIds),
+            userIds,
             $_("unknownUser"),
             $_("you"),
             user ? client.compareIsNotYouThenUsername(user.userId) : client.compareUsername,
@@ -85,10 +127,12 @@
     }
 </script>
 
-{#if joinedText !== undefined || deletedText !== undefined}
+{#if joinedText !== undefined || deletedText !== undefined || roleChangedTextList?.length > 0}
     <div class="timeline-event">
         {#if joinedText !== undefined}
-            <Markdown oneLine suppressLinks text={joinedText} />
+            <p>
+                <Markdown oneLine suppressLinks text={joinedText} />
+            </p>
         {/if}
         {#if deletedText !== undefined}
             <p
@@ -100,6 +144,11 @@
                 {deletedText}
             </p>
         {/if}
+        {#each roleChangedTextList as text}
+            <p>
+                <Markdown suppressLinks {text} />
+            </p>
+        {/each}
     </div>
 {/if}
 
@@ -108,7 +157,7 @@
         max-width: 80%;
         padding: $sp2;
         background-color: var(--timeline-bg);
-        margin: $sp4 auto;
+        margin: 0 auto $sp4 auto;
         text-align: center;
         color: var(--timeline-txt);
         @include font(book, normal, fs-70);

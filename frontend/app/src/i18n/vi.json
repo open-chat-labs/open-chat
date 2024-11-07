@@ -1292,7 +1292,7 @@
         "none": "Không ai",
         "owner": "Những chủ sở hữu"
     },
-    "roleChanged": "{changeBy} đã thay đổi vai trò của {change} từ {oldRole} thành {newRole}",
+    "roleChanged": "{changedBy} đã thay đổi vai trò của {changed} thành {newRole}",
     "rules": {
         "accept": "Chấp nhận",
         "acceptTitle": "Quy tắc trò chuyện",
@@ -1655,5 +1655,5 @@
     "yourAccountIsSuspended": "Tài khoản của bạn bị treo",
     "yourChats": "Mục trờ chuyện của bạn",
     "youreBlocked": "Xin lỗi, bạn đã bị chặn khỏi nhóm này",
-    "yourRoleChanged": "{changeBy} đã thay đổi vai trò của bạn từ {oldRole} thành {newRole}"
+    "yourRoleChanged": "{changedBy} đã thay đổi vai trò của bạn thành {newRole}"
 }

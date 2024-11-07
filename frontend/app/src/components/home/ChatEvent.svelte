@@ -4,7 +4,6 @@
     import DirectChatCreatedEvent from "./DirectChatCreatedEvent.svelte";
     import MembersChangedEvent from "./MembersChangedEvent.svelte";
     import PermissionsChangedEvent from "./PermissionsChangedEvent.svelte";
-    import RoleChangedEvent from "./RoleChangedEvent.svelte";
     import AggregateCommonEvents from "./AggregateCommonEvents.svelte";
     import {
         type CreatedUser,
@@ -213,9 +212,8 @@
         {readByMe}
         user={userSummary}
         joined={event.event.usersJoined}
-        messagesDeleted={event.event.messagesDeleted} />
-{:else if event.event.kind === "role_changed"}
-    <RoleChangedEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
+        messagesDeleted={event.event.messagesDeleted}
+        rolesChanged={event.event.rolesChanged} />
 {:else if event.event.kind === "users_blocked"}
     <MembersChangedEvent
         level={levelType}
