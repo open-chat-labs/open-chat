@@ -16,11 +16,3 @@ pub use crate::chat_events_list::*;
 pub use crate::events_map::*;
 pub use crate::message_content_internal::*;
 pub use crate::stable_storage::key::*;
-
-fn incr(counter: &mut u32) {
-    *counter = counter.saturating_add(1);
-}
-
-fn decr(counter: &mut u32) {
-    *counter = counter.saturating_sub(1);
-}

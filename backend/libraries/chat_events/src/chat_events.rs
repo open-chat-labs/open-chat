@@ -345,7 +345,7 @@ impl ChatEvents {
                     &mut self.metrics,
                     &mut self.per_user_metrics,
                     sender,
-                    |m| incr(&mut m.edits),
+                    |m| m.incr(MetricsKey::Edits, 1),
                     now,
                 );
                 EditMessageResult::Success
@@ -449,7 +449,7 @@ impl ChatEvents {
                         &mut self.metrics,
                         &mut self.per_user_metrics,
                         sender,
-                        |m| incr(&mut m.reported_messages),
+                        |m| m.incr(MetricsKey::ReportedMessages, 1),
                         args.now,
                     );
                 }
@@ -457,7 +457,7 @@ impl ChatEvents {
                     &mut self.metrics,
                     &mut self.per_user_metrics,
                     args.caller,
-                    |m| incr(&mut m.deleted_messages),
+                    |m| m.incr(MetricsKey::DeletedMessages, 1),
                     args.now,
                 );
                 if args.thread_root_message_index.is_none() {
@@ -508,7 +508,7 @@ impl ChatEvents {
                         &mut self.metrics,
                         &mut self.per_user_metrics,
                         sender,
-                        |m| decr(&mut m.reported_messages),
+                        |m| m.decr(MetricsKey::ReportedMessages, 1),
                         args.now,
                     );
                 }
@@ -516,7 +516,7 @@ impl ChatEvents {
                     &mut self.metrics,
                     &mut self.per_user_metrics,
                     args.caller,
-                    |m| decr(&mut m.deleted_messages),
+                    |m| m.decr(MetricsKey::DeletedMessages, 1),
                     args.now,
                 );
                 if args.thread_root_message_index.is_none() {
@@ -602,7 +602,7 @@ impl ChatEvents {
                                 &mut self.metrics,
                                 &mut self.per_user_metrics,
                                 args.user_id,
-                                |m| incr(&mut m.poll_votes),
+                                |m| m.incr(MetricsKey::PollVotes, 1),
                                 args.now,
                             );
                         }
@@ -612,7 +612,7 @@ impl ChatEvents {
                             &mut self.metrics,
                             &mut self.per_user_metrics,
                             args.user_id,
-                            |m| decr(&mut m.poll_votes),
+                            |m| m.decr(MetricsKey::PollVotes, 1),
                             args.now,
                         );
                     }
@@ -814,7 +814,7 @@ impl ChatEvents {
                     &mut self.metrics,
                     &mut self.per_user_metrics,
                     user_id,
-                    |m| incr(&mut m.reactions),
+                    |m| m.incr(MetricsKey::Reactions, 1),
                     now,
                 );
                 Success(sender)
@@ -881,7 +881,7 @@ impl ChatEvents {
                     &mut self.metrics,
                     &mut self.per_user_metrics,
                     args.user_id,
-                    |m| decr(&mut m.reactions),
+                    |m| m.decr(MetricsKey::Reactions, 1),
                     args.now,
                 );
                 Success(sender)
@@ -933,7 +933,7 @@ impl ChatEvents {
                     &mut self.metrics,
                     &mut self.per_user_metrics,
                     args.user_id,
-                    |m| incr(&mut m.tips),
+                    |m| m.incr(MetricsKey::Tips, 1),
                     args.now,
                 );
                 Success
