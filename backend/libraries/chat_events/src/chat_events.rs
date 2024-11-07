@@ -13,11 +13,12 @@ use search::{Document, Query};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use sha2::{Digest, Sha256};
-use std::cmp::max;
+use std::cmp::{max, min};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::mem;
 use std::ops::DerefMut;
+use tracing::info;
 use types::{
     AcceptP2PSwapResult, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, ChatType, CompleteP2PSwapResult,
     CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventContext, EventIndex, EventWrapper,
@@ -76,7 +77,23 @@ impl ChatEvents {
     }
 
     pub fn migrate_next_batch_of_events_to_stable_storage(&mut self) -> bool {
-        self.thread_messages_to_update_in_stable_memory.is_empty() && self.next_event_to_migrate_to_stable_memory.is_none()
+        while !self.thread_messages_to_update_in_stable_memory.is_empty() {
+            if ic_cdk::api::instruction_counter() > 1_000_000_000 {
+                return false;
+            }
+
+            let batch: Vec<_> = self
+                .thread_messages_to_update_in_stable_memory
+                .drain(..min(100, self.thread_messages_to_update_in_stable_memory.len()))
+                .collect();
+
+            let count = batch.len();
+            for message_index in batch {
+                self.update_event_in_stable_memory(message_index.into());
+            }
+            info!(chat = ?self.chat, count, "Updated threads in stable memory");
+        }
+        self.next_event_to_migrate_to_stable_memory.is_none()
     }
 
     pub fn new_direct_chat(
