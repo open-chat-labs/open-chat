@@ -677,7 +677,7 @@ impl From<ChatMetricsInternalPrevious> for ChatMetricsInternal {
             metrics.metrics.push((MetricsKey::Edits, value.edits));
         }
         if value.reactions > 0 {
-            metrics.metrics.push((MetricsKey::Reactions, value.replies));
+            metrics.metrics.push((MetricsKey::Reactions, value.reactions));
         }
         if value.tips > 0 {
             metrics.metrics.push((MetricsKey::Tips, value.tips));
