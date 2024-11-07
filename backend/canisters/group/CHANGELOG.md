@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix case where some thread messages were not updated in stable memory ([#6736](https://github.com/open-chat-labs/open-chat/pull/6736))
 - Perform cycles check when migrating events to stable memory ([#6751](https://github.com/open-chat-labs/open-chat/pull/6751))
 
+### Removed
+
+- Remove events from being stored on the heap ([#6753](https://github.com/open-chat-labs/open-chat/pull/6753))
+
 ### Fixed
 
 - Fix migrating to stable memory for chats with disappearing messages ([#6746](https://github.com/open-chat-labs/open-chat/pull/6746))
