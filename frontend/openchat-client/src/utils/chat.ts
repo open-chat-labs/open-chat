@@ -744,29 +744,24 @@ function reduceJoinedOrLeft(
                     agg.rolesChanged.set(e.event.changedBy, changedByMap);
                 }
 
-                let newRoleSet = changedByMap.get(e.event.newRole);
+                // Build the set of users that have already had their role changed
+                const alreadyChanged = new Set(
+                    [...changedByMap.values()].flatMap((users) => Array.from(users)),
+                );
 
-                if (newRoleSet === undefined) {
-                    newRoleSet = new Set();
-                    changedByMap.set(e.event.newRole, newRoleSet);
+                const existing = changedByMap.get(e.event.newRole) ?? new Set();
+
+                // Only add users who have not already had their role changed
+                let updated = false;
+                for (const userId of e.event.userIds) {
+                    if (!alreadyChanged.has(userId)) {
+                        existing.add(userId);
+                        updated = true;
+                    }
                 }
 
-                const newRole = e.event.newRole;
-
-                e.event.userIds.forEach((userId) => {
-                    // Seeing as we are visting the events in reverse order, only add
-                    // a user if it isn't already in another set
-                    if (
-                        [...changedByMap.entries()]
-                            .filter(([role, _]) => role !== newRole)
-                            .every(([_, users]) => !users.has(userId))
-                    ) {
-                        newRoleSet.add(userId);
-                    }
-                });
-
-                if (newRoleSet.size === 0) {
-                    changedByMap.delete(e.event.newRole);
+                if (updated) {
+                    changedByMap.set(e.event.newRole, existing);
                 }
             }
 
