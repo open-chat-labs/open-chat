@@ -236,6 +236,7 @@ import {
     MessageMap,
     MAX_ACTIVITY_EVENTS,
     messageContextToString,
+    MessageContextMap,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { AsyncMessageContextMap } from "../utils/messageContext";
@@ -3771,7 +3772,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     messageActivityFeed(): Stream<MessageActivityFeedResponse> {
-        return new Stream(async (resolve, reject) => {
+        return new Stream(async (resolve) => {
             const cachedEvents = await getActivityFeedEvents();
 
             const since = cachedEvents[0]?.timestamp ?? 0n;
@@ -3799,27 +3800,17 @@ export class OpenChatAgent extends EventTarget {
 
             setActivityFeedEvents(sorted.slice(0, MAX_ACTIVITY_EVENTS));
 
-            resolve({ total: server.total, events: sorted }, false);
-
-            const rehydrated = await this.hydrateActivityFeedEvents(sorted).catch((err) => {
-                console.error("Error rehydrating activity feed: ", err);
-                reject(err);
-                return sorted;
+            this.hydrateActivityFeedEvents(sorted, (hydrated, final) => {
+                console.log("Hydration callback: ", hydrated, final);
+                resolve({ total: server.total, events: hydrated }, final);
             });
-
-            resolve(
-                {
-                    total: server.total,
-                    events: rehydrated,
-                },
-                true,
-            );
         });
     }
 
     async hydrateActivityFeedEvents(
         activityEvents: MessageActivityEvent[],
-    ): Promise<MessageActivityEvent[]> {
+        callback: (events: MessageActivityEvent[], final: boolean) => void,
+    ) {
         // partition the events by message context
         const eventIndexesByMessageContext = activityEvents.reduce((map, event) => {
             const eventIndexes = map.get(event.messageContext) ?? [];
@@ -3828,45 +3819,121 @@ export class OpenChatAgent extends EventTarget {
             return map;
         }, new AsyncMessageContextMap<number>());
 
-        // look up all the messages correlated with the activity events (mostly this will come from the cache)
+        const [cachedMessageLookup, missing] = await this.getMessagesByMessageContext(
+            eventIndexesByMessageContext,
+            "cached",
+        );
+
+        const numberOfMissing = [...missing.values()].reduce((total, s) => total + s.size, 0);
+        const hydrated = activityEvents.map((ev) => ({
+            ...ev,
+            message: cachedMessageLookup.get(ev.messageId),
+        }));
+
+        console.log("Missing messages: ", missing);
+
+        callback(hydrated, numberOfMissing === 0);
+
+        if (numberOfMissing > 0) {
+            const [serverMessageLookup] = await this.getMessagesByMessageContext(
+                new AsyncMessageContextMap(missing.map((_, v) => [...v]).toMap()),
+                "missing",
+            );
+            callback(
+                hydrated.map((ev) => ({
+                    ...ev,
+                    message: ev.message ?? serverMessageLookup.get(ev.messageId),
+                })),
+                true,
+            );
+        }
+    }
+
+    async getMessagesByMessageContext(
+        eventIndexesByMessageContext: AsyncMessageContextMap<number>,
+        mode: "cached" | "missing",
+    ): Promise<[MessageMap<Message>, MessageContextMap<Set<number>>]> {
+        const allMissing = new MessageContextMap<Set<number>>();
+
         const messagesByMessageContext = await eventIndexesByMessageContext.asyncMap(
             (ctx, idxs) => {
                 const chatId = ctx.chatId;
                 const chatKind = chatId.kind;
 
+                function addMissing(context: MessageContext, missing: Set<number>) {
+                    if (missing.size > 0) {
+                        const current = allMissing.get(context) ?? new Set<number>();
+                        missing.forEach((n) => current.add(n));
+                        allMissing.set(context, current);
+                    }
+                }
+
                 if (chatKind === "direct_chat") {
-                    return this.userClient
-                        .chatEventsByIndex(idxs, chatId, ctx.threadRootMessageIndex, undefined)
-                        .then((resp) => this.messagesFromEventsResponse(ctx, resp));
+                    switch (mode) {
+                        case "cached":
+                            return this.userClient
+                                .getCachedEventsByIndex(idxs, chatId, ctx.threadRootMessageIndex)
+                                .then(([resp, missing]) => {
+                                    addMissing(ctx, missing);
+                                    return this.messagesFromEventsResponse(ctx, resp);
+                                });
+                        case "missing":
+                            return this.userClient
+                                .chatEventsByIndex(
+                                    // getMissing(ctx),
+                                    idxs,
+                                    chatId,
+                                    ctx.threadRootMessageIndex,
+                                    undefined,
+                                )
+                                .then((resp) => this.messagesFromEventsResponse(ctx, resp));
+                    }
                 } else if (chatKind === "group_chat") {
                     const client = this.getGroupClient(chatId.groupId);
-                    return client
-                        .chatEventsByIndex(idxs, ctx.threadRootMessageIndex, undefined)
-                        .then((resp) => this.messagesFromEventsResponse(ctx, resp));
+                    switch (mode) {
+                        case "cached":
+                            return client
+                                .getCachedEventsByIndex(idxs, ctx.threadRootMessageIndex)
+                                .then(([resp, missing]) => {
+                                    addMissing(ctx, missing);
+                                    return this.messagesFromEventsResponse(ctx, resp);
+                                });
+                        case "missing":
+                            return client
+                                .chatEventsByIndex(
+                                    // getMissing(ctx),
+                                    idxs,
+                                    ctx.threadRootMessageIndex,
+                                    undefined,
+                                )
+                                .then((resp) => this.messagesFromEventsResponse(ctx, resp));
+                    }
                 } else if (chatKind === "channel") {
                     const client = this.communityClient(chatId.communityId);
-                    return client
-                        .eventsByIndex(chatId, idxs, ctx.threadRootMessageIndex, undefined)
-                        .then((resp) => this.messagesFromEventsResponse(ctx, resp));
+                    switch (mode) {
+                        case "cached":
+                            return client
+                                .getCachedEventsByIndex(chatId, idxs, ctx.threadRootMessageIndex)
+                                .then(([resp, missing]) => {
+                                    addMissing(ctx, missing);
+                                    return this.messagesFromEventsResponse(ctx, resp);
+                                });
+                        case "missing":
+                            return client
+                                .eventsByIndex(chatId, idxs, ctx.threadRootMessageIndex, undefined)
+                                .then((resp) => this.messagesFromEventsResponse(ctx, resp));
+                    }
                 } else {
                     throw new UnsupportedValueError("unknown chatid kind supplied", chatId);
                 }
             },
         );
-
-        // organise the messages into a lookup so we can stitch things back together easily
-        const messageLookup = [...messagesByMessageContext.values()].reduce((lookup, events) => {
-            events.forEach((ev) => lookup.set(ev.event.messageId, ev.event));
-            return lookup;
-        }, new MessageMap<Message>());
-
-        // tie it all together
-        return activityEvents.map((ev) => {
-            const message = messageLookup.get(ev.messageId);
-            return {
-                ...ev,
-                message,
-            };
-        });
+        return [
+            [...messagesByMessageContext.values()].reduce((lookup, events) => {
+                events.forEach((ev) => lookup.set(ev.event.messageId, ev.event));
+                return lookup;
+            }, new MessageMap<Message>()),
+            allMissing,
+        ];
     }
 }

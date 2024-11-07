@@ -265,15 +265,21 @@ export class GroupClient extends CandidService {
         );
     }
 
+    getCachedEventsByIndex(eventIndexes: number[], threadRootMessageIndex: number | undefined) {
+        return getCachedEventsByIndex(this.db, eventIndexes, {
+            chatId: this.chatId,
+            threadRootMessageIndex,
+        });
+    }
+
     chatEventsByIndex(
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
-        return getCachedEventsByIndex(this.db, eventIndexes, {
-            chatId: this.chatId,
-            threadRootMessageIndex,
-        }).then((res) => this.handleMissingEvents(res, threadRootMessageIndex, latestKnownUpdate));
+        return this.getCachedEventsByIndex(eventIndexes, threadRootMessageIndex).then((res) =>
+            this.handleMissingEvents(res, threadRootMessageIndex, latestKnownUpdate),
+        );
     }
 
     private setCachedEvents<T extends ChatEvent>(
