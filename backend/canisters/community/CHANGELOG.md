@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Remove code to migrate events to stable memory ([#6751](https://github.com/open-chat-labs/open-chat/pull/6751))
+- Remove events from being stored on the heap ([#6753](https://github.com/open-chat-labs/open-chat/pull/6753))
 
 ## [[2.0.1431](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1431-community)] - 2024-11-06
 
