@@ -21,6 +21,11 @@ fn post_upgrade(args: Args) {
     let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
 
+    // Only proceed with removing events from the heap if the stable memory migration is complete
+    assert!(data.stable_memory_event_migration_complete);
+
+    // Set the migration flag to false if threads need to be updated, but this can be done purely
+    // in stable memory so no need to abort the upgrade
     for channel in data.channels.iter_mut() {
         if channel.chat.events.thread_messages_to_update_in_stable_memory_len() > 0 {
             data.stable_memory_event_migration_complete = false;
