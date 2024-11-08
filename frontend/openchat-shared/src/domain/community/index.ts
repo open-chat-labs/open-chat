@@ -323,3 +323,19 @@ export type SetMemberDisplayNameResponse =
     | "offline";
 
 export type FollowThreadResponse = "success" | "unchanged" | "failed" | "offline";
+
+export type FreezeCommunityResponse =
+    | "success"
+    | "community_already_frozen"
+    | "community_not_found"
+    | "not_authorized"
+    | "internal_error"
+    | "offline";
+
+export type UnfreezeCommunityResponse =
+    | "success"
+    | "community_not_frozen"
+    | "community_not_found"
+    | "not_authorized"
+    | "internal_error"
+    | "offline";

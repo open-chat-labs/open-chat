@@ -449,8 +449,8 @@
                         </MenuItem>
                     {/if}
 
-                    {#if $platformModerator}
-                        {#if client.isFrozen(selectedChatSummary.id)}
+                    {#if $platformModerator && selectedChatSummary.kind === "group_chat"}
+                        {#if client.isChatFrozen(selectedChatSummary.id)}
                             <MenuItem warning on:click={unfreezeGroup}>
                                 <TickIcon size={$iconSize} color={"var(--menu-warn"} slot="icon" />
                                 <div slot="text">

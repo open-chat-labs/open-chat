@@ -34,6 +34,7 @@
         messagesRead,
         blockedUsers as directlyBlockedUsers,
         communities,
+        selectedCommunity,
     } from "openchat-client";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
@@ -83,7 +84,7 @@
     $: messageContext = { chatId: chat.id };
     $: showFooter = !showSearchHeader && !$suspendedUser;
     $: blocked = isBlocked(chat, $directlyBlockedUsers);
-    $: frozen = isFrozen(chat);
+    $: frozen = client.isChatOrCommunityFrozen(chat, $selectedCommunity);
     $: canSendAny = client.canSendMessage(chat.id, "message");
     $: preview = client.isPreviewing(chat.id);
     $: lapsed = client.isLapsed(chat.id);
@@ -272,10 +273,6 @@
 
     function isBlocked(chatSummary: ChatSummary, blockedUsers: Set<string>): boolean {
         return chatSummary.kind === "direct_chat" && blockedUsers.has(chatSummary.them.userId);
-    }
-
-    function isFrozen(chatSummary: ChatSummary): boolean {
-        return chatSummary.kind !== "direct_chat" && chatSummary.frozen;
     }
 
     function defaultCryptoTransferReceiver(): string | undefined {
