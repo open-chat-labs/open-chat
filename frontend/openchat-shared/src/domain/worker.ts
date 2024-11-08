@@ -150,6 +150,8 @@ import type {
     DeleteUserGroupsResponse,
     SetMemberDisplayNameResponse,
     FollowThreadResponse,
+    FreezeCommunityResponse,
+    UnfreezeCommunityResponse,
 } from "./community";
 import type { UpdateBtcBalanceResponse } from "./bitcoin";
 import type { RegistryValue } from "./registry";
@@ -288,6 +290,8 @@ export type WorkerRequest =
     | SetCachedMessageFromNotification
     | FreezeGroup
     | UnfreezeGroup
+    | FreezeCommunity
+    | UnfreezeCommunity
     | DeleteFrozenGroup
     | AddHotGroupExclusion
     | RemoveHotGroupExclusion
@@ -1111,6 +1115,17 @@ type UnfreezeGroup = {
     kind: "unfreezeGroup";
 };
 
+type FreezeCommunity = {
+    id: CommunityIdentifier;
+    reason: string | undefined;
+    kind: "freezeCommunity";
+};
+
+type UnfreezeCommunity = {
+    id: CommunityIdentifier;
+    kind: "unfreezeCommunity";
+};
+
 type DeleteFrozenGroup = {
     chatId: GroupChatIdentifier;
     kind: "deleteFrozenGroup";
@@ -1401,6 +1416,8 @@ export type WorkerResponseInner =
     | CurrentUserResponse
     | FreezeGroupResponse
     | UnfreezeGroupResponse
+    | FreezeCommunityResponse
+    | UnfreezeCommunityResponse
     | DeleteFrozenGroupResponse
     | AddHotGroupExclusion
     | RemoveHotGroupExclusion
@@ -1961,6 +1978,10 @@ export type WorkerResult<T> = T extends Init
     ? FreezeGroupResponse
     : T extends UnfreezeGroup
     ? UnfreezeGroupResponse
+    : T extends FreezeCommunity
+    ? FreezeCommunityResponse
+    : T extends UnfreezeCommunity
+    ? UnfreezeCommunityResponse
     : T extends AddHotGroupExclusion
     ? AddHotGroupExclusionResponse
     : T extends RemoveHotGroupExclusion

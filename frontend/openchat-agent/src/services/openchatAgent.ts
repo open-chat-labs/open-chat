@@ -220,6 +220,8 @@ import type {
     MessageActivitySummary,
     MessageActivityFeedResponse,
     MessageActivityEvent,
+    FreezeCommunityResponse,
+    UnfreezeCommunityResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -2964,6 +2966,21 @@ export class OpenChatAgent extends EventTarget {
         if (offline()) return Promise.resolve("offline");
 
         return this._groupIndexClient.unfreezeGroup(chatId.groupId);
+    }
+
+    freezeCommunity(
+        id: CommunityIdentifier,
+        reason: string | undefined,
+    ): Promise<FreezeCommunityResponse> {
+        if (offline()) return Promise.resolve("offline");
+
+        return this._groupIndexClient.freezeCommunity(id, reason);
+    }
+
+    unfreezeCommunity(id: CommunityIdentifier): Promise<UnfreezeCommunityResponse> {
+        if (offline()) return Promise.resolve("offline");
+
+        return this._groupIndexClient.unfreezeCommunity(id);
     }
 
     deleteFrozenGroup(chatId: GroupChatIdentifier): Promise<DeleteFrozenGroupResponse> {
