@@ -96,7 +96,7 @@
     import NewGroup from "./addgroup/NewGroup.svelte";
     import AccountsModal from "./profile/AccountsModal.svelte";
     import { querystring } from "../../routes";
-    import { eventListScrollTop } from "../../stores/scrollPos";
+    import { communityListScrollTop, eventListScrollTop } from "../../stores/scrollPos";
     import GateCheckFailed from "./access/AccessGateCheckFailed.svelte";
     import HallOfFame from "./ChitHallOfFame.svelte";
     import LeftNav from "./nav/LeftNav.svelte";
