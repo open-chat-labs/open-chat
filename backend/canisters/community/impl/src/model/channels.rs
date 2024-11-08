@@ -444,11 +444,9 @@ impl From<&Channel> for ChannelMatch {
 impl From<&Channel> for Document {
     fn from(channel: &Channel) -> Self {
         let mut document = Document::default();
-        document.add_field(channel.chat.name.value.clone(), 5.0, true).add_field(
-            channel.chat.description.value.clone(),
-            1.0,
-            true,
-        );
+        document
+            .add_field(channel.chat.name.value.clone(), true)
+            .add_field(channel.chat.description.value.clone(), true);
         document
     }
 }

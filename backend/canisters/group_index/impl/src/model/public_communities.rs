@@ -270,8 +270,8 @@ impl From<&PublicCommunityInfo> for Document {
     fn from(community: &PublicCommunityInfo) -> Self {
         let mut document = Document::default();
         document
-            .add_field(community.name.clone(), 5.0, true)
-            .add_field(community.description.clone(), 1.0, true);
+            .add_field(community.name.clone(), true)
+            .add_field(community.description.clone(), true);
         document
     }
 }

@@ -32,14 +32,12 @@ impl Query {
 #[derive(Serialize, Deserialize)]
 pub struct Field {
     tokens: Vec<Token>,
-    weight: f32,
 }
 
 impl Field {
-    fn new(free_text: String, weight: f32, split: bool) -> Field {
+    fn new(free_text: String, split: bool) -> Field {
         Field {
             tokens: if split { parse_tokens(free_text) } else { vec![Token::new(free_text)] },
-            weight,
         }
     }
 }
@@ -50,8 +48,8 @@ pub struct Document {
 }
 
 impl Document {
-    pub fn add_field(&mut self, value: String, weight: f32, split: bool) -> &mut Document {
-        self.fields.push(Field::new(value, weight, split));
+    pub fn add_field(&mut self, value: String, split: bool) -> &mut Document {
+        self.fields.push(Field::new(value, split));
         self
     }
 
@@ -111,9 +109,7 @@ fn score_field(query: &Query, field: &Field) -> f32 {
     }
 
     // Average of token matches
-    let score = total / (query.tokens.len() as f32);
-
-    score * field.weight
+    total / (query.tokens.len() as f32)
 }
 
 fn score_field_for_token(search_token: &Token, field: &Field) -> f32 {
@@ -157,10 +153,10 @@ mod tests {
     #[test]
     fn test_matching_two_words_in_long_text_better_than_one_word_in_short_text() {
         let mut doc1 = Document::default();
-        doc1.add_field("The quick brown fox jumps over the lazy dog.".to_string(), 1.0, false);
+        doc1.add_field("The quick brown fox jumps over the lazy dog.".to_string(), false);
 
         let mut doc2 = Document::default();
-        doc2.add_field("fox".to_string(), 1.0, false);
+        doc2.add_field("fox".to_string(), false);
 
         let query = Query::parse("lazy fox".to_string());
 

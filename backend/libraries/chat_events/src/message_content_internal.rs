@@ -275,28 +275,28 @@ impl From<&MessageContentInternal> for Document {
 
         fn try_add_caption(document: &mut Document, caption_option: Option<&String>) {
             if let Some(caption) = caption_option {
-                document.add_field(caption.to_owned(), 1.0, false);
+                document.add_field(caption.to_owned(), false);
             }
         }
 
         fn try_add_caption_and_mime_type(document: &mut Document, caption_option: Option<&String>, mime_type: &str) {
-            document.add_field(mime_type.to_owned(), 1.0, false);
+            document.add_field(mime_type.to_owned(), false);
             try_add_caption(document, caption_option);
         }
 
         match message_content {
             MessageContentInternal::Text(c) => {
-                document.add_field(c.text.clone(), 1.0, false);
+                document.add_field(c.text.clone(), false);
             }
             MessageContentInternal::Crypto(c) => {
                 let token = c.transfer.token();
-                document.add_field(token.token_symbol().to_string(), 1.0, false);
+                document.add_field(token.token_symbol().to_string(), false);
 
                 let amount = c.transfer.units();
                 // This is only used for string searching so it's better to default to 8 than to trap
                 let decimals = c.transfer.token().decimals().unwrap_or(8);
                 let amount_string = format_crypto_amount(amount, decimals);
-                document.add_field(amount_string, 1.0, false);
+                document.add_field(amount_string, false);
 
                 try_add_caption(&mut document, c.caption.as_ref())
             }
@@ -306,32 +306,32 @@ impl From<&MessageContentInternal> for Document {
             MessageContentInternal::File(c) => try_add_caption_and_mime_type(&mut document, c.caption.as_ref(), &c.mime_type),
             MessageContentInternal::Giphy(c) => try_add_caption(&mut document, c.caption.as_ref()),
             MessageContentInternal::Poll(p) => {
-                document.add_field("poll".to_string(), 1.0, false);
+                document.add_field("poll".to_string(), false);
                 if let Some(text) = p.config.text.clone() {
-                    document.add_field(text, 1.0, false);
+                    document.add_field(text, false);
                 }
             }
             MessageContentInternal::GovernanceProposal(p) => {
-                document.add_field(p.proposal.title().to_string(), 1.0, false);
-                document.add_field(p.proposal.summary().to_string(), 1.0, false);
+                document.add_field(p.proposal.title().to_string(), false);
+                document.add_field(p.proposal.summary().to_string(), false);
             }
             MessageContentInternal::Prize(c) => {
-                document.add_field(c.transaction.token().token_symbol().to_string(), 1.0, false);
+                document.add_field(c.transaction.token().token_symbol().to_string(), false);
                 try_add_caption(&mut document, c.caption.as_ref())
             }
             MessageContentInternal::PrizeWinner(c) => {
-                document.add_field(c.token_symbol.clone(), 1.0, false);
+                document.add_field(c.token_symbol.clone(), false);
             }
             MessageContentInternal::MessageReminderCreated(r) => try_add_caption(&mut document, r.notes.as_ref()),
             MessageContentInternal::MessageReminder(r) => try_add_caption(&mut document, r.notes.as_ref()),
             MessageContentInternal::P2PSwap(p) => {
-                document.add_field("swap".to_string(), 1.0, false);
-                document.add_field(p.token0.token.token_symbol().to_string(), 1.0, false);
-                document.add_field(p.token1.token.token_symbol().to_string(), 1.0, false);
+                document.add_field("swap".to_string(), false);
+                document.add_field(p.token0.token.token_symbol().to_string(), false);
+                document.add_field(p.token1.token.token_symbol().to_string(), false);
                 try_add_caption(&mut document, p.caption.as_ref())
             }
             MessageContentInternal::Custom(c) => {
-                document.add_field(c.kind.clone(), 1.0, false);
+                document.add_field(c.kind.clone(), false);
             }
             MessageContentInternal::ReportedMessage(_)
             | MessageContentInternal::Deleted(_)
