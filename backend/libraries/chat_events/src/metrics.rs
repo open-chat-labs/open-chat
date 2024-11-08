@@ -421,9 +421,11 @@ mod tests {
 
     #[test]
     fn serialize_roundtrip() {
-        let mut input = ChatMetricsInternalCombined::default();
-        input.last_active = 1;
-        input.text_messages = 1;
+        let input = ChatMetricsInternalCombined {
+            last_active: 1,
+            text_messages: 1,
+            ..Default::default()
+        };
 
         let bytes = msgpack::serialize_then_unwrap(input);
         let output: ChatMetricsInternal = msgpack::deserialize_then_unwrap(&bytes);
