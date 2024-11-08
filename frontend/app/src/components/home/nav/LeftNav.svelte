@@ -13,7 +13,7 @@
     import { communityListScrollTop } from "../../../stores/scrollPos";
     import { pathParams } from "../../../routes";
     import page from "page";
-    import { createEventDispatcher, getContext, onDestroy, onMount, tick } from "svelte";
+    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import LeftNavItem from "./LeftNavItem.svelte";
     import MainMenu from "./MainMenu.svelte";
     import { navOpen } from "../../../stores/layout";
@@ -75,9 +75,9 @@
         return unsub;
     });
 
-    onDestroy(() => {
-        communityListScrollTop.set(scrollingSection?.scrollTop);
-    });
+    function onScroll() {
+        communityListScrollTop.set(scrollingSection.scrollTop);
+    }
 
     function initCommunitiesList(communities: CommunitySummary[]) {
         // we don't want to allow the list to update if we're in the middle of dragging
@@ -261,6 +261,7 @@
             dropTargetStyle: { outline: "var(--accent) solid 2px" },
             dragDisabled: isTouchDevice,
         }}
+        on:scroll={onScroll}
         bind:this={scrollingSection}
         on:consider={handleDndConsider}
         on:finalize={handleDndFinalize}
