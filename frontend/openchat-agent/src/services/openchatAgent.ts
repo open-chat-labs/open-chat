@@ -220,6 +220,8 @@ import type {
     MessageActivitySummary,
     MessageActivityFeedResponse,
     MessageActivityEvent,
+    FreezeCommunityResponse,
+    UnfreezeCommunityResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -236,6 +238,7 @@ import {
     MessageMap,
     MAX_ACTIVITY_EVENTS,
     messageContextToString,
+    MessageContextMap,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { AsyncMessageContextMap } from "../utils/messageContext";
@@ -2965,6 +2968,21 @@ export class OpenChatAgent extends EventTarget {
         return this._groupIndexClient.unfreezeGroup(chatId.groupId);
     }
 
+    freezeCommunity(
+        id: CommunityIdentifier,
+        reason: string | undefined,
+    ): Promise<FreezeCommunityResponse> {
+        if (offline()) return Promise.resolve("offline");
+
+        return this._groupIndexClient.freezeCommunity(id, reason);
+    }
+
+    unfreezeCommunity(id: CommunityIdentifier): Promise<UnfreezeCommunityResponse> {
+        if (offline()) return Promise.resolve("offline");
+
+        return this._groupIndexClient.unfreezeCommunity(id);
+    }
+
     deleteFrozenGroup(chatId: GroupChatIdentifier): Promise<DeleteFrozenGroupResponse> {
         if (offline()) return Promise.resolve("offline");
 
@@ -3771,7 +3789,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     messageActivityFeed(): Stream<MessageActivityFeedResponse> {
-        return new Stream(async (resolve, reject) => {
+        return new Stream(async (resolve) => {
             const cachedEvents = await getActivityFeedEvents();
 
             const since = cachedEvents[0]?.timestamp ?? 0n;
@@ -3799,28 +3817,21 @@ export class OpenChatAgent extends EventTarget {
 
             setActivityFeedEvents(sorted.slice(0, MAX_ACTIVITY_EVENTS));
 
-            resolve({ total: server.total, events: sorted }, false);
-
-            const rehydrated = await this.hydrateActivityFeedEvents(sorted).catch((err) => {
-                console.error("Error rehydrating activity feed: ", err);
-                reject(err);
-                return sorted;
-            });
-
-            resolve(
-                {
-                    total: server.total,
-                    events: rehydrated,
-                },
-                true,
+            this.hydrateActivityFeedEvents(sorted, (hydrated, final) =>
+                resolve({ total: server.total, events: hydrated }, final),
             );
         });
     }
 
+    /**
+     * Hydration is a two phase process. First we load all the messages that we have in the cache
+     * and resolve. Secondly we then optionally load any missing messages from the backend and
+     * resolve again.
+     */
     async hydrateActivityFeedEvents(
         activityEvents: MessageActivityEvent[],
-    ): Promise<MessageActivityEvent[]> {
-        // partition the events by message context
+        callback: (events: MessageActivityEvent[], final: boolean) => void,
+    ) {
         const eventIndexesByMessageContext = activityEvents.reduce((map, event) => {
             const eventIndexes = map.get(event.messageContext) ?? [];
             eventIndexes.push(event.eventIndex);
@@ -3828,45 +3839,116 @@ export class OpenChatAgent extends EventTarget {
             return map;
         }, new AsyncMessageContextMap<number>());
 
-        // look up all the messages correlated with the activity events (mostly this will come from the cache)
+        const [withCachedMessages, missing] = await this.getMessagesByMessageContext(
+            eventIndexesByMessageContext,
+            activityEvents,
+            "cached",
+        );
+
+        const anyMissing = [...missing.values()].some((s) => s.size > 0);
+        callback(withCachedMessages, !anyMissing);
+
+        if (anyMissing) {
+            this.getMessagesByMessageContext(
+                new AsyncMessageContextMap(missing.map((_, v) => [...v]).toMap()),
+                withCachedMessages,
+                "missing",
+            ).then(([withServerMessages]) => callback(withServerMessages, true));
+        }
+    }
+
+    async getMessagesByMessageContext(
+        eventIndexesByMessageContext: AsyncMessageContextMap<number>,
+        activityEvents: MessageActivityEvent[],
+        mode: "cached" | "missing",
+    ): Promise<[MessageActivityEvent[], MessageContextMap<Set<number>>]> {
+        const allMissing = new MessageContextMap<Set<number>>();
+
         const messagesByMessageContext = await eventIndexesByMessageContext.asyncMap(
             (ctx, idxs) => {
                 const chatId = ctx.chatId;
                 const chatKind = chatId.kind;
 
+                function addMissing(context: MessageContext, missing: Set<number>) {
+                    if (missing.size > 0) {
+                        const current = allMissing.get(context) ?? new Set<number>();
+                        missing.forEach((n) => current.add(n));
+                        allMissing.set(context, current);
+                    }
+                }
+
                 if (chatKind === "direct_chat") {
-                    return this.userClient
-                        .chatEventsByIndex(idxs, chatId, ctx.threadRootMessageIndex, undefined)
-                        .then((resp) => this.messagesFromEventsResponse(ctx, resp));
+                    switch (mode) {
+                        case "cached":
+                            return this.userClient
+                                .getCachedEventsByIndex(idxs, chatId, ctx.threadRootMessageIndex)
+                                .then(([resp, missing]) => {
+                                    addMissing(ctx, missing);
+                                    return this.messagesFromEventsResponse(ctx, resp);
+                                });
+                        case "missing":
+                            return this.userClient
+                                .chatEventsByIndex(
+                                    // getMissing(ctx),
+                                    idxs,
+                                    chatId,
+                                    ctx.threadRootMessageIndex,
+                                    undefined,
+                                )
+                                .then((resp) => this.messagesFromEventsResponse(ctx, resp));
+                    }
                 } else if (chatKind === "group_chat") {
                     const client = this.getGroupClient(chatId.groupId);
-                    return client
-                        .chatEventsByIndex(idxs, ctx.threadRootMessageIndex, undefined)
-                        .then((resp) => this.messagesFromEventsResponse(ctx, resp));
+                    switch (mode) {
+                        case "cached":
+                            return client
+                                .getCachedEventsByIndex(idxs, ctx.threadRootMessageIndex)
+                                .then(([resp, missing]) => {
+                                    addMissing(ctx, missing);
+                                    return this.messagesFromEventsResponse(ctx, resp);
+                                });
+                        case "missing":
+                            return client
+                                .chatEventsByIndex(
+                                    // getMissing(ctx),
+                                    idxs,
+                                    ctx.threadRootMessageIndex,
+                                    undefined,
+                                )
+                                .then((resp) => this.messagesFromEventsResponse(ctx, resp));
+                    }
                 } else if (chatKind === "channel") {
                     const client = this.communityClient(chatId.communityId);
-                    return client
-                        .eventsByIndex(chatId, idxs, ctx.threadRootMessageIndex, undefined)
-                        .then((resp) => this.messagesFromEventsResponse(ctx, resp));
+                    switch (mode) {
+                        case "cached":
+                            return client
+                                .getCachedEventsByIndex(chatId, idxs, ctx.threadRootMessageIndex)
+                                .then(([resp, missing]) => {
+                                    addMissing(ctx, missing);
+                                    return this.messagesFromEventsResponse(ctx, resp);
+                                });
+                        case "missing":
+                            return client
+                                .eventsByIndex(chatId, idxs, ctx.threadRootMessageIndex, undefined)
+                                .then((resp) => this.messagesFromEventsResponse(ctx, resp));
+                    }
                 } else {
                     throw new UnsupportedValueError("unknown chatid kind supplied", chatId);
                 }
             },
         );
 
-        // organise the messages into a lookup so we can stitch things back together easily
-        const messageLookup = [...messagesByMessageContext.values()].reduce((lookup, events) => {
+        const lookup = [...messagesByMessageContext.values()].reduce((lookup, events) => {
             events.forEach((ev) => lookup.set(ev.event.messageId, ev.event));
             return lookup;
         }, new MessageMap<Message>());
 
-        // tie it all together
-        return activityEvents.map((ev) => {
-            const message = messageLookup.get(ev.messageId);
-            return {
+        return [
+            activityEvents.map((ev) => ({
                 ...ev,
-                message,
-            };
-        });
+                message: ev.message ?? lookup.get(ev.messageId),
+            })),
+            allMissing,
+        ];
     }
 }

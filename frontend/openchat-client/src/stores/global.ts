@@ -18,7 +18,7 @@ import type {
 import { ChatMap, CommunityMap, ObjectSet, chatScopesEqual } from "openchat-shared";
 import { immutableStore } from "./immutable";
 import { derived } from "svelte/store";
-import { messagesRead } from "./markRead";
+import { messageActivityFeedReadUpToLocally, messagesRead } from "./markRead";
 import { safeWritable } from "./safeWritable";
 import { serverWalletConfigStore } from "./crypto";
 
@@ -152,11 +152,11 @@ function combinedUnreadCountForChats(chats: (ChatSummary | undefined)[]): Combin
             if (chat === undefined) return counts;
 
             const muted = chat.membership.notificationsMuted;
-            const mentions = hasUnreadMentions(chat);
             const unreadMessages = messagesRead.unreadMessageCount(
                 chat.id,
                 chat.latestMessage?.event.messageIndex,
             );
+            const mentions = unreadMessages > 0 && hasUnreadMentions(chat);
             const unreadThreads = messagesRead.staleThreadCountForChat(
                 chat.id,
                 chat.membership.latestThreads,
@@ -226,9 +226,18 @@ export const unreadDirectCounts = derived(
     },
 );
 
-export const unreadActivityCount = derived([globalStateStore], ([$global]) => {
-    return $global.messageActivitySummary.unreadCount;
-});
+export const unreadActivityCount = derived(
+    [globalStateStore, messageActivityFeedReadUpToLocally],
+    ([$global, readUpToLocally]) => {
+        if (
+            readUpToLocally !== undefined &&
+            readUpToLocally >= $global.messageActivitySummary.latestTimestamp
+        ) {
+            return 0;
+        }
+        return $global.messageActivitySummary.unreadCount;
+    },
+);
 
 export const directVideoCallCounts = derived([globalStateStore], ([$global]) => {
     return videoCallsInProgressForChats($global.directChats.values());

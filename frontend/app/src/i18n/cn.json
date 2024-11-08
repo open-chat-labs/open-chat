@@ -301,8 +301,10 @@
         "visibility": "能见度"
     },
     "communityDisplayNameRules": "只在被选择的社区内",
+    "communityFrozen": "社区冻结",
     "communityMembers": "社区成员",
     "communityTheme": "社区主题",
+    "communityUnfrozen": "社区解冻",
     "confirmLeaveGroup": "你真的想离开这个{level}吗？",
     "confirmMakeGroupPrivate": "您确定要将此 {level} 设为私有吗？目前此操作无法撤消！",
     "confirmMakeGroupPublic": "您确定要公开此 {level} 吗？\n\n现有消息将保持私密，所有新消息将公开。",
@@ -368,6 +370,7 @@
         "claim": "索取 CHIT！",
         "comeback": "回到 {time}",
         "extendStreak": "延长连胜",
+        "hideWhenClaimed": "每天领取后隐藏领取 CHIT 图标⚡️",
         "info": "您维持连续记录的时间越长，您每天可领取的 CHIT 就越多！",
         "title": "保持连胜",
         "utcInfo": "CHIT 连续性和领取窗口使用 UTC 表示，因此您可能会发现以 UTC 而不是当地时区查看日历更清楚。",
@@ -439,11 +442,13 @@
     "failedToCopyLinkToClipboard": "无法将链接复制到剪贴板",
     "failedToCopyToClipboard": "无法复制到粘贴板 {account}",
     "failedToCopyUrlToClipboard": "无法复制 URL ({url}) 到粘贴板",
+    "failedToFreezeCommunity": "冻结社区失败",
     "failedToFreezeGroup": "冻结群聊失败",
     "failedToLeaveGroup": "尝试将您从 {level} 中删除时发生错误",
     "failedToShareLink": "分享链接失败",
     "failedToShareMessage": "无法分享此消息",
     "failedToSuspendUser": "无法暂停用户",
+    "failedToUnfreezeCommunity": "解冻社区失败",
     "failedToUnfreezeGroup": "解冻群聊失败",
     "failedToUnsuspendUser": "无法取消暂停用户",
     "faq": {
@@ -489,6 +494,7 @@
     "followThreadFailed": "关注话题失败",
     "fontSize": "字体大小",
     "forward": "转发",
+    "freezeCommunity": "冻结社区",
     "freezeGroup": "冻结群聊",
     "giphyMessage": "Gif 消息",
     "goHome": "主页",
@@ -604,9 +610,9 @@
         "link": "关联",
         "linkedAccounts": {
             "currentAccount": "当前以该主体身份登录",
-            "linkAdvice": "要链接新帐户，请登录要链接的新帐户，然后登录当前帐户，最后将两个帐户链接在一起。",
-            "linkAnother": "链接另一个",
-            "section": "关联账户",
+            "linkAdvice": "要添加新的登录提供商，请先使用您要添加的新提供商登录，然后使用您当前的提供商登录，最后将两者链接在一起。",
+            "linkAnother": "添加另一个",
+            "section": "登录提供商",
             "start": "开始使用"
         },
         "linkIdentity": "链接标识",
@@ -1291,7 +1297,7 @@
         "none": "没有人",
         "owner": "拥有者"
     },
-    "roleChanged": "{changedBy} 将 {changed} 的角色从 {oldRole} 更改为 {newRole}",
+    "roleChanged": "{changedBy} 将 {changed} 的角色更改为 {newRole}",
     "rules": {
         "accept": "接受",
         "acceptTitle": "聊天规则",
@@ -1500,6 +1506,7 @@
     "unexpectedError": "未知错误",
     "unfollowThread": "取消关注此话题",
     "unfollowThreadFailed": "取消关注话题失败",
+    "unfreezeCommunity": "解冻社区",
     "unfreezeGroup": "解冻群聊",
     "unknown": "未知的",
     "unknownUser": "未知用户",
@@ -1654,5 +1661,5 @@
     "yourAccountIsSuspended": "您的账户暂时无法使用",
     "yourChats": "您的聊天",
     "youreBlocked": "抱歉 - 您已被该群聊加入黑名单",
-    "yourRoleChanged": "{changedBy} 将您的角色从 {oldRole} 更改为 {newRole}"
+    "yourRoleChanged": "{changedBy} 将您的角色更改为 {newRole}"
 }

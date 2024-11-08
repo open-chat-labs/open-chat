@@ -33,6 +33,7 @@
         currentCommunityUserGroups as userGroups,
         cryptoLookup,
         anonUser,
+        selectedCommunity,
     } from "openchat-client";
     import { enterSend } from "../../stores/settings";
     import MessageActions from "./MessageActions.svelte";
@@ -104,6 +105,7 @@
         editingEvent !== undefined ||
         attachment !== undefined;
     $: excessiveLinks = client.extractEnabledLinks(textContent ?? "").length > 5;
+    $: frozen = client.isChatOrCommunityFrozen(chat, $selectedCommunity);
 
     $: {
         if (inp) {
@@ -558,9 +560,13 @@
     class="message-entry"
     class:editing={editingEvent !== undefined}
     bind:clientHeight={messageEntryHeight}>
-    {#if blocked}
+    {#if frozen}
+        <div class="frozen">
+            <Translatable resourceKey={i18nKey("chatFrozen")} />
+        </div>
+    {:else if blocked}
         <div class="blocked">
-            {$_("userIsBlocked")}
+            <Translatable resourceKey={i18nKey("userIsBlocked")} />
         </div>
     {:else if (preview || lapsed) && chat.kind !== "direct_chat"}
         <PreviewFooter {lapsed} {joining} {chat} on:joinGroup on:upgrade />
@@ -750,6 +756,7 @@
     }
 
     .blocked,
+    .frozen,
     .disabled {
         height: 42px;
         color: var(--txt);

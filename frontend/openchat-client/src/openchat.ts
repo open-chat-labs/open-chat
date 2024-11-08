@@ -128,7 +128,11 @@ import {
 import { lastOnlineDates } from "./stores/lastOnlineDates";
 import { localChatSummaryUpdates } from "./stores/localChatSummaryUpdates";
 import { localMessageUpdates } from "./stores/localMessageUpdates";
-import { messagesRead, startMessagesReadTracker } from "./stores/markRead";
+import {
+    messageActivityFeedReadUpToLocally,
+    messagesRead,
+    startMessagesReadTracker,
+} from "./stores/markRead";
 import {
     askForNotificationPermission,
     initNotificationStores,
@@ -380,7 +384,6 @@ import type {
     PaymentGateApproval,
     PaymentGateApprovals,
     MessageActivityFeedResponse,
-    Stream,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -1351,25 +1354,30 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     markActivityFeedRead(readUpTo: bigint) {
+        messageActivityFeedReadUpToLocally.set(readUpTo);
         return this.sendRequest({
             kind: "markActivityFeedRead",
             readUpTo,
         });
     }
 
-    messageActivityFeed(): Stream<MessageActivityFeedResponse> {
-        return this.sendStreamRequest({
+    subscribeToMessageActivityFeed(
+        subscribeFn: (value: MessageActivityFeedResponse, final: boolean) => void,
+    ) {
+        this.sendStreamRequest({
             kind: "messageActivityFeed",
             since: this._liveState.globalState.messageActivitySummary.readUpToTimestamp,
-        }).subscribe((response) => {
-            const userIds = new Set<string>();
-            for (const event of response.events) {
-                if (event.userId !== undefined) {
-                    userIds.add(event.userId);
+        }).subscribe({
+            onResult: (response, final) => {
+                const userIds = new Set<string>();
+                for (const event of response.events) {
+                    if (event.userId !== undefined) {
+                        userIds.add(event.userId);
+                    }
                 }
-            }
-            this.getMissingUsers(userIds);
-            return response;
+                this.getMissingUsers(userIds);
+                subscribeFn(response, final);
+            },
         });
     }
 
@@ -1735,6 +1743,11 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
+    isChatOrCommunityFrozen(chat: ChatSummary, community: CommunitySummary | undefined): boolean {
+        if (chat.kind === "direct_chat") return false;
+        return chat.frozen || (community?.frozen ?? false);
+    }
+
     canPinMessages(chatId: ChatIdentifier): boolean {
         return this.chatPredicate(chatId, canPinMessages);
     }
@@ -1894,9 +1907,14 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    isFrozen(chatId: ChatIdentifier): boolean {
+    isChatFrozen(chatId: ChatIdentifier): boolean {
         if (chatId.kind === "direct_chat") return false;
         return this.multiUserChatPredicate(chatId, isFrozen);
+    }
+
+    isCommunityFrozen(id: CommunityIdentifier | undefined): boolean {
+        if (id === undefined) return false;
+        return this.communityPredicate(id, isFrozen);
     }
 
     isOpenChatBot(userId: string): boolean {
@@ -3553,8 +3571,8 @@ export class OpenChat extends OpenChatAgentWorker {
                 },
                 undefined,
                 isCryptoMessage ? 2 * DEFAULT_WORKER_TIMEOUT : undefined,
-            )
-                .subscribe((response) => {
+            ).subscribe({
+                onResult: (response) => {
                     if (response === "accepted") {
                         unconfirmed.markAccepted(messageContext, eventWrapper.event.messageId);
                         return;
@@ -3613,8 +3631,8 @@ export class OpenChat extends OpenChatAgentWorker {
                     }
 
                     resolve(resp);
-                })
-                .catch(() => {
+                },
+                onError: () => {
                     this.onSendMessageFailure(
                         chatId,
                         eventWrapper.event.messageId,
@@ -3625,7 +3643,8 @@ export class OpenChat extends OpenChatAgentWorker {
                     );
 
                     return resolve(CommonResponses.failure());
-                });
+                },
+            });
         });
     }
 
@@ -4587,8 +4606,8 @@ export class OpenChat extends OpenChatAgentWorker {
     getCurrentUser(): Promise<CurrentUserResponse> {
         return new Promise((resolve, reject) => {
             let resolved = false;
-            this.sendStreamRequest({ kind: "getCurrentUser" })
-                .subscribe((user) => {
+            this.sendStreamRequest({ kind: "getCurrentUser" }).subscribe({
+                onResult: (user) => {
                     if (user.kind === "created_user") {
                         userCreatedStore.set(true);
                         currentUser.set(user);
@@ -4600,8 +4619,9 @@ export class OpenChat extends OpenChatAgentWorker {
                         resolve(user);
                         resolved = true;
                     }
-                })
-                .catch(reject);
+                },
+                onError: reject,
+            });
         });
     }
 
@@ -5318,6 +5338,18 @@ export class OpenChat extends OpenChatAgentWorker {
         localMessageUpdates.markThreadSummaryUpdated(threadRootMessageId, summary);
     }
 
+    freezeCommunity(id: CommunityIdentifier, reason: string | undefined): Promise<boolean> {
+        return this.sendRequest({ kind: "freezeCommunity", id, reason })
+            .then((resp) => resp === "success")
+            .catch(() => false);
+    }
+
+    unfreezeCommunity(id: CommunityIdentifier): Promise<boolean> {
+        return this.sendRequest({ kind: "unfreezeCommunity", id })
+            .then((resp) => resp === "success")
+            .catch(() => false);
+    }
+
     freezeGroup(chatId: GroupChatIdentifier, reason: string | undefined): Promise<boolean> {
         return this.sendRequest({ kind: "freezeGroup", chatId, reason })
             .then((resp) => {
@@ -5746,22 +5778,23 @@ export class OpenChat extends OpenChatAgentWorker {
             this.sendStreamRequest({
                 kind: "getUpdates",
                 initialLoad,
-            })
-                .subscribe(async (resp) => {
+            }).subscribe({
+                onResult: async (resp) => {
                     await this.handleChatsResponse(
                         updateRegistryTask,
                         !this._liveState.chatsInitialised,
                         resp as UpdatesResult,
                     );
                     chatsLoading.set(!this._liveState.chatsInitialised);
-                })
-                .catch((err) => {
+                },
+                onError: (err) => {
                     console.warn("getUpdates threw an error: ", err);
                     resolve();
-                })
-                .finally(() => {
+                },
+                onEnd: () => {
                     resolve();
-                });
+                },
+            });
         });
     }
 
@@ -6275,8 +6308,8 @@ export class OpenChat extends OpenChatAgentWorker {
         return new Promise((resolve) => {
             this.sendStreamRequest({
                 kind: "updateRegistry",
-            })
-                .subscribe(([registry, updated]) => {
+            }).subscribe({
+                onResult: ([registry, updated]) => {
                     if (updated || Object.keys(get(cryptoLookup)).length === 0) {
                         this.currentAirdropChannel = registry.currentAirdropChannel;
                         const cryptoRecord = toRecord(registry.tokenDetails, (t) => t.ledger);
@@ -6311,11 +6344,12 @@ export class OpenChat extends OpenChatAgentWorker {
                         resolved = true;
                         resolve();
                     }
-                })
-                .catch((err) => {
+                },
+                onError: (err) => {
                     console.warn(`Failed to update the registry: ${err}`);
                     resolve();
-                });
+                },
+            });
         });
     }
 

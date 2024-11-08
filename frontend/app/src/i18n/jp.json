@@ -301,8 +301,10 @@
         "visibility": "可視性"
     },
     "communityDisplayNameRules": "このコミュニティ内だけで",
+    "communityFrozen": "コミュニティが凍結",
     "communityMembers": "コミュニティメンバー",
     "communityTheme": "コミュニティのテーマ",
+    "communityUnfrozen": "コミュニティの凍結解除",
     "confirmLeaveGroup": "本当にこの {level} から離れてもよろしいですか?",
     "confirmMakeGroupPrivate": "この {level} を非公開にしてもよろしいですか?現在、この操作を元に戻すことはできません。",
     "confirmMakeGroupPublic": "この {level} を公開してもよろしいですか?\n\n既存のメッセージは非公開のままですが、新しいメッセージはすべて公開されます。",
@@ -368,6 +370,7 @@
         "claim": "CHITを請求してください！",
         "comeback": "{time}に戻ってきて",
         "extendStreak": "連勝を伸ばす",
+        "hideWhenClaimed": "毎日請求した後、請求CHITアイコン⚡️を非表示にします",
         "info": "連続記録を長く維持すればするほど、より多くの CHIT を毎日獲得できます。",
         "title": "連勝を維持する",
         "utcInfo": "CHIT 連続記録と請求期間は UTC を使用して表されるため、ローカル タイムゾーンではなく UTC でカレンダーを表示する方がわかりやすい場合があります。",
@@ -439,11 +442,13 @@
     "failedToCopyLinkToClipboard": "リンクをクリップボードにコピーできません",
     "failedToCopyToClipboard": "クリップボードにコピーができません. {account}",
     "failedToCopyUrlToClipboard": "url ({url}) をクリップボードにコピーできません",
+    "failedToFreezeCommunity": "コミュニティを凍結できませんでした",
     "failedToFreezeGroup": "グループを凍結できませんでした",
     "failedToLeaveGroup": "{level} からあなたを削除しようとしてエラーが発生しました",
     "failedToShareLink": "リンクの共有に失敗しました",
     "failedToShareMessage": "このメッセージを共有できません",
     "failedToSuspendUser": "ユーザーを一時停止できませんでした",
+    "failedToUnfreezeCommunity": "コミュニティの凍結解除に失敗しました",
     "failedToUnfreezeGroup": "グループのフリーズ解除に失敗しました",
     "failedToUnsuspendUser": "ユーザーの停止を解除できませんでした",
     "faq": {
@@ -489,6 +494,7 @@
     "followThreadFailed": "スレッドのフォローに失敗しました",
     "fontSize": "フォントサイズ",
     "forward": "転送",
+    "freezeCommunity": "コミュニティを凍結する",
     "freezeGroup": "グループを凍結",
     "giphyMessage": "GIFメッセージ",
     "goHome": "ホーム",
@@ -604,9 +610,9 @@
         "link": "リンク",
         "linkedAccounts": {
             "currentAccount": "現在このプリンシパルでサインインしています",
-            "linkAdvice": "新しいアカウントをリンクするには、リンクする新しいアカウントにサインインし、次に現在のアカウントにサインインして、最後に 2 つのアカウントをリンクします。",
-            "linkAnother": "別のリンク",
-            "section": "リンクされたアカウント",
+            "linkAdvice": "新しいサインイン プロバイダーを追加するには、最初に追加する新しいプロバイダーでサインインし、次に現在のプロバイダーでサインインして、最後に 2 つをリンクします。",
+            "linkAnother": "追加する",
+            "section": "サインインプロバイダー",
             "start": "始める"
         },
         "linkIdentity": "リンクID",
@@ -1291,7 +1297,7 @@
         "none": "誰でもない",
         "owner": "所有者"
     },
-    "roleChanged": "{changedBy}は、{changed}の役割を{oldRole}から{newRole}に変更しました",
+    "roleChanged": "{changedBy} は {changed} の役割を {newRole} に変更しました",
     "rules": {
         "accept": "承認",
         "acceptTitle": "チャットのルール",
@@ -1500,6 +1506,7 @@
     "unexpectedError": "予期しないエラー",
     "unfollowThread": "このスレッドのフォローを解除する",
     "unfollowThreadFailed": "スレッドのフォローを解除できませんでした",
+    "unfreezeCommunity": "コミュニティの凍結解除",
     "unfreezeGroup": "グループを解凍",
     "unknown": "不明",
     "unknownUser": "不明なユーザー",
@@ -1654,5 +1661,5 @@
     "yourAccountIsSuspended": "あなたのアカウントが停止されました",
     "yourChats": "あなたのチャット",
     "youreBlocked": "申し訳ございませんが、あなたはこのグループからブロックされています",
-    "yourRoleChanged": "{changedBy}が役割を{oldRole}から{newRole}に変更しました"
+    "yourRoleChanged": "{changedBy} があなたの役割を {newRole} に変更しました"
 }

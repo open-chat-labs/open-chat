@@ -301,8 +301,10 @@
         "visibility": "רְאוּת"
     },
     "communityDisplayNameRules": "רק בתוך הקהילה הזו",
+    "communityFrozen": "הקהילה קפואה",
     "communityMembers": "חברי הקהילה",
     "communityTheme": "נושא קהילה",
+    "communityUnfrozen": "הקהילה לא הקפאה",
     "confirmLeaveGroup": "האם אתה באמת רוצה לעזוב את {level} הזה?",
     "confirmMakeGroupPrivate": "האם אתה בהחלט רוצה להפוך את ה-{level} הזה לפרטי? כרגע לא ניתן לבטל את הפעולה הזו!",
     "confirmMakeGroupPublic": "האם אתה בהחלט רוצה להפוך את ה-{level} הזה לציבורי?\n\nהודעות קיימות יישארו פרטיות, כל ההודעות החדשות יהיו ציבוריות.",
@@ -368,6 +370,7 @@
         "claim": "טען CHIT!",
         "comeback": "חזור ב-{time}",
         "extendStreak": "להאריך את הרצף",
+        "hideWhenClaimed": "הסתר את סמל הטענה CHIT ⚡️ לאחר התביעה בכל יום",
         "info": "ככל שתשמור על הרצף שלך זמן רב יותר, כך תוכל לתבוע יותר CHIT יומי!",
         "title": "שמור על הרצף שלך",
         "utcInfo": "פסי CHIT וחלונות תביעה מיוצגים באמצעות UTC כך שייתכן שיהיה ברור יותר להציג את היומן שלך ב-UTC ולא באזור הזמן המקומי שלך.",
@@ -439,11 +442,13 @@
     "failedToCopyLinkToClipboard": "לא ניתן להעתיק את הקישור ללוח",
     "failedToCopyToClipboard": "לא ניתן להעתיק ללוח. {account}",
     "failedToCopyUrlToClipboard": "לא ניתן להעתיק את כתובת האתר ({url}) ללוח",
+    "failedToFreezeCommunity": "הקפאת הקהילה נכשלה",
     "failedToFreezeGroup": "הקפאת הקבוצה נכשלה",
     "failedToLeaveGroup": "אירעה שגיאה בניסיון להסיר אותך מה-{level}",
     "failedToShareLink": "שיתוף הקישור נכשל",
     "failedToShareMessage": "לא ניתן לשתף את ההודעה הזו",
     "failedToSuspendUser": "השעיית המשתמש נכשלה",
+    "failedToUnfreezeCommunity": "ביטול הקפאת הקהילה נכשל",
     "failedToUnfreezeGroup": "ביטול הקפאת הקבוצה נכשל",
     "failedToUnsuspendUser": "ביטול השעיית המשתמש נכשל",
     "faq": {
@@ -489,6 +494,7 @@
     "followThreadFailed": "שרשור המעקב נכשל",
     "fontSize": "גודל גופן",
     "forward": "קָדִימָה",
+    "freezeCommunity": "הקפאת קהילה",
     "freezeGroup": "הקפאת קבוצה",
     "giphyMessage": "הודעת GIF",
     "goHome": "בית",
@@ -604,9 +610,9 @@
         "link": "קישור",
         "linkedAccounts": {
             "currentAccount": "כרגע מחובר עם מנהל זה",
-            "linkAdvice": "כדי לקשר חשבון חדש היכנס לחשבון החדש שברצונך לקשר, לאחר מכן היכנס לחשבון הנוכחי שלך ולבסוף קשר את שני החשבונות יחד.",
-            "linkAnother": "קישור אחר",
-            "section": "חשבונות מקושרים",
+            "linkAdvice": "כדי להוסיף ספק כניסה חדש, התחבר תחילה עם הספק החדש שברצונך להוסיף, לאחר מכן היכנס עם הספק הנוכחי שלך ולבסוף קשר את השניים יחד.",
+            "linkAnother": "הוסף עוד אחד",
+            "section": "ספקי כניסה",
             "start": "התחל"
         },
         "linkIdentity": "זהות קישור",
@@ -1291,7 +1297,7 @@
         "none": "אף אחד",
         "owner": "בעלים"
     },
-    "roleChanged": "{changedBy} שינה את התפקיד של {changed} מ-{oldRole} ל-{newRole}",
+    "roleChanged": "{changedBy} שינה את התפקיד של {changed} ל-{newRole}",
     "rules": {
         "accept": "לְקַבֵּל",
         "acceptTitle": "כללי צ'אט",
@@ -1500,6 +1506,7 @@
     "unexpectedError": "שגיאה בלתי צפויה",
     "unfollowThread": "בטל את המעקב אחר השרשור הזה",
     "unfollowThreadFailed": "ביטול המעקב נכשל",
+    "unfreezeCommunity": "בטל את הקפאת הקהילה",
     "unfreezeGroup": "בטל את הקפאת הקבוצה",
     "unknown": "לא ידוע",
     "unknownUser": "משתמש לא ידוע",
@@ -1654,5 +1661,5 @@
     "yourAccountIsSuspended": "החשבון שלך מושעה",
     "yourChats": "הצ'אטים שלך",
     "youreBlocked": "מצטערים - נחסמת מהקבוצה הזו",
-    "yourRoleChanged": "{changedBy} שינה את התפקיד שלך מ-{oldRole} ל-{newRole}"
+    "yourRoleChanged": "{changedBy} שינה את התפקיד שלך ל-{newRole}"
 }

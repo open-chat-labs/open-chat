@@ -635,17 +635,26 @@ export class CommunityClient extends CandidService {
         );
     }
 
+    getCachedEventsByIndex(
+        chatId: ChannelIdentifier,
+        eventIndexes: number[],
+        threadRootMessageIndex: number | undefined,
+    ) {
+        return getCachedEventsByIndex(this.db, eventIndexes, {
+            chatId,
+            threadRootMessageIndex,
+        });
+    }
+
     eventsByIndex(
         chatId: ChannelIdentifier,
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
-        return getCachedEventsByIndex(this.db, eventIndexes, {
-            chatId,
-            threadRootMessageIndex,
-        }).then((res) =>
-            this.handleMissingEvents(chatId, res, threadRootMessageIndex, latestKnownUpdate),
+        return this.getCachedEventsByIndex(chatId, eventIndexes, threadRootMessageIndex).then(
+            (res) =>
+                this.handleMissingEvents(chatId, res, threadRootMessageIndex, latestKnownUpdate),
         );
     }
 

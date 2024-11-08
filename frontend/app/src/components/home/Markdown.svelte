@@ -44,7 +44,7 @@
         return text.replace(/@UserGroup\(([\d]+)\)/g, (match, p1) => {
             const u = userGroups.get(Number(p1));
             if (u !== undefined) {
-                return `[**@${u.name}**](?usergroup=${u.id})`;
+                return `**[@${u.name}](?usergroup=${u.id})**`;
             } else {
                 console.warn("Unable to find user group: ", match);
                 return `**@unknown_user_group**`;

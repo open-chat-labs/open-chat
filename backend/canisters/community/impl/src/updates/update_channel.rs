@@ -74,6 +74,7 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                             let channel_id = channel.id;
                             add_members_to_public_channel_unchecked(
                                 channel,
+                                state.data.is_public,
                                 state
                                     .data
                                     .members

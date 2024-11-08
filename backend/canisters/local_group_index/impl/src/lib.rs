@@ -28,9 +28,9 @@ mod model;
 mod queries;
 mod updates;
 
-const GROUP_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + GROUP_CANISTER_TOP_UP_AMOUNT; // 0.18T cycles
+const GROUP_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + GROUP_CANISTER_TOP_UP_AMOUNT; // 0.5T cycles
 const COMMUNITY_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = GROUP_CANISTER_INITIAL_CYCLES_BALANCE;
-const GROUP_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
+const GROUP_CANISTER_TOP_UP_AMOUNT: Cycles = 200_000_000_000; // 0.2T cycles
 const COMMUNITY_CANISTER_TOP_UP_AMOUNT: Cycles = GROUP_CANISTER_TOP_UP_AMOUNT;
 const MARK_ACTIVE_DURATION: Milliseconds = 10 * 60 * 1000; // 10 minutes
 
@@ -124,10 +124,17 @@ impl RuntimeState {
                 internet_identity: self.data.internet_identity_canister_id,
             },
             group_upgrades_failed: group_upgrades_metrics.failed,
-            canisters_pending_events_migration_to_stable_memory: self
+            canisters_pending_events_migration_to_stable_memory_count: self
                 .data
                 .canisters_pending_events_migration_to_stable_memory
                 .len() as u32,
+            canisters_pending_events_migration_to_stable_memory: self
+                .data
+                .canisters_pending_events_migration_to_stable_memory
+                .iter()
+                .copied()
+                .take(20)
+                .collect(),
             community_upgrades_failed: community_upgrades_metrics.failed,
         }
     }
@@ -248,7 +255,8 @@ pub struct Metrics {
     pub community_versions: BTreeMap<String, u32>,
     pub canister_ids: CanisterIds,
     pub group_upgrades_failed: Vec<FailedUpgradeCount>,
-    pub canisters_pending_events_migration_to_stable_memory: u32,
+    pub canisters_pending_events_migration_to_stable_memory_count: u32,
+    pub canisters_pending_events_migration_to_stable_memory: Vec<CanisterId>,
     pub community_upgrades_failed: Vec<FailedUpgradeCount>,
 }
 

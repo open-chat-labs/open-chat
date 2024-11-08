@@ -301,8 +301,10 @@
         "visibility": "دید"
     },
     "communityDisplayNameRules": "فقط در جامعه انتخاب شده",
+    "communityFrozen": "جامعه یخ زده",
     "communityMembers": "اعضای جامعه",
     "communityTheme": "موضوع انجمن",
+    "communityUnfrozen": "انجمن منجمد شد",
     "confirmLeaveGroup": "آیا واقعاً می خواهید این {level} را ترک کنید؟",
     "confirmMakeGroupPrivate": "آیا قطعاً می خواهید این {level} را خصوصی کنید؟",
     "confirmMakeGroupPublic": "آیا قطعاً می خواهید این {level} را عمومی کنید؟\n\nپیام‌های موجود خصوصی خواهند ماند، همه پیام‌های جدید عمومی خواهند بود.",
@@ -368,6 +370,7 @@
         "claim": "ادعای CHIT!",
         "comeback": "به {time} برگرد",
         "extendStreak": "گسترش خط",
+        "hideWhenClaimed": "پس از هر روز، نماد CHIT ادعا را مخفی کنید",
         "info": "هرچه مدت طولانی تری رگ خود را حفظ کنید، CHIT روزانه بیشتری می توانید ادعا کنید!",
         "title": "خط خود را حفظ کنید",
         "utcInfo": "رگه‌های CHIT و پنجره‌های ادعا با استفاده از UTC نشان داده می‌شوند، بنابراین ممکن است مشاهده تقویم خود در UTC به جای منطقه زمانی محلی‌تان واضح‌تر باشد.",
@@ -439,11 +442,13 @@
     "failedToCopyLinkToClipboard": "پیوند در کلیپ بورد کپی نشد",
     "failedToCopyToClipboard": "امکان کپی در کلیپ بورد وجود ندارد. {account}",
     "failedToCopyUrlToClipboard": "کپی URL ({url}) در کلیپ بورد امکان پذیر نیست",
+    "failedToFreezeCommunity": "انجمن مسدود نشد",
     "failedToFreezeGroup": "ثابت کردن گروه ناموفق بود",
     "failedToLeaveGroup": "هنگام حذف شما از {level} خطایی روی داد",
     "failedToShareLink": "پیوند به اشتراک گذاشته نشد",
     "failedToShareMessage": "امکان اشتراک گذاری این پیام وجود ندارد",
     "failedToSuspendUser": "تعلیق کاربر ناموفق بود",
+    "failedToUnfreezeCommunity": "لغو انجماد انجمن انجام نشد",
     "failedToUnfreezeGroup": "لغو انجماد گروه انجام نشد",
     "failedToUnsuspendUser": "لغو تعلیق کاربر انجام نشد",
     "faq": {
@@ -489,6 +494,7 @@
     "followThreadFailed": "دنبال کردن موضوع ناموفق بود",
     "fontSize": "اندازه فونت",
     "forward": "رو به جلو",
+    "freezeCommunity": "جامعه را فریز کنید",
     "freezeGroup": "گروه فریز",
     "giphyMessage": "پیام گیف",
     "goHome": "صفحه اصلی",
@@ -604,9 +610,9 @@
         "link": "ارتباط دادن",
         "linkedAccounts": {
             "currentAccount": "در حال حاضر با این مدیر وارد شده است",
-            "linkAdvice": "برای پیوند دادن یک حساب جدید به حساب جدیدی که می خواهید پیوند دهید وارد شوید، سپس وارد حساب فعلی خود شوید و در نهایت این دو حساب را به هم پیوند دهید.",
-            "linkAnother": "دیگری را پیوند دهید",
-            "section": "حساب های مرتبط",
+            "linkAdvice": "برای افزودن یک ارائه‌دهنده ورود جدید، ابتدا با ارائه‌دهنده جدیدی که می‌خواهید اضافه کنید وارد شوید، سپس با ارائه‌دهنده فعلی خود وارد شوید و در نهایت این دو را به هم پیوند دهید.",
+            "linkAnother": "دیگری اضافه کنید",
+            "section": "ارائه دهندگان ورود به سیستم",
             "start": "شروع کنید"
         },
         "linkIdentity": "هویت پیوند",
@@ -1291,7 +1297,7 @@
         "none": "هيچ كس",
         "owner": "صاحبان"
     },
-    "roleChanged": "{changedBy} نقش {changed} را از {oldRole} به {newRole} تغییر داد",
+    "roleChanged": "{changedBy} نقش {changed} را به {newRole} تغییر داد",
     "rules": {
         "accept": "تایید کنید",
         "acceptTitle": "قوانین چت",
@@ -1500,6 +1506,7 @@
     "unexpectedError": "خطای غیرمنتظره",
     "unfollowThread": "این موضوع را لغو فالو کنید",
     "unfollowThreadFailed": "لغو دنبال کردن رشته انجام نشد",
+    "unfreezeCommunity": "جامعه را از حالت انجماد خارج کنید",
     "unfreezeGroup": "گروه را از حالت انجماد خارج کنید",
     "unknown": "ناشناخته",
     "unknownUser": "کاربر ناشناس",
@@ -1654,5 +1661,5 @@
     "yourAccountIsSuspended": "حساب شما به حالت تعلیق درآمده",
     "yourChats": "چت های شما",
     "youreBlocked": "با عرض پوزش - شما از این گروه مسدود شده اید",
-    "yourRoleChanged": "{changedBy} نقش شما را از {oldRole} به {newRole} تغییر داد"
+    "yourRoleChanged": "{changedBy} نقش شما را به {newRole} تغییر داد"
 }

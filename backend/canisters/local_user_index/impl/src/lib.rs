@@ -40,7 +40,7 @@ mod queries;
 mod updates;
 
 const USER_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + USER_CANISTER_TOP_UP_AMOUNT; // 0.18T cycles
-const USER_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
+const USER_CANISTER_TOP_UP_AMOUNT: Cycles = 200_000_000_000; // 0.2T cycles
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
@@ -236,6 +236,8 @@ impl RuntimeState {
             canisters_in_pool: self.data.canister_pool.len() as u16,
             local_user_count: self.data.local_users.len() as u64,
             global_user_count: self.data.global_users.len() as u64,
+            bot_user_count: self.data.global_users.bots().len() as u64,
+            oc_controlled_bots: self.data.global_users.oc_controlled_bots().iter().copied().collect(),
             canister_upgrades_completed: canister_upgrades_metrics.completed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
@@ -264,10 +266,17 @@ impl RuntimeState {
                 internet_identity: self.data.internet_identity_canister_id,
             },
             oc_secret_key_initialized: self.data.oc_key_pair.is_initialised(),
-            canisters_pending_events_migration_to_stable_memory: self
+            canisters_pending_events_migration_to_stable_memory_count: self
                 .data
                 .canisters_pending_events_migration_to_stable_memory
                 .len() as u32,
+            canisters_pending_events_migration_to_stable_memory: self
+                .data
+                .canisters_pending_events_migration_to_stable_memory
+                .iter()
+                .copied()
+                .take(20)
+                .collect(),
             canister_upgrades_failed: canister_upgrades_metrics.failed,
         }
     }
@@ -391,6 +400,8 @@ pub struct Metrics {
     pub total_cycles_spent_on_canisters: Cycles,
     pub local_user_count: u64,
     pub global_user_count: u64,
+    pub bot_user_count: u64,
+    pub oc_controlled_bots: Vec<UserId>,
     pub canisters_in_pool: u16,
     pub canister_upgrades_completed: u64,
     pub canister_upgrades_pending: u64,
@@ -405,7 +416,8 @@ pub struct Metrics {
     pub user_versions: BTreeMap<String, u32>,
     pub canister_ids: CanisterIds,
     pub oc_secret_key_initialized: bool,
-    pub canisters_pending_events_migration_to_stable_memory: u32,
+    pub canisters_pending_events_migration_to_stable_memory_count: u32,
+    pub canisters_pending_events_migration_to_stable_memory: Vec<CanisterId>,
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
 }
 

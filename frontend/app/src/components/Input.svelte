@@ -1,30 +1,51 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher, onMount, tick } from "svelte";
+    import { createEventDispatcher, onMount, tick, type Snippet } from "svelte";
     import { translatable } from "../actions/translatable";
     import { interpolate } from "../i18n/i18n";
     import type { ResourceKey } from "openchat-client";
 
-    export let disabled: boolean = false;
-    export let invalid: boolean = false;
-    export let value: string | number = "";
-    export let autofocus: boolean = false;
-    export let placeholder: ResourceKey | undefined = undefined;
-    export let type: "text" | "number" | "password" = "text";
-    export let minlength: number = 0;
-    export let maxlength: number = 10000;
-    export let fontSize: "small" | "normal" | "large" | "huge" = "normal";
-    export let align: "left" | "right" | "center" = "left";
-    export let countdown: boolean = false;
-    export let pattern: string | undefined = undefined;
+    interface Props {
+        disabled?: boolean;
+        invalid?: boolean;
+        value?: string | number;
+        autofocus?: boolean;
+        placeholder?: ResourceKey | undefined;
+        type?: "text" | "number" | "password";
+        minlength?: number;
+        maxlength?: number;
+        fontSize?: "small" | "normal" | "large" | "huge";
+        align?: "left" | "right" | "center";
+        countdown?: boolean;
+        pattern?: string | undefined;
+        children?: Snippet;
+        onblur?: () => void;
+    }
+
+    let {
+        disabled = false,
+        invalid = false,
+        value = $bindable(""),
+        autofocus = false,
+        placeholder = undefined,
+        type = "text",
+        minlength = 0,
+        maxlength = 10000,
+        fontSize = "normal",
+        align = "left",
+        countdown = false,
+        pattern = undefined,
+        onblur = undefined,
+        children
+    }: Props = $props();
 
     const dispatch = createEventDispatcher();
 
-    let inp: HTMLInputElement;
+    let inp: HTMLInputElement | undefined = $state();
 
     onMount(() => {
         if (autofocus) {
-            tick().then(() => inp.focus());
+            tick().then(() => inp?.focus());
         }
     });
 
@@ -48,8 +69,8 @@
         }
     }
 
-    $: remaining = typeof value === "string" ? maxlength - value.length : 0;
-    $: warn = remaining <= 5;
+    let remaining = $derived(typeof value === "string" ? maxlength - value.length : 0);
+    let warn = $derived(remaining <= 5);
 </script>
 
 <div class="input-wrapper">
@@ -67,9 +88,9 @@
         {maxlength}
         placeholder={placeholder !== undefined ? interpolate($_, placeholder) : ""}
         use:translatable={{ key: placeholder, position: "absolute", right: 30, top: 12 }}
-        on:input={handleInput}
-        on:keydown={keyDown}
-        on:blur
+        oninput={handleInput}
+        onkeydown={keyDown}
+        {onblur}
         bind:this={inp}
         {pattern}
         {value}
@@ -79,7 +100,7 @@
         <div class:warn class="countdown">{remaining}</div>
     {/if}
 
-    <slot />
+    {@render children?.()}
 </div>
 
 <style lang="scss">

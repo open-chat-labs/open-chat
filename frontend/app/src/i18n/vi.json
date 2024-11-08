@@ -301,8 +301,10 @@
         "visibility": "Hiển thị"
     },
     "communityDisplayNameRules": "chỉ trong cộng đồng này",
+    "communityFrozen": "Cộng đồng bị đóng băng",
     "communityMembers": "Thành viên cộng đồng",
     "communityTheme": "chủ đề cộng đồng",
+    "communityUnfrozen": "Cộng đồng không bị đóng băng",
     "confirmLeaveGroup": "Bạn có thực sự muốn rời khỏi {level} này không?",
     "confirmMakeGroupPrivate": "Bạn có chắc chắn muốn đặt {level} này ở chế độ riêng tư không? Hiện tại thao tác này không thể đảo ngược!",
     "confirmMakeGroupPublic": "Bạn có chắc chắn muốn công khai {level} này không?\n\nTin nhắn hiện tại sẽ vẫn ở chế độ riêng tư, tất cả tin nhắn mới sẽ được công khai.",
@@ -368,6 +370,7 @@
         "claim": "Yêu cầu CHIT!",
         "comeback": "Hãy quay lại trong {time}",
         "extendStreak": "Kéo dài vệt",
+        "hideWhenClaimed": "Ẩn biểu tượng CHIT yêu cầu ⚡️ sau khi yêu cầu mỗi ngày",
         "info": "Bạn duy trì chuỗi của mình càng lâu thì bạn càng có thể yêu cầu nhiều CHIT hàng ngày hơn!",
         "title": "Duy trì thành tích của bạn",
         "utcInfo": "Các chuỗi CHIT và khoảng thời gian xác nhận quyền sở hữu được thể hiện bằng UTC nên bạn có thể thấy lịch của mình theo UTC rõ ràng hơn thay vì múi giờ địa phương.",
@@ -439,11 +442,13 @@
     "failedToCopyLinkToClipboard": "Không thể sao chép liên kết vào khay nhớ tạm",
     "failedToCopyToClipboard": "Không thể sao chép {account}",
     "failedToCopyUrlToClipboard": "Không thể sao chép đường dẫn ({url})",
+    "failedToFreezeCommunity": "Không thể đóng băng cộng đồng",
     "failedToFreezeGroup": "Không thể đóng băng nhóm",
     "failedToLeaveGroup": "Đã xảy ra lỗi khi cố xóa bạn khỏi {level}",
     "failedToShareLink": "Không chia sẻ được liên kết",
     "failedToShareMessage": "Không thể chia sẻ tin nhắn này",
     "failedToSuspendUser": "Không thể tạm ngưng người dùng",
+    "failedToUnfreezeCommunity": "Không thể mở khóa cộng đồng",
     "failedToUnfreezeGroup": "Không thể hủy đóng băng nhóm",
     "failedToUnsuspendUser": "Không thể hủy tạm ngưng người dùng",
     "faq": {
@@ -489,6 +494,7 @@
     "followThreadFailed": "Theo dõi chủ đề không thành công",
     "fontSize": "Cỡ chữ",
     "forward": "Ở đằng trước",
+    "freezeCommunity": "Đóng băng cộng đồng",
     "freezeGroup": "Nhóm đóng băng",
     "giphyMessage": "Tin nhắn GIF",
     "goHome": "Trang chủ",
@@ -604,9 +610,9 @@
         "link": "liên kết",
         "linkedAccounts": {
             "currentAccount": "Hiện đang đăng nhập với hiệu trưởng này",
-            "linkAdvice": "Để liên kết tài khoản mới Đăng nhập vào tài khoản mới mà bạn muốn liên kết, sau đó đăng nhập vào tài khoản hiện tại và cuối cùng liên kết hai tài khoản với nhau.",
-            "linkAnother": "Liên kết khác",
-            "section": "Tài khoản được liên kết",
+            "linkAdvice": "Để thêm nhà cung cấp đăng nhập mới, trước tiên hãy đăng nhập bằng nhà cung cấp mới mà bạn muốn thêm, sau đó đăng nhập bằng nhà cung cấp hiện tại và cuối cùng liên kết cả hai với nhau.",
+            "linkAnother": "Thêm một cái nữa",
+            "section": "Nhà cung cấp đăng nhập",
             "start": "Bắt đầu"
         },
         "linkIdentity": "Nhận dạng liên kết",
@@ -1291,7 +1297,7 @@
         "none": "Không ai",
         "owner": "Những chủ sở hữu"
     },
-    "roleChanged": "{changeBy} đã thay đổi vai trò của {change} từ {oldRole} thành {newRole}",
+    "roleChanged": "{changedBy} đã thay đổi vai trò của {changed} thành {newRole}",
     "rules": {
         "accept": "Chấp nhận",
         "acceptTitle": "Quy tắc trò chuyện",
@@ -1500,6 +1506,7 @@
     "unexpectedError": "Đã xảy ra lỗi",
     "unfollowThread": "Hủy theo dõi chủ đề này",
     "unfollowThreadFailed": "Hủy theo dõi chủ đề không thành công",
+    "unfreezeCommunity": "Giải phóng cộng đồng",
     "unfreezeGroup": "Giải phóng nhóm",
     "unknown": "Không xác định",
     "unknownUser": "Người dùng không xác định",
@@ -1654,5 +1661,5 @@
     "yourAccountIsSuspended": "Tài khoản của bạn bị treo",
     "yourChats": "Mục trờ chuyện của bạn",
     "youreBlocked": "Xin lỗi, bạn đã bị chặn khỏi nhóm này",
-    "yourRoleChanged": "{changeBy} đã thay đổi vai trò của bạn từ {oldRole} thành {newRole}"
+    "yourRoleChanged": "{changedBy} đã thay đổi vai trò của bạn thành {newRole}"
 }

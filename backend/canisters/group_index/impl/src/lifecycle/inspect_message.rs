@@ -26,12 +26,14 @@ fn accept_if_valid(state: &RuntimeState) {
         "upload_wasm_chunk" => state.can_caller_upload_wasm_chunks(),
         "add_hot_group_exclusion"
         | "delete_frozen_group"
+        | "freeze_community"
         | "freeze_group"
         | "mark_local_group_index_full"
         | "remove_hot_group_exclusion"
         | "set_community_moderation_flags"
         | "set_community_upgrade_concurrency"
         | "set_group_upgrade_concurrency"
+        | "unfreeze_community"
         | "unfreeze_group" => true,
         _ => false,
     };

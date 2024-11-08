@@ -157,7 +157,7 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
             };
 
             if args.is_public && gate_config.is_none() {
-                add_members_to_public_channel_unchecked(&mut channel, state.data.members.iter_mut(), now);
+                add_members_to_public_channel_unchecked(&mut channel, state.data.is_public, state.data.members.iter_mut(), now);
             }
 
             state.data.channels.add(channel);

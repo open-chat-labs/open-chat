@@ -301,8 +301,10 @@
         "visibility": "दृश्यता"
     },
     "communityDisplayNameRules": "केवल चयनित समुदाय के भीतर",
+    "communityFrozen": "समुदाय जमे हुए",
     "communityMembers": "समुदाय के सदस्यों",
     "communityTheme": "सामुदायिक थीम",
+    "communityUnfrozen": "समुदाय अनफ़्रीज़न",
     "confirmLeaveGroup": "क्या आप सचमुच इसे {level} छोड़ना चाहते हैं?",
     "confirmMakeGroupPrivate": "क्या आप निश्चित रूप से इस {level} को निजी बनाना चाहते हैं?",
     "confirmMakeGroupPublic": "क्या आप निश्चित रूप से इस {level} को सार्वजनिक करना चाहते हैं?\n\nमौजूदा संदेश निजी रहेंगे, सभी नए संदेश सार्वजनिक रहेंगे।",
@@ -368,6 +370,7 @@
         "claim": "चिट का दावा करें!",
         "comeback": "{time} में वापस आ जाओ",
         "extendStreak": "लकीर बढ़ाएँ",
+        "hideWhenClaimed": "प्रत्येक दिन दावा करने के बाद दावा CHIT आइकन ⚡️ छिपाएँ",
         "info": "आप जितना अधिक समय तक अपना क्रम बनाए रखेंगे, उतना ही अधिक दैनिक CHIT आप प्राप्त कर सकेंगे!",
         "title": "अपना क्रम बनाए रखें",
         "utcInfo": "CHIT स्ट्रीक्स और दावा विंडो को UTC का उपयोग करके दर्शाया जाता है, इसलिए आपको अपने कैलेंडर को अपने स्थानीय समय क्षेत्र के बजाय UTC में देखना अधिक स्पष्ट लगेगा।",
@@ -439,11 +442,13 @@
     "failedToCopyLinkToClipboard": "क्लिपबोर्ड पर लिंक कॉपी करने में असमर्थ",
     "failedToCopyToClipboard": "क्लिपबोर्ड पर कॉपी करने में असमर्थ. {account}",
     "failedToCopyUrlToClipboard": "यूआरएल ({url}) को क्लिपबोर्ड पर कॉपी करने में असमर्थ",
+    "failedToFreezeCommunity": "समुदाय को स्थिर करने में विफल",
     "failedToFreezeGroup": "समूह को फ़्रीज़ करने में विफल",
     "failedToLeaveGroup": "आपको {level} से हटाने का प्रयास करते समय एक त्रुटि हुई",
     "failedToShareLink": "लिंक साझा करने में विफल",
     "failedToShareMessage": "इस संदेश को साझा करने में असमर्थ",
     "failedToSuspendUser": "उपयोगकर्ता को निलंबित करने में विफल",
+    "failedToUnfreezeCommunity": "समुदाय को अनफ्रीज करने में विफल",
     "failedToUnfreezeGroup": "समूह को अनफ़्रीज़ करने में विफल",
     "failedToUnsuspendUser": "उपयोगकर्ता का निलंबन रद्द करने में विफल",
     "faq": {
@@ -489,6 +494,7 @@
     "followThreadFailed": "फ़ॉलो थ्रेड विफल रहा",
     "fontSize": "फ़ॉन्ट आकार",
     "forward": "आगे",
+    "freezeCommunity": "फ़्रीज़ समुदाय",
     "freezeGroup": "फ़्रीज़ समूह",
     "giphyMessage": "जीआईएफ संदेश",
     "goHome": "घर",
@@ -604,9 +610,9 @@
         "link": "जोड़ना",
         "linkedAccounts": {
             "currentAccount": "वर्तमान में इस प्रिंसिपल के साथ साइन इन है",
-            "linkAdvice": "नया खाता लिंक करने के लिए उस नए खाते में साइन इन करें जिसे आप लिंक करना चाहते हैं, फिर अपने वर्तमान खाते में साइन इन करें और अंत में दोनों खातों को एक साथ लिंक करें।",
-            "linkAnother": "अन्य लिंक करें",
-            "section": "लिंक किए गए खाते",
+            "linkAdvice": "नया साइन-इन प्रदाता जोड़ने के लिए, पहले उस नए प्रदाता के साथ साइन-इन करें जिसे आप जोड़ना चाहते हैं, फिर अपने वर्तमान प्रदाता के साथ साइन-इन करें और अंत में दोनों को एक साथ लिंक करें।",
+            "linkAnother": "एक और जोड़ें",
+            "section": "साइन-इन प्रदाता",
             "start": "शुरू हो जाओ"
         },
         "linkIdentity": "लिंक पहचान",
@@ -1291,7 +1297,7 @@
         "none": "कोई नहीं",
         "owner": "मालिकों"
     },
-    "roleChanged": "{changedBy} ने {changed} की भूमिका को {oldRole} से बदलकर {newRole} कर दिया",
+    "roleChanged": "{changedBy} ने {changed} की भूमिका बदलकर {newRole} कर दी",
     "rules": {
         "accept": "स्वीकार करना",
         "acceptTitle": "चैट नियम",
@@ -1500,6 +1506,7 @@
     "unexpectedError": "अप्रत्याशित त्रुटि",
     "unfollowThread": "इस थ्रेड को अनफ़ॉलो करें",
     "unfollowThreadFailed": "अनफ़ॉलो थ्रेड विफल रहा",
+    "unfreezeCommunity": "समुदाय को अनफ्रीज करें",
     "unfreezeGroup": "समूह को अनफ़्रीज़ करें",
     "unknown": "अज्ञात",
     "unknownUser": "अज्ञात उपयोगकर्ता",
@@ -1654,5 +1661,5 @@
     "yourAccountIsSuspended": "तुम्हारा खाता निलंबित है",
     "yourChats": "आपकी चैट",
     "youreBlocked": "क्षमा करें - आपको इस समूह से ब्लॉक कर दिया गया है",
-    "yourRoleChanged": "{changedBy} ने आपकी भूमिका को {oldRole} से बदलकर {newRole} कर दिया"
+    "yourRoleChanged": "{changedBy} ने आपकी भूमिका बदलकर {newRole} कर दी है"
 }

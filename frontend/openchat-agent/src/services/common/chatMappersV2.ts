@@ -2185,7 +2185,7 @@ export function communityChannelSummary(
             readByMeUpTo: latestMessage?.event.messageIndex,
             latestThreads:
                 mapOptional(value.membership, (m) => m.latest_threads.map(threadSyncDetails)) ?? [],
-            mentions: [],
+            mentions: mapOptional(value.membership, (m) => mentions(m.mentions)) ?? [],
             archived: false,
             rulesAccepted: mapOptional(value.membership, (m) => m.rules_accepted) ?? false,
             lapsed: mapOptional(value.membership, (m) => m.lapsed) ?? false,
@@ -2312,8 +2312,11 @@ export function mention(value: TMention): Mention {
         messageId: value.message_id,
         messageIndex: value.message_index,
         eventIndex: value.event_index,
-        mentionedBy: principalBytesToString(value.mentioned_by),
     };
+}
+
+export function mentions(value: TMention[]): Mention[] {
+    return value.filter((m) => m.thread_root_message_index === undefined).map(mention);
 }
 
 export function expiredEventsRange([start, end]: [number, number]): ExpiredEventsRange {

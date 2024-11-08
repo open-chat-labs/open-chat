@@ -60,6 +60,7 @@ import {
     getContentAsFormattedText,
     getContentAsText,
     messageContextsEqual,
+    random64,
     OPENCHAT_VIDEO_CALL_AVATAR_URL,
     OPENCHAT_VIDEO_CALL_USER_ID,
     OPENCHAT_BOT_USER_ID,
@@ -67,7 +68,6 @@ import {
 } from "openchat-shared";
 import { distinctBy, groupWhile, toRecordFiltered } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
-import { v1 as uuidv1 } from "uuid";
 import DRange from "drange";
 import Identicon from "identicon.js";
 import md5 from "md5";
@@ -96,10 +96,6 @@ export function isLapsed(chat: ChatSummary): boolean {
 
 export function isFrozen(thing: AccessControlled): boolean {
     return thing.frozen;
-}
-
-export function newMessageId(): bigint {
-    return BigInt(parseInt(uuidv1().replace(/-/g, ""), 16));
 }
 
 export function isUpToDate(chat: ChatSummary, events: EventWrapper<ChatEvent>[]): boolean {
@@ -265,7 +261,7 @@ export function createMessage(
         content,
         sender: userId,
         repliesTo: replyingTo,
-        messageId: newMessageId(),
+        messageId: random64(),
         messageIndex,
         reactions: [],
         tips: {},
@@ -281,6 +277,7 @@ function messageMentionsUser(
     userId: string,
     msg: EventWrapper<Message>,
 ): boolean {
+    if (msg.event.sender === userId) return false;
     const txt = getContentAsFormattedText(formatter, msg.event.content, get(cryptoLookup));
     return txt.indexOf(`@UserId(${userId})`) >= 0;
 }
@@ -296,7 +293,6 @@ function mentionsFromMessages(
                 messageId: msg.event.messageId,
                 messageIndex: msg.event.messageIndex,
                 eventIndex: msg.index,
-                mentionedBy: msg.event.sender,
             });
         }
         return mentions;
@@ -704,9 +700,12 @@ function reduceJoinedOrLeft(
     }
 
     return events.reduce((previous: EventWrapper<ChatEvent>[], e: EventWrapper<ChatEvent>) => {
+        let newEvent = e;
+
         if (
             isEventKindHidden(e.event.kind) ||
             e.event.kind === "member_joined" ||
+            e.event.kind === "role_changed" ||
             (e.event.kind === "message" &&
                 messageIsHidden(e.event, myUserId, expandedDeletedMessages))
         ) {
@@ -716,6 +715,7 @@ function reduceJoinedOrLeft(
                     kind: "aggregate_common_events",
                     usersJoined: new Set(),
                     usersLeft: new Set(),
+                    rolesChanged: new Map(),
                     messagesDeleted: [],
                 };
             } else {
@@ -736,16 +736,44 @@ function reduceJoinedOrLeft(
                 }
             } else if (e.event.kind === "message") {
                 agg.messagesDeleted.push(e.event.messageIndex);
+            } else if (e.event.kind === "role_changed") {
+                let changedByMap = agg.rolesChanged.get(e.event.changedBy);
+
+                if (changedByMap === undefined) {
+                    changedByMap = new Map();
+                    agg.rolesChanged.set(e.event.changedBy, changedByMap);
+                }
+
+                // Build the set of users that have already had their role changed
+                const alreadyChanged = new Set(
+                    [...changedByMap.values()].flatMap((users) => Array.from(users)),
+                );
+
+                // Only add users who have not already had their role changed
+                const usersToAdd = e.event.userIds.filter((userId) => !alreadyChanged.has(userId));
+
+                if (usersToAdd.length > 0) {
+                    let newRoleSet = changedByMap.get(e.event.newRole);
+
+                    if (newRoleSet === undefined) {
+                        newRoleSet = new Set();
+                        changedByMap.set(e.event.newRole, newRoleSet);
+                    }
+
+                    for (const userId of usersToAdd) {
+                        newRoleSet.add(userId);
+                    }
+                }
             }
 
-            previous.push({
+            newEvent = {
                 event: agg,
                 timestamp: e.timestamp,
                 index: e.index,
-            });
-        } else {
-            previous.push(e);
+            };
         }
+
+        previous.push(newEvent);
 
         return previous;
     }, []);

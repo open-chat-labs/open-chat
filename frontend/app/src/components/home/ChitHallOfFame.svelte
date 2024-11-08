@@ -98,7 +98,7 @@
 <ModalContent closeIcon on:close>
     <div slot="header" class="header">
         <div class="streak">
-            <HoverIcon on:click={streak}>
+            <HoverIcon onclick={streak}>
                 <LighteningBolt enabled={false} />
             </HoverIcon>
         </div>

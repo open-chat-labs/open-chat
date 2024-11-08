@@ -52,7 +52,7 @@ import {
     groupPermissions,
     groupSubtype,
     memberRole,
-    mention,
+    mentions,
     messageEvent,
     messagesSuccessResponse,
     threadSyncDetails,
@@ -132,9 +132,7 @@ export function groupChatSummary(
             lapsed: m.lapsed,
             rulesAccepted: m.rules_accepted,
             latestThreads: m.latest_threads.map(threadSyncDetails),
-            mentions: m.mentions
-                .filter((m) => m.thread_root_message_index !== undefined)
-                .map(mention),
+            mentions: mentions(m.mentions),
             myMetrics: chatMetrics(m.my_metrics),
         })) ?? {
             joined: 0n,
@@ -163,9 +161,7 @@ export function summaryUpdatesResponse(
 export function groupMembershipUpdates(value: TGroupMembershipUpdates): GroupMembershipUpdates {
     return {
         myRole: mapOptional(value.role, memberRole),
-        mentions: value.mentions
-            .filter((m) => m.thread_root_message_index === undefined)
-            .map(mention),
+        mentions: mentions(value.mentions),
         notificationsMuted: value.notifications_muted,
         myMetrics: mapOptional(value.my_metrics, chatMetrics),
         latestThreads: value.latest_threads.map(threadSyncDetails),

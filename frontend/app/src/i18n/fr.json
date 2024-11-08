@@ -301,8 +301,10 @@
         "visibility": "Visibilité"
     },
     "communityDisplayNameRules": "seulement au sein de cette communauté",
+    "communityFrozen": "Communauté gelée",
     "communityMembers": "Membres de la communauté",
     "communityTheme": "Thème communautaire",
+    "communityUnfrozen": "Communauté dégelée",
     "confirmLeaveGroup": "Voulez-vous vraiment quitter ce {level} ?",
     "confirmMakeGroupPrivate": "Voulez-vous vraiment rendre ce {level} privé ? Actuellement, cette opération ne peut pas être annulée !",
     "confirmMakeGroupPublic": "Voulez-vous vraiment rendre ce {level} public ?\n\nLes messages existants resteront privés, tous les nouveaux messages seront publics.",
@@ -368,6 +370,7 @@
         "claim": "Réclamez CHIT !",
         "comeback": "Revenez dans {time}",
         "extendStreak": "Prolonger la séquence",
+        "hideWhenClaimed": "Masquer l'icône de réclamation CHIT ⚡️ après avoir réclamé chaque jour",
         "info": "Plus vous maintenez votre séquence longtemps, plus vous pouvez réclamer de CHIT quotidien !",
         "title": "Maintenez votre séquence",
         "utcInfo": "Les séquences CHIT et les fenêtres de réclamation sont représentées en UTC afin que vous puissiez trouver plus clair d'afficher votre calendrier en UTC plutôt que dans votre fuseau horaire local.",
@@ -439,11 +442,13 @@
     "failedToCopyLinkToClipboard": "Impossible de copier le lien dans le presse-papiers",
     "failedToCopyToClipboard": "Impossible de copier dans le presse-papiers {account}",
     "failedToCopyUrlToClipboard": "Impossible de copier l'URL ({url}) dans le presse-papiers",
+    "failedToFreezeCommunity": "Impossible de geler la communauté",
     "failedToFreezeGroup": "Échec du gel du groupe",
     "failedToLeaveGroup": "Une erreur s'est produite lors de la tentative de suppression de votre compte {level}",
     "failedToShareLink": "Impossible de partager le lien",
     "failedToShareMessage": "Impossible de partager ce message",
     "failedToSuspendUser": "Échec de la suspension de l'utilisateur",
+    "failedToUnfreezeCommunity": "Impossible de dégeler la communauté",
     "failedToUnfreezeGroup": "Impossible de dégeler le groupe",
     "failedToUnsuspendUser": "Échec de l'annulation de la suspension de l'utilisateur",
     "faq": {
@@ -489,6 +494,7 @@
     "followThreadFailed": "Échec du suivi du fil de discussion",
     "fontSize": "Taille de police",
     "forward": "Vers l'avant",
+    "freezeCommunity": "Geler la communauté",
     "freezeGroup": "Groupe Geler",
     "giphyMessage": "Message GIF",
     "goHome": "Accueil",
@@ -604,9 +610,9 @@
         "link": "Lien",
         "linkedAccounts": {
             "currentAccount": "Actuellement connecté avec ce principal",
-            "linkAdvice": "Pour lier un nouveau compte Connectez-vous au nouveau compte que vous souhaitez lier, puis connectez-vous à votre compte actuel et enfin associez les deux comptes ensemble.",
-            "linkAnother": "Lier un autre",
-            "section": "Comptes liés",
+            "linkAdvice": "Pour ajouter un nouveau fournisseur de connexion, connectez-vous d'abord avec le nouveau fournisseur que vous souhaitez ajouter, puis connectez-vous avec votre fournisseur actuel et enfin associez les deux.",
+            "linkAnother": "Ajouter un autre",
+            "section": "Fournisseurs de connexion",
             "start": "Commencer"
         },
         "linkIdentity": "Identité du lien",
@@ -1291,7 +1297,7 @@
         "none": "Personne",
         "owner": "Les propriétaires"
     },
-    "roleChanged": "{changedBy} a changé le rôle de {changed} de {oldRole} à {newRole}",
+    "roleChanged": "{changedBy} a changé le rôle de {changed} en {newRole}",
     "rules": {
         "accept": "Accepter",
         "acceptTitle": "Règles de discussion",
@@ -1500,6 +1506,7 @@
     "unexpectedError": "Erreur inattendue",
     "unfollowThread": "Ne plus suivre ce fil",
     "unfollowThreadFailed": "Échec de l'abandon du suivi du fil de discussion",
+    "unfreezeCommunity": "Communauté Unfreeze",
     "unfreezeGroup": "Dégeler le groupe",
     "unknown": "Inconnue",
     "unknownUser": "Utilisateur inconnu",
@@ -1654,5 +1661,5 @@
     "yourAccountIsSuspended": "Votre compte est suspendu",
     "yourChats": "Vos discussions",
     "youreBlocked": "Désolé - vous avez été bloqué de ce groupe",
-    "yourRoleChanged": "{changedBy} a changé votre rôle de {oldRole} à {newRole}"
+    "yourRoleChanged": "{changedBy} a changé votre rôle en {newRole}"
 }

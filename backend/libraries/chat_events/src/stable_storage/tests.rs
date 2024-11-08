@@ -18,7 +18,7 @@ use std::borrow::Cow;
 use testing::rng::{random_from_principal, random_from_u128, random_from_u32, random_principal, random_string};
 use types::{
     Cryptocurrency, EventIndex, EventWrapperInternal, MessageReport, P2PSwapCompleted, P2PSwapStatus, Proposal,
-    ProposalDecisionStatus, ProposalRewardStatus, Reaction, SnsProposal, Tally, ThumbnailData, Timestamped, Tips, TokenInfo,
+    ProposalDecisionStatus, ProposalRewardStatus, Reaction, SnsProposal, Tally, ThumbnailData, Tips, TokenInfo,
     VideoCallPresence, VideoCallType,
 };
 
@@ -475,10 +475,8 @@ fn generate_value(content: MessageContentInternal) -> Value {
                 timestamp: random(),
             }),
             thread_summary: Some(ThreadSummaryInternal {
-                participant_ids: vec![random_from_principal(), random_from_principal(), random_from_principal()],
-                follower_ids: [(random_from_principal(), Timestamped::new(true, random()))]
-                    .into_iter()
-                    .collect(),
+                participants: vec![random_from_principal(), random_from_principal(), random_from_principal()],
+                followers: [random_from_principal(), random_from_principal()].into_iter().collect(),
                 reply_count: random(),
                 latest_event_index: random_from_u32(),
                 latest_event_timestamp: random(),

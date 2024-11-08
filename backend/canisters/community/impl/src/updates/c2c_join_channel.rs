@@ -229,7 +229,13 @@ fn commit(
     };
 
     let now = state.env.now();
-    match join_channel_unchecked(channel, member, state.data.is_public, true, now) {
+    match join_channel_unchecked(
+        channel,
+        member,
+        state.data.is_public && channel.chat.is_public.value,
+        true,
+        now,
+    ) {
         AddResult::Success(result) => {
             let summary = channel
                 .summary(Some(user_id), true, state.data.is_public, &state.data.members)
@@ -278,12 +284,13 @@ fn commit(
 
 pub(crate) fn add_members_to_public_channel_unchecked<'a>(
     channel: &mut Channel,
+    notifications_muted: bool,
     members: impl Iterator<Item = &'a mut CommunityMemberInternal>,
     now: TimestampMillis,
 ) {
     let mut users_added = Vec::new();
     for member in members {
-        let result = join_channel_unchecked(channel, member, true, false, now);
+        let result = join_channel_unchecked(channel, member, notifications_muted, false, now);
         if matches!(result, AddResult::Success(_)) {
             member.channels.insert(channel.id);
             users_added.push(member.user_id);

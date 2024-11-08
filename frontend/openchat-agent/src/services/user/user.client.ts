@@ -454,17 +454,26 @@ export class UserClient extends CandidService {
         );
     }
 
+    getCachedEventsByIndex(
+        eventIndexes: number[],
+        chatId: DirectChatIdentifier,
+        threadRootMessageIndex: number | undefined,
+    ) {
+        return getCachedEventsByIndex(this.db, eventIndexes, {
+            chatId,
+            threadRootMessageIndex,
+        });
+    }
+
     chatEventsByIndex(
         eventIndexes: number[],
         chatId: DirectChatIdentifier,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
-        return getCachedEventsByIndex(this.db, eventIndexes, {
-            chatId,
-            threadRootMessageIndex,
-        }).then((res) =>
-            this.handleMissingEvents(chatId, res, threadRootMessageIndex, latestKnownUpdate),
+        return this.getCachedEventsByIndex(eventIndexes, chatId, threadRootMessageIndex).then(
+            (res) =>
+                this.handleMissingEvents(chatId, res, threadRootMessageIndex, latestKnownUpdate),
         );
     }
 

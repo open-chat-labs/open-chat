@@ -159,8 +159,8 @@ function streamReplies(
     chain: Stream<WorkerResponseInner>,
 ) {
     const start = Date.now();
-    chain
-        .subscribe((value, final) => {
+    chain.subscribe({
+        onResult: (value, final) => {
             console.debug(
                 `WORKER: sending streamed reply ${Date.now() - start}ms after subscribing`,
                 correlationId,
@@ -169,8 +169,9 @@ function streamReplies(
                 final,
             );
             sendResponse(correlationId, value, final);
-        })
-        .catch(sendError(correlationId, payload));
+        },
+        onError: sendError(correlationId, payload),
+    });
 }
 
 function executeThenReply(
@@ -952,6 +953,18 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "unfreezeGroup":
                 executeThenReply(payload, correlationId, agent.unfreezeGroup(payload.chatId));
+                break;
+
+            case "freezeCommunity":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.freezeCommunity(payload.id, payload.reason),
+                );
+                break;
+
+            case "unfreezeCommunity":
+                executeThenReply(payload, correlationId, agent.unfreezeCommunity(payload.id));
                 break;
 
             case "deleteFrozenGroup":

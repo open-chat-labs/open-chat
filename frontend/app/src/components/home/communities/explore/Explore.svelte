@@ -182,12 +182,12 @@
             {/if}
             <div class="buttons">
                 {#if $ipadWidth}
-                    <HoverIcon on:click={createCommunity}>
+                    <HoverIcon onclick={createCommunity}>
                         <Plus size={$iconSize} color={"var(--icon-txt)"} />
                     </HoverIcon>
                 {/if}
 
-                <HoverIcon title={$_("showFilters")} on:click={showFilters}>
+                <HoverIcon title={$_("showFilters")} onclick={showFilters}>
                     <Tune size={$iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
             </div>

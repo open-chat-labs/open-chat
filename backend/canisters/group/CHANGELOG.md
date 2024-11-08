@@ -8,7 +8,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Reduce size of metrics in memory ([#6765](https://github.com/open-chat-labs/open-chat/pull/6765))
+
+### Removed
+
+- Remove events from being stored on the heap ([#6758](https://github.com/open-chat-labs/open-chat/pull/6758))
+
+## [[2.0.1434](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1434-group)] - 2024-11-07
+
+### Changed
+
+- Consolidate `summary` and `c2c_summary` args ([#6723](https://github.com/open-chat-labs/open-chat/pull/6723))
+- Fix case where some thread messages were not updated in stable memory ([#6736](https://github.com/open-chat-labs/open-chat/pull/6736))
+- Restart migration job if threads need to be updated ([#6757](https://github.com/open-chat-labs/open-chat/pull/6757))
+- Perform cycles check when migrating events to stable memory ([#6757](https://github.com/open-chat-labs/open-chat/pull/6757))
+
+### Fixed
+
+- Fix migrating to stable memory for chats with disappearing messages ([#6746](https://github.com/open-chat-labs/open-chat/pull/6746))
+
+## [[2.0.1424](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1424-group)] - 2024-11-05
+
+### Changed
+
 - Avoid extra key lookup when iterating over events ([#6680](https://github.com/open-chat-labs/open-chat/pull/6680))
+- Read events in batches when performing stable memory garbage collection ([#6682](https://github.com/open-chat-labs/open-chat/pull/6682))
+- Improve efficiency of calculating latest threads per user ([#6687](https://github.com/open-chat-labs/open-chat/pull/6687))
+- Avoid iterating over chat events to load mentions ([#6690](https://github.com/open-chat-labs/open-chat/pull/6690))
+- Read events from stable memory once migration is complete ([#6722](https://github.com/open-chat-labs/open-chat/pull/6722))
 
 ## [[2.0.1408](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1408-group)] - 2024-10-24
 

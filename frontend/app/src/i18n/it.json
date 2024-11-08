@@ -301,8 +301,10 @@
         "visibility": "Visibilità"
     },
     "communityDisplayNameRules": "solo all'interno di questa comunità",
+    "communityFrozen": "Comunità congelata",
     "communityMembers": "Membri della comunità",
     "communityTheme": "Tema comunitario",
+    "communityUnfrozen": "Comunità sbloccata",
     "confirmLeaveGroup": "Vuoi davvero lasciare questo {level}?",
     "confirmMakeGroupPrivate": "Vuoi assolutamente rendere questo {level} privato? Attualmente questa operazione non può essere annullata!",
     "confirmMakeGroupPublic": "Vuoi davvero rendere pubblico questo {level}?\n\nI messaggi esistenti rimarranno privati, tutti i nuovi messaggi saranno pubblici.",
@@ -368,6 +370,7 @@
         "claim": "Richiedi CHIT!",
         "comeback": "Torna tra {time}",
         "extendStreak": "Estendi la serie",
+        "hideWhenClaimed": "Nascondi l'icona di richiesta CHIT ⚡️ dopo aver richiesto ogni giorno",
         "info": "Più a lungo mantieni la tua serie, più CHIT giornalieri puoi richiedere!",
         "title": "Mantieni la tua serie",
         "utcInfo": "Le serie CHIT e le finestre di reclamo sono rappresentate utilizzando l'UTC, quindi potresti trovare più chiaro visualizzare il tuo calendario in UTC anziché nel fuso orario locale.",
@@ -439,11 +442,13 @@
     "failedToCopyLinkToClipboard": "Impossibile copiare il collegamento negli appunti",
     "failedToCopyToClipboard": "Impossibile copiare negli appunti {account}",
     "failedToCopyUrlToClipboard": "Impossibile copiare l'URL ({url}) negli appunti",
+    "failedToFreezeCommunity": "Impossibile congelare la community",
     "failedToFreezeGroup": "Impossibile bloccare il gruppo",
     "failedToLeaveGroup": "Si è verificato un errore nel tentativo di rimuoverti da {level}",
     "failedToShareLink": "Impossibile condividere il collegamento",
     "failedToShareMessage": "Impossibile condividere questo messaggio",
     "failedToSuspendUser": "Impossibile sospendere l'utente",
+    "failedToUnfreezeCommunity": "Impossibile sbloccare la community",
     "failedToUnfreezeGroup": "Impossibile sbloccare il gruppo",
     "failedToUnsuspendUser": "Impossibile annullare la sospensione dell'utente",
     "faq": {
@@ -489,6 +494,7 @@
     "followThreadFailed": "Seguire il thread non è riuscito",
     "fontSize": "Dimensione del font",
     "forward": "Inoltra",
+    "freezeCommunity": "Congelare la comunità",
     "freezeGroup": "Congelare il gruppo",
     "giphyMessage": "Messaggio gif",
     "goHome": "Home",
@@ -604,9 +610,9 @@
         "link": "Collegamento",
         "linkedAccounts": {
             "currentAccount": "Attualmente connesso con questo preside",
-            "linkAdvice": "Per collegare un nuovo account Accedi al nuovo account che desideri collegare, quindi accedi al tuo account attuale e infine collega i due account.",
-            "linkAnother": "Collega un altro",
-            "section": "Account collegati",
+            "linkAdvice": "Per aggiungere un nuovo provider di accesso, accedi prima con il nuovo provider che desideri aggiungere, poi accedi con il tuo provider attuale e infine collega i due.",
+            "linkAnother": "Aggiungine un altro",
+            "section": "Provider di accesso",
             "start": "Iniziare"
         },
         "linkIdentity": "Collegamento Identità",
@@ -1291,7 +1297,7 @@
         "none": "Nessuno",
         "owner": "Proprietari"
     },
-    "roleChanged": "{changedBy} ha cambiato il ruolo di {changed} da {oldRole} a {newRole}",
+    "roleChanged": "{changedBy} ha cambiato il ruolo di {changed} in {newRole}",
     "rules": {
         "accept": "Accettare",
         "acceptTitle": "Regole della chat",
@@ -1500,6 +1506,7 @@
     "unexpectedError": "Errore inaspettato",
     "unfollowThread": "Smetti di seguire questo thread",
     "unfollowThreadFailed": "Smetti di seguire il thread non riuscito",
+    "unfreezeCommunity": "Scongelare la comunità",
     "unfreezeGroup": "Sblocca gruppo",
     "unknown": "Sconosciuto",
     "unknownUser": "Utente sconosciuto",
@@ -1654,5 +1661,5 @@
     "yourAccountIsSuspended": "Il tuo account è sospeso",
     "yourChats": "Le tue chat",
     "youreBlocked": "Siamo spiacenti, sei stato bloccato da questo gruppo",
-    "yourRoleChanged": "{changedBy} ha cambiato il tuo ruolo da {oldRole} a {newRole}"
+    "yourRoleChanged": "{changedBy} ha cambiato il tuo ruolo in {newRole}"
 }

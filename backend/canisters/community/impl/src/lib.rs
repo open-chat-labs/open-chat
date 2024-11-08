@@ -241,12 +241,12 @@ impl RuntimeState {
                 }
             }
             prize_refunds.extend(result.prize_refunds);
-            for (message_index, _) in result.threads {
+            for thread in result.threads {
                 self.data
                     .stable_memory_keys_to_garbage_collect
                     .push(KeyPrefix::ChannelThread(ChannelThreadKeyPrefix::new(
                         channel.id,
-                        message_index,
+                        thread.root_message_index,
                     )));
             }
         }
@@ -299,7 +299,6 @@ impl RuntimeState {
             instruction_counts: self.data.instruction_counts_log.iter().collect(),
             event_store_client_info: self.data.event_store_client.info(),
             timer_jobs: self.data.timer_jobs.len() as u32,
-            stable_memory_event_migration_complete: self.data.stable_memory_event_migration_complete,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -367,7 +366,6 @@ struct Data {
     expiring_member_actions: ExpiringMemberActions,
     user_cache: UserCache,
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
-    stable_memory_event_migration_complete: bool,
     stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
 }
 
@@ -470,7 +468,6 @@ impl Data {
             expiring_member_actions: ExpiringMemberActions::default(),
             user_cache: UserCache::default(),
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
-            stable_memory_event_migration_complete: true,
             stable_memory_keys_to_garbage_collect: Vec::new(),
         }
     }
@@ -715,7 +712,6 @@ pub struct Metrics {
     pub instruction_counts: Vec<InstructionCountEntry>,
     pub event_store_client_info: EventStoreClientInfo,
     pub timer_jobs: u32,
-    pub stable_memory_event_migration_complete: bool,
     pub canister_ids: CanisterIds,
 }
 

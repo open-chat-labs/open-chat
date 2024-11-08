@@ -86,6 +86,7 @@ type ChatMetrics = record {
     file_messages : nat64;
     polls : nat64;
     poll_votes : nat64;
+    crypto_messages : nat64;
     icp_messages : nat64;
     sns1_messages : nat64;
     ckbtc_messages : nat64;
@@ -570,7 +571,6 @@ type Mention = record {
     message_id : MessageId;
     message_index : MessageIndex;
     event_index : EventIndex;
-    mentioned_by : UserId;
 };
 
 type Message = record {

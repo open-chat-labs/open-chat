@@ -25,6 +25,7 @@
     import { now } from "../../../stores/time";
     import LighteningBolt from "./LighteningBolt.svelte";
     import { activityFeedShowing } from "../../../stores/activity";
+    import { hideChitIcon } from "../../../stores/settings";
     import {
         AvatarSize,
         type CommunitySummary,
@@ -227,25 +228,29 @@
             </LeftNavItem>
         {/if}
         {#if !$anonUser}
-            <LeftNavItem
-                label={i18nKey(
-                    claimChitAvailable ? "dailyChit.extendStreak" : "dailyChit.viewStreak",
-                )}
-                on:click={() => dispatch("claimDailyChit")}>
-                <div class="hover streak">
-                    <LighteningBolt enabled={claimChitAvailable} />
-                </div>
-            </LeftNavItem>
-            <LeftNavItem
-                separator
-                selected={$activityFeedShowing}
-                label={i18nKey("activity.navLabel")}
-                unread={{ muted: 0, unmuted: $unreadActivityCount, mentions: false }}
-                on:click={showActivityFeed}>
-                <div class="hover activity">
-                    <BellRingOutline size={iconSize} color={"var(--icon-txt)"} />
-                </div>
-            </LeftNavItem>
+            {#if claimChitAvailable || !$hideChitIcon}
+                <LeftNavItem
+                    label={i18nKey(
+                        claimChitAvailable ? "dailyChit.extendStreak" : "dailyChit.viewStreak",
+                    )}
+                    on:click={() => dispatch("claimDailyChit")}>
+                    <div class="hover streak">
+                        <LighteningBolt enabled={claimChitAvailable} />
+                    </div>
+                </LeftNavItem>
+            {/if}
+            {#if $globalState.messageActivitySummary.latestTimestamp > 0n}
+                <LeftNavItem
+                    separator
+                    selected={$activityFeedShowing}
+                    label={i18nKey("activity.navLabel")}
+                    unread={{ muted: 0, unmuted: $unreadActivityCount, mentions: false }}
+                    on:click={showActivityFeed}>
+                    <div class="hover activity">
+                        <BellRingOutline size={iconSize} color={"var(--icon-txt)"} />
+                    </div>
+                </LeftNavItem>
+            {/if}
         {/if}
     </div>
 

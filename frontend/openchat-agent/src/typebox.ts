@@ -301,6 +301,9 @@ export const GroupEditMessageResponse = Type.Union([
     Type.Literal("ChatFrozen"),
 ]);
 
+export type GroupSummaryArgs = Static<typeof GroupSummaryArgs>;
+export const GroupSummaryArgs = Type.Object({});
+
 export type GroupFollowThreadResponse = Static<typeof GroupFollowThreadResponse>;
 export const GroupFollowThreadResponse = Type.Union([
     Type.Literal("Success"),
@@ -4054,6 +4057,14 @@ export const PendingCryptoTransactionICRC1 = Type.Object({
     created: Type.BigInt(),
 });
 
+export type HydratedMention = Static<typeof HydratedMention>;
+export const HydratedMention = Type.Object({
+    thread_root_message_index: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
+    message_id: MessageId,
+    message_index: MessageIndex,
+    event_index: EventIndex,
+});
+
 export type DiamondMembershipFees = Static<typeof DiamondMembershipFees>;
 export const DiamondMembershipFees = Type.Object({
     chat_fees: DiamondMembershipFeesByDuration,
@@ -4267,6 +4278,18 @@ export const CompletedCryptoTransactionICRC1 = Type.Object({
     block_index: Type.BigInt(),
 });
 
+export type GroupMembership = Static<typeof GroupMembership>;
+export const GroupMembership = Type.Object({
+    joined: Type.BigInt(),
+    role: GroupRole,
+    mentions: Type.Array(HydratedMention),
+    notifications_muted: Type.Boolean(),
+    my_metrics: ChatMetrics,
+    latest_threads: Type.Array(GroupCanisterThreadDetails),
+    rules_accepted: Type.Boolean(),
+    lapsed: Type.Boolean(),
+});
+
 export type UserOrAccount = Static<typeof UserOrAccount>;
 export const UserOrAccount = Type.Union([
     Type.Object({
@@ -4338,6 +4361,18 @@ export type GovernanceProposalsSubtype = Static<typeof GovernanceProposalsSubtyp
 export const GovernanceProposalsSubtype = Type.Object({
     is_nns: Type.Boolean(),
     governance_canister_id: TSBytes,
+});
+
+export type GroupMembershipUpdates = Static<typeof GroupMembershipUpdates>;
+export const GroupMembershipUpdates = Type.Object({
+    role: Type.Optional(Type.Union([GroupRole, Type.Undefined()])),
+    mentions: Type.Array(HydratedMention),
+    notifications_muted: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
+    my_metrics: Type.Optional(Type.Union([ChatMetrics, Type.Undefined()])),
+    latest_threads: Type.Array(GroupCanisterThreadDetails),
+    unfollowed_threads: Type.Array(MessageIndex),
+    rules_accepted: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
+    lapsed: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
 });
 
 export type FailedCryptoTransactionNNS = Static<typeof FailedCryptoTransactionNNS>;
@@ -5870,15 +5905,6 @@ export const GroupCreated = Type.Object({
     created_by: UserId,
 });
 
-export type HydratedMention = Static<typeof HydratedMention>;
-export const HydratedMention = Type.Object({
-    thread_root_message_index: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
-    message_id: MessageId,
-    message_index: MessageIndex,
-    event_index: EventIndex,
-    mentioned_by: UserId,
-});
-
 export type UserSummaryV2 = Static<typeof UserSummaryV2>;
 export const UserSummaryV2 = Type.Object({
     user_id: UserId,
@@ -6182,18 +6208,6 @@ export const SelectedGroupUpdates = Type.Object({
     chat_rules: Type.Optional(Type.Union([VersionedRules, Type.Undefined()])),
 });
 
-export type GroupMembership = Static<typeof GroupMembership>;
-export const GroupMembership = Type.Object({
-    joined: Type.BigInt(),
-    role: GroupRole,
-    mentions: Type.Array(HydratedMention),
-    notifications_muted: Type.Boolean(),
-    my_metrics: ChatMetrics,
-    latest_threads: Type.Array(GroupCanisterThreadDetails),
-    rules_accepted: Type.Boolean(),
-    lapsed: Type.Boolean(),
-});
-
 export type OptionUpdateFrozenGroupInfo = Static<typeof OptionUpdateFrozenGroupInfo>;
 export const OptionUpdateFrozenGroupInfo = Type.Union(
     [
@@ -6225,18 +6239,6 @@ export type ReportedMessage = Static<typeof ReportedMessage>;
 export const ReportedMessage = Type.Object({
     reports: Type.Array(MessageReport),
     count: Type.Number(),
-});
-
-export type GroupMembershipUpdates = Static<typeof GroupMembershipUpdates>;
-export const GroupMembershipUpdates = Type.Object({
-    role: Type.Optional(Type.Union([GroupRole, Type.Undefined()])),
-    mentions: Type.Array(HydratedMention),
-    notifications_muted: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
-    my_metrics: Type.Optional(Type.Union([ChatMetrics, Type.Undefined()])),
-    latest_threads: Type.Array(GroupCanisterThreadDetails),
-    unfollowed_threads: Type.Array(MessageIndex),
-    rules_accepted: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
-    lapsed: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
 });
 
 export type DiamondMembershipStatusFull = Static<typeof DiamondMembershipStatusFull>;

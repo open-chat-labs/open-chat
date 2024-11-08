@@ -74,13 +74,13 @@
 
 <div class={"calendar-wrapper"}>
     <div class="calendar-header">
-        <HoverIcon on:click={previousMonth}>
+        <HoverIcon onclick={previousMonth}>
             <PrevIcon size={$iconSize} color={"var(--icon-txt"} />
         </HoverIcon>
         <slot name="month-title">
             <h3>{$title}</h3>
         </slot>
-        <HoverIcon on:click={nextMonth}>
+        <HoverIcon onclick={nextMonth}>
             <NextIcon size={$iconSize} color={"var(--icon-txt"} />
         </HoverIcon>
     </div>

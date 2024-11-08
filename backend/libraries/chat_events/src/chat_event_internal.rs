@@ -1,17 +1,16 @@
-use crate::{incr, MessageContentInternal};
+use crate::metrics::{ChatMetricsInternal, MetricKey};
+use crate::MessageContentInternal;
 use serde::{Deserialize, Serialize};
-use std::cmp::max;
-use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{HashMap, HashSet};
 use std::ops::DerefMut;
 use types::{
-    is_default, AccessGate, AccessGateConfigInternal, AvatarChanged, ChannelId, Chat, ChatId, ChatMetrics, CommunityId,
-    Cryptocurrency, DeletedBy, DirectChatCreated, EventIndex, EventWrapperInternal, EventsTimeToLiveUpdated,
-    ExternalUrlUpdated, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged,
-    GroupNameChanged, GroupReplyContext, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, MemberJoined, MemberLeft,
-    MembersAdded, MembersAddedToDefaultChannel, MembersRemoved, Message, MessageContent, MessageId, MessageIndex,
-    MessagePinned, MessageUnpinned, MultiUserChat, PermissionsChanged, PushIfNotContains, Reaction, ReplyContext, RoleChanged,
-    ThreadSummary, TimestampMillis, Timestamped, Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
+    is_default, AccessGate, AccessGateConfigInternal, AvatarChanged, ChannelId, Chat, ChatId, CommunityId, DeletedBy,
+    DirectChatCreated, EventIndex, EventWrapperInternal, EventsTimeToLiveUpdated, ExternalUrlUpdated, GroupCreated,
+    GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext,
+    GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, MemberJoined, MemberLeft, MembersAdded,
+    MembersAddedToDefaultChannel, MembersRemoved, Message, MessageContent, MessageId, MessageIndex, MessagePinned,
+    MessageUnpinned, MultiUserChat, PermissionsChanged, PushIfNotContains, Reaction, ReplyContext, RoleChanged, ThreadSummary,
+    TimestampMillis, Timestamped, Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -216,70 +215,57 @@ impl MessageInternal {
 
     pub fn add_to_metrics(&self, metrics: &mut ChatMetricsInternal) {
         if self.replies_to.is_some() {
-            incr(&mut metrics.replies);
+            metrics.incr(MetricKey::Replies, 1);
         }
 
         match &self.content {
             MessageContentInternal::Text(_) => {
-                incr(&mut metrics.text_messages);
+                metrics.incr(MetricKey::TextMessages, 1);
             }
             MessageContentInternal::Image(_) => {
-                incr(&mut metrics.image_messages);
+                metrics.incr(MetricKey::ImageMessages, 1);
             }
             MessageContentInternal::Video(_) => {
-                incr(&mut metrics.video_messages);
+                metrics.incr(MetricKey::VideoMessages, 1);
             }
             MessageContentInternal::Audio(_) => {
-                incr(&mut metrics.audio_messages);
+                metrics.incr(MetricKey::AudioMessages, 1);
             }
             MessageContentInternal::File(_) => {
-                incr(&mut metrics.file_messages);
+                metrics.incr(MetricKey::FileMessages, 1);
             }
             MessageContentInternal::Poll(_) => {
-                incr(&mut metrics.polls);
+                metrics.incr(MetricKey::Polls, 1);
             }
-            MessageContentInternal::Crypto(c) => match c.transfer.token() {
-                Cryptocurrency::InternetComputer => {
-                    incr(&mut metrics.icp_messages);
-                }
-                Cryptocurrency::SNS1 => {
-                    incr(&mut metrics.sns1_messages);
-                }
-                Cryptocurrency::CKBTC => {
-                    incr(&mut metrics.ckbtc_messages);
-                }
-                Cryptocurrency::CHAT => {
-                    incr(&mut metrics.chat_messages);
-                }
-                Cryptocurrency::KINIC => {
-                    incr(&mut metrics.kinic_messages);
-                }
-                Cryptocurrency::Other(_) => {
-                    incr(&mut metrics.other_crypto_messages);
-                }
-            },
+            MessageContentInternal::Crypto(_) => {
+                metrics.incr(MetricKey::CryptoMessages, 1);
+            }
             MessageContentInternal::Deleted(_) => {}
             MessageContentInternal::Giphy(_) => {
-                incr(&mut metrics.giphy_messages);
+                metrics.incr(MetricKey::GiphyMessages, 1);
             }
             MessageContentInternal::GovernanceProposal(_) => {
-                incr(&mut metrics.proposals);
+                metrics.incr(MetricKey::Proposals, 1);
             }
             MessageContentInternal::Prize(_) => {
-                incr(&mut metrics.prize_messages);
+                metrics.incr(MetricKey::PrizeMessages, 1);
             }
             MessageContentInternal::PrizeWinner(_) => {
-                incr(&mut metrics.prize_winner_messages);
+                metrics.incr(MetricKey::PrizeWinnerMessages, 1);
             }
             MessageContentInternal::MessageReminderCreated(_) => {}
             MessageContentInternal::MessageReminder(_) => {
-                incr(&mut metrics.message_reminders);
+                metrics.incr(MetricKey::MessageReminders, 1);
             }
             MessageContentInternal::ReportedMessage(_) => {}
-            MessageContentInternal::P2PSwap(_) => incr(&mut metrics.p2p_swaps),
-            MessageContentInternal::VideoCall(_) => incr(&mut metrics.video_calls),
+            MessageContentInternal::P2PSwap(_) => {
+                metrics.incr(MetricKey::P2pSwaps, 1);
+            }
+            MessageContentInternal::VideoCall(_) => {
+                metrics.incr(MetricKey::VideoCalls, 1);
+            }
             MessageContentInternal::Custom(_) => {
-                incr(&mut metrics.custom_type_messages);
+                metrics.incr(MetricKey::CustomTypeMessages, 1);
             }
         }
     }
@@ -348,11 +334,12 @@ impl From<&MembersAddedToPublicChannelInternal> for MembersAddedToDefaultChannel
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
+#[serde(from = "ThreadSummaryInternalCombined")]
 pub struct ThreadSummaryInternal {
-    #[serde(rename = "i")]
-    pub participant_ids: Vec<UserId>,
-    #[serde(default, rename = "f")]
-    pub follower_ids: HashMap<UserId, Timestamped<bool>>,
+    #[serde(rename = "p")]
+    pub participants: Vec<UserId>,
+    #[serde(rename = "f")]
+    pub followers: HashSet<UserId>,
     #[serde(rename = "r")]
     pub reply_count: u32,
     #[serde(rename = "e")]
@@ -361,11 +348,59 @@ pub struct ThreadSummaryInternal {
     pub latest_event_timestamp: TimestampMillis,
 }
 
+#[derive(Serialize, Deserialize)]
+#[serde(untagged)]
+enum Followers {
+    Old(HashMap<UserId, Timestamped<bool>>),
+    New(HashSet<UserId>),
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ThreadSummaryInternalCombined {
+    #[serde(rename = "p", alias = "i")]
+    participants: Vec<UserId>,
+    #[serde(rename = "f")]
+    followers: Followers,
+    #[serde(rename = "r")]
+    reply_count: u32,
+    #[serde(rename = "e")]
+    latest_event_index: EventIndex,
+    #[serde(rename = "t")]
+    latest_event_timestamp: TimestampMillis,
+}
+
+impl From<ThreadSummaryInternalCombined> for ThreadSummaryInternal {
+    fn from(value: ThreadSummaryInternalCombined) -> Self {
+        let followers = match value.followers {
+            Followers::Old(map) => {
+                let mut followers: HashSet<_> = value.participants.iter().copied().collect();
+                for (user_id, following) in map {
+                    if following.value {
+                        followers.insert(user_id);
+                    } else {
+                        followers.remove(&user_id);
+                    }
+                }
+                followers
+            }
+            Followers::New(set) => set,
+        };
+
+        ThreadSummaryInternal {
+            participants: value.participants,
+            followers,
+            reply_count: value.reply_count,
+            latest_event_index: value.latest_event_index,
+            latest_event_timestamp: value.latest_event_timestamp,
+        }
+    }
+}
+
 impl ThreadSummaryInternal {
     pub fn hydrate(&self, my_user_id: Option<UserId>) -> ThreadSummary {
         ThreadSummary {
-            participant_ids: self.participant_ids.clone(),
-            followed_by_me: my_user_id.map_or(false, |u| self.follower_ids.get(&u).map_or(false, |t| t.value)),
+            participant_ids: self.participants.clone(),
+            followed_by_me: my_user_id.map_or(false, |u| self.followers.contains(&u)),
             reply_count: self.reply_count,
             latest_event_index: self.latest_event_index,
             latest_event_timestamp: self.latest_event_timestamp,
@@ -376,60 +411,25 @@ impl ThreadSummaryInternal {
         &mut self,
         sender: UserId,
         mentioned_users: &[UserId],
+        root_message_sender: UserId,
         latest_event_index: EventIndex,
         now: TimestampMillis,
     ) {
         self.latest_event_index = latest_event_index;
         self.latest_event_timestamp = now;
         self.reply_count += 1;
-        self.participant_ids.push_if_not_contains(sender);
-        self.follower_ids.remove(&sender);
+        self.participants.push_if_not_contains(sender);
+        self.followers.insert(sender);
 
         // If a user is mentioned in a thread they automatically become a follower
         for user_id in mentioned_users {
-            if !self.participant_ids.contains(user_id) {
-                self.set_follow(*user_id, now, true);
-            }
-        }
-    }
-
-    pub fn set_follow(&mut self, user_id: UserId, now: TimestampMillis, follow: bool) -> bool {
-        if self.participant_ids.contains(&user_id) {
-            return false;
+            self.followers.insert(*user_id);
         }
 
-        let new_entry = Timestamped::new(follow, now);
-        match self.follower_ids.entry(user_id) {
-            Occupied(mut e) => {
-                if e.get().value == follow {
-                    false
-                } else {
-                    e.insert(new_entry);
-                    true
-                }
-            }
-            Vacant(e) => {
-                e.insert(new_entry);
-                true
-            }
+        let is_first_message = self.reply_count == 1;
+        if is_first_message {
+            self.followers.insert(root_message_sender);
         }
-    }
-
-    pub fn participants_and_followers(&self, include_unfollowed: bool) -> Vec<UserId> {
-        self.participant_ids
-            .iter()
-            .copied()
-            .chain(
-                self.follower_ids
-                    .iter()
-                    .filter(|(_, t)| include_unfollowed || t.value)
-                    .map(|(user_id, _)| *user_id),
-            )
-            .collect()
-    }
-
-    pub fn get_follower(&self, user_id: UserId) -> Option<Timestamped<bool>> {
-        self.follower_ids.get(&user_id).cloned()
     }
 }
 
@@ -507,121 +507,6 @@ impl From<&ReplyContext> for ReplyContextInternal {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
-pub struct ChatMetricsInternal {
-    #[serde(rename = "t", default, skip_serializing_if = "is_default")]
-    pub text_messages: u64,
-    #[serde(rename = "i", default, skip_serializing_if = "is_default")]
-    pub image_messages: u64,
-    #[serde(rename = "v", default, skip_serializing_if = "is_default")]
-    pub video_messages: u64,
-    #[serde(rename = "a", default, skip_serializing_if = "is_default")]
-    pub audio_messages: u64,
-    #[serde(rename = "f", default, skip_serializing_if = "is_default")]
-    pub file_messages: u64,
-    #[serde(rename = "p", default, skip_serializing_if = "is_default")]
-    pub polls: u64,
-    #[serde(rename = "pv", default, skip_serializing_if = "is_default")]
-    pub poll_votes: u64,
-    #[serde(rename = "icp", default, skip_serializing_if = "is_default")]
-    pub icp_messages: u64,
-    #[serde(rename = "sns1", default, skip_serializing_if = "is_default")]
-    pub sns1_messages: u64,
-    #[serde(rename = "ckbtc", default, skip_serializing_if = "is_default")]
-    pub ckbtc_messages: u64,
-    #[serde(rename = "chat", default, skip_serializing_if = "is_default")]
-    pub chat_messages: u64,
-    #[serde(rename = "kinic", default, skip_serializing_if = "is_default")]
-    pub kinic_messages: u64,
-    #[serde(rename = "o", default, skip_serializing_if = "is_default")]
-    pub other_crypto_messages: u64,
-    #[serde(rename = "d", default, skip_serializing_if = "is_default")]
-    pub deleted_messages: u64,
-    #[serde(rename = "g", default, skip_serializing_if = "is_default")]
-    pub giphy_messages: u64,
-    #[serde(rename = "pz", default, skip_serializing_if = "is_default")]
-    pub prize_messages: u64,
-    #[serde(rename = "pzw", default, skip_serializing_if = "is_default")]
-    pub prize_winner_messages: u64,
-    #[serde(rename = "rp", default, skip_serializing_if = "is_default")]
-    pub replies: u64,
-    #[serde(rename = "e", default, skip_serializing_if = "is_default")]
-    pub edits: u64,
-    #[serde(rename = "rt", default, skip_serializing_if = "is_default")]
-    pub reactions: u64,
-    #[serde(rename = "ti", default, skip_serializing_if = "is_default")]
-    pub tips: u64,
-    #[serde(rename = "pr", default, skip_serializing_if = "is_default")]
-    pub proposals: u64,
-    #[serde(rename = "rpt", default, skip_serializing_if = "is_default")]
-    pub reported_messages: u64,
-    #[serde(rename = "mr", default, skip_serializing_if = "is_default")]
-    pub message_reminders: u64,
-    #[serde(rename = "p2p", default, skip_serializing_if = "is_default")]
-    pub p2p_swaps: u64,
-    #[serde(rename = "vc", default, skip_serializing_if = "is_default")]
-    pub video_calls: u64,
-    #[serde(rename = "cu", default, skip_serializing_if = "is_default")]
-    pub custom_type_messages: u64,
-    #[serde(rename = "la")]
-    pub last_active: TimestampMillis,
-}
-
-impl ChatMetricsInternal {
-    pub fn merge(&mut self, other: &ChatMetricsInternal) {
-        self.text_messages += other.text_messages;
-        self.image_messages += other.image_messages;
-        self.video_messages += other.video_messages;
-        self.audio_messages += other.audio_messages;
-        self.file_messages += other.file_messages;
-        self.polls += other.polls;
-        self.poll_votes += other.poll_votes;
-        self.icp_messages += other.icp_messages;
-        self.sns1_messages += other.sns1_messages;
-        self.ckbtc_messages += other.ckbtc_messages;
-        self.chat_messages += other.chat_messages;
-        self.kinic_messages += other.kinic_messages;
-        self.deleted_messages += other.deleted_messages;
-        self.giphy_messages += other.giphy_messages;
-        self.prize_messages += other.prize_messages;
-        self.prize_winner_messages += other.prize_winner_messages;
-        self.replies += other.replies;
-        self.edits += other.edits;
-        self.reactions += other.reactions;
-        self.proposals += other.proposals;
-        self.last_active = max(self.last_active, other.last_active);
-    }
-
-    pub fn hydrate(&self) -> ChatMetrics {
-        ChatMetrics {
-            text_messages: self.text_messages,
-            image_messages: self.image_messages,
-            video_messages: self.video_messages,
-            audio_messages: self.audio_messages,
-            file_messages: self.file_messages,
-            polls: self.polls,
-            poll_votes: self.poll_votes,
-            icp_messages: self.icp_messages,
-            sns1_messages: self.sns1_messages,
-            ckbtc_messages: self.ckbtc_messages,
-            chat_messages: self.chat_messages,
-            kinic_messages: self.kinic_messages,
-            deleted_messages: self.deleted_messages,
-            giphy_messages: self.giphy_messages,
-            prize_messages: self.prize_messages,
-            prize_winner_messages: self.prize_winner_messages,
-            replies: self.replies,
-            edits: self.edits,
-            reactions: self.reactions,
-            proposals: self.proposals,
-            reported_messages: self.reported_messages,
-            message_reminders: self.message_reminders,
-            custom_type_messages: self.custom_type_messages,
-            last_active: self.last_active,
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use crate::{
@@ -629,7 +514,7 @@ mod tests {
         TextContentInternal, ThreadSummaryInternal,
     };
     use candid::Principal;
-    use std::collections::{HashMap, HashSet};
+    use std::collections::HashSet;
     use types::{EventWrapperInternal, Reaction, Tips};
 
     #[test]
@@ -690,8 +575,8 @@ mod tests {
                 timestamp: 1,
             }),
             thread_summary: Some(ThreadSummaryInternal {
-                participant_ids: vec![principal.into()],
-                follower_ids: HashMap::new(),
+                participants: vec![principal.into()],
+                followers: HashSet::new(),
                 reply_count: 1,
                 latest_event_index: 1.into(),
                 latest_event_timestamp: 1,

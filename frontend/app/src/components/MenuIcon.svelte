@@ -38,11 +38,15 @@
     }
 </script>
 
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class:open class="menu-icon" bind:this={menu} on:click|stopPropagation={onShowMenu}>
     <slot name="icon" />
 </div>
 
 <div class="menu-blueprint">
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <span class="menu" bind:this={contextMenu} on:click|stopPropagation={closeMenu}>
         {#if open}
             <slot name="menu" />

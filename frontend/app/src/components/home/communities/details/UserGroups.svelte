@@ -146,7 +146,7 @@
             </div>
             {#if canManageUserGroups}
                 <div class="add">
-                    <HoverIcon on:click={createUserGroup}>
+                    <HoverIcon onclick={createUserGroup}>
                         <Plus size={$iconSize} color={"var(--icon-txt)"} />
                     </HoverIcon>
                 </div>

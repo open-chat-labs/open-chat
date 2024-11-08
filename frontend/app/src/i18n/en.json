@@ -301,8 +301,10 @@
         "visibility": "Visibility"
     },
     "communityDisplayNameRules": "only within selected community",
+    "communityFrozen": "Community frozen",
     "communityMembers": "Community members",
     "communityTheme": "Community Theme",
+    "communityUnfrozen": "Community unfrozen",
     "confirmLeaveGroup": "Do you really want to leave this {level}?",
     "confirmMakeGroupPrivate": "Do you definitely want to make this {level} private?",
     "confirmMakeGroupPublic": "Do you definitely want to make this {level} public?\n\nExisting messages will remain private, all new messages will be public.",
@@ -368,6 +370,7 @@
         "claim": "Claim CHIT!",
         "comeback": "Come back in {time}",
         "extendStreak": "Extend streak",
+        "hideWhenClaimed": "Hide claim CHIT icon ⚡️ after claiming each day",
         "info": "The longer you maintain your streak the more daily CHIT you can claim!",
         "title": "Maintain your streak",
         "utcInfo": "CHIT streaks and claim windows are represented using UTC so you may find it clearer to view your calendar in UTC rather than your local timezone.",
@@ -439,11 +442,13 @@
     "failedToCopyLinkToClipboard": "Unable to copy link to clipboard",
     "failedToCopyToClipboard": "Unable to copy to clipboard. {account}",
     "failedToCopyUrlToClipboard": "Unable to copy url ({url}) to clipboard",
+    "failedToFreezeCommunity": "Failed to freeze community",
     "failedToFreezeGroup": "Failed to freeze group",
     "failedToLeaveGroup": "There was an error trying to remove you from the {level}",
     "failedToShareLink": "Failed to share link",
     "failedToShareMessage": "Unable to share this message",
     "failedToSuspendUser": "Failed to suspend user",
+    "failedToUnfreezeCommunity": "Failed to unfreeze community",
     "failedToUnfreezeGroup": "Failed to unfreeze group",
     "failedToUnsuspendUser": "Failed to un-suspend user",
     "faq": {
@@ -489,6 +494,7 @@
     "followThreadFailed": "Follow thread failed",
     "fontSize": "Font Size",
     "forward": "Forward",
+    "freezeCommunity": "Freeze community",
     "freezeGroup": "Freeze group",
     "giphyMessage": "Gif message",
     "goHome": "Home",
@@ -604,9 +610,9 @@
         "link": "Link",
         "linkedAccounts": {
             "currentAccount": "Currently signed in with this principal",
-            "linkAdvice": "To link a new account Sign into the new account you want to link, then sign into your current account and finally link the two accounts together.",
-            "linkAnother": "Link another",
-            "section": "Linked accounts",
+            "linkAdvice": "To add a new sign-in provider, first sign-in with the new provider you want to add, then sign-in with your current provider and finally link the two together.",
+            "linkAnother": "Add another",
+            "section": "Sign-in providers",
             "start": "Get started"
         },
         "linkIdentity": "Link Identity",
@@ -1291,7 +1297,7 @@
         "none": "Nobody",
         "owner": "Owners"
     },
-    "roleChanged": "{changedBy} changed the role of {changed} from {oldRole} to {newRole}",
+    "roleChanged": "{changedBy} changed the role of {changed} to {newRole}",
     "rules": {
         "accept": "Accept",
         "acceptTitle": "Chat rules",
@@ -1500,6 +1506,7 @@
     "unexpectedError": "Unexpected Error",
     "unfollowThread": "Unfollow this thread",
     "unfollowThreadFailed": "Unfollow thread failed",
+    "unfreezeCommunity": "Unfreeze community",
     "unfreezeGroup": "Unfreeze group",
     "unknown": "Unknown",
     "unknownUser": "Unknown User",
@@ -1654,5 +1661,5 @@
     "yourAccountIsSuspended": "Your account is suspended",
     "yourChats": "Your chats",
     "youreBlocked": "Sorry - you have been blocked from this group",
-    "yourRoleChanged": "{changedBy} changed your role from {oldRole} to {newRole}"
+    "yourRoleChanged": "{changedBy} changed your role to {newRole}"
 }

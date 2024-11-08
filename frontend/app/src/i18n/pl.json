@@ -301,8 +301,10 @@
         "visibility": "Widoczność"
     },
     "communityDisplayNameRules": "tylko w obrębie wybranej społeczności",
+    "communityFrozen": "Społeczność zamrożona",
     "communityMembers": "Członkowie społeczności",
     "communityTheme": "Temat społeczności",
+    "communityUnfrozen": "Społeczność odmrożona",
     "confirmLeaveGroup": "Czy na pewno chcesz to zostawić {level}?",
     "confirmMakeGroupPrivate": "Czy na pewno chcesz ustawić ten {level} jako prywatny?",
     "confirmMakeGroupPublic": "Czy na pewno chcesz upublicznić to {level}?\n\nIstniejące wiadomości pozostaną prywatne, wszystkie nowe wiadomości będą publiczne.",
@@ -368,6 +370,7 @@
         "claim": "Zgłoś CHIT!",
         "comeback": "Wróć za {time}",
         "extendStreak": "Przedłuż passę",
+        "hideWhenClaimed": "Ukryj ikonę CHIT ⚡️ po odebraniu każdego dnia",
         "info": "Im dłużej utrzymasz swoją passę, tym więcej codziennych CHITów możesz odebrać!",
         "title": "Utrzymaj swoją passę",
         "utcInfo": "Smugi CHIT i okna roszczeń są reprezentowane przy użyciu czasu UTC, dzięki czemu przeglądanie kalendarza w formacie UTC może być wyraźniejsze, a nie lokalnej strefy czasowej.",
@@ -439,11 +442,13 @@
     "failedToCopyLinkToClipboard": "Nie można skopiować linku do schowka",
     "failedToCopyToClipboard": "Nie można skopiować do schowka. {account}",
     "failedToCopyUrlToClipboard": "Nie można skopiować adresu URL ({url}) do schowka",
+    "failedToFreezeCommunity": "Nie udało się zamrozić społeczności",
     "failedToFreezeGroup": "Nie udało się zablokować grupy",
     "failedToLeaveGroup": "Wystąpił błąd podczas próby usunięcia Cię z {level}",
     "failedToShareLink": "Nie udało się udostępnić linku",
     "failedToShareMessage": "Nie można udostępnić tej wiadomości",
     "failedToSuspendUser": "Nie udało się zawiesić użytkownika",
+    "failedToUnfreezeCommunity": "Nie udało się odblokować społeczności",
     "failedToUnfreezeGroup": "Nie udało się odblokować grupy",
     "failedToUnsuspendUser": "Nie udało się cofnąć zawieszenia użytkownika",
     "faq": {
@@ -489,6 +494,7 @@
     "followThreadFailed": "Śledzenie wątku nie powiodło się",
     "fontSize": "Rozmiar czcionki",
     "forward": "Do przodu",
+    "freezeCommunity": "Zamroź społeczność",
     "freezeGroup": "Zamroź grupę",
     "giphyMessage": "Wiadomość GIF",
     "goHome": "Dom",
@@ -604,9 +610,9 @@
         "link": "Połączyć",
         "linkedAccounts": {
             "currentAccount": "Obecnie zalogowany z tym podmiotem",
-            "linkAdvice": "Aby połączyć nowe konto Zaloguj się na nowe konto, które chcesz połączyć, następnie zaloguj się na swoje bieżące konto i na koniec połącz oba konta.",
-            "linkAnother": "Połącz z innym",
-            "section": "Połączone konta",
+            "linkAdvice": "Aby dodać nowego dostawcę usług logowania, najpierw zaloguj się u nowego dostawcy, którego chcesz dodać, następnie u bieżącego dostawcy i na końcu połącz oba dostawcy.",
+            "linkAnother": "Dodaj kolejny",
+            "section": "Dostawcy logowania",
             "start": "Zacznij"
         },
         "linkIdentity": "Tożsamość łącza",
@@ -1291,7 +1297,7 @@
         "none": "Nikt",
         "owner": "Właściciele"
     },
-    "roleChanged": "{changedBy} zmienił rolę {changed} z {oldRole} na {newRole}",
+    "roleChanged": "{changedBy} zmienił rolę {changed} na {newRole}",
     "rules": {
         "accept": "Zaakceptować",
         "acceptTitle": "Zasady czatu",
@@ -1500,6 +1506,7 @@
     "unexpectedError": "Niespodziewany błąd",
     "unfollowThread": "Przestań obserwować ten wątek",
     "unfollowThreadFailed": "Nie udało się przestać obserwować wątku",
+    "unfreezeCommunity": "Odmroź społeczność",
     "unfreezeGroup": "Odblokuj grupę",
     "unknown": "Nieznany",
     "unknownUser": "Nieznany użytkownik",
@@ -1654,5 +1661,5 @@
     "yourAccountIsSuspended": "Twoje konto jest zawieszone",
     "yourChats": "Twoje czaty",
     "youreBlocked": "Przepraszamy - zostałeś zablokowany w tej grupie",
-    "yourRoleChanged": "{changedBy} zmienił Twoją rolę z {oldRole} na {newRole}"
+    "yourRoleChanged": "{changedBy} zmienił(a) Twoją rolę na {newRole}"
 }
