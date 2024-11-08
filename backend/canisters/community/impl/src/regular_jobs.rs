@@ -1,4 +1,3 @@
-use crate::updates::c2c_migrate_events_to_stable_memory::migrate_events_to_stable_memory_impl;
 use crate::Data;
 use utils::env::Environment;
 use utils::regular_jobs::{RegularJob, RegularJobs};
@@ -8,14 +7,8 @@ pub(crate) fn build() -> RegularJobs<Data> {
     let check_cycles_balance = RegularJob::new("Check cycles balance", check_cycles_balance, 5 * MINUTE_IN_MS);
     let retry_deleting_files = RegularJob::new("Retry deleting files", retry_deleting_files, MINUTE_IN_MS);
     let build_chat_metrics = RegularJob::new("Build chat metrics", build_chat_metrics, 30 * MINUTE_IN_MS);
-    let migrate_chat_events_to_stable_memory = RegularJob::new("Migrate chat events", migrate_chat_events_to_stable_memory, 0);
 
-    RegularJobs::new(vec![
-        check_cycles_balance,
-        retry_deleting_files,
-        build_chat_metrics,
-        migrate_chat_events_to_stable_memory,
-    ])
+    RegularJobs::new(vec![check_cycles_balance, retry_deleting_files, build_chat_metrics])
 }
 
 fn check_cycles_balance(_: &dyn Environment, data: &mut Data) {
@@ -28,8 +21,4 @@ fn retry_deleting_files(_: &dyn Environment, _: &mut Data) {
 
 fn build_chat_metrics(env: &dyn Environment, data: &mut Data) {
     data.build_chat_metrics(env.now());
-}
-
-fn migrate_chat_events_to_stable_memory(_: &dyn Environment, data: &mut Data) {
-    migrate_events_to_stable_memory_impl(data, true);
 }
