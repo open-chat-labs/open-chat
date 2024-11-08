@@ -23,8 +23,9 @@
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
-    import Toggle from "../../Toggle.svelte";
     import { calculateDollarAmount } from "../../../utils/exchange";
+    import AlertBox from "../../AlertBox.svelte";
+    import Checkbox from "../../Checkbox.svelte";
 
     export let ledgerIn: string;
 
@@ -328,7 +329,7 @@
             <Markdown text={$_("tokenSwap.youWillReceive", { values: swapMessageValues })} />
 
             {#if warnValueDropped || warnValueUnknown}
-                <div class="warning">
+                <AlertBox>
                     {#if warnValueDropped}
                         <div>
                             {$_("tokenSwap.warningValueDropped", { values: swapMessageValues })}
@@ -338,12 +339,12 @@
                             {$_("tokenSwap.warningValueUnknown", { values: swapMessageValues })}
                         </div>
                     {/if}
-                    <Toggle
+                    <Checkbox
                         id="confirm-understanding"
                         small
                         label={i18nKey("tokenSwap.confirmUnderstanding")}
                         bind:checked={userAcceptedWarning} />
-                </div>
+                </AlertBox>
             {/if}
 
             <div>{$_("tokenSwap.proceedWithSwap", { values: swapMessageValues })}</div>
