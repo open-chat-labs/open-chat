@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Reduce size of metrics in memory ([#6765](https://github.com/open-chat-labs/open-chat/pull/6765))
+- Clean up code from communities now that events are in stable memory ([#6769](https://github.com/open-chat-labs/open-chat/pull/6769))
 
 ## [[2.0.1433](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1433-community)] - 2024-11-07
 
