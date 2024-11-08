@@ -1,6 +1,7 @@
 use crate::chat_events_list::Reader;
 use crate::expiring_events::ExpiringEvents;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
+use crate::metrics::{ChatMetricsInternal, MetricsKey};
 use crate::search_index::SearchIndex;
 use crate::stable_storage::key::KeyPrefix;
 use crate::stable_storage::Memory;
