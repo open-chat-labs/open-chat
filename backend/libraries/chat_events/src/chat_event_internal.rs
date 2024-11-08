@@ -1,4 +1,4 @@
-use crate::metrics::{ChatMetricsInternal, MetricsKey};
+use crate::metrics::{ChatMetricsInternal, MetricKey};
 use crate::MessageContentInternal;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
@@ -215,57 +215,57 @@ impl MessageInternal {
 
     pub fn add_to_metrics(&self, metrics: &mut ChatMetricsInternal) {
         if self.replies_to.is_some() {
-            metrics.incr(MetricsKey::Replies, 1);
+            metrics.incr(MetricKey::Replies, 1);
         }
 
         match &self.content {
             MessageContentInternal::Text(_) => {
-                metrics.incr(MetricsKey::TextMessages, 1);
+                metrics.incr(MetricKey::TextMessages, 1);
             }
             MessageContentInternal::Image(_) => {
-                metrics.incr(MetricsKey::ImageMessages, 1);
+                metrics.incr(MetricKey::ImageMessages, 1);
             }
             MessageContentInternal::Video(_) => {
-                metrics.incr(MetricsKey::VideoMessages, 1);
+                metrics.incr(MetricKey::VideoMessages, 1);
             }
             MessageContentInternal::Audio(_) => {
-                metrics.incr(MetricsKey::AudioMessages, 1);
+                metrics.incr(MetricKey::AudioMessages, 1);
             }
             MessageContentInternal::File(_) => {
-                metrics.incr(MetricsKey::FileMessages, 1);
+                metrics.incr(MetricKey::FileMessages, 1);
             }
             MessageContentInternal::Poll(_) => {
-                metrics.incr(MetricsKey::Polls, 1);
+                metrics.incr(MetricKey::Polls, 1);
             }
             MessageContentInternal::Crypto(_) => {
-                metrics.incr(MetricsKey::CryptoMessages, 1);
+                metrics.incr(MetricKey::CryptoMessages, 1);
             }
             MessageContentInternal::Deleted(_) => {}
             MessageContentInternal::Giphy(_) => {
-                metrics.incr(MetricsKey::GiphyMessages, 1);
+                metrics.incr(MetricKey::GiphyMessages, 1);
             }
             MessageContentInternal::GovernanceProposal(_) => {
-                metrics.incr(MetricsKey::Proposals, 1);
+                metrics.incr(MetricKey::Proposals, 1);
             }
             MessageContentInternal::Prize(_) => {
-                metrics.incr(MetricsKey::PrizeMessages, 1);
+                metrics.incr(MetricKey::PrizeMessages, 1);
             }
             MessageContentInternal::PrizeWinner(_) => {
-                metrics.incr(MetricsKey::PrizeWinnerMessages, 1);
+                metrics.incr(MetricKey::PrizeWinnerMessages, 1);
             }
             MessageContentInternal::MessageReminderCreated(_) => {}
             MessageContentInternal::MessageReminder(_) => {
-                metrics.incr(MetricsKey::MessageReminders, 1);
+                metrics.incr(MetricKey::MessageReminders, 1);
             }
             MessageContentInternal::ReportedMessage(_) => {}
             MessageContentInternal::P2PSwap(_) => {
-                metrics.incr(MetricsKey::P2pSwaps, 1);
+                metrics.incr(MetricKey::P2pSwaps, 1);
             }
             MessageContentInternal::VideoCall(_) => {
-                metrics.incr(MetricsKey::VideoCalls, 1);
+                metrics.incr(MetricKey::VideoCalls, 1);
             }
             MessageContentInternal::Custom(_) => {
-                metrics.incr(MetricsKey::CustomTypeMessages, 1);
+                metrics.incr(MetricKey::CustomTypeMessages, 1);
             }
         }
     }

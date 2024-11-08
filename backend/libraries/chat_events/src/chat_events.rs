@@ -1,7 +1,7 @@
 use crate::chat_events_list::Reader;
 use crate::expiring_events::ExpiringEvents;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
-use crate::metrics::{ChatMetricsInternal, MetricsKey};
+use crate::metrics::{ChatMetricsInternal, MetricKey};
 use crate::search_index::SearchIndex;
 use crate::stable_storage::key::KeyPrefix;
 use crate::stable_storage::Memory;
@@ -346,7 +346,7 @@ impl ChatEvents {
                     &mut self.metrics,
                     &mut self.per_user_metrics,
                     sender,
-                    |m| m.incr(MetricsKey::Edits, 1),
+                    |m| m.incr(MetricKey::Edits, 1),
                     now,
                 );
                 EditMessageResult::Success
@@ -450,7 +450,7 @@ impl ChatEvents {
                         &mut self.metrics,
                         &mut self.per_user_metrics,
                         sender,
-                        |m| m.incr(MetricsKey::ReportedMessages, 1),
+                        |m| m.incr(MetricKey::ReportedMessages, 1),
                         args.now,
                     );
                 }
@@ -458,7 +458,7 @@ impl ChatEvents {
                     &mut self.metrics,
                     &mut self.per_user_metrics,
                     args.caller,
-                    |m| m.incr(MetricsKey::DeletedMessages, 1),
+                    |m| m.incr(MetricKey::DeletedMessages, 1),
                     args.now,
                 );
                 if args.thread_root_message_index.is_none() {
@@ -509,7 +509,7 @@ impl ChatEvents {
                         &mut self.metrics,
                         &mut self.per_user_metrics,
                         sender,
-                        |m| m.decr(MetricsKey::ReportedMessages, 1),
+                        |m| m.decr(MetricKey::ReportedMessages, 1),
                         args.now,
                     );
                 }
@@ -517,7 +517,7 @@ impl ChatEvents {
                     &mut self.metrics,
                     &mut self.per_user_metrics,
                     args.caller,
-                    |m| m.decr(MetricsKey::DeletedMessages, 1),
+                    |m| m.decr(MetricKey::DeletedMessages, 1),
                     args.now,
                 );
                 if args.thread_root_message_index.is_none() {
@@ -603,7 +603,7 @@ impl ChatEvents {
                                 &mut self.metrics,
                                 &mut self.per_user_metrics,
                                 args.user_id,
-                                |m| m.incr(MetricsKey::PollVotes, 1),
+                                |m| m.incr(MetricKey::PollVotes, 1),
                                 args.now,
                             );
                         }
@@ -613,7 +613,7 @@ impl ChatEvents {
                             &mut self.metrics,
                             &mut self.per_user_metrics,
                             args.user_id,
-                            |m| m.decr(MetricsKey::PollVotes, 1),
+                            |m| m.decr(MetricKey::PollVotes, 1),
                             args.now,
                         );
                     }
@@ -815,7 +815,7 @@ impl ChatEvents {
                     &mut self.metrics,
                     &mut self.per_user_metrics,
                     user_id,
-                    |m| m.incr(MetricsKey::Reactions, 1),
+                    |m| m.incr(MetricKey::Reactions, 1),
                     now,
                 );
                 Success(sender)
@@ -882,7 +882,7 @@ impl ChatEvents {
                     &mut self.metrics,
                     &mut self.per_user_metrics,
                     args.user_id,
-                    |m| m.decr(MetricsKey::Reactions, 1),
+                    |m| m.decr(MetricKey::Reactions, 1),
                     args.now,
                 );
                 Success(sender)
@@ -934,7 +934,7 @@ impl ChatEvents {
                     &mut self.metrics,
                     &mut self.per_user_metrics,
                     args.user_id,
-                    |m| m.incr(MetricsKey::Tips, 1),
+                    |m| m.incr(MetricKey::Tips, 1),
                     args.now,
                 );
                 Success

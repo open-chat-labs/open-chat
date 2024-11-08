@@ -17,7 +17,7 @@ struct MetricCounter([u8; 4]);
 impl MetricCounter {
     const MAX_COUNT: u32 = 0x00FFFFFF; // 16777215
 
-    fn new(key: MetricsKey, count: u32) -> MetricCounter {
+    fn new(key: MetricKey, count: u32) -> MetricCounter {
         let mut bytes = [0; 4];
         bytes[0] = key as u8;
 
@@ -26,7 +26,7 @@ impl MetricCounter {
         MetricCounter(bytes)
     }
 
-    pub fn key(&self) -> MetricsKey {
+    pub fn key(&self) -> MetricKey {
         self.0[0].into()
     }
 
@@ -51,7 +51,7 @@ impl MetricCounter {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
-pub enum MetricsKey {
+pub enum MetricKey {
     Unknown = 0,
     TextMessages = 1,
     ImageMessages = 2,
@@ -77,7 +77,7 @@ pub enum MetricsKey {
     CustomTypeMessages = 22,
 }
 
-impl From<u8> for MetricsKey {
+impl From<u8> for MetricKey {
     fn from(value: u8) -> Self {
         match value {
             1 => Self::TextMessages,
@@ -107,24 +107,10 @@ impl From<u8> for MetricsKey {
     }
 }
 
-#[derive(Serialize, Deserialize)]
-#[serde(untagged)]
-enum ChatMetricsInternalCombined {
-    Old(ChatMetricsInternalPrevious),
-    New(ChatMetricsInternal),
-}
-
-impl From<ChatMetricsInternalCombined> for ChatMetricsInternal {
-    fn from(value: ChatMetricsInternalCombined) -> Self {
-        match value {
-            ChatMetricsInternalCombined::Old(v) => v.into(),
-            ChatMetricsInternalCombined::New(v) => v,
-        }
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
-struct ChatMetricsInternalPrevious {
+struct ChatMetricsInternalCombined {
+    #[serde(rename = "m")]
+    metrics: Vec<MetricCounter>,
     #[serde(rename = "t", default, skip_serializing_if = "is_default")]
     pub text_messages: u32,
     #[serde(rename = "i", default, skip_serializing_if = "is_default")]
@@ -179,12 +165,19 @@ struct ChatMetricsInternalPrevious {
     pub video_calls: u32,
     #[serde(rename = "cu", default, skip_serializing_if = "is_default")]
     pub custom_type_messages: u32,
-    #[serde(rename = "la")]
+    #[serde(rename = "la", alias = "l")]
     pub last_active: TimestampMillis,
 }
 
-impl From<ChatMetricsInternalPrevious> for ChatMetricsInternal {
-    fn from(value: ChatMetricsInternalPrevious) -> Self {
+impl From<ChatMetricsInternalCombined> for ChatMetricsInternal {
+    fn from(value: ChatMetricsInternalCombined) -> Self {
+        if !value.metrics.is_empty() {
+            return ChatMetricsInternal {
+                metrics: value.metrics,
+                last_active: value.last_active,
+            };
+        }
+
         let mut metrics = ChatMetricsInternal {
             metrics: Vec::new(),
             last_active: value.last_active,
@@ -193,35 +186,35 @@ impl From<ChatMetricsInternalPrevious> for ChatMetricsInternal {
         if value.text_messages > 0 {
             metrics
                 .metrics
-                .push(MetricCounter::new(MetricsKey::TextMessages, value.text_messages));
+                .push(MetricCounter::new(MetricKey::TextMessages, value.text_messages));
         }
         if value.image_messages > 0 {
             metrics
                 .metrics
-                .push(MetricCounter::new(MetricsKey::ImageMessages, value.image_messages));
+                .push(MetricCounter::new(MetricKey::ImageMessages, value.image_messages));
         }
         if value.video_messages > 0 {
             metrics
                 .metrics
-                .push(MetricCounter::new(MetricsKey::VideoMessages, value.video_messages));
+                .push(MetricCounter::new(MetricKey::VideoMessages, value.video_messages));
         }
         if value.audio_messages > 0 {
             metrics
                 .metrics
-                .push(MetricCounter::new(MetricsKey::AudioMessages, value.audio_messages));
+                .push(MetricCounter::new(MetricKey::AudioMessages, value.audio_messages));
         }
         if value.file_messages > 0 {
             metrics
                 .metrics
-                .push(MetricCounter::new(MetricsKey::FileMessages, value.file_messages));
+                .push(MetricCounter::new(MetricKey::FileMessages, value.file_messages));
         }
         if value.polls > 0 {
-            metrics.metrics.push(MetricCounter::new(MetricsKey::Polls, value.polls));
+            metrics.metrics.push(MetricCounter::new(MetricKey::Polls, value.polls));
         }
         if value.poll_votes > 0 {
             metrics
                 .metrics
-                .push(MetricCounter::new(MetricsKey::PollVotes, value.poll_votes));
+                .push(MetricCounter::new(MetricKey::PollVotes, value.poll_votes));
         }
         let crypto_messages = value.icp_messages
             + value.sns1_messages
@@ -232,79 +225,77 @@ impl From<ChatMetricsInternalPrevious> for ChatMetricsInternal {
         if crypto_messages > 0 {
             metrics
                 .metrics
-                .push(MetricCounter::new(MetricsKey::CryptoMessages, crypto_messages));
+                .push(MetricCounter::new(MetricKey::CryptoMessages, crypto_messages));
         }
         if value.deleted_messages > 0 {
             metrics
                 .metrics
-                .push(MetricCounter::new(MetricsKey::DeletedMessages, value.deleted_messages));
+                .push(MetricCounter::new(MetricKey::DeletedMessages, value.deleted_messages));
         }
         if value.giphy_messages > 0 {
             metrics
                 .metrics
-                .push(MetricCounter::new(MetricsKey::GiphyMessages, value.giphy_messages));
+                .push(MetricCounter::new(MetricKey::GiphyMessages, value.giphy_messages));
         }
         if value.prize_messages > 0 {
             metrics
                 .metrics
-                .push(MetricCounter::new(MetricsKey::PrizeMessages, value.prize_messages));
+                .push(MetricCounter::new(MetricKey::PrizeMessages, value.prize_messages));
         }
         if value.prize_winner_messages > 0 {
             metrics.metrics.push(MetricCounter::new(
-                MetricsKey::PrizeWinnerMessages,
+                MetricKey::PrizeWinnerMessages,
                 value.prize_winner_messages,
             ));
         }
         if value.replies > 0 {
-            metrics.metrics.push(MetricCounter::new(MetricsKey::Replies, value.replies));
+            metrics.metrics.push(MetricCounter::new(MetricKey::Replies, value.replies));
         }
         if value.edits > 0 {
-            metrics.metrics.push(MetricCounter::new(MetricsKey::Edits, value.edits));
+            metrics.metrics.push(MetricCounter::new(MetricKey::Edits, value.edits));
         }
         if value.reactions > 0 {
             metrics
                 .metrics
-                .push(MetricCounter::new(MetricsKey::Reactions, value.reactions));
+                .push(MetricCounter::new(MetricKey::Reactions, value.reactions));
         }
         if value.tips > 0 {
-            metrics.metrics.push(MetricCounter::new(MetricsKey::Tips, value.tips));
+            metrics.metrics.push(MetricCounter::new(MetricKey::Tips, value.tips));
         }
         if value.proposals > 0 {
             metrics
                 .metrics
-                .push(MetricCounter::new(MetricsKey::Proposals, value.proposals));
+                .push(MetricCounter::new(MetricKey::Proposals, value.proposals));
         }
         if value.reported_messages > 0 {
             metrics
                 .metrics
-                .push(MetricCounter::new(MetricsKey::ReportedMessages, value.reported_messages));
+                .push(MetricCounter::new(MetricKey::ReportedMessages, value.reported_messages));
         }
         if value.message_reminders > 0 {
             metrics
                 .metrics
-                .push(MetricCounter::new(MetricsKey::MessageReminders, value.message_reminders));
+                .push(MetricCounter::new(MetricKey::MessageReminders, value.message_reminders));
         }
         if value.p2p_swaps > 0 {
-            metrics
-                .metrics
-                .push(MetricCounter::new(MetricsKey::P2pSwaps, value.p2p_swaps));
+            metrics.metrics.push(MetricCounter::new(MetricKey::P2pSwaps, value.p2p_swaps));
         }
         if value.video_calls > 0 {
             metrics
                 .metrics
-                .push(MetricCounter::new(MetricsKey::VideoCalls, value.video_calls));
+                .push(MetricCounter::new(MetricKey::VideoCalls, value.video_calls));
         }
         if value.custom_type_messages > 0 {
             metrics
                 .metrics
-                .push(MetricCounter::new(MetricsKey::CustomTypeMessages, value.custom_type_messages));
+                .push(MetricCounter::new(MetricKey::CustomTypeMessages, value.custom_type_messages));
         }
         metrics
     }
 }
 
 impl ChatMetricsInternal {
-    pub fn incr(&mut self, key: MetricsKey, count: u32) {
+    pub fn incr(&mut self, key: MetricKey, count: u32) {
         if let Some(m) = self.metrics.iter_mut().find(|m| m.key() == key) {
             m.incr(count);
         } else {
@@ -312,7 +303,7 @@ impl ChatMetricsInternal {
         }
     }
 
-    pub fn decr(&mut self, key: MetricsKey, count: u32) {
+    pub fn decr(&mut self, key: MetricKey, count: u32) {
         if let Some((i, m)) = self.metrics.iter_mut().enumerate().find(|(_, m)| m.key() == key) {
             if m.count() <= count {
                 self.metrics.remove(i);
@@ -331,35 +322,35 @@ impl ChatMetricsInternal {
 
     pub fn hydrate(&self) -> ChatMetrics {
         ChatMetrics {
-            text_messages: self.get(MetricsKey::TextMessages) as u64,
-            image_messages: self.get(MetricsKey::ImageMessages) as u64,
-            video_messages: self.get(MetricsKey::VideoMessages) as u64,
-            audio_messages: self.get(MetricsKey::AudioMessages) as u64,
-            file_messages: self.get(MetricsKey::FileMessages) as u64,
-            polls: self.get(MetricsKey::Polls) as u64,
-            poll_votes: self.get(MetricsKey::PollVotes) as u64,
-            crypto_messages: self.get(MetricsKey::CryptoMessages) as u64,
-            icp_messages: self.get(MetricsKey::CryptoMessages) as u64,
+            text_messages: self.get(MetricKey::TextMessages) as u64,
+            image_messages: self.get(MetricKey::ImageMessages) as u64,
+            video_messages: self.get(MetricKey::VideoMessages) as u64,
+            audio_messages: self.get(MetricKey::AudioMessages) as u64,
+            file_messages: self.get(MetricKey::FileMessages) as u64,
+            polls: self.get(MetricKey::Polls) as u64,
+            poll_votes: self.get(MetricKey::PollVotes) as u64,
+            crypto_messages: self.get(MetricKey::CryptoMessages) as u64,
+            icp_messages: self.get(MetricKey::CryptoMessages) as u64,
             sns1_messages: 0,
             ckbtc_messages: 0,
             chat_messages: 0,
             kinic_messages: 0,
-            deleted_messages: self.get(MetricsKey::DeletedMessages) as u64,
-            giphy_messages: self.get(MetricsKey::GiphyMessages) as u64,
-            prize_messages: self.get(MetricsKey::PrizeMessages) as u64,
-            prize_winner_messages: self.get(MetricsKey::PrizeWinnerMessages) as u64,
-            replies: self.get(MetricsKey::Replies) as u64,
-            edits: self.get(MetricsKey::Edits) as u64,
-            reactions: self.get(MetricsKey::Reactions) as u64,
-            proposals: self.get(MetricsKey::Proposals) as u64,
-            reported_messages: self.get(MetricsKey::ReportedMessages) as u64,
-            message_reminders: self.get(MetricsKey::MessageReminders) as u64,
-            custom_type_messages: self.get(MetricsKey::CustomTypeMessages) as u64,
+            deleted_messages: self.get(MetricKey::DeletedMessages) as u64,
+            giphy_messages: self.get(MetricKey::GiphyMessages) as u64,
+            prize_messages: self.get(MetricKey::PrizeMessages) as u64,
+            prize_winner_messages: self.get(MetricKey::PrizeWinnerMessages) as u64,
+            replies: self.get(MetricKey::Replies) as u64,
+            edits: self.get(MetricKey::Edits) as u64,
+            reactions: self.get(MetricKey::Reactions) as u64,
+            proposals: self.get(MetricKey::Proposals) as u64,
+            reported_messages: self.get(MetricKey::ReportedMessages) as u64,
+            message_reminders: self.get(MetricKey::MessageReminders) as u64,
+            custom_type_messages: self.get(MetricKey::CustomTypeMessages) as u64,
             last_active: self.last_active,
         }
     }
 
-    fn get(&self, key: MetricsKey) -> u32 {
+    fn get(&self, key: MetricKey) -> u32 {
         self.metrics.iter().find(|m| m.key() == key).map_or(0, |m| m.count())
     }
 }
@@ -373,7 +364,7 @@ mod tests {
         let mut keys = Vec::new();
         let mut value = 0u8;
         loop {
-            let key = MetricsKey::from(value);
+            let key = MetricKey::from(value);
 
             if value <= 22 {
                 assert!(key as u8 == value);
@@ -381,7 +372,7 @@ mod tests {
                 keys.push(key);
                 value += 1;
             } else {
-                assert!(key == MetricsKey::Unknown);
+                assert!(key == MetricKey::Unknown);
                 break;
             }
         }
@@ -390,7 +381,7 @@ mod tests {
     #[test]
     fn incr_decr() {
         for i in 1u8..5 {
-            let key = MetricsKey::from(i);
+            let key = MetricKey::from(i);
             let mut metric = MetricCounter::new(key, 1);
             metric.incr(1);
 
@@ -421,5 +412,22 @@ mod tests {
             assert_eq!(metric.key(), key);
             assert_eq!(metric.count(), MetricCounter::MAX_COUNT);
         }
+    }
+
+    #[test]
+    fn size() {
+        assert_eq!(size_of::<MetricCounter>(), 4);
+    }
+
+    #[test]
+    fn serialize_roundtrip() {
+        let mut input = ChatMetricsInternalCombined::default();
+        input.last_active = 1;
+        input.text_messages = 1;
+
+        let bytes = msgpack::serialize_then_unwrap(input);
+        let output: ChatMetricsInternal = msgpack::deserialize_then_unwrap(&bytes);
+
+        assert_eq!(output.last_active, 1);
     }
 }
