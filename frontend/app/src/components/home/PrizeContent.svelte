@@ -100,7 +100,7 @@
         <div class="number-claimed">
             {content.winners.length}/{total}
         </div>
-        <div class="claim">
+        <div class="prize-claim">
             {#if claimedByYou}
                 <div class="tada">
                     <div class="confetti">
@@ -131,18 +131,23 @@
 <style lang="scss">
     $accent: var(--prize);
 
-    :global(.claim button) {
-        &:not(.disabled) {
-            border: 1px solid $accent !important;
-        }
+    .prize-claim :global(button) {
         min-height: 45px !important;
         min-width: unset !important;
+    }
 
-        &:not(.disabled):hover,
-        &.loading {
-            background-color: $accent;
-            color: var(--button-txt);
-        }
+    .prize-claim :global(button.loading) {
+        background-color: $accent;
+        color: var(--button-txt);
+    }
+
+    .prize-claim :global(button:not(.disabled):hover) {
+        background-color: $accent;
+        color: var(--button-txt);
+    }
+
+    .prize-claim :global(button:not(.disabled)) {
+        border: 1px solid $accent !important;
     }
 
     .prize {
