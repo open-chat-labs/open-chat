@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Update the canister creation fee to 0.5T ([#6700](https://github.com/open-chat-labs/open-chat/pull/6700))
+
 ## [[2.0.1435](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1435-local_group_index)] - 2024-11-07
 
 ### Changed

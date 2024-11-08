@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Update the canister creation fee to 0.5T ([#6700](https://github.com/open-chat-labs/open-chat/pull/6700))
 - Increase the max cycles required during upgrades ([#6725](https://github.com/open-chat-labs/open-chat/pull/6725))
 - Increase size of cycles top-ups ([#6727](https://github.com/open-chat-labs/open-chat/pull/6727))
 - Expose which canisters are pending migration to stable memory in metrics ([#6742](https://github.com/open-chat-labs/open-chat/pull/6742))
