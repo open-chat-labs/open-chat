@@ -330,15 +330,21 @@
 
             {#if warnValueDropped || warnValueUnknown}
                 <AlertBox>
-                    {#if warnValueDropped}
-                        <div>
-                            {$_("tokenSwap.warningValueDropped", { values: swapMessageValues })}
-                        </div>
-                    {:else}
-                        <div>
-                            {$_("tokenSwap.warningValueUnknown", { values: swapMessageValues })}
-                        </div>
-                    {/if}
+                    <div class="warning">
+                        {#if warnValueDropped}
+                            <Translatable
+                                resourceKey={i18nKey(
+                                    "tokenSwap.warningValueDropped",
+                                    swapMessageValues,
+                                )} />
+                        {:else}
+                            <Translatable
+                                resourceKey={i18nKey(
+                                    "tokenSwap.warningValueUnknown",
+                                    swapMessageValues,
+                                )} />
+                        {/if}
+                    </div>
                     <Checkbox
                         id="confirm-understanding"
                         small
@@ -433,12 +439,6 @@
     }
 
     .warning {
-        @include font(book, normal, fs-80);
-        margin-bottom: $sp2;
-        background-color: var(--error);
-        padding: $sp3 $sp4;
-        display: flex;
-        flex-direction: column;
-        gap: $sp4;
+        margin-bottom: $sp4;
     }
 </style>
