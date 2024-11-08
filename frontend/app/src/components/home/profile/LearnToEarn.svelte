@@ -67,7 +67,7 @@
         "sent_reminder",
         "set_community_display_name",
         "joined_call",
-        "pinned_message",
+        "set_pin",
         "favourited_chat",
         "pinned_chat",
         "followed_thread",
