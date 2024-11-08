@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Remove events from being stored on the heap ([#6758](https://github.com/open-chat-labs/open-chat/pull/6758))
+- Remove `weight` field from search matches ([#6772](https://github.com/open-chat-labs/open-chat/pull/6772))
 
 ## [[2.0.1434](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1434-group)] - 2024-11-07
 
