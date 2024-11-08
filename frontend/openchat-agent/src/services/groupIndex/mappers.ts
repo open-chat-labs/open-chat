@@ -157,7 +157,6 @@ export function freezeGroupResponse(value: GroupIndexFreezeGroupResponse): Freez
 export function freezeCommunityResponse(
     value: GroupIndexFreezeCommunityResponse,
 ): FreezeCommunityResponse {
-    console.log("FreezeCommunityResponse: ", value);
     if (value === "CommunityAlreadyFrozen") {
         return "community_already_frozen";
     }
@@ -179,7 +178,6 @@ export function freezeCommunityResponse(
 export function unfreezeCommunityResponse(
     value: GroupIndexUnfreezeCommunityResponse,
 ): UnfreezeCommunityResponse {
-    console.log("UnfreezeCommunityResponse: ", value);
     if (value === "CommunityNotFrozen") {
         return "community_not_frozen";
     }

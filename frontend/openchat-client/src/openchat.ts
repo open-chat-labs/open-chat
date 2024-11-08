@@ -5340,25 +5340,13 @@ export class OpenChat extends OpenChatAgentWorker {
 
     freezeCommunity(id: CommunityIdentifier, reason: string | undefined): Promise<boolean> {
         return this.sendRequest({ kind: "freezeCommunity", id, reason })
-            .then((resp) => {
-                if (resp === "success") {
-                    // this.onChatFrozen(chatId, resp);
-                    return true;
-                }
-                return false;
-            })
+            .then((resp) => resp === "success")
             .catch(() => false);
     }
 
     unfreezeCommunity(id: CommunityIdentifier): Promise<boolean> {
         return this.sendRequest({ kind: "unfreezeCommunity", id })
-            .then((resp) => {
-                if (resp === "success") {
-                    // this.onChatFrozen(chatId, resp);
-                    return true;
-                }
-                return false;
-            })
+            .then((resp) => resp === "success")
             .catch(() => false);
     }
 
