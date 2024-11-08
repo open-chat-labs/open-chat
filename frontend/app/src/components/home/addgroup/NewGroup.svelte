@@ -134,6 +134,7 @@
         resp: UpdateGroupResponse,
         level: Level,
     ): ResourceKey | undefined {
+        console.log("Group update response: ", resp);
         if (resp.kind === "success") return undefined;
         if (resp.kind === "unchanged") return undefined;
         if (resp.kind === "name_too_short") return i18nKey("groupNameTooShort");

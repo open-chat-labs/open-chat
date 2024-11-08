@@ -24,11 +24,14 @@
     export let selectedTab: "community" | "channel" = "channel";
     export let memberCount: number;
 
-    $: canEditCommunity = client.canEditCommunity(community.id);
-    $: canEditChannel = client.canEditGroupDetails(channel.id);
+    $: communityFrozen = client.isCommunityFrozen(community.id);
+    $: channelFrozen = client.isChatFrozen(channel.id);
+    $: canEditCommunity = !communityFrozen && client.canEditCommunity(community.id);
+    $: canEditChannel =
+        !channelFrozen && !communityFrozen && client.canEditGroupDetails(channel.id);
     $: rules = $currentCommunityRules ?? defaultChatRules("community");
     $: canDeleteCommunity = client.canDeleteCommunity(community.id);
-    $: canInviteToCommunity = client.canInviteUsers(community.id);
+    $: canInviteToCommunity = !communityFrozen && client.canInviteUsers(community.id);
 
     function editGroup() {
         if (canEditChannel) {

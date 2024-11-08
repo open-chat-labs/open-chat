@@ -1743,6 +1743,11 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
+    isChatOrCommunityFrozen(chat: ChatSummary, community: CommunitySummary | undefined): boolean {
+        if (chat.kind === "direct_chat") return false;
+        return chat.frozen || (community?.frozen ?? false);
+    }
+
     canPinMessages(chatId: ChatIdentifier): boolean {
         return this.chatPredicate(chatId, canPinMessages);
     }
@@ -1902,12 +1907,13 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    isFrozen(chatId: ChatIdentifier): boolean {
+    isChatFrozen(chatId: ChatIdentifier): boolean {
         if (chatId.kind === "direct_chat") return false;
         return this.multiUserChatPredicate(chatId, isFrozen);
     }
 
-    isCommunityFrozen(id: CommunityIdentifier): boolean {
+    isCommunityFrozen(id: CommunityIdentifier | undefined): boolean {
+        if (id === undefined) return false;
         return this.communityPredicate(id, isFrozen);
     }
 

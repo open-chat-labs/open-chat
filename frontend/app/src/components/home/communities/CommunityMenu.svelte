@@ -34,11 +34,12 @@
     const dispatch = createEventDispatcher();
 
     $: member = community.membership.role !== "none";
+    $: frozen = client.isCommunityFrozen(community.id);
     $: canLeave = member;
-    $: canDelete = member && client.canDeleteCommunity(community.id);
-    $: canEdit = member && client.canEditCommunity(community.id);
-    $: canInvite = member && client.canInviteUsers(community.id);
-    $: canCreateChannel = member && client.canCreateChannel(community.id);
+    $: canDelete = member && !frozen && client.canDeleteCommunity(community.id);
+    $: canEdit = member && !frozen && client.canEditCommunity(community.id);
+    $: canInvite = member && !frozen && client.canInviteUsers(community.id);
+    $: canCreateChannel = member && !frozen && client.canCreateChannel(community.id);
     $: isCommunityMuted = $chatSummariesListStore.every((c) => c.membership.notificationsMuted);
 
     function leaveCommunity() {
