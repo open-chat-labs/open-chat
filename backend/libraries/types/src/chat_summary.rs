@@ -279,6 +279,7 @@ pub struct ChatMetrics {
     pub file_messages: u64,
     pub polls: u64,
     pub poll_votes: u64,
+    #[serde(default)]
     pub crypto_messages: u64,
     pub icp_messages: u64,
     pub sns1_messages: u64,
