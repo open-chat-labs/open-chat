@@ -1,5 +1,4 @@
 use crate::updates::c2c_notify_low_balance::top_up_user;
-use ic_cdk::api::call::RejectionCode;
 use timer_job_queues::{TimerJobItem, TimerJobItemGroup};
 use types::UserId;
 use user_canister::Event as UserEvent;
