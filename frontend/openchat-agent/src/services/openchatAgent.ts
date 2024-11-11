@@ -3951,4 +3951,8 @@ export class OpenChatAgent extends EventTarget {
             allMissing,
         ];
     }
+
+    deleteUser(userId: string): Promise<boolean> {
+        return this._userIndexClient.deleteUser(userId);
+    }
 }
