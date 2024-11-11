@@ -2,7 +2,7 @@ use crate::canister;
 use crate::canister::is_out_of_cycles_error;
 use crate::consts::CYCLES_REQUIRED_FOR_UPGRADE;
 use candid::CandidType;
-use ic_cdk::api::call::{CallResult, RejectionCode};
+use ic_cdk::api::call::CallResult;
 use ic_cdk::api::management_canister;
 use ic_cdk::api::management_canister::main::{CanisterInstallMode, ChunkHash, InstallChunkedCodeArgument, InstallCodeArgument};
 use tracing::{error, trace};
