@@ -44,4 +44,8 @@ impl Pool {
     pub fn pop(&mut self) -> Option<CanisterId> {
         self.canister_ids.pop_front()
     }
+
+    pub fn set_target_size(&mut self, target_size: u16) {
+        self.target_size = target_size;
+    }
 }

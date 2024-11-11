@@ -12,7 +12,7 @@ pub fn min_cycles_balance(test_mode: bool) -> Cycles {
 
 const MIN_CYCLES_BALANCE: Cycles = 50_000_000_000_000; // 50T
 const MIN_CYCLES_BALANCE_TEST: Cycles = MIN_CYCLES_BALANCE / 10; // 5T
-pub const CREATE_CANISTER_CYCLES_FEE: Cycles = 500_000_000_000; // 0.5T cycles
+pub const CREATE_CANISTER_CYCLES_FEE: Cycles = 100_000_000_000; // 0.1T cycles
 pub const CYCLES_REQUIRED_FOR_UPGRADE: Cycles = 300_000_000_000; // 0.3T cycles
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));

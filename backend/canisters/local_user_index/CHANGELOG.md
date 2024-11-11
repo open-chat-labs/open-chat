@@ -6,12 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1437](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1437-local_user_index)] - 2024-11-11
+
 ### Changed
 
-- Update the canister creation fee to 0.5T ([#6700](https://github.com/open-chat-labs/open-chat/pull/6700))
 - Increase the max cycles required during upgrades ([#6725](https://github.com/open-chat-labs/open-chat/pull/6725))
 - Increase size of cycles top-ups ([#6727](https://github.com/open-chat-labs/open-chat/pull/6727))
 - Expose which canisters are pending migration to stable memory in metrics ([#6742](https://github.com/open-chat-labs/open-chat/pull/6742))
+- Add more canisters to the pools before fee increases ([#6777](https://github.com/open-chat-labs/open-chat/pull/6777))
 
 ## [[2.0.1422](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1422-local_user_index)] - 2024-11-05
 
