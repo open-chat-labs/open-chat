@@ -92,7 +92,6 @@
         messagesVisibleToNonMembersDirty;
     $: hideInviteUsers = candidateGroup.level === "channel" && candidateGroup.public;
     $: valid = detailsValid && visibilityValid && rulesValid;
-
     $: {
         if (candidateGroup.public) {
             candidateGroup.permissions.startVideoCall = "admin";
