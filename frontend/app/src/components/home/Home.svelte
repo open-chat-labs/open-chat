@@ -1061,7 +1061,7 @@
                     blobUrl: chat.blobUrl,
                     blobData: chat.blobData,
                 },
-                gateConfig: chat.gateConfig,
+                gateConfig: { ...chat.gateConfig },
                 level,
                 membership: chat.membership,
                 eventsTTL: chat.eventsTTL,
