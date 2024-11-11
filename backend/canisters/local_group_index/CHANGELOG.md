@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Update the canister creation fee to 0.5T ([#6781](https://github.com/open-chat-labs/open-chat/pull/6781))
+- Continue creating canisters after delay if cycles balance too low ([#6783](https://github.com/open-chat-labs/open-chat/pull/6783))
 
 ## [[2.0.1438](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1438-local_group_index)] - 2024-11-11
 

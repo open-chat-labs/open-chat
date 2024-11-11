@@ -174,7 +174,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         test_mode: state.data.test_mode,
     };
 
-    crate::jobs::topup_canister_pool::start_job_if_required(state);
+    crate::jobs::topup_canister_pool::start_job_if_required(state, None);
 
     Ok(PrepareOk {
         caller,
