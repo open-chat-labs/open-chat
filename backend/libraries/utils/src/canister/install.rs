@@ -1,7 +1,8 @@
 use crate::canister;
+use crate::canister::is_out_of_cycles_error;
 use crate::consts::CYCLES_REQUIRED_FOR_UPGRADE;
 use candid::CandidType;
-use ic_cdk::api::call::{CallResult, RejectionCode};
+use ic_cdk::api::call::CallResult;
 use ic_cdk::api::management_canister;
 use ic_cdk::api::management_canister::main::{CanisterInstallMode, ChunkHash, InstallChunkedCodeArgument, InstallCodeArgument};
 use tracing::{error, trace};
@@ -135,7 +136,7 @@ fn should_deposit_cycles_and_retry(
     }
 
     if let Err((code, msg)) = response {
-        if matches!(code, RejectionCode::SysTransient) && msg.contains("out of cycles") {
+        if is_out_of_cycles_error(*code, msg) {
             return ShouldDepositAndRetry::Yes(CYCLES_REQUIRED_FOR_UPGRADE / 2);
         }
     }

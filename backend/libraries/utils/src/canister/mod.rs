@@ -30,6 +30,10 @@ pub use stop::*;
 pub use uninstall::*;
 pub use update_settings::*;
 
+pub fn is_out_of_cycles_error(rejection_code: RejectionCode, message: &str) -> bool {
+    matches!(rejection_code, RejectionCode::SysTransient) && message.contains("out of cycles")
+}
+
 pub fn should_retry_failed_c2c_call(rejection_code: RejectionCode, message: &str) -> bool {
     match rejection_code {
         RejectionCode::DestinationInvalid => false,
