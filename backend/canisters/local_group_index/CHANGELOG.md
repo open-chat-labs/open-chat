@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1438](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1438-local_group_index)] - 2024-11-11
+
 ### Changed
 
 - Add more canisters to the pools before fee increases ([#6777](https://github.com/open-chat-labs/open-chat/pull/6777))
