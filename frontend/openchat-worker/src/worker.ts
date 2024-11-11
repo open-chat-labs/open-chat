@@ -1849,6 +1849,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "deleteUser":
+                executeThenReply(payload, correlationId, agent.deleteUser(payload.userId));
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }

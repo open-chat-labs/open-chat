@@ -405,7 +405,8 @@ export type WorkerRequest =
     | GetExternalAchievements
     | CancelInvites
     | MessageActivityFeed
-    | MarkActivityFeedRead;
+    | MarkActivityFeedRead
+    | DeleteUser;
 
 type MarkActivityFeedRead = {
     kind: "markActivityFeedRead";
@@ -1337,6 +1338,11 @@ type LinkIdentities = {
     approverDelegation: JsonnableDelegationChain;
 };
 
+type DeleteUser = {
+    kind: "deleteUser";
+    userId: string;
+};
+
 /**
  * Worker error type
  */
@@ -2194,4 +2200,6 @@ export type WorkerResult<T> = T extends Init
     ? MessageActivityFeedResponse
     : T extends MarkActivityFeedRead
     ? void
+    : T extends DeleteUser
+    ? boolean
     : never;
