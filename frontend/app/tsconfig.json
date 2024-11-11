@@ -2,7 +2,8 @@
     "extends": "../tsconfig",
     "compilerOptions": {
         "isolatedModules": true,
-        "outDir": "build"
+        "outDir": "build",
+        "allowImportingTsExtensions": true
     },
     "include": ["./src/**/*"]
 }
