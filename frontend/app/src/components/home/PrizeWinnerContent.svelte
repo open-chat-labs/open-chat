@@ -2,11 +2,11 @@
     import Markdown from "./Markdown.svelte";
     import type { OpenChat, PrizeWinnerContent } from "openchat-client";
     import { userStore, currentUser as user, cryptoLookup } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import SpinningToken from "../icons/SpinningToken.svelte";
+    import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
 
-    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
     export let content: PrizeWinnerContent;
@@ -25,14 +25,22 @@
             : `${$userStore.get(userId)?.username ?? $_("unknown")}`;
     }
 
-    function zoomToMessage() {
-        dispatch("goToMessageIndex", {
-            index: content.prizeMessageIndex,
-        });
+    function openUserProfile(ev: Event) {
+        ev.target?.dispatchEvent(
+            new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
+                detail: {
+                    userId: content.transaction.recipient,
+                    chatButton: false,
+                    inGlobalContext: false,
+                },
+                bubbles: true,
+            }),
+        );
+        ev.stopPropagation();
     }
 </script>
 
-<div role="button" tabindex="0" class="msg" on:click={zoomToMessage}>
+<div class="msg">
     <div class="wrapper" class:other={!me}>
         <div class="graphic" class:tiny={!me}>
             {#if me}
@@ -46,7 +54,7 @@
             {/if}
         </div>
         <div class="txt" class:other={!me}>
-            <div class="label">
+            <div class="label" on:click={openUserProfile}>
                 <Markdown
                     text={$_("prizes.winner", {
                         values: { recipient: winner, amount, token: symbol },
@@ -63,7 +71,6 @@
 
 <style lang="scss">
     .msg {
-        cursor: pointer;
         text-align: center;
         padding-top: $sp2;
     }
@@ -79,6 +86,7 @@
     }
 
     .label {
+        cursor: pointer;
         @include font(book, normal, fs-100);
     }
 

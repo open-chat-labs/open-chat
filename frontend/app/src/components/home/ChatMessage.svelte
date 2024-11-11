@@ -555,7 +555,6 @@
                         blockLevelMarkdown={msg.blockLevelMarkdown}
                         on:removePreview
                         on:registerVote={registerVote}
-                        on:goToMessageIndex
                         on:upgrade
                         on:startVideoCall
                         on:expandMessage />
