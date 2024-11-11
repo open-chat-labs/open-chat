@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Update the canister creation fee to 0.5T ([#6700](https://github.com/open-chat-labs/open-chat/pull/6700))
+- Add more canisters to the pools before fee increases ([#6777](https://github.com/open-chat-labs/open-chat/pull/6777))
 
 ## [[2.0.1435](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1435-local_group_index)] - 2024-11-07
 
