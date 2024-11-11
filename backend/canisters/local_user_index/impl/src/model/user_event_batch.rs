@@ -1,7 +1,9 @@
+use crate::updates::c2c_notify_low_balance::top_up_user;
+use ic_cdk::api::call::RejectionCode;
 use timer_job_queues::{TimerJobItem, TimerJobItemGroup};
 use types::UserId;
 use user_canister::Event as UserEvent;
-use utils::canister::should_retry_failed_c2c_call;
+use utils::canister::{is_out_of_cycles_error, should_retry_failed_c2c_call};
 
 pub struct UserEventBatch {
     user_id: UserId,
@@ -49,6 +51,9 @@ impl TimerJobItem for UserEventBatch {
         match response {
             Ok(user_canister::c2c_notify_events::Response::Success) => Ok(()),
             Err((code, msg)) => {
+                if is_out_of_cycles_error(code, &msg) {
+                    top_up_user(Some(self.user_id)).await;
+                }
                 let retry = should_retry_failed_c2c_call(code, &msg);
                 Err(retry)
             }
