@@ -18,7 +18,9 @@ fn post_upgrade(args: Args) {
     let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
 
-    data.canister_pool.set_target_size(1000);
+    if !data.test_mode {
+        data.canister_pool.set_target_size(1000);
+    }
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
