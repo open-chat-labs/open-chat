@@ -103,7 +103,7 @@
         {reply}
         {pinned} />
 {:else if content.kind === "prize_winner_content"}
-    <PrizeWinnerContent on:goToMessageIndex {content} />
+    <PrizeWinnerContent {content} />
 {:else if content.kind === "poll_content"}
     <PollContent {readonly} {me} {content} {myUserId} {senderId} on:registerVote />
 {:else if content.kind === "giphy_content"}
