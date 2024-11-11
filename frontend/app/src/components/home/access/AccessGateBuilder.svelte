@@ -38,37 +38,47 @@
 
     const MAX_GATES = 5;
 
-    export let gateConfig: AccessGateConfig;
-    export let editable: boolean;
-    export let level: Level;
-    export let valid: boolean;
+    interface Props {
+        gateConfig: AccessGateConfig;
+        editable: boolean;
+        level: Level;
+        valid: boolean;
+    }
 
-    let gateValidity: boolean[] = [];
-    let selectedGateIndex: number | undefined = undefined;
+    let { gateConfig = $bindable(), editable, level, valid = $bindable() }: Props = $props();
+
+    let gateValidity: boolean[] = $state([]);
+    let selectedGateIndex: number | undefined = $state(undefined);
     let gateBindings: GateBinding[] = getGateBindings(level);
-    let evaluationIntervalValid: boolean;
+    let evaluationIntervalValid = $state(true);
+    let nsLedgers = $derived(
+        new Set(Object.values($nervousSystemLookup).map((d) => d.ledgerCanisterId)),
+    );
+    let neuronGateBindings = $derived(getNeuronGateBindings($nervousSystemLookup));
+    let paymentGateBindings = $derived(getPaymentGateBindings($cryptoLookup, nsLedgers));
+    let balanceGateBindings = $derived(getBalanceGateBindings($cryptoLookup));
+    let canAdd = $derived(isLeafGate(gateConfig.gate) || gateConfig.gate.gates.length < MAX_GATES);
+    let title = $derived(!editable ? i18nKey("access.readonlyTitle") : i18nKey("access.title"));
 
-    $: nsLedgers = new Set(Object.values($nervousSystemLookup).map((d) => d.ledgerCanisterId));
-    $: neuronGateBindings = getNeuronGateBindings($nervousSystemLookup);
-    $: paymentGateBindings = getPaymentGateBindings($cryptoLookup, nsLedgers);
-    $: balanceGateBindings = getBalanceGateBindings($cryptoLookup);
-    $: canAdd = isLeafGate(gateConfig.gate) || gateConfig.gate.gates.length < MAX_GATES;
-    $: title = !editable ? i18nKey("access.readonlyTitle") : i18nKey("access.title");
-
-    $: {
-        valid =
+    $effect(() => {
+        const isValid =
             gateValidity.every((v) => v) &&
             (gateConfig.expiry !== undefined ? !editable || evaluationIntervalValid : true);
-    }
+
+        if (isValid !== valid) {
+            valid = isValid;
+        }
+    });
 
     function addLeaf() {
         const newGate: AccessGate = { kind: "no_gate" };
         if (gateConfig.gate.kind === "composite_gate") {
             gateConfig.gate.gates.push(newGate);
         } else {
+            const oldGate = { ...gateConfig.gate };
             gateConfig.gate = {
                 kind: "composite_gate",
-                gates: [gateConfig.gate, newGate],
+                gates: [oldGate, newGate],
                 operator: "and",
             };
         }
@@ -109,7 +119,7 @@
         <div slot="header">
             <Translatable resourceKey={title} />
         </div>
-        <div class="body access-gate-builder" slot="body">
+        <div slot="body" class="body access-gate-builder">
             {#if isLeafGate(gateConfig.gate)}
                 <LeafGateBuilder
                     {gateBindings}
@@ -127,16 +137,16 @@
                         transition={false}
                         open={selectedGateIndex === i}
                         on:opened={() => (selectedGateIndex = i)}>
-                        <div class="sub-header" slot="titleSlot" class:invalid={!gateValidity[i]}>
+                        <div slot="titleSlot" class="sub-header" class:invalid={!gateValidity[i]}>
                             <AccessGateIcon
                                 {level}
                                 showNoGate
                                 gateConfig={{ expiry: undefined, gate: subgate }} />
                             <Translatable resourceKey={getGateText(subgate)} />
                             {#if editable}
-                                <!-- svelte-ignore a11y-click-events-have-key-events -->
-                                <!-- svelte-ignore a11y-no-static-element-interactions -->
-                                <div on:click={() => deleteGate(i)} class="delete">
+                                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                                <div onclick={() => deleteGate(i)} class="delete">
                                     <Delete
                                         viewBox={"0 -3 24 24"}
                                         size={$iconSize}
@@ -150,7 +160,7 @@
                             {paymentGateBindings}
                             {balanceGateBindings}
                             allowNone={false}
-                            bind:gate={subgate}
+                            bind:gate={gateConfig.gate.gates[i]}
                             {editable}
                             {level}
                             bind:valid={gateValidity[i]} />
