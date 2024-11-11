@@ -19,7 +19,7 @@ fn post_upgrade(args: Args) {
         msgpack::deserialize(reader).unwrap();
 
     if !data.test_mode {
-        data.canister_pool.set_target_size(1000);
+        data.canister_pool.set_target_size(20);
     }
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
