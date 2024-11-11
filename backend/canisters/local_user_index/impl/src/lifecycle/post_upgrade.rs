@@ -22,7 +22,9 @@ fn post_upgrade(args: Args) {
     data.canisters_pending_events_migration_to_stable_memory =
         data.local_users.iter().map(|(u, _)| Principal::from(*u)).collect();
 
-    data.canister_pool.set_target_size(5000);
+    if !data.test_mode {
+        data.canister_pool.set_target_size(5000);
+    }
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
