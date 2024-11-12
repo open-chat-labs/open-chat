@@ -2021,6 +2021,7 @@ type Achievement = variant {
     HadMessageTipped;
     JoinedCall; 
     ProvedUniquePersonhood;
+    SetCommunityDisplayName;
     ChangedTheme;
     SwappedFromWallet;
     AcceptedP2PSwapOffer;
