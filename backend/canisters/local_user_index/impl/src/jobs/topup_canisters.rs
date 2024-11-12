@@ -6,7 +6,7 @@ use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::collections::VecDeque;
 use std::time::Duration;
-use tracing::info;
+use tracing::{error, info};
 use types::{Milliseconds, UserId};
 use utils::canister_timers::run_now_then_interval;
 use utils::time::DAY_IN_MS;
@@ -47,13 +47,16 @@ fn next(state: &mut RuntimeState) -> Option<UserId> {
 }
 
 async fn run_async(user_id: UserId) {
-    if let Ok((status,)) = ic_cdk::api::management_canister::main::canister_status(CanisterIdRecord {
+    match ic_cdk::api::management_canister::main::canister_status(CanisterIdRecord {
         canister_id: user_id.into(),
     })
     .await
     {
-        if status.cycles < Nat::from(2u32) * status.settings.freezing_threshold {
-            top_up_user(Some(user_id)).await;
+        Ok((status,)) => {
+            if status.cycles < Nat::from(2u32) * status.settings.freezing_threshold {
+                top_up_user(Some(user_id)).await;
+            }
         }
+        Err(error) => error!(%user_id, ?error, "Error getting canister status"),
     }
 }
