@@ -278,6 +278,7 @@ impl RuntimeState {
                 .take(20)
                 .collect(),
             canister_upgrades_failed: canister_upgrades_metrics.failed,
+            cycles_balance_check_queue_len: self.data.cycles_balance_check_queue.len() as u32,
         }
     }
 }
@@ -314,8 +315,9 @@ struct Data {
     #[serde(with = "serde_bytes")]
     pub ic_root_key: Vec<u8>,
     pub events_for_remote_users: Vec<(UserId, UserEvent)>,
-    #[serde(default)]
     pub canisters_pending_events_migration_to_stable_memory: Vec<CanisterId>,
+    #[serde(default)]
+    pub cycles_balance_check_queue: VecDeque<UserId>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -385,6 +387,7 @@ impl Data {
             ic_root_key,
             events_for_remote_users: Vec::new(),
             canisters_pending_events_migration_to_stable_memory: Vec::new(),
+            cycles_balance_check_queue: VecDeque::new(),
         }
     }
 }
@@ -419,6 +422,7 @@ pub struct Metrics {
     pub canisters_pending_events_migration_to_stable_memory_count: u32,
     pub canisters_pending_events_migration_to_stable_memory: Vec<CanisterId>,
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
+    pub cycles_balance_check_queue_len: u32,
 }
 
 #[derive(Serialize, Debug)]

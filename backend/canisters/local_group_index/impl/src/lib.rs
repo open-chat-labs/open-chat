@@ -8,7 +8,7 @@ use local_group_index_canister::ChildCanisterType;
 use model::local_group_map::LocalGroupMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, VecDeque};
 use std::time::Duration;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChildCanisterWasms, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId,
@@ -136,6 +136,7 @@ impl RuntimeState {
                 .take(20)
                 .collect(),
             community_upgrades_failed: community_upgrades_metrics.failed,
+            cycles_balance_check_queue_len: self.data.cycles_balance_check_queue.len() as u32,
         }
     }
 }
@@ -169,6 +170,7 @@ struct Data {
     pub event_deduper: EventDeduper,
     pub rng_seed: [u8; 32],
     pub canisters_pending_events_migration_to_stable_memory: Vec<CanisterId>,
+    pub cycles_balance_check_queue: VecDeque<CanisterId>,
 }
 
 impl Data {
@@ -222,6 +224,7 @@ impl Data {
                 .build(),
             event_deduper: EventDeduper::default(),
             canisters_pending_events_migration_to_stable_memory: Vec::new(),
+            cycles_balance_check_queue: VecDeque::new(),
         }
     }
 }
@@ -258,6 +261,7 @@ pub struct Metrics {
     pub canisters_pending_events_migration_to_stable_memory_count: u32,
     pub canisters_pending_events_migration_to_stable_memory: Vec<CanisterId>,
     pub community_upgrades_failed: Vec<FailedUpgradeCount>,
+    pub cycles_balance_check_queue_len: u32,
 }
 
 #[derive(Serialize, Debug)]
