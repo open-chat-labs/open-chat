@@ -6,6 +6,7 @@ use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::collections::VecDeque;
 use std::time::Duration;
+use tracing::info;
 use types::{Milliseconds, UserId};
 use utils::canister_timers::run_now_then_interval;
 use utils::time::DAY_IN_MS;
@@ -29,6 +30,7 @@ fn populate_canisters() {
     }
     let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
     TIMER_ID.set(Some(timer_id));
+    info!("Top up canisters job starting");
 }
 
 fn run() {
@@ -36,6 +38,7 @@ fn run() {
         ic_cdk::spawn(run_async(user_id));
     } else if let Some(timer_id) = TIMER_ID.take() {
         ic_cdk_timers::clear_timer(timer_id);
+        info!("Top up canisters job finished");
     }
 }
 
