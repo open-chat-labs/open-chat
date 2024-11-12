@@ -56,7 +56,7 @@ fn next(state: &mut RuntimeState) -> Option<CanisterId> {
 async fn run_async(canister_id: CanisterId) {
     match ic_cdk::api::management_canister::main::canister_status(CanisterIdRecord { canister_id }).await {
         Ok((status,)) => {
-            if status.cycles < Nat::from(2u32) * status.settings.freezing_threshold {
+            if status.cycles < Nat::from(60u32) * status.idle_cycles_burned_per_day {
                 top_up_canister(Some(canister_id)).await;
             }
         }
