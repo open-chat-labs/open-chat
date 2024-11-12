@@ -24,11 +24,13 @@ pub fn start_job() {
 
 fn populate_canisters() {
     mutate_state(|state| {
-        let mut vec: Vec<_> = state.data.local_users.iter().map(|(u, _)| *u).collect();
+        if state.data.cycles_balance_check_queue.is_empty() {
+            let mut vec: Vec<_> = state.data.local_users.iter().map(|(u, _)| *u).collect();
 
-        vec.sort_by_cached_key(|_| state.env.rng().next_u32());
+            vec.sort_by_cached_key(|_| state.env.rng().next_u32());
 
-        state.data.cycles_balance_check_queue = VecDeque::from(vec);
+            state.data.cycles_balance_check_queue = VecDeque::from(vec);
+        }
     });
 
     if let Some(timer_id) = TIMER_ID.take() {
