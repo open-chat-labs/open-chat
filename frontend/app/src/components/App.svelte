@@ -117,7 +117,8 @@
 
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
-        (<any>window).platformModerator = {
+        //@ts-ignore
+        window.platformModerator = {
             addHotGroupExclusion,
             deleteFrozenGroup,
             deleteMessage,
@@ -130,7 +131,8 @@
             removeMessageFilter,
             reportedMessages,
         };
-        (<any>window).platformOperator = {
+        //@ts-ignore
+        window.platformOperator = {
             addRemoveSwapProvider,
             setGroupUpgradeConcurrency,
             setCommunityUpgradeConcurrency,
