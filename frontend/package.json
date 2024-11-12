@@ -34,6 +34,7 @@
         "@rollup/plugin-replace": "^5.0.5",
         "@rollup/plugin-terser": "^0.4.4",
         "@rollup/plugin-typescript": "^11.1.2",
+        "@sveltejs/vite-plugin-svelte": "^4.0.0",
         "@typescript-eslint/eslint-plugin": "^6.4.0",
         "@typescript-eslint/parser": "^6.4.0",
         "auto-changelog": "open-chat-labs/auto-changelog#master",
@@ -52,7 +53,8 @@
         "rollup-styles": "^1.5.0",
         "svelte": "^5.1.0",
         "svelte-check": "^4.0.5",
-        "turbo": "^2.1.2"
+        "turbo": "^2.1.2",
+        "vite": "^5.4.11"
     },
     "dependencies": {
         "svelte-dnd-action": "^0.9.52",

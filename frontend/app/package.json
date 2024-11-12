@@ -2,6 +2,7 @@
     "name": "openchat_app",
     "version": "2.0.0",
     "private": true,
+    "type": "module",
     "scripts": {
         "build": "sh ./build_dev.sh",
         "build:prod": "sh ./build_prod.sh",

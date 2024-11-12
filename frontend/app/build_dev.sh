@@ -13,4 +13,15 @@ export ACHIEVEMENT_URL_PATH=http://{canisterId}.localhost:8080
 export WALLET_CONNECT_PROJECT_ID=b9aafebed2abfaf8341afd9428c947d5
 export NODE_OPTIONS="--max-old-space-size=8192"
 
-npx rollup -c $WATCH
+# npx rollup -c $WATCH
+
+# Check the WATCH flag and run the appropriate Vite command
+if [ "$WATCH" == "-w" ]; then
+  # Run Vite in development mode
+  echo "Starting Vite dev server..."
+  vite --port $DEV_PORT
+else
+  # Run Vite build for production
+  echo "Running Vite build..."
+  vite build
+fi
