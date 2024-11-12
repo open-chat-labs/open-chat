@@ -3,6 +3,7 @@ use crate::{mutate_state, RuntimeState};
 use candid::Nat;
 use ic_cdk::api::management_canister::main::CanisterIdRecord;
 use ic_cdk_timers::TimerId;
+use rand::RngCore;
 use std::cell::Cell;
 use std::collections::VecDeque;
 use std::time::Duration;
@@ -23,15 +24,19 @@ pub fn start_job() {
 
 fn populate_canisters() {
     mutate_state(|state| {
-        state.data.cycles_balance_check_queue = VecDeque::from_iter(
-            state
-                .data
-                .local_communities
-                .iter()
-                .map(|(c, _)| CanisterId::from(*c))
-                .chain(state.data.local_groups.iter().map(|(g, _)| CanisterId::from(*g))),
-        );
+        let mut vec: Vec<_> = state
+            .data
+            .local_communities
+            .iter()
+            .map(|(c, _)| CanisterId::from(*c))
+            .chain(state.data.local_groups.iter().map(|(g, _)| CanisterId::from(*g)))
+            .collect();
+
+        vec.sort_by_cached_key(|_| state.env.rng().next_u32());
+
+        state.data.cycles_balance_check_queue = VecDeque::from(vec);
     });
+
     if let Some(timer_id) = TIMER_ID.take() {
         ic_cdk_timers::clear_timer(timer_id);
     }
