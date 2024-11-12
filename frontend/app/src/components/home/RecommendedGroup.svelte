@@ -10,6 +10,7 @@
         suspendedUser,
         chatListScopeStore as chatListScope,
         chatSummariesStore,
+        selectedCommunity,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Markdown from "./Markdown.svelte";
@@ -58,7 +59,7 @@
         <div class="header">
             <div class="avatar">
                 <Avatar
-                    url={client.groupAvatarUrl(group)}
+                    url={client.groupAvatarUrl(group, $selectedCommunity)}
                     size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
             </div>
             <div class="group-title-line">

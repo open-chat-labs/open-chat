@@ -1608,11 +1608,14 @@ export class OpenChat extends OpenChatAgentWorker {
         return getContentAsFormattedText(formatter, content, get(cryptoLookup));
     }
 
-    groupAvatarUrl(chat?: {
-        id: MultiUserChatIdentifier;
-        blobUrl?: string;
-        subtype?: GroupSubtype;
-    }): string {
+    groupAvatarUrl(
+        chat?: {
+            id: MultiUserChatIdentifier;
+            blobUrl?: string;
+            subtype?: GroupSubtype;
+        },
+        community?: CommunitySummary,
+    ): string {
         if (chat?.blobUrl !== undefined) {
             return chat.blobUrl;
         } else if (chat?.subtype?.kind === "governance_proposals") {
@@ -1622,7 +1625,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 return snsLogo;
             }
         } else if (chat?.id?.kind === "channel") {
-            const community = this.getCommunityForChannel(chat?.id);
+            community = this.getCommunityForChannel(chat?.id) ?? community;
             if (community !== undefined) {
                 return this.communityAvatarUrl(community.id.communityId, community.avatar);
             }

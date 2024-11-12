@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AvatarSize, OpenChat, chatIdentifiersEqual } from "openchat-client";
+    import { AvatarSize, OpenChat, chatIdentifiersEqual, selectedCommunity } from "openchat-client";
     import CameraTimer from "svelte-material-icons/CameraTimer.svelte";
     import type {
         UserLookup,
@@ -104,7 +104,7 @@
                     name: chatSummary.name,
                     diamondStatus: "inactive" as DiamondMembershipStatus["kind"],
                     streak: 0,
-                    avatarUrl: client.groupAvatarUrl(chatSummary),
+                    avatarUrl: client.groupAvatarUrl(chatSummary, $selectedCommunity),
                     userId: undefined,
                     typing: client.getTypingString(
                         $_,
