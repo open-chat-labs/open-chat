@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Fix calculation to determine if a canister needs a cycles top up ([#6799](https://github.com/open-chat-labs/open-chat/pull/6799))
+
+## [[2.0.1444](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1444-local_user_index)] - 2024-11-12
+
 ### Added
 
 - Add job to check cycles balances of child canisters every week ([#6796](https://github.com/open-chat-labs/open-chat/pull/6796))

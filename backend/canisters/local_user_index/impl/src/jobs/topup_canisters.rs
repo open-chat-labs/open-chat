@@ -56,7 +56,7 @@ async fn run_async(user_id: UserId) {
     .await
     {
         Ok((status,)) => {
-            if status.cycles < Nat::from(2u32) * status.settings.freezing_threshold {
+            if status.cycles < Nat::from(60u32) * status.idle_cycles_burned_per_day {
                 top_up_user(Some(user_id)).await;
             }
         }
