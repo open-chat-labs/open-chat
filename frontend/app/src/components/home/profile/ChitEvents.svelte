@@ -14,7 +14,7 @@
     import { chitPopup, hideChitIcon, utcMode } from "../../../stores/settings";
     import Translatable from "../../Translatable.svelte";
     import { menuCloser } from "../../../actions/closeMenu";
-    import { calendarState, type DateRange } from "../../calendar/calendarState.svelte.ts";
+    import { calendarState, type DateRange } from "../../calendar/calendarState.svelte";
     import Calendar from "../../calendar/Calendar.svelte";
 
     const client = getContext<OpenChat>("client");

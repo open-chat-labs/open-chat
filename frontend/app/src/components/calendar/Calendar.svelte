@@ -8,32 +8,29 @@
     import { type Snippet } from "svelte";
     import { translationCodes } from "../../i18n/i18n";
     import { weekDays } from "./weekdays";
-    import { calendarState, type DateRange } from "./calendarState.svelte.ts"
+    import { calendarState, type DateRange } from "./calendarState.svelte";
 
     interface Props {
         monthTitleTemplate?: Snippet;
         dayTemplate?: Snippet<[Date]>;
-        dateSelected?: (range: DateRange) => void
+        dateSelected?: (range: DateRange) => void;
     }
 
-    let {
-        monthTitleTemplate,
-        dayTemplate,
-        dateSelected,
-    }: Props = $props();
+    let { monthTitleTemplate, dayTemplate, dateSelected }: Props = $props();
 
     let today = $state(new Date());
     let showDate = $state(new Date());
     let dates = $state<Date[][]>([]);
     let translatedLocale = $derived(translationCodes[$locale || "en"] || "en");
 
-    $effect(() => getDates(showDate))
+    $effect(() => getDates(showDate));
 
     function endOfDay(date: Date): Date {
         return new Date(date.getTime() + 24 * 60 * 60 * 1000 - 1);
     }
 
     function getDates(start: Date) {
+        console.log("Getting dates for start date: ", start);
         const resp = getMonthCalendar(start);
         calendarState.monthTitle = getTitleText(resp.year, resp.month, translatedLocale);
         dates = resp.dates;
@@ -98,7 +95,7 @@
                         class:today={typeof day === "string" ? false : isSameDay(today, day)}
                         class="block daily-date-block pointer">
                         {#if dayTemplate}
-                            {@render dayTemplate(day) }
+                            {@render dayTemplate(day)}
                         {:else}
                             {day.getDate()}
                         {/if}
