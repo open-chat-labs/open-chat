@@ -222,6 +222,7 @@ import type {
     MessageActivityEvent,
     FreezeCommunityResponse,
     UnfreezeCommunityResponse,
+    ChannelSummaryResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -2225,11 +2226,17 @@ export class OpenChatAgent extends EventTarget {
                 const localUserIndex = await this.getGroupClient(chatId.groupId).localUserIndex();
                 const localUserIndexClient = this.getLocalUserIndexClient(localUserIndex);
                 const groupInviteCode = this.getProvidedGroupInviteCode(chatId);
-                return localUserIndexClient.joinGroup(
-                    chatId.groupId,
-                    groupInviteCode,
-                    credentialArgs,
-                );
+                return localUserIndexClient
+                    .joinGroup(chatId.groupId, groupInviteCode, credentialArgs)
+                    .then((resp) => {
+                        if (resp.kind === "success") {
+                            return {
+                                kind: "success",
+                                group: this.hydrateChatSummary(resp.group),
+                            } as JoinGroupResponse;
+                        }
+                        return resp;
+                    });
             }
             case "channel": {
                 const localUserIndex = await this.communityClient(
@@ -2243,6 +2250,19 @@ export class OpenChatAgent extends EventTarget {
                     .then((resp) => {
                         if (resp.kind === "success" || resp.kind === "success_joined_community") {
                             deleteCommunityReferral(chatId.communityId);
+                        }
+                        if (resp.kind === "success") {
+                            return {
+                                kind: "success",
+                                group: this.hydrateChatSummary(resp.group),
+                            } as JoinGroupResponse;
+                        }
+
+                        if (resp.kind === "success_joined_community") {
+                            return {
+                                kind: "success_joined_community",
+                                community: this.hydrateCommunity(resp.community),
+                            };
                         }
                         return resp;
                     });
@@ -2522,6 +2542,15 @@ export class OpenChatAgent extends EventTarget {
     getPublicGroupSummary(chatId: GroupChatIdentifier): Promise<PublicGroupSummaryResponse> {
         return this.getGroupClient(chatId.groupId)
             .getPublicSummary()
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    return {
+                        kind: "success",
+                        group: this.rehydrateDataContent(resp.group, "avatar"),
+                    } as PublicGroupSummaryResponse;
+                }
+                return resp;
+            })
             .catch((err) => {
                 if (err instanceof DestinationInvalidError) {
                     return this._groupIndexClient.lookupChannelByGroupId(chatId).then((resp) => {
@@ -3954,5 +3983,16 @@ export class OpenChatAgent extends EventTarget {
 
     deleteUser(userId: string): Promise<boolean> {
         return this._userIndexClient.deleteUser(userId);
+    }
+
+    getChannelSummary(channelId: ChannelIdentifier): Promise<ChannelSummaryResponse> {
+        return this.communityClient(channelId.communityId)
+            .channelSummary(channelId)
+            .then((resp) => {
+                if (resp.kind === "channel") {
+                    return this.hydrateChatSummary(resp);
+                }
+                return resp;
+            });
     }
 }

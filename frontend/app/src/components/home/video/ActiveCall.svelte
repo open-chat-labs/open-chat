@@ -13,6 +13,7 @@
         selectedChatStore as selectedChat,
         currentUser as user,
         communities,
+        selectedCommunity,
     } from "openchat-client";
     import {
         activeVideoCall,
@@ -92,7 +93,7 @@
                                     communityId: chat.id.communityId,
                                 })?.name
                             } > ${chat.name}`,
-                            avatarUrl: client.groupAvatarUrl(chat),
+                            avatarUrl: client.groupAvatarUrl(chat, $selectedCommunity),
                             userId: undefined,
                             messageIndex: chat.videoCallInProgress,
                         };

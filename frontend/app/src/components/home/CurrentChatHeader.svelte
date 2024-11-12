@@ -95,7 +95,7 @@
                     name: chatSummary.name,
                     diamondStatus: "inactive" as DiamondMembershipStatus["kind"],
                     streak: 0,
-                    avatarUrl: client.groupAvatarUrl(chatSummary),
+                    avatarUrl: client.groupAvatarUrl(chatSummary, $selectedCommunity),
                     userId: undefined,
                     username: undefined,
                     typing: client.getTypingString(

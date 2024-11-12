@@ -32,7 +32,7 @@
 <div class="details" on:click={() => selectChannel(channel)}>
     <div class="avatar">
         <Avatar
-            url={client.groupAvatarUrl({ id: channel.id, ...channel.avatar })}
+            url={client.groupAvatarUrl({ id: channel.id, ...channel.avatar }, $selectedCommunity)}
             size={AvatarSize.Default} />
     </div>
     <div class="channel-text">

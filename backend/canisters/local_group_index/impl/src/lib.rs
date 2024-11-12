@@ -170,6 +170,7 @@ struct Data {
     pub event_deduper: EventDeduper,
     pub rng_seed: [u8; 32],
     pub canisters_pending_events_migration_to_stable_memory: Vec<CanisterId>,
+    #[serde(default)]
     pub cycles_balance_check_queue: VecDeque<CanisterId>,
 }
 
