@@ -23,15 +23,18 @@ pub fn start_job() {
 
 fn populate_canisters() {
     mutate_state(|state| {
-        state.data.cycles_balance_check_queue = VecDeque::from_iter(
-            state
-                .data
-                .local_communities
-                .iter()
-                .map(|(c, _)| CanisterId::from(*c))
-                .chain(state.data.local_groups.iter().map(|(g, _)| CanisterId::from(*g))),
-        );
+        if state.data.cycles_balance_check_queue.is_empty() {
+            state.data.cycles_balance_check_queue = VecDeque::from_iter(
+                state
+                    .data
+                    .local_communities
+                    .iter()
+                    .map(|(c, _)| CanisterId::from(*c))
+                    .chain(state.data.local_groups.iter().map(|(g, _)| CanisterId::from(*g))),
+            );
+        }
     });
+
     if let Some(timer_id) = TIMER_ID.take() {
         ic_cdk_timers::clear_timer(timer_id);
     }
