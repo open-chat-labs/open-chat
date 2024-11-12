@@ -7,7 +7,13 @@
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import { createEventDispatcher, getContext } from "svelte";
-    import { AvatarSize, type OpenChat, userStore, communities } from "openchat-client";
+    import {
+        AvatarSize,
+        type OpenChat,
+        userStore,
+        communities,
+        selectedCommunity,
+    } from "openchat-client";
     import {
         incomingVideoCall,
         ringtoneUrls,
@@ -55,7 +61,7 @@
                                     communityId: chat.id.communityId,
                                 })?.name
                             } > ${chat.name}`,
-                            avatarUrl: client.groupAvatarUrl(chat),
+                            avatarUrl: client.groupAvatarUrl(chat, $selectedCommunity),
                             initiator: initiator.username,
                         };
                 }

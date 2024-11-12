@@ -1301,13 +1301,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "getChannelSummary":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent
-                        .communityClient(payload.chatId.communityId)
-                        .channelSummary(payload.chatId),
-                );
+                executeThenReply(payload, correlationId, agent.getChannelSummary(payload.chatId));
                 break;
 
             case "exploreChannels":
