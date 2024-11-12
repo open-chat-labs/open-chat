@@ -222,6 +222,7 @@ import type {
     MessageActivityEvent,
     FreezeCommunityResponse,
     UnfreezeCommunityResponse,
+    ChannelSummaryResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -3982,5 +3983,16 @@ export class OpenChatAgent extends EventTarget {
 
     deleteUser(userId: string): Promise<boolean> {
         return this._userIndexClient.deleteUser(userId);
+    }
+
+    getChannelSummary(channelId: ChannelIdentifier): Promise<ChannelSummaryResponse> {
+        return this.communityClient(channelId.communityId)
+            .channelSummary(channelId)
+            .then((resp) => {
+                if (resp.kind === "channel") {
+                    return this.rehydrateDataContent(resp, "avatar");
+                }
+                return resp;
+            });
     }
 }

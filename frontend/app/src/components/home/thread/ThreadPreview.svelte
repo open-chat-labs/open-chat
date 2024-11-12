@@ -12,6 +12,7 @@
         chatListScopeStore as chatListScope,
         chatSummariesStore,
         messagesRead,
+        selectedCommunity,
     } from "openchat-client";
     import { pop } from "../../../utils/transition";
     import { _ } from "svelte-i18n";
@@ -48,7 +49,7 @@
         : 0;
     $: chatData = {
         name: chat?.name,
-        avatarUrl: client.groupAvatarUrl(chat),
+        avatarUrl: client.groupAvatarUrl(chat, $selectedCommunity),
     };
 
     $: grouped = client.groupBySender(thread.latestReplies);

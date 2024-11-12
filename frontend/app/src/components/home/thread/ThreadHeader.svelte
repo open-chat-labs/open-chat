@@ -6,7 +6,13 @@
         OpenChat,
         TypersByKey,
     } from "openchat-client";
-    import { AvatarSize, UserStatus, userStore, byContext } from "openchat-client";
+    import {
+        AvatarSize,
+        UserStatus,
+        userStore,
+        byContext,
+        selectedCommunity,
+    } from "openchat-client";
     import Avatar from "../../Avatar.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import { rtlStore } from "../../../stores/rtl";
@@ -60,7 +66,7 @@
         return {
             title: $mobileWidth ? chatSummary.name : $_("thread.title"),
             userStatus: UserStatus.None,
-            avatarUrl: client.groupAvatarUrl(chatSummary),
+            avatarUrl: client.groupAvatarUrl(chatSummary, $selectedCommunity),
             userId: undefined,
             subtext,
             typing: someoneTyping !== undefined,

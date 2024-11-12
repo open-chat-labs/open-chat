@@ -2,7 +2,7 @@
 
 <script lang="ts">
     import Avatar from "../Avatar.svelte";
-    import { AvatarSize } from "openchat-client";
+    import { AvatarSize, selectedCommunity } from "openchat-client";
     import type { MultiUserChat } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { getContext } from "svelte";
@@ -28,7 +28,7 @@
         </div>
     {/if}
     <div class="pop">
-        <Avatar url={client.groupAvatarUrl(group)} size={AvatarSize.Large} />
+        <Avatar url={client.groupAvatarUrl(group, $selectedCommunity)} size={AvatarSize.Large} />
     </div>
     <div>
         <Translatable
