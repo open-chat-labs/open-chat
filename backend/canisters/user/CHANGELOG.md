@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Remove events from being stored on the heap ([#6758](https://github.com/open-chat-labs/open-chat/pull/6758))
+- Removed a bunch of unwanted achievements ([#6794](https://github.com/open-chat-labs/open-chat/pull/6794))
 
 ## [[2.0.1412](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1414-user)] - 2024-10-24
 
