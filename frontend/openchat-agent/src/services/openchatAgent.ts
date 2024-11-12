@@ -2232,7 +2232,7 @@ export class OpenChatAgent extends EventTarget {
                         if (resp.kind === "success") {
                             return {
                                 kind: "success",
-                                group: this.rehydrateDataContent(resp.group, "avatar"),
+                                group: this.hydrateChatSummary(resp.group),
                             } as JoinGroupResponse;
                         }
                         return resp;
@@ -2254,7 +2254,7 @@ export class OpenChatAgent extends EventTarget {
                         if (resp.kind === "success") {
                             return {
                                 kind: "success",
-                                group: this.rehydrateDataContent(resp.group, "avatar"),
+                                group: this.hydrateChatSummary(resp.group),
                             } as JoinGroupResponse;
                         }
 
@@ -3990,7 +3990,7 @@ export class OpenChatAgent extends EventTarget {
             .channelSummary(channelId)
             .then((resp) => {
                 if (resp.kind === "channel") {
-                    return this.rehydrateDataContent(resp, "avatar");
+                    return this.hydrateChatSummary(resp);
                 }
                 return resp;
             });
