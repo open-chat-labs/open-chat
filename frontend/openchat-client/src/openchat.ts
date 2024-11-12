@@ -384,6 +384,7 @@ import type {
     PaymentGateApproval,
     PaymentGateApprovals,
     MessageActivityFeedResponse,
+    ApproveTransferResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -1379,6 +1380,44 @@ export class OpenChat extends OpenChatAgentWorker {
                 subscribeFn(response, final);
             },
         });
+    }
+
+    async approveTransfer(
+        spender: string,
+        ledger: string,
+        amount: bigint,
+        expiresIn: bigint,
+    ): Promise<ApproveTransferResponse> {
+        let pin: string | undefined = undefined;
+        if (this._liveState.pinNumberRequired) {
+            pin = await this.promptForCurrentPin("pinNumber.enterPinInfo");
+        }
+
+        return this.sendRequest({
+            kind: "approveTransfer",
+            spender,
+            ledger,
+            amount,
+            expiresIn,
+            pin,
+        })
+            .then((response) => {
+                if (response.kind === "approve_error" || response.kind === "internal_error") {
+                    this._logger.error("Unable to approve transfer", response.error);
+                } else if (
+                    response.kind === "pin_incorrect" ||
+                    response.kind === "pin_required" ||
+                    response.kind === "too_main_failed_pin_attempts"
+                ) {
+                    pinNumberFailureStore.set(response as PinNumberFailures);
+                }
+
+                return response;
+            })
+            .catch((error) => {
+                this._logger.error("Error calling approveTransfer", error);
+                return CommonResponses.internalError(error.toString());
+            });
     }
 
     async approveAccessGatePayment(

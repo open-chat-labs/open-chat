@@ -73,6 +73,49 @@ export function createUpdateTokenPayload(
     );
 }
 
+export function createRegisterExternalAchievementPayload(
+    id: number,
+    userId: string,
+    name: string,
+    url: string,
+    logo: string | undefined,
+    canisterId: string,
+    chitReward: number,
+    expiryTimestampMillis: bigint,
+    maxAwards: number,
+): Uint8Array {
+    return new Uint8Array(
+        IDL.encode(
+            [
+                IDL.Record({
+                    id: IDL.Nat32,
+                    submitted_by: IDL.Principal,
+                    name: IDL.Text,
+                    url: IDL.Text,
+                    logo: IDL.Opt(IDL.Text),
+                    canister_id: IDL.Principal,
+                    chit_reward: IDL.Nat32,
+                    expires: IDL.Nat64,
+                    max_awards: IDL.Nat32,
+                }),
+            ],
+            [
+                {
+                    id,
+                    submitted_by: Principal.fromText(userId),
+                    name,
+                    url,
+                    logo: optionalStringToCandid(logo),
+                    canisterId: Principal.fromText(canisterId),
+                    chit_reward: chitReward,
+                    expires: expiryTimestampMillis,
+                    max_awards: maxAwards,
+                },
+            ],
+        ),
+    );
+}
+
 function optionalStringToCandid(value: string | undefined): [string] | [] {
     return value !== undefined && value.length > 0 ? [value] : [];
 }

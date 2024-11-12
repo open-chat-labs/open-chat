@@ -71,7 +71,8 @@ export const CommonResponses = {
     noChange: (): NoChange => ({ kind: "no_change" }) as NoChange,
     communityNotPublic: (): CommunityNotPublic =>
         ({ kind: "community_not_public" }) as CommunityNotPublic,
-    internalError: (): InternalError => ({ kind: "internal_error" }) as InternalError,
+    internalError: (error?: string): InternalError =>
+        ({ kind: "internal_error", error }) as InternalError,
     invalid: (): Invalid => ({ kind: "invalid" }) as Invalid,
     targetUserNotInCommunity: (): TargetUserNotInCommunity =>
         ({ kind: "target_user_not_in_community" }) as TargetUserNotInCommunity,

@@ -1,6 +1,7 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import { mobileWidth } from "../../stores/screenDimensions";
+    import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
     import ModalContent from "../ModalContent.svelte";
     import { createEventDispatcher, getContext } from "svelte";
     import {
@@ -14,7 +15,7 @@
         currentUser as user,
         cryptoBalance as cryptoBalanceStore,
     } from "openchat-client";
-    import { isPrincipalValid, isSubAccountValid, isUrl } from "openchat-shared";
+    import { isPrincipalValid, isSubAccountValid, isUrl, random32 } from "openchat-shared";
     import { iconSize } from "../../stores/iconSize";
     import Button from "../Button.svelte";
     import Legend from "../Legend.svelte";
@@ -27,9 +28,15 @@
     import Markdown from "./Markdown.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import AccountInfo from "./AccountInfo.svelte";
-    import { createAddTokenPayload, createUpdateTokenPayload } from "../../utils/sns";
+    import {
+        createAddTokenPayload,
+        createRegisterExternalAchievementPayload,
+        createUpdateTokenPayload,
+    } from "../../utils/sns";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
+    import DurationPicker from "./DurationPicker.svelte";
+    import ErrorMessage from "../ErrorMessage.svelte";
 
     const MIN_TITLE_LENGTH = 3;
     const MAX_TITLE_LENGTH = 120;
@@ -37,6 +44,12 @@
     const MIN_SUMMARY_LENGTH = 3;
     const MAX_SUMMARY_LENGTH = 10000;
     const CANISTER_ID_LENGTH = 27;
+    const MIN_ACHIEVEMENT_NAME_LENGTH = 3;
+    const MAX_ACHIEVEMENT_NAME_LENGTH = 45;
+    const MIN_CHIT_REWARD = 5000;
+    const MIN_AWARDS = 200;
+    const CHAT_FEE_PER_CHIT_AWARD: bigint = 20_000n; // 1/5000th of a CHAT
+    const ONE_MONTH = 1000 * 60 * 60 * 24 * 7 * 4;
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -49,6 +62,10 @@
     let summary = "";
     let treasury: Treasury = "SNS";
     let amountText = "";
+    let achievementExpiry: bigint = BigInt(ONE_MONTH);
+    let achievementExpiryValid = true;
+    let chitRewardText = "5000";
+    let maxAwardsText = "200";
     let recipientOwner = "";
     let recipientSubaccount = "";
     let step = -1;
@@ -59,15 +76,20 @@
         | "motion"
         | "transfer_sns_funds"
         | "upgrade_sns_to_next_version"
+        | "register_external_acievement"
         | "add_token"
         | "update_token" = "motion";
-    let message: ResourceKey | undefined = undefined;
-    let error = true;
+    let error: string | undefined = undefined;
+    let fundingMessage: ResourceKey | undefined = undefined;
+    let fundingError = true;
     let summaryContainerHeight = 0;
     let summaryHeight = 0;
     let refreshingBalance = false;
     let balanceWithRefresh: BalanceWithRefresh;
+    let achivementName = "";
 
+    $: errorMessage =
+        error !== undefined ? i18nKey("proposal.maker." + error) : $pinNumberErrorMessageStore;
     $: tokenDetails = nervousSystem.token;
     $: ledger = tokenDetails.ledger;
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
@@ -76,7 +98,17 @@
     $: transferFee = tokenDetails.transferFee;
     $: proposalCost = nervousSystem.proposalRejectionFee;
     $: requiredFunds = proposalCost + transferFee + transferFee;
+    $: chitReward = Number(chitRewardText);
+    $: chitRewardValid = chitReward >= MIN_CHIT_REWARD;
+    $: achievementChatCost =
+        BigInt(chitReward * maxAwards) * CHAT_FEE_PER_CHIT_AWARD + tokenDetails.transferFee;
     $: insufficientFunds = cryptoBalance < requiredFunds;
+    $: insufficientFundsForAchievement =
+        cryptoBalance <
+        requiredFunds +
+            (selectedProposalType === "register_external_acievement" && step == 2
+                ? achievementChatCost
+                : BigInt(0));
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
     $: token = treasury === "SNS" ? symbol : "ICP";
@@ -85,16 +117,24 @@
     $: summaryValid = summary.length >= MIN_SUMMARY_LENGTH && summary.length <= MAX_SUMMARY_LENGTH;
     $: amount = Number(amountText) * Number(Math.pow(10, tokenDetails.decimals));
     $: amountValid = amount >= transferFee;
+    $: maxAwards = Number(maxAwardsText);
+    $: maxAwardsValid = maxAwards >= MIN_AWARDS;
     $: recipientOwnerValid = isPrincipalValid(recipientOwner);
     $: recipientSubaccountValid =
         recipientSubaccount.length === 0 || isSubAccountValid(recipientSubaccount);
+    $: achievementNameValid =
+        achivementName.length >= MIN_ACHIEVEMENT_NAME_LENGTH &&
+        achivementName.length <= MAX_ACHIEVEMENT_NAME_LENGTH;
     $: addOrUpdateTokenLedgerCanisterId = "";
     $: addOrUpdateTokenHowToBuyUrl = "";
     $: addOrUpdateTokenInfoUrl = "";
     $: addOrUpdateTokenTransactionUrlFormat = "";
-    $: addOrUpdateTokenLogo = "";
+    $: tokenLogo = "";
+    $: achievementUrl = "";
+    $: awardingAchievementCanisterId = "";
     $: valid =
         !insufficientFunds &&
+        !insufficientFundsForAchievement &&
         titleValid &&
         urlValid &&
         summaryValid &&
@@ -104,16 +144,25 @@
                 amountValid &&
                 recipientOwnerValid &&
                 recipientSubaccountValid) ||
+            (selectedProposalType === "register_external_acievement" &&
+                achievementNameValid &&
+                chitRewardValid &&
+                maxAwardsValid &&
+                achievementExpiryValid &&
+                isLogoValid(tokenLogo) &&
+                achievementUrl.length > 0 &&
+                awardingAchievementCanisterId.length > 0 &&
+                isPrincipalValid(awardingAchievementCanisterId)) ||
             (selectedProposalType === "add_token" &&
                 isPrincipalValid(addOrUpdateTokenLedgerCanisterId) &&
                 addOrUpdateTokenHowToBuyUrl.length > 0 &&
                 addOrUpdateTokenTransactionUrlFormat.length > 0 &&
-                isTokenLogoValid(addOrUpdateTokenLogo)) ||
+                isLogoValid(tokenLogo)) ||
             (selectedProposalType === "update_token" &&
                 isPrincipalValid(addOrUpdateTokenLedgerCanisterId) &&
                 (addOrUpdateTokenHowToBuyUrl.length > 0 ||
                     addOrUpdateTokenTransactionUrlFormat.length > 0 ||
-                    (addOrUpdateTokenLogo.length > 0 && isTokenLogoValid(addOrUpdateTokenLogo)))));
+                    (tokenLogo.length > 0 && isLogoValid(tokenLogo)))));
     $: canSubmit =
         step === 2 ||
         (step === 1 &&
@@ -122,7 +171,7 @@
 
     $: {
         if (tokenDetails !== undefined) {
-            message = defaultMessage();
+            fundingMessage = defaultMessage();
         }
     }
 
@@ -135,7 +184,7 @@
         dispatch("close");
     }
 
-    function onClickPrimary() {
+    async function onClickPrimary(): Promise<void> {
         if (step === 0) {
             balanceWithRefresh.refresh();
         } else if (canSubmit) {
@@ -145,10 +194,17 @@
         }
     }
 
-    function onSubmit() {
+    async function onSubmit(): Promise<void> {
         if (!valid) return;
 
         busy = true;
+
+        if (selectedProposalType === "register_external_acievement") {
+            if (!(await approveExternalAchievementPayment())) {
+                busy = false;
+                return;
+            }
+        }
 
         const action = convertAction();
 
@@ -161,11 +217,10 @@
             })
             .then((success) => {
                 busy = false;
-                error = !success;
                 if (success) {
                     dispatch("close");
                 } else {
-                    message = i18nKey("proposal.maker.unexpectedError");
+                    error = "unexpectedError";
                 }
             });
     }
@@ -198,7 +253,7 @@
                         addOrUpdateTokenInfoUrl,
                         addOrUpdateTokenHowToBuyUrl,
                         addOrUpdateTokenTransactionUrlFormat,
-                        addOrUpdateTokenLogo,
+                        tokenLogo,
                     ),
                 };
             }
@@ -213,11 +268,47 @@
                         addOrUpdateTokenInfoUrl,
                         addOrUpdateTokenHowToBuyUrl,
                         addOrUpdateTokenTransactionUrlFormat,
-                        addOrUpdateTokenLogo,
+                        tokenLogo,
+                    ),
+                };
+            }
+            case "register_external_acievement": {
+                return {
+                    kind: "execute_generic_nervous_system_function",
+                    functionId: BigInt(1012),
+                    payload: createRegisterExternalAchievementPayload(
+                        random32(),
+                        $user.userId,
+                        achivementName,
+                        achievementUrl,
+                        tokenLogo,
+                        awardingAchievementCanisterId,
+                        chitReward,
+                        BigInt(Date.now()) + achievementExpiry,
+                        maxAwards,
                     ),
                 };
             }
         }
+    }
+
+    async function approveExternalAchievementPayment(): Promise<boolean> {
+        return client
+            .approveTransfer(
+                process.env.USER_INDEX_CANISTER!,
+                tokenDetails.ledger,
+                achievementChatCost,
+                BigInt(Date.now() + 1000 * 60 * 60 * 24 * 5), // allow 5 days for proposal
+            )
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    return true;
+                } else if ($pinNumberErrorMessageStore === undefined) {
+                    error = "approvalError";
+                }
+
+                return false;
+            });
     }
 
     function onStartRefreshingBalance() {
@@ -229,19 +320,19 @@
             step = insufficientFunds ? 0 : 1;
             busy = false;
             if (!insufficientFunds) {
-                error = false;
+                fundingError = false;
             }
         } else if (step === 0 && !insufficientFunds) {
             step = 1;
-            error = false;
+            fundingError = false;
         }
 
         refreshingBalance = false;
     }
 
     function onRefreshingBalanceFailed() {
-        message = i18nKey("Failed to refresh balance");
-        error = true;
+        fundingMessage = i18nKey("Failed to refresh balance");
+        fundingError = true;
         refreshingBalance = false;
     }
 
@@ -256,7 +347,7 @@
 > Submitted by [@${$user.username}](https://oc.app/user/${$user.userId}) on [OpenChat](https://oc.app${groupPath})`;
     }
 
-    function isTokenLogoValid(logo: string): boolean {
+    function isLogoValid(logo: string): boolean {
         return logo.length === 0 || isUrl(logo);
     }
 </script>
@@ -292,6 +383,8 @@
                         <option value={"upgrade_sns_to_next_version"}
                             >Upgrade SNS to next version</option>
                         {#if symbol === "CHAT"}
+                            <option value={"register_external_acievement"}
+                                >Register external achievement</option>
                             <option value={"add_token"}>Add token</option>
                             <option value={"update_token"}>Update token</option>
                         {/if}
@@ -426,6 +519,96 @@
                                 })} />
                         </section>
                     </div>
+                {:else if selectedProposalType === "register_external_acievement"}
+                    <div>
+                        <section>
+                            <Legend label={i18nKey("proposal.maker.achievementName")} required />
+                            <Input
+                                autofocus
+                                disabled={busy}
+                                invalid={achivementName.length > 0 && !achievementNameValid}
+                                bind:value={achivementName}
+                                minlength={MIN_ACHIEVEMENT_NAME_LENGTH}
+                                maxlength={MAX_ACHIEVEMENT_NAME_LENGTH}
+                                countdown
+                                placeholder={i18nKey("proposal.maker.enterAchievementName")} />
+                        </section>
+                        <section>
+                            <Legend label={i18nKey("proposal.maker.achievementUrl")} required />
+                            <Input
+                                disabled={busy}
+                                minlength={1}
+                                maxlength={100}
+                                bind:value={achievementUrl}
+                                countdown
+                                placeholder={i18nKey("https://myapp.xyz/register")} />
+                        </section>
+                        <section>
+                            <Legend label={i18nKey("proposal.maker.achievementLogo")} />
+                            <Input
+                                disabled={busy}
+                                invalid={!isLogoValid(tokenLogo)}
+                                minlength={0}
+                                maxlength={50000}
+                                bind:value={tokenLogo}
+                                countdown
+                                placeholder={i18nKey("data:image/svg+xml;base64,PHN2ZyB3aW...")} />
+                        </section>
+                        <section>
+                            <Legend
+                                label={i18nKey("proposal.maker.awardingAchievementCanisterId")}
+                                rules={i18nKey("proposal.maker.awardingAchievementCanisterIdRules")}
+                                required />
+                            <Input
+                                autofocus
+                                disabled={busy}
+                                invalid={awardingAchievementCanisterId.length > 0 &&
+                                    !isPrincipalValid(awardingAchievementCanisterId)}
+                                bind:value={awardingAchievementCanisterId}
+                                minlength={CANISTER_ID_LENGTH}
+                                maxlength={CANISTER_ID_LENGTH}
+                                countdown
+                                placeholder={i18nKey("2ouva-viaaa-aaaaq-aaamq-cai")} />
+                        </section>
+                        <section>
+                            <Legend
+                                label={i18nKey("proposal.maker.chitReward")}
+                                rules={i18nKey("proposal.maker.chitRewardRules", {
+                                    value: MIN_CHIT_REWARD,
+                                })}
+                                required />
+                            <Input
+                                disabled={busy}
+                                invalid={chitRewardText.length > 0 && !chitRewardValid}
+                                minlength={4}
+                                maxlength={5}
+                                bind:value={chitRewardText}
+                                placeholder={i18nKey("proposal.maker.enterChitReward")} />
+                        </section>
+                        <section>
+                            <Legend
+                                label={i18nKey("proposal.maker.maxAwards")}
+                                rules={i18nKey("proposal.maker.maxAwardsRules", {
+                                    value: MIN_AWARDS,
+                                })}
+                                required />
+                            <Input
+                                disabled={busy}
+                                invalid={maxAwardsText.length > 0 && !maxAwardsValid}
+                                minlength={3}
+                                maxlength={8}
+                                bind:value={maxAwardsText}
+                                placeholder={i18nKey("proposal.maker.enterMaxAwards")} />
+                        </section>
+                        <section>
+                            <Legend label={i18nKey("proposal.maker.achievementExpiry")} required />
+
+                            <DurationPicker
+                                bind:valid={achievementExpiryValid}
+                                bind:milliseconds={achievementExpiry}
+                                unitFilter={(u) => !["minutes", "hours"].includes(u)} />
+                        </section>
+                    </div>
                 {:else if selectedProposalType === "add_token" || selectedProposalType === "update_token"}
                     <div>
                         <section>
@@ -483,10 +666,10 @@
                             <Legend label={i18nKey("proposal.maker.tokenLogo")} />
                             <Input
                                 disabled={busy}
-                                invalid={!isTokenLogoValid(addOrUpdateTokenLogo)}
+                                invalid={!isLogoValid(tokenLogo)}
                                 minlength={0}
                                 maxlength={50000}
-                                bind:value={addOrUpdateTokenLogo}
+                                bind:value={tokenLogo}
                                 countdown
                                 placeholder={i18nKey("data:image/svg+xml;base64,PHN2ZyB3aW...")} />
                         </section>
@@ -496,8 +679,24 @@
         </div>
     </div>
     <span class="footer" slot="footer">
-        {#if message !== undefined}
-            <p class="message" class:error><Translatable resourceKey={message} /></p>
+        {#if selectedProposalType === "register_external_acievement" && step === 2}
+            <p class="message" class:error={insufficientFundsForAchievement}>
+                <Translatable
+                    resourceKey={i18nKey("proposal.maker.achievementChatCost", {
+                        cost: client.formatTokens(achievementChatCost, 8),
+                        token: symbol,
+                    })} />
+            </p>
+        {/if}
+        {#if fundingMessage !== undefined}
+            <p class="message" class:error={fundingError}>
+                <Translatable resourceKey={fundingMessage} />
+            </p>
+        {/if}
+        {#if errorMessage !== undefined}
+            <div class="error">
+                <ErrorMessage><Translatable resourceKey={errorMessage} /></ErrorMessage>
+            </div>
         {/if}
         <div class="group-buttons">
             <div class="back">
