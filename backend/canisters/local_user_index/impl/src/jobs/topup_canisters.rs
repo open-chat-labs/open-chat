@@ -36,17 +36,47 @@ fn populate_canisters() {
     info!("Top up canisters job starting");
 }
 
+enum GetNextResult {
+    Success(UserId),
+    Continue,
+    Break,
+}
+
 fn run() {
-    if let Some(user_id) = mutate_state(next) {
-        ic_cdk::spawn(run_async(user_id));
-    } else if let Some(timer_id) = TIMER_ID.take() {
-        ic_cdk_timers::clear_timer(timer_id);
-        info!("Top up canisters job finished");
+    match mutate_state(next) {
+        GetNextResult::Success(user_id) => {
+            ic_cdk::spawn(run_async(user_id));
+        }
+        GetNextResult::Continue => {}
+        GetNextResult::Break => {
+            if let Some(timer_id) = TIMER_ID.take() {
+                ic_cdk_timers::clear_timer(timer_id);
+                info!("Top up canisters job finished");
+            }
+        }
     }
 }
 
-fn next(state: &mut RuntimeState) -> Option<UserId> {
-    state.data.cycles_balance_check_queue.pop_front()
+fn next(state: &mut RuntimeState) -> GetNextResult {
+    let mut count = 0;
+    let now = state.env.now();
+    while let Some(user_id) = state.data.cycles_balance_check_queue.pop_front() {
+        if let Some(user) = state.data.local_users.get(&user_id) {
+            let most_recent_top_up = user.cycle_top_ups.last().map(|c| c.date).unwrap_or_default();
+
+            // Only check the balance if the most recent top up was more than 10 days ago
+            if now.saturating_sub(most_recent_top_up) > 10 * DAY_IN_MS {
+                return GetNextResult::Success(user_id);
+            }
+        }
+
+        count += 1;
+        if count >= 1000 {
+            return GetNextResult::Continue;
+        }
+    }
+
+    GetNextResult::Break
 }
 
 async fn run_async(user_id: UserId) {
