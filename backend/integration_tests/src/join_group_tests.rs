@@ -1,8 +1,10 @@
 use crate::env::ENV;
+use crate::utils::now_millis;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
+use std::time::Duration;
 use testing::rng::random_string;
 use types::ChatId;
 
@@ -110,6 +112,41 @@ fn join_private_group_using_invite_code_succeeds() {
     let initial_state = client::user::happy_path::initial_state(env, &user2);
 
     assert!(initial_state.group_chats.summaries.iter().any(|c| c.chat_id == group_id));
+}
+
+#[test]
+fn join_leave_group_triggers_correct_updates() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData {
+        user1: _,
+        user2,
+        group_id,
+    } = init_test_data(env, canister_ids, *controller, true);
+
+    env.advance_time(Duration::from_secs(1));
+
+    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
+
+    env.tick();
+
+    let updates = client::user::happy_path::updates(env, &user2, now_millis(env) - 1);
+
+    assert!(updates.unwrap().group_chats.added.iter().any(|c| c.chat_id == group_id));
+
+    env.advance_time(Duration::from_secs(1));
+
+    client::user::happy_path::leave_group(env, &user2, group_id);
+
+    let updates = client::user::happy_path::updates(env, &user2, now_millis(env) - 1);
+
+    assert!(updates.unwrap().group_chats.removed.contains(&group_id));
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal, public: bool) -> TestData {
