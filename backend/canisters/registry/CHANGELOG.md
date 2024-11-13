@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add an error log with http endpoint ([#6608](https://github.com/open-chat-labs/open-chat/pull/6608))
+- Require a listing fee to add non-SNS tokens ([#6811](https://github.com/open-chat-labs/open-chat/pull/6811))
 
 ## [[2.0.1369](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1369-registry)] - 2024-10-04
 

@@ -385,7 +385,7 @@
                         {#if symbol === "CHAT"}
                             <option value={"register_external_acievement"}
                                 >Register external achievement</option>
-                            <option value={"add_token"}>Add token</option>
+                            <!-- <option value={"add_token"}>Add token</option> -->
                             <option value={"update_token"}>Update token</option>
                         {/if}
                     </Select>

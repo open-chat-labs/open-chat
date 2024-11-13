@@ -1,5 +1,5 @@
 use dataurl::DataUrl;
-use registry_canister::TokenDetails;
+use registry_canister::{Payment, TokenDetails};
 use serde::{Deserialize, Serialize};
 use sha256::sha256;
 use tracing::info;
@@ -25,6 +25,7 @@ impl Tokens {
         how_to_buy_url: String,
         transaction_url_format: String,
         supported_standards: Vec<String>,
+        payment: Option<Payment>,
         now: TimestampMillis,
     ) -> bool {
         if self.exists(ledger_canister_id) {
@@ -53,6 +54,7 @@ impl Tokens {
                 added: now,
                 enabled: true,
                 last_updated: now,
+                payments: if let Some(p) = payment { vec![p] } else { Vec::new() },
             });
             self.last_updated = now;
             true
@@ -153,6 +155,7 @@ pub struct TokenMetrics {
     added: TimestampMillis,
     enabled: bool,
     last_updated: TimestampMillis,
+    payments: Vec<Payment>,
 }
 
 impl From<&TokenDetails> for TokenMetrics {
@@ -172,6 +175,7 @@ impl From<&TokenDetails> for TokenMetrics {
             added: value.added,
             enabled: value.enabled,
             last_updated: value.last_updated,
+            payments: value.payments.clone(),
         }
     }
 }
