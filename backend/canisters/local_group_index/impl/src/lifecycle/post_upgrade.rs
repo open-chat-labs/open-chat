@@ -7,7 +7,6 @@ use ic_cdk::post_upgrade;
 use local_group_index_canister::post_upgrade::Args;
 use stable_memory::get_reader;
 use tracing::info;
-use types::CanisterId;
 use utils::cycles::init_cycles_dispenser_client;
 
 #[post_upgrade]
@@ -16,11 +15,8 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
-    let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
+    let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
-
-    data.canisters_pending_events_migration_to_stable_memory =
-        data.local_groups.iter().map(|(g, _)| CanisterId::from(*g)).collect();
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
