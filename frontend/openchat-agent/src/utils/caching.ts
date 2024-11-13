@@ -783,7 +783,7 @@ function rebuildBlobUrls(content: MessageContent): MessageContent {
 
 export async function loadFailedMessages(
     db: Database,
-): Promise<MessageContextMap<Record<number, EventWrapper<Message>>>> {
+): Promise<MessageContextMap<Record<string, EventWrapper<Message>>>> {
     const chatMessages = await (await db).getAll("failed_chat_messages");
     const threadMessages = await (await db).getAll("failed_thread_messages");
     return [...chatMessages, ...threadMessages].reduce((res, ev) => {
@@ -795,10 +795,10 @@ export async function loadFailedMessages(
         };
         const val = res.get(context) ?? {};
         ev.event.content = rebuildBlobUrls(ev.event.content);
-        val[Number(ev.event.messageId)] = ev;
+        val[ev.event.messageId.toString()] = ev;
         res.set(context, val);
         return res;
-    }, new MessageContextMap<Record<number, EventWrapper<Message>>>());
+    }, new MessageContextMap<Record<string, EventWrapper<Message>>>());
 }
 
 export async function setCachedEvents(

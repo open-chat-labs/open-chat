@@ -2023,7 +2023,7 @@ export type WorkerResult<T> = T extends Init
     : T extends TopUpNeuronForSubmittingProposals
     ? TopUpNeuronResponse
     : T extends LoadFailedMessages
-    ? Map< string, Record< number, EventWrapper<Message>>>
+    ? Map< string, Record< string, EventWrapper<Message>>>
     : T extends DeleteFailedMessage
     ? void
     : T extends ClaimPrize
