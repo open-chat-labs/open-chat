@@ -7,7 +7,7 @@ use std::cell::Cell;
 use std::collections::VecDeque;
 use std::time::Duration;
 use tracing::{error, info};
-use types::{CanisterId, Milliseconds};
+use types::{CanisterId, ChatId, CommunityId, Milliseconds};
 use utils::canister_timers::run_now_then_interval;
 use utils::time::DAY_IN_MS;
 
@@ -43,17 +43,51 @@ fn populate_canisters() {
     info!("Top up canisters job starting");
 }
 
+enum GetNextResult {
+    Success(CanisterId),
+    Continue,
+    Break,
+}
+
 fn run() {
-    if let Some(canister_id) = mutate_state(next) {
-        ic_cdk::spawn(run_async(canister_id));
-    } else if let Some(timer_id) = TIMER_ID.take() {
-        ic_cdk_timers::clear_timer(timer_id);
-        info!("Top up canisters job finished");
+    match mutate_state(next) {
+        GetNextResult::Success(canister_id) => {
+            ic_cdk::spawn(run_async(canister_id));
+        }
+        GetNextResult::Continue => {}
+        GetNextResult::Break => {
+            if let Some(timer_id) = TIMER_ID.take() {
+                ic_cdk_timers::clear_timer(timer_id);
+                info!("Top up canisters job finished");
+            }
+        }
     }
 }
 
-fn next(state: &mut RuntimeState) -> Option<CanisterId> {
-    state.data.cycles_balance_check_queue.pop_front()
+fn next(state: &mut RuntimeState) -> GetNextResult {
+    let mut count = 0;
+    let now = state.env.now();
+    while let Some(canister_id) = state.data.cycles_balance_check_queue.pop_front() {
+        let most_recent_top_up = if let Some(group) = state.data.local_groups.get(&ChatId::from(canister_id)) {
+            group.cycle_top_ups.last().map(|c| c.date).unwrap_or_default()
+        } else if let Some(community) = state.data.local_communities.get(&CommunityId::from(canister_id)) {
+            community.cycle_top_ups.last().map(|c| c.date).unwrap_or_default()
+        } else {
+            now
+        };
+
+        // Only check the balance if the most recent top up was more than 10 days ago
+        if now.saturating_sub(most_recent_top_up) > 10 * DAY_IN_MS {
+            return GetNextResult::Success(canister_id);
+        }
+
+        count += 1;
+        if count >= 1000 {
+            return GetNextResult::Continue;
+        }
+    }
+
+    GetNextResult::Break
 }
 
 async fn run_async(canister_id: CanisterId) {
