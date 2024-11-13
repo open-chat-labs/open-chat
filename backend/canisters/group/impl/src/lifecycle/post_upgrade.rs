@@ -23,11 +23,6 @@ fn post_upgrade(args: Args) {
     // Only proceed with removing events from the heap if the stable memory migration is complete
     assert!(data.stable_memory_event_migration_complete);
 
-    // Set the migration flag to false if threads need to be updated, but this can be done purely
-    // in stable memory so no need to abort the upgrade
-    if data.chat.events.thread_messages_to_update_in_stable_memory_len() > 0 {
-        data.stable_memory_event_migration_complete = false;
-    }
     data.chat.events.init_maps();
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
