@@ -104,9 +104,7 @@
     $: landingPageRoute = isLandingPageRoute($pathParams);
     $: homeRoute = $pathParams.kind === "home_route";
     $: showLandingPage =
-        landingPageRoute ||
-        (homeRoute && $identityState.kind === "anon" && $anonUser) || // show landing page if the anon user hits "/"
-        (($identityState.kind === "anon" || $identityState.kind === "logging_in") && $framed); // show landing page if anon and running in a frame
+        landingPageRoute || (homeRoute && $identityState.kind === "anon" && $anonUser);
 
     onMount(() => {
         redirectLandingPageLinksIfNecessary();
