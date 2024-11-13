@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1447](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1447-local_user_index)] - 2024-11-13
+
 ### Changed
 
 - Skip check for canisters that have been topped up in the last 10 days ([#6802](https://github.com/open-chat-labs/open-chat/pull/6802))

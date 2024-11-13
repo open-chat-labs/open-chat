@@ -1,10 +1,10 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
 use crate::Data;
+use bot_api_gateway_canister::post_upgrade::Args;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
-use local_group_index_canister::post_upgrade::Args;
 use stable_memory::get_reader;
 use tracing::info;
 use utils::cycles::init_cycles_dispenser_client;
