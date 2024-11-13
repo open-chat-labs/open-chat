@@ -907,6 +907,53 @@ dependencies = [
 ]
 
 [[package]]
+name = "bot_api_gateway_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "bot_api_gateway_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "bot_api_gateway_canister",
+ "candid",
+ "canister_client",
+ "ic-cdk 0.16.0",
+ "tracing",
+ "types",
+]
+
+[[package]]
+name = "bot_api_gateway_canister_impl"
+version = "0.1.0"
+dependencies = [
+ "bot_api_gateway_canister",
+ "candid",
+ "canister_api_macros",
+ "canister_logger",
+ "canister_state_macros",
+ "canister_tracing_macros",
+ "event_store_producer",
+ "event_store_producer_cdk_runtime",
+ "http_request",
+ "ic-cdk 0.16.0",
+ "ic-cdk-timers",
+ "ic-stable-structures",
+ "msgpack",
+ "rand 0.8.5",
+ "serde",
+ "stable_memory",
+ "tracing",
+ "types",
+ "utils 0.1.0",
+]
+
+[[package]]
 name = "bot_c2c_client"
 version = "0.1.0"
 dependencies = [
