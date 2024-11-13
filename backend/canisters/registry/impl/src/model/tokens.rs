@@ -54,7 +54,7 @@ impl Tokens {
                 added: now,
                 enabled: true,
                 last_updated: now,
-                payments: if let Some(p) = payment { vec![p] } else { Vec::new() },
+                payments: payment.into_iter().collect(),
             });
             self.last_updated = now;
             true

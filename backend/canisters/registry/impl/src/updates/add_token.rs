@@ -18,7 +18,7 @@ const TOKEN_LISTING_FEE_E8S: u128 = 50_000_000_000; // 500 CHAT
 async fn add_token(args: Args) -> Response {
     add_token_impl(
         args.ledger_canister_id,
-        args.submitted_by,
+        Some(args.submitted_by),
         None,
         Some(args.info_url),
         Some(args.how_to_buy_url),

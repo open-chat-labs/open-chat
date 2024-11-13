@@ -31,6 +31,12 @@ type TokenDetails = record {
     added : TimestampMillis;
     enabled : bool;
     last_updated : TimestampMillis;
+    payments: vec record {
+        amount : nat;
+        block_index : nat64;
+        timestamp : TimestampMillis;
+        user_id : UserId;
+    };
 };
 
 type NervousSystemSummary = record {

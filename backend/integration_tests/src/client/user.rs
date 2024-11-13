@@ -12,6 +12,7 @@ generate_query_call!(updates);
 
 // Updates
 generate_update_call!(accept_p2p_swap);
+generate_update_call!(approve_transfer);
 generate_update_call!(add_reaction);
 generate_update_call!(block_user);
 generate_update_call!(cancel_message_reminder);
@@ -502,5 +503,11 @@ pub mod happy_path {
             accept_offer_response,
             user_canister::accept_p2p_swap::Response::Success(_)
         ));
+    }
+
+    pub fn approve_transfer(env: &mut PocketIc, user: &User, args: &user_canister::approve_transfer::Args) {
+        let response = super::approve_transfer(env, user.principal, user.canister(), args);
+
+        assert!(matches!(response, user_canister::approve_transfer::Response::Success));
     }
 }
