@@ -18,13 +18,12 @@ const TOKEN_LISTING_FEE_E8S: u128 = 50_000_000_000; // 500 CHAT
 async fn add_token(args: Args) -> Response {
     add_token_impl(
         args.ledger_canister_id,
-        Some(args.submitted_by),
+        args.payer,
         None,
         Some(args.info_url),
         Some(args.how_to_buy_url),
         Some(args.transaction_url_format),
         args.logo,
-        true,
     )
     .await
 }
@@ -38,7 +37,6 @@ pub(crate) async fn add_sns_token(nervous_system: NervousSystemDetails) {
         None,
         None,
         None,
-        false,
     )
     .await;
 }
@@ -46,13 +44,12 @@ pub(crate) async fn add_sns_token(nervous_system: NervousSystemDetails) {
 #[allow(clippy::too_many_arguments)]
 async fn add_token_impl(
     ledger_canister_id: CanisterId,
-    submitted_by: Option<UserId>,
+    payer: Option<UserId>,
     nervous_system: Option<NervousSystemDetails>,
     info_url: Option<String>,
     how_to_buy_url: Option<String>,
     transaction_url_format: Option<String>,
     logo: Option<String>,
-    requires_payment: bool,
 ) -> Response {
     let metadata = match icrc_ledger_canister_c2c_client::icrc1_metadata(ledger_canister_id).await {
         Ok(r) => r,
@@ -108,38 +105,34 @@ async fn add_token_impl(
         return AlreadyAdded;
     }
 
-    // BURN the listing fee from given user if required
+    // Transfer the listing fee from the payer to the BURN address
     let mut payment: Option<Payment> = None;
-    if requires_payment && !test_mode {
-        if let Some(user_id) = submitted_by {
-            let amount = TOKEN_LISTING_FEE_E8S;
-            let from: Principal = user_id.into();
-            let transfer_args = TransferFromArgs {
-                spender_subaccount: None,
-                from: from.into(),
-                to: SNS_GOVERNANCE_CANISTER_ID.into(),
-                amount: amount.into(),
-                fee: Cryptocurrency::CHAT.fee().map(|fee| fee.into()),
-                memo: Some(MEMO_LIST_TOKEN.to_vec().into()),
-                created_at_time: Some(now_nanos),
-            };
+    if let Some(user_id) = payer {
+        let amount = if test_mode { 100_000_000 } else { TOKEN_LISTING_FEE_E8S };
+        let from: Principal = user_id.into();
+        let transfer_args = TransferFromArgs {
+            spender_subaccount: None,
+            from: from.into(),
+            to: SNS_GOVERNANCE_CANISTER_ID.into(),
+            amount: amount.into(),
+            fee: Cryptocurrency::CHAT.fee().map(|fee| fee.into()),
+            memo: Some(MEMO_LIST_TOKEN.to_vec().into()),
+            created_at_time: Some(now_nanos),
+        };
 
-            match icrc2_transfer_from(Cryptocurrency::CHAT.ledger_canister_id().unwrap(), &transfer_args).await {
-                Ok(block_index) => {
-                    payment = Some(Payment {
-                        amount,
-                        block_index,
-                        timestamp: now_nanos / 1000,
-                        user_id,
-                    });
-                }
-                Err(message) => {
-                    error!(%user_id, ?message, "Error transferring listing fee");
-                    return PaymentFailed("message".to_string());
-                }
+        match icrc2_transfer_from(Cryptocurrency::CHAT.ledger_canister_id().unwrap(), &transfer_args).await {
+            Ok(block_index) => {
+                payment = Some(Payment {
+                    amount,
+                    block_index,
+                    timestamp: now_nanos / 1000,
+                    user_id,
+                });
             }
-        } else {
-            return InvalidRequest("Request missing `submitted_by` required to pay for token listing".to_string());
+            Err(message) => {
+                error!(%user_id, ?message, "Error transferring listing fee");
+                return PaymentFailed("message".to_string());
+            }
         }
     }
 

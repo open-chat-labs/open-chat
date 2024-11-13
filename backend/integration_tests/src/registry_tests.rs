@@ -35,7 +35,7 @@ fn add_token_succeeds() {
         canister_ids.registry,
         &registry_canister::add_token::Args {
             ledger_canister_id: test_data.ledger_canister_id,
-            submitted_by: test_data.user.user_id,
+            payer: Some(test_data.user.user_id),
             token_standard: TokenStandard::ICRC1,
             info_url: info_url.clone(),
             how_to_buy_url: how_to_buy_url.clone(),
@@ -115,7 +115,7 @@ fn update_token_succeeds() {
         canister_ids.registry,
         &registry_canister::add_token::Args {
             ledger_canister_id: test_data.ledger_canister_id,
-            submitted_by: test_data.user.user_id,
+            payer: Some(test_data.user.user_id),
             token_standard: TokenStandard::ICRC1,
             info_url: info_url.clone(),
             how_to_buy_url: how_to_buy_url.clone(),
@@ -188,9 +188,9 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
 
     env.advance_time(Duration::from_secs(1));
 
-    // Register user and give them enough CHAT for the token listing fee
+    // Register user and give them enough CHAT for the token listing fee (1 CHAT in test)
     let user = client::register_user(env, canister_ids);
-    ledger::happy_path::transfer(env, controller, canister_ids.chat_ledger, user.user_id, 51_000_000_000);
+    ledger::happy_path::transfer(env, controller, canister_ids.chat_ledger, user.user_id, 110_000_000);
 
     // Approve the token listing fee payment (BURN)
     client::user::happy_path::approve_transfer(
@@ -199,7 +199,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
         &user_canister::approve_transfer::Args {
             spender: SNS_GOVERNANCE_CANISTER_ID.into(), // CHAT BURN address
             ledger_canister_id: Cryptocurrency::CHAT.ledger_canister_id().unwrap(),
-            amount: 50_000_000_000,
+            amount: 100_000_000,
             expires_in: None,
             pin: None,
         },

@@ -7,7 +7,7 @@ use types::{CanisterId, UserId};
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub ledger_canister_id: CanisterId,
-    pub submitted_by: UserId,
+    pub payer: Option<UserId>,
     pub token_standard: TokenStandard,
     pub info_url: String,
     pub how_to_buy_url: String,
@@ -27,7 +27,7 @@ pub enum Response {
 #[derive(Serialize)]
 pub struct HumanReadableArgs {
     ledger_canister_id: HumanReadablePrincipal,
-    submitted_by: String,
+    payer: Option<String>,
     token_standard: String,
     info_url: String,
     how_to_buy_url: String,
@@ -41,7 +41,7 @@ impl ToHumanReadable for Args {
     fn to_human_readable(&self) -> Self::Target {
         HumanReadableArgs {
             ledger_canister_id: self.ledger_canister_id.into(),
-            submitted_by: self.submitted_by.to_string(),
+            payer: self.payer.map(|user_id| user_id.to_string()),
             token_standard: self.token_standard.to_string(),
             info_url: self.info_url.clone(),
             how_to_buy_url: self.how_to_buy_url.clone(),
