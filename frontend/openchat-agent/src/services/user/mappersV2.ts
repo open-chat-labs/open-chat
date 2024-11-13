@@ -962,7 +962,7 @@ export function groupChatsUpdates(value: UserUpdatesGroupChatsUpdates): GroupCha
             p.map((p) => ({ kind: "group_chat", groupId: principalBytesToString(p) })),
         ),
         updated: value.updated.map(userCanisterGroupSummaryUpdates),
-        removed: value.removed.map((c) => c.toString()),
+        removed: value.removed.map(principalBytesToString),
     };
 }
 
