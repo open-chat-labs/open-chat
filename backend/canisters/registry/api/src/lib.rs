@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
-use types::{CanisterId, Milliseconds, TimestampMillis};
+use types::{CanisterId, Milliseconds, TimestampMillis, UserId};
 
 mod lifecycle;
 mod queries;
@@ -32,6 +32,16 @@ pub struct TokenDetails {
     pub added: TimestampMillis,
     pub enabled: bool,
     pub last_updated: TimestampMillis,
+    pub payments: Vec<Payment>,
+}
+
+#[ts_export(registry)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct Payment {
+    pub amount: u128,
+    pub block_index: u64,
+    pub timestamp: TimestampMillis,
+    pub user_id: UserId,
 }
 
 impl TokenDetails {
