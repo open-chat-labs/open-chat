@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add job to check cycles balances of child canisters every week ([#6796](https://github.com/open-chat-labs/open-chat/pull/6796))
 
+### Changed
+
+- Skip check for canisters that have been topped up in the last 10 days ([#6802](https://github.com/open-chat-labs/open-chat/pull/6802))
+
 ## [[2.0.1442](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1442-local_group_index)] - 2024-11-12
 
 ### Changed

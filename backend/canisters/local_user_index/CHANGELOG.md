@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Skip check for canisters that have been topped up in the last 10 days ([#6802](https://github.com/open-chat-labs/open-chat/pull/6802))
+
 ### Fixed
 
 - Fix calculation to determine if a canister needs a cycles top up ([#6799](https://github.com/open-chat-labs/open-chat/pull/6799))
