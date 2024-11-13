@@ -466,7 +466,7 @@ export function communityDetailsResponse(
             rules: value.Success.chat_rules,
             lastUpdated: value.Success.timestamp,
             userGroups: new Map(value.Success.user_groups.map(userGroupDetails)),
-            referrals: new Set(value.Success.referrals.map((u) => u.toString())),
+            referrals: new Set(value.Success.referrals.map(principalBytesToString)),
         };
     } else {
         console.warn("CommunityDetails failed with", value);
