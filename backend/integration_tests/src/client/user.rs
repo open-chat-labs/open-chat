@@ -508,6 +508,9 @@ pub mod happy_path {
     pub fn approve_transfer(env: &mut PocketIc, user: &User, args: &user_canister::approve_transfer::Args) {
         let response = super::approve_transfer(env, user.principal, user.canister(), args);
 
-        assert!(matches!(response, user_canister::approve_transfer::Response::Success));
+        match response {
+            user_canister::approve_transfer::Response::Success => (),
+            response => panic!("'approve_transfer' error: {response:?}"),
+        };
     }
 }

@@ -131,7 +131,7 @@ async fn add_token_impl(
             }
             Err(message) => {
                 error!(%user_id, ?message, "Error transferring listing fee");
-                return PaymentFailed("message".to_string());
+                return PaymentFailed(message.to_string());
             }
         }
     }

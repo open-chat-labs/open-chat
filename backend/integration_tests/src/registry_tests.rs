@@ -10,7 +10,6 @@ use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_principal, random_string};
 use types::{CanisterId, Cryptocurrency};
-use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 
 #[test]
 fn add_token_succeeds() {
@@ -44,7 +43,10 @@ fn add_token_succeeds() {
         },
     );
 
-    assert!(matches!(add_token_response, registry_canister::add_token::Response::Success));
+    match add_token_response {
+        registry_canister::add_token::Response::Success => (),
+        response => panic!("'add_token' error: {response:?}"),
+    };
 
     env.tick();
 
@@ -197,9 +199,9 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
         env,
         &user,
         &user_canister::approve_transfer::Args {
-            spender: SNS_GOVERNANCE_CANISTER_ID.into(), // CHAT BURN address
+            spender: canister_ids.registry.into(),
             ledger_canister_id: Cryptocurrency::CHAT.ledger_canister_id().unwrap(),
-            amount: 100_000_000,
+            amount: 100_000_000 + Cryptocurrency::CHAT.fee().unwrap(),
             expires_in: None,
             pin: None,
         },
