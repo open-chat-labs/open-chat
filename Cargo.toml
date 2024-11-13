@@ -220,7 +220,7 @@ lazy_static = "1.4.0"
 num-traits = "0.2.19"
 openssl = "0.10.66"
 p256 = { version = "0.13.2" }
-pocket-ic = "5.0.0"
+pocket-ic = { git = "https://github.com/dfinity/ic", rev = "bcbccf79c89a3e81b1a38d8233f8f81d1af1b245" }
 proc-macro2 = "1.0.83"
 pulldown-cmark = { version = "0.12.0", default-features = false, features = [
     "html",
