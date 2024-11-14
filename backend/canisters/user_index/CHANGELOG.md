@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Fix the ext achievement proposal validation fn ([#6816](https://github.com/open-chat-labs/open-chat/pull/6816))
+
+## [[2.0.1446](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1446-user_index)] - 2024-11-12
+
 ### Changed
 
 - Take payment before registering ext achievement ([#6720](https://github.com/open-chat-labs/open-chat/pull/6720))

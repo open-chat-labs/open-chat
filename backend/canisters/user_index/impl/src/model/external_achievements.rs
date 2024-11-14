@@ -21,9 +21,7 @@ pub struct ExternalAchievementInternal {
     pub remaining_chit_budget: u32,
     pub budget_exhausted: Option<TimestampMillis>,
     pub awarded: HashSet<UserId>,
-    #[serde(default)]
     pub submitted_by: Option<UserId>,
-    #[serde(default)]
     pub payment_block_index: Option<u64>,
 }
 
