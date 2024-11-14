@@ -1094,11 +1094,12 @@
         "groupIndexAction": "グループ インデックス アクション",
         "makeProposal": "提案する",
         "maker": {
-            "achievementChatCost": "要求された CHIT をプロビジョニングするには、{cost} {token} トークンの支払いが必要です。未使用の CHAT は、実績の有効期限が切れると返金されます。",
+            "achievementChatCost": "要求された CHIT をプロビジョニングするには、{cost} {chat} トークンの支払いが必要です。未使用の CHAT は、実績の有効期限が切れると返金されます。",
             "achievementExpiry": "有効期限",
             "achievementLogo": "達成ロゴ",
             "achievementName": "実績名",
             "achievementUrl": "実績URL",
+            "addTokenChatCost": "OpenChatに新しいトークンを掲載するには、{cost} {chat}トークンの支払いが必要です。",
             "amount": "額",
             "amountRules": "少なくとも 1 つの {token} トークン",
             "approvalError": "CHAT 転送の承認に失敗しました",
