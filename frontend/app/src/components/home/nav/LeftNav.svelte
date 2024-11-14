@@ -48,6 +48,7 @@
         communityChannelVideoCallCounts,
         anonUser,
         globalStateStore as globalState,
+        favouritesStore,
     } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
@@ -214,7 +215,7 @@
                 <ForumOutline size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
-        {#if $globalState.favourites.size > 0}
+        {#if $favouritesStore.size > 0}
             <LeftNavItem
                 selected={$chatListScope.kind === "favourite" && !communityExplorer}
                 disabled={$anonUser}
