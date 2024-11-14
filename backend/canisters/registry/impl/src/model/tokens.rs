@@ -99,6 +99,7 @@ impl Tokens {
             if token.supported_standards != supported_standards {
                 token.supported_standards = supported_standards;
                 token.last_updated = now;
+                self.last_updated = now;
             }
         }
     }
