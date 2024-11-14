@@ -1,7 +1,7 @@
 use crate::model::token_swaps::TokenSwap;
 use crate::updates::end_video_call::end_video_call_impl;
 use crate::updates::swap_tokens::process_token_swap;
-use crate::{mutate_state, openchat_bot, read_state};
+use crate::{can_borrow_state, mutate_state, openchat_bot, read_state, run_regular_jobs};
 use canister_timer_jobs::Job;
 use chat_events::{MessageContentInternal, MessageReminderContentInternal};
 use serde::{Deserialize, Serialize};
@@ -120,6 +120,10 @@ pub struct MarkVideoCallEndedJob(pub user_canister::end_video_call::Args);
 
 impl Job for TimerJob {
     fn execute(self) {
+        if can_borrow_state() {
+            run_regular_jobs();
+        }
+
         match self {
             TimerJob::RetrySendingFailedMessages(job) => job.execute(),
             TimerJob::HardDeleteMessageContent(job) => job.execute(),

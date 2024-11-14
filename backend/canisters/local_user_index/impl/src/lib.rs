@@ -316,6 +316,7 @@ struct Data {
     pub ic_root_key: Vec<u8>,
     pub events_for_remote_users: Vec<(UserId, UserEvent)>,
     pub canisters_pending_events_migration_to_stable_memory: Vec<CanisterId>,
+    #[serde(skip_deserializing)]
     pub cycles_balance_check_queue: VecDeque<UserId>,
 }
 

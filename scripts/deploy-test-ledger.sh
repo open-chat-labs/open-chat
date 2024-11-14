@@ -27,6 +27,7 @@ LEDGER_CANISTER_ID=$(dfx canister id test_ledger)
 
 dfx --identity $IDENTITY canister call registry add_token "(record {
     ledger_canister_id = principal \"$LEDGER_CANISTER_ID\";
+    payer = null;
     token_standard = variant { icrc1 };
     info_url = \"https://dashboard.internetcomputer.org/sns/3e3x2-xyaaa-aaaaq-aaalq-cai\";
     how_to_buy_url = \"https://dashboard.internetcomputer.org/sns/3e3x2-xyaaa-aaaaq-aaalq-cai\";

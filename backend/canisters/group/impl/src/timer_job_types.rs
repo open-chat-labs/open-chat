@@ -1,5 +1,7 @@
 use crate::updates::end_video_call::end_video_call_impl;
-use crate::{activity_notifications::handle_activity_notification, mutate_state, read_state};
+use crate::{
+    activity_notifications::handle_activity_notification, can_borrow_state, mutate_state, read_state, run_regular_jobs,
+};
 use canister_timer_jobs::Job;
 use chat_events::MessageContentInternal;
 use ledger_utils::process_transaction;
@@ -110,6 +112,10 @@ pub struct MarkVideoCallEndedJob(pub group_canister::end_video_call::Args);
 
 impl Job for TimerJob {
     fn execute(self) {
+        if can_borrow_state() {
+            run_regular_jobs();
+        }
+
         match self {
             TimerJob::HardDeleteMessageContent(job) => job.execute(),
             TimerJob::DeleteFileReferences(job) => job.execute(),

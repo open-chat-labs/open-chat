@@ -44,13 +44,7 @@ import { setsAreEqual } from "../utils/set";
 import { failedMessagesStore } from "./failedMessages";
 import { proposalTallies } from "./proposalTallies";
 import type { OpenChat } from "../openchat";
-import {
-    allServerChats,
-    chatListScopeStore,
-    getAllServerChats,
-    globalStateStore,
-    pinnedChatsStore,
-} from "./global";
+import { allServerChats, chatListScopeStore, getAllServerChats, globalStateStore } from "./global";
 import { createDerivedPropStore } from "./derived";
 import { messagesRead } from "./markRead";
 import { safeWritable } from "./safeWritable";
@@ -194,9 +188,55 @@ const currentChatBlockedOrSuspendedUsers = derived(
     },
 );
 
+export const favouritesStore = derived(
+    [globalStateStore, localChatSummaryUpdates],
+    ([$global, $localUpdates]) => {
+        const mergedFavs = $global.favourites.clone();
+        $localUpdates.entries().forEach(([key, val]) => {
+            if (val.favourited && !val.unfavourited) {
+                mergedFavs.add(key);
+            }
+            if (!val.favourited && val.unfavourited) {
+                mergedFavs.delete(key);
+            }
+        });
+        return mergedFavs;
+    },
+);
+
+export const pinnedChatsStore = derived(
+    [globalStateStore, localChatSummaryUpdates],
+    ([$global, $localUpdates]) => {
+        const mergedPinned = new Map($global.pinnedChats);
+
+        $localUpdates.forEach((val, key) => {
+            if (val.pinned !== undefined) {
+                val.pinned.forEach((scope) => {
+                    const ids = mergedPinned.get(scope) ?? [];
+                    if (!ids.find((id) => chatIdentifiersEqual(id, key))) {
+                        ids.unshift(key);
+                    }
+                    mergedPinned.set(scope, ids);
+                });
+            }
+            if (val.unpinned !== undefined) {
+                val.unpinned.forEach((scope) => {
+                    const ids = mergedPinned.get(scope) ?? [];
+                    mergedPinned.set(
+                        scope,
+                        ids.filter((id) => !chatIdentifiersEqual(id, key)),
+                    );
+                });
+            }
+        });
+
+        return mergedPinned;
+    },
+);
+
 export const myServerChatSummariesStore = derived(
-    [globalStateStore, chatListScopeStore],
-    ([$allState, $scope]) => {
+    [globalStateStore, chatListScopeStore, favouritesStore],
+    ([$allState, $scope, $favourites]) => {
         const allChats = getAllServerChats($allState);
         if ($scope.kind === "community") {
             const community = $allState.communities.get($scope.id);
@@ -206,7 +246,7 @@ export const myServerChatSummariesStore = derived(
         } else if ($scope.kind === "direct_chat") {
             return $allState.directChats;
         } else if ($scope.kind === "favourite") {
-            return $allState.favourites.values().reduce((favs, chatId) => {
+            return $favourites.values().reduce((favs, chatId) => {
                 const chat = allChats.get(chatId);
                 if (chat !== undefined) {
                     favs.set(chat.id, chat);
@@ -338,7 +378,7 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
 // This is annoying. If only the pinnedChatIndex was stored in the chatSummary...
 export const chatSummariesListStore = derived([chatSummariesStore], ([summaries]) => {
     const pinnedChats = get(pinnedChatsStore);
-    const pinnedByScope = pinnedChats[currentScope.kind];
+    const pinnedByScope = pinnedChats.get(currentScope.kind) ?? [];
     const pinned = pinnedByScope.reduce<ChatSummary[]>((result, id) => {
         const summary = summaries.get(id);
         if (summary !== undefined) {

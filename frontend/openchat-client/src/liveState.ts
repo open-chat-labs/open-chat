@@ -48,6 +48,7 @@ import {
     allChats,
     currentChatMembers,
     currentChatRules,
+    pinnedChatsStore,
 } from "./stores/chat";
 import { remainingStorage } from "./stores/storage";
 import { userCreatedStore } from "./stores/userCreated";
@@ -67,6 +68,7 @@ import {
     chatListScopeStore,
     globalStateStore,
     chitStateStore,
+    type PinnedByScope,
 } from "./stores/global";
 import { offlineStore } from "./stores/network";
 import { type DraftMessages, draftMessagesStore } from "./stores/draftMessages";
@@ -116,6 +118,7 @@ export class LiveState {
     communities!: CommunityMap<CommunitySummary>;
     chatListScope!: ChatListScope;
     globalState!: GlobalState;
+    pinnedChats!: PinnedByScope;
     allChats!: ChatMap<ChatSummary>;
     selectedCommunity!: CommunitySummary | undefined;
     currentCommunityMembers!: Map<string, Member>;
@@ -179,6 +182,7 @@ export class LiveState {
         communities.subscribe((data) => (this.communities = data));
         chatListScopeStore.subscribe((scope) => (this.chatListScope = scope));
         globalStateStore.subscribe((data) => (this.globalState = data));
+        pinnedChatsStore.subscribe((data) => (this.pinnedChats = data));
         allChats.subscribe((data) => (this.allChats = data));
         selectedCommunity.subscribe((data) => (this.selectedCommunity = data));
         currentCommunityMembers.subscribe((data) => (this.currentCommunityMembers = data));
