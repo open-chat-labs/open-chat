@@ -1133,74 +1133,48 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    private pinLocally(chatId: ChatIdentifier, scope: ChatListScope["kind"]): void {
-        localChatSummaryUpdates.pin(chatId, scope);
-        // globalStateStore.update((state) => {
-        //     const ids = state.pinnedChats[scope];
-        //     if (!ids.find((id) => chatIdentifiersEqual(id, chat.id))) {
-        //         return {
-        //             ...state,
-        //             pinnedChats: {
-        //                 ...state.pinnedChats,
-        //                 [scope]: [chat.id, ...ids],
-        //             },
-        //         };
-        //     }
-        //     return state;
-        // });
-    }
-
-    private unpinLocally(chatId: ChatIdentifier, scope: ChatListScope["kind"]): void {
-        localChatSummaryUpdates.unpin(chatId, scope);
-        //     globalStateStore.update((state) => {
-        //         const ids = state.pinnedChats[scope];
-        //         const index = ids.findIndex((id) => chatIdentifiersEqual(id, chat.id));
-        //         if (index >= 0) {
-        //             const ids_clone = [...ids];
-        //             ids_clone.splice(index, 1);
-        //             return {
-        //                 ...state,
-        //                 pinnedChats: {
-        //                     ...state.pinnedChats,
-        //                     [scope]: ids_clone,
-        //                 },
-        //             };
-        //         }
-        //         return state;
-        //     });
-    }
-
     pinned(scope: ChatListScope["kind"], chatId: ChatIdentifier): boolean {
-        const pinned = this._liveState.globalState.pinnedChats;
-        return pinned[scope].find((id) => chatIdentifiersEqual(id, chatId)) !== undefined;
+        const pinned = this._liveState.pinnedChats;
+        return pinned.get(scope)?.find((id) => chatIdentifiersEqual(id, chatId)) !== undefined;
     }
 
     pinChat(chatId: ChatIdentifier): Promise<boolean> {
         const scope = this._liveState.chatListScope.kind;
-        this.pinLocally(chatId, scope);
+        localChatSummaryUpdates.pin(chatId, scope);
         return this.sendRequest({
             kind: "pinChat",
             chatId,
             favourite: scope === "favourite",
         })
-            .then((resp) => resp === "success")
+            .then((resp) => {
+                if (resp !== "success") {
+                    localChatSummaryUpdates.unpin(chatId, scope);
+                }
+                return resp === "success";
+            })
             .catch(() => {
-                this.unpinLocally(chatId, scope);
+                localChatSummaryUpdates.unpin(chatId, scope);
+
                 return false;
             });
     }
 
     unpinChat(chatId: ChatIdentifier): Promise<boolean> {
         const scope = this._liveState.chatListScope.kind;
-        this.unpinLocally(chatId, scope);
+        localChatSummaryUpdates.unpin(chatId, scope);
         return this.sendRequest({
             kind: "unpinChat",
             chatId,
             favourite: scope === "favourite",
         })
-            .then((resp) => resp === "success")
+            .then((resp) => {
+                if (resp !== "success") {
+                    localChatSummaryUpdates.pin(chatId, scope);
+                }
+                return resp === "success";
+            })
             .catch(() => {
-                this.pinLocally(chatId, scope);
+                localChatSummaryUpdates.pin(chatId, scope);
                 return false;
             });
     }
@@ -5721,13 +5695,13 @@ export class OpenChat extends OpenChatAgentWorker {
                 chatsResponse.state.communities,
                 chats,
                 chatsResponse.state.favouriteChats,
-                {
-                    group_chat: chatsResponse.state.pinnedGroupChats,
-                    direct_chat: chatsResponse.state.pinnedDirectChats,
-                    favourite: chatsResponse.state.pinnedFavouriteChats,
-                    community: chatsResponse.state.pinnedChannels,
-                    none: [],
-                },
+                new Map<ChatListScope["kind"], ChatIdentifier[]>([
+                    ["group_chat", chatsResponse.state.pinnedGroupChats],
+                    ["direct_chat", chatsResponse.state.pinnedDirectChats],
+                    ["favourite", chatsResponse.state.pinnedFavouriteChats],
+                    ["community", chatsResponse.state.pinnedChannels],
+                    ["none", []],
+                ]),
                 chatsResponse.state.achievements,
                 chatsResponse.state.chitState,
                 chatsResponse.state.referrals,

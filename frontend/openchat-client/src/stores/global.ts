@@ -22,7 +22,11 @@ import { messageActivityFeedReadUpToLocally, messagesRead } from "./markRead";
 import { safeWritable } from "./safeWritable";
 import { serverWalletConfigStore } from "./crypto";
 
-export type PinnedByScope = Record<ChatListScope["kind"], ChatIdentifier[]>;
+// TODO - this cannot be an ObjectSet! It has to be a list otherwise
+// we lose track of the order in which things were pinned
+// This might mean that we cannot store local pins in localChatSummaryUpdates at all
+// because the order of chats is indeterminate
+export type PinnedByScope = Map<ChatListScope["kind"], ChatIdentifier[]>;
 
 // This will contain all state.
 export type GlobalState = {
@@ -44,21 +48,18 @@ export const chitStateStore = immutableStore<ChitState>({
     nextDailyChitClaim: 0n,
 });
 
-/**
- * This is the root of the
- */
 export const globalStateStore = immutableStore<GlobalState>({
     communities: new CommunityMap<CommunitySummary>(),
     directChats: new ChatMap<DirectChatSummary>(),
     groupChats: new ChatMap<GroupChatSummary>(),
     favourites: new ObjectSet<ChatIdentifier>(),
-    pinnedChats: {
-        group_chat: [],
-        direct_chat: [],
-        favourite: [],
-        community: [],
-        none: [],
-    },
+    pinnedChats: new Map<ChatListScope["kind"], ChatIdentifier[]>([
+        ["group_chat", []],
+        ["direct_chat", []],
+        ["favourite", []],
+        ["community", []],
+        ["none", []],
+    ]),
     achievements: new Set(),
     referrals: [],
     messageActivitySummary: {

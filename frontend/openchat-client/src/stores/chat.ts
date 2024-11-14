@@ -207,8 +207,30 @@ export const favouritesStore = derived(
 export const pinnedChatsStore = derived(
     [globalStateStore, localChatSummaryUpdates],
     ([$global, $localUpdates]) => {
-        // TODO account for local updates
-        return $global.pinnedChats;
+        const mergedPinned = new Map($global.pinnedChats);
+
+        $localUpdates.forEach((val, key) => {
+            if (val.pinned !== undefined) {
+                val.pinned.forEach((scope) => {
+                    const ids = mergedPinned.get(scope) ?? [];
+                    if (!ids.find((id) => chatIdentifiersEqual(id, key))) {
+                        ids.unshift(key);
+                    }
+                    mergedPinned.set(scope, ids);
+                });
+            }
+            if (val.unpinned !== undefined) {
+                val.unpinned.forEach((scope) => {
+                    const ids = mergedPinned.get(scope) ?? [];
+                    mergedPinned.set(
+                        scope,
+                        ids.filter((id) => !chatIdentifiersEqual(id, key)),
+                    );
+                });
+            }
+        });
+
+        return mergedPinned;
     },
 );
 
@@ -356,7 +378,7 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
 // This is annoying. If only the pinnedChatIndex was stored in the chatSummary...
 export const chatSummariesListStore = derived([chatSummariesStore], ([summaries]) => {
     const pinnedChats = get(pinnedChatsStore);
-    const pinnedByScope = pinnedChats[currentScope.kind];
+    const pinnedByScope = pinnedChats.get(currentScope.kind) ?? [];
     const pinned = pinnedByScope.reduce<ChatSummary[]>((result, id) => {
         const summary = summaries.get(id);
         if (summary !== undefined) {

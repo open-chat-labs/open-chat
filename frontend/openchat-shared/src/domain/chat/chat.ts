@@ -659,8 +659,8 @@ export type LocalGlobalUpdates = {
 export type LocalChatSummaryUpdates = {
     favourited?: boolean;
     unfavourited?: boolean;
-    pinned?: ChatListScope["kind"];
-    unpinned?: ChatListScope["kind"];
+    pinned?: Set<ChatListScope["kind"]>;
+    unpinned?: Set<ChatListScope["kind"]>;
     added?: ChatSummary;
     updated?:
         | {
