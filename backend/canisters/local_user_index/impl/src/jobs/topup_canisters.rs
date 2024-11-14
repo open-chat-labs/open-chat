@@ -89,7 +89,7 @@ async fn run_async(user_id: UserId) {
             if status.cycles < utils::cycles::MIN_CYCLES_BALANCE
                 || status.cycles < Nat::from(60u32) * status.idle_cycles_burned_per_day
             {
-                top_up_user(Some(user_id)).await;
+                top_up_user(Some(user_id), Some(20_000_000_000)).await;
             }
         }
         Err(error) => error!(%user_id, ?error, "Error getting canister status"),
