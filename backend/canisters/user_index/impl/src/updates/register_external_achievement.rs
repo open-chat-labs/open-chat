@@ -67,7 +67,7 @@ async fn register_external_achievement(args: Args) -> Response {
         );
 
         // TODO: Create a timer for when the achievement expires
-        // 1. Refund any unspent CHAT
+        // 1. Refund any unspent CHAT and BURN the spent CHAT
         // 2. Clear the awarded users HashSet
     });
 
