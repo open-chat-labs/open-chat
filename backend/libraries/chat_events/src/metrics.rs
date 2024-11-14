@@ -109,7 +109,7 @@ impl From<u8> for MetricKey {
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 struct ChatMetricsInternalCombined {
-    #[serde(rename = "m")]
+    #[serde(rename = "m", default)]
     metrics: Vec<MetricCounter>,
     #[serde(rename = "t", default, skip_serializing_if = "is_default")]
     pub text_messages: u32,
