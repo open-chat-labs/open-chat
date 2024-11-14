@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Top up canisters which have fewer than `MIN_CYCLES_BALANCE` cycles ([#6819](https://github.com/open-chat-labs/open-chat/pull/6819))
+- Reduce top up amount to 0.02T ([#6821](https://github.com/open-chat-labs/open-chat/pull/6821))
 
 ## [[2.0.1447](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1447-local_user_index)] - 2024-11-13
 
