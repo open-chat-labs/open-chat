@@ -184,25 +184,25 @@ impl From<ChatMetricsInternalCombined> for ChatMetricsInternal {
             last_active: value.last_active,
         };
 
-        if let Ok(count) = try_convert_to_metric_count(value.text_messages, "text_messages") {
+        if let Some(count) = try_convert_to_metric_count(value.text_messages, "text_messages") {
             metrics.metrics.push(MetricCounter::new(MetricKey::TextMessages, count));
         }
-        if let Ok(count) = try_convert_to_metric_count(value.image_messages, "image_messages") {
+        if let Some(count) = try_convert_to_metric_count(value.image_messages, "image_messages") {
             metrics.metrics.push(MetricCounter::new(MetricKey::ImageMessages, count));
         }
-        if let Ok(count) = try_convert_to_metric_count(value.video_messages, "video_messages") {
+        if let Some(count) = try_convert_to_metric_count(value.video_messages, "video_messages") {
             metrics.metrics.push(MetricCounter::new(MetricKey::VideoMessages, count));
         }
-        if let Ok(count) = try_convert_to_metric_count(value.audio_messages, "audio_messages") {
+        if let Some(count) = try_convert_to_metric_count(value.audio_messages, "audio_messages") {
             metrics.metrics.push(MetricCounter::new(MetricKey::AudioMessages, count));
         }
-        if let Ok(count) = try_convert_to_metric_count(value.file_messages, "file_messages") {
+        if let Some(count) = try_convert_to_metric_count(value.file_messages, "file_messages") {
             metrics.metrics.push(MetricCounter::new(MetricKey::FileMessages, count));
         }
-        if let Ok(count) = try_convert_to_metric_count(value.polls, "polls") {
+        if let Some(count) = try_convert_to_metric_count(value.polls, "polls") {
             metrics.metrics.push(MetricCounter::new(MetricKey::Polls, count));
         }
-        if let Ok(count) = try_convert_to_metric_count(value.poll_votes, "poll_votes") {
+        if let Some(count) = try_convert_to_metric_count(value.poll_votes, "poll_votes") {
             metrics.metrics.push(MetricCounter::new(MetricKey::PollVotes, count));
         }
         let crypto_messages = value.icp_messages
@@ -211,51 +211,51 @@ impl From<ChatMetricsInternalCombined> for ChatMetricsInternal {
             + value.chat_messages
             + value.kinic_messages
             + value.other_crypto_messages;
-        if let Ok(count) = try_convert_to_metric_count(crypto_messages, "crypto_messages") {
+        if let Some(count) = try_convert_to_metric_count(crypto_messages, "crypto_messages") {
             metrics.metrics.push(MetricCounter::new(MetricKey::CryptoMessages, count));
         }
-        if let Ok(count) = try_convert_to_metric_count(value.deleted_messages, "deleted_messages") {
+        if let Some(count) = try_convert_to_metric_count(value.deleted_messages, "deleted_messages") {
             metrics.metrics.push(MetricCounter::new(MetricKey::DeletedMessages, count));
         }
-        if let Ok(count) = try_convert_to_metric_count(value.giphy_messages, "giphy_messages") {
+        if let Some(count) = try_convert_to_metric_count(value.giphy_messages, "giphy_messages") {
             metrics.metrics.push(MetricCounter::new(MetricKey::GiphyMessages, count));
         }
-        if let Ok(count) = try_convert_to_metric_count(value.prize_messages, "prize_messages") {
+        if let Some(count) = try_convert_to_metric_count(value.prize_messages, "prize_messages") {
             metrics.metrics.push(MetricCounter::new(MetricKey::PrizeMessages, count));
         }
-        if let Ok(count) = try_convert_to_metric_count(value.prize_winner_messages, "prize_winner_messages") {
+        if let Some(count) = try_convert_to_metric_count(value.prize_winner_messages, "prize_winner_messages") {
             metrics
                 .metrics
                 .push(MetricCounter::new(MetricKey::PrizeWinnerMessages, count));
         }
-        if let Ok(count) = try_convert_to_metric_count(value.replies, "replies") {
+        if let Some(count) = try_convert_to_metric_count(value.replies, "replies") {
             metrics.metrics.push(MetricCounter::new(MetricKey::Replies, count));
         }
-        if let Ok(count) = try_convert_to_metric_count(value.edits, "edits") {
+        if let Some(count) = try_convert_to_metric_count(value.edits, "edits") {
             metrics.metrics.push(MetricCounter::new(MetricKey::Edits, count));
         }
-        if let Ok(count) = try_convert_to_metric_count(value.reactions, "reactions") {
+        if let Some(count) = try_convert_to_metric_count(value.reactions, "reactions") {
             metrics.metrics.push(MetricCounter::new(MetricKey::Reactions, count));
         }
-        if let Ok(count) = try_convert_to_metric_count(value.tips, "tips") {
+        if let Some(count) = try_convert_to_metric_count(value.tips, "tips") {
             metrics.metrics.push(MetricCounter::new(MetricKey::Tips, count));
         }
-        if let Ok(count) = try_convert_to_metric_count(value.proposals, "proposals") {
+        if let Some(count) = try_convert_to_metric_count(value.proposals, "proposals") {
             metrics.metrics.push(MetricCounter::new(MetricKey::Proposals, count));
         }
-        if let Ok(count) = try_convert_to_metric_count(value.reported_messages, "reported_messages") {
+        if let Some(count) = try_convert_to_metric_count(value.reported_messages, "reported_messages") {
             metrics.metrics.push(MetricCounter::new(MetricKey::ReportedMessages, count));
         }
-        if let Ok(count) = try_convert_to_metric_count(value.message_reminders, "message_reminders") {
+        if let Some(count) = try_convert_to_metric_count(value.message_reminders, "message_reminders") {
             metrics.metrics.push(MetricCounter::new(MetricKey::MessageReminders, count));
         }
-        if let Ok(count) = try_convert_to_metric_count(value.p2p_swaps, "p2p_swaps") {
+        if let Some(count) = try_convert_to_metric_count(value.p2p_swaps, "p2p_swaps") {
             metrics.metrics.push(MetricCounter::new(MetricKey::P2pSwaps, count));
         }
-        if let Ok(count) = try_convert_to_metric_count(value.video_calls, "video_calls") {
+        if let Some(count) = try_convert_to_metric_count(value.video_calls, "video_calls") {
             metrics.metrics.push(MetricCounter::new(MetricKey::VideoCalls, count));
         }
-        if let Ok(count) = try_convert_to_metric_count(value.custom_type_messages, "custom_type_messages") {
+        if let Some(count) = try_convert_to_metric_count(value.custom_type_messages, "custom_type_messages") {
             metrics.metrics.push(MetricCounter::new(MetricKey::CustomTypeMessages, count));
         }
         metrics
