@@ -108,6 +108,7 @@ impl Tokens {
             if token.enabled != enabled {
                 token.enabled = enabled;
                 token.last_updated = now;
+                self.last_updated = now;
             }
         }
     }
