@@ -1,4 +1,4 @@
-use crate::run_regular_jobs;
+use crate::{can_borrow_state, run_regular_jobs};
 use timer_job_queues::{TimerJobItem, TimerJobItemGroup};
 use types::UserId;
 use user_canister::CommunityCanisterEvent;
@@ -39,7 +39,9 @@ impl TimerJobItemGroup for UserEventBatch {
 
 impl TimerJobItem for UserEventBatch {
     async fn process(&self) -> Result<(), bool> {
-        run_regular_jobs();
+        if can_borrow_state() {
+            run_regular_jobs();
+        }
 
         let response = user_canister_c2c_client::c2c_notify_community_canister_events(
             self.user_id.into(),
