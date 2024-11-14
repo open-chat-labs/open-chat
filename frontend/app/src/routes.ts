@@ -40,7 +40,6 @@ export function pageReplace(url: string) {
 }
 
 export function pageRedirect(url: string) {
-    console.log("Is this happening?", url);
     return getRouter().then((r) => r.redirect(url));
 }
 
