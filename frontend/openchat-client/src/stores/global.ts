@@ -22,10 +22,6 @@ import { messageActivityFeedReadUpToLocally, messagesRead } from "./markRead";
 import { safeWritable } from "./safeWritable";
 import { serverWalletConfigStore } from "./crypto";
 
-// TODO - this cannot be an ObjectSet! It has to be a list otherwise
-// we lose track of the order in which things were pinned
-// This might mean that we cannot store local pins in localChatSummaryUpdates at all
-// because the order of chats is indeterminate
 export type PinnedByScope = Map<ChatListScope["kind"], ChatIdentifier[]>;
 
 // This will contain all state.
