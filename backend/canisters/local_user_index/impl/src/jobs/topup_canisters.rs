@@ -86,7 +86,9 @@ async fn run_async(user_id: UserId) {
     .await
     {
         Ok((status,)) => {
-            if status.cycles < Nat::from(60u32) * status.idle_cycles_burned_per_day {
+            if status.cycles < Nat::from(utils::cycles::MIN_CYCLES_BALANCE)
+                || status.cycles < Nat::from(60u32) * status.idle_cycles_burned_per_day
+            {
                 top_up_user(Some(user_id)).await;
             }
         }
