@@ -1035,6 +1035,7 @@
                     role: "owner",
                 },
                 messagesVisibleToNonMembers: false,
+                externalUrl: embeddedContent ? "" : undefined,
             },
         };
     }

@@ -20,6 +20,7 @@ import type {
     DiamondMembershipStatus,
     ChitState,
     WalletConfig,
+    ObjectSet,
 } from "openchat-shared";
 import { selectedAuthProviderStore } from "./stores/authProviders";
 import {
@@ -49,6 +50,7 @@ import {
     currentChatMembers,
     currentChatRules,
     pinnedChatsStore,
+    favouritesStore,
 } from "./stores/chat";
 import { remainingStorage } from "./stores/storage";
 import { userCreatedStore } from "./stores/userCreated";
@@ -119,6 +121,7 @@ export class LiveState {
     chatListScope!: ChatListScope;
     globalState!: GlobalState;
     pinnedChats!: PinnedByScope;
+    favourites!: ObjectSet<ChatIdentifier>;
     allChats!: ChatMap<ChatSummary>;
     selectedCommunity!: CommunitySummary | undefined;
     currentCommunityMembers!: Map<string, Member>;
@@ -183,6 +186,7 @@ export class LiveState {
         chatListScopeStore.subscribe((scope) => (this.chatListScope = scope));
         globalStateStore.subscribe((data) => (this.globalState = data));
         pinnedChatsStore.subscribe((data) => (this.pinnedChats = data));
+        favouritesStore.subscribe((data) => (this.favourites = data));
         allChats.subscribe((data) => (this.allChats = data));
         selectedCommunity.subscribe((data) => (this.selectedCommunity = data));
         currentCommunityMembers.subscribe((data) => (this.currentCommunityMembers = data));
