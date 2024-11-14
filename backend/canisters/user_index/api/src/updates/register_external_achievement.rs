@@ -1,4 +1,4 @@
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use human_readable::{HumanReadablePrincipal, ToHumanReadable};
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
@@ -27,6 +27,7 @@ pub enum Response {
 #[derive(Serialize)]
 pub struct HumanReadableArgs {
     id: u32,
+    submitted_by: HumanReadablePrincipal,
     name: String,
     logo: String,
     url: String,
@@ -42,6 +43,7 @@ impl ToHumanReadable for Args {
     fn to_human_readable(&self) -> Self::Target {
         HumanReadableArgs {
             id: self.id,
+            submitted_by: Principal::from(self.submitted_by).into(),
             name: self.name.clone(),
             logo: self.logo.clone(),
             url: self.url.clone(),
