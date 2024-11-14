@@ -1,3 +1,4 @@
+use crate::run_regular_jobs;
 use candid::Deserialize;
 use serde::Serialize;
 use timer_job_queues::{TimerJobItem, TimerJobItemGroup};
@@ -13,6 +14,8 @@ pub struct UserCanisterEventBatch {
 
 impl TimerJobItem for UserCanisterEventBatch {
     async fn process(&self) -> Result<(), bool> {
+        run_regular_jobs();
+
         let response = user_canister_c2c_client::c2c_notify_user_canister_events(
             self.user_id.into(),
             &user_canister::c2c_notify_user_canister_events::Args {
