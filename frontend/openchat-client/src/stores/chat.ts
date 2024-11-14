@@ -44,13 +44,7 @@ import { setsAreEqual } from "../utils/set";
 import { failedMessagesStore } from "./failedMessages";
 import { proposalTallies } from "./proposalTallies";
 import type { OpenChat } from "../openchat";
-import {
-    allServerChats,
-    chatListScopeStore,
-    getAllServerChats,
-    globalStateStore,
-    pinnedChatsStore,
-} from "./global";
+import { allServerChats, chatListScopeStore, getAllServerChats, globalStateStore } from "./global";
 import { createDerivedPropStore } from "./derived";
 import { messagesRead } from "./markRead";
 import { safeWritable } from "./safeWritable";
@@ -194,9 +188,33 @@ const currentChatBlockedOrSuspendedUsers = derived(
     },
 );
 
+export const favouritesStore = derived(
+    [globalStateStore, localChatSummaryUpdates],
+    ([$global, $localUpdates]) => {
+        const mergedFavs = $global.favourites.clone();
+        $localUpdates.entries().forEach(([key, val]) => {
+            if (val.favourited && !val.unfavourited) {
+                mergedFavs.add(key);
+            }
+            if (!val.favourited && val.unfavourited) {
+                mergedFavs.delete(key);
+            }
+        });
+        return mergedFavs;
+    },
+);
+
+export const pinnedChatsStore = derived(
+    [globalStateStore, localChatSummaryUpdates],
+    ([$global, $localUpdates]) => {
+        // TODO account for local updates
+        return $global.pinnedChats;
+    },
+);
+
 export const myServerChatSummariesStore = derived(
-    [globalStateStore, chatListScopeStore],
-    ([$allState, $scope]) => {
+    [globalStateStore, chatListScopeStore, favouritesStore],
+    ([$allState, $scope, $favourites]) => {
         const allChats = getAllServerChats($allState);
         if ($scope.kind === "community") {
             const community = $allState.communities.get($scope.id);
@@ -206,7 +224,7 @@ export const myServerChatSummariesStore = derived(
         } else if ($scope.kind === "direct_chat") {
             return $allState.directChats;
         } else if ($scope.kind === "favourite") {
-            return $allState.favourites.values().reduce((favs, chatId) => {
+            return $favourites.values().reduce((favs, chatId) => {
                 const chat = allChats.get(chatId);
                 if (chat !== undefined) {
                     favs.set(chat.id, chat);

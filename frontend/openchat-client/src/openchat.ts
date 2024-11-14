@@ -1134,38 +1134,40 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private pinLocally(chatId: ChatIdentifier, scope: ChatListScope["kind"]): void {
-        globalStateStore.update((state) => {
-            const ids = state.pinnedChats[scope];
-            if (!ids.find((id) => chatIdentifiersEqual(id, chatId))) {
-                return {
-                    ...state,
-                    pinnedChats: {
-                        ...state.pinnedChats,
-                        [scope]: [chatId, ...ids],
-                    },
-                };
-            }
-            return state;
-        });
+        localChatSummaryUpdates.pin(chatId, scope);
+        // globalStateStore.update((state) => {
+        //     const ids = state.pinnedChats[scope];
+        //     if (!ids.find((id) => chatIdentifiersEqual(id, chat.id))) {
+        //         return {
+        //             ...state,
+        //             pinnedChats: {
+        //                 ...state.pinnedChats,
+        //                 [scope]: [chat.id, ...ids],
+        //             },
+        //         };
+        //     }
+        //     return state;
+        // });
     }
 
     private unpinLocally(chatId: ChatIdentifier, scope: ChatListScope["kind"]): void {
-        globalStateStore.update((state) => {
-            const ids = state.pinnedChats[scope];
-            const index = ids.findIndex((id) => chatIdentifiersEqual(id, chatId));
-            if (index >= 0) {
-                const ids_clone = [...ids];
-                ids_clone.splice(index, 1);
-                return {
-                    ...state,
-                    pinnedChats: {
-                        ...state.pinnedChats,
-                        [scope]: ids_clone,
-                    },
-                };
-            }
-            return state;
-        });
+        localChatSummaryUpdates.unpin(chatId, scope);
+        //     globalStateStore.update((state) => {
+        //         const ids = state.pinnedChats[scope];
+        //         const index = ids.findIndex((id) => chatIdentifiersEqual(id, chat.id));
+        //         if (index >= 0) {
+        //             const ids_clone = [...ids];
+        //             ids_clone.splice(index, 1);
+        //             return {
+        //                 ...state,
+        //                 pinnedChats: {
+        //                     ...state.pinnedChats,
+        //                     [scope]: ids_clone,
+        //                 },
+        //             };
+        //         }
+        //         return state;
+        //     });
     }
 
     pinned(scope: ChatListScope["kind"], chatId: ChatIdentifier): boolean {
@@ -7278,46 +7280,32 @@ export class OpenChat extends OpenChatAgentWorker {
             }));
     }
 
-    private addToFavouritesLocally(chatId: ChatIdentifier): void {
-        globalStateStore.update((state) => {
-            state.favourites.add(chatId);
-            return state;
-        });
-    }
-
-    private removeFromFavouritesLocally(chatId: ChatIdentifier): void {
-        globalStateStore.update((state) => {
-            state.favourites.delete(chatId);
-            return state;
-        });
-    }
-
     addToFavourites(chatId: ChatIdentifier): Promise<boolean> {
-        this.addToFavouritesLocally(chatId);
+        localChatSummaryUpdates.favourite(chatId);
         return this.sendRequest({ kind: "addToFavourites", chatId })
             .then((resp) => {
                 if (resp !== "success") {
-                    this.removeFromFavouritesLocally(chatId);
+                    localChatSummaryUpdates.unfavourite(chatId);
                 }
                 return resp === "success";
             })
             .catch(() => {
-                this.removeFromFavouritesLocally(chatId);
+                localChatSummaryUpdates.unfavourite(chatId);
                 return false;
             });
     }
 
     removeFromFavourites(chatId: ChatIdentifier): Promise<boolean> {
-        this.removeFromFavouritesLocally(chatId);
+        localChatSummaryUpdates.unfavourite(chatId);
         return this.sendRequest({ kind: "removeFromFavourites", chatId })
             .then((resp) => {
                 if (resp !== "success") {
-                    this.addToFavouritesLocally(chatId);
+                    localChatSummaryUpdates.favourite(chatId);
                 }
                 return resp === "success";
             })
             .catch(() => {
-                this.addToFavouritesLocally(chatId);
+                localChatSummaryUpdates.favourite(chatId);
                 return false;
             });
     }

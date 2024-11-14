@@ -68,11 +68,7 @@ export const globalStateStore = immutableStore<GlobalState>({
     },
 });
 
-export const pinnedChatsStore = derived(globalStateStore, ($global) => $global.pinnedChats);
-
 export const chatListScopeStore = safeWritable<ChatListScope>({ kind: "none" }, chatScopesEqual);
-
-export const favouritesStore = derived(globalStateStore, (state) => state.favourites);
 
 export type CombinedUnreadCounts = {
     threads: UnreadCounts;
