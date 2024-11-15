@@ -1,6 +1,5 @@
 <script lang="ts">
-    import { onMount, setContext } from "svelte";
-
+    import { setContext } from "svelte";
     import "../i18n/i18n";
     import "../utils/markdown";
     import "../utils/scream";
@@ -95,18 +94,36 @@
     }
 
     let client: OpenChat = createOpenChatClient();
-
-    let profileTrace = client.showTrace();
-    let videoCallElement: ActiveCall;
-
     setContext<OpenChat>("client", client);
 
-    $: landingPageRoute = isLandingPageRoute($pathParams);
-    $: homeRoute = $pathParams.kind === "home_route";
-    $: showLandingPage =
-        landingPageRoute || (homeRoute && $identityState.kind === "anon" && $anonUser);
+    let profileTrace = client.showTrace();
+    let videoCallElement: ActiveCall | undefined = $state();
+    let landingPageRoute = $derived(isLandingPageRoute($pathParams));
+    let homeRoute = $derived($pathParams.kind === "home_route");
+    let showLandingPage = $derived(
+        landingPageRoute || (homeRoute && $identityState.kind === "anon" && $anonUser),
+    );
+    let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
+    let burstPath = $derived(
+        $currentTheme.mode === "dark" ? "/assets/burst_dark" : "/assets/burst_light",
+    );
+    let burstUrl = $derived(isFirefox ? `${burstPath}.png` : `${burstPath}.svg`);
+    let burstFixed = $derived(isScrollingRoute($pathParams));
 
-    onMount(() => {
+    $effect(() => {
+        // subscribe to the rtl store so that we can set the overall page direction at the right time
+        document.dir = $rtlStore ? "rtl" : "ltr";
+    });
+
+    $effect(() => {
+        if (!$notFound && showLandingPage) {
+            document.body.classList.add("landing-page");
+        } else {
+            document.body.classList.remove("landing-page");
+        }
+    });
+
+    $effect(() => {
         redirectLandingPageLinksIfNecessary();
         if (client.captureReferralCode()) {
             pageReplace(removeQueryStringParam("ref"));
@@ -389,23 +406,10 @@
         });
     }
 
-    $: {
-        if (!$notFound && showLandingPage) {
-            document.body.classList.add("landing-page");
-        } else {
-            document.body.classList.remove("landing-page");
-        }
-    }
-
     function calculateHeight() {
         // fix the issue with 100vh layouts in various mobile browsers
         let vh = window.innerHeight * 0.01;
         document.documentElement.style.setProperty("--vh", `${vh}px`);
-    }
-
-    $: {
-        // subscribe to the rtl store so that we can set the overall page direction at the right time
-        document.dir = $rtlStore ? "rtl" : "ltr";
     }
 
     function unhandledError(ev: Event) {
@@ -445,11 +449,6 @@
             videoCallElement?.startOrJoinVideoCall(chat, true);
         }
     }
-
-    let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
-    $: burstPath = $currentTheme.mode === "dark" ? "/assets/burst_dark" : "/assets/burst_light";
-    $: burstUrl = isFirefox ? `${burstPath}.png` : `${burstPath}.svg`;
-    $: burstFixed = isScrollingRoute($pathParams);
 </script>
 
 {#if $currentTheme.burst || landingPageRoute}
@@ -500,8 +499,8 @@
     <Snow />
 {/if}
 
-<svelte:window on:resize={resize} on:error={unhandledError} on:orientationchange={resize} />
-<svelte:body on:click={() => menuStore.hideMenu()} />
+<svelte:window onresize={resize} onerror={unhandledError} onorientationchange={resize} />
+<svelte:body onclick={() => menuStore.hideMenu()} />
 
 <style lang="scss">
     :global {
