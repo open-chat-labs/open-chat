@@ -441,9 +441,9 @@
         videoCallElement?.hangup();
     }
 
-    function joinVideoCall(ev: CustomEvent<ChatIdentifier>) {
+    function joinVideoCall(chatId: ChatIdentifier) {
         incomingVideoCall.set(undefined);
-        const chat = client.lookupChatSummary(ev.detail);
+        const chat = client.lookupChatSummary(chatId);
         if (chat) {
             page(routeForChatIdentifier("none", chat.id));
             videoCallElement?.startOrJoinVideoCall(chat, true);
@@ -467,7 +467,7 @@
 
 <VideoCallAccessRequests />
 
-<IncomingCall on:joinVideoCall={joinVideoCall} />
+<IncomingCall onJoinVideoCall={joinVideoCall} />
 
 <Witch background />
 
