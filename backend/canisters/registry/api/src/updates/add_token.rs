@@ -1,5 +1,5 @@
 use crate::TokenStandard;
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use human_readable::{HumanReadablePrincipal, ToHumanReadable};
 use serde::{Deserialize, Serialize};
 use types::{CanisterId, UserId};
@@ -27,7 +27,7 @@ pub enum Response {
 #[derive(Serialize)]
 pub struct HumanReadableArgs {
     ledger_canister_id: HumanReadablePrincipal,
-    payer: Option<String>,
+    payer: Option<HumanReadablePrincipal>,
     token_standard: String,
     info_url: String,
     how_to_buy_url: String,
@@ -41,7 +41,7 @@ impl ToHumanReadable for Args {
     fn to_human_readable(&self) -> Self::Target {
         HumanReadableArgs {
             ledger_canister_id: self.ledger_canister_id.into(),
-            payer: self.payer.map(|user_id| user_id.to_string()),
+            payer: self.payer.map(|user_id| Principal::from(user_id).into()),
             token_standard: self.token_standard.to_string(),
             info_url: self.info_url.clone(),
             how_to_buy_url: self.how_to_buy_url.clone(),
