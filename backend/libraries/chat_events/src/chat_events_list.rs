@@ -1,7 +1,7 @@
 use crate::hybrid_map::HybridMap;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::stable_storage::ChatEventsStableStorage;
-use crate::{ChatEventInternal, ChatInternal, EventKey, EventOrExpiredRangeInternal, EventsMap, MessageInternal};
+use crate::{ChatEventInternal, EventKey, EventOrExpiredRangeInternal, EventsMap, MessageInternal};
 use candid::Principal;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -209,28 +209,6 @@ impl ChatEventsList {
         } else {
             None
         }
-    }
-
-    pub fn migrate_replies(&mut self, old: ChatInternal, new: ChatInternal) -> Vec<EventIndex> {
-        let mut updated = Vec::new();
-        for mut event in self.iter_internal() {
-            if let Some(message) = event.event.as_message_mut() {
-                if let Some(r) = message.replies_to.as_mut() {
-                    if let Some((chat, _)) = r.chat_if_other.as_mut() {
-                        if *chat == old {
-                            *chat = new;
-                            updated.push(event);
-                        }
-                    }
-                }
-            }
-        }
-
-        let updated_indexes = updated.iter().map(|e| e.index).collect();
-        for event in updated {
-            self.stable_events_map.insert(event);
-        }
-        updated_indexes
     }
 
     pub(crate) fn event_count_since<F: Fn(&ChatEventInternal) -> bool>(&self, since: TimestampMillis, filter: &F) -> usize {
