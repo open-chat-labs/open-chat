@@ -7,7 +7,7 @@ use crate::{mutate_state, read_state, run_regular_jobs, Data, RuntimeState, Time
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::{MessageContentInternal, PushMessageArgs, Reader};
+use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextInternal};
 use rand::Rng;
 use types::{
     BlobReference, CanisterId, Chat, ChatId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction,
@@ -217,10 +217,17 @@ fn send_message_impl(
     let this_canister_id = state.env.canister_id();
     let sender: UserId = this_canister_id.into();
     let recipient = args.recipient;
+    let replies_to = args.replies_to.as_ref().map(ReplyContextInternal::from);
     let content = if let Some(transfer) = completed_transfer.clone() {
         MessageContentInternal::new_with_transfer(args.content.clone(), transfer.into(), p2p_swap_id, now)
     } else {
         args.content.into()
+    };
+
+    let chat_private_replying_to = if let Some((chat, None)) = replies_to.as_ref().and_then(|r| r.chat_if_other) {
+        Some(chat)
+    } else {
+        None
     };
 
     let push_message_args = PushMessageArgs {
@@ -229,7 +236,7 @@ fn send_message_impl(
         sender,
         content: content.clone(),
         mentioned: Vec::new(),
-        replies_to: args.replies_to.as_ref().map(|r| r.into()),
+        replies_to,
         forwarded: args.forwarding,
         sender_is_bot: false,
         block_level_markdown: args.block_level_markdown,
@@ -305,6 +312,13 @@ fn send_message_impl(
         now,
         &mut state.data,
     );
+
+    if let Some(chat) = chat_private_replying_to {
+        state
+            .data
+            .direct_chats
+            .mark_private_reply(args.recipient, chat, message_event.event.message_index);
+    }
 
     if let Some(transfer) = completed_transfer {
         TransferSuccessV2(TransferSuccessV2Result {
