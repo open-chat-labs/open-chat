@@ -400,6 +400,9 @@ impl From<MessageContentInitial> for MessageContent {
                 caption: c.caption,
                 prizes_pending: 0,
                 diamond_only: c.diamond_only,
+                lifetime_diamond_only: c.lifetime_diamond_only,
+                unique_person_only: c.unique_person_only,
+                streak_only: c.streak_only,
             }),
             MessageContentInitial::MessageReminderCreated(r) => MessageContent::MessageReminderCreated(r),
             MessageContentInitial::MessageReminder(r) => MessageContent::MessageReminder(r),
@@ -613,6 +616,9 @@ pub struct PrizeContentInitial {
     pub end_date: TimestampMillis,
     pub caption: Option<String>,
     pub diamond_only: bool,
+    pub lifetime_diamond_only: bool,
+    pub unique_person_only: bool,
+    pub streak_only: u16,
 }
 
 #[ts_export]
@@ -627,6 +633,9 @@ pub struct PrizeContent {
     pub end_date: TimestampMillis,
     pub caption: Option<String>,
     pub diamond_only: bool,
+    pub lifetime_diamond_only: bool,
+    pub unique_person_only: bool,
+    pub streak_only: u16,
 }
 
 #[ts_export]
