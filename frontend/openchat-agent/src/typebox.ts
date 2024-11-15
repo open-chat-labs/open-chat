@@ -4208,15 +4208,6 @@ export const OptionUpdateOptionalMessagePermissions = Type.Union(
     { default: "NoChange" },
 );
 
-export type AccessTokenType = Static<typeof AccessTokenType>;
-export const AccessTokenType = Type.Union([
-    Type.Object({
-        StartVideoCallV2: VideoCallAccessTokenArgs,
-    }),
-    Type.Literal("JoinVideoCall"),
-    Type.Literal("MarkVideoCallAsEnded"),
-]);
-
 export type PendingCryptoTransactionICRC2 = Static<typeof PendingCryptoTransactionICRC2>;
 export const PendingCryptoTransactionICRC2 = Type.Object({
     ledger: TSBytes,
@@ -4524,6 +4515,14 @@ export const DiamondMembershipDetails = Type.Object({
     expires_at: Type.BigInt(),
     pay_in_chat: Type.Boolean(),
     subscription: DiamondMembershipSubscription,
+});
+
+export type BotCommandArgs = Static<typeof BotCommandArgs>;
+export const BotCommandArgs = Type.Object({
+    user_id: UserId,
+    bot: UserId,
+    thread_root_message_index: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
+    message_id: MessageId,
 });
 
 export type MemberLeft = Static<typeof MemberLeft>;
@@ -6073,6 +6072,18 @@ export const GroupFrozen = Type.Object({
     frozen_by: UserId,
     reason: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
 });
+
+export type AccessTokenType = Static<typeof AccessTokenType>;
+export const AccessTokenType = Type.Union([
+    Type.Object({
+        StartVideoCallV2: VideoCallAccessTokenArgs,
+    }),
+    Type.Literal("JoinVideoCall"),
+    Type.Literal("MarkVideoCallAsEnded"),
+    Type.Object({
+        BotCommand: BotCommandArgs,
+    }),
+]);
 
 export type FailedCryptoTransactionICRC2 = Static<typeof FailedCryptoTransactionICRC2>;
 export const FailedCryptoTransactionICRC2 = Type.Object({
