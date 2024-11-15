@@ -217,7 +217,7 @@ fn send_message_impl(
     let this_canister_id = state.env.canister_id();
     let sender: UserId = this_canister_id.into();
     let recipient = args.recipient;
-    let replies_to = args.replies_to.as_ref().map(|r| ReplyContextInternal::from(r));
+    let replies_to = args.replies_to.as_ref().map(ReplyContextInternal::from);
     let content = if let Some(transfer) = completed_transfer.clone() {
         MessageContentInternal::new_with_transfer(args.content.clone(), transfer.into(), p2p_swap_id, now)
     } else {
