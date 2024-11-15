@@ -110,6 +110,10 @@
     let burstUrl = $derived(isFirefox ? `${burstPath}.png` : `${burstPath}.svg`);
     let burstFixed = $derived(isScrollingRoute($pathParams));
 
+    let upgrading = $derived(
+        $identityState.kind === "upgrading_user" || $identityState.kind === "upgrade_user",
+    );
+
     $effect(() => {
         // subscribe to the rtl store so that we can set the overall page direction at the right time
         document.dir = $rtlStore ? "rtl" : "ltr";
@@ -477,7 +481,7 @@
 
 {#if isCanisterUrl}
     <SwitchDomain />
-{:else if $identityState.kind === "upgrading_user" || $identityState.kind === "upgrade_user"}
+{:else if upgrading}
     <Upgrading />
 {:else if $identityState.kind === "anon" || $identityState.kind === "logging_in" || $identityState.kind === "registering" || $identityState.kind === "logged_in" || $identityState.kind === "loading_user" || $identityState.kind === "challenging"}
     {#if !$isLoading || $reviewingTranslations}
