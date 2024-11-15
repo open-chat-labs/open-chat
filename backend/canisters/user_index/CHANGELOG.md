@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Pass in `BotApiCanister` when installing a new LocalUserIndex ([#6828](https://github.com/open-chat-labs/open-chat/pull/6828))
+
 ### Fixed
 
 - Fix the ext achievement proposal validation fn ([#6816](https://github.com/open-chat-labs/open-chat/pull/6816))
