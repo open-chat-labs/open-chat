@@ -97,7 +97,7 @@
     setContext<OpenChat>("client", client);
 
     let profileTrace = client.showTrace();
-    let videoCallElement: ActiveCall | undefined = $state();
+    let videoCallElement: typeof ActiveCall | undefined = $state();
     let landingPageRoute = $derived(isLandingPageRoute($pathParams));
     let homeRoute = $derived($pathParams.kind === "home_route");
     let showLandingPage = $derived(
