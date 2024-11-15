@@ -21,9 +21,13 @@
         adminRoute,
     } from "../routes";
 
-    export let showLandingPage: boolean;
+    interface Props {
+        showLandingPage: boolean;
+    }
 
-    let route: typeof SvelteComponent<object> | undefined = undefined;
+    let { showLandingPage }: Props = $props();
+
+    let route: typeof SvelteComponent<object> | undefined = $state(undefined);
 
     function parsePathParams(fn: (ctx: PageJS.Context) => RouteParams) {
         return (ctx: PageJS.Context, next: () => any) => {
@@ -219,5 +223,6 @@
 </script>
 
 {#if route !== undefined}
-    <svelte:component this={route} {showLandingPage} on:startVideoCall on:askToSpeak on:hangup />
+    {@const RouteComponent = route}
+    <RouteComponent {showLandingPage} on:startVideoCall on:askToSpeak on:hangup />
 {/if}
