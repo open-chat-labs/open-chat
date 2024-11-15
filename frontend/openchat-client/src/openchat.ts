@@ -1133,72 +1133,48 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    private pinLocally(chatId: ChatIdentifier, scope: ChatListScope["kind"]): void {
-        globalStateStore.update((state) => {
-            const ids = state.pinnedChats[scope];
-            if (!ids.find((id) => chatIdentifiersEqual(id, chatId))) {
-                return {
-                    ...state,
-                    pinnedChats: {
-                        ...state.pinnedChats,
-                        [scope]: [chatId, ...ids],
-                    },
-                };
-            }
-            return state;
-        });
-    }
-
-    private unpinLocally(chatId: ChatIdentifier, scope: ChatListScope["kind"]): void {
-        globalStateStore.update((state) => {
-            const ids = state.pinnedChats[scope];
-            const index = ids.findIndex((id) => chatIdentifiersEqual(id, chatId));
-            if (index >= 0) {
-                const ids_clone = [...ids];
-                ids_clone.splice(index, 1);
-                return {
-                    ...state,
-                    pinnedChats: {
-                        ...state.pinnedChats,
-                        [scope]: ids_clone,
-                    },
-                };
-            }
-            return state;
-        });
-    }
-
     pinned(scope: ChatListScope["kind"], chatId: ChatIdentifier): boolean {
-        const pinned = this._liveState.globalState.pinnedChats;
-        return pinned[scope].find((id) => chatIdentifiersEqual(id, chatId)) !== undefined;
+        const pinned = this._liveState.pinnedChats;
+        return pinned.get(scope)?.find((id) => chatIdentifiersEqual(id, chatId)) !== undefined;
     }
 
     pinChat(chatId: ChatIdentifier): Promise<boolean> {
         const scope = this._liveState.chatListScope.kind;
-        this.pinLocally(chatId, scope);
+        localChatSummaryUpdates.pin(chatId, scope);
         return this.sendRequest({
             kind: "pinChat",
             chatId,
             favourite: scope === "favourite",
         })
-            .then((resp) => resp === "success")
+            .then((resp) => {
+                if (resp !== "success") {
+                    localChatSummaryUpdates.unpin(chatId, scope);
+                }
+                return resp === "success";
+            })
             .catch(() => {
-                this.unpinLocally(chatId, scope);
+                localChatSummaryUpdates.unpin(chatId, scope);
+
                 return false;
             });
     }
 
     unpinChat(chatId: ChatIdentifier): Promise<boolean> {
         const scope = this._liveState.chatListScope.kind;
-        this.unpinLocally(chatId, scope);
+        localChatSummaryUpdates.unpin(chatId, scope);
         return this.sendRequest({
             kind: "unpinChat",
             chatId,
             favourite: scope === "favourite",
         })
-            .then((resp) => resp === "success")
+            .then((resp) => {
+                if (resp !== "success") {
+                    localChatSummaryUpdates.pin(chatId, scope);
+                }
+                return resp === "success";
+            })
             .catch(() => {
-                this.pinLocally(chatId, scope);
+                localChatSummaryUpdates.pin(chatId, scope);
                 return false;
             });
     }
@@ -5719,13 +5695,13 @@ export class OpenChat extends OpenChatAgentWorker {
                 chatsResponse.state.communities,
                 chats,
                 chatsResponse.state.favouriteChats,
-                {
-                    group_chat: chatsResponse.state.pinnedGroupChats,
-                    direct_chat: chatsResponse.state.pinnedDirectChats,
-                    favourite: chatsResponse.state.pinnedFavouriteChats,
-                    community: chatsResponse.state.pinnedChannels,
-                    none: [],
-                },
+                new Map<ChatListScope["kind"], ChatIdentifier[]>([
+                    ["group_chat", chatsResponse.state.pinnedGroupChats],
+                    ["direct_chat", chatsResponse.state.pinnedDirectChats],
+                    ["favourite", chatsResponse.state.pinnedFavouriteChats],
+                    ["community", chatsResponse.state.pinnedChannels],
+                    ["none", []],
+                ]),
                 chatsResponse.state.achievements,
                 chatsResponse.state.chitState,
                 chatsResponse.state.referrals,
@@ -7278,46 +7254,36 @@ export class OpenChat extends OpenChatAgentWorker {
             }));
     }
 
-    private addToFavouritesLocally(chatId: ChatIdentifier): void {
-        globalStateStore.update((state) => {
-            state.favourites.add(chatId);
-            return state;
-        });
-    }
-
-    private removeFromFavouritesLocally(chatId: ChatIdentifier): void {
-        globalStateStore.update((state) => {
-            state.favourites.delete(chatId);
-            return state;
-        });
-    }
-
     addToFavourites(chatId: ChatIdentifier): Promise<boolean> {
-        this.addToFavouritesLocally(chatId);
+        localChatSummaryUpdates.favourite(chatId);
         return this.sendRequest({ kind: "addToFavourites", chatId })
             .then((resp) => {
                 if (resp !== "success") {
-                    this.removeFromFavouritesLocally(chatId);
+                    localChatSummaryUpdates.unfavourite(chatId);
                 }
                 return resp === "success";
             })
             .catch(() => {
-                this.removeFromFavouritesLocally(chatId);
+                localChatSummaryUpdates.unfavourite(chatId);
                 return false;
             });
     }
 
     removeFromFavourites(chatId: ChatIdentifier): Promise<boolean> {
-        this.removeFromFavouritesLocally(chatId);
+        localChatSummaryUpdates.unfavourite(chatId);
+        if (this._liveState.chatSummariesList.length === 0) {
+            this.dispatchEvent(new SelectedChatInvalid());
+        }
+
         return this.sendRequest({ kind: "removeFromFavourites", chatId })
             .then((resp) => {
                 if (resp !== "success") {
-                    this.addToFavouritesLocally(chatId);
+                    localChatSummaryUpdates.favourite(chatId);
                 }
                 return resp === "success";
             })
             .catch(() => {
-                this.addToFavouritesLocally(chatId);
+                localChatSummaryUpdates.favourite(chatId);
                 return false;
             });
     }
@@ -7483,8 +7449,10 @@ export class OpenChat extends OpenChatAgentWorker {
         // However, with communities enabled it is not clear what this means
         // we actually need to direct the user to one of the global scopes "direct", "group" or "favourites"
         // which one we choose is kind of unclear and probably depends on the state
+
         const global = this._liveState.globalState;
-        if (global.favourites.size > 0) return { kind: "favourite" };
+        const favourites = this._liveState.favourites;
+        if (favourites.size > 0) return { kind: "favourite" };
         if (global.groupChats.size > 0) return { kind: "group_chat" };
         return { kind: "direct_chat" };
     }

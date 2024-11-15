@@ -93,7 +93,9 @@ fn next(state: &mut RuntimeState) -> GetNextResult {
 async fn run_async(canister_id: CanisterId) {
     match ic_cdk::api::management_canister::main::canister_status(CanisterIdRecord { canister_id }).await {
         Ok((status,)) => {
-            if status.cycles < Nat::from(60u32) * status.idle_cycles_burned_per_day {
+            if status.cycles < utils::cycles::MIN_CYCLES_BALANCE
+                || status.cycles < Nat::from(60u32) * status.idle_cycles_burned_per_day
+            {
                 top_up_canister(Some(canister_id)).await;
             }
         }

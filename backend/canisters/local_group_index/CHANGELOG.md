@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1452](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1452-local_group_index)] - 2024-11-14
+
+### Changed
+
+- Top up canisters which have fewer than `MIN_CYCLES_BALANCE` cycles ([#6819](https://github.com/open-chat-labs/open-chat/pull/6819))
+
 ## [[2.0.1449](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1449-local_group_index)] - 2024-11-13
 
 ### Added
