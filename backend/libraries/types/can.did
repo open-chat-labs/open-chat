@@ -1489,6 +1489,9 @@ type PrizeContentInitial = record {
     end_date : TimestampMillis;
     caption : opt text;
     diamond_only : bool;
+    lifetime_diamond_only : bool;
+    unique_person_only : bool;
+    streak_only: nat16;
 };
 
 type PrizeContent = record {
@@ -1501,6 +1504,9 @@ type PrizeContent = record {
     end_date : TimestampMillis;
     caption : opt text;
     diamond_only : bool;
+    lifetime_diamond_only : bool;
+    unique_person_only : bool;
+    streak_only: nat16;
 };
 
 type PrizeWinnerContent = record {

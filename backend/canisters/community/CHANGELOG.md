@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add new prize message criteria ([#6831](https://github.com/open-chat-labs/open-chat/pull/6831))
+
 ### Changed
 
 - Store events in `HybridMap` which caches latest events on the heap ([#6762](https://github.com/open-chat-labs/open-chat/pull/6762))

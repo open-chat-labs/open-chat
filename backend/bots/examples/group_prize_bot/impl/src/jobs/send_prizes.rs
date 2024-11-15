@@ -183,6 +183,9 @@ async fn send_prize_message_to_group(
         end_date,
         caption: None,
         diamond_only: false,
+        lifetime_diamond_only: false,
+        unique_person_only: false,
+        streak_only: 0,
     });
 
     let c2c_args = group_canister::send_message_v2::Args {

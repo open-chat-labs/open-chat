@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add new prize message criteria ([#6831](https://github.com/open-chat-labs/open-chat/pull/6831))
+
 ### Changed
 
 - Avoid extra key lookup when iterating over events ([#6680](https://github.com/open-chat-labs/open-chat/pull/6680))
