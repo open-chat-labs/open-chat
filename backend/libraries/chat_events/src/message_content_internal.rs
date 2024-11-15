@@ -226,6 +226,9 @@ impl MessageContentInternal {
                 token: c.transaction.token().token_symbol().to_string(),
                 amount: c.transaction.units(),
                 diamond_only: c.diamond_only,
+                lifetime_diamond_only: c.lifetime_diamond_only,
+                unique_person_only: c.unique_person_only,
+                streak_only: c.streak_only,
             }),
             MessageContentInternal::PrizeWinner(c) => MessageContentEventPayload::PrizeWinner(PrizeWinnerContentEventPayload {
                 token: c.token_symbol.clone(),
@@ -1194,6 +1197,12 @@ pub struct PrizeContentInternal {
     pub caption: Option<String>,
     #[serde(rename = "d", default, skip_serializing_if = "is_default")]
     pub diamond_only: bool,
+    #[serde(rename = "g", default, skip_serializing_if = "is_default")]
+    pub lifetime_diamond_only: bool,
+    #[serde(rename = "u", default, skip_serializing_if = "is_default")]
+    pub unique_person_only: bool,
+    #[serde(rename = "s", default, skip_serializing_if = "is_default")]
+    pub streak_only: u16,
     #[serde(rename = "f", default, skip_serializing_if = "is_default")]
     pub refund_started: bool,
     #[serde(rename = "l", default, skip_serializing_if = "is_default")]
@@ -1210,6 +1219,9 @@ impl PrizeContentInternal {
             end_date: content.end_date,
             caption: content.caption,
             diamond_only: content.diamond_only,
+            lifetime_diamond_only: content.lifetime_diamond_only,
+            unique_person_only: content.unique_person_only,
+            streak_only: content.streak_only,
             refund_started: false,
             ledger_error: false,
         }
@@ -1252,6 +1264,9 @@ impl MessageContentInternalSubtype for PrizeContentInternal {
             end_date: self.end_date,
             caption: self.caption,
             diamond_only: self.diamond_only,
+            lifetime_diamond_only: self.lifetime_diamond_only,
+            unique_person_only: self.unique_person_only,
+            streak_only: self.streak_only,
         }
     }
 }

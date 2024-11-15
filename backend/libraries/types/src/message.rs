@@ -209,6 +209,9 @@ pub struct PrizeContentEventPayload {
     pub token: String,
     pub amount: u128,
     pub diamond_only: bool,
+    pub lifetime_diamond_only: bool,
+    pub unique_person_only: bool,
+    pub streak_only: u16,
 }
 
 #[derive(Serialize)]
