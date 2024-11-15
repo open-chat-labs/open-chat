@@ -1094,11 +1094,12 @@
         "groupIndexAction": "Akcje indeksu grupowego",
         "makeProposal": "Złóż propozycję",
         "maker": {
-            "achievementChatCost": "Wymagana jest płatność {cost} {token} tokenów, aby zapewnić żądany CHIT. Wszelkie niewydane CHAT zostaną zwrócone po wygaśnięciu osiągnięcia.",
+            "achievementChatCost": "Wymagana jest płatność {cost} {chat} tokenów, aby zapewnić żądany CHIT. Wszelkie niewydane CHAT zostaną zwrócone po wygaśnięciu osiągnięcia.",
             "achievementExpiry": "Wygaśnięcie",
             "achievementLogo": "Logo osiągnięć",
             "achievementName": "Nazwa osiągnięcia",
             "achievementUrl": "Adres URL osiągnięcia",
+            "addTokenChatCost": "Aby dodać nowy token na OpenChat, wymagana jest zapłata {cost} {chat} tokenów.",
             "amount": "Kwota",
             "amountRules": "co najmniej 1 token {token}",
             "approvalError": "Nie udało się zatwierdzić transferu CHAT",

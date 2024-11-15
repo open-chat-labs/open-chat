@@ -1094,11 +1094,12 @@
         "groupIndexAction": "Gruppenindexaktionen",
         "makeProposal": "Machen Sie einen Vorschlag",
         "maker": {
-            "achievementChatCost": "Zur Bereitstellung des angeforderten CHIT ist eine Zahlung von {cost} {token}-Tokens erforderlich. Nicht ausgegebene CHATs werden nach Ablauf der Errungenschaft zurückerstattet.",
+            "achievementChatCost": "Zur Bereitstellung des angeforderten CHIT ist eine Zahlung von {cost} {chat}-Tokens erforderlich. Nicht ausgegebene CHATs werden nach Ablauf der Errungenschaft zurückerstattet.",
             "achievementExpiry": "Ablauf",
             "achievementLogo": "Leistungslogo",
             "achievementName": "Name der Leistung",
             "achievementUrl": "Erfolgs-URL",
+            "addTokenChatCost": "Um ein neues Token auf OpenChat aufzulisten, ist eine Zahlung von {cost} {chat}-Token erforderlich.",
             "amount": "Menge",
             "amountRules": "mindestens 1 {token}-Token",
             "approvalError": "Die Genehmigung der CHAT-Übertragung ist fehlgeschlagen",

@@ -207,6 +207,7 @@ pub mod happy_path {
         user_index_canister_id: CanisterId,
         local_user_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
+        bot_api_gateway_canister_id: CanisterId,
     ) {
         let response = super::add_local_user_index_canister(
             env,
@@ -215,6 +216,7 @@ pub mod happy_path {
             &user_index_canister::add_local_user_index_canister::Args {
                 canister_id: local_user_index_canister_id,
                 notifications_canister_id,
+                bot_api_gateway_canister_id,
             },
         );
 

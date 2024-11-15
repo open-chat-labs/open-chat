@@ -1,4 +1,4 @@
-use crate::VideoCallType;
+use crate::{MessageId, MessageIndex, UserId, VideoCallType};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
@@ -9,6 +9,7 @@ pub enum AccessTokenType {
     StartVideoCallV2(VideoCallAccessTokenArgs),
     JoinVideoCall,
     MarkVideoCallAsEnded,
+    BotCommand(BotCommandArgs),
 }
 
 #[ts_export]
@@ -17,12 +18,22 @@ pub struct VideoCallAccessTokenArgs {
     pub call_type: VideoCallType,
 }
 
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+pub struct BotCommandArgs {
+    pub user_id: UserId,
+    pub bot: UserId,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_id: MessageId,
+}
+
 impl AccessTokenType {
     pub fn type_name(&self) -> &str {
         match self {
             AccessTokenType::StartVideoCallV2(_) => "StartVideoCall",
             AccessTokenType::JoinVideoCall => "JoinVideoCall",
             AccessTokenType::MarkVideoCallAsEnded => "MarkVideoCallAsEnded",
+            AccessTokenType::BotCommand(_) => "BotCommand",
         }
     }
 }
