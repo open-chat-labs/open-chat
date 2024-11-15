@@ -99,6 +99,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let local_user_index_canister_id = create_canister(env, user_index_canister_id);
     let local_group_index_canister_id = create_canister(env, group_index_canister_id);
     let notifications_canister_id = create_canister(env, notifications_index_canister_id);
+    let bot_api_gateway_canister_id = create_canister(env, user_index_canister_id);
 
     let community_canister_wasm = wasms::COMMUNITY.clone();
     let cycles_dispenser_canister_wasm = wasms::CYCLES_DISPENSER.clone();
@@ -410,6 +411,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         user_index_canister_id,
         local_user_index_canister_id,
         notifications_canister_id,
+        bot_api_gateway_canister_id,
     );
 
     client::group_index::happy_path::upgrade_group_canister_wasm(env, controller, group_index_canister_id, group_canister_wasm);
