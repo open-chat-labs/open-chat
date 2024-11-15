@@ -7,8 +7,8 @@ use pocket_ic::PocketIc;
 use std::ops::Deref;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    icrc1, ChatId, CommunityId, CryptoTransaction, Cryptocurrency, EventIndex, MessageContentInitial, PendingCryptoTransaction,
-    PrizeContentInitial,
+    icrc1, Chat, ChatEvent, ChatId, CommunityId, CryptoTransaction, Cryptocurrency, EventIndex, MessageContentInitial,
+    PendingCryptoTransaction, PrizeContentInitial, ReplyContext, TextContent,
 };
 use user_canister::mark_read::ChatMessagesRead;
 use utils::time::HOUR_IN_MS;
@@ -243,6 +243,103 @@ fn pending_prizes_transferred_to_community() {
 
     let community_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, Principal::from(community_id));
     assert_eq!(community_balance, 0);
+}
+
+#[test]
+fn private_replies_to_group_updated_to_community() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData {
+        user1,
+        user2,
+        group_id,
+        community_id,
+        ..
+    } = init_test_data(env, canister_ids, *controller);
+
+    let send_message_response =
+        client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None);
+
+    client::user::send_message_v2(
+        env,
+        user2.principal,
+        user2.canister(),
+        &user_canister::send_message_v2::Args {
+            recipient: user1.user_id,
+            thread_root_message_index: None,
+            message_id: random_from_u128(),
+            content: MessageContentInitial::Text(TextContent { text: random_string() }),
+            replies_to: Some(ReplyContext {
+                chat_if_other: Some((Chat::Group(group_id), None)),
+                event_index: send_message_response.event_index,
+            }),
+            forwarding: false,
+            block_level_markdown: false,
+            message_filter_failed: None,
+            pin: None,
+            correlation_id: 0,
+        },
+    );
+
+    let import_group_response = client::community::import_group(
+        env,
+        user1.principal,
+        community_id.into(),
+        &community_canister::import_group::Args { group_id },
+    );
+
+    let channel_id = match import_group_response {
+        community_canister::import_group::Response::Success(result) => result.channel_id,
+        response => panic!("{response:?}"),
+    };
+
+    tick_many(env, 10);
+
+    let user1_event = client::user::happy_path::events(env, &user1, user2.user_id, EventIndex::default(), true, 10, 10)
+        .events
+        .pop()
+        .unwrap()
+        .event;
+
+    if let ChatEvent::Message(m) = user1_event {
+        if let Some(replies_to) = m.replies_to {
+            assert_eq!(
+                replies_to.chat_if_other,
+                Some((Chat::Channel(community_id, channel_id), None))
+            );
+            assert_eq!(replies_to.event_index, send_message_response.event_index);
+        } else {
+            panic!();
+        }
+    } else {
+        panic!();
+    }
+
+    let user2_event = client::user::happy_path::events(env, &user2, user1.user_id, EventIndex::default(), true, 10, 10)
+        .events
+        .pop()
+        .unwrap()
+        .event;
+
+    if let ChatEvent::Message(m) = user2_event {
+        if let Some(replies_to) = m.replies_to {
+            assert_eq!(
+                replies_to.chat_if_other,
+                Some((Chat::Channel(community_id, channel_id), None))
+            );
+            assert_eq!(replies_to.event_index, send_message_response.event_index);
+        } else {
+            panic!();
+        }
+    } else {
+        panic!();
+    }
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {

@@ -19,7 +19,7 @@ use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::mem;
 use std::ops::DerefMut;
-use tracing::info;
+use tracing::{error, info};
 use types::{
     AcceptP2PSwapResult, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, ChatType, CompleteP2PSwapResult,
     CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventContext, EventIndex, EventWrapper,
@@ -1559,15 +1559,22 @@ impl ChatEvents {
     }
 
     // Used when a group is imported into a community
-    pub fn migrate_replies(&mut self, old: ChatInternal, new: ChatInternal, now: TimestampMillis) {
-        for (thread_root_message_index, events_list) in [(None, &mut self.main)]
-            .into_iter()
-            .chain(self.threads.iter_mut().map(|(t, e)| (Some(*t), e)))
+    pub fn migrate_reply(&mut self, message_index: MessageIndex, old: ChatInternal, new: ChatInternal, now: TimestampMillis) {
+        if self
+            .update_message(None, message_index.into(), EventIndex::default(), Some(now), |message, _| {
+                if let Some(r) = message.replies_to.as_mut() {
+                    if let Some((chat, _)) = r.chat_if_other.as_mut() {
+                        if *chat == old {
+                            *chat = new;
+                            return Ok(());
+                        }
+                    }
+                }
+                Err(UpdateEventError::NoChange(()))
+            })
+            .is_err()
         {
-            for event_index in events_list.migrate_replies(old, new) {
-                self.last_updated_timestamps
-                    .mark_updated(thread_root_message_index, event_index, now);
-            }
+            error!("Failed to migrate reply. This should never happen")
         }
     }
 
