@@ -462,7 +462,7 @@
 <Head />
 
 <ActiveCall
-    on:clearSelection={() => page(routeForScope($chatListScope))}
+    onClearSelection={() => page(routeForScope($chatListScope))}
     bind:this={videoCallElement} />
 
 <VideoCallAccessRequests />

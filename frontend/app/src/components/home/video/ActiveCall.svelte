@@ -41,28 +41,29 @@
     import Button from "../../Button.svelte";
     import ActiveCallHeader from "./ActiveCallHeader.svelte";
 
-    const client = getContext<OpenChat>("client");
-
-    $: chat = normaliseChatSummary($selectedChat, $activeVideoCall?.chatId);
-    $: threadOpen = $activeVideoCall?.threadOpen ?? false;
-    $: participantsOpen = $activeVideoCall?.participantsOpen ?? false;
-
-    let iframeContainer: HTMLDivElement;
-    let confirmSwitchTo: { chat: ChatSummary; join: boolean } | undefined = undefined;
-    let hostEnded = false;
-    let denied = false;
-    let askedToSpeak = false;
-    let call: DailyCall | undefined = undefined;
-
-    $: {
-        activeVideoCall.changeTheme(getThemeConfig($currentTheme));
+    interface Props {
+        onClearSelection: () => void;
     }
 
-    // Note: _selectedChat is passed in as a reactivity hack for svelte :puke:
-    function normaliseChatSummary(
-        _selectedChat: ChatSummary | undefined,
-        chatId: ChatIdentifier | undefined,
-    ) {
+    let { onClearSelection }: Props = $props();
+
+    const client = getContext<OpenChat>("client");
+
+    let iframeContainer: HTMLDivElement | undefined = $state();
+    let confirmSwitchTo: { chat: ChatSummary; join: boolean } | undefined = $state(undefined);
+    let hostEnded = $state(false);
+    let denied = $state(false);
+    let askedToSpeak = $state(false);
+    let call: DailyCall | undefined = $state();
+    let chat = $derived(normaliseChatSummary($activeVideoCall?.chatId));
+    let threadOpen = $derived($activeVideoCall?.threadOpen ?? false);
+    let participantsOpen = $derived($activeVideoCall?.participantsOpen ?? false);
+
+    $effect(() => {
+        activeVideoCall.changeTheme(getThemeConfig($currentTheme));
+    });
+
+    function normaliseChatSummary(chatId: ChatIdentifier | undefined) {
         if (chatId) {
             const chat = client.lookupChatSummary(chatId);
             if (chat) {
@@ -103,7 +104,7 @@
     }
 
     export async function startOrJoinVideoCall(chat: ChatSummary, join: boolean) {
-        if (chat === undefined) return;
+        if (chat === undefined || iframeContainer === undefined) return;
 
         const isPublic = !client.isChatPrivate(chat);
 
@@ -311,7 +312,7 @@
 {#if hostEnded}
     <Overlay>
         <ModalContent hideHeader>
-            <div class="host-ended" slot="body">
+            <div slot="body" class="host-ended">
                 <Translatable resourceKey={i18nKey("videoCall.hostEnded")} />
             </div>
             <span slot="footer">
@@ -328,7 +329,7 @@
 {#if denied}
     <Overlay>
         <ModalContent hideHeader>
-            <div class="denied" slot="body">
+            <div slot="body" class="denied">
                 <Translatable resourceKey={i18nKey("videoCall.denied")} />
             </div>
             <span slot="footer">
@@ -352,10 +353,9 @@
         chatIdentifiersEqual($activeVideoCall.chatId, $selectedChat?.id)}>
     {#if chat !== undefined}
         <ActiveCallHeader
-            on:clearSelection
-            on:hangup={hangup}
-            on:showParticipants
-            on:askToSpeak={askToSpeak}
+            {onClearSelection}
+            onHangup={hangup}
+            onAskToSpeak={askToSpeak}
             {chat}
             {askedToSpeak} />
     {/if}
