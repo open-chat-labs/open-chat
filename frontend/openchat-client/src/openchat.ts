@@ -7271,6 +7271,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
     removeFromFavourites(chatId: ChatIdentifier): Promise<boolean> {
         localChatSummaryUpdates.unfavourite(chatId);
+        if (this._liveState.chatSummariesList.length === 0) {
+            this.dispatchEvent(new SelectedChatInvalid());
+        }
+
         return this.sendRequest({ kind: "removeFromFavourites", chatId })
             .then((resp) => {
                 if (resp !== "success") {
@@ -7445,8 +7449,10 @@ export class OpenChat extends OpenChatAgentWorker {
         // However, with communities enabled it is not clear what this means
         // we actually need to direct the user to one of the global scopes "direct", "group" or "favourites"
         // which one we choose is kind of unclear and probably depends on the state
+
         const global = this._liveState.globalState;
-        if (global.favourites.size > 0) return { kind: "favourite" };
+        const favourites = this._liveState.favourites;
+        if (favourites.size > 0) return { kind: "favourite" };
         if (global.groupChats.size > 0) return { kind: "group_chat" };
         return { kind: "direct_chat" };
     }
