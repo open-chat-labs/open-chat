@@ -1094,11 +1094,12 @@
         "groupIndexAction": "समूह सूचकांक क्रियाएँ",
         "makeProposal": "प्रस्ताव बनाएं",
         "maker": {
-            "achievementChatCost": "अनुरोधित CHIT का प्रावधान करने के लिए {cost} {token} टोकन का भुगतान आवश्यक है। उपलब्धि समाप्त होने पर कोई भी अप्रयुक्त CHAT वापस कर दी जाएगी।",
+            "achievementChatCost": "अनुरोधित CHIT का प्रावधान करने के लिए {cost} {chat} टोकन का भुगतान आवश्यक है। उपलब्धि समाप्त होने पर कोई भी अप्रयुक्त CHAT वापस कर दी जाएगी।",
             "achievementExpiry": "समाप्ति",
             "achievementLogo": "उपलब्धि लोगो",
             "achievementName": "उपलब्धि का नाम",
             "achievementUrl": "उपलब्धि यूआरएल",
+            "addTokenChatCost": "ओपनचैट पर नया टोकन सूचीबद्ध करने के लिए {cost} {chat} टोकन का भुगतान आवश्यक है।",
             "amount": "मात्रा",
             "amountRules": "कम से कम 1 {token} टोकन",
             "approvalError": "CHAT स्थानांतरण स्वीकृत करने में विफल",
