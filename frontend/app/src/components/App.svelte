@@ -97,7 +97,8 @@
     setContext<OpenChat>("client", client);
 
     let profileTrace = client.showTrace();
-    let videoCallElement: ActiveCall;
+    // I can't (yet) find a way to avoid using "any" here. Will try to improve but need to commit this crime for the time being
+    let videoCallElement: any;
     let landingPageRoute = $derived(isLandingPageRoute($pathParams));
     let homeRoute = $derived($pathParams.kind === "home_route");
     let showLandingPage = $derived(
