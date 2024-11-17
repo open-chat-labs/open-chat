@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add `BotApiCanister` to the canister state ([#6828](https://github.com/open-chat-labs/open-chat/pull/6828))
 - Add the `BotCommand` access token type ([#6830](https://github.com/open-chat-labs/open-chat/pull/6830))
+- Disable job to top up canisters until we have more cycles ([#6833](https://github.com/open-chat-labs/open-chat/pull/6833))
 
 ## [[2.0.1454](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1454-local_user_index)] - 2024-11-14
 

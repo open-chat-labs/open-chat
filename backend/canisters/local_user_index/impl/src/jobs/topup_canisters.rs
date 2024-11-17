@@ -18,7 +18,10 @@ thread_local! {
 const CYCLES_CHECK_INTERVAL: Milliseconds = 7 * DAY_IN_MS;
 
 pub fn start_job() {
-    run_now_then_interval(Duration::from_millis(CYCLES_CHECK_INTERVAL), populate_canisters);
+    let enabled = false;
+    if enabled {
+        run_now_then_interval(Duration::from_millis(CYCLES_CHECK_INTERVAL), populate_canisters);
+    }
 }
 
 fn populate_canisters() {
