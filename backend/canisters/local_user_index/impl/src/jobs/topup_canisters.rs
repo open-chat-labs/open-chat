@@ -18,7 +18,10 @@ thread_local! {
 const CYCLES_CHECK_INTERVAL: Milliseconds = 7 * DAY_IN_MS;
 
 pub fn start_job() {
-    run_now_then_interval(Duration::from_millis(CYCLES_CHECK_INTERVAL), populate_canisters);
+    let enabled = false;
+    if enabled {
+        run_now_then_interval(Duration::from_millis(CYCLES_CHECK_INTERVAL), populate_canisters);
+    }
 }
 
 fn populate_canisters() {
@@ -79,7 +82,7 @@ fn next(state: &mut RuntimeState) -> GetNextResult {
     GetNextResult::Break
 }
 
-async fn run_async(user_id: UserId) {
+pub(crate) async fn run_async(user_id: UserId) {
     match ic_cdk::api::management_canister::main::canister_status(CanisterIdRecord {
         canister_id: user_id.into(),
     })

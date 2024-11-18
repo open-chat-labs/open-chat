@@ -1095,11 +1095,12 @@
         "groupIndexAction": "פעולות אינדקס קבוצתיות",
         "makeProposal": "תציע הצעה",
         "maker": {
-            "achievementChatCost": "נדרש תשלום של {cost} {token} אסימונים כדי לספק את ה-CHIT המבוקש. כל צ'אט שלא הוצא יוחזר כאשר ההישג יפוג.",
+            "achievementChatCost": "נדרש תשלום של {cost} {chat} אסימונים כדי לספק את ה-CHIT המבוקש. כל CHAT שלא הוצא יוחזר כאשר יפוג ההישג.",
             "achievementExpiry": "תְפוּגָה",
             "achievementLogo": "לוגו הישג",
             "achievementName": "שם הישג",
             "achievementUrl": "כתובת אתר של הישג",
+            "addTokenChatCost": "נדרש תשלום של {cost} {chat} אסימונים כדי לרשום אסימון חדש ב-OpenChat.",
             "amount": "כמות",
             "amountRules": "לפחות אסימון {token} אחד",
             "approvalError": "אישור העברת ה-CHAT נכשל",

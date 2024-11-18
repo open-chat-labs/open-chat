@@ -1095,11 +1095,12 @@
         "groupIndexAction": "Actions d'index de groupe",
         "makeProposal": "Faire une proposition",
         "maker": {
-            "achievementChatCost": "Un paiement de {cost} {token} jetons est requis pour provisionner le CHIT demandé. Tout CHAT non dépensé sera remboursé à l'expiration de la réussite.",
+            "achievementChatCost": "Un paiement de {cost} {chat} jetons est requis pour provisionner le CHIT demandé. Tout CHAT non dépensé sera remboursé à l'expiration de la réussite.",
             "achievementExpiry": "Expiration",
             "achievementLogo": "Logo de réussite",
             "achievementName": "Nom de la réalisation",
             "achievementUrl": "URL de réussite",
+            "addTokenChatCost": "Un paiement de {cost} {chat} jetons est requis pour répertorier un nouveau jeton sur OpenChat.",
             "amount": "Montant",
             "amountRules": "au moins 1 jeton {token}",
             "approvalError": "Impossible d'approuver le transfert CHAT",

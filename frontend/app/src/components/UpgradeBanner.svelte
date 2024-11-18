@@ -11,14 +11,15 @@
     let poller = new Poller(checkVersion, VERSION_INTERVAL);
     // @ts-ignore
     let clientVersion = Version.parse(window.OPENCHAT_WEBSITE_VERSION);
-    let countdown = 30;
-    let showBanner = false;
+    let countdown = $state(30);
+    let showBanner = $state(false);
     let errorCount = 0;
 
     onDestroy(() => poller.stop());
 
     function checkVersion(): Promise<void> {
-        if (process.env.NODE_ENV !== "production" || $activeVideoCall !== undefined) return Promise.resolve();
+        if (process.env.NODE_ENV !== "production" || $activeVideoCall !== undefined)
+            return Promise.resolve();
         return getServerVersion().then((serverVersion) => {
             if (serverVersion.isGreaterThan(clientVersion)) {
                 poller.stop();
@@ -54,6 +55,11 @@
                 return clientVersion;
             });
     }
+
+    function reload(ev: Event) {
+        window.location.reload();
+        ev.preventDefault();
+    }
 </script>
 
 {#if showBanner}
@@ -62,8 +68,7 @@
             <span class="message"
                 ><Translatable resourceKey={i18nKey("updateRequired", { countdown })} /></span>
             <span class="update-now">
-                <a href="/" on:click|preventDefault={() => window.location.reload()}
-                    ><Translatable resourceKey={i18nKey("updateNow")} /></a>
+                <a href="/" onclick={reload}><Translatable resourceKey={i18nKey("updateNow")} /></a>
             </span>
         </div>
     </div>

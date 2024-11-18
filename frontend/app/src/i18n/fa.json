@@ -1095,11 +1095,12 @@
         "groupIndexAction": "اقدامات فهرست گروهی",
         "makeProposal": "پیشنهاد بدهید",
         "maker": {
-            "achievementChatCost": "برای ارائه CHIT درخواستی، پرداخت {cost} {token} توکن مورد نیاز است. هر چت خرج نشده پس از انقضای جایزه بازپرداخت خواهد شد.",
+            "achievementChatCost": "برای ارائه CHIT درخواستی، پرداخت {cost} {chat} توکن مورد نیاز است. هر چت خرج نشده پس از منقضی شدن جایزه بازپرداخت می شود.",
             "achievementExpiry": "انقضا",
             "achievementLogo": "لوگوی دستاورد",
             "achievementName": "نام دستاورد",
             "achievementUrl": "URL دستاورد",
+            "addTokenChatCost": "برای فهرست کردن یک نشانه جدید در OpenChat، پرداخت {cost} {chat} توکن لازم است.",
             "amount": "میزان",
             "amountRules": "حداقل 1 نشانه {token}",
             "approvalError": "تایید انتقال CHAT انجام نشد",

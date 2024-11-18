@@ -1,6 +1,5 @@
 <script lang="ts">
-    import { onMount, setContext } from "svelte";
-
+    import { setContext } from "svelte";
     import "../i18n/i18n";
     import "../utils/markdown";
     import "../utils/scream";
@@ -95,18 +94,41 @@
     }
 
     let client: OpenChat = createOpenChatClient();
-
-    let profileTrace = client.showTrace();
-    let videoCallElement: ActiveCall;
-
     setContext<OpenChat>("client", client);
 
-    $: landingPageRoute = isLandingPageRoute($pathParams);
-    $: homeRoute = $pathParams.kind === "home_route";
-    $: showLandingPage =
-        landingPageRoute || (homeRoute && $identityState.kind === "anon" && $anonUser);
+    let profileTrace = client.showTrace();
+    // I can't (yet) find a way to avoid using "any" here. Will try to improve but need to commit this crime for the time being
+    let videoCallElement: any;
+    let landingPageRoute = $derived(isLandingPageRoute($pathParams));
+    let homeRoute = $derived($pathParams.kind === "home_route");
+    let showLandingPage = $derived(
+        landingPageRoute || (homeRoute && $identityState.kind === "anon" && $anonUser),
+    );
+    let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
+    let burstPath = $derived(
+        $currentTheme.mode === "dark" ? "/assets/burst_dark" : "/assets/burst_light",
+    );
+    let burstUrl = $derived(isFirefox ? `${burstPath}.png` : `${burstPath}.svg`);
+    let burstFixed = $derived(isScrollingRoute($pathParams));
 
-    onMount(() => {
+    let upgrading = $derived(
+        $identityState.kind === "upgrading_user" || $identityState.kind === "upgrade_user",
+    );
+
+    $effect(() => {
+        // subscribe to the rtl store so that we can set the overall page direction at the right time
+        document.dir = $rtlStore ? "rtl" : "ltr";
+    });
+
+    $effect(() => {
+        if (!$notFound && showLandingPage) {
+            document.body.classList.add("landing-page");
+        } else {
+            document.body.classList.remove("landing-page");
+        }
+    });
+
+    $effect(() => {
         redirectLandingPageLinksIfNecessary();
         if (client.captureReferralCode()) {
             pageReplace(removeQueryStringParam("ref"));
@@ -389,23 +411,10 @@
         });
     }
 
-    $: {
-        if (!$notFound && showLandingPage) {
-            document.body.classList.add("landing-page");
-        } else {
-            document.body.classList.remove("landing-page");
-        }
-    }
-
     function calculateHeight() {
         // fix the issue with 100vh layouts in various mobile browsers
         let vh = window.innerHeight * 0.01;
         document.documentElement.style.setProperty("--vh", `${vh}px`);
-    }
-
-    $: {
-        // subscribe to the rtl store so that we can set the overall page direction at the right time
-        document.dir = $rtlStore ? "rtl" : "ltr";
     }
 
     function unhandledError(ev: Event) {
@@ -437,19 +446,14 @@
         videoCallElement?.hangup();
     }
 
-    function joinVideoCall(ev: CustomEvent<ChatIdentifier>) {
+    function joinVideoCall(chatId: ChatIdentifier) {
         incomingVideoCall.set(undefined);
-        const chat = client.lookupChatSummary(ev.detail);
+        const chat = client.lookupChatSummary(chatId);
         if (chat) {
             page(routeForChatIdentifier("none", chat.id));
             videoCallElement?.startOrJoinVideoCall(chat, true);
         }
     }
-
-    let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
-    $: burstPath = $currentTheme.mode === "dark" ? "/assets/burst_dark" : "/assets/burst_light";
-    $: burstUrl = isFirefox ? `${burstPath}.png` : `${burstPath}.svg`;
-    $: burstFixed = isScrollingRoute($pathParams);
 </script>
 
 {#if $currentTheme.burst || landingPageRoute}
@@ -463,12 +467,12 @@
 <Head />
 
 <ActiveCall
-    on:clearSelection={() => page(routeForScope($chatListScope))}
+    onClearSelection={() => page(routeForScope($chatListScope))}
     bind:this={videoCallElement} />
 
 <VideoCallAccessRequests />
 
-<IncomingCall on:joinVideoCall={joinVideoCall} />
+<IncomingCall onJoinVideoCall={joinVideoCall} />
 
 <Witch background />
 
@@ -478,7 +482,7 @@
 
 {#if isCanisterUrl}
     <SwitchDomain />
-{:else if $identityState.kind === "upgrading_user" || $identityState.kind === "upgrade_user"}
+{:else if upgrading}
     <Upgrading />
 {:else if $identityState.kind === "anon" || $identityState.kind === "logging_in" || $identityState.kind === "registering" || $identityState.kind === "logged_in" || $identityState.kind === "loading_user" || $identityState.kind === "challenging"}
     {#if !$isLoading || $reviewingTranslations}
@@ -500,8 +504,8 @@
     <Snow />
 {/if}
 
-<svelte:window on:resize={resize} on:error={unhandledError} on:orientationchange={resize} />
-<svelte:body on:click={() => menuStore.hideMenu()} />
+<svelte:window onresize={resize} onerror={unhandledError} onorientationchange={resize} />
+<svelte:body onclick={() => menuStore.hideMenu()} />
 
 <style lang="scss">
     :global {

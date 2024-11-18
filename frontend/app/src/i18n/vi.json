@@ -1095,11 +1095,12 @@
         "groupIndexAction": "Hành động chỉ mục nhóm",
         "makeProposal": "Đưa ra đề xuất",
         "maker": {
-            "achievementChatCost": "Cần phải thanh toán {cost} {token} token để cung cấp CHIT theo yêu cầu. Bất kỳ CHAT nào chưa sử dụng sẽ được hoàn lại khi thành tích hết hạn.",
+            "achievementChatCost": "Cần phải thanh toán {cost} {chat} token để cung cấp CHIT theo yêu cầu. Bất kỳ CHAT nào chưa sử dụng sẽ được hoàn lại khi thành tích hết hạn.",
             "achievementExpiry": "Hết hạn",
             "achievementLogo": "Logo thành tích",
             "achievementName": "Tên thành tích",
             "achievementUrl": "URL thành tích",
+            "addTokenChatCost": "Cần phải thanh toán {cost} {chat} token để niêm yết một token mới trên OpenChat.",
             "amount": "Số lượng",
             "amountRules": "ít nhất 1 mã thông báo {token}",
             "approvalError": "Không thể chấp thuận chuyển CHAT",

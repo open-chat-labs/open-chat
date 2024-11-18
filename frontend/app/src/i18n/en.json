@@ -1095,11 +1095,12 @@
         "groupIndexAction": "Group Index Actions",
         "makeProposal": "Make proposal",
         "maker": {
-            "achievementChatCost": "A payment of {cost} {token} tokens is required to provision the requested CHIT. Any unspent CHAT will be refunded when the achievement expires.",
+            "achievementChatCost": "A payment of {cost} {chat} tokens is required to provision the requested CHIT. Any unspent CHAT will be refunded when the achievement expires.",
             "achievementExpiry": "Expiry",
             "achievementLogo": "Achievement Logo",
             "achievementName": "Achievement name",
             "achievementUrl": "Achievement URL",
+            "addTokenChatCost": "A payment of {cost} {chat} tokens is required to list a new token on OpenChat.",
             "amount": "Amount",
             "amountRules": "at least 1 {token} token",
             "approvalError": "Failed to approve the CHAT transfer",

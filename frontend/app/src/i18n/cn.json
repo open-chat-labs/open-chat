@@ -1095,11 +1095,12 @@
         "groupIndexAction": "集团指数行动",
         "makeProposal": "提案",
         "maker": {
-            "achievementChatCost": "需要支付 {cost} {token} 代币才能提供所请求的 CHIT。成就到期后，所有未使用的 CHAT 都将退还。",
+            "achievementChatCost": "需要支付 {cost} {chat} 代币才能提供所请求的 CHIT。成就到期后，所有未使用的 CHAT 都将退还。",
             "achievementExpiry": "到期",
             "achievementLogo": "成就标志",
             "achievementName": "成就名称",
             "achievementUrl": "成就网址",
+            "addTokenChatCost": "需要支付 {cost} {chat} 个代币才能在 OpenChat 上列出新代币。",
             "amount": "数量",
             "amountRules": "至少 1 个 {token} 令牌",
             "approvalError": "无法批准 CHAT 转移",

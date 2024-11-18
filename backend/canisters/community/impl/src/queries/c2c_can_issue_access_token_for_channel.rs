@@ -24,7 +24,7 @@ fn c2c_can_issue_access_token_for_channel_impl(args: Args, state: &RuntimeState)
         AccessTokenType::StartVideoCallV2(vc) => {
             can_start_video_call(member, state.data.is_public, vc.call_type, &channel.chat)
         }
-        AccessTokenType::JoinVideoCall | AccessTokenType::MarkVideoCallAsEnded => true,
+        AccessTokenType::JoinVideoCall | AccessTokenType::MarkVideoCallAsEnded | AccessTokenType::BotCommand(_) => true,
     }
 }
 

@@ -24,6 +24,7 @@ dfx --identity $IDENTITY canister create --provisional-create-canister-effective
 dfx --identity $IDENTITY canister create --provisional-create-canister-effective-canister-id jrlun-jiaaa-aaaab-aaaaa-cai --network $NETWORK --no-wallet --with-cycles 100000000000000 local_user_index
 dfx --identity $IDENTITY canister create --provisional-create-canister-effective-canister-id jrlun-jiaaa-aaaab-aaaaa-cai --network $NETWORK --no-wallet --with-cycles 100000000000000 local_group_index
 dfx --identity $IDENTITY canister create --provisional-create-canister-effective-canister-id jrlun-jiaaa-aaaab-aaaaa-cai --network $NETWORK --no-wallet --with-cycles 100000000000000 notifications
+dfx --identity $IDENTITY canister create --provisional-create-canister-effective-canister-id jrlun-jiaaa-aaaab-aaaaa-cai --network $NETWORK --no-wallet --with-cycles 100000000000000 bot_api_gateway
 dfx --identity $IDENTITY canister create --provisional-create-canister-effective-canister-id jrlun-jiaaa-aaaab-aaaaa-cai --network $NETWORK --no-wallet --with-cycles 100000000000000 identity
 dfx --identity $IDENTITY canister create --provisional-create-canister-effective-canister-id jrlun-jiaaa-aaaab-aaaaa-cai --network $NETWORK --no-wallet --with-cycles 100000000000000 online_users
 dfx --identity $IDENTITY canister create --provisional-create-canister-effective-canister-id jrlun-jiaaa-aaaab-aaaaa-cai --network $NETWORK --no-wallet --with-cycles 100000000000000 airdrop_bot

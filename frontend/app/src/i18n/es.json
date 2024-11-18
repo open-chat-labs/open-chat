@@ -1095,11 +1095,12 @@
         "groupIndexAction": "Acciones de índice de grupo",
         "makeProposal": "hacer propuesta",
         "maker": {
-            "achievementChatCost": "Se requiere un pago de tokens {cost} {token} para obtener el CHIT solicitado. Cualquier CHAT no utilizado se reembolsará cuando caduque el logro.",
+            "achievementChatCost": "Se requiere un pago de tokens {cost} {chat} para obtener el CHIT solicitado. Cualquier CHAT no utilizado se reembolsará cuando caduque el logro.",
             "achievementExpiry": "Expiración",
             "achievementLogo": "Logotipo de logros",
             "achievementName": "Nombre del logro",
             "achievementUrl": "URL del logro",
+            "addTokenChatCost": "Se requiere un pago de tokens {cost} {chat} para incluir un nuevo token en OpenChat.",
             "amount": "Cantidad",
             "amountRules": "al menos 1 token {token}",
             "approvalError": "No se pudo aprobar la transferencia de CHAT",

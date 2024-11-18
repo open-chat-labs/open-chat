@@ -113,6 +113,8 @@ function updateParticipant(
     });
 }
 
+export type ActiveVideoCallStore = typeof activeVideoCall;
+
 export const activeVideoCall = {
     subscribe: activeStore.subscribe,
     setCall: (chatId: ChatIdentifier, messageId: bigint, call: DailyCall) => {

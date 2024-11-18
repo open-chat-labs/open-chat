@@ -9,7 +9,7 @@
         <h1 class="title"><Translatable resourceKey={i18nKey("performingUpgrade")} /></h1>
         <p class="blurb"><Translatable resourceKey={i18nKey("pleaseWait")} /></p>
     </div>
-    <div class="spinner" />
+    <div class="spinner"></div>
 </ModalPage>
 
 <style lang="scss">
