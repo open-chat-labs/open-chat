@@ -14,7 +14,7 @@ use p256_key_pair::P256KeyPair;
 use proof_of_unique_personhood::verify_proof_of_unique_personhood;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::{BTreeMap, HashMap, VecDeque};
+use std::collections::{BTreeMap, BTreeSet, HashMap, VecDeque};
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
@@ -318,7 +318,7 @@ struct Data {
     #[serde(with = "serde_bytes")]
     pub ic_root_key: Vec<u8>,
     pub events_for_remote_users: Vec<(UserId, UserEvent)>,
-    pub canisters_pending_events_migration_to_stable_memory: Vec<CanisterId>,
+    pub canisters_pending_events_migration_to_stable_memory: BTreeSet<CanisterId>,
     pub cycles_balance_check_queue: VecDeque<UserId>,
 }
 
@@ -403,7 +403,7 @@ impl Data {
             users_to_delete_queue: VecDeque::new(),
             ic_root_key,
             events_for_remote_users: Vec::new(),
-            canisters_pending_events_migration_to_stable_memory: Vec::new(),
+            canisters_pending_events_migration_to_stable_memory: BTreeSet::new(),
             cycles_balance_check_queue: VecDeque::new(),
         }
     }

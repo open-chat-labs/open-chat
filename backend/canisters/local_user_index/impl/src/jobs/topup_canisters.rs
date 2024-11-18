@@ -82,7 +82,7 @@ fn next(state: &mut RuntimeState) -> GetNextResult {
     GetNextResult::Break
 }
 
-async fn run_async(user_id: UserId) {
+pub(crate) async fn run_async(user_id: UserId) {
     match ic_cdk::api::management_canister::main::canister_status(CanisterIdRecord {
         canister_id: user_id.into(),
     })
