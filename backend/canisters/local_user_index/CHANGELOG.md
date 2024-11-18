@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Modify upgrade job to top up, then migrate events, then upgrade ([#6834](https://github.com/open-chat-labs/open-chat/pull/6834))
+
+## [[2.0.1457](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1457-local_user_index)] - 2024-11-17
+
+### Changed
+
 - Add `BotApiCanister` to the canister state ([#6828](https://github.com/open-chat-labs/open-chat/pull/6828))
 - Add the `BotCommand` access token type ([#6830](https://github.com/open-chat-labs/open-chat/pull/6830))
 - Disable job to top up canisters until we have more cycles ([#6833](https://github.com/open-chat-labs/open-chat/pull/6833))
