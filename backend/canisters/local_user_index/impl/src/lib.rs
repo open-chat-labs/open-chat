@@ -14,7 +14,7 @@ use p256_key_pair::P256KeyPair;
 use proof_of_unique_personhood::verify_proof_of_unique_personhood;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::{BTreeMap, HashMap, VecDeque};
+use std::collections::{BTreeMap, BTreeSet, HashMap, VecDeque};
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
@@ -259,6 +259,7 @@ impl RuntimeState {
                 group_index: self.data.group_index_canister_id,
                 identity: self.data.identity_canister_id,
                 notifications: self.data.notifications_canister_id,
+                bot_api_gateway: self.data.bot_api_gateway_canister_id,
                 proposals_bot: self.data.proposals_bot_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 escrow: self.data.escrow_canister_id,
@@ -292,6 +293,8 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub identity_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
+    #[serde(default = "bot_api_gateway_canister_id")]
+    pub bot_api_gateway_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
@@ -315,9 +318,21 @@ struct Data {
     #[serde(with = "serde_bytes")]
     pub ic_root_key: Vec<u8>,
     pub events_for_remote_users: Vec<(UserId, UserEvent)>,
-    pub canisters_pending_events_migration_to_stable_memory: Vec<CanisterId>,
-    #[serde(skip_deserializing)]
+    pub canisters_pending_events_migration_to_stable_memory: BTreeSet<CanisterId>,
     pub cycles_balance_check_queue: VecDeque<UserId>,
+}
+
+fn bot_api_gateway_canister_id() -> CanisterId {
+    let canister_id = ic_cdk::id();
+    if canister_id == CanisterId::from_text("nq4qv-wqaaa-aaaaf-bhdgq-cai").unwrap() {
+        CanisterId::from_text("xdh4a-myaaa-aaaaf-bscya-cai").unwrap()
+    } else if canister_id == CanisterId::from_text("aboy3-giaaa-aaaar-aaaaq-cai").unwrap() {
+        CanisterId::from_text("lvpeh-caaaa-aaaar-boaha-cai").unwrap()
+    } else if canister_id == CanisterId::from_text("pecvb-tqaaa-aaaaf-bhdiq-cai").unwrap() {
+        CanisterId::from_text("xeg2u-baaaa-aaaaf-bscyq-cai").unwrap()
+    } else {
+        Principal::anonymous()
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -341,6 +356,7 @@ impl Data {
         group_index_canister_id: CanisterId,
         identity_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
+        bot_api_gateway_canister_id: CanisterId,
         proposals_bot_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         escrow_canister_id: CanisterId,
@@ -360,6 +376,7 @@ impl Data {
             group_index_canister_id,
             identity_canister_id,
             notifications_canister_id,
+            bot_api_gateway_canister_id,
             proposals_bot_canister_id,
             cycles_dispenser_canister_id,
             escrow_canister_id,
@@ -386,7 +403,7 @@ impl Data {
             users_to_delete_queue: VecDeque::new(),
             ic_root_key,
             events_for_remote_users: Vec::new(),
-            canisters_pending_events_migration_to_stable_memory: Vec::new(),
+            canisters_pending_events_migration_to_stable_memory: BTreeSet::new(),
             cycles_balance_check_queue: VecDeque::new(),
         }
     }
@@ -431,6 +448,7 @@ pub struct CanisterIds {
     pub group_index: CanisterId,
     pub identity: CanisterId,
     pub notifications: CanisterId,
+    pub bot_api_gateway: CanisterId,
     pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub escrow: CanisterId,

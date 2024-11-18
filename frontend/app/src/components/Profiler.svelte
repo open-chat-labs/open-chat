@@ -2,32 +2,33 @@
     import { profileStore } from "openchat-client";
     import Select from "./Select.svelte";
 
-    let selectedMethod: string = "";
+    let selectedMethod: string = $state("");
     let dragging = false;
-    let style = `bottom: 10px; left: 10px;`;
-
-    $: methods = Object.keys($profileStore);
-    $: series = selectedMethod !== "" ? $profileStore[selectedMethod] : [];
-
-    $: points = series
-        .map((n, i) => {
-            const belowMax = max - n;
-            const y = (belowMax / range) * 200;
-            const x = 40 * i;
-            return `${x},${y}`;
-        })
-        .join(" ");
-
-    $: average = series.length > 0 ? series.reduce((total, x) => total + x, 0) / series.length : 0;
-
-    $: [min, max] = series.reduce(
-        ([min, max], x) => {
-            return [Math.min(min, x), Math.max(max, x)];
-        },
-        [Number.MAX_VALUE, Number.MIN_VALUE],
+    let style = $state(`bottom: 10px; left: 10px;`);
+    let methods = $derived(Object.keys($profileStore));
+    let series = $derived(selectedMethod !== "" ? $profileStore[selectedMethod] : []);
+    let [min, max] = $derived(
+        series.reduce(
+            ([min, max], x) => {
+                return [Math.min(min, x), Math.max(max, x)];
+            },
+            [Number.MAX_VALUE, Number.MIN_VALUE],
+        ),
     );
-
-    $: range = max - min;
+    let range = $derived(max - min);
+    let points = $derived(
+        series
+            .map((n, i) => {
+                const belowMax = max - n;
+                const y = (belowMax / range) * 200;
+                const x = 40 * i;
+                return `${x},${y}`;
+            })
+            .join(" "),
+    );
+    let average = $derived(
+        series.length > 0 ? series.reduce((total, x) => total + x, 0) / series.length : 0,
+    );
 
     let offset = { x: 0, y: 0 };
 
@@ -49,9 +50,9 @@
     }
 </script>
 
-<svelte:body on:mouseup={stopDrag} on:mousemove={drag} />
+<svelte:body onmouseup={stopDrag} onmousemove={drag} />
 
-<div on:mousedown={startDrag} class="profiler" {style}>
+<div onmousedown={startDrag} class="profiler" {style}>
     <Select bind:value={selectedMethod}>
         <option value={""} selected disabled>Choose metric</option>
         {#each methods as method}

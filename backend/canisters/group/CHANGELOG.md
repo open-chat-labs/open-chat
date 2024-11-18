@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add new prize message criteria ([#6831](https://github.com/open-chat-labs/open-chat/pull/6831))
+
+### Changed
+
+- Add cycles balance check to more timer jobs ([#6822](https://github.com/open-chat-labs/open-chat/pull/6822))
+- Add the `BotCommand` access token type ([#6830](https://github.com/open-chat-labs/open-chat/pull/6830))
+
+### Removed
+
+- Remove code to migrate events to stable memory ([#6837](https://github.com/open-chat-labs/open-chat/pull/6837))
+
 ### Fixed
 
 - Fix a few upgrades that failed due to overflowing `u32::MAX` ([#6826](https://github.com/open-chat-labs/open-chat/pull/6826))
@@ -17,7 +30,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Store events in `HybridMap` which caches latest events on the heap ([#6762](https://github.com/open-chat-labs/open-chat/pull/6762))
 - Reduce size of metrics in memory ([#6765](https://github.com/open-chat-labs/open-chat/pull/6765))
 - Run cycles check (+ other background tasks) when executing timer jobs ([#6815](https://github.com/open-chat-labs/open-chat/pull/6815))
-- Add cycles balance check to more timer jobs ([#6822](https://github.com/open-chat-labs/open-chat/pull/6822))
 
 ### Removed
 

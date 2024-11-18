@@ -254,6 +254,9 @@ fn prize_content() {
         end_date: random(),
         caption: Some(random_string()),
         diamond_only: true,
+        lifetime_diamond_only: false,
+        unique_person_only: false,
+        streak_only: 0,
         refund_started: true,
         ledger_error: true,
     });

@@ -11,7 +11,7 @@
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
     import { mobileWidth } from "../../../stores/screenDimensions";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import type { VideoCallChat } from "./callChat";
     import MenuIcon from "../../MenuIcon.svelte";
     import Menu from "../../Menu.svelte";
@@ -23,15 +23,23 @@
     import { pageReplace } from "../../../routes";
     import { removeQueryStringParam } from "../../../utils/urls";
 
-    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
-    export let askedToSpeak: boolean;
-    export let chat: VideoCallChat;
+    interface Props {
+        askedToSpeak: boolean;
+        chat: VideoCallChat;
+        onAskToSpeak: () => void;
+        onHangup: () => void;
+        onMinimise: () => void;
+        onToggleFullscreen: () => void;
+    }
 
-    $: threadOpen = $activeVideoCall?.threadOpen ?? false;
-    $: participantsOpen = $activeVideoCall?.participantsOpen ?? false;
-    $: isOwner = $activeVideoCall?.isOwner ?? false;
+    let { askedToSpeak, chat, onAskToSpeak, onHangup, onMinimise, onToggleFullscreen }: Props =
+        $props();
+
+    let threadOpen = $derived($activeVideoCall?.threadOpen ?? false);
+    let participantsOpen = $derived($activeVideoCall?.participantsOpen ?? false);
+    let isOwner = $derived($activeVideoCall?.isOwner ?? false);
 
     function toggleThread() {
         if (chat.chatId !== undefined && chat.messageIndex !== undefined) {
@@ -78,15 +86,15 @@
             <div slot="menu">
                 <Menu>
                     {#if !$hasPresence}
-                        <MenuItem on:click={() => dispatch("askToSpeak")}>
+                        <MenuItem on:click={onAskToSpeak}>
                             <HandFrontLeft
                                 slot="icon"
                                 title={$_("videoCall.askToSpeak")}
                                 size={$iconSize}
                                 color={askedToSpeak ? "var(--icon-selected)" : "var(--icon-txt)"} />
-                            <div slot="text">
-                                <Translatable resourceKey={i18nKey("videoCall.askToSpeak")} />
-                            </div>
+                            <Translatable
+                                slot="text"
+                                resourceKey={i18nKey("videoCall.askToSpeak")} />
                         </MenuItem>
                     {/if}
                     {#if $activeVideoCall?.messageId !== undefined && $activeVideoCall.chatId.kind !== "direct_chat"}
@@ -97,9 +105,9 @@
                                 color={participantsOpen
                                     ? "var(--icon-selected)"
                                     : "var(--icon-txt)"} />
-                            <div slot="text">
-                                <Translatable resourceKey={i18nKey("videoCall.showParticipants")} />
-                            </div>
+                            <Translatable
+                                slot="text"
+                                resourceKey={i18nKey("videoCall.showParticipants")} />
                         </MenuItem>
                     {/if}
                     {#if chat.chatId && chat.messageIndex !== undefined}
@@ -108,22 +116,16 @@
                                 slot="icon"
                                 size={$iconSize}
                                 color={threadOpen ? "var(--icon-selected)" : "var(--icon-txt)"} />
-                            <div slot="text">
-                                <Translatable resourceKey={i18nKey("videoCall.chat")} />
-                            </div>
+                            <Translatable slot="text" resourceKey={i18nKey("videoCall.chat")} />
                         </MenuItem>
                     {/if}
-                    <MenuItem on:click={() => dispatch("minimise")}>
+                    <MenuItem on:click={onMinimise}>
                         <WindowMinimize slot="icon" size={$iconSize} color={"var(--icon-txt)"} />
-                        <div slot="text">
-                            <Translatable resourceKey={i18nKey("videoCall.minimise")} />
-                        </div>
+                        <Translatable slot="text" resourceKey={i18nKey("videoCall.minimise")} />
                     </MenuItem>
-                    <MenuItem on:click={() => dispatch("hangup")}>
+                    <MenuItem on:click={onHangup}>
                         <PhoneHangup slot="icon" size={$iconSize} color={"var(--vote-no-color)"} />
-                        <div slot="text">
-                            <Translatable resourceKey={i18nKey("videoCall.leave")} />
-                        </div>
+                        <Translatable slot="text" resourceKey={i18nKey("videoCall.leave")} />
                     </MenuItem>
                 </Menu>
             </div>
@@ -132,7 +134,7 @@
 {:else}
     <div class:joining={$activeVideoCall?.status === "joining"} class="actions">
         {#if !$hasPresence && $activeVideoCall?.status !== "joining"}
-            <HoverIcon onclick={() => dispatch("askToSpeak")}>
+            <HoverIcon onclick={onAskToSpeak}>
                 <HandFrontLeft
                     title={$_("videoCall.askToSpeak")}
                     size={$iconSize}
@@ -153,13 +155,13 @@
                     color={threadOpen ? "var(--icon-selected)" : "var(--icon-txt)"} />
             </HoverIcon>
         {/if}
-        <HoverIcon onclick={() => dispatch("minimise")}>
+        <HoverIcon onclick={onMinimise}>
             <WindowMinimize size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
-        <HoverIcon onclick={() => dispatch("toggleFullScreen")}>
+        <HoverIcon onclick={onToggleFullscreen}>
             <WindowMaximize size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
-        <HoverIcon title={$_("videoCall.leave")} onclick={() => dispatch("hangup")}>
+        <HoverIcon title={$_("videoCall.leave")} onclick={onHangup}>
             <PhoneHangup size={$iconSize} color={"var(--vote-no-color)"} />
         </HoverIcon>
     </div>

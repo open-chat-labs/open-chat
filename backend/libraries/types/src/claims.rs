@@ -1,4 +1,4 @@
-use crate::{Chat, UserId, VideoCallType};
+use crate::{CanisterId, Chat, MessageId, MessageIndex, UserId, VideoCallType};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -30,4 +30,14 @@ pub struct StartVideoCallClaims {
     pub chat_id: StringChat,
     pub call_type: VideoCallType,
     pub is_diamond: bool,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct BotCommandClaims {
+    pub user_id: UserId,
+    pub bot: UserId,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_id: MessageId,
+    pub bot_api_gateway: CanisterId,
+    pub reply_url: String,
 }

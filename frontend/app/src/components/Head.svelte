@@ -19,16 +19,7 @@
 
     const client = getContext<OpenChat>("client");
 
-    let viewPortContent = "width=device-width, initial-scale=1";
-
-    $: details = getDetails(
-        $chatListScopeStore,
-        $location,
-        $userStore,
-        $globalUnreadCount,
-        $selectedChatStore,
-        $selectedCommunity,
-    );
+    let viewPortContent = $state("width=device-width, initial-scale=1");
 
     type Details = {
         title: string;
@@ -93,6 +84,17 @@
             viewPortContent += ", maximum-scale=1";
         }
     });
+
+    let details = $derived(
+        getDetails(
+            $chatListScopeStore,
+            $location,
+            $userStore,
+            $globalUnreadCount,
+            $selectedChatStore,
+            $selectedCommunity,
+        ),
+    );
 </script>
 
 <svelte:head>

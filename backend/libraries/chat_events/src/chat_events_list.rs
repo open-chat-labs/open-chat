@@ -7,7 +7,7 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
-use std::ops::{Deref, RangeBounds};
+use std::ops::Deref;
 use types::{
     Chat, ChatEvent, EventIndex, EventOrExpiredRange, EventWrapper, EventWrapperInternal, HydratedMention, Mention, Message,
     MessageId, MessageIndex, TimestampMillis, UserId,
@@ -21,7 +21,6 @@ pub struct ChatEventsList {
     message_event_indexes: Vec<EventIndex>,
     latest_event_index: Option<EventIndex>,
     latest_event_timestamp: Option<TimestampMillis>,
-    read_events_from_stable_memory: bool,
 }
 
 fn default_stable_events_map() -> HybridMap<ChatEventsStableStorage> {
@@ -48,10 +47,6 @@ impl ChatEventsList {
             .set_stable_memory_prefix(chat, thread_root_message_index);
     }
 
-    pub fn set_read_events_from_stable_memory(&mut self, value: bool) {
-        self.read_events_from_stable_memory = value;
-    }
-
     pub fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
         ChatEventsList {
             stable_events_map: HybridMap::new(chat, thread_root_message_index),
@@ -59,7 +54,6 @@ impl ChatEventsList {
             message_event_indexes: Vec::new(),
             latest_event_index: None,
             latest_event_timestamp: None,
-            read_events_from_stable_memory: false,
         }
     }
 
@@ -159,7 +153,7 @@ impl ChatEventsList {
             (min_visible_event_index, self.latest_event_index.unwrap_or_default())
         };
 
-        let iter = self.range_internal(min..=max);
+        let iter = self.stable_events_map.range(min..=max);
 
         if ascending {
             Box::new(ChatEventsListIterator {
@@ -212,7 +206,8 @@ impl ChatEventsList {
     }
 
     pub(crate) fn event_count_since<F: Fn(&ChatEventInternal) -> bool>(&self, since: TimestampMillis, filter: &F) -> usize {
-        self.iter_internal()
+        self.stable_events_map
+            .iter()
             .rev()
             .take_while(|e| e.timestamp > since)
             .filter(|e| filter(&e.event))
@@ -248,7 +243,7 @@ impl ChatEventsList {
     }
 
     pub fn last(&self) -> Option<EventWrapperInternal<ChatEventInternal>> {
-        self.iter_internal().next_back()
+        self.stable_events_map.iter().next_back()
     }
 
     pub fn contains_message_id(&self, message_id: MessageId) -> bool {
@@ -267,25 +262,14 @@ impl ChatEventsList {
         &self,
         event_index: EventIndex,
     ) -> Result<EventWrapperInternal<ChatEventInternal>, (Option<EventIndex>, Option<EventIndex>)> {
-        let next_key = match self.range_internal(event_index..).next() {
+        let next_key = match self.stable_events_map.range(event_index..).next() {
             Some(v) if v.index == event_index => return Ok(v),
             Some(v) => Some(v.index),
             None => None,
         };
-        let previous_key = self.range_internal(..event_index).next_back().map(|e| e.index);
+        let previous_key = self.stable_events_map.range(..event_index).next_back().map(|e| e.index);
 
         Err((previous_key, next_key))
-    }
-
-    fn iter_internal(&self) -> Box<dyn DoubleEndedIterator<Item = EventWrapperInternal<ChatEventInternal>> + '_> {
-        self.stable_events_map.iter()
-    }
-
-    fn range_internal<R: RangeBounds<EventIndex>>(
-        &self,
-        range: R,
-    ) -> Box<dyn DoubleEndedIterator<Item = EventWrapperInternal<ChatEventInternal>> + '_> {
-        self.stable_events_map.range(range)
     }
 }
 

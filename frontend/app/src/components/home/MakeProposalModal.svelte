@@ -50,6 +50,7 @@
     const MIN_AWARDS = 200;
     const CHAT_FEE_PER_CHIT_AWARD: bigint = 20_000n; // 1/5000th of a CHAT
     const ONE_MONTH = 1000 * 60 * 60 * 24 * 7 * 4;
+    const TOKEN_LISTING_FEE: bigint = 50_000_100_000n; // 500 CHAT + transfer fee
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -103,12 +104,14 @@
     $: achievementChatCost =
         BigInt(chitReward * maxAwards) * CHAT_FEE_PER_CHIT_AWARD + tokenDetails.transferFee;
     $: insufficientFunds = cryptoBalance < requiredFunds;
-    $: insufficientFundsForAchievement =
+    $: insufficientFundsForPayment =
         cryptoBalance <
         requiredFunds +
-            (selectedProposalType === "register_external_acievement" && step == 2
+            (selectedProposalType === "register_external_acievement"
                 ? achievementChatCost
-                : BigInt(0));
+                : selectedProposalType === "add_token"
+                  ? TOKEN_LISTING_FEE
+                  : BigInt(0));
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
     $: token = treasury === "SNS" ? symbol : "ICP";
@@ -134,7 +137,7 @@
     $: awardingAchievementCanisterId = "";
     $: valid =
         !insufficientFunds &&
-        !insufficientFundsForAchievement &&
+        !insufficientFundsForPayment &&
         titleValid &&
         urlValid &&
         summaryValid &&
@@ -199,8 +202,19 @@
 
         busy = true;
 
-        if (selectedProposalType === "register_external_acievement") {
-            if (!(await approveExternalAchievementPayment())) {
+        if (
+            selectedProposalType === "register_external_acievement" ||
+            selectedProposalType === "add_token"
+        ) {
+            let spender =
+                selectedProposalType === "add_token"
+                    ? process.env.REGISTRY_CANISTER!
+                    : process.env.USER_INDEX_CANISTER!;
+
+            let amount =
+                selectedProposalType === "add_token" ? TOKEN_LISTING_FEE : achievementChatCost;
+
+            if (!(await approvePayment(spender, amount))) {
                 busy = false;
                 return;
             }
@@ -250,6 +264,7 @@
                     functionId: BigInt(7000),
                     payload: createAddTokenPayload(
                         addOrUpdateTokenLedgerCanisterId,
+                        $user.userId,
                         addOrUpdateTokenInfoUrl,
                         addOrUpdateTokenHowToBuyUrl,
                         addOrUpdateTokenTransactionUrlFormat,
@@ -292,12 +307,12 @@
         }
     }
 
-    async function approveExternalAchievementPayment(): Promise<boolean> {
+    async function approvePayment(spender_canister_id: string, amount: bigint): Promise<boolean> {
         return client
             .approveTransfer(
-                process.env.USER_INDEX_CANISTER!,
+                spender_canister_id,
                 tokenDetails.ledger,
-                achievementChatCost,
+                amount,
                 BigInt(Date.now() + 1000 * 60 * 60 * 24 * 5), // allow 5 days for proposal
             )
             .then((resp) => {
@@ -679,13 +694,18 @@
         </div>
     </div>
     <span class="footer" slot="footer">
-        {#if selectedProposalType === "register_external_acievement" && step === 2}
-            <p class="message" class:error={insufficientFundsForAchievement}>
+        {#if (selectedProposalType === "register_external_acievement" || selectedProposalType === "add_token") && step === 2}
+            <p class="message" class:error={insufficientFundsForPayment}>
                 <Translatable
-                    resourceKey={i18nKey("proposal.maker.achievementChatCost", {
-                        cost: client.formatTokens(achievementChatCost, 8),
-                        token: symbol,
-                    })} />
+                    resourceKey={i18nKey(
+                        "proposal.maker." + selectedProposalType === "add_token"
+                            ? "addTokenChatCost"
+                            : "achievementChatCost",
+                        {
+                            cost: client.formatTokens(achievementChatCost, 8),
+                            chat: "CHAT",
+                        },
+                    )} />
             </p>
         {/if}
         {#if fundingMessage !== undefined}

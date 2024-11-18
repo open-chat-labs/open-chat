@@ -7,7 +7,10 @@ use local_user_index_canister::access_token::{Response::*, *};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use serde::Serialize;
-use types::{AccessTokenType, ChannelId, Chat, ChatId, CommunityId, JoinOrEndVideoCallClaims, StartVideoCallClaims, UserId};
+use types::{
+    AccessTokenType, BotCommandClaims, ChannelId, Chat, ChatId, CommunityId, JoinOrEndVideoCallClaims, StartVideoCallClaims,
+    UserId,
+};
 
 #[query(composite = true, guard = "caller_is_openchat_user", candid = true, msgpack = true)]
 #[trace]
@@ -50,6 +53,18 @@ async fn access_token(args: Args) -> Response {
             let custom_claims = JoinOrEndVideoCallClaims {
                 user_id,
                 chat_id: args.chat.into(),
+            };
+            build_token(args.token_type, custom_claims, state)
+        }
+        AccessTokenType::BotCommand(bc) => {
+            let bot_api_gateway = state.data.internet_identity_canister_id;
+            let custom_claims = BotCommandClaims {
+                user_id: bc.user_id,
+                bot: bc.bot,
+                thread_root_message_index: bc.thread_root_message_index,
+                message_id: bc.message_id,
+                bot_api_gateway,
+                reply_url: format!("https://{bot_api_gateway}.icp0.io/call"),
             };
             build_token(args.token_type, custom_claims, state)
         }
