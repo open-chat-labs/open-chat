@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1458](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1458-local_user_index)] - 2024-11-18
+
 ### Changed
 
 - Modify upgrade job to top up, then migrate events, then upgrade ([#6834](https://github.com/open-chat-labs/open-chat/pull/6834))
