@@ -51,7 +51,7 @@ impl TimerJobItem for UserEventBatch {
             Ok(user_canister::c2c_notify_events::Response::Success) => Ok(()),
             Err((code, msg)) => {
                 if is_out_of_cycles_error(code, &msg) {
-                    top_up_user(Some(self.user_id), None).await;
+                    top_up_user(Some(self.user_id)).await;
                 }
                 let retry = should_retry_failed_c2c_call(code, &msg);
                 Err(retry)
