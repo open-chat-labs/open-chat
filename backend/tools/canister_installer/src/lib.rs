@@ -550,6 +550,7 @@ async fn install_service_canisters_impl(
             canister_id: canister_ids.local_group_index,
             local_user_index_canister_id: canister_ids.local_user_index,
             notifications_canister_id: canister_ids.notifications,
+            bot_api_gateway_canister_id: canister_ids.bot_api_gateway,
         },
     )
     .await
