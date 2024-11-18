@@ -1,5 +1,3 @@
-<!-- svelte-ignore a11y-interactive-supports-focus -->
-<!-- svelte-ignore a11y-click-events-have-key-events -->
 <script lang="ts">
     import ThumbUp from "svelte-material-icons/ThumbUp.svelte";
     import ThumbDown from "svelte-material-icons/ThumbDown.svelte";
@@ -15,7 +13,7 @@
 
     const client = getContext<OpenChat>("client");
 
-    $: requests = $activeVideoCall?.accessRequests ?? [];
+    let requests = $derived($activeVideoCall?.accessRequests ?? []);
 
     function approve(request: RequestToSpeak) {
         activeVideoCall.approveAccessRequest(request);
@@ -52,10 +50,14 @@
             resourceKey={i18nKey("videoCall.accessRequest", {
                 username: $userStore.get(request.userId)?.username,
             })} />
-        <div role="button" on:click={() => approve(request)} class="btn">
+        <!-- svelte-ignore a11y_interactive_supports_focus -->
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <div role="button" onclick={() => approve(request)} class="btn">
             <ThumbUp size={$iconSize} color={"var(--vote-yes-color)"} />
         </div>
-        <div role="button" on:click={() => reject(request)} class="btn">
+        <!-- svelte-ignore a11y_interactive_supports_focus -->
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <div role="button" onclick={() => reject(request)} class="btn">
             <ThumbDown size={$iconSize} color={"var(--vote-no-color)"} />
         </div>
     </div>

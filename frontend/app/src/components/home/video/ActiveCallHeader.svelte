@@ -6,7 +6,6 @@
     import { iconSize } from "../../../stores/iconSize";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import SectionHeader from "../../SectionHeader.svelte";
-    import { createEventDispatcher } from "svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Typing from "../../Typing.svelte";
     import { AvatarSize } from "openchat-client";
@@ -16,14 +15,15 @@
     import ActiveCallActions from "./ActiveCallActions.svelte";
     import type { VideoCallChat } from "./callChat";
 
-    const dispatch = createEventDispatcher();
-
-    export let askedToSpeak: boolean;
-    export let chat: VideoCallChat;
-
-    function clearSelection() {
-        dispatch("clearSelection");
+    interface Props {
+        askedToSpeak: boolean;
+        chat: VideoCallChat;
+        onClearSelection: () => void;
+        onAskToSpeak: () => void;
+        onHangup: () => void;
     }
+
+    let { askedToSpeak, chat, onClearSelection, onAskToSpeak, onHangup }: Props = $props();
 
     function minimise() {
         activeVideoCall.setView("minimised");
@@ -41,13 +41,13 @@
 <SectionHeader shadow flush>
     <div class="header">
         {#if $mobileWidth}
-            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
             <div
                 tabindex="0"
                 role="button"
                 class="back"
                 class:rtl={$rtlStore}
-                on:click={clearSelection}>
+                onclick={onClearSelection}>
                 <HoverIcon>
                     {#if $rtlStore}
                         <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
@@ -81,10 +81,10 @@
         <ActiveCallActions
             {chat}
             {askedToSpeak}
-            on:askToSpeak
-            on:minimise={minimise}
-            on:toggleFullScreen={toggleFullscreen}
-            on:hangup />
+            {onAskToSpeak}
+            onMinimise={minimise}
+            onToggleFullscreen={toggleFullscreen}
+            {onHangup} />
     </div>
 </SectionHeader>
 
