@@ -9,6 +9,8 @@
 
     export let autofocus: boolean;
     export let selectedReceiver: UserOrUserGroup | undefined = undefined;
+    export let direction: "up" | "down" = "down";
+    export let placeholder: string = "tokenTransfer.chooseReceiver";
 
     let showMentionPicker = false;
     let textValue: string = "";
@@ -41,7 +43,7 @@
     {#if showMentionPicker}
         <MentionPicker
             offset={inputHeight}
-            direction={"down"}
+            {direction}
             on:mention={selectReceiver}
             border
             usersOnly
@@ -59,7 +61,7 @@
                 maxlength="100"
                 {autofocus}
                 bind:value={textValue}
-                placeholder={$_("tokenTransfer.chooseReceiver")} />
+                placeholder={$_(placeholder)} />
         </div>
     {/if}
 </div>

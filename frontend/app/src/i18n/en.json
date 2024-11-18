@@ -148,6 +148,9 @@
     "blockUser": "Block user",
     "blockUserFailed": "Unable to block user",
     "blockUserSucceeded": "User has been blocked",
+    "bots": {
+        "matchingCommands": "Matching commands"
+    },
     "cancel": "Cancel",
     "cancelInvite": "Cancel invite",
     "cancelInviteFailed": "Error cancelling invite",

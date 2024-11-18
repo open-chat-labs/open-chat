@@ -24,6 +24,7 @@
         MultiUserChat,
         UserOrUserGroup,
         AttachmentContent,
+        FlattenedCommand,
     } from "openchat-client";
     import {
         allQuestions,
@@ -48,6 +49,8 @@
     import MarkdownToggle from "./MarkdownToggle.svelte";
     import { useBlockLevelMarkdown } from "../../stores/settings";
     import ThrottleCountdown from "./ThrottleCountdown.svelte";
+    import CommandSelector from "../bots/CommandSelector.svelte";
+    import CommandBuilder from "../bots/CommandBuilder.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -81,6 +84,8 @@
     let typingTimer: number | undefined = undefined;
     let audioSupported: boolean = "mediaDevices" in navigator;
     let showMentionPicker = false;
+    let commandPrefix: string | undefined = undefined;
+    let selectedCommand: FlattenedCommand | undefined = undefined;
     let showEmojiSearch = false;
     let mentionPrefix: string | undefined;
     let emojiQuery: string | undefined;
@@ -186,6 +191,7 @@
     function onInput() {
         const inputContent = inp.textContent ?? "";
         dispatch("setTextContent", inputContent.trim().length === 0 ? undefined : inputContent);
+        triggerCommandSelector(inputContent);
         triggerMentionLookup(inputContent);
         triggerEmojiLookup(inputContent);
         triggerTypingTimer();
@@ -239,6 +245,22 @@
                 mentionPrefix = undefined;
             }
         });
+    }
+
+    function triggerCommandSelector(inputContent: string | null): void {
+        const commandMatch = inputContent?.match(/^\/\w*/);
+        commandPrefix = commandMatch ? commandMatch[0] : undefined;
+    }
+
+    function cancelCommandSelector() {
+        commandPrefix = undefined;
+        selectedCommand = undefined;
+        dispatch("setTextContent", undefined);
+    }
+
+    function selectCommand(command: FlattenedCommand) {
+        // commandPrefix = undefined;
+        selectedCommand = command;
     }
 
     function triggerTypingTimer() {
@@ -548,6 +570,13 @@
         prefix={mentionPrefix} />
 {/if}
 
+{#if commandPrefix !== undefined}
+    <CommandSelector
+        onSelect={selectCommand}
+        prefix={commandPrefix}
+        onCancel={cancelCommandSelector} />
+{/if}
+
 {#if showEmojiSearch}
     <EmojiAutocompleter
         offset={messageEntryHeight}
@@ -600,32 +629,36 @@
                     {#if excessiveLinks}
                         <div class="note">{$_("excessiveLinksNote")}</div>
                     {/if}
-                    <div
-                        data-gram="false"
-                        data-gramm_editor="false"
-                        data-enable-grammarly="false"
-                        tabindex={0}
-                        bind:this={inp}
-                        on:blur={saveSelection}
-                        class="textbox"
-                        class:recording
-                        class:dragging
-                        contenteditable
-                        on:paste
-                        placeholder={interpolate($_, placeholder)}
-                        use:translatable={{
-                            key: placeholder,
-                            position: "absolute",
-                            right: 12,
-                            top: 12,
-                        }}
-                        spellcheck
-                        on:dragover={() => (dragging = true)}
-                        on:dragenter={() => (dragging = true)}
-                        on:dragleave={() => (dragging = false)}
-                        on:drop={onDrop}
-                        on:input={onInput}
-                        on:keypress={keyPress} />
+                    {#if selectedCommand !== undefined}
+                        <CommandBuilder command={selectedCommand} />
+                    {:else}
+                        <div
+                            data-gram="false"
+                            data-gramm_editor="false"
+                            data-enable-grammarly="false"
+                            tabindex={0}
+                            bind:this={inp}
+                            on:blur={saveSelection}
+                            class="textbox"
+                            class:recording
+                            class:dragging
+                            contenteditable
+                            on:paste
+                            placeholder={interpolate($_, placeholder)}
+                            use:translatable={{
+                                key: placeholder,
+                                position: "absolute",
+                                right: 12,
+                                top: 12,
+                            }}
+                            spellcheck
+                            on:dragover={() => (dragging = true)}
+                            on:dragenter={() => (dragging = true)}
+                            on:dragleave={() => (dragging = false)}
+                            on:drop={onDrop}
+                            on:input={onInput}
+                            on:keypress={keyPress} />
+                    {/if}
 
                     {#if containsMarkdown}
                         <MarkdownToggle {editingEvent} />
