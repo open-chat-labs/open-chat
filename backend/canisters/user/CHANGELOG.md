@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Avoid extra key lookup when iterating over events ([#6680](https://github.com/open-chat-labs/open-chat/pull/6680))
 - Read events in batches when performing stable memory garbage collection ([#6682](https://github.com/open-chat-labs/open-chat/pull/6682))
 - Read events from stable memory once migration is complete ([#6722](https://github.com/open-chat-labs/open-chat/pull/6722))
+- Increase the minimum cycles balance ([#6725](https://github.com/open-chat-labs/open-chat/pull/6725))
 - Perform cycles check when migrating events to stable memory ([#6757](https://github.com/open-chat-labs/open-chat/pull/6757))
 - Store events in `HybridMap` which caches latest events on the heap ([#6762](https://github.com/open-chat-labs/open-chat/pull/6762))
 - Reduce size of metrics in memory ([#6765](https://github.com/open-chat-labs/open-chat/pull/6765))
@@ -27,6 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove events from being stored on the heap ([#6758](https://github.com/open-chat-labs/open-chat/pull/6758))
 - Removed a bunch of unwanted achievements ([#6794](https://github.com/open-chat-labs/open-chat/pull/6794))
+- Remove code to migrate events to stable memory ([#6837](https://github.com/open-chat-labs/open-chat/pull/6837))
 
 ## [[2.0.1412](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1414-user)] - 2024-10-24
 
