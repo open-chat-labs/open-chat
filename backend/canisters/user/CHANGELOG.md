@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Avoid iterating all events when migrating private replies after group import ([#6827](https://github.com/open-chat-labs/open-chat/pull/6827))
 - Add the `BotCommand` access token type ([#6830](https://github.com/open-chat-labs/open-chat/pull/6830))
 - Avoid storing any events on the heap within direct chats ([#6838](https://github.com/open-chat-labs/open-chat/pull/6838))
+- Improve job to delete files after messages are deleted ([#6839](https://github.com/open-chat-labs/open-chat/pull/6839))
 
 ### Removed
 
