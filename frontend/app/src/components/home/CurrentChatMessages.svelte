@@ -353,6 +353,8 @@
                             on:expandMessage={() => toggleMessageExpansion(evt, true)}
                             on:collapseMessage={() => toggleMessageExpansion(evt, false)}
                             on:upgrade
+                            on:verifyHumanity
+                            on:claimDailyChit
                             on:forward
                             on:retrySend
                             on:startVideoCall

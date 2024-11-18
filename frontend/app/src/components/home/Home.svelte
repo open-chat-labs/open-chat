@@ -121,6 +121,7 @@
     import { chitPopup } from "../../stores/settings";
     import AccessGateEvaluator from "./access/AccessGateEvaluator.svelte";
     import SetPinNumberModal from "./profile/SetPinNumberModal.svelte";
+    import VerifyHumanity from "./profile/VerifyHumanity.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -168,6 +169,7 @@
 
     type ModalType =
         | { kind: "none" }
+        | { kind: "verify_humanity" }
         | { kind: "select_chat" }
         | { kind: "suspended" }
         | { kind: "no_access" }
@@ -1156,6 +1158,14 @@
         $pinNumberStore?.reject();
     }
 
+    function verifyHumanity() {
+        modal = { kind: "verify_humanity" };
+    }
+
+    function claimDailyChit() {
+        modal = { kind: "claim_daily_chit" };
+    }
+
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
@@ -1182,9 +1192,7 @@
             on:leaveCommunity={triggerConfirm}
             on:deleteCommunity={triggerConfirm}
             on:upgrade={upgrade}
-            on:claimDailyChit={() => {
-                modal = { kind: "claim_daily_chit" };
-            }} />
+            on:claimDailyChit={claimDailyChit} />
     {/if}
 
     {#if $layoutStore.showLeft}
@@ -1223,6 +1231,8 @@
             on:showGroupMembers={showGroupMembers}
             on:joinGroup={joinGroup}
             on:upgrade={upgrade}
+            on:verifyHumanity={verifyHumanity}
+            on:claimDailyChit={claimDailyChit}
             on:toggleMuteNotifications={toggleMuteNotifications}
             on:goToMessageIndex={goToMessageIndex}
             on:forward={forwardMessage}
@@ -1242,7 +1252,8 @@
         on:editCommunity={editCommunity}
         on:deleteCommunity={triggerConfirm}
         on:newChannel={newChannel}
-        on:groupCreated={groupCreated} />
+        on:groupCreated={groupCreated}
+        on:verifyHumanity={verifyHumanity} />
 </main>
 
 {#if $anonUser}
@@ -1325,6 +1336,8 @@
             <DailyChitModal on:leaderboard={leaderboard} on:close={closeModal} />
         {:else if modal.kind === "challenge"}
             <ChallengeModal on:close={closeModal} />
+        {:else if modal.kind === "verify_humanity"}
+            <VerifyHumanity on:close={closeModal} on:success={closeModal} />
         {/if}
     </Overlay>
 {/if}

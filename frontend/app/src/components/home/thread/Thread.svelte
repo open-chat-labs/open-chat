@@ -375,6 +375,8 @@
                             on:editEvent={() => editEvent(evt)}
                             on:replyTo={replyTo}
                             on:upgrade
+                            on:verifyHumanity
+                            on:claimDailyChit
                             on:startVideoCall
                             on:forward />
                     {/each}

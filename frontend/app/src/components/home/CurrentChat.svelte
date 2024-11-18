@@ -377,6 +377,8 @@
             on:replyTo={replyTo}
             on:chatWith
             on:upgrade
+            on:verifyHumanity
+            on:claimDailyChit
             on:forward
             on:retrySend
             on:startVideoCall

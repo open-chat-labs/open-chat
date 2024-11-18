@@ -122,6 +122,8 @@
             on:chatWith
             on:joinGroup
             on:upgrade
+            on:verifyHumanity
+            on:claimDailyChit
             on:toggleMuteNotifications
             on:goToMessageIndex
             on:convertGroupToCommunity

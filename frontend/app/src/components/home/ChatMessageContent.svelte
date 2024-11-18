@@ -91,7 +91,14 @@
         text={i18nKey(failed ? "p2pSwap.failedToCreateMessage" : "p2pSwap.creatingYourMessage")}
         {failed} />
 {:else if content.kind === "prize_content"}
-    <PrizeContent on:upgrade chatId={messageContext.chatId} {messageId} {content} {me} />
+    <PrizeContent
+        on:upgrade
+        on:verifyHumanity
+        on:claimDailyChit
+        chatId={messageContext.chatId}
+        {messageId}
+        {content}
+        {me} />
 {:else if content.kind === "p2p_swap_content"}
     <P2PSwapContent
         on:upgrade

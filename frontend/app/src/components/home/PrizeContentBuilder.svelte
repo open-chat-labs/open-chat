@@ -34,12 +34,15 @@
         cryptoBalance as cryptoBalanceStore,
         cryptoLookup,
     } from "openchat-client";
+    import Checkbox from "../Checkbox.svelte";
+    import Select from "../Select.svelte";
 
     const ONE_HOUR = 1000 * 60 * 60;
     const ONE_DAY = ONE_HOUR * 24;
     const ONE_WEEK = ONE_DAY * 7;
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
+    const streaks = ["3", "7", "14", "30", "100"];
 
     export let draftAmount: bigint;
     export let ledger: string;
@@ -51,7 +54,11 @@
     const durations: Duration[] = ["oneHour", "oneDay", "oneWeek"];
     type Duration = "oneHour" | "oneDay" | "oneWeek";
     let selectedDuration: Duration = "oneDay";
-    let diamondOnly = true;
+    let diamondOnly = false;
+    let lifetimeDiamondOnly = false;
+    let uniquePersonOnly = false;
+    let streakOnly = false;
+    let streakValue = "3";
     let refreshing = false;
     let error: string | undefined = undefined;
     let message = "";
@@ -61,6 +68,7 @@
     let tokenInputState: "ok" | "zero" | "too_low" | "too_high";
     let sending = false;
 
+    $: anyUser = !diamondOnly && !lifetimeDiamondOnly && !uniquePersonOnly && !streakOnly;
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
     $: tokenDetails = $cryptoLookup[ledger];
     $: symbol = tokenDetails.symbol;
@@ -124,6 +132,9 @@
             caption: message === "" ? undefined : message,
             endDate: getEndDate(),
             diamondOnly,
+            lifetimeDiamondOnly,
+            uniquePersonOnly,
+            streakOnly: streakOnly ? parseInt(streakValue) : 0,
             transfer: {
                 kind: "pending",
                 ledger,
@@ -248,6 +259,22 @@
         const range = max - min;
         return Math.floor(min + Math.random() * range);
     }
+
+    function onAnyUserChecked() {
+        anyUser = true;
+        diamondOnly = false;
+        lifetimeDiamondOnly = false;
+        uniquePersonOnly = false;
+        streakOnly = false;
+    }
+
+    function onDiamondOnlyChecked() {
+        lifetimeDiamondOnly = false;
+    }
+
+    function onLifetimeDiamondOnlyChecked() {
+        diamondOnly = false;
+    }
 </script>
 
 <Overlay dismissible>
@@ -367,18 +394,40 @@
                         </div>
                         <div class="restrictions">
                             <Legend label={i18nKey("prizes.whoCanWin")} />
-                            <Radio
-                                on:change={() => (diamondOnly = true)}
-                                checked={diamondOnly}
-                                id={`restricted_diamond`}
-                                label={i18nKey(`prizes.onlyDiamond`)}
-                                group={"prize_restriction"} />
-                            <Radio
-                                on:change={() => (diamondOnly = false)}
-                                checked={!diamondOnly}
-                                id={`restricted_anyone`}
+                            <Checkbox
+                                id="any_user"
                                 label={i18nKey(`prizes.anyone`)}
-                                group={"prize_restriction"} />
+                                bind:checked={anyUser}
+                                on:change={onAnyUserChecked} />
+                            <Checkbox
+                                id="diamond_only"
+                                label={i18nKey(`prizes.onlyDiamond`)}
+                                bind:checked={diamondOnly}
+                                on:change={onDiamondOnlyChecked} />
+                            <Checkbox
+                                id="lifetime_diamond_only"
+                                label={i18nKey(`prizes.onlyLifetimeDiamond`)}
+                                bind:checked={lifetimeDiamondOnly}
+                                on:change={onLifetimeDiamondOnlyChecked} />
+                            <Checkbox
+                                id="unique_person_only"
+                                label={i18nKey(`prizes.onlyUniquePerson`)}
+                                bind:checked={uniquePersonOnly} />
+                            <Checkbox
+                                id="streak_only"
+                                label={i18nKey(`prizes.onlyStreak`)}
+                                bind:checked={streakOnly} />
+
+                            {#if streakOnly}
+                                <Select bind:value={streakValue}>
+                                    {#each streaks as streak}
+                                        <option value={streak}
+                                            >{$_("prizes.streakValue", {
+                                                values: { n: streak },
+                                            })}</option>
+                                    {/each}
+                                </Select>
+                            {/if}
                         </div>
                     </div>
                     {#if errorMessage !== undefined}
