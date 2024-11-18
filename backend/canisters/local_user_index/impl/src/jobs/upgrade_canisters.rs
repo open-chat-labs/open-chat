@@ -1,4 +1,4 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{jobs, mutate_state, read_state, RuntimeState};
 use ic_cdk::api::management_canister::main::CanisterInstallMode;
 use ic_cdk_timers::TimerId;
 use local_user_index_canister::ChildCanisterType;
@@ -114,6 +114,24 @@ async fn perform_upgrades(canisters_to_upgrade: Vec<CanisterToUpgrade>) {
 
 async fn perform_upgrade(canister_to_upgrade: CanisterToUpgrade) {
     let canister_id = canister_to_upgrade.canister_id;
+
+    jobs::topup_canisters::run_async(canister_id.into()).await;
+
+    if read_state(|state| {
+        state
+            .data
+            .canisters_pending_events_migration_to_stable_memory
+            .contains(&canister_id)
+    }) && !jobs::migrate_events_to_stable_memory::migrate_events(canister_id).await
+    {
+        mutate_state(|state| {
+            mark_upgrade_complete(canister_id.into(), None, state);
+            state.data.canisters_requiring_upgrade.mark_skipped(&canister_id);
+            state.data.canisters_requiring_upgrade.enqueue(canister_id, false)
+        });
+        return;
+    }
+
     let from_version = canister_to_upgrade.current_wasm_version;
     let to_version = canister_to_upgrade.new_wasm_version;
 
