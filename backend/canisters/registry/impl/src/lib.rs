@@ -78,12 +78,9 @@ struct Data {
     tokens: Tokens,
     nervous_systems: NervousSystems,
     failed_sns_launches: HashSet<CanisterId>,
-    #[serde(default)]
     swap_providers: Timestamped<HashSet<ExchangeId>>,
     message_filters: MessageFilters,
-    #[serde(default)]
     total_supply: Timestamped<u128>,
-    #[serde(default)]
     circulating_supply: Timestamped<u128>,
     rng_seed: [u8; 32],
     test_mode: bool,
