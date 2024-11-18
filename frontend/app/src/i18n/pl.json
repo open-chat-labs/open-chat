@@ -370,6 +370,7 @@
         "claim": "Zgłoś CHIT!",
         "comeback": "Wróć za {time}",
         "extendStreak": "Przedłuż passę",
+        "failedToClaim": "Przepraszamy, nie udało nam się odebrać Twojego dziennego CHIT",
         "hideWhenClaimed": "Ukryj ikonę CHIT ⚡️ po odebraniu każdego dnia",
         "info": "Im dłużej utrzymasz swoją passę, tym więcej codziennych CHITów możesz odebrać!",
         "title": "Utrzymaj swoją passę",

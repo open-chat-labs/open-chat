@@ -370,6 +370,7 @@
         "claim": "Claim CHIT!",
         "comeback": "Come back in {time}",
         "extendStreak": "Extend streak",
+        "failedToClaim": "Sorry we were unable to claim your daily CHIT",
         "hideWhenClaimed": "Hide claim CHIT icon ⚡️ after claiming each day",
         "info": "The longer you maintain your streak the more daily CHIT you can claim!",
         "title": "Maintain your streak",

@@ -370,6 +370,7 @@
         "claim": "Richiedi CHIT!",
         "comeback": "Torna tra {time}",
         "extendStreak": "Estendi la serie",
+        "failedToClaim": "Spiacenti, non siamo riusciti a richiedere il tuo CHIT giornaliero",
         "hideWhenClaimed": "Nascondi l'icona di richiesta CHIT ⚡️ dopo aver richiesto ogni giorno",
         "info": "Più a lungo mantieni la tua serie, più CHIT giornalieri puoi richiedere!",
         "title": "Mantieni la tua serie",
