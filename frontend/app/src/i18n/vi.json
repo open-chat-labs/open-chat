@@ -370,6 +370,7 @@
         "claim": "Yêu cầu CHIT!",
         "comeback": "Hãy quay lại trong {time}",
         "extendStreak": "Kéo dài vệt",
+        "failedToClaim": "Xin lỗi chúng tôi không thể yêu cầu CHIT hàng ngày của bạn",
         "hideWhenClaimed": "Ẩn biểu tượng CHIT yêu cầu ⚡️ sau khi yêu cầu mỗi ngày",
         "info": "Bạn duy trì chuỗi của mình càng lâu thì bạn càng có thể yêu cầu nhiều CHIT hàng ngày hơn!",
         "title": "Duy trì thành tích của bạn",

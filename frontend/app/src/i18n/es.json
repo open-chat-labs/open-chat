@@ -370,6 +370,7 @@
         "claim": "¡Reclama CHIT!",
         "comeback": "Vuelve en {time}",
         "extendStreak": "Extender racha",
+        "failedToClaim": "Lo sentimos, no pudimos reclamar su CHIT diario",
         "hideWhenClaimed": "Ocultar el icono de CHIT de reclamo ⚡️ después de reclamar cada día",
         "info": "¡Cuanto más tiempo mantengas tu racha, más CHIT diario podrás reclamar!",
         "title": "Mantén tu racha",

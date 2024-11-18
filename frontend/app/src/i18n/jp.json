@@ -370,6 +370,7 @@
         "claim": "CHITを請求してください！",
         "comeback": "{time}に戻ってきて",
         "extendStreak": "連勝を伸ばす",
+        "failedToClaim": "申し訳ありませんが、毎日のCHITを受け取ることができませんでした",
         "hideWhenClaimed": "毎日請求した後、請求CHITアイコン⚡️を非表示にします",
         "info": "連続記録を長く維持すればするほど、より多くの CHIT を毎日獲得できます。",
         "title": "連勝を維持する",

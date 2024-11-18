@@ -24,6 +24,7 @@
     import ChitBalance from "./profile/ChitBalance.svelte";
     import AlertBox from "../AlertBox.svelte";
     import Markdown from "./Markdown.svelte";
+    import { toastStore } from "../../stores/toast";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -73,6 +74,10 @@
                         additional = undefined;
                     }, 2000);
                 }
+            })
+            .catch((err) => {
+                toastStore.showFailureToast(i18nKey("dailyChit.failedToClaim"), err);
+                close();
             })
             .finally(() => {
                 busy = false;

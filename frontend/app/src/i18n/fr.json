@@ -370,6 +370,7 @@
         "claim": "Réclamez CHIT !",
         "comeback": "Revenez dans {time}",
         "extendStreak": "Prolonger la séquence",
+        "failedToClaim": "Désolé, nous n'avons pas pu réclamer votre CHIT quotidien",
         "hideWhenClaimed": "Masquer l'icône de réclamation CHIT ⚡️ après avoir réclamé chaque jour",
         "info": "Plus vous maintenez votre séquence longtemps, plus vous pouvez réclamer de CHIT quotidien !",
         "title": "Maintenez votre séquence",
