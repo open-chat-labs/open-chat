@@ -132,7 +132,8 @@
                     {#if content.diamondOnly || content.lifetimeDiamondOnly}
                         <div on:click={onDiamondClick}>
                             <div>
-                                <Diamond show={content.lifetimeDiamondOnly ? "gold" : "blue"} />
+                                <Diamond
+                                    status={content.lifetimeDiamondOnly ? "lifetime" : "active"} />
                             </div>
                             <Translatable
                                 resourceKey={i18nKey(
