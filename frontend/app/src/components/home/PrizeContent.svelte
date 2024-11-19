@@ -1,10 +1,11 @@
 <script lang="ts">
     import Button from "../Button.svelte";
-    import type {
-        ChatIdentifier,
-        DiamondMembershipStatus,
-        OpenChat,
-        PrizeContent,
+    import {
+        type ChatIdentifier,
+        type DiamondMembershipStatus,
+        type OpenChat,
+        type PrizeContent,
+        chitStateStore,
     } from "openchat-client";
     import {
         currentUser as user,
@@ -65,7 +66,7 @@
         (!content.diamondOnly || $isDiamond) &&
         (!content.lifetimeDiamondOnly || $isLifetimeDiamond) &&
         (!content.uniquePersonOnly || $user.isUniquePerson) &&
-        content.streakOnly <= client.getStreak($user.userId);
+        content.streakOnly <= $chitStateStore.streak;
 
     let progressWidth = 0;
 
