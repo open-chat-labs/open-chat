@@ -151,7 +151,10 @@
                     {#if content.streakOnly > 0}
                         <div on:click={onStreakClick}>
                             <div><Streak days={content.streakOnly} /></div>
-                            {`${content.streakOnly} day streak or longer`}
+                            <Translatable
+                                resourceKey={i18nKey("prizes.streakFull", {
+                                    n: content.streakOnly,
+                                })} />
                         </div>
                     {/if}
                 </div>

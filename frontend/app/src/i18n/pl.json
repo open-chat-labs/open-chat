@@ -1064,6 +1064,7 @@
         "randomDistribution": "Losowa dystrybucja",
         "restrictedMessage": "Aby odebrać tę nagrodę, musisz spełniać następujące wymagania:",
         "streak": "Pasemko",
+        "streakFull": "Seria {n} dni lub dłuższa",
         "streakValue": "{n} dni lub więcej",
         "title": "Nagroda",
         "totalAmount": "Łączna kwota nagród",

@@ -1064,6 +1064,7 @@
         "randomDistribution": "Distribution aléatoire",
         "restrictedMessage": "Pour réclamer ce prix, vous devez avoir les éléments suivants",
         "streak": "Traînée",
+        "streakFull": "Une séquence de {n} jours ou plus",
         "streakValue": "{n} jours ou plus",
         "title": "Prix",
         "totalAmount": "Montant total du prix",

@@ -1064,6 +1064,7 @@
         "randomDistribution": "Zufällige Verteilung",
         "restrictedMessage": "Um diesen Preis zu erhalten, müssen Sie über Folgendes verfügen",
         "streak": "Strähne",
+        "streakFull": "Eine Serie von {n} Tagen oder mehr",
         "streakValue": "{n} Tage oder mehr",
         "title": "Preis",
         "totalAmount": "Gesamtpreisbetrag",

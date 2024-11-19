@@ -1064,6 +1064,7 @@
         "randomDistribution": "ランダム配分",
         "restrictedMessage": "この賞品を受け取るには、以下の条件を満たしている必要があります",
         "streak": "連勝",
+        "streakFull": "{n}日以上の連続",
         "streakValue": "{n}日以上",
         "title": "賞",
         "totalAmount": "賞金総額",

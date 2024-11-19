@@ -1064,6 +1064,7 @@
         "randomDistribution": "Distribuzione casuale",
         "restrictedMessage": "Per richiedere questo premio devi avere quanto segue",
         "streak": "Strisciante",
+        "streakFull": "Una serie di {n} giorni o più",
         "streakValue": "{n} giorni o più",
         "title": "Premio",
         "totalAmount": "Importo totale del premio",

@@ -1064,6 +1064,7 @@
         "randomDistribution": "Random distribution",
         "restrictedMessage": "To claim this prize you must have the following",
         "streak": "Streak",
+        "streakFull": "A streak of {n} days or more",
         "streakValue": "{n} days or more",
         "title": "Prize",
         "totalAmount": "Total prize amount",

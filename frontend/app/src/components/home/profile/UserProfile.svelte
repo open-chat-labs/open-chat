@@ -70,7 +70,6 @@
     import VideoCallSettings from "./VideoCallSettings.svelte";
     import ChitEvents from "./ChitEvents.svelte";
     import Human from "../../icons/Human.svelte";
-    import VerifyHumanity from "./VerifyHumanity.svelte";
     import { uniquePersonGate } from "../../../utils/access";
     import ReferredUsersList from "./ReferredUsersList.svelte";
     import LinkedAuthAccounts from "./LinkedAuthAccounts.svelte";

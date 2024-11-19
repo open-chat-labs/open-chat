@@ -1064,6 +1064,7 @@
         "randomDistribution": "Distribución aleatoria",
         "restrictedMessage": "Para reclamar este premio debes tener lo siguiente",
         "streak": "Racha",
+        "streakFull": "Una racha de {n} días o más",
         "streakValue": "{n} días o más",
         "title": "Premio",
         "totalAmount": "Monto total del premio",

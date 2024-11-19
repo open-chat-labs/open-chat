@@ -1064,6 +1064,7 @@
         "randomDistribution": "توزیع تصادفی",
         "restrictedMessage": "برای دریافت این جایزه باید موارد زیر را داشته باشید",
         "streak": "رگه",
+        "streakFull": "رگه‌ای از {n} روز یا بیشتر",
         "streakValue": "{n} روز یا بیشتر",
         "title": "جایزه",
         "totalAmount": "مبلغ کل جایزه",

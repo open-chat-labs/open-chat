@@ -1064,6 +1064,7 @@
         "randomDistribution": "随机分布",
         "restrictedMessage": "要领取此奖品，您必须满足以下条件",
         "streak": "条纹",
+        "streakFull": "连续 {n} 天或更长时间",
         "streakValue": "{n} 天或更长时间",
         "title": "奖",
         "totalAmount": "总奖金金额",

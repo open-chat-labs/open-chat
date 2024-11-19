@@ -1064,6 +1064,7 @@
         "randomDistribution": "הפצה אקראית",
         "restrictedMessage": "כדי לתבוע את הפרס הזה, אתה צריך את הדברים הבאים",
         "streak": "פַּס",
+        "streakFull": "רצף של {n} ימים או יותר",
         "streakValue": "{n} ימים או יותר",
         "title": "פרס",
         "totalAmount": "סכום הפרס הכולל",
