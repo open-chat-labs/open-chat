@@ -4,7 +4,7 @@ use crate::RuntimeState;
 use canister_api_macros::query;
 use group_canister::c2c_can_issue_access_token::*;
 use group_chat_core::{GroupChatCore, GroupMemberInternal};
-use types::{AccessTokenType, VideoCallType};
+use types::{AccessTokenType, MessageContentType, VideoCallType};
 
 #[query(guard = "caller_is_local_user_index", msgpack = true)]
 fn c2c_can_issue_access_token(args: Args) -> Response {
@@ -18,7 +18,14 @@ fn c2c_can_issue_access_token_impl(args: Args, state: &RuntimeState) -> bool {
 
     match args.access_type {
         AccessTokenType::StartVideoCallV2(vc) => can_start_video_call(member, vc.call_type, &state.data.chat),
-        AccessTokenType::JoinVideoCall | AccessTokenType::MarkVideoCallAsEnded | AccessTokenType::BotCommand(_) => true,
+        AccessTokenType::JoinVideoCall | AccessTokenType::MarkVideoCallAsEnded => true,
+        AccessTokenType::BotCommand(c) => state.data.chat.members.get_bot(&c.bot).is_some_and(|b| {
+            b.role.can_send_message(
+                MessageContentType::Text,
+                c.thread_root_message_index.is_some(),
+                &state.data.chat.permissions,
+            )
+        }),
     }
 }
 

@@ -802,7 +802,7 @@ impl GroupChatCore {
 
         if !member
             .role
-            .can_send_message(content, thread_root_message_index.is_some(), permissions)
+            .can_send_message(content.into(), thread_root_message_index.is_some(), permissions)
         {
             return NotAuthorized;
         }
