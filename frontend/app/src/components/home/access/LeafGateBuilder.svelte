@@ -102,7 +102,11 @@
             return undefined;
         }
 
-        return BigInt((amount * 10 ** tokenDetails.decimals).toFixed(0));
+        const pow10 = 10 ** tokenDetails.decimals;
+        const integralPart = BigInt(Math.trunc(amount)) * BigInt(pow10);
+        const fractionalPart = BigInt((amount - Math.trunc(amount)) * pow10);
+
+        return integralPart + fractionalPart
     }
 
     function buildPaymentInfoMessage(gate: AccessGate): string {
