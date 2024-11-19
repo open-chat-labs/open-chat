@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add an error log with http endpoint ([#6608](https://github.com/open-chat-labs/open-chat/pull/6608))
 
+### Changed
+
+- Simplify `inspect_message` ([#6847](https://github.com/open-chat-labs/open-chat/pull/6847))
+
 ### Fixed
 
 - Wire up `freeze_community` in `inspect_message` ([#6764](https://github.com/open-chat-labs/open-chat/pull/6764))

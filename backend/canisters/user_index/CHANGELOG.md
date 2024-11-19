@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Pass in `BotApiCanister` when installing a new LocalUserIndex ([#6828](https://github.com/open-chat-labs/open-chat/pull/6828))
+- Simplify `inspect_message` ([#6847](https://github.com/open-chat-labs/open-chat/pull/6847))
 
 ## [[2.0.1450](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1450-user_index)] - 2024-11-14
 
