@@ -1,6 +1,7 @@
 <script lang="ts">
     import { type FlattenedCommand } from "openchat-shared";
-    import SingleUserSelector from "../home/SingleUserSelector.svelte";
+    import CommandParam from "./CommandParam.svelte";
+    import { botState } from "./botState.svelte";
 
     interface Props {
         command: FlattenedCommand;
@@ -9,19 +10,28 @@
     let { command }: Props = $props();
 
     let commandName = $derived(`/${command.name}`);
-    let focus = $state(command.params?.[0]);
+    let numberOfParams = $derived(command.params?.length ?? 0);
+
+    function onFocus(index: number) {
+        if (index === numberOfParams) {
+            console.log("We will validate at this point");
+        } else {
+            botState.focusedParamIndex = index;
+        }
+    }
+
+    function onSubmit() {
+        // at this point we validate all of the parameters
+        // if there are no errors we can send the command
+        // otherwise select the first invalid param and show its
+        // error message
+    }
 </script>
 
-{#if focus?.kind === "user"}
-    <SingleUserSelector placeholder={focus.description} direction={"up"} autofocus={false} />
-{/if}
 <div contenteditable class="command-entry">
-    <span class="command">{commandName}</span>
-    {#each command?.params ?? [] as param}
-        <div class="param">
-            <span class="param-name">{param.name}</span>
-            <input class="param-input" />
-        </div>
+    <span contenteditable="false" tabindex="-1" class="command">{commandName}</span>
+    {#each command?.params ?? [] as param, i}
+        <CommandParam {onSubmit} index={i} {onFocus} {param} />
     {/each}
 </div>
 
@@ -43,15 +53,5 @@
         display: flex;
         align-items: center;
         gap: $sp3;
-    }
-
-    .param {
-        display: flex;
-        gap: $sp2;
-
-        .param-name {
-            border: 1px solid var(--bd);
-            padding: $sp2;
-        }
     }
 </style>

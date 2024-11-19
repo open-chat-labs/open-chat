@@ -8,7 +8,9 @@ export type SlashCommandParamType = UserParam | BooleanParam | StringParam | Num
 export type CommandParam = {
     name: string;
     description?: string;
+    placeholder?: string;
     required: boolean;
+    errorMessage?: string;
 };
 
 export type UserParam = {

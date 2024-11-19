@@ -51,6 +51,7 @@
     import ThrottleCountdown from "./ThrottleCountdown.svelte";
     import CommandSelector from "../bots/CommandSelector.svelte";
     import CommandBuilder from "../bots/CommandBuilder.svelte";
+    import { botState } from "../bots/botState.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -84,8 +85,7 @@
     let typingTimer: number | undefined = undefined;
     let audioSupported: boolean = "mediaDevices" in navigator;
     let showMentionPicker = false;
-    let commandPrefix: string | undefined = undefined;
-    let selectedCommand: FlattenedCommand | undefined = undefined;
+    let showCommandSelector: boolean = false;
     let showEmojiSearch = false;
     let mentionPrefix: string | undefined;
     let emojiQuery: string | undefined;
@@ -249,18 +249,18 @@
 
     function triggerCommandSelector(inputContent: string | null): void {
         const commandMatch = inputContent?.match(/^\/\w*/);
-        commandPrefix = commandMatch ? commandMatch[0] : undefined;
+        showCommandSelector = commandMatch != null;
+        botState.prefix = commandMatch ? commandMatch[0] : "";
     }
 
     function cancelCommandSelector() {
-        commandPrefix = undefined;
-        selectedCommand = undefined;
+        showCommandSelector = false;
+        botState.selectedCommand = undefined;
         dispatch("setTextContent", undefined);
     }
 
     function selectCommand(command: FlattenedCommand) {
-        // commandPrefix = undefined;
-        selectedCommand = command;
+        botState.selectedCommand = command;
     }
 
     function triggerTypingTimer() {
@@ -282,10 +282,15 @@
     }
 
     function keyPress(e: KeyboardEvent) {
-        if (e.key === "Enter" && $enterSend && !e.shiftKey) {
+        if (e.key === "Enter" && $enterSend && !e.shiftKey && !showCommandSelector) {
             if (!messageIsEmpty) {
                 sendMessage();
             }
+            e.preventDefault();
+        }
+
+        if (e.key === "Enter" && showCommandSelector) {
+            botState.setSelectedCommand();
             e.preventDefault();
         }
     }
@@ -570,11 +575,8 @@
         prefix={mentionPrefix} />
 {/if}
 
-{#if commandPrefix !== undefined}
-    <CommandSelector
-        onSelect={selectCommand}
-        prefix={commandPrefix}
-        onCancel={cancelCommandSelector} />
+{#if showCommandSelector}
+    <CommandSelector onSelect={selectCommand} onCancel={cancelCommandSelector} />
 {/if}
 
 {#if showEmojiSearch}
@@ -629,8 +631,8 @@
                     {#if excessiveLinks}
                         <div class="note">{$_("excessiveLinksNote")}</div>
                     {/if}
-                    {#if selectedCommand !== undefined}
-                        <CommandBuilder command={selectedCommand} />
+                    {#if botState.selectedCommand !== undefined}
+                        <CommandBuilder command={botState.selectedCommand} />
                     {:else}
                         <div
                             data-gram="false"
