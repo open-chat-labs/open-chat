@@ -96,13 +96,8 @@
         if (tokenDetails === undefined) {
             return undefined;
         }
-
-        const amount = Number(amountText);
-        if (isNaN(amount)) {
-            return undefined;
-        }
-
-        return BigInt((amount * 10 ** tokenDetails.decimals).toFixed(0));
+        const { amount } = client.validateTokenInput(amountText, tokenDetails.decimals);
+        return amount;
     }
 
     function buildPaymentInfoMessage(gate: AccessGate): string {
