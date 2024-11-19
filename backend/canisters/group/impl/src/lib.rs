@@ -88,6 +88,10 @@ impl RuntimeState {
         self.env.caller() == self.data.local_group_index_canister_id
     }
 
+    pub fn is_caller_bot_api_gateway(&self) -> bool {
+        self.env.caller() == self.data.bot_api_gateway_canister_id
+    }
+
     pub fn is_caller_escrow_canister(&self) -> bool {
         self.env.caller() == self.data.escrow_canister_id
     }
