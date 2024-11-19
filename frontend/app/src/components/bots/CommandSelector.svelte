@@ -48,6 +48,9 @@
             <p>{botState.selectedCommand.description}</p>
         {/if}
     </div>
+    {#if botState.focusedParamInstance}
+        <pre>{JSON.stringify(botState.focusedParamInstance, null, 4)}</pre>
+    {/if}
 {:else}
     <div class="command-list">
         {#each botState.commands as command}
@@ -90,6 +93,7 @@
     }
 
     .param-help {
+        background-color: var(--modal-bg);
         padding: $sp4;
     }
 

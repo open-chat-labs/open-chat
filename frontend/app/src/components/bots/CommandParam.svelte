@@ -1,15 +1,16 @@
 <script lang="ts">
-    import type { SlashCommandParam } from "openchat-client";
+    import type { SlashCommandParam, SlashCommandParamInstance } from "openchat-client";
     import { onMount } from "svelte";
 
     interface Props {
         param: SlashCommandParam;
         index: number;
+        instance: SlashCommandParamInstance;
         onFocus: (index: number) => void;
         onSubmit: () => void;
     }
 
-    let { param, onFocus, onSubmit, index }: Props = $props();
+    let { param, onFocus, onSubmit, index, instance }: Props = $props();
 
     let inp: HTMLInputElement;
 
@@ -30,6 +31,7 @@
 <div class="param">
     <span tabindex="-1" contenteditable="false" class="param-name">{param.name}</span>
     <input
+        bind:value={instance.value}
         onfocus={() => onFocus(index)}
         onkeydown={keydown}
         bind:this={inp}

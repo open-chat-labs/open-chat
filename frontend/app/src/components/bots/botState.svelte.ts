@@ -1,4 +1,4 @@
-import type { ExternalBot, FlattenedCommand } from "openchat-client";
+import type { ExternalBot, FlattenedCommand, SlashCommandParamInstance } from "openchat-client";
 import { getBots } from "./testBots";
 
 let error = $state<string | undefined>(undefined);
@@ -25,6 +25,8 @@ let commands = $derived.by(() => {
 let selectedCommand = $state<FlattenedCommand | undefined>(undefined);
 let focusedParamIndex = $state(0);
 let focusedParam = $derived(selectedCommand?.params?.[focusedParamIndex]);
+let selectedCommandParamInstances = $state<SlashCommandParamInstance[]>([]);
+let focusedParamInstance = $derived(selectedCommandParamInstances[focusedParamIndex]);
 
 class BotState {
     constructor() {
@@ -38,6 +40,15 @@ class BotState {
     }
     set prefix(val: string) {
         prefix = val;
+    }
+    set selectedCommandParamInstances(val: SlashCommandParamInstance[]) {
+        selectedCommandParamInstances = val;
+    }
+    get selectedCommandParamInstances() {
+        return selectedCommandParamInstances;
+    }
+    get focusedParamInstance() {
+        return focusedParamInstance;
     }
     get commands() {
         return commands;

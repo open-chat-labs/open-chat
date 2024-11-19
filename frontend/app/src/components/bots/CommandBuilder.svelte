@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { type FlattenedCommand } from "openchat-shared";
+    import { createParamInstancesFromSchema, type FlattenedCommand } from "openchat-shared";
     import CommandParam from "./CommandParam.svelte";
     import { botState } from "./botState.svelte";
+    import { onMount } from "svelte";
 
     interface Props {
         command: FlattenedCommand;
@@ -11,6 +12,10 @@
 
     let commandName = $derived(`/${command.name}`);
     let numberOfParams = $derived(command.params?.length ?? 0);
+
+    onMount(() => {
+        botState.selectedCommandParamInstances = createParamInstancesFromSchema(command.params);
+    });
 
     function onFocus(index: number) {
         if (index === numberOfParams) {
@@ -30,9 +35,16 @@
 
 <div contenteditable class="command-entry">
     <span contenteditable="false" tabindex="-1" class="command">{commandName}</span>
-    {#each command?.params ?? [] as param, i}
-        <CommandParam {onSubmit} index={i} {onFocus} {param} />
-    {/each}
+    {#if botState.selectedCommandParamInstances.length === command?.params?.length}
+        {#each command?.params ?? [] as param, i}
+            <CommandParam
+                instance={botState.selectedCommandParamInstances[i]}
+                {onSubmit}
+                index={i}
+                {onFocus}
+                {param} />
+        {/each}
+    {/if}
 </div>
 
 <style lang="scss">

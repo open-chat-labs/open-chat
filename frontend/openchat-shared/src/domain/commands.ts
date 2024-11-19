@@ -21,7 +21,7 @@ export type BooleanParam = {
     kind: "boolean";
 };
 
-export type StringParam = CommandParam & {
+export type StringParam = {
     kind: "string";
     minLength: number;
     maxLength: number;
@@ -63,3 +63,54 @@ export type FlattenedCommand = SlashCommandSchema & {
     botIcon: string;
     botDescription?: string;
 };
+
+export type CommandParamInstance = {
+    name: string;
+};
+
+export type UserParamInstance = {
+    kind: "user";
+    value?: string;
+};
+
+export type BooleanParamInstance = {
+    kind: "boolean";
+    value?: boolean;
+};
+
+export type StringParamInstance = {
+    kind: "string";
+    value?: string;
+};
+
+export type NumberParamInstance = {
+    kind: "number";
+    value?: number;
+};
+
+export type SlashCommandParamTypeInstance =
+    | UserParamInstance
+    | BooleanParamInstance
+    | StringParamInstance
+    | NumberParamInstance;
+
+export type SlashCommandParamInstance = CommandParamInstance & SlashCommandParamTypeInstance;
+
+export function createParamInstancesFromSchema(
+    params?: SlashCommandParam[],
+): SlashCommandParamInstance[] {
+    return (
+        params?.map((p) => {
+            switch (p.kind) {
+                case "user":
+                    return { kind: "user", name: p.name };
+                case "boolean":
+                    return { kind: "boolean", name: p.name };
+                case "number":
+                    return { kind: "number", name: p.name };
+                case "string":
+                    return { kind: "string", name: p.name };
+            }
+        }) ?? []
+    );
+}
