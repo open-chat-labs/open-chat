@@ -96,17 +96,8 @@
         if (tokenDetails === undefined) {
             return undefined;
         }
-
-        const amount = Number(amountText);
-        if (isNaN(amount)) {
-            return undefined;
-        }
-
-        const pow10 = 10 ** tokenDetails.decimals;
-        const integralPart = BigInt(Math.trunc(amount)) * BigInt(pow10);
-        const fractionalPart = BigInt((amount - Math.trunc(amount)) * pow10);
-
-        return integralPart + fractionalPart
+        const { amount } = client.validateTokenInput(amountText, tokenDetails.decimals);
+        return amount;
     }
 
     function buildPaymentInfoMessage(gate: AccessGate): string {
