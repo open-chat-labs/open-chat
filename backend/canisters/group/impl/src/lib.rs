@@ -167,7 +167,7 @@ impl RuntimeState {
         let membership = GroupMembership {
             joined: member.date_added(),
             role: member.role().value.into(),
-            mentions: member.most_recent_mentions(None, &chat.events),
+            mentions: chat.most_recent_mentions(member, None),
             notifications_muted: member.notifications_muted.value,
             my_metrics: chat
                 .events

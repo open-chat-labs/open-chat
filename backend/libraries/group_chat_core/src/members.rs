@@ -1,7 +1,6 @@
 use crate::mentions::Mentions;
 use crate::roles::GroupRoleInternal;
 use crate::AccessRulesInternal;
-use chat_events::ChatEvents;
 use group_community_common::{Member, Members};
 use serde::de::{SeqAccess, Visitor};
 use serde::ser::SerializeSeq;
@@ -11,8 +10,8 @@ use std::cmp::max;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::fmt::Formatter;
 use types::{
-    is_default, EventIndex, GroupMember, GroupPermissions, HydratedMention, MessageIndex, TimestampMillis, Timestamped, UserId,
-    UserType, Version, MAX_RETURNED_MENTIONS,
+    is_default, EventIndex, GroupMember, GroupPermissions, MessageIndex, TimestampMillis, Timestamped, UserId, UserType,
+    Version,
 };
 use utils::timestamped_set::TimestampedSet;
 
@@ -564,16 +563,6 @@ impl GroupMemberInternal {
         } else {
             self.min_visible_message_index
         }
-    }
-
-    pub fn most_recent_mentions(&self, since: Option<TimestampMillis>, chat_events: &ChatEvents) -> Vec<HydratedMention> {
-        let min_visible_event_index = self.min_visible_event_index();
-
-        self.mentions
-            .iter_most_recent(since)
-            .filter_map(|m| chat_events.hydrate_mention(min_visible_event_index, &m))
-            .take(MAX_RETURNED_MENTIONS)
-            .collect()
     }
 
     pub fn accept_rules(&mut self, version: Version, now: TimestampMillis) {
