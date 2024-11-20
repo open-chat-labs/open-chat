@@ -5,7 +5,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::update_group_v2::*;
 use group_chat_core::UpdateResult;
-use group_community_common::{ExpiringMember, Member};
+use group_community_common::{ExpiringMember, Members};
 use group_index_canister::{c2c_make_private, c2c_update_group};
 use tracing::error;
 use types::{AccessGateConfigInternal, CanisterId, ChatId, Document, OptionUpdate, TimestampMillis, UserId};
@@ -211,11 +211,11 @@ pub fn update_member_expiry(data: &mut Data, prev_gate_config: &Option<AccessGat
         }
     } else if let Some(new_gate_expiry) = new_gate_expiry {
         // Else if the new gate has an expiry then add members to the expiry schedule.
-        for member in data.chat.members.iter().filter(|m| m.can_member_lapse()) {
+        for user_id in data.chat.members.iter_members_who_can_lapse() {
             data.expiring_members.push(ExpiringMember {
                 expires: now + new_gate_expiry,
                 channel_id: None,
-                user_id: member.user_id(),
+                user_id,
             });
         }
     }

@@ -16,6 +16,8 @@ pub trait Members {
 
     fn get(&self, user_id: &UserId) -> Option<&Self::Member>;
 
+    fn iter_members_who_can_lapse(&self) -> Box<dyn Iterator<Item = UserId> + '_>;
+
     fn can_member_lapse(&self, user_id: &UserId) -> bool {
         self.get(user_id).map_or(false, |m| m.can_member_lapse())
     }
