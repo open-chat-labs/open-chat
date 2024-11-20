@@ -18,6 +18,7 @@ pub const CYCLES_REQUIRED_FOR_UPGRADE: Cycles = 300_000_000_000; // 0.3T cycles
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
 pub const DELETED_USER_ID: UserId = UserId::new(Principal::from_slice(&[139, 36, 200, 58, 72, 145, 241, 66, 97, 1]));
 pub const OPENCHAT_BOT_USERNAME: &str = "OpenChatBot";
+pub const OPENCHAT_TREASURY_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 2, 0, 0, 23, 1, 1]);
 
 pub const SNS_ROOT_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 2, 0, 0, 23, 1, 1]);
 pub const SNS_GOVERNANCE_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 2, 0, 0, 24, 1, 1]);
@@ -36,6 +37,7 @@ pub const MEMO_TIP: [u8; 6] = [0x4f, 0x43, 0x5f, 0x54, 0x49, 0x50]; // OC_TIP
 pub const MEMO_PRIZE: [u8; 6] = [0x4f, 0x43, 0x5f, 0x50, 0x52, 0x5a]; // OC_PRZ
 pub const MEMO_PRIZE_CLAIM: [u8; 8] = [0x4f, 0x43, 0x5f, 0x50, 0x52, 0x5a, 0x43, 0x4c]; // OC_PRZCL
 pub const MEMO_PRIZE_REFUND: [u8; 8] = [0x4f, 0x43, 0x5f, 0x50, 0x52, 0x5a, 0x52, 0x46]; // OC_PRZRF
+pub const MEMO_PRIZE_FEE: [u8; 9] = [0x4f, 0x43, 0x5f, 0x50, 0x52, 0x5a, 0x46, 0x45, 0x45]; // OC_PRZFEE
 pub const MEMO_SWAP: [u8; 7] = [0x4F, 0x43, 0x5F, 0x53, 0x57, 0x41, 0x50]; // OC_SWAP
 pub const MEMO_SWAP_APPROVAL: [u8; 8] = [0x4F, 0x43, 0x5F, 0x53, 0x57, 0x41, 0x50, 0x41]; // OC_SWAPA
 pub const MEMO_JOINING_FEE: [u8; 7] = [0x4f, 0x43, 0x5f, 0x4A, 0x4F, 0x49, 0x4E]; // OC_JOIN
@@ -48,6 +50,8 @@ pub const MEMO_CHIT_FOR_CHAT_LOTTERY: [u8; 6] = [0x4f, 0x43, 0x5f, 0x4C, 0x4F, 0
 pub const MEMO_LIST_TOKEN: [u8; 6] = [0x4f, 0x43, 0x5f, 0x54, 0x4f, 0x4b]; // OC_TOK
 
 pub const LIFETIME_DIAMOND_TIMESTAMP: TimestampMillis = 30000000000000; // This timestamp is in the year 2920
+
+pub const PRIZE_FEE_PERCENT: u8 = 5;
 
 #[cfg(test)]
 mod tests {

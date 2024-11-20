@@ -8,7 +8,6 @@ use ledger_utils::process_transaction;
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{BlobReference, CanisterId, MessageId, MessageIndex, P2PSwapStatus, PendingCryptoTransaction, UserId};
-use utils::consts::MEMO_PRIZE_REFUND;
 use utils::time::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -176,9 +175,7 @@ impl Job for HardDeleteMessageContentJob {
                                 })
                                 .is_some()
                             {
-                                if let Some(pending_transaction) =
-                                    prize.prize_refund(sender, &MEMO_PRIZE_REFUND, state.env.now_nanos())
-                                {
+                                for pending_transaction in prize.final_payments(sender, state.env.now_nanos()) {
                                     follow_on_jobs.push(TimerJob::MakeTransfer(MakeTransferJob {
                                         pending_transaction,
                                         attempt: 0,
@@ -229,14 +226,15 @@ impl Job for EndPollJob {
 
 impl Job for RefundPrizeJob {
     fn execute(self) {
-        if let Some(pending_transaction) = mutate_state(|state| {
-            state.data.chat.events.prize_refund(
-                self.thread_root_message_index,
-                self.message_index,
-                &MEMO_PRIZE_REFUND,
-                state.env.now_nanos(),
-            )
-        }) {
+        let pending_transactions = mutate_state(|state| {
+            state
+                .data
+                .chat
+                .events
+                .final_payments(self.thread_root_message_index, self.message_index, state.env.now_nanos())
+        });
+
+        for pending_transaction in pending_transactions {
             let make_transfer_job = MakeTransferJob {
                 pending_transaction,
                 attempt: 0,

@@ -240,7 +240,7 @@ impl RuntimeState {
                     next_event_expiry = Some(expiry);
                 }
             }
-            prize_refunds.extend(result.prize_refunds);
+            prize_refunds.extend(result.final_prize_payments);
             for thread in result.threads {
                 self.data
                     .stable_memory_keys_to_garbage_collect

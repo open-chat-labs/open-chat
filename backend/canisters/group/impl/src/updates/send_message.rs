@@ -3,7 +3,6 @@ use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, MarkP2PSwapExp
 use crate::{mutate_state, run_regular_jobs, Data, RuntimeState, TimerJob};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::OPENCHAT_BOT_USER_ID;
 use group_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse};
 use group_canister::send_message_v2::{Response::*, *};
 use group_chat_core::SendMessageResult;
@@ -12,6 +11,7 @@ use types::{
     TimestampMillis, User, UserId, UserType,
 };
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
+use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[update(candid = true, msgpack = true)]
 #[trace]
