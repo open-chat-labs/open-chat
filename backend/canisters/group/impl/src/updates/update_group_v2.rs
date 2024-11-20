@@ -113,7 +113,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         let permissions = args.permissions_v2.as_ref();
 
         match state.data.chat.can_update(
-            &member.user_id,
+            &member.user_id(),
             &args.name,
             &args.description,
             &args.rules,
@@ -125,7 +125,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 let avatar_update = args.avatar.as_ref().expand();
 
                 Ok(PrepareResult {
-                    my_user_id: member.user_id,
+                    my_user_id: member.user_id(),
                     group_index_canister_id: state.data.group_index_canister_id,
                     is_public: args.public.unwrap_or(state.data.chat.is_public.value),
                     chat_id: state.env.canister_id().into(),
@@ -215,7 +215,7 @@ pub fn update_member_expiry(data: &mut Data, prev_gate_config: &Option<AccessGat
             data.expiring_members.push(ExpiringMember {
                 expires: now + new_gate_expiry,
                 channel_id: None,
-                user_id: member.user_id,
+                user_id: member.user_id(),
             });
         }
     }

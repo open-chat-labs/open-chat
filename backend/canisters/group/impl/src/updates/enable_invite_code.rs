@@ -76,7 +76,7 @@ fn record_event(caller: Principal, change: GroupInviteCodeChange, correlation_id
         state.data.chat.events.push_main_event(
             ChatEventInternal::GroupInviteCodeChanged(Box::new(GroupInviteCodeChanged {
                 change,
-                changed_by: member.user_id,
+                changed_by: member.user_id(),
             })),
             correlation_id,
             now,
@@ -103,7 +103,7 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
             return Err(UserSuspended);
         }
 
-        if member.role.can_invite_users(&state.data.chat.permissions) {
+        if member.role().can_invite_users(&state.data.chat.permissions) {
             return Ok(PrepareResult {
                 caller,
                 code: state.data.invite_code,
