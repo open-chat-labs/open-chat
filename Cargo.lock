@@ -7503,6 +7503,7 @@ dependencies = [
  "storage_bucket_canister",
  "storage_bucket_canister_c2c_client",
  "types",
+ "utils 0.1.0",
 ]
 
 [[package]]
