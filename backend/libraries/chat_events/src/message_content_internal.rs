@@ -1248,8 +1248,10 @@ impl PrizeContentInternal {
         let fee = (self.prizes_paid * self.fee_percent as u128) / 100;
 
         // Refund includes prizes unclaimed plus their associated fee
-        let unclaimed = self.prizes_remaining.iter().map(|p| p + transaction_fee).sum::<u128>();
-        let refund = unclaimed + (unclaimed * self.fee_percent as u128) / 100;
+        let unclaimed_prizes = self.prizes_remaining.iter().sum::<u128>();
+        let unclaimed_fees =
+            ((unclaimed_prizes * self.fee_percent as u128) / 100) + (self.prizes_remaining.len() as u128 * fee);
+        let refund = unclaimed_prizes + unclaimed_fees;
 
         let mut payments = Vec::new();
 
