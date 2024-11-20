@@ -15,7 +15,7 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::GatePayment;
 use group_chat_core::AccessRulesInternal;
 use group_community_common::{
-    Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, Members, PaymentReceipts, PaymentRecipient,
+    Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, Member, Members, PaymentReceipts, PaymentRecipient,
     PendingPayment, PendingPaymentReason, PendingPaymentsQueue, UserCache,
 };
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
@@ -638,20 +638,29 @@ impl Data {
 
             if let Some(channel_id) = channel_id {
                 if let Some(channel) = self.channels.get_mut(&channel_id) {
-                    user_ids = channel.chat.members.iter().map(|m| m.user_id).collect();
+                    user_ids = channel
+                        .chat
+                        .members
+                        .iter()
+                        .filter(|m| m.can_member_lapse())
+                        .map(|m| m.user_id)
+                        .collect();
                 }
             } else {
-                user_ids = self.members.iter().map(|m| m.user_id).collect();
+                user_ids = self
+                    .members
+                    .iter()
+                    .filter(|m| m.can_member_lapse())
+                    .map(|m| m.user_id)
+                    .collect();
             }
 
             for user_id in user_ids {
-                if self.can_member_lapse(&user_id, channel_id) {
-                    self.expiring_members.push(ExpiringMember {
-                        expires: now + new_gate_expiry,
-                        channel_id,
-                        user_id,
-                    });
-                }
+                self.expiring_members.push(ExpiringMember {
+                    expires: now + new_gate_expiry,
+                    channel_id,
+                    user_id,
+                });
             }
         }
     }
