@@ -267,7 +267,7 @@ impl Channel {
         let membership = member.map(|m| GroupMembership {
             joined: m.date_added(),
             role: m.role().value.into(),
-            mentions: m.most_recent_mentions(None, &chat.events),
+            mentions: chat.most_recent_mentions(m, None),
             notifications_muted: m.notifications_muted.value,
             my_metrics: chat
                 .events
