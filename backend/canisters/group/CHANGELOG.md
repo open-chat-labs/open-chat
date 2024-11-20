@@ -16,7 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add the `BotCommand` access token type ([#6830](https://github.com/open-chat-labs/open-chat/pull/6830))
 - Add `bot_api_gateway` canisterId to the canister state ([#6842](https://github.com/open-chat-labs/open-chat/pull/6842))
 - Simplify `inspect_message` ([#6847](https://github.com/open-chat-labs/open-chat/pull/6847))
-- Maintain sets of owners, admins, moderators and lapsed members ([#6853](https://github.com/open-chat-labs/open-chat/pull/6853))
+- Avoid cases where we were iterating over the full chat members map ([#6853](https://github.com/open-chat-labs/open-chat/pull/6853))
 
 ### Removed
 
