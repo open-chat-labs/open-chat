@@ -1797,16 +1797,15 @@ impl GroupChatCore {
             })
             .filter(move |(_, m)| m.sender() != user_id)
             .filter_map(|(_, m)| {
-                if let Some(event_index) = self.events.main_events_list().event_index(m.message_index().into()) {
-                    Some(HydratedMention {
+                self.events
+                    .main_events_list()
+                    .event_index(m.message_index().into())
+                    .map(|event_index| HydratedMention {
                         thread_root_message_index: None,
                         message_id: m.message_id(),
                         message_index: m.message_index(),
                         event_index,
                     })
-                } else {
-                    None
-                }
             })
     }
 
