@@ -316,11 +316,10 @@ impl GroupMembers {
     }
 
     pub fn unlapse_all(&mut self, now: TimestampMillis) {
-        for user_id in self.lapsed.iter() {
-            if let Some(member) = self.members.get_mut(user_id) {
+        for user_id in std::mem::take(&mut self.lapsed) {
+            if let Some(member) = self.members.get_mut(&user_id) {
                 if member.set_lapsed(false, now) {
-                    self.lapsed.remove(&m.user_id);
-                    self.updates.insert((now, m.user_id, MemberUpdate::Unlapsed));
+                    self.updates.insert((now, member.user_id, MemberUpdate::Unlapsed));
                 }
             }
         }
