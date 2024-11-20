@@ -10,7 +10,6 @@ use regex_lite::Regex;
 use search::Query;
 use serde::{Deserialize, Serialize};
 use std::cmp::{max, min, Reverse};
-use std::collections::btree_map::Entry::Vacant;
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use types::{
     AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, ContentValidationError, CustomPermission, Document,
@@ -71,28 +70,33 @@ impl GroupChatCore {
     pub fn dedupe_at_everyone_mentions(&mut self) {
         let mut at_everyone_mentions = BTreeMap::new();
 
-        for member in self.members.iter() {
+        for member in self.members.iter_mut() {
+            member.mentions.remove_at_everyone_mentions(&at_everyone_mentions);
+
+            let mut updated = false;
             for mention in member.mentions.iter_potential_at_everyone_mentions() {
-                if let Vacant(e) = at_everyone_mentions.entry(mention.message_index) {
-                    if let Some(event_wrapper) =
-                        self.events
-                            .event_wrapper_internal(EventIndex::default(), None, mention.message_index.into())
-                    {
-                        if let Some(message) = event_wrapper.event.into_message() {
-                            if is_everyone_mentioned(&message.content) {
-                                e.insert((
+                if let Some(event_wrapper) =
+                    self.events
+                        .event_wrapper_internal(EventIndex::default(), None, mention.message_index.into())
+                {
+                    if let Some(message) = event_wrapper.event.into_message() {
+                        if is_everyone_mentioned(&message.content) {
+                            at_everyone_mentions.insert(
+                                mention.message_index,
+                                (
                                     event_wrapper.timestamp,
                                     AtEveryoneMention::new(message.sender, message.message_id, message.message_index),
-                                ));
-                            }
+                                ),
+                            );
+                            updated = true;
                         }
                     }
                 }
             }
-        }
 
-        for member in self.members.iter_mut() {
-            member.mentions.remove_at_everyone_mentions(&at_everyone_mentions);
+            if updated {
+                member.mentions.remove_at_everyone_mentions(&at_everyone_mentions);
+            }
         }
     }
 
