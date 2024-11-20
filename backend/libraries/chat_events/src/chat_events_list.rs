@@ -250,7 +250,7 @@ impl ChatEventsList {
         self.message_id_map.contains_key(&message_id)
     }
 
-    fn event_index(&self, event_key: EventKey) -> Option<EventIndex> {
+    pub fn event_index(&self, event_key: EventKey) -> Option<EventIndex> {
         match event_key {
             EventKey::EventIndex(e) => Some(e),
             EventKey::MessageIndex(m) => self.message_event_indexes.get(usize::from(m)).copied(),

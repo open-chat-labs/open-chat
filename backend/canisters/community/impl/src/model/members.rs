@@ -403,6 +403,10 @@ impl Members for CommunityMembers {
     fn get(&self, user_id: &UserId) -> Option<&CommunityMemberInternal> {
         self.get_by_user_id(user_id)
     }
+
+    fn iter_members_who_can_lapse(&self) -> Box<dyn Iterator<Item = UserId> + '_> {
+        Box::new(self.members.values().filter(|m| m.can_member_lapse()).map(|m| m.user_id))
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone)]

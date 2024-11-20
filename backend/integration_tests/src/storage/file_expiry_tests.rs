@@ -31,7 +31,7 @@ fn file_is_removed_after_expiry_date() {
 
     let now = now_millis(env);
 
-    client::storage_bucket::happy_path::upload_file(env, user_id, bucket, file_id, file, Some(now + 1000));
+    client::storage_bucket::happy_path::upload_file(env, user_id, bucket, file_id, file, Vec::new(), Some(now + 1000));
 
     env.advance_time(Duration::from_millis(999));
     env.tick();

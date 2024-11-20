@@ -16,9 +16,10 @@ pub mod happy_path {
     use crate::utils::tick_many;
     use candid::Principal;
     use pocket_ic::PocketIc;
+    use rand::{thread_rng, RngCore};
     use storage_index_canister::add_or_update_users::UserConfig;
     use storage_index_canister::user::UserRecord;
-    use types::{CanisterId, CanisterWasm};
+    use types::{AccessorId, BlobReference, CanisterId, CanisterWasm};
     use utils::hasher::hash_bytes;
 
     pub fn add_or_update_users(env: &mut PocketIc, sender: Principal, canister_id: CanisterId, users: Vec<UserConfig>) {
@@ -92,5 +93,33 @@ pub mod happy_path {
             response,
             storage_index_canister::upgrade_bucket_canister_wasm::Response::Success
         ));
+    }
+
+    pub fn upload_file(
+        env: &mut PocketIc,
+        sender: Principal,
+        storage_index_canister_id: CanisterId,
+        file_size: u32,
+        accessors: Vec<AccessorId>,
+    ) -> BlobReference {
+        let mut file = vec![0; file_size as usize];
+        thread_rng().fill_bytes(file.as_mut_slice());
+
+        let bucket_response = allocated_bucket(env, sender, storage_index_canister_id, &file);
+
+        crate::client::storage_bucket::happy_path::upload_file(
+            env,
+            sender,
+            bucket_response.canister_id,
+            bucket_response.file_id,
+            file,
+            accessors,
+            None,
+        );
+
+        BlobReference {
+            canister_id: bucket_response.canister_id,
+            blob_id: bucket_response.file_id,
+        }
     }
 }

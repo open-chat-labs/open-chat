@@ -16,10 +16,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Reduce size of metrics in memory ([#6765](https://github.com/open-chat-labs/open-chat/pull/6765))
 - Run cycles check (+ other background tasks) when executing timer jobs ([#6815](https://github.com/open-chat-labs/open-chat/pull/6815))
 - Add cycles balance check to more timer jobs ([#6822](https://github.com/open-chat-labs/open-chat/pull/6822))
+- Handle metric counters that overflow `u32::MAX` ([#6826](https://github.com/open-chat-labs/open-chat/pull/6826))
 - Add the `BotCommand` access token type ([#6830](https://github.com/open-chat-labs/open-chat/pull/6830))
+- Improve job to delete files after messages are deleted ([#6839](https://github.com/open-chat-labs/open-chat/pull/6839))
 - Add `bot_api_gateway` canisterId to the canister state ([#6842](https://github.com/open-chat-labs/open-chat/pull/6842))
 - Simplify `inspect_message` ([#6847](https://github.com/open-chat-labs/open-chat/pull/6847))
 - Avoid double iteration when updating member expiry ([#6851](https://github.com/open-chat-labs/open-chat/pull/6851))
+- Avoid cases where we were iterating over the full chat members map ([#6853](https://github.com/open-chat-labs/open-chat/pull/6853))
+- Store @everyone mentions once rather than linking to each user ([#6856](https://github.com/open-chat-labs/open-chat/pull/6856))
 - Take a fee for prize messages and send to treasury ([#6854](https://github.com/open-chat-labs/open-chat/pull/6854))
 
 ### Removed

@@ -9,8 +9,8 @@ use lazy_static::lazy_static;
 use regex_lite::Regex;
 use search::Query;
 use serde::{Deserialize, Serialize};
-use std::cmp::{max, min};
-use std::collections::{BTreeSet, HashSet};
+use std::cmp::{max, min, Reverse};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
 use types::{
     AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, ContentValidationError, CustomPermission, Document,
     EventIndex, EventOrExpiredRange, EventWrapper, EventsResponse, ExternalUrlUpdated, FieldTooLongResult, FieldTooShortResult,
@@ -20,6 +20,7 @@ use types::{
     MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions,
     PermissionsChanged, PushEventResult, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis,
     Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall,
+    MAX_RETURNED_MENTIONS,
 };
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::document_validation::validate_avatar;
@@ -60,6 +61,8 @@ pub struct GroupChatCore {
     pub invited_users: InvitedUsers,
     pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
     pub external_url: Timestamped<Option<String>>,
+    #[serde(default)]
+    at_everyone_mentions: BTreeMap<TimestampMillis, AtEveryoneMention>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -115,6 +118,7 @@ impl GroupChatCore {
             invited_users: InvitedUsers::default(),
             min_visible_indexes_for_new_members: None,
             external_url: Timestamped::new(external_url, now),
+            at_everyone_mentions: BTreeMap::new(),
         }
     }
 
@@ -189,9 +193,8 @@ impl GroupChatCore {
 
         let events_reader = self.events.visible_main_events_reader(min_visible_event_index);
         let latest_message = events_reader.latest_message_event_if_updated(since, user_id);
-        let mentions = member
-            .map(|m| m.most_recent_mentions(Some(since), &self.events))
-            .unwrap_or_default();
+        let mentions = member.map(|m| self.most_recent_mentions(m, Some(since))).unwrap_or_default();
+
         let events_ttl = self.events.get_events_time_to_live();
         let mut updated_events: Vec<_> = self
             .events
@@ -735,18 +738,25 @@ impl GroupChatCore {
                     }
                 }
             } else {
+                if everyone_mentioned {
+                    self.at_everyone_mentions.insert(
+                        now,
+                        AtEveryoneMention::new(sender, message_event.event.message_id, message_event.event.message_index),
+                    );
+                }
+
                 for member in self
                     .members
                     .iter_mut()
                     .filter(|m| m.user_id() != sender && !m.user_type().is_bot() && !m.suspended.value)
                 {
-                    let mentioned = !mentions_disabled && (everyone_mentioned || mentions.contains(&member.user_id()));
+                    let mentioned = !mentions_disabled && mentions.contains(&member.user_id());
                     if mentioned {
                         // Mention this member
                         member.mentions.add(thread_root_message_index, message_index, message_id, now);
                     }
 
-                    if mentioned || !member.notifications_muted.value {
+                    if !member.notifications_muted.value || mentioned || everyone_mentioned {
                         users_to_notify.insert(member.user_id());
                     }
                 }
@@ -1296,7 +1306,7 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 UserSuspended
-            } else if member.role().is_owner() && self.members.owner_count() == 1 {
+            } else if member.role().is_owner() && self.members.owners().len() == 1 {
                 LastOwnerCannotLeave
             } else {
                 Yes
@@ -1755,6 +1765,48 @@ impl GroupChatCore {
         }
 
         result
+    }
+
+    pub fn most_recent_mentions(&self, member: &GroupMemberInternal, since: Option<TimestampMillis>) -> Vec<HydratedMention> {
+        let min_visible_event_index = member.min_visible_event_index();
+
+        self.at_everyone_mentions_since(since, member.user_id(), member.min_visible_message_index())
+            .chain(
+                member
+                    .mentions
+                    .iter_most_recent(since)
+                    .filter_map(|m| self.events.hydrate_mention(min_visible_event_index, &m)),
+            )
+            .unique_by(|m| m.event_index)
+            .sorted_unstable_by_key(|m| Reverse(m.event_index))
+            .take(MAX_RETURNED_MENTIONS)
+            .collect()
+    }
+
+    fn at_everyone_mentions_since(
+        &self,
+        since: Option<TimestampMillis>,
+        user_id: UserId,
+        min_visible_message_index: MessageIndex,
+    ) -> impl Iterator<Item = HydratedMention> + '_ {
+        self.at_everyone_mentions
+            .iter()
+            .rev()
+            .take_while(move |(&ts, m)| {
+                since.as_ref().map_or(true, |s| ts > *s) && m.message_index() >= min_visible_message_index
+            })
+            .filter(move |(_, m)| m.sender() != user_id)
+            .filter_map(|(_, m)| {
+                self.events
+                    .main_events_list()
+                    .event_index(m.message_index().into())
+                    .map(|event_index| HydratedMention {
+                        thread_root_message_index: None,
+                        message_id: m.message_id(),
+                        message_index: m.message_index(),
+                        event_index,
+                    })
+            })
     }
 
     fn events_reader(&self, user_id: Option<UserId>, thread_root_message_index: Option<MessageIndex>) -> EventsReaderResult {
@@ -2220,4 +2272,25 @@ pub enum MinVisibleEventIndexResult {
     UserLapsed,
     UserSuspended,
     UserNotInGroup,
+}
+
+#[derive(Serialize, Deserialize)]
+struct AtEveryoneMention(UserId, MessageId, MessageIndex);
+
+impl AtEveryoneMention {
+    fn new(sender: UserId, message_id: MessageId, message_index: MessageIndex) -> AtEveryoneMention {
+        AtEveryoneMention(sender, message_id, message_index)
+    }
+
+    fn sender(&self) -> UserId {
+        self.0
+    }
+
+    fn message_id(&self) -> MessageId {
+        self.1
+    }
+
+    fn message_index(&self) -> MessageIndex {
+        self.2
+    }
 }
