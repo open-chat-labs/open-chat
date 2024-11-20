@@ -213,7 +213,7 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
         let mut to_add: HashMap<UserId, UserType> = HashMap::new();
 
         for user_id in channel.chat.members.member_ids().iter() {
-            if let Some(member) = state.data.members.get_by_user_id_mut(&user_id) {
+            if let Some(member) = state.data.members.get_by_user_id_mut(user_id) {
                 member.channels.insert(channel_id);
             } else {
                 let user_type = bots.get(user_id).copied().unwrap_or_default();
