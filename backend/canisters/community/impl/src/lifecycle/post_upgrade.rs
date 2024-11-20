@@ -24,6 +24,7 @@ fn post_upgrade(args: Args) {
 
     for channel in data.channels.iter_mut() {
         channel.chat.events.init_maps();
+        channel.chat.dedupe_at_everyone_mentions();
     }
 
     if data.local_user_index_canister_id == CanisterId::from_text("nq4qv-wqaaa-aaaaf-bhdgq-cai").unwrap() {
