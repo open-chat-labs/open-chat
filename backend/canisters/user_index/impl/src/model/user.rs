@@ -79,21 +79,25 @@ pub enum PhoneStatus {
 }
 
 impl User {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         principal: Principal,
         user_id: UserId,
         username: String,
+        display_name: Option<String>,
         now: TimestampMillis,
         referred_by: Option<UserId>,
         user_type: UserType,
         bot_config: Option<BotConfig>,
     ) -> User {
+        let display_name_upper = display_name.as_ref().map(|dn| dn.to_uppercase());
+
         User {
             principal,
             user_id,
             username,
-            display_name: None,
-            display_name_upper: None,
+            display_name,
+            display_name_upper,
             date_created: now,
             date_updated: now,
             cycle_top_ups: Vec::new(),

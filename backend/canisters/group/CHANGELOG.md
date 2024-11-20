@@ -15,10 +15,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add cycles balance check to more timer jobs ([#6822](https://github.com/open-chat-labs/open-chat/pull/6822))
 - Add the `BotCommand` access token type ([#6830](https://github.com/open-chat-labs/open-chat/pull/6830))
 - Improve job to delete files after messages are deleted ([#6839](https://github.com/open-chat-labs/open-chat/pull/6839))
+- Add `bot_api_gateway` canisterId to the canister state ([#6842](https://github.com/open-chat-labs/open-chat/pull/6842))
+- Simplify `inspect_message` ([#6847](https://github.com/open-chat-labs/open-chat/pull/6847))
 
 ### Removed
 
 - Remove code to migrate events to stable memory ([#6837](https://github.com/open-chat-labs/open-chat/pull/6837))
+
+### Fixed
+
+- Fix a few upgrades that failed due to overflowing `u32::MAX` ([#6826](https://github.com/open-chat-labs/open-chat/pull/6826))
 
 ## [[2.0.1453](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1453-group)] - 2024-11-14
 

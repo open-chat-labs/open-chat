@@ -48,7 +48,7 @@ struct PrepareResult {
 fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
     let caller = state.env.caller();
     let (user_id, is_bot) =
-        if let Some((user_id, is_bot)) = state.data.get_member(caller).map(|m| (m.user_id, m.user_type.is_bot())) {
+        if let Some((user_id, is_bot)) = state.data.get_member(caller).map(|m| (m.user_id(), m.user_type().is_bot())) {
             (user_id, is_bot)
         } else if caller == state.data.user_index_canister_id {
             (OPENCHAT_BOT_USER_ID, true)

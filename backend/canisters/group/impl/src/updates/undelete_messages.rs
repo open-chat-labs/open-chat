@@ -29,7 +29,7 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
         match state
             .data
             .chat
-            .undelete_messages(member.user_id, args.thread_root_message_index, args.message_ids, now)
+            .undelete_messages(member.user_id(), args.thread_root_message_index, args.message_ids, now)
         {
             UndeleteMessagesResult::Success(messages) => {
                 if !messages.is_empty() {

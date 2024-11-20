@@ -64,11 +64,11 @@ fn build_c2c_args(args: &Args, state: &RuntimeState) -> Result<(c2c_report_messa
 
     if channel_member.suspended.value {
         return Err(UserSuspended);
-    } else if channel_member.lapsed.value {
+    } else if channel_member.lapsed().value {
         return Err(UserLapsed);
     }
 
-    if args.delete && !channel_member.role.can_delete_messages(&chat.permissions) {
+    if args.delete && !channel_member.role().can_delete_messages(&chat.permissions) {
         return Err(NotAuthorized);
     }
 

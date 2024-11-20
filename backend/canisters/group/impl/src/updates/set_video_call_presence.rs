@@ -21,7 +21,7 @@ pub(crate) fn set_video_call_presence_impl(args: Args, state: &mut RuntimeState)
 
     let caller = state.env.caller();
 
-    let Some((user_id, is_bot)) = state.data.get_member(caller).map(|m| (m.user_id, m.user_type.is_bot())) else {
+    let Some((user_id, is_bot)) = state.data.get_member(caller).map(|m| (m.user_id(), m.user_type().is_bot())) else {
         return UserNotInGroup;
     };
 

@@ -42,9 +42,9 @@ fn delete_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Respo
         return UserNotInChannel;
     };
 
-    if channel_member.lapsed.value {
+    if channel_member.lapsed().value {
         return UserLapsed;
-    } else if !channel_member.role.can_delete_group() {
+    } else if !channel_member.role().can_delete_group() {
         return NotAuthorized;
     }
 
@@ -76,7 +76,7 @@ fn delete_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Respo
         now,
     );
 
-    for user_id in channel.chat.members.iter().map(|m| m.user_id) {
+    for user_id in channel.chat.members.iter().map(|m| m.user_id()) {
         state.data.members.mark_member_left_channel(&user_id, channel_id, now);
     }
 
