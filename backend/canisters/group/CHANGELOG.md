@@ -22,6 +22,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove code to migrate events to stable memory ([#6837](https://github.com/open-chat-labs/open-chat/pull/6837))
 
+### Fixed
+
+- Fix a few upgrades that failed due to overflowing `u32::MAX` ([#6826](https://github.com/open-chat-labs/open-chat/pull/6826))
+
 ## [[2.0.1453](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1453-group)] - 2024-11-14
 
 ### Changed
