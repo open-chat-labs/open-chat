@@ -316,10 +316,12 @@ impl GroupMembers {
     }
 
     pub fn unlapse_all(&mut self, now: TimestampMillis) {
-        for m in self.members.values_mut() {
-            if m.set_lapsed(false, now) {
-                self.lapsed.remove(&m.user_id);
-                self.updates.insert((now, m.user_id, MemberUpdate::Unlapsed));
+        for user_id in self.lapsed.iter() {
+            if let Some(member) = self.members.get_mut(user_id) {
+                if member.set_lapsed(false, now) {
+                    self.lapsed.remove(&m.user_id);
+                    self.updates.insert((now, m.user_id, MemberUpdate::Unlapsed));
+                }
             }
         }
     }
