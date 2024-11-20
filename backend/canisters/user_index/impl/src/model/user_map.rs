@@ -59,6 +59,7 @@ impl UserMap {
         principal: Principal,
         user_id: UserId,
         username: String,
+        display_name: Option<String>,
         now: TimestampMillis,
         referred_by: Option<UserId>,
         user_type: UserType,
@@ -67,7 +68,16 @@ impl UserMap {
         self.username_to_user_id.insert(&username, user_id);
         self.principal_to_user_id.insert(principal, user_id);
 
-        let user = User::new(principal, user_id, username, now, referred_by, user_type, bot_config);
+        let user = User::new(
+            principal,
+            user_id,
+            username,
+            display_name,
+            now,
+            referred_by,
+            user_type,
+            bot_config,
+        );
         self.users.insert(user_id, user);
 
         if let Some(ref_by) = referred_by {
