@@ -1,7 +1,7 @@
 use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
 use community_canister::selected_channel_initial::{Response::*, *};
-use types::{GroupMember, GroupRole};
+use std::collections::HashSet;
 
 #[query(candid = true, msgpack = true)]
 fn selected_channel_initial(args: Args) -> Response {
@@ -29,13 +29,21 @@ fn selected_channel_initial_impl(args: Args, state: &RuntimeState) -> Response {
             .map(|m| m.min_visible_message_index())
             .unwrap_or_default();
 
+        let mut non_basic_members = HashSet::new();
+        non_basic_members.extend(chat.members.owners().iter().copied());
+        non_basic_members.extend(chat.members.admins().iter().copied());
+        non_basic_members.extend(chat.members.moderators().iter().copied());
+        non_basic_members.extend(chat.members.lapsed().iter().copied());
+
         let mut members = Vec::new();
         let mut basic_members = Vec::new();
-        for member in chat.members.iter().map(GroupMember::from) {
-            if matches!(member.role, GroupRole::Participant) && !member.lapsed {
-                basic_members.push(member.user_id);
+        for user_id in chat.members.member_ids().iter() {
+            if non_basic_members.contains(user_id) {
+                if let Some(member) = chat.members.get(user_id) {
+                    members.push(member.into());
+                }
             } else {
-                members.push(member);
+                basic_members.push(*user_id);
             }
         }
 

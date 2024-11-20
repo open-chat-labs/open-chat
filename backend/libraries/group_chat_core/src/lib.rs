@@ -1296,7 +1296,7 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 UserSuspended
-            } else if member.role().is_owner() && self.members.owner_count() == 1 {
+            } else if member.role().is_owner() && self.members.owners().len() == 1 {
                 LastOwnerCannotLeave
             } else {
                 Yes

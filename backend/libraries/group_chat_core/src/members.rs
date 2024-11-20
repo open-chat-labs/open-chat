@@ -30,6 +30,7 @@ pub struct GroupMembers {
     owners: BTreeSet<UserId>,
     admins: BTreeSet<UserId>,
     moderators: BTreeSet<UserId>,
+    bots: BTreeMap<UserId, UserType>,
     lapsed: BTreeSet<UserId>,
     blocked: BTreeSet<UserId>,
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
@@ -49,6 +50,7 @@ impl From<GroupMembersPrevious> for GroupMembers {
         let mut owners = BTreeSet::new();
         let mut admins = BTreeSet::new();
         let mut moderators = BTreeSet::new();
+        let mut bots = BTreeMap::new();
         let mut lapsed = BTreeSet::new();
 
         for member in value.members.values() {
@@ -64,6 +66,10 @@ impl From<GroupMembersPrevious> for GroupMembers {
             if member.lapsed.value {
                 lapsed.insert(member.user_id);
             }
+
+            if member.user_type.is_bot() {
+                bots.insert(member.user_id, member.user_type);
+            }
         }
 
         GroupMembers {
@@ -72,6 +78,7 @@ impl From<GroupMembersPrevious> for GroupMembers {
             owners,
             admins,
             moderators,
+            bots,
             lapsed,
             blocked: value.blocked,
             updates: value.updates,
@@ -118,6 +125,11 @@ impl GroupMembers {
             admins: BTreeSet::new(),
             moderators: BTreeSet::new(),
             blocked: BTreeSet::new(),
+            bots: if user_type.is_bot() {
+                [(creator_user_id, user_type)].into_iter().collect()
+            } else {
+                BTreeMap::new()
+            },
             lapsed: BTreeSet::new(),
             updates: BTreeSet::new(),
         }
@@ -154,6 +166,9 @@ impl GroupMembers {
                 lapsed: Timestamped::new(false, now),
             };
             self.members.insert(user_id, member.clone());
+            if user_type.is_bot() {
+                self.bots.insert(user_id, user_type);
+            }
             self.updates.insert((now, user_id, MemberUpdate::Added));
             AddResult::Success(AddMemberSuccess { member, unlapse: false })
         } else {
@@ -169,6 +184,9 @@ impl GroupMembers {
                 GroupRoleInternal::Moderator => self.moderators.remove(&user_id),
                 _ => false,
             };
+            if member.user_type.is_bot() {
+                self.bots.remove(&user_id);
+            }
             if member.lapsed.value {
                 self.lapsed.remove(&user_id);
             }
@@ -202,8 +220,8 @@ impl GroupMembers {
         self.blocked.iter().copied().collect()
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &GroupMemberInternal> {
-        self.members.values()
+    pub fn member_ids(&self) -> &BTreeSet<UserId> {
+        &self.member_ids
     }
 
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut GroupMemberInternal> {
@@ -352,16 +370,24 @@ impl GroupMembers {
         }
     }
 
-    pub fn owner_count(&self) -> u32 {
-        self.owners.len() as u32
+    pub fn owners(&self) -> &BTreeSet<UserId> {
+        &self.owners
     }
 
-    pub fn admin_count(&self) -> u32 {
-        self.admins.len() as u32
+    pub fn admins(&self) -> &BTreeSet<UserId> {
+        &self.admins
     }
 
-    pub fn moderator_count(&self) -> u32 {
-        self.moderators.len() as u32
+    pub fn moderators(&self) -> &BTreeSet<UserId> {
+        &self.moderators
+    }
+
+    pub fn bots(&self) -> &BTreeMap<UserId, UserType> {
+        &self.bots
+    }
+
+    pub fn lapsed(&self) -> &BTreeSet<UserId> {
+        &self.lapsed
     }
 
     pub fn has_membership_changed(&self, since: TimestampMillis) -> bool {
@@ -417,6 +443,15 @@ impl Members for GroupMembers {
 
     fn get(&self, user_id: &UserId) -> Option<&GroupMemberInternal> {
         self.get(user_id)
+    }
+
+    fn iter_members_who_can_lapse(&self) -> Box<dyn Iterator<Item = UserId> + '_> {
+        Box::new(
+            self.member_ids
+                .iter()
+                .filter(|id| !self.owners.contains(id) && !self.lapsed.contains(id))
+                .copied(),
+        )
     }
 }
 
