@@ -104,4 +104,12 @@ mod tests {
             Principal::from_text("tu45y-p4p3d-b4gg4-gmyy3-rgweo-whsrq-fephi-vshrn-cipca-xdkri-pae").unwrap()
         );
     }
+
+    #[test]
+    fn openchat_treasury_canister_id() {
+        assert_eq!(
+            OPENCHAT_TREASURY_CANISTER_ID,
+            Principal::from_text("nafek-diaaa-aaaar-qalxa-cai").unwrap()
+        );
+    }
 }
