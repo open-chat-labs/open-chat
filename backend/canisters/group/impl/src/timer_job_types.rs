@@ -15,7 +15,7 @@ pub enum TimerJob {
     HardDeleteMessageContent(HardDeleteMessageContentJob),
     DeleteFileReferences(DeleteFileReferencesJob),
     EndPoll(EndPollJob),
-    RefundPrize(RefundPrizeJob),
+    FinalPrizePaymentsJob(FinalPrizePaymentsJob),
     MakeTransfer(MakeTransferJob),
     RemoveExpiredEvents(RemoveExpiredEventsJob),
     NotifyEscrowCanisterOfDeposit(NotifyEscrowCanisterOfDepositJob),
@@ -42,7 +42,7 @@ pub struct EndPollJob {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct RefundPrizeJob {
+pub struct FinalPrizePaymentsJob {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_index: MessageIndex,
 }
@@ -119,7 +119,7 @@ impl Job for TimerJob {
             TimerJob::HardDeleteMessageContent(job) => job.execute(),
             TimerJob::DeleteFileReferences(job) => job.execute(),
             TimerJob::EndPoll(job) => job.execute(),
-            TimerJob::RefundPrize(job) => job.execute(),
+            TimerJob::FinalPrizePaymentsJob(job) => job.execute(),
             TimerJob::MakeTransfer(job) => job.execute(),
             TimerJob::RemoveExpiredEvents(job) => job.execute(),
             TimerJob::NotifyEscrowCanisterOfDeposit(job) => job.execute(),
@@ -159,7 +159,7 @@ impl Job for HardDeleteMessageContentJob {
                                 .data
                                 .timer_jobs
                                 .cancel_job(|job| {
-                                    if let TimerJob::RefundPrize(j) = job {
+                                    if let TimerJob::FinalPrizePaymentsJob(j) = job {
                                         j.thread_root_message_index == self.thread_root_message_index
                                             && j.message_index == message_index
                                     } else {
@@ -230,7 +230,7 @@ impl Job for EndPollJob {
     }
 }
 
-impl Job for RefundPrizeJob {
+impl Job for FinalPrizePaymentsJob {
     fn execute(self) {
         let pending_transactions = mutate_state(|state| {
             state

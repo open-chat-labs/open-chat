@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, MarkP2PSwapExpiredJob, RefundPrizeJob};
+use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, FinalPrizePaymentsJob, MarkP2PSwapExpiredJob};
 use crate::{mutate_state, run_regular_jobs, Data, RuntimeState, TimerJob};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -319,7 +319,7 @@ fn register_timer_jobs(
         }
         MessageContent::Prize(p) => {
             data.timer_jobs.enqueue_job(
-                TimerJob::RefundPrize(RefundPrizeJob {
+                TimerJob::FinalPrizePaymentsJob(FinalPrizePaymentsJob {
                     thread_root_message_index,
                     message_index: message_event.event.message_index,
                 }),

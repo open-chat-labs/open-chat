@@ -21,7 +21,7 @@ pub enum TimerJob {
     FinalizeGroupImport(FinalizeGroupImportJob),
     ProcessGroupImportChannelMembers(ProcessGroupImportChannelMembersJob),
     MarkGroupImportComplete(MarkGroupImportCompleteJob),
-    RefundPrize(RefundPrizeJob),
+    FinalPrizePayments(FinalPrizePaymentsJob),
     MakeTransfer(MakeTransferJob),
     NotifyEscrowCanisterOfDeposit(NotifyEscrowCanisterOfDepositJob),
     CancelP2PSwapInEscrowCanister(CancelP2PSwapInEscrowCanisterJob),
@@ -70,7 +70,7 @@ pub struct MarkGroupImportCompleteJob {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct RefundPrizeJob {
+pub struct FinalPrizePaymentsJob {
     pub channel_id: ChannelId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_index: MessageIndex,
@@ -153,7 +153,7 @@ impl Job for TimerJob {
             TimerJob::FinalizeGroupImport(job) => job.execute(),
             TimerJob::ProcessGroupImportChannelMembers(job) => job.execute(),
             TimerJob::MarkGroupImportComplete(job) => job.execute(),
-            TimerJob::RefundPrize(job) => job.execute(),
+            TimerJob::FinalPrizePayments(job) => job.execute(),
             TimerJob::MakeTransfer(job) => job.execute(),
             TimerJob::NotifyEscrowCanisterOfDeposit(job) => job.execute(),
             TimerJob::CancelP2PSwapInEscrowCanister(job) => job.execute(),
@@ -191,7 +191,7 @@ impl Job for HardDeleteMessageContentJob {
                                     .data
                                     .timer_jobs
                                     .cancel_job(|job| {
-                                        if let TimerJob::RefundPrize(j) = job {
+                                        if let TimerJob::FinalPrizePayments(j) = job {
                                             j.thread_root_message_index == self.thread_root_message_index
                                                 && j.message_index == message_index
                                         } else {
@@ -290,7 +290,7 @@ impl Job for MarkGroupImportCompleteJob {
     }
 }
 
-impl Job for RefundPrizeJob {
+impl Job for FinalPrizePaymentsJob {
     fn execute(self) {
         let pending_transactions = mutate_state(|state| {
             state
