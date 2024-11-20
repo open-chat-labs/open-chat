@@ -62,7 +62,7 @@ pub struct GroupChatCore {
     pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
     pub external_url: Timestamped<Option<String>>,
     #[serde(default)]
-    at_everyone_mentions: BTreeMap<TimestampMillis, (MessageId, MessageIndex)>,
+    at_everyone_mentions: BTreeMap<TimestampMillis, AtEveryoneMention>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -739,8 +739,10 @@ impl GroupChatCore {
                 }
             } else {
                 if everyone_mentioned {
-                    self.at_everyone_mentions
-                        .insert(now, (message_event.event.message_id, message_event.event.message_index));
+                    self.at_everyone_mentions.insert(
+                        now,
+                        AtEveryoneMention::new(sender, message_event.event.message_id, message_event.event.message_index),
+                    );
                 }
 
                 for member in self
@@ -1768,7 +1770,7 @@ impl GroupChatCore {
     pub fn most_recent_mentions(&self, member: &GroupMemberInternal, since: Option<TimestampMillis>) -> Vec<HydratedMention> {
         let min_visible_event_index = member.min_visible_event_index();
 
-        self.at_everyone_mentions_since(since, member.min_visible_message_index())
+        self.at_everyone_mentions_since(since, member.user_id(), member.min_visible_message_index())
             .chain(
                 member
                     .mentions
@@ -1784,20 +1786,22 @@ impl GroupChatCore {
     fn at_everyone_mentions_since(
         &self,
         since: Option<TimestampMillis>,
+        user_id: UserId,
         min_visible_message_index: MessageIndex,
     ) -> impl Iterator<Item = HydratedMention> + '_ {
         self.at_everyone_mentions
             .iter()
             .rev()
-            .take_while(move |(&ts, (_, message_index))| {
-                since.as_ref().map_or(true, |s| ts > *s) && *message_index >= min_visible_message_index
+            .take_while(move |(&ts, m)| {
+                since.as_ref().map_or(true, |s| ts > *s) && m.message_index() >= min_visible_message_index
             })
-            .filter_map(|(_, &(message_id, message_index))| {
-                if let Some(event_index) = self.events.main_events_list().event_index(message_index.into()) {
+            .filter(move |(_, m)| m.sender() != user_id)
+            .filter_map(|(_, m)| {
+                if let Some(event_index) = self.events.main_events_list().event_index(m.message_index().into()) {
                     Some(HydratedMention {
                         thread_root_message_index: None,
-                        message_id,
-                        message_index,
+                        message_id: m.message_id(),
+                        message_index: m.message_index(),
                         event_index,
                     })
                 } else {
@@ -2269,4 +2273,25 @@ pub enum MinVisibleEventIndexResult {
     UserLapsed,
     UserSuspended,
     UserNotInGroup,
+}
+
+#[derive(Serialize, Deserialize)]
+struct AtEveryoneMention(UserId, MessageId, MessageIndex);
+
+impl AtEveryoneMention {
+    fn new(sender: UserId, message_id: MessageId, message_index: MessageIndex) -> AtEveryoneMention {
+        AtEveryoneMention(sender, message_id, message_index)
+    }
+
+    fn sender(&self) -> UserId {
+        self.0
+    }
+
+    fn message_id(&self) -> MessageId {
+        self.1
+    }
+
+    fn message_index(&self) -> MessageIndex {
+        self.2
+    }
 }
