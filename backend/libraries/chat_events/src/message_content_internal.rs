@@ -1245,22 +1245,22 @@ impl PrizeContentInternal {
         let ledger = self.transaction.ledger_canister_id();
 
         // Only take proportion of prizes paid out as a fee and refund the rest
-        let fee = (self.prizes_paid * self.fee_percent as u128) / 100;
+        let oc_fee = (self.prizes_paid * self.fee_percent as u128) / 100;
 
         // Refund includes prizes unclaimed plus their associated fee
         let unclaimed_prizes = self.prizes_remaining.iter().sum::<u128>();
         let unclaimed_fees =
-            ((unclaimed_prizes * self.fee_percent as u128) / 100) + (self.prizes_remaining.len() as u128 * fee);
+            ((unclaimed_prizes * self.fee_percent as u128) / 100) + (self.prizes_remaining.len() as u128 * transaction_fee);
         let refund = unclaimed_prizes + unclaimed_fees;
 
         let mut payments = Vec::new();
 
-        if fee > transaction_fee {
+        if oc_fee > transaction_fee {
             payments.push(PendingCryptoTransaction::ICRC1(types::icrc1::PendingCryptoTransaction {
                 ledger,
                 fee: transaction_fee,
                 token: self.transaction.token(),
-                amount: fee - transaction_fee,
+                amount: oc_fee - transaction_fee,
                 to: Account::from(OPENCHAT_TREASURY_CANISTER_ID),
                 memo: Some(MEMO_PRIZE_FEE.to_vec().into()),
                 created: now_nanos,

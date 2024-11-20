@@ -216,11 +216,11 @@ fn send_prize_in_channel() {
         env.advance_time(Duration::from_secs(2));
         tick_many(env, 5);
 
-        let community_balance_after_refund = balance_of(env, canister_ids.icp_ledger, Principal::from(community_id));
-        assert_eq!(community_balance_after_refund, 0);
-
         let user1_balance_after_refund = balance_of(env, canister_ids.icp_ledger, user1.canister());
         assert_eq!(user1_balance_after_refund, initial_user1_balance - 2 * fee);
+
+        let community_balance_after_refund = balance_of(env, canister_ids.icp_ledger, Principal::from(community_id));
+        assert_eq!(community_balance_after_refund, 0);
     } else {
         panic!("{send_message_result:?}")
     }
