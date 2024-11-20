@@ -41,6 +41,7 @@ impl From<user_index_canister::c2c_register_bot::Response> for Response {
             R::UsernameTooLong(max_length) => Self::UsernameTooLong(max_length),
             R::InsufficientCyclesProvided(cycles_required) => Self::InsufficientCyclesProvided(cycles_required),
             R::InternalError(error) => Self::InternalError(error),
+            R::DisplayNameInvalid | R::DisplayNameTooShort(_) | R::DisplayNameTooLong(_) => unreachable!(),
         }
     }
 }

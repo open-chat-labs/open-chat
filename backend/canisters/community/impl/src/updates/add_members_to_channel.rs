@@ -67,9 +67,9 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 Err(UserLimitReached(limit))
             } else if let Some(channel_member) = channel.chat.members.get(&user_id) {
                 let permissions = &channel.chat.permissions;
-                if !channel_member.role.can_add_members(permissions) {
+                if !channel_member.role().can_add_members(permissions) {
                     return Err(NotAuthorized);
-                } else if channel_member.lapsed.value {
+                } else if channel_member.lapsed().value {
                     return Err(UserLapsed);
                 }
 

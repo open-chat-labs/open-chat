@@ -59,6 +59,7 @@ impl UserMap {
         principal: Principal,
         user_id: UserId,
         username: String,
+        display_name: Option<String>,
         now: TimestampMillis,
         referred_by: Option<UserId>,
         user_type: UserType,
@@ -67,7 +68,16 @@ impl UserMap {
         self.username_to_user_id.insert(&username, user_id);
         self.principal_to_user_id.insert(principal, user_id);
 
-        let user = User::new(principal, user_id, username, now, referred_by, user_type, bot_config);
+        let user = User::new(
+            principal,
+            user_id,
+            username,
+            display_name,
+            now,
+            referred_by,
+            user_type,
+            bot_config,
+        );
         self.users.insert(user_id, user);
 
         if let Some(ref_by) = referred_by {
@@ -399,6 +409,7 @@ impl UserMap {
             user.principal,
             user.user_id,
             user.username.clone(),
+            None,
             user.date_created,
             None,
             UserType::User,
@@ -478,9 +489,9 @@ mod tests {
         let user_id2: UserId = Principal::from_slice(&[3, 2]).into();
         let user_id3: UserId = Principal::from_slice(&[3, 3]).into();
 
-        user_map.register(principal1, user_id1, username1.clone(), 1, None, UserType::User, None);
-        user_map.register(principal2, user_id2, username2.clone(), 2, None, UserType::User, None);
-        user_map.register(principal3, user_id3, username3.clone(), 3, None, UserType::User, None);
+        user_map.register(principal1, user_id1, username1.clone(), None, 1, None, UserType::User, None);
+        user_map.register(principal2, user_id2, username2.clone(), None, 2, None, UserType::User, None);
+        user_map.register(principal3, user_id3, username3.clone(), None, 3, None, UserType::User, None);
 
         let principal_to_user_id: Vec<_> = user_map
             .principal_to_user_id
@@ -517,7 +528,7 @@ mod tests {
 
         let user_id = Principal::from_slice(&[1, 1]).into();
 
-        user_map.register(principal, user_id, username1, 1, None, UserType::User, None);
+        user_map.register(principal, user_id, username1, None, 1, None, UserType::User, None);
 
         if let Some(original) = user_map.get_by_principal(&principal) {
             let mut updated = original.clone();

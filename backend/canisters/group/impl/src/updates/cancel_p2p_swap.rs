@@ -31,7 +31,7 @@ fn cancel_p2p_swap_impl(args: Args, state: &mut RuntimeState) -> Result<u32, Box
             .data
             .chat
             .events
-            .cancel_p2p_swap(member.user_id, args.thread_root_message_index, args.message_id, now)
+            .cancel_p2p_swap(member.user_id(), args.thread_root_message_index, args.message_id, now)
         {
             CancelP2PSwapResult::Success(swap_id) => Ok(swap_id),
             CancelP2PSwapResult::Failure(status) => Err(Box::new(StatusError(status.into()))),

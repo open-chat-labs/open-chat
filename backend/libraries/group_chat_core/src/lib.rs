@@ -4,7 +4,6 @@ use chat_events::{
     RemoveExpiredEventsResult, TipMessageArgs, UndeleteMessageResult,
 };
 use event_store_producer::{EventStoreClient, Runtime};
-use group_community_common::Member;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use regex_lite::Regex;
@@ -137,7 +136,7 @@ impl GroupChatCore {
             if let Some(member) = member {
                 if member.suspended.value {
                     return MinVisibleEventIndexResult::UserSuspended;
-                } else if member.lapsed.value {
+                } else if member.lapsed().value {
                     return MinVisibleEventIndexResult::UserLapsed;
                 }
             } else {
@@ -236,7 +235,7 @@ impl GroupChatCore {
             latest_event_index: events_reader.latest_event_index(),
             latest_message_index: events_reader.latest_message_index(),
             member_count: if self.members.has_membership_changed(since) { Some(self.members.len()) } else { None },
-            role_changed: member.map(|m| m.role.timestamp > since).unwrap_or_default(),
+            role_changed: member.map(|m| m.role().timestamp > since).unwrap_or_default(),
             mentions,
             permissions: self.permissions.if_set_after(since).cloned(),
             updated_events,
@@ -497,7 +496,7 @@ impl GroupChatCore {
                         if matches!(message.content, MessageContentInternal::Deleted(_)) {
                             MessageHardDeleted
                         } else if user_id == message.sender
-                            || (deleted_by.deleted_by != message.sender && member.role.can_delete_messages(&self.permissions))
+                            || (deleted_by.deleted_by != message.sender && member.role().can_delete_messages(&self.permissions))
                         {
                             Success(Box::new(message.content.hydrate(Some(user_id))))
                         } else {
@@ -523,7 +522,7 @@ impl GroupChatCore {
                 threads
                     .into_iter()
                     .filter_map(|root_message_index| {
-                        self.build_thread_preview(member.user_id, member.min_visible_event_index(), root_message_index)
+                        self.build_thread_preview(member.user_id(), member.min_visible_event_index(), root_message_index)
                     })
                     .collect(),
             )
@@ -718,10 +717,10 @@ impl GroupChatCore {
                             // Bump the thread timestamp for all followers
                             member.followed_threads.insert(root_message_index, now);
 
-                            if member.user_id != sender && !member.user_type.is_bot() && !member.suspended.value {
+                            if member.user_id() != sender && !member.user_type().is_bot() && !member.suspended.value {
                                 let mentioned = !mentions_disabled
-                                    && (mentions.contains(&member.user_id)
-                                        || (is_first_reply && member.user_id == root_message_sender));
+                                    && (mentions.contains(&member.user_id())
+                                        || (is_first_reply && member.user_id() == root_message_sender));
 
                                 if mentioned {
                                     // Mention this member
@@ -729,7 +728,7 @@ impl GroupChatCore {
                                 }
 
                                 if mentioned || !member.notifications_muted.value {
-                                    users_to_notify.insert(member.user_id);
+                                    users_to_notify.insert(member.user_id());
                                 }
                             }
                         }
@@ -739,16 +738,16 @@ impl GroupChatCore {
                 for member in self
                     .members
                     .iter_mut()
-                    .filter(|m| m.user_id != sender && !m.user_type.is_bot() && !m.suspended.value)
+                    .filter(|m| m.user_id() != sender && !m.user_type().is_bot() && !m.suspended.value)
                 {
-                    let mentioned = !mentions_disabled && (everyone_mentioned || mentions.contains(&member.user_id));
+                    let mentioned = !mentions_disabled && (everyone_mentioned || mentions.contains(&member.user_id()));
                     if mentioned {
                         // Mention this member
                         member.mentions.add(thread_root_message_index, message_index, message_id, now);
                     }
 
                     if mentioned || !member.notifications_muted.value {
-                        users_to_notify.insert(member.user_id);
+                        users_to_notify.insert(member.user_id());
                     }
                 }
             }
@@ -801,7 +800,7 @@ impl GroupChatCore {
         let permissions = &self.permissions;
 
         if !member
-            .role
+            .role()
             .can_send_message(content, thread_root_message_index.is_some(), permissions)
         {
             return NotAuthorized;
@@ -810,8 +809,8 @@ impl GroupChatCore {
         Success(PrepareSendMessageSuccess {
             min_visible_event_index: member.min_visible_event_index(),
             mentions_disabled: false,
-            everyone_mentioned: member.role.can_mention_everyone(permissions) && is_everyone_mentioned(content),
-            sender_user_type: member.user_type,
+            everyone_mentioned: member.role().can_mention_everyone(permissions) && is_everyone_mentioned(content),
+            sender_user_type: member.user_type(),
         })
     }
 
@@ -829,10 +828,10 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
-            } else if member.lapsed.value {
+            } else if member.lapsed().value {
                 return UserLapsed;
             }
-            if !member.role.can_react_to_messages(&self.permissions) {
+            if !member.role().can_react_to_messages(&self.permissions) {
                 return NotAuthorized;
             }
 
@@ -869,10 +868,10 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
-            } else if member.lapsed.value {
+            } else if member.lapsed().value {
                 return UserLapsed;
             }
-            if !member.role.can_react_to_messages(&self.permissions) {
+            if !member.role().can_react_to_messages(&self.permissions) {
                 return NotAuthorized;
             }
 
@@ -903,9 +902,9 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&args.user_id) {
             if member.suspended.value {
                 return UserSuspended;
-            } else if member.lapsed.value {
+            } else if member.lapsed().value {
                 return UserLapsed;
-            } else if !member.role.can_react_to_messages(&self.permissions) {
+            } else if !member.role().can_react_to_messages(&self.permissions) {
                 return NotAuthorized;
             }
 
@@ -932,11 +931,11 @@ impl GroupChatCore {
         let (is_admin, min_visible_event_index) = if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
-            } else if member.lapsed() {
+            } else if member.lapsed().value {
                 return UserLapsed;
             }
             (
-                member.role.can_delete_messages(&self.permissions),
+                member.role().can_delete_messages(&self.permissions),
                 member.min_visible_event_index(),
             )
         } else if as_platform_moderator {
@@ -999,7 +998,7 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
-            } else if member.lapsed() {
+            } else if member.lapsed().value {
                 return UserLapsed;
             }
 
@@ -1007,7 +1006,7 @@ impl GroupChatCore {
 
             let results = self.events.undelete_messages(DeleteUndeleteMessagesArgs {
                 caller: user_id,
-                is_admin: member.role.can_delete_messages(&self.permissions),
+                is_admin: member.role().can_delete_messages(&self.permissions),
                 min_visible_event_index,
                 thread_root_message_index,
                 message_ids,
@@ -1076,14 +1075,14 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
-            } else if member.lapsed.value {
+            } else if member.lapsed().value {
                 return UserLapsed;
-            } else if !member.role.can_pin_messages(&self.permissions) {
+            } else if !member.role().can_pin_messages(&self.permissions) {
                 return NotAuthorized;
             }
 
             let min_visible_event_index = member.min_visible_event_index();
-            let user_id = member.user_id;
+            let user_id = member.user_id();
 
             if !self.events.is_accessible(min_visible_event_index, None, message_index.into()) {
                 return MessageNotFound;
@@ -1120,9 +1119,9 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
-            } else if member.lapsed.value {
+            } else if member.lapsed().value {
                 return UserLapsed;
-            } else if !member.role.can_pin_messages(&self.permissions) {
+            } else if !member.role().can_pin_messages(&self.permissions) {
                 return NotAuthorized;
             }
 
@@ -1133,7 +1132,7 @@ impl GroupChatCore {
                 return MessageNotFound;
             }
 
-            let user_id = member.user_id;
+            let user_id = member.user_id();
 
             if self.remove_pinned_message(message_index, now) {
                 let push_event_result = self.events.push_main_event(
@@ -1198,7 +1197,7 @@ impl GroupChatCore {
             }
 
             // The original caller must be authorized to invite other users
-            if !member.role.can_invite_users(&self.permissions) {
+            if !member.role().can_invite_users(&self.permissions) {
                 return NotAuthorized;
             }
 
@@ -1238,7 +1237,7 @@ impl GroupChatCore {
                 for user_id in invited_users.iter() {
                     self.invited_users.add(UserInvitation {
                         invited: *user_id,
-                        invited_by: member.user_id,
+                        invited_by: member.user_id(),
                         timestamp: now,
                         min_visible_event_index,
                         min_visible_message_index,
@@ -1249,7 +1248,7 @@ impl GroupChatCore {
                 self.events.push_main_event(
                     ChatEventInternal::UsersInvited(Box::new(UsersInvited {
                         user_ids: user_ids.clone(),
-                        invited_by: member.user_id,
+                        invited_by: member.user_id(),
                     })),
                     0,
                     now,
@@ -1271,9 +1270,9 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&cancelled_by) {
             if member.suspended.value {
                 return UserSuspended;
-            } else if member.lapsed.value {
+            } else if member.lapsed().value {
                 return UserLapsed;
-            } else if !member.role.can_invite_users(&self.permissions) {
+            } else if !member.role().can_invite_users(&self.permissions) {
                 return NotAuthorized;
             }
 
@@ -1297,7 +1296,7 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 UserSuspended
-            } else if member.role.is_owner() && self.members.owner_count() == 1 {
+            } else if member.role().is_owner() && self.members.owner_count() == 1 {
                 LastOwnerCannotLeave
             } else {
                 Yes
@@ -1341,18 +1340,18 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
-            } else if member.lapsed.value {
+            } else if member.lapsed().value {
                 return UserLapsed;
             }
 
             let target_member_role = match self.members.get(&target_user_id) {
-                Some(m) => m.role.value,
+                Some(m) => m.role().value,
                 None if block => GroupRoleInternal::Member,
                 _ => return TargetUserNotInGroup,
             };
 
             if member
-                .role
+                .role()
                 .can_remove_members_with_role(target_member_role, &self.permissions)
             {
                 // Remove the user from the group
@@ -1469,14 +1468,14 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(user_id) {
             if member.suspended.value {
                 return Err(UserSuspended);
-            } else if member.lapsed.value {
+            } else if member.lapsed().value {
                 return Err(UserLapsed);
             }
 
             let group_permissions = &self.permissions;
-            if !member.role.can_update_group(group_permissions)
-                || (permissions.is_some() && !member.role.can_change_permissions())
-                || (public.is_some() && !member.role.can_change_group_visibility())
+            if !member.role().can_update_group(group_permissions)
+                || (permissions.is_some() && !member.role().can_change_permissions())
+                || (public.is_some() && !member.role().can_change_group_visibility())
             {
                 Err(NotAuthorized)
             } else {
@@ -1694,7 +1693,7 @@ impl GroupChatCore {
 
         if member.suspended.value {
             return UserSuspended;
-        } else if member.lapsed.value {
+        } else if member.lapsed().value {
             return UserLapsed;
         }
 
@@ -1726,7 +1725,7 @@ impl GroupChatCore {
 
         if member.suspended.value {
             return UserSuspended;
-        } else if member.lapsed.value {
+        } else if member.lapsed().value {
             return UserLapsed;
         }
 

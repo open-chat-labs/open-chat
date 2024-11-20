@@ -63,14 +63,14 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
     if let Some(member) = state.data.get_member(caller) {
         if member.suspended.value {
             return Err(Box::new(UserSuspended));
-        } else if member.lapsed.value {
+        } else if member.lapsed().value {
             return Err(Box::new(UserLapsed));
         }
 
         let now = state.env.now();
         let now_nanos = state.env.now_nanos();
         let min_visible_event_index = member.min_visible_event_index();
-        let user_id = member.user_id;
+        let user_id = member.user_id();
 
         let (token, ledger, amount, fee) =
             match state

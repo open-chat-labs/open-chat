@@ -206,7 +206,7 @@ impl GroupMembers {
             Some(p) => {
                 if p.suspended.value {
                     return ChangeRoleResult::UserSuspended;
-                } else if p.lapsed() {
+                } else if p.lapsed().value {
                     return ChangeRoleResult::UserLapsed;
                 }
                 // Platform moderators can always promote themselves to owner
@@ -364,11 +364,11 @@ pub struct ChangeRoleSuccess {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct GroupMemberInternal {
     #[serde(rename = "u")]
-    pub user_id: UserId,
+    user_id: UserId,
     #[serde(rename = "d")]
-    pub date_added: TimestampMillis,
+    date_added: TimestampMillis,
     #[serde(rename = "r", default, skip_serializing_if = "is_default")]
-    pub role: Timestamped<GroupRoleInternal>,
+    role: Timestamped<GroupRoleInternal>,
     #[serde(rename = "n")]
     pub notifications_muted: Timestamped<bool>,
     #[serde(rename = "m", default, skip_serializing_if = "mentions_are_empty")]
@@ -384,16 +384,36 @@ pub struct GroupMemberInternal {
     #[serde(rename = "ra", default, skip_serializing_if = "is_default")]
     pub rules_accepted: Option<Timestamped<Version>>,
     #[serde(rename = "ut", default, skip_serializing_if = "is_default")]
-    pub user_type: UserType,
+    user_type: UserType,
     #[serde(rename = "me", default, skip_serializing_if = "is_default")]
     min_visible_event_index: EventIndex,
     #[serde(rename = "mm", default, skip_serializing_if = "is_default")]
     min_visible_message_index: MessageIndex,
     #[serde(rename = "la", default, skip_serializing_if = "is_default")]
-    pub lapsed: Timestamped<bool>,
+    lapsed: Timestamped<bool>,
 }
 
 impl GroupMemberInternal {
+    pub fn user_id(&self) -> UserId {
+        self.user_id
+    }
+
+    pub fn date_added(&self) -> TimestampMillis {
+        self.date_added
+    }
+
+    pub fn role(&self) -> &Timestamped<GroupRoleInternal> {
+        &self.role
+    }
+
+    pub fn user_type(&self) -> UserType {
+        self.user_type
+    }
+
+    pub fn lapsed(&self) -> &Timestamped<bool> {
+        &self.lapsed
+    }
+
     pub fn last_updated(&self) -> TimestampMillis {
         [
             self.date_added,
