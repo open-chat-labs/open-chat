@@ -1,7 +1,7 @@
-import { type ExternalBot } from "openchat-shared";
+import { type Bot } from "openchat-shared";
 // let's create some imaginary bots
 
-export const bots: ExternalBot[] = [
+export const bots: Bot[] = [
     {
         kind: "external_bot",
         name: "Kitten Bot",
@@ -57,7 +57,7 @@ export const bots: ExternalBot[] = [
         name: "Puppy Bot",
         icon: "https://t3.ftcdn.net/jpg/02/74/06/48/360_F_274064877_Tuq84kGOn5nhyIJeUFTUSvXaSeedAOTT.jpg",
         id: "bot_two",
-        endpoint: "https://some_bot_or_other",
+        endpoint: "http://localhost:3000/execute",
         description: "And this is another bot",
         commands: [
             {
@@ -96,14 +96,61 @@ export const bots: ExternalBot[] = [
                     },
                 ],
             },
+            {
+                name: "multiply",
+                description: "Multiply some number I pick",
+                params: [
+                    {
+                        kind: "number",
+                        name: "Number",
+                        minValue: 0,
+                        maxValue: 100,
+                        required: true,
+                        description: "Please select a number from the list",
+                        placeholder: "Select number",
+                        choices: [
+                            { kind: "option", name: "One", value: 1 },
+                            { kind: "option", name: "Ten", value: 10 },
+                            { kind: "option", name: "Twenty", value: 20 },
+                            { kind: "option", name: "Forty five", value: 45 },
+                        ],
+                        errorMessage: "You must select a number from the list",
+                    },
+                ],
+            },
+            {
+                name: "calculate",
+                description: "Do some calculations on two numbers",
+                params: [
+                    {
+                        kind: "number",
+                        name: "Number one",
+                        minValue: 0,
+                        maxValue: Number.MAX_VALUE,
+                        required: true,
+                        description: "Enter the first number",
+                        placeholder: "First number",
+                        errorMessage: "You need to enter number one",
+                        choices: [],
+                    },
+                    {
+                        kind: "number",
+                        name: "Number two",
+                        minValue: 0,
+                        maxValue: Number.MAX_VALUE,
+                        required: true,
+                        description: "Enter the second number",
+                        placeholder: "Second number",
+                        errorMessage: "You need to enter number two",
+                        choices: [],
+                    },
+                ],
+            },
         ],
     },
     {
-        kind: "external_bot",
+        kind: "internal_bot",
         name: "Built in",
-        icon: "http://f3nhr-bmaaa-aaaaa-qaayq-cai.localhost:8080/avatar/337552968497928491234552079353700799635",
-        id: "bot_three",
-        endpoint: "https://some_bot_or_other",
         description: "This is a built in bot",
         commands: [
             {

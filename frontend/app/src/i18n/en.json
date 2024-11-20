@@ -149,7 +149,8 @@
     "blockUserFailed": "Unable to block user",
     "blockUserSucceeded": "User has been blocked",
     "bots": {
-        "matchingCommands": "Matching commands"
+        "matchingCommands": "Matching commands",
+        "failed": "Sorry, we failed to execute the bot command"
     },
     "cancel": "Cancel",
     "cancelInvite": "Cancel invite",

@@ -218,6 +218,7 @@ import {
     SendingMessage,
     SendMessageFailed,
     SentMessage,
+    SummonWitch,
     ThreadClosed,
     ThreadSelected,
     UserLoggedIn,
@@ -385,6 +386,10 @@ import type {
     PaymentGateApprovals,
     MessageActivityFeedResponse,
     ApproveTransferResponse,
+    SlashCommandParamInstance,
+    BotCommandInstance,
+    InternalBotCommandInstance,
+    ExternalBotCommandInstance,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -7562,6 +7567,56 @@ export class OpenChat extends OpenChatAgentWorker {
         }
 
         return this._liveState.userStore.get(userId)?.streak ?? 0;
+    }
+
+    private getAuthTokenForBotCommand(_bot: BotCommandInstance): Promise<string> {
+        const token =
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzMyMTE5NjIxLCJleHAiOjE3MzQ3MTE2MjF9.HMuL8CJEKFVf26Hv3lqiE8LnI6MbnGlamFKEzngLei4";
+        return Promise.resolve(token);
+    }
+
+    private callBotEndpoint(bot: ExternalBotCommandInstance, token: string): Promise<unknown> {
+        // This will send the OC access JWT to the external bot's endpoint
+        const headers = new Headers();
+        headers.append("x-auth-jwt", token);
+        headers.append("Content-type", "application/json");
+        return fetch(`${bot.endpoint}/${bot.command.name}`, {
+            method: "POST",
+            headers: headers,
+            body: JSON.stringify(bot.command.params),
+        }).then((res) => {
+            if (res.ok) {
+                return res.json();
+            } else {
+                const msg = `Failed to execute external bot command: ${res.status}, ${
+                    res.statusText
+                }, ${JSON.stringify(bot)}`;
+                console.error(msg);
+                throw new Error(msg);
+            }
+        });
+    }
+
+    executeInternalBotCommand(bot: InternalBotCommandInstance): Promise<boolean> {
+        if (bot.command.name === "witch") {
+            this.dispatchEvent(new SummonWitch());
+        }
+        return Promise.resolve(true);
+    }
+
+    executeBotCommand(bot: BotCommandInstance): Promise<boolean> {
+        switch (bot.kind) {
+            case "external_bot":
+                return this.getAuthTokenForBotCommand(bot)
+                    .then((token) => this.callBotEndpoint(bot, token))
+                    .then(() => true)
+                    .catch((err) => {
+                        console.log("Failed to execute bot command: ", err);
+                        return false;
+                    });
+            case "internal_bot":
+                return this.executeInternalBotCommand(bot);
+        }
     }
 
     claimDailyChit(): Promise<ClaimDailyChitResponse> {

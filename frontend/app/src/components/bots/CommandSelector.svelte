@@ -6,11 +6,16 @@
     import { i18nKey } from "../../i18n/i18n";
     import { botState } from "./botState.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
-    import { onMount } from "svelte";
+    import { getContext, onMount } from "svelte";
+    import Logo from "../Logo.svelte";
+    import type { OpenChat } from "openchat-client";
+    import { toastStore } from "../../stores/toast";
 
     interface Props {
         onCancel: () => void;
     }
+
+    const client = getContext<OpenChat>("client");
 
     let { onCancel }: Props = $props();
 
@@ -36,6 +41,16 @@
                 break;
             case "Enter":
                 botState.setSelectedCommand();
+                if (botState.selectedCommand && botState.selectedCommand.params.length === 0) {
+                    client
+                        .executeBotCommand(botState.createBotInstance(botState.selectedCommand))
+                        .then((success) => {
+                            if (!success) {
+                                toastStore.showFailureToast(i18nKey("bots.failed"));
+                            }
+                        })
+                        .finally(onCancel);
+                }
                 break;
             case "Escape":
                 onCancel();
@@ -60,7 +75,11 @@
             class="command"
             class:selected={botState.focusedCommandIndex === i}
             onclick={() => selectCommand(command)}>
-            <img class="icon" src={command.botIcon} alt={command.botName} />
+            {#if command.kind === "external_bot"}
+                <img class="icon" src={command.botIcon} alt={command.botName} />
+            {:else}
+                <Logo />
+            {/if}
             <div class="details">
                 <div class="interface">
                     <div class="command-name">
@@ -111,12 +130,18 @@
         background-color: var(--modal-bg);
 
         .command {
+            $size: 48px;
             display: flex;
             align-items: center;
             gap: $sp3;
             border-bottom: 1px solid var(--bd);
             padding: $sp3;
             cursor: pointer;
+
+            :global(.logo) {
+                width: $size;
+                height: $size;
+            }
 
             &.selected {
                 background-color: var(--chatSummary-bg-selected);
@@ -128,7 +153,6 @@
             }
 
             .icon {
-                $size: 48px;
                 flex: 0 0 $size;
                 width: $size;
                 height: $size;

@@ -1,25 +1,51 @@
-import type { ExternalBot, FlattenedCommand, SlashCommandParamInstance } from "openchat-client";
+import type {
+    Bot,
+    BotCommandInstance,
+    FlattenedCommand,
+    SlashCommandParamInstance,
+} from "openchat-client";
 import { getBots } from "./testBots";
+
+function filterCommand(c: FlattenedCommand): boolean {
+    return (
+        c.name.toLocaleLowerCase().includes(parsedPrefix) ||
+        (c.description?.toLocaleLowerCase()?.includes(parsedPrefix) ?? false)
+    );
+}
 
 let error = $state<string | undefined>(undefined);
 let prefix = $state<string>("");
 let parsedPrefix = $derived(prefix.slice(1).toLocaleLowerCase());
-let bots = $state<ExternalBot[]>([]);
+let bots = $state<Bot[]>([]);
 let commands = $derived.by(() => {
     return botState.bots.flatMap((b) => {
-        return b.commands
-            .map((c) => ({
-                ...c,
-                botName: b.name,
-                botIcon: b.icon,
-                botDescription: b.description,
-            }))
-            .filter((c) => {
-                return (
-                    c.name.toLocaleLowerCase().includes(parsedPrefix) ||
-                    c.description?.toLocaleLowerCase()?.includes(parsedPrefix)
-                );
-            });
+        switch (b.kind) {
+            case "external_bot":
+                return b.commands
+                    .map((c) => {
+                        return {
+                            ...c,
+                            kind: b.kind,
+                            botName: b.name,
+                            botIcon: b.icon,
+                            botId: b.id,
+                            botEndpoint: b.endpoint,
+                            botDescription: b.description,
+                        };
+                    })
+                    .filter(filterCommand) as FlattenedCommand[];
+            case "internal_bot":
+                return b.commands
+                    .map((c) => {
+                        return {
+                            ...c,
+                            kind: b.kind,
+                            botName: b.name,
+                            botDescription: b.description,
+                        };
+                    })
+                    .filter(filterCommand) as FlattenedCommand[];
+        }
     });
 });
 let selectedCommand = $state<FlattenedCommand | undefined>(undefined);
@@ -36,7 +62,7 @@ class BotState {
     get bots() {
         return bots;
     }
-    set bots(val: ExternalBot[]) {
+    set bots(val: Bot[]) {
         bots = val;
     }
     set prefix(val: string) {
@@ -107,6 +133,28 @@ class BotState {
     }
     set error(val: string | undefined) {
         error = val;
+    }
+    createBotInstance(command: FlattenedCommand): BotCommandInstance {
+        switch (command.kind) {
+            case "external_bot":
+                return {
+                    kind: "external_bot",
+                    id: command.botId,
+                    endpoint: command.botEndpoint,
+                    command: {
+                        name: command.name,
+                        params: selectedCommandParamInstances,
+                    },
+                };
+            case "internal_bot":
+                return {
+                    kind: "internal_bot",
+                    command: {
+                        name: command.name,
+                        params: selectedCommandParamInstances,
+                    },
+                };
+        }
     }
 }
 

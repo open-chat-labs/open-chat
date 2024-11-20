@@ -46,8 +46,15 @@ export type SlashCommandParam = CommandParam & SlashCommandParamType;
 export type SlashCommandSchema = {
     name: string;
     description?: string;
-    params?: SlashCommandParam[];
+    params: SlashCommandParam[];
 };
+
+export type SlashCommandInstance = {
+    name: string;
+    params: SlashCommandParamInstance[];
+};
+
+export type Bot = ExternalBot | InternalBot;
 
 export type ExternalBot = {
     kind: "external_bot";
@@ -59,21 +66,45 @@ export type ExternalBot = {
     commands: SlashCommandSchema[];
 };
 
-// Not sure about this just yet, but I feel like it's probably a thing
 export type InternalBot = {
     kind: "internal_bot";
     name: string;
-    icon: string;
-    id: string;
     description?: string;
     commands: SlashCommandSchema[];
 };
 
-export type FlattenedCommand = SlashCommandSchema & {
-    botName: string;
-    botIcon: string;
-    botDescription?: string;
+export type BotCommandInstance = ExternalBotCommandInstance | InternalBotCommandInstance;
+
+export type ExternalBotCommandInstance = {
+    kind: "external_bot";
+    id: string;
+    endpoint: string;
+    command: SlashCommandInstance;
 };
+
+export type InternalBotCommandInstance = {
+    kind: "internal_bot";
+    command: SlashCommandInstance;
+};
+
+// Not sure about this just yet, but I feel like it's probably a thing
+
+export type FlattenedCommand = SlashCommandSchema &
+    (
+        | {
+              kind: "external_bot";
+              botName: string;
+              botIcon: string;
+              botId: string;
+              botEndpoint: string;
+              botDescription?: string;
+          }
+        | {
+              kind: "internal_bot";
+              botName: string;
+              botDescription?: string;
+          }
+    );
 
 export type CommandParamInstance = {
     name: string;
@@ -81,7 +112,6 @@ export type CommandParamInstance = {
 
 export type UserParamInstance = {
     kind: "user";
-    value?: string;
     userId?: string;
 };
 
@@ -109,20 +139,46 @@ export type SlashCommandParamTypeInstance =
 export type SlashCommandParamInstance = CommandParamInstance & SlashCommandParamTypeInstance;
 
 export function createParamInstancesFromSchema(
-    params?: SlashCommandParam[],
+    params: SlashCommandParam[],
 ): SlashCommandParamInstance[] {
-    return (
-        params?.map((p) => {
-            switch (p.kind) {
-                case "user":
-                    return { kind: "user", name: p.name };
-                case "boolean":
-                    return { kind: "boolean", name: p.name, value: false };
-                case "number":
-                    return { kind: "number", name: p.name, value: 0 };
-                case "string":
-                    return { kind: "string", name: p.name, value: "" };
-            }
-        }) ?? []
-    );
+    return params.map((p) => {
+        switch (p.kind) {
+            case "user":
+                return { kind: "user", name: p.name };
+            case "boolean":
+                return { kind: "boolean", name: p.name, value: false };
+            case "number":
+                return { kind: "number", name: p.name, value: Number.MIN_VALUE };
+            case "string":
+                return { kind: "string", name: p.name, value: "" };
+        }
+    });
+}
+
+export function paramInstanceIsValid(
+    schema: SlashCommandParam,
+    instance: SlashCommandParamInstance,
+): boolean {
+    if (schema.kind === "user" && instance.kind === "user") {
+        return !schema.required || instance.userId !== undefined;
+    } else if (schema.kind === "boolean" && instance.kind === "boolean") {
+        return !schema.required || instance.value !== undefined;
+    } else if (schema.kind === "string" && instance.kind === "string") {
+        return (
+            !schema.required ||
+            (instance.value !== undefined &&
+                instance.value.length > schema.minLength &&
+                instance.value.length < schema.maxLength)
+        );
+    } else if (schema.kind === "number" && instance.kind === "number") {
+        return (
+            !schema.required ||
+            (instance.value !== undefined &&
+                instance.value !== Number.MIN_VALUE &&
+                instance.value > schema.minValue &&
+                instance.value < schema.maxValue)
+        );
+    }
+
+    return false;
 }

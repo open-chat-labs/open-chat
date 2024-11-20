@@ -23,7 +23,7 @@
 
     onMount(() => {
         if (index === 0) {
-            inp.focus();
+            inp?.focus();
         }
     });
 </script>
@@ -32,13 +32,12 @@
     {#if instance.kind === "user" && param.kind === "user"}
         <Legend label={i18nKey(param.name)} required={param.required} />
         <SingleUserSelector
-            on:userSelected={(ev: CustomEvent<UserSummary>) => (instance.value = ev.detail.userId)}
-            on:userRemoved={() => (instance.value = undefined)}
+            on:userSelected={(ev: CustomEvent<UserSummary>) => (instance.userId = ev.detail.userId)}
+            on:userRemoved={() => (instance.userId = undefined)}
             autofocus={false}
             direction={"down"}
             placeholder={param.placeholder} />
-    {/if}
-    {#if instance.kind === "string" && param.kind === "string"}
+    {:else if instance.kind === "string" && param.kind === "string"}
         <Legend
             label={i18nKey(param.name)}
             required={param.required}
@@ -58,6 +57,25 @@
                 maxlength={param.maxLength}
                 placeholder={i18nKey(param.placeholder ?? "")}
                 bind:value={instance.value} />
+        {/if}
+    {:else if instance.kind === "boolean" && param.kind === "boolean"}
+        <Legend label={i18nKey(param.name)} required={param.required} />
+        <Select bind:value={instance.value}>
+            <option value={""} selected disabled>{`Choose ${param.name}`}</option>
+            <option value={true}>True</option>
+            <option value={false}>False</option>
+        </Select>
+    {:else if instance.kind === "number" && param.kind === "number"}
+        <Legend label={i18nKey(param.name)} required={param.required} />
+        {#if param.choices?.length ?? 0 > 0}
+            <Select bind:value={instance.value}>
+                <option value={Number.MIN_VALUE} selected disabled>{`Choose ${param.name}`}</option>
+                {#each param.choices as choice}
+                    <option value={choice.value}>{choice.name}</option>
+                {/each}
+            </Select>
+        {:else}
+            <Input placeholder={i18nKey(param.placeholder ?? "")} bind:value={instance.value} />
         {/if}
     {/if}
 </div>

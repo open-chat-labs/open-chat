@@ -563,7 +563,7 @@
     }
 </script>
 
-{#if botState.selectedCommand !== undefined}
+{#if botState.selectedCommand !== undefined && botState.selectedCommand.params.length > 0}
     <CommandBuilder onCancel={cancelCommandSelector} command={botState.selectedCommand} />
 {/if}
 

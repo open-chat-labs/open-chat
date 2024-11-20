@@ -173,3 +173,9 @@ export class ChitEarnedEvent extends CustomEvent<ChitEarned[]> {
         });
     }
 }
+
+export class SummonWitch extends Event {
+    constructor() {
+        super("openchat_event");
+    }
+}
