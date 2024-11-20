@@ -45,7 +45,7 @@ fn build_c2c_args(args: &Args, state: &RuntimeState) -> Result<(c2c_report_messa
 
         if member.suspended.value {
             return Err(UserSuspended);
-        } else if member.lapsed.value {
+        } else if member.lapsed().value {
             return Err(UserLapsed);
         }
 

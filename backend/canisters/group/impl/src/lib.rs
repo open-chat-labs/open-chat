@@ -194,7 +194,7 @@ impl RuntimeState {
                 .rules_accepted
                 .as_ref()
                 .map_or(false, |version| version.value >= chat.rules.text.version),
-            lapsed: member.lapsed.value,
+            lapsed: member.lapsed().value,
         };
 
         GroupCanisterGroupChatSummary {

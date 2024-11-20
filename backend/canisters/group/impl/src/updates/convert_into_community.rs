@@ -69,7 +69,7 @@ fn prepare(state: &mut RuntimeState) -> Result<PrepareResult, Response> {
     if let Some(member) = state.data.get_member(caller) {
         if member.suspended.value {
             Err(UserSuspended)
-        } else if member.lapsed.value {
+        } else if member.lapsed().value {
             return Err(UserLapsed);
         } else if !member.role().is_owner() {
             Err(NotAuthorized)

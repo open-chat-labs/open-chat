@@ -4,7 +4,6 @@ use chat_events::{
     RemoveExpiredEventsResult, TipMessageArgs, UndeleteMessageResult,
 };
 use event_store_producer::{EventStoreClient, Runtime};
-use group_community_common::Member;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use regex_lite::Regex;
@@ -137,7 +136,7 @@ impl GroupChatCore {
             if let Some(member) = member {
                 if member.suspended.value {
                     return MinVisibleEventIndexResult::UserSuspended;
-                } else if member.lapsed.value {
+                } else if member.lapsed().value {
                     return MinVisibleEventIndexResult::UserLapsed;
                 }
             } else {
@@ -829,7 +828,7 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
-            } else if member.lapsed.value {
+            } else if member.lapsed().value {
                 return UserLapsed;
             }
             if !member.role().can_react_to_messages(&self.permissions) {
@@ -869,7 +868,7 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
-            } else if member.lapsed.value {
+            } else if member.lapsed().value {
                 return UserLapsed;
             }
             if !member.role().can_react_to_messages(&self.permissions) {
@@ -903,7 +902,7 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&args.user_id) {
             if member.suspended.value {
                 return UserSuspended;
-            } else if member.lapsed.value {
+            } else if member.lapsed().value {
                 return UserLapsed;
             } else if !member.role().can_react_to_messages(&self.permissions) {
                 return NotAuthorized;
@@ -932,7 +931,7 @@ impl GroupChatCore {
         let (is_admin, min_visible_event_index) = if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
-            } else if member.lapsed() {
+            } else if member.lapsed().value {
                 return UserLapsed;
             }
             (
@@ -999,7 +998,7 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
-            } else if member.lapsed() {
+            } else if member.lapsed().value {
                 return UserLapsed;
             }
 
@@ -1076,7 +1075,7 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
-            } else if member.lapsed.value {
+            } else if member.lapsed().value {
                 return UserLapsed;
             } else if !member.role().can_pin_messages(&self.permissions) {
                 return NotAuthorized;
@@ -1120,7 +1119,7 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
-            } else if member.lapsed.value {
+            } else if member.lapsed().value {
                 return UserLapsed;
             } else if !member.role().can_pin_messages(&self.permissions) {
                 return NotAuthorized;
@@ -1271,7 +1270,7 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&cancelled_by) {
             if member.suspended.value {
                 return UserSuspended;
-            } else if member.lapsed.value {
+            } else if member.lapsed().value {
                 return UserLapsed;
             } else if !member.role().can_invite_users(&self.permissions) {
                 return NotAuthorized;
@@ -1341,7 +1340,7 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
-            } else if member.lapsed.value {
+            } else if member.lapsed().value {
                 return UserLapsed;
             }
 
@@ -1469,7 +1468,7 @@ impl GroupChatCore {
         if let Some(member) = self.members.get(user_id) {
             if member.suspended.value {
                 return Err(UserSuspended);
-            } else if member.lapsed.value {
+            } else if member.lapsed().value {
                 return Err(UserLapsed);
             }
 
@@ -1694,7 +1693,7 @@ impl GroupChatCore {
 
         if member.suspended.value {
             return UserSuspended;
-        } else if member.lapsed.value {
+        } else if member.lapsed().value {
             return UserLapsed;
         }
 
@@ -1726,7 +1725,7 @@ impl GroupChatCore {
 
         if member.suspended.value {
             return UserSuspended;
-        } else if member.lapsed.value {
+        } else if member.lapsed().value {
             return UserLapsed;
         }
 

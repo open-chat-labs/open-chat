@@ -63,7 +63,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
 
     if member.suspended.value {
         return Err(UserSuspended);
-    } else if member.lapsed.value {
+    } else if member.lapsed().value {
         return Err(UserLapsed);
     }
 

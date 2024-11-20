@@ -285,7 +285,7 @@ impl Channel {
                 .rules_accepted
                 .as_ref()
                 .map_or(false, |version| version.value >= chat.rules.text.version),
-            lapsed: m.lapsed.value,
+            lapsed: m.lapsed().value,
         });
 
         Some(CommunityCanisterChannelSummary {
@@ -370,7 +370,7 @@ impl Channel {
                 .as_ref()
                 .filter(|accepted| updates.rules_changed || accepted.timestamp > since)
                 .map(|accepted| accepted.value >= chat.rules.text.version),
-            lapsed: m.lapsed.if_set_after(since).copied(),
+            lapsed: m.lapsed().if_set_after(since).copied(),
         });
 
         ChannelUpdates::Updated(CommunityCanisterChannelSummaryUpdates {

@@ -42,7 +42,7 @@ fn delete_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Respo
         return UserNotInChannel;
     };
 
-    if channel_member.lapsed.value {
+    if channel_member.lapsed().value {
         return UserLapsed;
     } else if !channel_member.role().can_delete_group() {
         return NotAuthorized;

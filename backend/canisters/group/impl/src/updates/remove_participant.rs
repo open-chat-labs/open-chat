@@ -64,7 +64,7 @@ fn prepare(user_to_remove: UserId, block: bool, state: &RuntimeState) -> Result<
     if let Some(member) = state.data.get_member(caller) {
         if member.suspended.value {
             Err(UserSuspended)
-        } else if member.lapsed.value {
+        } else if member.lapsed().value {
             return Err(UserLapsed);
         } else if member.user_id() == user_to_remove {
             Err(CannotRemoveSelf)

@@ -121,7 +121,7 @@ fn reserve_p2p_swap(args: Args, state: &mut RuntimeState) -> Result<ReserveP2PSw
                 _ => return Err(Box::new(UserNotInChannel)),
             };
 
-            if channel_member.lapsed.value {
+            if channel_member.lapsed().value {
                 return Err(Box::new(UserLapsed));
             }
 

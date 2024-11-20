@@ -206,7 +206,7 @@ impl GroupMembers {
             Some(p) => {
                 if p.suspended.value {
                     return ChangeRoleResult::UserSuspended;
-                } else if p.lapsed() {
+                } else if p.lapsed().value {
                     return ChangeRoleResult::UserLapsed;
                 }
                 // Platform moderators can always promote themselves to owner
@@ -390,7 +390,7 @@ pub struct GroupMemberInternal {
     #[serde(rename = "mm", default, skip_serializing_if = "is_default")]
     min_visible_message_index: MessageIndex,
     #[serde(rename = "la", default, skip_serializing_if = "is_default")]
-    pub lapsed: Timestamped<bool>,
+    lapsed: Timestamped<bool>,
 }
 
 impl GroupMemberInternal {
@@ -408,6 +408,10 @@ impl GroupMemberInternal {
 
     pub fn user_type(&self) -> UserType {
         self.user_type
+    }
+
+    pub fn lapsed(&self) -> &Timestamped<bool> {
+        &self.lapsed
     }
 
     pub fn last_updated(&self) -> TimestampMillis {

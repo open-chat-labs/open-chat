@@ -22,7 +22,7 @@ fn cancel_invites_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     if member.suspended.value {
         return UserSuspended;
-    } else if member.lapsed.value {
+    } else if member.lapsed().value {
         return UserLapsed;
     }
 

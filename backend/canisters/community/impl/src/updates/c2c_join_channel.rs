@@ -166,7 +166,7 @@ fn is_permitted_to_join(
 
         if let Some(channel) = state.data.channels.get(&channel_id) {
             if let Some(channel_member) = channel.chat.members.get(&member.user_id) {
-                if !member.lapsed() && !channel_member.lapsed() {
+                if !member.lapsed() && !channel_member.lapsed().value {
                     return Err(AlreadyInChannel(Box::new(
                         channel
                             .summary(
@@ -340,7 +340,7 @@ pub(crate) fn join_channel_unchecked(
 
     if matches!(result, AddResult::AlreadyInGroup) {
         let member = channel.chat.members.get(&community_member.user_id).unwrap();
-        if member.lapsed() {
+        if member.lapsed().value {
             return AddResult::Success(AddMemberSuccess {
                 member: member.clone(),
                 unlapse: true,

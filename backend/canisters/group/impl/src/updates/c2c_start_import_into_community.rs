@@ -17,7 +17,7 @@ fn c2c_start_import_into_community_impl(args: Args, state: &mut RuntimeState) ->
         if let Some(member) = state.data.chat.members.get(&args.user_id) {
             if member.suspended.value {
                 return UserSuspended;
-            } else if member.lapsed.value {
+            } else if member.lapsed().value {
                 return UserLapsed;
             } else if !member.role().is_owner() {
                 return NotAuthorized;

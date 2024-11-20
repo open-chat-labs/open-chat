@@ -43,7 +43,7 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> Response {
         None => return UserNotInChannel,
     };
 
-    if channel_member.lapsed.value {
+    if channel_member.lapsed().value {
         return UserLapsed;
     }
 

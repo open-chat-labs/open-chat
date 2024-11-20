@@ -64,7 +64,7 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
             .as_ref()
             .filter(|accepted| updates.rules_changed || accepted.timestamp > updates_since)
             .map(|accepted| accepted.value >= chat.rules.text.version),
-        lapsed: member.lapsed.if_set_after(updates_since).copied(),
+        lapsed: member.lapsed().if_set_after(updates_since).copied(),
     };
 
     Success(SuccessResult {
