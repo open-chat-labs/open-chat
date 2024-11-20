@@ -23,8 +23,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Simplify `inspect_message` ([#6847](https://github.com/open-chat-labs/open-chat/pull/6847))
 - Avoid double iteration when updating member expiry ([#6851](https://github.com/open-chat-labs/open-chat/pull/6851))
 - Avoid cases where we were iterating over the full chat members map ([#6853](https://github.com/open-chat-labs/open-chat/pull/6853))
-- Store @everyone mentions once rather than linking to each user ([#6856](https://github.com/open-chat-labs/open-chat/pull/6856))
 - Take a fee for prize messages and send to treasury ([#6854](https://github.com/open-chat-labs/open-chat/pull/6854))
+- Store @everyone mentions once rather than linking to each user ([#6856](https://github.com/open-chat-labs/open-chat/pull/6856))
+- Deduplicate existing @everyone mentions ([#6857](https://github.com/open-chat-labs/open-chat/pull/6857))
 
 ### Removed
 
