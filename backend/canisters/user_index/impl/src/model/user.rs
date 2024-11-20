@@ -79,6 +79,7 @@ pub enum PhoneStatus {
 }
 
 impl User {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         principal: Principal,
         user_id: UserId,
