@@ -265,13 +265,13 @@ impl Channel {
             .and_then(|m| m.display_name().value.clone());
 
         let membership = member.map(|m| GroupMembership {
-            joined: m.date_added,
-            role: m.role.value.into(),
+            joined: m.date_added(),
+            role: m.role().value.into(),
             mentions: m.most_recent_mentions(None, &chat.events),
             notifications_muted: m.notifications_muted.value,
             my_metrics: chat
                 .events
-                .user_metrics(&m.user_id, None)
+                .user_metrics(&m.user_id(), None)
                 .map(|m| m.hydrate())
                 .unwrap_or_default(),
             latest_threads: m
@@ -285,7 +285,7 @@ impl Channel {
                 .rules_accepted
                 .as_ref()
                 .map_or(false, |version| version.value >= chat.rules.text.version),
-            lapsed: m.lapsed.value,
+            lapsed: m.lapsed().value,
         });
 
         Some(CommunityCanisterChannelSummary {
@@ -335,7 +335,7 @@ impl Channel {
         let member = user_id.and_then(|id| chat.members.get(&id));
 
         if let Some(m) = member {
-            if m.date_added > since {
+            if m.date_added() > since {
                 return ChannelUpdates::Added(
                     self.summary(user_id, is_community_member, is_public_community, community_members)
                         .expect("Channel should be accessible"),
@@ -354,10 +354,10 @@ impl Channel {
             .and_then(|m| m.display_name().value.clone());
 
         let membership = member.map(|m| GroupMembershipUpdates {
-            role: updates.role_changed.then_some(m.role.value.into()),
+            role: updates.role_changed.then_some(m.role().value.into()),
             mentions: updates.mentions,
             notifications_muted: m.notifications_muted.if_set_after(since).cloned(),
-            my_metrics: self.chat.events.user_metrics(&m.user_id, Some(since)).map(|m| m.hydrate()),
+            my_metrics: self.chat.events.user_metrics(&m.user_id(), Some(since)).map(|m| m.hydrate()),
             latest_threads: m
                 .followed_threads
                 .updated_since(since)
@@ -370,7 +370,7 @@ impl Channel {
                 .as_ref()
                 .filter(|accepted| updates.rules_changed || accepted.timestamp > since)
                 .map(|accepted| accepted.value >= chat.rules.text.version),
-            lapsed: m.lapsed.if_set_after(since).copied(),
+            lapsed: m.lapsed().if_set_after(since).copied(),
         });
 
         ChannelUpdates::Updated(CommunityCanisterChannelSummaryUpdates {

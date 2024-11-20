@@ -124,8 +124,8 @@ fn validate_caller(state: &RuntimeState) -> Result<Caller, Response> {
             Err(UserSuspended)
         } else {
             Ok(Caller {
-                user_id: member.user_id,
-                user_type: member.user_type,
+                user_id: member.user_id(),
+                user_type: member.user_type(),
             })
         }
     } else if caller == state.data.user_index_canister_id {
@@ -162,7 +162,12 @@ fn process_send_message_result(
 
             let content = &message_event.event.content;
             let chat_id = state.env.canister_id().into();
-            let sender_is_human = state.data.chat.members.get(&sender).map_or(false, |m| !m.user_type.is_bot());
+            let sender_is_human = state
+                .data
+                .chat
+                .members
+                .get(&sender)
+                .map_or(false, |m| !m.user_type().is_bot());
 
             let notification = Notification::GroupMessage(GroupMessageNotification {
                 chat_id,
@@ -195,7 +200,7 @@ fn process_send_message_result(
                     .chat
                     .members
                     .get(&c.recipient)
-                    .map_or(false, |m| !m.user_type.is_bot())
+                    .map_or(false, |m| !m.user_type().is_bot())
                 {
                     state
                         .data
@@ -212,7 +217,7 @@ fn process_send_message_result(
                         .chat
                         .members
                         .get(&user.user_id)
-                        .map_or(false, |m| !m.user_type.is_bot())
+                        .map_or(false, |m| !m.user_type().is_bot())
                 {
                     activity_events.push((user.user_id, MessageActivity::Mention));
                 }
@@ -236,7 +241,7 @@ fn process_send_message_result(
                             .chat
                             .members
                             .get(&message.sender)
-                            .map_or(false, |m| !m.user_type.is_bot())
+                            .map_or(false, |m| !m.user_type().is_bot())
                     {
                         activity_events.push((message.sender, MessageActivity::QuoteReply));
                     }

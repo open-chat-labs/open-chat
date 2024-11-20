@@ -70,10 +70,10 @@ fn prepare(user_id: UserId, state: &RuntimeState) -> Result<PrepareResult, Respo
     let caller = state.env.caller();
     if let Some(member) = state.data.get_member(caller) {
         Ok(PrepareResult {
-            caller_id: member.user_id,
+            caller_id: member.user_id(),
             user_index_canister_id: state.data.user_index_canister_id,
-            is_caller_owner: member.role.is_owner(),
-            is_user_owner: state.data.chat.members.get(&user_id).map_or(false, |u| u.role.is_owner()),
+            is_caller_owner: member.role().is_owner(),
+            is_user_owner: state.data.chat.members.get(&user_id).map_or(false, |u| u.role().is_owner()),
         })
     } else {
         Err(CallerNotInGroup)

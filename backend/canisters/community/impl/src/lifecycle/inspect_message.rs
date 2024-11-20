@@ -11,9 +11,7 @@ fn accept_if_valid(state: &RuntimeState) {
 
     // 'inspect_message' only applies to ingress messages so calls to c2c methods should be rejected
     let is_c2c_method = method_name.starts_with("c2c") || method_name == "wallet_receive";
-    let is_frozen = state.data.frozen.value.is_some();
-
-    if is_c2c_method || is_frozen {
+    if is_c2c_method {
         return;
     }
 

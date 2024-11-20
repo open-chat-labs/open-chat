@@ -56,6 +56,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 local_user_index_canister_id: args.local_user_index_canister_id,
                 group_index_canister_id: state.env.canister_id(),
                 notifications_canister_id: args.notifications_canister_id,
+                bot_api_gateway_canister_id: args.bot_api_gateway_canister_id,
                 cycles_dispenser_canister_id: state.data.cycles_dispenser_canister_id,
                 proposals_bot_user_id: state.data.proposals_bot_user_id,
                 escrow_canister_id: state.data.escrow_canister_id,

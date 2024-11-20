@@ -51,7 +51,7 @@ async fn accept_p2p_swap(args: Args) -> Response {
                             .chat
                             .members
                             .get(&message.sender)
-                            .map_or(false, |m| !m.user_type.is_bot())
+                            .map_or(false, |m| !m.user_type().is_bot())
                         {
                             let community_id = state.env.canister_id().into();
 
@@ -121,7 +121,7 @@ fn reserve_p2p_swap(args: Args, state: &mut RuntimeState) -> Result<ReserveP2PSw
                 _ => return Err(Box::new(UserNotInChannel)),
             };
 
-            if channel_member.lapsed.value {
+            if channel_member.lapsed().value {
                 return Err(Box::new(UserLapsed));
             }
 
