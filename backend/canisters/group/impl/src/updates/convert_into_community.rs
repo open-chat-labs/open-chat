@@ -71,12 +71,12 @@ fn prepare(state: &mut RuntimeState) -> Result<PrepareResult, Response> {
             Err(UserSuspended)
         } else if member.lapsed.value {
             return Err(UserLapsed);
-        } else if !member.role.is_owner() {
+        } else if !member.role().is_owner() {
             Err(NotAuthorized)
         } else {
             Ok(PrepareResult {
                 caller,
-                user_id: member.user_id,
+                user_id: member.user_id(),
                 user_index_canister_id: state.data.user_index_canister_id,
                 group_index_canister_id: state.data.group_index_canister_id,
             })

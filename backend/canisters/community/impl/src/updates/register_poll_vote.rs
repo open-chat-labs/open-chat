@@ -65,7 +65,7 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> Response {
     match result {
         RegisterPollVoteResult::Success(votes, creator) => {
             if creator != user_id {
-                if channel.chat.members.get(&creator).map_or(false, |m| !m.user_type.is_bot()) {
+                if channel.chat.members.get(&creator).map_or(false, |m| !m.user_type().is_bot()) {
                     if let Some((message, event_index)) = channel.chat.events.message_internal(
                         EventIndex::default(),
                         args.thread_root_message_index,

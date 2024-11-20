@@ -51,7 +51,7 @@ async fn accept_p2p_swap(args: Args) -> Response {
                         .chat
                         .members
                         .get(&message.sender)
-                        .map_or(false, |m| !m.user_type.is_bot())
+                        .map_or(false, |m| !m.user_type().is_bot())
                     {
                         state.data.user_event_sync_queue.push(
                             message.sender,
@@ -111,7 +111,7 @@ fn reserve_p2p_swap(args: Args, state: &mut RuntimeState) -> Result<ReserveP2PSw
             return Err(Box::new(UserLapsed));
         }
 
-        let user_id = member.user_id;
+        let user_id = member.user_id();
         let min_visible_event_index = member.min_visible_event_index();
         let now = state.env.now();
 

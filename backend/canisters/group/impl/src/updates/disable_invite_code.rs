@@ -25,8 +25,8 @@ fn disable_invite_code_impl(args: Args, state: &mut RuntimeState) -> Response {
             return UserSuspended;
         }
 
-        if member.role.can_invite_users(&state.data.chat.permissions) {
-            let user_id = member.user_id;
+        if member.role().can_invite_users(&state.data.chat.permissions) {
+            let user_id = member.user_id();
             state.data.invite_code_enabled = false;
 
             let now = state.env.now();

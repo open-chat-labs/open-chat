@@ -169,7 +169,12 @@ fn is_permitted_to_join(
                 if !member.lapsed() && !channel_member.lapsed() {
                     return Err(AlreadyInChannel(Box::new(
                         channel
-                            .summary(Some(channel_member.user_id), true, state.data.is_public, &state.data.members)
+                            .summary(
+                                Some(channel_member.user_id()),
+                                true,
+                                state.data.is_public,
+                                &state.data.members,
+                            )
                             .unwrap(),
                     )));
                 }

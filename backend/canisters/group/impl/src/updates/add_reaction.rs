@@ -21,7 +21,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 
     let caller = state.env.caller();
-    if let Some((user_id, is_bot)) = state.data.get_member(caller).map(|m| (m.user_id, m.user_type.is_bot())) {
+    if let Some((user_id, is_bot)) = state.data.get_member(caller).map(|m| (m.user_id(), m.user_type().is_bot())) {
         let now = state.env.now();
         let thread_root_message_index = args.thread_root_message_index;
 
@@ -40,7 +40,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                     args.message_id.into(),
                 ) {
                     if let Some(sender) = state.data.chat.members.get(&message.sender) {
-                        if message.sender != user_id && !sender.user_type.is_bot() {
+                        if message.sender != user_id && !sender.user_type().is_bot() {
                             let chat_id = state.env.canister_id().into();
 
                             let notifications_muted = state

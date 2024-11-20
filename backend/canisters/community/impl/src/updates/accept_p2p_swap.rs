@@ -51,7 +51,7 @@ async fn accept_p2p_swap(args: Args) -> Response {
                             .chat
                             .members
                             .get(&message.sender)
-                            .map_or(false, |m| !m.user_type.is_bot())
+                            .map_or(false, |m| !m.user_type().is_bot())
                         {
                             let community_id = state.env.canister_id().into();
 

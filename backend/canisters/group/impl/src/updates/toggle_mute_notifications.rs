@@ -18,7 +18,7 @@ fn toggle_mute_notifications_impl(args: Args, state: &mut RuntimeState) -> Respo
     match state.data.get_member_mut(caller) {
         Some(member) => {
             member.notifications_muted = Timestamped::new(args.mute, now);
-            let user_id = member.user_id;
+            let user_id = member.user_id();
             state.data.mark_group_updated_in_user_canister(user_id);
             Success
         }

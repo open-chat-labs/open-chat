@@ -19,7 +19,7 @@ fn c2c_start_import_into_community_impl(args: Args, state: &mut RuntimeState) ->
                 return UserSuspended;
             } else if member.lapsed.value {
                 return UserLapsed;
-            } else if !member.role.is_owner() {
+            } else if !member.role().is_owner() {
                 return NotAuthorized;
             }
         } else {

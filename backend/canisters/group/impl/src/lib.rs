@@ -132,8 +132,8 @@ impl RuntimeState {
             .chat
             .members
             .iter()
-            .filter(|m| matches!(m.role.value, GroupRoleInternal::Owner))
-            .map(|m| m.user_id)
+            .filter(|m| matches!(m.role().value, GroupRoleInternal::Owner))
+            .map(|m| m.user_id())
             .collect();
 
         let owner_count = owners.len() as u128;
@@ -174,13 +174,13 @@ impl RuntimeState {
         let events_ttl = chat.events.get_events_time_to_live();
 
         let membership = GroupMembership {
-            joined: member.date_added,
-            role: member.role.value.into(),
+            joined: member.date_added(),
+            role: member.role().value.into(),
             mentions: member.most_recent_mentions(None, &chat.events),
             notifications_muted: member.notifications_muted.value,
             my_metrics: chat
                 .events
-                .user_metrics(&member.user_id, None)
+                .user_metrics(&member.user_id(), None)
                 .map(|m| m.hydrate())
                 .unwrap_or_default(),
             latest_threads: member
@@ -200,7 +200,7 @@ impl RuntimeState {
         GroupCanisterGroupChatSummary {
             chat_id: self.env.canister_id().into(),
             local_user_index_canister_id: self.data.local_user_index_canister_id,
-            last_updated: chat.last_updated(Some(member.user_id)),
+            last_updated: chat.last_updated(Some(member.user_id())),
             name: chat.name.value.clone(),
             description: chat.description.value.clone(),
             subtype: chat.subtype.value.clone(),
@@ -210,7 +210,7 @@ impl RuntimeState {
             messages_visible_to_non_members: chat.messages_visible_to_non_members.value,
             min_visible_event_index,
             min_visible_message_index,
-            latest_message: main_events_reader.latest_message_event(Some(member.user_id)),
+            latest_message: main_events_reader.latest_message_event(Some(member.user_id())),
             latest_event_index: main_events_reader.latest_event_index().unwrap_or_default(),
             latest_message_index: main_events_reader.latest_message_index(),
             joined: membership.joined,
@@ -586,7 +586,7 @@ impl Data {
     }
 
     pub fn lookup_user_id(&self, user_id_or_principal: Principal) -> Option<UserId> {
-        self.get_member(user_id_or_principal).map(|m| m.user_id)
+        self.get_member(user_id_or_principal).map(|m| m.user_id())
     }
 
     pub fn get_member(&self, user_id_or_principal: Principal) -> Option<&GroupMemberInternal> {

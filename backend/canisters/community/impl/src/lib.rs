@@ -643,7 +643,7 @@ impl Data {
                         .members
                         .iter()
                         .filter(|m| m.can_member_lapse())
-                        .map(|m| m.user_id)
+                        .map(|m| m.user_id())
                         .collect();
                 }
             } else {

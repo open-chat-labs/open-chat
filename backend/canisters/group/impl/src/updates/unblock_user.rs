@@ -30,10 +30,10 @@ fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> Response {
             return UserLapsed;
         }
 
-        let unblocked_by = caller_member.user_id;
+        let unblocked_by = caller_member.user_id();
         if unblocked_by == args.user_id {
             CannotUnblockSelf
-        } else if caller_member.role.can_unblock_users(&state.data.chat.permissions) {
+        } else if caller_member.role().can_unblock_users(&state.data.chat.permissions) {
             let now = state.env.now();
 
             state.data.chat.members.unblock(args.user_id, now);

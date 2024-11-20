@@ -27,7 +27,10 @@ fn cancel_invites_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 
     if !matches!(
-        state.data.chat.cancel_invites(member.user_id, args.user_ids, state.env.now()),
+        state
+            .data
+            .chat
+            .cancel_invites(member.user_id(), args.user_ids, state.env.now()),
         CancelInvitesResult::Success
     ) {
         return NotAuthorized;

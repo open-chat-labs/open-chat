@@ -30,23 +30,23 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
     };
 
     let chat = &state.data.chat;
-    let chat_last_updated = chat.last_updated(Some(member.user_id));
+    let chat_last_updated = chat.last_updated(Some(member.user_id()));
 
     if chat_last_updated <= updates_since {
         return SuccessNoUpdates;
     }
 
-    let updates = chat.summary_updates(updates_since, Some(member.user_id));
+    let updates = chat.summary_updates(updates_since, Some(member.user_id()));
 
     let membership = GroupMembershipUpdates {
-        role: updates.role_changed.then_some(member.role.value.into()),
+        role: updates.role_changed.then_some(member.role().value.into()),
         mentions: updates.mentions,
         notifications_muted: member.notifications_muted.if_set_after(updates_since).cloned(),
         my_metrics: state
             .data
             .chat
             .events
-            .user_metrics(&member.user_id, Some(updates_since))
+            .user_metrics(&member.user_id(), Some(updates_since))
             .map(|m| m.hydrate()),
         latest_threads: member
             .followed_threads
