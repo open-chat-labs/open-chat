@@ -3,67 +3,55 @@
     import CommandParam from "./CommandParam.svelte";
     import { botState } from "./botState.svelte";
     import { onMount } from "svelte";
+    import ModalContent from "../ModalContent.svelte";
+    import Overlay from "../Overlay.svelte";
+    import Button from "../Button.svelte";
+    import { mobileWidth } from "../../stores/screenDimensions";
+    import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     interface Props {
         command: FlattenedCommand;
+        onCancel: () => void;
     }
 
-    let { command }: Props = $props();
+    let { command, onCancel }: Props = $props();
 
     let commandName = $derived(`/${command.name}`);
-    let numberOfParams = $derived(command.params?.length ?? 0);
 
     onMount(() => {
         botState.selectedCommandParamInstances = createParamInstancesFromSchema(command.params);
     });
 
-    function onFocus(index: number) {
-        if (index === numberOfParams) {
-            console.log("We will validate at this point");
-        } else {
-            botState.focusedParamIndex = index;
-        }
-    }
-
     function onSubmit() {
-        // at this point we validate all of the parameters
-        // if there are no errors we can send the command
-        // otherwise select the first invalid param and show its
-        // error message
+        // let's validate the instance against the schema and if it's ok, submit the command
+        // Might leave that for now until we have more of the framework in place
+        onCancel();
     }
 </script>
 
-<div contenteditable class="command-entry">
-    <span contenteditable="false" tabindex="-1" class="command">{commandName}</span>
-    {#if botState.selectedCommandParamInstances.length === command?.params?.length}
-        {#each command?.params ?? [] as param, i}
-            <CommandParam
-                instance={botState.selectedCommandParamInstances[i]}
-                {onSubmit}
-                index={i}
-                {onFocus}
-                {param} />
-        {/each}
-    {/if}
-</div>
+<Overlay>
+    <ModalContent on:close={onCancel}>
+        <div slot="header">{commandName}</div>
+        <div slot="body">
+            <p>{command.description}</p>
+            {#if botState.selectedCommandParamInstances.length === command?.params?.length}
+                {#each command?.params ?? [] as param, i}
+                    <CommandParam
+                        instance={botState.selectedCommandParamInstances[i]}
+                        index={i}
+                        {param} />
+                    <pre>{JSON.stringify(botState.selectedCommandParamInstances[i], null, 4)}</pre>
+                {/each}
+            {/if}
+        </div>
+        <div slot="footer">
+            <Button on:click={onSubmit} small={!$mobileWidth} tiny={$mobileWidth}>
+                <Translatable resourceKey={i18nKey("Submit")} />
+            </Button>
+        </div>
+    </ModalContent>
+</Overlay>
 
 <style lang="scss">
-    .command-entry {
-        padding: toRem(12) $sp4 $sp3 $sp4;
-        background-color: var(--entry-input-bg);
-        border-radius: var(--entry-input-rd);
-        outline: none;
-        border: 0;
-        min-height: toRem(25);
-        overflow-x: hidden;
-        overflow-y: auto;
-        user-select: text;
-        white-space: pre-wrap;
-        overflow-wrap: anywhere;
-        border: var(--bw) solid var(--entry-input-bd);
-        box-shadow: var(--entry-input-sh);
-        display: flex;
-        align-items: center;
-        gap: $sp3;
-    }
 </style>

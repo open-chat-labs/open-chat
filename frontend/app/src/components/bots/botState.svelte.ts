@@ -23,6 +23,7 @@ let commands = $derived.by(() => {
     });
 });
 let selectedCommand = $state<FlattenedCommand | undefined>(undefined);
+let focusedCommandIndex = $state(0);
 let focusedParamIndex = $state(0);
 let focusedParam = $derived(selectedCommand?.params?.[focusedParamIndex]);
 let selectedCommandParamInstances = $state<SlashCommandParamInstance[]>([]);
@@ -50,6 +51,22 @@ class BotState {
     get focusedParamInstance() {
         return focusedParamInstance;
     }
+    focusPreviousCommand() {
+        focusedCommandIndex = (focusedCommandIndex + 1) % commands.length;
+    }
+    focusNextCommand() {
+        focusedCommandIndex = (focusedCommandIndex - 1 + commands.length) % commands.length;
+    }
+    selectCommand(val: FlattenedCommand) {
+        selectedCommand = $state.snapshot(val);
+        prefix = `/${val.name}`;
+    }
+    get focusedCommandIndex() {
+        return focusedCommandIndex;
+    }
+    set focusedCommandIndex(val: number) {
+        focusedCommandIndex = val;
+    }
     get commands() {
         return commands;
     }
@@ -62,12 +79,17 @@ class BotState {
     get focusedParam() {
         return focusedParam;
     }
+    cancel() {
+        selectedCommand = undefined;
+        error = undefined;
+        prefix = "";
+        focusedCommandIndex = 0;
+        focusedParamIndex = 0;
+        selectedCommandParamInstances = [];
+    }
     setSelectedCommand() {
-        const cmd = commands[0];
-        if (cmd) {
-            prefix = `/${cmd.name}`;
-        }
-        this.selectedCommand = cmd;
+        this.selectedCommand = commands[focusedCommandIndex];
+        return this.selectedCommand;
     }
     get selectedCommand(): FlattenedCommand | undefined {
         return selectedCommand;
@@ -75,6 +97,10 @@ class BotState {
     set selectedCommand(val: FlattenedCommand | undefined) {
         focusedParamIndex = 0;
         selectedCommand = val;
+        focusedCommandIndex = 0;
+        if (val) {
+            prefix = `/${val.name}`;
+        }
     }
     get error() {
         return error;

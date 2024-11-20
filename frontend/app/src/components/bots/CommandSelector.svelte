@@ -10,72 +10,74 @@
 
     interface Props {
         onCancel: () => void;
-        onSelect: (command: FlattenedCommand) => void;
     }
 
-    let { onCancel, onSelect }: Props = $props();
+    let { onCancel }: Props = $props();
 
     function selectCommand(command: FlattenedCommand) {
         botState.selectedCommand = $state.snapshot(command);
-        botState.prefix = `/${command.name}`;
-        onSelect(command);
     }
 
-    onMount(() => (botState.error = undefined));
+    onMount(() => {
+        botState.error = undefined;
+        document.addEventListener("keydown", onkeydown);
+        return () => {
+            document.removeEventListener("keydown", onkeydown);
+        };
+    });
+
+    function onkeydown(ev: KeyboardEvent): void {
+        switch (ev.key) {
+            case "ArrowDown":
+                botState.focusPreviousCommand();
+                break;
+            case "ArrowUp":
+                botState.focusNextCommand();
+                break;
+            case "Enter":
+                botState.setSelectedCommand();
+                break;
+            case "Escape":
+                onCancel();
+                break;
+        }
+    }
 </script>
 
 <div class="command-header">
     <h4>
-        {#if botState.selectedCommand !== undefined}
-            <Translatable resourceKey={i18nKey(`/${botState.selectedCommand.name}`)} />
-        {:else}
-            <Translatable resourceKey={i18nKey("bots.matchingCommands")} />
-        {/if}
+        <Translatable resourceKey={i18nKey("bots.matchingCommands")} />
     </h4>
     <HoverIcon onclick={onCancel}>
         <Close size={"1em"} color={"var(--icon-txt)"} />
     </HoverIcon>
 </div>
-{#if botState.selectedCommand !== undefined}
-    <div class="param-help">
-        {#if botState.focusedParam !== undefined}
-            <p>
-                {`${botState.focusedParam.description} (${
-                    botState.focusedParam.required ? "required" : "optional"
-                })`}
-            </p>
-        {:else}
-            <p>{botState.selectedCommand.description}</p>
-        {/if}
-    </div>
-    {#if botState.focusedParamInstance}
-        <pre>{JSON.stringify(botState.focusedParamInstance, null, 4)}</pre>
-    {/if}
-{:else}
-    <div class="command-list">
-        {#each botState.commands as command}
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <div class="command" onclick={() => selectCommand(command)}>
-                <img class="icon" src={command.botIcon} alt={command.botName} />
-                <div class="details">
-                    <div class="interface">
-                        <div class="command-name">
-                            /{command.name}
-                        </div>
-                        {#each command?.params ?? [] as param}
-                            <div class="param">{param.name}</div>
-                        {/each}
+<div class="command-list">
+    {#each botState.commands as command, i}
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div
+            class="command"
+            class:selected={botState.focusedCommandIndex === i}
+            onclick={() => selectCommand(command)}>
+            <img class="icon" src={command.botIcon} alt={command.botName} />
+            <div class="details">
+                <div class="interface">
+                    <div class="command-name">
+                        /{command.name}
                     </div>
-                    <div class="desc">
-                        {command.description}
-                    </div>
+                    {#each command?.params ?? [] as param}
+                        <div class="param" class:required={param.required}>{param.name}</div>
+                    {/each}
                 </div>
-                <div class="bot-name">{command.botName}</div>
+                <div class="desc">
+                    {command.description}
+                </div>
             </div>
-        {/each}
-    </div>
-{/if}
+            <div class="bot-name">{command.botName}</div>
+        </div>
+    {/each}
+</div>
 
 {#if botState.error !== undefined}
     <div class="command-error">
@@ -90,11 +92,6 @@
         :global(h4) {
             margin-bottom: 0;
         }
-    }
-
-    .param-help {
-        background-color: var(--modal-bg);
-        padding: $sp4;
     }
 
     .command-header {
@@ -121,19 +118,25 @@
             padding: $sp3;
             cursor: pointer;
 
+            &.selected {
+                background-color: var(--chatSummary-bg-selected);
+            }
+
             .bot-name {
                 @include font(light, normal, fs-80);
                 color: var(--txt-light);
             }
 
             .icon {
-                flex: 0 0 50px;
-                width: 50px;
-                height: 50px;
+                $size: 48px;
+                flex: 0 0 $size;
+                width: $size;
+                height: $size;
                 aspect-ratio: 1 / 1;
                 background-position: center;
                 background-repeat: no-repeat;
                 background-size: cover;
+                border-radius: $sp2;
             }
 
             .details {
@@ -144,17 +147,24 @@
                 .interface {
                     display: flex;
                     align-items: center;
-                    gap: $sp2;
+                    gap: $sp3;
 
                     .command-name {
                         @include font(bold, normal, fs-100);
                     }
 
                     .param {
-                        @include font(light, normal, fs-100);
-                        border: 1px solid var(--bd);
+                        @include font(light, normal, fs-80);
+                        border: 1px solid var(--button-bg);
                         padding: $sp1 $sp3;
                         border-radius: $sp2;
+                        line-height: 18px;
+
+                        &.required {
+                            background-color: var(--button-bg);
+                            color: var(--button-txt);
+                            border: none;
+                        }
                     }
                 }
 

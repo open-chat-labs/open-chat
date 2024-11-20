@@ -25,14 +25,14 @@ export type StringParam = {
     kind: "string";
     minLength: number;
     maxLength: number;
-    choices?: SlashCommandOptionChoice<string>[];
+    choices: SlashCommandOptionChoice<string>[];
 };
 
 export type NumberParam = {
     kind: "number";
     minValue: number;
     maxValue: number;
-    choices?: SlashCommandOptionChoice<number>[];
+    choices: SlashCommandOptionChoice<number>[];
 };
 
 export type SlashCommandOptionChoice<T> = {
@@ -50,10 +50,21 @@ export type SlashCommandSchema = {
 };
 
 export type ExternalBot = {
+    kind: "external_bot";
     name: string;
     icon: string;
     id: string;
     endpoint: string;
+    description?: string;
+    commands: SlashCommandSchema[];
+};
+
+// Not sure about this just yet, but I feel like it's probably a thing
+export type InternalBot = {
+    kind: "internal_bot";
+    name: string;
+    icon: string;
+    id: string;
     description?: string;
     commands: SlashCommandSchema[];
 };
@@ -71,6 +82,7 @@ export type CommandParamInstance = {
 export type UserParamInstance = {
     kind: "user";
     value?: string;
+    userId?: string;
 };
 
 export type BooleanParamInstance = {
@@ -105,11 +117,11 @@ export function createParamInstancesFromSchema(
                 case "user":
                     return { kind: "user", name: p.name };
                 case "boolean":
-                    return { kind: "boolean", name: p.name };
+                    return { kind: "boolean", name: p.name, value: false };
                 case "number":
-                    return { kind: "number", name: p.name };
+                    return { kind: "number", name: p.name, value: 0 };
                 case "string":
-                    return { kind: "string", name: p.name };
+                    return { kind: "string", name: p.name, value: "" };
             }
         }) ?? []
     );

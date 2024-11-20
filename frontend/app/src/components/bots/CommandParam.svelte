@@ -1,16 +1,23 @@
 <script lang="ts">
-    import type { SlashCommandParam, SlashCommandParamInstance } from "openchat-client";
+    import type {
+        SlashCommandParam,
+        SlashCommandParamInstance,
+        UserSummary,
+    } from "openchat-client";
     import { onMount } from "svelte";
+    import Legend from "../Legend.svelte";
+    import { i18nKey } from "../../i18n/i18n";
+    import Input from "../Input.svelte";
+    import SingleUserSelector from "../home/SingleUserSelector.svelte";
+    import Select from "../Select.svelte";
 
     interface Props {
         param: SlashCommandParam;
         index: number;
         instance: SlashCommandParamInstance;
-        onFocus: (index: number) => void;
-        onSubmit: () => void;
     }
 
-    let { param, onFocus, onSubmit, index, instance }: Props = $props();
+    let { param, index, instance }: Props = $props();
 
     let inp: HTMLInputElement;
 
@@ -19,46 +26,41 @@
             inp.focus();
         }
     });
-
-    function keydown(e: KeyboardEvent) {
-        if (e.key === "Enter") {
-            onSubmit();
-            e.preventDefault();
-        }
-    }
 </script>
 
 <div class="param">
-    <span tabindex="-1" contenteditable="false" class="param-name">{param.name}</span>
-    <input
-        bind:value={instance.value}
-        onfocus={() => onFocus(index)}
-        onkeydown={keydown}
-        bind:this={inp}
-        class="param-input"
-        placeholder={param.description} />
+    {#if instance.kind === "user" && param.kind === "user"}
+        <Legend label={i18nKey(param.name)} required={param.required} />
+        <SingleUserSelector
+            on:userSelected={(ev: CustomEvent<UserSummary>) => (instance.value = ev.detail.userId)}
+            on:userRemoved={() => (instance.value = undefined)}
+            autofocus={false}
+            direction={"down"}
+            placeholder={param.placeholder} />
+    {/if}
+    {#if instance.kind === "string" && param.kind === "string"}
+        <Legend
+            label={i18nKey(param.name)}
+            required={param.required}
+            rules={param.choices.length > 0
+                ? undefined
+                : i18nKey(`Max length ${param.maxLength}`)} />
+        {#if param.choices?.length ?? 0 > 0}
+            <Select bind:value={instance.value}>
+                <option value={""} selected disabled>{`Choose ${param.name}`}</option>
+                {#each param.choices as choice}
+                    <option value={choice.value}>{choice.name}</option>
+                {/each}
+            </Select>
+        {:else}
+            <Input
+                minlength={param.minLength}
+                maxlength={param.maxLength}
+                placeholder={i18nKey(param.placeholder ?? "")}
+                bind:value={instance.value} />
+        {/if}
+    {/if}
 </div>
 
 <style lang="scss">
-    .param {
-        display: flex;
-
-        .param-name {
-            border: 1px solid var(--bd);
-            padding: $sp1 $sp3;
-            border-radius: $sp2 0 0 $sp2;
-            background-color: var(--button-bg);
-            color: var(--button-txt);
-        }
-
-        .param-input {
-            background-color: var(--entry-bg);
-            border-radius: 0 $sp2 $sp2 0;
-            border: 1px solid var(--bd);
-            border-left: none;
-            color: var(--txt);
-            padding: $sp1 $sp3;
-            outline: none;
-        }
-    }
 </style>

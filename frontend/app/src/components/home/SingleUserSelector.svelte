@@ -2,10 +2,11 @@
     import MentionPicker from "./MentionPicker.svelte";
     import { _ } from "svelte-i18n";
     import type { OpenChat, UserOrUserGroup } from "openchat-client";
-    import { getContext } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import UserPill from "../UserPill.svelte";
 
     const client = getContext<OpenChat>("client");
+    const dispatch = createEventDispatcher();
 
     export let autofocus: boolean;
     export let selectedReceiver: UserOrUserGroup | undefined = undefined;
@@ -20,12 +21,16 @@
         selectedReceiver = ev.detail;
         showMentionPicker = false;
         textValue = "";
+        if (ev.detail.kind === "user") {
+            dispatch("userSelected", ev.detail);
+        }
     }
 
     function removeReceiver() {
         selectedReceiver = undefined;
         showMentionPicker = true;
         textValue = "";
+        dispatch("userRemoved");
     }
 
     function blur() {
