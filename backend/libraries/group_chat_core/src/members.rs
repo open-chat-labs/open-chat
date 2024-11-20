@@ -223,6 +223,10 @@ impl GroupMembers {
         &self.member_ids
     }
 
+    pub fn iter(&self) -> impl Iterator<Item = &GroupMemberInternal> {
+        self.members.values()
+    }
+
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut GroupMemberInternal> {
         self.members.values_mut()
     }

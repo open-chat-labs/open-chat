@@ -2109,7 +2109,7 @@ impl ChatEvents {
         }
     }
 
-    fn event_wrapper_internal(
+    pub fn event_wrapper_internal(
         &self,
         min_visible_event_index: EventIndex,
         thread_root_message_index: Option<MessageIndex>,
