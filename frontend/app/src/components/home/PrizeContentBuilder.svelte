@@ -55,7 +55,7 @@
     type Duration = "oneHour" | "oneDay" | "oneWeek";
     let selectedDuration: Duration = "oneDay";
     let diamondOnly = false;
-    let lifetimeDiamondOnly = false;
+    let diamondType: "standard" | "lifetime" = "standard";
     let uniquePersonOnly = false;
     let streakOnly = false;
     let streakValue = "3";
@@ -68,7 +68,7 @@
     let tokenInputState: "ok" | "zero" | "too_low" | "too_high";
     let sending = false;
 
-    $: anyUser = !diamondOnly && !lifetimeDiamondOnly && !uniquePersonOnly && !streakOnly;
+    $: anyUser = !diamondOnly && !uniquePersonOnly && !streakOnly;
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
     $: tokenDetails = $cryptoLookup[ledger];
     $: symbol = tokenDetails.symbol;
@@ -131,8 +131,8 @@
             kind: "prize_content_initial",
             caption: message === "" ? undefined : message,
             endDate: getEndDate(),
-            diamondOnly,
-            lifetimeDiamondOnly,
+            diamondOnly: diamondOnly && diamondType === "standard",
+            lifetimeDiamondOnly: diamondOnly && diamondType === "lifetime",
             uniquePersonOnly,
             streakOnly: streakOnly ? parseInt(streakValue) : 0,
             transfer: {
@@ -263,17 +263,8 @@
     function onAnyUserChecked() {
         anyUser = true;
         diamondOnly = false;
-        lifetimeDiamondOnly = false;
         uniquePersonOnly = false;
         streakOnly = false;
-    }
-
-    function onDiamondOnlyChecked() {
-        lifetimeDiamondOnly = false;
-    }
-
-    function onLifetimeDiamondOnlyChecked() {
-        diamondOnly = false;
     }
 </script>
 
@@ -402,13 +393,23 @@
                             <Checkbox
                                 id="diamond_only"
                                 label={i18nKey(`prizes.onlyDiamond`)}
-                                bind:checked={diamondOnly}
-                                on:change={onDiamondOnlyChecked} />
-                            <Checkbox
-                                id="lifetime_diamond_only"
-                                label={i18nKey(`prizes.onlyLifetimeDiamond`)}
-                                bind:checked={lifetimeDiamondOnly}
-                                on:change={onLifetimeDiamondOnlyChecked} />
+                                bind:checked={diamondOnly} />
+                            {#if diamondOnly}
+                                <div class="diamond-choice">
+                                    <Radio
+                                        id={"standard-diamond"}
+                                        on:change={() => (diamondType = "standard")}
+                                        checked={diamondType === "standard"}
+                                        label={i18nKey(`prizes.standardDiamond`)}
+                                        group={"diamond"} />
+                                    <Radio
+                                        id={"lifetime-diamond"}
+                                        on:change={() => (diamondType = "lifetime")}
+                                        checked={diamondType === "lifetime"}
+                                        label={i18nKey(`prizes.lifetimeDiamond`)}
+                                        group={"diamond"} />
+                                </div>
+                            {/if}
                             <Checkbox
                                 id="unique_person_only"
                                 label={i18nKey(`prizes.onlyUniquePerson`)}
@@ -417,7 +418,6 @@
                                 id="streak_only"
                                 label={i18nKey(`prizes.onlyStreak`)}
                                 bind:checked={streakOnly} />
-
                             {#if streakOnly}
                                 <Select bind:value={streakValue}>
                                     {#each streaks as streak}
@@ -464,6 +464,10 @@
 </Overlay>
 
 <style lang="scss">
+    :global(.restrictions .diamond-choice .radio) {
+        margin-bottom: 0;
+    }
+
     .header {
         display: flex;
         align-items: center;
@@ -548,5 +552,9 @@
 
     .error {
         margin-top: $sp4;
+    }
+
+    .diamond-choice {
+        margin-left: $sp6;
     }
 </style>
