@@ -11,3 +11,4 @@ storage_bucket_canister = { path = "../../canisters/storage_bucket/api" }
 storage_bucket_canister_c2c_client = { path = "../../canisters/storage_bucket/c2c_client" }
 ic-cdk = { workspace = true }
 types = { path = "../types" }
+utils = { path = "../utils" }

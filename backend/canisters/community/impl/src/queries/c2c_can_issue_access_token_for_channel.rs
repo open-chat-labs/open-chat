@@ -34,7 +34,7 @@ fn can_start_video_call(
     call_type: VideoCallType,
     chat: &GroupChatCore,
 ) -> bool {
-    if !member.role.is_permitted(chat.permissions.start_video_call) {
+    if !member.role().is_permitted(chat.permissions.start_video_call) {
         return false;
     }
 

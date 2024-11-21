@@ -41,7 +41,7 @@ fn is_permitted_to_join(
     }
 
     if let Some(member) = state.data.chat.members.get(&args.user_id) {
-        if !member.lapsed.value {
+        if !member.lapsed().value {
             let summary = state.summary(member);
             return Err(AlreadyInGroupV2(Box::new(summary)));
         }

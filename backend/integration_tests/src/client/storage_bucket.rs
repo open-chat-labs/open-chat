@@ -15,7 +15,7 @@ pub mod happy_path {
     use crate::utils::tick_many;
     use candid::Principal;
     use pocket_ic::PocketIc;
-    use types::{CanisterId, FileId, TimestampMillis};
+    use types::{AccessorId, CanisterId, FileId, TimestampMillis};
     use utils::hasher::hash_bytes;
 
     const DEFAULT_MIME_TYPE: &str = "test_mime_type";
@@ -26,6 +26,7 @@ pub mod happy_path {
         canister_id: CanisterId,
         file_id: FileId,
         file: Vec<u8>,
+        accessors: Vec<AccessorId>,
         expiry: Option<TimestampMillis>,
     ) {
         let hash = hash_bytes(&file);
@@ -41,7 +42,7 @@ pub mod happy_path {
                     file_id,
                     hash,
                     mime_type: DEFAULT_MIME_TYPE.to_string(),
-                    accessors: vec![],
+                    accessors: accessors.clone(),
                     chunk_index: index as u32,
                     chunk_size,
                     total_size,

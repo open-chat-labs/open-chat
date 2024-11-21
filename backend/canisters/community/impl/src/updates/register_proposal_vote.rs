@@ -77,7 +77,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         None => return Err(UserNotInChannel),
     };
 
-    if channel_member.lapsed.value {
+    if channel_member.lapsed().value {
         return Err(UserLapsed);
     }
 

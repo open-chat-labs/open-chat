@@ -42,14 +42,14 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
 
     let caller = state.env.caller().into();
     if let Some(member) = state.data.chat.members.get(&caller) {
-        if !member.role.can_delete_group() {
+        if !member.role().can_delete_group() {
             Err(NotAuthorized)
         } else {
             Ok(PrepareResult {
                 group_index_canister_id: state.data.group_index_canister_id,
-                deleted_by: member.user_id,
+                deleted_by: member.user_id(),
                 group_name: state.data.chat.name.value.clone(),
-                members: state.data.chat.members.iter().map(|m| m.user_id).collect(),
+                members: state.data.chat.members.member_ids().iter().copied().collect(),
             })
         }
     } else {
