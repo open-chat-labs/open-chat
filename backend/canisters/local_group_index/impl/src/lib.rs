@@ -140,7 +140,6 @@ struct Data {
     pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
-    #[serde(default = "CanisterId::anonymous")]
     pub bot_api_gateway_canister_id: CanisterId,
     pub groups_requiring_upgrade: CanistersRequiringUpgrade,
     pub communities_requiring_upgrade: CanistersRequiringUpgrade,
