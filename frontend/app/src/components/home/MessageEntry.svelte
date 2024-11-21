@@ -39,8 +39,6 @@
     import MessageActions from "./MessageActions.svelte";
     import { addQueryStringParam } from "../../utils/urls";
     import PreviewFooter from "./PreviewFooter.svelte";
-    import { preferredDarkThemeName, themeType, currentThemeName } from "../../theme/themes";
-    import { scream } from "../../utils/scream";
     import { snowing } from "../../stores/snow";
     import Translatable from "../Translatable.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
@@ -350,22 +348,6 @@
      * * /witch - summon the halloween witch
      */
     function parseCommands(txt: string): boolean {
-        const summonWitch = txt.match(/^\/witch( *(.*))$/);
-        const isHalloweenTheme = $currentThemeName === "halloween";
-        if (summonWitch) {
-            if (!isHalloweenTheme) {
-                themeType.set("dark");
-                preferredDarkThemeName.set("halloween");
-            }
-            document.body.classList.add("witch");
-            scream.currentTime = 0;
-            scream.play();
-            window.setTimeout(() => {
-                document.body.classList.remove("witch");
-            }, 2000);
-            return false;
-        }
-
         if (/snow|xmas|christmas|noel/.test(txt)) {
             $snowing = true;
         }
