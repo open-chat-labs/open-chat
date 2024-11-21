@@ -169,5 +169,5 @@ async fn is_cycles_dispenser_balance_low(
 ) -> CallResult<bool> {
     icrc_ledger_canister_c2c_client::icrc1_balance_of(nns_ledger_canister_id, &Account::from(cycles_dispenser_canister_id))
         .await
-        .map(|balance| balance < 5000 * E8S_PER_ICP)
+        .map(|balance| balance < 10000 * E8S_PER_ICP)
 }
