@@ -38,7 +38,7 @@ fn c2c_register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
     if state.data.users.get_by_username(&args.username).is_some() {
         return UsernameTaken;
     }
-  
+
     if let Some(display_name) = &args.display_name {
         match validate_display_name(display_name) {
             Ok(_) => {}
@@ -55,7 +55,7 @@ fn c2c_register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
         ic_cdk::api::call::msg_cycles_accept128(BOT_REGISTRATION_FEE);
     }
-  
+
     state.data.users.register(
         caller,
         user_id,
