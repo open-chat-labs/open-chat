@@ -18,6 +18,7 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none()
+        && state.data.community_upgrade_concurrency > 0
         && (state.data.communities_requiring_upgrade.count_pending() > 0
             || state.data.communities_requiring_upgrade.count_in_progress() > 0)
     {
@@ -44,6 +45,8 @@ fn run() {
 fn next_batch(state: &mut RuntimeState) -> Option<Vec<CanisterToUpgrade>> {
     if state.data.event_store_client.info().events_pending > 100000 {
         return Some(Vec::new());
+    } else if state.data.community_upgrade_concurrency == 0 {
+        return None;
     }
 
     let count_in_progress = state.data.communities_requiring_upgrade.count_in_progress();
