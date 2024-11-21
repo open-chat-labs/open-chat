@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Avoid pushing events to bot users ([#6846](https://github.com/open-chat-labs/open-chat/pull/6846))
 - Simplify `inspect_message` ([#6847](https://github.com/open-chat-labs/open-chat/pull/6847))
+- Add the full command details when requesting a bot access token ([#6861](https://github.com/open-chat-labs/open-chat/pull/6861))
 
 ### Removed
 
