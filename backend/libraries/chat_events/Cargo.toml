@@ -22,6 +22,7 @@ serde_bytes = { workspace = true }
 sha2 = { workspace = true }
 tracing = { workspace = true }
 types = { path = "../types" }
+utils = { path = "../utils" }
 
 [dev-dependencies]
 msgpack = { path = "../msgpack" }

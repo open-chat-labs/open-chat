@@ -257,8 +257,10 @@ fn prize_content() {
         lifetime_diamond_only: false,
         unique_person_only: false,
         streak_only: 0,
-        refund_started: true,
+        final_payments_started: true,
         ledger_error: true,
+        prizes_paid: 0,
+        fee_percent: 0,
     });
     let bytes = generate_then_serialize_value(content);
     assert!(matches!(test_deserialization(&bytes), MessageContentInternal::Prize(_)));
