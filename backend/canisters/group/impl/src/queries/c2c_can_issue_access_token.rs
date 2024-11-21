@@ -20,7 +20,7 @@ fn c2c_can_issue_access_token_impl(args: Args, state: &RuntimeState) -> bool {
         AccessTokenType::StartVideoCallV2(vc) => can_start_video_call(member, vc.call_type, &state.data.chat),
         AccessTokenType::JoinVideoCall | AccessTokenType::MarkVideoCallAsEnded => true,
         AccessTokenType::BotCommand(c) => state.data.chat.members.get_bot(&c.bot).is_some_and(|b| {
-            b.role.can_send_message(
+            b.role().can_send_message(
                 MessageContentType::Text,
                 c.thread_root_message_index.is_some(),
                 &state.data.chat.permissions,

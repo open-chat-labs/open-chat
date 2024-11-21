@@ -843,7 +843,7 @@ impl GroupChatCore {
         let permissions = &self.permissions;
 
         if !member
-            .role
+            .role()
             .can_send_message(content.into(), thread_root_message_index.is_some(), permissions)
         {
             return NotAuthorized;
