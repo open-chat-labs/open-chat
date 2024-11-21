@@ -15,7 +15,9 @@ pub enum TimerJob {
     HardDeleteMessageContent(HardDeleteMessageContentJob),
     DeleteFileReferences(DeleteFileReferencesJob),
     EndPoll(EndPollJob),
-    FinalPrizePaymentsJob(FinalPrizePaymentsJob),
+    // TODO: Remove this serde attribute post release
+    #[serde(alias = "RefundPrize")]
+    FinalPrizePayments(FinalPrizePaymentsJob),
     MakeTransfer(MakeTransferJob),
     RemoveExpiredEvents(RemoveExpiredEventsJob),
     NotifyEscrowCanisterOfDeposit(NotifyEscrowCanisterOfDepositJob),
@@ -119,7 +121,7 @@ impl Job for TimerJob {
             TimerJob::HardDeleteMessageContent(job) => job.execute(),
             TimerJob::DeleteFileReferences(job) => job.execute(),
             TimerJob::EndPoll(job) => job.execute(),
-            TimerJob::FinalPrizePaymentsJob(job) => job.execute(),
+            TimerJob::FinalPrizePayments(job) => job.execute(),
             TimerJob::MakeTransfer(job) => job.execute(),
             TimerJob::RemoveExpiredEvents(job) => job.execute(),
             TimerJob::NotifyEscrowCanisterOfDeposit(job) => job.execute(),
@@ -159,7 +161,7 @@ impl Job for HardDeleteMessageContentJob {
                                 .data
                                 .timer_jobs
                                 .cancel_job(|job| {
-                                    if let TimerJob::FinalPrizePaymentsJob(j) = job {
+                                    if let TimerJob::FinalPrizePayments(j) = job {
                                         j.thread_root_message_index == self.thread_root_message_index
                                             && j.message_index == message_index
                                     } else {

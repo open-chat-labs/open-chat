@@ -319,7 +319,7 @@ fn register_timer_jobs(
         }
         MessageContent::Prize(p) => {
             data.timer_jobs.enqueue_job(
-                TimerJob::FinalPrizePaymentsJob(FinalPrizePaymentsJob {
+                TimerJob::FinalPrizePayments(FinalPrizePaymentsJob {
                     thread_root_message_index,
                     message_index: message_event.event.message_index,
                 }),
