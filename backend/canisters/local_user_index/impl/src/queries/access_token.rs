@@ -63,8 +63,10 @@ async fn access_token(args: Args) -> Response {
                 bot: bc.bot,
                 thread_root_message_index: bc.thread_root_message_index,
                 message_id: bc.message_id,
+                command_name: bc.command_name.clone(),
+                parameters: bc.parameters.clone(),
+                version: bc.version,
                 bot_api_gateway,
-                reply_url: format!("https://{bot_api_gateway}.icp0.io/call"),
             };
             build_token(args.token_type, custom_claims, state)
         }
