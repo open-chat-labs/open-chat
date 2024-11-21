@@ -86,6 +86,10 @@ impl RuntimeState {
         self.env.caller() == self.data.local_group_index_canister_id
     }
 
+    pub fn is_caller_bot_api_gateway(&self) -> bool {
+        self.env.caller() == self.data.bot_api_gateway_canister_id
+    }
+
     pub fn is_caller_proposals_bot(&self) -> bool {
         self.env.caller() == self.data.proposals_bot_user_id.into()
     }

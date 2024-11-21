@@ -950,6 +950,7 @@ dependencies = [
  "bot_api_gateway_canister",
  "candid",
  "canister_api_macros",
+ "canister_client",
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
@@ -1551,6 +1552,7 @@ checksum = "acbf1af155f9b9ef647e42cdc158db4b64a1b61f743629225fde6f3e0be2a7c7"
 name = "community_canister"
 version = "0.1.0"
 dependencies = [
+ "bot_api_gateway_canister",
  "candid",
  "candid_gen",
  "chat_events",
@@ -1579,6 +1581,7 @@ name = "community_canister_impl"
 version = "0.1.0"
 dependencies = [
  "activity_notification_state",
+ "bot_api_gateway_canister",
  "candid",
  "canister_api_macros",
  "canister_logger",
@@ -2772,6 +2775,7 @@ dependencies = [
 name = "group_canister"
 version = "0.1.0"
 dependencies = [
+ "bot_api_gateway_canister",
  "candid",
  "candid_gen",
  "chat_events",
@@ -2811,6 +2815,7 @@ name = "group_canister_impl"
 version = "0.1.0"
 dependencies = [
  "activity_notification_state",
+ "bot_api_gateway_canister",
  "candid",
  "canister_api_macros",
  "canister_logger",
@@ -4234,6 +4239,7 @@ name = "integration_tests"
 version = "0.1.0"
 dependencies = [
  "airdrop_bot_canister",
+ "bot_api_gateway_canister",
  "candid",
  "community_canister",
  "cycles_dispenser_canister",
@@ -8392,6 +8398,7 @@ checksum = "daf8dba3b7eb870caf1ddeed7bc9d2a049f3cfdfae7cb521b087cc33ae4c49da"
 name = "user_canister"
 version = "0.1.0"
 dependencies = [
+ "bot_api_gateway_canister",
  "candid",
  "candid_gen",
  "chat_events",

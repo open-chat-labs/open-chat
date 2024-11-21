@@ -13,6 +13,7 @@ use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration, SignedDeleg
 mod macros;
 
 pub mod airdrop_bot;
+pub mod bot_api_gateway;
 pub mod community;
 pub mod cycles_dispenser;
 pub mod escrow;

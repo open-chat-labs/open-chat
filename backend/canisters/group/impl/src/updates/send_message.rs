@@ -1,6 +1,7 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, FinalPrizePaymentsJob, MarkP2PSwapExpiredJob};
 use crate::{mutate_state, run_regular_jobs, Data, RuntimeState, TimerJob};
+use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse};
@@ -18,7 +19,7 @@ use utils::consts::OPENCHAT_BOT_USER_ID;
 fn send_message_v2(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| send_message_impl(args, state))
+    mutate_state(|state| send_message_impl(args, None, state))
 }
 
 #[update(msgpack = true)]
@@ -29,8 +30,8 @@ fn c2c_send_message(args: C2CArgs) -> C2CResponse {
     mutate_state(|state| c2c_send_message_impl(args, state))
 }
 
-fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
-    match validate_caller(state) {
+pub(crate) fn send_message_impl(args: Args, caller_override: Option<Principal>, state: &mut RuntimeState) -> Response {
+    match validate_caller(caller_override, state) {
         Ok(Caller { user_id, user_type }) => {
             let now = state.env.now();
             let mentioned: Vec<_> = args.mentioned.iter().map(|u| u.user_id).collect();
@@ -68,7 +69,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
 }
 
 fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse {
-    match validate_caller(state) {
+    match validate_caller(None, state) {
         Ok(Caller { user_id, user_type }) => {
             // Bots can't call this c2c endpoint since it skips the validation
             if user_type.is_bot() && !user_type.is_oc_controlled_bot() {
@@ -113,12 +114,12 @@ struct Caller {
     user_type: UserType,
 }
 
-fn validate_caller(state: &RuntimeState) -> Result<Caller, Response> {
+fn validate_caller(caller_override: Option<Principal>, state: &RuntimeState) -> Result<Caller, Response> {
     if state.data.is_frozen() {
         return Err(ChatFrozen);
     }
 
-    let caller = state.env.caller();
+    let caller = caller_override.unwrap_or_else(|| state.env.caller());
     if let Some(member) = state.data.get_member(caller) {
         if member.suspended.value {
             Err(UserSuspended)
