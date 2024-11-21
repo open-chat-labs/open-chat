@@ -39,7 +39,9 @@ async fn access_token(args: Args) -> Response {
         }
     }
 
-    mutate_state(|state| match &args.token_type {
+    let token_type_name = args.token_type.type_name().to_string();
+
+    mutate_state(|state| match args.token_type {
         AccessTokenType::StartVideoCallV2(vc) => {
             let custom_claims = StartVideoCallClaims {
                 user_id,
@@ -47,14 +49,14 @@ async fn access_token(args: Args) -> Response {
                 call_type: vc.call_type,
                 is_diamond,
             };
-            build_token(args.token_type, custom_claims, state)
+            build_token(token_type_name, custom_claims, state)
         }
         AccessTokenType::JoinVideoCall | AccessTokenType::MarkVideoCallAsEnded => {
             let custom_claims = JoinOrEndVideoCallClaims {
                 user_id,
                 chat_id: args.chat.into(),
             };
-            build_token(args.token_type, custom_claims, state)
+            build_token(token_type_name, custom_claims, state)
         }
         AccessTokenType::BotCommand(bc) => {
             let bot_api_gateway = state.data.internet_identity_canister_id;
@@ -63,12 +65,12 @@ async fn access_token(args: Args) -> Response {
                 bot: bc.bot,
                 thread_root_message_index: bc.thread_root_message_index,
                 message_id: bc.message_id,
-                command_name: bc.command_name.clone(),
-                parameters: bc.parameters.clone(),
+                command_name: bc.command_name,
+                parameters: bc.parameters,
                 version: bc.version,
                 bot_api_gateway,
             };
-            build_token(args.token_type, custom_claims, state)
+            build_token(token_type_name, custom_claims, state)
         }
     })
 }
@@ -87,7 +89,7 @@ fn get_user(state: &RuntimeState) -> Option<(UserId, bool)> {
         })
 }
 
-fn build_token<T: Serialize>(token_type: AccessTokenType, custom_claims: T, state: &mut RuntimeState) -> Response {
+fn build_token<T: Serialize>(token_type_name: String, custom_claims: T, state: &mut RuntimeState) -> Response {
     if !state.data.oc_key_pair.is_initialised() {
         return InternalError("OC Secret not set".to_string());
     };
@@ -96,7 +98,7 @@ fn build_token<T: Serialize>(token_type: AccessTokenType, custom_claims: T, stat
 
     let claims = Claims::new(
         state.env.now() + 300_000, // Token valid for 5 mins from now
-        token_type.type_name().to_string(),
+        token_type_name,
         custom_claims,
     );
 
