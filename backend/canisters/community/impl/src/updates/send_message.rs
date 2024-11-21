@@ -1,11 +1,11 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::model::members::CommunityMembers;
 use crate::model::user_groups::UserGroup;
-use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, MarkP2PSwapExpiredJob, RefundPrizeJob, TimerJob};
+use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, FinalPrizePaymentsJob, MarkP2PSwapExpiredJob, TimerJob};
 use crate::{mutate_state, run_regular_jobs, Data, RuntimeState};
+use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::OPENCHAT_BOT_USER_ID;
 use community_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse};
 use community_canister::send_message::{Response::*, *};
 use group_chat_core::SendMessageResult;
@@ -18,13 +18,14 @@ use types::{
     Notification, TimestampMillis, User, UserId, UserType, Version,
 };
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
+use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[update(candid = true, msgpack = true)]
 #[trace]
 fn send_message(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| send_message_impl(args, state))
+    mutate_state(|state| send_message_impl(args, None, state))
 }
 
 #[update(msgpack = true)]
@@ -35,12 +36,12 @@ fn c2c_send_message(args: C2CArgs) -> C2CResponse {
     mutate_state(|state| c2c_send_message_impl(args, state))
 }
 
-fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
+pub(crate) fn send_message_impl(args: Args, caller_override: Option<Principal>, state: &mut RuntimeState) -> Response {
     let Caller {
         user_id,
         user_type,
         display_name,
-    } = match validate_caller(args.community_rules_accepted, state) {
+    } = match validate_caller(caller_override, args.community_rules_accepted, state) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
@@ -90,7 +91,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
         user_id,
         user_type,
         display_name,
-    } = match validate_caller(args.community_rules_accepted, state) {
+    } = match validate_caller(None, args.community_rules_accepted, state) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
@@ -145,12 +146,16 @@ struct Caller {
     display_name: Option<String>,
 }
 
-fn validate_caller(community_rules_accepted: Option<Version>, state: &mut RuntimeState) -> Result<Caller, Response> {
+fn validate_caller(
+    caller_override: Option<Principal>,
+    community_rules_accepted: Option<Version>,
+    state: &mut RuntimeState,
+) -> Result<Caller, Response> {
     if state.data.is_frozen() {
         return Err(CommunityFrozen);
     }
 
-    let caller = state.env.caller();
+    let caller = caller_override.unwrap_or_else(|| state.env.caller());
     if let Some(member) = state.data.members.get_mut(caller) {
         if member.suspended.value {
             Err(UserSuspended)
@@ -387,7 +392,7 @@ fn register_timer_jobs(
         }
         MessageContent::Prize(p) => {
             data.timer_jobs.enqueue_job(
-                TimerJob::RefundPrize(RefundPrizeJob {
+                TimerJob::FinalPrizePayments(FinalPrizePaymentsJob {
                     channel_id,
                     thread_root_message_index,
                     message_index: message_event.event.message_index,

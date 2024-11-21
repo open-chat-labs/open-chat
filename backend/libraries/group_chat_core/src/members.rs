@@ -235,6 +235,10 @@ impl GroupMembers {
         self.members.get(user_id)
     }
 
+    pub fn get_bot(&self, bot_user_id: &UserId) -> Option<&GroupMemberInternal> {
+        self.get(bot_user_id).filter(|m| m.user_type.is_bot())
+    }
+
     pub fn contains(&self, user_id: &UserId) -> bool {
         self.members.contains_key(user_id)
     }

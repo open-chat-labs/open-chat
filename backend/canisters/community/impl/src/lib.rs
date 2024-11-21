@@ -86,6 +86,10 @@ impl RuntimeState {
         self.env.caller() == self.data.local_group_index_canister_id
     }
 
+    pub fn is_caller_bot_api_gateway(&self) -> bool {
+        self.env.caller() == self.data.bot_api_gateway_canister_id
+    }
+
     pub fn is_caller_proposals_bot(&self) -> bool {
         self.env.caller() == self.data.proposals_bot_user_id.into()
     }
@@ -232,7 +236,7 @@ impl RuntimeState {
     pub fn run_event_expiry_job(&mut self) {
         let now = self.env.now();
         let mut next_event_expiry = None;
-        let mut prize_refunds = Vec::new();
+        let mut final_prize_payments = Vec::new();
         for channel in self.data.channels.iter_mut() {
             let result = channel.chat.remove_expired_events(now);
             if let Some(expiry) = channel.chat.events.next_event_expiry() {
@@ -240,7 +244,7 @@ impl RuntimeState {
                     next_event_expiry = Some(expiry);
                 }
             }
-            prize_refunds.extend(result.prize_refunds);
+            final_prize_payments.extend(result.final_prize_payments);
             for thread in result.threads {
                 self.data
                     .stable_memory_keys_to_garbage_collect
@@ -258,7 +262,7 @@ impl RuntimeState {
                 .timer_jobs
                 .enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
         }
-        for pending_transaction in prize_refunds {
+        for pending_transaction in final_prize_payments {
             self.data.timer_jobs.enqueue_job(
                 TimerJob::MakeTransfer(MakeTransferJob {
                     pending_transaction,

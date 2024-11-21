@@ -86,6 +86,10 @@ impl RuntimeState {
         self.env.caller() == self.data.local_group_index_canister_id
     }
 
+    pub fn is_caller_bot_api_gateway(&self) -> bool {
+        self.env.caller() == self.data.bot_api_gateway_canister_id
+    }
+
     pub fn is_caller_escrow_canister(&self) -> bool {
         self.env.caller() == self.data.escrow_canister_id
     }
@@ -345,7 +349,7 @@ impl RuntimeState {
                 .timer_jobs
                 .enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
         }
-        for pending_transaction in result.prize_refunds {
+        for pending_transaction in result.final_prize_payments {
             self.data.timer_jobs.enqueue_job(
                 TimerJob::MakeTransfer(MakeTransferJob {
                     pending_transaction,
