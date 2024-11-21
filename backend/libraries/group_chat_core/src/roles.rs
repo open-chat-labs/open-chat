@@ -1,6 +1,5 @@
-use chat_events::MessageContentInternal;
 use serde::{Deserialize, Serialize};
-use types::{GroupPermissionRole, GroupPermissions, GroupRole};
+use types::{GroupPermissionRole, GroupPermissions, GroupRole, MessageContentType};
 
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, Default, Eq, PartialEq)]
 pub enum GroupRoleInternal {
@@ -94,37 +93,37 @@ impl GroupRoleInternal {
         self.is_permitted(permissions.pin_messages)
     }
 
-    pub fn can_send_message(&self, message: &MessageContentInternal, is_thread: bool, permissions: &GroupPermissions) -> bool {
+    pub fn can_send_message(&self, message_type: MessageContentType, is_thread: bool, permissions: &GroupPermissions) -> bool {
         let ps = if is_thread && permissions.thread_permissions.is_some() {
             permissions.thread_permissions.as_ref().unwrap()
         } else {
             &permissions.message_permissions
         };
 
-        let sender_role = match message {
-            MessageContentInternal::Text(_) => ps.text.unwrap_or(ps.default),
-            MessageContentInternal::Image(_) => ps.image.unwrap_or(ps.default),
-            MessageContentInternal::Video(_) => ps.video.unwrap_or(ps.default),
-            MessageContentInternal::Audio(_) => ps.audio.unwrap_or(ps.default),
-            MessageContentInternal::File(_) => ps.file.unwrap_or(ps.default),
-            MessageContentInternal::Poll(_) => ps.poll.unwrap_or(ps.default),
-            MessageContentInternal::Crypto(_) => ps.crypto.unwrap_or(ps.default),
-            MessageContentInternal::Giphy(_) => ps.giphy.unwrap_or(ps.default),
-            MessageContentInternal::Prize(_) => ps.prize.unwrap_or(ps.default),
-            MessageContentInternal::P2PSwap(_) => ps.p2p_swap.unwrap_or(ps.default),
-            MessageContentInternal::VideoCall(_) => permissions.start_video_call,
-            MessageContentInternal::Custom(mc) => ps
+        let sender_role = match message_type {
+            MessageContentType::Text => ps.text.unwrap_or(ps.default),
+            MessageContentType::Image => ps.image.unwrap_or(ps.default),
+            MessageContentType::Video => ps.video.unwrap_or(ps.default),
+            MessageContentType::Audio => ps.audio.unwrap_or(ps.default),
+            MessageContentType::File => ps.file.unwrap_or(ps.default),
+            MessageContentType::Poll => ps.poll.unwrap_or(ps.default),
+            MessageContentType::Crypto => ps.crypto.unwrap_or(ps.default),
+            MessageContentType::Giphy => ps.giphy.unwrap_or(ps.default),
+            MessageContentType::Prize => ps.prize.unwrap_or(ps.default),
+            MessageContentType::P2PSwap => ps.p2p_swap.unwrap_or(ps.default),
+            MessageContentType::VideoCall => permissions.start_video_call,
+            MessageContentType::Custom(c) => ps
                 .custom
                 .iter()
-                .find(|cp| cp.subtype == mc.kind)
+                .find(|cp| cp.subtype == c)
                 .map(|cp| cp.role)
                 .unwrap_or(ps.default),
-            MessageContentInternal::Deleted(_)
-            | MessageContentInternal::GovernanceProposal(_)
-            | MessageContentInternal::MessageReminderCreated(_)
-            | MessageContentInternal::MessageReminder(_)
-            | MessageContentInternal::PrizeWinner(_)
-            | MessageContentInternal::ReportedMessage(_) => GroupPermissionRole::None,
+            MessageContentType::Deleted
+            | MessageContentType::GovernanceProposal
+            | MessageContentType::MessageReminderCreated
+            | MessageContentType::MessageReminder
+            | MessageContentType::PrizeWinner
+            | MessageContentType::ReportedMessage => GroupPermissionRole::None,
         };
 
         self.is_permitted(sender_role)

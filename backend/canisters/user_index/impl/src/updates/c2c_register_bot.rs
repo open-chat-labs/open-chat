@@ -47,7 +47,14 @@ fn c2c_register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
             Err(UsernameValidationError::Invalid) => return DisplayNameInvalid,
         }
     }
-    ic_cdk::api::call::msg_cycles_accept128(BOT_REGISTRATION_FEE);
+
+    if !state.data.test_mode {
+        let cycles = ic_cdk::api::call::msg_cycles_available128();
+        if cycles < BOT_REGISTRATION_FEE {
+            return InsufficientCyclesProvided(BOT_REGISTRATION_FEE);
+        }
+        ic_cdk::api::call::msg_cycles_accept128(BOT_REGISTRATION_FEE);
+    }
 
     state.data.users.register(
         caller,
