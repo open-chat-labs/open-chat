@@ -1,7 +1,6 @@
-/**
- * Validating whether the bot's command schema is valid is not the same as validating that a command built from the schema is valid.
- * e.g. the command schema will not have
- */
+import type { MessageContext } from "./chat";
+import type { ChatPermissions, CommunityPermissions, MessagePermission } from "./permission";
+
 // This can be expanded as necessary to include things like ChatParam (e.g. for a /goto bot)
 export type SlashCommandParamType = UserParam | BooleanParam | StringParam | NumberParam;
 
@@ -47,10 +46,19 @@ export type SlashCommandSchema = {
     name: string;
     description?: string;
     params: SlashCommandParam[];
+    permissions: SlashCommandPermissions;
+};
+
+export type SlashCommandPermissions = {
+    chatPermissions: (keyof ChatPermissions)[];
+    communityPermissions: (keyof CommunityPermissions)[];
+    messagePermissions: MessagePermission[];
+    threadPermissions: MessagePermission[];
 };
 
 export type SlashCommandInstance = {
     name: string;
+    messageContext: MessageContext;
     params: SlashCommandParamInstance[];
 };
 

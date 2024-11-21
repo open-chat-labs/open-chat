@@ -8,16 +8,43 @@
     import ErrorMessage from "../ErrorMessage.svelte";
     import { getContext, onMount } from "svelte";
     import Logo from "../Logo.svelte";
-    import type { OpenChat } from "openchat-client";
+    import type { MessageContext, OpenChat } from "openchat-client";
+    import {
+        messagePermissionsForSelectedChat,
+        threadPermissionsForSelectedChat,
+    } from "openchat-client";
     import { toastStore } from "../../stores/toast";
 
     interface Props {
         onCancel: () => void;
+        mode: "thread" | "message";
+        messageContext: MessageContext;
     }
 
     const client = getContext<OpenChat>("client");
 
-    let { onCancel }: Props = $props();
+    let { onCancel, mode, messageContext }: Props = $props();
+
+    let commands = $derived.by(() =>
+        botState.commands.filter((c) => {
+            return hasPermissionForCommand(c);
+        }),
+    );
+
+    // We need to check that the user in the current context has all of the permissions that the command requires
+    // It's annoying that this can't really be in the botState file because it combines runes and stores
+    function hasPermissionForCommand(command: FlattenedCommand): boolean {
+        switch (mode) {
+            case "message":
+                return command.permissions.messagePermissions.every((p) =>
+                    $messagePermissionsForSelectedChat.get(p),
+                );
+            case "thread":
+                return command.permissions.messagePermissions.every((p) =>
+                    $threadPermissionsForSelectedChat.get(p),
+                );
+        }
+    }
 
     function selectCommand(command: FlattenedCommand) {
         botState.selectedCommand = $state.snapshot(command);
@@ -43,7 +70,9 @@
                 botState.setSelectedCommand();
                 if (botState.selectedCommand && botState.selectedCommand.params.length === 0) {
                     client
-                        .executeBotCommand(botState.createBotInstance(botState.selectedCommand))
+                        .executeBotCommand(
+                            botState.createBotInstance(botState.selectedCommand, messageContext),
+                        )
                         .then((success) => {
                             if (!success) {
                                 toastStore.showFailureToast(i18nKey("bots.failed"));
@@ -68,7 +97,7 @@
     </HoverIcon>
 </div>
 <div class="command-list">
-    {#each botState.commands as command, i}
+    {#each commands as command, i}
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div

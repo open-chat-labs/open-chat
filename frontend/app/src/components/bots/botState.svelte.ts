@@ -2,20 +2,27 @@ import type {
     Bot,
     BotCommandInstance,
     FlattenedCommand,
+    MessageContext,
     SlashCommandParamInstance,
 } from "openchat-client";
 import { getBots } from "./testBots";
 
 function filterCommand(c: FlattenedCommand): boolean {
-    return (
-        c.name.toLocaleLowerCase().includes(parsedPrefix) ||
-        (c.description?.toLocaleLowerCase()?.includes(parsedPrefix) ?? false)
-    );
+    if (prefixParts.length > 1) {
+        return c.name.toLocaleLowerCase() === parsedPrefix.toLocaleLowerCase();
+    } else {
+        return (
+            c.name.toLocaleLowerCase().includes(parsedPrefix.toLocaleLowerCase()) ||
+            (c.description?.toLocaleLowerCase()?.includes(parsedPrefix.toLocaleLowerCase()) ??
+                false)
+        );
+    }
 }
 
 let error = $state<string | undefined>(undefined);
 let prefix = $state<string>("");
-let parsedPrefix = $derived(prefix.slice(1).toLocaleLowerCase());
+let prefixParts = $derived(prefix.split(" "));
+let parsedPrefix = $derived(prefixParts[0].slice(1).toLocaleLowerCase());
 let bots = $state<Bot[]>([]);
 let commands = $derived.by(() => {
     return botState.bots.flatMap((b) => {
@@ -134,7 +141,7 @@ class BotState {
     set error(val: string | undefined) {
         error = val;
     }
-    createBotInstance(command: FlattenedCommand): BotCommandInstance {
+    createBotInstance(command: FlattenedCommand, context: MessageContext): BotCommandInstance {
         switch (command.kind) {
             case "external_bot":
                 return {
@@ -143,6 +150,7 @@ class BotState {
                     endpoint: command.botEndpoint,
                     command: {
                         name: command.name,
+                        messageContext: context,
                         params: selectedCommandParamInstances,
                     },
                 };
@@ -151,6 +159,7 @@ class BotState {
                     kind: "internal_bot",
                     command: {
                         name: command.name,
+                        messageContext: context,
                         params: selectedCommandParamInstances,
                     },
                 };

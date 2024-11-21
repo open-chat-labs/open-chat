@@ -35,6 +35,7 @@
         blockedUsers as directlyBlockedUsers,
         communities,
         selectedCommunity,
+        CreatePoll,
     } from "openchat-client";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
@@ -115,11 +116,27 @@
     }
 
     onMount(() => {
-        return messagesRead.subscribe(() => {
+        client.addEventListener("openchat_event", clientEvent);
+        const unsub = messagesRead.subscribe(() => {
             unreadMessages = getUnreadMessageCount(chat);
             firstUnreadMention = client.getFirstUnreadMention(chat);
         });
+        return () => {
+            unsub();
+            client.removeEventListener("openchat_event", clientEvent);
+        };
     });
+
+    function clientEvent(ev: Event): void {
+        if (ev instanceof CreatePoll) {
+            if (
+                ev.detail.chatId === messageContext.chatId &&
+                ev.detail.threadRootMessageIndex === undefined
+            ) {
+                createPoll();
+            }
+        }
+    }
 
     function importToCommunity() {
         importToCommunities = $communities.filter((c) => c.membership.role === "owner");
@@ -410,6 +427,7 @@
             {preview}
             {lapsed}
             {blocked}
+            {messageContext}
             externalContent={externalUrl !== undefined}
             on:joinGroup
             on:upgrade

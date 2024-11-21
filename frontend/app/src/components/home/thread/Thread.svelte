@@ -13,8 +13,8 @@
         TimelineItem,
         MessageContent,
     } from "openchat-client";
-    import { LEDGER_CANISTER_ICP } from "openchat-client";
-    import { getContext } from "svelte";
+    import { CreatePoll, LEDGER_CANISTER_ICP } from "openchat-client";
+    import { getContext, onMount } from "svelte";
     import Loading from "../../Loading.svelte";
     import { derived, readable } from "svelte/store";
     import PollBuilder from "../PollBuilder.svelte";
@@ -90,6 +90,24 @@
     $: loading = !initialised && $threadEvents.length === 0 && thread !== undefined;
     $: isFollowedByMe =
         $threadsFollowedByMeStore.get(chat.id)?.has(threadRootMessageIndex) ?? false;
+
+    onMount(() => {
+        client.addEventListener("openchat_event", clientEvent);
+        return () => {
+            client.removeEventListener("openchat_event", clientEvent);
+        };
+    });
+
+    function clientEvent(ev: Event): void {
+        if (ev instanceof CreatePoll) {
+            if (
+                ev.detail.chatId === messageContext.chatId &&
+                ev.detail.threadRootMessageIndex === messageContext.threadRootMessageIndex
+            ) {
+                createPoll();
+            }
+        }
+    }
 
     function createTestMessages(ev: CustomEvent<number>): void {
         if (process.env.NODE_ENV === "production") return;
@@ -397,6 +415,7 @@
         lapsed={false}
         mode={"thread"}
         {blocked}
+        {messageContext}
         on:joinGroup
         on:cancelPreview
         on:upgrade

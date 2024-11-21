@@ -209,6 +209,7 @@ import {
     ChatsUpdated,
     ChatUpdated,
     ChitEarnedEvent,
+    CreatePoll,
     LoadedMessageWindow,
     LoadedNewMessages,
     LoadedPreviousMessages,
@@ -386,7 +387,6 @@ import type {
     PaymentGateApprovals,
     MessageActivityFeedResponse,
     ApproveTransferResponse,
-    SlashCommandParamInstance,
     BotCommandInstance,
     InternalBotCommandInstance,
     ExternalBotCommandInstance,
@@ -494,6 +494,7 @@ import { getEmailSignInSession } from "openchat-shared";
 import { removeEmailSignInSession } from "openchat-shared";
 import { localGlobalUpdates } from "./stores/localGlobalUpdates";
 import { identityState } from "./stores/identity";
+import { addQueryStringParam } from "./utils/url";
 
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
@@ -1720,6 +1721,7 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
+    // TODO this is now available as a store so we *probably* don't need this now
     permittedMessages(
         chatId: ChatIdentifier,
         mode: "message" | "thread",
@@ -7600,6 +7602,14 @@ export class OpenChat extends OpenChatAgentWorker {
     executeInternalBotCommand(bot: InternalBotCommandInstance): Promise<boolean> {
         if (bot.command.name === "witch") {
             this.dispatchEvent(new SummonWitch());
+        }
+        if (bot.command.name === "poll") {
+            this.dispatchEvent(new CreatePoll(bot.command.messageContext));
+        }
+        if (bot.command.name === "diamond") {
+            const url = addQueryStringParam("diamond", "");
+            const msg = `[${this.config.i18nFormatter("upgrade.message")}](${url})`;
+            this.sendMessageWithAttachment(bot.command.messageContext, msg, false, undefined, []);
         }
         return Promise.resolve(true);
     }

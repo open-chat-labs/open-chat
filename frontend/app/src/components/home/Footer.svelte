@@ -16,6 +16,7 @@
         OpenChat,
         MultiUserChat,
         AttachmentContent,
+        MessageContext,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import HoverIcon from "../HoverIcon.svelte";
@@ -38,6 +39,7 @@
     export let user: CreatedUser;
     export let mode: "thread" | "message" = "message";
     export let externalContent: boolean = false;
+    export let messageContext: MessageContext;
 
     const dispatch = createEventDispatcher();
 
@@ -149,6 +151,7 @@
         {replyingTo}
         {textContent}
         {chat}
+        {messageContext}
         on:sendMessage
         on:cancelEditEvent
         on:setTextContent

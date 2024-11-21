@@ -3,6 +3,7 @@
         createParamInstancesFromSchema,
         paramInstanceIsValid,
         type FlattenedCommand,
+        type MessageContext,
         type SlashCommandParam,
         type SlashCommandParamInstance,
     } from "openchat-shared";
@@ -21,10 +22,11 @@
     interface Props {
         command: FlattenedCommand;
         onCancel: () => void;
+        messageContext: MessageContext;
     }
 
     const client = getContext<OpenChat>("client");
-    let { command, onCancel }: Props = $props();
+    let { command, onCancel, messageContext }: Props = $props();
     let commandName = $derived(`/${command.name}`);
 
     onMount(() => {
@@ -43,7 +45,7 @@
 
     function onSubmit() {
         client
-            .executeBotCommand(botState.createBotInstance(command))
+            .executeBotCommand(botState.createBotInstance(command, messageContext))
             .then((success) => {
                 if (!success) {
                     toastStore.showFailureToast(i18nKey("bots.failed"));

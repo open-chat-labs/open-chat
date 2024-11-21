@@ -179,3 +179,11 @@ export class SummonWitch extends Event {
         super("openchat_event");
     }
 }
+
+export class CreatePoll extends CustomEvent<MessageContext> {
+    constructor(context: MessageContext) {
+        super("openchat_event", {
+            detail: context,
+        });
+    }
+}

@@ -24,6 +24,7 @@
         MultiUserChat,
         UserOrUserGroup,
         AttachmentContent,
+        MessageContext,
     } from "openchat-client";
     import {
         allQuestions,
@@ -64,6 +65,7 @@
     export let textContent: string | undefined;
     export let mode: "thread" | "message" = "message";
     export let externalContent: boolean;
+    export let messageContext: MessageContext;
 
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
@@ -245,7 +247,7 @@
     }
 
     function triggerCommandSelector(inputContent: string | null): void {
-        const commandMatch = inputContent?.match(/^\/\w*/);
+        const commandMatch = inputContent?.match(/^\/.*/);
         showCommandSelector = commandMatch != null;
         if (commandMatch) {
             botState.prefix = commandMatch[0];
@@ -340,21 +342,14 @@
 
     /**
      * Check the message content for special commands
-     * * /poll - creates a poll
      * * /icp [amount]
      * * /search [term]
      * * /pinned - opens pinned messages (not yet)
      * * /details - opens group details (not yet)
-     * * /witch - summon the halloween witch
      */
     function parseCommands(txt: string): boolean {
         if (/snow|xmas|christmas|noel/.test(txt)) {
             $snowing = true;
-        }
-
-        if (permittedMessages.get("poll") && /^\/poll$/.test(txt)) {
-            dispatch("createPoll");
-            return true;
         }
 
         const testMsgMatch = txt.match(/^\/test-msg (\d+)/);
@@ -385,12 +380,6 @@
             } else {
                 dispatch("sendMessage", [`[🤔 FAQs](/faq)`, []]);
             }
-            return true;
-        }
-
-        if (/^\/diamond$/.test(txt)) {
-            const url = addQueryStringParam("diamond", "");
-            dispatch("sendMessage", [`[${$_("upgrade.message")}](${url})`, []]);
             return true;
         }
 
@@ -546,7 +535,10 @@
 </script>
 
 {#if botState.selectedCommand !== undefined && botState.selectedCommand.params.length > 0}
-    <CommandBuilder onCancel={cancelCommandSelector} command={botState.selectedCommand} />
+    <CommandBuilder
+        {messageContext}
+        onCancel={cancelCommandSelector}
+        command={botState.selectedCommand} />
 {/if}
 
 {#if showMentionPicker}
@@ -559,7 +551,7 @@
 {/if}
 
 {#if showCommandSelector}
-    <CommandSelector onCancel={cancelCommandSelector} />
+    <CommandSelector {messageContext} {mode} onCancel={cancelCommandSelector} />
 {/if}
 
 {#if showEmojiSearch}

@@ -1,5 +1,12 @@
-import { type Bot } from "openchat-shared";
+import { type Bot, type SlashCommandPermissions } from "openchat-shared";
 // let's create some imaginary bots
+
+const emptyPermissions: SlashCommandPermissions = {
+    chatPermissions: [],
+    communityPermissions: [],
+    messagePermissions: [],
+    threadPermissions: [],
+};
 
 export const bots: Bot[] = [
     {
@@ -13,6 +20,7 @@ export const bots: Bot[] = [
             {
                 name: "kill",
                 description: "kill everyone",
+                permissions: emptyPermissions,
                 params: [
                     {
                         kind: "string",
@@ -29,6 +37,7 @@ export const bots: Bot[] = [
             {
                 name: "kick_poll",
                 description: "Create a poll to kick someone out of the chat",
+                permissions: emptyPermissions,
                 params: [
                     {
                         kind: "user",
@@ -63,6 +72,7 @@ export const bots: Bot[] = [
             {
                 name: "ban",
                 description: "ban a person from this chat",
+                permissions: emptyPermissions,
                 params: [
                     {
                         kind: "user",
@@ -77,6 +87,7 @@ export const bots: Bot[] = [
             {
                 name: "weather",
                 description: "Show me the weather for tomorrow",
+                permissions: emptyPermissions,
                 params: [
                     {
                         kind: "string",
@@ -99,6 +110,7 @@ export const bots: Bot[] = [
             {
                 name: "multiply",
                 description: "Multiply some number I pick",
+                permissions: emptyPermissions,
                 params: [
                     {
                         kind: "number",
@@ -121,6 +133,7 @@ export const bots: Bot[] = [
             {
                 name: "calculate",
                 description: "Do some calculations on two numbers",
+                permissions: emptyPermissions,
                 params: [
                     {
                         kind: "number",
@@ -156,6 +169,27 @@ export const bots: Bot[] = [
             {
                 name: "witch",
                 description: "Summon the witch",
+                permissions: emptyPermissions,
+                params: [],
+            },
+            {
+                name: "poll",
+                description: "Create a poll in the current chat",
+                permissions: {
+                    ...emptyPermissions,
+                    messagePermissions: ["poll"],
+                    threadPermissions: ["poll"],
+                },
+                params: [],
+            },
+            {
+                name: "diamond",
+                description: "Post a link to explain Diamond membership",
+                permissions: {
+                    ...emptyPermissions,
+                    messagePermissions: ["text"],
+                    threadPermissions: ["text"],
+                },
                 params: [],
             },
         ],
