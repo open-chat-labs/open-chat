@@ -143,15 +143,8 @@ impl Job for HardDeleteMessageContentJob {
             {
                 let files_to_delete = content.blob_references();
                 if !files_to_delete.is_empty() {
-                    // If there was already a job queued up to delete these files, cancel it
-                    state.data.timer_jobs.cancel_jobs(|job| {
-                        if let TimerJob::DeleteFileReferences(j) = job {
-                            j.files.iter().all(|f| files_to_delete.contains(f))
-                        } else {
-                            false
-                        }
-                    });
-                    ic_cdk::spawn(storage_bucket_client::delete_files(files_to_delete));
+                    let delete_files_job = DeleteFileReferencesJob { files: files_to_delete };
+                    delete_files_job.execute();
                 }
                 match content {
                     MessageContentInternal::Prize(mut prize) => {
@@ -208,7 +201,20 @@ impl Job for HardDeleteMessageContentJob {
 
 impl Job for DeleteFileReferencesJob {
     fn execute(self) {
-        ic_cdk::spawn(storage_bucket_client::delete_files(self.files.clone()));
+        ic_cdk::spawn(async move {
+            let to_retry = storage_bucket_client::delete_files(self.files.clone()).await;
+
+            if !to_retry.is_empty() {
+                mutate_state(|state| {
+                    let now = state.env.now();
+                    state.data.timer_jobs.enqueue_job(
+                        TimerJob::DeleteFileReferences(DeleteFileReferencesJob { files: to_retry }),
+                        now + MINUTE_IN_MS,
+                        now,
+                    );
+                });
+            }
+        });
     }
 }
 

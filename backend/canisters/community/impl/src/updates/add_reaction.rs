@@ -48,7 +48,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                         args.message_id.into(),
                     ) {
                         if let Some(sender) = channel.chat.members.get(&message.sender) {
-                            if message.sender != user_id && !sender.user_type.is_bot() {
+                            if message.sender != user_id && !sender.user_type().is_bot() {
                                 let community_id = state.env.canister_id().into();
 
                                 state.data.user_event_sync_queue.push(

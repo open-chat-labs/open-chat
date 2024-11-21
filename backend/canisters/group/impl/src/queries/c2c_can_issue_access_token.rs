@@ -23,7 +23,7 @@ fn c2c_can_issue_access_token_impl(args: Args, state: &RuntimeState) -> bool {
 }
 
 fn can_start_video_call(member: &GroupMemberInternal, call_type: VideoCallType, chat: &GroupChatCore) -> bool {
-    if !member.role.is_permitted(chat.permissions.start_video_call) {
+    if !member.role().is_permitted(chat.permissions.start_video_call) {
         return false;
     }
 

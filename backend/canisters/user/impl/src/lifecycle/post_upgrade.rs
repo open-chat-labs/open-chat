@@ -6,6 +6,7 @@ use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
 use tracing::info;
+use types::CanisterId;
 use user_canister::post_upgrade::Args;
 
 #[post_upgrade]
@@ -19,11 +20,12 @@ fn post_upgrade(args: Args) {
     let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
 
-    // Only proceed with removing events from the heap if the stable memory migration is complete
-    assert!(data.stable_memory_event_migration_complete);
-
-    for chat in data.direct_chats.iter_mut() {
-        chat.events.init_maps();
+    if data.local_user_index_canister_id == CanisterId::from_text("nq4qv-wqaaa-aaaaf-bhdgq-cai").unwrap() {
+        data.bot_api_gateway_canister_id = CanisterId::from_text("xdh4a-myaaa-aaaaf-bscya-cai").unwrap()
+    } else if data.local_user_index_canister_id == CanisterId::from_text("aboy3-giaaa-aaaar-aaaaq-cai").unwrap() {
+        data.bot_api_gateway_canister_id = CanisterId::from_text("lvpeh-caaaa-aaaar-boaha-cai").unwrap()
+    } else if data.local_user_index_canister_id == CanisterId::from_text("pecvb-tqaaa-aaaaf-bhdiq-cai").unwrap() {
+        data.bot_api_gateway_canister_id = CanisterId::from_text("xeg2u-baaaa-aaaaf-bscyq-cai").unwrap()
     }
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);

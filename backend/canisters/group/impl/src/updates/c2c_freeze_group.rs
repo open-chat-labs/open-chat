@@ -48,7 +48,7 @@ pub(crate) fn freeze_group_impl(
         handle_activity_notification(state);
 
         if return_members {
-            SuccessWithMembers(event, state.data.chat.members.iter().map(|p| p.user_id).collect())
+            SuccessWithMembers(event, state.data.chat.members.member_ids().iter().cloned().collect())
         } else {
             Success(event)
         }

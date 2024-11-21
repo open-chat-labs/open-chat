@@ -117,6 +117,7 @@ impl RuntimeState {
                 group_index: self.data.group_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
                 notifications: self.data.notifications_canister_id,
+                bot_api_gateway: self.data.bot_api_gateway_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
                 escrow: self.data.escrow_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -124,17 +125,6 @@ impl RuntimeState {
                 internet_identity: self.data.internet_identity_canister_id,
             },
             group_upgrades_failed: group_upgrades_metrics.failed,
-            canisters_pending_events_migration_to_stable_memory_count: self
-                .data
-                .canisters_pending_events_migration_to_stable_memory
-                .len() as u32,
-            canisters_pending_events_migration_to_stable_memory: self
-                .data
-                .canisters_pending_events_migration_to_stable_memory
-                .iter()
-                .copied()
-                .take(20)
-                .collect(),
             community_upgrades_failed: community_upgrades_metrics.failed,
             cycles_balance_check_queue_len: self.data.cycles_balance_check_queue.len() as u32,
         }
@@ -150,6 +140,8 @@ struct Data {
     pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
+    #[serde(default = "CanisterId::anonymous")]
+    pub bot_api_gateway_canister_id: CanisterId,
     pub groups_requiring_upgrade: CanistersRequiringUpgrade,
     pub communities_requiring_upgrade: CanistersRequiringUpgrade,
     pub cycles_dispenser_canister_id: CanisterId,
@@ -169,7 +161,6 @@ struct Data {
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
     pub rng_seed: [u8; 32],
-    pub canisters_pending_events_migration_to_stable_memory: Vec<CanisterId>,
     pub cycles_balance_check_queue: VecDeque<CanisterId>,
 }
 
@@ -182,6 +173,7 @@ impl Data {
         local_user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
+        bot_api_gateway_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
         escrow_canister_id: CanisterId,
@@ -203,6 +195,7 @@ impl Data {
             local_user_index_canister_id,
             group_index_canister_id,
             notifications_canister_id,
+            bot_api_gateway_canister_id,
             cycles_dispenser_canister_id,
             proposals_bot_user_id,
             escrow_canister_id,
@@ -223,7 +216,6 @@ impl Data {
                 .with_flush_delay(Duration::from_millis(MINUTE_IN_MS))
                 .build(),
             event_deduper: EventDeduper::default(),
-            canisters_pending_events_migration_to_stable_memory: Vec::new(),
             cycles_balance_check_queue: VecDeque::new(),
         }
     }
@@ -258,8 +250,6 @@ pub struct Metrics {
     pub community_versions: BTreeMap<String, u32>,
     pub canister_ids: CanisterIds,
     pub group_upgrades_failed: Vec<FailedUpgradeCount>,
-    pub canisters_pending_events_migration_to_stable_memory_count: u32,
-    pub canisters_pending_events_migration_to_stable_memory: Vec<CanisterId>,
     pub community_upgrades_failed: Vec<FailedUpgradeCount>,
     pub cycles_balance_check_queue_len: u32,
 }
@@ -270,6 +260,7 @@ pub struct CanisterIds {
     pub group_index: CanisterId,
     pub local_user_index: CanisterId,
     pub notifications: CanisterId,
+    pub bot_api_gateway: CanisterId,
     pub proposals_bot: CanisterId,
     pub escrow: CanisterId,
     pub cycles_dispenser: CanisterId,

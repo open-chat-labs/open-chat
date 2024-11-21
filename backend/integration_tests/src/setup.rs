@@ -434,6 +434,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         local_group_index_canister_id,
         local_user_index_canister_id,
         notifications_canister_id,
+        bot_api_gateway_canister_id,
     );
 
     client::notifications_index::happy_path::upgrade_notifications_canister_wasm(

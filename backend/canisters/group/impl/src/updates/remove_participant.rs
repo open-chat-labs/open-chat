@@ -64,13 +64,13 @@ fn prepare(user_to_remove: UserId, block: bool, state: &RuntimeState) -> Result<
     if let Some(member) = state.data.get_member(caller) {
         if member.suspended.value {
             Err(UserSuspended)
-        } else if member.lapsed.value {
+        } else if member.lapsed().value {
             return Err(UserLapsed);
-        } else if member.user_id == user_to_remove {
+        } else if member.user_id() == user_to_remove {
             Err(CannotRemoveSelf)
         } else {
             let user_to_remove_role = match state.data.chat.members.get(&user_to_remove) {
-                Some(member_to_remove) => member_to_remove.role.value,
+                Some(member_to_remove) => member_to_remove.role().value,
                 None if block => {
                     if state.data.chat.members.is_blocked(&user_to_remove) {
                         return Err(Success);
@@ -82,11 +82,11 @@ fn prepare(user_to_remove: UserId, block: bool, state: &RuntimeState) -> Result<
 
             // Check if the caller is authorized to remove the user
             if member
-                .role
+                .role()
                 .can_remove_members_with_role(user_to_remove_role, &state.data.chat.permissions)
             {
                 Ok(PrepareResult {
-                    removed_by: member.user_id,
+                    removed_by: member.user_id(),
                     local_user_index_canister_id: state.data.local_user_index_canister_id,
                     is_user_to_remove_an_owner: user_to_remove_role.is_owner(),
                 })

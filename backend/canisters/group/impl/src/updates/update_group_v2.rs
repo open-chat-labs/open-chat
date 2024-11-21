@@ -5,7 +5,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::update_group_v2::*;
 use group_chat_core::UpdateResult;
-use group_community_common::{ExpiringMember, Member};
+use group_community_common::{ExpiringMember, Members};
 use group_index_canister::{c2c_make_private, c2c_update_group};
 use tracing::error;
 use types::{AccessGateConfigInternal, CanisterId, ChatId, Document, OptionUpdate, TimestampMillis, UserId};
@@ -113,7 +113,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         let permissions = args.permissions_v2.as_ref();
 
         match state.data.chat.can_update(
-            &member.user_id,
+            &member.user_id(),
             &args.name,
             &args.description,
             &args.rules,
@@ -125,7 +125,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 let avatar_update = args.avatar.as_ref().expand();
 
                 Ok(PrepareResult {
-                    my_user_id: member.user_id,
+                    my_user_id: member.user_id(),
                     group_index_canister_id: state.data.group_index_canister_id,
                     is_public: args.public.unwrap_or(state.data.chat.is_public.value),
                     chat_id: state.env.canister_id().into(),
@@ -211,11 +211,11 @@ pub fn update_member_expiry(data: &mut Data, prev_gate_config: &Option<AccessGat
         }
     } else if let Some(new_gate_expiry) = new_gate_expiry {
         // Else if the new gate has an expiry then add members to the expiry schedule.
-        for member in data.chat.members.iter().filter(|m| m.can_member_lapse()) {
+        for user_id in data.chat.members.iter_members_who_can_lapse() {
             data.expiring_members.push(ExpiringMember {
                 expires: now + new_gate_expiry,
                 channel_id: None,
-                user_id: member.user_id,
+                user_id,
             });
         }
     }

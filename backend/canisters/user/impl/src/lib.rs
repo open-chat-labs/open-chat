@@ -189,6 +189,7 @@ impl RuntimeState {
                 group_index: self.data.group_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
                 notifications: self.data.notifications_canister_id,
+                bot_api_gateway: self.data.bot_api_gateway_canister_id,
                 proposals_bot: self.data.proposals_bot_canister_id,
                 escrow: self.data.escrow_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
@@ -199,7 +200,6 @@ impl RuntimeState {
             next_daily_claim: if self.data.streak.can_claim(now) { today(now) } else { tomorrow(now) },
             achievements: self.data.achievements.iter().cloned().collect(),
             unique_person_proof: self.data.unique_person_proof.is_some(),
-            stable_memory_event_migration_complete: self.data.stable_memory_event_migration_complete,
         }
     }
 }
@@ -216,6 +216,8 @@ struct Data {
     pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
+    #[serde(default = "CanisterId::anonymous")]
+    pub bot_api_gateway_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
     pub avatar: Timestamped<Option<Document>>,
@@ -253,8 +255,7 @@ struct Data {
     pub referred_by: Option<UserId>,
     pub referrals: Referrals,
     pub message_activity_events: MessageActivityEvents,
-    stable_memory_event_migration_complete: bool,
-    stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
+    pub stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
 }
 
 impl Data {
@@ -265,6 +266,7 @@ impl Data {
         local_user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
+        bot_api_gateway_canister_id: CanisterId,
         proposals_bot_canister_id: CanisterId,
         escrow_canister_id: CanisterId,
         video_call_operators: Vec<Principal>,
@@ -284,6 +286,7 @@ impl Data {
             local_user_index_canister_id,
             group_index_canister_id,
             notifications_canister_id,
+            bot_api_gateway_canister_id,
             proposals_bot_canister_id,
             escrow_canister_id,
             avatar: Timestamped::default(),
@@ -323,7 +326,6 @@ impl Data {
             referred_by,
             referrals: Referrals::default(),
             message_activity_events: MessageActivityEvents::default(),
-            stable_memory_event_migration_complete: true,
             stable_memory_keys_to_garbage_collect: Vec::new(),
         }
     }
@@ -462,7 +464,6 @@ pub struct Metrics {
     pub next_daily_claim: TimestampMillis,
     pub achievements: Vec<Achievement>,
     pub unique_person_proof: bool,
-    pub stable_memory_event_migration_complete: bool,
 }
 
 fn run_regular_jobs() {
@@ -475,6 +476,7 @@ pub struct CanisterIds {
     pub group_index: CanisterId,
     pub local_user_index: CanisterId,
     pub notifications: CanisterId,
+    pub bot_api_gateway: CanisterId,
     pub proposals_bot: CanisterId,
     pub escrow: CanisterId,
     pub icp_ledger: CanisterId,

@@ -305,6 +305,7 @@ impl RuntimeState {
                 local_user_index: self.data.local_user_index_canister_id,
                 local_group_index: self.data.local_group_index_canister_id,
                 notifications: self.data.notifications_canister_id,
+                bot_api_gateway: self.data.bot_api_gateway_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
                 escrow: self.data.escrow_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
@@ -334,6 +335,8 @@ struct Data {
     group_index_canister_id: CanisterId,
     local_group_index_canister_id: CanisterId,
     notifications_canister_id: CanisterId,
+    #[serde(default = "CanisterId::anonymous")]
+    bot_api_gateway_canister_id: CanisterId,
     proposals_bot_user_id: UserId,
     escrow_canister_id: CanisterId,
     internet_identity_canister_id: CanisterId,
@@ -389,6 +392,7 @@ impl Data {
         group_index_canister_id: CanisterId,
         local_group_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
+        bot_api_gateway_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
         escrow_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
@@ -436,6 +440,7 @@ impl Data {
             group_index_canister_id,
             local_group_index_canister_id,
             notifications_canister_id,
+            bot_api_gateway_canister_id,
             proposals_bot_user_id,
             escrow_canister_id,
             internet_identity_canister_id,
@@ -629,24 +634,22 @@ impl Data {
             }
         } else if let Some(new_gate_expiry) = new_gate_expiry {
             // Else if the new gate has an expiry then add members to the expiry schedule.
-            let mut user_ids = Vec::new();
-
-            if let Some(channel_id) = channel_id {
+            let user_ids_iter = if let Some(channel_id) = channel_id {
                 if let Some(channel) = self.channels.get_mut(&channel_id) {
-                    user_ids = channel.chat.members.iter().map(|m| m.user_id).collect();
+                    channel.chat.members.iter_members_who_can_lapse()
+                } else {
+                    Box::new(std::iter::empty())
                 }
             } else {
-                user_ids = self.members.iter().map(|m| m.user_id).collect();
-            }
+                self.members.iter_members_who_can_lapse()
+            };
 
-            for user_id in user_ids {
-                if self.can_member_lapse(&user_id, channel_id) {
-                    self.expiring_members.push(ExpiringMember {
-                        expires: now + new_gate_expiry,
-                        channel_id,
-                        user_id,
-                    });
-                }
+            for user_id in user_ids_iter {
+                self.expiring_members.push(ExpiringMember {
+                    expires: now + new_gate_expiry,
+                    channel_id,
+                    user_id,
+                });
             }
         }
     }
@@ -722,6 +725,7 @@ pub struct CanisterIds {
     pub local_user_index: CanisterId,
     pub local_group_index: CanisterId,
     pub notifications: CanisterId,
+    pub bot_api_gateway: CanisterId,
     pub proposals_bot: CanisterId,
     pub escrow: CanisterId,
     pub icp_ledger: CanisterId,

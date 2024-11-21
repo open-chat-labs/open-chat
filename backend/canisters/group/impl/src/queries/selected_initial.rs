@@ -1,7 +1,7 @@
 use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
 use group_canister::selected_initial::{Response::*, *};
-use types::{GroupMember, GroupRole};
+use std::collections::HashSet;
 
 #[query(candid = true, msgpack = true)]
 fn selected_initial(_args: Args) -> Response {
@@ -15,14 +15,22 @@ fn selected_initial_impl(state: &RuntimeState) -> Response {
         let chat = &state.data.chat;
         let last_updated = chat.details_last_updated();
 
+        let mut non_basic_members = HashSet::new();
+        non_basic_members.extend(chat.members.owners().iter().copied());
+        non_basic_members.extend(chat.members.admins().iter().copied());
+        non_basic_members.extend(chat.members.moderators().iter().copied());
+        non_basic_members.extend(chat.members.lapsed().iter().copied());
+
         let mut members = Vec::new();
         let mut basic_members = Vec::new();
-        for member in chat.members.iter().map(GroupMember::from) {
-            if matches!(member.role, GroupRole::Participant) && !member.lapsed {
-                basic_members.push(member.user_id);
+        for user_id in chat.members.member_ids().iter() {
+            if non_basic_members.contains(user_id) {
+                if let Some(member) = chat.members.get(user_id) {
+                    members.push(member.into());
+                }
+            } else {
+                basic_members.push(*user_id);
             }
-            // Once website is upgraded, only push to `members` if not added to `basic_members`
-            members.push(member);
         }
 
         Success(SuccessResult {

@@ -82,7 +82,7 @@ fn next(state: &mut RuntimeState) -> GetNextResult {
     GetNextResult::Break
 }
 
-pub(crate) async fn run_async(user_id: UserId) {
+async fn run_async(user_id: UserId) {
     match ic_cdk::api::management_canister::main::canister_status(CanisterIdRecord {
         canister_id: user_id.into(),
     })
@@ -92,7 +92,7 @@ pub(crate) async fn run_async(user_id: UserId) {
             if status.cycles < utils::cycles::MIN_CYCLES_BALANCE
                 || status.cycles < Nat::from(60u32) * status.idle_cycles_burned_per_day
             {
-                top_up_user(Some(user_id), Some(20_000_000_000)).await;
+                top_up_user(Some(user_id)).await;
             }
         }
         Err(error) => error!(%user_id, ?error, "Error getting canister status"),

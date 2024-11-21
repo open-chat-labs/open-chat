@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::cmp::{max, min};
+use tracing::error;
 use types::{is_default, ChatMetrics, TimestampMillis};
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
@@ -112,59 +113,59 @@ struct ChatMetricsInternalCombined {
     #[serde(rename = "m", default)]
     metrics: Vec<MetricCounter>,
     #[serde(rename = "t", default, skip_serializing_if = "is_default")]
-    pub text_messages: u32,
+    pub text_messages: u64,
     #[serde(rename = "i", default, skip_serializing_if = "is_default")]
-    pub image_messages: u32,
+    pub image_messages: u64,
     #[serde(rename = "v", default, skip_serializing_if = "is_default")]
-    pub video_messages: u32,
+    pub video_messages: u64,
     #[serde(rename = "a", default, skip_serializing_if = "is_default")]
-    pub audio_messages: u32,
+    pub audio_messages: u64,
     #[serde(rename = "f", default, skip_serializing_if = "is_default")]
-    pub file_messages: u32,
+    pub file_messages: u64,
     #[serde(rename = "p", default, skip_serializing_if = "is_default")]
-    pub polls: u32,
+    pub polls: u64,
     #[serde(rename = "pv", default, skip_serializing_if = "is_default")]
-    pub poll_votes: u32,
+    pub poll_votes: u64,
     #[serde(rename = "icp", default, skip_serializing_if = "is_default")]
-    pub icp_messages: u32,
+    pub icp_messages: u64,
     #[serde(rename = "sns1", default, skip_serializing_if = "is_default")]
-    pub sns1_messages: u32,
+    pub sns1_messages: u64,
     #[serde(rename = "ckbtc", default, skip_serializing_if = "is_default")]
-    pub ckbtc_messages: u32,
+    pub ckbtc_messages: u64,
     #[serde(rename = "chat", default, skip_serializing_if = "is_default")]
-    pub chat_messages: u32,
+    pub chat_messages: u64,
     #[serde(rename = "kinic", default, skip_serializing_if = "is_default")]
-    pub kinic_messages: u32,
+    pub kinic_messages: u64,
     #[serde(rename = "o", default, skip_serializing_if = "is_default")]
-    pub other_crypto_messages: u32,
+    pub other_crypto_messages: u64,
     #[serde(rename = "d", default, skip_serializing_if = "is_default")]
-    pub deleted_messages: u32,
+    pub deleted_messages: u64,
     #[serde(rename = "g", default, skip_serializing_if = "is_default")]
-    pub giphy_messages: u32,
+    pub giphy_messages: u64,
     #[serde(rename = "pz", default, skip_serializing_if = "is_default")]
-    pub prize_messages: u32,
+    pub prize_messages: u64,
     #[serde(rename = "pzw", default, skip_serializing_if = "is_default")]
-    pub prize_winner_messages: u32,
+    pub prize_winner_messages: u64,
     #[serde(rename = "rp", default, skip_serializing_if = "is_default")]
-    pub replies: u32,
+    pub replies: u64,
     #[serde(rename = "e", default, skip_serializing_if = "is_default")]
-    pub edits: u32,
+    pub edits: u64,
     #[serde(rename = "rt", default, skip_serializing_if = "is_default")]
-    pub reactions: u32,
+    pub reactions: u64,
     #[serde(rename = "ti", default, skip_serializing_if = "is_default")]
-    pub tips: u32,
+    pub tips: u64,
     #[serde(rename = "pr", default, skip_serializing_if = "is_default")]
-    pub proposals: u32,
+    pub proposals: u64,
     #[serde(rename = "rpt", default, skip_serializing_if = "is_default")]
-    pub reported_messages: u32,
+    pub reported_messages: u64,
     #[serde(rename = "mr", default, skip_serializing_if = "is_default")]
-    pub message_reminders: u32,
+    pub message_reminders: u64,
     #[serde(rename = "p2p", default, skip_serializing_if = "is_default")]
-    pub p2p_swaps: u32,
+    pub p2p_swaps: u64,
     #[serde(rename = "vc", default, skip_serializing_if = "is_default")]
-    pub video_calls: u32,
+    pub video_calls: u64,
     #[serde(rename = "cu", default, skip_serializing_if = "is_default")]
-    pub custom_type_messages: u32,
+    pub custom_type_messages: u64,
     #[serde(rename = "la", alias = "l")]
     pub last_active: TimestampMillis,
 }
@@ -183,38 +184,26 @@ impl From<ChatMetricsInternalCombined> for ChatMetricsInternal {
             last_active: value.last_active,
         };
 
-        if value.text_messages > 0 {
-            metrics
-                .metrics
-                .push(MetricCounter::new(MetricKey::TextMessages, value.text_messages));
+        if let Some(count) = try_convert_to_metric_count(value.text_messages, "text_messages") {
+            metrics.metrics.push(MetricCounter::new(MetricKey::TextMessages, count));
         }
-        if value.image_messages > 0 {
-            metrics
-                .metrics
-                .push(MetricCounter::new(MetricKey::ImageMessages, value.image_messages));
+        if let Some(count) = try_convert_to_metric_count(value.image_messages, "image_messages") {
+            metrics.metrics.push(MetricCounter::new(MetricKey::ImageMessages, count));
         }
-        if value.video_messages > 0 {
-            metrics
-                .metrics
-                .push(MetricCounter::new(MetricKey::VideoMessages, value.video_messages));
+        if let Some(count) = try_convert_to_metric_count(value.video_messages, "video_messages") {
+            metrics.metrics.push(MetricCounter::new(MetricKey::VideoMessages, count));
         }
-        if value.audio_messages > 0 {
-            metrics
-                .metrics
-                .push(MetricCounter::new(MetricKey::AudioMessages, value.audio_messages));
+        if let Some(count) = try_convert_to_metric_count(value.audio_messages, "audio_messages") {
+            metrics.metrics.push(MetricCounter::new(MetricKey::AudioMessages, count));
         }
-        if value.file_messages > 0 {
-            metrics
-                .metrics
-                .push(MetricCounter::new(MetricKey::FileMessages, value.file_messages));
+        if let Some(count) = try_convert_to_metric_count(value.file_messages, "file_messages") {
+            metrics.metrics.push(MetricCounter::new(MetricKey::FileMessages, count));
         }
-        if value.polls > 0 {
-            metrics.metrics.push(MetricCounter::new(MetricKey::Polls, value.polls));
+        if let Some(count) = try_convert_to_metric_count(value.polls, "polls") {
+            metrics.metrics.push(MetricCounter::new(MetricKey::Polls, count));
         }
-        if value.poll_votes > 0 {
-            metrics
-                .metrics
-                .push(MetricCounter::new(MetricKey::PollVotes, value.poll_votes));
+        if let Some(count) = try_convert_to_metric_count(value.poll_votes, "poll_votes") {
+            metrics.metrics.push(MetricCounter::new(MetricKey::PollVotes, count));
         }
         let crypto_messages = value.icp_messages
             + value.sns1_messages
@@ -222,75 +211,67 @@ impl From<ChatMetricsInternalCombined> for ChatMetricsInternal {
             + value.chat_messages
             + value.kinic_messages
             + value.other_crypto_messages;
-        if crypto_messages > 0 {
+        if let Some(count) = try_convert_to_metric_count(crypto_messages, "crypto_messages") {
+            metrics.metrics.push(MetricCounter::new(MetricKey::CryptoMessages, count));
+        }
+        if let Some(count) = try_convert_to_metric_count(value.deleted_messages, "deleted_messages") {
+            metrics.metrics.push(MetricCounter::new(MetricKey::DeletedMessages, count));
+        }
+        if let Some(count) = try_convert_to_metric_count(value.giphy_messages, "giphy_messages") {
+            metrics.metrics.push(MetricCounter::new(MetricKey::GiphyMessages, count));
+        }
+        if let Some(count) = try_convert_to_metric_count(value.prize_messages, "prize_messages") {
+            metrics.metrics.push(MetricCounter::new(MetricKey::PrizeMessages, count));
+        }
+        if let Some(count) = try_convert_to_metric_count(value.prize_winner_messages, "prize_winner_messages") {
             metrics
                 .metrics
-                .push(MetricCounter::new(MetricKey::CryptoMessages, crypto_messages));
+                .push(MetricCounter::new(MetricKey::PrizeWinnerMessages, count));
         }
-        if value.deleted_messages > 0 {
-            metrics
-                .metrics
-                .push(MetricCounter::new(MetricKey::DeletedMessages, value.deleted_messages));
+        if let Some(count) = try_convert_to_metric_count(value.replies, "replies") {
+            metrics.metrics.push(MetricCounter::new(MetricKey::Replies, count));
         }
-        if value.giphy_messages > 0 {
-            metrics
-                .metrics
-                .push(MetricCounter::new(MetricKey::GiphyMessages, value.giphy_messages));
+        if let Some(count) = try_convert_to_metric_count(value.edits, "edits") {
+            metrics.metrics.push(MetricCounter::new(MetricKey::Edits, count));
         }
-        if value.prize_messages > 0 {
-            metrics
-                .metrics
-                .push(MetricCounter::new(MetricKey::PrizeMessages, value.prize_messages));
+        if let Some(count) = try_convert_to_metric_count(value.reactions, "reactions") {
+            metrics.metrics.push(MetricCounter::new(MetricKey::Reactions, count));
         }
-        if value.prize_winner_messages > 0 {
-            metrics.metrics.push(MetricCounter::new(
-                MetricKey::PrizeWinnerMessages,
-                value.prize_winner_messages,
-            ));
+        if let Some(count) = try_convert_to_metric_count(value.tips, "tips") {
+            metrics.metrics.push(MetricCounter::new(MetricKey::Tips, count));
         }
-        if value.replies > 0 {
-            metrics.metrics.push(MetricCounter::new(MetricKey::Replies, value.replies));
+        if let Some(count) = try_convert_to_metric_count(value.proposals, "proposals") {
+            metrics.metrics.push(MetricCounter::new(MetricKey::Proposals, count));
         }
-        if value.edits > 0 {
-            metrics.metrics.push(MetricCounter::new(MetricKey::Edits, value.edits));
+        if let Some(count) = try_convert_to_metric_count(value.reported_messages, "reported_messages") {
+            metrics.metrics.push(MetricCounter::new(MetricKey::ReportedMessages, count));
         }
-        if value.reactions > 0 {
-            metrics
-                .metrics
-                .push(MetricCounter::new(MetricKey::Reactions, value.reactions));
+        if let Some(count) = try_convert_to_metric_count(value.message_reminders, "message_reminders") {
+            metrics.metrics.push(MetricCounter::new(MetricKey::MessageReminders, count));
         }
-        if value.tips > 0 {
-            metrics.metrics.push(MetricCounter::new(MetricKey::Tips, value.tips));
+        if let Some(count) = try_convert_to_metric_count(value.p2p_swaps, "p2p_swaps") {
+            metrics.metrics.push(MetricCounter::new(MetricKey::P2pSwaps, count));
         }
-        if value.proposals > 0 {
-            metrics
-                .metrics
-                .push(MetricCounter::new(MetricKey::Proposals, value.proposals));
+        if let Some(count) = try_convert_to_metric_count(value.video_calls, "video_calls") {
+            metrics.metrics.push(MetricCounter::new(MetricKey::VideoCalls, count));
         }
-        if value.reported_messages > 0 {
-            metrics
-                .metrics
-                .push(MetricCounter::new(MetricKey::ReportedMessages, value.reported_messages));
-        }
-        if value.message_reminders > 0 {
-            metrics
-                .metrics
-                .push(MetricCounter::new(MetricKey::MessageReminders, value.message_reminders));
-        }
-        if value.p2p_swaps > 0 {
-            metrics.metrics.push(MetricCounter::new(MetricKey::P2pSwaps, value.p2p_swaps));
-        }
-        if value.video_calls > 0 {
-            metrics
-                .metrics
-                .push(MetricCounter::new(MetricKey::VideoCalls, value.video_calls));
-        }
-        if value.custom_type_messages > 0 {
-            metrics
-                .metrics
-                .push(MetricCounter::new(MetricKey::CustomTypeMessages, value.custom_type_messages));
+        if let Some(count) = try_convert_to_metric_count(value.custom_type_messages, "custom_type_messages") {
+            metrics.metrics.push(MetricCounter::new(MetricKey::CustomTypeMessages, count));
         }
         metrics
+    }
+}
+
+fn try_convert_to_metric_count(value: u64, name: &str) -> Option<u32> {
+    if let Ok(count) = u32::try_from(value) {
+        if count > 0 {
+            Some(count)
+        } else {
+            None
+        }
+    } else {
+        error!(name, value, "Metric value exceeded limit");
+        None
     }
 }
 

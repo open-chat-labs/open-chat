@@ -1,33 +1,88 @@
 use crate::mentions::Mentions;
 use crate::roles::GroupRoleInternal;
 use crate::AccessRulesInternal;
-use chat_events::ChatEvents;
 use group_community_common::{Member, Members};
 use serde::de::{SeqAccess, Visitor};
 use serde::ser::SerializeSeq;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::cmp::max;
-use std::collections::hash_map::Entry::Vacant;
-use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::fmt::Formatter;
 use types::{
-    is_default, EventIndex, GroupMember, GroupPermissions, HydratedMention, MessageIndex, TimestampMillis, Timestamped, UserId,
-    UserType, Version, MAX_RETURNED_MENTIONS,
+    is_default, EventIndex, GroupMember, GroupPermissions, MessageIndex, TimestampMillis, Timestamped, UserId, UserType,
+    Version,
 };
 use utils::timestamped_set::TimestampedSet;
+
+#[cfg(test)]
+mod proptests;
 
 const MAX_MEMBERS_PER_GROUP: u32 = 100_000;
 
 #[derive(Serialize, Deserialize, Default)]
+#[serde(from = "GroupMembersPrevious")]
 pub struct GroupMembers {
     #[serde(serialize_with = "serialize_members", deserialize_with = "deserialize_members")]
-    pub members: HashMap<UserId, GroupMemberInternal>,
-    pub blocked: HashSet<UserId>,
-    pub moderator_count: u32,
-    pub admin_count: u32,
-    pub owner_count: u32,
+    members: HashMap<UserId, GroupMemberInternal>,
+    member_ids: BTreeSet<UserId>,
+    owners: BTreeSet<UserId>,
+    admins: BTreeSet<UserId>,
+    moderators: BTreeSet<UserId>,
+    bots: BTreeMap<UserId, UserType>,
+    lapsed: BTreeSet<UserId>,
+    blocked: BTreeSet<UserId>,
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
+}
+
+#[derive(Serialize, Deserialize, Default)]
+pub struct GroupMembersPrevious {
+    #[serde(serialize_with = "serialize_members", deserialize_with = "deserialize_members")]
+    members: HashMap<UserId, GroupMemberInternal>,
+    blocked: BTreeSet<UserId>,
+    updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
+}
+
+impl From<GroupMembersPrevious> for GroupMembers {
+    fn from(value: GroupMembersPrevious) -> Self {
+        let mut member_ids = BTreeSet::new();
+        let mut owners = BTreeSet::new();
+        let mut admins = BTreeSet::new();
+        let mut moderators = BTreeSet::new();
+        let mut bots = BTreeMap::new();
+        let mut lapsed = BTreeSet::new();
+
+        for member in value.members.values() {
+            member_ids.insert(member.user_id);
+
+            match member.role.value {
+                GroupRoleInternal::Owner => owners.insert(member.user_id),
+                GroupRoleInternal::Admin => admins.insert(member.user_id),
+                GroupRoleInternal::Moderator => moderators.insert(member.user_id),
+                GroupRoleInternal::Member => false,
+            };
+
+            if member.lapsed.value {
+                lapsed.insert(member.user_id);
+            }
+
+            if member.user_type.is_bot() {
+                bots.insert(member.user_id, member.user_type);
+            }
+        }
+
+        GroupMembers {
+            members: value.members,
+            member_ids,
+            owners,
+            admins,
+            moderators,
+            bots,
+            lapsed,
+            blocked: value.blocked,
+            updates: value.updates,
+        }
+    }
 }
 
 #[derive(Serialize_repr, Deserialize_repr, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
@@ -64,10 +119,17 @@ impl GroupMembers {
 
         GroupMembers {
             members: vec![(creator_user_id, member)].into_iter().collect(),
-            blocked: HashSet::new(),
-            moderator_count: 0,
-            admin_count: 0,
-            owner_count: 1,
+            member_ids: [creator_user_id].into_iter().collect(),
+            owners: [creator_user_id].into_iter().collect(),
+            admins: BTreeSet::new(),
+            moderators: BTreeSet::new(),
+            blocked: BTreeSet::new(),
+            bots: if user_type.is_bot() {
+                [(creator_user_id, user_type)].into_iter().collect()
+            } else {
+                BTreeMap::new()
+            },
+            lapsed: BTreeSet::new(),
             updates: BTreeSet::new(),
         }
     }
@@ -85,43 +147,49 @@ impl GroupMembers {
             AddResult::Blocked
         } else if let Some(limit) = self.user_limit_reached() {
             AddResult::MemberLimitReached(limit)
-        } else {
-            match self.members.entry(user_id) {
-                Vacant(e) => {
-                    let member = GroupMemberInternal {
-                        user_id,
-                        date_added: now,
-                        role: Timestamped::new(GroupRoleInternal::Member, now),
-                        min_visible_event_index,
-                        min_visible_message_index,
-                        notifications_muted: Timestamped::new(notifications_muted, now),
-                        mentions: Mentions::default(),
-                        followed_threads: TimestampedSet::new(),
-                        unfollowed_threads: TimestampedSet::new(),
-                        proposal_votes: BTreeMap::default(),
-                        suspended: Timestamped::default(),
-                        rules_accepted: None,
-                        user_type,
-                        lapsed: Timestamped::new(false, now),
-                    };
-                    e.insert(member.clone());
-                    self.updates.insert((now, user_id, MemberUpdate::Added));
-                    AddResult::Success(AddMemberSuccess { member, unlapse: false })
-                }
-                _ => AddResult::AlreadyInGroup,
+        } else if self.member_ids.insert(user_id) {
+            let member = GroupMemberInternal {
+                user_id,
+                date_added: now,
+                role: Timestamped::new(GroupRoleInternal::Member, now),
+                min_visible_event_index,
+                min_visible_message_index,
+                notifications_muted: Timestamped::new(notifications_muted, now),
+                mentions: Mentions::default(),
+                followed_threads: TimestampedSet::new(),
+                unfollowed_threads: TimestampedSet::new(),
+                proposal_votes: BTreeMap::default(),
+                suspended: Timestamped::default(),
+                rules_accepted: None,
+                user_type,
+                lapsed: Timestamped::new(false, now),
+            };
+            self.members.insert(user_id, member.clone());
+            if user_type.is_bot() {
+                self.bots.insert(user_id, user_type);
             }
+            self.updates.insert((now, user_id, MemberUpdate::Added));
+            AddResult::Success(AddMemberSuccess { member, unlapse: false })
+        } else {
+            AddResult::AlreadyInGroup
         }
     }
 
     pub fn remove(&mut self, user_id: UserId, now: TimestampMillis) -> Option<GroupMemberInternal> {
         if let Some(member) = self.members.remove(&user_id) {
             match member.role.value {
-                GroupRoleInternal::Owner => self.owner_count -= 1,
-                GroupRoleInternal::Admin => self.admin_count -= 1,
-                GroupRoleInternal::Moderator => self.moderator_count -= 1,
-                _ => (),
+                GroupRoleInternal::Owner => self.owners.remove(&user_id),
+                GroupRoleInternal::Admin => self.admins.remove(&user_id),
+                GroupRoleInternal::Moderator => self.moderators.remove(&user_id),
+                _ => false,
+            };
+            if member.user_type.is_bot() {
+                self.bots.remove(&user_id);
             }
-
+            if member.lapsed.value {
+                self.lapsed.remove(&user_id);
+            }
+            self.member_ids.remove(&user_id);
             self.updates.insert((now, user_id, MemberUpdate::Removed));
             Some(member)
         } else {
@@ -149,6 +217,10 @@ impl GroupMembers {
 
     pub fn blocked(&self) -> Vec<UserId> {
         self.blocked.iter().copied().collect()
+    }
+
+    pub fn member_ids(&self) -> &BTreeSet<UserId> {
+        &self.member_ids
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &GroupMemberInternal> {
@@ -202,11 +274,11 @@ impl GroupMembers {
         now: TimestampMillis,
     ) -> ChangeRoleResult {
         // Is the caller authorized to change the user to this role
-        match self.get(&caller_id) {
+        match self.members.get(&caller_id) {
             Some(p) => {
                 if p.suspended.value {
                     return ChangeRoleResult::UserSuspended;
-                } else if p.lapsed() {
+                } else if p.lapsed().value {
                     return ChangeRoleResult::UserLapsed;
                 }
                 // Platform moderators can always promote themselves to owner
@@ -217,11 +289,7 @@ impl GroupMembers {
             None => return ChangeRoleResult::UserNotInGroup,
         }
 
-        let mut owner_count = self.owner_count;
-        let mut admin_count = self.admin_count;
-        let mut moderator_count = self.moderator_count;
-
-        let member = match self.get_mut(&user_id) {
+        let member = match self.members.get_mut(&user_id) {
             Some(p) => p,
             None => return ChangeRoleResult::TargetUserNotInGroup,
         };
@@ -232,7 +300,7 @@ impl GroupMembers {
         }
 
         // It is not possible to change the role of the last owner
-        if member.role.is_owner() && owner_count <= 1 {
+        if member.role.is_owner() && self.owners.len() <= 1 {
             return ChangeRoleResult::Invalid;
         }
 
@@ -243,33 +311,37 @@ impl GroupMembers {
         }
 
         match prev_role {
-            GroupRoleInternal::Owner => owner_count -= 1,
-            GroupRoleInternal::Admin => admin_count -= 1,
-            GroupRoleInternal::Moderator => moderator_count -= 1,
-            _ => (),
-        }
+            GroupRoleInternal::Owner => self.owners.remove(&user_id),
+            GroupRoleInternal::Admin => self.admins.remove(&user_id),
+            GroupRoleInternal::Moderator => self.moderators.remove(&user_id),
+            _ => false,
+        };
 
         member.role = Timestamped::new(new_role, now);
 
         match new_role {
-            GroupRoleInternal::Owner => owner_count += 1,
-            GroupRoleInternal::Admin => admin_count += 1,
-            GroupRoleInternal::Moderator => moderator_count += 1,
-            _ => (),
-        }
+            GroupRoleInternal::Owner => {
+                if member.lapsed.value {
+                    self.update_lapsed(user_id, false, now);
+                }
+                self.owners.insert(user_id)
+            }
+            GroupRoleInternal::Admin => self.admins.insert(user_id),
+            GroupRoleInternal::Moderator => self.moderators.insert(user_id),
+            _ => false,
+        };
 
-        self.owner_count = owner_count;
-        self.admin_count = admin_count;
-        self.moderator_count = moderator_count;
         self.updates.insert((now, user_id, MemberUpdate::RoleChanged));
 
         ChangeRoleResult::Success(ChangeRoleSuccess { prev_role })
     }
 
     pub fn unlapse_all(&mut self, now: TimestampMillis) {
-        for m in self.members.values_mut() {
-            if m.set_lapsed(false, now) {
-                self.updates.insert((now, m.user_id, MemberUpdate::Unlapsed));
+        for user_id in std::mem::take(&mut self.lapsed) {
+            if let Some(member) = self.members.get_mut(&user_id) {
+                if member.set_lapsed(false, now) {
+                    self.updates.insert((now, member.user_id, MemberUpdate::Unlapsed));
+                }
             }
         }
     }
@@ -287,6 +359,12 @@ impl GroupMembers {
         };
 
         if updated {
+            if lapse {
+                self.lapsed.insert(user_id);
+            } else {
+                self.lapsed.remove(&user_id);
+            }
+
             self.updates.insert((
                 now,
                 user_id,
@@ -295,16 +373,24 @@ impl GroupMembers {
         }
     }
 
-    pub fn owner_count(&self) -> u32 {
-        self.owner_count
+    pub fn owners(&self) -> &BTreeSet<UserId> {
+        &self.owners
     }
 
-    pub fn admin_count(&self) -> u32 {
-        self.admin_count
+    pub fn admins(&self) -> &BTreeSet<UserId> {
+        &self.admins
     }
 
-    pub fn moderator_count(&self) -> u32 {
-        self.moderator_count
+    pub fn moderators(&self) -> &BTreeSet<UserId> {
+        &self.moderators
+    }
+
+    pub fn bots(&self) -> &BTreeMap<UserId, UserType> {
+        &self.bots
+    }
+
+    pub fn lapsed(&self) -> &BTreeSet<UserId> {
+        &self.lapsed
     }
 
     pub fn has_membership_changed(&self, since: TimestampMillis) -> bool {
@@ -323,6 +409,36 @@ impl GroupMembers {
     pub fn last_updated(&self) -> Option<TimestampMillis> {
         self.updates.iter().next_back().map(|(ts, _, _)| *ts)
     }
+
+    #[cfg(test)]
+    fn check_invariants(&self) {
+        let mut member_ids = BTreeSet::new();
+        let mut owners = BTreeSet::new();
+        let mut admins = BTreeSet::new();
+        let mut moderators = BTreeSet::new();
+        let mut lapsed = BTreeSet::new();
+
+        for member in self.members.values() {
+            member_ids.insert(member.user_id);
+
+            match member.role.value {
+                GroupRoleInternal::Owner => owners.insert(member.user_id),
+                GroupRoleInternal::Admin => admins.insert(member.user_id),
+                GroupRoleInternal::Moderator => moderators.insert(member.user_id),
+                GroupRoleInternal::Member => false,
+            };
+
+            if member.lapsed.value {
+                lapsed.insert(member.user_id);
+            }
+        }
+
+        assert_eq!(member_ids, self.member_ids);
+        assert_eq!(owners, self.owners);
+        assert_eq!(admins, self.admins);
+        assert_eq!(moderators, self.moderators);
+        assert_eq!(lapsed, self.lapsed);
+    }
 }
 
 impl Members for GroupMembers {
@@ -330,6 +446,15 @@ impl Members for GroupMembers {
 
     fn get(&self, user_id: &UserId) -> Option<&GroupMemberInternal> {
         self.get(user_id)
+    }
+
+    fn iter_members_who_can_lapse(&self) -> Box<dyn Iterator<Item = UserId> + '_> {
+        Box::new(
+            self.member_ids
+                .iter()
+                .filter(|id| !self.owners.contains(id) && !self.lapsed.contains(id))
+                .copied(),
+        )
     }
 }
 
@@ -364,11 +489,11 @@ pub struct ChangeRoleSuccess {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct GroupMemberInternal {
     #[serde(rename = "u")]
-    pub user_id: UserId,
+    user_id: UserId,
     #[serde(rename = "d")]
-    pub date_added: TimestampMillis,
+    date_added: TimestampMillis,
     #[serde(rename = "r", default, skip_serializing_if = "is_default")]
-    pub role: Timestamped<GroupRoleInternal>,
+    role: Timestamped<GroupRoleInternal>,
     #[serde(rename = "n")]
     pub notifications_muted: Timestamped<bool>,
     #[serde(rename = "m", default, skip_serializing_if = "mentions_are_empty")]
@@ -384,16 +509,36 @@ pub struct GroupMemberInternal {
     #[serde(rename = "ra", default, skip_serializing_if = "is_default")]
     pub rules_accepted: Option<Timestamped<Version>>,
     #[serde(rename = "ut", default, skip_serializing_if = "is_default")]
-    pub user_type: UserType,
+    user_type: UserType,
     #[serde(rename = "me", default, skip_serializing_if = "is_default")]
     min_visible_event_index: EventIndex,
     #[serde(rename = "mm", default, skip_serializing_if = "is_default")]
     min_visible_message_index: MessageIndex,
     #[serde(rename = "la", default, skip_serializing_if = "is_default")]
-    pub lapsed: Timestamped<bool>,
+    lapsed: Timestamped<bool>,
 }
 
 impl GroupMemberInternal {
+    pub fn user_id(&self) -> UserId {
+        self.user_id
+    }
+
+    pub fn date_added(&self) -> TimestampMillis {
+        self.date_added
+    }
+
+    pub fn role(&self) -> &Timestamped<GroupRoleInternal> {
+        &self.role
+    }
+
+    pub fn user_type(&self) -> UserType {
+        self.user_type
+    }
+
+    pub fn lapsed(&self) -> &Timestamped<bool> {
+        &self.lapsed
+    }
+
     pub fn last_updated(&self) -> TimestampMillis {
         [
             self.date_added,
@@ -422,16 +567,6 @@ impl GroupMemberInternal {
         } else {
             self.min_visible_message_index
         }
-    }
-
-    pub fn most_recent_mentions(&self, since: Option<TimestampMillis>, chat_events: &ChatEvents) -> Vec<HydratedMention> {
-        let min_visible_event_index = self.min_visible_event_index();
-
-        self.mentions
-            .iter_most_recent(since)
-            .filter_map(|m| chat_events.hydrate_mention(min_visible_event_index, &m))
-            .take(MAX_RETURNED_MENTIONS)
-            .collect()
     }
 
     pub fn accept_rules(&mut self, version: Version, now: TimestampMillis) {
