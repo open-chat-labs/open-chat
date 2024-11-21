@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add `bot_api_gateway` canisterId to the canister state ([#6842](https://github.com/open-chat-labs/open-chat/pull/6842))
 
+### Removed
+
+- Remove all code to migrate events to stable memory ([#6858](https://github.com/open-chat-labs/open-chat/pull/6858))
+
 ## [[2.0.1459](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1459-user)] - 2024-11-18
 
 ### Added
