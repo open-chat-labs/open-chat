@@ -29,6 +29,7 @@ fn post_upgrade(args: Args) {
         data.bot_api_gateway_canister_id = CanisterId::from_text("xeg2u-baaaa-aaaaf-bscyq-cai").unwrap()
     }
 
+    data.chat.events.init_maps();
     data.chat.dedupe_at_everyone_mentions();
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
