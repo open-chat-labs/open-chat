@@ -8,7 +8,6 @@ use ledger_utils::process_transaction;
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{BlobReference, CanisterId, MessageId, MessageIndex, P2PSwapStatus, PendingCryptoTransaction, UserId};
-use utils::consts::MEMO_PRIZE_REFUND;
 use utils::time::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -16,7 +15,9 @@ pub enum TimerJob {
     HardDeleteMessageContent(HardDeleteMessageContentJob),
     DeleteFileReferences(DeleteFileReferencesJob),
     EndPoll(EndPollJob),
-    RefundPrize(RefundPrizeJob),
+    // TODO: Remove this serde attribute post release
+    #[serde(alias = "RefundPrize")]
+    FinalPrizePayments(FinalPrizePaymentsJob),
     MakeTransfer(MakeTransferJob),
     RemoveExpiredEvents(RemoveExpiredEventsJob),
     NotifyEscrowCanisterOfDeposit(NotifyEscrowCanisterOfDepositJob),
@@ -43,7 +44,7 @@ pub struct EndPollJob {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct RefundPrizeJob {
+pub struct FinalPrizePaymentsJob {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_index: MessageIndex,
 }
@@ -120,7 +121,7 @@ impl Job for TimerJob {
             TimerJob::HardDeleteMessageContent(job) => job.execute(),
             TimerJob::DeleteFileReferences(job) => job.execute(),
             TimerJob::EndPoll(job) => job.execute(),
-            TimerJob::RefundPrize(job) => job.execute(),
+            TimerJob::FinalPrizePayments(job) => job.execute(),
             TimerJob::MakeTransfer(job) => job.execute(),
             TimerJob::RemoveExpiredEvents(job) => job.execute(),
             TimerJob::NotifyEscrowCanisterOfDeposit(job) => job.execute(),
@@ -160,7 +161,7 @@ impl Job for HardDeleteMessageContentJob {
                                 .data
                                 .timer_jobs
                                 .cancel_job(|job| {
-                                    if let TimerJob::RefundPrize(j) = job {
+                                    if let TimerJob::FinalPrizePayments(j) = job {
                                         j.thread_root_message_index == self.thread_root_message_index
                                             && j.message_index == message_index
                                     } else {
@@ -169,9 +170,7 @@ impl Job for HardDeleteMessageContentJob {
                                 })
                                 .is_some()
                             {
-                                if let Some(pending_transaction) =
-                                    prize.prize_refund(sender, &MEMO_PRIZE_REFUND, state.env.now_nanos())
-                                {
+                                for pending_transaction in prize.final_payments(sender, state.env.now_nanos()) {
                                     follow_on_jobs.push(TimerJob::MakeTransfer(MakeTransferJob {
                                         pending_transaction,
                                         attempt: 0,
@@ -233,16 +232,17 @@ impl Job for EndPollJob {
     }
 }
 
-impl Job for RefundPrizeJob {
+impl Job for FinalPrizePaymentsJob {
     fn execute(self) {
-        if let Some(pending_transaction) = mutate_state(|state| {
-            state.data.chat.events.prize_refund(
-                self.thread_root_message_index,
-                self.message_index,
-                &MEMO_PRIZE_REFUND,
-                state.env.now_nanos(),
-            )
-        }) {
+        let pending_transactions = mutate_state(|state| {
+            state
+                .data
+                .chat
+                .events
+                .final_payments(self.thread_root_message_index, self.message_index, state.env.now_nanos())
+        });
+
+        for pending_transaction in pending_transactions {
             let make_transfer_job = MakeTransferJob {
                 pending_transaction,
                 attempt: 0,
