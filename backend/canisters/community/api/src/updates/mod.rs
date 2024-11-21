@@ -5,6 +5,7 @@ pub mod block_user;
 pub mod c2c_create_proposals_channel;
 pub mod c2c_delete_community;
 pub mod c2c_freeze_community;
+pub mod c2c_handle_bot_actions;
 pub mod c2c_import_proposals_group;
 pub mod c2c_invite_users;
 pub mod c2c_invite_users_to_channel;
