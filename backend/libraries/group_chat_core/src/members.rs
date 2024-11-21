@@ -308,7 +308,7 @@ impl GroupMembers {
             return ChangeRoleResult::Invalid;
         }
         // It is not currently possible to make a bot an owner
-        if member.user_type.is_bot() && new_role.is_owner() {
+        if member.user_type == UserType::Bot && new_role.is_owner() {
             return ChangeRoleResult::Invalid;
         }
 
