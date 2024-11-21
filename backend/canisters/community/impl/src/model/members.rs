@@ -174,6 +174,10 @@ impl CommunityMembers {
         if member.role.is_owner() && owner_count <= 1 {
             return ChangeRoleResult::Invalid;
         }
+        // It is not currently possible to make a bot an owner
+        if member.user_type.is_bot() && new_role.is_owner() {
+            return ChangeRoleResult::Invalid;
+        }
 
         let prev_role = member.role;
 
