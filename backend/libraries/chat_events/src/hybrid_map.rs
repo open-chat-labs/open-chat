@@ -48,7 +48,7 @@ impl HybridMap<ChatEventsStableStorage> {
 impl<MSlow: EventsMap> EventsMap for HybridMap<MSlow> {
     fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
         let disable_fast_map = matches!(chat, Chat::Direct(_)) || thread_root_message_index.is_some();
-        let max_events_in_fast_map = if disable_fast_map { 0 } else { 1000 };
+        let max_events_in_fast_map = if disable_fast_map { 0 } else { 200 };
 
         HybridMap {
             fast: BTreeMap::new(),
