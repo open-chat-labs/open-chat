@@ -63,7 +63,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
 
     if member.suspended.value {
         return Err(UserSuspended);
-    } else if member.lapsed.value {
+    } else if member.lapsed().value {
         return Err(UserLapsed);
     }
 
@@ -77,11 +77,11 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         .message_internal(args.message_index.into())
         .and_then(|m| if let MessageContentInternal::GovernanceProposal(p) = m.content { Some(p) } else { None })
     {
-        if let Some(vote) = proposal.votes.get(&member.user_id) {
+        if let Some(vote) = proposal.votes.get(&member.user_id()) {
             Err(AlreadyVoted(*vote))
         } else {
             Ok(PrepareResult {
-                user_id: member.user_id,
+                user_id: member.user_id(),
                 is_nns: proposal.proposal.is_nns(),
                 governance_canister_id: proposal.governance_canister_id,
                 proposal_id: proposal.proposal.id(),

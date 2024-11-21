@@ -5,7 +5,7 @@ use ic_cdk::update;
 use local_user_index_canister::{Event, UserRegistered};
 use types::{Cycles, UserId, UserType};
 use user_index_canister::c2c_register_bot::{Response::*, *};
-use utils::text_validation::{validate_username, UsernameValidationError};
+use utils::text_validation::{validate_display_name, validate_username, UsernameValidationError};
 
 const BOT_REGISTRATION_FEE: Cycles = 10_000_000_000_000; // 10T
 
@@ -38,6 +38,15 @@ fn c2c_register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
     if state.data.users.get_by_username(&args.username).is_some() {
         return UsernameTaken;
     }
+  
+    if let Some(display_name) = &args.display_name {
+        match validate_display_name(display_name) {
+            Ok(_) => {}
+            Err(UsernameValidationError::TooShort(s)) => return DisplayNameTooShort(s.min_length as u16),
+            Err(UsernameValidationError::TooLong(l)) => return DisplayNameTooLong(l.max_length as u16),
+            Err(UsernameValidationError::Invalid) => return DisplayNameInvalid,
+        }
+    }
 
     if !state.data.test_mode {
         let cycles = ic_cdk::api::call::msg_cycles_available128();
@@ -46,11 +55,12 @@ fn c2c_register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
         ic_cdk::api::call::msg_cycles_accept128(BOT_REGISTRATION_FEE);
     }
-
+  
     state.data.users.register(
         caller,
         user_id,
         args.username.clone(),
+        args.display_name,
         now,
         None,
         UserType::Bot,

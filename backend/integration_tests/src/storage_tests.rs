@@ -1,13 +1,10 @@
 use crate::env::ENV;
 use crate::utils::tick_many;
 use crate::{client, TestEnv};
-use candid::Principal;
-use pocket_ic::PocketIc;
-use rand::{thread_rng, RngCore};
 use std::ops::Deref;
 use std::time::Duration;
 use storage_index_canister::add_or_update_users::UserConfig;
-use types::{CanisterId, FileId};
+use types::BlobReference;
 
 #[test]
 fn oldest_files_deleted_once_limit_exceeded() {
@@ -34,31 +31,19 @@ fn oldest_files_deleted_once_limit_exceeded() {
 
     let mut files = Vec::new();
     for _ in 0..5 {
-        files.push(upload_file(env, user.principal, canister_ids.storage_index, 500));
+        files.push(client::storage_index::happy_path::upload_file(
+            env,
+            user.principal,
+            canister_ids.storage_index,
+            500,
+            Vec::new(),
+        ));
         env.advance_time(Duration::from_secs(1));
         tick_many(env, 5);
 
-        for (index, (bucket, file_id)) in files.iter().rev().enumerate() {
-            let exists = client::storage_bucket::happy_path::file_exists(env, user.principal, *bucket, *file_id);
+        for (index, BlobReference { canister_id, blob_id }) in files.iter().rev().enumerate() {
+            let exists = client::storage_bucket::happy_path::file_exists(env, user.principal, *canister_id, *blob_id);
             assert_eq!(exists, index < 2);
         }
     }
-}
-
-fn upload_file(env: &mut PocketIc, sender: Principal, index_canister_id: CanisterId, file_size: usize) -> (CanisterId, FileId) {
-    let mut file = vec![0; file_size];
-    thread_rng().fill_bytes(file.as_mut_slice());
-
-    let bucket_response = client::storage_index::happy_path::allocated_bucket(env, sender, index_canister_id, &file);
-
-    client::storage_bucket::happy_path::upload_file(
-        env,
-        sender,
-        bucket_response.canister_id,
-        bucket_response.file_id,
-        file,
-        None,
-    );
-
-    (bucket_response.canister_id, bucket_response.file_id)
 }

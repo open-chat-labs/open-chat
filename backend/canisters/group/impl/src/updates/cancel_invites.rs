@@ -22,12 +22,15 @@ fn cancel_invites_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     if member.suspended.value {
         return UserSuspended;
-    } else if member.lapsed.value {
+    } else if member.lapsed().value {
         return UserLapsed;
     }
 
     if !matches!(
-        state.data.chat.cancel_invites(member.user_id, args.user_ids, state.env.now()),
+        state
+            .data
+            .chat
+            .cancel_invites(member.user_id(), args.user_ids, state.env.now()),
         CancelInvitesResult::Success
     ) {
         return NotAuthorized;

@@ -9,11 +9,9 @@ fn inspect_message() {
 fn accept_if_valid(state: &RuntimeState) {
     let method_name = ic_cdk::api::call::method_name();
 
-    let is_c2c_method = method_name.starts_with("c2c") || method_name == "wallet_receive";
-    let is_frozen = state.data.frozen.value.is_some();
-
     // 'inspect_message' only applies to ingress messages so calls to c2c methods should be rejected
-    if is_c2c_method || is_frozen {
+    let is_c2c_method = method_name.starts_with("c2c") || method_name == "wallet_receive";
+    if is_c2c_method {
         return;
     }
 

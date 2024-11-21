@@ -14,7 +14,7 @@ use p256_key_pair::P256KeyPair;
 use proof_of_unique_personhood::verify_proof_of_unique_personhood;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::{BTreeMap, BTreeSet, HashMap, VecDeque};
+use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
@@ -267,17 +267,6 @@ impl RuntimeState {
                 internet_identity: self.data.internet_identity_canister_id,
             },
             oc_secret_key_initialized: self.data.oc_key_pair.is_initialised(),
-            canisters_pending_events_migration_to_stable_memory_count: self
-                .data
-                .canisters_pending_events_migration_to_stable_memory
-                .len() as u32,
-            canisters_pending_events_migration_to_stable_memory: self
-                .data
-                .canisters_pending_events_migration_to_stable_memory
-                .iter()
-                .copied()
-                .take(20)
-                .collect(),
             canister_upgrades_failed: canister_upgrades_metrics.failed,
             cycles_balance_check_queue_len: self.data.cycles_balance_check_queue.len() as u32,
         }
@@ -318,7 +307,6 @@ struct Data {
     #[serde(with = "serde_bytes")]
     pub ic_root_key: Vec<u8>,
     pub events_for_remote_users: Vec<(UserId, UserEvent)>,
-    pub canisters_pending_events_migration_to_stable_memory: BTreeSet<CanisterId>,
     pub cycles_balance_check_queue: VecDeque<UserId>,
 }
 
@@ -403,7 +391,6 @@ impl Data {
             users_to_delete_queue: VecDeque::new(),
             ic_root_key,
             events_for_remote_users: Vec::new(),
-            canisters_pending_events_migration_to_stable_memory: BTreeSet::new(),
             cycles_balance_check_queue: VecDeque::new(),
         }
     }
@@ -436,8 +423,6 @@ pub struct Metrics {
     pub user_versions: BTreeMap<String, u32>,
     pub canister_ids: CanisterIds,
     pub oc_secret_key_initialized: bool,
-    pub canisters_pending_events_migration_to_stable_memory_count: u32,
-    pub canisters_pending_events_migration_to_stable_memory: Vec<CanisterId>,
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
     pub cycles_balance_check_queue_len: u32,
 }

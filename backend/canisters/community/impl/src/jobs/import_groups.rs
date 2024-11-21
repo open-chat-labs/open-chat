@@ -150,7 +150,7 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
             chat.events
                 .set_chat(Chat::Channel(state.env.canister_id().into(), channel_id));
 
-            let blocked: Vec<_> = chat.members.blocked.iter().copied().collect();
+            let blocked: Vec<_> = chat.members.blocked();
             if !blocked.is_empty() {
                 let mut blocked_from_community = Vec::new();
 
@@ -209,12 +209,15 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
 
     let (members_to_add_to_community, local_user_index_canister_id) = mutate_state(|state| {
         let channel = state.data.channels.get(&channel_id).unwrap();
+        let bots = channel.chat.members.bots();
         let mut to_add: HashMap<UserId, UserType> = HashMap::new();
-        for (user_id, user_type) in channel.chat.members.iter().map(|m| (m.user_id, m.user_type)) {
-            if let Some(member) = state.data.members.get_by_user_id_mut(&user_id) {
+
+        for user_id in channel.chat.members.member_ids().iter() {
+            if let Some(member) = state.data.members.get_by_user_id_mut(user_id) {
                 member.channels.insert(channel_id);
             } else {
-                to_add.insert(user_id, user_type);
+                let user_type = bots.get(user_id).copied().unwrap_or_default();
+                to_add.insert(*user_id, user_type);
             }
         }
 
@@ -333,7 +336,7 @@ pub(crate) fn mark_import_complete(group_id: ChatId, channel_id: ChannelId) {
                 },
                 group_id,
                 group_name: channel.chat.name.value.clone(),
-                members: channel.chat.members.iter().map(|m| m.user_id).collect(),
+                members: channel.chat.members.member_ids().iter().copied().collect(),
                 other_public_channels: state
                     .data
                     .channels

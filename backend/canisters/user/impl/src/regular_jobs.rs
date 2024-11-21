@@ -10,13 +10,7 @@ pub(crate) fn build() -> RegularJobs<Data> {
         aggregate_direct_chat_metrics,
         5 * MINUTE_IN_MS,
     );
-    let retry_deleting_files = RegularJob::new("Retry deleting files", retry_deleting_files, MINUTE_IN_MS);
-
-    RegularJobs::new(vec![
-        check_cycles_balance,
-        aggregate_direct_chat_metrics,
-        retry_deleting_files,
-    ])
+    RegularJobs::new(vec![check_cycles_balance, aggregate_direct_chat_metrics])
 }
 
 fn check_cycles_balance(_: &dyn Environment, data: &mut Data) {
@@ -25,8 +19,4 @@ fn check_cycles_balance(_: &dyn Environment, data: &mut Data) {
 
 fn aggregate_direct_chat_metrics(_: &dyn Environment, data: &mut Data) {
     data.direct_chats.aggregate_metrics();
-}
-
-fn retry_deleting_files(_: &dyn Environment, _: &mut Data) {
-    storage_bucket_client::retry_failed();
 }

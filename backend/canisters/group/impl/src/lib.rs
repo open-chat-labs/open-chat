@@ -12,9 +12,7 @@ use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStore
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::GatePayment;
-use group_chat_core::{
-    AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, GroupRoleInternal, InvitedUsersResult, UserInvitation,
-};
+use group_chat_core::{AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, InvitedUsersResult, UserInvitation};
 use group_community_common::{
     Achievements, ExpiringMemberActions, ExpiringMembers, PaymentReceipts, PaymentRecipient, PendingPayment,
     PendingPaymentReason, PendingPaymentsQueue, UserCache,
@@ -131,14 +129,7 @@ impl RuntimeState {
 
     pub fn queue_access_gate_payments(&mut self, payment: GatePayment) {
         // Queue a payment to each owner less the fee
-        let owners: Vec<UserId> = self
-            .data
-            .chat
-            .members
-            .iter()
-            .filter(|m| matches!(m.role.value, GroupRoleInternal::Owner))
-            .map(|m| m.user_id)
-            .collect();
+        let owners = self.data.chat.members.owners();
 
         let owner_count = owners.len() as u128;
         let owner_share = (payment.amount * (100 - SNS_FEE_SHARE_PERCENT) / 100) / owner_count;
@@ -148,7 +139,7 @@ impl RuntimeState {
                     amount: owner_share,
                     fee: payment.fee,
                     ledger_canister: payment.ledger_canister_id,
-                    recipient: PaymentRecipient::Member(owner),
+                    recipient: PaymentRecipient::Member(*owner),
                     reason: PendingPaymentReason::AccessGate,
                 });
             }
@@ -178,13 +169,13 @@ impl RuntimeState {
         let events_ttl = chat.events.get_events_time_to_live();
 
         let membership = GroupMembership {
-            joined: member.date_added,
-            role: member.role.value.into(),
-            mentions: member.most_recent_mentions(None, &chat.events),
+            joined: member.date_added(),
+            role: member.role().value.into(),
+            mentions: chat.most_recent_mentions(member, None),
             notifications_muted: member.notifications_muted.value,
             my_metrics: chat
                 .events
-                .user_metrics(&member.user_id, None)
+                .user_metrics(&member.user_id(), None)
                 .map(|m| m.hydrate())
                 .unwrap_or_default(),
             latest_threads: member
@@ -198,13 +189,13 @@ impl RuntimeState {
                 .rules_accepted
                 .as_ref()
                 .map_or(false, |version| version.value >= chat.rules.text.version),
-            lapsed: member.lapsed.value,
+            lapsed: member.lapsed().value,
         };
 
         GroupCanisterGroupChatSummary {
             chat_id: self.env.canister_id().into(),
             local_user_index_canister_id: self.data.local_user_index_canister_id,
-            last_updated: chat.last_updated(Some(member.user_id)),
+            last_updated: chat.last_updated(Some(member.user_id())),
             name: chat.name.value.clone(),
             description: chat.description.value.clone(),
             subtype: chat.subtype.value.clone(),
@@ -214,7 +205,7 @@ impl RuntimeState {
             messages_visible_to_non_members: chat.messages_visible_to_non_members.value,
             min_visible_event_index,
             min_visible_message_index,
-            latest_message: main_events_reader.latest_message_event(Some(member.user_id)),
+            latest_message: main_events_reader.latest_message_event(Some(member.user_id())),
             latest_event_index: main_events_reader.latest_event_index().unwrap_or_default(),
             latest_message_index: main_events_reader.latest_message_index(),
             joined: membership.joined,
@@ -404,9 +395,9 @@ impl RuntimeState {
             public: group_chat_core.is_public.value,
             date_created: group_chat_core.date_created,
             members: group_chat_core.members.len(),
-            moderators: group_chat_core.members.moderator_count(),
-            admins: group_chat_core.members.admin_count(),
-            owners: group_chat_core.members.owner_count(),
+            moderators: group_chat_core.members.moderators().len() as u32,
+            admins: group_chat_core.members.admins().len() as u32,
+            owners: group_chat_core.members.owners().len() as u32,
             blocked: group_chat_core.members.blocked().len() as u32,
             invited: self.data.chat.invited_users.len() as u32,
             chat_metrics: group_chat_core.events.metrics().hydrate(),
@@ -590,7 +581,7 @@ impl Data {
     }
 
     pub fn lookup_user_id(&self, user_id_or_principal: Principal) -> Option<UserId> {
-        self.get_member(user_id_or_principal).map(|m| m.user_id)
+        self.get_member(user_id_or_principal).map(|m| m.user_id())
     }
 
     pub fn get_member(&self, user_id_or_principal: Principal) -> Option<&GroupMemberInternal> {

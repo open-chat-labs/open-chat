@@ -12,7 +12,6 @@ pub mod c2c_handle_bot_actions;
 pub mod c2c_handle_bot_messages;
 pub mod c2c_mark_community_updated_for_user;
 pub mod c2c_mark_group_updated_for_user;
-pub mod c2c_migrate_events_to_stable_memory;
 pub mod c2c_notify_achievement;
 pub mod c2c_notify_community_canister_events;
 pub mod c2c_notify_community_deleted;

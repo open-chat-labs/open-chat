@@ -30,7 +30,7 @@ fn upload_file() {
     let bucket = allocated_bucket_response.canister_id;
     let file_id = allocated_bucket_response.file_id;
 
-    client::storage_bucket::happy_path::upload_file(env, user_id, bucket, file_id, file, None);
+    client::storage_bucket::happy_path::upload_file(env, user_id, bucket, file_id, file, Vec::new(), None);
 
     let file_info_response = client::storage_bucket::happy_path::file_info(env, user_id, bucket, file_id);
 

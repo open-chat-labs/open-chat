@@ -2,7 +2,7 @@ import { locale } from "svelte-i18n";
 import { get } from "svelte/store";
 import { getDecimalSeparator } from "./i18n";
 
-export function validateTokenInput(value: string, powTenPerWhole: number): ValidatedICPInput {
+export function validateTokenInput(value: string, powTenPerWhole: number): ValidatedTokenInput {
     const [replacementText, amount] = validateInput(value, powTenPerWhole);
 
     return {
@@ -72,7 +72,7 @@ function format(
     units: bigint,
     powTenPerWhole: number,
     decimalSeparatorOverride: string | undefined,
-    fullPrecision: boolean
+    fullPrecision: boolean,
 ): string {
     // This is a bespoke notion of significant figures!
     const maxSignificantFigures = 6;
@@ -93,25 +93,31 @@ function format(
 
     if (!fullPrecision) {
         if (integral > 0) {
-            const maxFractionalDecimalPlaces = Math.max(maxSignificantFigures - integralString.length, 0);
+            const maxFractionalDecimalPlaces = Math.max(
+                maxSignificantFigures - integralString.length,
+                0,
+            );
             if (fractionalString.length > maxFractionalDecimalPlaces) {
                 fractionalString = fractionalString.substring(0, maxFractionalDecimalPlaces);
             }
-
         } else {
-            const significantFigures = fractionalString.replace(/^0+/, '').length;
+            const significantFigures = fractionalString.replace(/^0+/, "").length;
             if (significantFigures > maxSignificantFigures) {
-                const indexToRemove = maxSignificantFigures + fractionalString.length - significantFigures
+                const indexToRemove =
+                    maxSignificantFigures + fractionalString.length - significantFigures;
                 fractionalString = fractionalString.substring(0, indexToRemove);
             }
         }
     }
 
     // Remove trailing zeros leaving 0, 1, or 2 depending on how many integral digits we have already
-    const minDecimalPlaces = Math.max(0, Math.min(2, maxSignificantFigures - integralString.length));
+    const minDecimalPlaces = Math.max(
+        0,
+        Math.min(2, maxSignificantFigures - integralString.length),
+    );
 
     for (let i = fractionalString.length - 1; i >= minDecimalPlaces; i--) {
-        if (fractionalString[i] === '0') {
+        if (fractionalString[i] === "0") {
             fractionalString = fractionalString.slice(0, -1);
         } else {
             break;
@@ -123,7 +129,7 @@ function format(
         : integralString;
 }
 
-export type ValidatedICPInput = {
+export type ValidatedTokenInput = {
     replacementText: string | undefined;
     amount: bigint;
 };

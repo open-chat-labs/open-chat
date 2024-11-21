@@ -9,6 +9,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Pass in `bot_api_gateway` when creating groups and communities ([#6842](https://github.com/open-chat-labs/open-chat/pull/6842))
+- Simplify `inspect_message` ([#6847](https://github.com/open-chat-labs/open-chat/pull/6847))
+
+### Removed
+
+- Remove all code to migrate events to stable memory ([#6858](https://github.com/open-chat-labs/open-chat/pull/6858))
 
 ## [[2.0.1452](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1452-local_group_index)] - 2024-11-14
 
