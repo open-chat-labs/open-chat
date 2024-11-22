@@ -30,7 +30,6 @@
         userStore,
         throttleDeadline,
         currentCommunityUserGroups as userGroups,
-        cryptoLookup,
         anonUser,
         selectedCommunity,
     } from "openchat-client";
@@ -95,10 +94,6 @@
     let textboxId = Symbol();
 
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && attachment === undefined;
-    $: tokens = Object.values($cryptoLookup)
-        .map((t) => t.symbol.toLowerCase())
-        .join("|");
-    $: tokenMatchRegex = new RegExp(`^\/(${tokens}) *(\\d*[.,]?\\d*)$`);
     $: canSendAny = !$anonUser && client.canSendMessage(chat.id, mode);
     $: permittedMessages = client.permittedMessages(chat.id, mode);
     $: canEnterText =
