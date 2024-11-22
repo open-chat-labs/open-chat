@@ -26,10 +26,6 @@ fn set_display_name_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
 
         let now = state.env.now();
-        if !user.diamond_membership_details.is_active(now) && user.display_name.is_none() {
-            return Unauthorized;
-        }
-
         let mut user_to_update = user.clone();
         user_to_update.display_name.clone_from(&args.display_name);
         let user_id = user.user_id;
