@@ -24,9 +24,23 @@ function filterCommand(c: FlattenedCommand): boolean {
     }
 }
 
+function parseCommand(input: string): string[] {
+    const regex = /"([^"]+)"|(\S+)/g;
+    const result: string[] = [];
+    let match;
+    while ((match = regex.exec(input)) !== null) {
+        if (match[1]) {
+            result.push(match[1]);
+        } else if (match[2]) {
+            result.push(match[2]);
+        }
+    }
+    return result;
+}
+
 let error = $state<string | undefined>(undefined);
 let prefix = $state<string>("");
-let prefixParts = $derived(prefix.split(" "));
+let prefixParts = $derived(parseCommand(prefix));
 let maybeParams = $derived(prefixParts.slice(1));
 let parsedPrefix = $derived(prefixParts[0].slice(1).toLocaleLowerCase());
 let bots = $state<Bot[]>([]);

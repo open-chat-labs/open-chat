@@ -351,12 +351,6 @@
             $snowing = true;
         }
 
-        const searchMatch = txt.match(/^\/search( *(.*))$/);
-        if (searchMatch && searchMatch[2] !== undefined) {
-            dispatch("searchChat", searchMatch[2]);
-            return true;
-        }
-
         if (permittedMessages.get("giphy")) {
             const gifMatch = txt.match(/^\/gif( *(.*))$/);
             if (gifMatch && gifMatch[2] !== undefined) {

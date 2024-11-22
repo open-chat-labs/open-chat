@@ -216,6 +216,7 @@ import {
     LoadedPreviousMessages,
     ReactionSelected,
     RemoteVideoCallStartedEvent,
+    SearchChat,
     SelectedChatInvalid,
     SendingMessage,
     SendMessageFailed,
@@ -7616,6 +7617,8 @@ export class OpenChat extends OpenChatAgentWorker {
             const url = addQueryStringParam("diamond", "");
             const msg = `[${this.config.i18nFormatter("upgrade.message")}](${url})`;
             this.sendMessageWithAttachment(bot.command.messageContext, msg, false, undefined, []);
+        } else if (bot.command.name === "search" && bot.command.params[0]?.kind === "string") {
+            this.dispatchEvent(new SearchChat(bot.command.params[0]?.value ?? ""));
         }
         return Promise.resolve(true);
     }

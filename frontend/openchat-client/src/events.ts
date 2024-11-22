@@ -195,3 +195,11 @@ export class CreateTestMessages extends CustomEvent<[MessageContext, number]> {
         });
     }
 }
+
+export class SearchChat extends CustomEvent<string> {
+    constructor(search: string) {
+        super("openchat_event", {
+            detail: search,
+        });
+    }
+}

@@ -37,6 +37,7 @@
         selectedCommunity,
         CreatePoll,
         CreateTestMessages,
+        SearchChat,
     } from "openchat-client";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
@@ -142,6 +143,9 @@
             if (chatId === messageContext.chatId && threadRootMessageIndex === undefined) {
                 createTestMessages(num);
             }
+        }
+        if (ev instanceof SearchChat) {
+            searchChat(ev);
         }
     }
 
