@@ -68,7 +68,7 @@
                 break;
             case "Enter":
                 botState.setSelectedCommand();
-                if (botState.selectedCommand && botState.selectedCommand.params.length === 0) {
+                if (botState.selectedCommand && botState.instanceValid) {
                     client
                         .executeBotCommand(
                             botState.createBotInstance(botState.selectedCommand, messageContext),

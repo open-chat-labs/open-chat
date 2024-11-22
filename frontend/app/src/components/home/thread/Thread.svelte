@@ -13,7 +13,7 @@
         TimelineItem,
         MessageContent,
     } from "openchat-client";
-    import { CreatePoll, LEDGER_CANISTER_ICP } from "openchat-client";
+    import { CreatePoll, CreateTestMessages, LEDGER_CANISTER_ICP } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import Loading from "../../Loading.svelte";
     import { derived, readable } from "svelte/store";
@@ -107,13 +107,20 @@
                 createPoll();
             }
         }
+        if (ev instanceof CreateTestMessages) {
+            const [{ chatId, threadRootMessageIndex }, num] = ev.detail;
+            if (
+                chatId === messageContext.chatId &&
+                threadRootMessageIndex === messageContext.threadRootMessageIndex
+            ) {
+                createTestMessages(num);
+            }
+        }
     }
 
-    function createTestMessages(ev: CustomEvent<number>): void {
-        if (process.env.NODE_ENV === "production") return;
-
+    function createTestMessages(total: number): void {
         function send(n: number) {
-            if (n === ev.detail) return;
+            if (n === total) return;
 
             sendMessageWithAttachment(randomSentence(), false, undefined);
 
@@ -431,7 +438,6 @@
         on:attachGif={attachGif}
         on:makeMeme={makeMeme}
         on:tokenTransfer={tokenTransfer}
-        on:createTestMessages={createTestMessages}
         on:createP2PSwapMessage={createP2PSwapMessage}
         on:createPoll={createPoll} />
 {/if}

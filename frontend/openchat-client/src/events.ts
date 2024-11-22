@@ -187,3 +187,11 @@ export class CreatePoll extends CustomEvent<MessageContext> {
         });
     }
 }
+
+export class CreateTestMessages extends CustomEvent<[MessageContext, number]> {
+    constructor(detail: [MessageContext, number]) {
+        super("openchat_event", {
+            detail,
+        });
+    }
+}

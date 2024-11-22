@@ -36,6 +36,7 @@
         communities,
         selectedCommunity,
         CreatePoll,
+        CreateTestMessages,
     } from "openchat-client";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
@@ -136,6 +137,12 @@
                 createPoll();
             }
         }
+        if (ev instanceof CreateTestMessages) {
+            const [{ chatId, threadRootMessageIndex }, num] = ev.detail;
+            if (chatId === messageContext.chatId && threadRootMessageIndex === undefined) {
+                createTestMessages(num);
+            }
+        }
     }
 
     function importToCommunity() {
@@ -210,11 +217,9 @@
         searchTerm = ev.detail;
     }
 
-    function createTestMessages(ev: CustomEvent<number>): void {
-        if (process.env.NODE_ENV === "production") return;
-
+    function createTestMessages(total: number): void {
         function send(n: number) {
-            if (n === ev.detail) return;
+            if (n === total) return;
 
             sendMessageWithAttachment(randomSentence(), false, undefined);
 
@@ -441,7 +446,6 @@
             on:fileSelected={fileSelected}
             on:audioCaptured={fileSelected}
             on:sendMessage={sendMessage}
-            on:createTestMessages={createTestMessages}
             on:attachGif={attachGif}
             on:makeMeme={makeMeme}
             on:tokenTransfer={tokenTransfer}

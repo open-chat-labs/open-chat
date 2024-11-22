@@ -97,6 +97,7 @@ export const bots: Bot[] = [
                         required: true,
                         description: "Please select the city for requested forecast",
                         placeholder: "Select city",
+                        defaultValue: "london",
                         choices: [
                             { kind: "option", name: "London", value: "london" },
                             { kind: "option", name: "Paris", value: "paris" },
@@ -191,6 +192,30 @@ export const bots: Bot[] = [
                     threadPermissions: ["text"],
                 },
                 params: [],
+            },
+            {
+                name: "test-msg",
+                description: "Create and send a number of test messages",
+                devmode: true,
+                permissions: {
+                    ...emptyPermissions,
+                    messagePermissions: ["text"],
+                    threadPermissions: ["text"],
+                },
+                params: [
+                    {
+                        kind: "number",
+                        name: "Number of messages",
+                        minValue: 0,
+                        maxValue: 50,
+                        required: true,
+                        defaultValue: 5,
+                        description: "Enter the number of messages you want to create",
+                        placeholder: "Number of messages",
+                        errorMessage: "You need to enter the number of messages to enter",
+                        choices: [],
+                    },
+                ],
             },
         ],
     },

@@ -1,13 +1,18 @@
-import type {
-    Bot,
-    BotCommandInstance,
-    FlattenedCommand,
-    MessageContext,
-    SlashCommandParamInstance,
+import {
+    createParamInstancesFromSchema,
+    paramInstanceIsValid,
+    type Bot,
+    type BotCommandInstance,
+    type FlattenedCommand,
+    type MessageContext,
+    type SlashCommandParam,
+    type SlashCommandParamInstance,
 } from "openchat-client";
 import { getBots } from "./testBots";
 
 function filterCommand(c: FlattenedCommand): boolean {
+    if (c.devmode && process.env.NODE_ENV === "production") return false;
+
     if (prefixParts.length > 1) {
         return c.name.toLocaleLowerCase() === parsedPrefix.toLocaleLowerCase();
     } else {
@@ -22,6 +27,7 @@ function filterCommand(c: FlattenedCommand): boolean {
 let error = $state<string | undefined>(undefined);
 let prefix = $state<string>("");
 let prefixParts = $derived(prefix.split(" "));
+let maybeParams = $derived(prefixParts.slice(1));
 let parsedPrefix = $derived(prefixParts[0].slice(1).toLocaleLowerCase());
 let bots = $state<Bot[]>([]);
 let commands = $derived.by(() => {
@@ -61,6 +67,22 @@ let focusedParamIndex = $state(0);
 let focusedParam = $derived(selectedCommand?.params?.[focusedParamIndex]);
 let selectedCommandParamInstances = $state<SlashCommandParamInstance[]>([]);
 let focusedParamInstance = $derived(selectedCommandParamInstances[focusedParamIndex]);
+let instanceValid = $derived.by(() => {
+    if (selectedCommand === undefined) return false;
+    if (selectedCommandParamInstances.length !== selectedCommand.params.length) {
+        return false;
+    }
+    const pairs: [SlashCommandParam, SlashCommandParamInstance][] = selectedCommand.params.map(
+        (p, i) => [p, botState.selectedCommandParamInstances[i]],
+    );
+    return pairs.every(([p, i]) => paramInstanceIsValid(p, i));
+});
+let showingBuilder = $derived(selectedCommand !== undefined && !instanceValid);
+
+function commandsMatch(a: FlattenedCommand | undefined, b: FlattenedCommand | undefined): boolean {
+    if (a === undefined || b === undefined) return false;
+    return a.botName === b.botName && a.name === b.name;
+}
 
 class BotState {
     constructor() {
@@ -71,6 +93,12 @@ class BotState {
     }
     set bots(val: Bot[]) {
         bots = val;
+    }
+    get showingBuilder() {
+        return showingBuilder;
+    }
+    get instanceValid() {
+        return instanceValid;
     }
     set prefix(val: string) {
         prefix = val;
@@ -121,8 +149,21 @@ class BotState {
         selectedCommandParamInstances = [];
     }
     setSelectedCommand() {
-        this.selectedCommand = commands[focusedCommandIndex];
-        return this.selectedCommand;
+        const cmd = commands[focusedCommandIndex];
+
+        // make sure that we don't set the same command twice
+        if (!commandsMatch(selectedCommand, cmd)) {
+            selectedCommand = cmd;
+            if (selectedCommand !== undefined) {
+                if (selectedCommand.params.length > 0) {
+                    this.selectedCommandParamInstances = createParamInstancesFromSchema(
+                        selectedCommand.params,
+                        maybeParams,
+                    );
+                }
+            }
+        }
+        return selectedCommand;
     }
     get selectedCommand(): FlattenedCommand | undefined {
         return selectedCommand;

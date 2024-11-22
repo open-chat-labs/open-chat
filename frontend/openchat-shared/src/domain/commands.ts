@@ -47,6 +47,7 @@ export type SlashCommandSchema = {
     description?: string;
     params: SlashCommandParam[];
     permissions: SlashCommandPermissions;
+    devmode?: boolean;
 };
 
 export type SlashCommandPermissions = {
@@ -135,7 +136,7 @@ export type StringParamInstance = {
 
 export type NumberParamInstance = {
     kind: "number";
-    value?: number;
+    value: number | null; // this is to do with how number input binding works
 };
 
 export type SlashCommandParamTypeInstance =
@@ -148,15 +149,21 @@ export type SlashCommandParamInstance = CommandParamInstance & SlashCommandParam
 
 export function createParamInstancesFromSchema(
     params: SlashCommandParam[],
+    maybeParams: string[],
 ): SlashCommandParamInstance[] {
-    return params.map((p) => {
+    return params.map((p, i) => {
         switch (p.kind) {
             case "user":
                 return { kind: "user", name: p.name };
             case "boolean":
                 return { kind: "boolean", name: p.name, value: false };
             case "number":
-                return { kind: "number", name: p.name, value: Number.MIN_VALUE };
+                const param = Number(maybeParams[i]);
+                let value = isNaN(param) ? null : param;
+                if (p.choices.length > 0) {
+                    value = p.choices.find((c) => c.value === value)?.value ?? null;
+                }
+                return { kind: "number", name: p.name, value };
             case "string":
                 return { kind: "string", name: p.name, value: "" };
         }
@@ -180,11 +187,10 @@ export function paramInstanceIsValid(
         );
     } else if (schema.kind === "number" && instance.kind === "number") {
         return (
-            !schema.required ||
-            (instance.value !== undefined &&
-                instance.value !== Number.MIN_VALUE &&
-                instance.value > schema.minValue &&
-                instance.value < schema.maxValue)
+            (!schema.required && instance.value === null) ||
+            (instance.value !== null &&
+                instance.value >= schema.minValue &&
+                instance.value <= schema.maxValue)
         );
     }
 

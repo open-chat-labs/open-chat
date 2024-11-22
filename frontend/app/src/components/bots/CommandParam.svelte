@@ -4,28 +4,20 @@
         SlashCommandParamInstance,
         UserSummary,
     } from "openchat-client";
-    import { onMount } from "svelte";
+    // import { onMount } from "svelte";
     import Legend from "../Legend.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Input from "../Input.svelte";
     import SingleUserSelector from "../home/SingleUserSelector.svelte";
     import Select from "../Select.svelte";
+    import NumberInput from "../NumberInput.svelte";
 
     interface Props {
         param: SlashCommandParam;
-        index: number;
         instance: SlashCommandParamInstance;
     }
 
-    let { param, index, instance }: Props = $props();
-
-    let inp: HTMLInputElement;
-
-    onMount(() => {
-        if (index === 0) {
-            inp?.focus();
-        }
-    });
+    let { param, instance = $bindable() }: Props = $props();
 </script>
 
 <div class="param">
@@ -69,13 +61,18 @@
         <Legend label={i18nKey(param.name)} required={param.required} />
         {#if param.choices?.length ?? 0 > 0}
             <Select bind:value={instance.value}>
-                <option value={Number.MIN_VALUE} selected disabled>{`Choose ${param.name}`}</option>
+                <option value={null} selected disabled>{`Choose ${param.name}`}</option>
                 {#each param.choices as choice}
                     <option value={choice.value}>{choice.name}</option>
                 {/each}
             </Select>
         {:else}
-            <Input placeholder={i18nKey(param.placeholder ?? "")} bind:value={instance.value} />
+            <NumberInput
+                min={param.minValue}
+                max={param.maxValue}
+                shouldClamp={false}
+                placeholder={param.placeholder ?? ""}
+                bind:value={instance.value} />
         {/if}
     {/if}
 </div>

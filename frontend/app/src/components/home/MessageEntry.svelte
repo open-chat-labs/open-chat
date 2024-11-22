@@ -38,7 +38,6 @@
     } from "openchat-client";
     import { enterSend } from "../../stores/settings";
     import MessageActions from "./MessageActions.svelte";
-    import { addQueryStringParam } from "../../utils/urls";
     import PreviewFooter from "./PreviewFooter.svelte";
     import { snowing } from "../../stores/snow";
     import Translatable from "../Translatable.svelte";
@@ -352,12 +351,6 @@
             $snowing = true;
         }
 
-        const testMsgMatch = txt.match(/^\/test-msg (\d+)/);
-        if (testMsgMatch && testMsgMatch[1] !== undefined) {
-            dispatch("createTestMessages", Number(testMsgMatch[1]));
-            return true;
-        }
-
         const searchMatch = txt.match(/^\/search( *(.*))$/);
         if (searchMatch && searchMatch[2] !== undefined) {
             dispatch("searchChat", searchMatch[2]);
@@ -534,7 +527,7 @@
     }
 </script>
 
-{#if botState.selectedCommand !== undefined && botState.selectedCommand.params.length > 0}
+{#if botState.selectedCommand && botState.showingBuilder}
     <CommandBuilder
         {messageContext}
         onCancel={cancelCommandSelector}

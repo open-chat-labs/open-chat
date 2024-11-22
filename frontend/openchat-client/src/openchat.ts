@@ -210,6 +210,7 @@ import {
     ChatUpdated,
     ChitEarnedEvent,
     CreatePoll,
+    CreateTestMessages,
     LoadedMessageWindow,
     LoadedNewMessages,
     LoadedPreviousMessages,
@@ -7602,11 +7603,16 @@ export class OpenChat extends OpenChatAgentWorker {
     executeInternalBotCommand(bot: InternalBotCommandInstance): Promise<boolean> {
         if (bot.command.name === "witch") {
             this.dispatchEvent(new SummonWitch());
-        }
-        if (bot.command.name === "poll") {
+        } else if (bot.command.name === "poll") {
             this.dispatchEvent(new CreatePoll(bot.command.messageContext));
-        }
-        if (bot.command.name === "diamond") {
+        } else if (bot.command.name === "test-msg") {
+            const param = bot.command.params[0];
+            if (param !== undefined && param.kind === "number" && param.value !== null) {
+                this.dispatchEvent(
+                    new CreateTestMessages([bot.command.messageContext, param.value]),
+                );
+            }
+        } else if (bot.command.name === "diamond") {
             const url = addQueryStringParam("diamond", "");
             const msg = `[${this.config.i18nFormatter("upgrade.message")}](${url})`;
             this.sendMessageWithAttachment(bot.command.messageContext, msg, false, undefined, []);

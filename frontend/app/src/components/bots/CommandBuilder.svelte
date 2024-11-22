@@ -1,6 +1,6 @@
 <script lang="ts">
     import {
-        createParamInstancesFromSchema,
+        // createParamInstancesFromSchema,
         paramInstanceIsValid,
         type FlattenedCommand,
         type MessageContext,
@@ -28,9 +28,10 @@
     const client = getContext<OpenChat>("client");
     let { command, onCancel, messageContext }: Props = $props();
     let commandName = $derived(`/${command.name}`);
+    let form: HTMLFormElement;
 
     onMount(() => {
-        botState.selectedCommandParamInstances = createParamInstancesFromSchema(command.params);
+        setTimeout(() => focusFirstInput(), 100);
     });
 
     let valid = $derived.by(() => {
@@ -43,7 +44,8 @@
         return pairs.every(([p, i]) => paramInstanceIsValid(p, i));
     });
 
-    function onSubmit() {
+    function onSubmit(e: Event) {
+        e.preventDefault();
         client
             .executeBotCommand(botState.createBotInstance(command, messageContext))
             .then((success) => {
@@ -53,22 +55,49 @@
             })
             .finally(onCancel);
     }
+
+    function focusFirstInput() {
+        if (form === undefined) return;
+
+        const formElements = form.querySelectorAll("input, select, textarea, button");
+        for (const el of formElements) {
+            if (el instanceof HTMLElement && isFocusable(el)) {
+                el.focus();
+
+                if (isTextBox(el)) {
+                    el.select();
+                }
+                break;
+            }
+        }
+    }
+
+    function isTextBox(element: HTMLElement): element is HTMLInputElement | HTMLTextAreaElement {
+        return (
+            (element instanceof HTMLInputElement && element.type === "text") ||
+            element instanceof HTMLTextAreaElement
+        );
+    }
+
+    function isFocusable(element: HTMLElement): boolean {
+        return (
+            !(element as HTMLInputElement | HTMLButtonElement | HTMLSelectElement).disabled &&
+            element.offsetParent !== null
+        );
+    }
 </script>
 
 <Overlay>
     <ModalContent on:close={onCancel}>
         <div slot="header">{commandName}</div>
-        <div slot="body">
+        <form bind:this={form} slot="body" onsubmit={onSubmit}>
             <p>{command.description}</p>
             {#if botState.selectedCommandParamInstances.length === command?.params?.length}
                 {#each command?.params ?? [] as param, i}
-                    <CommandParam
-                        instance={botState.selectedCommandParamInstances[i]}
-                        index={i}
-                        {param} />
+                    <CommandParam instance={botState.selectedCommandParamInstances[i]} {param} />
                 {/each}
             {/if}
-        </div>
+        </form>
         <div slot="footer">
             <Button disabled={!valid} on:click={onSubmit} small={!$mobileWidth} tiny={$mobileWidth}>
                 <Translatable resourceKey={i18nKey("Submit")} />

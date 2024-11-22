@@ -168,8 +168,7 @@
         on:fileSelected
         on:audioCaptured
         on:joinGroup
-        on:upgrade
-        on:createTestMessages />
+        on:upgrade />
 </div>
 
 <style lang="scss">
