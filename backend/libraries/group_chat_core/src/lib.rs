@@ -752,28 +752,22 @@ impl GroupChatCore {
                             // Bump the thread timestamp for all followers
                             member.followed_threads.insert(root_message_index, now);
 
-                            if member.can_receive_notifications(sender) {
-                                let mentioned = mentions.contains(&member.user_id())
-                                    || (is_first_reply && member.user_id() == root_message_sender);
+                            let mentioned = mentions.contains(&member.user_id())
+                                || (is_first_reply && member.user_id() == root_message_sender);
 
-                                if mentioned {
-                                    member.mentions.add(thread_root_message_index, message_index, message_id, now);
-                                }
+                            if mentioned {
+                                member.mentions.add(thread_root_message_index, message_index, message_id, now);
+                            }
 
-                                if mentioned || !member.notifications_muted().value {
-                                    users_to_notify.insert(member.user_id());
-                                }
+                            if mentioned || !member.notifications_muted().value {
+                                users_to_notify.insert(member.user_id());
                             }
                         }
                     }
                 }
             } else {
                 for mentioned in mentions {
-                    if let Some(member) = self
-                        .members
-                        .get_mut(&mentioned)
-                        .filter(|m| m.can_receive_notifications(sender))
-                    {
+                    if let Some(member) = self.members.get_mut(&mentioned) {
                         member.mentions.add(thread_root_message_index, message_index, message_id, now);
                         users_to_notify.insert(mentioned);
                     }
@@ -783,27 +777,23 @@ impl GroupChatCore {
                         now,
                         AtEveryoneMention::new(sender, message_event.event.message_id, message_event.event.message_index),
                     );
-                    // Notify everyone...
-                    for user_id in self.members.member_ids() {
-                        users_to_notify.insert(*user_id);
-                    }
-                    // ... except bots
-                    for bot in self.members.bots().keys() {
-                        users_to_notify.remove(bot);
-                    }
-                    // ... and lapsed members
-                    for user_id in self.members.lapsed() {
-                        users_to_notify.remove(user_id);
-                    }
-                    // TODO and suspended members
+                    // Notify everyone
+                    users_to_notify.extend(self.members.member_ids().iter().copied());
                 } else {
                     // Notify everyone who has notifications unmuted
-                    for user_id in self.members.notifications_unmuted() {
-                        users_to_notify.insert(*user_id);
-                    }
+                    users_to_notify.extend(self.members.notifications_unmuted().iter().copied());
                 }
             }
         }
+
+        // Exclude bots, lapsed members, and suspended members from notifications
+        for bot in self.members.bots().keys() {
+            users_to_notify.remove(bot);
+        }
+        for user_id in self.members.lapsed() {
+            users_to_notify.remove(user_id);
+        }
+        // TODO remove suspended members
 
         Success(SendMessageSuccess {
             message_event,

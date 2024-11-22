@@ -644,10 +644,6 @@ impl GroupMemberInternal {
                 .as_ref()
                 .map_or(false, |accepted| accepted.value >= rules.text.version))
     }
-
-    pub fn can_receive_notifications(&self, sender: UserId) -> bool {
-        self.user_id != sender && !self.user_type.is_bot() && !self.suspended.value && !self.lapsed.value
-    }
 }
 
 impl Member for GroupMemberInternal {
