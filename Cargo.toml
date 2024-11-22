@@ -151,6 +151,7 @@ members = [
     "backend/libraries/search",
     "backend/libraries/sha256",
     "backend/libraries/stable_memory",
+    "backend/libraries/stable_memory_map",
     "backend/libraries/testing",
     "backend/libraries/timer_job_queues",
     "backend/libraries/ts_export",
