@@ -169,7 +169,9 @@ export function createParamInstancesFromSchema(
                 if (p.choices.length > 0) {
                     strParam =
                         p.choices.find(
-                            (c) => c.name.toLocaleLowerCase() === strParam.toLocaleLowerCase(),
+                            (c) =>
+                                c.name.toLocaleLowerCase() === strParam.toLocaleLowerCase() ||
+                                c.value.toLocaleLowerCase() === strParam.toLocaleLowerCase(),
                         )?.value ?? "";
                 }
                 return { kind: "string", name: p.name, value: strParam };

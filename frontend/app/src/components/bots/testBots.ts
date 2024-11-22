@@ -255,6 +255,109 @@ export const bots: Bot[] = [
                     },
                 ],
             },
+            {
+                name: "faq",
+                description: "Create a link to an FAQ topic",
+                permissions: {
+                    ...emptyPermissions,
+                    messagePermissions: ["text"],
+                    threadPermissions: ["text"],
+                },
+                params: [
+                    {
+                        kind: "string",
+                        name: "FAQ Topic",
+                        minLength: 0,
+                        maxLength: 100,
+                        required: true,
+                        description: "The specific FAQ topic you are interested in",
+                        placeholder: "Topic",
+                        errorMessage: "You need to select a topic",
+                        choices: [
+                            {
+                                kind: "option",
+                                name: "Wallet",
+                                value: "wallet",
+                            },
+                            {
+                                kind: "option",
+                                name: "Buying CHAT",
+                                value: "buychat",
+                            },
+                            {
+                                kind: "option",
+                                name: "Sending tokens",
+                                value: "send_tokens",
+                            },
+                            {
+                                kind: "option",
+                                name: "Diamond membership",
+                                value: "diamond",
+                            },
+                            {
+                                kind: "option",
+                                name: "Referral rewards",
+                                value: "referral_rewards",
+                            },
+                            {
+                                kind: "option",
+                                name: "Voting",
+                                value: "voting",
+                            },
+                            {
+                                kind: "option",
+                                name: "Monthly airdrop",
+                                value: "airdrop",
+                            },
+                            {
+                                kind: "option",
+                                name: "iOS app",
+                                value: "ios_app",
+                            },
+                            {
+                                kind: "option",
+                                name: "Android app",
+                                value: "android_app",
+                            },
+                            {
+                                kind: "option",
+                                name: "Styling messages",
+                                value: "style_messages",
+                            },
+                            {
+                                kind: "option",
+                                name: "Storage",
+                                value: "storage",
+                            },
+                            {
+                                kind: "option",
+                                name: "Security",
+                                value: "security",
+                            },
+                            {
+                                kind: "option",
+                                name: "Information",
+                                value: "info",
+                            },
+                            {
+                                kind: "option",
+                                name: "Shortcuts",
+                                value: "shortcuts",
+                            },
+                            {
+                                kind: "option",
+                                name: "Content guidelines",
+                                value: "content",
+                            },
+                            {
+                                kind: "option",
+                                name: "Content translation",
+                                value: "translation",
+                            },
+                        ],
+                    },
+                ],
+            },
         ],
     },
 ];

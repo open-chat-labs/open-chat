@@ -351,17 +351,6 @@
             $snowing = true;
         }
 
-        const faqMatch = txt.match(/^\/faq( *(.*))$/);
-        if (faqMatch && faqMatch[2] !== undefined) {
-            if (allQuestions.includes(faqMatch[2] as Questions)) {
-                const url = `/faq?q=${faqMatch[2]}`;
-                dispatch("sendMessage", [`[🤔 FAQ: ${$_(`faq.${faqMatch[2]}_q`)}](${url})`, []]);
-            } else {
-                dispatch("sendMessage", [`[🤔 FAQs](/faq)`, []]);
-            }
-            return true;
-        }
-
         if (permittedMessages.get("crypto")) {
             const tokenMatch = txt.match(tokenMatchRegex);
             if (tokenMatch && tokenMatch[2] !== undefined) {
