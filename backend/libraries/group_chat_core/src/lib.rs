@@ -687,7 +687,6 @@ impl GroupChatCore {
 
         let PrepareSendMessageSuccess {
             min_visible_event_index,
-            mentions_disabled,
             everyone_mentioned,
             sender_user_type,
         } = match self.prepare_send_message(
@@ -753,17 +752,15 @@ impl GroupChatCore {
                             // Bump the thread timestamp for all followers
                             member.followed_threads.insert(root_message_index, now);
 
-                            if member.user_id() != sender && !member.user_type().is_bot() && !member.suspended.value {
-                                let mentioned = !mentions_disabled
-                                    && (mentions.contains(&member.user_id())
-                                        || (is_first_reply && member.user_id() == root_message_sender));
+                            if member.should_notify(sender) {
+                                let mentioned = mentions.contains(&member.user_id())
+                                    || (is_first_reply && member.user_id() == root_message_sender);
 
                                 if mentioned {
-                                    // Mention this member
                                     member.mentions.add(thread_root_message_index, message_index, message_id, now);
                                 }
 
-                                if mentioned || !member.notifications_muted.value {
+                                if mentioned || !member.notifications_muted().value {
                                     users_to_notify.insert(member.user_id());
                                 }
                             }
@@ -771,26 +768,34 @@ impl GroupChatCore {
                     }
                 }
             } else {
+                for mentioned in mentions {
+                    if let Some(member) = self.members.get_mut(&mentioned).filter(|m| m.should_notify(sender)) {
+                        member.mentions.add(thread_root_message_index, message_index, message_id, now);
+                        users_to_notify.insert(mentioned);
+                    }
+                }
                 if everyone_mentioned {
                     self.at_everyone_mentions.insert(
                         now,
                         AtEveryoneMention::new(sender, message_event.event.message_id, message_event.event.message_index),
                     );
-                }
-
-                for member in self
-                    .members
-                    .iter_mut()
-                    .filter(|m| m.user_id() != sender && !m.user_type().is_bot() && !m.suspended.value)
-                {
-                    let mentioned = !mentions_disabled && mentions.contains(&member.user_id());
-                    if mentioned {
-                        // Mention this member
-                        member.mentions.add(thread_root_message_index, message_index, message_id, now);
+                    // Notify everyone...
+                    for user_id in self.members.member_ids() {
+                        users_to_notify.insert(*user_id);
                     }
-
-                    if !member.notifications_muted.value || mentioned || everyone_mentioned {
-                        users_to_notify.insert(member.user_id());
+                    // ... except bots
+                    for bot in self.members.bots().keys() {
+                        users_to_notify.remove(bot);
+                    }
+                    // ... and lapsed members
+                    for user_id in self.members.lapsed() {
+                        users_to_notify.remove(user_id);
+                    }
+                    // TODO and suspended members
+                } else {
+                    // Notify everyone who has notifications unmuted
+                    for user_id in self.members.notifications_unmuted() {
+                        users_to_notify.insert(*user_id);
                     }
                 }
             }
@@ -816,7 +821,6 @@ impl GroupChatCore {
         if sender == OPENCHAT_BOT_USER_ID || sender == proposals_bot_user_id {
             return Success(PrepareSendMessageSuccess {
                 min_visible_event_index: EventIndex::default(),
-                mentions_disabled: true,
                 everyone_mentioned: false,
                 sender_user_type: UserType::OcControlledBot,
             });
@@ -851,7 +855,6 @@ impl GroupChatCore {
 
         Success(PrepareSendMessageSuccess {
             min_visible_event_index: member.min_visible_event_index(),
-            mentions_disabled: false,
             everyone_mentioned: member.role().can_mention_everyone(permissions) && is_everyone_mentioned(content),
             sender_user_type: member.user_type(),
         })
@@ -2295,7 +2298,6 @@ enum PrepareSendMessageResult {
 
 struct PrepareSendMessageSuccess {
     min_visible_event_index: EventIndex,
-    mentions_disabled: bool,
     everyone_mentioned: bool,
     sender_user_type: UserType,
 }

@@ -41,7 +41,7 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
     let membership = GroupMembershipUpdates {
         role: updates.role_changed.then_some(member.role().value.into()),
         mentions: updates.mentions,
-        notifications_muted: member.notifications_muted.if_set_after(updates_since).cloned(),
+        notifications_muted: member.notifications_muted().if_set_after(updates_since).cloned(),
         my_metrics: state
             .data
             .chat
