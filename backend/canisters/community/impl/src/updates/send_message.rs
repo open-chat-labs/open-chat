@@ -214,20 +214,6 @@ fn process_send_message_result(
             let message_index = message_event.event.message_index;
             let message_id = message_event.event.message_id;
             let expires_at = message_event.expires_at;
-
-            // Exclude suspended members and bots from notification
-            let users_to_notify: Vec<UserId> = result
-                .users_to_notify
-                .into_iter()
-                .filter(|u| {
-                    state
-                        .data
-                        .members
-                        .get_by_user_id(u)
-                        .map_or(false, |m| !m.suspended.value && !m.user_type.is_bot())
-                })
-                .collect();
-
             let content = &message_event.event.content;
             let community_id = state.env.canister_id().into();
             let sender_is_human = state
@@ -255,7 +241,7 @@ fn process_send_message_result(
                 channel_avatar_id,
                 crypto_transfer: content.notification_crypto_transfer_details(&users_mentioned.mentioned_directly),
             });
-            state.push_notification(users_to_notify, notification);
+            state.push_notification(result.users_to_notify, notification);
 
             register_timer_jobs(channel_id, thread_root_message_index, message_event, now, &mut state.data);
 

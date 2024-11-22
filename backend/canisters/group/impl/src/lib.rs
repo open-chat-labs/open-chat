@@ -172,7 +172,7 @@ impl RuntimeState {
             joined: member.date_added(),
             role: member.role().value.into(),
             mentions: chat.most_recent_mentions(member, None),
-            notifications_muted: member.notifications_muted.value,
+            notifications_muted: member.notifications_muted().value,
             my_metrics: chat
                 .events
                 .user_metrics(&member.user_id(), None)
@@ -581,7 +581,13 @@ impl Data {
     }
 
     pub fn lookup_user_id(&self, user_id_or_principal: Principal) -> Option<UserId> {
-        self.get_member(user_id_or_principal).map(|m| m.user_id())
+        let user_id = self
+            .principal_to_user_id_map
+            .get(&user_id_or_principal)
+            .copied()
+            .unwrap_or(user_id_or_principal.into());
+
+        self.chat.members.contains(&user_id).then_some(user_id)
     }
 
     pub fn get_member(&self, user_id_or_principal: Principal) -> Option<&GroupMemberInternal> {

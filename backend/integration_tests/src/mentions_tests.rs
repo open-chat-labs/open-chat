@@ -147,6 +147,57 @@ fn mention_everyone_only_succeeds_if_authorized(authorized: bool) {
     }
 }
 
+#[test]
+fn mentioned_in_thread_adds_user_as_follower() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData {
+        user1,
+        user2,
+        user3: _,
+        group_id,
+    } = init_test_data(env, canister_ids, *controller);
+
+    client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None);
+    client::group::happy_path::send_text_message(env, &user1, group_id, Some(0.into()), random_string(), None);
+
+    client::group::send_message_v2(
+        env,
+        user1.principal,
+        group_id.into(),
+        &group_canister::send_message_v2::Args {
+            thread_root_message_index: Some(0.into()),
+            message_id: random_from_u128(),
+            content: MessageContentInitial::Text(TextContent {
+                text: format!("Hello @UserId({})!", user2.user_id),
+            }),
+            sender_name: user1.username(),
+            sender_display_name: None,
+            replies_to: None,
+            mentioned: vec![types::User {
+                user_id: user2.user_id,
+                username: user2.username(),
+            }],
+            forwarding: false,
+            block_level_markdown: false,
+            rules_accepted: None,
+            message_filter_failed: None,
+            new_achievement: false,
+            correlation_id: 0,
+        },
+    );
+
+    let summary = client::group::happy_path::summary(env, &user2, group_id);
+    assert_eq!(summary.mentions.len(), 1);
+    assert_eq!(summary.latest_threads.len(), 1);
+}
+
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
     let user2 = client::register_user(env, canister_ids);
