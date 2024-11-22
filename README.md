@@ -42,3 +42,7 @@ You can build the OpenChat canister wasms by running `./scripts/docker-build-all
 Copyright 2024 OpenChat Labs LTD
 
 Licensed under the AGPLv3: https://www.gnu.org/licenses/agpl-3.0.html
+
+---
+
+*Our tests run fast and cheap via [RunsOn](https://github.com/runs-on)*
