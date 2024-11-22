@@ -105,7 +105,7 @@ fn reserve_p2p_swap(args: Args, state: &mut RuntimeState) -> Result<ReserveP2PSw
 
     let caller = state.env.caller();
     if let Some(member) = state.data.get_member(caller) {
-        if member.suspended.value {
+        if member.suspended().value {
             return Err(Box::new(UserSuspended));
         } else if member.lapsed().value {
             return Err(Box::new(UserLapsed));

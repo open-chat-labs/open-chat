@@ -48,7 +48,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                                 .chat
                                 .members
                                 .get(&message.sender)
-                                .map_or(true, |p| p.notifications_muted().value || p.suspended.value);
+                                .map_or(true, |p| p.notifications_muted().value || p.suspended().value);
 
                             if !notifications_muted {
                                 state.push_notification(

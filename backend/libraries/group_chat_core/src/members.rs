@@ -33,6 +33,7 @@ pub struct GroupMembers {
     notifications_unmuted: BTreeSet<UserId>,
     lapsed: BTreeSet<UserId>,
     blocked: BTreeSet<UserId>,
+    suspended: BTreeSet<UserId>,
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
 }
 
@@ -53,6 +54,7 @@ impl From<GroupMembersPrevious> for GroupMembers {
         let mut bots = BTreeMap::new();
         let mut notifications_unmuted = BTreeSet::new();
         let mut lapsed = BTreeSet::new();
+        let mut suspended = BTreeSet::new();
 
         for member in value.members.values() {
             member_ids.insert(member.user_id);
@@ -75,6 +77,10 @@ impl From<GroupMembersPrevious> for GroupMembers {
             if member.user_type.is_bot() {
                 bots.insert(member.user_id, member.user_type);
             }
+
+            if member.suspended.value {
+                suspended.insert(member.user_id);
+            }
         }
 
         GroupMembers {
@@ -86,6 +92,7 @@ impl From<GroupMembersPrevious> for GroupMembers {
             bots,
             notifications_unmuted,
             lapsed,
+            suspended,
             blocked: value.blocked,
             updates: value.updates,
         }
@@ -138,6 +145,7 @@ impl GroupMembers {
             },
             notifications_unmuted: [creator_user_id].into_iter().collect(),
             lapsed: BTreeSet::new(),
+            suspended: BTreeSet::new(),
             updates: BTreeSet::new(),
         }
     }
@@ -202,6 +210,9 @@ impl GroupMembers {
             }
             if member.lapsed.value {
                 self.lapsed.remove(&user_id);
+            }
+            if member.suspended.value {
+                self.suspended.remove(&user_id);
             }
             self.member_ids.remove(&user_id);
             self.updates.insert((now, user_id, MemberUpdate::Removed));
@@ -379,6 +390,22 @@ impl GroupMembers {
         }
     }
 
+    pub fn set_suspended(&mut self, user_id: UserId, suspended: bool, now: TimestampMillis) -> Option<bool> {
+        let member = self.members.get_mut(&user_id)?;
+
+        if member.suspended.value != suspended {
+            member.suspended = Timestamped::new(suspended, now);
+            if suspended {
+                self.suspended.insert(user_id);
+            } else {
+                self.suspended.remove(&user_id);
+            }
+            Some(true)
+        } else {
+            Some(false)
+        }
+    }
+
     pub fn unlapse_all(&mut self, now: TimestampMillis) {
         for user_id in std::mem::take(&mut self.lapsed) {
             if let Some(member) = self.members.get_mut(&user_id) {
@@ -440,6 +467,10 @@ impl GroupMembers {
         &self.lapsed
     }
 
+    pub fn suspended(&self) -> &BTreeSet<UserId> {
+        &self.suspended
+    }
+
     pub fn has_membership_changed(&self, since: TimestampMillis) -> bool {
         self.iter_latest_updates(since)
             .any(|(_, u)| matches!(u, MemberUpdate::Added | MemberUpdate::Removed))
@@ -465,6 +496,7 @@ impl GroupMembers {
         let mut moderators = BTreeSet::new();
         let mut notifications_unmuted = BTreeSet::new();
         let mut lapsed = BTreeSet::new();
+        let mut suspended = BTreeSet::new();
 
         for member in self.members.values() {
             member_ids.insert(member.user_id);
@@ -483,6 +515,10 @@ impl GroupMembers {
             if member.lapsed.value {
                 lapsed.insert(member.user_id);
             }
+
+            if member.suspended.value {
+                suspended.insert(member.user_id);
+            }
         }
 
         assert_eq!(member_ids, self.member_ids);
@@ -491,6 +527,7 @@ impl GroupMembers {
         assert_eq!(moderators, self.moderators);
         assert_eq!(notifications_unmuted, self.notifications_unmuted);
         assert_eq!(lapsed, self.lapsed);
+        assert_eq!(suspended, self.suspended);
     }
 }
 
@@ -558,7 +595,7 @@ pub struct GroupMemberInternal {
     #[serde(rename = "p", default, skip_serializing_if = "BTreeMap::is_empty")]
     pub proposal_votes: BTreeMap<TimestampMillis, Vec<MessageIndex>>,
     #[serde(rename = "s", default, skip_serializing_if = "is_default")]
-    pub suspended: Timestamped<bool>,
+    suspended: Timestamped<bool>,
     #[serde(rename = "ra", default, skip_serializing_if = "is_default")]
     pub rules_accepted: Option<Timestamped<Version>>,
     #[serde(rename = "ut", default, skip_serializing_if = "is_default")]
@@ -594,6 +631,10 @@ impl GroupMemberInternal {
 
     pub fn lapsed(&self) -> &Timestamped<bool> {
         &self.lapsed
+    }
+
+    pub fn suspended(&self) -> &Timestamped<bool> {
+        &self.suspended
     }
 
     pub fn last_updated(&self) -> TimestampMillis {

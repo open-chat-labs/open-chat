@@ -171,7 +171,7 @@ impl GroupChatCore {
 
         if hidden_for_non_members {
             if let Some(member) = member {
-                if member.suspended.value {
+                if member.suspended().value {
                     return MinVisibleEventIndexResult::UserSuspended;
                 } else if member.lapsed().value {
                     return MinVisibleEventIndexResult::UserLapsed;
@@ -786,14 +786,17 @@ impl GroupChatCore {
             }
         }
 
-        // Exclude bots, lapsed members, and suspended members from notifications
+        // Exclude the sender, bots, lapsed members, and suspended members from notifications
+        users_to_notify.remove(&sender);
         for bot in self.members.bots().keys() {
             users_to_notify.remove(bot);
         }
         for user_id in self.members.lapsed() {
             users_to_notify.remove(user_id);
         }
-        // TODO remove suspended members
+        for user_id in self.members.suspended() {
+            users_to_notify.remove(user_id);
+        }
 
         Success(SendMessageSuccess {
             message_event,
@@ -834,7 +837,7 @@ impl GroupChatCore {
         let Some(member) = self.members.get(&sender) else {
             return UserNotInGroup;
         };
-        if member.suspended.value {
+        if member.suspended().value {
             return UserSuspended;
         }
 
@@ -866,7 +869,7 @@ impl GroupChatCore {
         use AddRemoveReactionResult::*;
 
         if let Some(member) = self.members.get(&user_id) {
-            if member.suspended.value {
+            if member.suspended().value {
                 return UserSuspended;
             } else if member.lapsed().value {
                 return UserLapsed;
@@ -906,7 +909,7 @@ impl GroupChatCore {
         use AddRemoveReactionResult::*;
 
         if let Some(member) = self.members.get(&user_id) {
-            if member.suspended.value {
+            if member.suspended().value {
                 return UserSuspended;
             } else if member.lapsed().value {
                 return UserLapsed;
@@ -940,7 +943,7 @@ impl GroupChatCore {
         use TipMessageResult::*;
 
         if let Some(member) = self.members.get(&args.user_id) {
-            if member.suspended.value {
+            if member.suspended().value {
                 return UserSuspended;
             } else if member.lapsed().value {
                 return UserLapsed;
@@ -969,7 +972,7 @@ impl GroupChatCore {
         use DeleteMessagesResult::*;
 
         let (is_admin, min_visible_event_index) = if let Some(member) = self.members.get(&user_id) {
-            if member.suspended.value {
+            if member.suspended().value {
                 return UserSuspended;
             } else if member.lapsed().value {
                 return UserLapsed;
@@ -1036,7 +1039,7 @@ impl GroupChatCore {
         use UndeleteMessagesResult::*;
 
         if let Some(member) = self.members.get(&user_id) {
-            if member.suspended.value {
+            if member.suspended().value {
                 return UserSuspended;
             } else if member.lapsed().value {
                 return UserLapsed;
@@ -1113,7 +1116,7 @@ impl GroupChatCore {
         use PinUnpinMessageResult::*;
 
         if let Some(member) = self.members.get(&user_id) {
-            if member.suspended.value {
+            if member.suspended().value {
                 return UserSuspended;
             } else if member.lapsed().value {
                 return UserLapsed;
@@ -1157,7 +1160,7 @@ impl GroupChatCore {
         use PinUnpinMessageResult::*;
 
         if let Some(member) = self.members.get(&user_id) {
-            if member.suspended.value {
+            if member.suspended().value {
                 return UserSuspended;
             } else if member.lapsed().value {
                 return UserLapsed;
@@ -1232,7 +1235,7 @@ impl GroupChatCore {
         const MAX_INVITES: usize = 100;
 
         if let Some(member) = self.members.get(&invited_by) {
-            if member.suspended.value {
+            if member.suspended().value {
                 return UserSuspended;
             }
 
@@ -1308,7 +1311,7 @@ impl GroupChatCore {
         use CancelInvitesResult::*;
 
         if let Some(member) = self.members.get(&cancelled_by) {
-            if member.suspended.value {
+            if member.suspended().value {
                 return UserSuspended;
             } else if member.lapsed().value {
                 return UserLapsed;
@@ -1334,7 +1337,7 @@ impl GroupChatCore {
         use CanLeaveResult::*;
 
         if let Some(member) = self.members.get(&user_id) {
-            if member.suspended.value {
+            if member.suspended().value {
                 UserSuspended
             } else if member.role().is_owner() && self.members.owners().len() == 1 {
                 LastOwnerCannotLeave
@@ -1378,7 +1381,7 @@ impl GroupChatCore {
         }
 
         if let Some(member) = self.members.get(&user_id) {
-            if member.suspended.value {
+            if member.suspended().value {
                 return UserSuspended;
             } else if member.lapsed().value {
                 return UserLapsed;
@@ -1506,7 +1509,7 @@ impl GroupChatCore {
         }
 
         if let Some(member) = self.members.get(user_id) {
-            if member.suspended.value {
+            if member.suspended().value {
                 return Err(UserSuspended);
             } else if member.lapsed().value {
                 return Err(UserLapsed);
@@ -1731,7 +1734,7 @@ impl GroupChatCore {
             return UserNotInGroup;
         };
 
-        if member.suspended.value {
+        if member.suspended().value {
             return UserSuspended;
         } else if member.lapsed().value {
             return UserLapsed;
@@ -1763,7 +1766,7 @@ impl GroupChatCore {
             return UserNotInGroup;
         };
 
-        if member.suspended.value {
+        if member.suspended().value {
             return UserSuspended;
         } else if member.lapsed().value {
             return UserLapsed;

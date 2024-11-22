@@ -61,7 +61,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         None => return Err(CallerNotInGroup),
     };
 
-    if member.suspended.value {
+    if member.suspended().value {
         return Err(UserSuspended);
     } else if member.lapsed().value {
         return Err(UserLapsed);

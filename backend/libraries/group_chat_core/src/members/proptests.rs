@@ -37,6 +37,10 @@ enum Operation {
         user_index: usize,
     },
     UnlapseAll,
+    SetSuspended {
+        user_index: usize,
+        suspended: bool,
+    },
 }
 
 fn operation_strategy() -> impl Strategy<Value = Operation> {
@@ -44,15 +48,15 @@ fn operation_strategy() -> impl Strategy<Value = Operation> {
         50 => any::<usize>().prop_map(|user_index| Operation::Add { user_id: user_id(user_index) }),
         20 => (any::<usize>(), any::<usize>(), any::<usize>())
             .prop_map(|(owner_index, user_index, role_index)| Operation::ChangeRole { owner_index, user_index, role: role(role_index) }),
-        10 => (any::<usize>(), any::<bool>()).prop_map(|(user_index, mute)| Operation::ToggleMuteNotifications { user_index, mute
-
-        }),
+        10 => (any::<usize>(), any::<bool>()).prop_map(|(user_index, mute)| Operation::ToggleMuteNotifications { user_index, mute }),
         10 => any::<usize>().prop_map(|user_index| Operation::Remove { user_index}),
         5 => any::<usize>().prop_map(|user_index| Operation::Block { user_index}),
         3 => any::<usize>().prop_map(|user_index| Operation::Unblock { user_index}),
         5 => any::<usize>().prop_map(|user_index| Operation::Lapse { user_index}),
         3 => any::<usize>().prop_map(|user_index| Operation::Unlapse { user_index}),
         1 => Just(Operation::UnlapseAll),
+        2 => any::<usize>().prop_map(|user_index| Operation::SetSuspended { user_index, suspended: true }),
+        1 => any::<usize>().prop_map(|user_index| Operation::SetSuspended { user_index, suspended: false }),
     ]
 }
 
@@ -125,6 +129,15 @@ fn execute_operation(members: &mut GroupMembers, op: Operation, timestamp: Times
         }
         Operation::UnlapseAll => {
             members.unlapse_all(timestamp);
+        }
+        Operation::SetSuspended { user_index, suspended } => {
+            if suspended {
+                let user_id = get(&members.member_ids, user_index);
+                members.set_suspended(user_id, true, timestamp);
+            } else if !members.suspended.is_empty() {
+                let user_id = get(&members.suspended, user_index);
+                members.set_suspended(user_id, false, timestamp);
+            }
         }
     };
 }
