@@ -39,6 +39,7 @@
         CreateTestMessages,
         SearchChat,
         AttachGif,
+        TokenTransfer,
     } from "openchat-client";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
@@ -143,6 +144,15 @@
             const [{ chatId, threadRootMessageIndex }, num] = ev.detail;
             if (chatId === messageContext.chatId && threadRootMessageIndex === undefined) {
                 createTestMessages(num);
+            }
+        }
+        if (ev instanceof TokenTransfer) {
+            const { context } = ev.detail;
+            if (
+                context.chatId === messageContext.chatId &&
+                context.threadRootMessageIndex === undefined
+            ) {
+                tokenTransfer(ev);
             }
         }
         if (ev instanceof AttachGif) {

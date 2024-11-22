@@ -18,6 +18,7 @@
         CreatePoll,
         CreateTestMessages,
         LEDGER_CANISTER_ICP,
+        TokenTransfer,
     } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import Loading from "../../Loading.svelte";
@@ -110,6 +111,15 @@
                 ev.detail.threadRootMessageIndex === messageContext.threadRootMessageIndex
             ) {
                 createPoll();
+            }
+        }
+        if (ev instanceof TokenTransfer) {
+            const { context } = ev.detail;
+            if (
+                context.chatId === messageContext.chatId &&
+                context.threadRootMessageIndex === messageContext.threadRootMessageIndex
+            ) {
+                tokenTransfer(ev);
             }
         }
         if (ev instanceof AttachGif) {

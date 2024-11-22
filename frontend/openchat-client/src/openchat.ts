@@ -225,6 +225,7 @@ import {
     SummonWitch,
     ThreadClosed,
     ThreadSelected,
+    TokenTransfer,
     UserLoggedIn,
     UserSuspensionChanged,
     VideoCallMessageUpdated,
@@ -7611,6 +7612,31 @@ export class OpenChat extends OpenChatAgentWorker {
             const param = bot.command.params[0];
             if (param !== undefined && param.kind === "string" && param.value !== undefined) {
                 this.dispatchEvent(new AttachGif([bot.command.messageContext, param.value]));
+            }
+        } else if (bot.command.name === "crypto") {
+            const [token, amount] = bot.command.params;
+            if (
+                token !== undefined &&
+                token.kind === "string" &&
+                amount !== undefined &&
+                amount.kind === "number" &&
+                amount.value !== null
+            ) {
+                const tokenDetails = Object.values(get(cryptoLookup)).find(
+                    (t) => t.symbol.toLowerCase() === token.value?.toLocaleLowerCase(),
+                );
+                if (tokenDetails !== undefined) {
+                    this.dispatchEvent(
+                        new TokenTransfer({
+                            context: bot.command.messageContext,
+                            ledger: tokenDetails.ledger,
+                            amount: this.validateTokenInput(
+                                amount.value.toString(),
+                                tokenDetails.decimals,
+                            ).amount,
+                        }),
+                    );
+                }
             }
         } else if (bot.command.name === "test-msg") {
             const param = bot.command.params[0];

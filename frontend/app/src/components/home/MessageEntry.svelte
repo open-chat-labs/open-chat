@@ -19,7 +19,6 @@
         EventWrapper,
         Message,
         MessageAction,
-        Questions,
         OpenChat,
         MultiUserChat,
         UserOrUserGroup,
@@ -27,7 +26,6 @@
         MessageContext,
     } from "openchat-client";
     import {
-        allQuestions,
         chatIdentifiersEqual,
         userStore,
         throttleDeadline,
@@ -339,36 +337,10 @@
         return [expandedText, mentioned, containsMarkdown && $useBlockLevelMarkdown];
     }
 
-    /**
-     * Check the message content for special commands
-     * * /icp [amount]
-     * * /search [term]
-     * * /pinned - opens pinned messages (not yet)
-     * * /details - opens group details (not yet)
-     */
     function parseCommands(txt: string): boolean {
         if (/snow|xmas|christmas|noel/.test(txt)) {
             $snowing = true;
         }
-
-        if (permittedMessages.get("crypto")) {
-            const tokenMatch = txt.match(tokenMatchRegex);
-            if (tokenMatch && tokenMatch[2] !== undefined) {
-                const token = tokenMatch[1];
-                const tokenDetails = Object.values($cryptoLookup).find(
-                    (t) => t.symbol.toLowerCase() === token,
-                );
-                if (tokenDetails !== undefined) {
-                    dispatch("tokenTransfer", {
-                        ledger: tokenDetails.ledger,
-                        amount: client.validateTokenInput(tokenMatch[2], tokenDetails.decimals)
-                            .amount,
-                    });
-                }
-                return true;
-            }
-        }
-
         return false;
     }
 

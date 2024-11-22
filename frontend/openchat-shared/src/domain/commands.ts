@@ -9,7 +9,6 @@ export type CommandParam = {
     description?: string;
     placeholder?: string;
     required: boolean;
-    errorMessage?: string;
 };
 
 export type UserParam = {
