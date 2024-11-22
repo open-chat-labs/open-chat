@@ -8,6 +8,7 @@ use canister_tracing_macros::trace;
 use chat_events::MessageContentInternal;
 use escrow_canister::deposit_subaccount;
 use ic_cdk::api::call::CallResult;
+use tracing::error;
 use types::icrc1::Account;
 use types::{
     icrc1, Achievement, CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, MessageContentInitial, MessageId,
@@ -329,8 +330,14 @@ fn prepare(
                     let oc_fee = (total_prizes * PRIZE_FEE_PERCENT as u128) / 100;
                     let total_amount_to_send_old = total_prizes + total_transfer_fees;
                     let total_amount_to_send = total_prizes + total_transfer_fees + oc_fee;
+                    let transaction_amount = t.units();
 
-                    if t.units() != total_amount_to_send && t.units() != total_amount_to_send_old {
+                    if transaction_amount != total_amount_to_send && transaction_amount != total_amount_to_send_old {
+                        error!(
+                            ?total_amount_to_send,
+                            ?transaction_amount,
+                            "Expected vs Actual prize transfer"
+                        );
                         return InvalidRequest("Transaction amount must equal total prizes + total fees".to_string());
                     }
 
