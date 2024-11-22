@@ -81,8 +81,8 @@
         | "add_token"
         | "update_token" = "motion";
     let error: string | undefined = undefined;
-    let fundingMessage: ResourceKey | undefined = undefined;
-    let fundingError = true;
+    let depositMessage: ResourceKey | undefined = undefined;
+    let depositError = true;
     let summaryContainerHeight = 0;
     let summaryHeight = 0;
     let refreshingBalance = false;
@@ -112,8 +112,6 @@
                 : selectedProposalType === "add_token"
                   ? TOKEN_LISTING_FEE
                   : BigInt(0));
-    $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
-    $: left = step * (actualWidth - padding);
     $: token = treasury === "SNS" ? symbol : "ICP";
     $: titleValid = title.length >= MIN_TITLE_LENGTH && title.length <= MAX_TITLE_LENGTH;
     $: urlValid = url.length <= MAX_URL_LENGTH;
@@ -174,7 +172,7 @@
 
     $: {
         if (tokenDetails !== undefined) {
-            fundingMessage = defaultMessage();
+            depositMessage = defaultMessage();
         }
     }
 
@@ -335,19 +333,19 @@
             step = insufficientFunds ? 0 : 1;
             busy = false;
             if (!insufficientFunds) {
-                fundingError = false;
+                depositError = false;
             }
         } else if (step === 0 && !insufficientFunds) {
             step = 1;
-            fundingError = false;
+            depositError = false;
         }
 
         refreshingBalance = false;
     }
 
     function onRefreshingBalanceFailed() {
-        fundingMessage = i18nKey("Failed to refresh balance");
-        fundingError = true;
+        depositMessage = i18nKey("Failed to refresh balance");
+        depositError = true;
         refreshingBalance = false;
     }
 
@@ -381,7 +379,7 @@
             on:error={onRefreshingBalanceFailed} />
     </div>
     <div class="body" slot="body">
-        <div class="sections" style={`left: -${left}px`}>
+        <div class="sections">
             <div class="topup hidden" class:visible={step === 0}>
                 <AccountInfo {ledger} user={$user} />
                 <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
@@ -400,7 +398,7 @@
                         {#if symbol === "CHAT"}
                             <option value={"register_external_acievement"}
                                 >Register external achievement</option>
-                            <!-- <option value={"add_token"}>Add token</option> -->
+                            <option value={"add_token"}>Add token</option>
                             <option value={"update_token"}>Update token</option>
                         {/if}
                     </Select>
@@ -698,19 +696,25 @@
             <p class="message" class:error={insufficientFundsForPayment}>
                 <Translatable
                     resourceKey={i18nKey(
-                        "proposal.maker." + selectedProposalType === "add_token"
-                            ? "addTokenChatCost"
-                            : "achievementChatCost",
+                        "proposal.maker." +
+                            (selectedProposalType === "add_token"
+                                ? "addTokenChatCost"
+                                : "achievementChatCost"),
                         {
-                            cost: client.formatTokens(achievementChatCost, 8),
+                            cost: client.formatTokens(
+                                selectedProposalType === "add_token"
+                                    ? TOKEN_LISTING_FEE
+                                    : achievementChatCost,
+                                8,
+                            ),
                             chat: "CHAT",
                         },
                     )} />
             </p>
         {/if}
-        {#if fundingMessage !== undefined}
-            <p class="message" class:error={fundingError}>
-                <Translatable resourceKey={fundingMessage} />
+        {#if depositMessage !== undefined}
+            <p class="message" class:error={depositError}>
+                <Translatable resourceKey={depositMessage} />
             </p>
         {/if}
         {#if errorMessage !== undefined}
@@ -805,10 +809,8 @@
 
     .sections {
         display: flex;
-        transition: left 250ms ease-in-out;
         position: relative;
         gap: $sp5;
-        height: 100%;
         @include mobile() {
             gap: $sp4;
         }
@@ -825,13 +827,12 @@
         gap: $sp2;
         display: flex;
         flex-direction: column;
-        transition: visibility 250ms ease-in-out;
     }
 
     .hidden {
-        visibility: hidden;
+        display: none;
         &.visible {
-            visibility: visible;
+            display: flex;
         }
     }
 
