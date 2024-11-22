@@ -203,3 +203,11 @@ export class SearchChat extends CustomEvent<string> {
         });
     }
 }
+
+export class AttachGif extends CustomEvent<[MessageContext, string]> {
+    constructor(detail: [MessageContext, string]) {
+        super("openchat_event", {
+            detail,
+        });
+    }
+}

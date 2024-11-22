@@ -38,6 +38,7 @@
         CreatePoll,
         CreateTestMessages,
         SearchChat,
+        AttachGif,
     } from "openchat-client";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
@@ -142,6 +143,12 @@
             const [{ chatId, threadRootMessageIndex }, num] = ev.detail;
             if (chatId === messageContext.chatId && threadRootMessageIndex === undefined) {
                 createTestMessages(num);
+            }
+        }
+        if (ev instanceof AttachGif) {
+            const [{ chatId, threadRootMessageIndex }, search] = ev.detail;
+            if (chatId === messageContext.chatId && threadRootMessageIndex === undefined) {
+                attachGif(new CustomEvent("openchat_client", { detail: search }));
             }
         }
         if (ev instanceof SearchChat) {

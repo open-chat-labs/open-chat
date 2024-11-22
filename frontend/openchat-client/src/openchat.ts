@@ -206,6 +206,7 @@ import { initialiseTracking, startTrackingSession, trackEvent } from "./utils/tr
 import { startSwCheckPoller } from "./utils/updateSw";
 import type { OpenChatConfig } from "./config";
 import {
+    AttachGif,
     ChatsUpdated,
     ChatUpdated,
     ChitEarnedEvent,
@@ -7606,6 +7607,11 @@ export class OpenChat extends OpenChatAgentWorker {
             this.dispatchEvent(new SummonWitch());
         } else if (bot.command.name === "poll") {
             this.dispatchEvent(new CreatePoll(bot.command.messageContext));
+        } else if (bot.command.name === "gif") {
+            const param = bot.command.params[0];
+            if (param !== undefined && param.kind === "string" && param.value !== undefined) {
+                this.dispatchEvent(new AttachGif([bot.command.messageContext, param.value]));
+            }
         } else if (bot.command.name === "test-msg") {
             const param = bot.command.params[0];
             if (param !== undefined && param.kind === "number" && param.value !== null) {

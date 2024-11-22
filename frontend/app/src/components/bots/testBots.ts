@@ -233,6 +233,28 @@ export const bots: Bot[] = [
                     },
                 ],
             },
+            {
+                name: "gif",
+                description: "Find a gif to send",
+                permissions: {
+                    ...emptyPermissions,
+                    messagePermissions: ["giphy"],
+                    threadPermissions: ["giphy"],
+                },
+                params: [
+                    {
+                        kind: "string",
+                        name: "Search term",
+                        minLength: 0,
+                        maxLength: 100,
+                        required: true,
+                        description: "Enter the search term for your gif",
+                        placeholder: "Search term",
+                        errorMessage: "You need to enter the search term",
+                        choices: [],
+                    },
+                ],
+            },
         ],
     },
 ];

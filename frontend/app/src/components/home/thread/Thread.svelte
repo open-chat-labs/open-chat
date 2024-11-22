@@ -13,7 +13,12 @@
         TimelineItem,
         MessageContent,
     } from "openchat-client";
-    import { CreatePoll, CreateTestMessages, LEDGER_CANISTER_ICP } from "openchat-client";
+    import {
+        AttachGif,
+        CreatePoll,
+        CreateTestMessages,
+        LEDGER_CANISTER_ICP,
+    } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import Loading from "../../Loading.svelte";
     import { derived, readable } from "svelte/store";
@@ -105,6 +110,15 @@
                 ev.detail.threadRootMessageIndex === messageContext.threadRootMessageIndex
             ) {
                 createPoll();
+            }
+        }
+        if (ev instanceof AttachGif) {
+            const [evContext, search] = ev.detail;
+            if (
+                evContext.chatId === messageContext.chatId &&
+                evContext.threadRootMessageIndex === messageContext.threadRootMessageIndex
+            ) {
+                attachGif(new CustomEvent("openchat_client", { detail: search }));
             }
         }
         if (ev instanceof CreateTestMessages) {

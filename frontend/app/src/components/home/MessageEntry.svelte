@@ -351,14 +351,6 @@
             $snowing = true;
         }
 
-        if (permittedMessages.get("giphy")) {
-            const gifMatch = txt.match(/^\/gif( *(.*))$/);
-            if (gifMatch && gifMatch[2] !== undefined) {
-                dispatch("attachGif", gifMatch[2]);
-                return true;
-            }
-        }
-
         const faqMatch = txt.match(/^\/faq( *(.*))$/);
         if (faqMatch && faqMatch[2] !== undefined) {
             if (allQuestions.includes(faqMatch[2] as Questions)) {
