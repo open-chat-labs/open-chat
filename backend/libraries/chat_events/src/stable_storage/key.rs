@@ -84,12 +84,12 @@ impl KeyPrefix {
 
     pub fn key_type(&self) -> KeyType {
         match self {
-            KeyPrefix::DirectChat(_) => KeyType::DirectChat,
-            KeyPrefix::GroupChat(_) => KeyType::GroupChat,
-            KeyPrefix::Channel(_) => KeyType::Channel,
-            KeyPrefix::DirectChatThread(_) => KeyType::DirectChatThread,
-            KeyPrefix::GroupChatThread(_) => KeyType::GroupChatThread,
-            KeyPrefix::ChannelThread(_) => KeyType::ChannelThread,
+            KeyPrefix::DirectChat(_) => KeyType::DirectChatEvent,
+            KeyPrefix::GroupChat(_) => KeyType::GroupChatEvent,
+            KeyPrefix::Channel(_) => KeyType::ChannelEvent,
+            KeyPrefix::DirectChatThread(_) => KeyType::DirectChatThreadEvent,
+            KeyPrefix::GroupChatThread(_) => KeyType::GroupChatThreadEvent,
+            KeyPrefix::ChannelThread(_) => KeyType::ChannelThreadEvent,
         }
     }
 }
@@ -140,12 +140,12 @@ impl TryFrom<&[u8]> for KeyPrefix {
         let bytes = Cow::Borrowed(&bytes[1..]);
 
         match key_type {
-            KeyType::DirectChat => Ok(KeyPrefix::DirectChat(DirectChatKeyPrefix::from_bytes(bytes))),
-            KeyType::GroupChat => Ok(KeyPrefix::GroupChat(GroupChatKeyPrefix::from_bytes(bytes))),
-            KeyType::Channel => Ok(KeyPrefix::Channel(ChannelKeyPrefix::from_bytes(bytes))),
-            KeyType::DirectChatThread => Ok(KeyPrefix::DirectChatThread(DirectChatThreadKeyPrefix::from_bytes(bytes))),
-            KeyType::GroupChatThread => Ok(KeyPrefix::GroupChatThread(GroupChatThreadKeyPrefix::from_bytes(bytes))),
-            KeyType::ChannelThread => Ok(KeyPrefix::ChannelThread(ChannelThreadKeyPrefix::from_bytes(bytes))),
+            KeyType::DirectChatEvent => Ok(KeyPrefix::DirectChat(DirectChatKeyPrefix::from_bytes(bytes))),
+            KeyType::GroupChatEvent => Ok(KeyPrefix::GroupChat(GroupChatKeyPrefix::from_bytes(bytes))),
+            KeyType::ChannelEvent => Ok(KeyPrefix::Channel(ChannelKeyPrefix::from_bytes(bytes))),
+            KeyType::DirectChatThreadEvent => Ok(KeyPrefix::DirectChatThread(DirectChatThreadKeyPrefix::from_bytes(bytes))),
+            KeyType::GroupChatThreadEvent => Ok(KeyPrefix::GroupChatThread(GroupChatThreadKeyPrefix::from_bytes(bytes))),
+            KeyType::ChannelThreadEvent => Ok(KeyPrefix::ChannelThread(ChannelThreadKeyPrefix::from_bytes(bytes))),
             _ => Err(()),
         }
     }
