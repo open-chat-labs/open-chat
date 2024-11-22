@@ -752,7 +752,7 @@ impl GroupChatCore {
                             // Bump the thread timestamp for all followers
                             member.followed_threads.insert(root_message_index, now);
 
-                            if member.should_notify(sender) {
+                            if member.can_receive_notifications(sender) {
                                 let mentioned = mentions.contains(&member.user_id())
                                     || (is_first_reply && member.user_id() == root_message_sender);
 
@@ -769,7 +769,11 @@ impl GroupChatCore {
                 }
             } else {
                 for mentioned in mentions {
-                    if let Some(member) = self.members.get_mut(&mentioned).filter(|m| m.should_notify(sender)) {
+                    if let Some(member) = self
+                        .members
+                        .get_mut(&mentioned)
+                        .filter(|m| m.can_receive_notifications(sender))
+                    {
                         member.mentions.add(thread_root_message_index, message_index, message_id, now);
                         users_to_notify.insert(mentioned);
                     }
