@@ -4,7 +4,6 @@ use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::metrics::{ChatMetricsInternal, MetricKey};
 use crate::search_index::SearchIndex;
 use crate::stable_storage::key::KeyPrefix;
-use crate::stable_storage::Memory;
 use crate::*;
 use event_store_producer::{EventBuilder, EventStoreClient, Runtime};
 use rand::rngs::StdRng;
@@ -76,10 +75,6 @@ impl ChatEvents {
         }
 
         false
-    }
-
-    pub fn init_stable_storage(memory: Memory) {
-        stable_storage::init(memory)
     }
 
     pub fn init_maps(&mut self) {
