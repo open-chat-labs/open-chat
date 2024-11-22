@@ -69,6 +69,11 @@ pub enum ChatEventInternal {
     ExternalUrlUpdated(Box<ExternalUrlUpdated>),
     #[serde(rename = "e")]
     Empty,
+    // This should never happen!
+    // But if it ever does, it's better to return the remaining events
+    // than to endlessly fail attempting to load the broken event(s)
+    #[serde(rename = "fd")]
+    FailedToDeserialize,
 }
 
 impl ChatEventInternal {

@@ -9,7 +9,9 @@ use std::cell::RefCell;
 use std::cmp::min;
 use std::collections::VecDeque;
 use std::ops::RangeBounds;
-use types::{Chat, EventContext, EventIndex, EventWrapperInternal, MessageIndex, MAX_EVENT_INDEX, MIN_EVENT_INDEX};
+use types::{
+    Chat, EventContext, EventIndex, EventWrapperInternal, MessageIndex, TimestampMillis, MAX_EVENT_INDEX, MIN_EVENT_INDEX,
+};
 
 pub mod key;
 
@@ -208,7 +210,18 @@ impl Storable for Value {
 
 impl From<&Value> for EventWrapperInternal<ChatEventInternal> {
     fn from(value: &Value) -> Self {
-        msgpack::deserialize_then_unwrap(value.0.as_ref())
+        match msgpack::deserialize(value.0.as_slice()) {
+            Ok(result) => result,
+            Err(error) => {
+                ic_cdk::eprintln!("Failed to deserialize event from stable memory: {error:?}");
+                match msgpack::deserialize::<EventWrapperFallback, _>(value.0.as_slice()) {
+                    Ok(fallback) => fallback.into(),
+                    Err(fallback_error) => {
+                        panic!("Failed to deserialize event from stable memory. Error: {error:?}. Fallback error: {fallback_error:?}");
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -345,6 +358,27 @@ impl DoubleEndedIterator for Iter {
         } else {
             self.finished = true;
             None
+        }
+    }
+}
+
+// Deserialize to this as a fallback if deserializing the event fails
+#[derive(Deserialize)]
+struct EventWrapperFallback {
+    #[serde(rename = "i")]
+    pub index: EventIndex,
+    #[serde(rename = "t")]
+    pub timestamp: TimestampMillis,
+}
+
+impl From<EventWrapperFallback> for EventWrapperInternal<ChatEventInternal> {
+    fn from(value: EventWrapperFallback) -> Self {
+        EventWrapperInternal {
+            index: value.index,
+            timestamp: value.timestamp,
+            correlation_id: 0,
+            expires_at: None,
+            event: ChatEventInternal::FailedToDeserialize,
         }
     }
 }
