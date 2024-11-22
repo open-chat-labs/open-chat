@@ -752,15 +752,18 @@ impl GroupChatCore {
                             // Bump the thread timestamp for all followers
                             member.followed_threads.insert(root_message_index, now);
 
-                            let mentioned = mentions.contains(&member.user_id())
-                                || (is_first_reply && member.user_id() == root_message_sender);
+                            let user_id = member.user_id();
+                            if user_id != sender {
+                                let mentioned =
+                                    mentions.contains(&user_id) || (is_first_reply && user_id == root_message_sender);
 
-                            if mentioned {
-                                member.mentions.add(thread_root_message_index, message_index, message_id, now);
-                            }
+                                if mentioned {
+                                    member.mentions.add(thread_root_message_index, message_index, message_id, now);
+                                }
 
-                            if mentioned || !member.notifications_muted().value {
-                                users_to_notify.insert(member.user_id());
+                                if mentioned || !member.notifications_muted().value {
+                                    users_to_notify.insert(user_id);
+                                }
                             }
                         }
                     }
