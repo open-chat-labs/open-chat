@@ -1,3 +1,7 @@
+//! If you want to store data in this map and be able to iterate over it in order, then the keys
+//! must maintain their ordering when represented as bytes, since the keys in the map are ordered
+//! by their bytes.
+
 use ic_stable_structures::memory_manager::VirtualMemory;
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
 use std::cell::RefCell;
@@ -29,12 +33,12 @@ pub fn with_map_mut<F: FnOnce(&mut StableBTreeMap<Vec<u8>, Vec<u8>, Memory>) -> 
 #[derive(Copy, Clone)]
 #[repr(u8)]
 pub enum KeyType {
-    DirectChat = 1,
-    GroupChat = 2,
-    Channel = 3,
-    DirectChatThread = 4,
-    GroupChatThread = 5,
-    ChannelThread = 6,
+    DirectChatEvent = 1,
+    GroupChatEvent = 2,
+    ChannelEvent = 3,
+    DirectChatThreadEvent = 4,
+    GroupChatThreadEvent = 5,
+    ChannelThreadEvent = 6,
     ChatMember = 7,
     CommunityMember = 8,
 }
@@ -42,12 +46,12 @@ pub enum KeyType {
 impl From<u8> for KeyType {
     fn from(value: u8) -> Self {
         match value {
-            1 => KeyType::DirectChat,
-            2 => KeyType::GroupChat,
-            3 => KeyType::Channel,
-            4 => KeyType::DirectChatThread,
-            5 => KeyType::GroupChatThread,
-            6 => KeyType::ChannelThread,
+            1 => KeyType::DirectChatEvent,
+            2 => KeyType::GroupChatEvent,
+            3 => KeyType::ChannelEvent,
+            4 => KeyType::DirectChatThreadEvent,
+            5 => KeyType::GroupChatThreadEvent,
+            6 => KeyType::ChannelThreadEvent,
             7 => KeyType::ChatMember,
             8 => KeyType::CommunityMember,
             _ => unreachable!(),
