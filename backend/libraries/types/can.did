@@ -243,6 +243,7 @@ type ChatEvent = variant {
     UsersInvited : UsersInvited;
     MembersAddedToDefaultChannel : MembersAddedToDefaultChannel;
     ExternalUrlUpdated : ExternalUrlUpdated;
+    FailedToDeserialize;
 };
 
 type ChatEventWrapper = record {

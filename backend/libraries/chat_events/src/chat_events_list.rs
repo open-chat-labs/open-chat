@@ -459,6 +459,7 @@ pub trait Reader {
             ChatEventInternal::MembersAddedToPublicChannel(m) => ChatEvent::MembersAddedToDefaultChannel(m.as_ref().into()),
             ChatEventInternal::ExternalUrlUpdated(u) => ChatEvent::ExternalUrlUpdated(*u),
             ChatEventInternal::Empty => ChatEvent::Empty,
+            ChatEventInternal::FailedToDeserialize => ChatEvent::FailedToDeserialize,
         };
 
         EventWrapper {
