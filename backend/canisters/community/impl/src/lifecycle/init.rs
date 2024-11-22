@@ -1,5 +1,5 @@
 use crate::lifecycle::{init_env, init_state};
-use crate::memory::get_chat_events_memory;
+use crate::memory::get_stable_memory_map_memory;
 use crate::updates::import_group::commit_group_to_import;
 use crate::{mutate_state, Data};
 use canister_tracing_macros::trace;
@@ -12,7 +12,7 @@ use utils::env::Environment;
 #[trace]
 fn init(args: Args) {
     canister_logger::init(args.test_mode);
-    chat_events::ChatEvents::init_stable_storage(get_chat_events_memory());
+    stable_memory_map::init(get_stable_memory_map_memory());
 
     let mut env = init_env([0; 32]);
 

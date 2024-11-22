@@ -2,6 +2,7 @@ use candid::Principal;
 use ic_stable_structures::storable::Bound;
 use ic_stable_structures::Storable;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use stable_memory_map::KeyType;
 use std::borrow::Cow;
 use types::{CanisterId, ChannelId, Chat, EventIndex, MessageIndex, UserId};
 
@@ -19,31 +20,6 @@ pub enum KeyPrefix {
     DirectChatThread(DirectChatThreadKeyPrefix),
     GroupChatThread(GroupChatThreadKeyPrefix),
     ChannelThread(ChannelThreadKeyPrefix),
-}
-
-#[derive(Copy, Clone)]
-#[repr(u8)]
-enum KeyType {
-    DirectChat = 1,
-    GroupChat = 2,
-    Channel = 3,
-    DirectChatThread = 4,
-    GroupChatThread = 5,
-    ChannelThread = 6,
-}
-
-impl From<u8> for KeyType {
-    fn from(value: u8) -> Self {
-        match value {
-            1 => KeyType::DirectChat,
-            2 => KeyType::GroupChat,
-            3 => KeyType::Channel,
-            4 => KeyType::DirectChatThread,
-            5 => KeyType::GroupChatThread,
-            6 => KeyType::ChannelThread,
-            _ => unreachable!(),
-        }
-    }
 }
 
 impl Key {
@@ -65,6 +41,10 @@ impl Key {
 
     pub fn matches_chat(&self, chat: Chat) -> bool {
         self.prefix.matches_chat(chat)
+    }
+
+    pub fn key_type(&self) -> KeyType {
+        self.prefix.key_type()
     }
 }
 
@@ -102,7 +82,7 @@ impl KeyPrefix {
         }
     }
 
-    fn key_type(&self) -> KeyType {
+    pub fn key_type(&self) -> KeyType {
         match self {
             KeyPrefix::DirectChat(_) => KeyType::DirectChat,
             KeyPrefix::GroupChat(_) => KeyType::GroupChat,
@@ -114,28 +94,29 @@ impl KeyPrefix {
     }
 }
 
-impl Storable for Key {
-    fn to_bytes(&self) -> Cow<[u8]> {
-        let mut bytes = self.prefix.to_bytes().to_vec();
+impl Key {
+    pub fn to_vec(&self) -> Vec<u8> {
+        let mut bytes = self.prefix.to_vec();
         bytes.extend_from_slice(&u32::from(self.event_index).to_be_bytes());
-        Cow::Owned(bytes)
+        bytes
     }
-
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        let len = bytes.len();
-        let prefix = KeyPrefix::from_bytes(Cow::Borrowed(&bytes[..len - 4]));
-        let event_index = u32::from_be_bytes(bytes[(len - 4)..].try_into().unwrap()).into();
-        Key { prefix, event_index }
-    }
-
-    const BOUND: Bound = Bound::Unbounded;
 }
 
-impl Storable for KeyPrefix {
-    fn to_bytes(&self) -> Cow<[u8]> {
+impl TryFrom<&[u8]> for Key {
+    type Error = ();
+
+    fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
+        let len = bytes.len();
+        let prefix = KeyPrefix::try_from(&bytes[..len - 4])?;
+        let event_index = u32::from_be_bytes(bytes[(len - 4)..].try_into().unwrap()).into();
+        Ok(Key { prefix, event_index })
+    }
+}
+
+impl KeyPrefix {
+    pub fn to_vec(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
         bytes.push(self.key_type() as u8);
-
         bytes.extend_from_slice(
             match self {
                 KeyPrefix::DirectChat(k) => k.to_bytes(),
@@ -147,25 +128,27 @@ impl Storable for KeyPrefix {
             }
             .as_ref(),
         );
-
-        Cow::Owned(bytes)
+        bytes
     }
+}
 
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+impl TryFrom<&[u8]> for KeyPrefix {
+    type Error = ();
+
+    fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
         let key_type = KeyType::from(bytes[0]);
-        let bytes = Cow::Borrowed(&bytes.as_ref()[1..]);
+        let bytes = Cow::Borrowed(&bytes[1..]);
 
         match key_type {
-            KeyType::DirectChat => KeyPrefix::DirectChat(DirectChatKeyPrefix::from_bytes(bytes)),
-            KeyType::GroupChat => KeyPrefix::GroupChat(GroupChatKeyPrefix::from_bytes(bytes)),
-            KeyType::Channel => KeyPrefix::Channel(ChannelKeyPrefix::from_bytes(bytes)),
-            KeyType::DirectChatThread => KeyPrefix::DirectChatThread(DirectChatThreadKeyPrefix::from_bytes(bytes)),
-            KeyType::GroupChatThread => KeyPrefix::GroupChatThread(GroupChatThreadKeyPrefix::from_bytes(bytes)),
-            KeyType::ChannelThread => KeyPrefix::ChannelThread(ChannelThreadKeyPrefix::from_bytes(bytes)),
+            KeyType::DirectChat => Ok(KeyPrefix::DirectChat(DirectChatKeyPrefix::from_bytes(bytes))),
+            KeyType::GroupChat => Ok(KeyPrefix::GroupChat(GroupChatKeyPrefix::from_bytes(bytes))),
+            KeyType::Channel => Ok(KeyPrefix::Channel(ChannelKeyPrefix::from_bytes(bytes))),
+            KeyType::DirectChatThread => Ok(KeyPrefix::DirectChatThread(DirectChatThreadKeyPrefix::from_bytes(bytes))),
+            KeyType::GroupChatThread => Ok(KeyPrefix::GroupChatThread(GroupChatThreadKeyPrefix::from_bytes(bytes))),
+            KeyType::ChannelThread => Ok(KeyPrefix::ChannelThread(ChannelThreadKeyPrefix::from_bytes(bytes))),
+            _ => Err(()),
         }
     }
-
-    const BOUND: Bound = Bound::Unbounded;
 }
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd)]
@@ -341,7 +324,7 @@ impl Serialize for KeyPrefix {
     where
         S: Serializer,
     {
-        let bytes = self.to_bytes();
+        let bytes = self.to_vec();
         serializer.serialize_bytes(&bytes)
     }
 }
@@ -352,6 +335,6 @@ impl<'de> Deserialize<'de> for KeyPrefix {
         D: Deserializer<'de>,
     {
         let bytes: Vec<u8> = Vec::deserialize(deserializer)?;
-        Ok(KeyPrefix::from_bytes(Cow::Owned(bytes)))
+        Ok(KeyPrefix::try_from(bytes.as_slice()).unwrap())
     }
 }

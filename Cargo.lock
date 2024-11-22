@@ -1369,6 +1369,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "sha2 0.10.8",
+ "stable_memory_map",
  "test-case",
  "testing",
  "tracing",
@@ -1627,6 +1628,7 @@ dependencies = [
  "serde_bytes",
  "serde_repr",
  "stable_memory",
+ "stable_memory_map",
  "storage_bucket_client",
  "timer_job_queues",
  "tracing",
@@ -2857,6 +2859,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "stable_memory",
+ "stable_memory_map",
  "storage_bucket_client",
  "timer_job_queues",
  "tracing",
@@ -7438,6 +7441,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "stable_memory_map"
+version = "0.1.0"
+dependencies = [
+ "ic-cdk 0.16.0",
+ "ic-stable-structures",
+]
+
+[[package]]
 name = "stacker"
 version = "0.1.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8500,6 +8511,7 @@ dependencies = [
  "sonic_canister",
  "sonic_canister_c2c_client",
  "stable_memory",
+ "stable_memory_map",
  "storage_bucket_client",
  "timer_job_queues",
  "tracing",
