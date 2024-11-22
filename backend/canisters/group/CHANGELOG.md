@@ -22,10 +22,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Take a fee for prize messages and send to treasury ([#6854](https://github.com/open-chat-labs/open-chat/pull/6854))
 - Store @everyone mentions once rather than linking to each user ([#6856](https://github.com/open-chat-labs/open-chat/pull/6856))
 - Deduplicate existing @everyone mentions ([#6857](https://github.com/open-chat-labs/open-chat/pull/6857))
+- Disallow promoting bots to owners ([#6865](https://github.com/open-chat-labs/open-chat/pull/6865))
+- Reduce the number of events stored on the heap in the `HybridMap` ([#6867](https://github.com/open-chat-labs/open-chat/pull/6867))
 
 ### Removed
 
 - Remove code to migrate events to stable memory ([#6837](https://github.com/open-chat-labs/open-chat/pull/6837))
+- Remove code to migrate to the new thread summary format ([#6862](https://github.com/open-chat-labs/open-chat/pull/6862))
+- Remove any spurious video calls in progress ([#6872](https://github.com/open-chat-labs/open-chat/pull/6872))
 
 ### Fixed
 
