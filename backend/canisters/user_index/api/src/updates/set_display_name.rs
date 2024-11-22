@@ -12,7 +12,6 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
-    Unauthorized,
     UserNotFound,
     DisplayNameInvalid,
     DisplayNameTooShort(u16),
