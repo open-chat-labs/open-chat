@@ -91,7 +91,9 @@
     <ModalContent on:close={onCancel}>
         <div slot="header">{commandName}</div>
         <form bind:this={form} slot="body" onsubmit={onSubmit}>
-            <p>{command.description}</p>
+            {#if command.description}
+                <p><Translatable resourceKey={i18nKey(command.description)} /></p>
+            {/if}
             {#if botState.selectedCommandParamInstances.length === command?.params?.length}
                 {#each command?.params ?? [] as param, i}
                     <CommandParam instance={botState.selectedCommandParamInstances[i]} {param} />

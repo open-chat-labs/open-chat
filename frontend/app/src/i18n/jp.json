@@ -148,6 +148,86 @@
     "blockUser": "ユーザーのブロック",
     "blockUserFailed": "ユーザーをブロックできませんでした",
     "blockUserSucceeded": "ユーザーはブロックされました",
+    "bots": {
+        "builtin": {
+            "desc": "このボットはOpenChatの組み込みコマンドを提供します",
+            "name": "内蔵"
+        },
+        "crypto": {
+            "desc": "他のユーザーに暗号を送信する",
+            "params": {
+                "amount": {
+                    "desc": "送金したい金額",
+                    "name": "額",
+                    "placeholder": "金額を入力"
+                },
+                "token": {
+                    "desc": "送信したいトークン",
+                    "name": "トークン",
+                    "placeholder": "トークンを入力"
+                }
+            }
+        },
+        "diamond": {
+            "desc": "ダイヤモンド会員資格を説明するリンクを投稿する"
+        },
+        "failed": "申し訳ありませんが、ボットコマンドの実行に失敗しました",
+        "faq": {
+            "desc": "FAQトピックへのリンクを作成する",
+            "params": {
+                "topic": {
+                    "choices": {
+                        "airdrop": "毎月のエアドロップ",
+                        "android": "Androidアプリ",
+                        "buychat": "CHATを購入する",
+                        "content": "コンテンツガイドライン",
+                        "diamond": "ダイヤモンド会員",
+                        "info": "情報",
+                        "ios": "iOSアプリ",
+                        "referral": "紹介報酬",
+                        "security": "安全",
+                        "sendtokens": "トークンの送信",
+                        "shortcuts": "ショートカット",
+                        "storage": "ストレージ",
+                        "style": "メッセージのスタイル設定",
+                        "translation": "コンテンツ翻訳",
+                        "voting": "投票",
+                        "wallet": "財布"
+                    },
+                    "desc": "あなたが興味を持っている特定のFAQトピック",
+                    "name": "FAQトピック",
+                    "placeholder": "トピックを選択"
+                }
+            }
+        },
+        "gif": {
+            "desc": "送信するGIFを探す",
+            "params": {
+                "term": {
+                    "desc": "GIFの検索語を入力してください",
+                    "name": "検索語",
+                    "placeholder": "検索語"
+                }
+            }
+        },
+        "matchingCommands": "一致するコマンド",
+        "poll": {
+            "desc": "現在のチャットでアンケートを作成する"
+        },
+        "search": {
+            "desc": "現在のチャットで検索を開始する",
+            "params": {
+                "term": {
+                    "desc": "チャット内で検索する用語を入力してください",
+                    "name": "検索語",
+                    "placeholder": "検索語"
+                }
+            }
+        },
+        "witch": {
+            "desc": "魔女を召喚する"
+        }
+    },
     "cancel": "キャンセル",
     "cancelInvite": "招待をキャンセル",
     "cancelInviteFailed": "招待のキャンセル中にエラーが発生しました",

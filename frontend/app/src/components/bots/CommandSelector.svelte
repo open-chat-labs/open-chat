@@ -115,14 +115,20 @@
                         /{command.name}
                     </div>
                     {#each command?.params ?? [] as param}
-                        <div class="param" class:required={param.required}>{param.name}</div>
+                        <div class="param" class:required={param.required}>
+                            <Translatable resourceKey={i18nKey(param.name)} />
+                        </div>
                     {/each}
                 </div>
-                <div class="desc">
-                    {command.description}
-                </div>
+                {#if command.description}
+                    <div class="desc">
+                        <Translatable resourceKey={i18nKey(command.description)} />
+                    </div>
+                {/if}
             </div>
-            <div class="bot-name">{command.botName}</div>
+            <div class="bot-name">
+                <Translatable resourceKey={i18nKey(command.botName)} />
+            </div>
         </div>
     {/each}
 </div>

@@ -1,16 +1,17 @@
 <script lang="ts">
+    import { _ } from "svelte-i18n";
     import type {
         SlashCommandParam,
         SlashCommandParamInstance,
         UserSummary,
     } from "openchat-client";
-    // import { onMount } from "svelte";
     import Legend from "../Legend.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Input from "../Input.svelte";
     import SingleUserSelector from "../home/SingleUserSelector.svelte";
     import Select from "../Select.svelte";
     import NumberInput from "../NumberInput.svelte";
+    import Translatable from "../Translatable.svelte";
 
     interface Props {
         param: SlashCommandParam;
@@ -28,7 +29,7 @@
             on:userRemoved={() => (instance.userId = undefined)}
             autofocus={false}
             direction={"down"}
-            placeholder={param.placeholder} />
+            placeholder={$_(param.placeholder ?? "")} />
     {:else if instance.kind === "string" && param.kind === "string"}
         <Legend
             label={i18nKey(param.name)}
@@ -40,7 +41,9 @@
             <Select bind:value={instance.value}>
                 <option value={""} selected disabled>{`Choose ${param.name}`}</option>
                 {#each param.choices as choice}
-                    <option value={choice.value}>{choice.name}</option>
+                    <option value={choice.value}>
+                        <Translatable resourceKey={i18nKey(choice.name)} />
+                    </option>
                 {/each}
             </Select>
         {:else}
@@ -63,7 +66,9 @@
             <Select bind:value={instance.value}>
                 <option value={null} selected disabled>{`Choose ${param.name}`}</option>
                 {#each param.choices as choice}
-                    <option value={choice.value}>{choice.name}</option>
+                    <option value={choice.value}>
+                        <Translatable resourceKey={i18nKey(choice.name)} />
+                    </option>
                 {/each}
             </Select>
         {:else}
@@ -71,7 +76,7 @@
                 min={param.minValue}
                 max={param.maxValue}
                 shouldClamp={false}
-                placeholder={param.placeholder ?? ""}
+                placeholder={$_(param.placeholder ?? "")}
                 bind:value={instance.value} />
         {/if}
     {/if}

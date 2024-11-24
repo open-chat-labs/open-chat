@@ -149,8 +149,84 @@
     "blockUserFailed": "Unable to block user",
     "blockUserSucceeded": "User has been blocked",
     "bots": {
+        "builtin": {
+            "desc": "This bot provides the built in OpenChat commands",
+            "name": "Built-in"
+        },
+        "crypto": {
+            "desc": "Send crypto to another user",
+            "params": {
+                "amount": {
+                    "desc": "The amount that you want to send",
+                    "name": "Amount",
+                    "placeholder": "Enter amount"
+                },
+                "token": {
+                    "desc": "The token that you want to send",
+                    "name": "Token",
+                    "placeholder": "Enter token"
+                }
+            }
+        },
+        "diamond": {
+            "desc": "Post a link to explain Diamond membership"
+        },
+        "failed": "Sorry, we failed to execute the bot command",
+        "faq": {
+            "desc": "Create a link to an FAQ topic",
+            "params": {
+                "topic": {
+                    "choices": {
+                        "airdrop": "Monthly airdrop",
+                        "android": "Android app",
+                        "buychat": "Buying CHAT",
+                        "content": "Content guidelines",
+                        "diamond": "Diamond membership",
+                        "info": "Information",
+                        "ios": "iOS app",
+                        "referral": "Referral rewards",
+                        "security": "Security",
+                        "sendtokens": "Sending tokens",
+                        "shortcuts": "Shortcuts",
+                        "storage": "Storage",
+                        "style": "Styling messages",
+                        "translation": "Content translation",
+                        "voting": "Voting",
+                        "wallet": "Wallet"
+                    },
+                    "desc": "The specific FAQ topic you are interested in",
+                    "name": "FAQ topic",
+                    "placeholder": "Select topic"
+                }
+            }
+        },
+        "gif": {
+            "desc": "Find a gif to send",
+            "params": {
+                "term": {
+                    "desc": "Enter the search term for your gif",
+                    "name": "Search term",
+                    "placeholder": "Search term"
+                }
+            }
+        },
         "matchingCommands": "Matching commands",
-        "failed": "Sorry, we failed to execute the bot command"
+        "poll": {
+            "desc": "Create a poll in the current chat"
+        },
+        "search": {
+            "desc": "Initiate a search in the current chat",
+            "params": {
+                "term": {
+                    "desc": "Enter the term to search for with in the chat",
+                    "name": "Search term",
+                    "placeholder": "Search term"
+                }
+            }
+        },
+        "witch": {
+            "desc": "Summon the witch"
+        }
     },
     "cancel": "Cancel",
     "cancelInvite": "Cancel invite",

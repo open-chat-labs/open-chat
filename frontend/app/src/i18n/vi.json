@@ -148,6 +148,86 @@
     "blockUser": "Chặn",
     "blockUserFailed": "Không thể chặn người dùng",
     "blockUserSucceeded": "Người dùng đã bị chặn",
+    "bots": {
+        "builtin": {
+            "desc": "Bot này cung cấp các lệnh OpenChat tích hợp sẵn",
+            "name": "Tích hợp sẵn"
+        },
+        "crypto": {
+            "desc": "Gửi tiền điện tử cho người dùng khác",
+            "params": {
+                "amount": {
+                    "desc": "Số tiền bạn muốn gửi",
+                    "name": "Số lượng",
+                    "placeholder": "Nhập số tiền"
+                },
+                "token": {
+                    "desc": "Mã thông báo mà bạn muốn gửi",
+                    "name": "Mã thông báo",
+                    "placeholder": "Nhập mã thông báo"
+                }
+            }
+        },
+        "diamond": {
+            "desc": "Đăng liên kết để giải thích về tư cách thành viên Kim cương"
+        },
+        "failed": "Xin lỗi, chúng tôi không thực hiện được lệnh bot",
+        "faq": {
+            "desc": "Tạo liên kết đến chủ đề FAQ",
+            "params": {
+                "topic": {
+                    "choices": {
+                        "airdrop": "Airdrop hàng tháng",
+                        "android": "Ứng dụng Android",
+                        "buychat": "Mua CHAT",
+                        "content": "Hướng dẫn nội dung",
+                        "diamond": "Thành viên kim cương",
+                        "info": "Thông tin",
+                        "ios": "Ứng dụng iOS",
+                        "referral": "Phần thưởng giới thiệu",
+                        "security": "Bảo vệ",
+                        "sendtokens": "Gửi token",
+                        "shortcuts": "Phím tắt",
+                        "storage": "Kho",
+                        "style": "Tin nhắn kiểu dáng",
+                        "translation": "Bản dịch nội dung",
+                        "voting": "Bỏ phiếu",
+                        "wallet": "Cái ví"
+                    },
+                    "desc": "Chủ đề FAQ cụ thể mà bạn quan tâm",
+                    "name": "Chủ đề FAQ",
+                    "placeholder": "Chọn chủ đề"
+                }
+            }
+        },
+        "gif": {
+            "desc": "Tìm một gif để gửi",
+            "params": {
+                "term": {
+                    "desc": "Nhập từ khóa tìm kiếm cho gif của bạn",
+                    "name": "Thuật ngữ tìm kiếm",
+                    "placeholder": "Thuật ngữ tìm kiếm"
+                }
+            }
+        },
+        "matchingCommands": "Lệnh khớp",
+        "poll": {
+            "desc": "Tạo một cuộc thăm dò trong cuộc trò chuyện hiện tại"
+        },
+        "search": {
+            "desc": "Bắt đầu tìm kiếm trong cuộc trò chuyện hiện tại",
+            "params": {
+                "term": {
+                    "desc": "Nhập thuật ngữ để tìm kiếm trong cuộc trò chuyện",
+                    "name": "Thuật ngữ tìm kiếm",
+                    "placeholder": "Thuật ngữ tìm kiếm"
+                }
+            }
+        },
+        "witch": {
+            "desc": "Triệu hồi phù thủy"
+        }
+    },
     "cancel": "Hủy bỏ",
     "cancelInvite": "Hủy lời mời",
     "cancelInviteFailed": "Lỗi khi hủy lời mời",
