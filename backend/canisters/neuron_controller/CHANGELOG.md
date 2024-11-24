@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1467](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1467-neuron_controller)] - 2024-11-24
+
 ### Changed
 
 - Increase CyclesDispenser's minimum balance to 10k ICP ([#6870](https://github.com/open-chat-labs/open-chat/pull/6870))
