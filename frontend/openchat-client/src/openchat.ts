@@ -7770,6 +7770,12 @@ export class OpenChat extends OpenChatAgentWorker {
                         "No II principals found, we will have to ask the user to link one",
                     );
                 }
+                if (
+                    this._authPrincipal !== undefined &&
+                    iiPrincipals.includes(this._authPrincipal)
+                ) {
+                    return this._authPrincipal;
+                }
                 return iiPrincipals[0];
             })
             .catch((err) => {

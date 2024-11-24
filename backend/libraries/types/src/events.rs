@@ -37,6 +37,7 @@ pub enum ChatEvent {
     UsersInvited(UsersInvited),
     MembersAddedToDefaultChannel(MembersAddedToDefaultChannel),
     ExternalUrlUpdated(ExternalUrlUpdated),
+    FailedToDeserialize,
 }
 
 #[ts_export]

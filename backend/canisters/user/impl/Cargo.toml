@@ -70,6 +70,7 @@ sns_governance_canister_c2c_client = { path = "../../../external_canisters/sns_g
 sonic_canister = { path = "../../../external_canisters/sonic/api" }
 sonic_canister_c2c_client = { path = "../../../external_canisters/sonic/c2c_client" }
 stable_memory = { path = "../../../libraries/stable_memory" }
+stable_memory_map = { path = "../../../libraries/stable_memory_map" }
 storage_bucket_client = { path = "../../../libraries/storage_bucket_client" }
 timer_job_queues = { path = "../../../libraries/timer_job_queues" }
 tracing = { workspace = true }

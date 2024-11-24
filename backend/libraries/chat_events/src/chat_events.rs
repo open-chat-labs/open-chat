@@ -4,9 +4,7 @@ use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::metrics::{ChatMetricsInternal, MetricKey};
 use crate::search_index::SearchIndex;
 use crate::stable_storage::key::KeyPrefix;
-use crate::stable_storage::Memory;
 use crate::*;
-use candid::Principal;
 use event_store_producer::{EventBuilder, EventStoreClient, Runtime};
 use rand::rngs::StdRng;
 use rand::Rng;
@@ -24,16 +22,15 @@ use types::{
     AcceptP2PSwapResult, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, ChatType, CompleteP2PSwapResult,
     CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventContext, EventIndex, EventWrapper,
     EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash,
-    HydratedMention, Mention, Message, MessageContentInitial, MessageEditedEventPayload, MessageEventPayload, MessageId,
-    MessageIndex, MessageMatch, MessageReport, MessageTippedEventPayload, Milliseconds, MultiUserChat, P2PSwapAccepted,
-    P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes,
-    ProposalUpdate, PushEventResult, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapResult,
+    HydratedMention, Mention, Message, MessageContent, MessageContentInitial, MessageEditedEventPayload, MessageEventPayload,
+    MessageId, MessageIndex, MessageMatch, MessageReport, MessageTippedEventPayload, Milliseconds, MultiUserChat,
+    P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction,
+    PollVotes, ProposalUpdate, PushEventResult, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapResult,
     ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload,
     VideoCallParticipants, VideoCallPresence, VoteOperation,
 };
-
-pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
-const MEMO_PRIZE_REFUND: [u8; 8] = [0x4f, 0x43, 0x5f, 0x50, 0x52, 0x5a, 0x52, 0x46]; // OC_PRZRF
+use utils::consts::OPENCHAT_BOT_USER_ID;
+use utils::time::HOUR_IN_MS;
 
 #[derive(Serialize, Deserialize)]
 pub struct ChatEvents {
@@ -52,8 +49,32 @@ pub struct ChatEvents {
 }
 
 impl ChatEvents {
-    pub fn init_stable_storage(memory: Memory) {
-        stable_storage::init(memory)
+    pub fn remove_spurious_video_call_in_progress(&mut self, now: TimestampMillis) {
+        // IF any direct chats have video calls in progress where either:
+        // 1. The message cannot be found
+        // 2. The message is not a video call
+        // 3. More than 2 hours have passed since the call was started
+        // THEN remove the video call in progress indicator
+
+        if self.video_call_is_spurious(now) {
+            self.video_call_in_progress = Timestamped::new(None, now);
+        }
+    }
+
+    fn video_call_is_spurious(&self, now: TimestampMillis) -> bool {
+        if let Some(video_call) = &self.video_call_in_progress.value {
+            if now - self.video_call_in_progress.timestamp > 2 * HOUR_IN_MS {
+                return true;
+            }
+
+            if let Some(message) = self.main_events_reader().message(video_call.message_index.into(), None) {
+                return !matches!(message.content, MessageContent::VideoCall(_));
+            } else {
+                return true;
+            }
+        }
+
+        false
     }
 
     pub fn init_maps(&mut self) {
@@ -654,37 +675,32 @@ impl ChatEvents {
         }
     }
 
-    pub fn prize_refund(
+    pub fn final_payments(
         &mut self,
         thread_root_message_index: Option<MessageIndex>,
         message_index: MessageIndex,
-        memo: &[u8],
         now_nanos: TimestampNanos,
-    ) -> Option<PendingCryptoTransaction> {
+    ) -> Vec<PendingCryptoTransaction> {
         self.update_message(
             thread_root_message_index,
             message_index.into(),
             EventIndex::default(),
             None,
-            |message, _| Self::prize_refund_inner(message, memo, now_nanos),
+            |message, _| Self::final_payments_inner(message, now_nanos),
         )
         .ok()
+        .unwrap_or_default()
     }
 
-    fn prize_refund_inner(
+    fn final_payments_inner(
         message: &mut MessageInternal,
-        memo: &[u8],
         now_nanos: TimestampNanos,
-    ) -> Result<PendingCryptoTransaction, UpdateEventError> {
+    ) -> Result<Vec<PendingCryptoTransaction>, UpdateEventError> {
         let MessageContentInternal::Prize(p) = &mut message.content else {
             return Err(UpdateEventError::NotFound);
         };
 
-        if let Some(refund) = p.prize_refund(message.sender, memo, now_nanos) {
-            Ok(refund)
-        } else {
-            Err(UpdateEventError::NoChange(()))
-        }
+        Ok(p.final_payments(message.sender, now_nanos))
     }
 
     pub fn record_proposal_vote(
@@ -1013,8 +1029,10 @@ impl ChatEvents {
     ) -> ClaimPrizeResult {
         use ClaimPrizeResult::*;
 
+        let amount = transaction.units();
+
         match self.update_message(None, message_id.into(), EventIndex::default(), Some(now), |message, _| {
-            Self::claim_prize_inner(message, winner)
+            Self::claim_prize_inner(message, winner, amount)
         }) {
             Ok(message_index) => {
                 // Push a PrizeWinnerContent message to the group from the OpenChatBot
@@ -1027,7 +1045,7 @@ impl ChatEvents {
                             winner,
                             ledger: transaction.ledger_canister_id(),
                             token_symbol: transaction.token().token_symbol().to_string(),
-                            amount: transaction.units(),
+                            amount,
                             fee: transaction.fee(),
                             block_index: transaction.index(),
                             prize_message: message_index,
@@ -1049,7 +1067,11 @@ impl ChatEvents {
         }
     }
 
-    fn claim_prize_inner(message: &mut MessageInternal, winner: UserId) -> Result<MessageIndex, UpdateEventError> {
+    fn claim_prize_inner(
+        message: &mut MessageInternal,
+        winner: UserId,
+        amount: u128,
+    ) -> Result<MessageIndex, UpdateEventError> {
         let MessageContentInternal::Prize(content) = &mut message.content else {
             return Err(UpdateEventError::NotFound);
         };
@@ -1058,6 +1080,7 @@ impl ChatEvents {
         if content.reservations.remove(&winner) {
             // Add the user to winners list
             content.winners.insert(winner);
+            content.prizes_paid += amount;
             Ok(message.message_index)
         } else {
             Err(UpdateEventError::NotFound)
@@ -1862,9 +1885,9 @@ impl ChatEvents {
                         });
                     }
                     if let MessageContentInternal::Prize(mut p) = m.content {
-                        if let Some(refund) = p.prize_refund(m.sender, &MEMO_PRIZE_REFUND, now * 1_000_000) {
-                            result.prize_refunds.push(refund);
-                        }
+                        result
+                            .final_prize_payments
+                            .append(&mut p.final_payments(m.sender, now * 1_000_000));
                     }
                 }
             }
@@ -2405,7 +2428,7 @@ pub enum UnfollowThreadResult {
 pub struct RemoveExpiredEventsResult {
     pub events: Vec<EventIndex>,
     pub threads: Vec<ExpiredThread>,
-    pub prize_refunds: Vec<PendingCryptoTransaction>,
+    pub final_prize_payments: Vec<PendingCryptoTransaction>,
 }
 
 pub struct ExpiredThread {

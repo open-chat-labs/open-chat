@@ -1,7 +1,7 @@
 use crate::metrics::{ChatMetricsInternal, MetricKey};
 use crate::MessageContentInternal;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::ops::DerefMut;
 use types::{
     is_default, AccessGate, AccessGateConfigInternal, AvatarChanged, ChannelId, Chat, ChatId, CommunityId, DeletedBy,
@@ -10,7 +10,7 @@ use types::{
     GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, MemberJoined, MemberLeft, MembersAdded,
     MembersAddedToDefaultChannel, MembersRemoved, Message, MessageContent, MessageId, MessageIndex, MessagePinned,
     MessageUnpinned, MultiUserChat, PermissionsChanged, PushIfNotContains, Reaction, ReplyContext, RoleChanged, ThreadSummary,
-    TimestampMillis, Timestamped, Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
+    TimestampMillis, Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -69,6 +69,11 @@ pub enum ChatEventInternal {
     ExternalUrlUpdated(Box<ExternalUrlUpdated>),
     #[serde(rename = "e")]
     Empty,
+    // This should never happen!
+    // But if it ever does, it's better to return the remaining events
+    // than to endlessly fail attempting to load the broken event(s)
+    #[serde(rename = "fd")]
+    FailedToDeserialize,
 }
 
 impl ChatEventInternal {
@@ -334,7 +339,6 @@ impl From<&MembersAddedToPublicChannelInternal> for MembersAddedToDefaultChannel
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
-#[serde(from = "ThreadSummaryInternalCombined")]
 pub struct ThreadSummaryInternal {
     #[serde(rename = "p")]
     pub participants: Vec<UserId>,
@@ -346,54 +350,6 @@ pub struct ThreadSummaryInternal {
     pub latest_event_index: EventIndex,
     #[serde(rename = "t")]
     pub latest_event_timestamp: TimestampMillis,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(untagged)]
-enum Followers {
-    Old(HashMap<UserId, Timestamped<bool>>),
-    New(HashSet<UserId>),
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct ThreadSummaryInternalCombined {
-    #[serde(rename = "p", alias = "i")]
-    participants: Vec<UserId>,
-    #[serde(rename = "f")]
-    followers: Followers,
-    #[serde(rename = "r")]
-    reply_count: u32,
-    #[serde(rename = "e")]
-    latest_event_index: EventIndex,
-    #[serde(rename = "t")]
-    latest_event_timestamp: TimestampMillis,
-}
-
-impl From<ThreadSummaryInternalCombined> for ThreadSummaryInternal {
-    fn from(value: ThreadSummaryInternalCombined) -> Self {
-        let followers = match value.followers {
-            Followers::Old(map) => {
-                let mut followers: HashSet<_> = value.participants.iter().copied().collect();
-                for (user_id, following) in map {
-                    if following.value {
-                        followers.insert(user_id);
-                    } else {
-                        followers.remove(&user_id);
-                    }
-                }
-                followers
-            }
-            Followers::New(set) => set,
-        };
-
-        ThreadSummaryInternal {
-            participants: value.participants,
-            followers,
-            reply_count: value.reply_count,
-            latest_event_index: value.latest_event_index,
-            latest_event_timestamp: value.latest_event_timestamp,
-        }
-    }
 }
 
 impl ThreadSummaryInternal {

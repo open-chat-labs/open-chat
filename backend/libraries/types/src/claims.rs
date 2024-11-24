@@ -38,6 +38,8 @@ pub struct BotCommandClaims {
     pub bot: UserId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
+    pub command_name: String,
+    pub parameters: String,
+    pub version: u32,
     pub bot_api_gateway: CanisterId,
-    pub reply_url: String,
 }

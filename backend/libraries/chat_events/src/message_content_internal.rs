@@ -5,7 +5,7 @@ use search::Document;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::collections::{HashMap, HashSet};
-use types::icrc1::CryptoAccount;
+use types::icrc1::{Account, CryptoAccount};
 use types::{
     is_default, AudioContent, BlobReference, CallParticipant, CanisterId, CompletedCryptoTransaction,
     ContentWithCaptionEventPayload, CryptoContent, CryptoContentEventPayload, CryptoTransaction, Cryptocurrency, CustomContent,
@@ -19,6 +19,7 @@ use types::{
     TextContentEventPayload, ThumbnailData, TimestampMillis, TimestampNanos, TokenInfo, TotalVotes, TransactionHash, UserId,
     VideoCallContent, VideoCallPresence, VideoCallType, VideoContent, VoteOperation,
 };
+use utils::consts::{MEMO_PRIZE_FEE, MEMO_PRIZE_REFUND, OPENCHAT_TREASURY_CANISTER_ID, PRIZE_FEE_PERCENT};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum MessageContentInternal {
@@ -1204,9 +1205,13 @@ pub struct PrizeContentInternal {
     #[serde(rename = "s", default, skip_serializing_if = "is_default")]
     pub streak_only: u16,
     #[serde(rename = "f", default, skip_serializing_if = "is_default")]
-    pub refund_started: bool,
+    pub final_payments_started: bool,
     #[serde(rename = "l", default, skip_serializing_if = "is_default")]
     pub ledger_error: bool,
+    #[serde(rename = "pp", default, skip_serializing_if = "is_default")]
+    pub prizes_paid: u128,
+    #[serde(rename = "fp", default, skip_serializing_if = "is_default")]
+    pub fee_percent: u8,
 }
 
 impl PrizeContentInternal {
@@ -1222,31 +1227,59 @@ impl PrizeContentInternal {
             lifetime_diamond_only: content.lifetime_diamond_only,
             unique_person_only: content.unique_person_only,
             streak_only: content.streak_only,
-            refund_started: false,
+            final_payments_started: false,
             ledger_error: false,
+            prizes_paid: 0,
+            fee_percent: PRIZE_FEE_PERCENT,
         }
     }
 
-    pub fn prize_refund(&mut self, sender: UserId, memo: &[u8], now_nanos: TimestampNanos) -> Option<PendingCryptoTransaction> {
-        if self.refund_started {
-            return None;
+    pub fn final_payments(&mut self, sender: UserId, now_nanos: TimestampNanos) -> Vec<PendingCryptoTransaction> {
+        if self.final_payments_started {
+            return Vec::new();
         }
-        let fee = self.transaction.fee();
-        let unclaimed = self.prizes_remaining.iter().map(|p| p + fee).sum::<u128>();
-        if unclaimed > 0 {
-            self.refund_started = true;
-            Some(create_pending_transaction(
+
+        self.final_payments_started = true;
+
+        let transaction_fee = self.transaction.fee();
+        let ledger = self.transaction.ledger_canister_id();
+
+        // Only take proportion of prizes paid out as a fee and refund the rest
+        let oc_fee = (self.prizes_paid * self.fee_percent as u128) / 100;
+
+        // Refund includes prizes unclaimed plus their associated fee
+        let unclaimed_prizes = self.prizes_remaining.iter().sum::<u128>();
+        let unclaimed_fees =
+            ((unclaimed_prizes * self.fee_percent as u128) / 100) + (self.prizes_remaining.len() as u128 * transaction_fee);
+        let refund = unclaimed_prizes + unclaimed_fees;
+
+        let mut payments = Vec::new();
+
+        if oc_fee > transaction_fee {
+            payments.push(PendingCryptoTransaction::ICRC1(types::icrc1::PendingCryptoTransaction {
+                ledger,
+                fee: transaction_fee,
+                token: self.transaction.token(),
+                amount: oc_fee - transaction_fee,
+                to: Account::from(OPENCHAT_TREASURY_CANISTER_ID),
+                memo: Some(MEMO_PRIZE_FEE.to_vec().into()),
+                created: now_nanos,
+            }));
+        }
+
+        if refund > transaction_fee {
+            payments.push(create_pending_transaction(
                 self.transaction.token(),
-                self.transaction.ledger_canister_id(),
-                unclaimed - fee,
-                fee,
+                ledger,
+                refund - transaction_fee,
+                transaction_fee,
                 sender,
-                Some(memo),
+                Some(&MEMO_PRIZE_REFUND),
                 now_nanos,
-            ))
-        } else {
-            None
+            ));
         }
+
+        payments
     }
 }
 

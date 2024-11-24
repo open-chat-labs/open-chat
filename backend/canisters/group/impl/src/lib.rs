@@ -86,6 +86,10 @@ impl RuntimeState {
         self.env.caller() == self.data.local_group_index_canister_id
     }
 
+    pub fn is_caller_bot_api_gateway(&self) -> bool {
+        self.env.caller() == self.data.bot_api_gateway_canister_id
+    }
+
     pub fn is_caller_escrow_canister(&self) -> bool {
         self.env.caller() == self.data.escrow_canister_id
     }
@@ -168,7 +172,7 @@ impl RuntimeState {
             joined: member.date_added(),
             role: member.role().value.into(),
             mentions: chat.most_recent_mentions(member, None),
-            notifications_muted: member.notifications_muted.value,
+            notifications_muted: member.notifications_muted().value,
             my_metrics: chat
                 .events
                 .user_metrics(&member.user_id(), None)
@@ -345,7 +349,7 @@ impl RuntimeState {
                 .timer_jobs
                 .enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
         }
-        for pending_transaction in result.prize_refunds {
+        for pending_transaction in result.final_prize_payments {
             self.data.timer_jobs.enqueue_job(
                 TimerJob::MakeTransfer(MakeTransferJob {
                     pending_transaction,
@@ -577,7 +581,13 @@ impl Data {
     }
 
     pub fn lookup_user_id(&self, user_id_or_principal: Principal) -> Option<UserId> {
-        self.get_member(user_id_or_principal).map(|m| m.user_id())
+        let user_id = self
+            .principal_to_user_id_map
+            .get(&user_id_or_principal)
+            .copied()
+            .unwrap_or(user_id_or_principal.into());
+
+        self.chat.members.contains(&user_id).then_some(user_id)
     }
 
     pub fn get_member(&self, user_id_or_principal: Principal) -> Option<&GroupMemberInternal> {

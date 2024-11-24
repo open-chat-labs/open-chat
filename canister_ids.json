@@ -71,6 +71,9 @@
     "ic": "cpi5u-yiaaa-aaaar-aqw5a-cai",
     "ic_test": "cglwi-oaaaa-aaaar-aqw4q-cai"
   },
+  "treasury": {
+    "ic": "nafek-diaaa-aaaar-qalxa-cai"
+  },
   "sign_in_with_email": {
     "ic": "zi2i7-nqaaa-aaaar-qaemq-cai",
     "ic_test": "rubs2-eaaaa-aaaaf-bijfq-cai"
