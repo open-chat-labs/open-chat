@@ -29,11 +29,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Deduplicate existing @everyone mentions ([#6857](https://github.com/open-chat-labs/open-chat/pull/6857))
 - Disallow promoting bots to owners ([#6865](https://github.com/open-chat-labs/open-chat/pull/6865))
 - Reduce the number of events stored on the heap in the `HybridMap` ([#6867](https://github.com/open-chat-labs/open-chat/pull/6867))
+- Return `FailedToDeserialize` and log error if unable to read event ([#6873](https://github.com/open-chat-labs/open-chat/pull/6873))
+- Extract stable memory map so it can store additional datasets ([#6876](https://github.com/open-chat-labs/open-chat/pull/6876))
+- Avoid iterating all users when determining who to notify of new message ([#6877](https://github.com/open-chat-labs/open-chat/pull/6877))
 
 ### Removed
 
 - Remove code to migrate events to stable memory now that it is complete ([#6769](https://github.com/open-chat-labs/open-chat/pull/6769))
 - Remove code to migrate to the new thread summary format ([#6862](https://github.com/open-chat-labs/open-chat/pull/6862))
+- Remove any spurious video calls in progress ([#6872](https://github.com/open-chat-labs/open-chat/pull/6872))
 
 ## [[2.0.1433](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1433-community)] - 2024-11-07
 

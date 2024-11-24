@@ -69,7 +69,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                                     .chat
                                     .members
                                     .get(&message.sender)
-                                    .map_or(true, |m| m.notifications_muted.value || m.suspended.value);
+                                    .map_or(true, |m| m.notifications_muted().value || m.suspended().value);
 
                                 if !notifications_muted {
                                     let notification = Notification::ChannelReactionAdded(ChannelReactionAddedNotification {

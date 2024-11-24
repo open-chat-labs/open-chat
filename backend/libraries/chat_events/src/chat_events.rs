@@ -4,7 +4,6 @@ use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::metrics::{ChatMetricsInternal, MetricKey};
 use crate::search_index::SearchIndex;
 use crate::stable_storage::key::KeyPrefix;
-use crate::stable_storage::Memory;
 use crate::*;
 use event_store_producer::{EventBuilder, EventStoreClient, Runtime};
 use rand::rngs::StdRng;
@@ -23,14 +22,15 @@ use types::{
     AcceptP2PSwapResult, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, ChatType, CompleteP2PSwapResult,
     CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventContext, EventIndex, EventWrapper,
     EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash,
-    HydratedMention, Mention, Message, MessageContentInitial, MessageEditedEventPayload, MessageEventPayload, MessageId,
-    MessageIndex, MessageMatch, MessageReport, MessageTippedEventPayload, Milliseconds, MultiUserChat, P2PSwapAccepted,
-    P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes,
-    ProposalUpdate, PushEventResult, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapResult,
+    HydratedMention, Mention, Message, MessageContent, MessageContentInitial, MessageEditedEventPayload, MessageEventPayload,
+    MessageId, MessageIndex, MessageMatch, MessageReport, MessageTippedEventPayload, Milliseconds, MultiUserChat,
+    P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction,
+    PollVotes, ProposalUpdate, PushEventResult, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapResult,
     ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload,
     VideoCallParticipants, VideoCallPresence, VoteOperation,
 };
 use utils::consts::OPENCHAT_BOT_USER_ID;
+use utils::time::HOUR_IN_MS;
 
 #[derive(Serialize, Deserialize)]
 pub struct ChatEvents {
@@ -49,8 +49,32 @@ pub struct ChatEvents {
 }
 
 impl ChatEvents {
-    pub fn init_stable_storage(memory: Memory) {
-        stable_storage::init(memory)
+    pub fn remove_spurious_video_call_in_progress(&mut self, now: TimestampMillis) {
+        // IF any direct chats have video calls in progress where either:
+        // 1. The message cannot be found
+        // 2. The message is not a video call
+        // 3. More than 2 hours have passed since the call was started
+        // THEN remove the video call in progress indicator
+
+        if self.video_call_is_spurious(now) {
+            self.video_call_in_progress = Timestamped::new(None, now);
+        }
+    }
+
+    fn video_call_is_spurious(&self, now: TimestampMillis) -> bool {
+        if let Some(video_call) = &self.video_call_in_progress.value {
+            if now - self.video_call_in_progress.timestamp > 2 * HOUR_IN_MS {
+                return true;
+            }
+
+            if let Some(message) = self.main_events_reader().message(video_call.message_index.into(), None) {
+                return !matches!(message.content, MessageContent::VideoCall(_));
+            } else {
+                return true;
+            }
+        }
+
+        false
     }
 
     pub fn init_maps(&mut self) {

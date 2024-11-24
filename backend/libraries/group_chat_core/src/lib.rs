@@ -171,7 +171,7 @@ impl GroupChatCore {
 
         if hidden_for_non_members {
             if let Some(member) = member {
-                if member.suspended.value {
+                if member.suspended().value {
                     return MinVisibleEventIndexResult::UserSuspended;
                 } else if member.lapsed().value {
                     return MinVisibleEventIndexResult::UserLapsed;
@@ -687,7 +687,6 @@ impl GroupChatCore {
 
         let PrepareSendMessageSuccess {
             min_visible_event_index,
-            mentions_disabled,
             everyone_mentioned,
             sender_user_type,
         } = match self.prepare_send_message(
@@ -753,47 +752,53 @@ impl GroupChatCore {
                             // Bump the thread timestamp for all followers
                             member.followed_threads.insert(root_message_index, now);
 
-                            if member.user_id() != sender && !member.user_type().is_bot() && !member.suspended.value {
-                                let mentioned = !mentions_disabled
-                                    && (mentions.contains(&member.user_id())
-                                        || (is_first_reply && member.user_id() == root_message_sender));
+                            let user_id = member.user_id();
+                            if user_id != sender {
+                                let mentioned =
+                                    mentions.contains(&user_id) || (is_first_reply && user_id == root_message_sender);
 
                                 if mentioned {
-                                    // Mention this member
                                     member.mentions.add(thread_root_message_index, message_index, message_id, now);
                                 }
 
-                                if mentioned || !member.notifications_muted.value {
-                                    users_to_notify.insert(member.user_id());
+                                if mentioned || !member.notifications_muted().value {
+                                    users_to_notify.insert(user_id);
                                 }
                             }
                         }
                     }
                 }
             } else {
+                for mentioned in mentions {
+                    if let Some(member) = self.members.get_mut(&mentioned) {
+                        member.mentions.add(thread_root_message_index, message_index, message_id, now);
+                        users_to_notify.insert(mentioned);
+                    }
+                }
                 if everyone_mentioned {
                     self.at_everyone_mentions.insert(
                         now,
                         AtEveryoneMention::new(sender, message_event.event.message_id, message_event.event.message_index),
                     );
-                }
-
-                for member in self
-                    .members
-                    .iter_mut()
-                    .filter(|m| m.user_id() != sender && !m.user_type().is_bot() && !m.suspended.value)
-                {
-                    let mentioned = !mentions_disabled && mentions.contains(&member.user_id());
-                    if mentioned {
-                        // Mention this member
-                        member.mentions.add(thread_root_message_index, message_index, message_id, now);
-                    }
-
-                    if !member.notifications_muted.value || mentioned || everyone_mentioned {
-                        users_to_notify.insert(member.user_id());
-                    }
+                    // Notify everyone
+                    users_to_notify.extend(self.members.member_ids().iter().copied());
+                } else {
+                    // Notify everyone who has notifications unmuted
+                    users_to_notify.extend(self.members.notifications_unmuted().iter().copied());
                 }
             }
+        }
+
+        // Exclude the sender, bots, lapsed members, and suspended members from notifications
+        users_to_notify.remove(&sender);
+        for bot in self.members.bots().keys() {
+            users_to_notify.remove(bot);
+        }
+        for user_id in self.members.lapsed() {
+            users_to_notify.remove(user_id);
+        }
+        for user_id in self.members.suspended() {
+            users_to_notify.remove(user_id);
         }
 
         Success(SendMessageSuccess {
@@ -816,7 +821,6 @@ impl GroupChatCore {
         if sender == OPENCHAT_BOT_USER_ID || sender == proposals_bot_user_id {
             return Success(PrepareSendMessageSuccess {
                 min_visible_event_index: EventIndex::default(),
-                mentions_disabled: true,
                 everyone_mentioned: false,
                 sender_user_type: UserType::OcControlledBot,
             });
@@ -836,7 +840,7 @@ impl GroupChatCore {
         let Some(member) = self.members.get(&sender) else {
             return UserNotInGroup;
         };
-        if member.suspended.value {
+        if member.suspended().value {
             return UserSuspended;
         }
 
@@ -851,7 +855,6 @@ impl GroupChatCore {
 
         Success(PrepareSendMessageSuccess {
             min_visible_event_index: member.min_visible_event_index(),
-            mentions_disabled: false,
             everyone_mentioned: member.role().can_mention_everyone(permissions) && is_everyone_mentioned(content),
             sender_user_type: member.user_type(),
         })
@@ -869,7 +872,7 @@ impl GroupChatCore {
         use AddRemoveReactionResult::*;
 
         if let Some(member) = self.members.get(&user_id) {
-            if member.suspended.value {
+            if member.suspended().value {
                 return UserSuspended;
             } else if member.lapsed().value {
                 return UserLapsed;
@@ -909,7 +912,7 @@ impl GroupChatCore {
         use AddRemoveReactionResult::*;
 
         if let Some(member) = self.members.get(&user_id) {
-            if member.suspended.value {
+            if member.suspended().value {
                 return UserSuspended;
             } else if member.lapsed().value {
                 return UserLapsed;
@@ -943,7 +946,7 @@ impl GroupChatCore {
         use TipMessageResult::*;
 
         if let Some(member) = self.members.get(&args.user_id) {
-            if member.suspended.value {
+            if member.suspended().value {
                 return UserSuspended;
             } else if member.lapsed().value {
                 return UserLapsed;
@@ -972,7 +975,7 @@ impl GroupChatCore {
         use DeleteMessagesResult::*;
 
         let (is_admin, min_visible_event_index) = if let Some(member) = self.members.get(&user_id) {
-            if member.suspended.value {
+            if member.suspended().value {
                 return UserSuspended;
             } else if member.lapsed().value {
                 return UserLapsed;
@@ -1039,7 +1042,7 @@ impl GroupChatCore {
         use UndeleteMessagesResult::*;
 
         if let Some(member) = self.members.get(&user_id) {
-            if member.suspended.value {
+            if member.suspended().value {
                 return UserSuspended;
             } else if member.lapsed().value {
                 return UserLapsed;
@@ -1116,7 +1119,7 @@ impl GroupChatCore {
         use PinUnpinMessageResult::*;
 
         if let Some(member) = self.members.get(&user_id) {
-            if member.suspended.value {
+            if member.suspended().value {
                 return UserSuspended;
             } else if member.lapsed().value {
                 return UserLapsed;
@@ -1160,7 +1163,7 @@ impl GroupChatCore {
         use PinUnpinMessageResult::*;
 
         if let Some(member) = self.members.get(&user_id) {
-            if member.suspended.value {
+            if member.suspended().value {
                 return UserSuspended;
             } else if member.lapsed().value {
                 return UserLapsed;
@@ -1235,7 +1238,7 @@ impl GroupChatCore {
         const MAX_INVITES: usize = 100;
 
         if let Some(member) = self.members.get(&invited_by) {
-            if member.suspended.value {
+            if member.suspended().value {
                 return UserSuspended;
             }
 
@@ -1311,7 +1314,7 @@ impl GroupChatCore {
         use CancelInvitesResult::*;
 
         if let Some(member) = self.members.get(&cancelled_by) {
-            if member.suspended.value {
+            if member.suspended().value {
                 return UserSuspended;
             } else if member.lapsed().value {
                 return UserLapsed;
@@ -1337,7 +1340,7 @@ impl GroupChatCore {
         use CanLeaveResult::*;
 
         if let Some(member) = self.members.get(&user_id) {
-            if member.suspended.value {
+            if member.suspended().value {
                 UserSuspended
             } else if member.role().is_owner() && self.members.owners().len() == 1 {
                 LastOwnerCannotLeave
@@ -1381,7 +1384,7 @@ impl GroupChatCore {
         }
 
         if let Some(member) = self.members.get(&user_id) {
-            if member.suspended.value {
+            if member.suspended().value {
                 return UserSuspended;
             } else if member.lapsed().value {
                 return UserLapsed;
@@ -1509,7 +1512,7 @@ impl GroupChatCore {
         }
 
         if let Some(member) = self.members.get(user_id) {
-            if member.suspended.value {
+            if member.suspended().value {
                 return Err(UserSuspended);
             } else if member.lapsed().value {
                 return Err(UserLapsed);
@@ -1734,7 +1737,7 @@ impl GroupChatCore {
             return UserNotInGroup;
         };
 
-        if member.suspended.value {
+        if member.suspended().value {
             return UserSuspended;
         } else if member.lapsed().value {
             return UserLapsed;
@@ -1766,7 +1769,7 @@ impl GroupChatCore {
             return UserNotInGroup;
         };
 
-        if member.suspended.value {
+        if member.suspended().value {
             return UserSuspended;
         } else if member.lapsed().value {
             return UserLapsed;
@@ -2295,7 +2298,6 @@ enum PrepareSendMessageResult {
 
 struct PrepareSendMessageSuccess {
     min_visible_event_index: EventIndex,
-    mentions_disabled: bool,
     everyone_mentioned: bool,
     sender_user_type: UserType,
 }

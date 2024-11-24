@@ -23,6 +23,7 @@ export const translationCodes: Record<string, string> = {
     vi: "vi",
     pl: "pl",
     fa: "fa",
+    ar: "ar",
 };
 
 export const supportedLanguages = [
@@ -82,6 +83,10 @@ export const supportedLanguages = [
         name: "فارسی",
         code: "fa",
     },
+    {
+        name: "عربي",
+        code: "ar",
+    },
 ];
 
 export const supportedLanguagesByCode = supportedLanguages.reduce(
@@ -107,6 +112,7 @@ register("uk", () => import("./uk.json"));
 register("vi", () => import("./vi.json"));
 register("pl", () => import("./pl.json"));
 register("fa", () => import("./fa.json"));
+register("ar", () => import("./ar.json"));
 
 export function getStoredLocale(): string {
     const fromStorage = localStorage.getItem(configKeys.locale);

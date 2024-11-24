@@ -61,7 +61,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
     let caller = state.env.caller();
 
     if let Some(member) = state.data.get_member(caller) {
-        if member.suspended.value {
+        if member.suspended().value {
             return Err(Box::new(UserSuspended));
         } else if member.lapsed().value {
             return Err(Box::new(UserLapsed));

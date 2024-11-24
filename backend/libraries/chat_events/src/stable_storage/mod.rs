@@ -1,40 +1,19 @@
 use crate::stable_storage::key::{Key, KeyPrefix};
 use crate::{ChatEventInternal, EventsMap};
-use ic_stable_structures::storable::Bound;
-use ic_stable_structures::{StableBTreeMap, Storable};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
-use std::borrow::Cow;
-use std::cell::RefCell;
+use stable_memory_map::{with_map, with_map_mut};
 use std::cmp::min;
 use std::collections::VecDeque;
 use std::ops::RangeBounds;
-use types::{Chat, EventContext, EventIndex, EventWrapperInternal, MessageIndex, MAX_EVENT_INDEX, MIN_EVENT_INDEX};
+use types::{
+    Chat, EventContext, EventIndex, EventWrapperInternal, MessageIndex, TimestampMillis, MAX_EVENT_INDEX, MIN_EVENT_INDEX,
+};
 
 pub mod key;
 
 #[cfg(test)]
 mod tests;
-
-#[cfg(not(test))]
-pub type Memory = ic_stable_structures::memory_manager::VirtualMemory<ic_stable_structures::DefaultMemoryImpl>;
-
-#[cfg(test)]
-pub type Memory = ic_stable_structures::VectorMemory;
-
-struct ChatEventsStableStorageInner {
-    map: StableBTreeMap<Key, Value, Memory>,
-}
-
-struct Value(Vec<u8>);
-
-thread_local! {
-    static MAP: RefCell<Option<ChatEventsStableStorageInner>> = RefCell::default();
-}
-
-pub fn init(memory: Memory) {
-    MAP.set(Some(ChatEventsStableStorageInner::init(memory)));
-}
 
 pub fn garbage_collect(prefix: KeyPrefix) -> Result<u32, u32> {
     let start = Key::new(prefix.clone(), EventIndex::default());
@@ -43,8 +22,8 @@ pub fn garbage_collect(prefix: KeyPrefix) -> Result<u32, u32> {
         // If < 1B instructions have been used so far, delete another 100 keys, or exit if complete
         while ic_cdk::api::instruction_counter() < 1_000_000_000 {
             let keys: Vec<_> = m
-                .range(&start..)
-                .map(|(k, _)| k)
+                .range(start.to_vec()..)
+                .map_while(|(k, _)| Key::try_from(k.as_slice()).ok())
                 .take_while(|k| *k.prefix() == prefix)
                 .take(100)
                 .collect();
@@ -52,7 +31,7 @@ pub fn garbage_collect(prefix: KeyPrefix) -> Result<u32, u32> {
             let batch_count = keys.len() as u32;
             total_count += batch_count;
             for key in keys {
-                m.remove(&key);
+                m.remove(&key.to_vec());
             }
             // If batch count < 100 then we are finished
             if batch_count < 100 {
@@ -74,15 +53,16 @@ pub fn read_events_as_bytes(chat: Chat, after: Option<EventContext>, max_bytes: 
     };
     with_map(|m| {
         let mut total_bytes = 0;
-        m.range(key..)
+        m.range(key.to_vec()..)
+            .map_while(|(k, v)| Key::try_from(k.as_slice()).ok().map(|k| (k, v)))
             .take_while(|(k, v)| {
                 if !k.matches_chat(chat) {
                     return false;
                 }
-                total_bytes += v.0.len();
+                total_bytes += v.len();
                 total_bytes < max_bytes
             })
-            .map(|(k, v)| (EventContext::new(k.thread_root_message_index(), k.event_index()), v.0.into()))
+            .map(|(k, v)| (EventContext::new(k.thread_root_message_index(), k.event_index()), v.into()))
             .collect()
     })
 }
@@ -91,29 +71,13 @@ pub fn write_events_as_bytes(chat: Chat, events: Vec<(EventContext, ByteBuf)>) {
     with_map_mut(|m| {
         for (context, bytes) in events {
             let prefix = KeyPrefix::new(chat, context.thread_root_message_index);
-            let key = Key::new(prefix, context.event_index);
-            let value = Value(bytes.into_vec());
+            let key = Key::new(prefix, context.event_index).to_vec();
+            let value = bytes.into_vec();
             // Check the event is valid. We could remove this once we're more confident
-            let _ = EventWrapperInternal::from(&value);
+            let _ = bytes_to_event(&value);
             m.insert(key, value);
         }
     });
-}
-
-impl ChatEventsStableStorageInner {
-    fn init(memory: Memory) -> ChatEventsStableStorageInner {
-        ChatEventsStableStorageInner {
-            map: StableBTreeMap::init(memory),
-        }
-    }
-}
-
-fn with_map<F: FnOnce(&StableBTreeMap<Key, Value, Memory>) -> R, R>(f: F) -> R {
-    MAP.with_borrow(|m| f(&m.as_ref().unwrap().map))
-}
-
-fn with_map_mut<F: FnOnce(&mut StableBTreeMap<Key, Value, Memory>) -> R, R>(f: F) -> R {
-    MAP.with_borrow_mut(|m| f(&mut m.as_mut().unwrap().map))
 }
 
 #[derive(Serialize, Deserialize)]
@@ -153,9 +117,9 @@ impl ChatEventsStableStorage {
         Iter::new(prefix, start, end)
     }
 
-    fn get_internal(&self, event_index: EventIndex) -> Option<Value> {
+    fn get_internal(&self, event_index: EventIndex) -> Option<Vec<u8>> {
         let key = self.key(event_index);
-        with_map(|m| m.get(&key))
+        with_map(|m| m.get(&key.to_vec()))
     }
 }
 
@@ -165,17 +129,17 @@ impl EventsMap for ChatEventsStableStorage {
     }
 
     fn get(&self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
-        self.get_internal(event_index).map(|v| (&v).into())
+        self.get_internal(event_index).map(|v| bytes_to_event(&v))
     }
 
     fn insert(&mut self, event: EventWrapperInternal<ChatEventInternal>) {
         let key = self.key(event.index);
-        with_map_mut(|m| m.insert(key, event.into()));
+        with_map_mut(|m| m.insert(key.to_vec(), event_to_bytes(event)));
     }
 
     fn remove(&mut self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
         let key = self.key(event_index);
-        with_map_mut(|m| m.remove(&key)).map(|v| (&v).into())
+        with_map_mut(|m| m.remove(&key.to_vec())).map(|v| bytes_to_event(&v))
     }
 
     fn range<R: RangeBounds<EventIndex>>(
@@ -194,28 +158,24 @@ impl EventsMap for ChatEventsStableStorage {
     }
 }
 
-impl Storable for Value {
-    fn to_bytes(&self) -> Cow<[u8]> {
-        Cow::Borrowed(&self.0)
-    }
-
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        Value(bytes.to_vec())
-    }
-
-    const BOUND: Bound = Bound::Unbounded;
+fn event_to_bytes(value: EventWrapperInternal<ChatEventInternal>) -> Vec<u8> {
+    msgpack::serialize_then_unwrap(&value)
 }
 
-impl From<&Value> for EventWrapperInternal<ChatEventInternal> {
-    fn from(value: &Value) -> Self {
-        msgpack::deserialize_then_unwrap(value.0.as_ref())
-    }
-}
-
-impl From<EventWrapperInternal<ChatEventInternal>> for Value {
-    fn from(value: EventWrapperInternal<ChatEventInternal>) -> Self {
-        let bytes = msgpack::serialize_then_unwrap(&value);
-        Value(bytes)
+fn bytes_to_event(bytes: &[u8]) -> EventWrapperInternal<ChatEventInternal> {
+    match msgpack::deserialize(bytes) {
+        Ok(result) => result,
+        Err(error) => {
+            ic_cdk::eprintln!("Failed to deserialize event from stable memory: {error:?}");
+            match msgpack::deserialize::<EventWrapperFallback, _>(bytes) {
+                Ok(fallback) => fallback.into(),
+                Err(fallback_error) => {
+                    panic!(
+                        "Failed to deserialize event from stable memory. Error: {error:?}. Fallback error: {fallback_error:?}"
+                    );
+                }
+            }
+        }
     }
 }
 
@@ -228,7 +188,7 @@ struct Iter {
     next_back: EventIndex,
     is_forward_buffer: bool,
     next_buffer_size: usize,
-    buffer: VecDeque<(EventIndex, Value)>,
+    buffer: VecDeque<(EventIndex, Vec<u8>)>,
     finished: bool,
 }
 
@@ -265,10 +225,6 @@ impl Iter {
         Key::new(self.prefix.clone(), self.next_back)
     }
 
-    fn range_bounds(&self) -> impl RangeBounds<Key> {
-        self.next_key()..=self.next_back_key()
-    }
-
     fn check_buffer_direction(&mut self, forward: bool) {
         if self.is_forward_buffer == forward {
             self.buffer.clear();
@@ -286,18 +242,18 @@ impl Iterator for EventIter {
     type Item = EventWrapperInternal<ChatEventInternal>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next().map(|(_, v)| (&v).into())
+        self.iter.next().map(|(_, v)| bytes_to_event(&v))
     }
 }
 
 impl DoubleEndedIterator for EventIter {
     fn next_back(&mut self) -> Option<Self::Item> {
-        self.iter.next_back().map(|(_, v)| (&v).into())
+        self.iter.next_back().map(|(_, v)| bytes_to_event(&v))
     }
 }
 
 impl Iterator for Iter {
-    type Item = (EventIndex, Value);
+    type Item = (EventIndex, Vec<u8>);
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.finished {
@@ -306,9 +262,9 @@ impl Iterator for Iter {
         self.check_buffer_direction(true);
         if self.buffer.is_empty() {
             self.buffer = with_map(|m| {
-                m.range(self.range_bounds())
+                m.range(self.next_key().to_vec()..=self.next_back_key().to_vec())
+                    .map_while(|(k, v)| Key::try_from(k.as_slice()).ok().map(|k| (k.event_index(), v)))
                     .take(self.next_buffer_size)
-                    .map(|(k, v)| (k.event_index(), v))
                     .collect()
             });
             self.next_buffer_size = min(self.next_buffer_size * 2, MAX_BUFFER_SIZE);
@@ -331,10 +287,10 @@ impl DoubleEndedIterator for Iter {
         self.check_buffer_direction(false);
         if self.buffer.is_empty() {
             self.buffer = with_map(|m| {
-                m.range(self.range_bounds())
+                m.range(self.next_key().to_vec()..=self.next_back_key().to_vec())
                     .rev()
+                    .map_while(|(k, v)| Key::try_from(k.as_slice()).ok().map(|k| (k.event_index(), v)))
                     .take(self.next_buffer_size)
-                    .map(|(k, v)| (k.event_index(), v))
                     .collect()
             });
             self.next_buffer_size = min(self.next_buffer_size * 2, MAX_BUFFER_SIZE);
@@ -345,6 +301,27 @@ impl DoubleEndedIterator for Iter {
         } else {
             self.finished = true;
             None
+        }
+    }
+}
+
+// Deserialize to this as a fallback if deserializing the event fails
+#[derive(Deserialize)]
+struct EventWrapperFallback {
+    #[serde(rename = "i")]
+    pub index: EventIndex,
+    #[serde(rename = "t")]
+    pub timestamp: TimestampMillis,
+}
+
+impl From<EventWrapperFallback> for EventWrapperInternal<ChatEventInternal> {
+    fn from(value: EventWrapperFallback) -> Self {
+        EventWrapperInternal {
+            index: value.index,
+            timestamp: value.timestamp,
+            correlation_id: 0,
+            expires_at: None,
+            event: ChatEventInternal::FailedToDeserialize,
         }
     }
 }

@@ -30,8 +30,10 @@ pub struct GroupMembers {
     admins: BTreeSet<UserId>,
     moderators: BTreeSet<UserId>,
     bots: BTreeMap<UserId, UserType>,
+    notifications_unmuted: BTreeSet<UserId>,
     lapsed: BTreeSet<UserId>,
     blocked: BTreeSet<UserId>,
+    suspended: BTreeSet<UserId>,
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
 }
 
@@ -50,7 +52,9 @@ impl From<GroupMembersPrevious> for GroupMembers {
         let mut admins = BTreeSet::new();
         let mut moderators = BTreeSet::new();
         let mut bots = BTreeMap::new();
+        let mut notifications_unmuted = BTreeSet::new();
         let mut lapsed = BTreeSet::new();
+        let mut suspended = BTreeSet::new();
 
         for member in value.members.values() {
             member_ids.insert(member.user_id);
@@ -62,12 +66,20 @@ impl From<GroupMembersPrevious> for GroupMembers {
                 GroupRoleInternal::Member => false,
             };
 
+            if !member.notifications_muted.value {
+                notifications_unmuted.insert(member.user_id);
+            }
+
             if member.lapsed.value {
                 lapsed.insert(member.user_id);
             }
 
             if member.user_type.is_bot() {
                 bots.insert(member.user_id, member.user_type);
+            }
+
+            if member.suspended.value {
+                suspended.insert(member.user_id);
             }
         }
 
@@ -78,7 +90,9 @@ impl From<GroupMembersPrevious> for GroupMembers {
             admins,
             moderators,
             bots,
+            notifications_unmuted,
             lapsed,
+            suspended,
             blocked: value.blocked,
             updates: value.updates,
         }
@@ -129,7 +143,9 @@ impl GroupMembers {
             } else {
                 BTreeMap::new()
             },
+            notifications_unmuted: [creator_user_id].into_iter().collect(),
             lapsed: BTreeSet::new(),
+            suspended: BTreeSet::new(),
             updates: BTreeSet::new(),
         }
     }
@@ -168,6 +184,9 @@ impl GroupMembers {
             if user_type.is_bot() {
                 self.bots.insert(user_id, user_type);
             }
+            if !notifications_muted {
+                self.notifications_unmuted.insert(user_id);
+            }
             self.updates.insert((now, user_id, MemberUpdate::Added));
             AddResult::Success(AddMemberSuccess { member, unlapse: false })
         } else {
@@ -186,8 +205,14 @@ impl GroupMembers {
             if member.user_type.is_bot() {
                 self.bots.remove(&user_id);
             }
+            if !member.notifications_muted.value {
+                self.notifications_unmuted.remove(&user_id);
+            }
             if member.lapsed.value {
                 self.lapsed.remove(&user_id);
+            }
+            if member.suspended.value {
+                self.suspended.remove(&user_id);
             }
             self.member_ids.remove(&user_id);
             self.updates.insert((now, user_id, MemberUpdate::Removed));
@@ -240,7 +265,7 @@ impl GroupMembers {
     }
 
     pub fn contains(&self, user_id: &UserId) -> bool {
-        self.members.contains_key(user_id)
+        self.member_ids.contains(user_id)
     }
 
     pub fn get_mut(&mut self, user_id: &UserId) -> Option<&mut GroupMemberInternal> {
@@ -344,6 +369,43 @@ impl GroupMembers {
         ChangeRoleResult::Success(ChangeRoleSuccess { prev_role })
     }
 
+    pub fn toggle_notifications_muted(
+        &mut self,
+        user_id: UserId,
+        notifications_muted: bool,
+        now: TimestampMillis,
+    ) -> Option<bool> {
+        let member = self.members.get_mut(&user_id)?;
+
+        if member.notifications_muted.value != notifications_muted {
+            member.notifications_muted = Timestamped::new(notifications_muted, now);
+            if notifications_muted {
+                self.notifications_unmuted.remove(&user_id);
+            } else {
+                self.notifications_unmuted.insert(user_id);
+            }
+            Some(true)
+        } else {
+            Some(false)
+        }
+    }
+
+    pub fn set_suspended(&mut self, user_id: UserId, suspended: bool, now: TimestampMillis) -> Option<bool> {
+        let member = self.members.get_mut(&user_id)?;
+
+        if member.suspended.value != suspended {
+            member.suspended = Timestamped::new(suspended, now);
+            if suspended {
+                self.suspended.insert(user_id);
+            } else {
+                self.suspended.remove(&user_id);
+            }
+            Some(true)
+        } else {
+            Some(false)
+        }
+    }
+
     pub fn unlapse_all(&mut self, now: TimestampMillis) {
         for user_id in std::mem::take(&mut self.lapsed) {
             if let Some(member) = self.members.get_mut(&user_id) {
@@ -397,8 +459,16 @@ impl GroupMembers {
         &self.bots
     }
 
+    pub fn notifications_unmuted(&self) -> &BTreeSet<UserId> {
+        &self.notifications_unmuted
+    }
+
     pub fn lapsed(&self) -> &BTreeSet<UserId> {
         &self.lapsed
+    }
+
+    pub fn suspended(&self) -> &BTreeSet<UserId> {
+        &self.suspended
     }
 
     pub fn has_membership_changed(&self, since: TimestampMillis) -> bool {
@@ -424,7 +494,9 @@ impl GroupMembers {
         let mut owners = BTreeSet::new();
         let mut admins = BTreeSet::new();
         let mut moderators = BTreeSet::new();
+        let mut notifications_unmuted = BTreeSet::new();
         let mut lapsed = BTreeSet::new();
+        let mut suspended = BTreeSet::new();
 
         for member in self.members.values() {
             member_ids.insert(member.user_id);
@@ -436,8 +508,16 @@ impl GroupMembers {
                 GroupRoleInternal::Member => false,
             };
 
+            if !member.notifications_muted.value {
+                notifications_unmuted.insert(member.user_id);
+            }
+
             if member.lapsed.value {
                 lapsed.insert(member.user_id);
+            }
+
+            if member.suspended.value {
+                suspended.insert(member.user_id);
             }
         }
 
@@ -445,7 +525,9 @@ impl GroupMembers {
         assert_eq!(owners, self.owners);
         assert_eq!(admins, self.admins);
         assert_eq!(moderators, self.moderators);
+        assert_eq!(notifications_unmuted, self.notifications_unmuted);
         assert_eq!(lapsed, self.lapsed);
+        assert_eq!(suspended, self.suspended);
     }
 }
 
@@ -503,7 +585,7 @@ pub struct GroupMemberInternal {
     #[serde(rename = "r", default, skip_serializing_if = "is_default")]
     role: Timestamped<GroupRoleInternal>,
     #[serde(rename = "n")]
-    pub notifications_muted: Timestamped<bool>,
+    notifications_muted: Timestamped<bool>,
     #[serde(rename = "m", default, skip_serializing_if = "mentions_are_empty")]
     pub mentions: Mentions,
     #[serde(rename = "tf", default, skip_serializing_if = "TimestampedSet::is_empty")]
@@ -513,7 +595,7 @@ pub struct GroupMemberInternal {
     #[serde(rename = "p", default, skip_serializing_if = "BTreeMap::is_empty")]
     pub proposal_votes: BTreeMap<TimestampMillis, Vec<MessageIndex>>,
     #[serde(rename = "s", default, skip_serializing_if = "is_default")]
-    pub suspended: Timestamped<bool>,
+    suspended: Timestamped<bool>,
     #[serde(rename = "ra", default, skip_serializing_if = "is_default")]
     pub rules_accepted: Option<Timestamped<Version>>,
     #[serde(rename = "ut", default, skip_serializing_if = "is_default")]
@@ -543,8 +625,16 @@ impl GroupMemberInternal {
         self.user_type
     }
 
+    pub fn notifications_muted(&self) -> &Timestamped<bool> {
+        &self.notifications_muted
+    }
+
     pub fn lapsed(&self) -> &Timestamped<bool> {
         &self.lapsed
+    }
+
+    pub fn suspended(&self) -> &Timestamped<bool> {
+        &self.suspended
     }
 
     pub fn last_updated(&self) -> TimestampMillis {

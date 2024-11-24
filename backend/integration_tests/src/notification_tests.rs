@@ -4,7 +4,9 @@ use candid::Principal;
 use itertools::Itertools;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
-use testing::rng::random_string;
+use test_case::test_case;
+use testing::rng::{random_from_u128, random_string};
+use types::{MessageContentInitial, TextContent};
 
 #[test]
 fn direct_message_notification_succeeds() {
@@ -112,8 +114,14 @@ fn direct_message_notification_muted() {
     assert!(notifications_response.notifications.is_empty());
 }
 
-#[test]
-fn group_message_notification_muted() {
+#[test_case(1)]
+#[test_case(2)]
+#[test_case(3)]
+fn group_message_notification_muted(case: u32) {
+    // case 1: default
+    // case 2: @user
+    // case 3: @everyone
+
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -142,7 +150,39 @@ fn group_message_notification_muted() {
 
     let latest_notification_index = latest_notification_index(env, canister_ids.notifications, *controller);
 
-    client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None);
+    let (text, mentioned) = match case {
+        1 => (random_string(), Vec::new()),
+        2 => (
+            format!("@UserId({})", user2.user_id),
+            vec![types::User {
+                user_id: user2.user_id,
+                username: user2.username(),
+            }],
+        ),
+        3 => ("@everyone".to_string(), Vec::new()),
+        _ => panic!(),
+    };
+
+    client::group::send_message_v2(
+        env,
+        user1.principal,
+        group_id.into(),
+        &group_canister::send_message_v2::Args {
+            thread_root_message_index: None,
+            message_id: random_from_u128(),
+            content: MessageContentInitial::Text(TextContent { text }),
+            sender_name: user1.username(),
+            sender_display_name: None,
+            replies_to: None,
+            mentioned,
+            forwarding: false,
+            block_level_markdown: false,
+            rules_accepted: None,
+            message_filter_failed: None,
+            new_achievement: false,
+            correlation_id: 0,
+        },
+    );
 
     let notifications_canister::notifications::Response::Success(notifications_response) = client::notifications::notifications(
         env,
@@ -153,7 +193,11 @@ fn group_message_notification_muted() {
         },
     );
 
-    assert!(notifications_response.notifications.is_empty());
+    if case == 1 {
+        assert!(notifications_response.notifications.is_empty());
+    } else {
+        assert_eq!(notifications_response.notifications.len(), 1);
+    }
 }
 
 #[test]
