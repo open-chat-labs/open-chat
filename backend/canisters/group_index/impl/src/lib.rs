@@ -153,6 +153,7 @@ struct Data {
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub test_mode: bool,
     pub total_cycles_spent_on_canisters: Cycles,
+    #[serde(skip_deserializing)]
     pub cached_hot_groups: CachedHotGroups,
     pub cached_metrics: CachedMetrics,
     pub local_index_map: LocalGroupIndexMap,
