@@ -1781,6 +1781,16 @@ export const RegistryAddMessageFilterResponse = Type.Union([
     }),
 ]);
 
+export type RegistrySetAirdropConfigResponse = Static<typeof RegistrySetAirdropConfigResponse>;
+export const RegistrySetAirdropConfigResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("IncompleteConfig"),
+    Type.Literal("NotAuthorized"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
 export type RegistryMessageFilterSummary = Static<typeof RegistryMessageFilterSummary>;
 export const RegistryMessageFilterSummary = Type.Object({
     id: Type.BigInt(),
@@ -1850,24 +1860,6 @@ export type RegistrySetTokenEnabledArgs = Static<typeof RegistrySetTokenEnabledA
 export const RegistrySetTokenEnabledArgs = Type.Object({
     ledger_canister_id: TSBytes,
     enabled: Type.Boolean(),
-});
-
-export type RegistryTokenDetails = Static<typeof RegistryTokenDetails>;
-export const RegistryTokenDetails = Type.Object({
-    ledger_canister_id: TSBytes,
-    name: Type.String(),
-    symbol: Type.String(),
-    decimals: Type.Number(),
-    fee: Type.BigInt(),
-    logo: Type.String(),
-    logo_id: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
-    info_url: Type.String(),
-    how_to_buy_url: Type.String(),
-    transaction_url_format: Type.String(),
-    supported_standards: Type.Array(Type.String()),
-    added: Type.BigInt(),
-    enabled: Type.Boolean(),
-    last_updated: Type.BigInt(),
 });
 
 export type UserIndexDiamondMembershipFeesDiamondMembershipFees = Static<
@@ -4639,23 +4631,41 @@ export const StorageIndexCanForwardResponse = Type.Union([
     Type.Literal("UserNotFound"),
 ]);
 
-export type RegistryUpdatesSuccessResult = Static<typeof RegistryUpdatesSuccessResult>;
-export const RegistryUpdatesSuccessResult = Type.Object({
-    last_updated: Type.BigInt(),
-    token_details: Type.Optional(Type.Union([Type.Array(RegistryTokenDetails), Type.Undefined()])),
-    nervous_system_details: Type.Array(RegistryNervousSystemSummary),
-    message_filters_added: Type.Array(RegistryMessageFilterSummary),
-    message_filters_removed: Type.Array(Type.BigInt()),
-    swap_providers: Type.Optional(Type.Union([Type.Array(ExchangeId), Type.Undefined()])),
+export type RegistrySetAirdropConfigArgs = Static<typeof RegistrySetAirdropConfigArgs>;
+export const RegistrySetAirdropConfigArgs = Type.Object({
+    enabled: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
+    community_id: Type.Optional(Type.Union([CommunityId, Type.Undefined()])),
+    channel_id: Type.Optional(Type.Union([ChannelId, Type.Undefined()])),
+    community_name: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
+    channel_name: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
 });
 
-export type RegistryUpdatesResponse = Static<typeof RegistryUpdatesResponse>;
-export const RegistryUpdatesResponse = Type.Union([
-    Type.Object({
-        Success: RegistryUpdatesSuccessResult,
-    }),
-    Type.Literal("SuccessNoUpdates"),
-]);
+export type RegistryPayment = Static<typeof RegistryPayment>;
+export const RegistryPayment = Type.Object({
+    amount: Type.BigInt(),
+    block_index: Type.BigInt(),
+    timestamp: Type.BigInt(),
+    user_id: UserId,
+});
+
+export type RegistryTokenDetails = Static<typeof RegistryTokenDetails>;
+export const RegistryTokenDetails = Type.Object({
+    ledger_canister_id: TSBytes,
+    name: Type.String(),
+    symbol: Type.String(),
+    decimals: Type.Number(),
+    fee: Type.BigInt(),
+    logo: Type.String(),
+    logo_id: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
+    info_url: Type.String(),
+    how_to_buy_url: Type.String(),
+    transaction_url_format: Type.String(),
+    supported_standards: Type.Array(Type.String()),
+    added: Type.BigInt(),
+    enabled: Type.Boolean(),
+    last_updated: Type.BigInt(),
+    payments: Type.Array(RegistryPayment),
+});
 
 export type UserIndexDiamondMembershipFeesResponse = Static<
     typeof UserIndexDiamondMembershipFeesResponse
@@ -6150,6 +6160,14 @@ export const SwapStatusErrorCompleted = Type.Object({
     token1_txn_out: Type.BigInt(),
 });
 
+export type AirdropConfig = Static<typeof AirdropConfig>;
+export const AirdropConfig = Type.Object({
+    community_id: CommunityId,
+    channel_id: ChannelId,
+    community_name: Type.String(),
+    channel_name: Type.String(),
+});
+
 export type MembersAdded = Static<typeof MembersAdded>;
 export const MembersAdded = Type.Object({
     user_ids: Type.Array(UserId),
@@ -6244,6 +6262,18 @@ export const ReportedMessage = Type.Object({
     count: Type.Number(),
 });
 
+export type OptionUpdateAirdropConfig = Static<typeof OptionUpdateAirdropConfig>;
+export const OptionUpdateAirdropConfig = Type.Union(
+    [
+        Type.Literal("NoChange"),
+        Type.Literal("SetToNone"),
+        Type.Object({
+            SetToSome: AirdropConfig,
+        }),
+    ],
+    { default: "NoChange" },
+);
+
 export type DiamondMembershipStatusFull = Static<typeof DiamondMembershipStatusFull>;
 export const DiamondMembershipStatusFull = Type.Union([
     Type.Literal("Inactive"),
@@ -6275,6 +6305,25 @@ export const GroupIndexActiveGroupsSuccessResult = Type.Object({
     deleted_groups: Type.Array(DeletedGroupInfo),
     deleted_communities: Type.Array(DeletedCommunityInfo),
 });
+
+export type RegistryUpdatesSuccessResult = Static<typeof RegistryUpdatesSuccessResult>;
+export const RegistryUpdatesSuccessResult = Type.Object({
+    last_updated: Type.BigInt(),
+    token_details: Type.Optional(Type.Union([Type.Array(RegistryTokenDetails), Type.Undefined()])),
+    nervous_system_details: Type.Array(RegistryNervousSystemSummary),
+    message_filters_added: Type.Array(RegistryMessageFilterSummary),
+    message_filters_removed: Type.Array(Type.BigInt()),
+    swap_providers: Type.Optional(Type.Union([Type.Array(ExchangeId), Type.Undefined()])),
+    airdrop_config: OptionUpdateAirdropConfig,
+});
+
+export type RegistryUpdatesResponse = Static<typeof RegistryUpdatesResponse>;
+export const RegistryUpdatesResponse = Type.Union([
+    Type.Object({
+        Success: RegistryUpdatesSuccessResult,
+    }),
+    Type.Literal("SuccessNoUpdates"),
+]);
 
 export type UserIndexPlatformModeratorsResponse = Static<
     typeof UserIndexPlatformModeratorsResponse

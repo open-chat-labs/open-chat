@@ -199,6 +199,7 @@ export type StorageIndexAllocationBucketResponse = { "Success": StorageIndexAllo
 export type StorageIndexAllocationBucketArgs = { file_hash: [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number], file_size: bigint, file_id_seed?: bigint | undefined, };
 export type RegistryAddMessageFilterArgs = { regex: string, };
 export type RegistryAddMessageFilterResponse = { "Success": bigint } | "NotAuthorized" | "AlreadyAdded" | { "InvalidRequest": string } | { "InternalError": string };
+export type RegistrySetAirdropConfigResponse = "Success" | "IncompleteConfig" | "NotAuthorized" | { "InternalError": string };
 export type RegistryMessageFilterSummary = { id: bigint, regex: string, };
 export type RegistryRemoveMessageFilterResponse = "Success" | "NotAuthorized" | "NotFound" | { "InternalError": string };
 export type RegistryRemoveMessageFilterArgs = { id: bigint, };
@@ -208,7 +209,6 @@ export type RegistryAddRemoveSwapProviderArgs = { swap_provider: ExchangeId, add
 export type RegistryUpdatesArgs = { since?: bigint | undefined, };
 export type RegistrySetTokenEnabledResponse = "Success" | "NotAuthorized" | { "InternalError": string };
 export type RegistrySetTokenEnabledArgs = { ledger_canister_id: TSBytes, enabled: boolean, };
-export type RegistryTokenDetails = { ledger_canister_id: TSBytes, name: string, symbol: string, decimals: number, fee: bigint, logo: string, logo_id?: bigint | undefined, info_url: string, how_to_buy_url: string, transaction_url_format: string, supported_standards: Array<string>, added: bigint, enabled: boolean, last_updated: bigint, };
 export type UserIndexDiamondMembershipFeesDiamondMembershipFees = { token: Cryptocurrency, one_month: bigint, three_months: bigint, one_year: bigint, lifetime: bigint, };
 export type UserIndexUsersChitSuccessResult = { chit: Array<Chit>, };
 export type UserIndexPublicKeyResponse = { "Success": string } | "NotInitialised";
@@ -667,12 +667,18 @@ export type OptionUpdateFrozenGroupInfo = "NoChange" | "SetToNone" | { "SetToSom
 export type ProposalContent = { governance_canister_id: TSBytes, proposal: Proposal, my_vote?: boolean | undefined, };
 export type ReplyContext = { chat_if_other?: [Chat, MessageIndex | null] | undefined, event_index: EventIndex, };
 export type ReportedMessage = { reports: Array<MessageReport>, count: number, };
+/**
+ * @default NoChange
+ */
+export type OptionUpdateAirdropConfig = "NoChange" | "SetToNone" | { "SetToSome": AirdropConfig };
 export type DiamondMembershipStatusFull = "Inactive" | { "Active": DiamondMembershipDetails } | "Lifetime";
 /**
  * @default NoChange
  */
 export type OptionUpdateGroupSubtype = "NoChange" | "SetToNone" | { "SetToSome": GroupSubtype };
 export type GroupIndexActiveGroupsSuccessResult = { timestamp: bigint, active_groups: Array<ChatId>, active_communities: Array<CommunityId>, deleted_groups: Array<DeletedGroupInfo>, deleted_communities: Array<DeletedCommunityInfo>, };
+export type RegistryUpdatesSuccessResult = { last_updated: bigint, token_details?: Array<RegistryTokenDetails> | undefined, nervous_system_details: Array<RegistryNervousSystemSummary>, message_filters_added: Array<RegistryMessageFilterSummary>, message_filters_removed: Array<bigint>, swap_providers?: Array<ExchangeId> | undefined, airdrop_config: OptionUpdateAirdropConfig, };
+export type RegistryUpdatesResponse = { "Success": RegistryUpdatesSuccessResult } | "SuccessNoUpdates";
 export type UserIndexPlatformModeratorsResponse = { "Success": UserIndexPlatformModeratorsSuccessResult };
 export type UserIndexSuspectedBotsResponse = { "Success": UserIndexSuspectedBotsSuccessResult };
 export type UserIndexUserResponse = { "Success": UserSummary } | "UserNotFound";
