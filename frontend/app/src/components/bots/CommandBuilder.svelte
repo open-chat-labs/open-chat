@@ -29,6 +29,7 @@
     let { command, onCancel, messageContext }: Props = $props();
     let commandName = $derived(`/${command.name}`);
     let form: HTMLFormElement;
+    let busy = $state(false);
 
     onMount(() => {
         setTimeout(() => focusFirstInput(), 100);
@@ -46,6 +47,7 @@
 
     function onSubmit(e: Event) {
         e.preventDefault();
+        busy = true;
         client
             .executeBotCommand(botState.createBotInstance(command, messageContext))
             .then((success) => {
@@ -53,7 +55,10 @@
                     toastStore.showFailureToast(i18nKey("bots.failed"));
                 }
             })
-            .finally(onCancel);
+            .finally(() => {
+                busy = false;
+                onCancel();
+            });
     }
 
     function focusFirstInput() {
@@ -101,7 +106,12 @@
             {/if}
         </form>
         <div slot="footer">
-            <Button disabled={!valid} on:click={onSubmit} small={!$mobileWidth} tiny={$mobileWidth}>
+            <Button
+                disabled={!valid || busy}
+                loading={busy}
+                on:click={onSubmit}
+                small={!$mobileWidth}
+                tiny={$mobileWidth}>
                 <Translatable resourceKey={i18nKey("Submit")} />
             </Button>
         </div>

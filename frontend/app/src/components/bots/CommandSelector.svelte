@@ -67,18 +67,23 @@
                 botState.focusNextCommand();
                 break;
             case "Enter":
-                botState.setSelectedCommand();
-                if (botState.selectedCommand && botState.instanceValid) {
-                    client
-                        .executeBotCommand(
-                            botState.createBotInstance(botState.selectedCommand, messageContext),
-                        )
-                        .then((success) => {
-                            if (!success) {
-                                toastStore.showFailureToast(i18nKey("bots.failed"));
-                            }
-                        })
-                        .finally(onCancel);
+                if (!botState.showingBuilder) {
+                    botState.setSelectedCommand();
+                    if (botState.selectedCommand && botState.instanceValid) {
+                        client
+                            .executeBotCommand(
+                                botState.createBotInstance(
+                                    botState.selectedCommand,
+                                    messageContext,
+                                ),
+                            )
+                            .then((success) => {
+                                if (!success) {
+                                    toastStore.showFailureToast(i18nKey("bots.failed"));
+                                }
+                            })
+                            .finally(onCancel);
+                    }
                 }
                 break;
             case "Escape":

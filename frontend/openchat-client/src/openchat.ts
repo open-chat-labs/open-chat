@@ -499,6 +499,8 @@ import { removeEmailSignInSession } from "openchat-shared";
 import { localGlobalUpdates } from "./stores/localGlobalUpdates";
 import { identityState } from "./stores/identity";
 import { addQueryStringParam } from "./utils/url";
+import { builtinBot } from "./utils/builtinBotCommands";
+import { testBots } from "./utils/testBots";
 
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
@@ -7669,7 +7671,20 @@ export class OpenChat extends OpenChatAgentWorker {
             case "external_bot":
                 return this.getAuthTokenForBotCommand(bot)
                     .then((token) => this.callBotEndpoint(bot, token))
-                    .then(() => true)
+                    .then((resp) => {
+                        if (bot.command.name === "chat") {
+                            //@ts-ignore
+                            const r: { response: string; success: boolean } = resp;
+                            this.sendMessageWithAttachment(
+                                bot.command.messageContext,
+                                r.response,
+                                false,
+                                undefined,
+                                [],
+                            );
+                        }
+                        return true;
+                    })
                     .catch((err) => {
                         console.log("Failed to execute bot command: ", err);
                         return false;
@@ -7677,6 +7692,12 @@ export class OpenChat extends OpenChatAgentWorker {
             case "internal_bot":
                 return this.executeInternalBotCommand(bot);
         }
+    }
+
+    getBots(includeTestBots: boolean = false) {
+        return includeTestBots
+            ? Promise.resolve([builtinBot, ...testBots])
+            : Promise.resolve([builtinBot]);
     }
 
     claimDailyChit(): Promise<ClaimDailyChitResponse> {

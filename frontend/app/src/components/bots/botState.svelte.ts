@@ -8,10 +8,13 @@ import {
     type SlashCommandParam,
     type SlashCommandParamInstance,
 } from "openchat-client";
-import { getBots } from "./testBots";
 
 function filterCommand(c: FlattenedCommand): boolean {
     if (c.devmode && process.env.NODE_ENV === "production") return false;
+
+    if (selectedCommand !== undefined) {
+        return commandsMatch(selectedCommand, c);
+    }
 
     if (prefixParts.length > 1) {
         return c.name.toLocaleLowerCase() === parsedPrefix.toLocaleLowerCase();
@@ -96,9 +99,6 @@ function commandsMatch(a: FlattenedCommand | undefined, b: FlattenedCommand | un
 }
 
 class BotState {
-    constructor() {
-        getBots().then((b) => (this.bots = b));
-    }
     get bots() {
         return bots;
     }
@@ -125,10 +125,6 @@ class BotState {
     }
     focusNextCommand() {
         focusedCommandIndex = (focusedCommandIndex - 1 + commands.length) % commands.length;
-    }
-    selectCommand(val: FlattenedCommand) {
-        selectedCommand = $state.snapshot(val);
-        prefix = `/${val.name}`;
     }
     get focusedCommandIndex() {
         return focusedCommandIndex;
