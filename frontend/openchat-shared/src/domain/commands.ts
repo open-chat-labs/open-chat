@@ -156,14 +156,15 @@ export function createParamInstancesFromSchema(
                 return { kind: "user", name: p.name };
             case "boolean":
                 return { kind: "boolean", name: p.name, value: false };
-            case "number":
+            case "number": {
                 const numParam = Number(maybeParams[i]);
                 let value = isNaN(numParam) ? null : numParam;
                 if (p.choices.length > 0) {
                     value = p.choices.find((c) => c.value === value)?.value ?? null;
                 }
                 return { kind: "number", name: p.name, value };
-            case "string":
+            }
+            case "string": {
                 let strParam = maybeParams[i] ?? "";
                 if (p.choices.length > 0) {
                     strParam =
@@ -174,6 +175,7 @@ export function createParamInstancesFromSchema(
                         )?.value ?? "";
                 }
                 return { kind: "string", name: p.name, value: strParam };
+            }
         }
     });
 }
