@@ -44,7 +44,7 @@ impl PartialEq<ChannelId> for ChannelId {
 
 impl PartialOrd<ChannelId> for ChannelId {
     fn partial_cmp(&self, other: &ChannelId) -> Option<Ordering> {
-        self.as_u32().partial_cmp(&other.as_u32())
+        Some(self.cmp(other))
     }
 }
 
