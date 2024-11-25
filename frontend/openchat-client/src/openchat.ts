@@ -7673,6 +7673,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     .then((token) => this.callBotEndpoint(bot, token))
                     .then((resp) => {
                         if (bot.command.name === "chat") {
+                            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                             //@ts-ignore
                             const r: { response: string; success: boolean } = resp;
                             this.sendMessageWithAttachment(
