@@ -122,7 +122,7 @@ impl Tokens {
         self.tokens.iter()
     }
 
-    pub fn iter_mut(&self) -> impl Iterator<Item = &mut TokenDetails> {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut TokenDetails> {
         self.tokens.iter_mut()
     }
 
