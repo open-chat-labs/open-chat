@@ -92,8 +92,8 @@
     }
 </script>
 
-<Overlay>
-    <ModalContent on:close={onCancel}>
+<Overlay dismissible on:close={onCancel}>
+    <ModalContent closeIcon on:close={onCancel}>
         <div slot="header">{commandName}</div>
         <form bind:this={form} slot="body" onsubmit={onSubmit}>
             {#if command.description}

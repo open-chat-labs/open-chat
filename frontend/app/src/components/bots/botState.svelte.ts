@@ -43,11 +43,11 @@ function parseCommand(input: string): string[] {
 
 let error = $state<string | undefined>(undefined);
 let prefix = $state<string>("");
-let prefixParts = $derived(parseCommand(prefix));
-let maybeParams = $derived(prefixParts.slice(1));
-let parsedPrefix = $derived(prefixParts[0].slice(1).toLocaleLowerCase());
+const prefixParts = $derived(parseCommand(prefix));
+const maybeParams = $derived(prefixParts.slice(1));
+const parsedPrefix = $derived(prefixParts[0].slice(1).toLocaleLowerCase());
 let bots = $state<Bot[]>([]);
-let commands = $derived.by(() => {
+const commands = $derived.by(() => {
     return botState.bots.flatMap((b) => {
         switch (b.kind) {
             case "external_bot":
@@ -81,7 +81,7 @@ let commands = $derived.by(() => {
 let selectedCommand = $state<FlattenedCommand | undefined>(undefined);
 let focusedCommandIndex = $state(0);
 let selectedCommandParamInstances = $state<SlashCommandParamInstance[]>([]);
-let instanceValid = $derived.by(() => {
+const instanceValid = $derived.by(() => {
     if (selectedCommand === undefined) return false;
     if (selectedCommandParamInstances.length !== selectedCommand.params.length) {
         return false;

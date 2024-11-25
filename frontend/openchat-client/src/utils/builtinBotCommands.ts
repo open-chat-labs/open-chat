@@ -13,92 +13,6 @@ export const builtinBot: InternalBot = {
     description: "bots.builtin.desc",
     commands: [
         {
-            name: "witch",
-            description: "bots.witch.desc",
-            permissions: emptyPermissions,
-            params: [],
-        },
-        {
-            name: "poll",
-            description: "bots.poll.desc",
-            permissions: {
-                ...emptyPermissions,
-                messagePermissions: ["poll"],
-                threadPermissions: ["poll"],
-            },
-            params: [],
-        },
-        {
-            name: "diamond",
-            description: "bots.diamond.desc",
-            permissions: {
-                ...emptyPermissions,
-                messagePermissions: ["text"],
-                threadPermissions: ["text"],
-            },
-            params: [],
-        },
-        {
-            name: "test-msg",
-            description: "Create and send a number of test messages",
-            devmode: true,
-            permissions: {
-                ...emptyPermissions,
-                messagePermissions: ["text"],
-                threadPermissions: ["text"],
-            },
-            params: [
-                {
-                    kind: "number",
-                    name: "Number of messages",
-                    minValue: 0,
-                    maxValue: 50,
-                    required: true,
-                    description: "Enter the number of messages you want to create",
-                    placeholder: "Number of messages",
-                    choices: [],
-                },
-            ],
-        },
-        {
-            name: "search",
-            description: "bots.search.desc",
-            permissions: emptyPermissions,
-            params: [
-                {
-                    kind: "string",
-                    name: "bots.search.params.term.name",
-                    minLength: 0,
-                    maxLength: 100,
-                    required: true,
-                    description: "bots.search.params.term.desc",
-                    placeholder: "bots.search.params.term.placeholder",
-                    choices: [],
-                },
-            ],
-        },
-        {
-            name: "gif",
-            description: "bots.gif.desc",
-            permissions: {
-                ...emptyPermissions,
-                messagePermissions: ["giphy"],
-                threadPermissions: ["giphy"],
-            },
-            params: [
-                {
-                    kind: "string",
-                    name: "bots.gif.params.term.name",
-                    minLength: 0,
-                    maxLength: 100,
-                    required: true,
-                    description: "bots.gif.params.term.desc",
-                    placeholder: "bots.gif.params.term.placeholder",
-                    choices: [],
-                },
-            ],
-        },
-        {
             name: "crypto",
             description: "bots.crypto.desc",
             permissions: {
@@ -125,6 +39,37 @@ export const builtinBot: InternalBot = {
                     required: true,
                     description: "bots.crypto.params.amount.desc",
                     placeholder: "bots.crypto.params.amount.placeholder",
+                    choices: [],
+                },
+            ],
+        },
+        {
+            name: "diamond",
+            description: "bots.diamond.desc",
+            permissions: {
+                ...emptyPermissions,
+                messagePermissions: ["text"],
+                threadPermissions: ["text"],
+            },
+            params: [],
+        },
+        {
+            name: "gif",
+            description: "bots.gif.desc",
+            permissions: {
+                ...emptyPermissions,
+                messagePermissions: ["giphy"],
+                threadPermissions: ["giphy"],
+            },
+            params: [
+                {
+                    kind: "string",
+                    name: "bots.gif.params.term.name",
+                    minLength: 0,
+                    maxLength: 100,
+                    required: true,
+                    description: "bots.gif.params.term.desc",
+                    placeholder: "bots.gif.params.term.placeholder",
                     choices: [],
                 },
             ],
@@ -230,6 +175,61 @@ export const builtinBot: InternalBot = {
                     ],
                 },
             ],
+        },
+        {
+            name: "poll",
+            description: "bots.poll.desc",
+            permissions: {
+                ...emptyPermissions,
+                messagePermissions: ["poll"],
+                threadPermissions: ["poll"],
+            },
+            params: [],
+        },
+        {
+            name: "search",
+            description: "bots.search.desc",
+            permissions: emptyPermissions,
+            params: [
+                {
+                    kind: "string",
+                    name: "bots.search.params.term.name",
+                    minLength: 0,
+                    maxLength: 100,
+                    required: true,
+                    description: "bots.search.params.term.desc",
+                    placeholder: "bots.search.params.term.placeholder",
+                    choices: [],
+                },
+            ],
+        },
+        {
+            name: "test-msg",
+            description: "Create and send a number of test messages",
+            devmode: true,
+            permissions: {
+                ...emptyPermissions,
+                messagePermissions: ["text"],
+                threadPermissions: ["text"],
+            },
+            params: [
+                {
+                    kind: "number",
+                    name: "Number of messages",
+                    minValue: 0,
+                    maxValue: 50,
+                    required: true,
+                    description: "Enter the number of messages you want to create",
+                    placeholder: "Number of messages",
+                    choices: [],
+                },
+            ],
+        },
+        {
+            name: "witch",
+            description: "bots.witch.desc",
+            permissions: emptyPermissions,
+            params: [],
         },
     ],
 };
