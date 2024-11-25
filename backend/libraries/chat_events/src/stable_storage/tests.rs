@@ -455,7 +455,7 @@ fn generate_value(content: MessageContentInternal) -> EventWrapperInternal<ChatE
             replies_to: Some(ReplyContextInternal {
                 event_index: random_from_u32(),
                 chat_if_other: Some((
-                    ChatInternal::Channel(random_from_principal(), random()),
+                    ChatInternal::Channel(random_from_principal(), random_from_u32()),
                     Some(random_from_u32()),
                 )),
             }),

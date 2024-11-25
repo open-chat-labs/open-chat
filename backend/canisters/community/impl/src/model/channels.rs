@@ -45,7 +45,7 @@ impl Channels {
             .into_iter()
             .map(|name| {
                 let channel_id = loop {
-                    let id = rng.next_u32() as ChannelId;
+                    let id = rng.next_u32().into();
                     if channel_ids.insert(id) {
                         break id;
                     }

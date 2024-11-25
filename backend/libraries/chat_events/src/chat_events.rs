@@ -1474,7 +1474,7 @@ impl ChatEvents {
                 let community_id_bytes = community_id.as_ref();
                 hasher.update([community_id_bytes.len() as u8]);
                 hasher.update(community_id);
-                let channel_id_bytes = channel_id.to_be_bytes();
+                let channel_id_bytes = channel_id.as_u32().to_be_bytes();
                 hasher.update([channel_id_bytes.len() as u8]);
                 hasher.update(channel_id_bytes);
             }

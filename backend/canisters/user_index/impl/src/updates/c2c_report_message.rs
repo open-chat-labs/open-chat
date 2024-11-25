@@ -204,7 +204,7 @@ https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938
     fn create_report_from_image_message() {
         let chat = Chat::Channel(
             Principal::from_text("wowos-hyaaa-aaaar-ar4ca-cai").unwrap().into(),
-            259630963639405604007172212966027535235,
+            259630963639405604007172212966027535235u128.into(),
         );
 
         let message = Message {
@@ -240,7 +240,7 @@ https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938
     fn create_report_from_video_message() {
         let chat = Chat::Channel(
             Principal::from_text("wowos-hyaaa-aaaar-ar4ca-cai").unwrap().into(),
-            259630963639405604007172212966027535235,
+            259630963639405604007172212966027535235u128.into(),
         );
 
         let message = Message {
