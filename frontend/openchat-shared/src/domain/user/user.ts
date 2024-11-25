@@ -343,8 +343,7 @@ export type SetDisplayNameResponse =
     | "display_name_too_short"
     | "display_name_too_long"
     | "display_name_invalid"
-    | "offline"
-    | "unauthorized";
+    | "offline";
 
 export type InvalidCurrency = { kind: "invalid_currency" };
 

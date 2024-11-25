@@ -11,6 +11,7 @@ pub struct Args {
 }
 
 #[ts_export(registry, updates)]
+#[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
