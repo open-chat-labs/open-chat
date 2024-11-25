@@ -122,6 +122,10 @@ impl Tokens {
         self.tokens.iter()
     }
 
+    pub fn iter_mut(&self) -> impl Iterator<Item = &mut TokenDetails> {
+        self.tokens.iter_mut()
+    }
+
     pub fn exists(&self, ledger_canister_id: CanisterId) -> bool {
         self.get(ledger_canister_id).is_some()
     }
