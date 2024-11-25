@@ -34,6 +34,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Avoid iterating all channel members when determining who to notify of new message ([#6877](https://github.com/open-chat-labs/open-chat/pull/6877))
 - Reduce size of community members when serialized ([#6883](https://github.com/open-chat-labs/open-chat/pull/6883))
 - Avoid many cases where we were iterating over all community members ([#6884](https://github.com/open-chat-labs/open-chat/pull/6884))
+- Make `ChannelId` comparisons use their 32bit representation ([#6885](https://github.com/open-chat-labs/open-chat/pull/6885))
 
 ### Removed
 
