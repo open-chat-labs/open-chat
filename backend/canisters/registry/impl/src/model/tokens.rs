@@ -7,7 +7,7 @@ use types::{CanisterId, TimestampMillis};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Tokens {
-    last_updated: TimestampMillis,
+    pub last_updated: TimestampMillis,
     tokens: Vec<TokenDetails>,
 }
 
