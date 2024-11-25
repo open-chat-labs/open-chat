@@ -20,13 +20,13 @@ fn create_user_group_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let caller = state.env.caller();
     if let Some(member) = state.data.members.get_mut(caller) {
-        if member.suspended.value {
+        if member.suspended().value {
             return UserSuspended;
-        } else if member.lapsed.value {
+        } else if member.lapsed().value {
             return UserLapsed;
         }
 
-        if !member.role.can_manage_user_groups(&state.data.permissions) {
+        if !member.role().can_manage_user_groups(&state.data.permissions) {
             NotAuthorized
         } else if let Err(error) = validate_user_group_name(&args.name) {
             match error {

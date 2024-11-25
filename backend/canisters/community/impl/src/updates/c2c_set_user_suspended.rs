@@ -3,7 +3,6 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_set_user_suspended::{Response::*, *};
-use types::Timestamped;
 
 #[update(guard = "caller_is_user_index", msgpack = true)]
 #[trace]
@@ -14,13 +13,12 @@ fn c2c_set_user_suspended(args: Args) -> Response {
 }
 
 fn c2c_set_user_suspended_impl(args: Args, state: &mut RuntimeState) -> Response {
-    if let Some(member) = state.data.members.get_by_user_id_mut(&args.user_id) {
-        if member.suspended.value != args.suspended {
-            let now = state.env.now();
-            member.suspended = Timestamped::new(args.suspended, now);
-
-            for channel_id in member.channels.iter() {
-                if let Some(channel) = state.data.channels.get_mut(channel_id) {
+    let now = state.env.now();
+    if state.data.members.set_suspended(args.user_id, args.suspended, now).is_some() {
+        if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
+            let channels = member.channels.clone();
+            for channel_id in channels {
+                if let Some(channel) = state.data.channels.get_mut(&channel_id) {
                     channel.chat.members.set_suspended(member.user_id, args.suspended, now);
                 }
             }

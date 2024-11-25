@@ -71,7 +71,7 @@ struct PrepareResult {
 fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
     let caller = state.env.caller();
     if let Some(member) = state.data.members.get(caller) {
-        if member.role.is_owner() {
+        if member.role().is_owner() {
             if !state.data.groups_being_imported.contains(&args.group_id) {
                 Ok(PrepareResult {
                     group_index_canister_id: state.data.group_index_canister_id,

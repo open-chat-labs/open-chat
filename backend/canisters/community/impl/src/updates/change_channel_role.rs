@@ -21,9 +21,9 @@ fn change_channel_role_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let caller = state.env.caller();
     if let Some(member) = state.data.members.get(caller) {
-        if member.suspended.value {
+        if member.suspended().value {
             return UserSuspended;
-        } else if member.lapsed.value {
+        } else if member.lapsed().value {
             return UserLapsed;
         }
 

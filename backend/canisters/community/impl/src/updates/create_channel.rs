@@ -79,9 +79,9 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
     let caller = state.env.caller();
     let channel_id = state.generate_channel_id();
     if let Some(member) = state.data.members.get_mut(caller) {
-        if member.suspended.value {
+        if member.suspended().value {
             return UserSuspended;
-        } else if member.lapsed.value {
+        } else if member.lapsed().value {
             return UserLapsed;
         }
 
@@ -89,9 +89,9 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
 
         if !is_proposals_channel {
             let is_authorized = if args.is_public {
-                member.role.can_create_public_channel(&state.data.permissions)
+                member.role().can_create_public_channel(&state.data.permissions)
             } else {
-                member.role.can_create_private_channel(&state.data.permissions)
+                member.role().can_create_private_channel(&state.data.permissions)
             };
 
             if !is_authorized {

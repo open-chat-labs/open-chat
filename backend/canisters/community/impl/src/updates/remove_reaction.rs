@@ -23,9 +23,9 @@ fn remove_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
         return UserNotInCommunity;
     };
 
-    if member.suspended.value {
+    if member.suspended().value {
         return UserSuspended;
-    } else if member.lapsed.value {
+    } else if member.lapsed().value {
         return UserLapsed;
     }
 
