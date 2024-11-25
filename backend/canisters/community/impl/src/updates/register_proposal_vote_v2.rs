@@ -25,7 +25,7 @@ fn register_proposal_vote_impl(args: Args, state: &mut RuntimeState) -> Response
         None => return UserNotInCommunity,
     };
 
-    if member.suspended.value {
+    if member.suspended().value {
         return UserSuspended;
     }
 

@@ -157,9 +157,9 @@ fn validate_caller(
 
     let caller = caller_override.unwrap_or_else(|| state.env.caller());
     if let Some(member) = state.data.members.get_mut(caller) {
-        if member.suspended.value {
+        if member.suspended().value {
             Err(UserSuspended)
-        } else if member.lapsed.value {
+        } else if member.lapsed().value {
             Err(UserLapsed)
         } else {
             if let Some(version) = community_rules_accepted {

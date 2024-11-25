@@ -22,8 +22,8 @@ fn set_member_display_name_impl(args: Args, state: &mut RuntimeState) -> Respons
     let now = state.env.now();
 
     let user_id = match state.data.members.get(caller) {
-        Some(member) if member.suspended.value => return UserSuspended,
-        Some(member) if member.lapsed.value => return UserLapsed,
+        Some(member) if member.suspended().value => return UserSuspended,
+        Some(member) if member.lapsed().value => return UserLapsed,
         Some(member) => {
             if let Some(display_name) = args.display_name.as_ref() {
                 match validate_display_name(display_name) {

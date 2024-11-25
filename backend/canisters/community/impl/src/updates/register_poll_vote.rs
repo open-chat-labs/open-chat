@@ -27,9 +27,9 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> Response {
         None => return UserNotInCommunity,
     };
 
-    if member.suspended.value {
+    if member.suspended().value {
         return UserSuspended;
-    } else if member.lapsed.value {
+    } else if member.lapsed().value {
         return UserLapsed;
     }
 
