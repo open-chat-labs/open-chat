@@ -2,7 +2,7 @@ use crate::{MessageFilterSummary, NervousSystemSummary, TokenDetails};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
-use types::{ExchangeId, TimestampMillis};
+use types::{AirdropConfig, ExchangeId, OptionUpdate, TimestampMillis};
 
 #[ts_export(registry, updates)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -26,4 +26,6 @@ pub struct SuccessResult {
     pub message_filters_added: Vec<MessageFilterSummary>,
     pub message_filters_removed: Vec<u64>,
     pub swap_providers: Option<Vec<ExchangeId>>,
+    #[ts(as = "types::OptionUpdateAirdropConfig")]
+    pub airdrop_config: OptionUpdate<AirdropConfig>,
 }
