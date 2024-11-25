@@ -43,6 +43,11 @@ function parseCommand(input: string): string[] {
 
 let error = $state<string | undefined>(undefined);
 let prefix = $state<string>("");
+let selectedCommand = $state<FlattenedCommand | undefined>(undefined);
+let focusedCommandIndex = $state(0);
+let selectedCommandParamInstances = $state<SlashCommandParamInstance[]>([]);
+let showingBuilder = $state(false);
+
 const prefixParts = $derived(parseCommand(prefix));
 const maybeParams = $derived(prefixParts.slice(1));
 const parsedPrefix = $derived(prefixParts[0].slice(1).toLocaleLowerCase());
@@ -78,9 +83,6 @@ const commands = $derived.by(() => {
         }
     });
 });
-let selectedCommand = $state<FlattenedCommand | undefined>(undefined);
-let focusedCommandIndex = $state(0);
-let selectedCommandParamInstances = $state<SlashCommandParamInstance[]>([]);
 const instanceValid = $derived.by(() => {
     if (selectedCommand === undefined) return false;
     if (selectedCommandParamInstances.length !== selectedCommand.params.length) {
@@ -91,7 +93,6 @@ const instanceValid = $derived.by(() => {
     );
     return pairs.every(([p, i]) => paramInstanceIsValid(p, i));
 });
-let showingBuilder = $state(false);
 
 function commandsMatch(a: FlattenedCommand | undefined, b: FlattenedCommand | undefined): boolean {
     if (a === undefined || b === undefined) return false;

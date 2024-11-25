@@ -240,10 +240,11 @@
 
     function triggerCommandSelector(inputContent: string | null): void {
         const commandMatch = inputContent?.match(/^\/.*/);
-        showCommandSelector = commandMatch != null;
         if (commandMatch) {
+            showCommandSelector = true;
             botState.prefix = commandMatch[0];
         } else {
+            showCommandSelector = false;
             botState.cancel();
         }
     }

@@ -96,6 +96,7 @@
 <div class="command-header">
     <h4>
         <Translatable resourceKey={i18nKey("bots.matchingCommands")} />
+        <pre>Prefix: {botState.prefix}</pre>
     </h4>
     <HoverIcon onclick={onCancel}>
         <Close size={"1em"} color={"var(--icon-txt)"} />
