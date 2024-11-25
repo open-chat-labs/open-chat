@@ -7,7 +7,8 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeSet, HashMap, HashSet};
 use types::{
-    ChannelId, CommunityMember, CommunityPermissions, CommunityRole, TimestampMillis, Timestamped, UserId, UserType, Version,
+    is_default, ChannelId, CommunityMember, CommunityPermissions, CommunityRole, TimestampMillis, Timestamped, UserId,
+    UserType, Version,
 };
 
 const MAX_MEMBERS_PER_COMMUNITY: u32 = 100_000;
