@@ -154,6 +154,6 @@ const bots: Bot[] = [
 // this will be moved into the client at some point and we
 // would have to figure out how they are registered but I
 // don't want to deal with that at the moment
-export function getBots() {
+export function getBots(): Promise<Bot[]> {
     return Promise.resolve([builtinBot, ...bots]);
 }

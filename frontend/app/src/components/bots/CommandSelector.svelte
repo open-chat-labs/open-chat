@@ -47,7 +47,7 @@
     }
 
     function selectCommand(command: FlattenedCommand) {
-        botState.selectedCommand = $state.snapshot(command);
+        botState.setSelectedCommand(command);
     }
 
     onMount(() => {

@@ -1,4 +1,4 @@
-import type { SlashCommandPermissions } from "openchat-client";
+import type { InternalBot, SlashCommandPermissions } from "openchat-client";
 
 export const emptyPermissions: SlashCommandPermissions = {
     chatPermissions: [],
@@ -7,7 +7,7 @@ export const emptyPermissions: SlashCommandPermissions = {
     threadPermissions: [],
 };
 
-export const builtinBot = {
+export const builtinBot: InternalBot = {
     kind: "internal_bot",
     name: "bots.builtin.name",
     description: "bots.builtin.desc",
@@ -154,77 +154,77 @@ export const builtinBot = {
                         },
                         {
                             kind: "option",
-                            name: "Buying bots.faq.params.topic.choices.buychat",
+                            name: "bots.faq.params.topic.choices.buychat",
                             value: "buychat",
                         },
                         {
                             kind: "option",
-                            name: "Buying bots.faq.params.topic.choices.sendtokens",
+                            name: "bots.faq.params.topic.choices.sendtokens",
                             value: "send_tokens",
                         },
                         {
                             kind: "option",
-                            name: "Buying bots.faq.params.topic.choices.diamond",
+                            name: "bots.faq.params.topic.choices.diamond",
                             value: "diamond",
                         },
                         {
                             kind: "option",
-                            name: "Buying bots.faq.params.topic.choices.referral",
+                            name: "bots.faq.params.topic.choices.referral",
                             value: "referral_rewards",
                         },
                         {
                             kind: "option",
-                            name: "Buying bots.faq.params.topic.choices.voting",
+                            name: "bots.faq.params.topic.choices.voting",
                             value: "voting",
                         },
                         {
                             kind: "option",
-                            name: "Buying bots.faq.params.topic.choices.airdrop",
+                            name: "bots.faq.params.topic.choices.airdrop",
                             value: "airdrop",
                         },
                         {
                             kind: "option",
-                            name: "Buying bots.faq.params.topic.choices.ios",
+                            name: "bots.faq.params.topic.choices.ios",
                             value: "ios_app",
                         },
                         {
                             kind: "option",
-                            name: "Buying bots.faq.params.topic.choices.android",
+                            name: "bots.faq.params.topic.choices.android",
                             value: "android_app",
                         },
                         {
                             kind: "option",
-                            name: "Buying bots.faq.params.topic.choices.style",
+                            name: "bots.faq.params.topic.choices.style",
                             value: "style_messages",
                         },
                         {
                             kind: "option",
-                            name: "Buying bots.faq.params.topic.choices.storage",
+                            name: "bots.faq.params.topic.choices.storage",
                             value: "storage",
                         },
                         {
                             kind: "option",
-                            name: "Buying bots.faq.params.topic.choices.security",
+                            name: "bots.faq.params.topic.choices.security",
                             value: "security",
                         },
                         {
                             kind: "option",
-                            name: "Buying bots.faq.params.topic.choices.info",
+                            name: "bots.faq.params.topic.choices.info",
                             value: "info",
                         },
                         {
                             kind: "option",
-                            name: "Buying bots.faq.params.topic.choices.shortcuts",
+                            name: "bots.faq.params.topic.choices.shortcuts",
                             value: "shortcuts",
                         },
                         {
                             kind: "option",
-                            name: "Buying bots.faq.params.topic.choices.content",
+                            name: "bots.faq.params.topic.choices.content",
                             value: "content",
                         },
                         {
                             kind: "option",
-                            name: "Buying bots.faq.params.topic.choices.translation",
+                            name: "bots.faq.params.topic.choices.translation",
                             value: "translation",
                         },
                     ],

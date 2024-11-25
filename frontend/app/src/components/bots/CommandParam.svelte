@@ -39,7 +39,7 @@
                 : i18nKey(`Max length ${param.maxLength}`)} />
         {#if param.choices?.length ?? 0 > 0}
             <Select bind:value={instance.value}>
-                <option value={""} selected disabled>{`Choose ${param.name}`}</option>
+                <option value={""} selected disabled>{`Choose ${$_(param.name)}`}</option>
                 {#each param.choices as choice}
                     <option value={choice.value}>
                         <Translatable resourceKey={i18nKey(choice.name)} />
@@ -56,7 +56,7 @@
     {:else if instance.kind === "boolean" && param.kind === "boolean"}
         <Legend label={i18nKey(param.name)} required={param.required} />
         <Select bind:value={instance.value}>
-            <option value={""} selected disabled>{`Choose ${param.name}`}</option>
+            <option value={""} selected disabled>{`Choose ${$_(param.name)}`}</option>
             <option value={true}>True</option>
             <option value={false}>False</option>
         </Select>
@@ -64,7 +64,7 @@
         <Legend label={i18nKey(param.name)} required={param.required} />
         {#if param.choices?.length ?? 0 > 0}
             <Select bind:value={instance.value}>
-                <option value={null} selected disabled>{`Choose ${param.name}`}</option>
+                <option value={null} selected disabled>{`Choose ${$_(param.name)}`}</option>
                 {#each param.choices as choice}
                     <option value={choice.value}>
                         <Translatable resourceKey={i18nKey(choice.name)} />

@@ -77,10 +77,7 @@ let commands = $derived.by(() => {
 });
 let selectedCommand = $state<FlattenedCommand | undefined>(undefined);
 let focusedCommandIndex = $state(0);
-let focusedParamIndex = $state(0);
-let focusedParam = $derived(selectedCommand?.params?.[focusedParamIndex]);
 let selectedCommandParamInstances = $state<SlashCommandParamInstance[]>([]);
-let focusedParamInstance = $derived(selectedCommandParamInstances[focusedParamIndex]);
 let instanceValid = $derived.by(() => {
     if (selectedCommand === undefined) return false;
     if (selectedCommandParamInstances.length !== selectedCommand.params.length) {
@@ -91,7 +88,7 @@ let instanceValid = $derived.by(() => {
     );
     return pairs.every(([p, i]) => paramInstanceIsValid(p, i));
 });
-let showingBuilder = $derived(selectedCommand !== undefined && !instanceValid);
+let showingBuilder = $state(false);
 
 function commandsMatch(a: FlattenedCommand | undefined, b: FlattenedCommand | undefined): boolean {
     if (a === undefined || b === undefined) return false;
@@ -123,9 +120,6 @@ class BotState {
     get selectedCommandParamInstances() {
         return selectedCommandParamInstances;
     }
-    get focusedParamInstance() {
-        return focusedParamInstance;
-    }
     focusPreviousCommand() {
         focusedCommandIndex = (focusedCommandIndex + 1) % commands.length;
     }
@@ -145,50 +139,36 @@ class BotState {
     get commands() {
         return commands;
     }
-    get focusedParamIndex() {
-        return focusedParamIndex;
-    }
-    set focusedParamIndex(val: number) {
-        focusedParamIndex = val;
-    }
-    get focusedParam() {
-        return focusedParam;
-    }
     cancel() {
         selectedCommand = undefined;
         error = undefined;
         prefix = "";
         focusedCommandIndex = 0;
-        focusedParamIndex = 0;
         selectedCommandParamInstances = [];
+        showingBuilder = false;
     }
-    setSelectedCommand() {
-        const cmd = commands[focusedCommandIndex];
+    setSelectedCommand(cmd?: FlattenedCommand) {
+        cmd = cmd ?? commands[focusedCommandIndex];
 
         // make sure that we don't set the same command twice
         if (!commandsMatch(selectedCommand, cmd)) {
             selectedCommand = cmd;
             if (selectedCommand !== undefined) {
+                focusedCommandIndex = 0;
                 if (selectedCommand.params.length > 0) {
                     this.selectedCommandParamInstances = createParamInstancesFromSchema(
                         selectedCommand.params,
                         maybeParams,
                     );
                 }
+                // if the instance is not already valid (via inline params) show the builder modal
+                showingBuilder = !instanceValid;
             }
         }
         return selectedCommand;
     }
     get selectedCommand(): FlattenedCommand | undefined {
         return selectedCommand;
-    }
-    set selectedCommand(val: FlattenedCommand | undefined) {
-        focusedParamIndex = 0;
-        selectedCommand = val;
-        focusedCommandIndex = 0;
-        if (val) {
-            prefix = `/${val.name}`;
-        }
     }
     get error() {
         return error;

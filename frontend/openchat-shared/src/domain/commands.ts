@@ -150,6 +150,7 @@ export function createParamInstancesFromSchema(
     params: SlashCommandParam[],
     maybeParams: string[],
 ): SlashCommandParamInstance[] {
+    console.log("Maybe params: ", maybeParams);
     return params.map((p, i) => {
         switch (p.kind) {
             case "user":
