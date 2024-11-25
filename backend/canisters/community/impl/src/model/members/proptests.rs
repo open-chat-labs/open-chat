@@ -65,7 +65,7 @@ fn operation_strategy() -> impl Strategy<Value = Operation> {
 
 #[proptest(cases = 10)]
 fn comprehensive(#[strategy(pvec(operation_strategy(), 100..5_000))] ops: Vec<Operation>) {
-    let mut members = CommunityMembers::new(principal(0), user_id(0), UserType::User, vec![1], 0);
+    let mut members = CommunityMembers::new(principal(0), user_id(0), UserType::User, vec![1u32.into()], 0);
 
     let mut timestamp = 1000;
     for op in ops.into_iter() {

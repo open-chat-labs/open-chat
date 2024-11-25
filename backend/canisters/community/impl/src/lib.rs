@@ -270,7 +270,7 @@ impl RuntimeState {
 
     pub fn generate_channel_id(&mut self) -> ChannelId {
         loop {
-            let channel_id = self.env.rng().next_u32() as ChannelId;
+            let channel_id = self.env.rng().next_u32().into();
             if self.data.channels.get(&channel_id).is_none() {
                 return channel_id;
             }

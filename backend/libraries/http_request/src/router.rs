@@ -43,7 +43,7 @@ pub fn extract_route(path: &str) -> Route {
                 if let Some(sub_route) = parts.get(2) {
                     if *sub_route == "avatar" {
                         let blob_id = parts.get(3).and_then(|p| u128::from_str(p).ok());
-                        return Route::ChannelAvatar((channel_id, blob_id));
+                        return Route::ChannelAvatar((channel_id.into(), blob_id));
                     }
                 }
             }
