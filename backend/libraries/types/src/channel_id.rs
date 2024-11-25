@@ -1,7 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
-use std::collections::{BTreeSet, HashSet};
 use std::fmt::{Display, Formatter};
 use std::hash::{Hash, Hasher};
 use ts_rs::TS;
@@ -63,6 +62,8 @@ impl Hash for ChannelId {
 
 #[test]
 fn channel_id_u128_matches_u32() {
+    use std::collections::{BTreeSet, HashSet};
+
     let input_128: u128 = rand::random();
     let channel_id_u128 = ChannelId::from(input_128);
     let channel_id_u32 = ChannelId::from(input_128 as u32);
