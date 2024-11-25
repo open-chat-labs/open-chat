@@ -415,18 +415,29 @@ impl Members for CommunityMembers {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct CommunityMemberInternal {
+    #[serde(rename = "u", alias = "user_id")]
     pub user_id: UserId,
+    #[serde(rename = "d", alias = "date_added")]
     pub date_added: TimestampMillis,
+    #[serde(rename = "r", alias = "role", default, skip_serializing_if = "is_default")]
     pub role: CommunityRole,
+    #[serde(rename = "s", alias = "suspended", default, skip_serializing_if = "is_default")]
     pub suspended: Timestamped<bool>,
+    #[serde(rename = "c", alias = "channels")]
     pub channels: HashSet<ChannelId>,
+    #[serde(rename = "cr", alias = "channel_removed", default, skip_serializing_if = "Vec::is_empty")]
     pub channels_removed: Vec<Timestamped<ChannelId>>,
+    #[serde(rename = "ra", alias = "rules_accepted", skip_serializing_if = "Option::is_none")]
     pub rules_accepted: Option<Timestamped<Version>>,
+    #[serde(rename = "ut", alias = "user_type", default, skip_serializing_if = "is_default")]
     pub user_type: UserType,
+    #[serde(rename = "dn", alias = "display_name", default, skip_serializing_if = "is_default")]
     display_name: Timestamped<Option<String>>,
+    #[serde(rename = "rb", alias = "referred_by", skip_serializing_if = "Option::is_none")]
     pub referred_by: Option<UserId>,
+    #[serde(rename = "rf", alias = "referrals", default, skip_serializing_if = "HashSet::is_empty")]
     pub referrals: HashSet<UserId>,
-    #[serde(default)]
+    #[serde(rename = "l", alias = "lapsed", default, skip_serializing_if = "is_default")]
     pub lapsed: Timestamped<bool>,
 }
 
