@@ -66,10 +66,10 @@ impl KeyPrefix {
         match self {
             KeyPrefix::DirectChat(k) => matches!(chat, Chat::Direct(c) if CanisterId::from(c) == k.user_id.0),
             KeyPrefix::GroupChat(_) => matches!(chat, Chat::Group(_)),
-            KeyPrefix::Channel(k) => matches!(chat, Chat::Channel(_, c) if c == u128::from(k.channel_id)),
+            KeyPrefix::Channel(k) => matches!(chat, Chat::Channel(_, c) if c == k.channel_id.into()),
             KeyPrefix::DirectChatThread(k) => matches!(chat, Chat::Direct(c) if CanisterId::from(c) == k.user_id.0),
             KeyPrefix::GroupChatThread(_) => matches!(chat, Chat::Group(_)),
-            KeyPrefix::ChannelThread(k) => matches!(chat, Chat::Channel(_, c) if c == u128::from(k.channel_id)),
+            KeyPrefix::ChannelThread(k) => matches!(chat, Chat::Channel(_, c) if c == k.channel_id.into()),
         }
     }
 
@@ -175,7 +175,7 @@ pub struct ChannelKeyPrefix {
 impl ChannelKeyPrefix {
     pub fn new(channel_id: ChannelId) -> Self {
         ChannelKeyPrefix {
-            channel_id: channel_id as u32,
+            channel_id: channel_id.as_u32(),
         }
     }
 }
@@ -217,7 +217,7 @@ pub struct ChannelThreadKeyPrefix {
 impl ChannelThreadKeyPrefix {
     pub fn new(channel_id: ChannelId, thread_root_message_index: MessageIndex) -> Self {
         ChannelThreadKeyPrefix {
-            channel_id: channel_id as u32,
+            channel_id: channel_id.as_u32(),
             thread_root_message_index: thread_root_message_index.into(),
         }
     }

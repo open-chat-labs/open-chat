@@ -4,7 +4,7 @@ use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::convert_into_community::{Response::*, *};
-use rand::Rng;
+use rand::RngCore;
 use std::collections::HashMap;
 use types::{CanisterId, UserId};
 use utils::consts::OPENCHAT_BOT_USER_ID;
@@ -100,7 +100,7 @@ fn start_import(
     match state.start_importing_into_community(CommunityBeingImportedInto::New) {
         StartImportIntoCommunityResult::Success(result) => {
             let c2c_args = group_index_canister::c2c_convert_group_into_community::Args {
-                channel_id: state.env.rng().gen(),
+                channel_id: state.env.rng().next_u32().into(),
                 user_id,
                 user_principal: caller,
                 name: state.data.chat.name.value.clone(),
