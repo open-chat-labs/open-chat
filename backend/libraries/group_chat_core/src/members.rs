@@ -416,12 +416,12 @@ impl GroupMembers {
         }
     }
 
-    pub fn update_lapsed(&mut self, user_id: UserId, lapse: bool, now: TimestampMillis) {
+    pub fn update_lapsed(&mut self, user_id: UserId, lapsed: bool, now: TimestampMillis) {
         let Some(member) = self.get_mut(&user_id) else {
             return;
         };
 
-        let updated = if lapse {
+        let updated = if lapsed {
             // Owners can't lapse
             !member.is_owner() && member.set_lapsed(true, now)
         } else {
@@ -429,7 +429,7 @@ impl GroupMembers {
         };
 
         if updated {
-            if lapse {
+            if lapsed {
                 self.lapsed.insert(user_id);
             } else {
                 self.lapsed.remove(&user_id);
@@ -438,7 +438,7 @@ impl GroupMembers {
             self.updates.insert((
                 now,
                 user_id,
-                if lapse { MemberUpdate::Lapsed } else { MemberUpdate::Unlapsed },
+                if lapsed { MemberUpdate::Lapsed } else { MemberUpdate::Unlapsed },
             ));
         }
     }

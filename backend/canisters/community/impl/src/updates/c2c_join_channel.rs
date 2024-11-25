@@ -14,7 +14,7 @@ use gated_groups::{
     CheckVerifiedCredentialGateArgs, GatePayment,
 };
 use group_chat_core::{AddMemberSuccess, AddResult};
-use group_community_common::{ExpiringMember, Member};
+use group_community_common::ExpiringMember;
 use types::{
     AccessGateConfigInternal, ChannelId, MemberJoined, TimestampMillis, UniquePersonProof, VerifiedCredentialGateArgs,
 };
@@ -29,7 +29,7 @@ async fn c2c_join_channel(args: Args) -> Response {
             .data
             .members
             .get_by_user_id(&args.user_id)
-            .map_or(false, |member| !member.lapsed())
+            .map_or(false, |member| !member.lapsed().value)
     }) {
         check_gate_then_join_channel(&args).await
     } else {
@@ -160,13 +160,13 @@ fn is_permitted_to_join(
     }
 
     if let Some(member) = state.data.members.get(user_principal) {
-        if member.suspended.value {
+        if member.suspended().value {
             return Err(UserSuspended);
         }
 
         if let Some(channel) = state.data.channels.get(&channel_id) {
             if let Some(channel_member) = channel.chat.members.get(&member.user_id) {
-                if !member.lapsed() && !channel_member.lapsed().value {
+                if !member.lapsed().value && !channel_member.lapsed().value {
                     return Err(AlreadyInChannel(Box::new(
                         channel
                             .summary(

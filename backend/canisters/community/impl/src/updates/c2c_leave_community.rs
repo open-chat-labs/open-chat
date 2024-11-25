@@ -29,11 +29,11 @@ fn c2c_leave_community_impl(state: &mut RuntimeState) -> Response {
         None => return UserNotInCommunity,
     };
 
-    if member.suspended.value {
+    if member.suspended().value {
         return UserSuspended;
     }
 
-    if (member.role.is_owner() && state.data.members.owner_count() == 1)
+    if (member.role().is_owner() && state.data.members.owners().len() <= 1)
         || !state.data.channels.can_leave_all_channels(member.user_id)
     {
         return LastOwnerCannotLeave;

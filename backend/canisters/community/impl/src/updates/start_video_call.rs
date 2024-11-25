@@ -77,7 +77,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
     let users_to_notify: Vec<UserId> = result
         .users_to_notify
         .into_iter()
-        .filter(|u| state.data.members.get_by_user_id(u).map_or(false, |m| !m.suspended.value))
+        .filter(|u| state.data.members.get_by_user_id(u).map_or(false, |m| !m.suspended().value))
         .collect();
 
     let notification = Notification::ChannelMessage(ChannelMessageNotification {

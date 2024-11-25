@@ -27,12 +27,12 @@ pub(crate) fn invite_users_to_community_impl(args: Args, state: &mut RuntimeStat
     let now = state.env.now();
 
     if let Some(member) = state.data.members.get_by_user_id(&args.caller) {
-        if member.suspended.value {
+        if member.suspended().value {
             return UserSuspended;
         }
 
         // The original caller must be authorized to invite other users
-        if !member.role.can_invite_users(&state.data.permissions) {
+        if !member.role().can_invite_users(&state.data.permissions) {
             return NotAuthorized;
         }
 

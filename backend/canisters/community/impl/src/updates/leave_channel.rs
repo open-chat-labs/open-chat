@@ -22,7 +22,7 @@ fn leave_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
         return UserNotInCommunity;
     };
 
-    if member.suspended.value {
+    if member.suspended().value {
         return UserSuspended;
     }
 

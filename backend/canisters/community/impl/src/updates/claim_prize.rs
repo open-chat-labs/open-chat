@@ -67,9 +67,9 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
         None => return Err(Box::new(UserNotInCommunity)),
     };
 
-    if member.suspended.value {
+    if member.suspended().value {
         return Err(Box::new(UserSuspended));
-    } else if member.lapsed.value {
+    } else if member.lapsed().value {
         return Err(Box::new(UserLapsed));
     }
 
