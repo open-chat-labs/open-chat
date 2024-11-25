@@ -6,39 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
-### Changed
-
-- Make `ChannelId` comparisons use their 32bit representation ([#6885](https://github.com/open-chat-labs/open-chat/pull/6885))
-
-## [[2.0.1465](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1465-group_index)] - 2024-11-21
-
-### Added
-
-- Add an error log with http endpoint ([#6608](https://github.com/open-chat-labs/open-chat/pull/6608))
-
-### Changed
-
-- Simplify `inspect_message` ([#6847](https://github.com/open-chat-labs/open-chat/pull/6847))
-
-### Fixed
-
-- Wire up `freeze_community` in `inspect_message` ([#6764](https://github.com/open-chat-labs/open-chat/pull/6764))
-
-## [[2.0.1389](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1389-group_index)] - 2024-10-15
-
 ### Added
 
 - Add support for expiring access gates ([#6401](https://github.com/open-chat-labs/open-chat/pull/6401))
+- Add an error log with http endpoint ([#6608](https://github.com/open-chat-labs/open-chat/pull/6608))
 
 ### Changed
-
+- 
 - Add `CanisterWasmBytes` to reduce duplication ([#6480](https://github.com/open-chat-labs/open-chat/pull/6480))
 - Log error if chunked Group/Community upgrade fails ([#6483](https://github.com/open-chat-labs/open-chat/pull/6483))
 - Clear wasm chunks once new wasm version has been set ([#6524](https://github.com/open-chat-labs/open-chat/pull/6524))
+- Simplify `inspect_message` ([#6847](https://github.com/open-chat-labs/open-chat/pull/6847))
+- Make `ChannelId` comparisons use their 32bit representation ([#6885](https://github.com/open-chat-labs/open-chat/pull/6885))
 
 ### Fixed
 
-- Fix GroupIndex upgrade ([#6580](https://github.com/open-chat-labs/open-chat/pull/6580))
+- Fix GroupIndex upgrade ([#6890](https://github.com/open-chat-labs/open-chat/pull/6890))
+- Wire up `freeze_community` in `inspect_message` ([#6764](https://github.com/open-chat-labs/open-chat/pull/6764))
 
 ## [[2.0.1360](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1360-group_index)] - 2024-09-30
 
