@@ -29,6 +29,7 @@ pub enum TimerJob {
     CancelP2PSwapInEscrowCanister(CancelP2PSwapInEscrowCanisterJob),
     MarkP2PSwapExpired(MarkP2PSwapExpiredJob),
     MarkVideoCallEnded(MarkVideoCallEndedJob),
+    DedupeAtEveryoneMentions(DedupeAtEveryoneMentionsJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -141,6 +142,9 @@ pub struct MarkP2PSwapExpiredJob {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct MarkVideoCallEndedJob(pub community_canister::end_video_call::Args);
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct DedupeAtEveryoneMentionsJob {}
+
 impl Job for TimerJob {
     fn execute(self) {
         if can_borrow_state() {
@@ -161,6 +165,7 @@ impl Job for TimerJob {
             TimerJob::CancelP2PSwapInEscrowCanister(job) => job.execute(),
             TimerJob::MarkP2PSwapExpired(job) => job.execute(),
             TimerJob::MarkVideoCallEnded(job) => job.execute(),
+            TimerJob::DedupeAtEveryoneMentions(job) => job.execute(),
         }
     }
 }
@@ -459,5 +464,23 @@ impl Job for MarkP2PSwapExpiredJob {
 impl Job for MarkVideoCallEndedJob {
     fn execute(self) {
         mutate_state(|state| end_video_call_impl(self.0, state));
+    }
+}
+
+impl Job for DedupeAtEveryoneMentionsJob {
+    fn execute(self) {
+        mutate_state(|state| {
+            for channel in state.data.channels.iter_mut() {
+                let finished = channel.chat.dedupe_at_everyone_mentions();
+                if !finished {
+                    let now = state.env.now();
+                    state
+                        .data
+                        .timer_jobs
+                        .enqueue_job(TimerJob::DedupeAtEveryoneMentions(self), now, now);
+                    break;
+                }
+            }
+        })
     }
 }

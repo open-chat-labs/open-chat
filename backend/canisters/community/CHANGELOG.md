@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Dedupe @everyone mentions using timer job
+
+## [[2.0.1475](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1475-community)] - 2024-11-26
+
 ### Added
 
 - Add new prize message criteria ([#6831](https://github.com/open-chat-labs/open-chat/pull/6831))
