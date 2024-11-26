@@ -254,10 +254,12 @@
         }
     }
 
-    function cancelCommandSelector() {
+    function cancelCommandSelector(clearInput: boolean) {
         showCommandSelector = false;
         cancelCommand();
-        dispatch("setTextContent", undefined);
+        if (clearInput) {
+            dispatch("setTextContent", undefined);
+        }
     }
 
     function triggerTypingTimer() {
@@ -280,9 +282,7 @@
 
     function keyPress(e: KeyboardEvent) {
         if (e.key === "Enter" && $enterSend && !e.shiftKey && !showCommandSelector) {
-            if (!messageIsEmpty) {
-                sendMessage();
-            }
+            sendMessage();
             e.preventDefault();
         }
         if (e.key === "Enter" && showCommandSelector) {
@@ -350,6 +350,8 @@
     }
 
     function sendMessage() {
+        if (showCommandSelector || messageIsEmpty) return;
+
         const txt = inp.innerText?.trim() ?? "";
 
         if (!parseCommands(txt)) {
@@ -476,7 +478,11 @@
 </script>
 
 {#if $selectedCommand && $showingBuilder}
-    <CommandBuilder {messageContext} onCancel={cancelCommandSelector} command={$selectedCommand} />
+    <CommandBuilder
+        {messageContext}
+        onCommandSent={() => cancelCommandSelector(true)}
+        onCancel={() => cancelCommandSelector(false)}
+        command={$selectedCommand} />
 {/if}
 
 {#if showMentionPicker}
@@ -489,7 +495,12 @@
 {/if}
 
 {#if showCommandSelector}
-    <CommandSelector {messageContext} {mode} onCancel={cancelCommandSelector} />
+    <CommandSelector
+        {messageContext}
+        {mode}
+        onCommandSent={() => cancelCommandSelector(true)}
+        onNoMatches={() => cancelCommandSelector(false)}
+        onCancel={() => cancelCommandSelector(false)} />
 {/if}
 
 {#if showEmojiSearch}

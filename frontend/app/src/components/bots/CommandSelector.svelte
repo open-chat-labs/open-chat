@@ -28,13 +28,15 @@
 
     interface Props {
         onCancel: () => void;
+        onNoMatches: () => void;
+        onCommandSent: () => void;
         mode: "thread" | "message";
         messageContext: MessageContext;
     }
 
     const client = getContext<OpenChat>("client");
 
-    let { onCancel, mode, messageContext }: Props = $props();
+    let { onCancel, onNoMatches, onCommandSent, mode, messageContext }: Props = $props();
 
     let commands = $derived.by(() =>
         $commandsStore.filter((c) => {
@@ -60,8 +62,6 @@
     function selectCommand(command: FlattenedCommand) {
         setSelectedCommand(command);
         sendCommandIfValid();
-
-        console.log("Is instance valid: ", $instanceValid);
     }
 
     function sendCommandIfValid() {
@@ -73,7 +73,7 @@
                         toastStore.showFailureToast(i18nKey("bots.failed"));
                     }
                 })
-                .finally(onCancel);
+                .finally(onCommandSent);
         }
     }
 
@@ -83,6 +83,12 @@
         return () => {
             document.removeEventListener("keydown", onkeydown);
         };
+    });
+
+    $effect(() => {
+        if (commands.length === 0) {
+            onNoMatches();
+        }
     });
 
     function onkeydown(ev: KeyboardEvent): void {

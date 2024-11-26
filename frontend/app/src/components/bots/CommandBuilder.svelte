@@ -19,11 +19,12 @@
     interface Props {
         command: FlattenedCommand;
         onCancel: () => void;
+        onCommandSent: () => void;
         messageContext: MessageContext;
     }
 
     const client = getContext<OpenChat>("client");
-    let { command, onCancel, messageContext }: Props = $props();
+    let { command, onCancel, onCommandSent, messageContext }: Props = $props();
     let commandName = $derived(`/${command.name}`);
     let form: HTMLFormElement;
     let busy = $state(false);
@@ -46,7 +47,7 @@
             })
             .finally(() => {
                 busy = false;
-                onCancel();
+                onCommandSent();
             });
     }
 

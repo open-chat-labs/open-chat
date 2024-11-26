@@ -5,12 +5,15 @@ import {
     type BotCommandInstance,
     type FlattenedCommand,
     type MessageContext,
+    type MessageFormatter,
     type SlashCommandParam,
     type SlashCommandParamInstance,
 } from "openchat-client";
 import { derived, get, writable } from "svelte/store";
+import { _ } from "svelte-i18n";
 
 function filterCommand(
+    formatter: MessageFormatter,
     c: FlattenedCommand,
     selectedCommand: FlattenedCommand | undefined,
     parsedPrefix: string,
@@ -25,10 +28,10 @@ function filterCommand(
     if (prefixParts.length > 1) {
         return c.name.toLocaleLowerCase() === parsedPrefix.toLocaleLowerCase();
     } else {
+        const desc = c.description ? formatter(c.description).toLocaleLowerCase() : undefined;
         return (
             c.name.toLocaleLowerCase().includes(parsedPrefix.toLocaleLowerCase()) ||
-            (c.description?.toLocaleLowerCase()?.includes(parsedPrefix.toLocaleLowerCase()) ??
-                false)
+            (desc?.includes(parsedPrefix.toLocaleLowerCase()) ?? false)
         );
     }
 }
@@ -62,8 +65,8 @@ export const parsedPrefix = derived(
     (prefixParts) => prefixParts[0]?.slice(1)?.toLocaleLowerCase() ?? "",
 );
 export const commands = derived(
-    [bots, selectedCommand, parsedPrefix, prefixParts],
-    ([bots, selectedCommand, parsedPrefix, prefixParts]) => {
+    [_, bots, selectedCommand, parsedPrefix, prefixParts],
+    ([$_, bots, selectedCommand, parsedPrefix, prefixParts]) => {
         return bots.flatMap((b) => {
             switch (b.kind) {
                 case "external_bot":
@@ -80,7 +83,7 @@ export const commands = derived(
                             };
                         })
                         .filter((c) =>
-                            filterCommand(c, selectedCommand, parsedPrefix, prefixParts),
+                            filterCommand($_, c, selectedCommand, parsedPrefix, prefixParts),
                         ) as FlattenedCommand[];
                 case "internal_bot":
                     return b.commands
@@ -93,7 +96,7 @@ export const commands = derived(
                             };
                         })
                         .filter((c) =>
-                            filterCommand(c, selectedCommand, parsedPrefix, prefixParts),
+                            filterCommand($_, c, selectedCommand, parsedPrefix, prefixParts),
                         ) as FlattenedCommand[];
             }
         });
