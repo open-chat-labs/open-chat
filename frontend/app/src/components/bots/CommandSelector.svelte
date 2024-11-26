@@ -59,6 +59,22 @@
 
     function selectCommand(command: FlattenedCommand) {
         setSelectedCommand(command);
+        sendCommandIfValid();
+
+        console.log("Is instance valid: ", $instanceValid);
+    }
+
+    function sendCommandIfValid() {
+        if ($selectedCommand && $instanceValid) {
+            client
+                .executeBotCommand(createBotInstance($selectedCommand, messageContext))
+                .then((success) => {
+                    if (!success) {
+                        toastStore.showFailureToast(i18nKey("bots.failed"));
+                    }
+                })
+                .finally(onCancel);
+        }
     }
 
     onMount(() => {
@@ -80,16 +96,7 @@
             case "Enter":
                 if (!$showingBuilder) {
                     setSelectedCommand();
-                    if ($selectedCommand && $instanceValid) {
-                        client
-                            .executeBotCommand(createBotInstance($selectedCommand, messageContext))
-                            .then((success) => {
-                                if (!success) {
-                                    toastStore.showFailureToast(i18nKey("bots.failed"));
-                                }
-                            })
-                            .finally(onCancel);
-                    }
+                    sendCommandIfValid();
                 }
                 break;
             case "Escape":
