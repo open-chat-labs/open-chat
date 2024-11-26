@@ -218,7 +218,7 @@ impl PublicGroupInfo {
             description,
             subtype,
             avatar_id,
-            gate_config: gate_config.map(|g| AccessGateConfigInternal::from(g).into()),
+            gate_config: gate_config.map(AccessGateConfigInternal::from),
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
             activity: PublicGroupActivity::new(now),
