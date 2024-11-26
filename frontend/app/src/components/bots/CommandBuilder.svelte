@@ -8,7 +8,7 @@
         type SlashCommandParamInstance,
     } from "openchat-shared";
     import CommandParam from "./CommandParam.svelte";
-    import { botState } from "./botState.svelte";
+    import { createBotInstance, selectedCommandParamInstances } from "./botState";
     import { getContext, onMount } from "svelte";
     import ModalContent from "../ModalContent.svelte";
     import Overlay from "../Overlay.svelte";
@@ -36,11 +36,11 @@
     });
 
     let valid = $derived.by(() => {
-        if (botState.selectedCommandParamInstances.length !== command.params?.length) {
+        if ($selectedCommandParamInstances.length !== command.params?.length) {
             return false;
         }
         const pairs: [SlashCommandParam, SlashCommandParamInstance][] = (command.params ?? []).map(
-            (p, i) => [p, botState.selectedCommandParamInstances[i]],
+            (p, i) => [p, $selectedCommandParamInstances[i]],
         );
         return pairs.every(([p, i]) => paramInstanceIsValid(p, i));
     });
@@ -49,7 +49,7 @@
         e.preventDefault();
         busy = true;
         client
-            .executeBotCommand(botState.createBotInstance(command, messageContext))
+            .executeBotCommand(createBotInstance(command, messageContext))
             .then((success) => {
                 if (!success) {
                     toastStore.showFailureToast(i18nKey("bots.failed"));
@@ -99,9 +99,9 @@
             {#if command.description}
                 <p><Translatable resourceKey={i18nKey(command.description)} /></p>
             {/if}
-            {#if botState.selectedCommandParamInstances.length === command?.params?.length}
+            {#if $selectedCommandParamInstances.length === command?.params?.length}
                 {#each command?.params ?? [] as param, i}
-                    <CommandParam instance={botState.selectedCommandParamInstances[i]} {param} />
+                    <CommandParam instance={$selectedCommandParamInstances[i]} {param} />
                 {/each}
             {/if}
         </form>

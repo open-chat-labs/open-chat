@@ -4,7 +4,18 @@
     import { type FlattenedCommand } from "openchat-shared";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import { botState } from "./botState.svelte";
+    import {
+        commands as commandsStore,
+        createBotInstance,
+        error,
+        focusedCommandIndex,
+        focusNextCommand,
+        focusPreviousCommand,
+        instanceValid,
+        selectedCommand,
+        setSelectedCommand,
+        showingBuilder,
+    } from "./botState";
     import ErrorMessage from "../ErrorMessage.svelte";
     import { getContext, onMount } from "svelte";
     import Logo from "../Logo.svelte";
@@ -26,7 +37,7 @@
     let { onCancel, mode, messageContext }: Props = $props();
 
     let commands = $derived.by(() =>
-        botState.commands.filter((c) => {
+        $commandsStore.filter((c) => {
             return hasPermissionForCommand(c);
         }),
     );
@@ -47,11 +58,11 @@
     }
 
     function selectCommand(command: FlattenedCommand) {
-        botState.setSelectedCommand(command);
+        setSelectedCommand(command);
     }
 
     onMount(() => {
-        botState.error = undefined;
+        error.set(undefined);
         document.addEventListener("keydown", onkeydown);
         return () => {
             document.removeEventListener("keydown", onkeydown);
@@ -61,22 +72,17 @@
     function onkeydown(ev: KeyboardEvent): void {
         switch (ev.key) {
             case "ArrowDown":
-                botState.focusPreviousCommand();
+                focusPreviousCommand();
                 break;
             case "ArrowUp":
-                botState.focusNextCommand();
+                focusNextCommand();
                 break;
             case "Enter":
-                if (!botState.showingBuilder) {
-                    botState.setSelectedCommand();
-                    if (botState.selectedCommand && botState.instanceValid) {
+                if (!$showingBuilder) {
+                    setSelectedCommand();
+                    if ($selectedCommand && $instanceValid) {
                         client
-                            .executeBotCommand(
-                                botState.createBotInstance(
-                                    botState.selectedCommand,
-                                    messageContext,
-                                ),
-                            )
+                            .executeBotCommand(createBotInstance($selectedCommand, messageContext))
                             .then((success) => {
                                 if (!success) {
                                     toastStore.showFailureToast(i18nKey("bots.failed"));
@@ -96,7 +102,6 @@
 <div class="command-header">
     <h4>
         <Translatable resourceKey={i18nKey("bots.matchingCommands")} />
-        <pre>Prefix: {botState.prefix}</pre>
     </h4>
     <HoverIcon onclick={onCancel}>
         <Close size={"1em"} color={"var(--icon-txt)"} />
@@ -108,7 +113,7 @@
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
             class="command"
-            class:selected={botState.focusedCommandIndex === i}
+            class:selected={$focusedCommandIndex === i}
             onclick={() => selectCommand(command)}>
             {#if command.kind === "external_bot"}
                 <img class="icon" src={command.botIcon} alt={command.botName} />
@@ -139,10 +144,10 @@
     {/each}
 </div>
 
-{#if botState.error !== undefined}
+{#if $error !== undefined}
     <div class="command-error">
         <ErrorMessage>
-            {botState.error}
+            {$error}
         </ErrorMessage>
     </div>
 {/if}

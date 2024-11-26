@@ -52,7 +52,7 @@
     import InstallPrompt from "./home/InstallPrompt.svelte";
     import NotificationsBar from "./home/NotificationsBar.svelte";
     import { reviewingTranslations } from "../i18n/i18n";
-    import { botState } from "./bots/botState.svelte";
+    import { bots as botsStore } from "./bots/botState";
 
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
@@ -118,7 +118,7 @@
 
     $effect(() => {
         // TODO - this will not be like this in the end but just for now ...
-        client.getBots(false).then((bots) => (botState.bots = bots));
+        client.getBots(false).then((bots) => botsStore.set(bots));
     });
 
     $effect(() => {

@@ -44,7 +44,12 @@
     import { useBlockLevelMarkdown } from "../../stores/settings";
     import ThrottleCountdown from "./ThrottleCountdown.svelte";
     import CommandSelector from "../bots/CommandSelector.svelte";
-    import { botState } from "../bots/botState.svelte";
+    import {
+        prefix as commandPrefix,
+        cancel as cancelCommand,
+        selectedCommand,
+        showingBuilder,
+    } from "../bots/botState";
     import CommandBuilder from "../bots/CommandBuilder.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -242,16 +247,16 @@
         const commandMatch = inputContent?.match(/^\/.*/);
         if (commandMatch) {
             showCommandSelector = true;
-            botState.prefix = commandMatch[0];
+            commandPrefix.set(commandMatch[0]);
         } else {
             showCommandSelector = false;
-            botState.cancel();
+            cancelCommand();
         }
     }
 
     function cancelCommandSelector() {
         showCommandSelector = false;
-        botState.cancel();
+        cancelCommand();
         dispatch("setTextContent", undefined);
     }
 
@@ -470,11 +475,8 @@
     }
 </script>
 
-{#if botState.selectedCommand && botState.showingBuilder}
-    <CommandBuilder
-        {messageContext}
-        onCancel={cancelCommandSelector}
-        command={botState.selectedCommand} />
+{#if $selectedCommand && $showingBuilder}
+    <CommandBuilder {messageContext} onCancel={cancelCommandSelector} command={$selectedCommand} />
 {/if}
 
 {#if showMentionPicker}
