@@ -214,10 +214,10 @@ export class AttachGif extends CustomEvent<[MessageContext, string]> {
 
 export class TokenTransfer extends CustomEvent<{
     context: MessageContext;
-    ledger: string;
-    amount: bigint;
+    ledger?: string;
+    amount?: bigint;
 }> {
-    constructor(detail: { context: MessageContext; ledger: string; amount: bigint }) {
+    constructor(detail: { context: MessageContext; ledger?: string; amount?: bigint }) {
         super("openchat_event", {
             detail,
         });

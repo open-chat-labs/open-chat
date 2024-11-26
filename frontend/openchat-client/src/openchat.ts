@@ -7616,6 +7616,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 this.dispatchEvent(new AttachGif([bot.command.messageContext, param.value]));
             }
         } else if (bot.command.name === "crypto") {
+            const ev = new TokenTransfer({ context: bot.command.messageContext });
             const [token, amount] = bot.command.params;
             if (
                 token !== undefined &&
@@ -7628,18 +7629,14 @@ export class OpenChat extends OpenChatAgentWorker {
                     (t) => t.symbol.toLowerCase() === token.value?.toLocaleLowerCase(),
                 );
                 if (tokenDetails !== undefined) {
-                    this.dispatchEvent(
-                        new TokenTransfer({
-                            context: bot.command.messageContext,
-                            ledger: tokenDetails.ledger,
-                            amount: this.validateTokenInput(
-                                amount.value.toString(),
-                                tokenDetails.decimals,
-                            ).amount,
-                        }),
-                    );
+                    ev.detail.ledger = tokenDetails.ledger;
+                    ev.detail.amount = this.validateTokenInput(
+                        amount.value.toString(),
+                        tokenDetails.decimals,
+                    ).amount;
                 }
             }
+            this.dispatchEvent(ev);
         } else if (bot.command.name === "test-msg") {
             const param = bot.command.params[0];
             if (param !== undefined && param.kind === "number" && param.value !== null) {

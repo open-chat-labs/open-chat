@@ -114,12 +114,18 @@
             }
         }
         if (ev instanceof TokenTransfer) {
-            const { context } = ev.detail;
+            const { context, ledger, amount } = ev.detail;
             if (
                 context.chatId === messageContext.chatId &&
                 context.threadRootMessageIndex === messageContext.threadRootMessageIndex
             ) {
-                tokenTransfer(ev);
+                if (ledger !== undefined && amount !== undefined) {
+                    tokenTransfer(
+                        new CustomEvent("openchat_client", { detail: { ledger, amount } }),
+                    );
+                } else {
+                    tokenTransfer(new CustomEvent("openchat_client"));
+                }
             }
         }
         if (ev instanceof AttachGif) {
