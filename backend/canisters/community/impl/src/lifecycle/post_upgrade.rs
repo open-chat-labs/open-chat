@@ -1,6 +1,7 @@
 use crate::jobs::import_groups::finalize_group_import;
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
+use crate::timer_job_types::{DedupeAtEveryoneMentionsJob, TimerJob};
 use crate::{mutate_state, read_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
@@ -24,7 +25,7 @@ fn post_upgrade(args: Args) {
 
     for channel in data.channels.iter_mut() {
         channel.chat.events.init_maps();
-        channel.chat.dedupe_at_everyone_mentions();
+        channel.chat.populate_at_everyone_mentions_dedupe_queue();
     }
 
     if data.local_user_index_canister_id == CanisterId::from_text("nq4qv-wqaaa-aaaaf-bhdgq-cai").unwrap() {
@@ -60,5 +61,9 @@ fn post_upgrade(args: Args) {
         for channel in state.data.channels.iter_mut() {
             channel.chat.events.remove_spurious_video_call_in_progress(now);
         }
+        state
+            .data
+            .timer_jobs
+            .enqueue_job(TimerJob::DedupeAtEveryoneMentions(DedupeAtEveryoneMentionsJob {}), now, now);
     });
 }

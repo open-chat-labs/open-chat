@@ -10,7 +10,8 @@ use regex_lite::Regex;
 use search::Query;
 use serde::{Deserialize, Serialize};
 use std::cmp::{max, min, Reverse};
-use std::collections::{BTreeMap, BTreeSet, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashSet, VecDeque};
+use tracing::info;
 use types::{
     AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, ContentValidationError, CustomPermission, Document,
     EventIndex, EventOrExpiredRange, EventWrapper, EventsResponse, ExternalUrlUpdated, FieldTooLongResult, FieldTooShortResult,
@@ -63,41 +64,70 @@ pub struct GroupChatCore {
     pub external_url: Timestamped<Option<String>>,
     #[serde(default)]
     at_everyone_mentions: BTreeMap<TimestampMillis, AtEveryoneMention>,
+    #[serde(default)]
+    pub dedupe_at_everyone_mentions_queue: VecDeque<UserId>,
 }
 
 #[allow(clippy::too_many_arguments)]
 impl GroupChatCore {
-    pub fn dedupe_at_everyone_mentions(&mut self) {
-        let mut at_everyone_mentions = BTreeMap::new();
+    pub fn populate_at_everyone_mentions_dedupe_queue(&mut self) {
+        self.dedupe_at_everyone_mentions_queue = self.members.member_ids().iter().copied().collect();
+    }
 
-        for member in self.members.iter_mut() {
-            member.mentions.remove_at_everyone_mentions(&at_everyone_mentions);
+    pub fn dedupe_at_everyone_mentions(&mut self) -> bool {
+        if self.dedupe_at_everyone_mentions_queue.is_empty() {
+            return true;
+        }
 
-            let mut updated = false;
-            for mention in member.mentions.iter_potential_at_everyone_mentions() {
-                if let Some(event_wrapper) =
-                    self.events
-                        .event_wrapper_internal(EventIndex::default(), None, mention.message_index.into())
-                {
-                    if let Some(message) = event_wrapper.event.into_message() {
-                        if is_everyone_mentioned(&message.content) {
-                            at_everyone_mentions.insert(
-                                mention.message_index,
-                                (
-                                    event_wrapper.timestamp,
-                                    AtEveryoneMention::new(message.sender, message.message_id, message.message_index),
-                                ),
-                            );
-                            updated = true;
+        let mut at_everyone_mentions = self
+            .at_everyone_mentions
+            .iter()
+            .map(|(ts, m)| (m.2, (*ts, m.clone())))
+            .collect();
+
+        let mut user_count = 0;
+        let mut mentions_removed = 0;
+
+        while let Some(next) = self.dedupe_at_everyone_mentions_queue.pop_back() {
+            if let Some(member) = self.members.get_mut(&next) {
+                mentions_removed += member.mentions.remove_at_everyone_mentions(&at_everyone_mentions);
+
+                let mut updated = false;
+                for mention in member.mentions.iter_potential_at_everyone_mentions() {
+                    if let Some(event_wrapper) =
+                        self.events
+                            .event_wrapper_internal(EventIndex::default(), None, mention.message_index.into())
+                    {
+                        if let Some(message) = event_wrapper.event.into_message() {
+                            if is_everyone_mentioned(&message.content) {
+                                at_everyone_mentions.insert(
+                                    mention.message_index,
+                                    (
+                                        event_wrapper.timestamp,
+                                        AtEveryoneMention::new(message.sender, message.message_id, message.message_index),
+                                    ),
+                                );
+                                updated = true;
+                            }
                         }
                     }
                 }
-            }
 
-            if updated {
-                member.mentions.remove_at_everyone_mentions(&at_everyone_mentions);
+                if updated {
+                    mentions_removed += member.mentions.remove_at_everyone_mentions(&at_everyone_mentions);
+                }
+            }
+            user_count += 1;
+            if user_count % 100 == 0 && ic_cdk::api::instruction_counter() > 1_000_000_000 {
+                break;
             }
         }
+
+        self.at_everyone_mentions = at_everyone_mentions.into_values().collect();
+
+        let finished = self.dedupe_at_everyone_mentions_queue.is_empty();
+        info!(user_count, mentions_removed, finished, "At everyone mentions deduped");
+        finished
     }
 
     pub fn new(
@@ -152,6 +182,7 @@ impl GroupChatCore {
             min_visible_indexes_for_new_members: None,
             external_url: Timestamped::new(external_url, now),
             at_everyone_mentions: BTreeMap::new(),
+            dedupe_at_everyone_mentions_queue: VecDeque::new(),
         }
     }
 
@@ -2309,7 +2340,7 @@ pub enum MinVisibleEventIndexResult {
     UserNotInGroup,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct AtEveryoneMention(UserId, MessageId, MessageIndex);
 
 impl AtEveryoneMention {
