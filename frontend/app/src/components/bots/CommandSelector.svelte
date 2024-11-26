@@ -25,6 +25,8 @@
         threadPermissionsForSelectedChat,
     } from "openchat-client";
     import { toastStore } from "../../stores/toast";
+    import TooltipWrapper from "../TooltipWrapper.svelte";
+    import TooltipPopup from "../TooltipPopup.svelte";
 
     interface Props {
         onCancel: () => void;
@@ -139,9 +141,16 @@
                         /{command.name}
                     </div>
                     {#each command?.params ?? [] as param}
-                        <div class="param" class:required={param.required}>
-                            <Translatable resourceKey={i18nKey(param.name)} />
-                        </div>
+                        <TooltipWrapper position={"top"} align={"middle"}>
+                            <div slot="target" class="param" class:required={param.required}>
+                                <Translatable resourceKey={i18nKey(param.name)} />
+                            </div>
+                            <div let:position let:align slot="tooltip">
+                                <TooltipPopup {align} {position}>
+                                    <Translatable resourceKey={i18nKey(param.description ?? "")} />
+                                </TooltipPopup>
+                            </div>
+                        </TooltipWrapper>
                     {/each}
                 </div>
                 {#if command.description}
