@@ -332,9 +332,6 @@ export function setDisplayNameResponse(
     if (value === "DisplayNameInvalid") {
         return "display_name_invalid";
     }
-    if (value === "Unauthorized") {
-        return "unauthorized";
-    }
     if ("DisplayNameTooShort" in value) {
         return "display_name_too_short";
     }

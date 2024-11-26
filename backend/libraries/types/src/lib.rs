@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 mod access_tokens;
 mod achievement;
+mod airdrop_config;
 mod avatar;
 pub mod bot_actions;
 mod bots;
@@ -79,6 +80,7 @@ mod video_calls;
 
 pub use access_tokens::*;
 pub use achievement::*;
+pub use airdrop_config::*;
 pub use avatar::*;
 pub use bot_actions::BotAction;
 pub use bots::*;
