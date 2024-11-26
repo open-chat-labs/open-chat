@@ -7,7 +7,7 @@ use types::{CanisterId, TimestampMillis};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Tokens {
-    last_updated: TimestampMillis,
+    pub last_updated: TimestampMillis,
     tokens: Vec<TokenDetails>,
 }
 
@@ -120,10 +120,6 @@ impl Tokens {
 
     pub fn iter(&self) -> impl Iterator<Item = &TokenDetails> {
         self.tokens.iter()
-    }
-
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut TokenDetails> {
-        self.tokens.iter_mut()
     }
 
     pub fn exists(&self, ledger_canister_id: CanisterId) -> bool {

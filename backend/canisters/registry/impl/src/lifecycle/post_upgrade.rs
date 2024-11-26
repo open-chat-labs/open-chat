@@ -1,6 +1,6 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{mutate_state, Data};
+use crate::Data;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
@@ -25,16 +25,4 @@ fn post_upgrade(args: Args) {
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
-
-    mutate_state(|state| {
-        for token in state.data.tokens.iter_mut() {
-            if token.symbol == "CHAT" {
-                token.how_to_buy_url = "https://oc.app/faq?q=buychat".to_string();
-            } else if token.symbol == "ICP" {
-                token.how_to_buy_url = "https://oc.app/faq?q=buyicp".to_string();
-            } else if token.how_to_buy_url == "https://3ezrj-4yaaa-aaaam-abcha-cai.ic0.app/sns/faq#how-can-i-get-sns-tokens" {
-                token.how_to_buy_url = "https://internetcomputer.org/sns/faq#how-can-i-get-sns-tokens".to_string();
-            }
-        }
-    });
 }
