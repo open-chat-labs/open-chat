@@ -6,8 +6,8 @@ use serde::{Deserialize, Serialize};
 use std::cmp;
 use std::collections::HashMap;
 use types::{
-    AccessGate, AccessGateConfig, AccessGateConfigInternal, BuildVersion, ChatId, FrozenGroupInfo, GroupMatch, GroupSubtype,
-    Milliseconds, PublicGroupActivity, PublicGroupSummary, TimestampMillis,
+    AccessGate, AccessGateConfig, BuildVersion, ChatId, FrozenGroupInfo, GroupMatch, GroupSubtype, Milliseconds,
+    PublicGroupActivity, PublicGroupSummary, TimestampMillis,
 };
 use utils::iterator_extensions::IteratorExtensions;
 use utils::time::DAY_IN_MS;
@@ -167,7 +167,7 @@ pub struct PublicGroupInfo {
     hotness_score: u32,
     exclude_from_hotlist: bool,
     #[serde(alias = "gate")]
-    gate_config: Option<AccessGateConfigInternal>,
+    gate_config: Option<AccessGateConfigInternal2>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
@@ -218,7 +218,7 @@ impl PublicGroupInfo {
             description,
             subtype,
             avatar_id,
-            gate_config: gate_config.map(AccessGateConfigInternal::from),
+            gate_config: gate_config.map(AccessGateConfigInternal2::from),
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
             activity: PublicGroupActivity::new(now),
