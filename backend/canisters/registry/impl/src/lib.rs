@@ -7,7 +7,7 @@ use registry_canister::{MessageFilterSummary, NervousSystemDetails};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{BuildVersion, CanisterId, Cycles, ExchangeId, TimestampMillis, Timestamped};
+use types::{AirdropConfig, BuildVersion, CanisterId, Cycles, ExchangeId, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
 mod guards;
@@ -82,6 +82,8 @@ struct Data {
     message_filters: MessageFilters,
     total_supply: Timestamped<u128>,
     circulating_supply: Timestamped<u128>,
+    #[serde(default)]
+    airdrop_config: Timestamped<Option<AirdropConfig>>,
     rng_seed: [u8; 32],
     test_mode: bool,
 }
@@ -108,6 +110,7 @@ impl Data {
             message_filters: MessageFilters::default(),
             total_supply: Timestamped::default(),
             circulating_supply: Timestamped::default(),
+            airdrop_config: Timestamped::default(),
             rng_seed: [0; 32],
             test_mode,
         }
