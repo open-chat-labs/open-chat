@@ -16,17 +16,24 @@
     interface Props {
         param: SlashCommandParam;
         instance: SlashCommandParamInstance;
+        onChange: () => void;
     }
 
-    let { param, instance = $bindable() }: Props = $props();
+    let { param, instance, onChange }: Props = $props();
 </script>
 
 <div class="param">
     {#if instance.kind === "user" && param.kind === "user"}
         <Legend label={i18nKey(param.name)} required={param.required} />
         <SingleUserSelector
-            on:userSelected={(ev: CustomEvent<UserSummary>) => (instance.userId = ev.detail.userId)}
-            on:userRemoved={() => (instance.userId = undefined)}
+            on:userSelected={(ev: CustomEvent<UserSummary>) => {
+                instance.userId = ev.detail.userId;
+                onChange();
+            }}
+            on:userRemoved={() => {
+                instance.userId = undefined;
+                onChange();
+            }}
             autofocus={false}
             direction={"down"}
             placeholder={$_(param.placeholder ?? "")} />
@@ -38,7 +45,7 @@
                 ? undefined
                 : i18nKey(`Max length ${param.maxLength}`)} />
         {#if param.choices?.length ?? 0 > 0}
-            <Select bind:value={instance.value}>
+            <Select onchange={onChange} bind:value={instance.value}>
                 <option value={""} selected disabled>{`Choose ${$_(param.name)}`}</option>
                 {#each param.choices as choice}
                     <option value={choice.value}>
@@ -51,11 +58,12 @@
                 minlength={param.minLength}
                 maxlength={param.maxLength}
                 placeholder={i18nKey(param.placeholder ?? "")}
+                on:change={onChange}
                 bind:value={instance.value} />
         {/if}
     {:else if instance.kind === "boolean" && param.kind === "boolean"}
         <Legend label={i18nKey(param.name)} required={param.required} />
-        <Select bind:value={instance.value}>
+        <Select bind:value={instance.value} onchange={onChange}>
             <option value={""} selected disabled>{`Choose ${$_(param.name)}`}</option>
             <option value={true}>True</option>
             <option value={false}>False</option>
@@ -63,7 +71,7 @@
     {:else if instance.kind === "number" && param.kind === "number"}
         <Legend label={i18nKey(param.name)} required={param.required} />
         {#if param.choices?.length ?? 0 > 0}
-            <Select bind:value={instance.value}>
+            <Select bind:value={instance.value} onchange={onChange}>
                 <option value={null} selected disabled>{`Choose ${$_(param.name)}`}</option>
                 {#each param.choices as choice}
                     <option value={choice.value}>
@@ -76,6 +84,7 @@
                 min={param.minValue}
                 max={param.maxValue}
                 shouldClamp={false}
+                on:change={onChange}
                 placeholder={$_(param.placeholder ?? "")}
                 bind:value={instance.value} />
         {/if}

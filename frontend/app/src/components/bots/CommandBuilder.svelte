@@ -1,14 +1,11 @@
 <script lang="ts">
     import {
         // createParamInstancesFromSchema,
-        paramInstanceIsValid,
         type FlattenedCommand,
         type MessageContext,
-        type SlashCommandParam,
-        type SlashCommandParamInstance,
     } from "openchat-shared";
     import CommandParam from "./CommandParam.svelte";
-    import { createBotInstance, selectedCommandParamInstances } from "./botState";
+    import { createBotInstance, instanceValid, selectedCommandParamInstances } from "./botState";
     import { getContext, onMount } from "svelte";
     import ModalContent from "../ModalContent.svelte";
     import Overlay from "../Overlay.svelte";
@@ -35,18 +32,10 @@
         setTimeout(() => focusFirstInput(), 100);
     });
 
-    let valid = $derived.by(() => {
-        if ($selectedCommandParamInstances.length !== command.params?.length) {
-            return false;
-        }
-        const pairs: [SlashCommandParam, SlashCommandParamInstance][] = (command.params ?? []).map(
-            (p, i) => [p, $selectedCommandParamInstances[i]],
-        );
-        return pairs.every(([p, i]) => paramInstanceIsValid(p, i));
-    });
-
     function onSubmit(e: Event) {
         e.preventDefault();
+
+        if (!$instanceValid) return;
         busy = true;
         client
             .executeBotCommand(createBotInstance(command, messageContext))
@@ -90,6 +79,13 @@
             element.offsetParent !== null
         );
     }
+
+    function onParamChange() {
+        // this is a nasty little hack to get the reactivity we need
+        setTimeout(() => {
+            $selectedCommandParamInstances = $selectedCommandParamInstances;
+        }, 0);
+    }
 </script>
 
 <Overlay dismissible on:close={onCancel}>
@@ -101,13 +97,16 @@
             {/if}
             {#if $selectedCommandParamInstances.length === command?.params?.length}
                 {#each command?.params ?? [] as param, i}
-                    <CommandParam instance={$selectedCommandParamInstances[i]} {param} />
+                    <CommandParam
+                        onChange={onParamChange}
+                        instance={$selectedCommandParamInstances[i]}
+                        {param} />
                 {/each}
             {/if}
         </form>
         <div slot="footer">
             <Button
-                disabled={!valid || busy}
+                disabled={!$instanceValid || busy}
                 loading={busy}
                 on:click={onSubmit}
                 small={!$mobileWidth}
@@ -117,6 +116,3 @@
         </div>
     </ModalContent>
 </Overlay>
-
-<style lang="scss">
-</style>
