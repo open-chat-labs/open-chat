@@ -114,18 +114,12 @@
             }
         }
         if (ev instanceof TokenTransfer) {
-            const { context, ledger, amount } = ev.detail;
+            const { context } = ev.detail;
             if (
                 context.chatId === messageContext.chatId &&
                 context.threadRootMessageIndex === messageContext.threadRootMessageIndex
             ) {
-                if (ledger !== undefined && amount !== undefined) {
-                    tokenTransfer(
-                        new CustomEvent("openchat_client", { detail: { ledger, amount } }),
-                    );
-                } else {
-                    tokenTransfer(new CustomEvent("openchat_client"));
-                }
+                tokenTransfer(ev);
             }
         }
         if (ev instanceof AttachGif) {
@@ -229,10 +223,10 @@
         draftMessagesStore.setAttachment(messageContext, ev.detail);
     }
 
-    function tokenTransfer(ev: CustomEvent<{ ledger: string; amount: bigint } | undefined>) {
-        creatingCryptoTransfer = ev.detail ?? {
-            ledger: $lastCryptoSent ?? LEDGER_CANISTER_ICP,
-            amount: BigInt(0),
+    function tokenTransfer(ev: CustomEvent<{ ledger?: string; amount?: bigint }>) {
+        creatingCryptoTransfer = {
+            ledger: ev.detail.ledger ?? $lastCryptoSent ?? LEDGER_CANISTER_ICP,
+            amount: ev.detail.amount ?? BigInt(0),
         };
     }
 
