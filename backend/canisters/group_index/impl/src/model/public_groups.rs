@@ -6,8 +6,8 @@ use serde::{Deserialize, Serialize};
 use std::cmp;
 use std::collections::HashMap;
 use types::{
-    AccessGate, BuildVersion, ChatId, FrozenGroupInfo, GroupMatch, GroupSubtype, PublicGroupActivity, PublicGroupSummary,
-    TimestampMillis,
+    AccessGate, AccessGateConfig, AccessGateConfigInternal, BuildVersion, ChatId, FrozenGroupInfo, GroupMatch, GroupSubtype,
+    Milliseconds, PublicGroupActivity, PublicGroupSummary, TimestampMillis,
 };
 use utils::iterator_extensions::IteratorExtensions;
 use utils::time::DAY_IN_MS;
@@ -38,12 +38,12 @@ impl PublicGroups {
         description: String,
         subtype: Option<GroupSubtype>,
         avatar_id: Option<u128>,
-        gate: Option<AccessGate>,
+        gate_config: Option<AccessGateConfig>,
         created: TimestampMillis,
     ) {
         self.groups.insert(
             chat_id,
-            PublicGroupInfo::new(chat_id, name, description, subtype, avatar_id, gate, created),
+            PublicGroupInfo::new(chat_id, name, description, subtype, avatar_id, gate_config, created),
         );
     }
 
@@ -113,7 +113,7 @@ impl PublicGroups {
         name: String,
         description: String,
         avatar_id: Option<u128>,
-        gate: Option<AccessGate>,
+        gate_config: Option<AccessGateConfig>,
     ) -> UpdateGroupResult {
         match self.groups.get_mut(chat_id) {
             None => UpdateGroupResult::ChatNotFound,
@@ -121,7 +121,7 @@ impl PublicGroups {
                 group.name = name;
                 group.description = description;
                 group.avatar_id = avatar_id;
-                group.gate = gate;
+                group.gate_config = gate_config.map(|g| g.into());
                 UpdateGroupResult::Success
             }
         }
@@ -166,7 +166,34 @@ pub struct PublicGroupInfo {
     activity: PublicGroupActivity,
     hotness_score: u32,
     exclude_from_hotlist: bool,
-    gate: Option<AccessGate>,
+    #[serde(alias = "gate")]
+    gate_config: Option<AccessGateConfigInternal>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[serde(from = "AccessGate")]
+pub struct AccessGateConfigInternal2 {
+    pub gate: AccessGate,
+    pub expiry: Option<Milliseconds>,
+}
+
+// TODO: Delete this after it is released
+impl From<AccessGate> for AccessGateConfigInternal2 {
+    fn from(value: AccessGate) -> Self {
+        AccessGateConfigInternal2 {
+            gate: value,
+            expiry: None,
+        }
+    }
+}
+
+impl From<AccessGateConfig> for AccessGateConfigInternal2 {
+    fn from(value: AccessGateConfig) -> Self {
+        AccessGateConfigInternal2 {
+            gate: value.gate,
+            expiry: value.expiry,
+        }
+    }
 }
 
 pub enum UpdateGroupResult {
@@ -182,7 +209,7 @@ impl PublicGroupInfo {
         description: String,
         subtype: Option<GroupSubtype>,
         avatar_id: Option<u128>,
-        gate: Option<AccessGate>,
+        gate_config: Option<AccessGateConfig>,
         now: TimestampMillis,
     ) -> PublicGroupInfo {
         PublicGroupInfo {
@@ -191,7 +218,7 @@ impl PublicGroupInfo {
             description,
             subtype,
             avatar_id,
-            gate,
+            gate_config: gate_config.map(AccessGateConfigInternal::from),
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
             activity: PublicGroupActivity::new(now),
@@ -255,7 +282,7 @@ impl PublicGroupInfo {
     }
 
     pub fn gate(&self) -> Option<&AccessGate> {
-        self.gate.as_ref()
+        self.gate_config.as_ref().map(|g| &g.gate)
     }
 }
 
@@ -267,7 +294,7 @@ impl From<&PublicGroupInfo> for GroupMatch {
             description: group.description.clone(),
             avatar_id: group.avatar_id,
             member_count: group.activity.member_count,
-            gate: group.gate.clone(),
+            gate: group.gate_config.as_ref().map(|g| g.gate.clone()),
             subtype: group.subtype.clone(),
         }
     }
