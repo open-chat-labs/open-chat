@@ -1,10 +1,10 @@
-use crate::guards::caller_is_governance_principal;
+use crate::guards::caller_is_authorized_to_add_canister;
 use crate::{mutate_state, State};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use cycles_dispenser_canister::add_canister::{Response::*, *};
 
-#[proposal(guard = "caller_is_governance_principal")]
+#[proposal(guard = "caller_is_authorized_to_add_canister")]
 #[trace]
 fn add_canister(args: Args) -> Response {
     mutate_state(|state| add_canister_impl(args, state))

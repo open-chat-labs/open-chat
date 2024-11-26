@@ -19,6 +19,7 @@ canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" 
 community_canister = { path = "../../community/api" }
 community_canister_c2c_client = { path = "../../community/c2c_client" }
 constants = { path = "../../../libraries/constants" }
+cycles_dispenser_canister = { path = "../../cycles_dispenser/api" }
 fire_and_forget_handler = { path = "../../../libraries/fire_and_forget_handler" }
 futures = { workspace = true }
 group_canister = { path = "../../group/api" }
