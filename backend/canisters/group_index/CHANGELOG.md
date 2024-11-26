@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Revert temporary hacks to fix upgrade ([#6894](https://github.com/open-chat-labs/open-chat/pull/6894))
+
+## [[2.0.1472](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1472-group_index)] - 2024-11-26
+
 ### Added
 
 - Add support for expiring access gates ([#6401](https://github.com/open-chat-labs/open-chat/pull/6401))
@@ -21,8 +27,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Fix GroupIndex upgrade ([#6890](https://github.com/open-chat-labs/open-chat/pull/6890))
 - Wire up `freeze_community` in `inspect_message` ([#6764](https://github.com/open-chat-labs/open-chat/pull/6764))
+- Fix GroupIndex upgrade ([#6890](https://github.com/open-chat-labs/open-chat/pull/6890))
 
 ## [[2.0.1360](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1360-group_index)] - 2024-09-30
 
