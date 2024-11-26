@@ -51,7 +51,13 @@ async fn run_async(canister_id: CanisterId) {
             let top_up_amount = read_state(|state| state.data.max_top_up_amount);
 
             for canister_id in to_top_up {
-                let _ = deposit_cycles(canister_id, top_up_amount).await;
+                if deposit_cycles(canister_id, top_up_amount).await.is_ok() {
+                    mutate_state(|state| {
+                        if let Some(canister) = state.data.canisters.get_mut(&canister_id) {
+                            canister.record_top_up(top_up_amount, state.env.now());
+                        }
+                    })
+                }
             }
         }
     }
