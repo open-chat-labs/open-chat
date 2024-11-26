@@ -82,6 +82,7 @@ option_update!(OptionUpdateString, String);
 option_update!(OptionUpdateU64, u64);
 option_update!(OptionUpdateU128, u128);
 option_update!(OptionUpdateAccessGate, crate::AccessGate);
+option_update!(OptionUpdateAirdropConfig, crate::AirdropConfig);
 option_update!(OptionUpdateDocument, crate::Document);
 option_update!(OptionUpdateAccessGateConfig, crate::AccessGateConfig);
 option_update!(OptionUpdateFrozenGroupInfo, crate::FrozenGroupInfo);
