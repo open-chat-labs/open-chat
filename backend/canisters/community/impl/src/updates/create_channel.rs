@@ -148,6 +148,8 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
                 now,
             );
 
+            state.data.members.mark_member_joined_channel(member.user_id, channel_id);
+
             let mut channel = Channel {
                 id: channel_id,
                 chat,
@@ -163,8 +165,6 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
                     state.data.is_public,
                     now,
                 );
-            } else {
-                state.data.members.mark_member_joined_channel(member.user_id, channel_id);
             }
 
             state.data.channels.add(channel);
