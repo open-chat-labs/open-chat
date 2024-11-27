@@ -262,7 +262,7 @@ impl GroupMembers {
             return ChangeRoleResult::Invalid;
         }
         // It is not currently possible to make a bot an owner
-        if member.user_type == UserType::Bot && new_role.is_owner() {
+        if member.user_type.is_3rd_party_bot() && new_role.is_owner() {
             return ChangeRoleResult::Invalid;
         }
 
@@ -779,7 +779,7 @@ mod tests {
             min_visible_event_index: 1.into(),
             min_visible_message_index: 1.into(),
             rules_accepted: Some(Timestamped::new(Version::zero(), 1)),
-            user_type: UserType::Bot,
+            user_type: UserType::LegacyBot,
             lapsed: Timestamped::new(false, 1),
         };
 

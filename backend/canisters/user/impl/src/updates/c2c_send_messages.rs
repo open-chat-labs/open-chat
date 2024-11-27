@@ -22,8 +22,9 @@ async fn c2c_handle_bot_messages(
         SenderStatus::Blocked => return user_canister::c2c_handle_bot_messages::Response::Blocked,
         SenderStatus::UnknownUser(local_user_index_canister_id, user_id) => {
             let user_type = match verify_user(local_user_index_canister_id, user_id).await {
-                Some(UserType::Bot) => UserType::Bot,
+                Some(UserType::LegacyBot) => UserType::LegacyBot,
                 Some(UserType::OcControlledBot) => UserType::OcControlledBot,
+                Some(UserType::Bot) => UserType::Bot,
                 _ => panic!("This request is not from a bot registered with OpenChat"),
             };
             (user_id, user_type)

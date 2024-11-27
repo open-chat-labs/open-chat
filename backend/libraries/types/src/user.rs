@@ -69,17 +69,26 @@ pub struct UserDetails {
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub enum UserType {
     #[default]
+    #[serde(rename = "u", alias = "User")]
     User,
+    #[serde(rename = "b")]
     Bot,
+    #[serde(rename = "l", alias = "Bot")]
+    LegacyBot,
+    #[serde(rename = "o", alias = "OcControlledBot")]
     OcControlledBot,
 }
 
 impl UserType {
     pub fn is_bot(&self) -> bool {
-        matches!(self, UserType::Bot | UserType::OcControlledBot)
+        matches!(self, UserType::Bot | UserType::LegacyBot | UserType::OcControlledBot)
     }
 
     pub fn is_oc_controlled_bot(&self) -> bool {
         matches!(self, UserType::OcControlledBot)
+    }
+
+    pub fn is_3rd_party_bot(&self) -> bool {
+        matches!(self, UserType::Bot | UserType::LegacyBot)
     }
 }
