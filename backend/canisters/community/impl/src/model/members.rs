@@ -340,12 +340,14 @@ impl CommunityMembers {
         if let Some(member) = self.members.get_mut(&user_id) {
             member.channels.insert(channel_id);
             self.member_channel_links.insert((user_id, channel_id));
+            self.member_channel_links_removed.remove(&(user_id, channel_id));
         }
     }
 
     pub fn mark_member_left_channel(&mut self, user_id: UserId, channel_id: ChannelId, now: TimestampMillis) {
         if let Some(member) = self.members.get_mut(&user_id) {
             if member.leave(channel_id, now) {
+                self.member_channel_links.remove(&(user_id, channel_id));
                 self.member_channel_links_removed.insert((user_id, channel_id));
             }
         }
