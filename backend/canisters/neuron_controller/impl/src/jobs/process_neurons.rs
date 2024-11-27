@@ -130,7 +130,7 @@ async fn disburse_neurons(neuron_ids: Vec<u64>) {
     let (nns_ledger_canister_id, cycles_dispenser_canister_id) =
         read_state(|state| (state.data.nns_ledger_canister_id, state.data.cycles_dispenser_canister_id));
 
-    // If the CyclesDispenser has less than 5000 ICP, top it up, otherwise send the ICP to the treasury
+    // If the CyclesDispenser has less than 10000 ICP, top it up, otherwise send the ICP to the treasury
     let mut top_up_cycles_dispenser = is_cycles_dispenser_balance_low(nns_ledger_canister_id, cycles_dispenser_canister_id)
         .await
         .unwrap_or(true);

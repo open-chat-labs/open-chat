@@ -301,7 +301,7 @@ export function eventWrapper(value: TEventWrapperChatEvent): EventWrapper<ChatEv
 }
 
 export function event(value: TChatEvent): ChatEvent {
-    if (value === "Empty") {
+    if (value === "Empty" || value === "FailedToDeserialize") {
         return { kind: "empty" };
     }
     if ("Message" in value) {

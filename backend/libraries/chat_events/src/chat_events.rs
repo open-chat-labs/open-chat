@@ -3,8 +3,7 @@ use crate::expiring_events::ExpiringEvents;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::metrics::{ChatMetricsInternal, MetricKey};
 use crate::search_index::SearchIndex;
-use crate::stable_storage::key::KeyPrefix;
-use crate::stable_storage::Memory;
+use crate::stable_memory::key::KeyPrefix;
 use crate::*;
 use event_store_producer::{EventBuilder, EventStoreClient, Runtime};
 use rand::rngs::StdRng;
@@ -78,23 +77,12 @@ impl ChatEvents {
         false
     }
 
-    pub fn init_stable_storage(memory: Memory) {
-        stable_storage::init(memory)
-    }
-
-    pub fn init_maps(&mut self) {
-        self.main.init_hybrid_map(self.chat, None);
-        for (message_index, thread) in self.threads.iter_mut() {
-            thread.init_hybrid_map(self.chat, Some(*message_index));
-        }
-    }
-
     pub fn import_events(chat: Chat, events: Vec<(EventContext, ByteBuf)>) {
-        stable_storage::write_events_as_bytes(chat, events);
+        stable_memory::write_events_as_bytes(chat, events);
     }
 
     pub fn garbage_collect_stable_memory(prefix: KeyPrefix) -> Result<u32, u32> {
-        stable_storage::garbage_collect(prefix)
+        stable_memory::garbage_collect(prefix)
     }
 
     pub fn set_stable_memory_key_prefixes(&mut self) {
@@ -179,7 +167,7 @@ impl ChatEvents {
     }
 
     pub fn read_events_as_bytes_from_stable_memory(&self, after: Option<EventContext>) -> Vec<(EventContext, ByteBuf)> {
-        stable_storage::read_events_as_bytes(self.chat, after, 1_000_000)
+        stable_memory::read_events_as_bytes(self.chat, after, 1_000_000)
     }
 
     pub fn iter_recently_updated_events(
@@ -1479,7 +1467,7 @@ impl ChatEvents {
                 let community_id_bytes = community_id.as_ref();
                 hasher.update([community_id_bytes.len() as u8]);
                 hasher.update(community_id);
-                let channel_id_bytes = channel_id.to_be_bytes();
+                let channel_id_bytes = channel_id.as_u32().to_be_bytes();
                 hasher.update([channel_id_bytes.len() as u8]);
                 hasher.update(channel_id_bytes);
             }

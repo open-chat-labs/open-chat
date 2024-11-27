@@ -148,6 +148,86 @@
     "blockUser": "ब्लॉक करें",
     "blockUserFailed": "उपयोगकर्ता को ब्लॉक करने में असमर्थ",
     "blockUserSucceeded": "उपयोगकर्ता को ब्लॉक कर दिया गया है",
+    "bots": {
+        "builtin": {
+            "desc": "यह बॉट अंतर्निहित OpenChat कमांड प्रदान करता है",
+            "name": "में निर्मित"
+        },
+        "crypto": {
+            "desc": "किसी अन्य उपयोगकर्ता को क्रिप्टो भेजें",
+            "params": {
+                "amount": {
+                    "desc": "वह राशि जो आप भेजना चाहते हैं",
+                    "name": "मात्रा",
+                    "placeholder": "राशि डालें"
+                },
+                "token": {
+                    "desc": "वह टोकन जिसे आप भेजना चाहते हैं",
+                    "name": "टोकन",
+                    "placeholder": "टोकन दर्ज करें"
+                }
+            }
+        },
+        "diamond": {
+            "desc": "डायमंड सदस्यता के बारे में बताने के लिए लिंक पोस्ट करें"
+        },
+        "failed": "क्षमा करें, हम बॉट कमांड निष्पादित करने में विफल रहे",
+        "faq": {
+            "desc": "FAQ विषय के लिए लिंक बनाएं",
+            "params": {
+                "topic": {
+                    "choices": {
+                        "airdrop": "मासिक एयरड्रॉप",
+                        "android": "एंड्रॉयड ऐप",
+                        "buychat": "CHAT ख़रीदना",
+                        "content": "सामग्री दिशानिर्देश",
+                        "diamond": "डायमंड सदस्यता",
+                        "info": "जानकारी",
+                        "ios": "आईओएस ऐप",
+                        "referral": "रेफरल पुरस्कार",
+                        "security": "सुरक्षा",
+                        "sendtokens": "टोकन भेजना",
+                        "shortcuts": "शॉर्टकट",
+                        "storage": "भंडारण",
+                        "style": "संदेशों की स्टाइलिंग",
+                        "translation": "सामग्री अनुवाद",
+                        "voting": "मतदान",
+                        "wallet": "बटुआ"
+                    },
+                    "desc": "विशिष्ट FAQ विषय जिसमें आपकी रुचि है",
+                    "name": "अक्सर पूछे जाने वाले प्रश्न विषय",
+                    "placeholder": "विषय चुनें"
+                }
+            }
+        },
+        "gif": {
+            "desc": "भेजने के लिए एक GIF खोजें",
+            "params": {
+                "term": {
+                    "desc": "अपने gif के लिए खोज शब्द दर्ज करें",
+                    "name": "जाँच अवधि",
+                    "placeholder": "जाँच अवधि"
+                }
+            }
+        },
+        "matchingCommands": "मिलान आदेश",
+        "poll": {
+            "desc": "वर्तमान चैट में पोल बनाएँ"
+        },
+        "search": {
+            "desc": "वर्तमान चैट में खोज आरंभ करें",
+            "params": {
+                "term": {
+                    "desc": "चैट में खोजने के लिए शब्द दर्ज करें",
+                    "name": "जाँच अवधि",
+                    "placeholder": "जाँच अवधि"
+                }
+            }
+        },
+        "witch": {
+            "desc": "चुड़ैल को बुलाओ"
+        }
+    },
     "cancel": "रद्द करें",
     "cancelInvite": "आमंत्रण रद्द करें",
     "cancelInviteFailed": "आमंत्रण रद्द करने में त्रुटि",
@@ -457,8 +537,10 @@
         "airdrop_q": "क्या कोई एयरड्रॉप होगा?",
         "android_app_a": "जहां तक आईओएस (ऊपर देखें) का सवाल है, ओपनचैट वेब ऐप पहले से ही एंड्रॉइड पर काम करता है और आप ब्राउज़र मेनू से \"होमस्क्रीन में जोड़ें\" कर सकते हैं। यह आपको ऐप खोलने के लिए एक मानक आइकन देता है जो यूआरएल बार के बिना एक मूल ऐप की तरह दिखाई देता है। एंड्रॉइड पर प्रोग्रेसिव वेब ऐप (PWA) सपोर्ट बहुत अच्छा है। आईओएस की तरह यह वेब पुश नोटिफिकेशन का समर्थन करता है लेकिन फोन से संपर्कों को पढ़ने का भी समर्थन करता है (यदि आप प्रत्येक मामले में अनुमति देते हैं)। इसके अलावा WebRTC के लिए समर्थन काफी बेहतर है। ऐसे में एक देशी एंड्रॉइड ऐप बनाने का मामला कम आकर्षक है और यह एक देशी आईओएस ऐप के बाद आएगा। कोर वेब ऐप के चारों ओर एक पतले देशी आवरण के लक्ष्य और एंड्रॉइड प्ले स्टोर पर प्रमाणन के संबंध में आईओएस के रूप में एंड्रॉइड ऐप के निर्माण पर भी यही विचार लागू होते हैं।",
         "android_app_q": "एंड्रॉइड ऐप कब आएगा?",
-        "buychat_a": "आप <a target=\"_blank\" href=\"https://www.helixmarkets.io/trade/CHATUSDC\">हेलिक्स मार्केट्स</a> पर USDC के साथ CHAT खरीद सकते हैं। अन्यथा आपको पहले <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">ICP खरीदना</a> होगा जिसे आप विभिन्न विकेन्द्रीकृत एक्सचेंजों (DEXes) पर CHAT के लिए स्वैप कर सकते हैं।<ul><li> <a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">आईसीडीएक्स</a></li><li> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">आईसीपीस्वैप</a></li></ul> DFINITY ICRC1 टोकन (जिसमें CHAT शामिल है) के लिए <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">रोसेटा API</a> के लिए समर्थन जोड़ रहा है, जिससे उन्हें सेंट्रलाइज्ड एक्सचेंज (CEXes) के साथ एकीकृत करना बहुत आसान हो जाएगा। एक बार ऐसा हो जाने के बाद यह संभावना है कि CHAT ICP या USDT के लिए CEXes पर व्यापार करने के लिए उपलब्ध होगा।",
+        "buychat_a": "आप CHAT को विभिन्न क्रिप्टोकरेंसी एक्सचेंजों पर खरीद सकते हैं:<br><br><table><tr><th> अदला-बदली</th><th> शैली</th><th> खरीदें</th><th> सीईएक्स/डीईएक्स</th></tr><tr><td> <a target=\"_blank\" href=\"https://www.helixmarkets.io/trade/CHATUSDC\">हेलिक्स मार्केट्स</a></td><td> अॉर्डर - बुक</td><td> यूएसडीसी</td><td> हाइब्रिड</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.bitmart.com/trade?symbol=CHAT_USDT\">बिटमार्ट</a></td><td> अॉर्डर - बुक</td><td> यूएसडीटी</td><td> सीईएक्स</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.bitrue.com/trade/chat_usdt\">बिट्रू</a></td><td> अॉर्डर - बुक</td><td> यूएसडीटी</td><td> सीईएक्स</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.coinstore.com/spot/chatusdt\">कॉइनस्टोर</a></td><td> अॉर्डर - बुक</td><td> यूएसडीटी</td><td> सीईएक्स</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.lbank.com/trade/chat_usdt\">एलबैंक</a></td><td> अॉर्डर - बुक</td><td> यूएसडीटी</td><td> सीईएक्स</td></tr><tr><td> <a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">आईसीडीएक्स</a></td><td> अॉर्डर - बुक</td><td> आईसीपी</td><td> डेक्स</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.kongswap.io/?viewtab=swap&pool=CHAT_ckUSDT\">कोंगस्वैप</a></td><td> स्वैप (एएमएम)</td><td> यूएसडीटी</td><td> डेक्स</td></tr><tr><td> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">आईसीपीस्वैप</a></td><td> स्वैप (एएमएम)</td><td> आईसीपी</td><td> डेक्स</td></tr><tr><td> <a target=\"_blank\" href=\"https://app.sonic.ooo/?tokenin=ryjl3-tyaaa-aaaaa-aaaba-cai&tokenout=2ouva-viaaa-aaaaq-aaamq-cai\">ध्वनि का</a></td><td> स्वैप (एएमएम)</td><td> आईसीपी</td><td> डेक्स</td></tr></table><br> आप अपने ओपनचैट वॉलेट से सीधे CHAT के लिए टोकन स्वैप भी कर सकते हैं, जो स्वचालित रूप से सर्वोत्तम उपलब्ध मूल्य के साथ स्वैप एक्सचेंज का उपयोग करेगा।",
         "buychat_q": "मैं CHAT टोकन कैसे खरीदूं?",
+        "buyicp_a": "<ol><li>आप Coinbase, Binance, Kraken और अन्य जैसे प्रमुख एक्सचेंजों पर ICP टोकन खरीद सकते हैं। ये प्लेटफ़ॉर्म आपको ICP के लिए विभिन्न क्रिप्टोकरेंसी का व्यापार करने की अनुमति देते हैं।</li><li> नेटवर्क नर्वस सिस्टम (NNS) dapp क्रेडिट कार्ड का उपयोग करके ICP खरीदने की सुविधा प्रदान करता है। आपको अपने इंटरनेट पहचान के साथ लॉग इन करना होगा और लेनदेन को पूरा करने के लिए संकेतों का पालन करना होगा <a target=\"_blank\" href=\"https://support.dfinity.org/hc/en-us/articles/21363667463828-How-do-I-purchase-ICP-from-within-the-NNS-dapp\">अक्सर पूछे जाने वाले प्रश्न &gt; इंटरनेट कंप्यूटर &gt; नेटवर्क नर्वस सिस्टम (NNS) &gt; मैं NNS dapp के भीतर से ICP कैसे खरीद सकता हूँ?</a></li><li> आप इंटरनेट कंप्यूटर पर विकेंद्रीकृत एक्सचेंज (DEX) का उपयोग ICP के लिए अन्य क्रिप्टोकरेंसी को स्वैप करने के लिए कर सकते हैं। उदाहरण के लिए:<ul><li> <a target=\"_blank\" href=\"https://iclight.io/ICDex/ckBTC/ICP\">ICDex.io</a> आपको ICP के लिए बिटकॉइन (ckBTC के रूप में) स्वैप करने की अनुमति देता है।</li><li> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/token/details/ryjl3-tyaaa-aaaaa-aaaba-cai\">आईसीपीस्वैप</a> आईसीपी के साथ ट्रेडिंग जोड़े प्रदान करता है।</li></ul></li></ol>",
+        "buyicp_q": "मैं आईसीपी टोकन कैसे खरीदूं?",
         "content_a": "हमारी सामग्री और मॉडरेशन दिशानिर्देशों की पूरी जानकारी के लिए <a href=\"/guidelines\">यहां देखें</a>।",
         "content_q": "किस प्रकार की सामग्री की अनुमति है?",
         "diamond_a": "ओपनचैट के भीतर अतिरिक्त या उन्नत सुविधाओं तक पहुंच पाने के लिए आप डायमंड सदस्यता में अपग्रेड कर सकते हैं। फीचर की तुलना और अपग्रेड के लिए <a href=\"/diamond\">यहां देखें</a>।",

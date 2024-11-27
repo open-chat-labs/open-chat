@@ -13,7 +13,7 @@ use utils::text_validation::{
     validate_description, validate_group_name, validate_rules, NameValidationError, RulesValidationError,
 };
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 async fn create_group(mut args: Args) -> Response {
     run_regular_jobs();
@@ -107,7 +107,6 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
             avatar: args.avatar,
             permissions_v2: args.permissions_v2,
             events_ttl: args.events_ttl,
-            gate: args.gate,
             gate_config: args.gate_config,
         };
         Ok(PrepareResult {

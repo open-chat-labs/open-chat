@@ -61,7 +61,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         None => return Err(CallerNotInGroup),
     };
 
-    if member.suspended.value {
+    if member.suspended().value {
         return Err(UserSuspended);
     } else if member.lapsed().value {
         return Err(UserLapsed);
@@ -98,7 +98,6 @@ fn commit(user_id: UserId, args: Args, state: &mut RuntimeState) -> Response {
         None => return CallerNotInGroup,
     };
 
-    let now = state.env.now();
     let min_visible_event_index = member.min_visible_event_index();
 
     match state
@@ -108,10 +107,13 @@ fn commit(user_id: UserId, args: Args, state: &mut RuntimeState) -> Response {
         .record_proposal_vote(user_id, min_visible_event_index, args.message_index, args.adopt)
     {
         RecordProposalVoteResult::Success => {
-            let votes = member.proposal_votes.entry(now).or_default();
-            if !votes.contains(&args.message_index) {
-                votes.push(args.message_index);
-            }
+            let now = state.env.now();
+            state
+                .data
+                .chat
+                .members
+                .register_proposal_vote(user_id, args.message_index, now);
+
             handle_activity_notification(state);
             Success
         }

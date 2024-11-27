@@ -82,7 +82,6 @@ async fn create_group(ns: NervousSystemDetails, group_index_canister_id: Caniste
             ..Default::default()
         }),
         events_ttl: None,
-        gate: None,
         gate_config: None,
     };
 

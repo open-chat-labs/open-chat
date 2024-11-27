@@ -100,7 +100,7 @@ fn summary_updates_impl(
     }
 
     let membership = member.map(|m| CommunityMembershipUpdates {
-        role: updates_from_events.role_changed.then_some(m.role),
+        role: updates_from_events.role_changed.then_some(m.role()),
         rules_accepted: m
             .rules_accepted
             .as_ref()
@@ -113,7 +113,7 @@ fn summary_updates_impl(
                 Some(display_name) => OptionUpdate::SetToSome(display_name.clone()),
                 None => OptionUpdate::SetToNone,
             }),
-        lapsed: m.lapsed.if_set_after(updates_since).copied(),
+        lapsed: m.lapsed().if_set_after(updates_since).copied(),
     });
 
     let last_updated = [community_last_updated]

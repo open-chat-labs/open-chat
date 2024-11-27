@@ -315,6 +315,9 @@ export const GroupFollowThreadResponse = Type.Union([
     Type.Literal("GroupFrozen"),
 ]);
 
+export type ChannelId = Static<typeof ChannelId>;
+export const ChannelId = Type.BigInt();
+
 export type UserManageFavouriteChatsResponse = Static<typeof UserManageFavouriteChatsResponse>;
 export const UserManageFavouriteChatsResponse = Type.Union([
     Type.Literal("Success"),
@@ -1782,6 +1785,16 @@ export const RegistryAddMessageFilterResponse = Type.Union([
     }),
 ]);
 
+export type RegistrySetAirdropConfigResponse = Static<typeof RegistrySetAirdropConfigResponse>;
+export const RegistrySetAirdropConfigResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("IncompleteConfig"),
+    Type.Literal("NotAuthorized"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
 export type RegistryMessageFilterSummary = Static<typeof RegistryMessageFilterSummary>;
 export const RegistryMessageFilterSummary = Type.Object({
     id: Type.BigInt(),
@@ -2082,7 +2095,6 @@ export const UserIndexSetUsernameArgs = Type.Object({
 export type UserIndexSetDisplayNameResponse = Static<typeof UserIndexSetDisplayNameResponse>;
 export const UserIndexSetDisplayNameResponse = Type.Union([
     Type.Literal("Success"),
-    Type.Literal("Unauthorized"),
     Type.Literal("UserNotFound"),
     Type.Literal("DisplayNameInvalid"),
     Type.Object({
@@ -2251,7 +2263,7 @@ export type CommunitySelectedChannelUpdatesArgs = Static<
     typeof CommunitySelectedChannelUpdatesArgs
 >;
 export const CommunitySelectedChannelUpdatesArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     updates_since: Type.BigInt(),
 });
 
@@ -2268,7 +2280,7 @@ export const CommunityLeaveChannelResponse = Type.Union([
 
 export type CommunityLeaveChannelArgs = Static<typeof CommunityLeaveChannelArgs>;
 export const CommunityLeaveChannelArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
 });
 
 export type CommunityRemoveMemberResponse = Static<typeof CommunityRemoveMemberResponse>;
@@ -2304,13 +2316,13 @@ export type CommunityToggleMuteNotificationsArgs = Static<
     typeof CommunityToggleMuteNotificationsArgs
 >;
 export const CommunityToggleMuteNotificationsArgs = Type.Object({
-    channel_id: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
+    channel_id: Type.Optional(Type.Union([ChannelId, Type.Undefined()])),
     mute: Type.Boolean(),
 });
 
 export type CommunityClaimPrizeArgs = Static<typeof CommunityClaimPrizeArgs>;
 export const CommunityClaimPrizeArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     message_id: MessageId,
 });
 
@@ -2351,14 +2363,14 @@ export const CommunityCreateUserGroupResponse = Type.Union([
 
 export type CommunityJoinVideoCallArgs = Static<typeof CommunityJoinVideoCallArgs>;
 export const CommunityJoinVideoCallArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     message_id: MessageId,
     new_achievement: Type.Boolean(),
 });
 
 export type CommunitySetVideoCallPresenceArgs = Static<typeof CommunitySetVideoCallPresenceArgs>;
 export const CommunitySetVideoCallPresenceArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     message_id: MessageId,
     presence: VideoCallPresence,
     new_achievement: Type.Boolean(),
@@ -2381,14 +2393,14 @@ export const CommunitySetVideoCallPresenceResponse = Type.Union([
 
 export type CommunityDeletedMessageArgs = Static<typeof CommunityDeletedMessageArgs>;
 export const CommunityDeletedMessageArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     thread_root_message_index: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
     message_id: MessageId,
 });
 
 export type CommunityRegisterPollVoteArgs = Static<typeof CommunityRegisterPollVoteArgs>;
 export const CommunityRegisterPollVoteArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     thread_root_message_index: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
     message_index: MessageIndex,
     poll_option: Type.Number(),
@@ -2398,7 +2410,7 @@ export const CommunityRegisterPollVoteArgs = Type.Object({
 
 export type CommunityCancelP2pSwapArgs = Static<typeof CommunityCancelP2pSwapArgs>;
 export const CommunityCancelP2pSwapArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     thread_root_message_index: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
     message_id: MessageId,
 });
@@ -2432,7 +2444,7 @@ export const CommunitySearchChannelResponse = Type.Union([
 
 export type CommunityUndeleteMessagesArgs = Static<typeof CommunityUndeleteMessagesArgs>;
 export const CommunityUndeleteMessagesArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     thread_root_message_index: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
     message_ids: Type.Array(MessageId),
 });
@@ -2456,7 +2468,7 @@ export type CommunitySelectedChannelInitialArgs = Static<
     typeof CommunitySelectedChannelInitialArgs
 >;
 export const CommunitySelectedChannelInitialArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
 });
 
 export type CommunityInviteCodeSuccessResult = Static<typeof CommunityInviteCodeSuccessResult>;
@@ -2495,7 +2507,7 @@ export const CommunityExploreChannelsArgs = Type.Object({
 
 export type CommunityChannelSummaryUpdatesArgs = Static<typeof CommunityChannelSummaryUpdatesArgs>;
 export const CommunityChannelSummaryUpdatesArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     invite_code: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
     updates_since: Type.BigInt(),
 });
@@ -2520,7 +2532,7 @@ export const CommunityUpdateUserGroupResponse = Type.Union([
 
 export type CommunityEventsWindowArgs = Static<typeof CommunityEventsWindowArgs>;
 export const CommunityEventsWindowArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     thread_root_message_index: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
     mid_point: MessageIndex,
     max_messages: Type.Number(),
@@ -2530,7 +2542,7 @@ export const CommunityEventsWindowArgs = Type.Object({
 
 export type CommunityUnfollowThreadArgs = Static<typeof CommunityUnfollowThreadArgs>;
 export const CommunityUnfollowThreadArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     thread_root_message_index: MessageIndex,
 });
 
@@ -2565,7 +2577,7 @@ export const CommunityDeleteMessagesResponse = Type.Union([
 
 export type CommunityDeleteMessagesArgs = Static<typeof CommunityDeleteMessagesArgs>;
 export const CommunityDeleteMessagesArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     thread_root_message_index: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
     message_ids: Type.Array(MessageId),
     as_platform_moderator: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
@@ -2609,7 +2621,7 @@ export const CommunityEnableInviteCodeResponse = Type.Union([
 
 export type CommunityRegisterProposalVoteArgs = Static<typeof CommunityRegisterProposalVoteArgs>;
 export const CommunityRegisterProposalVoteArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     message_index: MessageIndex,
     adopt: Type.Boolean(),
 });
@@ -2648,7 +2660,7 @@ export const CommunityDisableInviteCodeResponse = Type.Union([
 
 export type CommunityChannelSummaryArgs = Static<typeof CommunityChannelSummaryArgs>;
 export const CommunityChannelSummaryArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     invite_code: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
 });
 
@@ -2668,7 +2680,7 @@ export const CommunityChangeChannelRoleResponse = Type.Union([
 
 export type CommunityDeclineInvitationArgs = Static<typeof CommunityDeclineInvitationArgs>;
 export const CommunityDeclineInvitationArgs = Type.Object({
-    channel_id: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
+    channel_id: Type.Optional(Type.Union([ChannelId, Type.Undefined()])),
 });
 
 export type CommunityDeclineInvitationResponse = Static<typeof CommunityDeclineInvitationResponse>;
@@ -2683,7 +2695,7 @@ export type CommunityMessagesByMessageIndexArgs = Static<
     typeof CommunityMessagesByMessageIndexArgs
 >;
 export const CommunityMessagesByMessageIndexArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     thread_root_message_index: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
     messages: Type.Array(MessageIndex),
     latest_known_update: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
@@ -2693,7 +2705,7 @@ export type CommunityRegisterProposalVoteV2Args = Static<
     typeof CommunityRegisterProposalVoteV2Args
 >;
 export const CommunityRegisterProposalVoteV2Args = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     message_index: MessageIndex,
     adopt: Type.Boolean(),
 });
@@ -2773,7 +2785,7 @@ export const CommunityUpdateCommunityResponse = Type.Union([
 
 export type CommunityRemoveReactionArgs = Static<typeof CommunityRemoveReactionArgs>;
 export const CommunityRemoveReactionArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     thread_root_message_index: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
     message_id: MessageId,
     reaction: Reaction,
@@ -2800,7 +2812,7 @@ export const CommunitySelectedInitialArgs = Type.Object({
 
 export type CommunityAddReactionArgs = Static<typeof CommunityAddReactionArgs>;
 export const CommunityAddReactionArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     thread_root_message_index: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
     message_id: MessageId,
     reaction: Reaction,
@@ -2826,7 +2838,7 @@ export const CommunityAddReactionResponse = Type.Union([
 
 export type CommunityThreadPreviewsArgs = Static<typeof CommunityThreadPreviewsArgs>;
 export const CommunityThreadPreviewsArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     threads: Type.Array(MessageIndex),
     latest_client_thread_update: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
 });
@@ -2850,7 +2862,7 @@ export const CommunityBlockUserResponse = Type.Union([
 
 export type CommunityPinMessageArgs = Static<typeof CommunityPinMessageArgs>;
 export const CommunityPinMessageArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     message_index: MessageIndex,
 });
 
@@ -2872,7 +2884,7 @@ export const CommunityPinMessageResponse = Type.Union([
 
 export type CommunityVideoCallParticipantsArgs = Static<typeof CommunityVideoCallParticipantsArgs>;
 export const CommunityVideoCallParticipantsArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     message_id: MessageId,
     updated_since: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
 });
@@ -2914,7 +2926,7 @@ export const CommunitySendMessageResponse = Type.Union([
 
 export type CommunityEventsByIndexArgs = Static<typeof CommunityEventsByIndexArgs>;
 export const CommunityEventsByIndexArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     thread_root_message_index: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
     events: Type.Array(EventIndex),
     latest_known_update: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
@@ -2927,7 +2939,7 @@ export const CommunityLocalUserIndexResponse = Type.Object({
 
 export type CommunityEventsArgs = Static<typeof CommunityEventsArgs>;
 export const CommunityEventsArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     thread_root_message_index: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
     start_index: EventIndex,
     ascending: Type.Boolean(),
@@ -2938,7 +2950,7 @@ export const CommunityEventsArgs = Type.Object({
 
 export type CommunityAcceptP2pSwapArgs = Static<typeof CommunityAcceptP2pSwapArgs>;
 export const CommunityAcceptP2pSwapArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     thread_root_message_index: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
     message_id: MessageId,
     pin: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
@@ -2949,7 +2961,7 @@ export type CommunityCreateChannelSuccessResult = Static<
     typeof CommunityCreateChannelSuccessResult
 >;
 export const CommunityCreateChannelSuccessResult = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
 });
 
 export type CommunitySelectedUpdatesArgs = Static<typeof CommunitySelectedUpdatesArgs>;
@@ -2960,7 +2972,7 @@ export const CommunitySelectedUpdatesArgs = Type.Object({
 
 export type CommunityImportGroupSuccessResult = Static<typeof CommunityImportGroupSuccessResult>;
 export const CommunityImportGroupSuccessResult = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     total_bytes: Type.BigInt(),
 });
 
@@ -2986,7 +2998,7 @@ export const CommunityImportGroupResponse = Type.Union([
 
 export type CommunityReportMessageArgs = Static<typeof CommunityReportMessageArgs>;
 export const CommunityReportMessageArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     thread_root_message_index: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
     message_id: MessageId,
     delete: Type.Boolean(),
@@ -3072,7 +3084,7 @@ export const CommunityFollowThreadResponse = Type.Union([
 
 export type CommunityFollowThreadArgs = Static<typeof CommunityFollowThreadArgs>;
 export const CommunityFollowThreadArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     thread_root_message_index: MessageIndex,
     new_achievement: Type.Boolean(),
 });
@@ -3091,7 +3103,7 @@ export const CommunityDeleteChannelResponse = Type.Union([
 
 export type CommunityDeleteChannelArgs = Static<typeof CommunityDeleteChannelArgs>;
 export const CommunityDeleteChannelArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
 });
 
 export type NotificationsIndexPushSubscriptionResponse = Static<
@@ -3710,7 +3722,7 @@ export const UserManualWallet = Type.Object({
 
 export type UserChannelSummaryUpdates = Static<typeof UserChannelSummaryUpdates>;
 export const UserChannelSummaryUpdates = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     read_by_me_up_to: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
     threads_read: Type.Record(MessageIndex, MessageIndex),
     archived: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
@@ -3738,7 +3750,7 @@ export const UserSetBioResponse = Type.Union([
 
 export type UserChannelSummary = Static<typeof UserChannelSummary>;
 export const UserChannelSummary = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     read_by_me_up_to: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
     threads_read: Type.Record(MessageIndex, MessageIndex),
     archived: Type.Boolean(),
@@ -3835,7 +3847,7 @@ export const UserMarkReadThreadRead = Type.Object({
 
 export type UserMarkReadChannelMessagesRead = Static<typeof UserMarkReadChannelMessagesRead>;
 export const UserMarkReadChannelMessagesRead = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     read_up_to: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
     threads: Type.Array(UserMarkReadThreadRead),
     date_read_pinned: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
@@ -4545,7 +4557,7 @@ export type GroupIndexLookupChannelByGroupIdSuccessResult = Static<
 >;
 export const GroupIndexLookupChannelByGroupIdSuccessResult = Type.Object({
     community_id: CommunityId,
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
 });
 
 export type GroupIndexLookupChannelByGroupIdResponse = Static<
@@ -4621,6 +4633,15 @@ export const StorageIndexCanForwardResponse = Type.Union([
     }),
     Type.Literal("UserNotFound"),
 ]);
+
+export type RegistrySetAirdropConfigArgs = Static<typeof RegistrySetAirdropConfigArgs>;
+export const RegistrySetAirdropConfigArgs = Type.Object({
+    enabled: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
+    community_id: Type.Optional(Type.Union([CommunityId, Type.Undefined()])),
+    channel_id: Type.Optional(Type.Union([ChannelId, Type.Undefined()])),
+    community_name: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
+    channel_name: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
+});
 
 export type RegistryPayment = Static<typeof RegistryPayment>;
 export const RegistryPayment = Type.Object({
@@ -4869,7 +4890,7 @@ export const LocalUserIndexChatEventsEventsContext = Type.Union([
         Group: Type.Tuple([ChatId, Type.Union([MessageIndex, Type.Null()])]),
     }),
     Type.Object({
-        Channel: Type.Tuple([CommunityId, Type.BigInt(), Type.Union([MessageIndex, Type.Null()])]),
+        Channel: Type.Tuple([CommunityId, ChannelId, Type.Union([MessageIndex, Type.Null()])]),
     }),
 ]);
 
@@ -4886,7 +4907,7 @@ export const LocalUserIndexJoinCommunityArgs = Type.Object({
 export type LocalUserIndexJoinChannelArgs = Static<typeof LocalUserIndexJoinChannelArgs>;
 export const LocalUserIndexJoinChannelArgs = Type.Object({
     community_id: CommunityId,
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     invite_code: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
     referred_by: Type.Optional(Type.Union([UserId, Type.Undefined()])),
     verified_credential_args: Type.Optional(
@@ -4913,7 +4934,7 @@ export type LocalUserIndexInviteUsersToChannelArgs = Static<
 >;
 export const LocalUserIndexInviteUsersToChannelArgs = Type.Object({
     community_id: CommunityId,
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     user_ids: Type.Array(UserId),
     caller_username: Type.String(),
 });
@@ -4932,7 +4953,7 @@ export const CommunityRemoveMemberArgs = Type.Object({
 
 export type CommunityCancelInvitesArgs = Static<typeof CommunityCancelInvitesArgs>;
 export const CommunityCancelInvitesArgs = Type.Object({
-    channel_id: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
+    channel_id: Type.Optional(Type.Union([ChannelId, Type.Undefined()])),
     user_ids: Type.Array(UserId),
 });
 
@@ -4944,7 +4965,7 @@ export const CommunityCreateUserGroupArgs = Type.Object({
 
 export type CommunitySearchChannelArgs = Static<typeof CommunitySearchChannelArgs>;
 export const CommunitySearchChannelArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     search_term: Type.String(),
     max_results: Type.Number(),
     users: Type.Optional(Type.Union([Type.Array(UserId), Type.Undefined()])),
@@ -4973,7 +4994,7 @@ export type CommunityRemoveMemberFromChannelArgs = Static<
     typeof CommunityRemoveMemberFromChannelArgs
 >;
 export const CommunityRemoveMemberFromChannelArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     user_id: UserId,
 });
 
@@ -4999,7 +5020,7 @@ export const CommunityAddMembersToChannelUserFailedError = Type.Object({
 
 export type CommunityAddMembersToChannelArgs = Static<typeof CommunityAddMembersToChannelArgs>;
 export const CommunityAddMembersToChannelArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     user_ids: Type.Array(UserId),
     added_by_name: Type.String(),
     added_by_display_name: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
@@ -5026,7 +5047,7 @@ export const CommunityAddMembersToChannelFailedResult = Type.Object({
 
 export type CommunityChangeChannelRoleArgs = Static<typeof CommunityChangeChannelRoleArgs>;
 export const CommunityChangeChannelRoleArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     user_id: UserId,
     new_role: GroupRole,
 });
@@ -5202,7 +5223,7 @@ export type GroupConvertIntoCommunitySuccessResult = Static<
 >;
 export const GroupConvertIntoCommunitySuccessResult = Type.Object({
     community_id: CommunityId,
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
 });
 
 export type GroupConvertIntoCommunityResponse = Static<typeof GroupConvertIntoCommunityResponse>;
@@ -5298,7 +5319,7 @@ export const UserCommunitySummaryUpdates = Type.Object({
     channels: Type.Array(UserChannelSummaryUpdates),
     index: Type.Optional(Type.Union([Type.Number(), Type.Undefined()])),
     archived: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
-    pinned: Type.Optional(Type.Union([Type.Array(Type.BigInt()), Type.Undefined()])),
+    pinned: Type.Optional(Type.Union([Type.Array(ChannelId), Type.Undefined()])),
 });
 
 export type UserGroupChatSummary = Static<typeof UserGroupChatSummary>;
@@ -5341,7 +5362,7 @@ export const UserCommunitySummary = Type.Object({
     channels: Type.Array(UserChannelSummary),
     index: Type.Number(),
     archived: Type.Boolean(),
-    pinned: Type.Array(Type.BigInt()),
+    pinned: Type.Array(ChannelId),
 });
 
 export type UserSwapTokensExchangeArgs = Static<typeof UserSwapTokensExchangeArgs>;
@@ -5971,7 +5992,7 @@ export const Chat = Type.Union([
         Group: ChatId,
     }),
     Type.Object({
-        Channel: Type.Tuple([CommunityId, Type.BigInt()]),
+        Channel: Type.Tuple([CommunityId, ChannelId]),
     }),
 ]);
 
@@ -6034,7 +6055,7 @@ export const MultiUserChat = Type.Union([
         Group: ChatId,
     }),
     Type.Object({
-        Channel: Type.Tuple([CommunityId, Type.BigInt()]),
+        Channel: Type.Tuple([CommunityId, ChannelId]),
     }),
 ]);
 
@@ -6145,6 +6166,14 @@ export const SwapStatusErrorCompleted = Type.Object({
     token1_txn_out: Type.BigInt(),
 });
 
+export type AirdropConfig = Static<typeof AirdropConfig>;
+export const AirdropConfig = Type.Object({
+    community_id: CommunityId,
+    channel_id: ChannelId,
+    community_name: Type.String(),
+    channel_name: Type.String(),
+});
+
 export type MembersAdded = Static<typeof MembersAdded>;
 export const MembersAdded = Type.Object({
     user_ids: Type.Array(UserId),
@@ -6239,6 +6268,18 @@ export const ReportedMessage = Type.Object({
     count: Type.Number(),
 });
 
+export type OptionUpdateAirdropConfig = Static<typeof OptionUpdateAirdropConfig>;
+export const OptionUpdateAirdropConfig = Type.Union(
+    [
+        Type.Literal("NoChange"),
+        Type.Literal("SetToNone"),
+        Type.Object({
+            SetToSome: AirdropConfig,
+        }),
+    ],
+    { default: "NoChange" },
+);
+
 export type DiamondMembershipStatusFull = Static<typeof DiamondMembershipStatusFull>;
 export const DiamondMembershipStatusFull = Type.Union([
     Type.Literal("Inactive"),
@@ -6279,6 +6320,7 @@ export const RegistryUpdatesSuccessResult = Type.Object({
     message_filters_added: Type.Array(RegistryMessageFilterSummary),
     message_filters_removed: Type.Array(Type.BigInt()),
     swap_providers: Type.Optional(Type.Union([Type.Array(ExchangeId), Type.Undefined()])),
+    airdrop_config: OptionUpdateAirdropConfig,
 });
 
 export type RegistryUpdatesResponse = Static<typeof RegistryUpdatesResponse>;
@@ -6738,7 +6780,7 @@ export const UserChatInList = Type.Union([
         Favourite: Chat,
     }),
     Type.Object({
-        Community: Type.Tuple([CommunityId, Type.BigInt()]),
+        Community: Type.Tuple([CommunityId, ChannelId]),
     }),
 ]);
 
@@ -7732,7 +7774,7 @@ export const CommunityUpdateCommunityArgs = Type.Object({
 
 export type CommunitySendMessageArgs = Static<typeof CommunitySendMessageArgs>;
 export const CommunitySendMessageArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     thread_root_message_index: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
     message_id: MessageId,
     content: MessageContentInitial,
@@ -7767,7 +7809,7 @@ export const CommunityCreateChannelArgs = Type.Object({
 
 export type CommunityEditMessageArgs = Static<typeof CommunityEditMessageArgs>;
 export const CommunityEditMessageArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     thread_root_message_index: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
     message_id: MessageId,
     content: MessageContentInitial,
@@ -7777,7 +7819,7 @@ export const CommunityEditMessageArgs = Type.Object({
 
 export type CommunityUpdateChannelArgs = Static<typeof CommunityUpdateChannelArgs>;
 export const CommunityUpdateChannelArgs = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     name: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
     description: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
     rules: Type.Optional(Type.Union([UpdatedRules, Type.Undefined()])),
@@ -7924,7 +7966,7 @@ export type UserSendMessageWithTransferToChannelArgs = Static<
 >;
 export const UserSendMessageWithTransferToChannelArgs = Type.Object({
     community_id: CommunityId,
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     thread_root_message_index: Type.Optional(Type.Union([MessageIndex, Type.Undefined()])),
     message_id: MessageId,
     content: MessageContentInitial,
@@ -7951,7 +7993,7 @@ export const UserEditMessageArgs = Type.Object({
 
 export type ChannelMatch = Static<typeof ChannelMatch>;
 export const ChannelMatch = Type.Object({
-    id: Type.BigInt(),
+    id: ChannelId,
     name: Type.String(),
     description: Type.String(),
     avatar_id: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
@@ -8082,13 +8124,14 @@ export const ChatEvent = Type.Union([
     Type.Object({
         ExternalUrlUpdated: ExternalUrlUpdated,
     }),
+    Type.Literal("FailedToDeserialize"),
 ]);
 
 export type CommunityCanisterChannelSummaryUpdates = Static<
     typeof CommunityCanisterChannelSummaryUpdates
 >;
 export const CommunityCanisterChannelSummaryUpdates = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     last_updated: Type.BigInt(),
     name: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
     description: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
@@ -8393,7 +8436,7 @@ export const PublicGroupSummary = Type.Object({
 
 export type CommunityCanisterChannelSummary = Static<typeof CommunityCanisterChannelSummary>;
 export const CommunityCanisterChannelSummary = Type.Object({
-    channel_id: Type.BigInt(),
+    channel_id: ChannelId,
     last_updated: Type.BigInt(),
     name: Type.String(),
     description: Type.String(),
@@ -8671,7 +8714,7 @@ export const CommunityCanisterCommunitySummaryUpdates = Type.Object({
     latest_event_index: Type.Optional(Type.Union([EventIndex, Type.Undefined()])),
     channels_added: Type.Array(CommunityCanisterChannelSummary),
     channels_updated: Type.Array(CommunityCanisterChannelSummaryUpdates),
-    channels_removed: Type.Array(Type.BigInt()),
+    channels_removed: Type.Array(ChannelId),
     membership: Type.Optional(Type.Union([CommunityMembershipUpdates, Type.Undefined()])),
     user_groups: Type.Array(UserGroupSummary),
     user_groups_deleted: Type.Array(Type.Number()),

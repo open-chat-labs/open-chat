@@ -57,6 +57,7 @@ serde = { workspace = true }
 serde_bytes = { workspace = true }
 serde_repr = { workspace = true }
 stable_memory = { path = "../../../libraries/stable_memory" }
+stable_memory_map = { path = "../../../libraries/stable_memory_map" }
 storage_bucket_client = { path = "../../../libraries/storage_bucket_client" }
 timer_job_queues = { path = "../../../libraries/timer_job_queues" }
 tracing = { workspace = true }
@@ -67,3 +68,7 @@ user_canister_c2c_client = { path = "../../user/c2c_client" }
 user_index_canister = { path = "../../user_index/api" }
 user_index_canister_c2c_client = { path = "../../user_index/c2c_client" }
 utils = { path = "../../../libraries/utils" }
+
+[dev-dependencies]
+proptest = { workspace = true }
+test-strategy = { workspace = true }

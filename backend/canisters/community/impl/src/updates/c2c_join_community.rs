@@ -10,7 +10,7 @@ use community_canister::c2c_join_community::{Response::*, *};
 use gated_groups::{
     check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult, CheckVerifiedCredentialGateArgs, GatePayment,
 };
-use group_community_common::{ExpiringMember, Member};
+use group_community_common::ExpiringMember;
 use types::{AccessGate, ChannelId, MemberJoined, UsersUnblocked};
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
@@ -62,7 +62,7 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(Acc
     }
 
     if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
-        if !member.lapsed.value {
+        if !member.lapsed().value {
             return Err(AlreadyInCommunity(Box::new(state.summary(Some(member), None))));
         }
     } else if state.data.members.is_blocked(&args.user_id) {
@@ -140,7 +140,7 @@ pub(crate) fn join_community_impl(
         AddResult::Success(_) => {}
         AddResult::AlreadyInCommunity => {
             let member = state.data.members.get_by_user_id(&args.user_id).unwrap();
-            if !member.lapsed() {
+            if !member.lapsed().value {
                 let summary = state.summary(Some(member), None);
                 return Err(AlreadyInCommunity(Box::new(summary)));
             }

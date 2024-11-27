@@ -48,9 +48,9 @@ cargo build --locked --target wasm32-unknown-unknown --release \
   --package user_index_canister_impl || exit 1
 
 echo Optimising wasms
-if ! cargo install --list | grep -Fxq "ic-wasm v0.8.0:"
+if ! cargo install --list | grep -Fxq "ic-wasm v0.9.0:"
 then
-  cargo install --version 0.8.0 ic-wasm
+  cargo install --version 0.9.0 ic-wasm
 fi
 
 ic-wasm ./target/wasm32-unknown-unknown/release/airdrop_bot_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/airdrop_bot_canister_impl-opt.wasm shrink

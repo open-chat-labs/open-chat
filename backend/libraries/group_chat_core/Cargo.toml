@@ -22,5 +22,4 @@ utils = { path = "../utils" }
 [dev-dependencies]
 msgpack = { path = "../msgpack" }
 proptest = { workspace = true }
-rand = { workspace = true }
 test-strategy = { workspace = true }

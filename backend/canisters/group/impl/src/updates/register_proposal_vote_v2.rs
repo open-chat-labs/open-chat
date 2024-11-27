@@ -20,12 +20,12 @@ fn register_proposal_vote_impl(args: Args, state: &mut RuntimeState) -> Response
 
     let caller = state.env.caller();
 
-    let member = match state.data.get_member_mut(caller) {
+    let member = match state.data.get_member(caller) {
         Some(p) => p,
         None => return CallerNotInGroup,
     };
 
-    if member.suspended.value {
+    if member.suspended().value {
         return UserSuspended;
     } else if member.lapsed().value {
         return UserLapsed;
@@ -42,17 +42,11 @@ fn register_proposal_vote_impl(args: Args, state: &mut RuntimeState) -> Response
     {
         RecordProposalVoteResult::Success => {
             let now = state.env.now();
-
             state
                 .data
                 .chat
                 .members
-                .get_mut(&user_id)
-                .unwrap()
-                .proposal_votes
-                .entry(now)
-                .or_default()
-                .push(args.message_index);
+                .register_proposal_vote(user_id, args.message_index, now);
 
             handle_activity_notification(state);
             Success

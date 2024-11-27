@@ -44,9 +44,9 @@ fn build_c2c_args(args: &Args, state: &RuntimeState) -> Result<(c2c_report_messa
         return Err(UserNotInCommunity);
     };
 
-    if member.suspended.value {
+    if member.suspended().value {
         return Err(UserSuspended);
-    } else if member.lapsed.value {
+    } else if member.lapsed().value {
         return Err(UserLapsed);
     }
 
@@ -62,7 +62,7 @@ fn build_c2c_args(args: &Args, state: &RuntimeState) -> Result<(c2c_report_messa
         return Err(UserNotInChannel);
     };
 
-    if channel_member.suspended.value {
+    if channel_member.suspended().value {
         return Err(UserSuspended);
     } else if channel_member.lapsed().value {
         return Err(UserLapsed);

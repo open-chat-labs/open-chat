@@ -5,7 +5,7 @@ use types::{OptionUpdate, TimestampMillis, UserId};
 use user_canister::updates::{Response::*, *};
 use utils::time::{today, tomorrow};
 
-#[query(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[query(guard = "caller_is_owner", msgpack = true)]
 fn updates(args: Args) -> Response {
     read_state(|state| updates_impl(args.updates_since, state))
 }

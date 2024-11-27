@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use group_canister::c2c_leave_group;
 use user_canister::leave_group::{Response::*, *};
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 async fn leave_group(args: Args) -> Response {
     run_regular_jobs();

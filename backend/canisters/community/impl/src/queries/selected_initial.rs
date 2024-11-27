@@ -1,7 +1,7 @@
 use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
 use community_canister::selected_initial::{Response::*, *};
-use types::{CommunityMember, CommunityRole};
+use std::collections::HashSet;
 
 #[query(candid = true, msgpack = true)]
 fn selected_initial(args: Args) -> Response {
@@ -23,15 +23,25 @@ fn selected_initial_impl(args: Args, state: &RuntimeState) -> Response {
     let referrals = data
         .members
         .get(caller)
-        .map_or(Vec::new(), |m| m.referrals.iter().copied().collect());
+        .map_or(Vec::new(), |m| m.referrals().iter().copied().collect());
+
+    let mut non_basic_members = HashSet::new();
+    non_basic_members.extend(data.members.owners().iter().copied());
+    non_basic_members.extend(data.members.admins().iter().copied());
+    non_basic_members.extend(data.members.lapsed().iter().copied());
+    non_basic_members.extend(data.members.suspended().iter().copied());
+    non_basic_members.extend(data.members.members_with_display_names().iter().copied());
+    non_basic_members.extend(data.members.members_with_referrals().iter().copied());
 
     let mut members = Vec::new();
     let mut basic_members = Vec::new();
-    for member in state.data.members.iter().map(CommunityMember::from) {
-        if matches!(member.role, CommunityRole::Member) && member.display_name.is_none() && !member.lapsed {
-            basic_members.push(member.user_id);
+    for user_id in data.members.member_ids().iter() {
+        if non_basic_members.contains(user_id) {
+            if let Some(member) = data.members.get_by_user_id(user_id) {
+                members.push(member.into());
+            }
         } else {
-            members.push(member);
+            basic_members.push(*user_id);
         }
     }
 

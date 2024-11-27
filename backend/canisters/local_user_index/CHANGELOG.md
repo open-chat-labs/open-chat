@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Make `ChannelId` comparisons use their 32bit representation ([#6885](https://github.com/open-chat-labs/open-chat/pull/6885))
+
+## [[2.0.1463](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1463-local_user_index)] - 2024-11-21
+
+### Changed
+
 - Avoid pushing events to bot users ([#6846](https://github.com/open-chat-labs/open-chat/pull/6846))
 - Simplify `inspect_message` ([#6847](https://github.com/open-chat-labs/open-chat/pull/6847))
 - Add the full command details when requesting a bot access token ([#6861](https://github.com/open-chat-labs/open-chat/pull/6861))

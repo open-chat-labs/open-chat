@@ -148,6 +148,86 @@
     "blockUser": "Заблокировать пользователя",
     "blockUserFailed": "Не удалось заблокировать пользователя",
     "blockUserSucceeded": "Пользователь заблокирован",
+    "bots": {
+        "builtin": {
+            "desc": "Этот бот предоставляет встроенные команды OpenChat",
+            "name": "Встроенный"
+        },
+        "crypto": {
+            "desc": "Отправить криптовалюту другому пользователю",
+            "params": {
+                "amount": {
+                    "desc": "Сумма, которую вы хотите отправить",
+                    "name": "Количество",
+                    "placeholder": "Введите сумму"
+                },
+                "token": {
+                    "desc": "Токен, который вы хотите отправить",
+                    "name": "Токен",
+                    "placeholder": "Введите токен"
+                }
+            }
+        },
+        "diamond": {
+            "desc": "Опубликуйте ссылку, чтобы объяснить суть членства Diamond"
+        },
+        "failed": "Извините, нам не удалось выполнить команду бота",
+        "faq": {
+            "desc": "Создайте ссылку на тему часто задаваемых вопросов",
+            "params": {
+                "topic": {
+                    "choices": {
+                        "airdrop": "Ежемесячная раздача",
+                        "android": "Android-приложение",
+                        "buychat": "Покупка ЧАТ",
+                        "content": "Правила содержания",
+                        "diamond": "Бриллиантовое членство",
+                        "info": "Информация",
+                        "ios": "iOS-приложение",
+                        "referral": "Реферальные вознаграждения",
+                        "security": "Безопасность",
+                        "sendtokens": "Отправка токенов",
+                        "shortcuts": "Ярлыки",
+                        "storage": "Хранилище",
+                        "style": "Стиль сообщений",
+                        "translation": "Перевод содержания",
+                        "voting": "Голосование",
+                        "wallet": "Кошелек"
+                    },
+                    "desc": "Конкретная тема FAQ, которая вас интересует",
+                    "name": "Часто задаваемые вопросы тема",
+                    "placeholder": "Выберите тему"
+                }
+            }
+        },
+        "gif": {
+            "desc": "Найдите gif-анимацию для отправки",
+            "params": {
+                "term": {
+                    "desc": "Введите поисковый запрос для вашего gif-изображения",
+                    "name": "Поисковый термин",
+                    "placeholder": "Поисковый термин"
+                }
+            }
+        },
+        "matchingCommands": "Соответствующие команды",
+        "poll": {
+            "desc": "Создать опрос в текущем чате"
+        },
+        "search": {
+            "desc": "Начать поиск в текущем чате",
+            "params": {
+                "term": {
+                    "desc": "Введите термин для поиска в чате",
+                    "name": "Поисковый термин",
+                    "placeholder": "Поисковый термин"
+                }
+            }
+        },
+        "witch": {
+            "desc": "Вызов ведьмы"
+        }
+    },
     "cancel": "Отмена",
     "cancelInvite": "Отменить приглашение",
     "cancelInviteFailed": "Ошибка отмены приглашения",
@@ -457,8 +537,10 @@
         "airdrop_q": "Будет ли аирдроп?",
         "android_app_a": "Что касается iOS (см. выше), веб-приложение OpenChat <em>уже работает</em> на Android, и вы можете «Добавить на главный экран» из меню браузера. Это дает вам стандартный значок для открытия приложения, который больше похож на собственное приложение без строки URL. Поддержка Progressive Web App (PWA) на Android очень хороша. Как и iOS, он поддерживает push-уведомления через веб-интерфейс, но также <em>поддерживает</em> чтение контактов с телефона (если в каждом случае вы даете разрешение). Кроме того, поддержка WebRTC намного лучше. Таким образом, необходимость создания нативного приложения для Android менее убедительна и появится после нативного приложения для iOS. Те же соображения применимы к созданию приложения для Android, как и для iOS, с точки зрения создания тонкой встроенной оболочки вокруг основного веб-приложения, а также в отношении сертификации в магазине приложений Android.",
         "android_app_q": "Когда будет приложение для Android?",
-        "buychat_a": "Вы можете купить CHAT за USDC на <a target=\"_blank\" href=\"https://www.helixmarkets.io/trade/CHATUSDC\">Helix Markets</a> . В противном случае вам придется сначала <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">купить ICP</a> , который затем можно будет обменять на CHAT на различных децентрализованных биржах (DEX).<ul><li> <a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">ICDex</a></li><li> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPSwap</a></li></ul> DFINITY добавляет поддержку <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta API</a> для токенов ICRC1 (включая CHAT), что значительно упрощает их интеграцию с централизованными биржами (CEX). Как только это произойдет, вполне вероятно, что CHAT станет доступен для торговли на CEX за ICP или USDT.",
+        "buychat_a": "Купить CHAT можно на различных криптовалютных биржах:<br><br><table><tr><th> Обмен</th><th> Стиль</th><th> Купить с</th><th> ЦБ/ДБ</th></tr><tr><td> <a target=\"_blank\" href=\"https://www.helixmarkets.io/trade/CHATUSDC\">Хеликс Маркетс</a></td><td> Книга заказов</td><td> USDC</td><td> Гибридный</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.bitmart.com/trade?symbol=CHAT_USDT\">BitMart</a></td><td> Книга заказов</td><td> USDT</td><td> ЦБК</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.bitrue.com/trade/chat_usdt\">Bitrue</a></td><td> Книга заказов</td><td> USDT</td><td> ЦБК</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.coinstore.com/spot/chatusdt\">Магазин монет</a></td><td> Книга заказов</td><td> USDT</td><td> ЦБК</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.lbank.com/trade/chat_usdt\">LБанк</a></td><td> Книга заказов</td><td> USDT</td><td> ЦБК</td></tr><tr><td> <a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">ICDex</a></td><td> Книга заказов</td><td> ИКП</td><td> ДЕКС</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.kongswap.io/?viewtab=swap&pool=CHAT_ckUSDT\">KongSwap</a></td><td> Своп (АММ)</td><td> USDT</td><td> ДЕКС</td></tr><tr><td> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPSwap</a></td><td> Своп (АММ)</td><td> ИКП</td><td> ДЕКС</td></tr><tr><td> <a target=\"_blank\" href=\"https://app.sonic.ooo/?tokenin=ryjl3-tyaaa-aaaaa-aaaba-cai&tokenout=2ouva-viaaa-aaaaq-aaamq-cai\">Соник</a></td><td> Своп (АММ)</td><td> ИКП</td><td> ДЕКС</td></tr></table><br> Вы также можете обменять токены на CHAT непосредственно из своего кошелька OpenChat, который автоматически использует биржу обмена с лучшей доступной ценой.",
         "buychat_q": "Как купить токены ЧАТ?",
+        "buyicp_a": "<ol><li>Вы можете купить токены ICP на крупных биржах, таких как Coinbase, Binance, Kraken и др. Эти платформы позволяют вам торговать различными криптовалютами за ICP.</li><li> Сетевая нервная система (NNS) dapp предлагает функцию покупки ICP с помощью кредитной карты. Вам нужно будет войти в систему, используя свою интернет-идентификацию, и следовать инструкциям, чтобы завершить транзакцию <a target=\"_blank\" href=\"https://support.dfinity.org/hc/en-us/articles/21363667463828-How-do-I-purchase-ICP-from-within-the-NNS-dapp\">Часто задаваемые вопросы &gt; Интернет-компьютер &gt; Сетевая нервная система (NNS) &gt; Как купить ICP из NNS dapp?</a> .</li><li> Вы можете использовать децентрализованные биржи (DEX) на Интернет-компьютере для обмена других криптовалют на ICP. Например:<ul><li> <a target=\"_blank\" href=\"https://iclight.io/ICDex/ckBTC/ICP\">ICDex.io</a> позволяет вам обменять биткоины (в форме ckBTC) на ICP.</li><li> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/token/details/ryjl3-tyaaa-aaaaa-aaaba-cai\">ICPSwap</a> предлагает торговые пары с ICP.</li></ul></li></ol>",
+        "buyicp_q": "Как купить токены ICP?",
         "content_a": "Полную информацию о наших правилах содержания и модерации см. <a href=\"/guidelines\">здесь</a>.",
         "content_q": "Какой контент допустим?",
         "diamond_a": "Вы можете перейти на статус Diamond, чтобы получить доступ к дополнительным или улучшенным функциям OpenChat. <a href=\"/diamond\">См. здесь</a> сравнение функций и обновление.",

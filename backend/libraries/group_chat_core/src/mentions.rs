@@ -83,9 +83,11 @@ impl Mentions {
     pub fn remove_at_everyone_mentions(
         &mut self,
         at_everyone_mentions: &BTreeMap<MessageIndex, (TimestampMillis, AtEveryoneMention)>,
-    ) {
+    ) -> u32 {
+        let mut count = 0;
         for (message_index, (timestamp, _)) in at_everyone_mentions {
             if self.mentions.remove(&(*message_index, None)) {
+                count += 1;
                 if let Occupied(mut e) = self.by_timestamp.entry(*timestamp) {
                     let mentions = e.get_mut();
                     mentions.retain(|mention| mention.message_index != *message_index);
@@ -95,6 +97,7 @@ impl Mentions {
                 }
             }
         }
+        count
     }
 
     pub fn is_empty(&self) -> bool {

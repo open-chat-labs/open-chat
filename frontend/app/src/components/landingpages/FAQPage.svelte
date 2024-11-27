@@ -57,6 +57,16 @@
 </div>
 
 <style lang="scss">
+    :global(.faq .body th) {
+        @include font(bold);
+        padding: 0;
+        padding-bottom: $sp3;
+    }
+
+    :global(.faq .body td) {
+        padding: 0;
+    }
+
     .translation {
         display: block;
         margin-top: $sp3;
@@ -81,15 +91,6 @@
             padding: 0 0 toRem(24) 0;
             max-width: 100%;
         }
-    }
-
-    .body p,
-    .body li {
-        @include font(book, normal, fs-100, 28);
-    }
-
-    .body p {
-        margin-bottom: toRem(24);
     }
 
     .header {

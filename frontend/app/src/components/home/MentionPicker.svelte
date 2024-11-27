@@ -24,6 +24,7 @@
     export let mentionSelf = false;
     export let supportsUserGroups = false;
     export let usersOnly = false;
+    export let inline = false;
 
     let index = 0;
     let usersAndGroups: UserOrUserGroup[] = [];
@@ -141,6 +142,7 @@
         class="mention-picker"
         class:up={direction === "up"}
         class:down={direction === "down"}
+        class:inline
         class:border
         {style}>
         <Menu fit>
@@ -199,6 +201,7 @@
         position: absolute;
         max-height: calc(var(--vh, 1vh) * 50);
         overflow: auto;
+        z-index: 10000;
 
         &.up {
             box-shadow: var(--menu-inverted-sh);
@@ -206,6 +209,11 @@
 
         &.down {
             box-shadow: var(--menu-sh);
+        }
+
+        &.inline {
+            position: relative;
+            box-shadow: none;
         }
 
         &.border {

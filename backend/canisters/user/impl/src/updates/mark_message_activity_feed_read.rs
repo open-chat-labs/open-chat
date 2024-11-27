@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use user_canister::mark_message_activity_feed_read::{Response::*, *};
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 fn mark_message_activity_feed_read(args: Args) -> Response {
     run_regular_jobs();

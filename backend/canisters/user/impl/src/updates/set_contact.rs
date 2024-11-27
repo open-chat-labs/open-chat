@@ -5,7 +5,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use user_canister::set_contact::{Response::*, *};
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 fn set_contact(args: Args) -> Response {
     run_regular_jobs();

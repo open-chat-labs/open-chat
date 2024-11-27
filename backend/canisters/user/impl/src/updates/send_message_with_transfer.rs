@@ -20,7 +20,7 @@ use user_canister::{send_message_v2, send_message_with_transfer_to_channel};
 use utils::consts::{MEMO_MESSAGE, MEMO_P2P_SWAP_CREATE, MEMO_PRIZE, PRIZE_FEE_PERCENT};
 use utils::time::{NANOS_PER_MILLISECOND, SECOND_IN_MS};
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 async fn send_message_with_transfer_to_channel(
     args: send_message_with_transfer_to_channel::Args,
@@ -145,7 +145,7 @@ async fn send_message_with_transfer_to_channel(
     }
 }
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 async fn send_message_with_transfer_to_group(
     args: send_message_with_transfer_to_group::Args,

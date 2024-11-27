@@ -121,7 +121,7 @@ fn validate_caller(caller_override: Option<Principal>, state: &RuntimeState) -> 
 
     let caller = caller_override.unwrap_or_else(|| state.env.caller());
     if let Some(member) = state.data.get_member(caller) {
-        if member.suspended.value {
+        if member.suspended().value {
             Err(UserSuspended)
         } else {
             Ok(Caller {

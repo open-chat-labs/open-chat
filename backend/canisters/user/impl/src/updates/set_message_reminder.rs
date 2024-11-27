@@ -11,7 +11,7 @@ use user_canister::C2CReplyContext;
 
 const MAX_NOTES_LENGTH: usize = 1000;
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 fn set_message_reminder_v2(args: Args) -> Response {
     run_regular_jobs();

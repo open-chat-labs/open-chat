@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1469](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1469-user_index)] - 2024-11-25
+
+### Changed
+
+- Remove diamond only access to set display name ([#6879](https://github.com/open-chat-labs/open-chat/pull/6879))
+- Make `ChannelId` comparisons use their 32bit representation ([#6885](https://github.com/open-chat-labs/open-chat/pull/6885))
+
+## [[2.0.1464](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1464-user_index)] - 2024-11-21
+
 ### Changed
 
 - Pass in `BotApiCanister` when installing a new LocalUserIndex ([#6828](https://github.com/open-chat-labs/open-chat/pull/6828))
