@@ -42,7 +42,6 @@ fn accept_if_valid(state: &RuntimeState) {
         | "register_external_achievement"
         | "suspected_bots" => state.is_caller_governance_principal(),
         "award_external_achievement" | "modclub_callback" => true,
-        "c2c_register_bot" => state.data.test_mode,
         _ => false,
     };
 
