@@ -731,12 +731,8 @@ impl<'de> Visitor<'de> for GroupMembersMapVisitor {
 
 #[cfg(test)]
 mod tests {
-    use crate::roles::GroupRoleInternal;
-    use crate::{GroupMemberInternal, Mentions};
+    use super::*;
     use candid::Principal;
-    use std::collections::BTreeMap;
-    use types::{Timestamped, UserType, Version};
-    use utils::timestamped_set::TimestampedSet;
 
     #[test]
     fn serialize_with_max_defaults() {
@@ -748,7 +744,7 @@ mod tests {
             mentions: Mentions::default(),
             followed_threads: TimestampedSet::default(),
             unfollowed_threads: TimestampedSet::default(),
-            proposal_votes: BTreeMap::new(),
+            proposal_votes: BTreeSet::new(),
             suspended: Timestamped::default(),
             min_visible_event_index: 0.into(),
             min_visible_message_index: 0.into(),
@@ -778,7 +774,7 @@ mod tests {
             mentions,
             followed_threads: [(1.into(), 1)].into_iter().collect(),
             unfollowed_threads: [(1.into(), 1)].into_iter().collect(),
-            proposal_votes: BTreeMap::from([(1, vec![1.into()])]),
+            proposal_votes: BTreeSet::from([(1, 1.into())]),
             suspended: Timestamped::new(true, 1),
             min_visible_event_index: 1.into(),
             min_visible_message_index: 1.into(),
