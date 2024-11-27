@@ -172,10 +172,11 @@ impl RuntimeState {
             };
 
             // Return all the channels that the user is a member of
-            let channels: Vec<_> = m
-                .channels
-                .iter()
-                .filter_map(|c| self.data.channels.get(c))
+            let channels: Vec<_> = self
+                .data
+                .members
+                .channels_for_member(m.user_id)
+                .filter_map(|c| self.data.channels.get(&c))
                 .filter_map(|c| c.summary(Some(m.user_id), true, data.is_public, &data.members))
                 .collect();
 
@@ -569,7 +570,7 @@ impl Data {
     }
 
     pub fn remove_user_from_channel(&mut self, user_id: UserId, channel_id: ChannelId, now: TimestampMillis) {
-        self.members.mark_member_left_channel(&user_id, channel_id, now);
+        self.members.mark_member_left_channel(user_id, channel_id, now);
         self.expiring_members.remove_member(user_id, Some(channel_id));
         self.expiring_member_actions.remove_member(user_id, Some(channel_id));
     }

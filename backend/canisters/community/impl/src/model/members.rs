@@ -19,6 +19,10 @@ const MAX_MEMBERS_PER_COMMUNITY: u32 = 100_000;
 #[derive(Serialize, Deserialize)]
 pub struct CommunityMembers {
     members: BTreeMap<UserId, CommunityMemberInternal>,
+    #[serde(default)]
+    member_channel_links: BTreeSet<(UserId, ChannelId)>,
+    #[serde(default)]
+    member_channel_links_removed: BTreeSet<(UserId, ChannelId)>,
     user_groups: UserGroups,
     // This includes the userIds of community members and also users invited to the community
     principal_to_user_id_map: BTreeMap<Principal, UserId>,
@@ -35,6 +39,18 @@ pub struct CommunityMembers {
 }
 
 impl CommunityMembers {
+    pub fn populate_member_channel_links(&mut self) {
+        for member in self.members.values() {
+            for channel in member.channels.iter() {
+                self.member_channel_links.insert((member.user_id, *channel));
+            }
+            for channel_removed in member.channels_removed.iter() {
+                self.member_channel_links_removed
+                    .insert((member.user_id, channel_removed.value));
+            }
+        }
+    }
+
     pub fn new(
         creator_principal: Principal,
         creator_user_id: UserId,
@@ -47,7 +63,7 @@ impl CommunityMembers {
             date_added: now,
             role: CommunityRole::Owner,
             suspended: Timestamped::default(),
-            channels: public_channels.into_iter().collect(),
+            channels: public_channels.iter().copied().collect(),
             channels_removed: Vec::new(),
             rules_accepted: Some(Timestamped::new(Version::zero(), now)),
             user_type: creator_user_type,
@@ -59,6 +75,8 @@ impl CommunityMembers {
 
         CommunityMembers {
             members: vec![(creator_user_id, member)].into_iter().collect(),
+            member_channel_links: public_channels.into_iter().map(|c| (creator_user_id, c)).collect(),
+            member_channel_links_removed: BTreeSet::new(),
             user_groups: UserGroups::default(),
             principal_to_user_id_map: vec![(creator_principal, creator_user_id)].into_iter().collect(),
             member_ids: [creator_user_id].into_iter().collect(),
@@ -318,15 +336,24 @@ impl CommunityMembers {
         }
     }
 
-    pub fn mark_member_joined_channel(&mut self, user_id: &UserId, channel_id: ChannelId) {
-        if let Some(member) = self.members.get_mut(user_id) {
+    pub fn mark_member_joined_channel(&mut self, user_id: UserId, channel_id: ChannelId) {
+        if let Some(member) = self.members.get_mut(&user_id) {
             member.channels.insert(channel_id);
+            self.member_channel_links.insert((user_id, channel_id));
         }
     }
 
-    pub fn mark_member_left_channel(&mut self, user_id: &UserId, channel_id: ChannelId, now: TimestampMillis) {
+    pub fn mark_member_left_channel(&mut self, user_id: UserId, channel_id: ChannelId, now: TimestampMillis) {
+        if let Some(member) = self.members.get_mut(&user_id) {
+            if member.leave(channel_id, now) {
+                self.member_channel_links_removed.insert((user_id, channel_id));
+            }
+        }
+    }
+
+    pub fn mark_rules_accepted(&mut self, user_id: &UserId, version: Version, now: TimestampMillis) {
         if let Some(member) = self.members.get_mut(user_id) {
-            member.leave(channel_id, now);
+            member.accept_rules(version, now);
         }
     }
 
@@ -354,14 +381,10 @@ impl CommunityMembers {
         self.blocked.iter().copied().collect()
     }
 
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut CommunityMemberInternal> {
-        self.members.values_mut()
-    }
-
     pub fn lookup_user_id(&self, user_id_or_principal: Principal) -> Option<UserId> {
         self.principal_to_user_id_map.get(&user_id_or_principal).copied().or_else(|| {
             let user_id: UserId = user_id_or_principal.into();
-            self.members.contains_key(&user_id).then_some(user_id)
+            self.member_ids.contains(&user_id).then_some(user_id)
         })
     }
 
@@ -405,12 +428,27 @@ impl CommunityMembers {
         &self.member_ids
     }
 
+    pub fn channels_for_member(&self, user_id: UserId) -> impl Iterator<Item = ChannelId> + '_ {
+        self.member_channel_links
+            .range((user_id, ChannelId::from(0u32))..)
+            .take_while(move |(u, _)| *u == user_id)
+            .map(|(_, c)| *c)
+    }
+
+    pub fn member_channel_links_removed(&self) -> &BTreeSet<(UserId, ChannelId)> {
+        &self.member_channel_links_removed
+    }
+
     pub fn owners(&self) -> &BTreeSet<UserId> {
         &self.owners
     }
 
     pub fn admins(&self) -> &BTreeSet<UserId> {
         &self.admins
+    }
+
+    pub fn bots(&self) -> &BTreeMap<UserId, UserType> {
+        &self.bots
     }
 
     pub fn lapsed(&self) -> &BTreeSet<UserId> {
@@ -563,9 +601,9 @@ pub struct CommunityMemberInternal {
     #[serde(rename = "r", alias = "role", default, skip_serializing_if = "is_default")]
     role: CommunityRole,
     #[serde(rename = "c", alias = "channels")]
-    pub channels: BTreeSet<ChannelId>,
+    channels: BTreeSet<ChannelId>,
     #[serde(rename = "cr", alias = "channel_removed", default, skip_serializing_if = "Vec::is_empty")]
-    pub channels_removed: Vec<Timestamped<ChannelId>>,
+    channels_removed: Vec<Timestamped<ChannelId>>,
     #[serde(rename = "ra", alias = "rules_accepted", skip_serializing_if = "Option::is_none")]
     pub rules_accepted: Option<Timestamped<Version>>,
     #[serde(rename = "ut", alias = "user_type", default, skip_serializing_if = "is_default")]
@@ -583,10 +621,13 @@ pub struct CommunityMemberInternal {
 }
 
 impl CommunityMemberInternal {
-    pub fn leave(&mut self, channel_id: ChannelId, now: TimestampMillis) {
+    pub fn leave(&mut self, channel_id: ChannelId, now: TimestampMillis) -> bool {
         if self.channels.remove(&channel_id) {
             self.channels_removed.retain(|c| c.value != channel_id);
             self.channels_removed.push(Timestamped::new(channel_id, now));
+            true
+        } else {
+            false
         }
     }
 
