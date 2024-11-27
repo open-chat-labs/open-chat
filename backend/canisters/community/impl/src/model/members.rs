@@ -17,7 +17,6 @@ mod proptests;
 const MAX_MEMBERS_PER_COMMUNITY: u32 = 100_000;
 
 #[derive(Serialize, Deserialize)]
-#[serde(from = "CommunityMembersPrevious")]
 pub struct CommunityMembers {
     members: BTreeMap<UserId, CommunityMemberInternal>,
     user_groups: UserGroups,
@@ -33,74 +32,6 @@ pub struct CommunityMembers {
     members_with_display_names: BTreeSet<UserId>,
     members_with_referrals: BTreeSet<UserId>,
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct CommunityMembersPrevious {
-    members: BTreeMap<UserId, CommunityMemberInternal>,
-    user_groups: UserGroups,
-    principal_to_user_id_map: BTreeMap<Principal, UserId>,
-    blocked: BTreeSet<UserId>,
-    updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
-}
-
-impl From<CommunityMembersPrevious> for CommunityMembers {
-    fn from(value: CommunityMembersPrevious) -> Self {
-        let mut member_ids = BTreeSet::new();
-        let mut owners = BTreeSet::new();
-        let mut admins = BTreeSet::new();
-        let mut bots = BTreeMap::new();
-        let mut lapsed = BTreeSet::new();
-        let mut suspended = BTreeSet::new();
-        let mut members_with_display_names = BTreeSet::new();
-        let mut members_with_referrals = BTreeSet::new();
-
-        for member in value.members.values() {
-            member_ids.insert(member.user_id);
-
-            match member.role {
-                CommunityRole::Owner => owners.insert(member.user_id),
-                CommunityRole::Admin => admins.insert(member.user_id),
-                CommunityRole::Member => false,
-            };
-
-            if member.lapsed.value {
-                lapsed.insert(member.user_id);
-            }
-
-            if member.user_type.is_bot() {
-                bots.insert(member.user_id, member.user_type);
-            }
-
-            if member.suspended.value {
-                suspended.insert(member.user_id);
-            }
-
-            if member.display_name.is_some() {
-                members_with_display_names.insert(member.user_id);
-            }
-
-            if !member.referrals.is_empty() {
-                members_with_referrals.insert(member.user_id);
-            }
-        }
-
-        CommunityMembers {
-            members: value.members,
-            user_groups: value.user_groups,
-            principal_to_user_id_map: value.principal_to_user_id_map,
-            member_ids,
-            owners,
-            admins,
-            bots,
-            blocked: value.blocked,
-            lapsed,
-            suspended,
-            members_with_display_names,
-            members_with_referrals,
-            updates: value.updates,
-        }
-    }
 }
 
 impl CommunityMembers {
