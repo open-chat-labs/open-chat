@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Store airdrop config in the Registry ([#6893](https://github.com/open-chat-labs/open-chat/pull/6893))
+
+## [[2.0.1471](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1471-registry)] - 2024-11-25
+
+### Changed
+
+- Improve the 'how to buy urls' of the NS tokens ([#6888](https://github.com/open-chat-labs/open-chat/pull/6888))
+
 ## [[2.0.1455](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1455-registry)] - 2024-11-15
 
 ### Added

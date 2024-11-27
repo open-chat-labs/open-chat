@@ -43,7 +43,7 @@
     }
 
     function createTokenTransfer() {
-        dispatch("tokenTransfer");
+        dispatch("tokenTransfer", {});
         drawOpen = false;
     }
 

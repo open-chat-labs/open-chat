@@ -4,7 +4,7 @@ use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_group::{Response::*, *};
-use types::{AccessGate, CanisterId, ChatId, Document, GroupSubtype, UserId};
+use types::{AccessGateConfig, CanisterId, ChatId, Document, GroupSubtype, UserId};
 
 #[update(msgpack = true)]
 #[trace]
@@ -36,7 +36,6 @@ async fn c2c_create_group(args: Args) -> Response {
         messages_visible_to_non_members: args.messages_visible_to_non_members,
         permissions_v2: args.permissions_v2,
         events_ttl: args.events_ttl,
-        gate: args.gate.clone(),
         gate_config: args.gate_config.clone(),
     };
 
@@ -51,7 +50,7 @@ async fn c2c_create_group(args: Args) -> Response {
                         description: args.description,
                         subtype: args.subtype,
                         avatar_id,
-                        gate: args.gate,
+                        gate_config: args.gate_config,
                         local_group_index_canister,
                     },
                     state,
@@ -118,7 +117,7 @@ struct CommitArgs {
     description: String,
     subtype: Option<GroupSubtype>,
     avatar_id: Option<u128>,
-    gate: Option<AccessGate>,
+    gate_config: Option<AccessGateConfig>,
     local_group_index_canister: CanisterId,
 }
 
@@ -136,7 +135,7 @@ fn commit(args: CommitArgs, state: &mut RuntimeState) {
             args.description,
             args.subtype,
             args.avatar_id,
-            args.gate,
+            args.gate_config,
             now,
         );
     } else {

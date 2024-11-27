@@ -4,23 +4,33 @@ use group_community_common::{Member, Members};
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use std::collections::hash_map::Entry::Vacant;
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::btree_map::Entry::Vacant;
+use std::collections::{BTreeMap, BTreeSet};
 use types::{
-    ChannelId, CommunityMember, CommunityPermissions, CommunityRole, TimestampMillis, Timestamped, UserId, UserType, Version,
+    is_default, ChannelId, CommunityMember, CommunityPermissions, CommunityRole, TimestampMillis, Timestamped, UserId,
+    UserType, Version,
 };
+
+#[cfg(test)]
+mod proptests;
 
 const MAX_MEMBERS_PER_COMMUNITY: u32 = 100_000;
 
 #[derive(Serialize, Deserialize)]
 pub struct CommunityMembers {
-    members: HashMap<UserId, CommunityMemberInternal>,
+    members: BTreeMap<UserId, CommunityMemberInternal>,
     user_groups: UserGroups,
     // This includes the userIds of community members and also users invited to the community
-    principal_to_user_id_map: HashMap<Principal, UserId>,
-    blocked: HashSet<UserId>,
-    admin_count: u32,
-    owner_count: u32,
+    principal_to_user_id_map: BTreeMap<Principal, UserId>,
+    member_ids: BTreeSet<UserId>,
+    owners: BTreeSet<UserId>,
+    admins: BTreeSet<UserId>,
+    bots: BTreeMap<UserId, UserType>,
+    blocked: BTreeSet<UserId>,
+    lapsed: BTreeSet<UserId>,
+    suspended: BTreeSet<UserId>,
+    members_with_display_names: BTreeSet<UserId>,
+    members_with_referrals: BTreeSet<UserId>,
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
 }
 
@@ -43,7 +53,7 @@ impl CommunityMembers {
             user_type: creator_user_type,
             display_name: Timestamped::default(),
             referred_by: None,
-            referrals: HashSet::new(),
+            referrals: BTreeSet::new(),
             lapsed: Timestamped::default(),
         };
 
@@ -51,9 +61,19 @@ impl CommunityMembers {
             members: vec![(creator_user_id, member)].into_iter().collect(),
             user_groups: UserGroups::default(),
             principal_to_user_id_map: vec![(creator_principal, creator_user_id)].into_iter().collect(),
-            blocked: HashSet::new(),
-            admin_count: 0,
-            owner_count: 1,
+            member_ids: [creator_user_id].into_iter().collect(),
+            owners: [creator_user_id].into_iter().collect(),
+            admins: BTreeSet::new(),
+            bots: if creator_user_type.is_bot() {
+                [(creator_user_id, creator_user_type)].into_iter().collect()
+            } else {
+                BTreeMap::new()
+            },
+            blocked: BTreeSet::new(),
+            lapsed: BTreeSet::new(),
+            suspended: BTreeSet::new(),
+            members_with_display_names: BTreeSet::new(),
+            members_with_referrals: BTreeSet::new(),
             updates: BTreeSet::new(),
         }
     }
@@ -80,13 +100,13 @@ impl CommunityMembers {
                         date_added: now,
                         role: CommunityRole::Member,
                         suspended: Timestamped::default(),
-                        channels: HashSet::new(),
+                        channels: BTreeSet::new(),
                         channels_removed: Vec::new(),
                         rules_accepted: None,
                         user_type,
                         display_name: Timestamped::default(),
                         referred_by,
-                        referrals: HashSet::new(),
+                        referrals: BTreeSet::new(),
                         lapsed: Timestamped::default(),
                     };
                     e.insert(member.clone());
@@ -94,7 +114,10 @@ impl CommunityMembers {
 
                     if let Some(referrer) = referred_by.and_then(|ref_id| self.get_by_user_id_mut(&ref_id)) {
                         referrer.referrals.insert(user_id);
+                        let referrer_user_id = referrer.user_id;
+                        self.members_with_referrals.insert(referrer_user_id);
                     }
+                    self.member_ids.insert(user_id);
 
                     AddResult::Success(member)
                 }
@@ -116,16 +139,34 @@ impl CommunityMembers {
         if let Some(user_id) = self.principal_to_user_id_map.remove(principal) {
             if let Some(member) = self.members.remove(&user_id) {
                 match member.role {
-                    CommunityRole::Owner => self.owner_count -= 1,
-                    CommunityRole::Admin => self.admin_count -= 1,
-                    _ => (),
+                    CommunityRole::Owner => self.owners.remove(&user_id),
+                    CommunityRole::Admin => self.admins.remove(&user_id),
+                    _ => false,
+                };
+                if member.user_type.is_bot() {
+                    self.bots.remove(&user_id);
                 }
-
-                self.user_groups.remove_user_from_all(&member.user_id, now);
-
+                if member.lapsed.value {
+                    self.lapsed.remove(&user_id);
+                }
+                if member.suspended.value {
+                    self.suspended.remove(&user_id);
+                }
+                if member.display_name.is_some() {
+                    self.members_with_display_names.remove(&user_id);
+                }
+                if !member.referrals.is_empty() {
+                    self.members_with_referrals.remove(&user_id);
+                }
                 if let Some(referrer) = member.referred_by.and_then(|uid| self.get_by_user_id_mut(&uid)) {
                     referrer.referrals.remove(&user_id);
+                    if referrer.referrals.is_empty() {
+                        let referrer_user_id = referrer.user_id;
+                        self.members_with_referrals.remove(&referrer_user_id);
+                    }
                 }
+                self.user_groups.remove_user_from_all(&member.user_id, now);
+                self.member_ids.remove(&user_id);
 
                 return Some(member);
             }
@@ -134,6 +175,7 @@ impl CommunityMembers {
         None
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn change_role(
         &mut self,
         user_id: UserId,
@@ -142,6 +184,7 @@ impl CommunityMembers {
         permissions: &CommunityPermissions,
         is_caller_platform_moderator: bool,
         is_user_platform_moderator: bool,
+        now: TimestampMillis,
     ) -> ChangeRoleResult {
         // Is the caller authorized to change the user to this role
         match self.get_by_user_id(&user_id) {
@@ -157,10 +200,7 @@ impl CommunityMembers {
             None => return ChangeRoleResult::UserNotInCommunity,
         }
 
-        let mut owner_count = self.owner_count;
-        let mut admin_count = self.admin_count;
-
-        let member = match self.get_by_user_id_mut(&target_user_id) {
+        let member = match self.members.get_mut(&target_user_id) {
             Some(p) => p,
             None => return ChangeRoleResult::TargetUserNotInCommunity,
         };
@@ -171,7 +211,7 @@ impl CommunityMembers {
         }
 
         // It is not possible to change the role of the last owner
-        if member.role.is_owner() && owner_count <= 1 {
+        if member.role.is_owner() && self.owners.len() <= 1 {
             return ChangeRoleResult::Invalid;
         }
         // It is not currently possible to make a bot an owner
@@ -185,27 +225,45 @@ impl CommunityMembers {
             return ChangeRoleResult::Unchanged;
         }
 
-        match member.role {
-            CommunityRole::Owner => owner_count -= 1,
-            CommunityRole::Admin => admin_count -= 1,
-            _ => (),
-        }
+        match prev_role {
+            CommunityRole::Owner => self.owners.remove(&target_user_id),
+            CommunityRole::Admin => self.admins.remove(&target_user_id),
+            _ => false,
+        };
 
         member.role = new_role;
 
-        match member.role {
-            CommunityRole::Owner => owner_count += 1,
-            CommunityRole::Admin => admin_count += 1,
-            _ => (),
-        }
-
-        self.owner_count = owner_count;
-        self.admin_count = admin_count;
+        match new_role {
+            CommunityRole::Owner => {
+                if member.lapsed.value {
+                    self.update_lapsed(target_user_id, false, now);
+                }
+                self.owners.insert(target_user_id)
+            }
+            CommunityRole::Admin => self.admins.insert(target_user_id),
+            _ => false,
+        };
 
         ChangeRoleResult::Success(ChangeRoleSuccessResult {
             caller_id: user_id,
             prev_role,
         })
+    }
+
+    pub fn set_suspended(&mut self, user_id: UserId, suspended: bool, now: TimestampMillis) -> Option<bool> {
+        let member = self.members.get_mut(&user_id)?;
+
+        if member.suspended.value != suspended {
+            member.suspended = Timestamped::new(suspended, now);
+            if suspended {
+                self.suspended.insert(user_id);
+            } else {
+                self.suspended.remove(&user_id);
+            }
+            Some(true)
+        } else {
+            Some(false)
+        }
     }
 
     pub fn create_user_group<R: RngCore>(
@@ -296,10 +354,6 @@ impl CommunityMembers {
         self.blocked.iter().copied().collect()
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &CommunityMemberInternal> {
-        self.members.values()
-    }
-
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut CommunityMemberInternal> {
         self.members.values_mut()
     }
@@ -347,37 +401,79 @@ impl CommunityMembers {
         self.members.len() as u32
     }
 
-    pub fn owner_count(&self) -> u32 {
-        self.owner_count
+    pub fn member_ids(&self) -> &BTreeSet<UserId> {
+        &self.member_ids
     }
 
-    pub fn admin_count(&self) -> u32 {
-        self.admin_count
+    pub fn owners(&self) -> &BTreeSet<UserId> {
+        &self.owners
+    }
+
+    pub fn admins(&self) -> &BTreeSet<UserId> {
+        &self.admins
+    }
+
+    pub fn lapsed(&self) -> &BTreeSet<UserId> {
+        &self.lapsed
+    }
+
+    pub fn suspended(&self) -> &BTreeSet<UserId> {
+        &self.suspended
+    }
+
+    pub fn members_with_display_names(&self) -> &BTreeSet<UserId> {
+        &self.members_with_display_names
+    }
+
+    pub fn members_with_referrals(&self) -> &BTreeSet<UserId> {
+        &self.members_with_referrals
     }
 
     pub fn set_display_name(&mut self, user_id: UserId, display_name: Option<String>, now: TimestampMillis) {
         if let Some(member) = self.members.get_mut(&user_id) {
+            if display_name.is_some() {
+                self.members_with_display_names.insert(user_id);
+            } else {
+                self.members_with_display_names.remove(&user_id);
+            }
             member.display_name = Timestamped::new(display_name, now);
             self.updates.insert((now, user_id, MemberUpdate::DisplayNameChanged));
         }
     }
 
-    pub fn updated_lapsed(&mut self, user_id: UserId, lapsed: bool, now: TimestampMillis) {
-        if let Some(member) = self.members.get_mut(&user_id) {
-            if member.set_lapsed(lapsed, now) {
-                self.updates.insert((
-                    now,
-                    user_id,
-                    if lapsed { MemberUpdate::Lapsed } else { MemberUpdate::Unlapsed },
-                ));
+    pub fn update_lapsed(&mut self, user_id: UserId, lapsed: bool, now: TimestampMillis) {
+        let Some(member) = self.members.get_mut(&user_id) else {
+            return;
+        };
+
+        let updated = if lapsed {
+            // Owners can't lapse
+            !member.is_owner() && member.set_lapsed(true, now)
+        } else {
+            member.set_lapsed(false, now)
+        };
+
+        if updated {
+            if lapsed {
+                self.lapsed.insert(user_id);
+            } else {
+                self.lapsed.remove(&user_id);
             }
+
+            self.updates.insert((
+                now,
+                user_id,
+                if lapsed { MemberUpdate::Lapsed } else { MemberUpdate::Unlapsed },
+            ));
         }
     }
 
     pub fn unlapse_all(&mut self, now: TimestampMillis) {
-        for member in self.members.values_mut() {
-            if member.set_lapsed(false, now) {
-                self.updates.insert((now, member.user_id, MemberUpdate::Unlapsed));
+        for user_id in std::mem::take(&mut self.lapsed) {
+            if let Some(member) = self.members.get_mut(&user_id) {
+                if member.set_lapsed(false, now) {
+                    self.updates.insert((now, member.user_id, MemberUpdate::Unlapsed));
+                }
             }
         }
     }
@@ -399,6 +495,51 @@ impl CommunityMembers {
         .max()
         .unwrap()
     }
+
+    #[cfg(test)]
+    fn check_invariants(&self) {
+        let mut member_ids = BTreeSet::new();
+        let mut owners = BTreeSet::new();
+        let mut admins = BTreeSet::new();
+        let mut lapsed = BTreeSet::new();
+        let mut suspended = BTreeSet::new();
+        let mut members_with_display_names = BTreeSet::new();
+        let mut members_with_referrals = BTreeSet::new();
+
+        for member in self.members.values() {
+            member_ids.insert(member.user_id);
+
+            match member.role {
+                CommunityRole::Owner => owners.insert(member.user_id),
+                CommunityRole::Admin => admins.insert(member.user_id),
+                CommunityRole::Member => false,
+            };
+
+            if member.lapsed.value {
+                lapsed.insert(member.user_id);
+            }
+
+            if member.suspended.value {
+                suspended.insert(member.user_id);
+            }
+
+            if member.display_name.is_some() {
+                members_with_display_names.insert(member.user_id);
+            }
+
+            if !member.referrals.is_empty() {
+                members_with_referrals.insert(member.user_id);
+            }
+        }
+
+        assert_eq!(member_ids, self.member_ids);
+        assert_eq!(owners, self.owners);
+        assert_eq!(admins, self.admins);
+        assert_eq!(lapsed, self.lapsed);
+        assert_eq!(suspended, self.suspended);
+        assert_eq!(members_with_display_names, self.members_with_display_names);
+        assert_eq!(members_with_referrals, self.members_with_referrals);
+    }
 }
 
 impl Members for CommunityMembers {
@@ -415,19 +556,30 @@ impl Members for CommunityMembers {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct CommunityMemberInternal {
+    #[serde(rename = "u", alias = "user_id")]
     pub user_id: UserId,
+    #[serde(rename = "d", alias = "date_added")]
     pub date_added: TimestampMillis,
-    pub role: CommunityRole,
-    pub suspended: Timestamped<bool>,
-    pub channels: HashSet<ChannelId>,
+    #[serde(rename = "r", alias = "role", default, skip_serializing_if = "is_default")]
+    role: CommunityRole,
+    #[serde(rename = "c", alias = "channels")]
+    pub channels: BTreeSet<ChannelId>,
+    #[serde(rename = "cr", alias = "channel_removed", default, skip_serializing_if = "Vec::is_empty")]
     pub channels_removed: Vec<Timestamped<ChannelId>>,
+    #[serde(rename = "ra", alias = "rules_accepted", skip_serializing_if = "Option::is_none")]
     pub rules_accepted: Option<Timestamped<Version>>,
+    #[serde(rename = "ut", alias = "user_type", default, skip_serializing_if = "is_default")]
     pub user_type: UserType,
+    #[serde(rename = "dn", alias = "display_name", default, skip_serializing_if = "is_default")]
     display_name: Timestamped<Option<String>>,
+    #[serde(rename = "rb", alias = "referred_by", skip_serializing_if = "Option::is_none")]
     pub referred_by: Option<UserId>,
-    pub referrals: HashSet<UserId>,
-    #[serde(default)]
-    pub lapsed: Timestamped<bool>,
+    #[serde(rename = "rf", alias = "referrals", default, skip_serializing_if = "BTreeSet::is_empty")]
+    referrals: BTreeSet<UserId>,
+    #[serde(rename = "l", alias = "lapsed", default, skip_serializing_if = "is_default")]
+    lapsed: Timestamped<bool>,
+    #[serde(rename = "s", alias = "suspended", default, skip_serializing_if = "is_default")]
+    suspended: Timestamped<bool>,
 }
 
 impl CommunityMemberInternal {
@@ -472,8 +624,24 @@ impl CommunityMemberInternal {
         .unwrap()
     }
 
+    pub fn role(&self) -> CommunityRole {
+        self.role
+    }
+
     pub fn display_name(&self) -> &Timestamped<Option<String>> {
         &self.display_name
+    }
+
+    pub fn referrals(&self) -> &BTreeSet<UserId> {
+        &self.referrals
+    }
+
+    pub fn lapsed(&self) -> &Timestamped<bool> {
+        &self.lapsed
+    }
+
+    pub fn suspended(&self) -> &Timestamped<bool> {
+        &self.suspended
     }
 }
 

@@ -7,7 +7,7 @@ use user_canister::set_bio::{Response::*, *};
 
 const MAX_BIO_LEN: u32 = 2000;
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 fn set_bio(args: Args) -> Response {
     run_regular_jobs();

@@ -3,7 +3,7 @@ use crate::stable_storage::tests::test_values::{
     AUDIO1, CRYPTO1, CUSTOM1, DELETED1, FILE1, GIPHY1, GOVERNANCE_PROPOSAL1, IMAGE1, MESSAGE_REMINDER1,
     MESSAGE_REMINDER_CREATED1, P2P_SWAP1, POLL1, PRIZE1, PRIZE_WINNER1, REPORTED_MESSAGE1, TEXT1, VIDEO1, VIDEO_CALL1,
 };
-use crate::stable_storage::Value;
+use crate::stable_storage::{bytes_to_event, event_to_bytes};
 use crate::{
     AudioContentInternal, BlobReferenceInternal, CallParticipantInternal, ChatEventInternal, ChatInternal,
     CompletedCryptoTransactionInternal, CryptoContentInternal, CustomContentInternal, DeletedByInternal, FileContentInternal,
@@ -12,9 +12,7 @@ use crate::{
     PollContentInternal, PrizeContentInternal, PrizeWinnerContentInternal, ProposalContentInternal, ReplyContextInternal,
     ReportedMessageInternal, TextContentInternal, ThreadSummaryInternal, VideoCallContentInternal, VideoContentInternal,
 };
-use ic_stable_structures::Storable;
 use rand::random;
-use std::borrow::Cow;
 use testing::rng::{random_from_principal, random_from_u128, random_from_u32, random_principal, random_string};
 use types::{
     Cryptocurrency, EventIndex, EventWrapperInternal, MessageReport, P2PSwapCompleted, P2PSwapStatus, Proposal,
@@ -430,7 +428,7 @@ fn custom_content() {
 }
 
 fn test_deserialization(bytes: &[u8]) -> MessageContentInternal {
-    let value = EventWrapperInternal::from(&Value::from_bytes(Cow::Borrowed(bytes)));
+    let value = bytes_to_event(bytes);
     assert!(value.index > EventIndex::default());
     if let ChatEventInternal::Message(m) = value.event {
         m.content
@@ -440,10 +438,10 @@ fn test_deserialization(bytes: &[u8]) -> MessageContentInternal {
 }
 
 fn generate_then_serialize_value(content: MessageContentInternal) -> Vec<u8> {
-    generate_value(content).to_bytes().to_vec()
+    event_to_bytes(generate_value(content))
 }
 
-fn generate_value(content: MessageContentInternal) -> Value {
+fn generate_value(content: MessageContentInternal) -> EventWrapperInternal<ChatEventInternal> {
     EventWrapperInternal {
         index: random_from_u32(),
         timestamp: random(),
@@ -457,7 +455,7 @@ fn generate_value(content: MessageContentInternal) -> Value {
             replies_to: Some(ReplyContextInternal {
                 event_index: random_from_u32(),
                 chat_if_other: Some((
-                    ChatInternal::Channel(random_from_principal(), random()),
+                    ChatInternal::Channel(random_from_principal(), random_from_u32()),
                     Some(random_from_u32()),
                 )),
             }),
@@ -490,5 +488,4 @@ fn generate_value(content: MessageContentInternal) -> Value {
             block_level_markdown: true,
         })),
     }
-    .into()
 }

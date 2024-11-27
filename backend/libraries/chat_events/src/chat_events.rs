@@ -4,7 +4,6 @@ use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::metrics::{ChatMetricsInternal, MetricKey};
 use crate::search_index::SearchIndex;
 use crate::stable_storage::key::KeyPrefix;
-use crate::stable_storage::Memory;
 use crate::*;
 use event_store_producer::{EventBuilder, EventStoreClient, Runtime};
 use rand::rngs::StdRng;
@@ -76,10 +75,6 @@ impl ChatEvents {
         }
 
         false
-    }
-
-    pub fn init_stable_storage(memory: Memory) {
-        stable_storage::init(memory)
     }
 
     pub fn init_maps(&mut self) {
@@ -1479,7 +1474,7 @@ impl ChatEvents {
                 let community_id_bytes = community_id.as_ref();
                 hasher.update([community_id_bytes.len() as u8]);
                 hasher.update(community_id);
-                let channel_id_bytes = channel_id.to_be_bytes();
+                let channel_id_bytes = channel_id.as_u32().to_be_bytes();
                 hasher.update([channel_id_bytes.len() as u8]);
                 hasher.update(channel_id_bytes);
             }

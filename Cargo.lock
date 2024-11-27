@@ -1369,6 +1369,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "sha2 0.10.8",
+ "stable_memory_map",
  "test-case",
  "testing",
  "tracing",
@@ -1620,6 +1621,7 @@ dependencies = [
  "msgpack",
  "notifications_canister",
  "notifications_canister_c2c_client",
+ "proptest",
  "rand 0.8.5",
  "regex-lite",
  "search",
@@ -1627,7 +1629,9 @@ dependencies = [
  "serde_bytes",
  "serde_repr",
  "stable_memory",
+ "stable_memory_map",
  "storage_bucket_client",
+ "test-strategy",
  "timer_job_queues",
  "tracing",
  "types",
@@ -2857,6 +2861,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "stable_memory",
+ "stable_memory_map",
  "storage_bucket_client",
  "timer_job_queues",
  "tracing",
@@ -2876,16 +2881,17 @@ dependencies = [
  "chat_events",
  "event_store_producer",
  "group_community_common",
+ "ic-cdk 0.16.0",
  "itertools 0.13.0",
  "lazy_static",
  "msgpack",
  "proptest",
- "rand 0.8.5",
  "regex-lite",
  "search",
  "serde",
  "serde_repr",
  "test-strategy",
+ "tracing",
  "types",
  "utils 0.1.0",
 ]
@@ -7438,6 +7444,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "stable_memory_map"
+version = "0.1.0"
+dependencies = [
+ "ic-cdk 0.16.0",
+ "ic-stable-structures",
+]
+
+[[package]]
 name = "stacker"
 version = "0.1.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8400,13 +8414,11 @@ version = "0.1.0"
 dependencies = [
  "bot_api_gateway_canister",
  "candid",
- "candid_gen",
  "chat_events",
  "ic-ledger-types",
  "icrc-ledger-types",
  "proposals_bot_canister",
  "serde",
- "serde_bytes",
  "ts-rs",
  "ts_export",
  "types",
@@ -8500,6 +8512,7 @@ dependencies = [
  "sonic_canister",
  "sonic_canister_c2c_client",
  "stable_memory",
+ "stable_memory_map",
  "storage_bucket_client",
  "timer_job_queues",
  "tracing",

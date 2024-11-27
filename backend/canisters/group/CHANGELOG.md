@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove code to migrate metrics to new reduced size format ([#6901](https://github.com/open-chat-labs/open-chat/pull/6901))
+- Remove code to deduplicate @everyone mentions ([#6901](https://github.com/open-chat-labs/open-chat/pull/6901))
+- Remove the old `gate` field which has been superseded by `gate_config` ([#6902](https://github.com/open-chat-labs/open-chat/pull/6902))
+
+## [[2.0.1476](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1476-group)] - 2024-11-26
+
 ### Added
 
 - Add new prize message criteria ([#6831](https://github.com/open-chat-labs/open-chat/pull/6831))
@@ -25,6 +33,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Disallow promoting bots to owners ([#6865](https://github.com/open-chat-labs/open-chat/pull/6865))
 - Reduce the number of events stored on the heap in the `HybridMap` ([#6867](https://github.com/open-chat-labs/open-chat/pull/6867))
 - Return `FailedToDeserialize` and log error if unable to read event ([#6873](https://github.com/open-chat-labs/open-chat/pull/6873))
+- Extract stable memory map so it can store additional datasets ([#6876](https://github.com/open-chat-labs/open-chat/pull/6876))
+- Avoid iterating all users when determining who to notify of new message ([#6877](https://github.com/open-chat-labs/open-chat/pull/6877))
+- Make `ChannelId` comparisons use their 32bit representation ([#6885](https://github.com/open-chat-labs/open-chat/pull/6885))
 
 ### Removed
 

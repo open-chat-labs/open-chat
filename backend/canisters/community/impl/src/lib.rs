@@ -33,8 +33,8 @@ use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BuildVersion, CanisterId, ChannelId, ChatMetrics,
-    CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, CommunityRole, Cryptocurrency, Cycles,
-    Document, Empty, FrozenGroupInfo, Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId, UserType,
+    CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cryptocurrency, Cycles, Document, Empty,
+    FrozenGroupInfo, Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use user_canister::CommunityCanisterEvent;
@@ -120,13 +120,7 @@ impl RuntimeState {
 
     pub fn queue_access_gate_payments(&mut self, payment: GatePayment) {
         // Queue a payment to each owner less the fee
-        let owners: Vec<UserId> = self
-            .data
-            .members
-            .iter()
-            .filter(|m| matches!(m.role, CommunityRole::Owner))
-            .map(|m| m.user_id)
-            .collect();
+        let owners = self.data.members.owners();
 
         let owner_count = owners.len() as u128;
         let owner_share = (payment.amount * (100 - SNS_FEE_SHARE_PERCENT) / 100) / owner_count;
@@ -136,7 +130,7 @@ impl RuntimeState {
                     amount: owner_share,
                     fee: payment.fee,
                     ledger_canister: payment.ledger_canister_id,
-                    recipient: PaymentRecipient::Member(owner),
+                    recipient: PaymentRecipient::Member(*owner),
                     reason: PendingPaymentReason::AccessGate,
                 });
             }
@@ -168,13 +162,13 @@ impl RuntimeState {
         let (channels, membership) = if let Some(m) = member {
             let membership = CommunityMembership {
                 joined: m.date_added,
-                role: m.role,
+                role: m.role(),
                 rules_accepted: m
                     .rules_accepted
                     .as_ref()
                     .map_or(false, |version| version.value >= self.data.rules.text.version),
                 display_name: m.display_name().value.clone(),
-                lapsed: m.lapsed.value,
+                lapsed: m.lapsed().value,
             };
 
             // Return all the channels that the user is a member of
@@ -276,7 +270,7 @@ impl RuntimeState {
 
     pub fn generate_channel_id(&mut self) -> ChannelId {
         loop {
-            let channel_id = self.env.rng().next_u32() as ChannelId;
+            let channel_id = self.env.rng().next_u32().into();
             if self.data.channels.get(&channel_id).is_none() {
                 return channel_id;
             }
@@ -294,8 +288,8 @@ impl RuntimeState {
             public: self.data.is_public,
             date_created: self.data.date_created,
             members: self.data.members.len(),
-            admins: self.data.members.admin_count(),
-            owners: self.data.members.owner_count(),
+            admins: self.data.members.admins().len() as u32,
+            owners: self.data.members.owners().len() as u32,
             blocked: self.data.members.blocked().len() as u32,
             invited: self.data.invited_users.len() as u32,
             frozen: self.data.is_frozen(),
@@ -339,7 +333,6 @@ struct Data {
     group_index_canister_id: CanisterId,
     local_group_index_canister_id: CanisterId,
     notifications_canister_id: CanisterId,
-    #[serde(default = "CanisterId::anonymous")]
     bot_api_gateway_canister_id: CanisterId,
     proposals_bot_user_id: UserId,
     escrow_canister_id: CanisterId,
@@ -597,7 +590,7 @@ impl Data {
                 channel.chat.members.update_lapsed(user_id, lapsed, now);
             }
         } else {
-            self.members.updated_lapsed(user_id, lapsed, now);
+            self.members.update_lapsed(user_id, lapsed, now);
         }
     }
 
@@ -674,9 +667,9 @@ impl Data {
 
         if hidden_for_non_members {
             if let Some(member) = member {
-                if member.suspended.value {
+                if member.suspended().value {
                     return Err(EventsResponse::UserSuspended);
-                } else if member.lapsed.value {
+                } else if member.lapsed().value {
                     return Err(EventsResponse::UserLapsed);
                 }
             } else {

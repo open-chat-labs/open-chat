@@ -78,7 +78,6 @@ fn existing_users_joined_to_new_public_channel() {
             messages_visible_to_non_members: None,
             permissions_v2: None,
             events_ttl: None,
-            gate: None,
             gate_config: None,
             external_url: None,
         },

@@ -36,7 +36,6 @@ fn public_group_diamond_member_gate_check(is_diamond: bool, is_invited: bool) {
             permissions_v2: None,
             rules: Rules::default(),
             events_ttl: None,
-            gate: None,
             gate_config: Some(AccessGate::DiamondMember.into()),
             messages_visible_to_non_members: None,
         },
@@ -117,7 +116,6 @@ fn public_group_token_balance_gate_check(has_sufficient_balance: bool) {
             permissions_v2: None,
             rules: Rules::default(),
             events_ttl: None,
-            gate: None,
             gate_config: Some(
                 AccessGate::TokenBalance(TokenBalanceGate {
                     ledger_canister_id: canister_ids.icp_ledger,
@@ -199,7 +197,6 @@ fn public_group_composite_gate_check(is_diamond: bool, has_sufficient_balance: b
             permissions_v2: None,
             rules: Rules::default(),
             events_ttl: None,
-            gate: None,
             gate_config: Some(
                 AccessGate::Composite(CompositeGate {
                     inner: vec![
@@ -309,7 +306,6 @@ fn owner_receives_transfer_after_user_joins_via_payment_gate(composite_gate: boo
             permissions_v2: None,
             rules: Rules::default(),
             events_ttl: None,
-            gate: None,
             gate_config: Some(gate.into()),
             messages_visible_to_non_members: None,
         },

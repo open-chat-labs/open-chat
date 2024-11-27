@@ -15,7 +15,7 @@ use user_canister::UserCanisterEvent;
 use utils::consts::MEMO_TIP;
 use utils::time::NANOS_PER_MILLISECOND;
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 async fn tip_message(args: Args) -> Response {
     run_regular_jobs();

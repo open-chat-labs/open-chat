@@ -2,13 +2,16 @@
     import MentionPicker from "./MentionPicker.svelte";
     import { _ } from "svelte-i18n";
     import type { OpenChat, UserOrUserGroup } from "openchat-client";
-    import { getContext } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import UserPill from "../UserPill.svelte";
 
     const client = getContext<OpenChat>("client");
+    const dispatch = createEventDispatcher();
 
     export let autofocus: boolean;
     export let selectedReceiver: UserOrUserGroup | undefined = undefined;
+    export let direction: "up" | "down" = "down";
+    export let placeholder: string = "tokenTransfer.chooseReceiver";
 
     let showMentionPicker = false;
     let textValue: string = "";
@@ -18,12 +21,16 @@
         selectedReceiver = ev.detail;
         showMentionPicker = false;
         textValue = "";
+        if (ev.detail.kind === "user") {
+            dispatch("userSelected", ev.detail);
+        }
     }
 
     function removeReceiver() {
         selectedReceiver = undefined;
         showMentionPicker = true;
         textValue = "";
+        dispatch("userRemoved");
     }
 
     function blur() {
@@ -41,7 +48,7 @@
     {#if showMentionPicker}
         <MentionPicker
             offset={inputHeight}
-            direction={"down"}
+            {direction}
             on:mention={selectReceiver}
             border
             usersOnly
@@ -59,7 +66,7 @@
                 maxlength="100"
                 {autofocus}
                 bind:value={textValue}
-                placeholder={$_("tokenTransfer.chooseReceiver")} />
+                placeholder={$_(placeholder)} />
         </div>
     {/if}
 </div>

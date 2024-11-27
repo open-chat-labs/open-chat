@@ -15,10 +15,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `bot_api_gateway` canisterId to the canister state ([#6842](https://github.com/open-chat-labs/open-chat/pull/6842))
 - Prize message validation takes account of 5% fee ([#6854](https://github.com/open-chat-labs/open-chat/pull/6854))
 - Return `FailedToDeserialize` and log error if unable to read event ([#6873](https://github.com/open-chat-labs/open-chat/pull/6873))
+- Extract stable memory map so it can store additional datasets ([#6876](https://github.com/open-chat-labs/open-chat/pull/6876))
+- Make `ChannelId` comparisons use their 32bit representation ([#6885](https://github.com/open-chat-labs/open-chat/pull/6885))
 
 ### Removed
 
 - Remove all code to migrate events to stable memory ([#6858](https://github.com/open-chat-labs/open-chat/pull/6858))
+- Remove the old `gate` field which has been superseded by `gate_config` ([#6902](https://github.com/open-chat-labs/open-chat/pull/6902))
+- Remove candid endpoints from User canisters ([#6905](https://github.com/open-chat-labs/open-chat/pull/6905))
 
 ## [[2.0.1459](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1459-user)] - 2024-11-18
 

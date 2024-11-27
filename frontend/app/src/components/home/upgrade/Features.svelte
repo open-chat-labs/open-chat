@@ -208,16 +208,6 @@
         </div>
     </Feature>
 
-    <Feature {landing}>
-        <div slot="title"><Translatable resourceKey={i18nKey("upgrade.displayNames")} /></div>
-        <div slot="free">
-            <Minus size={"1em"} color={"var(--menu-warn)"} />
-        </div>
-        <div slot="diamond">
-            <Check size={"1em"} color={"limegreen"} />
-        </div>
-    </Feature>
-
     <Feature {landing} diamondInfo={i18nKey("upgrade.airdropsInfo")}>
         <div slot="title"><Translatable resourceKey={i18nKey("upgrade.airdrops")} /></div>
         <div slot="free">

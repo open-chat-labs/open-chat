@@ -52,6 +52,9 @@
     const ONE_MONTH = 1000 * 60 * 60 * 24 * 7 * 4;
     const TOKEN_LISTING_FEE: bigint = 50_000_100_000n; // 500 CHAT + transfer fee
 
+    const REGISTRY_CANISTER = process.env.REGISTRY_CANISTER!;
+    const USER_INDEX_CANISTER = process.env.USER_INDEX_CANISTER!;
+
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
@@ -204,13 +207,9 @@
             selectedProposalType === "register_external_acievement" ||
             selectedProposalType === "add_token"
         ) {
-            let spender =
-                selectedProposalType === "add_token"
-                    ? process.env.REGISTRY_CANISTER!
-                    : process.env.USER_INDEX_CANISTER!;
-
-            let amount =
-                selectedProposalType === "add_token" ? TOKEN_LISTING_FEE : achievementChatCost;
+            const addToken = selectedProposalType === "add_token";
+            let spender = addToken ? REGISTRY_CANISTER : USER_INDEX_CANISTER;
+            let amount = addToken ? TOKEN_LISTING_FEE : achievementChatCost;
 
             if (!(await approvePayment(spender, amount))) {
                 busy = false;
@@ -320,6 +319,9 @@
                     error = "approvalError";
                 }
 
+                return false;
+            })
+            .catch(() => {
                 return false;
             });
     }

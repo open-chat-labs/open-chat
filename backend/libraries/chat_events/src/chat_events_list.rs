@@ -611,6 +611,8 @@ mod tests {
     use crate::{ChatEvents, MessageContentInternal, PushMessageArgs, TextContentInternal};
     use candid::Principal;
     use event_store_producer::NullRuntime;
+    use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+    use ic_stable_structures::DefaultMemoryImpl;
     use rand::random;
     use std::mem::size_of;
     use types::{EventsTimeToLiveUpdated, Milliseconds};
@@ -769,7 +771,9 @@ mod tests {
     }
 
     fn setup_events(events_ttl: Option<Milliseconds>) -> ChatEvents {
-        ChatEvents::init_stable_storage(ic_stable_structures::VectorMemory::default());
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(1)));
+
         let mut events = ChatEvents::new_direct_chat(Principal::from_slice(&[1]).into(), events_ttl, random(), 1);
 
         push_events(&mut events, 0);

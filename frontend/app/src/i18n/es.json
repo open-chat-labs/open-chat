@@ -148,6 +148,86 @@
     "blockUser": "Bloquear usuario",
     "blockUserFailed": "No se puede bloquear al usuario",
     "blockUserSucceeded": "El usuario ha sido bloqueado",
+    "bots": {
+        "builtin": {
+            "desc": "Este bot proporciona los comandos OpenChat integrados",
+            "name": "Incorporado"
+        },
+        "crypto": {
+            "desc": "Enviar criptomonedas a otro usuario",
+            "params": {
+                "amount": {
+                    "desc": "La cantidad que deseas enviar",
+                    "name": "Cantidad",
+                    "placeholder": "Introduzca la cantidad"
+                },
+                "token": {
+                    "desc": "El token que deseas enviar",
+                    "name": "Simbólico",
+                    "placeholder": "Ingresar token"
+                }
+            }
+        },
+        "diamond": {
+            "desc": "Publica un enlace para explicar la membresía Diamante"
+        },
+        "failed": "Lo sentimos, no pudimos ejecutar el comando del bot",
+        "faq": {
+            "desc": "Crear un enlace a un tema de preguntas frecuentes",
+            "params": {
+                "topic": {
+                    "choices": {
+                        "airdrop": "Airdrop mensual",
+                        "android": "Aplicación para Android",
+                        "buychat": "Compra de CHAT",
+                        "content": "Pautas de contenido",
+                        "diamond": "Membresía Diamante",
+                        "info": "Información",
+                        "ios": "Aplicación iOS",
+                        "referral": "Recompensas por recomendación",
+                        "security": "Seguridad",
+                        "sendtokens": "Envío de tokens",
+                        "shortcuts": "Atajos",
+                        "storage": "Almacenamiento",
+                        "style": "Mensajes de estilo",
+                        "translation": "Traducción de contenido",
+                        "voting": "Votación",
+                        "wallet": "Billetera"
+                    },
+                    "desc": "El tema de preguntas frecuentes específico que le interesa",
+                    "name": "Tema de preguntas frecuentes",
+                    "placeholder": "Seleccionar tema"
+                }
+            }
+        },
+        "gif": {
+            "desc": "Encuentra un gif para enviar",
+            "params": {
+                "term": {
+                    "desc": "Ingresa el término de búsqueda para tu gif",
+                    "name": "Término de búsqueda",
+                    "placeholder": "Término de búsqueda"
+                }
+            }
+        },
+        "matchingCommands": "Comandos coincidentes",
+        "poll": {
+            "desc": "Crear una encuesta en el chat actual"
+        },
+        "search": {
+            "desc": "Iniciar una búsqueda en el chat actual",
+            "params": {
+                "term": {
+                    "desc": "Ingresa el término a buscar en el chat",
+                    "name": "Término de búsqueda",
+                    "placeholder": "Término de búsqueda"
+                }
+            }
+        },
+        "witch": {
+            "desc": "Invocar a la bruja"
+        }
+    },
     "cancel": "Cancelar",
     "cancelInvite": "Cancelar invitación",
     "cancelInviteFailed": "Error al cancelar la invitación",
@@ -457,8 +537,10 @@
         "airdrop_q": "¿Habrá un lanzamiento aéreo?",
         "android_app_a": "En cuanto a iOS (ver arriba), la aplicación web OpenChat <em>sí</em> ya funciona en Android y puedes \"Agregar a la pantalla de inicio\" desde el menú del navegador. Esto le brinda un ícono estándar para abrir la aplicación que se parece más a una aplicación nativa sin una barra de URL. La compatibilidad con aplicaciones web progresivas (PWA) es muy buena en Android. Al igual que iOS, admite notificaciones push web pero también <em>admite</em> la lectura de contactos desde el teléfono (si otorga permiso en cada caso). Más allá de eso, el soporte para WebRTC es mucho mejor. Como tal, el argumento a favor de producir una aplicación nativa para Android es menos convincente y vendrá después de una aplicación nativa para iOS. Las mismas consideraciones se aplican a la creación de una aplicación para Android como para iOS en términos de apuntar a un contenedor nativo delgado alrededor de una aplicación web principal y con respecto a la certificación en la Play Store de Android.",
         "android_app_q": "¿Cuándo habrá una aplicación para Android?",
-        "buychat_a": "Puedes comprar CHAT con USDC en <a target=\"_blank\" href=\"https://www.helixmarkets.io/trade/CHATUSDC\">Helix Markets</a> . De lo contrario, primero debe <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">comprar ICP</a> , que luego puede cambiar por CHAT en varios intercambios descentralizados (DEX).<ul><li> <a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">ICDex</a></li><li> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPSwap</a></li></ul> DFINITY está agregando soporte para la <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">API de Rosetta</a> para tokens ICRC1 (que incluye CHAT), lo que los hace mucho más fáciles de integrar con los intercambios centralizados (CEX). Una vez que esto haya sucedido, es probable que CHAT esté disponible para operar en CEX por ICP o USDT.",
+        "buychat_a": "Puedes comprar CHAT en varios intercambios de criptomonedas:<br><br><table><tr><th> Intercambio</th><th> Estilo</th><th> Comprar con</th><th> CEX/DEX</th></tr><tr><td> <a target=\"_blank\" href=\"https://www.helixmarkets.io/trade/CHATUSDC\">Mercados Helix</a></td><td> Cartera de pedidos</td><td> Dólar estadounidense</td><td> Híbrido</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.bitmart.com/trade?symbol=CHAT_USDT\">BitMart</a></td><td> Cartera de pedidos</td><td> USDT</td><td> CEX</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.bitrue.com/trade/chat_usdt\">Bitrue</a></td><td> Cartera de pedidos</td><td> USDT</td><td> CEX</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.coinstore.com/spot/chatusdt\">Almacén de monedas</a></td><td> Cartera de pedidos</td><td> USDT</td><td> CEX</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.lbank.com/trade/chat_usdt\">Banco L</a></td><td> Cartera de pedidos</td><td> USDT</td><td> CEX</td></tr><tr><td> <a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">CICDex</a></td><td> Cartera de pedidos</td><td> PCI</td><td> DESEMPEÑO</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.kongswap.io/?viewtab=swap&pool=CHAT_ckUSDT\">KongSwap</a></td><td> Intercambio (AMM)</td><td> USDT</td><td> DESEMPEÑO</td></tr><tr><td> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">Intercambio de ICPS</a></td><td> Intercambio (AMM)</td><td> PCI</td><td> DESEMPEÑO</td></tr><tr><td> <a target=\"_blank\" href=\"https://app.sonic.ooo/?tokenin=ryjl3-tyaaa-aaaaa-aaaba-cai&tokenout=2ouva-viaaa-aaaaq-aaamq-cai\">Sónico</a></td><td> Intercambio (AMM)</td><td> PCI</td><td> DESEMPEÑO</td></tr></table><br> También puedes intercambiar tokens por CHAT directamente desde tu billetera OpenChat, que utilizará automáticamente el intercambio con el mejor precio disponible.",
         "buychat_q": "¿Cómo compro tokens de CHAT?",
+        "buyicp_a": "<ol><li>Puedes comprar tokens ICP en las principales plataformas de intercambio como Coinbase, Binance, Kraken y otras. Estas plataformas te permiten intercambiar varias criptomonedas por ICP.</li><li> La aplicación descentralizada Network Nervous System (NNS) ofrece una función para comprar ICP con una tarjeta de crédito. Deberá iniciar sesión con su identidad de Internet y seguir las instrucciones para completar la transacción <a target=\"_blank\" href=\"https://support.dfinity.org/hc/en-us/articles/21363667463828-How-do-I-purchase-ICP-from-within-the-NNS-dapp\">Preguntas frecuentes &gt; Computadoras de Internet &gt; Network Nervous System (NNS) &gt; ¿Cómo compro ICP desde la aplicación descentralizada NNS?</a></li><li> Puede utilizar intercambios descentralizados (DEX) en Internet Computer para intercambiar otras criptomonedas por ICP. Por ejemplo:<ul><li> <a target=\"_blank\" href=\"https://iclight.io/ICDex/ckBTC/ICP\">ICDex.io</a> le permite intercambiar Bitcoin (en forma de ckBTC) por ICP.</li><li> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/token/details/ryjl3-tyaaa-aaaaa-aaaba-cai\">ICPSwap</a> ofrece pares comerciales con ICP.</li></ul></li></ol>",
+        "buyicp_q": "¿Cómo compro tokens ICP?",
         "content_a": "Para obtener detalles completos sobre nuestras pautas de contenido y moderación, <a href=\"/guidelines\">ver aquí</a>.",
         "content_q": "¿Qué tipo de contenido está permitido?",
         "diamond_a": "Puede actualizar a la membresía Diamond para tener acceso a funciones adicionales o mejoradas dentro de OpenChat. <a href=\"/diamond\">Ver aquí</a> para una comparación de características y para actualizar.",

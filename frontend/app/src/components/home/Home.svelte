@@ -64,6 +64,7 @@
         offlineStore,
         capturePinNumberStore as pinNumberStore,
         captureRulesAcceptanceStore as rulesAcceptanceStore,
+        SummonWitch,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -90,7 +91,12 @@
     import { dimensions } from "../../stores/screenDimensions";
     import { messageToForwardStore } from "../../stores/messageToForward";
     import type { Share } from "../../utils/share";
-    import { currentTheme } from "../../theme/themes";
+    import {
+        currentTheme,
+        currentThemeName,
+        preferredDarkThemeName,
+        themeType,
+    } from "../../theme/themes";
     import SuspendedModal from "../SuspendedModal.svelte";
     import NoAccess from "./NoAccess.svelte";
     import NewGroup from "./addgroup/NewGroup.svelte";
@@ -121,6 +127,7 @@
     import { chitPopup } from "../../stores/settings";
     import AccessGateEvaluator from "./access/AccessGateEvaluator.svelte";
     import SetPinNumberModal from "./profile/SetPinNumberModal.svelte";
+    import { scream } from "../../utils/scream";
     import VerifyHumanity from "./profile/VerifyHumanity.svelte";
 
     type ViewProfileConfig = {
@@ -256,6 +263,8 @@
     function clientEvent(ev: Event): void {
         if (ev instanceof ThreadSelected) {
             openThread(ev.detail);
+        } else if (ev instanceof SummonWitch) {
+            summonWitch();
         } else if (ev instanceof RemoteVideoCallStartedEvent) {
             remoteVideoCallStarted(ev);
         } else if (ev instanceof RemoteVideoCallEndedEvent) {
@@ -291,6 +300,20 @@
             // The latest suspension details will be picked up on reload when user_index::current_user is called
             window.location.reload();
         }
+    }
+
+    function summonWitch() {
+        const isHalloweenTheme = $currentThemeName === "halloween";
+        if (!isHalloweenTheme) {
+            themeType.set("dark");
+            preferredDarkThemeName.set("halloween");
+        }
+        document.body.classList.add("witch");
+        scream.currentTime = 0;
+        scream.play();
+        window.setTimeout(() => {
+            document.body.classList.remove("witch");
+        }, 2000);
     }
 
     function remoteVideoCallEnded(ev: RemoteVideoCallEndedEvent) {

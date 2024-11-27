@@ -4,12 +4,14 @@ use serde::{Deserialize, Serialize};
 
 mod access_tokens;
 mod achievement;
+mod airdrop_config;
 mod avatar;
 pub mod bot_actions;
 mod bots;
 mod build_version;
 mod canister_upgrade_status;
 mod canister_wasm;
+mod channel_id;
 mod channel_summary;
 mod chat;
 mod chat_id;
@@ -78,12 +80,14 @@ mod video_calls;
 
 pub use access_tokens::*;
 pub use achievement::*;
+pub use airdrop_config::*;
 pub use avatar::*;
 pub use bot_actions::BotAction;
 pub use bots::*;
 pub use build_version::*;
 pub use canister_upgrade_status::*;
 pub use canister_wasm::*;
+pub use channel_id::*;
 pub use channel_summary::*;
 pub use chat::*;
 pub use chat_id::*;
@@ -153,7 +157,6 @@ pub use video_calls::*;
 
 pub type AccessorId = Principal;
 pub type CanisterId = Principal;
-pub type ChannelId = u128;
 pub type FileId = u128;
 pub type Hash = [u8; 32];
 pub type ICP = Tokens;

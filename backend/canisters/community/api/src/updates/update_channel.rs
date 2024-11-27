@@ -2,7 +2,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
-    AccessGate, AccessGateConfig, ChannelId, Document, FieldTooLongResult, FieldTooShortResult, Milliseconds, OptionUpdate,
+    AccessGateConfig, ChannelId, Document, FieldTooLongResult, FieldTooShortResult, Milliseconds, OptionUpdate,
     OptionalGroupPermissions, UpdatedRules, Version,
 };
 
@@ -18,8 +18,6 @@ pub struct Args {
     pub permissions_v2: Option<OptionalGroupPermissions>,
     #[ts(as = "types::OptionUpdateU64")]
     pub events_ttl: OptionUpdate<Milliseconds>,
-    #[ts(as = "types::OptionUpdateAccessGate")]
-    pub gate: OptionUpdate<AccessGate>,
     #[ts(as = "types::OptionUpdateAccessGateConfig")]
     pub gate_config: OptionUpdate<AccessGateConfig>,
     pub public: Option<bool>,

@@ -10,7 +10,7 @@ use std::collections::{HashMap, HashSet};
 use types::{
     ChannelId, ChannelMatch, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, CommunityId,
     GroupMembership, GroupMembershipUpdates, GroupPermissionRole, GroupPermissions, MultiUserChat, Rules, TimestampMillis,
-    Timestamped, UserId, UserType, MAX_THREADS_IN_SUMMARY,
+    UserId, UserType, MAX_THREADS_IN_SUMMARY,
 };
 
 use super::members::CommunityMembers;
@@ -45,7 +45,7 @@ impl Channels {
             .into_iter()
             .map(|name| {
                 let channel_id = loop {
-                    let id = rng.next_u32() as ChannelId;
+                    let id = rng.next_u32().into();
                     if channel_ids.insert(id) {
                         break id;
                     }
@@ -268,7 +268,7 @@ impl Channel {
             joined: m.date_added(),
             role: m.role().value.into(),
             mentions: chat.most_recent_mentions(m, None),
-            notifications_muted: m.notifications_muted.value,
+            notifications_muted: m.notifications_muted().value,
             my_metrics: chat
                 .events
                 .user_metrics(&m.user_id(), None)
@@ -356,7 +356,7 @@ impl Channel {
         let membership = member.map(|m| GroupMembershipUpdates {
             role: updates.role_changed.then_some(m.role().value.into()),
             mentions: updates.mentions,
-            notifications_muted: m.notifications_muted.if_set_after(since).cloned(),
+            notifications_muted: m.notifications_muted().if_set_after(since).cloned(),
             my_metrics: self.chat.events.user_metrics(&m.user_id(), Some(since)).map(|m| m.hydrate()),
             latest_threads: m
                 .followed_threads
@@ -404,15 +404,10 @@ impl Channel {
     pub fn mute_notifications(&mut self, mute: bool, user_id: UserId, now: TimestampMillis) -> MuteChannelResult {
         use MuteChannelResult::*;
 
-        if let Some(channel_member) = self.chat.members.get_mut(&user_id) {
-            if channel_member.notifications_muted.value != mute {
-                channel_member.notifications_muted = Timestamped::new(mute, now);
-                Success
-            } else {
-                Unchanged
-            }
-        } else {
-            UserNotFound
+        match self.chat.members.toggle_notifications_muted(user_id, mute, now) {
+            Some(true) => Success,
+            Some(false) => Unchanged,
+            None => UserNotFound,
         }
     }
 

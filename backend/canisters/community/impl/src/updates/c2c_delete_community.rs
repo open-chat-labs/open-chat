@@ -51,11 +51,11 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
 
     let caller = state.env.caller();
     if let Some(member) = state.data.members.get(caller) {
-        if member.suspended.value {
+        if member.suspended().value {
             Err(UserSuspended)
-        } else if member.lapsed.value {
+        } else if member.lapsed().value {
             Err(UserLapsed)
-        } else if !member.role.can_delete_community() {
+        } else if !member.role().can_delete_community() {
             Err(NotAuthorized)
         } else {
             Ok(PrepareResult {
@@ -63,7 +63,7 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
                 community_id: state.env.canister_id().into(),
                 deleted_by: member.user_id,
                 communtiy_name: state.data.name.clone(),
-                members: state.data.members.iter().map(|m| m.user_id).collect(),
+                members: state.data.members.member_ids().iter().copied().collect(),
             })
         }
     } else {

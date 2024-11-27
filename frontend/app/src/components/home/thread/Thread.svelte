@@ -13,8 +13,14 @@
         TimelineItem,
         MessageContent,
     } from "openchat-client";
-    import { LEDGER_CANISTER_ICP } from "openchat-client";
-    import { getContext } from "svelte";
+    import {
+        AttachGif,
+        CreatePoll,
+        CreateTestMessages,
+        LEDGER_CANISTER_ICP,
+        TokenTransfer,
+    } from "openchat-client";
+    import { getContext, onMount } from "svelte";
     import Loading from "../../Loading.svelte";
     import { derived, readable } from "svelte/store";
     import PollBuilder from "../PollBuilder.svelte";
@@ -91,11 +97,54 @@
     $: isFollowedByMe =
         $threadsFollowedByMeStore.get(chat.id)?.has(threadRootMessageIndex) ?? false;
 
-    function createTestMessages(ev: CustomEvent<number>): void {
-        if (process.env.NODE_ENV === "production") return;
+    onMount(() => {
+        client.addEventListener("openchat_event", clientEvent);
+        return () => {
+            client.removeEventListener("openchat_event", clientEvent);
+        };
+    });
 
+    function clientEvent(ev: Event): void {
+        if (ev instanceof CreatePoll) {
+            if (
+                ev.detail.chatId === messageContext.chatId &&
+                ev.detail.threadRootMessageIndex === messageContext.threadRootMessageIndex
+            ) {
+                createPoll();
+            }
+        }
+        if (ev instanceof TokenTransfer) {
+            const { context } = ev.detail;
+            if (
+                context.chatId === messageContext.chatId &&
+                context.threadRootMessageIndex === messageContext.threadRootMessageIndex
+            ) {
+                tokenTransfer(ev);
+            }
+        }
+        if (ev instanceof AttachGif) {
+            const [evContext, search] = ev.detail;
+            if (
+                evContext.chatId === messageContext.chatId &&
+                evContext.threadRootMessageIndex === messageContext.threadRootMessageIndex
+            ) {
+                attachGif(new CustomEvent("openchat_client", { detail: search }));
+            }
+        }
+        if (ev instanceof CreateTestMessages) {
+            const [{ chatId, threadRootMessageIndex }, num] = ev.detail;
+            if (
+                chatId === messageContext.chatId &&
+                threadRootMessageIndex === messageContext.threadRootMessageIndex
+            ) {
+                createTestMessages(num);
+            }
+        }
+    }
+
+    function createTestMessages(total: number): void {
         function send(n: number) {
-            if (n === ev.detail) return;
+            if (n === total) return;
 
             sendMessageWithAttachment(randomSentence(), false, undefined);
 
@@ -174,10 +223,10 @@
         draftMessagesStore.setAttachment(messageContext, ev.detail);
     }
 
-    function tokenTransfer(ev: CustomEvent<{ ledger: string; amount: bigint } | undefined>) {
-        creatingCryptoTransfer = ev.detail ?? {
-            ledger: $lastCryptoSent ?? LEDGER_CANISTER_ICP,
-            amount: BigInt(0),
+    function tokenTransfer(ev: CustomEvent<{ ledger?: string; amount?: bigint }>) {
+        creatingCryptoTransfer = {
+            ledger: ev.detail.ledger ?? $lastCryptoSent ?? LEDGER_CANISTER_ICP,
+            amount: ev.detail.amount ?? BigInt(0),
         };
     }
 
@@ -399,6 +448,7 @@
         lapsed={false}
         mode={"thread"}
         {blocked}
+        {messageContext}
         on:joinGroup
         on:cancelPreview
         on:upgrade
@@ -414,7 +464,6 @@
         on:attachGif={attachGif}
         on:makeMeme={makeMeme}
         on:tokenTransfer={tokenTransfer}
-        on:createTestMessages={createTestMessages}
         on:createP2PSwapMessage={createP2PSwapMessage}
         on:createPoll={createPoll} />
 {/if}

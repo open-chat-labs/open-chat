@@ -50,7 +50,7 @@ fn c2c_freeze_community_impl(args: Args, state: &mut RuntimeState) -> Response {
         handle_activity_notification(state);
 
         if args.return_members {
-            SuccessWithMembers(event, state.data.members.iter().map(|p| p.user_id).collect())
+            SuccessWithMembers(event, state.data.members.member_ids().iter().copied().collect())
         } else {
             Success(event)
         }

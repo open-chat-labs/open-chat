@@ -35,6 +35,11 @@
         blockedUsers as directlyBlockedUsers,
         communities,
         selectedCommunity,
+        CreatePoll,
+        CreateTestMessages,
+        SearchChat,
+        AttachGif,
+        TokenTransfer,
     } from "openchat-client";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
@@ -115,11 +120,51 @@
     }
 
     onMount(() => {
-        return messagesRead.subscribe(() => {
+        client.addEventListener("openchat_event", clientEvent);
+        const unsub = messagesRead.subscribe(() => {
             unreadMessages = getUnreadMessageCount(chat);
             firstUnreadMention = client.getFirstUnreadMention(chat);
         });
+        return () => {
+            unsub();
+            client.removeEventListener("openchat_event", clientEvent);
+        };
     });
+
+    function clientEvent(ev: Event): void {
+        if (ev instanceof CreatePoll) {
+            if (
+                ev.detail.chatId === messageContext.chatId &&
+                ev.detail.threadRootMessageIndex === undefined
+            ) {
+                createPoll();
+            }
+        }
+        if (ev instanceof CreateTestMessages) {
+            const [{ chatId, threadRootMessageIndex }, num] = ev.detail;
+            if (chatId === messageContext.chatId && threadRootMessageIndex === undefined) {
+                createTestMessages(num);
+            }
+        }
+        if (ev instanceof TokenTransfer) {
+            const { context } = ev.detail;
+            if (
+                context.chatId === messageContext.chatId &&
+                context.threadRootMessageIndex === undefined
+            ) {
+                tokenTransfer(ev);
+            }
+        }
+        if (ev instanceof AttachGif) {
+            const [{ chatId, threadRootMessageIndex }, search] = ev.detail;
+            if (chatId === messageContext.chatId && threadRootMessageIndex === undefined) {
+                attachGif(new CustomEvent("openchat_client", { detail: search }));
+            }
+        }
+        if (ev instanceof SearchChat) {
+            searchChat(ev);
+        }
+    }
 
     function importToCommunity() {
         importToCommunities = $communities.filter((c) => c.membership.role === "owner");
@@ -150,10 +195,10 @@
         creatingPoll = true;
     }
 
-    function tokenTransfer(ev: CustomEvent<{ ledger: string; amount: bigint } | undefined>) {
-        creatingCryptoTransfer = ev.detail ?? {
-            ledger: $lastCryptoSent ?? LEDGER_CANISTER_ICP,
-            amount: BigInt(0),
+    function tokenTransfer(ev: CustomEvent<{ ledger?: string; amount?: bigint }>) {
+        creatingCryptoTransfer = {
+            ledger: ev.detail.ledger ?? $lastCryptoSent ?? LEDGER_CANISTER_ICP,
+            amount: ev.detail.amount ?? BigInt(0),
         };
     }
 
@@ -193,11 +238,9 @@
         searchTerm = ev.detail;
     }
 
-    function createTestMessages(ev: CustomEvent<number>): void {
-        if (process.env.NODE_ENV === "production") return;
-
+    function createTestMessages(total: number): void {
         function send(n: number) {
-            if (n === ev.detail) return;
+            if (n === total) return;
 
             sendMessageWithAttachment(randomSentence(), false, undefined);
 
@@ -412,6 +455,7 @@
             {preview}
             {lapsed}
             {blocked}
+            {messageContext}
             externalContent={externalUrl !== undefined}
             on:joinGroup
             on:upgrade
@@ -425,7 +469,6 @@
             on:fileSelected={fileSelected}
             on:audioCaptured={fileSelected}
             on:sendMessage={sendMessage}
-            on:createTestMessages={createTestMessages}
             on:attachGif={attachGif}
             on:makeMeme={makeMeme}
             on:tokenTransfer={tokenTransfer}

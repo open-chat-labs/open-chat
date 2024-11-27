@@ -9,7 +9,7 @@ use user_canister::search_messages::{Response::*, *};
 const MIN_TERM_LENGTH: u8 = 3;
 const MAX_TERM_LENGTH: u8 = 30;
 
-#[query(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[query(guard = "caller_is_owner", msgpack = true)]
 fn search_messages(args: Args) -> Response {
     read_state(|state| search_messages_impl(args, state))
 }

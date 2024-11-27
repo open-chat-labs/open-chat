@@ -6,7 +6,7 @@ use user_canister::mark_read::{Response::*, *};
 use user_canister::{MarkMessagesReadArgs, UserCanisterEvent};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 fn mark_read(args: Args) -> Response {
     run_regular_jobs();

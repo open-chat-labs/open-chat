@@ -62,7 +62,7 @@ fn prepare(user_to_remove: UserId, block: bool, state: &RuntimeState) -> Result<
     let caller = state.env.caller();
 
     if let Some(member) = state.data.get_member(caller) {
-        if member.suspended.value {
+        if member.suspended().value {
             Err(UserSuspended)
         } else if member.lapsed().value {
             return Err(UserLapsed);
