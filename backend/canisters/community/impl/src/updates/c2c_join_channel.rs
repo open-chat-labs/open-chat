@@ -290,7 +290,7 @@ fn commit(
     }
 }
 
-pub(crate) fn add_members_to_public_channel_unchecked<'a>(
+pub(crate) fn add_members_to_public_channel_unchecked(
     user_ids: impl Iterator<Item = UserId>,
     channel: &mut Channel,
     community_members: &mut CommunityMembers,
