@@ -170,7 +170,6 @@ pub mod happy_path {
                 permissions_v2: None,
                 rules: Rules::default(),
                 events_ttl: None,
-                gate: None,
                 gate_config: None,
             },
         );
