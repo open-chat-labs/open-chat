@@ -5,13 +5,13 @@ use canister_tracing_macros::trace;
 use types::{ChatId, Timestamped};
 use user_canister::mute_notifications::{Response::*, *};
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 fn mute_notifications(args: Args) -> Response {
     toggle_mute_notifications_impl(args.chat_id, true)
 }
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 fn unmute_notifications(args: Args) -> Response {
     toggle_mute_notifications_impl(args.chat_id, false)

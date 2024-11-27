@@ -5,7 +5,7 @@ use types::UserId;
 use user_canister::initial_state::{Response::*, *};
 use utils::time::{today, tomorrow};
 
-#[query(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[query(guard = "caller_is_owner", msgpack = true)]
 fn initial_state(_args: Args) -> Response {
     read_state(initial_state_impl)
 }

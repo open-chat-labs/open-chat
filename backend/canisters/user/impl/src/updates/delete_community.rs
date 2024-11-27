@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use community_canister::c2c_delete_community;
 use user_canister::delete_community::{Response::*, *};
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 async fn delete_community(args: Args) -> Response {
     run_regular_jobs();

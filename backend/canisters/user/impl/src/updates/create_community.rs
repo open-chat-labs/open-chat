@@ -13,7 +13,7 @@ use utils::text_validation::{
     RulesValidationError,
 };
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 async fn create_community(mut args: Args) -> Response {
     run_regular_jobs();
