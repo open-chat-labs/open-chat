@@ -8,8 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-- Remove code to migrate metrics to new reduced size format ([#6901](https://github.com/open-chat-labs/open-chat/pull/6901))
 - Remove code to deduplicate @everyone mentions ([#6901](https://github.com/open-chat-labs/open-chat/pull/6901))
+- Remove code to migrate metrics to new reduced size format ([#6901](https://github.com/open-chat-labs/open-chat/pull/6901))
+- Remove code to migrate community members to new reduced size format ([#6901](https://github.com/open-chat-labs/open-chat/pull/6901))
 
 ## [[2.0.1477](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1477-community)] - 2024-11-27
 
