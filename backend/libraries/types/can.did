@@ -362,6 +362,7 @@ type GroupCanisterGroupChatSummaryUpdates = record {
     rules_accepted : opt bool;
     membership : opt GroupMembershipUpdates;
     video_call_in_progress : VideoCallUpdates;
+    any_updates_missed : bool;
 };
 
 type CommunityCanisterCommunitySummary = record {
@@ -498,6 +499,7 @@ type CommunityCanisterChannelSummaryUpdates = record {
     membership : opt GroupMembershipUpdates;
     video_call_in_progress : VideoCallUpdates;
     external_url : TextUpdate;
+    any_updates_missed : bool;
 };
 
 type GroupMembershipUpdates = record {

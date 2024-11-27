@@ -262,6 +262,8 @@ impl GroupChatCore {
                 .if_set_after(since)
                 .cloned()
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
+            any_updates_missed: self.members.any_updates_removed(since)
+                || member.as_ref().map(|m| m.any_updates_removed(since)).unwrap_or_default(),
         }
     }
 
@@ -2177,6 +2179,7 @@ pub struct SummaryUpdates {
     pub rules_changed: bool,
     pub video_call_in_progress: OptionUpdate<VideoCall>,
     pub external_url: OptionUpdate<String>,
+    pub any_updates_missed: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]

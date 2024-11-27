@@ -37,6 +37,8 @@ pub struct GroupMembers {
     blocked: BTreeSet<UserId>,
     suspended: BTreeSet<UserId>,
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
+    #[serde(default)]
+    latest_update_removed: TimestampMillis,
 }
 
 #[derive(Serialize_repr, Deserialize_repr, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
@@ -54,11 +56,8 @@ pub enum MemberUpdate {
 #[allow(clippy::too_many_arguments)]
 impl GroupMembers {
     pub fn prune_proposal_votes(&mut self, now: TimestampMillis) {
-        let cutoff = self.remove_updates_cutoff(now);
-        let key = (cutoff, MessageIndex::from(0));
-
         for member in self.members.values_mut() {
-            member.proposal_votes = member.proposal_votes.split_off(&key);
+            member.prune_proposal_votes(now);
         }
     }
 
@@ -74,6 +73,7 @@ impl GroupMembers {
             followed_threads: TimestampedSet::new(),
             unfollowed_threads: TimestampedSet::new(),
             proposal_votes: BTreeSet::default(),
+            latest_proposal_vote_removed: 0,
             suspended: Timestamped::default(),
             rules_accepted: Some(Timestamped::new(Version::zero(), now)),
             user_type,
@@ -96,6 +96,7 @@ impl GroupMembers {
             lapsed: BTreeSet::new(),
             suspended: BTreeSet::new(),
             updates: BTreeSet::new(),
+            latest_update_removed: 0,
         }
     }
 
@@ -124,6 +125,7 @@ impl GroupMembers {
                 followed_threads: TimestampedSet::new(),
                 unfollowed_threads: TimestampedSet::new(),
                 proposal_votes: BTreeSet::default(),
+                latest_proposal_vote_removed: 0,
                 suspended: Timestamped::default(),
                 rules_accepted: None,
                 user_type,
@@ -332,7 +334,7 @@ impl GroupMembers {
     }
 
     pub fn register_proposal_vote(&mut self, user_id: UserId, message_index: MessageIndex, now: TimestampMillis) {
-        let cutoff = self.remove_updates_cutoff(now);
+        let cutoff = calculate_remove_updates_cutoff(now);
         if let Some(member) = self.members.get_mut(&user_id) {
             member.proposal_votes = member.proposal_votes.split_off(&(cutoff, 0.into()));
             member.proposal_votes.insert((now, message_index));
@@ -438,20 +440,26 @@ impl GroupMembers {
         self.updates.iter().next_back().map(|(ts, _, _)| *ts)
     }
 
+    pub fn any_updates_removed(&self, since: TimestampMillis) -> bool {
+        self.latest_update_removed > since
+    }
+
     fn prune_then_insert_member_update(&mut self, user_id: UserId, update: MemberUpdate, now: TimestampMillis) {
         self.prune_member_updates(now);
         self.updates.insert((now, user_id, update));
     }
 
     pub fn prune_member_updates(&mut self, now: TimestampMillis) {
-        let cutoff = self.remove_updates_cutoff(now);
-        self.updates = self
+        let cutoff = calculate_remove_updates_cutoff(now);
+        let still_valid = self
             .updates
             .split_off(&(cutoff, Principal::anonymous().into(), MemberUpdate::Added));
-    }
 
-    fn remove_updates_cutoff(&self, now: TimestampMillis) -> Milliseconds {
-        now.saturating_sub(REMOVE_UPDATES_AFTER_DURATION)
+        if let Some((ts, _, _)) = self.updates.pop_last() {
+            self.latest_update_removed = ts;
+        }
+
+        self.updates = still_valid;
     }
 
     #[cfg(test)]
@@ -561,6 +569,8 @@ pub struct GroupMemberInternal {
     #[serde(rename = "p", default, skip_serializing_if = "BTreeSet::is_empty")]
     #[serde(deserialize_with = "deserialize_proposal_votes")]
     proposal_votes: BTreeSet<(TimestampMillis, MessageIndex)>,
+    #[serde(rename = "pr", default, skip_serializing_if = "is_default")]
+    latest_proposal_vote_removed: TimestampMillis,
     #[serde(rename = "s", default, skip_serializing_if = "is_default")]
     suspended: Timestamped<bool>,
     #[serde(rename = "ra", default, skip_serializing_if = "is_default")]
@@ -590,6 +600,10 @@ fn deserialize_proposal_votes<'de, D: Deserializer<'de>>(d: D) -> Result<BTreeSe
         }
         ProposalVotesCombined::New(set) => set,
     })
+}
+
+fn calculate_remove_updates_cutoff(now: TimestampMillis) -> Milliseconds {
+    now.saturating_sub(REMOVE_UPDATES_AFTER_DURATION)
 }
 
 #[derive(Deserialize)]
@@ -687,6 +701,21 @@ impl GroupMemberInternal {
             .take_while(move |(ts, _)| *ts > since)
             .copied()
     }
+
+    pub fn any_updates_removed(&self, since: TimestampMillis) -> bool {
+        self.latest_proposal_vote_removed > since
+    }
+
+    fn prune_proposal_votes(&mut self, now: TimestampMillis) {
+        let cutoff = calculate_remove_updates_cutoff(now);
+        let still_valid = self.proposal_votes.split_off(&(cutoff, 0.into()));
+
+        if let Some((ts, _)) = self.proposal_votes.pop_last() {
+            self.latest_proposal_vote_removed = ts;
+        }
+
+        self.proposal_votes = still_valid;
+    }
 }
 
 impl Member for GroupMemberInternal {
@@ -776,6 +805,7 @@ mod tests {
             followed_threads: TimestampedSet::default(),
             unfollowed_threads: TimestampedSet::default(),
             proposal_votes: BTreeSet::new(),
+            latest_proposal_vote_removed: 0,
             suspended: Timestamped::default(),
             min_visible_event_index: 0.into(),
             min_visible_message_index: 0.into(),
@@ -806,6 +836,7 @@ mod tests {
             followed_threads: [(1.into(), 1)].into_iter().collect(),
             unfollowed_threads: [(1.into(), 1)].into_iter().collect(),
             proposal_votes: BTreeSet::from([(1, 1.into())]),
+            latest_proposal_vote_removed: 1,
             suspended: Timestamped::new(true, 1),
             min_visible_event_index: 1.into(),
             min_visible_message_index: 1.into(),
@@ -817,7 +848,7 @@ mod tests {
         let member_bytes = msgpack::serialize_then_unwrap(&member);
         let member_bytes_len = member_bytes.len();
 
-        assert_eq!(member_bytes_len, 159);
+        assert_eq!(member_bytes_len, 163);
 
         let _deserialized: GroupMemberInternal = msgpack::deserialize_then_unwrap(&member_bytes);
     }

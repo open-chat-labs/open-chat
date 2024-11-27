@@ -212,6 +212,7 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub membership: Option<GroupMembershipUpdates>,
     #[ts(as = "crate::OptionUpdateVideoCall")]
     pub video_call_in_progress: OptionUpdate<VideoCall>,
+    pub any_updates_missed: bool,
 }
 
 #[ts_export]
