@@ -1,6 +1,7 @@
 use crate::mentions::Mentions;
 use crate::roles::GroupRoleInternal;
 use crate::AccessRulesInternal;
+use candid::Principal;
 use group_community_common::{Member, Members};
 use serde::de::{SeqAccess, Visitor};
 use serde::ser::SerializeSeq;
@@ -10,15 +11,17 @@ use std::cmp::max;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Formatter;
 use types::{
-    is_default, EventIndex, GroupMember, GroupPermissions, MessageIndex, TimestampMillis, Timestamped, UserId, UserType,
-    Version,
+    is_default, EventIndex, GroupMember, GroupPermissions, MessageIndex, Milliseconds, TimestampMillis, Timestamped, UserId,
+    UserType, Version,
 };
+use utils::time::DAY_IN_MS;
 use utils::timestamped_set::TimestampedSet;
 
 #[cfg(test)]
 mod proptests;
 
 const MAX_MEMBERS_PER_GROUP: u32 = 100_000;
+const REMOVE_UPDATES_AFTER_DURATION: Milliseconds = 90 * DAY_IN_MS;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct GroupMembers {
@@ -50,6 +53,15 @@ pub enum MemberUpdate {
 
 #[allow(clippy::too_many_arguments)]
 impl GroupMembers {
+    pub fn prune_proposal_votes(&mut self, now: TimestampMillis) {
+        let cutoff = self.remove_updates_cutoff(now);
+        let key = (cutoff, MessageIndex::from(0));
+
+        for member in self.members.values_mut() {
+            member.proposal_votes = member.proposal_votes.split_off(&key);
+        }
+    }
+
     pub fn new(creator_user_id: UserId, user_type: UserType, now: TimestampMillis) -> GroupMembers {
         let member = GroupMemberInternal {
             user_id: creator_user_id,
@@ -124,7 +136,7 @@ impl GroupMembers {
             if !notifications_muted {
                 self.notifications_unmuted.insert(user_id);
             }
-            self.updates.insert((now, user_id, MemberUpdate::Added));
+            self.prune_then_insert_member_update(user_id, MemberUpdate::Added, now);
             AddResult::Success(AddMemberSuccess { member, unlapse: false })
         } else {
             AddResult::AlreadyInGroup
@@ -152,7 +164,7 @@ impl GroupMembers {
                 self.suspended.remove(&user_id);
             }
             self.member_ids.remove(&user_id);
-            self.updates.insert((now, user_id, MemberUpdate::Removed));
+            self.prune_then_insert_member_update(user_id, MemberUpdate::Removed, now);
             Some(member)
         } else {
             None
@@ -161,7 +173,7 @@ impl GroupMembers {
 
     pub fn block(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
         if self.blocked.insert(user_id) {
-            self.updates.insert((now, user_id, MemberUpdate::Blocked));
+            self.prune_then_insert_member_update(user_id, MemberUpdate::Blocked, now);
             true
         } else {
             false
@@ -170,7 +182,7 @@ impl GroupMembers {
 
     pub fn unblock(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
         if self.blocked.remove(&user_id) {
-            self.updates.insert((now, user_id, MemberUpdate::Unblocked));
+            self.prune_then_insert_member_update(user_id, MemberUpdate::Unblocked, now);
             true
         } else {
             false
@@ -293,7 +305,7 @@ impl GroupMembers {
             _ => false,
         };
 
-        self.updates.insert((now, user_id, MemberUpdate::RoleChanged));
+        self.prune_then_insert_member_update(user_id, MemberUpdate::RoleChanged, now);
 
         ChangeRoleResult::Success(ChangeRoleSuccess { prev_role })
     }
@@ -320,7 +332,9 @@ impl GroupMembers {
     }
 
     pub fn register_proposal_vote(&mut self, user_id: UserId, message_index: MessageIndex, now: TimestampMillis) {
+        let cutoff = self.remove_updates_cutoff(now);
         if let Some(member) = self.members.get_mut(&user_id) {
+            member.proposal_votes = member.proposal_votes.split_off(&(cutoff, 0.into()));
             member.proposal_votes.insert((now, message_index));
         }
     }
@@ -342,6 +356,7 @@ impl GroupMembers {
     }
 
     pub fn unlapse_all(&mut self, now: TimestampMillis) {
+        self.prune_member_updates(now);
         for user_id in std::mem::take(&mut self.lapsed) {
             if let Some(member) = self.members.get_mut(&user_id) {
                 if member.set_lapsed(false, now) {
@@ -370,11 +385,11 @@ impl GroupMembers {
                 self.lapsed.remove(&user_id);
             }
 
-            self.updates.insert((
-                now,
+            self.prune_then_insert_member_update(
                 user_id,
                 if lapsed { MemberUpdate::Lapsed } else { MemberUpdate::Unlapsed },
-            ));
+                now,
+            );
         }
     }
 
@@ -421,6 +436,22 @@ impl GroupMembers {
 
     pub fn last_updated(&self) -> Option<TimestampMillis> {
         self.updates.iter().next_back().map(|(ts, _, _)| *ts)
+    }
+
+    fn prune_then_insert_member_update(&mut self, user_id: UserId, update: MemberUpdate, now: TimestampMillis) {
+        self.prune_member_updates(now);
+        self.updates.insert((now, user_id, update));
+    }
+
+    pub fn prune_member_updates(&mut self, now: TimestampMillis) {
+        let cutoff = self.remove_updates_cutoff(now);
+        self.updates = self
+            .updates
+            .split_off(&(cutoff, Principal::anonymous().into(), MemberUpdate::Added));
+    }
+
+    fn remove_updates_cutoff(&self, now: TimestampMillis) -> Milliseconds {
+        now.saturating_sub(REMOVE_UPDATES_AFTER_DURATION)
     }
 
     #[cfg(test)]
