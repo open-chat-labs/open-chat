@@ -61,7 +61,7 @@ impl GroupMembers {
             mentions: Mentions::default(),
             followed_threads: TimestampedSet::new(),
             unfollowed_threads: TimestampedSet::new(),
-            proposal_votes: BTreeMap::default(),
+            proposal_votes: BTreeSet::default(),
             suspended: Timestamped::default(),
             rules_accepted: Some(Timestamped::new(Version::zero(), now)),
             user_type,
@@ -111,7 +111,7 @@ impl GroupMembers {
                 mentions: Mentions::default(),
                 followed_threads: TimestampedSet::new(),
                 unfollowed_threads: TimestampedSet::new(),
-                proposal_votes: BTreeMap::default(),
+                proposal_votes: BTreeSet::default(),
                 suspended: Timestamped::default(),
                 rules_accepted: None,
                 user_type,
@@ -319,6 +319,12 @@ impl GroupMembers {
         }
     }
 
+    pub fn register_proposal_vote(&mut self, user_id: UserId, message_index: MessageIndex, now: TimestampMillis) {
+        if let Some(member) = self.members.get_mut(&user_id) {
+            member.proposal_votes.insert((now, message_index));
+        }
+    }
+
     pub fn set_suspended(&mut self, user_id: UserId, suspended: bool, now: TimestampMillis) -> Option<bool> {
         let member = self.members.get_mut(&user_id)?;
 
@@ -521,8 +527,9 @@ pub struct GroupMemberInternal {
     pub followed_threads: TimestampedSet<MessageIndex>,
     #[serde(rename = "tu", default, skip_serializing_if = "TimestampedSet::is_empty")]
     pub unfollowed_threads: TimestampedSet<MessageIndex>,
-    #[serde(rename = "p", default, skip_serializing_if = "BTreeMap::is_empty")]
-    pub proposal_votes: BTreeMap<TimestampMillis, Vec<MessageIndex>>,
+    #[serde(rename = "p", default, skip_serializing_if = "BTreeSet::is_empty")]
+    #[serde(deserialize_with = "deserialize_proposal_votes")]
+    proposal_votes: BTreeSet<(TimestampMillis, MessageIndex)>,
     #[serde(rename = "s", default, skip_serializing_if = "is_default")]
     suspended: Timestamped<bool>,
     #[serde(rename = "ra", default, skip_serializing_if = "is_default")]
@@ -535,6 +542,30 @@ pub struct GroupMemberInternal {
     min_visible_message_index: MessageIndex,
     #[serde(rename = "la", default, skip_serializing_if = "is_default")]
     lapsed: Timestamped<bool>,
+}
+
+fn deserialize_proposal_votes<'de, D: Deserializer<'de>>(d: D) -> Result<BTreeSet<(TimestampMillis, MessageIndex)>, D::Error> {
+    let votes = ProposalVotesCombined::deserialize(d)?;
+
+    Ok(match votes {
+        ProposalVotesCombined::Old(map) => {
+            let mut set = BTreeSet::new();
+            for (ts, message_indexes) in map {
+                for message_index in message_indexes {
+                    set.insert((ts, message_index));
+                }
+            }
+            set
+        }
+        ProposalVotesCombined::New(set) => set,
+    })
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum ProposalVotesCombined {
+    Old(BTreeMap<TimestampMillis, Vec<MessageIndex>>),
+    New(BTreeSet<(TimestampMillis, MessageIndex)>),
 }
 
 impl GroupMemberInternal {
@@ -613,6 +644,17 @@ impl GroupMemberInternal {
                 .rules_accepted
                 .as_ref()
                 .map_or(false, |accepted| accepted.value >= rules.text.version))
+    }
+
+    pub fn iter_proposal_votes_since(
+        &self,
+        since: TimestampMillis,
+    ) -> impl Iterator<Item = (TimestampMillis, MessageIndex)> + '_ {
+        self.proposal_votes
+            .iter()
+            .rev()
+            .take_while(move |(ts, _)| *ts > since)
+            .copied()
     }
 }
 
