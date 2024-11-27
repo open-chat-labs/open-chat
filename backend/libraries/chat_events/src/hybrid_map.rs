@@ -1,4 +1,4 @@
-use crate::stable_storage::ChatEventsStableStorage;
+use crate::stable_memory::ChatEventsStableStorage;
 use crate::{ChatEventInternal, EventsMap};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;

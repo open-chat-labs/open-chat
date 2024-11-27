@@ -1,4 +1,4 @@
-use crate::stable_storage::key::{Key, KeyPrefix};
+use crate::stable_memory::key::{Key, KeyPrefix};
 use crate::{ChatEventInternal, EventsMap};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;

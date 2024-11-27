@@ -1,6 +1,6 @@
 use crate::hybrid_map::HybridMap;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
-use crate::stable_storage::ChatEventsStableStorage;
+use crate::stable_memory::ChatEventsStableStorage;
 use crate::{ChatEventInternal, EventKey, EventOrExpiredRangeInternal, EventsMap, MessageInternal};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
