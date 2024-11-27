@@ -5892,6 +5892,9 @@ export const PrizeContent = Type.Object({
     end_date: Type.BigInt(),
     caption: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
     diamond_only: Type.Boolean(),
+    lifetime_diamond_only: Type.Boolean(),
+    unique_person_only: Type.Boolean(),
+    streak_only: Type.Number(),
 });
 
 export type GroupRulesChanged = Static<typeof GroupRulesChanged>;
@@ -7552,6 +7555,9 @@ export const PrizeContentInitial = Type.Object({
     end_date: Type.BigInt(),
     caption: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
     diamond_only: Type.Boolean(),
+    lifetime_diamond_only: Type.Boolean(),
+    unique_person_only: Type.Boolean(),
+    streak_only: Type.Number(),
 });
 
 export type OptionUpdateAccessGate = Static<typeof OptionUpdateAccessGate>;

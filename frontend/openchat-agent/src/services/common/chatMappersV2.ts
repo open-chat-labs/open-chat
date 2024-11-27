@@ -673,6 +673,9 @@ function prizeContent(value: TPrizeContent): PrizeContent {
         prizesRemaining: value.prizes_remaining,
         prizesPending: value.prizes_pending,
         diamondOnly: value.diamond_only,
+        lifetimeDiamondOnly: value.lifetime_diamond_only,
+        uniquePersonOnly: value.unique_person_only,
+        streakOnly: value.streak_only,
         winners: value.winners.map(principalBytesToString),
         token: token(value.token),
         endDate: value.end_date,
@@ -1845,6 +1848,9 @@ export function apiPrizeContentInitial(domain: PrizeContentInitial): TPrizeConte
         transfer: apiPendingCryptoTransaction(domain.transfer),
         end_date: domain.endDate,
         diamond_only: domain.diamondOnly,
+        lifetime_diamond_only: domain.lifetimeDiamondOnly,
+        unique_person_only: domain.uniquePersonOnly,
+        streak_only: domain.streakOnly,
         prizes_v2: domain.prizes,
     };
 }

@@ -621,7 +621,7 @@ export type SwapStatusErrorReserved = { reserved_by: UserId, };
 export type MessagePinned = { message_index: MessageIndex, pinned_by: UserId, };
 export type P2PSwapContentInitial = { token0: TokenInfo, token0_amount: bigint, token1: TokenInfo, token1_amount: bigint, expires_in: bigint, caption?: string | undefined, };
 export type GroupDescriptionChanged = { new_description: string, previous_description: string, changed_by: UserId, };
-export type PrizeContent = { prizes_remaining: number, prizes_pending: number, winners: Array<UserId>, winner_count: number, user_is_winner: boolean, token: Cryptocurrency, end_date: bigint, caption?: string | undefined, diamond_only: boolean, };
+export type PrizeContent = { prizes_remaining: number, prizes_pending: number, winners: Array<UserId>, winner_count: number, user_is_winner: boolean, token: Cryptocurrency, end_date: bigint, caption?: string | undefined, diamond_only: boolean, lifetime_diamond_only: boolean, unique_person_only: boolean, streak_only: number, };
 export type GroupRulesChanged = { enabled: boolean, prev_enabled: boolean, changed_by: UserId, };
 export type GroupCreated = { name: string, description: string, created_by: UserId, };
 export type UserSummaryV2 = { user_id: UserId, stable?: UserSummaryStable | undefined, volatile?: UserSummaryVolatile | undefined, };
@@ -773,7 +773,7 @@ export type UserSendMessageWithTransferToChannelResponse = { "Success": UserSend
 export type UserAcceptP2pSwapResponse = { "Success": AcceptSwapSuccess } | "ChatNotFound" | "InsufficientFunds" | { "StatusError": SwapStatusError } | "SwapNotFound" | "UserSuspended" | "PinRequired" | { "PinIncorrect": bigint } | { "TooManyFailedPinAttempts": bigint } | { "InternalError": string };
 export type PollContent = { config: PollConfig, votes: PollVotes, ended: boolean, };
 export type CryptoContent = { recipient: UserId, transfer: CryptoTransaction, caption?: string | undefined, };
-export type PrizeContentInitial = { prizes_v2: Array<bigint>, transfer: CryptoTransaction, end_date: bigint, caption?: string | undefined, diamond_only: boolean, };
+export type PrizeContentInitial = { prizes_v2: Array<bigint>, transfer: CryptoTransaction, end_date: bigint, caption?: string | undefined, diamond_only: boolean, lifetime_diamond_only: boolean, unique_person_only: boolean, streak_only: number, };
 /**
  * @default NoChange
  */
