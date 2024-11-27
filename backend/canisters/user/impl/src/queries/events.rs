@@ -7,7 +7,7 @@ use chat_events::{ChatEventsListReader, Reader};
 use types::{EventIndex, EventOrExpiredRange, EventsResponse, MessageIndex, TimestampMillis, UserId};
 use user_canister::events::{Response::*, *};
 
-#[query(guard = "caller_is_owner_or_local_user_index", candid = true, msgpack = true)]
+#[query(guard = "caller_is_owner_or_local_user_index", msgpack = true)]
 fn events(args: Args) -> Response {
     read_state(|state| {
         read_events(

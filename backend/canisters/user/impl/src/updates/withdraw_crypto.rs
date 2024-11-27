@@ -7,7 +7,7 @@ use canister_tracing_macros::trace;
 use user_canister::withdraw_crypto_v2::{Response::*, *};
 use utils::consts::MEMO_SEND;
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 async fn withdraw_crypto_v2(args: Args) -> Response {
     run_regular_jobs();

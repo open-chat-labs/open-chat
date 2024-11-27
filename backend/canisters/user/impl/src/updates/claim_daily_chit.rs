@@ -8,7 +8,7 @@ use types::{Achievement, ChitEarned, ChitEarnedReason, UserId};
 use user_canister::claim_daily_chit::{Response::*, *};
 use utils::time::tomorrow;
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 fn claim_daily_chit(_args: Args) -> Response {
     mutate_state(claim_daily_chit_impl)

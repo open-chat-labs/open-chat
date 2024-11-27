@@ -9,7 +9,7 @@ use user_canister::{
     JoinVideoCall, UserCanisterEvent,
 };
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 fn join_video_call(args: Args) -> Response {
     run_regular_jobs();

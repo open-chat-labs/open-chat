@@ -3,7 +3,7 @@ use crate::{guards::caller_is_owner, RuntimeState};
 use canister_api_macros::query;
 use user_canister::message_activity_feed::{Response::*, *};
 
-#[query(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[query(guard = "caller_is_owner", msgpack = true)]
 fn message_activity_feed(args: Args) -> Response {
     read_state(|state| message_activity_feed_impl(args, state))
 }
