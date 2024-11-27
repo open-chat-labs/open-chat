@@ -2881,7 +2881,6 @@ dependencies = [
  "chat_events",
  "event_store_producer",
  "group_community_common",
- "ic-cdk 0.16.0",
  "itertools 0.13.0",
  "lazy_static",
  "msgpack",
@@ -2891,7 +2890,6 @@ dependencies = [
  "serde",
  "serde_repr",
  "test-strategy",
- "tracing",
  "types",
  "utils 0.1.0",
 ]
