@@ -7,7 +7,7 @@ use types::icrc1::PendingCryptoTransaction;
 use types::{CanisterId, UserId};
 use user_canister::submit_proposal::{Response::*, *};
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 async fn submit_proposal(args: Args) -> Response {
     run_regular_jobs();

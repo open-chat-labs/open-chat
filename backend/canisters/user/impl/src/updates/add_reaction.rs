@@ -7,7 +7,7 @@ use types::{Achievement, EventIndex};
 use user_canister::add_reaction::{Response::*, *};
 use user_canister::{ToggleReactionArgs, UserCanisterEvent};
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 fn add_reaction(args: Args) -> Response {
     run_regular_jobs();
