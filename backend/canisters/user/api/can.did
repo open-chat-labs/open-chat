@@ -434,7 +434,6 @@ type CreateGroupArgs = record {
     permissions_v2 : opt GroupPermissions;
     rules : Rules;
     events_ttl : opt Milliseconds;
-    gate : opt AccessGate;
     gate_config : opt AccessGateConfig;
 };
 
@@ -497,7 +496,6 @@ type CreateCommunityArgs = record {
     history_visible_to_new_joiners : bool;
     permissions : opt CommunityPermissions;
     rules : Rules;
-    gate : opt AccessGate;
     gate_config : opt AccessGateConfig;
     default_channels : vec text;
     default_channel_rules : opt Rules;
