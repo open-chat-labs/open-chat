@@ -26,14 +26,6 @@ pub struct HybridMap<EventsMap> {
 }
 
 impl<MSlow: EventsMap> HybridMap<MSlow> {
-    // TODO: Remove this once everything is migrated over
-    pub fn populate_fast_map(&mut self, latest_event_index: EventIndex) {
-        for event in self.slow.iter().rev().take(self.max_events_in_fast_map as usize) {
-            self.fast.insert(event.index, event);
-        }
-        self.latest_event_index = latest_event_index;
-    }
-
     fn fast_enabled(&self) -> bool {
         self.max_events_in_fast_map > 0
     }

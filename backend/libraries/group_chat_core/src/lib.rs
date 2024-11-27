@@ -10,7 +10,7 @@ use regex_lite::Regex;
 use search::Query;
 use serde::{Deserialize, Serialize};
 use std::cmp::{max, min, Reverse};
-use std::collections::{BTreeMap, BTreeSet, HashSet, VecDeque};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
 use types::{
     AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, ContentValidationError, CustomPermission, Document,
     EventIndex, EventOrExpiredRange, EventWrapper, EventsResponse, ExternalUrlUpdated, FieldTooLongResult, FieldTooShortResult,
@@ -61,10 +61,7 @@ pub struct GroupChatCore {
     pub invited_users: InvitedUsers,
     pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
     pub external_url: Timestamped<Option<String>>,
-    #[serde(default)]
     at_everyone_mentions: BTreeMap<TimestampMillis, AtEveryoneMention>,
-    #[serde(default)]
-    pub dedupe_at_everyone_mentions_queue: VecDeque<UserId>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -121,7 +118,6 @@ impl GroupChatCore {
             min_visible_indexes_for_new_members: None,
             external_url: Timestamped::new(external_url, now),
             at_everyone_mentions: BTreeMap::new(),
-            dedupe_at_everyone_mentions_queue: VecDeque::new(),
         }
     }
 

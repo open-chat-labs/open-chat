@@ -7,7 +7,7 @@ use serde::ser::SerializeSeq;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::cmp::max;
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Formatter;
 use types::{
     is_default, EventIndex, GroupMember, GroupPermissions, MessageIndex, TimestampMillis, Timestamped, UserId, UserType,
@@ -23,7 +23,7 @@ const MAX_MEMBERS_PER_GROUP: u32 = 100_000;
 #[derive(Serialize, Deserialize, Default)]
 pub struct GroupMembers {
     #[serde(serialize_with = "serialize_members", deserialize_with = "deserialize_members")]
-    members: HashMap<UserId, GroupMemberInternal>,
+    members: BTreeMap<UserId, GroupMemberInternal>,
     member_ids: BTreeSet<UserId>,
     owners: BTreeSet<UserId>,
     admins: BTreeSet<UserId>,
@@ -183,14 +183,6 @@ impl GroupMembers {
 
     pub fn member_ids(&self) -> &BTreeSet<UserId> {
         &self.member_ids
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = &GroupMemberInternal> {
-        self.members.values()
-    }
-
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut GroupMemberInternal> {
-        self.members.values_mut()
     }
 
     pub fn get(&self, user_id: &UserId) -> Option<&GroupMemberInternal> {
@@ -662,7 +654,7 @@ fn mentions_are_empty(value: &Mentions) -> bool {
     value.is_empty()
 }
 
-fn serialize_members<S: Serializer>(value: &HashMap<UserId, GroupMemberInternal>, serializer: S) -> Result<S::Ok, S::Error> {
+fn serialize_members<S: Serializer>(value: &BTreeMap<UserId, GroupMemberInternal>, serializer: S) -> Result<S::Ok, S::Error> {
     let mut seq = serializer.serialize_seq(Some(value.len()))?;
     for member in value.values() {
         seq.serialize_element(member)?;
@@ -670,14 +662,14 @@ fn serialize_members<S: Serializer>(value: &HashMap<UserId, GroupMemberInternal>
     seq.end()
 }
 
-fn deserialize_members<'de, D: Deserializer<'de>>(deserializer: D) -> Result<HashMap<UserId, GroupMemberInternal>, D::Error> {
+fn deserialize_members<'de, D: Deserializer<'de>>(deserializer: D) -> Result<BTreeMap<UserId, GroupMemberInternal>, D::Error> {
     deserializer.deserialize_seq(GroupMembersMapVisitor)
 }
 
 struct GroupMembersMapVisitor;
 
 impl<'de> Visitor<'de> for GroupMembersMapVisitor {
-    type Value = HashMap<UserId, GroupMemberInternal>;
+    type Value = BTreeMap<UserId, GroupMemberInternal>;
 
     fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
         formatter.write_str("a sequence")
@@ -687,7 +679,7 @@ impl<'de> Visitor<'de> for GroupMembersMapVisitor {
     where
         A: SeqAccess<'de>,
     {
-        let mut map = seq.size_hint().map_or_else(HashMap::new, HashMap::with_capacity);
+        let mut map = BTreeMap::new();
         while let Some(next) = seq.next_element::<GroupMemberInternal>()? {
             map.insert(next.user_id, next);
         }

@@ -2,7 +2,6 @@ use crate::hybrid_map::HybridMap;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::stable_storage::ChatEventsStableStorage;
 use crate::{ChatEventInternal, EventKey, EventOrExpiredRangeInternal, EventsMap, MessageInternal};
-use candid::Principal;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
@@ -15,41 +14,29 @@ use types::{
 
 #[derive(Serialize, Deserialize)]
 pub struct ChatEventsList {
-    #[serde(skip_deserializing, default = "default_stable_events_map")]
-    stable_events_map: HybridMap<ChatEventsStableStorage>,
+    events_map: HybridMap<ChatEventsStableStorage>,
     message_id_map: HashMap<MessageId, EventIndex>,
     message_event_indexes: Vec<EventIndex>,
     latest_event_index: Option<EventIndex>,
     latest_event_timestamp: Option<TimestampMillis>,
 }
 
-fn default_stable_events_map() -> HybridMap<ChatEventsStableStorage> {
-    HybridMap::new(Chat::Group(Principal::anonymous().into()), None)
-}
-
 impl ChatEventsList {
-    pub fn init_hybrid_map(&mut self, chat: Chat, thread_root_message_index: Option<MessageIndex>) {
-        self.stable_events_map = HybridMap::new(chat, thread_root_message_index);
-        self.stable_events_map
-            .populate_fast_map(self.latest_event_index.unwrap_or_default());
-    }
-
-    pub fn update_event_in_stable_memory(&mut self, event_key: EventKey) {
+    pub fn update_event_in_memory(&mut self, event_key: EventKey) {
         if let Some(event_index) = self.event_index(event_key) {
-            if let Some(event) = self.stable_events_map.get(event_index) {
-                self.stable_events_map.insert(event);
+            if let Some(event) = self.events_map.get(event_index) {
+                self.events_map.insert(event);
             }
         }
     }
 
     pub fn set_stable_memory_prefix(&mut self, chat: Chat, thread_root_message_index: Option<MessageIndex>) {
-        self.stable_events_map
-            .set_stable_memory_prefix(chat, thread_root_message_index);
+        self.events_map.set_stable_memory_prefix(chat, thread_root_message_index);
     }
 
     pub fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
         ChatEventsList {
-            stable_events_map: HybridMap::new(chat, thread_root_message_index),
+            events_map: HybridMap::new(chat, thread_root_message_index),
             message_id_map: HashMap::new(),
             message_event_indexes: Vec::new(),
             latest_event_index: None,
@@ -81,7 +68,7 @@ impl ChatEventsList {
             expires_at,
             event,
         };
-        self.stable_events_map.insert(event_wrapper);
+        self.events_map.insert(event_wrapper);
 
         self.latest_event_index = Some(event_index);
         self.latest_event_timestamp = Some(now);
@@ -121,7 +108,7 @@ impl ChatEventsList {
         if let Some(mut event) = self.get_event(event_key, EventIndex::default()) {
             update_event_fn(&mut event).map(|result| {
                 let event_index = event.index;
-                self.stable_events_map.insert(event);
+                self.events_map.insert(event);
                 (result, event_index)
             })
         } else {
@@ -153,7 +140,7 @@ impl ChatEventsList {
             (min_visible_event_index, self.latest_event_index.unwrap_or_default())
         };
 
-        let iter = self.stable_events_map.range(min..=max);
+        let iter = self.events_map.range(min..=max);
 
         if ascending {
             Box::new(ChatEventsListIterator {
@@ -206,7 +193,7 @@ impl ChatEventsList {
     }
 
     pub(crate) fn event_count_since<F: Fn(&ChatEventInternal) -> bool>(&self, since: TimestampMillis, filter: &F) -> usize {
-        self.stable_events_map
+        self.events_map
             .iter()
             .rev()
             .take_while(|e| e.timestamp > since)
@@ -215,7 +202,7 @@ impl ChatEventsList {
     }
 
     pub fn remove(&mut self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
-        self.stable_events_map.remove(event_index)
+        self.events_map.remove(event_index)
     }
 
     pub fn latest_event_index(&self) -> Option<EventIndex> {
@@ -243,7 +230,7 @@ impl ChatEventsList {
     }
 
     pub fn last(&self) -> Option<EventWrapperInternal<ChatEventInternal>> {
-        self.stable_events_map.iter().next_back()
+        self.events_map.iter().next_back()
     }
 
     pub fn contains_message_id(&self, message_id: MessageId) -> bool {
@@ -262,12 +249,12 @@ impl ChatEventsList {
         &self,
         event_index: EventIndex,
     ) -> Result<EventWrapperInternal<ChatEventInternal>, (Option<EventIndex>, Option<EventIndex>)> {
-        let next_key = match self.stable_events_map.range(event_index..).next() {
+        let next_key = match self.events_map.range(event_index..).next() {
             Some(v) if v.index == event_index => return Ok(v),
             Some(v) => Some(v.index),
             None => None,
         };
-        let previous_key = self.stable_events_map.range(..event_index).next_back().map(|e| e.index);
+        let previous_key = self.events_map.range(..event_index).next_back().map(|e| e.index);
 
         Err((previous_key, next_key))
     }
