@@ -193,6 +193,12 @@
       "candid": "",
       "type": "custom",
       "wasm": "./wasms/icrc_ledger.wasm.gz"
+    },
+    "bot_api_gateway": {
+      "build": "",
+      "candid": "",
+      "type": "custom",
+      "wasm": "wasms/bot_api_gateway.wasm.gz"
     }
   },
   "networks": {

@@ -925,6 +925,9 @@ function messageToEvent(
                     endDate: message.content.endDate,
                     caption: message.content.caption,
                     diamondOnly: message.content.diamondOnly,
+                    lifetimeDiamondOnly: message.content.lifetimeDiamondOnly,
+                    uniquePersonOnly: message.content.uniquePersonOnly,
+                    streakOnly: message.content.streakOnly,
                 } as PrizeContent;
                 break;
             case "p2p_swap_content_initial":

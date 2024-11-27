@@ -164,6 +164,8 @@
             on:retrySend={retrySend}
             on:editMessage={editEvent}
             on:upgrade
+            on:verifyHumanity
+            on:claimDailyChit
             on:forward
             on:expandMessage
             on:collapseMessage

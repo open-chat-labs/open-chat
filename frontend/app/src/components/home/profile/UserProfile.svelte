@@ -70,7 +70,6 @@
     import VideoCallSettings from "./VideoCallSettings.svelte";
     import ChitEvents from "./ChitEvents.svelte";
     import Human from "../../icons/Human.svelte";
-    import VerifyHumanity from "./VerifyHumanity.svelte";
     import { uniquePersonGate } from "../../../utils/access";
     import ReferredUsersList from "./ReferredUsersList.svelte";
     import LinkedAuthAccounts from "./LinkedAuthAccounts.svelte";
@@ -95,7 +94,6 @@
     let checkingUsername: boolean;
     let view: "global" | "communities" | "chit" = "global";
     let selectedCommunityId = "";
-    let verifying = false;
 
     $: originalUsername = user?.username ?? "";
     $: originalDisplayName = user?.displayName ?? undefined;
@@ -248,10 +246,6 @@
     }
 </script>
 
-{#if verifying}
-    <VerifyHumanity on:close={() => (verifying = false)} on:success={() => (verifying = false)} />
-{/if}
-
 <SectionHeader border={false} flush shadow>
     <h4 class="title"><Translatable resourceKey={i18nKey("profile.title")} /></h4>
     <span title={$_("close")} class="close" on:click={closeProfile}>
@@ -390,7 +384,7 @@
                     {:else}
                         <Translatable resourceKey={i18nKey("human.notVerified")} />
                         <div class="full-width-btn">
-                            <Button on:click={() => (verifying = true)} fill small>
+                            <Button on:click={() => dispatch("verifyHumanity")} fill small>
                                 <Translatable resourceKey={i18nKey("human.verify")} />
                             </Button>
                         </div>
