@@ -148,6 +148,86 @@
     "blockUser": "加入黑名单",
     "blockUserFailed": "无法加入黑名单",
     "blockUserSucceeded": "该用户已被加入黑名单",
+    "bots": {
+        "builtin": {
+            "desc": "该机器人提供内置的 OpenChat 命令",
+            "name": "内置"
+        },
+        "crypto": {
+            "desc": "向其他用户发送加密货币",
+            "params": {
+                "amount": {
+                    "desc": "您要发送的金额",
+                    "name": "数量",
+                    "placeholder": "输入金额"
+                },
+                "token": {
+                    "desc": "您要发送的令牌",
+                    "name": "代币",
+                    "placeholder": "输入 token"
+                }
+            }
+        },
+        "diamond": {
+            "desc": "发布链接解释钻石会员资格"
+        },
+        "failed": "抱歉，我们无法执行机器人命令",
+        "faq": {
+            "desc": "创建常见问题解答主题的链接",
+            "params": {
+                "topic": {
+                    "choices": {
+                        "airdrop": "每月空投",
+                        "android": "Android 应用程序",
+                        "buychat": "购买 CHAT",
+                        "content": "内容指南",
+                        "diamond": "钻石会员",
+                        "info": "信息",
+                        "ios": "iOS 应用程序",
+                        "referral": "推荐奖励",
+                        "security": "安全",
+                        "sendtokens": "发送代币",
+                        "shortcuts": "快捷方式",
+                        "storage": "贮存",
+                        "style": "消息样式",
+                        "translation": "内容翻译",
+                        "voting": "表决",
+                        "wallet": "钱包"
+                    },
+                    "desc": "您感兴趣的具体常见问题解答主题",
+                    "name": "常见问题主题",
+                    "placeholder": "选择主题"
+                }
+            }
+        },
+        "gif": {
+            "desc": "找到要发送的 GIF",
+            "params": {
+                "term": {
+                    "desc": "输入您的 gif 的搜索词",
+                    "name": "搜索词",
+                    "placeholder": "搜索词"
+                }
+            }
+        },
+        "matchingCommands": "匹配命令",
+        "poll": {
+            "desc": "在当前聊天中创建投票"
+        },
+        "search": {
+            "desc": "在当前聊天中发起搜索",
+            "params": {
+                "term": {
+                    "desc": "输入要在聊天中搜索的词条",
+                    "name": "搜索词",
+                    "placeholder": "搜索词"
+                }
+            }
+        },
+        "witch": {
+            "desc": "召唤女巫"
+        }
+    },
     "cancel": "取消",
     "cancelInvite": "取消邀请",
     "cancelInviteFailed": "取消邀请时出错",

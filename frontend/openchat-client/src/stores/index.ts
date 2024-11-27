@@ -24,3 +24,4 @@ export * from "./notifications";
 export * from "./profiling";
 export * from "./filteredProposals";
 export * from "./storage";
+export * from "./permission";
