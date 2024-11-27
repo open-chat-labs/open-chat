@@ -8414,13 +8414,11 @@ version = "0.1.0"
 dependencies = [
  "bot_api_gateway_canister",
  "candid",
- "candid_gen",
  "chat_events",
  "ic-ledger-types",
  "icrc-ledger-types",
  "proposals_bot_canister",
  "serde",
- "serde_bytes",
  "ts-rs",
  "ts_export",
  "types",

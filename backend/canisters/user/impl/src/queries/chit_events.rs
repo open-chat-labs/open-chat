@@ -3,7 +3,7 @@ use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
 use user_canister::chit_events::*;
 
-#[query(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[query(guard = "caller_is_owner", msgpack = true)]
 fn chit_events(args: Args) -> Response {
     read_state(|state| chit_events_impl(args, state))
 }

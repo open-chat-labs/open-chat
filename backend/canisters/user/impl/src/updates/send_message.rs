@@ -20,7 +20,7 @@ use utils::consts::{MEMO_MESSAGE, OPENCHAT_BOT_USER_ID};
 
 // The args are mutable because if the request contains a pending transfer, we process the transfer
 // and then update the message content to contain the completed transfer.
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 async fn send_message_v2(mut args: Args) -> Response {
     run_regular_jobs();

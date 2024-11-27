@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use chat_events::{DirectChatKeyPrefix, DirectChatThreadKeyPrefix, KeyPrefix};
 use user_canister::delete_direct_chat::{Response::*, *};
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 fn delete_direct_chat(args: Args) -> Response {
     run_regular_jobs();
