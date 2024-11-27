@@ -2991,55 +2991,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "group_prize_bot"
-version = "0.1.0"
-dependencies = [
- "bot_api",
- "candid",
- "serde",
- "types",
- "user_canister",
- "user_index_canister",
-]
-
-[[package]]
-name = "group_prize_bot_impl"
-version = "0.1.0"
-dependencies = [
- "candid",
- "canister_api_macros",
- "canister_logger",
- "canister_state_macros",
- "canister_tracing_macros",
- "group_canister",
- "group_canister_c2c_client",
- "group_prize_bot",
- "http_request",
- "ic-cdk 0.16.0",
- "ic-cdk-timers",
- "ic-ledger-types",
- "ic-stable-structures",
- "icrc-ledger-types",
- "icrc_ledger_canister",
- "icrc_ledger_canister_c2c_client",
- "ledger_utils",
- "local_user_index_canister",
- "local_user_index_canister_c2c_client",
- "msgpack",
- "rand 0.8.5",
- "serde",
- "serde_bytes",
- "serde_json",
- "stable_memory",
- "tracing",
- "types",
- "user_canister",
- "user_index_canister",
- "user_index_canister_c2c_client",
- "utils 0.1.0",
-]
-
-[[package]]
 name = "h2"
 version = "0.3.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3843,51 +3794,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "icp_dispenser_bot"
-version = "0.1.0"
-dependencies = [
- "bot_api",
- "candid",
- "ic-ledger-types",
- "serde",
- "types",
- "user_canister",
- "user_index_canister",
-]
-
-[[package]]
-name = "icp_dispenser_bot_impl"
-version = "0.1.0"
-dependencies = [
- "candid",
- "canister_api_macros",
- "canister_client",
- "canister_logger",
- "canister_state_macros",
- "canister_tracing_macros",
- "http_request",
- "ic-cdk 0.16.0",
- "ic-cdk-timers",
- "ic-ledger-types",
- "ic-stable-structures",
- "icp_dispenser_bot",
- "icp_ledger_canister_c2c_client",
- "ledger_utils",
- "msgpack",
- "rand 0.8.5",
- "serde",
- "serde_bytes",
- "stable_memory",
- "tracing",
- "types",
- "user_canister",
- "user_canister_c2c_client",
- "user_index_canister",
- "user_index_canister_c2c_client",
- "utils 0.1.0",
-]
-
-[[package]]
 name = "icp_ledger_canister"
 version = "0.1.0"
 dependencies = [
@@ -4686,8 +4592,6 @@ dependencies = [
  "p256_key_pair",
  "proof_of_unique_personhood",
  "rand 0.8.5",
- "satoshi_dice_canister",
- "satoshi_dice_canister_c2c_client",
  "serde",
  "serde_bytes",
  "serde_json",
@@ -6730,63 +6634,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "satoshi_dice_canister"
-version = "0.1.0"
-dependencies = [
- "bot_api",
- "candid",
- "serde",
- "types",
- "user_canister",
- "user_index_canister",
-]
-
-[[package]]
-name = "satoshi_dice_canister_c2c_client"
-version = "0.1.0"
-dependencies = [
- "canister_client",
- "ic-cdk 0.16.0",
- "msgpack",
- "satoshi_dice_canister",
- "tracing",
- "types",
-]
-
-[[package]]
-name = "satoshi_dice_canister_impl"
-version = "0.1.0"
-dependencies = [
- "candid",
- "canister_api_macros",
- "canister_logger",
- "canister_state_macros",
- "canister_tracing_macros",
- "futures",
- "http_request",
- "ic-cdk 0.16.0",
- "ic-cdk-timers",
- "ic-ledger-types",
- "ic-stable-structures",
- "icrc-ledger-types",
- "icrc_ledger_canister_c2c_client",
- "msgpack",
- "rand 0.8.5",
- "satoshi_dice_canister",
- "serde",
- "serde_bytes",
- "serde_json",
- "stable_memory",
- "tracing",
- "types",
- "user_canister",
- "user_canister_c2c_client",
- "user_index_canister",
- "user_index_canister_c2c_client",
- "utils 0.1.0",
-]
-
-[[package]]
 name = "schannel"
 version = "0.1.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7198,46 +7045,6 @@ name = "smallvec"
 version = "1.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e6ecd384b10a64542d77071bd64bd7b231f4ed5940fba55e98c3de13824cf3d7"
-
-[[package]]
-name = "sns1_airdrop"
-version = "0.1.0"
-dependencies = [
- "bot_api",
- "candid",
- "serde",
- "types",
- "user_canister",
- "user_index_canister",
-]
-
-[[package]]
-name = "sns1_airdrop_impl"
-version = "0.1.0"
-dependencies = [
- "candid",
- "canister_api_macros",
- "canister_logger",
- "canister_state_macros",
- "canister_tracing_macros",
- "http_request",
- "ic-cdk 0.16.0",
- "ic-cdk-timers",
- "ic-stable-structures",
- "msgpack",
- "rand 0.8.5",
- "serde",
- "serde_bytes",
- "serde_json",
- "sns1_airdrop",
- "stable_memory",
- "tracing",
- "types",
- "user_canister",
- "user_index_canister",
- "user_index_canister_c2c_client",
- "utils 0.1.0",
-]
 
 [[package]]
 name = "sns_archive_canister"

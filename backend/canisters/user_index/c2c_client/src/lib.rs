@@ -1,5 +1,5 @@
 use candid::Principal;
-use canister_client::{generate_c2c_call, generate_candid_c2c_call, generate_candid_c2c_call_with_payment};
+use canister_client::{generate_c2c_call, generate_candid_c2c_call};
 use types::{CanisterId, UserDetails};
 use user_index_canister::*;
 
@@ -14,7 +14,6 @@ generate_c2c_call!(c2c_mark_user_canister_empty);
 generate_c2c_call!(c2c_report_message);
 generate_c2c_call!(c2c_notify_chit);
 generate_c2c_call!(c2c_notify_events);
-generate_candid_c2c_call_with_payment!(c2c_register_bot);
 generate_c2c_call!(c2c_send_openchat_bot_messages);
 generate_c2c_call!(c2c_set_avatar);
 generate_c2c_call!(c2c_suspend_users);
