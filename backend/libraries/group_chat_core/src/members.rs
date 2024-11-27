@@ -21,7 +21,6 @@ mod proptests;
 const MAX_MEMBERS_PER_GROUP: u32 = 100_000;
 
 #[derive(Serialize, Deserialize, Default)]
-#[serde(from = "GroupMembersPrevious")]
 pub struct GroupMembers {
     #[serde(serialize_with = "serialize_members", deserialize_with = "deserialize_members")]
     members: HashMap<UserId, GroupMemberInternal>,
@@ -35,68 +34,6 @@ pub struct GroupMembers {
     blocked: BTreeSet<UserId>,
     suspended: BTreeSet<UserId>,
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
-}
-
-#[derive(Serialize, Deserialize, Default)]
-pub struct GroupMembersPrevious {
-    #[serde(serialize_with = "serialize_members", deserialize_with = "deserialize_members")]
-    members: HashMap<UserId, GroupMemberInternal>,
-    blocked: BTreeSet<UserId>,
-    updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
-}
-
-impl From<GroupMembersPrevious> for GroupMembers {
-    fn from(value: GroupMembersPrevious) -> Self {
-        let mut member_ids = BTreeSet::new();
-        let mut owners = BTreeSet::new();
-        let mut admins = BTreeSet::new();
-        let mut moderators = BTreeSet::new();
-        let mut bots = BTreeMap::new();
-        let mut notifications_unmuted = BTreeSet::new();
-        let mut lapsed = BTreeSet::new();
-        let mut suspended = BTreeSet::new();
-
-        for member in value.members.values() {
-            member_ids.insert(member.user_id);
-
-            match member.role.value {
-                GroupRoleInternal::Owner => owners.insert(member.user_id),
-                GroupRoleInternal::Admin => admins.insert(member.user_id),
-                GroupRoleInternal::Moderator => moderators.insert(member.user_id),
-                GroupRoleInternal::Member => false,
-            };
-
-            if !member.notifications_muted.value {
-                notifications_unmuted.insert(member.user_id);
-            }
-
-            if member.lapsed.value {
-                lapsed.insert(member.user_id);
-            }
-
-            if member.user_type.is_bot() {
-                bots.insert(member.user_id, member.user_type);
-            }
-
-            if member.suspended.value {
-                suspended.insert(member.user_id);
-            }
-        }
-
-        GroupMembers {
-            members: value.members,
-            member_ids,
-            owners,
-            admins,
-            moderators,
-            bots,
-            notifications_unmuted,
-            lapsed,
-            suspended,
-            blocked: value.blocked,
-            updates: value.updates,
-        }
-    }
 }
 
 #[derive(Serialize_repr, Deserialize_repr, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]

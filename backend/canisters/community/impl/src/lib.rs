@@ -333,7 +333,6 @@ struct Data {
     group_index_canister_id: CanisterId,
     local_group_index_canister_id: CanisterId,
     notifications_canister_id: CanisterId,
-    #[serde(default = "CanisterId::anonymous")]
     bot_api_gateway_canister_id: CanisterId,
     proposals_bot_user_id: UserId,
     escrow_canister_id: CanisterId,

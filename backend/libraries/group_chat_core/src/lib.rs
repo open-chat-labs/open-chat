@@ -11,7 +11,6 @@ use search::Query;
 use serde::{Deserialize, Serialize};
 use std::cmp::{max, min, Reverse};
 use std::collections::{BTreeMap, BTreeSet, HashSet, VecDeque};
-use tracing::info;
 use types::{
     AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, ContentValidationError, CustomPermission, Document,
     EventIndex, EventOrExpiredRange, EventWrapper, EventsResponse, ExternalUrlUpdated, FieldTooLongResult, FieldTooShortResult,
@@ -70,66 +69,6 @@ pub struct GroupChatCore {
 
 #[allow(clippy::too_many_arguments)]
 impl GroupChatCore {
-    pub fn populate_at_everyone_mentions_dedupe_queue(&mut self) {
-        self.dedupe_at_everyone_mentions_queue = self.members.member_ids().iter().copied().collect();
-    }
-
-    pub fn dedupe_at_everyone_mentions(&mut self) -> bool {
-        if self.dedupe_at_everyone_mentions_queue.is_empty() {
-            return true;
-        }
-
-        let mut at_everyone_mentions = self
-            .at_everyone_mentions
-            .iter()
-            .map(|(ts, m)| (m.2, (*ts, m.clone())))
-            .collect();
-
-        let mut user_count = 0;
-        let mut mentions_removed = 0;
-
-        while let Some(next) = self.dedupe_at_everyone_mentions_queue.pop_back() {
-            if let Some(member) = self.members.get_mut(&next) {
-                mentions_removed += member.mentions.remove_at_everyone_mentions(&at_everyone_mentions);
-
-                let mut updated = false;
-                for mention in member.mentions.iter_potential_at_everyone_mentions() {
-                    if let Some(event_wrapper) =
-                        self.events
-                            .event_wrapper_internal(EventIndex::default(), None, mention.message_index.into())
-                    {
-                        if let Some(message) = event_wrapper.event.into_message() {
-                            if is_everyone_mentioned(&message.content) {
-                                at_everyone_mentions.insert(
-                                    mention.message_index,
-                                    (
-                                        event_wrapper.timestamp,
-                                        AtEveryoneMention::new(message.sender, message.message_id, message.message_index),
-                                    ),
-                                );
-                                updated = true;
-                            }
-                        }
-                    }
-                }
-
-                if updated {
-                    mentions_removed += member.mentions.remove_at_everyone_mentions(&at_everyone_mentions);
-                }
-            }
-            user_count += 1;
-            if user_count % 100 == 0 && ic_cdk::api::instruction_counter() > 1_000_000_000 {
-                break;
-            }
-        }
-
-        self.at_everyone_mentions = at_everyone_mentions.into_values().collect();
-
-        let finished = self.dedupe_at_everyone_mentions_queue.is_empty();
-        info!(user_count, mentions_removed, finished, "At everyone mentions deduped");
-        finished
-    }
-
     pub fn new(
         chat: MultiUserChat,
         created_by: UserId,
