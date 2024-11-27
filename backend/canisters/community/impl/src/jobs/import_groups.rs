@@ -252,7 +252,8 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
                             state.data.invited_users.remove(&user_id, now);
 
                             let user_type = state.data.members.bots().get(&user_id).copied().unwrap_or_default();
-                            for channel_id in public_channel_ids.iter() {
+
+                            for channel_id in public_channel_ids.iter().filter(|&c| *c != channel_id) {
                                 if let Some(channel) = state.data.channels.get_mut(channel_id) {
                                     if channel.chat.gate_config.is_none() {
                                         join_channel_unchecked(
@@ -267,6 +268,8 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
                                     }
                                 }
                             }
+
+                            state.data.members.mark_member_joined_channel(user_id, channel_id);
                             members_added.push(user_id);
                         }
                         AddResult::AlreadyInCommunity => {}
