@@ -173,3 +173,53 @@ export class ChitEarnedEvent extends CustomEvent<ChitEarned[]> {
         });
     }
 }
+
+export class SummonWitch extends Event {
+    constructor() {
+        super("openchat_event");
+    }
+}
+
+export class CreatePoll extends CustomEvent<MessageContext> {
+    constructor(context: MessageContext) {
+        super("openchat_event", {
+            detail: context,
+        });
+    }
+}
+
+export class CreateTestMessages extends CustomEvent<[MessageContext, number]> {
+    constructor(detail: [MessageContext, number]) {
+        super("openchat_event", {
+            detail,
+        });
+    }
+}
+
+export class SearchChat extends CustomEvent<string> {
+    constructor(search: string) {
+        super("openchat_event", {
+            detail: search,
+        });
+    }
+}
+
+export class AttachGif extends CustomEvent<[MessageContext, string]> {
+    constructor(detail: [MessageContext, string]) {
+        super("openchat_event", {
+            detail,
+        });
+    }
+}
+
+export class TokenTransfer extends CustomEvent<{
+    context: MessageContext;
+    ledger?: string;
+    amount?: bigint;
+}> {
+    constructor(detail: { context: MessageContext; ledger?: string; amount?: bigint }) {
+        super("openchat_event", {
+            detail,
+        });
+    }
+}

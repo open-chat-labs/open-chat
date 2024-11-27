@@ -148,6 +148,86 @@
     "blockUser": "Zablokować użytkownika",
     "blockUserFailed": "Nie można zablokować użytkownika",
     "blockUserSucceeded": "Użytkownik został zablokowany",
+    "bots": {
+        "builtin": {
+            "desc": "Ten bot zapewnia wbudowane polecenia OpenChat",
+            "name": "Wbudowany"
+        },
+        "crypto": {
+            "desc": "Wyślij kryptowalutę innemu użytkownikowi",
+            "params": {
+                "amount": {
+                    "desc": "Kwota, którą chcesz wysłać",
+                    "name": "Kwota",
+                    "placeholder": "Wprowadź kwotę"
+                },
+                "token": {
+                    "desc": "Token, który chcesz wysłać",
+                    "name": "Znak",
+                    "placeholder": "Wprowadź token"
+                }
+            }
+        },
+        "diamond": {
+            "desc": "Opublikuj link wyjaśniający członkostwo Diamond"
+        },
+        "failed": "Przepraszamy, nie udało nam się wykonać polecenia bota",
+        "faq": {
+            "desc": "Utwórz link do tematu FAQ",
+            "params": {
+                "topic": {
+                    "choices": {
+                        "airdrop": "Miesięczny airdrop",
+                        "android": "Aplikacja na Androida",
+                        "buychat": "Kupno CHAT",
+                        "content": "Wytyczne dotyczące treści",
+                        "diamond": "Członkostwo diamentowe",
+                        "info": "Informacja",
+                        "ios": "Aplikacja iOS",
+                        "referral": "Nagrody za polecenia",
+                        "security": "Bezpieczeństwo",
+                        "sendtokens": "Wysyłanie tokenów",
+                        "shortcuts": "Skróty",
+                        "storage": "Składowanie",
+                        "style": "Stylizowanie wiadomości",
+                        "translation": "Tłumaczenie treści",
+                        "voting": "Głosowanie",
+                        "wallet": "Portfel"
+                    },
+                    "desc": "Konkretny temat FAQ, który Cię interesuje",
+                    "name": "Temat FAQ",
+                    "placeholder": "Wybierz temat"
+                }
+            }
+        },
+        "gif": {
+            "desc": "Znajdź plik GIF do wysłania",
+            "params": {
+                "term": {
+                    "desc": "Wprowadź termin wyszukiwania dla swojego pliku gif",
+                    "name": "Termin wyszukiwania",
+                    "placeholder": "Termin wyszukiwania"
+                }
+            }
+        },
+        "matchingCommands": "Dopasowywanie poleceń",
+        "poll": {
+            "desc": "Utwórz ankietę w bieżącym czacie"
+        },
+        "search": {
+            "desc": "Rozpocznij wyszukiwanie w bieżącym czacie",
+            "params": {
+                "term": {
+                    "desc": "Wprowadź termin, którego chcesz szukać na czacie",
+                    "name": "Termin wyszukiwania",
+                    "placeholder": "Termin wyszukiwania"
+                }
+            }
+        },
+        "witch": {
+            "desc": "Przywołaj czarownicę"
+        }
+    },
     "cancel": "Anulować",
     "cancelInvite": "Anuluj zaproszenie",
     "cancelInviteFailed": "Błąd podczas anulowania zaproszenia",

@@ -206,20 +206,26 @@ import { initialiseTracking, startTrackingSession, trackEvent } from "./utils/tr
 import { startSwCheckPoller } from "./utils/updateSw";
 import type { OpenChatConfig } from "./config";
 import {
+    AttachGif,
     ChatsUpdated,
     ChatUpdated,
     ChitEarnedEvent,
+    CreatePoll,
+    CreateTestMessages,
     LoadedMessageWindow,
     LoadedNewMessages,
     LoadedPreviousMessages,
     ReactionSelected,
     RemoteVideoCallStartedEvent,
+    SearchChat,
     SelectedChatInvalid,
     SendingMessage,
     SendMessageFailed,
     SentMessage,
+    SummonWitch,
     ThreadClosed,
     ThreadSelected,
+    TokenTransfer,
     UserLoggedIn,
     UserSuspensionChanged,
     VideoCallMessageUpdated,
@@ -385,6 +391,9 @@ import type {
     PaymentGateApprovals,
     MessageActivityFeedResponse,
     ApproveTransferResponse,
+    BotCommandInstance,
+    InternalBotCommandInstance,
+    ExternalBotCommandInstance,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -489,6 +498,9 @@ import { getEmailSignInSession } from "openchat-shared";
 import { removeEmailSignInSession } from "openchat-shared";
 import { localGlobalUpdates } from "./stores/localGlobalUpdates";
 import { identityState } from "./stores/identity";
+import { addQueryStringParam } from "./utils/url";
+import { builtinBot } from "./utils/builtinBotCommands";
+import { testBots } from "./utils/testBots";
 
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
@@ -1715,6 +1727,7 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
+    // TODO this is now available as a store so we *probably* don't need this now
     permittedMessages(
         chatId: ChatIdentifier,
         mode: "message" | "thread",
@@ -7562,6 +7575,127 @@ export class OpenChat extends OpenChatAgentWorker {
         }
 
         return this._liveState.userStore.get(userId)?.streak ?? 0;
+    }
+
+    private getAuthTokenForBotCommand(_bot: BotCommandInstance): Promise<string> {
+        const token =
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzMyMTE5NjIxLCJleHAiOjE3MzQ3MTE2MjF9.HMuL8CJEKFVf26Hv3lqiE8LnI6MbnGlamFKEzngLei4";
+        return Promise.resolve(token);
+    }
+
+    private callBotEndpoint(bot: ExternalBotCommandInstance, token: string): Promise<unknown> {
+        // This will send the OC access JWT to the external bot's endpoint
+        const headers = new Headers();
+        headers.append("x-auth-jwt", token);
+        headers.append("Content-type", "application/json");
+        return fetch(`${bot.endpoint}/${bot.command.name}`, {
+            method: "POST",
+            headers: headers,
+            body: JSON.stringify(bot.command.params),
+        }).then((res) => {
+            if (res.ok) {
+                return res.json();
+            } else {
+                const msg = `Failed to execute external bot command: ${res.status}, ${
+                    res.statusText
+                }, ${JSON.stringify(bot)}`;
+                console.error(msg);
+                throw new Error(msg);
+            }
+        });
+    }
+
+    executeInternalBotCommand(bot: InternalBotCommandInstance): Promise<boolean> {
+        if (bot.command.name === "witch") {
+            this.dispatchEvent(new SummonWitch());
+        } else if (bot.command.name === "poll") {
+            this.dispatchEvent(new CreatePoll(bot.command.messageContext));
+        } else if (bot.command.name === "gif") {
+            const param = bot.command.params[0];
+            if (param !== undefined && param.kind === "string" && param.value !== undefined) {
+                this.dispatchEvent(new AttachGif([bot.command.messageContext, param.value]));
+            }
+        } else if (bot.command.name === "crypto") {
+            const ev = new TokenTransfer({ context: bot.command.messageContext });
+            const [token, amount] = bot.command.params;
+            if (
+                token !== undefined &&
+                token.kind === "string" &&
+                amount !== undefined &&
+                amount.kind === "number" &&
+                amount.value !== null
+            ) {
+                const tokenDetails = Object.values(get(cryptoLookup)).find(
+                    (t) => t.symbol.toLowerCase() === token.value?.toLocaleLowerCase(),
+                );
+                if (tokenDetails !== undefined) {
+                    ev.detail.ledger = tokenDetails.ledger;
+                    ev.detail.amount = this.validateTokenInput(
+                        amount.value.toString(),
+                        tokenDetails.decimals,
+                    ).amount;
+                }
+            }
+            this.dispatchEvent(ev);
+        } else if (bot.command.name === "test-msg") {
+            const param = bot.command.params[0];
+            if (param !== undefined && param.kind === "number" && param.value !== null) {
+                this.dispatchEvent(
+                    new CreateTestMessages([bot.command.messageContext, param.value]),
+                );
+            }
+        } else if (bot.command.name === "diamond") {
+            const url = addQueryStringParam("diamond", "");
+            const msg = `[${this.config.i18nFormatter("upgrade.message")}](${url})`;
+            this.sendMessageWithAttachment(bot.command.messageContext, msg, false, undefined, []);
+        } else if (bot.command.name === "faq") {
+            const topic =
+                bot.command.params[0]?.kind === "string" ? bot.command.params[0]?.value : undefined;
+            const url = topic === undefined || topic === "" ? "/faq" : `/faq?q=${topic}`;
+            const msg =
+                topic === undefined
+                    ? `[🤔 FAQs](/faq)`
+                    : `[🤔 FAQ: ${this.config.i18nFormatter(`faq.${topic}_q`)}](${url})`;
+            this.sendMessageWithAttachment(bot.command.messageContext, msg, false, undefined, []);
+        } else if (bot.command.name === "search" && bot.command.params[0]?.kind === "string") {
+            this.dispatchEvent(new SearchChat(bot.command.params[0]?.value ?? ""));
+        }
+        return Promise.resolve(true);
+    }
+
+    executeBotCommand(bot: BotCommandInstance): Promise<boolean> {
+        switch (bot.kind) {
+            case "external_bot":
+                return this.getAuthTokenForBotCommand(bot)
+                    .then((token) => this.callBotEndpoint(bot, token))
+                    .then((resp) => {
+                        if (bot.command.name === "chat") {
+                            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                            //@ts-ignore
+                            const r: { response: string; success: boolean } = resp;
+                            this.sendMessageWithAttachment(
+                                bot.command.messageContext,
+                                r.response,
+                                false,
+                                undefined,
+                                [],
+                            );
+                        }
+                        return true;
+                    })
+                    .catch((err) => {
+                        console.log("Failed to execute bot command: ", err);
+                        return false;
+                    });
+            case "internal_bot":
+                return this.executeInternalBotCommand(bot);
+        }
+    }
+
+    getBots(includeTestBots: boolean = false) {
+        return includeTestBots
+            ? Promise.resolve([builtinBot, ...testBots])
+            : Promise.resolve([builtinBot]);
     }
 
     claimDailyChit(): Promise<ClaimDailyChitResponse> {

@@ -8,8 +8,9 @@
     export let min: number = 0;
     export let max: number = Number.MAX_VALUE;
     export let defaultValue = Math.round(max - min / 2);
-    export let value: number = min;
+    export let value: number | null = min;
     export let align: "left" | "right" | "center" = "left";
+    export let shouldClamp = true;
 
     const dispatch = createEventDispatcher();
 
@@ -29,9 +30,11 @@
     }
 
     function handleInput(e: { currentTarget: { value: string } }) {
-        value = clamp(parseInt(e.currentTarget.value, 10));
-        inp.value = value.toString();
-        dispatch("change", value);
+        if (shouldClamp) {
+            value = clamp(parseInt(e.currentTarget.value, 10));
+            inp.value = value.toString();
+        }
+        dispatch("change", inp.value);
     }
 
     function keyDown(e: KeyboardEvent) {
@@ -56,7 +59,7 @@
         on:input={handleInput}
         on:blur
         bind:this={inp}
-        {value}
+        bind:value
         class={`textbox ${align}`} />
 </div>
 
