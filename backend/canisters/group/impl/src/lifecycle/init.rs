@@ -25,7 +25,7 @@ fn init(args: Args) {
         args.subtype,
         args.avatar,
         args.history_visible_to_new_joiners,
-        args.is_public && args.messages_visible_to_non_members.unwrap_or(args.gate.is_none()),
+        args.is_public && args.messages_visible_to_non_members.unwrap_or(args.gate_config.is_none()),
         args.created_by_principal,
         args.created_by_user_id,
         args.created_by_user_type,
@@ -43,11 +43,7 @@ fn init(args: Args) {
         args.internet_identity_canister_id,
         args.test_mode,
         args.permissions_v2,
-        if args.gate_config.is_some() {
-            args.gate_config.map(|gc| gc.into())
-        } else {
-            args.gate.map(|g| g.into())
-        },
+        args.gate_config.map(|g| g.into()),
         args.video_call_operators,
         args.ic_root_key,
         env.rng().gen(),

@@ -2,8 +2,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
-    AccessGate, AccessGateConfig, ChatId, Document, FieldTooLongResult, FieldTooShortResult, GroupPermissions, Milliseconds,
-    Rules,
+    AccessGateConfig, ChatId, Document, FieldTooLongResult, FieldTooShortResult, GroupPermissions, Milliseconds, Rules,
 };
 
 #[ts_export(user, create_group)]
@@ -18,7 +17,6 @@ pub struct Args {
     pub messages_visible_to_non_members: Option<bool>,
     pub permissions_v2: Option<GroupPermissions>,
     pub events_ttl: Option<Milliseconds>,
-    pub gate: Option<AccessGate>,
     pub gate_config: Option<AccessGateConfig>,
 }
 

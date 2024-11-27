@@ -7759,7 +7759,6 @@ export const CommunityUpdateCommunityArgs = Type.Object({
     avatar: OptionUpdateDocument,
     banner: OptionUpdateDocument,
     permissions: Type.Optional(Type.Union([OptionalCommunityPermissions, Type.Undefined()])),
-    gate: OptionUpdateAccessGate,
     gate_config: OptionUpdateAccessGateConfig,
     public: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
     primary_language: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
@@ -7819,7 +7818,6 @@ export const CommunityUpdateChannelArgs = Type.Object({
     avatar: OptionUpdateDocument,
     permissions_v2: Type.Optional(Type.Union([OptionalGroupPermissions, Type.Undefined()])),
     events_ttl: OptionUpdateU64,
-    gate: OptionUpdateAccessGate,
     gate_config: OptionUpdateAccessGateConfig,
     public: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
     messages_visible_to_non_members: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
@@ -7839,7 +7837,6 @@ export const GroupUpdateGroupArgs = Type.Object({
     avatar: OptionUpdateDocument,
     permissions_v2: Type.Optional(Type.Union([OptionalGroupPermissions, Type.Undefined()])),
     events_ttl: OptionUpdateU64,
-    gate: OptionUpdateAccessGate,
     gate_config: OptionUpdateAccessGateConfig,
     public: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
     messages_visible_to_non_members: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
@@ -7884,7 +7881,6 @@ export const UserCreateGroupArgs = Type.Object({
     messages_visible_to_non_members: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
     permissions_v2: Type.Optional(Type.Union([GroupPermissions, Type.Undefined()])),
     events_ttl: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
-    gate: Type.Optional(Type.Union([AccessGate, Type.Undefined()])),
     gate_config: Type.Optional(Type.Union([AccessGateConfig, Type.Undefined()])),
 });
 
