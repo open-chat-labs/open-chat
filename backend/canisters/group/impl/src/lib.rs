@@ -599,16 +599,6 @@ impl Data {
         self.chat.members.get(&user_id)
     }
 
-    pub fn get_member_mut(&mut self, user_id_or_principal: Principal) -> Option<&mut GroupMemberInternal> {
-        let user_id = self
-            .principal_to_user_id_map
-            .get(&user_id_or_principal)
-            .copied()
-            .unwrap_or(user_id_or_principal.into());
-
-        self.chat.members.get_mut(&user_id)
-    }
-
     pub fn is_frozen(&self) -> bool {
         self.frozen.is_some()
     }

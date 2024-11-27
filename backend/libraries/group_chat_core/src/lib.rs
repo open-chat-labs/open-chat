@@ -203,18 +203,9 @@ impl GroupChatCore {
             .collect();
 
         if let Some(member) = member {
-            let new_proposal_votes =
-                member
-                    .proposal_votes
-                    .iter()
-                    .rev()
-                    .take_while(|(&t, _)| t > since)
-                    .flat_map(|(&t, message_indexes)| {
-                        message_indexes
-                            .iter()
-                            .filter_map(|&m| events_reader.event_index(m.into()))
-                            .map(move |e| (None, e, t))
-                    });
+            let new_proposal_votes = member
+                .iter_proposal_votes_since(since)
+                .filter_map(|(ts, m)| events_reader.event_index(m.into()).map(move |e| (None, e, ts)));
 
             updated_events.extend(new_proposal_votes);
         };
