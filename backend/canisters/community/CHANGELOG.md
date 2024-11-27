@@ -6,11 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove code to migrate metrics to new reduced size format ([#6901](https://github.com/open-chat-labs/open-chat/pull/6901))
+- Remove code to deduplicate @everyone mentions ([#6901](https://github.com/open-chat-labs/open-chat/pull/6901))
+
 ## [[2.0.1477](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1477-community)] - 2024-11-27
 
 ### Fixed
 
-- Dedupe @everyone mentions using timer job
+- Dedupe @everyone mentions using timer job ([#6899](https://github.com/open-chat-labs/open-chat/pull/6899))
 
 ## [[2.0.1475](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1475-community)] - 2024-11-26
 
