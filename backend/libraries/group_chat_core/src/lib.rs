@@ -10,7 +10,7 @@ use regex_lite::Regex;
 use search::Query;
 use serde::{Deserialize, Serialize};
 use std::cmp::{max, min, Reverse};
-use std::collections::{BTreeMap, BTreeSet, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashSet, VecDeque};
 use types::{
     AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, ContentValidationError, CustomPermission, Document,
     EventIndex, EventOrExpiredRange, EventWrapper, EventsResponse, ExternalUrlUpdated, FieldTooLongResult, FieldTooShortResult,
@@ -63,43 +63,12 @@ pub struct GroupChatCore {
     pub external_url: Timestamped<Option<String>>,
     #[serde(default)]
     at_everyone_mentions: BTreeMap<TimestampMillis, AtEveryoneMention>,
+    #[serde(default)]
+    pub dedupe_at_everyone_mentions_queue: VecDeque<UserId>,
 }
 
 #[allow(clippy::too_many_arguments)]
 impl GroupChatCore {
-    pub fn dedupe_at_everyone_mentions(&mut self) {
-        let mut at_everyone_mentions = BTreeMap::new();
-
-        for member in self.members.iter_mut() {
-            member.mentions.remove_at_everyone_mentions(&at_everyone_mentions);
-
-            let mut updated = false;
-            for mention in member.mentions.iter_potential_at_everyone_mentions() {
-                if let Some(event_wrapper) =
-                    self.events
-                        .event_wrapper_internal(EventIndex::default(), None, mention.message_index.into())
-                {
-                    if let Some(message) = event_wrapper.event.into_message() {
-                        if is_everyone_mentioned(&message.content) {
-                            at_everyone_mentions.insert(
-                                mention.message_index,
-                                (
-                                    event_wrapper.timestamp,
-                                    AtEveryoneMention::new(message.sender, message.message_id, message.message_index),
-                                ),
-                            );
-                            updated = true;
-                        }
-                    }
-                }
-            }
-
-            if updated {
-                member.mentions.remove_at_everyone_mentions(&at_everyone_mentions);
-            }
-        }
-    }
-
     pub fn new(
         chat: MultiUserChat,
         created_by: UserId,
@@ -152,6 +121,7 @@ impl GroupChatCore {
             min_visible_indexes_for_new_members: None,
             external_url: Timestamped::new(external_url, now),
             at_everyone_mentions: BTreeMap::new(),
+            dedupe_at_everyone_mentions_queue: VecDeque::new(),
         }
     }
 
@@ -2309,7 +2279,7 @@ pub enum MinVisibleEventIndexResult {
     UserNotInGroup,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct AtEveryoneMention(UserId, MessageId, MessageIndex);
 
 impl AtEveryoneMention {

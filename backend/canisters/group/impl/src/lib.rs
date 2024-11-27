@@ -446,7 +446,6 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
-    #[serde(default = "CanisterId::anonymous")]
     pub bot_api_gateway_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
     pub escrow_canister_id: CanisterId,
