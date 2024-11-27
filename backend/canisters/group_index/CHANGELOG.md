@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1474](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1474-group_index)] - 2024-11-26
+
 ### Changed
 
 - Revert temporary hacks to fix upgrade ([#6894](https://github.com/open-chat-labs/open-chat/pull/6894))
