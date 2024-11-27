@@ -508,7 +508,6 @@ type CreateChannelArgs = record {
     history_visible_to_new_joiners : bool;
     permissions_v2 : opt GroupPermissions;
     events_ttl : opt Milliseconds;
-    gate : opt AccessGate;
     gate_config : opt AccessGateConfig;
     external_url : opt text;
     messages_visible_to_non_members: opt bool;
@@ -1017,7 +1016,6 @@ type UpdateChannelArgs = record {
     avatar : DocumentUpdate;
     permissions_v2 : opt OptionalGroupPermissions;
     events_ttl : EventsTimeToLiveUpdate;
-    gate : AccessGateUpdate;
     gate_config : AccessGateConfigUpdate;
     public : opt bool;
     messages_visible_to_non_members: opt bool;
@@ -1054,7 +1052,6 @@ type UpdateCommunityArgs = record {
     avatar : DocumentUpdate;
     banner : DocumentUpdate;
     permissions : opt OptionalCommunityPermissions;
-    gate : AccessGateUpdate;
     gate_config : AccessGateConfigUpdate;
     public : opt bool;
     primary_language : opt text;

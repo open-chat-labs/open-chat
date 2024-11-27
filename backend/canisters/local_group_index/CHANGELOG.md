@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Make `ChannelId` comparisons use their 32bit representation ([#6885](https://github.com/open-chat-labs/open-chat/pull/6885))
 
+### Removed
+
+- Remove the old `gate` field which has been superseded by `gate_config` ([#6902](https://github.com/open-chat-labs/open-chat/pull/6902))
+
 ## [[2.0.1462](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1462-local_group_index)] - 2024-11-21
 
 ### Changed

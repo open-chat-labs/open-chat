@@ -107,7 +107,6 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
             avatar: args.avatar,
             permissions_v2: args.permissions_v2,
             events_ttl: args.events_ttl,
-            gate: args.gate,
             gate_config: args.gate_config,
         };
         Ok(PrepareResult {

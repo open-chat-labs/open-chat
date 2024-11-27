@@ -1,8 +1,7 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
-    AccessGate, AccessGateConfig, BuildVersion, CanisterId, Document, GroupPermissions, GroupSubtype, Milliseconds, Rules,
-    UserId, UserType,
+    AccessGateConfig, BuildVersion, CanisterId, Document, GroupPermissions, GroupSubtype, Milliseconds, Rules, UserId, UserType,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -31,7 +30,6 @@ pub struct Args {
     pub proposals_bot_user_id: UserId,
     pub escrow_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
-    pub gate: Option<AccessGate>,
     pub gate_config: Option<AccessGateConfig>,
     pub video_call_operators: Vec<Principal>,
     #[serde(with = "serde_bytes")]

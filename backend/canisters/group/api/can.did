@@ -339,7 +339,6 @@ type UpdateGroupV2Args = record {
     avatar : DocumentUpdate;
     permissions_v2 : opt OptionalGroupPermissions;
     events_ttl : EventsTimeToLiveUpdate;
-    gate : AccessGateUpdate;
     gate_config : AccessGateConfigUpdate;
     public : opt bool;
     messages_visible_to_non_members: opt bool;    

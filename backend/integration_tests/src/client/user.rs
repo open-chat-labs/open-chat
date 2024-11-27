@@ -170,7 +170,6 @@ pub mod happy_path {
                 permissions_v2: None,
                 rules: Rules::default(),
                 events_ttl: None,
-                gate: None,
                 gate_config: None,
             },
         );
@@ -201,7 +200,6 @@ pub mod happy_path {
                 history_visible_to_new_joiners: is_public,
                 permissions: None,
                 rules: Rules::default(),
-                gate: None,
                 gate_config: None,
                 default_channels,
                 default_channel_rules: None,

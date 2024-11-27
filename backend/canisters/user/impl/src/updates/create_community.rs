@@ -110,7 +110,6 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
             avatar: args.avatar,
             banner: args.banner,
             permissions: args.permissions,
-            gate: args.gate,
             gate_config: args.gate_config,
             default_channels: args.default_channels,
             default_channel_rules: args.default_channel_rules,

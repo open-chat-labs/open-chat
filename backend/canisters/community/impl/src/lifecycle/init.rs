@@ -39,11 +39,7 @@ fn init(args: Args) {
         args.proposals_bot_user_id,
         args.escrow_canister_id,
         args.internet_identity_canister_id,
-        if args.gate_config.is_some() {
-            args.gate_config.map(|g| g.into())
-        } else {
-            args.gate.map(|g| g.into())
-        },
+        args.gate_config.map(|g| g.into()),
         args.default_channels,
         args.default_channel_rules,
         args.mark_active_duration,
