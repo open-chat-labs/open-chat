@@ -1,9 +1,9 @@
 use crate::message_content_internal::icrc1::AccountInternal;
-use crate::stable_storage::tests::test_values::{
+use crate::stable_memory::tests::test_values::{
     AUDIO1, CRYPTO1, CUSTOM1, DELETED1, FILE1, GIPHY1, GOVERNANCE_PROPOSAL1, IMAGE1, MESSAGE_REMINDER1,
     MESSAGE_REMINDER_CREATED1, P2P_SWAP1, POLL1, PRIZE1, PRIZE_WINNER1, REPORTED_MESSAGE1, TEXT1, VIDEO1, VIDEO_CALL1,
 };
-use crate::stable_storage::{bytes_to_event, event_to_bytes};
+use crate::stable_memory::{bytes_to_event, event_to_bytes};
 use crate::{
     AudioContentInternal, BlobReferenceInternal, CallParticipantInternal, ChatEventInternal, ChatInternal,
     CompletedCryptoTransactionInternal, CryptoContentInternal, CustomContentInternal, DeletedByInternal, FileContentInternal,
