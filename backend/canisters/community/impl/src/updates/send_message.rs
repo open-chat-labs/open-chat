@@ -156,15 +156,21 @@ fn validate_caller(
     }
 
     let caller = caller_override.unwrap_or_else(|| state.env.caller());
-    if let Some(member) = state.data.members.get_mut(caller) {
+    let Some(user_id) = state.data.members.lookup_user_id(caller) else {
+        return Err(UserNotInCommunity);
+    };
+
+    let now = state.env.now();
+    if let Some(version) = community_rules_accepted {
+        state.data.members.mark_rules_accepted(&user_id, version, now);
+    }
+
+    if let Some(member) = state.data.members.get(caller) {
         if member.suspended().value {
             Err(UserSuspended)
         } else if member.lapsed().value {
             Err(UserLapsed)
         } else {
-            if let Some(version) = community_rules_accepted {
-                member.accept_rules(version, state.env.now());
-            }
             if state.data.rules.enabled
                 && !member.user_type.is_bot()
                 && member

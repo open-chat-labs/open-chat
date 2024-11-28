@@ -148,7 +148,7 @@ fn commit(
             ) {
                 AddResult::Success(_) => {
                     users_added.push(user_id);
-                    state.data.members.mark_member_joined_channel(&user_id, channel_id);
+                    state.data.members.mark_member_joined_channel(user_id, channel_id);
 
                     if let Some(gate_expiry) = gate_expiry {
                         state.data.expiring_members.push(ExpiringMember {
