@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove member updates after 31 days ([#6907](https://github.com/open-chat-labs/open-chat/pull/6907))
 - Extract member to channel links out of each member instance ([#6910](https://github.com/open-chat-labs/open-chat/pull/6910))
 - Consolidate member updates into a single enum ([#6915](https://github.com/open-chat-labs/open-chat/pull/6915))
+- Remove chat event updates after 31 days ([#6916](https://github.com/open-chat-labs/open-chat/pull/6916))
 
 ### Removed
 
