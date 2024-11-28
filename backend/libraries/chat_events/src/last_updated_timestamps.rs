@@ -4,10 +4,11 @@ use std::collections::{BTreeMap, BTreeSet};
 use types::{EventIndex, MessageIndex, TimestampMillis};
 
 #[derive(Serialize, Deserialize, Default)]
+#[serde(from = "LastUpdatedTimestampsTrimmed")]
 pub struct LastUpdatedTimestamps {
     by_timestamp: BTreeSet<(TimestampMillis, Option<MessageIndex>, EventIndex)>,
+    #[serde(skip)]
     by_event_index: BTreeMap<(Option<MessageIndex>, EventIndex), TimestampMillis>,
-    #[serde(default)]
     latest_update_removed: TimestampMillis,
 }
 
@@ -56,5 +57,27 @@ impl LastUpdatedTimestamps {
             self.by_event_index.remove(&(tr, e));
         }
         count_removed
+    }
+}
+
+#[derive(Deserialize)]
+pub struct LastUpdatedTimestampsTrimmed {
+    by_timestamp: BTreeSet<(TimestampMillis, Option<MessageIndex>, EventIndex)>,
+    #[serde(default)]
+    latest_update_removed: TimestampMillis,
+}
+
+impl From<LastUpdatedTimestampsTrimmed> for LastUpdatedTimestamps {
+    fn from(value: LastUpdatedTimestampsTrimmed) -> Self {
+        let mut by_event_index = BTreeMap::new();
+        for (ts, tr, e) in value.by_timestamp.iter() {
+            by_event_index.insert((*tr, *e), *ts);
+        }
+
+        LastUpdatedTimestamps {
+            by_timestamp: value.by_timestamp,
+            by_event_index,
+            latest_update_removed: value.latest_update_removed,
+        }
     }
 }
