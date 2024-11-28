@@ -1,4 +1,5 @@
 import type { MessageContext } from "./chat";
+import type { DataContent } from "./data";
 import type { ChatPermissions, CommunityPermissions, MessagePermission } from "./permission";
 
 // This can be expanded as necessary to include things like ChatParam (e.g. for a /goto bot)
@@ -34,12 +35,66 @@ export type NumberParam = {
 };
 
 export type SlashCommandOptionChoice<T> = {
-    kind: "option";
     name: string;
     value: T;
 };
 
 export type SlashCommandParam = CommandParam & SlashCommandParamType;
+
+export function defaultBooleanParam(): SlashCommandParam {
+    return {
+        kind: "boolean",
+        name: "",
+        description: "",
+        placeholder: "",
+        required: true,
+    };
+}
+
+export function defaultStringParam(): SlashCommandParam {
+    return {
+        kind: "string",
+        name: "",
+        description: "",
+        placeholder: "",
+        required: true,
+        minLength: 0,
+        maxLength: 1000,
+        choices: [],
+    };
+}
+
+export function defaultNumberParam(): SlashCommandParam {
+    return {
+        kind: "number",
+        name: "",
+        description: "",
+        placeholder: "",
+        required: true,
+        minValue: 0,
+        maxValue: 1000,
+        choices: [],
+    };
+}
+
+export function defaultUserParam(): SlashCommandParam {
+    return {
+        kind: "user",
+        name: "",
+        description: "",
+        placeholder: "",
+        required: true,
+    };
+}
+
+export function emptySlashCommand(): SlashCommandSchema {
+    return {
+        name: "",
+        description: "",
+        params: [],
+        permissions: emptyPermissions(),
+    };
+}
 
 export type SlashCommandSchema = {
     name: string;
@@ -48,6 +103,15 @@ export type SlashCommandSchema = {
     permissions: SlashCommandPermissions;
     devmode?: boolean;
 };
+
+export function emptyPermissions(): SlashCommandPermissions {
+    return {
+        chatPermissions: [],
+        communityPermissions: [],
+        messagePermissions: [],
+        threadPermissions: [],
+    };
+}
 
 export type SlashCommandPermissions = {
     chatPermissions: (keyof ChatPermissions)[];
@@ -64,10 +128,23 @@ export type SlashCommandInstance = {
 
 export type Bot = ExternalBot | InternalBot;
 
+export type CandidateExternalBot = Omit<ExternalBot, "id">;
+
+export function emptyBotInstance(): ExternalBot {
+    return {
+        kind: "external_bot",
+        name: "",
+        description: "",
+        id: "",
+        endpoint: "",
+        commands: [],
+    };
+}
+
 export type ExternalBot = {
     kind: "external_bot";
     name: string;
-    icon: string;
+    icon?: DataContent;
     id: string;
     endpoint: string;
     description?: string;
@@ -102,7 +179,7 @@ export type FlattenedCommand = SlashCommandSchema &
         | {
               kind: "external_bot";
               botName: string;
-              botIcon: string;
+              botIcon?: DataContent;
               botId: string;
               botEndpoint: string;
               botDescription?: string;

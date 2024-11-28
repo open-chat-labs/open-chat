@@ -93,82 +93,66 @@ export const builtinBot: InternalBot = {
                     placeholder: "bots.faq.params.topic.placeholder",
                     choices: [
                         {
-                            kind: "option",
                             name: "bots.faq.params.topic.choices.wallet",
                             value: "wallet",
                         },
                         {
-                            kind: "option",
                             name: "bots.faq.params.topic.choices.buychat",
                             value: "buychat",
                         },
                         {
-                            kind: "option",
                             name: "bots.faq.params.topic.choices.sendtokens",
                             value: "send_tokens",
                         },
                         {
-                            kind: "option",
                             name: "bots.faq.params.topic.choices.diamond",
                             value: "diamond",
                         },
                         {
-                            kind: "option",
                             name: "bots.faq.params.topic.choices.referral",
                             value: "referral_rewards",
                         },
                         {
-                            kind: "option",
                             name: "bots.faq.params.topic.choices.voting",
                             value: "voting",
                         },
                         {
-                            kind: "option",
                             name: "bots.faq.params.topic.choices.airdrop",
                             value: "airdrop",
                         },
                         {
-                            kind: "option",
                             name: "bots.faq.params.topic.choices.ios",
                             value: "ios_app",
                         },
                         {
-                            kind: "option",
                             name: "bots.faq.params.topic.choices.android",
                             value: "android_app",
                         },
                         {
-                            kind: "option",
                             name: "bots.faq.params.topic.choices.style",
                             value: "style_messages",
                         },
                         {
-                            kind: "option",
                             name: "bots.faq.params.topic.choices.storage",
                             value: "storage",
                         },
                         {
-                            kind: "option",
                             name: "bots.faq.params.topic.choices.security",
                             value: "security",
                         },
                         {
-                            kind: "option",
                             name: "bots.faq.params.topic.choices.info",
                             value: "info",
                         },
                         {
-                            kind: "option",
                             name: "bots.faq.params.topic.choices.shortcuts",
                             value: "shortcuts",
                         },
                         {
-                            kind: "option",
                             name: "bots.faq.params.topic.choices.content",
                             value: "content",
                         },
                         {
-                            kind: "option",
                             name: "bots.faq.params.topic.choices.translation",
                             value: "translation",
                         },
@@ -185,6 +169,13 @@ export const builtinBot: InternalBot = {
                 threadPermissions: ["poll"],
             },
             params: [],
+        },
+        {
+            name: "register_bot",
+            description: "bots.register_bot.desc",
+            permissions: emptyPermissions,
+            params: [],
+            devmode: true,
         },
         {
             name: "search",
@@ -224,6 +215,13 @@ export const builtinBot: InternalBot = {
                     choices: [],
                 },
             ],
+        },
+        {
+            name: "update_bot",
+            description: "bots.update_bot.desc",
+            permissions: emptyPermissions,
+            devmode: true,
+            params: [],
         },
         {
             name: "witch",

@@ -223,3 +223,15 @@ export class TokenTransfer extends CustomEvent<{
         });
     }
 }
+
+export class RegisterBot extends Event {
+    constructor() {
+        super("openchat_event");
+    }
+}
+
+export class UpdateBot extends Event {
+    constructor() {
+        super("openchat_event");
+    }
+}

@@ -51,11 +51,11 @@
     function hasPermissionForCommand(command: FlattenedCommand): boolean {
         switch (mode) {
             case "message":
-                return command.permissions.messagePermissions.every((p) =>
+                return [...command.permissions.messagePermissions].every((p) =>
                     $messagePermissionsForSelectedChat.get(p),
                 );
             case "thread":
-                return command.permissions.messagePermissions.every((p) =>
+                return [...command.permissions.messagePermissions].every((p) =>
                     $threadPermissionsForSelectedChat.get(p),
                 );
         }
@@ -131,7 +131,7 @@
             class:selected={$focusedCommandIndex === i}
             onclick={() => selectCommand(command)}>
             {#if command.kind === "external_bot"}
-                <img class="icon" src={command.botIcon} alt={command.botName} />
+                <img class="icon" src={"TODO"} alt={command.botName} />
             {:else}
                 <Logo />
             {/if}

@@ -29,6 +29,29 @@ export const messagePermissionsList = [
 type MessagePermissionsType = typeof messagePermissionsList;
 export type MessagePermission = MessagePermissionsType[number];
 
+export const chatPermissionsList = [
+    "changeRoles",
+    "updateGroup",
+    "inviteUsers",
+    "addMembers",
+    "removeMembers",
+    "deleteMessages",
+    "pinMessages",
+    "reactToMessages",
+    "mentionAllMembers",
+    "startVideoCall",
+] as const;
+
+export const communityPermissionsList = [
+    "changeRoles",
+    "updateDetails",
+    "inviteUsers",
+    "removeMembers",
+    "createPublicChannel",
+    "createPrivateChannel",
+    "manageUserGroups",
+] as const;
+
 export type Permissioned<T> = {
     permissions: T;
 };

@@ -214,6 +214,9 @@
         "poll": {
             "desc": "Create a poll in the current chat"
         },
+        "register_bot": {
+            "desc": "Start a proposal to describe and register a new bot with OpenChat"
+        },
         "search": {
             "desc": "Initiate a search in the current chat",
             "params": {
@@ -223,6 +226,9 @@
                     "placeholder": "Search term"
                 }
             }
+        },
+        "update_bot": {
+            "desc": "Start a proposal to update an existing OpenChat bot"
         },
         "witch": {
             "desc": "Summon the witch"
