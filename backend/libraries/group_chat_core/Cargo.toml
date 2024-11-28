@@ -16,7 +16,6 @@ lazy_static = { workspace = true }
 regex-lite = { workspace = true }
 search = { path = "../search" }
 serde = { workspace = true }
-serde_repr = { workspace = true }
 types = { path = "../types" }
 utils = { path = "../utils" }
 

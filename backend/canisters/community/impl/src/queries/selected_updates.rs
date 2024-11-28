@@ -1,12 +1,10 @@
 use crate::{
-    model::{
-        events::CommunityEventInternal,
-        members::{CommunityMembers, MemberUpdate},
-    },
+    model::{events::CommunityEventInternal, members::CommunityMembers},
     read_state, RuntimeState,
 };
 use canister_api_macros::query;
 use community_canister::selected_updates_v2::{Response::*, *};
+use group_community_common::MemberUpdate;
 use std::cell::LazyCell;
 use std::collections::HashSet;
 use types::UserId;
@@ -118,6 +116,7 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
             MemberUpdate::Lapsed | MemberUpdate::Unlapsed | MemberUpdate::DisplayNameChanged => {
                 user_updates_handler.mark_member_updated(&mut result, user_id, false, false);
             }
+            _ => {}
         }
     }
 

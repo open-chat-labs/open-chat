@@ -1,9 +1,8 @@
 use crate::model::user_groups::{UserGroup, UserGroups};
 use candid::Principal;
-use group_community_common::{Member, Members};
+use group_community_common::{Member, MemberUpdate, Members};
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
-use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::collections::btree_map::Entry::Vacant;
 use std::collections::{BTreeMap, BTreeSet};
 use types::{
@@ -39,6 +38,25 @@ pub struct CommunityMembers {
 }
 
 impl CommunityMembers {
+    pub fn migrate_member_updates(&mut self) {
+        let updates = self
+            .updates
+            .iter()
+            .map(|(timestamp, user_id, update)| {
+                let new_update = match *update as u8 {
+                    1 => MemberUpdate::Lapsed,             // Lapsed was 1 in the old version
+                    2 => MemberUpdate::Unlapsed,           // Unlapsed was 2 in the old version
+                    3 => MemberUpdate::DisplayNameChanged, // DisplayNameChanged was 3 in the old version
+                    _ => *update,
+                };
+
+                (*timestamp, *user_id, new_update)
+            })
+            .collect();
+
+        self.updates = updates;
+    }
+
     pub fn populate_member_channel_links(&mut self) {
         for member in self.members.values() {
             for channel in member.channels.iter() {
@@ -757,12 +775,4 @@ impl From<&CommunityMemberInternal> for CommunityMember {
             lapsed: m.lapsed.value,
         }
     }
-}
-
-#[derive(Serialize_repr, Deserialize_repr, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
-#[repr(u8)]
-pub enum MemberUpdate {
-    Lapsed = 1,
-    Unlapsed = 2,
-    DisplayNameChanged = 3,
 }
