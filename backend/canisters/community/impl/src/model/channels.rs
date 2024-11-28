@@ -398,6 +398,7 @@ impl Channel {
             membership,
             video_call_in_progress: updates.video_call_in_progress,
             external_url: updates.external_url,
+            any_updates_missed: updates.any_updates_missed,
         })
     }
 

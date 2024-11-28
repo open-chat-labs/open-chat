@@ -1,7 +1,7 @@
 use crate::jobs::import_groups::finalize_group_import;
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
-use crate::{read_state, Data};
+use crate::{mutate_state, read_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use community_canister::post_upgrade::Args;
@@ -33,6 +33,20 @@ fn post_upgrade(args: Args) {
     }
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
+
+    mutate_state(|state| {
+        let now = state.env.now();
+        state.data.members.populate_member_channel_links();
+        for channel in state.data.channels.iter_mut() {
+            let count_removed = channel.chat.members.prune_member_updates(now);
+            info!(count_removed, "Removed old member updates");
+
+            if channel.chat.subtype.is_some() {
+                let count_removed = channel.chat.members.prune_proposal_votes(now);
+                info!(count_removed, "Removed old proposal votes");
+            }
+        }
+    });
 
     read_state(|state| {
         let now = state.env.now();

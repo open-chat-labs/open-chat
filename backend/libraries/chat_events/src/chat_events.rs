@@ -15,7 +15,7 @@ use serde_bytes::ByteBuf;
 use sha2::{Digest, Sha256};
 use std::cmp::max;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, HashSet};
 use std::mem;
 use std::ops::DerefMut;
 use tracing::error;
@@ -37,7 +37,7 @@ pub struct ChatEvents {
     main: ChatEventsList,
     threads: BTreeMap<MessageIndex, ChatEventsList>,
     metrics: ChatMetricsInternal,
-    per_user_metrics: HashMap<UserId, ChatMetricsInternal>,
+    per_user_metrics: BTreeMap<UserId, ChatMetricsInternal>,
     frozen: bool,
     events_ttl: Timestamped<Option<Milliseconds>>,
     expiring_events: ExpiringEvents,
@@ -103,7 +103,7 @@ impl ChatEvents {
             main: ChatEventsList::new(chat, None),
             threads: BTreeMap::new(),
             metrics: ChatMetricsInternal::default(),
-            per_user_metrics: HashMap::new(),
+            per_user_metrics: BTreeMap::new(),
             frozen: false,
             events_ttl: Timestamped::new(events_ttl, now),
             expiring_events: ExpiringEvents::default(),
@@ -133,7 +133,7 @@ impl ChatEvents {
             main: ChatEventsList::new(chat, None),
             threads: BTreeMap::new(),
             metrics: ChatMetricsInternal::default(),
-            per_user_metrics: HashMap::new(),
+            per_user_metrics: BTreeMap::new(),
             frozen: false,
             events_ttl: Timestamped::new(events_ttl, now),
             expiring_events: ExpiringEvents::default(),
@@ -2226,7 +2226,7 @@ impl ChatEvents {
 
 fn add_to_metrics<F: FnMut(&mut ChatMetricsInternal)>(
     metrics: &mut ChatMetricsInternal,
-    per_user_metrics: &mut HashMap<UserId, ChatMetricsInternal>,
+    per_user_metrics: &mut BTreeMap<UserId, ChatMetricsInternal>,
     user_id: UserId,
     mut action: F,
     timestamp: TimestampMillis,
