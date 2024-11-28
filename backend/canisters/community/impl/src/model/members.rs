@@ -21,7 +21,7 @@ pub struct CommunityMembers {
     #[serde(default)]
     member_channel_links: BTreeSet<(UserId, ChannelId)>,
     #[serde(default)]
-    member_channel_links_removed: BTreeSet<(UserId, ChannelId)>,
+    member_channel_links_removed: BTreeMap<(UserId, ChannelId), TimestampMillis>,
     user_groups: UserGroups,
     // This includes the userIds of community members and also users invited to the community
     principal_to_user_id_map: BTreeMap<Principal, UserId>,
@@ -64,7 +64,7 @@ impl CommunityMembers {
             }
             for channel_removed in member.channels_removed.iter() {
                 self.member_channel_links_removed
-                    .insert((member.user_id, channel_removed.value));
+                    .insert((member.user_id, channel_removed.value), channel_removed.timestamp);
             }
         }
     }
@@ -94,7 +94,7 @@ impl CommunityMembers {
         CommunityMembers {
             members: vec![(creator_user_id, member)].into_iter().collect(),
             member_channel_links: public_channels.into_iter().map(|c| (creator_user_id, c)).collect(),
-            member_channel_links_removed: BTreeSet::new(),
+            member_channel_links_removed: BTreeMap::new(),
             user_groups: UserGroups::default(),
             principal_to_user_id_map: vec![(creator_principal, creator_user_id)].into_iter().collect(),
             member_ids: [creator_user_id].into_iter().collect(),
@@ -366,7 +366,7 @@ impl CommunityMembers {
         if let Some(member) = self.members.get_mut(&user_id) {
             if member.leave(channel_id, now) {
                 self.member_channel_links.remove(&(user_id, channel_id));
-                self.member_channel_links_removed.insert((user_id, channel_id));
+                self.member_channel_links_removed.insert((user_id, channel_id), now);
             }
         }
     }
@@ -455,8 +455,8 @@ impl CommunityMembers {
             .map(|(_, c)| *c)
     }
 
-    pub fn member_channel_links_removed(&self) -> &BTreeSet<(UserId, ChannelId)> {
-        &self.member_channel_links_removed
+    pub fn member_channel_links_removed_contains(&self, user_id: UserId, channel_id: ChannelId) -> bool {
+        self.member_channel_links_removed.contains_key(&(user_id, channel_id))
     }
 
     pub fn owners(&self) -> &BTreeSet<UserId> {
