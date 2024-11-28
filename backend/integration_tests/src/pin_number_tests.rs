@@ -1,6 +1,7 @@
 use crate::env::ENV;
 use crate::utils::now_nanos;
 use crate::{client, TestEnv};
+use constants::MINUTE_IN_MS;
 use ledger_utils::create_pending_transaction;
 use std::ops::Deref;
 use std::time::Duration;
@@ -8,7 +9,6 @@ use test_case::test_case;
 use testing::rng::random_from_u128;
 use types::{CryptoContent, CryptoTransaction, Cryptocurrency, MessageContentInitial};
 use user_canister::set_pin_number::PinNumberVerification;
-use utils::time::MINUTE_IN_MS;
 
 #[test]
 fn can_set_pin_number_by_providing_current() {

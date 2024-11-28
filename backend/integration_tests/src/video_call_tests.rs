@@ -1,12 +1,12 @@
 use crate::env::ENV;
 use crate::utils::tick_many;
 use crate::{client, TestEnv};
+use constants::HOUR_IN_MS;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
 use types::{ChatEvent, MessageContent, VideoCallContent};
-use utils::time::HOUR_IN_MS;
 
 #[test_case(true)]
 #[test_case(false)]
