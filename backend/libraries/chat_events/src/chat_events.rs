@@ -5,6 +5,7 @@ use crate::metrics::{ChatMetricsInternal, MetricKey};
 use crate::search_index::SearchIndex;
 use crate::stable_memory::key::KeyPrefix;
 use crate::*;
+use constants::{HOUR_IN_MS, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventBuilder, EventStoreClient, Runtime};
 use rand::rngs::StdRng;
 use rand::Rng;
@@ -29,8 +30,6 @@ use types::{
     ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload,
     VideoCallParticipants, VideoCallPresence, VoteOperation,
 };
-use utils::consts::OPENCHAT_BOT_USER_ID;
-use utils::time::HOUR_IN_MS;
 
 #[derive(Serialize, Deserialize)]
 pub struct ChatEvents {

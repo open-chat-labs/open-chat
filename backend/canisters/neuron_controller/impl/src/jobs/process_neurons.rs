@@ -1,5 +1,6 @@
 use crate::updates::manage_nns_neuron::manage_nns_neuron_impl;
 use crate::{mutate_state, read_state, Neurons};
+use constants::{DAY_IN_MS, MINUTE_IN_MS, SNS_GOVERNANCE_CANISTER_ID};
 use ic_cdk::api::call::CallResult;
 use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
 use icrc_ledger_types::icrc1::account::Account;
@@ -9,8 +10,6 @@ use std::time::Duration;
 use tracing::info;
 use types::{CanisterId, Milliseconds};
 use utils::canister_timers::run_now_then_interval;
-use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
-use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
 
 // We add a minute because spawning takes 7 days, and if we wait exactly 7 days, there may still be a few seconds left
 // before the neuron can be spawned

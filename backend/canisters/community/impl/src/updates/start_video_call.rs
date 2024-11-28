@@ -5,10 +5,10 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::{CallParticipantInternal, MessageContentInternal, VideoCallContentInternal};
 use community_canister::start_video_call::{Response::*, *};
+use constants::HOUR_IN_MS;
 use group_chat_core::SendMessageResult;
 use ic_cdk::update;
 use types::{ChannelMessageNotification, Notification, UserId, VideoCallPresence, VideoCallType};
-use utils::time::HOUR_IN_MS;
 
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]

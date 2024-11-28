@@ -1,13 +1,12 @@
 use crate::model::pending_payments_queue::PendingPayment;
 use crate::{mutate_state, read_state, RuntimeState};
+use constants::{MEMO_TRANSLATION_PAYMENT, NANOS_PER_MILLISECOND};
 use ic_cdk_timers::TimerId;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use ledger_utils::icrc1::make_transfer;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
-use utils::consts::MEMO_TRANSLATION_PAYMENT;
-use utils::time::NANOS_PER_MILLISECOND;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();

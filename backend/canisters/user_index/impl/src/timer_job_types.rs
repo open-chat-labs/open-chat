@@ -3,6 +3,7 @@ use crate::updates::suspend_user::suspend_user_impl;
 use crate::updates::unsuspend_user::unsuspend_user_impl;
 use crate::{mutate_state, read_state};
 use canister_timer_jobs::Job;
+use constants::{MINUTE_IN_MS, SECOND_IN_MS};
 use ic_ledger_types::Tokens;
 use local_user_index_canister::{Event as LocalUserIndexEvent, OpenChatBotMessage, UserJoinedGroup};
 use serde::{Deserialize, Serialize};
@@ -10,7 +11,6 @@ use types::{
     ChatId, CommunityId, Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration, MessageContent, Milliseconds,
     TextContent, UserId,
 };
-use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {

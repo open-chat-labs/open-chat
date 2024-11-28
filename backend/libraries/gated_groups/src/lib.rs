@@ -1,6 +1,7 @@
 use candid::Principal;
 // use ic_verifiable_credentials::issuer_api::{ArgumentValue, CredentialSpec};
 // use ic_verifiable_credentials::VcFlowSigners;
+use constants::{DAY_IN_MS, MEMO_JOINING_FEE, NANOS_PER_MILLISECOND};
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use sns_governance_canister::types::neuron::DissolveState;
@@ -9,8 +10,6 @@ use types::{
     AccessGate, AccessGateNonComposite, AccessGateScope, CanisterId, CompositeGate, GateCheckFailedReason, PaymentGate,
     SnsNeuronGate, TimestampMillis, TokenBalanceGate, UserId, VerifiedCredentialGate,
 };
-use utils::consts::MEMO_JOINING_FEE;
-use utils::time::{DAY_IN_MS, NANOS_PER_MILLISECOND};
 
 pub enum CheckIfPassesGateResult {
     Success(Vec<GatePayment>),

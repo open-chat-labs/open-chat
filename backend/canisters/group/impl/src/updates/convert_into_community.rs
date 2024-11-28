@@ -3,11 +3,11 @@ use crate::{mutate_state, run_regular_jobs, CommunityBeingImportedInto, RuntimeS
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use constants::OPENCHAT_BOT_USER_ID;
 use group_canister::convert_into_community::{Response::*, *};
 use rand::RngCore;
 use std::collections::HashMap;
 use types::{CanisterId, UserId};
-use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[update(candid = true, msgpack = true)]
 #[trace]

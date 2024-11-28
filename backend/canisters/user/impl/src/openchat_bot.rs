@@ -1,12 +1,11 @@
 use crate::updates::c2c_send_messages::{handle_message_impl, HandleMessageArgs};
 use crate::{RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT};
 use chat_events::{MessageContentInternal, TextContentInternal};
+use constants::{DAY_IN_MS, HOUR_IN_MS, OPENCHAT_BOT_USERNAME, OPENCHAT_BOT_USER_ID};
 use types::nns::Tokens;
 use types::{ChannelId, CommunityId, EventWrapper, Message, SuspensionDuration, User, UserId, UserType};
 use user_canister::{C2CReplyContext, PhoneNumberConfirmed, StorageUpgraded, UserSuspended};
-use utils::consts::{OPENCHAT_BOT_USERNAME, OPENCHAT_BOT_USER_ID};
 use utils::format::format_to_decimal_places;
-use utils::time::{DAY_IN_MS, HOUR_IN_MS};
 
 pub(crate) fn send_community_deleted_message(deleted_by: UserId, name: String, public: bool, state: &mut RuntimeState) {
     let visibility = if public { "public" } else { "private" };

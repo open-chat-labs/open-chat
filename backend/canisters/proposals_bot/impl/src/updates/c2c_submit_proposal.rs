@@ -5,6 +5,7 @@ use candid::Principal;
 use canister_api_macros::update;
 use canister_timer_jobs::Job;
 use canister_tracing_macros::trace;
+use constants::SECOND_IN_MS;
 use proposals_bot_canister::c2c_submit_proposal::{Response::*, *};
 use proposals_bot_canister::{ProposalToSubmit, ProposalToSubmitAction, Treasury};
 use sns_governance_canister::types::manage_neuron::Command;
@@ -16,7 +17,6 @@ use sns_governance_canister::types::{
 use tracing::{error, info};
 use types::{icrc1, CanisterId, MultiUserChat, SnsNeuronId, UserDetails, UserId};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
-use utils::time::SECOND_IN_MS;
 
 const OC_ROOT_URL: &str = "https://oc.app/";
 

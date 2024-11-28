@@ -3,9 +3,9 @@ use crate::{read_state, run_regular_jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ckbtc_minter_canister::CKBTC_MINTER_CANISTER_ID;
+use constants::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 use types::Cryptocurrency;
 use user_canister::retrieve_btc::{Response::*, *};
-use utils::time::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]

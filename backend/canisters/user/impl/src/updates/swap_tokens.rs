@@ -9,13 +9,12 @@ use crate::token_swaps::swap_client::SwapClient;
 use crate::{mutate_state, read_state, run_regular_jobs, Data, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use constants::{MEMO_SWAP, MEMO_SWAP_APPROVAL, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
 use tracing::{error, info};
 use types::{Achievement, TimestampMillis, Timestamped};
 use user_canister::swap_tokens::{Response::*, *};
-use utils::consts::{MEMO_SWAP, MEMO_SWAP_APPROVAL};
-use utils::time::{NANOS_PER_MILLISECOND, SECOND_IN_MS};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]

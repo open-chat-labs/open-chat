@@ -1,11 +1,11 @@
 use crate::metadata_helper::MetadataHelper;
 use crate::{mutate_state, read_state};
+use constants::HOUR_IN_MS;
 use ic_cdk::api::call::RejectionCode;
 use std::time::Duration;
 use tracing::error;
 use types::CanisterId;
 use utils::canister_timers::run_now_then_interval;
-use utils::time::HOUR_IN_MS;
 
 pub fn start_job() {
     run_now_then_interval(Duration::from_millis(11 * HOUR_IN_MS), run);

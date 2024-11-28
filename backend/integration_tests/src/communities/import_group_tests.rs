@@ -2,6 +2,7 @@ use crate::env::ENV;
 use crate::utils::{now_millis, now_nanos, tick_many};
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
+use constants::HOUR_IN_MS;
 use itertools::Itertools;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
@@ -11,7 +12,6 @@ use types::{
     PendingCryptoTransaction, PrizeContentInitial, ReplyContext, TextContent,
 };
 use user_canister::mark_read::ChatMessagesRead;
-use utils::time::HOUR_IN_MS;
 
 #[test]
 fn import_group_succeeds() {

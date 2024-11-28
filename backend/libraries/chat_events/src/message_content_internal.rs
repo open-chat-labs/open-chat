@@ -1,5 +1,6 @@
 use crate::DeletedByInternal;
 use candid::Principal;
+use constants::{MEMO_PRIZE_FEE, MEMO_PRIZE_REFUND, OPENCHAT_TREASURY_CANISTER_ID, PRIZE_FEE_PERCENT};
 use ledger_utils::{create_pending_transaction, format_crypto_amount};
 use search::Document;
 use serde::{Deserialize, Serialize};
@@ -19,7 +20,6 @@ use types::{
     TextContentEventPayload, ThumbnailData, TimestampMillis, TimestampNanos, TokenInfo, TotalVotes, TransactionHash, UserId,
     VideoCallContent, VideoCallPresence, VideoCallType, VideoContent, VoteOperation,
 };
-use utils::consts::{MEMO_PRIZE_FEE, MEMO_PRIZE_REFUND, OPENCHAT_TREASURY_CANISTER_ID, PRIZE_FEE_PERCENT};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum MessageContentInternal {

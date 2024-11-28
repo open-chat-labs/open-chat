@@ -4,13 +4,12 @@ use crate::model::pin_number::VerifyPinError;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use constants::{MEMO_P2P_SWAP_ACCEPT, NANOS_PER_MILLISECOND};
 use escrow_canister::deposit_subaccount;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use types::{CanisterId, TimestampMillis, UserId};
 use user_canister::c2c_accept_p2p_swap::{Response::*, *};
-use utils::consts::MEMO_P2P_SWAP_ACCEPT;
-use utils::time::NANOS_PER_MILLISECOND;
 
 #[update(guard = "caller_is_known_group_or_community_canister", msgpack = true)]
 #[trace]

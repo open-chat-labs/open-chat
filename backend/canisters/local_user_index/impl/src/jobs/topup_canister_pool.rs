@@ -1,11 +1,11 @@
 use crate::{mutate_state, read_state, RuntimeState, USER_CANISTER_INITIAL_CYCLES_BALANCE};
+use constants::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
 use types::{CanisterId, Cycles};
 use utils::canister::create;
-use utils::consts::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();

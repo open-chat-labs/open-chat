@@ -1,8 +1,8 @@
 use crate::{mutate_state, RuntimeState};
+use constants::MINUTE_IN_MS;
 use std::time::Duration;
 use types::Milliseconds;
 use utils::canister_timers::run_now_then_interval;
-use utils::time::MINUTE_IN_MS;
 
 const CALCULATE_METRICS_INTERVAL: Milliseconds = 5 * MINUTE_IN_MS;
 

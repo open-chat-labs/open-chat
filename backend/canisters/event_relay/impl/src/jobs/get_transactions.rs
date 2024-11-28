@@ -1,4 +1,5 @@
 use crate::{mutate_state, read_state};
+use constants::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 use event_store_producer::EventBuilder;
 use ic_cdk::api::call::CallResult;
 use icrc_ledger_types::icrc3::transactions::{GetTransactionsRequest, Transaction};
@@ -7,7 +8,6 @@ use std::cell::Cell;
 use std::convert::Into;
 use std::time::Duration;
 use types::{CanisterId, Milliseconds};
-use utils::time::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 
 const DEFAULT_INTERVAL: Milliseconds = MINUTE_IN_MS;
 const BATCH_SIZE: usize = 1000;
