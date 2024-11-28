@@ -36,6 +36,7 @@ fn post_upgrade(args: Args) {
 
     mutate_state(|state| {
         let now = state.env.now();
+        state.data.members.populate_member_channel_links();
         for channel in state.data.channels.iter_mut() {
             let count_removed = channel.chat.members.prune_member_updates(now);
             info!(count_removed, "Removed old member updates");
