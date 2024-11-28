@@ -72,4 +72,5 @@ utils = { path = "../../../libraries/utils" }
 
 [dev-dependencies]
 proptest = { workspace = true }
+test-case = { workspace = true }
 test-strategy = { workspace = true }

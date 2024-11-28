@@ -48,8 +48,6 @@ impl CommunityMembers {
             date_added: now,
             role: CommunityRole::Owner,
             suspended: Timestamped::default(),
-            channels: public_channels.iter().copied().collect(),
-            channels_removed: Vec::new(),
             rules_accepted: Some(Timestamped::new(Version::zero(), now)),
             user_type: creator_user_type,
             display_name: Timestamped::default(),
@@ -103,8 +101,6 @@ impl CommunityMembers {
                         date_added: now,
                         role: CommunityRole::Member,
                         suspended: Timestamped::default(),
-                        channels: BTreeSet::new(),
-                        channels_removed: Vec::new(),
                         rules_accepted: None,
                         user_type,
                         display_name: Timestamped::default(),
@@ -167,6 +163,14 @@ impl CommunityMembers {
                         let referrer_user_id = referrer.user_id;
                         self.members_with_referrals.remove(&referrer_user_id);
                     }
+                }
+                let channel_ids: Vec<_> = self.channels_for_member(user_id).collect();
+                for channel_id in channel_ids {
+                    self.member_channel_links.remove(&(user_id, channel_id));
+                }
+                let channels_removed: Vec<_> = self.channels_removed_for_member(user_id).map(|(c, _)| c).collect();
+                for channel_id in channels_removed {
+                    self.member_channel_links_removed.remove(&(user_id, channel_id));
                 }
                 self.user_groups.remove_user_from_all(&member.user_id, now);
                 self.member_ids.remove(&user_id);
@@ -322,17 +326,22 @@ impl CommunityMembers {
     }
 
     pub fn mark_member_joined_channel(&mut self, user_id: UserId, channel_id: ChannelId) {
-        if let Some(member) = self.members.get_mut(&user_id) {
-            member.channels.insert(channel_id);
+        if self.member_ids.contains(&user_id) {
             self.member_channel_links.insert((user_id, channel_id));
             self.member_channel_links_removed.remove(&(user_id, channel_id));
         }
     }
 
-    pub fn mark_member_left_channel(&mut self, user_id: UserId, channel_id: ChannelId, now: TimestampMillis) {
-        if let Some(member) = self.members.get_mut(&user_id) {
-            if member.leave(channel_id, now) {
-                self.member_channel_links.remove(&(user_id, channel_id));
+    pub fn mark_member_left_channel(
+        &mut self,
+        user_id: UserId,
+        channel_id: ChannelId,
+        channel_deleted: bool,
+        now: TimestampMillis,
+    ) {
+        if self.member_ids.contains(&user_id) {
+            self.member_channel_links.remove(&(user_id, channel_id));
+            if !channel_deleted {
                 self.member_channel_links_removed.insert((user_id, channel_id), now);
             }
         }
@@ -422,8 +431,19 @@ impl CommunityMembers {
             .map(|(_, c)| *c)
     }
 
+    pub fn channels_removed_for_member(&self, user_id: UserId) -> impl Iterator<Item = (ChannelId, TimestampMillis)> + '_ {
+        self.member_channel_links_removed
+            .range((user_id, ChannelId::from(0u32))..)
+            .take_while(move |((u, _), _)| *u == user_id)
+            .map(|((_, c), ts)| (*c, *ts))
+    }
+
     pub fn member_channel_links_removed_contains(&self, user_id: UserId, channel_id: ChannelId) -> bool {
         self.member_channel_links_removed.contains_key(&(user_id, channel_id))
+    }
+
+    pub fn timestamp_of_latest_channel_removed(&self, user_id: UserId) -> Option<TimestampMillis> {
+        self.channels_removed_for_member(user_id).map(|(_, ts)| ts).max()
     }
 
     pub fn owners(&self) -> &BTreeSet<UserId> {
@@ -587,10 +607,6 @@ pub struct CommunityMemberInternal {
     pub date_added: TimestampMillis,
     #[serde(rename = "r", alias = "role", default, skip_serializing_if = "is_default")]
     role: CommunityRole,
-    #[serde(rename = "c", alias = "channels")]
-    channels: BTreeSet<ChannelId>,
-    #[serde(rename = "cr", alias = "channel_removed", default, skip_serializing_if = "Vec::is_empty")]
-    channels_removed: Vec<Timestamped<ChannelId>>,
     #[serde(rename = "ra", alias = "rules_accepted", skip_serializing_if = "Option::is_none")]
     pub rules_accepted: Option<Timestamped<Version>>,
     #[serde(rename = "ut", alias = "user_type", default, skip_serializing_if = "is_default")]
@@ -608,16 +624,6 @@ pub struct CommunityMemberInternal {
 }
 
 impl CommunityMemberInternal {
-    pub fn leave(&mut self, channel_id: ChannelId, now: TimestampMillis) -> bool {
-        if self.channels.remove(&channel_id) {
-            self.channels_removed.retain(|c| c.value != channel_id);
-            self.channels_removed.push(Timestamped::new(channel_id, now));
-            true
-        } else {
-            false
-        }
-    }
-
     pub fn accept_rules(&mut self, version: Version, now: TimestampMillis) {
         let already_accepted = self
             .rules_accepted
@@ -629,20 +635,10 @@ impl CommunityMemberInternal {
         }
     }
 
-    pub fn channels_removed_since(&self, since: TimestampMillis) -> Vec<ChannelId> {
-        self.channels_removed
-            .iter()
-            .rev()
-            .take_while(|t| t.timestamp > since)
-            .map(|t| t.value)
-            .collect()
-    }
-
     pub fn last_updated(&self) -> TimestampMillis {
         [
             self.date_added,
             self.suspended.timestamp,
-            self.channels_removed.last().map(|c| c.timestamp).unwrap_or_default(),
             self.rules_accepted.as_ref().map(|r| r.timestamp).unwrap_or_default(),
             self.display_name.timestamp,
             self.lapsed.timestamp,
@@ -741,5 +737,46 @@ impl From<&CommunityMemberInternal> for CommunityMember {
             referred_by: m.referred_by,
             lapsed: m.lapsed.value,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test_case::test_case;
+
+    #[test_case(true)]
+    #[test_case(false)]
+    fn channel_link_sets_maintained_correctly(channels_deleted: bool) {
+        let principal1 = Principal::from_slice(&[1]);
+        let principal2 = Principal::from_slice(&[2]);
+        let user_id1 = principal1.into();
+        let user_id2 = principal1.into();
+
+        let mut members = CommunityMembers::new(principal1, user_id1, UserType::User, vec![1u32.into()], 0);
+
+        members.add(user_id2, principal2, UserType::User, None, 0);
+
+        for i in 1u32..100 {
+            members.mark_member_joined_channel(user_id2, i.into());
+
+            if i % 4 == 0 {
+                members.mark_member_left_channel(user_id2, (i / 4).into(), channels_deleted, 0);
+            }
+        }
+
+        let channel_ids: Vec<_> = members.channels_for_member(user_id2).collect();
+        assert_eq!(channel_ids, (25u32..100).map(ChannelId::from).collect::<Vec<_>>());
+
+        let removed: Vec<_> = members.channels_removed_for_member(user_id2).map(|(c, _)| c).collect();
+        if channels_deleted {
+            assert!(removed.is_empty());
+        } else {
+            assert_eq!(removed, (1u32..25).map(ChannelId::from).collect::<Vec<_>>());
+        }
+
+        members.remove(&user_id2, 0);
+        assert!(members.channels_for_member(user_id2).next().is_none());
+        assert!(members.channels_removed_for_member(user_id2).next().is_none());
     }
 }

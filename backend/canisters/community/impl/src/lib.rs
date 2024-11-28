@@ -570,7 +570,7 @@ impl Data {
     }
 
     pub fn remove_user_from_channel(&mut self, user_id: UserId, channel_id: ChannelId, now: TimestampMillis) {
-        self.members.mark_member_left_channel(user_id, channel_id, now);
+        self.members.mark_member_left_channel(user_id, channel_id, false, now);
         self.expiring_members.remove_member(user_id, Some(channel_id));
         self.expiring_member_actions.remove_member(user_id, Some(channel_id));
     }

@@ -41,7 +41,10 @@ fn summary_updates_impl(
     }
 
     let member = state.data.members.get(caller);
-    let member_last_updated = member.as_ref().map(|m| m.last_updated()).unwrap_or_default();
+    let mut last_updated = max(
+        state.data.details_last_updated(),
+        member.as_ref().map(|m| m.last_updated()).unwrap_or_default(),
+    );
 
     let (channels_with_updates, channels_removed) = if let Some(m) = member {
         let channels_with_updates: Vec<_> = state
@@ -52,7 +55,18 @@ fn summary_updates_impl(
             .filter(|c| c.last_updated(Some(m.user_id)) > updates_since)
             .collect();
 
-        let channels_removed = m.channels_removed_since(updates_since);
+        let mut channels_removed = Vec::new();
+        for (channel_id, timestamp) in state
+            .data
+            .members
+            .channels_removed_for_member(m.user_id)
+            .filter(|(_, ts)| *ts > updates_since)
+        {
+            channels_removed.push(channel_id);
+            if timestamp > last_updated {
+                last_updated = timestamp;
+            }
+        }
 
         (channels_with_updates, channels_removed)
     } else {
@@ -67,9 +81,7 @@ fn summary_updates_impl(
         (channels_with_updates, Vec::new())
     };
 
-    let community_last_updated = max(member_last_updated, state.data.details_last_updated());
-
-    if channels_with_updates.is_empty() && channels_removed.is_empty() && community_last_updated <= updates_since {
+    if channels_with_updates.is_empty() && channels_removed.is_empty() && last_updated <= updates_since {
         return SuccessNoUpdates;
     }
 
@@ -117,12 +129,16 @@ fn summary_updates_impl(
         lapsed: m.lapsed().if_set_after(updates_since).copied(),
     });
 
-    let last_updated = [community_last_updated]
-        .into_iter()
-        .chain(channels_added.iter().map(|c| c.last_updated))
+    if let Some(channels_last_updated) = channels_added
+        .iter()
+        .map(|c| c.last_updated)
         .chain(channels_updated.iter().map(|c| c.last_updated))
         .max()
-        .unwrap_or_default();
+    {
+        if channels_last_updated > last_updated {
+            last_updated = channels_last_updated;
+        }
+    }
 
     Success(CommunityCanisterCommunitySummaryUpdates {
         community_id: state.env.canister_id().into(),
