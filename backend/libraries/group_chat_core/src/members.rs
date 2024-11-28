@@ -3,11 +3,10 @@ use crate::roles::GroupRoleInternal;
 use crate::AccessRulesInternal;
 use candid::Principal;
 use constants::calculate_summary_updates_data_removal_cutoff;
-use group_community_common::{Member, Members};
+use group_community_common::{Member, MemberUpdate, Members};
 use serde::de::{SeqAccess, Visitor};
 use serde::ser::SerializeSeq;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::cmp::max;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Formatter;
@@ -38,18 +37,6 @@ pub struct GroupMembers {
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
     #[serde(default)]
     latest_update_removed: TimestampMillis,
-}
-
-#[derive(Serialize_repr, Deserialize_repr, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
-#[repr(u8)]
-pub enum MemberUpdate {
-    Added = 1,
-    Removed = 2,
-    RoleChanged = 3,
-    Blocked = 4,
-    Unblocked = 5,
-    Lapsed = 6,
-    Unlapsed = 7,
 }
 
 #[allow(clippy::too_many_arguments)]

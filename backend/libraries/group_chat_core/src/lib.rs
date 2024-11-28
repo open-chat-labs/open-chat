@@ -5,6 +5,7 @@ use chat_events::{
 };
 use constants::OPENCHAT_BOT_USER_ID;
 use event_store_producer::{EventStoreClient, Runtime};
+use group_community_common::MemberUpdate;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use regex_lite::Regex;
@@ -332,6 +333,7 @@ impl GroupChatCore {
                         result.blocked_users_removed.push(user_id);
                     }
                 }
+                MemberUpdate::DisplayNameChanged => {}
             }
         }
 

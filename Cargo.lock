@@ -2906,7 +2906,6 @@ dependencies = [
  "regex-lite",
  "search",
  "serde",
- "serde_repr",
  "test-strategy",
  "types",
  "utils 0.1.0",
