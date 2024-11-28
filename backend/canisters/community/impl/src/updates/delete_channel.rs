@@ -80,6 +80,10 @@ fn delete_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Respo
         state.data.members.mark_member_left_channel(*user_id, channel_id, now);
     }
 
+    if channel.chat.gate_config.value.is_some_and(|gc| gc.expiry.is_some()) {
+        state.data.expiring_members.remove_gate(Some(channel_id));
+    }
+
     handle_activity_notification(state);
 
     Success
