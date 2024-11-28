@@ -1,11 +1,11 @@
 use crate::{Data, RuntimeState};
 use chat_events::{ChatEventInternal, Reader};
+use constants::{DAY_IN_MS, HOUR_IN_MS};
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_index_canister::c2c_mark_community_active;
 use msgpack::serialize_then_unwrap;
 use std::collections::HashSet;
 use types::{CanisterId, Milliseconds, PublicCommunityActivity, TimestampMillis};
-use utils::time::{DAY_IN_MS, HOUR_IN_MS};
 
 // If needed, notify the group index canister that there has been activity in this community
 pub(crate) fn handle_activity_notification(state: &mut RuntimeState) {

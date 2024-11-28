@@ -9,6 +9,7 @@ use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use chat_events::{ChannelThreadKeyPrefix, ChatMetricsInternal, KeyPrefix};
 use community_canister::EventsResponse;
+use constants::MINUTE_IN_MS;
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -40,7 +41,6 @@ use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use user_canister::CommunityCanisterEvent;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
-use utils::time::MINUTE_IN_MS;
 
 mod activity_notifications;
 mod guards;
@@ -172,10 +172,11 @@ impl RuntimeState {
             };
 
             // Return all the channels that the user is a member of
-            let channels: Vec<_> = m
-                .channels
-                .iter()
-                .filter_map(|c| self.data.channels.get(c))
+            let channels: Vec<_> = self
+                .data
+                .members
+                .channels_for_member(m.user_id)
+                .filter_map(|c| self.data.channels.get(&c))
                 .filter_map(|c| c.summary(Some(m.user_id), true, data.is_public, &data.members))
                 .collect();
 
@@ -569,7 +570,7 @@ impl Data {
     }
 
     pub fn remove_user_from_channel(&mut self, user_id: UserId, channel_id: ChannelId, now: TimestampMillis) {
-        self.members.mark_member_left_channel(&user_id, channel_id, now);
+        self.members.mark_member_left_channel(user_id, channel_id, now);
         self.expiring_members.remove_member(user_id, Some(channel_id));
         self.expiring_member_actions.remove_member(user_id, Some(channel_id));
     }

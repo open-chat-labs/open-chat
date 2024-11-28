@@ -19,6 +19,7 @@ canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" 
 chat_events = { path = "../../../libraries/chat_events" }
 community_canister = { path = "../../community/api" }
 community_canister_c2c_client = { path = "../../community/c2c_client" }
+constants = { path = "../../../libraries/constants" }
 fire_and_forget_handler = { path = "../../../libraries/fire_and_forget_handler" }
 group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }

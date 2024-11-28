@@ -2,6 +2,7 @@ use crate::env::ENV;
 use crate::utils::{now_millis, now_nanos, tick_many};
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
+use constants::DAY_IN_MS;
 use event_store_canister::TimestampMillis;
 use pocket_ic::PocketIc;
 use std::collections::HashMap;
@@ -14,7 +15,6 @@ use types::{
     P2PSwapContentInitial, PendingCryptoTransaction, PollConfig, PollContent, PollVotes, TextContent, TotalVotes,
 };
 use user_canister::MessageActivity;
-use utils::time::DAY_IN_MS;
 
 #[test_case(ChatType::Direct)]
 #[test_case(ChatType::Group)]

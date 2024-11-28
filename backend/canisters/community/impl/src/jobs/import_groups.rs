@@ -7,6 +7,7 @@ use crate::timer_job_types::{FinalizeGroupImportJob, ProcessGroupImportChannelMe
 use crate::updates::c2c_join_channel::{add_members_to_public_channel_unchecked, join_channel_unchecked};
 use crate::{mutate_state, read_state, RuntimeState};
 use chat_events::ChatEvents;
+use constants::OPENCHAT_BOT_USER_ID;
 use group_canister::c2c_export_group::{Args, Response};
 use group_chat_core::GroupChatCore;
 use ic_cdk_timers::TimerId;
@@ -15,7 +16,6 @@ use std::collections::HashMap;
 use std::time::Duration;
 use tracing::{info, trace};
 use types::{ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityUsersBlocked, Empty, UserId, UserType};
-use utils::consts::OPENCHAT_BOT_USER_ID;
 
 const PAGE_SIZE: u32 = 19 * 102 * 1024; // Roughly 1.9MB (1.9 * 1024 * 1024)
 
@@ -213,8 +213,8 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
         let mut to_add: HashMap<UserId, UserType> = HashMap::new();
 
         for user_id in channel.chat.members.member_ids().iter() {
-            if let Some(member) = state.data.members.get_by_user_id_mut(user_id) {
-                member.channels.insert(channel_id);
+            if state.data.members.member_ids().contains(user_id) {
+                state.data.members.mark_member_joined_channel(*user_id, channel_id);
             } else {
                 let user_type = bots.get(user_id).copied().unwrap_or_default();
                 to_add.insert(*user_id, user_type);
@@ -251,15 +251,25 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
                         AddResult::Success(_) => {
                             state.data.invited_users.remove(&user_id, now);
 
-                            let member = state.data.members.get_by_user_id_mut(&user_id).unwrap();
-                            for channel_id in public_channel_ids.iter() {
+                            let user_type = state.data.members.bots().get(&user_id).copied().unwrap_or_default();
+
+                            for channel_id in public_channel_ids.iter().filter(|&c| *c != channel_id) {
                                 if let Some(channel) = state.data.channels.get_mut(channel_id) {
                                     if channel.chat.gate_config.is_none() {
-                                        join_channel_unchecked(channel, member, state.data.is_public, true, now);
+                                        join_channel_unchecked(
+                                            user_id,
+                                            user_type,
+                                            channel,
+                                            &mut state.data.members,
+                                            state.data.is_public,
+                                            true,
+                                            now,
+                                        );
                                     }
                                 }
                             }
-                            member.channels.insert(channel_id);
+
+                            state.data.members.mark_member_joined_channel(user_id, channel_id);
                             members_added.push(user_id);
                         }
                         AddResult::AlreadyInCommunity => {}
@@ -310,7 +320,14 @@ fn add_community_members_to_channel_if_public(channel_id: ChannelId, state: &mut
         // If this is a public channel, add all community members to it
         if channel.chat.is_public.value && channel.chat.gate_config.value.is_none() {
             let now = state.env.now();
-            add_members_to_public_channel_unchecked(channel, state.data.is_public, state.data.members.iter_mut(), now);
+            let user_ids: Vec<_> = state.data.members.member_ids().iter().copied().collect();
+            add_members_to_public_channel_unchecked(
+                user_ids.into_iter(),
+                channel,
+                &mut state.data.members,
+                state.data.is_public,
+                now,
+            );
         }
     }
 }

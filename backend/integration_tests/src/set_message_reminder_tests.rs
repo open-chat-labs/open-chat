@@ -1,11 +1,11 @@
 use crate::env::ENV;
 use crate::utils::now_millis;
 use crate::{client, TestEnv};
+use constants::OPENCHAT_BOT_USER_ID;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::random_string;
 use types::{Chat, ChatEvent, EventIndex, MessageContent};
-use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[test]
 fn set_message_reminder_succeeds() {

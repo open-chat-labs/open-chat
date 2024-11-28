@@ -1,4 +1,5 @@
 use crate::{mutate_state, RuntimeState};
+use constants::min_cycles_balance;
 use ic_cdk::api::management_canister::main::CanisterInstallMode;
 use ic_cdk_timers::TimerId;
 use local_group_index_canister::ChildCanisterType;
@@ -8,7 +9,6 @@ use tracing::trace;
 use types::{BuildVersion, CanisterId, CommunityId, Cycles, CyclesTopUp};
 use utils::canister;
 use utils::canister::{install, ChunkedWasmToInstall, FailedUpgrade, WasmToInstall};
-use utils::consts::min_cycles_balance;
 
 type CanisterToUpgrade = canister::CanisterToInstall<community_canister::post_upgrade::Args>;
 

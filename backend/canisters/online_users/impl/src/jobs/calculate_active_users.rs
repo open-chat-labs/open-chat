@@ -1,8 +1,8 @@
 use crate::{mutate_state, ActiveUsers, RuntimeState};
+use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
 use std::time::Duration;
 use types::Milliseconds;
 use utils::canister_timers::run_now_then_interval;
-use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
 
 const ACTIVE_USERS_REFRESH_INTERVAL: Milliseconds = 5 * MINUTE_IN_MS;
 const FIVE_MINUTES: Milliseconds = 5 * MINUTE_IN_MS;

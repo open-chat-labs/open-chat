@@ -1,9 +1,9 @@
 use crate::{mutate_state, RuntimeState};
+use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
 use rand::RngCore;
 use std::time::Duration;
 use types::{Activity, Milliseconds, TimestampMillis};
 use utils::canister_timers::run_now_then_interval;
-use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
 
 const INTERVAL: Milliseconds = 30 * MINUTE_IN_MS;
 

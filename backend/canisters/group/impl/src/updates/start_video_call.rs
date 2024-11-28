@@ -4,11 +4,11 @@ use crate::timer_job_types::{MarkVideoCallEndedJob, RemoveExpiredEventsJob};
 use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_tracing_macros::trace;
 use chat_events::{CallParticipantInternal, MessageContentInternal, VideoCallContentInternal};
+use constants::HOUR_IN_MS;
 use group_canister::start_video_call::{Response::*, *};
 use group_chat_core::SendMessageResult;
 use ic_cdk::update;
 use types::{GroupMessageNotification, Notification, VideoCallPresence, VideoCallType};
-use utils::time::HOUR_IN_MS;
 
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]

@@ -20,6 +20,7 @@ canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" 
 chat_events = { path = "../../../libraries/chat_events" }
 community_canister = { path = "../../community/api" }
 community_canister_c2c_client = { path = "../../community/c2c_client" }
+constants = { path = "../../../libraries/constants" }
 dataurl = { workspace = true }
 event_store_producer = { workspace = true, features = ["json"] }
 event_store_producer_cdk_runtime = { workspace = true }

@@ -19,7 +19,7 @@ fn create_user_group_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 
     let caller = state.env.caller();
-    if let Some(member) = state.data.members.get_mut(caller) {
+    if let Some(member) = state.data.members.get(caller) {
         if member.suspended().value {
             return UserSuspended;
         } else if member.lapsed().value {

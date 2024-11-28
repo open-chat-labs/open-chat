@@ -8,6 +8,7 @@ use chat_events::{
     AddRemoveReactionArgs, AddRemoveReactionResult, DeleteMessageResult, DeleteUndeleteMessagesArgs, EditMessageArgs,
     MessageContentInternal, Reader, TipMessageArgs, TipMessageResult,
 };
+use constants::{HOUR_IN_MS, MINUTE_IN_MS};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use ledger_utils::format_crypto_amount_with_symbol;
 use types::{
@@ -18,7 +19,6 @@ use user_canister::c2c_notify_user_canister_events::{Response::*, *};
 use user_canister::{
     MessageActivity, MessageActivityEvent, P2PSwapStatusChange, SendMessagesArgs, ToggleReactionArgs, UserCanisterEvent,
 };
-use utils::time::{HOUR_IN_MS, MINUTE_IN_MS};
 
 #[update(msgpack = true)]
 #[trace]

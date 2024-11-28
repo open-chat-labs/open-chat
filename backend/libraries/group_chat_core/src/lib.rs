@@ -3,6 +3,7 @@ use chat_events::{
     DeleteUndeleteMessagesArgs, GroupGateUpdatedInternal, MessageContentInternal, PushMessageArgs, Reader,
     RemoveExpiredEventsResult, TipMessageArgs, UndeleteMessageResult,
 };
+use constants::OPENCHAT_BOT_USER_ID;
 use event_store_producer::{EventStoreClient, Runtime};
 use itertools::Itertools;
 use lazy_static::lazy_static;
@@ -22,7 +23,6 @@ use types::{
     Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall,
     MAX_RETURNED_MENTIONS,
 };
-use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
     validate_description, validate_group_name, validate_rules, NameValidationError, RulesValidationError,
