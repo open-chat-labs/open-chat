@@ -37,10 +37,12 @@ fn post_upgrade(args: Args) {
     mutate_state(|state| {
         let now = state.env.now();
         for channel in state.data.channels.iter_mut() {
-            channel.chat.members.prune_member_updates(now);
+            let count_removed = channel.chat.members.prune_member_updates(now);
+            info!(count_removed, "Removed old member updates");
 
             if channel.chat.subtype.is_some() {
-                channel.chat.members.prune_proposal_votes(now);
+                let count_removed = channel.chat.members.prune_proposal_votes(now);
+                info!(count_removed, "Removed old proposal votes");
             }
         }
     });

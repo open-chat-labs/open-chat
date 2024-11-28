@@ -54,10 +54,12 @@ pub enum MemberUpdate {
 
 #[allow(clippy::too_many_arguments)]
 impl GroupMembers {
-    pub fn prune_proposal_votes(&mut self, now: TimestampMillis) {
+    pub fn prune_proposal_votes(&mut self, now: TimestampMillis) -> u32 {
+        let mut count = 0;
         for member in self.members.values_mut() {
-            member.prune_proposal_votes(now);
+            count += member.prune_proposal_votes(now);
         }
+        count
     }
 
     pub fn new(creator_user_id: UserId, user_type: UserType, now: TimestampMillis) -> GroupMembers {
@@ -447,17 +449,19 @@ impl GroupMembers {
         self.updates.insert((now, user_id, update));
     }
 
-    pub fn prune_member_updates(&mut self, now: TimestampMillis) {
+    pub fn prune_member_updates(&mut self, now: TimestampMillis) -> u32 {
         let cutoff = calculate_summary_updates_data_removal_cutoff(now);
         let still_valid = self
             .updates
             .split_off(&(cutoff, Principal::anonymous().into(), MemberUpdate::Added));
 
-        if let Some((ts, _, _)) = self.updates.pop_last() {
-            self.latest_update_removed = ts;
+        let removed = std::mem::replace(&mut self.updates, still_valid);
+
+        if let Some((ts, _, _)) = removed.last() {
+            self.latest_update_removed = *ts;
         }
 
-        self.updates = still_valid;
+        removed.len() as u32
     }
 
     #[cfg(test)]
@@ -700,15 +704,16 @@ impl GroupMemberInternal {
         self.latest_proposal_vote_removed > since
     }
 
-    fn prune_proposal_votes(&mut self, now: TimestampMillis) {
+    fn prune_proposal_votes(&mut self, now: TimestampMillis) -> u32 {
         let cutoff = calculate_summary_updates_data_removal_cutoff(now);
         let still_valid = self.proposal_votes.split_off(&(cutoff, 0.into()));
+        let removed = std::mem::replace(&mut self.proposal_votes, still_valid);
 
-        if let Some((ts, _)) = self.proposal_votes.pop_last() {
-            self.latest_proposal_vote_removed = ts;
+        if let Some((ts, _)) = removed.last() {
+            self.latest_proposal_vote_removed = *ts;
         }
 
-        self.proposal_votes = still_valid;
+        removed.len() as u32
     }
 }
 
