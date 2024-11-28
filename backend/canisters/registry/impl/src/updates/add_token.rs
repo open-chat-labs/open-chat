@@ -4,12 +4,12 @@ use crate::{mutate_state, read_state};
 use candid::Principal;
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
+use constants::{MEMO_LIST_TOKEN, SNS_GOVERNANCE_CANISTER_ID};
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use registry_canister::add_token::{Response::*, *};
 use registry_canister::{NervousSystemDetails, Payment};
 use tracing::{error, info};
 use types::{CanisterId, Cryptocurrency, UserId};
-use utils::consts::{MEMO_LIST_TOKEN, SNS_GOVERNANCE_CANISTER_ID};
 
 const TOKEN_LISTING_FEE_E8S: u128 = 50_000_000_000; // 500 CHAT
 

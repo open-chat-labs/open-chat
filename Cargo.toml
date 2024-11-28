@@ -120,6 +120,7 @@ members = [
     "backend/libraries/canister_timer_jobs",
     "backend/libraries/canister_tracing_macros",
     "backend/libraries/chat_events",
+    "backend/libraries/constants",
     "backend/libraries/cycles_dispenser_client",
     "backend/libraries/dynamodb_index_store",
     "backend/libraries/fire_and_forget_handler",
@@ -199,7 +200,7 @@ ic-certificate-verification = "2.4.0"
 ic-certification = "2.5.0"
 ic-ledger-types = "0.13.0"
 ic_principal = "0.1.1"
-ic-stable-structures = "0.6.6"
+ic-stable-structures = "0.6.7"
 ic-transport-types = "0.37.1"
 ic-utils = "0.37.0"
 ic-verifiable-credentials = { git = "https://github.com/dfinity/verifiable-credentials-sdk", rev = "d5e1bb0f8c0bf99ad565620e18dc402a9ac3317a" }

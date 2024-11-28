@@ -9,12 +9,12 @@ use crate::{
     RuntimeState,
 };
 use canister_tracing_macros::trace;
+use constants::OPENCHAT_BOT_USER_ID;
 use fire_and_forget_handler::FireAndForgetHandler;
 use ic_cdk::update;
 use tracing::error;
 use types::{CanisterId, ChannelId, MessageId, MessageIndex, SuspensionDuration, UserId};
 use user_index_canister::modclub_callback::*;
-use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[update(guard = "caller_is_modclub")]
 #[trace]

@@ -1,4 +1,5 @@
 use crate::{mutate_state, RuntimeState};
+use constants::min_cycles_balance;
 use ic_cdk::api::management_canister::main::CanisterInstallMode;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
@@ -6,7 +7,6 @@ use std::time::Duration;
 use tracing::trace;
 use types::{BuildVersion, CanisterId};
 use utils::canister::{install, FailedUpgrade, WasmToInstall};
-use utils::consts::min_cycles_balance;
 
 type CanisterToUpgrade = utils::canister::CanisterToInstall<notifications_canister::post_upgrade::Args>;
 

@@ -1,6 +1,7 @@
 use crate::ecdsa::{get_key_id, CanisterEcdsaRequest};
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
+use constants::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 use ic_transport_types::EnvelopeContent;
 use k256::pkcs8::EncodePublicKey;
 use k256::PublicKey;
@@ -10,7 +11,6 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
 use utils::env::Environment;
-use utils::time::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 
 mod ecdsa;
 mod guards;

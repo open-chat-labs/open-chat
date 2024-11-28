@@ -7,6 +7,7 @@ use crate::timer_job_types::{FinalizeGroupImportJob, ProcessGroupImportChannelMe
 use crate::updates::c2c_join_channel::{add_members_to_public_channel_unchecked, join_channel_unchecked};
 use crate::{mutate_state, read_state, RuntimeState};
 use chat_events::ChatEvents;
+use constants::OPENCHAT_BOT_USER_ID;
 use group_canister::c2c_export_group::{Args, Response};
 use group_chat_core::GroupChatCore;
 use ic_cdk_timers::TimerId;
@@ -15,7 +16,6 @@ use std::collections::HashMap;
 use std::time::Duration;
 use tracing::{info, trace};
 use types::{ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityUsersBlocked, Empty, UserId, UserType};
-use utils::consts::OPENCHAT_BOT_USER_ID;
 
 const PAGE_SIZE: u32 = 19 * 102 * 1024; // Roughly 1.9MB (1.9 * 1024 * 1024)
 

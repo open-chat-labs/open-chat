@@ -1,10 +1,10 @@
 use crate::{mutate_state, read_state, RuntimeState};
+use constants::MINUTE_IN_MS;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
 use types::{DeletedCommunityInfo, UserId};
-use utils::time::MINUTE_IN_MS;
 
 const MAX_BATCH_SIZE: usize = 100;
 

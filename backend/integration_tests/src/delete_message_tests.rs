@@ -1,11 +1,11 @@
 use crate::env::ENV;
 use crate::{client, TestEnv};
+use constants::MINUTE_IN_MS;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
 use types::{ChatEvent, FileContent, MessageContent, MessageContentInitial};
-use utils::time::MINUTE_IN_MS;
 
 #[test]
 fn delete_direct_message_succeeds() {

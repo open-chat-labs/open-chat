@@ -9,6 +9,7 @@ use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use chat_events::{ChannelThreadKeyPrefix, ChatMetricsInternal, KeyPrefix};
 use community_canister::EventsResponse;
+use constants::MINUTE_IN_MS;
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -40,7 +41,6 @@ use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use user_canister::CommunityCanisterEvent;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
-use utils::time::MINUTE_IN_MS;
 
 mod activity_notifications;
 mod guards;

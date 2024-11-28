@@ -6,14 +6,13 @@ use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{TipMessageArgs, TipMessageResult};
+use constants::{MEMO_TIP, NANOS_PER_MILLISECOND};
 use serde::Serialize;
 use types::{
     icrc1, Achievement, CanisterId, Chat, ChatId, CommunityId, EventIndex, PendingCryptoTransaction, TimestampNanos, UserId,
 };
 use user_canister::tip_message::{Response::*, *};
 use user_canister::UserCanisterEvent;
-use utils::consts::MEMO_TIP;
-use utils::time::NANOS_PER_MILLISECOND;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]

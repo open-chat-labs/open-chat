@@ -4,12 +4,11 @@ use crate::updates::swap_tokens::process_token_swap;
 use crate::{can_borrow_state, mutate_state, openchat_bot, read_state, run_regular_jobs};
 use canister_timer_jobs::Job;
 use chat_events::{MessageContentInternal, MessageReminderContentInternal};
+use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, SECOND_IN_MS};
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{BlobReference, Chat, ChatId, CommunityId, EventIndex, MessageId, MessageIndex, P2PSwapStatus, UserId};
 use user_canister::{C2CReplyContext, UserCanisterEvent};
-use utils::consts::OPENCHAT_BOT_USER_ID;
-use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {

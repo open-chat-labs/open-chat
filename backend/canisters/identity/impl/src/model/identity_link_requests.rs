@@ -1,9 +1,9 @@
 use candid::Principal;
+use constants::MINUTE_IN_MS;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Occupied;
 use std::collections::HashMap;
 use types::{CanisterId, TimestampMillis};
-use utils::time::MINUTE_IN_MS;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct IdentityLinkRequests {

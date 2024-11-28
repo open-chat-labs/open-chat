@@ -4,6 +4,7 @@ use crate::env::ENV;
 use crate::utils::{now_millis, now_nanos, tick_many};
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
+use constants::PRIZE_FEE_PERCENT;
 use ledger_utils::create_pending_transaction;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
@@ -14,7 +15,6 @@ use types::{
     CanisterId, ChannelId, ChatEvent, CommunityId, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContent,
     MessageContentInitial, OptionUpdate, PrizeContentInitial, TextContent, UpdatedRules, Version,
 };
-use utils::consts::PRIZE_FEE_PERCENT;
 
 #[test]
 fn send_text_in_channel() {

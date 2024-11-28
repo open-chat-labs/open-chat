@@ -1,7 +1,7 @@
+use constants::DAY_IN_MS;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{ChatId, Milliseconds, TimestampMillis};
-use utils::time::DAY_IN_MS;
 
 const DEFAULT_EXCLUSION_DURATION: Milliseconds = 14 * DAY_IN_MS; // 2 weeks
 

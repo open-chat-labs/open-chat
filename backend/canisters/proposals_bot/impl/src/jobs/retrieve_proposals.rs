@@ -3,13 +3,13 @@ use crate::proposals::{RawProposal, REWARD_STATUS_ACCEPT_VOTES, REWARD_STATUS_RE
 use crate::timer_job_types::{ProcessUserRefundJob, TimerJob, TopUpNeuronJob, VoteOnNnsProposalJob};
 use crate::{mutate_state, RuntimeState};
 use canister_timer_jobs::Job;
+use constants::MINUTE_IN_MS;
 use ic_cdk::api::call::CallResult;
 use nns_governance_canister::types::{ListProposalInfo, ProposalInfo};
 use sns_governance_canister::types::ProposalData;
 use std::collections::HashSet;
 use std::time::Duration;
 use types::{CanisterId, Milliseconds, Proposal};
-use utils::time::MINUTE_IN_MS;
 
 pub const NNS_TOPIC_NEURON_MANAGEMENT: i32 = 1;
 pub const NNS_TOPIC_EXCHANGE_RATE: i32 = 2;

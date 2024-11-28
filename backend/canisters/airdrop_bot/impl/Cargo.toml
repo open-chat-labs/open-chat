@@ -18,6 +18,7 @@ canister_state_macros = { path = "../../../libraries/canister_state_macros" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 community_canister_c2c_client = { path = "../../community/c2c_client" }
 community_canister = { path = "../../community/api" }
+constants = { path = "../../../libraries/constants" }
 futures = { workspace = true }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }

@@ -20,6 +20,7 @@ canister_timer_jobs = { path = "../../../libraries/canister_timer_jobs" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 chat_events = { path = "../../../libraries/chat_events" }
 community_canister = { path = "../api" }
+constants = { path = "../../../libraries/constants" }
 escrow_canister = { path = "../../escrow/api" }
 escrow_canister_c2c_client = { path = "../../escrow/c2c_client" }
 event_store_producer = { workspace = true, features = ["json"] }

@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 candid = { workspace = true }
 chat_events = { path = "../chat_events" }
+constants = { path = "../constants" }
 event_store_producer = { workspace = true }
 group_community_common = { path = "../group_community_common" }
 itertools = { workspace = true }
