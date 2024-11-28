@@ -2,6 +2,7 @@ use crate::mentions::Mentions;
 use crate::roles::GroupRoleInternal;
 use crate::AccessRulesInternal;
 use candid::Principal;
+use constants::calculate_summary_updates_data_removal_cutoff;
 use group_community_common::{Member, Members};
 use serde::de::{SeqAccess, Visitor};
 use serde::ser::SerializeSeq;
@@ -11,17 +12,15 @@ use std::cmp::max;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Formatter;
 use types::{
-    is_default, EventIndex, GroupMember, GroupPermissions, MessageIndex, Milliseconds, TimestampMillis, Timestamped, UserId,
-    UserType, Version,
+    is_default, EventIndex, GroupMember, GroupPermissions, MessageIndex, TimestampMillis, Timestamped, UserId, UserType,
+    Version,
 };
-use utils::time::DAY_IN_MS;
 use utils::timestamped_set::TimestampedSet;
 
 #[cfg(test)]
 mod proptests;
 
 const MAX_MEMBERS_PER_GROUP: u32 = 100_000;
-const REMOVE_UPDATES_AFTER_DURATION: Milliseconds = 90 * DAY_IN_MS;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct GroupMembers {
@@ -334,9 +333,8 @@ impl GroupMembers {
     }
 
     pub fn register_proposal_vote(&mut self, user_id: UserId, message_index: MessageIndex, now: TimestampMillis) {
-        let cutoff = calculate_remove_updates_cutoff(now);
         if let Some(member) = self.members.get_mut(&user_id) {
-            member.proposal_votes = member.proposal_votes.split_off(&(cutoff, 0.into()));
+            member.prune_proposal_votes(now);
             member.proposal_votes.insert((now, message_index));
         }
     }
@@ -450,7 +448,7 @@ impl GroupMembers {
     }
 
     pub fn prune_member_updates(&mut self, now: TimestampMillis) {
-        let cutoff = calculate_remove_updates_cutoff(now);
+        let cutoff = calculate_summary_updates_data_removal_cutoff(now);
         let still_valid = self
             .updates
             .split_off(&(cutoff, Principal::anonymous().into(), MemberUpdate::Added));
@@ -602,10 +600,6 @@ fn deserialize_proposal_votes<'de, D: Deserializer<'de>>(d: D) -> Result<BTreeSe
     })
 }
 
-fn calculate_remove_updates_cutoff(now: TimestampMillis) -> Milliseconds {
-    now.saturating_sub(REMOVE_UPDATES_AFTER_DURATION)
-}
-
 #[derive(Deserialize)]
 #[serde(untagged)]
 enum ProposalVotesCombined {
@@ -707,7 +701,7 @@ impl GroupMemberInternal {
     }
 
     fn prune_proposal_votes(&mut self, now: TimestampMillis) {
-        let cutoff = calculate_remove_updates_cutoff(now);
+        let cutoff = calculate_summary_updates_data_removal_cutoff(now);
         let still_valid = self.proposal_votes.split_off(&(cutoff, 0.into()));
 
         if let Some((ts, _)) = self.proposal_votes.pop_last() {
