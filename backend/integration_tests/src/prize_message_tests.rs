@@ -1,6 +1,7 @@
 use crate::env::ENV;
 use crate::utils::{now_millis, now_nanos, tick_many};
 use crate::{client, TestEnv};
+use constants::PRIZE_FEE_PERCENT;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
@@ -9,7 +10,6 @@ use types::{
     icrc1, ChatEvent, CryptoTransaction, Cryptocurrency, EventIndex, MessageContent, MessageContentInitial, OptionUpdate,
     PendingCryptoTransaction, PrizeContentInitial,
 };
-use utils::consts::PRIZE_FEE_PERCENT;
 use utils::time::{HOUR_IN_MS, MINUTE_IN_MS};
 
 #[test]

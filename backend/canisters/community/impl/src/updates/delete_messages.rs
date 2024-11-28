@@ -6,11 +6,10 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::DeleteMessageResult;
 use community_canister::delete_messages::{Response::*, *};
+use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use group_chat_core::DeleteMessagesResult;
 use types::{Achievement, CanisterId, UserId};
 use user_index_canister_c2c_client::lookup_user;
-use utils::consts::OPENCHAT_BOT_USER_ID;
-use utils::time::MINUTE_IN_MS;
 
 #[update(candid = true, msgpack = true)]
 #[trace]

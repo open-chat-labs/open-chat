@@ -1,9 +1,9 @@
+use constants::MINUTE_IN_MS;
 use identity_canister::{Challenge, ChallengeAttempt, ChallengeKey};
 use rand::{Rng, RngCore};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{Milliseconds, TimestampMillis};
-use utils::time::MINUTE_IN_MS;
 
 const CAPTCHA_CHALLENGE_LIFETIME: Milliseconds = 5 * MINUTE_IN_MS;
 const MAX_INFLIGHT_CHALLENGES: u32 = 500;

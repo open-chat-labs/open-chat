@@ -4,6 +4,7 @@ use crate::timer_job_types::{RecurringDiamondMembershipPayment, TimerJob};
 use crate::{mutate_state, read_state, RuntimeState, ONE_GB};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use constants::{DAY_IN_MS, HOUR_IN_MS, SNS_GOVERNANCE_CANISTER_ID};
 use event_store_producer::EventBuilder;
 use ic_ledger_types::{BlockIndex, TransferError};
 use icrc_ledger_types::icrc1;
@@ -16,8 +17,6 @@ use storage_index_canister::add_or_update_users::UserConfig;
 use tracing::error;
 use types::{Cryptocurrency, DiamondMembershipPlanDuration, UserId, ICP};
 use user_index_canister::pay_for_diamond_membership::{Response::*, *};
-use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
-use utils::time::{DAY_IN_MS, HOUR_IN_MS};
 
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]

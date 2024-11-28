@@ -1,5 +1,6 @@
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
+use constants::{MEMO_GROUP_IMPORT_INTO_COMMUNITY, MEMO_JOINING_FEE, SNS_GOVERNANCE_CANISTER_ID};
 use group_community_common::{PaymentRecipient, PendingPayment, PendingPaymentReason};
 use ic_cdk_timers::TimerId;
 use icrc_ledger_types::icrc1::transfer::{Memo, TransferArg};
@@ -8,7 +9,6 @@ use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
 use types::TimestampNanos;
-use utils::consts::{MEMO_GROUP_IMPORT_INTO_COMMUNITY, MEMO_JOINING_FEE, SNS_GOVERNANCE_CANISTER_ID};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();

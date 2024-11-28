@@ -1,11 +1,11 @@
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
+use constants::{DAY_IN_MS, NANOS_PER_MILLISECOND};
 use ic_canister_sig_creation::signature_map::CanisterSigInputs;
 use ic_canister_sig_creation::{delegation_signature_msg, DELEGATION_SIG_DOMAIN};
 use ic_cdk::update;
 use identity_canister::prepare_delegation::{Response::*, *};
 use types::Nanoseconds;
-use utils::time::{DAY_IN_MS, NANOS_PER_MILLISECOND};
 
 const DEFAULT_EXPIRATION_PERIOD: Nanoseconds = 30 * DAY_IN_MS * NANOS_PER_MILLISECOND;
 const MAX_EXPIRATION_PERIOD: Nanoseconds = 90 * DAY_IN_MS * NANOS_PER_MILLISECOND;

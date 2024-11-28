@@ -1,5 +1,6 @@
 use crate::model::buckets::BucketRecord;
 use crate::{mutate_state, RuntimeState, MIN_CYCLES_BALANCE};
+use constants::{CREATE_CANISTER_CYCLES_FEE, MINUTE_IN_MS};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
@@ -7,8 +8,6 @@ use tracing::{error, trace};
 use types::{CanisterWasm, Cycles};
 use utils::canister::create_and_install;
 use utils::canister_timers::run_now_then_interval;
-use utils::consts::CREATE_CANISTER_CYCLES_FEE;
-use utils::time::MINUTE_IN_MS;
 use PrepareResponse::*;
 
 thread_local! {

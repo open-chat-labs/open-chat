@@ -1,5 +1,6 @@
 use crate::exchanges::Exchange;
 use crate::{mutate_state, read_state, Config, RuntimeState};
+use constants::MINUTE_IN_MS;
 use ic_cdk::api::call::CallResult;
 use itertools::Itertools;
 use market_maker_canister::ExchangeId;
@@ -9,7 +10,6 @@ use std::collections::BTreeMap;
 use std::time::Duration;
 use tracing::{error, trace};
 use types::{AggregatedOrders, CancelOrderRequest, MakeOrderRequest, Milliseconds, Order, OrderType};
-use utils::time::MINUTE_IN_MS;
 
 const RUN_MARKET_MAKER_INTERVAL: Milliseconds = MINUTE_IN_MS;
 

@@ -3,13 +3,13 @@ use crate::{mutate_state, RuntimeState, COMMUNITY_CANISTER_INITIAL_CYCLES_BALANC
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::init::Args as InitCommunityCanisterArgs;
+use constants::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
 use event_store_producer::EventBuilder;
 use local_group_index_canister::c2c_create_community::{Response::*, *};
 use local_group_index_canister::ChildCanisterType;
 use types::{BuildVersion, CanisterId, CanisterWasm, CommunityCreatedEventPayload, CommunityId, Cycles, UserId, UserType};
 use utils::canister;
 use utils::canister::CreateAndInstallError;
-use utils::consts::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
 
 #[update(guard = "caller_is_group_index_canister", msgpack = true)]
 #[trace]

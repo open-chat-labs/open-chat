@@ -1,6 +1,7 @@
 use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
 use crate::{mutate_state, RuntimeState};
 use crate::{read_state, LocalUserIndexEvent};
+use constants::SNS_ROOT_CANISTER_ID;
 use ic_cdk_timers::TimerId;
 use ic_ledger_types::{BlockIndex, Tokens};
 use icrc_ledger_types::icrc1::transfer::TransferArg;
@@ -10,7 +11,6 @@ use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
 use types::{Cryptocurrency, MessageContent, TextContent};
-use utils::consts::SNS_ROOT_CANISTER_ID;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();

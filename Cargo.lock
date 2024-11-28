@@ -133,6 +133,7 @@ dependencies = [
  "canister_tracing_macros",
  "community_canister",
  "community_canister_c2c_client",
+ "constants",
  "futures",
  "http_request",
  "ic-cdk 0.16.0",
@@ -1160,6 +1161,7 @@ dependencies = [
  "candid",
  "canister_agent_utils",
  "clap 4.5.4",
+ "constants",
  "cycles_dispenser_canister",
  "escrow_canister",
  "event_relay_canister",
@@ -1356,6 +1358,7 @@ name = "chat_events"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "constants",
  "event_store_producer",
  "hex",
  "ic-cdk 0.16.0",
@@ -1591,6 +1594,7 @@ dependencies = [
  "canister_tracing_macros",
  "chat_events",
  "community_canister",
+ "constants",
  "escrow_canister",
  "escrow_canister_c2c_client",
  "event_store_producer",
@@ -1669,6 +1673,14 @@ name = "constant_time_eq"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f7144d30dcf0fafbce74250a3963025d8d52177934239851c917d29f1df280c2"
+
+[[package]]
+name = "constants"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "types",
+]
 
 [[package]]
 name = "conv"
@@ -2336,6 +2348,7 @@ dependencies = [
  "canister_state_macros",
  "canister_timer_jobs",
  "canister_tracing_macros",
+ "constants",
  "escrow_canister",
  "hex",
  "http_request",
@@ -2416,6 +2429,7 @@ dependencies = [
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
+ "constants",
  "event_relay_canister",
  "event_store_canister",
  "event_store_producer",
@@ -2524,6 +2538,7 @@ name = "fire_and_forget_handler"
 version = "0.1.0"
 dependencies = [
  "canister_client",
+ "constants",
  "futures",
  "ic-cdk 0.16.0",
  "ic-cdk-timers",
@@ -2670,6 +2685,7 @@ name = "gated_groups"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "constants",
  "icrc-ledger-types",
  "icrc_ledger_canister",
  "icrc_ledger_canister_c2c_client",
@@ -2827,6 +2843,7 @@ dependencies = [
  "canister_timer_jobs",
  "canister_tracing_macros",
  "chat_events",
+ "constants",
  "escrow_canister",
  "escrow_canister_c2c_client",
  "event_store_producer",
@@ -2879,6 +2896,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "chat_events",
+ "constants",
  "event_store_producer",
  "group_community_common",
  "itertools 0.13.0",
@@ -2959,6 +2977,7 @@ dependencies = [
  "canister_tracing_macros",
  "community_canister",
  "community_canister_c2c_client",
+ "constants",
  "fire_and_forget_handler",
  "futures",
  "group_canister",
@@ -3912,6 +3931,7 @@ dependencies = [
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
+ "constants",
  "http_request",
  "ic-canister-sig-creation",
  "ic-captcha",
@@ -4503,6 +4523,7 @@ dependencies = [
  "canister_state_macros",
  "canister_tracing_macros",
  "community_canister",
+ "constants",
  "event_store_canister",
  "event_store_producer",
  "event_store_producer_cdk_runtime",
@@ -4570,6 +4591,7 @@ dependencies = [
  "canister_tracing_macros",
  "community_canister",
  "community_canister_c2c_client",
+ "constants",
  "event_store_canister",
  "event_store_producer",
  "event_store_producer_cdk_runtime",
@@ -4674,6 +4696,7 @@ dependencies = [
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
+ "constants",
  "futures",
  "hex",
  "http_request",
@@ -4865,6 +4888,7 @@ dependencies = [
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
+ "constants",
  "cycles_minting_canister_c2c_client",
  "hex",
  "http_request",
@@ -5077,6 +5101,7 @@ dependencies = [
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
+ "constants",
  "futures",
  "http_request",
  "human_readable",
@@ -5275,6 +5300,7 @@ dependencies = [
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
+ "constants",
  "event_store_producer",
  "event_store_producer_cdk_runtime",
  "http_request",
@@ -5785,6 +5811,7 @@ dependencies = [
  "chat_events",
  "community_canister",
  "community_canister_c2c_client",
+ "constants",
  "fire_and_forget_handler",
  "group_canister",
  "group_canister_c2c_client",
@@ -6284,6 +6311,7 @@ dependencies = [
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
+ "constants",
  "dataurl",
  "futures",
  "hex",
@@ -7378,6 +7406,7 @@ dependencies = [
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
+ "constants",
  "cycles_dispenser_client",
  "futures",
  "http_request",
@@ -8019,6 +8048,7 @@ dependencies = [
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
+ "constants",
  "fire_and_forget_handler",
  "http_request",
  "ic-cdk 0.16.0",
@@ -8272,6 +8302,7 @@ dependencies = [
  "ckbtc_minter_canister_c2c_client",
  "community_canister",
  "community_canister_c2c_client",
+ "constants",
  "escrow_canister",
  "escrow_canister_c2c_client",
  "event_store_producer",
@@ -8383,6 +8414,7 @@ dependencies = [
  "chat_events",
  "community_canister",
  "community_canister_c2c_client",
+ "constants",
  "dataurl",
  "event_store_producer",
  "event_store_producer_cdk_runtime",
@@ -8449,6 +8481,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
+ "constants",
  "cycles_dispenser_client",
  "getrandom 0.2.15",
  "ic-cdk 0.16.0",

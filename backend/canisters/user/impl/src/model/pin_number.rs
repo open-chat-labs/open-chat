@@ -1,7 +1,7 @@
+use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use types::{Milliseconds, PinNumberSettings, TimestampMillis, Timestamped};
-use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct PinNumber {

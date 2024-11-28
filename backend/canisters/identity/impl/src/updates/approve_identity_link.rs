@@ -1,10 +1,10 @@
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
+use constants::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 use ic_cdk::update;
 use ic_certificate_verification::VerifyCertificate;
 use identity_canister::approve_identity_link::{Response::*, *};
 use identity_utils::extract_certificate;
-use utils::time::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 
 #[update]
 #[trace]

@@ -1,4 +1,5 @@
 use canister_client::make_c2c_call_raw;
+use constants::SECOND_IN_MS;
 use ic_cdk_timers::TimerId;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::{BTreeMap, HashMap};
@@ -9,7 +10,7 @@ use std::time::Duration;
 use tracing::trace;
 use types::{CanisterId, TimestampMillis};
 use utils::canister::should_retry_failed_c2c_call;
-use utils::time::{now_millis, SECOND_IN_MS};
+use utils::time::now_millis;
 
 pub struct FireAndForgetHandler {
     inner: Rc<Mutex<FireAndForgetHandlerInner>>,

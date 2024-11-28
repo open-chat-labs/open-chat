@@ -2,6 +2,7 @@ use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
 use crate::{client, TestEnv};
+use constants::SNS_GOVERNANCE_CANISTER_ID;
 use jwt::{verify_jwt, Claims};
 use std::ops::Deref;
 use std::time::Duration;
@@ -10,7 +11,6 @@ use types::{
     Achievement, ChitEarnedReason, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipFees,
     DiamondMembershipPlanDuration, DiamondMembershipSubscription, ReferralStatus,
 };
-use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
 
 #[test_case(true, false)]

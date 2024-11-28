@@ -3,10 +3,10 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{EditMessageArgs, EditMessageResult};
+use constants::OPENCHAT_BOT_USER_ID;
 use types::{Achievement, EventIndex};
 use user_canister::edit_message_v2::{Response::*, *};
 use user_canister::UserCanisterEvent;
-use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]

@@ -8,6 +8,7 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use chat_events::{GroupChatThreadKeyPrefix, KeyPrefix, Reader};
+use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -36,10 +37,8 @@ use types::{
     UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
 };
 use user_canister::GroupCanisterEvent;
-use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
-use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
 
 mod activity_notifications;
 mod guards;

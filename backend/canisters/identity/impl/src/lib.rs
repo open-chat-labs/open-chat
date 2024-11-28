@@ -12,7 +12,6 @@ use sha256::sha256;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
-use utils::consts::IC_ROOT_KEY;
 use utils::env::Environment;
 use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
 
@@ -91,24 +90,18 @@ struct Data {
     governance_principals: HashSet<Principal>,
     user_index_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
-    #[serde(default)]
     originating_canisters: HashSet<CanisterId>,
     skip_captcha_whitelist: HashSet<CanisterId>,
     user_principals: UserPrincipals,
-    #[serde(default)]
     identity_link_requests: IdentityLinkRequests,
     #[serde(skip)]
     signature_map: SignatureMap,
-    #[serde(with = "serde_bytes", default = "ic_root_key")]
+    #[serde(with = "serde_bytes")]
     ic_root_key: Vec<u8>,
     salt: Salt,
     rng_seed: [u8; 32],
     challenges: Challenges,
     test_mode: bool,
-}
-
-fn ic_root_key() -> Vec<u8> {
-    IC_ROOT_KEY.to_vec()
 }
 
 impl Data {

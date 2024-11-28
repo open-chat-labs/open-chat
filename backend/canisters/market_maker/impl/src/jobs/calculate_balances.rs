@@ -1,11 +1,11 @@
 use crate::exchanges::Exchange;
 use crate::{mutate_state, read_state, CanisterBalances, RuntimeState};
+use constants::HOUR_IN_MS;
 use ic_cdk::api::call::CallResult;
 use std::collections::BTreeMap;
 use std::time::Duration;
 use types::{CanisterId, Milliseconds, TimestampMillis};
 use utils::canister_timers::run_now_then_interval;
-use utils::time::HOUR_IN_MS;
 
 const CALCULATE_BALANCES_INTERVAL: Milliseconds = HOUR_IN_MS;
 

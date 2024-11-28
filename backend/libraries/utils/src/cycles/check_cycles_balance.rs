@@ -1,5 +1,5 @@
-use crate::consts::CYCLES_REQUIRED_FOR_UPGRADE;
 use canister_client::generate_c2c_call;
+use constants::CYCLES_REQUIRED_FOR_UPGRADE;
 use std::cmp::max;
 use tracing::error;
 use types::{CanisterId, Cycles};

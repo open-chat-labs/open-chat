@@ -120,6 +120,7 @@ members = [
     "backend/libraries/canister_timer_jobs",
     "backend/libraries/canister_tracing_macros",
     "backend/libraries/chat_events",
+    "backend/libraries/constants",
     "backend/libraries/cycles_dispenser_client",
     "backend/libraries/dynamodb_index_store",
     "backend/libraries/fire_and_forget_handler",
