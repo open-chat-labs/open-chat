@@ -32,6 +32,9 @@ fn post_upgrade(args: Args) {
         let count_removed = state.data.chat.members.prune_member_updates(now);
         info!(count_removed, "Removed old member updates");
 
+        let count_removed = state.data.chat.events.prune_updated_events(now);
+        info!(count_removed, "Removed old event updates");
+
         if state.data.chat.subtype.is_some() {
             let count_removed = state.data.chat.members.prune_proposal_votes(now);
             info!(count_removed, "Removed old proposal votes");
