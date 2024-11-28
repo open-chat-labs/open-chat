@@ -281,7 +281,6 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub identity_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
-    #[serde(default = "bot_api_gateway_canister_id")]
     pub bot_api_gateway_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
@@ -307,19 +306,6 @@ struct Data {
     pub ic_root_key: Vec<u8>,
     pub events_for_remote_users: Vec<(UserId, UserEvent)>,
     pub cycles_balance_check_queue: VecDeque<UserId>,
-}
-
-fn bot_api_gateway_canister_id() -> CanisterId {
-    let canister_id = ic_cdk::id();
-    if canister_id == CanisterId::from_text("nq4qv-wqaaa-aaaaf-bhdgq-cai").unwrap() {
-        CanisterId::from_text("xdh4a-myaaa-aaaaf-bscya-cai").unwrap()
-    } else if canister_id == CanisterId::from_text("aboy3-giaaa-aaaar-aaaaq-cai").unwrap() {
-        CanisterId::from_text("lvpeh-caaaa-aaaar-boaha-cai").unwrap()
-    } else if canister_id == CanisterId::from_text("pecvb-tqaaa-aaaaf-bhdiq-cai").unwrap() {
-        CanisterId::from_text("xeg2u-baaaa-aaaaf-bscyq-cai").unwrap()
-    } else {
-        Principal::anonymous()
-    }
 }
 
 #[derive(Serialize, Deserialize)]
