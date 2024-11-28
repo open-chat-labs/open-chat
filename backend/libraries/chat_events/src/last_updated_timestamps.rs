@@ -1,3 +1,4 @@
+use constants::calculate_summary_updates_data_removal_cutoff;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 use types::{EventIndex, MessageIndex, TimestampMillis};
@@ -6,6 +7,8 @@ use types::{EventIndex, MessageIndex, TimestampMillis};
 pub struct LastUpdatedTimestamps {
     by_timestamp: BTreeSet<(TimestampMillis, Option<MessageIndex>, EventIndex)>,
     by_event_index: BTreeMap<(Option<MessageIndex>, EventIndex), TimestampMillis>,
+    #[serde(default)]
+    latest_update_removed: TimestampMillis,
 }
 
 impl LastUpdatedTimestamps {
@@ -15,6 +18,8 @@ impl LastUpdatedTimestamps {
         event_index: EventIndex,
         now: TimestampMillis,
     ) {
+        self.prune(now);
+
         if let Some(previous) = self.by_event_index.insert((thread_root_message_index, event_index), now) {
             self.by_timestamp.remove(&(previous, thread_root_message_index, event_index));
         }
@@ -31,5 +36,25 @@ impl LastUpdatedTimestamps {
         event_index: EventIndex,
     ) -> Option<TimestampMillis> {
         self.by_event_index.get(&(thread_root_message_index, event_index)).copied()
+    }
+
+    pub fn latest_update_removed(&self) -> TimestampMillis {
+        self.latest_update_removed
+    }
+
+    pub fn prune(&mut self, now: TimestampMillis) -> u32 {
+        let cutoff = calculate_summary_updates_data_removal_cutoff(now);
+
+        let still_valid = self.by_timestamp.split_off(&(cutoff, None, 0.into()));
+        let removed = std::mem::replace(&mut self.by_timestamp, still_valid);
+        let count_removed = removed.len() as u32;
+
+        if let Some((ts, _, _)) = removed.last() {
+            self.latest_update_removed = *ts;
+        }
+        for (_, tr, e) in removed {
+            self.by_event_index.remove(&(tr, e));
+        }
+        count_removed
     }
 }

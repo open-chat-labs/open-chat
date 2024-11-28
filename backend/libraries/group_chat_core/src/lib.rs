@@ -264,7 +264,8 @@ impl GroupChatCore {
                 .cloned()
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
             any_updates_missed: self.members.any_updates_removed(since)
-                || member.as_ref().map(|m| m.any_updates_removed(since)).unwrap_or_default(),
+                || member.as_ref().map(|m| m.any_updates_removed(since)).unwrap_or_default()
+                || self.events.latest_event_update_removed() > since,
         }
     }
 
