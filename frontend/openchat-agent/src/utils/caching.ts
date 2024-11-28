@@ -45,6 +45,7 @@ import {
     MessageContextMap,
     MAX_EVENTS,
     MAX_MESSAGES,
+    ONE_DAY,
     updateCreatedUser,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
@@ -354,7 +355,21 @@ export async function getCachedChats(
     db: Database,
     principal: Principal,
 ): Promise<ChatStateFull | undefined> {
-    return await (await db).get("chats", principal.toString());
+    const resolvedDb = await db;
+    const chats = await resolvedDb.get("chats", principal.toString());
+
+    if (
+        chats !== undefined &&
+        chats.latestUserCanisterUpdates < BigInt(Date.now() - 30 * ONE_DAY)
+    ) {
+        // If the cache was last updated more than 30 days ago, clear the cache and return undefined
+        const storeNames = resolvedDb.objectStoreNames;
+        for (let i = 0; i < storeNames.length; i++) {
+            await resolvedDb.clear(storeNames[i]);
+        }
+        return undefined;
+    }
+    return chats;
 }
 
 export async function setCachedChats(
@@ -925,6 +940,9 @@ function messageToEvent(
                     endDate: message.content.endDate,
                     caption: message.content.caption,
                     diamondOnly: message.content.diamondOnly,
+                    lifetimeDiamondOnly: message.content.lifetimeDiamondOnly,
+                    uniquePersonOnly: message.content.uniquePersonOnly,
+                    streakOnly: message.content.streakOnly,
                 } as PrizeContent;
                 break;
             case "p2p_swap_content_initial":

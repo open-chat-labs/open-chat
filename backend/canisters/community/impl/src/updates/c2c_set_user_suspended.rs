@@ -15,12 +15,9 @@ fn c2c_set_user_suspended(args: Args) -> Response {
 fn c2c_set_user_suspended_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
     if state.data.members.set_suspended(args.user_id, args.suspended, now).is_some() {
-        if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
-            let channels = member.channels.clone();
-            for channel_id in channels {
-                if let Some(channel) = state.data.channels.get_mut(&channel_id) {
-                    channel.chat.members.set_suspended(member.user_id, args.suspended, now);
-                }
+        for channel_id in state.data.members.channels_for_member(args.user_id) {
+            if let Some(channel) = state.data.channels.get_mut(&channel_id) {
+                channel.chat.members.set_suspended(args.user_id, args.suspended, now);
             }
         }
         Success

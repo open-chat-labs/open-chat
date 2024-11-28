@@ -556,6 +556,8 @@
                         on:removePreview
                         on:registerVote={registerVote}
                         on:upgrade
+                        on:verifyHumanity
+                        on:claimDailyChit
                         on:startVideoCall
                         on:expandMessage />
 

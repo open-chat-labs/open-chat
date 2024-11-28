@@ -1,8 +1,18 @@
 <script lang="ts">
     import Button from "../Button.svelte";
-    import Diamond from "../icons/Diamond.svelte";
-    import type { ChatIdentifier, OpenChat, PrizeContent } from "openchat-client";
-    import { currentUser as user, isDiamond, cryptoLookup } from "openchat-client";
+    import {
+        type ChatIdentifier,
+        type DiamondMembershipStatus,
+        type OpenChat,
+        type PrizeContent,
+        chitStateStore,
+    } from "openchat-client";
+    import {
+        currentUser as user,
+        isDiamond,
+        isLifetimeDiamond,
+        cryptoLookup,
+    } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Clock from "svelte-material-icons/Clock.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
@@ -15,6 +25,10 @@
     import { claimsStore } from "../../stores/claims";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
+    import Badges from "./profile/Badges.svelte";
+    import Diamond from "../icons/Diamond.svelte";
+    import Human from "../icons/Human.svelte";
+    import Streak from "./profile/Streak.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -33,19 +47,31 @@
     $: claimedByYou = content.winners.includes($user.userId);
     $: finished = $now500 >= Number(content.endDate);
     $: allClaimed = content.prizesRemaining <= 0;
-    $: disabled = finished || claimedByYou || allClaimed;
+    $: disabled = finished || claimedByYou || allClaimed || !userEligible;
     $: timeRemaining = finished
         ? $_("prizes.finished")
         : client.formatTimeRemaining($now500, Number(content.endDate));
 
+    $: diamondStatus = (
+        content.lifetimeDiamondOnly ? "lifetime" : content.diamondOnly ? "active" : "inactive"
+    ) as DiamondMembershipStatus["kind"];
+
+    $: restrictedPrize =
+        content.diamondOnly ||
+        content.lifetimeDiamondOnly ||
+        content.uniquePersonOnly ||
+        content.streakOnly > 0;
+
+    $: userEligible =
+        (!content.diamondOnly || $isDiamond) &&
+        (!content.lifetimeDiamondOnly || $isLifetimeDiamond) &&
+        (!content.uniquePersonOnly || $user.isUniquePerson) &&
+        content.streakOnly <= $chitStateStore.streak;
+
     let progressWidth = 0;
 
     function claim(e: MouseEvent) {
-        if (e.isTrusted && chatId.kind !== "direct_chat" && !me) {
-            if (!$isDiamond && content.diamondOnly) {
-                dispatch("upgrade");
-                return;
-            }
+        if (e.isTrusted && chatId.kind !== "direct_chat" && !me && userEligible) {
             claimsStore.add(messageId);
             client
                 .claimPrize(chatId, messageId)
@@ -56,6 +82,18 @@
                 })
                 .finally(() => claimsStore.delete(messageId));
         }
+    }
+
+    function onDiamondClick() {
+        dispatch("upgrade");
+    }
+
+    function onUniquePersonClick() {
+        dispatch("verifyHumanity");
+    }
+
+    function onStreakClick() {
+        dispatch("claimDailyChit");
     }
 </script>
 
@@ -70,8 +108,11 @@
                     {timeRemaining}
                 {/if}
             </span>
-            {#if content.diamondOnly}
-                <Diamond y={0} size={"1em"} />
+            {#if restrictedPrize}
+                <Badges
+                    {diamondStatus}
+                    uniquePerson={content.uniquePersonOnly}
+                    streak={content.streakOnly} />
             {/if}
         </div>
         <div class="prize-coin">
@@ -85,7 +126,44 @@
             </div>
         {/if}
         {#if !me}
-            <div class="click"><Translatable resourceKey={i18nKey("prizes.click")} /></div>
+            {#if restrictedPrize}
+                <div class="restricted">
+                    <Translatable resourceKey={i18nKey("prizes.restrictedMessage")} />
+                    {#if content.diamondOnly || content.lifetimeDiamondOnly}
+                        <div on:click={onDiamondClick}>
+                            <div>
+                                <Diamond
+                                    status={content.lifetimeDiamondOnly ? "lifetime" : "active"} />
+                            </div>
+                            <Translatable
+                                resourceKey={i18nKey(
+                                    "prizes." +
+                                        (content.lifetimeDiamondOnly
+                                            ? "lifetimeDiamondMembership"
+                                            : "diamondMembership"),
+                                )} />
+                        </div>
+                    {/if}
+                    {#if content.uniquePersonOnly}
+                        <div on:click={onUniquePersonClick}>
+                            <div><Human uniquePerson={content.uniquePersonOnly} /></div>
+                            <Translatable resourceKey={i18nKey("prizes.uniquePerson")} />
+                        </div>
+                    {/if}
+                    {#if content.streakOnly > 0}
+                        <div on:click={onStreakClick}>
+                            <div><Streak days={content.streakOnly} /></div>
+                            <Translatable
+                                resourceKey={i18nKey("prizes.streakFull", {
+                                    n: content.streakOnly,
+                                })} />
+                        </div>
+                    {/if}
+                </div>
+            {/if}
+            {#if userEligible}
+                <div class="click"><Translatable resourceKey={i18nKey("prizes.click")} /></div>
+            {/if}
         {:else if finished}
             <div class="click"><Translatable resourceKey={i18nKey("prizes.prizeFinished")} /></div>
         {:else}
@@ -202,7 +280,8 @@
     }
 
     .click,
-    .caption {
+    .caption,
+    .restricted {
         @include font(book, normal, fs-80);
         margin-bottom: $sp4;
     }
@@ -243,6 +322,23 @@
         width: 360px;
         @include mobile() {
             width: 100%;
+        }
+    }
+
+    .restricted {
+        display: flex;
+        flex-direction: column;
+        gap: $sp2;
+
+        div {
+            display: flex;
+            flex-direction: row;
+            gap: $sp3;
+            cursor: pointer;
+
+            :first-child {
+                width: $sp5;
+            }
         }
     }
 </style>

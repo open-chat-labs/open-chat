@@ -8,7 +8,6 @@ pub mod c2c_mark_user_canister_empty;
 pub mod c2c_notify_chit;
 pub mod c2c_notify_events;
 pub mod c2c_notify_low_balance;
-pub mod c2c_register_bot;
 pub mod c2c_report_message;
 pub mod c2c_send_openchat_bot_messages;
 pub mod c2c_set_avatar;

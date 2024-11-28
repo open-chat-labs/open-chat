@@ -6,7 +6,7 @@ use chat_events::Reader;
 use types::{EventIndex, MessagesResponse};
 use user_canister::messages_by_message_index::{Response::*, *};
 
-#[query(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[query(guard = "caller_is_owner", msgpack = true)]
 fn messages_by_message_index(args: Args) -> Response {
     read_state(|state| messages_by_message_index_impl(args, state))
 }

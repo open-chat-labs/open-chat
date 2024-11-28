@@ -3,12 +3,12 @@ use crate::model::pin_number::VerifyPinError;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use constants::NANOS_PER_MILLISECOND;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
 use types::TimestampNanos;
 use user_canister::approve_transfer::{Response::*, *};
-use utils::time::NANOS_PER_MILLISECOND;
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 async fn approve_transfer(args: Args) -> Response {
     run_regular_jobs();

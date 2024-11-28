@@ -19,7 +19,7 @@ fn toggle_mute_notifications_impl(args: Args, state: &mut RuntimeState) -> Respo
     let caller = state.env.caller();
     let now = state.env.now();
 
-    match state.data.members.get_mut(caller) {
+    match state.data.members.get(caller) {
         Some(member) if member.suspended().value => UserSuspended,
         Some(member) if member.lapsed().value => UserLapsed,
         Some(member) => {

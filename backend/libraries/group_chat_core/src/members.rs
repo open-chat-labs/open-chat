@@ -1,13 +1,14 @@
 use crate::mentions::Mentions;
 use crate::roles::GroupRoleInternal;
 use crate::AccessRulesInternal;
-use group_community_common::{Member, Members};
+use candid::Principal;
+use constants::calculate_summary_updates_data_removal_cutoff;
+use group_community_common::{Member, MemberUpdate, Members};
 use serde::de::{SeqAccess, Visitor};
 use serde::ser::SerializeSeq;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::cmp::max;
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Formatter;
 use types::{
     is_default, EventIndex, GroupMember, GroupPermissions, MessageIndex, TimestampMillis, Timestamped, UserId, UserType,
@@ -23,7 +24,7 @@ const MAX_MEMBERS_PER_GROUP: u32 = 100_000;
 #[derive(Serialize, Deserialize, Default)]
 pub struct GroupMembers {
     #[serde(serialize_with = "serialize_members", deserialize_with = "deserialize_members")]
-    members: HashMap<UserId, GroupMemberInternal>,
+    members: BTreeMap<UserId, GroupMemberInternal>,
     member_ids: BTreeSet<UserId>,
     owners: BTreeSet<UserId>,
     admins: BTreeSet<UserId>,
@@ -34,22 +35,20 @@ pub struct GroupMembers {
     blocked: BTreeSet<UserId>,
     suspended: BTreeSet<UserId>,
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
-}
-
-#[derive(Serialize_repr, Deserialize_repr, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
-#[repr(u8)]
-pub enum MemberUpdate {
-    Added = 1,
-    Removed = 2,
-    RoleChanged = 3,
-    Blocked = 4,
-    Unblocked = 5,
-    Lapsed = 6,
-    Unlapsed = 7,
+    #[serde(default)]
+    latest_update_removed: TimestampMillis,
 }
 
 #[allow(clippy::too_many_arguments)]
 impl GroupMembers {
+    pub fn prune_proposal_votes(&mut self, now: TimestampMillis) -> u32 {
+        let mut count = 0;
+        for member in self.members.values_mut() {
+            count += member.prune_proposal_votes(now);
+        }
+        count
+    }
+
     pub fn new(creator_user_id: UserId, user_type: UserType, now: TimestampMillis) -> GroupMembers {
         let member = GroupMemberInternal {
             user_id: creator_user_id,
@@ -61,7 +60,8 @@ impl GroupMembers {
             mentions: Mentions::default(),
             followed_threads: TimestampedSet::new(),
             unfollowed_threads: TimestampedSet::new(),
-            proposal_votes: BTreeMap::default(),
+            proposal_votes: BTreeSet::default(),
+            latest_proposal_vote_removed: 0,
             suspended: Timestamped::default(),
             rules_accepted: Some(Timestamped::new(Version::zero(), now)),
             user_type,
@@ -84,6 +84,7 @@ impl GroupMembers {
             lapsed: BTreeSet::new(),
             suspended: BTreeSet::new(),
             updates: BTreeSet::new(),
+            latest_update_removed: 0,
         }
     }
 
@@ -111,7 +112,8 @@ impl GroupMembers {
                 mentions: Mentions::default(),
                 followed_threads: TimestampedSet::new(),
                 unfollowed_threads: TimestampedSet::new(),
-                proposal_votes: BTreeMap::default(),
+                proposal_votes: BTreeSet::default(),
+                latest_proposal_vote_removed: 0,
                 suspended: Timestamped::default(),
                 rules_accepted: None,
                 user_type,
@@ -124,7 +126,7 @@ impl GroupMembers {
             if !notifications_muted {
                 self.notifications_unmuted.insert(user_id);
             }
-            self.updates.insert((now, user_id, MemberUpdate::Added));
+            self.prune_then_insert_member_update(user_id, MemberUpdate::Added, now);
             AddResult::Success(AddMemberSuccess { member, unlapse: false })
         } else {
             AddResult::AlreadyInGroup
@@ -152,7 +154,7 @@ impl GroupMembers {
                 self.suspended.remove(&user_id);
             }
             self.member_ids.remove(&user_id);
-            self.updates.insert((now, user_id, MemberUpdate::Removed));
+            self.prune_then_insert_member_update(user_id, MemberUpdate::Removed, now);
             Some(member)
         } else {
             None
@@ -161,7 +163,7 @@ impl GroupMembers {
 
     pub fn block(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
         if self.blocked.insert(user_id) {
-            self.updates.insert((now, user_id, MemberUpdate::Blocked));
+            self.prune_then_insert_member_update(user_id, MemberUpdate::Blocked, now);
             true
         } else {
             false
@@ -170,7 +172,7 @@ impl GroupMembers {
 
     pub fn unblock(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
         if self.blocked.remove(&user_id) {
-            self.updates.insert((now, user_id, MemberUpdate::Unblocked));
+            self.prune_then_insert_member_update(user_id, MemberUpdate::Unblocked, now);
             true
         } else {
             false
@@ -183,14 +185,6 @@ impl GroupMembers {
 
     pub fn member_ids(&self) -> &BTreeSet<UserId> {
         &self.member_ids
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = &GroupMemberInternal> {
-        self.members.values()
-    }
-
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut GroupMemberInternal> {
-        self.members.values_mut()
     }
 
     pub fn get(&self, user_id: &UserId) -> Option<&GroupMemberInternal> {
@@ -301,7 +295,7 @@ impl GroupMembers {
             _ => false,
         };
 
-        self.updates.insert((now, user_id, MemberUpdate::RoleChanged));
+        self.prune_then_insert_member_update(user_id, MemberUpdate::RoleChanged, now);
 
         ChangeRoleResult::Success(ChangeRoleSuccess { prev_role })
     }
@@ -327,6 +321,13 @@ impl GroupMembers {
         }
     }
 
+    pub fn register_proposal_vote(&mut self, user_id: UserId, message_index: MessageIndex, now: TimestampMillis) {
+        if let Some(member) = self.members.get_mut(&user_id) {
+            member.prune_proposal_votes(now);
+            member.proposal_votes.insert((now, message_index));
+        }
+    }
+
     pub fn set_suspended(&mut self, user_id: UserId, suspended: bool, now: TimestampMillis) -> Option<bool> {
         let member = self.members.get_mut(&user_id)?;
 
@@ -344,6 +345,7 @@ impl GroupMembers {
     }
 
     pub fn unlapse_all(&mut self, now: TimestampMillis) {
+        self.prune_member_updates(now);
         for user_id in std::mem::take(&mut self.lapsed) {
             if let Some(member) = self.members.get_mut(&user_id) {
                 if member.set_lapsed(false, now) {
@@ -372,11 +374,11 @@ impl GroupMembers {
                 self.lapsed.remove(&user_id);
             }
 
-            self.updates.insert((
-                now,
+            self.prune_then_insert_member_update(
                 user_id,
                 if lapsed { MemberUpdate::Lapsed } else { MemberUpdate::Unlapsed },
-            ));
+                now,
+            );
         }
     }
 
@@ -423,6 +425,30 @@ impl GroupMembers {
 
     pub fn last_updated(&self) -> Option<TimestampMillis> {
         self.updates.iter().next_back().map(|(ts, _, _)| *ts)
+    }
+
+    pub fn any_updates_removed(&self, since: TimestampMillis) -> bool {
+        self.latest_update_removed > since
+    }
+
+    fn prune_then_insert_member_update(&mut self, user_id: UserId, update: MemberUpdate, now: TimestampMillis) {
+        self.prune_member_updates(now);
+        self.updates.insert((now, user_id, update));
+    }
+
+    pub fn prune_member_updates(&mut self, now: TimestampMillis) -> u32 {
+        let cutoff = calculate_summary_updates_data_removal_cutoff(now);
+        let still_valid = self
+            .updates
+            .split_off(&(cutoff, Principal::anonymous().into(), MemberUpdate::Added));
+
+        let removed = std::mem::replace(&mut self.updates, still_valid);
+
+        if let Some((ts, _, _)) = removed.last() {
+            self.latest_update_removed = *ts;
+        }
+
+        removed.len() as u32
     }
 
     #[cfg(test)]
@@ -529,8 +555,11 @@ pub struct GroupMemberInternal {
     pub followed_threads: TimestampedSet<MessageIndex>,
     #[serde(rename = "tu", default, skip_serializing_if = "TimestampedSet::is_empty")]
     pub unfollowed_threads: TimestampedSet<MessageIndex>,
-    #[serde(rename = "p", default, skip_serializing_if = "BTreeMap::is_empty")]
-    pub proposal_votes: BTreeMap<TimestampMillis, Vec<MessageIndex>>,
+    #[serde(rename = "p", default, skip_serializing_if = "BTreeSet::is_empty")]
+    #[serde(deserialize_with = "deserialize_proposal_votes")]
+    proposal_votes: BTreeSet<(TimestampMillis, MessageIndex)>,
+    #[serde(rename = "pr", default, skip_serializing_if = "is_default")]
+    latest_proposal_vote_removed: TimestampMillis,
     #[serde(rename = "s", default, skip_serializing_if = "is_default")]
     suspended: Timestamped<bool>,
     #[serde(rename = "ra", default, skip_serializing_if = "is_default")]
@@ -543,6 +572,30 @@ pub struct GroupMemberInternal {
     min_visible_message_index: MessageIndex,
     #[serde(rename = "la", default, skip_serializing_if = "is_default")]
     lapsed: Timestamped<bool>,
+}
+
+fn deserialize_proposal_votes<'de, D: Deserializer<'de>>(d: D) -> Result<BTreeSet<(TimestampMillis, MessageIndex)>, D::Error> {
+    let votes = ProposalVotesCombined::deserialize(d)?;
+
+    Ok(match votes {
+        ProposalVotesCombined::Old(map) => {
+            let mut set = BTreeSet::new();
+            for (ts, message_indexes) in map {
+                for message_index in message_indexes {
+                    set.insert((ts, message_index));
+                }
+            }
+            set
+        }
+        ProposalVotesCombined::New(set) => set,
+    })
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum ProposalVotesCombined {
+    Old(BTreeMap<TimestampMillis, Vec<MessageIndex>>),
+    New(BTreeSet<(TimestampMillis, MessageIndex)>),
 }
 
 impl GroupMemberInternal {
@@ -622,6 +675,33 @@ impl GroupMemberInternal {
                 .as_ref()
                 .map_or(false, |accepted| accepted.value >= rules.text.version))
     }
+
+    pub fn iter_proposal_votes_since(
+        &self,
+        since: TimestampMillis,
+    ) -> impl Iterator<Item = (TimestampMillis, MessageIndex)> + '_ {
+        self.proposal_votes
+            .iter()
+            .rev()
+            .take_while(move |(ts, _)| *ts > since)
+            .copied()
+    }
+
+    pub fn any_updates_removed(&self, since: TimestampMillis) -> bool {
+        self.latest_proposal_vote_removed > since
+    }
+
+    fn prune_proposal_votes(&mut self, now: TimestampMillis) -> u32 {
+        let cutoff = calculate_summary_updates_data_removal_cutoff(now);
+        let still_valid = self.proposal_votes.split_off(&(cutoff, 0.into()));
+        let removed = std::mem::replace(&mut self.proposal_votes, still_valid);
+
+        if let Some((ts, _)) = removed.last() {
+            self.latest_proposal_vote_removed = *ts;
+        }
+
+        removed.len() as u32
+    }
 }
 
 impl Member for GroupMemberInternal {
@@ -662,7 +742,7 @@ fn mentions_are_empty(value: &Mentions) -> bool {
     value.is_empty()
 }
 
-fn serialize_members<S: Serializer>(value: &HashMap<UserId, GroupMemberInternal>, serializer: S) -> Result<S::Ok, S::Error> {
+fn serialize_members<S: Serializer>(value: &BTreeMap<UserId, GroupMemberInternal>, serializer: S) -> Result<S::Ok, S::Error> {
     let mut seq = serializer.serialize_seq(Some(value.len()))?;
     for member in value.values() {
         seq.serialize_element(member)?;
@@ -670,14 +750,14 @@ fn serialize_members<S: Serializer>(value: &HashMap<UserId, GroupMemberInternal>
     seq.end()
 }
 
-fn deserialize_members<'de, D: Deserializer<'de>>(deserializer: D) -> Result<HashMap<UserId, GroupMemberInternal>, D::Error> {
+fn deserialize_members<'de, D: Deserializer<'de>>(deserializer: D) -> Result<BTreeMap<UserId, GroupMemberInternal>, D::Error> {
     deserializer.deserialize_seq(GroupMembersMapVisitor)
 }
 
 struct GroupMembersMapVisitor;
 
 impl<'de> Visitor<'de> for GroupMembersMapVisitor {
-    type Value = HashMap<UserId, GroupMemberInternal>;
+    type Value = BTreeMap<UserId, GroupMemberInternal>;
 
     fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
         formatter.write_str("a sequence")
@@ -687,7 +767,7 @@ impl<'de> Visitor<'de> for GroupMembersMapVisitor {
     where
         A: SeqAccess<'de>,
     {
-        let mut map = seq.size_hint().map_or_else(HashMap::new, HashMap::with_capacity);
+        let mut map = BTreeMap::new();
         while let Some(next) = seq.next_element::<GroupMemberInternal>()? {
             map.insert(next.user_id, next);
         }
@@ -697,12 +777,8 @@ impl<'de> Visitor<'de> for GroupMembersMapVisitor {
 
 #[cfg(test)]
 mod tests {
-    use crate::roles::GroupRoleInternal;
-    use crate::{GroupMemberInternal, Mentions};
+    use super::*;
     use candid::Principal;
-    use std::collections::BTreeMap;
-    use types::{Timestamped, UserType, Version};
-    use utils::timestamped_set::TimestampedSet;
 
     #[test]
     fn serialize_with_max_defaults() {
@@ -714,7 +790,8 @@ mod tests {
             mentions: Mentions::default(),
             followed_threads: TimestampedSet::default(),
             unfollowed_threads: TimestampedSet::default(),
-            proposal_votes: BTreeMap::new(),
+            proposal_votes: BTreeSet::new(),
+            latest_proposal_vote_removed: 0,
             suspended: Timestamped::default(),
             min_visible_event_index: 0.into(),
             min_visible_message_index: 0.into(),
@@ -744,7 +821,8 @@ mod tests {
             mentions,
             followed_threads: [(1.into(), 1)].into_iter().collect(),
             unfollowed_threads: [(1.into(), 1)].into_iter().collect(),
-            proposal_votes: BTreeMap::from([(1, vec![1.into()])]),
+            proposal_votes: BTreeSet::from([(1, 1.into())]),
+            latest_proposal_vote_removed: 1,
             suspended: Timestamped::new(true, 1),
             min_visible_event_index: 1.into(),
             min_visible_message_index: 1.into(),
@@ -756,7 +834,7 @@ mod tests {
         let member_bytes = msgpack::serialize_then_unwrap(&member);
         let member_bytes_len = member_bytes.len();
 
-        assert_eq!(member_bytes_len, 159);
+        assert_eq!(member_bytes_len, 163);
 
         let _deserialized: GroupMemberInternal = msgpack::deserialize_then_unwrap(&member_bytes);
     }

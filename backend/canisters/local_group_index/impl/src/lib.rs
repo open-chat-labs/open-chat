@@ -1,6 +1,7 @@
 use crate::model::local_community_map::LocalCommunityMap;
 use candid::Principal;
 use canister_state_macros::canister_state;
+use constants::{CYCLES_REQUIRED_FOR_UPGRADE, MINUTE_IN_MS};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use event_store_utils::EventDeduper;
@@ -15,10 +16,8 @@ use types::{
 };
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
-use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
 use utils::env::Environment;
 use utils::iterator_extensions::IteratorExtensions;
-use utils::time::MINUTE_IN_MS;
 
 mod guards;
 mod jobs;

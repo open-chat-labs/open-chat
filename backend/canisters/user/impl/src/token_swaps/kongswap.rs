@@ -1,10 +1,10 @@
 use super::swap_client::{SwapClient, SwapSuccess};
 use crate::token_swaps::nat_to_u128;
 use async_trait::async_trait;
+use constants::SNS_GOVERNANCE_CANISTER_ID;
 use ic_cdk::api::call::CallResult;
 use types::icrc1::Account;
 use types::{CanisterId, TokenInfo};
-use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 
 pub struct KongSwapClient {
     canister_id: CanisterId,

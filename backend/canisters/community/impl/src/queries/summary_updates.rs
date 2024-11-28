@@ -44,10 +44,11 @@ fn summary_updates_impl(
     let member_last_updated = member.as_ref().map(|m| m.last_updated()).unwrap_or_default();
 
     let (channels_with_updates, channels_removed) = if let Some(m) = member {
-        let channels_with_updates: Vec<_> = m
-            .channels
-            .iter()
-            .filter_map(|c| state.data.channels.get(c))
+        let channels_with_updates: Vec<_> = state
+            .data
+            .members
+            .channels_for_member(m.user_id)
+            .filter_map(|c| state.data.channels.get(&c))
             .filter(|c| c.last_updated(Some(m.user_id)) > updates_since)
             .collect();
 

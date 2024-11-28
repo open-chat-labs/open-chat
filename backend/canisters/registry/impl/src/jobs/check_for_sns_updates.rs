@@ -1,5 +1,6 @@
 use crate::updates::add_token::add_sns_token;
 use crate::{mutate_state, read_state};
+use constants::HOUR_IN_MS;
 use ic_cdk::api::call::{CallResult, RejectionCode};
 use ic_cdk::api::management_canister::main::CanisterId;
 use registry_canister::NervousSystemDetails;
@@ -11,7 +12,6 @@ use std::time::Duration;
 use tracing::{error, info};
 use types::{Empty, TimestampMillis};
 use utils::canister_timers::run_now_then_interval;
-use utils::time::HOUR_IN_MS;
 
 const LIFECYCLE_COMMITTED: i32 = 3;
 const LIFECYCLE_ABORTED: i32 = 4;

@@ -3,14 +3,16 @@ use chat_events::{
     DeleteUndeleteMessagesArgs, GroupGateUpdatedInternal, MessageContentInternal, PushMessageArgs, Reader,
     RemoveExpiredEventsResult, TipMessageArgs, UndeleteMessageResult,
 };
+use constants::OPENCHAT_BOT_USER_ID;
 use event_store_producer::{EventStoreClient, Runtime};
+use group_community_common::MemberUpdate;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use regex_lite::Regex;
 use search::Query;
 use serde::{Deserialize, Serialize};
 use std::cmp::{max, min, Reverse};
-use std::collections::{BTreeMap, BTreeSet, HashSet, VecDeque};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
 use types::{
     AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, ContentValidationError, CustomPermission, Document,
     EventIndex, EventOrExpiredRange, EventWrapper, EventsResponse, ExternalUrlUpdated, FieldTooLongResult, FieldTooShortResult,
@@ -22,7 +24,6 @@ use types::{
     Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall,
     MAX_RETURNED_MENTIONS,
 };
-use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
     validate_description, validate_group_name, validate_rules, NameValidationError, RulesValidationError,
@@ -61,10 +62,7 @@ pub struct GroupChatCore {
     pub invited_users: InvitedUsers,
     pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
     pub external_url: Timestamped<Option<String>>,
-    #[serde(default)]
     at_everyone_mentions: BTreeMap<TimestampMillis, AtEveryoneMention>,
-    #[serde(default)]
-    pub dedupe_at_everyone_mentions_queue: VecDeque<UserId>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -121,7 +119,6 @@ impl GroupChatCore {
             min_visible_indexes_for_new_members: None,
             external_url: Timestamped::new(external_url, now),
             at_everyone_mentions: BTreeMap::new(),
-            dedupe_at_everyone_mentions_queue: VecDeque::new(),
         }
     }
 
@@ -207,18 +204,9 @@ impl GroupChatCore {
             .collect();
 
         if let Some(member) = member {
-            let new_proposal_votes =
-                member
-                    .proposal_votes
-                    .iter()
-                    .rev()
-                    .take_while(|(&t, _)| t > since)
-                    .flat_map(|(&t, message_indexes)| {
-                        message_indexes
-                            .iter()
-                            .filter_map(|&m| events_reader.event_index(m.into()))
-                            .map(move |e| (None, e, t))
-                    });
+            let new_proposal_votes = member
+                .iter_proposal_votes_since(since)
+                .filter_map(|(ts, m)| events_reader.event_index(m.into()).map(move |e| (None, e, ts)));
 
             updated_events.extend(new_proposal_votes);
         };
@@ -275,6 +263,8 @@ impl GroupChatCore {
                 .if_set_after(since)
                 .cloned()
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
+            any_updates_missed: self.members.any_updates_removed(since)
+                || member.as_ref().map(|m| m.any_updates_removed(since)).unwrap_or_default(),
         }
     }
 
@@ -343,6 +333,7 @@ impl GroupChatCore {
                         result.blocked_users_removed.push(user_id);
                     }
                 }
+                MemberUpdate::DisplayNameChanged => {}
             }
         }
 
@@ -2190,6 +2181,7 @@ pub struct SummaryUpdates {
     pub rules_changed: bool,
     pub video_call_in_progress: OptionUpdate<VideoCall>,
     pub external_url: OptionUpdate<String>,
+    pub any_updates_missed: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]

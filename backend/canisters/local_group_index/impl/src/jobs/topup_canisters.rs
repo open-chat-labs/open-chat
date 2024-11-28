@@ -1,6 +1,7 @@
 use crate::updates::c2c_notify_low_balance::top_up_canister;
 use crate::{mutate_state, RuntimeState};
 use candid::Nat;
+use constants::DAY_IN_MS;
 use ic_cdk::api::management_canister::main::CanisterIdRecord;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
@@ -9,7 +10,6 @@ use std::time::Duration;
 use tracing::{error, info};
 use types::{CanisterId, ChatId, CommunityId, Milliseconds};
 use utils::canister_timers::run_now_then_interval;
-use utils::time::DAY_IN_MS;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();

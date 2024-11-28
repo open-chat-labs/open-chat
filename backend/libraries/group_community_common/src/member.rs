@@ -1,3 +1,4 @@
+use serde_repr::{Deserialize_repr, Serialize_repr};
 use types::{TimestampMillis, UserId};
 
 pub trait Member {
@@ -21,4 +22,17 @@ pub trait Members {
     fn can_member_lapse(&self, user_id: &UserId) -> bool {
         self.get(user_id).map_or(false, |m| m.can_member_lapse())
     }
+}
+
+#[derive(Serialize_repr, Deserialize_repr, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
+#[repr(u8)]
+pub enum MemberUpdate {
+    Added = 1,
+    Removed = 2,
+    RoleChanged = 3,
+    Blocked = 4,
+    Unblocked = 5,
+    Lapsed = 6,
+    Unlapsed = 7,
+    DisplayNameChanged = 8,
 }

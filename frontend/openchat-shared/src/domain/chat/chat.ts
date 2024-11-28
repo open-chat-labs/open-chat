@@ -81,6 +81,9 @@ export type VideoCallType = "broadcast" | "default";
 export interface PrizeContentInitial {
     kind: "prize_content_initial";
     diamondOnly: boolean;
+    lifetimeDiamondOnly: boolean;
+    uniquePersonOnly: boolean;
+    streakOnly: number;
     endDate: bigint;
     caption?: string;
     transfer: PendingCryptocurrencyTransfer;
@@ -316,6 +319,9 @@ export interface PrizeContent {
     prizesRemaining: number;
     prizesPending: number;
     diamondOnly: boolean;
+    lifetimeDiamondOnly: boolean;
+    uniquePersonOnly: boolean;
+    streakOnly: number;
     winners: string[];
     token: string;
     endDate: bigint;

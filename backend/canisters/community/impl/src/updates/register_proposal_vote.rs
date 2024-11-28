@@ -111,7 +111,7 @@ fn commit(channel_id: ChannelId, user_id: UserId, args: Args, state: &mut Runtim
         None => return ChannelNotFound,
     };
 
-    let member = match channel.chat.members.get_mut(&user_id) {
+    let member = match channel.chat.members.get(&user_id) {
         Some(m) => m,
         None => return UserNotInChannel,
     };
@@ -125,11 +125,8 @@ fn commit(channel_id: ChannelId, user_id: UserId, args: Args, state: &mut Runtim
     {
         RecordProposalVoteResult::Success => {
             let now = state.env.now();
+            channel.chat.members.register_proposal_vote(user_id, args.message_index, now);
 
-            let votes = member.proposal_votes.entry(now).or_default();
-            if !votes.contains(&args.message_index) {
-                votes.push(args.message_index);
-            }
             handle_activity_notification(state);
             Success
         }

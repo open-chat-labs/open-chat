@@ -1,12 +1,12 @@
 use crate::{mutate_state, NewJoinerRewardStatus, RuntimeState};
 use chat_events::{CompletedCryptoTransactionInternal, CryptoContentInternal, MessageContentInternal, PushMessageArgs};
+use constants::OPENCHAT_BOT_USER_ID;
 use ic_ledger_types::{Memo, Timestamp, TransferArgs, DEFAULT_FEE};
 use ledger_utils::default_ledger_account;
 use rand::Rng;
 use tracing::error;
 use types::nns::{CryptoAccount, Tokens};
 use types::{nns, CanisterId, Cryptocurrency, TimestampMillis, UserId, ICP};
-use utils::consts::OPENCHAT_BOT_USER_ID;
 
 pub async fn process_new_joiner_reward(
     this_canister_id: CanisterId,

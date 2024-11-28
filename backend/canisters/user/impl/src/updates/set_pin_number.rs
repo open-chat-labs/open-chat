@@ -3,15 +3,15 @@ use crate::model::pin_number::VerifyPinError;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use constants::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 use identity_utils::extract_certificate;
 use types::{Achievement, FieldTooLongResult, FieldTooShortResult};
 use user_canister::set_pin_number::{Response::*, *};
-use utils::time::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 
 const MIN_LENGTH: usize = 4;
 const MAX_LENGTH: usize = 20;
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 fn set_pin_number(args: Args) -> Response {
     run_regular_jobs();

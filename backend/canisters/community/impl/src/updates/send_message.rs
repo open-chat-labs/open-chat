@@ -8,6 +8,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse};
 use community_canister::send_message::{Response::*, *};
+use constants::OPENCHAT_BOT_USER_ID;
 use group_chat_core::SendMessageResult;
 use itertools::Itertools;
 use lazy_static::lazy_static;
@@ -18,7 +19,6 @@ use types::{
     Notification, TimestampMillis, User, UserId, UserType, Version,
 };
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
-use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[update(candid = true, msgpack = true)]
 #[trace]
@@ -156,15 +156,21 @@ fn validate_caller(
     }
 
     let caller = caller_override.unwrap_or_else(|| state.env.caller());
-    if let Some(member) = state.data.members.get_mut(caller) {
+    let Some(user_id) = state.data.members.lookup_user_id(caller) else {
+        return Err(UserNotInCommunity);
+    };
+
+    let now = state.env.now();
+    if let Some(version) = community_rules_accepted {
+        state.data.members.mark_rules_accepted(&user_id, version, now);
+    }
+
+    if let Some(member) = state.data.members.get(caller) {
         if member.suspended().value {
             Err(UserSuspended)
         } else if member.lapsed().value {
             Err(UserLapsed)
         } else {
-            if let Some(version) = community_rules_accepted {
-                member.accept_rules(version, state.env.now());
-            }
             if state.data.rules.enabled
                 && !member.user_type.is_bot()
                 && member

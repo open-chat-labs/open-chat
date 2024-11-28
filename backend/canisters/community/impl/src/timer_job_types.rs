@@ -4,13 +4,13 @@ use crate::updates::end_video_call::end_video_call_impl;
 use crate::{can_borrow_state, mutate_state, read_state, run_regular_jobs};
 use canister_timer_jobs::Job;
 use chat_events::MessageContentInternal;
+use constants::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 use ledger_utils::process_transaction;
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{
     BlobReference, CanisterId, ChannelId, ChatId, MessageId, MessageIndex, P2PSwapStatus, PendingCryptoTransaction, UserId,
 };
-use utils::time::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
