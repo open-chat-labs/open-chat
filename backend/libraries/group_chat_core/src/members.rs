@@ -35,12 +35,17 @@ pub struct GroupMembers {
     blocked: BTreeSet<UserId>,
     suspended: BTreeSet<UserId>,
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
-    #[serde(default)]
     latest_update_removed: TimestampMillis,
 }
 
 #[allow(clippy::too_many_arguments)]
 impl GroupMembers {
+    pub fn set_member_default_timestamps(&mut self) {
+        for member in self.members.values_mut() {
+            member.set_default_timestamps();
+        }
+    }
+
     pub fn prune_proposal_votes(&mut self, now: TimestampMillis) -> u32 {
         let mut count = 0;
         for member in self.members.values_mut() {
@@ -105,19 +110,19 @@ impl GroupMembers {
             let member = GroupMemberInternal {
                 user_id,
                 date_added: now,
-                role: Timestamped::new(GroupRoleInternal::Member, now),
+                role: Timestamped::new(GroupRoleInternal::Member, 0),
                 min_visible_event_index,
                 min_visible_message_index,
-                notifications_muted: Timestamped::new(notifications_muted, now),
+                notifications_muted: Timestamped::new(notifications_muted, 0),
                 mentions: Mentions::default(),
-                followed_threads: TimestampedSet::new(),
-                unfollowed_threads: TimestampedSet::new(),
+                followed_threads: TimestampedSet::default(),
+                unfollowed_threads: TimestampedSet::default(),
                 proposal_votes: BTreeSet::default(),
                 latest_proposal_vote_removed: 0,
                 suspended: Timestamped::default(),
                 rules_accepted: None,
                 user_type,
-                lapsed: Timestamped::new(false, now),
+                lapsed: Timestamped::default(),
             };
             self.members.insert(user_id, member.clone());
             if user_type.is_bot() {
@@ -547,16 +552,19 @@ pub struct GroupMemberInternal {
     date_added: TimestampMillis,
     #[serde(rename = "r", default, skip_serializing_if = "is_default")]
     role: Timestamped<GroupRoleInternal>,
-    #[serde(rename = "n")]
+    #[serde(
+        rename = "n",
+        default = "default_notifications_muted",
+        skip_serializing_if = "is_default_notifications_muted"
+    )]
     notifications_muted: Timestamped<bool>,
-    #[serde(rename = "m", default, skip_serializing_if = "mentions_are_empty")]
+    #[serde(rename = "m", default, skip_serializing_if = "Mentions::is_empty")]
     pub mentions: Mentions,
     #[serde(rename = "tf", default, skip_serializing_if = "TimestampedSet::is_empty")]
     pub followed_threads: TimestampedSet<MessageIndex>,
     #[serde(rename = "tu", default, skip_serializing_if = "TimestampedSet::is_empty")]
     pub unfollowed_threads: TimestampedSet<MessageIndex>,
     #[serde(rename = "p", default, skip_serializing_if = "BTreeSet::is_empty")]
-    #[serde(deserialize_with = "deserialize_proposal_votes")]
     proposal_votes: BTreeSet<(TimestampMillis, MessageIndex)>,
     #[serde(rename = "pr", default, skip_serializing_if = "is_default")]
     latest_proposal_vote_removed: TimestampMillis,
@@ -574,31 +582,19 @@ pub struct GroupMemberInternal {
     lapsed: Timestamped<bool>,
 }
 
-fn deserialize_proposal_votes<'de, D: Deserializer<'de>>(d: D) -> Result<BTreeSet<(TimestampMillis, MessageIndex)>, D::Error> {
-    let votes = ProposalVotesCombined::deserialize(d)?;
-
-    Ok(match votes {
-        ProposalVotesCombined::Old(map) => {
-            let mut set = BTreeSet::new();
-            for (ts, message_indexes) in map {
-                for message_index in message_indexes {
-                    set.insert((ts, message_index));
-                }
-            }
-            set
-        }
-        ProposalVotesCombined::New(set) => set,
-    })
-}
-
-#[derive(Deserialize)]
-#[serde(untagged)]
-enum ProposalVotesCombined {
-    Old(BTreeMap<TimestampMillis, Vec<MessageIndex>>),
-    New(BTreeSet<(TimestampMillis, MessageIndex)>),
-}
-
 impl GroupMemberInternal {
+    pub fn set_default_timestamps(&mut self) {
+        if self.role.timestamp <= self.date_added {
+            self.role.timestamp = 0;
+        }
+        if self.notifications_muted.timestamp <= self.date_added {
+            self.notifications_muted.timestamp = 0;
+        }
+        if self.lapsed.timestamp <= self.date_added {
+            self.lapsed.timestamp = 0;
+        }
+    }
+
     pub fn user_id(&self) -> UserId {
         self.user_id
     }
@@ -738,10 +734,6 @@ impl From<&GroupMemberInternal> for GroupMember {
     }
 }
 
-fn mentions_are_empty(value: &Mentions) -> bool {
-    value.is_empty()
-}
-
 fn serialize_members<S: Serializer>(value: &BTreeMap<UserId, GroupMemberInternal>, serializer: S) -> Result<S::Ok, S::Error> {
     let mut seq = serializer.serialize_seq(Some(value.len()))?;
     for member in value.values() {
@@ -775,18 +767,34 @@ impl<'de> Visitor<'de> for GroupMembersMapVisitor {
     }
 }
 
+fn default_notifications_muted() -> Timestamped<bool> {
+    Timestamped::new(true, 0)
+}
+
+fn is_default_notifications_muted(value: &Timestamped<bool>) -> bool {
+    value.value && value.timestamp == 0
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use candid::Principal;
+    use types::CanisterId;
 
     #[test]
     fn serialize_with_max_defaults() {
-        let member = GroupMemberInternal {
-            user_id: Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap().into(),
-            date_added: 1,
-            role: Timestamped::new(GroupRoleInternal::Member, 0),
-            notifications_muted: Timestamped::new(true, 1),
+        #[derive(Serialize)]
+        pub struct GroupMemberInternal2 {
+            #[serde(rename = "u")]
+            user_id: UserId,
+            #[serde(rename = "d")]
+            date_added: TimestampMillis,
+        }
+
+        let member1 = GroupMemberInternal {
+            user_id: CanisterId::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap().into(),
+            date_added: 1732874138000,
+            role: Timestamped::default(),
+            notifications_muted: default_notifications_muted(),
             mentions: Mentions::default(),
             followed_threads: TimestampedSet::default(),
             unfollowed_threads: TimestampedSet::default(),
@@ -795,17 +803,23 @@ mod tests {
             suspended: Timestamped::default(),
             min_visible_event_index: 0.into(),
             min_visible_message_index: 0.into(),
-            rules_accepted: Some(Timestamped::new(Version::zero(), 1)),
+            rules_accepted: None,
             user_type: UserType::User,
             lapsed: Timestamped::default(),
         };
 
-        let member_bytes = msgpack::serialize_then_unwrap(&member);
-        let member_bytes_len = member_bytes.len();
+        let member2 = GroupMemberInternal2 {
+            user_id: member1.user_id,
+            date_added: member1.date_added,
+        };
 
-        assert_eq!(member_bytes_len, 37);
+        let member1_bytes = msgpack::serialize_then_unwrap(&member1);
+        let member2_bytes = msgpack::serialize_then_unwrap(&member2);
 
-        let _deserialized: GroupMemberInternal = msgpack::deserialize_then_unwrap(&member_bytes);
+        assert_eq!(member1_bytes, member2_bytes);
+        assert_eq!(member1_bytes.len(), 26);
+
+        let _deserialized: GroupMemberInternal = msgpack::deserialize_then_unwrap(&member1_bytes);
     }
 
     #[test]
@@ -814,8 +828,8 @@ mod tests {
         mentions.add(Some(1.into()), 1.into(), 1.into(), 1);
 
         let member = GroupMemberInternal {
-            user_id: Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap().into(),
-            date_added: 1,
+            user_id: CanisterId::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap().into(),
+            date_added: 1732874138000,
             role: Timestamped::new(GroupRoleInternal::Owner, 1),
             notifications_muted: Timestamped::new(true, 1),
             mentions,
@@ -834,7 +848,7 @@ mod tests {
         let member_bytes = msgpack::serialize_then_unwrap(&member);
         let member_bytes_len = member_bytes.len();
 
-        assert_eq!(member_bytes_len, 163);
+        assert_eq!(member_bytes_len, 171);
 
         let _deserialized: GroupMemberInternal = msgpack::deserialize_then_unwrap(&member_bytes);
     }
