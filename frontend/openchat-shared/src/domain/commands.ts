@@ -41,49 +41,46 @@ export type SlashCommandOptionChoice<T> = {
 
 export type SlashCommandParam = CommandParam & SlashCommandParamType;
 
-export function defaultBooleanParam(): SlashCommandParam {
+function defaultCommonParam(param?: SlashCommandParam): CommandParam {
     return {
-        kind: "boolean",
-        name: "",
-        description: "",
-        placeholder: "",
-        required: true,
+        name: param?.name ?? "",
+        description: param?.description ?? "",
+        placeholder: param?.placeholder ?? "",
+        required: param?.required ?? true,
     };
 }
 
-export function defaultStringParam(): SlashCommandParam {
+export function defaultBooleanParam(param?: SlashCommandParam): SlashCommandParam {
+    return {
+        kind: "boolean",
+        ...defaultCommonParam(param),
+    };
+}
+
+export function defaultStringParam(param?: SlashCommandParam): SlashCommandParam {
     return {
         kind: "string",
-        name: "",
-        description: "",
-        placeholder: "",
-        required: true,
+        ...defaultCommonParam(param),
         minLength: 0,
         maxLength: 1000,
         choices: [],
     };
 }
 
-export function defaultNumberParam(): SlashCommandParam {
+export function defaultNumberParam(param?: SlashCommandParam): SlashCommandParam {
     return {
         kind: "number",
-        name: "",
-        description: "",
-        placeholder: "",
-        required: true,
+        ...defaultCommonParam(param),
         minValue: 0,
         maxValue: 1000,
         choices: [],
     };
 }
 
-export function defaultUserParam(): SlashCommandParam {
+export function defaultUserParam(param?: SlashCommandParam): SlashCommandParam {
     return {
         kind: "user",
-        name: "",
-        description: "",
-        placeholder: "",
-        required: true,
+        ...defaultCommonParam(param),
     };
 }
 

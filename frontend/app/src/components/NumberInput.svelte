@@ -1,10 +1,13 @@
 <script lang="ts">
+    import { _ } from "svelte-i18n";
+    import type { ResourceKey } from "openchat-client";
     import { createEventDispatcher } from "svelte";
     import { onMount } from "svelte";
+    import { interpolate } from "../i18n/i18n";
 
     export let disabled: boolean = false;
     export let autofocus: boolean = false;
-    export let placeholder: string = "";
+    export let placeholder: ResourceKey | undefined = undefined;
     export let min: number = 0;
     export let max: number = Number.MAX_VALUE;
     export let defaultValue = Math.round(max - min / 2);
@@ -54,7 +57,7 @@
         type="number"
         {min}
         {max}
-        {placeholder}
+        placeholder={placeholder !== undefined ? interpolate($_, placeholder) : ""}
         on:keydown={keyDown}
         on:input={handleInput}
         on:blur

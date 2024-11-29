@@ -85,7 +85,7 @@
                 max={param.maxValue}
                 shouldClamp={false}
                 on:change={onChange}
-                placeholder={$_(param.placeholder ?? "")}
+                placeholder={i18nKey(param.placeholder ?? "")}
                 bind:value={instance.value} />
         {/if}
     {/if}
