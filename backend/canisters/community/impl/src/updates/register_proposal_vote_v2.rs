@@ -53,7 +53,7 @@ fn register_proposal_vote_impl(args: Args, state: &mut RuntimeState) -> Response
     {
         RecordProposalVoteResult::Success => {
             let now = state.env.now();
-            channel.chat.members.register_proposal_vote(user_id, args.message_index, now);
+            channel.chat.members.register_proposal_vote(&user_id, args.message_index, now);
 
             handle_activity_notification(state);
             Success

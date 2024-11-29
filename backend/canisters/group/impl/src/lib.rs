@@ -588,7 +588,7 @@ impl Data {
         self.chat.members.contains(&user_id).then_some(user_id)
     }
 
-    pub fn get_member(&self, user_id_or_principal: Principal) -> Option<&GroupMemberInternal> {
+    pub fn get_member(&self, user_id_or_principal: Principal) -> Option<GroupMemberInternal> {
         let user_id = self
             .principal_to_user_id_map
             .get(&user_id_or_principal)
