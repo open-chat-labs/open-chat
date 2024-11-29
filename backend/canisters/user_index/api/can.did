@@ -73,13 +73,13 @@ type UsersResponse = variant {
     };
 };
 
-type ExloreBotsArgs = record {
+type ExploreBotsArgs = record {
     search_term : opt text;
     page_index : nat32;
     page_size : nat8;
 };
 
-type ExloreBotsResponse = variant {
+type ExploreBotsResponse = variant {
     Success : record {
         matches : vec BotMatch;
         total : nat32;
@@ -262,7 +262,7 @@ service : {
     chit_leaderboard : (EmptyArgs) -> (ChitLeaderboardResponse) query;
     current_user : (EmptyArgs) -> (CurrentUserResponse) query;
     diamond_membership_fees : (EmptyArgs) -> (DiamondMembershipFeesResponse) query;
-    explore_bots : (ExloreBotsArgs) -> (ExloreBotsResponse) query;
+    explore_bots : (ExploreBotsArgs) -> (ExploreBotsResponse) query;
     external_achievements : (ExternalAchievementsArgs) -> (ExternalAchievementsResponse) query;
     platform_moderators : (EmptyArgs) -> (PlatformModeratorsResponse) query;
     platform_moderators_group : (EmptyArgs) -> (PlatformModeratorsGroupResponse) query;
