@@ -442,10 +442,6 @@ impl CommunityMembers {
         self.member_channel_links_removed.contains_key(&(user_id, channel_id))
     }
 
-    pub fn timestamp_of_latest_channel_removed(&self, user_id: UserId) -> Option<TimestampMillis> {
-        self.channels_removed_for_member(user_id).map(|(_, ts)| ts).max()
-    }
-
     pub fn owners(&self) -> &BTreeSet<UserId> {
         &self.owners
     }
