@@ -5,7 +5,7 @@
     import { interpolate } from "../i18n/i18n";
     import type { ResourceKey } from "openchat-client";
 
-    interface Props {
+    export interface InputProps {
         disabled?: boolean;
         invalid?: boolean;
         value?: string | number;
@@ -20,6 +20,7 @@
         pattern?: string | undefined;
         children?: Snippet;
         onblur?: () => void;
+        onfocus?: () => void;
     }
 
     let {
@@ -36,8 +37,9 @@
         countdown = false,
         pattern = undefined,
         onblur = undefined,
-        children
-    }: Props = $props();
+        onfocus = undefined,
+        children,
+    }: InputProps = $props();
 
     const dispatch = createEventDispatcher();
 
@@ -91,6 +93,7 @@
         oninput={handleInput}
         onkeydown={keyDown}
         {onblur}
+        {onfocus}
         bind:this={inp}
         {pattern}
         {value}

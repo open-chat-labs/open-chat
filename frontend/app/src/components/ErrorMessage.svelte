@@ -13,5 +13,6 @@
         background-color: var(--error);
         color: #fff;
         padding: $sp3 $sp4;
+        border-radius: var(--rd);
     }
 </style>

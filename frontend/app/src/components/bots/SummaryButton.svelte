@@ -6,16 +6,17 @@
 
     interface Props {
         label: string;
+        valid: boolean;
         onDelete: () => void;
         onSelect: () => void;
     }
 
-    let { onDelete, onSelect, label }: Props = $props();
+    let { onDelete, onSelect, label, valid }: Props = $props();
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div onclick={onSelect} class="command">
+<div onclick={onSelect} class:invalid={!valid} class="command">
     <div class="name">
         <Translatable resourceKey={i18nKey(label)}></Translatable>
     </div>
@@ -57,6 +58,15 @@
         .name {
             padding: $sp3 $sp4;
             flex: auto;
+        }
+
+        &.invalid {
+            background-color: var(--error);
+            @media (hover: hover) {
+                &:hover {
+                    background: var(--error);
+                }
+            }
         }
     }
 </style>

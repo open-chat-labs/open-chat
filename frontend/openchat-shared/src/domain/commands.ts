@@ -1,6 +1,9 @@
+import { Principal } from "@dfinity/principal";
 import type { MessageContext } from "./chat";
 import type { DataContent } from "./data";
 import type { ChatPermissions, CommunityPermissions, MessagePermission } from "./permission";
+
+export const MIN_NAME_LENGTH = 3;
 
 // This can be expanded as necessary to include things like ChatParam (e.g. for a /goto bot)
 export type SlashCommandParamType = UserParam | BooleanParam | StringParam | NumberParam;
@@ -279,4 +282,130 @@ export function paramInstanceIsValid(
     }
 
     return false;
+}
+
+// This is used for all names: bot, command, param
+export function validBotComponentName(name: string) {
+    const regex = new RegExp(`^[a-zA-Z0-9_]{${MIN_NAME_LENGTH},}$`);
+    return regex.test(name);
+}
+
+type BotValidationError = string; // this might not be enough
+export type BotValidationErrors = Map<string, BotValidationError>;
+
+export function validateBot(bot: CandidateExternalBot): BotValidationErrors {
+    const errors: BotValidationErrors = new Map();
+    if (!validBotComponentName(bot.name)) {
+        errors.set(`bot_name`, "Required field can only contain alphanumerics and underscores");
+    }
+    if (!(validateOrigin(bot.endpoint) || validateCanister(bot.endpoint))) {
+        errors.set("bot_endpoint", "Endpoint must be a valid origin or canisterID");
+    }
+
+    if (containsDuplicateCommands(bot.commands)) {
+        errors.set("duplicate_commands", "Bot contains commands with duplicate names");
+    }
+
+    bot.commands.forEach((command, i) => {
+        if (!validateCommand(command, `command_${i}`, errors)) {
+            errors.set(`command_${i}`, "Command has errors");
+        }
+    });
+    console.log("Errors: ", errors);
+    return errors;
+}
+
+function validateCommand(
+    command: SlashCommandSchema,
+    errorPath: string,
+    errors: BotValidationErrors,
+): boolean {
+    let valid = true;
+    if (!validBotComponentName(command.name)) {
+        errors.set(
+            `${errorPath}_name`,
+            "Required field can only contain alphanumerics and underscores",
+        );
+        valid = false;
+    }
+    if (containsDuplicateParams(command.params)) {
+        errors.set(`${errorPath}_duplicate_params`, "Command contains params with duplicate names");
+    }
+    command.params.forEach((p, i) => {
+        const paramPath = `${errorPath}_param_${i}`;
+        if (!validateParameter(p, paramPath, errors)) {
+            errors.set(paramPath, "Parameter has errors");
+            valid = false;
+        }
+    });
+    return valid;
+}
+
+function containsDuplicateCommands(commands: SlashCommandSchema[]): boolean {
+    const set = new Set(commands.map((c) => c.name));
+    return set.size < commands.length;
+}
+
+function containsDuplicateParams(params: SlashCommandParam[]): boolean {
+    const set = new Set(params.map((p) => p.name));
+    return set.size < params.length;
+}
+
+function validateParameter(
+    param: SlashCommandParam,
+    errorPath: string,
+    errors: BotValidationErrors,
+): boolean {
+    let valid = true;
+    if (!validBotComponentName(param.name)) {
+        errors.set(
+            `${errorPath}_name`,
+            "Required field can only contain alphanumerics and underscores",
+        );
+        valid = false;
+    }
+    if (param.kind === "string") {
+        param.choices.forEach((c, i) => {
+            if (c.name.length < MIN_NAME_LENGTH) {
+                errors.set(`${errorPath}_choices_${i}_name`, "Choice name must be >= 3 characters");
+                valid = false;
+            }
+            if (c.value.length < MIN_NAME_LENGTH) {
+                errors.set(
+                    `${errorPath}_choices_${i}_value`,
+                    "Choice value must be >= 3 characters",
+                );
+                valid = false;
+            }
+        });
+    }
+    if (param.kind === "number") {
+        param.choices.forEach((c, i) => {
+            if (c.name.length < MIN_NAME_LENGTH) {
+                errors.set(`${errorPath}_choices_${i}_name`, "Choice name must be >= 3 characters");
+                valid = false;
+            }
+        });
+    }
+    return valid;
+}
+
+function validateOrigin(origin: string | undefined): boolean {
+    if (!origin) return false;
+    try {
+        const o = new URL(origin);
+        return o.origin === origin;
+    } catch (_) {
+        return false;
+    }
+}
+
+function validateCanister(canister: string | undefined): boolean {
+    if (!canister) return false;
+    try {
+        Principal.fromText(canister);
+        return true;
+    } catch (_) {
+        return false;
+    }
 }

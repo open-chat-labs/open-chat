@@ -4,6 +4,7 @@
         communityPermissionsList,
         defaultStringParam,
         messagePermissionsList,
+        type BotValidationErrors,
         type ChatPermissions,
         type CommunityPermissions,
         type MessagePermission,
@@ -23,17 +24,22 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import SummaryButton from "./SummaryButton.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
+    import ValidatingInput from "./ValidatingInput.svelte";
+    import ErrorMessage from "../ErrorMessage.svelte";
 
     interface Props {
+        errors: BotValidationErrors;
+        errorPath: string;
         command: SlashCommandSchema;
         onAddAnother: () => void;
     }
 
-    let { command = $bindable(), onAddAnother }: Props = $props();
+    let { command = $bindable(), onAddAnother, errors, errorPath }: Props = $props();
 
     let permissionsTab: "chat" | "community" | "message" | "thread" = $state("chat");
     let syncThreadPermissions = $state(true);
     let selectedParam = $state<SlashCommandParam | undefined>(undefined);
+    let selectedParamIndex = $state<number | undefined>(undefined);
 
     function toggleChatPermission(perm: keyof ChatPermissions) {
         if (command.permissions.chatPermissions.includes(perm)) {
@@ -84,19 +90,23 @@
     function addParameter() {
         command.params.push(defaultStringParam());
         selectedParam = command.params[command.params.length - 1];
+        selectedParamIndex = command.params.length - 1;
     }
 
     function onDeleteParam(param: SlashCommandParam) {
         command.params = command.params.filter((p) => p !== param);
     }
 
-    function onSelectParam(param: SlashCommandParam) {
+    function onSelectParam(param: SlashCommandParam, index: number) {
         selectedParam = param;
+        selectedParamIndex = index;
     }
 </script>
 
-{#if selectedParam !== undefined}
+{#if selectedParam !== undefined && selectedParamIndex !== undefined}
     <CommandParamBuilder
+        errorPath={`${errorPath}_param_${selectedParamIndex}`}
+        {errors}
         on:close={() => (selectedParam = undefined)}
         bind:param={selectedParam}
         onAddAnother={addParameter}></CommandParamBuilder>
@@ -115,9 +125,11 @@
                     rules={i18nKey(
                         "Must be unique and contain alphanumeric characters and underscores only",
                     )}></Legend>
-                <Input
+                <ValidatingInput
+                    error={errors.get(`${errorPath}_name`)}
                     minlength={3}
                     maxlength={25}
+                    invalid={errors.has(`${errorPath}_name`)}
                     placeholder={i18nKey("Enter command name")}
                     bind:value={command.name} />
             </section>
@@ -222,13 +234,18 @@
             </section>
 
             <section>
-                {#each command.params as param}
+                {#each command.params as param, i}
                     <SummaryButton
-                        onSelect={() => onSelectParam(param)}
+                        valid={!errors.has(`${errorPath}_param_${i}`)}
+                        onSelect={() => onSelectParam(param, i)}
                         onDelete={() => onDeleteParam(param)}
                         label={`Param: ${param.name}`}></SummaryButton>
                 {/each}
             </section>
+
+            {#if errors.has(`${errorPath}_duplicate_params`)}
+                <ErrorMessage>{errors.get(`${errorPath}_duplicate_params`)}</ErrorMessage>
+            {/if}
 
             <Link on:click={addParameter} underline={"never"}>
                 <Translatable resourceKey={i18nKey("Add a parameter")}></Translatable>

@@ -1,6 +1,7 @@
 <script lang="ts">
     import {
         emptyBotInstance,
+        validateBot,
         type CandidateExternalBot,
         type SlashCommandPermissions,
         type SlashCommandSchema,
@@ -13,6 +14,8 @@
     import Link from "../Link.svelte";
     import CommandBuilder from "./CommandBuilder.svelte";
     import SummaryButton from "./SummaryButton.svelte";
+    import ValidatingInput from "./ValidatingInput.svelte";
+    import ErrorMessage from "../ErrorMessage.svelte";
 
     interface Props {
         valid: boolean;
@@ -22,18 +25,16 @@
 
     let candidate = $state<CandidateExternalBot>(emptyBotInstance());
     let selectedCommand = $state<SlashCommandSchema | undefined>(undefined);
+    let selectedCommandIndex = $state<number | undefined>(undefined);
     let debug = $state(false);
+    let errors = $derived(validateBot(candidate));
 
     $effect(() => {
-        const isValid = validateCandidate();
+        const isValid = errors.size === 0;
         if (isValid !== valid) {
             valid = isValid;
         }
     });
-
-    function validateCandidate() {
-        return true;
-    }
 
     function botAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>) {
         candidate.icon = {
@@ -49,14 +50,16 @@
     function addCommand() {
         candidate.commands.push(emptySlashCommand());
         selectedCommand = candidate.commands[candidate.commands.length - 1];
+        selectedCommandIndex = candidate.commands.length - 1;
     }
 
     function onDeleteCommand(cmd: SlashCommandSchema) {
         candidate.commands = candidate.commands.filter((c) => c !== cmd);
     }
 
-    function onSelectCommand(cmd: SlashCommandSchema) {
+    function onSelectCommand(cmd: SlashCommandSchema, index: number) {
         selectedCommand = cmd;
+        selectedCommandIndex = index;
     }
 
     function emptySlashCommand(): SlashCommandSchema {
@@ -78,10 +81,12 @@
     }
 </script>
 
-{#if selectedCommand !== undefined}
+{#if selectedCommand !== undefined && selectedCommandIndex !== undefined}
     <CommandBuilder
         onAddAnother={addCommand}
         on:close={() => (selectedCommand = undefined)}
+        errorPath={`command_${selectedCommandIndex}`}
+        {errors}
         bind:command={selectedCommand}></CommandBuilder>
 {/if}
 
@@ -100,11 +105,14 @@
         label={i18nKey("Bot name")}
         rules={i18nKey("Must be unique and contain alphanumeric characters and underscores only")}
     ></Legend>
-    <Input
+    <ValidatingInput
         minlength={3}
         maxlength={25}
+        invalid={errors.has("bot_name")}
         placeholder={i18nKey("Enter bot name")}
-        bind:value={candidate.name} />
+        error={errors.get("bot_name")}
+        bind:value={candidate.name}>
+    </ValidatingInput>
 
     <Legend label={i18nKey("Bot desription")} rules={i18nKey("optional")}></Legend>
     <Input
@@ -117,21 +125,28 @@
         label={i18nKey("Bot endpoint")}
         required
         rules={i18nKey("The url origin of your bot server")}></Legend>
-    <Input
+    <ValidatingInput
         minlength={3}
         maxlength={200}
+        invalid={errors.has("bot_endpoint")}
+        error={errors.get("bot_endpoint")}
         placeholder={i18nKey("https://my_openchat_bot")}
         bind:value={candidate.endpoint} />
 
     <div class="commands">
         <div class="commands">
-            {#each candidate.commands as command}
+            {#each candidate.commands as command, i}
                 <SummaryButton
-                    onSelect={() => onSelectCommand(command)}
+                    valid={!errors.has(`command_${i}`)}
+                    onSelect={() => onSelectCommand(command, i)}
                     onDelete={() => onDeleteCommand(command)}
                     label={`Command: /${command.name}`}></SummaryButton>
             {/each}
         </div>
+
+        {#if errors.has("duplicate_commands")}
+            <ErrorMessage>{errors.get("duplicate_commands")}</ErrorMessage>
+        {/if}
 
         <Link on:click={addCommand} underline="never">
             <Translatable resourceKey={i18nKey("Add command")} />

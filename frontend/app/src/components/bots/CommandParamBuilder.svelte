@@ -5,6 +5,7 @@
         defaultNumberParam,
         defaultStringParam,
         defaultUserParam,
+        type BotValidationErrors,
         type SlashCommandOptionChoice,
         type SlashCommandParam,
     } from "openchat-client";
@@ -22,13 +23,16 @@
     import NumberInput from "../NumberInput.svelte";
     import Link from "../Link.svelte";
     import { iconSize } from "../../stores/iconSize";
+    import ValidatingInput from "./ValidatingInput.svelte";
 
     interface Props {
+        errorPath: string;
+        errors: BotValidationErrors;
         param: SlashCommandParam;
         onAddAnother: () => void;
     }
 
-    let { param = $bindable(), onAddAnother }: Props = $props();
+    let { param = $bindable(), onAddAnother, errors, errorPath }: Props = $props();
 
     function changeType() {
         switch (param.kind) {
@@ -118,9 +122,11 @@
                     rules={i18nKey(
                         "Must be unique and contain alphanumeric characters and underscores only",
                     )}></Legend>
-                <Input
+                <ValidatingInput
+                    error={errors.get(`${errorPath}_name`)}
                     minlength={3}
                     maxlength={25}
+                    invalid={errors.has(`${errorPath}_name`)}
                     placeholder={i18nKey("Enter parameter name")}
                     bind:value={param.name} />
             </section>
@@ -201,14 +207,18 @@
                         {#each param.choices as choice, i}
                             <div class="choice">
                                 <div class="choice-name">
-                                    <Input
+                                    <ValidatingInput
+                                        error={errors.get(`${errorPath}_choices_${i}_name`)}
+                                        invalid={errors.has(`${errorPath}_choices_${i}_name`)}
                                         minlength={3}
                                         maxlength={100}
                                         placeholder={i18nKey("Choice name")}
                                         bind:value={param.choices[i].name} />
                                 </div>
                                 <div class="choice-value">
-                                    <Input
+                                    <ValidatingInput
+                                        error={errors.get(`${errorPath}_choices_${i}_value`)}
+                                        invalid={errors.has(`${errorPath}_choices_${i}_value`)}
                                         minlength={3}
                                         maxlength={100}
                                         placeholder={i18nKey("Choice value")}
