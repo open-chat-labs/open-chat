@@ -62,6 +62,7 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) {
         None,
         UserType::BotV2,
         Some(Bot {
+            name: args.name.clone(),
             owner: args.owner,
             endpoint: args.endpoint.clone(),
             description: args.description.clone(),

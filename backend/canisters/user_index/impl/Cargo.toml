@@ -58,6 +58,7 @@ online_users_canister_c2c_client = { path = "../../online_users/c2c_client" }
 proof_of_unique_personhood = { path = "../../../libraries/proof_of_unique_personhood" }
 pulldown-cmark = { workspace = true }
 rand = { workspace = true }
+search = { path = "../../../libraries/search" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serde_json = { workspace = true }

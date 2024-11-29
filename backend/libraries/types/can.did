@@ -2061,3 +2061,91 @@ type ExchangeId = variant {
     KongSwap;
     Sonic;
 };
+
+type SlashCommandSchema = record {
+    name : text;
+    description : opt text;
+    params : vec SlashCommandParam;
+    permissions : SlashCommandPermissions;
+};
+
+type SlashCommandParam = record {
+    name : text;
+    description : opt text;
+    placeholder : opt text;
+    required : bool;
+    param_type : SlashCommandParamType;
+};
+
+type SlashCommandParamType = variant {
+    UserParam;
+    BooleanParam;
+    StringParam : StringParam;
+    NumberParam : NumberParam;
+};
+
+type StringParam = record {
+    min_length : nat16;
+    max_length : nat16;
+    choices : vec StringParamChoice;
+};
+
+type StringParamChoice = record {
+    name : text;
+    value : text;
+};
+
+type NumberParam = record {
+    min_length : nat16;
+    max_length : nat16;
+    choices : vec NumberParamChoice;
+};
+
+type NumberParamChoice = record {
+    name : text;
+    value : nat16;
+};
+
+type SlashCommandPermissions = record {
+    community: vec CommunityPermission;
+    chat: vec GroupPermission;
+    message: vec MessagePermission;
+    thread: vec MessagePermission;
+};
+
+type CommunityPermission = variant {
+    ChangeRoles;
+    UpdateDetails;
+    InviteUsers;
+    RemoveMembers;
+    CreatePublicChannel;
+    CreatePrivateChannel;
+    ManageUserGroups;
+};
+
+type GroupPermission = variant {
+    ChangeRoles;
+    UpdateGroup;
+    AddMembers;
+    InviteUsers;
+    RemoveMembers;
+    DeleteMessages;
+    PinMessages;
+    ReactToMessages;
+    MentionAllMembers;
+    StartVideoCall;
+};
+
+type MessagePermission = variant {
+    Text;
+    Image;
+    Video;
+    Audio;
+    File;
+    Poll;
+    Crypto;
+    Giphy;
+    Prize;
+    P2pSwap;
+    VideoCall;
+};

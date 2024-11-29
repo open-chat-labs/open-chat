@@ -8454,6 +8454,7 @@ dependencies = [
  "proof_of_unique_personhood",
  "pulldown-cmark",
  "rand 0.8.5",
+ "search",
  "serde",
  "serde_bytes",
  "serde_json",

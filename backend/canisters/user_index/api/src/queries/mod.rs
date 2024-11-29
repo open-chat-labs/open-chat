@@ -3,6 +3,7 @@ pub mod check_username;
 pub mod chit_leaderboard;
 pub mod current_user;
 pub mod diamond_membership_fees;
+pub mod explore_bots;
 pub mod external_achievements;
 pub mod platform_moderators;
 pub mod platform_moderators_group;
