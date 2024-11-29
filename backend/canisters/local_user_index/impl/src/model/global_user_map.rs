@@ -10,7 +10,8 @@ pub struct GlobalUserMap {
     principal_to_user_id: HashMap<Principal, UserId>,
     unique_person_proofs: HashMap<UserId, UniquePersonProof>,
     platform_moderators: HashSet<UserId>,
-    bots: HashSet<UserId>,
+    #[serde(alias = "bots")]
+    legacy_bots: HashSet<UserId>,
     oc_controlled_bot_users: HashSet<UserId>,
     diamond_membership_expiry_dates: HashMap<UserId, TimestampMillis>,
 }
@@ -21,7 +22,7 @@ impl GlobalUserMap {
         self.principal_to_user_id.insert(principal, user_id);
 
         if user_type.is_bot() {
-            self.bots.insert(user_id);
+            self.legacy_bots.insert(user_id);
 
             if user_type.is_oc_controlled_bot() {
                 self.oc_controlled_bot_users.insert(user_id);
@@ -79,7 +80,7 @@ impl GlobalUserMap {
                 self.principal_to_user_id.remove(&principal);
             }
             self.platform_moderators.remove(user_id);
-            self.bots.remove(user_id);
+            self.legacy_bots.remove(user_id);
             self.diamond_membership_expiry_dates.remove(user_id);
             true
         } else {
@@ -92,15 +93,15 @@ impl GlobalUserMap {
     }
 
     pub fn is_bot(&self, user_id: &UserId) -> bool {
-        self.bots.contains(user_id)
+        self.legacy_bots.contains(user_id)
     }
 
     pub fn len(&self) -> usize {
         self.user_id_to_principal.len()
     }
 
-    pub fn bots(&self) -> &HashSet<UserId> {
-        &self.bots
+    pub fn legacy_bots(&self) -> &HashSet<UserId> {
+        &self.legacy_bots
     }
 
     pub fn oc_controlled_bots(&self) -> &HashSet<UserId> {
@@ -114,7 +115,7 @@ impl GlobalUserMap {
     fn hydrate_user(&self, user_id: UserId, principal: Principal) -> GlobalUser {
         let user_type = if self.oc_controlled_bot_users.contains(&user_id) {
             UserType::OcControlledBot
-        } else if self.bots.contains(&user_id) {
+        } else if self.legacy_bots.contains(&user_id) {
             UserType::Bot
         } else {
             UserType::User

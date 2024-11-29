@@ -3,7 +3,7 @@ pub mod add_members_to_channel;
 pub mod add_reaction;
 pub mod c2c_delete_community;
 pub mod c2c_freeze_community;
-pub mod c2c_handle_bot_actions;
+pub mod c2c_handle_bot_action;
 pub mod c2c_invite_users;
 pub mod c2c_invite_users_to_channel;
 pub mod c2c_join_channel;

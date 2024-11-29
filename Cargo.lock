@@ -961,6 +961,7 @@ dependencies = [
  "ic-cdk 0.16.0",
  "ic-cdk-timers",
  "ic-stable-structures",
+ "jwt",
  "msgpack",
  "rand 0.8.5",
  "serde",

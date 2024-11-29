@@ -63,11 +63,13 @@ async fn access_token(args: Args) -> Response {
             let custom_claims = BotCommandClaims {
                 user_id: bc.user_id,
                 bot: bc.bot,
+                chat: bc.chat,
                 thread_root_message_index: bc.thread_root_message_index,
                 message_id: bc.message_id,
                 command_name: bc.command_name,
                 parameters: bc.parameters,
                 version: bc.version,
+                command_text: bc.command_text,
                 bot_api_gateway,
             };
             build_token(token_type_name, custom_claims, state)
