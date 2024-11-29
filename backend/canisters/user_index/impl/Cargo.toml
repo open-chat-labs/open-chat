@@ -69,6 +69,7 @@ testing = { path = "../../../libraries/testing" }
 time = { workspace = true }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
+url = { workspace = true }
 user_canister = { path = "../../user/api" }
 user_canister_c2c_client = { path = "../../user/c2c_client" }
 user_index_canister = { path = "../api" }

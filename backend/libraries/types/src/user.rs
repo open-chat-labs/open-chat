@@ -70,16 +70,21 @@ pub struct UserDetails {
 pub enum UserType {
     #[default]
     User,
+    BotV2,
     Bot,
     OcControlledBot,
 }
 
 impl UserType {
     pub fn is_bot(&self) -> bool {
-        matches!(self, UserType::Bot | UserType::OcControlledBot)
+        matches!(self, UserType::BotV2 | UserType::Bot | UserType::OcControlledBot)
     }
 
     pub fn is_oc_controlled_bot(&self) -> bool {
         matches!(self, UserType::OcControlledBot)
+    }
+
+    pub fn is_3rd_party_bot(&self) -> bool {
+        matches!(self, UserType::BotV2 | UserType::Bot)
     }
 }

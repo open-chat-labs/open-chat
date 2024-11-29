@@ -6,6 +6,7 @@ use ts_export::ts_export;
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub username: String,
+    pub is_bot: bool,
 }
 
 #[ts_export(user_index, check_username)]

@@ -18,7 +18,7 @@ fn check_username_impl(args: Args, state: &RuntimeState) -> Response {
 
     match validate_username(&args.username) {
         Ok(_) => {
-            if state.data.users.does_username_exist(&args.username) {
+            if state.data.users.does_username_exist(&args.username, args.is_bot) {
                 UsernameTaken
             } else {
                 Success

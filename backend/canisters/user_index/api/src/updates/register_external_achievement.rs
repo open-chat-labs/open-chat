@@ -1,10 +1,8 @@
 use candid::{CandidType, Principal};
 use human_readable::{HumanReadablePrincipal, ToHumanReadable};
 use serde::{Deserialize, Serialize};
-use ts_export::ts_export;
 use types::{CanisterId, TimestampMillis, UserId};
 
-#[ts_export(user_index, pay_for_diamond_membership)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub id: u32,
@@ -18,7 +16,6 @@ pub struct Args {
     pub max_awards: u32,
 }
 
-#[ts_export(user_index, pay_for_diamond_membership)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,

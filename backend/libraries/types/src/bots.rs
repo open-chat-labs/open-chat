@@ -1,14 +1,54 @@
-use crate::{MessageContentInitial, MessageId};
+use crate::{CommunityPermission, GroupPermission, MessageContentInitial, MessageId, MessagePermission};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
 use ts_export::ts_export;
 
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
-pub struct BotConfig {
-    pub is_oc_controlled: bool,
-    pub supports_direct_messages: bool,
-    pub can_be_added_to_groups: bool,
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+pub struct SlashCommandSchema {
+    pub name: String,
+    pub description: Option<String>,
+    pub params: Vec<SlashCommandParam>,
+    pub permissions: SlashCommandPermissions,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+pub struct SlashCommandParam {
+    pub name: String,
+    pub description: Option<String>,
+    pub placeholder: Option<String>,
+    pub required: bool,
+    pub param_type: SlashCommandParamType,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+pub enum SlashCommandParamType {
+    UserParam,
+    BooleanParam,
+    StringParam(StringParam),
+    NumberParam(NumberParam),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+pub struct StringParam {
+    pub min_length: u16,
+    pub max_length: u16,
+    pub choices: HashMap<String, String>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+pub struct NumberParam {
+    pub min_length: u16,
+    pub max_length: u16,
+    pub choices: HashMap<String, u16>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+pub struct SlashCommandPermissions {
+    pub community: HashSet<CommunityPermission>,
+    pub chat: HashSet<GroupPermission>,
+    pub message: HashSet<MessagePermission>,
+    pub thread: HashSet<MessagePermission>,
 }
 
 #[ts_export]
