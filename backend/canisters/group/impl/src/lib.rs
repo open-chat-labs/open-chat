@@ -361,9 +361,7 @@ impl RuntimeState {
         for thread in result.threads {
             self.data
                 .stable_memory_keys_to_garbage_collect
-                .push(KeyPrefix::GroupChatThread(GroupChatThreadKeyPrefix::new(
-                    thread.root_message_index,
-                )));
+                .push(KeyPrefix::GroupChatThread(GroupChatThreadKeyPrefix::new(thread.root_message_index)).to_vec());
         }
         jobs::garbage_collect_stable_memory::start_job_if_required(self);
     }
@@ -476,7 +474,7 @@ struct Data {
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
     #[serde(default)]
     members_migrated_to_stable_memory: bool,
-    stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
+    stable_memory_keys_to_garbage_collect: Vec<Vec<u8>>,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {

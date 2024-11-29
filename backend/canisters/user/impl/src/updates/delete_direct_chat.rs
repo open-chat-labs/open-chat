@@ -22,15 +22,12 @@ fn delete_direct_chat_impl(args: Args, state: &mut RuntimeState) -> Response {
         state
             .data
             .stable_memory_keys_to_garbage_collect
-            .push(KeyPrefix::DirectChat(DirectChatKeyPrefix::new(args.user_id)));
+            .push(KeyPrefix::DirectChat(DirectChatKeyPrefix::new(args.user_id)).to_vec());
         for message_index in chat.events.thread_keys() {
             state
                 .data
                 .stable_memory_keys_to_garbage_collect
-                .push(KeyPrefix::DirectChatThread(DirectChatThreadKeyPrefix::new(
-                    args.user_id,
-                    message_index,
-                )));
+                .push(KeyPrefix::DirectChatThread(DirectChatThreadKeyPrefix::new(args.user_id, message_index)).to_vec());
         }
         crate::jobs::garbage_collect_stable_memory::start_job_if_required(state);
         Success

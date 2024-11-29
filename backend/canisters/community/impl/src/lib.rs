@@ -241,12 +241,9 @@ impl RuntimeState {
             }
             final_prize_payments.extend(result.final_prize_payments);
             for thread in result.threads {
-                self.data
-                    .stable_memory_keys_to_garbage_collect
-                    .push(KeyPrefix::ChannelThread(ChannelThreadKeyPrefix::new(
-                        channel.id,
-                        thread.root_message_index,
-                    )));
+                self.data.stable_memory_keys_to_garbage_collect.push(
+                    KeyPrefix::ChannelThread(ChannelThreadKeyPrefix::new(channel.id, thread.root_message_index)).to_vec(),
+                );
             }
         }
         jobs::garbage_collect_stable_memory::start_job_if_required(self);
@@ -368,7 +365,8 @@ struct Data {
     expiring_member_actions: ExpiringMemberActions,
     user_cache: UserCache,
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
-    stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
+    #[serde(default)]
+    stable_memory_keys_to_garbage_collect: Vec<Vec<u8>>,
     #[serde(default)]
     members_migrated_to_stable_memory: bool,
 }

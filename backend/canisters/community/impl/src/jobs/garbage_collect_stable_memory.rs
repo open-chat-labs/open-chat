@@ -23,18 +23,12 @@ fn run() {
     TIMER_ID.set(None);
     mutate_state(|state| {
         while let Some(prefix) = state.data.stable_memory_keys_to_garbage_collect.pop() {
-            let result = chat_events::ChatEvents::garbage_collect_stable_memory(prefix.clone());
+            let result = stable_memory_map::garbage_collect(prefix.clone());
             let (count, complete) = match result {
                 Ok(c) => (c, true),
                 Err(c) => (c, false),
             };
-            let thread_root_message_index = prefix.thread_root_message_index();
-            info!(
-                count,
-                ?thread_root_message_index,
-                complete,
-                "Garbage collected keys from stable memory"
-            );
+            info!(count, complete, "Garbage collected keys from stable memory");
             if !complete {
                 state.data.stable_memory_keys_to_garbage_collect.push(prefix);
                 break;

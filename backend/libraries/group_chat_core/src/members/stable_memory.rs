@@ -83,8 +83,7 @@ impl Key {
 impl Key {
     fn to_vec(&self) -> Vec<u8> {
         let user_id_bytes = self.user_id.as_slice();
-        let mut bytes = Vec::with_capacity(1 + self.prefix.byte_len() + user_id_bytes.len());
-        bytes.push(KeyType::ChatMember as u8);
+        let mut bytes = Vec::with_capacity(self.prefix.byte_len() + user_id_bytes.len());
         bytes.extend_from_slice(&self.prefix.to_vec());
         bytes.extend_from_slice(user_id_bytes);
         bytes
@@ -95,20 +94,11 @@ impl TryFrom<&[u8]> for Key {
     type Error = ();
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
-        match value.split_first() {
-            Some((kt, tail)) if *kt == KeyType::ChatMember as u8 => {
-                let prefix_len = match tail.first() {
-                    Some(1) => 1,
-                    Some(2) => 5,
-                    _ => return Err(()),
-                };
-                let prefix = KeyPrefix::try_from(&tail[..prefix_len])?;
-                let user_id = Principal::from_slice(&tail[prefix_len..]).into();
+        let prefix = KeyPrefix::try_from(value)?;
+        let prefix_bytes_len = prefix.byte_len();
+        let user_id = Principal::from_slice(&value[prefix_bytes_len..]).into();
 
-                Ok(Key::new(prefix, user_id))
-            }
-            _ => Err(()),
-        }
+        Ok(Key::new(prefix, user_id))
     }
 }
 
@@ -119,11 +109,12 @@ pub enum KeyPrefix {
 }
 
 impl KeyPrefix {
-    fn to_vec(self) -> Vec<u8> {
+    pub fn to_vec(self) -> Vec<u8> {
         match self {
-            KeyPrefix::GroupChat => vec![1],
+            KeyPrefix::GroupChat => vec![KeyType::ChatMember as u8, 1],
             KeyPrefix::Channel(channel_id) => {
-                let mut vec = Vec::with_capacity(5);
+                let mut vec = Vec::with_capacity(6);
+                vec.push(KeyType::ChatMember as u8);
                 vec.push(2);
                 vec.extend_from_slice(&channel_id.to_be_bytes());
                 vec
@@ -133,8 +124,8 @@ impl KeyPrefix {
 
     fn byte_len(&self) -> usize {
         match self {
-            KeyPrefix::GroupChat => 1,
-            KeyPrefix::Channel(_) => 5,
+            KeyPrefix::GroupChat => 2,
+            KeyPrefix::Channel(_) => 6,
         }
     }
 }
@@ -142,10 +133,14 @@ impl KeyPrefix {
 impl TryFrom<&[u8]> for KeyPrefix {
     type Error = ();
 
+    // The slice may extend beyond the bytes of the prefix
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
         match value.split_first() {
-            Some((1, _)) => Ok(KeyPrefix::GroupChat),
-            Some((2, bytes)) if bytes.len() >= 4 => Ok(KeyPrefix::Channel(u32::from_be_bytes(bytes[..4].try_into().unwrap()))),
+            Some((kt, bytes)) if *kt == KeyType::ChatMember as u8 => match bytes.split_first() {
+                Some((1, _)) => Ok(KeyPrefix::GroupChat),
+                Some((2, tail)) if tail.len() >= 4 => Ok(KeyPrefix::Channel(u32::from_be_bytes(tail[..4].try_into().unwrap()))),
+                _ => Err(()),
+            },
             _ => Err(()),
         }
     }
@@ -205,7 +200,7 @@ mod tests {
 
             let key_in = Key::new(KeyPrefix::GroupChat, user_id);
             let bytes = key_in.to_vec();
-            let key_out = Key::try_from(&bytes[..]).unwrap();
+            let key_out = Key::try_from(bytes.as_slice()).unwrap();
 
             assert_eq!(key_in, key_out);
         }
@@ -220,7 +215,7 @@ mod tests {
 
             let key_in = Key::new(KeyPrefix::Channel(channel_id), user_id);
             let bytes = key_in.to_vec();
-            let key_out = Key::try_from(&bytes[..]).unwrap();
+            let key_out = Key::try_from(bytes.as_slice()).unwrap();
 
             assert_eq!(key_in, key_out);
         }
