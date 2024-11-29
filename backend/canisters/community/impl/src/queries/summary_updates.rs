@@ -129,14 +129,13 @@ fn summary_updates_impl(
         lapsed: m.lapsed().if_set_after(updates_since).copied(),
     });
 
-    if let Some(channels_last_updated) = channels_added
+    for timestamp in channels_added
         .iter()
         .map(|c| c.last_updated)
         .chain(channels_updated.iter().map(|c| c.last_updated))
-        .max()
     {
-        if channels_last_updated > last_updated {
-            last_updated = channels_last_updated;
+        if timestamp > last_updated {
+            last_updated = timestamp;
         }
     }
 
