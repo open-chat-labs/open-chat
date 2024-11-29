@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::BotMatch;
 
-#[ts_export(group_index, explore_communities)]
+#[ts_export(group_index, explore_bots)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub search_term: Option<String>,
@@ -11,7 +11,7 @@ pub struct Args {
     pub page_size: u8,
 }
 
-#[ts_export(group_index, explore_communities)]
+#[ts_export(group_index, explore_bots)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
@@ -20,7 +20,7 @@ pub enum Response {
     InvalidTerm,
 }
 
-#[ts_export(group_index, explore_communities)]
+#[ts_export(group_index, explore_bots)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub matches: Vec<BotMatch>,

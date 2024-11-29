@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Implement `register_bot` including bot schema ([#6928](https://github.com/open-chat-labs/open-chat/pull/6928))
 - Implement `explore_bots` ([#6932](https://github.com/open-chat-labs/open-chat/pull/6932))
+- Implement `bot_updates` ([#6934](https://github.com/open-chat-labs/open-chat/pull/6934))
 
 ## [[2.0.1469](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1469-user_index)] - 2024-11-25
 

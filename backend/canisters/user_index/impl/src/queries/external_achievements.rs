@@ -11,7 +11,6 @@ fn external_achievements(args: Args) -> Response {
 
 fn external_achievements_impl(args: Args, state: &RuntimeState) -> Response {
     let mut added_or_updated = Vec::new();
-    let mut achievements_added = Vec::new();
     let mut last_updated: TimestampMillis = 0;
 
     for (id, achievement) in state.data.external_achievements.iter() {
@@ -35,10 +34,6 @@ fn external_achievements_impl(args: Args, state: &RuntimeState) -> Response {
                 budget_exhausted: achievement.budget_exhausted.is_some(),
             };
 
-            if add {
-                achievements_added.push(a.clone());
-            }
-
             added_or_updated.push(a);
         }
     }
@@ -49,8 +44,6 @@ fn external_achievements_impl(args: Args, state: &RuntimeState) -> Response {
         Success(SuccessResult {
             last_updated,
             added_or_updated,
-            achievements_added,
-            achievements_removed: Vec::new(),
         })
     }
 }
