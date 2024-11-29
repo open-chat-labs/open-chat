@@ -436,7 +436,7 @@ impl GroupMembers {
         self.updates.insert((now, user_id, update));
     }
 
-    pub fn prune_member_updates(&mut self, now: TimestampMillis) -> u32 {
+    fn prune_member_updates(&mut self, now: TimestampMillis) -> u32 {
         let cutoff = calculate_summary_updates_data_removal_cutoff(now);
         let still_valid = self
             .updates
