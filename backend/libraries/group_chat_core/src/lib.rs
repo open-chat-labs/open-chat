@@ -807,10 +807,8 @@ impl GroupChatCore {
             }
         };
 
-        if !matches!(content, MessageContentInternal::VideoCall(_)) {
-            if !member.check_rules(&self.rules.value) {
-                return RulesNotAccepted;
-            }
+        if !matches!(content, MessageContentInternal::VideoCall(_)) && !member.check_rules(&self.rules.value) {
+            return RulesNotAccepted;
         }
 
         let permissions = &self.permissions;
