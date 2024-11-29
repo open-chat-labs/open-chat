@@ -108,7 +108,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         let permissions = args.permissions_v2.as_ref();
 
         match state.data.chat.can_update(
-            &member.user_id(),
+            member.user_id(),
             &args.name,
             &args.description,
             &args.rules,

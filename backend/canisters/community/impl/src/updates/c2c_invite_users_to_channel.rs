@@ -83,6 +83,7 @@ fn c2c_invite_users_to_channel_impl(args: Args, state: &mut RuntimeState) -> Res
                 InvitedUsersResult::UserNotInGroup => UserNotInChannel,
                 InvitedUsersResult::NotAuthorized => NotAuthorized,
                 InvitedUsersResult::UserSuspended => UserSuspended,
+                InvitedUsersResult::UserLapsed => UserLapsed,
                 InvitedUsersResult::TooManyInvites(v) => TooManyInvites(v),
             }
         } else {

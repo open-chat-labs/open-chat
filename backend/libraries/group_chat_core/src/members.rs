@@ -7,9 +7,11 @@ use group_community_common::{Member, MemberUpdate, Members};
 use serde::de::{SeqAccess, Visitor};
 use serde::ser::SerializeSeq;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use std::cell::OnceCell;
 use std::cmp::max;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Formatter;
+use std::ops::Deref;
 use types::{
     is_default, EventIndex, GroupMember, GroupPermissions, MessageIndex, TimestampMillis, Timestamped, UserId, UserType,
     Version,
@@ -188,6 +190,22 @@ impl GroupMembers {
         self.blocked.iter().copied().collect()
     }
 
+    pub fn get_verified_member(&self, user_id: UserId) -> Result<VerifiedGroupMember, VerifyMemberError> {
+        if !self.member_ids.contains(&user_id) {
+            Err(VerifyMemberError::NotFound)
+        } else if self.suspended.contains(&user_id) {
+            Err(VerifyMemberError::Suspended)
+        } else if self.lapsed.contains(&user_id) {
+            Err(VerifyMemberError::Lapsed)
+        } else {
+            Ok(VerifiedGroupMember {
+                user_id,
+                members: self,
+                member: OnceCell::new(),
+            })
+        }
+    }
+
     pub fn member_ids(&self) -> &BTreeSet<UserId> {
         &self.member_ids
     }
@@ -238,45 +256,50 @@ impl GroupMembers {
         is_user_platform_moderator: bool,
         now: TimestampMillis,
     ) -> ChangeRoleResult {
+        use ChangeRoleResult::*;
+
         // Is the caller authorized to change the user to this role
-        match self.members.get(&caller_id) {
-            Some(p) => {
-                if p.suspended.value {
-                    return ChangeRoleResult::UserSuspended;
-                } else if p.lapsed().value {
-                    return ChangeRoleResult::UserLapsed;
-                }
+        match self.get_verified_member(caller_id) {
+            Ok(member) => {
                 // Platform moderators can always promote themselves to owner
-                if !(p.role.can_change_roles(new_role, permissions) || (is_caller_platform_moderator && new_role.is_owner())) {
-                    return ChangeRoleResult::NotAuthorized;
+                if !(member.role.can_change_roles(new_role, permissions)
+                    || (is_caller_platform_moderator && new_role.is_owner()))
+                {
+                    return NotAuthorized;
                 }
             }
-            None => return ChangeRoleResult::UserNotInGroup,
+            Err(error) => {
+                return match error {
+                    VerifyMemberError::NotFound => UserNotInGroup,
+                    VerifyMemberError::Lapsed => UserLapsed,
+                    VerifyMemberError::Suspended => UserSuspended,
+                }
+            }
         }
 
         let member = match self.members.get_mut(&user_id) {
             Some(p) => p,
-            None => return ChangeRoleResult::TargetUserNotInGroup,
+            None => return TargetUserNotInGroup,
         };
 
         // Platform moderators cannot be demoted from owner except by themselves
         if is_user_platform_moderator && member.role.is_owner() && user_id != caller_id {
-            return ChangeRoleResult::NotAuthorized;
+            return NotAuthorized;
         }
 
         // It is not possible to change the role of the last owner
         if member.role.is_owner() && self.owners.len() <= 1 {
-            return ChangeRoleResult::Invalid;
+            return Invalid;
         }
         // It is not currently possible to make a bot an owner
         if member.user_type == UserType::Bot && new_role.is_owner() {
-            return ChangeRoleResult::Invalid;
+            return Invalid;
         }
 
         let prev_role = member.role.value;
 
         if prev_role == new_role {
-            return ChangeRoleResult::Unchanged;
+            return Unchanged;
         }
 
         match prev_role {
@@ -302,7 +325,7 @@ impl GroupMembers {
 
         self.prune_then_insert_member_update(user_id, MemberUpdate::RoleChanged, now);
 
-        ChangeRoleResult::Success(ChangeRoleSuccess { prev_role })
+        Success(ChangeRoleSuccess { prev_role })
     }
 
     pub fn toggle_notifications_muted(
@@ -732,6 +755,53 @@ impl From<&GroupMemberInternal> for GroupMember {
             lapsed: m.lapsed.value,
         }
     }
+}
+
+pub struct VerifiedGroupMember<'a> {
+    user_id: UserId,
+    members: &'a GroupMembers,
+    member: OnceCell<GroupMemberInternal>,
+}
+
+impl VerifiedGroupMember<'_> {
+    pub fn user_id(&self) -> UserId {
+        self.user_id
+    }
+
+    pub fn role(&self) -> GroupRoleInternal {
+        if self.members.owners.contains(&self.user_id) {
+            GroupRoleInternal::Owner
+        } else if self.members.admins.contains(&self.user_id) {
+            GroupRoleInternal::Admin
+        } else if self.members.moderators.contains(&self.user_id) {
+            GroupRoleInternal::Moderator
+        } else {
+            GroupRoleInternal::Member
+        }
+    }
+
+    pub fn user_type(&self) -> UserType {
+        self.members.bots.get(&self.user_id).copied().unwrap_or_default()
+    }
+
+    fn resolve_member(&self) -> &GroupMemberInternal {
+        self.member
+            .get_or_init(|| self.members.members.get(&self.user_id).cloned().unwrap())
+    }
+}
+
+impl Deref for VerifiedGroupMember<'_> {
+    type Target = GroupMemberInternal;
+
+    fn deref(&self) -> &Self::Target {
+        self.resolve_member()
+    }
+}
+
+pub enum VerifyMemberError {
+    NotFound,
+    Lapsed,
+    Suspended,
 }
 
 fn serialize_members<S: Serializer>(value: &BTreeMap<UserId, GroupMemberInternal>, serializer: S) -> Result<S::Ok, S::Error> {
