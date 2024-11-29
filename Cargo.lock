@@ -1635,6 +1635,7 @@ dependencies = [
  "stable_memory",
  "stable_memory_map",
  "storage_bucket_client",
+ "test-case",
  "test-strategy",
  "timer_job_queues",
  "tracing",
