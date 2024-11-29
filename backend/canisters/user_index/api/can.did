@@ -12,6 +12,7 @@ type PublicKeyResponse = variant {
 
 type CheckUsernameArgs = record {
     username : text;
+    is_bot : bool;
 };
 
 type CheckUsernameResponse = variant {

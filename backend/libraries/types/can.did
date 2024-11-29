@@ -1946,7 +1946,6 @@ type UserSummaryStable = record {
     suspended : bool;
     diamond_membership_status : DiamondMembershipStatus;
     is_unique_person : bool;
-    bot_config : opt BotConfig;
 };
 
 type UserSummaryVolatile = record {

@@ -12,7 +12,7 @@ use group_chat_core::GroupChatCore;
 use rand::Rng;
 use types::{MultiUserChat, UserType};
 use url::Url;
-use utils::document_validation::validate_avatar;
+use utils::document::validate_avatar;
 use utils::text_validation::{
     validate_description, validate_group_name, validate_rules, NameValidationError, RulesValidationError,
 };

@@ -24,6 +24,7 @@ async fn c2c_handle_bot_messages(
             let user_type = match verify_user(local_user_index_canister_id, user_id).await {
                 Some(UserType::Bot) => UserType::Bot,
                 Some(UserType::OcControlledBot) => UserType::OcControlledBot,
+                Some(UserType::BotV2) => UserType::BotV2,
                 _ => panic!("This request is not from a bot registered with OpenChat"),
             };
             (user_id, user_type)
