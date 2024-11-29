@@ -82,7 +82,6 @@ struct Data {
     message_filters: MessageFilters,
     total_supply: Timestamped<u128>,
     circulating_supply: Timestamped<u128>,
-    #[serde(default)]
     airdrop_config: Timestamped<Option<AirdropConfig>>,
     rng_seed: [u8; 32],
     test_mode: bool,

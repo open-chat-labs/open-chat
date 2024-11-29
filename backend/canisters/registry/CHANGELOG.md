@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1483](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1483-registry)] - 2024-11-29
+
 ### Added
 
 - Store airdrop config in the Registry ([#6893](https://github.com/open-chat-labs/open-chat/pull/6893))
