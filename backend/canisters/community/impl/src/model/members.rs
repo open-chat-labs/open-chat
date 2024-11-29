@@ -740,6 +740,7 @@ impl From<&CommunityMemberInternal> for CommunityMember {
 mod tests {
     use super::*;
     use test_case::test_case;
+    use types::CanisterId;
 
     #[test_case(true)]
     #[test_case(false)]
@@ -774,5 +775,40 @@ mod tests {
         members.remove(&user_id2, 0);
         assert!(members.channels_for_member(user_id2).next().is_none());
         assert!(members.channels_removed_for_member(user_id2).next().is_none());
+    }
+
+    #[test]
+    fn serialize_member_with_max_defaults() {
+        #[derive(Serialize, Deserialize, Clone)]
+        pub struct CommunityMemberInternal2 {
+            #[serde(rename = "u")]
+            pub user_id: UserId,
+            #[serde(rename = "d")]
+            pub date_added: TimestampMillis,
+        }
+
+        let member1 = CommunityMemberInternal {
+            user_id: CanisterId::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap().into(),
+            date_added: 1732874138000,
+            role: CommunityRole::Member,
+            rules_accepted: None,
+            user_type: UserType::User,
+            display_name: Timestamped::default(),
+            referred_by: None,
+            referrals: BTreeSet::new(),
+            lapsed: Timestamped::default(),
+            suspended: Timestamped::default(),
+        };
+
+        let member2 = CommunityMemberInternal2 {
+            user_id: member1.user_id,
+            date_added: member1.date_added,
+        };
+
+        let bytes1 = msgpack::serialize_then_unwrap(&member1);
+        let bytes2 = msgpack::serialize_then_unwrap(&member2);
+
+        assert_eq!(bytes1, bytes2);
+        assert_eq!(bytes1.len(), 26);
     }
 }
