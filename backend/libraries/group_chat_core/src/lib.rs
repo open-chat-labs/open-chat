@@ -1226,7 +1226,7 @@ impl GroupChatCore {
                 let invited_users: Vec<_> = user_ids
                     .iter()
                     .unique()
-                    .filter(|user_id| !self.members.contains(&user_id) && !self.invited_users.contains(user_id))
+                    .filter(|user_id| !self.members.contains(user_id) && !self.invited_users.contains(user_id))
                     .copied()
                     .collect();
 

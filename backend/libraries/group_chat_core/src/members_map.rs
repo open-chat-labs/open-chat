@@ -6,35 +6,21 @@ use std::collections::BTreeMap;
 use std::fmt::Formatter;
 use types::UserId;
 
-pub struct MembersMap {
+pub trait MembersMap {
+    fn get(&self, user_id: &UserId) -> Option<GroupMemberInternal>;
+    fn insert(&mut self, member: GroupMemberInternal);
+    fn remove(&mut self, user_id: &UserId) -> Option<GroupMemberInternal>;
+}
+
+pub struct HeapMembersMap {
     map: BTreeMap<UserId, GroupMemberInternal>,
 }
 
-impl MembersMap {
+impl HeapMembersMap {
     pub fn new(member: GroupMemberInternal) -> Self {
-        MembersMap {
+        HeapMembersMap {
             map: [(member.user_id(), member)].into_iter().collect(),
         }
-    }
-
-    pub fn get(&self, user_id: &UserId) -> Option<GroupMemberInternal> {
-        self.map.get(user_id).cloned()
-    }
-
-    pub fn insert(&mut self, member: GroupMemberInternal) {
-        self.map.insert(member.user_id(), member);
-    }
-
-    pub fn remove(&mut self, user_id: &UserId) -> Option<GroupMemberInternal> {
-        self.map.remove(user_id)
-    }
-
-    pub fn len(&self) -> usize {
-        self.map.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.map.is_empty()
     }
 
     // TODO Remove after next upgrade
@@ -48,7 +34,21 @@ impl MembersMap {
     }
 }
 
-impl Serialize for MembersMap {
+impl MembersMap for HeapMembersMap {
+    fn get(&self, user_id: &UserId) -> Option<GroupMemberInternal> {
+        self.map.get(user_id).cloned()
+    }
+
+    fn insert(&mut self, member: GroupMemberInternal) {
+        self.map.insert(member.user_id(), member);
+    }
+
+    fn remove(&mut self, user_id: &UserId) -> Option<GroupMemberInternal> {
+        self.map.remove(user_id)
+    }
+}
+
+impl Serialize for HeapMembersMap {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -61,7 +61,7 @@ impl Serialize for MembersMap {
     }
 }
 
-impl<'de> Deserialize<'de> for MembersMap {
+impl<'de> Deserialize<'de> for HeapMembersMap {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
@@ -73,7 +73,7 @@ impl<'de> Deserialize<'de> for MembersMap {
 struct GroupMembersMapVisitor;
 
 impl<'de> Visitor<'de> for GroupMembersMapVisitor {
-    type Value = MembersMap;
+    type Value = HeapMembersMap;
 
     fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
         formatter.write_str("a sequence")
@@ -87,6 +87,6 @@ impl<'de> Visitor<'de> for GroupMembersMapVisitor {
         while let Some(next) = seq.next_element::<GroupMemberInternal>()? {
             map.insert(next.user_id(), next);
         }
-        Ok(MembersMap { map })
+        Ok(HeapMembersMap { map })
     }
 }

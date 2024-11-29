@@ -1,4 +1,4 @@
-use crate::members_map::MembersMap;
+use crate::members_map::{HeapMembersMap, MembersMap};
 use crate::mentions::Mentions;
 use crate::roles::GroupRoleInternal;
 use crate::AccessRulesInternal;
@@ -23,7 +23,7 @@ const MAX_MEMBERS_PER_GROUP: u32 = 100_000;
 
 #[derive(Serialize, Deserialize)]
 pub struct GroupMembers {
-    members: MembersMap,
+    members: HeapMembersMap,
     member_ids: BTreeSet<UserId>,
     owners: BTreeSet<UserId>,
     admins: BTreeSet<UserId>,
@@ -73,7 +73,7 @@ impl GroupMembers {
         };
 
         GroupMembers {
-            members: MembersMap::new(member),
+            members: HeapMembersMap::new(member.clone()),
             member_ids: [creator_user_id].into_iter().collect(),
             owners: [creator_user_id].into_iter().collect(),
             admins: BTreeSet::new(),
@@ -238,7 +238,7 @@ impl GroupMembers {
     }
 
     pub fn user_limit_reached(&self) -> Option<u32> {
-        if self.members.len() >= MAX_MEMBERS_PER_GROUP as usize {
+        if self.member_ids.len() >= MAX_MEMBERS_PER_GROUP as usize {
             Some(MAX_MEMBERS_PER_GROUP)
         } else {
             None
@@ -246,11 +246,11 @@ impl GroupMembers {
     }
 
     pub fn len(&self) -> u32 {
-        self.members.len() as u32
+        self.member_ids.len() as u32
     }
 
     pub fn is_empty(&self) -> bool {
-        self.members.is_empty()
+        self.member_ids.is_empty()
     }
 
     pub fn change_role(
