@@ -73,11 +73,7 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                             let channel_id = channel.id;
                             let mut user_ids = Vec::with_capacity(state.data.members.member_ids().len());
                             user_ids.extend(state.data.members.member_ids().iter().filter(|&user_id| {
-                                !state
-                                    .data
-                                    .members
-                                    .member_channel_links_removed()
-                                    .contains(&(*user_id, channel_id))
+                                !state.data.members.member_channel_links_removed_contains(*user_id, channel_id)
                             }));
 
                             add_members_to_public_channel_unchecked(

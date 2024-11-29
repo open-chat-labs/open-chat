@@ -5,6 +5,7 @@ use ic_cdk::api::call::CallResult;
 use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
 use icrc_ledger_types::icrc1::account::Account;
 use nns_governance_canister::types::manage_neuron::{Command, Disburse, Spawn};
+use nns_governance_canister::types::neuron::DissolveState;
 use nns_governance_canister::types::ListNeurons;
 use std::time::Duration;
 use tracing::info;
@@ -37,11 +38,24 @@ async fn run_async() {
     .await
     {
         let now = read_state(|state| state.env.now());
+        // Neurons can vote if their dissolve delay is >= 6 months, but when they start dissolving
+        // they can still earn maturity for a few days as the rewards are distributed for
+        // proposals they have already voted on.
+        // Hence, this is set to 6 months minus a few days.
+        let cut_off_no_longer_accrue_maturity = now.saturating_sub(175 * DAY_IN_MS);
 
         let neurons_to_spawn: Vec<_> = response
             .full_neurons
             .iter()
-            .filter(|n| n.spawn_at_timestamp_seconds.is_none() && n.maturity_e8s_equivalent > 1000 * E8S_PER_ICP)
+            .filter(|n| n.spawn_at_timestamp_seconds.is_none() && n.maturity_e8s_equivalent > E8S_PER_ICP)
+            .filter(|n| {
+                // Spawn a new neuron if there is over 1000 ICP maturity or
+                // if the neuron is now dissolving and can no longer vote
+                n.maturity_e8s_equivalent > 1000 * E8S_PER_ICP
+                    || n.dissolve_state.as_ref().is_some_and(
+                        |ds| matches!(ds, DissolveState::WhenDissolvedTimestampSeconds(ts) if *ts < cut_off_no_longer_accrue_maturity),
+                    )
+            })
             .filter_map(|n| n.id.as_ref().map(|id| id.id))
             .collect();
 

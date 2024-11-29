@@ -14,6 +14,7 @@ use types::{
 
 #[derive(Serialize, Deserialize)]
 pub struct ChatEventsList {
+    #[serde(alias = "stable_events_map")]
     events_map: HybridMap<ChatEventsStableStorage>,
     message_id_map: HashMap<MessageId, EventIndex>,
     message_event_indexes: Vec<EventIndex>,

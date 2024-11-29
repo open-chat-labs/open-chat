@@ -8,10 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Remove channel links from being stored on each community member ([#6923](https://github.com/open-chat-labs/open-chat/pull/6923))
+
+## [[2.0.1479](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1479-community)] - 2024-11-28
+
+### Changed
+
 - Simplify how we store and query proposal votes ([#6906](https://github.com/open-chat-labs/open-chat/pull/6906))
 - Remove member updates after 31 days ([#6907](https://github.com/open-chat-labs/open-chat/pull/6907))
 - Extract member to channel links out of each member instance ([#6910](https://github.com/open-chat-labs/open-chat/pull/6910))
 - Consolidate member updates into a single enum ([#6915](https://github.com/open-chat-labs/open-chat/pull/6915))
+- Remove chat event updates after 31 days ([#6916](https://github.com/open-chat-labs/open-chat/pull/6916))
 
 ### Removed
 

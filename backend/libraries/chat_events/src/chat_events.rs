@@ -76,6 +76,10 @@ impl ChatEvents {
         false
     }
 
+    pub fn prune_updated_events(&mut self, now: TimestampMillis) -> u32 {
+        self.last_updated_timestamps.prune(now)
+    }
+
     pub fn import_events(chat: Chat, events: Vec<(EventContext, ByteBuf)>) {
         stable_memory::write_events_as_bytes(chat, events);
     }
@@ -2221,6 +2225,10 @@ impl ChatEvents {
         } else {
             Err(UpdateEventError::NotFound)
         }
+    }
+
+    pub fn latest_event_update_removed(&self) -> TimestampMillis {
+        self.last_updated_timestamps.latest_update_removed()
     }
 }
 

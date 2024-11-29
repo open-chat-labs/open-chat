@@ -209,6 +209,10 @@
 <style lang="scss">
     $accent: var(--prize);
 
+    :global(.message .prize .restricted .noselect) {
+        margin: auto;
+    }
+
     .prize-claim :global(button) {
         min-height: 45px !important;
         min-width: unset !important;

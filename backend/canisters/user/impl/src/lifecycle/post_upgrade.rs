@@ -39,6 +39,9 @@ fn post_upgrade(args: Args) {
         let now = state.env.now();
         for chat in state.data.direct_chats.iter_mut() {
             chat.events.remove_spurious_video_call_in_progress(now);
+
+            let count_removed = chat.events.prune_updated_events(now);
+            info!(count_removed, "Removed old event updates");
         }
     });
 }
