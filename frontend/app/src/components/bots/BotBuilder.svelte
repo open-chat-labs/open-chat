@@ -9,10 +9,10 @@
     import Input from "../Input.svelte";
     import Legend from "../Legend.svelte";
     import EditableAvatar from "../EditableAvatar.svelte";
-    import Button from "../Button.svelte";
     import Translatable from "../Translatable.svelte";
-    import CommandSummary from "./CommandSummary.svelte";
-    //    import { SvelteSet as Set } from "svelte/reactivity";
+    import Link from "../Link.svelte";
+    import CommandBuilder from "./CommandBuilder.svelte";
+    import SummaryButton from "./SummaryButton.svelte";
 
     interface Props {
         valid: boolean;
@@ -21,6 +21,8 @@
     let { valid = $bindable() }: Props = $props();
 
     let candidate = $state<CandidateExternalBot>(emptyBotInstance());
+    let selectedCommand = $state<SlashCommandSchema | undefined>(undefined);
+    let debug = $state(false);
 
     $effect(() => {
         const isValid = validateCandidate();
@@ -30,7 +32,6 @@
     });
 
     function validateCandidate() {
-        console.log("Candidate: ", JSON.stringify(candidate, null, 4));
         return true;
     }
 
@@ -47,10 +48,15 @@
 
     function addCommand() {
         candidate.commands.push(emptySlashCommand());
+        selectedCommand = candidate.commands[candidate.commands.length - 1];
     }
 
-    function onDelete(cmd: SlashCommandSchema) {
+    function onDeleteCommand(cmd: SlashCommandSchema) {
         candidate.commands = candidate.commands.filter((c) => c !== cmd);
+    }
+
+    function onSelectCommand(cmd: SlashCommandSchema) {
+        selectedCommand = cmd;
     }
 
     function emptySlashCommand(): SlashCommandSchema {
@@ -71,6 +77,13 @@
         };
     }
 </script>
+
+{#if selectedCommand !== undefined}
+    <CommandBuilder
+        onAddAnother={addCommand}
+        on:close={() => (selectedCommand = undefined)}
+        bind:command={selectedCommand}></CommandBuilder>
+{/if}
 
 <form onsubmit={onSubmit} class="bot">
     <Legend label={i18nKey("Bot avatar image")} />
@@ -111,24 +124,25 @@
         bind:value={candidate.endpoint} />
 
     <div class="commands">
-        <Legend
-            label={i18nKey("Bot commands")}
-            required
-            rules={i18nKey("Create one or more commands to add behaviour to your bot")}></Legend>
         <div class="commands">
-            {#each candidate.commands as _, i}
-                <CommandSummary {onDelete} bind:command={candidate.commands[i]}></CommandSummary>
+            {#each candidate.commands as command}
+                <SummaryButton
+                    onSelect={() => onSelectCommand(command)}
+                    onDelete={() => onDeleteCommand(command)}
+                    label={`Command: /${command.name}`}></SummaryButton>
             {/each}
         </div>
 
-        <Button on:click={addCommand}>
+        <Link on:click={addCommand} underline="never">
             <Translatable resourceKey={i18nKey("Add command")} />
-        </Button>
+        </Link>
     </div>
 
-    <pre class="debug">
+    {#if debug}
+        <pre class="debug">
         {JSON.stringify(candidate, null, 4)}
     </pre>
+    {/if}
 </form>
 
 <style lang="scss">
@@ -140,6 +154,6 @@
         margin-bottom: $sp3;
     }
     .commands {
-        margin-bottom: $sp3;
+        margin: $sp4 0 $sp3 0;
     }
 </style>

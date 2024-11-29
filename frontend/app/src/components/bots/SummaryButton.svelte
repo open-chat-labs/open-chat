@@ -1,32 +1,31 @@
 <script lang="ts">
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
-    import type { SlashCommandSchema } from "openchat-client";
     import { iconSize } from "../../stores/iconSize";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import CommandBuilder from "./CommandBuilder.svelte";
 
     interface Props {
-        command: SlashCommandSchema;
-        onDelete: (cmd: SlashCommandSchema) => void;
+        label: string;
+        onDelete: () => void;
+        onSelect: () => void;
     }
 
-    let { command = $bindable(), onDelete }: Props = $props();
-    let showBuilder = $state(false);
+    let { onDelete, onSelect, label }: Props = $props();
 </script>
-
-{#if showBuilder}
-    <CommandBuilder on:close={() => (showBuilder = false)} bind:command></CommandBuilder>
-{/if}
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div onclick={() => (showBuilder = true)} class="command">
+<div onclick={onSelect} class="command">
     <div class="name">
-        <Translatable resourceKey={i18nKey(`Command: /${command.name}`)}></Translatable>
+        <Translatable resourceKey={i18nKey(label)}></Translatable>
     </div>
-    <div onclick={() => onDelete(command)} class="icon">
-        <DeleteOutline viewBox={"0 0 -3 0"} size={$iconSize} color={"var(--button-txt)"} />
+    <div
+        onclick={(e) => {
+            e.stopPropagation();
+            onDelete();
+        }}
+        class="icon">
+        <DeleteOutline viewBox={"0 -3 24 24"} size={$iconSize} color={"var(--button-txt)"} />
     </div>
 </div>
 

@@ -7,6 +7,7 @@
         type ChatPermissions,
         type CommunityPermissions,
         type MessagePermission,
+        type SlashCommandParam,
         type SlashCommandSchema,
     } from "openchat-client";
     import Input from "../Input.svelte";
@@ -14,19 +15,25 @@
     import Legend from "../Legend.svelte";
     import Translatable from "../Translatable.svelte";
     import Checkbox from "../Checkbox.svelte";
-    import Button from "../Button.svelte";
     import CommandParamBuilder from "./CommandParamBuilder.svelte";
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
+    import Link from "../Link.svelte";
+    import Button from "../Button.svelte";
+    import { mobileWidth } from "../../stores/screenDimensions";
+    import SummaryButton from "./SummaryButton.svelte";
+    import ButtonGroup from "../ButtonGroup.svelte";
 
     interface Props {
         command: SlashCommandSchema;
+        onAddAnother: () => void;
     }
 
-    let { command = $bindable() }: Props = $props();
+    let { command = $bindable(), onAddAnother }: Props = $props();
 
     let permissionsTab: "chat" | "community" | "message" | "thread" = $state("chat");
     let syncThreadPermissions = $state(true);
+    let selectedParam = $state<SlashCommandParam | undefined>(undefined);
 
     function toggleChatPermission(perm: keyof ChatPermissions) {
         if (command.permissions.chatPermissions.includes(perm)) {
@@ -76,8 +83,24 @@
 
     function addParameter() {
         command.params.push(defaultStringParam());
+        selectedParam = command.params[command.params.length - 1];
+    }
+
+    function onDeleteParam(param: SlashCommandParam) {
+        command.params = command.params.filter((p) => p !== param);
+    }
+
+    function onSelectParam(param: SlashCommandParam) {
+        selectedParam = param;
     }
 </script>
+
+{#if selectedParam !== undefined}
+    <CommandParamBuilder
+        on:close={() => (selectedParam = undefined)}
+        bind:param={selectedParam}
+        onAddAnother={addParameter}></CommandParamBuilder>
+{/if}
 
 <Overlay>
     <ModalContent on:close>
@@ -199,18 +222,28 @@
             </section>
 
             <section>
-                <Legend
-                    label={i18nKey("Command parameters")}
-                    rules={i18nKey("Describe any parameters that this command accepts")}></Legend>
-
-                {#each command.params as _, i}
-                    <CommandParamBuilder bind:param={command.params[i]}></CommandParamBuilder>
+                {#each command.params as param}
+                    <SummaryButton
+                        onSelect={() => onSelectParam(param)}
+                        onDelete={() => onDeleteParam(param)}
+                        label={`Param: ${param.name}`}></SummaryButton>
                 {/each}
-
-                <Button on:click={addParameter}>
-                    <Translatable resourceKey={i18nKey("Add a parameter")}></Translatable>
-                </Button>
             </section>
+
+            <Link on:click={addParameter} underline={"never"}>
+                <Translatable resourceKey={i18nKey("Add a parameter")}></Translatable>
+            </Link>
+        </div>
+
+        <div let:onClose slot="footer" class="footer">
+            <ButtonGroup>
+                <Button secondary on:click={onAddAnother} small={!$mobileWidth} tiny={$mobileWidth}>
+                    <Translatable resourceKey={i18nKey("Add another")} />
+                </Button>
+                <Button on:click={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
+                    <Translatable resourceKey={i18nKey("close")} />
+                </Button>
+            </ButtonGroup>
         </div>
     </ModalContent>
 </Overlay>
@@ -220,11 +253,6 @@
         margin-bottom: $sp4;
     }
 
-    .title {
-        display: flex;
-        gap: $sp3;
-        align-items: center;
-    }
     .tabs {
         display: flex;
         align-items: center;
