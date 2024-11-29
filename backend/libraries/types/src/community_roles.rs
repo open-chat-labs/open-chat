@@ -12,6 +12,18 @@ pub enum CommunityRole {
 }
 
 #[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum CommunityPermission {
+    ChangeRoles,
+    UpdateDetails,
+    InviteUsers,
+    RemoveMembers,
+    CreatePublicChannel,
+    CreatePrivateChannel,
+    ManageUserGroups,
+}
+
+#[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CommunityPermissions {
     pub change_roles: CommunityPermissionRole,

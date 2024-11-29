@@ -7,7 +7,10 @@ use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::ops::RangeFrom;
 use tracing::info;
-use types::{BotConfig, CyclesTopUp, Milliseconds, SuspensionDuration, TimestampMillis, UniquePersonProof, UserId, UserType};
+use types::{
+    CyclesTopUp, Document, Milliseconds, SlashCommandSchema, SuspensionDuration, TimestampMillis, UniquePersonProof, UserId,
+    UserType,
+};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::MonthKey;
 
@@ -15,8 +18,17 @@ use utils::time::MonthKey;
 #[serde(from = "UserMapTrimmed")]
 pub struct UserMap {
     users: HashMap<UserId, User>,
+    #[serde(default)]
+    bots: HashMap<UserId, Bot>,
+    suspected_bots: BTreeSet<UserId>,
+    deleted_users: HashMap<UserId, TimestampMillis>,
+    suspended_or_unsuspended_users: BTreeSet<(TimestampMillis, UserId)>,
+    unique_person_proofs_submitted: u32,
+
     #[serde(skip)]
     username_to_user_id: CaseInsensitiveHashMap<UserId>,
+    #[serde(skip)]
+    botname_to_user_id: CaseInsensitiveHashMap<UserId>,
     #[serde(skip)]
     principal_to_user_id: HashMap<Principal, UserId>,
     #[serde(skip)]
@@ -25,20 +37,26 @@ pub struct UserMap {
     pub users_with_duplicate_usernames: Vec<(UserId, UserId)>,
     #[serde(skip)]
     pub users_with_duplicate_principals: Vec<(UserId, UserId)>,
-    suspected_bots: BTreeSet<UserId>,
-    suspended_or_unsuspended_users: BTreeSet<(TimestampMillis, UserId)>,
-    user_id_to_principal_backup: HashMap<UserId, Principal>,
-    deleted_users: HashMap<UserId, TimestampMillis>,
-    unique_person_proofs_submitted: u32,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Bot {
+    pub avatar: Option<Document>,
+    pub owner: UserId,
+    pub endpoint: String,
+    pub description: String,
+    pub commands: Vec<SlashCommandSchema>,
+    pub last_updated: TimestampMillis,
 }
 
 impl UserMap {
-    pub fn does_username_exist(&self, username: &str) -> bool {
-        self.username_to_user_id.contains_key(username)
+    pub fn does_username_exist(&self, username: &str, is_bot: bool) -> bool {
+        let map = if is_bot { &self.botname_to_user_id } else { &self.username_to_user_id };
+        map.contains_key(username)
     }
 
-    pub fn ensure_unique_username(&self, username: &str) -> Result<(), String> {
-        if !self.username_to_user_id.contains_key(username) {
+    pub fn ensure_unique_username(&self, username: &str, is_bot: bool) -> Result<(), String> {
+        if !self.does_username_exist(username, is_bot) {
             return Ok(());
         }
 
@@ -63,9 +81,16 @@ impl UserMap {
         now: TimestampMillis,
         referred_by: Option<UserId>,
         user_type: UserType,
-        bot_config: Option<BotConfig>,
+        bot: Option<Bot>,
     ) {
-        self.username_to_user_id.insert(&username, user_id);
+        if bot.is_some() {
+            self.botname_to_user_id.insert(&username, user_id);
+        } else {
+            self.username_to_user_id.insert(&username, user_id);
+        }
+
+        let avatar_id = bot.and_then(|b| b.avatar.as_ref().map(|a| a.id));
+
         self.principal_to_user_id.insert(principal, user_id);
 
         let user = User::new(
@@ -76,15 +101,14 @@ impl UserMap {
             now,
             referred_by,
             user_type,
-            bot_config,
+            avatar_id,
         );
+
         self.users.insert(user_id, user);
 
         if let Some(ref_by) = referred_by {
             self.user_referrals.entry(ref_by).or_default().push(user_id);
         }
-
-        self.user_id_to_principal_backup.insert(user_id, principal);
     }
 
     pub fn update(&mut self, mut user: User, now: TimestampMillis, ignore_principal_clash: bool) -> UpdateUserResult {
@@ -108,7 +132,7 @@ impl UserMap {
                 }
             }
 
-            if username_case_insensitive_changed && self.does_username_exist(username) {
+            if username_case_insensitive_changed && self.does_username_exist(username, false) {
                 return UpdateUserResult::UsernameTaken;
             }
 
@@ -430,8 +454,14 @@ pub enum UpdateUserResult {
 #[derive(Deserialize)]
 struct UserMapTrimmed {
     users: HashMap<UserId, User>,
+    #[serde(default)]
+    bots: HashMap<UserId, Bot>,
     suspected_bots: BTreeSet<UserId>,
     deleted_users: HashMap<UserId, TimestampMillis>,
+    #[serde(default)]
+    suspended_or_unsuspended_users: BTreeSet<(TimestampMillis, UserId)>,
+    #[serde(default)]
+    unique_person_proofs_submitted: u32,
 }
 
 impl From<UserMapTrimmed> for UserMap {
@@ -440,7 +470,15 @@ impl From<UserMapTrimmed> for UserMap {
             users: value.users,
             suspected_bots: value.suspected_bots,
             deleted_users: value.deleted_users,
-            ..Default::default()
+            suspended_or_unsuspended_users: value.suspended_or_unsuspended_users,
+            unique_person_proofs_submitted: value.unique_person_proofs_submitted,
+            bots: value.bots,
+            username_to_user_id: CaseInsensitiveHashMap::default(),
+            botname_to_user_id: CaseInsensitiveHashMap::default(),
+            principal_to_user_id: HashMap::default(),
+            user_referrals: HashMap::default(),
+            users_with_duplicate_usernames: Vec::default(),
+            users_with_duplicate_principals: Vec::default(),
         };
 
         for (user_id, user) in user_map.users.iter() {
@@ -448,8 +486,15 @@ impl From<UserMapTrimmed> for UserMap {
                 user_map.user_referrals.entry(referred_by).or_default().push(*user_id);
             }
 
-            if let Some(other_user_id) = user_map.username_to_user_id.insert(&user.username, *user_id) {
-                user_map.users_with_duplicate_usernames.push((*user_id, other_user_id));
+            match user.user_type {
+                UserType::BotV2 => {
+                    user_map.botname_to_user_id.insert(&user.username, *user_id);
+                }
+                _ => {
+                    if let Some(other_user_id) = user_map.username_to_user_id.insert(&user.username, *user_id) {
+                        user_map.users_with_duplicate_usernames.push((*user_id, other_user_id));
+                    }
+                }
             }
 
             if let Some(other_user_id) = user_map.principal_to_user_id.insert(user.principal, *user_id) {

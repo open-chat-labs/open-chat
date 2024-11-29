@@ -12,7 +12,7 @@ use types::{
     CommunityPermissionsChanged, CommunityVisibilityChanged, Document, GroupDescriptionChanged, GroupNameChanged,
     GroupRulesChanged, OptionUpdate, OptionalCommunityPermissions, PrimaryLanguageChanged, Timestamped, UserId,
 };
-use utils::document_validation::{validate_avatar, validate_banner};
+use utils::document::{validate_avatar, validate_banner};
 use utils::text_validation::{
     validate_community_name, validate_description, validate_rules, NameValidationError, RulesValidationError,
 };
