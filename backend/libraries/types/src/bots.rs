@@ -80,6 +80,7 @@ pub struct BotMatch {
     pub score: u32,
     pub name: String,
     pub description: String,
+    pub owner: UserId,
     pub avatar_id: Option<u128>,
     pub banner_id: Option<u128>,
     pub commands: Vec<SlashCommandSchema>,

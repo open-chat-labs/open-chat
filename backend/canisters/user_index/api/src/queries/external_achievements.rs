@@ -21,10 +21,6 @@ pub enum Response {
 pub struct SuccessResult {
     pub last_updated: TimestampMillis,
     pub added_or_updated: Vec<ExternalAchievement>,
-    // TODO: Remove after FE updated to use added_or_updated
-    pub achievements_added: Vec<ExternalAchievement>,
-    // TODO: Remove after FE updated to use added_or_updated
-    pub achievements_removed: Vec<ExternalAchievement>,
 }
 
 #[ts_export(user_index, external_achievements)]

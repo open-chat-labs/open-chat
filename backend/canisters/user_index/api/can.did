@@ -10,6 +10,28 @@ type PublicKeyResponse = variant {
     NotInitialised;
 };
 
+type BotUpdatesArgs = record {
+    updated_since : TimestampMillis;
+};
+
+type BotUpdatesResponse = variant {
+    Success : record {
+        added_or_updated: vec record {
+            id: UserId;
+            owner: UserId;
+            name: text;
+            avatar_id: opt nat;
+            endpoint: text;
+            description: text;
+            commands: vec SlashCommandSchema;
+            last_updated : TimestampMillis;
+        };
+        deleted: vec UserId;
+        timestamp: TimestampMillis;
+    };
+    SuccessNoUpdates;
+};
+
 type CheckUsernameArgs = record {
     username : text;
     is_bot : bool;
@@ -92,6 +114,7 @@ type ExploreBotsResponse = variant {
 type BotMatch = record {
     id : UserId;
     score : nat32;
+    owner : UserId;
     name : text;
     description : text;
     avatar_id : opt nat;
@@ -175,8 +198,6 @@ type ExternalAchievementsResponse = variant {
     Success : record {
         last_updated: TimestampMillis;
         added_or_updated : vec ExternalAchievement;
-        achievements_added : vec ExternalAchievement;
-        achievements_removed : vec ExternalAchievement;
     };
     SuccessNoUpdates;
 };
@@ -258,6 +279,7 @@ type AwardExternalAchievementResponse = variant {
 
 service : {
     // Queries
+    bot_updates : (BotUpdatesArgs) -> (BotUpdatesResponse) query;
     check_username : (CheckUsernameArgs) -> (CheckUsernameResponse) query;
     chit_leaderboard : (EmptyArgs) -> (ChitLeaderboardResponse) query;
     current_user : (EmptyArgs) -> (CurrentUserResponse) query;
