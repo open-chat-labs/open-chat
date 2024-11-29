@@ -18,9 +18,7 @@ const MAX_MEMBERS_PER_COMMUNITY: u32 = 100_000;
 #[derive(Serialize, Deserialize)]
 pub struct CommunityMembers {
     members: BTreeMap<UserId, CommunityMemberInternal>,
-    #[serde(default)]
     member_channel_links: BTreeSet<(UserId, ChannelId)>,
-    #[serde(default)]
     member_channel_links_removed: BTreeMap<(UserId, ChannelId), TimestampMillis>,
     user_groups: UserGroups,
     // This includes the userIds of community members and also users invited to the community
@@ -38,37 +36,6 @@ pub struct CommunityMembers {
 }
 
 impl CommunityMembers {
-    pub fn migrate_member_updates(&mut self) {
-        let updates = self
-            .updates
-            .iter()
-            .map(|(timestamp, user_id, update)| {
-                let new_update = match *update as u8 {
-                    1 => MemberUpdate::Lapsed,             // Lapsed was 1 in the old version
-                    2 => MemberUpdate::Unlapsed,           // Unlapsed was 2 in the old version
-                    3 => MemberUpdate::DisplayNameChanged, // DisplayNameChanged was 3 in the old version
-                    _ => *update,
-                };
-
-                (*timestamp, *user_id, new_update)
-            })
-            .collect();
-
-        self.updates = updates;
-    }
-
-    pub fn populate_member_channel_links(&mut self) {
-        for member in self.members.values() {
-            for channel in member.channels.iter() {
-                self.member_channel_links.insert((member.user_id, *channel));
-            }
-            for channel_removed in member.channels_removed.iter() {
-                self.member_channel_links_removed
-                    .insert((member.user_id, channel_removed.value), channel_removed.timestamp);
-            }
-        }
-    }
-
     pub fn new(
         creator_principal: Principal,
         creator_user_id: UserId,
