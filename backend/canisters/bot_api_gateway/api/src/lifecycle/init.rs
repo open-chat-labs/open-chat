@@ -9,5 +9,6 @@ pub struct Args {
     pub cycles_dispenser_canister_id: CanisterId,
     pub event_relay_canister_id: CanisterId,
     pub wasm_version: BuildVersion,
+    pub public_key: String,
     pub test_mode: bool,
 }

@@ -18,6 +18,7 @@ fn init(args: Args) {
         args.local_group_index_canister_id,
         args.event_relay_canister_id,
         args.cycles_dispenser_canister_id,
+        args.public_key,
         args.test_mode,
     );
 

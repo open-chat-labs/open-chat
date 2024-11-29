@@ -4,7 +4,7 @@ use crate::{client, TestEnv};
 use std::ops::Deref;
 use testing::rng::{random_from_u128, random_string};
 use types::bot_actions::SendTextMessageArgs;
-use types::{BotAction, Chat, ChatEvent};
+use types::{BotAction, BotCommandClaims, Chat, ChatEvent};
 use user_index_canister::c2c_register_bot::OptionalBotConfig;
 
 #[test]
@@ -51,15 +51,19 @@ fn bot_send_text_message_in_group_succeeds() {
         bot_id,
         canister_ids.bot_api_gateway,
         &bot_api_gateway_canister::call::Args {
-            target_canister_id: group_id.into(),
-            bot_user_id: bot_id.into(),
-            actions: vec![BotAction::SendTextMessage(SendTextMessageArgs {
+            action: BotAction::SendTextMessage(SendTextMessageArgs { text: random_string() }),
+            jwt: build_jwt(BotCommandClaims {
+                user_id: user.user_id,
+                bot: bot_id,
                 chat: Chat::Group(group_id),
                 thread_root_message_index: None,
                 message_id,
-                text: random_string(),
-            })],
-            jwt: random_string(),
+                command_name: todo!(),
+                parameters: todo!(),
+                version: todo!(),
+                command_text: todo!(),
+                bot_api_gateway: todo!(),
+            }),
         },
     );
     assert!(call_response.is_ok());
@@ -75,4 +79,8 @@ fn bot_send_text_message_in_group_succeeds() {
     } else {
         panic!()
     }
+}
+
+fn build_jwt(_bot_command_claims: BotCommandClaims) -> String {
+    "".to_string()
 }

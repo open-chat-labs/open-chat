@@ -8,16 +8,20 @@ pub use lifecycle::*;
 pub use queries::*;
 pub use updates::*;
 
-pub mod c2c_handle_bot_actions {
+pub mod c2c_handle_bot_action {
     use candid::CandidType;
     use serde::{Deserialize, Serialize};
-    use types::{BotAction, CanisterId, UserId};
+    use types::{BotAction, CanisterId, Chat, MessageId, MessageIndex, User, UserId};
 
     #[derive(Serialize, Deserialize, Debug)]
     pub struct Args {
-        pub bot_user_id: UserId,
-        pub bot_username: String,
-        pub actions: Vec<BotAction>,
+        pub bot: User,
+        pub commanded_by: Option<UserId>,
+        pub chat: Chat,
+        pub thread_root_message_index: Option<MessageIndex>,
+        pub message_id: MessageId,
+        pub action: BotAction,
+        pub command_text: String,
     }
 
     pub type Response = Result<(), HandleBotActionsError>;
