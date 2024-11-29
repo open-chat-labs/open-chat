@@ -13,11 +13,22 @@ pub struct MembersStableStorage {
 }
 
 impl MembersStableStorage {
+    // TODO delete this after next upgrade
+    pub fn new_empty() -> Self {
+        MembersStableStorage {
+            prefix: KeyPrefix::GroupChat,
+        }
+    }
+
     #[allow(dead_code)]
     pub fn new(chat: MultiUserChat, member: GroupMemberInternal) -> Self {
         let mut map = MembersStableStorage { prefix: chat.into() };
         map.insert(member);
         map
+    }
+
+    pub fn set_chat(&mut self, chat: MultiUserChat) {
+        self.prefix = chat.into();
     }
 
     fn key(&self, user_id: UserId) -> Key {
