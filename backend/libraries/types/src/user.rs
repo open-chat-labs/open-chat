@@ -3,6 +3,7 @@ use candid::{CandidType, Principal};
 use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
+use std::ops::Deref;
 use ts_export::ts_export;
 
 #[ts_export]
@@ -45,6 +46,14 @@ impl Debug for UserId {
 impl Display for UserId {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         std::fmt::Display::fmt(&self.0, f)
+    }
+}
+
+impl Deref for UserId {
+    type Target = Principal;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 

@@ -18,6 +18,7 @@ use utils::timestamped_set::TimestampedSet;
 
 #[cfg(test)]
 mod proptests;
+mod stable_memory;
 
 const MAX_MEMBERS_PER_GROUP: u32 = 100_000;
 
