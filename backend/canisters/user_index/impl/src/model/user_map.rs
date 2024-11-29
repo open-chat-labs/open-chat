@@ -56,6 +56,7 @@ impl Bot {
         BotMatch {
             id,
             score,
+            owner: self.owner,
             name: self.name.clone(),
             description: self.description.clone(),
             avatar_id: self.avatar.as_ref().map(|a| a.id),
@@ -349,6 +350,10 @@ impl UserMap {
 
     pub fn iter(&self) -> impl Iterator<Item = &User> {
         self.users.values()
+    }
+
+    pub fn iter_bots(&self) -> impl Iterator<Item = (&UserId, &Bot)> {
+        self.bots.iter()
     }
 
     pub fn len(&self) -> usize {

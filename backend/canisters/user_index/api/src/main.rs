@@ -3,6 +3,7 @@ use std::env;
 use ts_export::generate_ts_method;
 
 fn main() {
+    generate_candid_method!(user_index, bot_updates, query);
     generate_candid_method!(user_index, check_username, query);
     generate_candid_method!(user_index, chit_leaderboard, query);
     generate_candid_method!(user_index, current_user, query);
