@@ -62,10 +62,8 @@ fn summary_updates_impl(
             .channels_removed_for_member(m.user_id)
             .filter(|(_, ts)| *ts > updates_since)
         {
+            last_updated = max(last_updated, timestamp);
             channels_removed.push(channel_id);
-            if timestamp > last_updated {
-                last_updated = timestamp;
-            }
         }
 
         (channels_with_updates, channels_removed)
@@ -96,6 +94,7 @@ fn summary_updates_impl(
     for channel in channels_with_updates {
         if channel.date_imported.map_or(false, |ts| ts > updates_since) {
             if let Some(summary) = channel.summary(user_id, is_community_member, state.data.is_public, &state.data.members) {
+                last_updated = max(last_updated, summary.last_updated);
                 channels_added.push(summary);
             }
         } else {
@@ -106,8 +105,14 @@ fn summary_updates_impl(
                 state.data.is_public,
                 &state.data.members,
             ) {
-                ChannelUpdates::Added(s) => channels_added.push(s),
-                ChannelUpdates::Updated(s) => channels_updated.push(s),
+                ChannelUpdates::Added(s) => {
+                    last_updated = max(last_updated, s.last_updated);
+                    channels_added.push(s)
+                }
+                ChannelUpdates::Updated(s) => {
+                    last_updated = max(last_updated, s.last_updated);
+                    channels_updated.push(s)
+                }
             }
         }
     }
@@ -128,16 +133,6 @@ fn summary_updates_impl(
             }),
         lapsed: m.lapsed().if_set_after(updates_since).copied(),
     });
-
-    for timestamp in channels_added
-        .iter()
-        .map(|c| c.last_updated)
-        .chain(channels_updated.iter().map(|c| c.last_updated))
-    {
-        if timestamp > last_updated {
-            last_updated = timestamp;
-        }
-    }
 
     Success(CommunityCanisterCommunitySummaryUpdates {
         community_id: state.env.canister_id().into(),
