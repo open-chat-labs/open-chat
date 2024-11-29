@@ -24,6 +24,7 @@ types = { path = "../types" }
 utils = { path = "../utils" }
 
 [dev-dependencies]
+ic-stable-structures = { workspace = true }
 msgpack = { path = "../msgpack" }
 proptest = { workspace = true }
 rand = { workspace = true }

@@ -48,6 +48,16 @@ impl MembersMap for MembersStableStorage {
     fn remove(&mut self, user_id: &UserId) -> Option<GroupMemberInternal> {
         with_map_mut(|m| m.remove(&self.key(*user_id).to_vec()).map(bytes_to_member))
     }
+
+    #[cfg(test)]
+    fn all_members(&self) -> Vec<GroupMemberInternal> {
+        with_map(|m| {
+            m.range(self.key(Principal::from_slice(&[]).into()).to_vec()..)
+                .take_while(|(k, _)| Key::try_from(k.as_slice()).ok().filter(|k| k.prefix == self.prefix).is_some())
+                .map(|(_, v)| bytes_to_member(v))
+                .collect()
+        })
+    }
 }
 
 fn member_to_bytes(member: &GroupMemberInternal) -> Vec<u8> {

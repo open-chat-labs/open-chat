@@ -548,7 +548,7 @@ impl GroupMembers {
     }
 
     #[cfg(test)]
-    fn check_invariants(&self) {
+    fn check_invariants(&self, stable_map: bool) {
         let mut member_ids = BTreeSet::new();
         let mut owners = BTreeSet::new();
         let mut admins = BTreeSet::new();
@@ -557,7 +557,9 @@ impl GroupMembers {
         let mut lapsed = BTreeSet::new();
         let mut suspended = BTreeSet::new();
 
-        for member in self.members.values() {
+        let all_members = if stable_map { self.stable_memory_members_map.all_members() } else { self.members.all_members() };
+
+        for member in all_members {
             member_ids.insert(member.user_id);
 
             match member.role.value {

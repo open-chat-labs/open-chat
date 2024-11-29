@@ -2902,6 +2902,7 @@ dependencies = [
  "event_store_producer",
  "group_community_common",
  "ic-cdk 0.16.0",
+ "ic-stable-structures",
  "itertools 0.13.0",
  "lazy_static",
  "msgpack",

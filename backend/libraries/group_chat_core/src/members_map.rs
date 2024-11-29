@@ -10,6 +10,9 @@ pub trait MembersMap {
     fn get(&self, user_id: &UserId) -> Option<GroupMemberInternal>;
     fn insert(&mut self, member: GroupMemberInternal);
     fn remove(&mut self, user_id: &UserId) -> Option<GroupMemberInternal>;
+
+    #[cfg(test)]
+    fn all_members(&self) -> Vec<GroupMemberInternal>;
 }
 
 pub struct HeapMembersMap {
@@ -27,11 +30,6 @@ impl HeapMembersMap {
     pub fn values_mut(&mut self) -> impl Iterator<Item = &mut GroupMemberInternal> + '_ {
         self.map.values_mut()
     }
-
-    #[cfg(test)]
-    pub fn values(&self) -> impl Iterator<Item = &GroupMemberInternal> + '_ {
-        self.map.values()
-    }
 }
 
 impl MembersMap for HeapMembersMap {
@@ -45,6 +43,11 @@ impl MembersMap for HeapMembersMap {
 
     fn remove(&mut self, user_id: &UserId) -> Option<GroupMemberInternal> {
         self.map.remove(user_id)
+    }
+
+    #[cfg(test)]
+    fn all_members(&self) -> Vec<GroupMemberInternal> {
+        self.map.values().cloned().collect()
     }
 }
 
