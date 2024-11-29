@@ -1,16 +1,14 @@
+use crate::members_map::{HeapMembersMap, MembersMap};
 use crate::mentions::Mentions;
 use crate::roles::GroupRoleInternal;
 use crate::AccessRulesInternal;
 use candid::Principal;
 use constants::calculate_summary_updates_data_removal_cutoff;
 use group_community_common::{Member, MemberUpdate, Members};
-use serde::de::{SeqAccess, Visitor};
-use serde::ser::SerializeSeq;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 use std::cell::OnceCell;
 use std::cmp::max;
 use std::collections::{BTreeMap, BTreeSet};
-use std::fmt::Formatter;
 use std::ops::Deref;
 use types::{
     is_default, EventIndex, GroupMember, GroupPermissions, MessageIndex, TimestampMillis, Timestamped, UserId, UserType,
@@ -23,10 +21,9 @@ mod proptests;
 
 const MAX_MEMBERS_PER_GROUP: u32 = 100_000;
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize)]
 pub struct GroupMembers {
-    #[serde(serialize_with = "serialize_members", deserialize_with = "deserialize_members")]
-    members: BTreeMap<UserId, GroupMemberInternal>,
+    members: HeapMembersMap,
     member_ids: BTreeSet<UserId>,
     owners: BTreeSet<UserId>,
     admins: BTreeSet<UserId>,
@@ -76,7 +73,7 @@ impl GroupMembers {
         };
 
         GroupMembers {
-            members: vec![(creator_user_id, member)].into_iter().collect(),
+            members: HeapMembersMap::new(member.clone()),
             member_ids: [creator_user_id].into_iter().collect(),
             owners: [creator_user_id].into_iter().collect(),
             admins: BTreeSet::new(),
@@ -126,7 +123,7 @@ impl GroupMembers {
                 user_type,
                 lapsed: Timestamped::default(),
             };
-            self.members.insert(user_id, member.clone());
+            self.members.insert(member.clone());
             if user_type.is_bot() {
                 self.bots.insert(user_id, user_type);
             }
@@ -210,11 +207,11 @@ impl GroupMembers {
         &self.member_ids
     }
 
-    pub fn get(&self, user_id: &UserId) -> Option<&GroupMemberInternal> {
+    pub fn get(&self, user_id: &UserId) -> Option<GroupMemberInternal> {
         self.members.get(user_id)
     }
 
-    pub fn get_bot(&self, bot_user_id: &UserId) -> Option<&GroupMemberInternal> {
+    pub fn get_bot(&self, bot_user_id: &UserId) -> Option<GroupMemberInternal> {
         self.get(bot_user_id).filter(|m| m.user_type.is_bot())
     }
 
@@ -222,8 +219,18 @@ impl GroupMembers {
         self.member_ids.contains(user_id)
     }
 
-    pub fn get_mut(&mut self, user_id: &UserId) -> Option<&mut GroupMemberInternal> {
-        self.members.get_mut(user_id)
+    pub fn update_member<F: FnOnce(&mut GroupMemberInternal) -> bool>(
+        &mut self,
+        user_id: &UserId,
+        update_fn: F,
+    ) -> Option<bool> {
+        let mut member = self.members.get(user_id)?;
+
+        let updated = update_fn(&mut member);
+        if updated {
+            self.members.insert(member);
+        }
+        Some(updated)
     }
 
     pub fn is_blocked(&self, user_id: &UserId) -> bool {
@@ -231,7 +238,7 @@ impl GroupMembers {
     }
 
     pub fn user_limit_reached(&self) -> Option<u32> {
-        if self.members.len() >= MAX_MEMBERS_PER_GROUP as usize {
+        if self.member_ids.len() >= MAX_MEMBERS_PER_GROUP as usize {
             Some(MAX_MEMBERS_PER_GROUP)
         } else {
             None
@@ -239,11 +246,11 @@ impl GroupMembers {
     }
 
     pub fn len(&self) -> u32 {
-        self.members.len() as u32
+        self.member_ids.len() as u32
     }
 
     pub fn is_empty(&self) -> bool {
-        self.members.is_empty()
+        self.member_ids.is_empty()
     }
 
     pub fn change_role(
@@ -277,7 +284,7 @@ impl GroupMembers {
             }
         }
 
-        let member = match self.members.get_mut(&user_id) {
+        let member = match self.members.get(&user_id) {
             Some(p) => p,
             None => return TargetUserNotInGroup,
         };
@@ -309,7 +316,10 @@ impl GroupMembers {
             _ => false,
         };
 
-        member.role = Timestamped::new(new_role, now);
+        self.update_member(&user_id, |m| {
+            m.role = Timestamped::new(new_role, now);
+            true
+        });
 
         match new_role {
             GroupRoleInternal::Owner => {
@@ -334,73 +344,69 @@ impl GroupMembers {
         notifications_muted: bool,
         now: TimestampMillis,
     ) -> Option<bool> {
-        let member = self.members.get_mut(&user_id)?;
-
-        if member.notifications_muted.value != notifications_muted {
-            member.notifications_muted = Timestamped::new(notifications_muted, now);
-            if notifications_muted {
-                self.notifications_unmuted.remove(&user_id);
-            } else {
-                self.notifications_unmuted.insert(user_id);
-            }
-            Some(true)
+        if !self.member_ids.contains(&user_id) {
+            None
         } else {
-            Some(false)
+            let updated = if notifications_muted {
+                self.notifications_unmuted.remove(&user_id)
+            } else {
+                self.notifications_unmuted.insert(user_id)
+            };
+            if updated {
+                self.update_member(&user_id, |m| {
+                    m.notifications_muted = Timestamped::new(notifications_muted, now);
+                    true
+                });
+            }
+            Some(updated)
         }
     }
 
-    pub fn register_proposal_vote(&mut self, user_id: UserId, message_index: MessageIndex, now: TimestampMillis) {
-        if let Some(member) = self.members.get_mut(&user_id) {
-            member.prune_proposal_votes(now);
-            member.proposal_votes.insert((now, message_index));
-        }
+    pub fn register_proposal_vote(&mut self, user_id: &UserId, message_index: MessageIndex, now: TimestampMillis) {
+        self.update_member(user_id, |m| {
+            m.prune_proposal_votes(now);
+            m.proposal_votes.insert((now, message_index));
+            true
+        });
     }
 
     pub fn set_suspended(&mut self, user_id: UserId, suspended: bool, now: TimestampMillis) -> Option<bool> {
-        let member = self.members.get_mut(&user_id)?;
-
-        if member.suspended.value != suspended {
-            member.suspended = Timestamped::new(suspended, now);
-            if suspended {
-                self.suspended.insert(user_id);
-            } else {
-                self.suspended.remove(&user_id);
-            }
-            Some(true)
+        if !self.member_ids.contains(&user_id) {
+            None
         } else {
-            Some(false)
+            let updated = if suspended { self.suspended.insert(user_id) } else { self.suspended.remove(&user_id) };
+            if updated {
+                self.update_member(&user_id, |m| {
+                    m.suspended = Timestamped::new(suspended, now);
+                    true
+                });
+            }
+            Some(updated)
         }
     }
 
     pub fn unlapse_all(&mut self, now: TimestampMillis) {
         self.prune_member_updates(now);
         for user_id in std::mem::take(&mut self.lapsed) {
-            if let Some(member) = self.members.get_mut(&user_id) {
-                if member.set_lapsed(false, now) {
-                    self.updates.insert((now, member.user_id, MemberUpdate::Unlapsed));
-                }
+            if matches!(self.update_member(&user_id, |m| m.set_lapsed(false, now)), Some(true)) {
+                self.updates.insert((now, user_id, MemberUpdate::Unlapsed));
             }
         }
     }
 
     pub fn update_lapsed(&mut self, user_id: UserId, lapsed: bool, now: TimestampMillis) {
-        let Some(member) = self.get_mut(&user_id) else {
+        if !self.member_ids.contains(&user_id) {
             return;
-        };
-
-        let updated = if lapsed {
+        }
+        if lapsed && self.owners.contains(&user_id) {
             // Owners can't lapse
-            !member.is_owner() && member.set_lapsed(true, now)
-        } else {
-            member.set_lapsed(false, now)
-        };
+            return;
+        }
+
+        let updated = if lapsed { self.lapsed.insert(user_id) } else { self.lapsed.remove(&user_id) };
 
         if updated {
-            if lapsed {
-                self.lapsed.insert(user_id);
-            } else {
-                self.lapsed.remove(&user_id);
-            }
+            self.update_member(&user_id, |m| m.set_lapsed(lapsed, now));
 
             self.prune_then_insert_member_update(
                 user_id,
@@ -525,7 +531,7 @@ impl GroupMembers {
 impl Members for GroupMembers {
     type Member = GroupMemberInternal;
 
-    fn get(&self, user_id: &UserId) -> Option<&GroupMemberInternal> {
+    fn get(&self, user_id: &UserId) -> Option<GroupMemberInternal> {
         self.get(user_id)
     }
 
@@ -786,7 +792,7 @@ impl VerifiedGroupMember<'_> {
 
     fn resolve_member(&self) -> &GroupMemberInternal {
         self.member
-            .get_or_init(|| self.members.members.get(&self.user_id).cloned().unwrap())
+            .get_or_init(|| self.members.members.get(&self.user_id).clone().unwrap())
     }
 }
 
@@ -802,39 +808,6 @@ pub enum VerifyMemberError {
     NotFound,
     Lapsed,
     Suspended,
-}
-
-fn serialize_members<S: Serializer>(value: &BTreeMap<UserId, GroupMemberInternal>, serializer: S) -> Result<S::Ok, S::Error> {
-    let mut seq = serializer.serialize_seq(Some(value.len()))?;
-    for member in value.values() {
-        seq.serialize_element(member)?;
-    }
-    seq.end()
-}
-
-fn deserialize_members<'de, D: Deserializer<'de>>(deserializer: D) -> Result<BTreeMap<UserId, GroupMemberInternal>, D::Error> {
-    deserializer.deserialize_seq(GroupMembersMapVisitor)
-}
-
-struct GroupMembersMapVisitor;
-
-impl<'de> Visitor<'de> for GroupMembersMapVisitor {
-    type Value = BTreeMap<UserId, GroupMemberInternal>;
-
-    fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
-        formatter.write_str("a sequence")
-    }
-
-    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
-    where
-        A: SeqAccess<'de>,
-    {
-        let mut map = BTreeMap::new();
-        while let Some(next) = seq.next_element::<GroupMemberInternal>()? {
-            map.insert(next.user_id, next);
-        }
-        Ok(map)
-    }
 }
 
 fn default_notifications_muted() -> Timestamped<bool> {

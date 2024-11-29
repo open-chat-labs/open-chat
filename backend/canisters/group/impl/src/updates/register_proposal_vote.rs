@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, Reader, RecordProposalVoteResult};
 use group_canister::register_proposal_vote::{Response::*, *};
-use types::{CanisterId, ProposalId, UserId};
+use types::{CanisterId, EventIndex, ProposalId, UserId};
 
 #[update(candid = true, msgpack = true)]
 #[trace]
@@ -93,18 +93,11 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
 }
 
 fn commit(user_id: UserId, args: Args, state: &mut RuntimeState) -> Response {
-    let member = match state.data.chat.members.get_mut(&user_id) {
-        Some(p) => p,
-        None => return CallerNotInGroup,
-    };
-
-    let min_visible_event_index = member.min_visible_event_index();
-
     match state
         .data
         .chat
         .events
-        .record_proposal_vote(user_id, min_visible_event_index, args.message_index, args.adopt)
+        .record_proposal_vote(user_id, EventIndex::default(), args.message_index, args.adopt)
     {
         RecordProposalVoteResult::Success => {
             let now = state.env.now();
@@ -112,7 +105,7 @@ fn commit(user_id: UserId, args: Args, state: &mut RuntimeState) -> Response {
                 .data
                 .chat
                 .members
-                .register_proposal_vote(user_id, args.message_index, now);
+                .register_proposal_vote(&user_id, args.message_index, now);
 
             handle_activity_notification(state);
             Success

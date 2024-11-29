@@ -16,13 +16,13 @@ use std::collections::{BTreeMap, BTreeSet, HashSet};
 use types::{
     AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, ContentValidationError, CustomPermission, Document,
     EventIndex, EventOrExpiredRange, EventWrapper, EventsResponse, ExternalUrlUpdated, FieldTooLongResult, FieldTooShortResult,
-    GroupDescriptionChanged, GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
-    GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent,
-    MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned,
-    MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions,
-    PermissionsChanged, PushEventResult, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis,
-    Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall,
-    MAX_RETURNED_MENTIONS,
+    GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged,
+    GroupSubtype, GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message,
+    MessageContent, MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned,
+    MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate, OptionalGroupPermissions,
+    OptionalMessagePermissions, PermissionsChanged, PushEventResult, Reaction, RoleChanged, Rules, SelectedGroupUpdates,
+    ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version,
+    Versioned, VersionedRules, VideoCall, MAX_RETURNED_MENTIONS,
 };
 use utils::document::validate_avatar;
 use utils::text_validation::{
@@ -31,6 +31,7 @@ use utils::text_validation::{
 
 mod invited_users;
 mod members;
+mod members_map;
 mod mentions;
 mod roles;
 
@@ -182,7 +183,7 @@ impl GroupChatCore {
     pub fn summary_updates(&self, since: TimestampMillis, user_id: Option<UserId>) -> SummaryUpdates {
         let member = user_id.and_then(|user_id| self.members.get(&user_id));
 
-        let min_visible_event_index = if let Some(member) = member {
+        let min_visible_event_index = if let Some(member) = &member {
             member.min_visible_event_index()
         } else if self.is_public.value {
             EventIndex::default()
@@ -194,7 +195,10 @@ impl GroupChatCore {
 
         let events_reader = self.events.visible_main_events_reader(min_visible_event_index);
         let latest_message = events_reader.latest_message_event_if_updated(since, user_id);
-        let mentions = member.map(|m| self.most_recent_mentions(m, Some(since))).unwrap_or_default();
+        let mentions = member
+            .as_ref()
+            .map(|m| self.most_recent_mentions(m, Some(since)))
+            .unwrap_or_default();
 
         let events_ttl = self.events.get_events_time_to_live();
         let mut updated_events: Vec<_> = self
@@ -204,7 +208,7 @@ impl GroupChatCore {
             .take(1000)
             .collect();
 
-        if let Some(member) = member {
+        if let Some(member) = &member {
             let new_proposal_votes = member
                 .iter_proposal_votes_since(since)
                 .filter_map(|(ts, m)| events_reader.event_index(m.into()).map(move |e| (None, e, ts)));
@@ -230,7 +234,7 @@ impl GroupChatCore {
             latest_event_index: events_reader.latest_event_index(),
             latest_message_index: events_reader.latest_message_index(),
             member_count: if self.members.has_membership_changed(since) { Some(self.members.len()) } else { None },
-            role_changed: member.map(|m| m.role().timestamp > since).unwrap_or_default(),
+            role_changed: member.as_ref().map(|m| m.role().timestamp > since).unwrap_or_default(),
             mentions,
             permissions: self.permissions.if_set_after(since).cloned(),
             updated_events,
@@ -316,7 +320,7 @@ impl GroupChatCore {
                 MemberUpdate::Added | MemberUpdate::RoleChanged | MemberUpdate::Lapsed | MemberUpdate::Unlapsed => {
                     if users_added_updated_or_removed.insert(user_id) {
                         if let Some(member) = self.members.get(&user_id) {
-                            result.members_added_or_updated.push(member.into());
+                            result.members_added_or_updated.push(GroupMember::from(&member));
                         }
                     }
                 }
@@ -712,32 +716,34 @@ impl GroupChatCore {
                 {
                     let is_first_reply = message_index == MessageIndex::default();
                     for follower in thread_summary.followers {
-                        if let Some(member) = self.members.get_mut(&follower) {
+                        self.members.update_member(&follower, |m| {
                             // Bump the thread timestamp for all followers
-                            member.followed_threads.insert(root_message_index, now);
+                            m.followed_threads.insert(root_message_index, now);
 
-                            let user_id = member.user_id();
+                            let user_id = m.user_id();
                             if user_id != sender {
                                 let mentioned =
                                     mentions.contains(&user_id) || (is_first_reply && user_id == root_message_sender);
 
                                 if mentioned {
-                                    member.mentions.add(thread_root_message_index, message_index, message_id, now);
+                                    m.mentions.add(thread_root_message_index, message_index, message_id, now);
                                 }
 
-                                if mentioned || !member.notifications_muted().value {
+                                if mentioned || !m.notifications_muted().value {
                                     users_to_notify.insert(user_id);
                                 }
                             }
-                        }
+                            true
+                        });
                     }
                 }
             } else {
                 for mentioned in mentions {
-                    if let Some(member) = self.members.get_mut(&mentioned) {
-                        member.mentions.add(thread_root_message_index, message_index, message_id, now);
-                        users_to_notify.insert(mentioned);
-                    }
+                    self.members.update_member(&mentioned, |m| {
+                        m.mentions.add(thread_root_message_index, message_index, message_id, now);
+                        true
+                    });
+                    users_to_notify.insert(mentioned);
                 }
                 if everyone_mentioned {
                     self.at_everyone_mentions.insert(
@@ -791,9 +797,10 @@ impl GroupChatCore {
         }
 
         if let Some(version) = rules_accepted {
-            if let Some(member) = self.members.get_mut(&sender) {
-                member.accept_rules(min(version, self.rules.text.version), now);
-            }
+            self.members.update_member(&sender, |m| {
+                m.accept_rules(min(version, self.rules.text.version), now);
+                true
+            });
         }
 
         let member = match self.members.get_verified_member(sender) {
@@ -1219,7 +1226,7 @@ impl GroupChatCore {
                 let invited_users: Vec<_> = user_ids
                     .iter()
                     .unique()
-                    .filter(|user_id| self.members.get(user_id).is_none() && !self.invited_users.contains(user_id))
+                    .filter(|user_id| !self.members.contains(user_id) && !self.invited_users.contains(user_id))
                     .copied()
                     .collect();
 
@@ -1565,9 +1572,10 @@ impl GroupChatCore {
                 let new_version = self.rules.value.text.version;
                 result.rules_version = Some(new_version);
 
-                if let Some(member) = self.members.get_mut(&user_id) {
-                    member.accept_rules(new_version, now);
-                }
+                self.members.update_member(&user_id, |m| {
+                    m.accept_rules(new_version, now);
+                    true
+                });
 
                 events.push_main_event(
                     ChatEventInternal::GroupRulesChanged(Box::new(GroupRulesChanged {
@@ -1711,9 +1719,11 @@ impl GroupChatCore {
                     .follow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)
                 {
                     chat_events::FollowThreadResult::Success => {
-                        let member = self.members.get_mut(&user_id).unwrap();
-                        member.followed_threads.insert(thread_root_message_index, now);
-                        member.unfollowed_threads.remove(thread_root_message_index);
+                        self.members.update_member(&user_id, |m| {
+                            m.followed_threads.insert(thread_root_message_index, now);
+                            m.unfollowed_threads.remove(thread_root_message_index);
+                            true
+                        });
                         Success
                     }
                     chat_events::FollowThreadResult::AlreadyFollowing => AlreadyFollowing,
@@ -1743,9 +1753,11 @@ impl GroupChatCore {
                     .unfollow_thread(thread_root_message_index, user_id, member.min_visible_event_index(), now)
                 {
                     chat_events::UnfollowThreadResult::Success => {
-                        let member = self.members.get_mut(&user_id).unwrap();
-                        member.followed_threads.remove(thread_root_message_index);
-                        member.unfollowed_threads.insert(thread_root_message_index, now);
+                        self.members.update_member(&user_id, |m| {
+                            m.followed_threads.remove(thread_root_message_index);
+                            m.unfollowed_threads.insert(thread_root_message_index, now);
+                            true
+                        });
                         Success
                     }
                     chat_events::UnfollowThreadResult::NotFollowing => NotFollowing,
@@ -1765,9 +1777,8 @@ impl GroupChatCore {
 
         for thread in result.threads.iter() {
             for user_id in thread.followers.iter() {
-                if let Some(member) = self.members.get_mut(user_id) {
-                    member.followed_threads.remove(thread.root_message_index);
-                }
+                self.members
+                    .update_member(user_id, |m| m.followed_threads.remove(thread.root_message_index).is_some());
             }
         }
 

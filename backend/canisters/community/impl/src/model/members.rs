@@ -416,6 +416,10 @@ impl CommunityMembers {
         self.members.get_mut(user_id)
     }
 
+    pub fn contains(&self, user_id: &UserId) -> bool {
+        self.member_ids.contains(user_id)
+    }
+
     pub fn len(&self) -> u32 {
         self.members.len() as u32
     }
@@ -586,8 +590,8 @@ impl CommunityMembers {
 impl Members for CommunityMembers {
     type Member = CommunityMemberInternal;
 
-    fn get(&self, user_id: &UserId) -> Option<&CommunityMemberInternal> {
-        self.get_by_user_id(user_id)
+    fn get(&self, user_id: &UserId) -> Option<CommunityMemberInternal> {
+        self.get_by_user_id(user_id).cloned()
     }
 
     fn iter_members_who_can_lapse(&self) -> Box<dyn Iterator<Item = UserId> + '_> {

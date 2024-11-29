@@ -125,7 +125,7 @@ fn commit(channel_id: ChannelId, user_id: UserId, args: Args, state: &mut Runtim
     {
         RecordProposalVoteResult::Success => {
             let now = state.env.now();
-            channel.chat.members.register_proposal_vote(user_id, args.message_index, now);
+            channel.chat.members.register_proposal_vote(&user_id, args.message_index, now);
 
             handle_activity_notification(state);
             Success
