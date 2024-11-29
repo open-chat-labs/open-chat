@@ -3,13 +3,14 @@ use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
 use crate::model::user::User;
 use crate::DiamondMembershipUserMetrics;
 use candid::Principal;
+use search::{Document as SearchDocument, Query};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::ops::RangeFrom;
 use tracing::info;
 use types::{
-    CyclesTopUp, Document, Milliseconds, SlashCommandSchema, SuspensionDuration, TimestampMillis, UniquePersonProof, UserId,
-    UserType,
+    BotMatch, CyclesTopUp, Document, Milliseconds, SlashCommandSchema, SuspensionDuration, TimestampMillis, UniquePersonProof,
+    UserId, UserType,
 };
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::MonthKey;
@@ -41,12 +42,27 @@ pub struct UserMap {
 
 #[derive(Serialize, Deserialize)]
 pub struct Bot {
+    pub name: String,
     pub avatar: Option<Document>,
     pub owner: UserId,
     pub endpoint: String,
     pub description: String,
     pub commands: Vec<SlashCommandSchema>,
     pub last_updated: TimestampMillis,
+}
+
+impl Bot {
+    pub fn to_match(&self, id: UserId, score: u32) -> BotMatch {
+        BotMatch {
+            id,
+            score,
+            name: self.name.clone(),
+            description: self.description.clone(),
+            avatar_id: self.avatar.as_ref().map(|a| a.id),
+            banner_id: None,
+            commands: self.commands.clone(),
+        }
+    }
 }
 
 impl UserMap {
@@ -424,6 +440,43 @@ impl UserMap {
 
     pub fn unique_person_proofs_submitted(&self) -> u32 {
         self.unique_person_proofs_submitted
+    }
+
+    // TODO - When a bot is added/removed to/from a community or group the user_index should be notified
+    // so it can maintain a popularity score and use this for ordering results
+    pub fn search_bots(&self, search_term: Option<String>, page_index: u32, page_size: u8) -> (Vec<BotMatch>, u32) {
+        let query = search_term.map(Query::parse);
+
+        let mut matches: Vec<_> = self
+            .bots
+            .iter()
+            .map(|(user_id, bot)| {
+                let score = if let Some(query) = &query {
+                    SearchDocument::default()
+                        .add_field(bot.name.clone(), 5.0, true)
+                        .add_field(bot.description.clone(), 1.0, true)
+                        .calculate_score(query)
+                } else {
+                    bot.commands.len() as u32
+                };
+                (score, user_id, bot)
+            })
+            .filter(|(score, _, _)| *score > 0)
+            .collect();
+
+        let total = matches.len() as u32;
+
+        matches.sort_by_key(|(score, _, _)| *score);
+
+        let matches = matches
+            .into_iter()
+            .rev()
+            .map(|(s, id, b)| b.to_match(*id, s))
+            .skip(page_index as usize * page_size as usize)
+            .take(page_size as usize)
+            .collect();
+
+        (matches, total)
     }
 
     #[cfg(test)]
