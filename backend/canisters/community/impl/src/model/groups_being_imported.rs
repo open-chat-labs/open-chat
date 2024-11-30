@@ -16,6 +16,7 @@ pub struct GroupToImport {
 #[derive(Debug)]
 pub enum GroupToImportAction {
     Events(ChannelId, Option<EventContext>),
+    Members(ChannelId, Option<UserId>),
     Core(u64),
 }
 
@@ -47,10 +48,12 @@ impl GroupsBeingImported {
         for (chat_id, group) in self.groups.iter_mut().filter(|(_, g)| !g.is_complete()) {
             if group.current_batch_started.is_none() {
                 group.current_batch_started = Some(now);
-                let action = if group.events_imported {
-                    GroupToImportAction::Core(group.bytes.len() as u64)
-                } else {
+                let action = if !group.events_imported {
                     GroupToImportAction::Events(group.channel_id, group.events_imported_up_to.clone())
+                } else if !group.members_imported {
+                    GroupToImportAction::Members(group.channel_id, group.members_imported_up_to)
+                } else {
+                    GroupToImportAction::Core(group.bytes.len() as u64)
                 };
                 batch.push(GroupToImport {
                     group_id: *chat_id,
@@ -89,6 +92,22 @@ impl GroupsBeingImported {
         }
     }
 
+    pub fn mark_members_batch_complete(&mut self, group_id: &ChatId, up_to: UserId) {
+        if let Some(group) = self.groups.get_mut(group_id) {
+            group.current_batch_started = None;
+            group.error_message = None;
+            group.members_imported_up_to = Some(up_to);
+        }
+    }
+
+    pub fn mark_members_import_complete(&mut self, group_id: &ChatId) {
+        if let Some(group) = self.groups.get_mut(group_id) {
+            group.current_batch_started = None;
+            group.error_message = None;
+            group.members_imported = true;
+        }
+    }
+
     pub fn mark_batch_failed(&mut self, group_id: &ChatId, error_message: String) {
         if let Some(group) = self.groups.get_mut(group_id) {
             group.current_batch_started = None;
@@ -122,6 +141,9 @@ pub struct GroupBeingImported {
     #[serde(default)]
     events_imported: bool,
     events_imported_up_to: Option<EventContext>,
+    #[serde(default)]
+    members_imported: bool,
+    members_imported_up_to: Option<UserId>,
     total_bytes: u64,
     #[serde(with = "serde_bytes")]
     bytes: Vec<u8>,
@@ -144,6 +166,8 @@ impl GroupBeingImported {
             current_batch_started: None,
             events_imported: false,
             events_imported_up_to: None,
+            members_imported: false,
+            members_imported_up_to: None,
             total_bytes,
             bytes: Vec::with_capacity(total_bytes as usize),
             error_message: None,

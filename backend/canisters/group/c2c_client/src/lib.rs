@@ -20,6 +20,7 @@ generate_candid_c2c_call!(selected_initial);
 generate_c2c_call!(c2c_delete_group);
 generate_c2c_call!(c2c_export_group);
 generate_c2c_call!(c2c_export_group_events);
+generate_c2c_call!(c2c_export_group_members);
 generate_c2c_call!(c2c_freeze_group);
 generate_c2c_call!(c2c_invite_users);
 generate_c2c_call!(c2c_join_group);

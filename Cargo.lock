@@ -2911,6 +2911,7 @@ dependencies = [
  "regex-lite",
  "search",
  "serde",
+ "serde_bytes",
  "stable_memory_map",
  "test-strategy",
  "tracing",

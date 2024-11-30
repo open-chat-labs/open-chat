@@ -40,6 +40,7 @@ pub fn read_events_as_bytes(chat: Chat, after: Option<EventContext>, max_bytes: 
     })
 }
 
+// Used to efficiently write all events to stable memory when migrating a group into a community
 pub fn write_events_as_bytes(chat: Chat, events: Vec<(EventContext, ByteBuf)>) {
     with_map_mut(|m| {
         for (context, bytes) in events {
