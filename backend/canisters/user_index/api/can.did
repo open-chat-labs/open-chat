@@ -10,8 +10,31 @@ type PublicKeyResponse = variant {
     NotInitialised;
 };
 
+type BotUpdatesArgs = record {
+    updated_since : TimestampMillis;
+};
+
+type BotUpdatesResponse = variant {
+    Success : record {
+        added_or_updated: vec record {
+            id: UserId;
+            owner: UserId;
+            name: text;
+            avatar_id: opt nat;
+            endpoint: text;
+            description: text;
+            commands: vec SlashCommandSchema;
+            last_updated : TimestampMillis;
+        };
+        deleted: vec UserId;
+        timestamp: TimestampMillis;
+    };
+    SuccessNoUpdates;
+};
+
 type CheckUsernameArgs = record {
     username : text;
+    is_bot : bool;
 };
 
 type CheckUsernameResponse = variant {
@@ -70,6 +93,33 @@ type UsersResponse = variant {
         deleted : vec UserId;
         timestamp : TimestampMillis;
     };
+};
+
+type ExploreBotsArgs = record {
+    search_term : opt text;
+    page_index : nat32;
+    page_size : nat8;
+};
+
+type ExploreBotsResponse = variant {
+    Success : record {
+        matches : vec BotMatch;
+        total : nat32;
+    };
+    TermTooShort : nat8;
+    TermTooLong : nat8;
+    InvalidTerm;
+};
+
+type BotMatch = record {
+    id : UserId;
+    score : nat32;
+    owner : UserId;
+    name : text;
+    description : text;
+    avatar_id : opt nat;
+    banner_id: opt nat;
+    commands: vec SlashCommandSchema;
 };
 
 type SearchArgs = record {
@@ -148,8 +198,6 @@ type ExternalAchievementsResponse = variant {
     Success : record {
         last_updated: TimestampMillis;
         added_or_updated : vec ExternalAchievement;
-        achievements_added : vec ExternalAchievement;
-        achievements_removed : vec ExternalAchievement;
     };
     SuccessNoUpdates;
 };
@@ -231,10 +279,12 @@ type AwardExternalAchievementResponse = variant {
 
 service : {
     // Queries
+    bot_updates : (BotUpdatesArgs) -> (BotUpdatesResponse) query;
     check_username : (CheckUsernameArgs) -> (CheckUsernameResponse) query;
     chit_leaderboard : (EmptyArgs) -> (ChitLeaderboardResponse) query;
     current_user : (EmptyArgs) -> (CurrentUserResponse) query;
     diamond_membership_fees : (EmptyArgs) -> (DiamondMembershipFeesResponse) query;
+    explore_bots : (ExploreBotsArgs) -> (ExploreBotsResponse) query;
     external_achievements : (ExternalAchievementsArgs) -> (ExternalAchievementsResponse) query;
     platform_moderators : (EmptyArgs) -> (PlatformModeratorsResponse) query;
     platform_moderators_group : (EmptyArgs) -> (PlatformModeratorsGroupResponse) query;

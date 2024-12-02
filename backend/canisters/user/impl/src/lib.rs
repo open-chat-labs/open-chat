@@ -12,7 +12,6 @@ use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use chat_events::KeyPrefix;
 use constants::{DAY_IN_MS, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
@@ -256,7 +255,7 @@ struct Data {
     pub referred_by: Option<UserId>,
     pub referrals: Referrals,
     pub message_activity_events: MessageActivityEvents,
-    pub stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
+    pub stable_memory_keys_to_garbage_collect: Vec<Vec<u8>>,
 }
 
 impl Data {

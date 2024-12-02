@@ -58,6 +58,7 @@ struct Data {
     pub cycles_dispenser_canister_id: CanisterId,
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub rng_seed: [u8; 32],
+    pub public_key: String,
     pub test_mode: bool,
 }
 
@@ -67,6 +68,7 @@ impl Data {
         local_group_index_canister_id: CanisterId,
         event_relay_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
+        public_key: String,
         test_mode: bool,
     ) -> Data {
         Data {
@@ -77,6 +79,7 @@ impl Data {
                 .with_flush_delay(Duration::from_secs(60))
                 .build(),
             rng_seed: [0; 32],
+            public_key,
             test_mode,
         }
     }

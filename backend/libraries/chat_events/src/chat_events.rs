@@ -3,9 +3,8 @@ use crate::expiring_events::ExpiringEvents;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::metrics::{ChatMetricsInternal, MetricKey};
 use crate::search_index::SearchIndex;
-use crate::stable_memory::key::KeyPrefix;
 use crate::*;
-use constants::{HOUR_IN_MS, OPENCHAT_BOT_USER_ID};
+use constants::{HOUR_IN_MS, ONE_MB, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventBuilder, EventStoreClient, Runtime};
 use rand::rngs::StdRng;
 use rand::Rng;
@@ -82,10 +81,6 @@ impl ChatEvents {
 
     pub fn import_events(chat: Chat, events: Vec<(EventContext, ByteBuf)>) {
         stable_memory::write_events_as_bytes(chat, events);
-    }
-
-    pub fn garbage_collect_stable_memory(prefix: KeyPrefix) -> Result<u32, u32> {
-        stable_memory::garbage_collect(prefix)
     }
 
     pub fn set_stable_memory_key_prefixes(&mut self) {
@@ -170,7 +165,7 @@ impl ChatEvents {
     }
 
     pub fn read_events_as_bytes_from_stable_memory(&self, after: Option<EventContext>) -> Vec<(EventContext, ByteBuf)> {
-        stable_memory::read_events_as_bytes(self.chat, after, 1_000_000)
+        stable_memory::read_events_as_bytes(self.chat, after, 2 * ONE_MB as usize)
     }
 
     pub fn iter_recently_updated_events(

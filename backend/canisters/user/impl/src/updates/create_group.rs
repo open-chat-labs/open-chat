@@ -8,7 +8,7 @@ use group_index_canister::c2c_create_group;
 use tracing::error;
 use types::{CanisterId, ChatId};
 use user_canister::create_group::{Response::*, *};
-use utils::document_validation::validate_avatar;
+use utils::document::validate_avatar;
 use utils::text_validation::{
     validate_description, validate_group_name, validate_rules, NameValidationError, RulesValidationError,
 };

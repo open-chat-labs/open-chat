@@ -2,6 +2,7 @@ use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
 use group_canister::selected_initial::{Response::*, *};
 use std::collections::HashSet;
+use types::GroupMember;
 
 #[query(candid = true, msgpack = true)]
 fn selected_initial(_args: Args) -> Response {
@@ -26,7 +27,7 @@ fn selected_initial_impl(state: &RuntimeState) -> Response {
         for user_id in chat.members.member_ids().iter() {
             if non_basic_members.contains(user_id) {
                 if let Some(member) = chat.members.get(user_id) {
-                    members.push(member.into());
+                    members.push(GroupMember::from(&member));
                 }
             } else {
                 basic_members.push(*user_id);

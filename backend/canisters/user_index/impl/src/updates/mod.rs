@@ -17,6 +17,7 @@ pub mod mark_local_user_index_full;
 pub mod mark_suspected_bot;
 pub mod modclub_callback;
 pub mod pay_for_diamond_membership;
+pub mod register_bot;
 pub mod register_external_achievement;
 pub mod remove_platform_moderator;
 pub mod remove_platform_operator;

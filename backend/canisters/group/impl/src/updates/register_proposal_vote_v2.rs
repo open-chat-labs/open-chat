@@ -46,7 +46,7 @@ fn register_proposal_vote_impl(args: Args, state: &mut RuntimeState) -> Response
                 .data
                 .chat
                 .members
-                .register_proposal_vote(user_id, args.message_index, now);
+                .register_proposal_vote(&user_id, args.message_index, now);
 
             handle_activity_notification(state);
             Success

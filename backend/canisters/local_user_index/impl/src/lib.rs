@@ -235,7 +235,7 @@ impl RuntimeState {
             canisters_in_pool: self.data.canister_pool.len() as u16,
             local_user_count: self.data.local_users.len() as u64,
             global_user_count: self.data.global_users.len() as u64,
-            bot_user_count: self.data.global_users.bots().len() as u64,
+            bot_user_count: self.data.global_users.legacy_bots().len() as u64,
             oc_controlled_bots: self.data.global_users.oc_controlled_bots().iter().copied().collect(),
             canister_upgrades_completed: canister_upgrades_metrics.completed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,

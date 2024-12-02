@@ -30,6 +30,34 @@ pub fn with_map_mut<F: FnOnce(&mut StableBTreeMap<Vec<u8>, Vec<u8>, Memory>) -> 
     MAP.with_borrow_mut(|m| f(&mut m.as_mut().unwrap().map))
 }
 
+pub fn garbage_collect(prefix: Vec<u8>) -> Result<u32, u32> {
+    assert!(!prefix.is_empty());
+
+    let mut total_count = 0;
+    with_map_mut(|m| {
+        // If < 2B instructions have been used so far, delete another 100 keys, or exit if complete
+        while ic_cdk::api::instruction_counter() < 2_000_000_000 {
+            let keys: Vec<_> = m
+                .range(prefix.clone()..)
+                .take_while(|(k, _)| k.starts_with(&prefix))
+                .map(|(k, _)| k)
+                .take(100)
+                .collect();
+
+            let batch_count = keys.len() as u32;
+            total_count += batch_count;
+            for key in keys {
+                m.remove(&key);
+            }
+            // If batch count < 100 then we are finished
+            if batch_count < 100 {
+                return Ok(total_count);
+            }
+        }
+        Err(total_count)
+    })
+}
+
 #[derive(Copy, Clone)]
 #[repr(u8)]
 pub enum KeyType {

@@ -124,7 +124,7 @@ fn process_new_user(
     let now = state.env.now();
 
     let mut original_username = None;
-    let username = match state.data.users.ensure_unique_username(&username) {
+    let username = match state.data.users.ensure_unique_username(&username, false) {
         Ok(_) => username,
         Err(new_username) => {
             original_username = Some(username);

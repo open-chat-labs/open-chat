@@ -54,17 +54,20 @@ fn delete_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Respo
     state
         .data
         .stable_memory_keys_to_garbage_collect
-        .push(KeyPrefix::Channel(ChannelKeyPrefix::new(channel_id)));
+        .push(KeyPrefix::Channel(ChannelKeyPrefix::new(channel_id)).to_vec());
 
     for message_index in channel.chat.events.thread_keys() {
         state
             .data
             .stable_memory_keys_to_garbage_collect
-            .push(KeyPrefix::ChannelThread(ChannelThreadKeyPrefix::new(
-                channel_id,
-                message_index,
-            )));
+            .push(KeyPrefix::ChannelThread(ChannelThreadKeyPrefix::new(channel_id, message_index)).to_vec());
     }
+
+    state
+        .data
+        .stable_memory_keys_to_garbage_collect
+        .push(group_chat_core::MembersKeyPrefix::Channel(channel_id.as_u32()).to_vec());
+
     crate::jobs::garbage_collect_stable_memory::start_job_if_required(state);
 
     state.data.events.push_event(
@@ -78,6 +81,10 @@ fn delete_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Respo
 
     for user_id in channel.chat.members.member_ids() {
         state.data.members.mark_member_left_channel(*user_id, channel_id, true, now);
+    }
+
+    if channel.chat.gate_config.value.is_some_and(|gc| gc.expiry.is_some()) {
+        state.data.expiring_members.remove_gate(Some(channel_id));
     }
 
     handle_activity_notification(state);

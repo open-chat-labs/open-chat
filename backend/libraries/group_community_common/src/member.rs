@@ -15,7 +15,7 @@ pub trait Member {
 pub trait Members {
     type Member: Member;
 
-    fn get(&self, user_id: &UserId) -> Option<&Self::Member>;
+    fn get(&self, user_id: &UserId) -> Option<Self::Member>;
 
     fn iter_members_who_can_lapse(&self) -> Box<dyn Iterator<Item = UserId> + '_>;
 
