@@ -149,6 +149,57 @@
     "blockUserFailed": "No se puede bloquear al usuario",
     "blockUserSucceeded": "El usuario ha sido bloqueado",
     "bots": {
+        "builder": {
+            "addAnother": "Agregar otro",
+            "addChoice": "Añadir una opción",
+            "addCommand": "Agregar comando",
+            "addParam": "Agregar un parámetro",
+            "choiceName": "Nombre de elección",
+            "choices": "Opciones",
+            "choicesInfo": "Si ingresa un conjunto de opciones para su parámetro, se le presentará al usuario un menú desplegable para elegir el valor correcto.",
+            "choiceValue": "Valor de elección",
+            "commandDescLabel": "Descripción del comando",
+            "commandDescPlaceholder": "Introduzca la descripción del comando",
+            "commandLabel": "Comando: /{name}",
+            "commandNameLabel": "Nombre del comando",
+            "commandNamePlaceholder": "Introduzca el nombre del comando",
+            "commandPermissionsDesc": "Describe los permisos que requiere este comando",
+            "commandPermissionsLabel": "Permisos de comando",
+            "descLabel": "Descripción del bot",
+            "descPlaceholder": "Ingresar la descripción del bot",
+            "endpointLabel": "Punto final del bot",
+            "endpointRules": "Debe ser un origen válido o un canisterID",
+            "iconLabel": "Icono de bot",
+            "maxLengthLabel": "Longitud máxima",
+            "maxLengthPlaceholder": "Introduzca la longitud máxima",
+            "maxValueLabel": "Valor máximo",
+            "maxValuePlaceholder": "Introduzca el valor máximo",
+            "minLengthLabel": "Longitud mínima",
+            "minLengthPlaceholder": "Introduzca la longitud mínima",
+            "minValueLabel": "Valor mínimo",
+            "minValuePlaceholder": "Introduzca el valor mínimo",
+            "nameLabel": "Nombre del bot",
+            "namePlaceholder": "Introduzca el nombre del bot",
+            "nameRules": "Debe ser único y contener únicamente caracteres alfanuméricos y guiones bajos.",
+            "optional": "opcional",
+            "paramDescLabel": "Descripción de parámetros",
+            "paramDescPlaceholder": "Introduzca la descripción del parámetro",
+            "paramLabel": "Parámetro: {name}",
+            "paramNameLabel": "Nombre del parámetro",
+            "paramNamePlaceholder": "Introduzca el nombre del parámetro",
+            "paramPlaceholderLabel": "Marcador de posición de parámetro",
+            "paramPlaceholderPlaceholder": "Introduzca un marcador de posición de parámetro",
+            "paramTypeLabel": "Tipo de parámetro",
+            "permSameAsMessage": "Igual que los permisos de mensajes",
+            "permScopeChat": "Charlar",
+            "permScopeCommunity": "Comunidad",
+            "permScopeMessage": "Mensaje",
+            "permScopeThread": "Hilo",
+            "required": "Parámetro requerido",
+            "requiredDesc": "¿Es este un parámetro obligatorio para el comando?",
+            "title": "Construir un bot",
+            "uptoN": "hasta {n}"
+        },
         "builtin": {
             "desc": "Este bot proporciona los comandos OpenChat integrados",
             "name": "Incorporado"
@@ -214,6 +265,9 @@
         "poll": {
             "desc": "Crear una encuesta en el chat actual"
         },
+        "register_bot": {
+            "desc": "Iniciar una propuesta para describir y registrar un nuevo bot con OpenChat"
+        },
         "search": {
             "desc": "Iniciar una búsqueda en el chat actual",
             "params": {
@@ -223,6 +277,9 @@
                     "placeholder": "Término de búsqueda"
                 }
             }
+        },
+        "update_bot": {
+            "desc": "Iniciar una propuesta para actualizar un bot de OpenChat existente"
         },
         "witch": {
             "desc": "Invocar a la bruja"

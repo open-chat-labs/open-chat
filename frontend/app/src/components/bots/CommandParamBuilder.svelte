@@ -81,11 +81,12 @@
 <Overlay>
     <ModalContent on:close>
         <div slot="header" class="header">
-            <Translatable resourceKey={i18nKey(`Param: ${param.name}`)}></Translatable>
+            <Translatable resourceKey={i18nKey("bots.builder.paramLabel", { name: param.name })}
+            ></Translatable>
         </div>
         <div class="body" slot="body">
             <section>
-                <Legend label={i18nKey("Parameter type")}></Legend>
+                <Legend label={i18nKey("bots.builder.paramTypeLabel")}></Legend>
                 <Select onchange={changeType} bind:value={param.kind}>
                     <option value={"string"}>
                         <Translatable resourceKey={i18nKey("String")}></Translatable>
@@ -104,13 +105,12 @@
             <section>
                 <Checkbox
                     id={`param_required`}
-                    label={i18nKey("Required parameter")}
+                    label={i18nKey("bots.builder.required")}
                     bind:checked={param.required}
                     align={"start"}>
-                    <Translatable resourceKey={i18nKey("Required parameter")} />
+                    <Translatable resourceKey={i18nKey("bots.builder.required")} />
                     <div class="info">
-                        <Translatable
-                            resourceKey={i18nKey("Is this a required parameter for the command")}
+                        <Translatable resourceKey={i18nKey("bots.builder.requiredDesc")}
                         ></Translatable>
                     </div>
                 </Checkbox>
@@ -118,55 +118,57 @@
             <section>
                 <Legend
                     required
-                    label={i18nKey("Parameter name")}
-                    rules={i18nKey(
-                        "Must be unique and contain alphanumeric characters and underscores only",
-                    )}></Legend>
+                    label={i18nKey("bots.builder.paramNameLabel")}
+                    rules={i18nKey("bots.builder.nameRules")}></Legend>
                 <ValidatingInput
                     error={errors.get(`${errorPath}_name`)}
                     minlength={3}
                     maxlength={25}
                     invalid={errors.has(`${errorPath}_name`)}
-                    placeholder={i18nKey("Enter parameter name")}
+                    placeholder={i18nKey("bots.builder.paramNamePlaceholder")}
                     bind:value={param.name} />
             </section>
             <section>
-                <Legend label={i18nKey("Parameter description")} rules={i18nKey("optional")}
-                ></Legend>
+                <Legend
+                    label={i18nKey("bots.builder.paramDescLabel")}
+                    rules={i18nKey("bots.builder.optional")}></Legend>
                 <Input
                     minlength={3}
                     maxlength={200}
-                    placeholder={i18nKey("Enter parameter descritpion")}
+                    placeholder={i18nKey("bots.builder.paramDescPlaceholder")}
                     bind:value={param.description} />
             </section>
             <section>
-                <Legend label={i18nKey("Parameter placeholder")} rules={i18nKey("optional")}
-                ></Legend>
+                <Legend
+                    label={i18nKey("bots.builder.paramPlaceholderLabel")}
+                    rules={i18nKey("bots.builder.optional")}></Legend>
                 <Input
                     minlength={3}
                     maxlength={200}
-                    placeholder={i18nKey("Enter parameter placeholder")}
+                    placeholder={i18nKey("bots.builder.paramPlaceholderPlaceholder")}
                     bind:value={param.placeholder} />
             </section>
             {#if param.kind === "string"}
                 <section class="minmax">
                     <div class="min">
                         <Legend
-                            label={i18nKey("Minimum length")}
-                            rules={i18nKey(`up to ${param.maxLength}`)}></Legend>
+                            label={i18nKey("bots.builder.minLengthLabel")}
+                            rules={i18nKey("bots.builder.uptoN", { n: param.maxLength.toString() })}
+                        ></Legend>
                         <NumberInput
                             min={0}
                             max={param.maxLength}
-                            placeholder={i18nKey("Enter minimum length")}
+                            placeholder={i18nKey("bots.builder.minLengthPlaceholder")}
                             bind:value={param.minLength} />
                     </div>
                     <div class="max">
-                        <Legend label={i18nKey("Maximum length")} rules={i18nKey("up to 1000")}
-                        ></Legend>
+                        <Legend
+                            label={i18nKey("bots.builder.maxLengthLabel")}
+                            rules={i18nKey("bots.builder.uptoN", { n: "1000" })}></Legend>
                         <NumberInput
                             min={param.minLength}
                             max={1000}
-                            placeholder={i18nKey("Enter maximum length")}
+                            placeholder={i18nKey("bots.builder.maxLengthPlaceholder")}
                             bind:value={param.maxLength} />
                     </div>
                 </section>
@@ -174,21 +176,23 @@
                 <section class="minmax">
                     <div class="min">
                         <Legend
-                            label={i18nKey("Minimum value")}
-                            rules={i18nKey(`up to ${param.maxValue}`)}></Legend>
+                            label={i18nKey("bots.builder.minValueLabel")}
+                            rules={i18nKey("bots.builder.uptoN", { n: param.maxValue.toString() })}
+                        ></Legend>
                         <NumberInput
                             min={0}
                             max={param.maxValue}
-                            placeholder={i18nKey("Enter minimum value")}
+                            placeholder={i18nKey("bots.builder.minValuePlaceholder")}
                             bind:value={param.minValue} />
                     </div>
                     <div class="max">
-                        <Legend label={i18nKey("Maximum value")} rules={i18nKey("up to 1000")}
-                        ></Legend>
+                        <Legend
+                            label={i18nKey("bots.builder.maxValueLabel")}
+                            rules={i18nKey("bots.builder.uptoN", { n: "1000" })}></Legend>
                         <NumberInput
                             min={param.minValue}
                             max={1000}
-                            placeholder={i18nKey("Enter maximum value")}
+                            placeholder={i18nKey("bots.builder.maxValuePlaceholder")}
                             bind:value={param.maxValue} />
                     </div>
                 </section>
@@ -196,12 +200,10 @@
 
             {#if param.kind === "string" || param.kind === "number"}
                 <section>
-                    <Legend label={i18nKey("Choices")}></Legend>
+                    <Legend label={i18nKey("bots.builder.choices")}></Legend>
                     <p class="info">
-                        <Translatable
-                            resourceKey={i18nKey(
-                                "If you enter a set of choices for your parameter, the user will be presented with a drop down to choose the correct value.",
-                            )}></Translatable>
+                        <Translatable resourceKey={i18nKey("bots.builder.choicesInfo")}
+                        ></Translatable>
                     </p>
                     <div class="choices">
                         {#each param.choices as choice, i}
@@ -212,7 +214,7 @@
                                         invalid={errors.has(`${errorPath}_choices_${i}_name`)}
                                         minlength={3}
                                         maxlength={100}
-                                        placeholder={i18nKey("Choice name")}
+                                        placeholder={i18nKey("bots.builder.choiceName")}
                                         bind:value={param.choices[i].name} />
                                 </div>
                                 <div class="choice-value">
@@ -221,7 +223,7 @@
                                         invalid={errors.has(`${errorPath}_choices_${i}_value`)}
                                         minlength={3}
                                         maxlength={100}
-                                        placeholder={i18nKey("Choice value")}
+                                        placeholder={i18nKey("bots.builder.choiceValue")}
                                         bind:value={param.choices[i].value} />
                                 </div>
                                 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -234,7 +236,8 @@
                         {/each}
                     </div>
                     <Link on:click={addChoice} underline={"never"}>
-                        <Translatable resourceKey={i18nKey("Add a choice")}></Translatable>
+                        <Translatable resourceKey={i18nKey("bots.builder.addChoice")}
+                        ></Translatable>
                     </Link>
                 </section>
             {/if}
@@ -243,7 +246,7 @@
         <div let:onClose slot="footer" class="footer">
             <ButtonGroup>
                 <Button secondary on:click={onAddAnother} small={!$mobileWidth} tiny={$mobileWidth}>
-                    <Translatable resourceKey={i18nKey("Add another")} />
+                    <Translatable resourceKey={i18nKey("bots.builder.addAnother")} />
                 </Button>
                 <Button on:click={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
                     <Translatable resourceKey={i18nKey("close")} />

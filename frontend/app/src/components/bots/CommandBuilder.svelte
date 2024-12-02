@@ -115,38 +115,39 @@
 <Overlay>
     <ModalContent on:close>
         <div slot="header">
-            <Translatable resourceKey={i18nKey(`Command: /${command.name}`)}></Translatable>
+            <Translatable resourceKey={i18nKey("bots.builder.commandLabel", { name: command.name })}
+            ></Translatable>
         </div>
         <div slot="body">
             <section>
                 <Legend
                     required
-                    label={i18nKey("Command name")}
-                    rules={i18nKey(
-                        "Must be unique and contain alphanumeric characters and underscores only",
-                    )}></Legend>
+                    label={i18nKey("bots.builder.commandNameLabel")}
+                    rules={i18nKey("bots.builder.nameRules")}></Legend>
                 <ValidatingInput
                     error={errors.get(`${errorPath}_name`)}
                     minlength={3}
                     maxlength={25}
                     invalid={errors.has(`${errorPath}_name`)}
-                    placeholder={i18nKey("Enter command name")}
+                    placeholder={i18nKey("bots.builder.commandNamePlaceholder")}
                     bind:value={command.name} />
             </section>
 
             <section>
-                <Legend label={i18nKey("Command description")} rules={i18nKey("optional")}></Legend>
+                <Legend
+                    label={i18nKey("bots.builder.commandDescLabel")}
+                    rules={i18nKey("bots.builder.optional")}></Legend>
                 <Input
                     minlength={3}
                     maxlength={200}
-                    placeholder={i18nKey("Enter command descritpion")}
+                    placeholder={i18nKey("bots.builder.commandDescPlaceholder")}
                     bind:value={command.description} />
             </section>
 
             <section>
                 <Legend
-                    label={i18nKey("Command permissions")}
-                    rules={i18nKey("Describe the permissions that this command requires")}></Legend>
+                    label={i18nKey("bots.builder.commandPermissionsLabel")}
+                    rules={i18nKey("bots.builder.commandPermissionsDesc")}></Legend>
                 <div class="tabs">
                     <!-- svelte-ignore a11y_click_events_have_key_events -->
                     <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -154,7 +155,8 @@
                         class="tab"
                         onclick={() => (permissionsTab = "chat")}
                         class:selected={permissionsTab === "chat"}>
-                        <Translatable resourceKey={i18nKey("Chat")}></Translatable>
+                        <Translatable resourceKey={i18nKey("bots.builder.permScopeChat")}
+                        ></Translatable>
                     </div>
                     <!-- svelte-ignore a11y_click_events_have_key_events -->
                     <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -162,7 +164,8 @@
                         class="tab"
                         onclick={() => (permissionsTab = "community")}
                         class:selected={permissionsTab === "community"}>
-                        <Translatable resourceKey={i18nKey("Community")}></Translatable>
+                        <Translatable resourceKey={i18nKey("bots.builder.permScopeCommunity")}
+                        ></Translatable>
                     </div>
                     <!-- svelte-ignore a11y_click_events_have_key_events -->
                     <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -170,7 +173,8 @@
                         class="tab"
                         onclick={() => (permissionsTab = "message")}
                         class:selected={permissionsTab === "message"}>
-                        <Translatable resourceKey={i18nKey("Message")}></Translatable>
+                        <Translatable resourceKey={i18nKey("bots.builder.permScopeMessage")}
+                        ></Translatable>
                     </div>
                     <!-- svelte-ignore a11y_click_events_have_key_events -->
                     <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -178,7 +182,8 @@
                         class="tab"
                         onclick={() => (permissionsTab = "thread")}
                         class:selected={permissionsTab === "thread"}>
-                        <Translatable resourceKey={i18nKey("Thread")}></Translatable>
+                        <Translatable resourceKey={i18nKey("bots.builder.permScopeThread")}
+                        ></Translatable>
                     </div>
                 </div>
                 {#if permissionsTab === "chat"}
@@ -214,7 +219,7 @@
                 {:else if permissionsTab === "thread"}
                     <Checkbox
                         id={`sync_thread_perm`}
-                        label={i18nKey("Same as message permissions")}
+                        label={i18nKey("bots.builder.permSameAsMessage")}
                         bind:checked={syncThreadPermissions}
                         on:change={toggleSync}
                         align={"start"}></Checkbox>
@@ -239,7 +244,8 @@
                         valid={!errors.has(`${errorPath}_param_${i}`)}
                         onSelect={() => onSelectParam(param, i)}
                         onDelete={() => onDeleteParam(param)}
-                        label={`Param: ${param.name}`}></SummaryButton>
+                        resourceKey={i18nKey("bots.builder.paramLabel", { name: param.name })}
+                    ></SummaryButton>
                 {/each}
             </section>
 
@@ -248,14 +254,14 @@
             {/if}
 
             <Link on:click={addParameter} underline={"never"}>
-                <Translatable resourceKey={i18nKey("Add a parameter")}></Translatable>
+                <Translatable resourceKey={i18nKey("bots.builder.addParam")}></Translatable>
             </Link>
         </div>
 
         <div let:onClose slot="footer" class="footer">
             <ButtonGroup>
                 <Button secondary on:click={onAddAnother} small={!$mobileWidth} tiny={$mobileWidth}>
-                    <Translatable resourceKey={i18nKey("Add another")} />
+                    <Translatable resourceKey={i18nKey("bots.builder.addAnother")} />
                 </Button>
                 <Button on:click={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
                     <Translatable resourceKey={i18nKey("close")} />

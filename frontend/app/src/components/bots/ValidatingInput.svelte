@@ -6,14 +6,22 @@
 
     let { error, value = $bindable(), ...props }: Props = $props();
     let showError = $state(false);
+    let timer = $state<number | undefined>(undefined);
+
+    function onfocus() {
+        timer = window.setTimeout(() => (showError = true), 500);
+    }
+
+    function onblur() {
+        if (timer) {
+            window.clearTimeout(timer);
+        }
+        showError = false;
+    }
 </script>
 
 <div class:error={error !== undefined && showError} class="validating-input">
-    <Input
-        onfocus={() => (showError = true)}
-        onblur={() => (showError = false)}
-        {...props}
-        bind:value>
+    <Input {onfocus} {onblur} {...props} bind:value>
         {#if error && showError}
             <ErrorMessage>{error}</ErrorMessage>
         {/if}

@@ -149,6 +149,57 @@
     "blockUserFailed": "Không thể chặn người dùng",
     "blockUserSucceeded": "Người dùng đã bị chặn",
     "bots": {
+        "builder": {
+            "addAnother": "Thêm một cái nữa",
+            "addChoice": "Thêm một lựa chọn",
+            "addCommand": "Thêm lệnh",
+            "addParam": "Thêm một tham số",
+            "choiceName": "Tên lựa chọn",
+            "choices": "Lựa chọn",
+            "choicesInfo": "Nếu bạn nhập một tập hợp các lựa chọn cho tham số của mình, người dùng sẽ thấy danh sách thả xuống để chọn giá trị chính xác.",
+            "choiceValue": "Giá trị lựa chọn",
+            "commandDescLabel": "Mô tả lệnh",
+            "commandDescPlaceholder": "Nhập mô tả lệnh",
+            "commandLabel": "Lệnh: /{name}",
+            "commandNameLabel": "Tên lệnh",
+            "commandNamePlaceholder": "Nhập tên lệnh",
+            "commandPermissionsDesc": "Mô tả các quyền mà lệnh này yêu cầu",
+            "commandPermissionsLabel": "Quyền lệnh",
+            "descLabel": "Mô tả bot",
+            "descPlaceholder": "Nhập mô tả bot",
+            "endpointLabel": "Điểm cuối của Bot",
+            "endpointRules": "Phải là nguồn gốc hợp lệ hoặc là một canisterID",
+            "iconLabel": "Biểu tượng bot",
+            "maxLengthLabel": "Chiều dài tối đa",
+            "maxLengthPlaceholder": "Nhập chiều dài tối đa",
+            "maxValueLabel": "Giá trị tối đa",
+            "maxValuePlaceholder": "Nhập giá trị tối đa",
+            "minLengthLabel": "Chiều dài tối thiểu",
+            "minLengthPlaceholder": "Nhập độ dài tối thiểu",
+            "minValueLabel": "Giá trị tối thiểu",
+            "minValuePlaceholder": "Nhập giá trị tối thiểu",
+            "nameLabel": "Tên bot",
+            "namePlaceholder": "Nhập tên bot",
+            "nameRules": "Phải là duy nhất và chỉ chứa các ký tự chữ và số và dấu gạch dưới",
+            "optional": "không bắt buộc",
+            "paramDescLabel": "Mô tả tham số",
+            "paramDescPlaceholder": "Nhập mô tả tham số",
+            "paramLabel": "Tham số: {name}",
+            "paramNameLabel": "Tên tham số",
+            "paramNamePlaceholder": "Nhập tên tham số",
+            "paramPlaceholderLabel": "Trình giữ chỗ tham số",
+            "paramPlaceholderPlaceholder": "Nhập tham số giữ chỗ",
+            "paramTypeLabel": "Kiểu tham số",
+            "permSameAsMessage": "Giống như quyền tin nhắn",
+            "permScopeChat": "Trò chuyện",
+            "permScopeCommunity": "Cộng đồng",
+            "permScopeMessage": "Tin nhắn",
+            "permScopeThread": "Chủ đề",
+            "required": "Tham số bắt buộc",
+            "requiredDesc": "Đây có phải là tham số bắt buộc cho lệnh không?",
+            "title": "Xây dựng một bot",
+            "uptoN": "lên đến {n}"
+        },
         "builtin": {
             "desc": "Bot này cung cấp các lệnh OpenChat tích hợp sẵn",
             "name": "Tích hợp sẵn"
@@ -214,6 +265,9 @@
         "poll": {
             "desc": "Tạo một cuộc thăm dò trong cuộc trò chuyện hiện tại"
         },
+        "register_bot": {
+            "desc": "Bắt đầu đề xuất mô tả và đăng ký bot mới với OpenChat"
+        },
         "search": {
             "desc": "Bắt đầu tìm kiếm trong cuộc trò chuyện hiện tại",
             "params": {
@@ -223,6 +277,9 @@
                     "placeholder": "Thuật ngữ tìm kiếm"
                 }
             }
+        },
+        "update_bot": {
+            "desc": "Bắt đầu đề xuất cập nhật bot OpenChat hiện có"
         },
         "witch": {
             "desc": "Triệu hồi phù thủy"

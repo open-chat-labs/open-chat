@@ -130,15 +130,16 @@ export type Bot = ExternalBot | InternalBot;
 
 export type CandidateExternalBot = Omit<ExternalBot, "id">;
 
-export function emptyBotInstance(): ExternalBot {
-    return {
-        kind: "external_bot",
-        name: "",
-        description: "",
-        id: "",
-        endpoint: "",
-        commands: [],
-    };
+export function emptyBotInstance(bot: ExternalBot | undefined): CandidateExternalBot {
+    return bot
+        ? structuredClone(bot)
+        : {
+              kind: "external_bot",
+              name: "",
+              description: "",
+              endpoint: "",
+              commands: [],
+          };
 }
 
 export type ExternalBot = {

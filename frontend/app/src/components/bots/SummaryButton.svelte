@@ -2,23 +2,23 @@
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import { iconSize } from "../../stores/iconSize";
     import Translatable from "../Translatable.svelte";
-    import { i18nKey } from "../../i18n/i18n";
+    import type { ResourceKey } from "openchat-client";
 
     interface Props {
-        label: string;
+        resourceKey: ResourceKey;
         valid: boolean;
         onDelete: () => void;
         onSelect: () => void;
     }
 
-    let { onDelete, onSelect, label, valid }: Props = $props();
+    let { onDelete, onSelect, resourceKey, valid }: Props = $props();
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div onclick={onSelect} class:invalid={!valid} class="command">
     <div class="name">
-        <Translatable resourceKey={i18nKey(label)}></Translatable>
+        <Translatable {resourceKey}></Translatable>
     </div>
     <div
         onclick={(e) => {

@@ -149,6 +149,57 @@
     "blockUserFailed": "无法加入黑名单",
     "blockUserSucceeded": "该用户已被加入黑名单",
     "bots": {
+        "builder": {
+            "addAnother": "添加另一个",
+            "addChoice": "添加选择",
+            "addCommand": "添加命令",
+            "addParam": "添加参数",
+            "choiceName": "选择名称",
+            "choices": "选择",
+            "choicesInfo": "如果您为参数输入一组选项，则用户会看到一个下拉菜单来选择正确的值。",
+            "choiceValue": "选择值",
+            "commandDescLabel": "命令描述",
+            "commandDescPlaceholder": "输入命令描述",
+            "commandLabel": "命令：/{name}",
+            "commandNameLabel": "命令名称",
+            "commandNamePlaceholder": "输入命令名称",
+            "commandPermissionsDesc": "描述此命令所需的权限",
+            "commandPermissionsLabel": "命令权限",
+            "descLabel": "机器人描述",
+            "descPlaceholder": "输入机器人描述",
+            "endpointLabel": "机器人端点",
+            "endpointRules": "必须是有效的来源或 canisterID",
+            "iconLabel": "机器人图标",
+            "maxLengthLabel": "最大长度",
+            "maxLengthPlaceholder": "输入最大长度",
+            "maxValueLabel": "最大值",
+            "maxValuePlaceholder": "输入最大值",
+            "minLengthLabel": "最小长度",
+            "minLengthPlaceholder": "输入最小长度",
+            "minValueLabel": "最小值",
+            "minValuePlaceholder": "输入最小值",
+            "nameLabel": "机器人名称",
+            "namePlaceholder": "输入机器人名称",
+            "nameRules": "必须是唯一的，并且仅包含字母数字字符和下划线",
+            "optional": "选修的",
+            "paramDescLabel": "参数说明",
+            "paramDescPlaceholder": "输入参数描述",
+            "paramLabel": "参数：{name}",
+            "paramNameLabel": "参数名称",
+            "paramNamePlaceholder": "输入参数名称",
+            "paramPlaceholderLabel": "参数占位符",
+            "paramPlaceholderPlaceholder": "输入参数占位符",
+            "paramTypeLabel": "参数类型",
+            "permSameAsMessage": "与消息权限相同",
+            "permScopeChat": "聊天",
+            "permScopeCommunity": "社区",
+            "permScopeMessage": "信息",
+            "permScopeThread": "线",
+            "required": "必需参数",
+            "requiredDesc": "这是命令的必需参数吗",
+            "title": "构建机器人",
+            "uptoN": "最多 {n}"
+        },
         "builtin": {
             "desc": "该机器人提供内置的 OpenChat 命令",
             "name": "内置"
@@ -214,6 +265,9 @@
         "poll": {
             "desc": "在当前聊天中创建投票"
         },
+        "register_bot": {
+            "desc": "发起一个提案来描述和注册一个使用 OpenChat 的新机器人"
+        },
         "search": {
             "desc": "在当前聊天中发起搜索",
             "params": {
@@ -223,6 +277,9 @@
                     "placeholder": "搜索词"
                 }
             }
+        },
+        "update_bot": {
+            "desc": "发起更新现有 OpenChat 机器人的提案"
         },
         "witch": {
             "desc": "召唤女巫"

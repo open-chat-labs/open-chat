@@ -149,6 +149,57 @@
     "blockUserFailed": "ユーザーをブロックできませんでした",
     "blockUserSucceeded": "ユーザーはブロックされました",
     "bots": {
+        "builder": {
+            "addAnother": "追加する",
+            "addChoice": "選択肢を追加",
+            "addCommand": "コマンドを追加",
+            "addParam": "パラメータを追加する",
+            "choiceName": "選択名",
+            "choices": "選択肢",
+            "choicesInfo": "パラメータの選択肢のセットを入力すると、ユーザーには正しい値を選択するためのドロップダウンが表示されます。",
+            "choiceValue": "選択値",
+            "commandDescLabel": "コマンドの説明",
+            "commandDescPlaceholder": "コマンドの説明を入力",
+            "commandLabel": "コマンド: /{name}",
+            "commandNameLabel": "コマンド名",
+            "commandNamePlaceholder": "コマンド名を入力",
+            "commandPermissionsDesc": "このコマンドに必要な権限について説明します",
+            "commandPermissionsLabel": "コマンド権限",
+            "descLabel": "ボットの説明",
+            "descPlaceholder": "ボットの説明を入力してください",
+            "endpointLabel": "ボットエンドポイント",
+            "endpointRules": "有効なオリジンまたはキャニスターIDである必要があります",
+            "iconLabel": "ボットアイコン",
+            "maxLengthLabel": "最大長",
+            "maxLengthPlaceholder": "最大長を入力してください",
+            "maxValueLabel": "最大値",
+            "maxValuePlaceholder": "最大値を入力してください",
+            "minLengthLabel": "最小長さ",
+            "minLengthPlaceholder": "最小の長さを入力してください",
+            "minValueLabel": "最小値",
+            "minValuePlaceholder": "最小値を入力",
+            "nameLabel": "ボット名",
+            "namePlaceholder": "ボット名を入力",
+            "nameRules": "一意であり、英数字とアンダースコアのみを含む必要があります",
+            "optional": "オプション",
+            "paramDescLabel": "パラメータの説明",
+            "paramDescPlaceholder": "パラメータの説明を入力してください",
+            "paramLabel": "パラメータ: {name}",
+            "paramNameLabel": "パラメータ名",
+            "paramNamePlaceholder": "パラメータ名を入力してください",
+            "paramPlaceholderLabel": "パラメータプレースホルダ",
+            "paramPlaceholderPlaceholder": "パラメータプレースホルダを入力",
+            "paramTypeLabel": "パラメータタイプ",
+            "permSameAsMessage": "メッセージの権限と同じ",
+            "permScopeChat": "チャット",
+            "permScopeCommunity": "コミュニティ",
+            "permScopeMessage": "メッセージ",
+            "permScopeThread": "糸",
+            "required": "必須パラメータ",
+            "requiredDesc": "これはコマンドの必須パラメータですか",
+            "title": "ボットを構築する",
+            "uptoN": "{n}まで"
+        },
         "builtin": {
             "desc": "このボットはOpenChatの組み込みコマンドを提供します",
             "name": "内蔵"
@@ -214,6 +265,9 @@
         "poll": {
             "desc": "現在のチャットでアンケートを作成する"
         },
+        "register_bot": {
+            "desc": "OpenChatで新しいボットを説明して登録するための提案を開始する"
+        },
         "search": {
             "desc": "現在のチャットで検索を開始する",
             "params": {
@@ -223,6 +277,9 @@
                     "placeholder": "検索語"
                 }
             }
+        },
+        "update_bot": {
+            "desc": "既存のOpenChatボットを更新する提案を開始する"
         },
         "witch": {
             "desc": "魔女を召喚する"

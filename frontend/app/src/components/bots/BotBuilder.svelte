@@ -3,6 +3,7 @@
         emptyBotInstance,
         validateBot,
         type CandidateExternalBot,
+        type ExternalBot,
         type SlashCommandPermissions,
         type SlashCommandSchema,
     } from "openchat-client";
@@ -19,15 +20,17 @@
 
     interface Props {
         valid: boolean;
+        bot: ExternalBot | undefined;
     }
 
-    let { valid = $bindable() }: Props = $props();
+    let { valid = $bindable(), bot }: Props = $props();
 
-    let candidate = $state<CandidateExternalBot>(emptyBotInstance());
+    let candidate = $state<CandidateExternalBot>(emptyBotInstance(bot));
     let selectedCommand = $state<SlashCommandSchema | undefined>(undefined);
     let selectedCommandIndex = $state<number | undefined>(undefined);
     let debug = $state(false);
     let errors = $derived(validateBot(candidate));
+    // let editing = $derived(bot !== undefined);
 
     $effect(() => {
         const isValid = errors.size === 0;
@@ -91,7 +94,7 @@
 {/if}
 
 <form onsubmit={onSubmit} class="bot">
-    <Legend label={i18nKey("Bot avatar image")} />
+    <Legend label={i18nKey("bots.builder.iconLabel")} />
     <div class="photo">
         <EditableAvatar
             overlayIcon
@@ -102,29 +105,29 @@
 
     <Legend
         required
-        label={i18nKey("Bot name")}
-        rules={i18nKey("Must be unique and contain alphanumeric characters and underscores only")}
-    ></Legend>
+        label={i18nKey("bots.builder.nameLabel")}
+        rules={i18nKey("bots.builder.nameRules")}></Legend>
     <ValidatingInput
         minlength={3}
         maxlength={25}
         invalid={errors.has("bot_name")}
-        placeholder={i18nKey("Enter bot name")}
+        placeholder={i18nKey("bots.builder.namePlaceholder")}
         error={errors.get("bot_name")}
         bind:value={candidate.name}>
     </ValidatingInput>
 
-    <Legend label={i18nKey("Bot desription")} rules={i18nKey("optional")}></Legend>
+    <Legend label={i18nKey("bots.builder.descLabel")} rules={i18nKey("bots.builder.optional")}
+    ></Legend>
     <Input
         minlength={3}
         maxlength={200}
-        placeholder={i18nKey("Enter bot descritpion")}
+        placeholder={i18nKey("bots.builder.descPlaceholder")}
         bind:value={candidate.description} />
 
     <Legend
-        label={i18nKey("Bot endpoint")}
+        label={i18nKey("bots.builder.endpointLabel")}
         required
-        rules={i18nKey("The url origin of your bot server")}></Legend>
+        rules={i18nKey("bots.builder.endpointRules")}></Legend>
     <ValidatingInput
         minlength={3}
         maxlength={200}
@@ -140,7 +143,8 @@
                     valid={!errors.has(`command_${i}`)}
                     onSelect={() => onSelectCommand(command, i)}
                     onDelete={() => onDeleteCommand(command)}
-                    label={`Command: /${command.name}`}></SummaryButton>
+                    resourceKey={i18nKey("bots.builder.commandLabel", { name: command.name })}
+                ></SummaryButton>
             {/each}
         </div>
 
@@ -149,7 +153,7 @@
         {/if}
 
         <Link on:click={addCommand} underline="never">
-            <Translatable resourceKey={i18nKey("Add command")} />
+            <Translatable resourceKey={i18nKey("bots.builder.addCommand")} />
         </Link>
     </div>
 
