@@ -1,12 +1,13 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
 use crate::{mutate_state, Data};
+use candid::Principal;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
 use tracing::info;
-use types::CanisterId;
+use types::{CanisterId, Chat};
 use user_canister::post_upgrade::Args;
 
 #[post_upgrade]
@@ -38,6 +39,7 @@ fn post_upgrade(args: Args) {
     mutate_state(|state| {
         let now = state.env.now();
         for chat in state.data.direct_chats.iter_mut() {
+            chat.events.set_chat(Chat::Direct(Principal::from(chat.them).into()));
             chat.events.remove_spurious_video_call_in_progress(now);
 
             let count_removed = chat.events.prune_updated_events(now);

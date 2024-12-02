@@ -2907,7 +2907,6 @@ dependencies = [
  "lazy_static",
  "msgpack",
  "proptest",
- "rand 0.8.5",
  "regex-lite",
  "search",
  "serde",
@@ -7290,6 +7289,12 @@ version = "0.1.0"
 dependencies = [
  "ic-cdk 0.16.0",
  "ic-stable-structures",
+ "ic_principal",
+ "msgpack",
+ "rand 0.8.5",
+ "serde",
+ "serde_bytes",
+ "types",
 ]
 
 [[package]]

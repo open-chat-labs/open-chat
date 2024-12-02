@@ -17,4 +17,3 @@ pub use crate::chat_events_list::*;
 pub use crate::events_map::*;
 pub use crate::message_content_internal::*;
 pub use crate::metrics::*;
-pub use crate::stable_memory::key::*;
