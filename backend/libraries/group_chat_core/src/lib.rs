@@ -31,7 +31,6 @@ use utils::text_validation::{
 
 mod invited_users;
 mod members;
-mod members_map;
 mod mentions;
 mod roles;
 
@@ -58,7 +57,6 @@ pub struct GroupChatCore {
     pub pinned_messages_removed: BTreeSet<(TimestampMillis, MessageIndex)>,
     pub permissions: Timestamped<GroupPermissions>,
     pub date_last_pinned: Option<TimestampMillis>,
-    #[serde(alias = "gate")]
     pub gate_config: Timestamped<Option<AccessGateConfigInternal>>,
     pub invited_users: InvitedUsers,
     pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,

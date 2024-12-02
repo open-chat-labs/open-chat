@@ -1,16 +1,13 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
-use crate::timer_job_types::MigrateMembersToStableMemoryJob;
 use crate::{read_state, Data};
 use canister_logger::LogEntry;
-use canister_timer_jobs::Job;
 use canister_tracing_macros::trace;
 use group_canister::post_upgrade::Args;
 use ic_cdk::post_upgrade;
 use instruction_counts_log::InstructionCountFunctionId;
 use stable_memory::get_reader;
 use tracing::info;
-use types::{Chat, MultiUserChat};
 
 #[post_upgrade]
 #[trace]
@@ -20,13 +17,10 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
-    let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
+    let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
 
-    let chat_id = ic_cdk::id().into();
-    data.chat.events.set_chat(Chat::Group(chat_id));
-    data.chat.members.set_member_default_timestamps();
-    data.chat.members.set_chat(MultiUserChat::Group(chat_id));
+    assert!(data.members_migrated_to_stable_memory);
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
@@ -41,6 +35,4 @@ fn post_upgrade(args: Args) {
             .data
             .record_instructions_count(InstructionCountFunctionId::PostUpgrade, now)
     });
-
-    MigrateMembersToStableMemoryJob.execute();
 }

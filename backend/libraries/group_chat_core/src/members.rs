@@ -1,5 +1,4 @@
 use crate::members::stable_memory::MembersStableStorage;
-use crate::members_map::{HeapMembersMap, MembersMap};
 use crate::mentions::Mentions;
 use crate::roles::GroupRoleInternal;
 use crate::AccessRulesInternal;
@@ -10,9 +9,8 @@ use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::cell::OnceCell;
 use std::cmp::max;
-use std::collections::{BTreeMap, BTreeSet, VecDeque};
+use std::collections::{BTreeMap, BTreeSet};
 use std::ops::Deref;
-use tracing::info;
 use types::{
     is_default, EventIndex, GroupMember, GroupPermissions, MessageIndex, MultiUserChat, TimestampMillis, Timestamped, UserId,
     UserType, Version,
@@ -27,9 +25,8 @@ const MAX_MEMBERS_PER_GROUP: u32 = 100_000;
 
 #[derive(Serialize, Deserialize)]
 pub struct GroupMembers {
-    members: HeapMembersMap,
-    #[serde(default = "default_stable_memory_members_map")]
-    stable_memory_members_map: MembersStableStorage,
+    #[serde(alias = "stable_memory_members_map")]
+    members_map: MembersStableStorage,
     member_ids: BTreeSet<UserId>,
     owners: BTreeSet<UserId>,
     admins: BTreeSet<UserId>,
@@ -41,61 +38,10 @@ pub struct GroupMembers {
     suspended: BTreeSet<UserId>,
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
     latest_update_removed: TimestampMillis,
-    #[serde(default)]
-    migrate_to_stable_memory_queue: VecDeque<UserId>,
-    #[serde(default)]
-    migration_to_stable_memory_complete: bool,
-}
-
-fn default_stable_memory_members_map() -> MembersStableStorage {
-    MembersStableStorage::new_empty()
 }
 
 #[allow(clippy::too_many_arguments)]
 impl GroupMembers {
-    // TODO remove this once groups and communities are upgraded
-    pub fn reset_migration_to_stable_memory_complete_flag(&mut self) {
-        self.migration_to_stable_memory_complete = false;
-    }
-
-    pub fn migrate_next_batch_to_stable_memory(&mut self) -> bool {
-        if self.migration_to_stable_memory_complete {
-            return true;
-        }
-        if self.migrate_to_stable_memory_queue.is_empty() {
-            // This is the first iteration, populate the queue
-            self.migrate_to_stable_memory_queue = self.member_ids.iter().copied().collect();
-        }
-
-        // Migrate 100 at a time and exit if we exceed 2B instructions
-        let mut count = 0;
-        while !self.migrate_to_stable_memory_queue.is_empty() && ic_cdk::api::instruction_counter() < 2_000_000_000 {
-            for _ in 0..100 {
-                if let Some(next) = self.migrate_to_stable_memory_queue.pop_front() {
-                    let member = self.members.get(&next).unwrap();
-                    self.stable_memory_members_map.insert(member);
-                    count += 1
-                } else {
-                    break;
-                }
-            }
-        }
-
-        info!(count, "Migrated users to stable memory");
-
-        let complete = self.migrate_to_stable_memory_queue.is_empty();
-        if complete {
-            self.migration_to_stable_memory_complete = true;
-        }
-        complete
-    }
-
-    pub fn set_member_default_timestamps(&mut self) {
-        for member in self.members.values_mut() {
-            member.set_default_timestamps();
-        }
-    }
-
     pub fn new(creator_user_id: UserId, user_type: UserType, chat: MultiUserChat, now: TimestampMillis) -> GroupMembers {
         let member = GroupMemberInternal {
             user_id: creator_user_id,
@@ -116,8 +62,7 @@ impl GroupMembers {
         };
 
         GroupMembers {
-            members: HeapMembersMap::new(member.clone()),
-            stable_memory_members_map: MembersStableStorage::new(chat, member),
+            members_map: MembersStableStorage::new(chat, member),
             member_ids: [creator_user_id].into_iter().collect(),
             owners: [creator_user_id].into_iter().collect(),
             admins: BTreeSet::new(),
@@ -133,18 +78,15 @@ impl GroupMembers {
             suspended: BTreeSet::new(),
             updates: BTreeSet::new(),
             latest_update_removed: 0,
-            migrate_to_stable_memory_queue: VecDeque::default(),
-            migration_to_stable_memory_complete: true,
         }
     }
 
     pub fn set_chat(&mut self, chat: MultiUserChat) {
-        self.stable_memory_members_map.set_chat(chat);
+        self.members_map.set_chat(chat);
     }
 
     pub fn read_members_as_bytes_from_stable_memory(&self, after: Option<UserId>) -> Vec<ByteBuf> {
-        self.stable_memory_members_map
-            .read_members_as_bytes(after, 2 * ONE_MB as usize)
+        self.members_map.read_members_as_bytes(after, 2 * ONE_MB as usize)
     }
 
     pub fn write_members_from_bytes_to_stable_memory(chat: MultiUserChat, members: Vec<ByteBuf>) -> Option<UserId> {
@@ -182,7 +124,7 @@ impl GroupMembers {
                 user_type,
                 lapsed: Timestamped::default(),
             };
-            self.insert_internal(member.clone());
+            self.members_map.insert(member.clone());
             if user_type.is_bot() {
                 self.bots.insert(user_id, user_type);
             }
@@ -197,7 +139,7 @@ impl GroupMembers {
     }
 
     pub fn remove(&mut self, user_id: UserId, now: TimestampMillis) -> Option<GroupMemberInternal> {
-        if let Some(member) = self.remove_internal(&user_id) {
+        if let Some(member) = self.members_map.remove(&user_id) {
             match member.role.value {
                 GroupRoleInternal::Owner => self.owners.remove(&user_id),
                 GroupRoleInternal::Admin => self.admins.remove(&user_id),
@@ -267,7 +209,7 @@ impl GroupMembers {
     }
 
     pub fn get(&self, user_id: &UserId) -> Option<GroupMemberInternal> {
-        self.get_internal(user_id)
+        self.members_map.get(user_id)
     }
 
     pub fn get_bot(&self, bot_user_id: &UserId) -> Option<GroupMemberInternal> {
@@ -283,11 +225,11 @@ impl GroupMembers {
         user_id: &UserId,
         update_fn: F,
     ) -> Option<bool> {
-        let mut member = self.get_internal(user_id)?;
+        let mut member = self.members_map.get(user_id)?;
 
         let updated = update_fn(&mut member);
         if updated {
-            self.insert_internal(member);
+            self.members_map.insert(member);
         }
         Some(updated)
     }
@@ -343,7 +285,7 @@ impl GroupMembers {
             }
         }
 
-        let member = match self.get_internal(&user_id) {
+        let member = match self.members_map.get(&user_id) {
             Some(p) => p,
             None => return TargetUserNotInGroup,
         };
@@ -544,26 +486,8 @@ impl GroupMembers {
         removed.len() as u32
     }
 
-    fn get_internal(&self, user_id: &UserId) -> Option<GroupMemberInternal> {
-        if self.migration_to_stable_memory_complete {
-            self.stable_memory_members_map.get(user_id)
-        } else {
-            self.members.get(user_id)
-        }
-    }
-
-    fn insert_internal(&mut self, member: GroupMemberInternal) {
-        self.members.insert(member.clone());
-        self.stable_memory_members_map.insert(member);
-    }
-
-    fn remove_internal(&mut self, user_id: &UserId) -> Option<GroupMemberInternal> {
-        self.stable_memory_members_map.remove(user_id);
-        self.members.remove(user_id)
-    }
-
     #[cfg(test)]
-    fn check_invariants(&self, stable_map: bool) {
+    fn check_invariants(&self) {
         let mut member_ids = BTreeSet::new();
         let mut owners = BTreeSet::new();
         let mut admins = BTreeSet::new();
@@ -572,7 +496,7 @@ impl GroupMembers {
         let mut lapsed = BTreeSet::new();
         let mut suspended = BTreeSet::new();
 
-        let all_members = if stable_map { self.stable_memory_members_map.all_members() } else { self.members.all_members() };
+        let all_members = self.members_map.all_members();
 
         for member in all_members {
             member_ids.insert(member.user_id);
@@ -691,18 +615,6 @@ pub struct GroupMemberInternal {
 }
 
 impl GroupMemberInternal {
-    pub fn set_default_timestamps(&mut self) {
-        if self.role.timestamp <= self.date_added {
-            self.role.timestamp = 0;
-        }
-        if self.notifications_muted.timestamp <= self.date_added {
-            self.notifications_muted.timestamp = 0;
-        }
-        if self.lapsed.timestamp <= self.date_added {
-            self.lapsed.timestamp = 0;
-        }
-    }
-
     pub fn user_id(&self) -> UserId {
         self.user_id
     }
@@ -870,7 +782,8 @@ impl VerifiedGroupMember<'_> {
     }
 
     fn resolve_member(&self) -> &GroupMemberInternal {
-        self.member.get_or_init(|| self.members.get_internal(&self.user_id).unwrap())
+        self.member
+            .get_or_init(|| self.members.members_map.get(&self.user_id).unwrap())
     }
 }
 
