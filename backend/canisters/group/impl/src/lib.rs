@@ -7,7 +7,7 @@ use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use chat_events::{GroupChatThreadKeyPrefix, KeyPrefix, Reader};
+use chat_events::Reader;
 use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
@@ -24,6 +24,7 @@ use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
+use stable_memory_map::{ChatEventKeyPrefix, KeyPrefix};
 use std::cell::RefCell;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{HashMap, HashSet};
@@ -361,7 +362,9 @@ impl RuntimeState {
         for thread in result.threads {
             self.data
                 .stable_memory_keys_to_garbage_collect
-                .push(KeyPrefix::GroupChatThread(GroupChatThreadKeyPrefix::new(thread.root_message_index)).to_vec());
+                .push(KeyPrefix::from(ChatEventKeyPrefix::new_from_group_chat(Some(
+                    thread.root_message_index,
+                ))));
         }
         jobs::garbage_collect_stable_memory::start_job_if_required(self);
     }
@@ -474,7 +477,7 @@ struct Data {
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
     #[serde(default)]
     members_migrated_to_stable_memory: bool,
-    stable_memory_keys_to_garbage_collect: Vec<Vec<u8>>,
+    stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {

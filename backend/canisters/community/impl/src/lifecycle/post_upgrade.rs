@@ -11,7 +11,7 @@ use ic_cdk::post_upgrade;
 use instruction_counts_log::InstructionCountFunctionId;
 use stable_memory::get_reader;
 use tracing::info;
-use types::MultiUserChat;
+use types::{Chat, MultiUserChat};
 
 #[post_upgrade]
 #[trace]
@@ -26,6 +26,7 @@ fn post_upgrade(args: Args) {
 
     let community_id = ic_cdk::id().into();
     for channel in data.channels.iter_mut() {
+        channel.chat.events.set_chat(Chat::Channel(community_id, channel.id));
         channel.chat.members.set_member_default_timestamps();
         channel
             .chat

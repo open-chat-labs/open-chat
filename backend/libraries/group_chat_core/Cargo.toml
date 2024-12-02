@@ -28,5 +28,4 @@ utils = { path = "../utils" }
 ic-stable-structures = { workspace = true }
 msgpack = { path = "../msgpack" }
 proptest = { workspace = true }
-rand = { workspace = true }
 test-strategy = { workspace = true }

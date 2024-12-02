@@ -7,7 +7,7 @@ use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use chat_events::{ChannelThreadKeyPrefix, ChatMetricsInternal, KeyPrefix};
+use chat_events::ChatMetricsInternal;
 use community_canister::EventsResponse;
 use constants::MINUTE_IN_MS;
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
@@ -28,6 +28,7 @@ use rand::rngs::StdRng;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
+use stable_memory_map::{ChatEventKeyPrefix, KeyPrefix};
 use std::cell::RefCell;
 use std::ops::Deref;
 use std::time::Duration;
@@ -241,9 +242,12 @@ impl RuntimeState {
             }
             final_prize_payments.extend(result.final_prize_payments);
             for thread in result.threads {
-                self.data.stable_memory_keys_to_garbage_collect.push(
-                    KeyPrefix::ChannelThread(ChannelThreadKeyPrefix::new(channel.id, thread.root_message_index)).to_vec(),
-                );
+                self.data
+                    .stable_memory_keys_to_garbage_collect
+                    .push(KeyPrefix::from(ChatEventKeyPrefix::new_from_channel(
+                        channel.id,
+                        Some(thread.root_message_index),
+                    )));
             }
         }
         jobs::garbage_collect_stable_memory::start_job_if_required(self);
@@ -366,7 +370,7 @@ struct Data {
     user_cache: UserCache,
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
     #[serde(default)]
-    stable_memory_keys_to_garbage_collect: Vec<Vec<u8>>,
+    stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
     #[serde(default)]
     members_migrated_to_stable_memory: bool,
 }
