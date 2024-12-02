@@ -361,9 +361,7 @@ impl RuntimeState {
         for thread in result.threads {
             self.data
                 .stable_memory_keys_to_garbage_collect
-                .push(KeyPrefix::GroupChatThread(GroupChatThreadKeyPrefix::new(
-                    thread.root_message_index,
-                )));
+                .push(KeyPrefix::GroupChatThread(GroupChatThreadKeyPrefix::new(thread.root_message_index)).to_vec());
         }
         jobs::garbage_collect_stable_memory::start_job_if_required(self);
     }
@@ -420,7 +418,7 @@ impl RuntimeState {
                 .unwrap_or_default(),
             event_store_client_info: self.data.event_store_client.info(),
             timer_jobs: self.data.timer_jobs.len() as u32,
-            stable_memory_event_migration_complete: self.data.stable_memory_event_migration_complete,
+            members_migrated_to_stable_memory: self.data.members_migrated_to_stable_memory,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -474,8 +472,9 @@ struct Data {
     expiring_member_actions: ExpiringMemberActions,
     user_cache: UserCache,
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
-    stable_memory_event_migration_complete: bool,
-    stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
+    #[serde(default)]
+    members_migrated_to_stable_memory: bool,
+    stable_memory_keys_to_garbage_collect: Vec<Vec<u8>>,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -573,8 +572,8 @@ impl Data {
             expiring_member_actions: ExpiringMemberActions::default(),
             user_cache: UserCache::default(),
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
-            stable_memory_event_migration_complete: true,
             stable_memory_keys_to_garbage_collect: Vec::new(),
+            members_migrated_to_stable_memory: true,
         }
     }
 
@@ -730,7 +729,7 @@ pub struct Metrics {
     pub serialized_chat_state_bytes: u64,
     pub event_store_client_info: EventStoreClientInfo,
     pub timer_jobs: u32,
-    pub stable_memory_event_migration_complete: bool,
+    pub members_migrated_to_stable_memory: bool,
     pub canister_ids: CanisterIds,
 }
 

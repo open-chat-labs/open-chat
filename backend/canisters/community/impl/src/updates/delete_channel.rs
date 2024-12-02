@@ -54,17 +54,20 @@ fn delete_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Respo
     state
         .data
         .stable_memory_keys_to_garbage_collect
-        .push(KeyPrefix::Channel(ChannelKeyPrefix::new(channel_id)));
+        .push(KeyPrefix::Channel(ChannelKeyPrefix::new(channel_id)).to_vec());
 
     for message_index in channel.chat.events.thread_keys() {
         state
             .data
             .stable_memory_keys_to_garbage_collect
-            .push(KeyPrefix::ChannelThread(ChannelThreadKeyPrefix::new(
-                channel_id,
-                message_index,
-            )));
+            .push(KeyPrefix::ChannelThread(ChannelThreadKeyPrefix::new(channel_id, message_index)).to_vec());
     }
+
+    state
+        .data
+        .stable_memory_keys_to_garbage_collect
+        .push(group_chat_core::MembersKeyPrefix::Channel(channel_id.as_u32()).to_vec());
+
     crate::jobs::garbage_collect_stable_memory::start_job_if_required(state);
 
     state.data.events.push_event(

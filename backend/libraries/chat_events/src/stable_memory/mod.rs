@@ -15,33 +15,6 @@ pub mod key;
 #[cfg(test)]
 mod tests;
 
-pub fn garbage_collect(prefix: KeyPrefix) -> Result<u32, u32> {
-    let start = Key::new(prefix.clone(), EventIndex::default());
-    let mut total_count = 0;
-    with_map_mut(|m| {
-        // If < 1B instructions have been used so far, delete another 100 keys, or exit if complete
-        while ic_cdk::api::instruction_counter() < 1_000_000_000 {
-            let keys: Vec<_> = m
-                .range(start.to_vec()..)
-                .map_while(|(k, _)| Key::try_from(k.as_slice()).ok())
-                .take_while(|k| *k.prefix() == prefix)
-                .take(100)
-                .collect();
-
-            let batch_count = keys.len() as u32;
-            total_count += batch_count;
-            for key in keys {
-                m.remove(&key.to_vec());
-            }
-            // If batch count < 100 then we are finished
-            if batch_count < 100 {
-                return Ok(total_count);
-            }
-        }
-        Err(total_count)
-    })
-}
-
 // Used to efficiently read all events from stable memory when migrating a group into a community
 pub fn read_events_as_bytes(chat: Chat, after: Option<EventContext>, max_bytes: usize) -> Vec<(EventContext, ByteBuf)> {
     let key = match after {

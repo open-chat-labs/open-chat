@@ -2,7 +2,7 @@ use crate::{generate_msgpack_query_call, generate_msgpack_update_call};
 use community_canister::*;
 use ic_stable_structures::memory_manager::MemoryId;
 
-pub const CHAT_EVENTS_MEMORY_ID: MemoryId = MemoryId::new(3);
+pub const STABLE_MEMORY_MAP_MEMORY_ID: MemoryId = MemoryId::new(3);
 
 // Queries
 generate_msgpack_query_call!(channel_summary);

@@ -87,7 +87,7 @@ impl GroupChatCore {
         external_url: Option<String>,
         now: TimestampMillis,
     ) -> GroupChatCore {
-        let members = GroupMembers::new(created_by, created_by_user_type, now);
+        let members = GroupMembers::new(created_by, created_by_user_type, chat, now);
         let events = ChatEvents::new_group_chat(
             chat,
             name.clone(),
