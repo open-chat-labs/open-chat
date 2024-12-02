@@ -400,16 +400,22 @@ mod tests {
                 let prefix = ChatEventKeyPrefix::new_from_direct_chat(user_id.into(), thread_root_message_index);
                 let event_index = EventIndex::from(thread_rng().next_u32());
                 let key = Key::from(prefix.create_key(event_index));
-                let chat_key = ChatEventKey::try_from(key).unwrap();
+                let event_key = ChatEventKey::try_from(key.clone()).unwrap();
 
                 assert_eq!(
-                    *chat_key.0.first().unwrap(),
+                    *event_key.0.first().unwrap(),
                     if thread { KeyType::DirectChatThreadEvent } else { KeyType::DirectChatEvent } as u8
                 );
-                assert_eq!(chat_key.0.len(), if thread { 20 } else { 16 });
-                assert!(chat_key.matches_prefix(&prefix));
-                assert!(chat_key.matches_chat(&Chat::Direct(user_id.into())));
-                assert_eq!(chat_key.event_index(), event_index);
+                assert_eq!(event_key.0.len(), if thread { 20 } else { 16 });
+                assert!(event_key.matches_prefix(&prefix));
+                assert!(event_key.matches_chat(&Chat::Direct(user_id.into())));
+                assert_eq!(event_key.event_index(), event_index);
+
+                let serialized = msgpack::serialize_then_unwrap(&event_key);
+                assert_eq!(serialized.len(), event_key.0.len() + 2);
+                let deserialized: ChatEventKey = msgpack::deserialize_then_unwrap(&serialized);
+                assert_eq!(deserialized, event_key);
+                assert_eq!(deserialized.0, key.0);
             }
         }
     }
@@ -422,17 +428,23 @@ mod tests {
                 let prefix = ChatEventKeyPrefix::new_from_group_chat(thread_root_message_index);
                 let event_index = EventIndex::from(thread_rng().next_u32());
                 let key = Key::from(prefix.create_key(event_index));
-                let chat_key = ChatEventKey::try_from(key).unwrap();
+                let event_key = ChatEventKey::try_from(key.clone()).unwrap();
 
                 assert_eq!(
-                    *chat_key.0.first().unwrap(),
+                    *event_key.0.first().unwrap(),
                     if thread { KeyType::GroupChatThreadEvent } else { KeyType::GroupChatEvent } as u8
                 );
-                assert_eq!(chat_key.0.len(), if thread { 9 } else { 5 });
-                assert!(chat_key.matches_prefix(&prefix));
-                assert!(chat_key.matches_chat(&Chat::Group(Principal::anonymous().into())));
-                assert_eq!(chat_key.event_index(), event_index);
-                assert_eq!(chat_key.thread_root_message_index(), thread_root_message_index);
+                assert_eq!(event_key.0.len(), if thread { 9 } else { 5 });
+                assert!(event_key.matches_prefix(&prefix));
+                assert!(event_key.matches_chat(&Chat::Group(Principal::anonymous().into())));
+                assert_eq!(event_key.event_index(), event_index);
+                assert_eq!(event_key.thread_root_message_index(), thread_root_message_index);
+
+                let serialized = msgpack::serialize_then_unwrap(&event_key);
+                assert_eq!(serialized.len(), event_key.0.len() + 2);
+                let deserialized: ChatEventKey = msgpack::deserialize_then_unwrap(&serialized);
+                assert_eq!(deserialized, event_key);
+                assert_eq!(deserialized.0, key.0);
             }
         }
     }
@@ -446,16 +458,22 @@ mod tests {
                 let prefix = ChatEventKeyPrefix::new_from_channel(channel_id, thread_root_message_index);
                 let event_index = EventIndex::from(thread_rng().next_u32());
                 let key = Key::from(prefix.create_key(event_index));
-                let chat_key = ChatEventKey::try_from(key).unwrap();
+                let event_key = ChatEventKey::try_from(key.clone()).unwrap();
 
                 assert_eq!(
-                    *chat_key.0.first().unwrap(),
+                    *event_key.0.first().unwrap(),
                     if thread { KeyType::ChannelThreadEvent } else { KeyType::ChannelEvent } as u8
                 );
-                assert_eq!(chat_key.0.len(), if thread { 13 } else { 9 });
-                assert!(chat_key.matches_prefix(&prefix));
-                assert!(chat_key.matches_chat(&Chat::Channel(Principal::anonymous().into(), channel_id)));
-                assert_eq!(chat_key.event_index(), event_index);
+                assert_eq!(event_key.0.len(), if thread { 13 } else { 9 });
+                assert!(event_key.matches_prefix(&prefix));
+                assert!(event_key.matches_chat(&Chat::Channel(Principal::anonymous().into(), channel_id)));
+                assert_eq!(event_key.event_index(), event_index);
+
+                let serialized = msgpack::serialize_then_unwrap(&event_key);
+                assert_eq!(serialized.len(), event_key.0.len() + 2);
+                let deserialized: ChatEventKey = msgpack::deserialize_then_unwrap(&serialized);
+                assert_eq!(deserialized, event_key);
+                assert_eq!(deserialized.0, key.0);
             }
         }
     }
@@ -467,12 +485,18 @@ mod tests {
             let user_id = UserId::from(Principal::from_slice(&user_id_bytes));
             let prefix = MemberKeyPrefix::new_from_group();
             let key = Key::from(prefix.create_key(user_id));
-            let member_key = MemberKey::try_from(key).unwrap();
+            let member_key = MemberKey::try_from(key.clone()).unwrap();
 
             assert_eq!(*member_key.0.first().unwrap(), KeyType::GroupMember as u8);
             assert_eq!(member_key.0.len(), 11);
             assert!(member_key.matches_prefix(&prefix));
             assert_eq!(member_key.user_id(), user_id);
+
+            let serialized = msgpack::serialize_then_unwrap(&member_key);
+            assert_eq!(serialized.len(), member_key.0.len() + 2);
+            let deserialized: MemberKey = msgpack::deserialize_then_unwrap(&serialized);
+            assert_eq!(deserialized, member_key);
+            assert_eq!(deserialized.0, key.0);
         }
     }
 
@@ -484,12 +508,18 @@ mod tests {
             let user_id = UserId::from(Principal::from_slice(&user_id_bytes));
             let prefix = MemberKeyPrefix::new_from_channel(channel_id);
             let key = Key::from(prefix.create_key(user_id));
-            let member_key = MemberKey::try_from(key).unwrap();
+            let member_key = MemberKey::try_from(key.clone()).unwrap();
 
             assert_eq!(*member_key.0.first().unwrap(), KeyType::ChannelMember as u8);
             assert_eq!(member_key.0.len(), 15);
             assert!(member_key.matches_prefix(&prefix));
             assert_eq!(member_key.user_id(), user_id);
+
+            let serialized = msgpack::serialize_then_unwrap(&member_key);
+            assert_eq!(serialized.len(), member_key.0.len() + 2);
+            let deserialized: MemberKey = msgpack::deserialize_then_unwrap(&serialized);
+            assert_eq!(deserialized, member_key);
+            assert_eq!(deserialized.0, key.0);
         }
     }
 
@@ -500,12 +530,18 @@ mod tests {
             let user_id = UserId::from(Principal::from_slice(&user_id_bytes));
             let prefix = MemberKeyPrefix::new_from_community();
             let key = Key::from(prefix.create_key(user_id));
-            let member_key = MemberKey::try_from(key).unwrap();
+            let member_key = MemberKey::try_from(key.clone()).unwrap();
 
             assert_eq!(*member_key.0.first().unwrap(), KeyType::CommunityMember as u8);
             assert_eq!(member_key.0.len(), 11);
             assert!(member_key.matches_prefix(&prefix));
             assert_eq!(member_key.user_id(), user_id);
+
+            let serialized = msgpack::serialize_then_unwrap(&member_key);
+            assert_eq!(serialized.len(), member_key.0.len() + 2);
+            let deserialized: MemberKey = msgpack::deserialize_then_unwrap(&serialized);
+            assert_eq!(deserialized, member_key);
+            assert_eq!(deserialized.0, key.0);
         }
     }
 }

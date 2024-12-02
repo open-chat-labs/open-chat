@@ -7290,6 +7290,7 @@ dependencies = [
  "ic-cdk 0.16.0",
  "ic-stable-structures",
  "ic_principal",
+ "msgpack",
  "rand 0.8.5",
  "serde",
  "serde_bytes",
