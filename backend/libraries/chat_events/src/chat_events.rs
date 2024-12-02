@@ -4,7 +4,7 @@ use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::metrics::{ChatMetricsInternal, MetricKey};
 use crate::search_index::SearchIndex;
 use crate::*;
-use constants::{HOUR_IN_MS, OPENCHAT_BOT_USER_ID};
+use constants::{HOUR_IN_MS, ONE_MB, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventBuilder, EventStoreClient, Runtime};
 use rand::rngs::StdRng;
 use rand::Rng;
@@ -165,7 +165,7 @@ impl ChatEvents {
     }
 
     pub fn read_events_as_bytes_from_stable_memory(&self, after: Option<EventContext>) -> Vec<(EventContext, ByteBuf)> {
-        stable_memory::read_events_as_bytes(self.chat, after, 1_000_000)
+        stable_memory::read_events_as_bytes(self.chat, after, 2 * ONE_MB as usize)
     }
 
     pub fn iter_recently_updated_events(

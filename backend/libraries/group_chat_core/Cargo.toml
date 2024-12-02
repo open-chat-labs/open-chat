@@ -18,6 +18,7 @@ msgpack = { path = "../msgpack" }
 regex-lite = { workspace = true }
 search = { path = "../search" }
 serde = { workspace = true }
+serde_bytes = { workspace = true }
 stable_memory_map = { path = "../stable_memory_map" }
 tracing = { workspace = true }
 types = { path = "../types" }

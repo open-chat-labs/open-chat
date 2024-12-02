@@ -3,6 +3,7 @@ use crate::GroupMemberInternal;
 use candid::{Deserialize, Principal};
 use serde::de::{Error, Visitor};
 use serde::{Deserializer, Serialize, Serializer};
+use serde_bytes::ByteBuf;
 use stable_memory_map::{with_map, with_map_mut, KeyType};
 use std::fmt::Formatter;
 use types::{MultiUserChat, UserId};
@@ -31,6 +32,28 @@ impl MembersStableStorage {
         self.prefix = chat.into();
     }
 
+    // Used to efficiently read all members from stable memory when migrating a group into a community
+    pub fn read_members_as_bytes(&self, after: Option<UserId>, max_bytes: usize) -> Vec<ByteBuf> {
+        let start_key = match after {
+            None => self.key(Principal::from_slice(&[]).into()),
+            Some(user_id) => self.key(user_id),
+        }
+        .to_vec();
+
+        with_map(|m| {
+            let mut total_bytes = 0;
+            m.range(start_key.clone()..)
+                .skip_while(|(k, _)| *k == start_key)
+                .take_while(|(k, _)| KeyPrefix::try_from(k.as_slice()).is_ok_and(|p| p == self.prefix))
+                .map(|(_, v)| ByteBuf::from(v))
+                .take_while(|v| {
+                    total_bytes += v.len();
+                    total_bytes < max_bytes
+                })
+                .collect()
+        })
+    }
+
     fn key(&self, user_id: UserId) -> Key {
         Key::new(self.prefix, user_id)
     }
@@ -38,7 +61,7 @@ impl MembersStableStorage {
 
 impl MembersMap for MembersStableStorage {
     fn get(&self, user_id: &UserId) -> Option<GroupMemberInternal> {
-        with_map(|m| m.get(&self.key(*user_id).to_vec()).map(bytes_to_member))
+        with_map(|m| m.get(&self.key(*user_id).to_vec()).map(|v| bytes_to_member(&v)))
     }
 
     fn insert(&mut self, member: GroupMemberInternal) {
@@ -46,7 +69,7 @@ impl MembersMap for MembersStableStorage {
     }
 
     fn remove(&mut self, user_id: &UserId) -> Option<GroupMemberInternal> {
-        with_map_mut(|m| m.remove(&self.key(*user_id).to_vec()).map(bytes_to_member))
+        with_map_mut(|m| m.remove(&self.key(*user_id).to_vec()).map(|v| bytes_to_member(&v)))
     }
 
     #[cfg(test)]
@@ -54,18 +77,33 @@ impl MembersMap for MembersStableStorage {
         with_map(|m| {
             m.range(self.key(Principal::from_slice(&[]).into()).to_vec()..)
                 .take_while(|(k, _)| Key::try_from(k.as_slice()).ok().filter(|k| k.prefix == self.prefix).is_some())
-                .map(|(_, v)| bytes_to_member(v))
+                .map(|(_, v)| bytes_to_member(&v))
                 .collect()
         })
     }
+}
+
+// Used to write all members to stable memory when migrating a group into a community
+pub fn write_members_from_bytes(chat: MultiUserChat, members: Vec<ByteBuf>) -> Option<UserId> {
+    let prefix = chat.into();
+    let mut latest = None;
+    with_map_mut(|m| {
+        for byte_buf in members {
+            let bytes = byte_buf.into_vec();
+            let member = bytes_to_member(&bytes);
+            latest = Some(member.user_id);
+            m.insert(Key::new(prefix, member.user_id).to_vec(), bytes);
+        }
+    });
+    latest
 }
 
 fn member_to_bytes(member: &GroupMemberInternal) -> Vec<u8> {
     msgpack::serialize_then_unwrap(member)
 }
 
-fn bytes_to_member(bytes: Vec<u8>) -> GroupMemberInternal {
-    msgpack::deserialize_then_unwrap(&bytes)
+fn bytes_to_member(bytes: &[u8]) -> GroupMemberInternal {
+    msgpack::deserialize_then_unwrap(bytes)
 }
 
 #[derive(Eq, PartialEq, Ord, PartialOrd, Debug)]
