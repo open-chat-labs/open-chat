@@ -158,7 +158,6 @@ pub mod happy_path {
         local_group_index_canister_id: CanisterId,
         local_user_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
-        bot_api_gateway_canister_id: CanisterId,
     ) {
         let response = super::add_local_group_index_canister(
             env,
@@ -168,7 +167,6 @@ pub mod happy_path {
                 canister_id: local_group_index_canister_id,
                 local_user_index_canister_id,
                 notifications_canister_id,
-                bot_api_gateway_canister_id,
             },
         );
 

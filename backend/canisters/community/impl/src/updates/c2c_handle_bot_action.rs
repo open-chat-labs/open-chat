@@ -1,14 +1,13 @@
-use crate::guards::caller_is_bot_api_gateway;
+use crate::guards::caller_is_local_user_index;
 use crate::updates::send_message::send_message_impl;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
-use bot_api_gateway_canister::c2c_handle_bot_action;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_handle_bot_action::*;
 use community_canister::send_message;
-use types::{BotAction, Chat, MessageContentInitial, TextContent};
+use types::{c2c_handle_bot_action, BotAction, Chat, MessageContentInitial, TextContent};
 
-#[update(guard = "caller_is_bot_api_gateway", msgpack = true)]
+#[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 async fn c2c_handle_bot_action(args: Args) -> Response {
     run_regular_jobs();

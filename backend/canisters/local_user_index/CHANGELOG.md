@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Added `execute_bot_command` endpoint and bot registry ([#6944](https://github.com/open-chat-labs/open-chat/pull/6944))
+
 ### Changed
 
 - Add chat + command text to bot command claims ([#6929](https://github.com/open-chat-labs/open-chat/pull/6929))

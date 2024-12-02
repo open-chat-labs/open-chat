@@ -4,8 +4,9 @@ use std::collections::HashMap;
 use types::{SlashCommandSchema, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
-pub struct BotRegistry {
-    bots: HashMap<Principal, Bot>,
+pub struct BotsMap {
+    bots: HashMap<UserId, Bot>,
+    principal_to_user_id: HashMap<Principal, UserId>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -15,13 +16,20 @@ pub struct Bot {
     pub commands: Vec<SlashCommandSchema>,
 }
 
-impl BotRegistry {
-    pub fn get(&self, caller: &Principal) -> Option<&Bot> {
-        self.bots.get(caller)
+impl BotsMap {
+    pub fn get(&self, user_id: &UserId) -> Option<&Bot> {
+        self.bots.get(user_id)
+    }
+
+    pub fn get_by_caller(&self, caller: &Principal) -> Option<&Bot> {
+        self.principal_to_user_id
+            .get(caller)
+            .and_then(|user_id| self.bots.get(user_id))
     }
 
     pub fn set(&mut self, user_principal: Principal, user_id: UserId, name: String, commands: Vec<SlashCommandSchema>) {
-        self.bots.insert(user_principal, Bot { user_id, name, commands });
+        self.bots.insert(user_id, Bot { user_id, name, commands });
+        self.principal_to_user_id.insert(user_principal, user_id);
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &Bot> {
