@@ -53,7 +53,12 @@ pub fn write_events_as_bytes(chat: Chat, events: Vec<(EventContext, ByteBuf)>) {
 
 #[derive(Serialize, Deserialize)]
 pub struct ChatEventsStableStorage {
+    #[serde(skip_deserializing, default = "default_key_prefix")]
     prefix: ChatEventKeyPrefix,
+}
+
+fn default_key_prefix() -> ChatEventKeyPrefix {
+    ChatEventKeyPrefix::new_from_group_chat(None)
 }
 
 impl ChatEventsStableStorage {

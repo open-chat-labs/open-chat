@@ -10,7 +10,7 @@ use ic_cdk::post_upgrade;
 use instruction_counts_log::InstructionCountFunctionId;
 use stable_memory::get_reader;
 use tracing::info;
-use types::MultiUserChat;
+use types::{Chat, MultiUserChat};
 
 #[post_upgrade]
 #[trace]
@@ -23,8 +23,10 @@ fn post_upgrade(args: Args) {
     let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
 
+    let chat_id = ic_cdk::id().into();
+    data.chat.events.set_chat(Chat::Group(chat_id));
     data.chat.members.set_member_default_timestamps();
-    data.chat.members.set_chat(MultiUserChat::Group(ic_cdk::id().into()));
+    data.chat.members.set_chat(MultiUserChat::Group(chat_id));
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
