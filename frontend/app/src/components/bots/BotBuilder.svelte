@@ -17,6 +17,7 @@
     import SummaryButton from "./SummaryButton.svelte";
     import ValidatingInput from "./ValidatingInput.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
+    import { debouncedDerived } from "../../utils/reactivity.svelte";
 
     interface Props {
         valid: boolean;
@@ -24,12 +25,23 @@
     }
 
     let { valid = $bindable(), bot }: Props = $props();
-
     let candidate = $state<CandidateExternalBot>(emptyBotInstance(bot));
     let selectedCommand = $state<SlashCommandSchema | undefined>(undefined);
     let selectedCommandIndex = $state<number | undefined>(undefined);
     let debug = $state(false);
-    let errors = $derived(validateBot(candidate));
+
+    let errors = $derived.by(
+        debouncedDerived(
+            () => [$state.snapshot(candidate)],
+            () => {
+                console.log("Validating candidate");
+                return validateBot(candidate);
+            },
+            500,
+            new Map(),
+        ),
+    );
+
     // TODO we will probably need to come back to this to flesh out edit mode (is the bot dirty etc)
     // let editing = $derived(bot !== undefined);
 
