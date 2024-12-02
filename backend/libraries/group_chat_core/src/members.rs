@@ -23,8 +23,6 @@ use utils::timestamped_set::TimestampedSet;
 mod proptests;
 mod stable_memory;
 
-pub use stable_memory::KeyPrefix as MembersKeyPrefix;
-
 const MAX_MEMBERS_PER_GROUP: u32 = 100_000;
 
 #[derive(Serialize, Deserialize)]

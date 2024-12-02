@@ -1,8 +1,7 @@
-use crate::stable_memory::key::{Key, KeyPrefix};
 use crate::{ChatEventInternal, EventsMap};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
-use stable_memory_map::{with_map, with_map_mut};
+use stable_memory_map::{with_map, with_map_mut, ChatEventKey, ChatEventKeyPrefix, Key};
 use std::cmp::min;
 use std::collections::VecDeque;
 use std::ops::RangeBounds;
@@ -10,26 +9,24 @@ use types::{
     Chat, EventContext, EventIndex, EventWrapperInternal, MessageIndex, TimestampMillis, MAX_EVENT_INDEX, MIN_EVENT_INDEX,
 };
 
-pub mod key;
-
 #[cfg(test)]
 mod tests;
 
 // Used to efficiently read all events from stable memory when migrating a group into a community
 pub fn read_events_as_bytes(chat: Chat, after: Option<EventContext>, max_bytes: usize) -> Vec<(EventContext, ByteBuf)> {
     let key = match after {
-        None => Key::new(KeyPrefix::new(chat, None), EventIndex::default()),
+        None => ChatEventKeyPrefix::new_from_chat(chat, None).create_key(EventIndex::default()),
         Some(EventContext {
             thread_root_message_index,
             event_index,
-        }) => Key::new(KeyPrefix::new(chat, thread_root_message_index), event_index.incr()),
+        }) => ChatEventKeyPrefix::new_from_chat(chat, thread_root_message_index).create_key(event_index.incr()),
     };
     with_map(|m| {
         let mut total_bytes = 0;
-        m.range(key.to_vec()..)
-            .map_while(|(k, v)| Key::try_from(k.as_slice()).ok().map(|k| (k, v)))
+        m.range(Key::from(key)..)
+            .map_while(|(k, v)| ChatEventKey::try_from(k).ok().map(|k| (k, v)))
             .take_while(|(k, v)| {
-                if !k.matches_chat(chat) {
+                if !k.matches_chat(&chat) {
                     return false;
                 }
                 total_bytes += v.len();
@@ -44,30 +41,26 @@ pub fn read_events_as_bytes(chat: Chat, after: Option<EventContext>, max_bytes: 
 pub fn write_events_as_bytes(chat: Chat, events: Vec<(EventContext, ByteBuf)>) {
     with_map_mut(|m| {
         for (context, bytes) in events {
-            let prefix = KeyPrefix::new(chat, context.thread_root_message_index);
-            let key = Key::new(prefix, context.event_index).to_vec();
+            let prefix = ChatEventKeyPrefix::new_from_chat(chat, context.thread_root_message_index);
+            let key = prefix.create_key(context.event_index);
             let value = bytes.into_vec();
             // Check the event is valid. We could remove this once we're more confident
             let _ = bytes_to_event(&value);
-            m.insert(key, value);
+            m.insert(key.into(), value);
         }
     });
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct ChatEventsStableStorage {
-    prefix: KeyPrefix,
+    prefix: ChatEventKeyPrefix,
 }
 
 impl ChatEventsStableStorage {
     pub fn new(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
         ChatEventsStableStorage {
-            prefix: KeyPrefix::new(chat, thread_root_message_index),
+            prefix: ChatEventKeyPrefix::new_from_chat(chat, thread_root_message_index),
         }
-    }
-
-    fn key(&self, event_index: EventIndex) -> Key {
-        Key::new(self.prefix.clone(), event_index)
     }
 
     fn iter_as_bytes(&self) -> Iter {
@@ -92,8 +85,8 @@ impl ChatEventsStableStorage {
     }
 
     fn get_internal(&self, event_index: EventIndex) -> Option<Vec<u8>> {
-        let key = self.key(event_index);
-        with_map(|m| m.get(&key.to_vec()))
+        let key = self.prefix.create_key(event_index);
+        with_map(|m| m.get(&Key::from(key)))
     }
 }
 
@@ -107,13 +100,11 @@ impl EventsMap for ChatEventsStableStorage {
     }
 
     fn insert(&mut self, event: EventWrapperInternal<ChatEventInternal>) {
-        let key = self.key(event.index);
-        with_map_mut(|m| m.insert(key.to_vec(), event_to_bytes(event)));
+        with_map_mut(|m| m.insert(Key::from(self.prefix.create_key(event.index)), event_to_bytes(event)));
     }
 
     fn remove(&mut self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
-        let key = self.key(event_index);
-        with_map_mut(|m| m.remove(&key.to_vec())).map(|v| bytes_to_event(&v))
+        with_map_mut(|m| m.remove(&Key::from(self.prefix.create_key(event_index)))).map(|v| bytes_to_event(&v))
     }
 
     fn range<R: RangeBounds<EventIndex>>(
@@ -157,7 +148,7 @@ const DEFAULT_BUFFER_SIZE: usize = 20;
 const MAX_BUFFER_SIZE: usize = 1000;
 
 struct Iter {
-    prefix: KeyPrefix,
+    prefix: ChatEventKeyPrefix,
     next: EventIndex,
     next_back: EventIndex,
     is_forward_buffer: bool,
@@ -167,7 +158,7 @@ struct Iter {
 }
 
 impl Iter {
-    fn new(prefix: KeyPrefix, start: EventIndex, end: EventIndex) -> Self {
+    fn new(prefix: ChatEventKeyPrefix, start: EventIndex, end: EventIndex) -> Self {
         Iter {
             prefix,
             next: start,
@@ -179,7 +170,7 @@ impl Iter {
         }
     }
 
-    fn empty(prefix: KeyPrefix) -> Iter {
+    fn empty(prefix: ChatEventKeyPrefix) -> Iter {
         Iter {
             prefix,
             next: EventIndex::default(),
@@ -191,12 +182,12 @@ impl Iter {
         }
     }
 
-    fn next_key(&self) -> Key {
-        Key::new(self.prefix.clone(), self.next)
+    fn next_key(&self) -> ChatEventKey {
+        self.prefix.create_key(self.next)
     }
 
-    fn next_back_key(&self) -> Key {
-        Key::new(self.prefix.clone(), self.next_back)
+    fn next_back_key(&self) -> ChatEventKey {
+        self.prefix.create_key(self.next_back)
     }
 
     fn check_buffer_direction(&mut self, forward: bool) {
@@ -236,8 +227,8 @@ impl Iterator for Iter {
         self.check_buffer_direction(true);
         if self.buffer.is_empty() {
             self.buffer = with_map(|m| {
-                m.range(self.next_key().to_vec()..=self.next_back_key().to_vec())
-                    .map_while(|(k, v)| Key::try_from(k.as_slice()).ok().map(|k| (k.event_index(), v)))
+                m.range(Key::from(self.next_key())..=Key::from(self.next_back_key()))
+                    .map_while(|(k, v)| ChatEventKey::try_from(k).ok().map(|k| (k.event_index(), v)))
                     .take(self.next_buffer_size)
                     .collect()
             });
@@ -261,9 +252,9 @@ impl DoubleEndedIterator for Iter {
         self.check_buffer_direction(false);
         if self.buffer.is_empty() {
             self.buffer = with_map(|m| {
-                m.range(self.next_key().to_vec()..=self.next_back_key().to_vec())
+                m.range(Key::from(self.next_key())..=Key::from(self.next_back_key()))
                     .rev()
-                    .map_while(|(k, v)| Key::try_from(k.as_slice()).ok().map(|k| (k.event_index(), v)))
+                    .map_while(|(k, v)| ChatEventKey::try_from(k).ok().map(|k| (k.event_index(), v)))
                     .take(self.next_buffer_size)
                     .collect()
             });
