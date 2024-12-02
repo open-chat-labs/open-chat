@@ -1,12 +1,14 @@
 use canister_state_macros::canister_state;
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
+use model::bot_registry::BotRegistry;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::time::Duration;
-use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
+use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped, UserId};
 use utils::env::Environment;
 
+mod guards;
 mod lifecycle;
 mod memory;
 mod model;
@@ -29,6 +31,11 @@ impl RuntimeState {
         RuntimeState { env, data }
     }
 
+    pub fn is_caller_user_index_canister(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.user_index_canister_id == caller
+    }
+
     pub fn metrics(&self) -> Metrics {
         let event_store_client_info = self.data.event_store_client.info();
         let event_store_canister_id = event_store_client_info.event_store_canister_id;
@@ -47,16 +54,29 @@ impl RuntimeState {
                 event_relay: event_store_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
             },
+            bots: self
+                .data
+                .bots
+                .iter()
+                .map(|b| BotMetrics {
+                    user_id: b.user_id,
+                    name: b.name.clone(),
+                    commands: b.commands.iter().map(|c| c.name.clone()).collect(),
+                })
+                .collect(),
         }
     }
 }
 
 #[derive(Serialize, Deserialize)]
 struct Data {
+    pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
     pub local_group_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub event_store_client: EventStoreClient<CdkRuntime>,
+    #[serde(default)]
+    pub bots: BotRegistry,
     pub rng_seed: [u8; 32],
     pub public_key: String,
     pub test_mode: bool,
@@ -64,6 +84,7 @@ struct Data {
 
 impl Data {
     pub fn new(
+        user_index_canister_id: CanisterId,
         local_user_index_canister_id: CanisterId,
         local_group_index_canister_id: CanisterId,
         event_relay_canister_id: CanisterId,
@@ -72,6 +93,7 @@ impl Data {
         test_mode: bool,
     ) -> Data {
         Data {
+            user_index_canister_id,
             local_user_index_canister_id,
             local_group_index_canister_id,
             cycles_dispenser_canister_id,
@@ -81,6 +103,7 @@ impl Data {
             rng_seed: [0; 32],
             public_key,
             test_mode,
+            bots: BotRegistry::default(),
         }
     }
 }
@@ -95,6 +118,7 @@ pub struct Metrics {
     pub git_commit_id: String,
     pub event_store_client_info: EventStoreClientInfo,
     pub canister_ids: CanisterIds,
+    pub bots: Vec<BotMetrics>,
 }
 
 #[derive(Serialize, Debug)]
@@ -103,4 +127,11 @@ pub struct CanisterIds {
     pub local_group_index: CanisterId,
     pub event_relay: CanisterId,
     pub cycles_dispenser: CanisterId,
+}
+
+#[derive(Serialize, Debug)]
+pub struct BotMetrics {
+    pub user_id: UserId,
+    pub name: String,
+    pub commands: Vec<String>,
 }
