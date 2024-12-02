@@ -3,9 +3,12 @@ use crate::model::channels::Channel;
 use crate::model::events::{CommunityEventInternal, GroupImportedInternal};
 use crate::model::groups_being_imported::{GroupToImport, GroupToImportAction};
 use crate::model::members::AddResult;
-use crate::timer_job_types::{FinalizeGroupImportJob, ProcessGroupImportChannelMembersJob, TimerJob};
+use crate::timer_job_types::{
+    FinalizeGroupImportJob, MigrateMembersToStableMemoryJob, ProcessGroupImportChannelMembersJob, TimerJob,
+};
 use crate::updates::c2c_join_channel::{add_members_to_public_channel_unchecked, join_channel_unchecked};
 use crate::{mutate_state, read_state, RuntimeState};
+use canister_timer_jobs::Job;
 use chat_events::ChatEvents;
 use constants::OPENCHAT_BOT_USER_ID;
 use group_canister::c2c_export_group::{Args, Response};
@@ -214,6 +217,14 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
                         now,
                     );
                 }
+            }
+
+            // TODO remove this once groups are upgraded and we re-enable importing
+            // members to stable memory
+            chat.members.reset_migration_to_stable_memory_complete_flag();
+            if !chat.members.migrate_next_batch_to_stable_memory() {
+                state.data.members_migrated_to_stable_memory = false;
+                MigrateMembersToStableMemoryJob.execute();
             }
 
             state.data.channels.add(Channel {
