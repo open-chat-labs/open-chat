@@ -6,9 +6,9 @@ use ic_stable_structures::memory_manager::VirtualMemory;
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
 use std::cell::RefCell;
 
-pub use key::*;
-
 mod key;
+
+pub use key::*;
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 

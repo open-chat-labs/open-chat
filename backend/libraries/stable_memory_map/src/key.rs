@@ -75,6 +75,11 @@ impl ChatEventKeyPrefix {
     }
 
     pub fn new_from_direct_chat(user_id: UserId, thread_root_message_index: Option<MessageIndex>) -> Self {
+        // We don't actually need the userId length marker but existing entries have it so we
+        // need to keep it to be backwards compatible. If we decide we want to remove it then we
+        // can switch to a new KeyType for direct chat events, but that is quite a lot of work
+        // and complexity since we'd still have to support the old version too (or migrate them).
+
         let user_id_bytes = user_id.as_slice();
 
         match thread_root_message_index {
