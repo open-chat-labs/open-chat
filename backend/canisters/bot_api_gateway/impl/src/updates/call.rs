@@ -7,12 +7,11 @@ use types::BotCommandClaims;
 use types::User;
 
 use crate::read_state;
+use crate::RuntimeState;
 
 #[update]
 async fn call(args: Args) -> Response {
-    // TODO: Get the BOT details given the caller
-
-    let c2c_args = match read_state(|state| validate(args, &state.data.public_key)) {
+    let c2c_args = match read_state(|state| validate(args, &state.data.public_key, state)) {
         Ok(c2c_args) => c2c_args,
         Err(message) => return Err(BotApiCallError::Invalid(message)),
     };
@@ -24,18 +23,26 @@ async fn call(args: Args) -> Response {
     }
 }
 
-fn validate(args: Args /*, bot_details: &BotDetails */, public_key: &str) -> Result<c2c_handle_bot_action::Args, String> {
+fn validate(args: Args, public_key: &str, state: &RuntimeState) -> Result<c2c_handle_bot_action::Args, String> {
+    let Some(bot) = state.data.bots.get(&state.env.caller()) else {
+        return Err("Bot not found for caller".to_string());
+    };
+
     let claims = verify_jwt::<Claims<BotCommandClaims>>(&args.jwt, public_key)
         .map_err(|error| format!("Access token invalid: {error:?}"))?;
 
     let bot_command_claims = claims.custom();
+    let calling_user = bot.user_id;
+    let jwt_user = bot_command_claims.bot;
 
-    // TODO: Confirm the bot UserId in the claim matches the UserId of the bot from the BotDetails
+    if calling_user != jwt_user {
+        return Err(format!("Caller ({calling_user}) doesn't match JWT ({jwt_user})"));
+    }
 
     Ok(c2c_handle_bot_action::Args {
         bot: User {
             user_id: bot_command_claims.bot,
-            username: "NoNameBot".to_string(), // TODO: From the BotDetails
+            username: bot.name.clone(),
         },
         commanded_by: Some(bot_command_claims.user_id),
         chat: bot_command_claims.chat,

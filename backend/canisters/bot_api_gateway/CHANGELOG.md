@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Forward requests on to the relevant Community/Group/User canister ([#6846](https://github.com/open-chat-labs/open-chat/pull/6846))
+- Hold a registry of bots in BotApiGateways ([#6939](https://github.com/open-chat-labs/open-chat/pull/6939))
 
 ### Changed
 

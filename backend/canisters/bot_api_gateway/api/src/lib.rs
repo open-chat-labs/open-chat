@@ -4,8 +4,11 @@ mod lifecycle;
 mod queries;
 mod updates;
 
+use candid::Principal;
 pub use lifecycle::*;
 pub use queries::*;
+use serde::{Deserialize, Serialize};
+use types::{SlashCommandSchema, UserId};
 pub use updates::*;
 
 pub mod c2c_handle_bot_action {
@@ -32,4 +35,17 @@ pub mod c2c_handle_bot_action {
         Frozen,
         Other(String),
     }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum Event {
+    BotRegistered(BotRegistered),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BotRegistered {
+    pub user_id: UserId,
+    pub user_principal: Principal,
+    pub name: String,
+    pub commands: Vec<SlashCommandSchema>,
 }

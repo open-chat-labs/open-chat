@@ -14,6 +14,7 @@ fn init(args: Args) {
 
     let env = init_env([0; 32]);
     let data = Data::new(
+        args.user_index_canister_id,
         args.local_user_index_canister_id,
         args.local_group_index_canister_id,
         args.event_relay_canister_id,

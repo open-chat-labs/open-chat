@@ -459,6 +459,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let public_key = client::user_index::happy_path::public_key(env, user_index_canister_id);
 
     let bot_api_gateway_init_args = bot_api_gateway_canister::init::Args {
+        user_index_canister_id,
         local_user_index_canister_id,
         local_group_index_canister_id,
         cycles_dispenser_canister_id,
