@@ -540,11 +540,11 @@ impl GroupMembers {
     }
 
     fn get_internal(&self, user_id: &UserId) -> Option<GroupMemberInternal> {
-        // if self.migration_to_stable_memory_complete {
-        //     self.stable_memory_members_map.get(user_id)
-        // } else {
-        self.members.get(user_id)
-        // }
+        if self.migration_to_stable_memory_complete {
+            self.stable_memory_members_map.get(user_id)
+        } else {
+            self.members.get(user_id)
+        }
     }
 
     fn insert_internal(&mut self, member: GroupMemberInternal) {

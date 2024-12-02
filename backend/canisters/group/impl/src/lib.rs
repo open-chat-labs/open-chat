@@ -266,6 +266,7 @@ impl RuntimeState {
         } else if self.data.is_frozen() {
             ChatFrozen
         } else {
+            assert!(self.data.members_migrated_to_stable_memory);
             let transfers_required = self.prepare_transfers_for_import_into_community();
             let serialized = serialize_then_unwrap(&self.data.chat);
             let total_bytes = serialized.len() as u64;
