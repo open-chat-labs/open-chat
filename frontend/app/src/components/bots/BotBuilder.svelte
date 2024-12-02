@@ -30,6 +30,7 @@
     let selectedCommandIndex = $state<number | undefined>(undefined);
     let debug = $state(false);
     let errors = $derived(validateBot(candidate));
+    // TODO we will probably need to come back to this to flesh out edit mode (is the bot dirty etc)
     // let editing = $derived(bot !== undefined);
 
     $effect(() => {
