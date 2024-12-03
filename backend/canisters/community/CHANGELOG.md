@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Remove UserId for member map values since its already in the keys ([#6945](https://github.com/open-chat-labs/open-chat/pull/6945))
+
 ## [[2.0.1486](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1486-community)] - 2024-12-02
 
 ### Changed
