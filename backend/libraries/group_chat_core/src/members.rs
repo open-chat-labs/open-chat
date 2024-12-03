@@ -142,12 +142,12 @@ impl GroupMembers {
         self.stable_memory_members_map.set_chat(chat);
     }
 
-    pub fn read_members_as_bytes_from_stable_memory(&self, after: Option<UserId>) -> Vec<ByteBuf> {
+    pub fn read_members_as_bytes_from_stable_memory(&self, after: Option<UserId>) -> Vec<(UserId, ByteBuf)> {
         self.stable_memory_members_map
             .read_members_as_bytes(after, 2 * ONE_MB as usize)
     }
 
-    pub fn write_members_from_bytes_to_stable_memory(chat: MultiUserChat, members: Vec<ByteBuf>) -> Option<UserId> {
+    pub fn write_members_from_bytes_to_stable_memory(chat: MultiUserChat, members: Vec<(UserId, ByteBuf)>) -> Option<UserId> {
         stable_memory::write_members_from_bytes(chat, members)
     }
 
