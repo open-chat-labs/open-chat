@@ -23,7 +23,6 @@ done
 
 cargo build --locked --target wasm32-unknown-unknown --release \
   --package airdrop_bot_canister_impl \
-  --package bot_api_gateway_canister_impl \
   --package community_canister_impl \
   --package cycles_dispenser_canister_impl \
   --package escrow_canister_impl \
@@ -54,7 +53,6 @@ then
 fi
 
 ic-wasm ./target/wasm32-unknown-unknown/release/airdrop_bot_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/airdrop_bot_canister_impl-opt.wasm shrink
-ic-wasm ./target/wasm32-unknown-unknown/release/bot_api_gateway_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/bot_api_gateway_canister_impl-opt.wasm shrink
 ic-wasm ./target/wasm32-unknown-unknown/release/community_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/community_canister_impl-opt.wasm shrink
 ic-wasm ./target/wasm32-unknown-unknown/release/cycles_dispenser_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/cycles_dispenser_canister_impl-opt.wasm shrink
 ic-wasm ./target/wasm32-unknown-unknown/release/escrow_canister_impl.wasm -o ./target/wasm32-unknown-unknown/release/escrow_canister_impl-opt.wasm shrink
@@ -81,7 +79,6 @@ ic-wasm ./target/wasm32-unknown-unknown/release/user_index_canister_impl.wasm -o
 echo Compressing wasms
 mkdir -p wasms
 gzip -fckn9 target/wasm32-unknown-unknown/release/airdrop_bot_canister_impl-opt.wasm > ./wasms/airdrop_bot.wasm.gz
-gzip -fckn9 target/wasm32-unknown-unknown/release/bot_api_gateway_canister_impl-opt.wasm > ./wasms/bot_api_gateway.wasm.gz
 gzip -fckn9 target/wasm32-unknown-unknown/release/community_canister_impl-opt.wasm > ./wasms/community.wasm.gz
 gzip -fckn9 target/wasm32-unknown-unknown/release/cycles_dispenser_canister_impl-opt.wasm > ./wasms/cycles_dispenser.wasm.gz
 gzip -fckn9 target/wasm32-unknown-unknown/release/escrow_canister_impl-opt.wasm > ./wasms/escrow.wasm.gz

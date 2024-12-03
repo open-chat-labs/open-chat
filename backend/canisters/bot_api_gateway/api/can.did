@@ -1,4 +1,0 @@
-import "../../../libraries/types/can.did";
-
-service : {
-};

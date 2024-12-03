@@ -50,7 +50,7 @@ fn bot_send_text_message_in_group_succeeds() {
         env,
         bot_id,
         canister_ids.bot_api_gateway,
-        &bot_api_gateway_canister::call::Args {
+        &local_user_index_canister::call::Args {
             action: BotAction::SendTextMessage(SendTextMessageArgs { text: random_string() }),
             jwt: build_jwt(BotCommandClaims {
                 user_id: user.user_id,

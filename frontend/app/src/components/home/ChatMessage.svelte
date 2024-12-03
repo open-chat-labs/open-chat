@@ -725,11 +725,6 @@
         align-items: center;
     }
 
-    :global(.message .loading) {
-        min-height: 100px;
-        min-width: 250px;
-    }
-
     :global(.message .avatar .avatar) {
         margin: 0;
     }

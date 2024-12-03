@@ -115,7 +115,6 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         user_index_canister_id: state.data.user_index_canister_id,
         local_user_index_canister_id,
         notifications_canister_id: state.data.notifications_canister_id,
-        bot_api_gateway_canister_id: state.data.bot_api_gateway_canister_id,
         proposals_bot_user_id: state.data.proposals_bot_user_id,
         escrow_canister_id: state.data.escrow_canister_id,
         internet_identity_canister_id: state.data.internet_identity_canister_id,
