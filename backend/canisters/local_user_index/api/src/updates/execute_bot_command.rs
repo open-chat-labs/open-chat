@@ -1,7 +1,6 @@
-use crate::c2c_handle_bot_action::HandleBotActionsError;
-use candid::{CandidType, Principal};
+use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{BotAction, CanisterId, Chat, UserId};
+use types::{BotAction, HandleBotActionsError};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Args {

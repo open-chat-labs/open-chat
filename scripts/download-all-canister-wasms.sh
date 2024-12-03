@@ -14,7 +14,6 @@ fi
 echo "Downloading wasms"
 
 ./download-canister-wasm.sh airdrop_bot $WASM_SRC || exit 1
-./download-canister-wasm.sh bot_api_gateway $WASM_SRC || exit 1
 ./download-canister-wasm.sh community $WASM_SRC || exit 1
 ./download-canister-wasm.sh cycles_dispenser $WASM_SRC || exit 1
 ./download-canister-wasm.sh escrow $WASM_SRC || exit 1

@@ -6,7 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bot_api_gateway_canister = { path = "../../bot_api_gateway/api" }
 candid = { workspace = true }
 candid_gen = { path = "../../../libraries/candid_gen" }
 chat_events = { path = "../../../libraries/chat_events" }

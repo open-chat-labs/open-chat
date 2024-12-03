@@ -14,7 +14,6 @@ async fn main() {
         local_user_index: opts.local_user_index,
         local_group_index: opts.local_group_index,
         notifications: opts.notifications,
-        bot_api_gateway: opts.bot_api_gateway,
         identity: opts.identity,
         online_users: opts.online_users,
         proposals_bot: opts.proposals_bot,
@@ -73,9 +72,6 @@ struct Opts {
 
     #[arg(long)]
     notifications: CanisterId,
-
-    #[arg(long)]
-    bot_api_gateway: CanisterId,
 
     #[arg(long)]
     identity: CanisterId,

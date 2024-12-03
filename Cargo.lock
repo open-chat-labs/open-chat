@@ -923,55 +923,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bot_api_gateway_canister"
-version = "0.1.0"
-dependencies = [
- "candid",
- "candid_gen",
- "serde",
- "types",
-]
-
-[[package]]
-name = "bot_api_gateway_canister_c2c_client"
-version = "0.1.0"
-dependencies = [
- "bot_api_gateway_canister",
- "candid",
- "canister_client",
- "ic-cdk 0.16.0",
- "tracing",
- "types",
-]
-
-[[package]]
-name = "bot_api_gateway_canister_impl"
-version = "0.1.0"
-dependencies = [
- "bot_api_gateway_canister",
- "candid",
- "canister_api_macros",
- "canister_client",
- "canister_logger",
- "canister_state_macros",
- "canister_tracing_macros",
- "event_store_producer",
- "event_store_producer_cdk_runtime",
- "http_request",
- "ic-cdk 0.16.0",
- "ic-cdk-timers",
- "ic-stable-structures",
- "jwt",
- "msgpack",
- "rand 0.8.5",
- "serde",
- "stable_memory",
- "tracing",
- "types",
- "utils 0.1.0",
-]
-
-[[package]]
 name = "bot_c2c_client"
 version = "0.1.0"
 dependencies = [
@@ -1557,7 +1508,6 @@ checksum = "acbf1af155f9b9ef647e42cdc158db4b64a1b61f743629225fde6f3e0be2a7c7"
 name = "community_canister"
 version = "0.1.0"
 dependencies = [
- "bot_api_gateway_canister",
  "candid",
  "candid_gen",
  "chat_events",
@@ -1586,7 +1536,6 @@ name = "community_canister_impl"
 version = "0.1.0"
 dependencies = [
  "activity_notification_state",
- "bot_api_gateway_canister",
  "candid",
  "canister_api_macros",
  "canister_logger",
@@ -2797,7 +2746,6 @@ dependencies = [
 name = "group_canister"
 version = "0.1.0"
 dependencies = [
- "bot_api_gateway_canister",
  "candid",
  "candid_gen",
  "chat_events",
@@ -2837,7 +2785,6 @@ name = "group_canister_impl"
 version = "0.1.0"
 dependencies = [
  "activity_notification_state",
- "bot_api_gateway_canister",
  "candid",
  "canister_api_macros",
  "canister_logger",
@@ -4175,7 +4122,6 @@ name = "integration_tests"
 version = "0.1.0"
 dependencies = [
  "airdrop_bot_canister",
- "bot_api_gateway_canister",
  "candid",
  "community_canister",
  "constants",
@@ -4593,6 +4539,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_api_macros",
+ "canister_client",
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
@@ -8260,7 +8207,6 @@ checksum = "daf8dba3b7eb870caf1ddeed7bc9d2a049f3cfdfae7cb521b087cc33ae4c49da"
 name = "user_canister"
 version = "0.1.0"
 dependencies = [
- "bot_api_gateway_canister",
  "candid",
  "chat_events",
  "ic-ledger-types",

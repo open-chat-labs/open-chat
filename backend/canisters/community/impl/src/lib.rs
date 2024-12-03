@@ -87,10 +87,6 @@ impl RuntimeState {
         self.env.caller() == self.data.local_group_index_canister_id
     }
 
-    pub fn is_caller_bot_api_gateway(&self) -> bool {
-        self.env.caller() == self.data.bot_api_gateway_canister_id
-    }
-
     pub fn is_caller_proposals_bot(&self) -> bool {
         self.env.caller() == self.data.proposals_bot_user_id.into()
     }
@@ -307,7 +303,6 @@ impl RuntimeState {
                 local_user_index: self.data.local_user_index_canister_id,
                 local_group_index: self.data.local_group_index_canister_id,
                 notifications: self.data.notifications_canister_id,
-                bot_api_gateway: self.data.bot_api_gateway_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
                 escrow: self.data.escrow_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
@@ -337,7 +332,6 @@ struct Data {
     group_index_canister_id: CanisterId,
     local_group_index_canister_id: CanisterId,
     notifications_canister_id: CanisterId,
-    bot_api_gateway_canister_id: CanisterId,
     proposals_bot_user_id: UserId,
     escrow_canister_id: CanisterId,
     internet_identity_canister_id: CanisterId,
@@ -396,7 +390,6 @@ impl Data {
         group_index_canister_id: CanisterId,
         local_group_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
-        bot_api_gateway_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
         escrow_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
@@ -444,7 +437,6 @@ impl Data {
             group_index_canister_id,
             local_group_index_canister_id,
             notifications_canister_id,
-            bot_api_gateway_canister_id,
             proposals_bot_user_id,
             escrow_canister_id,
             internet_identity_canister_id,
@@ -731,7 +723,6 @@ pub struct CanisterIds {
     pub local_user_index: CanisterId,
     pub local_group_index: CanisterId,
     pub notifications: CanisterId,
-    pub bot_api_gateway: CanisterId,
     pub proposals_bot: CanisterId,
     pub escrow: CanisterId,
     pub icp_ledger: CanisterId,

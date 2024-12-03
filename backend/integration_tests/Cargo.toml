@@ -7,7 +7,6 @@ edition = "2021"
 
 [dev-dependencies]
 airdrop_bot_canister = { path = "../canisters/airdrop_bot/api" }
-bot_api_gateway_canister = { path = "../canisters/bot_api_gateway/api" }
 candid = { workspace = true }
 community_canister = { path = "../canisters/community/api" }
 constants = { path = "../libraries/constants" }
