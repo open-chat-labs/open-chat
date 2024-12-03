@@ -1,31 +1,29 @@
 type TokenReply = variant {
-	LP : LPTokenReply;
-	IC : ICTokenReply;
+    LP : LPTokenReply;
+    IC : ICTokenReply;
 };
 type LPTokenReply = record {
-	token_id : nat32;
-    pool_symbol : text;
+    token_id : nat32;
     name : text;
     chain : text;
-	symbol : text;
+    symbol : text;
     token : text;
     pool_id_of : nat32;
     address : text;
-	decimals : nat8;
+    decimals : nat8;
     fee : nat;
     total_supply : nat;
     on_kong : bool;
 };
 type ICTokenReply = record {
-	token_id : nat32;
-	pool_symbol : text;
+    token_id : nat32;
     name : text;
     chain : text;
-	symbol : text;
+    symbol : text;
     token : text;
-	canister_id : text;
-	decimals : nat8;	
-	fee : nat;
+    canister_id : text;
+    decimals : nat8;
+    fee : nat;
     icrc1 : bool;
     icrc2 : bool;
     icrc3 : bool;
@@ -37,9 +35,11 @@ type SwapAmountsTxReply = record {
     pool_symbol : text;
     pay_chain : text;
     pay_symbol : text;
+    pay_address : text;
     pay_amount : nat;
     receive_chain : text;
     receive_symbol : text;
+    receive_address : text;
     receive_amount : nat;
     price : float64;
     lp_fee : nat;
@@ -48,17 +48,18 @@ type SwapAmountsTxReply = record {
 type SwapAmountsReply = record {
     pay_chain : text;
     pay_symbol : text;
+    pay_address : text;
     pay_amount : nat;
     receive_chain : text;
     receive_symbol : text;
+    receive_address : text;
     receive_amount : nat;
-    mid_price : float64;    
     price : float64;
+    mid_price : float64;
     slippage : float64;
-    txs : vec SwapAmountsTxReply;    
+    txs : vec SwapAmountsTxReply;
 };
 type SwapAmountsResult = variant { Ok : SwapAmountsReply; Err : text };
-
 
 service : {
     tokens : (opt text) -> (TokensResult) query;
