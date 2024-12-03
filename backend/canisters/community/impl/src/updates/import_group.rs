@@ -24,7 +24,7 @@ async fn c2c_import_proposals_group(
     }
 }
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn import_group(args: Args) -> Response {
     run_regular_jobs();

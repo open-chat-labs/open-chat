@@ -6,7 +6,7 @@ use group_chat_core::{ChangeRoleResult, GroupRoleInternal};
 use group_community_common::ExpiringMember;
 use types::GroupRole;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn change_channel_role(args: Args) -> Response {
     run_regular_jobs();

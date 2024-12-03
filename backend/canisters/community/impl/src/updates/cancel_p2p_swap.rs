@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use community_canister::cancel_p2p_swap::{Response::*, *};
 use types::CancelP2PSwapResult;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn cancel_p2p_swap(args: Args) -> Response {
     run_regular_jobs();

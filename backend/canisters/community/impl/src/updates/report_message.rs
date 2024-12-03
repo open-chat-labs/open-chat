@@ -7,7 +7,7 @@ use community_canister::report_message::{Response::*, *};
 use group_index_canister::c2c_report_message;
 use types::{CanisterId, MultiUserChat, UserId};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn report_message(args: Args) -> Response {
     run_regular_jobs();

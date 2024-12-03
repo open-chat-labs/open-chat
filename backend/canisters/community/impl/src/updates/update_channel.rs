@@ -8,7 +8,7 @@ use group_chat_core::UpdateResult;
 use types::OptionUpdate;
 use url::Url;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn update_channel(args: Args) -> Response {
     run_regular_jobs();
