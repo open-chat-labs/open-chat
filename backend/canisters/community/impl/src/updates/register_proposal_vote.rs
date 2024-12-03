@@ -6,7 +6,7 @@ use chat_events::{MessageContentInternal, Reader, RecordProposalVoteResult};
 use community_canister::register_proposal_vote::{Response::*, *};
 use types::{CanisterId, ChannelId, ProposalId, UserId};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn register_proposal_vote(args: Args) -> Response {
     run_regular_jobs();

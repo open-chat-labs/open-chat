@@ -30,4 +30,4 @@ generate_c2c_call!(change_channel_role);
 generate_c2c_call!(delete_channel);
 generate_c2c_call!(delete_messages);
 generate_candid_c2c_call!(send_message);
-generate_candid_c2c_call!(update_channel);
+generate_c2c_call!(update_channel);

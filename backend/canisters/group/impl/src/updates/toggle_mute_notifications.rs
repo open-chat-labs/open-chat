@@ -3,7 +3,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::toggle_mute_notifications::{Response::*, *};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn toggle_mute_notifications(args: Args) -> Response {
     run_regular_jobs();

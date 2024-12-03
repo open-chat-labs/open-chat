@@ -4,7 +4,7 @@ use canister_api_macros::query;
 use group_canister::thread_previews::{Response::*, *};
 use group_chat_core::ThreadPreviewsResult;
 
-#[query(candid = true, msgpack = true)]
+#[query(msgpack = true)]
 fn thread_previews(args: Args) -> Response {
     read_state(|state| thread_previews_impl(args, state))
 }

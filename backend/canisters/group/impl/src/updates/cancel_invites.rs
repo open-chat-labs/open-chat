@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use group_canister::cancel_invites::{Response::*, *};
 use group_chat_core::CancelInvitesResult;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn cancel_invites(args: Args) -> Response {
     run_regular_jobs();

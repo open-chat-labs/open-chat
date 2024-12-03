@@ -5,7 +5,7 @@ use group_canister::follow_thread::{Response::*, *};
 use group_chat_core::FollowThreadResult;
 use types::Achievement;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn follow_thread(args: Args) -> Response {
     run_regular_jobs();

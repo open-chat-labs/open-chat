@@ -10,7 +10,7 @@ use msgpack::serialize_then_unwrap;
 use types::{CanisterId, UserId};
 use user_canister::c2c_remove_from_group;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn block_user(args: group_canister::block_user::Args) -> group_canister::block_user::Response {
     if !read_state(|state| state.data.chat.is_public.value) {
@@ -20,7 +20,7 @@ async fn block_user(args: group_canister::block_user::Args) -> group_canister::b
     remove_participant_impl(args.user_id, true).await.into()
 }
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn remove_participant(args: Args) -> Response {
     remove_participant_impl(args.user_id, false).await
