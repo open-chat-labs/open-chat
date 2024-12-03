@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Remove UserId for member map values since its already in the keys ([#6945](https://github.com/open-chat-labs/open-chat/pull/6945))
+- Remove UserId from member map values since its already in the keys ([#6945](https://github.com/open-chat-labs/open-chat/pull/6945))
 
 ### Removed
 
