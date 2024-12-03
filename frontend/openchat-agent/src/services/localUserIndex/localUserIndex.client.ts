@@ -33,7 +33,11 @@ import {
 } from "./mappers";
 import { joinGroupResponse, apiChatIdentifier } from "../common/chatMappersV2";
 import { MAX_MISSING, textToCode, UnsupportedValueError } from "openchat-shared";
-import { mapOptional, principalStringToBytes } from "../../utils/mapping";
+import {
+    mapOptional,
+    maybePrincipalStringToBytes,
+    principalStringToBytes,
+} from "../../utils/mapping";
 import {
     type Database,
     getCachedEvents,
@@ -260,7 +264,7 @@ export class LocalUserIndexClient extends CandidService {
                 community_id: principalStringToBytes(communityId),
                 invite_code: mapOptional(inviteCode, textToCode),
                 verified_credential_args: mapOptional(credentialArgs, apiVerifiedCredentialArgs),
-                referred_by: mapOptional(referredBy, principalStringToBytes),
+                referred_by: maybePrincipalStringToBytes(referredBy),
             },
             joinCommunityResponse,
             LocalUserIndexJoinCommunityArgs,
@@ -300,7 +304,7 @@ export class LocalUserIndexClient extends CandidService {
                 channel_id: BigInt(id.channelId),
                 invite_code: mapOptional(inviteCode, textToCode),
                 verified_credential_args: mapOptional(credentialArgs, apiVerifiedCredentialArgs),
-                referred_by: mapOptional(referredBy, principalStringToBytes),
+                referred_by: maybePrincipalStringToBytes(referredBy),
             },
             (resp) => {
                 return joinChannelResponse(resp, id.communityId);
