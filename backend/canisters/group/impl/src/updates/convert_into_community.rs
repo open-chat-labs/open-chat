@@ -9,7 +9,7 @@ use rand::RngCore;
 use std::collections::HashMap;
 use types::{CanisterId, UserId};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn convert_into_community(args: Args) -> Response {
     run_regular_jobs();

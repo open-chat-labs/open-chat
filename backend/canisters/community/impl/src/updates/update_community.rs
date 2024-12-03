@@ -17,7 +17,7 @@ use utils::text_validation::{
     validate_community_name, validate_description, validate_rules, NameValidationError, RulesValidationError,
 };
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn update_community(mut args: Args) -> Response {
     run_regular_jobs();

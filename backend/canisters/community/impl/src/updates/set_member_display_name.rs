@@ -5,7 +5,7 @@ use community_canister::set_member_display_name::{Response::*, *};
 use types::Achievement;
 use utils::text_validation::{validate_display_name, UsernameValidationError};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn set_member_display_name(args: Args) -> Response {
     run_regular_jobs();

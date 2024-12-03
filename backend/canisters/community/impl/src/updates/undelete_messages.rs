@@ -5,7 +5,7 @@ use community_canister::undelete_messages::{Response::*, *};
 use group_chat_core::UndeleteMessagesResult;
 use std::collections::HashSet;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn undelete_messages(args: Args) -> Response {
     run_regular_jobs();

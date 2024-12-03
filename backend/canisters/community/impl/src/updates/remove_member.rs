@@ -13,7 +13,7 @@ use msgpack::serialize_then_unwrap;
 use types::{CanisterId, CommunityMembersRemoved, CommunityRole, CommunityUsersBlocked, UserId};
 use user_canister::c2c_remove_from_community;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn block_user(args: community_canister::block_user::Args) -> community_canister::block_user::Response {
     run_regular_jobs();
@@ -25,7 +25,7 @@ async fn block_user(args: community_canister::block_user::Args) -> community_can
     remove_member_impl(args.user_id, true).await.into()
 }
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn remove_member(args: Args) -> Response {
     run_regular_jobs();

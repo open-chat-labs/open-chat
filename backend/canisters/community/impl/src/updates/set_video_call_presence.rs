@@ -6,7 +6,7 @@ use community_canister::set_video_call_presence::{Response::*, *};
 use group_chat_core::MinVisibleEventIndexResult;
 use types::Achievement;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn set_video_call_presence(args: Args) -> Response {
     run_regular_jobs();

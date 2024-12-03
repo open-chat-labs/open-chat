@@ -8,7 +8,7 @@ use icrc_ledger_types::icrc1::transfer::TransferError;
 use types::{AcceptSwapSuccess, Achievement, ChannelId, Chat, EventIndex, MessageId, MessageIndex, P2PSwapLocation, UserId};
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn accept_p2p_swap(args: Args) -> Response {
     run_regular_jobs();

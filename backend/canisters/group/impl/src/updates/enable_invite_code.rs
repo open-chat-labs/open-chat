@@ -11,7 +11,7 @@ use rand::{RngCore, SeedableRng};
 use types::{GroupInviteCodeChange, GroupInviteCodeChanged};
 use utils::canister;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn reset_invite_code(args: reset_invite_code::Args) -> reset_invite_code::Response {
     run_regular_jobs();
