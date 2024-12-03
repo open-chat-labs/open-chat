@@ -666,19 +666,10 @@ impl ChatEvents {
         }
     }
 
-    pub fn final_payments(
-        &mut self,
-        thread_root_message_index: Option<MessageIndex>,
-        message_index: MessageIndex,
-        now_nanos: TimestampNanos,
-    ) -> Vec<PendingCryptoTransaction> {
-        self.update_message(
-            thread_root_message_index,
-            message_index.into(),
-            EventIndex::default(),
-            None,
-            |message, _| Self::final_payments_inner(message, now_nanos),
-        )
+    pub fn final_payments(&mut self, message_index: MessageIndex, now_nanos: TimestampNanos) -> Vec<PendingCryptoTransaction> {
+        self.update_message(None, message_index.into(), EventIndex::default(), None, |message, _| {
+            Self::final_payments_inner(message, now_nanos)
+        })
         .ok()
         .unwrap_or_default()
     }
