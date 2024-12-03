@@ -4,7 +4,7 @@ use canister_tracing_macros::trace;
 use group_canister::unfollow_thread::{Response::*, *};
 use group_chat_core::UnfollowThreadResult;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn unfollow_thread(args: Args) -> Response {
     run_regular_jobs();

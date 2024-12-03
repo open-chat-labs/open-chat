@@ -7,7 +7,7 @@ use canister_tracing_macros::trace;
 use community_canister::disable_invite_code::{Response::*, *};
 use types::{GroupInviteCodeChange, GroupInviteCodeChanged};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn disable_invite_code(_args: Args) -> Response {
     run_regular_jobs();

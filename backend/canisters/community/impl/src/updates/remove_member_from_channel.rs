@@ -4,7 +4,7 @@ use canister_tracing_macros::trace;
 use community_canister::remove_member_from_channel::{Response::*, *};
 use group_chat_core::RemoveMemberResult;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn remove_member_from_channel(args: Args) -> Response {
     run_regular_jobs();
