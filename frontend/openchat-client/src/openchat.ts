@@ -7692,6 +7692,19 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
+    private contentTypesSupportingEdit = new Set([
+        "file_content",
+        "text_content",
+        "image_content",
+        "video_content",
+        "audio_content",
+        "giphy_content",
+    ]);
+
+    contentTypeSupportsEdit(contentType: MessageContent["kind"]): boolean {
+        return this.contentTypesSupportingEdit.has(contentType);
+    }
+
     getBots(includeTestBots: boolean = false) {
         return includeTestBots
             ? Promise.resolve([builtinBot, ...testBots])
