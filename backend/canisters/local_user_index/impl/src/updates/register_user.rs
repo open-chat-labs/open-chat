@@ -172,6 +172,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         video_call_operators: state.data.video_call_operators.clone(),
         referred_by,
         test_mode: state.data.test_mode,
+        bot_api_gateway_canister_id: Principal::anonymous(),
     };
 
     crate::jobs::topup_canister_pool::start_job_if_required(state, None);
