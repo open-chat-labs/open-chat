@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add token ([#6953](https://github.com/open-chat-labs/open-chat/pull/6953))
+
+## [[2.0.1488](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1488-registry)] - 2024-12-03
+
 ### Fixed
 
 - Fix listing fee transfer ([#6948](https://github.com/open-chat-labs/open-chat/pull/6948))
