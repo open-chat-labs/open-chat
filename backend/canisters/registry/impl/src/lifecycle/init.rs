@@ -1,13 +1,9 @@
-use std::time::Duration;
-
 use crate::lifecycle::{init_env, init_state};
-use crate::updates::add_token::add_token_impl;
 use crate::Data;
-use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk::init;
 use registry_canister::init::Args;
-use tracing::{error, info};
+use tracing::info;
 use utils::cycles::init_cycles_dispenser_client;
 use utils::env::Environment;
 
@@ -38,37 +34,4 @@ fn init(args: Args) {
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Initialization complete");
-
-    ic_cdk_timers::set_timer(Duration::ZERO, add_token);
-}
-
-fn add_token() {
-    ic_cdk::spawn(add_token_inner());
-
-    async fn add_token_inner() {
-        let ledger_canister_id = Principal::from_text("npnnq-naaaa-aaaam-qb7va-cai").unwrap();
-        let payer = Principal::from_text("icbn4-5qaaa-aaaaf-bp72q-cai").unwrap().into();
-        let info_url = "https://info.icpswap.com/token/details/npnnq-naaaa-aaaam-qb7va-cai".to_string();
-        let how_to_buy_url =
-            "https://app.icpswap.com/swap?input=ryjl3-tyaaa-aaaaa-aaaba-cai&output=npnnq-naaaa-aaaam-qb7va-cai".to_string();
-        let transaction_url_format = "https://ic.house/token/npnnq-naaaa-aaaam-qb7va-cai".to_string();
-
-        let response = add_token_impl(
-            ledger_canister_id,
-            Some(payer),
-            None,
-            Some(info_url),
-            Some(how_to_buy_url),
-            Some(transaction_url_format),
-            None,
-        )
-        .await;
-
-        match response {
-            registry_canister::add_token::Response::Success => {
-                info!("AWB added");
-            }
-            _ => error!("Failed to add AWB: {response:?}"),
-        }
-    }
 }

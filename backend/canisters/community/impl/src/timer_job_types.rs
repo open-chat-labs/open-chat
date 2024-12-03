@@ -480,7 +480,7 @@ impl Job for MigrateMembersToStableMemoryJob {
                 state
                     .data
                     .timer_jobs
-                    .enqueue_job(TimerJob::MigrateMembersToStableMemory(self), now, now);
+                    .enqueue_job(TimerJob::MigrateMembersToStableMemory(self), now + (10 * SECOND_IN_MS), now);
             } else {
                 state.data.members_migrated_to_stable_memory = true;
                 info!("Finished migrating members to stable memory");
