@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1486](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1486-community)] - 2024-12-02
+
 ### Changed
 
 - Remove channel links from being stored on each community member ([#6923](https://github.com/open-chat-labs/open-chat/pull/6923))
