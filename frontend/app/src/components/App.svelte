@@ -473,6 +473,7 @@
 <Head />
 
 <ActiveCall
+    {showLandingPage}
     onClearSelection={() => page(routeForScope($chatListScope))}
     bind:this={videoCallElement} />
 
