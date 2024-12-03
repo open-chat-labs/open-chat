@@ -1,20 +1,20 @@
-use crate::{generate_query_call, generate_update_call};
+use crate::{generate_msgpack_query_call, generate_msgpack_update_call};
 use local_user_index_canister::*;
 
 // Queries
-generate_query_call!(access_token);
-generate_query_call!(chat_events);
-generate_query_call!(group_and_community_summary_updates);
+generate_msgpack_query_call!(access_token);
+generate_msgpack_query_call!(chat_events);
+generate_msgpack_query_call!(group_and_community_summary_updates);
 
 // Updates
-generate_update_call!(invite_users_to_channel);
-generate_update_call!(invite_users_to_community);
-generate_update_call!(invite_users_to_group);
-generate_update_call!(join_channel);
-generate_update_call!(join_community);
-generate_update_call!(join_group);
-generate_update_call!(register_user);
-generate_update_call!(report_message_v2);
+generate_msgpack_update_call!(invite_users_to_channel);
+generate_msgpack_update_call!(invite_users_to_community);
+generate_msgpack_update_call!(invite_users_to_group);
+generate_msgpack_update_call!(join_channel);
+generate_msgpack_update_call!(join_community);
+generate_msgpack_update_call!(join_group);
+generate_msgpack_update_call!(register_user);
+generate_msgpack_update_call!(report_message_v2);
 
 pub mod happy_path {
     use crate::utils::{principal_to_username, tick_many};

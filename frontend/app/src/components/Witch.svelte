@@ -1,8 +1,12 @@
 <script lang="ts">
-    export let background = false;
+    interface Props {
+        background?: boolean;
+    }
+
+    let { background = false }: Props = $props();
 </script>
 
-<div class:background class="witch" />
+<div class:background class="witch"></div>
 
 <style lang="scss">
     :global(body.witch .witch) {

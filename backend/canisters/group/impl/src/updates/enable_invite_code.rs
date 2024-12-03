@@ -11,7 +11,7 @@ use rand::{RngCore, SeedableRng};
 use types::{GroupInviteCodeChange, GroupInviteCodeChanged};
 use utils::canister;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn reset_invite_code(args: reset_invite_code::Args) -> reset_invite_code::Response {
     run_regular_jobs();
@@ -76,7 +76,7 @@ fn record_event(caller: Principal, change: GroupInviteCodeChange, correlation_id
         state.data.chat.events.push_main_event(
             ChatEventInternal::GroupInviteCodeChanged(Box::new(GroupInviteCodeChanged {
                 change,
-                changed_by: member.user_id,
+                changed_by: member.user_id(),
             })),
             correlation_id,
             now,
@@ -99,11 +99,11 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
 
     let caller = state.env.caller();
     if let Some(member) = state.data.get_member(caller) {
-        if member.suspended.value {
+        if member.suspended().value {
             return Err(UserSuspended);
         }
 
-        if member.role.can_invite_users(&state.data.chat.permissions) {
+        if member.role().can_invite_users(&state.data.chat.permissions) {
             return Ok(PrepareResult {
                 caller,
                 code: state.data.invite_code,

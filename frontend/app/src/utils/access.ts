@@ -5,6 +5,7 @@ import {
     type Credential,
     type CredentialGate,
     type CryptocurrencyDetails,
+    type EnhancedAccessGate,
     type Level,
     type NervousSystemDetails,
 } from "openchat-client";
@@ -236,3 +237,38 @@ export const credentialIssuers: Credential[] = [
         },
     },
 ];
+
+function minExpiry(e1: bigint | undefined, e2: bigint | undefined): bigint | undefined {
+    if (e1 === undefined && e2 === undefined) return undefined;
+    if (e1 === undefined) return e2;
+    if (e2 === undefined) return e1;
+    return BigInt(Math.min(Number(e1), Number(e2)));
+}
+
+function canGatesBeMerged(g1: EnhancedAccessGate, g2: EnhancedAccessGate): boolean {
+    return (
+        (g1.kind === "diamond_gate" && g2.kind === "diamond_gate") ||
+        (g1.kind === "lifetime_diamond_gate" && g2.kind === "lifetime_diamond_gate") ||
+        (g1.kind === "locked_gate" && g2.kind === "locked_gate") ||
+        (g1.kind === "referred_by_member_gate" && g2.kind === "referred_by_member_gate") ||
+        (g1.kind === "unique_person_gate" && g2.kind === "unique_person_gate")
+    );
+}
+
+export function mergeAccessGates(
+    g1?: EnhancedAccessGate,
+    g2?: EnhancedAccessGate,
+): EnhancedAccessGate[] {
+    if (g1 === undefined) return [];
+    if (g2 === undefined) return [g1];
+
+    if (canGatesBeMerged(g1, g2)) {
+        return [
+            {
+                ...g1,
+                expiry: minExpiry(g1.expiry, g2.expiry),
+            },
+        ];
+    }
+    return [g1, g2];
+}

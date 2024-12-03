@@ -24,6 +24,7 @@ async fn c2c_handle_bot_messages(
             let user_type = match verify_user(local_user_index_canister_id, user_id).await {
                 Some(UserType::Bot) => UserType::Bot,
                 Some(UserType::OcControlledBot) => UserType::OcControlledBot,
+                Some(UserType::BotV2) => UserType::BotV2,
                 _ => panic!("This request is not from a bot registered with OpenChat"),
             };
             (user_id, user_type)
@@ -133,6 +134,12 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
 
     let thread_root_message_index = args.thread_root_message_id.map(|id| chat.main_message_id_to_index(id));
 
+    let chat_private_replying_to = if let Some((chat, None)) = replies_to.as_ref().and_then(|r| r.chat_if_other) {
+        Some(chat)
+    } else {
+        None
+    };
+
     let push_message_args = PushMessageArgs {
         thread_root_message_index,
         message_id: args.message_id.unwrap_or_else(|| state.env.rng().gen()),
@@ -206,6 +213,13 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
         args.now,
         &mut state.data,
     );
+
+    if let Some(chat) = chat_private_replying_to {
+        state
+            .data
+            .direct_chats
+            .mark_private_reply(args.sender, chat, message_event.event.message_index);
+    }
 
     message_event
 }

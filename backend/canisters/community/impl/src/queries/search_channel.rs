@@ -3,7 +3,7 @@ use canister_api_macros::query;
 use community_canister::search_channel::{Response::*, *};
 use group_chat_core::SearchResults;
 
-#[query(candid = true, msgpack = true)]
+#[query(msgpack = true)]
 fn search_channel(args: Args) -> Response {
     read_state(|state| search_channel_impl(args, state))
 }

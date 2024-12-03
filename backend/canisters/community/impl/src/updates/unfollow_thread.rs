@@ -4,7 +4,7 @@ use canister_tracing_macros::trace;
 use community_canister::unfollow_thread::{Response::*, *};
 use group_chat_core::UnfollowThreadResult;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn unfollow_thread(args: Args) -> Response {
     run_regular_jobs();
@@ -21,8 +21,8 @@ fn unfollow_thread_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
 
     let user_id = match state.data.members.get(caller) {
-        Some(member) if member.suspended.value => return UserSuspended,
-        Some(member) if member.lapsed.value => return UserLapsed,
+        Some(member) if member.suspended().value => return UserSuspended,
+        Some(member) if member.lapsed().value => return UserLapsed,
         Some(member) => member.user_id,
         None => return UserNotInCommunity,
     };

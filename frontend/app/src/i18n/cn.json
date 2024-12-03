@@ -148,6 +148,86 @@
     "blockUser": "加入黑名单",
     "blockUserFailed": "无法加入黑名单",
     "blockUserSucceeded": "该用户已被加入黑名单",
+    "bots": {
+        "builtin": {
+            "desc": "该机器人提供内置的 OpenChat 命令",
+            "name": "内置"
+        },
+        "crypto": {
+            "desc": "向其他用户发送加密货币",
+            "params": {
+                "amount": {
+                    "desc": "您要发送的金额",
+                    "name": "数量",
+                    "placeholder": "输入金额"
+                },
+                "token": {
+                    "desc": "您要发送的令牌",
+                    "name": "代币",
+                    "placeholder": "输入 token"
+                }
+            }
+        },
+        "diamond": {
+            "desc": "发布链接解释钻石会员资格"
+        },
+        "failed": "抱歉，我们无法执行机器人命令",
+        "faq": {
+            "desc": "创建常见问题解答主题的链接",
+            "params": {
+                "topic": {
+                    "choices": {
+                        "airdrop": "每月空投",
+                        "android": "Android 应用程序",
+                        "buychat": "购买 CHAT",
+                        "content": "内容指南",
+                        "diamond": "钻石会员",
+                        "info": "信息",
+                        "ios": "iOS 应用程序",
+                        "referral": "推荐奖励",
+                        "security": "安全",
+                        "sendtokens": "发送代币",
+                        "shortcuts": "快捷方式",
+                        "storage": "贮存",
+                        "style": "消息样式",
+                        "translation": "内容翻译",
+                        "voting": "表决",
+                        "wallet": "钱包"
+                    },
+                    "desc": "您感兴趣的具体常见问题解答主题",
+                    "name": "常见问题主题",
+                    "placeholder": "选择主题"
+                }
+            }
+        },
+        "gif": {
+            "desc": "找到要发送的 GIF",
+            "params": {
+                "term": {
+                    "desc": "输入您的 gif 的搜索词",
+                    "name": "搜索词",
+                    "placeholder": "搜索词"
+                }
+            }
+        },
+        "matchingCommands": "匹配命令",
+        "poll": {
+            "desc": "在当前聊天中创建投票"
+        },
+        "search": {
+            "desc": "在当前聊天中发起搜索",
+            "params": {
+                "term": {
+                    "desc": "输入要在聊天中搜索的词条",
+                    "name": "搜索词",
+                    "placeholder": "搜索词"
+                }
+            }
+        },
+        "witch": {
+            "desc": "召唤女巫"
+        }
+    },
     "cancel": "取消",
     "cancelInvite": "取消邀请",
     "cancelInviteFailed": "取消邀请时出错",
@@ -301,8 +381,10 @@
         "visibility": "能见度"
     },
     "communityDisplayNameRules": "只在被选择的社区内",
+    "communityFrozen": "社区冻结",
     "communityMembers": "社区成员",
     "communityTheme": "社区主题",
+    "communityUnfrozen": "社区解冻",
     "confirmLeaveGroup": "你真的想离开这个{level}吗？",
     "confirmMakeGroupPrivate": "您确定要将此 {level} 设为私有吗？目前此操作无法撤消！",
     "confirmMakeGroupPublic": "您确定要公开此 {level} 吗？\n\n现有消息将保持私密，所有新消息将公开。",
@@ -368,6 +450,8 @@
         "claim": "索取 CHIT！",
         "comeback": "回到 {time}",
         "extendStreak": "延长连胜",
+        "failedToClaim": "抱歉，我们无法领取您的每日 CHIT",
+        "hideWhenClaimed": "每天领取后隐藏领取 CHIT 图标⚡️",
         "info": "您维持连续记录的时间越长，您每天可领取的 CHIT 就越多！",
         "title": "保持连胜",
         "utcInfo": "CHIT 连续性和领取窗口使用 UTC 表示，因此您可能会发现以 UTC 而不是当地时区查看日历更清楚。",
@@ -439,11 +523,13 @@
     "failedToCopyLinkToClipboard": "无法将链接复制到剪贴板",
     "failedToCopyToClipboard": "无法复制到粘贴板 {account}",
     "failedToCopyUrlToClipboard": "无法复制 URL ({url}) 到粘贴板",
+    "failedToFreezeCommunity": "冻结社区失败",
     "failedToFreezeGroup": "冻结群聊失败",
     "failedToLeaveGroup": "尝试将您从 {level} 中删除时发生错误",
     "failedToShareLink": "分享链接失败",
     "failedToShareMessage": "无法分享此消息",
     "failedToSuspendUser": "无法暂停用户",
+    "failedToUnfreezeCommunity": "解冻社区失败",
     "failedToUnfreezeGroup": "解冻群聊失败",
     "failedToUnsuspendUser": "无法取消暂停用户",
     "faq": {
@@ -451,8 +537,10 @@
         "airdrop_q": "会有空投吗？",
         "android_app_a": "至于 iOS（见上文），OpenChat Web 应用程序<em>确实</em>已经可以在 Android 上运行，并且您可以从浏览器菜单中“添加到主屏幕”。这为您提供了一个标准图标来打开应用程序，它看起来更像是没有网址栏的本机应用程序。 Android 上的渐进式 Web 应用程序 (PWA) 支持非常好。与 iOS 一样，它支持网络推送通知，但也支持从手机读取联系人信息（如果您在每种情况下都授予权限）。除此之外，对 WebRTC 的支持要好得多。因此，开发原生 Android 应用程序的吸引力较小，将在原生 iOS 应用程序之后出现。同样的考虑因素也适用于构建像 iOS 一样的 Android 应用程序，目的是围绕核心 Web 应用程序提供精简的本机包装，以及 Android Play 商店的认证。",
         "android_app_q": "什么时候会有安卓应用？",
-        "buychat_a": "您可以在<a target=\"_blank\" href=\"https://www.helixmarkets.io/trade/CHATUSDC\">Helix Markets</a>上使用 USDC 购买 CHAT。否则，您必须先<a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">购买 ICP</a> ，然后在各种去中心化交易所 (DEX) 上将其兑换为 CHAT。<ul><li><a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">信息中心</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPSwap</a></li></ul> DFINITY 正在增加对 ICRC1 代币（包括 CHAT）的<a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta API</a>的支持，使其更容易与中心化交易所 (CEX) 集成。一旦实现这一点，CHAT 很可能将在 CEX 上用于 ICP 或 USDT 交易。",
+        "buychat_a": "您可以在各种加密货币交易所购买 CHAT：<br><br><table><tr><th>交换</th><th>风格</th><th>购买</th><th>去中心化交易所/去中心化交易所</th></tr><tr><td><a target=\"_blank\" href=\"https://www.helixmarkets.io/trade/CHATUSDC\">Helix 市场</a></td><td>订单簿</td><td>美国货币基金组织</td><td>杂交种</td></tr><tr><td><a target=\"_blank\" href=\"https://www.bitmart.com/trade?symbol=CHAT_USDT\">比特市场</a></td><td>订单簿</td><td>USDT</td><td>中远海运能源</td></tr><tr><td><a target=\"_blank\" href=\"https://www.bitrue.com/trade/chat_usdt\">比特鲁</a></td><td>订单簿</td><td>USDT</td><td>中远海运能源</td></tr><tr><td><a target=\"_blank\" href=\"https://www.coinstore.com/spot/chatusdt\">Coinstore</a></td><td>订单簿</td><td>USDT</td><td>中远海运能源</td></tr><tr><td><a target=\"_blank\" href=\"https://www.lbank.com/trade/chat_usdt\">银行</a></td><td>订单簿</td><td>USDT</td><td>中远海运能源</td></tr><tr><td><a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">信息中心</a></td><td>订单簿</td><td>电感耦合等离子体</td><td>去中心化交易所</td></tr><tr><td><a target=\"_blank\" href=\"https://www.kongswap.io/?viewtab=swap&pool=CHAT_ckUSDT\">KongSwap</a></td><td>掉期（AMM）</td><td> USDT</td><td>去中心化交易所</td></tr><tr><td><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPSwap</a></td><td>掉期（AMM）</td><td>电感耦合等离子体</td><td>去中心化交易所</td></tr><tr><td><a target=\"_blank\" href=\"https://app.sonic.ooo/?tokenin=ryjl3-tyaaa-aaaaa-aaaba-cai&tokenout=2ouva-viaaa-aaaaq-aaamq-cai\">索尼克</a></td><td>掉期（AMM）</td><td>电感耦合等离子体</td><td>去中心化交易所</td></tr></table><br>您还可以直接从 OpenChat 钱包将代币兑换为 CHAT，它将自动使用具有最佳可用价格的兑换交易所。",
         "buychat_q": "我如何购买 CHAT 代币？",
+        "buyicp_a": "<ol><li>您可以在 Coinbase、Binance、Kraken 等主要交易所购买 ICP 代币。这些平台允许您使用各种加密货币交易 ICP。</li><li>网络神经系统 (NNS) dapp 提供使用信用卡购买 ICP 的功能。您需要使用您的互联网身份登录并按照提示完成交易<a target=\"_blank\" href=\"https://support.dfinity.org/hc/en-us/articles/21363667463828-How-do-I-purchase-ICP-from-within-the-NNS-dapp\">常见问题 &gt; 互联网计算机 &gt; 网络神经系统 (NNS) &gt; 如何从 NNS dapp 内购买 ICP？</a> .</li><li>您可以使用互联网计算机上的去中心化交易所（DEX）将其他加密货币兑换为ICP。例如：<ul><li> <a target=\"_blank\" href=\"https://iclight.io/ICDex/ckBTC/ICP\">ICDex.io</a>允许您将比特币（以 ckBTC 的形式）兑换为 ICP。</li><li> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/token/details/ryjl3-tyaaa-aaaaa-aaaba-cai\">ICPSwap</a>提供与 ICP 的交易对。</li></ul></li></ol>",
+        "buyicp_q": "如何购买 ICP 代币？",
         "content_a": "有关我们的内容和审核指南的完整详细信息，请<a href=\"/guidelines\">参见此处</a>。",
         "content_q": "什么样的内容是允许的？",
         "diamond_a": "您可以升级为钻石会员，以访问 OpenChat 中的额外或增强功能。 <a href=\"/diamond\">参见此处</a> 进行功能比较和升级。",
@@ -489,6 +577,7 @@
     "followThreadFailed": "关注话题失败",
     "fontSize": "字体大小",
     "forward": "转发",
+    "freezeCommunity": "冻结社区",
     "freezeGroup": "冻结群聊",
     "giphyMessage": "Gif 消息",
     "goHome": "主页",
@@ -604,9 +693,9 @@
         "link": "关联",
         "linkedAccounts": {
             "currentAccount": "当前以该主体身份登录",
-            "linkAdvice": "要链接新帐户，请登录要链接的新帐户，然后登录当前帐户，最后将两个帐户链接在一起。",
-            "linkAnother": "链接另一个",
-            "section": "关联账户",
+            "linkAdvice": "要添加新的登录提供商，请先使用您要添加的新提供商登录，然后使用您当前的提供商登录，最后将两者链接在一起。",
+            "linkAnother": "添加另一个",
+            "section": "登录提供商",
             "start": "开始使用"
         },
         "linkIdentity": "链接标识",
@@ -657,20 +746,10 @@
     "lastOnline": "上次在线 {duration} 前",
     "learnToEarn": {
         "accepted_swap_offer": "接受掉期报价",
-        "appointed_as_group_admin": "指定管理员群组/频道",
-        "appointed_as_group_mod": "被任命为群组/频道的版主",
-        "appointed_as_group_owner": "被任命为群组/频道的所有者",
-        "appointed_group_admin": "指定群组/频道管理员",
-        "appointed_group_mod": "指定群组/频道管理员",
-        "appointed_group_owner": "指定群组/频道所有者",
         "changed_theme": "更改主题",
         "deleted_message": "删除邮件",
-        "direct_chat_5": "进行 5 次直接聊天",
-        "direct_chats_10": "进行 10 次直接聊天",
-        "direct_chats_20": "进行 20 次直接聊天",
         "done": "完毕",
         "edited_message": "编辑消息",
-        "enabled_disappearing_messages": "启用“消失的消息”",
         "external": "待办事项（外部）",
         "externalInfo": "外部成就由第三方定义。只需点击链接并按照他们的指示即可获得 CHIT 奖励。",
         "favourited_chat": "将聊天标记为收藏",
@@ -683,13 +762,8 @@
         "joined_group": "加入群组",
         "nothingDone": "你还有很多工作要做！",
         "nothingLeftToDo": "放松！你没什么可做的了",
-        "owned_group_with_1_diamond_member": "拥有一个拥有 1 名经过验证的成员的群组/社区",
-        "owned_group_with_10_diamond_members": "拥有一个拥有 10 名经过验证的成员的群组/社区",
-        "owned_group_with_100_diamond_members": "拥有一个拥有 100 名经过验证的成员的群组/社区",
-        "owned_group_with_1000_diamond_members": "拥有一个拥有 1000 名经过验证的成员的群组/社区",
         "percentageComplete": "{perc}% 完成",
         "pinned_chat": "将聊天固定到列表顶部",
-        "pinned_message": "置顶消息",
         "proved_unique_personhood": "证明你独特的人性",
         "quote_replied": "引用回复消息",
         "reacted_to_message": "对消息做出反应",
@@ -717,10 +791,8 @@
         "sent_video": "发送视频",
         "set_avatar": "上传您的个人资料头像",
         "set_bio": "更新您的个人简介",
-        "set_community_access_gate": "设置社区出入口",
         "set_community_display_name": "设置社区显示名称",
         "set_display_name": "更新您的显示名称",
-        "set_group_access_gate": "设置群组/频道访问门限",
         "set_pin": "在你的钱包上设置密码",
         "showChitPopup": "通知我我的成就",
         "started_call": "开始视频通话",
@@ -730,12 +802,10 @@
         "streak_30": "实现 30 天连续记录",
         "streak_365": "实现 365 天连续",
         "streak_7": "实现 7 天连续",
-        "suggested_translation": "建议翻译",
         "swapped_from_wallet": "从钱包中兑换代币",
         "tipped_message": "留言提示",
         "title": "成就",
         "todo": "待办事项",
-        "translation_accepted": "接受翻译",
         "upgrade_to_gold_diamond": "升级为终身钻石会员",
         "upgraded_to_diamond": "升级为钻石会员",
         "voted_on_poll": "投票"
@@ -1055,21 +1125,33 @@
         "claim": "领取",
         "claimed": "已领取！",
         "claimFailed": "抱歉，您未领取成功！祝你下次好运。",
+        "claimIneligible": "抱歉，您不符合领取此奖品的条件。",
         "click": "点击下方按钮即有机会赢取礼品。",
         "creatingYourPrizeMessage": "我们正在创建您的奖品消息，请稍候",
+        "diamondMembership": "钻石会员",
         "distribution": "奖品应该如何分配？",
         "duration": "奖品有效期多久？",
         "equalDistribution": "均等分配",
         "finished": "完成的",
+        "lifetimeDiamond": "寿命",
+        "lifetimeDiamondMembership": "终身钻石会员",
         "live": "奖品留言直播！其他人可以点击领取🎁",
         "maxPrize": "最高奖金是多少？",
         "minPrize": "最低奖金是多少？",
         "numberOfWinners": "获奖人数",
         "onlyDiamond": "仅限钻石用户",
+        "onlyStreak": "仅限有连胜记录的用户",
+        "onlyUniquePerson": "只有独一无二的人类",
         "prizeFinished": "您的奖品留言现已完成",
         "randomDistribution": "随机分布",
+        "restrictedMessage": "要领取此奖品，您必须满足以下条件",
+        "standardDiamond": "标准",
+        "streak": "条纹",
+        "streakFull": "连续 {n} 天或更长时间",
+        "streakValue": "{n} 天或更长时间",
         "title": "奖",
         "totalAmount": "总奖金金额",
+        "uniquePerson": "独特个人证明",
         "whoCanWin": "谁可以申请份额？",
         "winner": "**{recipient}** 领取了 **{amount}** {token}"
     },
@@ -1107,9 +1189,23 @@
         "groupIndexAction": "集团指数行动",
         "makeProposal": "提案",
         "maker": {
+            "achievementChatCost": "需要支付 {cost} {chat} 代币才能提供所请求的 CHIT。成就到期后，所有未使用的 CHAT 都将退还。",
+            "achievementExpiry": "到期",
+            "achievementLogo": "成就标志",
+            "achievementName": "成就名称",
+            "achievementUrl": "成就网址",
+            "addTokenChatCost": "需要支付 {cost} {chat} 个代币才能在 OpenChat 上列出新代币。",
             "amount": "数量",
             "amountRules": "至少 1 个 {token} 令牌",
+            "approvalError": "无法批准 CHAT 转移",
+            "awardingAchievementCanisterId": "罐体 ID",
+            "awardingAchievementCanisterIdRules": "只有此罐子可以授予成就",
+            "chitReward": "CHIT 奖励",
+            "chitRewardRules": "至少 {value} CHIT",
+            "enterAchievementName": "输入成就的名称",
             "enterAmount": "输入 {token} 代币的数量",
+            "enterChitReward": "输入 CHIT 奖励",
+            "enterMaxAwards": "输入要授予的最大用户数",
             "enterRecipientOwner": "输入收件人的账户主体",
             "enterRecipientSubaccount": "输入可选的收件人子帐户",
             "enterSummary": "输入摘要",
@@ -1118,6 +1214,8 @@
             "header": "提出建议",
             "howToBuyUrl": "如何购买网址",
             "ledgerCanisterId": "分类帐容器 ID",
+            "maxAwards": "最大用户奖励",
+            "maxAwardsRules": "至少 {value}",
             "message": "提交提案需要缴纳 {cost} {token} 代币押金（包括两套转账费用），如果提案被采纳，押金将退还。",
             "recipientOwner": "收款人账户本金",
             "recipientSubaccount": "收款人子账户",
@@ -1291,7 +1389,7 @@
         "none": "没有人",
         "owner": "拥有者"
     },
-    "roleChanged": "{changedBy} 将 {changed} 的角色从 {oldRole} 更改为 {newRole}",
+    "roleChanged": "{changedBy} 将 {changed} 的角色更改为 {newRole}",
     "rules": {
         "accept": "接受",
         "acceptTitle": "聊天规则",
@@ -1500,6 +1598,7 @@
     "unexpectedError": "未知错误",
     "unfollowThread": "取消关注此话题",
     "unfollowThreadFailed": "取消关注话题失败",
+    "unfreezeCommunity": "解冻社区",
     "unfreezeGroup": "解冻群聊",
     "unknown": "未知的",
     "unknownUser": "未知用户",
@@ -1654,5 +1753,5 @@
     "yourAccountIsSuspended": "您的账户暂时无法使用",
     "yourChats": "您的聊天",
     "youreBlocked": "抱歉 - 您已被该群聊加入黑名单",
-    "yourRoleChanged": "{changedBy} 将您的角色从 {oldRole} 更改为 {newRole}"
+    "yourRoleChanged": "{changedBy} 将您的角色更改为 {newRole}"
 }

@@ -18,11 +18,11 @@ import type {
 import { ChatMap, CommunityMap, ObjectSet, chatScopesEqual } from "openchat-shared";
 import { immutableStore } from "./immutable";
 import { derived } from "svelte/store";
-import { messagesRead } from "./markRead";
+import { messageActivityFeedReadUpToLocally, messagesRead } from "./markRead";
 import { safeWritable } from "./safeWritable";
 import { serverWalletConfigStore } from "./crypto";
 
-export type PinnedByScope = Record<ChatListScope["kind"], ChatIdentifier[]>;
+export type PinnedByScope = Map<ChatListScope["kind"], ChatIdentifier[]>;
 
 // This will contain all state.
 export type GlobalState = {
@@ -44,21 +44,18 @@ export const chitStateStore = immutableStore<ChitState>({
     nextDailyChitClaim: 0n,
 });
 
-/**
- * This is the root of the
- */
 export const globalStateStore = immutableStore<GlobalState>({
     communities: new CommunityMap<CommunitySummary>(),
     directChats: new ChatMap<DirectChatSummary>(),
     groupChats: new ChatMap<GroupChatSummary>(),
     favourites: new ObjectSet<ChatIdentifier>(),
-    pinnedChats: {
-        group_chat: [],
-        direct_chat: [],
-        favourite: [],
-        community: [],
-        none: [],
-    },
+    pinnedChats: new Map<ChatListScope["kind"], ChatIdentifier[]>([
+        ["group_chat", []],
+        ["direct_chat", []],
+        ["favourite", []],
+        ["community", []],
+        ["none", []],
+    ]),
     achievements: new Set(),
     referrals: [],
     messageActivitySummary: {
@@ -68,11 +65,7 @@ export const globalStateStore = immutableStore<GlobalState>({
     },
 });
 
-export const pinnedChatsStore = derived(globalStateStore, ($global) => $global.pinnedChats);
-
 export const chatListScopeStore = safeWritable<ChatListScope>({ kind: "none" }, chatScopesEqual);
-
-export const favouritesStore = derived(globalStateStore, (state) => state.favourites);
 
 export type CombinedUnreadCounts = {
     threads: UnreadCounts;
@@ -226,9 +219,18 @@ export const unreadDirectCounts = derived(
     },
 );
 
-export const unreadActivityCount = derived([globalStateStore], ([$global]) => {
-    return $global.messageActivitySummary.unreadCount;
-});
+export const unreadActivityCount = derived(
+    [globalStateStore, messageActivityFeedReadUpToLocally],
+    ([$global, readUpToLocally]) => {
+        if (
+            readUpToLocally !== undefined &&
+            readUpToLocally >= $global.messageActivitySummary.latestTimestamp
+        ) {
+            return 0;
+        }
+        return $global.messageActivitySummary.unreadCount;
+    },
+);
 
 export const directVideoCallCounts = derived([globalStateStore], ([$global]) => {
     return videoCallsInProgressForChats($global.directChats.values());

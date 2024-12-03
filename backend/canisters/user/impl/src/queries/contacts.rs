@@ -3,7 +3,7 @@ use crate::read_state;
 use canister_api_macros::query;
 use user_canister::contacts::{Response::*, *};
 
-#[query(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[query(guard = "caller_is_owner", msgpack = true)]
 fn contacts(_args: Args) -> Response {
     read_state(|state| {
         Success(SuccessResult {

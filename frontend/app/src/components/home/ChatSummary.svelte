@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AvatarSize, OpenChat, chatIdentifiersEqual } from "openchat-client";
+    import { AvatarSize, OpenChat, chatIdentifiersEqual, selectedCommunity } from "openchat-client";
     import CameraTimer from "svelte-material-icons/CameraTimer.svelte";
     import type {
         UserLookup,
@@ -104,7 +104,7 @@
                     name: chatSummary.name,
                     diamondStatus: "inactive" as DiamondMembershipStatus["kind"],
                     streak: 0,
-                    avatarUrl: client.groupAvatarUrl(chatSummary),
+                    avatarUrl: client.groupAvatarUrl(chatSummary, $selectedCommunity),
                     userId: undefined,
                     typing: client.getTypingString(
                         $_,
@@ -333,6 +333,7 @@
 </script>
 
 {#if visible}
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div
         role="button"
         class="chat-summary"
@@ -366,7 +367,7 @@
             <div class="name-date">
                 <div class="chat-name">
                     {#if chat.private}
-                        <div class="private" />
+                        <div class="private"></div>
                     {/if}
                     <h4>
                         {#if community !== undefined && $chatListScope.kind === "favourite"}
@@ -592,6 +593,7 @@
             {/if}
         {/if}
         {#if canDelete}
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div
                 title={$_("removeChat")}
                 style={$mobileWidth
@@ -727,16 +729,6 @@
 
     .expires {
         @include disappearing();
-    }
-
-    .video-call {
-        height: calc(1em + 4px);
-        width: calc(1em + 4px);
-        border-radius: 50%;
-        position: absolute;
-        bottom: -2px;
-        left: 2px;
-        background-image: url("/assets/video_call.svg");
     }
 
     .details {

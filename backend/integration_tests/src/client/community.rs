@@ -1,49 +1,49 @@
-use crate::{generate_query_call, generate_update_call};
+use crate::{generate_msgpack_query_call, generate_msgpack_update_call};
 use community_canister::*;
 use ic_stable_structures::memory_manager::MemoryId;
 
-pub const CHAT_EVENTS_MEMORY_ID: MemoryId = MemoryId::new(3);
+pub const STABLE_MEMORY_MAP_MEMORY_ID: MemoryId = MemoryId::new(3);
 
 // Queries
-generate_query_call!(channel_summary);
-generate_query_call!(events);
-generate_query_call!(events_by_index);
-generate_query_call!(search_channel);
-generate_query_call!(selected_channel_initial);
-generate_query_call!(selected_channel_updates_v2);
-generate_query_call!(selected_initial);
-generate_query_call!(selected_updates_v2);
-generate_query_call!(summary);
-generate_query_call!(summary_updates);
+generate_msgpack_query_call!(channel_summary);
+generate_msgpack_query_call!(events);
+generate_msgpack_query_call!(events_by_index);
+generate_msgpack_query_call!(search_channel);
+generate_msgpack_query_call!(selected_channel_initial);
+generate_msgpack_query_call!(selected_channel_updates_v2);
+generate_msgpack_query_call!(selected_initial);
+generate_msgpack_query_call!(selected_updates_v2);
+generate_msgpack_query_call!(summary);
+generate_msgpack_query_call!(summary_updates);
 
 // Updates
-generate_update_call!(accept_p2p_swap);
-generate_update_call!(add_reaction);
-generate_update_call!(block_user);
-generate_update_call!(cancel_invites);
-generate_update_call!(cancel_p2p_swap);
-generate_update_call!(change_channel_role);
-generate_update_call!(change_role);
-generate_update_call!(claim_prize);
-generate_update_call!(create_channel);
-generate_update_call!(create_user_group);
-generate_update_call!(delete_channel);
-generate_update_call!(delete_messages);
-generate_update_call!(delete_user_groups);
-generate_update_call!(edit_message);
-generate_update_call!(enable_invite_code);
-generate_update_call!(import_group);
-generate_update_call!(leave_channel);
-generate_update_call!(register_poll_vote);
-generate_update_call!(remove_member);
-generate_update_call!(remove_member_from_channel);
-generate_update_call!(remove_reaction);
-generate_update_call!(send_message);
-generate_update_call!(unblock_user);
-generate_update_call!(undelete_messages);
-generate_update_call!(update_channel);
-generate_update_call!(update_community);
-generate_update_call!(update_user_group);
+generate_msgpack_update_call!(accept_p2p_swap);
+generate_msgpack_update_call!(add_reaction);
+generate_msgpack_update_call!(block_user);
+generate_msgpack_update_call!(cancel_invites);
+generate_msgpack_update_call!(cancel_p2p_swap);
+generate_msgpack_update_call!(change_channel_role);
+generate_msgpack_update_call!(change_role);
+generate_msgpack_update_call!(claim_prize);
+generate_msgpack_update_call!(create_channel);
+generate_msgpack_update_call!(create_user_group);
+generate_msgpack_update_call!(delete_channel);
+generate_msgpack_update_call!(delete_messages);
+generate_msgpack_update_call!(delete_user_groups);
+generate_msgpack_update_call!(edit_message);
+generate_msgpack_update_call!(enable_invite_code);
+generate_msgpack_update_call!(import_group);
+generate_msgpack_update_call!(leave_channel);
+generate_msgpack_update_call!(register_poll_vote);
+generate_msgpack_update_call!(remove_member);
+generate_msgpack_update_call!(remove_member_from_channel);
+generate_msgpack_update_call!(remove_reaction);
+generate_msgpack_update_call!(send_message);
+generate_msgpack_update_call!(unblock_user);
+generate_msgpack_update_call!(undelete_messages);
+generate_msgpack_update_call!(update_channel);
+generate_msgpack_update_call!(update_community);
+generate_msgpack_update_call!(update_user_group);
 
 pub mod happy_path {
     use crate::{client::user, User};
@@ -79,7 +79,6 @@ pub mod happy_path {
                 messages_visible_to_non_members: None,
                 permissions_v2: None,
                 events_ttl: None,
-                gate: None,
                 gate_config: None,
                 external_url: None,
             },
@@ -114,7 +113,6 @@ pub mod happy_path {
                 messages_visible_to_non_members: None,
                 permissions_v2: None,
                 events_ttl: None,
-                gate: None,
                 gate_config: Some(gate.into()),
                 external_url: None,
             },
@@ -419,7 +417,10 @@ pub mod happy_path {
             env,
             sender.principal,
             community_id.into(),
-            &community_canister::summary::Args { invite_code: None },
+            &community_canister::summary::Args {
+                on_behalf_of: None,
+                invite_code: None,
+            },
         );
 
         match response {
@@ -439,6 +440,7 @@ pub mod happy_path {
             sender.principal,
             community_id.into(),
             &community_canister::summary_updates::Args {
+                on_behalf_of: None,
                 invite_code: None,
                 updates_since,
             },

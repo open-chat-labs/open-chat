@@ -1,11 +1,11 @@
 use crate::env::ENV;
 use crate::{client, TestEnv};
+use constants::MINUTE_IN_MS;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
-use types::{ChatEvent, MessageContent};
-use utils::time::MINUTE_IN_MS;
+use types::{ChatEvent, FileContent, MessageContent, MessageContentInitial};
 
 #[test]
 fn delete_direct_message_succeeds() {
@@ -51,6 +51,82 @@ fn delete_direct_message_succeeds() {
     } else {
         panic!("Unexpected response from `events_by_index`: {user2_events_response:?}");
     }
+}
+
+#[test]
+fn file_deleted_after_direct_message_deleted() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
+
+    let message_id = random_from_u128();
+
+    let blob_reference = client::storage_index::happy_path::upload_file(
+        env,
+        user1.principal,
+        canister_ids.storage_index,
+        100,
+        vec![user1.canister()],
+    );
+
+    client::user::send_message_v2(
+        env,
+        user1.principal,
+        user1.canister(),
+        &user_canister::send_message_v2::Args {
+            recipient: user2.user_id,
+            thread_root_message_index: None,
+            message_id,
+            content: MessageContentInitial::File(FileContent {
+                name: random_string(),
+                caption: None,
+                mime_type: random_string(),
+                file_size: 100,
+                blob_reference: Some(blob_reference.clone()),
+            }),
+            replies_to: None,
+            forwarding: false,
+            block_level_markdown: false,
+            message_filter_failed: None,
+            pin: None,
+            correlation_id: 0,
+        },
+    );
+
+    assert!(client::storage_bucket::happy_path::file_exists(
+        env,
+        user1.principal,
+        blob_reference.canister_id,
+        blob_reference.blob_id
+    ));
+
+    let delete_messages_response = client::user::delete_messages(
+        env,
+        user1.principal,
+        user1.canister(),
+        &user_canister::delete_messages::Args {
+            user_id: user2.user_id,
+            thread_root_message_index: None,
+            message_ids: vec![message_id],
+            correlation_id: 0,
+        },
+    );
+    assert!(matches!(
+        delete_messages_response,
+        user_canister::delete_messages::Response::Success
+    ));
+
+    env.advance_time(Duration::from_secs(300));
+    env.tick();
+
+    assert!(!client::storage_bucket::happy_path::file_exists(
+        env,
+        user1.principal,
+        blob_reference.canister_id,
+        blob_reference.blob_id
+    ));
 }
 
 #[test]

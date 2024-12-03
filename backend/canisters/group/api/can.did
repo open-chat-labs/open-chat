@@ -339,7 +339,6 @@ type UpdateGroupV2Args = record {
     avatar : DocumentUpdate;
     permissions_v2 : opt OptionalGroupPermissions;
     events_ttl : EventsTimeToLiveUpdate;
-    gate : AccessGateUpdate;
     gate_config : AccessGateConfigUpdate;
     public : opt bool;
     messages_visible_to_non_members: opt bool;    
@@ -470,7 +469,9 @@ type ConvertIntoCommunityResponse = variant {
     InternalError : text;
 };
 
-type SummaryArgs = record {};
+type SummaryArgs = record {
+    on_behalf_of: opt UserId;
+};
 
 type SummaryResponse = variant {
     Success : record {
@@ -480,6 +481,7 @@ type SummaryResponse = variant {
 };
 
 type SummaryUpdatesArgs = record {
+    on_behalf_of: opt UserId;
     updates_since : TimestampMillis;
 };
 

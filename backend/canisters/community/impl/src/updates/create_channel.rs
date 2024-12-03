@@ -12,12 +12,12 @@ use group_chat_core::GroupChatCore;
 use rand::Rng;
 use types::{MultiUserChat, UserType};
 use url::Url;
-use utils::document_validation::validate_avatar;
+use utils::document::validate_avatar;
 use utils::text_validation::{
     validate_description, validate_group_name, validate_rules, NameValidationError, RulesValidationError,
 };
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn create_channel(args: Args) -> Response {
     run_regular_jobs();
@@ -74,14 +74,15 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
         }
     }
 
-    let messages_visible_to_non_members = args.is_public && args.messages_visible_to_non_members.unwrap_or(args.gate.is_none());
+    let messages_visible_to_non_members =
+        args.is_public && args.messages_visible_to_non_members.unwrap_or(args.gate_config.is_none());
 
     let caller = state.env.caller();
     let channel_id = state.generate_channel_id();
-    if let Some(member) = state.data.members.get_mut(caller) {
-        if member.suspended.value {
+    if let Some(member) = state.data.members.get(caller) {
+        if member.suspended().value {
             return UserSuspended;
-        } else if member.lapsed.value {
+        } else if member.lapsed().value {
             return UserLapsed;
         }
 
@@ -89,9 +90,9 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
 
         if !is_proposals_channel {
             let is_authorized = if args.is_public {
-                member.role.can_create_public_channel(&state.data.permissions)
+                member.role().can_create_public_channel(&state.data.permissions)
             } else {
-                member.role.can_create_private_channel(&state.data.permissions)
+                member.role().can_create_private_channel(&state.data.permissions)
             };
 
             if !is_authorized {
@@ -126,7 +127,6 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
         } else {
             let now = state.env.now();
             let permissions = args.permissions_v2.unwrap_or_default();
-            let gate_config = if args.gate_config.is_some() { args.gate_config } else { args.gate.map(|g| g.into()) };
 
             let chat = GroupChatCore::new(
                 MultiUserChat::Channel(state.env.canister_id().into(), channel_id),
@@ -140,7 +140,7 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
                 args.history_visible_to_new_joiners,
                 messages_visible_to_non_members,
                 permissions,
-                gate_config.clone().map(|gc| gc.into()),
+                args.gate_config.clone().map(|gc| gc.into()),
                 args.events_ttl,
                 member.user_type,
                 state.env.rng().gen(),
@@ -148,7 +148,7 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
                 now,
             );
 
-            member.channels.insert(channel_id);
+            state.data.members.mark_member_joined_channel(member.user_id, channel_id);
 
             let mut channel = Channel {
                 id: channel_id,
@@ -156,8 +156,15 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
                 date_imported: None,
             };
 
-            if args.is_public && gate_config.is_none() {
-                add_members_to_public_channel_unchecked(&mut channel, state.data.members.iter_mut(), now);
+            if args.is_public && args.gate_config.is_none() {
+                let user_ids: Vec<_> = state.data.members.member_ids().iter().copied().collect();
+                add_members_to_public_channel_unchecked(
+                    user_ids.into_iter(),
+                    &mut channel,
+                    &mut state.data.members,
+                    state.data.is_public,
+                    now,
+                );
             }
 
             state.data.channels.add(channel);

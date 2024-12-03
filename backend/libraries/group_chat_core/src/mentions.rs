@@ -1,4 +1,6 @@
+use crate::AtEveryoneMention;
 use serde::{Deserialize, Serialize};
+use std::collections::btree_map::Entry::Occupied;
 use std::collections::{BTreeMap, BTreeSet};
 use types::{Mention, MessageId, MessageIndex, PushIfNotContains, TimestampMillis};
 
@@ -63,6 +65,39 @@ impl Mentions {
                     message_id: mention.message_id,
                 })
             })
+    }
+
+    pub fn iter_potential_at_everyone_mentions(&self) -> impl Iterator<Item = Mention> + '_ {
+        self.by_timestamp.iter().flat_map(|(t, m)| {
+            m.iter()
+                .filter(|m| m.thread_root_message_index.is_none())
+                .map(|mention| Mention {
+                    timestamp: *t,
+                    thread_root_message_index: mention.thread_root_message_index,
+                    message_index: mention.message_index,
+                    message_id: mention.message_id,
+                })
+        })
+    }
+
+    pub fn remove_at_everyone_mentions(
+        &mut self,
+        at_everyone_mentions: &BTreeMap<MessageIndex, (TimestampMillis, AtEveryoneMention)>,
+    ) -> u32 {
+        let mut count = 0;
+        for (message_index, (timestamp, _)) in at_everyone_mentions {
+            if self.mentions.remove(&(*message_index, None)) {
+                count += 1;
+                if let Occupied(mut e) = self.by_timestamp.entry(*timestamp) {
+                    let mentions = e.get_mut();
+                    mentions.retain(|mention| mention.message_index != *message_index);
+                    if mentions.is_empty() {
+                        e.remove();
+                    }
+                }
+            }
+        }
+        count
     }
 
     pub fn is_empty(&self) -> bool {

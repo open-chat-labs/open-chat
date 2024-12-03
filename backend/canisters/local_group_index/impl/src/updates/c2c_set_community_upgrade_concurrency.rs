@@ -12,6 +12,9 @@ fn c2c_set_community_upgrade_concurrency(args: Args) -> Response {
     mutate_state(|state| {
         let max = state.data.max_concurrent_community_upgrades;
         state.data.community_upgrade_concurrency = min(args.value, max);
+        if state.data.community_upgrade_concurrency > 0 {
+            crate::jobs::upgrade_communities::start_job_if_required(state);
+        }
         info!(state.data.community_upgrade_concurrency, "Community upgrade concurrency set");
         if args.value > max {
             Capped(max)

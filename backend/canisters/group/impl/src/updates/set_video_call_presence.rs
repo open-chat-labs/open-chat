@@ -6,7 +6,7 @@ use group_canister::set_video_call_presence::{Response::*, *};
 use group_chat_core::MinVisibleEventIndexResult;
 use types::Achievement;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn set_video_call_presence(args: Args) -> Response {
     run_regular_jobs();
@@ -21,7 +21,7 @@ pub(crate) fn set_video_call_presence_impl(args: Args, state: &mut RuntimeState)
 
     let caller = state.env.caller();
 
-    let Some((user_id, is_bot)) = state.data.get_member(caller).map(|m| (m.user_id, m.user_type.is_bot())) else {
+    let Some((user_id, is_bot)) = state.data.get_member(caller).map(|m| (m.user_id(), m.user_type().is_bot())) else {
         return UserNotInGroup;
     };
 

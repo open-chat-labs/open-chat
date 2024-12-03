@@ -12,12 +12,12 @@ use types::{
     CommunityPermissionsChanged, CommunityVisibilityChanged, Document, GroupDescriptionChanged, GroupNameChanged,
     GroupRulesChanged, OptionUpdate, OptionalCommunityPermissions, PrimaryLanguageChanged, Timestamped, UserId,
 };
-use utils::document_validation::{validate_avatar, validate_banner};
+use utils::document::{validate_avatar, validate_banner};
 use utils::text_validation::{
     validate_community_name, validate_description, validate_rules, NameValidationError, RulesValidationError,
 };
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn update_community(mut args: Args) -> Response {
     run_regular_jobs();
@@ -54,7 +54,7 @@ async fn update_community(mut args: Args) -> Response {
             || args.description.is_some()
             || args.avatar.has_update()
             || args.banner.has_update()
-            || args.gate.has_update()
+            || args.gate_config.has_update()
             || args.public == Some(true)
             || args.primary_language.is_some())
     {
@@ -63,7 +63,6 @@ async fn update_community(mut args: Args) -> Response {
             description: prepare_result.description,
             avatar_id: prepare_result.avatar_id,
             banner_id: prepare_result.banner_id,
-            gate: prepare_result.gate_config.as_ref().map(|gc| gc.gate.clone()),
             gate_config: prepare_result.gate_config.map(|gc| gc.into()),
             primary_language: prepare_result.primary_language,
             channel_count: prepare_result.channel_count,
@@ -122,13 +121,11 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     let caller = state.env.caller();
     let avatar_update = args.avatar.as_ref().expand();
     let banner_update = args.banner.as_ref().expand();
-    let gate_config_updates = if args.gate_config.has_update() {
-        &args.gate_config.as_ref().map(|gc| gc.clone().into())
-    } else {
-        &args.gate.as_ref().map(|g| g.clone().into())
-    };
-
-    let gate_config = gate_config_updates.as_ref().apply_to(state.data.gate_config.value.as_ref());
+    let gate_config = args
+        .gate_config
+        .clone()
+        .map(|gc| gc.into())
+        .apply_to(state.data.gate_config.value.clone());
 
     if let Some(name) = &args.name {
         if let Err(error) = validate_community_name(name, state.data.is_public) {
@@ -170,16 +167,16 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     }
 
     if let Some(member) = state.data.members.get(caller) {
-        if member.suspended.value {
+        if member.suspended().value {
             return Err(UserSuspended);
-        } else if member.lapsed.value {
+        } else if member.lapsed().value {
             return Err(UserLapsed);
         }
 
         let permissions = &state.data.permissions;
-        if !member.role.can_update_details(permissions)
-            || (args.permissions.is_some() && !member.role.can_change_permissions())
-            || (args.public.is_some() && !member.role.can_change_community_visibility())
+        if !member.role().can_update_details(permissions)
+            || (args.permissions.is_some() && !member.role().can_change_permissions())
+            || (args.public.is_some() && !member.role().can_change_community_visibility())
         {
             Err(NotAuthorized)
         } else {
@@ -192,7 +189,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 description: args.description.as_ref().unwrap_or(&state.data.description).clone(),
                 avatar_id: avatar_update.map_or(Document::id(&state.data.avatar), |avatar| avatar.map(|a| a.id)),
                 banner_id: banner_update.map_or(Document::id(&state.data.banner), |banner| banner.map(|a| a.id)),
-                gate_config: gate_config.cloned(),
+                gate_config,
                 primary_language: args.primary_language.as_ref().unwrap_or(&state.data.primary_language).clone(),
                 channel_count: state.data.channels.public_channel_ids().len() as u32,
             })
@@ -311,13 +308,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
         );
     }
 
-    let gate_config_updates = if args.gate_config.has_update() {
-        args.gate_config.as_ref().map(|g| g.clone().into())
-    } else {
-        args.gate.as_ref().map(|g| g.clone().into())
-    };
-
-    if let Some(gate_config) = gate_config_updates.expand() {
+    if let Some(gate_config) = args.gate_config.clone().map(|g| g.into()).expand() {
         if state.data.gate_config.value != gate_config {
             let prev_gate_config = state.data.gate_config.clone();
 

@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use chat_events::RecordProposalVoteResult;
 use community_canister::register_proposal_vote_v2::{Response::*, *};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn register_proposal_vote_v2(args: Args) -> Response {
     run_regular_jobs();
@@ -25,7 +25,7 @@ fn register_proposal_vote_impl(args: Args, state: &mut RuntimeState) -> Response
         None => return UserNotInCommunity,
     };
 
-    if member.suspended.value {
+    if member.suspended().value {
         return UserSuspended;
     }
 
@@ -39,7 +39,7 @@ fn register_proposal_vote_impl(args: Args, state: &mut RuntimeState) -> Response
         None => return UserNotInChannel,
     };
 
-    if channel_member.lapsed.value {
+    if channel_member.lapsed().value {
         return UserLapsed;
     }
 
@@ -53,16 +53,7 @@ fn register_proposal_vote_impl(args: Args, state: &mut RuntimeState) -> Response
     {
         RecordProposalVoteResult::Success => {
             let now = state.env.now();
-
-            channel
-                .chat
-                .members
-                .get_mut(&user_id)
-                .unwrap()
-                .proposal_votes
-                .entry(now)
-                .or_default()
-                .push(args.message_index);
+            channel.chat.members.register_proposal_vote(&user_id, args.message_index, now);
 
             handle_activity_notification(state);
             Success

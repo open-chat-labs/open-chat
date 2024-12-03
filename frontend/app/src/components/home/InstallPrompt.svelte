@@ -9,8 +9,8 @@
     import { onMount } from "svelte";
 
     let installed = window.matchMedia("(display-mode: standalone)").matches;
-    let dismissed = false;
-    let show = false;
+    let dismissed = $state(false);
+    let show = $state(false);
 
     onMount(() => {
         show = !installed && $showHomeScreenPrompt;
@@ -20,10 +20,10 @@
 {#if show && !dismissed && !$isLoading}
     <Overlay dismissible>
         <ModalContent on:close={() => (dismissed = true)} closeIcon hideFooter>
-            <div class="header" slot="header">
+            <div slot="header" class="header">
                 <Translatable resourceKey={i18nKey("install.title")} />
             </div>
-            <div class="body" slot="body">
+            <div slot="body" class="body">
                 <div class="msg">
                     <Translatable resourceKey={i18nKey("install.message")} />
                 </div>

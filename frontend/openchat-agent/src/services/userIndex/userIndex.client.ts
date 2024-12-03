@@ -69,6 +69,8 @@ import {
     UserIndexCheckUsernameResponse,
     UserIndexChitLeaderboardResponse,
     UserIndexCurrentUserResponse,
+    UserIndexDeleteUserArgs,
+    UserIndexDeleteUserResponse,
     UserIndexDiamondMembershipFeesResponse,
     UserIndexExternalAchievementsArgs,
     UserIndexExternalAchievementsResponse,
@@ -576,6 +578,16 @@ export class UserIndexClient extends CandidService {
             externalAchievementsResponse,
             UserIndexExternalAchievementsArgs,
             UserIndexExternalAchievementsResponse,
+        );
+    }
+
+    deleteUser(userId: string): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "delete_user",
+            { user_id: principalStringToBytes(userId) },
+            (resp) => resp === "Success",
+            UserIndexDeleteUserArgs,
+            UserIndexDeleteUserResponse,
         );
     }
 }

@@ -4,6 +4,7 @@ use crate::env::ENV;
 use crate::utils::{now_millis, now_nanos, tick_many};
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
+use constants::PRIZE_FEE_PERCENT;
 use ledger_utils::create_pending_transaction;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
@@ -159,7 +160,8 @@ fn send_prize_in_channel() {
     let initial_user1_balance = balance_of(env, canister_ids.icp_ledger, user1.canister());
     let fee = 10000;
     let prizes = vec![100000];
-    let total = prizes.iter().map(|p| p + fee).sum::<u128>();
+    let total = prizes.iter().sum::<u128>();
+    let amount = total + (fee * prizes.len() as u128) + (total * PRIZE_FEE_PERCENT as u128 / 100);
 
     let transfer_to: CanisterId = community_id.into();
     let send_message_result = client::user::send_message_with_transfer_to_channel(
@@ -175,7 +177,7 @@ fn send_prize_in_channel() {
                 transfer: CryptoTransaction::Pending(create_pending_transaction(
                     Cryptocurrency::InternetComputer,
                     canister_ids.icp_ledger,
-                    total,
+                    amount,
                     fee,
                     transfer_to.into(),
                     None,
@@ -185,6 +187,9 @@ fn send_prize_in_channel() {
                 prizes_v2: prizes,
                 end_date: now_millis(env) + 1000,
                 diamond_only: false,
+                lifetime_diamond_only: false,
+                unique_person_only: false,
+                streak_only: 0,
             }),
             sender_name: user1.username(),
             sender_display_name: None,
@@ -203,10 +208,10 @@ fn send_prize_in_channel() {
         user_canister::send_message_with_transfer_to_channel::Response::Success(_)
     ) {
         let user1_balance_after_sending_prize = balance_of(env, canister_ids.icp_ledger, user1.canister());
-        assert_eq!(user1_balance_after_sending_prize, initial_user1_balance - total - fee);
+        assert_eq!(user1_balance_after_sending_prize, initial_user1_balance - amount - fee);
 
         let community_balance_after_sending_prize = balance_of(env, canister_ids.icp_ledger, Principal::from(community_id));
-        assert_eq!(community_balance_after_sending_prize, total);
+        assert_eq!(community_balance_after_sending_prize, amount);
 
         env.advance_time(Duration::from_secs(2));
         tick_many(env, 5);
@@ -736,7 +741,6 @@ fn set_community_rules(env: &mut PocketIc, sender: Principal, community_id: Comm
         avatar: OptionUpdate::NoChange,
         banner: OptionUpdate::NoChange,
         permissions: None,
-        gate: OptionUpdate::NoChange,
         gate_config: OptionUpdate::NoChange,
         public: None,
         primary_language: None,
@@ -757,7 +761,6 @@ fn set_channel_rules(env: &mut PocketIc, sender: Principal, community_id: Commun
         avatar: OptionUpdate::NoChange,
         permissions_v2: None,
         events_ttl: OptionUpdate::NoChange,
-        gate: OptionUpdate::NoChange,
         gate_config: OptionUpdate::NoChange,
         public: None,
         channel_id,

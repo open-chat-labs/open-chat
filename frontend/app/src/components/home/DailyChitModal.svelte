@@ -24,6 +24,7 @@
     import ChitBalance from "./profile/ChitBalance.svelte";
     import AlertBox from "../AlertBox.svelte";
     import Markdown from "./Markdown.svelte";
+    import { toastStore } from "../../stores/toast";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -74,6 +75,10 @@
                     }, 2000);
                 }
             })
+            .catch((err) => {
+                toastStore.showFailureToast(i18nKey("dailyChit.failedToClaim"), err);
+                close();
+            })
             .finally(() => {
                 busy = false;
             });
@@ -108,7 +113,7 @@
 <ModalContent closeIcon on:close={close}>
     <div class="header" slot="header">
         <div class="leaderboard">
-            <HoverIcon on:click={leaderboard}>
+            <HoverIcon onclick={leaderboard}>
                 <TrophyOutline size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </div>

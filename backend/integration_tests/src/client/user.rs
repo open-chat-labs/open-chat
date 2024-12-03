@@ -1,47 +1,48 @@
-use crate::{generate_query_call, generate_update_call};
+use crate::{generate_msgpack_query_call, generate_msgpack_update_call, generate_update_call};
 use user_canister::*;
 
 // Queries
-generate_query_call!(chit_events);
-generate_query_call!(events);
-generate_query_call!(events_by_index);
-generate_query_call!(initial_state);
-generate_query_call!(message_activity_feed);
-generate_query_call!(saved_crypto_accounts);
-generate_query_call!(updates);
+generate_msgpack_query_call!(chit_events);
+generate_msgpack_query_call!(events);
+generate_msgpack_query_call!(events_by_index);
+generate_msgpack_query_call!(initial_state);
+generate_msgpack_query_call!(message_activity_feed);
+generate_msgpack_query_call!(saved_crypto_accounts);
+generate_msgpack_query_call!(updates);
 
 // Updates
-generate_update_call!(accept_p2p_swap);
-generate_update_call!(add_reaction);
-generate_update_call!(block_user);
-generate_update_call!(cancel_message_reminder);
-generate_update_call!(cancel_p2p_swap);
-generate_update_call!(claim_daily_chit);
-generate_update_call!(create_community);
-generate_update_call!(create_group);
-generate_update_call!(delete_community);
-generate_update_call!(delete_direct_chat);
-generate_update_call!(delete_group);
-generate_update_call!(delete_messages);
-generate_update_call!(edit_message_v2);
+generate_msgpack_update_call!(accept_p2p_swap);
+generate_msgpack_update_call!(approve_transfer);
+generate_msgpack_update_call!(add_reaction);
+generate_msgpack_update_call!(block_user);
+generate_msgpack_update_call!(cancel_message_reminder);
+generate_msgpack_update_call!(cancel_p2p_swap);
+generate_msgpack_update_call!(claim_daily_chit);
+generate_msgpack_update_call!(create_community);
+generate_msgpack_update_call!(create_group);
+generate_msgpack_update_call!(delete_community);
+generate_msgpack_update_call!(delete_direct_chat);
+generate_msgpack_update_call!(delete_group);
+generate_msgpack_update_call!(delete_messages);
+generate_msgpack_update_call!(edit_message_v2);
 generate_update_call!(end_video_call);
-generate_update_call!(join_video_call);
-generate_update_call!(leave_community);
-generate_update_call!(leave_group);
-generate_update_call!(mark_message_activity_feed_read);
-generate_update_call!(mark_read);
-generate_update_call!(mute_notifications);
-generate_update_call!(remove_reaction);
-generate_update_call!(save_crypto_account);
-generate_update_call!(send_message_v2);
-generate_update_call!(send_message_with_transfer_to_channel);
-generate_update_call!(send_message_with_transfer_to_group);
-generate_update_call!(set_message_reminder_v2);
-generate_update_call!(set_pin_number);
+generate_msgpack_update_call!(join_video_call);
+generate_msgpack_update_call!(leave_community);
+generate_msgpack_update_call!(leave_group);
+generate_msgpack_update_call!(mark_message_activity_feed_read);
+generate_msgpack_update_call!(mark_read);
+generate_msgpack_update_call!(mute_notifications);
+generate_msgpack_update_call!(remove_reaction);
+generate_msgpack_update_call!(save_crypto_account);
+generate_msgpack_update_call!(send_message_v2);
+generate_msgpack_update_call!(send_message_with_transfer_to_channel);
+generate_msgpack_update_call!(send_message_with_transfer_to_group);
+generate_msgpack_update_call!(set_message_reminder_v2);
+generate_msgpack_update_call!(set_pin_number);
 generate_update_call!(start_video_call);
-generate_update_call!(tip_message);
-generate_update_call!(unblock_user);
-generate_update_call!(undelete_messages);
+generate_msgpack_update_call!(tip_message);
+generate_msgpack_update_call!(unblock_user);
+generate_msgpack_update_call!(undelete_messages);
 
 pub mod happy_path {
     use crate::env::VIDEO_CALL_OPERATOR;
@@ -169,7 +170,6 @@ pub mod happy_path {
                 permissions_v2: None,
                 rules: Rules::default(),
                 events_ttl: None,
-                gate: None,
                 gate_config: None,
             },
         );
@@ -200,7 +200,6 @@ pub mod happy_path {
                 history_visible_to_new_joiners: is_public,
                 permissions: None,
                 rules: Rules::default(),
-                gate: None,
                 gate_config: None,
                 default_channels,
                 default_channel_rules: None,
@@ -502,5 +501,14 @@ pub mod happy_path {
             accept_offer_response,
             user_canister::accept_p2p_swap::Response::Success(_)
         ));
+    }
+
+    pub fn approve_transfer(env: &mut PocketIc, user: &User, args: &user_canister::approve_transfer::Args) {
+        let response = super::approve_transfer(env, user.principal, user.canister(), args);
+
+        match response {
+            user_canister::approve_transfer::Response::Success => (),
+            response => panic!("'approve_transfer' error: {response:?}"),
+        };
     }
 }

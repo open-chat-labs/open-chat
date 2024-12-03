@@ -12,7 +12,7 @@ use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use chat_events::{KeyPrefix, OPENCHAT_BOT_USER_ID};
+use constants::{DAY_IN_MS, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -25,6 +25,7 @@ use model::streak::Streak;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
+use stable_memory_map::KeyPrefix;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::ops::Deref;
@@ -37,7 +38,7 @@ use types::{
 use user_canister::{MessageActivityEvent, NamedAccount, UserCanisterEvent, WalletConfig};
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
-use utils::time::{today, tomorrow, DAY_IN_MS, MINUTE_IN_MS};
+use utils::time::{today, tomorrow};
 
 mod crypto;
 mod governance_clients;
@@ -199,7 +200,6 @@ impl RuntimeState {
             next_daily_claim: if self.data.streak.can_claim(now) { today(now) } else { tomorrow(now) },
             achievements: self.data.achievements.iter().cloned().collect(),
             unique_person_proof: self.data.unique_person_proof.is_some(),
-            stable_memory_event_migration_complete: self.data.stable_memory_event_migration_complete,
         }
     }
 }
@@ -253,8 +253,7 @@ struct Data {
     pub referred_by: Option<UserId>,
     pub referrals: Referrals,
     pub message_activity_events: MessageActivityEvents,
-    stable_memory_event_migration_complete: bool,
-    stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
+    pub stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
 }
 
 impl Data {
@@ -323,7 +322,6 @@ impl Data {
             referred_by,
             referrals: Referrals::default(),
             message_activity_events: MessageActivityEvents::default(),
-            stable_memory_event_migration_complete: true,
             stable_memory_keys_to_garbage_collect: Vec::new(),
         }
     }
@@ -462,7 +460,6 @@ pub struct Metrics {
     pub next_daily_claim: TimestampMillis,
     pub achievements: Vec<Achievement>,
     pub unique_person_proof: bool,
-    pub stable_memory_event_migration_complete: bool,
 }
 
 fn run_regular_jobs() {

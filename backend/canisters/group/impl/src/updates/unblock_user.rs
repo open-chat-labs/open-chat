@@ -7,7 +7,7 @@ use chat_events::ChatEventInternal;
 use group_canister::unblock_user::*;
 use types::UsersUnblocked;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn unblock_user(args: Args) -> Response {
     run_regular_jobs();
@@ -24,16 +24,16 @@ fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> Response {
     if !state.data.chat.is_public.value {
         GroupNotPublic
     } else if let Some(caller_member) = state.data.get_member(caller) {
-        if caller_member.suspended.value {
+        if caller_member.suspended().value {
             return UserSuspended;
-        } else if caller_member.lapsed.value {
+        } else if caller_member.lapsed().value {
             return UserLapsed;
         }
 
-        let unblocked_by = caller_member.user_id;
+        let unblocked_by = caller_member.user_id();
         if unblocked_by == args.user_id {
             CannotUnblockSelf
-        } else if caller_member.role.can_unblock_users(&state.data.chat.permissions) {
+        } else if caller_member.role().can_unblock_users(&state.data.chat.permissions) {
             let now = state.env.now();
 
             state.data.chat.members.unblock(args.user_id, now);

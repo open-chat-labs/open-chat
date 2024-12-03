@@ -4,9 +4,9 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, Reader, RecordProposalVoteResult};
 use group_canister::register_proposal_vote::{Response::*, *};
-use types::{CanisterId, ProposalId, UserId};
+use types::{CanisterId, EventIndex, ProposalId, UserId};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn register_proposal_vote(args: Args) -> Response {
     run_regular_jobs();
@@ -61,9 +61,9 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         None => return Err(CallerNotInGroup),
     };
 
-    if member.suspended.value {
+    if member.suspended().value {
         return Err(UserSuspended);
-    } else if member.lapsed.value {
+    } else if member.lapsed().value {
         return Err(UserLapsed);
     }
 
@@ -77,11 +77,11 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         .message_internal(args.message_index.into())
         .and_then(|m| if let MessageContentInternal::GovernanceProposal(p) = m.content { Some(p) } else { None })
     {
-        if let Some(vote) = proposal.votes.get(&member.user_id) {
+        if let Some(vote) = proposal.votes.get(&member.user_id()) {
             Err(AlreadyVoted(*vote))
         } else {
             Ok(PrepareResult {
-                user_id: member.user_id,
+                user_id: member.user_id(),
                 is_nns: proposal.proposal.is_nns(),
                 governance_canister_id: proposal.governance_canister_id,
                 proposal_id: proposal.proposal.id(),
@@ -93,25 +93,20 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
 }
 
 fn commit(user_id: UserId, args: Args, state: &mut RuntimeState) -> Response {
-    let member = match state.data.chat.members.get_mut(&user_id) {
-        Some(p) => p,
-        None => return CallerNotInGroup,
-    };
-
-    let now = state.env.now();
-    let min_visible_event_index = member.min_visible_event_index();
-
     match state
         .data
         .chat
         .events
-        .record_proposal_vote(user_id, min_visible_event_index, args.message_index, args.adopt)
+        .record_proposal_vote(user_id, EventIndex::default(), args.message_index, args.adopt)
     {
         RecordProposalVoteResult::Success => {
-            let votes = member.proposal_votes.entry(now).or_default();
-            if !votes.contains(&args.message_index) {
-                votes.push(args.message_index);
-            }
+            let now = state.env.now();
+            state
+                .data
+                .chat
+                .members
+                .register_proposal_vote(&user_id, args.message_index, now);
+
             handle_activity_notification(state);
             Success
         }

@@ -148,6 +148,86 @@
     "blockUser": "Block user",
     "blockUserFailed": "Unable to block user",
     "blockUserSucceeded": "User has been blocked",
+    "bots": {
+        "builtin": {
+            "desc": "This bot provides the built in OpenChat commands",
+            "name": "Built-in"
+        },
+        "crypto": {
+            "desc": "Send crypto to another user",
+            "params": {
+                "amount": {
+                    "desc": "The amount that you want to send",
+                    "name": "Amount",
+                    "placeholder": "Enter amount"
+                },
+                "token": {
+                    "desc": "The token that you want to send",
+                    "name": "Token",
+                    "placeholder": "Enter token"
+                }
+            }
+        },
+        "diamond": {
+            "desc": "Post a link to explain Diamond membership"
+        },
+        "failed": "Sorry, we failed to execute the bot command",
+        "faq": {
+            "desc": "Create a link to an FAQ topic",
+            "params": {
+                "topic": {
+                    "choices": {
+                        "airdrop": "Monthly airdrop",
+                        "android": "Android app",
+                        "buychat": "Buying CHAT",
+                        "content": "Content guidelines",
+                        "diamond": "Diamond membership",
+                        "info": "Information",
+                        "ios": "iOS app",
+                        "referral": "Referral rewards",
+                        "security": "Security",
+                        "sendtokens": "Sending tokens",
+                        "shortcuts": "Shortcuts",
+                        "storage": "Storage",
+                        "style": "Styling messages",
+                        "translation": "Content translation",
+                        "voting": "Voting",
+                        "wallet": "Wallet"
+                    },
+                    "desc": "The specific FAQ topic you are interested in",
+                    "name": "FAQ topic",
+                    "placeholder": "Select topic"
+                }
+            }
+        },
+        "gif": {
+            "desc": "Find a gif to send",
+            "params": {
+                "term": {
+                    "desc": "Enter the search term for your gif",
+                    "name": "Search term",
+                    "placeholder": "Search term"
+                }
+            }
+        },
+        "matchingCommands": "Matching commands",
+        "poll": {
+            "desc": "Create a poll in the current chat"
+        },
+        "search": {
+            "desc": "Initiate a search in the current chat",
+            "params": {
+                "term": {
+                    "desc": "Enter the term to search for with in the chat",
+                    "name": "Search term",
+                    "placeholder": "Search term"
+                }
+            }
+        },
+        "witch": {
+            "desc": "Summon the witch"
+        }
+    },
     "cancel": "Cancel",
     "cancelInvite": "Cancel invite",
     "cancelInviteFailed": "Error cancelling invite",
@@ -301,8 +381,10 @@
         "visibility": "Visibility"
     },
     "communityDisplayNameRules": "only within selected community",
+    "communityFrozen": "Community frozen",
     "communityMembers": "Community members",
     "communityTheme": "Community Theme",
+    "communityUnfrozen": "Community unfrozen",
     "confirmLeaveGroup": "Do you really want to leave this {level}?",
     "confirmMakeGroupPrivate": "Do you definitely want to make this {level} private?",
     "confirmMakeGroupPublic": "Do you definitely want to make this {level} public?\n\nExisting messages will remain private, all new messages will be public.",
@@ -368,6 +450,8 @@
         "claim": "Claim CHIT!",
         "comeback": "Come back in {time}",
         "extendStreak": "Extend streak",
+        "failedToClaim": "Sorry we were unable to claim your daily CHIT",
+        "hideWhenClaimed": "Hide claim CHIT icon ⚡️ after claiming each day",
         "info": "The longer you maintain your streak the more daily CHIT you can claim!",
         "title": "Maintain your streak",
         "utcInfo": "CHIT streaks and claim windows are represented using UTC so you may find it clearer to view your calendar in UTC rather than your local timezone.",
@@ -439,11 +523,13 @@
     "failedToCopyLinkToClipboard": "Unable to copy link to clipboard",
     "failedToCopyToClipboard": "Unable to copy to clipboard. {account}",
     "failedToCopyUrlToClipboard": "Unable to copy url ({url}) to clipboard",
+    "failedToFreezeCommunity": "Failed to freeze community",
     "failedToFreezeGroup": "Failed to freeze group",
     "failedToLeaveGroup": "There was an error trying to remove you from the {level}",
     "failedToShareLink": "Failed to share link",
     "failedToShareMessage": "Unable to share this message",
     "failedToSuspendUser": "Failed to suspend user",
+    "failedToUnfreezeCommunity": "Failed to unfreeze community",
     "failedToUnfreezeGroup": "Failed to unfreeze group",
     "failedToUnsuspendUser": "Failed to un-suspend user",
     "faq": {
@@ -451,8 +537,10 @@
         "airdrop_q": "Will there be an airdrop?",
         "android_app_a": "As for iOS (see above), the OpenChat web app <em>does</em> already work on Android and you can \"Add to homescreen\" from the browser menu. This gives you a standard icon to open the app which appears more like a native app without a url bar. Progressive Web App (PWA) support is very good on Android. Like iOS it supports web push notifications but also <em>does</em> support the reading of contacts from the phone (if you grant permisson in each case). Beyond that the support for WebRTC is much better. As such the case for producing a native Android app is less compelling and will come after a native iOS app. The same considerations apply to the building of an Android app as an iOS in terms of aiming for a thin native wrapper around a core web app, and with regards to certification on the Android play store.",
         "android_app_q": "When will there be an Android app?",
-        "buychat_a": "You can buy CHAT with USDC on <a target=\"_blank\" href=\"https://www.helixmarkets.io/trade/CHATUSDC\">Helix Markets</a>. Otherwise you must first <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">buy ICP</a> which you can then swap for CHAT on various Decentralised Exchanges (DEXes).<ul><li><a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPSwap</a></li></ul>DFINITY are adding support for the <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta API</a> for ICRC1 tokens (which includes CHAT) making them much easier to integrate with Centralised Exchanges (CEXes). Once this has happened it is likely CHAT will be available to trade on CEXes for ICP or USDT.",
+        "buychat_a": "You can buy CHAT on various cryptocurrency exchanges:<br><br><table><tr><th>Exchange</th><th>Style</th><th>Buy with</th><th>CEX/DEX</th></tr><tr><td><a target=\"_blank\" href=\"https://www.helixmarkets.io/trade/CHATUSDC\">Helix Markets</a></td><td>Orderbook</td><td>USDC</td><td>Hybrid</td></tr><tr><td><a target=\"_blank\" href=\"https://www.bitmart.com/trade?symbol=CHAT_USDT\">BitMart</a></td><td>Orderbook</td><td>USDT</td><td>CEX</td></tr><tr><td><a target=\"_blank\" href=\"https://www.bitrue.com/trade/chat_usdt\">Bitrue</a></td><td>Orderbook</td><td>USDT</td><td>CEX</td></tr><tr><td><a target=\"_blank\" href=\"https://www.coinstore.com/spot/chatusdt\">Coinstore</a></td><td>Orderbook</td><td>USDT</td><td>CEX</td></tr><tr><td><a target=\"_blank\" href=\"https://www.lbank.com/trade/chat_usdt\">LBank</a></td><td>Orderbook</td><td>USDT</td><td>CEX</td></tr><tr><td><a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">ICDex</a></td><td>Orderbook</td><td>ICP</td><td>DEX</td></tr><tr><td><a target=\"_blank\" href=\"https://www.kongswap.io/?viewtab=swap&pool=CHAT_ckUSDT\">KongSwap</a></td><td>Swap (AMM)</td><td>USDT</td><td>DEX</td></tr><tr><td><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPSwap</a></td><td>Swap (AMM)</td><td>ICP</td><td>DEX</td></tr><tr><td><a target=\"_blank\" href=\"https://app.sonic.ooo/?tokenin=ryjl3-tyaaa-aaaaa-aaaba-cai&tokenout=2ouva-viaaa-aaaaq-aaamq-cai\">Sonic</a></td><td>Swap (AMM)</td><td>ICP</td><td>DEX</td></tr></table><br>You can also swap tokens for CHAT directly from your OpenChat wallet which will automatically use the swap exchange with the best available price.",
         "buychat_q": "How do I buy CHAT tokens?",
+        "buyicp_a": "<ol><li>You can buy ICP tokens on major exchanges like Coinbase, Binance, Kraken, and others. These platforms allow you to trade various cryptocurrencies for ICP</a>.</li><li>The Network Nervous System (NNS) dapp offers a feature to purchase ICP using a credit card. You'll need to log in with your Internet Identity and follow the prompts to complete the transaction <a target=\"_blank\" href=\"https://support.dfinity.org/hc/en-us/articles/21363667463828-How-do-I-purchase-ICP-from-within-the-NNS-dapp\">Frequently Asked Questions > Internet Computer > Network Nervous System (NNS) > How do I purchase ICP from within the NNS dapp?</a>.</li><li>You can use decentralized exchanges (DEXs) on the Internet Computer to swap other cryptocurrencies for ICP. For example:<ul><li><a target=\"_blank\" href=\"https://iclight.io/ICDex/ckBTC/ICP\">ICDex.io</a> allows you to swap Bitcoin (in the form of ckBTC) for ICP.</li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/token/details/ryjl3-tyaaa-aaaaa-aaaba-cai\">ICPSwap</a> offers trading pairs with ICP.</li></ul></li></ol>",
+        "buyicp_q": "How do I buy ICP tokens?",
         "content_a": "For full details of our content and moderation guidelines <a href=\"/guidelines\">see here</a>.",
         "content_q": "What kind of content is permissible?",
         "diamond_a": "You can upgrade to Diamond membership to have access to extra or enhanced features within OpenChat. <a href=\"/diamond\">See here</a> for a feature comparison and to upgrade.",
@@ -489,6 +577,7 @@
     "followThreadFailed": "Follow thread failed",
     "fontSize": "Font Size",
     "forward": "Forward",
+    "freezeCommunity": "Freeze community",
     "freezeGroup": "Freeze group",
     "giphyMessage": "Gif message",
     "goHome": "Home",
@@ -604,9 +693,9 @@
         "link": "Link",
         "linkedAccounts": {
             "currentAccount": "Currently signed in with this principal",
-            "linkAdvice": "To link a new account Sign into the new account you want to link, then sign into your current account and finally link the two accounts together.",
-            "linkAnother": "Link another",
-            "section": "Linked accounts",
+            "linkAdvice": "To add a new sign-in provider, first sign-in with the new provider you want to add, then sign-in with your current provider and finally link the two together.",
+            "linkAnother": "Add another",
+            "section": "Sign-in providers",
             "start": "Get started"
         },
         "linkIdentity": "Link Identity",
@@ -657,20 +746,10 @@
     "lastOnline": "Last online {duration} ago",
     "learnToEarn": {
         "accepted_swap_offer": "Accept a swap offer",
-        "appointed_as_group_admin": "Appoint an administrator group/channel",
-        "appointed_as_group_mod": "Be appointed a moderator of a group/channel",
-        "appointed_as_group_owner": "Be appointed an owner of a group/channel",
-        "appointed_group_admin": "Appoint a group/channel administrator",
-        "appointed_group_mod": "Appoint a group/channel moderator",
-        "appointed_group_owner": "Appoint a group/channel owner",
         "changed_theme": "Change the theme",
         "deleted_message": "Delete a message",
-        "direct_chat_5": "Have 5 direct chats",
-        "direct_chats_10": "Have 10 direct chats",
-        "direct_chats_20": "Have 20 direct chats",
         "done": "Done",
         "edited_message": "Edit a message",
-        "enabled_disappearing_messages": "Enable disappearing messages",
         "external": "To do (external)",
         "externalInfo": "External achievements are defined by third parties. Just click the link and follow their instructions to recieve a CHIT reward.",
         "favourited_chat": "Mark a chat as a favourite",
@@ -683,13 +762,8 @@
         "joined_group": "Join a group",
         "nothingDone": "You still have a lot of work to do!",
         "nothingLeftToDo": "Relax! You have nothing left to do",
-        "owned_group_with_1_diamond_member": "Own a group/community with 1 verified member",
-        "owned_group_with_10_diamond_members": "Owned a group/community with 10 verified members",
-        "owned_group_with_100_diamond_members": "Owned a group/community with 100 verified members",
-        "owned_group_with_1000_diamond_members": "Owned a group/community with 1000 verified members",
         "percentageComplete": "{perc}% Complete",
         "pinned_chat": "Pin a chat to the top of the list",
-        "pinned_message": "Pin a message",
         "proved_unique_personhood": "Prove your unique humanity",
         "quote_replied": "Quote reply to a message",
         "reacted_to_message": "React to a message",
@@ -717,10 +791,8 @@
         "sent_video": "Send a video",
         "set_avatar": "Upload your profile avatar",
         "set_bio": "Update your profile bio",
-        "set_community_access_gate": "Set a community access gate",
         "set_community_display_name": "Set a community display name",
         "set_display_name": "Update your display name",
-        "set_group_access_gate": "Set a group/channel access gate",
         "set_pin": "Set a pin number on your wallet",
         "showChitPopup": "Notify me of my achievements",
         "started_call": "Start a video call",
@@ -730,12 +802,10 @@
         "streak_30": "Achieve a 30 day streak",
         "streak_365": "Achieve a 365 day streak",
         "streak_7": "Achieve a 7 day streak",
-        "suggested_translation": "Suggest a translation",
         "swapped_from_wallet": "Swap a token from the wallet",
         "tipped_message": "Tip a message",
         "title": "Achievements",
         "todo": "To do",
-        "translation_accepted": "Have a translation accepted",
         "upgrade_to_gold_diamond": "Upgrade to Lifetime Diamond membership",
         "upgraded_to_diamond": "Upgrade to Diamond membership",
         "voted_on_poll": "Vote on a poll"
@@ -1055,21 +1125,33 @@
         "claim": "Claim",
         "claimed": "Success!",
         "claimFailed": "Sorry your claim was unsuccessfull! Better luck next time. ",
+        "claimIneligible": "Sorry you don't meet the requirements to claim this prize.",
         "click": "Click the button below for a chance to win a prize.",
         "creatingYourPrizeMessage": "Please wait while we create your prize message",
+        "diamondMembership": "Diamond membership",
         "distribution": "How should prizes be distributed?",
         "duration": "How long will prize be active?",
         "equalDistribution": "Equal distribution",
         "finished": "Finished",
+        "lifetimeDiamond": "Lifetime",
+        "lifetimeDiamondMembership": "Lifetime diamond membership",
         "live": "Prize message live! Others can click to claim 🎁",
         "maxPrize": "What is the maximum prize?",
         "minPrize": "What is the minimum prize?",
         "numberOfWinners": "Number of winners",
         "onlyDiamond": "Only Diamond users",
+        "onlyStreak": "Only users with a streak",
+        "onlyUniquePerson": "Only Unique humans",
         "prizeFinished": "Your prize message has now finished",
         "randomDistribution": "Random distribution",
+        "restrictedMessage": "To claim this prize you must have the following",
+        "standardDiamond": "Standard",
+        "streak": "Streak",
+        "streakFull": "A streak of {n} days or more",
+        "streakValue": "{n} days or more",
         "title": "Prize",
         "totalAmount": "Total prize amount",
+        "uniquePerson": "Unique person proof",
         "whoCanWin": "Who can claim a share?",
         "winner": "**{recipient}** won **{amount}** {token}"
     },
@@ -1107,9 +1189,23 @@
         "groupIndexAction": "Group Index Actions",
         "makeProposal": "Make proposal",
         "maker": {
+            "achievementChatCost": "A payment of {cost} {chat} tokens is required to provision the requested CHIT. Any unspent CHAT will be refunded when the achievement expires.",
+            "achievementExpiry": "Expiry",
+            "achievementLogo": "Achievement Logo",
+            "achievementName": "Achievement name",
+            "achievementUrl": "Achievement URL",
+            "addTokenChatCost": "A payment of {cost} {chat} tokens is required to list a new token on OpenChat.",
             "amount": "Amount",
             "amountRules": "at least 1 {token} token",
+            "approvalError": "Failed to approve the CHAT transfer",
+            "awardingAchievementCanisterId": "Canister Id",
+            "awardingAchievementCanisterIdRules": "Only this canister can award the achievement",
+            "chitReward": "CHIT reward",
+            "chitRewardRules": "at least {value} CHIT",
+            "enterAchievementName": "Enter a name for the achievement",
             "enterAmount": "Enter a quantity of {token} tokens",
+            "enterChitReward": "Enter the CHIT reward",
+            "enterMaxAwards": "Enter max users to award",
             "enterRecipientOwner": "Enter the recipient's account principal",
             "enterRecipientSubaccount": "Enter an optional recipient sub-account",
             "enterSummary": "Enter a summary",
@@ -1118,6 +1214,8 @@
             "header": "Make a proposal",
             "howToBuyUrl": "How to buy url",
             "ledgerCanisterId": "Ledger canister Id",
+            "maxAwards": "Max users awarded",
+            "maxAwardsRules": "at least {value}",
             "message": "A deposit of {cost} {token} tokens (includes two sets of transfer fees) is required to submit a proposal which is refunded if the proposal is adopted.",
             "recipientOwner": "Recipient's account principal",
             "recipientSubaccount": "Recipient's sub-account",
@@ -1291,7 +1389,7 @@
         "none": "Nobody",
         "owner": "Owners"
     },
-    "roleChanged": "{changedBy} changed the role of {changed} from {oldRole} to {newRole}",
+    "roleChanged": "{changedBy} changed the role of {changed} to {newRole}",
     "rules": {
         "accept": "Accept",
         "acceptTitle": "Chat rules",
@@ -1500,6 +1598,7 @@
     "unexpectedError": "Unexpected Error",
     "unfollowThread": "Unfollow this thread",
     "unfollowThreadFailed": "Unfollow thread failed",
+    "unfreezeCommunity": "Unfreeze community",
     "unfreezeGroup": "Unfreeze group",
     "unknown": "Unknown",
     "unknownUser": "Unknown User",
@@ -1654,5 +1753,5 @@
     "yourAccountIsSuspended": "Your account is suspended",
     "yourChats": "Your chats",
     "youreBlocked": "Sorry - you have been blocked from this group",
-    "yourRoleChanged": "{changedBy} changed your role from {oldRole} to {newRole}"
+    "yourRoleChanged": "{changedBy} changed your role to {newRole}"
 }

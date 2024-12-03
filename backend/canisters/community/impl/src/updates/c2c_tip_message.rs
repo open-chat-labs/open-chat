@@ -24,9 +24,9 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let user_id = state.env.caller().into();
     if let Some(member) = state.data.members.get_by_user_id(&user_id) {
-        if member.suspended.value {
+        if member.suspended().value {
             return UserSuspended;
-        } else if member.lapsed.value {
+        } else if member.lapsed().value {
             return UserLapsed;
         }
 
@@ -52,7 +52,7 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                         args.message_id.into(),
                     ) {
                         if let Some(sender) = channel.chat.members.get(&message.sender) {
-                            if message.sender != user_id && !sender.user_type.is_bot() {
+                            if message.sender != user_id && !sender.user_type().is_bot() {
                                 let community_id = state.env.canister_id().into();
 
                                 state.data.user_event_sync_queue.push(

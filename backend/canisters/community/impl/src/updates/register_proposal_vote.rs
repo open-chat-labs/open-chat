@@ -6,7 +6,7 @@ use chat_events::{MessageContentInternal, Reader, RecordProposalVoteResult};
 use community_canister::register_proposal_vote::{Response::*, *};
 use types::{CanisterId, ChannelId, ProposalId, UserId};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn register_proposal_vote(args: Args) -> Response {
     run_regular_jobs();
@@ -61,9 +61,9 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         None => return Err(UserNotInCommunity),
     };
 
-    if member.suspended.value {
+    if member.suspended().value {
         return Err(UserSuspended);
-    } else if member.lapsed.value {
+    } else if member.lapsed().value {
         return Err(UserLapsed);
     }
 
@@ -77,7 +77,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         None => return Err(UserNotInChannel),
     };
 
-    if channel_member.lapsed.value {
+    if channel_member.lapsed().value {
         return Err(UserLapsed);
     }
 
@@ -111,7 +111,7 @@ fn commit(channel_id: ChannelId, user_id: UserId, args: Args, state: &mut Runtim
         None => return ChannelNotFound,
     };
 
-    let member = match channel.chat.members.get_mut(&user_id) {
+    let member = match channel.chat.members.get(&user_id) {
         Some(m) => m,
         None => return UserNotInChannel,
     };
@@ -125,11 +125,8 @@ fn commit(channel_id: ChannelId, user_id: UserId, args: Args, state: &mut Runtim
     {
         RecordProposalVoteResult::Success => {
             let now = state.env.now();
+            channel.chat.members.register_proposal_vote(&user_id, args.message_index, now);
 
-            let votes = member.proposal_votes.entry(now).or_default();
-            if !votes.contains(&args.message_index) {
-                votes.push(args.message_index);
-            }
             handle_activity_notification(state);
             Success
         }

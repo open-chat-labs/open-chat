@@ -23,8 +23,9 @@
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
-    import Toggle from "../../Toggle.svelte";
     import { calculateDollarAmount } from "../../../utils/exchange";
+    import AlertBox from "../../AlertBox.svelte";
+    import Checkbox from "../../Checkbox.svelte";
 
     export let ledgerIn: string;
 
@@ -328,22 +329,28 @@
             <Markdown text={$_("tokenSwap.youWillReceive", { values: swapMessageValues })} />
 
             {#if warnValueDropped || warnValueUnknown}
-                <div class="warning">
-                    {#if warnValueDropped}
-                        <div>
-                            {$_("tokenSwap.warningValueDropped", { values: swapMessageValues })}
-                        </div>
-                    {:else}
-                        <div>
-                            {$_("tokenSwap.warningValueUnknown", { values: swapMessageValues })}
-                        </div>
-                    {/if}
-                    <Toggle
+                <AlertBox>
+                    <div class="warning">
+                        {#if warnValueDropped}
+                            <Translatable
+                                resourceKey={i18nKey(
+                                    "tokenSwap.warningValueDropped",
+                                    swapMessageValues,
+                                )} />
+                        {:else}
+                            <Translatable
+                                resourceKey={i18nKey(
+                                    "tokenSwap.warningValueUnknown",
+                                    swapMessageValues,
+                                )} />
+                        {/if}
+                    </div>
+                    <Checkbox
                         id="confirm-understanding"
                         small
                         label={i18nKey("tokenSwap.confirmUnderstanding")}
                         bind:checked={userAcceptedWarning} />
-                </div>
+                </AlertBox>
             {/if}
 
             <div>{$_("tokenSwap.proceedWithSwap", { values: swapMessageValues })}</div>
@@ -432,12 +439,6 @@
     }
 
     .warning {
-        @include font(book, normal, fs-80);
-        margin-bottom: $sp2;
-        background-color: var(--error);
-        padding: $sp3 $sp4;
-        display: flex;
-        flex-direction: column;
-        gap: $sp4;
+        margin-bottom: $sp4;
     }
 </style>

@@ -19,27 +19,23 @@
         EventWrapper,
         Message,
         MessageAction,
-        Questions,
         OpenChat,
         MultiUserChat,
         UserOrUserGroup,
         AttachmentContent,
+        MessageContext,
     } from "openchat-client";
     import {
-        allQuestions,
         chatIdentifiersEqual,
         userStore,
         throttleDeadline,
         currentCommunityUserGroups as userGroups,
-        cryptoLookup,
         anonUser,
+        selectedCommunity,
     } from "openchat-client";
     import { enterSend } from "../../stores/settings";
     import MessageActions from "./MessageActions.svelte";
-    import { addQueryStringParam } from "../../utils/urls";
     import PreviewFooter from "./PreviewFooter.svelte";
-    import { preferredDarkThemeName, themeType, currentThemeName } from "../../theme/themes";
-    import { scream } from "../../utils/scream";
     import { snowing } from "../../stores/snow";
     import Translatable from "../Translatable.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
@@ -47,6 +43,14 @@
     import MarkdownToggle from "./MarkdownToggle.svelte";
     import { useBlockLevelMarkdown } from "../../stores/settings";
     import ThrottleCountdown from "./ThrottleCountdown.svelte";
+    import CommandSelector from "../bots/CommandSelector.svelte";
+    import {
+        prefix as commandPrefix,
+        cancel as cancelCommand,
+        selectedCommand,
+        showingBuilder,
+    } from "../bots/botState";
+    import CommandBuilder from "../bots/CommandBuilder.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -62,6 +66,7 @@
     export let textContent: string | undefined;
     export let mode: "thread" | "message" = "message";
     export let externalContent: boolean;
+    export let messageContext: MessageContext;
 
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
@@ -80,6 +85,7 @@
     let typingTimer: number | undefined = undefined;
     let audioSupported: boolean = "mediaDevices" in navigator;
     let showMentionPicker = false;
+    let showCommandSelector: boolean = false;
     let showEmojiSearch = false;
     let mentionPrefix: string | undefined;
     let emojiQuery: string | undefined;
@@ -93,10 +99,6 @@
     let textboxId = Symbol();
 
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && attachment === undefined;
-    $: tokens = Object.values($cryptoLookup)
-        .map((t) => t.symbol.toLowerCase())
-        .join("|");
-    $: tokenMatchRegex = new RegExp(`^\/(${tokens}) *(\\d*[.,]?\\d*)$`);
     $: canSendAny = !$anonUser && client.canSendMessage(chat.id, mode);
     $: permittedMessages = client.permittedMessages(chat.id, mode);
     $: canEnterText =
@@ -104,6 +106,7 @@
         editingEvent !== undefined ||
         attachment !== undefined;
     $: excessiveLinks = client.extractEnabledLinks(textContent ?? "").length > 5;
+    $: frozen = client.isChatOrCommunityFrozen(chat, $selectedCommunity);
 
     $: {
         if (inp) {
@@ -184,6 +187,7 @@
     function onInput() {
         const inputContent = inp.textContent ?? "";
         dispatch("setTextContent", inputContent.trim().length === 0 ? undefined : inputContent);
+        triggerCommandSelector(inputContent);
         triggerMentionLookup(inputContent);
         triggerEmojiLookup(inputContent);
         triggerTypingTimer();
@@ -239,6 +243,25 @@
         });
     }
 
+    function triggerCommandSelector(inputContent: string | null): void {
+        const commandMatch = inputContent?.match(/^\/.*/);
+        if (commandMatch) {
+            showCommandSelector = true;
+            commandPrefix.set(commandMatch[0]);
+        } else {
+            showCommandSelector = false;
+            cancelCommand();
+        }
+    }
+
+    function cancelCommandSelector(clearInput: boolean) {
+        showCommandSelector = false;
+        cancelCommand();
+        if (clearInput) {
+            dispatch("setTextContent", undefined);
+        }
+    }
+
     function triggerTypingTimer() {
         requestAnimationFrame(() => {
             const now = Date.now();
@@ -258,10 +281,11 @@
     }
 
     function keyPress(e: KeyboardEvent) {
-        if (e.key === "Enter" && $enterSend && !e.shiftKey) {
-            if (!messageIsEmpty) {
-                sendMessage();
-            }
+        if (e.key === "Enter" && $enterSend && !e.shiftKey && !showCommandSelector) {
+            sendMessage();
+            e.preventDefault();
+        }
+        if (e.key === "Enter" && showCommandSelector) {
             e.preventDefault();
         }
     }
@@ -314,96 +338,10 @@
         return [expandedText, mentioned, containsMarkdown && $useBlockLevelMarkdown];
     }
 
-    /**
-     * Check the message content for special commands
-     * * /poll - creates a poll
-     * * /icp [amount]
-     * * /search [term]
-     * * /pinned - opens pinned messages (not yet)
-     * * /details - opens group details (not yet)
-     * * /witch - summon the halloween witch
-     */
     function parseCommands(txt: string): boolean {
-        const summonWitch = txt.match(/^\/witch( *(.*))$/);
-        const isHalloweenTheme = $currentThemeName === "halloween";
-        if (summonWitch) {
-            if (!isHalloweenTheme) {
-                themeType.set("dark");
-                preferredDarkThemeName.set("halloween");
-            }
-            document.body.classList.add("witch");
-            scream.currentTime = 0;
-            scream.play();
-            window.setTimeout(() => {
-                document.body.classList.remove("witch");
-            }, 2000);
-            return false;
-        }
-
         if (/snow|xmas|christmas|noel/.test(txt)) {
             $snowing = true;
         }
-
-        if (permittedMessages.get("poll") && /^\/poll$/.test(txt)) {
-            dispatch("createPoll");
-            return true;
-        }
-
-        const testMsgMatch = txt.match(/^\/test-msg (\d+)/);
-        if (testMsgMatch && testMsgMatch[1] !== undefined) {
-            dispatch("createTestMessages", Number(testMsgMatch[1]));
-            return true;
-        }
-
-        const searchMatch = txt.match(/^\/search( *(.*))$/);
-        if (searchMatch && searchMatch[2] !== undefined) {
-            dispatch("searchChat", searchMatch[2]);
-            return true;
-        }
-
-        if (permittedMessages.get("giphy")) {
-            const gifMatch = txt.match(/^\/gif( *(.*))$/);
-            if (gifMatch && gifMatch[2] !== undefined) {
-                dispatch("attachGif", gifMatch[2]);
-                return true;
-            }
-        }
-
-        const faqMatch = txt.match(/^\/faq( *(.*))$/);
-        if (faqMatch && faqMatch[2] !== undefined) {
-            if (allQuestions.includes(faqMatch[2] as Questions)) {
-                const url = `/faq?q=${faqMatch[2]}`;
-                dispatch("sendMessage", [`[🤔 FAQ: ${$_(`faq.${faqMatch[2]}_q`)}](${url})`, []]);
-            } else {
-                dispatch("sendMessage", [`[🤔 FAQs](/faq)`, []]);
-            }
-            return true;
-        }
-
-        if (/^\/diamond$/.test(txt)) {
-            const url = addQueryStringParam("diamond", "");
-            dispatch("sendMessage", [`[${$_("upgrade.message")}](${url})`, []]);
-            return true;
-        }
-
-        if (permittedMessages.get("crypto")) {
-            const tokenMatch = txt.match(tokenMatchRegex);
-            if (tokenMatch && tokenMatch[2] !== undefined) {
-                const token = tokenMatch[1];
-                const tokenDetails = Object.values($cryptoLookup).find(
-                    (t) => t.symbol.toLowerCase() === token,
-                );
-                if (tokenDetails !== undefined) {
-                    dispatch("tokenTransfer", {
-                        ledger: tokenDetails.ledger,
-                        amount: client.validateTokenInput(tokenMatch[2], tokenDetails.decimals)
-                            .amount,
-                    });
-                }
-                return true;
-            }
-        }
-
         return false;
     }
 
@@ -412,6 +350,8 @@
     }
 
     function sendMessage() {
+        if (showCommandSelector || messageIsEmpty) return;
+
         const txt = inp.innerText?.trim() ?? "";
 
         if (!parseCommands(txt)) {
@@ -537,6 +477,14 @@
     }
 </script>
 
+{#if $selectedCommand && $showingBuilder}
+    <CommandBuilder
+        {messageContext}
+        onCommandSent={() => cancelCommandSelector(true)}
+        onCancel={() => cancelCommandSelector(false)}
+        command={$selectedCommand} />
+{/if}
+
 {#if showMentionPicker}
     <MentionPicker
         supportsUserGroups
@@ -544,6 +492,15 @@
         on:close={cancelMention}
         on:mention={mention}
         prefix={mentionPrefix} />
+{/if}
+
+{#if showCommandSelector}
+    <CommandSelector
+        {messageContext}
+        {mode}
+        onCommandSent={() => cancelCommandSelector(true)}
+        onNoMatches={() => cancelCommandSelector(false)}
+        onCancel={() => cancelCommandSelector(false)} />
 {/if}
 
 {#if showEmojiSearch}
@@ -558,9 +515,13 @@
     class="message-entry"
     class:editing={editingEvent !== undefined}
     bind:clientHeight={messageEntryHeight}>
-    {#if blocked}
+    {#if frozen}
+        <div class="frozen">
+            <Translatable resourceKey={i18nKey("chatFrozen")} />
+        </div>
+    {:else if blocked}
         <div class="blocked">
-            {$_("userIsBlocked")}
+            <Translatable resourceKey={i18nKey("userIsBlocked")} />
         </div>
     {:else if (preview || lapsed) && chat.kind !== "direct_chat"}
         <PreviewFooter {lapsed} {joining} {chat} on:joinGroup on:upgrade />
@@ -750,6 +711,7 @@
     }
 
     .blocked,
+    .frozen,
     .disabled {
         height: 42px;
         color: var(--txt);

@@ -9,6 +9,7 @@
         userStore,
         selectedChatId,
         communities,
+        selectedCommunity,
     } from "openchat-client";
     import {
         activeVideoCall,
@@ -83,7 +84,7 @@
                                     communityId: chat.id.communityId,
                                 })?.name
                             } > ${chat.name}`,
-                            avatarUrl: client.groupAvatarUrl(chat),
+                            avatarUrl: client.groupAvatarUrl(chat, $selectedCommunity),
                             userId: undefined,
                         };
                 }

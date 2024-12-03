@@ -10,7 +10,7 @@ use std::collections::{HashMap, HashSet};
 use types::{
     ChannelId, ChannelMatch, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, CommunityId,
     GroupMembership, GroupMembershipUpdates, GroupPermissionRole, GroupPermissions, MultiUserChat, Rules, TimestampMillis,
-    Timestamped, UserId, UserType, MAX_THREADS_IN_SUMMARY,
+    UserId, UserType, MAX_THREADS_IN_SUMMARY,
 };
 
 use super::members::CommunityMembers;
@@ -45,7 +45,7 @@ impl Channels {
             .into_iter()
             .map(|name| {
                 let channel_id = loop {
-                    let id = rng.next_u32() as ChannelId;
+                    let id = rng.next_u32().into();
                     if channel_ids.insert(id) {
                         break id;
                     }
@@ -238,7 +238,7 @@ impl Channel {
         let chat = &self.chat;
         let member = user_id.and_then(|user_id| chat.members.get(&user_id));
 
-        let (min_visible_event_index, min_visible_message_index, is_invited) = if let Some(member) = member {
+        let (min_visible_event_index, min_visible_message_index, is_invited) = if let Some(member) = &member {
             (member.min_visible_event_index(), member.min_visible_message_index(), None)
         } else if let Some(invitation) = user_id.and_then(|user_id| chat.invited_users.get(&user_id)) {
             (
@@ -264,14 +264,14 @@ impl Channel {
             .and_then(|m| community_members.get_by_user_id(&m.event.sender))
             .and_then(|m| m.display_name().value.clone());
 
-        let membership = member.map(|m| GroupMembership {
-            joined: m.date_added,
-            role: m.role.value.into(),
-            mentions: m.most_recent_mentions(None, &chat.events),
-            notifications_muted: m.notifications_muted.value,
+        let membership = member.as_ref().map(|m| GroupMembership {
+            joined: m.date_added(),
+            role: m.role().value.into(),
+            mentions: chat.most_recent_mentions(m, None),
+            notifications_muted: m.notifications_muted().value,
             my_metrics: chat
                 .events
-                .user_metrics(&m.user_id, None)
+                .user_metrics(&m.user_id(), None)
                 .map(|m| m.hydrate())
                 .unwrap_or_default(),
             latest_threads: m
@@ -285,7 +285,7 @@ impl Channel {
                 .rules_accepted
                 .as_ref()
                 .map_or(false, |version| version.value >= chat.rules.text.version),
-            lapsed: m.lapsed.value,
+            lapsed: m.lapsed().value,
         });
 
         Some(CommunityCanisterChannelSummary {
@@ -334,8 +334,8 @@ impl Channel {
         let chat = &self.chat;
         let member = user_id.and_then(|id| chat.members.get(&id));
 
-        if let Some(m) = member {
-            if m.date_added > since {
+        if let Some(m) = &member {
+            if m.date_added() > since {
                 return ChannelUpdates::Added(
                     self.summary(user_id, is_community_member, is_public_community, community_members)
                         .expect("Channel should be accessible"),
@@ -353,11 +353,11 @@ impl Channel {
             .and_then(|m| community_members.get_by_user_id(&m.event.sender))
             .and_then(|m| m.display_name().value.clone());
 
-        let membership = member.map(|m| GroupMembershipUpdates {
-            role: updates.role_changed.then_some(m.role.value.into()),
+        let membership = member.as_ref().map(|m| GroupMembershipUpdates {
+            role: updates.role_changed.then_some(m.role().value.into()),
             mentions: updates.mentions,
-            notifications_muted: m.notifications_muted.if_set_after(since).cloned(),
-            my_metrics: self.chat.events.user_metrics(&m.user_id, Some(since)).map(|m| m.hydrate()),
+            notifications_muted: m.notifications_muted().if_set_after(since).cloned(),
+            my_metrics: self.chat.events.user_metrics(&m.user_id(), Some(since)).map(|m| m.hydrate()),
             latest_threads: m
                 .followed_threads
                 .updated_since(since)
@@ -370,7 +370,7 @@ impl Channel {
                 .as_ref()
                 .filter(|accepted| updates.rules_changed || accepted.timestamp > since)
                 .map(|accepted| accepted.value >= chat.rules.text.version),
-            lapsed: m.lapsed.if_set_after(since).copied(),
+            lapsed: m.lapsed().if_set_after(since).copied(),
         });
 
         ChannelUpdates::Updated(CommunityCanisterChannelSummaryUpdates {
@@ -398,21 +398,17 @@ impl Channel {
             membership,
             video_call_in_progress: updates.video_call_in_progress,
             external_url: updates.external_url,
+            any_updates_missed: updates.any_updates_missed,
         })
     }
 
     pub fn mute_notifications(&mut self, mute: bool, user_id: UserId, now: TimestampMillis) -> MuteChannelResult {
         use MuteChannelResult::*;
 
-        if let Some(channel_member) = self.chat.members.get_mut(&user_id) {
-            if channel_member.notifications_muted.value != mute {
-                channel_member.notifications_muted = Timestamped::new(mute, now);
-                Success
-            } else {
-                Unchanged
-            }
-        } else {
-            UserNotFound
+        match self.chat.members.toggle_notifications_muted(user_id, mute, now) {
+            Some(true) => Success,
+            Some(false) => Unchanged,
+            None => UserNotFound,
         }
     }
 

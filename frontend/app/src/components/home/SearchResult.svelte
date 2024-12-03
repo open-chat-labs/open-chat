@@ -7,6 +7,8 @@
     export let index: number;
 </script>
 
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="search-result" class:first={index === 0} on:click>
     <span class="avatar">
         <Avatar url={avatarUrl} size={AvatarSize.Default} />
@@ -16,7 +18,7 @@
     </div>
 
     {#if showSpinner}
-        <div class="spinner" />
+        <div class="spinner"></div>
     {/if}
 </div>
 

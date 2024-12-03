@@ -8,7 +8,7 @@ use icrc_ledger_types::icrc1::transfer::TransferError;
 use types::{AcceptSwapSuccess, Achievement, Chat, EventIndex, MessageId, MessageIndex, P2PSwapLocation, UserId};
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn accept_p2p_swap(args: Args) -> Response {
     run_regular_jobs();
@@ -51,7 +51,7 @@ async fn accept_p2p_swap(args: Args) -> Response {
                         .chat
                         .members
                         .get(&message.sender)
-                        .map_or(false, |m| !m.user_type.is_bot())
+                        .map_or(false, |m| !m.user_type().is_bot())
                     {
                         state.data.user_event_sync_queue.push(
                             message.sender,
@@ -105,13 +105,13 @@ fn reserve_p2p_swap(args: Args, state: &mut RuntimeState) -> Result<ReserveP2PSw
 
     let caller = state.env.caller();
     if let Some(member) = state.data.get_member(caller) {
-        if member.suspended.value {
+        if member.suspended().value {
             return Err(Box::new(UserSuspended));
-        } else if member.lapsed.value {
+        } else if member.lapsed().value {
             return Err(Box::new(UserLapsed));
         }
 
-        let user_id = member.user_id;
+        let user_id = member.user_id();
         let min_visible_event_index = member.min_visible_event_index();
         let now = state.env.now();
 

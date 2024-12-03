@@ -1,11 +1,11 @@
 use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
 use crate::{client, TestEnv};
+use constants::DAY_IN_MS;
 use escrow_canister::deposit_subaccount;
 use icrc_ledger_types::icrc1::account::Account;
 use std::ops::Deref;
 use types::{Chat, Cryptocurrency, P2PSwapLocation};
-use utils::time::DAY_IN_MS;
 
 #[test]
 fn swap_via_escrow_canister_succeeds() {

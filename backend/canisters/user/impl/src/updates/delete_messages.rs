@@ -4,13 +4,12 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{DeleteMessageResult, DeleteUndeleteMessagesArgs};
+use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use types::{Achievement, EventIndex};
 use user_canister::delete_messages::{Response::*, *};
 use user_canister::UserCanisterEvent;
-use utils::consts::OPENCHAT_BOT_USER_ID;
-use utils::time::MINUTE_IN_MS;
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 fn delete_messages(args: Args) -> Response {
     run_regular_jobs();

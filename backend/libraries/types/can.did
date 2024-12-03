@@ -86,6 +86,7 @@ type ChatMetrics = record {
     file_messages : nat64;
     polls : nat64;
     poll_votes : nat64;
+    crypto_messages : nat64;
     icp_messages : nat64;
     sns1_messages : nat64;
     ckbtc_messages : nat64;
@@ -242,6 +243,7 @@ type ChatEvent = variant {
     UsersInvited : UsersInvited;
     MembersAddedToDefaultChannel : MembersAddedToDefaultChannel;
     ExternalUrlUpdated : ExternalUrlUpdated;
+    FailedToDeserialize;
 };
 
 type ChatEventWrapper = record {
@@ -360,6 +362,7 @@ type GroupCanisterGroupChatSummaryUpdates = record {
     rules_accepted : opt bool;
     membership : opt GroupMembershipUpdates;
     video_call_in_progress : VideoCallUpdates;
+    any_updates_missed : bool;
 };
 
 type CommunityCanisterCommunitySummary = record {
@@ -496,6 +499,7 @@ type CommunityCanisterChannelSummaryUpdates = record {
     membership : opt GroupMembershipUpdates;
     video_call_in_progress : VideoCallUpdates;
     external_url : TextUpdate;
+    any_updates_missed : bool;
 };
 
 type GroupMembershipUpdates = record {
@@ -1488,6 +1492,9 @@ type PrizeContentInitial = record {
     end_date : TimestampMillis;
     caption : opt text;
     diamond_only : bool;
+    lifetime_diamond_only : bool;
+    unique_person_only : bool;
+    streak_only: nat16;
 };
 
 type PrizeContent = record {
@@ -1500,6 +1507,9 @@ type PrizeContent = record {
     end_date : TimestampMillis;
     caption : opt text;
     diamond_only : bool;
+    lifetime_diamond_only : bool;
+    unique_person_only : bool;
+    streak_only: nat16;
 };
 
 type PrizeWinnerContent = record {
@@ -1936,7 +1946,6 @@ type UserSummaryStable = record {
     suspended : bool;
     diamond_membership_status : DiamondMembershipStatus;
     is_unique_person : bool;
-    bot_config : opt BotConfig;
 };
 
 type UserSummaryVolatile = record {
@@ -2024,30 +2033,10 @@ type Achievement = variant {
     ChangedTheme;
     SwappedFromWallet;
     AcceptedP2PSwapOffer;
-    EnabledDisappearingMessages;
-    PinnedMessage;
     FavouritedChat;
     FollowedThread;
-    SuggestedTranslation;
-    TranslationAccepted;
-    AppointedGroupModerator;
-    AppointedGroupAdmin;
-    AppointedGroupOwner;
-    ChosenAsGroupModerator;
-    ChosenAsGroupAdmin;
-    ChosenAsGroupOwner;
-    SetGroupAccessGate;
-    SetCommunityAccessGate;
-    JoinedGatedGroupOrCommunity;
     PinnedChat;
     SetPin;
-    OwnGroupWithOneDiamondMember;
-    OwnGroupWithTenDiamondMembers;
-    OwnGroupWithOneHundredDiamondMembers;
-    OwnGroupWithOneThousandDiamondMembers;
-    DirectChats5;
-    DirectChats10;
-    DirectChats20;
     Referred1stUser;
     Referred3rdUser;
     Referred10thUser;
@@ -2071,4 +2060,92 @@ type ExchangeId = variant {
     ICPSwap;
     KongSwap;
     Sonic;
+};
+
+type SlashCommandSchema = record {
+    name : text;
+    description : opt text;
+    params : vec SlashCommandParam;
+    permissions : SlashCommandPermissions;
+};
+
+type SlashCommandParam = record {
+    name : text;
+    description : opt text;
+    placeholder : opt text;
+    required : bool;
+    param_type : SlashCommandParamType;
+};
+
+type SlashCommandParamType = variant {
+    UserParam;
+    BooleanParam;
+    StringParam : StringParam;
+    NumberParam : NumberParam;
+};
+
+type StringParam = record {
+    min_length : nat16;
+    max_length : nat16;
+    choices : vec StringParamChoice;
+};
+
+type StringParamChoice = record {
+    name : text;
+    value : text;
+};
+
+type NumberParam = record {
+    min_length : nat16;
+    max_length : nat16;
+    choices : vec NumberParamChoice;
+};
+
+type NumberParamChoice = record {
+    name : text;
+    value : nat16;
+};
+
+type SlashCommandPermissions = record {
+    community: vec CommunityPermission;
+    chat: vec GroupPermission;
+    message: vec MessagePermission;
+    thread: vec MessagePermission;
+};
+
+type CommunityPermission = variant {
+    ChangeRoles;
+    UpdateDetails;
+    InviteUsers;
+    RemoveMembers;
+    CreatePublicChannel;
+    CreatePrivateChannel;
+    ManageUserGroups;
+};
+
+type GroupPermission = variant {
+    ChangeRoles;
+    UpdateGroup;
+    AddMembers;
+    InviteUsers;
+    RemoveMembers;
+    DeleteMessages;
+    PinMessages;
+    ReactToMessages;
+    MentionAllMembers;
+    StartVideoCall;
+};
+
+type MessagePermission = variant {
+    Text;
+    Image;
+    Video;
+    Audio;
+    File;
+    Poll;
+    Crypto;
+    Giphy;
+    Prize;
+    P2pSwap;
+    VideoCall;
 };

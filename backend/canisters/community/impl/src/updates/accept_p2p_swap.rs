@@ -8,7 +8,7 @@ use icrc_ledger_types::icrc1::transfer::TransferError;
 use types::{AcceptSwapSuccess, Achievement, ChannelId, Chat, EventIndex, MessageId, MessageIndex, P2PSwapLocation, UserId};
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn accept_p2p_swap(args: Args) -> Response {
     run_regular_jobs();
@@ -51,7 +51,7 @@ async fn accept_p2p_swap(args: Args) -> Response {
                             .chat
                             .members
                             .get(&message.sender)
-                            .map_or(false, |m| !m.user_type.is_bot())
+                            .map_or(false, |m| !m.user_type().is_bot())
                         {
                             let community_id = state.env.canister_id().into();
 
@@ -108,9 +108,9 @@ fn reserve_p2p_swap(args: Args, state: &mut RuntimeState) -> Result<ReserveP2PSw
 
     let caller = state.env.caller();
     if let Some(member) = state.data.members.get(caller) {
-        if member.suspended.value {
+        if member.suspended().value {
             return Err(Box::new(UserSuspended));
-        } else if member.lapsed.value {
+        } else if member.lapsed().value {
             return Err(Box::new(UserLapsed));
         }
         let user_id = member.user_id;
@@ -121,7 +121,7 @@ fn reserve_p2p_swap(args: Args, state: &mut RuntimeState) -> Result<ReserveP2PSw
                 _ => return Err(Box::new(UserNotInChannel)),
             };
 
-            if channel_member.lapsed.value {
+            if channel_member.lapsed().value {
                 return Err(Box::new(UserLapsed));
             }
 

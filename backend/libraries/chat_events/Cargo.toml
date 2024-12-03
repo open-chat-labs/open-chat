@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
+constants = { path = "../constants" }
 event_store_producer = { workspace = true, features = ["json"] }
 hex = { workspace = true }
 ic-cdk = { workspace = true }
@@ -20,9 +21,12 @@ search = { path = "../search" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 sha2 = { workspace = true }
+stable_memory_map = { path = "../stable_memory_map" }
 tracing = { workspace = true }
 types = { path = "../types" }
+utils = { path = "../utils" }
 
 [dev-dependencies]
 msgpack = { path = "../msgpack" }
+test-case = { workspace = true }
 testing = { path = "../testing" }

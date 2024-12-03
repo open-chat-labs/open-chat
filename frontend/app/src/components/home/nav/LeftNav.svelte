@@ -13,7 +13,7 @@
     import { communityListScrollTop } from "../../../stores/scrollPos";
     import { pathParams } from "../../../routes";
     import page from "page";
-    import { createEventDispatcher, getContext, onDestroy, onMount, tick } from "svelte";
+    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import LeftNavItem from "./LeftNavItem.svelte";
     import MainMenu from "./MainMenu.svelte";
     import { navOpen } from "../../../stores/layout";
@@ -25,6 +25,7 @@
     import { now } from "../../../stores/time";
     import LighteningBolt from "./LighteningBolt.svelte";
     import { activityFeedShowing } from "../../../stores/activity";
+    import { hideChitIcon } from "../../../stores/settings";
     import {
         AvatarSize,
         type CommunitySummary,
@@ -47,6 +48,7 @@
         communityChannelVideoCallCounts,
         anonUser,
         globalStateStore as globalState,
+        favouritesStore,
     } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
@@ -74,9 +76,9 @@
         return unsub;
     });
 
-    onDestroy(() => {
-        communityListScrollTop.set(scrollingSection?.scrollTop);
-    });
+    function onScroll() {
+        communityListScrollTop.set(scrollingSection.scrollTop);
+    }
 
     function initCommunitiesList(communities: CommunitySummary[]) {
         // we don't want to allow the list to update if we're in the middle of dragging
@@ -213,7 +215,7 @@
                 <ForumOutline size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
-        {#if $globalState.favourites.size > 0}
+        {#if $favouritesStore.size > 0}
             <LeftNavItem
                 selected={$chatListScope.kind === "favourite" && !communityExplorer}
                 disabled={$anonUser}
@@ -227,25 +229,29 @@
             </LeftNavItem>
         {/if}
         {#if !$anonUser}
-            <LeftNavItem
-                label={i18nKey(
-                    claimChitAvailable ? "dailyChit.extendStreak" : "dailyChit.viewStreak",
-                )}
-                on:click={() => dispatch("claimDailyChit")}>
-                <div class="hover streak">
-                    <LighteningBolt enabled={claimChitAvailable} />
-                </div>
-            </LeftNavItem>
-            <LeftNavItem
-                separator
-                selected={$activityFeedShowing}
-                label={i18nKey("activity.navLabel")}
-                unread={{ muted: 0, unmuted: $unreadActivityCount, mentions: false }}
-                on:click={showActivityFeed}>
-                <div class="hover activity">
-                    <BellRingOutline size={iconSize} color={"var(--icon-txt)"} />
-                </div>
-            </LeftNavItem>
+            {#if claimChitAvailable || !$hideChitIcon}
+                <LeftNavItem
+                    label={i18nKey(
+                        claimChitAvailable ? "dailyChit.extendStreak" : "dailyChit.viewStreak",
+                    )}
+                    on:click={() => dispatch("claimDailyChit")}>
+                    <div class="hover streak">
+                        <LighteningBolt enabled={claimChitAvailable} />
+                    </div>
+                </LeftNavItem>
+            {/if}
+            {#if $globalState.messageActivitySummary.latestTimestamp > 0n}
+                <LeftNavItem
+                    separator
+                    selected={$activityFeedShowing}
+                    label={i18nKey("activity.navLabel")}
+                    unread={{ muted: 0, unmuted: $unreadActivityCount, mentions: false }}
+                    on:click={showActivityFeed}>
+                    <div class="hover activity">
+                        <BellRingOutline size={iconSize} color={"var(--icon-txt)"} />
+                    </div>
+                </LeftNavItem>
+            {/if}
         {/if}
     </div>
 
@@ -256,6 +262,7 @@
             dropTargetStyle: { outline: "var(--accent) solid 2px" },
             dragDisabled: isTouchDevice,
         }}
+        on:scroll={onScroll}
         bind:this={scrollingSection}
         on:consider={handleDndConsider}
         on:finalize={handleDndFinalize}

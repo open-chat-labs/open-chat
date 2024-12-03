@@ -10,7 +10,6 @@ generate_c2c_call!(c2c_accept_p2p_swap);
 generate_c2c_call!(c2c_charge_user_account);
 generate_c2c_call!(c2c_grant_super_admin);
 generate_candid_c2c_call!(c2c_handle_bot_messages);
-generate_c2c_call!(c2c_migrate_events_to_stable_memory);
 generate_c2c_call!(c2c_notify_community_canister_events);
 generate_c2c_call!(c2c_notify_community_deleted);
 generate_c2c_call!(c2c_notify_events);

@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{AccessGate, AccessGateConfig, CanisterId, ChatId, Document, GroupPermissions, GroupSubtype, Milliseconds, Rules};
+use types::{AccessGateConfig, CanisterId, ChatId, Document, GroupPermissions, GroupSubtype, Milliseconds, Rules};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -14,7 +14,6 @@ pub struct Args {
     pub messages_visible_to_non_members: Option<bool>,
     pub permissions_v2: Option<GroupPermissions>,
     pub events_ttl: Option<Milliseconds>,
-    pub gate: Option<AccessGate>,
     pub gate_config: Option<AccessGateConfig>,
 }
 

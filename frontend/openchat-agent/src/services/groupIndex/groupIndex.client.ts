@@ -14,6 +14,8 @@ import type {
     ActiveGroupsResponse,
     ExploreCommunitiesResponse,
     ChannelIdentifier,
+    FreezeCommunityResponse,
+    UnfreezeCommunityResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -29,6 +31,8 @@ import {
     exploreCommunitiesResponse,
     lookupChannelResponse,
     exploreGroupsResponse,
+    freezeCommunityResponse,
+    unfreezeCommunityResponse,
 } from "./mappers";
 import {
     GroupIndexActiveGroupsArgs,
@@ -41,6 +45,8 @@ import {
     GroupIndexExploreCommunitiesResponse,
     GroupIndexExploreGroupsArgs,
     GroupIndexExploreGroupsResponse,
+    GroupIndexFreezeCommunityArgs,
+    GroupIndexFreezeCommunityResponse,
     GroupIndexFreezeGroupArgs,
     GroupIndexFreezeGroupResponse,
     GroupIndexLookupChannelByGroupIdArgs,
@@ -57,6 +63,8 @@ import {
     GroupIndexSetCommunityUpgradeConcurrencyResponse,
     GroupIndexSetGroupUpgradeConcurrencyArgs,
     GroupIndexSetGroupUpgradeConcurrencyResponse,
+    GroupIndexUnfreezeCommunityArgs,
+    GroupIndexUnfreezeCommunityResponse,
     GroupIndexUnfreezeGroupArgs,
     GroupIndexUnfreezeGroupResponse,
 } from "../../typebox";
@@ -160,6 +168,34 @@ export class GroupIndexClient extends CandidService {
             freezeGroupResponse,
             GroupIndexFreezeGroupArgs,
             GroupIndexFreezeGroupResponse,
+        );
+    }
+
+    freezeCommunity(
+        id: CommunityIdentifier,
+        reason: string | undefined,
+    ): Promise<FreezeCommunityResponse> {
+        return this.executeMsgpackUpdate(
+            "freeze_community",
+            {
+                community_id: principalStringToBytes(id.communityId),
+                reason: reason,
+            },
+            freezeCommunityResponse,
+            GroupIndexFreezeCommunityArgs,
+            GroupIndexFreezeCommunityResponse,
+        );
+    }
+
+    unfreezeCommunity(id: CommunityIdentifier): Promise<UnfreezeCommunityResponse> {
+        return this.executeMsgpackUpdate(
+            "unfreeze_community",
+            {
+                community_id: principalStringToBytes(id.communityId),
+            },
+            unfreezeCommunityResponse,
+            GroupIndexUnfreezeCommunityArgs,
+            GroupIndexUnfreezeCommunityResponse,
         );
     }
 

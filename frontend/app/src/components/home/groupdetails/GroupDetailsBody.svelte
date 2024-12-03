@@ -39,7 +39,7 @@
     $: canSend = client.canSendMessage(chat.id, "any");
     $: canInvite =
         client.canInviteUsers(chat.id) && (chat.kind !== "channel" || !client.isChatPrivate(chat));
-    $: avatarSrc = client.groupAvatarUrl(chat);
+    $: avatarSrc = client.groupAvatarUrl(chat, $selectedCommunity);
     $: combinedRulesText = canSend
         ? client.combineRulesText($currentChatRules, $currentCommunityRules)
         : "";

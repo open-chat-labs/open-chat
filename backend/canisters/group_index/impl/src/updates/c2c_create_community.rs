@@ -32,7 +32,6 @@ async fn c2c_create_community(args: Args) -> Response {
         banner: args.banner,
         history_visible_to_new_joiners: args.history_visible_to_new_joiners,
         permissions: args.permissions,
-        gate: args.gate.clone(),
         gate_config: args.gate_config.clone(),
         default_channels: args.default_channels,
         default_channel_rules: args.default_channel_rules,
@@ -58,7 +57,6 @@ pub(crate) async fn create_community_impl(
             mutate_state(|state| {
                 let avatar_id = Document::id(&args.avatar);
                 let banner_id = Document::id(&args.banner);
-                let gate_config = if args.gate_config.is_some() { args.gate_config } else { args.gate.map(|g| g.into()) };
 
                 commit(
                     args.is_public,
@@ -67,7 +65,7 @@ pub(crate) async fn create_community_impl(
                     args.description,
                     avatar_id,
                     banner_id,
-                    gate_config,
+                    args.gate_config,
                     args.primary_language,
                     local_group_index_canister,
                     args.default_channels.len() as u32,

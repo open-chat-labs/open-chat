@@ -7,7 +7,7 @@ use community_canister::report_message::{Response::*, *};
 use group_index_canister::c2c_report_message;
 use types::{CanisterId, MultiUserChat, UserId};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn report_message(args: Args) -> Response {
     run_regular_jobs();
@@ -44,9 +44,9 @@ fn build_c2c_args(args: &Args, state: &RuntimeState) -> Result<(c2c_report_messa
         return Err(UserNotInCommunity);
     };
 
-    if member.suspended.value {
+    if member.suspended().value {
         return Err(UserSuspended);
-    } else if member.lapsed.value {
+    } else if member.lapsed().value {
         return Err(UserLapsed);
     }
 
@@ -62,13 +62,13 @@ fn build_c2c_args(args: &Args, state: &RuntimeState) -> Result<(c2c_report_messa
         return Err(UserNotInChannel);
     };
 
-    if channel_member.suspended.value {
+    if channel_member.suspended().value {
         return Err(UserSuspended);
-    } else if channel_member.lapsed.value {
+    } else if channel_member.lapsed().value {
         return Err(UserLapsed);
     }
 
-    if args.delete && !channel_member.role.can_delete_messages(&chat.permissions) {
+    if args.delete && !channel_member.role().can_delete_messages(&chat.permissions) {
         return Err(NotAuthorized);
     }
 

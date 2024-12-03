@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1484](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1484-neuron_controller)] - 2024-11-29
+
+### Changed
+
+- Spawn maturity from neurons that are dissolving and can no longer vote ([#6920](https://github.com/open-chat-labs/open-chat/pull/6920))
+
+## [[2.0.1467](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1467-neuron_controller)] - 2024-11-24
+
+### Changed
+
+- Increase CyclesDispenser's minimum balance to 10k ICP ([#6870](https://github.com/open-chat-labs/open-chat/pull/6870))
+
+## [[2.0.1426](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1426-neuron_controller)] - 2024-11-06
+
 ### Added
 
 - Add an error log with http endpoint ([#6608](https://github.com/open-chat-labs/open-chat/pull/6608))
@@ -14,6 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Serialize large integers as strings when using MessagePack ([#6315](https://github.com/open-chat-labs/open-chat/pull/6315))
 - Increase max stable memory read / write buffer size ([#6440](https://github.com/open-chat-labs/open-chat/pull/6440))
+- Increase the CyclesDispenser's minimum ICP balance ([#6728](https://github.com/open-chat-labs/open-chat/pull/6728))
 
 ## [[2.0.1303](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1303-neuron_controller)] - 2024-08-22
 

@@ -1,13 +1,3 @@
-<script context="module" lang="ts">
-    export type DateRange = { date: Date; range: [Date, Date] };
-    export const title = writable("");
-    export const month = writable(0);
-    export const selectedRange = writable<DateRange>({
-        date: new Date(),
-        range: [new Date(), new Date()],
-    });
-</script>
-
 <script lang="ts">
     import { locale } from "svelte-i18n";
     import { getMonthCalendar, getTitleText, isSameDay } from "./utils";
@@ -15,41 +5,44 @@
     import PrevIcon from "svelte-material-icons/ChevronLeft.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import { iconSize } from "../../stores/iconSize";
-    import { createEventDispatcher, onMount } from "svelte";
+    import { type Snippet } from "svelte";
     import { translationCodes } from "../../i18n/i18n";
     import { weekDays } from "./weekdays";
-    import { writable } from "svelte/store";
+    import { calendarState, type DateRange } from "./calendarState.svelte";
 
-    const dispatch = createEventDispatcher();
-
-    let today = new Date();
-    let showDate = new Date();
-    let dates: Date[][] = [];
-
-    $: translatedLocale = translationCodes[$locale || "en"] || "en";
-    $: {
-        getDates(showDate);
+    interface Props {
+        monthTitleTemplate?: Snippet;
+        dayTemplate?: Snippet<[Date]>;
+        dateSelected?: (range: DateRange) => void;
     }
 
-    onMount(() => getDates(showDate));
+    let { monthTitleTemplate, dayTemplate, dateSelected }: Props = $props();
+
+    let today = $state(new Date());
+    let showDate = $state(new Date());
+    let dates = $state<Date[][]>([]);
+    let translatedLocale = $derived(translationCodes[$locale || "en"] || "en");
+
+    $effect(() => getDates(showDate));
 
     function endOfDay(date: Date): Date {
         return new Date(date.getTime() + 24 * 60 * 60 * 1000 - 1);
     }
 
     function getDates(start: Date) {
+        console.log("Getting dates for start date: ", start);
         const resp = getMonthCalendar(start);
-        title.set(getTitleText(resp.year, resp.month, translatedLocale));
+        calendarState.monthTitle = getTitleText(resp.year, resp.month, translatedLocale);
         dates = resp.dates;
-        month.set(resp.month);
+        calendarState.selectedMonth = resp.month;
         const allDates = resp.dates.flatMap((d) => d);
         const finalDay = allDates[allDates.length - 1];
         const range: DateRange = {
             date: start,
             range: [allDates[0], endOfDay(finalDay)],
         };
-        selectedRange.set(range);
-        dispatch("dateSelected", range);
+        calendarState.selectedRange = range;
+        dateSelected?.(range);
     }
 
     function previousMonth() {
@@ -74,13 +67,15 @@
 
 <div class={"calendar-wrapper"}>
     <div class="calendar-header">
-        <HoverIcon on:click={previousMonth}>
+        <HoverIcon onclick={previousMonth}>
             <PrevIcon size={$iconSize} color={"var(--icon-txt"} />
         </HoverIcon>
-        <slot name="month-title">
-            <h3>{$title}</h3>
-        </slot>
-        <HoverIcon on:click={nextMonth}>
+        {#if monthTitleTemplate}
+            {@render monthTitleTemplate()}
+        {:else}
+            <h3>{calendarState.monthTitle}</h3>
+        {/if}
+        <HoverIcon onclick={nextMonth}>
             <NextIcon size={$iconSize} color={"var(--icon-txt"} />
         </HoverIcon>
     </div>
@@ -95,15 +90,15 @@
         {#each dates as week}
             <div class="week-row">
                 {#each week as day}
-                    <!-- svelte-ignore a11y-click-events-have-key-events -->
-                    <!-- svelte-ignore a11y-no-static-element-interactions -->
                     <div
-                        class:disabled={day.getMonth() !== $month}
+                        class:disabled={day.getMonth() !== calendarState.selectedMonth}
                         class:today={typeof day === "string" ? false : isSameDay(today, day)}
                         class="block daily-date-block pointer">
-                        <slot {day}>
+                        {#if dayTemplate}
+                            {@render dayTemplate(day)}
+                        {:else}
                             {day.getDate()}
-                        </slot>
+                        {/if}
                     </div>
                 {/each}
             </div>

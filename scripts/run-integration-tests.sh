@@ -7,7 +7,7 @@ cd $SCRIPT_DIR/..
 WASM_SRC=${1:-build}
 TEST_THREADS=${2:-6}
 TESTNAME=$3
-POCKET_IC_SERVER_VERSION="6.0.0"
+POCKET_IC_SERVER_VERSION="7.0.0"
 
 if [[ $OSTYPE == "linux-gnu"* ]] || [[ $RUNNER_OS == "Linux" ]]
 then

@@ -4,9 +4,8 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use types::{
-    is_default, BotConfig, CyclesTopUp, CyclesTopUpInternal, PhoneNumber, RegistrationFee, SuspensionAction,
-    SuspensionDuration, TimestampMillis, UniquePersonProof, UserId, UserSummary, UserSummaryStable, UserSummaryV2,
-    UserSummaryVolatile, UserType,
+    is_default, CyclesTopUp, CyclesTopUpInternal, PhoneNumber, RegistrationFee, SuspensionAction, SuspensionDuration,
+    TimestampMillis, UniquePersonProof, UserId, UserSummary, UserSummaryStable, UserSummaryV2, UserSummaryVolatile, UserType,
 };
 use utils::time::MonthKey;
 
@@ -40,8 +39,6 @@ pub struct User {
     pub referred_by: Option<UserId>,
     #[serde(rename = "ut", default, skip_serializing_if = "is_default")]
     pub user_type: UserType,
-    #[serde(rename = "bc", default, skip_serializing_if = "Option::is_none")]
-    pub bot_config: Option<BotConfig>,
     #[serde(rename = "sd", default, skip_serializing_if = "Option::is_none")]
     pub suspension_details: Option<SuspensionDetails>,
     #[serde(
@@ -79,31 +76,34 @@ pub enum PhoneStatus {
 }
 
 impl User {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         principal: Principal,
         user_id: UserId,
         username: String,
+        display_name: Option<String>,
         now: TimestampMillis,
         referred_by: Option<UserId>,
         user_type: UserType,
-        bot_config: Option<BotConfig>,
+        avatar_id: Option<u128>,
     ) -> User {
+        let display_name_upper = display_name.as_ref().map(|dn| dn.to_uppercase());
+
         User {
             principal,
             user_id,
             username,
-            display_name: None,
-            display_name_upper: None,
+            display_name,
+            display_name_upper,
             date_created: now,
             date_updated: now,
             cycle_top_ups: Vec::new(),
-            avatar_id: None,
+            avatar_id,
             registration_fee: None,
             account_billing: AccountBilling::default(),
             phone_status: PhoneStatus::None,
             referred_by,
             user_type,
-            bot_config,
             suspension_details: None,
             diamond_membership_details: DiamondMembershipDetailsInternal::default(),
             moderation_flags_enabled: 0,
@@ -152,7 +152,6 @@ impl User {
             suspended: self.suspension_details.is_some(),
             diamond_membership_status: self.diamond_membership_details.status(now),
             is_unique_person: self.unique_person_proof.is_some(),
-            bot_config: self.bot_config.clone(),
         }
     }
 
@@ -242,7 +241,6 @@ impl Default for User {
             phone_status: PhoneStatus::None,
             referred_by: None,
             user_type: UserType::User,
-            bot_config: None,
             suspension_details: None,
             diamond_membership_details: DiamondMembershipDetailsInternal::default(),
             moderation_flags_enabled: 0,

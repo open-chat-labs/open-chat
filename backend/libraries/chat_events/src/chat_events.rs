@@ -1,11 +1,10 @@
 use crate::chat_events_list::Reader;
 use crate::expiring_events::ExpiringEvents;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
+use crate::metrics::{ChatMetricsInternal, MetricKey};
 use crate::search_index::SearchIndex;
-use crate::stable_storage::key::KeyPrefix;
-use crate::stable_storage::Memory;
 use crate::*;
-use candid::Principal;
+use constants::{HOUR_IN_MS, ONE_MB, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventBuilder, EventStoreClient, Runtime};
 use rand::rngs::StdRng;
 use rand::Rng;
@@ -13,26 +12,23 @@ use search::{Document, Query};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use sha2::{Digest, Sha256};
-use std::cmp::{max, min};
+use std::cmp::max;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, HashSet};
 use std::mem;
 use std::ops::DerefMut;
-use tracing::info;
+use tracing::error;
 use types::{
     AcceptP2PSwapResult, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, ChatType, CompleteP2PSwapResult,
     CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventContext, EventIndex, EventWrapper,
     EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash,
-    HydratedMention, Mention, Message, MessageContentInitial, MessageEditedEventPayload, MessageEventPayload, MessageId,
-    MessageIndex, MessageMatch, MessageReport, MessageTippedEventPayload, Milliseconds, MultiUserChat, P2PSwapAccepted,
-    P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction, PollVotes,
-    ProposalUpdate, PushEventResult, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapResult,
+    HydratedMention, Mention, Message, MessageContent, MessageContentInitial, MessageEditedEventPayload, MessageEventPayload,
+    MessageId, MessageIndex, MessageMatch, MessageReport, MessageTippedEventPayload, Milliseconds, MultiUserChat,
+    P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction,
+    PollVotes, ProposalUpdate, PushEventResult, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapResult,
     ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload,
     VideoCallParticipants, VideoCallPresence, VoteOperation,
 };
-
-pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
-const MEMO_PRIZE_REFUND: [u8; 8] = [0x4f, 0x43, 0x5f, 0x50, 0x52, 0x5a, 0x52, 0x46]; // OC_PRZRF
 
 #[derive(Serialize, Deserialize)]
 pub struct ChatEvents {
@@ -40,7 +36,7 @@ pub struct ChatEvents {
     main: ChatEventsList,
     threads: BTreeMap<MessageIndex, ChatEventsList>,
     metrics: ChatMetricsInternal,
-    per_user_metrics: HashMap<UserId, ChatMetricsInternal>,
+    per_user_metrics: BTreeMap<UserId, ChatMetricsInternal>,
     frozen: bool,
     events_ttl: Timestamped<Option<Milliseconds>>,
     expiring_events: ExpiringEvents,
@@ -48,36 +44,43 @@ pub struct ChatEvents {
     video_call_in_progress: Timestamped<Option<VideoCall>>,
     anonymized_id: String,
     search_index: SearchIndex,
-    #[serde(default = "default_next_event_to_migrate_to_stable_memory")]
-    next_event_to_migrate_to_stable_memory: Option<EventContext>,
-    #[serde(default)]
-    thread_messages_to_update_in_stable_memory: Vec<MessageIndex>,
-}
-
-fn default_next_event_to_migrate_to_stable_memory() -> Option<EventContext> {
-    Some(EventContext::default())
 }
 
 impl ChatEvents {
-    pub fn init_thread_messages_to_update_in_stable_memory(&mut self) -> bool {
-        self.thread_messages_to_update_in_stable_memory = self.threads.keys().copied().collect();
-        !self.thread_messages_to_update_in_stable_memory.is_empty()
+    pub fn remove_spurious_video_call_in_progress(&mut self, now: TimestampMillis) {
+        // IF any direct chats have video calls in progress where either:
+        // 1. The message cannot be found
+        // 2. The message is not a video call
+        // 3. More than 2 hours have passed since the call was started
+        // THEN remove the video call in progress indicator
+
+        if self.video_call_is_spurious(now) {
+            self.video_call_in_progress = Timestamped::new(None, now);
+        }
     }
 
-    pub fn update_event_in_stable_memory(&mut self, event_key: EventKey) {
-        self.main.update_event_in_stable_memory(event_key);
+    fn video_call_is_spurious(&self, now: TimestampMillis) -> bool {
+        if let Some(video_call) = &self.video_call_in_progress.value {
+            if now - self.video_call_in_progress.timestamp > 2 * HOUR_IN_MS {
+                return true;
+            }
+
+            if let Some(message) = self.main_events_reader().message(video_call.message_index.into(), None) {
+                return !matches!(message.content, MessageContent::VideoCall(_));
+            } else {
+                return true;
+            }
+        }
+
+        false
     }
 
-    pub fn init_stable_storage(memory: Memory) {
-        stable_storage::init(memory)
+    pub fn prune_updated_events(&mut self, now: TimestampMillis) -> u32 {
+        self.last_updated_timestamps.prune(now)
     }
 
     pub fn import_events(chat: Chat, events: Vec<(EventContext, ByteBuf)>) {
-        stable_storage::write_events_as_bytes(chat, events);
-    }
-
-    pub fn garbage_collect_stable_memory(prefix: KeyPrefix) -> Result<u32, u32> {
-        stable_storage::garbage_collect(prefix)
+        stable_memory::write_events_as_bytes(chat, events);
     }
 
     pub fn set_stable_memory_key_prefixes(&mut self) {
@@ -85,78 +88,6 @@ impl ChatEvents {
         for (message_index, events) in self.threads.iter_mut() {
             events.set_stable_memory_prefix(self.chat, Some(*message_index));
         }
-    }
-
-    pub fn migrate_next_batch_of_events_to_stable_storage(&mut self) -> bool {
-        let mut total_count = 0;
-        if !self.thread_messages_to_update_in_stable_memory.is_empty() {
-            while ic_cdk::api::instruction_counter() < 1_000_000_000 {
-                let batch: Vec<_> = self
-                    .thread_messages_to_update_in_stable_memory
-                    .drain(..min(100, self.thread_messages_to_update_in_stable_memory.len()))
-                    .collect();
-
-                let count = batch.len();
-                for message_index in batch {
-                    self.update_event_in_stable_memory(message_index.into());
-                }
-                info!(chat = ?self.chat, count, "Updated threads in stable memory");
-                total_count += count;
-                if self.thread_messages_to_update_in_stable_memory.is_empty() {
-                    break;
-                }
-            }
-        }
-
-        if self.next_event_to_migrate_to_stable_memory.is_none() {
-            return true;
-        };
-
-        while ic_cdk::api::instruction_counter() < 1_000_000_000 {
-            let EventContext {
-                thread_root_message_index: next_thread_root_message_index,
-                event_index: next_event_index,
-            } = self.next_event_to_migrate_to_stable_memory.clone().unwrap();
-
-            let (thread_root_message_index, events_list) = if let Some(message_index) = next_thread_root_message_index {
-                if let Some((index, next)) = self.threads.range_mut(message_index..).next() {
-                    (Some(*index), next)
-                } else {
-                    self.next_event_to_migrate_to_stable_memory = None;
-                    // self.main.set_read_events_from_stable_memory(true);
-                    // for events_list in self.threads.values_mut() {
-                    //     events_list.set_read_events_from_stable_memory(true);
-                    // }
-                    info!(chat = ?self.chat, total_count, "Finished migrating events to stable memory");
-                    return true;
-                }
-            } else {
-                (None, &mut self.main)
-            };
-
-            let (count, next_event_index) = events_list.migrate_events_to_stable_memory(next_event_index, 100);
-            if let Some(event_index) = next_event_index {
-                self.next_event_to_migrate_to_stable_memory = Some(EventContext {
-                    thread_root_message_index,
-                    event_index,
-                });
-            } else {
-                self.next_event_to_migrate_to_stable_memory = Some(EventContext {
-                    thread_root_message_index: Some(thread_root_message_index.map_or(MessageIndex::default(), |m| m.incr())),
-                    event_index: EventIndex::default(),
-                });
-            }
-            total_count += count;
-        }
-        if total_count > 0 {
-            info!(
-                chat = ?self.chat,
-                count = total_count,
-                next = ?self.next_event_to_migrate_to_stable_memory,
-                "Migrated batch of events to stable memory"
-            );
-        }
-        false
     }
 
     pub fn new_direct_chat(
@@ -171,7 +102,7 @@ impl ChatEvents {
             main: ChatEventsList::new(chat, None),
             threads: BTreeMap::new(),
             metrics: ChatMetricsInternal::default(),
-            per_user_metrics: HashMap::new(),
+            per_user_metrics: BTreeMap::new(),
             frozen: false,
             events_ttl: Timestamped::new(events_ttl, now),
             expiring_events: ExpiringEvents::default(),
@@ -179,8 +110,6 @@ impl ChatEvents {
             video_call_in_progress: Timestamped::default(),
             anonymized_id: hex::encode(anonymized_id.to_be_bytes()),
             search_index: SearchIndex::default(),
-            next_event_to_migrate_to_stable_memory: None,
-            thread_messages_to_update_in_stable_memory: Vec::new(),
         };
 
         events.push_event(None, ChatEventInternal::DirectChatCreated(DirectChatCreated {}), 0, now);
@@ -203,7 +132,7 @@ impl ChatEvents {
             main: ChatEventsList::new(chat, None),
             threads: BTreeMap::new(),
             metrics: ChatMetricsInternal::default(),
-            per_user_metrics: HashMap::new(),
+            per_user_metrics: BTreeMap::new(),
             frozen: false,
             events_ttl: Timestamped::new(events_ttl, now),
             expiring_events: ExpiringEvents::default(),
@@ -211,8 +140,6 @@ impl ChatEvents {
             video_call_in_progress: Timestamped::default(),
             anonymized_id: hex::encode(anonymized_id.to_be_bytes()),
             search_index: SearchIndex::default(),
-            next_event_to_migrate_to_stable_memory: None,
-            thread_messages_to_update_in_stable_memory: Vec::new(),
         };
 
         events.push_event(
@@ -238,7 +165,7 @@ impl ChatEvents {
     }
 
     pub fn read_events_as_bytes_from_stable_memory(&self, after: Option<EventContext>) -> Vec<(EventContext, ByteBuf)> {
-        stable_storage::read_events_as_bytes(self.chat, after, 1_000_000)
+        stable_memory::read_events_as_bytes(self.chat, after, 2 * ONE_MB as usize)
     }
 
     pub fn iter_recently_updated_events(
@@ -398,7 +325,7 @@ impl ChatEvents {
                     &mut self.metrics,
                     &mut self.per_user_metrics,
                     sender,
-                    |m| incr(&mut m.edits),
+                    |m| m.incr(MetricKey::Edits, 1),
                     now,
                 );
                 EditMessageResult::Success
@@ -502,7 +429,7 @@ impl ChatEvents {
                         &mut self.metrics,
                         &mut self.per_user_metrics,
                         sender,
-                        |m| incr(&mut m.reported_messages),
+                        |m| m.incr(MetricKey::ReportedMessages, 1),
                         args.now,
                     );
                 }
@@ -510,7 +437,7 @@ impl ChatEvents {
                     &mut self.metrics,
                     &mut self.per_user_metrics,
                     args.caller,
-                    |m| incr(&mut m.deleted_messages),
+                    |m| m.incr(MetricKey::DeletedMessages, 1),
                     args.now,
                 );
                 if args.thread_root_message_index.is_none() {
@@ -561,7 +488,7 @@ impl ChatEvents {
                         &mut self.metrics,
                         &mut self.per_user_metrics,
                         sender,
-                        |m| decr(&mut m.reported_messages),
+                        |m| m.decr(MetricKey::ReportedMessages, 1),
                         args.now,
                     );
                 }
@@ -569,7 +496,7 @@ impl ChatEvents {
                     &mut self.metrics,
                     &mut self.per_user_metrics,
                     args.caller,
-                    |m| decr(&mut m.deleted_messages),
+                    |m| m.decr(MetricKey::DeletedMessages, 1),
                     args.now,
                 );
                 if args.thread_root_message_index.is_none() {
@@ -655,7 +582,7 @@ impl ChatEvents {
                                 &mut self.metrics,
                                 &mut self.per_user_metrics,
                                 args.user_id,
-                                |m| incr(&mut m.poll_votes),
+                                |m| m.incr(MetricKey::PollVotes, 1),
                                 args.now,
                             );
                         }
@@ -665,7 +592,7 @@ impl ChatEvents {
                             &mut self.metrics,
                             &mut self.per_user_metrics,
                             args.user_id,
-                            |m| decr(&mut m.poll_votes),
+                            |m| m.decr(MetricKey::PollVotes, 1),
                             args.now,
                         );
                     }
@@ -739,37 +666,23 @@ impl ChatEvents {
         }
     }
 
-    pub fn prize_refund(
-        &mut self,
-        thread_root_message_index: Option<MessageIndex>,
-        message_index: MessageIndex,
-        memo: &[u8],
-        now_nanos: TimestampNanos,
-    ) -> Option<PendingCryptoTransaction> {
-        self.update_message(
-            thread_root_message_index,
-            message_index.into(),
-            EventIndex::default(),
-            None,
-            |message, _| Self::prize_refund_inner(message, memo, now_nanos),
-        )
+    pub fn final_payments(&mut self, message_index: MessageIndex, now_nanos: TimestampNanos) -> Vec<PendingCryptoTransaction> {
+        self.update_message(None, message_index.into(), EventIndex::default(), None, |message, _| {
+            Self::final_payments_inner(message, now_nanos)
+        })
         .ok()
+        .unwrap_or_default()
     }
 
-    fn prize_refund_inner(
+    fn final_payments_inner(
         message: &mut MessageInternal,
-        memo: &[u8],
         now_nanos: TimestampNanos,
-    ) -> Result<PendingCryptoTransaction, UpdateEventError> {
+    ) -> Result<Vec<PendingCryptoTransaction>, UpdateEventError> {
         let MessageContentInternal::Prize(p) = &mut message.content else {
             return Err(UpdateEventError::NotFound);
         };
 
-        if let Some(refund) = p.prize_refund(message.sender, memo, now_nanos) {
-            Ok(refund)
-        } else {
-            Err(UpdateEventError::NoChange(()))
-        }
+        Ok(p.final_payments(message.sender, now_nanos))
     }
 
     pub fn record_proposal_vote(
@@ -867,7 +780,7 @@ impl ChatEvents {
                     &mut self.metrics,
                     &mut self.per_user_metrics,
                     user_id,
-                    |m| incr(&mut m.reactions),
+                    |m| m.incr(MetricKey::Reactions, 1),
                     now,
                 );
                 Success(sender)
@@ -934,7 +847,7 @@ impl ChatEvents {
                     &mut self.metrics,
                     &mut self.per_user_metrics,
                     args.user_id,
-                    |m| decr(&mut m.reactions),
+                    |m| m.decr(MetricKey::Reactions, 1),
                     args.now,
                 );
                 Success(sender)
@@ -986,7 +899,7 @@ impl ChatEvents {
                     &mut self.metrics,
                     &mut self.per_user_metrics,
                     args.user_id,
-                    |m| incr(&mut m.tips),
+                    |m| m.incr(MetricKey::Tips, 1),
                     args.now,
                 );
                 Success
@@ -1098,8 +1011,10 @@ impl ChatEvents {
     ) -> ClaimPrizeResult {
         use ClaimPrizeResult::*;
 
+        let amount = transaction.units();
+
         match self.update_message(None, message_id.into(), EventIndex::default(), Some(now), |message, _| {
-            Self::claim_prize_inner(message, winner)
+            Self::claim_prize_inner(message, winner, amount)
         }) {
             Ok(message_index) => {
                 // Push a PrizeWinnerContent message to the group from the OpenChatBot
@@ -1112,7 +1027,7 @@ impl ChatEvents {
                             winner,
                             ledger: transaction.ledger_canister_id(),
                             token_symbol: transaction.token().token_symbol().to_string(),
-                            amount: transaction.units(),
+                            amount,
                             fee: transaction.fee(),
                             block_index: transaction.index(),
                             prize_message: message_index,
@@ -1134,7 +1049,11 @@ impl ChatEvents {
         }
     }
 
-    fn claim_prize_inner(message: &mut MessageInternal, winner: UserId) -> Result<MessageIndex, UpdateEventError> {
+    fn claim_prize_inner(
+        message: &mut MessageInternal,
+        winner: UserId,
+        amount: u128,
+    ) -> Result<MessageIndex, UpdateEventError> {
         let MessageContentInternal::Prize(content) = &mut message.content else {
             return Err(UpdateEventError::NotFound);
         };
@@ -1143,6 +1062,7 @@ impl ChatEvents {
         if content.reservations.remove(&winner) {
             // Add the user to winners list
             content.winners.insert(winner);
+            content.prizes_paid += amount;
             Ok(message.message_index)
         } else {
             Err(UpdateEventError::NotFound)
@@ -1536,7 +1456,7 @@ impl ChatEvents {
                 let community_id_bytes = community_id.as_ref();
                 hasher.update([community_id_bytes.len() as u8]);
                 hasher.update(community_id);
-                let channel_id_bytes = channel_id.to_be_bytes();
+                let channel_id_bytes = channel_id.as_u32().to_be_bytes();
                 hasher.update([channel_id_bytes.len() as u8]);
                 hasher.update(channel_id_bytes);
             }
@@ -1604,15 +1524,22 @@ impl ChatEvents {
     }
 
     // Used when a group is imported into a community
-    pub fn migrate_replies(&mut self, old: ChatInternal, new: ChatInternal, now: TimestampMillis) {
-        for (thread_root_message_index, events_list) in [(None, &mut self.main)]
-            .into_iter()
-            .chain(self.threads.iter_mut().map(|(t, e)| (Some(*t), e)))
+    pub fn migrate_reply(&mut self, message_index: MessageIndex, old: ChatInternal, new: ChatInternal, now: TimestampMillis) {
+        if self
+            .update_message(None, message_index.into(), EventIndex::default(), Some(now), |message, _| {
+                if let Some(r) = message.replies_to.as_mut() {
+                    if let Some((chat, _)) = r.chat_if_other.as_mut() {
+                        if *chat == old {
+                            *chat = new;
+                            return Ok(());
+                        }
+                    }
+                }
+                Err(UpdateEventError::NoChange(()))
+            })
+            .is_err()
         {
-            for event_index in events_list.migrate_replies(old, new) {
-                self.last_updated_timestamps
-                    .mark_updated(thread_root_message_index, event_index, now);
-            }
+            error!("Failed to migrate reply. This should never happen")
         }
     }
 
@@ -1940,9 +1867,9 @@ impl ChatEvents {
                         });
                     }
                     if let MessageContentInternal::Prize(mut p) = m.content {
-                        if let Some(refund) = p.prize_refund(m.sender, &MEMO_PRIZE_REFUND, now * 1_000_000) {
-                            result.prize_refunds.push(refund);
-                        }
+                        result
+                            .final_prize_payments
+                            .append(&mut p.final_payments(m.sender, now * 1_000_000));
                     }
                 }
             }
@@ -2187,7 +2114,7 @@ impl ChatEvents {
         }
     }
 
-    fn event_wrapper_internal(
+    pub fn event_wrapper_internal(
         &self,
         min_visible_event_index: EventIndex,
         thread_root_message_index: Option<MessageIndex>,
@@ -2285,11 +2212,15 @@ impl ChatEvents {
             Err(UpdateEventError::NotFound)
         }
     }
+
+    pub fn latest_event_update_removed(&self) -> TimestampMillis {
+        self.last_updated_timestamps.latest_update_removed()
+    }
 }
 
 fn add_to_metrics<F: FnMut(&mut ChatMetricsInternal)>(
     metrics: &mut ChatMetricsInternal,
-    per_user_metrics: &mut HashMap<UserId, ChatMetricsInternal>,
+    per_user_metrics: &mut BTreeMap<UserId, ChatMetricsInternal>,
     user_id: UserId,
     mut action: F,
     timestamp: TimestampMillis,
@@ -2483,7 +2414,7 @@ pub enum UnfollowThreadResult {
 pub struct RemoveExpiredEventsResult {
     pub events: Vec<EventIndex>,
     pub threads: Vec<ExpiredThread>,
-    pub prize_refunds: Vec<PendingCryptoTransaction>,
+    pub final_prize_payments: Vec<PendingCryptoTransaction>,
 }
 
 pub struct ExpiredThread {

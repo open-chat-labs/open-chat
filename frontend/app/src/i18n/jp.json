@@ -148,6 +148,86 @@
     "blockUser": "ユーザーのブロック",
     "blockUserFailed": "ユーザーをブロックできませんでした",
     "blockUserSucceeded": "ユーザーはブロックされました",
+    "bots": {
+        "builtin": {
+            "desc": "このボットはOpenChatの組み込みコマンドを提供します",
+            "name": "内蔵"
+        },
+        "crypto": {
+            "desc": "他のユーザーに暗号を送信する",
+            "params": {
+                "amount": {
+                    "desc": "送金したい金額",
+                    "name": "額",
+                    "placeholder": "金額を入力"
+                },
+                "token": {
+                    "desc": "送信したいトークン",
+                    "name": "トークン",
+                    "placeholder": "トークンを入力"
+                }
+            }
+        },
+        "diamond": {
+            "desc": "ダイヤモンド会員資格を説明するリンクを投稿する"
+        },
+        "failed": "申し訳ありませんが、ボットコマンドの実行に失敗しました",
+        "faq": {
+            "desc": "FAQトピックへのリンクを作成する",
+            "params": {
+                "topic": {
+                    "choices": {
+                        "airdrop": "毎月のエアドロップ",
+                        "android": "Androidアプリ",
+                        "buychat": "CHATを購入する",
+                        "content": "コンテンツガイドライン",
+                        "diamond": "ダイヤモンド会員",
+                        "info": "情報",
+                        "ios": "iOSアプリ",
+                        "referral": "紹介報酬",
+                        "security": "安全",
+                        "sendtokens": "トークンの送信",
+                        "shortcuts": "ショートカット",
+                        "storage": "ストレージ",
+                        "style": "メッセージのスタイル設定",
+                        "translation": "コンテンツ翻訳",
+                        "voting": "投票",
+                        "wallet": "財布"
+                    },
+                    "desc": "あなたが興味を持っている特定のFAQトピック",
+                    "name": "FAQトピック",
+                    "placeholder": "トピックを選択"
+                }
+            }
+        },
+        "gif": {
+            "desc": "送信するGIFを探す",
+            "params": {
+                "term": {
+                    "desc": "GIFの検索語を入力してください",
+                    "name": "検索語",
+                    "placeholder": "検索語"
+                }
+            }
+        },
+        "matchingCommands": "一致するコマンド",
+        "poll": {
+            "desc": "現在のチャットでアンケートを作成する"
+        },
+        "search": {
+            "desc": "現在のチャットで検索を開始する",
+            "params": {
+                "term": {
+                    "desc": "チャット内で検索する用語を入力してください",
+                    "name": "検索語",
+                    "placeholder": "検索語"
+                }
+            }
+        },
+        "witch": {
+            "desc": "魔女を召喚する"
+        }
+    },
     "cancel": "キャンセル",
     "cancelInvite": "招待をキャンセル",
     "cancelInviteFailed": "招待のキャンセル中にエラーが発生しました",
@@ -301,8 +381,10 @@
         "visibility": "可視性"
     },
     "communityDisplayNameRules": "このコミュニティ内だけで",
+    "communityFrozen": "コミュニティが凍結",
     "communityMembers": "コミュニティメンバー",
     "communityTheme": "コミュニティのテーマ",
+    "communityUnfrozen": "コミュニティの凍結解除",
     "confirmLeaveGroup": "本当にこの {level} から離れてもよろしいですか?",
     "confirmMakeGroupPrivate": "この {level} を非公開にしてもよろしいですか?現在、この操作を元に戻すことはできません。",
     "confirmMakeGroupPublic": "この {level} を公開してもよろしいですか?\n\n既存のメッセージは非公開のままですが、新しいメッセージはすべて公開されます。",
@@ -368,6 +450,8 @@
         "claim": "CHITを請求してください！",
         "comeback": "{time}に戻ってきて",
         "extendStreak": "連勝を伸ばす",
+        "failedToClaim": "申し訳ありませんが、毎日のCHITを受け取ることができませんでした",
+        "hideWhenClaimed": "毎日請求した後、請求CHITアイコン⚡️を非表示にします",
         "info": "連続記録を長く維持すればするほど、より多くの CHIT を毎日獲得できます。",
         "title": "連勝を維持する",
         "utcInfo": "CHIT 連続記録と請求期間は UTC を使用して表されるため、ローカル タイムゾーンではなく UTC でカレンダーを表示する方がわかりやすい場合があります。",
@@ -439,11 +523,13 @@
     "failedToCopyLinkToClipboard": "リンクをクリップボードにコピーできません",
     "failedToCopyToClipboard": "クリップボードにコピーができません. {account}",
     "failedToCopyUrlToClipboard": "url ({url}) をクリップボードにコピーできません",
+    "failedToFreezeCommunity": "コミュニティを凍結できませんでした",
     "failedToFreezeGroup": "グループを凍結できませんでした",
     "failedToLeaveGroup": "{level} からあなたを削除しようとしてエラーが発生しました",
     "failedToShareLink": "リンクの共有に失敗しました",
     "failedToShareMessage": "このメッセージを共有できません",
     "failedToSuspendUser": "ユーザーを一時停止できませんでした",
+    "failedToUnfreezeCommunity": "コミュニティの凍結解除に失敗しました",
     "failedToUnfreezeGroup": "グループのフリーズ解除に失敗しました",
     "failedToUnsuspendUser": "ユーザーの停止を解除できませんでした",
     "faq": {
@@ -451,8 +537,10 @@
         "airdrop_q": "エアドロップはあるのでしょうか？",
         "android_app_a": "iOS に関しては (上記を参照)、OpenChat Web アプリは Android 上で<em>すでに</em>動作しており、ブラウザのメニューから「ホーム画面に追加」することができます。これにより、アプリを開くための標準アイコンが表示され、URL バーのないネイティブ アプリのように表示されます。 Android では、Progressive Web App (PWA) のサポートが非常に優れています。 iOS と同様に、Web プッシュ通知をサポートしますが、電話からの連絡先の読み取りもサポート<em>します</em> (それぞれの場合に許可を与えた場合)。さらに、WebRTC のサポートもはるかに優れています。そのため、ネイティブ Android アプリを作成するケースはそれほど魅力的ではなく、ネイティブ iOS アプリの後に来ることになります。コア Web アプリの薄いネイティブ ラッパーを目指すという点と、Android Play ストアでの認証に関して、iOS と同じ考慮事項が Android アプリの構築にも当てはまります。",
         "android_app_q": "Androidアプリはいつリリースされますか？",
-        "buychat_a": "<a target=\"_blank\" href=\"https://www.helixmarkets.io/trade/CHATUSDC\">Helix Markets</a>では USDC を使って CHAT を購入できます。それ以外の場合は、まず<a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">ICP を購入し</a>、それをさまざまな分散型取引所 (DEX) で CHAT と交換する必要があります。<ul><li> <a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">ICDex</a></li><li> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPSwap</a></li></ul> DFINITY は、ICRC1 トークン (CHAT を含む) の<a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta API</a>のサポートを追加しており、これにより、集中型取引所 (CEX) との統合がはるかに容易になります。これが完了すると、CHAT は CEX で ICP または USDT と取引できるようになる可能性があります。",
+        "buychat_a": "CHAT はさまざまな暗号通貨取引所で購入できます。<br><br><table><tr><th>交換</th><th>スタイル</th><th>購入する</th><th>CEX/DEX</th></tr><tr><td><a target=\"_blank\" href=\"https://www.helixmarkets.io/trade/CHATUSDC\">ヘリックスマーケット</a></td><td>注文書</td><td>USDC</td><td>ハイブリッド</td></tr><tr><td><a target=\"_blank\" href=\"https://www.bitmart.com/trade?symbol=CHAT_USDT\">ビットマート</a></td><td>注文書</td><td>USDT</td><td>欧州</td></tr><tr><td><a target=\"_blank\" href=\"https://www.bitrue.com/trade/chat_usdt\">ビトゥルー</a></td><td>注文書</td><td>USDT</td><td>欧州</td></tr><tr><td><a target=\"_blank\" href=\"https://www.coinstore.com/spot/chatusdt\">コインストア</a></td><td>注文書</td><td>USDT</td><td>欧州</td></tr><tr><td><a target=\"_blank\" href=\"https://www.lbank.com/trade/chat_usdt\">Lバンク</a></td><td>注文書</td><td>USDT</td><td>欧州</td></tr><tr><td><a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">ICDex</a></td><td>注文書</td><td>国際脳脊髄液</td><td>デックス</td></tr><tr><td><a target=\"_blank\" href=\"https://www.kongswap.io/?viewtab=swap&pool=CHAT_ckUSDT\">コングスワップ</a></td><td>スワップ（AMM）</td><td> USDT</td><td>デックス</td></tr><tr><td><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPSwap</a></td><td>スワップ（AMM）</td><td>国際脳脊髄液</td><td>デックス</td></tr><tr><td><a target=\"_blank\" href=\"https://app.sonic.ooo/?tokenin=ryjl3-tyaaa-aaaaa-aaaba-cai&tokenout=2ouva-viaaa-aaaaq-aaamq-cai\">ソニック</a></td><td>スワップ（AMM）</td><td>国際脳脊髄液</td><td>デックス</td></tr></table><br>また、OpenChat ウォレットから直接トークンを CHAT に交換することもできます。その場合、利用可能な最良の価格でスワップ取引所が自動的に使用されます。",
         "buychat_q": "CHAT トークンを購入するにはどうすればよいですか?",
+        "buyicp_a": "<ol><li>ICP トークンは、Coinbase、Binance、Kraken などの主要な取引所で購入できます。これらのプラットフォームでは、さまざまな暗号通貨を ICP と交換できます。</li><li> Network Nervous System (NNS) dapp は、クレジットカードを使用して ICP を購入する機能を提供します。インターネット ID でログインし、プロンプトに従ってトランザクションを完了する必要があります<a target=\"_blank\" href=\"https://support.dfinity.org/hc/en-us/articles/21363667463828-How-do-I-purchase-ICP-from-within-the-NNS-dapp\">。よくある質問 &gt; インターネット コンピューター &gt; Network Nervous System (NNS) &gt; NNS dapp 内から ICP を購入するにはどうすればよいですか?</a></li><li>インターネット コンピュータ上の分散型取引所 (DEX) を使用して、他の暗号通貨を ICP と交換できます。例:<ul><li> <a target=\"_blank\" href=\"https://iclight.io/ICDex/ckBTC/ICP\">ICDex.io では</a>、ビットコイン (ckBTC 形式) を ICP に交換できます。</li><li> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/token/details/ryjl3-tyaaa-aaaaa-aaaba-cai\">ICPSwap は</a>ICP との取引ペアを提供します。</li></ul></li></ol>",
+        "buyicp_q": "ICP トークンを購入するにはどうすればよいですか?",
         "content_a": "コンテンツとモデレーションのガイドラインの詳細については、<a href=\"/guidelines\">こちら</a>をご覧ください。",
         "content_q": "どのようなコンテンツが許可されますか?",
         "diamond_a": "ダイヤモンド メンバーシップにアップグレードすると、OpenChat 内の追加または拡張機能にアクセスできるようになります。機能の比較とアップグレードについては、<a href=\"/diamond\">ここを参照</a>してください。",
@@ -489,6 +577,7 @@
     "followThreadFailed": "スレッドのフォローに失敗しました",
     "fontSize": "フォントサイズ",
     "forward": "転送",
+    "freezeCommunity": "コミュニティを凍結する",
     "freezeGroup": "グループを凍結",
     "giphyMessage": "GIFメッセージ",
     "goHome": "ホーム",
@@ -604,9 +693,9 @@
         "link": "リンク",
         "linkedAccounts": {
             "currentAccount": "現在このプリンシパルでサインインしています",
-            "linkAdvice": "新しいアカウントをリンクするには、リンクする新しいアカウントにサインインし、次に現在のアカウントにサインインして、最後に 2 つのアカウントをリンクします。",
-            "linkAnother": "別のリンク",
-            "section": "リンクされたアカウント",
+            "linkAdvice": "新しいサインイン プロバイダーを追加するには、最初に追加する新しいプロバイダーでサインインし、次に現在のプロバイダーでサインインして、最後に 2 つをリンクします。",
+            "linkAnother": "追加する",
+            "section": "サインインプロバイダー",
             "start": "始める"
         },
         "linkIdentity": "リンクID",
@@ -657,20 +746,10 @@
     "lastOnline": "最終オンライン{duration}前",
     "learnToEarn": {
         "accepted_swap_offer": "スワップオファーを受け入れる",
-        "appointed_as_group_admin": "管理者グループ/チャネルを任命する",
-        "appointed_as_group_mod": "グループ/チャンネルのモデレーターに任命される",
-        "appointed_as_group_owner": "グループ/チャンネルのオーナーに任命される",
-        "appointed_group_admin": "グループ/チャンネル管理者を任命する",
-        "appointed_group_mod": "グループ/チャンネルのモデレーターを任命する",
-        "appointed_group_owner": "グループ/チャンネルの所有者を任命する",
         "changed_theme": "テーマを変更する",
         "deleted_message": "メッセージを削除する",
-        "direct_chat_5": "5回の直接チャット",
-        "direct_chats_10": "直接チャットを10回行う",
-        "direct_chats_20": "直接チャットを20回行う",
         "done": "終わり",
         "edited_message": "メッセージを編集する",
-        "enabled_disappearing_messages": "消えるメッセージを有効にする",
         "external": "やること（外部）",
         "externalInfo": "外部の成果は第三者によって定義されます。リンクをクリックして指示に従うだけで、CHIT 報酬を受け取ることができます。",
         "favourited_chat": "チャットをお気に入りとしてマークする",
@@ -683,13 +762,8 @@
         "joined_group": "グループに参加する",
         "nothingDone": "やるべき仕事はまだたくさんあります!",
         "nothingLeftToDo": "リラックスしてください！もう何もすることはありません",
-        "owned_group_with_1_diamond_member": "認証済みメンバーが 1 人いるグループ/コミュニティを所有する",
-        "owned_group_with_10_diamond_members": "10 人の認証済みメンバーがいるグループ/コミュニティを所有している",
-        "owned_group_with_100_diamond_members": "100人の認証済みメンバーを持つグループ/コミュニティを所有している",
-        "owned_group_with_1000_diamond_members": "1000人の認証済みメンバーを持つグループ/コミュニティを所有している",
         "percentageComplete": "{perc}% 完了",
         "pinned_chat": "チャットをリストの一番上に固定する",
-        "pinned_message": "メッセージをピン留めする",
         "proved_unique_personhood": "あなたのユニークな人間性を証明しましょう",
         "quote_replied": "メッセージに引用返信する",
         "reacted_to_message": "メッセージに反応する",
@@ -717,10 +791,8 @@
         "sent_video": "ビデオを送信",
         "set_avatar": "プロフィールアバターをアップロードする",
         "set_bio": "プロフィール情報を更新する",
-        "set_community_access_gate": "コミュニティアクセスゲートを設定する",
         "set_community_display_name": "コミュニティの表示名を設定する",
         "set_display_name": "表示名を更新する",
-        "set_group_access_gate": "グループ/チャンネルアクセスゲートを設定する",
         "set_pin": "ウォレットにPIN番号を設定する",
         "showChitPopup": "私の成果を通知する",
         "started_call": "ビデオ通話を開始する",
@@ -730,12 +802,10 @@
         "streak_30": "30日間連続達成",
         "streak_365": "365日連続達成",
         "streak_7": "7日間連続達成",
-        "suggested_translation": "翻訳を提案する",
         "swapped_from_wallet": "ウォレットからトークンを交換する",
         "tipped_message": "メッセージを送る",
         "title": "実績",
         "todo": "やること",
-        "translation_accepted": "翻訳を承認してもらう",
         "upgrade_to_gold_diamond": "生涯ダイヤモンド会員にアップグレード",
         "upgraded_to_diamond": "ダイヤモンド会員にアップグレード",
         "voted_on_poll": "アンケートに投票する"
@@ -1055,21 +1125,33 @@
         "claim": "請求",
         "claimed": "成功！",
         "claimFailed": "申し訳ありませんが、あなたの請求は失敗しました!次回は頑張ってください。",
+        "claimIneligible": "申し訳ありませんが、この賞品を受け取るための要件を満たしていません。",
         "click": "下のボタンをクリックして、賞品を獲得するチャンスを手に入れましょう。",
         "creatingYourPrizeMessage": "賞品メッセージを作成するまでお待ちください",
+        "diamondMembership": "ダイヤモンド会員",
         "distribution": "賞の配分の仕方",
         "duration": "賞の実施期間",
         "equalDistribution": "均等配分",
         "finished": "終了した",
+        "lifetimeDiamond": "一生",
+        "lifetimeDiamondMembership": "生涯ダイヤモンド会員",
         "live": "賞金メッセージを実施中！他の人はクリックして申請できます 🎁",
         "maxPrize": "賞金の最高額はいくらですか?",
         "minPrize": "最低賞金額はいくらですか?",
         "numberOfWinners": "当選者数",
         "onlyDiamond": "ダイヤモンドユーザーのみ",
+        "onlyStreak": "連続記録を持つユーザーのみ",
+        "onlyUniquePerson": "ユニークな人間だけ",
         "prizeFinished": "賞品メッセージが完成しました",
         "randomDistribution": "ランダム配分",
+        "restrictedMessage": "この賞品を受け取るには、以下の条件を満たしている必要があります",
+        "standardDiamond": "標準",
+        "streak": "連勝",
+        "streakFull": "{n}日以上の連続",
+        "streakValue": "{n}日以上",
         "title": "賞",
         "totalAmount": "賞金総額",
+        "uniquePerson": "個人証明",
         "whoCanWin": "シェアを請求できる人",
         "winner": "**{recipient}** 勝った **{amount}** {token}"
     },
@@ -1107,9 +1189,23 @@
         "groupIndexAction": "グループ インデックス アクション",
         "makeProposal": "提案する",
         "maker": {
+            "achievementChatCost": "要求された CHIT をプロビジョニングするには、{cost} {chat} トークンの支払いが必要です。未使用の CHAT は、実績の有効期限が切れると返金されます。",
+            "achievementExpiry": "有効期限",
+            "achievementLogo": "達成ロゴ",
+            "achievementName": "実績名",
+            "achievementUrl": "実績URL",
+            "addTokenChatCost": "OpenChatに新しいトークンを掲載するには、{cost} {chat}トークンの支払いが必要です。",
             "amount": "額",
             "amountRules": "少なくとも 1 つの {token} トークン",
+            "approvalError": "CHAT 転送の承認に失敗しました",
+            "awardingAchievementCanisterId": "キャニスターID",
+            "awardingAchievementCanisterIdRules": "この缶だけが達成を授与できる",
+            "chitReward": "CHIT報酬",
+            "chitRewardRules": "少なくとも{value} CHIT",
+            "enterAchievementName": "実績の名前を入力してください",
             "enterAmount": "{token} トークンの数量を入力してください",
+            "enterChitReward": "CHIT報酬を獲得する",
+            "enterMaxAwards": "授与する最大ユーザー数を入力",
             "enterRecipientOwner": "受信者のアカウントプリンシパルを入力してください",
             "enterRecipientSubaccount": "オプションの受信者のサブアカウントを入力します",
             "enterSummary": "概要を入力してください",
@@ -1118,6 +1214,8 @@
             "header": "提案をする",
             "howToBuyUrl": "購入方法URL",
             "ledgerCanisterId": "レジャーキャニスターID",
+            "maxAwards": "最大ユーザー数",
+            "maxAwardsRules": "少なくとも{value}",
             "message": "提案を提出するには、{cost} {token} トークンのデポジット (2 セットの送金手数料を含む) が必要です。提案が採用された場合、デポジットは返金されます。",
             "recipientOwner": "受信者のアカウント本人",
             "recipientSubaccount": "受信者のサブアカウント",
@@ -1291,7 +1389,7 @@
         "none": "誰でもない",
         "owner": "所有者"
     },
-    "roleChanged": "{changedBy}は、{changed}の役割を{oldRole}から{newRole}に変更しました",
+    "roleChanged": "{changedBy} は {changed} の役割を {newRole} に変更しました",
     "rules": {
         "accept": "承認",
         "acceptTitle": "チャットのルール",
@@ -1500,6 +1598,7 @@
     "unexpectedError": "予期しないエラー",
     "unfollowThread": "このスレッドのフォローを解除する",
     "unfollowThreadFailed": "スレッドのフォローを解除できませんでした",
+    "unfreezeCommunity": "コミュニティの凍結解除",
     "unfreezeGroup": "グループを解凍",
     "unknown": "不明",
     "unknownUser": "不明なユーザー",
@@ -1654,5 +1753,5 @@
     "yourAccountIsSuspended": "あなたのアカウントが停止されました",
     "yourChats": "あなたのチャット",
     "youreBlocked": "申し訳ございませんが、あなたはこのグループからブロックされています",
-    "yourRoleChanged": "{changedBy}が役割を{oldRole}から{newRole}に変更しました"
+    "yourRoleChanged": "{changedBy} があなたの役割を {newRole} に変更しました"
 }

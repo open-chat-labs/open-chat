@@ -2,10 +2,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 declare module "remount/es5";
 
-declare module "uuid" {
-    export function v1(): string;
-}
-
 declare module "svelte-easy-crop" {
     import { SvelteComponentTyped } from "svelte";
 

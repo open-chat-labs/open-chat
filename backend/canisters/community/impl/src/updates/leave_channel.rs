@@ -18,11 +18,11 @@ fn leave_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 
     let caller = state.env.caller();
-    let Some(member) = state.data.members.get_mut(caller) else {
+    let Some(member) = state.data.members.get(caller) else {
         return UserNotInCommunity;
     };
 
-    if member.suspended.value {
+    if member.suspended().value {
         return UserSuspended;
     }
 

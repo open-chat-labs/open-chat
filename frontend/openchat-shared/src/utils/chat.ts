@@ -56,7 +56,10 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
                     userIds.add(e.event.content.transfer.recipient);
                 } else if (e.event.content.kind === "reported_message_content") {
                     e.event.content.reports.forEach((r) => userIds.add(r.reportedBy));
+                } else if (e.event.content.kind === "prize_winner_content") {
+                    userIds.add(e.event.content.transaction.recipient);
                 }
+                e.event.reactions.forEach((r) => r.userIds.forEach((u) => userIds.add(u)));
                 extractUserIdsFromMentions(
                     getContentAsFormattedText(fakeFormatter, e.event.content, {}),
                 ).forEach((id) => userIds.add(id));

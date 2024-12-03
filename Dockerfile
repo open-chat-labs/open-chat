@@ -24,7 +24,7 @@ RUN curl --fail https://sh.rustup.rs -sSf \
     rustup target add wasm32-unknown-unknown
 
 # Install IC Wasm
-RUN cargo install --version 0.8.0 ic-wasm
+RUN cargo install --version 0.9.0 ic-wasm
 
 COPY . /build
 WORKDIR /build

@@ -21,7 +21,7 @@
     export let unitFilter = (_: DurationUnit) => true;
 
     let initialised = false;
-    let amount: string;
+    let amount: string = "";
     let unit: DurationUnit;
 
     $: allUnits = ["minutes", "hours", "days", "weeks", "months"] as DurationUnit[];
@@ -88,7 +88,7 @@
     </div>
 
     <div class="units">
-        <Select {disabled} margin={false} on:change={() => updateAmount(amount)} bind:value={unit}>
+        <Select {disabled} margin={false} onchange={() => updateAmount(amount)} bind:value={unit}>
             {#each supportedDurations as duration}
                 <option value={duration}>{$_(duration)}</option>
             {/each}

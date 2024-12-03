@@ -7,13 +7,13 @@ use std::collections::HashSet;
 use tracing::error;
 use types::{CanisterId, CommunityId};
 use user_canister::create_community::{Response::*, *};
-use utils::document_validation::{validate_avatar, validate_banner};
+use utils::document::{validate_avatar, validate_banner};
 use utils::text_validation::{
     validate_community_name, validate_description, validate_group_name, validate_rules, NameValidationError,
     RulesValidationError,
 };
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 async fn create_community(mut args: Args) -> Response {
     run_regular_jobs();
@@ -110,7 +110,6 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
             avatar: args.avatar,
             banner: args.banner,
             permissions: args.permissions,
-            gate: args.gate,
             gate_config: args.gate_config,
             default_channels: args.default_channels,
             default_channel_rules: args.default_channel_rules,

@@ -1,5 +1,6 @@
 use crate::mutate_state;
 use candid::Principal;
+use constants::{HOUR_IN_MS, SNS_GOVERNANCE_CANISTER_ID, SNS_LEDGER_CANISTER_ID};
 use ic_cdk::api::call::CallResult;
 use icrc_ledger_types::icrc1::account::Account;
 use sha256::sha256;
@@ -9,8 +10,6 @@ use std::time::Duration;
 use tracing::info;
 use types::Timestamped;
 use utils::canister_timers::run_now_then_interval;
-use utils::consts::{SNS_GOVERNANCE_CANISTER_ID, SNS_LEDGER_CANISTER_ID};
-use utils::time::HOUR_IN_MS;
 
 pub fn start_job() {
     run_now_then_interval(Duration::from_millis(HOUR_IN_MS), run);

@@ -9,7 +9,7 @@ use group_chat_core::AddResult;
 use group_community_common::ExpiringMember;
 use types::{AddedToChannelNotification, ChannelId, EventIndex, MembersAdded, MessageIndex, Notification, UserId, UserType};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn add_members_to_channel(args: Args) -> Response {
     run_regular_jobs();
@@ -54,9 +54,9 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     let caller = state.env.caller();
 
     if let Some(member) = state.data.members.get(caller) {
-        if member.suspended.value {
+        if member.suspended().value {
             return Err(UserSuspended);
-        } else if member.lapsed.value {
+        } else if member.lapsed().value {
             return Err(UserLapsed);
         }
 
@@ -67,9 +67,9 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 Err(UserLimitReached(limit))
             } else if let Some(channel_member) = channel.chat.members.get(&user_id) {
                 let permissions = &channel.chat.permissions;
-                if !channel_member.role.can_add_members(permissions) {
+                if !channel_member.role().can_add_members(permissions) {
                     return Err(NotAuthorized);
-                } else if channel_member.lapsed.value {
+                } else if channel_member.lapsed().value {
                     return Err(UserLapsed);
                 }
 
@@ -148,7 +148,7 @@ fn commit(
             ) {
                 AddResult::Success(_) => {
                     users_added.push(user_id);
-                    state.data.members.mark_member_joined_channel(&user_id, channel_id);
+                    state.data.members.mark_member_joined_channel(user_id, channel_id);
 
                     if let Some(gate_expiry) = gate_expiry {
                         state.data.expiring_members.push(ExpiringMember {

@@ -1,17 +1,16 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::jobs::import_groups::{finalize_group_import, mark_import_complete, process_channel_members};
 use crate::updates::end_video_call::end_video_call_impl;
-use crate::{mutate_state, read_state};
+use crate::{can_borrow_state, mutate_state, read_state, run_regular_jobs};
 use canister_timer_jobs::Job;
 use chat_events::MessageContentInternal;
+use constants::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 use ledger_utils::process_transaction;
 use serde::{Deserialize, Serialize};
-use tracing::error;
+use tracing::{error, info};
 use types::{
     BlobReference, CanisterId, ChannelId, ChatId, MessageId, MessageIndex, P2PSwapStatus, PendingCryptoTransaction, UserId,
 };
-use utils::consts::MEMO_PRIZE_REFUND;
-use utils::time::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -22,12 +21,13 @@ pub enum TimerJob {
     FinalizeGroupImport(FinalizeGroupImportJob),
     ProcessGroupImportChannelMembers(ProcessGroupImportChannelMembersJob),
     MarkGroupImportComplete(MarkGroupImportCompleteJob),
-    RefundPrize(RefundPrizeJob),
+    FinalPrizePayments(FinalPrizePaymentsJob),
     MakeTransfer(MakeTransferJob),
     NotifyEscrowCanisterOfDeposit(NotifyEscrowCanisterOfDepositJob),
     CancelP2PSwapInEscrowCanister(CancelP2PSwapInEscrowCanisterJob),
     MarkP2PSwapExpired(MarkP2PSwapExpiredJob),
     MarkVideoCallEnded(MarkVideoCallEndedJob),
+    MigrateMembersToStableMemory(MigrateMembersToStableMemoryJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -71,16 +71,14 @@ pub struct MarkGroupImportCompleteJob {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct RefundPrizeJob {
+pub struct FinalPrizePaymentsJob {
     pub channel_id: ChannelId,
-    pub thread_root_message_index: Option<MessageIndex>,
     pub message_index: MessageIndex,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct MakeTransferJob {
     pub pending_transaction: PendingCryptoTransaction,
-    #[serde(default)]
     pub attempt: u32,
 }
 
@@ -140,8 +138,15 @@ pub struct MarkP2PSwapExpiredJob {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct MarkVideoCallEndedJob(pub community_canister::end_video_call::Args);
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct MigrateMembersToStableMemoryJob;
+
 impl Job for TimerJob {
     fn execute(self) {
+        if can_borrow_state() {
+            run_regular_jobs();
+        }
+
         match self {
             TimerJob::HardDeleteMessageContent(job) => job.execute(),
             TimerJob::DeleteFileReferences(job) => job.execute(),
@@ -150,12 +155,13 @@ impl Job for TimerJob {
             TimerJob::FinalizeGroupImport(job) => job.execute(),
             TimerJob::ProcessGroupImportChannelMembers(job) => job.execute(),
             TimerJob::MarkGroupImportComplete(job) => job.execute(),
-            TimerJob::RefundPrize(job) => job.execute(),
+            TimerJob::FinalPrizePayments(job) => job.execute(),
             TimerJob::MakeTransfer(job) => job.execute(),
             TimerJob::NotifyEscrowCanisterOfDeposit(job) => job.execute(),
             TimerJob::CancelP2PSwapInEscrowCanister(job) => job.execute(),
             TimerJob::MarkP2PSwapExpired(job) => job.execute(),
             TimerJob::MarkVideoCallEnded(job) => job.execute(),
+            TimerJob::MigrateMembersToStableMemory(job) => job.execute(),
         }
     }
 }
@@ -172,15 +178,8 @@ impl Job for HardDeleteMessageContentJob {
                 {
                     let files_to_delete = content.blob_references();
                     if !files_to_delete.is_empty() {
-                        // If there was already a job queued up to delete these files, cancel it
-                        state.data.timer_jobs.cancel_jobs(|job| {
-                            if let TimerJob::DeleteFileReferences(j) = job {
-                                j.files.iter().all(|f| files_to_delete.contains(f))
-                            } else {
-                                false
-                            }
-                        });
-                        ic_cdk::spawn(storage_bucket_client::delete_files(files_to_delete));
+                        let delete_files_job = DeleteFileReferencesJob { files: files_to_delete };
+                        delete_files_job.execute();
                     }
                     match content {
                         MessageContentInternal::Prize(mut prize) => {
@@ -195,18 +194,15 @@ impl Job for HardDeleteMessageContentJob {
                                     .data
                                     .timer_jobs
                                     .cancel_job(|job| {
-                                        if let TimerJob::RefundPrize(j) = job {
-                                            j.thread_root_message_index == self.thread_root_message_index
-                                                && j.message_index == message_index
+                                        if let TimerJob::FinalPrizePayments(j) = job {
+                                            j.channel_id == self.channel_id && j.message_index == message_index
                                         } else {
                                             false
                                         }
                                     })
                                     .is_some()
                                 {
-                                    if let Some(pending_transaction) =
-                                        prize.prize_refund(sender, &MEMO_PRIZE_REFUND, state.env.now_nanos())
-                                    {
+                                    for pending_transaction in prize.final_payments(sender, state.env.now_nanos()) {
                                         follow_on_jobs.push(TimerJob::MakeTransfer(MakeTransferJob {
                                             pending_transaction,
                                             attempt: 0,
@@ -239,7 +235,20 @@ impl Job for HardDeleteMessageContentJob {
 
 impl Job for DeleteFileReferencesJob {
     fn execute(self) {
-        ic_cdk::spawn(storage_bucket_client::delete_files(self.files));
+        ic_cdk::spawn(async move {
+            let to_retry = storage_bucket_client::delete_files(self.files.clone()).await;
+
+            if !to_retry.is_empty() {
+                mutate_state(|state| {
+                    let now = state.env.now();
+                    state.data.timer_jobs.enqueue_job(
+                        TimerJob::DeleteFileReferences(DeleteFileReferencesJob { files: to_retry }),
+                        now + MINUTE_IN_MS,
+                        now,
+                    );
+                });
+            }
+        });
     }
 }
 
@@ -283,20 +292,18 @@ impl Job for MarkGroupImportCompleteJob {
     }
 }
 
-impl Job for RefundPrizeJob {
+impl Job for FinalPrizePaymentsJob {
     fn execute(self) {
-        if let Some(pending_transaction) = mutate_state(|state| {
-            if let Some(channel) = state.data.channels.get_mut(&self.channel_id) {
-                channel.chat.events.prize_refund(
-                    self.thread_root_message_index,
-                    self.message_index,
-                    &MEMO_PRIZE_REFUND,
-                    state.env.now_nanos(),
-                )
-            } else {
-                None
-            }
-        }) {
+        let pending_transactions = mutate_state(|state| {
+            state
+                .data
+                .channels
+                .get_mut(&self.channel_id)
+                .map(|channel| channel.chat.events.final_payments(self.message_index, state.env.now_nanos()))
+                .unwrap_or_default()
+        });
+
+        for pending_transaction in pending_transactions {
             let make_transfer_job = MakeTransferJob {
                 pending_transaction,
                 attempt: 0,
@@ -446,5 +453,29 @@ impl Job for MarkP2PSwapExpiredJob {
 impl Job for MarkVideoCallEndedJob {
     fn execute(self) {
         mutate_state(|state| end_video_call_impl(self.0, state));
+    }
+}
+
+impl Job for MigrateMembersToStableMemoryJob {
+    fn execute(self) {
+        mutate_state(|state| {
+            let mut complete = true;
+            for channel in state.data.channels.iter_mut() {
+                if !channel.chat.members.migrate_next_batch_to_stable_memory() {
+                    complete = false;
+                    break;
+                }
+            }
+            if !complete {
+                let now = state.env.now();
+                state
+                    .data
+                    .timer_jobs
+                    .enqueue_job(TimerJob::MigrateMembersToStableMemory(self), now + (10 * SECOND_IN_MS), now);
+            } else {
+                state.data.members_migrated_to_stable_memory = true;
+                info!("Finished migrating members to stable memory");
+            }
+        })
     }
 }

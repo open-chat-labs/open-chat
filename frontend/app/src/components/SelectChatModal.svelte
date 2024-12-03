@@ -27,7 +27,7 @@
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
     import Search from "./Search.svelte";
-    import { compareBigints } from "../utils/bigints";
+    import { buildDisplayName } from "../utils/user";
     import { i18nKey } from "../i18n/i18n";
     import Translatable from "./Translatable.svelte";
     import Badges from "./home/profile/Badges.svelte";
@@ -115,7 +115,7 @@
                     c.name.toLowerCase().includes(searchTerm) ||
                     c.username?.toLowerCase()?.includes(searchTerm),
             )
-            .sort((a, b) => compareBigints(b.lastUpdated, a.lastUpdated));
+            .sort(compare);
     }
 
     function communityMatchesSearch(communities: ShareCommunity[], searchTerm: string) {
@@ -130,7 +130,7 @@
                 }
                 return agg;
             }, [] as ShareCommunity[])
-            .sort((a, b) => compareBigints(b.lastUpdated, a.lastUpdated));
+            .sort(compare);
     }
 
     async function buildListOfTargets(
@@ -145,7 +145,11 @@
             favourites: [],
             communities: [],
         };
-        const direct = global.directChats.values();
+        const direct = global.directChats.values().map((d) => ({
+            ...d,
+            name: buildDisplayName($userStore, d.them.userId, false)
+        }));
+
         const group = global.groupChats.values();
         const channels = global.communities.values().flatMap((c) => c.channels);
         const all = [...group, ...direct, ...channels];
@@ -260,6 +264,10 @@
 
     function selectChat(chatId: ChatIdentifier) {
         dispatch("select", chatId);
+    }
+
+    function compare(a: { name: string }, b: { name: string }): number {
+        return a.name.localeCompare(b.name);
     }
 </script>
 

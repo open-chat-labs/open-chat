@@ -7,13 +7,11 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
-candid_gen = { path = "../../../libraries/candid_gen" }
 chat_events = { path = "../../../libraries/chat_events" }
 ic-ledger-types = { workspace = true }
 icrc-ledger-types = { workspace = true }
 proposals_bot_canister = { path = "../../proposals_bot/api" }
 serde = { workspace = true }
-serde_bytes = { workspace = true }
 ts_export = { path = "../../../libraries/ts_export" }
 ts-rs = { workspace = true }
 types = { path = "../../../libraries/types" }

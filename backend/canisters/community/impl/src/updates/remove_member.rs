@@ -13,7 +13,7 @@ use msgpack::serialize_then_unwrap;
 use types::{CanisterId, CommunityMembersRemoved, CommunityRole, CommunityUsersBlocked, UserId};
 use user_canister::c2c_remove_from_community;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn block_user(args: community_canister::block_user::Args) -> community_canister::block_user::Response {
     run_regular_jobs();
@@ -25,7 +25,7 @@ async fn block_user(args: community_canister::block_user::Args) -> community_can
     remove_member_impl(args.user_id, true).await.into()
 }
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn remove_member(args: Args) -> Response {
     run_regular_jobs();
@@ -71,15 +71,15 @@ fn prepare(user_id: UserId, block: bool, state: &RuntimeState) -> Result<Prepare
     let caller = state.env.caller();
 
     if let Some(member) = state.data.members.get(caller) {
-        if member.suspended.value {
+        if member.suspended().value {
             Err(UserSuspended)
-        } else if member.lapsed.value {
+        } else if member.lapsed().value {
             Err(UserLapsed)
         } else if member.user_id == user_id {
             Err(CannotRemoveSelf)
         } else {
             let user_to_remove_role = match state.data.members.get_by_user_id(&user_id) {
-                Some(member_to_remove) => member_to_remove.role,
+                Some(member_to_remove) => member_to_remove.role(),
                 None if block => {
                     if state.data.members.is_blocked(&user_id) {
                         return Err(Success);
@@ -91,7 +91,7 @@ fn prepare(user_id: UserId, block: bool, state: &RuntimeState) -> Result<Prepare
 
             // Check if the caller is authorized to remove the user
             if member
-                .role
+                .role()
                 .can_remove_members_with_role(user_to_remove_role, &state.data.permissions)
             {
                 Ok(PrepareResult {

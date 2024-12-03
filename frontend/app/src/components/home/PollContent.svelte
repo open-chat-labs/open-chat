@@ -154,7 +154,7 @@
 <style lang="scss">
     .poll {
         @include size-above(sm) {
-            min-width: 300px;
+            min-width: 240px;
         }
     }
 

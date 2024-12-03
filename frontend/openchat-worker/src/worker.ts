@@ -159,8 +159,8 @@ function streamReplies(
     chain: Stream<WorkerResponseInner>,
 ) {
     const start = Date.now();
-    chain
-        .subscribe((value, final) => {
+    chain.subscribe({
+        onResult: (value, final) => {
             console.debug(
                 `WORKER: sending streamed reply ${Date.now() - start}ms after subscribing`,
                 correlationId,
@@ -169,8 +169,9 @@ function streamReplies(
                 final,
             );
             sendResponse(correlationId, value, final);
-        })
-        .catch(sendError(correlationId, payload));
+        },
+        onError: sendError(correlationId, payload),
+    });
 }
 
 function executeThenReply(
@@ -954,6 +955,18 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.unfreezeGroup(payload.chatId));
                 break;
 
+            case "freezeCommunity":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.freezeCommunity(payload.id, payload.reason),
+                );
+                break;
+
+            case "unfreezeCommunity":
+                executeThenReply(payload, correlationId, agent.unfreezeCommunity(payload.id));
+                break;
+
             case "deleteFrozenGroup":
                 executeThenReply(payload, correlationId, agent.deleteFrozenGroup(payload.chatId));
                 break;
@@ -1288,13 +1301,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "getChannelSummary":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent
-                        .communityClient(payload.chatId.communityId)
-                        .channelSummary(payload.chatId),
-                );
+                executeThenReply(payload, correlationId, agent.getChannelSummary(payload.chatId));
                 break;
 
             case "exploreChannels":
@@ -1834,6 +1841,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     correlationId,
                     agent.markActivityFeedRead(payload.readUpTo),
                 );
+                break;
+
+            case "deleteUser":
+                executeThenReply(payload, correlationId, agent.deleteUser(payload.userId));
                 break;
 
             default:

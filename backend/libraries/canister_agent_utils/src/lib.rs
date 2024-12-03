@@ -239,7 +239,7 @@ fn file_by_prefix(file_name_prefix: &str, dir: &PathBuf) -> Option<String> {
 
     dir.filter_map(|f| f.ok())
         .filter_map(|f| f.file_name().to_str().map(|s| s.to_string()))
-        .filter(|f| f.starts_with(file_name_prefix))
+        .filter(|f| f.starts_with(file_name_prefix) && f.ends_with(".wasm.gz"))
         .sorted_unstable_by_key(|f| f.len())
         .next()
 }

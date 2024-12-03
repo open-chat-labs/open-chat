@@ -74,11 +74,9 @@
     function otherReactors(ev: MessageActivityEvent): Set<string> {
         if (ev.message === undefined) return new Set();
         return new Set(
-            ev.message.reactions.flatMap((r) => {
-                return [...r.userIds]
-                    .filter((u) => u !== ev.userId)
-                    .map((u) => buildDisplayName($userStore, u, u === userId));
-            }),
+            ev.message.reactions.flatMap((r) =>
+                [...r.userIds].filter((u) => u !== ev.userId && u !== userId),
+            ),
         );
     }
 
@@ -86,9 +84,7 @@
         if (ev.message === undefined) return new Set();
         return new Set(
             Object.values(ev.message.tips).flatMap((tips) => {
-                return Object.keys(tips)
-                    .filter((u) => u !== ev.userId)
-                    .map((u) => buildDisplayName($userStore, u, u === userId));
+                return Object.keys(tips).filter((u) => u !== ev.userId);
             }),
         );
     }
@@ -118,9 +114,10 @@
             case 0:
                 return i18nKey(`activity.${root}One`, { username });
             case 1:
+                const u = [...others][0];
                 return i18nKey(`activity.${root}Two`, {
                     username,
-                    other: [...others][0],
+                    other: buildDisplayName($userStore, u, u === userId),
                 });
             default:
                 return i18nKey(`activity.${root}N`, { username, n: others.size });

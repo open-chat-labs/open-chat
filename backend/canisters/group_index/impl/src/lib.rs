@@ -9,6 +9,7 @@ use crate::model::public_group_and_community_names::PublicGroupAndCommunityNames
 use crate::model::public_groups::PublicGroups;
 use candid::Principal;
 use canister_state_macros::canister_state;
+use constants::MINUTE_IN_MS;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_index_canister::ChildCanisterType;
 use model::local_group_index_map::LocalGroupIndexMap;
@@ -21,7 +22,6 @@ use types::{
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
-use utils::time::MINUTE_IN_MS;
 
 mod guards;
 mod jobs;

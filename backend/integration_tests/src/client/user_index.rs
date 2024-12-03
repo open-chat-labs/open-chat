@@ -17,7 +17,6 @@ generate_update_call!(add_local_user_index_canister);
 generate_update_call!(add_platform_moderator);
 generate_update_call!(add_platform_operator);
 generate_update_call!(assign_platform_moderators_group);
-generate_update_call!(c2c_register_bot);
 generate_msgpack_update_call!(delete_user);
 generate_msgpack_update_call!(pay_for_diamond_membership);
 generate_update_call!(remove_platform_moderator);

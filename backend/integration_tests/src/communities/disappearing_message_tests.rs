@@ -1,6 +1,6 @@
-use crate::client::community::CHAT_EVENTS_MEMORY_ID;
+use crate::client::community::STABLE_MEMORY_MAP_MEMORY_ID;
 use crate::env::ENV;
-use crate::stable_memory::count_stable_memory_event_keys;
+use crate::stable_memory::get_stable_memory_map;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
@@ -33,7 +33,6 @@ fn disappearing_messages_in_channel() {
             avatar: OptionUpdate::NoChange,
             permissions_v2: None,
             events_ttl: OptionUpdate::SetToSome(1000),
-            gate: OptionUpdate::NoChange,
             gate_config: OptionUpdate::NoChange,
             public: None,
             messages_visible_to_non_members: None,
@@ -81,7 +80,6 @@ fn disappearing_messages_in_channel() {
             avatar: OptionUpdate::NoChange,
             permissions_v2: None,
             events_ttl: OptionUpdate::SetToNone,
-            gate: OptionUpdate::NoChange,
             gate_config: OptionUpdate::NoChange,
             public: None,
             messages_visible_to_non_members: None,
@@ -137,7 +135,6 @@ fn stable_memory_garbage_collected_after_messages_disappear() {
             avatar: OptionUpdate::NoChange,
             permissions_v2: None,
             events_ttl: OptionUpdate::SetToSome(1000),
-            gate: OptionUpdate::NoChange,
             gate_config: OptionUpdate::NoChange,
             public: None,
             messages_visible_to_non_members: None,
@@ -162,7 +159,10 @@ fn stable_memory_garbage_collected_after_messages_disappear() {
         }
     }
 
-    assert_eq!(count_stable_memory_event_keys(env, community_id, CHAT_EVENTS_MEMORY_ID), 32);
+    assert_eq!(
+        get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(),
+        33
+    );
 
     // Tick once to expire the messages
     env.advance_time(Duration::from_secs(2));
@@ -172,5 +172,5 @@ fn stable_memory_garbage_collected_after_messages_disappear() {
     env.advance_time(Duration::from_secs(60));
     env.tick();
 
-    assert_eq!(count_stable_memory_event_keys(env, community_id, CHAT_EVENTS_MEMORY_ID), 2);
+    assert_eq!(get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(), 3);
 }

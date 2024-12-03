@@ -1,15 +1,14 @@
 use crate::model::token_swaps::TokenSwap;
 use crate::updates::end_video_call::end_video_call_impl;
 use crate::updates::swap_tokens::process_token_swap;
-use crate::{mutate_state, openchat_bot, read_state};
+use crate::{can_borrow_state, mutate_state, openchat_bot, read_state, run_regular_jobs};
 use canister_timer_jobs::Job;
 use chat_events::{MessageContentInternal, MessageReminderContentInternal};
+use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, SECOND_IN_MS};
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{BlobReference, Chat, ChatId, CommunityId, EventIndex, MessageId, MessageIndex, P2PSwapStatus, UserId};
 use user_canister::{C2CReplyContext, UserCanisterEvent};
-use utils::consts::OPENCHAT_BOT_USER_ID;
-use utils::time::SECOND_IN_MS;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -120,6 +119,10 @@ pub struct MarkVideoCallEndedJob(pub user_canister::end_video_call::Args);
 
 impl Job for TimerJob {
     fn execute(self) {
+        if can_borrow_state() {
+            run_regular_jobs();
+        }
+
         match self {
             TimerJob::RetrySendingFailedMessages(job) => job.execute(),
             TimerJob::HardDeleteMessageContent(job) => job.execute(),
@@ -184,15 +187,8 @@ impl Job for HardDeleteMessageContentJob {
                 if sender == my_user_id {
                     let files_to_delete = content.blob_references();
                     if !files_to_delete.is_empty() {
-                        // If there was already a job queued up to delete these files, cancel it
-                        state.data.timer_jobs.cancel_jobs(|job| {
-                            if let TimerJob::DeleteFileReferences(j) = job {
-                                j.files.iter().all(|f| files_to_delete.contains(f))
-                            } else {
-                                false
-                            }
-                        });
-                        ic_cdk::spawn(storage_bucket_client::delete_files(files_to_delete));
+                        let delete_files_job = DeleteFileReferencesJob { files: files_to_delete };
+                        delete_files_job.execute();
                     }
                     if let MessageContentInternal::P2PSwap(s) = content {
                         if matches!(s.status, P2PSwapStatus::Open) {
@@ -211,7 +207,20 @@ impl Job for HardDeleteMessageContentJob {
 
 impl Job for DeleteFileReferencesJob {
     fn execute(self) {
-        ic_cdk::spawn(storage_bucket_client::delete_files(self.files.clone()));
+        ic_cdk::spawn(async move {
+            let to_retry = storage_bucket_client::delete_files(self.files.clone()).await;
+
+            if !to_retry.is_empty() {
+                mutate_state(|state| {
+                    let now = state.env.now();
+                    state.data.timer_jobs.enqueue_job(
+                        TimerJob::DeleteFileReferences(DeleteFileReferencesJob { files: to_retry }),
+                        now + MINUTE_IN_MS,
+                        now,
+                    );
+                });
+            }
+        });
     }
 }
 

@@ -22,9 +22,9 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let caller = state.env.caller();
     if let Some(member) = state.data.members.get(caller) {
-        if member.suspended.value {
+        if member.suspended().value {
             return UserSuspended;
-        } else if member.lapsed.value {
+        } else if member.lapsed().value {
             return UserLapsed;
         }
         let user_id = member.user_id;
@@ -48,7 +48,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                         args.message_id.into(),
                     ) {
                         if let Some(sender) = channel.chat.members.get(&message.sender) {
-                            if message.sender != user_id && !sender.user_type.is_bot() {
+                            if message.sender != user_id && !sender.user_type().is_bot() {
                                 let community_id = state.env.canister_id().into();
 
                                 state.data.user_event_sync_queue.push(
@@ -69,7 +69,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                                     .chat
                                     .members
                                     .get(&message.sender)
-                                    .map_or(true, |m| m.notifications_muted.value || m.suspended.value);
+                                    .map_or(true, |m| m.notifications_muted().value || m.suspended().value);
 
                                 if !notifications_muted {
                                     let notification = Notification::ChannelReactionAdded(ChannelReactionAddedNotification {

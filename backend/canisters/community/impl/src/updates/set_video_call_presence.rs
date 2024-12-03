@@ -6,7 +6,7 @@ use community_canister::set_video_call_presence::{Response::*, *};
 use group_chat_core::MinVisibleEventIndexResult;
 use types::Achievement;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn set_video_call_presence(args: Args) -> Response {
     run_regular_jobs();
@@ -22,8 +22,8 @@ pub(crate) fn set_video_call_presence_impl(args: Args, state: &mut RuntimeState)
     let caller = state.env.caller();
 
     let (user_id, is_bot) = match state.data.members.get(caller) {
-        Some(member) if member.suspended.value => return UserSuspended,
-        Some(member) if member.lapsed.value => return UserLapsed,
+        Some(member) if member.suspended().value => return UserSuspended,
+        Some(member) if member.lapsed().value => return UserLapsed,
         Some(member) => (member.user_id, member.user_type.is_bot()),
         None => return UserNotInCommunity,
     };

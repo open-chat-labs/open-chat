@@ -13,7 +13,9 @@
         "lint": "eslint ./src --fix",
         "format": "prettier --config .prettierrc './src/**/*.ts' --write",
         "typecheck": "tsc --noEmit",
-        "sync_lang": "node ./generate.js"
+        "sync_lang": "node ./generate.js",
+        "test": "vitest --run",
+        "test:watch": "vitest"
     },
     "devDependencies": {
         "@google-cloud/translate": "^8.0.1",
@@ -21,11 +23,10 @@
         "@types/dom-mediacapture-record": "^1.0.16",
         "@types/dompurify": "^3.0.2",
         "@types/identicon.js": "^2.3.1",
-        "@types/marked": "^5.0.1",
+        "@types/marked": "^5.0.2",
         "@types/md5": "^2.3.2",
         "@types/node": "^20.5.0",
         "@types/page": "^1.11.6",
-        "@types/uuid": "^9.0.2",
         "@typescript-eslint/eslint-plugin": "^6.4.0",
         "@typescript-eslint/parser": "^6.4.0",
         "assert": "2.0.0",
@@ -40,7 +41,6 @@
         "events": "3.3.0",
         "js-sha256": "^0.9.0",
         "lodash": "^4.17.21",
-        "marked": "^7.0.3",
         "node-fetch": "^3.3.2",
         "prettier": "^3.0.1",
         "process": "^0.11.10",
@@ -75,6 +75,7 @@
         "idb": "^7.1.1",
         "identicon.js": "^2.3.3",
         "jsqr-es6": "^1.4.0-1",
+        "marked": "^14.1.3",
         "md5": "^2.3.0",
         "openchat-client": "*",
         "page": "^1.11.6",
@@ -87,7 +88,6 @@
         "svelte-material-icons": "^3.0.5",
         "svelte-qrcode-image": "^1.0.0-rc.2",
         "usergeek-ic-js": "hpeebles/usergeek-ic-js#3626834a09277d803e857d5968c0767771511047",
-        "uuid": "^9.0.0",
         "wavesurfer.js": "^7.7.5"
     }
 }

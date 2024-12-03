@@ -2,7 +2,7 @@ use crate::guards::caller_is_local_user_index;
 use crate::read_state;
 use crate::RuntimeState;
 use canister_api_macros::query;
-use types::AccessTokenType;
+use types::CheckAccessTokenType;
 use user_canister::c2c_can_issue_access_token::*;
 
 #[query(guard = "caller_is_local_user_index", msgpack = true)]
@@ -16,6 +16,9 @@ fn c2c_can_issue_access_token_impl(args: Args, state: &RuntimeState) -> bool {
     }
 
     match args.access_type {
-        AccessTokenType::StartVideoCallV2(_) | AccessTokenType::JoinVideoCall | AccessTokenType::MarkVideoCallAsEnded => true,
+        CheckAccessTokenType::StartVideoCallV2(_)
+        | CheckAccessTokenType::JoinVideoCall
+        | CheckAccessTokenType::MarkVideoCallAsEnded
+        | CheckAccessTokenType::BotCommand(_) => true,
     }
 }

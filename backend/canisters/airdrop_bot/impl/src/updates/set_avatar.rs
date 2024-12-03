@@ -5,7 +5,7 @@ use airdrop_bot_canister::set_avatar::*;
 use canister_tracing_macros::trace;
 use ic_cdk::update;
 use types::{CanisterId, Timestamped};
-use utils::document_validation::validate_avatar;
+use utils::document::validate_avatar;
 
 #[update(guard = "caller_is_admin")]
 #[trace]

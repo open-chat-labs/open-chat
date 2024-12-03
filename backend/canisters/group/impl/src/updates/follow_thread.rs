@@ -5,7 +5,7 @@ use group_canister::follow_thread::{Response::*, *};
 use group_chat_core::FollowThreadResult;
 use types::Achievement;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn follow_thread(args: Args) -> Response {
     run_regular_jobs();
@@ -20,7 +20,7 @@ fn follow_thread_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let caller = state.env.caller();
 
-    let (user_id, is_bot) = match state.data.get_member(caller).map(|m| (m.user_id, m.user_type.is_bot())) {
+    let (user_id, is_bot) = match state.data.get_member(caller).map(|m| (m.user_id(), m.user_type().is_bot())) {
         Some(uid) => uid,
         None => return UserNotInGroup,
     };

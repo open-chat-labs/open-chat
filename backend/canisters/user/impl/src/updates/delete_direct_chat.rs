@@ -2,10 +2,10 @@ use crate::guards::caller_is_owner;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::{DirectChatKeyPrefix, DirectChatThreadKeyPrefix, KeyPrefix};
+use stable_memory_map::{ChatEventKeyPrefix, KeyPrefix};
 use user_canister::delete_direct_chat::{Response::*, *};
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 fn delete_direct_chat(args: Args) -> Response {
     run_regular_jobs();
@@ -19,19 +19,22 @@ fn delete_direct_chat_impl(args: Args, state: &mut RuntimeState) -> Response {
         if args.block_user {
             state.data.block_user(args.user_id, now);
         }
+
         state
             .data
             .stable_memory_keys_to_garbage_collect
-            .push(KeyPrefix::DirectChat(DirectChatKeyPrefix::new(args.user_id)));
+            .push(KeyPrefix::from(ChatEventKeyPrefix::new_from_direct_chat(args.user_id, None)));
+
         for message_index in chat.events.thread_keys() {
             state
                 .data
                 .stable_memory_keys_to_garbage_collect
-                .push(KeyPrefix::DirectChatThread(DirectChatThreadKeyPrefix::new(
+                .push(KeyPrefix::from(ChatEventKeyPrefix::new_from_direct_chat(
                     args.user_id,
-                    message_index,
+                    Some(message_index),
                 )));
         }
+
         crate::jobs::garbage_collect_stable_memory::start_job_if_required(state);
         Success
     } else {

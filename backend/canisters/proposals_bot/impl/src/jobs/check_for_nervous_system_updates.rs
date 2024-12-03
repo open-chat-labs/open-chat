@@ -1,4 +1,5 @@
 use crate::{jobs, mutate_state, read_state};
+use constants::HOUR_IN_MS;
 use registry_canister::NervousSystemDetails;
 use std::fmt::Write;
 use std::time::Duration;
@@ -8,7 +9,6 @@ use types::{
     MultiUserChat, Rules,
 };
 use utils::canister_timers::run_now_then_interval;
-use utils::time::HOUR_IN_MS;
 
 pub fn start_job() {
     run_now_then_interval(Duration::from_millis(HOUR_IN_MS), run);
@@ -82,7 +82,6 @@ async fn create_group(ns: NervousSystemDetails, group_index_canister_id: Caniste
             ..Default::default()
         }),
         events_ttl: None,
-        gate: None,
         gate_config: None,
     };
 

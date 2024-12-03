@@ -7,7 +7,6 @@ use crate::RuntimeState;
 use crate::{read_state, Data};
 use candid::Principal;
 use canister_api_macros::query;
-use community_canister::c2c_summary_updates::{Args as C2CArgs, Response as C2CResponse};
 use community_canister::summary_updates::{Response::*, *};
 use types::{
     AccessGateConfig, CommunityCanisterCommunitySummaryUpdates, CommunityMembershipUpdates, CommunityPermissions, EventIndex,
@@ -16,11 +15,11 @@ use types::{
 
 #[query(candid = true, msgpack = true)]
 fn summary_updates(args: Args) -> Response {
-    read_state(|state| summary_updates_impl(args.updates_since, args.invite_code, None, state))
+    read_state(|state| summary_updates_impl(args.updates_since, args.invite_code, args.on_behalf_of, state))
 }
 
 #[query(msgpack = true)]
-fn c2c_summary_updates(args: C2CArgs) -> C2CResponse {
+fn c2c_summary_updates(args: Args) -> Response {
     read_state(|state| summary_updates_impl(args.updates_since, args.invite_code, args.on_behalf_of, state))
 }
 
@@ -42,17 +41,30 @@ fn summary_updates_impl(
     }
 
     let member = state.data.members.get(caller);
-    let member_last_updated = member.as_ref().map(|m| m.last_updated()).unwrap_or_default();
+    let mut last_updated = max(
+        state.data.details_last_updated(),
+        member.as_ref().map(|m| m.last_updated()).unwrap_or_default(),
+    );
 
     let (channels_with_updates, channels_removed) = if let Some(m) = member {
-        let channels_with_updates: Vec<_> = m
-            .channels
-            .iter()
-            .filter_map(|c| state.data.channels.get(c))
+        let channels_with_updates: Vec<_> = state
+            .data
+            .members
+            .channels_for_member(m.user_id)
+            .filter_map(|c| state.data.channels.get(&c))
             .filter(|c| c.last_updated(Some(m.user_id)) > updates_since)
             .collect();
 
-        let channels_removed = m.channels_removed_since(updates_since);
+        let mut channels_removed = Vec::new();
+        for (channel_id, timestamp) in state
+            .data
+            .members
+            .channels_removed_for_member(m.user_id)
+            .filter(|(_, ts)| *ts > updates_since)
+        {
+            last_updated = max(last_updated, timestamp);
+            channels_removed.push(channel_id);
+        }
 
         (channels_with_updates, channels_removed)
     } else {
@@ -67,9 +79,7 @@ fn summary_updates_impl(
         (channels_with_updates, Vec::new())
     };
 
-    let community_last_updated = max(member_last_updated, state.data.details_last_updated());
-
-    if channels_with_updates.is_empty() && channels_removed.is_empty() && community_last_updated <= updates_since {
+    if channels_with_updates.is_empty() && channels_removed.is_empty() && last_updated <= updates_since {
         return SuccessNoUpdates;
     }
 
@@ -84,6 +94,7 @@ fn summary_updates_impl(
     for channel in channels_with_updates {
         if channel.date_imported.map_or(false, |ts| ts > updates_since) {
             if let Some(summary) = channel.summary(user_id, is_community_member, state.data.is_public, &state.data.members) {
+                last_updated = max(last_updated, summary.last_updated);
                 channels_added.push(summary);
             }
         } else {
@@ -94,14 +105,20 @@ fn summary_updates_impl(
                 state.data.is_public,
                 &state.data.members,
             ) {
-                ChannelUpdates::Added(s) => channels_added.push(s),
-                ChannelUpdates::Updated(s) => channels_updated.push(s),
+                ChannelUpdates::Added(s) => {
+                    last_updated = max(last_updated, s.last_updated);
+                    channels_added.push(s)
+                }
+                ChannelUpdates::Updated(s) => {
+                    last_updated = max(last_updated, s.last_updated);
+                    channels_updated.push(s)
+                }
             }
         }
     }
 
     let membership = member.map(|m| CommunityMembershipUpdates {
-        role: updates_from_events.role_changed.then_some(m.role),
+        role: updates_from_events.role_changed.then_some(m.role()),
         rules_accepted: m
             .rules_accepted
             .as_ref()
@@ -114,15 +131,8 @@ fn summary_updates_impl(
                 Some(display_name) => OptionUpdate::SetToSome(display_name.clone()),
                 None => OptionUpdate::SetToNone,
             }),
-        lapsed: m.lapsed.if_set_after(updates_since).copied(),
+        lapsed: m.lapsed().if_set_after(updates_since).copied(),
     });
-
-    let last_updated = [community_last_updated]
-        .into_iter()
-        .chain(channels_added.iter().map(|c| c.last_updated))
-        .chain(channels_updated.iter().map(|c| c.last_updated))
-        .max()
-        .unwrap_or_default();
 
     Success(CommunityCanisterCommunitySummaryUpdates {
         community_id: state.env.canister_id().into(),

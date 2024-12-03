@@ -294,46 +294,24 @@ export function referralStatus(value: TReferralStatus): ReferralStatus {
 
 export function achievementType(value: TAchievement): Achievement {
     switch (value) {
-        case "AppointedGroupModerator":
-            return "appointed_group_mod";
-        case "DirectChats5":
-            return "direct_chat_5";
         case "ChangedTheme":
             return "changed_theme";
-        case "ChosenAsGroupModerator":
-            return "appointed_as_group_mod";
         case "FavouritedChat":
             return "favourited_chat";
-        case "AppointedGroupAdmin":
-            return "appointed_group_admin";
         case "HadMessageReactedTo":
             return "received_reaction";
         case "VotedOnPoll":
             return "voted_on_poll";
-        case "ChosenAsGroupAdmin":
-            return "appointed_as_group_admin";
-        case "OwnGroupWithOneHundredDiamondMembers":
-            return "owned_group_with_100_diamond_members";
         case "SetCommunityDisplayName":
             return "set_community_display_name";
-        case "AppointedGroupOwner":
-            return "appointed_group_owner";
-        case "OwnGroupWithTenDiamondMembers":
-            return "owned_group_with_10_diamond_members";
-        case "JoinedGatedGroupOrCommunity":
-            return "joined_gated_group_or_community";
         case "PinnedChat":
             return "pinned_chat";
         case "StartedCall":
             return "started_call";
-        case "ChosenAsGroupOwner":
-            return "appointed_as_group_owner";
         case "TippedMessage":
             return "tipped_message";
         case "SentGiphy":
             return "sent_giphy";
-        case "SetCommunityAccessGate":
-            return "set_community_access_gate";
         case "HadMessageTipped":
             return "had_message_tipped";
         case "SwappedFromWallet":
@@ -348,8 +326,6 @@ export function achievementType(value: TAchievement): Achievement {
             return "joined_call";
         case "SentImage":
             return "sent_image";
-        case "EnabledDisappearingMessages":
-            return "enabled_disappearing_messages";
         case "ForwardedMessage":
             return "forwarded_message";
         case "SentPrize":
@@ -364,30 +340,16 @@ export function achievementType(value: TAchievement): Achievement {
             return "deleted_message";
         case "SentText":
             return "sent_text";
-        case "OwnGroupWithOneThousandDiamondMembers":
-            return "owned_group_with_1000_diamond_members";
         case "SentP2PSwapOffer":
             return "sent_swap_offer";
         case "QuoteReplied":
             return "quote_replied";
-        case "OwnGroupWithOneDiamondMember":
-            return "owned_group_with_1_diamond_member";
         case "SentCrypto":
             return "sent_crypto";
-        case "PinnedMessage":
-            return "pinned_message";
         case "ReceivedCrypto":
             return "received_crypto";
-        case "TranslationAccepted":
-            return "translation_accepted";
         case "RepliedInThread":
             return "replied_in_thread";
-        case "DirectChats10":
-            return "direct_chats_10";
-        case "DirectChats20":
-            return "direct_chats_20";
-        case "SetGroupAccessGate":
-            return "set_group_access_gate";
         case "SentFile":
             return "sent_file";
         case "SentMeme":
@@ -396,8 +358,6 @@ export function achievementType(value: TAchievement): Achievement {
             return "sent_poll";
         case "SentAudio":
             return "sent_audio";
-        case "SuggestedTranslation":
-            return "suggested_translation";
         case "SentVideo":
             return "sent_video";
         case "JoinedCommunity":
@@ -1002,7 +962,7 @@ export function groupChatsUpdates(value: UserUpdatesGroupChatsUpdates): GroupCha
             p.map((p) => ({ kind: "group_chat", groupId: principalBytesToString(p) })),
         ),
         updated: value.updated.map(userCanisterGroupSummaryUpdates),
-        removed: value.removed.map((c) => c.toString()),
+        removed: value.removed.map(principalBytesToString),
     };
 }
 

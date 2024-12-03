@@ -2,6 +2,7 @@ use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
 use canister_tracing_macros::trace;
 use registry_canister::updates::{Response::*, *};
+use types::OptionUpdate;
 
 #[query(candid = true, msgpack = true)]
 #[trace]
@@ -17,6 +18,7 @@ fn updates_impl(args: Args, state: &RuntimeState) -> Response {
         state.data.nervous_systems.last_updated(),
         state.data.swap_providers.timestamp,
         state.data.message_filters.last_updated(),
+        state.data.airdrop_config.timestamp,
     ]
     .into_iter()
     .max()
@@ -53,6 +55,12 @@ fn updates_impl(args: Args, state: &RuntimeState) -> Response {
                 .map(|p| p.iter().copied().collect()),
             message_filters_added: state.data.message_filters.added_since(updates_since),
             message_filters_removed: state.data.message_filters.removed_since(updates_since),
+            airdrop_config: state
+                .data
+                .airdrop_config
+                .if_set_after(updates_since)
+                .cloned()
+                .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
         })
     } else {
         SuccessNoUpdates

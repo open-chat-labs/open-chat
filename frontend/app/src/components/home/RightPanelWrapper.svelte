@@ -23,6 +23,8 @@
         on:showGroupMembers
         on:chatWith
         on:upgrade
+        on:verifyHumanity
+        on:claimDailyChit
         on:deleteGroup
         on:editGroup
         on:editCommunity

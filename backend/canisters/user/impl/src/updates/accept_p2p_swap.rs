@@ -5,6 +5,7 @@ use crate::timer_job_types::NotifyEscrowCanisterOfDepositJob;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use constants::{MEMO_P2P_SWAP_ACCEPT, NANOS_PER_MILLISECOND};
 use escrow_canister::deposit_subaccount;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
@@ -14,10 +15,8 @@ use types::{
 };
 use user_canister::accept_p2p_swap::{Response::*, *};
 use user_canister::{P2PSwapStatusChange, UserCanisterEvent};
-use utils::consts::MEMO_P2P_SWAP_ACCEPT;
-use utils::time::NANOS_PER_MILLISECOND;
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 async fn accept_p2p_swap(args: Args) -> Response {
     run_regular_jobs();

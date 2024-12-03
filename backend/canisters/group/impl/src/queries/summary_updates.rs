@@ -1,7 +1,6 @@
 use crate::{read_state, RuntimeState};
 use candid::Principal;
 use canister_api_macros::query;
-use group_canister::c2c_summary_updates::{Args as C2CArgs, Response as C2CResponse};
 use group_canister::summary_updates::{Response::*, *};
 use types::{
     GroupCanisterGroupChatSummaryUpdates, GroupMembershipUpdates, OptionUpdate, TimestampMillis, MAX_THREADS_IN_SUMMARY,
@@ -9,11 +8,11 @@ use types::{
 
 #[query(candid = true, msgpack = true)]
 fn summary_updates(args: Args) -> Response {
-    read_state(|state| summary_updates_impl(args.updates_since, None, state))
+    read_state(|state| summary_updates_impl(args.updates_since, args.on_behalf_of, state))
 }
 
 #[query(msgpack = true)]
-fn c2c_summary_updates(args: C2CArgs) -> C2CResponse {
+fn c2c_summary_updates(args: Args) -> Response {
     read_state(|state| summary_updates_impl(args.updates_since, args.on_behalf_of, state))
 }
 
@@ -31,23 +30,23 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
     };
 
     let chat = &state.data.chat;
-    let chat_last_updated = chat.last_updated(Some(member.user_id));
+    let chat_last_updated = chat.last_updated(Some(member.user_id()));
 
     if chat_last_updated <= updates_since {
         return SuccessNoUpdates;
     }
 
-    let updates = chat.summary_updates(updates_since, Some(member.user_id));
+    let updates = chat.summary_updates(updates_since, Some(member.user_id()));
 
     let membership = GroupMembershipUpdates {
-        role: updates.role_changed.then_some(member.role.value.into()),
+        role: updates.role_changed.then_some(member.role().value.into()),
         mentions: updates.mentions,
-        notifications_muted: member.notifications_muted.if_set_after(updates_since).cloned(),
+        notifications_muted: member.notifications_muted().if_set_after(updates_since).cloned(),
         my_metrics: state
             .data
             .chat
             .events
-            .user_metrics(&member.user_id, Some(updates_since))
+            .user_metrics(&member.user_id(), Some(updates_since))
             .map(|m| m.hydrate()),
         latest_threads: member
             .followed_threads
@@ -65,7 +64,7 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
             .as_ref()
             .filter(|accepted| updates.rules_changed || accepted.timestamp > updates_since)
             .map(|accepted| accepted.value >= chat.rules.text.version),
-        lapsed: member.lapsed.if_set_after(updates_since).copied(),
+        lapsed: member.lapsed().if_set_after(updates_since).copied(),
     };
 
     Success(SuccessResult {
@@ -106,6 +105,7 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
             rules_accepted: membership.rules_accepted,
             membership: Some(membership),
             video_call_in_progress: updates.video_call_in_progress,
+            any_updates_missed: updates.any_updates_missed,
         },
     })
 }

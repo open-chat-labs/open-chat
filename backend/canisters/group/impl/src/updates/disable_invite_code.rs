@@ -6,7 +6,7 @@ use chat_events::ChatEventInternal;
 use group_canister::disable_invite_code::{Response::*, *};
 use types::{GroupInviteCodeChange, GroupInviteCodeChanged};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn disable_invite_code(args: Args) -> Response {
     run_regular_jobs();
@@ -21,12 +21,12 @@ fn disable_invite_code_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let caller = state.env.caller();
     if let Some(member) = state.data.get_member(caller) {
-        if member.suspended.value {
+        if member.suspended().value {
             return UserSuspended;
         }
 
-        if member.role.can_invite_users(&state.data.chat.permissions) {
-            let user_id = member.user_id;
+        if member.role().can_invite_users(&state.data.chat.permissions) {
+            let user_id = member.user_id();
             state.data.invite_code_enabled = false;
 
             let now = state.env.now();

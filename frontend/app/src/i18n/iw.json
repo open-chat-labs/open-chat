@@ -148,6 +148,86 @@
     "blockUser": "חסום משתמש",
     "blockUserFailed": "לא ניתן לחסום משתמש",
     "blockUserSucceeded": "המשתמש נחסם",
+    "bots": {
+        "builtin": {
+            "desc": "בוט זה מספק את הפקודות המובנות של OpenChat",
+            "name": "מובנה"
+        },
+        "crypto": {
+            "desc": "שלח קריפטו למשתמש אחר",
+            "params": {
+                "amount": {
+                    "desc": "הסכום שברצונך לשלוח",
+                    "name": "סְכוּם",
+                    "placeholder": "הזן סכום"
+                },
+                "token": {
+                    "desc": "האסימון שברצונך לשלוח",
+                    "name": "אֲסִימוֹן",
+                    "placeholder": "הזן אסימון"
+                }
+            }
+        },
+        "diamond": {
+            "desc": "פרסם קישור להסבר על חברות Diamond"
+        },
+        "failed": "מצטערים, לא הצלחנו לבצע את פקודת הבוט",
+        "faq": {
+            "desc": "צור קישור לנושא שאלות נפוצות",
+            "params": {
+                "topic": {
+                    "choices": {
+                        "airdrop": "ירידת אוויר חודשית",
+                        "android": "אפליקציית אנדרואיד",
+                        "buychat": "קניית CHAT",
+                        "content": "הנחיות תוכן",
+                        "diamond": "חברות יהלום",
+                        "info": "מֵידָע",
+                        "ios": "אפליקציית iOS",
+                        "referral": "תגמולי הפניה",
+                        "security": "בִּטָחוֹן",
+                        "sendtokens": "שולח אסימונים",
+                        "shortcuts": "קיצורי דרך",
+                        "storage": "אִחסוּן",
+                        "style": "עיצוב הודעות",
+                        "translation": "תרגום תוכן",
+                        "voting": "הַצבָּעָה",
+                        "wallet": "אַרְנָק"
+                    },
+                    "desc": "נושא השאלות הנפוצות הספציפיות שבו אתה מעוניין",
+                    "name": "נושא שאלות נפוצות",
+                    "placeholder": "בחר נושא"
+                }
+            }
+        },
+        "gif": {
+            "desc": "מצא גיף לשלוח",
+            "params": {
+                "term": {
+                    "desc": "הזן את מונח החיפוש עבור ה-GIF שלך",
+                    "name": "מונח חיפוש",
+                    "placeholder": "מונח חיפוש"
+                }
+            }
+        },
+        "matchingCommands": "התאמת פקודות",
+        "poll": {
+            "desc": "צור סקר בצ'אט הנוכחי"
+        },
+        "search": {
+            "desc": "התחל חיפוש בצ'אט הנוכחי",
+            "params": {
+                "term": {
+                    "desc": "הזן את המונח שברצונך לחפש איתו בצ'אט",
+                    "name": "מונח חיפוש",
+                    "placeholder": "מונח חיפוש"
+                }
+            }
+        },
+        "witch": {
+            "desc": "לזמן את המכשפה"
+        }
+    },
     "cancel": "לְבַטֵל",
     "cancelInvite": "בטל הזמנה",
     "cancelInviteFailed": "שגיאה בביטול ההזמנה",
@@ -301,8 +381,10 @@
         "visibility": "רְאוּת"
     },
     "communityDisplayNameRules": "רק בתוך הקהילה הזו",
+    "communityFrozen": "הקהילה קפואה",
     "communityMembers": "חברי הקהילה",
     "communityTheme": "נושא קהילה",
+    "communityUnfrozen": "הקהילה לא הקפאה",
     "confirmLeaveGroup": "האם אתה באמת רוצה לעזוב את {level} הזה?",
     "confirmMakeGroupPrivate": "האם אתה בהחלט רוצה להפוך את ה-{level} הזה לפרטי? כרגע לא ניתן לבטל את הפעולה הזו!",
     "confirmMakeGroupPublic": "האם אתה בהחלט רוצה להפוך את ה-{level} הזה לציבורי?\n\nהודעות קיימות יישארו פרטיות, כל ההודעות החדשות יהיו ציבוריות.",
@@ -368,6 +450,8 @@
         "claim": "טען CHIT!",
         "comeback": "חזור ב-{time}",
         "extendStreak": "להאריך את הרצף",
+        "failedToClaim": "מצטערים שלא הצלחנו לתבוע את ה-CHIT היומי שלך",
+        "hideWhenClaimed": "הסתר את סמל הטענה CHIT ⚡️ לאחר התביעה בכל יום",
         "info": "ככל שתשמור על הרצף שלך זמן רב יותר, כך תוכל לתבוע יותר CHIT יומי!",
         "title": "שמור על הרצף שלך",
         "utcInfo": "פסי CHIT וחלונות תביעה מיוצגים באמצעות UTC כך שייתכן שיהיה ברור יותר להציג את היומן שלך ב-UTC ולא באזור הזמן המקומי שלך.",
@@ -439,11 +523,13 @@
     "failedToCopyLinkToClipboard": "לא ניתן להעתיק את הקישור ללוח",
     "failedToCopyToClipboard": "לא ניתן להעתיק ללוח. {account}",
     "failedToCopyUrlToClipboard": "לא ניתן להעתיק את כתובת האתר ({url}) ללוח",
+    "failedToFreezeCommunity": "הקפאת הקהילה נכשלה",
     "failedToFreezeGroup": "הקפאת הקבוצה נכשלה",
     "failedToLeaveGroup": "אירעה שגיאה בניסיון להסיר אותך מה-{level}",
     "failedToShareLink": "שיתוף הקישור נכשל",
     "failedToShareMessage": "לא ניתן לשתף את ההודעה הזו",
     "failedToSuspendUser": "השעיית המשתמש נכשלה",
+    "failedToUnfreezeCommunity": "ביטול הקפאת הקהילה נכשל",
     "failedToUnfreezeGroup": "ביטול הקפאת הקבוצה נכשל",
     "failedToUnsuspendUser": "ביטול השעיית המשתמש נכשל",
     "faq": {
@@ -451,8 +537,10 @@
         "airdrop_q": "האם תהיה נפילת אוויר?",
         "android_app_a": "באשר ל-iOS (ראה למעלה), אפליקציית האינטרנט OpenChat <em>פועלת</em> כבר על אנדרואיד ואתה יכול \"הוסף למסך הבית\" מתפריט הדפדפן. זה נותן לך סמל סטנדרטי לפתיחת האפליקציה שנראית יותר כמו אפליקציה מקורית ללא סרגל כתובות אתרים. תמיכה באפליקציית אינטרנט מתקדמת (PWA) טובה מאוד באנדרואיד. כמו iOS הוא תומך בהודעות דחיפה באינטרנט אך גם <em>תומך</em> בקריאה של אנשי קשר מהטלפון (אם אתה נותן הרשאה בכל מקרה). מעבר לכך התמיכה ב-WebRTC הרבה יותר טובה. ככזה המקרה להפקת אפליקציית אנדרואיד מקורית פחות משכנע ויבוא אחרי אפליקציית iOS מקורית. אותם שיקולים חלים על בניית אפליקציית אנדרואיד כ-iOS במונחים של הכוונה לעטיפה מקומית דקה סביב אפליקציית אינטרנט ליבה, ולגבי הסמכה בחנות Play של אנדרואיד.",
         "android_app_q": "מתי תהיה אפליקציית אנדרואיד?",
-        "buychat_a": "אתה יכול לקנות CHAT עם USDC ב- <a target=\"_blank\" href=\"https://www.helixmarkets.io/trade/CHATUSDC\">Helix Markets</a> . אחרת תחילה עליך <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">לקנות ICP</a> שאותו תוכל לאחר מכן להחליף עבור CHAT בבורסה מבוזרת (DEXes) שונות.<ul style=\";text-align:right;direction:rtl\"><li style=\";text-align:right;direction:rtl\"> <a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">ICDex</a></li><li style=\";text-align:right;direction:rtl\"> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPSwap</a></li></ul> DFINITY מוסיפה תמיכה עבור ה- <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">API של Rosetta</a> עבור אסימוני ICRC1 (הכוללים CHAT) מה שהופך אותם להרבה יותר קלים לשילוב עם חילופים מרכזיים (CEXes). ברגע שזה קרה, סביר להניח ש-CHAT יהיה זמין למסחר ב-CEXes עבור ICP או USDT.",
+        "buychat_a": "אתה יכול לקנות CHAT בבורסות קריפטוגרפיות שונות:<br><br><table style=\";text-align:right;direction:rtl\"><tr><th> לְהַחלִיף</th><th> סִגְנוֹן</th><th> קנה עם</th><th> CEX/DEX</th></tr><tr><td> <a target=\"_blank\" href=\"https://www.helixmarkets.io/trade/CHATUSDC\">Helix Markets</a></td><td> ספר הזמנות</td><td> USDC</td><td> היברידי</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.bitmart.com/trade?symbol=CHAT_USDT\">BitMart</a></td><td> ספר הזמנות</td><td> USDT</td><td> CEX</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.bitrue.com/trade/chat_usdt\">Bitrue</a></td><td> ספר הזמנות</td><td> USDT</td><td> CEX</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.coinstore.com/spot/chatusdt\">חנות מטבעות</a></td><td> ספר הזמנות</td><td> USDT</td><td> CEX</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.lbank.com/trade/chat_usdt\">LBank</a></td><td> ספר הזמנות</td><td> USDT</td><td> CEX</td></tr><tr><td> <a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">ICDex</a></td><td> ספר הזמנות</td><td> ICP</td><td> DEX</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.kongswap.io/?viewtab=swap&pool=CHAT_ckUSDT\">KongSwap</a></td><td> החלפה (AMM)</td><td> USDT</td><td> DEX</td></tr><tr><td> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPSwap</a></td><td> החלפה (AMM)</td><td> ICP</td><td> DEX</td></tr><tr><td> <a target=\"_blank\" href=\"https://app.sonic.ooo/?tokenin=ryjl3-tyaaa-aaaaa-aaaba-cai&tokenout=2ouva-viaaa-aaaaq-aaamq-cai\">קוֹלִי</a></td><td> החלפה (AMM)</td><td> ICP</td><td> DEX</td></tr></table><br> אתה יכול גם להחליף אסימונים ל-CHAT ישירות מארנק ה-OpenChat שלך שישתמש אוטומטית בבורסת ההחלפה במחיר הטוב ביותר הזמין.",
         "buychat_q": "איך אני קונה אסימוני CHAT?",
+        "buyicp_a": "<ol style=\";text-align:right;direction:rtl\"><li style=\";text-align:right;direction:rtl\">אתה יכול לקנות אסימוני ICP בבורסות גדולות כמו Coinbase, Binance, Kraken ואחרות. פלטפורמות אלו מאפשרות לך לסחור במטבעות קריפטוגרפיים שונים עבור ICP.</li><li style=\";text-align:right;direction:rtl\"> ה-Dapp Network Nervous System (NNS) מציע תכונה לרכישת ICP באמצעות כרטיס אשראי. יהיה עליך להתחבר עם זהות האינטרנט שלך ולעקוב אחר ההנחיות כדי להשלים את העסקה <a target=\"_blank\" href=\"https://support.dfinity.org/hc/en-us/articles/21363667463828-How-do-I-purchase-ICP-from-within-the-NNS-dapp\">שאלות נפוצות &gt; מחשב אינטרנט &gt; מערכת עצבים ברשת (NNS) &gt; כיצד אוכל לרכוש ICP מתוך ה- NNS dapp?</a> .</li><li style=\";text-align:right;direction:rtl\"> אתה יכול להשתמש בבורסה מבוזרת (DEXs) במחשב האינטרנט כדי להחליף מטבעות קריפטוגרפיים אחרים עבור ICP. לְדוּגמָה:<ul style=\";text-align:right;direction:rtl\"><li style=\";text-align:right;direction:rtl\"> <a target=\"_blank\" href=\"https://iclight.io/ICDex/ckBTC/ICP\">ICDex.io</a> מאפשר לך להחליף ביטקוין (בצורת ckBTC) עבור ICP.</li><li style=\";text-align:right;direction:rtl\"> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/token/details/ryjl3-tyaaa-aaaaa-aaaba-cai\">ICPSwap</a> מציעה צמדי מסחר עם ICP.</li></ul></li></ol>",
+        "buyicp_q": "איך אני קונה אסימוני ICP?",
         "content_a": "לפרטים מלאים על הנחיות התוכן והניהול שלנו <a href=\"/guidelines\">ראה כאן</a>.",
         "content_q": "איזה סוג תוכן מותר?",
         "diamond_a": "אתה יכול לשדרג לחברות Diamond כדי לקבל גישה לתכונות נוספות או משופרות בתוך OpenChat. <a href=\"/diamond\">ראה כאן</a> להשוואת תכונות ולשדרוג.",
@@ -489,6 +577,7 @@
     "followThreadFailed": "שרשור המעקב נכשל",
     "fontSize": "גודל גופן",
     "forward": "קָדִימָה",
+    "freezeCommunity": "הקפאת קהילה",
     "freezeGroup": "הקפאת קבוצה",
     "giphyMessage": "הודעת GIF",
     "goHome": "בית",
@@ -604,9 +693,9 @@
         "link": "קישור",
         "linkedAccounts": {
             "currentAccount": "כרגע מחובר עם מנהל זה",
-            "linkAdvice": "כדי לקשר חשבון חדש היכנס לחשבון החדש שברצונך לקשר, לאחר מכן היכנס לחשבון הנוכחי שלך ולבסוף קשר את שני החשבונות יחד.",
-            "linkAnother": "קישור אחר",
-            "section": "חשבונות מקושרים",
+            "linkAdvice": "כדי להוסיף ספק כניסה חדש, התחבר תחילה עם הספק החדש שברצונך להוסיף, לאחר מכן היכנס עם הספק הנוכחי שלך ולבסוף קשר את השניים יחד.",
+            "linkAnother": "הוסף עוד אחד",
+            "section": "ספקי כניסה",
             "start": "התחל"
         },
         "linkIdentity": "זהות קישור",
@@ -657,20 +746,10 @@
     "lastOnline": "מחובר לאחרונה לפני {duration}",
     "learnToEarn": {
         "accepted_swap_offer": "קבל הצעת החלפה",
-        "appointed_as_group_admin": "מנה קבוצת מנהל/ערוץ",
-        "appointed_as_group_mod": "תתמנה למנחה של קבוצה/ערוץ",
-        "appointed_as_group_owner": "תתמנה לבעלים של קבוצה/ערוץ",
-        "appointed_group_admin": "מנה מנהל קבוצה/ערוץ",
-        "appointed_group_mod": "מנה מנחה קבוצה/ערוץ",
-        "appointed_group_owner": "מנה בעל קבוצה/ערוץ",
         "changed_theme": "שנה את הנושא",
         "deleted_message": "מחק הודעה",
-        "direct_chat_5": "ערכו 5 שיחות ישירות",
-        "direct_chats_10": "ערכו 10 צ'אטים ישירים",
-        "direct_chats_20": "ערכו 20 צ'אטים ישירים",
         "done": "נַעֲשָׂה",
         "edited_message": "ערוך הודעה",
-        "enabled_disappearing_messages": "אפשר הודעות נעלמות",
         "external": "לעשות (חיצוני)",
         "externalInfo": "הישגים חיצוניים מוגדרים על ידי צדדים שלישיים. פשוט לחץ על הקישור ופעל לפי ההוראות שלהם כדי לקבל תגמול CHIT.",
         "favourited_chat": "סמן צ'אט כמועדף",
@@ -683,13 +762,8 @@
         "joined_group": "הצטרף לקבוצה",
         "nothingDone": "יש לך עוד הרבה עבודה לעשות!",
         "nothingLeftToDo": "לְהִרָגַע! לא נשאר לך מה לעשות",
-        "owned_group_with_1_diamond_member": "הבעלים של קבוצה/קהילה עם חבר מאומת אחד",
-        "owned_group_with_10_diamond_members": "בעלים של קבוצה/קהילה עם 10 חברים מאומתים",
-        "owned_group_with_100_diamond_members": "בעלים של קבוצה/קהילה עם 100 חברים מאומתים",
-        "owned_group_with_1000_diamond_members": "בעלים של קבוצה/קהילה עם 1000 חברים מאומתים",
         "percentageComplete": "{perc}% הושלם",
         "pinned_chat": "הצמד צ'אט לראש הרשימה",
-        "pinned_message": "הצמד הודעה",
         "proved_unique_personhood": "הוכח את האנושיות הייחודית שלך",
         "quote_replied": "ציטוט תגובה להודעה",
         "reacted_to_message": "תגיב להודעה",
@@ -717,10 +791,8 @@
         "sent_video": "שלח סרטון",
         "set_avatar": "העלה את הדמות שלך בפרופיל",
         "set_bio": "עדכן את הביוגרפיה של הפרופיל שלך",
-        "set_community_access_gate": "הגדר שער גישה לקהילה",
         "set_community_display_name": "הגדר שם תצוגה של הקהילה",
         "set_display_name": "עדכן את שם התצוגה שלך",
-        "set_group_access_gate": "הגדר שער גישה לקבוצה/ערוץ",
         "set_pin": "הגדר מספר PIN בארנק שלך",
         "showChitPopup": "הודע לי על ההישגים שלי",
         "started_call": "התחל שיחת וידאו",
@@ -730,12 +802,10 @@
         "streak_30": "השג רצף של 30 יום",
         "streak_365": "השג רצף של 365 ימים",
         "streak_7": "השג רצף של 7 ימים",
-        "suggested_translation": "הצע תרגום",
         "swapped_from_wallet": "החלף אסימון מהארנק",
         "tipped_message": "טיפ בהודעה",
         "title": "הישגים",
         "todo": "לעשות",
-        "translation_accepted": "קבל תרגום",
         "upgrade_to_gold_diamond": "שדרג לחברות Lifetime Diamond",
         "upgraded_to_diamond": "שדרג לחברות Diamond",
         "voted_on_poll": "הצביעו על סקר"
@@ -1055,21 +1125,33 @@
         "claim": "תְבִיעָה",
         "claimed": "הַצלָחָה!",
         "claimFailed": "מצטער שהטענה שלך לא צלחה! בהצלחה בפעם הבאה.",
+        "claimIneligible": "מצטערים שאתה לא עומד בדרישות כדי לתבוע את הפרס הזה.",
         "click": "לחץ על הכפתור למטה כדי לקבל הזדמנות לזכות בפרס.",
         "creatingYourPrizeMessage": "אנא המתן בזמן שאנו יוצרים את הודעת הפרס שלך",
+        "diamondMembership": "חברות יהלום",
         "distribution": "כיצד יש לחלק את הפרסים?",
         "duration": "כמה זמן הפרס יהיה פעיל?",
         "equalDistribution": "חלוקה שווה",
         "finished": "גָמוּר",
+        "lifetimeDiamond": "מֶשֶׁך הָחַיִים",
+        "lifetimeDiamondMembership": "חברות יהלומים לכל החיים",
         "live": "הודעת פרס בשידור חי! אחרים יכולים ללחוץ כדי לתבוע 🎁",
         "maxPrize": "מהו הפרס המקסימלי?",
         "minPrize": "מהו הפרס המינימלי?",
         "numberOfWinners": "מספר הזוכים",
         "onlyDiamond": "רק משתמשי Diamond",
+        "onlyStreak": "רק משתמשים עם פס",
+        "onlyUniquePerson": "רק בני אדם ייחודיים",
         "prizeFinished": "הודעת הפרס שלך הסתיימה כעת",
         "randomDistribution": "הפצה אקראית",
+        "restrictedMessage": "כדי לתבוע את הפרס הזה, אתה צריך את הדברים הבאים",
+        "standardDiamond": "תֶקֶן",
+        "streak": "פַּס",
+        "streakFull": "רצף של {n} ימים או יותר",
+        "streakValue": "{n} ימים או יותר",
         "title": "פרס",
         "totalAmount": "סכום הפרס הכולל",
+        "uniquePerson": "הוכחת אדם ייחודית",
         "whoCanWin": "מי יכול לתבוע מניה?",
         "winner": "**{recipient}** זכה **{amount}** {token}"
     },
@@ -1107,9 +1189,23 @@
         "groupIndexAction": "פעולות אינדקס קבוצתיות",
         "makeProposal": "תציע הצעה",
         "maker": {
+            "achievementChatCost": "נדרש תשלום של {cost} {chat} אסימונים כדי לספק את ה-CHIT המבוקש. כל CHAT שלא הוצא יוחזר כאשר יפוג ההישג.",
+            "achievementExpiry": "תְפוּגָה",
+            "achievementLogo": "לוגו הישג",
+            "achievementName": "שם הישג",
+            "achievementUrl": "כתובת אתר של הישג",
+            "addTokenChatCost": "נדרש תשלום של {cost} {chat} אסימונים כדי לרשום אסימון חדש ב-OpenChat.",
             "amount": "כמות",
             "amountRules": "לפחות אסימון {token} אחד",
+            "approvalError": "אישור העברת ה-CHAT נכשל",
+            "awardingAchievementCanisterId": "מזהה מיכל",
+            "awardingAchievementCanisterIdRules": "רק מיכל זה יכול להעניק את ההישג",
+            "chitReward": "פרס CHIT",
+            "chitRewardRules": "לפחות {value} CHIT",
+            "enterAchievementName": "הזן שם להישג",
             "enterAmount": "הזן כמות של {token} אסימונים",
+            "enterChitReward": "הזן את הפרס CHIT",
+            "enterMaxAwards": "הזן את מקסימום המשתמשים לפרס",
             "enterRecipientOwner": "הזן את מנהל החשבון של הנמען",
             "enterRecipientSubaccount": "הזן חשבון משנה אופציונלי של נמען",
             "enterSummary": "הזן סיכום",
@@ -1118,6 +1214,8 @@
             "header": "תציע הצעה",
             "howToBuyUrl": "איך לקנות כתובת אתר",
             "ledgerCanisterId": "מזהה מיכל פנקס",
+            "maxAwards": "מקסימום פרס משתמשים",
+            "maxAwardsRules": "לפחות {value}",
             "message": "נדרשת הפקדה של {cost} {token} אסימונים (כולל שתי קבוצות של עמלות העברה) כדי להגיש הצעה שתוחזר אם ההצעה תתקבל.",
             "recipientOwner": "מנהל החשבון של הנמען",
             "recipientSubaccount": "חשבון המשנה של הנמען",
@@ -1291,7 +1389,7 @@
         "none": "אף אחד",
         "owner": "בעלים"
     },
-    "roleChanged": "{changedBy} שינה את התפקיד של {changed} מ-{oldRole} ל-{newRole}",
+    "roleChanged": "{changedBy} שינה את התפקיד של {changed} ל-{newRole}",
     "rules": {
         "accept": "לְקַבֵּל",
         "acceptTitle": "כללי צ'אט",
@@ -1500,6 +1598,7 @@
     "unexpectedError": "שגיאה בלתי צפויה",
     "unfollowThread": "בטל את המעקב אחר השרשור הזה",
     "unfollowThreadFailed": "ביטול המעקב נכשל",
+    "unfreezeCommunity": "בטל את הקפאת הקהילה",
     "unfreezeGroup": "בטל את הקפאת הקבוצה",
     "unknown": "לא ידוע",
     "unknownUser": "משתמש לא ידוע",
@@ -1654,5 +1753,5 @@
     "yourAccountIsSuspended": "החשבון שלך מושעה",
     "yourChats": "הצ'אטים שלך",
     "youreBlocked": "מצטערים - נחסמת מהקבוצה הזו",
-    "yourRoleChanged": "{changedBy} שינה את התפקיד שלך מ-{oldRole} ל-{newRole}"
+    "yourRoleChanged": "{changedBy} שינה את התפקיד שלך ל-{newRole}"
 }

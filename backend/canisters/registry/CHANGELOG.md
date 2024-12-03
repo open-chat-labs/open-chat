@@ -6,9 +6,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1490](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1490-registry)] - 2024-12-03
+
+### Added
+
+- Add token ([#6953](https://github.com/open-chat-labs/open-chat/pull/6953))
+
+## [[2.0.1488](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1488-registry)] - 2024-12-03
+
+### Fixed
+
+- Fix listing fee transfer ([#6948](https://github.com/open-chat-labs/open-chat/pull/6948))
+
+## [[2.0.1483](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1483-registry)] - 2024-11-29
+
+### Added
+
+- Store airdrop config in the Registry ([#6893](https://github.com/open-chat-labs/open-chat/pull/6893))
+
+## [[2.0.1471](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1471-registry)] - 2024-11-25
+
+### Changed
+
+- Improve the 'how to buy urls' of the NS tokens ([#6888](https://github.com/open-chat-labs/open-chat/pull/6888))
+
+## [[2.0.1455](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1455-registry)] - 2024-11-15
+
 ### Added
 
 - Add an error log with http endpoint ([#6608](https://github.com/open-chat-labs/open-chat/pull/6608))
+- Require a listing fee to add non-SNS tokens ([#6811](https://github.com/open-chat-labs/open-chat/pull/6811))
+
+### Fixed
+
+- Mark Registry updated when token is enabled/disabled ([#6825](https://github.com/open-chat-labs/open-chat/pull/6825))
 
 ## [[2.0.1369](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1369-registry)] - 2024-10-04
 

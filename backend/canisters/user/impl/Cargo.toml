@@ -25,6 +25,7 @@ ckbtc_minter_canister = { path = "../../../external_canisters/ckbtc_minter/api" 
 ckbtc_minter_canister_c2c_client = { path = "../../../external_canisters/ckbtc_minter/c2c_client" }
 community_canister = { path = "../../community/api" }
 community_canister_c2c_client = { path = "../../community/c2c_client" }
+constants = { path = "../../../libraries/constants" }
 escrow_canister = { path = "../../escrow/api" }
 escrow_canister_c2c_client = { path = "../../escrow/c2c_client" }
 event_store_producer = { workspace = true, features = ["json"] }
@@ -70,6 +71,7 @@ sns_governance_canister_c2c_client = { path = "../../../external_canisters/sns_g
 sonic_canister = { path = "../../../external_canisters/sonic/api" }
 sonic_canister_c2c_client = { path = "../../../external_canisters/sonic/c2c_client" }
 stable_memory = { path = "../../../libraries/stable_memory" }
+stable_memory_map = { path = "../../../libraries/stable_memory_map" }
 storage_bucket_client = { path = "../../../libraries/storage_bucket_client" }
 timer_job_queues = { path = "../../../libraries/timer_job_queues" }
 tracing = { workspace = true }

@@ -6,11 +6,10 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::DeleteMessageResult;
 use community_canister::delete_messages::{Response::*, *};
+use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use group_chat_core::DeleteMessagesResult;
 use types::{Achievement, CanisterId, UserId};
 use user_index_canister_c2c_client::lookup_user;
-use utils::consts::OPENCHAT_BOT_USER_ID;
-use utils::time::MINUTE_IN_MS;
 
 #[update(candid = true, msgpack = true)]
 #[trace]
@@ -46,9 +45,9 @@ struct PrepareResult {
 fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
     let caller = state.env.caller();
     let user_id = if let Some(member) = state.data.members.get(caller) {
-        if member.suspended.value {
+        if member.suspended().value {
             return Err(UserSuspended);
-        } else if member.lapsed.value {
+        } else if member.lapsed().value {
             return Err(UserLapsed);
         } else {
             member.user_id

@@ -1,6 +1,7 @@
 use crate::env::ENV;
 use crate::utils::{now_millis, now_nanos, tick_many};
 use crate::{client, TestEnv};
+use constants::{HOUR_IN_MS, MINUTE_IN_MS, PRIZE_FEE_PERCENT};
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
@@ -9,7 +10,6 @@ use types::{
     icrc1, ChatEvent, CryptoTransaction, Cryptocurrency, EventIndex, MessageContent, MessageContentInitial, OptionUpdate,
     PendingCryptoTransaction, PrizeContentInitial,
 };
-use utils::time::{HOUR_IN_MS, MINUTE_IN_MS};
 
 #[test]
 fn prize_messages_can_be_claimed_successfully() {
@@ -58,6 +58,9 @@ fn prize_messages_can_be_claimed_successfully() {
                 end_date: now_millis(env) + HOUR_IN_MS,
                 caption: None,
                 diamond_only: false,
+                lifetime_diamond_only: false,
+                unique_person_only: false,
+                streak_only: 0,
             }),
             sender_name: user1.username(),
             sender_display_name: None,
@@ -139,6 +142,8 @@ fn unclaimed_prizes_get_refunded(case: u32) {
     let prizes = [100000, 200000];
     let token = Cryptocurrency::InternetComputer;
     let fee = token.fee().unwrap();
+    let total = prizes.iter().sum::<u128>();
+    let amount = total + (fee * prizes.len() as u128) + (total * PRIZE_FEE_PERCENT as u128 / 100);
     let message_id = random_from_u128();
 
     client::user::send_message_with_transfer_to_group(
@@ -154,7 +159,7 @@ fn unclaimed_prizes_get_refunded(case: u32) {
                 transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
                     ledger: canister_ids.icp_ledger,
                     token,
-                    amount: prizes.iter().sum::<u64>() as u128 + fee * prizes.len() as u128,
+                    amount,
                     to: group_id.into(),
                     fee,
                     memo: None,
@@ -163,6 +168,9 @@ fn unclaimed_prizes_get_refunded(case: u32) {
                 end_date: now_millis(env) + HOUR_IN_MS,
                 caption: None,
                 diamond_only: false,
+                lifetime_diamond_only: false,
+                unique_person_only: false,
+                streak_only: 0,
             }),
             sender_name: user1.username(),
             sender_display_name: None,
@@ -198,7 +206,7 @@ fn unclaimed_prizes_get_refunded(case: u32) {
 
     let user1_balance_after_refund = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id);
 
-    assert_eq!(user1_balance_after_refund, user1_balance_before_refund + 100000);
+    assert_eq!(user1_balance_after_refund, user1_balance_before_refund + 105000);
 }
 
 #[test]
@@ -222,6 +230,8 @@ fn old_transactions_fixed_by_updating_created_date() {
     let prizes = [100_000];
     let token = Cryptocurrency::InternetComputer;
     let fee = token.fee().unwrap();
+    let total = prizes.iter().sum::<u128>();
+    let amount = total + (fee * prizes.len() as u128) + (total * PRIZE_FEE_PERCENT as u128 / 100);
     let message_id = random_from_u128();
 
     let send_message_response = client::user::send_message_with_transfer_to_group(
@@ -237,7 +247,7 @@ fn old_transactions_fixed_by_updating_created_date() {
                 transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
                     ledger: canister_ids.icp_ledger,
                     token,
-                    amount: prizes.iter().sum::<u64>() as u128 + fee * prizes.len() as u128,
+                    amount,
                     to: group_id.into(),
                     fee,
                     memo: None,
@@ -246,6 +256,9 @@ fn old_transactions_fixed_by_updating_created_date() {
                 end_date: now_millis(env) + HOUR_IN_MS,
                 caption: None,
                 diamond_only: false,
+                lifetime_diamond_only: false,
+                unique_person_only: false,
+                streak_only: 0,
             }),
             sender_name: user.username(),
             sender_display_name: None,
@@ -269,7 +282,7 @@ fn old_transactions_fixed_by_updating_created_date() {
     client::start_canister(env, *controller, canister_ids.icp_ledger);
 
     let user_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id);
-    assert_eq!(user_balance, starting_balance + 80_000);
+    assert_eq!(user_balance, starting_balance + 75_000);
 
     env.advance_time(Duration::from_millis(MINUTE_IN_MS + 1));
     tick_many(env, 3);

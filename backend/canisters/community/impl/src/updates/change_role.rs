@@ -11,7 +11,7 @@ use group_community_common::ExpiringMember;
 use types::{CanisterId, CommunityRole, CommunityRoleChanged, UserId};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn change_role(args: Args) -> Response {
     run_regular_jobs();
@@ -71,20 +71,20 @@ struct PrepareResult {
 fn prepare(user_id: UserId, state: &RuntimeState) -> Result<PrepareResult, Response> {
     let caller = state.env.caller();
     if let Some(member) = state.data.members.get(caller) {
-        if member.suspended.value {
+        if member.suspended().value {
             Err(UserSuspended)
-        } else if member.lapsed.value {
+        } else if member.lapsed().value {
             Err(UserLapsed)
         } else {
             Ok(PrepareResult {
                 caller_id: member.user_id,
                 user_index_canister_id: state.data.user_index_canister_id,
-                is_caller_owner: member.role.is_owner(),
+                is_caller_owner: member.role().is_owner(),
                 is_user_owner: state
                     .data
                     .members
                     .get_by_user_id(&user_id)
-                    .map_or(false, |p| p.role.is_owner()),
+                    .map_or(false, |p| p.role().is_owner()),
             })
         }
     } else {
@@ -111,6 +111,7 @@ fn change_role_impl(
         &state.data.permissions,
         is_caller_platform_moderator,
         is_user_platform_moderator,
+        now,
     ) {
         ChangeRoleResult::Success(r) => {
             // Owners can't "lapse" so either add or remove user from expiry list if they lose or gain owner status

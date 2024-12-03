@@ -3,13 +3,13 @@ use crate::{mutate_state, run_regular_jobs, CommunityBeingImportedInto, RuntimeS
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use constants::OPENCHAT_BOT_USER_ID;
 use group_canister::convert_into_community::{Response::*, *};
-use rand::Rng;
+use rand::RngCore;
 use std::collections::HashMap;
 use types::{CanisterId, UserId};
-use utils::consts::OPENCHAT_BOT_USER_ID;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn convert_into_community(args: Args) -> Response {
     run_regular_jobs();
@@ -67,16 +67,16 @@ fn prepare(state: &mut RuntimeState) -> Result<PrepareResult, Response> {
     let caller = state.env.caller();
 
     if let Some(member) = state.data.get_member(caller) {
-        if member.suspended.value {
+        if member.suspended().value {
             Err(UserSuspended)
-        } else if member.lapsed.value {
+        } else if member.lapsed().value {
             return Err(UserLapsed);
-        } else if !member.role.is_owner() {
+        } else if !member.role().is_owner() {
             Err(NotAuthorized)
         } else {
             Ok(PrepareResult {
                 caller,
-                user_id: member.user_id,
+                user_id: member.user_id(),
                 user_index_canister_id: state.data.user_index_canister_id,
                 group_index_canister_id: state.data.group_index_canister_id,
             })
@@ -100,7 +100,7 @@ fn start_import(
     match state.start_importing_into_community(CommunityBeingImportedInto::New) {
         StartImportIntoCommunityResult::Success(result) => {
             let c2c_args = group_index_canister::c2c_convert_group_into_community::Args {
-                channel_id: state.env.rng().gen(),
+                channel_id: state.env.rng().next_u32().into(),
                 user_id,
                 user_principal: caller,
                 name: state.data.chat.name.value.clone(),
@@ -108,7 +108,6 @@ fn start_import(
                 rules: args.rules,
                 avatar: state.data.chat.avatar.value.clone(),
                 permissions: args.permissions,
-                gate: state.data.chat.gate_config.value.as_ref().map(|gc| gc.gate.clone()),
                 gate_config: state.data.chat.gate_config.value.clone().map(|gc| gc.into()),
                 primary_language: args.primary_language.unwrap_or_else(|| "en".to_string()),
                 history_visible_to_new_joiners: args.history_visible_to_new_joiners,

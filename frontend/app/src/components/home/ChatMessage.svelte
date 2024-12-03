@@ -113,7 +113,6 @@
         msg.content.kind === "crypto_content" ||
         msg.content.kind === "prize_content" ||
         msg.content.kind === "p2p_swap_content";
-    let poll = msg.content.kind === "poll_content";
     let showRemindMe = false;
     let showReport = false;
     let messageMenu: ChatMessageMenu;
@@ -138,13 +137,12 @@
     $: isProposal = msg.content.kind === "proposal_content";
     $: isPrize = msg.content.kind === "prize_content";
     $: isP2PSwap = msg.content.kind === "p2p_swap_content";
-    $: isMemeFighter = msg.content.kind === "meme_fighter_content";
     $: inert =
         msg.content.kind === "deleted_content" ||
         msg.content.kind === "blocked_content" ||
         collapsed;
     $: canEdit =
-        me && supportsEdit && !msg.deleted && !crypto && !poll && !isPrize && !isMemeFighter;
+        me && supportsEdit && !msg.deleted && client.contentTypeSupportsEdit(msg.content.kind);
     $: undeleting = $undeletingMessagesStore.has(msg.messageId);
     $: showChatMenu = (!inert || canRevealDeleted || canRevealBlocked) && !readonly;
     $: canUndelete = msg.deleted && msg.content.kind !== "deleted_content";
@@ -555,8 +553,9 @@
                         blockLevelMarkdown={msg.blockLevelMarkdown}
                         on:removePreview
                         on:registerVote={registerVote}
-                        on:goToMessageIndex
                         on:upgrade
+                        on:verifyHumanity
+                        on:claimDailyChit
                         on:startVideoCall
                         on:expandMessage />
 
@@ -724,11 +723,6 @@
         display: inline-flex;
         gap: $sp2;
         align-items: center;
-    }
-
-    :global(.message .loading) {
-        min-height: 100px;
-        min-width: 250px;
     }
 
     :global(.message .avatar .avatar) {

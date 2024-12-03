@@ -2,7 +2,7 @@ use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
 use group_canister::video_call_participants::{Response::*, *};
 
-#[query(candid = true, msgpack = true)]
+#[query(msgpack = true)]
 fn video_call_participants(args: Args) -> Response {
     read_state(|state| video_call_participants_impl(args, state))
 }

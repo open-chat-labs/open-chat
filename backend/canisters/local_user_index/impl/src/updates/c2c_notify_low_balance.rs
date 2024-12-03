@@ -2,9 +2,9 @@ use crate::guards::caller_is_local_user_canister;
 use crate::{mutate_state, read_state, RuntimeState, USER_CANISTER_TOP_UP_AMOUNT};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use types::{CyclesTopUp, NotifyLowBalanceArgs, NotifyLowBalanceResponse, UserId};
+use constants::min_cycles_balance;
+use types::{Cycles, CyclesTopUp, NotifyLowBalanceArgs, NotifyLowBalanceResponse, UserId};
 use utils::canister::deposit_cycles;
-use utils::consts::min_cycles_balance;
 use utils::cycles::can_spend_cycles;
 
 #[update(guard = "caller_is_local_user_canister", msgpack = true)]
@@ -14,7 +14,7 @@ async fn c2c_notify_low_balance(_args: NotifyLowBalanceArgs) -> NotifyLowBalance
 }
 
 pub(crate) async fn top_up_user(user_id: Option<UserId>) -> NotifyLowBalanceResponse {
-    let prepare_ok = match read_state(|state| prepare(user_id, state)) {
+    let prepare_ok = match read_state(|state| prepare(user_id, USER_CANISTER_TOP_UP_AMOUNT, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
@@ -33,15 +33,14 @@ struct PrepareResult {
     top_up: CyclesTopUp,
 }
 
-fn prepare(user_id: Option<UserId>, state: &RuntimeState) -> Result<PrepareResult, NotifyLowBalanceResponse> {
+fn prepare(user_id: Option<UserId>, amount: Cycles, state: &RuntimeState) -> Result<PrepareResult, NotifyLowBalanceResponse> {
     let user_id = user_id.unwrap_or_else(|| state.env.caller().into());
-    let top_up_amount = USER_CANISTER_TOP_UP_AMOUNT;
     let top_up = CyclesTopUp {
         date: state.env.now(),
-        amount: top_up_amount,
+        amount,
     };
 
-    if can_spend_cycles(top_up_amount, min_cycles_balance(state.data.test_mode)) {
+    if can_spend_cycles(amount, min_cycles_balance(state.data.test_mode)) {
         Ok(PrepareResult { user_id, top_up })
     } else {
         Err(NotifyLowBalanceResponse::NotEnoughCyclesRemaining)

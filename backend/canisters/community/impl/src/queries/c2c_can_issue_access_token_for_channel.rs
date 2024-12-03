@@ -3,8 +3,8 @@ use crate::read_state;
 use crate::RuntimeState;
 use canister_api_macros::query;
 use community_canister::c2c_can_issue_access_token_for_channel::*;
-use group_chat_core::{GroupChatCore, GroupMemberInternal};
-use types::{AccessTokenType, VideoCallType};
+use group_chat_core::{GroupChatCore, GroupRoleInternal};
+use types::{CheckAccessTokenType, MessageContentType, VideoCallType};
 
 #[query(guard = "caller_is_local_user_index", msgpack = true)]
 fn c2c_can_issue_access_token_for_channel(args: Args) -> Response {
@@ -16,25 +16,32 @@ fn c2c_can_issue_access_token_for_channel_impl(args: Args, state: &RuntimeState)
         return false;
     };
 
-    let Some(member) = channel.chat.members.get(&args.user_id) else {
+    let Ok(member) = channel.chat.members.get_verified_member(args.user_id) else {
         return false;
     };
 
     match args.access_type {
-        AccessTokenType::StartVideoCallV2(vc) => {
-            can_start_video_call(member, state.data.is_public, vc.call_type, &channel.chat)
+        CheckAccessTokenType::StartVideoCallV2(vc) => {
+            can_start_video_call(member.role(), state.data.is_public, vc.call_type, &channel.chat)
         }
-        AccessTokenType::JoinVideoCall | AccessTokenType::MarkVideoCallAsEnded => true,
+        CheckAccessTokenType::JoinVideoCall | CheckAccessTokenType::MarkVideoCallAsEnded => true,
+        CheckAccessTokenType::BotCommand(c) => channel.chat.members.get_bot(&c.bot).is_some_and(|b| {
+            b.role().can_send_message(
+                MessageContentType::Text,
+                c.thread_root_message_index.is_some(),
+                &channel.chat.permissions,
+            )
+        }),
     }
 }
 
 fn can_start_video_call(
-    member: &GroupMemberInternal,
+    member_role: GroupRoleInternal,
     is_public_community: bool,
     call_type: VideoCallType,
     chat: &GroupChatCore,
 ) -> bool {
-    if !member.role.is_permitted(chat.permissions.start_video_call) {
+    if !member_role.is_permitted(chat.permissions.start_video_call) {
         return false;
     }
 

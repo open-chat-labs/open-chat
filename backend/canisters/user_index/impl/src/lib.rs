@@ -5,6 +5,7 @@ use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
+use constants::{DAY_IN_MS, DEV_TEAM_DFX_PRINCIPAL};
 use event_store_producer::{EventBuilder, EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -26,15 +27,14 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use types::{
-    BotConfig, BuildVersion, CanisterId, ChatId, ChildCanisterWasms, Cryptocurrency, Cycles, DiamondMembershipFees,
-    Milliseconds, TimestampMillis, Timestamped, UserId, UserType,
+    BuildVersion, CanisterId, ChatId, ChildCanisterWasms, Cryptocurrency, Cycles, DiamondMembershipFees, Milliseconds,
+    TimestampMillis, Timestamped, UserId, UserType,
 };
 use user_index_canister::ChildCanisterType;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
-use utils::consts::DEV_TEAM_DFX_PRINCIPAL;
 use utils::env::Environment;
-use utils::time::{MonthKey, DAY_IN_MS};
+use utils::time::MonthKey;
 
 mod guards;
 mod jobs;
@@ -468,10 +468,11 @@ impl Data {
             proposals_bot_canister_id,
             proposals_bot_canister_id.into(),
             "ProposalsBot".to_string(),
+            None,
             now,
             None,
             UserType::OcControlledBot,
-            Some(BotConfig::default()),
+            None,
         );
 
         // Register the AirdropBot
@@ -479,10 +480,11 @@ impl Data {
             airdrop_bot_canister_id,
             airdrop_bot_canister_id.into(),
             "AirdropBot".to_string(),
+            None,
             now,
             None,
             UserType::OcControlledBot,
-            Some(BotConfig::default()),
+            None,
         );
 
         data

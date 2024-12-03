@@ -6,9 +6,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Implement `register_bot` including bot schema ([#6928](https://github.com/open-chat-labs/open-chat/pull/6928))
+- Implement `explore_bots` ([#6932](https://github.com/open-chat-labs/open-chat/pull/6932))
+- Implement `bot_updates` ([#6934](https://github.com/open-chat-labs/open-chat/pull/6934))
+
 ### Changed
 
 - Set the derivation origin when checking verifiable credentials ([#6703](https://github.com/open-chat-labs/open-chat/pull/6703))
+
+## [[2.0.1469](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1469-user_index)] - 2024-11-25
+
+### Changed
+
+- Remove diamond only access to set display name ([#6879](https://github.com/open-chat-labs/open-chat/pull/6879))
+- Make `ChannelId` comparisons use their 32bit representation ([#6885](https://github.com/open-chat-labs/open-chat/pull/6885))
+
+## [[2.0.1464](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1464-user_index)] - 2024-11-21
+
+### Changed
+
+- Pass in `BotApiCanister` when installing a new LocalUserIndex ([#6828](https://github.com/open-chat-labs/open-chat/pull/6828))
+- Simplify `inspect_message` ([#6847](https://github.com/open-chat-labs/open-chat/pull/6847))
+- Allow bots to set a display name when registering ([#6850](https://github.com/open-chat-labs/open-chat/pull/6850))
+
+## [[2.0.1450](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1450-user_index)] - 2024-11-14
+
+### Fixed
+
+- Fix the ext achievement proposal validation fn ([#6816](https://github.com/open-chat-labs/open-chat/pull/6816))
+
+## [[2.0.1446](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1446-user_index)] - 2024-11-12
+
+### Changed
+
+- Take payment before registering ext achievement ([#6720](https://github.com/open-chat-labs/open-chat/pull/6720))
 
 ## [[2.0.1413](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1413-user_index)] - 2024-10-24
 

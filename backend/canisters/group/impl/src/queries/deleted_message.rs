@@ -3,7 +3,7 @@ use canister_api_macros::query;
 use group_canister::deleted_message::{Response::*, *};
 use group_chat_core::DeletedMessageResult;
 
-#[query(candid = true, msgpack = true)]
+#[query(msgpack = true)]
 fn deleted_message(args: Args) -> Response {
     read_state(|state| deleted_message_impl(args, state))
 }

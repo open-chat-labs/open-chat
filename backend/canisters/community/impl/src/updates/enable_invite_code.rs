@@ -11,7 +11,7 @@ use rand::{RngCore, SeedableRng};
 use types::{GroupInviteCodeChange, GroupInviteCodeChanged};
 use utils::canister;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn reset_invite_code(_args: reset_invite_code::Args) -> reset_invite_code::Response {
     run_regular_jobs();
@@ -93,13 +93,13 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
 
     let caller = state.env.caller();
     if let Some(member) = state.data.members.get(caller) {
-        if member.suspended.value {
+        if member.suspended().value {
             return Err(UserSuspended);
-        } else if member.lapsed.value {
+        } else if member.lapsed().value {
             return Err(UserLapsed);
         }
 
-        if member.role.can_invite_users(&state.data.permissions) {
+        if member.role().can_invite_users(&state.data.permissions) {
             return Ok(PrepareResult {
                 caller,
                 code: state.data.invite_code,

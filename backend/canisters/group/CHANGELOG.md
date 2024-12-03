@@ -8,10 +8,116 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Remove UserId from member map values since it's already in the keys ([#6945](https://github.com/open-chat-labs/open-chat/pull/6945))
+- Disallow sending prize messages to threads ([#6960](https://github.com/open-chat-labs/open-chat/pull/6960))
+
+### Removed
+
+- Remove a load of unused candid endpoints ([#6947](https://github.com/open-chat-labs/open-chat/pull/6947))
+- Remove references to bot_api_gateway ([#6944](https://github.com/open-chat-labs/open-chat/pull/6944))
+
+### Fixed
+
+- Don't supply a fee when BURNing ([#6948](https://github.com/open-chat-labs/open-chat/pull/6948))
+
+## [[2.0.1487](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1487-group)] - 2024-12-02
+
+### Changed
+
+- Reduce size of chat members when serialized ([#6925](https://github.com/open-chat-labs/open-chat/pull/6925))
+- Consolidate member verification logic into `get_verified_member` ([#6926](https://github.com/open-chat-labs/open-chat/pull/6926))
+- Move members to `MembersMap` in prep for stable memory ([#6927](https://github.com/open-chat-labs/open-chat/pull/6927))
+- Only handle a single bot action ([#6929](https://github.com/open-chat-labs/open-chat/pull/6929))
+- Implement `MembersStableStorage` which stores members in stable memory ([#6931](https://github.com/open-chat-labs/open-chat/pull/6931))
+- Migrate chat members to stable memory using timer job ([#6933](https://github.com/open-chat-labs/open-chat/pull/6933))
+- Export members from stable memory when importing group into community ([#6935](https://github.com/open-chat-labs/open-chat/pull/6935))
+- Make `StableMemoryMap` use strongly typed keys ([#6937](https://github.com/open-chat-labs/open-chat/pull/6937))
+- Read from stable memory members map once migration is complete ([#6938](https://github.com/open-chat-labs/open-chat/pull/6938))
+
+## [[2.0.1480](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1480-group)] - 2024-11-28
+
+### Changed
+
+- Simplify how we store and query proposal votes ([#6906](https://github.com/open-chat-labs/open-chat/pull/6906))
+- Remove member updates after 31 days ([#6907](https://github.com/open-chat-labs/open-chat/pull/6907))
+- Consolidate member updates into a single enum ([#6915](https://github.com/open-chat-labs/open-chat/pull/6915))
+- Remove chat event updates after 31 days ([#6916](https://github.com/open-chat-labs/open-chat/pull/6916))
+
+### Removed
+
+- Remove code to migrate metrics to new reduced size format ([#6901](https://github.com/open-chat-labs/open-chat/pull/6901))
+- Remove code to deduplicate @everyone mentions ([#6901](https://github.com/open-chat-labs/open-chat/pull/6901))
+- Remove the old `gate` field which has been superseded by `gate_config` ([#6902](https://github.com/open-chat-labs/open-chat/pull/6902))
+
+## [[2.0.1476](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1476-group)] - 2024-11-26
+
+### Added
+
+- Add new prize message criteria ([#6831](https://github.com/open-chat-labs/open-chat/pull/6831))
+- Accept calls from the BotApiGateway ([#6846](https://github.com/open-chat-labs/open-chat/pull/6846))
+
+### Changed
+
+- Add cycles balance check to more timer jobs ([#6822](https://github.com/open-chat-labs/open-chat/pull/6822))
+- Add the `BotCommand` access token type ([#6830](https://github.com/open-chat-labs/open-chat/pull/6830))
+- Improve job to delete files after messages are deleted ([#6839](https://github.com/open-chat-labs/open-chat/pull/6839))
+- Add `bot_api_gateway` canisterId to the canister state ([#6842](https://github.com/open-chat-labs/open-chat/pull/6842))
+- Simplify `inspect_message` ([#6847](https://github.com/open-chat-labs/open-chat/pull/6847))
+- Avoid cases where we were iterating over the full chat members map ([#6853](https://github.com/open-chat-labs/open-chat/pull/6853))
+- Take a fee for prize messages and send to treasury ([#6854](https://github.com/open-chat-labs/open-chat/pull/6854))
+- Store @everyone mentions once rather than linking to each user ([#6856](https://github.com/open-chat-labs/open-chat/pull/6856))
+- Deduplicate existing @everyone mentions ([#6857](https://github.com/open-chat-labs/open-chat/pull/6857))
+- Disallow promoting bots to owners ([#6865](https://github.com/open-chat-labs/open-chat/pull/6865))
+- Reduce the number of events stored on the heap in the `HybridMap` ([#6867](https://github.com/open-chat-labs/open-chat/pull/6867))
+- Return `FailedToDeserialize` and log error if unable to read event ([#6873](https://github.com/open-chat-labs/open-chat/pull/6873))
+- Extract stable memory map so it can store additional datasets ([#6876](https://github.com/open-chat-labs/open-chat/pull/6876))
+- Avoid iterating all users when determining who to notify of new message ([#6877](https://github.com/open-chat-labs/open-chat/pull/6877))
+- Make `ChannelId` comparisons use their 32bit representation ([#6885](https://github.com/open-chat-labs/open-chat/pull/6885))
+
+### Removed
+
+- Remove code to migrate events to stable memory ([#6837](https://github.com/open-chat-labs/open-chat/pull/6837))
+- Remove code to migrate to the new thread summary format ([#6862](https://github.com/open-chat-labs/open-chat/pull/6862))
+- Remove any spurious video calls in progress ([#6872](https://github.com/open-chat-labs/open-chat/pull/6872))
+
+### Fixed
+
+- Fix a few upgrades that failed due to overflowing `u32::MAX` ([#6826](https://github.com/open-chat-labs/open-chat/pull/6826))
+
+## [[2.0.1453](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1453-group)] - 2024-11-14
+
+### Changed
+
+- Store events in `HybridMap` which caches latest events on the heap ([#6762](https://github.com/open-chat-labs/open-chat/pull/6762))
+- Reduce size of metrics in memory ([#6765](https://github.com/open-chat-labs/open-chat/pull/6765))
+- Run cycles check (+ other background tasks) when executing timer jobs ([#6815](https://github.com/open-chat-labs/open-chat/pull/6815))
+
+### Removed
+
+- Remove events from being stored on the heap ([#6758](https://github.com/open-chat-labs/open-chat/pull/6758))
+
+## [[2.0.1434](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1434-group)] - 2024-11-07
+
+### Changed
+
+- Consolidate `summary` and `c2c_summary` args ([#6723](https://github.com/open-chat-labs/open-chat/pull/6723))
+- Fix case where some thread messages were not updated in stable memory ([#6736](https://github.com/open-chat-labs/open-chat/pull/6736))
+- Restart migration job if threads need to be updated ([#6757](https://github.com/open-chat-labs/open-chat/pull/6757))
+- Perform cycles check when migrating events to stable memory ([#6757](https://github.com/open-chat-labs/open-chat/pull/6757))
+
+### Fixed
+
+- Fix migrating to stable memory for chats with disappearing messages ([#6746](https://github.com/open-chat-labs/open-chat/pull/6746))
+
+## [[2.0.1424](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1424-group)] - 2024-11-05
+
+### Changed
+
 - Avoid extra key lookup when iterating over events ([#6680](https://github.com/open-chat-labs/open-chat/pull/6680))
 - Read events in batches when performing stable memory garbage collection ([#6682](https://github.com/open-chat-labs/open-chat/pull/6682))
 - Improve efficiency of calculating latest threads per user ([#6687](https://github.com/open-chat-labs/open-chat/pull/6687))
 - Avoid iterating over chat events to load mentions ([#6690](https://github.com/open-chat-labs/open-chat/pull/6690))
+- Read events from stable memory once migration is complete ([#6722](https://github.com/open-chat-labs/open-chat/pull/6722))
 
 ## [[2.0.1408](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1408-group)] - 2024-10-24
 

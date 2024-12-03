@@ -6,8 +6,15 @@
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
-    import { AvatarSize, type OpenChat, userStore, communities } from "openchat-client";
+    import { getContext } from "svelte";
+    import {
+        AvatarSize,
+        type OpenChat,
+        userStore,
+        communities,
+        selectedCommunity,
+        type ChatIdentifier,
+    } from "openchat-client";
     import {
         incomingVideoCall,
         ringtoneUrls,
@@ -20,10 +27,16 @@
     import TooltipPopup from "../../TooltipPopup.svelte";
     import { iconSize } from "../../../stores/iconSize";
 
-    const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
+    interface Props {
+        onJoinVideoCall: (chatId: ChatIdentifier) => void;
+    }
 
-    $: chat = normaliseChatSummary($incomingVideoCall);
+    let { onJoinVideoCall }: Props = $props();
+
+    const client = getContext<OpenChat>("client");
+
+    let chat = $derived(normaliseChatSummary($incomingVideoCall));
+    let ringtoneUrl = $derived(ringtoneUrls[$selectedRingtone as RingtoneKey]);
 
     function normaliseChatSummary(call: IncomingVideoCall | undefined) {
         if (call) {
@@ -55,7 +68,7 @@
                                     communityId: chat.id.communityId,
                                 })?.name
                             } > ${chat.name}`,
-                            avatarUrl: client.groupAvatarUrl(chat),
+                            avatarUrl: client.groupAvatarUrl(chat, $selectedCommunity),
                             initiator: initiator.username,
                         };
                 }
@@ -65,24 +78,22 @@
 
     function join() {
         if ($incomingVideoCall !== undefined) {
-            dispatch("joinVideoCall", $incomingVideoCall.chatId);
+            onJoinVideoCall($incomingVideoCall.chatId);
         }
     }
 
     function cancel() {
         incomingVideoCall.set(undefined);
     }
-
-    $: ringtoneUrl = ringtoneUrls[$selectedRingtone as RingtoneKey];
 </script>
 
 {#if chat !== undefined}
     <audio playsinline={true} autoplay={true} src={ringtoneUrl} muted={false} preload="auto"
     ></audio>
 
-    <Overlay on:close={() => dispatch("cancel")} dismissible>
+    <Overlay on:close={cancel} dismissible>
         <ModalContent hideHeader hideFooter closeIcon>
-            <span class="body" slot="body">
+            <span slot="body" class="body">
                 <div class="details">
                     <div class="avatar">
                         <Avatar url={chat.avatarUrl} size={AvatarSize.Default} />
@@ -101,20 +112,20 @@
                 </div>
                 <div class="btns">
                     <TooltipWrapper position={"top"} align={"middle"}>
-                        <div role="button" slot="target" on:click={cancel} class="btn ignore">
+                        <div slot="target" role="button" onclick={cancel} class="btn ignore">
                             <PhoneHangup size={$iconSize} color={"var(--txt)"} />
                         </div>
-                        <div let:position let:align slot="tooltip">
+                        <div slot="tooltip" let:position let:align>
                             <TooltipPopup {position} {align}>
                                 <Translatable resourceKey={i18nKey("videoCall.ignore")} />
                             </TooltipPopup>
                         </div>
                     </TooltipWrapper>
                     <TooltipWrapper position={"top"} align={"middle"}>
-                        <div role="button" slot="target" on:click={join} class="btn join">
+                        <div slot="target" role="button" onclick={join} class="btn join">
                             <Phone size={$iconSize} color={"var(--txt)"} />
                         </div>
-                        <div let:position let:align slot="tooltip">
+                        <div slot="tooltip" let:position let:align>
                             <TooltipPopup {position} {align}>
                                 <Translatable resourceKey={i18nKey("videoCall.join")} />
                             </TooltipPopup>

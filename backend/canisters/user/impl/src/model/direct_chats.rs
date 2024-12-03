@@ -2,8 +2,8 @@ use crate::model::direct_chat::DirectChat;
 use chat_events::{ChatInternal, ChatMetricsInternal};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
-use std::collections::{BTreeSet, HashMap};
-use types::{ChatId, TimestampMillis, Timestamped, UserId, UserType};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
+use types::{ChatId, MessageIndex, TimestampMillis, Timestamped, UserId, UserType};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct DirectChats {
@@ -11,6 +11,10 @@ pub struct DirectChats {
     pinned: Timestamped<Vec<ChatId>>,
     metrics: ChatMetricsInternal,
     chats_removed: BTreeSet<(TimestampMillis, ChatId)>,
+    // This is needed so that when a group is imported into a community we can quickly update the
+    // replies to point to the community
+    #[serde(default)]
+    private_replies_to_groups: BTreeMap<ChatId, Vec<(UserId, MessageIndex)>>,
 }
 
 impl DirectChats {
@@ -75,9 +79,24 @@ impl DirectChats {
         self.direct_chats.len()
     }
 
+    pub fn mark_private_reply(&mut self, user_id: UserId, chat: ChatInternal, message_index: MessageIndex) {
+        if let ChatInternal::Group(chat_id) = chat {
+            self.private_replies_to_groups
+                .entry(chat_id)
+                .or_default()
+                .push((user_id, message_index));
+        }
+    }
+
     pub fn migrate_replies(&mut self, old: ChatInternal, new: ChatInternal, now: TimestampMillis) {
-        for chat in self.direct_chats.values_mut() {
-            chat.events.migrate_replies(old, new, now);
+        if let ChatInternal::Group(chat_id) = old {
+            if let Some(replies) = self.private_replies_to_groups.remove(&chat_id) {
+                for (user_id, message_index) in replies {
+                    if let Some(chat) = self.direct_chats.get_mut(&user_id.into()) {
+                        chat.events.migrate_reply(message_index, old, new, now);
+                    }
+                }
+            }
         }
     }
 

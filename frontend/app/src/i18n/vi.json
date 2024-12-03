@@ -148,6 +148,86 @@
     "blockUser": "Chặn",
     "blockUserFailed": "Không thể chặn người dùng",
     "blockUserSucceeded": "Người dùng đã bị chặn",
+    "bots": {
+        "builtin": {
+            "desc": "Bot này cung cấp các lệnh OpenChat tích hợp sẵn",
+            "name": "Tích hợp sẵn"
+        },
+        "crypto": {
+            "desc": "Gửi tiền điện tử cho người dùng khác",
+            "params": {
+                "amount": {
+                    "desc": "Số tiền bạn muốn gửi",
+                    "name": "Số lượng",
+                    "placeholder": "Nhập số tiền"
+                },
+                "token": {
+                    "desc": "Mã thông báo mà bạn muốn gửi",
+                    "name": "Mã thông báo",
+                    "placeholder": "Nhập mã thông báo"
+                }
+            }
+        },
+        "diamond": {
+            "desc": "Đăng liên kết để giải thích về tư cách thành viên Kim cương"
+        },
+        "failed": "Xin lỗi, chúng tôi không thực hiện được lệnh bot",
+        "faq": {
+            "desc": "Tạo liên kết đến chủ đề FAQ",
+            "params": {
+                "topic": {
+                    "choices": {
+                        "airdrop": "Airdrop hàng tháng",
+                        "android": "Ứng dụng Android",
+                        "buychat": "Mua CHAT",
+                        "content": "Hướng dẫn nội dung",
+                        "diamond": "Thành viên kim cương",
+                        "info": "Thông tin",
+                        "ios": "Ứng dụng iOS",
+                        "referral": "Phần thưởng giới thiệu",
+                        "security": "Bảo vệ",
+                        "sendtokens": "Gửi token",
+                        "shortcuts": "Phím tắt",
+                        "storage": "Kho",
+                        "style": "Tin nhắn kiểu dáng",
+                        "translation": "Bản dịch nội dung",
+                        "voting": "Bỏ phiếu",
+                        "wallet": "Cái ví"
+                    },
+                    "desc": "Chủ đề FAQ cụ thể mà bạn quan tâm",
+                    "name": "Chủ đề FAQ",
+                    "placeholder": "Chọn chủ đề"
+                }
+            }
+        },
+        "gif": {
+            "desc": "Tìm một gif để gửi",
+            "params": {
+                "term": {
+                    "desc": "Nhập từ khóa tìm kiếm cho gif của bạn",
+                    "name": "Thuật ngữ tìm kiếm",
+                    "placeholder": "Thuật ngữ tìm kiếm"
+                }
+            }
+        },
+        "matchingCommands": "Lệnh khớp",
+        "poll": {
+            "desc": "Tạo một cuộc thăm dò trong cuộc trò chuyện hiện tại"
+        },
+        "search": {
+            "desc": "Bắt đầu tìm kiếm trong cuộc trò chuyện hiện tại",
+            "params": {
+                "term": {
+                    "desc": "Nhập thuật ngữ để tìm kiếm trong cuộc trò chuyện",
+                    "name": "Thuật ngữ tìm kiếm",
+                    "placeholder": "Thuật ngữ tìm kiếm"
+                }
+            }
+        },
+        "witch": {
+            "desc": "Triệu hồi phù thủy"
+        }
+    },
     "cancel": "Hủy bỏ",
     "cancelInvite": "Hủy lời mời",
     "cancelInviteFailed": "Lỗi khi hủy lời mời",
@@ -301,8 +381,10 @@
         "visibility": "Hiển thị"
     },
     "communityDisplayNameRules": "chỉ trong cộng đồng này",
+    "communityFrozen": "Cộng đồng bị đóng băng",
     "communityMembers": "Thành viên cộng đồng",
     "communityTheme": "chủ đề cộng đồng",
+    "communityUnfrozen": "Cộng đồng không bị đóng băng",
     "confirmLeaveGroup": "Bạn có thực sự muốn rời khỏi {level} này không?",
     "confirmMakeGroupPrivate": "Bạn có chắc chắn muốn đặt {level} này ở chế độ riêng tư không? Hiện tại thao tác này không thể đảo ngược!",
     "confirmMakeGroupPublic": "Bạn có chắc chắn muốn công khai {level} này không?\n\nTin nhắn hiện tại sẽ vẫn ở chế độ riêng tư, tất cả tin nhắn mới sẽ được công khai.",
@@ -368,6 +450,8 @@
         "claim": "Yêu cầu CHIT!",
         "comeback": "Hãy quay lại trong {time}",
         "extendStreak": "Kéo dài vệt",
+        "failedToClaim": "Xin lỗi chúng tôi không thể yêu cầu CHIT hàng ngày của bạn",
+        "hideWhenClaimed": "Ẩn biểu tượng CHIT yêu cầu ⚡️ sau khi yêu cầu mỗi ngày",
         "info": "Bạn duy trì chuỗi của mình càng lâu thì bạn càng có thể yêu cầu nhiều CHIT hàng ngày hơn!",
         "title": "Duy trì thành tích của bạn",
         "utcInfo": "Các chuỗi CHIT và khoảng thời gian xác nhận quyền sở hữu được thể hiện bằng UTC nên bạn có thể thấy lịch của mình theo UTC rõ ràng hơn thay vì múi giờ địa phương.",
@@ -439,11 +523,13 @@
     "failedToCopyLinkToClipboard": "Không thể sao chép liên kết vào khay nhớ tạm",
     "failedToCopyToClipboard": "Không thể sao chép {account}",
     "failedToCopyUrlToClipboard": "Không thể sao chép đường dẫn ({url})",
+    "failedToFreezeCommunity": "Không thể đóng băng cộng đồng",
     "failedToFreezeGroup": "Không thể đóng băng nhóm",
     "failedToLeaveGroup": "Đã xảy ra lỗi khi cố xóa bạn khỏi {level}",
     "failedToShareLink": "Không chia sẻ được liên kết",
     "failedToShareMessage": "Không thể chia sẻ tin nhắn này",
     "failedToSuspendUser": "Không thể tạm ngưng người dùng",
+    "failedToUnfreezeCommunity": "Không thể mở khóa cộng đồng",
     "failedToUnfreezeGroup": "Không thể hủy đóng băng nhóm",
     "failedToUnsuspendUser": "Không thể hủy tạm ngưng người dùng",
     "faq": {
@@ -451,8 +537,10 @@
         "airdrop_q": "Sẽ có một airdrop?",
         "android_app_a": "Đối với iOS (xem ở trên), ứng dụng web OpenChat <em>không</em> đã hoạt động trên Android và bạn có thể \"Thêm vào màn hình chính\" từ menu trình duyệt. Điều này cung cấp cho bạn một biểu tượng tiêu chuẩn để mở ứng dụng trông giống ứng dụng gốc hơn mà không có thanh url. Hỗ trợ Ứng dụng web lũy tiến (PWA) rất tốt trên Android. Giống như iOS, nó hỗ trợ thông báo đẩy trên web nhưng cũng <em>không</em> hỗ trợ đọc danh bạ từ điện thoại (nếu bạn cấp quyền trong từng trường hợp). Ngoài ra, sự hỗ trợ dành cho WebRTC còn tốt hơn nhiều. Vì vậy, trường hợp sản xuất ứng dụng Android gốc sẽ kém hấp dẫn hơn và sẽ xuất hiện sau ứng dụng iOS gốc. Những cân nhắc tương tự cũng áp dụng cho việc xây dựng một ứng dụng Android dưới dạng iOS về mục tiêu tạo ra một trình bao bọc gốc mỏng xung quanh ứng dụng web cốt lõi và liên quan đến chứng nhận trên cửa hàng Android Play.",
         "android_app_q": "Khi nào sẽ có ứng dụng Android?",
-        "buychat_a": "Bạn có thể mua CHAT bằng USDC trên <a target=\"_blank\" href=\"https://www.helixmarkets.io/trade/CHATUSDC\">Helix Markets</a> . Nếu không, trước tiên bạn phải <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">mua ICP</a> , sau đó bạn có thể đổi lấy CHAT trên các Sàn giao dịch phi tập trung (DEX) khác nhau.<ul><li> <a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">ICDex</a></li><li> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPSwap</a></li></ul> DFINITY đang bổ sung hỗ trợ cho <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">API Rosetta</a> cho mã thông báo ICRC1 (bao gồm CHAT) giúp chúng tích hợp dễ dàng hơn nhiều với Sàn giao dịch tập trung (CEX). Một khi điều này xảy ra, rất có thể CHAT sẽ có sẵn để giao dịch trên CEX lấy ICP hoặc USDT.",
+        "buychat_a": "Bạn có thể mua CHAT trên nhiều sàn giao dịch tiền điện tử khác nhau:<br><br><table><tr><th> Trao đổi</th><th> Phong cách</th><th> Mua với</th><th> CEX/DEX</th></tr><tr><td> <a target=\"_blank\" href=\"https://www.helixmarkets.io/trade/CHATUSDC\">Thị trường Helix</a></td><td> Sổ lệnh</td><td> USDC</td><td> lai</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.bitmart.com/trade?symbol=CHAT_USDT\">BitMart</a></td><td> Sổ lệnh</td><td> USDT</td><td> CEX</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.bitrue.com/trade/chat_usdt\">Bitrue</a></td><td> Sổ lệnh</td><td> USDT</td><td> CEX</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.coinstore.com/spot/chatusdt\">Cửa hàng tiền xu</a></td><td> Sổ lệnh</td><td> USDT</td><td> CEX</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.lbank.com/trade/chat_usdt\">Ngân hàng L</a></td><td> Sổ lệnh</td><td> USDT</td><td> CEX</td></tr><tr><td> <a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">ICDex</a></td><td> Sổ lệnh</td><td> ICP</td><td> XÓA</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.kongswap.io/?viewtab=swap&pool=CHAT_ckUSDT\">KongSwap</a></td><td> Hoán đổi (AMM)</td><td> USDT</td><td> XÓA</td></tr><tr><td> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPSwap</a></td><td> Hoán đổi (AMM)</td><td> ICP</td><td> XÓA</td></tr><tr><td> <a target=\"_blank\" href=\"https://app.sonic.ooo/?tokenin=ryjl3-tyaaa-aaaaa-aaaba-cai&tokenout=2ouva-viaaa-aaaaq-aaamq-cai\">Âm thanh</a></td><td> Hoán đổi (AMM)</td><td> ICP</td><td> XÓA</td></tr></table><br> Bạn cũng có thể đổi token lấy CHAT trực tiếp từ ví OpenChat của mình, ví này sẽ tự động sử dụng tỷ giá hoán đổi có giá tốt nhất hiện có.",
         "buychat_q": "Làm cách nào để mua mã thông báo CHAT?",
+        "buyicp_a": "<ol><li>Bạn có thể mua token ICP trên các sàn giao dịch lớn như Coinbase, Binance, Kraken và các sàn khác. Các nền tảng này cho phép bạn giao dịch nhiều loại tiền điện tử khác nhau để lấy ICP.</li><li> Dapp Network Nervous System (NNS) cung cấp tính năng mua ICP bằng thẻ tín dụng. Bạn sẽ cần đăng nhập bằng Internet Identity và làm theo lời nhắc để hoàn tất giao dịch <a target=\"_blank\" href=\"https://support.dfinity.org/hc/en-us/articles/21363667463828-How-do-I-purchase-ICP-from-within-the-NNS-dapp\">Câu hỏi thường gặp &gt; Máy tính Internet &gt; Network Nervous System (NNS) &gt; Làm thế nào để mua ICP từ trong dapp NNS?</a> .</li><li> Bạn có thể sử dụng các sàn giao dịch phi tập trung (DEX) trên Internet Computer để đổi các loại tiền điện tử khác lấy ICP. Ví dụ:<ul><li> <a target=\"_blank\" href=\"https://iclight.io/ICDex/ckBTC/ICP\">ICDex.io</a> cho phép bạn đổi Bitcoin (dưới dạng ckBTC) lấy ICP.</li><li> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/token/details/ryjl3-tyaaa-aaaaa-aaaba-cai\">ICPSwap</a> cung cấp các cặp giao dịch với ICP.</li></ul></li></ol>",
+        "buyicp_q": "Làm thế nào để tôi mua token ICP?",
         "content_a": "Để biết chi tiết đầy đủ về nội dung và nguyên tắc kiểm duyệt của chúng tôi <a href=\"/guidelines\">xem tại đây</a>.",
         "content_q": "Loại nội dung nào được phép?",
         "diamond_a": "Bạn có thể nâng cấp lên thành viên Kim cương để có quyền truy cập vào các tính năng bổ sung hoặc nâng cao trong OpenChat. <a href=\"/diamond\">Xem tại đây</a> để so sánh tính năng và nâng cấp.",
@@ -489,6 +577,7 @@
     "followThreadFailed": "Theo dõi chủ đề không thành công",
     "fontSize": "Cỡ chữ",
     "forward": "Ở đằng trước",
+    "freezeCommunity": "Đóng băng cộng đồng",
     "freezeGroup": "Nhóm đóng băng",
     "giphyMessage": "Tin nhắn GIF",
     "goHome": "Trang chủ",
@@ -604,9 +693,9 @@
         "link": "liên kết",
         "linkedAccounts": {
             "currentAccount": "Hiện đang đăng nhập với hiệu trưởng này",
-            "linkAdvice": "Để liên kết tài khoản mới Đăng nhập vào tài khoản mới mà bạn muốn liên kết, sau đó đăng nhập vào tài khoản hiện tại và cuối cùng liên kết hai tài khoản với nhau.",
-            "linkAnother": "Liên kết khác",
-            "section": "Tài khoản được liên kết",
+            "linkAdvice": "Để thêm nhà cung cấp đăng nhập mới, trước tiên hãy đăng nhập bằng nhà cung cấp mới mà bạn muốn thêm, sau đó đăng nhập bằng nhà cung cấp hiện tại và cuối cùng liên kết cả hai với nhau.",
+            "linkAnother": "Thêm một cái nữa",
+            "section": "Nhà cung cấp đăng nhập",
             "start": "Bắt đầu"
         },
         "linkIdentity": "Nhận dạng liên kết",
@@ -657,20 +746,10 @@
     "lastOnline": "Online cách đây {duration}",
     "learnToEarn": {
         "accepted_swap_offer": "Chấp nhận lời đề nghị trao đổi",
-        "appointed_as_group_admin": "Chỉ định một nhóm/kênh quản trị viên",
-        "appointed_as_group_mod": "Được bổ nhiệm làm người điều hành của một nhóm/kênh",
-        "appointed_as_group_owner": "Được chỉ định là chủ sở hữu của một nhóm/kênh",
-        "appointed_group_admin": "Chỉ định người quản lý nhóm/kênh",
-        "appointed_group_mod": "Chỉ định người điều hành nhóm/kênh",
-        "appointed_group_owner": "Chỉ định chủ sở hữu nhóm/kênh",
         "changed_theme": "Thay đổi chủ đề",
         "deleted_message": "Xóa tin nhắn",
-        "direct_chat_5": "Có 5 cuộc trò chuyện trực tiếp",
-        "direct_chats_10": "Có 10 cuộc trò chuyện trực tiếp",
-        "direct_chats_20": "Có 20 cuộc trò chuyện trực tiếp",
         "done": "Xong",
         "edited_message": "Chỉnh sửa tin nhắn",
-        "enabled_disappearing_messages": "Cho phép tin nhắn biến mất",
         "external": "Để làm (bên ngoài)",
         "externalInfo": "Thành tích bên ngoài được xác định bởi bên thứ ba. Chỉ cần nhấp vào liên kết và làm theo hướng dẫn của họ để nhận phần thưởng CHIT.",
         "favourited_chat": "Đánh dấu một cuộc trò chuyện là mục yêu thích",
@@ -683,13 +762,8 @@
         "joined_group": "Tham gia một nhóm",
         "nothingDone": "Bạn vẫn còn nhiều việc phải làm!",
         "nothingLeftToDo": "Thư giãn đi! Bạn không còn gì để làm nữa",
-        "owned_group_with_1_diamond_member": "Sở hữu một nhóm/cộng đồng với 1 thành viên đã xác minh",
-        "owned_group_with_10_diamond_members": "Sở hữu một nhóm/cộng đồng với 10 thành viên đã xác minh",
-        "owned_group_with_100_diamond_members": "Sở hữu một nhóm/cộng đồng với 100 thành viên đã được xác minh",
-        "owned_group_with_1000_diamond_members": "Sở hữu một nhóm/cộng đồng với 1000 thành viên đã được xác minh",
         "percentageComplete": "{perc}% Hoàn thành",
         "pinned_chat": "Ghim cuộc trò chuyện lên đầu danh sách",
-        "pinned_message": "Ghim tin nhắn",
         "proved_unique_personhood": "Chứng minh tính nhân văn độc đáo của bạn",
         "quote_replied": "Trích dẫn trả lời tin nhắn",
         "reacted_to_message": "Phản hồi tin nhắn",
@@ -717,10 +791,8 @@
         "sent_video": "Gửi một video",
         "set_avatar": "Tải lên ảnh đại diện của bạn",
         "set_bio": "Cập nhật tiểu sử của bạn",
-        "set_community_access_gate": "Thiết lập cổng ra vào cộng đồng",
         "set_community_display_name": "Đặt tên hiển thị cộng đồng",
         "set_display_name": "Cập nhật tên hiển thị của bạn",
-        "set_group_access_gate": "Thiết lập cổng truy cập nhóm/kênh",
         "set_pin": "Đặt mã pin trên ví của bạn",
         "showChitPopup": "Thông báo cho tôi về thành tích của tôi",
         "started_call": "Bắt đầu cuộc gọi video",
@@ -730,12 +802,10 @@
         "streak_30": "Đạt được chuỗi 30 ngày",
         "streak_365": "Đạt được chuỗi 365 ngày",
         "streak_7": "Đạt được chuỗi 7 ngày",
-        "suggested_translation": "Đề xuất bản dịch",
         "swapped_from_wallet": "Đổi token từ ví",
         "tipped_message": "Mẹo một tin nhắn",
         "title": "Thành tựu",
         "todo": "Để làm",
-        "translation_accepted": "Đã chấp nhận bản dịch",
         "upgrade_to_gold_diamond": "Nâng cấp lên tư cách thành viên Kim cương trọn đời",
         "upgraded_to_diamond": "Nâng cấp lên thành viên Kim cương",
         "voted_on_poll": "Bỏ phiếu cho một cuộc thăm dò"
@@ -1055,21 +1125,33 @@
         "claim": "Yêu cầu",
         "claimed": "Sự thành công!",
         "claimFailed": "Rất tiếc, khiếu nại của bạn không thành công! Chúc may mắn lần sau.",
+        "claimIneligible": "Rất tiếc, bạn không đáp ứng đủ yêu cầu để nhận giải thưởng này.",
         "click": "Nhấp vào nút bên dưới để có cơ hội giành giải thưởng.",
         "creatingYourPrizeMessage": "Vui lòng đợi trong khi chúng tôi tạo tin nhắn giải thưởng của bạn",
+        "diamondMembership": "Thành viên kim cương",
         "distribution": "Giải thưởng nên được phân phối như thế nào?",
         "duration": "Giải thưởng sẽ có hiệu lực trong bao lâu?",
         "equalDistribution": "Phân phối bình đẳng",
         "finished": "Hoàn thành",
+        "lifetimeDiamond": "Trọn đời",
+        "lifetimeDiamondMembership": "Thành viên kim cương trọn đời",
         "live": "Tin nhắn giải thưởng trực tiếp! Những người khác có thể nhấp để yêu cầu 🎁",
         "maxPrize": "Giải thưởng tối đa là bao nhiêu?",
         "minPrize": "Giải thưởng tối thiểu là gì?",
         "numberOfWinners": "Số người chiến thắng",
         "onlyDiamond": "Chỉ người dùng kim cương",
+        "onlyStreak": "Chỉ những người dùng có streak",
+        "onlyUniquePerson": "Chỉ có con người độc nhất",
         "prizeFinished": "Tin nhắn giải thưởng của bạn hiện đã kết thúc",
         "randomDistribution": "Phân phối ngẫu nhiên",
+        "restrictedMessage": "Để nhận giải thưởng này, bạn phải có những điều sau",
+        "standardDiamond": "Tiêu chuẩn",
+        "streak": "Vệt",
+        "streakFull": "Một chuỗi {n} ngày hoặc lâu hơn",
+        "streakValue": "{n} ngày hoặc hơn",
         "title": "Phần thưởng",
         "totalAmount": "Tổng số tiền thưởng",
+        "uniquePerson": "Bằng chứng người duy nhất",
         "whoCanWin": "Ai có thể yêu cầu một phần?",
         "winner": "**{recipient}** đã thắng **{amount}** {token}"
     },
@@ -1107,9 +1189,23 @@
         "groupIndexAction": "Hành động chỉ mục nhóm",
         "makeProposal": "Đưa ra đề xuất",
         "maker": {
+            "achievementChatCost": "Cần phải thanh toán {cost} {chat} token để cung cấp CHIT theo yêu cầu. Bất kỳ CHAT nào chưa sử dụng sẽ được hoàn lại khi thành tích hết hạn.",
+            "achievementExpiry": "Hết hạn",
+            "achievementLogo": "Logo thành tích",
+            "achievementName": "Tên thành tích",
+            "achievementUrl": "URL thành tích",
+            "addTokenChatCost": "Cần phải thanh toán {cost} {chat} token để niêm yết một token mới trên OpenChat.",
             "amount": "Số lượng",
             "amountRules": "ít nhất 1 mã thông báo {token}",
+            "approvalError": "Không thể chấp thuận chuyển CHAT",
+            "awardingAchievementCanisterId": "Mã số hộp",
+            "awardingAchievementCanisterIdRules": "Chỉ có chiếc bình này mới có thể trao tặng thành tích",
+            "chitReward": "Phần thưởng CHIT",
+            "chitRewardRules": "ít nhất {value} CHIT",
+            "enterAchievementName": "Nhập tên cho thành tích",
             "enterAmount": "Nhập số lượng mã thông báo {token}",
+            "enterChitReward": "Nhập phần thưởng CHIT",
+            "enterMaxAwards": "Nhập số lượng người dùng tối đa để trao giải",
             "enterRecipientOwner": "Nhập số tiền gốc tài khoản của người nhận",
             "enterRecipientSubaccount": "Nhập tài khoản phụ người nhận tùy chọn",
             "enterSummary": "Nhập tóm tắt",
@@ -1118,6 +1214,8 @@
             "header": "Đưa ra đề xuất",
             "howToBuyUrl": "Làm thế nào để mua url",
             "ledgerCanisterId": "Id hộp sổ cái",
+            "maxAwards": "Người dùng tối đa được trao giải",
+            "maxAwardsRules": "ít nhất {value}",
             "message": "Cần phải đặt cọc số token {cost} {token} (bao gồm hai bộ phí chuyển khoản) để gửi đề xuất và số tiền này sẽ được hoàn lại nếu đề xuất được thông qua.",
             "recipientOwner": "Tiền gốc tài khoản của người nhận",
             "recipientSubaccount": "Tài khoản phụ của người nhận",
@@ -1291,7 +1389,7 @@
         "none": "Không ai",
         "owner": "Những chủ sở hữu"
     },
-    "roleChanged": "{changeBy} đã thay đổi vai trò của {change} từ {oldRole} thành {newRole}",
+    "roleChanged": "{changedBy} đã thay đổi vai trò của {changed} thành {newRole}",
     "rules": {
         "accept": "Chấp nhận",
         "acceptTitle": "Quy tắc trò chuyện",
@@ -1500,6 +1598,7 @@
     "unexpectedError": "Đã xảy ra lỗi",
     "unfollowThread": "Hủy theo dõi chủ đề này",
     "unfollowThreadFailed": "Hủy theo dõi chủ đề không thành công",
+    "unfreezeCommunity": "Giải phóng cộng đồng",
     "unfreezeGroup": "Giải phóng nhóm",
     "unknown": "Không xác định",
     "unknownUser": "Người dùng không xác định",
@@ -1654,5 +1753,5 @@
     "yourAccountIsSuspended": "Tài khoản của bạn bị treo",
     "yourChats": "Mục trờ chuyện của bạn",
     "youreBlocked": "Xin lỗi, bạn đã bị chặn khỏi nhóm này",
-    "yourRoleChanged": "{changeBy} đã thay đổi vai trò của bạn từ {oldRole} thành {newRole}"
+    "yourRoleChanged": "{changedBy} đã thay đổi vai trò của bạn thành {newRole}"
 }

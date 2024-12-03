@@ -324,10 +324,13 @@
                                 {#each resp.matches as group, i (group.chatId.groupId)}
                                     <SearchResult
                                         index={i}
-                                        avatarUrl={client.groupAvatarUrl({
-                                            ...group,
-                                            id: group.chatId,
-                                        })}
+                                        avatarUrl={client.groupAvatarUrl(
+                                            {
+                                                ...group,
+                                                id: group.chatId,
+                                            },
+                                            $selectedCommunity,
+                                        )}
                                         on:click={() => selectGroup(group)}>
                                         <h4 class="search-item-title">
                                             {group.name}
@@ -468,6 +471,12 @@
         flex: 1;
         display: flex;
         flex-direction: column;
+
+        h4 {
+            display: flex;
+            align-items: center;
+            gap: $sp2;
+        }
 
         .username {
             font-weight: 200;

@@ -6,10 +6,56 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Accept calls from the BotApiGateway ([#6846](https://github.com/open-chat-labs/open-chat/pull/6846))
+
+### Changed
+
+- Add `bot_api_gateway` canisterId to the canister state ([#6842](https://github.com/open-chat-labs/open-chat/pull/6842))
+- Prize message validation takes account of 5% fee ([#6854](https://github.com/open-chat-labs/open-chat/pull/6854))
+- Return `FailedToDeserialize` and log error if unable to read event ([#6873](https://github.com/open-chat-labs/open-chat/pull/6873))
+- Extract stable memory map so it can store additional datasets ([#6876](https://github.com/open-chat-labs/open-chat/pull/6876))
+- Make `ChannelId` comparisons use their 32bit representation ([#6885](https://github.com/open-chat-labs/open-chat/pull/6885))
+- Remove chat event updates after 31 days ([#6916](https://github.com/open-chat-labs/open-chat/pull/6916))
+- Make `StableMemoryMap` use strongly typed keys ([#6937](https://github.com/open-chat-labs/open-chat/pull/6937))
+- Disallow sending prize messages to threads ([#6960](https://github.com/open-chat-labs/open-chat/pull/6960))
+
+### Removed
+
+- Remove all code to migrate events to stable memory ([#6858](https://github.com/open-chat-labs/open-chat/pull/6858))
+- Remove the old `gate` field which has been superseded by `gate_config` ([#6902](https://github.com/open-chat-labs/open-chat/pull/6902))
+- Remove candid endpoints from User canisters ([#6905](https://github.com/open-chat-labs/open-chat/pull/6905))
+
+## [[2.0.1459](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1459-user)] - 2024-11-18
+
+### Added
+
+- Add new prize message criteria ([#6831](https://github.com/open-chat-labs/open-chat/pull/6831))
+
 ### Changed
 
 - Avoid extra key lookup when iterating over events ([#6680](https://github.com/open-chat-labs/open-chat/pull/6680))
 - Read events in batches when performing stable memory garbage collection ([#6682](https://github.com/open-chat-labs/open-chat/pull/6682))
+- Read events from stable memory once migration is complete ([#6722](https://github.com/open-chat-labs/open-chat/pull/6722))
+- Increase the minimum cycles balance ([#6725](https://github.com/open-chat-labs/open-chat/pull/6725))
+- Perform cycles check when migrating events to stable memory ([#6757](https://github.com/open-chat-labs/open-chat/pull/6757))
+- Store events in `HybridMap` which caches latest events on the heap ([#6762](https://github.com/open-chat-labs/open-chat/pull/6762))
+- Reduce size of metrics in memory ([#6765](https://github.com/open-chat-labs/open-chat/pull/6765))
+- Run cycles check (+ other background tasks) when executing timer jobs ([#6815](https://github.com/open-chat-labs/open-chat/pull/6815))
+- Add cycles balance check to more timer jobs ([#6822](https://github.com/open-chat-labs/open-chat/pull/6822))
+- Handle metric counters that overflow `u32::MAX` ([#6826](https://github.com/open-chat-labs/open-chat/pull/6826))
+- Avoid iterating all events when migrating private replies after group import ([#6827](https://github.com/open-chat-labs/open-chat/pull/6827))
+- Add the `BotCommand` access token type ([#6830](https://github.com/open-chat-labs/open-chat/pull/6830))
+- Avoid storing any events on the heap within direct chats ([#6838](https://github.com/open-chat-labs/open-chat/pull/6838))
+- Improve job to delete files after messages are deleted ([#6839](https://github.com/open-chat-labs/open-chat/pull/6839))
+
+### Removed
+
+- Remove events from being stored on the heap ([#6758](https://github.com/open-chat-labs/open-chat/pull/6758))
+- Removed a bunch of unwanted achievements ([#6794](https://github.com/open-chat-labs/open-chat/pull/6794))
+- Remove code to migrate events to stable memory ([#6837](https://github.com/open-chat-labs/open-chat/pull/6837))
+- Remove any spurious video calls in progress ([#6872](https://github.com/open-chat-labs/open-chat/pull/6872))
 
 ## [[2.0.1412](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1414-user)] - 2024-10-24
 

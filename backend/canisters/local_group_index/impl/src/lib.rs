@@ -1,6 +1,7 @@
 use crate::model::local_community_map::LocalCommunityMap;
 use candid::Principal;
 use canister_state_macros::canister_state;
+use constants::{CYCLES_REQUIRED_FOR_UPGRADE, MINUTE_IN_MS};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use event_store_utils::EventDeduper;
@@ -8,17 +9,15 @@ use local_group_index_canister::ChildCanisterType;
 use model::local_group_map::LocalGroupMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, VecDeque};
 use std::time::Duration;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChildCanisterWasms, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId,
 };
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
-use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
 use utils::env::Environment;
 use utils::iterator_extensions::IteratorExtensions;
-use utils::time::MINUTE_IN_MS;
 
 mod guards;
 mod jobs;
@@ -28,9 +27,9 @@ mod model;
 mod queries;
 mod updates;
 
-const GROUP_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + GROUP_CANISTER_TOP_UP_AMOUNT; // 0.18T cycles
+const GROUP_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + GROUP_CANISTER_TOP_UP_AMOUNT; // 0.5T cycles
 const COMMUNITY_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = GROUP_CANISTER_INITIAL_CYCLES_BALANCE;
-const GROUP_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
+const GROUP_CANISTER_TOP_UP_AMOUNT: Cycles = 200_000_000_000; // 0.2T cycles
 const COMMUNITY_CANISTER_TOP_UP_AMOUNT: Cycles = GROUP_CANISTER_TOP_UP_AMOUNT;
 const MARK_ACTIVE_DURATION: Milliseconds = 10 * 60 * 1000; // 10 minutes
 
@@ -124,11 +123,8 @@ impl RuntimeState {
                 internet_identity: self.data.internet_identity_canister_id,
             },
             group_upgrades_failed: group_upgrades_metrics.failed,
-            canisters_pending_events_migration_to_stable_memory: self
-                .data
-                .canisters_pending_events_migration_to_stable_memory
-                .len() as u32,
             community_upgrades_failed: community_upgrades_metrics.failed,
+            cycles_balance_check_queue_len: self.data.cycles_balance_check_queue.len() as u32,
         }
     }
 }
@@ -161,7 +157,7 @@ struct Data {
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
     pub rng_seed: [u8; 32],
-    pub canisters_pending_events_migration_to_stable_memory: Vec<CanisterId>,
+    pub cycles_balance_check_queue: VecDeque<CanisterId>,
 }
 
 impl Data {
@@ -214,7 +210,7 @@ impl Data {
                 .with_flush_delay(Duration::from_millis(MINUTE_IN_MS))
                 .build(),
             event_deduper: EventDeduper::default(),
-            canisters_pending_events_migration_to_stable_memory: Vec::new(),
+            cycles_balance_check_queue: VecDeque::new(),
         }
     }
 }
@@ -248,8 +244,8 @@ pub struct Metrics {
     pub community_versions: BTreeMap<String, u32>,
     pub canister_ids: CanisterIds,
     pub group_upgrades_failed: Vec<FailedUpgradeCount>,
-    pub canisters_pending_events_migration_to_stable_memory: u32,
     pub community_upgrades_failed: Vec<FailedUpgradeCount>,
+    pub cycles_balance_check_queue_len: u32,
 }
 
 #[derive(Serialize, Debug)]

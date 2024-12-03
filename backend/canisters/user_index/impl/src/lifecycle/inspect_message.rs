@@ -9,12 +9,6 @@ fn inspect_message() {
 fn accept_if_valid(state: &RuntimeState) {
     let method_name = ic_cdk::api::call::method_name().trim_end_matches("_msgpack").to_string();
 
-    // 'inspect_message' only applies to ingress messages so calls to c2c methods should be rejected
-    let is_c2c_method = method_name.starts_with("c2c") || method_name == "wallet_receive";
-    if is_c2c_method {
-        return;
-    }
-
     let is_valid = match method_name.as_str() {
         "claim_daily_chit"
         | "create_canister"
@@ -46,6 +40,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "upgrade_local_user_index_canister_wasm"
         | "mark_local_user_index_full"
         | "register_external_achievement"
+        | "register_bot"
         | "suspected_bots" => state.is_caller_governance_principal(),
         "award_external_achievement" | "modclub_callback" => true,
         _ => false,

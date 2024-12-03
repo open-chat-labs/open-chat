@@ -7,8 +7,9 @@ use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use chat_events::{ChannelThreadKeyPrefix, ChatMetricsInternal, KeyPrefix};
+use chat_events::ChatMetricsInternal;
 use community_canister::EventsResponse;
+use constants::{MINUTE_IN_MS, SNS_LEDGER_CANISTER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -27,20 +28,20 @@ use rand::rngs::StdRng;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
+use stable_memory_map::{ChatEventKeyPrefix, KeyPrefix};
 use std::cell::RefCell;
 use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BuildVersion, CanisterId, ChannelId, ChatMetrics,
-    CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, CommunityRole, Cryptocurrency, Cycles,
-    Document, Empty, FrozenGroupInfo, Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId, UserType,
+    CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cryptocurrency, Cycles, Document, Empty,
+    FrozenGroupInfo, Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use user_canister::CommunityCanisterEvent;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
-use utils::time::MINUTE_IN_MS;
 
 mod activity_notifications;
 mod guards;
@@ -116,13 +117,7 @@ impl RuntimeState {
 
     pub fn queue_access_gate_payments(&mut self, payment: GatePayment) {
         // Queue a payment to each owner less the fee
-        let owners: Vec<UserId> = self
-            .data
-            .members
-            .iter()
-            .filter(|m| matches!(m.role, CommunityRole::Owner))
-            .map(|m| m.user_id)
-            .collect();
+        let owners = self.data.members.owners();
 
         let owner_count = owners.len() as u128;
         let owner_share = (payment.amount * (100 - SNS_FEE_SHARE_PERCENT) / 100) / owner_count;
@@ -132,7 +127,7 @@ impl RuntimeState {
                     amount: owner_share,
                     fee: payment.fee,
                     ledger_canister: payment.ledger_canister_id,
-                    recipient: PaymentRecipient::Member(owner),
+                    recipient: PaymentRecipient::Member(*owner),
                     reason: PendingPaymentReason::AccessGate,
                 });
             }
@@ -142,9 +137,10 @@ impl RuntimeState {
         let treasury_share = payment.amount.saturating_sub(owner_share * owner_count);
         let amount = treasury_share.saturating_sub(payment.fee);
         if amount > 0 {
+            let is_chat = payment.ledger_canister_id == SNS_LEDGER_CANISTER_ID;
             self.data.pending_payments_queue.push(PendingPayment {
                 amount,
-                fee: payment.fee,
+                fee: if is_chat { 0 } else { payment.fee }, // No fee for BURNing
                 ledger_canister: payment.ledger_canister_id,
                 recipient: PaymentRecipient::Treasury,
                 reason: PendingPaymentReason::AccessGate,
@@ -164,20 +160,21 @@ impl RuntimeState {
         let (channels, membership) = if let Some(m) = member {
             let membership = CommunityMembership {
                 joined: m.date_added,
-                role: m.role,
+                role: m.role(),
                 rules_accepted: m
                     .rules_accepted
                     .as_ref()
                     .map_or(false, |version| version.value >= self.data.rules.text.version),
                 display_name: m.display_name().value.clone(),
-                lapsed: m.lapsed.value,
+                lapsed: m.lapsed().value,
             };
 
             // Return all the channels that the user is a member of
-            let channels: Vec<_> = m
-                .channels
-                .iter()
-                .filter_map(|c| self.data.channels.get(c))
+            let channels: Vec<_> = self
+                .data
+                .members
+                .channels_for_member(m.user_id)
+                .filter_map(|c| self.data.channels.get(&c))
                 .filter_map(|c| c.summary(Some(m.user_id), true, data.is_public, &data.members))
                 .collect();
 
@@ -232,7 +229,7 @@ impl RuntimeState {
     pub fn run_event_expiry_job(&mut self) {
         let now = self.env.now();
         let mut next_event_expiry = None;
-        let mut prize_refunds = Vec::new();
+        let mut final_prize_payments = Vec::new();
         for channel in self.data.channels.iter_mut() {
             let result = channel.chat.remove_expired_events(now);
             if let Some(expiry) = channel.chat.events.next_event_expiry() {
@@ -240,13 +237,13 @@ impl RuntimeState {
                     next_event_expiry = Some(expiry);
                 }
             }
-            prize_refunds.extend(result.prize_refunds);
+            final_prize_payments.extend(result.final_prize_payments);
             for thread in result.threads {
                 self.data
                     .stable_memory_keys_to_garbage_collect
-                    .push(KeyPrefix::ChannelThread(ChannelThreadKeyPrefix::new(
+                    .push(KeyPrefix::from(ChatEventKeyPrefix::new_from_channel(
                         channel.id,
-                        thread.root_message_index,
+                        Some(thread.root_message_index),
                     )));
             }
         }
@@ -258,7 +255,7 @@ impl RuntimeState {
                 .timer_jobs
                 .enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
         }
-        for pending_transaction in prize_refunds {
+        for pending_transaction in final_prize_payments {
             self.data.timer_jobs.enqueue_job(
                 TimerJob::MakeTransfer(MakeTransferJob {
                     pending_transaction,
@@ -272,7 +269,7 @@ impl RuntimeState {
 
     pub fn generate_channel_id(&mut self) -> ChannelId {
         loop {
-            let channel_id = self.env.rng().next_u32() as ChannelId;
+            let channel_id = self.env.rng().next_u32().into();
             if self.data.channels.get(&channel_id).is_none() {
                 return channel_id;
             }
@@ -290,8 +287,8 @@ impl RuntimeState {
             public: self.data.is_public,
             date_created: self.data.date_created,
             members: self.data.members.len(),
-            admins: self.data.members.admin_count(),
-            owners: self.data.members.owner_count(),
+            admins: self.data.members.admins().len() as u32,
+            owners: self.data.members.owners().len() as u32,
             blocked: self.data.members.blocked().len() as u32,
             invited: self.data.invited_users.len() as u32,
             frozen: self.data.is_frozen(),
@@ -299,7 +296,7 @@ impl RuntimeState {
             instruction_counts: self.data.instruction_counts_log.iter().collect(),
             event_store_client_info: self.data.event_store_client.info(),
             timer_jobs: self.data.timer_jobs.len() as u32,
-            stable_memory_event_migration_complete: self.data.stable_memory_event_migration_complete,
+            members_migrated_to_stable_memory: self.data.members_migrated_to_stable_memory,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -367,8 +364,10 @@ struct Data {
     expiring_member_actions: ExpiringMemberActions,
     user_cache: UserCache,
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
-    stable_memory_event_migration_complete: bool,
+    #[serde(default)]
     stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
+    #[serde(default)]
+    members_migrated_to_stable_memory: bool,
 }
 
 impl Data {
@@ -470,8 +469,8 @@ impl Data {
             expiring_member_actions: ExpiringMemberActions::default(),
             user_cache: UserCache::default(),
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
-            stable_memory_event_migration_complete: true,
             stable_memory_keys_to_garbage_collect: Vec::new(),
+            members_migrated_to_stable_memory: true,
         }
     }
 
@@ -570,7 +569,7 @@ impl Data {
     }
 
     pub fn remove_user_from_channel(&mut self, user_id: UserId, channel_id: ChannelId, now: TimestampMillis) {
-        self.members.mark_member_left_channel(&user_id, channel_id, now);
+        self.members.mark_member_left_channel(user_id, channel_id, false, now);
         self.expiring_members.remove_member(user_id, Some(channel_id));
         self.expiring_member_actions.remove_member(user_id, Some(channel_id));
     }
@@ -591,7 +590,7 @@ impl Data {
                 channel.chat.members.update_lapsed(user_id, lapsed, now);
             }
         } else {
-            self.members.updated_lapsed(user_id, lapsed, now);
+            self.members.update_lapsed(user_id, lapsed, now);
         }
     }
 
@@ -632,24 +631,22 @@ impl Data {
             }
         } else if let Some(new_gate_expiry) = new_gate_expiry {
             // Else if the new gate has an expiry then add members to the expiry schedule.
-            let mut user_ids = Vec::new();
-
-            if let Some(channel_id) = channel_id {
+            let user_ids_iter = if let Some(channel_id) = channel_id {
                 if let Some(channel) = self.channels.get_mut(&channel_id) {
-                    user_ids = channel.chat.members.iter().map(|m| m.user_id).collect();
+                    channel.chat.members.iter_members_who_can_lapse()
+                } else {
+                    Box::new(std::iter::empty())
                 }
             } else {
-                user_ids = self.members.iter().map(|m| m.user_id).collect();
-            }
+                self.members.iter_members_who_can_lapse()
+            };
 
-            for user_id in user_ids {
-                if self.can_member_lapse(&user_id, channel_id) {
-                    self.expiring_members.push(ExpiringMember {
-                        expires: now + new_gate_expiry,
-                        channel_id,
-                        user_id,
-                    });
-                }
+            for user_id in user_ids_iter {
+                self.expiring_members.push(ExpiringMember {
+                    expires: now + new_gate_expiry,
+                    channel_id,
+                    user_id,
+                });
             }
         }
     }
@@ -670,9 +667,9 @@ impl Data {
 
         if hidden_for_non_members {
             if let Some(member) = member {
-                if member.suspended.value {
+                if member.suspended().value {
                     return Err(EventsResponse::UserSuspended);
-                } else if member.lapsed.value {
+                } else if member.lapsed().value {
                     return Err(EventsResponse::UserLapsed);
                 }
             } else {
@@ -715,7 +712,7 @@ pub struct Metrics {
     pub instruction_counts: Vec<InstructionCountEntry>,
     pub event_store_client_info: EventStoreClientInfo,
     pub timer_jobs: u32,
-    pub stable_memory_event_migration_complete: bool,
+    pub members_migrated_to_stable_memory: bool,
     pub canister_ids: CanisterIds,
 }
 

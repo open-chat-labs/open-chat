@@ -148,6 +148,86 @@
     "blockUser": "Blocca utente",
     "blockUserFailed": "Impossibile bloccare l'utente",
     "blockUserSucceeded": "L'utente è stato bloccato",
+    "bots": {
+        "builtin": {
+            "desc": "Questo bot fornisce i comandi OpenChat integrati",
+            "name": "Incorporato"
+        },
+        "crypto": {
+            "desc": "Invia criptovalute a un altro utente",
+            "params": {
+                "amount": {
+                    "desc": "L'importo che vuoi inviare",
+                    "name": "Quantità",
+                    "placeholder": "Inserisci l'importo"
+                },
+                "token": {
+                    "desc": "Il token che vuoi inviare",
+                    "name": "Gettone",
+                    "placeholder": "Inserisci il token"
+                }
+            }
+        },
+        "diamond": {
+            "desc": "Pubblica un link per spiegare l'appartenenza a Diamond"
+        },
+        "failed": "Spiacenti, non siamo riusciti a eseguire il comando del bot",
+        "faq": {
+            "desc": "Crea un collegamento a un argomento FAQ",
+            "params": {
+                "topic": {
+                    "choices": {
+                        "airdrop": "Airdrop mensile",
+                        "android": "Applicazione Android",
+                        "buychat": "Acquistare CHAT",
+                        "content": "Linee guida sui contenuti",
+                        "diamond": "Iscrizione Diamond",
+                        "info": "Informazioni",
+                        "ios": "applicazione iOS",
+                        "referral": "Ricompense per referral",
+                        "security": "Sicurezza",
+                        "sendtokens": "Invio di token",
+                        "shortcuts": "Scorciatoie",
+                        "storage": "Magazzinaggio",
+                        "style": "Messaggi di stile",
+                        "translation": "Traduzione dei contenuti",
+                        "voting": "Voto",
+                        "wallet": "Portafoglio"
+                    },
+                    "desc": "L'argomento specifico delle FAQ a cui sei interessato",
+                    "name": "Argomento FAQ",
+                    "placeholder": "Seleziona argomento"
+                }
+            }
+        },
+        "gif": {
+            "desc": "Trova una gif da inviare",
+            "params": {
+                "term": {
+                    "desc": "Inserisci il termine di ricerca per la tua gif",
+                    "name": "Termine di ricerca",
+                    "placeholder": "Termine di ricerca"
+                }
+            }
+        },
+        "matchingCommands": "Comandi corrispondenti",
+        "poll": {
+            "desc": "Crea un sondaggio nella chat corrente"
+        },
+        "search": {
+            "desc": "Avvia una ricerca nella chat corrente",
+            "params": {
+                "term": {
+                    "desc": "Inserisci il termine da cercare nella chat",
+                    "name": "Termine di ricerca",
+                    "placeholder": "Termine di ricerca"
+                }
+            }
+        },
+        "witch": {
+            "desc": "Evoca la strega"
+        }
+    },
     "cancel": "Annulla",
     "cancelInvite": "Annulla invito",
     "cancelInviteFailed": "Errore durante l'annullamento dell'invito",
@@ -301,8 +381,10 @@
         "visibility": "Visibilità"
     },
     "communityDisplayNameRules": "solo all'interno di questa comunità",
+    "communityFrozen": "Comunità congelata",
     "communityMembers": "Membri della comunità",
     "communityTheme": "Tema comunitario",
+    "communityUnfrozen": "Comunità sbloccata",
     "confirmLeaveGroup": "Vuoi davvero lasciare questo {level}?",
     "confirmMakeGroupPrivate": "Vuoi assolutamente rendere questo {level} privato? Attualmente questa operazione non può essere annullata!",
     "confirmMakeGroupPublic": "Vuoi davvero rendere pubblico questo {level}?\n\nI messaggi esistenti rimarranno privati, tutti i nuovi messaggi saranno pubblici.",
@@ -343,7 +425,7 @@
         "showZeroBalance": "mostra di più",
         "swap": "Scambio",
         "token": "gettone",
-        "tokens": "Gettoni",
+        "tokens": "Token",
         "topUp": "Riempire",
         "topUpBlurb": "Per ricaricare, trasferisci semplicemente un po' di {token} sul conto sopra.",
         "total": "Totale",
@@ -368,6 +450,8 @@
         "claim": "Richiedi CHIT!",
         "comeback": "Torna tra {time}",
         "extendStreak": "Estendi la serie",
+        "failedToClaim": "Spiacenti, non siamo riusciti a richiedere il tuo CHIT giornaliero",
+        "hideWhenClaimed": "Nascondi l'icona di richiesta CHIT ⚡️ dopo aver richiesto ogni giorno",
         "info": "Più a lungo mantieni la tua serie, più CHIT giornalieri puoi richiedere!",
         "title": "Mantieni la tua serie",
         "utcInfo": "Le serie CHIT e le finestre di reclamo sono rappresentate utilizzando l'UTC, quindi potresti trovare più chiaro visualizzare il tuo calendario in UTC anziché nel fuso orario locale.",
@@ -439,11 +523,13 @@
     "failedToCopyLinkToClipboard": "Impossibile copiare il collegamento negli appunti",
     "failedToCopyToClipboard": "Impossibile copiare negli appunti {account}",
     "failedToCopyUrlToClipboard": "Impossibile copiare l'URL ({url}) negli appunti",
+    "failedToFreezeCommunity": "Impossibile congelare la community",
     "failedToFreezeGroup": "Impossibile bloccare il gruppo",
     "failedToLeaveGroup": "Si è verificato un errore nel tentativo di rimuoverti da {level}",
     "failedToShareLink": "Impossibile condividere il collegamento",
     "failedToShareMessage": "Impossibile condividere questo messaggio",
     "failedToSuspendUser": "Impossibile sospendere l'utente",
+    "failedToUnfreezeCommunity": "Impossibile sbloccare la community",
     "failedToUnfreezeGroup": "Impossibile sbloccare il gruppo",
     "failedToUnsuspendUser": "Impossibile annullare la sospensione dell'utente",
     "faq": {
@@ -451,8 +537,10 @@
         "airdrop_q": "Ci sarà un lancio aereo?",
         "android_app_a": "Per quanto riguarda iOS (vedi sopra), l'app web OpenChat <em>funziona</em> già su Android e puoi \"Aggiungi alla schermata iniziale\" dal menu del browser. Questo ti dà un'icona standard per aprire l'app che appare più simile a un'app nativa senza barra dell'URL. Il supporto Progressive Web App (PWA) è molto buono su Android. Come iOS, supporta le notifiche push web ma <em>non</em> supporta anche la lettura dei contatti dal telefono (se concedi l'autorizzazione in ogni caso). Oltre a ciò, il supporto per WebRTC è molto migliore. Pertanto, il caso della produzione di un'app Android nativa è meno convincente e verrà dopo un'app iOS nativa. Le stesse considerazioni si applicano alla creazione di un'app Android come iOS in termini di puntamento a un sottile wrapper nativo attorno a un'app Web principale e per quanto riguarda la certificazione sul Play Store Android.",
         "android_app_q": "Quando ci sarà un'app per Android?",
-        "buychat_a": "Puoi acquistare CHAT con USDC su <a target=\"_blank\" href=\"https://www.helixmarkets.io/trade/CHATUSDC\">Helix Markets</a> . Altrimenti devi prima <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">acquistare ICP</a> che potrai poi scambiare con CHAT su vari scambi decentralizzati (DEX).<ul><li> <a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">ICDex</a></li><li> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPSwap</a></li></ul> DFINITY sta aggiungendo il supporto per l&#39; <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">API Rosetta</a> per i token ICRC1 (che include CHAT) rendendoli molto più facili da integrare con gli scambi centralizzati (CEX). Una volta che ciò sarà accaduto, è probabile che CHAT sarà disponibile per fare trading su CEX per ICP o USDT.",
+        "buychat_a": "Puoi acquistare CHAT su vari exchange di criptovalute:<br><br><table><tr><th> Scambio</th><th> Stile</th><th> Acquista con</th><th> CEX/DEX</th></tr><tr><td> <a target=\"_blank\" href=\"https://www.helixmarkets.io/trade/CHATUSDC\">Mercati Helix</a></td><td> Libro degli ordini</td><td> USDC</td><td> Ibrido</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.bitmart.com/trade?symbol=CHAT_USDT\">BitMart</a></td><td> Libro degli ordini</td><td> Dollaro statunitense</td><td> CEX</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.bitrue.com/trade/chat_usdt\">Bivero</a></td><td> Libro degli ordini</td><td> Dollaro statunitense</td><td> CEX</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.coinstore.com/spot/chatusdt\">Negozio di monete</a></td><td> Libro degli ordini</td><td> Dollaro statunitense</td><td> CEX</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.lbank.com/trade/chat_usdt\">Banca L</a></td><td> Libro degli ordini</td><td> Dollaro statunitense</td><td> CEX</td></tr><tr><td> <a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">ICDex</a></td><td> Libro degli ordini</td><td> PIC</td><td> DEX</td></tr><tr><td> <a target=\"_blank\" href=\"https://www.kongswap.io/?viewtab=swap&pool=CHAT_ckUSDT\">Scambio di Kong</a></td><td> Scambio (AMM)</td><td> Dollaro statunitense</td><td> DEX</td></tr><tr><td> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">Scambio ICP</a></td><td> Scambio (AMM)</td><td> PIC</td><td> DEX</td></tr><tr><td> <a target=\"_blank\" href=\"https://app.sonic.ooo/?tokenin=ryjl3-tyaaa-aaaaa-aaaba-cai&tokenout=2ouva-viaaa-aaaaq-aaamq-cai\">Sonico</a></td><td> Scambio (AMM)</td><td> PIC</td><td> DEX</td></tr></table><br> Puoi anche scambiare token per CHAT direttamente dal tuo portafoglio OpenChat, che utilizzerà automaticamente lo scambio con il miglior prezzo disponibile.",
         "buychat_q": "Come posso acquistare token CHAT?",
+        "buyicp_a": "<ol><li>Puoi acquistare token ICP sui principali exchange come Coinbase, Binance, Kraken e altri. Queste piattaforme ti consentono di scambiare varie criptovalute per ICP.</li><li> La dapp Network Nervous System (NNS) offre una funzionalità per acquistare ICP tramite carta di credito. Dovrai effettuare l&#39;accesso con la tua Identità Internet e seguire le istruzioni per completare la transazione <a target=\"_blank\" href=\"https://support.dfinity.org/hc/en-us/articles/21363667463828-How-do-I-purchase-ICP-from-within-the-NNS-dapp\">Domande frequenti &gt; Computer Internet &gt; Network Nervous System (NNS) &gt; Come acquisto ICP dall&#39;interno della dapp NNS?</a> .</li><li> Puoi usare gli exchange decentralizzati (DEX) su Internet Computer per scambiare altre criptovalute con ICP. Ad esempio:<ul><li> <a target=\"_blank\" href=\"https://iclight.io/ICDex/ckBTC/ICP\">ICDex.io</a> ti consente di scambiare Bitcoin (sotto forma di ckBTC) con ICP.</li><li> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/token/details/ryjl3-tyaaa-aaaaa-aaaba-cai\">ICP Swap</a> offre coppie di trading con ICP.</li></ul></li></ol>",
+        "buyicp_q": "Come posso acquistare i token ICP?",
         "content_a": "Per i dettagli completi delle nostre linee guida sui contenuti e sulla moderazione <a href=\"/guidelines\">vedi qui</a>.",
         "content_q": "Che tipo di contenuto è consentito?",
         "diamond_a": "Puoi passare all'abbonamento Diamond per avere accesso a funzionalità extra o migliorate all'interno di OpenChat. <a href=\"/diamond\">Vedi qui</a> per un confronto delle funzioni e per l'aggiornamento.",
@@ -489,6 +577,7 @@
     "followThreadFailed": "Seguire il thread non è riuscito",
     "fontSize": "Dimensione del font",
     "forward": "Inoltra",
+    "freezeCommunity": "Congelare la comunità",
     "freezeGroup": "Congelare il gruppo",
     "giphyMessage": "Messaggio gif",
     "goHome": "Home",
@@ -604,9 +693,9 @@
         "link": "Collegamento",
         "linkedAccounts": {
             "currentAccount": "Attualmente connesso con questo preside",
-            "linkAdvice": "Per collegare un nuovo account Accedi al nuovo account che desideri collegare, quindi accedi al tuo account attuale e infine collega i due account.",
-            "linkAnother": "Collega un altro",
-            "section": "Account collegati",
+            "linkAdvice": "Per aggiungere un nuovo provider di accesso, accedi prima con il nuovo provider che desideri aggiungere, poi accedi con il tuo provider attuale e infine collega i due.",
+            "linkAnother": "Aggiungine un altro",
+            "section": "Provider di accesso",
             "start": "Iniziare"
         },
         "linkIdentity": "Collegamento Identità",
@@ -657,20 +746,10 @@
     "lastOnline": "Ultimo online {duration} fa",
     "learnToEarn": {
         "accepted_swap_offer": "Accetta un'offerta di scambio",
-        "appointed_as_group_admin": "Nominare un gruppo/canale di amministratori",
-        "appointed_as_group_mod": "Essere nominato moderatore di un gruppo/canale",
-        "appointed_as_group_owner": "Essere nominato proprietario di un gruppo/canale",
-        "appointed_group_admin": "Nominare un amministratore di gruppo/canale",
-        "appointed_group_mod": "Nominare un moderatore del gruppo/canale",
-        "appointed_group_owner": "Nominare un proprietario di gruppo/canale",
         "changed_theme": "Cambia il tema",
         "deleted_message": "Elimina un messaggio",
-        "direct_chat_5": "Avere 5 chat dirette",
-        "direct_chats_10": "Avere 10 chat dirette",
-        "direct_chats_20": "Avere 20 chat dirette",
         "done": "Fatto",
         "edited_message": "Modifica un messaggio",
-        "enabled_disappearing_messages": "Abilita i messaggi che scompaiono",
         "external": "Da fare (esterno)",
         "externalInfo": "I risultati esterni sono definiti da terze parti. Basta cliccare sul link e seguire le istruzioni per ricevere una ricompensa CHIT.",
         "favourited_chat": "Contrassegna una chat come preferita",
@@ -683,13 +762,8 @@
         "joined_group": "Unisciti a un gruppo",
         "nothingDone": "Hai ancora molto lavoro da fare!",
         "nothingLeftToDo": "Rilassati! Non hai più niente da fare",
-        "owned_group_with_1_diamond_member": "Possiedi un gruppo/comunità con 1 membro verificato",
-        "owned_group_with_10_diamond_members": "Possedeva un gruppo/comunità con 10 membri verificati",
-        "owned_group_with_100_diamond_members": "Possedeva un gruppo/comunità con 100 membri verificati",
-        "owned_group_with_1000_diamond_members": "Possedeva un gruppo/comunità con 1000 membri verificati",
         "percentageComplete": "{perc}% Completato",
         "pinned_chat": "Aggiungi una chat in cima all'elenco",
-        "pinned_message": "Aggiungi un messaggio ai preferiti",
         "proved_unique_personhood": "Verifica la tua unicità",
         "quote_replied": "Risposta a un messaggio citato",
         "reacted_to_message": "Reagire a un messaggio",
@@ -717,10 +791,8 @@
         "sent_video": "Invia un video",
         "set_avatar": "Carica l'avatar del tuo profilo",
         "set_bio": "Aggiorna la biografia del tuo profilo",
-        "set_community_access_gate": "Imposta un cancello di accesso alla comunità",
         "set_community_display_name": "Imposta un nome visualizzato per la community",
         "set_display_name": "Aggiorna il tuo nome visualizzato",
-        "set_group_access_gate": "Imposta un gate di accesso al gruppo/canale",
         "set_pin": "Imposta un codice PIN sul tuo portafoglio",
         "showChitPopup": "Avvisami dei miei risultati",
         "started_call": "Avvia una videochiamata",
@@ -730,12 +802,10 @@
         "streak_30": "Ottieni una serie di 30 giorni",
         "streak_365": "Ottieni una serie di 365 giorni",
         "streak_7": "Ottieni una serie di 7 giorni",
-        "suggested_translation": "Suggerisci una traduzione",
         "swapped_from_wallet": "Scambia un token dal portafoglio",
         "tipped_message": "Invia un messaggio",
         "title": "Risultati",
         "todo": "Da fare",
-        "translation_accepted": "Fai accettare una traduzione",
         "upgrade_to_gold_diamond": "Passa all'abbonamento Diamond a vita",
         "upgraded_to_diamond": "Passa all'abbonamento Diamond",
         "voted_on_poll": "Vota in un sondaggio"
@@ -1055,21 +1125,33 @@
         "claim": "Reclamo",
         "claimed": "Successo!",
         "claimFailed": "Ci dispiace che il tuo reclamo non abbia avuto successo! La prossima volta sarai più fortunato.",
+        "claimIneligible": "Ci dispiace che tu non soddisfi i requisiti per richiedere questo premio.",
         "click": "Fai clic sul pulsante in basso per avere la possibilità di vincere un premio.",
         "creatingYourPrizeMessage": "Ti preghiamo di attendere mentre creiamo il messaggio del tuo premio",
+        "diamondMembership": "Iscrizione Diamond",
         "distribution": "Come dovrebbero essere distribuiti i premi?",
         "duration": "Per quanto tempo sarà attivo il premio?",
         "equalDistribution": "Equa distribuzione",
         "finished": "Finito",
+        "lifetimeDiamond": "Tutta la vita",
+        "lifetimeDiamondMembership": "Abbonamento Diamond a vita",
         "live": "Messaggio del premio in diretta! Gli altri possono fare clic per rivendicare 🎁",
         "maxPrize": "Qual è il premio massimo?",
         "minPrize": "Qual è il premio minimo?",
         "numberOfWinners": "Numero di vincitori",
         "onlyDiamond": "Solo utenti Diamond",
+        "onlyStreak": "Solo utenti con una serie",
+        "onlyUniquePerson": "Solo gli umani unici",
         "prizeFinished": "Il tuo messaggio premio è terminato",
         "randomDistribution": "Distribuzione casuale",
+        "restrictedMessage": "Per richiedere questo premio devi avere quanto segue",
+        "standardDiamond": "Standard",
+        "streak": "Strisciante",
+        "streakFull": "Una serie di {n} giorni o più",
+        "streakValue": "{n} giorni o più",
         "title": "Premio",
         "totalAmount": "Importo totale del premio",
+        "uniquePerson": "Prova di persona unica",
         "whoCanWin": "Chi può rivendicare una quota?",
         "winner": "**{recipient}** ha vinto **{amount}** {token}"
     },
@@ -1107,9 +1189,23 @@
         "groupIndexAction": "Azioni indice di gruppo",
         "makeProposal": "Fai una proposta",
         "maker": {
+            "achievementChatCost": "È richiesto un pagamento di {cost} {chat} token per fornire il CHIT richiesto. Qualsiasi CHAT non speso verrà rimborsato alla scadenza dell'obiettivo.",
+            "achievementExpiry": "Scadenza",
+            "achievementLogo": "Logo del risultato",
+            "achievementName": "Nome del risultato",
+            "achievementUrl": "URL del risultato",
+            "addTokenChatCost": "Per elencare un nuovo token su OpenChat è richiesto il pagamento di {cost} {chat} token.",
             "amount": "Quantità",
             "amountRules": "almeno 1 token {token}",
+            "approvalError": "Impossibile approvare il trasferimento CHAT",
+            "awardingAchievementCanisterId": "ID contenitore",
+            "awardingAchievementCanisterIdRules": "Solo questo contenitore può conferire il risultato",
+            "chitReward": "Ricompensa CHIT",
+            "chitRewardRules": "almeno {value} CHIT",
+            "enterAchievementName": "Inserisci un nome per il risultato",
             "enterAmount": "Inserisci una quantità di token {token}",
+            "enterChitReward": "Inserisci la ricompensa CHIT",
+            "enterMaxAwards": "Inserisci il numero massimo di utenti da premiare",
             "enterRecipientOwner": "Inserisci l'entità del conto del destinatario",
             "enterRecipientSubaccount": "Inserisci un account secondario del destinatario facoltativo",
             "enterSummary": "Inserisci un riepilogo",
@@ -1118,6 +1214,8 @@
             "header": "Fai una proposta",
             "howToBuyUrl": "Come acquistare l'URL",
             "ledgerCanisterId": "ID contenitore registro",
+            "maxAwards": "Numero massimo di utenti assegnati",
+            "maxAwardsRules": "almeno {value}",
             "message": "Per presentare una proposta è richiesto un deposito di token {cost} {token} (include due serie di commissioni di trasferimento) che verrà rimborsato se la proposta viene adottata.",
             "recipientOwner": "Entità del conto del destinatario",
             "recipientSubaccount": "Sottoconto del destinatario",
@@ -1291,7 +1389,7 @@
         "none": "Nessuno",
         "owner": "Proprietari"
     },
-    "roleChanged": "{changedBy} ha cambiato il ruolo di {changed} da {oldRole} a {newRole}",
+    "roleChanged": "{changedBy} ha cambiato il ruolo di {changed} in {newRole}",
     "rules": {
         "accept": "Accettare",
         "acceptTitle": "Regole della chat",
@@ -1500,6 +1598,7 @@
     "unexpectedError": "Errore inaspettato",
     "unfollowThread": "Smetti di seguire questo thread",
     "unfollowThreadFailed": "Smetti di seguire il thread non riuscito",
+    "unfreezeCommunity": "Scongelare la comunità",
     "unfreezeGroup": "Sblocca gruppo",
     "unknown": "Sconosciuto",
     "unknownUser": "Utente sconosciuto",
@@ -1654,5 +1753,5 @@
     "yourAccountIsSuspended": "Il tuo account è sospeso",
     "yourChats": "Le tue chat",
     "youreBlocked": "Siamo spiacenti, sei stato bloccato da questo gruppo",
-    "yourRoleChanged": "{changedBy} ha cambiato il tuo ruolo da {oldRole} a {newRole}"
+    "yourRoleChanged": "{changedBy} ha cambiato il tuo ruolo in {newRole}"
 }

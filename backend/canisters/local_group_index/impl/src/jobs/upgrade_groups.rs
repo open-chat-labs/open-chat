@@ -1,4 +1,5 @@
 use crate::{mutate_state, RuntimeState};
+use constants::min_cycles_balance;
 use ic_cdk::api::management_canister::main::CanisterInstallMode;
 use ic_cdk_timers::TimerId;
 use local_group_index_canister::ChildCanisterType;
@@ -8,7 +9,6 @@ use tracing::trace;
 use types::{BuildVersion, CanisterId, ChatId, Cycles, CyclesTopUp};
 use utils::canister;
 use utils::canister::{install, ChunkedWasmToInstall, FailedUpgrade, WasmToInstall};
-use utils::consts::min_cycles_balance;
 
 type CanisterToUpgrade = canister::CanisterToInstall<group_canister::post_upgrade::Args>;
 
@@ -18,6 +18,7 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none()
+        && state.data.group_upgrade_concurrency > 0
         && (state.data.groups_requiring_upgrade.count_pending() > 0
             || state.data.groups_requiring_upgrade.count_in_progress() > 0)
     {
@@ -44,6 +45,8 @@ fn run() {
 fn next_batch(state: &mut RuntimeState) -> Option<Vec<CanisterToUpgrade>> {
     if state.data.event_store_client.info().events_pending > 100000 {
         return Some(Vec::new());
+    } else if state.data.group_upgrade_concurrency == 0 {
+        return None;
     }
 
     let count_in_progress = state.data.groups_requiring_upgrade.count_in_progress();

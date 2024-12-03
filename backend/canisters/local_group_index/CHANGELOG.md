@@ -6,9 +6,109 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove references to bot_api_gateway ([#6944](https://github.com/open-chat-labs/open-chat/pull/6944))
+
+## [[2.0.1482](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1482-local_group_index)] - 2024-11-29
+
+### Changed
+
+- Make `ChannelId` comparisons use their 32bit representation ([#6885](https://github.com/open-chat-labs/open-chat/pull/6885))
+
+### Removed
+
+- Remove the old `gate` field which has been superseded by `gate_config` ([#6902](https://github.com/open-chat-labs/open-chat/pull/6902))
+
+## [[2.0.1462](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1462-local_group_index)] - 2024-11-21
+
+### Changed
+
+- Pass in `bot_api_gateway` when creating groups and communities ([#6842](https://github.com/open-chat-labs/open-chat/pull/6842))
+- Simplify `inspect_message` ([#6847](https://github.com/open-chat-labs/open-chat/pull/6847))
+- Stop upgrade job if concurrency set to 0 ([#6863](https://github.com/open-chat-labs/open-chat/pull/6863))
+
+### Removed
+
+- Remove all code to migrate events to stable memory ([#6858](https://github.com/open-chat-labs/open-chat/pull/6858))
+
+## [[2.0.1452](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1452-local_group_index)] - 2024-11-14
+
+### Changed
+
+- Top up canisters which have fewer than `MIN_CYCLES_BALANCE` cycles ([#6819](https://github.com/open-chat-labs/open-chat/pull/6819))
+
+## [[2.0.1449](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1449-local_group_index)] - 2024-11-13
+
+### Added
+
+- Run job to trigger migrating events in all Groups to stable memory ([#6810](https://github.com/open-chat-labs/open-chat/pull/6810))
+
+## [[2.0.1448](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1448-local_group_index)] - 2024-11-13
+
+### Added
+
+- Add job to check cycles balances of child canisters every week ([#6796](https://github.com/open-chat-labs/open-chat/pull/6796))
+
+### Changed
+
+- Skip check for canisters that have been topped up in the last 10 days ([#6802](https://github.com/open-chat-labs/open-chat/pull/6802))
+
+## [[2.0.1442](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1442-local_group_index)] - 2024-11-12
+
+### Changed
+
+- Update the canister creation fee to 0.5T ([#6789](https://github.com/open-chat-labs/open-chat/pull/6789))
+
+## [[2.0.1440](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1440-local_group_index)] - 2024-11-11
+
+### Changed
+
+- Continue creating canisters after delay if cycles balance too low ([#6783](https://github.com/open-chat-labs/open-chat/pull/6783))
+
+## [[2.0.1438](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1438-local_group_index)] - 2024-11-11
+
+### Changed
+
+- Add more canisters to the pools before fee increases ([#6777](https://github.com/open-chat-labs/open-chat/pull/6777))
+
+## [[2.0.1435](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1435-local_group_index)] - 2024-11-07
+
+### Changed
+
+- Re-queue all canisters to ensure all have fully migrated ([#6760](https://github.com/open-chat-labs/open-chat/pull/6760))
+
+## [[2.0.1432](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1432-local_group_index)] - 2024-11-06
+
+### Changed
+
+- Re-enable job to trigger migrating events to stable memory ([#6747](https://github.com/open-chat-labs/open-chat/pull/6747))
+
+## [[2.0.1428](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1428-local_group_index)] - 2024-11-06
+
+### Changed
+
+- Expose which canisters are pending migration to stable memory in metrics ([#6742](https://github.com/open-chat-labs/open-chat/pull/6742))
+
+## [[2.0.1428](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1428-local_group_index)] - 2024-11-06
+
+### Changed
+
+- Enable job to trigger migrating events to stable memory for communities ([#6738](https://github.com/open-chat-labs/open-chat/pull/6738))
+
+## [[2.0.1427](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1427-local_group_index)] - 2024-11-06
+
 ### Added
 
 - Trigger migrating Group/Community events to stable memory using canister timer job ([#6671](https://github.com/open-chat-labs/open-chat/pull/6671))
+
+### Changed
+
+- Repopulate event migration queue because threads also need to be handled ([#6704](https://github.com/open-chat-labs/open-chat/pull/6704))
+- Increase the max cycles required during upgrades ([#6725](https://github.com/open-chat-labs/open-chat/pull/6725))
+- Increase size of cycles top-ups ([#6727](https://github.com/open-chat-labs/open-chat/pull/6727))
+- Temporarily disable job to trigger event migration ([#6730](https://github.com/open-chat-labs/open-chat/pull/6730))
+- Increase reserved cycles limit for the Windoge98 community ([#6732](https://github.com/open-chat-labs/open-chat/pull/6732))
 
 ## [[2.0.1410](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1410-local_group_index)] - 2024-10-24
 

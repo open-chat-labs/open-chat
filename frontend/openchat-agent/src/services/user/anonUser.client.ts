@@ -158,6 +158,14 @@ export class AnonUserClient {
         throw new AnonymousOperationError();
     }
 
+    getCachedEventsByIndex(
+        _eventIndexes: number[],
+        _chatId: DirectChatIdentifier,
+        _threadRootMessageIndex: number | undefined,
+    ): Promise<[EventsResponse<ChatEvent>, Set<number>]> {
+        throw new AnonymousOperationError();
+    }
+
     chatEventsByIndex(
         _eventIndexes: number[],
         _chatId: DirectChatIdentifier,

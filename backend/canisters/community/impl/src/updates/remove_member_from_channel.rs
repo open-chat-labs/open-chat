@@ -4,7 +4,7 @@ use canister_tracing_macros::trace;
 use community_canister::remove_member_from_channel::{Response::*, *};
 use group_chat_core::RemoveMemberResult;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn remove_member_from_channel(args: Args) -> Response {
     run_regular_jobs();
@@ -20,8 +20,8 @@ fn remove_member_from_channel_impl(args: Args, state: &mut RuntimeState) -> Resp
     let caller = state.env.caller();
 
     let user_id = match state.data.members.get(caller) {
-        Some(m) if m.suspended.value => return UserSuspended,
-        Some(m) if m.lapsed.value => return UserLapsed,
+        Some(m) if m.suspended().value => return UserSuspended,
+        Some(m) if m.lapsed().value => return UserLapsed,
         Some(m) => m.user_id,
         _ => return UserNotInCommunity,
     };

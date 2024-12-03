@@ -7,7 +7,7 @@ use community_canister::register_poll_vote::{Response::*, *};
 use types::{Achievement, Chat, EventIndex, TotalVotes};
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn register_poll_vote(args: Args) -> Response {
     run_regular_jobs();
@@ -27,9 +27,9 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> Response {
         None => return UserNotInCommunity,
     };
 
-    if member.suspended.value {
+    if member.suspended().value {
         return UserSuspended;
-    } else if member.lapsed.value {
+    } else if member.lapsed().value {
         return UserLapsed;
     }
 
@@ -43,7 +43,7 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> Response {
         None => return UserNotInChannel,
     };
 
-    if channel_member.lapsed.value {
+    if channel_member.lapsed().value {
         return UserLapsed;
     }
 
@@ -65,7 +65,7 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> Response {
     match result {
         RegisterPollVoteResult::Success(votes, creator) => {
             if creator != user_id {
-                if channel.chat.members.get(&creator).map_or(false, |m| !m.user_type.is_bot()) {
+                if channel.chat.members.get(&creator).map_or(false, |m| !m.user_type().is_bot()) {
                     if let Some((message, event_index)) = channel.chat.events.message_internal(
                         EventIndex::default(),
                         args.thread_root_message_index,

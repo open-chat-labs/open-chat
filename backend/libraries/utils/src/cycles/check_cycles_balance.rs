@@ -1,11 +1,11 @@
-use crate::consts::CYCLES_REQUIRED_FOR_UPGRADE;
 use canister_client::generate_c2c_call;
+use constants::CYCLES_REQUIRED_FOR_UPGRADE;
 use std::cmp::max;
 use tracing::error;
 use types::{CanisterId, Cycles};
 
 const FREEZE_THRESHOLD_SECONDS: u32 = 30 * 24 * 60 * 60; // 30 days
-const MIN_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + 50_000_000_000;
+pub const MIN_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + 50_000_000_000;
 const GB_STORAGE_PER_SECOND_FEE: Cycles = 127_000;
 
 pub fn check_cycles_balance(top_up_canister_id: CanisterId) {

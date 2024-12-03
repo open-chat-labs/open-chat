@@ -11,16 +11,16 @@
 
     const client = getContext<OpenChat>("client");
 
-    $: console.debug("PUSH STATUS: ", $notificationStatus);
+    $inspect(`PUSH STATUS: ${$notificationStatus}`);
 </script>
 
 {#if !$anonUser && $notificationStatus === "prompt"}
     <Overlay dismissible>
         <ModalContent>
-            <div class="header" slot="header">
+            <div slot="header" class="header">
                 <Translatable resourceKey={i18nKey("Notifications")} />
             </div>
-            <div class="body" slot="body">
+            <div slot="body" class="body">
                 <Translatable resourceKey={i18nKey("enableNotifications")} />
             </div>
             <span slot="footer">

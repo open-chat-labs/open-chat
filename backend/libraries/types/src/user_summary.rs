@@ -1,6 +1,4 @@
-use crate::{
-    BotConfig, DiamondMembershipDetails, DiamondMembershipStatus, DiamondMembershipStatusFull, SuspensionDetails, UserId,
-};
+use crate::{DiamondMembershipDetails, DiamondMembershipStatus, DiamondMembershipStatusFull, SuspensionDetails, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
@@ -40,7 +38,6 @@ pub struct UserSummaryStable {
     pub suspended: bool,
     pub diamond_membership_status: DiamondMembershipStatus,
     pub is_unique_person: bool,
-    pub bot_config: Option<BotConfig>,
 }
 
 #[ts_export]

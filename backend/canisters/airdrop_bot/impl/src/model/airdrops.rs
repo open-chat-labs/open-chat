@@ -314,7 +314,7 @@ mod tests {
         airdrops.set_next(
             AirdropConfig {
                 community_id: random_principal().into(),
-                channel_id: 1,
+                channel_id: 1u32.into(),
                 start: now + 1_000,
                 algorithm: AirdropAlgorithm::V1(V1Algorithm {
                     main_chat_fund: 80_000,

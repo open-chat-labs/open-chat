@@ -6,31 +6,30 @@
         currentUser as user,
     } from "openchat-client";
     import { getContext } from "svelte";
-    import Calendar, {
-        title as monthTitle,
-        month as selectedMonth,
-        selectedRange,
-    } from "../../calendar/Calendar.svelte";
     import { isSameDay } from "../../calendar/utils";
     import ChitEventsForDay from "./ChitEventsForDay.svelte";
     import ChitBalance from "./ChitBalance.svelte";
     import Toggle from "../../Toggle.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import { chitPopup, utcMode } from "../../../stores/settings";
+    import { chitPopup, hideChitIcon, utcMode } from "../../../stores/settings";
     import Translatable from "../../Translatable.svelte";
     import { menuCloser } from "../../../actions/closeMenu";
+    import { calendarState, type DateRange } from "../../calendar/calendarState.svelte";
+    import Calendar from "../../calendar/Calendar.svelte";
 
     const client = getContext<OpenChat>("client");
-    let events: ChitEarned[] = [];
+    let events = $state<ChitEarned[]>([]);
 
-    $: streak = client.getStreak($user.userId);
-    $: totalEarned = events.reduce((total, ev) => {
-        const eventDate = new Date(Number(ev.timestamp));
-        if (eventDate.getMonth() === $selectedMonth) {
-            total = total + ev.amount;
-        }
-        return total;
-    }, 0);
+    let streak = $derived(client.getStreak($user.userId));
+    let totalEarned = $derived(
+        events.reduce((total, ev) => {
+            const eventDate = new Date(Number(ev.timestamp));
+            if (eventDate.getMonth() === calendarState.selectedMonth) {
+                total = total + ev.amount;
+            }
+            return total;
+        }, 0),
+    );
 
     function offset(date: Date): number {
         return date.getTimezoneOffset() * 60000;
@@ -53,10 +52,10 @@
     }
 
     function changeMode() {
-        dateSelected($selectedRange);
+        dateSelected(calendarState.selectedRange);
     }
 
-    function dateSelected(selection: { date: Date; range: [Date, Date] }) {
+    function dateSelected(selection: DateRange) {
         let [from, to] = selection.range;
 
         if (utcMode) {
@@ -102,15 +101,19 @@
             balance={$chitState.chitBalance}
             totalEarned={$chitState.totalChitEarned} />
     </div>
-    <Calendar on:dateSelected={(ev) => dateSelected(ev.detail)} let:day>
-        <div class="month-title" slot="month-title">
-            <div class="month">{$monthTitle}</div>
-            <div class="chit-earned">{totalEarned.toLocaleString()} CHIT</div>
-        </div>
-        <ChitEventsForDay
-            {day}
-            selectedMonth={$selectedMonth}
-            events={chitEventsForDay(events, day)} />
+    <Calendar {dateSelected}>
+        {#snippet monthTitleTemplate()}
+            <div class="month-title">
+                <div class="month">{calendarState.monthTitle}</div>
+                <div class="chit-earned">{totalEarned.toLocaleString()} CHIT</div>
+            </div>
+        {/snippet}
+        {#snippet dayTemplate(day)}
+            <ChitEventsForDay
+                {day}
+                selectedMonth={calendarState.selectedMonth}
+                events={chitEventsForDay(events, day)} />
+        {/snippet}
     </Calendar>
 
     <Toggle
@@ -130,6 +133,13 @@
         on:change={() => chitPopup.set(!$chitPopup)}
         label={i18nKey("learnToEarn.showChitPopup")}
         checked={$chitPopup} />
+
+    <Toggle
+        id={"hide-chit-icon"}
+        small
+        on:change={() => hideChitIcon.set(!$hideChitIcon)}
+        label={i18nKey("dailyChit.hideWhenClaimed")}
+        checked={$hideChitIcon} />
 </div>
 
 <style lang="scss">

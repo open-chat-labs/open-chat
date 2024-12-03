@@ -74,6 +74,7 @@ pub struct CommunityCanisterChannelSummaryUpdates {
     pub video_call_in_progress: OptionUpdate<VideoCall>,
     #[ts(as = "crate::OptionUpdateString")]
     pub external_url: OptionUpdate<String>,
+    pub any_updates_missed: bool,
 }
 
 #[ts_export]

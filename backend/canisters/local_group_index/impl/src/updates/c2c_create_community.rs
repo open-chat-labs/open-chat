@@ -3,13 +3,13 @@ use crate::{mutate_state, RuntimeState, COMMUNITY_CANISTER_INITIAL_CYCLES_BALANC
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::init::Args as InitCommunityCanisterArgs;
+use constants::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
 use event_store_producer::EventBuilder;
 use local_group_index_canister::c2c_create_community::{Response::*, *};
 use local_group_index_canister::ChildCanisterType;
 use types::{BuildVersion, CanisterId, CanisterWasm, CommunityCreatedEventPayload, CommunityId, Cycles, UserId, UserType};
 use utils::canister;
 use utils::canister::CreateAndInstallError;
-use utils::consts::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
 
 #[update(guard = "caller_is_group_index_canister", msgpack = true)]
 #[trace]
@@ -21,7 +21,11 @@ async fn c2c_create_community(args: Args) -> Response {
 
     let created_by = prepare_ok.init_canister_args.created_by_user_id;
     let is_public = prepare_ok.init_canister_args.is_public;
-    let gate_type = prepare_ok.init_canister_args.gate.as_ref().map(|g| g.gate_type().to_string());
+    let gate_type = prepare_ok
+        .init_canister_args
+        .gate_config
+        .as_ref()
+        .map(|g| g.gate.gate_type().to_string());
     let rules_enabled = prepare_ok.init_canister_args.rules.enabled;
     let channel_count = prepare_ok.init_canister_args.default_channels.len() as u32;
     let wasm_version = prepare_ok.canister_wasm.version;
@@ -109,7 +113,6 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         internet_identity_canister_id: state.data.internet_identity_canister_id,
         avatar: args.avatar,
         banner: args.banner,
-        gate: args.gate,
         gate_config: args.gate_config,
         default_channels: args.default_channels,
         default_channel_rules: args.default_channel_rules,
@@ -147,7 +150,7 @@ fn commit(
             .build(),
     );
 
-    crate::jobs::topup_canister_pool::start_job_if_required(state);
+    crate::jobs::topup_canister_pool::start_job_if_required(state, None);
 }
 
 fn rollback(canister_id: Option<CanisterId>, state: &mut RuntimeState) {

@@ -3,6 +3,7 @@ use crate::{mutate_state, RuntimeState, USER_CANISTER_INITIAL_CYCLES_BALANCE};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use constants::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
 use ledger_utils::default_ledger_account;
 use local_user_index_canister::register_user::{Response::*, *};
 use local_user_index_canister::ChildCanisterType;
@@ -12,7 +13,6 @@ use user_canister::{Event as UserEvent, ReferredUserRegistered};
 use user_index_canister::{Event as UserIndexEvent, UserRegistered};
 use utils::canister;
 use utils::canister::CreateAndInstallError;
-use utils::consts::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
 use utils::text_validation::{validate_username, UsernameValidationError};
 use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
 
@@ -172,9 +172,10 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         video_call_operators: state.data.video_call_operators.clone(),
         referred_by,
         test_mode: state.data.test_mode,
+        bot_api_gateway_canister_id: Principal::anonymous(),
     };
 
-    crate::jobs::topup_canister_pool::start_job_if_required(state);
+    crate::jobs::topup_canister_pool::start_job_if_required(state, None);
 
     Ok(PrepareOk {
         caller,

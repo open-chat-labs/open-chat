@@ -1,43 +1,43 @@
-use crate::{generate_query_call, generate_update_call};
+use crate::{generate_msgpack_query_call, generate_msgpack_update_call, generate_update_call};
 use group_canister::*;
 use ic_stable_structures::memory_manager::MemoryId;
 
 pub const CHAT_EVENTS_MEMORY_ID: MemoryId = MemoryId::new(3);
 
 // Queries
-generate_query_call!(events);
-generate_query_call!(events_by_index);
-generate_query_call!(events_window);
-generate_query_call!(public_summary);
-generate_query_call!(selected_initial);
-generate_query_call!(selected_updates_v2);
-generate_query_call!(summary);
-generate_query_call!(summary_updates);
+generate_msgpack_query_call!(events);
+generate_msgpack_query_call!(events_by_index);
+generate_msgpack_query_call!(events_window);
+generate_msgpack_query_call!(public_summary);
+generate_msgpack_query_call!(selected_initial);
+generate_msgpack_query_call!(selected_updates_v2);
+generate_msgpack_query_call!(summary);
+generate_msgpack_query_call!(summary_updates);
 
 // Updates
-generate_update_call!(accept_p2p_swap);
-generate_update_call!(add_reaction);
-generate_update_call!(block_user);
-generate_update_call!(cancel_p2p_swap);
-generate_update_call!(change_role);
-generate_update_call!(claim_prize);
-generate_update_call!(convert_into_community);
-generate_update_call!(delete_messages);
-generate_update_call!(edit_message_v2);
-generate_update_call!(enable_invite_code);
+generate_msgpack_update_call!(accept_p2p_swap);
+generate_msgpack_update_call!(add_reaction);
+generate_msgpack_update_call!(block_user);
+generate_msgpack_update_call!(cancel_p2p_swap);
+generate_msgpack_update_call!(change_role);
+generate_msgpack_update_call!(claim_prize);
+generate_msgpack_update_call!(convert_into_community);
+generate_msgpack_update_call!(delete_messages);
+generate_msgpack_update_call!(edit_message_v2);
+generate_msgpack_update_call!(enable_invite_code);
 generate_update_call!(end_video_call);
-generate_update_call!(join_video_call);
-generate_update_call!(pin_message_v2);
-generate_update_call!(register_poll_vote);
-generate_update_call!(remove_participant);
-generate_update_call!(remove_reaction);
-generate_update_call!(send_message_v2);
+generate_msgpack_update_call!(join_video_call);
+generate_msgpack_update_call!(pin_message_v2);
+generate_msgpack_update_call!(register_poll_vote);
+generate_msgpack_update_call!(remove_participant);
+generate_msgpack_update_call!(remove_reaction);
+generate_msgpack_update_call!(send_message_v2);
 generate_update_call!(start_video_call);
-generate_update_call!(toggle_mute_notifications);
-generate_update_call!(unblock_user);
-generate_update_call!(undelete_messages);
-generate_update_call!(unpin_message);
-generate_update_call!(update_group_v2);
+generate_msgpack_update_call!(toggle_mute_notifications);
+generate_msgpack_update_call!(unblock_user);
+generate_msgpack_update_call!(undelete_messages);
+generate_msgpack_update_call!(unpin_message);
+generate_msgpack_update_call!(update_group_v2);
 
 pub mod happy_path {
     use crate::client::user;
@@ -360,7 +360,12 @@ pub mod happy_path {
     }
 
     pub fn summary(env: &PocketIc, sender: &User, group_chat_id: ChatId) -> GroupCanisterGroupChatSummary {
-        let response = super::summary(env, sender.principal, group_chat_id.into(), &group_canister::summary::Args {});
+        let response = super::summary(
+            env,
+            sender.principal,
+            group_chat_id.into(),
+            &group_canister::summary::Args { on_behalf_of: None },
+        );
 
         match response {
             group_canister::summary::Response::Success(result) => result.summary,
@@ -378,7 +383,10 @@ pub mod happy_path {
             env,
             sender.principal,
             group_chat_id.into(),
-            &group_canister::summary_updates::Args { updates_since },
+            &group_canister::summary_updates::Args {
+                on_behalf_of: None,
+                updates_since,
+            },
         );
 
         match response {

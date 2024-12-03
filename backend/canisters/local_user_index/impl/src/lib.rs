@@ -3,11 +3,13 @@ use crate::model::user_event_batch::UserEventBatch;
 use crate::model::user_index_event_batch::UserIndexEventBatch;
 use candid::Principal;
 use canister_state_macros::canister_state;
+use constants::{CYCLES_REQUIRED_FOR_UPGRADE, MINUTE_IN_MS};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use event_store_utils::EventDeduper;
 use jwt::{verify_jwt, Claims};
 use local_user_index_canister::{ChildCanisterType, GlobalUser};
+use model::bots_map::BotsMap;
 use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
 use p256_key_pair::P256KeyPair;
@@ -26,10 +28,8 @@ use user_canister::Event as UserEvent;
 use user_index_canister::Event as UserIndexEvent;
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
-use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
 use utils::env::Environment;
 use utils::iterator_extensions::IteratorExtensions;
-use utils::time::MINUTE_IN_MS;
 
 mod guards;
 mod jobs;
@@ -40,7 +40,7 @@ mod queries;
 mod updates;
 
 const USER_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + USER_CANISTER_TOP_UP_AMOUNT; // 0.18T cycles
-const USER_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
+const USER_CANISTER_TOP_UP_AMOUNT: Cycles = 200_000_000_000; // 0.2T cycles
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
@@ -237,6 +237,8 @@ impl RuntimeState {
             canisters_in_pool: self.data.canister_pool.len() as u16,
             local_user_count: self.data.local_users.len() as u64,
             global_user_count: self.data.global_users.len() as u64,
+            bot_user_count: self.data.global_users.legacy_bots().len() as u64,
+            oc_controlled_bots: self.data.global_users.oc_controlled_bots().iter().copied().collect(),
             canister_upgrades_completed: canister_upgrades_metrics.completed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
@@ -266,11 +268,18 @@ impl RuntimeState {
                 website: self.data.website_canister_id,
             },
             oc_secret_key_initialized: self.data.oc_key_pair.is_initialised(),
-            canisters_pending_events_migration_to_stable_memory: self
-                .data
-                .canisters_pending_events_migration_to_stable_memory
-                .len() as u32,
             canister_upgrades_failed: canister_upgrades_metrics.failed,
+            cycles_balance_check_queue_len: self.data.cycles_balance_check_queue.len() as u32,
+            bots: self
+                .data
+                .bots
+                .iter()
+                .map(|b| BotMetrics {
+                    user_id: b.user_id,
+                    name: b.name.clone(),
+                    commands: b.commands.iter().map(|c| c.name.clone()).collect(),
+                })
+                .collect(),
         }
     }
 }
@@ -279,6 +288,8 @@ impl RuntimeState {
 struct Data {
     pub local_users: LocalUserMap,
     pub global_users: GlobalUserMap,
+    #[serde(default)]
+    pub bots: BotsMap,
     pub child_canister_wasms: ChildCanisterWasms<ChildCanisterType>,
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
@@ -309,8 +320,7 @@ struct Data {
     #[serde(with = "serde_bytes")]
     pub ic_root_key: Vec<u8>,
     pub events_for_remote_users: Vec<(UserId, UserEvent)>,
-    #[serde(default)]
-    pub canisters_pending_events_migration_to_stable_memory: Vec<CanisterId>,
+    pub cycles_balance_check_queue: VecDeque<UserId>,
 }
 
 fn website_canister_id() -> CanisterId {
@@ -385,7 +395,8 @@ impl Data {
             users_to_delete_queue: VecDeque::new(),
             ic_root_key,
             events_for_remote_users: Vec::new(),
-            canisters_pending_events_migration_to_stable_memory: Vec::new(),
+            cycles_balance_check_queue: VecDeque::new(),
+            bots: BotsMap::default(),
         }
     }
 }
@@ -401,6 +412,8 @@ pub struct Metrics {
     pub total_cycles_spent_on_canisters: Cycles,
     pub local_user_count: u64,
     pub global_user_count: u64,
+    pub bot_user_count: u64,
+    pub oc_controlled_bots: Vec<UserId>,
     pub canisters_in_pool: u16,
     pub canister_upgrades_completed: u64,
     pub canister_upgrades_pending: u64,
@@ -415,8 +428,9 @@ pub struct Metrics {
     pub user_versions: BTreeMap<String, u32>,
     pub canister_ids: CanisterIds,
     pub oc_secret_key_initialized: bool,
-    pub canisters_pending_events_migration_to_stable_memory: u32,
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
+    pub cycles_balance_check_queue_len: u32,
+    pub bots: Vec<BotMetrics>,
 }
 
 #[derive(Serialize, Debug)]
@@ -431,4 +445,11 @@ pub struct CanisterIds {
     pub event_relay: CanisterId,
     pub internet_identity: CanisterId,
     pub website: CanisterId,
+}
+
+#[derive(Serialize, Debug)]
+pub struct BotMetrics {
+    pub user_id: UserId,
+    pub name: String,
+    pub commands: Vec<String>,
 }

@@ -6,6 +6,7 @@ use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::MessageContentInternal;
+use constants::{MEMO_MESSAGE, MEMO_P2P_SWAP_CREATE, MEMO_PRIZE, NANOS_PER_MILLISECOND, PRIZE_FEE_PERCENT, SECOND_IN_MS};
 use escrow_canister::deposit_subaccount;
 use ic_cdk::api::call::CallResult;
 use types::icrc1::Account;
@@ -16,10 +17,8 @@ use types::{
 };
 use user_canister::send_message_with_transfer_to_group;
 use user_canister::{send_message_v2, send_message_with_transfer_to_channel};
-use utils::consts::{MEMO_MESSAGE, MEMO_P2P_SWAP_CREATE, MEMO_PRIZE};
-use utils::time::{NANOS_PER_MILLISECOND, SECOND_IN_MS};
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 async fn send_message_with_transfer_to_channel(
     args: send_message_with_transfer_to_channel::Args,
@@ -144,7 +143,7 @@ async fn send_message_with_transfer_to_channel(
     }
 }
 
-#[update(guard = "caller_is_owner", candid = true, msgpack = true)]
+#[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
 async fn send_message_with_transfer_to_group(
     args: send_message_with_transfer_to_group::Args,
@@ -319,16 +318,21 @@ fn prepare(
             }
         }
         MessageContentInitial::Prize(c) => {
+            if thread_root_message_index.is_some() {
+                return InvalidRequest("Prize messages cannot be sent within threads".to_string());
+            }
             if c.end_date <= now {
                 return InvalidRequest("Prize end date must be in the future".to_string());
             }
             match &c.transfer {
                 CryptoTransaction::Pending(t) => {
                     let total_prizes = c.prizes_v2.iter().sum::<u128>();
-                    let total_fees = c.prizes_v2.len() as u128 * t.fee();
-                    let total_amount_to_send = total_prizes + total_fees;
+                    let total_transfer_fees = c.prizes_v2.len() as u128 * t.fee();
+                    let oc_fee = (total_prizes * PRIZE_FEE_PERCENT as u128) / 100;
+                    let total_amount_to_send_old = total_prizes + total_transfer_fees;
+                    let total_amount_to_send = total_prizes + total_transfer_fees + oc_fee;
 
-                    if t.units() != total_amount_to_send {
+                    if t.units() != total_amount_to_send && t.units() != total_amount_to_send_old {
                         return InvalidRequest("Transaction amount must equal total prizes + total fees".to_string());
                     }
 

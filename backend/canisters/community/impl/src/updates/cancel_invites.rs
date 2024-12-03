@@ -4,7 +4,7 @@ use canister_tracing_macros::trace;
 use community_canister::cancel_invites::{Response::*, *};
 use group_chat_core::CancelInvitesResult;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn cancel_invites(args: Args) -> Response {
     run_regular_jobs();
@@ -19,9 +19,9 @@ fn cancel_invites_impl(args: Args, state: &mut RuntimeState) -> Response {
         return NotAuthorized;
     };
 
-    if member.suspended.value {
+    if member.suspended().value {
         return UserSuspended;
-    } else if member.lapsed.value {
+    } else if member.lapsed().value {
         return UserLapsed;
     }
 
@@ -40,7 +40,7 @@ fn cancel_invites_impl(args: Args, state: &mut RuntimeState) -> Response {
             CancelInvitesResult::UserLapsed => return UserLapsed,
         }
     } else {
-        if !member.role.can_invite_users(&state.data.permissions) {
+        if !member.role().can_invite_users(&state.data.permissions) {
             return NotAuthorized;
         }
 

@@ -1,7 +1,6 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{mutate_state, Data};
-use candid::Principal;
+use crate::Data;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
@@ -32,10 +31,5 @@ fn post_upgrade(args: Args) {
         if state.data.test_mode {
             state.data.website_canister_id = CanisterId::from_text("pfs7b-iqaaa-aaaaf-abs7q-cai").unwrap();
         }
-
-        state
-            .data
-            .canisters_pending_events_migration_to_stable_memory
-            .extend(state.data.local_users.iter().map(|(u, _)| Principal::from(*u)));
     })
 }

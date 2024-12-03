@@ -12,6 +12,16 @@ type UpdatesResponse = variant {
         swap_providers : opt vec ExchangeId;
         message_filters_added : vec MessageFilterSummary;
         message_filters_removed : vec nat64;
+        airdrop_config : variant {
+            SetToSome : record {
+                community_id : CommunityId;
+                channel_id : ChannelId;
+                community_name : text;
+                channel_name : text;
+            };
+            SetToNone;
+            NoChange;
+        };
     };
     SuccessNoUpdates;
 };
@@ -31,6 +41,12 @@ type TokenDetails = record {
     added : TimestampMillis;
     enabled : bool;
     last_updated : TimestampMillis;
+    payments: vec record {
+        amount : nat;
+        block_index : nat64;
+        timestamp : TimestampMillis;
+        user_id : UserId;
+    };
 };
 
 type NervousSystemSummary = record {

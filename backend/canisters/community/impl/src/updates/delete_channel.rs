@@ -4,11 +4,11 @@ use crate::{
 };
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::{ChannelKeyPrefix, ChannelThreadKeyPrefix, KeyPrefix};
 use community_canister::delete_channel::{Response::*, *};
+use stable_memory_map::{ChatEventKeyPrefix, KeyPrefix, MemberKeyPrefix};
 use types::{ChannelDeleted, ChannelId};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn delete_channel(args: Args) -> Response {
     run_regular_jobs();
@@ -27,9 +27,9 @@ fn delete_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Respo
         return UserNotInCommunity;
     };
 
-    if member.suspended.value {
+    if member.suspended().value {
         return UserSuspended;
-    } else if member.lapsed.value {
+    } else if member.lapsed().value {
         return UserLapsed;
     }
 
@@ -42,9 +42,9 @@ fn delete_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Respo
         return UserNotInChannel;
     };
 
-    if channel_member.lapsed.value {
+    if channel_member.lapsed().value {
         return UserLapsed;
-    } else if !channel_member.role.can_delete_group() {
+    } else if !channel_member.role().can_delete_group() {
         return NotAuthorized;
     }
 
@@ -54,17 +54,23 @@ fn delete_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Respo
     state
         .data
         .stable_memory_keys_to_garbage_collect
-        .push(KeyPrefix::Channel(ChannelKeyPrefix::new(channel_id)));
+        .push(KeyPrefix::from(ChatEventKeyPrefix::new_from_channel(channel_id, None)));
 
     for message_index in channel.chat.events.thread_keys() {
         state
             .data
             .stable_memory_keys_to_garbage_collect
-            .push(KeyPrefix::ChannelThread(ChannelThreadKeyPrefix::new(
+            .push(KeyPrefix::from(ChatEventKeyPrefix::new_from_channel(
                 channel_id,
-                message_index,
+                Some(message_index),
             )));
     }
+
+    state
+        .data
+        .stable_memory_keys_to_garbage_collect
+        .push(KeyPrefix::from(MemberKeyPrefix::new_from_channel(channel_id)));
+
     crate::jobs::garbage_collect_stable_memory::start_job_if_required(state);
 
     state.data.events.push_event(
@@ -76,8 +82,12 @@ fn delete_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Respo
         now,
     );
 
-    for user_id in channel.chat.members.iter().map(|m| m.user_id) {
-        state.data.members.mark_member_left_channel(&user_id, channel_id, now);
+    for user_id in channel.chat.members.member_ids() {
+        state.data.members.mark_member_left_channel(*user_id, channel_id, true, now);
+    }
+
+    if channel.chat.gate_config.value.is_some_and(|gc| gc.expiry.is_some()) {
+        state.data.expiring_members.remove_gate(Some(channel_id));
     }
 
     handle_activity_notification(state);

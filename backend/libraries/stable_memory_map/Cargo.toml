@@ -1,0 +1,18 @@
+[package]
+name = "stable_memory_map"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ic-cdk = { workspace = true }
+ic_principal = { workspace = true }
+ic-stable-structures = { workspace = true }
+serde = { workspace = true }
+serde_bytes = { workspace = true }
+types = { path = "../types" }
+
+[dev-dependencies]
+msgpack = { path = "../msgpack" }
+rand = { workspace = true }

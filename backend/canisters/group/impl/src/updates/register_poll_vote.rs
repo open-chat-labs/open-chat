@@ -7,7 +7,7 @@ use group_canister::register_poll_vote::{Response::*, *};
 use types::{Achievement, Chat, EventIndex, TotalVotes};
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn register_poll_vote(args: Args) -> Response {
     run_regular_jobs();
@@ -22,15 +22,15 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let caller = state.env.caller();
     if let Some(member) = state.data.get_member(caller) {
-        if member.suspended.value {
+        if member.suspended().value {
             return UserSuspended;
-        } else if member.lapsed.value {
+        } else if member.lapsed().value {
             return UserLapsed;
         }
 
         let now = state.env.now();
-        let user_id = member.user_id;
-        let is_bot = member.user_type.is_bot();
+        let user_id = member.user_id();
+        let is_bot = member.user_type().is_bot();
         let min_visible_event_index = member.min_visible_event_index();
 
         let result = state.data.chat.events.register_poll_vote(RegisterPollVoteArgs {
@@ -56,7 +56,13 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> Response {
                         args.thread_root_message_index,
                         args.message_index.into(),
                     ) {
-                        if state.data.chat.members.get(&creator).map_or(false, |m| !m.user_type.is_bot()) {
+                        if state
+                            .data
+                            .chat
+                            .members
+                            .get(&creator)
+                            .map_or(false, |m| !m.user_type().is_bot())
+                        {
                             state.data.user_event_sync_queue.push(
                                 creator,
                                 GroupCanisterEvent::MessageActivity(MessageActivityEvent {

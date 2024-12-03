@@ -11,7 +11,6 @@
     import { uniquePersonCredentialGate } from "../../../utils/access";
     import Markdown from "../Markdown.svelte";
     import { _ } from "svelte-i18n";
-    import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import LinkAccounts from "./LinkAccounts.svelte";
     import HumanityConfirmation from "../HumanityConfirmation.svelte";
@@ -52,13 +51,15 @@
                 if (credential === undefined) {
                     failed = true;
                 } else {
-                    return client.submitProofOfUniquePersonhood(credential, iiPrincipalCopy).then((resp) => {
-                        if (resp.kind !== "success") {
-                            failed = true;
-                        } else {
-                            dispatch("success");
-                        }
-                    });
+                    return client
+                        .submitProofOfUniquePersonhood(credential, iiPrincipalCopy)
+                        .then((resp) => {
+                            if (resp.kind !== "success") {
+                                failed = true;
+                            } else {
+                                dispatch("success");
+                            }
+                        });
                 }
             })
             .catch(() => (failed = true))
@@ -66,73 +67,71 @@
     }
 </script>
 
-<Overlay>
-    {#if checkingPrincipal}
-        <ModalContent hideFooter hideHeader fadeDelay={0} fadeDuration={0}>
-            <div slot="body">
-                <div class="loader">
-                    <FancyLoader />
-                </div>
+{#if checkingPrincipal}
+    <ModalContent hideFooter hideHeader fadeDelay={0} fadeDuration={0}>
+        <div slot="body">
+            <div class="loader">
+                <FancyLoader />
             </div>
-        </ModalContent>
-    {:else if step === "linking"}
-        <LinkAccountsModal>
-            <LinkAccounts
-                bind:iiPrincipal
-                on:close
-                on:proceed={() => (step = "verification")}
-                explanations={[i18nKey("identity.humanityWarning")]} />
-        </LinkAccountsModal>
-    {:else}
-        <ModalContent fadeDelay={0} fadeDuration={0}>
-            <div slot="header" class="header">
-                <AccountCheck size={$iconSize} color={"var(--txt)"} />
-                <div class="title">
-                    <Translatable resourceKey={i18nKey("access.uniquePerson")} />
-                </div>
+        </div>
+    </ModalContent>
+{:else if step === "linking"}
+    <LinkAccountsModal>
+        <LinkAccounts
+            bind:iiPrincipal
+            on:close
+            on:proceed={() => (step = "verification")}
+            explanations={[i18nKey("identity.humanityWarning")]} />
+    </LinkAccountsModal>
+{:else}
+    <ModalContent fadeDelay={0} fadeDuration={0}>
+        <div slot="header" class="header">
+            <AccountCheck size={$iconSize} color={"var(--txt)"} />
+            <div class="title">
+                <Translatable resourceKey={i18nKey("access.uniquePerson")} />
             </div>
-            <div slot="body">
-                {#if failed}
-                    <p class="info">
-                        <ErrorMessage>
-                            <Translatable resourceKey={i18nKey("human.failed")} />
-                        </ErrorMessage>
-                    </p>
-                    <p class="question">
-                        <Translatable resourceKey={i18nKey("access.uniquePersonInfo1")} />
-                    </p>
+        </div>
+        <div slot="body">
+            {#if failed}
+                <p class="info">
+                    <ErrorMessage>
+                        <Translatable resourceKey={i18nKey("human.failed")} />
+                    </ErrorMessage>
+                </p>
+                <p class="question">
+                    <Translatable resourceKey={i18nKey("access.uniquePersonInfo1")} />
+                </p>
 
-                    <p class="answer">
-                        <Markdown text={interpolate($_, i18nKey("access.uniquePersonInfo2"))} />
-                    </p>
+                <p class="answer">
+                    <Markdown text={interpolate($_, i18nKey("access.uniquePersonInfo2"))} />
+                </p>
 
-                    <p class="answer">
-                        <Translatable resourceKey={i18nKey("access.uniquePersonInfo3")} />
-                    </p>
-                {:else}
-                    <p class="info">
-                        <Translatable resourceKey={i18nKey("human.instruction")} />
-                    </p>
-                    <HumanityConfirmation bind:confirmed />
-                {/if}
-            </div>
+                <p class="answer">
+                    <Translatable resourceKey={i18nKey("access.uniquePersonInfo3")} />
+                </p>
+            {:else}
+                <p class="info">
+                    <Translatable resourceKey={i18nKey("human.instruction")} />
+                </p>
+                <HumanityConfirmation bind:confirmed />
+            {/if}
+        </div>
 
-            <div slot="footer">
-                <ButtonGroup>
-                    <Button secondary on:click={() => dispatch("close")}
-                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
-                    <!-- <Button secondary on:click={() => (step = "linking")}
-                        ><Translatable resourceKey={i18nKey("identity.back")} /></Button> -->
-                    <Button
-                        loading={verifying}
-                        disabled={verifying || !confirmed || iiPrincipal === undefined}
-                        on:click={verify}
-                        ><Translatable resourceKey={i18nKey("access.verify")} /></Button>
-                </ButtonGroup>
-            </div>
-        </ModalContent>
-    {/if}
-</Overlay>
+        <div slot="footer">
+            <ButtonGroup>
+                <Button secondary on:click={() => dispatch("close")}
+                    ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+                <!-- <Button secondary on:click={() => (step = "linking")}
+                    ><Translatable resourceKey={i18nKey("identity.back")} /></Button> -->
+                <Button
+                    loading={verifying}
+                    disabled={verifying || !confirmed || iiPrincipal === undefined}
+                    on:click={verify}
+                    ><Translatable resourceKey={i18nKey("access.verify")} /></Button>
+            </ButtonGroup>
+        </div>
+    </ModalContent>
+{/if}
 
 <style lang="scss">
     :global(.link-ii-logo img) {

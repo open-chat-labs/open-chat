@@ -88,6 +88,9 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 }
             }
         }
+        Event::BotRegistered(ev) => {
+            state.data.bots.set(ev.user_principal, ev.user_id, ev.name, ev.commands);
+        }
         Event::SuperAdminStatusChanged(ev) => {
             state.data.global_users.set_platform_moderator(ev.user_id, ev.is_super_admin);
         }
@@ -97,6 +100,9 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
         }
         Event::UserUpgradeConcurrencyChanged(ev) => {
             state.data.user_upgrade_concurrency = min(state.data.max_concurrent_canister_upgrades, ev.value);
+            if state.data.user_upgrade_concurrency > 0 {
+                jobs::upgrade_canisters::start_job_if_required(state);
+            }
             info!("User upgrade concurrency set to {}", ev.value);
         }
         Event::UserJoinedGroup(ev) => {

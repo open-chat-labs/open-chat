@@ -7,7 +7,7 @@ use registry_canister::{MessageFilterSummary, NervousSystemDetails};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{BuildVersion, CanisterId, Cycles, ExchangeId, TimestampMillis, Timestamped};
+use types::{AirdropConfig, BuildVersion, CanisterId, Cycles, ExchangeId, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
 mod guards;
@@ -78,13 +78,11 @@ struct Data {
     tokens: Tokens,
     nervous_systems: NervousSystems,
     failed_sns_launches: HashSet<CanisterId>,
-    #[serde(default)]
     swap_providers: Timestamped<HashSet<ExchangeId>>,
     message_filters: MessageFilters,
-    #[serde(default)]
     total_supply: Timestamped<u128>,
-    #[serde(default)]
     circulating_supply: Timestamped<u128>,
+    airdrop_config: Timestamped<Option<AirdropConfig>>,
     rng_seed: [u8; 32],
     test_mode: bool,
 }
@@ -111,6 +109,7 @@ impl Data {
             message_filters: MessageFilters::default(),
             total_supply: Timestamped::default(),
             circulating_supply: Timestamped::default(),
+            airdrop_config: Timestamped::default(),
             rng_seed: [0; 32],
             test_mode,
         }
@@ -157,6 +156,7 @@ impl Data {
             "https://www.finder.com/uk/how-to-buy-internet-computer".to_string(),
             "https://dashboard.internetcomputer.org/transaction/{transaction_index}".to_string(),
             ["ICRC-1".to_string(), "ICRC-2".to_string()].to_vec(),
+            None,
             now,
         );
     }

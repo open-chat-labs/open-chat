@@ -7,14 +7,13 @@ use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use chat_events::{GroupChatThreadKeyPrefix, KeyPrefix, Reader};
+use chat_events::Reader;
+use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, SNS_LEDGER_CANISTER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::GatePayment;
-use group_chat_core::{
-    AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, GroupRoleInternal, InvitedUsersResult, UserInvitation,
-};
+use group_chat_core::{AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, InvitedUsersResult, UserInvitation};
 use group_community_common::{
     Achievements, ExpiringMemberActions, ExpiringMembers, PaymentReceipts, PaymentRecipient, PendingPayment,
     PendingPaymentReason, PendingPaymentsQueue, UserCache,
@@ -25,6 +24,7 @@ use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
+use stable_memory_map::{ChatEventKeyPrefix, KeyPrefix};
 use std::cell::RefCell;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{HashMap, HashSet};
@@ -38,10 +38,8 @@ use types::{
     UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
 };
 use user_canister::GroupCanisterEvent;
-use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
-use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
 
 mod activity_notifications;
 mod guards;
@@ -127,14 +125,7 @@ impl RuntimeState {
 
     pub fn queue_access_gate_payments(&mut self, payment: GatePayment) {
         // Queue a payment to each owner less the fee
-        let owners: Vec<UserId> = self
-            .data
-            .chat
-            .members
-            .iter()
-            .filter(|m| matches!(m.role.value, GroupRoleInternal::Owner))
-            .map(|m| m.user_id)
-            .collect();
+        let owners = self.data.chat.members.owners();
 
         let owner_count = owners.len() as u128;
         let owner_share = (payment.amount * (100 - SNS_FEE_SHARE_PERCENT) / 100) / owner_count;
@@ -144,7 +135,7 @@ impl RuntimeState {
                     amount: owner_share,
                     fee: payment.fee,
                     ledger_canister: payment.ledger_canister_id,
-                    recipient: PaymentRecipient::Member(owner),
+                    recipient: PaymentRecipient::Member(*owner),
                     reason: PendingPaymentReason::AccessGate,
                 });
             }
@@ -154,9 +145,10 @@ impl RuntimeState {
         let treasury_share = payment.amount.saturating_sub(owner_share * owner_count);
         let amount = treasury_share.saturating_sub(payment.fee);
         if amount > 0 {
+            let is_chat = payment.ledger_canister_id == SNS_LEDGER_CANISTER_ID;
             self.data.pending_payments_queue.push(PendingPayment {
                 amount,
-                fee: payment.fee,
+                fee: if is_chat { 0 } else { payment.fee }, // No fee for BURNing
                 ledger_canister: payment.ledger_canister_id,
                 recipient: PaymentRecipient::Treasury,
                 reason: PendingPaymentReason::AccessGate,
@@ -174,13 +166,13 @@ impl RuntimeState {
         let events_ttl = chat.events.get_events_time_to_live();
 
         let membership = GroupMembership {
-            joined: member.date_added,
-            role: member.role.value.into(),
-            mentions: member.most_recent_mentions(None, &chat.events),
-            notifications_muted: member.notifications_muted.value,
+            joined: member.date_added(),
+            role: member.role().value.into(),
+            mentions: chat.most_recent_mentions(member, None),
+            notifications_muted: member.notifications_muted().value,
             my_metrics: chat
                 .events
-                .user_metrics(&member.user_id, None)
+                .user_metrics(&member.user_id(), None)
                 .map(|m| m.hydrate())
                 .unwrap_or_default(),
             latest_threads: member
@@ -194,13 +186,13 @@ impl RuntimeState {
                 .rules_accepted
                 .as_ref()
                 .map_or(false, |version| version.value >= chat.rules.text.version),
-            lapsed: member.lapsed.value,
+            lapsed: member.lapsed().value,
         };
 
         GroupCanisterGroupChatSummary {
             chat_id: self.env.canister_id().into(),
             local_user_index_canister_id: self.data.local_user_index_canister_id,
-            last_updated: chat.last_updated(Some(member.user_id)),
+            last_updated: chat.last_updated(Some(member.user_id())),
             name: chat.name.value.clone(),
             description: chat.description.value.clone(),
             subtype: chat.subtype.value.clone(),
@@ -210,7 +202,7 @@ impl RuntimeState {
             messages_visible_to_non_members: chat.messages_visible_to_non_members.value,
             min_visible_event_index,
             min_visible_message_index,
-            latest_message: main_events_reader.latest_message_event(Some(member.user_id)),
+            latest_message: main_events_reader.latest_message_event(Some(member.user_id())),
             latest_event_index: main_events_reader.latest_event_index().unwrap_or_default(),
             latest_message_index: main_events_reader.latest_message_index(),
             joined: membership.joined,
@@ -271,6 +263,7 @@ impl RuntimeState {
         } else if self.data.is_frozen() {
             ChatFrozen
         } else {
+            assert!(self.data.members_migrated_to_stable_memory);
             let transfers_required = self.prepare_transfers_for_import_into_community();
             let serialized = serialize_then_unwrap(&self.data.chat);
             let total_bytes = serialized.len() as u64;
@@ -354,7 +347,7 @@ impl RuntimeState {
                 .timer_jobs
                 .enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
         }
-        for pending_transaction in result.prize_refunds {
+        for pending_transaction in result.final_prize_payments {
             self.data.timer_jobs.enqueue_job(
                 TimerJob::MakeTransfer(MakeTransferJob {
                     pending_transaction,
@@ -367,9 +360,9 @@ impl RuntimeState {
         for thread in result.threads {
             self.data
                 .stable_memory_keys_to_garbage_collect
-                .push(KeyPrefix::GroupChatThread(GroupChatThreadKeyPrefix::new(
+                .push(KeyPrefix::from(ChatEventKeyPrefix::new_from_group_chat(Some(
                     thread.root_message_index,
-                )));
+                ))));
         }
         jobs::garbage_collect_stable_memory::start_job_if_required(self);
     }
@@ -400,9 +393,9 @@ impl RuntimeState {
             public: group_chat_core.is_public.value,
             date_created: group_chat_core.date_created,
             members: group_chat_core.members.len(),
-            moderators: group_chat_core.members.moderator_count(),
-            admins: group_chat_core.members.admin_count(),
-            owners: group_chat_core.members.owner_count(),
+            moderators: group_chat_core.members.moderators().len() as u32,
+            admins: group_chat_core.members.admins().len() as u32,
+            owners: group_chat_core.members.owners().len() as u32,
             blocked: group_chat_core.members.blocked().len() as u32,
             invited: self.data.chat.invited_users.len() as u32,
             chat_metrics: group_chat_core.events.metrics().hydrate(),
@@ -426,7 +419,7 @@ impl RuntimeState {
                 .unwrap_or_default(),
             event_store_client_info: self.data.event_store_client.info(),
             timer_jobs: self.data.timer_jobs.len() as u32,
-            stable_memory_event_migration_complete: self.data.stable_memory_event_migration_complete,
+            members_migrated_to_stable_memory: self.data.members_migrated_to_stable_memory,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -478,7 +471,8 @@ struct Data {
     expiring_member_actions: ExpiringMemberActions,
     user_cache: UserCache,
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
-    stable_memory_event_migration_complete: bool,
+    #[serde(default)]
+    members_migrated_to_stable_memory: bool,
     stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
 }
 
@@ -575,16 +569,22 @@ impl Data {
             expiring_member_actions: ExpiringMemberActions::default(),
             user_cache: UserCache::default(),
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
-            stable_memory_event_migration_complete: true,
             stable_memory_keys_to_garbage_collect: Vec::new(),
+            members_migrated_to_stable_memory: true,
         }
     }
 
     pub fn lookup_user_id(&self, user_id_or_principal: Principal) -> Option<UserId> {
-        self.get_member(user_id_or_principal).map(|m| m.user_id)
+        let user_id = self
+            .principal_to_user_id_map
+            .get(&user_id_or_principal)
+            .copied()
+            .unwrap_or(user_id_or_principal.into());
+
+        self.chat.members.contains(&user_id).then_some(user_id)
     }
 
-    pub fn get_member(&self, user_id_or_principal: Principal) -> Option<&GroupMemberInternal> {
+    pub fn get_member(&self, user_id_or_principal: Principal) -> Option<GroupMemberInternal> {
         let user_id = self
             .principal_to_user_id_map
             .get(&user_id_or_principal)
@@ -592,16 +592,6 @@ impl Data {
             .unwrap_or(user_id_or_principal.into());
 
         self.chat.members.get(&user_id)
-    }
-
-    pub fn get_member_mut(&mut self, user_id_or_principal: Principal) -> Option<&mut GroupMemberInternal> {
-        let user_id = self
-            .principal_to_user_id_map
-            .get(&user_id_or_principal)
-            .copied()
-            .unwrap_or(user_id_or_principal.into());
-
-        self.chat.members.get_mut(&user_id)
     }
 
     pub fn is_frozen(&self) -> bool {
@@ -736,7 +726,7 @@ pub struct Metrics {
     pub serialized_chat_state_bytes: u64,
     pub event_store_client_info: EventStoreClientInfo,
     pub timer_jobs: u32,
-    pub stable_memory_event_migration_complete: bool,
+    pub members_migrated_to_stable_memory: bool,
     pub canister_ids: CanisterIds,
 }
 

@@ -32,7 +32,11 @@ const FRAME_ANCESTORS = [
     "https://e4tvt-6yaaa-aaaao-a3sdq-cai.icp0.io", // dragon paladin wizard
     "https://dragonwizards.club", // dragon paladin wizard web2 test
     "https://ic-vc.com", // ICVC via domain
-    "https://mnc6b-aaaaa-aaaap-qhnrq-cai.icp0.io" // ICVC via canister ID
+    "https://mnc6b-aaaaa-aaaap-qhnrq-cai.icp0.io", // ICVC via canister ID
+    "https://mitchkurtzman.com", //Mitch's portfolio POC Domain
+    "https://wk3k3-vaaaa-aaaak-adtza-cai.icp0.io", //Mitch's portfilio POC canister ID
+    "https://fantasyextreme.org", //fantasyextreme prod
+    "https://snxxs-viaaa-aaaam-acuba-cai.icp0.io", //fantasyextreme staging
 ];
 
 type InboundXFrameMessage = UpdateTheme | ChangeRoute | OverrideSettings | Logout;

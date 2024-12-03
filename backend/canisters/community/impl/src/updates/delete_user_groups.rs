@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::delete_user_groups::{Response::*, *};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn delete_user_groups(args: Args) -> Response {
     run_regular_jobs();
@@ -19,9 +19,9 @@ fn delete_user_groups_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let caller = state.env.caller();
     match state.data.members.get(caller) {
-        Some(m) if m.suspended.value => UserSuspended,
-        Some(m) if m.lapsed.value => UserLapsed,
-        Some(m) if m.role.can_manage_user_groups(&state.data.permissions) => {
+        Some(m) if m.suspended().value => UserSuspended,
+        Some(m) if m.lapsed().value => UserLapsed,
+        Some(m) if m.role().can_manage_user_groups(&state.data.permissions) => {
             let now = state.env.now();
 
             let mut updated = false;

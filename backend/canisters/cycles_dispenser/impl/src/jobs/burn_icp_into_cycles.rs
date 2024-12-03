@@ -50,9 +50,8 @@ fn get_next_action(state: &mut State) -> Action {
     } else {
         let cycles_balance = state.env.cycles_balance();
 
-        // Burn ICP into cycles whenever the cycles balance is < 2 * min_cycles_balance, this prevents
-        // the balance from ever falling below `min_cycles_balance`
-        if cycles_balance < 2 * state.data.min_cycles_balance {
+        // Burn ICP into cycles whenever the cycles balance is < 10 * min_cycles_balance
+        if cycles_balance < 10 * state.data.min_cycles_balance {
             Action::BurnIcp(BurnIcpDetails {
                 amount: state.data.icp_burn_amount,
                 this_canister_id: state.env.canister_id(),

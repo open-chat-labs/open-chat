@@ -41,8 +41,8 @@ fn is_permitted_to_join(
     }
 
     if let Some(member) = state.data.chat.members.get(&args.user_id) {
-        if !member.lapsed.value {
-            let summary = state.summary(member);
+        if !member.lapsed().value {
+            let summary = state.summary(&member);
             return Err(AlreadyInGroupV2(Box::new(summary)));
         }
     } else if state.data.chat.members.is_blocked(&args.user_id) {
@@ -155,7 +155,7 @@ fn c2c_join_group_impl(args: Args, payments: Vec<GatePayment>, state: &mut Runti
             state.data.chat.members.update_lapsed(args.user_id, false, now);
 
             let member = state.data.chat.members.get(&args.user_id).unwrap();
-            let summary = state.summary(member);
+            let summary = state.summary(&member);
             Success(Box::new(summary))
         }
         AddResult::Blocked => Blocked,

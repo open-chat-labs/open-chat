@@ -3,6 +3,7 @@ use crate::timer_job_types::{MarkVideoCallEndedJob, TimerJob};
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::{CallParticipantInternal, MessageContentInternal, PushMessageArgs, VideoCallContentInternal};
+use constants::HOUR_IN_MS;
 use ic_cdk::update;
 use rand::Rng;
 use types::{
@@ -11,7 +12,6 @@ use types::{
 };
 use user_canister::start_video_call::{Response::*, *};
 use user_canister::{StartVideoCallArgs, UserCanisterEvent};
-use utils::time::HOUR_IN_MS;
 
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]

@@ -1,9 +1,9 @@
 use crate::{mutate_state, read_state};
 use candid::Principal;
+use constants::HOUR_IN_MS;
 use ic_cdk::api::call::RejectionCode;
 use std::time::Duration;
 use utils::canister_timers::run_now_then_interval;
-use utils::time::HOUR_IN_MS;
 
 pub fn start_job() {
     run_now_then_interval(Duration::from_millis(13 * HOUR_IN_MS), run);

@@ -1,18 +1,33 @@
 <script lang="ts">
     import { ScreenWidth, screenWidth } from "../stores/screenDimensions";
 
-    export let width: string;
-    export let bottom: string;
-    export let right: string = "unset";
-    export let left: string = "unset";
-    export let opacity: string;
-    export let viewBox: string = "0 0 361 361";
-    export let skew: string = "0deg";
+    interface Props {
+        width: string;
+        bottom: string;
+        right?: string;
+        left?: string;
+        opacity: string;
+        viewBox?: string;
+        skew?: string;
+    }
 
-    $: style = `width: ${width}; bottom: ${bottom}; right: ${right}; left: ${left}; opacity: ${opacity}; transform: skewX(${skew})`;
+    let {
+        width,
+        bottom,
+        right = "unset",
+        left = "unset",
+        opacity,
+        viewBox = "0 0 361 361",
+        skew = "0deg",
+    }: Props = $props();
 
-    $: show =
-        $screenWidth === ScreenWidth.ExtraExtraLarge || $screenWidth === ScreenWidth.ExtraLarge;
+    let style = $derived(
+        `width: ${width}; bottom: ${bottom}; right: ${right}; left: ${left}; opacity: ${opacity}; transform: skewX(${skew})`,
+    );
+
+    let show = $derived(
+        $screenWidth === ScreenWidth.ExtraExtraLarge || $screenWidth === ScreenWidth.ExtraLarge,
+    );
 </script>
 
 {#if show}

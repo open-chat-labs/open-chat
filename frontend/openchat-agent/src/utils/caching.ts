@@ -45,6 +45,7 @@ import {
     MessageContextMap,
     MAX_EVENTS,
     MAX_MESSAGES,
+    ONE_DAY,
     updateCreatedUser,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
@@ -354,7 +355,21 @@ export async function getCachedChats(
     db: Database,
     principal: Principal,
 ): Promise<ChatStateFull | undefined> {
-    return await (await db).get("chats", principal.toString());
+    const resolvedDb = await db;
+    const chats = await resolvedDb.get("chats", principal.toString());
+
+    if (
+        chats !== undefined &&
+        chats.latestUserCanisterUpdates < BigInt(Date.now() - 30 * ONE_DAY)
+    ) {
+        // If the cache was last updated more than 30 days ago, clear the cache and return undefined
+        const storeNames = resolvedDb.objectStoreNames;
+        for (let i = 0; i < storeNames.length; i++) {
+            await resolvedDb.clear(storeNames[i]);
+        }
+        return undefined;
+    }
+    return chats;
 }
 
 export async function setCachedChats(
@@ -783,7 +798,7 @@ function rebuildBlobUrls(content: MessageContent): MessageContent {
 
 export async function loadFailedMessages(
     db: Database,
-): Promise<MessageContextMap<Record<number, EventWrapper<Message>>>> {
+): Promise<MessageContextMap<Record<string, EventWrapper<Message>>>> {
     const chatMessages = await (await db).getAll("failed_chat_messages");
     const threadMessages = await (await db).getAll("failed_thread_messages");
     return [...chatMessages, ...threadMessages].reduce((res, ev) => {
@@ -795,10 +810,10 @@ export async function loadFailedMessages(
         };
         const val = res.get(context) ?? {};
         ev.event.content = rebuildBlobUrls(ev.event.content);
-        val[Number(ev.event.messageId)] = ev;
+        val[ev.event.messageId.toString()] = ev;
         res.set(context, val);
         return res;
-    }, new MessageContextMap<Record<number, EventWrapper<Message>>>());
+    }, new MessageContextMap<Record<string, EventWrapper<Message>>>());
 }
 
 export async function setCachedEvents(
@@ -925,6 +940,9 @@ function messageToEvent(
                     endDate: message.content.endDate,
                     caption: message.content.caption,
                     diamondOnly: message.content.diamondOnly,
+                    lifetimeDiamondOnly: message.content.lifetimeDiamondOnly,
+                    uniquePersonOnly: message.content.uniquePersonOnly,
+                    streakOnly: message.content.streakOnly,
                 } as PrizeContent;
                 break;
             case "p2p_swap_content_initial":

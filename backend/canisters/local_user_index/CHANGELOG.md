@@ -8,11 +8,110 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added `execute_bot_command` endpoint and bot registry ([#6944](https://github.com/open-chat-labs/open-chat/pull/6944))
+
+### Changed
+
+- Add chat + command text to bot command claims ([#6929](https://github.com/open-chat-labs/open-chat/pull/6929))
+- Enable job to check User canister cycles balances ([#6959](https://github.com/open-chat-labs/open-chat/pull/6959))
+- Set the derivation origin when checking verifiable credentials ([#6703](https://github.com/open-chat-labs/open-chat/pull/6703))
+
+## [[2.0.1481](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1481-local_user_index)] - 2024-11-29
+
+### Changed
+
+- Make `ChannelId` comparisons use their 32bit representation ([#6885](https://github.com/open-chat-labs/open-chat/pull/6885))
+- Add `any_missed_updates` to summary updates responses ([#6907](https://github.com/open-chat-labs/open-chat/pull/6907))
+
+## [[2.0.1463](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1463-local_user_index)] - 2024-11-21
+
+### Changed
+
+- Avoid pushing events to bot users ([#6846](https://github.com/open-chat-labs/open-chat/pull/6846))
+- Simplify `inspect_message` ([#6847](https://github.com/open-chat-labs/open-chat/pull/6847))
+- Add the full command details when requesting a bot access token ([#6861](https://github.com/open-chat-labs/open-chat/pull/6861))
+- Stop upgrade job if concurrency set to 0 ([#6863](https://github.com/open-chat-labs/open-chat/pull/6863))
+
+### Removed
+
+- Remove all code to migrate events to stable memory ([#6858](https://github.com/open-chat-labs/open-chat/pull/6858))
+
+## [[2.0.1460](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1460-local_user_index)] - 2024-11-18
+
+### Changed
+
+- Pass in `bot_api_gateway` when installing User canisters ([#6842](https://github.com/open-chat-labs/open-chat/pull/6842))
+- Revert User canister cycles top-ups back to 0.2T ([#6843](https://github.com/open-chat-labs/open-chat/pull/6843))
+
+## [[2.0.1458](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1458-local_user_index)] - 2024-11-18
+
+### Changed
+
+- Modify upgrade job to top up, then migrate events, then upgrade ([#6834](https://github.com/open-chat-labs/open-chat/pull/6834))
+
+## [[2.0.1457](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1457-local_user_index)] - 2024-11-17
+
+### Changed
+
+- Add `BotApiCanister` to the canister state ([#6828](https://github.com/open-chat-labs/open-chat/pull/6828))
+- Add the `BotCommand` access token type ([#6830](https://github.com/open-chat-labs/open-chat/pull/6830))
+- Disable job to top up canisters until we have more cycles ([#6833](https://github.com/open-chat-labs/open-chat/pull/6833))
+
+## [[2.0.1454](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1454-local_user_index)] - 2024-11-14
+
+### Changed
+
+- Top up canisters which have fewer than `MIN_CYCLES_BALANCE` cycles ([#6819](https://github.com/open-chat-labs/open-chat/pull/6819))
+- Reduce top up amount to 0.02T ([#6821](https://github.com/open-chat-labs/open-chat/pull/6821))
+
+## [[2.0.1447](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1447-local_user_index)] - 2024-11-13
+
+### Changed
+
+- Skip check for canisters that have been topped up in the last 10 days ([#6802](https://github.com/open-chat-labs/open-chat/pull/6802))
+
+### Fixed
+
+- Fix calculation to determine if a canister needs a cycles top up ([#6799](https://github.com/open-chat-labs/open-chat/pull/6799))
+
+## [[2.0.1444](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1444-local_user_index)] - 2024-11-12
+
+### Added
+
+- Add job to check cycles balances of child canisters every week ([#6796](https://github.com/open-chat-labs/open-chat/pull/6796))
+
+## [[2.0.1441](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1441-local_user_index)] - 2024-11-12
+
+### Changed
+
+- Update the canister creation fee to 0.5T ([#6789](https://github.com/open-chat-labs/open-chat/pull/6789))
+
+## [[2.0.1439](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1439-local_user_index)] - 2024-11-11
+
+### Changed
+
+- Continue creating canisters after delay if cycles balance too low ([#6783](https://github.com/open-chat-labs/open-chat/pull/6783))
+- Top up User canisters if detected to be out of cycles ([#6785](https://github.com/open-chat-labs/open-chat/pull/6785))
+
+## [[2.0.1437](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1437-local_user_index)] - 2024-11-11
+
+### Changed
+
+- Increase the max cycles required during upgrades ([#6725](https://github.com/open-chat-labs/open-chat/pull/6725))
+- Increase size of cycles top-ups ([#6727](https://github.com/open-chat-labs/open-chat/pull/6727))
+- Expose which canisters are pending migration to stable memory in metrics ([#6742](https://github.com/open-chat-labs/open-chat/pull/6742))
+- Add more canisters to the pools before fee increases ([#6777](https://github.com/open-chat-labs/open-chat/pull/6777))
+
+## [[2.0.1422](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1422-local_user_index)] - 2024-11-05
+
+### Added
+
 - Trigger migrating User events to stable memory using canister timer job ([#6671](https://github.com/open-chat-labs/open-chat/pull/6671))
 
 ### Changed
 
-- Set the derivation origin when checking verifiable credentials ([#6703](https://github.com/open-chat-labs/open-chat/pull/6703))
+- Expose `bot_user_count` and `oc_controlled_bots` in metrics ([#6709](https://github.com/open-chat-labs/open-chat/pull/6709))
+- Temporarily disable job to trigger migrating events to stable memory ([#6721](https://github.com/open-chat-labs/open-chat/pull/6721))
 
 ## [[2.0.1411](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1411-local_user_index)] - 2024-10-24
 

@@ -81,6 +81,9 @@ export type VideoCallType = "broadcast" | "default";
 export interface PrizeContentInitial {
     kind: "prize_content_initial";
     diamondOnly: boolean;
+    lifetimeDiamondOnly: boolean;
+    uniquePersonOnly: boolean;
+    streakOnly: number;
     endDate: bigint;
     caption?: string;
     transfer: PendingCryptocurrencyTransfer;
@@ -316,6 +319,9 @@ export interface PrizeContent {
     prizesRemaining: number;
     prizesPending: number;
     diamondOnly: boolean;
+    lifetimeDiamondOnly: boolean;
+    uniquePersonOnly: boolean;
+    streakOnly: number;
     winners: string[];
     token: string;
     endDate: bigint;
@@ -657,6 +663,10 @@ export type LocalGlobalUpdates = {
 };
 
 export type LocalChatSummaryUpdates = {
+    favourited?: boolean;
+    unfavourited?: boolean;
+    pinned?: Set<ChatListScope["kind"]>;
+    unpinned?: Set<ChatListScope["kind"]>;
     added?: ChatSummary;
     updated?:
         | {
@@ -747,6 +757,7 @@ export type AggregateCommonEvents = {
     kind: "aggregate_common_events";
     usersJoined: Set<string>;
     usersLeft: Set<string>;
+    rolesChanged: Map<string, Map<MemberRole, Set<string>>>;
     messagesDeleted: number[];
 };
 

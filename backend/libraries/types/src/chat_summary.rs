@@ -212,6 +212,7 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub membership: Option<GroupMembershipUpdates>,
     #[ts(as = "crate::OptionUpdateVideoCall")]
     pub video_call_in_progress: OptionUpdate<VideoCall>,
+    pub any_updates_missed: bool,
 }
 
 #[ts_export]
@@ -279,6 +280,7 @@ pub struct ChatMetrics {
     pub file_messages: u64,
     pub polls: u64,
     pub poll_votes: u64,
+    pub crypto_messages: u64,
     pub icp_messages: u64,
     pub sns1_messages: u64,
     pub ckbtc_messages: u64,
