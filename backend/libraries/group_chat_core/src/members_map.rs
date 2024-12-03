@@ -1,4 +1,4 @@
-use crate::{GroupMemberInternal, GroupMemberStableStorage};
+use crate::GroupMemberInternal;
 use serde::de::{SeqAccess, Visitor};
 use serde::ser::SerializeSeq;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -16,38 +16,38 @@ pub trait MembersMap {
 }
 
 pub struct HeapMembersMap {
-    map: BTreeMap<UserId, GroupMemberStableStorage>,
+    map: BTreeMap<UserId, GroupMemberInternal>,
 }
 
 impl HeapMembersMap {
     pub fn new(member: GroupMemberInternal) -> Self {
         HeapMembersMap {
-            map: [(member.user_id(), member.into())].into_iter().collect(),
+            map: [(member.user_id(), member)].into_iter().collect(),
         }
     }
 
     // TODO Remove after next upgrade
-    pub fn values_mut(&mut self) -> impl Iterator<Item = &mut GroupMemberStableStorage> + '_ {
+    pub fn values_mut(&mut self) -> impl Iterator<Item = &mut GroupMemberInternal> + '_ {
         self.map.values_mut()
     }
 }
 
 impl MembersMap for HeapMembersMap {
     fn get(&self, user_id: &UserId) -> Option<GroupMemberInternal> {
-        self.map.get(user_id).cloned().map(|g| g.hydrate(*user_id))
+        self.map.get(user_id).cloned()
     }
 
     fn insert(&mut self, member: GroupMemberInternal) {
-        self.map.insert(member.user_id(), member.into());
+        self.map.insert(member.user_id(), member);
     }
 
     fn remove(&mut self, user_id: &UserId) -> Option<GroupMemberInternal> {
-        self.map.remove(user_id).map(|g| g.hydrate(*user_id))
+        self.map.remove(user_id)
     }
 
     #[cfg(test)]
     fn all_members(&self) -> Vec<GroupMemberInternal> {
-        self.map.iter().map(|(k, v)| v.clone().hydrate(*k)).collect()
+        self.map.values().cloned().collect()
     }
 }
 
@@ -57,12 +57,8 @@ impl Serialize for HeapMembersMap {
         S: Serializer,
     {
         let mut seq = serializer.serialize_seq(Some(self.map.len()))?;
-        for (user_id, member) in self.map.iter() {
-            let value = GroupMembersMapEntry {
-                user_id: *user_id,
-                details: member.clone(),
-            };
-            seq.serialize_element(&value)?;
+        for member in self.map.values() {
+            seq.serialize_element(member)?;
         }
         seq.end()
     }
@@ -91,17 +87,9 @@ impl<'de> Visitor<'de> for GroupMembersMapVisitor {
         A: SeqAccess<'de>,
     {
         let mut map = BTreeMap::new();
-        while let Some(next) = seq.next_element::<GroupMembersMapEntry>()? {
-            map.insert(next.user_id, next.details);
+        while let Some(next) = seq.next_element::<GroupMemberInternal>()? {
+            map.insert(next.user_id(), next);
         }
         Ok(HeapMembersMap { map })
     }
-}
-
-#[derive(Serialize, Deserialize)]
-struct GroupMembersMapEntry {
-    #[serde(rename = "u")]
-    user_id: UserId,
-    #[serde(flatten)]
-    details: GroupMemberStableStorage,
 }
