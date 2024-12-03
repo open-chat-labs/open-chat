@@ -57,8 +57,12 @@ impl Serialize for HeapMembersMap {
         S: Serializer,
     {
         let mut seq = serializer.serialize_seq(Some(self.map.len()))?;
-        for member in self.map.values() {
-            seq.serialize_element(member)?;
+        for (user_id, member) in self.map.iter() {
+            let value = GroupMembersMapEntry {
+                user_id: *user_id,
+                details: member.clone(),
+            };
+            seq.serialize_element(&value)?;
         }
         seq.end()
     }
