@@ -4,7 +4,8 @@ use crate::RuntimeState;
 use canister_api_macros::query;
 use community_canister::c2c_can_issue_access_token_for_channel::*;
 use group_chat_core::{GroupChatCore, GroupRoleInternal};
-use types::{CheckAccessTokenType, MessageContentType, VideoCallType};
+use types::{CheckAccessTokenType, VideoCallType};
+use utils::bots::can_execute_bot_command;
 
 #[query(guard = "caller_is_local_user_index", msgpack = true)]
 fn c2c_can_issue_access_token_for_channel(args: Args) -> Response {
@@ -25,13 +26,19 @@ fn c2c_can_issue_access_token_for_channel_impl(args: Args, state: &RuntimeState)
             can_start_video_call(member.role(), state.data.is_public, vc.call_type, &channel.chat)
         }
         CheckAccessTokenType::JoinVideoCall | CheckAccessTokenType::MarkVideoCallAsEnded => true,
-        CheckAccessTokenType::BotCommand(c) => channel.chat.members.get_bot(&c.bot).is_some_and(|b| {
-            b.role().can_send_message(
-                MessageContentType::Text,
-                c.thread_root_message_index.is_some(),
-                &channel.chat.permissions,
-            )
-        }),
+        CheckAccessTokenType::BotCommand(c) => {
+            // Get the permissions granted to the bot in this community
+            let Some(granted_to_bot) = state.data.get_bot_permissions(&c.bot) else {
+                return false;
+            };
+
+            // Get the permissions granted to the user in this community/channel
+            let Some(granted_to_user) = state.data.get_user_permissions_for_bot_commands(&c.user_id, &args.channel_id) else {
+                return false;
+            };
+
+            can_execute_bot_command(&c.permissions, granted_to_bot, &granted_to_user)
+        }
     }
 }
 

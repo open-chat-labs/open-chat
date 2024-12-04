@@ -1,5 +1,10 @@
+use std::collections::HashSet;
+
 use serde::{Deserialize, Serialize};
-use types::{GroupPermissionRole, GroupPermissions, GroupRole, MessageContentType};
+use types::{
+    GroupPermission, GroupPermissionRole, GroupPermissions, GroupRole, MessageContentType, MessagePermission,
+    MessagePermissions,
+};
 
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, Default, Eq, PartialEq)]
 pub enum GroupRoleInternal {
@@ -178,5 +183,47 @@ impl GroupRoleInternal {
 
     fn has_admin_rights(&self) -> bool {
         self.is_admin() || self.is_owner()
+    }
+
+    pub fn permissions(&self, role_permissions: &GroupPermissions) -> HashSet<GroupPermission> {
+        let permissions = [
+            (role_permissions.add_members, GroupPermission::AddMembers),
+            (role_permissions.change_roles, GroupPermission::ChangeRoles),
+            (role_permissions.delete_messages, GroupPermission::DeleteMessages),
+            (role_permissions.invite_users, GroupPermission::InviteUsers),
+            (role_permissions.mention_all_members, GroupPermission::MentionAllMembers),
+            (role_permissions.pin_messages, GroupPermission::PinMessages),
+            (role_permissions.react_to_messages, GroupPermission::ReactToMessages),
+            (role_permissions.remove_members, GroupPermission::RemoveMembers),
+            (role_permissions.start_video_call, GroupPermission::StartVideoCall),
+            (role_permissions.update_group, GroupPermission::UpdateGroup),
+        ];
+
+        permissions
+            .into_iter()
+            .filter_map(|(rp, p)| self.is_permitted(rp).then_some(p))
+            .collect()
+    }
+
+    pub fn message_permissions(&self, role_permissions: &MessagePermissions) -> HashSet<MessagePermission> {
+        let permissions = [
+            (role_permissions.audio, MessagePermission::Audio),
+            (role_permissions.crypto, MessagePermission::Crypto),
+            (role_permissions.file, MessagePermission::File),
+            (role_permissions.giphy, MessagePermission::Giphy),
+            (role_permissions.image, MessagePermission::Image),
+            (role_permissions.p2p_swap, MessagePermission::P2pSwap),
+            (role_permissions.poll, MessagePermission::Poll),
+            (role_permissions.prize, MessagePermission::Prize),
+            (role_permissions.text, MessagePermission::Text),
+            (role_permissions.video, MessagePermission::Video),
+        ];
+
+        let default_permitted = self.is_permitted(role_permissions.default);
+
+        permissions
+            .into_iter()
+            .filter_map(|(orp, p)| orp.map_or(default_permitted, |rp| self.is_permitted(rp)).then_some(p))
+            .collect()
     }
 }
