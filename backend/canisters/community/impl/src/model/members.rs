@@ -156,11 +156,15 @@ impl CommunityMembers {
             self.add_user_id(principal, user_id);
 
             if let Some(referrer) = referred_by {
-                self.members.update_member(&referrer, |m| {
-                    m.referrals.insert(user_id);
+                if matches!(
+                    self.update_member_internal(&referrer, |m| {
+                        m.referrals.insert(user_id);
+                        true
+                    }),
+                    Some(true)
+                ) {
                     self.members_with_referrals.insert(referrer);
-                    true
-                });
+                }
             }
             self.member_ids.insert(user_id);
 
@@ -201,14 +205,17 @@ impl CommunityMembers {
                     self.members_with_referrals.remove(&user_id);
                 }
                 if let Some(referrer) = member.referred_by {
-                    self.members.update_member(&referrer, |m| {
+                    let mut remove_from_members_with_referrals = false;
+                    self.update_member_internal(&referrer, |m| {
                         m.referrals.remove(&user_id);
                         if m.referrals.is_empty() {
-                            let referrer_user_id = m.user_id;
-                            self.members_with_referrals.remove(&referrer_user_id);
+                            remove_from_members_with_referrals = true;
                         }
                         true
                     });
+                    if remove_from_members_with_referrals {
+                        self.members_with_referrals.remove(&referrer);
+                    }
                 }
                 let channel_ids: Vec<_> = self.channels_for_member(user_id).collect();
                 for channel_id in channel_ids {
@@ -226,14 +233,6 @@ impl CommunityMembers {
         }
 
         None
-    }
-
-    pub fn update_member<F: FnOnce(&mut CommunityMemberInternal) -> bool>(
-        &mut self,
-        user_id: &UserId,
-        update_fn: F,
-    ) -> Option<bool> {
-        self.members.update_member(user_id, update_fn)
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -315,19 +314,22 @@ impl CommunityMembers {
     }
 
     pub fn set_suspended(&mut self, user_id: UserId, suspended: bool, now: TimestampMillis) -> Option<bool> {
-        self.members.update_member(&user_id, |member| {
+        let result = self.update_member_internal(&user_id, |member| {
             if member.suspended.value != suspended {
                 member.suspended = Timestamped::new(suspended, now);
-                if suspended {
-                    self.suspended.insert(user_id);
-                } else {
-                    self.suspended.remove(&user_id);
-                }
                 true
             } else {
                 false
             }
-        })
+        });
+        if matches!(result, Some(true)) {
+            if suspended {
+                self.suspended.insert(user_id);
+            } else {
+                self.suspended.remove(&user_id);
+            }
+        }
+        result
     }
 
     pub fn create_user_group<R: RngCore>(
@@ -405,8 +407,7 @@ impl CommunityMembers {
     }
 
     pub fn mark_rules_accepted(&mut self, user_id: &UserId, version: Version, now: TimestampMillis) {
-        self.members
-            .update_member(user_id, |member| member.accept_rules(version, now));
+        self.update_member_internal(user_id, |member| member.accept_rules(version, now));
     }
 
     pub fn block(&mut self, user_id: UserId) -> bool {
@@ -521,7 +522,7 @@ impl CommunityMembers {
     pub fn set_display_name(&mut self, user_id: UserId, display_name: Option<String>, now: TimestampMillis) {
         let display_name_is_some = display_name.is_some();
         if matches!(
-            self.members.update_member(&user_id, |m| {
+            self.update_member_internal(&user_id, |m| {
                 m.display_name = Timestamped::new(display_name, now);
                 true
             }),
@@ -538,7 +539,7 @@ impl CommunityMembers {
 
     pub fn update_lapsed(&mut self, user_id: UserId, lapsed: bool, now: TimestampMillis) {
         if matches!(
-            self.members.update_member(&user_id, |m| {
+            self.update_member_internal(&user_id, |m| {
                 if lapsed {
                     // Owners can't lapse
                     !m.is_owner() && m.set_lapsed(true, now)
@@ -564,7 +565,10 @@ impl CommunityMembers {
 
     pub fn unlapse_all(&mut self, now: TimestampMillis) {
         for user_id in std::mem::take(&mut self.lapsed) {
-            if matches!(self.members.update_member(&user_id, |m| m.set_lapsed(false, now)), Some(true)) {
+            if matches!(
+                self.update_member_internal(&user_id, |m| m.set_lapsed(false, now)),
+                Some(true)
+            ) {
                 self.updates.insert((now, user_id, MemberUpdate::Unlapsed));
             }
         }
@@ -606,8 +610,22 @@ impl CommunityMembers {
         self.members.remove(user_id)
     }
 
+    fn update_member_internal<F: FnOnce(&mut CommunityMemberInternal) -> bool>(
+        &mut self,
+        user_id: &UserId,
+        update_fn: F,
+    ) -> Option<bool> {
+        let mut member = self.get_internal(user_id)?;
+
+        let updated = update_fn(&mut member);
+        if updated {
+            self.insert_internal(member);
+        }
+        Some(updated)
+    }
+
     #[cfg(test)]
-    fn check_invariants(&self) {
+    fn check_invariants(&self, stable_memory_map: bool) {
         let mut member_ids = BTreeSet::new();
         let mut owners = BTreeSet::new();
         let mut admins = BTreeSet::new();
@@ -616,7 +634,13 @@ impl CommunityMembers {
         let mut members_with_display_names = BTreeSet::new();
         let mut members_with_referrals = BTreeSet::new();
 
-        for member in self.members.all_members() {
+        let all_members = if stable_memory_map {
+            self.stable_memory_members_map.all_members()
+        } else {
+            self.members.all_members()
+        };
+
+        for member in all_members {
             member_ids.insert(member.user_id);
 
             match member.role {
@@ -820,12 +844,17 @@ impl From<&CommunityMemberInternal> for CommunityMember {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+    use ic_stable_structures::DefaultMemoryImpl;
     use test_case::test_case;
     use types::CanisterId;
 
     #[test_case(true)]
     #[test_case(false)]
     fn channel_link_sets_maintained_correctly(channels_deleted: bool) {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(1)));
+
         let principal1 = Principal::from_slice(&[1]);
         let principal2 = Principal::from_slice(&[2]);
         let user_id1 = principal1.into();
@@ -860,6 +889,9 @@ mod tests {
 
     #[test]
     fn serialize_member_with_max_defaults() {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(1)));
+
         #[derive(Serialize, Deserialize, Clone)]
         pub struct CommunityMemberInternal2 {
             #[serde(rename = "u")]
