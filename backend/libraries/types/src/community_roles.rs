@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
@@ -152,5 +154,22 @@ impl CommunityRole {
 
     fn has_owner_rights(&self) -> bool {
         self.is_owner()
+    }
+
+    pub fn permissions(&self, rps: &CommunityPermissions) -> HashSet<CommunityPermission> {
+        let permissions = vec![
+            (rps.change_roles, CommunityPermission::ChangeRoles),
+            (rps.create_private_channel, CommunityPermission::CreatePrivateChannel),
+            (rps.create_public_channel, CommunityPermission::CreatePublicChannel),
+            (rps.invite_users, CommunityPermission::InviteUsers),
+            (rps.manage_user_groups, CommunityPermission::ManageUserGroups),
+            (rps.remove_members, CommunityPermission::RemoveMembers),
+            (rps.update_details, CommunityPermission::UpdateDetails),
+        ];
+
+        permissions
+            .into_iter()
+            .filter_map(|(rp, p)| self.is_permitted(rp).then_some(p))
+            .collect()
     }
 }

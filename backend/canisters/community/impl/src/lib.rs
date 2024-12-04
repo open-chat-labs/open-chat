@@ -30,13 +30,15 @@ use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{ChatEventKeyPrefix, KeyPrefix};
 use std::cell::RefCell;
+use std::collections::BTreeMap;
 use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BuildVersion, CanisterId, ChannelId, ChatMetrics,
     CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cryptocurrency, Cycles, Document, Empty,
-    FrozenGroupInfo, Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId, UserType,
+    FrozenGroupInfo, Milliseconds, Notification, Rules, SlashCommandPermissions, TimestampMillis, Timestamped, UserId,
+    UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use user_canister::CommunityCanisterEvent;
@@ -368,6 +370,8 @@ struct Data {
     stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
     #[serde(default)]
     members_migrated_to_stable_memory: bool,
+    #[serde(default)]
+    bot_permissions: BTreeMap<UserId, SlashCommandPermissions>,
 }
 
 impl Data {
@@ -471,6 +475,7 @@ impl Data {
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             members_migrated_to_stable_memory: true,
+            bot_permissions: BTreeMap::new(),
         }
     }
 
@@ -685,6 +690,38 @@ impl Data {
             self.user_event_sync_queue
                 .push(user_id, CommunityCanisterEvent::Achievement(achievement));
         }
+    }
+
+    pub fn get_bot_permissions(&self, bot_user_id: &UserId) -> Option<&SlashCommandPermissions> {
+        self.bot_permissions.get(bot_user_id)
+    }
+
+    pub fn get_user_permissions(&self, user_id: &UserId, channel_id: &ChannelId) -> Option<SlashCommandPermissions> {
+        let community_member = self.members.get_by_user_id(user_id)?;
+        let community_permissions = community_member.role().permissions(&self.permissions);
+
+        let channel = self.channels.get(channel_id)?;
+        let channel_member = channel.chat.members.get_verified_member(*user_id).ok()?;
+
+        let channel_permissions = channel_member.role().permissions(&channel.chat.permissions);
+        let message_permissions = channel_member
+            .role()
+            .message_permissions(&channel.chat.permissions.message_permissions);
+        let thread_permissions = channel
+            .chat
+            .permissions
+            .thread_permissions
+            .as_ref()
+            .map_or(message_permissions.clone(), |thread_permissions| {
+                channel_member.role().message_permissions(thread_permissions)
+            });
+
+        Some(SlashCommandPermissions {
+            community: community_permissions,
+            chat: channel_permissions,
+            message: message_permissions,
+            thread: thread_permissions,
+        })
     }
 }
 
