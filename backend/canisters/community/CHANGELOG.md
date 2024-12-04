@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Disallow sending prize messages to threads ([#6960](https://github.com/open-chat-labs/open-chat/pull/6960))
 - Re-run member migration to stable memory using reduced size format ([#6965](https://github.com/open-chat-labs/open-chat/pull/6965))
 - Introduce community `MembersMap` in prep for move to stable memory ([#6966](https://github.com/open-chat-labs/open-chat/pull/6966))
+- Migrate community members to stable memory ([#6967](https://github.com/open-chat-labs/open-chat/pull/6967))
 
 ### Removed
 
