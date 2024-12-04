@@ -170,6 +170,6 @@ fn generate_message_id(governance_canister_id: CanisterId, proposal_id: Proposal
     hash.update(governance_canister_id.as_slice());
     hash.update(proposal_id.to_ne_bytes());
     let array32: [u8; 32] = hash.finalize().into();
-    let array16: [u8; 16] = array32[..16].try_into().unwrap();
-    u128::from_ne_bytes(array16).into()
+    let array8: [u8; 8] = array32[..8].try_into().unwrap();
+    u128::from(u64::from_ne_bytes(array8)).into()
 }
