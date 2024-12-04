@@ -127,6 +127,28 @@ export function isAttachmentContent(content: MessageContent): content is Attachm
     }
 }
 
+export type EditableContent =
+    | FileContent
+    | TextContent
+    | ImageContent
+    | VideoContent
+    | AudioContent
+    | GiphyContent;
+
+export function isEditableContent(kind: MessageContent["kind"]): kind is EditableContent["kind"] {
+    switch (kind) {
+        case "file_content":
+        case "text_content":
+        case "image_content":
+        case "video_content":
+        case "audio_content":
+        case "giphy_content":
+            return true;
+        default:
+            return false;
+    }
+}
+
 export function isCaptionedContent(content: MessageContent): content is CaptionedContent {
     switch (content.kind) {
         case "image_content":
