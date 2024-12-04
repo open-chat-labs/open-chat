@@ -28,11 +28,7 @@ pub fn extract_route(path: &str) -> Route {
 
     match parts[0] {
         "avatar" => {
-            if let Some(user_id) = parts
-                .get(1)
-                .and_then(|p| Principal::from_text(*p).ok())
-                .map(|uid| UserId::from(uid))
-            {
+            if let Some(user_id) = parts.get(1).and_then(|p| Principal::from_text(*p).ok()).map(UserId::from) {
                 let blob_id = parts.get(2).and_then(|p| u128::from_str(p).ok());
                 return Route::BotAvatar(user_id, blob_id);
             } else {
