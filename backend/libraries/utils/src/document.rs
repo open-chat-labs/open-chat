@@ -1,4 +1,5 @@
 use dataurl::DataUrl;
+use sha256::sha256;
 use types::{Document, FieldTooLongResult};
 
 const MAX_AVATAR_SIZE: u32 = 1024 * 800; // 800KB
@@ -24,8 +25,9 @@ pub fn validate_document(avatar: Option<&Document>, max_size: u32) -> Result<(),
     }
 }
 
-pub fn try_parse_data_url(id: u128, data_url: &str) -> Option<Document> {
+pub fn try_parse_data_url(data_url: &str) -> Option<Document> {
     let url = DataUrl::parse(data_url).ok()?;
+    let id = u128::from_be_bytes(sha256(data_url.as_bytes())[..16].try_into().unwrap());
 
     Some(Document {
         id,
