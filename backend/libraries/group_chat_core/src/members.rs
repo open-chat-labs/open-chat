@@ -81,7 +81,7 @@ impl GroupMembers {
             }
         }
 
-        info!(count, "Migrated users to stable memory");
+        info!(count, "Migrated chat members to stable memory");
 
         let complete = self.migrate_to_stable_memory_queue.is_empty();
         if complete {

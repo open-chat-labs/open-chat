@@ -460,11 +460,15 @@ impl Job for MigrateMembersToStableMemoryJob {
     fn execute(self) {
         mutate_state(|state| {
             let mut complete = true;
-            for channel in state.data.channels.iter_mut() {
-                if !channel.chat.members.migrate_next_batch_to_stable_memory() {
-                    complete = false;
-                    break;
+            if state.data.members.migrate_next_batch_to_stable_memory() {
+                for channel in state.data.channels.iter_mut() {
+                    if !channel.chat.members.migrate_next_batch_to_stable_memory() {
+                        complete = false;
+                        break;
+                    }
                 }
+            } else {
+                complete = false;
             }
             if !complete {
                 let now = state.env.now();
