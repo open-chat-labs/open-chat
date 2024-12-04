@@ -8440,11 +8440,11 @@ checksum = "711b9620af191e0cdc7468a8d14e709c3dcdb115b36f838e601583af800a370a"
 name = "utils"
 version = "0.1.0"
 dependencies = [
- "base64 0.22.1",
  "candid",
  "canister_client",
  "constants",
  "cycles_dispenser_client",
+ "dataurl",
  "getrandom 0.2.15",
  "ic-cdk 0.16.0",
  "ic-cdk-timers",
