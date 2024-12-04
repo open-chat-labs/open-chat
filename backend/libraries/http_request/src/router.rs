@@ -1,8 +1,10 @@
+use candid::Principal;
 use std::{collections::HashMap, str::FromStr};
-use types::{ChannelId, FileId, TimestampMillis};
+use types::{ChannelId, FileId, TimestampMillis, UserId};
 
 pub enum Route {
     Avatar(Option<u128>),
+    BotAvatar(UserId, Option<u128>),
     Banner(Option<u128>),
     ChannelAvatar((ChannelId, Option<u128>)),
     File(u128),
@@ -26,8 +28,17 @@ pub fn extract_route(path: &str) -> Route {
 
     match parts[0] {
         "avatar" => {
-            let blob_id = parts.get(1).and_then(|p| u128::from_str(p).ok());
-            return Route::Avatar(blob_id);
+            if let Some(user_id) = parts
+                .get(1)
+                .and_then(|p| Principal::from_text(*p).ok())
+                .map(|uid| UserId::from(uid))
+            {
+                let blob_id = parts.get(2).and_then(|p| u128::from_str(p).ok());
+                return Route::BotAvatar(user_id, blob_id);
+            } else {
+                let blob_id = parts.get(1).and_then(|p| u128::from_str(p).ok());
+                return Route::Avatar(blob_id);
+            }
         }
         "banner" => {
             let blob_id = parts.get(1).and_then(|p| u128::from_str(p).ok());
