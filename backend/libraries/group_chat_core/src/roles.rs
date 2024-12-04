@@ -206,7 +206,7 @@ impl GroupRoleInternal {
     }
 
     pub fn message_permissions(&self, role_permissions: &MessagePermissions) -> HashSet<MessagePermission> {
-        let permissions = vec![
+        let permissions = [
             (role_permissions.audio, MessagePermission::Audio),
             (role_permissions.crypto, MessagePermission::Crypto),
             (role_permissions.file, MessagePermission::File),
