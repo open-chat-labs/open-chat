@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Migrate community members to stable memory ([#6967](https://github.com/open-chat-labs/open-chat/pull/6967))
 - Check bot + user permissions when issuing JWT ([#6970](https://github.com/open-chat-labs/open-chat/pull/6970))
 - Reduce size of search index when serialized ([#6973](https://github.com/open-chat-labs/open-chat/pull/6973))
+- Copy members from stable memory when importing group into community ([#6976](https://github.com/open-chat-labs/open-chat/pull/6976))
 
 ### Removed
 
