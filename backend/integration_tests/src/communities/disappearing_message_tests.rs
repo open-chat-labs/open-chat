@@ -161,7 +161,7 @@ fn stable_memory_garbage_collected_after_messages_disappear() {
 
     assert_eq!(
         get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(),
-        33
+        34
     );
 
     // Tick once to expire the messages
@@ -172,5 +172,5 @@ fn stable_memory_garbage_collected_after_messages_disappear() {
     env.advance_time(Duration::from_secs(60));
     env.tick();
 
-    assert_eq!(get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(), 3);
+    assert_eq!(get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(), 4);
 }
