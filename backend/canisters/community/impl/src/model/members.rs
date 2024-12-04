@@ -89,7 +89,7 @@ impl CommunityMembers {
     ) -> AddResult {
         if self.blocked.contains(&user_id) {
             AddResult::Blocked
-        } else if self.members.contains(&user_id) {
+        } else if self.member_ids.contains(&user_id) {
             AddResult::AlreadyInCommunity
         } else {
             if referred_by == Some(user_id) {

@@ -7,7 +7,6 @@ pub trait MembersMap {
     fn get(&self, user_id: &UserId) -> Option<CommunityMemberInternal>;
     fn insert(&mut self, member: CommunityMemberInternal);
     fn remove(&mut self, user_id: &UserId) -> Option<CommunityMemberInternal>;
-    fn contains(&self, user_id: &UserId) -> bool;
 
     fn update_member<F: FnOnce(&mut CommunityMemberInternal) -> bool>(
         &mut self,
@@ -50,10 +49,6 @@ impl MembersMap for HeapMembersMap {
 
     fn remove(&mut self, user_id: &UserId) -> Option<CommunityMemberInternal> {
         self.map.remove(user_id)
-    }
-
-    fn contains(&self, user_id: &UserId) -> bool {
-        self.map.contains_key(user_id)
     }
 
     #[cfg(test)]
