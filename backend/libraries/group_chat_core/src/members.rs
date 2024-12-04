@@ -614,6 +614,10 @@ impl Members for GroupMembers {
         self.get(user_id)
     }
 
+    fn can_member_lapse(&self, user_id: &UserId) -> bool {
+        self.member_ids.contains(user_id) && !self.owners.contains(user_id) && !self.lapsed.contains(user_id)
+    }
+
     fn iter_members_who_can_lapse(&self) -> Box<dyn Iterator<Item = UserId> + '_> {
         Box::new(
             self.member_ids

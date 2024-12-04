@@ -661,12 +661,12 @@ impl Data {
         }
     }
 
-    pub fn get_member_for_events(&self, caller: Principal) -> Result<Option<&CommunityMemberInternal>, EventsResponse> {
+    pub fn get_member_for_events(&self, caller: Principal) -> Result<Option<CommunityMemberInternal>, EventsResponse> {
         let hidden_for_non_members = !self.is_public || self.has_payment_gate();
         let member = self.members.get(caller);
 
         if hidden_for_non_members {
-            if let Some(member) = member {
+            if let Some(member) = &member {
                 if member.suspended().value {
                     return Err(EventsResponse::UserSuspended);
                 } else if member.lapsed().value {
