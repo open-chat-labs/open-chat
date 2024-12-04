@@ -2,6 +2,7 @@ import { Principal } from "@dfinity/principal";
 import type { MessageContext } from "./chat";
 import type { DataContent } from "./data";
 import type { ChatPermissions, CommunityPermissions, MessagePermission } from "./permission";
+import type { InterpolationValues, ResourceKey } from "../utils";
 
 export const MIN_NAME_LENGTH = 3;
 
@@ -128,13 +129,12 @@ export type SlashCommandInstance = {
 
 export type Bot = ExternalBot | InternalBot;
 
-export type CandidateExternalBot = Omit<ExternalBot, "id">;
-
-export function emptyBotInstance(bot: ExternalBot | undefined): CandidateExternalBot {
+export function emptyBotInstance(bot?: ExternalBot): ExternalBot {
     return bot
         ? structuredClone(bot)
         : {
               kind: "external_bot",
+              id: "",
               name: "",
               description: "",
               endpoint: "",
@@ -285,34 +285,75 @@ export function paramInstanceIsValid(
     return false;
 }
 
-// This is used for all names: bot, command, param
-export function validBotComponentName(name: string) {
-    const regex = new RegExp(`^[a-zA-Z0-9_]{${MIN_NAME_LENGTH},}$`);
-    return regex.test(name);
+export function i18nKey(key: string, params?: InterpolationValues): ResourceKey {
+    return {
+        kind: "resource_key",
+        key,
+        params,
+        lowercase: false,
+    };
 }
 
-type BotValidationError = string; // this might not be enough
-export type BotValidationErrors = Map<string, BotValidationError>;
-
-export function validateBot(bot: CandidateExternalBot): BotValidationErrors {
-    const errors: BotValidationErrors = new Map();
-    if (!validBotComponentName(bot.name)) {
-        errors.set(`bot_name`, "Required field can only contain alphanumerics and underscores");
+// This is used for all names: bot, command, param
+export function validBotComponentName(name: string): ResourceKey[] {
+    const errors = [];
+    if (name.length < MIN_NAME_LENGTH) {
+        errors.push(i18nKey("bots.builder.errors.minLength", { n: MIN_NAME_LENGTH }));
     }
+    const regex = /^[a-zA-Z0-9_]+$/;
+    if (!regex.test(name)) {
+        errors.push(i18nKey("bots.builder.errors.alphaOnly"));
+    }
+    return errors;
+}
+
+type BotValidationError = ResourceKey[]; // this might not be enough
+
+export class BotValidationErrors {
+    private errors = new Map<string, BotValidationError>();
+
+    addErrors(key: string, errors: ResourceKey | ResourceKey[]) {
+        if (!Array.isArray(errors)) errors = [errors];
+        if (errors.length === 0) return;
+        const current = this.errors.get(key) ?? [];
+        errors.forEach((e) => current.push(e));
+        this.errors.set(key, current);
+    }
+
+    has(key: string) {
+        return this.errors.has(key);
+    }
+
+    get(key: string): BotValidationError {
+        return this.errors.get(key) ?? [];
+    }
+
+    get size() {
+        return this.errors.size;
+    }
+}
+
+export function validateBot(bot: ExternalBot): BotValidationErrors {
+    const errors = new BotValidationErrors();
+    errors.addErrors(`bot_name`, validBotComponentName(bot.name));
+
     if (!(validateOrigin(bot.endpoint) || validateCanister(bot.endpoint))) {
-        errors.set("bot_endpoint", "Endpoint must be a valid origin or canisterID");
+        errors.addErrors("bot_endpoint", i18nKey("bots.builder.errors.endpoint"));
+    }
+
+    if (bot.commands.length === 0) {
+        errors.addErrors("no_commands", i18nKey("bots.builder.errors.noCommands"));
     }
 
     if (containsDuplicateCommands(bot.commands)) {
-        errors.set("duplicate_commands", "Bot contains commands with duplicate names");
+        errors.addErrors("duplicate_commands", i18nKey("bots.builder.errors.duplicateCommands"));
     }
 
     bot.commands.forEach((command, i) => {
         if (!validateCommand(command, `command_${i}`, errors)) {
-            errors.set(`command_${i}`, "Command has errors");
+            errors.addErrors(`command_${i}`, i18nKey("Command has errors"));
         }
     });
-    console.log("Errors: ", errors);
     return errors;
 }
 
@@ -322,20 +363,21 @@ function validateCommand(
     errors: BotValidationErrors,
 ): boolean {
     let valid = true;
-    if (!validBotComponentName(command.name)) {
-        errors.set(
-            `${errorPath}_name`,
-            "Required field can only contain alphanumerics and underscores",
-        );
+    let nameErrors = validBotComponentName(command.name);
+    if (nameErrors.length > 0) {
+        errors.addErrors(`${errorPath}_name`, nameErrors);
         valid = false;
     }
     if (containsDuplicateParams(command.params)) {
-        errors.set(`${errorPath}_duplicate_params`, "Command contains params with duplicate names");
+        errors.addErrors(
+            `${errorPath}_duplicate_params`,
+            i18nKey("bots.builder.errors.duplicateParams"),
+        );
     }
     command.params.forEach((p, i) => {
         const paramPath = `${errorPath}_param_${i}`;
         if (!validateParameter(p, paramPath, errors)) {
-            errors.set(paramPath, "Parameter has errors");
+            errors.addErrors(paramPath, i18nKey("Parameter has errors"));
             valid = false;
         }
     });
@@ -358,23 +400,24 @@ function validateParameter(
     errors: BotValidationErrors,
 ): boolean {
     let valid = true;
-    if (!validBotComponentName(param.name)) {
-        errors.set(
-            `${errorPath}_name`,
-            "Required field can only contain alphanumerics and underscores",
-        );
+    let nameErrors = validBotComponentName(param.name);
+    if (nameErrors.length > 0) {
+        errors.addErrors(`${errorPath}_name`, nameErrors);
         valid = false;
     }
     if (param.kind === "string") {
         param.choices.forEach((c, i) => {
             if (c.name.length < MIN_NAME_LENGTH) {
-                errors.set(`${errorPath}_choices_${i}_name`, "Choice name must be >= 3 characters");
+                errors.addErrors(
+                    `${errorPath}_choices_${i}_name`,
+                    i18nKey("bots.builder.errors.minLength", { n: 3 }),
+                );
                 valid = false;
             }
             if (c.value.length < MIN_NAME_LENGTH) {
-                errors.set(
+                errors.addErrors(
                     `${errorPath}_choices_${i}_value`,
-                    "Choice value must be >= 3 characters",
+                    i18nKey("bots.builder.errors.minLength", { n: 3 }),
                 );
                 valid = false;
             }
@@ -383,7 +426,10 @@ function validateParameter(
     if (param.kind === "number") {
         param.choices.forEach((c, i) => {
             if (c.name.length < MIN_NAME_LENGTH) {
-                errors.set(`${errorPath}_choices_${i}_name`, "Choice name must be >= 3 characters");
+                errors.addErrors(
+                    `${errorPath}_choices_${i}_name`,
+                    i18nKey("bots.builder.errors.minLength", { n: 3 }),
+                );
                 valid = false;
             }
         });

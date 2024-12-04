@@ -67,6 +67,7 @@
         SummonWitch,
         RegisterBot,
         UpdateBot,
+        nervousSystemLookup,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -212,6 +213,8 @@
     let creatingThread = false;
     let currentChatMessages: CurrentChatMessages | undefined;
 
+    $: console.log("Nervous System: ", $nervousSystemLookup);
+
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
 
     $: selectedMultiUserChat =
@@ -222,7 +225,8 @@
         selectedMultiUserChat !== undefined
             ? selectedMultiUserChat.subtype?.governanceCanisterId
             : undefined;
-    $: nervousSystem = client.tryGetNervousSystem(governanceCanisterId);
+    // $: nervousSystem = client.tryGetNervousSystem(governanceCanisterId);
+    $: nervousSystem = client.tryGetNervousSystem("rrkah-fqaaa-aaaaa-aaaaq-cai");
     $: {
         if ($identityState.kind === "registering") {
             modal = { kind: "registering" };

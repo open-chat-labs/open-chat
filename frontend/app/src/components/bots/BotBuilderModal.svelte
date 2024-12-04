@@ -8,6 +8,8 @@
     // will be embedded in the make proposal UI
 
     let valid = $state(false);
+
+    function onUpdate() {}
 </script>
 
 <ModalContent on:close>
@@ -15,7 +17,7 @@
         <Translatable resourceKey={i18nKey("bots.builder.title")}></Translatable>
     </div>
     <div class="body" slot="body">
-        <BotBuilder bot={undefined} bind:valid />
+        <BotBuilder {onUpdate} bind:valid />
     </div>
 </ModalContent>
 

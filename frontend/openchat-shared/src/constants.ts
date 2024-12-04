@@ -23,3 +23,6 @@ export const ONE_WEEK = ONE_DAY * 7;
 export const ONE_MONTH = ONE_WEEK * 4;
 export const ONE_YEAR = 365 * ONE_DAY;
 export const LARGE_GROUP_THRESHOLD = 1000;
+
+// temporary feature flags
+export const BOTS_ENABLED = true;

@@ -97,6 +97,12 @@ export type Achievement = { 'Referred20thUser' : null } |
   { 'SentText' : null } |
   { 'SetAvatar' : null } |
   { 'SentVideo' : null };
+export interface AddReferralCodesArgs {
+  'codes' : Array<string>,
+  'referral_type' : ReferralType,
+  'expiry' : [] | [TimestampMillis],
+}
+export type AddReferralCodesResponse = { 'Success' : null };
 export interface AddedToChannelNotification {
   'channel_id' : ChannelId,
   'community_id' : CommunityId,
@@ -118,6 +124,16 @@ export interface AvatarChanged {
   'previous_avatar' : [] | [bigint],
   'new_avatar' : [] | [bigint],
 }
+export interface AwardExternalAchievementArgs {
+  'user_id' : UserId,
+  'achievement_id' : number,
+}
+export type AwardExternalAchievementResponse = { 'InvalidCaller' : null } |
+  { 'NotFound' : null } |
+  { 'Success' : { 'remaining_chit_budget' : number } } |
+  { 'AlreadyAwarded' : null } |
+  { 'InsufficientBudget' : null } |
+  { 'Expired' : null };
 export interface BannerChanged {
   'new_banner' : [] | [bigint],
   'changed_by' : UserId,
@@ -133,6 +149,36 @@ export interface BotConfig {
   'is_oc_controlled' : boolean,
   'supports_direct_messages' : boolean,
 }
+export interface BotMatch {
+  'id' : UserId,
+  'owner' : UserId,
+  'name' : string,
+  'description' : string,
+  'score' : number,
+  'avatar_id' : [] | [bigint],
+  'banner_id' : [] | [bigint],
+  'commands' : Array<SlashCommandSchema>,
+}
+export interface BotUpdatesArgs { 'updated_since' : TimestampMillis }
+export type BotUpdatesResponse = {
+    'Success' : {
+      'deleted' : Array<UserId>,
+      'timestamp' : TimestampMillis,
+      'added_or_updated' : Array<
+        {
+          'id' : UserId,
+          'endpoint' : string,
+          'owner' : UserId,
+          'name' : string,
+          'description' : string,
+          'last_updated' : TimestampMillis,
+          'avatar_id' : [] | [bigint],
+          'commands' : Array<SlashCommandSchema>,
+        }
+      >,
+    }
+  } |
+  { 'SuccessNoUpdates' : null };
 export interface BuildVersion {
   'major' : number,
   'minor' : number,
@@ -275,6 +321,12 @@ export interface ChatMetrics {
   'custom_type_messages' : bigint,
   'prize_messages' : bigint,
 }
+export interface CheckUsernameArgs { 'username' : string, 'is_bot' : boolean }
+export type CheckUsernameResponse = { 'UsernameTaken' : null } |
+  { 'UsernameTooShort' : number } |
+  { 'UsernameInvalid' : null } |
+  { 'UsernameTooLong' : number } |
+  { 'Success' : null };
 export interface Chit { 'streak' : number, 'balance' : number }
 export interface ChitEarned {
   'timestamp' : TimestampMillis,
@@ -286,6 +338,18 @@ export type ChitEarnedReason = { 'DailyClaim' : null } |
   { 'ExternalAchievement' : string } |
   { 'MemeContestWinner' : null } |
   { 'Referral' : ReferralStatus };
+export type ChitLeaderboardResponse = {
+    'SuccessV2' : {
+      'all_time' : Array<ChitUserBalance>,
+      'last_month' : Array<ChitUserBalance>,
+      'this_month' : Array<ChitUserBalance>,
+    }
+  };
+export interface ChitUserBalance {
+  'username' : string,
+  'balance' : number,
+  'user_id' : UserId,
+}
 export interface CommunityCanisterChannelSummary {
   'latest_message_sender_display_name' : [] | [string],
   'channel_id' : ChannelId,
@@ -464,6 +528,28 @@ export type Cryptocurrency = { 'InternetComputer' : null } |
   { 'KINIC' : null } |
   { 'CKBTC' : null } |
   { 'Other' : string };
+export type CurrentUserResponse = {
+    'Success' : {
+      'username' : string,
+      'date_created' : TimestampMillis,
+      'is_platform_operator' : boolean,
+      'diamond_membership_status' : DiamondMembershipStatusFull,
+      'wasm_version' : BuildVersion,
+      'icp_account' : AccountIdentifier,
+      'is_unique_person' : boolean,
+      'referrals' : Array<UserId>,
+      'user_id' : UserId,
+      'display_name' : [] | [string],
+      'avatar_id' : [] | [bigint],
+      'moderation_flags_enabled' : number,
+      'is_suspected_bot' : boolean,
+      'canister_upgrade_status' : CanisterUpgradeStatus,
+      'suspension_details' : [] | [SuspensionDetails],
+      'is_platform_moderator' : boolean,
+      'diamond_membership_details' : [] | [DiamondMembershipDetails],
+    }
+  } |
+  { 'UserNotFound' : null };
 export interface CurrentUserSummary {
   'username' : string,
   'is_platform_operator' : boolean,
@@ -493,21 +579,6 @@ export interface CyclesRegistrationFee {
   'valid_until' : TimestampMillis,
   'amount' : Cycles,
 }
-export interface DeleteFileArgs { 'file_id' : FileId }
-export interface DeleteFileFailure {
-  'reason' : DeleteFileFailureReason,
-  'file_id' : FileId,
-}
-export type DeleteFileFailureReason = { 'NotFound' : null } |
-  { 'NotAuthorized' : null };
-export type DeleteFileResponse = { 'NotFound' : null } |
-  { 'NotAuthorized' : null } |
-  { 'Success' : null };
-export interface DeleteFilesArgs { 'file_ids' : Array<FileId> }
-export interface DeleteFilesResponse {
-  'failures' : Array<DeleteFileFailure>,
-  'success' : Array<FileId>,
-}
 export interface DeletedContent {
   'timestamp' : TimestampMillis,
   'deleted_by' : UserId,
@@ -517,6 +588,17 @@ export interface DiamondMembershipDetails {
   'subscription' : DiamondMembershipSubscription,
   'expires_at' : TimestampMillis,
 }
+export type DiamondMembershipFeesResponse = {
+    'Success' : Array<
+      {
+        'one_year' : bigint,
+        'token' : Cryptocurrency,
+        'lifetime' : bigint,
+        'one_month' : bigint,
+        'three_months' : bigint,
+      }
+    >
+  };
 export type DiamondMembershipPlanDuration = { 'OneYear' : null } |
   { 'Lifetime' : null } |
   { 'ThreeMonths' : null } |
@@ -630,6 +712,31 @@ export interface EventsTimeToLiveUpdated {
 export type ExchangeId = { 'Sonic' : null } |
   { 'KongSwap' : null } |
   { 'ICPSwap' : null };
+export interface ExploreBotsArgs {
+  'page_size' : number,
+  'page_index' : number,
+  'search_term' : [] | [string],
+}
+export type ExploreBotsResponse = { 'TermTooShort' : number } |
+  { 'Success' : { 'total' : number, 'matches' : Array<BotMatch> } } |
+  { 'TermTooLong' : number } |
+  { 'InvalidTerm' : null };
+export interface ExternalAchievement {
+  'id' : number,
+  'url' : string,
+  'expires' : TimestampMillis,
+  'name' : string,
+  'budget_exhausted' : boolean,
+  'chit_reward' : number,
+}
+export interface ExternalAchievementsArgs { 'updates_since' : TimestampMillis }
+export type ExternalAchievementsResponse = {
+    'Success' : {
+      'last_updated' : TimestampMillis,
+      'added_or_updated' : Array<ExternalAchievement>,
+    }
+  } |
+  { 'SuccessNoUpdates' : null };
 export interface ExternalUrlUpdated {
   'new_url' : [] | [string],
   'updated_by' : UserId,
@@ -653,21 +760,6 @@ export interface FileContent {
   'caption' : [] | [string],
 }
 export type FileId = bigint;
-export interface FileInfoArgs { 'file_id' : FileId }
-export type FileInfoResponse = { 'NotFound' : null } |
-  { 'Success' : FileInfoSuccessResult };
-export interface FileInfoSuccessResult {
-  'is_owner' : boolean,
-  'file_hash' : Hash,
-  'file_size' : bigint,
-}
-export interface ForwardFileArgs {
-  'accessors' : Array<AccessorId>,
-  'file_id' : FileId,
-}
-export type ForwardFileResponse = { 'NotFound' : null } |
-  { 'NotAuthorized' : null } |
-  { 'Success' : FileId };
 export interface FrozenGroupInfo {
   'timestamp' : TimestampMillis,
   'frozen_by' : UserId,
@@ -1451,6 +1543,14 @@ export interface PermissionsChanged {
 export type PinnedMessageUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : MessageIndex };
+export type PlatformModeratorsGroupResponse = { 'Success' : ChatId };
+export type PlatformModeratorsResponse = {
+    'Success' : { 'users' : Array<UserId> }
+  };
+export type PlatformOperatorsArgs = {};
+export type PlatformOperatorsResponse = {
+    'Success' : { 'users' : Array<UserId> }
+  };
 export interface PollConfig {
   'allow_multiple_votes_per_user' : boolean,
   'text' : [] | [string],
@@ -1538,16 +1638,61 @@ export interface PublicGroupSummary {
   'participant_count' : number,
   'latest_message' : [] | [MessageEventWrapper],
 }
+export type PublicKeyResponse = { 'NotInitialised' : null } |
+  { 'Success' : string };
 export interface PushEventResult {
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
   'expires_at' : [] | [TimestampMillis],
 }
 export type Reaction = string;
+export type ReferralMetricsResponse = {
+    'Success' : {
+      'users_who_referred' : number,
+      'users_who_referred_unpaid_diamond' : number,
+      'referrals_of_unpaid_diamond' : number,
+      'icp_raised_by_referrals_to_paid_diamond' : number,
+      'referrals_of_paid_diamond' : number,
+      'users_who_referred_paid_diamond' : number,
+      'referrals_other' : number,
+      'users_who_referred_90_percent_unpaid_diamond' : number,
+    }
+  };
+export interface ReferralStats {
+  'username' : string,
+  'total_users' : number,
+  'user_id' : UserId,
+  'diamond_members' : number,
+  'total_rewards_e8s' : bigint,
+}
 export type ReferralStatus = { 'Diamond' : null } |
   { 'UniquePerson' : null } |
   { 'LifetimeDiamond' : null } |
   { 'Registered' : null };
+export type ReferralType = { 'User' : null } |
+  { 'BtcMiami' : null };
+export interface RegisterBotArgs {
+  'principal' : Principal,
+  'endpoint' : string,
+  'owner' : UserId,
+  'name' : string,
+  'description' : string,
+  'commands' : Array<SlashCommandSchema>,
+  'avatar' : [] | [string],
+}
+export type RegisterBotResponse = { 'Success' : null };
+export interface RegisterExternalAchievementArgs {
+  'id' : number,
+  'url' : string,
+  'expires' : TimestampMillis,
+  'logo' : string,
+  'name' : string,
+  'canister_id' : CanisterId,
+  'max_awards' : number,
+  'chit_reward' : number,
+  'submitted_by' : UserId,
+}
+export type RegisterExternalAchievementResponse = { 'Success' : null };
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface ReplyContext {
@@ -1573,6 +1718,10 @@ export interface RoleChanged {
   'new_role' : GroupRole,
 }
 export interface Rules { 'text' : string, 'enabled' : boolean }
+export interface SearchArgs { 'max_results' : number, 'search_term' : string }
+export type SearchResponse = {
+    'Success' : { 'timestamp' : TimestampMillis, 'users' : Array<UserSummary> }
+  };
 export interface SelectedGroupUpdates {
   'blocked_users_removed' : Array<UserId>,
   'pinned_messages_removed' : Uint32Array | number[],
@@ -1728,36 +1877,21 @@ export interface UpdatedRules {
   'text' : string,
   'enabled' : boolean,
 }
-export interface UploadChunkArgs {
-  'accessors' : Array<AccessorId>,
-  'chunk_index' : number,
-  'hash' : Hash,
-  'mime_type' : string,
-  'total_size' : bigint,
-  'bytes' : Uint8Array | number[],
-  'expiry' : [] | [TimestampMillis],
-  'chunk_size' : number,
-  'file_id' : FileId,
-}
-export type UploadChunkResponse = { 'ChunkAlreadyExists' : null } |
-  { 'Full' : null } |
-  { 'ChunkSizeMismatch' : null } |
-  { 'FileTooBig' : null } |
-  { 'ChunkIndexTooHigh' : null } |
-  { 'Success' : null } |
-  { 'FileExpired' : null } |
-  { 'HashMismatch' : null } |
-  { 'FileAlreadyExists' : null } |
-  { 'AllowanceExceeded' : null } |
-  { 'InvalidFileId' : null } |
-  { 'UserNotFound' : null };
 export interface User { 'username' : string, 'user_id' : UserId }
+export interface UserArgs {
+  'username' : [] | [string],
+  'user_id' : [] | [UserId],
+}
 export interface UserGroup {
   'members' : number,
   'name' : string,
   'user_group_id' : number,
 }
 export type UserId = CanisterId;
+export type UserRegistrationCanisterResponse = { 'Success' : CanisterId } |
+  { 'NewRegistrationsClosed' : null };
+export type UserResponse = { 'Success' : UserSummary } |
+  { 'UserNotFound' : null };
 export interface UserSummary {
   'streak' : number,
   'username' : string,
@@ -1791,14 +1925,34 @@ export interface UserSummaryVolatile {
   'total_chit_earned' : number,
   'chit_balance' : number,
 }
+export interface UsersArgs {
+  'user_groups' : Array<
+    { 'users' : Array<UserId>, 'updated_since' : TimestampMillis }
+  >,
+  'users_suspended_since' : [] | [TimestampMillis],
+}
 export interface UsersBlocked {
   'user_ids' : Array<UserId>,
   'blocked_by' : UserId,
 }
+export interface UsersChitArgs {
+  'month' : number,
+  'year' : number,
+  'users' : Array<UserId>,
+}
+export type UsersChitResponse = { 'Success' : { 'chit' : Array<Chit> } };
 export interface UsersInvited {
   'user_ids' : Array<UserId>,
   'invited_by' : UserId,
 }
+export type UsersResponse = {
+    'Success' : {
+      'deleted' : Array<UserId>,
+      'timestamp' : TimestampMillis,
+      'users' : Array<UserSummaryV2>,
+      'current_user' : [] | [CurrentUserSummary],
+    }
+  };
 export interface UsersUnblocked {
   'user_ids' : Array<UserId>,
   'unblocked_by' : UserId,
@@ -1864,11 +2018,51 @@ export interface VideoContent {
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
 export interface _SERVICE {
-  'delete_file' : ActorMethod<[DeleteFileArgs], DeleteFileResponse>,
-  'delete_files' : ActorMethod<[DeleteFilesArgs], DeleteFilesResponse>,
-  'file_info' : ActorMethod<[FileInfoArgs], FileInfoResponse>,
-  'forward_file' : ActorMethod<[ForwardFileArgs], ForwardFileResponse>,
-  'upload_chunk_v2' : ActorMethod<[UploadChunkArgs], UploadChunkResponse>,
+  'add_referral_codes' : ActorMethod<
+    [AddReferralCodesArgs],
+    AddReferralCodesResponse
+  >,
+  'award_external_achievement' : ActorMethod<
+    [AwardExternalAchievementArgs],
+    AwardExternalAchievementResponse
+  >,
+  'bot_updates' : ActorMethod<[BotUpdatesArgs], BotUpdatesResponse>,
+  'check_username' : ActorMethod<[CheckUsernameArgs], CheckUsernameResponse>,
+  'chit_leaderboard' : ActorMethod<[EmptyArgs], ChitLeaderboardResponse>,
+  'current_user' : ActorMethod<[EmptyArgs], CurrentUserResponse>,
+  'diamond_membership_fees' : ActorMethod<
+    [EmptyArgs],
+    DiamondMembershipFeesResponse
+  >,
+  'explore_bots' : ActorMethod<[ExploreBotsArgs], ExploreBotsResponse>,
+  'external_achievements' : ActorMethod<
+    [ExternalAchievementsArgs],
+    ExternalAchievementsResponse
+  >,
+  'platform_moderators' : ActorMethod<[EmptyArgs], PlatformModeratorsResponse>,
+  'platform_moderators_group' : ActorMethod<
+    [EmptyArgs],
+    PlatformModeratorsGroupResponse
+  >,
+  'platform_operators' : ActorMethod<
+    [PlatformOperatorsArgs],
+    PlatformOperatorsResponse
+  >,
+  'public_key' : ActorMethod<[EmptyArgs], PublicKeyResponse>,
+  'referral_metrics' : ActorMethod<[EmptyArgs], ReferralMetricsResponse>,
+  'register_bot' : ActorMethod<[RegisterBotArgs], RegisterBotResponse>,
+  'register_external_achievement' : ActorMethod<
+    [RegisterExternalAchievementArgs],
+    RegisterExternalAchievementResponse
+  >,
+  'search' : ActorMethod<[SearchArgs], SearchResponse>,
+  'user' : ActorMethod<[UserArgs], UserResponse>,
+  'user_registration_canister' : ActorMethod<
+    [EmptyArgs],
+    UserRegistrationCanisterResponse
+  >,
+  'users' : ActorMethod<[UsersArgs], UsersResponse>,
+  'users_chit' : ActorMethod<[UsersChitArgs], UsersChitResponse>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

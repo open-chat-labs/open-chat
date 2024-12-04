@@ -1,5 +1,6 @@
 import { IDL } from "@dfinity/candid";
 import { Principal } from "@dfinity/principal";
+import type { CandidateExternalBot } from "openchat-client";
 
 export const OC_GOVERNANCE_CANISTER_ID = "2jvtu-yqaaa-aaaaq-aaama-cai";
 
@@ -72,6 +73,103 @@ export function createUpdateTokenPayload(
                     transaction_url_format: optionalStringToCandid(transactionUrlFormat),
                 },
             ],
+        ),
+    );
+}
+
+const GroupPermission = IDL.Variant({
+    StartVideoCall: IDL.Null,
+    DeleteMessages: IDL.Null,
+    RemoveMembers: IDL.Null,
+    UpdateGroup: IDL.Null,
+    ReactToMessages: IDL.Null,
+    AddMembers: IDL.Null,
+    InviteUsers: IDL.Null,
+    MentionAllMembers: IDL.Null,
+    PinMessages: IDL.Null,
+    ChangeRoles: IDL.Null,
+});
+const CommunityPermission = IDL.Variant({
+    RemoveMembers: IDL.Null,
+    CreatePublicChannel: IDL.Null,
+    InviteUsers: IDL.Null,
+    ManageUserGroups: IDL.Null,
+    UpdateDetails: IDL.Null,
+    CreatePrivateChannel: IDL.Null,
+    ChangeRoles: IDL.Null,
+});
+const MessagePermission = IDL.Variant({
+    VideoCall: IDL.Null,
+    Giphy: IDL.Null,
+    File: IDL.Null,
+    Poll: IDL.Null,
+    Text: IDL.Null,
+    Image: IDL.Null,
+    Prize: IDL.Null,
+    P2pSwap: IDL.Null,
+    Audio: IDL.Null,
+    Crypto: IDL.Null,
+    Video: IDL.Null,
+});
+const SlashCommandPermissions = IDL.Record({
+    chat: IDL.Vec(GroupPermission),
+    community: IDL.Vec(CommunityPermission),
+    thread: IDL.Vec(MessagePermission),
+    message: IDL.Vec(MessagePermission),
+});
+const NumberParamChoice = IDL.Record({
+    value: IDL.Nat16,
+    name: IDL.Text,
+});
+const NumberParam = IDL.Record({
+    min_length: IDL.Nat16,
+    max_length: IDL.Nat16,
+    choices: IDL.Vec(NumberParamChoice),
+});
+const StringParamChoice = IDL.Record({
+    value: IDL.Text,
+    name: IDL.Text,
+});
+const StringParam = IDL.Record({
+    min_length: IDL.Nat16,
+    max_length: IDL.Nat16,
+    choices: IDL.Vec(StringParamChoice),
+});
+const SlashCommandParamType = IDL.Variant({
+    UserParam: IDL.Null,
+    NumberParam: NumberParam,
+    StringParam: StringParam,
+    BooleanParam: IDL.Null,
+});
+const SlashCommandParam = IDL.Record({
+    name: IDL.Text,
+    description: IDL.Opt(IDL.Text),
+    required: IDL.Bool,
+    placeholder: IDL.Opt(IDL.Text),
+    param_type: SlashCommandParamType,
+});
+const SlashCommandSchema = IDL.Record({
+    permissions: SlashCommandPermissions,
+    name: IDL.Text,
+    description: IDL.Opt(IDL.Text),
+    params: IDL.Vec(SlashCommandParam),
+});
+
+export function createRegisterExternalBotPayload(candidate: CandidateExternalBot): Uint8Array {
+    return new Uint8Array(
+        IDL.encode(
+            [
+                IDL.Record({
+                    principal: IDL.Principal,
+                    endpoint: IDL.Text,
+                    owner: IDL.Principal,
+                    name: IDL.Text,
+                    description: IDL.Text,
+                    commands: IDL.Vec(SlashCommandSchema),
+                    avatar: IDL.Opt(IDL.Text),
+                }),
+            ],
+            [],
         ),
     );
 }

@@ -1,8 +1,8 @@
 <script lang="ts">
     import {
+        BotValidationErrors,
         emptyBotInstance,
         validateBot,
-        type CandidateExternalBot,
         type ExternalBot,
         type SlashCommandPermissions,
         type SlashCommandSchema,
@@ -21,14 +21,14 @@
 
     interface Props {
         valid: boolean;
-        bot: ExternalBot | undefined;
+        onUpdate: (bot: ExternalBot) => void;
     }
 
-    let { valid = $bindable(), bot }: Props = $props();
-    let candidate = $state<CandidateExternalBot>(emptyBotInstance(bot));
+    let { valid = $bindable(), onUpdate }: Props = $props();
     let selectedCommand = $state<SlashCommandSchema | undefined>(undefined);
     let selectedCommandIndex = $state<number | undefined>(undefined);
     let debug = $state(false);
+    let candidate = $state<ExternalBot>(emptyBotInstance());
 
     let errors = $derived.by(
         debouncedDerived(
@@ -37,8 +37,8 @@
                 console.log("Validating candidate");
                 return validateBot(candidate);
             },
-            500,
-            new Map(),
+            300,
+            new BotValidationErrors(),
         ),
     );
 
@@ -50,6 +50,11 @@
         if (isValid !== valid) {
             valid = isValid;
         }
+    });
+
+    $effect(() => {
+        console.log("Candidate updated");
+        onUpdate($state.snapshot(candidate));
     });
 
     function botAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>) {
@@ -161,19 +166,29 @@
             {/each}
         </div>
 
-        {#if errors.has("duplicate_commands")}
-            <ErrorMessage>{errors.get("duplicate_commands")}</ErrorMessage>
-        {/if}
-
         <Link on:click={addCommand} underline="never">
             <Translatable resourceKey={i18nKey("bots.builder.addCommand")} />
         </Link>
+
+        <div class="error">
+            {#if errors.has("duplicate_commands")}
+                <ErrorMessage>
+                    <Translatable resourceKey={errors.get("duplicate_commands")[0]}></Translatable
+                    ></ErrorMessage>
+            {/if}
+            {#if errors.has("no_commands")}
+                <ErrorMessage>
+                    <Translatable resourceKey={errors.get("no_commands")[0]}></Translatable
+                    ></ErrorMessage>
+            {/if}
+        </div>
     </div>
 
     {#if debug}
         <pre class="debug">
-        {JSON.stringify(candidate, null, 4)}
-    </pre>
+            {JSON.stringify(candidate, null, 4)}
+        </pre>
+        <pre>{valid}</pre>
     {/if}
 </form>
 
@@ -187,5 +202,11 @@
     }
     .commands {
         margin: $sp4 0 $sp3 0;
+    }
+
+    .error {
+        :global(.error) {
+            margin-top: $sp3;
+        }
     }
 </style>

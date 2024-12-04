@@ -31,12 +31,14 @@
     import {
         createAddTokenPayload,
         createRegisterExternalAchievementPayload,
+        createRegisterExternalBotPayload,
         createUpdateTokenPayload,
     } from "../../utils/sns";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
     import DurationPicker from "./DurationPicker.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
+    import BotBuilder from "../bots/BotBuilder.svelte";
 
     const MIN_TITLE_LENGTH = 3;
     const MAX_TITLE_LENGTH = 120;
@@ -78,6 +80,7 @@
     let busy = true;
     let selectedProposalType:
         | "motion"
+        | "register_bot"
         | "transfer_sns_funds"
         | "upgrade_sns_to_next_version"
         | "register_external_acievement"
@@ -91,6 +94,8 @@
     let refreshingBalance = false;
     let balanceWithRefresh: BalanceWithRefresh;
     let achivementName = "";
+    let candidateBot: ExternalBot | undefined = undefined;
+    let candidateBotValid = false;
 
     $: errorMessage =
         error !== undefined ? i18nKey("proposal.maker." + error) : $pinNumberErrorMessageStore;
@@ -144,6 +149,7 @@
         summaryValid &&
         (selectedProposalType === "motion" ||
             selectedProposalType === "upgrade_sns_to_next_version" ||
+            (selectedProposalType === "register_bot" && candidateBotValid) ||
             (selectedProposalType === "transfer_sns_funds" &&
                 amountValid &&
                 recipientOwnerValid &&
@@ -301,6 +307,13 @@
                     ),
                 };
             }
+            case "register_bot": {
+                return {
+                    kind: "execute_generic_nervous_system_function",
+                    functionId: BigInt(1012),
+                    payload: createRegisterExternalBotPayload(candidateBot),
+                };
+            }
         }
     }
 
@@ -397,6 +410,7 @@
                         <option value={"transfer_sns_funds"}>Transfer SNS funds</option>
                         <option value={"upgrade_sns_to_next_version"}
                             >Upgrade SNS to next version</option>
+                        <option value={"register_bot"}>Register a bot</option>
                         {#if symbol === "CHAT"}
                             <option value={"register_external_acievement"}
                                 >Register external achievement</option>
@@ -477,7 +491,11 @@
                 </section>
             </div>
             <div class="action hidden" class:visible={step === 2}>
-                {#if selectedProposalType === "transfer_sns_funds"}
+                {#if selectedProposalType === "register_bot"}
+                    <BotBuilder
+                        onUpdate={(bot) => (candidateBot = bot)}
+                        bind:valid={candidateBotValid} />
+                {:else if selectedProposalType === "transfer_sns_funds"}
                     <div>
                         <section>
                             <Legend label={i18nKey("proposal.maker.treasury")} required />

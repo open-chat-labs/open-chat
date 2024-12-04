@@ -169,7 +169,15 @@
             "descPlaceholder": "Enter bot description",
             "endpointLabel": "Bot endpoint",
             "endpointRules": "Must be a valid origin or a canisterID",
-            "iconLabel": "Bot icon",
+            "errors": {
+                "minLength": "Must have at least {n} characters",
+                "alphaOnly": "Must only contain alphanumerics and underscores",
+                "endpoint": "Endpoint must be a valid origin or canisterID",
+                "noCommands": "A bot must contain at least one command",
+                "duplicateCommands": "Bot contains duplicate commands",
+                "duplicateParams": "Command contains duplicate params"
+            },
+            "iconLabel": "Bot avatar",
             "maxLengthLabel": "Maximum length",
             "maxLengthPlaceholder": "Enter maximum length",
             "maxValueLabel": "Maximum value",
