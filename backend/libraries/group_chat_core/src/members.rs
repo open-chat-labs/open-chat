@@ -41,9 +41,9 @@ pub struct GroupMembers {
     suspended: BTreeSet<UserId>,
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
     latest_update_removed: TimestampMillis,
-    #[serde(default)]
+    #[serde(skip_deserializing)]
     migrate_to_stable_memory_queue: VecDeque<UserId>,
-    #[serde(default)]
+    #[serde(skip_deserializing)]
     migration_to_stable_memory_complete: bool,
 }
 
@@ -612,6 +612,10 @@ impl Members for GroupMembers {
 
     fn get(&self, user_id: &UserId) -> Option<GroupMemberInternal> {
         self.get(user_id)
+    }
+
+    fn can_member_lapse(&self, user_id: &UserId) -> bool {
+        self.member_ids.contains(user_id) && !self.owners.contains(user_id) && !self.lapsed.contains(user_id)
     }
 
     fn iter_members_who_can_lapse(&self) -> Box<dyn Iterator<Item = UserId> + '_> {
