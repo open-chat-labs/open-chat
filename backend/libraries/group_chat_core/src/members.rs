@@ -41,9 +41,9 @@ pub struct GroupMembers {
     suspended: BTreeSet<UserId>,
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
     latest_update_removed: TimestampMillis,
-    #[serde(default)]
+    #[serde(skip_deserializing)]
     migrate_to_stable_memory_queue: VecDeque<UserId>,
-    #[serde(default)]
+    #[serde(skip_deserializing)]
     migration_to_stable_memory_complete: bool,
 }
 
