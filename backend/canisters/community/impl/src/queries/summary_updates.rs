@@ -46,7 +46,7 @@ fn summary_updates_impl(
         member.as_ref().map(|m| m.last_updated()).unwrap_or_default(),
     );
 
-    let (channels_with_updates, channels_removed) = if let Some(m) = member {
+    let (channels_with_updates, channels_removed) = if let Some(m) = &member {
         let channels_with_updates: Vec<_> = state
             .data
             .members
@@ -83,12 +83,12 @@ fn summary_updates_impl(
         return SuccessNoUpdates;
     }
 
-    let updates_from_events = process_events(updates_since, member, &state.data);
+    let updates_from_events = process_events(updates_since, member.as_ref(), &state.data);
 
     let mut channels_added = Vec::new();
     let mut channels_updated = Vec::new();
 
-    let user_id = member.map(|m| m.user_id);
+    let user_id = member.as_ref().map(|m| m.user_id);
     let is_community_member = member.is_some();
 
     for channel in channels_with_updates {
