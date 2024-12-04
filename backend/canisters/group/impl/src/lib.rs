@@ -27,15 +27,15 @@ use serde_bytes::ByteBuf;
 use stable_memory_map::{ChatEventKeyPrefix, KeyPrefix};
 use std::cell::RefCell;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     AccessGateConfigInternal, Achievement, BuildVersion, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles,
     Document, Empty, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions,
-    GroupSubtype, MessageIndex, Milliseconds, MultiUserChat, Notification, Rules, TimestampMillis, Timestamped, UserId,
-    UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
+    GroupSubtype, MessageIndex, Milliseconds, MultiUserChat, Notification, Rules, SlashCommandPermissions, TimestampMillis,
+    Timestamped, UserId, UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
 };
 use user_canister::GroupCanisterEvent;
 use utils::env::Environment;
@@ -474,6 +474,8 @@ struct Data {
     #[serde(skip_deserializing)]
     members_migrated_to_stable_memory: bool,
     stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
+    #[serde(default)]
+    bot_permissions: BTreeMap<UserId, SlashCommandPermissions>,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -571,6 +573,7 @@ impl Data {
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             members_migrated_to_stable_memory: true,
+            bot_permissions: BTreeMap::new(),
         }
     }
 
@@ -695,6 +698,32 @@ impl Data {
             self.user_event_sync_queue
                 .push(user_id, GroupCanisterEvent::Achievement(achievement));
         }
+    }
+
+    pub fn get_bot_permissions(&self, bot_user_id: &UserId) -> Option<&SlashCommandPermissions> {
+        self.bot_permissions.get(bot_user_id)
+    }
+
+    pub fn get_user_permissions_for_bot_commands(&self, user_id: &UserId) -> Option<SlashCommandPermissions> {
+        let member = self.chat.members.get_verified_member(*user_id).ok()?;
+
+        let group_permissions = member.role().permissions(&self.chat.permissions);
+        let message_permissions = member.role().message_permissions(&self.chat.permissions.message_permissions);
+        let thread_permissions = self
+            .chat
+            .permissions
+            .thread_permissions
+            .as_ref()
+            .map_or(message_permissions.clone(), |thread_permissions| {
+                member.role().message_permissions(thread_permissions)
+            });
+
+        Some(SlashCommandPermissions {
+            community: HashSet::new(),
+            chat: group_permissions,
+            message: message_permissions,
+            thread: thread_permissions,
+        })
     }
 }
 
