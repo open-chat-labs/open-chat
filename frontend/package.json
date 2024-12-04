@@ -40,6 +40,7 @@
         "dotenv-cli": "^7.2.1",
         "eslint-config-prettier": "^9.0.0",
         "eslint-plugin-prettier": "^5.0.0",
+        "prettier-plugin-svelte": "^3.3.2",
         "rollup": "^4.22.4",
         "rollup-plugin-analyzer": "^4.0.0",
         "rollup-plugin-cleaner": "^1.0.0",
