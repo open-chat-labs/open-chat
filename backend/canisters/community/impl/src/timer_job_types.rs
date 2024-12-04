@@ -7,7 +7,7 @@ use chat_events::MessageContentInternal;
 use constants::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 use ledger_utils::process_transaction;
 use serde::{Deserialize, Serialize};
-use tracing::{error, info};
+use tracing::error;
 use types::{
     BlobReference, CanisterId, ChannelId, ChatId, MessageId, MessageIndex, P2PSwapStatus, PendingCryptoTransaction, UserId,
 };
@@ -27,7 +27,6 @@ pub enum TimerJob {
     CancelP2PSwapInEscrowCanister(CancelP2PSwapInEscrowCanisterJob),
     MarkP2PSwapExpired(MarkP2PSwapExpiredJob),
     MarkVideoCallEnded(MarkVideoCallEndedJob),
-    MigrateMembersToStableMemory(MigrateMembersToStableMemoryJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -138,9 +137,6 @@ pub struct MarkP2PSwapExpiredJob {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct MarkVideoCallEndedJob(pub community_canister::end_video_call::Args);
 
-#[derive(Serialize, Deserialize, Clone)]
-pub struct MigrateMembersToStableMemoryJob;
-
 impl Job for TimerJob {
     fn execute(self) {
         if can_borrow_state() {
@@ -161,7 +157,6 @@ impl Job for TimerJob {
             TimerJob::CancelP2PSwapInEscrowCanister(job) => job.execute(),
             TimerJob::MarkP2PSwapExpired(job) => job.execute(),
             TimerJob::MarkVideoCallEnded(job) => job.execute(),
-            TimerJob::MigrateMembersToStableMemory(job) => job.execute(),
         }
     }
 }
@@ -453,33 +448,5 @@ impl Job for MarkP2PSwapExpiredJob {
 impl Job for MarkVideoCallEndedJob {
     fn execute(self) {
         mutate_state(|state| end_video_call_impl(self.0, state));
-    }
-}
-
-impl Job for MigrateMembersToStableMemoryJob {
-    fn execute(self) {
-        mutate_state(|state| {
-            let mut complete = true;
-            if state.data.members.migrate_next_batch_to_stable_memory() {
-                for channel in state.data.channels.iter_mut() {
-                    if !channel.chat.members.migrate_next_batch_to_stable_memory() {
-                        complete = false;
-                        break;
-                    }
-                }
-            } else {
-                complete = false;
-            }
-            if !complete {
-                let now = state.env.now();
-                state
-                    .data
-                    .timer_jobs
-                    .enqueue_job(TimerJob::MigrateMembersToStableMemory(self), now + (10 * SECOND_IN_MS), now);
-            } else {
-                state.data.members_migrated_to_stable_memory = true;
-                info!("Finished migrating members to stable memory");
-            }
-        })
     }
 }
