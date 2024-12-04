@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Generate 64bit message Ids ([#6978](https://github.com/open-chat-labs/open-chat/pull/6978))
+
 ### Fixed
 
 - Prioritise updating proposals based on length of time since last update ([#6974](https://github.com/open-chat-labs/open-chat/pull/6974))
