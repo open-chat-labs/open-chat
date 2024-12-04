@@ -219,9 +219,6 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
                 }
             }
 
-            // TODO remove this once groups are upgraded and we re-enable importing
-            // members to stable memory
-            chat.members.reset_migration_to_stable_memory_complete_flag();
             if !chat.members.migrate_next_batch_to_stable_memory() {
                 state.data.members_migrated_to_stable_memory = false;
                 MigrateMembersToStableMemoryJob.execute();
