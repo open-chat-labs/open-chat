@@ -4,7 +4,8 @@ use types::nns::CryptoAmount;
 use types::{
     CanisterId, ChannelLatestMessageIndex, ChatId, ChitEarnedReason, CommunityId, Cryptocurrency,
     DiamondMembershipPlanDuration, MessageContent, MessageContentInitial, MessageId, MessageIndex, PhoneNumber, ReferralType,
-    SuspensionDuration, TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User, UserId, UserType,
+    SlashCommandSchema, SuspensionDuration, TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User, UserId,
+    UserType,
 };
 
 mod lifecycle;
@@ -22,6 +23,7 @@ pub enum Event {
     PhoneNumberConfirmed(PhoneNumberConfirmed),
     StorageUpgraded(StorageUpgraded),
     UserRegistered(UserRegistered),
+    BotRegistered(BotRegistered),
     SuperAdminStatusChanged(PlatformModeratorStatusChanged),
     MaxConcurrentCanisterUpgradesChanged(MaxConcurrentCanisterUpgradesChanged),
     UserUpgradeConcurrencyChanged(UserUpgradeConcurrencyChanged),
@@ -75,6 +77,14 @@ pub struct UserRegistered {
     pub username: String,
     pub user_type: UserType,
     pub referred_by: Option<UserId>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BotRegistered {
+    pub user_id: UserId,
+    pub user_principal: Principal,
+    pub name: String,
+    pub commands: Vec<SlashCommandSchema>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

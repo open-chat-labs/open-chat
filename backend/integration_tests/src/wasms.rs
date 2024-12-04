@@ -6,7 +6,6 @@ use types::{BuildVersion, CanisterWasm};
 
 lazy_static! {
     pub static ref AIRDROP_BOT: CanisterWasm = get_canister_wasm("airdrop_bot");
-    pub static ref BOT_API_GATEWAY: CanisterWasm = get_canister_wasm("bot_api_gateway");
     pub static ref COMMUNITY: CanisterWasm = get_canister_wasm("community");
     pub static ref CYCLES_DISPENSER: CanisterWasm = get_canister_wasm("cycles_dispenser");
     pub static ref CYCLES_MINTING_CANISTER: CanisterWasm = get_canister_wasm("cycles_minting_canister");

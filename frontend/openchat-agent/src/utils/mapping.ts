@@ -89,6 +89,16 @@ export function principalStringToBytes(principal: string): Uint8Array {
     return Principal.fromText(principal).toUint8Array();
 }
 
+export function maybePrincipalStringToBytes(principal?: string): Uint8Array | undefined {
+    if (principal === undefined) return undefined;
+    try {
+        return principalStringToBytes(principal);
+    } catch (err) {
+        console.warn("Unable to convert principal string to bytes", principal, err);
+    }
+    return undefined;
+}
+
 export function bigintToBytes(value: bigint): Uint8Array {
     return hexStringToBytes(value.toString(16));
 }

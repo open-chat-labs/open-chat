@@ -25,6 +25,7 @@ use model::streak::Streak;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
+use stable_memory_map::KeyPrefix;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::ops::Deref;
@@ -189,7 +190,6 @@ impl RuntimeState {
                 group_index: self.data.group_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
                 notifications: self.data.notifications_canister_id,
-                bot_api_gateway: self.data.bot_api_gateway_canister_id,
                 proposals_bot: self.data.proposals_bot_canister_id,
                 escrow: self.data.escrow_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
@@ -216,8 +216,6 @@ struct Data {
     pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
-    #[serde(default = "CanisterId::anonymous")]
-    pub bot_api_gateway_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
     pub avatar: Timestamped<Option<Document>>,
@@ -255,7 +253,7 @@ struct Data {
     pub referred_by: Option<UserId>,
     pub referrals: Referrals,
     pub message_activity_events: MessageActivityEvents,
-    pub stable_memory_keys_to_garbage_collect: Vec<Vec<u8>>,
+    pub stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
 }
 
 impl Data {
@@ -266,7 +264,6 @@ impl Data {
         local_user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
-        bot_api_gateway_canister_id: CanisterId,
         proposals_bot_canister_id: CanisterId,
         escrow_canister_id: CanisterId,
         video_call_operators: Vec<Principal>,
@@ -286,7 +283,6 @@ impl Data {
             local_user_index_canister_id,
             group_index_canister_id,
             notifications_canister_id,
-            bot_api_gateway_canister_id,
             proposals_bot_canister_id,
             escrow_canister_id,
             avatar: Timestamped::default(),
@@ -476,7 +472,6 @@ pub struct CanisterIds {
     pub group_index: CanisterId,
     pub local_user_index: CanisterId,
     pub notifications: CanisterId,
-    pub bot_api_gateway: CanisterId,
     pub proposals_bot: CanisterId,
     pub escrow: CanisterId,
     pub icp_ledger: CanisterId,

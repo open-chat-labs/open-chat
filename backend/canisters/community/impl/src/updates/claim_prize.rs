@@ -9,7 +9,7 @@ use ledger_utils::{create_pending_transaction, process_transaction};
 use tracing::error;
 use types::{CanisterId, CompletedCryptoTransaction, PendingCryptoTransaction, UserId};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn claim_prize(args: Args) -> Response {
     run_regular_jobs();

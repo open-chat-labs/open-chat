@@ -7,7 +7,7 @@ use canister_tracing_macros::trace;
 use community_canister::unblock_user::*;
 use types::UsersUnblocked;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn unblock_user(args: Args) -> Response {
     run_regular_jobs();

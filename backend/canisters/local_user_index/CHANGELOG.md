@@ -6,9 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Added `execute_bot_command` endpoint and bot registry ([#6944](https://github.com/open-chat-labs/open-chat/pull/6944))
+
 ### Changed
 
 - Add chat + command text to bot command claims ([#6929](https://github.com/open-chat-labs/open-chat/pull/6929))
+- Enable job to check User canister cycles balances ([#6959](https://github.com/open-chat-labs/open-chat/pull/6959))
+- Re-notify User canister after attempting to join if already in channel ([#6964](https://github.com/open-chat-labs/open-chat/pull/6964))
 
 ## [[2.0.1481](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1481-local_user_index)] - 2024-11-29
 

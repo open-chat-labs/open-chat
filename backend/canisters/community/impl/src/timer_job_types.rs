@@ -73,14 +73,12 @@ pub struct MarkGroupImportCompleteJob {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct FinalPrizePaymentsJob {
     pub channel_id: ChannelId,
-    pub thread_root_message_index: Option<MessageIndex>,
     pub message_index: MessageIndex,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct MakeTransferJob {
     pub pending_transaction: PendingCryptoTransaction,
-    #[serde(default)]
     pub attempt: u32,
 }
 
@@ -197,8 +195,7 @@ impl Job for HardDeleteMessageContentJob {
                                     .timer_jobs
                                     .cancel_job(|job| {
                                         if let TimerJob::FinalPrizePayments(j) = job {
-                                            j.thread_root_message_index == self.thread_root_message_index
-                                                && j.message_index == message_index
+                                            j.channel_id == self.channel_id && j.message_index == message_index
                                         } else {
                                             false
                                         }
@@ -302,13 +299,7 @@ impl Job for FinalPrizePaymentsJob {
                 .data
                 .channels
                 .get_mut(&self.channel_id)
-                .map(|channel| {
-                    channel.chat.events.final_payments(
-                        self.thread_root_message_index,
-                        self.message_index,
-                        state.env.now_nanos(),
-                    )
-                })
+                .map(|channel| channel.chat.events.final_payments(self.message_index, state.env.now_nanos()))
                 .unwrap_or_default()
         });
 
@@ -480,7 +471,7 @@ impl Job for MigrateMembersToStableMemoryJob {
                 state
                     .data
                     .timer_jobs
-                    .enqueue_job(TimerJob::MigrateMembersToStableMemory(self), now, now);
+                    .enqueue_job(TimerJob::MigrateMembersToStableMemory(self), now + (10 * SECOND_IN_MS), now);
             } else {
                 state.data.members_migrated_to_stable_memory = true;
                 info!("Finished migrating members to stable memory");

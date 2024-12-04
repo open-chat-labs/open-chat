@@ -42,7 +42,7 @@ pub(crate) async fn add_sns_token(nervous_system: NervousSystemDetails) {
 }
 
 #[allow(clippy::too_many_arguments)]
-async fn add_token_impl(
+pub(crate) async fn add_token_impl(
     ledger_canister_id: CanisterId,
     payer: Option<UserId>,
     nervous_system: Option<NervousSystemDetails>,
@@ -115,7 +115,7 @@ async fn add_token_impl(
             from: from.into(),
             to: SNS_GOVERNANCE_CANISTER_ID.into(),
             amount: amount.into(),
-            fee: Cryptocurrency::CHAT.fee().map(|fee| fee.into()),
+            fee: None, // No transfer fee for BURNing
             memo: Some(MEMO_LIST_TOKEN.to_vec().into()),
             created_at_time: Some(now_nanos),
         };

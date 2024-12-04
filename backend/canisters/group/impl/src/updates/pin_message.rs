@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use group_canister::pin_message_v2::{Response::*, *};
 use group_chat_core::PinUnpinMessageResult;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn pin_message_v2(args: Args) -> Response {
     run_regular_jobs();

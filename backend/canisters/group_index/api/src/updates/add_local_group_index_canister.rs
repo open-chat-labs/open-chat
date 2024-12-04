@@ -8,7 +8,6 @@ pub struct Args {
     pub canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
-    pub bot_api_gateway_canister_id: CanisterId,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

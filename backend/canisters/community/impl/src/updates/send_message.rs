@@ -386,7 +386,6 @@ fn register_timer_jobs(
             data.timer_jobs.enqueue_job(
                 TimerJob::FinalPrizePayments(FinalPrizePaymentsJob {
                     channel_id,
-                    thread_root_message_index,
                     message_index: message_event.event.message_index,
                 }),
                 p.end_date,

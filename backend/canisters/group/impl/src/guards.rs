@@ -40,14 +40,6 @@ pub fn caller_is_local_group_index() -> Result<(), String> {
     }
 }
 
-pub fn caller_is_bot_api_gateway() -> Result<(), String> {
-    if read_state(|state| state.is_caller_bot_api_gateway()) {
-        Ok(())
-    } else {
-        Err("Caller is not the BotAPI Gateway".to_string())
-    }
-}
-
 pub fn caller_is_escrow_canister() -> Result<(), String> {
     if read_state(|state| state.is_caller_escrow_canister()) {
         Ok(())

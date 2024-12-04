@@ -7,8 +7,8 @@ use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use chat_events::{GroupChatThreadKeyPrefix, KeyPrefix, Reader};
-use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
+use chat_events::Reader;
+use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, SNS_LEDGER_CANISTER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -24,6 +24,7 @@ use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
+use stable_memory_map::{ChatEventKeyPrefix, KeyPrefix};
 use std::cell::RefCell;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{HashMap, HashSet};
@@ -85,10 +86,6 @@ impl RuntimeState {
         self.env.caller() == self.data.local_group_index_canister_id
     }
 
-    pub fn is_caller_bot_api_gateway(&self) -> bool {
-        self.env.caller() == self.data.bot_api_gateway_canister_id
-    }
-
     pub fn is_caller_escrow_canister(&self) -> bool {
         self.env.caller() == self.data.escrow_canister_id
     }
@@ -148,9 +145,10 @@ impl RuntimeState {
         let treasury_share = payment.amount.saturating_sub(owner_share * owner_count);
         let amount = treasury_share.saturating_sub(payment.fee);
         if amount > 0 {
+            let is_chat = payment.ledger_canister_id == SNS_LEDGER_CANISTER_ID;
             self.data.pending_payments_queue.push(PendingPayment {
                 amount,
-                fee: payment.fee,
+                fee: if is_chat { 0 } else { payment.fee }, // No fee for BURNing
                 ledger_canister: payment.ledger_canister_id,
                 recipient: PaymentRecipient::Treasury,
                 reason: PendingPaymentReason::AccessGate,
@@ -265,6 +263,7 @@ impl RuntimeState {
         } else if self.data.is_frozen() {
             ChatFrozen
         } else {
+            assert!(self.data.members_migrated_to_stable_memory);
             let transfers_required = self.prepare_transfers_for_import_into_community();
             let serialized = serialize_then_unwrap(&self.data.chat);
             let total_bytes = serialized.len() as u64;
@@ -361,7 +360,9 @@ impl RuntimeState {
         for thread in result.threads {
             self.data
                 .stable_memory_keys_to_garbage_collect
-                .push(KeyPrefix::GroupChatThread(GroupChatThreadKeyPrefix::new(thread.root_message_index)).to_vec());
+                .push(KeyPrefix::from(ChatEventKeyPrefix::new_from_group_chat(Some(
+                    thread.root_message_index,
+                ))));
         }
         jobs::garbage_collect_stable_memory::start_job_if_required(self);
     }
@@ -425,7 +426,6 @@ impl RuntimeState {
                 local_user_index: self.data.local_user_index_canister_id,
                 local_group_index: self.data.local_group_index_canister_id,
                 notifications: self.data.notifications_canister_id,
-                bot_api_gateway: self.data.bot_api_gateway_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
                 escrow_canister_id: self.data.escrow_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
@@ -443,7 +443,6 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
-    pub bot_api_gateway_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
     pub escrow_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
@@ -472,9 +471,9 @@ struct Data {
     expiring_member_actions: ExpiringMemberActions,
     user_cache: UserCache,
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
-    #[serde(default)]
+    #[serde(skip_deserializing)]
     members_migrated_to_stable_memory: bool,
-    stable_memory_keys_to_garbage_collect: Vec<Vec<u8>>,
+    stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -504,7 +503,6 @@ impl Data {
         user_index_canister_id: CanisterId,
         local_user_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
-        bot_api_gateway_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
         escrow_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
@@ -543,7 +541,6 @@ impl Data {
             user_index_canister_id,
             local_user_index_canister_id,
             notifications_canister_id,
-            bot_api_gateway_canister_id,
             proposals_bot_user_id,
             escrow_canister_id,
             internet_identity_canister_id,
@@ -770,7 +767,6 @@ pub struct CanisterIds {
     pub local_user_index: CanisterId,
     pub local_group_index: CanisterId,
     pub notifications: CanisterId,
-    pub bot_api_gateway: CanisterId,
     pub proposals_bot: CanisterId,
     pub escrow_canister_id: CanisterId,
     pub icp_ledger: CanisterId,

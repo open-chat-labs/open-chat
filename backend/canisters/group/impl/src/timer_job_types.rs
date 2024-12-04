@@ -46,14 +46,12 @@ pub struct EndPollJob {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct FinalPrizePaymentsJob {
-    pub thread_root_message_index: Option<MessageIndex>,
     pub message_index: MessageIndex,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct MakeTransferJob {
     pub pending_transaction: PendingCryptoTransaction,
-    #[serde(default)]
     pub attempt: u32,
 }
 
@@ -167,8 +165,7 @@ impl Job for HardDeleteMessageContentJob {
                                 .timer_jobs
                                 .cancel_job(|job| {
                                     if let TimerJob::FinalPrizePayments(j) = job {
-                                        j.thread_root_message_index == self.thread_root_message_index
-                                            && j.message_index == message_index
+                                        j.message_index == message_index
                                     } else {
                                         false
                                     }
@@ -244,7 +241,7 @@ impl Job for FinalPrizePaymentsJob {
                 .data
                 .chat
                 .events
-                .final_payments(self.thread_root_message_index, self.message_index, state.env.now_nanos())
+                .final_payments(self.message_index, state.env.now_nanos())
         });
 
         for pending_transaction in pending_transactions {

@@ -3,7 +3,7 @@ use crate::RuntimeState;
 use canister_api_macros::query;
 use community_canister::invite_code::{Response::*, *};
 
-#[query(candid = true, msgpack = true)]
+#[query(msgpack = true)]
 fn invite_code(_: Args) -> Response {
     read_state(invite_code_impl)
 }
