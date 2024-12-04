@@ -51,9 +51,8 @@ impl GroupsBeingImported {
                 group.current_batch_started = Some(now);
                 let action = if !group.events_imported {
                     GroupToImportAction::Events(group.channel_id, group.events_imported_up_to.clone())
-                // TODO reinstate this once groups are upgraded
-                // } else if !group.members_imported {
-                //     GroupToImportAction::Members(group.channel_id, group.members_imported_up_to)
+                } else if !group.members_imported {
+                    GroupToImportAction::Members(group.channel_id, group.members_imported_up_to)
                 } else {
                     GroupToImportAction::Core(group.bytes.len() as u64)
                 };

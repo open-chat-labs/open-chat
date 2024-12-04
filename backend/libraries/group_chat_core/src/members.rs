@@ -53,11 +53,6 @@ fn default_stable_memory_members_map() -> MembersStableStorage {
 
 #[allow(clippy::too_many_arguments)]
 impl GroupMembers {
-    // TODO remove this once groups and communities are upgraded
-    pub fn reset_migration_to_stable_memory_complete_flag(&mut self) {
-        self.migration_to_stable_memory_complete = false;
-    }
-
     pub fn migrate_next_batch_to_stable_memory(&mut self) -> bool {
         if self.migration_to_stable_memory_complete {
             return true;
