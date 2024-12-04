@@ -157,7 +157,7 @@ impl CommunityRole {
     }
 
     pub fn permissions(&self, rps: &CommunityPermissions) -> HashSet<CommunityPermission> {
-        let permissions = vec![
+        let permissions = [
             (rps.change_roles, CommunityPermission::ChangeRoles),
             (rps.create_private_channel, CommunityPermission::CreatePrivateChannel),
             (rps.create_public_channel, CommunityPermission::CreatePublicChannel),

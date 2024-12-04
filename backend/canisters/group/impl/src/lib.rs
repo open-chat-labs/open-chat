@@ -704,7 +704,7 @@ impl Data {
         self.bot_permissions.get(bot_user_id)
     }
 
-    pub fn get_user_permissions(&self, user_id: &UserId) -> Option<SlashCommandPermissions> {
+    pub fn get_user_permissions_for_bot_commands(&self, user_id: &UserId) -> Option<SlashCommandPermissions> {
         let member = self.chat.members.get_verified_member(*user_id).ok()?;
 
         let group_permissions = member.role().permissions(&self.chat.permissions);

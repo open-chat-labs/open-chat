@@ -186,7 +186,7 @@ impl GroupRoleInternal {
     }
 
     pub fn permissions(&self, role_permissions: &GroupPermissions) -> HashSet<GroupPermission> {
-        let permissions = vec![
+        let permissions = [
             (role_permissions.add_members, GroupPermission::AddMembers),
             (role_permissions.change_roles, GroupPermission::ChangeRoles),
             (role_permissions.delete_messages, GroupPermission::DeleteMessages),

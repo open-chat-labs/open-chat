@@ -696,7 +696,11 @@ impl Data {
         self.bot_permissions.get(bot_user_id)
     }
 
-    pub fn get_user_permissions(&self, user_id: &UserId, channel_id: &ChannelId) -> Option<SlashCommandPermissions> {
+    pub fn get_user_permissions_for_bot_commands(
+        &self,
+        user_id: &UserId,
+        channel_id: &ChannelId,
+    ) -> Option<SlashCommandPermissions> {
         let community_member = self.members.get_by_user_id(user_id)?;
         let community_permissions = community_member.role().permissions(&self.permissions);
 
