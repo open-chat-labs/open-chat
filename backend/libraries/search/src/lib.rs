@@ -7,7 +7,9 @@ pub struct Query {
 
 #[derive(Serialize, Deserialize)]
 pub struct Token {
+    #[serde(rename = "v", alias = "value")]
     pub value: String,
+    #[serde(rename = "l", alias = "value_lower")]
     pub value_lower: String,
 }
 
@@ -31,7 +33,9 @@ impl Query {
 
 #[derive(Serialize, Deserialize)]
 pub struct Field {
+    #[serde(rename = "t", alias = "tokens")]
     tokens: Vec<Token>,
+    #[serde(rename = "w", alias = "weight")]
     weight: f32,
 }
 
@@ -46,6 +50,7 @@ impl Field {
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Document {
+    #[serde(rename = "f", alias = "fields")]
     fields: Vec<Field>,
 }
 

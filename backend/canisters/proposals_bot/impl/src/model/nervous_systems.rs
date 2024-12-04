@@ -170,9 +170,10 @@ impl NervousSystems {
     pub fn dequeue_next_proposals_to_update(&mut self) -> Option<ProposalsToUpdate> {
         self.nervous_systems
             .values_mut()
-            .find(|ns| {
+            .filter(|ns| {
                 !ns.disabled && !ns.proposals_to_be_updated.pending.is_empty() && !ns.proposals_to_be_updated.in_progress
             })
+            .min_by_key(|ns| max(ns.latest_successful_proposals_update, ns.latest_failed_proposals_update))
             .map(|ns| {
                 ns.proposals_to_be_updated.in_progress = true;
                 let proposals = std::mem::take(&mut ns.proposals_to_be_updated.pending)
