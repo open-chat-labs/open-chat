@@ -66,8 +66,8 @@ fn stable_memory_garbage_collected_after_deleting_channel() {
     } = init_test_data(env, canister_ids, *controller);
 
     let stable_map = get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID);
-    // 8 keys = 2 events and 2 users per channel
-    assert_eq!(stable_map.len(), 8);
+    // 10 keys = 2 community members, 2 events and 2 users per channel
+    assert_eq!(stable_map.len(), 10);
 
     for _ in 0..100 {
         client::community::happy_path::send_text_message(env, &user1, community_id, channel_id1, None, random_string(), None);
@@ -75,7 +75,7 @@ fn stable_memory_garbage_collected_after_deleting_channel() {
 
     assert_eq!(
         get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(),
-        108
+        110
     );
 
     for _ in 0..80 {
@@ -84,7 +84,7 @@ fn stable_memory_garbage_collected_after_deleting_channel() {
 
     assert_eq!(
         get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(),
-        188
+        190
     );
 
     client::community::happy_path::delete_channel(env, user1.principal, community_id, channel_id1);
@@ -94,7 +94,7 @@ fn stable_memory_garbage_collected_after_deleting_channel() {
 
     assert_eq!(
         get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(),
-        84
+        86
     );
 
     client::community::happy_path::delete_channel(env, user1.principal, community_id, channel_id2);
@@ -102,7 +102,7 @@ fn stable_memory_garbage_collected_after_deleting_channel() {
     env.advance_time(Duration::from_secs(60));
     env.tick();
 
-    assert_eq!(get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(), 0);
+    assert_eq!(get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(), 2);
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {

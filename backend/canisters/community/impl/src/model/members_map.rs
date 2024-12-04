@@ -8,6 +8,7 @@ pub trait MembersMap {
     fn insert(&mut self, member: CommunityMemberInternal);
     fn remove(&mut self, user_id: &UserId) -> Option<CommunityMemberInternal>;
 
+    #[allow(dead_code)]
     fn update_member<F: FnOnce(&mut CommunityMemberInternal) -> bool>(
         &mut self,
         user_id: &UserId,
