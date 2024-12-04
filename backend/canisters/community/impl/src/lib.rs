@@ -368,7 +368,7 @@ struct Data {
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
     #[serde(default)]
     stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
-    #[serde(default)]
+    #[serde(skip_deserializing)]
     members_migrated_to_stable_memory: bool,
     #[serde(default)]
     bot_permissions: BTreeMap<UserId, SlashCommandPermissions>,
