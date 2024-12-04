@@ -253,7 +253,8 @@ impl CommunityMembers {
         match new_role {
             CommunityRole::Owner => {
                 if member.lapsed.value {
-                    self.update_lapsed(target_user_id, false, now);
+                    member.lapsed = Timestamped::new(false, now);
+                    self.lapsed.remove(&target_user_id);
                 }
                 self.owners.insert(target_user_id)
             }
