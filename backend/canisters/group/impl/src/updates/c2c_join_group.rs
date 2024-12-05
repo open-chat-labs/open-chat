@@ -10,7 +10,7 @@ use gated_groups::{
 use group_canister::c2c_join_group::{Response::*, *};
 use group_chat_core::AddResult;
 use group_community_common::ExpiringMember;
-use types::{AccessGateConfigInternal, MemberJoined, UsersUnblocked};
+use types::{AccessGateConfigInternal, MemberJoinedInternal, UsersUnblocked};
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
@@ -130,7 +130,7 @@ fn c2c_join_group_impl(args: Args, payments: Vec<GatePayment>, state: &mut Runti
         AddResult::Success(result) => {
             let invitation = state.data.chat.invited_users.remove(&args.user_id, now);
 
-            let event = MemberJoined {
+            let event = MemberJoinedInternal {
                 user_id: args.user_id,
                 invited_by: invitation.map(|i| i.invited_by),
             };
