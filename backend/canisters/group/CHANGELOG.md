@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove chat members from being stored on the heap ([#6942](https://github.com/open-chat-labs/open-chat/pull/6942))
 - Check bot + user permissions when issuing JWT ([#6970](https://github.com/open-chat-labs/open-chat/pull/6970))
 - Reduce size of search index when serialized ([#6973](https://github.com/open-chat-labs/open-chat/pull/6973))
+- Reduce size of the `UserCache` ([#6982](https://github.com/open-chat-labs/open-chat/pull/6982))
 
 ## [[2.0.1494](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1494-group)] - 2024-12-04
 
