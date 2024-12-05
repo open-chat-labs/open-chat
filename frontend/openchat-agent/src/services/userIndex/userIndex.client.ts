@@ -590,4 +590,14 @@ export class UserIndexClient extends CandidService {
             UserIndexDeleteUserResponse,
         );
     }
+
+    exploreBots(): Promise<unknown> {
+        return this.executeMsgpackQuery(
+            "explore_bots",
+            {},
+            exploreBotsResponse,
+            UserIndexExploreBotsArgs,
+            UserIndexExploreBotsResponse,
+        );
+    }
 }

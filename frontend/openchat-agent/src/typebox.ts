@@ -1666,13 +1666,6 @@ export const GroupIndexSetCommunityModerationFlagsResponse = Type.Union([
     }),
 ]);
 
-export type GroupIndexExploreBotsArgs = Static<typeof GroupIndexExploreBotsArgs>;
-export const GroupIndexExploreBotsArgs = Type.Object({
-    search_term: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
-    page_index: Type.Number(),
-    page_size: Type.Number(),
-});
-
 export type GroupIndexRemoveHotGroupExclusionResponse = Static<
     typeof GroupIndexRemoveHotGroupExclusionResponse
 >;
@@ -2128,6 +2121,13 @@ export const UserIndexUnsuspendUserResponse = Type.Union([
         InternalError: Type.String(),
     }),
 ]);
+
+export type UserIndexExploreBotsArgs = Static<typeof UserIndexExploreBotsArgs>;
+export const UserIndexExploreBotsArgs = Type.Object({
+    search_term: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
+    page_index: Type.Number(),
+    page_size: Type.Number(),
+});
 
 export type UserIndexSubmitProofOfUniquePersonhoodResponse = Static<
     typeof UserIndexSubmitProofOfUniquePersonhoodResponse
@@ -6407,26 +6407,6 @@ export const BotCommandArgs = Type.Object({
     command_text: Type.String(),
 });
 
-export type GroupIndexExploreBotsSuccessResult = Static<typeof GroupIndexExploreBotsSuccessResult>;
-export const GroupIndexExploreBotsSuccessResult = Type.Object({
-    matches: Type.Array(BotMatch),
-    total: Type.Number(),
-});
-
-export type GroupIndexExploreBotsResponse = Static<typeof GroupIndexExploreBotsResponse>;
-export const GroupIndexExploreBotsResponse = Type.Union([
-    Type.Object({
-        Success: GroupIndexExploreBotsSuccessResult,
-    }),
-    Type.Object({
-        TermTooShort: Type.Number(),
-    }),
-    Type.Object({
-        TermTooLong: Type.Number(),
-    }),
-    Type.Literal("InvalidTerm"),
-]);
-
 export type GroupIndexActiveGroupsSuccessResult = Static<
     typeof GroupIndexActiveGroupsSuccessResult
 >;
@@ -6487,6 +6467,26 @@ export type UserIndexSearchResponse = Static<typeof UserIndexSearchResponse>;
 export const UserIndexSearchResponse = Type.Object({
     Success: UserIndexSearchResult,
 });
+
+export type UserIndexExploreBotsSuccessResult = Static<typeof UserIndexExploreBotsSuccessResult>;
+export const UserIndexExploreBotsSuccessResult = Type.Object({
+    matches: Type.Array(BotMatch),
+    total: Type.Number(),
+});
+
+export type UserIndexExploreBotsResponse = Static<typeof UserIndexExploreBotsResponse>;
+export const UserIndexExploreBotsResponse = Type.Union([
+    Type.Object({
+        Success: UserIndexExploreBotsSuccessResult,
+    }),
+    Type.Object({
+        TermTooShort: Type.Number(),
+    }),
+    Type.Object({
+        TermTooLong: Type.Number(),
+    }),
+    Type.Literal("InvalidTerm"),
+]);
 
 export type UserIndexChitLeaderboardSuccessResult = Static<
     typeof UserIndexChitLeaderboardSuccessResult
