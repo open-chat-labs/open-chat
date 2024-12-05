@@ -6,7 +6,7 @@ use community_canister::summary::{Response::*, *};
 
 #[query(candid = true, msgpack = true)]
 fn summary(args: Args) -> Response {
-    read_state(|state| summary_impl(args.invite_code, None, state))
+    read_state(|state| summary_impl(args.invite_code, args.on_behalf_of, state))
 }
 
 #[query(msgpack = true)]

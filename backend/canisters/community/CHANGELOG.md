@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Assign last updated timestamp to each updatable community attribute ([#6983](https://github.com/open-chat-labs/open-chat/pull/6983))
 - Remove community members from being stored on the heap ([#6984](https://github.com/open-chat-labs/open-chat/pull/6984))
 - Avoid iterating over community events ([#6986](https://github.com/open-chat-labs/open-chat/pull/6986))
+- Make `summary` match `c2c_summary` so that `c2c_summary` can be removed ([#6988](https://github.com/open-chat-labs/open-chat/pull/6988))
 
 ## [[2.0.1498](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1498-community)] - 2024-12-04
 
