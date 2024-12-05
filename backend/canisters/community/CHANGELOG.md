@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Reduce size of search index when serialized ([#6973](https://github.com/open-chat-labs/open-chat/pull/6973))
 - Copy members from stable memory when importing group into community ([#6976](https://github.com/open-chat-labs/open-chat/pull/6976))
 - Re-run member migration to stable member using reduced size format V2 ([#6977](https://github.com/open-chat-labs/open-chat/pull/6977))
+- Reduce the size of community events when serialized ([#6980](https://github.com/open-chat-labs/open-chat/pull/6980))
 
 ### Removed
 
