@@ -6,10 +6,7 @@ export const testBots: Bot[] = [
     {
         kind: "external_bot",
         name: "Kitten Bot",
-        icon: {
-            blobUrl:
-                "https://images.unsplash.com/photo-1529778873920-4da4926a72c2?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxleHBsb3JlLWZlZWR8NXx8fGVufDB8fHx8fA%3D%3D",
-        },
+        avatar: "https://images.unsplash.com/photo-1529778873920-4da4926a72c2?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxleHBsb3JlLWZlZWR8NXx8fGVufDB8fHx8fA%3D%3D",
         id: "bot_one",
         endpoint: "https://some_bot_or_other",
         description: "this is just a test bot that doesn't do anything at all",
@@ -60,10 +57,7 @@ export const testBots: Bot[] = [
     {
         kind: "external_bot",
         name: "Puppy Bot",
-        icon: {
-            blobUrl:
-                "https://t3.ftcdn.net/jpg/02/74/06/48/360_F_274064877_Tuq84kGOn5nhyIJeUFTUSvXaSeedAOTT.jpg",
-        },
+        avatar: "https://t3.ftcdn.net/jpg/02/74/06/48/360_F_274064877_Tuq84kGOn5nhyIJeUFTUSvXaSeedAOTT.jpg",
         id: "bot_two",
         endpoint: "http://localhost:3000/execute",
         description: "And this is another bot",
