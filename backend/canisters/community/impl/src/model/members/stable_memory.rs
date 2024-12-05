@@ -35,20 +35,6 @@ impl MembersStableStorage {
         })
     }
 
-    pub fn update_member<F: FnOnce(&mut CommunityMemberInternal) -> bool>(
-        &mut self,
-        user_id: &UserId,
-        update_fn: F,
-    ) -> Option<bool> {
-        let mut member = self.get(user_id)?;
-
-        let updated = update_fn(&mut member);
-        if updated {
-            self.insert(member);
-        }
-        Some(updated)
-    }
-
     #[cfg(test)]
     pub fn all_members(&self) -> Vec<CommunityMemberInternal> {
         use candid::Principal;

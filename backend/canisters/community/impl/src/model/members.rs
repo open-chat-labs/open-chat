@@ -4,7 +4,7 @@ use candid::Principal;
 use group_community_common::{Member, MemberUpdate, Members};
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, BTreeSet, VecDeque};
+use std::collections::{BTreeMap, BTreeSet};
 use types::{
     is_default, ChannelId, CommunityMember, CommunityPermissions, CommunityRole, TimestampMillis, Timestamped, UserId,
     UserType, Version,
@@ -115,7 +115,7 @@ impl CommunityMembers {
 
             if let Some(referrer) = referred_by {
                 if matches!(
-                    self.members_map.update_member(&referrer, |m| {
+                    self.update_member(&referrer, |m| {
                         m.referrals.insert(user_id);
                         true
                     }),
@@ -164,7 +164,7 @@ impl CommunityMembers {
                 }
                 if let Some(referrer) = member.referred_by {
                     let mut remove_from_members_with_referrals = false;
-                    self.members_map.update_member(&referrer, |m| {
+                    self.update_member(&referrer, |m| {
                         m.referrals.remove(&user_id);
                         if m.referrals.is_empty() {
                             remove_from_members_with_referrals = true;
@@ -272,7 +272,7 @@ impl CommunityMembers {
     }
 
     pub fn set_suspended(&mut self, user_id: UserId, suspended: bool, now: TimestampMillis) -> Option<bool> {
-        let result = self.members_map.update_member(&user_id, |member| {
+        let result = self.update_member(&user_id, |member| {
             if member.suspended.value != suspended {
                 member.suspended = Timestamped::new(suspended, now);
                 true
@@ -365,8 +365,7 @@ impl CommunityMembers {
     }
 
     pub fn mark_rules_accepted(&mut self, user_id: &UserId, version: Version, now: TimestampMillis) {
-        self.members_map
-            .update_member(user_id, |member| member.accept_rules(version, now));
+        self.update_member(user_id, |member| member.accept_rules(version, now));
     }
 
     pub fn block(&mut self, user_id: UserId) -> bool {
@@ -481,7 +480,7 @@ impl CommunityMembers {
     pub fn set_display_name(&mut self, user_id: UserId, display_name: Option<String>, now: TimestampMillis) {
         let display_name_is_some = display_name.is_some();
         if matches!(
-            self.members_map.update_member(&user_id, |m| {
+            self.update_member(&user_id, |m| {
                 m.display_name = Timestamped::new(display_name, now);
                 true
             }),
@@ -498,7 +497,7 @@ impl CommunityMembers {
 
     pub fn update_lapsed(&mut self, user_id: UserId, lapsed: bool, now: TimestampMillis) {
         if matches!(
-            self.members_map.update_member(&user_id, |m| {
+            self.update_member(&user_id, |m| {
                 if lapsed {
                     // Owners can't lapse
                     !m.is_owner() && m.set_lapsed(true, now)
@@ -524,10 +523,7 @@ impl CommunityMembers {
 
     pub fn unlapse_all(&mut self, now: TimestampMillis) {
         for user_id in std::mem::take(&mut self.lapsed) {
-            if matches!(
-                self.members_map.update_member(&user_id, |m| m.set_lapsed(false, now)),
-                Some(true)
-            ) {
+            if matches!(self.update_member(&user_id, |m| m.set_lapsed(false, now)), Some(true)) {
                 self.updates.insert((now, user_id, MemberUpdate::Unlapsed));
             }
         }
@@ -549,6 +545,20 @@ impl CommunityMembers {
         .into_iter()
         .max()
         .unwrap()
+    }
+
+    fn update_member<F: FnOnce(&mut CommunityMemberInternal) -> bool>(
+        &mut self,
+        user_id: &UserId,
+        update_fn: F,
+    ) -> Option<bool> {
+        let mut member = self.members_map.get(user_id)?;
+
+        let updated = update_fn(&mut member);
+        if updated {
+            self.members_map.insert(member);
+        }
+        Some(updated)
     }
 
     #[cfg(test)]
