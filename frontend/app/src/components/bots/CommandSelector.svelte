@@ -131,7 +131,7 @@
             class:selected={$focusedCommandIndex === i}
             onclick={() => selectCommand(command)}>
             {#if command.kind === "external_bot"}
-                <img class="icon" src={"TODO"} alt={command.botName} />
+                <img class="icon" src={command.botIcon} alt={command.botName} />
             {:else}
                 <Logo />
             {/if}
