@@ -318,6 +318,9 @@ fn prepare(
             }
         }
         MessageContentInitial::Prize(c) => {
+            if thread_root_message_index.is_some() {
+                return InvalidRequest("Prize messages cannot be sent within threads".to_string());
+            }
             if c.end_date <= now {
                 return InvalidRequest("Prize end date must be in the future".to_string());
             }

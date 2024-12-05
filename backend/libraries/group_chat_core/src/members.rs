@@ -85,11 +85,12 @@ impl GroupMembers {
         self.members_map.set_chat(chat);
     }
 
-    pub fn read_members_as_bytes_from_stable_memory(&self, after: Option<UserId>) -> Vec<ByteBuf> {
-        self.members_map.read_members_as_bytes(after, 2 * ONE_MB as usize)
+    pub fn read_members_as_bytes_from_stable_memory(&self, after: Option<UserId>) -> Vec<(UserId, ByteBuf)> {
+        self.stable_memory_members_map
+            .read_members_as_bytes(after, 2 * ONE_MB as usize)
     }
 
-    pub fn write_members_from_bytes_to_stable_memory(chat: MultiUserChat, members: Vec<ByteBuf>) -> Option<UserId> {
+    pub fn write_members_from_bytes_to_stable_memory(chat: MultiUserChat, members: Vec<(UserId, ByteBuf)>) -> Option<UserId> {
         stable_memory::write_members_from_bytes(chat, members)
     }
 
@@ -538,6 +539,10 @@ impl Members for GroupMembers {
         self.get(user_id)
     }
 
+    fn can_member_lapse(&self, user_id: &UserId) -> bool {
+        self.member_ids.contains(user_id) && !self.owners.contains(user_id) && !self.lapsed.contains(user_id)
+    }
+
     fn iter_members_who_can_lapse(&self) -> Box<dyn Iterator<Item = UserId> + '_> {
         Box::new(
             self.member_ids
@@ -801,6 +806,85 @@ pub enum VerifyMemberError {
     Suspended,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct GroupMemberStableStorage {
+    #[serde(rename = "d")]
+    date_added: TimestampMillis,
+    #[serde(rename = "r", default, skip_serializing_if = "is_default")]
+    role: Timestamped<GroupRoleInternal>,
+    #[serde(
+        rename = "n",
+        default = "default_notifications_muted",
+        skip_serializing_if = "is_default_notifications_muted"
+    )]
+    notifications_muted: Timestamped<bool>,
+    #[serde(rename = "m", default, skip_serializing_if = "Mentions::is_empty")]
+    pub mentions: Mentions,
+    #[serde(rename = "tf", default, skip_serializing_if = "TimestampedSet::is_empty")]
+    pub followed_threads: TimestampedSet<MessageIndex>,
+    #[serde(rename = "tu", default, skip_serializing_if = "TimestampedSet::is_empty")]
+    pub unfollowed_threads: TimestampedSet<MessageIndex>,
+    #[serde(rename = "p", default, skip_serializing_if = "BTreeSet::is_empty")]
+    proposal_votes: BTreeSet<(TimestampMillis, MessageIndex)>,
+    #[serde(rename = "pr", default, skip_serializing_if = "is_default")]
+    latest_proposal_vote_removed: TimestampMillis,
+    #[serde(rename = "s", default, skip_serializing_if = "is_default")]
+    suspended: Timestamped<bool>,
+    #[serde(rename = "ra", default, skip_serializing_if = "is_default")]
+    pub rules_accepted: Option<Timestamped<Version>>,
+    #[serde(rename = "ut", default, skip_serializing_if = "is_default")]
+    user_type: UserType,
+    #[serde(rename = "me", default, skip_serializing_if = "is_default")]
+    min_visible_event_index: EventIndex,
+    #[serde(rename = "mm", default, skip_serializing_if = "is_default")]
+    min_visible_message_index: MessageIndex,
+    #[serde(rename = "la", default, skip_serializing_if = "is_default")]
+    lapsed: Timestamped<bool>,
+}
+
+impl GroupMemberStableStorage {
+    pub fn hydrate(self, user_id: UserId) -> GroupMemberInternal {
+        GroupMemberInternal {
+            user_id,
+            date_added: self.date_added,
+            role: self.role,
+            notifications_muted: self.notifications_muted,
+            mentions: self.mentions,
+            followed_threads: self.followed_threads,
+            unfollowed_threads: self.unfollowed_threads,
+            proposal_votes: self.proposal_votes,
+            latest_proposal_vote_removed: self.latest_proposal_vote_removed,
+            suspended: self.suspended,
+            rules_accepted: self.rules_accepted,
+            user_type: self.user_type,
+            min_visible_event_index: self.min_visible_event_index,
+            min_visible_message_index: self.min_visible_message_index,
+            lapsed: self.lapsed,
+        }
+    }
+}
+
+impl From<GroupMemberInternal> for GroupMemberStableStorage {
+    fn from(value: GroupMemberInternal) -> Self {
+        GroupMemberStableStorage {
+            date_added: value.date_added,
+            role: value.role,
+            notifications_muted: value.notifications_muted,
+            mentions: value.mentions,
+            followed_threads: value.followed_threads,
+            unfollowed_threads: value.unfollowed_threads,
+            proposal_votes: value.proposal_votes,
+            latest_proposal_vote_removed: value.latest_proposal_vote_removed,
+            suspended: value.suspended,
+            rules_accepted: value.rules_accepted,
+            user_type: value.user_type,
+            min_visible_event_index: value.min_visible_event_index,
+            min_visible_message_index: value.min_visible_message_index,
+            lapsed: value.lapsed,
+        }
+    }
+}
+
 fn default_notifications_muted() -> Timestamped<bool> {
     Timestamped::new(true, 0)
 }
@@ -812,20 +896,16 @@ fn is_default_notifications_muted(value: &Timestamped<bool>) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use types::CanisterId;
 
     #[test]
     fn serialize_with_max_defaults() {
         #[derive(Serialize)]
         pub struct GroupMemberInternal2 {
-            #[serde(rename = "u")]
-            user_id: UserId,
             #[serde(rename = "d")]
             date_added: TimestampMillis,
         }
 
-        let member1 = GroupMemberInternal {
-            user_id: CanisterId::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap().into(),
+        let member1 = GroupMemberStableStorage {
             date_added: 1732874138000,
             role: Timestamped::default(),
             notifications_muted: default_notifications_muted(),
@@ -843,7 +923,6 @@ mod tests {
         };
 
         let member2 = GroupMemberInternal2 {
-            user_id: member1.user_id,
             date_added: member1.date_added,
         };
 
@@ -851,9 +930,9 @@ mod tests {
         let member2_bytes = msgpack::serialize_then_unwrap(&member2);
 
         assert_eq!(member1_bytes, member2_bytes);
-        assert_eq!(member1_bytes.len(), 26);
+        assert_eq!(member1_bytes.len(), 12);
 
-        let _deserialized: GroupMemberInternal = msgpack::deserialize_then_unwrap(&member1_bytes);
+        let _deserialized: GroupMemberStableStorage = msgpack::deserialize_then_unwrap(&member1_bytes);
     }
 
     #[test]
@@ -861,8 +940,7 @@ mod tests {
         let mut mentions = Mentions::default();
         mentions.add(Some(1.into()), 1.into(), 1.into(), 1);
 
-        let member = GroupMemberInternal {
-            user_id: CanisterId::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap().into(),
+        let member = GroupMemberStableStorage {
             date_added: 1732874138000,
             role: Timestamped::new(GroupRoleInternal::Owner, 1),
             notifications_muted: Timestamped::new(true, 1),
@@ -882,8 +960,8 @@ mod tests {
         let member_bytes = msgpack::serialize_then_unwrap(&member);
         let member_bytes_len = member_bytes.len();
 
-        assert_eq!(member_bytes_len, 171);
+        assert_eq!(member_bytes_len, 157);
 
-        let _deserialized: GroupMemberInternal = msgpack::deserialize_then_unwrap(&member_bytes);
+        let _deserialized: GroupMemberStableStorage = msgpack::deserialize_then_unwrap(&member_bytes);
     }
 }

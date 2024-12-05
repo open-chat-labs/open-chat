@@ -35,7 +35,7 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) {
     }
 
     let avatar = if let Some(data_url) = args.avatar.as_ref() {
-        match try_parse_data_url(0, data_url) {
+        match try_parse_data_url(data_url) {
             Some(a) => Some(a),
             None => {
                 error!("{error_prefix} invalid avatar");

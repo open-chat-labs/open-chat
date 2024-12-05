@@ -573,6 +573,10 @@
                 pageReplace(removeQueryStringParam("usergroup"));
             }
 
+            if (client.captureReferralCode()) {
+                pageReplace(removeQueryStringParam("ref"));
+            }
+
             if (modal?.kind === "claim_daily_chit") {
                 modal = { kind: "none" };
             }

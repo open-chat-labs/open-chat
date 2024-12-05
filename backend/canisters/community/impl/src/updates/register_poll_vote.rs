@@ -7,7 +7,7 @@ use community_canister::register_poll_vote::{Response::*, *};
 use types::{Achievement, Chat, EventIndex, TotalVotes};
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn register_poll_vote(args: Args) -> Response {
     run_regular_jobs();

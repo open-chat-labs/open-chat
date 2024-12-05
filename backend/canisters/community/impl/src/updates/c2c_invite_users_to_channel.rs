@@ -20,7 +20,7 @@ fn c2c_invite_users_to_channel_impl(args: Args, state: &mut RuntimeState) -> Res
         return CommunityFrozen;
     }
 
-    if let Some(member) = state.data.members.get_by_user_id(&args.caller).cloned() {
+    if let Some(member) = state.data.members.get_by_user_id(&args.caller) {
         if member.suspended().value {
             return UserSuspended;
         }

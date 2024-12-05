@@ -15,7 +15,7 @@ pub enum Response {
 
 #[derive(Serialize, Deserialize)]
 pub struct SuccessResult {
-    pub members: Vec<ByteBuf>,
+    pub members: Vec<(UserId, ByteBuf)>,
     pub finished: bool,
 }
 

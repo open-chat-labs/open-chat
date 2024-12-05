@@ -17,7 +17,7 @@ use utils::text_validation::{
     validate_community_name, validate_description, validate_rules, NameValidationError, RulesValidationError,
 };
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn update_community(mut args: Args) -> Response {
     run_regular_jobs();
@@ -241,10 +241,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
 
         if let Some(rules_version) = state.data.rules.update(new_rules, now) {
             result.rules_version = Some(rules_version);
-
-            if let Some(member) = state.data.members.get_by_user_id_mut(&my_user_id) {
-                member.rules_accepted = Some(Timestamped::new(rules_version, now))
-            }
+            state.data.members.mark_rules_accepted(&my_user_id, rules_version, now);
 
             events.push_event(
                 CommunityEventInternal::RulesChanged(Box::new(GroupRulesChanged {

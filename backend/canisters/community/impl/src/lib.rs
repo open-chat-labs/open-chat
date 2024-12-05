@@ -9,7 +9,7 @@ use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use chat_events::ChatMetricsInternal;
 use community_canister::EventsResponse;
-use constants::MINUTE_IN_MS;
+use constants::{MINUTE_IN_MS, SNS_LEDGER_CANISTER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -30,13 +30,15 @@ use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{ChatEventKeyPrefix, KeyPrefix};
 use std::cell::RefCell;
+use std::collections::BTreeMap;
 use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BuildVersion, CanisterId, ChannelId, ChatMetrics,
     CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cryptocurrency, Cycles, Document, Empty,
-    FrozenGroupInfo, Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId, UserType,
+    FrozenGroupInfo, Milliseconds, Notification, Rules, SlashCommandPermissions, TimestampMillis, Timestamped, UserId,
+    UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use user_canister::CommunityCanisterEvent;
@@ -85,10 +87,6 @@ impl RuntimeState {
 
     pub fn is_caller_local_group_index(&self) -> bool {
         self.env.caller() == self.data.local_group_index_canister_id
-    }
-
-    pub fn is_caller_bot_api_gateway(&self) -> bool {
-        self.env.caller() == self.data.bot_api_gateway_canister_id
     }
 
     pub fn is_caller_proposals_bot(&self) -> bool {
@@ -141,9 +139,10 @@ impl RuntimeState {
         let treasury_share = payment.amount.saturating_sub(owner_share * owner_count);
         let amount = treasury_share.saturating_sub(payment.fee);
         if amount > 0 {
+            let is_chat = payment.ledger_canister_id == SNS_LEDGER_CANISTER_ID;
             self.data.pending_payments_queue.push(PendingPayment {
                 amount,
-                fee: payment.fee,
+                fee: if is_chat { 0 } else { payment.fee }, // No fee for BURNing
                 ledger_canister: payment.ledger_canister_id,
                 recipient: PaymentRecipient::Treasury,
                 reason: PendingPaymentReason::AccessGate,
@@ -306,7 +305,6 @@ impl RuntimeState {
                 local_user_index: self.data.local_user_index_canister_id,
                 local_group_index: self.data.local_group_index_canister_id,
                 notifications: self.data.notifications_canister_id,
-                bot_api_gateway: self.data.bot_api_gateway_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
                 escrow: self.data.escrow_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
@@ -336,7 +334,6 @@ struct Data {
     group_index_canister_id: CanisterId,
     local_group_index_canister_id: CanisterId,
     notifications_canister_id: CanisterId,
-    bot_api_gateway_canister_id: CanisterId,
     proposals_bot_user_id: UserId,
     escrow_canister_id: CanisterId,
     internet_identity_canister_id: CanisterId,
@@ -369,10 +366,9 @@ struct Data {
     expiring_member_actions: ExpiringMemberActions,
     user_cache: UserCache,
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
-    #[serde(default)]
     stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
-    #[serde(default)]
     members_migrated_to_stable_memory: bool,
+    bot_permissions: BTreeMap<UserId, SlashCommandPermissions>,
 }
 
 impl Data {
@@ -395,7 +391,6 @@ impl Data {
         group_index_canister_id: CanisterId,
         local_group_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
-        bot_api_gateway_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
         escrow_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
@@ -443,7 +438,6 @@ impl Data {
             group_index_canister_id,
             local_group_index_canister_id,
             notifications_canister_id,
-            bot_api_gateway_canister_id,
             proposals_bot_user_id,
             escrow_canister_id,
             internet_identity_canister_id,
@@ -478,6 +472,7 @@ impl Data {
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             members_migrated_to_stable_memory: true,
+            bot_permissions: BTreeMap::new(),
         }
     }
 
@@ -668,12 +663,12 @@ impl Data {
         }
     }
 
-    pub fn get_member_for_events(&self, caller: Principal) -> Result<Option<&CommunityMemberInternal>, EventsResponse> {
+    pub fn get_member_for_events(&self, caller: Principal) -> Result<Option<CommunityMemberInternal>, EventsResponse> {
         let hidden_for_non_members = !self.is_public || self.has_payment_gate();
         let member = self.members.get(caller);
 
         if hidden_for_non_members {
-            if let Some(member) = member {
+            if let Some(member) = &member {
                 if member.suspended().value {
                     return Err(EventsResponse::UserSuspended);
                 } else if member.lapsed().value {
@@ -692,6 +687,42 @@ impl Data {
             self.user_event_sync_queue
                 .push(user_id, CommunityCanisterEvent::Achievement(achievement));
         }
+    }
+
+    pub fn get_bot_permissions(&self, bot_user_id: &UserId) -> Option<&SlashCommandPermissions> {
+        self.bot_permissions.get(bot_user_id)
+    }
+
+    pub fn get_user_permissions_for_bot_commands(
+        &self,
+        user_id: &UserId,
+        channel_id: &ChannelId,
+    ) -> Option<SlashCommandPermissions> {
+        let community_member = self.members.get_by_user_id(user_id)?;
+        let community_permissions = community_member.role().permissions(&self.permissions);
+
+        let channel = self.channels.get(channel_id)?;
+        let channel_member = channel.chat.members.get_verified_member(*user_id).ok()?;
+
+        let channel_permissions = channel_member.role().permissions(&channel.chat.permissions);
+        let message_permissions = channel_member
+            .role()
+            .message_permissions(&channel.chat.permissions.message_permissions);
+        let thread_permissions = channel
+            .chat
+            .permissions
+            .thread_permissions
+            .as_ref()
+            .map_or(message_permissions.clone(), |thread_permissions| {
+                channel_member.role().message_permissions(thread_permissions)
+            });
+
+        Some(SlashCommandPermissions {
+            community: community_permissions,
+            chat: channel_permissions,
+            message: message_permissions,
+            thread: thread_permissions,
+        })
     }
 }
 
@@ -730,7 +761,6 @@ pub struct CanisterIds {
     pub local_user_index: CanisterId,
     pub local_group_index: CanisterId,
     pub notifications: CanisterId,
-    pub bot_api_gateway: CanisterId,
     pub proposals_bot: CanisterId,
     pub escrow: CanisterId,
     pub icp_ledger: CanisterId,

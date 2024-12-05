@@ -8,7 +8,7 @@ use community_canister::delete_channel::{Response::*, *};
 use stable_memory_map::{ChatEventKeyPrefix, KeyPrefix, MemberKeyPrefix};
 use types::{ChannelDeleted, ChannelId};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn delete_channel(args: Args) -> Response {
     run_regular_jobs();

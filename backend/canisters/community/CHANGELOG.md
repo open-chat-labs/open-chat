@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1498](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1498-community)] - 2024-12-04
+
+### Changed
+
+- Remove UserId from member map values since it's already in the keys ([#6945](https://github.com/open-chat-labs/open-chat/pull/6945))
+- Disallow sending prize messages to threads ([#6960](https://github.com/open-chat-labs/open-chat/pull/6960))
+- Re-run member migration to stable memory using reduced size format ([#6965](https://github.com/open-chat-labs/open-chat/pull/6965))
+- Introduce community `MembersMap` in prep for move to stable memory ([#6966](https://github.com/open-chat-labs/open-chat/pull/6966))
+- Migrate community members to stable memory ([#6967](https://github.com/open-chat-labs/open-chat/pull/6967))
+- Check bot + user permissions when issuing JWT ([#6970](https://github.com/open-chat-labs/open-chat/pull/6970))
+- Reduce size of search index when serialized ([#6973](https://github.com/open-chat-labs/open-chat/pull/6973))
+- Copy members from stable memory when importing group into community ([#6976](https://github.com/open-chat-labs/open-chat/pull/6976))
+- Re-run member migration to stable member using reduced size format V2 ([#6977](https://github.com/open-chat-labs/open-chat/pull/6977))
+
+### Removed
+
+- Remove a load of unused candid endpoints ([#6947](https://github.com/open-chat-labs/open-chat/pull/6947))
+- Remove references to bot_api_gateway ([#6944](https://github.com/open-chat-labs/open-chat/pull/6944))
+
+### Fixed
+
+- Don't supply a fee when BURNing ([#6948](https://github.com/open-chat-labs/open-chat/pull/6948))
+
+## [[2.0.1486](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1486-community)] - 2024-12-02
+
 ### Changed
 
 - Remove channel links from being stored on each community member ([#6923](https://github.com/open-chat-labs/open-chat/pull/6923))

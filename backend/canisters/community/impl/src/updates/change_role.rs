@@ -11,7 +11,7 @@ use group_community_common::ExpiringMember;
 use types::{CanisterId, CommunityRole, CommunityRoleChanged, UserId};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn change_role(args: Args) -> Response {
     run_regular_jobs();

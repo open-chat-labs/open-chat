@@ -394,6 +394,7 @@ import type {
     BotCommandInstance,
     InternalBotCommandInstance,
     ExternalBotCommandInstance,
+    CaptionedContent,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -447,6 +448,8 @@ import {
     deletedUser,
     OPENCHAT_BOT_USER_ID,
     AIRDROP_BOT_USER_ID,
+    isEditableContent,
+    isCaptionedContent,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import { diamondDurationToMs } from "./stores/diamond";
@@ -3883,10 +3886,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private getMessageContent(
         text: string | undefined,
-        attachment: AttachmentContent | undefined,
+        captioned: CaptionedContent | undefined,
     ): MessageContent {
-        return attachment
-            ? { ...attachment, caption: text }
+        return captioned
+            ? { ...captioned, caption: text }
             : ({
                   kind: "text_content",
                   text: text ?? "",
@@ -4022,10 +4025,16 @@ export class OpenChat extends OpenChatAgentWorker {
                 textContent = disableLinksInText(textContent, disabledLinks);
             }
 
+            const captioned =
+                attachment ??
+                (isCaptionedContent(editingEvent.event.content)
+                    ? editingEvent.event.content
+                    : undefined);
+
             const msg = {
                 ...editingEvent.event,
                 edited: true,
-                content: this.getMessageContent(textContent ?? undefined, attachment),
+                content: this.getMessageContent(textContent ?? undefined, captioned),
             };
             localMessageUpdates.markContentEdited(msg.messageId, msg.content);
             draftMessagesStore.delete(messageContext);
@@ -7690,6 +7699,10 @@ export class OpenChat extends OpenChatAgentWorker {
             case "internal_bot":
                 return this.executeInternalBotCommand(bot);
         }
+    }
+
+    contentTypeSupportsEdit(contentType: MessageContent["kind"]): boolean {
+        return isEditableContent(contentType);
     }
 
     getBots(includeTestBots: boolean = false) {

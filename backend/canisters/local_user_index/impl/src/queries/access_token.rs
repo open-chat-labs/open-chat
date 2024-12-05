@@ -8,32 +8,36 @@ use rand::rngs::StdRng;
 use rand::SeedableRng;
 use serde::Serialize;
 use types::{
-    AccessTokenType, BotCommandClaims, ChannelId, Chat, ChatId, CommunityId, JoinOrEndVideoCallClaims, StartVideoCallClaims,
-    UserId,
+    AccessTokenType, BotCommandClaims, ChannelId, Chat, ChatId, CheckAccessTokenType, CheckBotCommandArgs, CommunityId,
+    JoinOrEndVideoCallClaims, StartVideoCallClaims, UserId,
 };
 
 #[query(composite = true, guard = "caller_is_openchat_user", candid = true, msgpack = true)]
 #[trace]
 async fn access_token(args: Args) -> Response {
-    let Some((user_id, is_diamond)) = read_state(get_user) else {
-        return NotAuthorized;
+    let PrepareResult {
+        user_id,
+        is_diamond,
+        check_access_type,
+    } = match read_state(|state| prepare(&args, state)) {
+        Ok(r) => r,
+        Err(response) => return response,
     };
-
-    let token_type = args.token_type.clone();
 
     match args.chat {
         Chat::Direct(chat_id) => {
-            if let Err(response) = check_user_access(chat_id, user_id, is_diamond, token_type).await {
+            if let Err(response) = check_user_access(chat_id, user_id, is_diamond, check_access_type).await {
                 return response;
             }
         }
         Chat::Group(chat_id) => {
-            if let Err(response) = check_group_access(chat_id, user_id, is_diamond, token_type).await {
+            if let Err(response) = check_group_access(chat_id, user_id, is_diamond, check_access_type).await {
                 return response;
             }
         }
         Chat::Channel(community_id, channel_id) => {
-            if let Err(response) = check_channel_access(community_id, channel_id, user_id, is_diamond, token_type).await {
+            if let Err(response) = check_channel_access(community_id, channel_id, user_id, is_diamond, check_access_type).await
+            {
                 return response;
             }
         }
@@ -59,7 +63,6 @@ async fn access_token(args: Args) -> Response {
             build_token(token_type_name, custom_claims, state)
         }
         AccessTokenType::BotCommand(bc) => {
-            let bot_api_gateway = state.data.internet_identity_canister_id;
             let custom_claims = BotCommandClaims {
                 user_id: bc.user_id,
                 bot: bc.bot,
@@ -70,25 +73,66 @@ async fn access_token(args: Args) -> Response {
                 parameters: bc.parameters,
                 version: bc.version,
                 command_text: bc.command_text,
-                bot_api_gateway,
+                bot_api_gateway: state.env.canister_id(),
             };
             build_token(token_type_name, custom_claims, state)
         }
     })
 }
 
-fn get_user(state: &RuntimeState) -> Option<(UserId, bool)> {
-    state
+struct PrepareResult {
+    user_id: UserId,
+    is_diamond: bool,
+    check_access_type: CheckAccessTokenType,
+}
+
+fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
+    let Some(user) = state
         .data
         .global_users
         .get_by_principal(&state.env.caller())
         .filter(|u| !u.user_type.is_bot())
-        .map(|u| {
-            (
-                u.user_id,
-                state.data.global_users.is_diamond_member(&u.user_id, state.env.now()),
-            )
-        })
+    else {
+        return Err(Response::NotAuthorized);
+    };
+
+    let user_id = user.user_id;
+    let is_diamond = state.data.global_users.is_diamond_member(&user_id, state.env.now());
+    let token_type = args.token_type.clone();
+
+    let check_access_type = match token_type {
+        AccessTokenType::StartVideoCallV2(video_call_access_token_args) => {
+            CheckAccessTokenType::StartVideoCallV2(video_call_access_token_args)
+        }
+        AccessTokenType::JoinVideoCall => CheckAccessTokenType::JoinVideoCall,
+        AccessTokenType::MarkVideoCallAsEnded => CheckAccessTokenType::MarkVideoCallAsEnded,
+        AccessTokenType::BotCommand(cmd) => {
+            let Some(permissions) = state
+                .data
+                .bots
+                .get(&cmd.user_id)
+                .and_then(|b| b.commands.iter().find(|c| c.name == cmd.command_name))
+                .map(|c| c.permissions.clone())
+            else {
+                return Err(Response::NotAuthorized);
+            };
+
+            CheckAccessTokenType::BotCommand(CheckBotCommandArgs {
+                user_id: cmd.user_id,
+                bot: cmd.bot,
+                chat: cmd.chat,
+                thread_root_message_index: cmd.thread_root_message_index,
+                message_id: cmd.message_id,
+                permissions,
+            })
+        }
+    };
+
+    Ok(PrepareResult {
+        user_id,
+        is_diamond,
+        check_access_type,
+    })
 }
 
 fn build_token<T: Serialize>(token_type_name: String, custom_claims: T, state: &mut RuntimeState) -> Response {
@@ -114,7 +158,7 @@ async fn check_group_access(
     chat_id: ChatId,
     user_id: UserId,
     is_diamond: bool,
-    access_type: AccessTokenType,
+    access_type: CheckAccessTokenType,
 ) -> Result<(), Response> {
     match group_canister_c2c_client::c2c_can_issue_access_token(
         chat_id.into(),
@@ -137,7 +181,7 @@ async fn check_channel_access(
     channel_id: ChannelId,
     user_id: UserId,
     is_diamond: bool,
-    access_type: AccessTokenType,
+    access_type: CheckAccessTokenType,
 ) -> Result<(), Response> {
     match community_canister_c2c_client::c2c_can_issue_access_token_for_channel(
         communty_id.into(),
@@ -160,7 +204,7 @@ async fn check_user_access(
     chat_id: ChatId,
     user_id: UserId,
     is_diamond: bool,
-    access_type: AccessTokenType,
+    access_type: CheckAccessTokenType,
 ) -> Result<(), Response> {
     match user_canister_c2c_client::c2c_can_issue_access_token(
         chat_id.into(),

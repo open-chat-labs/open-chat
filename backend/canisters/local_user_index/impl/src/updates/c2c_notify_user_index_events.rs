@@ -88,6 +88,9 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 }
             }
         }
+        Event::BotRegistered(ev) => {
+            state.data.bots.set(ev.user_principal, ev.user_id, ev.name, ev.commands);
+        }
         Event::SuperAdminStatusChanged(ev) => {
             state.data.global_users.set_platform_moderator(ev.user_id, ev.is_super_admin);
         }

@@ -6,7 +6,7 @@ use chat_events::ChatEventInternal;
 use group_canister::disable_invite_code::{Response::*, *};
 use types::{GroupInviteCodeChange, GroupInviteCodeChanged};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn disable_invite_code(args: Args) -> Response {
     run_regular_jobs();

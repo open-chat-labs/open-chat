@@ -83,13 +83,6 @@ impl ChatEvents {
         stable_memory::write_events_as_bytes(chat, events);
     }
 
-    pub fn set_stable_memory_key_prefixes(&mut self) {
-        self.main.set_stable_memory_prefix(self.chat, None);
-        for (message_index, events) in self.threads.iter_mut() {
-            events.set_stable_memory_prefix(self.chat, Some(*message_index));
-        }
-    }
-
     pub fn new_direct_chat(
         them: UserId,
         events_ttl: Option<Milliseconds>,
@@ -666,19 +659,10 @@ impl ChatEvents {
         }
     }
 
-    pub fn final_payments(
-        &mut self,
-        thread_root_message_index: Option<MessageIndex>,
-        message_index: MessageIndex,
-        now_nanos: TimestampNanos,
-    ) -> Vec<PendingCryptoTransaction> {
-        self.update_message(
-            thread_root_message_index,
-            message_index.into(),
-            EventIndex::default(),
-            None,
-            |message, _| Self::final_payments_inner(message, now_nanos),
-        )
+    pub fn final_payments(&mut self, message_index: MessageIndex, now_nanos: TimestampNanos) -> Vec<PendingCryptoTransaction> {
+        self.update_message(None, message_index.into(), EventIndex::default(), None, |message, _| {
+            Self::final_payments_inner(message, now_nanos)
+        })
         .ok()
         .unwrap_or_default()
     }

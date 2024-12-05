@@ -28,7 +28,8 @@ async fn join_channel(args: Args) -> Response {
     };
     match community_canister_c2c_client::c2c_join_channel(args.community_id.into(), &c2c_args).await {
         Ok(response) => match response {
-            community_canister::c2c_join_channel::Response::Success(s) => {
+            community_canister::c2c_join_channel::Response::Success(s)
+            | community_canister::c2c_join_channel::Response::AlreadyInChannel(s) => {
                 if !is_bot {
                     mutate_state(|state| state.notify_user_joined_channel(user_details.user_id, args.community_id, &s));
                 }
@@ -40,7 +41,6 @@ async fn join_channel(args: Args) -> Response {
                 }
                 SuccessJoinedCommunity(s)
             }
-            community_canister::c2c_join_channel::Response::AlreadyInChannel(s) => AlreadyInChannel(s),
             community_canister::c2c_join_channel::Response::GateCheckFailed(msg) => GateCheckFailed(msg),
             community_canister::c2c_join_channel::Response::UserNotInCommunity => CommunityNotPublic,
             community_canister::c2c_join_channel::Response::ChannelNotFound => ChannelNotFound,

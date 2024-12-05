@@ -85,7 +85,9 @@ export class DexesAgent {
                 }),
             );
         }
-        return Promise.all(promises).then((r) => r.flat());
+        return Promise.allSettled(promises).then((result) =>
+            result.flatMap((r) => (r.status === "fulfilled" ? r.value : [])),
+        );
     }
 
     private quoteSingle(

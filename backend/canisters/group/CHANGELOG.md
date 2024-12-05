@@ -8,6 +8,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Check bot + user permissions when issuing JWT ([#6970](https://github.com/open-chat-labs/open-chat/pull/6970))
+- Reduce size of search index when serialized ([#6973](https://github.com/open-chat-labs/open-chat/pull/6973))
+
+## [[2.0.1494](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1494-group)] - 2024-12-04
+
+### Changed
+
+- Re-run member migration to stable memory using reduced size format ([#6965](https://github.com/open-chat-labs/open-chat/pull/6965))
+
+## [[2.0.1491](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1491-group)] - 2024-12-03
+
+### Changed
+
+- Remove UserId from member map values since it's already in the keys ([#6945](https://github.com/open-chat-labs/open-chat/pull/6945))
+- Disallow sending prize messages to threads ([#6960](https://github.com/open-chat-labs/open-chat/pull/6960))
+
+### Removed
+
+- Remove a load of unused candid endpoints ([#6947](https://github.com/open-chat-labs/open-chat/pull/6947))
+- Remove references to bot_api_gateway ([#6944](https://github.com/open-chat-labs/open-chat/pull/6944))
+
+### Fixed
+
+- Don't supply a fee when BURNing ([#6948](https://github.com/open-chat-labs/open-chat/pull/6948))
+
+## [[2.0.1487](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1487-group)] - 2024-12-02
+
+### Changed
+
 - Reduce size of chat members when serialized ([#6925](https://github.com/open-chat-labs/open-chat/pull/6925))
 - Consolidate member verification logic into `get_verified_member` ([#6926](https://github.com/open-chat-labs/open-chat/pull/6926))
 - Move members to `MembersMap` in prep for stable memory ([#6927](https://github.com/open-chat-labs/open-chat/pull/6927))

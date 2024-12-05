@@ -9,7 +9,7 @@ use group_chat_core::AddResult;
 use group_community_common::ExpiringMember;
 use types::{AddedToChannelNotification, ChannelId, EventIndex, MembersAdded, MessageIndex, Notification, UserId, UserType};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn add_members_to_channel(args: Args) -> Response {
     run_regular_jobs();

@@ -200,6 +200,10 @@ impl UserMap {
         self.username_to_user_id.get(username).and_then(|u| self.users.get(u))
     }
 
+    pub fn get_bot(&self, user_id: &UserId) -> Option<&Bot> {
+        self.bots.get(user_id)
+    }
+
     pub fn delete_user(&mut self, user_id: UserId, now: TimestampMillis) -> Option<User> {
         let user = self.users.remove(&user_id)?;
         if self.principal_to_user_id.get(&user.principal) == Some(&user_id) {

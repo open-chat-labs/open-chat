@@ -19,6 +19,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Make `ChannelId` comparisons use their 32bit representation ([#6885](https://github.com/open-chat-labs/open-chat/pull/6885))
 - Remove chat event updates after 31 days ([#6916](https://github.com/open-chat-labs/open-chat/pull/6916))
 - Make `StableMemoryMap` use strongly typed keys ([#6937](https://github.com/open-chat-labs/open-chat/pull/6937))
+- Disallow sending prize messages to threads ([#6960](https://github.com/open-chat-labs/open-chat/pull/6960))
+- Reduce size of search index when serialized ([#6973](https://github.com/open-chat-labs/open-chat/pull/6973))
 
 ### Removed
 

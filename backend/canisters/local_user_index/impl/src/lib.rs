@@ -9,6 +9,7 @@ use event_store_producer_cdk_runtime::CdkRuntime;
 use event_store_utils::EventDeduper;
 use jwt::{verify_jwt, Claims};
 use local_user_index_canister::{ChildCanisterType, GlobalUser};
+use model::bots_map::BotsMap;
 use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
 use p256_key_pair::P256KeyPair;
@@ -258,7 +259,6 @@ impl RuntimeState {
                 group_index: self.data.group_index_canister_id,
                 identity: self.data.identity_canister_id,
                 notifications: self.data.notifications_canister_id,
-                bot_api_gateway: self.data.bot_api_gateway_canister_id,
                 proposals_bot: self.data.proposals_bot_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 escrow: self.data.escrow_canister_id,
@@ -268,6 +268,16 @@ impl RuntimeState {
             oc_secret_key_initialized: self.data.oc_key_pair.is_initialised(),
             canister_upgrades_failed: canister_upgrades_metrics.failed,
             cycles_balance_check_queue_len: self.data.cycles_balance_check_queue.len() as u32,
+            bots: self
+                .data
+                .bots
+                .iter()
+                .map(|b| BotMetrics {
+                    user_id: b.user_id,
+                    name: b.name.clone(),
+                    commands: b.commands.iter().map(|c| c.name.clone()).collect(),
+                })
+                .collect(),
         }
     }
 }
@@ -276,12 +286,13 @@ impl RuntimeState {
 struct Data {
     pub local_users: LocalUserMap,
     pub global_users: GlobalUserMap,
+    #[serde(default)]
+    pub bots: BotsMap,
     pub child_canister_wasms: ChildCanisterWasms<ChildCanisterType>,
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub identity_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
-    pub bot_api_gateway_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
@@ -329,7 +340,6 @@ impl Data {
         group_index_canister_id: CanisterId,
         identity_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
-        bot_api_gateway_canister_id: CanisterId,
         proposals_bot_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         escrow_canister_id: CanisterId,
@@ -349,7 +359,6 @@ impl Data {
             group_index_canister_id,
             identity_canister_id,
             notifications_canister_id,
-            bot_api_gateway_canister_id,
             proposals_bot_canister_id,
             cycles_dispenser_canister_id,
             escrow_canister_id,
@@ -377,6 +386,7 @@ impl Data {
             ic_root_key,
             events_for_remote_users: Vec::new(),
             cycles_balance_check_queue: VecDeque::new(),
+            bots: BotsMap::default(),
         }
     }
 }
@@ -410,6 +420,7 @@ pub struct Metrics {
     pub oc_secret_key_initialized: bool,
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
     pub cycles_balance_check_queue_len: u32,
+    pub bots: Vec<BotMetrics>,
 }
 
 #[derive(Serialize, Debug)]
@@ -418,10 +429,16 @@ pub struct CanisterIds {
     pub group_index: CanisterId,
     pub identity: CanisterId,
     pub notifications: CanisterId,
-    pub bot_api_gateway: CanisterId,
     pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub escrow: CanisterId,
     pub event_relay: CanisterId,
     pub internet_identity: CanisterId,
+}
+
+#[derive(Serialize, Debug)]
+pub struct BotMetrics {
+    pub user_id: UserId,
+    pub name: String,
+    pub commands: Vec<String>,
 }

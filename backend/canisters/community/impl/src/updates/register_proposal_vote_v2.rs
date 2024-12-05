@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use chat_events::RecordProposalVoteResult;
 use community_canister::register_proposal_vote_v2::{Response::*, *};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn register_proposal_vote_v2(args: Args) -> Response {
     run_regular_jobs();
