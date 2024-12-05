@@ -9,7 +9,7 @@ use nns_governance_canister::types::{ListProposalInfo, ProposalInfo};
 use sns_governance_canister::types::ProposalData;
 use std::collections::HashSet;
 use std::time::Duration;
-use types::{CanisterId, Milliseconds, Proposal};
+use types::{CanisterId, Proposal};
 
 pub const NNS_TOPIC_NEURON_MANAGEMENT: i32 = 1;
 pub const NNS_TOPIC_EXCHANGE_RATE: i32 = 2;
