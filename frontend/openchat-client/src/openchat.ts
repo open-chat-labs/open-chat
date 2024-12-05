@@ -216,6 +216,7 @@ import {
     LoadedNewMessages,
     LoadedPreviousMessages,
     ReactionSelected,
+    RegisterBot,
     RemoteVideoCallStartedEvent,
     SearchChat,
     SelectedChatInvalid,
@@ -226,6 +227,7 @@ import {
     ThreadClosed,
     ThreadSelected,
     TokenTransfer,
+    UpdateBot,
     UserLoggedIn,
     UserSuspensionChanged,
     VideoCallMessageUpdated,
@@ -7617,6 +7619,10 @@ export class OpenChat extends OpenChatAgentWorker {
     executeInternalBotCommand(bot: InternalBotCommandInstance): Promise<boolean> {
         if (bot.command.name === "witch") {
             this.dispatchEvent(new SummonWitch());
+        } else if (bot.command.name === "register_bot") {
+            this.dispatchEvent(new RegisterBot());
+        } else if (bot.command.name === "update_bot") {
+            this.dispatchEvent(new UpdateBot());
         } else if (bot.command.name === "poll") {
             this.dispatchEvent(new CreatePoll(bot.command.messageContext));
         } else if (bot.command.name === "gif") {

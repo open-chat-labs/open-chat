@@ -33,7 +33,7 @@
             color: var(--txt-light);
         }
         .required {
-            color: var(--accent);
+            color: var(--error);
         }
     }
 </style>

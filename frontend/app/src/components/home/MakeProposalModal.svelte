@@ -15,7 +15,13 @@
         currentUser as user,
         cryptoBalance as cryptoBalanceStore,
     } from "openchat-client";
-    import { isPrincipalValid, isSubAccountValid, isUrl, random32 } from "openchat-shared";
+    import {
+        isPrincipalValid,
+        isSubAccountValid,
+        isUrl,
+        random32,
+        type ExternalBot,
+    } from "openchat-shared";
     import { iconSize } from "../../stores/iconSize";
     import Button from "../Button.svelte";
     import Legend from "../Legend.svelte";
@@ -31,12 +37,14 @@
     import {
         createAddTokenPayload,
         createRegisterExternalAchievementPayload,
+        createRegisterExternalBotPayload,
         createUpdateTokenPayload,
     } from "../../utils/sns";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
     import DurationPicker from "./DurationPicker.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
+    import BotBuilder from "../bots/BotBuilder.svelte";
 
     const MIN_TITLE_LENGTH = 3;
     const MAX_TITLE_LENGTH = 120;
@@ -78,6 +86,7 @@
     let busy = true;
     let selectedProposalType:
         | "motion"
+        | "register_bot"
         | "transfer_sns_funds"
         | "upgrade_sns_to_next_version"
         | "register_external_acievement"
@@ -91,6 +100,10 @@
     let refreshingBalance = false;
     let balanceWithRefresh: BalanceWithRefresh;
     let achivementName = "";
+    let candidateBot: ExternalBot | undefined = undefined;
+    let candidateBotValid = false;
+
+    let registerBotEnabled = localStorage.getItem("openchat_register_bot_enabled") === "true";
 
     $: errorMessage =
         error !== undefined ? i18nKey("proposal.maker." + error) : $pinNumberErrorMessageStore;
@@ -144,6 +157,7 @@
         summaryValid &&
         (selectedProposalType === "motion" ||
             selectedProposalType === "upgrade_sns_to_next_version" ||
+            (selectedProposalType === "register_bot" && candidateBotValid) ||
             (selectedProposalType === "transfer_sns_funds" &&
                 amountValid &&
                 recipientOwnerValid &&
@@ -301,6 +315,22 @@
                     ),
                 };
             }
+            case "register_bot": {
+                if (candidateBot === undefined) {
+                    throw new Error(
+                        "Candidate bot definition is undefined. This should not happen.",
+                    );
+                }
+                return {
+                    kind: "execute_generic_nervous_system_function",
+                    functionId: BigInt(1012),
+                    payload: createRegisterExternalBotPayload(
+                        $user.userId,
+                        $user.userId,
+                        candidateBot,
+                    ),
+                };
+            }
         }
     }
 
@@ -402,6 +432,9 @@
                                 >Register external achievement</option>
                             <option value={"add_token"}>Add token</option>
                             <option value={"update_token"}>Update token</option>
+                            {#if registerBotEnabled}
+                                <option value={"register_bot"}>Register a bot</option>
+                            {/if}
                         {/if}
                     </Select>
                 </section>
@@ -477,7 +510,11 @@
                 </section>
             </div>
             <div class="action hidden" class:visible={step === 2}>
-                {#if selectedProposalType === "transfer_sns_funds"}
+                {#if selectedProposalType === "register_bot"}
+                    <BotBuilder
+                        onUpdate={(bot) => (candidateBot = bot)}
+                        bind:valid={candidateBotValid} />
+                {:else if selectedProposalType === "transfer_sns_funds"}
                     <div>
                         <section>
                             <Legend label={i18nKey("proposal.maker.treasury")} required />

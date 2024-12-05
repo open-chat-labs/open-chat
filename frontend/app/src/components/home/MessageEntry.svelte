@@ -50,7 +50,7 @@
         selectedCommand,
         showingBuilder,
     } from "../bots/botState";
-    import CommandBuilder from "../bots/CommandBuilder.svelte";
+    import CommandBuilder from "../bots/CommandInstanceBuilder.svelte";
 
     const client = getContext<OpenChat>("client");
 

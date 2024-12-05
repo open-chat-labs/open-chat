@@ -149,6 +149,65 @@
     "blockUserFailed": "Impossible de bloquer l'utilisateur",
     "blockUserSucceeded": "L'utilisateur a été bloqué",
     "bots": {
+        "builder": {
+            "addAnother": "Ajouter un autre",
+            "addChoice": "Ajouter un choix",
+            "addCommand": "Ajouter une commande",
+            "addParam": "Ajouter un paramètre",
+            "choiceName": "Nom de choix",
+            "choices": "Choix",
+            "choicesInfo": "Si vous entrez un ensemble de choix pour votre paramètre, l'utilisateur se verra présenter une liste déroulante lui permettant de choisir la valeur correcte.",
+            "choiceValue": "Valeur de choix",
+            "commandDescLabel": "Description de la commande",
+            "commandDescPlaceholder": "Entrer la description de la commande",
+            "commandLabel": "Commande : /{name}",
+            "commandNameLabel": "Nom de la commande",
+            "commandNamePlaceholder": "Entrer le nom de la commande",
+            "commandPermissionsDesc": "Décrivez les autorisations requises par cette commande",
+            "commandPermissionsLabel": "Autorisations de commande",
+            "descLabel": "Description du robot",
+            "descPlaceholder": "Entrez la description du bot",
+            "endpointLabel": "Point de terminaison du bot",
+            "endpointRules": "Doit être une origine valide ou un canisterID",
+            "errors": {
+                "alphaOnly": "Doit contenir uniquement des caractères alphanumériques et des traits de soulignement",
+                "duplicateCommands": "Le bot contient des commandes en double",
+                "duplicateParams": "La commande contient des paramètres en double",
+                "endpoint": "Le point de terminaison doit être une origine ou un canisterID valide",
+                "minLength": "Doit avoir au moins {n} caractères",
+                "noCommands": "Un bot doit contenir au moins une commande"
+            },
+            "iconLabel": "Icône de bot",
+            "maxLengthLabel": "Longueur maximale",
+            "maxLengthPlaceholder": "Entrez la longueur maximale",
+            "maxValueLabel": "Valeur maximale",
+            "maxValuePlaceholder": "Entrez la valeur maximale",
+            "minLengthLabel": "Longueur minimale",
+            "minLengthPlaceholder": "Entrez la longueur minimale",
+            "minValueLabel": "Valeur minimale",
+            "minValuePlaceholder": "Entrez la valeur minimale",
+            "nameLabel": "Nom du bot",
+            "namePlaceholder": "Entrez le nom du bot",
+            "nameRules": "Doit être unique et contenir uniquement des caractères alphanumériques et des traits de soulignement",
+            "optional": "facultatif",
+            "paramDescLabel": "Description des paramètres",
+            "paramDescPlaceholder": "Entrer la description du paramètre",
+            "paramLabel": "Paramètre : {name}",
+            "paramNameLabel": "Nom du paramètre",
+            "paramNamePlaceholder": "Entrer le nom du paramètre",
+            "paramPlaceholderLabel": "Espace réservé aux paramètres",
+            "paramPlaceholderPlaceholder": "Entrer l'espace réservé au paramètre",
+            "paramTypeLabel": "Type de paramètre",
+            "permSameAsMessage": "Identique aux autorisations de message",
+            "permScopeChat": "Chat",
+            "permScopeCommunity": "Communauté",
+            "permScopeMessage": "Message",
+            "permScopeThread": "Fil",
+            "required": "Paramètre obligatoire",
+            "requiredDesc": "Est-ce un paramètre obligatoire pour la commande",
+            "title": "Construire un bot",
+            "uptoN": "jusqu'à {n}"
+        },
         "builtin": {
             "desc": "Ce bot fournit les commandes OpenChat intégrées",
             "name": "Intégré"
@@ -214,6 +273,9 @@
         "poll": {
             "desc": "Créer un sondage dans le chat actuel"
         },
+        "register_bot": {
+            "desc": "Démarrer une proposition pour décrire et enregistrer un nouveau bot avec OpenChat"
+        },
         "search": {
             "desc": "Lancer une recherche dans le chat actuel",
             "params": {
@@ -223,6 +285,9 @@
                     "placeholder": "Terme de recherche"
                 }
             }
+        },
+        "update_bot": {
+            "desc": "Démarrer une proposition pour mettre à jour un bot OpenChat existant"
         },
         "witch": {
             "desc": "Invoquer la sorcière"

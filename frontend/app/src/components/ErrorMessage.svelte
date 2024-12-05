@@ -1,8 +1,4 @@
-<script lang="ts">
-    import { fade } from "svelte/transition";
-</script>
-
-<h4 in:fade|local class="error">
+<h4 class="error">
     <slot />
 </h4>
 
@@ -13,5 +9,6 @@
         background-color: var(--error);
         color: #fff;
         padding: $sp3 $sp4;
+        border-radius: var(--rd);
     }
 </style>
