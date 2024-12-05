@@ -1,4 +1,3 @@
-use crate::members_map::MembersMap;
 use crate::{GroupMemberInternal, GroupMemberStableStorage};
 use candid::{Deserialize, Principal};
 use serde::Serialize;
@@ -18,6 +17,24 @@ impl MembersStableStorage {
         };
         map.insert(member);
         map
+    }
+
+    pub fn get(&self, user_id: &UserId) -> Option<GroupMemberInternal> {
+        with_map(|m| {
+            m.get(&self.prefix.create_key(*user_id).into())
+                .map(|v| bytes_to_member(&v).hydrate(*user_id))
+        })
+    }
+
+    pub fn insert(&mut self, member: GroupMemberInternal) {
+        with_map_mut(|m| m.insert(self.prefix.create_key(member.user_id).into(), member_to_bytes(member.into())));
+    }
+
+    pub fn remove(&mut self, user_id: &UserId) -> Option<GroupMemberInternal> {
+        with_map_mut(|m| {
+            m.remove(&self.prefix.create_key(*user_id).into())
+                .map(|v| bytes_to_member(&v).hydrate(*user_id))
+        })
     }
 
     pub fn set_chat(&mut self, chat: MultiUserChat) {
@@ -47,29 +64,9 @@ impl MembersStableStorage {
                 .collect()
         })
     }
-}
-
-impl MembersMap for MembersStableStorage {
-    fn get(&self, user_id: &UserId) -> Option<GroupMemberInternal> {
-        with_map(|m| {
-            m.get(&self.prefix.create_key(*user_id).into())
-                .map(|v| bytes_to_member(&v).hydrate(*user_id))
-        })
-    }
-
-    fn insert(&mut self, member: GroupMemberInternal) {
-        with_map_mut(|m| m.insert(self.prefix.create_key(member.user_id).into(), member_to_bytes(member.into())));
-    }
-
-    fn remove(&mut self, user_id: &UserId) -> Option<GroupMemberInternal> {
-        with_map_mut(|m| {
-            m.remove(&self.prefix.create_key(*user_id).into())
-                .map(|v| bytes_to_member(&v).hydrate(*user_id))
-        })
-    }
 
     #[cfg(test)]
-    fn all_members(&self) -> Vec<GroupMemberInternal> {
+    pub fn all_members(&self) -> Vec<GroupMemberInternal> {
         with_map(|m| {
             m.range(Key::from(self.prefix.create_key(Principal::from_slice(&[]).into()))..)
                 .map_while(|(k, v)| MemberKey::try_from(k).ok().map(|k| (k, v)))

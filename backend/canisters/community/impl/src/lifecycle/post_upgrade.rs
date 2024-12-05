@@ -21,6 +21,8 @@ fn post_upgrade(args: Args) {
     let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
 
+    assert!(data.members_migrated_to_stable_memory);
+
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
     let env = init_env(data.rng_seed);

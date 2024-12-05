@@ -80,8 +80,7 @@ fn comprehensive(#[strategy(pvec(operation_strategy(), 100..5_000))] ops: Vec<Op
         timestamp += 1000;
     }
 
-    members.check_invariants(false);
-    members.check_invariants(true);
+    members.check_invariants();
 }
 
 fn execute_operation(members: &mut GroupMembers, op: Operation, timestamp: TimestampMillis) {
