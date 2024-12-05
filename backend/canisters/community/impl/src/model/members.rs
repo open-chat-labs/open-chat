@@ -58,6 +58,7 @@ impl CommunityMembers {
             display_name: Timestamped::default(),
             referred_by: None,
             referrals: BTreeSet::new(),
+            referrals_removed: BTreeSet::new(),
             lapsed: Timestamped::default(),
         };
 
@@ -112,6 +113,7 @@ impl CommunityMembers {
                 display_name: Timestamped::default(),
                 referred_by,
                 referrals: BTreeSet::new(),
+                referrals_removed: BTreeSet::new(),
                 lapsed: Timestamped::default(),
             };
             self.add_user_id(principal, user_id);
@@ -121,7 +123,7 @@ impl CommunityMembers {
             if let Some(referrer) = referred_by {
                 if matches!(
                     self.update_member(&referrer, |m| {
-                        m.referrals.insert(user_id);
+                        m.add_referral(user_id);
                         true
                     }),
                     Some(true)
@@ -170,7 +172,7 @@ impl CommunityMembers {
                 if let Some(referrer) = member.referred_by {
                     let mut remove_from_members_with_referrals = false;
                     self.update_member(&referrer, |m| {
-                        m.referrals.remove(&user_id);
+                        m.remove_referral(user_id);
                         if m.referrals.is_empty() {
                             remove_from_members_with_referrals = true;
                         }
@@ -684,6 +686,8 @@ pub struct CommunityMemberInternal {
     pub referred_by: Option<UserId>,
     #[serde(rename = "rf", default, skip_serializing_if = "BTreeSet::is_empty")]
     referrals: BTreeSet<UserId>,
+    #[serde(rename = "rr", default, skip_serializing_if = "BTreeSet::is_empty")]
+    referrals_removed: BTreeSet<UserId>,
     #[serde(rename = "l", default, skip_serializing_if = "is_default")]
     lapsed: Timestamped<bool>,
     #[serde(rename = "s", default, skip_serializing_if = "is_default")]
@@ -730,12 +734,27 @@ impl CommunityMemberInternal {
         &self.referrals
     }
 
+    pub fn referrals_removed(&self) -> &BTreeSet<UserId> {
+        &self.referrals_removed
+    }
+
     pub fn lapsed(&self) -> &Timestamped<bool> {
         &self.lapsed
     }
 
     pub fn suspended(&self) -> &Timestamped<bool> {
         &self.suspended
+    }
+
+    pub fn add_referral(&mut self, user_id: UserId) {
+        self.referrals.insert(user_id);
+        self.referrals_removed.remove(&user_id);
+    }
+
+    pub fn remove_referral(&mut self, user_id: UserId) {
+        if self.referrals.remove(&user_id) {
+            self.referrals_removed.insert(user_id);
+        }
     }
 }
 
@@ -878,6 +897,7 @@ mod tests {
             display_name: Timestamped::default(),
             referred_by: None,
             referrals: BTreeSet::new(),
+            referrals_removed: BTreeSet::new(),
             lapsed: Timestamped::default(),
             suspended: Timestamped::default(),
         };

@@ -1,4 +1,3 @@
-use crate::model::members::CommunityMemberInternal;
 use crate::{model::members::CommunityMembers, read_state, RuntimeState};
 use canister_api_macros::query;
 use community_canister::selected_updates_v2::{Response::*, *};
@@ -66,12 +65,12 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
     for (user_id, update) in state.data.members.iter_latest_updates(args.updates_since) {
         match update {
             MemberUpdate::Added => {
-                let referral = is_my_referral(&member, &user_id);
-                user_updates_handler.mark_member_updated(&mut result, user_id, referral, false);
+                let referral_added = member.as_ref().map_or(false, |m| m.referrals().contains(&user_id));
+                user_updates_handler.mark_member_updated(&mut result, user_id, referral_added, false);
             }
             MemberUpdate::Removed => {
-                let referral = is_my_referral(&member, &user_id);
-                user_updates_handler.mark_member_updated(&mut result, user_id, referral, true);
+                let referral_removed = member.as_ref().map_or(false, |m| m.referrals_removed().contains(&user_id));
+                user_updates_handler.mark_member_updated(&mut result, user_id, referral_removed, true);
             }
             MemberUpdate::RoleChanged => {
                 user_updates_handler.mark_member_updated(&mut result, user_id, false, false);
@@ -126,11 +125,4 @@ impl<'a> UserUpdatesHandler<'a> {
             }
         }
     }
-}
-
-fn is_my_referral<F: FnOnce() -> Option<CommunityMemberInternal>>(
-    member: &LazyCell<Option<CommunityMemberInternal>, F>,
-    user_id: &UserId,
-) -> bool {
-    member.as_ref().map_or(false, |m| m.referrals().contains(user_id))
 }
