@@ -1,6 +1,8 @@
+use crate::model::events::stable_memory::EventsStableStorage;
 use chat_events::GroupGateUpdatedInternal;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
+use tracing::info;
 use types::{
     AvatarChanged, BannerChanged, ChannelDeleted, ChannelId, ChatId, CommunityMemberLeftInternal, CommunityMembersRemoved,
     CommunityPermissionsChanged, CommunityRoleChanged, CommunityUsersBlocked, CommunityVisibilityChanged,
@@ -9,10 +11,13 @@ use types::{
     TimestampMillis, UserId, UsersInvited, UsersUnblocked,
 };
 
+mod stable_memory;
+
 #[derive(Serialize, Deserialize)]
 #[serde(from = "CommunityEventsPrevious")]
 pub struct CommunityEvents {
     events_map: BTreeMap<EventIndex, EventWrapperInternal<CommunityEventInternal>>,
+    stable_events_map: EventsStableStorage,
     latest_event_index: EventIndex,
     latest_event_timestamp: TimestampMillis,
 }
@@ -117,27 +122,36 @@ pub enum CommunityEventInternal {
 }
 
 impl CommunityEvents {
+    pub fn migrate_to_stable_memory(&mut self) {
+        for event in self.events_map.values() {
+            self.stable_events_map.insert(event.clone());
+        }
+        let count = self.events_map.len();
+        info!(count, "Community events migrated to stable memory");
+    }
+
     pub fn new(name: String, description: String, created_by: UserId, now: TimestampMillis) -> CommunityEvents {
         let event_index = EventIndex::default();
-        let mut events_map = BTreeMap::new();
+        let event = EventWrapperInternal {
+            index: event_index,
+            timestamp: now,
+            correlation_id: 0,
+            expires_at: None,
+            event: CommunityEventInternal::Created(Box::new(GroupCreated {
+                name,
+                description,
+                created_by,
+            })),
+        };
 
-        events_map.insert(
-            event_index,
-            EventWrapperInternal {
-                index: event_index,
-                timestamp: now,
-                correlation_id: 0,
-                expires_at: None,
-                event: CommunityEventInternal::Created(Box::new(GroupCreated {
-                    name,
-                    description,
-                    created_by,
-                })),
-            },
-        );
+        let mut events_map = BTreeMap::new();
+        events_map.insert(event_index, event.clone());
+        let mut stable_events_map = EventsStableStorage::default();
+        stable_events_map.insert(event);
 
         CommunityEvents {
             events_map,
+            stable_events_map,
             latest_event_index: event_index,
             latest_event_timestamp: now,
         }
@@ -145,17 +159,16 @@ impl CommunityEvents {
 
     pub(crate) fn push_event(&mut self, event: CommunityEventInternal, now: TimestampMillis) -> EventIndex {
         let event_index = self.next_event_index();
+        let event = EventWrapperInternal {
+            index: event_index,
+            timestamp: now,
+            correlation_id: 0,
+            expires_at: None,
+            event,
+        };
 
-        self.events_map.insert(
-            event_index,
-            EventWrapperInternal {
-                index: event_index,
-                timestamp: now,
-                correlation_id: 0,
-                expires_at: None,
-                event,
-            },
-        );
+        self.events_map.insert(event_index, event.clone());
+        self.stable_events_map.insert(event);
 
         self.latest_event_index = event_index;
         self.latest_event_timestamp = now;
@@ -241,6 +254,7 @@ impl From<CommunityEventsPrevious> for CommunityEvents {
 
         CommunityEvents {
             events_map,
+            stable_events_map: EventsStableStorage::default(),
             latest_event_index,
             latest_event_timestamp,
         }
