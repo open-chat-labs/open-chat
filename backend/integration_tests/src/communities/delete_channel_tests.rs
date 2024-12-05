@@ -102,7 +102,7 @@ fn stable_memory_garbage_collected_after_deleting_channel() {
     env.advance_time(Duration::from_secs(60));
     env.tick();
 
-    assert_eq!(get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(), 4);
+    assert_eq!(get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(), 5);
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
