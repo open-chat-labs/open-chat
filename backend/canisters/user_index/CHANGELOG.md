@@ -13,6 +13,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Implement `bot_updates` ([#6934](https://github.com/open-chat-labs/open-chat/pull/6934))
 - Serve bot avatars from UserIndex ([#6975](https://github.com/open-chat-labs/open-chat/pull/6975))
 
+### Changed
+
+- Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
+
 ## [[2.0.1469](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1469-user_index)] - 2024-11-25
 
 ### Changed
