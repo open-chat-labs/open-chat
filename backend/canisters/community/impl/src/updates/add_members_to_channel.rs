@@ -71,8 +71,8 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 let users_to_add = args
                     .user_ids
                     .iter()
-                    .filter_map(|user_id| state.data.members.get_by_user_id(user_id))
-                    .map(|member| (user_id, member.user_type))
+                    .filter(|user_id| state.data.members.contains(user_id))
+                    .map(|user_id| (*user_id, state.data.members.bots().get(user_id).copied().unwrap_or_default()))
                     .collect();
 
                 Ok(PrepareResult {
