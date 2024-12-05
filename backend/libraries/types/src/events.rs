@@ -428,3 +428,17 @@ impl EventContext {
         }
     }
 }
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct BotAdded {
+    pub bot_id: UserId,
+    pub added_by: UserId,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct BotRemoved {
+    pub bot_id: UserId,
+    pub removed_by: UserId,
+}

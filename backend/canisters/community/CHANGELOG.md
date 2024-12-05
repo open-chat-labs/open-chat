@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add/remove bot to/from community ([#6991](https://github.com/open-chat-labs/open-chat/pull/6991))
+
 ### Changed
 
 - Remove chat members from being stored on the heap ([#6942](https://github.com/open-chat-labs/open-chat/pull/6942))

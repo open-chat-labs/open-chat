@@ -4,11 +4,11 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use tracing::info;
 use types::{
-    AvatarChanged, BannerChanged, ChannelDeleted, ChannelId, ChatId, CommunityMemberLeftInternal, CommunityMembersRemoved,
-    CommunityPermissionsChanged, CommunityRoleChanged, CommunityUsersBlocked, CommunityVisibilityChanged,
-    DefaultChannelsChanged, EventIndex, EventWrapperInternal, GroupCreated, GroupDescriptionChanged, GroupFrozen,
-    GroupInviteCodeChanged, GroupNameChanged, GroupRulesChanged, GroupUnfrozen, MemberJoinedInternal, PrimaryLanguageChanged,
-    TimestampMillis, UserId, UsersInvited, UsersUnblocked,
+    AvatarChanged, BannerChanged, BotAdded, BotRemoved, ChannelDeleted, ChannelId, ChatId, CommunityMemberLeftInternal,
+    CommunityMembersRemoved, CommunityPermissionsChanged, CommunityRoleChanged, CommunityUsersBlocked,
+    CommunityVisibilityChanged, DefaultChannelsChanged, EventIndex, EventWrapperInternal, GroupCreated,
+    GroupDescriptionChanged, GroupFrozen, GroupInviteCodeChanged, GroupNameChanged, GroupRulesChanged, GroupUnfrozen,
+    MemberJoinedInternal, PrimaryLanguageChanged, TimestampMillis, UserId, UsersInvited, UsersUnblocked,
 };
 
 mod stable_memory;
@@ -119,6 +119,10 @@ pub enum CommunityEventInternal {
     PrimaryLanguageChanged(Box<PrimaryLanguageChanged>),
     #[serde(rename = "gi", alias = "GroupImported")]
     GroupImported(Box<GroupImportedInternal>),
+    #[serde(rename = "ba")]
+    BotAdded(Box<BotAdded>),
+    #[serde(rename = "br")]
+    BotRemoved(Box<BotRemoved>),
 }
 
 impl CommunityEvents {
