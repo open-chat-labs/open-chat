@@ -1,10 +1,4 @@
-<script lang="ts">
-    import { _ } from "svelte-i18n";
-    import { createEventDispatcher, onMount, tick, type Snippet } from "svelte";
-    import { translatable } from "../actions/translatable";
-    import { interpolate } from "../i18n/i18n";
-    import type { ResourceKey } from "openchat-client";
-
+<script module lang="ts">
     export interface InputProps {
         disabled?: boolean;
         invalid?: boolean;
@@ -22,6 +16,14 @@
         onblur?: () => void;
         onfocus?: () => void;
     }
+</script>
+
+<script lang="ts">
+    import { _ } from "svelte-i18n";
+    import { createEventDispatcher, onMount, tick, type Snippet } from "svelte";
+    import { translatable } from "../actions/translatable";
+    import { interpolate } from "../i18n/i18n";
+    import type { ResourceKey } from "openchat-client";
 
     let {
         disabled = false,

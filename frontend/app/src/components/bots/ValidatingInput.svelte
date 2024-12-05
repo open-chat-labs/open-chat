@@ -1,5 +1,6 @@
 <script lang="ts">
-    import Input, { type InputProps } from "../Input.svelte";
+    import Input from "../Input.svelte";
+    import { type InputProps } from "../Input.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import Translatable from "../Translatable.svelte";
     import type { ResourceKey } from "openchat-client";
