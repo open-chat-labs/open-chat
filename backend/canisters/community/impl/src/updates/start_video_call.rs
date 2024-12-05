@@ -28,7 +28,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
     };
 
     if matches!(
-        (args.call_type, channel.chat.is_public.value, state.data.is_public),
+        (args.call_type, channel.chat.is_public.value, state.data.is_public.value),
         (VideoCallType::Default, true, true)
     ) {
         return NotAuthorized;
@@ -93,7 +93,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         message_text: None,
         image_url: None,
         crypto_transfer: None,
-        community_name: state.data.name.clone(),
+        community_name: state.data.name.value.clone(),
         channel_name: channel.chat.name.value.clone(),
         community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
         channel_avatar_id: channel.chat.avatar.as_ref().map(|d| d.id),

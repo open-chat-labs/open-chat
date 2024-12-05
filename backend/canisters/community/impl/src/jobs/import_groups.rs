@@ -3,12 +3,9 @@ use crate::model::channels::Channel;
 use crate::model::events::{CommunityEventInternal, GroupImportedInternal};
 use crate::model::groups_being_imported::{GroupToImport, GroupToImportAction};
 use crate::model::members::AddResult;
-use crate::timer_job_types::{
-    FinalizeGroupImportJob, MigrateMembersToStableMemoryJob, ProcessGroupImportChannelMembersJob, TimerJob,
-};
+use crate::timer_job_types::{FinalizeGroupImportJob, ProcessGroupImportChannelMembersJob, TimerJob};
 use crate::updates::c2c_join_channel::{add_members_to_public_channel_unchecked, join_channel_unchecked};
 use crate::{mutate_state, read_state, RuntimeState};
-use canister_timer_jobs::Job;
 use chat_events::ChatEvents;
 use constants::OPENCHAT_BOT_USER_ID;
 use group_canister::c2c_export_group::{Args, Response};
@@ -219,14 +216,6 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
                 }
             }
 
-            // TODO remove this once groups are upgraded and we re-enable importing
-            // members to stable memory
-            chat.members.reset_migration_to_stable_memory_complete_flag();
-            if !chat.members.migrate_next_batch_to_stable_memory() {
-                state.data.members_migrated_to_stable_memory = false;
-                MigrateMembersToStableMemoryJob.execute();
-            }
-
             state.data.channels.add(Channel {
                 id: channel_id,
                 chat,
@@ -311,7 +300,7 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
                                             user_type,
                                             channel,
                                             &mut state.data.members,
-                                            state.data.is_public,
+                                            state.data.is_public.value,
                                             true,
                                             now,
                                         );
@@ -375,7 +364,7 @@ fn add_community_members_to_channel_if_public(channel_id: ChannelId, state: &mut
                 user_ids.into_iter(),
                 channel,
                 &mut state.data.members,
-                state.data.is_public,
+                state.data.is_public.value,
                 now,
             );
         }
@@ -395,7 +384,7 @@ pub(crate) fn mark_import_complete(group_id: ChatId, channel_id: ChannelId) {
             state.data.group_index_canister_id,
             "c2c_mark_group_import_complete_msgpack".to_string(),
             msgpack::serialize_then_unwrap(group_index_canister::c2c_mark_group_import_complete::Args {
-                community_name: state.data.name.clone(),
+                community_name: state.data.name.value.clone(),
                 local_user_index_canister_id: state.data.local_user_index_canister_id,
                 channel: ChannelLatestMessageIndex {
                     channel_id,

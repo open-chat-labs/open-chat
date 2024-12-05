@@ -11,7 +11,7 @@ use gated_groups::{
     check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult, CheckVerifiedCredentialGateArgs, GatePayment,
 };
 use group_community_common::ExpiringMember;
-use types::{AccessGate, ChannelId, MemberJoined, UsersUnblocked};
+use types::{AccessGate, ChannelId, MemberJoinedInternal, UsersUnblocked};
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
@@ -71,7 +71,7 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(Acc
         return Err(MemberLimitReached(limit));
     } else if caller == state.data.user_index_canister_id || state.data.is_invited(args.principal) {
         return Ok(None);
-    } else if !state.data.is_public && !state.data.is_invite_code_valid(args.invite_code) {
+    } else if !state.data.is_public.value && !state.data.is_invite_code_valid(args.invite_code) {
         return Err(NotInvited);
     }
 
@@ -152,7 +152,7 @@ pub(crate) fn join_community_impl(
 
     if !matches!(result, AddResult::AlreadyInCommunity) {
         state.data.events.push_event(
-            CommunityEventInternal::MemberJoined(Box::new(MemberJoined {
+            CommunityEventInternal::MemberJoined(Box::new(MemberJoinedInternal {
                 user_id: args.user_id,
                 invited_by: referred_by,
             })),

@@ -16,7 +16,7 @@ use gated_groups::{
 use group_chat_core::{AddMemberSuccess, AddResult};
 use group_community_common::ExpiringMember;
 use types::{
-    AccessGateConfigInternal, ChannelId, MemberJoined, TimestampMillis, UniquePersonProof, UserId, UserType,
+    AccessGateConfigInternal, ChannelId, MemberJoinedInternal, TimestampMillis, UniquePersonProof, UserId, UserType,
     VerifiedCredentialGateArgs,
 };
 
@@ -173,7 +173,7 @@ fn is_permitted_to_join(
                             .summary(
                                 Some(channel_member.user_id()),
                                 true,
-                                state.data.is_public,
+                                state.data.is_public.value,
                                 &state.data.members,
                             )
                             .unwrap(),
@@ -240,13 +240,13 @@ fn commit(
         member.user_type,
         channel,
         &mut state.data.members,
-        state.data.is_public && channel.chat.is_public.value,
+        state.data.is_public.value && channel.chat.is_public.value,
         true,
         now,
     ) {
         AddResult::Success(result) => {
             let summary = channel
-                .summary(Some(user_id), true, state.data.is_public, &state.data.members)
+                .summary(Some(user_id), true, state.data.is_public.value, &state.data.members)
                 .unwrap();
 
             if let Some(gate_expiry) = channel.chat.gate_config.value.as_ref().and_then(|gc| gc.expiry()) {
@@ -281,7 +281,7 @@ fn commit(
             channel.chat.members.update_lapsed(user_id, false, now);
 
             let summary = channel
-                .summary(Some(user_id), true, state.data.is_public, &state.data.members)
+                .summary(Some(user_id), true, state.data.is_public.value, &state.data.members)
                 .unwrap();
             AlreadyInChannel(Box::new(summary))
         }
@@ -374,7 +374,7 @@ pub(crate) fn join_channel_unchecked(
             channel.chat.events.mark_members_added_to_public_channel(vec![user_id], now);
         } else {
             channel.chat.events.push_main_event(
-                ChatEventInternal::ParticipantJoined(Box::new(MemberJoined {
+                ChatEventInternal::ParticipantJoined(Box::new(MemberJoinedInternal {
                     user_id,
                     invited_by: invitation.map(|i| i.invited_by),
                 })),

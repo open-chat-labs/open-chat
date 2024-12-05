@@ -42,7 +42,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
     }
 
     fn get_timer_jobs(state: &RuntimeState) -> HttpResponse {
-        let data: Vec<_> = if state.data.is_public || state.data.test_mode {
+        let data: Vec<_> = if state.data.is_public.value || state.data.test_mode {
             state
                 .data
                 .timer_jobs

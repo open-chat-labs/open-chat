@@ -17,7 +17,7 @@ fn messages_by_message_index_impl(args: Args, state: &RuntimeState) -> Response 
     let caller = state.env.caller();
     let user_id = state.data.members.get(caller).map(|m| m.user_id);
 
-    if user_id.is_none() && (!state.data.is_public || state.data.has_payment_gate()) {
+    if user_id.is_none() && (!state.data.is_public.value || state.data.has_payment_gate()) {
         return UserNotInCommunity;
     }
 

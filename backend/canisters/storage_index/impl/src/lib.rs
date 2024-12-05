@@ -5,7 +5,7 @@ use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use storage_index_canister::init::CyclesDispenserConfig;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, Cycles, CyclesTopUp, FileAdded, FileRejected, FileRejectedReason, FileRemoved,
@@ -88,6 +88,7 @@ impl RuntimeState {
             bucket_upgrades_failed: bucket_upgrade_metrics.failed,
             bucket_canister_wasm: self.data.bucket_canister_wasm.version,
             cycles_dispenser_config: self.data.cycles_dispenser_config.clone(),
+            stable_memory_sizes: memory::memory_sizes(),
         }
     }
 }
@@ -233,6 +234,7 @@ pub struct Metrics {
     pub bucket_upgrades_failed: Vec<FailedUpgradeCount>,
     pub bucket_canister_wasm: BuildVersion,
     pub cycles_dispenser_config: CyclesDispenserConfig,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
 }
 
 #[derive(CandidType, Serialize, Debug)]

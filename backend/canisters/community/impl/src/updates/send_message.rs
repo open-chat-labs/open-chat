@@ -234,7 +234,7 @@ fn process_send_message_result(
                 thread_root_message_index,
                 message_index: message_event.event.message_index,
                 event_index: message_event.index,
-                community_name: state.data.name.clone(),
+                community_name: state.data.name.value.clone(),
                 channel_name,
                 sender,
                 sender_name: sender_username,

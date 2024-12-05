@@ -93,7 +93,9 @@ fn summary_updates_impl(
 
     for channel in channels_with_updates {
         if channel.date_imported.map_or(false, |ts| ts > updates_since) {
-            if let Some(summary) = channel.summary(user_id, is_community_member, state.data.is_public, &state.data.members) {
+            if let Some(summary) =
+                channel.summary(user_id, is_community_member, state.data.is_public.value, &state.data.members)
+            {
                 last_updated = max(last_updated, summary.last_updated);
                 channels_added.push(summary);
             }
@@ -102,7 +104,7 @@ fn summary_updates_impl(
                 user_id,
                 updates_since,
                 is_community_member,
-                state.data.is_public,
+                state.data.is_public.value,
                 &state.data.members,
             ) {
                 ChannelUpdates::Added(s) => {

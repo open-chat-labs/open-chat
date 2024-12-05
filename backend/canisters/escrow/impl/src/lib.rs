@@ -6,6 +6,7 @@ use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
+use std::collections::BTreeMap;
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
@@ -44,6 +45,7 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             swaps: self.data.swaps.metrics(now),
+            stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
             },
@@ -85,6 +87,7 @@ pub struct Metrics {
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub swaps: SwapMetrics,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }
 

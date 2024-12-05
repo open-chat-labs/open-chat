@@ -343,7 +343,6 @@ pub struct NervousSystem {
     min_dissolve_delay_to_vote: Milliseconds,
     proposal_rejection_fee: u64,
     proposal_messages: BTreeMap<ProposalId, (MessageIndex, MessageId)>,
-    #[serde(default)]
     disabled: bool,
 }
 
@@ -416,7 +415,10 @@ impl NervousSystem {
 
         if finished {
             let update = ProposalUpdate {
-                message_id: generate_message_id(self.governance_canister_id, proposal_id),
+                message_id: self
+                    .proposal_message(&proposal_id)
+                    .map(|(_, id)| id)
+                    .unwrap_or_else(|| generate_message_id(self.governance_canister_id, proposal_id)),
                 status: Some(proposal.status()),
                 reward_status: Some(proposal.reward_status()),
                 latest_tally: Some(proposal.tally()),

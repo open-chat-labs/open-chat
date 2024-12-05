@@ -162,7 +162,7 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
                     user_ids.into_iter(),
                     &mut channel,
                     &mut state.data.members,
-                    state.data.is_public,
+                    state.data.is_public.value,
                     now,
                 );
             }

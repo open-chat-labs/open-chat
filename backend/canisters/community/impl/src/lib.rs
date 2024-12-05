@@ -26,7 +26,7 @@ use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
 use rand::rngs::StdRng;
 use rand::RngCore;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{ChatEventKeyPrefix, KeyPrefix};
 use std::cell::RefCell;
@@ -44,6 +44,7 @@ use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use user_canister::CommunityCanisterEvent;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
+use utils::time::now_millis;
 
 mod activity_notifications;
 mod guards;
@@ -177,7 +178,7 @@ impl RuntimeState {
                 .members
                 .channels_for_member(m.user_id)
                 .filter_map(|c| self.data.channels.get(&c))
-                .filter_map(|c| c.summary(Some(m.user_id), true, data.is_public, &data.members))
+                .filter_map(|c| c.summary(Some(m.user_id), true, data.is_public.value, &data.members))
                 .collect();
 
             (channels, Some(membership))
@@ -188,7 +189,7 @@ impl RuntimeState {
                 .channels
                 .public_channels()
                 .iter()
-                .filter_map(|c| c.summary(None, false, data.is_public, &data.members))
+                .filter_map(|c| c.summary(None, false, data.is_public.value, &data.members))
                 .collect();
 
             (channels, None)
@@ -208,18 +209,18 @@ impl RuntimeState {
             community_id: self.env.canister_id().into(),
             local_user_index_canister_id: self.data.local_user_index_canister_id,
             last_updated,
-            name: data.name.clone(),
-            description: data.description.clone(),
+            name: data.name.value.clone(),
+            description: data.description.value.clone(),
             avatar_id: Document::id(&data.avatar),
             banner_id: Document::id(&data.banner),
-            is_public: data.is_public,
+            is_public: data.is_public.value,
             latest_event_index: data.events.latest_event_index(),
             member_count: data.members.len(),
-            permissions: data.permissions.clone(),
+            permissions: data.permissions.value.clone(),
             frozen: data.frozen.value.clone(),
             gate: data.gate_config.value.as_ref().map(|gc| gc.gate.clone()),
             gate_config: data.gate_config.value.clone().map(|gc| gc.into()),
-            primary_language: data.primary_language.clone(),
+            primary_language: data.primary_language.value.clone(),
             channels,
             membership,
             user_groups: data.members.iter_user_groups().map(|u| u.into()).collect(),
@@ -286,7 +287,7 @@ impl RuntimeState {
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
-            public: self.data.is_public,
+            public: self.data.is_public.value,
             date_created: self.data.date_created,
             members: self.data.members.len(),
             admins: self.data.members.admins().len() as u32,
@@ -299,6 +300,7 @@ impl RuntimeState {
             event_store_client_info: self.data.event_store_client.info(),
             timer_jobs: self.data.timer_jobs.len() as u32,
             members_migrated_to_stable_memory: self.data.members_migrated_to_stable_memory,
+            stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -320,15 +322,24 @@ fn init_instruction_counts_log() -> InstructionCountsLog {
 
 #[derive(Serialize, Deserialize)]
 struct Data {
-    is_public: bool,
-    name: String,
-    description: String,
-    rules: AccessRulesInternal,
-    avatar: Option<Document>,
-    banner: Option<Document>,
-    permissions: CommunityPermissions,
+    #[serde(deserialize_with = "deserialize_maybe_timestamped")]
+    is_public: Timestamped<bool>,
+    #[serde(deserialize_with = "deserialize_maybe_timestamped")]
+    name: Timestamped<String>,
+    #[serde(deserialize_with = "deserialize_maybe_timestamped")]
+    description: Timestamped<String>,
+    #[serde(deserialize_with = "deserialize_maybe_timestamped")]
+    rules: Timestamped<AccessRulesInternal>,
+    #[serde(deserialize_with = "deserialize_maybe_timestamped")]
+    avatar: Timestamped<Option<Document>>,
+    #[serde(deserialize_with = "deserialize_maybe_timestamped")]
+    banner: Timestamped<Option<Document>>,
+    #[serde(deserialize_with = "deserialize_maybe_timestamped")]
+    permissions: Timestamped<CommunityPermissions>,
+    #[serde(deserialize_with = "deserialize_maybe_timestamped")]
     gate_config: Timestamped<Option<AccessGateConfigInternal>>,
-    primary_language: String,
+    #[serde(deserialize_with = "deserialize_maybe_timestamped")]
+    primary_language: Timestamped<String>,
     user_index_canister_id: CanisterId,
     local_user_index_canister_id: CanisterId,
     group_index_canister_id: CanisterId,
@@ -342,8 +353,10 @@ struct Data {
     channels: Channels,
     events: CommunityEvents,
     invited_users: InvitedUsers,
-    invite_code: Option<u64>,
-    invite_code_enabled: bool,
+    #[serde(deserialize_with = "deserialize_maybe_timestamped")]
+    invite_code: Timestamped<Option<u64>>,
+    #[serde(deserialize_with = "deserialize_maybe_timestamped")]
+    invite_code_enabled: Timestamped<bool>,
     frozen: Timestamped<Option<FrozenGroupInfo>>,
     timer_jobs: TimerJobs<TimerJob>,
     fire_and_forget_handler: FireAndForgetHandler,
@@ -366,12 +379,30 @@ struct Data {
     expiring_member_actions: ExpiringMemberActions,
     user_cache: UserCache,
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
-    #[serde(default)]
     stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
-    #[serde(default)]
     members_migrated_to_stable_memory: bool,
-    #[serde(default)]
     bot_permissions: BTreeMap<UserId, SlashCommandPermissions>,
+}
+
+fn deserialize_maybe_timestamped<'de, D: Deserializer<'de>, T: Deserialize<'de>>(d: D) -> Result<Timestamped<T>, D::Error> {
+    let maybe_timestamped = MaybeTimestamped::deserialize(d)?;
+    Ok(maybe_timestamped.into())
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
+#[serde(untagged)]
+pub enum MaybeTimestamped<T> {
+    Timestamped(Timestamped<T>),
+    Value(T),
+}
+
+impl<T> From<MaybeTimestamped<T>> for Timestamped<T> {
+    fn from(value: MaybeTimestamped<T>) -> Self {
+        match value {
+            MaybeTimestamped::Timestamped(ts) => ts,
+            MaybeTimestamped::Value(value) => Timestamped::new(value, now_millis()),
+        }
+    }
 }
 
 impl Data {
@@ -427,15 +458,15 @@ impl Data {
         let events = CommunityEvents::new(name.clone(), description.clone(), created_by_user_id, now);
 
         Data {
-            is_public,
-            name,
-            description,
-            rules: AccessRulesInternal::new(rules),
-            avatar,
-            banner,
-            permissions,
+            is_public: Timestamped::new(is_public, now),
+            name: Timestamped::new(name, now),
+            description: Timestamped::new(description, now),
+            rules: Timestamped::new(AccessRulesInternal::new(rules), now),
+            avatar: Timestamped::new(avatar, now),
+            banner: Timestamped::new(banner, now),
+            permissions: Timestamped::new(permissions, now),
             gate_config: Timestamped::new(gate, now),
-            primary_language,
+            primary_language: Timestamped::new(primary_language, now),
             user_index_canister_id,
             local_user_index_canister_id,
             group_index_canister_id,
@@ -449,8 +480,8 @@ impl Data {
             channels,
             events,
             invited_users: InvitedUsers::default(),
-            invite_code: None,
-            invite_code_enabled: false,
+            invite_code: Timestamped::default(),
+            invite_code_enabled: Timestamped::default(),
             frozen: Timestamped::default(),
             timer_jobs: TimerJobs::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
@@ -484,7 +515,7 @@ impl Data {
     }
 
     pub fn is_accessible(&self, caller: Principal, invite_code: Option<u64>) -> bool {
-        self.is_public
+        self.is_public.value
             || self.members.get(caller).is_some()
             || self.is_invited(caller)
             || self.is_invite_code_valid(invite_code)
@@ -553,9 +584,9 @@ impl Data {
     }
 
     pub fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {
-        if self.invite_code_enabled {
+        if self.invite_code_enabled.value {
             if let Some(provided_code) = invite_code {
-                if let Some(stored_code) = self.invite_code {
+                if let Some(stored_code) = self.invite_code.value {
                     return provided_code == stored_code;
                 }
             }
@@ -667,7 +698,7 @@ impl Data {
     }
 
     pub fn get_member_for_events(&self, caller: Principal) -> Result<Option<CommunityMemberInternal>, EventsResponse> {
-        let hidden_for_non_members = !self.is_public || self.has_payment_gate();
+        let hidden_for_non_members = !self.is_public.value || self.has_payment_gate();
         let member = self.members.get(caller);
 
         if hidden_for_non_members {
@@ -754,6 +785,7 @@ pub struct Metrics {
     pub event_store_client_info: EventStoreClientInfo,
     pub timer_jobs: u32,
     pub members_migrated_to_stable_memory: bool,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }
 

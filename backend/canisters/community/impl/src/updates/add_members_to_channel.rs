@@ -47,7 +47,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         return Err(CommunityFrozen);
     }
 
-    if state.data.is_public {
+    if state.data.is_public.value {
         return Err(CommunityPublic);
     }
 
@@ -188,7 +188,7 @@ fn commit(
 
         let notification = Notification::AddedToChannel(AddedToChannelNotification {
             community_id: state.env.canister_id().into(),
-            community_name: state.data.name.clone(),
+            community_name: state.data.name.value.clone(),
             channel_id,
             channel_name: channel.chat.name.value.clone(),
             added_by,

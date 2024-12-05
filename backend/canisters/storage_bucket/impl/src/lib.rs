@@ -5,6 +5,7 @@ use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
+use std::collections::BTreeMap;
 use types::{BuildVersion, CanisterId, Cycles, FileId, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
@@ -66,6 +67,7 @@ impl RuntimeState {
             blob_count: file_metrics.blob_count,
             index_sync_queue_length: self.data.index_sync_state.queue_len(),
             freezing_limit: self.data.freezing_limit.value.unwrap_or_default(),
+            stable_memory_sizes: memory::memory_sizes(),
         }
     }
 }
@@ -125,6 +127,7 @@ pub struct Metrics {
     pub blob_count: u64,
     pub index_sync_queue_length: u32,
     pub freezing_limit: Cycles,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
 }
 
 pub fn calc_chunk_count(chunk_size: u32, total_size: u64) -> u32 {

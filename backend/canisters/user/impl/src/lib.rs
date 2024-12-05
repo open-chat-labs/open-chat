@@ -27,7 +27,7 @@ use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::KeyPrefix;
 use std::cell::RefCell;
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
@@ -185,6 +185,13 @@ impl RuntimeState {
             event_store_client_info: self.data.event_store_client.info(),
             video_call_operators: self.data.video_call_operators.clone(),
             timer_jobs: self.data.timer_jobs.len() as u32,
+            chit_balance: self.data.chit_events.balance_for_month_by_timestamp(now),
+            streak: self.data.streak.days(now),
+            streak_ends: self.data.streak.ends(),
+            next_daily_claim: if self.data.streak.can_claim(now) { today(now) } else { tomorrow(now) },
+            achievements: self.data.achievements.iter().cloned().collect(),
+            unique_person_proof: self.data.unique_person_proof.is_some(),
+            stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -194,12 +201,6 @@ impl RuntimeState {
                 escrow: self.data.escrow_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
             },
-            chit_balance: self.data.chit_events.balance_for_month_by_timestamp(now),
-            streak: self.data.streak.days(now),
-            streak_ends: self.data.streak.ends(),
-            next_daily_claim: if self.data.streak.can_claim(now) { today(now) } else { tomorrow(now) },
-            achievements: self.data.achievements.iter().cloned().collect(),
-            unique_person_proof: self.data.unique_person_proof.is_some(),
         }
     }
 }
@@ -453,13 +454,14 @@ pub struct Metrics {
     pub event_store_client_info: EventStoreClientInfo,
     pub video_call_operators: Vec<Principal>,
     pub timer_jobs: u32,
-    pub canister_ids: CanisterIds,
     pub chit_balance: i32,
     pub streak: u16,
     pub streak_ends: TimestampMillis,
     pub next_daily_claim: TimestampMillis,
     pub achievements: Vec<Achievement>,
     pub unique_person_proof: bool,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
+    pub canister_ids: CanisterIds,
 }
 
 fn run_regular_jobs() {

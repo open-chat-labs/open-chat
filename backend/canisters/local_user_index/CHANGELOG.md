@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
+
+## [[2.0.1495](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1495-local_user_index)] - 2024-12-04
+
 ### Added
 
 - Added `execute_bot_command` endpoint and bot registry ([#6944](https://github.com/open-chat-labs/open-chat/pull/6944))

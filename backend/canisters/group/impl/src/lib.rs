@@ -420,6 +420,7 @@ impl RuntimeState {
             event_store_client_info: self.data.event_store_client.info(),
             timer_jobs: self.data.timer_jobs.len() as u32,
             members_migrated_to_stable_memory: self.data.members_migrated_to_stable_memory,
+            stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -471,7 +472,6 @@ struct Data {
     expiring_member_actions: ExpiringMemberActions,
     user_cache: UserCache,
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
-    #[serde(skip_deserializing)]
     members_migrated_to_stable_memory: bool,
     stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
     #[serde(default)]
@@ -756,6 +756,7 @@ pub struct Metrics {
     pub event_store_client_info: EventStoreClientInfo,
     pub timer_jobs: u32,
     pub members_migrated_to_stable_memory: bool,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }
 

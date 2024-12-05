@@ -60,7 +60,7 @@ fn c2c_invite_users_to_channel_impl(args: Args, state: &mut RuntimeState) -> Res
 
             match channel.chat.invite_users(member.user_id, users_to_invite_to_channel, now) {
                 InvitedUsersResult::Success(result) => {
-                    let community_name = state.data.name.clone();
+                    let community_name = state.data.name.value.clone();
                     let channel_name = channel.chat.name.value.clone();
 
                     handle_activity_notification(state);
