@@ -39,8 +39,8 @@ use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotRemoved, BuildVersion, CanisterId, ChannelId, ChatMetrics,
     CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cryptocurrency, Cycles, Document, Empty,
-    EventIndex, FrozenGroupInfo, MembersAdded, MessageIndex, Milliseconds, Notification, Rules, SlashCommandPermissions,
-    TimestampMillis, Timestamped, UserId, UserType,
+    FrozenGroupInfo, MembersAdded, Milliseconds, Notification, Rules, SlashCommandPermissions, TimestampMillis, Timestamped,
+    UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use user_canister::CommunityCanisterEvent;
@@ -740,14 +740,7 @@ impl Data {
         let mut users_limit_reached: Vec<UserId> = Vec::new();
 
         if let Some(channel) = self.channels.get_mut(channel_id) {
-            let mut min_visible_event_index = EventIndex::default();
-            let mut min_visible_message_index = MessageIndex::default();
-
-            if !channel.chat.history_visible_to_new_joiners {
-                let events_reader = channel.chat.events.main_events_reader();
-                min_visible_event_index = events_reader.next_event_index();
-                min_visible_message_index = events_reader.next_message_index();
-            }
+            let (min_visible_event_index, min_visible_message_index) = channel.chat.min_visible_indexes_for_new_members();
 
             let gate_expiry = channel.chat.gate_config.value.as_ref().and_then(|gc| gc.expiry());
 
