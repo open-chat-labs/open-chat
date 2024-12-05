@@ -6,7 +6,7 @@ use tracing::info;
 use types::{
     AvatarChanged, BannerChanged, ChannelDeleted, ChannelId, ChatId, CommunityMemberLeftInternal, CommunityMembersRemoved,
     CommunityPermissionsChanged, CommunityRoleChanged, CommunityUsersBlocked, CommunityVisibilityChanged,
-    DefaultChannelsChanged, EventIndex, EventWrapper, EventWrapperInternal, GroupCreated, GroupDescriptionChanged, GroupFrozen,
+    DefaultChannelsChanged, EventIndex, EventWrapperInternal, GroupCreated, GroupDescriptionChanged, GroupFrozen,
     GroupInviteCodeChanged, GroupNameChanged, GroupRulesChanged, GroupUnfrozen, MemberJoinedInternal, PrimaryLanguageChanged,
     TimestampMillis, UserId, UsersInvited, UsersUnblocked,
 };
@@ -24,7 +24,7 @@ pub struct CommunityEvents {
 
 #[derive(Serialize, Deserialize)]
 pub struct CommunityEventsPrevious {
-    events_map: BTreeMap<EventIndex, EventWrapper<CommunityEventInternalOld>>,
+    events_map: BTreeMap<EventIndex, EventWrapperInternal<CommunityEventInternalOld>>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
