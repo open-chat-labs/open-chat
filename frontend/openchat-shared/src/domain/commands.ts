@@ -1,8 +1,8 @@
 import { Principal } from "@dfinity/principal";
 import type { MessageContext } from "./chat";
-import type { DataContent } from "./data";
 import type { ChatPermissions, CommunityPermissions, MessagePermission } from "./permission";
 import type { InterpolationValues, ResourceKey } from "../utils";
+import { ValidationErrors } from "../utils/validation";
 
 export const MIN_NAME_LENGTH = 3;
 
@@ -145,7 +145,7 @@ export function emptyBotInstance(bot?: ExternalBot): ExternalBot {
 export type ExternalBot = {
     kind: "external_bot";
     name: string;
-    icon?: DataContent;
+    avatar?: string;
     id: string;
     endpoint: string;
     description?: string;
@@ -180,7 +180,7 @@ export type FlattenedCommand = SlashCommandSchema &
         | {
               kind: "external_bot";
               botName: string;
-              botIcon?: DataContent;
+              botIcon?: string;
               botId: string;
               botEndpoint: string;
               botDescription?: string;
@@ -307,34 +307,8 @@ export function validBotComponentName(name: string): ResourceKey[] {
     return errors;
 }
 
-type BotValidationError = ResourceKey[]; // this might not be enough
-
-export class BotValidationErrors {
-    private errors = new Map<string, BotValidationError>();
-
-    addErrors(key: string, errors: ResourceKey | ResourceKey[]) {
-        if (!Array.isArray(errors)) errors = [errors];
-        if (errors.length === 0) return;
-        const current = this.errors.get(key) ?? [];
-        errors.forEach((e) => current.push(e));
-        this.errors.set(key, current);
-    }
-
-    has(key: string) {
-        return this.errors.has(key);
-    }
-
-    get(key: string): BotValidationError {
-        return this.errors.get(key) ?? [];
-    }
-
-    get size() {
-        return this.errors.size;
-    }
-}
-
-export function validateBot(bot: ExternalBot): BotValidationErrors {
-    const errors = new BotValidationErrors();
+export function validateBot(bot: ExternalBot): ValidationErrors {
+    const errors = new ValidationErrors();
     errors.addErrors(`bot_name`, validBotComponentName(bot.name));
 
     if (!(validateOrigin(bot.endpoint) || validateCanister(bot.endpoint))) {
@@ -360,7 +334,7 @@ export function validateBot(bot: ExternalBot): BotValidationErrors {
 function validateCommand(
     command: SlashCommandSchema,
     errorPath: string,
-    errors: BotValidationErrors,
+    errors: ValidationErrors,
 ): boolean {
     let valid = true;
     let nameErrors = validBotComponentName(command.name);
@@ -397,7 +371,7 @@ function containsDuplicateParams(params: SlashCommandParam[]): boolean {
 function validateParameter(
     param: SlashCommandParam,
     errorPath: string,
-    errors: BotValidationErrors,
+    errors: ValidationErrors,
 ): boolean {
     let valid = true;
     let nameErrors = validBotComponentName(param.name);

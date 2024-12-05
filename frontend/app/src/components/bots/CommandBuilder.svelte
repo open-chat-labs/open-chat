@@ -4,12 +4,12 @@
         communityPermissionsList,
         defaultStringParam,
         messagePermissionsList,
-        type BotValidationErrors,
         type ChatPermissions,
         type CommunityPermissions,
         type MessagePermission,
         type SlashCommandParam,
         type SlashCommandSchema,
+        ValidationErrors,
     } from "openchat-client";
     import Input from "../Input.svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -28,7 +28,7 @@
     import ErrorMessage from "../ErrorMessage.svelte";
 
     interface Props {
-        errors: BotValidationErrors;
+        errors: ValidationErrors;
         errorPath: string;
         command: SlashCommandSchema;
         onAddAnother: () => void;

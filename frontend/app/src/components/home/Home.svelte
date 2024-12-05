@@ -225,8 +225,7 @@
         selectedMultiUserChat !== undefined
             ? selectedMultiUserChat.subtype?.governanceCanisterId
             : undefined;
-    // $: nervousSystem = client.tryGetNervousSystem(governanceCanisterId);
-    $: nervousSystem = client.tryGetNervousSystem("rrkah-fqaaa-aaaaa-aaaaq-cai");
+    $: nervousSystem = client.tryGetNervousSystem(governanceCanisterId);
     $: {
         if ($identityState.kind === "registering") {
             modal = { kind: "registering" };

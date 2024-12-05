@@ -5,7 +5,7 @@
         defaultNumberParam,
         defaultStringParam,
         defaultUserParam,
-        type BotValidationErrors,
+        type ValidationErrors,
         type SlashCommandOptionChoice,
         type SlashCommandParam,
     } from "openchat-client";
@@ -27,7 +27,7 @@
 
     interface Props {
         errorPath: string;
-        errors: BotValidationErrors;
+        errors: ValidationErrors;
         param: SlashCommandParam;
         onAddAnother: () => void;
     }

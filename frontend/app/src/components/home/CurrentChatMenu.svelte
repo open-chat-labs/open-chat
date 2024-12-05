@@ -58,9 +58,8 @@
         selectedChatSummary.subtype?.kind === "governance_proposals"
             ? selectedChatSummary.subtype.governanceCanisterId
             : undefined;
-    // $: canMakeProposals =
-    //     client.tryGetNervousSystem(governanceCanisterId)?.submittingProposalsEnabled ?? false;
-    $: canMakeProposals = true;
+    $: canMakeProposals =
+        client.tryGetNervousSystem(governanceCanisterId)?.submittingProposalsEnabled ?? false;
     $: userId = selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them.userId : "";
     $: isBot = $userStore.get(userId)?.kind === "bot";
     $: isSuspended = $userStore.get(userId)?.suspended ?? false;

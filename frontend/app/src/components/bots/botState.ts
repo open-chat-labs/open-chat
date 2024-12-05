@@ -76,7 +76,7 @@ export const commands = derived(
                                 ...c,
                                 kind: b.kind,
                                 botName: b.name,
-                                botIcon: b.icon,
+                                botIcon: b.avatar,
                                 botId: b.id,
                                 botEndpoint: b.endpoint,
                                 botDescription: b.description,

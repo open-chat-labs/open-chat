@@ -15,7 +15,13 @@
         currentUser as user,
         cryptoBalance as cryptoBalanceStore,
     } from "openchat-client";
-    import { isPrincipalValid, isSubAccountValid, isUrl, random32 } from "openchat-shared";
+    import {
+        isPrincipalValid,
+        isSubAccountValid,
+        isUrl,
+        random32,
+        type ExternalBot,
+    } from "openchat-shared";
     import { iconSize } from "../../stores/iconSize";
     import Button from "../Button.svelte";
     import Legend from "../Legend.svelte";
@@ -96,6 +102,8 @@
     let achivementName = "";
     let candidateBot: ExternalBot | undefined = undefined;
     let candidateBotValid = false;
+
+    let registerBotEnabled = localStorage.getItem("openchat_register_bot_enabled") === "true";
 
     $: errorMessage =
         error !== undefined ? i18nKey("proposal.maker." + error) : $pinNumberErrorMessageStore;
@@ -308,10 +316,19 @@
                 };
             }
             case "register_bot": {
+                if (candidateBot === undefined) {
+                    throw new Error(
+                        "Candidate bot definition is undefined. This should not happen.",
+                    );
+                }
                 return {
                     kind: "execute_generic_nervous_system_function",
                     functionId: BigInt(1012),
-                    payload: createRegisterExternalBotPayload(candidateBot),
+                    payload: createRegisterExternalBotPayload(
+                        $user.userId,
+                        $user.userId,
+                        candidateBot,
+                    ),
                 };
             }
         }
@@ -410,12 +427,14 @@
                         <option value={"transfer_sns_funds"}>Transfer SNS funds</option>
                         <option value={"upgrade_sns_to_next_version"}
                             >Upgrade SNS to next version</option>
-                        <option value={"register_bot"}>Register a bot</option>
                         {#if symbol === "CHAT"}
                             <option value={"register_external_acievement"}
                                 >Register external achievement</option>
                             <option value={"add_token"}>Add token</option>
                             <option value={"update_token"}>Update token</option>
+                            {#if registerBotEnabled}
+                                <option value={"register_bot"}>Register a bot</option>
+                            {/if}
                         {/if}
                     </Select>
                 </section>

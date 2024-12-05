@@ -1,8 +1,8 @@
 <script lang="ts">
     import {
-        BotValidationErrors,
         emptyBotInstance,
         validateBot,
+        ValidationErrors,
         type ExternalBot,
         type SlashCommandPermissions,
         type SlashCommandSchema,
@@ -38,7 +38,7 @@
                 return validateBot(candidate);
             },
             300,
-            new BotValidationErrors(),
+            new ValidationErrors(),
         ),
     );
 
@@ -58,10 +58,7 @@
     });
 
     function botAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>) {
-        candidate.icon = {
-            blobUrl: ev.detail.url,
-            blobData: ev.detail.data,
-        };
+        candidate.avatar = ev.detail.url;
     }
 
     function onSubmit(e: Event) {
@@ -117,7 +114,7 @@
         <EditableAvatar
             overlayIcon
             size={"medium"}
-            image={candidate.icon?.blobUrl}
+            image={candidate.avatar}
             on:imageSelected={botAvatarSelected} />
     </div>
 
