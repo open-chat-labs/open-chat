@@ -351,6 +351,12 @@ impl CommunityEventKeyPrefix {
     }
 }
 
+impl Default for CommunityEventKeyPrefix {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl From<CommunityEventKeyPrefix> for KeyPrefix {
     fn from(value: CommunityEventKeyPrefix) -> Self {
         KeyPrefix(value.0)
