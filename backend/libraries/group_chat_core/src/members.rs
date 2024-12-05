@@ -12,7 +12,6 @@ use std::cell::OnceCell;
 use std::cmp::max;
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::ops::Deref;
-use tracing::info;
 use types::{
     is_default, EventIndex, GroupMember, GroupPermissions, MessageIndex, MultiUserChat, TimestampMillis, Timestamped, UserId,
     UserType, Version,
@@ -28,7 +27,6 @@ const MAX_MEMBERS_PER_GROUP: u32 = 100_000;
 #[derive(Serialize, Deserialize)]
 pub struct GroupMembers {
     members: HeapMembersMap,
-    #[serde(default = "default_stable_memory_members_map")]
     stable_memory_members_map: MembersStableStorage,
     member_ids: BTreeSet<UserId>,
     owners: BTreeSet<UserId>,
@@ -41,56 +39,12 @@ pub struct GroupMembers {
     suspended: BTreeSet<UserId>,
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
     latest_update_removed: TimestampMillis,
-    #[serde(skip_deserializing)]
     migrate_to_stable_memory_queue: VecDeque<UserId>,
-    #[serde(skip_deserializing)]
     migration_to_stable_memory_complete: bool,
-}
-
-fn default_stable_memory_members_map() -> MembersStableStorage {
-    MembersStableStorage::new_empty()
 }
 
 #[allow(clippy::too_many_arguments)]
 impl GroupMembers {
-    pub fn migrate_next_batch_to_stable_memory(&mut self) -> bool {
-        if self.migration_to_stable_memory_complete {
-            return true;
-        }
-        if self.migrate_to_stable_memory_queue.is_empty() {
-            // This is the first iteration, populate the queue
-            self.migrate_to_stable_memory_queue = self.member_ids.iter().copied().collect();
-        }
-
-        // Migrate 100 at a time and exit if we exceed 2B instructions
-        let mut count = 0;
-        while !self.migrate_to_stable_memory_queue.is_empty() && ic_cdk::api::instruction_counter() < 2_000_000_000 {
-            for _ in 0..100 {
-                if let Some(next) = self.migrate_to_stable_memory_queue.pop_front() {
-                    let member = self.members.get(&next).unwrap();
-                    self.stable_memory_members_map.insert(member);
-                    count += 1
-                } else {
-                    break;
-                }
-            }
-        }
-
-        info!(count, "Migrated chat members to stable memory");
-
-        let complete = self.migrate_to_stable_memory_queue.is_empty();
-        if complete {
-            self.migration_to_stable_memory_complete = true;
-        }
-        complete
-    }
-
-    pub fn set_member_default_timestamps(&mut self) {
-        for member in self.members.values_mut() {
-            member.set_default_timestamps();
-        }
-    }
-
     pub fn new(creator_user_id: UserId, user_type: UserType, chat: MultiUserChat, now: TimestampMillis) -> GroupMembers {
         let member = GroupMemberInternal {
             user_id: creator_user_id,

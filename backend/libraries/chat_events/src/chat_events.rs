@@ -83,13 +83,6 @@ impl ChatEvents {
         stable_memory::write_events_as_bytes(chat, events);
     }
 
-    pub fn set_stable_memory_key_prefixes(&mut self) {
-        self.main.set_stable_memory_prefix(self.chat, None);
-        for (message_index, events) in self.threads.iter_mut() {
-            events.set_stable_memory_prefix(self.chat, Some(*message_index));
-        }
-    }
-
     pub fn new_direct_chat(
         them: UserId,
         events_ttl: Option<Milliseconds>,
