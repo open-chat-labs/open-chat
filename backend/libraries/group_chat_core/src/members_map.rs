@@ -25,11 +25,6 @@ impl HeapMembersMap {
             map: [(member.user_id(), member)].into_iter().collect(),
         }
     }
-
-    // TODO Remove after next upgrade
-    pub fn values_mut(&mut self) -> impl Iterator<Item = &mut GroupMemberInternal> + '_ {
-        self.map.values_mut()
-    }
 }
 
 impl MembersMap for HeapMembersMap {

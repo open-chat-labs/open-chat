@@ -10,13 +10,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Generate 64bit message Ids ([#6978](https://github.com/open-chat-labs/open-chat/pull/6978))
 
-### Fixed
-
-- Prioritise updating proposals based on length of time since last update ([#6974](https://github.com/open-chat-labs/open-chat/pull/6974))
+## [[2.0.1496](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1496-proposals_bot)] - 2024-12-04
 
 ### Removed
 
 - Remove the old `gate` field which has been superseded by `gate_config` ([#6902](https://github.com/open-chat-labs/open-chat/pull/6902))
+
+### Fixed
+
+- Prioritise updating proposals based on length of time since last update ([#6974](https://github.com/open-chat-labs/open-chat/pull/6974))
 
 ## [[2.0.1416](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1416-proposals_bot)] - 2024-10-25
 

@@ -12,14 +12,6 @@ pub struct MembersStableStorage {
 }
 
 impl MembersStableStorage {
-    // TODO delete this after next upgrade
-    pub fn new_empty() -> Self {
-        MembersStableStorage {
-            prefix: MemberKeyPrefix::new_from_chat(MultiUserChat::Group(Principal::anonymous().into())),
-        }
-    }
-
-    #[allow(dead_code)]
     pub fn new(chat: MultiUserChat, member: GroupMemberInternal) -> Self {
         let mut map = MembersStableStorage {
             prefix: MemberKeyPrefix::new_from_chat(chat),

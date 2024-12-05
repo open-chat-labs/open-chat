@@ -6,7 +6,6 @@ use group_community_common::{Member, MemberUpdate, Members};
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
-use tracing::info;
 use types::{
     is_default, ChannelId, CommunityMember, CommunityPermissions, CommunityRole, TimestampMillis, Timestamped, UserId,
     UserType, Version,
@@ -21,7 +20,6 @@ const MAX_MEMBERS_PER_COMMUNITY: u32 = 100_000;
 #[derive(Serialize, Deserialize)]
 pub struct CommunityMembers {
     members: HeapMembersMap,
-    #[serde(default)]
     stable_memory_members_map: MembersStableStorage,
     member_channel_links: BTreeSet<(UserId, ChannelId)>,
     member_channel_links_removed: BTreeMap<(UserId, ChannelId), TimestampMillis>,
@@ -38,45 +36,11 @@ pub struct CommunityMembers {
     members_with_display_names: BTreeSet<UserId>,
     members_with_referrals: BTreeSet<UserId>,
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
-    #[serde(default)]
     migrate_to_stable_memory_queue: VecDeque<UserId>,
-    #[serde(default)]
     migration_to_stable_memory_complete: bool,
 }
 
 impl CommunityMembers {
-    pub fn migrate_next_batch_to_stable_memory(&mut self) -> bool {
-        if self.migration_to_stable_memory_complete {
-            return true;
-        }
-        if self.migrate_to_stable_memory_queue.is_empty() {
-            // This is the first iteration, populate the queue
-            self.migrate_to_stable_memory_queue = self.member_ids.iter().copied().collect();
-        }
-
-        // Migrate 100 at a time and exit if we exceed 2B instructions
-        let mut count = 0;
-        while !self.migrate_to_stable_memory_queue.is_empty() && ic_cdk::api::instruction_counter() < 2_000_000_000 {
-            for _ in 0..100 {
-                if let Some(next) = self.migrate_to_stable_memory_queue.pop_front() {
-                    let member = self.members.get(&next).unwrap();
-                    self.stable_memory_members_map.insert(member);
-                    count += 1
-                } else {
-                    break;
-                }
-            }
-        }
-
-        info!(count, "Migrated community members to stable memory");
-
-        let complete = self.migrate_to_stable_memory_queue.is_empty();
-        if complete {
-            self.migration_to_stable_memory_complete = true;
-        }
-        complete
-    }
-
     pub fn new(
         creator_principal: Principal,
         creator_user_id: UserId,
