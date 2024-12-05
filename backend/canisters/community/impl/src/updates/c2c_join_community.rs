@@ -71,7 +71,7 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(Acc
         return Err(MemberLimitReached(limit));
     } else if caller == state.data.user_index_canister_id || state.data.is_invited(args.principal) {
         return Ok(None);
-    } else if !state.data.is_public && !state.data.is_invite_code_valid(args.invite_code) {
+    } else if !state.data.is_public.value && !state.data.is_invite_code_valid(args.invite_code) {
         return Err(NotInvited);
     }
 

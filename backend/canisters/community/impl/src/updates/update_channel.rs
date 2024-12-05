@@ -80,7 +80,7 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                                 user_ids.into_iter(),
                                 channel,
                                 &mut state.data.members,
-                                state.data.is_public,
+                                state.data.is_public.value,
                                 now,
                             );
                         }

@@ -86,7 +86,7 @@ pub(crate) fn invite_users_to_community_impl(args: Args, state: &mut RuntimeStat
 
         Success(SuccessResult {
             invited_users: user_ids,
-            community_name: state.data.name.clone(),
+            community_name: state.data.name.value.clone(),
         })
     } else {
         UserNotInCommunity
