@@ -7,7 +7,7 @@ use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use chat_events::Reader;
+use chat_events::{ChatEventInternal, Reader};
 use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, SNS_LEDGER_CANISTER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
@@ -32,10 +32,10 @@ use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    AccessGateConfigInternal, Achievement, BuildVersion, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles,
-    Document, Empty, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions,
-    GroupSubtype, MessageIndex, Milliseconds, MultiUserChat, Notification, Rules, SlashCommandPermissions, TimestampMillis,
-    Timestamped, UserId, UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
+    AccessGateConfigInternal, Achievement, BotAdded, BotRemoved, BuildVersion, CanisterId, ChatId, ChatMetrics, CommunityId,
+    Cryptocurrency, Cycles, Document, Empty, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership,
+    GroupPermissions, GroupSubtype, MessageIndex, Milliseconds, MultiUserChat, Notification, Rules, SlashCommandPermissions,
+    TimestampMillis, Timestamped, UserId, UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
 };
 use user_canister::GroupCanisterEvent;
 use utils::env::Environment;
@@ -698,6 +698,70 @@ impl Data {
             self.user_event_sync_queue
                 .push(user_id, GroupCanisterEvent::Achievement(achievement));
         }
+    }
+
+    pub fn add_bot(
+        &mut self,
+        owner_id: UserId,
+        bot_user_id: UserId,
+        granted_permissions: SlashCommandPermissions,
+        now: TimestampMillis,
+    ) -> bool {
+        if !self.bot_permissions.contains_key(&bot_user_id) {
+            return false;
+        }
+
+        // Insert the granted bot permissions
+        self.bot_permissions.insert(bot_user_id, granted_permissions);
+
+        // Add bot as member of group
+        let (min_visible_event_index, min_visible_message_index) = self.chat.min_visible_indexes_for_new_members();
+        self.chat.members.add(
+            bot_user_id,
+            now,
+            min_visible_event_index,
+            min_visible_message_index,
+            true,
+            UserType::BotV2,
+        );
+
+        // Push chat event
+        self.chat.events.push_main_event(
+            ChatEventInternal::BotAdded(Box::new(BotAdded {
+                bot_id: bot_user_id,
+                added_by: owner_id,
+            })),
+            0,
+            now,
+        );
+
+        // TODO: Notify UserIndex
+
+        true
+    }
+
+    pub fn remove_bot(&mut self, owner_id: UserId, bot_user_id: UserId, now: TimestampMillis) -> bool {
+        if self.bot_permissions.remove(&bot_user_id).is_none() {
+            return false;
+        }
+
+        // Remove bot user from the group
+        self.chat.remove_member(owner_id, bot_user_id, false, now);
+        self.remove_user(bot_user_id);
+
+        // Push chat event
+        self.chat.events.push_main_event(
+            ChatEventInternal::BotRemoved(Box::new(BotRemoved {
+                bot_id: bot_user_id,
+                removed_by: owner_id,
+            })),
+            0,
+            now,
+        );
+
+        // TODO: Notify UserIndex
+
+        true
     }
 
     pub fn get_bot_permissions(&self, bot_user_id: &UserId) -> Option<&SlashCommandPermissions> {
