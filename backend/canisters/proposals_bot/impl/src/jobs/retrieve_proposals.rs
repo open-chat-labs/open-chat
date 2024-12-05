@@ -26,8 +26,9 @@ const NNS_TOPICS_TO_PUSH_SNS_PROPOSALS_FOR: [i32; 3] = [
     NNS_TOPIC_SNS_AND_NEURON_FUND,
 ];
 
-pub fn start_job() {
-    ic_cdk_timers::set_timer_interval(Duration::from_millis(RETRIEVE_PROPOSALS_INTERVAL), run);
+pub fn start_job(state: &RuntimeState) {
+    let interval = Duration::from_millis(if state.data.test_mode { 30 * MINUTE_IN_MS } else { MINUTE_IN_MS });
+    ic_cdk_timers::set_timer_interval(interval, run);
 }
 
 pub fn run() {
