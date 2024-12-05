@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
+
 ## [[2.0.1498](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1498-community)] - 2024-12-04
 
 ### Changed
@@ -19,7 +23,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Reduce size of search index when serialized ([#6973](https://github.com/open-chat-labs/open-chat/pull/6973))
 - Copy members from stable memory when importing group into community ([#6976](https://github.com/open-chat-labs/open-chat/pull/6976))
 - Re-run member migration to stable member using reduced size format V2 ([#6977](https://github.com/open-chat-labs/open-chat/pull/6977))
-- Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
 
 ### Removed
 
