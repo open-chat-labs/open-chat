@@ -58,7 +58,6 @@ pub struct GroupChatCore {
     pub pinned_messages_removed: BTreeSet<(TimestampMillis, MessageIndex)>,
     pub permissions: Timestamped<GroupPermissions>,
     pub date_last_pinned: Option<TimestampMillis>,
-    #[serde(alias = "gate")]
     pub gate_config: Timestamped<Option<AccessGateConfigInternal>>,
     pub invited_users: InvitedUsers,
     pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
