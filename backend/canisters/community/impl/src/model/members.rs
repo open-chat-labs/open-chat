@@ -630,25 +630,25 @@ impl Members for CommunityMembers {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct CommunityMemberInternal {
-    #[serde(rename = "u", alias = "user_id")]
+    #[serde(rename = "u")]
     pub user_id: UserId,
-    #[serde(rename = "d", alias = "date_added")]
+    #[serde(rename = "d")]
     pub date_added: TimestampMillis,
-    #[serde(rename = "r", alias = "role", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "r", default, skip_serializing_if = "is_default")]
     role: CommunityRole,
-    #[serde(rename = "ra", alias = "rules_accepted", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "ra", skip_serializing_if = "Option::is_none")]
     pub rules_accepted: Option<Timestamped<Version>>,
-    #[serde(rename = "ut", alias = "user_type", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "ut", default, skip_serializing_if = "is_default")]
     pub user_type: UserType,
-    #[serde(rename = "dn", alias = "display_name", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "dn", default, skip_serializing_if = "is_default")]
     display_name: Timestamped<Option<String>>,
-    #[serde(rename = "rb", alias = "referred_by", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "rb", skip_serializing_if = "Option::is_none")]
     pub referred_by: Option<UserId>,
-    #[serde(rename = "rf", alias = "referrals", default, skip_serializing_if = "BTreeSet::is_empty")]
+    #[serde(rename = "rf", default, skip_serializing_if = "BTreeSet::is_empty")]
     referrals: BTreeSet<UserId>,
-    #[serde(rename = "l", alias = "lapsed", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "l", default, skip_serializing_if = "is_default")]
     lapsed: Timestamped<bool>,
-    #[serde(rename = "s", alias = "suspended", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "s", default, skip_serializing_if = "is_default")]
     suspended: Timestamped<bool>,
 }
 
