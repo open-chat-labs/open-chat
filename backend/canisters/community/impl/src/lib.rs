@@ -332,9 +332,9 @@ struct Data {
     description: Timestamped<String>,
     #[serde(deserialize_with = "deserialize_maybe_timestamped")]
     rules: Timestamped<AccessRulesInternal>,
-    #[serde(deserialize_with = "deserialize_maybe_timestamped")]
+    #[serde(deserialize_with = "deserialize_optional_document")]
     avatar: Timestamped<Option<Document>>,
-    #[serde(deserialize_with = "deserialize_maybe_timestamped")]
+    #[serde(deserialize_with = "deserialize_optional_document")]
     banner: Timestamped<Option<Document>>,
     #[serde(deserialize_with = "deserialize_maybe_timestamped")]
     permissions: Timestamped<CommunityPermissions>,
@@ -964,4 +964,9 @@ pub struct AddUsersToChannelResult {
     pub users_added: Vec<UserId>,
     pub users_already_in_channel: Vec<UserId>,
     pub users_limit_reached: Vec<UserId>,
+}
+
+fn deserialize_optional_document<'de, D: Deserializer<'de>>(d: D) -> Result<Timestamped<Option<Document>>, D::Error> {
+    let document = Option::deserialize(d)?;
+    Ok(Timestamped::new(document, now_millis()))
 }
