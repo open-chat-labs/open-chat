@@ -35,8 +35,6 @@ pub struct CommunityMembers {
     members_with_display_names: BTreeSet<UserId>,
     members_with_referrals: BTreeSet<UserId>,
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
-    migrate_to_stable_memory_queue: VecDeque<UserId>,
-    migration_to_stable_memory_complete: bool,
 }
 
 impl CommunityMembers {
@@ -80,8 +78,6 @@ impl CommunityMembers {
             members_with_display_names: BTreeSet::new(),
             members_with_referrals: BTreeSet::new(),
             updates: BTreeSet::new(),
-            migrate_to_stable_memory_queue: VecDeque::default(),
-            migration_to_stable_memory_complete: true,
         }
     }
 
