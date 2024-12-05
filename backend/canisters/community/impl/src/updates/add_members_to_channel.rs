@@ -109,7 +109,7 @@ fn commit(
         users_already_in_channel,
         users_limit_reached,
         users_failed_with_error,
-    } = state.data.add_users_to_channel(&channel_id, users_to_add, added_by, now);
+    } = state.data.add_members_to_channel(&channel_id, users_to_add, added_by, now);
 
     let Some(channel_name) = channel_name else {
         return ChannelNotFound;

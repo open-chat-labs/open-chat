@@ -725,7 +725,7 @@ impl Data {
         }
     }
 
-    pub fn add_users_to_channel(
+    pub fn add_members_to_channel(
         &mut self,
         channel_id: &ChannelId,
         users_to_add: Vec<(UserId, UserType)>,
@@ -834,7 +834,7 @@ impl Data {
         // Add the bot as a member of each channel
         let channel_ids: Vec<_> = self.channels.iter().map(|c| c.id).collect();
         for channel_id in channel_ids {
-            self.add_users_to_channel(&channel_id, vec![(bot_user_id, UserType::BotV2)], owner_id, now);
+            self.add_members_to_channel(&channel_id, vec![(bot_user_id, UserType::BotV2)], owner_id, now);
         }
 
         // Publish community event
