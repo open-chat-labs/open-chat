@@ -1,15 +1,21 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use types::{TimestampMillis, UserId};
+use std::collections::BTreeMap;
+use types::{is_default, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserCache {
-    map: HashMap<UserId, CachedUser>,
+    map: BTreeMap<UserId, CachedUser>,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct CachedUser {
+    #[serde(
+        rename = "d",
+        alias = "diamond_membership_expires_at",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub diamond_membership_expires_at: Option<TimestampMillis>,
+    #[serde(rename = "u", alias = "is_unique_person", skip_serializing_if = "is_default")]
     pub is_unique_person: bool,
 }
 
