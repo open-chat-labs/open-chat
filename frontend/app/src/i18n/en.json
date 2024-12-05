@@ -170,12 +170,12 @@
             "endpointLabel": "Bot endpoint",
             "endpointRules": "Must be a valid origin or a canisterID",
             "errors": {
-                "minLength": "Must have at least {n} characters",
                 "alphaOnly": "Must only contain alphanumerics and underscores",
-                "endpoint": "Endpoint must be a valid origin or canisterID",
-                "noCommands": "A bot must contain at least one command",
                 "duplicateCommands": "Bot contains duplicate commands",
-                "duplicateParams": "Command contains duplicate params"
+                "duplicateParams": "Command contains duplicate params",
+                "endpoint": "Endpoint must be a valid origin or canisterID",
+                "minLength": "Must have at least {n} characters",
+                "noCommands": "A bot must contain at least one command"
             },
             "iconLabel": "Bot avatar",
             "maxLengthLabel": "Maximum length",

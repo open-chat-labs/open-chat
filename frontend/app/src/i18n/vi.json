@@ -169,6 +169,14 @@
             "descPlaceholder": "Nhập mô tả bot",
             "endpointLabel": "Điểm cuối của Bot",
             "endpointRules": "Phải là nguồn gốc hợp lệ hoặc là một canisterID",
+            "errors": {
+                "alphaOnly": "Chỉ được chứa chữ và số và dấu gạch dưới",
+                "duplicateCommands": "Bot chứa các lệnh trùng lặp",
+                "duplicateParams": "Lệnh chứa các tham số trùng lặp",
+                "endpoint": "Điểm cuối phải là một origin hoặc canisterID hợp lệ",
+                "minLength": "Phải có ít nhất {n} ký tự",
+                "noCommands": "Một bot phải chứa ít nhất một lệnh"
+            },
             "iconLabel": "Biểu tượng bot",
             "maxLengthLabel": "Chiều dài tối đa",
             "maxLengthPlaceholder": "Nhập chiều dài tối đa",

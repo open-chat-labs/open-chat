@@ -169,6 +169,14 @@
             "descPlaceholder": "ボットの説明を入力してください",
             "endpointLabel": "ボットエンドポイント",
             "endpointRules": "有効なオリジンまたはキャニスターIDである必要があります",
+            "errors": {
+                "alphaOnly": "英数字とアンダースコアのみを含める必要があります",
+                "duplicateCommands": "ボットに重複したコマンドが含まれています",
+                "duplicateParams": "コマンドに重複したパラメータが含まれています",
+                "endpoint": "エンドポイントは有効なオリジンまたはキャニスターIDである必要があります",
+                "minLength": "少なくとも {n} 文字が必要です",
+                "noCommands": "ボットには少なくとも1つのコマンドが含まれている必要があります"
+            },
             "iconLabel": "ボットアイコン",
             "maxLengthLabel": "最大長",
             "maxLengthPlaceholder": "最大長を入力してください",

@@ -169,6 +169,14 @@
             "descPlaceholder": "输入机器人描述",
             "endpointLabel": "机器人端点",
             "endpointRules": "必须是有效的来源或 canisterID",
+            "errors": {
+                "alphaOnly": "只能包含字母数字和下划线",
+                "duplicateCommands": "机器人包含重复的命令",
+                "duplicateParams": "命令包含重复参数",
+                "endpoint": "端点必须是有效的来源或 canisterID",
+                "minLength": "必须至少包含 {n} 个字符",
+                "noCommands": "机器人必须至少包含一个命令"
+            },
             "iconLabel": "机器人图标",
             "maxLengthLabel": "最大长度",
             "maxLengthPlaceholder": "输入最大长度",

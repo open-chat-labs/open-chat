@@ -169,6 +169,14 @@
             "descPlaceholder": "Wprowadź opis bota",
             "endpointLabel": "Punkt końcowy bota",
             "endpointRules": "Musi to być prawidłowe pochodzenie lub canisterID",
+            "errors": {
+                "alphaOnly": "Może zawierać wyłącznie znaki alfanumeryczne i podkreślenia",
+                "duplicateCommands": "Bot zawiera zduplikowane polecenia",
+                "duplicateParams": "Polecenie zawiera zduplikowane parametry",
+                "endpoint": "Punkt końcowy musi być prawidłowym źródłem lub identyfikatorem kanistra",
+                "minLength": "Musi mieć co najmniej {n} znaków",
+                "noCommands": "Bot musi zawierać co najmniej jedno polecenie"
+            },
             "iconLabel": "Ikona bota",
             "maxLengthLabel": "Maksymalna długość",
             "maxLengthPlaceholder": "Wprowadź maksymalną długość",

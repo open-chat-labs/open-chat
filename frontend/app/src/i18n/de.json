@@ -169,6 +169,14 @@
             "descPlaceholder": "Geben Sie die Bot-Beschreibung ein",
             "endpointLabel": "Bot-Endpunkt",
             "endpointRules": "Muss ein gültiger Ursprung oder eine Kanister-ID sein",
+            "errors": {
+                "alphaOnly": "Darf nur alphanumerische Zeichen und Unterstriche enthalten",
+                "duplicateCommands": "Bot enthält doppelte Befehle",
+                "duplicateParams": "Befehl enthält doppelte Parameter",
+                "endpoint": "Der Endpunkt muss ein gültiger Ursprung oder eine gültige Kanister-ID sein",
+                "minLength": "Muss mindestens {n} Zeichen haben",
+                "noCommands": "Ein Bot muss mindestens einen Befehl enthalten"
+            },
             "iconLabel": "Bot-Symbol",
             "maxLengthLabel": "Maximallänge",
             "maxLengthPlaceholder": "Maximale Länge eingeben",

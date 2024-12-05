@@ -169,6 +169,14 @@
             "descPlaceholder": "Inserisci la descrizione del bot",
             "endpointLabel": "Punto finale del bot",
             "endpointRules": "Deve essere un'origine valida o un canisterID",
+            "errors": {
+                "alphaOnly": "Deve contenere solo caratteri alfanumerici e caratteri di sottolineatura",
+                "duplicateCommands": "Il bot contiene comandi duplicati",
+                "duplicateParams": "Il comando contiene parametri duplicati",
+                "endpoint": "L'endpoint deve essere un'origine o un canisterID valido",
+                "minLength": "Deve contenere almeno {n} caratteri",
+                "noCommands": "Un bot deve contenere almeno un comando"
+            },
             "iconLabel": "Icona del bot",
             "maxLengthLabel": "Lunghezza massima",
             "maxLengthPlaceholder": "Inserisci la lunghezza massima",

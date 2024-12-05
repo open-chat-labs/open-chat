@@ -169,6 +169,14 @@
             "descPlaceholder": "توضیحات ربات را وارد کنید",
             "endpointLabel": "نقطه پایانی ربات",
             "endpointRules": "باید مبدأ معتبر یا شناسه قوطی باشد",
+            "errors": {
+                "alphaOnly": "فقط باید دارای حروف الفبا و زیرخط باشد",
+                "duplicateCommands": "ربات حاوی دستورات تکراری است",
+                "duplicateParams": "فرمان حاوی پارامترهای تکراری است",
+                "endpoint": "نقطه پایانی باید یک مبدا یا شناسه canister معتبر باشد",
+                "minLength": "باید حداقل {n} کاراکتر داشته باشد",
+                "noCommands": "یک ربات باید حداقل یک دستور داشته باشد"
+            },
             "iconLabel": "نماد ربات",
             "maxLengthLabel": "حداکثر طول",
             "maxLengthPlaceholder": "حداکثر طول را وارد کنید",

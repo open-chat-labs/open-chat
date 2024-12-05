@@ -169,6 +169,14 @@
             "descPlaceholder": "Entrez la description du bot",
             "endpointLabel": "Point de terminaison du bot",
             "endpointRules": "Doit être une origine valide ou un canisterID",
+            "errors": {
+                "alphaOnly": "Doit contenir uniquement des caractères alphanumériques et des traits de soulignement",
+                "duplicateCommands": "Le bot contient des commandes en double",
+                "duplicateParams": "La commande contient des paramètres en double",
+                "endpoint": "Le point de terminaison doit être une origine ou un canisterID valide",
+                "minLength": "Doit avoir au moins {n} caractères",
+                "noCommands": "Un bot doit contenir au moins une commande"
+            },
             "iconLabel": "Icône de bot",
             "maxLengthLabel": "Longueur maximale",
             "maxLengthPlaceholder": "Entrez la longueur maximale",

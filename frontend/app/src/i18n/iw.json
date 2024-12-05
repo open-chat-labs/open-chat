@@ -169,6 +169,14 @@
             "descPlaceholder": "הזן את תיאור הבוט",
             "endpointLabel": "נקודת קצה של בוט",
             "endpointRules": "חייב להיות מקור חוקי או מזהה מיכל",
+            "errors": {
+                "alphaOnly": "חייב להכיל רק אלפאנומריות וקווים תחתונים",
+                "duplicateCommands": "הבוט מכיל פקודות כפולות",
+                "duplicateParams": "הפקודה מכילה פרמטרים כפולים",
+                "endpoint": "נקודת הקצה חייבת להיות מקור חוקי או מזהה מיכל",
+                "minLength": "חייב לכלול לפחות {n} תווים",
+                "noCommands": "בוט חייב להכיל לפחות פקודה אחת"
+            },
             "iconLabel": "סמל בוט",
             "maxLengthLabel": "אורך מקסימלי",
             "maxLengthPlaceholder": "הזן אורך מקסימלי",
