@@ -1,6 +1,7 @@
 use crate::model::members::stable_memory::MembersStableStorage;
 use crate::model::user_groups::{UserGroup, UserGroups};
 use candid::Principal;
+use constants::calculate_summary_updates_data_removal_cutoff;
 use group_community_common::{Member, MemberUpdate, Members};
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
@@ -35,6 +36,8 @@ pub struct CommunityMembers {
     members_with_display_names: BTreeSet<UserId>,
     members_with_referrals: BTreeSet<UserId>,
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
+    #[serde(default)]
+    latest_update_removed: TimestampMillis,
 }
 
 impl CommunityMembers {
@@ -78,6 +81,7 @@ impl CommunityMembers {
             members_with_display_names: BTreeSet::new(),
             members_with_referrals: BTreeSet::new(),
             updates: BTreeSet::new(),
+            latest_update_removed: 0,
         }
     }
 
@@ -110,8 +114,9 @@ impl CommunityMembers {
                 referrals: BTreeSet::new(),
                 lapsed: Timestamped::default(),
             };
-            self.members_map.insert(member.clone());
             self.add_user_id(principal, user_id);
+            self.members_map.insert(member.clone());
+            self.prune_then_insert_member_update(user_id, MemberUpdate::Added, now);
 
             if let Some(referrer) = referred_by {
                 if matches!(
@@ -185,6 +190,7 @@ impl CommunityMembers {
                 }
                 self.user_groups.remove_user_from_all(&member.user_id, now);
                 self.member_ids.remove(&user_id);
+                self.prune_then_insert_member_update(user_id, MemberUpdate::Removed, now);
 
                 return Some(member);
             }
@@ -264,6 +270,7 @@ impl CommunityMembers {
         };
 
         self.members_map.insert(member);
+        self.prune_then_insert_member_update(user_id, MemberUpdate::RoleChanged, now);
 
         ChangeRoleResult::Success(ChangeRoleSuccessResult {
             caller_id: user_id,
@@ -368,12 +375,22 @@ impl CommunityMembers {
         self.update_member(user_id, |member| member.accept_rules(version, now));
     }
 
-    pub fn block(&mut self, user_id: UserId) -> bool {
-        self.blocked.insert(user_id)
+    pub fn block(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
+        if self.blocked.insert(user_id) {
+            self.prune_then_insert_member_update(user_id, MemberUpdate::Blocked, now);
+            true
+        } else {
+            false
+        }
     }
 
-    pub fn unblock(&mut self, user_id: &UserId) -> bool {
-        self.blocked.remove(user_id)
+    pub fn unblock(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
+        if self.blocked.remove(&user_id) {
+            self.prune_then_insert_member_update(user_id, MemberUpdate::Unblocked, now);
+            true
+        } else {
+            false
+        }
     }
 
     pub fn user_limit_reached(&self) -> Option<u32> {
@@ -491,7 +508,7 @@ impl CommunityMembers {
             } else {
                 self.members_with_display_names.remove(&user_id);
             }
-            self.updates.insert((now, user_id, MemberUpdate::DisplayNameChanged));
+            self.prune_then_insert_member_update(user_id, MemberUpdate::DisplayNameChanged, now);
         }
     }
 
@@ -513,15 +530,16 @@ impl CommunityMembers {
                 self.lapsed.remove(&user_id);
             }
 
-            self.updates.insert((
-                now,
+            self.prune_then_insert_member_update(
                 user_id,
                 if lapsed { MemberUpdate::Lapsed } else { MemberUpdate::Unlapsed },
-            ));
+                now,
+            );
         }
     }
 
     pub fn unlapse_all(&mut self, now: TimestampMillis) {
+        self.prune_member_updates(now);
         for user_id in std::mem::take(&mut self.lapsed) {
             if matches!(self.update_member(&user_id, |m| m.set_lapsed(false, now)), Some(true)) {
                 self.updates.insert((now, user_id, MemberUpdate::Unlapsed));
@@ -559,6 +577,26 @@ impl CommunityMembers {
             self.members_map.insert(member);
         }
         Some(updated)
+    }
+
+    fn prune_then_insert_member_update(&mut self, user_id: UserId, update: MemberUpdate, now: TimestampMillis) {
+        self.prune_member_updates(now);
+        self.updates.insert((now, user_id, update));
+    }
+
+    fn prune_member_updates(&mut self, now: TimestampMillis) -> u32 {
+        let cutoff = calculate_summary_updates_data_removal_cutoff(now);
+        let still_valid = self
+            .updates
+            .split_off(&(cutoff, Principal::anonymous().into(), MemberUpdate::Added));
+
+        let removed = std::mem::replace(&mut self.updates, still_valid);
+
+        if let Some((ts, _, _)) = removed.last() {
+            self.latest_update_removed = *ts;
+        }
+
+        removed.len() as u32
     }
 
     #[cfg(test)]

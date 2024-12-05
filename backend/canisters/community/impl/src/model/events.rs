@@ -124,38 +124,6 @@ impl CommunityEvents {
     pub fn latest_event_timestamp(&self) -> TimestampMillis {
         self.latest_event_timestamp
     }
-
-    pub(crate) fn get(&self, event_index: EventIndex) -> Option<&EventWrapper<CommunityEventInternal>> {
-        self.events_map.get(&event_index)
-    }
-
-    pub(crate) fn iter(
-        &self,
-        start: Option<EventIndex>,
-        ascending: bool,
-    ) -> Box<dyn Iterator<Item = &EventWrapper<CommunityEventInternal>> + '_> {
-        let range = if let Some(start) = start {
-            if let Some(event_index) = self.get(start).map(|e| e.index) {
-                if ascending {
-                    self.events_map.range(event_index..)
-                } else {
-                    self.events_map.range(EventIndex::default()..=event_index)
-                }
-            } else {
-                return Box::new(std::iter::empty());
-            }
-        } else {
-            self.events_map.range(EventIndex::default()..)
-        };
-
-        let iter = range.map(|(_, e)| e);
-
-        if ascending {
-            Box::new(iter)
-        } else {
-            Box::new(iter.rev())
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

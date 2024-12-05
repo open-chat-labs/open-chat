@@ -1,7 +1,5 @@
-use crate::{
-    model::{events::CommunityEventInternal, members::CommunityMembers},
-    read_state, RuntimeState,
-};
+use crate::model::members::CommunityMemberInternal;
+use crate::{model::members::CommunityMembers, read_state, RuntimeState};
 use canister_api_macros::query;
 use community_canister::selected_updates_v2::{Response::*, *};
 use group_community_common::MemberUpdate;
@@ -46,7 +44,7 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         blocked_users_added: vec![],
         blocked_users_removed: vec![],
         invited_users,
-        chat_rules: None,
+        chat_rules: data.rules.if_set_after(args.updates_since).map(|r| r.clone().into()),
         user_groups: data
             .members
             .iter_user_groups()
@@ -64,62 +62,29 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         referrals_updated: HashSet::new(),
     };
 
-    let my_user_id = LazyCell::new(|| data.members.get(*caller).map(|m| m.user_id));
-
-    // Iterate through the new events starting from most recent
-    for event_wrapper in data.events.iter(None, false).take_while(|e| e.timestamp > args.updates_since) {
-        match &event_wrapper.event {
-            CommunityEventInternal::MembersRemoved(e) => {
-                for user_id in e.user_ids.iter() {
-                    let referral = is_my_referral(e.referred_by.get(user_id).copied(), &my_user_id);
-                    user_updates_handler.mark_member_updated(&mut result, *user_id, referral, true);
-                }
-            }
-            CommunityEventInternal::MemberJoined(e) => {
-                let referral = is_my_referral(e.invited_by, &my_user_id);
-                user_updates_handler.mark_member_updated(&mut result, e.user_id, referral, false);
-            }
-            CommunityEventInternal::MemberLeft(e) => {
-                let referral = is_my_referral(e.referred_by, &my_user_id);
-                user_updates_handler.mark_member_updated(&mut result, e.user_id, referral, true);
-            }
-            CommunityEventInternal::RoleChanged(e) => {
-                for user_id in e.user_ids.iter() {
-                    user_updates_handler.mark_member_updated(&mut result, *user_id, false, false);
-                }
-            }
-            CommunityEventInternal::UsersBlocked(e) => {
-                for user_id in e.user_ids.iter() {
-                    let referral = is_my_referral(e.referred_by.get(user_id).copied(), &my_user_id);
-                    user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, true);
-                    user_updates_handler.mark_member_updated(&mut result, *user_id, referral, true);
-                }
-            }
-            CommunityEventInternal::UsersUnblocked(e) => {
-                for user_id in e.user_ids.iter() {
-                    user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, false);
-                }
-            }
-            CommunityEventInternal::RulesChanged(_) => {
-                if result.chat_rules.is_none() {
-                    result.chat_rules = Some(data.rules.value.clone().into());
-                }
-            }
-            CommunityEventInternal::GroupImported(e) => {
-                for user_id in e.members_added.iter() {
-                    user_updates_handler.mark_member_updated(&mut result, *user_id, false, false);
-                }
-            }
-            _ => {}
-        }
-    }
-
+    let member = LazyCell::new(|| data.members.get(*caller));
     for (user_id, update) in state.data.members.iter_latest_updates(args.updates_since) {
         match update {
+            MemberUpdate::Added => {
+                let referral = is_my_referral(&member, &user_id);
+                user_updates_handler.mark_member_updated(&mut result, user_id, referral, false);
+            }
+            MemberUpdate::Removed => {
+                let referral = is_my_referral(&member, &user_id);
+                user_updates_handler.mark_member_updated(&mut result, user_id, referral, true);
+            }
+            MemberUpdate::RoleChanged => {
+                user_updates_handler.mark_member_updated(&mut result, user_id, false, false);
+            }
+            MemberUpdate::Blocked => {
+                user_updates_handler.mark_user_blocked_updated(&mut result, user_id, true);
+            }
+            MemberUpdate::Unblocked => {
+                user_updates_handler.mark_user_blocked_updated(&mut result, user_id, false);
+            }
             MemberUpdate::Lapsed | MemberUpdate::Unlapsed | MemberUpdate::DisplayNameChanged => {
                 user_updates_handler.mark_member_updated(&mut result, user_id, false, false);
             }
-            _ => {}
         }
     }
 
@@ -163,13 +128,9 @@ impl<'a> UserUpdatesHandler<'a> {
     }
 }
 
-fn is_my_referral<F: FnOnce() -> Option<UserId>>(
-    referred_by: Option<UserId>,
-    my_user_id: &LazyCell<Option<UserId>, F>,
+fn is_my_referral<F: FnOnce() -> Option<CommunityMemberInternal>>(
+    member: &LazyCell<Option<CommunityMemberInternal>, F>,
+    user_id: &UserId,
 ) -> bool {
-    if let Some(user_id) = referred_by {
-        Some(user_id) == **my_user_id
-    } else {
-        false
-    }
+    member.as_ref().map_or(false, |m| m.referrals().contains(user_id))
 }
