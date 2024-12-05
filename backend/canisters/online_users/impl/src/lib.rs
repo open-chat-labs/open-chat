@@ -5,6 +5,7 @@ use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStore
 use event_store_producer_cdk_runtime::CdkRuntime;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
+use std::collections::BTreeMap;
 use std::time::Duration;
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
 use utils::env::Environment;
@@ -52,6 +53,7 @@ impl RuntimeState {
             mark_as_online_count: self.data.mark_as_online_count,
             active_users: self.data.cached_active_users.clone(),
             event_store_client_info,
+            stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 event_relay: event_store_canister_id,
@@ -108,6 +110,7 @@ pub struct Metrics {
     pub mark_as_online_count: u64,
     pub active_users: ActiveUsers,
     pub event_store_client_info: EventStoreClientInfo,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }
 

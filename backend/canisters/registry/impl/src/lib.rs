@@ -6,7 +6,7 @@ use model::message_filters::MessageFilters;
 use registry_canister::{MessageFilterSummary, NervousSystemDetails};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 use types::{AirdropConfig, BuildVersion, CanisterId, Cycles, ExchangeId, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
@@ -59,6 +59,7 @@ impl RuntimeState {
             nervous_systems: self.data.nervous_systems.get_all().iter().map(|ns| ns.into()).collect(),
             message_filters: self.data.message_filters.added_since(0),
             failed_sns_launches: self.data.failed_sns_launches.iter().copied().collect(),
+            stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 proposals_bot: self.data.proposals_bot_canister_id,
                 sns_wasm: self.data.sns_wasm_canister_id,
@@ -175,6 +176,7 @@ pub struct Metrics {
     pub nervous_systems: Vec<NervousSystemMetrics>,
     pub message_filters: Vec<MessageFilterSummary>,
     pub failed_sns_launches: Vec<CanisterId>,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }
 
