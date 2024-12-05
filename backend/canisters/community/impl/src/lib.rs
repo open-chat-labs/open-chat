@@ -338,7 +338,6 @@ struct Data {
     banner: Timestamped<Option<Document>>,
     #[serde(deserialize_with = "deserialize_to_timestamped")]
     permissions: Timestamped<CommunityPermissions>,
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
     gate_config: Timestamped<Option<AccessGateConfigInternal>>,
     #[serde(deserialize_with = "deserialize_to_timestamped")]
     primary_language: Timestamped<String>,
