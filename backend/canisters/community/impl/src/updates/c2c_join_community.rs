@@ -11,7 +11,7 @@ use gated_groups::{
     check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult, CheckVerifiedCredentialGateArgs, GatePayment,
 };
 use group_community_common::ExpiringMember;
-use types::{AccessGate, ChannelId, MemberJoinedInternal, UsersUnblocked};
+use types::{AccessGate, ChannelId, UsersUnblocked};
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
@@ -150,15 +150,7 @@ pub(crate) fn join_community_impl(
 
     state.data.invited_users.remove(&args.user_id, now);
 
-    if !matches!(result, AddResult::AlreadyInCommunity) {
-        state.data.events.push_event(
-            CommunityEventInternal::MemberJoined(Box::new(MemberJoinedInternal {
-                user_id: args.user_id,
-                invited_by: referred_by,
-            })),
-            now,
-        );
-    } else {
+    if matches!(result, AddResult::AlreadyInCommunity) {
         state.data.update_lapsed(args.user_id, None, false, now);
     }
 

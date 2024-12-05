@@ -4,20 +4,26 @@ use std::collections::BTreeMap;
 use types::{
     AvatarChanged, BannerChanged, ChannelDeleted, ChannelId, ChatId, CommunityMemberLeftInternal, CommunityMembersRemoved,
     CommunityPermissionsChanged, CommunityRoleChanged, CommunityUsersBlocked, CommunityVisibilityChanged,
-    DefaultChannelsChanged, EventIndex, EventWrapper, GroupCreated, GroupDescriptionChanged, GroupFrozen,
+    DefaultChannelsChanged, EventIndex, EventWrapper, EventWrapperInternal, GroupCreated, GroupDescriptionChanged, GroupFrozen,
     GroupInviteCodeChanged, GroupNameChanged, GroupRulesChanged, GroupUnfrozen, MemberJoinedInternal, PrimaryLanguageChanged,
     TimestampMillis, UserId, UsersInvited, UsersUnblocked,
 };
 
 #[derive(Serialize, Deserialize)]
+#[serde(from = "CommunityEventsPrevious")]
 pub struct CommunityEvents {
-    events_map: BTreeMap<EventIndex, EventWrapper<CommunityEventInternal>>,
+    events_map: BTreeMap<EventIndex, EventWrapperInternal<CommunityEventInternal>>,
     latest_event_index: EventIndex,
     latest_event_timestamp: TimestampMillis,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct CommunityEventsPrevious {
+    events_map: BTreeMap<EventIndex, EventWrapper<CommunityEventInternalOld>>,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum CommunityEventInternal {
+pub enum CommunityEventInternalOld {
     #[serde(rename = "cr", alias = "Created")]
     Created(Box<GroupCreated>),
     #[serde(rename = "nc", alias = "NameChanged")]
@@ -66,6 +72,50 @@ pub enum CommunityEventInternal {
     GroupImported(Box<GroupImportedInternal>),
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum CommunityEventInternal {
+    #[serde(rename = "cr", alias = "Created")]
+    Created(Box<GroupCreated>),
+    #[serde(rename = "nc", alias = "NameChanged")]
+    NameChanged(Box<GroupNameChanged>),
+    #[serde(rename = "dc", alias = "DescriptionChanged")]
+    DescriptionChanged(Box<GroupDescriptionChanged>),
+    #[serde(rename = "rc", alias = "RulesChanged")]
+    RulesChanged(Box<GroupRulesChanged>),
+    #[serde(rename = "ac", alias = "AvatarChanged")]
+    AvatarChanged(Box<AvatarChanged>),
+    #[serde(rename = "bc", alias = "BannerChanged")]
+    BannerChanged(Box<BannerChanged>),
+    #[serde(rename = "ui", alias = "UsersInvited")]
+    UsersInvited(Box<UsersInvited>),
+    #[serde(rename = "mr", alias = "MembersRemoved")]
+    MembersRemoved(Box<CommunityMembersRemoved>),
+    #[serde(rename = "rc", alias = "RoleChanged")]
+    RoleChanged(Box<CommunityRoleChanged>),
+    #[serde(rename = "ub", alias = "UsersBlocked")]
+    UsersBlocked(Box<CommunityUsersBlocked>),
+    #[serde(rename = "uu", alias = "UsersUnblocked")]
+    UsersUnblocked(Box<UsersUnblocked>),
+    #[serde(rename = "pc", alias = "PermissionsChanged")]
+    PermissionsChanged(Box<CommunityPermissionsChanged>),
+    #[serde(rename = "vc", alias = "VisibilityChanged")]
+    VisibilityChanged(Box<CommunityVisibilityChanged>),
+    #[serde(rename = "ic", alias = "InviteCodeChanged")]
+    InviteCodeChanged(Box<GroupInviteCodeChanged>),
+    #[serde(rename = "fr", alias = "Frozen")]
+    Frozen(Box<GroupFrozen>),
+    #[serde(rename = "uf", alias = "Unfrozen")]
+    Unfrozen(Box<GroupUnfrozen>),
+    #[serde(rename = "gu", alias = "GateUpdated")]
+    GateUpdated(Box<GroupGateUpdatedInternal>),
+    #[serde(rename = "cd", alias = "ChannelDeleted")]
+    ChannelDeleted(Box<ChannelDeleted>),
+    #[serde(rename = "pl", alias = "PrimaryLanguageChanged")]
+    PrimaryLanguageChanged(Box<PrimaryLanguageChanged>),
+    #[serde(rename = "gi", alias = "GroupImported")]
+    GroupImported(Box<GroupImportedInternal>),
+}
+
 impl CommunityEvents {
     pub fn new(name: String, description: String, created_by: UserId, now: TimestampMillis) -> CommunityEvents {
         let event_index = EventIndex::default();
@@ -73,7 +123,7 @@ impl CommunityEvents {
 
         events_map.insert(
             event_index,
-            EventWrapper {
+            EventWrapperInternal {
                 index: event_index,
                 timestamp: now,
                 correlation_id: 0,
@@ -98,7 +148,7 @@ impl CommunityEvents {
 
         self.events_map.insert(
             event_index,
-            EventWrapper {
+            EventWrapperInternal {
                 index: event_index,
                 timestamp: now,
                 correlation_id: 0,
@@ -131,4 +181,68 @@ pub struct GroupImportedInternal {
     pub group_id: ChatId,
     pub channel_id: ChannelId,
     pub members_added: Vec<UserId>,
+}
+
+impl TryFrom<CommunityEventInternalOld> for CommunityEventInternal {
+    type Error = ();
+
+    fn try_from(value: CommunityEventInternalOld) -> Result<Self, Self::Error> {
+        match value {
+            CommunityEventInternalOld::Created(e) => Ok(CommunityEventInternal::Created(e)),
+            CommunityEventInternalOld::NameChanged(e) => Ok(CommunityEventInternal::NameChanged(e)),
+            CommunityEventInternalOld::DescriptionChanged(e) => Ok(CommunityEventInternal::DescriptionChanged(e)),
+            CommunityEventInternalOld::RulesChanged(e) => Ok(CommunityEventInternal::RulesChanged(e)),
+            CommunityEventInternalOld::AvatarChanged(e) => Ok(CommunityEventInternal::AvatarChanged(e)),
+            CommunityEventInternalOld::BannerChanged(e) => Ok(CommunityEventInternal::BannerChanged(e)),
+            CommunityEventInternalOld::UsersInvited(e) => Ok(CommunityEventInternal::UsersInvited(e)),
+            CommunityEventInternalOld::MembersRemoved(e) => Ok(CommunityEventInternal::MembersRemoved(e)),
+            CommunityEventInternalOld::RoleChanged(e) => Ok(CommunityEventInternal::RoleChanged(e)),
+            CommunityEventInternalOld::UsersBlocked(e) => Ok(CommunityEventInternal::UsersBlocked(e)),
+            CommunityEventInternalOld::UsersUnblocked(e) => Ok(CommunityEventInternal::UsersUnblocked(e)),
+            CommunityEventInternalOld::PermissionsChanged(e) => Ok(CommunityEventInternal::PermissionsChanged(e)),
+            CommunityEventInternalOld::VisibilityChanged(e) => Ok(CommunityEventInternal::VisibilityChanged(e)),
+            CommunityEventInternalOld::InviteCodeChanged(e) => Ok(CommunityEventInternal::InviteCodeChanged(e)),
+            CommunityEventInternalOld::Frozen(e) => Ok(CommunityEventInternal::Frozen(e)),
+            CommunityEventInternalOld::Unfrozen(e) => Ok(CommunityEventInternal::Unfrozen(e)),
+            CommunityEventInternalOld::GateUpdated(e) => Ok(CommunityEventInternal::GateUpdated(e)),
+            CommunityEventInternalOld::ChannelDeleted(e) => Ok(CommunityEventInternal::ChannelDeleted(e)),
+            CommunityEventInternalOld::PrimaryLanguageChanged(e) => Ok(CommunityEventInternal::PrimaryLanguageChanged(e)),
+            CommunityEventInternalOld::GroupImported(e) => Ok(CommunityEventInternal::GroupImported(e)),
+            CommunityEventInternalOld::MemberJoined(_)
+            | CommunityEventInternalOld::MemberLeft(_)
+            | CommunityEventInternalOld::DefaultChannelsChanged(_) => Err(()),
+        }
+    }
+}
+
+impl From<CommunityEventsPrevious> for CommunityEvents {
+    fn from(value: CommunityEventsPrevious) -> Self {
+        let mut events_map = BTreeMap::new();
+        let mut index = EventIndex::default();
+        for old_event in value.events_map.into_values() {
+            if let Ok(new_event) = CommunityEventInternal::try_from(old_event.event) {
+                events_map.insert(
+                    index,
+                    EventWrapperInternal {
+                        index,
+                        timestamp: old_event.timestamp,
+                        correlation_id: 0,
+                        expires_at: None,
+                        event: new_event,
+                    },
+                );
+                index = index.incr();
+            }
+        }
+
+        let last = events_map.values().last().unwrap();
+        let latest_event_index = last.index;
+        let latest_event_timestamp = last.timestamp;
+
+        CommunityEvents {
+            events_map,
+            latest_event_index,
+            latest_event_timestamp,
+        }
+    }
 }
