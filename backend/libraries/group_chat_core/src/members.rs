@@ -580,41 +580,22 @@ pub struct ChangeRoleSuccess {
     pub prev_role: GroupRoleInternal,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Clone)]
 pub struct GroupMemberInternal {
-    #[serde(rename = "u")]
     user_id: UserId,
-    #[serde(rename = "d")]
     date_added: TimestampMillis,
-    #[serde(rename = "r", default, skip_serializing_if = "is_default")]
     role: Timestamped<GroupRoleInternal>,
-    #[serde(
-        rename = "n",
-        default = "default_notifications_muted",
-        skip_serializing_if = "is_default_notifications_muted"
-    )]
     notifications_muted: Timestamped<bool>,
-    #[serde(rename = "m", default, skip_serializing_if = "Mentions::is_empty")]
     pub mentions: Mentions,
-    #[serde(rename = "tf", default, skip_serializing_if = "TimestampedSet::is_empty")]
     pub followed_threads: TimestampedSet<MessageIndex>,
-    #[serde(rename = "tu", default, skip_serializing_if = "TimestampedSet::is_empty")]
     pub unfollowed_threads: TimestampedSet<MessageIndex>,
-    #[serde(rename = "p", default, skip_serializing_if = "BTreeSet::is_empty")]
     proposal_votes: BTreeSet<(TimestampMillis, MessageIndex)>,
-    #[serde(rename = "pr", default, skip_serializing_if = "is_default")]
     latest_proposal_vote_removed: TimestampMillis,
-    #[serde(rename = "s", default, skip_serializing_if = "is_default")]
     suspended: Timestamped<bool>,
-    #[serde(rename = "ra", default, skip_serializing_if = "is_default")]
     pub rules_accepted: Option<Timestamped<Version>>,
-    #[serde(rename = "ut", default, skip_serializing_if = "is_default")]
     user_type: UserType,
-    #[serde(rename = "me", default, skip_serializing_if = "is_default")]
     min_visible_event_index: EventIndex,
-    #[serde(rename = "mm", default, skip_serializing_if = "is_default")]
     min_visible_message_index: MessageIndex,
-    #[serde(rename = "la", default, skip_serializing_if = "is_default")]
     lapsed: Timestamped<bool>,
 }
 

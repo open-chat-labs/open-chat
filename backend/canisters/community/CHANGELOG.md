@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
 - Reduce size of the `UserCache` ([#6982](https://github.com/open-chat-labs/open-chat/pull/6982))
 - Assign last updated timestamp to each updatable community attribute ([#6983](https://github.com/open-chat-labs/open-chat/pull/6983))
+- Remove community members from being stored on the heap ([#6984](https://github.com/open-chat-labs/open-chat/pull/6984))
 
 ## [[2.0.1498](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1498-community)] - 2024-12-04
 

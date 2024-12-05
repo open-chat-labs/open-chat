@@ -1,4 +1,3 @@
-use crate::model::members_map::MembersMap;
 use crate::CommunityMemberInternal;
 use candid::Deserialize;
 use serde::Serialize;
@@ -17,29 +16,19 @@ impl MembersStableStorage {
         map.insert(member);
         map
     }
-}
 
-impl Default for MembersStableStorage {
-    fn default() -> Self {
-        MembersStableStorage {
-            prefix: MemberKeyPrefix::new_from_community(),
-        }
-    }
-}
-
-impl MembersMap for MembersStableStorage {
-    fn get(&self, user_id: &UserId) -> Option<CommunityMemberInternal> {
+    pub fn get(&self, user_id: &UserId) -> Option<CommunityMemberInternal> {
         with_map(|m| {
             m.get(&self.prefix.create_key(*user_id).into())
                 .map(|v| bytes_to_member(&v).hydrate(*user_id))
         })
     }
 
-    fn insert(&mut self, member: CommunityMemberInternal) {
+    pub fn insert(&mut self, member: CommunityMemberInternal) {
         with_map_mut(|m| m.insert(self.prefix.create_key(member.user_id).into(), member_to_bytes(member.into())));
     }
 
-    fn remove(&mut self, user_id: &UserId) -> Option<CommunityMemberInternal> {
+    pub fn remove(&mut self, user_id: &UserId) -> Option<CommunityMemberInternal> {
         with_map_mut(|m| {
             m.remove(&self.prefix.create_key(*user_id).into())
                 .map(|v| bytes_to_member(&v).hydrate(*user_id))
@@ -47,7 +36,7 @@ impl MembersMap for MembersStableStorage {
     }
 
     #[cfg(test)]
-    fn all_members(&self) -> Vec<CommunityMemberInternal> {
+    pub fn all_members(&self) -> Vec<CommunityMemberInternal> {
         use candid::Principal;
         use stable_memory_map::{Key, MemberKey};
 
@@ -58,6 +47,14 @@ impl MembersMap for MembersStableStorage {
                 .map(|(k, v)| bytes_to_member(&v).hydrate(k.user_id()))
                 .collect()
         })
+    }
+}
+
+impl Default for MembersStableStorage {
+    fn default() -> Self {
+        MembersStableStorage {
+            prefix: MemberKeyPrefix::new_from_community(),
+        }
     }
 }
 
