@@ -1,7 +1,8 @@
 use ic_stable_structures::{
     memory_manager::{MemoryId, MemoryManager, VirtualMemory},
-    DefaultMemoryImpl,
+    DefaultMemoryImpl, Memory as MemoryTrait,
 };
+use std::collections::BTreeMap;
 
 const UPGRADES: MemoryId = MemoryId::new(0);
 const INSTRUCTION_COUNTS_INDEX: MemoryId = MemoryId::new(1);
@@ -29,6 +30,10 @@ pub fn get_instruction_counts_data_memory() -> Memory {
 
 pub fn get_stable_memory_map_memory() -> Memory {
     get_memory(STABLE_MEMORY_MAP)
+}
+
+pub fn memory_sizes() -> BTreeMap<u8, u64> {
+    (0u8..=3).map(|id| (id, get_memory(MemoryId::new(id)).size())).collect()
 }
 
 fn get_memory(id: MemoryId) -> Memory {

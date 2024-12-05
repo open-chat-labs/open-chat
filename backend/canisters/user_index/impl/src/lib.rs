@@ -264,20 +264,6 @@ impl RuntimeState {
             pending_payments: self.data.pending_payments_queue.len(),
             pending_users_to_sync_to_storage_index: self.data.storage_index_user_sync_queue.len(),
             reporting_metrics: self.data.reported_messages.metrics(),
-            canister_ids: CanisterIds {
-                group_index: self.data.group_index_canister_id,
-                notifications_index: self.data.notifications_index_canister_id,
-                identity: self.data.identity_canister_id,
-                proposals_bot: self.data.proposals_bot_canister_id,
-                airdrop_bot: self.data.airdrop_bot_canister_id,
-                online_users: self.data.online_users_canister_id,
-                cycles_dispenser: self.data.cycles_dispenser_canister_id,
-                storage_index: self.data.storage_index_canister_id,
-                escrow: self.data.escrow_canister_id,
-                translations: self.data.translations_canister_id,
-                event_relay: event_relay_canister_id,
-                internet_identity: self.data.internet_identity_canister_id,
-            },
             oc_public_key: self.data.oc_key_pair.public_key_pem().to_string(),
             empty_users: self.data.empty_users.len(),
             deleted_users: self.data.deleted_users.len(),
@@ -295,6 +281,21 @@ impl RuntimeState {
                 .into_iter()
                 .map(|(c, h)| (*c, hex::encode(h)))
                 .collect(),
+            stable_memory_sizes: memory::memory_sizes(),
+            canister_ids: CanisterIds {
+                group_index: self.data.group_index_canister_id,
+                notifications_index: self.data.notifications_index_canister_id,
+                identity: self.data.identity_canister_id,
+                proposals_bot: self.data.proposals_bot_canister_id,
+                airdrop_bot: self.data.airdrop_bot_canister_id,
+                online_users: self.data.online_users_canister_id,
+                cycles_dispenser: self.data.cycles_dispenser_canister_id,
+                storage_index: self.data.storage_index_canister_id,
+                escrow: self.data.escrow_canister_id,
+                translations: self.data.translations_canister_id,
+                event_relay: event_relay_canister_id,
+                internet_identity: self.data.internet_identity_canister_id,
+            },
         }
     }
 
@@ -614,7 +615,6 @@ pub struct Metrics {
     pub pending_payments: usize,
     pub pending_users_to_sync_to_storage_index: usize,
     pub reporting_metrics: ReportingMetrics,
-    pub canister_ids: CanisterIds,
     pub oc_public_key: String,
     pub empty_users: usize,
     pub deleted_users: usize,
@@ -626,6 +626,8 @@ pub struct Metrics {
     pub external_achievements: Vec<ExternalAchievementMetrics>,
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
     pub wasm_chunks_uploaded: Vec<(ChildCanisterType, String)>,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
+    pub canister_ids: CanisterIds,
 }
 
 #[derive(Serialize, Debug)]

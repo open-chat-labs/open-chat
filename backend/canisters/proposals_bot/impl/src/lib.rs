@@ -7,7 +7,7 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::cell::RefCell;
-use std::collections::{HashSet, VecDeque};
+use std::collections::{BTreeMap, HashSet, VecDeque};
 use types::{
     BuildVersion, CanisterId, Cycles, MessageId, Milliseconds, MultiUserChat, NnsNeuronId, ProposalId, TimestampMillis,
     Timestamped,
@@ -57,6 +57,7 @@ impl RuntimeState {
             governance_principals: self.data.governance_principals.iter().copied().collect(),
             finished_proposals_to_process: self.data.finished_proposals_to_process.iter().copied().collect(),
             registry_synced_up_to: self.data.registry_synced_up_to,
+            stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -129,6 +130,7 @@ pub struct Metrics {
     pub governance_principals: Vec<Principal>,
     pub finished_proposals_to_process: Vec<(CanisterId, ProposalId)>,
     pub registry_synced_up_to: TimestampMillis,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }
 

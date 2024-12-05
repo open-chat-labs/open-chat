@@ -5,7 +5,7 @@ use ic_ledger_types::{BlockIndex, Tokens};
 use ledger_utils::default_ledger_account;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 use types::{BuildVersion, CanisterId, Cycles, Milliseconds, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
@@ -53,6 +53,7 @@ impl State {
             min_interval: self.data.min_interval,
             min_cycles_balance: self.data.min_cycles_balance,
             icp_burn_amount: self.data.icp_burn_amount,
+            stable_memory_sizes: memory::memory_sizes(),
             ledger_canister: self.data.ledger_canister,
             cycles_minting_canister: self.data.cycles_minting_canister,
         }
@@ -122,6 +123,7 @@ pub struct Metrics {
     pub min_interval: Milliseconds,
     pub min_cycles_balance: Cycles,
     pub icp_burn_amount: Tokens,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub ledger_canister: CanisterId,
     pub cycles_minting_canister: CanisterId,
 }
