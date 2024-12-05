@@ -37,6 +37,8 @@ pub enum ChatEvent {
     UsersInvited(UsersInvited),
     MembersAddedToDefaultChannel(MembersAddedToDefaultChannel),
     ExternalUrlUpdated(ExternalUrlUpdated),
+    BotAdded(Box<BotAdded>),
+    BotRemoved(Box<BotRemoved>),
     FailedToDeserialize,
 }
 

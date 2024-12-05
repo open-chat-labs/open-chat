@@ -243,6 +243,8 @@ type ChatEvent = variant {
     UsersInvited : UsersInvited;
     MembersAddedToDefaultChannel : MembersAddedToDefaultChannel;
     ExternalUrlUpdated : ExternalUrlUpdated;
+    BotAdded : BotAdded;
+    BotRemoved : BotRemoved;
     FailedToDeserialize;
 };
 
@@ -1604,6 +1606,16 @@ type GroupGateUpdated = record {
 type ExternalUrlUpdated = record {
     updated_by : UserId;
     new_url : opt text;
+};
+
+type BotAdded = record {
+    bot_id : UserId;
+    added_by : UserId;
+};
+
+type BotRemoved = record {
+    bot_id : UserId;
+    removed_by : UserId;
 };
 
 type VerifiedCredentialGate = record {

@@ -440,6 +440,8 @@ pub trait Reader {
             ChatEventInternal::ExternalUrlUpdated(u) => ChatEvent::ExternalUrlUpdated(*u),
             ChatEventInternal::Empty => ChatEvent::Empty,
             ChatEventInternal::FailedToDeserialize => ChatEvent::FailedToDeserialize,
+            ChatEventInternal::BotAdded(e) => ChatEvent::BotAdded(e),
+            ChatEventInternal::BotRemoved(e) => ChatEvent::BotRemoved(e),
         };
 
         EventWrapper {
