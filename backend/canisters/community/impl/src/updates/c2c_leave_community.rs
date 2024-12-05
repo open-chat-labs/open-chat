@@ -5,7 +5,7 @@ use crate::{
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_leave_community::{Response::*, *};
-use types::CommunityMemberLeft;
+use types::CommunityMemberLeftInternal;
 
 // Called via the user's user canister
 #[update(msgpack = true)]
@@ -44,7 +44,7 @@ fn c2c_leave_community_impl(state: &mut RuntimeState) -> Response {
     let removed = state.data.remove_user_from_community(user_id, now);
 
     state.data.events.push_event(
-        CommunityEventInternal::MemberLeft(Box::new(CommunityMemberLeft {
+        CommunityEventInternal::MemberLeft(Box::new(CommunityMemberLeftInternal {
             user_id,
             referred_by: removed.and_then(|r| r.referred_by),
         })),

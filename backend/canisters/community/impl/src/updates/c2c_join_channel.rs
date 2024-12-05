@@ -16,7 +16,7 @@ use gated_groups::{
 use group_chat_core::{AddMemberSuccess, AddResult};
 use group_community_common::ExpiringMember;
 use types::{
-    AccessGateConfigInternal, ChannelId, MemberJoined, TimestampMillis, UniquePersonProof, UserId, UserType,
+    AccessGateConfigInternal, ChannelId, MemberJoinedInternal, TimestampMillis, UniquePersonProof, UserId, UserType,
     VerifiedCredentialGateArgs,
 };
 
@@ -374,7 +374,7 @@ pub(crate) fn join_channel_unchecked(
             channel.chat.events.mark_members_added_to_public_channel(vec![user_id], now);
         } else {
             channel.chat.events.push_main_event(
-                ChatEventInternal::ParticipantJoined(Box::new(MemberJoined {
+                ChatEventInternal::ParticipantJoined(Box::new(MemberJoinedInternal {
                     user_id,
                     invited_by: invitation.map(|i| i.invited_by),
                 })),

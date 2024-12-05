@@ -421,7 +421,7 @@ pub trait Reader {
             ChatEventInternal::AvatarChanged(g) => ChatEvent::AvatarChanged(*g),
             ChatEventInternal::ParticipantsAdded(p) => ChatEvent::ParticipantsAdded(*p),
             ChatEventInternal::ParticipantsRemoved(p) => ChatEvent::ParticipantsRemoved(*p),
-            ChatEventInternal::ParticipantJoined(p) => ChatEvent::ParticipantJoined(*p),
+            ChatEventInternal::ParticipantJoined(p) => ChatEvent::ParticipantJoined((*p).into()),
             ChatEventInternal::ParticipantLeft(p) => ChatEvent::ParticipantLeft(*p),
             ChatEventInternal::RoleChanged(r) => ChatEvent::RoleChanged(*r),
             ChatEventInternal::UsersBlocked(u) => ChatEvent::UsersBlocked(*u),
