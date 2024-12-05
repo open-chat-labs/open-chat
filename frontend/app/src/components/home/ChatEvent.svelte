@@ -14,11 +14,11 @@
         type OpenChat,
         type ChatIdentifier,
         type ChatType,
-        routeForChatIdentifier,
         type Level,
         userStore,
         chatListScopeStore,
         typing,
+        routeForMessage,
     } from "openchat-client";
     import GroupChangedEvent from "./GroupChangedEvent.svelte";
     import GroupRulesChangedEvent from "./GroupRulesChangedEvent.svelte";
@@ -110,9 +110,11 @@
         if (event.event.kind === "message") {
             if (event.event.thread !== undefined) {
                 page(
-                    `${routeForChatIdentifier($chatListScopeStore.kind, chatId)}/${
-                        event.event.messageIndex
-                    }`,
+                    `${routeForMessage(
+                        $chatListScopeStore.kind,
+                        { chatId },
+                        event.event.messageIndex,
+                    )}?open=true`,
                 );
             } else {
                 client.openThread(event as EventWrapper<Message>, true);

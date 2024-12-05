@@ -1,6 +1,7 @@
 use crate::model::members::stable_memory::MembersStableStorage;
 use crate::model::user_groups::{UserGroup, UserGroups};
 use candid::Principal;
+use constants::calculate_summary_updates_data_removal_cutoff;
 use group_community_common::{Member, MemberUpdate, Members};
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
@@ -35,6 +36,8 @@ pub struct CommunityMembers {
     members_with_display_names: BTreeSet<UserId>,
     members_with_referrals: BTreeSet<UserId>,
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
+    #[serde(default)]
+    latest_update_removed: TimestampMillis,
 }
 
 impl CommunityMembers {
@@ -55,6 +58,7 @@ impl CommunityMembers {
             display_name: Timestamped::default(),
             referred_by: None,
             referrals: BTreeSet::new(),
+            referrals_removed: BTreeSet::new(),
             lapsed: Timestamped::default(),
         };
 
@@ -78,6 +82,7 @@ impl CommunityMembers {
             members_with_display_names: BTreeSet::new(),
             members_with_referrals: BTreeSet::new(),
             updates: BTreeSet::new(),
+            latest_update_removed: 0,
         }
     }
 
@@ -108,15 +113,17 @@ impl CommunityMembers {
                 display_name: Timestamped::default(),
                 referred_by,
                 referrals: BTreeSet::new(),
+                referrals_removed: BTreeSet::new(),
                 lapsed: Timestamped::default(),
             };
-            self.members_map.insert(member.clone());
             self.add_user_id(principal, user_id);
+            self.members_map.insert(member.clone());
+            self.prune_then_insert_member_update(user_id, MemberUpdate::Added, now);
 
             if let Some(referrer) = referred_by {
                 if matches!(
                     self.update_member(&referrer, |m| {
-                        m.referrals.insert(user_id);
+                        m.add_referral(user_id);
                         true
                     }),
                     Some(true)
@@ -165,7 +172,7 @@ impl CommunityMembers {
                 if let Some(referrer) = member.referred_by {
                     let mut remove_from_members_with_referrals = false;
                     self.update_member(&referrer, |m| {
-                        m.referrals.remove(&user_id);
+                        m.remove_referral(user_id);
                         if m.referrals.is_empty() {
                             remove_from_members_with_referrals = true;
                         }
@@ -185,6 +192,7 @@ impl CommunityMembers {
                 }
                 self.user_groups.remove_user_from_all(&member.user_id, now);
                 self.member_ids.remove(&user_id);
+                self.prune_then_insert_member_update(user_id, MemberUpdate::Removed, now);
 
                 return Some(member);
             }
@@ -264,6 +272,7 @@ impl CommunityMembers {
         };
 
         self.members_map.insert(member);
+        self.prune_then_insert_member_update(user_id, MemberUpdate::RoleChanged, now);
 
         ChangeRoleResult::Success(ChangeRoleSuccessResult {
             caller_id: user_id,
@@ -368,12 +377,22 @@ impl CommunityMembers {
         self.update_member(user_id, |member| member.accept_rules(version, now));
     }
 
-    pub fn block(&mut self, user_id: UserId) -> bool {
-        self.blocked.insert(user_id)
+    pub fn block(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
+        if self.blocked.insert(user_id) {
+            self.prune_then_insert_member_update(user_id, MemberUpdate::Blocked, now);
+            true
+        } else {
+            false
+        }
     }
 
-    pub fn unblock(&mut self, user_id: &UserId) -> bool {
-        self.blocked.remove(user_id)
+    pub fn unblock(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
+        if self.blocked.remove(&user_id) {
+            self.prune_then_insert_member_update(user_id, MemberUpdate::Unblocked, now);
+            true
+        } else {
+            false
+        }
     }
 
     pub fn user_limit_reached(&self) -> Option<u32> {
@@ -491,7 +510,7 @@ impl CommunityMembers {
             } else {
                 self.members_with_display_names.remove(&user_id);
             }
-            self.updates.insert((now, user_id, MemberUpdate::DisplayNameChanged));
+            self.prune_then_insert_member_update(user_id, MemberUpdate::DisplayNameChanged, now);
         }
     }
 
@@ -513,15 +532,16 @@ impl CommunityMembers {
                 self.lapsed.remove(&user_id);
             }
 
-            self.updates.insert((
-                now,
+            self.prune_then_insert_member_update(
                 user_id,
                 if lapsed { MemberUpdate::Lapsed } else { MemberUpdate::Unlapsed },
-            ));
+                now,
+            );
         }
     }
 
     pub fn unlapse_all(&mut self, now: TimestampMillis) {
+        self.prune_member_updates(now);
         for user_id in std::mem::take(&mut self.lapsed) {
             if matches!(self.update_member(&user_id, |m| m.set_lapsed(false, now)), Some(true)) {
                 self.updates.insert((now, user_id, MemberUpdate::Unlapsed));
@@ -559,6 +579,26 @@ impl CommunityMembers {
             self.members_map.insert(member);
         }
         Some(updated)
+    }
+
+    fn prune_then_insert_member_update(&mut self, user_id: UserId, update: MemberUpdate, now: TimestampMillis) {
+        self.prune_member_updates(now);
+        self.updates.insert((now, user_id, update));
+    }
+
+    fn prune_member_updates(&mut self, now: TimestampMillis) -> u32 {
+        let cutoff = calculate_summary_updates_data_removal_cutoff(now);
+        let still_valid = self
+            .updates
+            .split_off(&(cutoff, Principal::anonymous().into(), MemberUpdate::Added));
+
+        let removed = std::mem::replace(&mut self.updates, still_valid);
+
+        if let Some((ts, _, _)) = removed.last() {
+            self.latest_update_removed = *ts;
+        }
+
+        removed.len() as u32
     }
 
     #[cfg(test)]
@@ -646,6 +686,8 @@ pub struct CommunityMemberInternal {
     pub referred_by: Option<UserId>,
     #[serde(rename = "rf", default, skip_serializing_if = "BTreeSet::is_empty")]
     referrals: BTreeSet<UserId>,
+    #[serde(rename = "rr", default, skip_serializing_if = "BTreeSet::is_empty")]
+    referrals_removed: BTreeSet<UserId>,
     #[serde(rename = "l", default, skip_serializing_if = "is_default")]
     lapsed: Timestamped<bool>,
     #[serde(rename = "s", default, skip_serializing_if = "is_default")]
@@ -692,12 +734,27 @@ impl CommunityMemberInternal {
         &self.referrals
     }
 
+    pub fn referrals_removed(&self) -> &BTreeSet<UserId> {
+        &self.referrals_removed
+    }
+
     pub fn lapsed(&self) -> &Timestamped<bool> {
         &self.lapsed
     }
 
     pub fn suspended(&self) -> &Timestamped<bool> {
         &self.suspended
+    }
+
+    pub fn add_referral(&mut self, user_id: UserId) {
+        self.referrals.insert(user_id);
+        self.referrals_removed.remove(&user_id);
+    }
+
+    pub fn remove_referral(&mut self, user_id: UserId) {
+        if self.referrals.remove(&user_id) {
+            self.referrals_removed.insert(user_id);
+        }
     }
 }
 
@@ -840,6 +897,7 @@ mod tests {
             display_name: Timestamped::default(),
             referred_by: None,
             referrals: BTreeSet::new(),
+            referrals_removed: BTreeSet::new(),
             lapsed: Timestamped::default(),
             suspended: Timestamped::default(),
         };

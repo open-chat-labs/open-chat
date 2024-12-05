@@ -115,7 +115,7 @@ fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeS
     let removed_member = state.data.remove_user_from_community(user_id, now);
     let removed = removed_member.is_some();
 
-    let blocked = block && state.data.members.block(user_id);
+    let blocked = block && state.data.members.block(user_id, now);
 
     let referred_by = removed_member
         .and_then(|r| r.referred_by)
