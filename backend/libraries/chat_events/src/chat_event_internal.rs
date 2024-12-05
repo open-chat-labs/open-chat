@@ -7,7 +7,7 @@ use types::{
     is_default, AccessGate, AccessGateConfigInternal, AvatarChanged, ChannelId, Chat, ChatId, CommunityId, DeletedBy,
     DirectChatCreated, EventIndex, EventWrapperInternal, EventsTimeToLiveUpdated, ExternalUrlUpdated, GroupCreated,
     GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext,
-    GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, MemberJoined, MemberLeft, MembersAdded,
+    GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, MemberJoinedInternal, MemberLeft, MembersAdded,
     MembersAddedToDefaultChannel, MembersRemoved, Message, MessageContent, MessageId, MessageIndex, MessagePinned,
     MessageUnpinned, MultiUserChat, PermissionsChanged, PushIfNotContains, Reaction, ReplyContext, RoleChanged, ThreadSummary,
     TimestampMillis, Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
@@ -34,7 +34,7 @@ pub enum ChatEventInternal {
     #[serde(rename = "mr")]
     ParticipantsRemoved(Box<MembersRemoved>),
     #[serde(rename = "mj")]
-    ParticipantJoined(Box<MemberJoined>),
+    ParticipantJoined(Box<MemberJoinedInternal>),
     #[serde(rename = "ml")]
     ParticipantLeft(Box<MemberLeft>),
     #[serde(rename = "rc")]
