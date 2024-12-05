@@ -37,6 +37,7 @@ pub enum SlashCommandParamType {
 pub struct StringParam {
     pub min_length: u16,
     pub max_length: u16,
+    #[ts(as = "SlashCommandOptionChoiceString")]
     pub choices: Vec<SlashCommandOptionChoice<String>>,
 }
 
@@ -45,6 +46,7 @@ pub struct StringParam {
 pub struct NumberParam {
     pub min_length: u16,
     pub max_length: u16,
+    #[ts(as = "SlashCommandOptionChoiceU16")]
     pub choices: Vec<SlashCommandOptionChoice<u16>>,
 }
 
@@ -85,3 +87,17 @@ pub struct BotMatch {
     pub banner_id: Option<u128>,
     pub commands: Vec<SlashCommandSchema>,
 }
+
+macro_rules! slash_command_option_choice {
+    ($name:ident, $value_type:ty) => {
+        #[ts_export]
+        #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+        struct $name {
+            pub name: String,
+            pub value: $value_type,
+        }
+    };
+}
+
+slash_command_option_choice!(SlashCommandOptionChoiceString, String);
+slash_command_option_choice!(SlashCommandOptionChoiceU16, u16);
