@@ -111,7 +111,7 @@ pub(crate) fn join_community_impl(
 
     // Unblock "platform moderator" if necessary
     if args.is_platform_moderator && state.data.members.is_blocked(&args.user_id) {
-        state.data.members.unblock(&args.user_id);
+        state.data.members.unblock(args.user_id, now);
 
         let event = UsersUnblocked {
             user_ids: vec![args.user_id],

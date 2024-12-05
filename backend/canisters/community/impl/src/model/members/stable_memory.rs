@@ -74,6 +74,8 @@ pub struct CommunityMemberStableStorage {
     referred_by: Option<UserId>,
     #[serde(rename = "rf", alias = "referrals", default, skip_serializing_if = "BTreeSet::is_empty")]
     referrals: BTreeSet<UserId>,
+    #[serde(rename = "rr", default, skip_serializing_if = "BTreeSet::is_empty")]
+    referrals_removed: BTreeSet<UserId>,
     #[serde(rename = "l", alias = "lapsed", default, skip_serializing_if = "is_default")]
     lapsed: Timestamped<bool>,
     #[serde(rename = "s", alias = "suspended", default, skip_serializing_if = "is_default")]
@@ -91,6 +93,7 @@ impl CommunityMemberStableStorage {
             display_name: self.display_name,
             referred_by: self.referred_by,
             referrals: self.referrals,
+            referrals_removed: self.referrals_removed,
             lapsed: self.lapsed,
             suspended: self.suspended,
         }
@@ -107,6 +110,7 @@ impl From<CommunityMemberInternal> for CommunityMemberStableStorage {
             display_name: value.display_name,
             referred_by: value.referred_by,
             referrals: value.referrals,
+            referrals_removed: value.referrals_removed,
             lapsed: value.lapsed,
             suspended: value.suspended,
         }

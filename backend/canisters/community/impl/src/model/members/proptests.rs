@@ -127,13 +127,13 @@ fn execute_operation(members: &mut CommunityMembers, op: Operation, timestamp: T
             let user_id = get(&members.member_ids, user_index);
             if members.owners.len() != 1 || members.owners.first() != Some(&user_id) {
                 members.remove(&user_id, timestamp);
-                members.block(user_id);
+                members.block(user_id, timestamp);
             }
         }
         Operation::Unblock { user_index } => {
             if !members.blocked.is_empty() {
                 let user_id = get(&members.blocked, user_index);
-                members.unblock(&user_id);
+                members.unblock(user_id, timestamp);
             }
         }
         Operation::Lapse { user_index } => {

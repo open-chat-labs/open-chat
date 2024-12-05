@@ -37,7 +37,7 @@ fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> Response {
         } else if caller_member.role().can_unblock_users(&state.data.permissions) {
             let now = state.env.now();
 
-            state.data.members.unblock(&args.user_id);
+            state.data.members.unblock(args.user_id, now);
 
             let event = UsersUnblocked {
                 user_ids: vec![args.user_id],

@@ -200,7 +200,7 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
                     chat.members.unblock(user_id, now);
 
                     // If the user is not already a member of the community, block them from the community
-                    if state.data.members.get_by_user_id(&user_id).is_none() && state.data.members.block(user_id) {
+                    if state.data.members.get_by_user_id(&user_id).is_none() && state.data.members.block(user_id, now) {
                         blocked_from_community.push(user_id);
                     }
                 }
