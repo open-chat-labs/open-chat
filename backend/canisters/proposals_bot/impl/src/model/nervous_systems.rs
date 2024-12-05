@@ -343,7 +343,6 @@ pub struct NervousSystem {
     min_dissolve_delay_to_vote: Milliseconds,
     proposal_rejection_fee: u64,
     proposal_messages: BTreeMap<ProposalId, (MessageIndex, MessageId)>,
-    #[serde(default)]
     disabled: bool,
 }
 
