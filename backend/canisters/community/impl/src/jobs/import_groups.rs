@@ -300,7 +300,7 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
                                             user_type,
                                             channel,
                                             &mut state.data.members,
-                                            state.data.is_public,
+                                            state.data.is_public.value,
                                             true,
                                             now,
                                         );
@@ -364,7 +364,7 @@ fn add_community_members_to_channel_if_public(channel_id: ChannelId, state: &mut
                 user_ids.into_iter(),
                 channel,
                 &mut state.data.members,
-                state.data.is_public,
+                state.data.is_public.value,
                 now,
             );
         }
@@ -384,7 +384,7 @@ pub(crate) fn mark_import_complete(group_id: ChatId, channel_id: ChannelId) {
             state.data.group_index_canister_id,
             "c2c_mark_group_import_complete_msgpack".to_string(),
             msgpack::serialize_then_unwrap(group_index_canister::c2c_mark_group_import_complete::Args {
-                community_name: state.data.name.clone(),
+                community_name: state.data.name.value.clone(),
                 local_user_index_canister_id: state.data.local_user_index_canister_id,
                 channel: ChannelLatestMessageIndex {
                     channel_id,

@@ -14,7 +14,7 @@ fn invite_code_impl(state: &RuntimeState) -> Response {
     if let Some(member) = state.data.members.get(caller) {
         if member.role().can_invite_users(&state.data.permissions) {
             Success(SuccessResult {
-                code: if state.data.invite_code_enabled { state.data.invite_code } else { None },
+                code: if state.data.invite_code_enabled.value { state.data.invite_code.value } else { None },
             })
         } else {
             NotAuthorized

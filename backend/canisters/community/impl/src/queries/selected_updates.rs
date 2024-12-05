@@ -18,7 +18,10 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
     // Only call `ic0.caller()` if we have to in order to maximise query caching
     let caller = LazyCell::new(|| state.env.caller());
 
-    if !state.data.is_public && !state.data.is_invite_code_valid(args.invite_code) && !state.data.is_accessible(*caller, None) {
+    if !state.data.is_public.value
+        && !state.data.is_invite_code_valid(args.invite_code)
+        && !state.data.is_accessible(*caller, None)
+    {
         return PrivateCommunity;
     }
 
@@ -99,7 +102,7 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
             }
             CommunityEventInternal::RulesChanged(_) => {
                 if result.chat_rules.is_none() {
-                    result.chat_rules = Some(data.rules.clone().into());
+                    result.chat_rules = Some(data.rules.value.clone().into());
                 }
             }
             CommunityEventInternal::GroupImported(e) => {

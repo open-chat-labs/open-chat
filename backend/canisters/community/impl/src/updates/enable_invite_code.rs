@@ -8,7 +8,7 @@ use community_canister::enable_invite_code::{Response::*, *};
 use community_canister::reset_invite_code;
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
-use types::{GroupInviteCodeChange, GroupInviteCodeChanged};
+use types::{GroupInviteCodeChange, GroupInviteCodeChanged, Timestamped};
 use utils::canister;
 
 #[update(msgpack = true)]
@@ -24,8 +24,9 @@ async fn reset_invite_code(_args: reset_invite_code::Args) -> reset_invite_code:
     let code = generate_code().await;
 
     mutate_state(|state| {
-        state.data.invite_code = Some(code);
-        state.data.invite_code_enabled = true;
+        let now = state.env.now();
+        state.data.invite_code = Timestamped::new(Some(code), now);
+        state.data.invite_code_enabled = Timestamped::new(true, now);
         record_event(initial_state.caller, GroupInviteCodeChange::Reset, state);
     });
 
@@ -49,8 +50,9 @@ async fn enable_invite_code(_args: Args) -> Response {
 
     if !initial_state.enabled {
         mutate_state(|state| {
-            state.data.invite_code = Some(code);
-            state.data.invite_code_enabled = true;
+            let now = state.env.now();
+            state.data.invite_code = Timestamped::new(Some(code), now);
+            state.data.invite_code_enabled = Timestamped::new(true, now);
             record_event(initial_state.caller, GroupInviteCodeChange::Enabled, state);
         });
     }
@@ -102,8 +104,8 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
         if member.role().can_invite_users(&state.data.permissions) {
             return Ok(PrepareResult {
                 caller,
-                code: state.data.invite_code,
-                enabled: state.data.invite_code_enabled,
+                code: state.data.invite_code.value,
+                enabled: state.data.invite_code_enabled.value,
             });
         }
     }

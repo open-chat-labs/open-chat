@@ -22,7 +22,7 @@ fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let caller = state.env.caller();
 
-    if !state.data.is_public {
+    if !state.data.is_public.value {
         CommunityNotPublic
     } else if let Some(caller_member) = state.data.members.get(caller) {
         if caller_member.suspended().value {
