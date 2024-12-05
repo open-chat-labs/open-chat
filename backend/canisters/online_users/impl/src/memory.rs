@@ -1,7 +1,8 @@
 use ic_stable_structures::{
     memory_manager::{MemoryId, MemoryManager, VirtualMemory},
-    DefaultMemoryImpl,
+    DefaultMemoryImpl, Memory as MemoryTrait,
 };
+use std::collections::BTreeMap;
 
 const UPGRADES: MemoryId = MemoryId::new(0);
 const PRINCIPAL_TO_USER_ID_MAP: MemoryId = MemoryId::new(1);
@@ -24,6 +25,10 @@ pub fn get_principal_to_user_id_map_memory() -> Memory {
 
 pub fn get_last_online_dates_memory() -> Memory {
     get_memory(LAST_ONLINE_DATES)
+}
+
+pub fn memory_sizes() -> BTreeMap<u8, u64> {
+    (0u8..=2).map(|id| (id, get_memory(MemoryId::new(id)).size())).collect()
 }
 
 fn get_memory(id: MemoryId) -> Memory {

@@ -15,7 +15,7 @@ use group_index_canister::ChildCanisterType;
 use model::local_group_index_map::LocalGroupIndexMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 use types::{
     AccessGate, BuildVersion, CanisterId, ChatId, ChildCanisterWasms, CommunityId, Cycles, FrozenGroupInfo, Milliseconds,
     TimestampMillis, Timestamped, UserId,
@@ -122,6 +122,7 @@ impl RuntimeState {
                 .into_iter()
                 .map(|(c, h)| (*c, hex::encode(h)))
                 .collect(),
+            stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
@@ -352,6 +353,7 @@ pub struct Metrics {
     pub local_group_indexes: Vec<(CanisterId, LocalGroupIndex)>,
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
     pub wasm_chunks_uploaded: Vec<(ChildCanisterType, String)>,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }
 

@@ -4,7 +4,7 @@ use canister_state_macros::canister_state;
 use model::airdrops::{Airdrops, AirdropsMetrics};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 use timer_job_queues::TimerJobQueue;
 use types::{BuildVersion, CanisterId, ChannelId, CommunityId, Cycles, Document, TimestampMillis, Timestamped};
 use utils::env::Environment;
@@ -49,14 +49,15 @@ impl RuntimeState {
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
+            airdrops: self.data.airdrops.metrics(),
+            pending_actions: self.data.pending_actions_queue.len(),
+            channels_joined: self.data.channels_joined.iter().cloned().collect(),
+            stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
                 chat_ledger: self.data.chat_ledger_canister_id,
             },
-            airdrops: self.data.airdrops.metrics(),
-            pending_actions: self.data.pending_actions_queue.len(),
-            channels_joined: self.data.channels_joined.iter().cloned().collect(),
         }
     }
 }
@@ -110,6 +111,7 @@ pub struct Metrics {
     pub airdrops: AirdropsMetrics,
     pub pending_actions: usize,
     pub channels_joined: Vec<(CommunityId, ChannelId)>,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
 }
 
 #[derive(Serialize, Debug)]

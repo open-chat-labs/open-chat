@@ -62,6 +62,7 @@ impl RuntimeState {
             latest_orders_taken: self.data.latest_orders_taken.clone(),
             my_open_orders: self.data.my_open_orders.clone(),
             market_makers_in_progress: self.data.market_makers_in_progress.clone(),
+            stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -147,6 +148,7 @@ pub struct Metrics {
     pub latest_orders_taken: HashMap<ExchangeId, (Option<u64>, Option<u64>)>,
     pub my_open_orders: HashMap<ExchangeId, AggregatedOrders>,
     pub market_makers_in_progress: HashMap<ExchangeId, TimestampMillis>,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }
 

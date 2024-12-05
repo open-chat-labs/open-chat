@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove chat members from being stored on the heap ([#6942](https://github.com/open-chat-labs/open-chat/pull/6942))
 - Reduce the size of community events when serialized ([#6980](https://github.com/open-chat-labs/open-chat/pull/6980))
+- Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
 
 ## [[2.0.1498](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1498-community)] - 2024-12-04
 

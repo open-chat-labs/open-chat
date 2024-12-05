@@ -1,7 +1,8 @@
 use ic_stable_structures::{
     memory_manager::{MemoryId, MemoryManager, VirtualMemory},
-    DefaultMemoryImpl,
+    DefaultMemoryImpl, Memory as MemoryTrait,
 };
+use std::collections::BTreeMap;
 
 const UPGRADES: MemoryId = MemoryId::new(0);
 const FILES_BY_USER: MemoryId = MemoryId::new(1);
@@ -39,6 +40,10 @@ pub fn get_total_file_bytes_memory() -> Memory {
 
 pub fn get_total_blob_bytes_memory() -> Memory {
     get_memory(TOTAL_BLOB_BYTES)
+}
+
+pub fn memory_sizes() -> BTreeMap<u8, u64> {
+    (0u8..=5).map(|id| (id, get_memory(MemoryId::new(id)).size())).collect()
 }
 
 fn get_memory(id: MemoryId) -> Memory {
