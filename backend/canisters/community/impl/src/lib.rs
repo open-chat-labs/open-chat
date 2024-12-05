@@ -7,19 +7,21 @@ use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use chat_events::ChatMetricsInternal;
+use chat_events::{ChatEventInternal, ChatMetricsInternal};
+use community_canister::add_members_to_channel::UserFailedError;
 use community_canister::EventsResponse;
 use constants::{MINUTE_IN_MS, SNS_LEDGER_CANISTER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::GatePayment;
-use group_chat_core::AccessRulesInternal;
+use group_chat_core::{AccessRulesInternal, AddResult};
 use group_community_common::{
     Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, Members, PaymentReceipts, PaymentRecipient,
     PendingPayment, PendingPaymentReason, PendingPaymentsQueue, UserCache,
 };
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
+use model::events::CommunityEventInternal;
 use model::user_event_batch::UserEventBatch;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use msgpack::serialize_then_unwrap;
@@ -35,10 +37,10 @@ use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    AccessGate, AccessGateConfigInternal, Achievement, BuildVersion, CanisterId, ChannelId, ChatMetrics,
+    AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotRemoved, BuildVersion, CanisterId, ChannelId, ChatMetrics,
     CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cryptocurrency, Cycles, Document, Empty,
-    FrozenGroupInfo, Milliseconds, Notification, Rules, SlashCommandPermissions, TimestampMillis, Timestamped, UserId,
-    UserType,
+    EventIndex, FrozenGroupInfo, MembersAdded, MessageIndex, Milliseconds, Notification, Rules, SlashCommandPermissions,
+    TimestampMillis, Timestamped, UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use user_canister::CommunityCanisterEvent;
@@ -723,6 +725,159 @@ impl Data {
         }
     }
 
+    pub fn add_users_to_channel(
+        &mut self,
+        channel_id: &ChannelId,
+        users_to_add: Vec<(UserId, UserType)>,
+        added_by: UserId,
+        now: TimestampMillis,
+    ) -> AddUsersToChannelResult {
+        let mut channel_name = None;
+        let mut channel_avatar_id = None;
+        let mut users_failed_with_error: Vec<UserFailedError> = Vec::new();
+        let mut users_added: Vec<UserId> = Vec::new();
+        let mut users_already_in_channel: Vec<UserId> = Vec::new();
+        let mut users_limit_reached: Vec<UserId> = Vec::new();
+
+        if let Some(channel) = self.channels.get_mut(channel_id) {
+            let mut min_visible_event_index = EventIndex::default();
+            let mut min_visible_message_index = MessageIndex::default();
+
+            if !channel.chat.history_visible_to_new_joiners {
+                let events_reader = channel.chat.events.main_events_reader();
+                min_visible_event_index = events_reader.next_event_index();
+                min_visible_message_index = events_reader.next_message_index();
+            }
+
+            let gate_expiry = channel.chat.gate_config.value.as_ref().and_then(|gc| gc.expiry());
+
+            for (user_id, user_type) in users_to_add {
+                match channel.chat.members.add(
+                    user_id,
+                    now,
+                    min_visible_event_index,
+                    min_visible_message_index,
+                    channel.chat.is_public.value,
+                    user_type,
+                ) {
+                    AddResult::Success(_) => {
+                        self.members.mark_member_joined_channel(user_id, channel.id);
+
+                        if !matches!(user_type, UserType::BotV2) {
+                            users_added.push(user_id);
+                        }
+
+                        if !user_type.is_bot() {
+                            if let Some(gate_expiry) = gate_expiry {
+                                self.expiring_members.push(ExpiringMember {
+                                    expires: now + gate_expiry,
+                                    channel_id: Some(channel.id),
+                                    user_id,
+                                });
+                            }
+                        }
+                    }
+                    AddResult::AlreadyInGroup => users_already_in_channel.push(user_id),
+                    AddResult::MemberLimitReached(_) => users_limit_reached.push(user_id),
+                    AddResult::Blocked => users_failed_with_error.push(UserFailedError {
+                        user_id,
+                        error: "User blocked".to_string(),
+                    }),
+                }
+            }
+
+            if !users_added.is_empty() {
+                let event = MembersAdded {
+                    user_ids: users_added.clone(),
+                    added_by,
+                    unblocked: Vec::new(),
+                };
+
+                channel
+                    .chat
+                    .events
+                    .push_main_event(ChatEventInternal::ParticipantsAdded(Box::new(event)), 0, now);
+            }
+
+            channel_name = Some(channel.chat.name.value.clone());
+            channel_avatar_id = channel.chat.avatar.as_ref().map(|d| d.id);
+        }
+
+        AddUsersToChannelResult {
+            channel_name,
+            channel_avatar_id,
+            users_failed_with_error,
+            users_added,
+            users_already_in_channel,
+            users_limit_reached,
+        }
+    }
+
+    pub fn add_bot(
+        &mut self,
+        owner_id: UserId,
+        bot_user_id: UserId,
+        granted_permissions: SlashCommandPermissions,
+        now: TimestampMillis,
+    ) -> bool {
+        if !self.bot_permissions.contains_key(&bot_user_id) {
+            return false;
+        }
+
+        // Insert the granted bot permissions
+        self.bot_permissions.insert(bot_user_id, granted_permissions);
+
+        // Add the bot as a community member
+        self.members.add(bot_user_id, bot_user_id.into(), UserType::BotV2, None, now);
+        self.invited_users.remove(&bot_user_id, now);
+
+        // Add the bot as a member of each channel
+        let channel_ids: Vec<_> = self.channels.iter().map(|c| c.id).collect();
+        for channel_id in channel_ids {
+            self.add_users_to_channel(&channel_id, vec![(bot_user_id, UserType::BotV2)], owner_id, now);
+        }
+
+        // Publish community event
+        self.events.push_event(
+            CommunityEventInternal::BotAdded(Box::new(BotAdded {
+                bot_id: bot_user_id,
+                added_by: owner_id,
+            })),
+            now,
+        );
+
+        // TODO: Notify UserIndex
+
+        true
+    }
+
+    pub fn remove_bot(&mut self, owner_id: UserId, bot_user_id: UserId, now: TimestampMillis) -> bool {
+        if self.bot_permissions.remove(&bot_user_id).is_none() {
+            return false;
+        }
+
+        // Remove bot user from each channel
+        for channel in self.channels.iter_mut() {
+            channel.chat.remove_member(owner_id, bot_user_id, false, now);
+        }
+
+        // Remove bot user from the community
+        self.remove_user_from_community(bot_user_id, now);
+
+        // Publish community event
+        self.events.push_event(
+            CommunityEventInternal::BotRemoved(Box::new(BotRemoved {
+                bot_id: bot_user_id,
+                removed_by: owner_id,
+            })),
+            now,
+        );
+
+        // TODO: Notify UserIndex
+
+        true
+    }
+
     pub fn get_bot_permissions(&self, bot_user_id: &UserId) -> Option<&SlashCommandPermissions> {
         self.bot_permissions.get(bot_user_id)
     }
@@ -800,4 +955,13 @@ pub struct CanisterIds {
     pub escrow: CanisterId,
     pub icp_ledger: CanisterId,
     pub internet_identity: CanisterId,
+}
+
+pub struct AddUsersToChannelResult {
+    pub channel_name: Option<String>,
+    pub channel_avatar_id: Option<u128>,
+    pub users_failed_with_error: Vec<UserFailedError>,
+    pub users_added: Vec<UserId>,
+    pub users_already_in_channel: Vec<UserId>,
+    pub users_limit_reached: Vec<UserId>,
 }

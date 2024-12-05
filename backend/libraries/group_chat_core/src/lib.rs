@@ -1373,6 +1373,8 @@ impl GroupChatCore {
                     .role()
                     .can_remove_members_with_role(target_member_role, &self.permissions)
                 {
+                    let is_bot_v2 = matches!(member.user_type(), UserType::BotV2);
+
                     // Remove the user from the group
                     self.members.remove(target_user_id, now);
 
@@ -1381,22 +1383,24 @@ impl GroupChatCore {
                         return Success;
                     }
 
-                    // Push relevant event
-                    let event = if block {
-                        let event = UsersBlocked {
-                            user_ids: vec![target_user_id],
-                            blocked_by: user_id,
-                        };
+                    if !is_bot_v2 {
+                        // Push relevant event
+                        let event = if block {
+                            let event = UsersBlocked {
+                                user_ids: vec![target_user_id],
+                                blocked_by: user_id,
+                            };
 
-                        ChatEventInternal::UsersBlocked(Box::new(event))
-                    } else {
-                        let event = MembersRemoved {
-                            user_ids: vec![target_user_id],
-                            removed_by: user_id,
+                            ChatEventInternal::UsersBlocked(Box::new(event))
+                        } else {
+                            let event = MembersRemoved {
+                                user_ids: vec![target_user_id],
+                                removed_by: user_id,
+                            };
+                            ChatEventInternal::ParticipantsRemoved(Box::new(event))
                         };
-                        ChatEventInternal::ParticipantsRemoved(Box::new(event))
-                    };
-                    self.events.push_main_event(event, 0, now);
+                        self.events.push_main_event(event, 0, now);
+                    }
 
                     Success
                 } else {
