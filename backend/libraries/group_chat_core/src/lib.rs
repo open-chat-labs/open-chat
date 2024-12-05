@@ -31,7 +31,6 @@ use utils::text_validation::{
 
 mod invited_users;
 mod members;
-mod members_map;
 mod mentions;
 mod roles;
 

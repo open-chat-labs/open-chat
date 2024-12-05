@@ -13,7 +13,6 @@ pub struct GroupToImport {
     pub action: GroupToImportAction,
 }
 
-#[allow(dead_code)]
 #[derive(Debug)]
 pub enum GroupToImportAction {
     Events(ChannelId, Option<EventContext>),
