@@ -6,16 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-candid = { workspace = true }
-fire_and_forget_handler = { path = "../fire_and_forget_handler" }
 icrc-ledger-types = { workspace = true }
-itertools = { workspace = true }
-msgpack = { path = "../msgpack" }
 serde = { workspace = true }
 serde_repr = { workspace = true }
 types = { path = "../types" }
-user_canister = { path = "../../canisters/user/api" }
 utils = { path = "../utils" }
-
-[dev-dependencies]
-msgpack = { path = "../msgpack" }

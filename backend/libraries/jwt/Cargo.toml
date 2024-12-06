@@ -10,8 +10,10 @@ candid = { workspace = true }
 ct-codecs = { workspace = true }
 hmac-sha256 = { workspace = true }
 p256 = { workspace = true, features = ["ecdsa", "pkcs8"] }
-p256_key_pair = { path = "../p256_key_pair" }
 rand = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 types = { path = "../types" }
+
+[dev-dependencies]
+p256_key_pair = { path = "../p256_key_pair" }
