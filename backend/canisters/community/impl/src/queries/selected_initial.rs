@@ -10,7 +10,7 @@ fn selected_initial(args: Args) -> Response {
 
 fn selected_initial_impl(args: Args, state: &RuntimeState) -> Response {
     // Don't call `ic0.caller()` if the community is public or the invite_code is valid to maximise query caching
-    if !state.data.is_public || !state.data.is_invite_code_valid(args.invite_code) {
+    if !state.data.is_public.value || !state.data.is_invite_code_valid(args.invite_code) {
         let caller = state.env.caller();
         if !state.data.is_accessible(caller, None) {
             return PrivateCommunity;
@@ -53,7 +53,7 @@ fn selected_initial_impl(args: Args, state: &RuntimeState) -> Response {
         basic_members,
         blocked_users: data.members.blocked(),
         invited_users: data.invited_users.users(),
-        chat_rules: data.rules.clone().into(),
+        chat_rules: data.rules.value.clone().into(),
         user_groups: data.members.iter_user_groups().map(|u| u.into()).collect(),
         referrals,
     })

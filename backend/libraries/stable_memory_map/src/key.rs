@@ -58,12 +58,20 @@ pub struct ChatEventKey(Vec<u8>);
 pub struct MemberKey(Vec<u8>);
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[serde(into = "Key", try_from = "Key")]
+pub struct CommunityEventKey(Vec<u8>);
+
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[serde(into = "KeyPrefix", try_from = "KeyPrefix")]
 pub struct ChatEventKeyPrefix(Vec<u8>);
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[serde(into = "KeyPrefix", try_from = "KeyPrefix")]
 pub struct MemberKeyPrefix(Vec<u8>);
+
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[serde(into = "KeyPrefix", try_from = "KeyPrefix")]
+pub struct CommunityEventKeyPrefix(Vec<u8>);
 
 impl ChatEventKeyPrefix {
     pub fn new_from_chat(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
@@ -329,7 +337,74 @@ impl MemberKey {
     }
 }
 
-#[derive(Copy, Clone)]
+impl CommunityEventKeyPrefix {
+    pub fn new() -> Self {
+        // KeyType::CommunityEvent      1 byte
+        CommunityEventKeyPrefix(vec![KeyType::CommunityEvent as u8])
+    }
+
+    pub fn create_key(&self, event_index: EventIndex) -> CommunityEventKey {
+        let mut bytes = Vec::with_capacity(5);
+        bytes.extend_from_slice(self.0.as_slice());
+        bytes.extend_from_slice(&u32::from(event_index).to_be_bytes());
+        CommunityEventKey(bytes)
+    }
+}
+
+impl Default for CommunityEventKeyPrefix {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl From<CommunityEventKeyPrefix> for KeyPrefix {
+    fn from(value: CommunityEventKeyPrefix) -> Self {
+        KeyPrefix(value.0)
+    }
+}
+
+impl From<CommunityEventKey> for Key {
+    fn from(value: CommunityEventKey) -> Self {
+        Key(value.0)
+    }
+}
+
+impl TryFrom<KeyPrefix> for CommunityEventKeyPrefix {
+    type Error = String;
+
+    fn try_from(value: KeyPrefix) -> Result<Self, Self::Error> {
+        if extract_key_type(&value.0).is_some_and(|kt| kt == KeyType::CommunityEvent) {
+            Ok(CommunityEventKeyPrefix(value.0))
+        } else {
+            Err(format!("Key type mismatch: {:?}", value.0.first()))
+        }
+    }
+}
+
+impl TryFrom<Key> for CommunityEventKey {
+    type Error = String;
+
+    fn try_from(value: Key) -> Result<Self, Self::Error> {
+        if extract_key_type(&value.0).is_some_and(|kt| kt == KeyType::CommunityEvent) {
+            Ok(CommunityEventKey(value.0))
+        } else {
+            Err(format!("Key type mismatch: {:?}", value.0.first()))
+        }
+    }
+}
+
+impl CommunityEventKey {
+    pub fn matches_prefix(&self, prefix: &CommunityEventKeyPrefix) -> bool {
+        self.0.starts_with(&prefix.0)
+    }
+
+    pub fn event_index(&self) -> EventIndex {
+        let start = self.0.len() - 4;
+        u32::from_be_bytes(self.0[start..].try_into().unwrap()).into()
+    }
+}
+
+#[derive(Copy, Clone, Eq, PartialEq)]
 #[repr(u8)]
 pub enum KeyType {
     DirectChatEvent = 1,
@@ -341,6 +416,7 @@ pub enum KeyType {
     GroupMember = 7,
     ChannelMember = 8,
     CommunityMember = 9,
+    CommunityEvent = 10,
 }
 
 fn extract_key_type(bytes: &[u8]) -> Option<KeyType> {
@@ -379,6 +455,7 @@ impl TryFrom<u8> for KeyType {
             7 => Ok(KeyType::GroupMember),
             8 => Ok(KeyType::ChannelMember),
             9 => Ok(KeyType::CommunityMember),
+            10 => Ok(KeyType::CommunityEvent),
             _ => Err(()),
         }
     }
@@ -541,6 +618,27 @@ mod tests {
             assert_eq!(serialized.len(), member_key.0.len() + 2);
             let deserialized: MemberKey = msgpack::deserialize_then_unwrap(&serialized);
             assert_eq!(deserialized, member_key);
+            assert_eq!(deserialized.0, key.0);
+        }
+    }
+
+    #[test]
+    fn community_event_key_e2e() {
+        for _ in 0..100 {
+            let prefix = CommunityEventKeyPrefix::new();
+            let event_index = EventIndex::from(thread_rng().next_u32());
+            let key = Key::from(prefix.create_key(event_index));
+            let event_key = CommunityEventKey::try_from(key.clone()).unwrap();
+
+            assert_eq!(*event_key.0.first().unwrap(), KeyType::CommunityEvent as u8);
+            assert_eq!(event_key.0.len(), 5);
+            assert!(event_key.matches_prefix(&prefix));
+            assert_eq!(event_key.event_index(), event_index);
+
+            let serialized = msgpack::serialize_then_unwrap(&event_key);
+            assert_eq!(serialized.len(), event_key.0.len() + 2);
+            let deserialized: CommunityEventKey = msgpack::deserialize_then_unwrap(&serialized);
+            assert_eq!(deserialized, event_key);
             assert_eq!(deserialized.0, key.0);
         }
     }

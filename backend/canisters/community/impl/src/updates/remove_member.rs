@@ -18,7 +18,7 @@ use user_canister::c2c_remove_from_community;
 async fn block_user(args: community_canister::block_user::Args) -> community_canister::block_user::Response {
     run_regular_jobs();
 
-    if !read_state(|state| state.data.is_public) {
+    if !read_state(|state| state.data.is_public.value) {
         return community_canister::block_user::Response::CommunityNotPublic;
     }
 
@@ -115,7 +115,7 @@ fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeS
     let removed_member = state.data.remove_user_from_community(user_id, now);
     let removed = removed_member.is_some();
 
-    let blocked = block && state.data.members.block(user_id);
+    let blocked = block && state.data.members.block(user_id, now);
 
     let referred_by = removed_member
         .and_then(|r| r.referred_by)
@@ -149,8 +149,8 @@ fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeS
             user_id,
             removed_by,
             block,
-            state.data.name.clone(),
-            state.data.is_public,
+            state.data.name.value.clone(),
+            state.data.is_public.value,
             &mut state.data.fire_and_forget_handler,
         );
     }

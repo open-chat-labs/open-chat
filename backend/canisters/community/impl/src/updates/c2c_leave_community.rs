@@ -1,11 +1,7 @@
-use crate::{
-    activity_notifications::handle_activity_notification, model::events::CommunityEventInternal, mutate_state,
-    run_regular_jobs, RuntimeState,
-};
+use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_leave_community::{Response::*, *};
-use types::CommunityMemberLeft;
 
 // Called via the user's user canister
 #[update(msgpack = true)]
@@ -39,19 +35,7 @@ fn c2c_leave_community_impl(state: &mut RuntimeState) -> Response {
         return LastOwnerCannotLeave;
     }
 
-    let user_id = member.user_id;
-
-    let removed = state.data.remove_user_from_community(user_id, now);
-
-    state.data.events.push_event(
-        CommunityEventInternal::MemberLeft(Box::new(CommunityMemberLeft {
-            user_id,
-            referred_by: removed.and_then(|r| r.referred_by),
-        })),
-        now,
-    );
-
+    state.data.remove_user_from_community(member.user_id, now);
     handle_activity_notification(state);
-
     Success
 }

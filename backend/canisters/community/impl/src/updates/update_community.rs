@@ -128,7 +128,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         .apply_to(state.data.gate_config.value.clone());
 
     if let Some(name) = &args.name {
-        if let Err(error) = validate_community_name(name, state.data.is_public) {
+        if let Err(error) = validate_community_name(name, state.data.is_public.value) {
             return Err(match error {
                 NameValidationError::TooShort(s) => NameTooShort(s),
                 NameValidationError::TooLong(l) => NameTooLong(l),
@@ -183,7 +183,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
             Ok(PrepareResult {
                 my_user_id: member.user_id,
                 group_index_canister_id: state.data.group_index_canister_id,
-                is_public: args.public.unwrap_or(state.data.is_public),
+                is_public: args.public.unwrap_or(state.data.is_public.value),
                 community_id: state.env.canister_id().into(),
                 name: args.name.as_ref().unwrap_or(&state.data.name).clone(),
                 description: args.description.as_ref().unwrap_or(&state.data.description).clone(),
@@ -206,32 +206,32 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
     let events = &mut state.data.events;
 
     if let Some(name) = args.name {
-        if state.data.name != name {
+        if state.data.name.value != name {
             events.push_event(
                 CommunityEventInternal::NameChanged(Box::new(GroupNameChanged {
                     new_name: name.clone(),
-                    previous_name: state.data.name.clone(),
+                    previous_name: state.data.name.value.clone(),
                     changed_by: my_user_id,
                 })),
                 now,
             );
 
-            state.data.name = name;
+            state.data.name = Timestamped::new(name, now);
         }
     }
 
     if let Some(description) = args.description {
-        if state.data.description != description {
+        if state.data.description.value != description {
             events.push_event(
                 CommunityEventInternal::DescriptionChanged(Box::new(GroupDescriptionChanged {
                     new_description: description.clone(),
-                    previous_description: state.data.description.clone(),
+                    previous_description: state.data.description.value.clone(),
                     changed_by: my_user_id,
                 })),
                 now,
             );
 
-            state.data.description = description;
+            state.data.description = Timestamped::new(description, now);
         }
     }
 
@@ -239,13 +239,18 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
         let enabled = new_rules.enabled;
         let prev_enabled = state.data.rules.enabled;
 
-        if let Some(rules_version) = state.data.rules.update(new_rules, now) {
-            result.rules_version = Some(rules_version);
-
-            if let Some(member) = state.data.members.get_by_user_id_mut(&my_user_id) {
-                member.rules_accepted = Some(Timestamped::new(rules_version, now))
-            }
-
+        if state.data.rules.update(
+            |r| {
+                if let Some(rules_version) = r.update(new_rules, now) {
+                    result.rules_version = Some(rules_version);
+                    state.data.members.mark_rules_accepted(&my_user_id, rules_version, now);
+                    true
+                } else {
+                    false
+                }
+            },
+            now,
+        ) {
             events.push_event(
                 CommunityEventInternal::RulesChanged(Box::new(GroupRulesChanged {
                     enabled,
@@ -258,7 +263,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
     }
 
     if let Some(avatar) = args.avatar.expand() {
-        let previous_avatar_id = Document::id(&state.data.avatar);
+        let previous_avatar_id = Document::id(&state.data.avatar.value);
         let new_avatar_id = Document::id(&avatar);
 
         if new_avatar_id != previous_avatar_id {
@@ -271,12 +276,12 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
                 now,
             );
 
-            state.data.avatar = avatar;
+            state.data.avatar = Timestamped::new(avatar, now);
         }
     }
 
     if let Some(banner) = args.banner.expand() {
-        let previous_banner_id = Document::id(&state.data.banner);
+        let previous_banner_id = Document::id(&state.data.banner.value);
         let new_banner_id = Document::id(&banner);
 
         if new_banner_id != previous_banner_id {
@@ -289,14 +294,14 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
                 now,
             );
 
-            state.data.banner = banner;
+            state.data.banner = Timestamped::new(banner, now);
         }
     }
 
     if let Some(permissions) = args.permissions {
-        let old_permissions = state.data.permissions.clone();
+        let old_permissions = state.data.permissions.value.clone();
         let new_permissions = merge_permissions(permissions, &old_permissions);
-        state.data.permissions = new_permissions.clone();
+        state.data.permissions = Timestamped::new(new_permissions.clone(), now);
 
         state.data.events.push_event(
             CommunityEventInternal::PermissionsChanged(Box::new(CommunityPermissionsChanged {
@@ -327,8 +332,8 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
     }
 
     if let Some(public) = args.public {
-        if state.data.is_public != public {
-            state.data.is_public = public;
+        if state.data.is_public.value != public {
+            state.data.is_public = Timestamped::new(public, now);
 
             let event = CommunityVisibilityChanged {
                 now_public: public,
@@ -342,10 +347,10 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
         }
     }
     if let Some(new) = args.primary_language {
-        let previous = state.data.primary_language.clone();
+        let previous = state.data.primary_language.value.clone();
 
         if previous != new {
-            state.data.primary_language.clone_from(&new);
+            state.data.primary_language = Timestamped::new(new.clone(), now);
 
             let event = PrimaryLanguageChanged {
                 previous,

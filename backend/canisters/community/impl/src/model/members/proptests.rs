@@ -1,5 +1,7 @@
 use crate::model::members::CommunityMembers;
 use candid::Principal;
+use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+use ic_stable_structures::DefaultMemoryImpl;
 use proptest::collection::vec as pvec;
 use proptest::prelude::*;
 use proptest::prop_oneof;
@@ -64,7 +66,10 @@ fn operation_strategy() -> impl Strategy<Value = Operation> {
 }
 
 #[proptest(cases = 10)]
-fn comprehensive(#[strategy(pvec(operation_strategy(), 100..5_000))] ops: Vec<Operation>) {
+fn comprehensive(#[strategy(pvec(operation_strategy(), 1_000..5_000))] ops: Vec<Operation>) {
+    let memory = MemoryManager::init(DefaultMemoryImpl::default());
+    stable_memory_map::init(memory.get(MemoryId::new(1)));
+
     let mut members = CommunityMembers::new(principal(0), user_id(0), UserType::User, vec![1u32.into()], 0);
 
     let mut timestamp = 1000;
@@ -122,13 +127,13 @@ fn execute_operation(members: &mut CommunityMembers, op: Operation, timestamp: T
             let user_id = get(&members.member_ids, user_index);
             if members.owners.len() != 1 || members.owners.first() != Some(&user_id) {
                 members.remove(&user_id, timestamp);
-                members.block(user_id);
+                members.block(user_id, timestamp);
             }
         }
         Operation::Unblock { user_index } => {
             if !members.blocked.is_empty() {
                 let user_id = get(&members.blocked, user_index);
-                members.unblock(&user_id);
+                members.unblock(user_id, timestamp);
             }
         }
         Operation::Lapse { user_index } => {

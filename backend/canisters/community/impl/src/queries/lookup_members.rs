@@ -8,7 +8,7 @@ fn lookup_members(args: Args) -> Response {
 }
 
 fn lookup_members_impl(args: Args, state: &RuntimeState) -> Response {
-    if !state.data.is_public {
+    if !state.data.is_public.value {
         let caller = state.env.caller();
         if !state.data.is_accessible(caller, None) {
             return PrivateCommunity;

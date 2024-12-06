@@ -7,36 +7,40 @@ use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use chat_events::ChatMetricsInternal;
+use chat_events::{ChatEventInternal, ChatMetricsInternal};
+use community_canister::add_members_to_channel::UserFailedError;
 use community_canister::EventsResponse;
 use constants::{MINUTE_IN_MS, SNS_LEDGER_CANISTER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::GatePayment;
-use group_chat_core::AccessRulesInternal;
+use group_chat_core::{AccessRulesInternal, AddResult};
 use group_community_common::{
     Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, Members, PaymentReceipts, PaymentRecipient,
     PendingPayment, PendingPaymentReason, PendingPaymentsQueue, UserCache,
 };
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
+use model::events::CommunityEventInternal;
 use model::user_event_batch::UserEventBatch;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
 use rand::rngs::StdRng;
 use rand::RngCore;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{ChatEventKeyPrefix, KeyPrefix};
 use std::cell::RefCell;
+use std::collections::BTreeMap;
 use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    AccessGate, AccessGateConfigInternal, Achievement, BuildVersion, CanisterId, ChannelId, ChatMetrics,
+    AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotRemoved, BuildVersion, CanisterId, ChannelId, ChatMetrics,
     CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cryptocurrency, Cycles, Document, Empty,
-    FrozenGroupInfo, Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId, UserType,
+    FrozenGroupInfo, MembersAdded, Milliseconds, Notification, Rules, SlashCommandPermissions, TimestampMillis, Timestamped,
+    UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use user_canister::CommunityCanisterEvent;
@@ -175,7 +179,7 @@ impl RuntimeState {
                 .members
                 .channels_for_member(m.user_id)
                 .filter_map(|c| self.data.channels.get(&c))
-                .filter_map(|c| c.summary(Some(m.user_id), true, data.is_public, &data.members))
+                .filter_map(|c| c.summary(Some(m.user_id), true, data.is_public.value, &data.members))
                 .collect();
 
             (channels, Some(membership))
@@ -186,7 +190,7 @@ impl RuntimeState {
                 .channels
                 .public_channels()
                 .iter()
-                .filter_map(|c| c.summary(None, false, data.is_public, &data.members))
+                .filter_map(|c| c.summary(None, false, data.is_public.value, &data.members))
                 .collect();
 
             (channels, None)
@@ -206,18 +210,18 @@ impl RuntimeState {
             community_id: self.env.canister_id().into(),
             local_user_index_canister_id: self.data.local_user_index_canister_id,
             last_updated,
-            name: data.name.clone(),
-            description: data.description.clone(),
+            name: data.name.value.clone(),
+            description: data.description.value.clone(),
             avatar_id: Document::id(&data.avatar),
             banner_id: Document::id(&data.banner),
-            is_public: data.is_public,
+            is_public: data.is_public.value,
             latest_event_index: data.events.latest_event_index(),
             member_count: data.members.len(),
-            permissions: data.permissions.clone(),
+            permissions: data.permissions.value.clone(),
             frozen: data.frozen.value.clone(),
             gate: data.gate_config.value.as_ref().map(|gc| gc.gate.clone()),
             gate_config: data.gate_config.value.clone().map(|gc| gc.into()),
-            primary_language: data.primary_language.clone(),
+            primary_language: data.primary_language.value.clone(),
             channels,
             membership,
             user_groups: data.members.iter_user_groups().map(|u| u.into()).collect(),
@@ -284,7 +288,7 @@ impl RuntimeState {
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
-            public: self.data.is_public,
+            public: self.data.is_public.value,
             date_created: self.data.date_created,
             members: self.data.members.len(),
             admins: self.data.members.admins().len() as u32,
@@ -297,6 +301,7 @@ impl RuntimeState {
             event_store_client_info: self.data.event_store_client.info(),
             timer_jobs: self.data.timer_jobs.len() as u32,
             members_migrated_to_stable_memory: self.data.members_migrated_to_stable_memory,
+            stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -318,15 +323,23 @@ fn init_instruction_counts_log() -> InstructionCountsLog {
 
 #[derive(Serialize, Deserialize)]
 struct Data {
-    is_public: bool,
-    name: String,
-    description: String,
-    rules: AccessRulesInternal,
-    avatar: Option<Document>,
-    banner: Option<Document>,
-    permissions: CommunityPermissions,
+    #[serde(deserialize_with = "deserialize_to_timestamped")]
+    is_public: Timestamped<bool>,
+    #[serde(deserialize_with = "deserialize_to_timestamped")]
+    name: Timestamped<String>,
+    #[serde(deserialize_with = "deserialize_to_timestamped")]
+    description: Timestamped<String>,
+    #[serde(deserialize_with = "deserialize_to_timestamped")]
+    rules: Timestamped<AccessRulesInternal>,
+    #[serde(deserialize_with = "deserialize_to_timestamped")]
+    avatar: Timestamped<Option<Document>>,
+    #[serde(deserialize_with = "deserialize_to_timestamped")]
+    banner: Timestamped<Option<Document>>,
+    #[serde(deserialize_with = "deserialize_to_timestamped")]
+    permissions: Timestamped<CommunityPermissions>,
     gate_config: Timestamped<Option<AccessGateConfigInternal>>,
-    primary_language: String,
+    #[serde(deserialize_with = "deserialize_to_timestamped")]
+    primary_language: Timestamped<String>,
     user_index_canister_id: CanisterId,
     local_user_index_canister_id: CanisterId,
     group_index_canister_id: CanisterId,
@@ -340,8 +353,10 @@ struct Data {
     channels: Channels,
     events: CommunityEvents,
     invited_users: InvitedUsers,
-    invite_code: Option<u64>,
-    invite_code_enabled: bool,
+    #[serde(deserialize_with = "deserialize_to_timestamped")]
+    invite_code: Timestamped<Option<u64>>,
+    #[serde(deserialize_with = "deserialize_to_timestamped")]
+    invite_code_enabled: Timestamped<bool>,
     frozen: Timestamped<Option<FrozenGroupInfo>>,
     timer_jobs: TimerJobs<TimerJob>,
     fire_and_forget_handler: FireAndForgetHandler,
@@ -364,10 +379,9 @@ struct Data {
     expiring_member_actions: ExpiringMemberActions,
     user_cache: UserCache,
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
-    #[serde(default)]
     stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
-    #[serde(default)]
     members_migrated_to_stable_memory: bool,
+    bot_permissions: BTreeMap<UserId, SlashCommandPermissions>,
 }
 
 impl Data {
@@ -423,15 +437,15 @@ impl Data {
         let events = CommunityEvents::new(name.clone(), description.clone(), created_by_user_id, now);
 
         Data {
-            is_public,
-            name,
-            description,
-            rules: AccessRulesInternal::new(rules),
-            avatar,
-            banner,
-            permissions,
+            is_public: Timestamped::new(is_public, now),
+            name: Timestamped::new(name, now),
+            description: Timestamped::new(description, now),
+            rules: Timestamped::new(AccessRulesInternal::new(rules), now),
+            avatar: Timestamped::new(avatar, now),
+            banner: Timestamped::new(banner, now),
+            permissions: Timestamped::new(permissions, now),
             gate_config: Timestamped::new(gate, now),
-            primary_language,
+            primary_language: Timestamped::new(primary_language, now),
             user_index_canister_id,
             local_user_index_canister_id,
             group_index_canister_id,
@@ -445,8 +459,8 @@ impl Data {
             channels,
             events,
             invited_users: InvitedUsers::default(),
-            invite_code: None,
-            invite_code_enabled: false,
+            invite_code: Timestamped::default(),
+            invite_code_enabled: Timestamped::default(),
             frozen: Timestamped::default(),
             timer_jobs: TimerJobs::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
@@ -471,6 +485,7 @@ impl Data {
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             members_migrated_to_stable_memory: true,
+            bot_permissions: BTreeMap::new(),
         }
     }
 
@@ -479,7 +494,7 @@ impl Data {
     }
 
     pub fn is_accessible(&self, caller: Principal, invite_code: Option<u64>) -> bool {
-        self.is_public
+        self.is_public.value
             || self.members.get(caller).is_some()
             || self.is_invited(caller)
             || self.is_invite_code_valid(invite_code)
@@ -548,9 +563,9 @@ impl Data {
     }
 
     pub fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {
-        if self.invite_code_enabled {
+        if self.invite_code_enabled.value {
             if let Some(provided_code) = invite_code {
-                if let Some(stored_code) = self.invite_code {
+                if let Some(stored_code) = self.invite_code.value {
                     return provided_code == stored_code;
                 }
             }
@@ -661,12 +676,12 @@ impl Data {
         }
     }
 
-    pub fn get_member_for_events(&self, caller: Principal) -> Result<Option<&CommunityMemberInternal>, EventsResponse> {
-        let hidden_for_non_members = !self.is_public || self.has_payment_gate();
+    pub fn get_member_for_events(&self, caller: Principal) -> Result<Option<CommunityMemberInternal>, EventsResponse> {
+        let hidden_for_non_members = !self.is_public.value || self.has_payment_gate();
         let member = self.members.get(caller);
 
         if hidden_for_non_members {
-            if let Some(member) = member {
+            if let Some(member) = &member {
                 if member.suspended().value {
                     return Err(EventsResponse::UserSuspended);
                 } else if member.lapsed().value {
@@ -685,6 +700,188 @@ impl Data {
             self.user_event_sync_queue
                 .push(user_id, CommunityCanisterEvent::Achievement(achievement));
         }
+    }
+
+    pub fn add_members_to_channel(
+        &mut self,
+        channel_id: &ChannelId,
+        users_to_add: Vec<(UserId, UserType)>,
+        added_by: UserId,
+        now: TimestampMillis,
+    ) -> AddUsersToChannelResult {
+        let mut channel_name = None;
+        let mut channel_avatar_id = None;
+        let mut users_failed_with_error: Vec<UserFailedError> = Vec::new();
+        let mut users_added: Vec<UserId> = Vec::new();
+        let mut users_already_in_channel: Vec<UserId> = Vec::new();
+        let mut users_limit_reached: Vec<UserId> = Vec::new();
+
+        if let Some(channel) = self.channels.get_mut(channel_id) {
+            let (min_visible_event_index, min_visible_message_index) = channel.chat.min_visible_indexes_for_new_members();
+
+            let gate_expiry = channel.chat.gate_config.value.as_ref().and_then(|gc| gc.expiry());
+
+            for (user_id, user_type) in users_to_add {
+                match channel.chat.members.add(
+                    user_id,
+                    now,
+                    min_visible_event_index,
+                    min_visible_message_index,
+                    channel.chat.is_public.value,
+                    user_type,
+                ) {
+                    AddResult::Success(_) => {
+                        self.members.mark_member_joined_channel(user_id, channel.id);
+
+                        if !matches!(user_type, UserType::BotV2) {
+                            users_added.push(user_id);
+                        }
+
+                        if !user_type.is_bot() {
+                            if let Some(gate_expiry) = gate_expiry {
+                                self.expiring_members.push(ExpiringMember {
+                                    expires: now + gate_expiry,
+                                    channel_id: Some(channel.id),
+                                    user_id,
+                                });
+                            }
+                        }
+                    }
+                    AddResult::AlreadyInGroup => users_already_in_channel.push(user_id),
+                    AddResult::MemberLimitReached(_) => users_limit_reached.push(user_id),
+                    AddResult::Blocked => users_failed_with_error.push(UserFailedError {
+                        user_id,
+                        error: "User blocked".to_string(),
+                    }),
+                }
+            }
+
+            if !users_added.is_empty() {
+                let event = MembersAdded {
+                    user_ids: users_added.clone(),
+                    added_by,
+                    unblocked: Vec::new(),
+                };
+
+                channel
+                    .chat
+                    .events
+                    .push_main_event(ChatEventInternal::ParticipantsAdded(Box::new(event)), 0, now);
+            }
+
+            channel_name = Some(channel.chat.name.value.clone());
+            channel_avatar_id = channel.chat.avatar.as_ref().map(|d| d.id);
+        }
+
+        AddUsersToChannelResult {
+            channel_name,
+            channel_avatar_id,
+            users_failed_with_error,
+            users_added,
+            users_already_in_channel,
+            users_limit_reached,
+        }
+    }
+
+    pub fn add_bot(
+        &mut self,
+        owner_id: UserId,
+        bot_user_id: UserId,
+        granted_permissions: SlashCommandPermissions,
+        now: TimestampMillis,
+    ) -> bool {
+        if !self.bot_permissions.contains_key(&bot_user_id) {
+            return false;
+        }
+
+        // Insert the granted bot permissions
+        self.bot_permissions.insert(bot_user_id, granted_permissions);
+
+        // Add the bot as a community member
+        self.members.add(bot_user_id, bot_user_id.into(), UserType::BotV2, None, now);
+        self.invited_users.remove(&bot_user_id, now);
+
+        // Add the bot as a member of each channel
+        let channel_ids: Vec<_> = self.channels.iter().map(|c| c.id).collect();
+        for channel_id in channel_ids {
+            self.add_members_to_channel(&channel_id, vec![(bot_user_id, UserType::BotV2)], owner_id, now);
+        }
+
+        // Publish community event
+        self.events.push_event(
+            CommunityEventInternal::BotAdded(Box::new(BotAdded {
+                bot_id: bot_user_id,
+                added_by: owner_id,
+            })),
+            now,
+        );
+
+        // TODO: Notify UserIndex
+
+        true
+    }
+
+    pub fn remove_bot(&mut self, owner_id: UserId, bot_user_id: UserId, now: TimestampMillis) -> bool {
+        if self.bot_permissions.remove(&bot_user_id).is_none() {
+            return false;
+        }
+
+        // Remove bot user from each channel
+        for channel in self.channels.iter_mut() {
+            channel.chat.remove_member(owner_id, bot_user_id, false, now);
+        }
+
+        // Remove bot user from the community
+        self.remove_user_from_community(bot_user_id, now);
+
+        // Publish community event
+        self.events.push_event(
+            CommunityEventInternal::BotRemoved(Box::new(BotRemoved {
+                bot_id: bot_user_id,
+                removed_by: owner_id,
+            })),
+            now,
+        );
+
+        // TODO: Notify UserIndex
+
+        true
+    }
+
+    pub fn get_bot_permissions(&self, bot_user_id: &UserId) -> Option<&SlashCommandPermissions> {
+        self.bot_permissions.get(bot_user_id)
+    }
+
+    pub fn get_user_permissions_for_bot_commands(
+        &self,
+        user_id: &UserId,
+        channel_id: &ChannelId,
+    ) -> Option<SlashCommandPermissions> {
+        let community_member = self.members.get_by_user_id(user_id)?;
+        let community_permissions = community_member.role().permissions(&self.permissions);
+
+        let channel = self.channels.get(channel_id)?;
+        let channel_member = channel.chat.members.get_verified_member(*user_id).ok()?;
+
+        let channel_permissions = channel_member.role().permissions(&channel.chat.permissions);
+        let message_permissions = channel_member
+            .role()
+            .message_permissions(&channel.chat.permissions.message_permissions);
+        let thread_permissions = channel
+            .chat
+            .permissions
+            .thread_permissions
+            .as_ref()
+            .map_or(message_permissions.clone(), |thread_permissions| {
+                channel_member.role().message_permissions(thread_permissions)
+            });
+
+        Some(SlashCommandPermissions {
+            community: community_permissions,
+            chat: channel_permissions,
+            message: message_permissions,
+            thread: thread_permissions,
+        })
     }
 }
 
@@ -713,6 +910,7 @@ pub struct Metrics {
     pub event_store_client_info: EventStoreClientInfo,
     pub timer_jobs: u32,
     pub members_migrated_to_stable_memory: bool,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }
 
@@ -727,4 +925,18 @@ pub struct CanisterIds {
     pub escrow: CanisterId,
     pub icp_ledger: CanisterId,
     pub internet_identity: CanisterId,
+}
+
+pub struct AddUsersToChannelResult {
+    pub channel_name: Option<String>,
+    pub channel_avatar_id: Option<u128>,
+    pub users_failed_with_error: Vec<UserFailedError>,
+    pub users_added: Vec<UserId>,
+    pub users_already_in_channel: Vec<UserId>,
+    pub users_limit_reached: Vec<UserId>,
+}
+
+fn deserialize_to_timestamped<'de, D: Deserializer<'de>, T: Deserialize<'de>>(d: D) -> Result<Timestamped<T>, D::Error> {
+    let value = T::deserialize(d)?;
+    Ok(Timestamped::new(value, canister_time::now_millis()))
 }

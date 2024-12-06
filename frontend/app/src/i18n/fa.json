@@ -149,6 +149,65 @@
     "blockUserFailed": "مسدود کردن کاربر ممکن نیست",
     "blockUserSucceeded": "کاربر مسدود شده است",
     "bots": {
+        "builder": {
+            "addAnother": "دیگری اضافه کنید",
+            "addChoice": "یک انتخاب اضافه کنید",
+            "addCommand": "دستور اضافه کنید",
+            "addParam": "یک پارامتر اضافه کنید",
+            "choiceName": "نام انتخابی",
+            "choices": "انتخاب ها",
+            "choicesInfo": "اگر مجموعه ای از انتخاب ها را برای پارامتر خود وارد کنید، یک کشویی برای انتخاب مقدار صحیح به کاربر نمایش داده می شود.",
+            "choiceValue": "ارزش انتخابی",
+            "commandDescLabel": "توضیحات فرمان",
+            "commandDescPlaceholder": "توضیحات دستور را وارد کنید",
+            "commandLabel": "دستور: /{name}",
+            "commandNameLabel": "نام فرمان",
+            "commandNamePlaceholder": "نام فرمان را وارد کنید",
+            "commandPermissionsDesc": "مجوزهای مورد نیاز این دستور را شرح دهید",
+            "commandPermissionsLabel": "مجوزهای فرمان",
+            "descLabel": "توضیحات ربات",
+            "descPlaceholder": "توضیحات ربات را وارد کنید",
+            "endpointLabel": "نقطه پایانی ربات",
+            "endpointRules": "باید مبدأ معتبر یا شناسه قوطی باشد",
+            "errors": {
+                "alphaOnly": "فقط باید دارای حروف الفبا و زیرخط باشد",
+                "duplicateCommands": "ربات حاوی دستورات تکراری است",
+                "duplicateParams": "فرمان حاوی پارامترهای تکراری است",
+                "endpoint": "نقطه پایانی باید یک مبدا یا شناسه canister معتبر باشد",
+                "minLength": "باید حداقل {n} کاراکتر داشته باشد",
+                "noCommands": "یک ربات باید حداقل یک دستور داشته باشد"
+            },
+            "iconLabel": "نماد ربات",
+            "maxLengthLabel": "حداکثر طول",
+            "maxLengthPlaceholder": "حداکثر طول را وارد کنید",
+            "maxValueLabel": "حداکثر مقدار",
+            "maxValuePlaceholder": "حداکثر مقدار را وارد کنید",
+            "minLengthLabel": "حداقل طول",
+            "minLengthPlaceholder": "حداقل طول را وارد کنید",
+            "minValueLabel": "حداقل ارزش",
+            "minValuePlaceholder": "حداقل مقدار را وارد کنید",
+            "nameLabel": "نام ربات",
+            "namePlaceholder": "نام ربات را وارد کنید",
+            "nameRules": "باید منحصر به فرد باشد و فقط شامل نویسه های الفبایی و زیرخط باشد",
+            "optional": "اختیاری",
+            "paramDescLabel": "توضیحات پارامتر",
+            "paramDescPlaceholder": "توضیحات پارامتر را وارد کنید",
+            "paramLabel": "پارامتر: {name}",
+            "paramNameLabel": "نام پارامتر",
+            "paramNamePlaceholder": "نام پارامتر را وارد کنید",
+            "paramPlaceholderLabel": "مکان نگهدار پارامتر",
+            "paramPlaceholderPlaceholder": "متغیر پارامتر پارامتر را وارد کنید",
+            "paramTypeLabel": "نوع پارام",
+            "permSameAsMessage": "مانند مجوزهای پیام",
+            "permScopeChat": "چت کنید",
+            "permScopeCommunity": "جامعه",
+            "permScopeMessage": "پیام",
+            "permScopeThread": "موضوع",
+            "required": "پارامتر مورد نیاز",
+            "requiredDesc": "آیا این یک پارامتر لازم برای دستور است؟",
+            "title": "یک ربات بسازید",
+            "uptoN": "تا {n}"
+        },
         "builtin": {
             "desc": "این ربات دستورات داخلی OpenChat را ارائه می دهد",
             "name": "ساخته شده است"
@@ -214,6 +273,9 @@
         "poll": {
             "desc": "یک نظرسنجی در چت فعلی ایجاد کنید"
         },
+        "register_bot": {
+            "desc": "یک پیشنهاد برای توصیف و ثبت یک ربات جدید با OpenChat شروع کنید"
+        },
         "search": {
             "desc": "جستجو را در چت فعلی آغاز کنید",
             "params": {
@@ -223,6 +285,9 @@
                     "placeholder": "عبارت جستجو"
                 }
             }
+        },
+        "update_bot": {
+            "desc": "پیشنهادی را برای به روز رسانی ربات OpenChat موجود شروع کنید"
         },
         "witch": {
             "desc": "جادوگر را احضار کن"

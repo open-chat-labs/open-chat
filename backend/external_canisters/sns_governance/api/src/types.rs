@@ -2074,7 +2074,7 @@ impl TryFrom<ProposalData> for types::SnsProposal {
     type Error = &'static str;
 
     fn try_from(p: ProposalData) -> Result<Self, Self::Error> {
-        let now = canister_time::timestamp_millis();
+        let now = canister_time::now_millis();
         let now_seconds = now / 1000;
         let status = p.status();
         let reward_status = p.reward_status(now_seconds);

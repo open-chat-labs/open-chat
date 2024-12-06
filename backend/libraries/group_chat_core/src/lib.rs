@@ -31,7 +31,6 @@ use utils::text_validation::{
 
 mod invited_users;
 mod members;
-mod members_map;
 mod mentions;
 mod roles;
 
@@ -58,7 +57,6 @@ pub struct GroupChatCore {
     pub pinned_messages_removed: BTreeSet<(TimestampMillis, MessageIndex)>,
     pub permissions: Timestamped<GroupPermissions>,
     pub date_last_pinned: Option<TimestampMillis>,
-    #[serde(alias = "gate")]
     pub gate_config: Timestamped<Option<AccessGateConfigInternal>>,
     pub invited_users: InvitedUsers,
     pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
@@ -1210,6 +1208,21 @@ impl GroupChatCore {
         }
     }
 
+    pub fn min_visible_indexes_for_new_members(&self) -> (EventIndex, MessageIndex) {
+        if self.history_visible_to_new_joiners {
+            self.min_visible_indexes_for_new_members.unwrap_or_default()
+        } else {
+            // If there is only an initial "group created" event then allow these users
+            // to see the "group created" event by starting min_visible_* at zero
+            let events_reader = self.events.main_events_reader();
+            if events_reader.latest_event_index().unwrap_or_default() > EventIndex::from(1) {
+                (events_reader.next_event_index(), events_reader.next_message_index())
+            } else {
+                (EventIndex::default(), MessageIndex::default())
+            }
+        }
+    }
+
     pub fn invite_users(&mut self, invited_by: UserId, user_ids: Vec<UserId>, now: TimestampMillis) -> InvitedUsersResult {
         use InvitedUsersResult::*;
 
@@ -1237,22 +1250,7 @@ impl GroupChatCore {
                     }
 
                     // Find the latest event and message that the invited users are allowed to see
-                    let mut min_visible_event_index = EventIndex::default();
-                    let mut min_visible_message_index = MessageIndex::default();
-                    if self.history_visible_to_new_joiners {
-                        let (e, m) = self.min_visible_indexes_for_new_members.unwrap_or_default();
-
-                        min_visible_event_index = e;
-                        min_visible_message_index = m;
-                    } else {
-                        // If there is only an initial "group created" event then allow these users
-                        // to see the "group created" event by starting min_visible_* at zero
-                        let events_reader = self.events.main_events_reader();
-                        if events_reader.latest_event_index().unwrap_or_default() > EventIndex::from(1) {
-                            min_visible_event_index = events_reader.next_event_index();
-                            min_visible_message_index = events_reader.next_message_index();
-                        }
-                    };
+                    let (min_visible_event_index, min_visible_message_index) = self.min_visible_indexes_for_new_members();
 
                     // Add new invites
                     for user_id in invited_users.iter() {
@@ -1375,6 +1373,8 @@ impl GroupChatCore {
                     .role()
                     .can_remove_members_with_role(target_member_role, &self.permissions)
                 {
+                    let is_bot_v2 = matches!(member.user_type(), UserType::BotV2);
+
                     // Remove the user from the group
                     self.members.remove(target_user_id, now);
 
@@ -1383,22 +1383,24 @@ impl GroupChatCore {
                         return Success;
                     }
 
-                    // Push relevant event
-                    let event = if block {
-                        let event = UsersBlocked {
-                            user_ids: vec![target_user_id],
-                            blocked_by: user_id,
-                        };
+                    if !is_bot_v2 {
+                        // Push relevant event
+                        let event = if block {
+                            let event = UsersBlocked {
+                                user_ids: vec![target_user_id],
+                                blocked_by: user_id,
+                            };
 
-                        ChatEventInternal::UsersBlocked(Box::new(event))
-                    } else {
-                        let event = MembersRemoved {
-                            user_ids: vec![target_user_id],
-                            removed_by: user_id,
+                            ChatEventInternal::UsersBlocked(Box::new(event))
+                        } else {
+                            let event = MembersRemoved {
+                                user_ids: vec![target_user_id],
+                                removed_by: user_id,
+                            };
+                            ChatEventInternal::ParticipantsRemoved(Box::new(event))
                         };
-                        ChatEventInternal::ParticipantsRemoved(Box::new(event))
-                    };
-                    self.events.push_main_event(event, 0, now);
+                        self.events.push_main_event(event, 0, now);
+                    }
 
                     Success
                 } else {

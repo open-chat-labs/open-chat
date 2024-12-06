@@ -149,6 +149,65 @@
     "blockUserFailed": "Nie można zablokować użytkownika",
     "blockUserSucceeded": "Użytkownik został zablokowany",
     "bots": {
+        "builder": {
+            "addAnother": "Dodaj kolejny",
+            "addChoice": "Dodaj wybór",
+            "addCommand": "Dodaj polecenie",
+            "addParam": "Dodaj parametr",
+            "choiceName": "Nazwa wyboru",
+            "choices": "Wybory",
+            "choicesInfo": "Jeśli wprowadzisz zestaw wyborów dla swojego parametru, użytkownikowi zostanie wyświetlona lista rozwijana umożliwiająca wybór właściwej wartości.",
+            "choiceValue": "Wartość wyboru",
+            "commandDescLabel": "Opis polecenia",
+            "commandDescPlaceholder": "Wprowadź opis polecenia",
+            "commandLabel": "Polecenie: /{name}",
+            "commandNameLabel": "Nazwa polecenia",
+            "commandNamePlaceholder": "Wprowadź nazwę polecenia",
+            "commandPermissionsDesc": "Opisz uprawnienia, których wymaga to polecenie",
+            "commandPermissionsLabel": "Uprawnienia do poleceń",
+            "descLabel": "Opis bota",
+            "descPlaceholder": "Wprowadź opis bota",
+            "endpointLabel": "Punkt końcowy bota",
+            "endpointRules": "Musi to być prawidłowe pochodzenie lub canisterID",
+            "errors": {
+                "alphaOnly": "Może zawierać wyłącznie znaki alfanumeryczne i podkreślenia",
+                "duplicateCommands": "Bot zawiera zduplikowane polecenia",
+                "duplicateParams": "Polecenie zawiera zduplikowane parametry",
+                "endpoint": "Punkt końcowy musi być prawidłowym źródłem lub identyfikatorem kanistra",
+                "minLength": "Musi mieć co najmniej {n} znaków",
+                "noCommands": "Bot musi zawierać co najmniej jedno polecenie"
+            },
+            "iconLabel": "Ikona bota",
+            "maxLengthLabel": "Maksymalna długość",
+            "maxLengthPlaceholder": "Wprowadź maksymalną długość",
+            "maxValueLabel": "Maksymalna wartość",
+            "maxValuePlaceholder": "Wprowadź maksymalną wartość",
+            "minLengthLabel": "Minimalna długość",
+            "minLengthPlaceholder": "Wprowadź minimalną długość",
+            "minValueLabel": "Wartość minimalna",
+            "minValuePlaceholder": "Wprowadź minimalną wartość",
+            "nameLabel": "Nazwa bota",
+            "namePlaceholder": "Wprowadź nazwę bota",
+            "nameRules": "Musi być unikalny i zawierać wyłącznie znaki alfanumeryczne oraz podkreślenia",
+            "optional": "fakultatywny",
+            "paramDescLabel": "Opis parametrów",
+            "paramDescPlaceholder": "Wprowadź opis parametru",
+            "paramLabel": "Parametr: {name}",
+            "paramNameLabel": "Nazwa parametru",
+            "paramNamePlaceholder": "Wprowadź nazwę parametru",
+            "paramPlaceholderLabel": "Symbol zastępczy parametru",
+            "paramPlaceholderPlaceholder": "Wprowadź symbol zastępczy parametru",
+            "paramTypeLabel": "Typ parametru",
+            "permSameAsMessage": "Tak samo jak uprawnienia do wiadomości",
+            "permScopeChat": "Pogawędzić",
+            "permScopeCommunity": "Wspólnota",
+            "permScopeMessage": "Wiadomość",
+            "permScopeThread": "Nitka",
+            "required": "Wymagany parametr",
+            "requiredDesc": "Czy jest to wymagany parametr dla polecenia?",
+            "title": "Zbuduj bota",
+            "uptoN": "do {n}"
+        },
         "builtin": {
             "desc": "Ten bot zapewnia wbudowane polecenia OpenChat",
             "name": "Wbudowany"
@@ -214,6 +273,9 @@
         "poll": {
             "desc": "Utwórz ankietę w bieżącym czacie"
         },
+        "register_bot": {
+            "desc": "Rozpocznij propozycję opisania i zarejestrowania nowego bota w OpenChat"
+        },
         "search": {
             "desc": "Rozpocznij wyszukiwanie w bieżącym czacie",
             "params": {
@@ -223,6 +285,9 @@
                     "placeholder": "Termin wyszukiwania"
                 }
             }
+        },
+        "update_bot": {
+            "desc": "Rozpocznij propozycję aktualizacji istniejącego bota OpenChat"
         },
         "witch": {
             "desc": "Przywołaj czarownicę"

@@ -4,13 +4,13 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::ops::DerefMut;
 use types::{
-    is_default, AccessGate, AccessGateConfigInternal, AvatarChanged, ChannelId, Chat, ChatId, CommunityId, DeletedBy,
-    DirectChatCreated, EventIndex, EventWrapperInternal, EventsTimeToLiveUpdated, ExternalUrlUpdated, GroupCreated,
-    GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext,
-    GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, MemberJoined, MemberLeft, MembersAdded,
-    MembersAddedToDefaultChannel, MembersRemoved, Message, MessageContent, MessageId, MessageIndex, MessagePinned,
-    MessageUnpinned, MultiUserChat, PermissionsChanged, PushIfNotContains, Reaction, ReplyContext, RoleChanged, ThreadSummary,
-    TimestampMillis, Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
+    is_default, AccessGate, AccessGateConfigInternal, AvatarChanged, BotAdded, BotRemoved, ChannelId, Chat, ChatId,
+    CommunityId, DeletedBy, DirectChatCreated, EventIndex, EventWrapperInternal, EventsTimeToLiveUpdated, ExternalUrlUpdated,
+    GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged,
+    GroupReplyContext, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, MemberJoinedInternal, MemberLeft,
+    MembersAdded, MembersAddedToDefaultChannel, MembersRemoved, Message, MessageContent, MessageId, MessageIndex,
+    MessagePinned, MessageUnpinned, MultiUserChat, PermissionsChanged, PushIfNotContains, Reaction, ReplyContext, RoleChanged,
+    ThreadSummary, TimestampMillis, Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -34,7 +34,7 @@ pub enum ChatEventInternal {
     #[serde(rename = "mr")]
     ParticipantsRemoved(Box<MembersRemoved>),
     #[serde(rename = "mj")]
-    ParticipantJoined(Box<MemberJoined>),
+    ParticipantJoined(Box<MemberJoinedInternal>),
     #[serde(rename = "ml")]
     ParticipantLeft(Box<MemberLeft>),
     #[serde(rename = "rc")]
@@ -67,6 +67,10 @@ pub enum ChatEventInternal {
     MembersAddedToPublicChannel(Box<MembersAddedToPublicChannelInternal>),
     #[serde(rename = "xu")]
     ExternalUrlUpdated(Box<ExternalUrlUpdated>),
+    #[serde(rename = "ba")]
+    BotAdded(Box<BotAdded>),
+    #[serde(rename = "br")]
+    BotRemoved(Box<BotRemoved>),
     #[serde(rename = "e")]
     Empty,
     // This should never happen!

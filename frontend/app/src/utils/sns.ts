@@ -1,5 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { IDL } from "@dfinity/candid";
 import { Principal } from "@dfinity/principal";
+import {
+    type ExternalBot,
+    type SlashCommandPermissions,
+    type ChatPermissions,
+    type CommunityPermissions,
+    type MessagePermission,
+    type SlashCommandParam,
+} from "openchat-client";
 
 export const OC_GOVERNANCE_CANISTER_ID = "2jvtu-yqaaa-aaaaq-aaama-cai";
 
@@ -70,6 +79,247 @@ export function createUpdateTokenPayload(
                     ledger_canister_id: Principal.fromText(ledgerCanisterId),
                     symbol: optionalStringToCandid(symbol),
                     transaction_url_format: optionalStringToCandid(transactionUrlFormat),
+                },
+            ],
+        ),
+    );
+}
+
+const ApiGroupPermission = IDL.Variant({
+    StartVideoCall: IDL.Null,
+    DeleteMessages: IDL.Null,
+    RemoveMembers: IDL.Null,
+    UpdateGroup: IDL.Null,
+    ReactToMessages: IDL.Null,
+    AddMembers: IDL.Null,
+    InviteUsers: IDL.Null,
+    MentionAllMembers: IDL.Null,
+    PinMessages: IDL.Null,
+    ChangeRoles: IDL.Null,
+});
+const ApiCommunityPermission = IDL.Variant({
+    RemoveMembers: IDL.Null,
+    CreatePublicChannel: IDL.Null,
+    InviteUsers: IDL.Null,
+    ManageUserGroups: IDL.Null,
+    UpdateDetails: IDL.Null,
+    CreatePrivateChannel: IDL.Null,
+    ChangeRoles: IDL.Null,
+});
+const ApiMessagePermission = IDL.Variant({
+    VideoCall: IDL.Null,
+    Giphy: IDL.Null,
+    File: IDL.Null,
+    Poll: IDL.Null,
+    Text: IDL.Null,
+    Image: IDL.Null,
+    Prize: IDL.Null,
+    P2pSwap: IDL.Null,
+    Audio: IDL.Null,
+    Crypto: IDL.Null,
+    Video: IDL.Null,
+});
+const ApiSlashCommandPermissions = IDL.Record({
+    chat: IDL.Vec(ApiGroupPermission),
+    community: IDL.Vec(ApiCommunityPermission),
+    thread: IDL.Vec(ApiMessagePermission),
+    message: IDL.Vec(ApiMessagePermission),
+});
+const ApiNumberParamChoice = IDL.Record({
+    value: IDL.Nat16,
+    name: IDL.Text,
+});
+const ApiNumberParam = IDL.Record({
+    min_length: IDL.Nat16,
+    max_length: IDL.Nat16,
+    choices: IDL.Vec(ApiNumberParamChoice),
+});
+const ApiStringParamChoice = IDL.Record({
+    value: IDL.Text,
+    name: IDL.Text,
+});
+const ApiStringParam = IDL.Record({
+    min_length: IDL.Nat16,
+    max_length: IDL.Nat16,
+    choices: IDL.Vec(ApiStringParamChoice),
+});
+const ApiSlashCommandParamType = IDL.Variant({
+    UserParam: IDL.Null,
+    NumberParam: ApiNumberParam,
+    StringParam: ApiStringParam,
+    BooleanParam: IDL.Null,
+});
+const ApiSlashCommandParam = IDL.Record({
+    name: IDL.Text,
+    description: IDL.Opt(IDL.Text),
+    required: IDL.Bool,
+    placeholder: IDL.Opt(IDL.Text),
+    param_type: ApiSlashCommandParamType,
+});
+const ApiSlashCommandSchema = IDL.Record({
+    permissions: ApiSlashCommandPermissions,
+    name: IDL.Text,
+    description: IDL.Opt(IDL.Text),
+    params: IDL.Vec(ApiSlashCommandParam),
+});
+
+function createCommandParamType(param: SlashCommandParam): Record<string, any> {
+    switch (param.kind) {
+        case "boolean":
+            return { BooleanParam: null };
+        case "string":
+            return {
+                StringParam: {
+                    min_length: param.minLength,
+                    max_length: param.maxLength,
+                    choices: param.choices.map((c) => ({
+                        name: c.name,
+                        value: c.value,
+                    })),
+                },
+            };
+        case "user":
+            return { UserParam: null };
+        case "number":
+            return {
+                NumberParam: {
+                    min_length: param.minValue,
+                    max_length: param.maxValue,
+                    choices: param.choices.map((c) => ({
+                        name: c.name,
+                        value: c.value,
+                    })),
+                },
+            };
+        default:
+            return {};
+    }
+}
+
+function createGroupPermission(perm: keyof ChatPermissions): Record<string, any> {
+    switch (perm) {
+        case "addMembers":
+            return { AddMembers: null };
+        case "changeRoles":
+            return { ChangeRoles: null };
+        case "deleteMessages":
+            return { DeleteMessages: null };
+        case "inviteUsers":
+            return { InviteUsers: null };
+        case "mentionAllMembers":
+            return { MentionAllMembers: null };
+        case "pinMessages":
+            return { PinMessages: null };
+        case "reactToMessages":
+            return { ReactToMessages: null };
+        case "removeMembers":
+            return { RemoveMembers: null };
+        case "startVideoCall":
+            return { StartVideoCall: null };
+        case "updateGroup":
+            return { UpdateGroup: null };
+        default:
+            return {};
+    }
+}
+
+function createCommunityPermission(perm: keyof CommunityPermissions): Record<string, any> {
+    switch (perm) {
+        case "changeRoles":
+            return { ChangeRoles: null };
+        case "createPrivateChannel":
+            return { CreatePrivateChannel: null };
+        case "createPublicChannel":
+            return { CreatePublicChannel: null };
+        case "inviteUsers":
+            return { InviteUsers: null };
+        case "manageUserGroups":
+            return { ManageUserGroups: null };
+        case "removeMembers":
+            return { RemoveMembers: null };
+        case "updateDetails":
+            return { UpdateDetails: null };
+        default:
+            return {};
+    }
+}
+
+function createMessagePermission(perm: MessagePermission): Record<string, any> {
+    switch (perm) {
+        case "audio":
+            return { Audio: null };
+        case "crypto":
+            return { Crypto: null };
+        case "file":
+            return { File: null };
+        case "giphy":
+            return { Giphy: null };
+        case "image":
+            return { Image: null };
+        case "memeFighter":
+            return { MemeFighter: null };
+        case "p2pSwap":
+            return { P2pSwap: null };
+        case "poll":
+            return { Poll: null };
+        case "prize":
+            return { Prize: null };
+        case "text":
+            return { Text: null };
+        case "video":
+            return { Video: null };
+        default:
+            return {};
+    }
+}
+
+function createPermissions(perm: SlashCommandPermissions): Record<string, any> {
+    return {
+        chat: perm.chatPermissions.map(createGroupPermission),
+        community: perm.communityPermissions.map(createCommunityPermission),
+        message: perm.messagePermissions.map(createMessagePermission),
+        thread: perm.messagePermissions.map(createMessagePermission),
+    };
+}
+
+export function createRegisterExternalBotPayload(
+    userId: string,
+    ownerId: string,
+    candidate: ExternalBot,
+): Uint8Array {
+    return new Uint8Array(
+        IDL.encode(
+            [
+                IDL.Record({
+                    principal: IDL.Principal,
+                    endpoint: IDL.Text,
+                    owner: IDL.Principal,
+                    name: IDL.Text,
+                    description: IDL.Text,
+                    commands: IDL.Vec(ApiSlashCommandSchema),
+                    avatar: IDL.Opt(IDL.Text),
+                }),
+            ],
+            [
+                {
+                    principal: Principal.fromText(userId),
+                    endpoint: candidate.endpoint,
+                    owner: Principal.fromText(ownerId),
+                    name: candidate.name,
+                    description: candidate.description ?? "",
+                    avatar: optionalStringToCandid(candidate.avatar),
+                    commands: candidate.commands.map((c) => ({
+                        name: c.name,
+                        description: optionalStringToCandid(c.description),
+                        permissions: createPermissions(c.permissions),
+                        params: c.params.map((p) => ({
+                            name: p.name,
+                            description: optionalStringToCandid(p.description),
+                            required: p.required,
+                            placeholder: optionalStringToCandid(p.placeholder),
+                            param_type: createCommandParamType(p),
+                        })),
+                    })),
                 },
             ],
         ),

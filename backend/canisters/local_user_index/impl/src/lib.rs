@@ -255,18 +255,6 @@ impl RuntimeState {
                 .iter()
                 .map(|u| u.1.wasm_version.to_string())
                 .count_per_value(),
-            canister_ids: CanisterIds {
-                user_index: self.data.user_index_canister_id,
-                group_index: self.data.group_index_canister_id,
-                identity: self.data.identity_canister_id,
-                notifications: self.data.notifications_canister_id,
-                proposals_bot: self.data.proposals_bot_canister_id,
-                cycles_dispenser: self.data.cycles_dispenser_canister_id,
-                escrow: self.data.escrow_canister_id,
-                event_relay: event_relay_canister_id,
-                internet_identity: self.data.internet_identity_canister_id,
-                website: self.data.website_canister_id,
-            },
             oc_secret_key_initialized: self.data.oc_key_pair.is_initialised(),
             canister_upgrades_failed: canister_upgrades_metrics.failed,
             cycles_balance_check_queue_len: self.data.cycles_balance_check_queue.len() as u32,
@@ -280,6 +268,19 @@ impl RuntimeState {
                     commands: b.commands.iter().map(|c| c.name.clone()).collect(),
                 })
                 .collect(),
+            stable_memory_sizes: memory::memory_sizes(),
+            canister_ids: CanisterIds {
+                user_index: self.data.user_index_canister_id,
+                group_index: self.data.group_index_canister_id,
+                identity: self.data.identity_canister_id,
+                notifications: self.data.notifications_canister_id,
+                proposals_bot: self.data.proposals_bot_canister_id,
+                cycles_dispenser: self.data.cycles_dispenser_canister_id,
+                escrow: self.data.escrow_canister_id,
+                event_relay: event_relay_canister_id,
+                internet_identity: self.data.internet_identity_canister_id,
+                website: self.data.website_canister_id,
+            },
         }
     }
 }
@@ -426,11 +427,12 @@ pub struct Metrics {
     pub referral_codes: HashMap<ReferralType, ReferralTypeMetrics>,
     pub event_store_client_info: EventStoreClientInfo,
     pub user_versions: BTreeMap<String, u32>,
-    pub canister_ids: CanisterIds,
     pub oc_secret_key_initialized: bool,
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
     pub cycles_balance_check_queue_len: u32,
     pub bots: Vec<BotMetrics>,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
+    pub canister_ids: CanisterIds,
 }
 
 #[derive(Serialize, Debug)]

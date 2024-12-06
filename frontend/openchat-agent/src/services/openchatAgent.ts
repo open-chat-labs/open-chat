@@ -3226,6 +3226,7 @@ export class OpenChatAgent extends EventTarget {
                         };
                         setCachedRegistry(updated);
                         this._registryValue = updated;
+                        this._dexesAgent.updateTokenDetails(updated.tokenDetails);
                         resolve([updated, true], true);
                     } else if (updates.kind === "success_no_updates" && current !== undefined) {
                         resolve([current, false], true);

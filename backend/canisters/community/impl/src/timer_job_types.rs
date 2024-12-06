@@ -458,24 +458,6 @@ impl Job for MarkVideoCallEndedJob {
 
 impl Job for MigrateMembersToStableMemoryJob {
     fn execute(self) {
-        mutate_state(|state| {
-            let mut complete = true;
-            for channel in state.data.channels.iter_mut() {
-                if !channel.chat.members.migrate_next_batch_to_stable_memory() {
-                    complete = false;
-                    break;
-                }
-            }
-            if !complete {
-                let now = state.env.now();
-                state
-                    .data
-                    .timer_jobs
-                    .enqueue_job(TimerJob::MigrateMembersToStableMemory(self), now + (10 * SECOND_IN_MS), now);
-            } else {
-                state.data.members_migrated_to_stable_memory = true;
-                info!("Finished migrating members to stable memory");
-            }
-        })
+        info!("MigrateMembersToStableMemoryJob executed")
     }
 }

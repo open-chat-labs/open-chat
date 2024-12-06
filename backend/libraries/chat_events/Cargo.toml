@@ -24,7 +24,6 @@ sha2 = { workspace = true }
 stable_memory_map = { path = "../stable_memory_map" }
 tracing = { workspace = true }
 types = { path = "../types" }
-utils = { path = "../utils" }
 
 [dev-dependencies]
 msgpack = { path = "../msgpack" }

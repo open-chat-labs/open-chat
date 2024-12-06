@@ -7,7 +7,7 @@ use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use chat_events::Reader;
+use chat_events::{ChatEventInternal, Reader};
 use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, SNS_LEDGER_CANISTER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
@@ -27,15 +27,15 @@ use serde_bytes::ByteBuf;
 use stable_memory_map::{ChatEventKeyPrefix, KeyPrefix};
 use std::cell::RefCell;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    AccessGateConfigInternal, Achievement, BuildVersion, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles,
-    Document, Empty, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions,
-    GroupSubtype, MessageIndex, Milliseconds, MultiUserChat, Notification, Rules, TimestampMillis, Timestamped, UserId,
-    UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
+    AccessGateConfigInternal, Achievement, BotAdded, BotRemoved, BuildVersion, CanisterId, ChatId, ChatMetrics, CommunityId,
+    Cryptocurrency, Cycles, Document, Empty, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership,
+    GroupPermissions, GroupSubtype, MessageIndex, Milliseconds, MultiUserChat, Notification, Rules, SlashCommandPermissions,
+    TimestampMillis, Timestamped, UserId, UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
 };
 use user_canister::GroupCanisterEvent;
 use utils::env::Environment;
@@ -263,7 +263,6 @@ impl RuntimeState {
         } else if self.data.is_frozen() {
             ChatFrozen
         } else {
-            assert!(self.data.members_migrated_to_stable_memory);
             let transfers_required = self.prepare_transfers_for_import_into_community();
             let serialized = serialize_then_unwrap(&self.data.chat);
             let total_bytes = serialized.len() as u64;
@@ -419,7 +418,7 @@ impl RuntimeState {
                 .unwrap_or_default(),
             event_store_client_info: self.data.event_store_client.info(),
             timer_jobs: self.data.timer_jobs.len() as u32,
-            members_migrated_to_stable_memory: self.data.members_migrated_to_stable_memory,
+            stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -471,9 +470,8 @@ struct Data {
     expiring_member_actions: ExpiringMemberActions,
     user_cache: UserCache,
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
-    #[serde(default)]
-    members_migrated_to_stable_memory: bool,
     stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
+    bot_permissions: BTreeMap<UserId, SlashCommandPermissions>,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -570,7 +568,7 @@ impl Data {
             user_cache: UserCache::default(),
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
-            members_migrated_to_stable_memory: true,
+            bot_permissions: BTreeMap::new(),
         }
     }
 
@@ -696,6 +694,96 @@ impl Data {
                 .push(user_id, GroupCanisterEvent::Achievement(achievement));
         }
     }
+
+    pub fn add_bot(
+        &mut self,
+        owner_id: UserId,
+        bot_user_id: UserId,
+        granted_permissions: SlashCommandPermissions,
+        now: TimestampMillis,
+    ) -> bool {
+        if !self.bot_permissions.contains_key(&bot_user_id) {
+            return false;
+        }
+
+        // Insert the granted bot permissions
+        self.bot_permissions.insert(bot_user_id, granted_permissions);
+
+        // Add bot as member of group
+        let (min_visible_event_index, min_visible_message_index) = self.chat.min_visible_indexes_for_new_members();
+        self.chat.members.add(
+            bot_user_id,
+            now,
+            min_visible_event_index,
+            min_visible_message_index,
+            true,
+            UserType::BotV2,
+        );
+
+        // Push chat event
+        self.chat.events.push_main_event(
+            ChatEventInternal::BotAdded(Box::new(BotAdded {
+                bot_id: bot_user_id,
+                added_by: owner_id,
+            })),
+            0,
+            now,
+        );
+
+        // TODO: Notify UserIndex
+
+        true
+    }
+
+    pub fn remove_bot(&mut self, owner_id: UserId, bot_user_id: UserId, now: TimestampMillis) -> bool {
+        if self.bot_permissions.remove(&bot_user_id).is_none() {
+            return false;
+        }
+
+        // Remove bot user from the group
+        self.chat.remove_member(owner_id, bot_user_id, false, now);
+        self.remove_user(bot_user_id);
+
+        // Push chat event
+        self.chat.events.push_main_event(
+            ChatEventInternal::BotRemoved(Box::new(BotRemoved {
+                bot_id: bot_user_id,
+                removed_by: owner_id,
+            })),
+            0,
+            now,
+        );
+
+        // TODO: Notify UserIndex
+
+        true
+    }
+
+    pub fn get_bot_permissions(&self, bot_user_id: &UserId) -> Option<&SlashCommandPermissions> {
+        self.bot_permissions.get(bot_user_id)
+    }
+
+    pub fn get_user_permissions_for_bot_commands(&self, user_id: &UserId) -> Option<SlashCommandPermissions> {
+        let member = self.chat.members.get_verified_member(*user_id).ok()?;
+
+        let group_permissions = member.role().permissions(&self.chat.permissions);
+        let message_permissions = member.role().message_permissions(&self.chat.permissions.message_permissions);
+        let thread_permissions = self
+            .chat
+            .permissions
+            .thread_permissions
+            .as_ref()
+            .map_or(message_permissions.clone(), |thread_permissions| {
+                member.role().message_permissions(thread_permissions)
+            });
+
+        Some(SlashCommandPermissions {
+            community: HashSet::new(),
+            chat: group_permissions,
+            message: message_permissions,
+            thread: thread_permissions,
+        })
+    }
 }
 
 #[derive(Serialize, Debug)]
@@ -726,7 +814,7 @@ pub struct Metrics {
     pub serialized_chat_state_bytes: u64,
     pub event_store_client_info: EventStoreClientInfo,
     pub timer_jobs: u32,
-    pub members_migrated_to_stable_memory: bool,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }
 

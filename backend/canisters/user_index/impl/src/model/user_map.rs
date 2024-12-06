@@ -60,7 +60,6 @@ impl Bot {
             name: self.name.clone(),
             description: self.description.clone(),
             avatar_id: self.avatar.as_ref().map(|a| a.id),
-            banner_id: None,
             commands: self.commands.clone(),
         }
     }
@@ -198,6 +197,10 @@ impl UserMap {
 
     pub fn get_by_username(&self, username: &str) -> Option<&User> {
         self.username_to_user_id.get(username).and_then(|u| self.users.get(u))
+    }
+
+    pub fn get_bot(&self, user_id: &UserId) -> Option<&Bot> {
+        self.bots.get(user_id)
     }
 
     pub fn delete_user(&mut self, user_id: UserId, now: TimestampMillis) -> Option<User> {

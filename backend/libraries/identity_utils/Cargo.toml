@@ -5,6 +5,4 @@ edition = "2021"
 
 [dependencies]
 ic-cbor = { workspace = true }
-ic-certificate-verification = { workspace = true }
 ic-certification = { workspace = true }
-types = { path = "../types" }

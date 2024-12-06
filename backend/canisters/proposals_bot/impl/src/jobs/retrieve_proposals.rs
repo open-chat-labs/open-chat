@@ -9,13 +9,12 @@ use nns_governance_canister::types::{ListProposalInfo, ProposalInfo};
 use sns_governance_canister::types::ProposalData;
 use std::collections::HashSet;
 use std::time::Duration;
-use types::{CanisterId, Milliseconds, Proposal};
+use types::{CanisterId, Proposal};
 
 pub const NNS_TOPIC_NEURON_MANAGEMENT: i32 = 1;
 pub const NNS_TOPIC_EXCHANGE_RATE: i32 = 2;
 
 const BATCH_SIZE_LIMIT: u32 = 50;
-const RETRIEVE_PROPOSALS_INTERVAL: Milliseconds = MINUTE_IN_MS;
 
 const NNS_TOPIC_NETWORK_ECONOMICS: i32 = 3;
 const NNS_TOPIC_GOVERNANCE: i32 = 4;
@@ -26,8 +25,9 @@ const NNS_TOPICS_TO_PUSH_SNS_PROPOSALS_FOR: [i32; 3] = [
     NNS_TOPIC_SNS_AND_NEURON_FUND,
 ];
 
-pub fn start_job() {
-    ic_cdk_timers::set_timer_interval(Duration::from_millis(RETRIEVE_PROPOSALS_INTERVAL), run);
+pub fn start_job(state: &RuntimeState) {
+    let interval = Duration::from_millis(if state.data.test_mode { 30 * MINUTE_IN_MS } else { MINUTE_IN_MS });
+    ic_cdk_timers::set_timer_interval(interval, run);
 }
 
 pub fn run() {

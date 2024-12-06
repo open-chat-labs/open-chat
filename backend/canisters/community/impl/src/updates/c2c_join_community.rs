@@ -11,7 +11,7 @@ use gated_groups::{
     check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult, CheckVerifiedCredentialGateArgs, GatePayment,
 };
 use group_community_common::ExpiringMember;
-use types::{AccessGate, ChannelId, MemberJoined, UsersUnblocked};
+use types::{AccessGate, ChannelId, UsersUnblocked};
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
 #[trace]
@@ -44,7 +44,7 @@ pub(crate) async fn join_community(args: Args) -> Response {
             }
             read_state(|state| {
                 if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
-                    Success(Box::new(state.summary(Some(member), None)))
+                    Success(Box::new(state.summary(Some(&member), None)))
                 } else {
                     InternalError("User not found in community".to_string())
                 }
@@ -63,7 +63,7 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(Acc
 
     if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
         if !member.lapsed().value {
-            return Err(AlreadyInCommunity(Box::new(state.summary(Some(member), None))));
+            return Err(AlreadyInCommunity(Box::new(state.summary(Some(&member), None))));
         }
     } else if state.data.members.is_blocked(&args.user_id) {
         return Err(UserBlocked);
@@ -71,7 +71,7 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<(Acc
         return Err(MemberLimitReached(limit));
     } else if caller == state.data.user_index_canister_id || state.data.is_invited(args.principal) {
         return Ok(None);
-    } else if !state.data.is_public && !state.data.is_invite_code_valid(args.invite_code) {
+    } else if !state.data.is_public.value && !state.data.is_invite_code_valid(args.invite_code) {
         return Err(NotInvited);
     }
 
@@ -111,7 +111,7 @@ pub(crate) fn join_community_impl(
 
     // Unblock "platform moderator" if necessary
     if args.is_platform_moderator && state.data.members.is_blocked(&args.user_id) {
-        state.data.members.unblock(&args.user_id);
+        state.data.members.unblock(args.user_id, now);
 
         let event = UsersUnblocked {
             user_ids: vec![args.user_id],
@@ -141,7 +141,7 @@ pub(crate) fn join_community_impl(
         AddResult::AlreadyInCommunity => {
             let member = state.data.members.get_by_user_id(&args.user_id).unwrap();
             if !member.lapsed().value {
-                let summary = state.summary(Some(member), None);
+                let summary = state.summary(Some(&member), None);
                 return Err(AlreadyInCommunity(Box::new(summary)));
             }
         }
@@ -150,15 +150,7 @@ pub(crate) fn join_community_impl(
 
     state.data.invited_users.remove(&args.user_id, now);
 
-    if !matches!(result, AddResult::AlreadyInCommunity) {
-        state.data.events.push_event(
-            CommunityEventInternal::MemberJoined(Box::new(MemberJoined {
-                user_id: args.user_id,
-                invited_by: referred_by,
-            })),
-            now,
-        );
-    } else {
+    if matches!(result, AddResult::AlreadyInCommunity) {
         state.data.update_lapsed(args.user_id, None, false, now);
     }
 

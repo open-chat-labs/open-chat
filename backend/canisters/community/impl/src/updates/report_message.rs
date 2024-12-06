@@ -91,7 +91,7 @@ fn build_c2c_args(args: &Args, state: &RuntimeState) -> Result<(c2c_report_messa
             thread_root_message_index: args.thread_root_message_index,
             message,
             already_deleted: args.delete,
-            is_public: channel.chat.is_public.value && state.data.is_public,
+            is_public: channel.chat.is_public.value && state.data.is_public.value,
         },
         state.data.group_index_canister_id,
     ))

@@ -65,6 +65,9 @@
         capturePinNumberStore as pinNumberStore,
         captureRulesAcceptanceStore as rulesAcceptanceStore,
         SummonWitch,
+        RegisterBot,
+        UpdateBot,
+        nervousSystemLookup,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -128,6 +131,7 @@
     import AccessGateEvaluator from "./access/AccessGateEvaluator.svelte";
     import SetPinNumberModal from "./profile/SetPinNumberModal.svelte";
     import { scream } from "../../utils/scream";
+    import BotBuilderModal from "../bots/BotBuilderModal.svelte";
     import VerifyHumanity from "./profile/VerifyHumanity.svelte";
 
     type ViewProfileConfig = {
@@ -178,6 +182,7 @@
         | { kind: "none" }
         | { kind: "verify_humanity" }
         | { kind: "select_chat" }
+        | { kind: "register_bot" }
         | { kind: "suspended" }
         | { kind: "no_access" }
         | { kind: "new_group"; embeddedContent: boolean; candidate: CandidateGroupChat }
@@ -207,6 +212,8 @@
     let messageToForward: Message | undefined = undefined;
     let creatingThread = false;
     let currentChatMessages: CurrentChatMessages | undefined;
+
+    $: console.log("Nervous System: ", $nervousSystemLookup);
 
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
 
@@ -263,6 +270,10 @@
     function clientEvent(ev: Event): void {
         if (ev instanceof ThreadSelected) {
             openThread(ev.detail);
+        } else if (ev instanceof RegisterBot) {
+            modal = { kind: "register_bot" };
+        } else if (ev instanceof UpdateBot) {
+            modal = { kind: "register_bot" };
         } else if (ev instanceof SummonWitch) {
             summonWitch();
         } else if (ev instanceof RemoteVideoCallStartedEvent) {
@@ -1324,6 +1335,8 @@
             <SelectChatModal on:close={onCloseSelectChat} on:select={onSelectChat} />
         {:else if modal.kind === "suspended"}
             <SuspendedModal on:close={closeModal} />
+        {:else if modal.kind === "register_bot"}
+            <BotBuilderModal on:close={closeModal} />
         {:else if modal.kind === "no_access"}
             <NoAccess on:close={closeNoAccess} />
         {:else if modal.kind === "not_found"}

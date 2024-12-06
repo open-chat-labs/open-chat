@@ -149,6 +149,65 @@
     "blockUserFailed": "לא ניתן לחסום משתמש",
     "blockUserSucceeded": "המשתמש נחסם",
     "bots": {
+        "builder": {
+            "addAnother": "הוסף עוד אחד",
+            "addChoice": "הוסף בחירה",
+            "addCommand": "הוסף פקודה",
+            "addParam": "הוסף פרמטר",
+            "choiceName": "שם בחירה",
+            "choices": "בחירות",
+            "choicesInfo": "אם תזין קבוצה של אפשרויות עבור הפרמטר שלך, יוצג למשתמש תפריט נפתח כדי לבחור את הערך הנכון.",
+            "choiceValue": "ערך בחירה",
+            "commandDescLabel": "תיאור הפקודה",
+            "commandDescPlaceholder": "הזן את תיאור הפקודה",
+            "commandLabel": "פקודה: /{name}",
+            "commandNameLabel": "שם פקודה",
+            "commandNamePlaceholder": "הזן את שם הפקודה",
+            "commandPermissionsDesc": "תאר את ההרשאות שפקודה זו דורשת",
+            "commandPermissionsLabel": "הרשאות פקודה",
+            "descLabel": "תיאור הבוט",
+            "descPlaceholder": "הזן את תיאור הבוט",
+            "endpointLabel": "נקודת קצה של בוט",
+            "endpointRules": "חייב להיות מקור חוקי או מזהה מיכל",
+            "errors": {
+                "alphaOnly": "חייב להכיל רק אלפאנומריות וקווים תחתונים",
+                "duplicateCommands": "הבוט מכיל פקודות כפולות",
+                "duplicateParams": "הפקודה מכילה פרמטרים כפולים",
+                "endpoint": "נקודת הקצה חייבת להיות מקור חוקי או מזהה מיכל",
+                "minLength": "חייב לכלול לפחות {n} תווים",
+                "noCommands": "בוט חייב להכיל לפחות פקודה אחת"
+            },
+            "iconLabel": "סמל בוט",
+            "maxLengthLabel": "אורך מקסימלי",
+            "maxLengthPlaceholder": "הזן אורך מקסימלי",
+            "maxValueLabel": "ערך מקסימלי",
+            "maxValuePlaceholder": "הזן ערך מקסימלי",
+            "minLengthLabel": "אורך מינימלי",
+            "minLengthPlaceholder": "הזן אורך מינימלי",
+            "minValueLabel": "ערך מינימלי",
+            "minValuePlaceholder": "הזן ערך מינימלי",
+            "nameLabel": "שם הבוט",
+            "namePlaceholder": "הזן את שם הבוט",
+            "nameRules": "חייב להיות ייחודי ולהכיל תווים אלפאנומריים וקווים תחתונים בלבד",
+            "optional": "אופציונלי",
+            "paramDescLabel": "תיאור פרמטר",
+            "paramDescPlaceholder": "הזן תיאור פרמטר",
+            "paramLabel": "פראם: {name}",
+            "paramNameLabel": "שם פרמטר",
+            "paramNamePlaceholder": "הזן את שם הפרמטר",
+            "paramPlaceholderLabel": "מציין מיקום של פרמטר",
+            "paramPlaceholderPlaceholder": "הזן מציין מיקום של פרמטר",
+            "paramTypeLabel": "סוג פארם",
+            "permSameAsMessage": "זהה להרשאות הודעות",
+            "permScopeChat": "לְשׂוֹחֵחַ",
+            "permScopeCommunity": "קהילה",
+            "permScopeMessage": "הוֹדָעָה",
+            "permScopeThread": "פְּתִיל",
+            "required": "פרמטר נדרש",
+            "requiredDesc": "האם זה פרמטר נדרש עבור הפקודה",
+            "title": "בנה בוט",
+            "uptoN": "עד {n}"
+        },
         "builtin": {
             "desc": "בוט זה מספק את הפקודות המובנות של OpenChat",
             "name": "מובנה"
@@ -214,6 +273,9 @@
         "poll": {
             "desc": "צור סקר בצ'אט הנוכחי"
         },
+        "register_bot": {
+            "desc": "התחל הצעה לתיאור ורישום של בוט חדש עם OpenChat"
+        },
         "search": {
             "desc": "התחל חיפוש בצ'אט הנוכחי",
             "params": {
@@ -223,6 +285,9 @@
                     "placeholder": "מונח חיפוש"
                 }
             }
+        },
+        "update_bot": {
+            "desc": "התחל הצעה לעדכון בוט OpenChat קיים"
         },
         "witch": {
             "desc": "לזמן את המכשפה"

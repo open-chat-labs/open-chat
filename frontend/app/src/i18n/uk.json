@@ -149,6 +149,65 @@
     "blockUserFailed": "Не вдалося заблокувати користувача",
     "blockUserSucceeded": "Користувача заблоковано",
     "bots": {
+        "builder": {
+            "addAnother": "Додайте іншу",
+            "addChoice": "Додати вибір",
+            "addCommand": "Додати команду",
+            "addParam": "Додайте параметр",
+            "choiceName": "Вибір імені",
+            "choices": "Вибір",
+            "choicesInfo": "Якщо ви введете набір варіантів для свого параметра, користувачеві буде запропоновано спадне меню для вибору правильного значення.",
+            "choiceValue": "Значення вибору",
+            "commandDescLabel": "Опис команди",
+            "commandDescPlaceholder": "Введіть опис команди",
+            "commandLabel": "Команда: /{name}",
+            "commandNameLabel": "Назва команди",
+            "commandNamePlaceholder": "Введіть назву команди",
+            "commandPermissionsDesc": "Опишіть дозволи, які вимагає ця команда",
+            "commandPermissionsLabel": "Дозволи команди",
+            "descLabel": "Опис бота",
+            "descPlaceholder": "Введіть опис бота",
+            "endpointLabel": "Кінцева точка бота",
+            "endpointRules": "Має бути дійсне джерело або canisterID",
+            "errors": {
+                "alphaOnly": "Має містити лише буквено-цифрові символи та підкреслення",
+                "duplicateCommands": "Бот містить повторювані команди",
+                "duplicateParams": "Команда містить повторювані параметри",
+                "endpoint": "Кінцева точка має бути дійсним джерелом або canisterID",
+                "minLength": "Має бути принаймні {n} символів",
+                "noCommands": "Бот повинен містити хоча б одну команду"
+            },
+            "iconLabel": "Значок бота",
+            "maxLengthLabel": "Максимальна довжина",
+            "maxLengthPlaceholder": "Введіть максимальну довжину",
+            "maxValueLabel": "Максимальне значення",
+            "maxValuePlaceholder": "Введіть максимальне значення",
+            "minLengthLabel": "Мінімальна довжина",
+            "minLengthPlaceholder": "Введіть мінімальну довжину",
+            "minValueLabel": "Мінімальна вартість",
+            "minValuePlaceholder": "Введіть мінімальне значення",
+            "nameLabel": "Назва бота",
+            "namePlaceholder": "Введіть назву бота",
+            "nameRules": "Має бути унікальним і містити лише буквено-цифрові символи та підкреслення",
+            "optional": "необов'язковий",
+            "paramDescLabel": "Опис параметра",
+            "paramDescPlaceholder": "Введіть опис параметра",
+            "paramLabel": "Параметр: {name}",
+            "paramNameLabel": "Назва параметра",
+            "paramNamePlaceholder": "Введіть назву параметра",
+            "paramPlaceholderLabel": "Заповнювач параметра",
+            "paramPlaceholderPlaceholder": "Введіть заповнювач параметра",
+            "paramTypeLabel": "Тип параметра",
+            "permSameAsMessage": "Те саме, що дозволи на повідомлення",
+            "permScopeChat": "Чат",
+            "permScopeCommunity": "Спільнота",
+            "permScopeMessage": "повідомлення",
+            "permScopeThread": "Нитка",
+            "required": "Обов'язковий параметр",
+            "requiredDesc": "Чи є це обов'язковим параметром для команди",
+            "title": "Створіть бота",
+            "uptoN": "до {n}"
+        },
         "builtin": {
             "desc": "Цей бот надає вбудовані команди OpenChat",
             "name": "Вбудований"
@@ -214,6 +273,9 @@
         "poll": {
             "desc": "Створити опитування в поточному чаті"
         },
+        "register_bot": {
+            "desc": "Розпочніть пропозицію для опису та реєстрації нового бота в OpenChat"
+        },
         "search": {
             "desc": "Розпочніть пошук у поточному чаті",
             "params": {
@@ -223,6 +285,9 @@
                     "placeholder": "Пошуковий термін"
                 }
             }
+        },
+        "update_bot": {
+            "desc": "Розпочніть пропозицію щодо оновлення існуючого бота OpenChat"
         },
         "witch": {
             "desc": "Викликати відьму"

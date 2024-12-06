@@ -51,11 +51,11 @@
     function hasPermissionForCommand(command: FlattenedCommand): boolean {
         switch (mode) {
             case "message":
-                return command.permissions.messagePermissions.every((p) =>
+                return [...command.permissions.messagePermissions].every((p) =>
                     $messagePermissionsForSelectedChat.get(p),
                 );
             case "thread":
-                return command.permissions.messagePermissions.every((p) =>
+                return [...command.permissions.messagePermissions].every((p) =>
                     $threadPermissionsForSelectedChat.get(p),
                 );
         }

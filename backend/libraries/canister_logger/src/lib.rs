@@ -155,7 +155,7 @@ impl Write for LogWriter {
         let json = String::from_utf8(buffer).unwrap();
 
         let log_entry = LogEntry {
-            timestamp: canister_time::timestamp_millis(),
+            timestamp: canister_time::now_millis(),
             message: json,
         };
 
@@ -180,7 +180,7 @@ struct Timer;
 
 impl FormatTime for Timer {
     fn format_time(&self, w: &mut Writer) -> std::fmt::Result {
-        let now = canister_time::timestamp_millis();
+        let now = canister_time::now_millis();
 
         w.write_str(&format!("{now}"))
     }

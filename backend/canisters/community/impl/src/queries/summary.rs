@@ -6,7 +6,7 @@ use community_canister::summary::{Response::*, *};
 
 #[query(candid = true, msgpack = true)]
 fn summary(args: Args) -> Response {
-    read_state(|state| summary_impl(args.invite_code, None, state))
+    read_state(|state| summary_impl(args.invite_code, args.on_behalf_of, state))
 }
 
 #[query(msgpack = true)]
@@ -29,7 +29,7 @@ fn summary_impl(invite_code: Option<u64>, on_behalf_of: Option<Principal>, state
     let member = state.data.members.get(caller);
     let is_invited = state.data.is_invited(caller);
 
-    let summary = state.summary(member, Some(is_invited));
+    let summary = state.summary(member.as_ref(), Some(is_invited));
 
     Success(summary)
 }

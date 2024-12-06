@@ -1,11 +1,5 @@
-<script lang="ts">
-    import { _ } from "svelte-i18n";
-    import { createEventDispatcher, onMount, tick, type Snippet } from "svelte";
-    import { translatable } from "../actions/translatable";
-    import { interpolate } from "../i18n/i18n";
-    import type { ResourceKey } from "openchat-client";
-
-    interface Props {
+<script module lang="ts">
+    export interface InputProps {
         disabled?: boolean;
         invalid?: boolean;
         value?: string | number;
@@ -20,7 +14,16 @@
         pattern?: string | undefined;
         children?: Snippet;
         onblur?: () => void;
+        onfocus?: () => void;
     }
+</script>
+
+<script lang="ts">
+    import { _ } from "svelte-i18n";
+    import { createEventDispatcher, onMount, tick, type Snippet } from "svelte";
+    import { translatable } from "../actions/translatable";
+    import { interpolate } from "../i18n/i18n";
+    import type { ResourceKey } from "openchat-client";
 
     let {
         disabled = false,
@@ -36,8 +39,9 @@
         countdown = false,
         pattern = undefined,
         onblur = undefined,
-        children
-    }: Props = $props();
+        onfocus = undefined,
+        children,
+    }: InputProps = $props();
 
     const dispatch = createEventDispatcher();
 
@@ -91,6 +95,7 @@
         oninput={handleInput}
         onkeydown={keyDown}
         {onblur}
+        {onfocus}
         bind:this={inp}
         {pattern}
         {value}

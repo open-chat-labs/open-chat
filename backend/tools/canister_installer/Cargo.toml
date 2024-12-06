@@ -7,7 +7,6 @@ edition = "2021"
 
 [dependencies]
 airdrop_bot_canister = { path = "../../canisters/airdrop_bot/api" }
-airdrop_bot_canister_client = { path = "../../canisters/airdrop_bot/client" }
 candid = { workspace = true }
 canister_agent_utils = { path = "../../libraries/canister_agent_utils" }
 clap = { workspace = true, features = ["derive"] }
@@ -36,7 +35,5 @@ storage_index_canister = { path = "../../canisters/storage_index/api" }
 tokio = { workspace = true, features = ["full"] }
 translations_canister = { path = "../../canisters/translations/api" }
 types = { path = "../../libraries/types" }
-user_canister = { path = "../../canisters/user/api" }
 user_index_canister = { path = "../../canisters/user_index/api" }
 user_index_canister_client = { path = "../../canisters/user_index/client" }
-utils = { path = "../../libraries/utils" }

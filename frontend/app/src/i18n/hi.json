@@ -149,6 +149,65 @@
     "blockUserFailed": "उपयोगकर्ता को ब्लॉक करने में असमर्थ",
     "blockUserSucceeded": "उपयोगकर्ता को ब्लॉक कर दिया गया है",
     "bots": {
+        "builder": {
+            "addAnother": "एक और जोड़ें",
+            "addChoice": "कोई विकल्प जोड़ें",
+            "addCommand": "आदेश जोड़ें",
+            "addParam": "पैरामीटर जोड़ें",
+            "choiceName": "पसंदीदा नाम",
+            "choices": "विकल्प",
+            "choicesInfo": "यदि आप अपने पैरामीटर के लिए विकल्पों का एक सेट दर्ज करते हैं, तो उपयोगकर्ता को सही मान चुनने के लिए ड्रॉप डाउन प्रस्तुत किया जाएगा।",
+            "choiceValue": "विकल्प मूल्य",
+            "commandDescLabel": "कमांड विवरण",
+            "commandDescPlaceholder": "आदेश विवरण दर्ज करें",
+            "commandLabel": "कमांड: /{name}",
+            "commandNameLabel": "कमांड का नाम",
+            "commandNamePlaceholder": "कमांड का नाम दर्ज करें",
+            "commandPermissionsDesc": "इस आदेश के लिए आवश्यक अनुमतियों का वर्णन करें",
+            "commandPermissionsLabel": "कमांड अनुमतियाँ",
+            "descLabel": "बॉट विवरण",
+            "descPlaceholder": "बॉट विवरण दर्ज करें",
+            "endpointLabel": "बॉट एंडपॉइंट",
+            "endpointRules": "वैध मूल या कैनिस्टरआईडी होना चाहिए",
+            "errors": {
+                "alphaOnly": "इसमें केवल अल्फ़ान्यूमेरिक्स और अंडरस्कोर ही होने चाहिए",
+                "duplicateCommands": "बॉट में डुप्लिकेट कमांड हैं",
+                "duplicateParams": "कमांड में डुप्लिकेट पैरामीटर्स शामिल हैं",
+                "endpoint": "एंडपॉइंट एक वैध मूल या कैनिस्टरआईडी होना चाहिए",
+                "minLength": "कम से कम {n} अक्षर होने चाहिए",
+                "noCommands": "बॉट में कम से कम एक कमांड अवश्य होना चाहिए"
+            },
+            "iconLabel": "बॉट आइकन",
+            "maxLengthLabel": "ज्यादा से ज्यादा लंबाई",
+            "maxLengthPlaceholder": "अधिकतम लंबाई दर्ज करें",
+            "maxValueLabel": "अधिकतम मूल्य",
+            "maxValuePlaceholder": "अधिकतम मान दर्ज करें",
+            "minLengthLabel": "न्यूनतम लंबाई",
+            "minLengthPlaceholder": "न्यूनतम लंबाई दर्ज करें",
+            "minValueLabel": "न्यूनतम मूल्य",
+            "minValuePlaceholder": "न्यूनतम मान दर्ज करें",
+            "nameLabel": "बॉट का नाम",
+            "namePlaceholder": "बॉट का नाम दर्ज करें",
+            "nameRules": "अद्वितीय होना चाहिए और इसमें केवल अल्फ़ान्यूमेरिक अक्षर और अंडरस्कोर ही होने चाहिए",
+            "optional": "वैकल्पिक",
+            "paramDescLabel": "पैरामीटर विवरण",
+            "paramDescPlaceholder": "पैरामीटर विवरण दर्ज करें",
+            "paramLabel": "पैराम: {name}",
+            "paramNameLabel": "मापदण्ड नाम",
+            "paramNamePlaceholder": "पैरामीटर नाम दर्ज करें",
+            "paramPlaceholderLabel": "पैरामीटर प्लेसहोल्डर",
+            "paramPlaceholderPlaceholder": "पैरामीटर प्लेसहोल्डर दर्ज करें",
+            "paramTypeLabel": "पैराम प्रकार",
+            "permSameAsMessage": "संदेश अनुमतियों के समान",
+            "permScopeChat": "बात करना",
+            "permScopeCommunity": "समुदाय",
+            "permScopeMessage": "संदेश",
+            "permScopeThread": "धागा",
+            "required": "आवश्यक पैरामीटर",
+            "requiredDesc": "क्या यह कमांड के लिए आवश्यक पैरामीटर है",
+            "title": "एक बॉट बनाएँ",
+            "uptoN": "{n} तक"
+        },
         "builtin": {
             "desc": "यह बॉट अंतर्निहित OpenChat कमांड प्रदान करता है",
             "name": "में निर्मित"
@@ -214,6 +273,9 @@
         "poll": {
             "desc": "वर्तमान चैट में पोल बनाएँ"
         },
+        "register_bot": {
+            "desc": "OpenChat के साथ एक नए बॉट का वर्णन और पंजीकरण करने के लिए एक प्रस्ताव शुरू करें"
+        },
         "search": {
             "desc": "वर्तमान चैट में खोज आरंभ करें",
             "params": {
@@ -223,6 +285,9 @@
                     "placeholder": "जाँच अवधि"
                 }
             }
+        },
+        "update_bot": {
+            "desc": "मौजूदा OpenChat बॉट को अपडेट करने के लिए प्रस्ताव शुरू करें"
         },
         "witch": {
             "desc": "चुड़ैल को बुलाओ"

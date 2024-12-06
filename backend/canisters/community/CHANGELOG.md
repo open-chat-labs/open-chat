@@ -6,10 +6,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Temporarily reinstate `MigrateMembersToStableMemory` job to fix upgrade ([#7007](https://github.com/open-chat-labs/open-chat/pull/7007))
+
+## [[2.0.1500](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1500-community)] - 2024-12-06
+
+### Added
+
+- Add/remove bot to/from community ([#6991](https://github.com/open-chat-labs/open-chat/pull/6991))
+
+### Changed
+
+- Remove chat members from being stored on the heap ([#6942](https://github.com/open-chat-labs/open-chat/pull/6942))
+- Reduce the size of community events when serialized ([#6980](https://github.com/open-chat-labs/open-chat/pull/6980))
+- Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
+- Reduce size of the `UserCache` ([#6982](https://github.com/open-chat-labs/open-chat/pull/6982))
+- Assign last updated timestamp to each updatable community attribute ([#6983](https://github.com/open-chat-labs/open-chat/pull/6983))
+- Remove community members from being stored on the heap ([#6984](https://github.com/open-chat-labs/open-chat/pull/6984))
+- Avoid iterating over community events ([#6986](https://github.com/open-chat-labs/open-chat/pull/6986))
+- Make `summary` match `c2c_summary` so that `c2c_summary` can be removed ([#6988](https://github.com/open-chat-labs/open-chat/pull/6988))
+- Remove `MemberJoined` and `MemberLeft` community events ([#6989](https://github.com/open-chat-labs/open-chat/pull/6989))
+- Migrate community events to stable memory ([#6990](https://github.com/open-chat-labs/open-chat/pull/6990))
+
+## [[2.0.1499](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1499-community)] - 2024-12-04
+
 ### Changed
 
 - Remove UserId from member map values since it's already in the keys ([#6945](https://github.com/open-chat-labs/open-chat/pull/6945))
 - Disallow sending prize messages to threads ([#6960](https://github.com/open-chat-labs/open-chat/pull/6960))
+- Re-run member migration to stable memory using reduced size format ([#6965](https://github.com/open-chat-labs/open-chat/pull/6965))
+- Introduce community `MembersMap` in prep for move to stable memory ([#6966](https://github.com/open-chat-labs/open-chat/pull/6966))
+- Migrate community members to stable memory ([#6967](https://github.com/open-chat-labs/open-chat/pull/6967))
+- Check bot + user permissions when issuing JWT ([#6970](https://github.com/open-chat-labs/open-chat/pull/6970))
+- Reduce size of search index when serialized ([#6973](https://github.com/open-chat-labs/open-chat/pull/6973))
+- Copy members from stable memory when importing group into community ([#6976](https://github.com/open-chat-labs/open-chat/pull/6976))
+- Re-run member migration to stable member using reduced size format V2 ([#6977](https://github.com/open-chat-labs/open-chat/pull/6977))
 
 ### Removed
 
