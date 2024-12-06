@@ -10,5 +10,4 @@ candid = { workspace = true }
 canister_time = { path = "../canister_time" }
 serde = { workspace = true }
 tracing = { workspace = true }
-tracing-attributes = { workspace = true }
 tracing-subscriber = { workspace = true, features = ["json"] }

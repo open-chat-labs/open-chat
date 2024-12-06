@@ -4,10 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-async-trait = { workspace = true }
 candid = { workspace = true }
 dotenv = { workspace = true }
-futures = { workspace = true }
 index_store = { path = "../../libraries/index_store" }
 notification_pusher_core = { path = "../core" }
 tokio = { workspace = true, features = ["macros", "time"] }

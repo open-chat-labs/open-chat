@@ -6,7 +6,5 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-candid = { workspace = true }
 p256 = { workspace = true, features = ["pem", "ecdsa", "pkcs8"] }
-rand = { workspace = true }
 serde = { workspace = true }
