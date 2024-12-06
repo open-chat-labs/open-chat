@@ -82,22 +82,13 @@ fn is_permitted_to_join(
 
 fn c2c_join_group_impl(args: Args, payments: Vec<GatePayment>, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
-    let min_visible_event_index;
-    let min_visible_message_index;
 
-    if let Some(invitation) = state.data.get_invitation(args.principal) {
-        min_visible_event_index = invitation.min_visible_event_index;
-        min_visible_message_index = invitation.min_visible_message_index;
-    } else if state.data.chat.history_visible_to_new_joiners {
-        let (e, m) = state.data.chat.min_visible_indexes_for_new_members.unwrap_or_default();
-
-        min_visible_event_index = e;
-        min_visible_message_index = m;
-    } else {
-        let events_reader = state.data.chat.events.main_events_list();
-        min_visible_event_index = events_reader.next_event_index();
-        min_visible_message_index = events_reader.next_message_index();
-    };
+    let (min_visible_event_index, min_visible_message_index) =
+        if let Some(invitation) = state.data.get_invitation(args.principal) {
+            (invitation.min_visible_event_index, invitation.min_visible_message_index)
+        } else {
+            state.data.chat.min_visible_indexes_for_new_members()
+        };
 
     // Unblock "platform moderator" if necessary
     let mut new_event = false;

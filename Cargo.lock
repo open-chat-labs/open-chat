@@ -1540,6 +1540,7 @@ dependencies = [
  "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
+ "canister_time",
  "canister_timer_jobs",
  "canister_tracing_macros",
  "chat_events",
@@ -2489,6 +2490,7 @@ name = "fire_and_forget_handler"
 version = "0.1.0"
 dependencies = [
  "canister_client",
+ "canister_time",
  "constants",
  "futures",
  "ic-cdk 0.16.0",
@@ -2636,6 +2638,7 @@ name = "gated_groups"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "canister_time",
  "constants",
  "icrc-ledger-types",
  "icrc_ledger_canister",
@@ -2645,7 +2648,6 @@ dependencies = [
  "types",
  "user_index_canister",
  "user_index_canister_c2c_client",
- "utils 0.1.0",
 ]
 
 [[package]]
@@ -8442,6 +8444,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
+ "canister_time",
  "constants",
  "cycles_dispenser_client",
  "dataurl",

@@ -103,7 +103,7 @@ impl<J: Clone> From<&TimerJobs<J>> for Vec<(J, TimestampMillis)> {
 
 impl<J: Job> From<Vec<(J, TimestampMillis)>> for TimerJobs<J> {
     fn from(jobs: Vec<(J, TimestampMillis)>) -> Self {
-        let now = canister_time::timestamp_millis();
+        let now = canister_time::now_millis();
 
         let mut timer_jobs = TimerJobs::default();
         for (job, ts) in jobs {
@@ -132,7 +132,7 @@ impl<'de, J: Job + Deserialize<'de>> Deserialize<'de> for TimerJobs<J> {
     {
         let vec: Vec<(J, TimestampMillis)> = Vec::deserialize(deserializer)?;
 
-        let now = canister_time::timestamp_millis();
+        let now = canister_time::now_millis();
 
         let mut timer_jobs = TimerJobs::default();
         for (job, due) in vec {

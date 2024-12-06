@@ -1,4 +1,5 @@
 pub mod accept_p2p_swap;
+pub mod add_bot;
 pub mod add_reaction;
 pub mod c2c_delete_group;
 pub mod c2c_export_group;
@@ -34,6 +35,7 @@ pub mod pin_message;
 pub mod register_poll_vote;
 pub mod register_proposal_vote;
 pub mod register_proposal_vote_v2;
+pub mod remove_bot;
 pub mod remove_participant;
 pub mod remove_reaction;
 pub mod report_message;

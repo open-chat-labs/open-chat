@@ -1,5 +1,4 @@
 use crate::env::Environment;
-use crate::time;
 use candid::Principal;
 use rand::rngs::StdRng;
 use rand::SeedableRng;
@@ -19,7 +18,7 @@ impl CanisterEnv {
 
 impl Environment for CanisterEnv {
     fn now_nanos(&self) -> TimestampNanos {
-        time::now_nanos()
+        canister_time::now_nanos()
     }
 
     fn caller(&self) -> Principal {

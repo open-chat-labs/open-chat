@@ -39,14 +39,13 @@ use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotRemoved, BuildVersion, CanisterId, ChannelId, ChatMetrics,
     CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cryptocurrency, Cycles, Document, Empty,
-    EventIndex, FrozenGroupInfo, MembersAdded, MessageIndex, Milliseconds, Notification, Rules, SlashCommandPermissions,
-    TimestampMillis, Timestamped, UserId, UserType,
+    FrozenGroupInfo, MembersAdded, Milliseconds, Notification, Rules, SlashCommandPermissions, TimestampMillis, Timestamped,
+    UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use user_canister::CommunityCanisterEvent;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
-use utils::time::now_millis;
 
 mod activity_notifications;
 mod guards;
@@ -324,23 +323,22 @@ fn init_instruction_counts_log() -> InstructionCountsLog {
 
 #[derive(Serialize, Deserialize)]
 struct Data {
-    #[serde(deserialize_with = "deserialize_maybe_timestamped")]
+    #[serde(deserialize_with = "deserialize_to_timestamped")]
     is_public: Timestamped<bool>,
-    #[serde(deserialize_with = "deserialize_maybe_timestamped")]
+    #[serde(deserialize_with = "deserialize_to_timestamped")]
     name: Timestamped<String>,
-    #[serde(deserialize_with = "deserialize_maybe_timestamped")]
+    #[serde(deserialize_with = "deserialize_to_timestamped")]
     description: Timestamped<String>,
-    #[serde(deserialize_with = "deserialize_maybe_timestamped")]
+    #[serde(deserialize_with = "deserialize_to_timestamped")]
     rules: Timestamped<AccessRulesInternal>,
-    #[serde(deserialize_with = "deserialize_optional_document")]
+    #[serde(deserialize_with = "deserialize_to_timestamped")]
     avatar: Timestamped<Option<Document>>,
-    #[serde(deserialize_with = "deserialize_optional_document")]
+    #[serde(deserialize_with = "deserialize_to_timestamped")]
     banner: Timestamped<Option<Document>>,
-    #[serde(deserialize_with = "deserialize_maybe_timestamped")]
+    #[serde(deserialize_with = "deserialize_to_timestamped")]
     permissions: Timestamped<CommunityPermissions>,
-    #[serde(deserialize_with = "deserialize_maybe_timestamped")]
     gate_config: Timestamped<Option<AccessGateConfigInternal>>,
-    #[serde(deserialize_with = "deserialize_maybe_timestamped")]
+    #[serde(deserialize_with = "deserialize_to_timestamped")]
     primary_language: Timestamped<String>,
     user_index_canister_id: CanisterId,
     local_user_index_canister_id: CanisterId,
@@ -355,9 +353,9 @@ struct Data {
     channels: Channels,
     events: CommunityEvents,
     invited_users: InvitedUsers,
-    #[serde(deserialize_with = "deserialize_maybe_timestamped")]
+    #[serde(deserialize_with = "deserialize_to_timestamped")]
     invite_code: Timestamped<Option<u64>>,
-    #[serde(deserialize_with = "deserialize_maybe_timestamped")]
+    #[serde(deserialize_with = "deserialize_to_timestamped")]
     invite_code_enabled: Timestamped<bool>,
     frozen: Timestamped<Option<FrozenGroupInfo>>,
     timer_jobs: TimerJobs<TimerJob>,
@@ -384,27 +382,6 @@ struct Data {
     stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
     members_migrated_to_stable_memory: bool,
     bot_permissions: BTreeMap<UserId, SlashCommandPermissions>,
-}
-
-fn deserialize_maybe_timestamped<'de, D: Deserializer<'de>, T: Deserialize<'de>>(d: D) -> Result<Timestamped<T>, D::Error> {
-    let maybe_timestamped = MaybeTimestamped::deserialize(d)?;
-    Ok(maybe_timestamped.into())
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
-#[serde(untagged)]
-pub enum MaybeTimestamped<T> {
-    Timestamped(Timestamped<T>),
-    Value(T),
-}
-
-impl<T> From<MaybeTimestamped<T>> for Timestamped<T> {
-    fn from(value: MaybeTimestamped<T>) -> Self {
-        match value {
-            MaybeTimestamped::Timestamped(ts) => ts,
-            MaybeTimestamped::Value(value) => Timestamped::new(value, now_millis()),
-        }
-    }
 }
 
 impl Data {
@@ -740,14 +717,7 @@ impl Data {
         let mut users_limit_reached: Vec<UserId> = Vec::new();
 
         if let Some(channel) = self.channels.get_mut(channel_id) {
-            let mut min_visible_event_index = EventIndex::default();
-            let mut min_visible_message_index = MessageIndex::default();
-
-            if !channel.chat.history_visible_to_new_joiners {
-                let events_reader = channel.chat.events.main_events_reader();
-                min_visible_event_index = events_reader.next_event_index();
-                min_visible_message_index = events_reader.next_message_index();
-            }
+            let (min_visible_event_index, min_visible_message_index) = channel.chat.min_visible_indexes_for_new_members();
 
             let gate_expiry = channel.chat.gate_config.value.as_ref().and_then(|gc| gc.expiry());
 
@@ -966,7 +936,7 @@ pub struct AddUsersToChannelResult {
     pub users_limit_reached: Vec<UserId>,
 }
 
-fn deserialize_optional_document<'de, D: Deserializer<'de>>(d: D) -> Result<Timestamped<Option<Document>>, D::Error> {
-    let document = Option::deserialize(d)?;
-    Ok(Timestamped::new(document, now_millis()))
+fn deserialize_to_timestamped<'de, D: Deserializer<'de>, T: Deserialize<'de>>(d: D) -> Result<Timestamped<T>, D::Error> {
+    let value = T::deserialize(d)?;
+    Ok(Timestamped::new(value, canister_time::now_millis()))
 }
