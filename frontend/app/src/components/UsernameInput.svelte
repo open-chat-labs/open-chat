@@ -29,7 +29,7 @@
 
     function checkUsername(value: string) {
         const promise = client
-            .checkUsername(value)
+            .checkUsername(value, false)
             .then((resp) => {
                 if (promise !== currentPromise) {
                     return;

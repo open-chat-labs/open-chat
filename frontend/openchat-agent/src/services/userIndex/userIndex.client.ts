@@ -20,6 +20,7 @@ import type {
     SubmitProofOfUniquePersonhoodResponse,
     ChitLeaderboardResponse,
     ExternalAchievementsResponse,
+    ExploreBotsResponse,
 } from "openchat-shared";
 import {
     mergeUserSummaryWithUpdates,
@@ -370,9 +371,10 @@ export class UserIndexClient extends CandidService {
         };
     }
 
-    checkUsername(username: string): Promise<CheckUsernameResponse> {
+    checkUsername(username: string, isBot: boolean): Promise<CheckUsernameResponse> {
         const args = {
             username: username,
+            is_bot: isBot,
         };
         return this.executeMsgpackQuery(
             "check_username",
@@ -594,7 +596,11 @@ export class UserIndexClient extends CandidService {
         );
     }
 
-    exploreBots(searchTerm: string, pageIndex: number, pageSize: number): Promise<unknown> {
+    exploreBots(
+        searchTerm: string,
+        pageIndex: number,
+        pageSize: number,
+    ): Promise<ExploreBotsResponse> {
         return this.executeMsgpackQuery(
             "explore_bots",
             {

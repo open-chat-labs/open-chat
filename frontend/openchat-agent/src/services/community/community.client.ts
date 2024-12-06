@@ -37,9 +37,7 @@ import {
 } from "./mappersV2";
 import {
     acceptP2PSwapResponse,
-    apiAccessGate,
     apiAccessGateConfig,
-    apiMaybeAccessGate,
     addRemoveReactionResponse,
     apiGroupPermissions,
     apiMessageContent,
@@ -423,7 +421,6 @@ export class CommunityClient extends CandidService {
                 permissions_v2: apiGroupPermissions(channel.permissions),
                 rules: channel.rules,
                 gate_config: apiMaybeAccessGateConfig(channel.gateConfig),
-                gate: apiMaybeAccessGate(channel.gateConfig.gate),
                 messages_visible_to_non_members: channel.messagesVisibleToNonMembers,
             },
             (resp) => createGroupResponse(resp, channel.id),
@@ -1424,12 +1421,6 @@ export class CommunityClient extends CandidService {
                 rules: mapOptional(rules, apiUpdatedRules),
                 public: isPublic,
                 events_ttl: apiOptionUpdateV2(identity, eventsTimeToLiveMs),
-                gate:
-                    gateConfig === undefined
-                        ? "NoChange"
-                        : gateConfig.gate.kind === "no_gate"
-                          ? "SetToNone"
-                          : { SetToSome: apiAccessGate(gateConfig.gate) },
                 gate_config:
                     gateConfig === undefined
                         ? "NoChange"
@@ -1476,12 +1467,6 @@ export class CommunityClient extends CandidService {
                 rules: mapOptional(rules, apiUpdatedRules),
                 public: isPublic,
                 primary_language: primaryLanguage,
-                gate:
-                    gateConfig === undefined
-                        ? "NoChange"
-                        : gateConfig.gate.kind === "no_gate"
-                          ? "SetToNone"
-                          : { SetToSome: apiAccessGate(gateConfig.gate) },
                 gate_config:
                     gateConfig === undefined
                         ? "NoChange"

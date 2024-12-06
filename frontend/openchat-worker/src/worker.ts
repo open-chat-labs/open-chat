@@ -420,7 +420,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "checkUsername":
-                executeThenReply(payload, correlationId, agent.checkUsername(payload.username));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.checkUsername(payload.username, payload.isBot),
+                );
                 break;
 
             case "searchUsers":
@@ -775,6 +779,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.flags,
                         payload.languages,
                     ),
+                );
+                break;
+
+            case "exploreBots":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.exploreBots(payload.searchTerm, payload.pageIndex, payload.pageSize),
                 );
                 break;
 

@@ -1039,7 +1039,7 @@ export type StringParam = Static<typeof StringParam>;
 export const StringParam = Type.Object({
     min_length: Type.Number(),
     max_length: Type.Number(),
-    choices: SlashCommandOptionChoiceString,
+    choices: Type.Array(SlashCommandOptionChoiceString),
 });
 
 export type GroupPermissionRole = Static<typeof GroupPermissionRole>;
@@ -1091,7 +1091,7 @@ export type NumberParam = Static<typeof NumberParam>;
 export const NumberParam = Type.Object({
     min_length: Type.Number(),
     max_length: Type.Number(),
-    choices: SlashCommandOptionChoiceU16,
+    choices: Type.Array(SlashCommandOptionChoiceU16),
 });
 
 export type SubscriptionInfo = Static<typeof SubscriptionInfo>;
@@ -4620,6 +4620,12 @@ export const MemberLeft = Type.Object({
     user_id: UserId,
 });
 
+export type BotAdded = Static<typeof BotAdded>;
+export const BotAdded = Type.Object({
+    bot_id: UserId,
+    added_by: UserId,
+});
+
 export type UserGroupDetails = Static<typeof UserGroupDetails>;
 export const UserGroupDetails = Type.Object({
     user_group_id: Type.Number(),
@@ -5950,6 +5956,12 @@ export const MembersRemoved = Type.Object({
 export type SwapStatusErrorReserved = Static<typeof SwapStatusErrorReserved>;
 export const SwapStatusErrorReserved = Type.Object({
     reserved_by: UserId,
+});
+
+export type BotRemoved = Static<typeof BotRemoved>;
+export const BotRemoved = Type.Object({
+    bot_id: UserId,
+    removed_by: UserId,
 });
 
 export type MessagePinned = Static<typeof MessagePinned>;
@@ -8256,6 +8268,12 @@ export const ChatEvent = Type.Union([
     }),
     Type.Object({
         ExternalUrlUpdated: ExternalUrlUpdated,
+    }),
+    Type.Object({
+        BotAdded: BotAdded,
+    }),
+    Type.Object({
+        BotRemoved: BotRemoved,
     }),
     Type.Literal("FailedToDeserialize"),
 ]);

@@ -26,6 +26,10 @@ import type {
     SlashCommandSchema,
     BotMatch,
     ChatPermissions,
+    CommunityPermissions,
+    MessagePermission,
+    SlashCommandParam,
+    SlashCommandParamType,
 } from "openchat-shared";
 import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
@@ -66,6 +70,10 @@ import type {
     BotMatch as ApiBotMatch,
     SlashCommandSchema as ApiSlashCommandSchema,
     GroupPermission,
+    CommunityPermission,
+    MessagePermission as ApiMessagePermission,
+    SlashCommandParam as ApiSlashCommandParam,
+    SlashCommandParamType as ApiSlashCommandParamType,
 } from "../../typebox";
 
 export function userSearchResponse(value: UserIndexSearchResponse): UserSummary[] {
@@ -556,16 +564,103 @@ export function chatPermission(perm: GroupPermission): keyof ChatPermissions {
     }
 }
 
+export function communityPermission(perm: CommunityPermission): keyof CommunityPermissions {
+    switch (perm) {
+        case "ChangeRoles":
+            return "changeRoles";
+        case "CreatePrivateChannel":
+            return "createPrivateChannel";
+        case "CreatePublicChannel":
+            return "createPublicChannel";
+        case "InviteUsers":
+            return "inviteUsers";
+        case "ManageUserGroups":
+            return "manageUserGroups";
+        case "RemoveMembers":
+            return "removeMembers";
+        case "UpdateDetails":
+            return "updateDetails";
+    }
+}
+
+export function messagePermission(perm: ApiMessagePermission): MessagePermission {
+    switch (perm) {
+        case "Audio":
+            return "audio";
+        case "Crypto":
+            return "crypto";
+        case "File":
+            return "file";
+        case "Giphy":
+            return "giphy";
+        case "Image":
+            return "image";
+        case "P2pSwap":
+            return "p2pSwap";
+        case "Poll":
+            return "poll";
+        case "Prize":
+            return "prize";
+        case "Text":
+            return "text";
+        case "Video":
+            return "video";
+        case "VideoCall":
+            return "text";
+    }
+}
+
+export function customParamFields(paramType: ApiSlashCommandParamType): SlashCommandParamType {
+    if (paramType === "UserParam") {
+        return {
+            kind: "user",
+        };
+    } else if (paramType === "BooleanParam") {
+        return { kind: "boolean" };
+    } else if ("StringParam" in paramType) {
+        return {
+            kind: "string",
+            minLength: paramType.StringParam.min_length,
+            maxLength: paramType.StringParam.max_length,
+            choices: paramType.StringParam.choices.map((c) => ({
+                name: c.name,
+                value: c.value,
+            })),
+        };
+    } else if ("NumberParam" in paramType) {
+        return {
+            kind: "number",
+            minValue: paramType.NumberParam.min_length,
+            maxValue: paramType.NumberParam.max_length,
+            choices: paramType.NumberParam.choices.map((c) => ({
+                name: c.name,
+                value: c.value,
+            })),
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiSlashCommandParamType value", paramType);
+}
+
+export function externalBotParam(param: ApiSlashCommandParam): SlashCommandParam {
+    return {
+        name: param.name,
+        description: param.description,
+        placeholder: param.placeholder,
+        required: param.required,
+        ...customParamFields(param.param_type),
+    };
+}
+
 export function externalBotCommand(command: ApiSlashCommandSchema): SlashCommandSchema {
     return {
         name: command.name,
         description: command.description,
-        params: [],
+        params: command.params.map(externalBotParam),
         permissions: {
             chatPermissions: command.permissions.chat.map(chatPermission),
-            communityPermissions: [],
-            messagePermissions: [],
-            threadPermissions: [],
+            communityPermissions: command.permissions.community.map(communityPermission),
+            messagePermissions: command.permissions.message.map(messagePermission),
+            threadPermissions: command.permissions.thread.map(messagePermission),
         },
     };
 }

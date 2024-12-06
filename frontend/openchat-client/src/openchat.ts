@@ -397,6 +397,7 @@ import type {
     InternalBotCommandInstance,
     ExternalBotCommandInstance,
     CaptionedContent,
+    ExploreBotsResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -4448,8 +4449,8 @@ export class OpenChat extends OpenChatAgentWorker {
         }, 0);
     }
 
-    checkUsername(username: string): Promise<CheckUsernameResponse> {
-        return this.sendRequest({ kind: "checkUsername", username });
+    checkUsername(username: string, isBot: boolean): Promise<CheckUsernameResponse> {
+        return this.sendRequest({ kind: "checkUsername", username, isBot });
     }
 
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
@@ -4929,6 +4930,19 @@ export class OpenChat extends OpenChatAgentWorker {
 
     searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
         return this.sendRequest({ kind: "searchGroups", searchTerm, maxResults });
+    }
+
+    exploreBots(
+        searchTerm: string,
+        pageIndex: number,
+        pageSize: number,
+    ): Promise<ExploreBotsResponse> {
+        return this.sendRequest({
+            kind: "exploreBots",
+            searchTerm,
+            pageIndex,
+            pageSize,
+        });
     }
 
     exploreCommunities(

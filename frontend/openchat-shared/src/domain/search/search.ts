@@ -1,5 +1,5 @@
 import type { AccessGateConfig } from "../access";
-import type { ExternalBot, SlashCommandSchema } from "../bots";
+import type { SlashCommandSchema } from "../bots";
 import type { ChatIdentifier, GroupChatIdentifier, GroupSubtype } from "../chat/chat";
 import type { ChannelMatch, CommunityIdentifier } from "../community";
 import type { DataContent } from "../data/data";

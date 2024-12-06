@@ -37,7 +37,7 @@ pub enum SlashCommandParamType {
 pub struct StringParam {
     pub min_length: u16,
     pub max_length: u16,
-    #[ts(as = "SlashCommandOptionChoiceString")]
+    #[ts(as = "Vec<SlashCommandOptionChoiceString>")]
     pub choices: Vec<SlashCommandOptionChoice<String>>,
 }
 
@@ -46,7 +46,7 @@ pub struct StringParam {
 pub struct NumberParam {
     pub min_length: u16,
     pub max_length: u16,
-    #[ts(as = "SlashCommandOptionChoiceU16")]
+    #[ts(as = "Vec<SlashCommandOptionChoiceU16>")]
     pub choices: Vec<SlashCommandOptionChoice<u16>>,
 }
 

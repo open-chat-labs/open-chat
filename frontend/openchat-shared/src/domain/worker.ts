@@ -116,6 +116,7 @@ import type {
     GroupSearchResponse,
     ExploreCommunitiesResponse,
     ExploreChannelsResponse,
+    ExploreBotsResponse,
 } from "./search/search";
 import type { GroupInvite, CommunityInvite } from "./inviteCodes";
 import type {
@@ -337,6 +338,7 @@ export type WorkerRequest =
     | UpdateCommunity
     | CreateCommunity
     | ExploreCommunities
+    | ExploreBots
     | GetCommunitySummary
     | ExploreChannels
     | GetCommunityDetails
@@ -769,6 +771,13 @@ type ExploreCommunities = {
     kind: "exploreCommunities";
 };
 
+type ExploreBots = {
+    searchTerm: string;
+    pageIndex: number;
+    pageSize: number;
+    kind: "exploreBots";
+};
+
 type SearchGroups = {
     searchTerm: string;
     maxResults: number;
@@ -1024,6 +1033,7 @@ type GetUserStorageLimits = {
 type CheckUsername = {
     username: string;
     kind: "checkUsername";
+    isBot: boolean;
 };
 
 type SearchUsers = {
@@ -1502,7 +1512,8 @@ export type WorkerResponseInner =
     | SubmitProofOfUniquePersonhoodResponse
     | AuthenticationPrincipalsResponse
     | ExternalAchievement[]
-    | MessageActivityFeedResponse;
+    | MessageActivityFeedResponse
+    | ExploreBotsResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -1936,6 +1947,8 @@ export type WorkerResult<T> = T extends Init
     ? GroupChatSummary[]
     : T extends ExploreCommunities
     ? ExploreCommunitiesResponse
+    : T extends ExploreBots
+    ? ExploreBotsResponse
     : T extends DismissRecommendations
     ? void
     : T extends GroupInvite

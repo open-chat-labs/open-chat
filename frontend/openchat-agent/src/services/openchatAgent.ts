@@ -223,6 +223,7 @@ import type {
     FreezeCommunityResponse,
     UnfreezeCommunityResponse,
     ChannelSummaryResponse,
+    ExploreBotsResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -2102,10 +2103,10 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.setModerationFlags(flags);
     }
 
-    checkUsername(username: string): Promise<CheckUsernameResponse> {
+    checkUsername(username: string, isBot: boolean): Promise<CheckUsernameResponse> {
         if (offline()) return Promise.resolve("offline");
 
-        return this._userIndexClient.checkUsername(username);
+        return this._userIndexClient.checkUsername(username, isBot);
     }
 
     setUsername(userId: string, username: string): Promise<SetUsernameResponse> {
@@ -3994,5 +3995,15 @@ export class OpenChatAgent extends EventTarget {
                 }
                 return resp;
             });
+    }
+
+    exploreBots(
+        searchTerm: string,
+        pageIndex: number,
+        pageSize: number,
+    ): Promise<ExploreBotsResponse> {
+        if (offline()) return Promise.resolve(CommonResponses.offline());
+
+        return this._userIndexClient.exploreBots(searchTerm, pageIndex, pageSize);
     }
 }
