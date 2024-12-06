@@ -2,7 +2,7 @@ use crate::guards::caller_is_governance_principal;
 use crate::model::user_map::Bot;
 use crate::{mutate_state, RuntimeState, USER_LIMIT};
 use candid::Principal;
-use canister_api_macros::proposal;
+use canister_api_macros::{proposal, update};
 use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
 use local_user_index_canister::{Event, UserRegistered};
@@ -18,7 +18,14 @@ const MAX_AVATAR_SIZE: usize = 250_000;
 const MAX_DESCRIPTION_LEN: usize = 10_000;
 const MAX_COMMANDS: usize = 100;
 
-#[proposal(guard = "caller_is_governance_principal", msgpack = true)]
+#[update(msgpack = true)]
+#[trace]
+fn register_bot(args: Args) -> Response {
+    mutate_state(|state| register_bot_impl(args, state));
+    Success
+}
+
+#[proposal(guard = "caller_is_governance_principal")]
 #[trace]
 fn register_bot(args: Args) -> Response {
     mutate_state(|state| register_bot_impl(args, state));
