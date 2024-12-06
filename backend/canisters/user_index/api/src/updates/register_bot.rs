@@ -1,8 +1,10 @@
 use candid::{CandidType, Principal};
 use human_readable::{HumanReadablePrincipal, ToHumanReadable};
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{SlashCommandSchema, UserId};
 
+#[ts_export(user_index, register_bot)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub principal: Principal,
@@ -14,6 +16,7 @@ pub struct Args {
     pub commands: Vec<SlashCommandSchema>,
 }
 
+#[ts_export(user_index, register_bot)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
