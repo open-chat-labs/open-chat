@@ -201,6 +201,7 @@ import type {
 } from "./chit";
 import type { JsonnableDelegationChain } from "@dfinity/identity";
 import type { Verification } from "./wallet";
+import type { ExternalBot } from "./bots";
 
 /**
  * Worker request types
@@ -339,6 +340,7 @@ export type WorkerRequest =
     | CreateCommunity
     | ExploreCommunities
     | ExploreBots
+    | RegisterBot
     | GetCommunitySummary
     | ExploreChannels
     | GetCommunityDetails
@@ -769,6 +771,11 @@ type ExploreCommunities = {
     flags: number;
     languages: string[];
     kind: "exploreCommunities";
+};
+
+type RegisterBot = {
+    kind: "registerBot";
+    bot: ExternalBot;
 };
 
 type ExploreBots = {
@@ -1949,6 +1956,8 @@ export type WorkerResult<T> = T extends Init
     ? ExploreCommunitiesResponse
     : T extends ExploreBots
     ? ExploreBotsResponse
+    : T extends RegisterBot
+    ? boolean
     : T extends DismissRecommendations
     ? void
     : T extends GroupInvite

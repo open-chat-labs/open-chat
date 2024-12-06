@@ -539,6 +539,33 @@ function externalAchievement(
     };
 }
 
+export function apiChatPermission(perm: keyof ChatPermissions): GroupPermission {
+    switch (perm) {
+        case "addMembers":
+            return "AddMembers";
+        case "changeRoles":
+            return "ChangeRoles";
+        case "deleteMessages":
+            return "DeleteMessages";
+        case "inviteUsers":
+            return "InviteUsers";
+        case "mentionAllMembers":
+            return "MentionAllMembers";
+        case "pinMessages":
+            return "PinMessages";
+        case "reactToMessages":
+            return "ReactToMessages";
+        case "removeMembers":
+            return "RemoveMembers";
+        case "startVideoCall":
+            return "StartVideoCall";
+        case "updateGroup":
+            return "UpdateGroup";
+        default:
+            throw new Error(`Unexpected ChatPermission (${perm}) received`);
+    }
+}
+
 export function chatPermission(perm: GroupPermission): keyof ChatPermissions {
     switch (perm) {
         case "AddMembers":
@@ -564,6 +591,25 @@ export function chatPermission(perm: GroupPermission): keyof ChatPermissions {
     }
 }
 
+export function apiCommunityPermission(perm: keyof CommunityPermissions): CommunityPermission {
+    switch (perm) {
+        case "changeRoles":
+            return "ChangeRoles";
+        case "createPrivateChannel":
+            return "CreatePrivateChannel";
+        case "createPublicChannel":
+            return "CreatePublicChannel";
+        case "inviteUsers":
+            return "InviteUsers";
+        case "manageUserGroups":
+            return "ManageUserGroups";
+        case "removeMembers":
+            return "RemoveMembers";
+        case "updateDetails":
+            return "UpdateDetails";
+    }
+}
+
 export function communityPermission(perm: CommunityPermission): keyof CommunityPermissions {
     switch (perm) {
         case "ChangeRoles":
@@ -580,6 +626,33 @@ export function communityPermission(perm: CommunityPermission): keyof CommunityP
             return "removeMembers";
         case "UpdateDetails":
             return "updateDetails";
+    }
+}
+
+export function apiMessagePermission(perm: MessagePermission): ApiMessagePermission {
+    switch (perm) {
+        case "audio":
+            return "Audio";
+        case "crypto":
+            return "Crypto";
+        case "file":
+            return "File";
+        case "giphy":
+            return "Giphy";
+        case "image":
+            return "Image";
+        case "p2pSwap":
+            return "P2pSwap";
+        case "poll":
+            return "Poll";
+        case "prize":
+            return "Prize";
+        case "text":
+            return "Text";
+        case "video":
+            return "Video";
+        default:
+            throw new Error(`Unexpect MessagePermission (${perm})`);
     }
 }
 
@@ -610,6 +683,31 @@ export function messagePermission(perm: ApiMessagePermission): MessagePermission
     }
 }
 
+export function apiCustomParamFields(param: SlashCommandParam): ApiSlashCommandParamType {
+    switch (param.kind) {
+        case "user":
+            return "UserParam";
+        case "boolean":
+            return "BooleanParam";
+        case "number":
+            return {
+                NumberParam: {
+                    min_length: param.minValue,
+                    max_length: param.maxValue,
+                    choices: param.choices,
+                },
+            };
+        case "string":
+            return {
+                StringParam: {
+                    min_length: param.minLength,
+                    max_length: param.maxLength,
+                    choices: param.choices,
+                },
+            };
+    }
+}
+
 export function customParamFields(paramType: ApiSlashCommandParamType): SlashCommandParamType {
     if (paramType === "UserParam") {
         return {
@@ -622,20 +720,14 @@ export function customParamFields(paramType: ApiSlashCommandParamType): SlashCom
             kind: "string",
             minLength: paramType.StringParam.min_length,
             maxLength: paramType.StringParam.max_length,
-            choices: paramType.StringParam.choices.map((c) => ({
-                name: c.name,
-                value: c.value,
-            })),
+            choices: paramType.StringParam.choices,
         };
     } else if ("NumberParam" in paramType) {
         return {
             kind: "number",
             minValue: paramType.NumberParam.min_length,
             maxValue: paramType.NumberParam.max_length,
-            choices: paramType.NumberParam.choices.map((c) => ({
-                name: c.name,
-                value: c.value,
-            })),
+            choices: paramType.NumberParam.choices,
         };
     }
     throw new UnsupportedValueError("Unexpected ApiSlashCommandParamType value", paramType);
@@ -643,11 +735,29 @@ export function customParamFields(paramType: ApiSlashCommandParamType): SlashCom
 
 export function externalBotParam(param: ApiSlashCommandParam): SlashCommandParam {
     return {
-        name: param.name,
-        description: param.description,
-        placeholder: param.placeholder,
-        required: param.required,
+        ...param,
         ...customParamFields(param.param_type),
+    };
+}
+
+export function apiExternalBotParam(param: SlashCommandParam): ApiSlashCommandParam {
+    return {
+        ...param,
+        param_type: apiCustomParamFields(param),
+    };
+}
+
+export function apiExternalBotCommand(command: SlashCommandSchema): ApiSlashCommandSchema {
+    return {
+        name: command.name,
+        description: command.description,
+        params: command.params.map(apiExternalBotParam),
+        permissions: {
+            chat: command.permissions.chatPermissions.map(apiChatPermission),
+            community: command.permissions.communityPermissions.map(apiCommunityPermission),
+            message: command.permissions.messagePermissions.map(apiMessagePermission),
+            thread: command.permissions.threadPermissions.map(apiMessagePermission),
+        },
     };
 }
 

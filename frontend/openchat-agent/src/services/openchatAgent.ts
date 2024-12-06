@@ -224,6 +224,7 @@ import type {
     UnfreezeCommunityResponse,
     ChannelSummaryResponse,
     ExploreBotsResponse,
+    ExternalBot,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -4006,5 +4007,10 @@ export class OpenChatAgent extends EventTarget {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this._userIndexClient.exploreBots(searchTerm, pageIndex, pageSize);
+    }
+
+    registerBot(bot: ExternalBot): Promise<boolean> {
+        if (offline()) return Promise.resolve(false);
+        return this._userIndexClient.registerBot(bot);
     }
 }

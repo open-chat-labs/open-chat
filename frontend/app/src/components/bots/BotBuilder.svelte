@@ -33,10 +33,7 @@
     let errors = $derived.by(
         debouncedDerived(
             () => [$state.snapshot(candidate)],
-            () => {
-                console.log("Validating candidate");
-                return validateBot(candidate);
-            },
+            () => validateBot(candidate),
             300,
             new ValidationErrors(),
         ),
@@ -53,7 +50,6 @@
     });
 
     $effect(() => {
-        console.log("Candidate updated");
         onUpdate($state.snapshot(candidate));
     });
 

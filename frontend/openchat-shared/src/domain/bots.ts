@@ -135,6 +135,7 @@ export function emptyBotInstance(bot?: ExternalBot): ExternalBot {
         : {
               kind: "external_bot",
               id: "",
+              ownerId: "",
               name: "",
               description: "",
               endpoint: "",
@@ -147,6 +148,7 @@ export type ExternalBot = {
     name: string;
     avatar?: string;
     id: string;
+    ownerId: string;
     endpoint: string;
     description?: string;
     commands: SlashCommandSchema[];

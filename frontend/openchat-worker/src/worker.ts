@@ -790,6 +790,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "registerBot":
+                executeThenReply(payload, correlationId, agent.registerBot(payload.bot));
+                break;
+
             case "searchGroups":
                 executeThenReply(
                     payload,

@@ -2193,6 +2193,9 @@ export const UserIndexSetDiamondMembershipFeesResponse = Type.Union([
     Type.Literal("Invalid"),
 ]);
 
+export type UserIndexRegisterBotResponse = Static<typeof UserIndexRegisterBotResponse>;
+export const UserIndexRegisterBotResponse = Type.Literal("Success");
+
 export type UserIndexReportedMessagesSuccessResult = Static<
     typeof UserIndexReportedMessagesSuccessResult
 >;
@@ -4896,6 +4899,17 @@ export const UserIndexSetDiamondMembershipFeesArgs = Type.Object({
     fees: DiamondMembershipFees,
 });
 
+export type UserIndexRegisterBotArgs = Static<typeof UserIndexRegisterBotArgs>;
+export const UserIndexRegisterBotArgs = Type.Object({
+    principal: TSBytes,
+    owner: UserId,
+    name: Type.String(),
+    avatar: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
+    endpoint: Type.String(),
+    description: Type.String(),
+    commands: Type.Array(SlashCommandSchema),
+});
+
 export type UserIndexPlatformModeratorsGroupResponse = Static<
     typeof UserIndexPlatformModeratorsGroupResponse
 >;
@@ -6289,7 +6303,6 @@ export const BotMatch = Type.Object({
     description: Type.String(),
     owner: UserId,
     avatar_id: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
-    banner_id: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
     commands: Type.Array(SlashCommandSchema),
 });
 

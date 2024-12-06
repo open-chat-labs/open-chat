@@ -21,6 +21,7 @@ import type {
     ChitLeaderboardResponse,
     ExternalAchievementsResponse,
     ExploreBotsResponse,
+    ExternalBot,
 } from "openchat-shared";
 import {
     mergeUserSummaryWithUpdates,
@@ -46,6 +47,7 @@ import {
     apiJsonDiamondDuration,
     externalAchievementsResponse,
     exploreBotsResponse,
+    apiExternalBotCommand,
 } from "./mappers";
 import {
     getCachedUsers,
@@ -64,7 +66,12 @@ import {
     setCachedCurrentUser,
     setCurrentUserDiamondStatusInCache,
 } from "../../utils/caching";
-import { mapOptional, principalBytesToString, principalStringToBytes } from "../../utils/mapping";
+import {
+    identity,
+    mapOptional,
+    principalBytesToString,
+    principalStringToBytes,
+} from "../../utils/mapping";
 import {
     Empty,
     UserIndexCheckUsernameArgs,
@@ -81,6 +88,8 @@ import {
     UserIndexPayForDiamondMembershipArgs,
     UserIndexPayForDiamondMembershipResponse,
     UserIndexPlatformModeratorsGroupResponse,
+    UserIndexRegisterBotArgs,
+    UserIndexRegisterBotResponse,
     UserIndexReportedMessagesArgs,
     UserIndexReportedMessagesResponse,
     UserIndexSearchArgs,
@@ -611,6 +620,24 @@ export class UserIndexClient extends CandidService {
             exploreBotsResponse,
             UserIndexExploreBotsArgs,
             UserIndexExploreBotsResponse,
+        );
+    }
+
+    registerBot(bot: ExternalBot): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "register_bot",
+            {
+                principal: principalStringToBytes(this.principal.toText()),
+                owner: principalStringToBytes(bot.ownerId),
+                name: bot.name,
+                avatar: mapOptional(bot.avatar, identity),
+                endpoint: bot.endpoint,
+                description: bot.description ?? "",
+                commands: bot.commands.map(apiExternalBotCommand),
+            },
+            (_) => true,
+            UserIndexRegisterBotArgs,
+            UserIndexRegisterBotResponse,
         );
     }
 }

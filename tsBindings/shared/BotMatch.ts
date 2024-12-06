@@ -2,4 +2,4 @@
 import type { SlashCommandSchema } from "./SlashCommandSchema";
 import type { UserId } from "./UserId";
 
-export type BotMatch = { id: UserId, score: number, name: string, description: string, owner: UserId, avatar_id?: bigint | undefined, banner_id?: bigint | undefined, commands: Array<SlashCommandSchema>, };
+export type BotMatch = { id: UserId, score: number, name: string, description: string, owner: UserId, avatar_id?: bigint | undefined, commands: Array<SlashCommandSchema>, };

@@ -162,6 +162,7 @@ export const testBots: Bot[] = [
         name: "Kitten Bot",
         avatar: "https://images.unsplash.com/photo-1529778873920-4da4926a72c2?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxleHBsb3JlLWZlZWR8NXx8fGVufDB8fHx8fA%3D%3D",
         id: "bot_one",
+        ownerId: "",
         endpoint: "https://some_bot_or_other",
         description: "this is just a test bot that doesn't do anything at all",
         commands: [killCommand, kickPollCommand],
@@ -171,6 +172,7 @@ export const testBots: Bot[] = [
         name: "Puppy Bot",
         avatar: "https://t3.ftcdn.net/jpg/02/74/06/48/360_F_274064877_Tuq84kGOn5nhyIJeUFTUSvXaSeedAOTT.jpg",
         id: "bot_two",
+        ownerId: "",
         endpoint: "http://localhost:3000/execute",
         description:
             "This bot also does not do anything but in this case it has a much longer description. The reason that we need a longer description is so that we can tell that the card still renders ok if there is a lot of text to display. What should we do? Should we truncate it or should we do something else? Show multiple lines? Show the whole thing? Make it expandable?",

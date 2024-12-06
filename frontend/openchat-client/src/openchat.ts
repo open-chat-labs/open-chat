@@ -398,6 +398,7 @@ import type {
     ExternalBotCommandInstance,
     CaptionedContent,
     ExploreBotsResponse,
+    ExternalBot,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -4622,6 +4623,13 @@ export class OpenChat extends OpenChatAgentWorker {
             : this.getUser(this._referralCode);
     }
 
+    registerBot(bot: ExternalBot): Promise<boolean> {
+        return this.sendRequest({
+            kind: "registerBot",
+            bot,
+        });
+    }
+
     registerUser(username: string): Promise<RegisterUserResponse> {
         return this.sendRequest({
             kind: "registerUser",
@@ -4941,11 +4949,11 @@ export class OpenChat extends OpenChatAgentWorker {
         pageIndex: number,
         pageSize: number,
     ): Promise<ExploreBotsResponse> {
-        return Promise.resolve({
-            kind: "success",
-            matches: testMatches,
-            total: 2,
-        });
+        // return Promise.resolve({
+        //     kind: "success",
+        //     matches: testMatches,
+        //     total: 2,
+        // });
         return this.sendRequest({
             kind: "exploreBots",
             searchTerm,
