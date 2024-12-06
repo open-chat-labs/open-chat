@@ -7,7 +7,6 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
-candid_gen = { path = "../../../libraries/candid_gen" }
 icrc-ledger-types = { workspace = true }
 serde = { workspace = true }
 sha256 = { path = "../../../libraries/sha256" }

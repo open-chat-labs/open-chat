@@ -12,7 +12,6 @@ crate-type = ["cdylib"]
 [dependencies]
 candid = { workspace = true }
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
-human_readable = { path = "../../../libraries/human_readable" }
 ic-cdk = { workspace = true }
 proposal_validation_canister = { path = "../api" }
 serde_json = { workspace = true }
