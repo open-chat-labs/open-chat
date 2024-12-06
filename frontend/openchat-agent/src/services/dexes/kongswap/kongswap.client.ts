@@ -47,8 +47,8 @@ export class KongSwapClient extends CandidService implements SwapIndexClient, Sw
                     pools.push({
                         dex: "kongswap",
                         canisterId: KONG_SWAP_CANISTER_ID,
-                        token0: tokens[i],
-                        token1: tokens[j],
+                        token0,
+                        token1,
                     });
                 }
             }
