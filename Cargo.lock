@@ -8330,6 +8330,7 @@ dependencies = [
  "constants",
  "cycles_dispenser_client",
  "dataurl",
+ "getrandom 0.2.15",
  "ic-cdk 0.16.0",
  "ic-cdk-timers",
  "itertools 0.13.0",
