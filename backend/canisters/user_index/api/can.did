@@ -118,7 +118,6 @@ type BotMatch = record {
     name : text;
     description : text;
     avatar_id : opt nat;
-    banner_id: opt nat;
     commands: vec SlashCommandSchema;
 };
 

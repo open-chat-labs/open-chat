@@ -84,7 +84,6 @@ pub struct BotMatch {
     pub description: String,
     pub owner: UserId,
     pub avatar_id: Option<u128>,
-    pub banner_id: Option<u128>,
     pub commands: Vec<SlashCommandSchema>,
 }
 
