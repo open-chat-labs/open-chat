@@ -9,5 +9,4 @@ edition = "2021"
 candid = { workspace = true }
 canister_client_macros = { path = "../canister_client_macros" }
 ic-cdk = { workspace = true }
-serde = { workspace = true }
 tracing = { workspace = true }

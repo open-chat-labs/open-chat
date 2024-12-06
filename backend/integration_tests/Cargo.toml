@@ -16,10 +16,8 @@ event_relay_canister = { path = "../canisters/event_relay/api" }
 event_store_canister = { workspace = true }
 group_canister = { path = "../canisters/group/api" }
 group_index_canister = { path = "../canisters/group_index/api" }
-ic-cdk = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
-icrc_ledger_canister = { path = "../external_canisters/icrc_ledger/api" }
 icrc-ledger-types = { workspace = true }
 identity_canister = { path = "../canisters/identity/api" }
 itertools = { workspace = true }
@@ -37,7 +35,6 @@ proposals_bot_canister = { path = "../canisters/proposals_bot/api" }
 rand = { workspace = true }
 registry_canister = { path = "../canisters/registry/api" }
 serde = { workspace = true }
-serde_bytes = { workspace = true }
 sha256 = { path = "../libraries/sha256" }
 sign_in_with_email_canister = { workspace = true }
 sign_in_with_email_canister_test_utils = { workspace = true }

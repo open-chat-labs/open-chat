@@ -12,8 +12,6 @@ ic-ledger-types = { workspace = true }
 icp_ledger_canister_c2c_client = { path = "../../external_canisters/icp_ledger/c2c_client" }
 icrc_ledger_canister_c2c_client = { path = "../../external_canisters/icrc_ledger/c2c_client" }
 icrc-ledger-types = { workspace = true }
-serde = { workspace = true }
-serde_cbor = { workspace = true }
 sha2 = { workspace = true }
 tracing = { workspace = true }
 types = { path = "../types" }

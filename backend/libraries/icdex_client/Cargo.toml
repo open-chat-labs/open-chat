@@ -11,7 +11,4 @@ hex = { workspace = true }
 ic-cdk = { workspace = true }
 icdex_canister = { path = "../../external_canisters/icdex/api" }
 icdex_canister_c2c_client = { path = "../../external_canisters/icdex/c2c_client" }
-icrc_ledger_canister_c2c_client = { path = "../../external_canisters/icrc_ledger/c2c_client" }
-icrc-ledger-types = { workspace = true }
-serde = { workspace = true }
 types = { path = "../types" }

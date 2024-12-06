@@ -30,16 +30,12 @@ human_readable = { path = "../../../libraries/human_readable" }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
-json = { path = "../../../libraries/json" }
 local_group_index_canister = { path = "../../local_group_index/api" }
 local_group_index_canister_c2c_client = { path = "../../local_group_index/c2c_client" }
 msgpack = { path = "../../../libraries/msgpack" }
 rand = { workspace = true }
 search = { path = "../../../libraries/search" }
 serde = { workspace = true }
-serde_bytes = { workspace = true }
-sha2 = { workspace = true }
-sha256 = { path = "../../../libraries/sha256" }
 stable_memory = { path = "../../../libraries/stable_memory" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
