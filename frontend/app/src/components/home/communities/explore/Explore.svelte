@@ -24,11 +24,7 @@
     import CommunityCardLink from "./CommunityCardLink.svelte";
     import Translatable from "../../../Translatable.svelte";
     import { i18nKey } from "../../../../i18n/i18n";
-    import {
-        communitySearchScrollPos,
-        communitySearchStore,
-        communitySearchTerm,
-    } from "../../../../stores/search";
+    import { communitySearchStore } from "../../../../stores/search";
     import Fab from "../../../Fab.svelte";
     import {
         anonUser,
@@ -103,7 +99,7 @@
 
         client
             .exploreCommunities(
-                $communitySearchTerm === "" ? undefined : $communitySearchTerm,
+                $communitySearchStore.term === "" ? undefined : $communitySearchStore.term,
                 $communitySearchStore.index,
                 pageSize,
                 $filters.flags ?? 0,
@@ -130,7 +126,7 @@
         tick().then(() => {
             scrollableElement = document.getElementById("communities-wrapper");
             if (scrollableElement) {
-                scrollableElement.scrollTop = $communitySearchScrollPos;
+                scrollableElement.scrollTop = $communitySearchStore.scrollPos;
             }
             onScroll();
         });
@@ -151,7 +147,7 @@
     function onScroll() {
         if (scrollableElement) {
             showFab = scrollableElement.scrollTop > 500;
-            communitySearchScrollPos.set(scrollableElement.scrollTop);
+            communitySearchStore.setScrollPos(scrollableElement.scrollTop);
         }
     }
 </script>
@@ -170,7 +166,7 @@
                 <div class="search">
                     <Search
                         fill
-                        bind:searchTerm={$communitySearchTerm}
+                        bind:searchTerm={$communitySearchStore.term}
                         searching={false}
                         on:searchEntered={() => search(true)}
                         placeholder={i18nKey("communities.search")} />
@@ -198,7 +194,7 @@
                     <Search
                         searching={false}
                         fill
-                        bind:searchTerm={$communitySearchTerm}
+                        bind:searchTerm={$communitySearchStore.term}
                         on:searchEntered={() => search(true)}
                         placeholder={i18nKey("communities.search")} />
                 </div>

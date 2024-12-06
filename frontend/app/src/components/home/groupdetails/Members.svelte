@@ -32,6 +32,8 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { trimLeadingAtSymbol } from "../../../utils/user";
     import User from "./User.svelte";
+    import { botsEnabled } from "../../../utils/bots";
+    import BotExplorer from "../../bots/BotExplorer.svelte";
 
     const MAX_SEARCH_RESULTS = 255; // irritatingly this is a nat8 in the candid
     const client = getContext<OpenChat>("client");
@@ -82,7 +84,7 @@
     let id = collection.id;
     let membersList: VirtualList;
     let memberView: "members" | "blocked" | "invited" | "lapsed" = "members";
-    let selectedTab: "users" | "groups" = "users";
+    let selectedTab: "users" | "groups" | "add-bots" = "users";
 
     $: searchTerm = trimLeadingAtSymbol(searchTermEntered);
     $: searchTermLower = searchTerm.toLowerCase();
@@ -168,7 +170,7 @@
         memberView = v;
     }
 
-    function selectTab(tab: "users" | "groups") {
+    function selectTab(tab: "users" | "groups" | "add-bots") {
         selectedTab = tab;
         userGroups?.reset();
     }
@@ -195,22 +197,26 @@
 
 {#if collection.level === "community"}
     <div class="tabs">
-        <div
-            tabindex="0"
-            role="button"
+        <button
             on:click={() => selectTab("users")}
             class:selected={selectedTab === "users"}
             class="tab">
             <Translatable resourceKey={i18nKey("communities.members")} />
-        </div>
-        <div
-            tabindex="0"
-            role="button"
+        </button>
+        <button
             on:click={() => selectTab("groups")}
             class:selected={selectedTab === "groups"}
             class="tab">
             <Translatable resourceKey={i18nKey("communities.userGroups")} />
-        </div>
+        </button>
+        {#if botsEnabled}
+            <button
+                on:click={() => selectTab("add-bots")}
+                class:selected={selectedTab === "add-bots"}
+                class="tab">
+                <Translatable resourceKey={i18nKey("bots.explorer.addBots")} />
+            </button>
+        {/if}
     </div>
 {/if}
 
@@ -226,9 +232,7 @@
     {#if showBlocked || showInvited || showLapsed}
         <div class="tabs">
             <!-- svelte-ignore a11y-click-events-have-key-events -->
-            <div
-                tabindex="0"
-                role="button"
+            <button
                 on:click={() => setView("members")}
                 class:selected={memberView === "members"}
                 class="tab sub">
@@ -237,12 +241,9 @@
                     viewBox={"0 -2 24 24"}
                     color={memberView === "members" ? "var(--txt)" : "var(--txt-light)"} />
                 <Translatable resourceKey={i18nKey("members")} />
-            </div>
+            </button>
             {#if showInvited}
-                <!-- svelte-ignore a11y-click-events-have-key-events -->
-                <div
-                    tabindex="0"
-                    role="button"
+                <button
                     on:click={() => setView("invited")}
                     class:selected={memberView === "invited"}
                     class="tab sub">
@@ -251,14 +252,11 @@
                         viewBox={"0 -2 24 24"}
                         color={memberView === "invited" ? "var(--txt)" : "var(--txt-light)"} />
                     <Translatable resourceKey={i18nKey("invited")} />
-                </div>
+                </button>
             {/if}
 
             {#if showBlocked}
-                <!-- svelte-ignore a11y-click-events-have-key-events -->
-                <div
-                    tabindex="0"
-                    role="button"
+                <button
                     on:click={() => setView("blocked")}
                     class:selected={memberView === "blocked"}
                     class="tab sub">
@@ -267,14 +265,11 @@
                         viewBox={"0 -2 24 24"}
                         color={memberView === "blocked" ? "var(--txt)" : "var(--txt-light)"} />
                     <Translatable resourceKey={i18nKey("blocked")} />
-                </div>
+                </button>
             {/if}
 
             {#if showLapsed}
-                <!-- svelte-ignore a11y-click-events-have-key-events -->
-                <div
-                    tabindex="0"
-                    role="button"
+                <button
                     on:click={() => setView("lapsed")}
                     class:selected={memberView === "lapsed"}
                     class="tab sub">
@@ -283,7 +278,7 @@
                         viewBox={"0 -2 24 24"}
                         color={memberView === "lapsed" ? "var(--txt)" : "var(--txt-light)"} />
                     <Translatable resourceKey={i18nKey("access.lapsed.user")} />
-                </div>
+                </button>
             {/if}
         </div>
     {/if}
@@ -350,12 +345,16 @@
             {/each}
         </div>
     {/if}
-{:else if collection.kind === "community"}
+{:else if selectedTab === "groups" && collection.kind === "community"}
     <div class="user-groups">
         <UserGroups
             bind:this={userGroups}
             bind:openedGroupId={initialUsergroup}
             community={collection} />
+    </div>
+{:else if selectedTab === "add-bots" && collection.kind === "community"}
+    <div class="bot-explorer">
+        <BotExplorer />
     </div>
 {/if}
 
@@ -379,7 +378,8 @@
         @include nice-scrollbar();
     }
 
-    .user-groups {
+    .user-groups,
+    .bot-explorer {
         padding: 0 0 $sp4 0;
         flex: auto;
     }
@@ -399,6 +399,7 @@
         }
 
         .tab {
+            all: unset;
             padding-bottom: 10px;
             margin-bottom: -2px;
             border-bottom: 3px solid transparent;

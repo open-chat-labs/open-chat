@@ -230,6 +230,10 @@
         "diamond": {
             "desc": "Post a link to explain Diamond membership"
         },
+        "explorer": {
+            "addBots": "Add bots",
+            "loadMore": "Load more..."
+        },
         "failed": "Sorry, we failed to execute the bot command",
         "faq": {
             "desc": "Create a link to an FAQ topic",

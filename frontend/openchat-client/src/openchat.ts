@@ -506,7 +506,7 @@ import { localGlobalUpdates } from "./stores/localGlobalUpdates";
 import { identityState } from "./stores/identity";
 import { addQueryStringParam } from "./utils/url";
 import { builtinBot } from "./utils/builtinBotCommands";
-import { testBots } from "./utils/testBots";
+import { testBots, testMatches } from "./utils/testBots";
 
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
@@ -1669,6 +1669,10 @@ export class OpenChat extends OpenChatAgentWorker {
      */
     showTrace = showTrace;
     userAvatarUrl = userAvatarUrl;
+    botAvatarUrl(_avatarId?: bigint): string {
+        // TODO - come back and sort this out
+        return "/assets/bot_avatar.svg";
+    }
     updateStorageLimit = updateStorageLimit;
     formatTokens = formatTokens;
     validateTokenInput = validateTokenInput;
@@ -4937,6 +4941,11 @@ export class OpenChat extends OpenChatAgentWorker {
         pageIndex: number,
         pageSize: number,
     ): Promise<ExploreBotsResponse> {
+        return Promise.resolve({
+            kind: "success",
+            matches: testMatches,
+            total: 2,
+        });
         return this.sendRequest({
             kind: "exploreBots",
             searchTerm,
