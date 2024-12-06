@@ -1,9 +1,6 @@
 import type { AccessGateConfig } from "../access";
-import type {
-    ChatIdentifier,
-    GroupChatIdentifier,
-    GroupSubtype,
-} from "../chat/chat";
+import type { ExternalBot, SlashCommandSchema } from "../bots";
+import type { ChatIdentifier, GroupChatIdentifier, GroupSubtype } from "../chat/chat";
 import type { ChannelMatch, CommunityIdentifier } from "../community";
 import type { DataContent } from "../data/data";
 import type { ChatNotFound, Failure, Offline } from "../response";
@@ -34,9 +31,20 @@ export type MessageMatch = {
     score: number;
 };
 
+export type BotMatch = {
+    id: string;
+    score: number;
+    name: string;
+    description: string;
+    owner: string;
+    avatarId?: bigint;
+    commands: SlashCommandSchema[];
+};
+
 export type ExploreCommunitiesResponse = TermInvalid | ExploreSuccess | Offline;
 export type GroupSearchResponse = TermInvalid | GroupSearchSuccess | Offline;
 export type ExploreChannelsResponse = Failure | ExploreChannelsSuccess | Offline;
+export type ExploreBotsResponse = TermInvalid | ExploreBotsSuccess | Offline;
 
 export type TooManyUsers = {
     kind: "too_many_users";
@@ -44,6 +52,12 @@ export type TooManyUsers = {
 
 export type TermInvalid = {
     kind: "term_invalid";
+};
+
+export type ExploreBotsSuccess = {
+    kind: "success";
+    matches: BotMatch[];
+    total: number;
 };
 
 export type ExploreChannelsSuccess = {

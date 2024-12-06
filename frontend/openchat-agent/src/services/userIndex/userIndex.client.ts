@@ -44,6 +44,7 @@ import {
     userSearchResponse,
     apiJsonDiamondDuration,
     externalAchievementsResponse,
+    exploreBotsResponse,
 } from "./mappers";
 import {
     getCachedUsers,
@@ -72,6 +73,8 @@ import {
     UserIndexDeleteUserArgs,
     UserIndexDeleteUserResponse,
     UserIndexDiamondMembershipFeesResponse,
+    UserIndexExploreBotsArgs,
+    UserIndexExploreBotsResponse,
     UserIndexExternalAchievementsArgs,
     UserIndexExternalAchievementsResponse,
     UserIndexPayForDiamondMembershipArgs,
@@ -591,10 +594,14 @@ export class UserIndexClient extends CandidService {
         );
     }
 
-    exploreBots(): Promise<unknown> {
+    exploreBots(searchTerm: string, pageIndex: number, pageSize: number): Promise<unknown> {
         return this.executeMsgpackQuery(
             "explore_bots",
-            {},
+            {
+                search_term: searchTerm,
+                page_index: pageIndex,
+                page_size: pageSize,
+            },
             exploreBotsResponse,
             UserIndexExploreBotsArgs,
             UserIndexExploreBotsResponse,

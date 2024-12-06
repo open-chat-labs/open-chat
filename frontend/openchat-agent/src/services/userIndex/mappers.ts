@@ -22,6 +22,10 @@ import type {
     ExternalAchievementsResponse,
     ExternalAchievement,
     ChitLeaderboardResponse,
+    ExploreBotsResponse,
+    SlashCommandSchema,
+    BotMatch,
+    ChatPermissions,
 } from "openchat-shared";
 import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
@@ -58,6 +62,10 @@ import type {
     UserSummaryV2 as TUserSummaryV2,
     UserIndexExternalAchievementsResponse,
     UserIndexExternalAchievementsExternalAchievement,
+    UserIndexExploreBotsResponse,
+    BotMatch as ApiBotMatch,
+    SlashCommandSchema as ApiSlashCommandSchema,
+    GroupPermission,
 } from "../../typebox";
 
 export function userSearchResponse(value: UserIndexSearchResponse): UserSummary[] {
@@ -521,4 +529,75 @@ function externalAchievement(
         expires: value.expires,
         budgetExhausted: value.budget_exhausted,
     };
+}
+
+export function chatPermission(perm: GroupPermission): keyof ChatPermissions {
+    switch (perm) {
+        case "AddMembers":
+            return "addMembers";
+        case "ChangeRoles":
+            return "changeRoles";
+        case "DeleteMessages":
+            return "deleteMessages";
+        case "InviteUsers":
+            return "inviteUsers";
+        case "MentionAllMembers":
+            return "mentionAllMembers";
+        case "PinMessages":
+            return "pinMessages";
+        case "ReactToMessages":
+            return "reactToMessages";
+        case "RemoveMembers":
+            return "removeMembers";
+        case "StartVideoCall":
+            return "startVideoCall";
+        case "UpdateGroup":
+            return "updateGroup";
+    }
+}
+
+export function externalBotCommand(command: ApiSlashCommandSchema): SlashCommandSchema {
+    return {
+        name: command.name,
+        description: command.description,
+        params: [],
+        permissions: {
+            chatPermissions: command.permissions.chat.map(chatPermission),
+            communityPermissions: [],
+            messagePermissions: [],
+            threadPermissions: [],
+        },
+    };
+}
+
+export function externalBotMatch(match: ApiBotMatch): BotMatch {
+    return {
+        name: match.name,
+        avatarId: match.avatar_id,
+        id: principalBytesToString(match.id),
+        score: match.score,
+        owner: principalBytesToString(match.owner),
+        description: match.description,
+        commands: match.commands.map(externalBotCommand),
+    };
+}
+
+export function exploreBotsResponse(value: UserIndexExploreBotsResponse): ExploreBotsResponse {
+    if (value === "InvalidTerm") {
+        return { kind: "term_invalid" };
+    }
+    if ("TermTooLong" in value) {
+        return { kind: "term_invalid" };
+    }
+    if ("TermTooShort" in value) {
+        return { kind: "term_invalid" };
+    }
+    if ("Success" in value) {
+        return {
+            kind: "success",
+            matches: value.Success.matches.map(externalBotMatch),
+            total: value.Success.total,
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ExploreBotsResponse type received", value);
 }
