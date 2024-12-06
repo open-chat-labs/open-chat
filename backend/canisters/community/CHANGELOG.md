@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1500](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1500-community)] - 2024-12-06
+
 ### Added
 
 - Add/remove bot to/from community ([#6991](https://github.com/open-chat-labs/open-chat/pull/6991))
@@ -23,7 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove `MemberJoined` and `MemberLeft` community events ([#6989](https://github.com/open-chat-labs/open-chat/pull/6989))
 - Migrate community events to stable memory ([#6990](https://github.com/open-chat-labs/open-chat/pull/6990))
 
-## [[2.0.1498](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1498-community)] - 2024-12-04
+## [[2.0.1499](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1499-community)] - 2024-12-04
 
 ### Changed
 
