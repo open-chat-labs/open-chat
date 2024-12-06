@@ -46,7 +46,6 @@ use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use user_canister::CommunityCanisterEvent;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
-use utils::time::now_millis;
 
 mod activity_notifications;
 mod guards;
@@ -939,5 +938,5 @@ pub struct AddUsersToChannelResult {
 
 fn deserialize_to_timestamped<'de, D: Deserializer<'de>, T: Deserialize<'de>>(d: D) -> Result<Timestamped<T>, D::Error> {
     let value = T::deserialize(d)?;
-    Ok(Timestamped::new(value, now_millis()))
+    Ok(Timestamped::new(value, canister_time::now_millis()))
 }

@@ -698,7 +698,7 @@ impl TryFrom<ProposalInfo> for types::NnsProposal {
     type Error = String;
 
     fn try_from(p: ProposalInfo) -> Result<Self, Self::Error> {
-        let now = canister_time::timestamp_millis();
+        let now = canister_time::now_millis();
         let proposal = p.proposal.ok_or("proposal not set".to_string())?;
 
         Ok(types::NnsProposal {
