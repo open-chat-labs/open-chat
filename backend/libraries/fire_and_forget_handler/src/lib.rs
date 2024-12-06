@@ -10,7 +10,6 @@ use std::time::Duration;
 use tracing::trace;
 use types::{CanisterId, TimestampMillis};
 use utils::canister::should_retry_failed_c2c_call;
-use utils::time::now_millis;
 
 pub struct FireAndForgetHandler {
     inner: Rc<Mutex<FireAndForgetHandlerInner>>,
@@ -53,7 +52,7 @@ impl FireAndForgetHandler {
                 match result {
                     Err((code, msg)) if should_retry_failed_c2c_call(code, &msg) && call.attempt < 50 => {
                         call.attempt += 1;
-                        let now = now_millis();
+                        let now = canister_time::now_millis();
                         let due = now + (u64::from(call.attempt) * SECOND_IN_MS);
                         calls.queue.insert((due, call.id), call);
                     }
@@ -83,7 +82,7 @@ impl FireAndForgetHandler {
     }
 
     fn run(&self) {
-        let now = now_millis();
+        let now = canister_time::now_millis();
         let next_batch = self.within_lock(|i| i.next_batch(50, now));
         match next_batch {
             NextBatchResult::Success(batch) => ic_cdk::spawn(self.clone().process_batch(batch)),
