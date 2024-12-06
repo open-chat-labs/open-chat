@@ -25,6 +25,7 @@ const MAX_MEMBERS_PER_GROUP: u32 = 100_000;
 
 #[derive(Serialize, Deserialize)]
 pub struct GroupMembers {
+    #[serde(alias = "stable_memory_members_map")]
     members_map: MembersStableStorage,
     member_ids: BTreeSet<UserId>,
     owners: BTreeSet<UserId>,
