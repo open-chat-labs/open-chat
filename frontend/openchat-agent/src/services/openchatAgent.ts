@@ -3226,6 +3226,7 @@ export class OpenChatAgent extends EventTarget {
                         };
                         setCachedRegistry(updated);
                         this._registryValue = updated;
+                        this._dexesAgent.updateTokenDetails(updated.tokenDetails);
                         resolve([updated, true], true);
                     } else if (updates.kind === "success_no_updates" && current !== undefined) {
                         resolve([current, false], true);
@@ -3383,7 +3384,12 @@ export class OpenChatAgent extends EventTarget {
         outputTokenLedgers: string[],
     ): Promise<Record<string, DexId[]>> {
         return this._dexesAgent
-            .getSwapPools(inputTokenLedger, new Set(outputTokenLedgers), this.swapProviders())
+            .getSwapPools(
+                inputTokenLedger,
+                new Set(outputTokenLedgers),
+                this.swapProviders(),
+                this._registryValue?.tokenDetails ?? [],
+            )
             .then((pools) => {
                 return pools.reduce(swapReducer, {} as Record<string, DexId[]>);
             });
