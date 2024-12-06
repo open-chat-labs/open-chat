@@ -60,7 +60,6 @@ impl Bot {
             name: self.name.clone(),
             description: self.description.clone(),
             avatar_id: self.avatar.as_ref().map(|a| a.id),
-            banner_id: None,
             commands: self.commands.clone(),
         }
     }

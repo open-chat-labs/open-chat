@@ -18,7 +18,7 @@ const MAX_AVATAR_SIZE: usize = 250_000;
 const MAX_DESCRIPTION_LEN: usize = 10_000;
 const MAX_COMMANDS: usize = 100;
 
-#[proposal(guard = "caller_is_governance_principal")]
+#[proposal(guard = "caller_is_governance_principal", msgpack = true)]
 #[trace]
 fn register_bot(args: Args) -> Response {
     mutate_state(|state| register_bot_impl(args, state));
