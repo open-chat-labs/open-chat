@@ -17,8 +17,8 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::GatePayment;
 use group_chat_core::{AccessRulesInternal, AddResult};
 use group_community_common::{
-    Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, Members, PaymentReceipts, PaymentRecipient,
-    PendingPayment, PendingPaymentReason, PendingPaymentsQueue, UserCache,
+    Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, GroupBots, Members, PaymentReceipts,
+    PaymentRecipient, PendingPayment, PendingPaymentReason, PendingPaymentsQueue, UserCache,
 };
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use model::events::CommunityEventInternal;
@@ -37,10 +37,10 @@ use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotRemoved, BuildVersion, CanisterId, ChannelId, ChatMetrics,
-    CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cryptocurrency, Cycles, Document, Empty,
-    FrozenGroupInfo, MembersAdded, Milliseconds, Notification, Rules, SlashCommandPermissions, TimestampMillis, Timestamped,
-    UserId, UserType,
+    AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotGroupConfig, BotRemoved, BuildVersion, CanisterId,
+    ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cryptocurrency,
+    Cycles, Document, Empty, FrozenGroupInfo, MembersAdded, Milliseconds, Notification, Rules, SlashCommandPermissions,
+    TimestampMillis, Timestamped, UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use user_canister::CommunityCanisterEvent;
@@ -381,7 +381,8 @@ struct Data {
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
     stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
     members_migrated_to_stable_memory: bool,
-    bot_permissions: BTreeMap<UserId, SlashCommandPermissions>,
+    #[serde(skip_deserializing)]
+    bots: GroupBots,
 }
 
 impl Data {
@@ -485,7 +486,7 @@ impl Data {
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             members_migrated_to_stable_memory: true,
-            bot_permissions: BTreeMap::new(),
+            bots: GroupBots::default(),
         }
     }
 
@@ -783,34 +784,15 @@ impl Data {
         }
     }
 
-    pub fn add_bot(
-        &mut self,
-        owner_id: UserId,
-        bot_user_id: UserId,
-        granted_permissions: SlashCommandPermissions,
-        now: TimestampMillis,
-    ) -> bool {
-        if !self.bot_permissions.contains_key(&bot_user_id) {
+    pub fn add_bot(&mut self, owner_id: UserId, user_id: UserId, bot_config: BotGroupConfig, now: TimestampMillis) -> bool {
+        if !self.bots.add(user_id, bot_config, now) {
             return false;
-        }
-
-        // Insert the granted bot permissions
-        self.bot_permissions.insert(bot_user_id, granted_permissions);
-
-        // Add the bot as a community member
-        self.members.add(bot_user_id, bot_user_id.into(), UserType::BotV2, None, now);
-        self.invited_users.remove(&bot_user_id, now);
-
-        // Add the bot as a member of each channel
-        let channel_ids: Vec<_> = self.channels.iter().map(|c| c.id).collect();
-        for channel_id in channel_ids {
-            self.add_members_to_channel(&channel_id, vec![(bot_user_id, UserType::BotV2)], owner_id, now);
         }
 
         // Publish community event
         self.events.push_event(
             CommunityEventInternal::BotAdded(Box::new(BotAdded {
-                bot_id: bot_user_id,
+                user_id,
                 added_by: owner_id,
             })),
             now,
@@ -821,23 +803,15 @@ impl Data {
         true
     }
 
-    pub fn remove_bot(&mut self, owner_id: UserId, bot_user_id: UserId, now: TimestampMillis) -> bool {
-        if self.bot_permissions.remove(&bot_user_id).is_none() {
+    pub fn remove_bot(&mut self, owner_id: UserId, user_id: UserId, now: TimestampMillis) -> bool {
+        if !self.bots.remove(user_id, now) {
             return false;
         }
-
-        // Remove bot user from each channel
-        for channel in self.channels.iter_mut() {
-            channel.chat.remove_member(owner_id, bot_user_id, false, now);
-        }
-
-        // Remove bot user from the community
-        self.remove_user_from_community(bot_user_id, now);
 
         // Publish community event
         self.events.push_event(
             CommunityEventInternal::BotRemoved(Box::new(BotRemoved {
-                bot_id: bot_user_id,
+                user_id,
                 removed_by: owner_id,
             })),
             now,
@@ -849,7 +823,7 @@ impl Data {
     }
 
     pub fn get_bot_permissions(&self, bot_user_id: &UserId) -> Option<&SlashCommandPermissions> {
-        self.bot_permissions.get(bot_user_id)
+        self.bots.get(bot_user_id).map(|b| &b.permissions)
     }
 
     pub fn get_user_permissions_for_bot_commands(
