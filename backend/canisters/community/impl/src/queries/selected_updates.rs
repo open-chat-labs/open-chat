@@ -1,10 +1,10 @@
 use crate::{model::members::CommunityMembers, read_state, RuntimeState};
 use canister_api_macros::query;
 use community_canister::selected_updates_v2::{Response::*, *};
-use group_community_common::MemberUpdate;
+use group_community_common::{BotUpdate, MemberUpdate};
 use std::cell::LazyCell;
 use std::collections::HashSet;
-use types::UserId;
+use types::{BotGroupDetails, UserId};
 
 #[query(candid = true, msgpack = true)]
 fn selected_updates_v2(args: Args) -> Response {
@@ -40,6 +40,8 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         last_updated,
         members_added_or_updated: vec![],
         members_removed: vec![],
+        bots_added_or_updated: vec![],
+        bots_removed: vec![],
         blocked_users_added: vec![],
         blocked_users_removed: vec![],
         invited_users,
@@ -83,6 +85,27 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
             }
             MemberUpdate::Lapsed | MemberUpdate::Unlapsed | MemberUpdate::DisplayNameChanged => {
                 user_updates_handler.mark_member_updated(&mut result, user_id, false, false);
+            }
+        }
+    }
+
+    let mut bots_changed = HashSet::new();
+    for (user_id, update) in state.data.bots.iter_latest_updates(args.updates_since) {
+        match update {
+            BotUpdate::Added | BotUpdate::Updated => {
+                if bots_changed.insert(user_id) {
+                    if let Some(bot) = state.data.bots.get(&user_id) {
+                        result.bots_added_or_updated.push(BotGroupDetails {
+                            user_id,
+                            permissions: bot.permissions.clone(),
+                        });
+                    }
+                }
+            }
+            BotUpdate::Removed => {
+                if bots_changed.insert(user_id) {
+                    result.bots_removed.push(user_id);
+                }
             }
         }
     }

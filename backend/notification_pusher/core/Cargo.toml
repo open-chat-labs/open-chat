@@ -12,6 +12,7 @@ notifications_canister = { path = "../../canisters/notifications/api" }
 notifications_canister_client = { path = "../../canisters/notifications/client" }
 notifications_index_canister = { path = "../../canisters/notifications_index/api" }
 notifications_index_canister_client = { path = "../../canisters/notifications_index/client" }
+openssl = { workspace = true, features = ["vendored"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true, features = ["macros", "time"] }

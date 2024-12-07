@@ -5,7 +5,7 @@ use chat_events::{
 };
 use constants::OPENCHAT_BOT_USER_ID;
 use event_store_producer::{EventStoreClient, Runtime};
-use group_community_common::MemberUpdate;
+use group_community_common::{BotUpdate, GroupBots, MemberUpdate};
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use regex_lite::Regex;
@@ -14,15 +14,15 @@ use serde::{Deserialize, Serialize};
 use std::cmp::{max, min, Reverse};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use types::{
-    AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, ContentValidationError, CustomPermission, Document,
-    EventIndex, EventOrExpiredRange, EventWrapper, EventsResponse, ExternalUrlUpdated, FieldTooLongResult, FieldTooShortResult,
-    GroupDescriptionChanged, GroupMember, GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged,
-    GroupSubtype, GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message,
-    MessageContent, MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned,
-    MessageUnpinned, MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate, OptionalGroupPermissions,
-    OptionalMessagePermissions, PermissionsChanged, PushEventResult, Reaction, RoleChanged, Rules, SelectedGroupUpdates,
-    ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version,
-    Versioned, VersionedRules, VideoCall, MAX_RETURNED_MENTIONS,
+    AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotAdded, BotGroupConfig, BotGroupDetails,
+    BotRemoved, ContentValidationError, CustomPermission, Document, EventIndex, EventOrExpiredRange, EventWrapper,
+    EventsResponse, ExternalUrlUpdated, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupMember,
+    GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged,
+    HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent, MessageContentInitial, MessageId,
+    MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds,
+    MultiUserChat, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged, PushEventResult,
+    Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId,
+    UserType, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall, MAX_RETURNED_MENTIONS,
 };
 use utils::document::validate_avatar;
 use utils::text_validation::{
@@ -62,6 +62,8 @@ pub struct GroupChatCore {
     pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
     pub external_url: Timestamped<Option<String>>,
     at_everyone_mentions: BTreeMap<TimestampMillis, AtEveryoneMention>,
+    #[serde(skip_deserializing)]
+    pub bots: GroupBots,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -118,6 +120,7 @@ impl GroupChatCore {
             min_visible_indexes_for_new_members: None,
             external_url: Timestamped::new(external_url, now),
             at_everyone_mentions: BTreeMap::new(),
+            bots: GroupBots::default(),
         }
     }
 
@@ -338,6 +341,27 @@ impl GroupChatCore {
                     }
                 }
                 MemberUpdate::DisplayNameChanged => {}
+            }
+        }
+
+        let mut bots_changed = HashSet::new();
+        for (user_id, update) in self.bots.iter_latest_updates(since) {
+            match update {
+                BotUpdate::Added | BotUpdate::Updated => {
+                    if bots_changed.insert(user_id) {
+                        if let Some(bot) = self.bots.get(&user_id) {
+                            result.bots_added_or_updated.push(BotGroupDetails {
+                                user_id,
+                                permissions: bot.permissions.clone(),
+                            });
+                        }
+                    }
+                }
+                BotUpdate::Removed => {
+                    if bots_changed.insert(user_id) {
+                        result.bots_removed.push(user_id);
+                    }
+                }
             }
         }
 
@@ -1801,6 +1825,40 @@ impl GroupChatCore {
             .sorted_unstable_by_key(|m| Reverse(m.event_index))
             .take(MAX_RETURNED_MENTIONS)
             .collect()
+    }
+
+    pub fn add_bot(&mut self, owner_id: UserId, user_id: UserId, config: BotGroupConfig, now: TimestampMillis) -> bool {
+        if !self.bots.add(user_id, config, now) {
+            return false;
+        }
+
+        self.events.push_main_event(
+            ChatEventInternal::BotAdded(Box::new(BotAdded {
+                user_id,
+                added_by: owner_id,
+            })),
+            0,
+            now,
+        );
+
+        true
+    }
+
+    pub fn remove_bot(&mut self, owner_id: UserId, user_id: UserId, now: TimestampMillis) -> bool {
+        if !self.bots.remove(user_id, now) {
+            return false;
+        }
+
+        self.events.push_main_event(
+            ChatEventInternal::BotRemoved(Box::new(BotRemoved {
+                user_id,
+                removed_by: owner_id,
+            })),
+            0,
+            now,
+        );
+
+        true
     }
 
     fn at_everyone_mentions_since(

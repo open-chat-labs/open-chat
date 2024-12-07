@@ -2839,6 +2839,8 @@ dependencies = [
 name = "group_community_common"
 version = "0.1.0"
 dependencies = [
+ "candid",
+ "constants",
  "icrc-ledger-types",
  "serde",
  "serde_repr",
@@ -4881,6 +4883,7 @@ dependencies = [
  "notifications_canister_client",
  "notifications_index_canister",
  "notifications_index_canister_client",
+ "openssl",
  "serde",
  "serde_json",
  "tokio",
@@ -5239,6 +5242,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ff011a302c396a5197692431fc1948019154afc178baf7d8e37367442a4601cf"
 
 [[package]]
+name = "openssl-src"
+version = "300.4.1+3.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "faa4eac4138c62414b5622d1b31c5c304f34b406b013c079c2bbc652fdd6678c"
+dependencies = [
+ "cc",
+]
+
+[[package]]
 name = "openssl-sys"
 version = "0.9.103"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5246,6 +5258,7 @@ checksum = "7f9e8deee91df40a943c71b917e5874b951d32a802526c85721ce3b776c929d6"
 dependencies = [
  "cc",
  "libc",
+ "openssl-src",
  "pkg-config",
  "vcpkg",
 ]
