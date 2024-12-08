@@ -47,31 +47,78 @@ impl KeyPrefix {
     }
 }
 
-// ChatEventKeyPrefix + EventIndex
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
-#[serde(into = "Key", try_from = "Key")]
-pub struct ChatEventKey(Vec<u8>);
+macro_rules! key {
+    ($key_name:ident, $key_prefix_name:ident, $key_types:pat) => {
+        #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+        #[serde(into = "Key", try_from = "Key")]
+        pub struct $key_name(Vec<u8>);
 
-// MemberKeyPrefix + UserId
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
-#[serde(into = "Key", try_from = "Key")]
-pub struct MemberKey(Vec<u8>);
+        #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+        #[serde(into = "KeyPrefix", try_from = "KeyPrefix")]
+        pub struct $key_prefix_name(Vec<u8>);
 
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
-#[serde(into = "Key", try_from = "Key")]
-pub struct CommunityEventKey(Vec<u8>);
+        impl From<$key_name> for Key {
+            fn from(value: $key_name) -> Self {
+                Key(value.0)
+            }
+        }
 
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
-#[serde(into = "KeyPrefix", try_from = "KeyPrefix")]
-pub struct ChatEventKeyPrefix(Vec<u8>);
+        impl From<$key_prefix_name> for KeyPrefix {
+            fn from(value: $key_prefix_name) -> Self {
+                KeyPrefix(value.0)
+            }
+        }
 
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
-#[serde(into = "KeyPrefix", try_from = "KeyPrefix")]
-pub struct MemberKeyPrefix(Vec<u8>);
+        impl TryFrom<Key> for $key_name {
+            type Error = String;
 
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
-#[serde(into = "KeyPrefix", try_from = "KeyPrefix")]
-pub struct CommunityEventKeyPrefix(Vec<u8>);
+            fn try_from(value: Key) -> Result<Self, Self::Error> {
+                validate_key(&value.0, |kt| matches!(kt, $key_types)).map(|_| $key_name(value.0))
+            }
+        }
+
+        impl TryFrom<KeyPrefix> for $key_prefix_name {
+            type Error = String;
+
+            fn try_from(value: KeyPrefix) -> Result<Self, Self::Error> {
+                validate_key(&value.0, |kt| matches!(kt, $key_types)).map(|_| $key_prefix_name(value.0))
+            }
+        }
+
+        impl $key_name {
+            pub fn matches_prefix(&self, prefix: &$key_prefix_name) -> bool {
+                self.0.starts_with(&prefix.0)
+            }
+        }
+    };
+}
+
+key!(
+    ChatEventKey,
+    ChatEventKeyPrefix,
+    KeyType::DirectChatEvent
+        | KeyType::GroupChatEvent
+        | KeyType::ChannelEvent
+        | KeyType::DirectChatThreadEvent
+        | KeyType::GroupChatThreadEvent
+        | KeyType::ChannelThreadEvent
+);
+
+key!(
+    MemberKey,
+    MemberKeyPrefix,
+    KeyType::GroupMember | KeyType::ChannelMember | KeyType::CommunityMember
+);
+
+key!(CommunityEventKey, CommunityEventKeyPrefix, KeyType::CommunityEvent);
+
+fn validate_key<F: FnOnce(KeyType) -> bool>(key: &[u8], validator: F) -> Result<(), String> {
+    if extract_key_type(key).is_some_and(validator) {
+        Ok(())
+    } else {
+        Err(format!("Key type mismatch: {:?}", key.first()))
+    }
+}
 
 impl ChatEventKeyPrefix {
     pub fn new_from_chat(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
@@ -164,47 +211,7 @@ impl ChatEventKeyPrefix {
     }
 }
 
-impl TryFrom<KeyPrefix> for ChatEventKeyPrefix {
-    type Error = String;
-
-    fn try_from(value: KeyPrefix) -> Result<Self, Self::Error> {
-        if extract_key_type(&value.0).is_some_and(|kt| kt.is_chat_event_key()) {
-            Ok(ChatEventKeyPrefix(value.0))
-        } else {
-            Err(format!("Key type mismatch: {:?}", value.0.first()))
-        }
-    }
-}
-
-impl TryFrom<Key> for ChatEventKey {
-    type Error = String;
-
-    fn try_from(value: Key) -> Result<Self, Self::Error> {
-        if extract_key_type(&value.0).is_some_and(|kt| kt.is_chat_event_key()) {
-            Ok(ChatEventKey(value.0))
-        } else {
-            Err(format!("Key type mismatch: {:?}", value.0.first()))
-        }
-    }
-}
-
-impl From<ChatEventKeyPrefix> for KeyPrefix {
-    fn from(value: ChatEventKeyPrefix) -> Self {
-        KeyPrefix(value.0)
-    }
-}
-
-impl From<ChatEventKey> for Key {
-    fn from(value: ChatEventKey) -> Self {
-        Key(value.0)
-    }
-}
-
 impl ChatEventKey {
-    pub fn matches_prefix(&self, prefix: &ChatEventKeyPrefix) -> bool {
-        self.0.starts_with(&prefix.0)
-    }
-
     pub fn matches_chat(&self, chat: &Chat) -> bool {
         match (chat, self.key_type()) {
             (Chat::Direct(id), KeyType::DirectChatEvent | KeyType::DirectChatThreadEvent) => {
@@ -282,47 +289,7 @@ impl MemberKeyPrefix {
     }
 }
 
-impl From<MemberKeyPrefix> for KeyPrefix {
-    fn from(value: MemberKeyPrefix) -> Self {
-        KeyPrefix(value.0)
-    }
-}
-
-impl From<MemberKey> for Key {
-    fn from(value: MemberKey) -> Self {
-        Key(value.0)
-    }
-}
-
-impl TryFrom<KeyPrefix> for MemberKeyPrefix {
-    type Error = String;
-
-    fn try_from(value: KeyPrefix) -> Result<Self, Self::Error> {
-        if extract_key_type(&value.0).is_some_and(|kt| kt.is_member_key()) {
-            Ok(MemberKeyPrefix(value.0))
-        } else {
-            Err(format!("Key type mismatch: {:?}", value.0.first()))
-        }
-    }
-}
-
-impl TryFrom<Key> for MemberKey {
-    type Error = String;
-
-    fn try_from(value: Key) -> Result<Self, Self::Error> {
-        if extract_key_type(&value.0).is_some_and(|kt| kt.is_member_key()) {
-            Ok(MemberKey(value.0))
-        } else {
-            Err(format!("Key type mismatch: {:?}", value.0.first()))
-        }
-    }
-}
-
 impl MemberKey {
-    pub fn matches_prefix(&self, prefix: &MemberKeyPrefix) -> bool {
-        self.0.starts_with(&prefix.0)
-    }
-
     pub fn user_id(&self) -> UserId {
         let prefix_len = match self.key_type() {
             KeyType::GroupMember | KeyType::CommunityMember => 1,
@@ -357,47 +324,7 @@ impl Default for CommunityEventKeyPrefix {
     }
 }
 
-impl From<CommunityEventKeyPrefix> for KeyPrefix {
-    fn from(value: CommunityEventKeyPrefix) -> Self {
-        KeyPrefix(value.0)
-    }
-}
-
-impl From<CommunityEventKey> for Key {
-    fn from(value: CommunityEventKey) -> Self {
-        Key(value.0)
-    }
-}
-
-impl TryFrom<KeyPrefix> for CommunityEventKeyPrefix {
-    type Error = String;
-
-    fn try_from(value: KeyPrefix) -> Result<Self, Self::Error> {
-        if extract_key_type(&value.0).is_some_and(|kt| kt == KeyType::CommunityEvent) {
-            Ok(CommunityEventKeyPrefix(value.0))
-        } else {
-            Err(format!("Key type mismatch: {:?}", value.0.first()))
-        }
-    }
-}
-
-impl TryFrom<Key> for CommunityEventKey {
-    type Error = String;
-
-    fn try_from(value: Key) -> Result<Self, Self::Error> {
-        if extract_key_type(&value.0).is_some_and(|kt| kt == KeyType::CommunityEvent) {
-            Ok(CommunityEventKey(value.0))
-        } else {
-            Err(format!("Key type mismatch: {:?}", value.0.first()))
-        }
-    }
-}
-
 impl CommunityEventKey {
-    pub fn matches_prefix(&self, prefix: &CommunityEventKeyPrefix) -> bool {
-        self.0.starts_with(&prefix.0)
-    }
-
     pub fn event_index(&self) -> EventIndex {
         let start = self.0.len() - 4;
         u32::from_be_bytes(self.0[start..].try_into().unwrap()).into()
@@ -423,24 +350,6 @@ fn extract_key_type(bytes: &[u8]) -> Option<KeyType> {
     bytes.first().and_then(|b| KeyType::try_from(*b).ok())
 }
 
-impl KeyType {
-    pub fn is_chat_event_key(&self) -> bool {
-        matches!(
-            self,
-            KeyType::DirectChatEvent
-                | KeyType::GroupChatEvent
-                | KeyType::ChannelEvent
-                | KeyType::DirectChatThreadEvent
-                | KeyType::GroupChatThreadEvent
-                | KeyType::ChannelThreadEvent
-        )
-    }
-
-    pub fn is_member_key(&self) -> bool {
-        matches!(self, KeyType::GroupMember | KeyType::ChannelMember | KeyType::CommunityMember)
-    }
-}
-
 impl TryFrom<u8> for KeyType {
     type Error = ();
 
@@ -460,6 +369,7 @@ impl TryFrom<u8> for KeyType {
         }
     }
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
