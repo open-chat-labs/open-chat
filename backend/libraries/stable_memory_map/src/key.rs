@@ -73,11 +73,7 @@ macro_rules! key {
             type Error = String;
 
             fn try_from(value: Key) -> Result<Self, Self::Error> {
-                if extract_key_type(&value.0).is_some_and(|kt| matches!(kt, $key_types)) {
-                    Ok($key_name(value.0))
-                } else {
-                    Err(format!("Key type mismatch: {:?}", value.0.first()))
-                }
+                validate_key(&value.0, |kt| matches!(kt, $key_types)).map(|_| $key_name(value.0))
             }
         }
 
@@ -85,11 +81,7 @@ macro_rules! key {
             type Error = String;
 
             fn try_from(value: KeyPrefix) -> Result<Self, Self::Error> {
-                if extract_key_type(&value.0).is_some_and(|kt| matches!(kt, $key_types)) {
-                    Ok($key_prefix_name(value.0))
-                } else {
-                    Err(format!("Key type mismatch: {:?}", value.0.first()))
-                }
+                validate_key(&value.0, |kt| matches!(kt, $key_types)).map(|_| $key_prefix_name(value.0))
             }
         }
 
@@ -119,6 +111,14 @@ key!(
 );
 
 key!(CommunityEventKey, CommunityEventKeyPrefix, KeyType::CommunityEvent);
+
+fn validate_key<F: FnOnce(KeyType) -> bool>(key: &[u8], validator: F) -> Result<(), String> {
+    if extract_key_type(key).is_some_and(validator) {
+        Ok(())
+    } else {
+        Err(format!("Key type mismatch: {:?}", key.first()))
+    }
+}
 
 impl ChatEventKeyPrefix {
     pub fn new_from_chat(chat: Chat, thread_root_message_index: Option<MessageIndex>) -> Self {
