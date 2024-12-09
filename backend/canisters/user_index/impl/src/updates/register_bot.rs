@@ -1,6 +1,6 @@
 use crate::guards::caller_is_governance_principal;
 use crate::model::user_map::Bot;
-use crate::{mutate_state, RuntimeState, USER_LIMIT};
+use crate::{mutate_state, read_state, RuntimeState, USER_LIMIT};
 use candid::Principal;
 use canister_api_macros::{proposal, update};
 use canister_tracing_macros::trace;
@@ -21,7 +21,10 @@ const MAX_COMMANDS: usize = 100;
 #[update(msgpack = true)]
 #[trace]
 fn register_bot(args: Args) -> Response {
-    mutate_state(|state| register_bot_impl(args, state));
+    if read_state(|state| state.data.test_mode) {
+        mutate_state(|state| register_bot_impl(args, state));
+    }
+
     Success
 }
 
