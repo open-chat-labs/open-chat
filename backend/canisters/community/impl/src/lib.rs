@@ -30,17 +30,17 @@ use rand::rngs::StdRng;
 use rand::RngCore;
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_bytes::ByteBuf;
-use stable_memory_map::{ChatEventKeyPrefix, KeyPrefix};
+use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
 use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotGroupConfig, BotRemoved, BuildVersion, CanisterId,
-    ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cryptocurrency,
-    Cycles, Document, Empty, FrozenGroupInfo, MembersAdded, Milliseconds, Notification, Rules, SlashCommandPermissions,
-    TimestampMillis, Timestamped, UserId, UserType,
+    AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotGroupConfig, BotRemoved, BotUpdated, BuildVersion,
+    CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions,
+    Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, MembersAdded, Milliseconds, Notification, Rules,
+    SlashCommandPermissions, TimestampMillis, Timestamped, UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use user_canister::CommunityCanisterEvent;
@@ -243,12 +243,9 @@ impl RuntimeState {
             }
             final_prize_payments.extend(result.final_prize_payments);
             for thread in result.threads {
-                self.data
-                    .stable_memory_keys_to_garbage_collect
-                    .push(KeyPrefix::from(ChatEventKeyPrefix::new_from_channel(
-                        channel.id,
-                        Some(thread.root_message_index),
-                    )));
+                self.data.stable_memory_keys_to_garbage_collect.push(BaseKeyPrefix::from(
+                    ChatEventKeyPrefix::new_from_channel(channel.id, Some(thread.root_message_index)),
+                ));
             }
         }
         jobs::garbage_collect_stable_memory::start_job_if_required(self);
@@ -379,7 +376,7 @@ struct Data {
     expiring_member_actions: ExpiringMemberActions,
     user_cache: UserCache,
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
-    stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
+    stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     members_migrated_to_stable_memory: bool,
     #[serde(default)]
     bots: GroupBots,
@@ -799,6 +796,23 @@ impl Data {
         );
 
         // TODO: Notify UserIndex
+
+        true
+    }
+
+    pub fn update_bot(&mut self, owner_id: UserId, user_id: UserId, bot_config: BotGroupConfig, now: TimestampMillis) -> bool {
+        if !self.bots.update(user_id, bot_config, now) {
+            return false;
+        }
+
+        // Publish community event
+        self.events.push_event(
+            CommunityEventInternal::BotUpdated(Box::new(BotUpdated {
+                user_id,
+                updated_by: owner_id,
+            })),
+            now,
+        );
 
         true
     }

@@ -15,7 +15,7 @@ use std::cmp::{max, min, Reverse};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use types::{
     AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotAdded, BotGroupConfig, BotGroupDetails,
-    BotRemoved, ContentValidationError, CustomPermission, Document, EventIndex, EventOrExpiredRange, EventWrapper,
+    BotRemoved, BotUpdated, ContentValidationError, CustomPermission, Document, EventIndex, EventOrExpiredRange, EventWrapper,
     EventsResponse, ExternalUrlUpdated, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupMember,
     GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged,
     HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent, MessageContentInitial, MessageId,
@@ -1836,6 +1836,23 @@ impl GroupChatCore {
             ChatEventInternal::BotAdded(Box::new(BotAdded {
                 user_id,
                 added_by: owner_id,
+            })),
+            0,
+            now,
+        );
+
+        true
+    }
+
+    pub fn update_bot(&mut self, owner_id: UserId, user_id: UserId, config: BotGroupConfig, now: TimestampMillis) -> bool {
+        if !self.bots.update(user_id, config, now) {
+            return false;
+        }
+
+        self.events.push_main_event(
+            ChatEventInternal::BotUpdated(Box::new(BotUpdated {
+                user_id,
+                updated_by: owner_id,
             })),
             0,
             now,

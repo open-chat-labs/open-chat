@@ -5,7 +5,7 @@ use crate::{
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::delete_channel::{Response::*, *};
-use stable_memory_map::{ChatEventKeyPrefix, KeyPrefix, MemberKeyPrefix};
+use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix, MemberKeyPrefix};
 use types::{ChannelDeleted, ChannelId};
 
 #[update(msgpack = true)]
@@ -54,13 +54,13 @@ fn delete_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Respo
     state
         .data
         .stable_memory_keys_to_garbage_collect
-        .push(KeyPrefix::from(ChatEventKeyPrefix::new_from_channel(channel_id, None)));
+        .push(BaseKeyPrefix::from(ChatEventKeyPrefix::new_from_channel(channel_id, None)));
 
     for message_index in channel.chat.events.thread_keys() {
         state
             .data
             .stable_memory_keys_to_garbage_collect
-            .push(KeyPrefix::from(ChatEventKeyPrefix::new_from_channel(
+            .push(BaseKeyPrefix::from(ChatEventKeyPrefix::new_from_channel(
                 channel_id,
                 Some(message_index),
             )));
@@ -69,7 +69,7 @@ fn delete_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Respo
     state
         .data
         .stable_memory_keys_to_garbage_collect
-        .push(KeyPrefix::from(MemberKeyPrefix::new_from_channel(channel_id)));
+        .push(BaseKeyPrefix::from(MemberKeyPrefix::new_from_channel(channel_id)));
 
     crate::jobs::garbage_collect_stable_memory::start_job_if_required(state);
 

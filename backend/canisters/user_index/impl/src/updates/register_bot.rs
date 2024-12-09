@@ -1,6 +1,6 @@
 use crate::guards::caller_is_governance_principal;
 use crate::model::user_map::Bot;
-use crate::{mutate_state, RuntimeState, USER_LIMIT};
+use crate::{mutate_state, read_state, RuntimeState, USER_LIMIT};
 use candid::Principal;
 use canister_api_macros::{proposal, update};
 use canister_tracing_macros::trace;
@@ -21,7 +21,10 @@ const MAX_COMMANDS: usize = 100;
 #[update(msgpack = true)]
 #[trace]
 fn register_bot(args: Args) -> Response {
-    mutate_state(|state| register_bot_impl(args, state));
+    if read_state(|state| state.data.test_mode) {
+        mutate_state(|state| register_bot_impl(args, state));
+    }
+
     Success
 }
 
@@ -109,6 +112,10 @@ fn validate_request(args: &Args, state: &RuntimeState) -> Result<(), String> {
 
     if args.principal == Principal::anonymous() {
         return Err("principal cannot be anonymous".to_string());
+    }
+
+    if state.data.users.get_by_principal(&state.env.caller()).is_some() {
+        return Err("already registered".to_string());
     }
 
     match validate_username(&args.name) {

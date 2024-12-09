@@ -4,9 +4,9 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use tracing::info;
 use types::{
-    AvatarChanged, BannerChanged, BotAdded, BotRemoved, ChannelDeleted, ChannelId, ChatId, CommunityMemberLeftInternal,
-    CommunityMembersRemoved, CommunityPermissionsChanged, CommunityRoleChanged, CommunityUsersBlocked,
-    CommunityVisibilityChanged, DefaultChannelsChanged, EventIndex, EventWrapperInternal, GroupCreated,
+    AvatarChanged, BannerChanged, BotAdded, BotRemoved, BotUpdated, ChannelDeleted, ChannelId, ChatId,
+    CommunityMemberLeftInternal, CommunityMembersRemoved, CommunityPermissionsChanged, CommunityRoleChanged,
+    CommunityUsersBlocked, CommunityVisibilityChanged, DefaultChannelsChanged, EventIndex, EventWrapperInternal, GroupCreated,
     GroupDescriptionChanged, GroupFrozen, GroupInviteCodeChanged, GroupNameChanged, GroupRulesChanged, GroupUnfrozen,
     MemberJoinedInternal, PrimaryLanguageChanged, TimestampMillis, UserId, UsersInvited, UsersUnblocked,
 };
@@ -123,6 +123,8 @@ pub enum CommunityEventInternal {
     BotAdded(Box<BotAdded>),
     #[serde(rename = "br")]
     BotRemoved(Box<BotRemoved>),
+    #[serde(rename = "bu")]
+    BotUpdated(Box<BotUpdated>),
 }
 
 impl CommunityEvents {
