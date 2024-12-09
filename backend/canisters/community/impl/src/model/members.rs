@@ -19,7 +19,6 @@ const MAX_MEMBERS_PER_COMMUNITY: u32 = 100_000;
 
 #[derive(Serialize, Deserialize)]
 pub struct CommunityMembers {
-    #[serde(alias = "stable_memory_members_map")]
     members_map: MembersStableStorage,
     member_channel_links: BTreeSet<(UserId, ChannelId)>,
     member_channel_links_removed: BTreeMap<(UserId, ChannelId), TimestampMillis>,
@@ -36,7 +35,6 @@ pub struct CommunityMembers {
     members_with_display_names: BTreeSet<UserId>,
     members_with_referrals: BTreeSet<UserId>,
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
-    #[serde(default)]
     latest_update_removed: TimestampMillis,
 }
 

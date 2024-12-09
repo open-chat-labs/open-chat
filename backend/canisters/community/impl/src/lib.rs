@@ -297,7 +297,6 @@ impl RuntimeState {
             instruction_counts: self.data.instruction_counts_log.iter().collect(),
             event_store_client_info: self.data.event_store_client.info(),
             timer_jobs: self.data.timer_jobs.len() as u32,
-            members_migrated_to_stable_memory: self.data.members_migrated_to_stable_memory,
             stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
@@ -377,7 +376,6 @@ struct Data {
     user_cache: UserCache,
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
-    members_migrated_to_stable_memory: bool,
     #[serde(default)]
     bots: GroupBots,
 }
@@ -482,7 +480,6 @@ impl Data {
             user_cache: UserCache::default(),
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
-            members_migrated_to_stable_memory: true,
             bots: GroupBots::default(),
         }
     }
@@ -897,7 +894,6 @@ pub struct Metrics {
     pub instruction_counts: Vec<InstructionCountEntry>,
     pub event_store_client_info: EventStoreClientInfo,
     pub timer_jobs: u32,
-    pub members_migrated_to_stable_memory: bool,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }
