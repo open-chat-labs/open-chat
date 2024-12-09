@@ -1,5 +1,6 @@
 use candid::Principal;
 use local_user_index_canister::GlobalUser;
+use principal_to_user_id_map::{deserialize_principal_to_user_id_map_from_heap, PrincipalToUserIdMap};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use types::{TimestampMillis, UniquePersonProof, UserId, UserType};
@@ -7,7 +8,8 @@ use types::{TimestampMillis, UniquePersonProof, UserId, UserType};
 #[derive(Serialize, Deserialize, Default)]
 pub struct GlobalUserMap {
     user_id_to_principal: HashMap<UserId, Principal>,
-    principal_to_user_id: HashMap<Principal, UserId>,
+    #[serde(deserialize_with = "deserialize_principal_to_user_id_map_from_heap")]
+    principal_to_user_id: PrincipalToUserIdMap,
     unique_person_proofs: HashMap<UserId, UniquePersonProof>,
     platform_moderators: HashSet<UserId>,
     #[serde(alias = "bots")]
@@ -46,7 +48,7 @@ impl GlobalUserMap {
     pub fn get_by_principal(&self, principal: &Principal) -> Option<GlobalUser> {
         self.principal_to_user_id
             .get(principal)
-            .map(|user_id| self.hydrate_user(*user_id, *principal))
+            .map(|user_id| self.hydrate_user(user_id, *principal))
     }
 
     pub fn get_by_user_id(&self, user_id: &UserId) -> Option<GlobalUser> {
@@ -76,7 +78,7 @@ impl GlobalUserMap {
 
     pub fn remove(&mut self, user_id: &UserId) -> bool {
         if let Some(principal) = self.user_id_to_principal.remove(user_id) {
-            if self.principal_to_user_id.get(&principal) == Some(user_id) {
+            if self.principal_to_user_id.get(&principal) == Some(*user_id) {
                 self.principal_to_user_id.remove(&principal);
             }
             self.platform_moderators.remove(user_id);

@@ -106,7 +106,7 @@ fn commit(user_to_remove: UserId, block: bool, removed_by: UserId, state: &mut R
         .remove_member(removed_by, user_to_remove, block, state.env.now())
     {
         group_chat_core::RemoveMemberResult::Success => {
-            state.data.remove_user(user_to_remove);
+            state.data.remove_user(user_to_remove, None);
 
             handle_activity_notification(state);
 

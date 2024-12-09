@@ -15,7 +15,7 @@ async fn mark_as_online(_args: Args) -> Response {
             let c2c_args = user_index_canister::c2c_lookup_user::Args { user_id_or_principal: p };
             match user_index_canister_c2c_client::c2c_lookup_user(user_index_canister_id, &c2c_args).await {
                 Ok(user_index_canister::c2c_lookup_user::Response::Success(res)) => {
-                    mutate_state(|state| state.data.principal_to_user_id_map.add(p, res.user_id));
+                    mutate_state(|state| state.data.principal_to_user_id_map.insert(p, res.user_id));
                     res.user_id
                 }
                 Ok(_) => return UserNotFound,

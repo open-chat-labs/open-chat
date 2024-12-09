@@ -142,7 +142,7 @@ fn stable_memory_garbage_collected_after_messages_disappear() {
         },
     );
 
-    let initial_stable_memory_keys = get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len();
+    let initial_stable_memory_map_keys = get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len();
 
     for _ in 0..5 {
         let result =
@@ -163,7 +163,7 @@ fn stable_memory_garbage_collected_after_messages_disappear() {
 
     assert_eq!(
         get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(),
-        initial_stable_memory_keys + 30
+        initial_stable_memory_map_keys + 30
     );
 
     // Tick once to expire the messages
@@ -176,6 +176,6 @@ fn stable_memory_garbage_collected_after_messages_disappear() {
 
     assert_eq!(
         get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(),
-        initial_stable_memory_keys
+        initial_stable_memory_map_keys
     );
 }

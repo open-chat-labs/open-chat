@@ -22,6 +22,7 @@ use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, 
 use model::user_event_batch::UserEventBatch;
 use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
+use principal_to_user_id_map::{deserialize_principal_to_user_id_map_from_heap, PrincipalToUserIdMap};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
@@ -436,7 +437,8 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub chat: GroupChatCore,
-    pub principal_to_user_id_map: HashMap<Principal, UserId>,
+    #[serde(deserialize_with = "deserialize_principal_to_user_id_map_from_heap")]
+    pub principal_to_user_id_map: PrincipalToUserIdMap,
     pub group_index_canister_id: CanisterId,
     pub local_group_index_canister_id: CanisterId,
     pub user_index_canister_id: CanisterId,
@@ -530,9 +532,12 @@ impl Data {
             now,
         );
 
+        let mut principal_to_user_id_map = PrincipalToUserIdMap::default();
+        principal_to_user_id_map.insert(creator_principal, creator_user_id);
+
         Data {
             chat,
-            principal_to_user_id_map: [(creator_principal, creator_user_id)].into_iter().collect(),
+            principal_to_user_id_map,
             group_index_canister_id,
             local_group_index_canister_id,
             user_index_canister_id,
@@ -574,7 +579,6 @@ impl Data {
         let user_id = self
             .principal_to_user_id_map
             .get(&user_id_or_principal)
-            .copied()
             .unwrap_or(user_id_or_principal.into());
 
         self.chat.members.contains(&user_id).then_some(user_id)
@@ -584,7 +588,6 @@ impl Data {
         let user_id = self
             .principal_to_user_id_map
             .get(&user_id_or_principal)
-            .copied()
             .unwrap_or(user_id_or_principal.into());
 
         self.chat.members.get(&user_id)
@@ -604,7 +607,7 @@ impl Data {
     pub fn get_invitation(&self, caller: Principal) -> Option<&UserInvitation> {
         self.principal_to_user_id_map
             .get(&caller)
-            .and_then(|user_id| self.chat.invited_users.get(user_id))
+            .and_then(|user_id| self.chat.invited_users.get(&user_id))
     }
 
     pub fn invite_users(
@@ -671,14 +674,10 @@ impl Data {
         false
     }
 
-    pub fn remove_user(&mut self, user_id: UserId) {
-        if let Some(principal) = self
-            .principal_to_user_id_map
-            .iter()
-            .find(|(_, &u)| u == user_id)
-            .map(|(p, _)| *p)
-        {
-            self.principal_to_user_id_map.remove(&principal);
+    pub fn remove_user(&mut self, user_id: UserId, principal: Option<Principal>) {
+        if let Some(principal) = principal {
+            let user_id_removed = self.principal_to_user_id_map.remove(&principal);
+            assert_eq!(user_id_removed, Some(user_id));
         }
 
         self.expiring_members.remove_member(user_id, None);

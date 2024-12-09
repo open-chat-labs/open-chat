@@ -35,7 +35,7 @@ fn decline_invitation_impl(args: Args, state: &mut RuntimeState) -> Response {
                     // If the user isn't a member of the community, remove their principal and user_id from
                     // `members`
                     if state.data.members.get(caller).is_none() {
-                        state.data.members.remove_by_principal(&caller, now);
+                        state.data.members.remove_by_principal(caller, now);
                     }
                     Success
                 }

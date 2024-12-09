@@ -45,6 +45,7 @@ local_user_index_canister_c2c_client = { path = "../../local_user_index/c2c_clie
 msgpack = { path = "../../../libraries/msgpack" }
 notifications_canister = { path = "../../notifications/api" }
 notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
+principal_to_user_id_map = { path = "../../../libraries/principal_to_user_id_map" }
 rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }

@@ -1,8 +1,8 @@
 use crate::model::last_online_dates::LastOnlineDates;
-use crate::model::principal_to_user_id_map::PrincipalToUserIdMap;
 use canister_state_macros::canister_state;
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
+use principal_to_user_id_map::PrincipalToUserIdMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::BTreeMap;
@@ -66,6 +66,7 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub last_online_dates: LastOnlineDates,
+    #[serde(skip_deserializing)]
     pub principal_to_user_id_map: PrincipalToUserIdMap,
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,

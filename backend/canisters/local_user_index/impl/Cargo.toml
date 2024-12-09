@@ -35,12 +35,14 @@ ledger_utils = { path = "../../../libraries/ledger_utils" }
 local_user_index_canister = { path = "../api" }
 msgpack = { path = "../../../libraries/msgpack" }
 p256_key_pair = { path = "../../../libraries/p256_key_pair" }
+principal_to_user_id_map = { path = "../../../libraries/principal_to_user_id_map" }
 proof_of_unique_personhood = { path = "../../../libraries/proof_of_unique_personhood" }
 rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 sha256 = { path = "../../../libraries/sha256" }
 stable_memory = { path = "../../../libraries/stable_memory" }
+stable_memory_map = { path = "../../../libraries/stable_memory_map" }
 timer_job_queues = { path = "../../../libraries/timer_job_queues" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }

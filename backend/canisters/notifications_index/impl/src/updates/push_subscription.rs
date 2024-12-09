@@ -32,7 +32,7 @@ async fn push_subscription(args: Args) -> Response {
 
 fn lookup_user_locally(state: &RuntimeState) -> LookupResult {
     let caller = state.env.caller();
-    if let Some(user_id) = state.data.principal_to_user_id.get(&caller).copied() {
+    if let Some(user_id) = state.data.principal_to_user_id_map.get(&caller) {
         LookupResult::Found(user_id)
     } else {
         LookupResult::NotFound((caller, state.data.user_index_canister_id))
@@ -45,5 +45,5 @@ enum LookupResult {
 }
 
 fn add_user_locally(principal: Principal, user_id: UserId, state: &mut RuntimeState) {
-    state.data.principal_to_user_id.insert(principal, user_id);
+    state.data.principal_to_user_id_map.insert(principal, user_id);
 }
