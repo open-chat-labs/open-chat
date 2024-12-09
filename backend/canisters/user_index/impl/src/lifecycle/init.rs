@@ -30,6 +30,7 @@ fn init(args: Args) {
         args.nns_governance_canister_id,
         args.internet_identity_canister_id,
         args.translations_canister_id,
+        args.website_canister_id,
         args.video_call_operators,
         args.ic_root_key,
         args.test_mode,

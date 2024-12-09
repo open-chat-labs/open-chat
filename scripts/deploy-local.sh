@@ -44,6 +44,7 @@ dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 sign_in_with_email
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 sign_in_with_ethereum
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 sign_in_with_solana
+dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 website
 
 # Install the OpenChat canisters
 ./scripts/deploy.sh local \

@@ -61,6 +61,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 escrow_canister_id: state.data.escrow_canister_id,
                 event_relay_canister_id: state.data.event_store_client.info().event_store_canister_id,
                 internet_identity_canister_id: state.data.internet_identity_canister_id,
+                website_canister_id: state.data.website_canister_id,
                 video_call_operators: state.data.video_call_operators.clone(),
                 oc_secret_key_der: state
                     .data
