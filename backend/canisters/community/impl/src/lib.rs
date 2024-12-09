@@ -28,7 +28,7 @@ use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
 use rand::rngs::StdRng;
 use rand::RngCore;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
 use std::cell::RefCell;
@@ -319,22 +319,14 @@ fn init_instruction_counts_log() -> InstructionCountsLog {
 
 #[derive(Serialize, Deserialize)]
 struct Data {
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
     is_public: Timestamped<bool>,
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
     name: Timestamped<String>,
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
     description: Timestamped<String>,
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
     rules: Timestamped<AccessRulesInternal>,
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
     avatar: Timestamped<Option<Document>>,
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
     banner: Timestamped<Option<Document>>,
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
     permissions: Timestamped<CommunityPermissions>,
     gate_config: Timestamped<Option<AccessGateConfigInternal>>,
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
     primary_language: Timestamped<String>,
     user_index_canister_id: CanisterId,
     local_user_index_canister_id: CanisterId,
@@ -349,9 +341,7 @@ struct Data {
     channels: Channels,
     events: CommunityEvents,
     invited_users: InvitedUsers,
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
     invite_code: Timestamped<Option<u64>>,
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
     invite_code_enabled: Timestamped<bool>,
     frozen: Timestamped<Option<FrozenGroupInfo>>,
     timer_jobs: TimerJobs<TimerJob>,
@@ -918,9 +908,4 @@ pub struct AddUsersToChannelResult {
     pub users_added: Vec<UserId>,
     pub users_already_in_channel: Vec<UserId>,
     pub users_limit_reached: Vec<UserId>,
-}
-
-fn deserialize_to_timestamped<'de, D: Deserializer<'de>, T: Deserialize<'de>>(d: D) -> Result<Timestamped<T>, D::Error> {
-    let value = T::deserialize(d)?;
-    Ok(Timestamped::new(value, canister_time::now_millis()))
 }
