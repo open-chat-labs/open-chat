@@ -37,10 +37,10 @@ use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotGroupConfig, BotRemoved, BuildVersion, CanisterId,
-    ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cryptocurrency,
-    Cycles, Document, Empty, FrozenGroupInfo, MembersAdded, Milliseconds, Notification, Rules, SlashCommandPermissions,
-    TimestampMillis, Timestamped, UserId, UserType,
+    AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotGroupConfig, BotRemoved, BotUpdated, BuildVersion,
+    CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions,
+    Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, MembersAdded, Milliseconds, Notification, Rules,
+    SlashCommandPermissions, TimestampMillis, Timestamped, UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use user_canister::CommunityCanisterEvent;
@@ -796,6 +796,23 @@ impl Data {
         );
 
         // TODO: Notify UserIndex
+
+        true
+    }
+
+    pub fn update_bot(&mut self, owner_id: UserId, user_id: UserId, bot_config: BotGroupConfig, now: TimestampMillis) -> bool {
+        if !self.bots.update(user_id, bot_config, now) {
+            return false;
+        }
+
+        // Publish community event
+        self.events.push_event(
+            CommunityEventInternal::BotUpdated(Box::new(BotUpdated {
+                user_id,
+                updated_by: owner_id,
+            })),
+            now,
+        );
 
         true
     }

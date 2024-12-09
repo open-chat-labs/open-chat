@@ -52,6 +52,7 @@ pub mod toggle_mute_notifications;
 pub mod unblock_user;
 pub mod undelete_messages;
 pub mod unfollow_thread;
+pub mod update_bot;
 pub mod update_channel;
 pub mod update_community;
 pub mod update_user_group;
