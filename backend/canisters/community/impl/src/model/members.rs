@@ -198,7 +198,7 @@ impl CommunityMembers {
                 self.members_with_referrals.remove(&referrer);
             }
         }
-        self.member_channel_links.remove(&(user_id, channel_id));
+        self.member_channel_links.remove(&user_id);
         let channels_removed: Vec<_> = self.channels_removed_for_member(user_id).map(|(c, _)| c).collect();
         for channel_id in channels_removed {
             self.member_channel_links_removed.remove(&(user_id, channel_id));
