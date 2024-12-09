@@ -896,6 +896,28 @@ function updateReplyContexts(
     }
 }
 
+function createMessageSortFunction(
+    unconfirmed: Set<bigint>,
+    recentlySent: Map<bigint, bigint>,
+): (a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>) => number {
+    return (a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): number => {
+        // If either message is still unconfirmed, and both were sent recently, use both of their local timestamps,
+        // otherwise we will be comparing the local timestamp of one with the server timestamp of the other
+        if (a.event.kind === "message" && b.event.kind === "message") {
+            if (unconfirmed.has(a.event.messageId) || unconfirmed.has(b.event.messageId)) {
+                const aTimestampOverride = recentlySent.get(a.event.messageId);
+                const bTimestampOverride = recentlySent.get(b.event.messageId);
+
+                if (aTimestampOverride && bTimestampOverride) {
+                    return aTimestampOverride > bTimestampOverride ? 1 : -1;
+                }
+            }
+        }
+
+        return sortByTimestampThenEventIndex(a, b);
+    };
+}
+
 function sortByTimestampThenEventIndex(
     a: EventWrapper<ChatEvent>,
     b: EventWrapper<ChatEvent>,
@@ -1389,6 +1411,7 @@ export function mergeEventsAndLocalUpdates(
     blockedUsers: Set<string>,
     currentUserId: string,
     messageFilters: MessageFilter[],
+    recentlySentMessages: Map<bigint, bigint>,
 ): EventWrapper<ChatEvent>[] {
     const eventIndexes = new DRange();
     eventIndexes.add(expiredEventRanges);
@@ -1466,7 +1489,7 @@ export function mergeEventsAndLocalUpdates(
     if (unconfirmed.length > 0) {
         unconfirmed.sort(sortByTimestampThenEventIndex);
 
-        let anyAdded = false;
+        let unconfirmedAdded = new Set<bigint>();
         for (const message of unconfirmed) {
             // Only include unconfirmed events that are either contiguous with the loaded confirmed events, or are the
             // first events in a new chat
@@ -1478,11 +1501,12 @@ export function mergeEventsAndLocalUpdates(
                         .some((s) => s.low - 1 <= message.index && message.index <= s.high + 1))
             ) {
                 merged.push(processEvent(message));
-                anyAdded = true;
+                unconfirmedAdded.add(message.event.messageId);
             }
         }
-        if (anyAdded) {
-            merged.sort(sortByTimestampThenEventIndex);
+        if (unconfirmedAdded.size > 0) {
+            const sortFn = createMessageSortFunction(unconfirmedAdded, recentlySentMessages);
+            merged.sort(sortFn);
         }
     }
 
