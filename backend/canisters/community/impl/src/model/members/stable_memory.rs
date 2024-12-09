@@ -1,7 +1,7 @@
 use crate::CommunityMemberInternal;
 use candid::Deserialize;
 use serde::Serialize;
-use stable_memory_map::{with_map, with_map_mut, MemberKeyPrefix};
+use stable_memory_map::{with_map, with_map_mut, KeyPrefix, MemberKeyPrefix};
 use std::collections::BTreeSet;
 use types::{is_default, CommunityRole, TimestampMillis, Timestamped, UserId, UserType, Version};
 
@@ -19,18 +19,18 @@ impl MembersStableStorage {
 
     pub fn get(&self, user_id: &UserId) -> Option<CommunityMemberInternal> {
         with_map(|m| {
-            m.get(&self.prefix.create_key(*user_id).into())
+            m.get(self.prefix.create_key(user_id))
                 .map(|v| bytes_to_member(&v).hydrate(*user_id))
         })
     }
 
     pub fn insert(&mut self, member: CommunityMemberInternal) {
-        with_map_mut(|m| m.insert(self.prefix.create_key(member.user_id).into(), member_to_bytes(member.into())));
+        with_map_mut(|m| m.insert(self.prefix.create_key(&member.user_id), member_to_bytes(member.into())));
     }
 
     pub fn remove(&mut self, user_id: &UserId) -> Option<CommunityMemberInternal> {
         with_map_mut(|m| {
-            m.remove(&self.prefix.create_key(*user_id).into())
+            m.remove(self.prefix.create_key(user_id))
                 .map(|v| bytes_to_member(&v).hydrate(*user_id))
         })
     }
@@ -38,11 +38,10 @@ impl MembersStableStorage {
     #[cfg(test)]
     pub fn all_members(&self) -> Vec<CommunityMemberInternal> {
         use candid::Principal;
-        use stable_memory_map::{Key, MemberKey};
+        use stable_memory_map::Key;
 
         with_map(|m| {
-            m.range(Key::from(self.prefix.create_key(Principal::from_slice(&[]).into()))..)
-                .map_while(|(k, v)| MemberKey::try_from(k).ok().map(|k| (k, v)))
+            m.range(self.prefix.create_key(&Principal::from_slice(&[]).into())..)
                 .take_while(|(k, _)| k.matches_prefix(&self.prefix))
                 .map(|(k, v)| bytes_to_member(&v).hydrate(k.user_id()))
                 .collect()
