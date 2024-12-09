@@ -24,6 +24,17 @@ impl GroupBots {
         true
     }
 
+    pub fn update(&mut self, user_id: UserId, bot_config: BotGroupConfig, now: TimestampMillis) -> bool {
+        if !self.bots.contains_key(&user_id) {
+            return false;
+        }
+
+        self.bots.insert(user_id, bot_config);
+        self.prune_then_insert_member_update(user_id, BotUpdate::Updated, now);
+
+        true
+    }
+
     pub fn remove(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
         let removed = self.bots.remove(&user_id).is_some();
 

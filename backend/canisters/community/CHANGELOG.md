@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Update community bot config ([#7018](https://github.com/open-chat-labs/open-chat/pull/7018))
+
 ### Changed
 
 - Return bots in community/group selected updates ([#7009](https://github.com/open-chat-labs/open-chat/pull/7009))

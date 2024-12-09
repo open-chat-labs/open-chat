@@ -39,6 +39,7 @@ pub enum ChatEvent {
     ExternalUrlUpdated(ExternalUrlUpdated),
     BotAdded(Box<BotAdded>),
     BotRemoved(Box<BotRemoved>),
+    BotUpdated(Box<BotUpdated>),
     FailedToDeserialize,
 }
 
@@ -443,4 +444,11 @@ pub struct BotAdded {
 pub struct BotRemoved {
     pub user_id: UserId,
     pub removed_by: UserId,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct BotUpdated {
+    pub user_id: UserId,
+    pub updated_by: UserId,
 }
