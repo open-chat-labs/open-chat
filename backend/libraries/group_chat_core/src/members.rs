@@ -67,9 +67,10 @@ impl GroupMembers {
         while !self.migrate_to_stable_memory_queue.is_empty() && ic_cdk::api::instruction_counter() < 2_000_000_000 {
             for _ in 0..100 {
                 if let Some(next) = self.migrate_to_stable_memory_queue.pop_front() {
-                    let member = self.members.get(&next).unwrap();
-                    self.stable_memory_members_map.insert(member);
-                    count += 1
+                    if let Some(member) = self.members.get(&next) {
+                        self.stable_memory_members_map.insert(member);
+                        count += 1
+                    }
                 } else {
                     break;
                 }

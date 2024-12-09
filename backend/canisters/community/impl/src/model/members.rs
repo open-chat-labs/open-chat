@@ -38,9 +38,9 @@ pub struct CommunityMembers {
     members_with_display_names: BTreeSet<UserId>,
     members_with_referrals: BTreeSet<UserId>,
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
-    #[serde(default)]
+    #[serde(skip_deserializing)]
     migrate_to_stable_memory_queue: VecDeque<UserId>,
-    #[serde(default)]
+    #[serde(skip_deserializing)]
     migration_to_stable_memory_complete: bool,
 }
 
@@ -59,9 +59,10 @@ impl CommunityMembers {
         while !self.migrate_to_stable_memory_queue.is_empty() && ic_cdk::api::instruction_counter() < 2_000_000_000 {
             for _ in 0..100 {
                 if let Some(next) = self.migrate_to_stable_memory_queue.pop_front() {
-                    let member = self.members.get(&next).unwrap();
-                    self.stable_memory_members_map.insert(member);
-                    count += 1
+                    if let Some(member) = self.members.get(&next) {
+                        self.stable_memory_members_map.insert(member);
+                        count += 1
+                    }
                 } else {
                     break;
                 }
