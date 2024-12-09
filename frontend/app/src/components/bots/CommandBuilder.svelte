@@ -4,12 +4,10 @@
         communityPermissionsList,
         defaultStringParam,
         messagePermissionsList,
-        type ChatPermissions,
-        type CommunityPermissions,
-        type MessagePermission,
         type SlashCommandParam,
         type SlashCommandSchema,
         ValidationErrors,
+        type SlashCommandPermissions,
     } from "openchat-client";
     import Input from "../Input.svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -41,43 +39,17 @@
     let selectedParam = $state<SlashCommandParam | undefined>(undefined);
     let selectedParamIndex = $state<number | undefined>(undefined);
 
-    function toggleChatPermission(perm: keyof ChatPermissions) {
-        if (command.permissions.chatPermissions.includes(perm)) {
-            command.permissions.chatPermissions = command.permissions.chatPermissions.filter(
+    function togglePerm<P extends keyof SlashCommandPermissions>(
+        prop: P,
+        perm: SlashCommandPermissions[P][number],
+    ) {
+        const list = command.permissions[prop] as SlashCommandPermissions[P][number][];
+        if (list.includes(perm)) {
+            command.permissions[prop] = list.filter(
                 (p) => p !== perm,
-            );
+            ) as SlashCommandPermissions[P];
         } else {
-            command.permissions.chatPermissions.push(perm);
-        }
-    }
-
-    function toggleCommunityPermission(perm: keyof CommunityPermissions) {
-        if (command.permissions.communityPermissions.includes(perm)) {
-            command.permissions.communityPermissions =
-                command.permissions.communityPermissions.filter((p) => p !== perm);
-        } else {
-            command.permissions.communityPermissions.push(perm);
-        }
-    }
-
-    function toggleMessagePermission(perm: MessagePermission) {
-        if (command.permissions.messagePermissions.includes(perm)) {
-            command.permissions.messagePermissions = command.permissions.messagePermissions.filter(
-                (p) => p !== perm,
-            );
-        } else {
-            command.permissions.messagePermissions.push(perm);
-        }
-        toggleSync();
-    }
-
-    function toggleThreadPermission(perm: MessagePermission) {
-        if (command.permissions.threadPermissions.includes(perm)) {
-            command.permissions.threadPermissions = command.permissions.threadPermissions.filter(
-                (p) => p !== perm,
-            );
-        } else {
-            command.permissions.threadPermissions.push(perm);
+            list.push(perm);
         }
     }
 
@@ -155,7 +127,7 @@
                                 id={`chat_permission_${perm}`}
                                 label={i18nKey(`permissions.${perm}`)}
                                 checked={command.permissions.chatPermissions.includes(perm)}
-                                on:change={() => toggleChatPermission(perm)}
+                                on:change={() => togglePerm("chatPermissions", perm)}
                                 align={"start"}>
                             </Checkbox>
                         {/each}
@@ -166,7 +138,7 @@
                                 id={`community_permission_${perm}`}
                                 label={i18nKey(`permissions.${perm}`)}
                                 checked={command.permissions.communityPermissions.includes(perm)}
-                                on:change={() => toggleCommunityPermission(perm)}
+                                on:change={() => togglePerm("communityPermissions", perm)}
                                 align={"start"}>
                             </Checkbox>
                         {/each}
@@ -177,7 +149,7 @@
                                 id={`message_permission_${perm}`}
                                 label={i18nKey(`permissions.messagePermissions.${perm}`)}
                                 checked={command.permissions.messagePermissions.includes(perm)}
-                                on:change={() => toggleMessagePermission(perm)}
+                                on:change={() => togglePerm("messagePermissions", perm)}
                                 align={"start"}>
                             </Checkbox>
                         {/each}
@@ -196,7 +168,7 @@
                                     disabled={syncThreadPermissions}
                                     label={i18nKey(`permissions.messagePermissions.${perm}`)}
                                     checked={command.permissions.threadPermissions.includes(perm)}
-                                    on:change={() => toggleThreadPermission(perm)}
+                                    on:change={() => togglePerm("threadPermissions", perm)}
                                     align={"start"}>
                                 </Checkbox>
                             {/each}
