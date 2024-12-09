@@ -105,7 +105,7 @@ impl UserMap {
             self.username_to_user_id.insert(&username, user_id);
         }
 
-        let avatar_id = bot.and_then(|b| b.avatar.as_ref().map(|a| a.id));
+        let avatar_id = bot.as_ref().and_then(|b| b.avatar.as_ref().map(|a| a.id));
 
         self.principal_to_user_id.insert(principal, user_id);
 
@@ -121,6 +121,10 @@ impl UserMap {
         );
 
         self.users.insert(user_id, user);
+
+        if let Some(bot) = bot {
+            self.bots.insert(user_id, bot);
+        }
 
         if let Some(ref_by) = referred_by {
             self.user_referrals.entry(ref_by).or_default().push(user_id);
