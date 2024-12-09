@@ -25,6 +25,7 @@
     import ValidatingInput from "./ValidatingInput.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import BotPermissionsTabs from "./BotPermissionsTabs.svelte";
+    import { togglePermission } from "../../utils/bots";
 
     interface Props {
         errors: ValidationErrors;
@@ -38,20 +39,6 @@
     let syncThreadPermissions = $state(true);
     let selectedParam = $state<SlashCommandParam | undefined>(undefined);
     let selectedParamIndex = $state<number | undefined>(undefined);
-
-    function togglePerm<P extends keyof SlashCommandPermissions>(
-        prop: P,
-        perm: SlashCommandPermissions[P][number],
-    ) {
-        const list = command.permissions[prop] as SlashCommandPermissions[P][number][];
-        if (list.includes(perm)) {
-            command.permissions[prop] = list.filter(
-                (p) => p !== perm,
-            ) as SlashCommandPermissions[P];
-        } else {
-            list.push(perm);
-        }
-    }
 
     function toggleSync() {
         if (syncThreadPermissions) {
@@ -127,7 +114,8 @@
                                 id={`chat_permission_${perm}`}
                                 label={i18nKey(`permissions.${perm}`)}
                                 checked={command.permissions.chatPermissions.includes(perm)}
-                                on:change={() => togglePerm("chatPermissions", perm)}
+                                on:change={() =>
+                                    togglePermission(command.permissions, "chatPermissions", perm)}
                                 align={"start"}>
                             </Checkbox>
                         {/each}
@@ -138,7 +126,12 @@
                                 id={`community_permission_${perm}`}
                                 label={i18nKey(`permissions.${perm}`)}
                                 checked={command.permissions.communityPermissions.includes(perm)}
-                                on:change={() => togglePerm("communityPermissions", perm)}
+                                on:change={() =>
+                                    togglePermission(
+                                        command.permissions,
+                                        "communityPermissions",
+                                        perm,
+                                    )}
                                 align={"start"}>
                             </Checkbox>
                         {/each}
@@ -149,7 +142,12 @@
                                 id={`message_permission_${perm}`}
                                 label={i18nKey(`permissions.messagePermissions.${perm}`)}
                                 checked={command.permissions.messagePermissions.includes(perm)}
-                                on:change={() => togglePerm("messagePermissions", perm)}
+                                on:change={() =>
+                                    togglePermission(
+                                        command.permissions,
+                                        "messagePermissions",
+                                        perm,
+                                    )}
                                 align={"start"}>
                             </Checkbox>
                         {/each}
@@ -168,7 +166,12 @@
                                     disabled={syncThreadPermissions}
                                     label={i18nKey(`permissions.messagePermissions.${perm}`)}
                                     checked={command.permissions.threadPermissions.includes(perm)}
-                                    on:change={() => togglePerm("threadPermissions", perm)}
+                                    on:change={() =>
+                                        togglePermission(
+                                            command.permissions,
+                                            "threadPermissions",
+                                            perm,
+                                        )}
                                     align={"start"}>
                                 </Checkbox>
                             {/each}

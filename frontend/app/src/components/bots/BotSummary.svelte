@@ -20,6 +20,7 @@
     import Legend from "../Legend.svelte";
     import BotPermissionsTabs from "./BotPermissionsTabs.svelte";
     import Checkbox from "../Checkbox.svelte";
+    import { togglePermission } from "../../utils/bots";
 
     const client = getContext<OpenChat>("client");
 
@@ -68,19 +69,6 @@
             messagePermissions: mergeLists(p1.messagePermissions, p2.messagePermissions),
             threadPermissions: mergeLists(p1.threadPermissions, p2.threadPermissions),
         };
-    }
-
-    // fancy
-    function togglePerm<P extends keyof SlashCommandPermissions>(
-        prop: P,
-        perm: SlashCommandPermissions[P][number],
-    ) {
-        const list = grantedPermissions[prop] as SlashCommandPermissions[P][number][];
-        if (list.includes(perm)) {
-            grantedPermissions[prop] = list.filter((p) => p !== perm) as SlashCommandPermissions[P];
-        } else {
-            list.push(perm);
-        }
     }
 
     function addBot() {}
@@ -136,7 +124,12 @@
                                         id={`chat_permission_${perm}`}
                                         label={i18nKey(`permissions.${perm}`)}
                                         checked={grantedPermissions.chatPermissions.includes(perm)}
-                                        on:change={() => togglePerm("chatPermissions", perm)}
+                                        on:change={() =>
+                                            togglePermission(
+                                                grantedPermissions,
+                                                "chatPermissions",
+                                                perm,
+                                            )}
                                         align={"start"}>
                                     </Checkbox>
                                 {/each}
@@ -154,7 +147,12 @@
                                         checked={grantedPermissions.communityPermissions.includes(
                                             perm,
                                         )}
-                                        on:change={() => togglePerm("communityPermissions", perm)}
+                                        on:change={() =>
+                                            togglePermission(
+                                                grantedPermissions,
+                                                "communityPermissions",
+                                                perm,
+                                            )}
                                         align={"start"}>
                                     </Checkbox>
                                 {/each}
@@ -172,7 +170,12 @@
                                         checked={grantedPermissions.messagePermissions.includes(
                                             perm,
                                         )}
-                                        on:change={() => togglePerm("messagePermissions", perm)}
+                                        on:change={() =>
+                                            togglePermission(
+                                                grantedPermissions,
+                                                "messagePermissions",
+                                                perm,
+                                            )}
                                         align={"start"}>
                                     </Checkbox>
                                 {/each}
@@ -190,7 +193,12 @@
                                         checked={grantedPermissions.threadPermissions.includes(
                                             perm,
                                         )}
-                                        on:change={() => togglePerm("threadPermissions", perm)}
+                                        on:change={() =>
+                                            togglePermission(
+                                                grantedPermissions,
+                                                "threadPermissions",
+                                                perm,
+                                            )}
                                         align={"start"}>
                                     </Checkbox>
                                 {/each}
