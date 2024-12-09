@@ -2,7 +2,7 @@ use crate::{GroupMemberInternal, GroupMemberStableStorage};
 use candid::{Deserialize, Principal};
 use serde::Serialize;
 use serde_bytes::ByteBuf;
-use stable_memory_map::{with_map, with_map_mut, Key, MemberKey, MemberKeyPrefix};
+use stable_memory_map::{with_map, with_map_mut, Key, KeyPrefix, MemberKeyPrefix};
 use types::{MultiUserChat, UserId};
 
 #[derive(Serialize, Deserialize)]
@@ -21,18 +21,18 @@ impl MembersStableStorage {
 
     pub fn get(&self, user_id: &UserId) -> Option<GroupMemberInternal> {
         with_map(|m| {
-            m.get(&self.prefix.create_key(*user_id).into())
+            m.get(self.prefix.create_key(user_id))
                 .map(|v| bytes_to_member(&v).hydrate(*user_id))
         })
     }
 
     pub fn insert(&mut self, member: GroupMemberInternal) {
-        with_map_mut(|m| m.insert(self.prefix.create_key(member.user_id).into(), member_to_bytes(member.into())));
+        with_map_mut(|m| m.insert(self.prefix.create_key(&member.user_id), member_to_bytes(member.into())));
     }
 
     pub fn remove(&mut self, user_id: &UserId) -> Option<GroupMemberInternal> {
         with_map_mut(|m| {
-            m.remove(&self.prefix.create_key(*user_id).into())
+            m.remove(self.prefix.create_key(user_id))
                 .map(|v| bytes_to_member(&v).hydrate(*user_id))
         })
     }
@@ -44,14 +44,13 @@ impl MembersStableStorage {
     // Used to efficiently read all members from stable memory when migrating a group into a community
     pub fn read_members_as_bytes(&self, after: Option<UserId>, max_bytes: usize) -> Vec<(UserId, ByteBuf)> {
         let start_key = match after {
-            None => self.prefix.create_key(Principal::from_slice(&[]).into()),
-            Some(user_id) => self.prefix.create_key(user_id),
+            None => self.prefix.create_key(&Principal::from_slice(&[]).into()),
+            Some(user_id) => self.prefix.create_key(&user_id),
         };
 
         with_map(|m| {
             let mut total_bytes = 0;
-            m.range(Key::from(start_key.clone())..)
-                .map_while(|(k, v)| MemberKey::try_from(k).ok().map(|k| (k, v)))
+            m.range(start_key.clone()..)
                 .skip_while(|(k, _)| *k == start_key)
                 .take_while(|(k, v)| {
                     if !k.matches_prefix(&self.prefix) {
@@ -68,8 +67,7 @@ impl MembersStableStorage {
     #[cfg(test)]
     pub fn all_members(&self) -> Vec<GroupMemberInternal> {
         with_map(|m| {
-            m.range(Key::from(self.prefix.create_key(Principal::from_slice(&[]).into()))..)
-                .map_while(|(k, v)| MemberKey::try_from(k).ok().map(|k| (k, v)))
+            m.range(self.prefix.create_key(&Principal::from_slice(&[]).into())..)
                 .take_while(|(k, _)| k.matches_prefix(&self.prefix))
                 .map(|(k, v)| bytes_to_member(&v).hydrate(k.user_id()))
                 .collect()
@@ -87,7 +85,7 @@ pub fn write_members_from_bytes(chat: MultiUserChat, members: Vec<(UserId, ByteB
             // Check that the bytes are valid
             let _ = bytes_to_member(&bytes);
             latest = Some(user_id);
-            m.insert(prefix.create_key(user_id).into(), bytes);
+            m.insert(prefix.create_key(&user_id), bytes);
         }
     });
     latest

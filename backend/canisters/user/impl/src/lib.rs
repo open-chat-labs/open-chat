@@ -25,7 +25,7 @@ use model::streak::Streak;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
-use stable_memory_map::KeyPrefix;
+use stable_memory_map::BaseKeyPrefix;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
 use std::ops::Deref;
@@ -254,7 +254,7 @@ struct Data {
     pub referred_by: Option<UserId>,
     pub referrals: Referrals,
     pub message_activity_events: MessageActivityEvents,
-    pub stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
+    pub stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
 }
 
 impl Data {

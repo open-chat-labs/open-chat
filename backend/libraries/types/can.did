@@ -521,6 +521,8 @@ type SelectedGroupUpdates = record {
     latest_event_index : EventIndex;
     members_added_or_updated : vec Participant;
     members_removed : vec UserId;
+    bots_added_or_updated : vec BotGroupDetails;
+    bots_removed : vec UserId;
     blocked_users_added : vec UserId;
     blocked_users_removed : vec UserId;
     invited_users : opt vec UserId;
@@ -1609,12 +1611,12 @@ type ExternalUrlUpdated = record {
 };
 
 type BotAdded = record {
-    bot_id : UserId;
+    user_id : UserId;
     added_by : UserId;
 };
 
 type BotRemoved = record {
-    bot_id : UserId;
+    user_id : UserId;
     removed_by : UserId;
 };
 
@@ -2161,3 +2163,12 @@ type MessagePermission = variant {
     P2pSwap;
     VideoCall;
 };
+
+type BotGroupConfig = record {
+    permissions : SlashCommandPermissions;
+};
+
+type BotGroupDetails = record {
+    user_id : UserId;
+    permissions : SlashCommandPermissions;
+}

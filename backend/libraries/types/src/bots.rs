@@ -58,7 +58,7 @@ pub struct SlashCommandOptionChoice<T> {
 }
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Default)]
 pub struct SlashCommandPermissions {
     pub community: HashSet<CommunityPermission>,
     pub chat: HashSet<GroupPermission>,
@@ -100,3 +100,16 @@ macro_rules! slash_command_option_choice {
 
 slash_command_option_choice!(SlashCommandOptionChoiceString, String);
 slash_command_option_choice!(SlashCommandOptionChoiceU16, u16);
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct BotGroupDetails {
+    pub user_id: UserId,
+    pub permissions: SlashCommandPermissions,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct BotGroupConfig {
+    pub permissions: SlashCommandPermissions,
+}

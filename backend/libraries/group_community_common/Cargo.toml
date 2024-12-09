@@ -6,6 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+candid = { workspace = true }
+constants = { path = "../constants" }
 icrc-ledger-types = { workspace = true }
 serde = { workspace = true }
 serde_repr = { workspace = true }

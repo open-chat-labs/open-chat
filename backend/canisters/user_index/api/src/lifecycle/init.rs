@@ -18,6 +18,7 @@ pub struct Args {
     pub nns_governance_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
     pub translations_canister_id: CanisterId,
+    pub website_canister_id: CanisterId,
     pub video_call_operators: Vec<Principal>,
     pub ic_root_key: Vec<u8>,
     pub wasm_version: BuildVersion,
