@@ -178,7 +178,8 @@ impl RuntimeState {
                 .data
                 .members
                 .channels_for_member(m.user_id)
-                .filter_map(|c| self.data.channels.get(&c))
+                .iter()
+                .filter_map(|c| self.data.channels.get(c))
                 .filter_map(|c| c.summary(Some(m.user_id), true, data.is_public.value, &data.members))
                 .collect();
 

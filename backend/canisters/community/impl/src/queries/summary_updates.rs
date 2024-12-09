@@ -47,7 +47,8 @@ fn summary_updates_impl(
             .data
             .members
             .channels_for_member(m.user_id)
-            .filter_map(|c| state.data.channels.get(&c))
+            .iter()
+            .filter_map(|c| state.data.channels.get(c))
             .filter(|c| c.last_updated(Some(m.user_id)) > updates_since)
             .collect();
 
