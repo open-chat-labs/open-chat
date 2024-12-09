@@ -85,7 +85,7 @@ pub async fn make_transfer(
     Ok(match response {
         Ok(block_index) => Ok(block_index.0.try_into().unwrap()),
         Err(transfer_error) => {
-            error!(?transfer_error, ?args, "Transfer failed");
+            error!(%ledger_canister_id, ?transfer_error, ?args, "Transfer failed");
             Err(format!("Transfer failed. {transfer_error:?}"))
         }
     })
