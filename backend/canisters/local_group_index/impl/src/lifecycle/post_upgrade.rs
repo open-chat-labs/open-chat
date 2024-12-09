@@ -10,6 +10,7 @@ use stable_memory::get_reader;
 use std::time::Duration;
 use tracing::info;
 use types::CanisterId;
+use utils::canister::deposit_cycles;
 use utils::cycles::init_cycles_dispenser_client;
 
 #[post_upgrade]
@@ -29,17 +30,23 @@ fn post_upgrade(args: Args) {
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
-    ic_cdk_timers::set_timer(Duration::ZERO, || ic_cdk::spawn(set_windoge_logs_public()));
+    ic_cdk_timers::set_timer(Duration::ZERO, || {
+        ic_cdk::spawn(increase_windoge_reserved_cycles_limit_public())
+    });
 }
 
-async fn set_windoge_logs_public() {
+async fn increase_windoge_reserved_cycles_limit_public() {
+    let windoge_canister_id = CanisterId::from_text("ow6el-gyaaa-aaaar-av5na-cai").unwrap();
+
     ic_cdk::api::management_canister::main::update_settings(UpdateSettingsArgument {
-        canister_id: CanisterId::from_text("ow6el-gyaaa-aaaar-av5na-cai").unwrap(),
+        canister_id: windoge_canister_id,
         settings: CanisterSettings {
-            log_visibility: Some(LogVisibility::Public),
+            reserved_cycles_limit: Some(20_000_000_000_000.into()),
             ..Default::default()
         },
     })
     .await
     .unwrap();
+
+    deposit_cycles(windoge_canister_id, 20_000_000_000_000.into())
 }
