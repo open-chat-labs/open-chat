@@ -136,6 +136,7 @@ members = [
     "backend/libraries/ledger_utils",
     "backend/libraries/msgpack",
     "backend/libraries/p256_key_pair",
+    "backend/libraries/principal_to_user_id_map",
     "backend/libraries/proof_of_unique_personhood",
     "backend/libraries/storage_bucket_client",
     "backend/libraries/search",

@@ -4,17 +4,9 @@ use serde::Serialize;
 use stable_memory_map::{with_map_mut, CommunityEventKeyPrefix, KeyPrefix};
 use types::EventWrapperInternal;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct EventsStableStorage {
     prefix: CommunityEventKeyPrefix,
-}
-
-impl Default for EventsStableStorage {
-    fn default() -> Self {
-        EventsStableStorage {
-            prefix: CommunityEventKeyPrefix::new(),
-        }
-    }
 }
 
 impl EventsStableStorage {

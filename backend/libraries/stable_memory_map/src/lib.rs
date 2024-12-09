@@ -41,8 +41,8 @@ impl StableMemoryMap {
         self.map.get(&key.into())
     }
 
-    pub fn insert<K: Key>(&mut self, key: K, value: Vec<u8>) {
-        self.map.insert(key.into(), value);
+    pub fn insert<K: Key>(&mut self, key: K, value: Vec<u8>) -> Option<Vec<u8>> {
+        self.map.insert(key.into(), value)
     }
 
     pub fn remove<K: Key>(&mut self, key: K) -> Option<Vec<u8>> {
@@ -68,7 +68,7 @@ pub fn garbage_collect(prefix: BaseKeyPrefix) -> Result<u32, u32> {
             let keys: Vec<_> = m
                 .map
                 .range(BaseKey::from(prefix.clone())..)
-                .take_while(|(k, _)| k.starts_with(&prefix))
+                .take_while(|(k, _)| k.matches_prefix(&prefix))
                 .map(|(k, _)| k)
                 .take(100)
                 .collect();
