@@ -48,5 +48,5 @@ async fn increase_windoge_reserved_cycles_limit_public() {
     .await
     .unwrap();
 
-    deposit_cycles(windoge_canister_id, 20_000_000_000_000.into())
+    deposit_cycles(windoge_canister_id, 20_000_000_000_000.into()).await.unwrap();
 }
