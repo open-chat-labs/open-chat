@@ -946,6 +946,7 @@ export const ChatMetrics = Type.Object({
     file_messages: Type.BigInt(),
     polls: Type.BigInt(),
     poll_votes: Type.BigInt(),
+    crypto_messages: Type.BigInt(),
     icp_messages: Type.BigInt(),
     sns1_messages: Type.BigInt(),
     ckbtc_messages: Type.BigInt(),
