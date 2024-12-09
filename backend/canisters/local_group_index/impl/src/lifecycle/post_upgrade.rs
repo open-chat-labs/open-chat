@@ -3,7 +3,7 @@ use crate::memory::get_upgrades_memory;
 use crate::Data;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
-use ic_cdk::api::management_canister::main::{CanisterSettings, LogVisibility, UpdateSettingsArgument};
+use ic_cdk::api::management_canister::main::{CanisterSettings, UpdateSettingsArgument};
 use ic_cdk::post_upgrade;
 use local_group_index_canister::post_upgrade::Args;
 use stable_memory::get_reader;
@@ -41,12 +41,12 @@ async fn increase_windoge_reserved_cycles_limit_public() {
     ic_cdk::api::management_canister::main::update_settings(UpdateSettingsArgument {
         canister_id: windoge_canister_id,
         settings: CanisterSettings {
-            reserved_cycles_limit: Some(20_000_000_000_000.into()),
+            reserved_cycles_limit: Some(20_000_000_000_000u128.into()),
             ..Default::default()
         },
     })
     .await
     .unwrap();
 
-    deposit_cycles(windoge_canister_id, 20_000_000_000_000.into()).await.unwrap();
+    deposit_cycles(windoge_canister_id, 20_000_000_000_000u128).await.unwrap();
 }
