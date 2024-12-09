@@ -849,7 +849,7 @@ mod tests {
         let principal1 = Principal::from_slice(&[1]);
         let principal2 = Principal::from_slice(&[2]);
         let user_id1 = principal1.into();
-        let user_id2 = principal1.into();
+        let user_id2 = principal2.into();
 
         let mut members = CommunityMembers::new(principal1, user_id1, UserType::User, vec![1u32.into()], 0);
 
