@@ -245,6 +245,7 @@ type ChatEvent = variant {
     ExternalUrlUpdated : ExternalUrlUpdated;
     BotAdded : BotAdded;
     BotRemoved : BotRemoved;
+    BotUpdated : BotUpdated;
     FailedToDeserialize;
 };
 
@@ -1618,6 +1619,11 @@ type BotAdded = record {
 type BotRemoved = record {
     user_id : UserId;
     removed_by : UserId;
+};
+
+type BotUpdated = record {
+    user_id : UserId;
+    updated_by : UserId;
 };
 
 type VerifiedCredentialGate = record {
