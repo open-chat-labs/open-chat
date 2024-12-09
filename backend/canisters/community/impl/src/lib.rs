@@ -30,7 +30,7 @@ use rand::rngs::StdRng;
 use rand::RngCore;
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_bytes::ByteBuf;
-use stable_memory_map::{ChatEventKeyPrefix, KeyPrefix};
+use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
 use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::ops::Deref;
@@ -243,12 +243,9 @@ impl RuntimeState {
             }
             final_prize_payments.extend(result.final_prize_payments);
             for thread in result.threads {
-                self.data
-                    .stable_memory_keys_to_garbage_collect
-                    .push(KeyPrefix::from(ChatEventKeyPrefix::new_from_channel(
-                        channel.id,
-                        Some(thread.root_message_index),
-                    )));
+                self.data.stable_memory_keys_to_garbage_collect.push(BaseKeyPrefix::from(
+                    ChatEventKeyPrefix::new_from_channel(channel.id, Some(thread.root_message_index)),
+                ));
             }
         }
         jobs::garbage_collect_stable_memory::start_job_if_required(self);
@@ -379,7 +376,7 @@ struct Data {
     expiring_member_actions: ExpiringMemberActions,
     user_cache: UserCache,
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
-    stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
+    stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
     members_migrated_to_stable_memory: bool,
     #[serde(default)]
     bots: GroupBots,
