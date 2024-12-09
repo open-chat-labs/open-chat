@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Return bots in community/group selected updates ([#7009](https://github.com/open-chat-labs/open-chat/pull/7009))
+- Include the ledger canister Id in transfer failed error logs ([#7011](https://github.com/open-chat-labs/open-chat/pull/7011))
 
 ## [[2.0.1501](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1501-group)] - 2024-12-06
 

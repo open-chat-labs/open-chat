@@ -1,5 +1,6 @@
 use ic_cdk::api::call::CallResult;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
+use tracing::error;
 use types::{
     icrc2::{CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction},
     CanisterId,
@@ -34,6 +35,12 @@ pub async fn process_transaction(
             block_index: block_index.0.try_into().unwrap(),
         }),
         Err(transfer_error) => {
+            error!(
+                ledger_canister_id = %transaction.ledger,
+                ?transfer_error,
+                ?args,
+                "Transfer failed"
+            );
             let error_message = format!("Transfer failed. {transfer_error:?}");
             Err(FailedCryptoTransaction {
                 ledger: transaction.ledger,
