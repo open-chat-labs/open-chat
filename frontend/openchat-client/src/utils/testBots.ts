@@ -49,8 +49,8 @@ const chatCommand: SlashCommandSchema = {
     description: "Ask OpenChat AI a question",
     permissions: {
         ...emptyPermissions,
-        messagePermissions: ["text"],
-        threadPermissions: ["text"],
+        messagePermissions: ["text", "image", "file"],
+        threadPermissions: ["text", "image", "file"],
     },
     params: [
         {
@@ -84,7 +84,10 @@ const banCommand: SlashCommandSchema = {
 const weatherCommand: SlashCommandSchema = {
     name: "weather",
     description: "Show me the weather for tomorrow",
-    permissions: emptyPermissions,
+    permissions: {
+        ...emptyPermissions,
+        messagePermissions: ["text", "giphy"],
+    },
     params: [
         {
             kind: "string",

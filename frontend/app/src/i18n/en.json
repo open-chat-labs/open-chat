@@ -149,6 +149,13 @@
     "blockUserFailed": "Unable to block user",
     "blockUserSucceeded": "User has been blocked",
     "bots": {
+        "add": {
+            "addBot": "Add bot",
+            "choosePermissions": "Permissions",
+            "noPermissions": "No special permissions required",
+            "permissionsInfo": "This bot seeks the following permissions. Choosing to limit the permissions granted will limit the commands available.",
+            "title": "Add bot to community"
+        },
         "builder": {
             "addAnother": "Add another",
             "addChoice": "Add a choice",

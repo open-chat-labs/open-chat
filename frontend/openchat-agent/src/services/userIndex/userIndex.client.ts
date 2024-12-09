@@ -610,6 +610,7 @@ export class UserIndexClient extends CandidService {
         pageIndex: number,
         pageSize: number,
     ): Promise<ExploreBotsResponse> {
+        console.log("Explore bots: ", searchTerm, pageIndex, pageSize);
         return this.executeMsgpackQuery(
             "explore_bots",
             {
@@ -624,11 +625,10 @@ export class UserIndexClient extends CandidService {
     }
 
     registerBot(bot: ExternalBot): Promise<boolean> {
-        console.log("UserIndex registering bot: ", bot);
         return this.executeMsgpackUpdate(
             "register_bot",
             {
-                principal: principalStringToBytes(this.principal.toText()),
+                principal: principalStringToBytes(bot.id),
                 owner: principalStringToBytes(bot.ownerId),
                 name: bot.name,
                 avatar: mapOptional(bot.avatar, identity),

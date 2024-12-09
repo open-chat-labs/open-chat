@@ -26,6 +26,7 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import ValidatingInput from "./ValidatingInput.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
+    import BotPermissionsTabs from "./BotPermissionsTabs.svelte";
 
     interface Props {
         errors: ValidationErrors;
@@ -36,7 +37,6 @@
 
     let { command = $bindable(), onAddAnother, errors, errorPath }: Props = $props();
 
-    let permissionsTab: "chat" | "community" | "message" | "thread" = $state("chat");
     let syncThreadPermissions = $state(true);
     let selectedParam = $state<SlashCommandParam | undefined>(undefined);
     let selectedParamIndex = $state<number | undefined>(undefined);
@@ -148,94 +148,61 @@
                 <Legend
                     label={i18nKey("bots.builder.commandPermissionsLabel")}
                     rules={i18nKey("bots.builder.commandPermissionsDesc")}></Legend>
-                <div class="tabs">
-                    <!-- svelte-ignore a11y_click_events_have_key_events -->
-                    <!-- svelte-ignore a11y_no_static_element_interactions -->
-                    <div
-                        class="tab"
-                        onclick={() => (permissionsTab = "chat")}
-                        class:selected={permissionsTab === "chat"}>
-                        <Translatable resourceKey={i18nKey("bots.builder.permScopeChat")}
-                        ></Translatable>
-                    </div>
-                    <!-- svelte-ignore a11y_click_events_have_key_events -->
-                    <!-- svelte-ignore a11y_no_static_element_interactions -->
-                    <div
-                        class="tab"
-                        onclick={() => (permissionsTab = "community")}
-                        class:selected={permissionsTab === "community"}>
-                        <Translatable resourceKey={i18nKey("bots.builder.permScopeCommunity")}
-                        ></Translatable>
-                    </div>
-                    <!-- svelte-ignore a11y_click_events_have_key_events -->
-                    <!-- svelte-ignore a11y_no_static_element_interactions -->
-                    <div
-                        class="tab"
-                        onclick={() => (permissionsTab = "message")}
-                        class:selected={permissionsTab === "message"}>
-                        <Translatable resourceKey={i18nKey("bots.builder.permScopeMessage")}
-                        ></Translatable>
-                    </div>
-                    <!-- svelte-ignore a11y_click_events_have_key_events -->
-                    <!-- svelte-ignore a11y_no_static_element_interactions -->
-                    <div
-                        class="tab"
-                        onclick={() => (permissionsTab = "thread")}
-                        class:selected={permissionsTab === "thread"}>
-                        <Translatable resourceKey={i18nKey("bots.builder.permScopeThread")}
-                        ></Translatable>
-                    </div>
-                </div>
-                {#if permissionsTab === "chat"}
-                    {#each chatPermissionsList as perm}
-                        <Checkbox
-                            id={`chat_permission_${perm}`}
-                            label={i18nKey(`permissions.${perm}`)}
-                            checked={command.permissions.chatPermissions.includes(perm)}
-                            on:change={() => toggleChatPermission(perm)}
-                            align={"start"}>
-                        </Checkbox>
-                    {/each}
-                {:else if permissionsTab === "community"}
-                    {#each communityPermissionsList as perm}
-                        <Checkbox
-                            id={`community_permission_${perm}`}
-                            label={i18nKey(`permissions.${perm}`)}
-                            checked={command.permissions.communityPermissions.includes(perm)}
-                            on:change={() => toggleCommunityPermission(perm)}
-                            align={"start"}>
-                        </Checkbox>
-                    {/each}
-                {:else if permissionsTab === "message"}
-                    {#each messagePermissionsList as perm}
-                        <Checkbox
-                            id={`message_permission_${perm}`}
-                            label={i18nKey(`permissions.messagePermissions.${perm}`)}
-                            checked={command.permissions.messagePermissions.includes(perm)}
-                            on:change={() => toggleMessagePermission(perm)}
-                            align={"start"}>
-                        </Checkbox>
-                    {/each}
-                {:else if permissionsTab === "thread"}
-                    <Checkbox
-                        id={`sync_thread_perm`}
-                        label={i18nKey("bots.builder.permSameAsMessage")}
-                        bind:checked={syncThreadPermissions}
-                        on:change={toggleSync}
-                        align={"start"}></Checkbox>
-                    {#if !syncThreadPermissions}
-                        {#each messagePermissionsList as perm}
+                <BotPermissionsTabs>
+                    {#snippet chatTab()}
+                        {#each chatPermissionsList as perm}
                             <Checkbox
-                                id={`thread_permission_${perm}`}
-                                disabled={syncThreadPermissions}
-                                label={i18nKey(`permissions.messagePermissions.${perm}`)}
-                                checked={command.permissions.threadPermissions.includes(perm)}
-                                on:change={() => toggleThreadPermission(perm)}
+                                id={`chat_permission_${perm}`}
+                                label={i18nKey(`permissions.${perm}`)}
+                                checked={command.permissions.chatPermissions.includes(perm)}
+                                on:change={() => toggleChatPermission(perm)}
                                 align={"start"}>
                             </Checkbox>
                         {/each}
-                    {/if}
-                {/if}
+                    {/snippet}
+                    {#snippet communityTab()}
+                        {#each communityPermissionsList as perm}
+                            <Checkbox
+                                id={`community_permission_${perm}`}
+                                label={i18nKey(`permissions.${perm}`)}
+                                checked={command.permissions.communityPermissions.includes(perm)}
+                                on:change={() => toggleCommunityPermission(perm)}
+                                align={"start"}>
+                            </Checkbox>
+                        {/each}
+                    {/snippet}
+                    {#snippet messageTab()}
+                        {#each messagePermissionsList as perm}
+                            <Checkbox
+                                id={`message_permission_${perm}`}
+                                label={i18nKey(`permissions.messagePermissions.${perm}`)}
+                                checked={command.permissions.messagePermissions.includes(perm)}
+                                on:change={() => toggleMessagePermission(perm)}
+                                align={"start"}>
+                            </Checkbox>
+                        {/each}
+                    {/snippet}
+                    {#snippet threadTab()}
+                        <Checkbox
+                            id={`sync_thread_perm`}
+                            label={i18nKey("bots.builder.permSameAsMessage")}
+                            bind:checked={syncThreadPermissions}
+                            on:change={toggleSync}
+                            align={"start"}></Checkbox>
+                        {#if !syncThreadPermissions}
+                            {#each messagePermissionsList as perm}
+                                <Checkbox
+                                    id={`thread_permission_${perm}`}
+                                    disabled={syncThreadPermissions}
+                                    label={i18nKey(`permissions.messagePermissions.${perm}`)}
+                                    checked={command.permissions.threadPermissions.includes(perm)}
+                                    on:change={() => toggleThreadPermission(perm)}
+                                    align={"start"}>
+                                </Checkbox>
+                            {/each}
+                        {/if}
+                    {/snippet}
+                </BotPermissionsTabs>
             </section>
 
             <section>
@@ -274,31 +241,5 @@
 <style lang="scss">
     section {
         margin-bottom: $sp4;
-    }
-
-    .tabs {
-        display: flex;
-        align-items: center;
-        @include font(medium, normal, fs-90);
-        color: var(--txt-light);
-        gap: $sp5;
-        border-bottom: 1px solid var(--bd);
-        cursor: pointer;
-        margin-bottom: $sp4;
-
-        @include mobile() {
-            gap: $sp4;
-        }
-
-        .tab {
-            padding-bottom: 10px;
-            margin-bottom: -2px;
-            border-bottom: 3px solid transparent;
-            white-space: nowrap;
-            &.selected {
-                color: var(--txt);
-                border-bottom: 3px solid var(--txt);
-            }
-        }
     }
 </style>

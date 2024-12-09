@@ -1,0 +1,278 @@
+<script lang="ts">
+    import {
+        AvatarSize,
+        emptyPermissions,
+        OpenChat,
+        type BotMatch,
+        type SlashCommandPermissions,
+    } from "openchat-client";
+    import Avatar from "../Avatar.svelte";
+    import { getContext } from "svelte";
+    import Overlay from "../Overlay.svelte";
+    import ModalContent from "../ModalContent.svelte";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
+    import ButtonGroup from "../ButtonGroup.svelte";
+    import Button from "../Button.svelte";
+    import { mobileWidth } from "../../stores/screenDimensions";
+    import TooltipWrapper from "../TooltipWrapper.svelte";
+    import TooltipPopup from "../TooltipPopup.svelte";
+    import Legend from "../Legend.svelte";
+    import BotPermissionsTabs from "./BotPermissionsTabs.svelte";
+    import Checkbox from "../Checkbox.svelte";
+
+    const client = getContext<OpenChat>("client");
+
+    interface Props {
+        bot: BotMatch;
+        onClose: () => void;
+    }
+
+    let { bot, onClose }: Props = $props();
+    let adding = $state(false);
+    let requestedPermissions = $derived(flattenPermissions());
+    let grantedPermissions = $state(flattenPermissions());
+
+    function permitted(required: SlashCommandPermissions): boolean {
+        return (
+            required.chatPermissions.every((p) => grantedPermissions.chatPermissions.includes(p)) &&
+            required.communityPermissions.every((p) =>
+                grantedPermissions.communityPermissions.includes(p),
+            ) &&
+            (required.messagePermissions.every((p) =>
+                grantedPermissions.messagePermissions.includes(p),
+            ) ||
+                required.threadPermissions.every((p) =>
+                    grantedPermissions.threadPermissions.includes(p),
+                ))
+        );
+    }
+
+    function flattenPermissions() {
+        return bot.commands.reduce((p, c) => {
+            return mergePermissions(p, c.permissions);
+        }, emptyPermissions());
+    }
+
+    function mergeLists<T>(l1: T[], l2: T[]): T[] {
+        return [...new Set([...l1, ...l2])];
+    }
+
+    function mergePermissions(
+        p1: SlashCommandPermissions,
+        p2: SlashCommandPermissions,
+    ): SlashCommandPermissions {
+        return {
+            chatPermissions: mergeLists(p1.chatPermissions, p2.chatPermissions),
+            communityPermissions: mergeLists(p1.communityPermissions, p2.communityPermissions),
+            messagePermissions: mergeLists(p1.messagePermissions, p2.messagePermissions),
+            threadPermissions: mergeLists(p1.threadPermissions, p2.threadPermissions),
+        };
+    }
+
+    // fancy
+    function togglePerm<P extends keyof SlashCommandPermissions>(
+        prop: P,
+        perm: SlashCommandPermissions[P][number],
+    ) {
+        const list = grantedPermissions[prop] as SlashCommandPermissions[P][number][];
+        if (list.includes(perm)) {
+            grantedPermissions[prop] = list.filter((p) => p !== perm) as SlashCommandPermissions[P];
+        } else {
+            list.push(perm);
+        }
+    }
+
+    function addBot() {}
+</script>
+
+<Overlay dismissible>
+    <ModalContent closeIcon on:close={onClose}>
+        <div class="header" slot="header">
+            <Translatable resourceKey={i18nKey("bots.add.title")}></Translatable>
+        </div>
+        <div class="body" slot="body">
+            <span class="avatar">
+                <Avatar url={client.botAvatarUrl(bot.avatarId)} size={AvatarSize.Default} />
+            </span>
+            <div class="details">
+                <h4 class="bot-name">
+                    {bot.name}
+                </h4>
+                <p title={bot.description} class="bot-desc">
+                    {bot.description}
+                </p>
+                <div class="commands">
+                    {#each bot.commands as command}
+                        <TooltipWrapper position="bottom" align="middle">
+                            <div
+                                slot="target"
+                                class="command"
+                                class:not_permitted={!permitted(command.permissions)}>
+                                {command.name}
+                            </div>
+                            <div let:position let:align slot="tooltip">
+                                <TooltipPopup {align} {position}>
+                                    {command.description}
+                                </TooltipPopup>
+                            </div>
+                        </TooltipWrapper>
+                    {/each}
+                </div>
+                <div class="permissions">
+                    <Legend label={i18nKey("bots.add.choosePermissions")}></Legend>
+                    <p class="info">
+                        <Translatable resourceKey={i18nKey("bots.add.permissionsInfo")}
+                        ></Translatable>
+                    </p>
+                    <BotPermissionsTabs>
+                        {#snippet chatTab()}
+                            {#if requestedPermissions.chatPermissions.length === 0}
+                                <Translatable resourceKey={i18nKey("bots.add.noPermissions")}
+                                ></Translatable>
+                            {:else}
+                                {#each requestedPermissions.chatPermissions as perm}
+                                    <Checkbox
+                                        id={`chat_permission_${perm}`}
+                                        label={i18nKey(`permissions.${perm}`)}
+                                        checked={grantedPermissions.chatPermissions.includes(perm)}
+                                        on:change={() => togglePerm("chatPermissions", perm)}
+                                        align={"start"}>
+                                    </Checkbox>
+                                {/each}
+                            {/if}
+                        {/snippet}
+                        {#snippet communityTab()}
+                            {#if requestedPermissions.communityPermissions.length === 0}
+                                <Translatable resourceKey={i18nKey("bots.add.noPermissions")}
+                                ></Translatable>
+                            {:else}
+                                {#each requestedPermissions.communityPermissions as perm}
+                                    <Checkbox
+                                        id={`community_permission_${perm}`}
+                                        label={i18nKey(`permissions.${perm}`)}
+                                        checked={grantedPermissions.communityPermissions.includes(
+                                            perm,
+                                        )}
+                                        on:change={() => togglePerm("communityPermissions", perm)}
+                                        align={"start"}>
+                                    </Checkbox>
+                                {/each}
+                            {/if}
+                        {/snippet}
+                        {#snippet messageTab()}
+                            {#if requestedPermissions.messagePermissions.length === 0}
+                                <Translatable resourceKey={i18nKey("bots.add.noPermissions")}
+                                ></Translatable>
+                            {:else}
+                                {#each requestedPermissions.messagePermissions as perm}
+                                    <Checkbox
+                                        id={`message_permission_${perm}`}
+                                        label={i18nKey(`permissions.messagePermissions.${perm}`)}
+                                        checked={grantedPermissions.messagePermissions.includes(
+                                            perm,
+                                        )}
+                                        on:change={() => togglePerm("messagePermissions", perm)}
+                                        align={"start"}>
+                                    </Checkbox>
+                                {/each}
+                            {/if}
+                        {/snippet}
+                        {#snippet threadTab()}
+                            {#if requestedPermissions.threadPermissions.length === 0}
+                                <Translatable resourceKey={i18nKey("bots.add.noPermissions")}
+                                ></Translatable>
+                            {:else}
+                                {#each requestedPermissions.threadPermissions as perm}
+                                    <Checkbox
+                                        id={`thread_permission_${perm}`}
+                                        label={i18nKey(`permissions.messagePermissions.${perm}`)}
+                                        checked={grantedPermissions.threadPermissions.includes(
+                                            perm,
+                                        )}
+                                        on:change={() => togglePerm("threadPermissions", perm)}
+                                        align={"start"}>
+                                    </Checkbox>
+                                {/each}
+                            {/if}
+                        {/snippet}
+                    </BotPermissionsTabs>
+                </div>
+            </div>
+        </div>
+        <div class="footer" slot="footer">
+            <ButtonGroup>
+                <Button secondary small={!$mobileWidth} tiny={$mobileWidth} on:click={onClose}>
+                    <Translatable resourceKey={i18nKey("cancel")} />
+                </Button>
+                <Button
+                    on:click={addBot}
+                    loading={adding}
+                    small={!$mobileWidth}
+                    tiny={$mobileWidth}>
+                    <Translatable resourceKey={i18nKey("bots.add.addBot")} />
+                </Button>
+            </ButtonGroup>
+        </div>
+    </ModalContent>
+</Overlay>
+
+<style lang="scss">
+    .body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+    }
+    .avatar {
+        flex: 0 0 50px;
+        position: relative;
+        align-self: start;
+    }
+
+    .details {
+        display: flex;
+        gap: $sp2;
+        flex: 1;
+        flex-direction: column;
+        @include font(book, normal, fs-100);
+
+        .bot-name {
+            @include ellipsis();
+        }
+
+        .bot-desc {
+            @include font(light, normal, fs-100);
+            color: var(--txt-light);
+            margin-bottom: $sp3;
+        }
+    }
+
+    .commands {
+        display: flex;
+        align-items: center;
+        gap: $sp3;
+        margin-bottom: $sp4;
+
+        .command {
+            @include font(light, normal, fs-80);
+            background-color: var(--button-bg);
+            color: var(--button-txt);
+            padding: $sp2 $sp3;
+            border-radius: $sp2;
+            cursor: pointer;
+
+            &.not_permitted {
+                background-color: unset;
+                border: 1px solid var(--button-bg);
+                color: var(--txt);
+            }
+        }
+    }
+
+    .info {
+        @include font(book, normal, fs-70);
+        color: var(--txt-light);
+        margin-bottom: $sp4;
+    }
+</style>

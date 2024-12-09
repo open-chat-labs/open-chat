@@ -2,6 +2,9 @@
     import { AvatarSize, OpenChat, type BotMatch } from "openchat-client";
     import Avatar from "../Avatar.svelte";
     import { getContext } from "svelte";
+    import BotSummary from "./BotSummary.svelte";
+    import TooltipWrapper from "../TooltipWrapper.svelte";
+    import TooltipPopup from "../TooltipPopup.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -10,11 +13,16 @@
     }
 
     let { match }: Props = $props();
-
-    function onClick() {}
+    let showing = $state(false);
 </script>
 
-<button class="bot-match" onclick={onClick}>
+{#if showing}
+    <BotSummary onClose={() => (showing = false)} bot={match} />
+{/if}
+
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="bot-match" onclick={() => (showing = true)}>
     <span class="avatar">
         <Avatar url={client.botAvatarUrl(match.avatarId)} size={AvatarSize.Default} />
     </span>
@@ -22,15 +30,26 @@
         <h4 class="bot-name">
             {match.name}
         </h4>
-        <p class="bot-desc">
+        <p title={match.description} class="bot-desc">
             {match.description}
         </p>
+        <div class="commands">
+            {#each match.commands as command}
+                <TooltipWrapper position="bottom" align="middle">
+                    <div slot="target" class="command">{command.name}</div>
+                    <div let:position let:align slot="tooltip">
+                        <TooltipPopup {align} {position}>
+                            {command.description}
+                        </TooltipPopup>
+                    </div>
+                </TooltipWrapper>
+            {/each}
+        </div>
     </div>
-</button>
+</div>
 
 <style lang="scss">
     .bot-match {
-        all: unset;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -76,6 +95,20 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
             text-overflow: ellipsis;
+            margin-bottom: $sp3;
+        }
+    }
+
+    .commands {
+        display: flex;
+        align-items: center;
+        gap: $sp3;
+        .command {
+            @include font(light, normal, fs-80);
+            background-color: var(--button-bg);
+            color: var(--button-txt);
+            padding: $sp2 $sp3;
+            border-radius: $sp2;
         }
     }
 </style>

@@ -798,6 +798,7 @@ export function exploreBotsResponse(value: UserIndexExploreBotsResponse): Explor
         return { kind: "term_invalid" };
     }
     if ("Success" in value) {
+        console.log("Explore bots response: ", value);
         return {
             kind: "success",
             matches: value.Success.matches.map(externalBotMatch),

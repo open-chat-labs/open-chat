@@ -213,8 +213,6 @@
     let creatingThread = false;
     let currentChatMessages: CurrentChatMessages | undefined;
 
-    $: console.log("Nervous System: ", $nervousSystemLookup);
-
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
 
     $: selectedMultiUserChat =

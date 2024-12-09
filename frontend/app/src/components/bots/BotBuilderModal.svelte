@@ -27,11 +27,10 @@
         if (bot !== undefined && valid) {
             registering = true;
             const snapshot = $state.snapshot(bot);
-            console.log("About to register bot", snapshot);
             client
                 .registerBot({
                     ...snapshot,
-                    id: $currentUser.userId,
+                    id: "tu45y-p4p3d-b4gg4-gmyy3-rgweo-whsrq-fephi-vshrn-cipca-xdkri-pae",
                     ownerId: $currentUser.userId,
                 })
                 .then((success) => {
