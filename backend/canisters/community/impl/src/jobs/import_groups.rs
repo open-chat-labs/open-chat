@@ -359,7 +359,7 @@ fn add_community_members_to_channel_if_public(channel_id: ChannelId, state: &mut
         // If this is a public channel, add all community members to it
         if channel.chat.is_public.value && channel.chat.gate_config.value.is_none() {
             let now = state.env.now();
-            let user_ids: Vec<_> = state.data.members.member_ids().iter().copied().collect();
+            let user_ids: Vec<_> = state.data.members.iter_member_ids().collect();
             add_members_to_public_channel_unchecked(
                 user_ids.into_iter(),
                 channel,

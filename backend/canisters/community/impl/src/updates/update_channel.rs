@@ -71,8 +71,8 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                         // been in the channel before and then left
                         if result.newly_public || matches!(result.gate_config_update, OptionUpdate::SetToNone) {
                             let channel_id = channel.id;
-                            let mut user_ids = Vec::with_capacity(state.data.members.member_ids().len());
-                            user_ids.extend(state.data.members.member_ids().iter().filter(|&user_id| {
+                            let mut user_ids = Vec::with_capacity(state.data.members.len());
+                            user_ids.extend(state.data.members.iter_member_ids().filter(|user_id| {
                                 !state.data.members.member_channel_links_removed_contains(*user_id, channel_id)
                             }));
 

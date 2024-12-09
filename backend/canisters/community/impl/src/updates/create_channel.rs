@@ -157,7 +157,7 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
             };
 
             if args.is_public && args.gate_config.is_none() {
-                let user_ids: Vec<_> = state.data.members.member_ids().iter().copied().collect();
+                let user_ids: Vec<_> = state.data.members.iter_member_ids().collect();
                 add_members_to_public_channel_unchecked(
                     user_ids.into_iter(),
                     &mut channel,

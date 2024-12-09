@@ -121,7 +121,7 @@ fn summary_updates_impl(
     let primary_language = state.data.primary_language.if_set_after(updates_since).cloned();
     let latest_event_index =
         (state.data.events.latest_event_timestamp() > updates_since).then_some(state.data.events.latest_event_index());
-    let member_count = (state.data.members.last_updated() > updates_since).then_some(state.data.members.len());
+    let member_count = (state.data.members.last_updated() > updates_since).then_some(state.data.members.len() as u32);
     let avatar_id = state
         .data
         .avatar

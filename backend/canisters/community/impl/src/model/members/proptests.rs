@@ -5,7 +5,7 @@ use ic_stable_structures::DefaultMemoryImpl;
 use proptest::collection::vec as pvec;
 use proptest::prelude::*;
 use proptest::prop_oneof;
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use test_strategy::proptest;
 use types::{CommunityPermissions, CommunityRole, TimestampMillis, UserId, UserType};
 
@@ -88,10 +88,10 @@ fn execute_operation(members: &mut CommunityMembers, op: Operation, timestamp: T
             referred_by_index,
         } => {
             let referred_by = referred_by_index.and_then(|i| {
-                if members.member_ids.is_empty() {
+                if members.members_and_channels.is_empty() {
                     None
                 } else {
-                    Some(get(&members.member_ids, i))
+                    Some(get_from_map(&members.members_and_channels, i))
                 }
             });
             members.add(user_id, user_id.into(), UserType::User, referred_by, timestamp);
@@ -101,8 +101,8 @@ fn execute_operation(members: &mut CommunityMembers, op: Operation, timestamp: T
             user_index,
             role,
         } => {
-            let owner = get(&members.owners, owner_index);
-            let user_id = get(&members.member_ids, user_index);
+            let owner = get_from_set(&members.owners, owner_index);
+            let user_id = get_from_map(&members.members_and_channels, user_index);
             members.change_role(
                 owner,
                 user_id,
@@ -114,17 +114,17 @@ fn execute_operation(members: &mut CommunityMembers, op: Operation, timestamp: T
             );
         }
         Operation::SetDisplayName { user_index, value } => {
-            let user_id = get(&members.member_ids, user_index);
+            let user_id = get_from_map(&members.members_and_channels, user_index);
             members.set_display_name(user_id, value, timestamp);
         }
         Operation::Remove { user_index } => {
-            let user_id = get(&members.member_ids, user_index);
+            let user_id = get_from_map(&members.members_and_channels, user_index);
             if members.owners.len() != 1 || members.owners.first() != Some(&user_id) {
                 members.remove(&user_id, timestamp);
             }
         }
         Operation::Block { user_index } => {
-            let user_id = get(&members.member_ids, user_index);
+            let user_id = get_from_map(&members.members_and_channels, user_index);
             if members.owners.len() != 1 || members.owners.first() != Some(&user_id) {
                 members.remove(&user_id, timestamp);
                 members.block(user_id, timestamp);
@@ -132,17 +132,17 @@ fn execute_operation(members: &mut CommunityMembers, op: Operation, timestamp: T
         }
         Operation::Unblock { user_index } => {
             if !members.blocked.is_empty() {
-                let user_id = get(&members.blocked, user_index);
+                let user_id = get_from_set(&members.blocked, user_index);
                 members.unblock(user_id, timestamp);
             }
         }
         Operation::Lapse { user_index } => {
-            let user_id = get(&members.member_ids, user_index);
+            let user_id = get_from_map(&members.members_and_channels, user_index);
             members.update_lapsed(user_id, true, timestamp);
         }
         Operation::Unlapse { user_index } => {
             if !members.lapsed.is_empty() {
-                let user_id = get(&members.lapsed, user_index);
+                let user_id = get_from_set(&members.lapsed, user_index);
                 members.update_lapsed(user_id, false, timestamp);
             }
         }
@@ -151,19 +151,24 @@ fn execute_operation(members: &mut CommunityMembers, op: Operation, timestamp: T
         }
         Operation::SetSuspended { user_index, suspended } => {
             if suspended {
-                let user_id = get(&members.member_ids, user_index);
+                let user_id = get_from_map(&members.members_and_channels, user_index);
                 members.set_suspended(user_id, true, timestamp);
             } else if !members.suspended.is_empty() {
-                let user_id = get(&members.suspended, user_index);
+                let user_id = get_from_set(&members.suspended, user_index);
                 members.set_suspended(user_id, false, timestamp);
             }
         }
     };
 }
 
-fn get(set: &BTreeSet<UserId>, index: usize) -> UserId {
+fn get_from_map<V>(map: &BTreeMap<UserId, V>, index: usize) -> UserId {
+    let index = index % map.len();
+    map.iter().nth(index).map(|(u, _)| *u).unwrap()
+}
+
+fn get_from_set(set: &BTreeSet<UserId>, index: usize) -> UserId {
     let index = index % set.len();
-    *set.iter().nth(index).unwrap()
+    set.iter().nth(index).copied().unwrap()
 }
 
 fn principal(index: usize) -> Principal {
