@@ -5,6 +5,7 @@ use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
+use constants::{DAY_IN_MS, DEV_TEAM_DFX_PRINCIPAL};
 use event_store_producer::{EventBuilder, EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -26,15 +27,14 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use types::{
-    BotConfig, BuildVersion, CanisterId, ChatId, ChildCanisterWasms, Cryptocurrency, Cycles, DiamondMembershipFees,
-    Milliseconds, TimestampMillis, Timestamped, UserId, UserType,
+    BuildVersion, CanisterId, ChatId, ChildCanisterWasms, Cryptocurrency, Cycles, DiamondMembershipFees, Milliseconds,
+    TimestampMillis, Timestamped, UserId, UserType,
 };
 use user_index_canister::ChildCanisterType;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
-use utils::consts::DEV_TEAM_DFX_PRINCIPAL;
 use utils::env::Environment;
-use utils::time::{MonthKey, DAY_IN_MS};
+use utils::time::MonthKey;
 
 mod guards;
 mod jobs;
@@ -264,20 +264,6 @@ impl RuntimeState {
             pending_payments: self.data.pending_payments_queue.len(),
             pending_users_to_sync_to_storage_index: self.data.storage_index_user_sync_queue.len(),
             reporting_metrics: self.data.reported_messages.metrics(),
-            canister_ids: CanisterIds {
-                group_index: self.data.group_index_canister_id,
-                notifications_index: self.data.notifications_index_canister_id,
-                identity: self.data.identity_canister_id,
-                proposals_bot: self.data.proposals_bot_canister_id,
-                airdrop_bot: self.data.airdrop_bot_canister_id,
-                online_users: self.data.online_users_canister_id,
-                cycles_dispenser: self.data.cycles_dispenser_canister_id,
-                storage_index: self.data.storage_index_canister_id,
-                escrow: self.data.escrow_canister_id,
-                translations: self.data.translations_canister_id,
-                event_relay: event_relay_canister_id,
-                internet_identity: self.data.internet_identity_canister_id,
-            },
             oc_public_key: self.data.oc_key_pair.public_key_pem().to_string(),
             empty_users: self.data.empty_users.len(),
             deleted_users: self.data.deleted_users.len(),
@@ -295,6 +281,22 @@ impl RuntimeState {
                 .into_iter()
                 .map(|(c, h)| (*c, hex::encode(h)))
                 .collect(),
+            stable_memory_sizes: memory::memory_sizes(),
+            canister_ids: CanisterIds {
+                group_index: self.data.group_index_canister_id,
+                notifications_index: self.data.notifications_index_canister_id,
+                identity: self.data.identity_canister_id,
+                proposals_bot: self.data.proposals_bot_canister_id,
+                airdrop_bot: self.data.airdrop_bot_canister_id,
+                online_users: self.data.online_users_canister_id,
+                cycles_dispenser: self.data.cycles_dispenser_canister_id,
+                storage_index: self.data.storage_index_canister_id,
+                escrow: self.data.escrow_canister_id,
+                translations: self.data.translations_canister_id,
+                event_relay: event_relay_canister_id,
+                internet_identity: self.data.internet_identity_canister_id,
+                website: self.data.website_canister_id,
+            },
         }
     }
 
@@ -360,6 +362,8 @@ struct Data {
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
     pub nns_governance_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
+    #[serde(default = "website_canister_id")]
+    pub website_canister_id: CanisterId,
     pub platform_moderators_group: Option<ChatId>,
     pub reported_messages: ReportedMessages,
     pub fire_and_forget_handler: FireAndForgetHandler,
@@ -380,6 +384,10 @@ struct Data {
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
 }
 
+fn website_canister_id() -> CanisterId {
+    CanisterId::from_text("6hsbt-vqaaa-aaaaf-aaafq-cai").unwrap()
+}
+
 impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -397,6 +405,7 @@ impl Data {
         nns_governance_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
         translations_canister_id: CanisterId,
+        website_canister_id: CanisterId,
         video_call_operators: Vec<Principal>,
         ic_root_key: Vec<u8>,
         test_mode: bool,
@@ -435,6 +444,7 @@ impl Data {
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             nns_governance_canister_id,
             internet_identity_canister_id,
+            website_canister_id,
             platform_moderators_group: None,
             nns_8_year_neuron: None,
             reported_messages: ReportedMessages::default(),
@@ -463,7 +473,7 @@ impl Data {
             now,
             None,
             UserType::OcControlledBot,
-            Some(BotConfig::default()),
+            None,
         );
 
         // Register the AirdropBot
@@ -475,7 +485,7 @@ impl Data {
             now,
             None,
             UserType::OcControlledBot,
-            Some(BotConfig::default()),
+            None,
         );
 
         data
@@ -563,6 +573,7 @@ impl Default for Data {
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             nns_governance_canister_id: Principal::anonymous(),
             internet_identity_canister_id: Principal::anonymous(),
+            website_canister_id: Principal::anonymous(),
             platform_moderators_group: None,
             reported_messages: ReportedMessages::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
@@ -614,7 +625,6 @@ pub struct Metrics {
     pub pending_payments: usize,
     pub pending_users_to_sync_to_storage_index: usize,
     pub reporting_metrics: ReportingMetrics,
-    pub canister_ids: CanisterIds,
     pub oc_public_key: String,
     pub empty_users: usize,
     pub deleted_users: usize,
@@ -626,6 +636,8 @@ pub struct Metrics {
     pub external_achievements: Vec<ExternalAchievementMetrics>,
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
     pub wasm_chunks_uploaded: Vec<(ChildCanisterType, String)>,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
+    pub canister_ids: CanisterIds,
 }
 
 #[derive(Serialize, Debug)]
@@ -705,4 +717,5 @@ pub struct CanisterIds {
     pub translations: CanisterId,
     pub event_relay: CanisterId,
     pub internet_identity: CanisterId,
+    pub website: CanisterId,
 }

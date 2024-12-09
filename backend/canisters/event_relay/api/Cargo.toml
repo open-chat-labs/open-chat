@@ -7,7 +7,6 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
-candid_gen = { path = "../../../libraries/candid_gen" }
 event_store_canister = { workspace = true }
 serde = { workspace = true }
 types = { path = "../../../libraries/types" }

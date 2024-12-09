@@ -34,6 +34,7 @@ fn c2c_invite_users_impl(args: Args, state: &mut RuntimeState) -> Response {
         InvitedUsersResult::UserNotInGroup => CallerNotInGroup,
         InvitedUsersResult::NotAuthorized => NotAuthorized,
         InvitedUsersResult::UserSuspended => NotAuthorized,
+        InvitedUsersResult::UserLapsed => NotAuthorized,
         InvitedUsersResult::TooManyInvites(v) => TooManyInvites(v),
     }
 }

@@ -7,11 +7,5 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
-getrandom = { workspace = true }
-ic-ledger-types = { workspace = true }
-icrc-ledger-types = { workspace = true }
 rand = { workspace = true }
-range-set = { workspace = true }
-serde = { workspace = true }
-serde_bytes = { workspace = true }
 types = { path = "../types" }

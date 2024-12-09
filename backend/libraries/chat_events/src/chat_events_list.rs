@@ -14,6 +14,7 @@ use types::{
 
 #[derive(Serialize, Deserialize)]
 pub struct ChatEventsList {
+    #[serde(alias = "stable_events_map")]
     events_map: HybridMap<ChatEventsStableStorage>,
     message_id_map: HashMap<MessageId, EventIndex>,
     message_event_indexes: Vec<EventIndex>,
@@ -22,14 +23,6 @@ pub struct ChatEventsList {
 }
 
 impl ChatEventsList {
-    pub fn update_event_in_memory(&mut self, event_key: EventKey) {
-        if let Some(event_index) = self.event_index(event_key) {
-            if let Some(event) = self.events_map.get(event_index) {
-                self.events_map.insert(event);
-            }
-        }
-    }
-
     pub fn set_stable_memory_prefix(&mut self, chat: Chat, thread_root_message_index: Option<MessageIndex>) {
         self.events_map.set_stable_memory_prefix(chat, thread_root_message_index);
     }
@@ -428,7 +421,7 @@ pub trait Reader {
             ChatEventInternal::AvatarChanged(g) => ChatEvent::AvatarChanged(*g),
             ChatEventInternal::ParticipantsAdded(p) => ChatEvent::ParticipantsAdded(*p),
             ChatEventInternal::ParticipantsRemoved(p) => ChatEvent::ParticipantsRemoved(*p),
-            ChatEventInternal::ParticipantJoined(p) => ChatEvent::ParticipantJoined(*p),
+            ChatEventInternal::ParticipantJoined(p) => ChatEvent::ParticipantJoined((*p).into()),
             ChatEventInternal::ParticipantLeft(p) => ChatEvent::ParticipantLeft(*p),
             ChatEventInternal::RoleChanged(r) => ChatEvent::RoleChanged(*r),
             ChatEventInternal::UsersBlocked(u) => ChatEvent::UsersBlocked(*u),
@@ -447,6 +440,9 @@ pub trait Reader {
             ChatEventInternal::ExternalUrlUpdated(u) => ChatEvent::ExternalUrlUpdated(*u),
             ChatEventInternal::Empty => ChatEvent::Empty,
             ChatEventInternal::FailedToDeserialize => ChatEvent::FailedToDeserialize,
+            ChatEventInternal::BotAdded(e) => ChatEvent::BotAdded(e),
+            ChatEventInternal::BotRemoved(e) => ChatEvent::BotRemoved(e),
+            ChatEventInternal::BotUpdated(e) => ChatEvent::BotUpdated(e),
         };
 
         EventWrapper {

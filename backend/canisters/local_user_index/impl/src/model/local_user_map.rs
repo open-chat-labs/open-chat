@@ -1,9 +1,9 @@
 use candid::Principal;
+use constants::MINUTE_IN_MS;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{BuildVersion, CyclesTopUp, TimestampMillis, UserId};
-use utils::time::MINUTE_IN_MS;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct LocalUserMap {

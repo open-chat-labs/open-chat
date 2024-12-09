@@ -4,6 +4,7 @@ use crate::{mutate_state, run_regular_jobs, Data, RuntimeState, TimerJob};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use constants::OPENCHAT_BOT_USER_ID;
 use group_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse};
 use group_canister::send_message_v2::{Response::*, *};
 use group_chat_core::SendMessageResult;
@@ -12,7 +13,6 @@ use types::{
     TimestampMillis, User, UserId, UserType,
 };
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
-use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[update(candid = true, msgpack = true)]
 #[trace]
@@ -321,7 +321,6 @@ fn register_timer_jobs(
         MessageContent::Prize(p) => {
             data.timer_jobs.enqueue_job(
                 TimerJob::FinalPrizePayments(FinalPrizePaymentsJob {
-                    thread_root_message_index,
                     message_index: message_event.event.message_index,
                 }),
                 p.end_date,

@@ -28,7 +28,6 @@ dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 local_user_index
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 local_group_index
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 notifications
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 bot_api_gateway
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 identity
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 online_users
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 proposals_bot
@@ -45,6 +44,7 @@ dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 sign_in_with_email
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 sign_in_with_ethereum
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 sign_in_with_solana
+dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 website
 
 # Install the OpenChat canisters
 ./scripts/deploy.sh local \

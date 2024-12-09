@@ -2,13 +2,7 @@ use candid::Deserialize;
 use serde::Serialize;
 use std::ops::Range;
 use time::{OffsetDateTime, Time};
-use types::{Milliseconds, TimestampMillis, TimestampNanos};
-
-pub const SECOND_IN_MS: Milliseconds = 1000;
-pub const MINUTE_IN_MS: Milliseconds = SECOND_IN_MS * 60;
-pub const HOUR_IN_MS: Milliseconds = MINUTE_IN_MS * 60;
-pub const DAY_IN_MS: Milliseconds = HOUR_IN_MS * 24;
-pub const WEEK_IN_MS: Milliseconds = DAY_IN_MS * 7;
+use types::TimestampMillis;
 
 pub const MONTHS: [&str; 12] = [
     "January",
@@ -24,16 +18,6 @@ pub const MONTHS: [&str; 12] = [
     "November",
     "December",
 ];
-
-pub const NANOS_PER_MILLISECOND: u64 = 1_000_000;
-
-pub fn now_millis() -> TimestampMillis {
-    now_nanos() / NANOS_PER_MILLISECOND
-}
-
-pub fn now_nanos() -> TimestampNanos {
-    ic_cdk::api::time()
-}
 
 pub fn today(now: TimestampMillis) -> TimestampMillis {
     to_timestamp(to_date(now))

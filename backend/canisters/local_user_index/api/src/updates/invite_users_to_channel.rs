@@ -23,6 +23,7 @@ pub enum Response {
     ChannelNotFound,
     UserNotInChannel,
     UserSuspended,
+    UserLapsed,
     NotAuthorized,
     TooManyInvites(u32),
     InternalError(String),

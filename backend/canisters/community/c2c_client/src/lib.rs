@@ -6,10 +6,10 @@ generate_c2c_call!(c2c_can_issue_access_token_for_channel);
 generate_c2c_call!(c2c_events);
 generate_c2c_call!(c2c_events_by_index);
 generate_c2c_call!(c2c_events_window);
-generate_c2c_call!(c2c_summary);
-generate_c2c_call!(c2c_summary_updates);
 generate_candid_c2c_call!(local_user_index);
 generate_candid_c2c_call!(selected_channel_initial);
+generate_c2c_call!(summary);
+generate_c2c_call!(summary_updates);
 
 // Updates
 generate_c2c_call!(c2c_create_proposals_channel);
@@ -30,4 +30,4 @@ generate_c2c_call!(change_channel_role);
 generate_c2c_call!(delete_channel);
 generate_c2c_call!(delete_messages);
 generate_candid_c2c_call!(send_message);
-generate_candid_c2c_call!(update_channel);
+generate_c2c_call!(update_channel);

@@ -37,6 +37,9 @@ pub enum ChatEvent {
     UsersInvited(UsersInvited),
     MembersAddedToDefaultChannel(MembersAddedToDefaultChannel),
     ExternalUrlUpdated(ExternalUrlUpdated),
+    BotAdded(Box<BotAdded>),
+    BotRemoved(Box<BotRemoved>),
+    BotUpdated(Box<BotUpdated>),
     FailedToDeserialize,
 }
 
@@ -194,16 +197,44 @@ pub struct MemberJoined {
     pub invited_by: Option<UserId>,
 }
 
+// The aliases need to be kept to handle pre-existing values
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct MemberJoinedInternal {
+    #[serde(rename = "u", alias = "user_id")]
+    pub user_id: UserId,
+    #[serde(rename = "i", alias = "invited_by", skip_serializing_if = "Option::is_none")]
+    pub invited_by: Option<UserId>,
+}
+
+impl From<MemberJoined> for MemberJoinedInternal {
+    fn from(value: MemberJoined) -> Self {
+        MemberJoinedInternal {
+            user_id: value.user_id,
+            invited_by: value.invited_by,
+        }
+    }
+}
+
+impl From<MemberJoinedInternal> for MemberJoined {
+    fn from(value: MemberJoinedInternal) -> Self {
+        MemberJoined {
+            user_id: value.user_id,
+            invited_by: value.invited_by,
+        }
+    }
+}
+
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MemberLeft {
     pub user_id: UserId,
 }
 
-#[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct CommunityMemberLeft {
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct CommunityMemberLeftInternal {
+    #[serde(rename = "u", alias = "user_id")]
     pub user_id: UserId,
+    #[serde(rename = "r", alias = "referred_by", skip_serializing_if = "Option::is_none")]
     pub referred_by: Option<UserId>,
 }
 
@@ -399,4 +430,25 @@ impl EventContext {
             event_index,
         }
     }
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct BotAdded {
+    pub user_id: UserId,
+    pub added_by: UserId,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct BotRemoved {
+    pub user_id: UserId,
+    pub removed_by: UserId,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct BotUpdated {
+    pub user_id: UserId,
+    pub updated_by: UserId,
 }

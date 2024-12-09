@@ -15,6 +15,7 @@ canister_api_macros = { path = "../../../libraries/canister_api_macros" }
 canister_logger = { path = "../../../libraries/canister_logger" }
 canister_state_macros = { path = "../../../libraries/canister_state_macros" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
+constants = { path = "../../../libraries/constants" }
 http_request = { path = "../../../libraries/http_request" }
 ic-canister-sig-creation = { workspace = true }
 ic-captcha = { workspace = true }
@@ -29,12 +30,9 @@ msgpack = { path = "../../../libraries/msgpack" }
 rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
-sha2 = { workspace = true }
 sha256 = { path = "../../../libraries/sha256" }
 stable_memory = { path = "../../../libraries/stable_memory" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
-user_index_canister = { path = "../../user_index/api" }
-user_index_canister_c2c_client = { path = "../../user_index/c2c_client" }
 utils = { path = "../../../libraries/utils" }
 x509-parser = { workspace = true }

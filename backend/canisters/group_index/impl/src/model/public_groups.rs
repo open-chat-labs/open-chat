@@ -1,16 +1,16 @@
 use crate::model::cached_hot_groups::CachedPublicGroupSummary;
 use crate::model::private_groups::PrivateGroupInfo;
 use crate::{CACHED_HOT_GROUPS_COUNT, MARK_ACTIVE_DURATION};
+use constants::DAY_IN_MS;
 use search::*;
 use serde::{Deserialize, Serialize};
 use std::cmp;
 use std::collections::HashMap;
 use types::{
-    AccessGate, AccessGateConfig, BuildVersion, ChatId, FrozenGroupInfo, GroupMatch, GroupSubtype, Milliseconds,
+    AccessGate, AccessGateConfig, AccessGateConfigInternal, BuildVersion, ChatId, FrozenGroupInfo, GroupMatch, GroupSubtype,
     PublicGroupActivity, PublicGroupSummary, TimestampMillis,
 };
 use utils::iterator_extensions::IteratorExtensions;
-use utils::time::DAY_IN_MS;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct PublicGroups {
@@ -166,34 +166,7 @@ pub struct PublicGroupInfo {
     activity: PublicGroupActivity,
     hotness_score: u32,
     exclude_from_hotlist: bool,
-    #[serde(alias = "gate")]
-    gate_config: Option<AccessGateConfigInternal2>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-#[serde(from = "AccessGate")]
-pub struct AccessGateConfigInternal2 {
-    pub gate: AccessGate,
-    pub expiry: Option<Milliseconds>,
-}
-
-// TODO: Delete this after it is released
-impl From<AccessGate> for AccessGateConfigInternal2 {
-    fn from(value: AccessGate) -> Self {
-        AccessGateConfigInternal2 {
-            gate: value,
-            expiry: None,
-        }
-    }
-}
-
-impl From<AccessGateConfig> for AccessGateConfigInternal2 {
-    fn from(value: AccessGateConfig) -> Self {
-        AccessGateConfigInternal2 {
-            gate: value.gate,
-            expiry: value.expiry,
-        }
-    }
+    gate_config: Option<AccessGateConfigInternal>,
 }
 
 pub enum UpdateGroupResult {
@@ -218,7 +191,7 @@ impl PublicGroupInfo {
             description,
             subtype,
             avatar_id,
-            gate_config: gate_config.map(AccessGateConfigInternal2::from),
+            gate_config: gate_config.map(|gc| gc.into()),
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
             activity: PublicGroupActivity::new(now),

@@ -4,12 +4,12 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::ReservePrizeResult;
 use community_canister::claim_prize::{Response::*, *};
+use constants::MEMO_PRIZE_CLAIM;
 use ledger_utils::{create_pending_transaction, process_transaction};
 use tracing::error;
 use types::{CanisterId, CompletedCryptoTransaction, PendingCryptoTransaction, UserId};
-use utils::consts::MEMO_PRIZE_CLAIM;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn claim_prize(args: Args) -> Response {
     run_regular_jobs();

@@ -1,6 +1,6 @@
 use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::model::channels::Channel;
-use crate::model::members::CommunityMemberInternal;
+use crate::model::members::CommunityMembers;
 use crate::updates::c2c_join_community::join_community;
 use crate::{activity_notifications::handle_activity_notification, mutate_state, read_state, RuntimeState};
 use crate::{jobs, run_regular_jobs};
@@ -16,7 +16,8 @@ use gated_groups::{
 use group_chat_core::{AddMemberSuccess, AddResult};
 use group_community_common::ExpiringMember;
 use types::{
-    AccessGateConfigInternal, ChannelId, MemberJoined, TimestampMillis, UniquePersonProof, VerifiedCredentialGateArgs,
+    AccessGateConfigInternal, ChannelId, MemberJoinedInternal, TimestampMillis, UniquePersonProof, UserId, UserType,
+    VerifiedCredentialGateArgs,
 };
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
@@ -53,7 +54,7 @@ async fn c2c_join_channel(args: Args) -> Response {
                 if matches!(response, Success(_) | AlreadyInChannel(_)) {
                     let summary = read_state(|state| {
                         let member = state.data.members.get_by_user_id(&args.user_id);
-                        state.summary(member, None)
+                        state.summary(member.as_ref(), None)
                     });
                     SuccessJoinedCommunity(Box::new(summary))
                 } else {
@@ -172,7 +173,7 @@ fn is_permitted_to_join(
                             .summary(
                                 Some(channel_member.user_id()),
                                 true,
-                                state.data.is_public,
+                                state.data.is_public.value,
                                 &state.data.members,
                             )
                             .unwrap(),
@@ -224,7 +225,7 @@ fn commit(
     payments: Vec<GatePayment>,
     state: &mut RuntimeState,
 ) -> Response {
-    let Some(member) = state.data.members.get_mut(user_principal) else {
+    let Some(member) = state.data.members.get(user_principal) else {
         return UserNotInCommunity;
     };
 
@@ -235,15 +236,17 @@ fn commit(
 
     let now = state.env.now();
     match join_channel_unchecked(
+        member.user_id,
+        member.user_type,
         channel,
-        member,
-        state.data.is_public && channel.chat.is_public.value,
+        &mut state.data.members,
+        state.data.is_public.value && channel.chat.is_public.value,
         true,
         now,
     ) {
         AddResult::Success(result) => {
             let summary = channel
-                .summary(Some(user_id), true, state.data.is_public, &state.data.members)
+                .summary(Some(user_id), true, state.data.is_public.value, &state.data.members)
                 .unwrap();
 
             if let Some(gate_expiry) = channel.chat.gate_config.value.as_ref().and_then(|gc| gc.expiry()) {
@@ -278,7 +281,7 @@ fn commit(
             channel.chat.members.update_lapsed(user_id, false, now);
 
             let summary = channel
-                .summary(Some(user_id), true, state.data.is_public, &state.data.members)
+                .summary(Some(user_id), true, state.data.is_public.value, &state.data.members)
                 .unwrap();
             AlreadyInChannel(Box::new(summary))
         }
@@ -287,18 +290,27 @@ fn commit(
     }
 }
 
-pub(crate) fn add_members_to_public_channel_unchecked<'a>(
+pub(crate) fn add_members_to_public_channel_unchecked(
+    user_ids: impl Iterator<Item = UserId>,
     channel: &mut Channel,
+    community_members: &mut CommunityMembers,
     notifications_muted: bool,
-    members: impl Iterator<Item = &'a mut CommunityMemberInternal>,
     now: TimestampMillis,
 ) {
     let mut users_added = Vec::new();
-    for member in members {
-        let result = join_channel_unchecked(channel, member, notifications_muted, false, now);
+    for user_id in user_ids {
+        let user_type = community_members.bots().get(&user_id).copied().unwrap_or_default();
+        let result = join_channel_unchecked(
+            user_id,
+            user_type,
+            channel,
+            community_members,
+            notifications_muted,
+            false,
+            now,
+        );
         if matches!(result, AddResult::Success(_)) {
-            member.channels.insert(channel.id);
-            users_added.push(member.user_id);
+            users_added.push(user_id);
         }
     }
 
@@ -306,8 +318,10 @@ pub(crate) fn add_members_to_public_channel_unchecked<'a>(
 }
 
 pub(crate) fn join_channel_unchecked(
+    user_id: UserId,
+    user_type: UserType,
     channel: &mut Channel,
-    community_member: &mut CommunityMemberInternal,
+    community_members: &mut CommunityMembers,
     notifications_muted: bool,
     push_event: bool,
     now: TimestampMillis,
@@ -315,7 +329,7 @@ pub(crate) fn join_channel_unchecked(
     let min_visible_event_index;
     let min_visible_message_index;
 
-    if let Some(invitation) = channel.chat.invited_users.get(&community_member.user_id) {
+    if let Some(invitation) = channel.chat.invited_users.get(&user_id) {
         min_visible_event_index = invitation.min_visible_event_index;
         min_visible_message_index = invitation.min_visible_message_index;
     } else if channel.chat.history_visible_to_new_joiners {
@@ -330,16 +344,16 @@ pub(crate) fn join_channel_unchecked(
     };
 
     let result = channel.chat.members.add(
-        community_member.user_id,
+        user_id,
         now,
         min_visible_event_index,
         min_visible_message_index,
         notifications_muted,
-        community_member.user_type,
+        user_type,
     );
 
     if matches!(result, AddResult::AlreadyInGroup) {
-        let member = channel.chat.members.get(&community_member.user_id).unwrap();
+        let member = channel.chat.members.get(&user_id).unwrap();
         if member.lapsed().value {
             return AddResult::Success(AddMemberSuccess {
                 member: member.clone(),
@@ -352,20 +366,16 @@ pub(crate) fn join_channel_unchecked(
         return result;
     }
 
-    community_member.channels.insert(channel.id);
-
-    let invitation = channel.chat.invited_users.remove(&community_member.user_id, now);
+    let invitation = channel.chat.invited_users.remove(&user_id, now);
+    community_members.mark_member_joined_channel(user_id, channel.id);
 
     if push_event {
         if channel.chat.is_public.value {
-            channel
-                .chat
-                .events
-                .mark_members_added_to_public_channel(vec![community_member.user_id], now);
+            channel.chat.events.mark_members_added_to_public_channel(vec![user_id], now);
         } else {
             channel.chat.events.push_main_event(
-                ChatEventInternal::ParticipantJoined(Box::new(MemberJoined {
-                    user_id: community_member.user_id,
+                ChatEventInternal::ParticipantJoined(Box::new(MemberJoinedInternal {
+                    user_id,
                     invited_by: invitation.map(|i| i.invited_by),
                 })),
                 0,

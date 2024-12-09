@@ -3,6 +3,7 @@ use crate::env::VIDEO_CALL_OPERATOR;
 use crate::utils::tick_many;
 use crate::{client, wasms, CanisterIds, TestEnv, T};
 use candid::{CandidType, Nat, Principal};
+use constants::SNS_GOVERNANCE_CANISTER_ID;
 use ic_ledger_types::{AccountIdentifier, BlockIndex, Tokens, DEFAULT_SUBACCOUNT};
 use icrc_ledger_types::icrc::generic_metadata_value::MetadataValue;
 use icrc_ledger_types::icrc1::account::Account;
@@ -15,7 +16,6 @@ use storage_index_canister::init::CyclesDispenserConfig;
 use testing::rng::random_principal;
 use testing::NNS_INTERNET_IDENTITY_CANISTER_ID;
 use types::{BuildVersion, CanisterId, CanisterWasm, Hash};
-use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 
 pub static POCKET_IC_BIN: &str = "./pocket-ic";
 
@@ -95,13 +95,12 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let event_relay_canister_id = create_canister(env, controller);
     let event_store_canister_id = create_canister(env, controller);
     let sign_in_with_email_canister_id = create_canister(env, controller);
+    let website_canister_id = create_canister(env, controller);
 
     let local_user_index_canister_id = create_canister(env, user_index_canister_id);
     let local_group_index_canister_id = create_canister(env, group_index_canister_id);
     let notifications_canister_id = create_canister(env, notifications_index_canister_id);
-    let bot_api_gateway_canister_id = create_canister(env, user_index_canister_id);
 
-    let bot_api_gateway_canister_wasm = wasms::BOT_API_GATEWAY.clone();
     let community_canister_wasm = wasms::COMMUNITY.clone();
     let cycles_dispenser_canister_wasm = wasms::CYCLES_DISPENSER.clone();
     let cycles_minting_canister_wasm = wasms::CYCLES_MINTING_CANISTER.clone();
@@ -146,6 +145,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         nns_governance_canister_id,
         internet_identity_canister_id: NNS_INTERNET_IDENTITY_CANISTER_ID,
         translations_canister_id,
+        website_canister_id,
         video_call_operators: vec![VIDEO_CALL_OPERATOR],
         ic_root_key: env.root_key().unwrap(),
         wasm_version,
@@ -415,7 +415,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         user_index_canister_id,
         local_user_index_canister_id,
         notifications_canister_id,
-        bot_api_gateway_canister_id,
     );
 
     client::group_index::happy_path::upgrade_group_canister_wasm(env, controller, group_index_canister_id, group_canister_wasm);
@@ -438,7 +437,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         local_group_index_canister_id,
         local_user_index_canister_id,
         notifications_canister_id,
-        bot_api_gateway_canister_id,
     );
 
     client::notifications_index::happy_path::upgrade_notifications_canister_wasm(
@@ -454,22 +452,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         notifications_canister_id,
         local_user_index_canister_id,
         local_group_index_canister_id,
-    );
-
-    let bot_api_gateway_init_args = bot_api_gateway_canister::init::Args {
-        local_user_index_canister_id,
-        local_group_index_canister_id,
-        cycles_dispenser_canister_id,
-        event_relay_canister_id,
-        wasm_version,
-        test_mode,
-    };
-    install_canister(
-        env,
-        user_index_canister_id,
-        bot_api_gateway_canister_id,
-        bot_api_gateway_canister_wasm,
-        bot_api_gateway_init_args,
     );
 
     client::storage_index::happy_path::upgrade_notifications_canister_wasm(
@@ -528,7 +510,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         local_user_index: local_user_index_canister_id,
         local_group_index: local_group_index_canister_id,
         notifications: notifications_canister_id,
-        bot_api_gateway: bot_api_gateway_canister_id,
         identity: identity_canister_id,
         online_users: online_users_canister_id,
         proposals_bot: proposals_bot_canister_id,

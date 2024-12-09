@@ -1,10 +1,10 @@
 use candid::Principal;
 use canister_agent_utils::{build_ic_agent, get_canister_wasm, install_wasm, set_controllers, CanisterIds, CanisterName};
+use constants::{SNS_GOVERNANCE_CANISTER_ID, SNS_LEDGER_CANISTER_ID};
 use ic_agent::{Agent, Identity};
 use ic_utils::interfaces::ManagementCanister;
 use sha256::sha256;
 use types::{BuildVersion, CanisterWasm, Cycles};
-use utils::consts::{SNS_GOVERNANCE_CANISTER_ID, SNS_LEDGER_CANISTER_ID};
 
 const T: Cycles = 1_000_000_000_000;
 
@@ -83,6 +83,7 @@ async fn install_service_canisters_impl(
         nns_governance_canister_id: canister_ids.nns_governance,
         internet_identity_canister_id: canister_ids.nns_internet_identity,
         translations_canister_id: canister_ids.translations,
+        website_canister_id: canister_ids.website,
         video_call_operators: video_call_operators.clone(),
         ic_root_key: agent.read_root_key(),
         wasm_version: version,
@@ -550,7 +551,6 @@ async fn install_service_canisters_impl(
             canister_id: canister_ids.local_group_index,
             local_user_index_canister_id: canister_ids.local_user_index,
             notifications_canister_id: canister_ids.notifications,
-            bot_api_gateway_canister_id: canister_ids.bot_api_gateway,
         },
     )
     .await
@@ -569,7 +569,6 @@ async fn install_service_canisters_impl(
         &user_index_canister::add_local_user_index_canister::Args {
             canister_id: canister_ids.local_user_index,
             notifications_canister_id: canister_ids.notifications,
-            bot_api_gateway_canister_id: canister_ids.bot_api_gateway,
         },
     )
     .await

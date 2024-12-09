@@ -1,10 +1,10 @@
 use crate::env::ENV;
 use crate::utils::now_millis;
 use crate::{client, TestEnv};
+use constants::MINUTE_IN_MS;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::random_principal;
-use utils::time::MINUTE_IN_MS;
 
 #[test]
 fn set_then_get_last_online_date_succeeds() {

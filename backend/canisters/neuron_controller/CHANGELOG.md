@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
+
+## [[2.0.1484](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1484-neuron_controller)] - 2024-11-29
+
+### Changed
+
+- Spawn maturity from neurons that are dissolving and can no longer vote ([#6920](https://github.com/open-chat-labs/open-chat/pull/6920))
+
 ## [[2.0.1467](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1467-neuron_controller)] - 2024-11-24
 
 ### Changed

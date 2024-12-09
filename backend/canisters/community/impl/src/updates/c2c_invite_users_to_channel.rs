@@ -20,7 +20,7 @@ fn c2c_invite_users_to_channel_impl(args: Args, state: &mut RuntimeState) -> Res
         return CommunityFrozen;
     }
 
-    if let Some(member) = state.data.members.get_by_user_id(&args.caller).cloned() {
+    if let Some(member) = state.data.members.get_by_user_id(&args.caller) {
         if member.suspended().value {
             return UserSuspended;
         }
@@ -60,7 +60,7 @@ fn c2c_invite_users_to_channel_impl(args: Args, state: &mut RuntimeState) -> Res
 
             match channel.chat.invite_users(member.user_id, users_to_invite_to_channel, now) {
                 InvitedUsersResult::Success(result) => {
-                    let community_name = state.data.name.clone();
+                    let community_name = state.data.name.value.clone();
                     let channel_name = channel.chat.name.value.clone();
 
                     handle_activity_notification(state);
@@ -83,6 +83,7 @@ fn c2c_invite_users_to_channel_impl(args: Args, state: &mut RuntimeState) -> Res
                 InvitedUsersResult::UserNotInGroup => UserNotInChannel,
                 InvitedUsersResult::NotAuthorized => NotAuthorized,
                 InvitedUsersResult::UserSuspended => UserSuspended,
+                InvitedUsersResult::UserLapsed => UserLapsed,
                 InvitedUsersResult::TooManyInvites(v) => TooManyInvites(v),
             }
         } else {

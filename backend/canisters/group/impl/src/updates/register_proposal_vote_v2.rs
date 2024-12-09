@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use chat_events::RecordProposalVoteResult;
 use group_canister::register_proposal_vote_v2::{Response::*, *};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn register_proposal_vote_v2(args: Args) -> Response {
     run_regular_jobs();
@@ -46,7 +46,7 @@ fn register_proposal_vote_impl(args: Args, state: &mut RuntimeState) -> Response
                 .data
                 .chat
                 .members
-                .register_proposal_vote(user_id, args.message_index, now);
+                .register_proposal_vote(&user_id, args.message_index, now);
 
             handle_activity_notification(state);
             Success

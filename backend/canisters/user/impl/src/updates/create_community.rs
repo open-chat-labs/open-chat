@@ -7,7 +7,7 @@ use std::collections::HashSet;
 use tracing::error;
 use types::{CanisterId, CommunityId};
 use user_canister::create_community::{Response::*, *};
-use utils::document_validation::{validate_avatar, validate_banner};
+use utils::document::{validate_avatar, validate_banner};
 use utils::text_validation::{
     validate_community_name, validate_description, validate_group_name, validate_rules, NameValidationError,
     RulesValidationError,

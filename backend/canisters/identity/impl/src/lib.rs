@@ -10,9 +10,8 @@ use ic_cdk::api::set_certified_data;
 use serde::{Deserialize, Serialize};
 use sha256::sha256;
 use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
-use utils::consts::IC_ROOT_KEY;
 use utils::env::Environment;
 use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
 
@@ -78,6 +77,7 @@ impl RuntimeState {
             user_principals: self.data.user_principals.user_principals_count(),
             auth_principals: self.data.user_principals.auth_principals_count(),
             originating_canisters: self.data.user_principals.originating_canisters().clone(),
+            stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -91,24 +91,18 @@ struct Data {
     governance_principals: HashSet<Principal>,
     user_index_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
-    #[serde(default)]
     originating_canisters: HashSet<CanisterId>,
     skip_captcha_whitelist: HashSet<CanisterId>,
     user_principals: UserPrincipals,
-    #[serde(default)]
     identity_link_requests: IdentityLinkRequests,
     #[serde(skip)]
     signature_map: SignatureMap,
-    #[serde(with = "serde_bytes", default = "ic_root_key")]
+    #[serde(with = "serde_bytes")]
     ic_root_key: Vec<u8>,
     salt: Salt,
     rng_seed: [u8; 32],
     challenges: Challenges,
     test_mode: bool,
-}
-
-fn ic_root_key() -> Vec<u8> {
-    IC_ROOT_KEY.to_vec()
 }
 
 impl Data {
@@ -188,6 +182,7 @@ pub struct Metrics {
     pub user_principals: u32,
     pub auth_principals: u32,
     pub originating_canisters: HashMap<CanisterId, u32>,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }
 

@@ -39,7 +39,6 @@ NOTIFICATIONS_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id notificatio
 LOCAL_USER_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id local_user_index)
 LOCAL_GROUP_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id local_group_index)
 NOTIFICATIONS_CANISTER_ID=$(dfx canister --network $NETWORK id notifications)
-BOT_API_GATEWAY_CANISTER_ID=$(dfx canister --network $NETWORK id bot_api_gateway)
 IDENTITY_CANISTER_ID=$(dfx canister --network $NETWORK id identity)
 ONLINE_USERS_CANISTER_ID=$(dfx canister --network $NETWORK id online_users)
 PROPOSALS_BOT_CANISTER_ID=$(dfx canister --network $NETWORK id proposals_bot)
@@ -56,6 +55,7 @@ EVENT_STORE_CANISTER_ID=$(dfx canister --network $NETWORK id event_store)
 SIGN_IN_WITH_EMAIL_CANISTER_ID=$(dfx canister --network $NETWORK id sign_in_with_email)
 SIGN_IN_WITH_ETHEREUM_CANISTER_ID=$(dfx canister --network $NETWORK id sign_in_with_ethereum)
 SIGN_IN_WITH_SOLANA_CANISTER_ID=$(dfx canister --network $NETWORK id sign_in_with_solana)
+WEBSITE_CANISTER_ID=$(dfx canister --network $NETWORK id website)
 
 cargo run \
   --manifest-path backend/tools/canister_installer/Cargo.toml -- \
@@ -68,7 +68,6 @@ cargo run \
   --local-user-index $LOCAL_USER_INDEX_CANISTER_ID \
   --local-group-index $LOCAL_GROUP_INDEX_CANISTER_ID \
   --notifications $NOTIFICATIONS_CANISTER_ID \
-  --bot-api-gateway $BOT_API_GATEWAY_CANISTER_ID \
   --identity $IDENTITY_CANISTER_ID \
   --online-users $ONLINE_USERS_CANISTER_ID \
   --proposals-bot $PROPOSALS_BOT_CANISTER_ID \
@@ -92,4 +91,5 @@ cargo run \
   --nns-cmc $NNS_CMC_CANISTER_ID \
   --nns-sns-wasm $NNS_SNS_WASM_CANISTER_ID \
   --nns-index $NNS_INDEX_CANISTER_ID \
+  --website $WEBSITE_CANISTER_ID \
 

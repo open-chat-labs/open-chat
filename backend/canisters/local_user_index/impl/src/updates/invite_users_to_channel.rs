@@ -70,6 +70,7 @@ async fn invite_users_to_channel(args: Args) -> Response {
             c2c_invite_users_to_channel::Response::CommunityFrozen => CommunityFrozen,
             c2c_invite_users_to_channel::Response::TooManyInvites(l) => TooManyInvites(l),
             c2c_invite_users_to_channel::Response::UserSuspended => UserSuspended,
+            c2c_invite_users_to_channel::Response::UserLapsed => UserLapsed,
         },
         Err(error) => InternalError(format!("Failed to call 'community::c2c_invite_users_to_channel': {error:?}")),
     }

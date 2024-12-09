@@ -7,6 +7,8 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
+canister_time = { path = "../canister_time" }
+constants = { path = "../constants" }
 #ic-verifiable-credentials = { workspace = true }
 icrc_ledger_canister_c2c_client = { path = "../../external_canisters/icrc_ledger/c2c_client" }
 icrc_ledger_canister = { path = "../../external_canisters/icrc_ledger/api" }
@@ -14,6 +16,3 @@ icrc-ledger-types = { workspace = true }
 sns_governance_canister = { path = "../../external_canisters/sns_governance/api" }
 sns_governance_canister_c2c_client = { path = "../../external_canisters/sns_governance/c2c_client" }
 types = { path = "../types" }
-user_index_canister = { path = "../../canisters/user_index/api" }
-user_index_canister_c2c_client = { path = "../../canisters/user_index/c2c_client" }
-utils = { path = "../utils" }

@@ -6,6 +6,7 @@ use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::MessageContentInternal;
+use constants::{MEMO_MESSAGE, MEMO_P2P_SWAP_CREATE, MEMO_PRIZE, NANOS_PER_MILLISECOND, PRIZE_FEE_PERCENT, SECOND_IN_MS};
 use escrow_canister::deposit_subaccount;
 use ic_cdk::api::call::CallResult;
 use tracing::error;
@@ -17,8 +18,6 @@ use types::{
 };
 use user_canister::send_message_with_transfer_to_group;
 use user_canister::{send_message_v2, send_message_with_transfer_to_channel};
-use utils::consts::{MEMO_MESSAGE, MEMO_P2P_SWAP_CREATE, MEMO_PRIZE, PRIZE_FEE_PERCENT};
-use utils::time::{NANOS_PER_MILLISECOND, SECOND_IN_MS};
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]
@@ -320,6 +319,9 @@ fn prepare(
             }
         }
         MessageContentInitial::Prize(c) => {
+            if thread_root_message_index.is_some() {
+                return InvalidRequest("Prize messages cannot be sent within threads".to_string());
+            }
             if c.end_date <= now {
                 return InvalidRequest("Prize end date must be in the future".to_string());
             }

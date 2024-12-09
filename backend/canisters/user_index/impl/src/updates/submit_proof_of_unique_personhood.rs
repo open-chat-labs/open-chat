@@ -23,6 +23,7 @@ fn submit_proof_of_unique_personhood_impl(args: Args, state: &mut RuntimeState) 
     match verify_proof_of_unique_personhood(
         args.user_ii_principal,
         state.data.internet_identity_canister_id,
+        state.data.website_canister_id,
         &args.credential_jwt,
         &state.data.ic_root_key,
         now,

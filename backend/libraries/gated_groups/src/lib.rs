@@ -1,6 +1,7 @@
 use candid::Principal;
 // use ic_verifiable_credentials::issuer_api::{ArgumentValue, CredentialSpec};
 // use ic_verifiable_credentials::VcFlowSigners;
+use constants::{DAY_IN_MS, MEMO_JOINING_FEE, NANOS_PER_MILLISECOND};
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use sns_governance_canister::types::neuron::DissolveState;
@@ -9,8 +10,6 @@ use types::{
     AccessGate, AccessGateNonComposite, AccessGateScope, CanisterId, CompositeGate, GateCheckFailedReason, PaymentGate,
     SnsNeuronGate, TimestampMillis, TokenBalanceGate, UserId, VerifiedCredentialGate,
 };
-use utils::consts::MEMO_JOINING_FEE;
-use utils::time::{DAY_IN_MS, NANOS_PER_MILLISECOND};
 
 pub enum CheckIfPassesGateResult {
     Success(Vec<GatePayment>),
@@ -264,7 +263,7 @@ async fn check_sns_neuron_gate(gate: &SnsNeuronGate, user_id: UserId) -> CheckIf
         Ok(response) => {
             let mut valid_neurons = response.neurons;
             if let Some(dd) = gate.min_dissolve_delay {
-                let now = utils::time::now_millis();
+                let now = canister_time::now_millis();
                 valid_neurons.retain(|n| dissolve_delay_seconds(n, now / 1000) > (dd / 1000));
             }
 

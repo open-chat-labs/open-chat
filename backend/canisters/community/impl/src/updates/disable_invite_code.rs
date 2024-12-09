@@ -5,9 +5,9 @@ use crate::{
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::disable_invite_code::{Response::*, *};
-use types::{GroupInviteCodeChange, GroupInviteCodeChanged};
+use types::{GroupInviteCodeChange, GroupInviteCodeChanged, Timestamped};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn disable_invite_code(_args: Args) -> Response {
     run_regular_jobs();
@@ -29,9 +29,8 @@ fn disable_invite_code_impl(state: &mut RuntimeState) -> Response {
         }
 
         if member.role().can_invite_users(&state.data.permissions) {
-            state.data.invite_code_enabled = false;
-
             let now = state.env.now();
+            state.data.invite_code_enabled = Timestamped::new(false, now);
             state.data.events.push_event(
                 CommunityEventInternal::InviteCodeChanged(Box::new(GroupInviteCodeChanged {
                     change: GroupInviteCodeChange::Disabled,

@@ -171,3 +171,34 @@ impl GroupPermissionRole {
         *self as usize
     }
 }
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum GroupPermission {
+    ChangeRoles,
+    UpdateGroup,
+    AddMembers,
+    InviteUsers,
+    RemoveMembers,
+    DeleteMessages,
+    PinMessages,
+    ReactToMessages,
+    MentionAllMembers,
+    StartVideoCall,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum MessagePermission {
+    Text,
+    Image,
+    Video,
+    Audio,
+    File,
+    Poll,
+    Crypto,
+    Giphy,
+    Prize,
+    P2pSwap,
+    VideoCall,
+}

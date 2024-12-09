@@ -1,7 +1,7 @@
 use crate::{
-    AccessGate, AccessGateConfig, BuildVersion, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupMember,
-    GroupPermissions, GroupRole, HydratedMention, Message, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis, UserId,
-    Version,
+    AccessGate, AccessGateConfig, BotGroupDetails, BuildVersion, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo,
+    GroupMember, GroupPermissions, GroupRole, HydratedMention, Message, MessageIndex, Milliseconds, OptionUpdate,
+    TimestampMillis, UserId, Version,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -212,6 +212,7 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub membership: Option<GroupMembershipUpdates>,
     #[ts(as = "crate::OptionUpdateVideoCall")]
     pub video_call_in_progress: OptionUpdate<VideoCall>,
+    pub any_updates_missed: bool,
 }
 
 #[ts_export]
@@ -248,6 +249,8 @@ pub struct SelectedGroupUpdates {
     pub latest_event_index: EventIndex,
     pub members_added_or_updated: Vec<GroupMember>,
     pub members_removed: Vec<UserId>,
+    pub bots_added_or_updated: Vec<BotGroupDetails>,
+    pub bots_removed: Vec<UserId>,
     pub blocked_users_added: Vec<UserId>,
     pub blocked_users_removed: Vec<UserId>,
     pub invited_users: Option<Vec<UserId>>,

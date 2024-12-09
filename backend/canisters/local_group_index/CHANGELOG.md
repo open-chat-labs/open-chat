@@ -8,6 +8,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Increase Windoge community canister's reserved cycles limit ([#7022](https://github.com/open-chat-labs/open-chat/pull/7022))
+
+## [[2.0.1504](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1504-local_group_index)] - 2024-12-09
+
+### Changed
+
+- Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
+- Temporarily make Windoge98 community canister logs public ([#7091](https://github.com/open-chat-labs/open-chat/pull/7091))
+
+## [[2.0.1493](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1493-local_group_index)] - 2024-12-04
+
+### Removed
+
+- Remove references to bot_api_gateway ([#6944](https://github.com/open-chat-labs/open-chat/pull/6944))
+
+### Fixed
+
+- Fix starting group upgrade job when concurrency updated ([#6963](https://github.com/open-chat-labs/open-chat/pull/6963))
+
+## [[2.0.1482](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1482-local_group_index)] - 2024-11-29
+
+### Changed
+
 - Make `ChannelId` comparisons use their 32bit representation ([#6885](https://github.com/open-chat-labs/open-chat/pull/6885))
 
 ### Removed

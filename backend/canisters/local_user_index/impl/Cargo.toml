@@ -12,12 +12,13 @@ crate-type = ["cdylib"]
 [dependencies]
 candid = { workspace = true }
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
+canister_client = { path = "../../../libraries/canister_client" }
 canister_logger = { path = "../../../libraries/canister_logger" }
 canister_state_macros = { path = "../../../libraries/canister_state_macros" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 community_canister = { path = "../../community/api" }
 community_canister_c2c_client = { path = "../../community/c2c_client" }
-event_store_canister = { workspace = true }
+constants = { path = "../../../libraries/constants" }
 event_store_producer = { workspace = true }
 event_store_producer_cdk_runtime = { workspace = true }
 event_store_utils = { workspace = true }
@@ -27,10 +28,7 @@ group_canister_c2c_client = { path = "../../group/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
-ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
-icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_ledger/c2c_client" }
-icrc-ledger-types = { workspace = true }
 itertools = { workspace = true }
 jwt = { path = "../../../libraries/jwt" }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
@@ -41,9 +39,6 @@ proof_of_unique_personhood = { path = "../../../libraries/proof_of_unique_person
 rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
-serde_json = { workspace = true }
-satoshi_dice_canister = { path = "../../../bots/examples/satoshi_dice/api" }
-satoshi_dice_canister_c2c_client = { path = "../../../bots/examples/satoshi_dice/c2c_client" }
 sha256 = { path = "../../../libraries/sha256" }
 stable_memory = { path = "../../../libraries/stable_memory" }
 timer_job_queues = { path = "../../../libraries/timer_job_queues" }

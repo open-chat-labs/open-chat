@@ -3,8 +3,8 @@ use crate::expiring_events::ExpiringEvents;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::metrics::{ChatMetricsInternal, MetricKey};
 use crate::search_index::SearchIndex;
-use crate::stable_memory::key::KeyPrefix;
 use crate::*;
+use constants::{HOUR_IN_MS, ONE_MB, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventBuilder, EventStoreClient, Runtime};
 use rand::rngs::StdRng;
 use rand::Rng;
@@ -14,7 +14,7 @@ use serde_bytes::ByteBuf;
 use sha2::{Digest, Sha256};
 use std::cmp::max;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, HashSet};
 use std::mem;
 use std::ops::DerefMut;
 use tracing::error;
@@ -29,8 +29,6 @@ use types::{
     ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload,
     VideoCallParticipants, VideoCallPresence, VoteOperation,
 };
-use utils::consts::OPENCHAT_BOT_USER_ID;
-use utils::time::HOUR_IN_MS;
 
 #[derive(Serialize, Deserialize)]
 pub struct ChatEvents {
@@ -38,7 +36,7 @@ pub struct ChatEvents {
     main: ChatEventsList,
     threads: BTreeMap<MessageIndex, ChatEventsList>,
     metrics: ChatMetricsInternal,
-    per_user_metrics: HashMap<UserId, ChatMetricsInternal>,
+    per_user_metrics: BTreeMap<UserId, ChatMetricsInternal>,
     frozen: bool,
     events_ttl: Timestamped<Option<Milliseconds>>,
     expiring_events: ExpiringEvents,
@@ -77,19 +75,12 @@ impl ChatEvents {
         false
     }
 
+    pub fn prune_updated_events(&mut self, now: TimestampMillis) -> u32 {
+        self.last_updated_timestamps.prune(now)
+    }
+
     pub fn import_events(chat: Chat, events: Vec<(EventContext, ByteBuf)>) {
         stable_memory::write_events_as_bytes(chat, events);
-    }
-
-    pub fn garbage_collect_stable_memory(prefix: KeyPrefix) -> Result<u32, u32> {
-        stable_memory::garbage_collect(prefix)
-    }
-
-    pub fn set_stable_memory_key_prefixes(&mut self) {
-        self.main.set_stable_memory_prefix(self.chat, None);
-        for (message_index, events) in self.threads.iter_mut() {
-            events.set_stable_memory_prefix(self.chat, Some(*message_index));
-        }
     }
 
     pub fn new_direct_chat(
@@ -104,7 +95,7 @@ impl ChatEvents {
             main: ChatEventsList::new(chat, None),
             threads: BTreeMap::new(),
             metrics: ChatMetricsInternal::default(),
-            per_user_metrics: HashMap::new(),
+            per_user_metrics: BTreeMap::new(),
             frozen: false,
             events_ttl: Timestamped::new(events_ttl, now),
             expiring_events: ExpiringEvents::default(),
@@ -134,7 +125,7 @@ impl ChatEvents {
             main: ChatEventsList::new(chat, None),
             threads: BTreeMap::new(),
             metrics: ChatMetricsInternal::default(),
-            per_user_metrics: HashMap::new(),
+            per_user_metrics: BTreeMap::new(),
             frozen: false,
             events_ttl: Timestamped::new(events_ttl, now),
             expiring_events: ExpiringEvents::default(),
@@ -167,7 +158,7 @@ impl ChatEvents {
     }
 
     pub fn read_events_as_bytes_from_stable_memory(&self, after: Option<EventContext>) -> Vec<(EventContext, ByteBuf)> {
-        stable_memory::read_events_as_bytes(self.chat, after, 1_000_000)
+        stable_memory::read_events_as_bytes(self.chat, after, 2 * ONE_MB as usize)
     }
 
     pub fn iter_recently_updated_events(
@@ -668,19 +659,10 @@ impl ChatEvents {
         }
     }
 
-    pub fn final_payments(
-        &mut self,
-        thread_root_message_index: Option<MessageIndex>,
-        message_index: MessageIndex,
-        now_nanos: TimestampNanos,
-    ) -> Vec<PendingCryptoTransaction> {
-        self.update_message(
-            thread_root_message_index,
-            message_index.into(),
-            EventIndex::default(),
-            None,
-            |message, _| Self::final_payments_inner(message, now_nanos),
-        )
+    pub fn final_payments(&mut self, message_index: MessageIndex, now_nanos: TimestampNanos) -> Vec<PendingCryptoTransaction> {
+        self.update_message(None, message_index.into(), EventIndex::default(), None, |message, _| {
+            Self::final_payments_inner(message, now_nanos)
+        })
         .ok()
         .unwrap_or_default()
     }
@@ -2223,11 +2205,15 @@ impl ChatEvents {
             Err(UpdateEventError::NotFound)
         }
     }
+
+    pub fn latest_event_update_removed(&self) -> TimestampMillis {
+        self.last_updated_timestamps.latest_update_removed()
+    }
 }
 
 fn add_to_metrics<F: FnMut(&mut ChatMetricsInternal)>(
     metrics: &mut ChatMetricsInternal,
-    per_user_metrics: &mut HashMap<UserId, ChatMetricsInternal>,
+    per_user_metrics: &mut BTreeMap<UserId, ChatMetricsInternal>,
     user_id: UserId,
     mut action: F,
     timestamp: TimestampMillis,

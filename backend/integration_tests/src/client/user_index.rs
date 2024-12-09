@@ -17,7 +17,6 @@ generate_update_call!(add_local_user_index_canister);
 generate_update_call!(add_platform_moderator);
 generate_update_call!(add_platform_operator);
 generate_update_call!(assign_platform_moderators_group);
-generate_update_call!(c2c_register_bot);
 generate_msgpack_update_call!(delete_user);
 generate_msgpack_update_call!(pay_for_diamond_membership);
 generate_update_call!(remove_platform_moderator);
@@ -207,7 +206,6 @@ pub mod happy_path {
         user_index_canister_id: CanisterId,
         local_user_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
-        bot_api_gateway_canister_id: CanisterId,
     ) {
         let response = super::add_local_user_index_canister(
             env,
@@ -216,7 +214,6 @@ pub mod happy_path {
             &user_index_canister::add_local_user_index_canister::Args {
                 canister_id: local_user_index_canister_id,
                 notifications_canister_id,
-                bot_api_gateway_canister_id,
             },
         );
 

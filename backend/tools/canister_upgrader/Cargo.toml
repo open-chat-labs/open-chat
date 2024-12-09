@@ -32,6 +32,5 @@ storage_index_canister_client = { path = "../../canisters/storage_index/client" 
 tokio = { workspace = true, features = ["full"] }
 translations_canister = { path = "../../canisters/translations/api" }
 types = { path = "../../libraries/types" }
-user_canister = { path = "../../canisters/user/api" }
 user_index_canister = { path = "../../canisters/user_index/api" }
 user_index_canister_client = { path = "../../canisters/user_index/client" }

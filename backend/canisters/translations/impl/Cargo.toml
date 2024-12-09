@@ -11,10 +11,10 @@ crate-type = ["cdylib"]
 
 [dependencies]
 candid = { workspace = true }
-canister_api_macros = { path = "../../../libraries/canister_api_macros" }
 canister_logger = { path = "../../../libraries/canister_logger" }
 canister_state_macros = { path = "../../../libraries/canister_state_macros" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
+constants = { path = "../../../libraries/constants" }
 fire_and_forget_handler = { path = "../../../libraries/fire_and_forget_handler" }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }

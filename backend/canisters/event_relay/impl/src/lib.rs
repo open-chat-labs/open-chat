@@ -7,7 +7,7 @@ use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
 use sha256::sha256;
 use std::cell::RefCell;
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 use std::time::Duration;
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
 use utils::env::Environment;
@@ -54,6 +54,7 @@ impl RuntimeState {
             push_events_whitelist: self.data.push_events_whitelist.iter().copied().collect(),
             event_store_client_info,
             ledger_transaction_processed_up_to: self.data.ledger_transaction_processed_up_to,
+            stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 event_sink: event_store_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -122,6 +123,7 @@ pub struct Metrics {
     pub push_events_whitelist: Vec<Principal>,
     pub event_store_client_info: EventStoreClientInfo,
     pub ledger_transaction_processed_up_to: Option<u64>,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }
 

@@ -2,6 +2,7 @@ use crate::guards::caller_is_group_index_canister;
 use crate::{mutate_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MARK_ACTIVE_DURATION};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use constants::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
 use event_store_producer::EventBuilder;
 use group_canister::init::Args as InitGroupCanisterArgs;
 use local_group_index_canister::c2c_create_group::{Response::*, *};
@@ -9,7 +10,6 @@ use local_group_index_canister::ChildCanisterType;
 use types::{BuildVersion, CanisterId, CanisterWasm, ChatId, Cycles, GroupCreatedEventPayload, UserId, UserType};
 use utils::canister;
 use utils::canister::CreateAndInstallError;
-use utils::consts::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
 
 #[update(guard = "caller_is_group_index_canister", msgpack = true)]
 #[trace]
@@ -115,7 +115,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         user_index_canister_id: state.data.user_index_canister_id,
         local_user_index_canister_id,
         notifications_canister_id: state.data.notifications_canister_id,
-        bot_api_gateway_canister_id: state.data.bot_api_gateway_canister_id,
+        bot_api_gateway_canister_id: CanisterId::anonymous(),
         proposals_bot_user_id: state.data.proposals_bot_user_id,
         escrow_canister_id: state.data.escrow_canister_id,
         internet_identity_canister_id: state.data.internet_identity_canister_id,

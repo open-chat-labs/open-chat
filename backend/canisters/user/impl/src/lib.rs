@@ -12,7 +12,7 @@ use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use chat_events::KeyPrefix;
+use constants::{DAY_IN_MS, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -25,8 +25,9 @@ use model::streak::Streak;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
+use stable_memory_map::BaseKeyPrefix;
 use std::cell::RefCell;
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
@@ -35,10 +36,9 @@ use types::{
     Cryptocurrency, Cycles, Document, Milliseconds, Notification, TimestampMillis, Timestamped, UniquePersonProof, UserId,
 };
 use user_canister::{MessageActivityEvent, NamedAccount, UserCanisterEvent, WalletConfig};
-use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
-use utils::time::{today, tomorrow, DAY_IN_MS, MINUTE_IN_MS};
+use utils::time::{today, tomorrow};
 
 mod crypto;
 mod governance_clients;
@@ -185,22 +185,22 @@ impl RuntimeState {
             event_store_client_info: self.data.event_store_client.info(),
             video_call_operators: self.data.video_call_operators.clone(),
             timer_jobs: self.data.timer_jobs.len() as u32,
-            canister_ids: CanisterIds {
-                user_index: self.data.user_index_canister_id,
-                group_index: self.data.group_index_canister_id,
-                local_user_index: self.data.local_user_index_canister_id,
-                notifications: self.data.notifications_canister_id,
-                bot_api_gateway: self.data.bot_api_gateway_canister_id,
-                proposals_bot: self.data.proposals_bot_canister_id,
-                escrow: self.data.escrow_canister_id,
-                icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
-            },
             chit_balance: self.data.chit_events.balance_for_month_by_timestamp(now),
             streak: self.data.streak.days(now),
             streak_ends: self.data.streak.ends(),
             next_daily_claim: if self.data.streak.can_claim(now) { today(now) } else { tomorrow(now) },
             achievements: self.data.achievements.iter().cloned().collect(),
             unique_person_proof: self.data.unique_person_proof.is_some(),
+            stable_memory_sizes: memory::memory_sizes(),
+            canister_ids: CanisterIds {
+                user_index: self.data.user_index_canister_id,
+                group_index: self.data.group_index_canister_id,
+                local_user_index: self.data.local_user_index_canister_id,
+                notifications: self.data.notifications_canister_id,
+                proposals_bot: self.data.proposals_bot_canister_id,
+                escrow: self.data.escrow_canister_id,
+                icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
+            },
         }
     }
 }
@@ -217,8 +217,6 @@ struct Data {
     pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
-    #[serde(default = "CanisterId::anonymous")]
-    pub bot_api_gateway_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
     pub avatar: Timestamped<Option<Document>>,
@@ -256,7 +254,7 @@ struct Data {
     pub referred_by: Option<UserId>,
     pub referrals: Referrals,
     pub message_activity_events: MessageActivityEvents,
-    pub stable_memory_keys_to_garbage_collect: Vec<KeyPrefix>,
+    pub stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
 }
 
 impl Data {
@@ -267,7 +265,6 @@ impl Data {
         local_user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
-        bot_api_gateway_canister_id: CanisterId,
         proposals_bot_canister_id: CanisterId,
         escrow_canister_id: CanisterId,
         video_call_operators: Vec<Principal>,
@@ -287,7 +284,6 @@ impl Data {
             local_user_index_canister_id,
             group_index_canister_id,
             notifications_canister_id,
-            bot_api_gateway_canister_id,
             proposals_bot_canister_id,
             escrow_canister_id,
             avatar: Timestamped::default(),
@@ -458,13 +454,14 @@ pub struct Metrics {
     pub event_store_client_info: EventStoreClientInfo,
     pub video_call_operators: Vec<Principal>,
     pub timer_jobs: u32,
-    pub canister_ids: CanisterIds,
     pub chit_balance: i32,
     pub streak: u16,
     pub streak_ends: TimestampMillis,
     pub next_daily_claim: TimestampMillis,
     pub achievements: Vec<Achievement>,
     pub unique_person_proof: bool,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
+    pub canister_ids: CanisterIds,
 }
 
 fn run_regular_jobs() {
@@ -477,7 +474,6 @@ pub struct CanisterIds {
     pub group_index: CanisterId,
     pub local_user_index: CanisterId,
     pub notifications: CanisterId,
-    pub bot_api_gateway: CanisterId,
     pub proposals_bot: CanisterId,
     pub escrow: CanisterId,
     pub icp_ledger: CanisterId,

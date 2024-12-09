@@ -1,16 +1,16 @@
 use crate::updates::manage_nns_neuron::manage_nns_neuron_impl;
 use crate::{mutate_state, read_state, Neurons};
+use constants::{DAY_IN_MS, MINUTE_IN_MS, SNS_GOVERNANCE_CANISTER_ID};
 use ic_cdk::api::call::CallResult;
 use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
 use icrc_ledger_types::icrc1::account::Account;
 use nns_governance_canister::types::manage_neuron::{Command, Disburse, Spawn};
+use nns_governance_canister::types::neuron::DissolveState;
 use nns_governance_canister::types::ListNeurons;
 use std::time::Duration;
 use tracing::info;
 use types::{CanisterId, Milliseconds};
 use utils::canister_timers::run_now_then_interval;
-use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
-use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
 
 // We add a minute because spawning takes 7 days, and if we wait exactly 7 days, there may still be a few seconds left
 // before the neuron can be spawned
@@ -38,11 +38,24 @@ async fn run_async() {
     .await
     {
         let now = read_state(|state| state.env.now());
+        // Neurons can vote if their dissolve delay is >= 6 months, but when they start dissolving
+        // they can still earn maturity for a few days as the rewards are distributed for
+        // proposals they have already voted on.
+        // Hence, this is set to 6 months minus a few days.
+        let cut_off_no_longer_accrue_maturity = now.saturating_sub(175 * DAY_IN_MS);
 
         let neurons_to_spawn: Vec<_> = response
             .full_neurons
             .iter()
-            .filter(|n| n.spawn_at_timestamp_seconds.is_none() && n.maturity_e8s_equivalent > 1000 * E8S_PER_ICP)
+            .filter(|n| n.spawn_at_timestamp_seconds.is_none() && n.maturity_e8s_equivalent > E8S_PER_ICP)
+            .filter(|n| {
+                // Spawn a new neuron if there is over 1000 ICP maturity or
+                // if the neuron is now dissolving and can no longer vote
+                n.maturity_e8s_equivalent > 1000 * E8S_PER_ICP
+                    || n.dissolve_state.as_ref().is_some_and(
+                        |ds| matches!(ds, DissolveState::WhenDissolvedTimestampSeconds(ts) if *ts < cut_off_no_longer_accrue_maturity),
+                    )
+            })
             .filter_map(|n| n.id.as_ref().map(|id| id.id))
             .collect();
 

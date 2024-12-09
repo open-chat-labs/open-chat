@@ -238,7 +238,7 @@ impl Channel {
         let chat = &self.chat;
         let member = user_id.and_then(|user_id| chat.members.get(&user_id));
 
-        let (min_visible_event_index, min_visible_message_index, is_invited) = if let Some(member) = member {
+        let (min_visible_event_index, min_visible_message_index, is_invited) = if let Some(member) = &member {
             (member.min_visible_event_index(), member.min_visible_message_index(), None)
         } else if let Some(invitation) = user_id.and_then(|user_id| chat.invited_users.get(&user_id)) {
             (
@@ -264,7 +264,7 @@ impl Channel {
             .and_then(|m| community_members.get_by_user_id(&m.event.sender))
             .and_then(|m| m.display_name().value.clone());
 
-        let membership = member.map(|m| GroupMembership {
+        let membership = member.as_ref().map(|m| GroupMembership {
             joined: m.date_added(),
             role: m.role().value.into(),
             mentions: chat.most_recent_mentions(m, None),
@@ -334,7 +334,7 @@ impl Channel {
         let chat = &self.chat;
         let member = user_id.and_then(|id| chat.members.get(&id));
 
-        if let Some(m) = member {
+        if let Some(m) = &member {
             if m.date_added() > since {
                 return ChannelUpdates::Added(
                     self.summary(user_id, is_community_member, is_public_community, community_members)
@@ -353,7 +353,7 @@ impl Channel {
             .and_then(|m| community_members.get_by_user_id(&m.event.sender))
             .and_then(|m| m.display_name().value.clone());
 
-        let membership = member.map(|m| GroupMembershipUpdates {
+        let membership = member.as_ref().map(|m| GroupMembershipUpdates {
             role: updates.role_changed.then_some(m.role().value.into()),
             mentions: updates.mentions,
             notifications_muted: m.notifications_muted().if_set_after(since).cloned(),
@@ -398,6 +398,7 @@ impl Channel {
             membership,
             video_call_in_progress: updates.video_call_in_progress,
             external_url: updates.external_url,
+            any_updates_missed: updates.any_updates_missed,
         })
     }
 

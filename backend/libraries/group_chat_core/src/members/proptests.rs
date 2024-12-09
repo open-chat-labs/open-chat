@@ -1,11 +1,13 @@
 use crate::{GroupMembers, GroupRoleInternal};
 use candid::Principal;
+use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+use ic_stable_structures::DefaultMemoryImpl;
 use proptest::collection::vec as pvec;
 use proptest::prelude::*;
 use proptest::prop_oneof;
 use std::collections::BTreeSet;
 use test_strategy::proptest;
-use types::{EventIndex, GroupPermissions, MessageIndex, TimestampMillis, UserId, UserType};
+use types::{EventIndex, GroupPermissions, MessageIndex, MultiUserChat, TimestampMillis, UserId, UserType};
 
 #[derive(Debug, Clone)]
 enum Operation {
@@ -62,7 +64,15 @@ fn operation_strategy() -> impl Strategy<Value = Operation> {
 
 #[proptest(cases = 10)]
 fn comprehensive(#[strategy(pvec(operation_strategy(), 100..5_000))] ops: Vec<Operation>) {
-    let mut members = GroupMembers::new(user_id(0), UserType::User, 0);
+    let memory = MemoryManager::init(DefaultMemoryImpl::default());
+    stable_memory_map::init(memory.get(MemoryId::new(1)));
+
+    let mut members = GroupMembers::new(
+        user_id(0),
+        UserType::User,
+        MultiUserChat::Group(Principal::anonymous().into()),
+        0,
+    );
 
     let mut timestamp = 1000;
     for op in ops.into_iter() {

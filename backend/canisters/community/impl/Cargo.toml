@@ -11,15 +11,16 @@ crate-type = ["cdylib"]
 
 [dependencies]
 activity_notification_state = { path = "../../../libraries/activity_notification_state" }
-bot_api_gateway_canister = { path = "../../bot_api_gateway/api" }
 candid = { workspace = true }
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
 canister_logger = { path = "../../../libraries/canister_logger" }
 canister_state_macros = { path = "../../../libraries/canister_state_macros" }
+canister_time = { path = "../../../libraries/canister_time" }
 canister_timer_jobs = { path = "../../../libraries/canister_timer_jobs" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 chat_events = { path = "../../../libraries/chat_events" }
 community_canister = { path = "../api" }
+constants = { path = "../../../libraries/constants" }
 escrow_canister = { path = "../../escrow/api" }
 escrow_canister_c2c_client = { path = "../../escrow/c2c_client" }
 event_store_producer = { workspace = true, features = ["json"] }
@@ -36,15 +37,12 @@ group_index_canister_c2c_client = { path = "../../group_index/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
-ic-ledger-types = { workspace = true }
-icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_ledger/c2c_client" }
 icrc-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
 instruction_counts_log = { path = "../../../libraries/instruction_counts_log" }
 itertools = { workspace = true }
 lazy_static = { workspace = true }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
-local_group_index_canister_c2c_client = { path = "../../local_group_index/c2c_client" }
 local_user_index_canister = { path = "../../local_user_index/api" }
 local_user_index_canister_c2c_client = { path = "../../local_user_index/c2c_client" }
 msgpack = { path = "../../../libraries/msgpack" }
@@ -55,7 +53,6 @@ regex-lite = { workspace = true }
 search = { path = "../../../libraries/search" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
-serde_repr = { workspace = true }
 stable_memory = { path = "../../../libraries/stable_memory" }
 stable_memory_map = { path = "../../../libraries/stable_memory_map" }
 storage_bucket_client = { path = "../../../libraries/storage_bucket_client" }
@@ -71,4 +68,5 @@ utils = { path = "../../../libraries/utils" }
 
 [dev-dependencies]
 proptest = { workspace = true }
+test-case = { workspace = true }
 test-strategy = { workspace = true }

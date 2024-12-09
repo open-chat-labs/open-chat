@@ -5,7 +5,7 @@ use canister_state_macros::canister_state;
 use notifications_index_canister::{NotificationsIndexEvent, SubscriptionAdded, SubscriptionRemoved};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, SubscriptionInfo, TimestampMillis, Timestamped, UserId};
 use utils::canister::CanistersRequiringUpgrade;
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
@@ -93,6 +93,7 @@ impl RuntimeState {
                 .iter()
                 .map(|(k, v)| (*k, v.clone()))
                 .collect(),
+            stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -168,6 +169,7 @@ pub struct Metrics {
     pub push_service_principals: Vec<Principal>,
     pub notifications_canister_wasm_version: BuildVersion,
     pub notifications_canisters: Vec<(CanisterId, NotificationsCanister)>,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }
 

@@ -5,10 +5,10 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::{CallParticipantInternal, MessageContentInternal, VideoCallContentInternal};
 use community_canister::start_video_call::{Response::*, *};
+use constants::HOUR_IN_MS;
 use group_chat_core::SendMessageResult;
 use ic_cdk::update;
 use types::{ChannelMessageNotification, Notification, UserId, VideoCallPresence, VideoCallType};
-use utils::time::HOUR_IN_MS;
 
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
@@ -28,7 +28,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
     };
 
     if matches!(
-        (args.call_type, channel.chat.is_public.value, state.data.is_public),
+        (args.call_type, channel.chat.is_public.value, state.data.is_public.value),
         (VideoCallType::Default, true, true)
     ) {
         return NotAuthorized;
@@ -93,7 +93,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
         message_text: None,
         image_url: None,
         crypto_transfer: None,
-        community_name: state.data.name.clone(),
+        community_name: state.data.name.value.clone(),
         channel_name: channel.chat.name.value.clone(),
         community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
         channel_avatar_id: channel.chat.avatar.as_ref().map(|d| d.id),

@@ -7,7 +7,7 @@ use chat_events::ChatEventInternal;
 use group_canister::unblock_user::*;
 use types::UsersUnblocked;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn unblock_user(args: Args) -> Response {
     run_regular_jobs();

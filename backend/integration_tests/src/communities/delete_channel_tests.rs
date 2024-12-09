@@ -1,6 +1,6 @@
-use crate::client::community::CHAT_EVENTS_MEMORY_ID;
+use crate::client::community::STABLE_MEMORY_MAP_MEMORY_ID;
 use crate::env::ENV;
-use crate::stable_memory::count_stable_memory_event_keys;
+use crate::stable_memory::get_stable_memory_map;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use pocket_ic::PocketIc;
@@ -65,33 +65,44 @@ fn stable_memory_garbage_collected_after_deleting_channel() {
         ..
     } = init_test_data(env, canister_ids, *controller);
 
-    assert_eq!(count_stable_memory_event_keys(env, community_id, CHAT_EVENTS_MEMORY_ID), 4);
+    let stable_map = get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID);
+    // 11 keys = 1 community event, 2 community members, 2 chat events and 2 users per channel
+    assert_eq!(stable_map.len(), 11);
 
     for _ in 0..100 {
         client::community::happy_path::send_text_message(env, &user1, community_id, channel_id1, None, random_string(), None);
     }
 
-    assert_eq!(count_stable_memory_event_keys(env, community_id, CHAT_EVENTS_MEMORY_ID), 104);
+    assert_eq!(
+        get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(),
+        111
+    );
 
     for _ in 0..80 {
         client::community::happy_path::send_text_message(env, &user1, community_id, channel_id2, None, random_string(), None);
     }
 
-    assert_eq!(count_stable_memory_event_keys(env, community_id, CHAT_EVENTS_MEMORY_ID), 184);
+    assert_eq!(
+        get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(),
+        191
+    );
 
     client::community::happy_path::delete_channel(env, user1.principal, community_id, channel_id1);
 
     env.advance_time(Duration::from_secs(60));
     env.tick();
 
-    assert_eq!(count_stable_memory_event_keys(env, community_id, CHAT_EVENTS_MEMORY_ID), 82);
+    assert_eq!(
+        get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(),
+        88
+    );
 
     client::community::happy_path::delete_channel(env, user1.principal, community_id, channel_id2);
 
     env.advance_time(Duration::from_secs(60));
     env.tick();
 
-    assert_eq!(count_stable_memory_event_keys(env, community_id, CHAT_EVENTS_MEMORY_ID), 0);
+    assert_eq!(get_stable_memory_map(env, community_id, STABLE_MEMORY_MAP_MEMORY_ID).len(), 5);
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {

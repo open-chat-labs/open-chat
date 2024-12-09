@@ -1,6 +1,7 @@
 use crate::ecdsa::{get_key_id, CanisterEcdsaRequest};
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
+use constants::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 use ic_transport_types::EnvelopeContent;
 use k256::pkcs8::EncodePublicKey;
 use k256::PublicKey;
@@ -8,9 +9,9 @@ use nns_governance_canister::types::Neuron;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
+use std::collections::BTreeMap;
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
 use utils::env::Environment;
-use utils::time::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 
 mod ecdsa;
 mod guards;
@@ -96,6 +97,7 @@ impl RuntimeState {
                 .filter_map(|n| n.id.as_ref().map(|i| i.id))
                 .collect(),
             disbursed_neurons: self.data.neurons.disbursed_neurons.clone(),
+            stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 nns_governance_canister: self.data.nns_governance_canister_id,
                 nns_ledger_canister: self.data.nns_ledger_canister_id,
@@ -169,6 +171,7 @@ pub struct Metrics {
     pub active_neurons: Vec<u64>,
     pub spawning_neurons: Vec<u64>,
     pub disbursed_neurons: Vec<u64>,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }
 

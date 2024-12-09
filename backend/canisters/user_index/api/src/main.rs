@@ -3,10 +3,12 @@ use std::env;
 use ts_export::generate_ts_method;
 
 fn main() {
+    generate_candid_method!(user_index, bot_updates, query);
     generate_candid_method!(user_index, check_username, query);
     generate_candid_method!(user_index, chit_leaderboard, query);
     generate_candid_method!(user_index, current_user, query);
     generate_candid_method!(user_index, diamond_membership_fees, query);
+    generate_candid_method!(user_index, explore_bots, query);
     generate_candid_method!(user_index, external_achievements, query);
     generate_candid_method!(user_index, platform_moderators, query);
     generate_candid_method!(user_index, platform_moderators_group, query);
@@ -22,6 +24,7 @@ fn main() {
     generate_candid_method!(user_index, add_referral_codes, update);
     generate_candid_method!(user_index, award_external_achievement, update);
     generate_candid_method!(user_index, register_external_achievement, update);
+    generate_candid_method!(user_index, register_bot, update);
 
     candid::export_service!();
     std::print!("{}", __export_service());

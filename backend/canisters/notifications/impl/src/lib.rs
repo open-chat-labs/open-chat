@@ -4,7 +4,7 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 use types::{BuildVersion, CanisterId, Cycles, NotificationEnvelope, TimestampMillis, Timestamped};
 use utils::env::Environment;
 use utils::event_stream::EventStream;
@@ -54,6 +54,7 @@ impl RuntimeState {
             push_service_principals: self.data.push_service_principals.iter().copied().collect(),
             principals_authorized: self.data.authorized_principals.count_authorized() as u64,
             principals_blocked: self.data.authorized_principals.count_blocked() as u64,
+            stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 notifications_index: self.data.notifications_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -125,6 +126,7 @@ pub struct Metrics {
     pub push_service_principals: Vec<Principal>,
     pub principals_authorized: u64,
     pub principals_blocked: u64,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }
 

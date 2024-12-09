@@ -7,6 +7,8 @@ edition = "2021"
 
 [dependencies]
 canister_client = { path = "../canister_client" }
+canister_time = { path = "../canister_time" }
+constants = { path = "../constants" }
 futures = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }

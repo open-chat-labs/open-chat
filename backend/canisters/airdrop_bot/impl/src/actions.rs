@@ -1,6 +1,7 @@
 use crate::jobs::execute_airdrop::start_airdrop_timer;
 use crate::{mutate_state, read_state, USERNAME};
 use candid::Deserialize;
+use constants::{MEMO_CHIT_FOR_CHAT_AIRDROP, MEMO_CHIT_FOR_CHAT_LOTTERY};
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use rand::Rng;
 use serde::Serialize;
@@ -12,7 +13,6 @@ use types::{
     Cryptocurrency, MessageContentInitial, UserId,
 };
 use utils::canister::should_retry_failed_c2c_call;
-use utils::consts::{MEMO_CHIT_FOR_CHAT_AIRDROP, MEMO_CHIT_FOR_CHAT_LOTTERY};
 use utils::time::{MonthKey, MONTHS};
 
 impl TimerJobItem for Action {

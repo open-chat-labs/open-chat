@@ -16,15 +16,15 @@ pub struct EventWrapper<T> {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct EventWrapperInternal<T> {
-    #[serde(rename = "i")]
+    #[serde(rename = "i", alias = "index")]
     pub index: EventIndex,
-    #[serde(rename = "t")]
+    #[serde(rename = "t", alias = "timestamp")]
     pub timestamp: TimestampMillis,
-    #[serde(rename = "c", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "c", alias = "correlation_id", default, skip_serializing_if = "is_default")]
     pub correlation_id: u64,
-    #[serde(rename = "x", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "x", alias = "expires_at", default, skip_serializing_if = "Option::is_none")]
     pub expires_at: Option<TimestampMillis>,
-    #[serde(rename = "e")]
+    #[serde(rename = "e", alias = "event")]
     pub event: T,
 }
 

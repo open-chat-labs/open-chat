@@ -120,7 +120,6 @@ pub struct CanisterIds {
     pub local_user_index: CanisterId,
     pub local_group_index: CanisterId,
     pub notifications: CanisterId,
-    pub bot_api_gateway: CanisterId,
     pub identity: CanisterId,
     pub online_users: CanisterId,
     pub proposals_bot: CanisterId,
@@ -144,6 +143,7 @@ pub struct CanisterIds {
     pub nns_cmc: CanisterId,
     pub nns_sns_wasm: CanisterId,
     pub nns_index: CanisterId,
+    pub website: CanisterId,
 }
 
 pub fn get_dfx_identity(name: &str) -> Box<dyn Identity> {
@@ -239,7 +239,7 @@ fn file_by_prefix(file_name_prefix: &str, dir: &PathBuf) -> Option<String> {
 
     dir.filter_map(|f| f.ok())
         .filter_map(|f| f.file_name().to_str().map(|s| s.to_string()))
-        .filter(|f| f.starts_with(file_name_prefix))
+        .filter(|f| f.starts_with(file_name_prefix) && f.ends_with(".wasm.gz"))
         .sorted_unstable_by_key(|f| f.len())
         .next()
 }

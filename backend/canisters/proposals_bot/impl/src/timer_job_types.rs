@@ -2,6 +2,7 @@ use crate::mutate_state;
 use crate::updates::c2c_submit_proposal::{lookup_user_then_submit_proposal, submit_proposal};
 use candid::Principal;
 use canister_timer_jobs::Job;
+use constants::{MINUTE_IN_MS, SECOND_IN_MS};
 use icrc_ledger_types::icrc1::{account::Account, transfer::TransferArg};
 use proposals_bot_canister::ProposalToSubmit;
 use serde::{Deserialize, Serialize};
@@ -10,7 +11,6 @@ use sns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
 use sns_governance_canister::types::{manage_neuron_response, Empty, ManageNeuron};
 use tracing::error;
 use types::{icrc1, CanisterId, MultiUserChat, NnsNeuronId, ProposalId, SnsNeuronId, UserId};
-use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {

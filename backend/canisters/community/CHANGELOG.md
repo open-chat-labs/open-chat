@@ -6,9 +6,89 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Update community bot config ([#7018](https://github.com/open-chat-labs/open-chat/pull/7018))
+
+### Changed
+
+- Return bots in community/group selected updates ([#7009](https://github.com/open-chat-labs/open-chat/pull/7009))
+- Include the ledger canister Id in transfer failed error logs ([#7011](https://github.com/open-chat-labs/open-chat/pull/7011))
+- Ensure bot has permission to execute given action ([#7014](https://github.com/open-chat-labs/open-chat/pull/7014))
+- Allow bots to send a subset of message types ([#7016](https://github.com/open-chat-labs/open-chat/pull/7016))
+
+### Fixed
+
+- Temporarily reinstate `MigrateMembersToStableMemory` job to fix upgrade ([#7007](https://github.com/open-chat-labs/open-chat/pull/7007))
+
+## [[2.0.1500](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1500-community)] - 2024-12-06
+
+### Added
+
+- Add/remove bot to/from community ([#6991](https://github.com/open-chat-labs/open-chat/pull/6991))
+
+### Changed
+
+- Remove chat members from being stored on the heap ([#6942](https://github.com/open-chat-labs/open-chat/pull/6942))
+- Reduce the size of community events when serialized ([#6980](https://github.com/open-chat-labs/open-chat/pull/6980))
+- Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
+- Reduce size of the `UserCache` ([#6982](https://github.com/open-chat-labs/open-chat/pull/6982))
+- Assign last updated timestamp to each updatable community attribute ([#6983](https://github.com/open-chat-labs/open-chat/pull/6983))
+- Remove community members from being stored on the heap ([#6984](https://github.com/open-chat-labs/open-chat/pull/6984))
+- Avoid iterating over community events ([#6986](https://github.com/open-chat-labs/open-chat/pull/6986))
+- Make `summary` match `c2c_summary` so that `c2c_summary` can be removed ([#6988](https://github.com/open-chat-labs/open-chat/pull/6988))
+- Remove `MemberJoined` and `MemberLeft` community events ([#6989](https://github.com/open-chat-labs/open-chat/pull/6989))
+- Migrate community events to stable memory ([#6990](https://github.com/open-chat-labs/open-chat/pull/6990))
+
+## [[2.0.1499](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1499-community)] - 2024-12-04
+
+### Changed
+
+- Remove UserId from member map values since it's already in the keys ([#6945](https://github.com/open-chat-labs/open-chat/pull/6945))
+- Disallow sending prize messages to threads ([#6960](https://github.com/open-chat-labs/open-chat/pull/6960))
+- Re-run member migration to stable memory using reduced size format ([#6965](https://github.com/open-chat-labs/open-chat/pull/6965))
+- Introduce community `MembersMap` in prep for move to stable memory ([#6966](https://github.com/open-chat-labs/open-chat/pull/6966))
+- Migrate community members to stable memory ([#6967](https://github.com/open-chat-labs/open-chat/pull/6967))
+- Check bot + user permissions when issuing JWT ([#6970](https://github.com/open-chat-labs/open-chat/pull/6970))
+- Reduce size of search index when serialized ([#6973](https://github.com/open-chat-labs/open-chat/pull/6973))
+- Copy members from stable memory when importing group into community ([#6976](https://github.com/open-chat-labs/open-chat/pull/6976))
+- Re-run member migration to stable member using reduced size format V2 ([#6977](https://github.com/open-chat-labs/open-chat/pull/6977))
+
+### Removed
+
+- Remove a load of unused candid endpoints ([#6947](https://github.com/open-chat-labs/open-chat/pull/6947))
+- Remove references to bot_api_gateway ([#6944](https://github.com/open-chat-labs/open-chat/pull/6944))
+
+### Fixed
+
+- Don't supply a fee when BURNing ([#6948](https://github.com/open-chat-labs/open-chat/pull/6948))
+
+## [[2.0.1486](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1486-community)] - 2024-12-02
+
+### Changed
+
+- Remove channel links from being stored on each community member ([#6923](https://github.com/open-chat-labs/open-chat/pull/6923))
+- Remove entries from expiring members queue when channel deleted ([#6924](https://github.com/open-chat-labs/open-chat/pull/6924))
+- Reduce size of chat members when serialized ([#6925](https://github.com/open-chat-labs/open-chat/pull/6925))
+- Consolidate member verification logic into `get_verified_member` ([#6926](https://github.com/open-chat-labs/open-chat/pull/6926))
+- Move members to `MembersMap` in prep for stable memory ([#6927](https://github.com/open-chat-labs/open-chat/pull/6927))
+- Only handle a single bot action ([#6929](https://github.com/open-chat-labs/open-chat/pull/6929))
+- Implement `MembersStableStorage` which stores members in stable memory ([#6931](https://github.com/open-chat-labs/open-chat/pull/6931))
+- Migrate chat members to stable memory using timer job ([#6933](https://github.com/open-chat-labs/open-chat/pull/6933))
+- Write group members to stable memory when importing group into community ([#6935](https://github.com/open-chat-labs/open-chat/pull/6935))
+- Make `StableMemoryMap` use strongly typed keys ([#6937](https://github.com/open-chat-labs/open-chat/pull/6937))
+- Read from stable memory members map once migration is complete ([#6938](https://github.com/open-chat-labs/open-chat/pull/6938))
+- Restart member migration job after importing group into community ([#6940](https://github.com/open-chat-labs/open-chat/pull/6940))
+
+## [[2.0.1479](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1479-community)] - 2024-11-28
+
 ### Changed
 
 - Simplify how we store and query proposal votes ([#6906](https://github.com/open-chat-labs/open-chat/pull/6906))
+- Remove member updates after 31 days ([#6907](https://github.com/open-chat-labs/open-chat/pull/6907))
+- Extract member to channel links out of each member instance ([#6910](https://github.com/open-chat-labs/open-chat/pull/6910))
+- Consolidate member updates into a single enum ([#6915](https://github.com/open-chat-labs/open-chat/pull/6915))
+- Remove chat event updates after 31 days ([#6916](https://github.com/open-chat-labs/open-chat/pull/6916))
 
 ### Removed
 

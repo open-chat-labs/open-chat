@@ -10,6 +10,7 @@ const NANOS_PER_MILLISECOND: u64 = 1_000_000;
 pub fn verify_proof_of_unique_personhood(
     principal: Principal,
     internet_identity_canister_id: CanisterId,
+    website_canister_id: CanisterId,
     credential_jwt: &str,
     ic_root_key: &[u8],
     now: TimestampMillis,
@@ -19,6 +20,7 @@ pub fn verify_proof_of_unique_personhood(
     match ic_verifiable_credentials::validate_ii_presentation_and_claims(
         credential_jwt,
         principal,
+        format!("https://{website_canister_id}.ic0.app"),
         &VcFlowSigners {
             ii_canister_id: internet_identity_canister_id,
             ii_origin: "https://identity.ic0.app".to_string(),

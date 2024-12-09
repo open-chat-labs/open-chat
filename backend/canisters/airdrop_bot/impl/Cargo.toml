@@ -18,25 +18,20 @@ canister_state_macros = { path = "../../../libraries/canister_state_macros" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 community_canister_c2c_client = { path = "../../community/c2c_client" }
 community_canister = { path = "../../community/api" }
-futures = { workspace = true }
+constants = { path = "../../../libraries/constants" }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
-ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
 icrc_ledger_canister = { path = "../../../external_canisters/icrc_ledger/api" }
 icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_ledger/c2c_client" }
 icrc-ledger-types = { workspace = true }
-ledger_utils = { path = "../../../libraries/ledger_utils" }
 local_user_index_canister_c2c_client = { path = "../../local_user_index/c2c_client" }
 local_user_index_canister = { path = "../../local_user_index/api" }
 msgpack = { path = "../../../libraries/msgpack" }
 rand = { workspace = true }
 serde = { workspace = true }
-serde_bytes = { workspace = true }
-serde_json = { workspace = true }
 stable_memory = { path = "../../../libraries/stable_memory" }
-testing = { path = "../../../libraries/testing" }
 timer_job_queues = { path = "../../../libraries/timer_job_queues" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
@@ -45,3 +40,6 @@ user_canister = { path = "../../user/api" }
 user_index_canister_c2c_client = { path = "../../user_index/c2c_client" }
 user_index_canister = { path = "../../user_index/api" }
 utils = { path = "../../../libraries/utils" }
+
+[dev-dependencies]
+testing = { path = "../../../libraries/testing" }

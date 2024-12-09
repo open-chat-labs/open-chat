@@ -85,12 +85,6 @@
       "wasm": "wasms/group.wasm.gz",
       "build": "./scripts/generate-wasm.sh group"
     },
-    "bot_api_gateway": {
-      "type": "custom",
-      "candid": "backend/canisters/bot_api_gateway/api/can.did",
-      "wasm": "wasms/bot_api_gateway.wasm.gz",
-      "build": "./scripts/generate-wasm.sh bot_api_gateway"
-    },
     "storage_index": {
       "type": "custom",
       "candid": "backend/canisters/storage_index/api/can.did",
@@ -193,12 +187,6 @@
       "candid": "",
       "type": "custom",
       "wasm": "./wasms/icrc_ledger.wasm.gz"
-    },
-    "bot_api_gateway": {
-      "build": "",
-      "candid": "",
-      "type": "custom",
-      "wasm": "wasms/bot_api_gateway.wasm.gz"
     }
   },
   "networks": {

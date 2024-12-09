@@ -7,7 +7,7 @@ use canister_tracing_macros::trace;
 use community_canister::unblock_user::*;
 use types::UsersUnblocked;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn unblock_user(args: Args) -> Response {
     run_regular_jobs();
@@ -22,7 +22,7 @@ fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let caller = state.env.caller();
 
-    if !state.data.is_public {
+    if !state.data.is_public.value {
         CommunityNotPublic
     } else if let Some(caller_member) = state.data.members.get(caller) {
         if caller_member.suspended().value {
@@ -37,7 +37,7 @@ fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> Response {
         } else if caller_member.role().can_unblock_users(&state.data.permissions) {
             let now = state.env.now();
 
-            state.data.members.unblock(&args.user_id);
+            state.data.members.unblock(args.user_id, now);
 
             let event = UsersUnblocked {
                 user_ids: vec![args.user_id],

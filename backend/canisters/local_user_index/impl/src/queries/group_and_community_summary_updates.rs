@@ -20,9 +20,9 @@ async fn make_c2c_call(args: SummaryUpdatesArgs, principal: Principal) -> Summar
     if args.is_community {
         if let Some(updates_since) = args.updates_since {
             map_response(
-                community_canister_c2c_client::c2c_summary_updates(
+                community_canister_c2c_client::summary_updates(
                     args.canister_id,
-                    &community_canister::c2c_summary_updates::Args {
+                    &community_canister::summary_updates::Args {
                         updates_since,
                         invite_code: args.invite_code,
                         on_behalf_of: Some(principal),
@@ -32,9 +32,9 @@ async fn make_c2c_call(args: SummaryUpdatesArgs, principal: Principal) -> Summar
             )
         } else {
             map_response(
-                community_canister_c2c_client::c2c_summary(
+                community_canister_c2c_client::summary(
                     args.canister_id,
-                    &community_canister::c2c_summary::Args {
+                    &community_canister::summary::Args {
                         invite_code: args.invite_code,
                         on_behalf_of: Some(principal),
                     },
@@ -44,9 +44,9 @@ async fn make_c2c_call(args: SummaryUpdatesArgs, principal: Principal) -> Summar
         }
     } else if let Some(updates_since) = args.updates_since {
         map_response(
-            group_canister_c2c_client::c2c_summary_updates(
+            group_canister_c2c_client::summary_updates(
                 args.canister_id,
-                &group_canister::c2c_summary_updates::Args {
+                &group_canister::summary_updates::Args {
                     updates_since,
                     on_behalf_of: Some(principal),
                 },
@@ -55,9 +55,9 @@ async fn make_c2c_call(args: SummaryUpdatesArgs, principal: Principal) -> Summar
         )
     } else {
         map_response(
-            group_canister_c2c_client::c2c_summary(
+            group_canister_c2c_client::summary(
                 args.canister_id,
-                &group_canister::c2c_summary::Args {
+                &group_canister::summary::Args {
                     on_behalf_of: Some(principal),
                 },
             )

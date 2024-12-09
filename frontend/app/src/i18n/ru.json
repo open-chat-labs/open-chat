@@ -149,6 +149,65 @@
     "blockUserFailed": "Не удалось заблокировать пользователя",
     "blockUserSucceeded": "Пользователь заблокирован",
     "bots": {
+        "builder": {
+            "addAnother": "Добавить еще",
+            "addChoice": "Добавить выбор",
+            "addCommand": "Добавить команду",
+            "addParam": "Добавить параметр",
+            "choiceName": "Имя выбора",
+            "choices": "Выбор",
+            "choicesInfo": "Если вы введете набор вариантов для своего параметра, пользователю будет представлен раскрывающийся список для выбора правильного значения.",
+            "choiceValue": "Ценность выбора",
+            "commandDescLabel": "Описание команды",
+            "commandDescPlaceholder": "Введите описание команды",
+            "commandLabel": "Команда: /{name}",
+            "commandNameLabel": "Имя команды",
+            "commandNamePlaceholder": "Введите имя команды",
+            "commandPermissionsDesc": "Опишите разрешения, необходимые этой команде.",
+            "commandPermissionsLabel": "Разрешения на выполнение команд",
+            "descLabel": "Описание бота",
+            "descPlaceholder": "Введите описание бота",
+            "endpointLabel": "Конечная точка бота",
+            "endpointRules": "Должен быть действительный источник или идентификатор контейнера",
+            "errors": {
+                "alphaOnly": "Должен содержать только буквы, цифры и подчеркивания.",
+                "duplicateCommands": "Бот содержит дублирующиеся команды",
+                "duplicateParams": "Команда содержит повторяющиеся параметры",
+                "endpoint": "Конечная точка должна быть действительным источником или идентификатором canisterID.",
+                "minLength": "Должно быть не менее {n} символов",
+                "noCommands": "Бот должен содержать хотя бы одну команду"
+            },
+            "iconLabel": "Значок бота",
+            "maxLengthLabel": "Максимальная длина",
+            "maxLengthPlaceholder": "Введите максимальную длину",
+            "maxValueLabel": "Максимальное значение",
+            "maxValuePlaceholder": "Введите максимальное значение",
+            "minLengthLabel": "Минимальная длина",
+            "minLengthPlaceholder": "Введите минимальную длину",
+            "minValueLabel": "Минимальное значение",
+            "minValuePlaceholder": "Введите минимальное значение",
+            "nameLabel": "Имя бота",
+            "namePlaceholder": "Введите имя бота",
+            "nameRules": "Должен быть уникальным и содержать только буквенно-цифровые символы и символы подчеркивания.",
+            "optional": "необязательный",
+            "paramDescLabel": "Описание параметра",
+            "paramDescPlaceholder": "Введите описание параметра",
+            "paramLabel": "Параметр: {name}",
+            "paramNameLabel": "Имя параметра",
+            "paramNamePlaceholder": "Введите имя параметра",
+            "paramPlaceholderLabel": "Заполнитель параметра",
+            "paramPlaceholderPlaceholder": "Введите заполнитель параметра",
+            "paramTypeLabel": "Тип параметра",
+            "permSameAsMessage": "То же, что и разрешения на сообщения",
+            "permScopeChat": "Чат",
+            "permScopeCommunity": "Сообщество",
+            "permScopeMessage": "Сообщение",
+            "permScopeThread": "Нить",
+            "required": "Обязательный параметр",
+            "requiredDesc": "Является ли это обязательным параметром для команды?",
+            "title": "Создать бота",
+            "uptoN": "до {n}"
+        },
         "builtin": {
             "desc": "Этот бот предоставляет встроенные команды OpenChat",
             "name": "Встроенный"
@@ -214,6 +273,9 @@
         "poll": {
             "desc": "Создать опрос в текущем чате"
         },
+        "register_bot": {
+            "desc": "Начать предложение по описанию и регистрации нового бота в OpenChat"
+        },
         "search": {
             "desc": "Начать поиск в текущем чате",
             "params": {
@@ -223,6 +285,9 @@
                     "placeholder": "Поисковый термин"
                 }
             }
+        },
+        "update_bot": {
+            "desc": "Начать предложение по обновлению существующего бота OpenChat"
         },
         "witch": {
             "desc": "Вызов ведьмы"

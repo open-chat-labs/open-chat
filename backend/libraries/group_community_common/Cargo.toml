@@ -7,15 +7,9 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
-fire_and_forget_handler = { path = "../fire_and_forget_handler" }
+constants = { path = "../constants" }
 icrc-ledger-types = { workspace = true }
-itertools = { workspace = true }
-msgpack = { path = "../msgpack" }
 serde = { workspace = true }
 serde_repr = { workspace = true }
 types = { path = "../types" }
-user_canister = { path = "../../canisters/user/api" }
 utils = { path = "../utils" }
-
-[dev-dependencies]
-msgpack = { path = "../msgpack" }

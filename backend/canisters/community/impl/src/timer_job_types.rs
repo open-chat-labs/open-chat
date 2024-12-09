@@ -4,13 +4,13 @@ use crate::updates::end_video_call::end_video_call_impl;
 use crate::{can_borrow_state, mutate_state, read_state, run_regular_jobs};
 use canister_timer_jobs::Job;
 use chat_events::MessageContentInternal;
+use constants::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 use ledger_utils::process_transaction;
 use serde::{Deserialize, Serialize};
-use tracing::error;
+use tracing::{error, info};
 use types::{
     BlobReference, CanisterId, ChannelId, ChatId, MessageId, MessageIndex, P2PSwapStatus, PendingCryptoTransaction, UserId,
 };
-use utils::time::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -21,14 +21,13 @@ pub enum TimerJob {
     FinalizeGroupImport(FinalizeGroupImportJob),
     ProcessGroupImportChannelMembers(ProcessGroupImportChannelMembersJob),
     MarkGroupImportComplete(MarkGroupImportCompleteJob),
-    // TODO: Remove this serde attribute post release
-    #[serde(alias = "RefundPrize")]
     FinalPrizePayments(FinalPrizePaymentsJob),
     MakeTransfer(MakeTransferJob),
     NotifyEscrowCanisterOfDeposit(NotifyEscrowCanisterOfDepositJob),
     CancelP2PSwapInEscrowCanister(CancelP2PSwapInEscrowCanisterJob),
     MarkP2PSwapExpired(MarkP2PSwapExpiredJob),
     MarkVideoCallEnded(MarkVideoCallEndedJob),
+    MigrateMembersToStableMemory(MigrateMembersToStableMemoryJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -74,14 +73,12 @@ pub struct MarkGroupImportCompleteJob {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct FinalPrizePaymentsJob {
     pub channel_id: ChannelId,
-    pub thread_root_message_index: Option<MessageIndex>,
     pub message_index: MessageIndex,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct MakeTransferJob {
     pub pending_transaction: PendingCryptoTransaction,
-    #[serde(default)]
     pub attempt: u32,
 }
 
@@ -141,6 +138,9 @@ pub struct MarkP2PSwapExpiredJob {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct MarkVideoCallEndedJob(pub community_canister::end_video_call::Args);
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct MigrateMembersToStableMemoryJob;
+
 impl Job for TimerJob {
     fn execute(self) {
         if can_borrow_state() {
@@ -161,6 +161,7 @@ impl Job for TimerJob {
             TimerJob::CancelP2PSwapInEscrowCanister(job) => job.execute(),
             TimerJob::MarkP2PSwapExpired(job) => job.execute(),
             TimerJob::MarkVideoCallEnded(job) => job.execute(),
+            TimerJob::MigrateMembersToStableMemory(job) => job.execute(),
         }
     }
 }
@@ -194,8 +195,7 @@ impl Job for HardDeleteMessageContentJob {
                                     .timer_jobs
                                     .cancel_job(|job| {
                                         if let TimerJob::FinalPrizePayments(j) = job {
-                                            j.thread_root_message_index == self.thread_root_message_index
-                                                && j.message_index == message_index
+                                            j.channel_id == self.channel_id && j.message_index == message_index
                                         } else {
                                             false
                                         }
@@ -299,13 +299,7 @@ impl Job for FinalPrizePaymentsJob {
                 .data
                 .channels
                 .get_mut(&self.channel_id)
-                .map(|channel| {
-                    channel.chat.events.final_payments(
-                        self.thread_root_message_index,
-                        self.message_index,
-                        state.env.now_nanos(),
-                    )
-                })
+                .map(|channel| channel.chat.events.final_payments(self.message_index, state.env.now_nanos()))
                 .unwrap_or_default()
         });
 
@@ -459,5 +453,11 @@ impl Job for MarkP2PSwapExpiredJob {
 impl Job for MarkVideoCallEndedJob {
     fn execute(self) {
         mutate_state(|state| end_video_call_impl(self.0, state));
+    }
+}
+
+impl Job for MigrateMembersToStableMemoryJob {
+    fn execute(self) {
+        info!("MigrateMembersToStableMemoryJob executed")
     }
 }

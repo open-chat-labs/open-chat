@@ -43,9 +43,10 @@
 
     interface Props {
         onClearSelection: () => void;
+        showLandingPage: boolean;
     }
 
-    let { onClearSelection }: Props = $props();
+    let { onClearSelection, showLandingPage }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -348,6 +349,7 @@
     class="video-call-container"
     class:visible={$activeVideoCall &&
         $activeVideoCall.view !== "minimised" &&
+        !showLandingPage &&
         !(threadOpen && $mobileWidth) &&
         !(participantsOpen && $mobileWidth) &&
         chatIdentifiersEqual($activeVideoCall.chatId, $selectedChat?.id)}>

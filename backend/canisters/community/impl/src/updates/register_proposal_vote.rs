@@ -6,7 +6,7 @@ use chat_events::{MessageContentInternal, Reader, RecordProposalVoteResult};
 use community_canister::register_proposal_vote::{Response::*, *};
 use types::{CanisterId, ChannelId, ProposalId, UserId};
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 async fn register_proposal_vote(args: Args) -> Response {
     run_regular_jobs();
@@ -125,7 +125,7 @@ fn commit(channel_id: ChannelId, user_id: UserId, args: Args, state: &mut Runtim
     {
         RecordProposalVoteResult::Success => {
             let now = state.env.now();
-            channel.chat.members.register_proposal_vote(user_id, args.message_index, now);
+            channel.chat.members.register_proposal_vote(&user_id, args.message_index, now);
 
             handle_activity_notification(state);
             Success

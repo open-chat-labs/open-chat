@@ -1,10 +1,10 @@
+pub mod bots;
 pub mod canister;
 pub mod canister_event_sync_queue;
 pub mod canister_timers;
 pub mod case_insensitive_hash_map;
-pub mod consts;
 pub mod cycles;
-pub mod document_validation;
+pub mod document;
 pub mod env;
 pub mod event_stream;
 pub mod file_id;

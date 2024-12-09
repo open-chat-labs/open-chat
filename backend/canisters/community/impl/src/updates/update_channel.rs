@@ -8,7 +8,7 @@ use group_chat_core::UpdateResult;
 use types::OptionUpdate;
 use url::Url;
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn update_channel(args: Args) -> Response {
     run_regular_jobs();
@@ -67,17 +67,20 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                 UpdateResult::Success(result) => {
                     if channel.chat.is_public.value && channel.chat.gate_config.is_none() {
                         // If the channel has just been made public or had its gate removed, add
-                        // existing community members to the channel
+                        // all existing community members to the channel, except those who have
+                        // been in the channel before and then left
                         if result.newly_public || matches!(result.gate_config_update, OptionUpdate::SetToNone) {
                             let channel_id = channel.id;
+                            let mut user_ids = Vec::with_capacity(state.data.members.member_ids().len());
+                            user_ids.extend(state.data.members.member_ids().iter().filter(|&user_id| {
+                                !state.data.members.member_channel_links_removed_contains(*user_id, channel_id)
+                            }));
+
                             add_members_to_public_channel_unchecked(
+                                user_ids.into_iter(),
                                 channel,
-                                state.data.is_public,
-                                state
-                                    .data
-                                    .members
-                                    .iter_mut()
-                                    .filter(|m| !m.channels_removed.iter().any(|c| c.value == channel_id)),
+                                &mut state.data.members,
+                                state.data.is_public.value,
                                 now,
                             );
                         }

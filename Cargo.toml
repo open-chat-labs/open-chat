@@ -2,20 +2,9 @@
 members = [
     "backend/bots/api",
     "backend/bots/c2c_client",
-    "backend/bots/examples/group_prize_bot/api",
-    "backend/bots/examples/group_prize_bot/impl",
-    "backend/bots/examples/icp_dispenser/api",
-    "backend/bots/examples/icp_dispenser/impl",
-    "backend/bots/examples/satoshi_dice/api",
-    "backend/bots/examples/satoshi_dice/impl",
-    "backend/bots/examples/sns1_airdrop/api",
-    "backend/bots/examples/sns1_airdrop/impl",
     "backend/canisters/airdrop_bot/api",
     "backend/canisters/airdrop_bot/client",
     "backend/canisters/airdrop_bot/impl",
-    "backend/canisters/bot_api_gateway/api",
-    "backend/canisters/bot_api_gateway/c2c_client",
-    "backend/canisters/bot_api_gateway/impl",
     "backend/canisters/community/api",
     "backend/canisters/community/c2c_client",
     "backend/canisters/community/impl",
@@ -128,6 +117,7 @@ members = [
     "backend/libraries/canister_timer_jobs",
     "backend/libraries/canister_tracing_macros",
     "backend/libraries/chat_events",
+    "backend/libraries/constants",
     "backend/libraries/cycles_dispenser_client",
     "backend/libraries/dynamodb_index_store",
     "backend/libraries/fire_and_forget_handler",
@@ -146,6 +136,7 @@ members = [
     "backend/libraries/ledger_utils",
     "backend/libraries/msgpack",
     "backend/libraries/p256_key_pair",
+    "backend/libraries/principal_to_user_id_map",
     "backend/libraries/proof_of_unique_personhood",
     "backend/libraries/storage_bucket_client",
     "backend/libraries/search",
@@ -207,10 +198,10 @@ ic-certificate-verification = "2.4.0"
 ic-certification = "2.5.0"
 ic-ledger-types = "0.13.0"
 ic_principal = "0.1.1"
-ic-stable-structures = "0.6.6"
+ic-stable-structures = "0.6.7"
 ic-transport-types = "0.37.1"
 ic-utils = "0.37.0"
-ic-verifiable-credentials = { git = "https://github.com/dfinity/verifiable-credentials-sdk", rev = "d5e1bb0f8c0bf99ad565620e18dc402a9ac3317a" }
+ic-verifiable-credentials = "1.0.1"
 icrc-ledger-types = "0.1.5"
 ic0 = "0.23.0"
 itertools = "0.13.0"

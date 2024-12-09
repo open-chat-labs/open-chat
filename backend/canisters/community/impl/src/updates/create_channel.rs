@@ -12,12 +12,12 @@ use group_chat_core::GroupChatCore;
 use rand::Rng;
 use types::{MultiUserChat, UserType};
 use url::Url;
-use utils::document_validation::validate_avatar;
+use utils::document::validate_avatar;
 use utils::text_validation::{
     validate_description, validate_group_name, validate_rules, NameValidationError, RulesValidationError,
 };
 
-#[update(candid = true, msgpack = true)]
+#[update(msgpack = true)]
 #[trace]
 fn create_channel(args: Args) -> Response {
     run_regular_jobs();
@@ -79,7 +79,7 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
 
     let caller = state.env.caller();
     let channel_id = state.generate_channel_id();
-    if let Some(member) = state.data.members.get_mut(caller) {
+    if let Some(member) = state.data.members.get(caller) {
         if member.suspended().value {
             return UserSuspended;
         } else if member.lapsed().value {
@@ -148,7 +148,7 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
                 now,
             );
 
-            member.channels.insert(channel_id);
+            state.data.members.mark_member_joined_channel(member.user_id, channel_id);
 
             let mut channel = Channel {
                 id: channel_id,
@@ -157,7 +157,14 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
             };
 
             if args.is_public && args.gate_config.is_none() {
-                add_members_to_public_channel_unchecked(&mut channel, state.data.is_public, state.data.members.iter_mut(), now);
+                let user_ids: Vec<_> = state.data.members.member_ids().iter().copied().collect();
+                add_members_to_public_channel_unchecked(
+                    user_ids.into_iter(),
+                    &mut channel,
+                    &mut state.data.members,
+                    state.data.is_public.value,
+                    now,
+                );
             }
 
             state.data.channels.add(channel);

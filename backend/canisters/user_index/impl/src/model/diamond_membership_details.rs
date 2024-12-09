@@ -1,10 +1,10 @@
+use constants::{DAY_IN_MS, LIFETIME_DIAMOND_TIMESTAMP};
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use types::{
     is_default, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration, DiamondMembershipStatus,
     DiamondMembershipStatusFull, DiamondMembershipSubscription, TimestampMillis,
 };
-use utils::{consts::LIFETIME_DIAMOND_TIMESTAMP, time::DAY_IN_MS};
 
 #[derive(Serialize, Deserialize, Clone, Default)]
 pub struct DiamondMembershipDetailsInternal {

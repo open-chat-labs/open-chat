@@ -4,19 +4,17 @@ use crate::{
 };
 use canister_timer_jobs::Job;
 use chat_events::MessageContentInternal;
+use constants::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 use ledger_utils::process_transaction;
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{BlobReference, CanisterId, MessageId, MessageIndex, P2PSwapStatus, PendingCryptoTransaction, UserId};
-use utils::time::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
     HardDeleteMessageContent(HardDeleteMessageContentJob),
     DeleteFileReferences(DeleteFileReferencesJob),
     EndPoll(EndPollJob),
-    // TODO: Remove this serde attribute post release
-    #[serde(alias = "RefundPrize")]
     FinalPrizePayments(FinalPrizePaymentsJob),
     MakeTransfer(MakeTransferJob),
     RemoveExpiredEvents(RemoveExpiredEventsJob),
@@ -45,14 +43,12 @@ pub struct EndPollJob {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct FinalPrizePaymentsJob {
-    pub thread_root_message_index: Option<MessageIndex>,
     pub message_index: MessageIndex,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct MakeTransferJob {
     pub pending_transaction: PendingCryptoTransaction,
-    #[serde(default)]
     pub attempt: u32,
 }
 
@@ -162,8 +158,7 @@ impl Job for HardDeleteMessageContentJob {
                                 .timer_jobs
                                 .cancel_job(|job| {
                                     if let TimerJob::FinalPrizePayments(j) = job {
-                                        j.thread_root_message_index == self.thread_root_message_index
-                                            && j.message_index == message_index
+                                        j.message_index == message_index
                                     } else {
                                         false
                                     }
@@ -239,7 +234,7 @@ impl Job for FinalPrizePaymentsJob {
                 .data
                 .chat
                 .events
-                .final_payments(self.thread_root_message_index, self.message_index, state.env.now_nanos())
+                .final_payments(self.message_index, state.env.now_nanos())
         });
 
         for pending_transaction in pending_transactions {

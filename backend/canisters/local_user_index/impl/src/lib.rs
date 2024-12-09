@@ -3,11 +3,13 @@ use crate::model::user_event_batch::UserEventBatch;
 use crate::model::user_index_event_batch::UserIndexEventBatch;
 use candid::Principal;
 use canister_state_macros::canister_state;
+use constants::{CYCLES_REQUIRED_FOR_UPGRADE, MINUTE_IN_MS};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use event_store_utils::EventDeduper;
 use jwt::{verify_jwt, Claims};
 use local_user_index_canister::{ChildCanisterType, GlobalUser};
+use model::bots_map::BotsMap;
 use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
 use p256_key_pair::P256KeyPair;
@@ -26,10 +28,8 @@ use user_canister::Event as UserEvent;
 use user_index_canister::Event as UserIndexEvent;
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
-use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
 use utils::env::Environment;
 use utils::iterator_extensions::IteratorExtensions;
-use utils::time::MINUTE_IN_MS;
 
 mod guards;
 mod jobs;
@@ -82,6 +82,7 @@ impl RuntimeState {
                 if let Ok(unique_person_proof) = verify_proof_of_unique_personhood(
                     credential_args.user_ii_principal,
                     self.data.internet_identity_canister_id,
+                    self.data.website_canister_id,
                     jwt,
                     &self.data.ic_root_key,
                     now,
@@ -236,7 +237,7 @@ impl RuntimeState {
             canisters_in_pool: self.data.canister_pool.len() as u16,
             local_user_count: self.data.local_users.len() as u64,
             global_user_count: self.data.global_users.len() as u64,
-            bot_user_count: self.data.global_users.bots().len() as u64,
+            bot_user_count: self.data.global_users.legacy_bots().len() as u64,
             oc_controlled_bots: self.data.global_users.oc_controlled_bots().iter().copied().collect(),
             canister_upgrades_completed: canister_upgrades_metrics.completed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
@@ -254,21 +255,32 @@ impl RuntimeState {
                 .iter()
                 .map(|u| u.1.wasm_version.to_string())
                 .count_per_value(),
+            oc_secret_key_initialized: self.data.oc_key_pair.is_initialised(),
+            canister_upgrades_failed: canister_upgrades_metrics.failed,
+            cycles_balance_check_queue_len: self.data.cycles_balance_check_queue.len() as u32,
+            bots: self
+                .data
+                .bots
+                .iter()
+                .map(|b| BotMetrics {
+                    user_id: b.user_id,
+                    name: b.name.clone(),
+                    commands: b.commands.iter().map(|c| c.name.clone()).collect(),
+                })
+                .collect(),
+            stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
                 identity: self.data.identity_canister_id,
                 notifications: self.data.notifications_canister_id,
-                bot_api_gateway: self.data.bot_api_gateway_canister_id,
                 proposals_bot: self.data.proposals_bot_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 escrow: self.data.escrow_canister_id,
                 event_relay: event_relay_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
+                website: self.data.website_canister_id,
             },
-            oc_secret_key_initialized: self.data.oc_key_pair.is_initialised(),
-            canister_upgrades_failed: canister_upgrades_metrics.failed,
-            cycles_balance_check_queue_len: self.data.cycles_balance_check_queue.len() as u32,
         }
     }
 }
@@ -277,17 +289,19 @@ impl RuntimeState {
 struct Data {
     pub local_users: LocalUserMap,
     pub global_users: GlobalUserMap,
+    #[serde(default)]
+    pub bots: BotsMap,
     pub child_canister_wasms: ChildCanisterWasms<ChildCanisterType>,
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub identity_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
-    #[serde(default = "bot_api_gateway_canister_id")]
-    pub bot_api_gateway_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
+    #[serde(default = "website_canister_id")]
+    pub website_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
@@ -310,17 +324,8 @@ struct Data {
     pub cycles_balance_check_queue: VecDeque<UserId>,
 }
 
-fn bot_api_gateway_canister_id() -> CanisterId {
-    let canister_id = ic_cdk::id();
-    if canister_id == CanisterId::from_text("nq4qv-wqaaa-aaaaf-bhdgq-cai").unwrap() {
-        CanisterId::from_text("xdh4a-myaaa-aaaaf-bscya-cai").unwrap()
-    } else if canister_id == CanisterId::from_text("aboy3-giaaa-aaaar-aaaaq-cai").unwrap() {
-        CanisterId::from_text("lvpeh-caaaa-aaaar-boaha-cai").unwrap()
-    } else if canister_id == CanisterId::from_text("pecvb-tqaaa-aaaaf-bhdiq-cai").unwrap() {
-        CanisterId::from_text("xeg2u-baaaa-aaaaf-bscyq-cai").unwrap()
-    } else {
-        Principal::anonymous()
-    }
+fn website_canister_id() -> CanisterId {
+    CanisterId::from_text("6hsbt-vqaaa-aaaaf-aaafq-cai").unwrap()
 }
 
 #[derive(Serialize, Deserialize)]
@@ -344,12 +349,12 @@ impl Data {
         group_index_canister_id: CanisterId,
         identity_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
-        bot_api_gateway_canister_id: CanisterId,
         proposals_bot_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         escrow_canister_id: CanisterId,
         event_relay_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
+        website_canister_id: CanisterId,
         canister_pool_target_size: u16,
         video_call_operators: Vec<Principal>,
         oc_secret_key_der: Option<Vec<u8>>,
@@ -364,11 +369,11 @@ impl Data {
             group_index_canister_id,
             identity_canister_id,
             notifications_canister_id,
-            bot_api_gateway_canister_id,
             proposals_bot_canister_id,
             cycles_dispenser_canister_id,
             escrow_canister_id,
             internet_identity_canister_id,
+            website_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
@@ -392,6 +397,7 @@ impl Data {
             ic_root_key,
             events_for_remote_users: Vec::new(),
             cycles_balance_check_queue: VecDeque::new(),
+            bots: BotsMap::default(),
         }
     }
 }
@@ -421,10 +427,12 @@ pub struct Metrics {
     pub referral_codes: HashMap<ReferralType, ReferralTypeMetrics>,
     pub event_store_client_info: EventStoreClientInfo,
     pub user_versions: BTreeMap<String, u32>,
-    pub canister_ids: CanisterIds,
     pub oc_secret_key_initialized: bool,
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
     pub cycles_balance_check_queue_len: u32,
+    pub bots: Vec<BotMetrics>,
+    pub stable_memory_sizes: BTreeMap<u8, u64>,
+    pub canister_ids: CanisterIds,
 }
 
 #[derive(Serialize, Debug)]
@@ -433,10 +441,17 @@ pub struct CanisterIds {
     pub group_index: CanisterId,
     pub identity: CanisterId,
     pub notifications: CanisterId,
-    pub bot_api_gateway: CanisterId,
     pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub escrow: CanisterId,
     pub event_relay: CanisterId,
     pub internet_identity: CanisterId,
+    pub website: CanisterId,
+}
+
+#[derive(Serialize, Debug)]
+pub struct BotMetrics {
+    pub user_id: UserId,
+    pub name: String,
+    pub commands: Vec<String>,
 }

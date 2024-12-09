@@ -43,31 +43,20 @@ export interface Account {
   'subaccount' : [] | [Subaccount],
 }
 export type AccountIdentifier = Uint8Array | number[];
-export type Achievement = { 'AppointedGroupModerator' : null } |
-  { 'Referred20thUser' : null } |
-  { 'DirectChats5' : null } |
+export type Achievement = { 'Referred20thUser' : null } |
   { 'ChangedTheme' : null } |
-  { 'ChosenAsGroupModerator' : null } |
   { 'FavouritedChat' : null } |
-  { 'AppointedGroupAdmin' : null } |
   { 'HadMessageReactedTo' : null } |
   { 'PinnedChat' : null } |
   { 'VotedOnPoll' : null } |
-  { 'ChosenAsGroupAdmin' : null } |
-  { 'OwnGroupWithOneHundredDiamondMembers' : null } |
   { 'JoinedCommunity' : null } |
   { 'SetCommunityDisplayName' : null } |
-  { 'AppointedGroupOwner' : null } |
-  { 'OwnGroupWithTenDiamondMembers' : null } |
-  { 'JoinedGatedGroupOrCommunity' : null } |
   { 'JoinedGroup' : null } |
   { 'StartedCall' : null } |
-  { 'ChosenAsGroupOwner' : null } |
   { 'TippedMessage' : null } |
   { 'Streak100' : null } |
   { 'Streak365' : null } |
   { 'SentGiphy' : null } |
-  { 'SetCommunityAccessGate' : null } |
   { 'Streak14' : null } |
   { 'Streak30' : null } |
   { 'HadMessageTipped' : null } |
@@ -82,31 +71,23 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'JoinedCall' : null } |
   { 'SetDisplayName' : null } |
   { 'SentImage' : null } |
-  { 'EnabledDisappearingMessages' : null } |
   { 'ForwardedMessage' : null } |
   { 'SentPrize' : null } |
   { 'FollowedThread' : null } |
   { 'SetBio' : null } |
   { 'SetPin' : null } |
-  { 'OwnGroupWithOneThousandDiamondMembers' : null } |
   { 'SentP2PSwapOffer' : null } |
   { 'QuoteReplied' : null } |
   { 'Referred50thUser' : null } |
-  { 'OwnGroupWithOneDiamondMember' : null } |
   { 'SentCrypto' : null } |
   { 'ProvedUniquePersonhood' : null } |
-  { 'PinnedMessage' : null } |
   { 'Streak3' : null } |
   { 'Streak7' : null } |
   { 'UpgradedToGoldDiamond' : null } |
   { 'Referred1stUser' : null } |
   { 'ReceivedCrypto' : null } |
   { 'Referred10thUser' : null } |
-  { 'TranslationAccepted' : null } |
   { 'RepliedInThread' : null } |
-  { 'DirectChats10' : null } |
-  { 'DirectChats20' : null } |
-  { 'SetGroupAccessGate' : null } |
   { 'SentFile' : null } |
   { 'DeletedMessage' : null } |
   { 'SentDirectMessage' : null } |
@@ -114,7 +95,6 @@ export type Achievement = { 'AppointedGroupModerator' : null } |
   { 'SentPoll' : null } |
   { 'SentAudio' : null } |
   { 'SentText' : null } |
-  { 'SuggestedTranslation' : null } |
   { 'SetAvatar' : null } |
   { 'SentVideo' : null };
 export interface AddedToChannelNotification {
@@ -252,6 +232,7 @@ export type ChatEvent = { 'Empty' : null } |
   { 'UsersInvited' : UsersInvited } |
   { 'UsersBlocked' : UsersBlocked } |
   { 'MessageUnpinned' : MessageUnpinned } |
+  { 'FailedToDeserialize' : null } |
   { 'ParticipantsRemoved' : ParticipantsRemoved } |
   { 'GroupVisibilityChanged' : GroupVisibilityChanged } |
   { 'Message' : Message } |
@@ -283,6 +264,7 @@ export interface ChatMetrics {
   'prize_winner_messages' : bigint,
   'audio_messages' : bigint,
   'chat_messages' : bigint,
+  'crypto_messages' : bigint,
   'edits' : bigint,
   'icp_messages' : bigint,
   'last_active' : TimestampMillis,
@@ -362,6 +344,7 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'description' : [] | [string],
   'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
+  'any_updates_missed' : boolean,
   'avatar_id' : DocumentIdUpdate,
   'messages_visible_to_non_members' : [] | [boolean],
   'membership' : [] | [GroupMembershipUpdates],
@@ -452,6 +435,13 @@ export interface CommunityMembershipUpdates {
   'display_name' : TextUpdate,
   'rules_accepted' : [] | [boolean],
 }
+export type CommunityPermission = { 'RemoveMembers' : null } |
+  { 'CreatePublicChannel' : null } |
+  { 'InviteUsers' : null } |
+  { 'ManageUserGroups' : null } |
+  { 'UpdateDetails' : null } |
+  { 'CreatePrivateChannel' : null } |
+  { 'ChangeRoles' : null };
 export type CommunityPermissionRole = { 'Owners' : null } |
   { 'Admins' : null } |
   { 'Members' : null };
@@ -749,6 +739,7 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
   'unfollowed_threads' : Uint32Array | number[],
+  'any_updates_missed' : boolean,
   'avatar_id' : DocumentIdUpdate,
   'rules_accepted' : [] | [boolean],
   'messages_visible_to_non_members' : [] | [boolean],
@@ -892,6 +883,16 @@ export interface GroupNameChanged {
   'new_name' : string,
   'previous_name' : string,
 }
+export type GroupPermission = { 'StartVideoCall' : null } |
+  { 'DeleteMessages' : null } |
+  { 'RemoveMembers' : null } |
+  { 'UpdateGroup' : null } |
+  { 'ReactToMessages' : null } |
+  { 'AddMembers' : null } |
+  { 'InviteUsers' : null } |
+  { 'MentionAllMembers' : null } |
+  { 'PinMessages' : null } |
+  { 'ChangeRoles' : null };
 export interface GroupPermissions {
   'mention_all_members' : PermissionRole,
   'delete_messages' : PermissionRole,
@@ -1103,7 +1104,6 @@ export interface Mention {
   'message_id' : MessageId,
   'event_index' : EventIndex,
   'thread_root_message_index' : [] | [MessageIndex],
-  'mentioned_by' : UserId,
   'message_index' : MessageIndex,
 }
 export interface Message {
@@ -1169,6 +1169,17 @@ export interface MessageMatch {
   'score' : number,
   'message_index' : MessageIndex,
 }
+export type MessagePermission = { 'VideoCall' : null } |
+  { 'Giphy' : null } |
+  { 'File' : null } |
+  { 'Poll' : null } |
+  { 'Text' : null } |
+  { 'Image' : null } |
+  { 'Prize' : null } |
+  { 'P2pSwap' : null } |
+  { 'Audio' : null } |
+  { 'Crypto' : null } |
+  { 'Video' : null };
 export interface MessagePermissions {
   'audio' : [] | [PermissionRole],
   'video' : [] | [PermissionRole],
@@ -1294,6 +1305,12 @@ export interface NotificationEnvelope {
   'recipients' : Array<UserId>,
   'timestamp' : TimestampMillis,
 }
+export interface NumberParam {
+  'min_length' : number,
+  'max_length' : number,
+  'choices' : Array<NumberParamChoice>,
+}
+export interface NumberParamChoice { 'value' : number, 'name' : string }
 export interface OptionalCommunityPermissions {
   'create_public_channel' : [] | [CommunityPermissionRole],
   'manage_user_groups' : [] | [CommunityPermissionRole],
@@ -1445,21 +1462,27 @@ export interface PollVotes {
 }
 export interface PrizeContent {
   'winner_count' : number,
+  'streak_only' : number,
   'token' : Cryptocurrency,
+  'lifetime_diamond_only' : boolean,
   'end_date' : TimestampMillis,
   'prizes_remaining' : number,
   'prizes_pending' : number,
   'caption' : [] | [string],
   'diamond_only' : boolean,
+  'unique_person_only' : boolean,
   'winners' : Array<UserId>,
   'user_is_winner' : boolean,
 }
 export interface PrizeContentInitial {
   'prizes_v2' : Array<bigint>,
+  'streak_only' : number,
+  'lifetime_diamond_only' : boolean,
   'end_date' : TimestampMillis,
   'caption' : [] | [string],
   'transfer' : CryptoTransaction,
   'diamond_only' : boolean,
+  'unique_person_only' : boolean,
 }
 export interface PrizeWinnerContent {
   'transaction' : CompletedCryptoTransaction,
@@ -1582,6 +1605,29 @@ export interface SelectedGroupUpdates {
   'latest_event_index' : EventIndex,
   'blocked_users_added' : Array<UserId>,
 }
+export interface SlashCommandParam {
+  'name' : string,
+  'description' : [] | [string],
+  'required' : boolean,
+  'placeholder' : [] | [string],
+  'param_type' : SlashCommandParamType,
+}
+export type SlashCommandParamType = { 'UserParam' : null } |
+  { 'NumberParam' : NumberParam } |
+  { 'StringParam' : StringParam } |
+  { 'BooleanParam' : null };
+export interface SlashCommandPermissions {
+  'chat' : Array<GroupPermission>,
+  'community' : Array<CommunityPermission>,
+  'thread' : Array<MessagePermission>,
+  'message' : Array<MessagePermission>,
+}
+export interface SlashCommandSchema {
+  'permissions' : SlashCommandPermissions,
+  'name' : string,
+  'description' : [] | [string],
+  'params' : Array<SlashCommandParam>,
+}
 export interface SnsNeuronGate {
   'min_stake_e8s' : [] | [bigint],
   'min_dissolve_delay' : [] | [Milliseconds],
@@ -1605,6 +1651,12 @@ export interface SnsProposal {
   'proposer' : SnsNeuronId,
   'minimum_yes_proportion_of_exercised' : number,
 }
+export interface StringParam {
+  'min_length' : number,
+  'max_length' : number,
+  'choices' : Array<StringParamChoice>,
+}
+export interface StringParamChoice { 'value' : string, 'name' : string }
 export type Subaccount = Uint8Array | number[];
 export interface Subscription {
   'value' : SubscriptionInfo,
@@ -1723,7 +1775,6 @@ export interface UserSummary {
 }
 export interface UserSummaryStable {
   'username' : string,
-  'bot_config' : [] | [BotConfig],
   'diamond_membership_status' : DiamondMembershipStatus,
   'is_unique_person' : boolean,
   'is_bot' : boolean,
