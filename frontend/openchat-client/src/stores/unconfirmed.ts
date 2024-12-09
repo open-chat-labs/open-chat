@@ -6,6 +6,7 @@ import {
     type MessageContext,
     MessageContextMap,
 } from "openchat-shared";
+import { recentlySentMessagesStore } from "./recentlySentMessages";
 
 export type UnconfirmedState = {
     messages: EventWrapper<Message>[];
@@ -81,6 +82,7 @@ function createUnconfirmedStore() {
                 }
                 return state;
             });
+            recentlySentMessagesStore.insert(message.event.messageId, message.timestamp);
         },
         contains: (key: MessageContext, messageId: bigint): boolean => {
             return storeValue.get(key)?.messageIds.has(messageId) ?? false;
