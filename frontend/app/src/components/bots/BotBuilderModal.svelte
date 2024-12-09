@@ -8,16 +8,26 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import { getContext } from "svelte";
     import { toastStore } from "../../stores/toast";
+    import ButtonGroup from "../ButtonGroup.svelte";
 
     const client = getContext<OpenChat>("client");
 
+    interface Props {
+        onClose: () => void;
+    }
+
+    let { onClose }: Props = $props();
+
     let valid = $state(false);
+    let registering = $state(false);
 
     let bot = $state(emptyBotInstance());
 
     function register() {
         if (bot !== undefined && valid) {
+            registering = true;
             const snapshot = $state.snapshot(bot);
+            console.log("About to register bot", snapshot);
             client
                 .registerBot({
                     ...snapshot,
@@ -27,30 +37,36 @@
                 .then((success) => {
                     if (!success) {
                         toastStore.showFailureToast(i18nKey("Unable to register test bot"));
+                    } else {
+                        console.log("Bot registered");
+                        onClose();
                     }
-                });
+                })
+                .finally(() => (registering = false));
         }
     }
 </script>
 
-<ModalContent on:close>
+<ModalContent on:close={onClose}>
     <div class="header" slot="header">
         <Translatable resourceKey={i18nKey("bots.builder.title")}></Translatable>
     </div>
     <div class="body" slot="body">
         <BotBuilder onUpdate={(b) => (bot = b)} bind:valid />
     </div>
-    <div class="footer" slot="footer" let:onClose>
-        <Button
-            on:click={register}
-            disabled={!valid}
-            on:click={onClose}
-            small={!$mobileWidth}
-            tiny={$mobileWidth}>
-            <Translatable resourceKey={i18nKey("Register")} />
-        </Button>
+    <div class="footer" slot="footer">
+        <ButtonGroup>
+            <Button secondary small={!$mobileWidth} tiny={$mobileWidth} on:click={onClose}>
+                <Translatable resourceKey={i18nKey("cancel")} />
+            </Button>
+            <Button
+                on:click={register}
+                disabled={!valid || registering}
+                loading={registering}
+                small={!$mobileWidth}
+                tiny={$mobileWidth}>
+                <Translatable resourceKey={i18nKey("Register")} />
+            </Button>
+        </ButtonGroup>
     </div>
 </ModalContent>
-
-<style lang="scss">
-</style>

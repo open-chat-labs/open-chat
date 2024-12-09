@@ -779,7 +779,7 @@ type RegisterBot = {
 };
 
 type ExploreBots = {
-    searchTerm: string;
+    searchTerm: string | undefined;
     pageIndex: number;
     pageSize: number;
     kind: "exploreBots";

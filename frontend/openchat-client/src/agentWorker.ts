@@ -213,10 +213,15 @@ export class OpenChatAgentWorker extends EventTarget {
             throw new Error("WORKER_CLIENT: the client is not yet connected to the worker");
         }
         const correlationId = random128().toString();
-        this._worker.postMessage({
-            ...req,
-            correlationId,
-        });
+        try {
+            this._worker.postMessage({
+                ...req,
+                correlationId,
+            });
+        } catch (err) {
+            console.error("Error sending postMessage to worker", err);
+            throw err;
+        }
         return this.responseHandler(req, correlationId, timeout);
     }
 }

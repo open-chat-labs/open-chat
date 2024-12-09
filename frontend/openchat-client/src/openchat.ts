@@ -507,7 +507,7 @@ import { localGlobalUpdates } from "./stores/localGlobalUpdates";
 import { identityState } from "./stores/identity";
 import { addQueryStringParam } from "./utils/url";
 import { builtinBot } from "./utils/builtinBotCommands";
-import { testBots, testMatches } from "./utils/testBots";
+import { testBots } from "./utils/testBots";
 
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
@@ -4627,6 +4627,9 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({
             kind: "registerBot",
             bot,
+        }).catch((err) => {
+            this._logger.error("Failed to register bot: ", err);
+            return false;
         });
     }
 
@@ -4945,15 +4948,10 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     exploreBots(
-        searchTerm: string,
+        searchTerm: string | undefined,
         pageIndex: number,
         pageSize: number,
     ): Promise<ExploreBotsResponse> {
-        // return Promise.resolve({
-        //     kind: "success",
-        //     matches: testMatches,
-        //     total: 2,
-        // });
         return this.sendRequest({
             kind: "exploreBots",
             searchTerm,

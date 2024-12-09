@@ -4000,7 +4000,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     exploreBots(
-        searchTerm: string,
+        searchTerm: string | undefined,
         pageIndex: number,
         pageSize: number,
     ): Promise<ExploreBotsResponse> {
@@ -4011,6 +4011,7 @@ export class OpenChatAgent extends EventTarget {
 
     registerBot(bot: ExternalBot): Promise<boolean> {
         if (offline()) return Promise.resolve(false);
+        console.log("Are we getting to this point? I suspect not");
         return this._userIndexClient.registerBot(bot);
     }
 }

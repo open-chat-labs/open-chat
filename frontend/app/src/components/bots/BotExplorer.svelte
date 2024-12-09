@@ -2,7 +2,7 @@
     import { i18nKey, type OpenChat } from "openchat-client";
     import Search from "../Search.svelte";
     import { getContext } from "svelte";
-    import { botSearchStore } from "../../stores/search";
+    import { botSearchState } from "../../stores/search.svelte";
     import Button from "../Button.svelte";
     import Translatable from "../Translatable.svelte";
     import BotMatch from "./BotMatch.svelte";
@@ -12,27 +12,31 @@
 
     let initialised = $state(false);
     let searching = $state(false);
-    let more = $derived($botSearchStore.total > $botSearchStore.results.length);
+    let more = $derived(botSearchState.total > botSearchState.results.length);
 
     function onSearchEntered(reset = false) {
         searching = true;
         if (reset) {
-            botSearchStore.reset();
+            botSearchState.reset();
         } else {
-            botSearchStore.nextPage();
+            botSearchState.nextPage();
         }
-        console.log("Search entered: ", $botSearchStore.term);
+        console.log("Search entered: ", botSearchState.term);
         client
-            .exploreBots($botSearchStore.term, $botSearchStore.index, PAGE_SIZE)
+            .exploreBots(
+                botSearchState.term === "" ? undefined : botSearchState.term,
+                botSearchState.index,
+                PAGE_SIZE,
+            )
             .then((results) => {
                 console.log("Results: ", results);
                 if (results.kind === "success") {
                     if (reset) {
-                        botSearchStore.setResults(results.matches);
+                        botSearchState.results = results.matches;
                     } else {
-                        botSearchStore.appendResults(results.matches);
+                        botSearchState.appendResults(results.matches);
                     }
-                    botSearchStore.setTotal(results.total);
+                    botSearchState.total = results.total;
                 }
             })
             .finally(() => (searching = false));
@@ -49,7 +53,7 @@
 <Search
     on:searchEntered={() => onSearchEntered(true)}
     searching={false}
-    bind:searchTerm={$botSearchStore.term}
+    bind:searchTerm={botSearchState.term}
     placeholder={i18nKey("search")} />
 
 {#if more}
@@ -59,7 +63,7 @@
     </div>
 {/if}
 
-{#each $botSearchStore.results as match}
+{#each botSearchState.results as match}
     <BotMatch {match} />
 {/each}
 

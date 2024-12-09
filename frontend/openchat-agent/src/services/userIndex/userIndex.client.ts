@@ -606,7 +606,7 @@ export class UserIndexClient extends CandidService {
     }
 
     exploreBots(
-        searchTerm: string,
+        searchTerm: string | undefined,
         pageIndex: number,
         pageSize: number,
     ): Promise<ExploreBotsResponse> {
@@ -624,6 +624,7 @@ export class UserIndexClient extends CandidService {
     }
 
     registerBot(bot: ExternalBot): Promise<boolean> {
+        console.log("UserIndex registering bot: ", bot);
         return this.executeMsgpackUpdate(
             "register_bot",
             {
@@ -635,7 +636,10 @@ export class UserIndexClient extends CandidService {
                 description: bot.description ?? "",
                 commands: bot.commands.map(apiExternalBotCommand),
             },
-            (_) => true,
+            (resp) => {
+                console.log("UserIndex register bot response: ", resp);
+                return true;
+            },
             UserIndexRegisterBotArgs,
             UserIndexRegisterBotResponse,
         );
