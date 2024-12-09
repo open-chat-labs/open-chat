@@ -62,7 +62,7 @@ pub struct GroupChatCore {
     pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
     pub external_url: Timestamped<Option<String>>,
     at_everyone_mentions: BTreeMap<TimestampMillis, AtEveryoneMention>,
-    #[serde(skip_deserializing)]
+    #[serde(default)]
     pub bots: GroupBots,
 }
 

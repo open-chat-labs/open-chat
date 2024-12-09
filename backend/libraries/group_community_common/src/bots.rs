@@ -14,7 +14,7 @@ pub struct GroupBots {
 
 impl GroupBots {
     pub fn add(&mut self, user_id: UserId, bot_config: BotGroupConfig, now: TimestampMillis) -> bool {
-        if !self.bots.contains_key(&user_id) {
+        if self.bots.contains_key(&user_id) {
             return false;
         }
 
