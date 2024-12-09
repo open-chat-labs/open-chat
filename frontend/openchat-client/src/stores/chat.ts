@@ -55,6 +55,7 @@ import { draftMessagesStore } from "./draftMessages";
 import { blockedUsers } from "./blockedUsers";
 import { createLsBoolStore } from "./localStorageSetting";
 import { configKeys } from "../utils/config";
+import { recentlySentMessagesStore } from "./recentlySentMessages";
 
 let currentScope: ChatListScope = { kind: "direct_chat" };
 chatListScopeStore.subscribe((s) => (currentScope = s));
@@ -544,6 +545,7 @@ export const threadEvents = derived(
         currentChatBlockedOrSuspendedUsers,
         currentUserIdStore,
         messageFiltersStore,
+        recentlySentMessagesStore,
     ],
     ([
         $serverEvents,
@@ -556,6 +558,7 @@ export const threadEvents = derived(
         $blockedOrSuspendedUsers,
         $currentUserId,
         $messageFilters,
+        $recentlySentMessagesStore,
     ]) => {
         if ($messageContext === undefined || $messageContext.threadRootMessageIndex === undefined)
             return [];
@@ -574,6 +577,7 @@ export const threadEvents = derived(
             $blockedOrSuspendedUsers,
             $currentUserId,
             $messageFilters,
+            $recentlySentMessagesStore,
         );
     },
 );
@@ -728,6 +732,7 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
         currentChatBlockedOrSuspendedUsers,
         currentUserIdStore,
         messageFiltersStore,
+        recentlySentMessagesStore,
     ],
     ([
         $serverEventsForSelectedChat,
@@ -740,6 +745,7 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
         $blockedOrSuspendedUsers,
         $currentUserId,
         $messageFilters,
+        $recentlySentMessagesStore,
     ]) => {
         const chatId = get(selectedChatId) ?? { kind: "group_chat", groupId: "" };
         const failedForChat = $failedMessages.get({ chatId });
@@ -756,6 +762,7 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
             $blockedOrSuspendedUsers,
             $currentUserId,
             $messageFilters,
+            $recentlySentMessagesStore,
         );
     },
 );

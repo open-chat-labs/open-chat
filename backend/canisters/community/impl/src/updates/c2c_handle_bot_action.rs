@@ -5,11 +5,12 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_handle_bot_action::*;
 use community_canister::send_message;
-use types::{c2c_handle_bot_action, BotAction, Chat, MessageContentInitial, TextContent};
+use types::{BotAction, Chat, HandleBotActionsError, MessageContentInitial, TextContent};
+use utils::bots::can_execute_bot_command;
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
-async fn c2c_handle_bot_action(args: Args) -> Response {
+fn c2c_handle_bot_action(args: Args) -> Response {
     run_regular_jobs();
 
     mutate_state(|state| c2c_handle_bot_action_impl(args, state))
@@ -17,15 +18,19 @@ async fn c2c_handle_bot_action(args: Args) -> Response {
 
 fn c2c_handle_bot_action_impl(args: Args, state: &mut RuntimeState) -> Response {
     if state.data.frozen.is_some() {
-        return Err(c2c_handle_bot_action::HandleBotActionsError::Frozen);
+        return Err(HandleBotActionsError::Frozen);
     }
+
+    if !is_bot_permitted_to_execute_command(&args, state) {
+        return Err(HandleBotActionsError::NotAuthorized);
+    }
+
+    let Chat::Channel(_, channel_id) = args.chat else {
+        unreachable!()
+    };
 
     match args.action {
         BotAction::SendTextMessage(send_message_args) => {
-            let Chat::Channel(_, channel_id) = args.chat else {
-                unreachable!()
-            };
-
             send_message_impl(
                 send_message::Args {
                     channel_id,
@@ -52,4 +57,28 @@ fn c2c_handle_bot_action_impl(args: Args, state: &mut RuntimeState) -> Response 
     }
 
     Ok(())
+}
+
+fn is_bot_permitted_to_execute_command(args: &Args, state: &RuntimeState) -> bool {
+    let Chat::Channel(_, channel_id) = args.chat else {
+        unreachable!()
+    };
+
+    // Get the permissions granted to the bot in this community
+    let Some(granted_to_bot) = state.data.get_bot_permissions(&args.bot.user_id) else {
+        return false;
+    };
+
+    // Get the permissions granted to the user in this community/channel
+    let Some(granted_to_user) = state
+        .data
+        .get_user_permissions_for_bot_commands(&args.commanded_by, &channel_id)
+    else {
+        return false;
+    };
+
+    // Get the permissions required to execute the given action
+    let permissions_required = args.action.permissions_required(args.thread_root_message_index.is_some());
+
+    can_execute_bot_command(&permissions_required, granted_to_bot, &granted_to_user)
 }
