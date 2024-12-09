@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::ops::DerefMut;
 use types::{
-    is_default, AccessGate, AccessGateConfigInternal, AvatarChanged, BotAdded, BotRemoved, ChannelId, Chat, ChatId,
+    is_default, AccessGate, AccessGateConfigInternal, AvatarChanged, BotAdded, BotRemoved, BotUpdated, ChannelId, Chat, ChatId,
     CommunityId, DeletedBy, DirectChatCreated, EventIndex, EventWrapperInternal, EventsTimeToLiveUpdated, ExternalUrlUpdated,
     GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged,
     GroupReplyContext, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, MemberJoinedInternal, MemberLeft,
@@ -71,6 +71,8 @@ pub enum ChatEventInternal {
     BotAdded(Box<BotAdded>),
     #[serde(rename = "br")]
     BotRemoved(Box<BotRemoved>),
+    #[serde(rename = "bu")]
+    BotUpdated(Box<BotUpdated>),
     #[serde(rename = "e")]
     Empty,
     // This should never happen!

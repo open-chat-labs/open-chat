@@ -442,6 +442,7 @@ pub trait Reader {
             ChatEventInternal::FailedToDeserialize => ChatEvent::FailedToDeserialize,
             ChatEventInternal::BotAdded(e) => ChatEvent::BotAdded(e),
             ChatEventInternal::BotRemoved(e) => ChatEvent::BotRemoved(e),
+            ChatEventInternal::BotUpdated(e) => ChatEvent::BotUpdated(e),
         };
 
         EventWrapper {
