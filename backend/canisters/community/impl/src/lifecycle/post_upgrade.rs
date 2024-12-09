@@ -1,8 +1,8 @@
 use crate::jobs::import_groups::finalize_group_import;
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
-use crate::timer_job_types::MigrateMembersToStableMemoryJob;
-use crate::{read_state, Data};
+use crate::timer_job_types::{MigrateMembersToStableMemoryJob, TimerJob};
+use crate::{mutate_state, read_state, Data};
 use canister_logger::LogEntry;
 use canister_timer_jobs::Job;
 use canister_tracing_macros::trace;
@@ -52,6 +52,13 @@ fn post_upgrade(args: Args) {
         state
             .data
             .record_instructions_count(InstructionCountFunctionId::PostUpgrade, now)
+    });
+
+    mutate_state(|state| {
+        state
+            .data
+            .timer_jobs
+            .cancel_jobs(|j| matches!(j, TimerJob::MigrateMembersToStableMemory(_)));
     });
 
     MigrateMembersToStableMemoryJob.execute();

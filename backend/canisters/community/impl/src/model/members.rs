@@ -38,9 +38,7 @@ pub struct CommunityMembers {
     members_with_display_names: BTreeSet<UserId>,
     members_with_referrals: BTreeSet<UserId>,
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
-    #[serde(skip_deserializing)]
     migrate_to_stable_memory_queue: VecDeque<UserId>,
-    #[serde(skip_deserializing)]
     migration_to_stable_memory_complete: bool,
 }
 
