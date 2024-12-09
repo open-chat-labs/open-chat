@@ -114,6 +114,10 @@ fn validate_request(args: &Args, state: &RuntimeState) -> Result<(), String> {
         return Err("principal cannot be anonymous".to_string());
     }
 
+    if state.data.users.get_by_principal(&state.env.caller()).is_some() {
+        return Err("already registered".to_string());
+    }
+
     match validate_username(&args.name) {
         Ok(_) => {}
         Err(UsernameValidationError::TooShort(_)) => return Err("name too short".to_string()),
