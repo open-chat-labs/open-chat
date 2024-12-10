@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Allow bots to send a subset of message types ([#7016](https://github.com/open-chat-labs/open-chat/pull/7016))
 - Switch to using `PrincipalToStableMemoryMap` ([#7023](https://github.com/open-chat-labs/open-chat/pull/7023))
 - Implement new lightweight search index for searching messages ([#7029](https://github.com/open-chat-labs/open-chat/pull/7029))
+- Make `MessageId` comparisons use their 64bit representation ([#7030](https://github.com/open-chat-labs/open-chat/pull/7030))
 
 ## [[2.0.1501](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1501-group)] - 2024-12-06
 
