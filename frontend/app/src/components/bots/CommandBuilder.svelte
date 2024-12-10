@@ -7,7 +7,6 @@
         type SlashCommandParam,
         type SlashCommandSchema,
         ValidationErrors,
-        type SlashCommandPermissions,
     } from "openchat-client";
     import Input from "../Input.svelte";
     import { i18nKey } from "../../i18n/i18n";

@@ -33,19 +33,24 @@
     let adding = $state(false);
     let requestedPermissions = $derived(flattenPermissions());
     let grantedPermissions = $state(flattenPermissions());
+    let collapsed = $state(true);
+
+    function hasEveryPermission<P extends keyof SlashCommandPermissions>(
+        required: SlashCommandPermissions,
+        granted: SlashCommandPermissions,
+        prop: P,
+    ): boolean {
+        const r = required[prop] as SlashCommandPermissions[P][number][];
+        const g = granted[prop] as SlashCommandPermissions[P][number][];
+        return r.every((p) => g.includes(p));
+    }
 
     function permitted(required: SlashCommandPermissions): boolean {
         return (
-            required.chatPermissions.every((p) => grantedPermissions.chatPermissions.includes(p)) &&
-            required.communityPermissions.every((p) =>
-                grantedPermissions.communityPermissions.includes(p),
-            ) &&
-            (required.messagePermissions.every((p) =>
-                grantedPermissions.messagePermissions.includes(p),
-            ) ||
-                required.threadPermissions.every((p) =>
-                    grantedPermissions.threadPermissions.includes(p),
-                ))
+            hasEveryPermission(required, grantedPermissions, "chatPermissions") &&
+            hasEveryPermission(required, grantedPermissions, "communityPermissions") &&
+            hasEveryPermission(required, grantedPermissions, "messagePermissions") &&
+            hasEveryPermission(required, grantedPermissions, "threadPermissions")
         );
     }
 
@@ -87,7 +92,13 @@
                 <h4 class="bot-name">
                     {bot.name}
                 </h4>
-                <p title={bot.description} class="bot-desc">
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+                <p
+                    title={bot.description}
+                    class="bot-desc"
+                    class:collapsed
+                    onclick={() => (collapsed = !collapsed)}>
                     {bot.description}
                 </p>
                 <div class="commands">
@@ -253,18 +264,24 @@
             @include font(light, normal, fs-100);
             color: var(--txt-light);
             margin-bottom: $sp3;
+
+            &.collapsed {
+                @include clamp(4);
+            }
         }
     }
 
     .commands {
         display: flex;
         align-items: center;
+        flex-wrap: wrap;
         gap: $sp3;
         margin-bottom: $sp4;
 
         .command {
             @include font(light, normal, fs-80);
             background-color: var(--button-bg);
+            border: 1px solid var(--button-bg);
             color: var(--button-txt);
             padding: $sp2 $sp3;
             border-radius: $sp2;
@@ -272,8 +289,8 @@
 
             &.not_permitted {
                 background-color: unset;
-                border: 1px solid var(--button-bg);
                 color: var(--txt);
+                opacity: 0.8;
             }
         }
     }

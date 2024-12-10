@@ -44,11 +44,34 @@ const kickPollCommand: SlashCommandSchema = {
     ],
 };
 
+const pingPong: SlashCommandSchema = {
+    name: "ping_pong",
+    description: "This will just take a message and send it back to you",
+    permissions: {
+        ...emptyPermissions,
+        messagePermissions: ["text"],
+        threadPermissions: ["text"],
+    },
+    params: [
+        {
+            kind: "string",
+            name: "Prompt",
+            required: true,
+            minLength: 0,
+            maxLength: 1000,
+            description: "The text that you want to relay",
+            placeholder: "Enter text",
+            choices: [],
+        },
+    ],
+};
+
 const chatCommand: SlashCommandSchema = {
     name: "chat",
     description: "Ask OpenChat AI a question",
     permissions: {
         ...emptyPermissions,
+        chatPermissions: ["reactToMessages", "pinMessages", "startVideoCall"],
         messagePermissions: ["text", "image", "file"],
         threadPermissions: ["text", "image", "file"],
     },
@@ -179,7 +202,14 @@ export const testBots: Bot[] = [
         endpoint: "http://localhost:3000/execute",
         description:
             "This bot also does not do anything but in this case it has a much longer description. The reason that we need a longer description is so that we can tell that the card still renders ok if there is a lot of text to display. What should we do? Should we truncate it or should we do something else? Show multiple lines? Show the whole thing? Make it expandable?",
-        commands: [chatCommand, banCommand, weatherCommand, multiplyCommand, calculateCommand],
+        commands: [
+            chatCommand,
+            banCommand,
+            weatherCommand,
+            multiplyCommand,
+            calculateCommand,
+            pingPong,
+        ],
     },
 ];
 
@@ -199,6 +229,13 @@ export const testMatches: BotMatch[] = [
         description:
             "This bot also does not do anything but in this case it has a much longer description. The reason that we need a longer description is so that we can tell that the card still renders ok if there is a lot of text to display. What should we do? Should we truncate it or should we do something else? Show multiple lines? Show the whole thing? Make it expandable?",
         owner: "owner",
-        commands: [chatCommand, banCommand, weatherCommand, multiplyCommand, calculateCommand],
+        commands: [
+            chatCommand,
+            banCommand,
+            weatherCommand,
+            multiplyCommand,
+            calculateCommand,
+            pingPong,
+        ],
     },
 ];

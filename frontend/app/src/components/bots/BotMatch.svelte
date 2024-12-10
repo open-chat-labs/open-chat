@@ -90,17 +90,14 @@
         .bot-desc {
             @include font(light, normal, fs-100);
             color: var(--txt-light);
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            @include clamp(2);
             margin-bottom: $sp3;
         }
     }
 
     .commands {
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
         gap: $sp3;
         .command {
