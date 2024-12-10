@@ -51,14 +51,24 @@ impl<'de> Visitor<'de> for SearchIndexVisitor {
     {
         let mut result: BTreeMap<MessageIndex, (UserId, Document)> = BTreeMap::new();
         while let Some((message_index, (user_id, doc))) = map.next_entry()? {
-            result.insert(message_index, (user_id, convert_weighted_to_simple(doc)));
+            result.insert(message_index, (user_id, convert_to_simple_doc(doc)));
         }
         Ok(result)
     }
 }
 
-fn convert_weighted_to_simple(weighted: search::weighted::Document) -> Document {
-    weighted.into()
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum DocumentCombined {
+    Weighted(search::weighted::Document),
+    Simple(Document),
+}
+
+fn convert_to_simple_doc(doc: DocumentCombined) -> Document {
+    match doc {
+        DocumentCombined::Weighted(doc) => doc.into(),
+        DocumentCombined::Simple(doc) => doc,
+    }
 }
 
 fn deserialize_weighted_search_map<'de, D: Deserializer<'de>>(
