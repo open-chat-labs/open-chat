@@ -4022,4 +4022,8 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<boolean> {
         return this.communityClient(id.communityId).addBot(botId, grantedPermissions);
     }
+
+    removeBotFromCommunity(id: CommunityIdentifier, botId: string): Promise<boolean> {
+        return this.communityClient(id.communityId).removeBot(botId);
+    }
 }

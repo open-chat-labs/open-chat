@@ -7673,6 +7673,17 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
+    removeBotFromCommunity(id: CommunityIdentifier, botId: string): Promise<boolean> {
+        return this.sendRequest({
+            kind: "removeBotFromCommunity",
+            id,
+            botId,
+        }).catch((err) => {
+            this._logger.error("Error removing bot from community", err);
+            return false;
+        });
+    }
+
     private callBotEndpoint(bot: ExternalBotCommandInstance, token: string): Promise<unknown> {
         // This will send the OC access JWT to the external bot's endpoint
         const headers = new Headers();

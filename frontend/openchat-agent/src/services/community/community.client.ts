@@ -25,6 +25,7 @@ import {
     exploreChannelsResponse,
     followThreadResponse,
     importGroupResponse,
+    removeBotResponse,
     removeMemberFromChannelResponse,
     removeMemberResponse,
     reportMessageResponse,
@@ -292,6 +293,8 @@ import {
     Empty as TEmpty,
     CommunityAddBotArgs,
     CommunityAddBotResponse,
+    CommunityRemoveBotArgs,
+    CommunityRemoveBotResponse,
 } from "../../typebox";
 
 export class CommunityClient extends CandidService {
@@ -1734,6 +1737,18 @@ export class CommunityClient extends CandidService {
             addBotResponse,
             CommunityAddBotArgs,
             CommunityAddBotResponse,
+        );
+    }
+
+    removeBot(botId: string): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "add_bot",
+            {
+                bot_id: principalStringToBytes(botId),
+            },
+            removeBotResponse,
+            CommunityRemoveBotArgs,
+            CommunityRemoveBotResponse,
         );
     }
 }

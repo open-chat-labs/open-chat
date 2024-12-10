@@ -411,13 +411,20 @@ export type WorkerRequest =
     | MessageActivityFeed
     | MarkActivityFeedRead
     | DeleteUser
-    | AddBotToCommunity;
+    | AddBotToCommunity
+    | RemoveBotFromCommunity;
 
 type AddBotToCommunity = {
     kind: "addBotToCommunity";
     id: CommunityIdentifier;
     botId: string;
     grantedPermissions: SlashCommandPermissions;
+};
+
+type RemoveBotFromCommunity = {
+    kind: "removeBotFromCommunity";
+    id: CommunityIdentifier;
+    botId: string;
 };
 
 type MarkActivityFeedRead = {
