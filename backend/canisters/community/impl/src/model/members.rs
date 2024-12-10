@@ -28,9 +28,9 @@ pub struct CommunityMembers {
     members_and_channels: BTreeMap<UserId, Vec<ChannelId>>,
     member_channel_links_removed: BTreeMap<(UserId, ChannelId), TimestampMillis>,
     user_groups: UserGroups,
+    // This includes the userIds of community members and also users invited to the community
     #[serde(deserialize_with = "deserialize_principal_to_user_id_map_from_heap")]
     principal_to_user_id_map: PrincipalToUserIdMap,
-    // This includes the userIds of community members and also users invited to the community
     #[deprecated]
     member_ids: Vec<UserId>,
     owners: BTreeSet<UserId>,

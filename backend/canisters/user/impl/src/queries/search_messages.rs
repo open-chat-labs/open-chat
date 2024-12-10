@@ -1,7 +1,7 @@
 use crate::guards::caller_is_owner;
 use crate::{read_state, RuntimeState};
 use canister_api_macros::query;
-use search::Query;
+use search::simple::Query;
 use std::collections::HashSet;
 use types::MessageIndex;
 use user_canister::search_messages::{Response::*, *};
@@ -30,7 +30,7 @@ fn search_messages_impl(args: Args, state: &RuntimeState) -> Response {
         Some(dc) => dc,
     };
 
-    let query = Query::parse(args.search_term);
+    let query = Query::new(&args.search_term);
 
     let matches = direct_chat
         .events

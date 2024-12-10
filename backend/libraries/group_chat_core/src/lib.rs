@@ -9,7 +9,7 @@ use group_community_common::{BotUpdate, GroupBots, MemberUpdate};
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use regex_lite::Regex;
-use search::Query;
+use search::simple::Query;
 use serde::{Deserialize, Serialize};
 use std::cmp::{max, min, Reverse};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
@@ -590,7 +590,7 @@ impl GroupChatCore {
             Some(p) => p,
         };
 
-        let query = Query::parse(search_term);
+        let query = Query::new(&search_term);
 
         let matches = self
             .events

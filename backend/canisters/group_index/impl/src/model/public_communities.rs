@@ -1,7 +1,7 @@
 use crate::model::moderation_flags::ModerationFlags;
 use crate::model::private_communities::PrivateCommunityInfo;
 use crate::MARK_ACTIVE_DURATION;
-use search::{Document, Query};
+use search::weighted::{Document, Query};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
