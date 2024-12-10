@@ -560,8 +560,13 @@ impl Data {
         false
     }
 
-    pub fn remove_user_from_community(&mut self, user_id: UserId, now: TimestampMillis) -> Option<CommunityMemberInternal> {
-        let removed = self.members.remove(&user_id, now);
+    pub fn remove_user_from_community(
+        &mut self,
+        user_id: UserId,
+        principal: Option<Principal>,
+        now: TimestampMillis,
+    ) -> Option<CommunityMemberInternal> {
+        let removed = self.members.remove(user_id, principal, now);
         self.channels.leave_all_channels(user_id, now);
         self.expiring_members.remove_member(user_id, None);
         self.expiring_member_actions.remove_member(user_id, None);

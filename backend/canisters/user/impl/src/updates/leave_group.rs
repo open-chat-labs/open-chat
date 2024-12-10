@@ -10,11 +10,20 @@ use user_canister::leave_group::{Response::*, *};
 async fn leave_group(args: Args) -> Response {
     run_regular_jobs();
 
-    if read_state(|state| state.data.suspended.value) {
+    let Ok(principal) = read_state(
+        |state| {
+            if state.data.suspended.value {
+                Err(())
+            } else {
+                Ok(state.data.owner)
+            }
+        },
+    ) else {
         return UserSuspended;
-    }
+    };
 
     let c2c_args = c2c_leave_group::Args {
+        principal,
         correlation_id: args.correlation_id,
     };
 
