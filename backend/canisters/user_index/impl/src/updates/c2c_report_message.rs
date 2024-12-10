@@ -183,7 +183,7 @@ https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938
 
         let message = Message {
             message_index: 27461.into(),
-            message_id: 188960262885472233086330058967164649472.into(),
+            message_id: 188960262885472233086330058967164649472u128.into(),
             sender: Principal::from_text("3skqk-iqaaa-aaaaf-aaa3q-cai").unwrap().into(),
             content: types::MessageContent::Text(TextContent { text }),
             replies_to: None,
@@ -209,7 +209,7 @@ https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938
 
         let message = Message {
             message_index: 72805.into(),
-            message_id: 123356442671309293004896491442800689152.into(),
+            message_id: 123356442671309293004896491442800689152u128.into(),
             sender: Principal::from_text("6oehr-mqaaa-aaaaf-ahlaa-cai").unwrap().into(),
             content: types::MessageContent::Image(ImageContent {
                 width: 100,
@@ -245,7 +245,7 @@ https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938
 
         let message = Message {
             message_index: 72805.into(),
-            message_id: 123356442671309293004896491442800689152.into(),
+            message_id: 123356442671309293004896491442800689152u128.into(),
             sender: Principal::from_text("6oehr-mqaaa-aaaaf-ahlaa-cai").unwrap().into(),
             content: types::MessageContent::Video(VideoContent {
                 width: 200,
