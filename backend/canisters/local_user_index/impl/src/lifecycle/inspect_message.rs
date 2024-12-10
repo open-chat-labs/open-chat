@@ -17,7 +17,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "join_community"
         | "join_group"
         | "report_message_v2" => state.is_caller_openchat_user(),
-        "register_user" => true,
+        "register_user" | "execute_bot_command" => true,
         _ => false,
     };
 
