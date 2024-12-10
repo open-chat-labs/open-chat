@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Allow bots to send a subset of message types ([#7016](https://github.com/open-chat-labs/open-chat/pull/7016))
 - Switch to using `PrincipalToStableMemoryMap` ([#7023](https://github.com/open-chat-labs/open-chat/pull/7023))
 - Reduce size by grouping member -> channel links per userId ([#7025](https://github.com/open-chat-labs/open-chat/pull/7025))
+- Merge member Ids set with channel links map ([#7027](https://github.com/open-chat-labs/open-chat/pull/7027))
 
 ### Removed
 
