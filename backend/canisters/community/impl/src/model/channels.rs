@@ -1,8 +1,9 @@
+use super::members::CommunityMembers;
 use chat_events::Reader;
 use group_chat_core::{CanLeaveResult, GroupChatCore, GroupMemberInternal, LeaveResult};
 use rand::rngs::StdRng;
 use rand::{Rng, RngCore};
-use search::*;
+use search::weighted::*;
 use serde::{Deserialize, Serialize};
 use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::Vacant;
@@ -12,8 +13,6 @@ use types::{
     GroupMembership, GroupMembershipUpdates, GroupPermissionRole, GroupPermissions, MultiUserChat, Rules, TimestampMillis,
     UserId, UserType, MAX_THREADS_IN_SUMMARY,
 };
-
-use super::members::CommunityMembers;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Channels {

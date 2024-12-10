@@ -1,5 +1,5 @@
 use ic_principal::Principal;
-use serde::de::SeqAccess;
+use serde::de::MapAccess;
 use serde::{Deserialize, Deserializer, Serialize};
 use stable_memory_map::{with_map, with_map_mut, KeyPrefix, PrincipalToUserIdKeyPrefix};
 use std::fmt::Formatter;
@@ -40,7 +40,7 @@ impl PrincipalToUserIdMap {
 pub fn deserialize_principal_to_user_id_map_from_heap<'de, D: Deserializer<'de>>(
     d: D,
 ) -> Result<PrincipalToUserIdMap, D::Error> {
-    d.deserialize_seq(Visitor)
+    d.deserialize_map(Visitor)
 }
 
 struct Visitor;
@@ -49,18 +49,18 @@ impl<'a> serde::de::Visitor<'a> for Visitor {
     type Value = PrincipalToUserIdMap;
 
     fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
-        formatter.write_str("a sequence of (Principal, UserId)")
+        formatter.write_str("a map of (Principal, UserId)")
     }
 
-    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+    fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
     where
-        A: SeqAccess<'a>,
+        A: MapAccess<'a>,
     {
-        let mut map = PrincipalToUserIdMap::default();
-        while let Some((principal, user_id)) = seq.next_element()? {
-            map.insert(principal, user_id);
+        let mut result = PrincipalToUserIdMap::default();
+        while let Some((principal, user_id)) = map.next_entry()? {
+            result.insert(principal, user_id);
         }
-        Ok(map)
+        Ok(result)
     }
 }
 

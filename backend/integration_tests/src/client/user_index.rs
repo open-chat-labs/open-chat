@@ -11,6 +11,8 @@ generate_query_call!(public_key);
 generate_msgpack_query_call!(user);
 generate_msgpack_query_call!(users);
 generate_msgpack_query_call!(users_chit);
+generate_msgpack_query_call!(bot_updates);
+generate_msgpack_query_call!(explore_bots);
 
 // Updates
 generate_update_call!(add_local_user_index_canister);
@@ -28,9 +30,11 @@ generate_msgpack_update_call!(unsuspend_user);
 generate_update_call!(upgrade_local_user_index_canister_wasm);
 generate_update_call!(upgrade_user_canister_wasm);
 generate_update_call!(upload_wasm_chunk);
+generate_msgpack_update_call!(register_bot);
 
 pub mod happy_path {
     use candid::Principal;
+    use event_store_canister::TimestampMillis;
     use pocket_ic::PocketIc;
     use sha256::sha256;
     use std::collections::HashMap;
@@ -265,6 +269,48 @@ pub mod happy_path {
 
         match response {
             user_index_canister::users_chit::Response::Success(result) => users.into_iter().zip(result.chit).collect(),
+        }
+    }
+
+    pub fn bot_updates(
+        env: &PocketIc,
+        sender: Principal,
+        user_index_canister_id: CanisterId,
+        updated_since: TimestampMillis,
+    ) -> user_index_canister::bot_updates::SuccessResult {
+        let response = super::bot_updates(
+            env,
+            sender,
+            user_index_canister_id,
+            &user_index_canister::bot_updates::Args { updated_since },
+        );
+
+        match response {
+            user_index_canister::bot_updates::Response::Success(success_result) => success_result,
+            response => panic!("'bot_updates' expected Success: {response:?}"),
+        }
+    }
+
+    pub fn explore_bots(
+        env: &PocketIc,
+        sender: Principal,
+        user_index_canister_id: CanisterId,
+        search_term: Option<String>,
+    ) -> user_index_canister::explore_bots::SuccessResult {
+        let response = super::explore_bots(
+            env,
+            sender,
+            user_index_canister_id,
+            &user_index_canister::explore_bots::Args {
+                search_term,
+                page_index: 0,
+                page_size: 10,
+            },
+        );
+
+        match response {
+            user_index_canister::explore_bots::Response::Success(success_result) => success_result,
+            response => panic!("'explore_bots' expected Success: {response:?}"),
         }
     }
 
