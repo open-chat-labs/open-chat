@@ -152,6 +152,7 @@
         "add": {
             "addBot": "Add bot",
             "choosePermissions": "Permissions",
+            "failure": "Sorry we were unable to add the bot",
             "noPermissions": "No special permissions required",
             "permissionsInfo": "This bot seeks the following permissions. Choosing to limit the permissions granted will limit the commands available.",
             "title": "Add bot to community"

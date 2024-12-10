@@ -399,6 +399,7 @@ import type {
     CaptionedContent,
     ExploreBotsResponse,
     ExternalBot,
+    SlashCommandPermissions,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -7653,6 +7654,22 @@ export class OpenChat extends OpenChatAgentWorker {
                 console.log("TOKEN: ", token);
                 return token;
             });
+        });
+    }
+
+    addBotToCommunity(
+        id: CommunityIdentifier,
+        botId: string,
+        grantedPermissions: SlashCommandPermissions,
+    ): Promise<boolean> {
+        return this.sendRequest({
+            kind: "addBotToCommunity",
+            id,
+            botId,
+            grantedPermissions,
+        }).catch((err) => {
+            this._logger.error("Error adding bot to community", err);
+            return false;
         });
     }
 

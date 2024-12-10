@@ -2742,6 +2742,12 @@ export const CommunityChannelSummaryArgs = Type.Object({
     invite_code: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
 });
 
+export type CommunityRemoveBotResponse = Static<typeof CommunityRemoveBotResponse>;
+export const CommunityRemoveBotResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("NotAuthorized"),
+]);
+
 export type CommunityChangeChannelRoleResponse = Static<typeof CommunityChangeChannelRoleResponse>;
 export const CommunityChangeChannelRoleResponse = Type.Union([
     Type.Literal("Success"),
@@ -3166,6 +3172,14 @@ export const CommunityFollowThreadArgs = Type.Object({
     thread_root_message_index: MessageIndex,
     new_achievement: Type.Boolean(),
 });
+
+export type CommunityAddBotResponse = Static<typeof CommunityAddBotResponse>;
+export const CommunityAddBotResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("ChatFrozen"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("AlreadyAdded"),
+]);
 
 export type CommunityDeleteChannelResponse = Static<typeof CommunityDeleteChannelResponse>;
 export const CommunityDeleteChannelResponse = Type.Union([
@@ -4625,7 +4639,7 @@ export const MemberLeft = Type.Object({
 
 export type BotAdded = Static<typeof BotAdded>;
 export const BotAdded = Type.Object({
-    bot_id: UserId,
+    user_id: UserId,
     added_by: UserId,
 });
 
@@ -5158,27 +5172,16 @@ export const CommunityAddMembersToChannelFailedResult = Type.Object({
     users_failed_with_error: Type.Array(CommunityAddMembersToChannelUserFailedError),
 });
 
+export type CommunityRemoveBotArgs = Static<typeof CommunityRemoveBotArgs>;
+export const CommunityRemoveBotArgs = Type.Object({
+    bot_id: UserId,
+});
+
 export type CommunityChangeChannelRoleArgs = Static<typeof CommunityChangeChannelRoleArgs>;
 export const CommunityChangeChannelRoleArgs = Type.Object({
     channel_id: ChannelId,
     user_id: UserId,
     new_role: GroupRole,
-});
-
-export type CommunitySelectedInitialSuccessResult = Static<
-    typeof CommunitySelectedInitialSuccessResult
->;
-export const CommunitySelectedInitialSuccessResult = Type.Object({
-    timestamp: Type.BigInt(),
-    last_updated: Type.BigInt(),
-    latest_event_index: EventIndex,
-    members: Type.Array(CommunityMember),
-    basic_members: Type.Array(UserId),
-    blocked_users: Type.Array(UserId),
-    invited_users: Type.Array(UserId),
-    chat_rules: VersionedRules,
-    user_groups: Type.Array(UserGroupDetails),
-    referrals: Type.Array(UserId),
 });
 
 export type CommunityBlockUserArgs = Static<typeof CommunityBlockUserArgs>;
@@ -5225,35 +5228,6 @@ export const CommunityCreateChannelResponse = Type.Union([
     Type.Literal("UserLapsed"),
 ]);
 
-export type CommunitySelectedUpdatesSuccessResult = Static<
-    typeof CommunitySelectedUpdatesSuccessResult
->;
-export const CommunitySelectedUpdatesSuccessResult = Type.Object({
-    timestamp: Type.BigInt(),
-    last_updated: Type.BigInt(),
-    members_added_or_updated: Type.Array(CommunityMember),
-    members_removed: Type.Array(UserId),
-    blocked_users_added: Type.Array(UserId),
-    blocked_users_removed: Type.Array(UserId),
-    invited_users: Type.Optional(Type.Union([Type.Array(UserId), Type.Undefined()])),
-    chat_rules: Type.Optional(Type.Union([VersionedRules, Type.Undefined()])),
-    user_groups: Type.Array(UserGroupDetails),
-    user_groups_deleted: Type.Array(Type.Number()),
-    referrals_added: Type.Array(UserId),
-    referrals_removed: Type.Array(UserId),
-});
-
-export type CommunitySelectedUpdatesResponse = Static<typeof CommunitySelectedUpdatesResponse>;
-export const CommunitySelectedUpdatesResponse = Type.Union([
-    Type.Object({
-        Success: CommunitySelectedUpdatesSuccessResult,
-    }),
-    Type.Object({
-        SuccessNoUpdates: Type.BigInt(),
-    }),
-    Type.Literal("PrivateCommunity"),
-]);
-
 export type CommunityImportGroupArgs = Static<typeof CommunityImportGroupArgs>;
 export const CommunityImportGroupArgs = Type.Object({
     group_id: ChatId,
@@ -5294,6 +5268,12 @@ export const CommunityUpdateChannelResponse = Type.Union([
     Type.Literal("CommunityFrozen"),
     Type.Literal("UserLapsed"),
 ]);
+
+export type CommunityAddBotArgs = Static<typeof CommunityAddBotArgs>;
+export const CommunityAddBotArgs = Type.Object({
+    bot_id: UserId,
+    granted_permissions: SlashCommandPermissions,
+});
 
 export type StorageBucketDeleteFilesResponse = Static<typeof StorageBucketDeleteFilesResponse>;
 export const StorageBucketDeleteFilesResponse = Type.Object({
@@ -5967,6 +5947,12 @@ export const MembersRemoved = Type.Object({
     removed_by: UserId,
 });
 
+export type BotGroupDetails = Static<typeof BotGroupDetails>;
+export const BotGroupDetails = Type.Object({
+    user_id: UserId,
+    permissions: SlashCommandPermissions,
+});
+
 export type SwapStatusErrorReserved = Static<typeof SwapStatusErrorReserved>;
 export const SwapStatusErrorReserved = Type.Object({
     reserved_by: UserId,
@@ -5974,7 +5960,7 @@ export const SwapStatusErrorReserved = Type.Object({
 
 export type BotRemoved = Static<typeof BotRemoved>;
 export const BotRemoved = Type.Object({
-    bot_id: UserId,
+    user_id: UserId,
     removed_by: UserId,
 });
 
@@ -6208,6 +6194,12 @@ export const GroupFrozen = Type.Object({
     reason: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
 });
 
+export type BotUpdated = Static<typeof BotUpdated>;
+export const BotUpdated = Type.Object({
+    user_id: UserId,
+    updated_by: UserId,
+});
+
 export type FailedCryptoTransactionICRC2 = Static<typeof FailedCryptoTransactionICRC2>;
 export const FailedCryptoTransactionICRC2 = Type.Object({
     ledger: TSBytes,
@@ -6345,6 +6337,8 @@ export const SelectedGroupUpdates = Type.Object({
     latest_event_index: EventIndex,
     members_added_or_updated: Type.Array(GroupMember),
     members_removed: Type.Array(UserId),
+    bots_added_or_updated: Type.Array(BotGroupDetails),
+    bots_removed: Type.Array(UserId),
     blocked_users_added: Type.Array(UserId),
     blocked_users_removed: Type.Array(UserId),
     invited_users: Type.Optional(Type.Union([Type.Array(UserId), Type.Undefined()])),
@@ -6725,13 +6719,22 @@ export const CommunityAddMembersToChannelResponse = Type.Union([
     }),
 ]);
 
-export type CommunitySelectedInitialResponse = Static<typeof CommunitySelectedInitialResponse>;
-export const CommunitySelectedInitialResponse = Type.Union([
-    Type.Object({
-        Success: CommunitySelectedInitialSuccessResult,
-    }),
-    Type.Literal("PrivateCommunity"),
-]);
+export type CommunitySelectedInitialSuccessResult = Static<
+    typeof CommunitySelectedInitialSuccessResult
+>;
+export const CommunitySelectedInitialSuccessResult = Type.Object({
+    timestamp: Type.BigInt(),
+    last_updated: Type.BigInt(),
+    latest_event_index: EventIndex,
+    members: Type.Array(CommunityMember),
+    bots: Type.Array(BotGroupDetails),
+    basic_members: Type.Array(UserId),
+    blocked_users: Type.Array(UserId),
+    invited_users: Type.Array(UserId),
+    chat_rules: VersionedRules,
+    user_groups: Type.Array(UserGroupDetails),
+    referrals: Type.Array(UserId),
+});
 
 export type CommunityVideoCallParticipantsResponse = Static<
     typeof CommunityVideoCallParticipantsResponse
@@ -6744,6 +6747,37 @@ export const CommunityVideoCallParticipantsResponse = Type.Union([
     Type.Literal("UserNotInCommunity"),
     Type.Literal("UserNotInChannel"),
     Type.Literal("ChannelNotFound"),
+]);
+
+export type CommunitySelectedUpdatesSuccessResult = Static<
+    typeof CommunitySelectedUpdatesSuccessResult
+>;
+export const CommunitySelectedUpdatesSuccessResult = Type.Object({
+    timestamp: Type.BigInt(),
+    last_updated: Type.BigInt(),
+    members_added_or_updated: Type.Array(CommunityMember),
+    members_removed: Type.Array(UserId),
+    bots_added_or_updated: Type.Array(BotGroupDetails),
+    bots_removed: Type.Array(UserId),
+    blocked_users_added: Type.Array(UserId),
+    blocked_users_removed: Type.Array(UserId),
+    invited_users: Type.Optional(Type.Union([Type.Array(UserId), Type.Undefined()])),
+    chat_rules: Type.Optional(Type.Union([VersionedRules, Type.Undefined()])),
+    user_groups: Type.Array(UserGroupDetails),
+    user_groups_deleted: Type.Array(Type.Number()),
+    referrals_added: Type.Array(UserId),
+    referrals_removed: Type.Array(UserId),
+});
+
+export type CommunitySelectedUpdatesResponse = Static<typeof CommunitySelectedUpdatesResponse>;
+export const CommunitySelectedUpdatesResponse = Type.Union([
+    Type.Object({
+        Success: CommunitySelectedUpdatesSuccessResult,
+    }),
+    Type.Object({
+        SuccessNoUpdates: Type.BigInt(),
+    }),
+    Type.Literal("PrivateCommunity"),
 ]);
 
 export type ProposalsBotProposalToSubmitAction = Static<typeof ProposalsBotProposalToSubmitAction>;
@@ -6780,6 +6814,7 @@ export const GroupSelectedInitialSuccessResult = Type.Object({
     last_updated: Type.BigInt(),
     latest_event_index: EventIndex,
     participants: Type.Array(GroupMember),
+    bots: Type.Array(BotGroupDetails),
     basic_members: Type.Array(UserId),
     blocked_users: Type.Array(UserId),
     invited_users: Type.Array(UserId),
@@ -7422,6 +7457,14 @@ export const CommunitySelectedChannelInitialResponse = Type.Union([
     Type.Literal("PrivateCommunity"),
     Type.Literal("ChannelNotFound"),
     Type.Literal("PrivateChannel"),
+]);
+
+export type CommunitySelectedInitialResponse = Static<typeof CommunitySelectedInitialResponse>;
+export const CommunitySelectedInitialResponse = Type.Union([
+    Type.Object({
+        Success: CommunitySelectedInitialSuccessResult,
+    }),
+    Type.Literal("PrivateCommunity"),
 ]);
 
 export type CommunityAcceptP2pSwapResponse = Static<typeof CommunityAcceptP2pSwapResponse>;
@@ -8287,6 +8330,9 @@ export const ChatEvent = Type.Union([
     }),
     Type.Object({
         BotRemoved: BotRemoved,
+    }),
+    Type.Object({
+        BotUpdated: BotUpdated,
     }),
     Type.Literal("FailedToDeserialize"),
 ]);

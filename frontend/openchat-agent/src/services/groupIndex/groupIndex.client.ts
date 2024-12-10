@@ -16,6 +16,7 @@ import type {
     ChannelIdentifier,
     FreezeCommunityResponse,
     UnfreezeCommunityResponse,
+    SlashCommandPermissions,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -69,6 +70,11 @@ import {
     GroupIndexUnfreezeGroupResponse,
 } from "../../typebox";
 import { principalStringToBytes } from "../../utils/mapping";
+import {
+    apiChatPermission,
+    apiCommunityPermission,
+    apiMessagePermission,
+} from "../common/chatMappersV2";
 
 export class GroupIndexClient extends CandidService {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
@@ -287,4 +293,22 @@ export class GroupIndexClient extends CandidService {
             GroupIndexMarkLocalGroupIndexFullResponse,
         );
     }
+
+    // addBot(botId: string, grantedPermissions: SlashCommandPermissions): Promise<boolean> {
+    //     return this.executeMsgpackUpdate(
+    //         "add_bot",
+    //         {
+    //             bot_id: principalStringToBytes(botId),
+    //             granted_permissions: {
+    //                 chat: grantedPermissions.chatPermissions.map(apiChatPermission),
+    //                 community: grantedPermissions.communityPermissions.map(apiCommunityPermission),
+    //                 message: grantedPermissions.messagePermissions.map(apiMessagePermission),
+    //                 thread: grantedPermissions.threadPermissions.map(apiMessagePermission),
+    //             },
+    //         },
+    //         addBotResponse,
+    //         GroupAddBotArgs,
+    //         GroupAddBotResponse,
+    //     );
+    // }
 }

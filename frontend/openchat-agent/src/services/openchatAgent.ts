@@ -225,6 +225,7 @@ import type {
     ChannelSummaryResponse,
     ExploreBotsResponse,
     ExternalBot,
+    SlashCommandPermissions,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -4012,5 +4013,13 @@ export class OpenChatAgent extends EventTarget {
     registerBot(bot: ExternalBot): Promise<boolean> {
         if (offline()) return Promise.resolve(false);
         return this._userIndexClient.registerBot(bot);
+    }
+
+    addBotToCommunity(
+        id: CommunityIdentifier,
+        botId: string,
+        grantedPermissions: SlashCommandPermissions,
+    ): Promise<boolean> {
+        return this.communityClient(id.communityId).addBot(botId, grantedPermissions);
     }
 }

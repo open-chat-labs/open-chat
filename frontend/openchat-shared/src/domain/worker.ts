@@ -201,7 +201,7 @@ import type {
 } from "./chit";
 import type { JsonnableDelegationChain } from "@dfinity/identity";
 import type { Verification } from "./wallet";
-import type { ExternalBot } from "./bots";
+import type { ExternalBot, SlashCommandPermissions } from "./bots";
 
 /**
  * Worker request types
@@ -410,7 +410,15 @@ export type WorkerRequest =
     | CancelInvites
     | MessageActivityFeed
     | MarkActivityFeedRead
-    | DeleteUser;
+    | DeleteUser
+    | AddBotToCommunity;
+
+type AddBotToCommunity = {
+    kind: "addBotToCommunity";
+    id: CommunityIdentifier;
+    botId: string;
+    grantedPermissions: SlashCommandPermissions;
+};
 
 type MarkActivityFeedRead = {
     kind: "markActivityFeedRead";
@@ -2223,5 +2231,7 @@ export type WorkerResult<T> = T extends Init
     : T extends MarkActivityFeedRead
     ? void
     : T extends DeleteUser
+    ? boolean
+    : T extends AddBotToCommunity
     ? boolean
     : never;

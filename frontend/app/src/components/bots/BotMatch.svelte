@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AvatarSize, OpenChat, type BotMatch } from "openchat-client";
+    import { AvatarSize, OpenChat, type BotMatch, type CommunitySummary } from "openchat-client";
     import Avatar from "../Avatar.svelte";
     import { getContext } from "svelte";
     import BotSummary from "./BotSummary.svelte";
@@ -10,14 +10,15 @@
 
     interface Props {
         match: BotMatch;
+        community: CommunitySummary;
     }
 
-    let { match }: Props = $props();
+    let { match, community }: Props = $props();
     let showing = $state(false);
 </script>
 
 {#if showing}
-    <BotSummary onClose={() => (showing = false)} bot={match} />
+    <BotSummary {community} onClose={() => (showing = false)} bot={match} />
 {/if}
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->

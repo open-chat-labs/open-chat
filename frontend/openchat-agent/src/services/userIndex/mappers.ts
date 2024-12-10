@@ -38,7 +38,12 @@ import {
     mapOptional,
     principalBytesToString,
 } from "../../utils/mapping";
-import { token } from "../common/chatMappersV2";
+import {
+    apiChatPermission,
+    apiCommunityPermission,
+    apiMessagePermission,
+    token,
+} from "../common/chatMappersV2";
 import type {
     CurrentUserSummary as TCurrentUserSummary,
     DiamondMembershipDetails as TDiamondMembershipDetails,
@@ -539,33 +544,6 @@ function externalAchievement(
     };
 }
 
-export function apiChatPermission(perm: keyof ChatPermissions): GroupPermission {
-    switch (perm) {
-        case "addMembers":
-            return "AddMembers";
-        case "changeRoles":
-            return "ChangeRoles";
-        case "deleteMessages":
-            return "DeleteMessages";
-        case "inviteUsers":
-            return "InviteUsers";
-        case "mentionAllMembers":
-            return "MentionAllMembers";
-        case "pinMessages":
-            return "PinMessages";
-        case "reactToMessages":
-            return "ReactToMessages";
-        case "removeMembers":
-            return "RemoveMembers";
-        case "startVideoCall":
-            return "StartVideoCall";
-        case "updateGroup":
-            return "UpdateGroup";
-        default:
-            throw new Error(`Unexpected ChatPermission (${perm}) received`);
-    }
-}
-
 export function chatPermission(perm: GroupPermission): keyof ChatPermissions {
     switch (perm) {
         case "AddMembers":
@@ -591,25 +569,6 @@ export function chatPermission(perm: GroupPermission): keyof ChatPermissions {
     }
 }
 
-export function apiCommunityPermission(perm: keyof CommunityPermissions): CommunityPermission {
-    switch (perm) {
-        case "changeRoles":
-            return "ChangeRoles";
-        case "createPrivateChannel":
-            return "CreatePrivateChannel";
-        case "createPublicChannel":
-            return "CreatePublicChannel";
-        case "inviteUsers":
-            return "InviteUsers";
-        case "manageUserGroups":
-            return "ManageUserGroups";
-        case "removeMembers":
-            return "RemoveMembers";
-        case "updateDetails":
-            return "UpdateDetails";
-    }
-}
-
 export function communityPermission(perm: CommunityPermission): keyof CommunityPermissions {
     switch (perm) {
         case "ChangeRoles":
@@ -626,33 +585,6 @@ export function communityPermission(perm: CommunityPermission): keyof CommunityP
             return "removeMembers";
         case "UpdateDetails":
             return "updateDetails";
-    }
-}
-
-export function apiMessagePermission(perm: MessagePermission): ApiMessagePermission {
-    switch (perm) {
-        case "audio":
-            return "Audio";
-        case "crypto":
-            return "Crypto";
-        case "file":
-            return "File";
-        case "giphy":
-            return "Giphy";
-        case "image":
-            return "Image";
-        case "p2pSwap":
-            return "P2pSwap";
-        case "poll":
-            return "Poll";
-        case "prize":
-            return "Prize";
-        case "text":
-            return "Text";
-        case "video":
-            return "Video";
-        default:
-            throw new Error(`Unexpect MessagePermission (${perm})`);
     }
 }
 

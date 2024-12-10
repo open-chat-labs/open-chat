@@ -4,6 +4,7 @@
         emptyPermissions,
         OpenChat,
         type BotMatch,
+        type CommunitySummary,
         type SlashCommandPermissions,
     } from "openchat-client";
     import Avatar from "../Avatar.svelte";
@@ -21,15 +22,17 @@
     import BotPermissionsTabs from "./BotPermissionsTabs.svelte";
     import Checkbox from "../Checkbox.svelte";
     import { togglePermission } from "../../utils/bots";
+    import { toastStore } from "../../stores/toast";
 
     const client = getContext<OpenChat>("client");
 
     interface Props {
         bot: BotMatch;
         onClose: () => void;
+        community: CommunitySummary;
     }
 
-    let { bot, onClose }: Props = $props();
+    let { bot, onClose, community }: Props = $props();
     let adding = $state(false);
     let requestedPermissions = $derived(flattenPermissions());
     let grantedPermissions = $state(flattenPermissions());
@@ -76,7 +79,17 @@
         };
     }
 
-    function addBot() {}
+    function addBot() {
+        adding = true;
+        client
+            .addBotToCommunity(community.id, bot.id, grantedPermissions)
+            .then((success) => {
+                if (!success) {
+                    toastStore.showFailureToast(i18nKey("bots.add.failure"));
+                }
+            })
+            .finally(() => (adding = false));
+    }
 </script>
 
 <Overlay dismissible>

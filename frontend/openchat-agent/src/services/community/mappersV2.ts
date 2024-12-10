@@ -64,6 +64,7 @@ import type {
     CommunitySetMemberDisplayNameResponse,
     CommunityDeleteUserGroupsResponse,
     CommunityUpdateUserGroupResponse,
+    CommunityAddBotResponse,
 } from "../../typebox";
 import { mapOptional, optionUpdateV2, principalBytesToString } from "../../utils/mapping";
 import {
@@ -84,6 +85,14 @@ import {
 } from "../common/chatMappersV2";
 import { identity } from "../../utils/mapping";
 import { mapCommonResponses } from "../common/commonResponseMapper";
+
+export function addBotResponse(value: CommunityAddBotResponse): boolean {
+    if (value === "Success" || value === "AlreadyAdded") {
+        return true;
+    }
+    console.warn("CommunityAddBotResponse failed with ", value);
+    return false;
+}
 
 export function addMembersToChannelResponse(
     value: CommunityAddMembersToChannelResponse,

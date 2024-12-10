@@ -1863,6 +1863,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.deleteUser(payload.userId));
                 break;
 
+            case "addBotToCommunity":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.addBotToCommunity(payload.id, payload.botId, payload.grantedPermissions),
+                );
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }

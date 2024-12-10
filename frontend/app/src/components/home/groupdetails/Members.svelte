@@ -23,6 +23,7 @@
         LARGE_GROUP_THRESHOLD,
         userStore,
         currentUser as user,
+        selectedCommunity,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import InvitedUser from "./InvitedUser.svelte";
@@ -352,9 +353,9 @@
             bind:openedGroupId={initialUsergroup}
             community={collection} />
     </div>
-{:else if selectedTab === "add-bots" && collection.kind === "community"}
+{:else if selectedTab === "add-bots" && collection.kind === "community" && $selectedCommunity}
     <div class="bot-explorer">
-        <BotExplorer />
+        <BotExplorer community={$selectedCommunity} />
     </div>
 {/if}
 
