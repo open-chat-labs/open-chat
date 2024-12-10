@@ -918,7 +918,7 @@ mod tests {
     #[test]
     fn serialize_with_no_defaults() {
         let mut mentions = Mentions::default();
-        mentions.add(Some(1.into()), 1.into(), 1.into(), 1);
+        mentions.add(Some(1.into()), 1.into(), 1u64.into(), 1);
 
         let member = GroupMemberStableStorage {
             date_added: 1732874138000,

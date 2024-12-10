@@ -302,7 +302,7 @@ mod tests {
 
         reported_messages.add_report(args.clone());
         args.message_index = 2.into();
-        args.message_id = 123729212795234236487236419860990447789.into();
+        args.message_id = 123729212795234236487236419860990447789u128.into();
 
         if let AddReportResult::New(index) = reported_messages.add_report(args) {
             assert_eq!(index, 1)
@@ -316,7 +316,7 @@ mod tests {
             chat_id: Chat::Group(Principal::from_text("wowos-hyaaa-aaaar-ar4ca-cai").unwrap().into()),
             thread_root_message_index: None,
             message_index: 87884.into(),
-            message_id: 87672921279501061003607611986099044352.into(),
+            message_id: 87672921279501061003607611986099044352u128.into(),
             sender: Principal::from_text("3skqk-iqaaa-aaaaf-aaa3q-cai").unwrap().into(),
             reporter: Principal::from_text("27eue-hyaaa-aaaaf-aaa4a-cai").unwrap().into(),
             already_deleted: false,
