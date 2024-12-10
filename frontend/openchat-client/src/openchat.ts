@@ -454,6 +454,7 @@ import {
     AIRDROP_BOT_USER_ID,
     isEditableContent,
     isCaptionedContent,
+    random64,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import { diamondDurationToMs } from "./stores/diamond";
@@ -507,7 +508,7 @@ import { localGlobalUpdates } from "./stores/localGlobalUpdates";
 import { identityState } from "./stores/identity";
 import { addQueryStringParam } from "./utils/url";
 import { builtinBot } from "./utils/builtinBotCommands";
-import { testBots, testMatches } from "./utils/testBots";
+import { testBots } from "./utils/testBots";
 
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
@@ -4952,11 +4953,11 @@ export class OpenChat extends OpenChatAgentWorker {
         pageIndex: number,
         pageSize: number,
     ): Promise<ExploreBotsResponse> {
-        return Promise.resolve({
-            kind: "success",
-            matches: testMatches,
-            total: 2,
-        });
+        // return Promise.resolve({
+        //     kind: "success",
+        //     matches: testMatches,
+        //     total: 2,
+        // });
         return this.sendRequest({
             kind: "exploreBots",
             searchTerm,
@@ -7622,10 +7623,37 @@ export class OpenChat extends OpenChatAgentWorker {
         return this._liveState.userStore.get(userId)?.streak ?? 0;
     }
 
-    private getAuthTokenForBotCommand(_bot: BotCommandInstance): Promise<string> {
-        const token =
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzMyMTE5NjIxLCJleHAiOjE3MzQ3MTE2MjF9.HMuL8CJEKFVf26Hv3lqiE8LnI6MbnGlamFKEzngLei4";
-        return Promise.resolve(token);
+    private getAuthTokenForBotCommand(
+        chat: ChatSummary,
+        threadRootMessageIndex: number | undefined,
+        bot: ExternalBotCommandInstance,
+    ): Promise<string> {
+        return this.getLocalUserIndex(chat).then((localUserIndex) => {
+            return this.sendRequest({
+                kind: "getAccessToken",
+                chatId: chat.id,
+                accessTokenType: {
+                    kind: "execute_bot_command",
+                    messageContext: { chatId: chat.id, threadRootMessageIndex },
+                    messageId: random64(),
+                    commandName: bot.command.name,
+                    parameters: JSON.stringify(bot.command.params),
+                    version: 0,
+                    commandText: `@${this.getDisplayName(
+                        this._liveState.user,
+                    )} executed the command /${bot.command.name}`,
+                    botId: bot.id,
+                    userId: this._liveState.user.userId,
+                },
+                localUserIndex,
+            }).then((token) => {
+                if (token === undefined) {
+                    throw new Error("Didn't get an access token");
+                }
+                console.log("TOKEN: ", token);
+                return token;
+            });
+        });
     }
 
     private callBotEndpoint(bot: ExternalBotCommandInstance, token: string): Promise<unknown> {
@@ -7712,10 +7740,14 @@ export class OpenChat extends OpenChatAgentWorker {
         return Promise.resolve(true);
     }
 
-    executeBotCommand(bot: BotCommandInstance): Promise<boolean> {
+    executeBotCommand(
+        chat: ChatSummary,
+        threadRootMessageIndex: number | undefined,
+        bot: BotCommandInstance,
+    ): Promise<boolean> {
         switch (bot.kind) {
             case "external_bot":
-                return this.getAuthTokenForBotCommand(bot)
+                return this.getAuthTokenForBotCommand(chat, threadRootMessageIndex, bot)
                     .then((token) => this.callBotEndpoint(bot, token))
                     .then((resp) => {
                         if (bot.command.name === "chat") {

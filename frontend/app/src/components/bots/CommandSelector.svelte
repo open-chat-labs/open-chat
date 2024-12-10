@@ -20,6 +20,7 @@
     import { getContext, onMount } from "svelte";
     import Logo from "../Logo.svelte";
     import type { MessageContext, OpenChat } from "openchat-client";
+    import { selectedChatStore, selectedMessageContext } from "openchat-client";
     import {
         messagePermissionsForSelectedChat,
         threadPermissionsForSelectedChat,
@@ -67,9 +68,13 @@
     }
 
     function sendCommandIfValid() {
-        if ($selectedCommand && $instanceValid) {
+        if ($selectedCommand && $instanceValid && $selectedChatStore && $selectedMessageContext) {
             client
-                .executeBotCommand(createBotInstance($selectedCommand, messageContext))
+                .executeBotCommand(
+                    $selectedChatStore,
+                    $selectedMessageContext.threadRootMessageIndex,
+                    createBotInstance($selectedCommand, messageContext),
+                )
                 .then((success) => {
                     if (!success) {
                         toastStore.showFailureToast(i18nKey("bots.failed"));
