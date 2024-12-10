@@ -42,7 +42,7 @@ fn c2c_handle_bot_action_impl(args: Args, state: &mut RuntimeState) -> Response 
                 MessageContent::Giphy(giphy_content) => MessageContentInitial::Giphy(giphy_content),
             };
 
-            send_message_impl(
+            match send_message_impl(
                 send_message::Args {
                     channel_id,
                     thread_root_message_index: args.thread_root_message_index,
@@ -61,11 +61,12 @@ fn c2c_handle_bot_action_impl(args: Args, state: &mut RuntimeState) -> Response 
                 },
                 Some(args.bot.user_id.into()),
                 state,
-            );
+            ) {
+                send_message::Response::Success(_) => Ok(()),
+                response => Err(HandleBotActionsError::Other(format!("{response:?}"))),
+            }
         }
     }
-
-    Ok(())
 }
 
 fn is_bot_permitted_to_execute_command(args: &Args, state: &RuntimeState) -> bool {

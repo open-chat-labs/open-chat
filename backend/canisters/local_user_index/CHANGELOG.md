@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Ensure bot has permission to execute given action ([#7014](https://github.com/open-chat-labs/open-chat/pull/7014))
 - Switch to using `PrincipalToStableMemoryMap` ([#7023](https://github.com/open-chat-labs/open-chat/pull/7023))
 
+### Fixes
+
+- Fixes to `access_token` and `execute_bot_command` ([#7031](https://github.com/open-chat-labs/open-chat/pull/7031))
+
 ## [[2.0.1495](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1495-local_user_index)] - 2024-12-04
 
 ### Added

@@ -110,7 +110,7 @@ fn insert_field_attributes(field: &mut Field, is_tuple: bool) {
                 type_override: _,
             }) = skip_serializing_if_default(&type_path.path.segments[0])
             {
-                field.attrs.push(parse_quote!( #[serde(default)] ));
+                //field.attrs.push(parse_quote!( #[serde(default)] ));
                 // field.attrs.push(parse_quote!( #[serde(skip_serializing_if = #func)]));
                 //
                 // if let Some(default_override) = default_override {

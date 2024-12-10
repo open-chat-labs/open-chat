@@ -120,6 +120,9 @@ impl ChatEventInternal {
                 | ChatEventInternal::UsersInvited(_)
                 | ChatEventInternal::MembersAddedToPublicChannel(_)
                 | ChatEventInternal::ExternalUrlUpdated(_)
+                | ChatEventInternal::BotAdded(_)
+                | ChatEventInternal::BotRemoved(_)
+                | ChatEventInternal::BotUpdated(_)
         )
     }
 

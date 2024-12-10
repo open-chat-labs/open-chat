@@ -524,6 +524,7 @@ impl Data {
             self.invited_users.last_updated(),
             self.events.latest_event_timestamp(),
             self.members.last_updated(),
+            self.bots.last_updated(),
         ]
         .into_iter()
         .max()

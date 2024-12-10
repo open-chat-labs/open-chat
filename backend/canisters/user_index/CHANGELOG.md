@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Fix to allow `register_bot` to be called in test mode ([#7015](https://github.com/open-chat-labs/open-chat/pull/7015))
+- Fix `register_bot` ([#7031](https://github.com/open-chat-labs/open-chat/pull/7031))
 
 ## [[2.0.1469](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1469-user_index)] - 2024-11-25
 
