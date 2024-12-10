@@ -7,17 +7,19 @@ mod chat_event;
 mod community_event;
 mod macros;
 mod member;
+mod principal_to_user_id;
 
 pub use chat_event::*;
 pub use community_event::*;
 pub use member::*;
+pub use principal_to_user_id::*;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 #[serde(transparent)]
 pub struct BaseKey(#[serde(with = "serde_bytes")] Vec<u8>);
 
 impl BaseKey {
-    pub fn starts_with(&self, prefix: &BaseKeyPrefix) -> bool {
+    pub fn matches_prefix(&self, prefix: &BaseKeyPrefix) -> bool {
         self.0.starts_with(prefix.0.as_slice())
     }
 
@@ -88,6 +90,7 @@ pub enum KeyType {
     ChannelMember = 8,
     CommunityMember = 9,
     CommunityEvent = 10,
+    PrincipalToUserId = 11,
 }
 
 fn extract_key_type(bytes: &[u8]) -> Option<KeyType> {
@@ -109,6 +112,7 @@ impl TryFrom<u8> for KeyType {
             8 => Ok(KeyType::ChannelMember),
             9 => Ok(KeyType::CommunityMember),
             10 => Ok(KeyType::CommunityEvent),
+            11 => Ok(KeyType::PrincipalToUserId),
             _ => Err(()),
         }
     }

@@ -6,15 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Update community bot config ([#7018](https://github.com/open-chat-labs/open-chat/pull/7018))
+
 ### Changed
 
 - Return bots in community/group selected updates ([#7009](https://github.com/open-chat-labs/open-chat/pull/7009))
 - Include the ledger canister Id in transfer failed error logs ([#7011](https://github.com/open-chat-labs/open-chat/pull/7011))
 - Ensure bot has permission to execute given action ([#7014](https://github.com/open-chat-labs/open-chat/pull/7014))
+- Allow bots to send a subset of message types ([#7016](https://github.com/open-chat-labs/open-chat/pull/7016))
+- Switch to using `PrincipalToStableMemoryMap` ([#7023](https://github.com/open-chat-labs/open-chat/pull/7023))
+- Reduce size by grouping member -> channel links per userId ([#7025](https://github.com/open-chat-labs/open-chat/pull/7025))
+- Merge member Ids set with channel links map ([#7027](https://github.com/open-chat-labs/open-chat/pull/7027))
 
-### Fixed
+### Removed
 
-- Temporarily reinstate `MigrateMembersToStableMemory` job to fix upgrade ([#7007](https://github.com/open-chat-labs/open-chat/pull/7007))
+- Remove code to migrate members and events to stable memory ([#7024](https://github.com/open-chat-labs/open-chat/pull/7024))
 
 ## [[2.0.1500](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1500-community)] - 2024-12-06
 

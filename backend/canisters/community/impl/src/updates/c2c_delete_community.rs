@@ -63,7 +63,7 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
                 community_id: state.env.canister_id().into(),
                 deleted_by: member.user_id,
                 communtiy_name: state.data.name.value.clone(),
-                members: state.data.members.member_ids().iter().copied().collect(),
+                members: state.data.members.iter_member_ids().collect(),
             })
         }
     } else {

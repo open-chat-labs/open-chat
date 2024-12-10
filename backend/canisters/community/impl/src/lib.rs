@@ -28,7 +28,7 @@ use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
 use rand::rngs::StdRng;
 use rand::RngCore;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
 use std::cell::RefCell;
@@ -37,10 +37,10 @@ use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotGroupConfig, BotRemoved, BuildVersion, CanisterId,
-    ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions, Cryptocurrency,
-    Cycles, Document, Empty, FrozenGroupInfo, MembersAdded, Milliseconds, Notification, Rules, SlashCommandPermissions,
-    TimestampMillis, Timestamped, UserId, UserType,
+    AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotGroupConfig, BotRemoved, BotUpdated, BuildVersion,
+    CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions,
+    Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, MembersAdded, Milliseconds, Notification, Rules,
+    SlashCommandPermissions, TimestampMillis, Timestamped, UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use user_canister::CommunityCanisterEvent;
@@ -178,7 +178,8 @@ impl RuntimeState {
                 .data
                 .members
                 .channels_for_member(m.user_id)
-                .filter_map(|c| self.data.channels.get(&c))
+                .iter()
+                .filter_map(|c| self.data.channels.get(c))
                 .filter_map(|c| c.summary(Some(m.user_id), true, data.is_public.value, &data.members))
                 .collect();
 
@@ -216,7 +217,7 @@ impl RuntimeState {
             banner_id: Document::id(&data.banner),
             is_public: data.is_public.value,
             latest_event_index: data.events.latest_event_index(),
-            member_count: data.members.len(),
+            member_count: data.members.len() as u32,
             permissions: data.permissions.value.clone(),
             frozen: data.frozen.value.clone(),
             gate: data.gate_config.value.as_ref().map(|gc| gc.gate.clone()),
@@ -287,7 +288,7 @@ impl RuntimeState {
             git_commit_id: utils::git::git_commit_id().to_string(),
             public: self.data.is_public.value,
             date_created: self.data.date_created,
-            members: self.data.members.len(),
+            members: self.data.members.len() as u32,
             admins: self.data.members.admins().len() as u32,
             owners: self.data.members.owners().len() as u32,
             blocked: self.data.members.blocked().len() as u32,
@@ -297,7 +298,6 @@ impl RuntimeState {
             instruction_counts: self.data.instruction_counts_log.iter().collect(),
             event_store_client_info: self.data.event_store_client.info(),
             timer_jobs: self.data.timer_jobs.len() as u32,
-            members_migrated_to_stable_memory: self.data.members_migrated_to_stable_memory,
             stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
@@ -320,22 +320,14 @@ fn init_instruction_counts_log() -> InstructionCountsLog {
 
 #[derive(Serialize, Deserialize)]
 struct Data {
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
     is_public: Timestamped<bool>,
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
     name: Timestamped<String>,
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
     description: Timestamped<String>,
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
     rules: Timestamped<AccessRulesInternal>,
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
     avatar: Timestamped<Option<Document>>,
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
     banner: Timestamped<Option<Document>>,
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
     permissions: Timestamped<CommunityPermissions>,
     gate_config: Timestamped<Option<AccessGateConfigInternal>>,
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
     primary_language: Timestamped<String>,
     user_index_canister_id: CanisterId,
     local_user_index_canister_id: CanisterId,
@@ -350,9 +342,7 @@ struct Data {
     channels: Channels,
     events: CommunityEvents,
     invited_users: InvitedUsers,
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
     invite_code: Timestamped<Option<u64>>,
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
     invite_code_enabled: Timestamped<bool>,
     frozen: Timestamped<Option<FrozenGroupInfo>>,
     timer_jobs: TimerJobs<TimerJob>,
@@ -377,7 +367,6 @@ struct Data {
     user_cache: UserCache,
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
-    members_migrated_to_stable_memory: bool,
     #[serde(default)]
     bots: GroupBots,
 }
@@ -482,7 +471,6 @@ impl Data {
             user_cache: UserCache::default(),
             user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
-            members_migrated_to_stable_memory: true,
             bots: GroupBots::default(),
         }
     }
@@ -572,8 +560,13 @@ impl Data {
         false
     }
 
-    pub fn remove_user_from_community(&mut self, user_id: UserId, now: TimestampMillis) -> Option<CommunityMemberInternal> {
-        let removed = self.members.remove(&user_id, now);
+    pub fn remove_user_from_community(
+        &mut self,
+        user_id: UserId,
+        principal: Option<Principal>,
+        now: TimestampMillis,
+    ) -> Option<CommunityMemberInternal> {
+        let removed = self.members.remove(user_id, principal, now);
         self.channels.leave_all_channels(user_id, now);
         self.expiring_members.remove_member(user_id, None);
         self.expiring_member_actions.remove_member(user_id, None);
@@ -800,6 +793,23 @@ impl Data {
         true
     }
 
+    pub fn update_bot(&mut self, owner_id: UserId, user_id: UserId, bot_config: BotGroupConfig, now: TimestampMillis) -> bool {
+        if !self.bots.update(user_id, bot_config, now) {
+            return false;
+        }
+
+        // Publish community event
+        self.events.push_event(
+            CommunityEventInternal::BotUpdated(Box::new(BotUpdated {
+                user_id,
+                updated_by: owner_id,
+            })),
+            now,
+        );
+
+        true
+    }
+
     pub fn remove_bot(&mut self, owner_id: UserId, user_id: UserId, now: TimestampMillis) -> bool {
         if !self.bots.remove(user_id, now) {
             return false;
@@ -880,7 +890,6 @@ pub struct Metrics {
     pub instruction_counts: Vec<InstructionCountEntry>,
     pub event_store_client_info: EventStoreClientInfo,
     pub timer_jobs: u32,
-    pub members_migrated_to_stable_memory: bool,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }
@@ -905,9 +914,4 @@ pub struct AddUsersToChannelResult {
     pub users_added: Vec<UserId>,
     pub users_already_in_channel: Vec<UserId>,
     pub users_limit_reached: Vec<UserId>,
-}
-
-fn deserialize_to_timestamped<'de, D: Deserializer<'de>, T: Deserialize<'de>>(d: D) -> Result<Timestamped<T>, D::Error> {
-    let value = T::deserialize(d)?;
-    Ok(Timestamped::new(value, canister_time::now_millis()))
 }
