@@ -5,7 +5,7 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::collections::{BTreeMap, BTreeSet};
 use types::{BotGroupConfig, TimestampMillis, UserId};
 
-#[derive(Serialize, Deserialize, Default, Debug)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct GroupBots {
     bots: BTreeMap<UserId, BotGroupConfig>,
     updates: BTreeSet<(TimestampMillis, UserId, BotUpdate)>,
@@ -86,7 +86,7 @@ impl GroupBots {
     }
 }
 
-#[derive(Serialize_repr, Deserialize_repr, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Debug)]
+#[derive(Serialize_repr, Deserialize_repr, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
 #[repr(u8)]
 pub enum BotUpdate {
     Added = 1,

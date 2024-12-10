@@ -41,8 +41,6 @@ impl serde::Serialize for MessageId {
 mod deserialize {
     use super::MessageId;
 
-    // Simple visitor for deserialization from bytes. We don't support other number types
-    // as there's no need for it.
     pub(super) struct MessageIdVisitor;
 
     impl<'de> serde::de::Visitor<'de> for MessageIdVisitor {
