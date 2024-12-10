@@ -6614,6 +6614,7 @@ name = "search"
 version = "0.1.0"
 dependencies = [
  "serde",
+ "test-case",
 ]
 
 [[package]]

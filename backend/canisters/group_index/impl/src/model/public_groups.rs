@@ -2,7 +2,7 @@ use crate::model::cached_hot_groups::CachedPublicGroupSummary;
 use crate::model::private_groups::PrivateGroupInfo;
 use crate::{CACHED_HOT_GROUPS_COUNT, MARK_ACTIVE_DURATION};
 use constants::DAY_IN_MS;
-use search::*;
+use search::weighted::*;
 use serde::{Deserialize, Serialize};
 use std::cmp;
 use std::collections::HashMap;
