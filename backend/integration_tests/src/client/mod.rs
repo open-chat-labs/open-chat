@@ -225,7 +225,7 @@ pub fn register_bot(
 
     user_index::register_bot(
         env,
-        auth_principal,
+        owner.principal,
         canister_ids.user_index,
         &user_index_canister::register_bot::Args {
             principal: auth_principal,
