@@ -18,6 +18,7 @@ generate_msgpack_query_call!(summary_updates);
 
 // Updates
 generate_msgpack_update_call!(accept_p2p_swap);
+generate_msgpack_update_call!(add_bot);
 generate_msgpack_update_call!(add_reaction);
 generate_msgpack_update_call!(block_user);
 generate_msgpack_update_call!(cancel_invites);
@@ -41,6 +42,7 @@ generate_msgpack_update_call!(remove_reaction);
 generate_msgpack_update_call!(send_message);
 generate_msgpack_update_call!(unblock_user);
 generate_msgpack_update_call!(undelete_messages);
+generate_msgpack_update_call!(update_bot);
 generate_msgpack_update_call!(update_channel);
 generate_msgpack_update_call!(update_community);
 generate_msgpack_update_call!(update_user_group);
@@ -53,8 +55,8 @@ pub mod happy_path {
     use types::{
         AccessGate, ChannelId, ChatId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
         CommunityCanisterCommunitySummaryUpdates, CommunityId, CommunityRole, EventIndex, EventsResponse, GroupReplyContext,
-        GroupRole, MessageContentInitial, MessageId, MessageIndex, PollVotes, Reaction, Rules, TextContent, TimestampMillis,
-        UserId, VoteOperation,
+        GroupRole, MessageContentInitial, MessageId, MessageIndex, PollVotes, Reaction, Rules, SlashCommandPermissions,
+        TextContent, TimestampMillis, UserId, VoteOperation,
     };
 
     pub fn create_channel(
@@ -692,6 +694,52 @@ pub mod happy_path {
         match response {
             community_canister::accept_p2p_swap::Response::Success(_) => {}
             response => panic!("'accept_p2p_swap' error: {response:?}"),
+        }
+    }
+
+    pub fn add_bot(
+        env: &mut PocketIc,
+        sender: Principal,
+        community_id: CommunityId,
+        bot_id: UserId,
+        granted_permissions: SlashCommandPermissions,
+    ) {
+        let response = super::add_bot(
+            env,
+            sender,
+            community_id.into(),
+            &community_canister::add_bot::Args {
+                bot_id,
+                granted_permissions,
+            },
+        );
+
+        match response {
+            community_canister::add_bot::Response::Success => {}
+            response => panic!("'add_bot' error: {response:?}"),
+        }
+    }
+
+    pub fn update_bot(
+        env: &mut PocketIc,
+        sender: Principal,
+        community_id: CommunityId,
+        bot_id: UserId,
+        granted_permissions: SlashCommandPermissions,
+    ) {
+        let response = super::update_bot(
+            env,
+            sender,
+            community_id.into(),
+            &community_canister::update_bot::Args {
+                bot_id,
+                granted_permissions,
+            },
+        );
+
+        match response {
+            community_canister::update_bot::Response::Success => {}
+            response => panic!("'update_bot' error: {response:?}"),
         }
     }
 }

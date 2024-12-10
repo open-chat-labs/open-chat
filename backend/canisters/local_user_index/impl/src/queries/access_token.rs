@@ -110,7 +110,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
             let Some(permissions) = state
                 .data
                 .bots
-                .get(&cmd.user_id)
+                .get(&cmd.bot)
                 .and_then(|b| b.commands.iter().find(|c| c.name == cmd.command_name))
                 .map(|c| c.permissions.clone())
             else {

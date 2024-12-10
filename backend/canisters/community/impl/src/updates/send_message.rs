@@ -61,7 +61,6 @@ pub(crate) fn send_message_impl(args: Args, caller_override: Option<Principal>, 
             args.forwarding,
             args.channel_rules_accepted,
             args.message_filter_failed.is_some(),
-            state.data.proposals_bot_user_id,
             args.block_level_markdown,
             &mut state.data.event_store_client,
             now,
@@ -107,6 +106,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
 
         let result = channel.chat.send_message(
             user_id,
+            user_type,
             args.thread_root_message_index,
             args.message_id,
             args.content,
@@ -115,7 +115,6 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
             args.forwarding,
             args.channel_rules_accepted,
             args.message_filter_failed.is_some(),
-            state.data.proposals_bot_user_id,
             args.block_level_markdown,
             &mut state.data.event_store_client,
             now,
@@ -187,6 +186,12 @@ fn validate_caller(
                 display_name: member.display_name().value.clone(),
             })
         }
+    } else if state.data.bots.get(&caller.into()).is_some() {
+        Ok(Caller {
+            user_id: caller.into(),
+            user_type: UserType::BotV2,
+            display_name: None,
+        })
     } else if caller == state.data.user_index_canister_id {
         Ok(Caller {
             user_id: OPENCHAT_BOT_USER_ID,

@@ -1,5 +1,5 @@
+use canister_api_macros::update;
 use canister_client::generate_c2c_call;
-use ic_cdk::update;
 use jwt::{verify_jwt, Claims};
 use local_user_index_canister::execute_bot_command::*;
 use types::c2c_handle_bot_action;
@@ -9,7 +9,7 @@ use types::User;
 use crate::read_state;
 use crate::RuntimeState;
 
-#[update]
+#[update(candid = true, msgpack = true)]
 async fn execute_bot_command(args: Args) -> Response {
     let c2c_args = match read_state(|state| validate(args, state)) {
         Ok(c2c_args) => c2c_args,

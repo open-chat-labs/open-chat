@@ -263,6 +263,8 @@ impl SelectedGroupUpdates {
     pub fn has_updates(&self) -> bool {
         !self.members_added_or_updated.is_empty()
             || !self.members_removed.is_empty()
+            || !self.bots_added_or_updated.is_empty()
+            || !self.bots_removed.is_empty()
             || !self.blocked_users_added.is_empty()
             || !self.blocked_users_removed.is_empty()
             || self.invited_users.is_some()
