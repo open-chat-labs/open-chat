@@ -216,7 +216,6 @@ impl CommunityMembers {
             self.member_channel_links_removed.remove(&(user_id, channel_id));
         }
         self.user_groups.remove_user_from_all(&member.user_id, now);
-        self.member_ids.remove(&user_id);
         self.prune_then_insert_member_update(user_id, MemberUpdate::Removed, now);
 
         Some(member)
