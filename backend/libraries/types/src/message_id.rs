@@ -65,6 +65,7 @@ impl Ord for MessageId {
 impl Hash for MessageId {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.as_u64().hash(state);
+    }
 }
 
 // Serialization
