@@ -14,11 +14,11 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use constants::{DAY_IN_MS, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
-use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
+use event_store_producer::{EventBuilder, EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
-use model::chit::ChitEarnedEvents;
+use model::chit_earned_events::ChitEarnedEvents;
 use model::contacts::Contacts;
 use model::favourite_chats::FavouriteChats;
 use model::message_activity_events::MessageActivityEvents;
@@ -36,7 +36,7 @@ use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     Achievement, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEarned, ChitEarnedReason, CommunityId,
     Cryptocurrency, Cycles, Document, Milliseconds, Notification, NotifyChit, TimestampMillis, Timestamped, UniquePersonProof,
-    UserId,
+    UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
 };
 use user_canister::{MessageActivityEvent, NamedAccount, UserCanisterEvent, WalletConfig};
 use utils::env::Environment;
@@ -151,6 +151,33 @@ impl RuntimeState {
         if canister_id != OPENCHAT_BOT_USER_ID.into() && canister_id != self.env.canister_id() {
             self.data.user_canister_events_queue.push(canister_id.into(), event);
         }
+    }
+
+    pub fn mark_streak_insurance_payment(&mut self, payment: UserCanisterStreakInsurancePayment) {
+        let user_id: UserId = self.env.canister_id().into();
+        self.data.streak.mark_streak_insurance_payment(payment.clone());
+        self.data.event_store_client.push(
+            EventBuilder::new("user_streak_insurance_payment", payment.timestamp)
+                .with_user(user_id.to_string(), true)
+                .with_source(user_id.to_string(), true)
+                .with_json_payload(&payment)
+                .build(),
+        );
+        self.data
+            .push_local_user_index_canister_event(LocalUserIndexEvent::NotifyStreakInsurancePayment(payment));
+    }
+
+    pub fn mark_streak_insurance_claim(&mut self, claim: UserCanisterStreakInsuranceClaim) {
+        let user_id: UserId = self.env.canister_id().into();
+        self.data.event_store_client.push(
+            EventBuilder::new("user_streak_insurance_claim", claim.timestamp)
+                .with_user(user_id.to_string(), true)
+                .with_source(user_id.to_string(), true)
+                .with_json_payload(&claim)
+                .build(),
+        );
+        self.data
+            .push_local_user_index_canister_event(LocalUserIndexEvent::NotifyStreakInsuranceClaim(claim));
     }
 
     pub fn is_empty_and_dormant(&self) -> bool {
@@ -425,16 +452,18 @@ impl Data {
         }
     }
 
+    pub fn push_local_user_index_canister_event(&mut self, event: LocalUserIndexEvent) {
+        self.local_user_index_event_sync_queue
+            .push(self.local_user_index_canister_id, event);
+    }
+
     pub fn notify_user_index_of_chit(&mut self, now: TimestampMillis) {
-        self.local_user_index_event_sync_queue.push(
-            self.local_user_index_canister_id,
-            LocalUserIndexEvent::NotifyChit(NotifyChit {
-                timestamp: now,
-                chit_balance: self.chit_events.balance_for_month_by_timestamp(now),
-                streak: self.streak.days(now),
-                streak_ends: self.streak.ends(),
-            }),
-        );
+        self.push_local_user_index_canister_event(LocalUserIndexEvent::NotifyChit(NotifyChit {
+            timestamp: now,
+            chit_balance: self.chit_events.balance_for_month_by_timestamp(now),
+            streak: self.streak.days(now),
+            streak_ends: self.streak.ends(),
+        }))
     }
 
     pub fn push_message_activity(&mut self, event: MessageActivityEvent, now: TimestampMillis) {

@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
     Chat, ChatId, ChitEarned, CommunityId, DirectChatSummary, DirectChatSummaryUpdates, OptionUpdate, PinNumberSettings,
-    TimestampMillis, UserId,
+    StreakInsurance, TimestampMillis, UserId,
 };
 
 #[ts_export(user, updates)]
@@ -44,6 +44,8 @@ pub struct SuccessResult {
     pub chit_balance: i32,
     pub streak: u16,
     pub streak_ends: TimestampMillis,
+    #[ts(as = "types::OptionUpdateStreakInsurance")]
+    pub streak_insurance: OptionUpdate<StreakInsurance>,
     pub next_daily_claim: TimestampMillis,
     pub is_unique_person: Option<bool>,
     pub wallet_config: Option<WalletConfig>,

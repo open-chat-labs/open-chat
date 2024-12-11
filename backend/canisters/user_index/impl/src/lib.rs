@@ -1,5 +1,6 @@
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::storage_index_user_config_batch::StorageIndexUserConfigBatch;
+use crate::model::streak_insurance_logs::StreakInsuranceLogs;
 use crate::model::user_map::UserMap;
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
@@ -283,6 +284,7 @@ impl RuntimeState {
                 .map(|(c, h)| (*c, hex::encode(h)))
                 .collect(),
             stable_memory_sizes: memory::memory_sizes(),
+            streak_insurance_metrics: self.data.streak_insurance_logs.metrics(),
             canister_ids: CanisterIds {
                 group_index: self.data.group_index_canister_id,
                 notifications_index: self.data.notifications_index_canister_id,
@@ -384,6 +386,8 @@ struct Data {
     pub survey_messages_sent: usize,
     pub external_achievements: ExternalAchievements,
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
+    #[serde(default)]
+    pub streak_insurance_logs: StreakInsuranceLogs,
 }
 
 fn storage_index_user_sync_queue() -> GroupedTimerJobQueue<StorageIndexUserConfigBatch> {
@@ -468,6 +472,7 @@ impl Data {
             survey_messages_sent: 0,
             external_achievements: ExternalAchievements::default(),
             upload_wasm_chunks_whitelist: Vec::new(),
+            streak_insurance_logs: StreakInsuranceLogs::default(),
         };
 
         // Register the ProposalsBot
@@ -597,6 +602,7 @@ impl Default for Data {
             survey_messages_sent: 0,
             external_achievements: ExternalAchievements::default(),
             upload_wasm_chunks_whitelist: Vec::new(),
+            streak_insurance_logs: StreakInsuranceLogs::default(),
         }
     }
 }
@@ -643,6 +649,7 @@ pub struct Metrics {
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
     pub wasm_chunks_uploaded: Vec<(ChildCanisterType, String)>,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
+    pub streak_insurance_metrics: StreakInsuranceMetrics,
     pub canister_ids: CanisterIds,
 }
 
@@ -707,6 +714,15 @@ pub struct DeletedUser {
     pub user_id: UserId,
     pub triggered_by_user: bool,
     pub timestamp: TimestampMillis,
+}
+
+#[derive(Serialize, Debug, Default)]
+pub struct StreakInsuranceMetrics {
+    payments: u32,
+    payments_unique_users: u32,
+    claims: u32,
+    claims_unique_users: u32,
+    total_paid: u128,
 }
 
 #[derive(Serialize, Debug)]

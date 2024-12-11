@@ -90,4 +90,5 @@ option_update!(OptionUpdateGroupPermissionRole, crate::GroupPermissionRole);
 option_update!(OptionUpdateGroupSubtype, crate::GroupSubtype);
 option_update!(OptionUpdateOptionalMessagePermissions, crate::OptionalMessagePermissions);
 option_update!(OptionUpdatePinNumberSettings, crate::PinNumberSettings);
+option_update!(OptionUpdateStreakInsurance, crate::StreakInsurance);
 option_update!(OptionUpdateVideoCall, crate::VideoCall);
