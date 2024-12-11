@@ -46,3 +46,4 @@ translations_canister = { path = "../canisters/translations/api" }
 types = { path = "../libraries/types" }
 user_canister = { path = "../canisters/user/api" }
 user_index_canister = { path = "../canisters/user_index/api" }
+utils = { path = "../libraries/utils" }
