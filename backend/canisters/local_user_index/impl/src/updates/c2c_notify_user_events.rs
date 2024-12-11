@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use local_user_index_canister::c2c_notify_user_events::{Response::*, *};
 use local_user_index_canister::UserEvent;
 use types::UserId;
-use user_index_canister::LocalUserIndexToUserIndexEvent;
+use user_index_canister::LocalUserIndexEvent as UserIndexEvent;
 
 #[update(guard = "caller_is_local_user_canister", msgpack = true)]
 #[trace]
@@ -24,7 +24,7 @@ fn c2c_notify_user_events_impl(args: Args, state: &mut RuntimeState) -> Response
 fn handle_event(user_id: UserId, event: UserEvent, state: &mut RuntimeState) {
     match event {
         UserEvent::NotifyChit(ev) => {
-            state.push_event_to_user_index(LocalUserIndexToUserIndexEvent::NotifyChit(Box::new((user_id, ev))));
+            state.push_event_to_user_index(UserIndexEvent::NotifyChit(Box::new((user_id, ev))));
         }
     }
 }

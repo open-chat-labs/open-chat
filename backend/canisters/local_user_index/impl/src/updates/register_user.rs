@@ -10,7 +10,7 @@ use local_user_index_canister::ChildCanisterType;
 use types::{BuildVersion, CanisterId, CanisterWasm, Cycles, MessageContentInitial, TextContent, UserId, UserType};
 use user_canister::init::Args as InitUserCanisterArgs;
 use user_canister::{Event as UserEvent, ReferredUserRegistered};
-use user_index_canister::{LocalUserIndexToUserIndexEvent as UserIndexEvent, UserRegistered};
+use user_index_canister::{LocalUserIndexEvent as UserIndexEvent, UserRegistered};
 use utils::canister;
 use utils::canister::CreateAndInstallError;
 use utils::text_validation::{validate_username, UsernameValidationError};

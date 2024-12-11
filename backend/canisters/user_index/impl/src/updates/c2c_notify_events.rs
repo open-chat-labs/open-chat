@@ -12,7 +12,7 @@ use local_user_index_canister::{
 use storage_index_canister::add_or_update_users::UserConfig;
 use types::{CanisterId, MessageContent, TextContent, TimestampMillis, UserId, UserType};
 use user_index_canister::c2c_notify_events::{Response::*, *};
-use user_index_canister::LocalUserIndexToUserIndexEvent;
+use user_index_canister::LocalUserIndexEvent;
 
 #[update(guard = "caller_is_local_user_index_canister", msgpack = true)]
 #[trace]
@@ -30,12 +30,12 @@ fn c2c_notify_events_impl(args: Args, state: &mut RuntimeState) -> Response {
     Success
 }
 
-fn handle_event(event: LocalUserIndexToUserIndexEvent, caller: Principal, now: TimestampMillis, state: &mut RuntimeState) {
+fn handle_event(event: LocalUserIndexEvent, caller: Principal, now: TimestampMillis, state: &mut RuntimeState) {
     match event {
-        LocalUserIndexToUserIndexEvent::UserRegistered(ev) => {
+        LocalUserIndexEvent::UserRegistered(ev) => {
             process_new_user(ev.principal, ev.username, ev.user_id, ev.referred_by, caller, state)
         }
-        LocalUserIndexToUserIndexEvent::UserJoinedGroup(ev) => {
+        LocalUserIndexEvent::UserJoinedGroup(ev) => {
             state.push_event_to_local_user_index(
                 ev.user_id,
                 UserIndexEvent::UserJoinedGroup(UserJoinedGroup {
@@ -47,7 +47,7 @@ fn handle_event(event: LocalUserIndexToUserIndexEvent, caller: Principal, now: T
                 }),
             );
         }
-        LocalUserIndexToUserIndexEvent::UserJoinedCommunityOrChannel(ev) => {
+        LocalUserIndexEvent::UserJoinedCommunityOrChannel(ev) => {
             state.push_event_to_local_user_index(
                 ev.user_id,
                 UserIndexEvent::UserJoinedCommunityOrChannel(UserJoinedCommunityOrChannel {
@@ -59,7 +59,7 @@ fn handle_event(event: LocalUserIndexToUserIndexEvent, caller: Principal, now: T
                 }),
             );
         }
-        LocalUserIndexToUserIndexEvent::JoinUserToGroup(ev) => {
+        LocalUserIndexEvent::JoinUserToGroup(ev) => {
             state.data.timer_jobs.enqueue_job(
                 TimerJob::JoinUserToGroup(JoinUserToGroup {
                     user_id: ev.user_id,
@@ -70,7 +70,7 @@ fn handle_event(event: LocalUserIndexToUserIndexEvent, caller: Principal, now: T
                 now,
             );
         }
-        LocalUserIndexToUserIndexEvent::OpenChatBotMessage(ev) => {
+        LocalUserIndexEvent::OpenChatBotMessage(ev) => {
             state.push_event_to_local_user_index(
                 ev.user_id,
                 UserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage {
@@ -79,7 +79,7 @@ fn handle_event(event: LocalUserIndexToUserIndexEvent, caller: Principal, now: T
                 })),
             );
         }
-        LocalUserIndexToUserIndexEvent::OpenChatBotMessageV2(ev) => {
+        LocalUserIndexEvent::OpenChatBotMessageV2(ev) => {
             state.push_event_to_local_user_index(
                 ev.user_id,
                 UserIndexEvent::OpenChatBotMessageV2(Box::new(OpenChatBotMessageV2 {
@@ -90,7 +90,7 @@ fn handle_event(event: LocalUserIndexToUserIndexEvent, caller: Principal, now: T
                 })),
             );
         }
-        LocalUserIndexToUserIndexEvent::UserDeleted(ev) => {
+        LocalUserIndexEvent::UserDeleted(ev) => {
             state.delete_user(ev.user_id, false);
             state.push_event_to_all_local_user_indexes(
                 UserIndexEvent::DeleteUser(DeleteUser {
@@ -100,7 +100,7 @@ fn handle_event(event: LocalUserIndexToUserIndexEvent, caller: Principal, now: T
                 Some(caller),
             );
         }
-        LocalUserIndexToUserIndexEvent::NotifyUniquePersonProof(ev) => {
+        LocalUserIndexEvent::NotifyUniquePersonProof(ev) => {
             let (user_id, proof) = *ev;
             state
                 .data
@@ -108,7 +108,7 @@ fn handle_event(event: LocalUserIndexToUserIndexEvent, caller: Principal, now: T
                 .record_proof_of_unique_personhood(user_id, proof.clone(), now);
             state.push_event_to_all_local_user_indexes(UserIndexEvent::NotifyUniquePersonProof(user_id, proof), Some(caller));
         }
-        LocalUserIndexToUserIndexEvent::NotifyChit(ev) => {
+        LocalUserIndexEvent::NotifyChit(ev) => {
             let (user_id, chit) = *ev;
 
             if state.data.users.set_chit(

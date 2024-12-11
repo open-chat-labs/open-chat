@@ -1,16 +1,16 @@
-use local_user_index_canister::UserEvent;
+use local_user_index_canister::UserEvent as LocalUserIndexEvent;
 use timer_job_queues::{TimerJobItem, TimerJobItemGroup};
 use types::CanisterId;
 use utils::canister::should_retry_failed_c2c_call;
 
 pub struct LocalUserIndexEventBatch {
     canister_id: CanisterId,
-    events: Vec<UserEvent>,
+    events: Vec<LocalUserIndexEvent>,
 }
 
 impl TimerJobItemGroup for LocalUserIndexEventBatch {
     type Key = CanisterId;
-    type Item = UserEvent;
+    type Item = LocalUserIndexEvent;
 
     fn new(canister_id: CanisterId) -> Self {
         LocalUserIndexEventBatch {
@@ -23,11 +23,11 @@ impl TimerJobItemGroup for LocalUserIndexEventBatch {
         self.canister_id
     }
 
-    fn add(&mut self, event: UserEvent) {
+    fn add(&mut self, event: LocalUserIndexEvent) {
         self.events.push(event)
     }
 
-    fn into_items(self) -> Vec<UserEvent> {
+    fn into_items(self) -> Vec<LocalUserIndexEvent> {
         self.events
     }
 
