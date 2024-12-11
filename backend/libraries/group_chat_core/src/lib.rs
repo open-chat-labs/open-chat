@@ -354,6 +354,7 @@ impl GroupChatCore {
                             result.bots_added_or_updated.push(BotGroupDetails {
                                 user_id,
                                 permissions: bot.permissions.clone(),
+                                added_by: bot.added_by,
                             });
                         }
                     }
@@ -1825,7 +1826,7 @@ impl GroupChatCore {
     }
 
     pub fn add_bot(&mut self, owner_id: UserId, user_id: UserId, config: BotGroupConfig, now: TimestampMillis) -> bool {
-        if !self.bots.add(user_id, config, now) {
+        if !self.bots.add(user_id, owner_id, config.permissions, now) {
             return false;
         }
 
@@ -1842,7 +1843,7 @@ impl GroupChatCore {
     }
 
     pub fn update_bot(&mut self, owner_id: UserId, user_id: UserId, config: BotGroupConfig, now: TimestampMillis) -> bool {
-        if !self.bots.update(user_id, config, now) {
+        if !self.bots.update(user_id, config.permissions, now) {
             return false;
         }
 

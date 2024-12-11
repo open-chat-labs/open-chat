@@ -105,6 +105,7 @@ slash_command_option_choice!(SlashCommandOptionChoiceU16, u16);
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct BotGroupDetails {
     pub user_id: UserId,
+    pub added_by: UserId,
     pub permissions: SlashCommandPermissions,
 }
 

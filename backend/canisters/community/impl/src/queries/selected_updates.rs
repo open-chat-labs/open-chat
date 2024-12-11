@@ -98,6 +98,7 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
                         result.bots_added_or_updated.push(BotGroupDetails {
                             user_id,
                             permissions: bot.permissions.clone(),
+                            added_by: bot.added_by,
                         });
                     }
                 }

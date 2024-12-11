@@ -2176,5 +2176,6 @@ type BotGroupConfig = record {
 
 type BotGroupDetails = record {
     user_id : UserId;
+    added_by : UserId;
     permissions : SlashCommandPermissions;
 }
