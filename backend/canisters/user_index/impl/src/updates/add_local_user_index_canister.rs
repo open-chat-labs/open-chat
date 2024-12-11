@@ -2,7 +2,7 @@ use crate::guards::caller_is_governance_principal;
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
-use local_user_index_canister::{Event, UserRegistered};
+use local_user_index_canister::{UserIndexEvent, UserRegistered};
 use tracing::info;
 use types::{BuildVersion, CanisterId, CanisterWasm};
 use user_index_canister::add_local_user_index_canister::{Response::*, *};
@@ -83,7 +83,7 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
         for user in state.data.users.iter() {
             state.data.user_index_event_sync_queue.push(
                 canister_id,
-                Event::UserRegistered(UserRegistered {
+                UserIndexEvent::UserRegistered(UserRegistered {
                     user_id: user.user_id,
                     user_principal: user.principal,
                     username: user.username.clone(),

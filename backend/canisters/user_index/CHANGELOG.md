@@ -20,6 +20,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Log userId byte lengths ([#7008](https://github.com/open-chat-labs/open-chat/pull/7008))
 - Include the ledger canister Id in transfer failed error logs ([#7011](https://github.com/open-chat-labs/open-chat/pull/7011))
 - Make `MessageId` comparisons use their 64bit representation ([#7030](https://github.com/open-chat-labs/open-chat/pull/7030))
+- Notify CHIT updates via LocalUserIndex ([#7033](https://github.com/open-chat-labs/open-chat/pull/7033))
+- Use `GroupedTimerJobQueue` to push user config to StorageIndex ([#7034](https://github.com/open-chat-labs/open-chat/pull/7034))
 
 ### Fixed
 

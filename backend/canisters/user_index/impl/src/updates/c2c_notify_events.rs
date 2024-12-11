@@ -6,13 +6,13 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
 use local_user_index_canister::{
-    DeleteUser, Event as LocalUserIndexEvent, OpenChatBotMessage, OpenChatBotMessageV2, UserJoinedCommunityOrChannel,
-    UserJoinedGroup, UserRegistered, UsernameChanged,
+    DeleteUser, OpenChatBotMessage, OpenChatBotMessageV2, UserIndexEvent, UserJoinedCommunityOrChannel, UserJoinedGroup,
+    UserRegistered, UsernameChanged,
 };
 use storage_index_canister::add_or_update_users::UserConfig;
-use types::{CanisterId, MessageContent, TextContent, UserId, UserType};
+use types::{CanisterId, MessageContent, TextContent, TimestampMillis, UserId, UserType};
 use user_index_canister::c2c_notify_events::{Response::*, *};
-use user_index_canister::Event;
+use user_index_canister::LocalUserIndexEvent;
 
 #[update(guard = "caller_is_local_user_index_canister", msgpack = true)]
 #[trace]
@@ -21,22 +21,24 @@ fn c2c_notify_events(args: Args) -> Response {
 }
 
 fn c2c_notify_events_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let caller: CanisterId = state.env.caller();
+    let now = state.env.now();
     for event in args.events {
-        handle_event(event, state);
+        handle_event(event, caller, now, state);
     }
 
     Success
 }
 
-fn handle_event(event: Event, state: &mut RuntimeState) {
-    let caller: CanisterId = state.env.caller();
-
+fn handle_event(event: LocalUserIndexEvent, caller: Principal, now: TimestampMillis, state: &mut RuntimeState) {
     match event {
-        Event::UserRegistered(ev) => process_new_user(ev.principal, ev.username, ev.user_id, ev.referred_by, caller, state),
-        Event::UserJoinedGroup(ev) => {
+        LocalUserIndexEvent::UserRegistered(ev) => {
+            process_new_user(ev.principal, ev.username, ev.user_id, ev.referred_by, caller, state)
+        }
+        LocalUserIndexEvent::UserJoinedGroup(ev) => {
             state.push_event_to_local_user_index(
                 ev.user_id,
-                LocalUserIndexEvent::UserJoinedGroup(UserJoinedGroup {
+                UserIndexEvent::UserJoinedGroup(UserJoinedGroup {
                     user_id: ev.user_id,
                     chat_id: ev.chat_id,
                     local_user_index_canister_id: ev.local_user_index_canister_id,
@@ -45,10 +47,10 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 }),
             );
         }
-        Event::UserJoinedCommunityOrChannel(ev) => {
+        LocalUserIndexEvent::UserJoinedCommunityOrChannel(ev) => {
             state.push_event_to_local_user_index(
                 ev.user_id,
-                LocalUserIndexEvent::UserJoinedCommunityOrChannel(UserJoinedCommunityOrChannel {
+                UserIndexEvent::UserJoinedCommunityOrChannel(UserJoinedCommunityOrChannel {
                     user_id: ev.user_id,
                     community_id: ev.community_id,
                     local_user_index_canister_id: ev.local_user_index_canister_id,
@@ -57,8 +59,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 }),
             );
         }
-        Event::JoinUserToGroup(ev) => {
-            let now = state.env.now();
+        LocalUserIndexEvent::JoinUserToGroup(ev) => {
             state.data.timer_jobs.enqueue_job(
                 TimerJob::JoinUserToGroup(JoinUserToGroup {
                     user_id: ev.user_id,
@@ -69,19 +70,19 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 now,
             );
         }
-        Event::OpenChatBotMessage(ev) => {
+        LocalUserIndexEvent::OpenChatBotMessage(ev) => {
             state.push_event_to_local_user_index(
                 ev.user_id,
-                LocalUserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage {
+                UserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage {
                     user_id: ev.user_id,
                     message: ev.message,
                 })),
             );
         }
-        Event::OpenChatBotMessageV2(ev) => {
+        LocalUserIndexEvent::OpenChatBotMessageV2(ev) => {
             state.push_event_to_local_user_index(
                 ev.user_id,
-                LocalUserIndexEvent::OpenChatBotMessageV2(Box::new(OpenChatBotMessageV2 {
+                UserIndexEvent::OpenChatBotMessageV2(Box::new(OpenChatBotMessageV2 {
                     user_id: ev.user_id,
                     thread_root_message_id: ev.thread_root_message_id,
                     content: ev.content,
@@ -89,26 +90,45 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 })),
             );
         }
-        Event::UserDeleted(ev) => {
+        LocalUserIndexEvent::UserDeleted(ev) => {
             state.delete_user(ev.user_id, false);
             state.push_event_to_all_local_user_indexes(
-                LocalUserIndexEvent::DeleteUser(DeleteUser {
+                UserIndexEvent::DeleteUser(DeleteUser {
                     user_id: ev.user_id,
                     triggered_by_user: false,
                 }),
                 Some(caller),
             );
         }
-        Event::NotifyUniquePersonProof(ev) => {
+        LocalUserIndexEvent::NotifyUniquePersonProof(ev) => {
             let (user_id, proof) = *ev;
             state
                 .data
                 .users
-                .record_proof_of_unique_personhood(user_id, proof.clone(), state.env.now());
-            state.push_event_to_all_local_user_indexes(
-                LocalUserIndexEvent::NotifyUniquePersonProof(user_id, proof),
-                Some(caller),
-            );
+                .record_proof_of_unique_personhood(user_id, proof.clone(), now);
+            state.push_event_to_all_local_user_indexes(UserIndexEvent::NotifyUniquePersonProof(user_id, proof), Some(caller));
+        }
+        LocalUserIndexEvent::NotifyChit(ev) => {
+            let (user_id, chit) = *ev;
+
+            if state.data.users.set_chit(
+                &user_id,
+                chit.timestamp,
+                chit.chit_balance,
+                chit.streak,
+                chit.streak_ends,
+                now,
+            ) {
+                if let Some(user) = state.data.users.get_by_user_id(&user_id) {
+                    state.data.chit_leaderboard.update_position(
+                        user_id,
+                        user.total_chit_earned(),
+                        chit.chit_balance,
+                        chit.timestamp,
+                        now,
+                    );
+                }
+            }
         }
     }
 }
@@ -146,7 +166,7 @@ fn process_new_user(
     state.data.local_index_map.add_user(local_user_index_canister_id, user_id);
 
     state.push_event_to_all_local_user_indexes(
-        LocalUserIndexEvent::UserRegistered(UserRegistered {
+        UserIndexEvent::UserRegistered(UserRegistered {
             user_id,
             user_principal: principal,
             username: username.clone(),
@@ -170,14 +190,14 @@ fn process_new_user(
     if let Some(original_username) = original_username {
         state.push_event_to_local_user_index(
             user_id,
-            LocalUserIndexEvent::UsernameChanged(UsernameChanged {
+            UserIndexEvent::UsernameChanged(UsernameChanged {
                 user_id,
                 username: username.clone(),
             }),
         );
         state.push_event_to_local_user_index(
             user_id,
-            LocalUserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage {
+            UserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage {
                 user_id,
                 message: MessageContent::Text(TextContent {
                     text: format!("Unfortunately the username \"{original_username}\" was taken so your username has been changed to \"{username}\".
@@ -188,11 +208,13 @@ You can change your username at any time by clicking \"Profile settings\" from t
         );
     }
 
-    state.data.storage_index_user_sync_queue.push(UserConfig {
-        user_id: principal,
-        byte_limit: 100 * ONE_MB,
-    });
-    crate::jobs::sync_users_to_storage_index::try_run_now(state);
+    state.data.storage_index_user_sync_queue.push(
+        state.data.storage_index_canister_id,
+        UserConfig {
+            user_id: principal,
+            byte_limit: 100 * ONE_MB,
+        },
+    );
 
     state
         .data

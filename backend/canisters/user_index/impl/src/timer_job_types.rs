@@ -5,7 +5,7 @@ use crate::{mutate_state, read_state};
 use canister_timer_jobs::Job;
 use constants::{MINUTE_IN_MS, SECOND_IN_MS};
 use ic_ledger_types::Tokens;
-use local_user_index_canister::{Event as LocalUserIndexEvent, OpenChatBotMessage, UserJoinedGroup};
+use local_user_index_canister::{OpenChatBotMessage, UserIndexEvent, UserJoinedGroup};
 use serde::{Deserialize, Serialize};
 use types::{
     ChatId, CommunityId, Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration, MessageContent, Milliseconds,
@@ -118,7 +118,7 @@ impl Job for RecurringDiamondMembershipPayment {
                     mutate_state(|state| {
                         state.push_event_to_local_user_index(
                             user_id,
-                            LocalUserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage {
+                            UserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage {
                                 user_id,
                                 message: MessageContent::Text(TextContent {
                                     text: format!(
@@ -283,7 +283,7 @@ impl Job for JoinUserToGroup {
                 Ok(Response::Success(s) | Response::AlreadyInGroupV2(s)) => mutate_state(|state| {
                     state.push_event_to_local_user_index(
                         args.user_id,
-                        LocalUserIndexEvent::UserJoinedGroup(UserJoinedGroup {
+                        UserIndexEvent::UserJoinedGroup(UserJoinedGroup {
                             user_id: args.user_id,
                             chat_id: group_id,
                             local_user_index_canister_id: s.local_user_index_canister_id,

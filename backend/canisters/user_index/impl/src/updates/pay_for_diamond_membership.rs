@@ -10,7 +10,7 @@ use ic_ledger_types::{BlockIndex, TransferError};
 use icrc_ledger_types::icrc1;
 use icrc_ledger_types::icrc1::account::Account;
 use jwt::{sign_and_encode_token, Claims};
-use local_user_index_canister::{DiamondMembershipPaymentReceived, Event};
+use local_user_index_canister::{DiamondMembershipPaymentReceived, UserIndexEvent};
 use rand::Rng;
 use serde::Serialize;
 use storage_index_canister::add_or_update_users::UserConfig;
@@ -129,7 +129,7 @@ fn process_charge(
 
         state.data.users.mark_updated(&user_id, now);
         state.push_event_to_all_local_user_indexes(
-            Event::DiamondMembershipPaymentReceived(DiamondMembershipPaymentReceived {
+            UserIndexEvent::DiamondMembershipPaymentReceived(DiamondMembershipPaymentReceived {
                 user_id,
                 timestamp: now,
                 expires_at,
@@ -144,11 +144,13 @@ fn process_charge(
         );
 
         if let Some(user) = state.data.users.get_by_user_id(&user_id) {
-            state.data.storage_index_user_sync_queue.push(UserConfig {
-                user_id: user.principal,
-                byte_limit: ONE_GB,
-            });
-            crate::jobs::sync_users_to_storage_index::try_run_now(state);
+            state.data.storage_index_user_sync_queue.push(
+                state.data.storage_index_canister_id,
+                UserConfig {
+                    user_id: user.principal,
+                    byte_limit: ONE_GB,
+                },
+            );
         }
 
         if recurring {

@@ -3,9 +3,9 @@ use serde::{Deserialize, Serialize};
 use types::nns::CryptoAmount;
 use types::{
     CanisterId, ChannelLatestMessageIndex, ChatId, ChitEarnedReason, CommunityId, Cryptocurrency,
-    DiamondMembershipPlanDuration, MessageContent, MessageContentInitial, MessageId, MessageIndex, PhoneNumber, ReferralType,
-    SlashCommandSchema, SuspensionDuration, TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User, UserId,
-    UserType,
+    DiamondMembershipPlanDuration, MessageContent, MessageContentInitial, MessageId, MessageIndex, NotifyChit, PhoneNumber,
+    ReferralType, SlashCommandSchema, SuspensionDuration, TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User,
+    UserId, UserType,
 };
 
 mod lifecycle;
@@ -17,7 +17,7 @@ pub use queries::*;
 pub use updates::*;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum Event {
+pub enum UserIndexEvent {
     UsernameChanged(UsernameChanged),
     DisplayNameChanged(DisplayNameChanged),
     PhoneNumberConfirmed(PhoneNumberConfirmed),
@@ -197,6 +197,11 @@ pub struct ExternalAchievementAwarded {
     pub user_id: UserId,
     pub name: String,
     pub chit_reward: u32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum UserEvent {
+    NotifyChit(NotifyChit),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]

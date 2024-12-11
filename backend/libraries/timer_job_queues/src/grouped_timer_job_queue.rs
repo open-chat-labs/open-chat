@@ -82,11 +82,11 @@ impl<T: TimerJobItemGroup + 'static> GroupedTimerJobQueue<T>
 where
     <T as TimerJobItemGroup>::Key: Clone + Ord,
 {
-    pub fn push(&self, grouping_key: T::Key, item: T::Item) {
+    pub fn push(&mut self, grouping_key: T::Key, item: T::Item) {
         self.push_many(grouping_key, vec![item])
     }
 
-    pub fn push_many(&self, grouping_key: T::Key, items: Vec<T::Item>) {
+    pub fn push_many(&mut self, grouping_key: T::Key, items: Vec<T::Item>) {
         let defer_processing = self.within_lock(|i| {
             match i.items_map.entry(grouping_key.clone()) {
                 Vacant(e) => {

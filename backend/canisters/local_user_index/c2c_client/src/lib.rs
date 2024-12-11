@@ -16,6 +16,7 @@ generate_c2c_call!(chat_events);
 
 // Updates
 generate_c2c_call!(c2c_notify_low_balance);
+generate_c2c_call!(c2c_notify_user_events);
 generate_c2c_call!(c2c_notify_user_index_events);
 generate_c2c_call!(c2c_push_wasm_chunk);
 generate_c2c_call!(c2c_upgrade_user_canister_wasm);

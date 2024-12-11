@@ -1,5 +1,5 @@
 use crate::model::local_user_index_map::LocalUserIndex;
-use crate::model::storage_index_user_sync_queue::OpenStorageUserSyncQueue;
+use crate::model::storage_index_user_config_batch::StorageIndexUserConfigBatch;
 use crate::model::user_map::UserMap;
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
@@ -10,7 +10,7 @@ use event_store_producer::{EventBuilder, EventStoreClient, EventStoreClientBuild
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
-use local_user_index_canister::Event as LocalUserIndexEvent;
+use local_user_index_canister::UserIndexEvent as LocalUserIndexEvent;
 use model::chit_leaderboard::ChitLeaderboard;
 use model::external_achievements::{ExternalAchievementMetrics, ExternalAchievements};
 use model::local_user_index_map::LocalUserIndexMap;
@@ -26,6 +26,7 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
+use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     BuildVersion, CanisterId, ChatId, ChildCanisterWasms, Cryptocurrency, Cycles, DiamondMembershipFees, Milliseconds,
     TimestampMillis, Timestamped, UserId, UserType,
@@ -348,7 +349,8 @@ struct Data {
     pub escrow_canister_id: CanisterId,
     pub translations_canister_id: CanisterId,
     pub event_store_client: EventStoreClient<CdkRuntime>,
-    pub storage_index_user_sync_queue: OpenStorageUserSyncQueue,
+    #[serde(skip_deserializing, default = "storage_index_user_sync_queue")]
+    pub storage_index_user_sync_queue: GroupedTimerJobQueue<StorageIndexUserConfigBatch>,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub pending_payments_queue: PendingPaymentsQueue,
     pub pending_modclub_submissions_queue: PendingModclubSubmissionsQueue,
@@ -382,6 +384,10 @@ struct Data {
     pub survey_messages_sent: usize,
     pub external_achievements: ExternalAchievements,
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
+}
+
+fn storage_index_user_sync_queue() -> GroupedTimerJobQueue<StorageIndexUserConfigBatch> {
+    GroupedTimerJobQueue::new(1, false)
 }
 
 fn website_canister_id() -> CanisterId {
@@ -430,7 +436,7 @@ impl Data {
             event_store_client: EventStoreClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_secs(60))
                 .build(),
-            storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
+            storage_index_user_sync_queue: GroupedTimerJobQueue::new(1, false),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             pending_payments_queue: PendingPaymentsQueue::default(),
             pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),
@@ -559,7 +565,7 @@ impl Default for Data {
             escrow_canister_id: Principal::anonymous(),
             translations_canister_id: Principal::anonymous(),
             event_store_client: EventStoreClientBuilder::new(Principal::anonymous(), CdkRuntime::default()).build(),
-            storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
+            storage_index_user_sync_queue: GroupedTimerJobQueue::new(1, false),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             pending_payments_queue: PendingPaymentsQueue::default(),
             pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),
