@@ -49,9 +49,10 @@ fn selected_initial_impl(args: Args, state: &RuntimeState) -> Response {
     let bots = data
         .bots
         .iter()
-        .map(|(user_id, config)| BotGroupDetails {
+        .map(|(user_id, bot)| BotGroupDetails {
             user_id: *user_id,
-            permissions: config.permissions.clone(),
+            permissions: bot.permissions.clone(),
+            added_by: bot.added_by,
         })
         .collect();
 
