@@ -527,10 +527,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         cycles_minting_canister: cycles_minting_canister_id,
     };
 
-    println!(
-        "Test env setup complete. CanisterIds: {:?}",
-        serde_json::to_string(&canister_ids)
-    );
+    println!("Test env setup complete. {canister_ids:?}");
 
     canister_ids
 }
