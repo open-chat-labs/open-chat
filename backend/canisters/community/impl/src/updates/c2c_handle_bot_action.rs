@@ -59,7 +59,7 @@ fn c2c_handle_bot_action_impl(args: Args, state: &mut RuntimeState) -> Response 
                     message_filter_failed: None,
                     new_achievement: false,
                 },
-                Some(args.bot.user_id.into()),
+                Some(args.bot.user_id),
                 state,
             ) {
                 send_message::Response::Success(_) => Ok(()),

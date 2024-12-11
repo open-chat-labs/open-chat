@@ -8,7 +8,7 @@ use community_canister::start_video_call::{Response::*, *};
 use constants::HOUR_IN_MS;
 use group_chat_core::SendMessageResult;
 use ic_cdk::update;
-use types::{ChannelMessageNotification, Notification, UserId, UserType, VideoCallPresence, VideoCallType};
+use types::{Caller, ChannelMessageNotification, Notification, UserId, VideoCallPresence, VideoCallType};
 
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
@@ -38,8 +38,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
 
     let result = match channel.chat.send_message(
-        sender,
-        UserType::User,
+        &Caller::User(sender),
         None,
         args.message_id,
         MessageContentInternal::VideoCall(VideoCallContentInternal {

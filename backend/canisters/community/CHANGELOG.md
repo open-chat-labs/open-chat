@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Implement new lightweight search index for searching messages ([#7029](https://github.com/open-chat-labs/open-chat/pull/7029))
 - Make `MessageId` comparisons use their 64bit representation ([#7030](https://github.com/open-chat-labs/open-chat/pull/7030))
 - Record user who added bot to community/group ([#7035](https://github.com/open-chat-labs/open-chat/pull/7035))
+- Bot message visibility tied to initiating user ([#7044](https://github.com/open-chat-labs/open-chat/pull/7044))
 
 ### Removed
 
