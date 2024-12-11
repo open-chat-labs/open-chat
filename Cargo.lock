@@ -8330,6 +8330,7 @@ dependencies = [
  "storage_index_canister_c2c_client",
  "testing",
  "time",
+ "timer_job_queues",
  "tracing",
  "types",
  "url",

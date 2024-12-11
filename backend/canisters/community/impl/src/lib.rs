@@ -776,7 +776,7 @@ impl Data {
     }
 
     pub fn add_bot(&mut self, owner_id: UserId, user_id: UserId, bot_config: BotGroupConfig, now: TimestampMillis) -> bool {
-        if !self.bots.add(user_id, bot_config, now) {
+        if !self.bots.add(user_id, owner_id, bot_config.permissions, now) {
             return false;
         }
 
@@ -795,7 +795,7 @@ impl Data {
     }
 
     pub fn update_bot(&mut self, owner_id: UserId, user_id: UserId, bot_config: BotGroupConfig, now: TimestampMillis) -> bool {
-        if !self.bots.update(user_id, bot_config, now) {
+        if !self.bots.update(user_id, bot_config.permissions, now) {
             return false;
         }
 
