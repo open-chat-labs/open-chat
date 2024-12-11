@@ -62,6 +62,7 @@ stable_memory = { path = "../../../libraries/stable_memory" }
 storage_index_canister = { path = "../../storage_index/api" }
 storage_index_canister_c2c_client = { path = "../../storage_index/c2c_client" }
 time = { workspace = true }
+timer_job_queues = { path = "../../../libraries/timer_job_queues" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 url = { workspace = true }
