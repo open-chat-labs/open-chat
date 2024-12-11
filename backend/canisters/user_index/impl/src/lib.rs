@@ -284,6 +284,7 @@ impl RuntimeState {
                 .map(|(c, h)| (*c, hex::encode(h)))
                 .collect(),
             stable_memory_sizes: memory::memory_sizes(),
+            streak_insurance_metrics: self.data.streak_insurance_logs.metrics(),
             canister_ids: CanisterIds {
                 group_index: self.data.group_index_canister_id,
                 notifications_index: self.data.notifications_index_canister_id,
@@ -648,6 +649,7 @@ pub struct Metrics {
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
     pub wasm_chunks_uploaded: Vec<(ChildCanisterType, String)>,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
+    pub streak_insurance_metrics: StreakInsuranceMetrics,
     pub canister_ids: CanisterIds,
 }
 
@@ -712,6 +714,15 @@ pub struct DeletedUser {
     pub user_id: UserId,
     pub triggered_by_user: bool,
     pub timestamp: TimestampMillis,
+}
+
+#[derive(Serialize, Debug, Default)]
+pub struct StreakInsuranceMetrics {
+    payments: u32,
+    payments_unique_users: u32,
+    claims: u32,
+    claims_unique_users: u32,
+    total_paid: u128,
 }
 
 #[derive(Serialize, Debug)]
