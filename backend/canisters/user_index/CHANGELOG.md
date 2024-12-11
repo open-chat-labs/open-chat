@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Implement `explore_bots` ([#6932](https://github.com/open-chat-labs/open-chat/pull/6932))
 - Implement `bot_updates` ([#6934](https://github.com/open-chat-labs/open-chat/pull/6934))
 - Serve bot avatars from UserIndex ([#6975](https://github.com/open-chat-labs/open-chat/pull/6975))
+- Implement streak insurance ([#7036](https://github.com/open-chat-labs/open-chat/pull/7036))
 
 ### Changed
 
