@@ -33,7 +33,7 @@ pub fn ts_export(attr: TokenStream, item: TokenStream) -> TokenStream {
     match &mut item {
         Item::Struct(s) => {
             insert_container_attributes(&mut s.attrs, &s.ident, export_to, prefix);
-            let derives_serde = derives_serde(&s.attrs);
+            let derives_serde = any_derives_serde(&s.attrs);
 
             for field in s.fields.iter_mut() {
                 insert_field_attributes(field, false, derives_serde);
@@ -41,7 +41,7 @@ pub fn ts_export(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
         Item::Enum(e) => {
             insert_container_attributes(&mut e.attrs, &e.ident, export_to, prefix);
-            let derives_serde = derives_serde(&e.attrs);
+            let derives_serde = any_derives_serde(&e.attrs);
 
             for variant in e.variants.iter_mut() {
                 for field in variant.fields.iter_mut() {
@@ -191,10 +191,17 @@ fn skip_serializing_if_default(path_segment: &PathSegment) -> Option<Defaults> {
     }
 }
 
-fn derives_serde(attrs: &[Attribute]) -> bool {
-    attrs
-        .iter()
-        .any(|attr| attr.path().is_ident("derive") && attr.into_token_stream().to_string().contains("Serialize|Deserialize"))
+fn any_derives_serde(attrs: &[Attribute]) -> bool {
+    attrs.iter().any(derives_serde)
+}
+
+fn derives_serde(attr: &Attribute) -> bool {
+    if attr.path().is_ident("derive") {
+        let as_string = attr.into_token_stream().to_string();
+        as_string.contains("Serialize") || as_string.contains("Deserialize")
+    } else {
+        false
+    }
 }
 
 #[allow(dead_code)]
