@@ -145,7 +145,7 @@ fn process_send_message_result(
                 message_index,
                 event_index,
                 group_name: state.data.chat.name.value.clone(),
-                sender: caller.actor(),
+                sender: caller.agent(),
                 sender_name: sender_username,
                 sender_display_name,
                 message_type: content.message_type(),
@@ -158,7 +158,7 @@ fn process_send_message_result(
 
             if new_achievement && !caller.is_bot() {
                 for a in message_event.event.achievements(false, thread_root_message_index.is_some()) {
-                    state.data.notify_user_of_achievement(caller.actor(), a);
+                    state.data.notify_user_of_achievement(caller.agent(), a);
                 }
             }
 
@@ -229,7 +229,7 @@ fn process_send_message_result(
                         event_index,
                         activity,
                         timestamp: now,
-                        user_id: Some(caller.actor()),
+                        user_id: Some(caller.agent()),
                     }),
                 );
             }

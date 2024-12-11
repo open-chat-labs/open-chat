@@ -15,7 +15,7 @@ pub struct BotCaller {
 }
 
 impl Caller {
-    pub fn actor(&self) -> UserId {
+    pub fn agent(&self) -> UserId {
         match self {
             Caller::User(user_id) => *user_id,
             Caller::Bot(user_id) => *user_id,

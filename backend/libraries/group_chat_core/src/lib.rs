@@ -697,7 +697,7 @@ impl GroupChatCore {
             .as_ref()
             .and_then(|r| self.get_user_being_replied_to(r, min_visible_event_index, thread_root_message_index));
 
-        let sender = caller.actor();
+        let sender = caller.agent();
 
         let push_message_args = PushMessageArgs {
             sender,
@@ -809,7 +809,7 @@ impl GroupChatCore {
         }
 
         if let Some(version) = rules_accepted {
-            self.members.update_member(&caller.actor(), |m| {
+            self.members.update_member(&caller.agent(), |m| {
                 m.accept_rules(min(version, self.rules.text.version), now);
                 true
             });

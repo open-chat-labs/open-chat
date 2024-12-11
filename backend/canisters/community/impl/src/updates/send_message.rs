@@ -153,14 +153,14 @@ fn prepare(
     let now = state.env.now();
 
     if let Some(version) = community_rules_accepted {
-        state.data.members.mark_rules_accepted(&caller.actor(), version, now);
+        state.data.members.mark_rules_accepted(&caller.agent(), version, now);
     }
 
     if caller.is_bot() {
         return Ok(None);
     }
 
-    if let Some(member) = state.data.members.get_by_user_id(&caller.actor()) {
+    if let Some(member) = state.data.members.get_by_user_id(&caller.agent()) {
         if state.data.rules.enabled
             && !member.user_type.is_bot()
             && member
@@ -210,7 +210,7 @@ fn process_send_message_result(
                 event_index: message_event.index,
                 community_name: state.data.name.value.clone(),
                 channel_name,
-                sender: caller.actor(),
+                sender: caller.agent(),
                 sender_name: sender_username,
                 sender_display_name,
                 message_type: content.message_type(),
@@ -231,7 +231,7 @@ fn process_send_message_result(
                     .event
                     .achievements(false, thread_root_message_index.is_some())
                 {
-                    state.data.notify_user_of_achievement(caller.actor(), a);
+                    state.data.notify_user_of_achievement(caller.agent(), a);
                 }
             }
 
@@ -298,7 +298,7 @@ fn process_send_message_result(
                         event_index,
                         activity,
                         timestamp: now,
-                        user_id: Some(caller.actor()),
+                        user_id: Some(caller.agent()),
                     }),
                 );
             }
