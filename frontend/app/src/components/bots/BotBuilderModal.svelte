@@ -30,7 +30,6 @@
             client
                 .registerBot({
                     ...snapshot,
-                    id: "yf5kc-uaaaa-aaaar-a7qfq-cai",
                     ownerId: $currentUser.userId,
                 })
                 .then((success) => {

@@ -114,6 +114,17 @@
             on:imageSelected={botAvatarSelected} />
     </div>
 
+    <Legend required label={i18nKey("bots.builder.principalLabel")}></Legend>
+    <ValidatingInput
+        autofocus
+        minlength={3}
+        maxlength={50}
+        invalid={errors.has("bot_principal")}
+        placeholder={i18nKey("bots.builder.principalPlaceholder")}
+        error={errors.get("bot_principal")}
+        bind:value={candidate.id}>
+    </ValidatingInput>
+
     <Legend
         required
         label={i18nKey("bots.builder.nameLabel")}

@@ -1672,8 +1672,12 @@ export class OpenChat extends OpenChatAgentWorker {
      */
     showTrace = showTrace;
     userAvatarUrl = userAvatarUrl;
-    botAvatarUrl(_avatarId?: bigint): string {
-        // TODO - come back and sort this out
+    botAvatarUrl(botId: string, avatarId?: bigint): string {
+        if (avatarId !== undefined) {
+            return `${this.config.blobUrlPattern
+                .replace("{canisterId}", this.config.userIndexCanister)
+                .replace("{blobType}", "avatar")}/${botId}/${avatarId}`;
+        }
         return "/assets/bot_avatar.svg";
     }
     updateStorageLimit = updateStorageLimit;

@@ -19,17 +19,17 @@
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
         class="tab"
-        onclick={() => (permissionsTab = "chat")}
-        class:selected={permissionsTab === "chat"}>
-        <Translatable resourceKey={i18nKey("bots.builder.permScopeChat")}></Translatable>
+        onclick={() => (permissionsTab = "community")}
+        class:selected={permissionsTab === "community"}>
+        <Translatable resourceKey={i18nKey("bots.builder.permScopeCommunity")}></Translatable>
     </div>
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
         class="tab"
-        onclick={() => (permissionsTab = "community")}
-        class:selected={permissionsTab === "community"}>
-        <Translatable resourceKey={i18nKey("bots.builder.permScopeCommunity")}></Translatable>
+        onclick={() => (permissionsTab = "chat")}
+        class:selected={permissionsTab === "chat"}>
+        <Translatable resourceKey={i18nKey("bots.builder.permScopeChat")}></Translatable>
     </div>
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->

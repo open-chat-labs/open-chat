@@ -309,12 +309,25 @@ export function validBotComponentName(name: string): ResourceKey[] {
     return errors;
 }
 
+function validatePrincipal(p: string): boolean {
+    try {
+        Principal.fromText(p);
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
 export function validateBot(bot: ExternalBot): ValidationErrors {
     const errors = new ValidationErrors();
     errors.addErrors(`bot_name`, validBotComponentName(bot.name));
 
     if (!(validateOrigin(bot.endpoint) || validateCanister(bot.endpoint))) {
         errors.addErrors("bot_endpoint", i18nKey("bots.builder.errors.endpoint"));
+    }
+
+    if (!validatePrincipal(bot.id)) {
+        errors.addErrors("bot_principal", i18nKey("bots.builder.errors.principal"));
     }
 
     if (bot.commands.length === 0) {

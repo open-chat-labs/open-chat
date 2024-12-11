@@ -183,7 +183,8 @@
                 "duplicateParams": "Command contains duplicate params",
                 "endpoint": "Endpoint must be a valid origin or canisterID",
                 "minLength": "Must have at least {n} characters",
-                "noCommands": "A bot must contain at least one command"
+                "noCommands": "A bot must contain at least one command",
+                "principal": "You must enter a valid principal to identify the bot"
             },
             "iconLabel": "Bot avatar",
             "maxLengthLabel": "Maximum length",
@@ -211,6 +212,8 @@
             "permScopeCommunity": "Community",
             "permScopeMessage": "Message",
             "permScopeThread": "Thread",
+            "principalLabel": "Principal",
+            "principalPlaceholder": "Enter bot principal",
             "required": "Required parameter",
             "requiredDesc": "Is this a required parameter for the command",
             "title": "Build a bot",

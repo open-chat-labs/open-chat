@@ -82,10 +82,12 @@
     function addBot() {
         adding = true;
         client
-            .addBotToCommunity(community.id, bot.id, grantedPermissions)
+            .addBotToCommunity(community.id, bot.id, $state.snapshot(grantedPermissions))
             .then((success) => {
                 if (!success) {
                     toastStore.showFailureToast(i18nKey("bots.add.failure"));
+                } else {
+                    onClose();
                 }
             })
             .finally(() => (adding = false));
@@ -99,7 +101,7 @@
         </div>
         <div class="body" slot="body">
             <span class="avatar">
-                <Avatar url={client.botAvatarUrl(bot.avatarId)} size={AvatarSize.Default} />
+                <Avatar url={client.botAvatarUrl(bot.id, bot.avatarId)} size={AvatarSize.Default} />
             </span>
             <div class="details">
                 <h4 class="bot-name">

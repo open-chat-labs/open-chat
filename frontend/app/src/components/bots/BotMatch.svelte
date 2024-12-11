@@ -25,7 +25,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="bot-match" onclick={() => (showing = true)}>
     <span class="avatar">
-        <Avatar url={client.botAvatarUrl(match.avatarId)} size={AvatarSize.Default} />
+        <Avatar url={client.botAvatarUrl(match.id, match.avatarId)} size={AvatarSize.Default} />
     </span>
     <div class="details">
         <h4 class="bot-name">
