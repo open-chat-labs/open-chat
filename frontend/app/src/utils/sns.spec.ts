@@ -8,6 +8,7 @@ function createTestBot(): ExternalBot {
         description: "This is a test bot",
         avatar: "avatar_url",
         id: "bot_id",
+        ownerId: "owner_id",
         endpoint: "https://my_bot",
         commands: [
             {
