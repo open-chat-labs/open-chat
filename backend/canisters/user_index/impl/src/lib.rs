@@ -10,7 +10,7 @@ use event_store_producer::{EventBuilder, EventStoreClient, EventStoreClientBuild
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
-use local_user_index_canister::Event as LocalUserIndexEvent;
+use local_user_index_canister::UserIndexEvent as LocalUserIndexEvent;
 use model::chit_leaderboard::ChitLeaderboard;
 use model::external_achievements::{ExternalAchievementMetrics, ExternalAchievements};
 use model::local_user_index_map::LocalUserIndexMap;

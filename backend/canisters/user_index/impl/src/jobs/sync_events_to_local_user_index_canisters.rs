@@ -1,6 +1,5 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{mutate_state, LocalUserIndexEvent, RuntimeState};
 use ic_cdk_timers::TimerId;
-use local_user_index_canister::Event as LocalUserIndexEvent;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;

@@ -1,19 +1,19 @@
-use crate::UserIndexEvent;
+use crate::LocalUserIndexEvent;
 use timer_job_queues::{TimerJobItem, TimerJobItemGroup};
 use types::CanisterId;
 use utils::canister::should_retry_failed_c2c_call;
 
-pub struct UserIndexEventBatch {
+pub struct LocalUserIndexEventBatch {
     canister_id: CanisterId,
-    events: Vec<UserIndexEvent>,
+    events: Vec<LocalUserIndexEvent>,
 }
 
-impl TimerJobItemGroup for UserIndexEventBatch {
+impl TimerJobItemGroup for LocalUserIndexEventBatch {
     type Key = CanisterId;
-    type Item = UserIndexEvent;
+    type Item = LocalUserIndexEvent;
 
     fn new(canister_id: CanisterId) -> Self {
-        UserIndexEventBatch {
+        LocalUserIndexEventBatch {
             canister_id,
             events: Vec::new(),
         }
@@ -23,31 +23,31 @@ impl TimerJobItemGroup for UserIndexEventBatch {
         self.canister_id
     }
 
-    fn add(&mut self, event: UserIndexEvent) {
+    fn add(&mut self, event: LocalUserIndexEvent) {
         self.events.push(event)
     }
 
-    fn into_items(self) -> Vec<UserIndexEvent> {
+    fn into_items(self) -> Vec<LocalUserIndexEvent> {
         self.events
     }
 
     fn is_full(&self) -> bool {
-        self.events.len() >= 1000
+        self.events.len() >= 100
     }
 }
 
-impl TimerJobItem for UserIndexEventBatch {
+impl TimerJobItem for LocalUserIndexEventBatch {
     async fn process(&self) -> Result<(), bool> {
-        let response = user_index_canister_c2c_client::c2c_notify_events(
+        let response = local_user_index_canister_c2c_client::c2c_notify_user_events(
             self.canister_id,
-            &user_index_canister::c2c_notify_events::Args {
+            &local_user_index_canister::c2c_notify_user_events::Args {
                 events: self.events.clone(),
             },
         )
         .await;
 
         match response {
-            Ok(user_index_canister::c2c_notify_events::Response::Success) => Ok(()),
+            Ok(local_user_index_canister::c2c_notify_user_events::Response::Success) => Ok(()),
             Err((code, msg)) => {
                 let retry = should_retry_failed_c2c_call(code, &msg);
                 Err(retry)

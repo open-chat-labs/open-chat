@@ -92,7 +92,7 @@ pub struct ChannelSummaryUpdates {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum Event {
+pub enum LocalUserIndexEvent {
     UsernameChanged(Box<UsernameChanged>),
     DisplayNameChanged(Box<DisplayNameChanged>),
     PhoneNumberConfirmed(Box<PhoneNumberConfirmed>),

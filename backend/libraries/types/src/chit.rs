@@ -11,6 +11,14 @@ pub struct ChitEarned {
     pub reason: ChitEarnedReason,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct NotifyChit {
+    pub timestamp: TimestampMillis,
+    pub chit_balance: i32,
+    pub streak: u16,
+    pub streak_ends: TimestampMillis,
+}
+
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum ChitEarnedReason {

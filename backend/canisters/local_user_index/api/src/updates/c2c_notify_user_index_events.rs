@@ -1,9 +1,9 @@
-use crate::Event;
+use crate::UserIndexEvent;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub events: Vec<Event>,
+    pub events: Vec<UserIndexEvent>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

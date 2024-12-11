@@ -3,7 +3,7 @@ use crate::model::user_map::UpdateUserResult;
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use local_user_index_canister::{Event, UsernameChanged};
+use local_user_index_canister::{UserIndexEvent, UsernameChanged};
 use user_index_canister::set_username::{Response::*, *};
 use utils::text_validation::{validate_username, UsernameValidationError};
 
@@ -33,7 +33,10 @@ fn set_username_impl(args: Args, state: &mut RuntimeState) -> Response {
         let now = state.env.now();
         match state.data.users.update(user_to_update, now, false) {
             UpdateUserResult::Success => {
-                state.push_event_to_local_user_index(user_id, Event::UsernameChanged(UsernameChanged { user_id, username }));
+                state.push_event_to_local_user_index(
+                    user_id,
+                    UserIndexEvent::UsernameChanged(UsernameChanged { user_id, username }),
+                );
 
                 Success
             }
