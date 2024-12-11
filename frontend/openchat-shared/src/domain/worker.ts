@@ -201,7 +201,7 @@ import type {
 } from "./chit";
 import type { JsonnableDelegationChain } from "@dfinity/identity";
 import type { Verification } from "./wallet";
-import type { ExternalBot, SlashCommandPermissions } from "./bots";
+import type { BotsResponse, ExternalBot, SlashCommandPermissions } from "./bots";
 
 /**
  * Worker request types
@@ -304,6 +304,7 @@ export type WorkerRequest =
     | SuspendUser
     | UnsuspendUser
     | GetUpdates
+    | GetBots
     | GetDeletedGroupMessage
     | GetDeletedDirectMessage
     | LoadFailedMessages
@@ -1278,6 +1279,11 @@ type GetUpdates = {
     initialLoad: boolean;
 };
 
+type GetBots = {
+    kind: "getBots";
+    initialLoad: boolean;
+};
+
 type GetDeletedGroupMessage = {
     chatId: MultiUserChatIdentifier;
     messageId: bigint;
@@ -1464,6 +1470,7 @@ export type WorkerResponseInner =
     | SuspendUserResponse
     | UnsuspendUserResponse
     | UpdatesResult
+    | BotsResponse
     | DeletedDirectMessageResponse
     | DeletedGroupMessageResponse
     | StakeNeuronForSubmittingProposalsResponse
@@ -1863,6 +1870,8 @@ export type WorkerResult<T> = T extends Init
     ? UnpinMessageResponse
     : T extends GetUpdates
     ? UpdatesResult
+    : T extends GetBots
+    ? BotsResponse
     : T extends GetDeletedDirectMessage
     ? DeletedDirectMessageResponse
     : T extends GetDeletedGroupMessage

@@ -2,4 +2,4 @@
 import type { SlashCommandPermissions } from "./SlashCommandPermissions";
 import type { UserId } from "./UserId";
 
-export type BotGroupDetails = { user_id: UserId, permissions: SlashCommandPermissions, };
+export type BotGroupDetails = { user_id: UserId, added_by: UserId, permissions: SlashCommandPermissions, };

@@ -516,6 +516,8 @@ const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); //
 const MAX_TIMEOUT_MS = Math.pow(2, 31) - 1;
 const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
+const BOT_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
+const BOT_UPDATE_IDLE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 const REGISTRY_UPDATE_INTERVAL = 2 * ONE_MINUTE_MILLIS;
 const EXCHANGE_RATE_UPDATE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
@@ -538,6 +540,7 @@ export class OpenChat extends OpenChatAgentWorker {
     private _referralCode: string | undefined = undefined;
     private _userLookupForMentions: Record<string, UserOrUserGroup> | undefined = undefined;
     private _chatsPoller: Poller | undefined = undefined;
+    private _botsPoller: Poller | undefined = undefined;
     private _registryPoller: Poller | undefined = undefined;
     private _userUpdatePoller: Poller | undefined = undefined;
     private _exchangeRatePoller: Poller | undefined = undefined;
@@ -883,6 +886,7 @@ export class OpenChat extends OpenChatAgentWorker {
         }
 
         this.startChatsPoller();
+        this.startBotsPoller();
         this.startUserUpdatePoller();
 
         initNotificationStores();
@@ -913,6 +917,21 @@ export class OpenChat extends OpenChatAgentWorker {
 
     resumeEventLoop() {
         this.startChatsPoller();
+    }
+
+    private startBotsPoller() {
+        this._botsPoller?.stop();
+        this._botsPoller = new Poller(
+            () => this.loadBots(),
+            BOT_UPDATE_INTERVAL,
+            BOT_UPDATE_IDLE_INTERVAL,
+            true,
+        );
+
+        // we need to load chats at least once if we are completely offline
+        if (this._liveState.offlineStore) {
+            this.loadChats();
+        }
     }
 
     private startChatsPoller() {
@@ -5850,6 +5869,29 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
+    private botsLoaded = false;
+
+    private async loadBots() {
+        console.log("Loading bot updates");
+        return new Promise<void>((resolve) => {
+            this.sendStreamRequest({
+                kind: "getBots",
+                initialLoad: !this.botsLoaded,
+            }).subscribe({
+                onResult: async (resp) => {
+                    console.log("GetBots response: ", resp);
+                    this.botsLoaded = true;
+                },
+                onError: (err) => {
+                    console.warn("getBots threw an error: ", err);
+                    resolve();
+                },
+                onEnd: () => {
+                    resolve();
+                },
+            });
+        });
+    }
     private async loadChats() {
         const initialLoad = !this._liveState.chatsInitialised;
         chatsLoading.set(initialLoad);

@@ -6,6 +6,16 @@ import { ValidationErrors } from "../utils/validation";
 
 export const MIN_NAME_LENGTH = 3;
 
+export type BotGroupDetails = {
+    id: string;
+    permissions: SlashCommandPermissions;
+};
+
+export type BotsResponse = {
+    timestamp: bigint;
+    bots: ExternalBot[];
+};
+
 // This can be expanded as necessary to include things like ChatParam (e.g. for a /goto bot)
 export type SlashCommandParamType = UserParam | BooleanParam | StringParam | NumberParam;
 

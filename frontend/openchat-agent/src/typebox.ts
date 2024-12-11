@@ -2042,6 +2042,11 @@ export const UserIndexExternalAchievementsArgs = Type.Object({
     updates_since: Type.BigInt(),
 });
 
+export type UserIndexBotUpdatesArgs = Static<typeof UserIndexBotUpdatesArgs>;
+export const UserIndexBotUpdatesArgs = Type.Object({
+    updated_since: Type.BigInt(),
+});
+
 export type UserIndexReferralMetricsReferralMetrics = Static<
     typeof UserIndexReferralMetricsReferralMetrics
 >;
@@ -4870,6 +4875,18 @@ export const UserIndexUserArgs = Type.Object({
     username: Type.Optional(Type.Union([Type.String(), Type.Undefined()])),
 });
 
+export type UserIndexBotUpdatesBotSchema = Static<typeof UserIndexBotUpdatesBotSchema>;
+export const UserIndexBotUpdatesBotSchema = Type.Object({
+    id: UserId,
+    owner: UserId,
+    name: Type.String(),
+    avatar_id: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
+    endpoint: Type.String(),
+    description: Type.String(),
+    commands: Type.Array(SlashCommandSchema),
+    last_updated: Type.BigInt(),
+});
+
 export type UserIndexReferralMetricsResponse = Static<typeof UserIndexReferralMetricsResponse>;
 export const UserIndexReferralMetricsResponse = Type.Object({
     Success: UserIndexReferralMetricsReferralMetrics,
@@ -5950,6 +5967,7 @@ export const MembersRemoved = Type.Object({
 export type BotGroupDetails = Static<typeof BotGroupDetails>;
 export const BotGroupDetails = Type.Object({
     user_id: UserId,
+    added_by: UserId,
     permissions: SlashCommandPermissions,
 });
 
@@ -6474,6 +6492,21 @@ export const UserIndexUserResponse = Type.Union([
         Success: UserSummary,
     }),
     Type.Literal("UserNotFound"),
+]);
+
+export type UserIndexBotUpdatesSuccessResult = Static<typeof UserIndexBotUpdatesSuccessResult>;
+export const UserIndexBotUpdatesSuccessResult = Type.Object({
+    added_or_updated: Type.Array(UserIndexBotUpdatesBotSchema),
+    deleted: Type.Array(UserId),
+    timestamp: Type.BigInt(),
+});
+
+export type UserIndexBotUpdatesResponse = Static<typeof UserIndexBotUpdatesResponse>;
+export const UserIndexBotUpdatesResponse = Type.Union([
+    Type.Object({
+        Success: UserIndexBotUpdatesSuccessResult,
+    }),
+    Type.Literal("SuccessNoUpdates"),
 ]);
 
 export type UserIndexSearchResult = Static<typeof UserIndexSearchResult>;

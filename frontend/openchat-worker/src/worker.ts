@@ -311,6 +311,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 streamReplies(payload, correlationId, agent.getUpdates(payload.initialLoad));
                 break;
 
+            case "getBots":
+                streamReplies(payload, correlationId, agent.getBots(payload.initialLoad));
+                break;
+
             case "createUserClient":
                 agent.createUserClient(payload.userId);
                 sendResponse(correlationId, undefined);

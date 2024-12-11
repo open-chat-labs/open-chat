@@ -17,6 +17,8 @@ import {
     setCachedExternalAchievements,
     getActivityFeedEvents,
     setActivityFeedEvents,
+    getCachedBots,
+    setCachedBots,
 } from "../utils/caching";
 import { isMainnet } from "../utils/network";
 import { getAllUsers, clearCache as clearUserCache } from "../utils/userCache";
@@ -226,6 +228,7 @@ import type {
     ExploreBotsResponse,
     ExternalBot,
     SlashCommandPermissions,
+    BotsResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -4025,5 +4028,24 @@ export class OpenChatAgent extends EventTarget {
 
     removeBotFromCommunity(id: CommunityIdentifier, botId: string): Promise<boolean> {
         return this.communityClient(id.communityId).removeBot(botId);
+    }
+
+    getBots(initialLoad: boolean): Stream<BotsResponse> {
+        return new Stream(async (resolve, reject) => {
+            const cachedBots = await getCachedBots(this.db, this.principal);
+            const isOffline = offline();
+            if (cachedBots && initialLoad) {
+                resolve(cachedBots, isOffline);
+            }
+            if (!isOffline) {
+                try {
+                    const updates = await this._userIndexClient.getBots(cachedBots);
+                    setCachedBots(this.db, this.principal, updates);
+                    resolve(updates, true);
+                } catch (err) {
+                    reject(err);
+                }
+            }
+        });
     }
 }

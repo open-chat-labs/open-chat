@@ -25,11 +25,10 @@ import type {
     ExploreBotsResponse,
     SlashCommandSchema,
     BotMatch,
-    ChatPermissions,
-    CommunityPermissions,
-    MessagePermission,
     SlashCommandParam,
     SlashCommandParamType,
+    BotsResponse,
+    ExternalBot,
 } from "openchat-shared";
 import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
@@ -42,6 +41,7 @@ import {
     apiChatPermission,
     apiCommunityPermission,
     apiMessagePermission,
+    slashCommandPermissions,
     token,
 } from "../common/chatMappersV2";
 import type {
@@ -74,12 +74,52 @@ import type {
     UserIndexExploreBotsResponse,
     BotMatch as ApiBotMatch,
     SlashCommandSchema as ApiSlashCommandSchema,
-    GroupPermission,
-    CommunityPermission,
-    MessagePermission as ApiMessagePermission,
     SlashCommandParam as ApiSlashCommandParam,
     SlashCommandParamType as ApiSlashCommandParamType,
+    UserIndexBotUpdatesResponse,
+    UserIndexBotUpdatesBotSchema,
 } from "../../typebox";
+import { toRecord } from "../../utils/list";
+
+export function botUpdatesResponse(
+    value: UserIndexBotUpdatesResponse,
+    current: BotsResponse | undefined,
+): BotsResponse {
+    if (value === "SuccessNoUpdates") {
+        return current ?? { timestamp: 0n, bots: [] };
+    }
+    if ("Success" in value) {
+        const map = toRecord(current?.bots ?? [], (b) => b.id);
+        value.Success.deleted.forEach((d) => {
+            delete map[principalBytesToString(d)];
+        });
+        return {
+            timestamp: 0n,
+            bots: Object.values(
+                value.Success.added_or_updated.reduce((all, bot) => {
+                    const mapped = botSchema(bot);
+                    all[mapped.id] = mapped;
+                    return all;
+                }, map),
+            ),
+        };
+    }
+    throw new UnsupportedValueError("Unexpected UserIndexBotUpdatesResponse received", value);
+}
+
+export function botSchema(bot: UserIndexBotUpdatesBotSchema): ExternalBot {
+    return {
+        kind: "external_bot",
+        id: principalBytesToString(bot.id),
+        name: bot.name,
+        description: bot.description,
+        // avatar: mapOptional(bot.avatar_id, identity),
+        avatar: "", // todo - come back to this
+        ownerId: principalBytesToString(bot.owner),
+        endpoint: bot.endpoint,
+        commands: bot.commands.map(externalBotCommand),
+    };
+}
 
 export function userSearchResponse(value: UserIndexSearchResponse): UserSummary[] {
     if ("Success" in value) {
@@ -544,77 +584,6 @@ function externalAchievement(
     };
 }
 
-export function chatPermission(perm: GroupPermission): keyof ChatPermissions {
-    switch (perm) {
-        case "AddMembers":
-            return "addMembers";
-        case "ChangeRoles":
-            return "changeRoles";
-        case "DeleteMessages":
-            return "deleteMessages";
-        case "InviteUsers":
-            return "inviteUsers";
-        case "MentionAllMembers":
-            return "mentionAllMembers";
-        case "PinMessages":
-            return "pinMessages";
-        case "ReactToMessages":
-            return "reactToMessages";
-        case "RemoveMembers":
-            return "removeMembers";
-        case "StartVideoCall":
-            return "startVideoCall";
-        case "UpdateGroup":
-            return "updateGroup";
-    }
-}
-
-export function communityPermission(perm: CommunityPermission): keyof CommunityPermissions {
-    switch (perm) {
-        case "ChangeRoles":
-            return "changeRoles";
-        case "CreatePrivateChannel":
-            return "createPrivateChannel";
-        case "CreatePublicChannel":
-            return "createPublicChannel";
-        case "InviteUsers":
-            return "inviteUsers";
-        case "ManageUserGroups":
-            return "manageUserGroups";
-        case "RemoveMembers":
-            return "removeMembers";
-        case "UpdateDetails":
-            return "updateDetails";
-    }
-}
-
-export function messagePermission(perm: ApiMessagePermission): MessagePermission {
-    switch (perm) {
-        case "Audio":
-            return "audio";
-        case "Crypto":
-            return "crypto";
-        case "File":
-            return "file";
-        case "Giphy":
-            return "giphy";
-        case "Image":
-            return "image";
-        case "P2pSwap":
-            return "p2pSwap";
-        case "Poll":
-            return "poll";
-        case "Prize":
-            return "prize";
-        case "Text":
-            return "text";
-        case "Video":
-            return "video";
-        case "VideoCall":
-            return "text";
-    }
-}
-
 export function apiCustomParamFields(param: SlashCommandParam): ApiSlashCommandParamType {
     switch (param.kind) {
         case "user":
@@ -698,12 +667,7 @@ export function externalBotCommand(command: ApiSlashCommandSchema): SlashCommand
         name: command.name,
         description: command.description,
         params: command.params.map(externalBotParam),
-        permissions: {
-            chatPermissions: command.permissions.chat.map(chatPermission),
-            communityPermissions: command.permissions.community.map(communityPermission),
-            messagePermissions: command.permissions.message.map(messagePermission),
-            threadPermissions: command.permissions.thread.map(messagePermission),
-        },
+        permissions: slashCommandPermissions(command.permissions),
     };
 }
 
@@ -730,7 +694,6 @@ export function exploreBotsResponse(value: UserIndexExploreBotsResponse): Explor
         return { kind: "term_invalid" };
     }
     if ("Success" in value) {
-        console.log("Explore bots response: ", value);
         return {
             kind: "success",
             matches: value.Success.matches.map(externalBotMatch),

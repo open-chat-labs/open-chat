@@ -1,4 +1,5 @@
 import type { AccessControlled, AccessGateConfig, VersionedRules } from "../access";
+import type { BotGroupDetails } from "../bots";
 import type {
     GateCheckFailed,
     GateCheckFailedReason,
@@ -268,6 +269,7 @@ export type CommunityDetails = {
     lastUpdated: bigint;
     userGroups: Map<number, UserGroupDetails>;
     referrals: Set<string>;
+    bots: BotGroupDetails[];
 };
 
 export type CommunityDetailsUpdates = {
@@ -282,6 +284,8 @@ export type CommunityDetailsUpdates = {
     userGroupsDeleted: Set<number>;
     referralsRemoved: Set<string>;
     referralsAdded: Set<string>;
+    botsAddedOrUpdated: BotGroupDetails[];
+    botsRemoved: Set<string>;
 };
 
 export type ChannelSummaryResponse = Failure | ChannelSummary | CanisterNotFound;

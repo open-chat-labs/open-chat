@@ -22,6 +22,7 @@ import type {
     ExternalAchievementsResponse,
     ExploreBotsResponse,
     ExternalBot,
+    BotsResponse,
 } from "openchat-shared";
 import {
     mergeUserSummaryWithUpdates,
@@ -48,6 +49,7 @@ import {
     externalAchievementsResponse,
     exploreBotsResponse,
     apiExternalBotCommand,
+    botUpdatesResponse,
 } from "./mappers";
 import {
     getCachedUsers,
@@ -74,6 +76,8 @@ import {
 } from "../../utils/mapping";
 import {
     Empty,
+    UserIndexBotUpdatesArgs,
+    UserIndexBotUpdatesResponse,
     UserIndexCheckUsernameArgs,
     UserIndexCheckUsernameResponse,
     UserIndexChitLeaderboardResponse,
@@ -642,6 +646,18 @@ export class UserIndexClient extends CandidService {
             },
             UserIndexRegisterBotArgs,
             UserIndexRegisterBotResponse,
+        );
+    }
+
+    getBots(current: BotsResponse | undefined): Promise<BotsResponse> {
+        return this.executeMsgpackQuery(
+            "bot_updates",
+            {
+                updated_since: current?.timestamp ?? 0n,
+            },
+            (resp) => botUpdatesResponse(resp, current),
+            UserIndexBotUpdatesArgs,
+            UserIndexBotUpdatesResponse,
         );
     }
 }

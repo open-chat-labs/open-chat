@@ -119,6 +119,7 @@ import type {
     AccessGateConfig,
     SetPinNumberResponse,
     MessagePermission,
+    SlashCommandPermissions,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -282,6 +283,7 @@ import type {
     GroupPermission,
     CommunityPermission,
     MessagePermission as ApiMessagePermission,
+    SlashCommandPermissions as ApiSlashCommandPermissions,
 } from "../../typebox";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
@@ -3232,4 +3234,86 @@ export function apiMessagePermission(perm: MessagePermission): ApiMessagePermiss
         default:
             throw new Error(`Unexpect MessagePermission (${perm})`);
     }
+}
+
+export function chatPermission(perm: GroupPermission): keyof ChatPermissions {
+    switch (perm) {
+        case "AddMembers":
+            return "addMembers";
+        case "ChangeRoles":
+            return "changeRoles";
+        case "DeleteMessages":
+            return "deleteMessages";
+        case "InviteUsers":
+            return "inviteUsers";
+        case "MentionAllMembers":
+            return "mentionAllMembers";
+        case "PinMessages":
+            return "pinMessages";
+        case "ReactToMessages":
+            return "reactToMessages";
+        case "RemoveMembers":
+            return "removeMembers";
+        case "StartVideoCall":
+            return "startVideoCall";
+        case "UpdateGroup":
+            return "updateGroup";
+    }
+}
+
+export function communityPermission(perm: CommunityPermission): keyof CommunityPermissions {
+    switch (perm) {
+        case "ChangeRoles":
+            return "changeRoles";
+        case "CreatePrivateChannel":
+            return "createPrivateChannel";
+        case "CreatePublicChannel":
+            return "createPublicChannel";
+        case "InviteUsers":
+            return "inviteUsers";
+        case "ManageUserGroups":
+            return "manageUserGroups";
+        case "RemoveMembers":
+            return "removeMembers";
+        case "UpdateDetails":
+            return "updateDetails";
+    }
+}
+
+export function messagePermission(perm: ApiMessagePermission): MessagePermission {
+    switch (perm) {
+        case "Audio":
+            return "audio";
+        case "Crypto":
+            return "crypto";
+        case "File":
+            return "file";
+        case "Giphy":
+            return "giphy";
+        case "Image":
+            return "image";
+        case "P2pSwap":
+            return "p2pSwap";
+        case "Poll":
+            return "poll";
+        case "Prize":
+            return "prize";
+        case "Text":
+            return "text";
+        case "Video":
+            return "video";
+        case "VideoCall":
+            return "text";
+    }
+}
+
+export function slashCommandPermissions(
+    value: ApiSlashCommandPermissions,
+): SlashCommandPermissions {
+    return {
+        chatPermissions: value.chat.map(chatPermission),
+        communityPermissions: value.community.map(communityPermission),
+        messagePermissions: value.message.map(messagePermission),
+        threadPermissions: value.thread.map(messagePermission),
+    };
 }

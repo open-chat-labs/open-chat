@@ -1,6 +1,7 @@
 import type {
     AddMembersToChannelResponse,
     BlockCommunityUserResponse,
+    BotGroupDetails,
     ChangeCommunityRoleResponse,
     ChannelMatch,
     ChannelSummaryResponse,
@@ -66,6 +67,7 @@ import type {
     CommunityUpdateUserGroupResponse,
     CommunityAddBotResponse,
     CommunityRemoveBotResponse,
+    BotGroupDetails as ApiBotGroupDetails,
 } from "../../typebox";
 import { mapOptional, optionUpdateV2, principalBytesToString } from "../../utils/mapping";
 import {
@@ -80,6 +82,7 @@ import {
     memberRole,
     mentions,
     messageEvent,
+    slashCommandPermissions,
     threadSyncDetails,
     updatedEvent,
     userGroup,
@@ -485,11 +488,19 @@ export function communityDetailsResponse(
             lastUpdated: value.Success.timestamp,
             userGroups: new Map(value.Success.user_groups.map(userGroupDetails)),
             referrals: new Set(value.Success.referrals.map(principalBytesToString)),
+            bots: value.Success.bots.map(botGroupDetails),
         };
     } else {
         console.warn("CommunityDetails failed with", value);
         return "failure";
     }
+}
+
+export function botGroupDetails(value: ApiBotGroupDetails): BotGroupDetails {
+    return {
+        id: principalBytesToString(value.user_id),
+        permissions: slashCommandPermissions(value.permissions),
+    };
 }
 
 export function userGroupDetails(value: TUserGroupDetails): [number, UserGroupDetails] {
@@ -536,6 +547,8 @@ export function communityDetailsUpdatesResponse(
                     value.Success.referrals_removed.map(principalBytesToString),
                 ),
                 referralsAdded: new Set(value.Success.referrals_added.map(principalBytesToString)),
+                botsAddedOrUpdated: value.Success.bots_added_or_updated.map(botGroupDetails),
+                botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
             };
         } else if ("SuccessNoUpdates" in value) {
             return {
