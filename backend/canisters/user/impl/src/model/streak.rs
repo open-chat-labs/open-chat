@@ -44,6 +44,7 @@ impl Streak {
             if today > self.end_day {
                 if self.is_new_streak(today) {
                     if let Some(insurance_claim) = self.claim_via_insurance(now) {
+                        // This can happen if the user claims just after midnight, before the timer job runs
                         self.end_day = today;
                         return Ok(Some(insurance_claim));
                     }
