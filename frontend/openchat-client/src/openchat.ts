@@ -397,9 +397,6 @@ import type {
     InternalBotCommandInstance,
     ExternalBotCommandInstance,
     CaptionedContent,
-    ExploreBotsResponse,
-    ExternalBot,
-    SlashCommandPermissions,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -455,7 +452,6 @@ import {
     AIRDROP_BOT_USER_ID,
     isEditableContent,
     isCaptionedContent,
-    random64,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import { diamondDurationToMs } from "./stores/diamond";
@@ -1672,10 +1668,6 @@ export class OpenChat extends OpenChatAgentWorker {
      */
     showTrace = showTrace;
     userAvatarUrl = userAvatarUrl;
-    botAvatarUrl(_avatarId?: bigint): string {
-        // TODO - come back and sort this out
-        return "/assets/bot_avatar.svg";
-    }
     updateStorageLimit = updateStorageLimit;
     formatTokens = formatTokens;
     validateTokenInput = validateTokenInput;
@@ -4625,16 +4617,6 @@ export class OpenChat extends OpenChatAgentWorker {
             : this.getUser(this._referralCode);
     }
 
-    registerBot(bot: ExternalBot): Promise<boolean> {
-        return this.sendRequest({
-            kind: "registerBot",
-            bot,
-        }).catch((err) => {
-            this._logger.error("Failed to register bot: ", err);
-            return false;
-        });
-    }
-
     registerUser(username: string): Promise<RegisterUserResponse> {
         return this.sendRequest({
             kind: "registerUser",
@@ -4947,24 +4929,6 @@ export class OpenChat extends OpenChatAgentWorker {
 
     searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
         return this.sendRequest({ kind: "searchGroups", searchTerm, maxResults });
-    }
-
-    exploreBots(
-        searchTerm: string | undefined,
-        pageIndex: number,
-        pageSize: number,
-    ): Promise<ExploreBotsResponse> {
-        // return Promise.resolve({
-        //     kind: "success",
-        //     matches: testMatches,
-        //     total: 2,
-        // });
-        return this.sendRequest({
-            kind: "exploreBots",
-            searchTerm,
-            pageIndex,
-            pageSize,
-        });
     }
 
     exploreCommunities(
@@ -5946,7 +5910,16 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
+    private stackTrace() {
+        return new Error().stack ?? "";
+    }
+
     claimPrize(chatId: MultiUserChatIdentifier, messageId: bigint): Promise<boolean> {
+        const stack = this.stackTrace();
+        if (!stack.includes("HTMLButtonElement.click")) {
+            return Promise.resolve(false);
+        }
+
         return this.sendRequest({ kind: "claimPrize", chatId, messageId })
             .then((resp) => {
                 if (resp.kind !== "success") {
@@ -7624,64 +7597,10 @@ export class OpenChat extends OpenChatAgentWorker {
         return this._liveState.userStore.get(userId)?.streak ?? 0;
     }
 
-    private getAuthTokenForBotCommand(
-        chat: ChatSummary,
-        threadRootMessageIndex: number | undefined,
-        bot: ExternalBotCommandInstance,
-    ): Promise<string> {
-        return this.getLocalUserIndex(chat).then((localUserIndex) => {
-            return this.sendRequest({
-                kind: "getAccessToken",
-                chatId: chat.id,
-                accessTokenType: {
-                    kind: "execute_bot_command",
-                    messageContext: { chatId: chat.id, threadRootMessageIndex },
-                    messageId: random64(),
-                    commandName: bot.command.name,
-                    parameters: JSON.stringify(bot.command.params),
-                    version: 0,
-                    commandText: `@${this.getDisplayName(
-                        this._liveState.user,
-                    )} executed the command /${bot.command.name}`,
-                    botId: bot.id,
-                    userId: this._liveState.user.userId,
-                },
-                localUserIndex,
-            }).then((token) => {
-                if (token === undefined) {
-                    throw new Error("Didn't get an access token");
-                }
-                console.log("TOKEN: ", token);
-                return token;
-            });
-        });
-    }
-
-    addBotToCommunity(
-        id: CommunityIdentifier,
-        botId: string,
-        grantedPermissions: SlashCommandPermissions,
-    ): Promise<boolean> {
-        return this.sendRequest({
-            kind: "addBotToCommunity",
-            id,
-            botId,
-            grantedPermissions,
-        }).catch((err) => {
-            this._logger.error("Error adding bot to community", err);
-            return false;
-        });
-    }
-
-    removeBotFromCommunity(id: CommunityIdentifier, botId: string): Promise<boolean> {
-        return this.sendRequest({
-            kind: "removeBotFromCommunity",
-            id,
-            botId,
-        }).catch((err) => {
-            this._logger.error("Error removing bot from community", err);
-            return false;
-        });
+    private getAuthTokenForBotCommand(_bot: BotCommandInstance): Promise<string> {
+        const token =
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzMyMTE5NjIxLCJleHAiOjE3MzQ3MTE2MjF9.HMuL8CJEKFVf26Hv3lqiE8LnI6MbnGlamFKEzngLei4";
+        return Promise.resolve(token);
     }
 
     private callBotEndpoint(bot: ExternalBotCommandInstance, token: string): Promise<unknown> {
@@ -7768,14 +7687,10 @@ export class OpenChat extends OpenChatAgentWorker {
         return Promise.resolve(true);
     }
 
-    executeBotCommand(
-        chat: ChatSummary,
-        threadRootMessageIndex: number | undefined,
-        bot: BotCommandInstance,
-    ): Promise<boolean> {
+    executeBotCommand(bot: BotCommandInstance): Promise<boolean> {
         switch (bot.kind) {
             case "external_bot":
-                return this.getAuthTokenForBotCommand(chat, threadRootMessageIndex, bot)
+                return this.getAuthTokenForBotCommand(bot)
                     .then((token) => this.callBotEndpoint(bot, token))
                     .then((resp) => {
                         if (bot.command.name === "chat") {
