@@ -503,7 +503,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     // Tick a load of times so that all the child canisters have time to get installed
     tick_many(env, 10);
 
-    CanisterIds {
+    let canister_ids = CanisterIds {
         user_index: user_index_canister_id,
         group_index: group_index_canister_id,
         notifications_index: notifications_index_canister_id,
@@ -525,7 +525,14 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         icp_ledger: nns_ledger_canister_id,
         chat_ledger: chat_ledger_canister_id,
         cycles_minting_canister: cycles_minting_canister_id,
-    }
+    };
+
+    println!(
+        "Test env setup complete. CanisterIds: {:?}",
+        serde_json::to_string(&canister_ids)
+    );
+
+    canister_ids
 }
 
 pub fn install_icrc_ledger(

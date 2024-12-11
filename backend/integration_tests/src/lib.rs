@@ -3,6 +3,7 @@
 use crate::utils::principal_to_username;
 use candid::Principal;
 use pocket_ic::PocketIc;
+use serde::Serialize;
 use types::{CanisterId, Cycles, UserId};
 
 mod airdrop_bot_tests;
@@ -87,7 +88,7 @@ impl From<&User> for types::User {
     }
 }
 
-#[derive(Debug)]
+#[derive(Serialize, Debug)]
 pub struct CanisterIds {
     pub user_index: CanisterId,
     pub group_index: CanisterId,

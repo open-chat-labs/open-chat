@@ -4109,6 +4109,7 @@ dependencies = [
  "rand 0.8.5",
  "registry_canister",
  "serde",
+ "serde_json",
  "sha256",
  "sign_in_with_email_canister",
  "storage_bucket_canister",
