@@ -84,6 +84,8 @@ import { toRecord } from "../../utils/list";
 export function botUpdatesResponse(
     value: UserIndexBotUpdatesResponse,
     current: BotsResponse | undefined,
+    blobUrlPattern: string,
+    canisterId: string,
 ): BotsResponse {
     if (value === "SuccessNoUpdates") {
         return current ?? { timestamp: 0n, bots: [] };
@@ -97,7 +99,7 @@ export function botUpdatesResponse(
             timestamp: 0n,
             bots: Object.values(
                 value.Success.added_or_updated.reduce((all, bot) => {
-                    const mapped = botSchema(bot);
+                    const mapped = botSchema(bot, blobUrlPattern, canisterId);
                     all[mapped.id] = mapped;
                     return all;
                 }, map),
@@ -107,14 +109,24 @@ export function botUpdatesResponse(
     throw new UnsupportedValueError("Unexpected UserIndexBotUpdatesResponse received", value);
 }
 
-export function botSchema(bot: UserIndexBotUpdatesBotSchema): ExternalBot {
+export function botSchema(
+    bot: UserIndexBotUpdatesBotSchema,
+    blobUrlPattern: string,
+    canisterId: string,
+): ExternalBot {
+    const botId = principalBytesToString(bot.id);
     return {
         kind: "external_bot",
-        id: principalBytesToString(bot.id),
+        id: botId,
         name: bot.name,
         description: bot.description,
-        // avatar: mapOptional(bot.avatar_id, identity),
-        avatar: "", // todo - come back to this
+        avatarUrl: mapOptional(
+            bot.avatar_id,
+            (id) =>
+                `${blobUrlPattern
+                    .replace("{canisterId}", canisterId)
+                    .replace("{blobType}", "avatar")}/${botId}/${id}`,
+        ),
         ownerId: principalBytesToString(bot.owner),
         endpoint: bot.endpoint,
         commands: bot.commands.map(externalBotCommand),
@@ -671,11 +683,22 @@ export function externalBotCommand(command: ApiSlashCommandSchema): SlashCommand
     };
 }
 
-export function externalBotMatch(match: ApiBotMatch): BotMatch {
+export function externalBotMatch(
+    match: ApiBotMatch,
+    blobUrlPattern: string,
+    canisterId: string,
+): BotMatch {
+    const botId = principalBytesToString(match.id);
     return {
         name: match.name,
-        avatarId: match.avatar_id,
-        id: principalBytesToString(match.id),
+        avatarUrl: mapOptional(
+            match.avatar_id,
+            (id) =>
+                `${blobUrlPattern
+                    .replace("{canisterId}", canisterId)
+                    .replace("{blobType}", "avatar")}/${botId}/${id}`,
+        ),
+        id: botId,
         score: match.score,
         owner: principalBytesToString(match.owner),
         description: match.description,
@@ -683,7 +706,11 @@ export function externalBotMatch(match: ApiBotMatch): BotMatch {
     };
 }
 
-export function exploreBotsResponse(value: UserIndexExploreBotsResponse): ExploreBotsResponse {
+export function exploreBotsResponse(
+    value: UserIndexExploreBotsResponse,
+    blobUrlPattern: string,
+    canisterId: string,
+): ExploreBotsResponse {
     if (value === "InvalidTerm") {
         return { kind: "term_invalid" };
     }
@@ -696,7 +723,9 @@ export function exploreBotsResponse(value: UserIndexExploreBotsResponse): Explor
     if ("Success" in value) {
         return {
             kind: "success",
-            matches: value.Success.matches.map(externalBotMatch),
+            matches: value.Success.matches.map((m) =>
+                externalBotMatch(m, blobUrlPattern, canisterId),
+            ),
             total: value.Success.total,
         };
     }

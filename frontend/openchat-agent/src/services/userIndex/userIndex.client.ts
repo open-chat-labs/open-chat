@@ -121,7 +121,12 @@ import {
 import { apiToken } from "../common/chatMappersV2";
 
 export class UserIndexClient extends CandidService {
-    constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
+    constructor(
+        identity: Identity,
+        agent: HttpAgent,
+        canisterId: string,
+        private blobUrlPattern: string,
+    ) {
         super(identity, agent, canisterId);
     }
 
@@ -622,7 +627,7 @@ export class UserIndexClient extends CandidService {
                 page_index: pageIndex,
                 page_size: pageSize,
             },
-            exploreBotsResponse,
+            (resp) => exploreBotsResponse(resp, this.blobUrlPattern, this.canisterId),
             UserIndexExploreBotsArgs,
             UserIndexExploreBotsResponse,
         );
@@ -635,7 +640,7 @@ export class UserIndexClient extends CandidService {
                 principal: principalStringToBytes(bot.id),
                 owner: principalStringToBytes(bot.ownerId),
                 name: bot.name,
-                avatar: mapOptional(bot.avatar, identity),
+                avatar: mapOptional(bot.avatarUrl, identity),
                 endpoint: bot.endpoint,
                 description: bot.description ?? "",
                 commands: bot.commands.map(apiExternalBotCommand),
@@ -655,7 +660,7 @@ export class UserIndexClient extends CandidService {
             {
                 updated_since: current?.timestamp ?? 0n,
             },
-            (resp) => botUpdatesResponse(resp, current),
+            (resp) => botUpdatesResponse(resp, current, this.blobUrlPattern, this.canisterId),
             UserIndexBotUpdatesArgs,
             UserIndexBotUpdatesResponse,
         );

@@ -101,7 +101,7 @@
         </div>
         <div class="body" slot="body">
             <span class="avatar">
-                <Avatar url={client.botAvatarUrl(bot.id, bot.avatarId)} size={AvatarSize.Default} />
+                <Avatar url={bot.avatarUrl} size={AvatarSize.Default} />
             </span>
             <div class="details">
                 <h4 class="bot-name">

@@ -315,6 +315,7 @@ export class OpenChatAgent extends EventTarget {
             identity,
             this._agent,
             config.userIndexCanister,
+            config.blobUrlPattern,
         );
         this._groupIndexClient = new GroupIndexClient(
             identity,

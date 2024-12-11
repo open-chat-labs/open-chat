@@ -54,7 +54,7 @@
     });
 
     function botAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>) {
-        candidate.avatar = ev.detail.url;
+        candidate.avatarUrl = ev.detail.url;
     }
 
     function onSubmit(e: Event) {
@@ -110,7 +110,7 @@
         <EditableAvatar
             overlayIcon
             size={"medium"}
-            image={candidate.avatar}
+            image={candidate.avatarUrl}
             on:imageSelected={botAvatarSelected} />
     </div>
 

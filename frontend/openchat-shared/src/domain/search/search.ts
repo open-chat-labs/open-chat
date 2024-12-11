@@ -37,7 +37,7 @@ export type BotMatch = {
     name: string;
     description: string;
     owner: string;
-    avatarId?: bigint;
+    avatarUrl?: string;
     commands: SlashCommandSchema[];
 };
 

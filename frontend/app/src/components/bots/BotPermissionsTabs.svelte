@@ -11,7 +11,7 @@
     }
 
     let { chatTab, communityTab, messageTab, threadTab }: Props = $props();
-    let permissionsTab: "chat" | "community" | "message" | "thread" = $state("chat");
+    let permissionsTab: "chat" | "community" | "message" | "thread" = $state("message");
 </script>
 
 <div class="tabs">

@@ -508,8 +508,7 @@ import { removeEmailSignInSession } from "openchat-shared";
 import { localGlobalUpdates } from "./stores/localGlobalUpdates";
 import { identityState } from "./stores/identity";
 import { addQueryStringParam } from "./utils/url";
-import { builtinBot } from "./utils/builtinBotCommands";
-import { testBots } from "./utils/testBots";
+import { setExternalBots } from "./stores";
 
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
@@ -1691,14 +1690,6 @@ export class OpenChat extends OpenChatAgentWorker {
      */
     showTrace = showTrace;
     userAvatarUrl = userAvatarUrl;
-    botAvatarUrl(botId: string, avatarId?: bigint): string {
-        if (avatarId !== undefined) {
-            return `${this.config.blobUrlPattern
-                .replace("{canisterId}", this.config.userIndexCanister)
-                .replace("{blobType}", "avatar")}/${botId}/${avatarId}`;
-        }
-        return "/assets/bot_avatar.svg";
-    }
     updateStorageLimit = updateStorageLimit;
     formatTokens = formatTokens;
     validateTokenInput = validateTokenInput;
@@ -3113,6 +3104,11 @@ export class OpenChat extends OpenChatAgentWorker {
             communityStateStore.setProp(community.id, "rules", resp.rules);
             communityStateStore.setProp(community.id, "userGroups", resp.userGroups);
             communityStateStore.setProp(community.id, "referrals", resp.referrals);
+            communityStateStore.setProp(
+                community.id,
+                "bots",
+                resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
+            );
         }
         await this.updateUserStoreFromCommunityState(community.id);
     }
@@ -5878,8 +5874,9 @@ export class OpenChat extends OpenChatAgentWorker {
                 kind: "getBots",
                 initialLoad: !this.botsLoaded,
             }).subscribe({
-                onResult: async (resp) => {
-                    console.log("GetBots response: ", resp);
+                onResult: async ({ bots }) => {
+                    console.log("GetBots response: ", bots);
+                    setExternalBots(bots);
                     this.botsLoaded = true;
                 },
                 onError: (err) => {
@@ -7858,12 +7855,6 @@ export class OpenChat extends OpenChatAgentWorker {
 
     contentTypeSupportsEdit(contentType: MessageContent["kind"]): boolean {
         return isEditableContent(contentType);
-    }
-
-    getBots(includeTestBots: boolean = false) {
-        return includeTestBots
-            ? Promise.resolve([builtinBot, ...testBots])
-            : Promise.resolve([builtinBot]);
     }
 
     claimDailyChit(): Promise<ClaimDailyChitResponse> {
