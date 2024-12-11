@@ -1,5 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_leave_group::{Response::*, *};
@@ -8,13 +9,13 @@ use group_chat_core::LeaveResult;
 // Called via the user's user canister
 #[update(msgpack = true)]
 #[trace]
-fn c2c_leave_group(_args: Args) -> Response {
+fn c2c_leave_group(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(c2c_leave_group_impl)
+    mutate_state(|state| c2c_leave_group_impl(args, state))
 }
 
-fn c2c_leave_group_impl(state: &mut RuntimeState) -> Response {
+fn c2c_leave_group_impl(args: Args, state: &mut RuntimeState) -> Response {
     if state.data.is_frozen() {
         return ChatFrozen;
     }
@@ -24,7 +25,10 @@ fn c2c_leave_group_impl(state: &mut RuntimeState) -> Response {
 
     match state.data.chat.leave(caller, now) {
         LeaveResult::Success(_) => {
-            state.data.remove_user(caller);
+            state.data.remove_user(
+                caller,
+                if args.principal == Principal::anonymous() { None } else { Some(args.principal) },
+            );
 
             handle_activity_notification(state);
 

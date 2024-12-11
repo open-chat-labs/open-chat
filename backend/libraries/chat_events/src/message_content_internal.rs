@@ -2,7 +2,7 @@ use crate::DeletedByInternal;
 use candid::Principal;
 use constants::{MEMO_PRIZE_FEE, MEMO_PRIZE_REFUND, OPENCHAT_TREASURY_CANISTER_ID, PRIZE_FEE_PERCENT};
 use ledger_utils::{create_pending_transaction, format_crypto_amount};
-use search::Document;
+use search::simple::Document;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::collections::{HashMap, HashSet};
@@ -279,28 +279,28 @@ impl From<&MessageContentInternal> for Document {
 
         fn try_add_caption(document: &mut Document, caption_option: Option<&String>) {
             if let Some(caption) = caption_option {
-                document.add_field(caption.to_owned(), 1.0, false);
+                document.add_field(caption);
             }
         }
 
         fn try_add_caption_and_mime_type(document: &mut Document, caption_option: Option<&String>, mime_type: &str) {
-            document.add_field(mime_type.to_owned(), 1.0, false);
+            document.add_field(mime_type);
             try_add_caption(document, caption_option);
         }
 
         match message_content {
             MessageContentInternal::Text(c) => {
-                document.add_field(c.text.clone(), 1.0, false);
+                document.add_field(&c.text);
             }
             MessageContentInternal::Crypto(c) => {
                 let token = c.transfer.token();
-                document.add_field(token.token_symbol().to_string(), 1.0, false);
+                document.add_field(token.token_symbol());
 
                 let amount = c.transfer.units();
                 // This is only used for string searching so it's better to default to 8 than to trap
                 let decimals = c.transfer.token().decimals().unwrap_or(8);
                 let amount_string = format_crypto_amount(amount, decimals);
-                document.add_field(amount_string, 1.0, false);
+                document.add_field(&amount_string);
 
                 try_add_caption(&mut document, c.caption.as_ref())
             }
@@ -310,32 +310,32 @@ impl From<&MessageContentInternal> for Document {
             MessageContentInternal::File(c) => try_add_caption_and_mime_type(&mut document, c.caption.as_ref(), &c.mime_type),
             MessageContentInternal::Giphy(c) => try_add_caption(&mut document, c.caption.as_ref()),
             MessageContentInternal::Poll(p) => {
-                document.add_field("poll".to_string(), 1.0, false);
-                if let Some(text) = p.config.text.clone() {
-                    document.add_field(text, 1.0, false);
+                document.add_field("poll");
+                if let Some(text) = &p.config.text {
+                    document.add_field(text);
                 }
             }
             MessageContentInternal::GovernanceProposal(p) => {
-                document.add_field(p.proposal.title().to_string(), 1.0, false);
-                document.add_field(p.proposal.summary().to_string(), 1.0, false);
+                document.add_field(p.proposal.title());
+                document.add_field(p.proposal.summary());
             }
             MessageContentInternal::Prize(c) => {
-                document.add_field(c.transaction.token().token_symbol().to_string(), 1.0, false);
+                document.add_field(c.transaction.token().token_symbol());
                 try_add_caption(&mut document, c.caption.as_ref())
             }
             MessageContentInternal::PrizeWinner(c) => {
-                document.add_field(c.token_symbol.clone(), 1.0, false);
+                document.add_field(&c.token_symbol);
             }
             MessageContentInternal::MessageReminderCreated(r) => try_add_caption(&mut document, r.notes.as_ref()),
             MessageContentInternal::MessageReminder(r) => try_add_caption(&mut document, r.notes.as_ref()),
             MessageContentInternal::P2PSwap(p) => {
-                document.add_field("swap".to_string(), 1.0, false);
-                document.add_field(p.token0.token.token_symbol().to_string(), 1.0, false);
-                document.add_field(p.token1.token.token_symbol().to_string(), 1.0, false);
+                document.add_field("swap");
+                document.add_field(p.token0.token.token_symbol());
+                document.add_field(p.token1.token.token_symbol());
                 try_add_caption(&mut document, p.caption.as_ref())
             }
             MessageContentInternal::Custom(c) => {
-                document.add_field(c.kind.clone(), 1.0, false);
+                document.add_field(&c.kind);
             }
             MessageContentInternal::ReportedMessage(_)
             | MessageContentInternal::Deleted(_)

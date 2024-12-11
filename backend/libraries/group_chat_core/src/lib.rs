@@ -9,7 +9,7 @@ use group_community_common::{BotUpdate, GroupBots, MemberUpdate};
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use regex_lite::Regex;
-use search::Query;
+use search::simple::Query;
 use serde::{Deserialize, Serialize};
 use std::cmp::{max, min, Reverse};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
@@ -165,6 +165,7 @@ impl GroupChatCore {
             self.events.last_updated().unwrap_or_default(),
             self.invited_users.last_updated(),
             self.members.last_updated().unwrap_or_default(),
+            self.bots.last_updated(),
         ]
         .into_iter()
         .max()
@@ -589,7 +590,7 @@ impl GroupChatCore {
             Some(p) => p,
         };
 
-        let query = Query::parse(search_term);
+        let query = Query::new(&search_term);
 
         let matches = self
             .events
@@ -610,7 +611,6 @@ impl GroupChatCore {
         forwarding: bool,
         rules_accepted: Option<Version>,
         suppressed: bool,
-        proposals_bot_user_id: UserId,
         block_level_markdown: bool,
         event_store_client: &mut EventStoreClient<R>,
         now: TimestampMillis,
@@ -641,6 +641,7 @@ impl GroupChatCore {
 
         self.send_message(
             sender,
+            sender_user_type,
             thread_root_message_index,
             message_id,
             content.into(),
@@ -649,7 +650,6 @@ impl GroupChatCore {
             forwarding,
             rules_accepted,
             suppressed,
-            proposals_bot_user_id,
             block_level_markdown,
             event_store_client,
             now,
@@ -659,6 +659,7 @@ impl GroupChatCore {
     pub fn send_message<R: Runtime + Send + 'static>(
         &mut self,
         sender: UserId,
+        sender_user_type: UserType,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         content: MessageContentInternal,
@@ -667,7 +668,6 @@ impl GroupChatCore {
         forwarding: bool,
         rules_accepted: Option<Version>,
         suppressed: bool,
-        proposals_bot_user_id: UserId,
         block_level_markdown: bool,
         event_store_client: &mut EventStoreClient<R>,
         now: TimestampMillis,
@@ -677,13 +677,12 @@ impl GroupChatCore {
         let PrepareSendMessageSuccess {
             min_visible_event_index,
             everyone_mentioned,
-            sender_user_type,
         } = match self.prepare_send_message(
             sender,
+            sender_user_type,
             thread_root_message_index,
             &content,
             rules_accepted,
-            proposals_bot_user_id,
             now,
         ) {
             PrepareSendMessageResult::Success(success) => success,
@@ -802,19 +801,18 @@ impl GroupChatCore {
     fn prepare_send_message(
         &mut self,
         sender: UserId,
+        sender_user_type: UserType,
         thread_root_message_index: Option<MessageIndex>,
         content: &MessageContentInternal,
         rules_accepted: Option<Version>,
-        proposals_bot_user_id: UserId,
         now: TimestampMillis,
     ) -> PrepareSendMessageResult {
         use PrepareSendMessageResult::*;
 
-        if sender == OPENCHAT_BOT_USER_ID || sender == proposals_bot_user_id {
+        if sender == OPENCHAT_BOT_USER_ID || matches!(sender_user_type, UserType::OcControlledBot | UserType::BotV2) {
             return Success(PrepareSendMessageSuccess {
                 min_visible_event_index: EventIndex::default(),
                 everyone_mentioned: false,
-                sender_user_type: UserType::OcControlledBot,
             });
         }
 
@@ -852,7 +850,6 @@ impl GroupChatCore {
         Success(PrepareSendMessageSuccess {
             min_visible_event_index: member.min_visible_event_index(),
             everyone_mentioned: member.role().can_mention_everyone(permissions) && is_everyone_mentioned(content),
-            sender_user_type: member.user_type(),
         })
     }
 
@@ -2361,7 +2358,6 @@ enum PrepareSendMessageResult {
 struct PrepareSendMessageSuccess {
     min_visible_event_index: EventIndex,
     everyone_mentioned: bool,
-    sender_user_type: UserType,
 }
 
 pub enum MinVisibleEventIndexResult {

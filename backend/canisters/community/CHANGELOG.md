@@ -16,10 +16,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Include the ledger canister Id in transfer failed error logs ([#7011](https://github.com/open-chat-labs/open-chat/pull/7011))
 - Ensure bot has permission to execute given action ([#7014](https://github.com/open-chat-labs/open-chat/pull/7014))
 - Allow bots to send a subset of message types ([#7016](https://github.com/open-chat-labs/open-chat/pull/7016))
+- Switch to using `PrincipalToStableMemoryMap` ([#7023](https://github.com/open-chat-labs/open-chat/pull/7023))
+- Reduce size by grouping member -> channel links per userId ([#7025](https://github.com/open-chat-labs/open-chat/pull/7025))
+- Merge member Ids set with channel links map ([#7027](https://github.com/open-chat-labs/open-chat/pull/7027))
+- Implement new lightweight search index for searching messages ([#7029](https://github.com/open-chat-labs/open-chat/pull/7029))
+- Make `MessageId` comparisons use their 64bit representation ([#7030](https://github.com/open-chat-labs/open-chat/pull/7030))
 
-### Fixed
+### Removed
 
-- Temporarily reinstate `MigrateMembersToStableMemory` job to fix upgrade ([#7007](https://github.com/open-chat-labs/open-chat/pull/7007))
+- Remove code to migrate members and events to stable memory ([#7024](https://github.com/open-chat-labs/open-chat/pull/7024))
 
 ## [[2.0.1500](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1500-community)] - 2024-12-06
 

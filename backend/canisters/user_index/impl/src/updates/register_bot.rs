@@ -5,7 +5,7 @@ use candid::Principal;
 use canister_api_macros::{proposal, update};
 use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
-use local_user_index_canister::{Event, UserRegistered};
+use local_user_index_canister::{BotRegistered, Event};
 use rand::RngCore;
 use tracing::error;
 use types::{UserId, UserType};
@@ -83,17 +83,14 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) {
     );
 
     state.push_event_to_all_local_user_indexes(
-        Event::UserRegistered(UserRegistered {
+        Event::BotRegistered(BotRegistered {
             user_id,
             user_principal: args.principal,
-            username: args.name,
-            user_type: UserType::BotV2,
-            referred_by: None,
+            name: args.name.clone(),
+            commands: args.commands.clone(),
         }),
         None,
     );
-
-    // TODO: Propogate bot to each local Bot API Gateway
 
     state.data.event_store_client.push(
         EventBuilder::new("user_registered", now)
@@ -114,7 +111,7 @@ fn validate_request(args: &Args, state: &RuntimeState) -> Result<(), String> {
         return Err("principal cannot be anonymous".to_string());
     }
 
-    if state.data.users.get_by_principal(&state.env.caller()).is_some() {
+    if state.data.users.get_by_principal(&args.principal).is_some() {
         return Err("already registered".to_string());
     }
 

@@ -10,11 +10,19 @@ use user_canister::leave_community::{Response::*, *};
 async fn leave_community(args: Args) -> Response {
     run_regular_jobs();
 
-    if read_state(|state| state.data.suspended.value) {
+    let Ok(principal) = read_state(
+        |state| {
+            if state.data.suspended.value {
+                Err(())
+            } else {
+                Ok(state.data.owner)
+            }
+        },
+    ) else {
         return UserSuspended;
-    }
+    };
 
-    let c2c_args = c2c_leave_community::Args {};
+    let c2c_args = c2c_leave_community::Args { principal };
 
     match community_canister_c2c_client::c2c_leave_community(args.community_id.into(), &c2c_args).await {
         Ok(result) => match result {

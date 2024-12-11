@@ -36,13 +36,13 @@ fn selected_initial_impl(args: Args, state: &RuntimeState) -> Response {
 
     let mut members = Vec::new();
     let mut basic_members = Vec::new();
-    for user_id in data.members.member_ids().iter() {
-        if non_basic_members.contains(user_id) {
-            if let Some(member) = data.members.get_by_user_id(user_id) {
+    for user_id in data.members.iter_member_ids() {
+        if non_basic_members.contains(&user_id) {
+            if let Some(member) = data.members.get_by_user_id(&user_id) {
                 members.push(member.into());
             }
         } else {
-            basic_members.push(*user_id);
+            basic_members.push(user_id);
         }
     }
 

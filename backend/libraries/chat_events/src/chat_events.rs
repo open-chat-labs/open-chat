@@ -8,7 +8,7 @@ use constants::{HOUR_IN_MS, ONE_MB, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventBuilder, EventStoreClient, Runtime};
 use rand::rngs::StdRng;
 use rand::Rng;
-use search::{Document, Query};
+use search::simple::{Document, Query};
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use sha2::{Digest, Sha256};

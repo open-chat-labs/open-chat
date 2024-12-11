@@ -21,11 +21,8 @@ fn post_upgrade(args: Args) {
     let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
 
-    assert!(data.members_migrated_to_stable_memory);
-
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
-
-    data.events.migrate_to_stable_memory();
+    data.members.move_member_ids_into_channel_links_map();
 
     let env = init_env(data.rng_seed);
     init_state(env, data, args.wasm_version);

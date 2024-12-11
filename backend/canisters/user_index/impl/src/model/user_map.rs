@@ -3,7 +3,7 @@ use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
 use crate::model::user::User;
 use crate::DiamondMembershipUserMetrics;
 use candid::Principal;
-use search::{Document as SearchDocument, Query};
+use search::weighted::{Document as SearchDocument, Query};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::ops::RangeFrom;

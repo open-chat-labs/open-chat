@@ -3,12 +3,16 @@ use crate::model::user_groups::{UserGroup, UserGroups};
 use candid::Principal;
 use constants::calculate_summary_updates_data_removal_cutoff;
 use group_community_common::{Member, MemberUpdate, Members};
+use principal_to_user_id_map::{deserialize_principal_to_user_id_map_from_heap, PrincipalToUserIdMap};
 use rand::RngCore;
-use serde::{Deserialize, Serialize};
+use serde::de::{SeqAccess, Visitor};
+use serde::{Deserialize, Deserializer, Serialize};
+use std::collections::btree_map::Entry::Vacant;
 use std::collections::{BTreeMap, BTreeSet};
+use std::fmt::Formatter;
 use types::{
-    is_default, ChannelId, CommunityMember, CommunityPermissions, CommunityRole, TimestampMillis, Timestamped, UserId,
-    UserType, Version,
+    is_default, ChannelId, CommunityMember, CommunityPermissions, CommunityRole, PushIfNotContains, TimestampMillis,
+    Timestamped, UserId, UserType, Version,
 };
 
 #[cfg(test)]
@@ -19,14 +23,16 @@ const MAX_MEMBERS_PER_COMMUNITY: u32 = 100_000;
 
 #[derive(Serialize, Deserialize)]
 pub struct CommunityMembers {
-    #[serde(alias = "stable_memory_members_map")]
     members_map: MembersStableStorage,
-    member_channel_links: BTreeSet<(UserId, ChannelId)>,
+    #[serde(alias = "member_channel_links", deserialize_with = "deserialize_members_and_channels")]
+    members_and_channels: BTreeMap<UserId, Vec<ChannelId>>,
     member_channel_links_removed: BTreeMap<(UserId, ChannelId), TimestampMillis>,
     user_groups: UserGroups,
     // This includes the userIds of community members and also users invited to the community
-    principal_to_user_id_map: BTreeMap<Principal, UserId>,
-    member_ids: BTreeSet<UserId>,
+    #[serde(deserialize_with = "deserialize_principal_to_user_id_map_from_heap")]
+    principal_to_user_id_map: PrincipalToUserIdMap,
+    #[deprecated]
+    member_ids: Vec<UserId>,
     owners: BTreeSet<UserId>,
     admins: BTreeSet<UserId>,
     bots: BTreeMap<UserId, UserType>,
@@ -36,11 +42,19 @@ pub struct CommunityMembers {
     members_with_display_names: BTreeSet<UserId>,
     members_with_referrals: BTreeSet<UserId>,
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
-    #[serde(default)]
     latest_update_removed: TimestampMillis,
 }
 
 impl CommunityMembers {
+    pub fn move_member_ids_into_channel_links_map(&mut self) {
+        #[allow(deprecated)]
+        for user_id in std::mem::take(&mut self.member_ids) {
+            if let Vacant(e) = self.members_and_channels.entry(user_id) {
+                e.insert(Vec::new());
+            }
+        }
+    }
+
     pub fn new(
         creator_principal: Principal,
         creator_user_id: UserId,
@@ -62,13 +76,17 @@ impl CommunityMembers {
             lapsed: Timestamped::default(),
         };
 
+        let mut principal_to_user_id_map = PrincipalToUserIdMap::default();
+        principal_to_user_id_map.insert(creator_principal, creator_user_id);
+
+        #[allow(deprecated)]
         CommunityMembers {
             members_map: MembersStableStorage::new(member),
-            member_channel_links: public_channels.into_iter().map(|c| (creator_user_id, c)).collect(),
+            members_and_channels: [(creator_user_id, public_channels)].into_iter().collect(),
             member_channel_links_removed: BTreeMap::new(),
             user_groups: UserGroups::default(),
-            principal_to_user_id_map: vec![(creator_principal, creator_user_id)].into_iter().collect(),
-            member_ids: [creator_user_id].into_iter().collect(),
+            principal_to_user_id_map,
+            member_ids: Vec::new(),
             owners: [creator_user_id].into_iter().collect(),
             admins: BTreeSet::new(),
             bots: if creator_user_type.is_bot() {
@@ -96,9 +114,9 @@ impl CommunityMembers {
     ) -> AddResult {
         if self.blocked.contains(&user_id) {
             AddResult::Blocked
-        } else if self.member_ids.contains(&user_id) {
-            AddResult::AlreadyInCommunity
-        } else {
+        } else if let Vacant(e) = self.members_and_channels.entry(user_id) {
+            e.insert(Vec::new());
+
             if referred_by == Some(user_id) {
                 referred_by = None;
             }
@@ -131,9 +149,9 @@ impl CommunityMembers {
                     self.members_with_referrals.insert(referrer);
                 }
             }
-            self.member_ids.insert(user_id);
-
             AddResult::Success(member)
+        } else {
+            AddResult::AlreadyInCommunity
         }
     }
 
@@ -141,64 +159,66 @@ impl CommunityMembers {
         self.principal_to_user_id_map.insert(principal, user_id);
     }
 
-    pub fn remove(&mut self, user_id: &UserId, now: TimestampMillis) -> Option<CommunityMemberInternal> {
-        self.get_principal(user_id)
-            .and_then(|principal| self.remove_by_principal(&principal, now))
+    pub fn remove_by_principal(&mut self, principal: Principal, now: TimestampMillis) -> Option<CommunityMemberInternal> {
+        let user_id = self.principal_to_user_id_map.remove(&principal)?;
+        self.remove(user_id, Some(principal), now)
     }
 
-    pub fn remove_by_principal(&mut self, principal: &Principal, now: TimestampMillis) -> Option<CommunityMemberInternal> {
-        if let Some(user_id) = self.principal_to_user_id_map.remove(principal) {
-            if let Some(member) = self.members_map.remove(&user_id) {
-                match member.role {
-                    CommunityRole::Owner => self.owners.remove(&user_id),
-                    CommunityRole::Admin => self.admins.remove(&user_id),
-                    _ => false,
-                };
-                if member.user_type.is_bot() {
-                    self.bots.remove(&user_id);
-                }
-                if member.lapsed.value {
-                    self.lapsed.remove(&user_id);
-                }
-                if member.suspended.value {
-                    self.suspended.remove(&user_id);
-                }
-                if member.display_name.is_some() {
-                    self.members_with_display_names.remove(&user_id);
-                }
-                if !member.referrals.is_empty() {
-                    self.members_with_referrals.remove(&user_id);
-                }
-                if let Some(referrer) = member.referred_by {
-                    let mut remove_from_members_with_referrals = false;
-                    self.update_member(&referrer, |m| {
-                        m.remove_referral(user_id);
-                        if m.referrals.is_empty() {
-                            remove_from_members_with_referrals = true;
-                        }
-                        true
-                    });
-                    if remove_from_members_with_referrals {
-                        self.members_with_referrals.remove(&referrer);
-                    }
-                }
-                let channel_ids: Vec<_> = self.channels_for_member(user_id).collect();
-                for channel_id in channel_ids {
-                    self.member_channel_links.remove(&(user_id, channel_id));
-                }
-                let channels_removed: Vec<_> = self.channels_removed_for_member(user_id).map(|(c, _)| c).collect();
-                for channel_id in channels_removed {
-                    self.member_channel_links_removed.remove(&(user_id, channel_id));
-                }
-                self.user_groups.remove_user_from_all(&member.user_id, now);
-                self.member_ids.remove(&user_id);
-                self.prune_then_insert_member_update(user_id, MemberUpdate::Removed, now);
-
-                return Some(member);
-            }
+    pub fn remove(
+        &mut self,
+        user_id: UserId,
+        principal: Option<Principal>,
+        now: TimestampMillis,
+    ) -> Option<CommunityMemberInternal> {
+        if let Some(principal) = principal {
+            let user_id_removed = self.principal_to_user_id_map.remove(&principal);
+            assert_eq!(user_id_removed, Some(user_id));
         }
 
-        None
+        let member = self.members_map.remove(&user_id)?;
+
+        match member.role {
+            CommunityRole::Owner => self.owners.remove(&user_id),
+            CommunityRole::Admin => self.admins.remove(&user_id),
+            _ => false,
+        };
+        if member.user_type.is_bot() {
+            self.bots.remove(&user_id);
+        }
+        if member.lapsed.value {
+            self.lapsed.remove(&user_id);
+        }
+        if member.suspended.value {
+            self.suspended.remove(&user_id);
+        }
+        if member.display_name.is_some() {
+            self.members_with_display_names.remove(&user_id);
+        }
+        if !member.referrals.is_empty() {
+            self.members_with_referrals.remove(&user_id);
+        }
+        if let Some(referrer) = member.referred_by {
+            let mut remove_from_members_with_referrals = false;
+            self.update_member(&referrer, |m| {
+                m.remove_referral(user_id);
+                if m.referrals.is_empty() {
+                    remove_from_members_with_referrals = true;
+                }
+                true
+            });
+            if remove_from_members_with_referrals {
+                self.members_with_referrals.remove(&referrer);
+            }
+        }
+        self.members_and_channels.remove(&user_id);
+        let channels_removed: Vec<_> = self.channels_removed_for_member(user_id).map(|(c, _)| c).collect();
+        for channel_id in channels_removed {
+            self.member_channel_links_removed.remove(&(user_id, channel_id));
+        }
+        self.user_groups.remove_user_from_all(&member.user_id, now);
+        self.prune_then_insert_member_update(user_id, MemberUpdate::Removed, now);
+
+        Some(member)
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -306,7 +326,7 @@ impl CommunityMembers {
         rng: &mut R,
         now: TimestampMillis,
     ) -> Option<u32> {
-        users.retain(|u| self.member_ids.contains(u));
+        users.retain(|u| self.members_and_channels.contains_key(u));
 
         self.user_groups.create(name, users, rng, now)
     }
@@ -319,7 +339,7 @@ impl CommunityMembers {
         users_to_remove: Vec<UserId>,
         now: TimestampMillis,
     ) -> bool {
-        users_to_add.retain(|u| self.member_ids.contains(u));
+        users_to_add.retain(|u| self.members_and_channels.contains_key(u));
 
         self.user_groups
             .update(user_group_id, name, users_to_add, users_to_remove, now)
@@ -352,8 +372,8 @@ impl CommunityMembers {
     }
 
     pub fn mark_member_joined_channel(&mut self, user_id: UserId, channel_id: ChannelId) {
-        if self.member_ids.contains(&user_id) {
-            self.member_channel_links.insert((user_id, channel_id));
+        if let Some(channel_ids) = self.members_and_channels.get_mut(&user_id) {
+            channel_ids.push_if_not_contains(channel_id);
             self.member_channel_links_removed.remove(&(user_id, channel_id));
         }
     }
@@ -365,8 +385,8 @@ impl CommunityMembers {
         channel_deleted: bool,
         now: TimestampMillis,
     ) {
-        if self.member_ids.contains(&user_id) {
-            self.member_channel_links.remove(&(user_id, channel_id));
+        if let Some(channel_ids) = self.members_and_channels.get_mut(&user_id) {
+            channel_ids.retain(|id| *id != channel_id);
             if !channel_deleted {
                 self.member_channel_links_removed.insert((user_id, channel_id), now);
             }
@@ -396,7 +416,7 @@ impl CommunityMembers {
     }
 
     pub fn user_limit_reached(&self) -> Option<u32> {
-        if self.member_ids.len() >= MAX_MEMBERS_PER_COMMUNITY as usize {
+        if self.members_and_channels.len() >= MAX_MEMBERS_PER_COMMUNITY as usize {
             Some(MAX_MEMBERS_PER_COMMUNITY)
         } else {
             None
@@ -412,49 +432,41 @@ impl CommunityMembers {
     }
 
     pub fn lookup_user_id(&self, user_id_or_principal: Principal) -> Option<UserId> {
-        self.principal_to_user_id_map.get(&user_id_or_principal).copied().or_else(|| {
+        self.principal_to_user_id_map.get(&user_id_or_principal).or_else(|| {
             let user_id: UserId = user_id_or_principal.into();
-            self.member_ids.contains(&user_id).then_some(user_id)
+            self.members_and_channels.contains_key(&user_id).then_some(user_id)
         })
     }
 
     pub fn get(&self, user_id_or_principal: Principal) -> Option<CommunityMemberInternal> {
         let user_id = user_id_or_principal.into();
 
-        let user_id = self.principal_to_user_id_map.get(&user_id_or_principal).unwrap_or(&user_id);
+        let user_id = self.principal_to_user_id_map.get(&user_id_or_principal).unwrap_or(user_id);
 
-        self.members_map.get(user_id)
+        self.members_map.get(&user_id)
     }
 
     pub fn get_by_user_id(&self, user_id: &UserId) -> Option<CommunityMemberInternal> {
         self.members_map.get(user_id)
     }
 
-    // Note this lookup is O(n)
-    pub fn get_principal(&self, user_id: &UserId) -> Option<Principal> {
-        self.principal_to_user_id_map
-            .iter()
-            .find(|(_, u)| *u == user_id)
-            .map(|(p, _)| *p)
-    }
-
     pub fn contains(&self, user_id: &UserId) -> bool {
-        self.member_ids.contains(user_id)
+        self.members_and_channels.contains_key(user_id)
     }
 
-    pub fn len(&self) -> u32 {
-        self.member_ids.len() as u32
+    pub fn len(&self) -> usize {
+        self.members_and_channels.len()
     }
 
-    pub fn member_ids(&self) -> &BTreeSet<UserId> {
-        &self.member_ids
+    pub fn iter_member_ids(&self) -> impl Iterator<Item = UserId> + '_ {
+        self.members_and_channels.keys().copied()
     }
 
-    pub fn channels_for_member(&self, user_id: UserId) -> impl Iterator<Item = ChannelId> + '_ {
-        self.member_channel_links
-            .range((user_id, ChannelId::from(0u32))..)
-            .take_while(move |(u, _)| *u == user_id)
-            .map(|(_, c)| *c)
+    pub fn channels_for_member(&self, user_id: UserId) -> &[ChannelId] {
+        self.members_and_channels
+            .get(&user_id)
+            .map(|v| v.as_slice())
+            .unwrap_or_default()
     }
 
     pub fn channels_removed_for_member(&self, user_id: UserId) -> impl Iterator<Item = (ChannelId, TimestampMillis)> + '_ {
@@ -637,7 +649,7 @@ impl CommunityMembers {
             }
         }
 
-        assert_eq!(member_ids, self.member_ids);
+        assert_eq!(member_ids, self.members_and_channels.keys().copied().collect::<BTreeSet<_>>());
         assert_eq!(owners, self.owners);
         assert_eq!(admins, self.admins);
         assert_eq!(lapsed, self.lapsed);
@@ -655,15 +667,13 @@ impl Members for CommunityMembers {
     }
 
     fn can_member_lapse(&self, user_id: &UserId) -> bool {
-        self.member_ids.contains(user_id) && !self.owners.contains(user_id) && !self.lapsed.contains(user_id)
+        self.members_and_channels.contains_key(user_id) && !self.owners.contains(user_id) && !self.lapsed.contains(user_id)
     }
 
     fn iter_members_who_can_lapse(&self) -> Box<dyn Iterator<Item = UserId> + '_> {
         Box::new(
-            self.member_ids
-                .iter()
-                .filter(|id| !self.owners.contains(id) && !self.lapsed.contains(id))
-                .copied(),
+            self.iter_member_ids()
+                .filter(|id| !self.owners.contains(id) && !self.lapsed.contains(id)),
         )
     }
 }
@@ -829,6 +839,31 @@ impl From<&CommunityMemberInternal> for CommunityMember {
     }
 }
 
+struct MemberChannelLinksVisitor;
+
+impl<'de> Visitor<'de> for MemberChannelLinksVisitor {
+    type Value = BTreeMap<UserId, Vec<ChannelId>>;
+
+    fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
+        formatter.write_str("a sequence")
+    }
+
+    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+    where
+        A: SeqAccess<'de>,
+    {
+        let mut map: BTreeMap<UserId, Vec<ChannelId>> = BTreeMap::new();
+        while let Some((user_id, channel_id)) = seq.next_element()? {
+            map.entry(user_id).or_default().push(channel_id);
+        }
+        Ok(map)
+    }
+}
+
+fn deserialize_members_and_channels<'de, D: Deserializer<'de>>(d: D) -> Result<BTreeMap<UserId, Vec<ChannelId>>, D::Error> {
+    d.deserialize_seq(MemberChannelLinksVisitor)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -846,7 +881,7 @@ mod tests {
         let principal1 = Principal::from_slice(&[1]);
         let principal2 = Principal::from_slice(&[2]);
         let user_id1 = principal1.into();
-        let user_id2 = principal1.into();
+        let user_id2 = principal2.into();
 
         let mut members = CommunityMembers::new(principal1, user_id1, UserType::User, vec![1u32.into()], 0);
 
@@ -860,7 +895,7 @@ mod tests {
             }
         }
 
-        let channel_ids: Vec<_> = members.channels_for_member(user_id2).collect();
+        let channel_ids = members.channels_for_member(user_id2).to_vec();
         assert_eq!(channel_ids, (25u32..100).map(ChannelId::from).collect::<Vec<_>>());
 
         let removed: Vec<_> = members.channels_removed_for_member(user_id2).map(|(c, _)| c).collect();
@@ -870,8 +905,8 @@ mod tests {
             assert_eq!(removed, (1u32..25).map(ChannelId::from).collect::<Vec<_>>());
         }
 
-        members.remove(&user_id2, 0);
-        assert!(members.channels_for_member(user_id2).next().is_none());
+        members.remove(user_id2, Some(principal2), 0);
+        assert!(members.channels_for_member(user_id2).is_empty());
         assert!(members.channels_removed_for_member(user_id2).next().is_none());
     }
 

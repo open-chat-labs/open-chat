@@ -16,6 +16,7 @@ generate_msgpack_query_call!(summary_updates);
 
 // Updates
 generate_msgpack_update_call!(accept_p2p_swap);
+generate_msgpack_update_call!(add_bot);
 generate_msgpack_update_call!(add_reaction);
 generate_msgpack_update_call!(block_user);
 generate_msgpack_update_call!(cancel_p2p_swap);
@@ -37,6 +38,7 @@ generate_msgpack_update_call!(toggle_mute_notifications);
 generate_msgpack_update_call!(unblock_user);
 generate_msgpack_update_call!(undelete_messages);
 generate_msgpack_update_call!(unpin_message);
+generate_msgpack_update_call!(update_bot);
 generate_msgpack_update_call!(update_group_v2);
 
 pub mod happy_path {
@@ -49,7 +51,7 @@ pub mod happy_path {
     use types::{
         ChatId, EventIndex, EventsResponse, GroupCanisterGroupChatSummary, GroupCanisterGroupChatSummaryUpdates,
         GroupReplyContext, GroupRole, MessageContentInitial, MessageId, MessageIndex, Milliseconds, PollVotes, Reaction,
-        TextContent, TimestampMillis, UserId, VideoCallType, VoteOperation,
+        SlashCommandPermissions, TextContent, TimestampMillis, UserId, VideoCallType, VoteOperation,
     };
 
     pub fn send_text_message(
@@ -554,6 +556,52 @@ pub mod happy_path {
         match response {
             group_canister::accept_p2p_swap::Response::Success(_) => {}
             response => panic!("'accept_p2p_swap' error: {response:?}"),
+        }
+    }
+
+    pub fn add_bot(
+        env: &mut PocketIc,
+        sender: Principal,
+        group_id: ChatId,
+        bot_id: UserId,
+        granted_permissions: SlashCommandPermissions,
+    ) {
+        let response = super::add_bot(
+            env,
+            sender,
+            group_id.into(),
+            &group_canister::add_bot::Args {
+                bot_id,
+                granted_permissions,
+            },
+        );
+
+        match response {
+            group_canister::add_bot::Response::Success => {}
+            response => panic!("'add_bot' error: {response:?}"),
+        }
+    }
+
+    pub fn update_bot(
+        env: &mut PocketIc,
+        sender: Principal,
+        group_id: ChatId,
+        bot_id: UserId,
+        granted_permissions: SlashCommandPermissions,
+    ) {
+        let response = super::update_bot(
+            env,
+            sender,
+            group_id.into(),
+            &group_canister::update_bot::Args {
+                bot_id,
+                granted_permissions,
+            },
+        );
+
+        match response {
+            group_canister::update_bot::Response::Success => {}
+            response => panic!("'update_bot' error: {response:?}"),
         }
     }
 }

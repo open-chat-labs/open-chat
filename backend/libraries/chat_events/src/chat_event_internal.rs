@@ -120,6 +120,9 @@ impl ChatEventInternal {
                 | ChatEventInternal::UsersInvited(_)
                 | ChatEventInternal::MembersAddedToPublicChannel(_)
                 | ChatEventInternal::ExternalUrlUpdated(_)
+                | ChatEventInternal::BotAdded(_)
+                | ChatEventInternal::BotRemoved(_)
+                | ChatEventInternal::BotUpdated(_)
         )
     }
 
@@ -483,7 +486,7 @@ mod tests {
     fn serialize_with_max_defaults() {
         let message = MessageInternal {
             message_index: 1.into(),
-            message_id: 1.into(),
+            message_id: 1u64.into(),
             sender: Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap().into(),
             content: MessageContentInternal::Text(TextContentInternal { text: "123".to_string() }),
             replies_to: None,
@@ -522,7 +525,7 @@ mod tests {
         tips.push(principal, principal.into(), 1);
         let message = MessageInternal {
             message_index: 1.into(),
-            message_id: 1.into(),
+            message_id: 1u64.into(),
             sender: principal.into(),
             content: MessageContentInternal::Text(TextContentInternal { text: "123".to_string() }),
             replies_to: Some(ReplyContextInternal {
