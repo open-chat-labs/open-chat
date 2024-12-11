@@ -1,4 +1,4 @@
-use crate::{Achievement, ReferralStatus, TimestampMillis};
+use crate::{Achievement, ReferralStatus, TimestampMillis, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
@@ -34,4 +34,45 @@ pub enum ChitEarnedReason {
 pub struct Chit {
     pub balance: i32,
     pub streak: u16,
+}
+
+#[ts_export]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct StreakInsurance {
+    pub days_insured: u8,
+    pub days_missed: u8,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct UserCanisterStreakInsurancePayment {
+    pub timestamp: TimestampMillis,
+    pub chat_amount: u128,
+    pub additional_days: u8,
+    pub new_days_insured: u8,
+    pub transaction_index: u64,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct UserCanisterStreakInsuranceClaim {
+    pub timestamp: TimestampMillis,
+    pub streak_length: u16,
+    pub new_days_claimed: u8,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct StreakInsurancePayment {
+    pub user_id: UserId,
+    pub timestamp: TimestampMillis,
+    pub chat_amount: u128,
+    pub additional_days: u8,
+    pub new_days_insured: u8,
+    pub transaction_index: u64,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct StreakInsuranceClaim {
+    pub user_id: UserId,
+    pub timestamp: TimestampMillis,
+    pub streak_length: u16,
+    pub new_days_claimed: u8,
 }

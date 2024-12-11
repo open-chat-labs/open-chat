@@ -1,5 +1,6 @@
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::storage_index_user_config_batch::StorageIndexUserConfigBatch;
+use crate::model::streak_insurance_logs::StreakInsuranceLogs;
 use crate::model::user_map::UserMap;
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
@@ -384,6 +385,8 @@ struct Data {
     pub survey_messages_sent: usize,
     pub external_achievements: ExternalAchievements,
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
+    #[serde(default)]
+    pub streak_insurance_logs: StreakInsuranceLogs,
 }
 
 fn storage_index_user_sync_queue() -> GroupedTimerJobQueue<StorageIndexUserConfigBatch> {
@@ -468,6 +471,7 @@ impl Data {
             survey_messages_sent: 0,
             external_achievements: ExternalAchievements::default(),
             upload_wasm_chunks_whitelist: Vec::new(),
+            streak_insurance_logs: StreakInsuranceLogs::default(),
         };
 
         // Register the ProposalsBot
@@ -597,6 +601,7 @@ impl Default for Data {
             survey_messages_sent: 0,
             external_achievements: ExternalAchievements::default(),
             upload_wasm_chunks_whitelist: Vec::new(),
+            streak_insurance_logs: StreakInsuranceLogs::default(),
         }
     }
 }

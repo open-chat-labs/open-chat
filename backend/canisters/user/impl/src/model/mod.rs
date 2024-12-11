@@ -1,4 +1,4 @@
-pub mod chit;
+pub mod chit_earned_events;
 pub mod communities;
 pub mod community;
 pub mod contacts;
