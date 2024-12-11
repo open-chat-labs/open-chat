@@ -425,7 +425,7 @@ impl Data {
         }
     }
 
-    pub fn notify_user_index_of_chit(&self, now: TimestampMillis) {
+    pub fn notify_user_index_of_chit(&mut self, now: TimestampMillis) {
         self.local_user_index_event_sync_queue.push(
             self.local_user_index_canister_id,
             LocalUserIndexEvent::NotifyChit(NotifyChit {
