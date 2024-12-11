@@ -33,17 +33,19 @@ pub fn ts_export(attr: TokenStream, item: TokenStream) -> TokenStream {
     match &mut item {
         Item::Struct(s) => {
             insert_container_attributes(&mut s.attrs, &s.ident, export_to, prefix);
+            let derives_serde = any_derives_serde(&s.attrs);
 
             for field in s.fields.iter_mut() {
-                insert_field_attributes(field, false);
+                insert_field_attributes(field, false, derives_serde);
             }
         }
         Item::Enum(e) => {
             insert_container_attributes(&mut e.attrs, &e.ident, export_to, prefix);
+            let derives_serde = any_derives_serde(&e.attrs);
 
             for variant in e.variants.iter_mut() {
                 for field in variant.fields.iter_mut() {
-                    insert_field_attributes(field, true);
+                    insert_field_attributes(field, true, derives_serde);
                 }
             }
         }
@@ -92,14 +94,16 @@ fn insert_container_attributes(attrs: &mut Vec<Attribute>, ident: &Ident, export
 
 const PRINCIPAL_ALIASES: [&str; 3] = ["Principal", "CanisterId", "AccessorId"];
 
-fn insert_field_attributes(field: &mut Field, is_tuple: bool) {
+fn insert_field_attributes(field: &mut Field, is_tuple: bool, derives_serde: bool) {
     if let Type::Path(type_path) = &field.ty {
         if type_path.qself.is_none() && type_path.path.leading_colon.is_none() && type_path.path.segments.len() == 1 {
             if !is_tuple && type_path.path.segments[0].ident == "Option" {
                 field.attrs.push(parse_quote!( #[ts(optional)] ));
-                field
-                    .attrs
-                    .push(parse_quote!( #[serde(skip_serializing_if = "Option::is_none")] ));
+                if derives_serde {
+                    field
+                        .attrs
+                        .push(parse_quote!( #[serde(skip_serializing_if = "Option::is_none")] ));
+                }
             } else if field.attrs.iter().any(is_using_serde_bytes)
                 || PRINCIPAL_ALIASES.iter().any(|a| type_path.path.segments[0].ident == a)
             {
@@ -110,7 +114,9 @@ fn insert_field_attributes(field: &mut Field, is_tuple: bool) {
                 type_override: _,
             }) = skip_serializing_if_default(&type_path.path.segments[0])
             {
-                //field.attrs.push(parse_quote!( #[serde(default)] ));
+                if derives_serde {
+                    field.attrs.push(parse_quote!( #[serde(default)] ));
+                }
                 // field.attrs.push(parse_quote!( #[serde(skip_serializing_if = #func)]));
                 //
                 // if let Some(default_override) = default_override {
@@ -182,6 +188,19 @@ fn skip_serializing_if_default(path_segment: &PathSegment) -> Option<Defaults> {
             type_override: Some("ts_export::TSBigIntWithDefault"),
         }),
         _ => None,
+    }
+}
+
+fn any_derives_serde(attrs: &[Attribute]) -> bool {
+    attrs.iter().any(derives_serde)
+}
+
+fn derives_serde(attr: &Attribute) -> bool {
+    if attr.path().is_ident("derive") {
+        let as_string = attr.into_token_stream().to_string();
+        as_string.contains("Serialize") || as_string.contains("Deserialize")
+    } else {
+        false
     }
 }
 
