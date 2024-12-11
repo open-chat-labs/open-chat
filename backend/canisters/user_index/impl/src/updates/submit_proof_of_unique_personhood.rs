@@ -1,4 +1,4 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{mutate_state, LocalUserIndexEvent, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
@@ -33,10 +33,7 @@ fn submit_proof_of_unique_personhood_impl(args: Args, state: &mut RuntimeState) 
                 .data
                 .users
                 .record_proof_of_unique_personhood(user_id, proof.clone(), now);
-            state.push_event_to_all_local_user_indexes(
-                local_user_index_canister::Event::NotifyUniquePersonProof(user_id, proof),
-                None,
-            );
+            state.push_event_to_all_local_user_indexes(LocalUserIndexEvent::NotifyUniquePersonProof(user_id, proof), None);
             state.data.event_store_client.push(
                 EventBuilder::new("proof_of_uniqueness_submitted", now)
                     .with_user(user_id.to_string(), true)

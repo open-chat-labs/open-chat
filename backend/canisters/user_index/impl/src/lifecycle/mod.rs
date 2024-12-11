@@ -1,5 +1,4 @@
-use crate::{jobs, mutate_state, Data, RuntimeState, WASM_VERSION};
-use local_user_index_canister::Event;
+use crate::{jobs, mutate_state, Data, LocalUserIndexEvent, RuntimeState, WASM_VERSION};
 use std::time::Duration;
 use tracing::trace;
 use types::{BuildVersion, Timestamped};
@@ -48,7 +47,7 @@ fn reseed_rng() {
 }
 
 fn sync_secret_with_local_user_indexes(state: &mut RuntimeState) {
-    let event = Event::SecretKeySet(state.data.oc_key_pair.secret_key_der().to_vec());
+    let event = LocalUserIndexEvent::SecretKeySet(state.data.oc_key_pair.secret_key_der().to_vec());
     for canister_id in state.data.local_index_map.canisters() {
         state.data.user_index_event_sync_queue.push(*canister_id, event.clone());
     }

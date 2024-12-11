@@ -4,6 +4,7 @@ use crate::model::direct_chats::DirectChats;
 use crate::model::group_chat::GroupChat;
 use crate::model::group_chats::GroupChats;
 use crate::model::hot_group_exclusions::HotGroupExclusions;
+use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::p2p_swaps::P2PSwaps;
 use crate::model::pin_number::PinNumber;
 use crate::model::token_swaps::TokenSwaps;
@@ -16,6 +17,7 @@ use constants::{DAY_IN_MS, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
+use local_user_index_canister::UserEvent as LocalUserIndexEvent;
 use model::chit::ChitEarnedEvents;
 use model::contacts::Contacts;
 use model::favourite_chats::FavouriteChats;
@@ -33,7 +35,8 @@ use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     Achievement, BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, ChitEarned, ChitEarnedReason, CommunityId,
-    Cryptocurrency, Cycles, Document, Milliseconds, Notification, TimestampMillis, Timestamped, UniquePersonProof, UserId,
+    Cryptocurrency, Cycles, Document, Milliseconds, Notification, NotifyChit, TimestampMillis, Timestamped, UniquePersonProof,
+    UserId,
 };
 use user_canister::{MessageActivityEvent, NamedAccount, UserCanisterEvent, WalletConfig};
 use utils::env::Environment;
@@ -255,6 +258,12 @@ struct Data {
     pub referrals: Referrals,
     pub message_activity_events: MessageActivityEvents,
     pub stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
+    #[serde(default = "local_user_index_event_sync_queue")]
+    pub local_user_index_event_sync_queue: GroupedTimerJobQueue<LocalUserIndexEventBatch>,
+}
+
+fn local_user_index_event_sync_queue() -> GroupedTimerJobQueue<LocalUserIndexEventBatch> {
+    GroupedTimerJobQueue::new(1, false)
 }
 
 impl Data {
@@ -324,6 +333,7 @@ impl Data {
             referrals: Referrals::default(),
             message_activity_events: MessageActivityEvents::default(),
             stable_memory_keys_to_garbage_collect: Vec::new(),
+            local_user_index_event_sync_queue: GroupedTimerJobQueue::new(1, false),
         }
     }
 
@@ -416,17 +426,14 @@ impl Data {
     }
 
     pub fn notify_user_index_of_chit(&self, now: TimestampMillis) {
-        let args = user_index_canister::c2c_notify_chit::Args {
-            timestamp: now,
-            chit_balance: self.chit_events.balance_for_month_by_timestamp(now),
-            streak: self.streak.days(now),
-            streak_ends: self.streak.ends(),
-        };
-
-        self.fire_and_forget_handler.send(
-            self.user_index_canister_id,
-            "c2c_notify_chit_msgpack".to_string(),
-            msgpack::serialize_then_unwrap(args),
+        self.local_user_index_event_sync_queue.push(
+            self.local_user_index_canister_id,
+            LocalUserIndexEvent::NotifyChit(NotifyChit {
+                timestamp: now,
+                chit_balance: self.chit_events.balance_for_month_by_timestamp(now),
+                streak: self.streak.days(now),
+                streak_ends: self.streak.ends(),
+            }),
         );
     }
 

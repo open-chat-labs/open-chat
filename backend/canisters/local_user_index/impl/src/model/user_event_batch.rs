@@ -1,7 +1,7 @@
 use crate::updates::c2c_notify_low_balance::top_up_user;
+use crate::UserEvent;
 use timer_job_queues::{TimerJobItem, TimerJobItemGroup};
 use types::UserId;
-use user_canister::Event as UserEvent;
 use utils::canister::{is_out_of_cycles_error, should_retry_failed_c2c_call};
 
 pub struct UserEventBatch {

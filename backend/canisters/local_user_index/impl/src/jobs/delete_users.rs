@@ -1,11 +1,11 @@
-use crate::{mutate_state, read_state, RuntimeState, UserToDelete};
+use crate::{mutate_state, read_state, RuntimeState, UserIndexEvent, UserToDelete};
 use constants::SECOND_IN_MS;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
 use types::{Empty, Milliseconds};
-use user_index_canister::{Event, UserDeleted};
+use user_index_canister::UserDeleted;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -60,7 +60,7 @@ async fn process_user(user: UserToDelete) {
             state.data.local_users.remove(&user_id);
 
             if !user.triggered_by_user {
-                state.push_event_to_user_index(Event::UserDeleted(Box::new(UserDeleted { user_id })));
+                state.push_event_to_user_index(UserIndexEvent::UserDeleted(Box::new(UserDeleted { user_id })));
                 state.data.canister_pool.push(canister_id);
             }
         } else if user.attempt < 50 {
