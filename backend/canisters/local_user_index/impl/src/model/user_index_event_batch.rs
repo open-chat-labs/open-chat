@@ -1,6 +1,6 @@
+use crate::UserIndexEvent;
 use timer_job_queues::{TimerJobItem, TimerJobItemGroup};
 use types::CanisterId;
-use user_index_canister::LocalUserIndexEvent as UserIndexEvent;
 use utils::canister::should_retry_failed_c2c_call;
 
 pub struct UserIndexEventBatch {

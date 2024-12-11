@@ -1,6 +1,5 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{mutate_state, LocalUserIndexEvent, RuntimeState};
 use ic_cdk_timers::TimerId;
-use local_user_index_canister::UserIndexEvent;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
@@ -42,11 +41,11 @@ fn run() {
     }
 }
 
-fn next_batch(state: &mut RuntimeState) -> Option<Vec<(CanisterId, Vec<UserIndexEvent>)>> {
+fn next_batch(state: &mut RuntimeState) -> Option<Vec<(CanisterId, Vec<LocalUserIndexEvent>)>> {
     state.data.user_index_event_sync_queue.try_start_batch()
 }
 
-async fn process_batch(batch: Vec<(CanisterId, Vec<UserIndexEvent>)>) {
+async fn process_batch(batch: Vec<(CanisterId, Vec<LocalUserIndexEvent>)>) {
     let futures: Vec<_> = batch
         .into_iter()
         .map(|(canister_id, events)| sync_events(canister_id, events))
@@ -60,7 +59,7 @@ async fn process_batch(batch: Vec<(CanisterId, Vec<UserIndexEvent>)>) {
     });
 }
 
-async fn sync_events(canister_id: CanisterId, events: Vec<UserIndexEvent>) {
+async fn sync_events(canister_id: CanisterId, events: Vec<LocalUserIndexEvent>) {
     let args = local_user_index_canister::c2c_notify_user_index_events::Args { events: events.clone() };
     if let Err((code, msg)) = local_user_index_canister_c2c_client::c2c_notify_user_index_events(canister_id, &args).await {
         if should_retry_failed_c2c_call(code, &msg) {

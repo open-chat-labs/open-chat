@@ -1,5 +1,5 @@
 use crate::guards::caller_is_user_index_canister;
-use crate::{jobs, mutate_state, RuntimeState, UserToDelete};
+use crate::{jobs, mutate_state, RuntimeState, UserEvent, UserToDelete};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::c2c_notify_user_index_events::{Response::*, *};
@@ -8,7 +8,7 @@ use p256_key_pair::P256KeyPair;
 use std::cmp::min;
 use tracing::info;
 use user_canister::{
-    DiamondMembershipPaymentReceived, DisplayNameChanged, Event as UserEvent, ExternalAchievementAwarded, OpenChatBotMessageV2,
+    DiamondMembershipPaymentReceived, DisplayNameChanged, ExternalAchievementAwarded, OpenChatBotMessageV2,
     PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserJoinedCommunityOrChannel, UserJoinedGroup,
     UserSuspended, UsernameChanged,
 };

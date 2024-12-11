@@ -24,7 +24,7 @@ use types::{
     CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails,
     MessageContent, ReferralType, TimestampMillis, Timestamped, User, UserId, VerifiedCredentialGateArgs,
 };
-use user_canister::Event as UserEvent;
+use user_canister::LocalUserIndexEvent as UserEvent;
 use user_index_canister::LocalUserIndexEvent as UserIndexEvent;
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};

@@ -1,11 +1,11 @@
-use crate::{mutate_state, read_state, RuntimeState, UserToDelete};
+use crate::{mutate_state, read_state, RuntimeState, UserIndexEvent, UserToDelete};
 use constants::SECOND_IN_MS;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
 use types::{Empty, Milliseconds};
-use user_index_canister::{LocalUserIndexEvent as UserIndexEvent, UserDeleted};
+use user_index_canister::UserDeleted;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();

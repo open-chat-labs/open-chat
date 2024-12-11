@@ -17,7 +17,7 @@ use constants::{DAY_IN_MS, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
-use local_user_index_canister::UserEvent;
+use local_user_index_canister::UserEvent as LocalUserIndexEvent;
 use model::chit::ChitEarnedEvents;
 use model::contacts::Contacts;
 use model::favourite_chats::FavouriteChats;
@@ -428,7 +428,7 @@ impl Data {
     pub fn notify_user_index_of_chit(&self, now: TimestampMillis) {
         self.local_user_index_event_sync_queue.push(
             self.local_user_index_canister_id,
-            UserEvent::NotifyChit(NotifyChit {
+            LocalUserIndexEvent::NotifyChit(NotifyChit {
                 timestamp: now,
                 chit_balance: self.chit_events.balance_for_month_by_timestamp(now),
                 streak: self.streak.days(now),

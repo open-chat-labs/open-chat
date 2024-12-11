@@ -1,6 +1,6 @@
 use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
 use crate::{mutate_state, RuntimeState};
-use crate::{read_state, UserIndexEvent};
+use crate::{read_state, LocalUserIndexEvent};
 use constants::SNS_ROOT_CANISTER_ID;
 use ic_cdk_timers::TimerId;
 use ic_ledger_types::{BlockIndex, Tokens};
@@ -88,6 +88,6 @@ fn inform_referrer(pending_payment: &PendingPayment, block_index: BlockIndex, st
 
     state.push_event_to_local_user_index(
         user_id,
-        UserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage { user_id, message })),
+        LocalUserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage { user_id, message })),
     );
 }
