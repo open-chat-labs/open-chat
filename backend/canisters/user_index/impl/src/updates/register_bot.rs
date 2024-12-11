@@ -111,7 +111,7 @@ fn validate_request(args: &Args, state: &RuntimeState) -> Result<(), String> {
         return Err("principal cannot be anonymous".to_string());
     }
 
-    if state.data.users.get_by_principal(&state.env.caller()).is_some() {
+    if state.data.users.get_by_principal(&args.principal).is_some() {
         return Err("already registered".to_string());
     }
 
