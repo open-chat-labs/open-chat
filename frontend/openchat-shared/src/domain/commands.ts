@@ -337,7 +337,7 @@ function validateCommand(
     errors: ValidationErrors,
 ): boolean {
     let valid = true;
-    let nameErrors = validBotComponentName(command.name);
+    const nameErrors = validBotComponentName(command.name);
     if (nameErrors.length > 0) {
         errors.addErrors(`${errorPath}_name`, nameErrors);
         valid = false;
@@ -374,7 +374,7 @@ function validateParameter(
     errors: ValidationErrors,
 ): boolean {
     let valid = true;
-    let nameErrors = validBotComponentName(param.name);
+    const nameErrors = validBotComponentName(param.name);
     if (nameErrors.length > 0) {
         errors.addErrors(`${errorPath}_name`, nameErrors);
         valid = false;
