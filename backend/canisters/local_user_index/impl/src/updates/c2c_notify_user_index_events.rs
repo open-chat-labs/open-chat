@@ -3,7 +3,7 @@ use crate::{jobs, mutate_state, RuntimeState, UserToDelete};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::c2c_notify_user_index_events::{Response::*, *};
-use local_user_index_canister::UserIndexToLocalUserIndexEvent;
+use local_user_index_canister::UserIndexEvent;
 use p256_key_pair::P256KeyPair;
 use std::cmp::min;
 use tracing::info;
@@ -26,15 +26,15 @@ fn c2c_notify_user_index_events_impl(args: Args, state: &mut RuntimeState) -> Re
     Success
 }
 
-fn handle_event(event: UserIndexToLocalUserIndexEvent, state: &mut RuntimeState) {
+fn handle_event(event: UserIndexEvent, state: &mut RuntimeState) {
     match event {
-        UserIndexToLocalUserIndexEvent::UsernameChanged(ev) => {
+        UserIndexEvent::UsernameChanged(ev) => {
             state.push_event_to_user(
                 ev.user_id,
                 UserEvent::UsernameChanged(Box::new(UsernameChanged { username: ev.username })),
             );
         }
-        UserIndexToLocalUserIndexEvent::DisplayNameChanged(ev) => {
+        UserIndexEvent::DisplayNameChanged(ev) => {
             state.push_event_to_user(
                 ev.user_id,
                 UserEvent::DisplayNameChanged(Box::new(DisplayNameChanged {
@@ -42,7 +42,7 @@ fn handle_event(event: UserIndexToLocalUserIndexEvent, state: &mut RuntimeState)
                 })),
             );
         }
-        UserIndexToLocalUserIndexEvent::UserSuspended(ev) => {
+        UserIndexEvent::UserSuspended(ev) => {
             state.push_event_to_user(
                 ev.user_id,
                 UserEvent::UserSuspended(Box::new(UserSuspended {
@@ -53,7 +53,7 @@ fn handle_event(event: UserIndexToLocalUserIndexEvent, state: &mut RuntimeState)
                 })),
             );
         }
-        UserIndexToLocalUserIndexEvent::PhoneNumberConfirmed(ev) => {
+        UserIndexEvent::PhoneNumberConfirmed(ev) => {
             state.push_event_to_user(
                 ev.user_id,
                 UserEvent::PhoneNumberConfirmed(Box::new(PhoneNumberConfirmed {
@@ -63,7 +63,7 @@ fn handle_event(event: UserIndexToLocalUserIndexEvent, state: &mut RuntimeState)
                 })),
             );
         }
-        UserIndexToLocalUserIndexEvent::StorageUpgraded(ev) => {
+        UserIndexEvent::StorageUpgraded(ev) => {
             state.push_event_to_user(
                 ev.user_id,
                 UserEvent::StorageUpgraded(Box::new(StorageUpgraded {
@@ -73,7 +73,7 @@ fn handle_event(event: UserIndexToLocalUserIndexEvent, state: &mut RuntimeState)
                 })),
             );
         }
-        UserIndexToLocalUserIndexEvent::UserRegistered(ev) => {
+        UserIndexEvent::UserRegistered(ev) => {
             state.data.global_users.add(ev.user_principal, ev.user_id, ev.user_type);
 
             if let Some(referred_by) = ev.referred_by {
@@ -88,24 +88,24 @@ fn handle_event(event: UserIndexToLocalUserIndexEvent, state: &mut RuntimeState)
                 }
             }
         }
-        UserIndexToLocalUserIndexEvent::BotRegistered(ev) => {
+        UserIndexEvent::BotRegistered(ev) => {
             state.data.bots.set(ev.user_principal, ev.user_id, ev.name, ev.commands);
         }
-        UserIndexToLocalUserIndexEvent::SuperAdminStatusChanged(ev) => {
+        UserIndexEvent::SuperAdminStatusChanged(ev) => {
             state.data.global_users.set_platform_moderator(ev.user_id, ev.is_super_admin);
         }
-        UserIndexToLocalUserIndexEvent::MaxConcurrentCanisterUpgradesChanged(ev) => {
+        UserIndexEvent::MaxConcurrentCanisterUpgradesChanged(ev) => {
             state.data.max_concurrent_canister_upgrades = ev.value;
             info!("Max concurrent canister upgrades set to {}", ev.value);
         }
-        UserIndexToLocalUserIndexEvent::UserUpgradeConcurrencyChanged(ev) => {
+        UserIndexEvent::UserUpgradeConcurrencyChanged(ev) => {
             state.data.user_upgrade_concurrency = min(state.data.max_concurrent_canister_upgrades, ev.value);
             if state.data.user_upgrade_concurrency > 0 {
                 jobs::upgrade_canisters::start_job_if_required(state);
             }
             info!("User upgrade concurrency set to {}", ev.value);
         }
-        UserIndexToLocalUserIndexEvent::UserJoinedGroup(ev) => {
+        UserIndexEvent::UserJoinedGroup(ev) => {
             state.push_event_to_user(
                 ev.user_id,
                 UserEvent::UserJoinedGroup(Box::new(UserJoinedGroup {
@@ -116,7 +116,7 @@ fn handle_event(event: UserIndexToLocalUserIndexEvent, state: &mut RuntimeState)
                 })),
             );
         }
-        UserIndexToLocalUserIndexEvent::UserJoinedCommunityOrChannel(ev) => {
+        UserIndexEvent::UserJoinedCommunityOrChannel(ev) => {
             state.push_event_to_user(
                 ev.user_id,
                 UserEvent::UserJoinedCommunityOrChannel(Box::new(UserJoinedCommunityOrChannel {
@@ -127,7 +127,7 @@ fn handle_event(event: UserIndexToLocalUserIndexEvent, state: &mut RuntimeState)
                 })),
             );
         }
-        UserIndexToLocalUserIndexEvent::DiamondMembershipPaymentReceived(ev) => {
+        UserIndexEvent::DiamondMembershipPaymentReceived(ev) => {
             state
                 .data
                 .global_users
@@ -149,10 +149,10 @@ fn handle_event(event: UserIndexToLocalUserIndexEvent, state: &mut RuntimeState)
                 );
             }
         }
-        UserIndexToLocalUserIndexEvent::OpenChatBotMessage(ev) => {
+        UserIndexEvent::OpenChatBotMessage(ev) => {
             state.push_event_to_user(ev.user_id, UserEvent::OpenChatBotMessage(Box::new(ev.message)));
         }
-        UserIndexToLocalUserIndexEvent::OpenChatBotMessageV2(ev) => {
+        UserIndexEvent::OpenChatBotMessageV2(ev) => {
             state.push_event_to_user(
                 ev.user_id,
                 UserEvent::OpenChatBotMessageV2(Box::new(OpenChatBotMessageV2 {
@@ -162,19 +162,19 @@ fn handle_event(event: UserIndexToLocalUserIndexEvent, state: &mut RuntimeState)
                 })),
             );
         }
-        UserIndexToLocalUserIndexEvent::ReferralCodeAdded(ev) => {
+        UserIndexEvent::ReferralCodeAdded(ev) => {
             state
                 .data
                 .referral_codes
                 .add(ev.referral_type, ev.code, ev.expiry, state.env.now());
         }
-        UserIndexToLocalUserIndexEvent::UserPrincipalUpdated(update) => {
+        UserIndexEvent::UserPrincipalUpdated(update) => {
             state
                 .data
                 .global_users
                 .update_user_principal(update.old_principal, update.new_principal);
         }
-        UserIndexToLocalUserIndexEvent::DeleteUser(ev) => {
+        UserIndexEvent::DeleteUser(ev) => {
             if state.data.local_users.contains(&ev.user_id) {
                 state.data.users_to_delete_queue.push_back(UserToDelete {
                     user_id: ev.user_id,
@@ -186,23 +186,23 @@ fn handle_event(event: UserIndexToLocalUserIndexEvent, state: &mut RuntimeState)
                 state.data.global_users.remove(&ev.user_id);
             }
         }
-        UserIndexToLocalUserIndexEvent::SecretKeySet(sk_der) => {
+        UserIndexEvent::SecretKeySet(sk_der) => {
             if let Ok(key_pair) = P256KeyPair::from_secret_key_der(sk_der) {
                 state.data.oc_key_pair = key_pair;
             }
         }
-        UserIndexToLocalUserIndexEvent::NotifyUniquePersonProof(user_id, proof) => {
+        UserIndexEvent::NotifyUniquePersonProof(user_id, proof) => {
             if state.data.local_users.contains(&user_id) {
                 state.push_event_to_user(user_id, UserEvent::NotifyUniquePersonProof(Box::new(proof.clone())))
             }
             state.data.global_users.insert_unique_person_proof(user_id, proof);
         }
-        UserIndexToLocalUserIndexEvent::AddCanisterToPool(canister_id) => {
+        UserIndexEvent::AddCanisterToPool(canister_id) => {
             if !state.data.canister_pool.contains(&canister_id) {
                 state.data.canister_pool.push(canister_id);
             }
         }
-        UserIndexToLocalUserIndexEvent::ExternalAchievementAwarded(ev) => {
+        UserIndexEvent::ExternalAchievementAwarded(ev) => {
             state.push_event_to_user(
                 ev.user_id,
                 UserEvent::ExternalAchievementAwarded(Box::new(ExternalAchievementAwarded {

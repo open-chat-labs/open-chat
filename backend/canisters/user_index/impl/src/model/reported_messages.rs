@@ -1,5 +1,5 @@
 use chat_events::deep_message_links;
-use local_user_index_canister::{OpenChatBotMessage, UserIndexToLocalUserIndexEvent};
+use local_user_index_canister::{OpenChatBotMessage, UserIndexEvent};
 use modclub_canister::{getProviderRules::Rule, subscribe::ContentResult};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -190,7 +190,7 @@ pub struct ViolatedRules {
     pub rejected: u32,
 }
 
-pub fn build_message_to_reporter(reported_message: &ReportedMessage, reporter: UserId) -> UserIndexToLocalUserIndexEvent {
+pub fn build_message_to_reporter(reported_message: &ReportedMessage, reporter: UserId) -> UserIndexEvent {
     let outcome = reported_message.outcome.as_ref().unwrap();
     let rejected = reported_message.rejected();
 
@@ -205,7 +205,7 @@ pub fn build_message_to_reporter(reported_message: &ReportedMessage, reporter: U
     build_oc_bot_message(text, reporter)
 }
 
-pub fn build_message_to_sender(reported_message: &ReportedMessage) -> UserIndexToLocalUserIndexEvent {
+pub fn build_message_to_sender(reported_message: &ReportedMessage) -> UserIndexEvent {
     let outcome = reported_message.outcome.as_ref().unwrap();
 
     let text = format!(
@@ -218,8 +218,8 @@ pub fn build_message_to_sender(reported_message: &ReportedMessage) -> UserIndexT
     build_oc_bot_message(text, reported_message.sender)
 }
 
-fn build_oc_bot_message(text: String, user_id: UserId) -> UserIndexToLocalUserIndexEvent {
-    UserIndexToLocalUserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage {
+fn build_oc_bot_message(text: String, user_id: UserId) -> UserIndexEvent {
+    UserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage {
         user_id,
         message: MessageContent::Text(TextContent { text }),
     }))

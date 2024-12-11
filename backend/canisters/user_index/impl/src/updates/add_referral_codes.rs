@@ -2,7 +2,7 @@ use crate::guards::caller_is_dev_team_dfx_principal;
 use crate::mutate_state;
 use canister_tracing_macros::trace;
 use ic_cdk::update;
-use local_user_index_canister::{ReferralCodeAdded, UserIndexToLocalUserIndexEvent};
+use local_user_index_canister::{ReferralCodeAdded, UserIndexEvent};
 use types::ReferralType;
 use user_index_canister::add_referral_codes::{Response::*, *};
 
@@ -19,7 +19,7 @@ fn add_referral_codes(args: Args) -> Response {
         for code in args.codes {
             state.data.user_index_event_sync_queue.push(
                 local_user_index,
-                UserIndexToLocalUserIndexEvent::ReferralCodeAdded(ReferralCodeAdded {
+                UserIndexEvent::ReferralCodeAdded(ReferralCodeAdded {
                     referral_type: args.referral_type,
                     code,
                     expiry: args.expiry,

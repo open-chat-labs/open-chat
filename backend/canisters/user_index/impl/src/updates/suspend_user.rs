@@ -3,7 +3,7 @@ use crate::timer_job_types::{SetUserSuspendedInCommunity, SetUserSuspendedInGrou
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use local_user_index_canister::{UserIndexToLocalUserIndexEvent, UserSuspended};
+use local_user_index_canister::{UserIndexEvent, UserSuspended};
 use types::{ChatId, CommunityId, Milliseconds, SuspensionDuration, UserId};
 use user_index_canister::suspend_user::{Response::*, *};
 
@@ -106,7 +106,7 @@ fn commit(
 
     state.push_event_to_local_user_index(
         user_id,
-        UserIndexToLocalUserIndexEvent::UserSuspended(UserSuspended {
+        UserIndexEvent::UserSuspended(UserSuspended {
             user_id,
             timestamp: now,
             duration: duration.map_or(SuspensionDuration::Indefinitely, SuspensionDuration::Duration),

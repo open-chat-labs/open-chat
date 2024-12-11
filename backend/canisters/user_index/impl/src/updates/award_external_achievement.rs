@@ -1,7 +1,7 @@
 use crate::{model::external_achievements::AwardResult, mutate_state, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use local_user_index_canister::{ExternalAchievementAwarded, UserIndexToLocalUserIndexEvent};
+use local_user_index_canister::{ExternalAchievementAwarded, UserIndexEvent};
 use user_index_canister::award_external_achievement::{Response::*, *};
 
 #[update(candid = true)]
@@ -28,7 +28,7 @@ fn award_external_achievement_impl(args: Args, state: &mut RuntimeState) -> Resp
 
     state.push_event_to_local_user_index(
         args.user_id,
-        UserIndexToLocalUserIndexEvent::ExternalAchievementAwarded(ExternalAchievementAwarded {
+        UserIndexEvent::ExternalAchievementAwarded(ExternalAchievementAwarded {
             id: args.achievement_id,
             user_id: args.user_id,
             name: result.name,

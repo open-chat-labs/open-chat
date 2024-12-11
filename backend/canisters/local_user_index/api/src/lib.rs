@@ -17,7 +17,7 @@ pub use queries::*;
 pub use updates::*;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum UserIndexToLocalUserIndexEvent {
+pub enum UserIndexEvent {
     UsernameChanged(UsernameChanged),
     DisplayNameChanged(DisplayNameChanged),
     PhoneNumberConfirmed(PhoneNumberConfirmed),
@@ -200,7 +200,7 @@ pub struct ExternalAchievementAwarded {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum UserToLocalUserIndexEvent {
+pub enum UserEvent {
     NotifyChit(NotifyChit),
 }
 

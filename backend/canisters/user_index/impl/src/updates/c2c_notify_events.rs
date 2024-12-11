@@ -6,8 +6,8 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
 use local_user_index_canister::{
-    DeleteUser, OpenChatBotMessage, OpenChatBotMessageV2, UserIndexToLocalUserIndexEvent, UserJoinedCommunityOrChannel,
-    UserJoinedGroup, UserRegistered, UsernameChanged,
+    DeleteUser, OpenChatBotMessage, OpenChatBotMessageV2, UserIndexEvent, UserJoinedCommunityOrChannel, UserJoinedGroup,
+    UserRegistered, UsernameChanged,
 };
 use storage_index_canister::add_or_update_users::UserConfig;
 use types::{CanisterId, MessageContent, TextContent, TimestampMillis, UserId, UserType};
@@ -38,7 +38,7 @@ fn handle_event(event: LocalUserIndexToUserIndexEvent, caller: Principal, now: T
         LocalUserIndexToUserIndexEvent::UserJoinedGroup(ev) => {
             state.push_event_to_local_user_index(
                 ev.user_id,
-                UserIndexToLocalUserIndexEvent::UserJoinedGroup(UserJoinedGroup {
+                UserIndexEvent::UserJoinedGroup(UserJoinedGroup {
                     user_id: ev.user_id,
                     chat_id: ev.chat_id,
                     local_user_index_canister_id: ev.local_user_index_canister_id,
@@ -50,7 +50,7 @@ fn handle_event(event: LocalUserIndexToUserIndexEvent, caller: Principal, now: T
         LocalUserIndexToUserIndexEvent::UserJoinedCommunityOrChannel(ev) => {
             state.push_event_to_local_user_index(
                 ev.user_id,
-                UserIndexToLocalUserIndexEvent::UserJoinedCommunityOrChannel(UserJoinedCommunityOrChannel {
+                UserIndexEvent::UserJoinedCommunityOrChannel(UserJoinedCommunityOrChannel {
                     user_id: ev.user_id,
                     community_id: ev.community_id,
                     local_user_index_canister_id: ev.local_user_index_canister_id,
@@ -73,7 +73,7 @@ fn handle_event(event: LocalUserIndexToUserIndexEvent, caller: Principal, now: T
         LocalUserIndexToUserIndexEvent::OpenChatBotMessage(ev) => {
             state.push_event_to_local_user_index(
                 ev.user_id,
-                UserIndexToLocalUserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage {
+                UserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage {
                     user_id: ev.user_id,
                     message: ev.message,
                 })),
@@ -82,7 +82,7 @@ fn handle_event(event: LocalUserIndexToUserIndexEvent, caller: Principal, now: T
         LocalUserIndexToUserIndexEvent::OpenChatBotMessageV2(ev) => {
             state.push_event_to_local_user_index(
                 ev.user_id,
-                UserIndexToLocalUserIndexEvent::OpenChatBotMessageV2(Box::new(OpenChatBotMessageV2 {
+                UserIndexEvent::OpenChatBotMessageV2(Box::new(OpenChatBotMessageV2 {
                     user_id: ev.user_id,
                     thread_root_message_id: ev.thread_root_message_id,
                     content: ev.content,
@@ -93,7 +93,7 @@ fn handle_event(event: LocalUserIndexToUserIndexEvent, caller: Principal, now: T
         LocalUserIndexToUserIndexEvent::UserDeleted(ev) => {
             state.delete_user(ev.user_id, false);
             state.push_event_to_all_local_user_indexes(
-                UserIndexToLocalUserIndexEvent::DeleteUser(DeleteUser {
+                UserIndexEvent::DeleteUser(DeleteUser {
                     user_id: ev.user_id,
                     triggered_by_user: false,
                 }),
@@ -106,10 +106,7 @@ fn handle_event(event: LocalUserIndexToUserIndexEvent, caller: Principal, now: T
                 .data
                 .users
                 .record_proof_of_unique_personhood(user_id, proof.clone(), now);
-            state.push_event_to_all_local_user_indexes(
-                UserIndexToLocalUserIndexEvent::NotifyUniquePersonProof(user_id, proof),
-                Some(caller),
-            );
+            state.push_event_to_all_local_user_indexes(UserIndexEvent::NotifyUniquePersonProof(user_id, proof), Some(caller));
         }
         LocalUserIndexToUserIndexEvent::NotifyChit(ev) => {
             let (user_id, chit) = *ev;
@@ -169,7 +166,7 @@ fn process_new_user(
     state.data.local_index_map.add_user(local_user_index_canister_id, user_id);
 
     state.push_event_to_all_local_user_indexes(
-        UserIndexToLocalUserIndexEvent::UserRegistered(UserRegistered {
+        UserIndexEvent::UserRegistered(UserRegistered {
             user_id,
             user_principal: principal,
             username: username.clone(),
@@ -193,14 +190,14 @@ fn process_new_user(
     if let Some(original_username) = original_username {
         state.push_event_to_local_user_index(
             user_id,
-            UserIndexToLocalUserIndexEvent::UsernameChanged(UsernameChanged {
+            UserIndexEvent::UsernameChanged(UsernameChanged {
                 user_id,
                 username: username.clone(),
             }),
         );
         state.push_event_to_local_user_index(
             user_id,
-            UserIndexToLocalUserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage {
+            UserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage {
                 user_id,
                 message: MessageContent::Text(TextContent {
                     text: format!("Unfortunately the username \"{original_username}\" was taken so your username has been changed to \"{username}\".

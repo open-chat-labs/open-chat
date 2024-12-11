@@ -3,7 +3,7 @@ use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::c2c_notify_user_events::{Response::*, *};
-use local_user_index_canister::UserToLocalUserIndexEvent;
+use local_user_index_canister::UserEvent;
 use types::UserId;
 use user_index_canister::LocalUserIndexToUserIndexEvent;
 
@@ -21,9 +21,9 @@ fn c2c_notify_user_events_impl(args: Args, state: &mut RuntimeState) -> Response
     Success
 }
 
-fn handle_event(user_id: UserId, event: UserToLocalUserIndexEvent, state: &mut RuntimeState) {
+fn handle_event(user_id: UserId, event: UserEvent, state: &mut RuntimeState) {
     match event {
-        UserToLocalUserIndexEvent::NotifyChit(ev) => {
+        UserEvent::NotifyChit(ev) => {
             state.push_event_to_user_index(LocalUserIndexToUserIndexEvent::NotifyChit(Box::new((user_id, ev))));
         }
     }
