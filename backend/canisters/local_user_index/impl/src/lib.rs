@@ -25,7 +25,7 @@ use types::{
     MessageContent, ReferralType, TimestampMillis, Timestamped, User, UserId, VerifiedCredentialGateArgs,
 };
 use user_canister::Event as UserEvent;
-use user_index_canister::Event as UserIndexEvent;
+use user_index_canister::LocalUserIndexToUserIndexEvent as UserIndexEvent;
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;

@@ -5,7 +5,7 @@ use candid::Principal;
 use canister_api_macros::{proposal, update};
 use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
-use local_user_index_canister::{BotRegistered, Event};
+use local_user_index_canister::{BotRegistered, UserIndexToLocalUserIndexEvent};
 use rand::RngCore;
 use tracing::error;
 use types::{UserId, UserType};
@@ -83,7 +83,7 @@ fn register_bot_impl(args: Args, state: &mut RuntimeState) {
     );
 
     state.push_event_to_all_local_user_indexes(
-        Event::BotRegistered(BotRegistered {
+        UserIndexToLocalUserIndexEvent::BotRegistered(BotRegistered {
             user_id,
             user_principal: args.principal,
             name: args.name.clone(),

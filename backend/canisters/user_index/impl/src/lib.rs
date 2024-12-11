@@ -10,7 +10,7 @@ use event_store_producer::{EventBuilder, EventStoreClient, EventStoreClientBuild
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
 use icrc_ledger_types::icrc1::account::{Account, Subaccount};
-use local_user_index_canister::Event as LocalUserIndexEvent;
+use local_user_index_canister::UserIndexToLocalUserIndexEvent;
 use model::chit_leaderboard::ChitLeaderboard;
 use model::external_achievements::{ExternalAchievementMetrics, ExternalAchievements};
 use model::local_user_index_map::LocalUserIndexMap;
@@ -138,14 +138,14 @@ impl RuntimeState {
         Principal::from_text(modclub_canister_id).unwrap()
     }
 
-    pub fn push_event_to_local_user_index(&mut self, user_id: UserId, event: LocalUserIndexEvent) {
+    pub fn push_event_to_local_user_index(&mut self, user_id: UserId, event: UserIndexToLocalUserIndexEvent) {
         if let Some(canister_id) = self.data.local_index_map.get_index_canister(&user_id) {
             self.data.user_index_event_sync_queue.push(canister_id, event);
             jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
         }
     }
 
-    pub fn push_event_to_all_local_user_indexes(&mut self, event: LocalUserIndexEvent, except: Option<CanisterId>) {
+    pub fn push_event_to_all_local_user_indexes(&mut self, event: UserIndexToLocalUserIndexEvent, except: Option<CanisterId>) {
         for canister_id in self.data.local_index_map.canisters() {
             if except.map_or(true, |id| id != *canister_id) {
                 self.data.user_index_event_sync_queue.push(*canister_id, event.clone());
@@ -349,7 +349,7 @@ struct Data {
     pub translations_canister_id: CanisterId,
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub storage_index_user_sync_queue: OpenStorageUserSyncQueue,
-    pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
+    pub user_index_event_sync_queue: CanisterEventSyncQueue<UserIndexToLocalUserIndexEvent>,
     pub pending_payments_queue: PendingPaymentsQueue,
     pub pending_modclub_submissions_queue: PendingModclubSubmissionsQueue,
     pub platform_moderators: HashSet<UserId>,

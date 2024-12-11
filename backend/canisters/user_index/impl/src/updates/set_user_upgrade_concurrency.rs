@@ -2,7 +2,7 @@ use crate::guards::caller_is_platform_operator;
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use local_user_index_canister::{Event, UserUpgradeConcurrencyChanged};
+use local_user_index_canister::{UserIndexToLocalUserIndexEvent, UserUpgradeConcurrencyChanged};
 use tracing::info;
 use user_index_canister::set_user_upgrade_concurrency::{Response::*, *};
 
@@ -14,7 +14,7 @@ async fn set_user_upgrade_concurrency(args: Args) -> Response {
 
 fn set_user_upgrade_concurrency_impl(args: Args, state: &mut RuntimeState) -> Response {
     state.push_event_to_all_local_user_indexes(
-        Event::UserUpgradeConcurrencyChanged(UserUpgradeConcurrencyChanged { value: args.value }),
+        UserIndexToLocalUserIndexEvent::UserUpgradeConcurrencyChanged(UserUpgradeConcurrencyChanged { value: args.value }),
         None,
     );
 

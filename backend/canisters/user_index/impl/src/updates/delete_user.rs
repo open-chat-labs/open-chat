@@ -1,7 +1,7 @@
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use local_user_index_canister::{DeleteUser, Event};
+use local_user_index_canister::{DeleteUser, UserIndexToLocalUserIndexEvent};
 use user_index_canister::delete_user::{Response::*, *};
 
 #[update(msgpack = true)]
@@ -22,7 +22,7 @@ fn delete_user_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     state.delete_user(args.user_id, true);
     state.push_event_to_all_local_user_indexes(
-        Event::DeleteUser(DeleteUser {
+        UserIndexToLocalUserIndexEvent::DeleteUser(DeleteUser {
             user_id: args.user_id,
             triggered_by_user: true,
         }),

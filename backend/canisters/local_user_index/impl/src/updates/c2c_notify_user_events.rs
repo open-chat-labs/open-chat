@@ -1,0 +1,30 @@
+use crate::guards::caller_is_local_user_canister;
+use crate::{mutate_state, RuntimeState};
+use canister_api_macros::update;
+use canister_tracing_macros::trace;
+use local_user_index_canister::c2c_notify_user_events::{Response::*, *};
+use local_user_index_canister::UserToLocalUserIndexEvent;
+use types::UserId;
+use user_index_canister::LocalUserIndexToUserIndexEvent;
+
+#[update(guard = "caller_is_local_user_canister", msgpack = true)]
+#[trace]
+fn c2c_notify_user_events(args: Args) -> Response {
+    mutate_state(|state| c2c_notify_user_events_impl(args, state))
+}
+
+fn c2c_notify_user_events_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let user_id = state.env.caller().into();
+    for event in args.events {
+        handle_event(user_id, event, state);
+    }
+    Success
+}
+
+fn handle_event(user_id: UserId, event: UserToLocalUserIndexEvent, state: &mut RuntimeState) {
+    match event {
+        UserToLocalUserIndexEvent::NotifyChit(ev) => {
+            state.push_event_to_user_index(LocalUserIndexToUserIndexEvent::NotifyChit(Box::new((user_id, ev))));
+        }
+    }
+}

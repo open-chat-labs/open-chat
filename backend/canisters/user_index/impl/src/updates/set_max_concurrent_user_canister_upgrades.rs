@@ -2,7 +2,7 @@ use crate::guards::caller_is_governance_principal;
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
-use local_user_index_canister::{Event, MaxConcurrentCanisterUpgradesChanged};
+use local_user_index_canister::{MaxConcurrentCanisterUpgradesChanged, UserIndexToLocalUserIndexEvent};
 use tracing::info;
 use user_index_canister::set_max_concurrent_user_canister_upgrades::{Response::*, *};
 
@@ -15,7 +15,9 @@ async fn set_max_concurrent_user_canister_upgrades(args: Args) -> Response {
 
 fn set_max_concurrent_user_canister_upgrades_impl(args: Args, state: &mut RuntimeState) -> Response {
     state.push_event_to_all_local_user_indexes(
-        Event::MaxConcurrentCanisterUpgradesChanged(MaxConcurrentCanisterUpgradesChanged { value: args.value }),
+        UserIndexToLocalUserIndexEvent::MaxConcurrentCanisterUpgradesChanged(MaxConcurrentCanisterUpgradesChanged {
+            value: args.value,
+        }),
         None,
     );
 

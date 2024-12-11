@@ -1,13 +1,7 @@
 use serde::{Deserialize, Serialize};
-use types::TimestampMillis;
+use types::NotifyChit;
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Args {
-    pub timestamp: TimestampMillis,
-    pub chit_balance: i32,
-    pub streak: u16,
-    pub streak_ends: TimestampMillis,
-}
+pub type Args = NotifyChit;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Response {

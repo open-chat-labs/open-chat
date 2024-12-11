@@ -10,7 +10,7 @@ use ic_ledger_types::{BlockIndex, TransferError};
 use icrc_ledger_types::icrc1;
 use icrc_ledger_types::icrc1::account::Account;
 use jwt::{sign_and_encode_token, Claims};
-use local_user_index_canister::{DiamondMembershipPaymentReceived, Event};
+use local_user_index_canister::{DiamondMembershipPaymentReceived, UserIndexToLocalUserIndexEvent};
 use rand::Rng;
 use serde::Serialize;
 use storage_index_canister::add_or_update_users::UserConfig;
@@ -129,7 +129,7 @@ fn process_charge(
 
         state.data.users.mark_updated(&user_id, now);
         state.push_event_to_all_local_user_indexes(
-            Event::DiamondMembershipPaymentReceived(DiamondMembershipPaymentReceived {
+            UserIndexToLocalUserIndexEvent::DiamondMembershipPaymentReceived(DiamondMembershipPaymentReceived {
                 user_id,
                 timestamp: now,
                 expires_at,
