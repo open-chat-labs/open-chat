@@ -3,7 +3,6 @@ use chat_events::{
     DeleteUndeleteMessagesArgs, GroupGateUpdatedInternal, MessageContentInternal, PushMessageArgs, Reader,
     RemoveExpiredEventsResult, TipMessageArgs, UndeleteMessageResult,
 };
-use constants::OPENCHAT_BOT_USER_ID;
 use event_store_producer::{EventStoreClient, Runtime};
 use group_community_common::{BotUpdate, GroupBots, MemberUpdate};
 use itertools::Itertools;
@@ -15,14 +14,15 @@ use std::cmp::{max, min, Reverse};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use types::{
     AccessGate, AccessGateConfig, AccessGateConfigInternal, AvatarChanged, BotAdded, BotGroupConfig, BotGroupDetails,
-    BotRemoved, BotUpdated, ContentValidationError, CustomPermission, Document, EventIndex, EventOrExpiredRange, EventWrapper,
-    EventsResponse, ExternalUrlUpdated, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupMember,
-    GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged,
-    HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent, MessageContentInitial, MessageId,
-    MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds,
-    MultiUserChat, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged, PushEventResult,
-    Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId,
-    UserType, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall, MAX_RETURNED_MENTIONS,
+    BotRemoved, BotUpdated, Caller, ContentValidationError, CustomPermission, Document, EventIndex, EventOrExpiredRange,
+    EventWrapper, EventsResponse, ExternalUrlUpdated, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged,
+    GroupMember, GroupNameChanged, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
+    GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent,
+    MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned,
+    MessagesResponse, Milliseconds, MultiUserChat, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions,
+    PermissionsChanged, PushEventResult, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis,
+    Timestamped, UpdatedRules, UserId, UserType, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules, VideoCall,
+    MAX_RETURNED_MENTIONS,
 };
 use utils::document::validate_avatar;
 use utils::text_validation::{
@@ -602,8 +602,7 @@ impl GroupChatCore {
 
     pub fn validate_and_send_message<R: Runtime + Send + 'static>(
         &mut self,
-        sender: UserId,
-        sender_user_type: UserType,
+        caller: &Caller,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         content: MessageContentInitial,
@@ -622,7 +621,7 @@ impl GroupChatCore {
             return NotAuthorized;
         }
 
-        if let Err(error) = content.validate_for_new_message(false, sender_user_type, forwarding, now) {
+        if let Err(error) = content.validate_for_new_message(false, caller.into(), forwarding, now) {
             return match error {
                 ContentValidationError::Empty => MessageEmpty,
                 ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
@@ -641,8 +640,7 @@ impl GroupChatCore {
         }
 
         self.send_message(
-            sender,
-            sender_user_type,
+            caller,
             thread_root_message_index,
             message_id,
             content.into(),
@@ -659,8 +657,7 @@ impl GroupChatCore {
 
     pub fn send_message<R: Runtime + Send + 'static>(
         &mut self,
-        sender: UserId,
-        sender_user_type: UserType,
+        caller: &Caller,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         content: MessageContentInternal,
@@ -678,14 +675,7 @@ impl GroupChatCore {
         let PrepareSendMessageSuccess {
             min_visible_event_index,
             everyone_mentioned,
-        } = match self.prepare_send_message(
-            sender,
-            sender_user_type,
-            thread_root_message_index,
-            &content,
-            rules_accepted,
-            now,
-        ) {
+        } = match self.prepare_send_message(caller, thread_root_message_index, &content, rules_accepted, now) {
             PrepareSendMessageResult::Success(success) => success,
             PrepareSendMessageResult::UserLapsed => return UserLapsed,
             PrepareSendMessageResult::UserSuspended => return UserSuspended,
@@ -707,6 +697,8 @@ impl GroupChatCore {
             .as_ref()
             .and_then(|r| self.get_user_being_replied_to(r, min_visible_event_index, thread_root_message_index));
 
+        let sender = caller.actor();
+
         let push_message_args = PushMessageArgs {
             sender,
             thread_root_message_index,
@@ -715,7 +707,7 @@ impl GroupChatCore {
             mentioned: if !suppressed { mentioned.to_vec() } else { Vec::new() },
             replies_to: replies_to.as_ref().map(|r| r.into()),
             forwarded: forwarding,
-            sender_is_bot: sender_user_type.is_bot(),
+            sender_is_bot: caller.is_bot(),
             block_level_markdown,
             correlation_id: 0,
             now,
@@ -801,8 +793,7 @@ impl GroupChatCore {
 
     fn prepare_send_message(
         &mut self,
-        sender: UserId,
-        sender_user_type: UserType,
+        caller: &Caller,
         thread_root_message_index: Option<MessageIndex>,
         content: &MessageContentInternal,
         rules_accepted: Option<Version>,
@@ -810,7 +801,7 @@ impl GroupChatCore {
     ) -> PrepareSendMessageResult {
         use PrepareSendMessageResult::*;
 
-        if sender == OPENCHAT_BOT_USER_ID || matches!(sender_user_type, UserType::OcControlledBot | UserType::BotV2) {
+        if matches!(caller, Caller::OCBot(_)) {
             return Success(PrepareSendMessageSuccess {
                 min_visible_event_index: EventIndex::default(),
                 everyone_mentioned: false,
@@ -818,13 +809,13 @@ impl GroupChatCore {
         }
 
         if let Some(version) = rules_accepted {
-            self.members.update_member(&sender, |m| {
+            self.members.update_member(&caller.actor(), |m| {
                 m.accept_rules(min(version, self.rules.text.version), now);
                 true
             });
         }
 
-        let member = match self.members.get_verified_member(sender) {
+        let member = match self.members.get_verified_member(caller.initiator()) {
             Ok(member) => member,
             Err(error) => {
                 return match error {

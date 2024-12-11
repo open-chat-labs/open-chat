@@ -2,21 +2,19 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::model::members::CommunityMembers;
 use crate::model::user_groups::UserGroup;
 use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, FinalPrizePaymentsJob, MarkP2PSwapExpiredJob, TimerJob};
-use crate::{mutate_state, run_regular_jobs, Data, RuntimeState};
-use candid::Principal;
+use crate::{mutate_state, run_regular_jobs, CallerResult, Data, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse};
 use community_canister::send_message::{Response::*, *};
-use constants::OPENCHAT_BOT_USER_ID;
 use group_chat_core::SendMessageResult;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use regex_lite::Regex;
 use std::str::FromStr;
 use types::{
-    Achievement, ChannelId, ChannelMessageNotification, Chat, EventIndex, EventWrapper, Message, MessageContent, MessageIndex,
-    Notification, TimestampMillis, User, UserId, UserType, Version,
+    Achievement, Caller, ChannelId, ChannelMessageNotification, Chat, EventIndex, EventWrapper, Message, MessageContent,
+    MessageIndex, Notification, TimestampMillis, User, UserId, Version,
 };
 use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -36,12 +34,15 @@ fn c2c_send_message(args: C2CArgs) -> C2CResponse {
     mutate_state(|state| c2c_send_message_impl(args, state))
 }
 
-pub(crate) fn send_message_impl(args: Args, caller_override: Option<Principal>, state: &mut RuntimeState) -> Response {
-    let Caller {
-        user_id,
-        user_type,
-        display_name,
-    } = match validate_caller(caller_override, args.community_rules_accepted, state) {
+pub(crate) fn send_message_impl(args: Args, bot_id: Option<UserId>, state: &mut RuntimeState) -> Response {
+    let caller = match state.caller(bot_id) {
+        CallerResult::Success(caller) => caller,
+        CallerResult::NotFound => return UserNotInCommunity,
+        CallerResult::Suspended => return UserSuspended,
+        CallerResult::Lapsed => return UserLapsed,
+    };
+
+    let display_name = match prepare(&caller, args.community_rules_accepted, state) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
@@ -51,8 +52,7 @@ pub(crate) fn send_message_impl(args: Args, caller_override: Option<Principal>, 
         let users_mentioned = extract_users_mentioned(args.mentioned, args.content.text(), &state.data.members);
 
         let result = channel.chat.validate_and_send_message(
-            user_id,
-            user_type,
+            &caller,
             args.thread_root_message_index,
             args.message_id,
             args.content,
@@ -68,7 +68,7 @@ pub(crate) fn send_message_impl(args: Args, caller_override: Option<Principal>, 
 
         process_send_message_result(
             result,
-            user_id,
+            &caller,
             args.sender_name,
             display_name.or(args.sender_display_name),
             channel.id,
@@ -86,17 +86,20 @@ pub(crate) fn send_message_impl(args: Args, caller_override: Option<Principal>, 
 }
 
 fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse {
-    let Caller {
-        user_id,
-        user_type,
-        display_name,
-    } = match validate_caller(None, args.community_rules_accepted, state) {
+    let caller = match state.caller(None) {
+        CallerResult::Success(caller) => caller,
+        CallerResult::NotFound => return UserNotInCommunity,
+        CallerResult::Suspended => return UserSuspended,
+        CallerResult::Lapsed => return UserLapsed,
+    };
+
+    let display_name = match prepare(&caller, args.community_rules_accepted, state) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
 
     // Bots can't call this c2c endpoint since it skips the validation
-    if user_type.is_bot() && !user_type.is_oc_controlled_bot() {
+    if matches!(caller, Caller::Bot(_) | Caller::BotV2(_)) {
         return NotAuthorized;
     }
 
@@ -105,8 +108,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
         let users_mentioned = extract_users_mentioned(args.mentioned, args.content.text(), &state.data.members);
 
         let result = channel.chat.send_message(
-            user_id,
-            user_type,
+            &caller,
             args.thread_root_message_index,
             args.message_id,
             args.content,
@@ -122,7 +124,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
 
         process_send_message_result(
             result,
-            user_id,
+            &caller,
             args.sender_name,
             display_name.or(args.sender_display_name),
             channel.id,
@@ -139,65 +141,37 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
     }
 }
 
-struct Caller {
-    user_id: UserId,
-    user_type: UserType,
-    display_name: Option<String>,
-}
-
-fn validate_caller(
-    caller_override: Option<Principal>,
+fn prepare(
+    caller: &Caller,
     community_rules_accepted: Option<Version>,
     state: &mut RuntimeState,
-) -> Result<Caller, Response> {
+) -> Result<Option<String>, Response> {
     if state.data.is_frozen() {
         return Err(CommunityFrozen);
     }
 
-    let caller = caller_override.unwrap_or_else(|| state.env.caller());
-    let Some(user_id) = state.data.members.lookup_user_id(caller) else {
-        return Err(UserNotInCommunity);
-    };
-
     let now = state.env.now();
+
     if let Some(version) = community_rules_accepted {
-        state.data.members.mark_rules_accepted(&user_id, version, now);
+        state.data.members.mark_rules_accepted(&caller.actor(), version, now);
     }
 
-    if let Some(member) = state.data.members.get(caller) {
-        if member.suspended().value {
-            Err(UserSuspended)
-        } else if member.lapsed().value {
-            Err(UserLapsed)
-        } else {
-            if state.data.rules.enabled
-                && !member.user_type.is_bot()
-                && member
-                    .rules_accepted
-                    .as_ref()
-                    .map_or(true, |accepted| accepted.value < state.data.rules.text.version)
-            {
-                return Err(CommunityRulesNotAccepted);
-            }
+    if caller.is_bot() {
+        return Ok(None);
+    }
 
-            Ok(Caller {
-                user_id: member.user_id,
-                user_type: member.user_type,
-                display_name: member.display_name().value.clone(),
-            })
+    if let Some(member) = state.data.members.get_by_user_id(&caller.actor()) {
+        if state.data.rules.enabled
+            && !member.user_type.is_bot()
+            && member
+                .rules_accepted
+                .as_ref()
+                .map_or(true, |accepted| accepted.value < state.data.rules.text.version)
+        {
+            Err(CommunityRulesNotAccepted)
+        } else {
+            Ok(member.display_name().value.clone())
         }
-    } else if state.data.bots.get(&caller.into()).is_some() {
-        Ok(Caller {
-            user_id: caller.into(),
-            user_type: UserType::BotV2,
-            display_name: None,
-        })
-    } else if caller == state.data.user_index_canister_id {
-        Ok(Caller {
-            user_id: OPENCHAT_BOT_USER_ID,
-            user_type: UserType::OcControlledBot,
-            display_name: None,
-        })
     } else {
         Err(UserNotInCommunity)
     }
@@ -206,7 +180,7 @@ fn validate_caller(
 #[allow(clippy::too_many_arguments)]
 fn process_send_message_result(
     result: SendMessageResult,
-    sender: UserId,
+    caller: &Caller,
     sender_username: String,
     sender_display_name: Option<String>,
     channel_id: ChannelId,
@@ -227,11 +201,6 @@ fn process_send_message_result(
             let expires_at = message_event.expires_at;
             let content = &message_event.event.content;
             let community_id = state.env.canister_id().into();
-            let sender_is_human = state
-                .data
-                .members
-                .get_by_user_id(&sender)
-                .map_or(false, |m| !m.user_type.is_bot());
 
             let notification = Notification::ChannelMessage(ChannelMessageNotification {
                 community_id,
@@ -241,7 +210,7 @@ fn process_send_message_result(
                 event_index: message_event.index,
                 community_name: state.data.name.value.clone(),
                 channel_name,
-                sender,
+                sender: caller.actor(),
                 sender_name: sender_username,
                 sender_display_name,
                 message_type: content.message_type(),
@@ -256,13 +225,13 @@ fn process_send_message_result(
 
             register_timer_jobs(channel_id, thread_root_message_index, message_event, now, &mut state.data);
 
-            if new_achievement && sender_is_human {
+            if new_achievement && !caller.is_bot() {
                 for a in result
                     .message_event
                     .event
                     .achievements(false, thread_root_message_index.is_some())
                 {
-                    state.data.notify_user_of_achievement(sender, a);
+                    state.data.notify_user_of_achievement(caller.actor(), a);
                 }
             }
 
@@ -286,7 +255,9 @@ fn process_send_message_result(
 
             if let Some(channel) = state.data.channels.get(&channel_id) {
                 for user_id in users_mentioned.all_users_mentioned {
-                    if user_id != sender && channel.chat.members.get(&user_id).map_or(false, |m| !m.user_type().is_bot()) {
+                    if user_id != caller.initiator()
+                        && channel.chat.members.get(&user_id).map_or(false, |m| !m.user_type().is_bot())
+                    {
                         activity_events.push((user_id, MessageActivity::Mention));
                     }
                 }
@@ -303,7 +274,7 @@ fn process_send_message_result(
                         thread_root_message_index,
                         replying_to_event_index.into(),
                     ) {
-                        if message.sender != sender
+                        if message.sender != caller.initiator()
                             && channel
                                 .chat
                                 .members
@@ -327,7 +298,7 @@ fn process_send_message_result(
                         event_index,
                         activity,
                         timestamp: now,
-                        user_id: Some(sender),
+                        user_id: Some(caller.actor()),
                     }),
                 );
             }

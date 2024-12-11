@@ -33,10 +33,10 @@ use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    AccessGateConfigInternal, Achievement, BuildVersion, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles,
-    Document, Empty, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions,
-    GroupSubtype, MessageIndex, Milliseconds, MultiUserChat, Notification, Rules, SlashCommandPermissions, TimestampMillis,
-    Timestamped, UserId, UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
+    AccessGateConfigInternal, Achievement, BotCaller, BuildVersion, Caller, CanisterId, ChatId, ChatMetrics, CommunityId,
+    Cryptocurrency, Cycles, Document, Empty, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership,
+    GroupPermissions, GroupSubtype, MessageIndex, Milliseconds, MultiUserChat, Notification, Rules, SlashCommandPermissions,
+    TimestampMillis, Timestamped, UserId, UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
 };
 use user_canister::GroupCanisterEvent;
 use utils::env::Environment;
@@ -432,6 +432,44 @@ impl RuntimeState {
             },
         }
     }
+
+    pub fn caller(&self, bot_id: Option<UserId>) -> CallerResult {
+        use CallerResult::*;
+
+        let caller = self.env.caller();
+
+        if caller == self.data.user_index_canister_id {
+            return Success(Caller::OCBot(OPENCHAT_BOT_USER_ID));
+        }
+
+        if let Some(bot_id) = bot_id {
+            if let Some(bot) = self.data.chat.bots.get(&bot_id) {
+                if let Some(member) = self.data.get_member(bot.added_by.into()) {
+                    if member.suspended().value {
+                        return Suspended;
+                    } else {
+                        return Success(Caller::BotV2(BotCaller {
+                            user_id: bot.added_by,
+                            bot_id,
+                        }));
+                    }
+                }
+            }
+        } else if let Some(member) = self.data.get_member(caller) {
+            if member.suspended().value {
+                return Suspended;
+            } else {
+                return match member.user_type() {
+                    UserType::User => Success(Caller::User(member.user_id())),
+                    UserType::BotV2 => NotFound,
+                    UserType::Bot => Success(Caller::Bot(member.user_id())),
+                    UserType::OcControlledBot => Success(Caller::OCBot(member.user_id())),
+                };
+            }
+        }
+
+        NotFound
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -802,4 +840,10 @@ pub enum StartImportIntoCommunityResult {
 pub struct StartImportIntoCommunityResultSuccess {
     pub total_bytes: u64,
     pub transfers_required: HashMap<CanisterId, (u128, u128)>,
+}
+
+pub enum CallerResult {
+    Success(Caller),
+    NotFound,
+    Suspended,
 }
