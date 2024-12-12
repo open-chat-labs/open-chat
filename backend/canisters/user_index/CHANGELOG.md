@@ -23,6 +23,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Notify CHIT updates via LocalUserIndex ([#7033](https://github.com/open-chat-labs/open-chat/pull/7033))
 - Use `GroupedTimerJobQueue` to push user config to StorageIndex ([#7034](https://github.com/open-chat-labs/open-chat/pull/7034))
 
+### Removed
+
+- Remove some unused code ([#7050](https://github.com/open-chat-labs/open-chat/pull/7050))
+
 ### Fixed
 
 - Fix to allow `register_bot` to be called in test mode ([#7015](https://github.com/open-chat-labs/open-chat/pull/7015))

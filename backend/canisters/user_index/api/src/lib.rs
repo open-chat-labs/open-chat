@@ -18,7 +18,6 @@ pub enum LocalUserIndexEvent {
     UserRegistered(Box<UserRegistered>),
     UserJoinedGroup(Box<UserJoinedGroup>),
     UserJoinedCommunityOrChannel(Box<UserJoinedCommunityOrChannel>),
-    JoinUserToGroup(Box<JoinUserToGroup>),
     OpenChatBotMessage(Box<OpenChatBotMessage>),
     OpenChatBotMessageV2(Box<OpenChatBotMessageV2>),
     UserDeleted(Box<UserDeleted>),

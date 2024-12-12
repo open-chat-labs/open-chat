@@ -25,7 +25,6 @@ fn accept_if_valid(state: &RuntimeState) {
             let is_user = state.data.users.get_by_principal(&caller).is_some();
             is_user
         }
-        "add_referral_codes" => state.is_caller_dev_team_dfx_principal(),
         "suspend_user" | "unsuspend_user" => state.is_caller_platform_moderator(),
         "set_user_upgrade_concurrency" | "set_diamond_membership_fees" => state.is_caller_platform_operator(),
         "upload_wasm_chunk" => state.can_caller_upload_wasm_chunks(),
