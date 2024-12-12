@@ -1,8 +1,9 @@
 use crate::{read_state, RuntimeState};
 use http_request::{build_json_response, encode_logs, extract_route, Route};
 use ic_cdk::query;
+use serde::Serialize;
 use std::collections::HashMap;
-use types::{CanisterId, HttpRequest, HttpResponse, TimestampMillis};
+use types::{CanisterId, Cycles, CyclesTopUp, HttpRequest, HttpResponse, TimestampMillis};
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
@@ -25,13 +26,20 @@ fn http_request(request: HttpRequest) -> HttpResponse {
     fn get_top_ups(qs: HashMap<String, String>, state: &RuntimeState) -> HttpResponse {
         let canister_id = CanisterId::from_text(qs.get("canister_id").unwrap()).unwrap();
 
-        if let Some(group) = state.data.local_groups.get(&canister_id.into()) {
-            build_json_response(&group.cycle_top_ups)
+        let top_ups = if let Some(group) = state.data.local_groups.get(&canister_id.into()) {
+            &group.cycle_top_ups
         } else if let Some(community) = state.data.local_communities.get(&canister_id.into()) {
-            build_json_response(&community.cycle_top_ups)
+            &community.cycle_top_ups
         } else {
-            HttpResponse::not_found()
-        }
+            return HttpResponse::not_found();
+        };
+
+        let total = top_ups.iter().map(|c| c.amount).sum();
+
+        build_json_response(&TopUps {
+            total,
+            top_ups: &top_ups,
+        })
     }
 
     match extract_route(&request.url) {
@@ -42,4 +50,10 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         Route::Other(p, qs) if p == "top_ups" => read_state(|state| get_top_ups(qs, state)),
         _ => HttpResponse::not_found(),
     }
+}
+
+#[derive(Serialize)]
+struct TopUps<'a> {
+    total: Cycles,
+    top_ups: &'a [CyclesTopUp],
 }
