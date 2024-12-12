@@ -3,7 +3,7 @@ use http_request::{build_json_response, encode_logs, extract_route, Route};
 use ic_cdk::query;
 use serde::Serialize;
 use std::collections::HashMap;
-use types::{CanisterId, Cycles, CyclesTopUp, HttpRequest, HttpResponse, TimestampMillis};
+use types::{CanisterId, Cycles, CyclesTopUp, CyclesTopUpHumanReadable, HttpRequest, HttpResponse, TimestampMillis};
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
@@ -36,7 +36,10 @@ fn http_request(request: HttpRequest) -> HttpResponse {
 
         let total = top_ups.iter().map(|c| c.amount).sum::<u128>() as f64 / 1_000_000_000_000f64;
 
-        build_json_response(&TopUps { total, top_ups })
+        build_json_response(&TopUps {
+            total,
+            top_ups: top_ups.iter().map(|c| c.into()).collect(),
+        })
     }
 
     match extract_route(&request.url) {
@@ -50,7 +53,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
 }
 
 #[derive(Serialize)]
-struct TopUps<'a> {
+struct TopUps {
     total: f64,
-    top_ups: &'a [CyclesTopUp],
+    top_ups: Vec<CyclesTopUpHumanReadable>,
 }

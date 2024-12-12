@@ -45,3 +45,18 @@ pub enum NotifyLowBalanceResponse {
     NotEnoughCyclesRemaining,
     FailedToDepositCycles,
 }
+
+#[derive(Serialize)]
+pub struct CyclesTopUpHumanReadable {
+    date: TimestampMillis,
+    amount: f64,
+}
+
+impl From<&CyclesTopUp> for CyclesTopUpHumanReadable {
+    fn from(value: &CyclesTopUp) -> Self {
+        CyclesTopUpHumanReadable {
+            date: value.date,
+            amount: value.amount as f64 / 1_000_000_000_000f64,
+        }
+    }
+}
