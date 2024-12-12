@@ -62,8 +62,6 @@
                     return [i18nKey("bots.builder.errors.duplicateName")];
                 }
 
-                console.log("Bot name invalid because: ", resp);
-
                 return [i18nKey("bots.builder.errors.botNameInvalid")];
             })
             .catch((_) => {
