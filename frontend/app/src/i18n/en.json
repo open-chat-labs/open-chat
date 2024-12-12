@@ -179,10 +179,13 @@
             "endpointRules": "Must be a valid origin or a canisterID",
             "errors": {
                 "alphaOnly": "Must only contain alphanumerics and underscores",
+                "botNameInvalid": "This bot name is invalid",
                 "duplicateCommands": "Bot contains duplicate commands",
+                "duplicateName": "That bot name is already taken",
                 "duplicateParams": "Command contains duplicate params",
                 "endpoint": "Endpoint must be a valid origin or canisterID",
                 "minLength": "Must have at least {n} characters",
+                "nameCheckError": "There was an error checking the bot name",
                 "noCommands": "A bot must contain at least one command",
                 "principal": "You must enter a valid principal to identify the bot"
             },

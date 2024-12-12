@@ -4,7 +4,7 @@ import type { ChatPermissions, CommunityPermissions, MessagePermission } from ".
 import type { InterpolationValues, ResourceKey } from "../utils";
 import { ValidationErrors } from "../utils/validation";
 
-export const MIN_NAME_LENGTH = 3;
+export const MIN_NAME_LENGTH = 5;
 
 export type BotGroupDetails = {
     id: string;

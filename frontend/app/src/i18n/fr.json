@@ -149,6 +149,14 @@
     "blockUserFailed": "Impossible de bloquer l'utilisateur",
     "blockUserSucceeded": "L'utilisateur a été bloqué",
     "bots": {
+        "add": {
+            "addBot": "Ajouter un bot",
+            "choosePermissions": "Autorisations",
+            "failure": "Désolé, nous n'avons pas pu ajouter le bot",
+            "noPermissions": "Aucune autorisation spéciale requise",
+            "permissionsInfo": "Ce bot recherche les autorisations suivantes. Choisir de limiter les autorisations accordées limitera les commandes disponibles.",
+            "title": "Ajouter un bot à la communauté"
+        },
         "builder": {
             "addAnother": "Ajouter un autre",
             "addChoice": "Ajouter un choix",
@@ -171,11 +179,15 @@
             "endpointRules": "Doit être une origine valide ou un canisterID",
             "errors": {
                 "alphaOnly": "Doit contenir uniquement des caractères alphanumériques et des traits de soulignement",
+                "botNameInvalid": "Ce nom de bot n'est pas valide",
                 "duplicateCommands": "Le bot contient des commandes en double",
+                "duplicateName": "Ce nom de bot est déjà pris",
                 "duplicateParams": "La commande contient des paramètres en double",
                 "endpoint": "Le point de terminaison doit être une origine ou un canisterID valide",
                 "minLength": "Doit avoir au moins {n} caractères",
-                "noCommands": "Un bot doit contenir au moins une commande"
+                "nameCheckError": "Une erreur s'est produite lors de la vérification du nom du bot",
+                "noCommands": "Un bot doit contenir au moins une commande",
+                "principal": "Vous devez entrer un principal valide pour identifier le bot"
             },
             "iconLabel": "Icône de bot",
             "maxLengthLabel": "Longueur maximale",
@@ -203,6 +215,8 @@
             "permScopeCommunity": "Communauté",
             "permScopeMessage": "Message",
             "permScopeThread": "Fil",
+            "principalLabel": "Principal",
+            "principalPlaceholder": "Entrez le principal du bot",
             "required": "Paramètre obligatoire",
             "requiredDesc": "Est-ce un paramètre obligatoire pour la commande",
             "title": "Construire un bot",
@@ -229,6 +243,10 @@
         },
         "diamond": {
             "desc": "Postez un lien pour expliquer l'adhésion Diamond"
+        },
+        "explorer": {
+            "addBots": "Ajouter des robots",
+            "loadMore": "Charger plus..."
         },
         "failed": "Désolé, nous n'avons pas réussi à exécuter la commande du bot",
         "faq": {

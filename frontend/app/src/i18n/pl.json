@@ -149,6 +149,14 @@
     "blockUserFailed": "Nie można zablokować użytkownika",
     "blockUserSucceeded": "Użytkownik został zablokowany",
     "bots": {
+        "add": {
+            "addBot": "Dodaj bota",
+            "choosePermissions": "Uprawnienia",
+            "failure": "Przepraszamy, nie udało nam się dodać bota",
+            "noPermissions": "Nie są wymagane żadne specjalne uprawnienia",
+            "permissionsInfo": "Ten bot szuka następujących uprawnień. Wybór ograniczenia przyznanych uprawnień ograniczy dostępne polecenia.",
+            "title": "Dodaj bota do społeczności"
+        },
         "builder": {
             "addAnother": "Dodaj kolejny",
             "addChoice": "Dodaj wybór",
@@ -171,11 +179,15 @@
             "endpointRules": "Musi to być prawidłowe pochodzenie lub canisterID",
             "errors": {
                 "alphaOnly": "Może zawierać wyłącznie znaki alfanumeryczne i podkreślenia",
+                "botNameInvalid": "Ta nazwa bota jest nieprawidłowa",
                 "duplicateCommands": "Bot zawiera zduplikowane polecenia",
+                "duplicateName": "Ta nazwa bota jest już zajęta",
                 "duplicateParams": "Polecenie zawiera zduplikowane parametry",
                 "endpoint": "Punkt końcowy musi być prawidłowym źródłem lub identyfikatorem kanistra",
                 "minLength": "Musi mieć co najmniej {n} znaków",
-                "noCommands": "Bot musi zawierać co najmniej jedno polecenie"
+                "nameCheckError": "Wystąpił błąd podczas sprawdzania nazwy bota",
+                "noCommands": "Bot musi zawierać co najmniej jedno polecenie",
+                "principal": "Aby zidentyfikować bota, należy wprowadzić prawidłowy podmiot"
             },
             "iconLabel": "Ikona bota",
             "maxLengthLabel": "Maksymalna długość",
@@ -203,6 +215,8 @@
             "permScopeCommunity": "Wspólnota",
             "permScopeMessage": "Wiadomość",
             "permScopeThread": "Nitka",
+            "principalLabel": "Główny",
+            "principalPlaceholder": "Wprowadź dane bota",
             "required": "Wymagany parametr",
             "requiredDesc": "Czy jest to wymagany parametr dla polecenia?",
             "title": "Zbuduj bota",
@@ -229,6 +243,10 @@
         },
         "diamond": {
             "desc": "Opublikuj link wyjaśniający członkostwo Diamond"
+        },
+        "explorer": {
+            "addBots": "Dodaj boty",
+            "loadMore": "Załaduj więcej..."
         },
         "failed": "Przepraszamy, nie udało nam się wykonać polecenia bota",
         "faq": {
