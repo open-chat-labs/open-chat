@@ -24,6 +24,8 @@
         userStore,
         currentUser as user,
         selectedCommunity,
+        type ExternalBot,
+        externalBots,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import InvitedUser from "./InvitedUser.svelte";
@@ -35,6 +37,7 @@
     import User from "./User.svelte";
     import { botsEnabled } from "../../../utils/bots";
     import BotExplorer from "../../bots/BotExplorer.svelte";
+    import BotMember from "../../bots/BotMember.svelte";
 
     const MAX_SEARCH_RESULTS = 255; // irritatingly this is a nat8 in the candid
     const client = getContext<OpenChat>("client");
@@ -45,6 +48,7 @@
     export let members: MemberType[];
     export let blocked: Set<string>;
     export let lapsed: Set<string>;
+    export let botIds: Set<string>;
     export let initialUsergroup: number | undefined = undefined;
     export let showHeader = true;
 
@@ -65,6 +69,17 @@
     $: showLapsed = lapsedMembers.length > 0;
     $: canInvite = client.canInviteUsers(collection.id);
     $: canPromoteMyselfToOwner = false;
+    $: bots = hydrateBots(botIds, $externalBots).filter((b) => matchesSearch(searchTermLower, b));
+
+    function hydrateBots(_ids: Set<string>, allBots: Map<string, ExternalBot>): ExternalBot[] {
+        return [..._ids].reduce((bots, id) => {
+            const bot = allBots.get(id);
+            if (bot !== undefined) {
+                bots.push(bot);
+            }
+            return bots;
+        }, [] as ExternalBot[]);
+    }
 
     function matchingUsers(
         term: string,
@@ -130,8 +145,16 @@
         dispatch("showInviteUsers");
     }
 
-    function matchesSearch(searchTermLower: string, user: UserSummary): boolean {
+    function matchesSearch(searchTermLower: string, user: UserSummary | ExternalBot): boolean {
         if (searchTermLower === "") return true;
+        if (user.kind === "external_bot") {
+            return (
+                user.name.toLowerCase().includes(searchTermLower) ||
+                (user.description !== undefined &&
+                    user.description.toLocaleLowerCase().includes(searchTermLower))
+            );
+        }
+
         if (user.username === undefined) return true;
         return (
             user.username.toLowerCase().includes(searchTermLower) ||
@@ -295,6 +318,20 @@
                 canDemoteToMember={client.canDemote(collection.id, me.role, "member")}
                 on:changeRole />
         {/if}
+
+        {#if bots.length > 0}
+            <h4 class="member_type_label">
+                <Translatable resourceKey={i18nKey("bots.member.bots")}></Translatable>
+            </h4>
+            {#each bots as bot}
+                <BotMember {bot} canRemove={true} canReviewPermissions={true} {searchTerm} />
+            {/each}
+
+            <h4 class="member_type_label">
+                <Translatable resourceKey={i18nKey("bots.member.people")}></Translatable>
+            </h4>
+        {/if}
+
         <VirtualList
             bind:this={membersList}
             keyFn={(user) => user.userId}
@@ -414,5 +451,9 @@
                 }
             }
         }
+    }
+
+    .member_type_label {
+        margin: 0 $sp4;
     }
 </style>

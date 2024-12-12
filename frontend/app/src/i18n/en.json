@@ -288,6 +288,10 @@
             }
         },
         "matchingCommands": "Matching commands",
+        "member": {
+            "bots": "Bots",
+            "people": "People"
+        },
         "poll": {
             "desc": "Create a poll in the current chat"
         },

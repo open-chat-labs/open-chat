@@ -11,6 +11,7 @@
         currentCommunityInvitedUsers as currentCommunityInvited,
         currentCommunityBlockedUsers as currentCommunityBlocked,
         currentCommunityLapsedMembers as currentCommunityLapsed,
+        currentCommunityBots,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -27,6 +28,7 @@
     export let community: CommunitySummary;
     export let selectedTab: "community" | "channel" = "channel";
 
+    $: communityBotIds = new Set($currentCommunityBots.keys());
     $: canInvite =
         selectedTab === "community"
             ? client.canInviteUsers(community.id)
@@ -110,6 +112,7 @@
         members={[...$currentCommunityMembers.values()]}
         blocked={$currentCommunityBlocked}
         lapsed={$currentCommunityLapsed}
+        botIds={communityBotIds}
         on:close
         on:blockUser={onBlockCommunityUser}
         on:unblockUser={onUnblockCommunityUser}
@@ -128,6 +131,7 @@
         members={$currentChatMembers}
         blocked={$currentChatBlocked}
         lapsed={$currentChatLapsed}
+        botIds={new Set()}
         on:close
         on:blockUser={onBlockGroupUser}
         on:unblockUser={onUnblockGroupUser}
