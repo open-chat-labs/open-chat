@@ -22,6 +22,13 @@ import type {
     ExternalAchievementsResponse,
     ExternalAchievement,
     ChitLeaderboardResponse,
+    ExploreBotsResponse,
+    SlashCommandSchema,
+    BotMatch,
+    SlashCommandParam,
+    SlashCommandParamType,
+    BotsResponse,
+    ExternalBot,
 } from "openchat-shared";
 import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
@@ -30,7 +37,13 @@ import {
     mapOptional,
     principalBytesToString,
 } from "../../utils/mapping";
-import { token } from "../common/chatMappersV2";
+import {
+    apiChatPermission,
+    apiCommunityPermission,
+    apiMessagePermission,
+    slashCommandPermissions,
+    token,
+} from "../common/chatMappersV2";
 import type {
     CurrentUserSummary as TCurrentUserSummary,
     DiamondMembershipDetails as TDiamondMembershipDetails,
@@ -58,7 +71,67 @@ import type {
     UserSummaryV2 as TUserSummaryV2,
     UserIndexExternalAchievementsResponse,
     UserIndexExternalAchievementsExternalAchievement,
+    UserIndexExploreBotsResponse,
+    BotMatch as ApiBotMatch,
+    SlashCommandSchema as ApiSlashCommandSchema,
+    SlashCommandParam as ApiSlashCommandParam,
+    SlashCommandParamType as ApiSlashCommandParamType,
+    UserIndexBotUpdatesResponse,
+    UserIndexBotUpdatesBotSchema,
 } from "../../typebox";
+import { toRecord } from "../../utils/list";
+
+export function botUpdatesResponse(
+    value: UserIndexBotUpdatesResponse,
+    current: BotsResponse | undefined,
+    blobUrlPattern: string,
+    canisterId: string,
+): BotsResponse {
+    if (value === "SuccessNoUpdates") {
+        return current ?? { timestamp: 0n, bots: [] };
+    }
+    if ("Success" in value) {
+        const map = toRecord(current?.bots ?? [], (b) => b.id);
+        value.Success.deleted.forEach((d) => {
+            delete map[principalBytesToString(d)];
+        });
+        return {
+            timestamp: 0n,
+            bots: Object.values(
+                value.Success.added_or_updated.reduce((all, bot) => {
+                    const mapped = botSchema(bot, blobUrlPattern, canisterId);
+                    all[mapped.id] = mapped;
+                    return all;
+                }, map),
+            ),
+        };
+    }
+    throw new UnsupportedValueError("Unexpected UserIndexBotUpdatesResponse received", value);
+}
+
+export function botSchema(
+    bot: UserIndexBotUpdatesBotSchema,
+    blobUrlPattern: string,
+    canisterId: string,
+): ExternalBot {
+    const botId = principalBytesToString(bot.id);
+    return {
+        kind: "external_bot",
+        id: botId,
+        name: bot.name,
+        description: bot.description,
+        avatarUrl: mapOptional(
+            bot.avatar_id,
+            (id) =>
+                `${blobUrlPattern
+                    .replace("{canisterId}", canisterId)
+                    .replace("{blobType}", "avatar")}/${botId}/${id}`,
+        ),
+        ownerId: principalBytesToString(bot.owner),
+        endpoint: bot.endpoint,
+        commands: bot.commands.map(externalBotCommand),
+    };
+}
 
 export function userSearchResponse(value: UserIndexSearchResponse): UserSummary[] {
     if ("Success" in value) {
@@ -521,4 +594,140 @@ function externalAchievement(
         expires: value.expires,
         budgetExhausted: value.budget_exhausted,
     };
+}
+
+export function apiCustomParamFields(param: SlashCommandParam): ApiSlashCommandParamType {
+    switch (param.kind) {
+        case "user":
+            return "UserParam";
+        case "boolean":
+            return "BooleanParam";
+        case "number":
+            return {
+                NumberParam: {
+                    min_length: param.minValue,
+                    max_length: param.maxValue,
+                    choices: param.choices,
+                },
+            };
+        case "string":
+            return {
+                StringParam: {
+                    min_length: param.minLength,
+                    max_length: param.maxLength,
+                    choices: param.choices,
+                },
+            };
+    }
+}
+
+export function customParamFields(paramType: ApiSlashCommandParamType): SlashCommandParamType {
+    if (paramType === "UserParam") {
+        return {
+            kind: "user",
+        };
+    } else if (paramType === "BooleanParam") {
+        return { kind: "boolean" };
+    } else if ("StringParam" in paramType) {
+        return {
+            kind: "string",
+            minLength: paramType.StringParam.min_length,
+            maxLength: paramType.StringParam.max_length,
+            choices: paramType.StringParam.choices,
+        };
+    } else if ("NumberParam" in paramType) {
+        return {
+            kind: "number",
+            minValue: paramType.NumberParam.min_length,
+            maxValue: paramType.NumberParam.max_length,
+            choices: paramType.NumberParam.choices,
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiSlashCommandParamType value", paramType);
+}
+
+export function externalBotParam(param: ApiSlashCommandParam): SlashCommandParam {
+    return {
+        ...param,
+        ...customParamFields(param.param_type),
+    };
+}
+
+export function apiExternalBotParam(param: SlashCommandParam): ApiSlashCommandParam {
+    return {
+        ...param,
+        param_type: apiCustomParamFields(param),
+    };
+}
+
+export function apiExternalBotCommand(command: SlashCommandSchema): ApiSlashCommandSchema {
+    return {
+        name: command.name,
+        description: command.description,
+        params: command.params.map(apiExternalBotParam),
+        permissions: {
+            chat: command.permissions.chatPermissions.map(apiChatPermission),
+            community: command.permissions.communityPermissions.map(apiCommunityPermission),
+            message: command.permissions.messagePermissions.map(apiMessagePermission),
+            thread: command.permissions.messagePermissions.map(apiMessagePermission),
+        },
+    };
+}
+
+export function externalBotCommand(command: ApiSlashCommandSchema): SlashCommandSchema {
+    return {
+        name: command.name,
+        description: command.description,
+        params: command.params.map(externalBotParam),
+        permissions: slashCommandPermissions(command.permissions),
+    };
+}
+
+export function externalBotMatch(
+    match: ApiBotMatch,
+    blobUrlPattern: string,
+    canisterId: string,
+): BotMatch {
+    const botId = principalBytesToString(match.id);
+    return {
+        name: match.name,
+        avatarUrl: mapOptional(
+            match.avatar_id,
+            (id) =>
+                `${blobUrlPattern
+                    .replace("{canisterId}", canisterId)
+                    .replace("{blobType}", "avatar")}/${botId}/${id}`,
+        ),
+        id: botId,
+        score: match.score,
+        owner: principalBytesToString(match.owner),
+        description: match.description,
+        commands: match.commands.map(externalBotCommand),
+    };
+}
+
+export function exploreBotsResponse(
+    value: UserIndexExploreBotsResponse,
+    blobUrlPattern: string,
+    canisterId: string,
+): ExploreBotsResponse {
+    if (value === "InvalidTerm") {
+        return { kind: "term_invalid" };
+    }
+    if ("TermTooLong" in value) {
+        return { kind: "term_invalid" };
+    }
+    if ("TermTooShort" in value) {
+        return { kind: "term_invalid" };
+    }
+    if ("Success" in value) {
+        return {
+            kind: "success",
+            matches: value.Success.matches.map((m) =>
+                externalBotMatch(m, blobUrlPattern, canisterId),
+            ),
+            total: value.Success.total,
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ExploreBotsResponse type received", value);
 }

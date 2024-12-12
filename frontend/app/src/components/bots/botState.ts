@@ -1,7 +1,8 @@
 import {
+    builtinBot,
     createParamInstancesFromSchema,
+    externalBots,
     paramInstanceIsValid,
-    type Bot,
     type BotCommandInstance,
     type FlattenedCommand,
     type MessageContext,
@@ -56,7 +57,6 @@ export const selectedCommand = writable<FlattenedCommand | undefined>(undefined)
 export const focusedCommandIndex = writable(0);
 export const selectedCommandParamInstances = writable<SlashCommandParamInstance[]>([]);
 export const showingBuilder = writable(false);
-export const bots = writable<Bot[]>([]);
 
 export const prefixParts = derived(prefix, (prefix) => parseCommand(prefix));
 export const maybeParams = derived(prefixParts, (prefixParts) => prefixParts.slice(1) ?? []);
@@ -64,9 +64,12 @@ export const parsedPrefix = derived(
     prefixParts,
     (prefixParts) => prefixParts[0]?.slice(1)?.toLocaleLowerCase() ?? "",
 );
+
+// TODO - we need to account for the context here to filter out any commands that are not permitted
 export const commands = derived(
-    [_, bots, selectedCommand, parsedPrefix, prefixParts],
-    ([$_, bots, selectedCommand, parsedPrefix, prefixParts]) => {
+    [_, externalBots, selectedCommand, parsedPrefix, prefixParts],
+    ([$_, externalBots, selectedCommand, parsedPrefix, prefixParts]) => {
+        const bots = [builtinBot, ...externalBots.values()];
         return bots.flatMap((b) => {
             switch (b.kind) {
                 case "external_bot":
@@ -76,7 +79,7 @@ export const commands = derived(
                                 ...c,
                                 kind: b.kind,
                                 botName: b.name,
-                                botIcon: b.avatar,
+                                botIcon: b.avatarUrl,
                                 botId: b.id,
                                 botEndpoint: b.endpoint,
                                 botDescription: b.description,

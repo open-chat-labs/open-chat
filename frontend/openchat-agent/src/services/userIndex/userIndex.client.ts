@@ -20,6 +20,9 @@ import type {
     SubmitProofOfUniquePersonhoodResponse,
     ChitLeaderboardResponse,
     ExternalAchievementsResponse,
+    ExploreBotsResponse,
+    ExternalBot,
+    BotsResponse,
 } from "openchat-shared";
 import {
     mergeUserSummaryWithUpdates,
@@ -44,6 +47,9 @@ import {
     userSearchResponse,
     apiJsonDiamondDuration,
     externalAchievementsResponse,
+    exploreBotsResponse,
+    apiExternalBotCommand,
+    botUpdatesResponse,
 } from "./mappers";
 import {
     getCachedUsers,
@@ -62,9 +68,16 @@ import {
     setCachedCurrentUser,
     setCurrentUserDiamondStatusInCache,
 } from "../../utils/caching";
-import { mapOptional, principalBytesToString, principalStringToBytes } from "../../utils/mapping";
+import {
+    identity,
+    mapOptional,
+    principalBytesToString,
+    principalStringToBytes,
+} from "../../utils/mapping";
 import {
     Empty,
+    UserIndexBotUpdatesArgs,
+    UserIndexBotUpdatesResponse,
     UserIndexCheckUsernameArgs,
     UserIndexCheckUsernameResponse,
     UserIndexChitLeaderboardResponse,
@@ -72,11 +85,15 @@ import {
     UserIndexDeleteUserArgs,
     UserIndexDeleteUserResponse,
     UserIndexDiamondMembershipFeesResponse,
+    UserIndexExploreBotsArgs,
+    UserIndexExploreBotsResponse,
     UserIndexExternalAchievementsArgs,
     UserIndexExternalAchievementsResponse,
     UserIndexPayForDiamondMembershipArgs,
     UserIndexPayForDiamondMembershipResponse,
     UserIndexPlatformModeratorsGroupResponse,
+    UserIndexRegisterBotArgs,
+    UserIndexRegisterBotResponse,
     UserIndexReportedMessagesArgs,
     UserIndexReportedMessagesResponse,
     UserIndexSearchArgs,
@@ -104,7 +121,12 @@ import {
 import { apiToken } from "../common/chatMappersV2";
 
 export class UserIndexClient extends CandidService {
-    constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
+    constructor(
+        identity: Identity,
+        agent: HttpAgent,
+        canisterId: string,
+        private blobUrlPattern: string,
+    ) {
         super(identity, agent, canisterId);
     }
 
@@ -367,9 +389,10 @@ export class UserIndexClient extends CandidService {
         };
     }
 
-    checkUsername(username: string): Promise<CheckUsernameResponse> {
+    checkUsername(username: string, isBot: boolean): Promise<CheckUsernameResponse> {
         const args = {
             username: username,
+            is_bot: isBot,
         };
         return this.executeMsgpackQuery(
             "check_username",
@@ -588,6 +611,58 @@ export class UserIndexClient extends CandidService {
             (resp) => resp === "Success",
             UserIndexDeleteUserArgs,
             UserIndexDeleteUserResponse,
+        );
+    }
+
+    exploreBots(
+        searchTerm: string | undefined,
+        pageIndex: number,
+        pageSize: number,
+    ): Promise<ExploreBotsResponse> {
+        console.log("Explore bots: ", searchTerm, pageIndex, pageSize);
+        return this.executeMsgpackQuery(
+            "explore_bots",
+            {
+                search_term: searchTerm,
+                page_index: pageIndex,
+                page_size: pageSize,
+            },
+            (resp) => exploreBotsResponse(resp, this.blobUrlPattern, this.canisterId),
+            UserIndexExploreBotsArgs,
+            UserIndexExploreBotsResponse,
+        );
+    }
+
+    registerBot(bot: ExternalBot): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "register_bot",
+            {
+                principal: principalStringToBytes(bot.id),
+                owner: principalStringToBytes(bot.ownerId),
+                name: bot.name,
+                avatar: mapOptional(bot.avatarUrl, identity),
+                endpoint: bot.endpoint,
+                description: bot.description ?? "",
+                commands: bot.commands.map(apiExternalBotCommand),
+            },
+            (resp) => {
+                console.log("UserIndex register bot response: ", resp);
+                return true;
+            },
+            UserIndexRegisterBotArgs,
+            UserIndexRegisterBotResponse,
+        );
+    }
+
+    getBots(current: BotsResponse | undefined): Promise<BotsResponse> {
+        return this.executeMsgpackQuery(
+            "bot_updates",
+            {
+                updated_since: current?.timestamp ?? 0n,
+            },
+            (resp) => botUpdatesResponse(resp, current, this.blobUrlPattern, this.canisterId),
+            UserIndexBotUpdatesArgs,
+            UserIndexBotUpdatesResponse,
         );
     }
 }

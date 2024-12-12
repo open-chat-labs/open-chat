@@ -17,6 +17,8 @@ import {
     setCachedExternalAchievements,
     getActivityFeedEvents,
     setActivityFeedEvents,
+    getCachedBots,
+    setCachedBots,
 } from "../utils/caching";
 import { isMainnet } from "../utils/network";
 import { getAllUsers, clearCache as clearUserCache } from "../utils/userCache";
@@ -223,6 +225,10 @@ import type {
     FreezeCommunityResponse,
     UnfreezeCommunityResponse,
     ChannelSummaryResponse,
+    ExploreBotsResponse,
+    ExternalBot,
+    SlashCommandPermissions,
+    BotsResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -309,6 +315,7 @@ export class OpenChatAgent extends EventTarget {
             identity,
             this._agent,
             config.userIndexCanister,
+            config.blobUrlPattern,
         );
         this._groupIndexClient = new GroupIndexClient(
             identity,
@@ -2102,10 +2109,10 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.setModerationFlags(flags);
     }
 
-    checkUsername(username: string): Promise<CheckUsernameResponse> {
+    checkUsername(username: string, isBot: boolean): Promise<CheckUsernameResponse> {
         if (offline()) return Promise.resolve("offline");
 
-        return this._userIndexClient.checkUsername(username);
+        return this._userIndexClient.checkUsername(username, isBot);
     }
 
     setUsername(userId: string, username: string): Promise<SetUsernameResponse> {
@@ -3995,5 +4002,51 @@ export class OpenChatAgent extends EventTarget {
                 }
                 return resp;
             });
+    }
+
+    exploreBots(
+        searchTerm: string | undefined,
+        pageIndex: number,
+        pageSize: number,
+    ): Promise<ExploreBotsResponse> {
+        if (offline()) return Promise.resolve(CommonResponses.offline());
+
+        return this._userIndexClient.exploreBots(searchTerm, pageIndex, pageSize);
+    }
+
+    registerBot(bot: ExternalBot): Promise<boolean> {
+        if (offline()) return Promise.resolve(false);
+        return this._userIndexClient.registerBot(bot);
+    }
+
+    addBotToCommunity(
+        id: CommunityIdentifier,
+        botId: string,
+        grantedPermissions: SlashCommandPermissions,
+    ): Promise<boolean> {
+        return this.communityClient(id.communityId).addBot(botId, grantedPermissions);
+    }
+
+    removeBotFromCommunity(id: CommunityIdentifier, botId: string): Promise<boolean> {
+        return this.communityClient(id.communityId).removeBot(botId);
+    }
+
+    getBots(initialLoad: boolean): Stream<BotsResponse> {
+        return new Stream(async (resolve, reject) => {
+            const cachedBots = await getCachedBots(this.db, this.principal);
+            const isOffline = offline();
+            if (cachedBots && initialLoad) {
+                resolve(cachedBots, isOffline);
+            }
+            if (!isOffline) {
+                try {
+                    const updates = await this._userIndexClient.getBots(cachedBots);
+                    setCachedBots(this.db, this.principal, updates);
+                    resolve(updates, true);
+                } catch (err) {
+                    reject(err);
+                }
+            }
+        });
     }
 }

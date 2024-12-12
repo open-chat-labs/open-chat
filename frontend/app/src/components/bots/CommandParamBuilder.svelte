@@ -121,6 +121,7 @@
                     label={i18nKey("bots.builder.paramNameLabel")}
                     rules={i18nKey("bots.builder.nameRules")}></Legend>
                 <ValidatingInput
+                    autofocus
                     error={errors.get(`${errorPath}_name`)}
                     minlength={3}
                     maxlength={25}

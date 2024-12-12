@@ -6,6 +6,16 @@ import { ValidationErrors } from "../utils/validation";
 
 export const MIN_NAME_LENGTH = 3;
 
+export type BotGroupDetails = {
+    id: string;
+    permissions: SlashCommandPermissions;
+};
+
+export type BotsResponse = {
+    timestamp: bigint;
+    bots: ExternalBot[];
+};
+
 // This can be expanded as necessary to include things like ChatParam (e.g. for a /goto bot)
 export type SlashCommandParamType = UserParam | BooleanParam | StringParam | NumberParam;
 
@@ -93,7 +103,7 @@ export function emptySlashCommand(): SlashCommandSchema {
         name: "",
         description: "",
         params: [],
-        permissions: emptyPermissions(),
+        permissions: emptySlashCommandPermissions(),
     };
 }
 
@@ -105,20 +115,56 @@ export type SlashCommandSchema = {
     devmode?: boolean;
 };
 
-export function emptyPermissions(): SlashCommandPermissions {
+export function emptySlashCommandPermissions(): SlashCommandPermissions {
     return {
         chatPermissions: [],
         communityPermissions: [],
         messagePermissions: [],
-        threadPermissions: [],
     };
+}
+
+export type SlashCommandPermissionsSet = {
+    chatPermissions: Set<keyof ChatPermissions>;
+    communityPermissions: Set<keyof CommunityPermissions>;
+    messagePermissions: Set<MessagePermission>;
+};
+
+export function setifyCommandPermissions(
+    perm: SlashCommandPermissions,
+): SlashCommandPermissionsSet {
+    return {
+        chatPermissions: new Set(perm.chatPermissions),
+        communityPermissions: new Set(perm.communityPermissions),
+        messagePermissions: new Set(perm.messagePermissions),
+    };
+}
+
+function hasEveryPermissionOfType<P extends keyof SlashCommandPermissions>(
+    required: SlashCommandPermissions,
+    granted: SlashCommandPermissionsSet,
+    type: P,
+): boolean {
+    const r = required[type] as SlashCommandPermissions[P][number][];
+    const g = granted[type] as Set<SlashCommandPermissions[P][number]>;
+    return r.every((p) => g.has(p));
+}
+
+export function hasEveryRequiredPermission(
+    required: SlashCommandPermissions,
+    granted: SlashCommandPermissions,
+): boolean {
+    const grantedSet = setifyCommandPermissions(granted);
+    return (
+        hasEveryPermissionOfType(required, grantedSet, "chatPermissions") &&
+        hasEveryPermissionOfType(required, grantedSet, "communityPermissions") &&
+        hasEveryPermissionOfType(required, grantedSet, "messagePermissions")
+    );
 }
 
 export type SlashCommandPermissions = {
     chatPermissions: (keyof ChatPermissions)[];
     communityPermissions: (keyof CommunityPermissions)[];
     messagePermissions: MessagePermission[];
-    threadPermissions: MessagePermission[];
 };
 
 export type SlashCommandInstance = {
@@ -135,6 +181,7 @@ export function emptyBotInstance(bot?: ExternalBot): ExternalBot {
         : {
               kind: "external_bot",
               id: "",
+              ownerId: "",
               name: "",
               description: "",
               endpoint: "",
@@ -145,8 +192,9 @@ export function emptyBotInstance(bot?: ExternalBot): ExternalBot {
 export type ExternalBot = {
     kind: "external_bot";
     name: string;
-    avatar?: string;
+    avatarUrl?: string;
     id: string;
+    ownerId: string;
     endpoint: string;
     description?: string;
     commands: SlashCommandSchema[];
@@ -307,12 +355,25 @@ export function validBotComponentName(name: string): ResourceKey[] {
     return errors;
 }
 
+function validatePrincipal(p: string): boolean {
+    try {
+        Principal.fromText(p);
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
 export function validateBot(bot: ExternalBot): ValidationErrors {
     const errors = new ValidationErrors();
     errors.addErrors(`bot_name`, validBotComponentName(bot.name));
 
     if (!(validateOrigin(bot.endpoint) || validateCanister(bot.endpoint))) {
         errors.addErrors("bot_endpoint", i18nKey("bots.builder.errors.endpoint"));
+    }
+
+    if (!validatePrincipal(bot.id)) {
+        errors.addErrors("bot_principal", i18nKey("bots.builder.errors.principal"));
     }
 
     if (bot.commands.length === 0) {

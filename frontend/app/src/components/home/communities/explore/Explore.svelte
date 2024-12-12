@@ -20,15 +20,10 @@
     import { pushRightPanelHistory } from "../../../../stores/rightPanel";
     import { communityFiltersStore } from "../../../../stores/communityFilters";
     import Plus from "svelte-material-icons/Plus.svelte";
-    import { derived } from "svelte/store";
     import CommunityCardLink from "./CommunityCardLink.svelte";
     import Translatable from "../../../Translatable.svelte";
     import { i18nKey } from "../../../../i18n/i18n";
-    import {
-        communitySearchScrollPos,
-        communitySearchStore,
-        communitySearchTerm,
-    } from "../../../../stores/search";
+    import { communitySearchState } from "../../../../stores/search.svelte";
     import Fab from "../../../Fab.svelte";
     import {
         anonUser,
@@ -41,29 +36,15 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    let searching = false;
-    let showFab = false;
+    let searching = $state(false);
+    let showFab = $state(false);
     let scrollableElement: HTMLElement | null;
-    let initialised = false;
+    let initialised = $state(false);
 
-    $: pageSize = calculatePageSize($screenWidth);
-    $: more = $communitySearchStore.total > $communitySearchStore.results.length;
-    $: loading = searching && $communitySearchStore.results.length === 0;
-
-    $: {
-        if (
-            $identityState.kind === "logged_in" &&
-            $identityState.postLogin?.kind === "create_community"
-        ) {
-            client.clearPostLoginState();
-            tick().then(() => createCommunity());
-        }
-    }
-
-    let filters = derived([communityFiltersStore, moderationFlags], ([communityFilters, flags]) => {
+    let filters = $derived.by(() => {
         return {
-            languages: Array.from(communityFilters.languages),
-            flags,
+            languages: Array.from($communityFiltersStore.languages),
+            flags: $moderationFlags,
         };
     });
 
@@ -96,27 +77,27 @@
     function search(reset = false) {
         searching = true;
         if (reset) {
-            communitySearchStore.reset();
+            communitySearchState.reset();
         } else {
-            communitySearchStore.nextPage();
+            communitySearchState.nextPage();
         }
 
         client
             .exploreCommunities(
-                $communitySearchTerm === "" ? undefined : $communitySearchTerm,
-                $communitySearchStore.index,
+                communitySearchState.term === "" ? undefined : communitySearchState.term,
+                communitySearchState.index,
                 pageSize,
-                $filters.flags ?? 0,
-                $filters.languages,
+                filters.flags ?? 0,
+                filters.languages,
             )
             .then((results) => {
                 if (results.kind === "success") {
                     if (reset) {
-                        communitySearchStore.setResults(results.matches);
+                        communitySearchState.results = results.matches;
                     } else {
-                        communitySearchStore.appendResults(results.matches);
+                        communitySearchState.appendResults(results.matches);
                     }
-                    communitySearchStore.setTotal(results.total);
+                    communitySearchState.total = results.total;
                 }
             })
             .finally(() => (searching = false));
@@ -126,19 +107,20 @@
         pushRightPanelHistory({ kind: "community_filters" });
     }
 
+    $effect(() => {
+        if (initialised || communitySearchState.results.length === 0) {
+            search(true);
+        }
+        initialised = true;
+    });
+
     onMount(() => {
         tick().then(() => {
             scrollableElement = document.getElementById("communities-wrapper");
             if (scrollableElement) {
-                scrollableElement.scrollTop = $communitySearchScrollPos;
+                scrollableElement.scrollTop = communitySearchState.scrollPos;
             }
             onScroll();
-        });
-        return filters.subscribe((_) => {
-            if (initialised || $communitySearchStore.results.length === 0) {
-                search(true);
-            }
-            initialised = true;
         });
     });
 
@@ -151,9 +133,22 @@
     function onScroll() {
         if (scrollableElement) {
             showFab = scrollableElement.scrollTop > 500;
-            communitySearchScrollPos.set(scrollableElement.scrollTop);
+            communitySearchState.scrollPos = scrollableElement.scrollTop;
         }
     }
+    let pageSize = $derived(calculatePageSize($screenWidth));
+    let more = $derived(communitySearchState.total > communitySearchState.results.length);
+    let loading = $derived(searching && communitySearchState.results.length === 0);
+
+    $effect(() => {
+        if (
+            $identityState.kind === "logged_in" &&
+            $identityState.postLogin?.kind === "create_community"
+        ) {
+            client.clearPostLoginState();
+            tick().then(() => createCommunity());
+        }
+    });
 </script>
 
 <div class="explore">
@@ -170,7 +165,7 @@
                 <div class="search">
                     <Search
                         fill
-                        bind:searchTerm={$communitySearchTerm}
+                        bind:searchTerm={communitySearchState.term}
                         searching={false}
                         on:searchEntered={() => search(true)}
                         placeholder={i18nKey("communities.search")} />
@@ -198,7 +193,7 @@
                     <Search
                         searching={false}
                         fill
-                        bind:searchTerm={$communitySearchTerm}
+                        bind:searchTerm={communitySearchState.term}
                         on:searchEntered={() => search(true)}
                         placeholder={i18nKey("communities.search")} />
                 </div>
@@ -206,16 +201,16 @@
         </div>
     </div>
 
-    <div on:scroll={onScroll} id="communities-wrapper" class="communities-wrapper">
+    <div onscroll={onScroll} id="communities-wrapper" class="communities-wrapper">
         <div
             class="communities"
             class:loading
-            class:empty={$communitySearchStore.results.length === 0}>
+            class:empty={communitySearchState.results.length === 0}>
             {#if loading}
                 <div class="loading">
                     <FancyLoader />
                 </div>
-            {:else if $communitySearchStore.results.length === 0}
+            {:else if communitySearchState.results.length === 0}
                 {#if $offlineStore}
                     <div class="no-match">
                         <CloudOffOutline size={"1.8em"} color={"var(--txt-light)"} />
@@ -234,7 +229,7 @@
                     </div>
                 {/if}
             {:else}
-                {#each $communitySearchStore.results as community (community.id.communityId)}
+                {#each communitySearchState.results as community (community.id.communityId)}
                     <CommunityCardLink url={`/community/${community.id.communityId}`}>
                         <CommunityCard
                             id={community.id.communityId}

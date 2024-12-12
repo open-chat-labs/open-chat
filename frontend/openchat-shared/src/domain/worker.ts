@@ -116,6 +116,7 @@ import type {
     GroupSearchResponse,
     ExploreCommunitiesResponse,
     ExploreChannelsResponse,
+    ExploreBotsResponse,
 } from "./search/search";
 import type { GroupInvite, CommunityInvite } from "./inviteCodes";
 import type {
@@ -200,6 +201,7 @@ import type {
 } from "./chit";
 import type { JsonnableDelegationChain } from "@dfinity/identity";
 import type { Verification } from "./wallet";
+import type { BotsResponse, ExternalBot, SlashCommandPermissions } from "./bots";
 
 /**
  * Worker request types
@@ -302,6 +304,7 @@ export type WorkerRequest =
     | SuspendUser
     | UnsuspendUser
     | GetUpdates
+    | GetBots
     | GetDeletedGroupMessage
     | GetDeletedDirectMessage
     | LoadFailedMessages
@@ -337,6 +340,8 @@ export type WorkerRequest =
     | UpdateCommunity
     | CreateCommunity
     | ExploreCommunities
+    | ExploreBots
+    | RegisterBot
     | GetCommunitySummary
     | ExploreChannels
     | GetCommunityDetails
@@ -406,7 +411,22 @@ export type WorkerRequest =
     | CancelInvites
     | MessageActivityFeed
     | MarkActivityFeedRead
-    | DeleteUser;
+    | DeleteUser
+    | AddBotToCommunity
+    | RemoveBotFromCommunity;
+
+type AddBotToCommunity = {
+    kind: "addBotToCommunity";
+    id: CommunityIdentifier;
+    botId: string;
+    grantedPermissions: SlashCommandPermissions;
+};
+
+type RemoveBotFromCommunity = {
+    kind: "removeBotFromCommunity";
+    id: CommunityIdentifier;
+    botId: string;
+};
 
 type MarkActivityFeedRead = {
     kind: "markActivityFeedRead";
@@ -769,6 +789,18 @@ type ExploreCommunities = {
     kind: "exploreCommunities";
 };
 
+type RegisterBot = {
+    kind: "registerBot";
+    bot: ExternalBot;
+};
+
+type ExploreBots = {
+    searchTerm: string | undefined;
+    pageIndex: number;
+    pageSize: number;
+    kind: "exploreBots";
+};
+
 type SearchGroups = {
     searchTerm: string;
     maxResults: number;
@@ -1024,6 +1056,7 @@ type GetUserStorageLimits = {
 type CheckUsername = {
     username: string;
     kind: "checkUsername";
+    isBot: boolean;
 };
 
 type SearchUsers = {
@@ -1246,6 +1279,11 @@ type GetUpdates = {
     initialLoad: boolean;
 };
 
+type GetBots = {
+    kind: "getBots";
+    initialLoad: boolean;
+};
+
 type GetDeletedGroupMessage = {
     chatId: MultiUserChatIdentifier;
     messageId: bigint;
@@ -1432,6 +1470,7 @@ export type WorkerResponseInner =
     | SuspendUserResponse
     | UnsuspendUserResponse
     | UpdatesResult
+    | BotsResponse
     | DeletedDirectMessageResponse
     | DeletedGroupMessageResponse
     | StakeNeuronForSubmittingProposalsResponse
@@ -1502,7 +1541,8 @@ export type WorkerResponseInner =
     | SubmitProofOfUniquePersonhoodResponse
     | AuthenticationPrincipalsResponse
     | ExternalAchievement[]
-    | MessageActivityFeedResponse;
+    | MessageActivityFeedResponse
+    | ExploreBotsResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -1830,6 +1870,8 @@ export type WorkerResult<T> = T extends Init
     ? UnpinMessageResponse
     : T extends GetUpdates
     ? UpdatesResult
+    : T extends GetBots
+    ? BotsResponse
     : T extends GetDeletedDirectMessage
     ? DeletedDirectMessageResponse
     : T extends GetDeletedGroupMessage
@@ -1936,6 +1978,10 @@ export type WorkerResult<T> = T extends Init
     ? GroupChatSummary[]
     : T extends ExploreCommunities
     ? ExploreCommunitiesResponse
+    : T extends ExploreBots
+    ? ExploreBotsResponse
+    : T extends RegisterBot
+    ? boolean
     : T extends DismissRecommendations
     ? void
     : T extends GroupInvite
@@ -2201,5 +2247,7 @@ export type WorkerResult<T> = T extends Init
     : T extends MarkActivityFeedRead
     ? void
     : T extends DeleteUser
+    ? boolean
+    : T extends AddBotToCommunity
     ? boolean
     : never;

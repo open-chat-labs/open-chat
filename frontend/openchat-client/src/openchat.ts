@@ -397,6 +397,9 @@ import type {
     InternalBotCommandInstance,
     ExternalBotCommandInstance,
     CaptionedContent,
+    ExploreBotsResponse,
+    ExternalBot,
+    SlashCommandPermissions,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -452,6 +455,7 @@ import {
     AIRDROP_BOT_USER_ID,
     isEditableContent,
     isCaptionedContent,
+    random64,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import { diamondDurationToMs } from "./stores/diamond";
@@ -504,14 +508,15 @@ import { removeEmailSignInSession } from "openchat-shared";
 import { localGlobalUpdates } from "./stores/localGlobalUpdates";
 import { identityState } from "./stores/identity";
 import { addQueryStringParam } from "./utils/url";
-import { builtinBot } from "./utils/builtinBotCommands";
-import { testBots } from "./utils/testBots";
+import { setExternalBots } from "./stores";
 
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
 const MAX_TIMEOUT_MS = Math.pow(2, 31) - 1;
 const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
+const BOT_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
+const BOT_UPDATE_IDLE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 const REGISTRY_UPDATE_INTERVAL = 2 * ONE_MINUTE_MILLIS;
 const EXCHANGE_RATE_UPDATE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
@@ -534,6 +539,7 @@ export class OpenChat extends OpenChatAgentWorker {
     private _referralCode: string | undefined = undefined;
     private _userLookupForMentions: Record<string, UserOrUserGroup> | undefined = undefined;
     private _chatsPoller: Poller | undefined = undefined;
+    private _botsPoller: Poller | undefined = undefined;
     private _registryPoller: Poller | undefined = undefined;
     private _userUpdatePoller: Poller | undefined = undefined;
     private _exchangeRatePoller: Poller | undefined = undefined;
@@ -879,6 +885,7 @@ export class OpenChat extends OpenChatAgentWorker {
         }
 
         this.startChatsPoller();
+        this.startBotsPoller();
         this.startUserUpdatePoller();
 
         initNotificationStores();
@@ -909,6 +916,21 @@ export class OpenChat extends OpenChatAgentWorker {
 
     resumeEventLoop() {
         this.startChatsPoller();
+    }
+
+    private startBotsPoller() {
+        this._botsPoller?.stop();
+        this._botsPoller = new Poller(
+            () => this.loadBots(),
+            BOT_UPDATE_INTERVAL,
+            BOT_UPDATE_IDLE_INTERVAL,
+            true,
+        );
+
+        // we need to load chats at least once if we are completely offline
+        if (this._liveState.offlineStore) {
+            this.loadChats();
+        }
     }
 
     private startChatsPoller() {
@@ -3082,6 +3104,11 @@ export class OpenChat extends OpenChatAgentWorker {
             communityStateStore.setProp(community.id, "rules", resp.rules);
             communityStateStore.setProp(community.id, "userGroups", resp.userGroups);
             communityStateStore.setProp(community.id, "referrals", resp.referrals);
+            communityStateStore.setProp(
+                community.id,
+                "bots",
+                resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
+            );
         }
         await this.updateUserStoreFromCommunityState(community.id);
     }
@@ -4448,8 +4475,8 @@ export class OpenChat extends OpenChatAgentWorker {
         }, 0);
     }
 
-    checkUsername(username: string): Promise<CheckUsernameResponse> {
-        return this.sendRequest({ kind: "checkUsername", username });
+    checkUsername(username: string, isBot: boolean): Promise<CheckUsernameResponse> {
+        return this.sendRequest({ kind: "checkUsername", username, isBot });
     }
 
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
@@ -4615,6 +4642,16 @@ export class OpenChat extends OpenChatAgentWorker {
         return this._referralCode === undefined
             ? Promise.resolve(undefined)
             : this.getUser(this._referralCode);
+    }
+
+    registerBot(bot: ExternalBot): Promise<boolean> {
+        return this.sendRequest({
+            kind: "registerBot",
+            bot,
+        }).catch((err) => {
+            this._logger.error("Failed to register bot: ", err);
+            return false;
+        });
     }
 
     registerUser(username: string): Promise<RegisterUserResponse> {
@@ -4929,6 +4966,24 @@ export class OpenChat extends OpenChatAgentWorker {
 
     searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
         return this.sendRequest({ kind: "searchGroups", searchTerm, maxResults });
+    }
+
+    exploreBots(
+        searchTerm: string | undefined,
+        pageIndex: number,
+        pageSize: number,
+    ): Promise<ExploreBotsResponse> {
+        // return Promise.resolve({
+        //     kind: "success",
+        //     matches: testMatches,
+        //     total: 2,
+        // });
+        return this.sendRequest({
+            kind: "exploreBots",
+            searchTerm,
+            pageIndex,
+            pageSize,
+        });
     }
 
     exploreCommunities(
@@ -5810,6 +5865,30 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
+    private botsLoaded = false;
+
+    private async loadBots() {
+        console.log("Loading bot updates");
+        return new Promise<void>((resolve) => {
+            this.sendStreamRequest({
+                kind: "getBots",
+                initialLoad: !this.botsLoaded,
+            }).subscribe({
+                onResult: async ({ bots }) => {
+                    console.log("GetBots response: ", bots);
+                    setExternalBots(bots);
+                    this.botsLoaded = true;
+                },
+                onError: (err) => {
+                    console.warn("getBots threw an error: ", err);
+                    resolve();
+                },
+                onEnd: () => {
+                    resolve();
+                },
+            });
+        });
+    }
     private async loadChats() {
         const initialLoad = !this._liveState.chatsInitialised;
         chatsLoading.set(initialLoad);
@@ -5910,7 +5989,16 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
+    private stackTrace() {
+        return new Error().stack ?? "";
+    }
+
     claimPrize(chatId: MultiUserChatIdentifier, messageId: bigint): Promise<boolean> {
+        const stack = this.stackTrace();
+        if (!stack.includes("HTMLButtonElement.click")) {
+            return Promise.resolve(false);
+        }
+
         return this.sendRequest({ kind: "claimPrize", chatId, messageId })
             .then((resp) => {
                 if (resp.kind !== "success") {
@@ -7588,21 +7676,14 @@ export class OpenChat extends OpenChatAgentWorker {
         return this._liveState.userStore.get(userId)?.streak ?? 0;
     }
 
-    private getAuthTokenForBotCommand(_bot: BotCommandInstance): Promise<string> {
-        const token =
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzMyMTE5NjIxLCJleHAiOjE3MzQ3MTE2MjF9.HMuL8CJEKFVf26Hv3lqiE8LnI6MbnGlamFKEzngLei4";
-        return Promise.resolve(token);
-    }
-
     private callBotEndpoint(bot: ExternalBotCommandInstance, token: string): Promise<unknown> {
-        // This will send the OC access JWT to the external bot's endpoint
         const headers = new Headers();
         headers.append("x-auth-jwt", token);
         headers.append("Content-type", "application/json");
-        return fetch(`${bot.endpoint}/${bot.command.name}`, {
+        return fetch(`${bot.endpoint}/execute_command`, {
             method: "POST",
             headers: headers,
-            body: JSON.stringify(bot.command.params),
+            body: token,
         }).then((res) => {
             if (res.ok) {
                 return res.json();
@@ -7678,10 +7759,74 @@ export class OpenChat extends OpenChatAgentWorker {
         return Promise.resolve(true);
     }
 
-    executeBotCommand(bot: BotCommandInstance): Promise<boolean> {
+    private getAuthTokenForBotCommand(
+        chat: ChatSummary,
+        threadRootMessageIndex: number | undefined,
+        bot: ExternalBotCommandInstance,
+    ): Promise<string> {
+        return this.getLocalUserIndex(chat).then((localUserIndex) => {
+            return this.sendRequest({
+                kind: "getAccessToken",
+                chatId: chat.id,
+                accessTokenType: {
+                    kind: "execute_bot_command",
+                    messageContext: { chatId: chat.id, threadRootMessageIndex },
+                    messageId: random64(),
+                    commandName: bot.command.name,
+                    parameters: JSON.stringify(bot.command.params),
+                    version: 0,
+                    commandText: `@${this.getDisplayName(
+                        this._liveState.user,
+                    )} executed the command /${bot.command.name}`,
+                    botId: bot.id,
+                    userId: this._liveState.user.userId,
+                },
+                localUserIndex,
+            }).then((token) => {
+                if (token === undefined) {
+                    throw new Error("Didn't get an access token");
+                }
+                console.log("TOKEN: ", token);
+                return token;
+            });
+        });
+    }
+
+    addBotToCommunity(
+        id: CommunityIdentifier,
+        botId: string,
+        grantedPermissions: SlashCommandPermissions,
+    ): Promise<boolean> {
+        return this.sendRequest({
+            kind: "addBotToCommunity",
+            id,
+            botId,
+            grantedPermissions,
+        }).catch((err) => {
+            this._logger.error("Error adding bot to community", err);
+            return false;
+        });
+    }
+
+    removeBotFromCommunity(id: CommunityIdentifier, botId: string): Promise<boolean> {
+        return this.sendRequest({
+            kind: "removeBotFromCommunity",
+            id,
+            botId,
+        }).catch((err) => {
+            this._logger.error("Error removing bot from community", err);
+            return false;
+        });
+    }
+
+    executeBotCommand(
+        chat: ChatSummary,
+        threadRootMessageIndex: number | undefined,
+        bot: BotCommandInstance,
+    ): Promise<boolean> {
         switch (bot.kind) {
             case "external_bot":
-                return this.getAuthTokenForBotCommand(bot)
+                return this.getAuthTokenForBotCommand(chat, threadRootMessageIndex, bot)
                     .then((token) => this.callBotEndpoint(bot, token))
                     .then((resp) => {
                         if (bot.command.name === "chat") {
@@ -7709,12 +7854,6 @@ export class OpenChat extends OpenChatAgentWorker {
 
     contentTypeSupportsEdit(contentType: MessageContent["kind"]): boolean {
         return isEditableContent(contentType);
-    }
-
-    getBots(includeTestBots: boolean = false) {
-        return includeTestBots
-            ? Promise.resolve([builtinBot, ...testBots])
-            : Promise.resolve([builtinBot]);
     }
 
     claimDailyChit(): Promise<ClaimDailyChitResponse> {
