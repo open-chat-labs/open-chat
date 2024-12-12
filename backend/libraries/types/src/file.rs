@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 
 #[ts_export]
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct FileAdded {
     pub file_id: FileId,
     pub hash: Hash,
