@@ -259,21 +259,6 @@ type ChitUserBalance = record {
     balance : nat32;
 };
 
-type AddReferralCodesArgs = record {
-    referral_type : ReferralType;
-    codes : vec text;
-    expiry : opt TimestampMillis;
-};
-
-type ReferralType = variant {
-    BtcMiami;
-    User;
-};
-
-type AddReferralCodesResponse = variant {
-    Success;
-};
-
 type AwardExternalAchievementArgs = record {
     achievement_id : nat32;
     user_id : UserId;
@@ -313,9 +298,6 @@ service : {
     // Only callable by SNS governance canister
     register_bot : (RegisterBotArgs) -> (RegisterBotResponse);
     register_external_achievement : (RegisterExternalAchievementArgs) -> (RegisterExternalAchievementResponse);
-
-    // Only callable by OC dev team dfx identity
-    add_referral_codes : (AddReferralCodesArgs) -> (AddReferralCodesResponse);
 
     // Only callable by whitelisted canisters
     award_external_achievement : (AwardExternalAchievementArgs) -> (AwardExternalAchievementResponse);

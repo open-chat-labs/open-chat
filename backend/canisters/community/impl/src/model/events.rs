@@ -1,6 +1,7 @@
 use crate::model::events::stable_memory::EventsStableStorage;
 use chat_events::GroupGateUpdatedInternal;
 use serde::{Deserialize, Serialize};
+use tracing::info;
 use types::{
     AvatarChanged, BannerChanged, BotAdded, BotRemoved, BotUpdated, ChannelDeleted, ChannelId, ChatId, CommunityMembersRemoved,
     CommunityPermissionsChanged, CommunityRoleChanged, CommunityUsersBlocked, CommunityVisibilityChanged, EventIndex,
@@ -15,6 +16,54 @@ pub struct CommunityEvents {
     stable_events_map: EventsStableStorage,
     latest_event_index: EventIndex,
     latest_event_timestamp: TimestampMillis,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum CommunityEventInternalOld {
+    #[serde(rename = "cr", alias = "Created")]
+    Created(Box<GroupCreated>),
+    #[serde(rename = "nc", alias = "NameChanged")]
+    NameChanged(Box<GroupNameChanged>),
+    #[serde(rename = "dc", alias = "DescriptionChanged")]
+    DescriptionChanged(Box<GroupDescriptionChanged>),
+    #[serde(rename = "rc", alias = "RulesChanged")]
+    RulesChangedOrRoleChanged(Box<RulesChangedOrRoleChanged>),
+    #[serde(rename = "ac", alias = "AvatarChanged")]
+    AvatarChanged(Box<AvatarChanged>),
+    #[serde(rename = "bc", alias = "BannerChanged")]
+    BannerChanged(Box<BannerChanged>),
+    #[serde(rename = "ui", alias = "UsersInvited")]
+    UsersInvited(Box<UsersInvited>),
+    #[serde(rename = "mr", alias = "MembersRemoved")]
+    MembersRemoved(Box<CommunityMembersRemoved>),
+    #[serde(rename = "ub", alias = "UsersBlocked")]
+    UsersBlocked(Box<CommunityUsersBlocked>),
+    #[serde(rename = "uu", alias = "UsersUnblocked")]
+    UsersUnblocked(Box<UsersUnblocked>),
+    #[serde(rename = "pc", alias = "PermissionsChanged")]
+    PermissionsChanged(Box<CommunityPermissionsChanged>),
+    #[serde(rename = "vc", alias = "VisibilityChanged")]
+    VisibilityChanged(Box<CommunityVisibilityChanged>),
+    #[serde(rename = "ic", alias = "InviteCodeChanged")]
+    InviteCodeChanged(Box<GroupInviteCodeChanged>),
+    #[serde(rename = "fr", alias = "Frozen")]
+    Frozen(Box<GroupFrozen>),
+    #[serde(rename = "uf", alias = "Unfrozen")]
+    Unfrozen(Box<GroupUnfrozen>),
+    #[serde(rename = "gu", alias = "GateUpdated")]
+    GateUpdated(Box<GroupGateUpdatedInternal>),
+    #[serde(rename = "cd", alias = "ChannelDeleted")]
+    ChannelDeleted(Box<ChannelDeleted>),
+    #[serde(rename = "pl", alias = "PrimaryLanguageChanged")]
+    PrimaryLanguageChanged(Box<PrimaryLanguageChanged>),
+    #[serde(rename = "gi", alias = "GroupImported")]
+    GroupImported(Box<GroupImportedInternal>),
+    #[serde(rename = "ba")]
+    BotAdded(Box<BotAdded>),
+    #[serde(rename = "br")]
+    BotRemoved(Box<BotRemoved>),
+    #[serde(rename = "bu")]
+    BotUpdated(Box<BotUpdated>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -35,7 +84,7 @@ pub enum CommunityEventInternal {
     UsersInvited(Box<UsersInvited>),
     #[serde(rename = "mr", alias = "MembersRemoved")]
     MembersRemoved(Box<CommunityMembersRemoved>),
-    #[serde(rename = "rc", alias = "RoleChanged")]
+    #[serde(rename = "rl", alias = "RoleChanged")]
     RoleChanged(Box<CommunityRoleChanged>),
     #[serde(rename = "ub", alias = "UsersBlocked")]
     UsersBlocked(Box<CommunityUsersBlocked>),
@@ -67,7 +116,33 @@ pub enum CommunityEventInternal {
     BotUpdated(Box<BotUpdated>),
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(untagged)]
+pub enum RulesChangedOrRoleChanged {
+    RulesChanged(GroupRulesChanged),
+    RoleChanged(CommunityRoleChanged),
+}
+
 impl CommunityEvents {
+    pub fn fix_role_changed_events(&mut self) {
+        let mut count_updated = 0;
+        for event_wrapper in self.stable_events_map.read_all() {
+            if let CommunityEventInternalOld::RulesChangedOrRoleChanged(r) = event_wrapper.event {
+                if let RulesChangedOrRoleChanged::RoleChanged(role) = *r {
+                    self.stable_events_map.insert(EventWrapperInternal {
+                        index: event_wrapper.index,
+                        timestamp: event_wrapper.timestamp,
+                        correlation_id: 0,
+                        expires_at: event_wrapper.expires_at,
+                        event: CommunityEventInternal::RoleChanged(Box::new(role)),
+                    });
+                    count_updated += 1;
+                }
+            }
+        }
+        info!(count_updated, "Fixed community events");
+    }
+
     pub fn new(name: String, description: String, created_by: UserId, now: TimestampMillis) -> CommunityEvents {
         let event_index = EventIndex::default();
         let event = EventWrapperInternal {
