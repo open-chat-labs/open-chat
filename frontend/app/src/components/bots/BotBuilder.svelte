@@ -1,10 +1,10 @@
 <script lang="ts">
     import {
         emptyBotInstance,
+        emptySlashCommandPermissions,
         validateBot,
         ValidationErrors,
         type ExternalBot,
-        type SlashCommandPermissions,
         type SlashCommandSchema,
     } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
@@ -81,16 +81,7 @@
             name: "",
             description: "",
             params: [],
-            permissions: emptyPermissions(),
-        };
-    }
-
-    function emptyPermissions(): SlashCommandPermissions {
-        return {
-            chatPermissions: [],
-            communityPermissions: [],
-            messagePermissions: [],
-            threadPermissions: [],
+            permissions: emptySlashCommandPermissions(),
         };
     }
 </script>

@@ -6,7 +6,7 @@ function createTestBot(): ExternalBot {
         kind: "external_bot",
         name: "test_bot",
         description: "This is a test bot",
-        avatar: "avatar_url",
+        avatarUrl: "avatar_url",
         id: "bot_id",
         ownerId: "owner_id",
         endpoint: "https://my_bot",
@@ -18,7 +18,6 @@ function createTestBot(): ExternalBot {
                     chatPermissions: ["addMembers"],
                     communityPermissions: ["changeRoles"],
                     messagePermissions: ["text"],
-                    threadPermissions: ["text"],
                 },
                 params: [
                     {

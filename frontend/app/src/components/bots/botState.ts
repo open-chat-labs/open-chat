@@ -1,7 +1,6 @@
 import {
     builtinBot,
     createParamInstancesFromSchema,
-    currentCommunityBots,
     externalBots,
     paramInstanceIsValid,
     type BotCommandInstance,
@@ -10,44 +9,9 @@ import {
     type MessageFormatter,
     type SlashCommandParam,
     type SlashCommandParamInstance,
-    type SlashCommandPermissions,
 } from "openchat-client";
 import { derived, get, writable } from "svelte/store";
 import { _ } from "svelte-i18n";
-
-const emptyPermissions: SlashCommandPermissions = {
-    chatPermissions: [],
-    communityPermissions: [],
-    messagePermissions: [],
-    threadPermissions: [],
-};
-
-function hasEveryPermission<P extends keyof SlashCommandPermissions>(
-    required: SlashCommandPermissions,
-    granted: SlashCommandPermissions,
-    prop: P,
-): boolean {
-    const r = required[prop] as SlashCommandPermissions[P][number][];
-    const g = granted[prop] as SlashCommandPermissions[P][number][];
-    return r.every((p) => g.includes(p));
-}
-
-function botHasPermission(
-    c: FlattenedCommand & { kind: "external_bot" },
-    contextualPermissions: Map<string, SlashCommandPermissions>,
-): boolean {
-    const granted = contextualPermissions.get(c.botId) ?? emptyPermissions;
-    const required = c.permissions;
-
-    // TODO - do we need to know what context we are operating in here
-
-    return (
-        hasEveryPermission(required, granted, "chatPermissions") &&
-        hasEveryPermission(required, granted, "communityPermissions") &&
-        hasEveryPermission(required, granted, "messagePermissions") &&
-        hasEveryPermission(required, granted, "threadPermissions")
-    );
-}
 
 function filterCommand(
     formatter: MessageFormatter,
@@ -55,13 +19,8 @@ function filterCommand(
     selectedCommand: FlattenedCommand | undefined,
     parsedPrefix: string,
     prefixParts: string[],
-    contextualPermissions: Map<string, SlashCommandPermissions>,
 ): boolean {
     if (c.devmode && process.env.NODE_ENV === "production") return false;
-
-    if (c.kind === "external_bot" && !botHasPermission(c, contextualPermissions)) return false;
-
-    // TODO - let's also check that the *user* has the relevant permissions at this point so that we can have everything in one place
 
     if (selectedCommand !== undefined) {
         return commandsMatch(selectedCommand, c);
@@ -108,8 +67,8 @@ export const parsedPrefix = derived(
 
 // TODO - we need to account for the context here to filter out any commands that are not permitted
 export const commands = derived(
-    [_, externalBots, selectedCommand, parsedPrefix, prefixParts, currentCommunityBots],
-    ([$_, externalBots, selectedCommand, parsedPrefix, prefixParts, currentCommunityBots]) => {
+    [_, externalBots, selectedCommand, parsedPrefix, prefixParts],
+    ([$_, externalBots, selectedCommand, parsedPrefix, prefixParts]) => {
         const bots = [builtinBot, ...externalBots.values()];
         return bots.flatMap((b) => {
             switch (b.kind) {
@@ -127,14 +86,7 @@ export const commands = derived(
                             };
                         })
                         .filter((c) =>
-                            filterCommand(
-                                $_,
-                                c,
-                                selectedCommand,
-                                parsedPrefix,
-                                prefixParts,
-                                currentCommunityBots,
-                            ),
+                            filterCommand($_, c, selectedCommand, parsedPrefix, prefixParts),
                         ) as FlattenedCommand[];
                 case "internal_bot":
                     return b.commands
@@ -147,14 +99,7 @@ export const commands = derived(
                             };
                         })
                         .filter((c) =>
-                            filterCommand(
-                                $_,
-                                c,
-                                selectedCommand,
-                                parsedPrefix,
-                                prefixParts,
-                                currentCommunityBots,
-                            ),
+                            filterCommand($_, c, selectedCommand, parsedPrefix, prefixParts),
                         ) as FlattenedCommand[];
             }
         });

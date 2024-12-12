@@ -35,15 +35,8 @@
 
     let { command = $bindable(), onAddAnother, errors, errorPath }: Props = $props();
 
-    let syncThreadPermissions = $state(true);
     let selectedParam = $state<SlashCommandParam | undefined>(undefined);
     let selectedParamIndex = $state<number | undefined>(undefined);
-
-    function toggleSync() {
-        if (syncThreadPermissions) {
-            command.permissions.threadPermissions = command.permissions.messagePermissions;
-        }
-    }
 
     function addParameter() {
         command.params.push(defaultStringParam());
@@ -151,31 +144,6 @@
                                 align={"start"}>
                             </Checkbox>
                         {/each}
-                    {/snippet}
-                    {#snippet threadTab()}
-                        <Checkbox
-                            id={`sync_thread_perm`}
-                            label={i18nKey("bots.builder.permSameAsMessage")}
-                            bind:checked={syncThreadPermissions}
-                            on:change={toggleSync}
-                            align={"start"}></Checkbox>
-                        {#if !syncThreadPermissions}
-                            {#each messagePermissionsList as perm}
-                                <Checkbox
-                                    id={`thread_permission_${perm}`}
-                                    disabled={syncThreadPermissions}
-                                    label={i18nKey(`permissions.messagePermissions.${perm}`)}
-                                    checked={command.permissions.threadPermissions.includes(perm)}
-                                    on:change={() =>
-                                        togglePermission(
-                                            command.permissions,
-                                            "threadPermissions",
-                                            perm,
-                                        )}
-                                    align={"start"}>
-                                </Checkbox>
-                            {/each}
-                        {/if}
                     {/snippet}
                 </BotPermissionsTabs>
             </section>

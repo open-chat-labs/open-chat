@@ -3314,6 +3314,5 @@ export function slashCommandPermissions(
         chatPermissions: value.chat.map(chatPermission),
         communityPermissions: value.community.map(communityPermission),
         messagePermissions: value.message.map(messagePermission),
-        threadPermissions: value.thread.map(messagePermission),
     };
 }

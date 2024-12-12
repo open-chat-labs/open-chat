@@ -50,7 +50,6 @@ const pingPong: SlashCommandSchema = {
     permissions: {
         ...emptyPermissions,
         messagePermissions: ["text"],
-        threadPermissions: ["text"],
     },
     params: [
         {
@@ -73,7 +72,6 @@ const chatCommand: SlashCommandSchema = {
         ...emptyPermissions,
         chatPermissions: ["reactToMessages", "pinMessages", "startVideoCall"],
         messagePermissions: ["text", "image", "file"],
-        threadPermissions: ["text", "image", "file"],
     },
     params: [
         {

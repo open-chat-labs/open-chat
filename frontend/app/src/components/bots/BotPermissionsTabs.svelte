@@ -7,11 +7,10 @@
         chatTab: Snippet;
         communityTab: Snippet;
         messageTab: Snippet;
-        threadTab: Snippet;
     }
 
-    let { chatTab, communityTab, messageTab, threadTab }: Props = $props();
-    let permissionsTab: "chat" | "community" | "message" | "thread" = $state("message");
+    let { chatTab, communityTab, messageTab }: Props = $props();
+    let permissionsTab: "chat" | "community" | "message" = $state("message");
 </script>
 
 <div class="tabs">
@@ -39,14 +38,6 @@
         class:selected={permissionsTab === "message"}>
         <Translatable resourceKey={i18nKey("bots.builder.permScopeMessage")}></Translatable>
     </div>
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-        class="tab"
-        onclick={() => (permissionsTab = "thread")}
-        class:selected={permissionsTab === "thread"}>
-        <Translatable resourceKey={i18nKey("bots.builder.permScopeThread")}></Translatable>
-    </div>
 </div>
 {#if permissionsTab === "chat"}
     {@render chatTab()}
@@ -54,8 +45,6 @@
     {@render communityTab()}
 {:else if permissionsTab === "message"}
     {@render messageTab()}
-{:else if permissionsTab === "thread"}
-    {@render threadTab()}
 {/if}
 
 <style lang="scss">

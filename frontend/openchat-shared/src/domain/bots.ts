@@ -103,7 +103,7 @@ export function emptySlashCommand(): SlashCommandSchema {
         name: "",
         description: "",
         params: [],
-        permissions: emptyPermissions(),
+        permissions: emptySlashCommandPermissions(),
     };
 }
 
@@ -115,20 +115,56 @@ export type SlashCommandSchema = {
     devmode?: boolean;
 };
 
-export function emptyPermissions(): SlashCommandPermissions {
+export function emptySlashCommandPermissions(): SlashCommandPermissions {
     return {
         chatPermissions: [],
         communityPermissions: [],
         messagePermissions: [],
-        threadPermissions: [],
     };
+}
+
+export type SlashCommandPermissionsSet = {
+    chatPermissions: Set<keyof ChatPermissions>;
+    communityPermissions: Set<keyof CommunityPermissions>;
+    messagePermissions: Set<MessagePermission>;
+};
+
+export function setifyCommandPermissions(
+    perm: SlashCommandPermissions,
+): SlashCommandPermissionsSet {
+    return {
+        chatPermissions: new Set(perm.chatPermissions),
+        communityPermissions: new Set(perm.communityPermissions),
+        messagePermissions: new Set(perm.messagePermissions),
+    };
+}
+
+function hasEveryPermissionOfType<P extends keyof SlashCommandPermissions>(
+    required: SlashCommandPermissions,
+    granted: SlashCommandPermissionsSet,
+    type: P,
+): boolean {
+    const r = required[type] as SlashCommandPermissions[P][number][];
+    const g = granted[type] as Set<SlashCommandPermissions[P][number]>;
+    return r.every((p) => g.has(p));
+}
+
+export function hasEveryRequiredPermission(
+    required: SlashCommandPermissions,
+    granted: SlashCommandPermissions,
+): boolean {
+    const grantedSet = setifyCommandPermissions(granted);
+    return (
+        hasEveryPermissionOfType(required, grantedSet, "chatPermissions") &&
+        hasEveryPermissionOfType(required, grantedSet, "communityPermissions") &&
+        hasEveryPermissionOfType(required, grantedSet, "messagePermissions")
+    );
 }
 
 export type SlashCommandPermissions = {
     chatPermissions: (keyof ChatPermissions)[];
     communityPermissions: (keyof CommunityPermissions)[];
     messagePermissions: MessagePermission[];
-    threadPermissions: MessagePermission[];
 };
 
 export type SlashCommandInstance = {

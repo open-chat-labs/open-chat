@@ -1731,7 +1731,7 @@ export class CommunityClient extends CandidService {
                     chat: grantedPermissions.chatPermissions.map(apiChatPermission),
                     community: grantedPermissions.communityPermissions.map(apiCommunityPermission),
                     message: grantedPermissions.messagePermissions.map(apiMessagePermission),
-                    thread: grantedPermissions.threadPermissions.map(apiMessagePermission),
+                    thread: grantedPermissions.messagePermissions.map(apiMessagePermission),
                 },
             },
             addBotResponse,

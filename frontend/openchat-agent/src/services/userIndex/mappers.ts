@@ -669,7 +669,7 @@ export function apiExternalBotCommand(command: SlashCommandSchema): ApiSlashComm
             chat: command.permissions.chatPermissions.map(apiChatPermission),
             community: command.permissions.communityPermissions.map(apiCommunityPermission),
             message: command.permissions.messagePermissions.map(apiMessagePermission),
-            thread: command.permissions.threadPermissions.map(apiMessagePermission),
+            thread: command.permissions.messagePermissions.map(apiMessagePermission),
         },
     };
 }

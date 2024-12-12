@@ -1,11 +1,12 @@
 <script lang="ts">
     import {
         AvatarSize,
-        emptyPermissions,
+        emptySlashCommandPermissions,
         OpenChat,
         type BotMatch,
         type CommunitySummary,
         type SlashCommandPermissions,
+        hasEveryRequiredPermission,
     } from "openchat-client";
     import Avatar from "../Avatar.svelte";
     import { getContext } from "svelte";
@@ -38,29 +39,10 @@
     let grantedPermissions = $state(flattenPermissions());
     let collapsed = $state(true);
 
-    function hasEveryPermission<P extends keyof SlashCommandPermissions>(
-        required: SlashCommandPermissions,
-        granted: SlashCommandPermissions,
-        prop: P,
-    ): boolean {
-        const r = required[prop] as SlashCommandPermissions[P][number][];
-        const g = granted[prop] as SlashCommandPermissions[P][number][];
-        return r.every((p) => g.includes(p));
-    }
-
-    function permitted(required: SlashCommandPermissions): boolean {
-        return (
-            hasEveryPermission(required, grantedPermissions, "chatPermissions") &&
-            hasEveryPermission(required, grantedPermissions, "communityPermissions") &&
-            hasEveryPermission(required, grantedPermissions, "messagePermissions") &&
-            hasEveryPermission(required, grantedPermissions, "threadPermissions")
-        );
-    }
-
     function flattenPermissions() {
         return bot.commands.reduce((p, c) => {
             return mergePermissions(p, c.permissions);
-        }, emptyPermissions());
+        }, emptySlashCommandPermissions());
     }
 
     function mergeLists<T>(l1: T[], l2: T[]): T[] {
@@ -75,7 +57,6 @@
             chatPermissions: mergeLists(p1.chatPermissions, p2.chatPermissions),
             communityPermissions: mergeLists(p1.communityPermissions, p2.communityPermissions),
             messagePermissions: mergeLists(p1.messagePermissions, p2.messagePermissions),
-            threadPermissions: mergeLists(p1.threadPermissions, p2.threadPermissions),
         };
     }
 
@@ -122,7 +103,10 @@
                             <div
                                 slot="target"
                                 class="command"
-                                class:not_permitted={!permitted(command.permissions)}>
+                                class:not_permitted={!hasEveryRequiredPermission(
+                                    command.permissions,
+                                    grantedPermissions,
+                                )}>
                                 {command.name}
                             </div>
                             <div let:position let:align slot="tooltip">
@@ -200,29 +184,6 @@
                                             togglePermission(
                                                 grantedPermissions,
                                                 "messagePermissions",
-                                                perm,
-                                            )}
-                                        align={"start"}>
-                                    </Checkbox>
-                                {/each}
-                            {/if}
-                        {/snippet}
-                        {#snippet threadTab()}
-                            {#if requestedPermissions.threadPermissions.length === 0}
-                                <Translatable resourceKey={i18nKey("bots.add.noPermissions")}
-                                ></Translatable>
-                            {:else}
-                                {#each requestedPermissions.threadPermissions as perm}
-                                    <Checkbox
-                                        id={`thread_permission_${perm}`}
-                                        label={i18nKey(`permissions.messagePermissions.${perm}`)}
-                                        checked={grantedPermissions.threadPermissions.includes(
-                                            perm,
-                                        )}
-                                        on:change={() =>
-                                            togglePermission(
-                                                grantedPermissions,
-                                                "threadPermissions",
                                                 perm,
                                             )}
                                         align={"start"}>
