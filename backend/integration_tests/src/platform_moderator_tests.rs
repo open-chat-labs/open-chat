@@ -8,40 +8,6 @@ use testing::rng::random_string;
 use types::{Chat, ChatEvent, ChatId, MessageContent, MultiUserChat};
 
 #[test]
-fn new_platform_moderators_added_to_moderators_group() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-        ..
-    } = wrapper.env();
-
-    let TestData {
-        user1: _,
-        user2,
-        moderators_group,
-    } = init_test_data(env, canister_ids, *controller);
-
-    client::user_index::add_platform_moderator(
-        env,
-        *controller,
-        canister_ids.user_index,
-        &user_index_canister::add_platform_moderator::Args { user_id: user2.user_id },
-    );
-
-    tick_many(env, 5);
-
-    let initial_state = client::user::happy_path::initial_state(env, &user2);
-
-    assert!(initial_state
-        .group_chats
-        .summaries
-        .iter()
-        .any(|c| c.chat_id == moderators_group));
-}
-
-#[test]
 fn report_message_succeeds() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
@@ -100,18 +66,17 @@ fn report_message_succeeds() {
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
-    let user1 = client::register_diamond_user(env, canister_ids, controller);
-    let user2 = client::register_diamond_user(env, canister_ids, controller);
+    let user = client::register_diamond_user(env, canister_ids, controller);
 
     client::user_index::add_platform_moderator(
         env,
         controller,
         canister_ids.user_index,
-        &user_index_canister::add_platform_moderator::Args { user_id: user1.user_id },
+        &user_index_canister::add_platform_moderator::Args { user_id: user.user_id },
     );
 
     let group_name = random_string();
-    let group_id = client::user::happy_path::create_group(env, &user1, &group_name, false, true);
+    let group_id = client::user::happy_path::create_group(env, &user, &group_name, false, true);
 
     let moderators_group = match client::user_index::assign_platform_moderators_group(
         env,

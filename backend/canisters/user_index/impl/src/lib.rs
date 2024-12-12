@@ -5,7 +5,7 @@ use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use constants::{DAY_IN_MS, DEV_TEAM_DFX_PRINCIPAL};
+use constants::DAY_IN_MS;
 use event_store_producer::{EventBuilder, EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -115,11 +115,6 @@ impl RuntimeState {
         } else {
             false
         }
-    }
-
-    pub fn is_caller_dev_team_dfx_principal(&self) -> bool {
-        let caller = self.env.caller();
-        caller == DEV_TEAM_DFX_PRINCIPAL
     }
 
     pub fn is_caller_modclub(&self) -> bool {
