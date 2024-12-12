@@ -55,7 +55,7 @@ fn c2c_handle_bot_action_impl(args: Args, state: &mut RuntimeState) -> Response 
                     new_achievement: false,
                     correlation_id: 0,
                 },
-                Some(args.bot.user_id.into()),
+                Some(args.bot.user_id),
                 state,
             ) {
                 send_message_v2::Response::Success(_) => Ok(()),

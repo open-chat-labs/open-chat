@@ -1,4 +1,5 @@
 use crate::model::files::{Files, RemoveFileResult};
+use crate::model::index_event_batch::IndexEventBatch;
 use crate::model::index_sync_state::{EventToSync, IndexSyncState};
 use crate::model::users::Users;
 use candid::{CandidType, Principal};
@@ -6,6 +7,7 @@ use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::BTreeMap;
+use timer_job_queues::GroupedTimerJobQueue;
 use types::{BuildVersion, CanisterId, Cycles, FileId, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
@@ -65,7 +67,7 @@ impl RuntimeState {
             user_count: self.data.users.len() as u64,
             file_count: file_metrics.file_count,
             blob_count: file_metrics.blob_count,
-            index_sync_queue_length: self.data.index_sync_state.queue_len(),
+            index_sync_queue_length: self.data.index_event_sync_queue.len() as u32,
             freezing_limit: self.data.freezing_limit.value.unwrap_or_default(),
             stable_memory_sizes: memory::memory_sizes(),
         }
@@ -77,20 +79,29 @@ struct Data {
     storage_index_canister_id: CanisterId,
     users: Users,
     files: Files,
+    #[deprecated]
     index_sync_state: IndexSyncState,
+    #[serde(default = "index_event_sync_queue")]
+    index_event_sync_queue: GroupedTimerJobQueue<IndexEventBatch>,
     created: TimestampMillis,
     freezing_limit: Timestamped<Option<Cycles>>,
     rng_seed: [u8; 32],
     test_mode: bool,
 }
 
+fn index_event_sync_queue() -> GroupedTimerJobQueue<IndexEventBatch> {
+    GroupedTimerJobQueue::new(1, false)
+}
+
 impl Data {
     pub fn new(storage_index_canister_id: CanisterId, now: TimestampMillis, test_mode: bool) -> Data {
+        #[allow(deprecated)]
         Data {
             storage_index_canister_id,
             users: Users::default(),
             files: Files::default(),
             index_sync_state: IndexSyncState::default(),
+            index_event_sync_queue: GroupedTimerJobQueue::new(1, false),
             created: now,
             freezing_limit: Timestamped::default(),
             rng_seed: [0; 32],
@@ -109,8 +120,8 @@ impl Data {
     }
 
     pub fn push_event_to_index(&mut self, event_to_sync: EventToSync) {
-        self.index_sync_state.enqueue(event_to_sync);
-        jobs::sync_index::start_job_if_required(self);
+        self.index_event_sync_queue
+            .push(self.storage_index_canister_id, (event_to_sync, self.files.bytes_used()));
     }
 }
 

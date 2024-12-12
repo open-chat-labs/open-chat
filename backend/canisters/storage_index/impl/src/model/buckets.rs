@@ -1,9 +1,7 @@
 use crate::model::bucket_sync_state::BucketSyncState;
-use crate::model::bucket_sync_state::EventToSync;
 use crate::BucketMetrics;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use storage_bucket_canister::c2c_sync_index;
 use types::{BuildVersion, CanisterId, CyclesTopUp, Hash};
 
 const TARGET_ACTIVE_BUCKETS: usize = 4;
@@ -51,41 +49,19 @@ impl Buckets {
         }
     }
 
-    pub fn allocate(&self, blob_hash: Hash) -> Option<CanisterId> {
+    pub fn allocate(&self, blob_hash: Hash, entropy: u64) -> Option<CanisterId> {
         let bucket_count = self.active_buckets.len();
         if bucket_count == 0 {
             None
         } else {
-            let usize_from_hash = u64::from_le_bytes(blob_hash[..8].try_into().unwrap()) as usize;
+            let mut bucket_allocation_hash = blob_hash;
+            bucket_allocation_hash.rotate_left((entropy % 32) as usize);
+            let usize_from_hash = u64::from_le_bytes(bucket_allocation_hash[..8].try_into().unwrap()) as usize;
 
             // Use a modified modulo of the hash to slightly favour the first bucket
             // so that they don't all run out of space at the same time
             let index = (usize_from_hash % ((bucket_count * 2) + 1)) % bucket_count;
             Some(self.active_buckets[index].canister_id)
-        }
-    }
-
-    pub fn sync_event(&mut self, event: EventToSync) {
-        for bucket in self.iter_mut() {
-            bucket.sync_state.enqueue(event.clone());
-        }
-    }
-
-    pub fn pop_args_for_next_sync(&mut self) -> Option<Vec<(CanisterId, c2c_sync_index::Args)>> {
-        let all_empty = !self.iter().any(|b| !b.sync_state.is_empty());
-        if all_empty {
-            None
-        } else {
-            Some(
-                self.iter_mut()
-                    .filter_map(|bucket| {
-                        bucket
-                            .sync_state
-                            .pop_args_for_next_sync()
-                            .map(|args| (bucket.canister_id, args))
-                    })
-                    .collect(),
-            )
         }
     }
 
@@ -121,7 +97,7 @@ impl Buckets {
         self.full_buckets.values()
     }
 
-    fn iter_mut(&mut self) -> impl Iterator<Item = &mut BucketRecord> {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut BucketRecord> {
         self.active_buckets.iter_mut().chain(self.full_buckets.values_mut())
     }
 }
@@ -132,12 +108,14 @@ pub struct BucketRecord {
     pub wasm_version: BuildVersion,
     pub bytes_used: u64,
     pub bytes_remaining: i64,
+    #[deprecated]
     pub sync_state: BucketSyncState,
     pub cycle_top_ups: Vec<CyclesTopUp>,
 }
 
 impl BucketRecord {
     pub fn new(canister_id: CanisterId, wasm_version: BuildVersion) -> BucketRecord {
+        #[allow(deprecated)]
         BucketRecord {
             canister_id,
             wasm_version,
