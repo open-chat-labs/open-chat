@@ -23,10 +23,19 @@
     import ErrorMessage from "../ErrorMessage.svelte";
     import { getContext, onMount } from "svelte";
     import Logo from "../Logo.svelte";
-    import type { MessageContext, OpenChat, SlashCommandPermissions } from "openchat-client";
+    import type {
+        ChatSummary,
+        CommunitySummary,
+        MessageContext,
+        OpenChat,
+        PermissionRole,
+        SlashCommandPermissions,
+    } from "openchat-client";
     import {
         currentCommunityBots,
+        isPermitted,
         selectedChatStore,
+        selectedCommunity,
         selectedMessageContext,
     } from "openchat-client";
     import {
@@ -53,20 +62,53 @@
 
     let commands = $derived.by(() =>
         $commandsStore.filter((c) => {
-            return hasPermissionForCommand(c, $currentCommunityBots);
+            return hasPermissionForCommand(
+                c,
+                $currentCommunityBots,
+                $selectedChatStore,
+                $selectedCommunity,
+            );
         }),
     );
 
-    function userHasPermissionForCommand(command: FlattenedCommand): boolean {
-        // TODO this is currently not capturing chat or community permissions
+    function userHasPermissionForCommand(
+        command: FlattenedCommand,
+        chat: ChatSummary | undefined,
+        community: CommunitySummary | undefined,
+    ): boolean {
+        const chatPermitted =
+            chat !== undefined && chat.kind !== "direct_chat"
+                ? [...command.permissions.chatPermissions].every((p) =>
+                      isPermitted(chat.membership.role, chat.permissions[p] as PermissionRole),
+                  )
+                : true;
+
+        const communityPermitted =
+            community !== undefined
+                ? [...command.permissions.communityPermissions].every((p) =>
+                      isPermitted(
+                          community.membership.role,
+                          community.permissions[p] as PermissionRole,
+                      ),
+                  )
+                : true;
+
         switch (mode) {
             case "message":
-                return [...command.permissions.messagePermissions].every((p) =>
-                    $messagePermissionsForSelectedChat.get(p),
+                return (
+                    chatPermitted &&
+                    communityPermitted &&
+                    [...command.permissions.messagePermissions].every((p) =>
+                        $messagePermissionsForSelectedChat.has(p),
+                    )
                 );
             case "thread":
-                return [...command.permissions.messagePermissions].every((p) =>
-                    $threadPermissionsForSelectedChat.get(p),
+                return (
+                    chatPermitted &&
+                    communityPermitted &&
+                    [...command.permissions.messagePermissions].every((p) =>
+                        $threadPermissionsForSelectedChat.has(p),
+                    )
                 );
         }
     }
@@ -74,8 +116,10 @@
     function hasPermissionForCommand(
         command: FlattenedCommand,
         currenCommunityBots: Map<string, SlashCommandPermissions>,
+        chat: ChatSummary | undefined,
+        community: CommunitySummary | undefined,
     ): boolean {
-        const userPermission = userHasPermissionForCommand(command);
+        const userPermission = userHasPermissionForCommand(command, chat, community);
         if (command.kind === "external_bot") {
             // for an external bot we also need to know that the bot has been granted all the permissions it requires
             const granted = currenCommunityBots.get(command.botId) ?? emptyPermissions;

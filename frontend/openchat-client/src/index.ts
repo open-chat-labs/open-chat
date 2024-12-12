@@ -21,3 +21,4 @@ export { emptyUnreadCounts, emptyCombinedUnreadCounts } from "./stores/global";
 export { pinNumberFailureStore } from "./stores/pinNumber";
 export type { TrackingCategory } from "./utils/ga";
 export { builtinBot } from "./utils/builtinBotCommands";
+export { isPermitted } from "./utils/permissions";

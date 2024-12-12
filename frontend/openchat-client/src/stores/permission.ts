@@ -4,27 +4,38 @@ import { currentUser, userStore } from "./user";
 import { permittedMessagesInDirectChat, permittedMessagesInGroup } from "../utils/chat";
 import type { ChatSummary, CreatedUser, MessagePermission, UserLookup } from "openchat-shared";
 
+function toSet(map: Map<MessagePermission, boolean>): Set<MessagePermission> {
+    return [...map.entries()].reduce((s, [k, v]) => {
+        if (v) {
+            s.add(k);
+        }
+        return s;
+    }, new Set<MessagePermission>());
+}
+
 function getMessagePermissionsForSelectedChat(
     chat: ChatSummary | undefined,
     userStore: UserLookup,
     user: CreatedUser,
     mode: "thread" | "message",
-): Map<MessagePermission, boolean> {
+): Set<MessagePermission> {
     if (chat !== undefined) {
         if (chat.kind === "direct_chat") {
             const recipient = userStore.get(chat.them.userId);
             if (recipient !== undefined) {
-                return permittedMessagesInDirectChat(
-                    recipient,
-                    mode,
-                    process.env.PROPOSALS_BOT_CANISTER!,
+                return toSet(
+                    permittedMessagesInDirectChat(
+                        recipient,
+                        mode,
+                        process.env.PROPOSALS_BOT_CANISTER!,
+                    ),
                 );
             }
         } else {
-            return permittedMessagesInGroup(user, chat, mode);
+            return toSet(permittedMessagesInGroup(user, chat, mode));
         }
     }
-    return new Map();
+    return new Set();
 }
 
 export const messagePermissionsForSelectedChat = derived(
