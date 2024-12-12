@@ -87,6 +87,10 @@ where
     }
 
     pub fn push_many(&mut self, grouping_key: T::Key, items: Vec<T::Item>) {
+        if items.is_empty() {
+            return;
+        }
+
         let defer_processing = self.within_lock(|i| {
             match i.items_map.entry(grouping_key.clone()) {
                 Vacant(e) => {
@@ -139,6 +143,8 @@ where
                         }
                         if !empty_batch {
                             batches.push(batch);
+                        } else {
+                            i.in_progress.remove(&batch.key());
                         }
                     }
                 } else {

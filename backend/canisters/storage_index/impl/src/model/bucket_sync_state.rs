@@ -1,4 +1,3 @@
-use crate::MAX_EVENTS_TO_SYNC_PER_BATCH;
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
@@ -16,56 +15,28 @@ pub struct BucketSyncState {
 }
 
 impl BucketSyncState {
-    pub fn enqueue(&mut self, event: EventToSync) {
-        self.queue.push_back(event);
-    }
-
-    pub fn pop_args_for_next_sync(&mut self) -> Option<Args> {
-        if self.in_progress {
-            None
-        } else if let Some(args) = self.args_to_retry.take() {
-            self.in_progress = true;
-            Some(args)
-        } else if self.queue.is_empty() {
-            None
-        } else {
-            let mut args = Args {
-                users_added: Vec::new(),
-                users_removed: Vec::new(),
-                accessors_removed: Vec::new(),
-                user_ids_updated: Vec::new(),
-                files_to_remove: Vec::new(),
-            };
-
-            for _ in 0..MAX_EVENTS_TO_SYNC_PER_BATCH {
-                if let Some(event) = self.queue.pop_front() {
-                    match event {
-                        EventToSync::UserAdded(a) => args.users_added.push(a),
-                        EventToSync::UserRemoved(r) => args.users_removed.push(r),
-                        EventToSync::AccessorRemoved(r) => args.accessors_removed.push(r),
-                        EventToSync::UserIdUpdated(old, new) => args.user_ids_updated.push((old, new)),
-                        EventToSync::FileToRemove(file_id) => args.files_to_remove.push(file_id),
-                    }
-                } else {
-                    break;
-                }
+    pub fn take(&mut self) -> Vec<EventToSync> {
+        assert!(!self.in_progress);
+        let mut events = Vec::new();
+        if let Some(args) = self.args_to_retry.take() {
+            for principal in args.users_added {
+                events.push(EventToSync::UserAdded(principal));
             }
-            self.in_progress = true;
-            Some(args)
+            for principal in args.users_removed {
+                events.push(EventToSync::UserRemoved(principal));
+            }
+            for principal in args.accessors_removed {
+                events.push(EventToSync::AccessorRemoved(principal));
+            }
+            for (old, new) in args.user_ids_updated {
+                events.push(EventToSync::UserIdUpdated(old, new));
+            }
+            for file_id in args.files_to_remove {
+                events.push(EventToSync::FileToRemove(file_id));
+            }
         }
-    }
-
-    pub fn is_empty(&self) -> bool {
-        !self.in_progress && self.queue.is_empty() && self.args_to_retry.is_none()
-    }
-
-    pub fn mark_sync_completed(&mut self) {
-        self.in_progress = false;
-    }
-
-    pub fn mark_sync_failed(&mut self, args: Args) {
-        self.in_progress = false;
-        self.args_to_retry = Some(args);
+        events.extend(std::mem::take(&mut self.queue));
+        events
     }
 }
 
