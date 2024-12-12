@@ -1,9 +1,7 @@
 use crate::model::bucket_sync_state::BucketSyncState;
-use crate::model::bucket_sync_state::EventToSync;
 use crate::BucketMetrics;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use storage_bucket_canister::c2c_sync_index;
 use types::{BuildVersion, CanisterId, CyclesTopUp, Hash};
 
 const TARGET_ACTIVE_BUCKETS: usize = 4;
@@ -65,30 +63,6 @@ impl Buckets {
         }
     }
 
-    pub fn sync_event(&mut self, event: EventToSync) {
-        for bucket in self.iter_mut() {
-            bucket.sync_state.enqueue(event.clone());
-        }
-    }
-
-    pub fn pop_args_for_next_sync(&mut self) -> Option<Vec<(CanisterId, c2c_sync_index::Args)>> {
-        let all_empty = !self.iter().any(|b| !b.sync_state.is_empty());
-        if all_empty {
-            None
-        } else {
-            Some(
-                self.iter_mut()
-                    .filter_map(|bucket| {
-                        bucket
-                            .sync_state
-                            .pop_args_for_next_sync()
-                            .map(|args| (bucket.canister_id, args))
-                    })
-                    .collect(),
-            )
-        }
-    }
-
     pub fn set_full(&mut self, canister_id: CanisterId, full: bool) {
         if full {
             if let Some(index) = self.active_buckets.iter().position(|b| b.canister_id == canister_id) {
@@ -121,7 +95,7 @@ impl Buckets {
         self.full_buckets.values()
     }
 
-    fn iter_mut(&mut self) -> impl Iterator<Item = &mut BucketRecord> {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut BucketRecord> {
         self.active_buckets.iter_mut().chain(self.full_buckets.values_mut())
     }
 }
@@ -132,12 +106,14 @@ pub struct BucketRecord {
     pub wasm_version: BuildVersion,
     pub bytes_used: u64,
     pub bytes_remaining: i64,
+    #[deprecated]
     pub sync_state: BucketSyncState,
     pub cycle_top_ups: Vec<CyclesTopUp>,
 }
 
 impl BucketRecord {
     pub fn new(canister_id: CanisterId, wasm_version: BuildVersion) -> BucketRecord {
+        #[allow(deprecated)]
         BucketRecord {
             canister_id,
             wasm_version,
