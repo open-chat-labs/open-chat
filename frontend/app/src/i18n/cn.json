@@ -149,6 +149,14 @@
     "blockUserFailed": "无法加入黑名单",
     "blockUserSucceeded": "该用户已被加入黑名单",
     "bots": {
+        "add": {
+            "addBot": "添加机器人",
+            "choosePermissions": "权限",
+            "failure": "抱歉，我们无法添加该机器人",
+            "noPermissions": "无需特殊权限",
+            "permissionsInfo": "此机器人寻求以下权限。选择限制授予的权限将限制可用的命令。",
+            "title": "将机器人添加到社区"
+        },
         "builder": {
             "addAnother": "添加另一个",
             "addChoice": "添加选择",
@@ -171,11 +179,15 @@
             "endpointRules": "必须是有效的来源或 canisterID",
             "errors": {
                 "alphaOnly": "只能包含字母数字和下划线",
+                "botNameInvalid": "此机器人名称无效",
                 "duplicateCommands": "机器人包含重复的命令",
+                "duplicateName": "该机器人名称已被占用",
                 "duplicateParams": "命令包含重复参数",
                 "endpoint": "端点必须是有效的来源或 canisterID",
                 "minLength": "必须至少包含 {n} 个字符",
-                "noCommands": "机器人必须至少包含一个命令"
+                "nameCheckError": "检查机器人名称时出错",
+                "noCommands": "机器人必须至少包含一个命令",
+                "principal": "您必须输入有效的主体来识别机器人"
             },
             "iconLabel": "机器人图标",
             "maxLengthLabel": "最大长度",
@@ -203,6 +215,8 @@
             "permScopeCommunity": "社区",
             "permScopeMessage": "信息",
             "permScopeThread": "线",
+            "principalLabel": "主要的",
+            "principalPlaceholder": "输入机器人主体",
             "required": "必需参数",
             "requiredDesc": "这是命令的必需参数吗",
             "title": "构建机器人",
@@ -229,6 +243,10 @@
         },
         "diamond": {
             "desc": "发布链接解释钻石会员资格"
+        },
+        "explorer": {
+            "addBots": "添加机器人",
+            "loadMore": "加载更多..."
         },
         "failed": "抱歉，我们无法执行机器人命令",
         "faq": {
