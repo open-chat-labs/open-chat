@@ -184,7 +184,10 @@
                 "endpoint": "Endpoint must be a valid origin or canisterID",
                 "minLength": "Must have at least {n} characters",
                 "noCommands": "A bot must contain at least one command",
-                "principal": "You must enter a valid principal to identify the bot"
+                "principal": "You must enter a valid principal to identify the bot",
+                "duplicateName": "That bot name is already taken",
+                "botNameInvalid": "This bot name is invalid",
+                "nameCheckError": "There was an error checking the bot name"
             },
             "iconLabel": "Bot avatar",
             "maxLengthLabel": "Maximum length",
