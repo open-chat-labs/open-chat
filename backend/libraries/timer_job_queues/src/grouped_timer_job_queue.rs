@@ -50,7 +50,7 @@ impl<T: TimerJobItemGroup> GroupedTimerJobQueue<T> {
     }
 
     pub fn len(&self) -> usize {
-        self.within_lock(|i| i.queue.len())
+        self.within_lock(|i| i.items_map.values().map(|v| v.len()).sum())
     }
 
     pub fn is_empty(&self) -> bool {
