@@ -149,6 +149,14 @@
     "blockUserFailed": "Không thể chặn người dùng",
     "blockUserSucceeded": "Người dùng đã bị chặn",
     "bots": {
+        "add": {
+            "addBot": "Thêm bot",
+            "choosePermissions": "Quyền",
+            "failure": "Xin lỗi chúng tôi không thể thêm bot",
+            "noPermissions": "Không cần quyền đặc biệt",
+            "permissionsInfo": "Bot này tìm kiếm các quyền sau. Việc chọn giới hạn các quyền được cấp sẽ giới hạn các lệnh khả dụng.",
+            "title": "Thêm bot vào cộng đồng"
+        },
         "builder": {
             "addAnother": "Thêm một cái nữa",
             "addChoice": "Thêm một lựa chọn",
@@ -171,11 +179,15 @@
             "endpointRules": "Phải là nguồn gốc hợp lệ hoặc là một canisterID",
             "errors": {
                 "alphaOnly": "Chỉ được chứa chữ và số và dấu gạch dưới",
+                "botNameInvalid": "Tên bot này không hợp lệ",
                 "duplicateCommands": "Bot chứa các lệnh trùng lặp",
+                "duplicateName": "Tên bot đó đã được sử dụng rồi",
                 "duplicateParams": "Lệnh chứa các tham số trùng lặp",
                 "endpoint": "Điểm cuối phải là một origin hoặc canisterID hợp lệ",
                 "minLength": "Phải có ít nhất {n} ký tự",
-                "noCommands": "Một bot phải chứa ít nhất một lệnh"
+                "nameCheckError": "Đã xảy ra lỗi khi kiểm tra tên bot",
+                "noCommands": "Một bot phải chứa ít nhất một lệnh",
+                "principal": "Bạn phải nhập một nguyên tắc hợp lệ để xác định bot"
             },
             "iconLabel": "Biểu tượng bot",
             "maxLengthLabel": "Chiều dài tối đa",
@@ -203,6 +215,8 @@
             "permScopeCommunity": "Cộng đồng",
             "permScopeMessage": "Tin nhắn",
             "permScopeThread": "Chủ đề",
+            "principalLabel": "Hiệu trưởng",
+            "principalPlaceholder": "Nhập bot chính",
             "required": "Tham số bắt buộc",
             "requiredDesc": "Đây có phải là tham số bắt buộc cho lệnh không?",
             "title": "Xây dựng một bot",
@@ -229,6 +243,10 @@
         },
         "diamond": {
             "desc": "Đăng liên kết để giải thích về tư cách thành viên Kim cương"
+        },
+        "explorer": {
+            "addBots": "Thêm bot",
+            "loadMore": "Tải thêm..."
         },
         "failed": "Xin lỗi, chúng tôi không thực hiện được lệnh bot",
         "faq": {

@@ -5875,7 +5875,6 @@ export class OpenChat extends OpenChatAgentWorker {
                 initialLoad: !this.botsLoaded,
             }).subscribe({
                 onResult: async ({ bots }) => {
-                    console.log("GetBots response: ", bots);
                     setExternalBots(bots);
                     this.botsLoaded = true;
                 },
