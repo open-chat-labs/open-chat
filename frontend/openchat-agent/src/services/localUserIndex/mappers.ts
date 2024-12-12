@@ -32,10 +32,13 @@ import type {
 import { CommonResponses, MAX_EVENTS, MAX_MESSAGES, UnsupportedValueError } from "openchat-shared";
 import {
     bytesToHexString,
+    identity,
+    mapOptional,
     principalBytesToString,
     principalStringToBytes,
 } from "../../utils/mapping";
 import {
+    apiChatIdentifier,
     communityChannelSummary,
     communitySummary,
     eventsSuccessResponse,
@@ -53,6 +56,23 @@ export function apiAccessTokenType(domain: AccessTokenType): TAccessTokenType {
             return {
                 StartVideoCallV2: {
                     call_type: apiCallType(domain.callType),
+                },
+            };
+        case "execute_bot_command":
+            return {
+                BotCommand: {
+                    user_id: principalStringToBytes(domain.userId),
+                    bot: principalStringToBytes(domain.botId),
+                    chat: apiChatIdentifier(domain.messageContext.chatId),
+                    thread_root_message_index: mapOptional(
+                        domain.messageContext.threadRootMessageIndex,
+                        identity,
+                    ),
+                    message_id: domain.messageId,
+                    command_name: domain.commandName,
+                    parameters: domain.parameters,
+                    version: domain.version,
+                    command_text: domain.commandText,
                 },
             };
     }

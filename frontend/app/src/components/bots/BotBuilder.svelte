@@ -1,10 +1,10 @@
 <script lang="ts">
     import {
         emptyBotInstance,
+        emptySlashCommandPermissions,
         validateBot,
         ValidationErrors,
         type ExternalBot,
-        type SlashCommandPermissions,
         type SlashCommandSchema,
     } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
@@ -33,10 +33,7 @@
     let errors = $derived.by(
         debouncedDerived(
             () => [$state.snapshot(candidate)],
-            () => {
-                console.log("Validating candidate");
-                return validateBot(candidate);
-            },
+            () => validateBot(candidate),
             300,
             new ValidationErrors(),
         ),
@@ -53,12 +50,11 @@
     });
 
     $effect(() => {
-        console.log("Candidate updated");
         onUpdate($state.snapshot(candidate));
     });
 
     function botAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>) {
-        candidate.avatar = ev.detail.url;
+        candidate.avatarUrl = ev.detail.url;
     }
 
     function onSubmit(e: Event) {
@@ -85,16 +81,7 @@
             name: "",
             description: "",
             params: [],
-            permissions: emptyPermissions(),
-        };
-    }
-
-    function emptyPermissions(): SlashCommandPermissions {
-        return {
-            chatPermissions: [],
-            communityPermissions: [],
-            messagePermissions: [],
-            threadPermissions: [],
+            permissions: emptySlashCommandPermissions(),
         };
     }
 </script>
@@ -114,9 +101,20 @@
         <EditableAvatar
             overlayIcon
             size={"medium"}
-            image={candidate.avatar}
+            image={candidate.avatarUrl}
             on:imageSelected={botAvatarSelected} />
     </div>
+
+    <Legend required label={i18nKey("bots.builder.principalLabel")}></Legend>
+    <ValidatingInput
+        autofocus
+        minlength={3}
+        maxlength={50}
+        invalid={errors.has("bot_principal")}
+        placeholder={i18nKey("bots.builder.principalPlaceholder")}
+        error={errors.get("bot_principal")}
+        bind:value={candidate.id}>
+    </ValidatingInput>
 
     <Legend
         required

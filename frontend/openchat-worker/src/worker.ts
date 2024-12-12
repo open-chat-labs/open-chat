@@ -311,6 +311,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 streamReplies(payload, correlationId, agent.getUpdates(payload.initialLoad));
                 break;
 
+            case "getBots":
+                streamReplies(payload, correlationId, agent.getBots(payload.initialLoad));
+                break;
+
             case "createUserClient":
                 agent.createUserClient(payload.userId);
                 sendResponse(correlationId, undefined);
@@ -420,7 +424,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "checkUsername":
-                executeThenReply(payload, correlationId, agent.checkUsername(payload.username));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.checkUsername(payload.username, payload.isBot),
+                );
                 break;
 
             case "searchUsers":
@@ -776,6 +784,18 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.languages,
                     ),
                 );
+                break;
+
+            case "exploreBots":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.exploreBots(payload.searchTerm, payload.pageIndex, payload.pageSize),
+                );
+                break;
+
+            case "registerBot":
+                executeThenReply(payload, correlationId, agent.registerBot(payload.bot));
                 break;
 
             case "searchGroups":
@@ -1845,6 +1865,22 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "deleteUser":
                 executeThenReply(payload, correlationId, agent.deleteUser(payload.userId));
+                break;
+
+            case "addBotToCommunity":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.addBotToCommunity(payload.id, payload.botId, payload.grantedPermissions),
+                );
+                break;
+
+            case "removeBotFromCommunity":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.removeBotFromCommunity(payload.id, payload.botId),
+                );
                 break;
 
             default:

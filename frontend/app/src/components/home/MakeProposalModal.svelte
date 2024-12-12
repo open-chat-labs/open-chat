@@ -45,6 +45,7 @@
     import DurationPicker from "./DurationPicker.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import BotBuilder from "../bots/BotBuilder.svelte";
+    import { botsEnabled } from "../../utils/bots";
 
     const MIN_TITLE_LENGTH = 3;
     const MAX_TITLE_LENGTH = 120;
@@ -102,8 +103,6 @@
     let achivementName = "";
     let candidateBot: ExternalBot | undefined = undefined;
     let candidateBotValid = false;
-
-    let registerBotEnabled = localStorage.getItem("openchat_register_bot_enabled") === "true";
 
     $: errorMessage =
         error !== undefined ? i18nKey("proposal.maker." + error) : $pinNumberErrorMessageStore;
@@ -432,7 +431,7 @@
                                 >Register external achievement</option>
                             <option value={"add_token"}>Add token</option>
                             <option value={"update_token"}>Update token</option>
-                            {#if registerBotEnabled}
+                            {#if botsEnabled}
                                 <option value={"register_bot"}>Register a bot</option>
                             {/if}
                         {/if}

@@ -33,4 +33,4 @@ export * from "./worker";
 export * from "./feature";
 export * from "./chit";
 export * from "./wallet";
-export * from "./commands";
+export * from "./bots";

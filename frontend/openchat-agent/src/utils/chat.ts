@@ -102,6 +102,11 @@ export function mergeCommunityDetails(
             updates.userGroups,
             updates.userGroupsDeleted,
         ),
+        bots: mergeThings((b) => b.id, identity, previous.bots, {
+            added: [],
+            updated: updates.botsAddedOrUpdated,
+            removed: updates.botsRemoved,
+        }),
     };
 }
 

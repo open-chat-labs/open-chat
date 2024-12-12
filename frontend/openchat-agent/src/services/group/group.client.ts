@@ -92,7 +92,6 @@ import {
 import {
     acceptP2PSwapResponse,
     addRemoveReactionResponse,
-    apiAccessGate,
     apiAccessGateConfig,
     apiMessageContent,
     apiUser as apiUserV2,
@@ -681,12 +680,6 @@ export class GroupClient extends CandidService {
                         : gateConfig.gate.kind === "no_gate"
                           ? "SetToNone"
                           : { SetToSome: apiAccessGateConfig(gateConfig) },
-                gate:
-                    gateConfig === undefined
-                        ? "NoChange"
-                        : gateConfig.gate.kind === "no_gate"
-                          ? "SetToNone"
-                          : { SetToSome: apiAccessGate(gateConfig.gate) },
                 messages_visible_to_non_members: messagesVisibleToNonMembers,
             },
             updateGroupResponse,

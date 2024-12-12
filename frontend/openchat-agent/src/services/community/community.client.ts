@@ -10,6 +10,7 @@ import {
 } from "../../utils/mapping";
 import type { AgentConfig } from "../../config";
 import {
+    addBotResponse,
     addMembersToChannelResponse,
     apiCommunityRole,
     apiMemberRole,
@@ -24,6 +25,7 @@ import {
     exploreChannelsResponse,
     followThreadResponse,
     importGroupResponse,
+    removeBotResponse,
     removeMemberFromChannelResponse,
     removeMemberResponse,
     reportMessageResponse,
@@ -37,9 +39,7 @@ import {
 } from "./mappersV2";
 import {
     acceptP2PSwapResponse,
-    apiAccessGate,
     apiAccessGateConfig,
-    apiMaybeAccessGate,
     addRemoveReactionResponse,
     apiGroupPermissions,
     apiMessageContent,
@@ -72,6 +72,9 @@ import {
     updateGroupResponse,
     videoCallParticipantsResponse,
     apiMaybeAccessGateConfig,
+    apiChatPermission,
+    apiCommunityPermission,
+    apiMessagePermission,
 } from "../common/chatMappersV2";
 import type {
     AddMembersToChannelResponse,
@@ -140,6 +143,7 @@ import type {
     SetVideoCallPresenceResponse,
     VideoCallParticipantsResponse,
     AccessGateConfig,
+    SlashCommandPermissions,
 } from "openchat-shared";
 import {
     textToCode,
@@ -287,6 +291,10 @@ import {
     CommunityVideoCallParticipantsArgs,
     CommunityVideoCallParticipantsResponse,
     Empty as TEmpty,
+    CommunityAddBotArgs,
+    CommunityAddBotResponse,
+    CommunityRemoveBotArgs,
+    CommunityRemoveBotResponse,
 } from "../../typebox";
 
 export class CommunityClient extends CandidService {
@@ -423,7 +431,6 @@ export class CommunityClient extends CandidService {
                 permissions_v2: apiGroupPermissions(channel.permissions),
                 rules: channel.rules,
                 gate_config: apiMaybeAccessGateConfig(channel.gateConfig),
-                gate: apiMaybeAccessGate(channel.gateConfig.gate),
                 messages_visible_to_non_members: channel.messagesVisibleToNonMembers,
             },
             (resp) => createGroupResponse(resp, channel.id),
@@ -1424,12 +1431,6 @@ export class CommunityClient extends CandidService {
                 rules: mapOptional(rules, apiUpdatedRules),
                 public: isPublic,
                 events_ttl: apiOptionUpdateV2(identity, eventsTimeToLiveMs),
-                gate:
-                    gateConfig === undefined
-                        ? "NoChange"
-                        : gateConfig.gate.kind === "no_gate"
-                          ? "SetToNone"
-                          : { SetToSome: apiAccessGate(gateConfig.gate) },
                 gate_config:
                     gateConfig === undefined
                         ? "NoChange"
@@ -1476,12 +1477,6 @@ export class CommunityClient extends CandidService {
                 rules: mapOptional(rules, apiUpdatedRules),
                 public: isPublic,
                 primary_language: primaryLanguage,
-                gate:
-                    gateConfig === undefined
-                        ? "NoChange"
-                        : gateConfig.gate.kind === "no_gate"
-                          ? "SetToNone"
-                          : { SetToSome: apiAccessGate(gateConfig.gate) },
                 gate_config:
                     gateConfig === undefined
                         ? "NoChange"
@@ -1724,6 +1719,36 @@ export class CommunityClient extends CandidService {
             (value) => value === "Success",
             CommunityCancelInvitesArgs,
             CommunityCancelInvitesResponse,
+        );
+    }
+
+    addBot(botId: string, grantedPermissions: SlashCommandPermissions): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "add_bot",
+            {
+                bot_id: principalStringToBytes(botId),
+                granted_permissions: {
+                    chat: grantedPermissions.chatPermissions.map(apiChatPermission),
+                    community: grantedPermissions.communityPermissions.map(apiCommunityPermission),
+                    message: grantedPermissions.messagePermissions.map(apiMessagePermission),
+                    thread: grantedPermissions.messagePermissions.map(apiMessagePermission),
+                },
+            },
+            addBotResponse,
+            CommunityAddBotArgs,
+            CommunityAddBotResponse,
+        );
+    }
+
+    removeBot(botId: string): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "add_bot",
+            {
+                bot_id: principalStringToBytes(botId),
+            },
+            removeBotResponse,
+            CommunityRemoveBotArgs,
+            CommunityRemoveBotResponse,
         );
     }
 }
