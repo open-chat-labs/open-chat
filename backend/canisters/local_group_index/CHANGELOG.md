@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Expose the cycles top-ups of Group/Community canisters ([#7053](https://github.com/open-chat-labs/open-chat/pull/7053))
+
+## [[2.0.1505](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1505-local_group_index)] - 2024-12-09
+
 ### Changed
 
 - Increase Windoge community canister's reserved cycles limit ([#7022](https://github.com/open-chat-labs/open-chat/pull/7022))

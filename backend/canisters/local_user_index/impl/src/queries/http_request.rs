@@ -4,7 +4,7 @@ use ic_cdk::query;
 use serde::Serialize;
 use std::collections::{BTreeMap, HashMap};
 use std::str::FromStr;
-use types::{BuildVersion, HttpRequest, HttpResponse, TimestampMillis, UserId};
+use types::{BuildVersion, CanisterId, HttpRequest, HttpResponse, TimestampMillis, UserId};
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
@@ -22,6 +22,16 @@ fn http_request(request: HttpRequest) -> HttpResponse {
 
     fn get_metrics_impl(state: &RuntimeState) -> HttpResponse {
         build_json_response(&state.metrics())
+    }
+
+    fn get_top_ups(qs: HashMap<String, String>, state: &RuntimeState) -> HttpResponse {
+        let user_id: UserId = CanisterId::from_text(qs.get("canister_id").unwrap()).unwrap().into();
+
+        let Some(user) = state.data.local_users.get(&user_id) else {
+            return HttpResponse::not_found();
+        };
+
+        build_json_response(&user.cycle_top_ups)
     }
 
     fn get_user_canister_versions(state: &RuntimeState) -> HttpResponse {
@@ -60,6 +70,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         Route::Logs(since) => get_logs_impl(since),
         Route::Traces(since) => get_traces_impl(since),
         Route::Metrics => read_state(get_metrics_impl),
+        Route::Other(p, qs) if p == "top_ups" => read_state(|state| get_top_ups(qs, state)),
         Route::Other(p, _) if p == "user_canister_versions" => read_state(get_user_canister_versions),
         Route::Other(p, qs) if p == "remote_user_events" => read_state(|state| get_remote_user_events(qs, state)),
         _ => HttpResponse::not_found(),
