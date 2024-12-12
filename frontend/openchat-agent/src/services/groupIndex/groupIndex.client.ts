@@ -16,7 +16,6 @@ import type {
     ChannelIdentifier,
     FreezeCommunityResponse,
     UnfreezeCommunityResponse,
-    SlashCommandPermissions,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -70,11 +69,6 @@ import {
     GroupIndexUnfreezeGroupResponse,
 } from "../../typebox";
 import { principalStringToBytes } from "../../utils/mapping";
-import {
-    apiChatPermission,
-    apiCommunityPermission,
-    apiMessagePermission,
-} from "../common/chatMappersV2";
 
 export class GroupIndexClient extends CandidService {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {

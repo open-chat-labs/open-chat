@@ -121,7 +121,6 @@ import {
 import {
     apiCommunityPermissions,
     apiGroupPermissions,
-    apiMaybeAccessGate,
     apiMessageContent,
     editMessageResponse,
     apiPendingCryptocurrencyWithdrawal,

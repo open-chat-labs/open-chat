@@ -1,4 +1,4 @@
-import type { ChatIdentifier, MessageContext, VideoCallType } from "./chat";
+import type { MessageContext, VideoCallType } from "./chat";
 import type { OptionUpdate } from "./optionUpdate";
 
 export const allRoles = ["none", "owner", "admin", "moderator", "member"] as const;
