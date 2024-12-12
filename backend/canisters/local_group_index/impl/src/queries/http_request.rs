@@ -34,7 +34,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
             return HttpResponse::not_found();
         };
 
-        let total = top_ups.iter().map(|c| c.amount).sum();
+        let total = top_ups.iter().map(|c| c.amount).sum::<u128>() as f64 / 1_000_000_000_000f64;
 
         build_json_response(&TopUps { total, top_ups })
     }
@@ -51,6 +51,6 @@ fn http_request(request: HttpRequest) -> HttpResponse {
 
 #[derive(Serialize)]
 struct TopUps<'a> {
-    total: Cycles,
+    total: f64,
     top_ups: &'a [CyclesTopUp],
 }
