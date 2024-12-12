@@ -1,4 +1,3 @@
-use ic_agent::agent::http_transport::ReqwestTransport;
 use ic_agent::identity::BasicIdentity;
 use ic_agent::{Agent, Identity};
 use notifications_canister::{latest_notification_index, notifications, remove_notifications};
@@ -14,13 +13,12 @@ pub struct IcAgent {
 
 impl IcAgent {
     pub async fn build(ic_url: &str, ic_identity_pem: &str, fetch_root_key: bool) -> Result<IcAgent, Error> {
-        let transport = ReqwestTransport::create(ic_url)?;
         let timeout = std::time::Duration::from_secs(60 * 5);
 
         let agent = Agent::builder()
-            .with_transport(transport)
+            .with_url(ic_url.to_string())
             .with_boxed_identity(Self::get_identity(ic_identity_pem))
-            .with_ingress_expiry(Some(timeout))
+            .with_ingress_expiry(timeout)
             .build()?;
 
         if fetch_root_key {
