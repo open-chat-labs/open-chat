@@ -33,15 +33,14 @@ fn allocated_bucket_impl(args: Args, state: &RuntimeState) -> Response {
             });
         }
 
+        let now = state.env.now();
         let bucket = state
             .data
             .files
             .bucket_for_blob(args.file_hash)
-            .or_else(|| state.data.buckets.allocate(args.file_hash));
+            .or_else(|| state.data.buckets.allocate(args.file_hash, now));
 
         if let Some(canister_id) = bucket {
-            let now = state.env.now();
-
             Success(SuccessResult {
                 canister_id,
                 file_id: generate_file_id(
