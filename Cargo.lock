@@ -7232,6 +7232,7 @@ dependencies = [
  "storage_bucket_canister",
  "storage_index_canister",
  "storage_index_canister_c2c_client",
+ "timer_job_queues",
  "tracing",
  "types",
  "utils 0.1.0",
