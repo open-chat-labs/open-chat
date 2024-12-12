@@ -36,10 +36,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
 
         let total = top_ups.iter().map(|c| c.amount).sum();
 
-        build_json_response(&TopUps {
-            total,
-            top_ups: &top_ups,
-        })
+        build_json_response(&TopUps { total, top_ups })
     }
 
     match extract_route(&request.url) {
