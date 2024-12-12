@@ -49,12 +49,14 @@ impl Buckets {
         }
     }
 
-    pub fn allocate(&self, blob_hash: Hash) -> Option<CanisterId> {
+    pub fn allocate(&self, blob_hash: Hash, entropy: u64) -> Option<CanisterId> {
         let bucket_count = self.active_buckets.len();
         if bucket_count == 0 {
             None
         } else {
-            let usize_from_hash = u64::from_le_bytes(blob_hash[..8].try_into().unwrap()) as usize;
+            let mut bucket_allocation_hash = blob_hash;
+            bucket_allocation_hash.rotate_left((entropy % 32) as usize);
+            let usize_from_hash = u64::from_le_bytes(bucket_allocation_hash[..8].try_into().unwrap()) as usize;
 
             // Use a modified modulo of the hash to slightly favour the first bucket
             // so that they don't all run out of space at the same time
