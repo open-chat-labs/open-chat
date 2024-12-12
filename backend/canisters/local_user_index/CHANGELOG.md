@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Expose the cycles top-ups of User canisters ([#7053](https://github.com/open-chat-labs/open-chat/pull/7053))
+
 ### Changed
 
 - Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
