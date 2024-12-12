@@ -28,6 +28,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove code to migrate members and events to stable memory ([#7024](https://github.com/open-chat-labs/open-chat/pull/7024))
 
+### Fixed
+
+- Fix `RoleChanged` events which were serialized under the wrong name ([#7054](https://github.com/open-chat-labs/open-chat/pull/7054))
+
 ## [[2.0.1500](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1500-community)] - 2024-12-06
 
 ### Added
