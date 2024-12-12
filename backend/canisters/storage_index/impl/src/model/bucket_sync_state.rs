@@ -35,7 +35,7 @@ impl BucketSyncState {
                 events.push(EventToSync::FileToRemove(file_id));
             }
         }
-        events.extend(std::mem::take(&mut self.queue).into_iter());
+        events.extend(std::mem::take(&mut self.queue));
         events
     }
 }
