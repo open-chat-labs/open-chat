@@ -7677,14 +7677,13 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private callBotEndpoint(bot: ExternalBotCommandInstance, token: string): Promise<unknown> {
-        // This will send the OC access JWT to the external bot's endpoint
         const headers = new Headers();
         headers.append("x-auth-jwt", token);
         headers.append("Content-type", "application/json");
-        return fetch(`${bot.endpoint}/${bot.command.name}`, {
+        return fetch(`${bot.endpoint}/execute_command`, {
             method: "POST",
             headers: headers,
-            body: JSON.stringify(bot.command.params),
+            body: token,
         }).then((res) => {
             if (res.ok) {
                 return res.json();
