@@ -4,7 +4,7 @@ use ic_cdk::query;
 use serde::Serialize;
 use std::collections::{BTreeMap, HashMap};
 use std::str::FromStr;
-use types::{BuildVersion, CanisterId, HttpRequest, HttpResponse, TimestampMillis, UserId};
+use types::{BuildVersion, CanisterId, Cycles, CyclesTopUp, HttpRequest, HttpResponse, TimestampMillis, UserId};
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
@@ -31,7 +31,12 @@ fn http_request(request: HttpRequest) -> HttpResponse {
             return HttpResponse::not_found();
         };
 
-        build_json_response(&user.cycle_top_ups)
+        let total = user.cycle_top_ups.iter().map(|c| c.amount).sum();
+
+        build_json_response(&TopUps {
+            total,
+            top_ups: &user.cycle_top_ups,
+        })
     }
 
     fn get_user_canister_versions(state: &RuntimeState) -> HttpResponse {
@@ -82,4 +87,10 @@ struct UserCanisterVersion {
     version: BuildVersion,
     count: u32,
     users: Vec<UserId>,
+}
+
+#[derive(Serialize)]
+struct TopUps<'a> {
+    total: Cycles,
+    top_ups: &'a [CyclesTopUp],
 }
