@@ -791,7 +791,7 @@ export class UserClient extends CandidService {
                 UserSendMessageArgs,
                 UserSendMessageResponse,
                 onRequestAccepted,
-            ).then((resp) => [resp, event]);
+            ).then((resp) => [resp, event.event]);
         });
     }
 
