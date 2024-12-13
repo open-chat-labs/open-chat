@@ -596,9 +596,11 @@ export class GroupClient extends CandidService {
             : dataClient.uploadData(event.event.content, [this.chatId.groupId]);
 
         return uploadContentPromise.then((content) => {
-            const newContent = content ?? event.event.content;
+            if (content !== undefined) {
+                event.event.content = content;
+            }
             const args = {
-                content: apiMessageContent(newContent),
+                content: apiMessageContent(event.event.content),
                 message_id: event.event.messageId,
                 sender_name: senderName,
                 sender_display_name: senderDisplayName,
@@ -624,10 +626,7 @@ export class GroupClient extends CandidService {
                 onRequestAccepted,
             )
                 .then((resp) => {
-                    const retVal: [SendMessageResponse, Message] = [
-                        resp,
-                        { ...event.event, content: newContent },
-                    ];
+                    const retVal: [SendMessageResponse, Message] = [resp, event.event];
                     setCachedMessageFromSendResponse(
                         this.db,
                         this.chatId,
