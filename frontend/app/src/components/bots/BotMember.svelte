@@ -1,7 +1,8 @@
 <script lang="ts">
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
-    import AccountRemoveOutline from "svelte-material-icons/AccountRemoveOutline.svelte";
-    import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
+    import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
+    import TextBoxOutline from "svelte-material-icons/TextBoxOutline.svelte";
+    import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import MenuIcon from "../MenuIcon.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import Menu from "../Menu.svelte";
@@ -13,21 +14,36 @@
     import { i18nKey } from "../../i18n/i18n";
     import Avatar from "../Avatar.svelte";
     import FilteredUsername from "../FilteredUsername.svelte";
+    import type { CommunityIdentifier, GroupChatIdentifier, OpenChat } from "openchat-client";
+    import { getContext } from "svelte";
+    import { toastStore } from "../../stores/toast";
+
+    const client = getContext<OpenChat>("client");
 
     interface Props {
+        id: CommunityIdentifier | GroupChatIdentifier;
         bot: ExternalBot;
-        canRemove: boolean;
-        canReviewPermissions: boolean;
+        canManage: boolean;
         searchTerm: string;
     }
 
-    let { bot, canRemove, canReviewPermissions, searchTerm }: Props = $props();
+    let { id, bot, canManage, searchTerm }: Props = $props();
 
-    function removeBot() {}
+    function removeBot() {
+        client.removeBot(id, bot.id).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast(i18nKey("bots.manage.removeFailed"));
+            }
+        });
+    }
 
-    function reviewPermissions() {}
+    function reviewPermissions() {
+        console.log("Review bot permissions");
+    }
 
-    function viewBotDetails() {}
+    function viewBotDetails() {
+        console.log("View bot details");
+    }
 </script>
 
 <div class="bot_member" role="button">
@@ -52,35 +68,33 @@
         </span>
         <span slot="menu">
             <Menu>
-                {#if canRemove}
+                {#if canManage}
                     <MenuItem on:click={() => removeBot()}>
-                        <AccountPlusOutline
+                        <DeleteOutline
                             size={$iconSize}
                             color={"var(--icon-inverted-txt)"}
                             slot="icon" />
                         <div slot="text">
-                            <Translatable resourceKey={i18nKey("Remove bot from community")} />
+                            <Translatable resourceKey={i18nKey("bots.manage.remove")} />
                         </div>
                     </MenuItem>
-                {/if}
-                {#if canReviewPermissions}
                     <MenuItem on:click={() => reviewPermissions()}>
-                        <AccountPlusOutline
+                        <PencilOutline
                             size={$iconSize}
                             color={"var(--icon-inverted-txt)"}
                             slot="icon" />
                         <div slot="text">
-                            <Translatable resourceKey={i18nKey("Review bot permissions")} />
+                            <Translatable resourceKey={i18nKey("bots.manage.review")} />
                         </div>
                     </MenuItem>
                 {/if}
                 <MenuItem on:click={() => viewBotDetails()}>
-                    <AccountRemoveOutline
+                    <TextBoxOutline
                         size={$iconSize}
                         color={"var(--icon-inverted-txt)"}
                         slot="icon" />
                     <div slot="text">
-                        <Translatable resourceKey={i18nKey("View bot details")} />
+                        <Translatable resourceKey={i18nKey("bots.manage.view")} />
                     </div>
                 </MenuItem>
             </Menu>

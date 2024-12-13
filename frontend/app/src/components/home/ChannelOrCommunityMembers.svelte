@@ -131,7 +131,7 @@
         members={$currentChatMembers}
         blocked={$currentChatBlocked}
         lapsed={$currentChatLapsed}
-        botIds={new Set()}
+        botIds={communityBotIds}
         on:close
         on:blockUser={onBlockGroupUser}
         on:unblockUser={onUnblockGroupUser}

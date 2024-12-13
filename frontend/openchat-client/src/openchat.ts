@@ -1924,6 +1924,17 @@ export class OpenChat extends EventTarget {
         }
     }
 
+    canManageBots(id: ChatIdentifier | CommunityIdentifier): boolean {
+        switch (id.kind) {
+            case "community":
+                return this.#communityPredicate(id, ({ membership: { role } }) =>
+                    hasOwnerRights(role),
+                );
+            default:
+                return this.#chatPredicate(id, ({ membership: { role } }) => hasOwnerRights(role));
+        }
+    }
+
     canAddMembers(id: ChatIdentifier): boolean {
         return this.#chatPredicate(id, canAddMembers);
     }
@@ -7839,15 +7850,21 @@ export class OpenChat extends EventTarget {
         });
     }
 
-    removeBotFromCommunity(id: CommunityIdentifier, botId: string): Promise<boolean> {
-        return this.#sendRequest({
-            kind: "removeBotFromCommunity",
-            id,
-            botId,
-        }).catch((err) => {
-            this.#logger.error("Error removing bot from community", err);
-            return false;
-        });
+    // TODO - probably need to think about local updates here
+    removeBot(id: CommunityIdentifier | GroupChatIdentifier, botId: string): Promise<boolean> {
+        switch (id.kind) {
+            case "community":
+                return this.#sendRequest({
+                    kind: "removeBotFromCommunity",
+                    id,
+                    botId,
+                }).catch((err) => {
+                    this.#logger.error("Error removing bot from community", err);
+                    return false;
+                });
+            case "group_chat":
+                throw new Error("Not implemented yet");
+        }
     }
 
     executeBotCommand(

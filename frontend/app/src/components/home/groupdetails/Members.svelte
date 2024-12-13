@@ -70,6 +70,11 @@
     $: canInvite = client.canInviteUsers(collection.id);
     $: canPromoteMyselfToOwner = false;
     $: bots = hydrateBots(botIds, $externalBots).filter((b) => matchesSearch(searchTermLower, b));
+    $: canManageBots = client.canManageBots(collection.id);
+    $: botContainer =
+        collection.kind === "channel"
+            ? ({ kind: "community", communityId: collection.id.communityId } as CommunityIdentifier)
+            : collection.id;
 
     function hydrateBots(_ids: Set<string>, allBots: Map<string, ExternalBot>): ExternalBot[] {
         return [..._ids].reduce((bots, id) => {
@@ -324,7 +329,7 @@
                 <Translatable resourceKey={i18nKey("bots.member.bots")}></Translatable>
             </h4>
             {#each bots as bot}
-                <BotMember {bot} canRemove={true} canReviewPermissions={true} {searchTerm} />
+                <BotMember id={botContainer} {bot} canManage={canManageBots} {searchTerm} />
             {/each}
 
             <h4 class="member_type_label">
@@ -454,6 +459,9 @@
     }
 
     .member_type_label {
-        margin: 0 $sp4;
+        padding: $sp2 $sp4;
+        text-transform: uppercase;
+        @include font(light, normal, fs-50);
+        border-bottom: 1px solid var(--bd);
     }
 </style>

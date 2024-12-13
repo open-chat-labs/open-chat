@@ -288,6 +288,12 @@
             }
         },
         "matchingCommands": "Matching commands",
+        "manage": {
+            "remove": "Remove bot",
+            "review": "Review bot permissions",
+            "view": "View bot details",
+            "removeFailed": "Sorry we were unable to remove the bot"
+        },
         "member": {
             "bots": "Bots",
             "people": "People"
