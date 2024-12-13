@@ -3,7 +3,7 @@ use http_request::{build_json_response, encode_logs, extract_route, Route};
 use ic_cdk::query;
 use serde::Serialize;
 use std::collections::HashMap;
-use types::{CanisterId, Cycles, CyclesTopUp, CyclesTopUpHumanReadable, HttpRequest, HttpResponse, TimestampMillis};
+use types::{CanisterId, CyclesTopUpHumanReadable, HttpRequest, HttpResponse, TimestampMillis};
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
