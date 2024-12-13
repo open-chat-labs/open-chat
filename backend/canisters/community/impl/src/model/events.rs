@@ -4,10 +4,11 @@ use serde::{Deserialize, Serialize};
 use tracing::info;
 use types::{
     AvatarChanged, BannerChanged, BotAdded, BotRemoved, BotUpdated, ChannelDeleted, ChannelId, ChatId, CommunityMembersRemoved,
-    CommunityPermissionsChanged, CommunityRoleChanged, CommunityUsersBlocked, CommunityVisibilityChanged, EventIndex,
+    CommunityPermissionsChanged, CommunityRole, CommunityUsersBlocked, CommunityVisibilityChanged, EventIndex,
     EventWrapperInternal, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupInviteCodeChanged, GroupNameChanged,
-    GroupRulesChanged, GroupUnfrozen, PrimaryLanguageChanged, TimestampMillis, UserId, UsersInvited, UsersUnblocked,
+    GroupUnfrozen, PrimaryLanguageChanged, TimestampMillis, UserId, UsersInvited, UsersUnblocked,
 };
+use user_canister::token_swap_status::CandidType;
 
 mod stable_memory;
 
@@ -75,7 +76,7 @@ pub enum CommunityEventInternal {
     #[serde(rename = "dc", alias = "DescriptionChanged")]
     DescriptionChanged(Box<GroupDescriptionChanged>),
     #[serde(rename = "rc", alias = "RulesChanged")]
-    RulesChanged(Box<GroupRulesChanged>),
+    RulesChanged(Box<types::GroupRulesChanged>),
     #[serde(rename = "ac", alias = "AvatarChanged")]
     AvatarChanged(Box<AvatarChanged>),
     #[serde(rename = "bc", alias = "BannerChanged")]
@@ -85,7 +86,7 @@ pub enum CommunityEventInternal {
     #[serde(rename = "mr", alias = "MembersRemoved")]
     MembersRemoved(Box<CommunityMembersRemoved>),
     #[serde(rename = "rl", alias = "RoleChanged")]
-    RoleChanged(Box<CommunityRoleChanged>),
+    RoleChanged(Box<types::CommunityRoleChanged>),
     #[serde(rename = "ub", alias = "UsersBlocked")]
     UsersBlocked(Box<CommunityUsersBlocked>),
     #[serde(rename = "uu", alias = "UsersUnblocked")]
@@ -123,6 +124,21 @@ pub enum RulesChangedOrRoleChanged {
     RoleChanged(CommunityRoleChanged),
 }
 
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct GroupRulesChanged {
+    pub enabled: bool,
+    pub prev_enabled: bool,
+    pub changed_by: UserId,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CommunityRoleChanged {
+    pub user_ids: Vec<UserId>,
+    pub changed_by: UserId,
+    pub old_role: CommunityRole,
+    pub new_role: CommunityRole,
+}
+
 impl CommunityEvents {
     pub fn fix_role_changed_events(&mut self) {
         let mut count_updated = 0;
@@ -134,7 +150,12 @@ impl CommunityEvents {
                         timestamp: event_wrapper.timestamp,
                         correlation_id: 0,
                         expires_at: event_wrapper.expires_at,
-                        event: CommunityEventInternal::RoleChanged(Box::new(role)),
+                        event: CommunityEventInternal::RoleChanged(Box::new(types::CommunityRoleChanged {
+                            user_ids: role.user_ids,
+                            changed_by: role.changed_by,
+                            old_role: role.old_role,
+                            new_role: role.new_role,
+                        })),
                     });
                     count_updated += 1;
                 }

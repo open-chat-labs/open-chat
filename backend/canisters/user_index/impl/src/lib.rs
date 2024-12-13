@@ -344,7 +344,6 @@ struct Data {
     pub escrow_canister_id: CanisterId,
     pub translations_canister_id: CanisterId,
     pub event_store_client: EventStoreClient<CdkRuntime>,
-    #[serde(skip_deserializing, default = "storage_index_user_sync_queue")]
     pub storage_index_user_sync_queue: GroupedTimerJobQueue<StorageIndexUserConfigBatch>,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub pending_payments_queue: PendingPaymentsQueue,
@@ -359,7 +358,6 @@ struct Data {
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
     pub nns_governance_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
-    #[serde(default = "website_canister_id")]
     pub website_canister_id: CanisterId,
     pub platform_moderators_group: Option<ChatId>,
     pub reported_messages: ReportedMessages,
@@ -379,14 +377,6 @@ struct Data {
     pub survey_messages_sent: usize,
     pub external_achievements: ExternalAchievements,
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
-}
-
-fn storage_index_user_sync_queue() -> GroupedTimerJobQueue<StorageIndexUserConfigBatch> {
-    GroupedTimerJobQueue::new(1, false)
-}
-
-fn website_canister_id() -> CanisterId {
-    CanisterId::from_text("6hsbt-vqaaa-aaaaf-aaafq-cai").unwrap()
 }
 
 impl Data {

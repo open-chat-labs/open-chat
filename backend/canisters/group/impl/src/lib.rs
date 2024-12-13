@@ -22,7 +22,7 @@ use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, 
 use model::user_event_batch::UserEventBatch;
 use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
-use principal_to_user_id_map::{deserialize_principal_to_user_id_map_from_heap, PrincipalToUserIdMap};
+use principal_to_user_id_map::PrincipalToUserIdMap;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
@@ -475,7 +475,6 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub chat: GroupChatCore,
-    #[serde(deserialize_with = "deserialize_principal_to_user_id_map_from_heap")]
     pub principal_to_user_id_map: PrincipalToUserIdMap,
     pub group_index_canister_id: CanisterId,
     pub local_group_index_canister_id: CanisterId,

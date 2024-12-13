@@ -289,7 +289,6 @@ impl RuntimeState {
 struct Data {
     pub local_users: LocalUserMap,
     pub global_users: GlobalUserMap,
-    #[serde(default)]
     pub bots: BotsMap,
     pub child_canister_wasms: ChildCanisterWasms<ChildCanisterType>,
     pub user_index_canister_id: CanisterId,
@@ -300,7 +299,6 @@ struct Data {
     pub cycles_dispenser_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
-    #[serde(default = "website_canister_id")]
     pub website_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
@@ -322,10 +320,6 @@ struct Data {
     pub ic_root_key: Vec<u8>,
     pub events_for_remote_users: Vec<(UserId, UserEvent)>,
     pub cycles_balance_check_queue: VecDeque<UserId>,
-}
-
-fn website_canister_id() -> CanisterId {
-    CanisterId::from_text("6hsbt-vqaaa-aaaaf-aaafq-cai").unwrap()
 }
 
 #[derive(Serialize, Deserialize)]
