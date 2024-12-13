@@ -3,7 +3,7 @@ use crate::model::subscriptions::Subscriptions;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use notifications_index_canister::{NotificationsIndexEvent, SubscriptionAdded, SubscriptionRemoved};
-use principal_to_user_id_map::{deserialize_principal_to_user_id_map_from_heap, PrincipalToUserIdMap};
+use principal_to_user_id_map::PrincipalToUserIdMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
@@ -119,10 +119,6 @@ struct Data {
     pub push_service_principals: HashSet<Principal>,
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
-    #[serde(
-        alias = "principal_to_user_id",
-        deserialize_with = "deserialize_principal_to_user_id_map_from_heap"
-    )]
     pub principal_to_user_id_map: PrincipalToUserIdMap,
     pub subscriptions: Subscriptions,
     pub notifications_canister_wasm_for_new_canisters: CanisterWasm,

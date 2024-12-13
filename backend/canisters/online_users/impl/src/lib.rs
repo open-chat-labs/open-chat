@@ -66,7 +66,6 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub last_online_dates: LastOnlineDates,
-    #[serde(skip_deserializing)]
     pub principal_to_user_id_map: PrincipalToUserIdMap,
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,

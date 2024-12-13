@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Fix `RoleChanged` events which were serialized under the wrong name (part 2) ([#7059](https://github.com/open-chat-labs/open-chat/pull/7059))
+
+## [[2.0.1515](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1515-community)] - 2024-12-13
+
 ### Added
 
 - Update community bot config ([#7018](https://github.com/open-chat-labs/open-chat/pull/7018))

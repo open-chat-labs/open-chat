@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1512](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1512-escrow)] - 2024-12-13
+
 ### Added
 
 - Add an error log with http endpoint ([#6608](https://github.com/open-chat-labs/open-chat/pull/6608))
@@ -17,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Make `ChannelId` comparisons use their 32bit representation ([#6885](https://github.com/open-chat-labs/open-chat/pull/6885))
 - Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
 - Include the ledger canister Id in transfer failed error logs ([#7011](https://github.com/open-chat-labs/open-chat/pull/7011))
+- Expose transfer errors that occur during swaps ([#7055](https://github.com/open-chat-labs/open-chat/pull/7055))
 
 ## [[2.0.1316](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1316-escrow)] - 2024-09-02
 

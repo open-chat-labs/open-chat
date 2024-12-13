@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1513](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1513-local_user_index)] - 2024-12-13
+
+### Added
+
+- Expose the cycles top-ups of User canisters ([#7053](https://github.com/open-chat-labs/open-chat/pull/7053))
+
 ### Changed
 
 - Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
@@ -15,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Switch to using `PrincipalToStableMemoryMap` ([#7023](https://github.com/open-chat-labs/open-chat/pull/7023))
 - Make `MessageId` comparisons use their 64bit representation ([#7030](https://github.com/open-chat-labs/open-chat/pull/7030))
 - Notify CHIT updates via LocalUserIndex ([#7033](https://github.com/open-chat-labs/open-chat/pull/7033))
+- Include the total cycles topped up ([#7056](https://github.com/open-chat-labs/open-chat/pull/7056))
 
 ### Fixes
 
