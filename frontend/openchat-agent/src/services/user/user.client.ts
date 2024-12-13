@@ -767,9 +767,11 @@ export class UserClient extends CandidService {
             : dataClient.uploadData(event.event.content, [this.userId, chatId.userId]);
 
         return uploadContentPromise.then((content) => {
-            const newContent = content ?? event.event.content;
+            if (content !== undefined) {
+                event.event.content = content;
+            }
             const req = {
-                content: apiMessageContent(newContent),
+                content: apiMessageContent(event.event.content),
                 recipient: principalStringToBytes(chatId.userId),
                 message_id: event.event.messageId,
                 replies_to: mapOptional(event.event.repliesTo, (replyContext) =>
@@ -789,7 +791,7 @@ export class UserClient extends CandidService {
                 UserSendMessageArgs,
                 UserSendMessageResponse,
                 onRequestAccepted,
-            ).then((resp) => [resp, { ...event.event, content: newContent }]);
+            ).then((resp) => [resp, event]);
         });
     }
 
