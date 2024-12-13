@@ -409,7 +409,6 @@ struct Data {
     user_cache: UserCache,
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
-    #[serde(default)]
     bots: GroupBots,
 }
 

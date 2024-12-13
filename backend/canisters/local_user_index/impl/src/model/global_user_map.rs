@@ -1,6 +1,6 @@
 use candid::Principal;
 use local_user_index_canister::GlobalUser;
-use principal_to_user_id_map::{deserialize_principal_to_user_id_map_from_heap, PrincipalToUserIdMap};
+use principal_to_user_id_map::PrincipalToUserIdMap;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use types::{TimestampMillis, UniquePersonProof, UserId, UserType};
@@ -8,11 +8,9 @@ use types::{TimestampMillis, UniquePersonProof, UserId, UserType};
 #[derive(Serialize, Deserialize, Default)]
 pub struct GlobalUserMap {
     user_id_to_principal: HashMap<UserId, Principal>,
-    #[serde(deserialize_with = "deserialize_principal_to_user_id_map_from_heap")]
     principal_to_user_id: PrincipalToUserIdMap,
     unique_person_proofs: HashMap<UserId, UniquePersonProof>,
     platform_moderators: HashSet<UserId>,
-    #[serde(alias = "bots")]
     legacy_bots: HashSet<UserId>,
     oc_controlled_bot_users: HashSet<UserId>,
     diamond_membership_expiry_dates: HashMap<UserId, TimestampMillis>,
