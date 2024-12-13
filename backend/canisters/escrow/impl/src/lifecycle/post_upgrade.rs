@@ -16,7 +16,8 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
-    let (mut data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) = msgpack::deserialize(reader).unwrap();
+    let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
+        msgpack::deserialize(reader).unwrap();
 
     if data.test_mode {
         data.registry_canister_id = CanisterId::from_text("cglwi-oaaaa-aaaar-aqw4q-cai").unwrap();
@@ -24,9 +25,7 @@ fn post_upgrade(args: Args) {
         data.registry_canister_id = CanisterId::from_text("cpi5u-yiaaa-aaaar-aqw5a-cai").unwrap();
     }
 
-    // TODO: After release change this to
-    // let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) = msgpack::deserialize(reader).unwrap();
-    canister_logger::init_with_logs(data.test_mode, Vec::new(), logs, traces);
+    canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
     let env = init_env(data.rng_seed);
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id, data.test_mode);
