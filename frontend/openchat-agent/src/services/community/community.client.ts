@@ -1179,25 +1179,24 @@ export class CommunityClient extends CandidService {
             : dataClient.uploadData(event.event.content, [chatId.communityId]);
 
         return uploadContentPromise.then((content) => {
-            if (content !== undefined) {
-                event.event.content = content;
-            }
+            const newEvent =
+                content !== undefined ? { ...event, event: { ...event.event, content } } : event;
             const args = {
                 channel_id: BigInt(chatId.channelId),
-                content: apiMessageContent(event.event.content),
-                message_id: event.event.messageId,
+                content: apiMessageContent(newEvent.event.content),
+                message_id: newEvent.event.messageId,
                 sender_name: senderName,
                 sender_display_name: senderDisplayName,
                 community_rules_accepted: communityRulesAccepted,
                 channel_rules_accepted: channelRulesAccepted,
-                replies_to: mapOptional(event.event.repliesTo, (replyContext) => ({
+                replies_to: mapOptional(newEvent.event.repliesTo, (replyContext) => ({
                     event_index: replyContext.eventIndex,
                 })),
                 mentioned: mentioned.map(apiUserV2),
-                forwarding: event.event.forwarded,
+                forwarding: newEvent.event.forwarded,
                 thread_root_message_index: threadRootMessageIndex,
                 message_filter_failed: messageFilterFailed,
-                block_level_markdown: event.event.blockLevelMarkdown,
+                block_level_markdown: newEvent.event.blockLevelMarkdown,
                 new_achievement: newAchievement,
             };
             return this.executeMsgpackUpdate(
@@ -1209,17 +1208,17 @@ export class CommunityClient extends CandidService {
                 onRequestAccepted,
             )
                 .then((resp) => {
-                    const retVal: [SendMessageResponse, Message] = [resp, event.event];
+                    const retVal: [SendMessageResponse, Message] = [resp, newEvent.event];
                     setCachedMessageFromSendResponse(
                         this.db,
                         chatId,
-                        event,
+                        newEvent,
                         threadRootMessageIndex,
                     )(retVal);
                     return retVal;
                 })
                 .catch((err) => {
-                    recordFailedMessage(this.db, chatId, event, threadRootMessageIndex);
+                    recordFailedMessage(this.db, chatId, newEvent, threadRootMessageIndex);
                     throw err;
                 });
         });
