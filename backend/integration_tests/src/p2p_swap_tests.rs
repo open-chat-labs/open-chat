@@ -624,6 +624,17 @@ fn p2p_swap_blocked_if_token_disabled(input_token: bool) {
         },
     );
 
+    // Re-enable token so that other tests aren't affected
+    client::registry::set_token_enabled(
+        env,
+        user.principal,
+        canister_ids.registry,
+        &registry_canister::set_token_enabled::Args {
+            ledger_canister_id: if input_token { canister_ids.icp_ledger } else { canister_ids.chat_ledger },
+            enabled: true,
+        },
+    );
+
     if let user_canister::send_message_with_transfer_to_group::Response::InvalidRequest(error) = send_message_response {
         assert!(error.contains(if input_token { "Input" } else { "Output" }))
     } else {
