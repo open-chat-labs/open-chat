@@ -1,9 +1,10 @@
 use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageResult,
-    DeleteUndeleteMessagesArgs, GroupGateUpdatedInternal, MessageContentInternal, PushMessageArgs, Reader,
+    DeleteUndeleteMessagesArgs, EditMessageArgs, GroupGateUpdatedInternal, MessageContentInternal, PushMessageArgs, Reader,
     RemoveExpiredEventsResult, TipMessageArgs, UndeleteMessageResult,
 };
 use event_store_producer::{EventStoreClient, Runtime};
+use event_store_producer_cdk_runtime::CdkRuntime;
 use group_community_common::{BotUpdate, GroupBots, MemberUpdate};
 use itertools::Itertools;
 use lazy_static::lazy_static;
@@ -639,6 +640,52 @@ impl GroupChatCore {
             };
         }
 
+        // If there is an existing message with the same message id then this is invalid unless
+        // a bot is finalising its unfinalised message
+        if let Some(reader) = self.events.events_reader(EventIndex::default(), thread_root_message_index) {
+            if let Some(message) = reader.message_internal(message_id.into()) {
+                if let Caller::BotV2(bot_now) = &caller {
+                    if let Some(bot_message) = message.bot_context {
+                        if bot_now.bot == message.sender
+                            && bot_now.initiator == bot_message.initiator
+                            && bot_now.command_text == bot_message.command_text
+                            && bot_now.finalised
+                            && !bot_message.finalised
+                        {
+                            let edit_message_args = EditMessageArgs {
+                                sender: caller.agent(),
+                                min_visible_event_index: EventIndex::default(),
+                                thread_root_message_index,
+                                message_id,
+                                content,
+                                block_level_markdown: Some(block_level_markdown),
+                                finalise_bot_message: true,
+                                now,
+                            };
+
+                            match self.events.edit_message::<CdkRuntime>(edit_message_args, None) {
+                                chat_events::EditMessageResult::Success => {
+                                    let reader = self
+                                        .events
+                                        .events_reader(EventIndex::default(), thread_root_message_index)
+                                        .unwrap();
+                                    let message_event = reader.message_event(message_id.into(), Some(caller.agent())).unwrap();
+                                    return SendMessageResult::Success(SendMessageSuccess {
+                                        message_event,
+                                        users_to_notify: vec![],
+                                        bot_message_finalised: true,
+                                    });
+                                }
+                                _ => unreachable!(),
+                            }
+                        }
+                    }
+                }
+
+                return SendMessageResult::MessageAlreadyExists;
+            }
+        }
+
         self.send_message(
             caller,
             thread_root_message_index,
@@ -704,6 +751,7 @@ impl GroupChatCore {
             thread_root_message_index,
             message_id,
             content,
+            bot_context: if let Caller::BotV2(bot) = caller { Some(bot.into()) } else { None },
             mentioned: if !suppressed { mentioned.to_vec() } else { Vec::new() },
             replies_to: replies_to.as_ref().map(|r| r.into()),
             forwarded: forwarding,
@@ -788,6 +836,7 @@ impl GroupChatCore {
         Success(SendMessageSuccess {
             message_event,
             users_to_notify: users_to_notify.iter().copied().collect(),
+            bot_message_finalised: false,
         })
     }
 
@@ -2044,12 +2093,14 @@ pub enum SendMessageResult {
     UserSuspended,
     UserLapsed,
     RulesNotAccepted,
+    MessageAlreadyExists,
     InvalidRequest(String),
 }
 
 pub struct SendMessageSuccess {
     pub message_event: EventWrapper<Message>,
     pub users_to_notify: Vec<UserId>,
+    pub bot_message_finalised: bool,
 }
 
 pub enum AddRemoveReactionResult {

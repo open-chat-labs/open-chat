@@ -7,8 +7,8 @@ use group_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse}
 use group_canister::send_message_v2::{Response::*, *};
 use group_chat_core::SendMessageResult;
 use types::{
-    Achievement, Caller, Chat, EventIndex, EventWrapper, GroupMessageNotification, Message, MessageContent, MessageIndex,
-    Notification, TimestampMillis, User, UserId,
+    Achievement, BotCaller, Caller, Chat, EventIndex, EventWrapper, GroupMessageNotification, Message, MessageContent,
+    MessageIndex, Notification, TimestampMillis, User,
 };
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -28,12 +28,12 @@ fn c2c_send_message(args: C2CArgs) -> C2CResponse {
     mutate_state(|state| c2c_send_message_impl(args, state))
 }
 
-pub(crate) fn send_message_impl(args: Args, bot_id: Option<UserId>, state: &mut RuntimeState) -> Response {
+pub(crate) fn send_message_impl(args: Args, bot: Option<BotCaller>, state: &mut RuntimeState) -> Response {
     if state.data.is_frozen() {
         return ChatFrozen;
     }
 
-    let caller = match state.caller(bot_id) {
+    let caller = match state.verified_caller(bot) {
         CallerResult::Success(caller) => caller,
         CallerResult::NotFound => return CallerNotInGroup,
         CallerResult::Suspended => return UserSuspended,
@@ -74,7 +74,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
         return ChatFrozen;
     }
 
-    let caller = match state.caller(None) {
+    let caller = match state.verified_caller(None) {
         CallerResult::Success(caller) => caller,
         CallerResult::NotFound => return CallerNotInGroup,
         CallerResult::Suspended => return UserSuspended,
@@ -252,6 +252,7 @@ fn process_send_message_result(
         SendMessageResult::UserSuspended => UserSuspended,
         SendMessageResult::UserLapsed => NotAuthorized,
         SendMessageResult::RulesNotAccepted => RulesNotAccepted,
+        SendMessageResult::MessageAlreadyExists => MessageAlreadyExists,
         SendMessageResult::InvalidRequest(error) => InvalidRequest(error),
     }
 }

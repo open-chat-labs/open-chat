@@ -10,8 +10,10 @@ pub enum Caller {
 
 #[derive(Clone)]
 pub struct BotCaller {
-    pub user_id: UserId,
-    pub bot_id: UserId,
+    pub initiator: UserId,
+    pub bot: UserId,
+    pub command_text: String,
+    pub finalised: bool,
 }
 
 impl Caller {
@@ -19,7 +21,7 @@ impl Caller {
         match self {
             Caller::User(user_id) => *user_id,
             Caller::Bot(user_id) => *user_id,
-            Caller::BotV2(bot_caller) => bot_caller.bot_id,
+            Caller::BotV2(bot_caller) => bot_caller.bot,
             Caller::OCBot(user_id) => *user_id,
         }
     }
@@ -28,7 +30,7 @@ impl Caller {
         match self {
             Caller::User(user_id) => *user_id,
             Caller::Bot(user_id) => *user_id,
-            Caller::BotV2(bot_caller) => bot_caller.user_id,
+            Caller::BotV2(bot_caller) => bot_caller.initiator,
             Caller::OCBot(user_id) => *user_id,
         }
     }
@@ -39,8 +41,8 @@ impl Caller {
 }
 
 impl From<&Caller> for UserType {
-    fn from(channel: &Caller) -> Self {
-        match channel {
+    fn from(caller: &Caller) -> Self {
+        match caller {
             Caller::User(_) => UserType::User,
             Caller::Bot(_) => UserType::Bot,
             Caller::BotV2(_) => UserType::BotV2,

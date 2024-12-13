@@ -34,7 +34,7 @@ pub struct StartVideoCallClaims {
 
 #[derive(Serialize, Deserialize)]
 pub struct BotCommandClaims {
-    pub user_id: UserId,
+    pub initiator: UserId,
     pub bot: UserId,
     pub chat: Chat,
     pub thread_root_message_index: Option<MessageIndex>,

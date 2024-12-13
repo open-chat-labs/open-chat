@@ -4,13 +4,13 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::ops::DerefMut;
 use types::{
-    is_default, AccessGate, AccessGateConfigInternal, AvatarChanged, BotAdded, BotRemoved, BotUpdated, ChannelId, Chat, ChatId,
-    CommunityId, DeletedBy, DirectChatCreated, EventIndex, EventWrapperInternal, EventsTimeToLiveUpdated, ExternalUrlUpdated,
-    GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged,
-    GroupReplyContext, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, MemberJoinedInternal, MemberLeft,
-    MembersAdded, MembersAddedToDefaultChannel, MembersRemoved, Message, MessageContent, MessageId, MessageIndex,
-    MessagePinned, MessageUnpinned, MultiUserChat, PermissionsChanged, PushIfNotContains, Reaction, ReplyContext, RoleChanged,
-    ThreadSummary, TimestampMillis, Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
+    is_default, AccessGate, AccessGateConfigInternal, AvatarChanged, BotAdded, BotMessageContext, BotRemoved, BotUpdated,
+    ChannelId, Chat, ChatId, CommunityId, DeletedBy, DirectChatCreated, EventIndex, EventWrapperInternal,
+    EventsTimeToLiveUpdated, ExternalUrlUpdated, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated,
+    GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged,
+    MemberJoinedInternal, MemberLeft, MembersAdded, MembersAddedToDefaultChannel, MembersRemoved, Message, MessageContent,
+    MessageId, MessageIndex, MessagePinned, MessageUnpinned, MultiUserChat, PermissionsChanged, PushIfNotContains, Reaction,
+    ReplyContext, RoleChanged, ThreadSummary, TimestampMillis, Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -184,6 +184,8 @@ pub struct MessageInternal {
     pub sender: UserId,
     #[serde(rename = "c")]
     pub content: MessageContentInternal,
+    #[serde(rename = "bc", default, skip_serializing_if = "Option::is_none")]
+    pub bot_context: Option<BotMessageContext>,
     #[serde(rename = "p", default, skip_serializing_if = "Option::is_none")]
     pub replies_to: Option<ReplyContextInternal>,
     #[serde(rename = "r", default, skip_serializing_if = "Vec::is_empty")]
@@ -213,6 +215,7 @@ impl MessageInternal {
             } else {
                 self.content.hydrate(my_user_id)
             },
+            bot_context: self.bot_context.clone(),
             replies_to: self.replies_to.as_ref().map(|r| r.hydrate()),
             reactions: self
                 .reactions
@@ -480,7 +483,7 @@ mod tests {
     };
     use candid::Principal;
     use std::collections::HashSet;
-    use types::{EventWrapperInternal, Reaction, Tips};
+    use types::{BotMessageContext, EventWrapperInternal, Reaction, Tips};
 
     #[test]
     fn serialize_with_max_defaults() {
@@ -489,6 +492,7 @@ mod tests {
             message_id: 1u64.into(),
             sender: Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap().into(),
             content: MessageContentInternal::Text(TextContentInternal { text: "123".to_string() }),
+            bot_context: None,
             replies_to: None,
             reactions: Vec::new(),
             tips: Tips::default(),
@@ -528,6 +532,11 @@ mod tests {
             message_id: 1u64.into(),
             sender: principal.into(),
             content: MessageContentInternal::Text(TextContentInternal { text: "123".to_string() }),
+            bot_context: Some(BotMessageContext {
+                initiator: principal.into(),
+                command_text: "weather london".to_string(),
+                finalised: true,
+            }),
             replies_to: Some(ReplyContextInternal {
                 chat_if_other: Some((ChatInternal::Group(principal.into()), Some(1.into()))),
                 event_index: 1.into(),
