@@ -74,7 +74,7 @@
         if (e.isTrusted && chatId.kind !== "direct_chat" && !me && userEligible) {
             claimsStore.add(messageId);
             client
-                .claimPrize(chatId, messageId)
+                .claimPrize(chatId, messageId, e)
                 .then((success) => {
                     if (!success) {
                         toastStore.showFailureToast(i18nKey("prizes.claimFailed"));

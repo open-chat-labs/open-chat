@@ -5988,13 +5988,12 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    private stackTrace() {
-        return new Error().stack ?? "";
-    }
-
-    claimPrize(chatId: MultiUserChatIdentifier, messageId: bigint): Promise<boolean> {
-        const stack = this.stackTrace();
-        if (!stack.includes("HTMLButtonElement.click")) {
+    claimPrize(
+        chatId: MultiUserChatIdentifier,
+        messageId: bigint,
+        e: MouseEvent,
+    ): Promise<boolean> {
+        if (!e.isTrusted) {
             return Promise.resolve(false);
         }
 
