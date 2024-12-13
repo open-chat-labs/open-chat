@@ -642,48 +642,49 @@ impl GroupChatCore {
 
         // If there is an existing message with the same message id then this is invalid unless
         // a bot is finalising its unfinalised message
-        if let Some(reader) = self.events.events_reader(EventIndex::default(), thread_root_message_index) {
-            if let Some(message) = reader.message_internal(message_id.into()) {
-                if let Caller::BotV2(bot_now) = &caller {
-                    if let Some(bot_message) = message.bot_context {
-                        if bot_now.bot == message.sender
-                            && bot_now.initiator == bot_message.initiator
-                            && bot_now.command_text == bot_message.command_text
-                            && bot_now.finalised
-                            && !bot_message.finalised
-                        {
-                            let edit_message_args = EditMessageArgs {
-                                sender: caller.agent(),
-                                min_visible_event_index: EventIndex::default(),
-                                thread_root_message_index,
-                                message_id,
-                                content,
-                                block_level_markdown: Some(block_level_markdown),
-                                finalise_bot_message: true,
-                                now,
-                            };
+        if let Some((message, _)) =
+            self.events
+                .message_internal(EventIndex::default(), thread_root_message_index, message_id.into())
+        {
+            if let Caller::BotV2(bot_now) = &caller {
+                if let Some(bot_message) = message.bot_context {
+                    if bot_now.bot == message.sender
+                        && bot_now.initiator == bot_message.initiator
+                        && bot_now.command_text == bot_message.command_text
+                        && bot_now.finalised
+                        && !bot_message.finalised
+                    {
+                        let edit_message_args = EditMessageArgs {
+                            sender: caller.agent(),
+                            min_visible_event_index: EventIndex::default(),
+                            thread_root_message_index,
+                            message_id,
+                            content,
+                            block_level_markdown: Some(block_level_markdown),
+                            finalise_bot_message: true,
+                            now,
+                        };
 
-                            match self.events.edit_message::<CdkRuntime>(edit_message_args, None) {
-                                chat_events::EditMessageResult::Success => {
-                                    let reader = self
-                                        .events
-                                        .events_reader(EventIndex::default(), thread_root_message_index)
-                                        .unwrap();
-                                    let message_event = reader.message_event(message_id.into(), Some(caller.agent())).unwrap();
-                                    return SendMessageResult::Success(SendMessageSuccess {
-                                        message_event,
-                                        users_to_notify: vec![],
-                                        bot_message_finalised: true,
-                                    });
-                                }
-                                _ => unreachable!(),
+                        match self.events.edit_message::<CdkRuntime>(edit_message_args, None) {
+                            chat_events::EditMessageResult::Success => {
+                                let reader = self
+                                    .events
+                                    .events_reader(EventIndex::default(), thread_root_message_index)
+                                    .unwrap();
+                                let message_event = reader.message_event(message_id.into(), Some(caller.agent())).unwrap();
+                                return SendMessageResult::Success(SendMessageSuccess {
+                                    message_event,
+                                    users_to_notify: vec![],
+                                    bot_message_finalised: true,
+                                });
                             }
+                            _ => unreachable!(),
                         }
                     }
                 }
-
-                return SendMessageResult::MessageAlreadyExists;
             }
+
+            return SendMessageResult::MessageAlreadyExists;
         }
 
         self.send_message(
