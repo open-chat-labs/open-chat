@@ -5988,12 +5988,16 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
+    private validMouseEvent(e: MouseEvent) {
+        return e instanceof MouseEvent && e.isTrusted && e.type === "click";
+    }
+
     claimPrize(
         chatId: MultiUserChatIdentifier,
         messageId: bigint,
         e: MouseEvent,
     ): Promise<boolean> {
-        if (!e.isTrusted) {
+        if (!this.validMouseEvent(e)) {
             return Promise.resolve(false);
         }
 
