@@ -24,7 +24,6 @@
 
     function probablyBot(ev: MouseEvent): boolean {
         const pause = Date.now() - lastMoved;
-        console.log("Click Metrics: ", pause, document.activeElement === ev.target);
         return pause < PAUSE_TRESHOLD || document.activeElement !== ev.target || !ev.isTrusted;
     }
 
