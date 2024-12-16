@@ -222,6 +222,7 @@ async fn install_service_canisters_impl(
         nns_root_canister_id: canister_ids.nns_root,
         sns_wasm_canister_id: canister_ids.nns_sns_wasm,
         nns_index_canister_id: canister_ids.nns_index,
+        escrow_canister_id: canister_ids.escrow,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         wasm_version: version,
         test_mode,
@@ -250,6 +251,7 @@ async fn install_service_canisters_impl(
 
     let escrow_canister_wasm = get_canister_wasm(CanisterName::Escrow, version);
     let escrow_init_args = escrow_canister::init::Args {
+        registry_canister_id: canister_ids.registry,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         wasm_version: version,
         test_mode,

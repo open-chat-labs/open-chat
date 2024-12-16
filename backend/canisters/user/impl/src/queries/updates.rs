@@ -42,8 +42,8 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         .is_some_and(|p| p.timestamp > updates_since);
 
     let wallet_config = state.data.wallet_config.if_set_after(updates_since).cloned();
-
     let referrals = state.data.referrals.updated_since(updates_since);
+    let streak_insurance_updated = state.data.streak.insurance_last_updated() > updates_since;
 
     let has_any_updates = username.is_some()
         || display_name.has_update()
@@ -55,6 +55,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         || pin_number_updated
         || is_unique_person_updated
         || !referrals.is_empty()
+        || streak_insurance_updated
         || state.data.direct_chats.any_updated(updates_since)
         || state.data.group_chats.any_updated(updates_since)
         || state.data.favourite_chats.any_updated(updates_since)
@@ -154,6 +155,11 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
     let is_unique_person = is_unique_person_updated.then_some(true);
     let activity_feed = (state.data.message_activity_events.last_updated() > updates_since)
         .then(|| state.data.message_activity_events.summary());
+    let streak_insurance = if streak_insurance_updated {
+        OptionUpdate::from_update(state.data.streak.streak_insurance(now))
+    } else {
+        OptionUpdate::NoChange
+    };
 
     Success(SuccessResult {
         timestamp: now,
@@ -173,6 +179,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         chit_balance,
         streak,
         streak_ends,
+        streak_insurance,
         next_daily_claim,
         is_unique_person,
         wallet_config,

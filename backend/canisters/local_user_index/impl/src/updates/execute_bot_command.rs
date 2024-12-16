@@ -44,7 +44,7 @@ fn validate(args: Args, state: &RuntimeState) -> Result<c2c_handle_bot_action::A
             user_id: bot_command_claims.bot,
             username: bot.name.clone(),
         },
-        commanded_by: bot_command_claims.user_id,
+        initiator: bot_command_claims.initiator,
         chat: bot_command_claims.chat,
         thread_root_message_index: bot_command_claims.thread_root_message_index,
         message_id: bot_command_claims.message_id,

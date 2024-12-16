@@ -41,6 +41,7 @@ pub enum Response {
     InvalidRequest(String),
     CommunityFrozen,
     RulesNotAccepted,
+    MessageAlreadyExists,
     CommunityRulesNotAccepted,
     UserLapsed,
 }

@@ -64,7 +64,7 @@ async fn access_token(args: Args) -> Response {
         }
         AccessTokenType::BotCommand(bc) => {
             let custom_claims = BotCommandClaims {
-                user_id: bc.user_id,
+                initiator: bc.user_id,
                 bot: bc.bot,
                 chat: bc.chat,
                 thread_root_message_index: bc.thread_root_message_index,

@@ -29,6 +29,7 @@ type SendMessageResponse = variant {
     UserLapsed;
     ChatFrozen;
     RulesNotAccepted;
+    MessageAlreadyExists;
 };
 
 type SendMessageSuccess = record {

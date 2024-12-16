@@ -5,7 +5,7 @@ use types::{
     CanisterId, ChannelLatestMessageIndex, ChatId, ChitEarnedReason, CommunityId, Cryptocurrency,
     DiamondMembershipPlanDuration, MessageContent, MessageContentInitial, MessageId, MessageIndex, NotifyChit, PhoneNumber,
     ReferralType, SlashCommandSchema, SuspensionDuration, TimestampMillis, UniquePersonProof, UpdateUserPrincipalArgs, User,
-    UserId, UserType,
+    UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserType,
 };
 
 mod lifecycle;
@@ -202,6 +202,8 @@ pub struct ExternalAchievementAwarded {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum UserEvent {
     NotifyChit(NotifyChit),
+    NotifyStreakInsurancePayment(UserCanisterStreakInsurancePayment),
+    NotifyStreakInsuranceClaim(UserCanisterStreakInsuranceClaim),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
