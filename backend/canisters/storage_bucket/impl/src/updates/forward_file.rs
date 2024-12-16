@@ -1,6 +1,6 @@
 use crate::guards::caller_is_known_user;
 use crate::model::files::ForwardFileResult;
-use crate::model::index_sync_state::EventToSync;
+use crate::model::index_event_batch::EventToSync;
 use crate::model::users::{FileStatusInternal, IndexSyncComplete};
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;

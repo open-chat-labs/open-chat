@@ -195,12 +195,7 @@ export class CachePrimer {
         localUserIndex: string,
         requests: ChatEventsArgs[],
     ): Promise<ChatEventsResponse[]> {
-        return this.api.sendRequest({
-            kind: "chatEventsBatch",
-            localUserIndex,
-            requests,
-            cachePrimer: true,
-        });
+        return this.api.chatEventsBatch(localUserIndex, requests);
     }
 
     private localUserIndex(chat: ChatSummary): string {
