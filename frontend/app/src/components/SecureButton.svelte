@@ -2,6 +2,7 @@
     import { onMount } from "svelte";
     import type { ButtonProps } from "./Button.svelte";
     import Button from "./Button.svelte";
+    import { suspectedAutomationBot } from "../stores/automation";
 
     let { children, onClick, ...rest }: ButtonProps & { onClick: (ev: MouseEvent) => void } =
         $props();
@@ -24,7 +25,12 @@
 
     function probablyBot(ev: MouseEvent): boolean {
         const pause = Date.now() - lastMoved;
-        return pause < PAUSE_TRESHOLD || document.activeElement !== ev.target || !ev.isTrusted;
+        return (
+            pause < PAUSE_TRESHOLD ||
+            document.activeElement !== ev.target ||
+            !ev.isTrusted ||
+            $suspectedAutomationBot
+        );
     }
 
     function internalOnclick(ev: MouseEvent) {

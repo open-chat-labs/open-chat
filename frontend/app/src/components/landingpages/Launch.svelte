@@ -4,6 +4,7 @@
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { routeForScope } from "../../routes";
+    import SecureButton from "../SecureButton.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -13,7 +14,13 @@
 
     $: url = $identityState.kind === "logged_in" ? rootPath : "/communities";
     $: busy = $identityState.kind === "logging_in" || $identityState.kind === "loading_user";
+
+    function onClick(_: MouseEvent) {
+        console.log("You are a real user!");
+    }
 </script>
+
+<SecureButton cls="launch-button" {onClick}>Testing testing 123</SecureButton>
 
 {#if login}
     <div
