@@ -54,8 +54,22 @@ impl ChatEvents {
         // 3. More than 2 hours have passed since the call was started
         // THEN remove the video call in progress indicator
 
-        if self.video_call_is_spurious(now) {
-            self.video_call_in_progress = Timestamped::new(None, now);
+        let video_call_in_progress = self.video_call_in_progress.value.as_ref().map(|vc| vc.message_index);
+
+        if let Some(message_index) = video_call_in_progress {
+            if self.video_call_is_spurious(now) {
+                self.video_call_in_progress = Timestamped::new(None, now);
+
+                let _ = self.update_message(None, message_index.into(), EventIndex::default(), Some(now), |m, _| {
+                    if let MessageContentInternal::VideoCall(vc) = &mut m.content {
+                        if vc.ended.is_none() {
+                            vc.ended = Some(now);
+                            return Ok(());
+                        }
+                    }
+                    Err(UpdateEventError::NoChange(()))
+                });
+            }
         }
     }
 
