@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Push any remaining events still queued in the old events system ([#7065](https://github.com/open-chat-labs/open-chat/pull/7065))
+
 ## [[2.0.1522](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1522-storage_bucket)] - 2024-12-16
 
 ### Changed
