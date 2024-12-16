@@ -149,11 +149,6 @@
     "blockUserFailed": "Unable to block user",
     "blockUserSucceeded": "User has been blocked",
     "bots": {
-        "events": {
-            "add": "Bot **{botname}** added by {username}",
-            "remove": "Bot **{botname}** removed by {username}",
-            "update": "Bot **{botname}** updated by {username}"
-        },
         "add": {
             "addBot": "Add bot",
             "choosePermissions": "Permissions",
@@ -161,15 +156,6 @@
             "noPermissions": "No special permissions required",
             "permissionsInfo": "This bot seeks the following permissions. Choosing to limit the permissions granted will limit the commands available.",
             "title": "Add bot to community"
-        },
-        "edit": {
-            "title": "Update bot permissions",
-            "updateBot": "Update bot",
-            "failure": "Sorry we were unable to update the bot permissions"
-        },
-        "view": {
-            "title": "Bot details",
-            "close": "Close"
         },
         "builder": {
             "addAnother": "Add another",
@@ -258,6 +244,16 @@
         "diamond": {
             "desc": "Post a link to explain Diamond membership"
         },
+        "edit": {
+            "failure": "Sorry we were unable to update the bot permissions",
+            "title": "Update bot permissions",
+            "updateBot": "Update bot"
+        },
+        "events": {
+            "add": "Bot **{botname}** added by {username}",
+            "remove": "Bot **{botname}** removed by {username}",
+            "update": "Bot **{botname}** updated by {username}"
+        },
         "explorer": {
             "addBots": "Add bots",
             "loadMore": "Load more..."
@@ -301,13 +297,13 @@
                 }
             }
         },
-        "matchingCommands": "Matching commands",
         "manage": {
             "remove": "Remove bot",
+            "removeFailed": "Sorry we were unable to remove the bot",
             "review": "Review bot permissions",
-            "view": "View bot details",
-            "removeFailed": "Sorry we were unable to remove the bot"
+            "view": "View bot details"
         },
+        "matchingCommands": "Matching commands",
         "member": {
             "bots": "Bots",
             "people": "People"
@@ -330,6 +326,10 @@
         },
         "update_bot": {
             "desc": "Start a proposal to update an existing OpenChat bot"
+        },
+        "view": {
+            "close": "Close",
+            "title": "Bot details"
         },
         "witch": {
             "desc": "Summon the witch"

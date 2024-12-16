@@ -244,6 +244,16 @@
         "diamond": {
             "desc": "פרסם קישור להסבר על חברות Diamond"
         },
+        "edit": {
+            "failure": "מצטערים שלא הצלחנו לעדכן את הרשאות הבוט",
+            "title": "עדכן הרשאות בוט",
+            "updateBot": "עדכן את הבוט"
+        },
+        "events": {
+            "add": "בוט **{botname}** נוסף על ידי {username}",
+            "remove": "הבוט **{botname}** הוסר על ידי {username}",
+            "update": "בוט **{botname}** עודכן על ידי {username}"
+        },
         "explorer": {
             "addBots": "הוסף בוטים",
             "loadMore": "טען עוד..."
@@ -287,7 +297,17 @@
                 }
             }
         },
+        "manage": {
+            "remove": "הסר בוט",
+            "removeFailed": "מצטערים שלא הצלחנו להסיר את הבוט",
+            "review": "בדוק את הרשאות הבוט",
+            "view": "הצג את פרטי הבוט"
+        },
         "matchingCommands": "התאמת פקודות",
+        "member": {
+            "bots": "בוטים",
+            "people": "אֲנָשִׁים"
+        },
         "poll": {
             "desc": "צור סקר בצ'אט הנוכחי"
         },
@@ -306,6 +326,10 @@
         },
         "update_bot": {
             "desc": "התחל הצעה לעדכון בוט OpenChat קיים"
+        },
+        "view": {
+            "close": "לִסְגוֹר",
+            "title": "פרטי בוט"
         },
         "witch": {
             "desc": "לזמן את המכשפה"

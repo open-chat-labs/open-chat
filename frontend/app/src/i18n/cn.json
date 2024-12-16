@@ -244,6 +244,16 @@
         "diamond": {
             "desc": "发布链接解释钻石会员资格"
         },
+        "edit": {
+            "failure": "抱歉，我们无法更新机器人权限",
+            "title": "更新机器人权限",
+            "updateBot": "更新机器人"
+        },
+        "events": {
+            "add": "机器人 **{botname}** 由 {username} 添加",
+            "remove": "机器人 **{botname}** 已被 {username} 移除",
+            "update": "机器人 **{botname}** 由 {username} 更新"
+        },
         "explorer": {
             "addBots": "添加机器人",
             "loadMore": "加载更多..."
@@ -287,7 +297,17 @@
                 }
             }
         },
+        "manage": {
+            "remove": "移除机器人",
+            "removeFailed": "抱歉，我们无法移除该机器人",
+            "review": "审查机器人权限",
+            "view": "查看机器人详细信息"
+        },
         "matchingCommands": "匹配命令",
+        "member": {
+            "bots": "机器人",
+            "people": "人们"
+        },
         "poll": {
             "desc": "在当前聊天中创建投票"
         },
@@ -306,6 +326,10 @@
         },
         "update_bot": {
             "desc": "发起更新现有 OpenChat 机器人的提案"
+        },
+        "view": {
+            "close": "关闭",
+            "title": "机器人详细信息"
         },
         "witch": {
             "desc": "召唤女巫"
