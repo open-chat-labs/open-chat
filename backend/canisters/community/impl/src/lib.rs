@@ -10,7 +10,7 @@ use canister_timer_jobs::TimerJobs;
 use chat_events::{ChatEventInternal, ChatMetricsInternal};
 use community_canister::add_members_to_channel::UserFailedError;
 use community_canister::EventsResponse;
-use constants::{MINUTE_IN_MS, SNS_LEDGER_CANISTER_ID};
+use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, SNS_LEDGER_CANISTER_ID};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -37,10 +37,10 @@ use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotGroupConfig, BotRemoved, BotUpdated, BuildVersion,
-    CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership, CommunityPermissions,
-    Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, MembersAdded, Milliseconds, Notification, Rules,
-    SlashCommandPermissions, TimestampMillis, Timestamped, UserId, UserType,
+    AccessGate, AccessGateConfigInternal, Achievement, BotAdded, BotCaller, BotGroupConfig, BotRemoved, BotUpdated,
+    BuildVersion, Caller, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
+    CommunityPermissions, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, MembersAdded, Milliseconds, Notification,
+    Rules, SlashCommandPermissions, TimestampMillis, Timestamped, UserId, UserType,
 };
 use types::{CommunityId, SNS_FEE_SHARE_PERCENT};
 use user_canister::CommunityCanisterEvent;
@@ -312,6 +312,43 @@ impl RuntimeState {
             },
         }
     }
+
+    pub fn verified_caller(&self, mut bot_context: Option<BotCaller>) -> CallerResult {
+        use CallerResult::*;
+
+        let caller = self.env.caller();
+
+        if caller == self.data.user_index_canister_id {
+            return Success(Caller::OCBot(OPENCHAT_BOT_USER_ID));
+        }
+
+        let user_or_principal = bot_context.as_ref().map(|bc| bc.initiator.into()).unwrap_or(caller);
+
+        let Some(member) = self.data.members.get(user_or_principal) else {
+            return NotFound;
+        };
+
+        if member.suspended().value {
+            return Suspended;
+        } else if member.lapsed().value {
+            return Lapsed;
+        }
+
+        if let Some(bot_context) = bot_context.take() {
+            if self.data.bots.get(&bot_context.bot).is_some() {
+                Success(Caller::BotV2(bot_context))
+            } else {
+                NotFound
+            }
+        } else {
+            match member.user_type {
+                UserType::User => Success(Caller::User(member.user_id)),
+                UserType::BotV2 => NotFound,
+                UserType::Bot => Success(Caller::Bot(member.user_id)),
+                UserType::OcControlledBot => Success(Caller::OCBot(member.user_id)),
+            }
+        }
+    }
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -367,7 +404,6 @@ struct Data {
     user_cache: UserCache,
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
-    #[serde(default)]
     bots: GroupBots,
 }
 
@@ -915,4 +951,11 @@ pub struct AddUsersToChannelResult {
     pub users_added: Vec<UserId>,
     pub users_already_in_channel: Vec<UserId>,
     pub users_limit_reached: Vec<UserId>,
+}
+
+pub enum CallerResult {
+    Success(Caller),
+    NotFound,
+    Suspended,
+    Lapsed,
 }

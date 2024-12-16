@@ -4,7 +4,6 @@ export const emptyPermissions: SlashCommandPermissions = {
     chatPermissions: [],
     communityPermissions: [],
     messagePermissions: [],
-    threadPermissions: [],
 };
 
 export const builtinBot: InternalBot = {
@@ -18,7 +17,6 @@ export const builtinBot: InternalBot = {
             permissions: {
                 ...emptyPermissions,
                 messagePermissions: ["crypto"],
-                threadPermissions: ["crypto"],
             },
             params: [
                 {
@@ -49,7 +47,6 @@ export const builtinBot: InternalBot = {
             permissions: {
                 ...emptyPermissions,
                 messagePermissions: ["text"],
-                threadPermissions: ["text"],
             },
             params: [],
         },
@@ -59,7 +56,6 @@ export const builtinBot: InternalBot = {
             permissions: {
                 ...emptyPermissions,
                 messagePermissions: ["giphy"],
-                threadPermissions: ["giphy"],
             },
             params: [
                 {
@@ -80,7 +76,6 @@ export const builtinBot: InternalBot = {
             permissions: {
                 ...emptyPermissions,
                 messagePermissions: ["text"],
-                threadPermissions: ["text"],
             },
             params: [
                 {
@@ -166,7 +161,6 @@ export const builtinBot: InternalBot = {
             permissions: {
                 ...emptyPermissions,
                 messagePermissions: ["poll"],
-                threadPermissions: ["poll"],
             },
             params: [],
         },
@@ -201,7 +195,6 @@ export const builtinBot: InternalBot = {
             permissions: {
                 ...emptyPermissions,
                 messagePermissions: ["text"],
-                threadPermissions: ["text"],
             },
             params: [
                 {

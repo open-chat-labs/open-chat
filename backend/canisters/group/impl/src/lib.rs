@@ -22,7 +22,7 @@ use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, 
 use model::user_event_batch::UserEventBatch;
 use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
-use principal_to_user_id_map::{deserialize_principal_to_user_id_map_from_heap, PrincipalToUserIdMap};
+use principal_to_user_id_map::PrincipalToUserIdMap;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
@@ -33,10 +33,10 @@ use std::ops::Deref;
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    AccessGateConfigInternal, Achievement, BuildVersion, CanisterId, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles,
-    Document, Empty, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions,
-    GroupSubtype, MessageIndex, Milliseconds, MultiUserChat, Notification, Rules, SlashCommandPermissions, TimestampMillis,
-    Timestamped, UserId, UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
+    AccessGateConfigInternal, Achievement, BotCaller, BuildVersion, Caller, CanisterId, ChatId, ChatMetrics, CommunityId,
+    Cryptocurrency, Cycles, Document, Empty, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership,
+    GroupPermissions, GroupSubtype, MessageIndex, Milliseconds, MultiUserChat, Notification, Rules, SlashCommandPermissions,
+    TimestampMillis, Timestamped, UserId, UserType, MAX_THREADS_IN_SUMMARY, SNS_FEE_SHARE_PERCENT,
 };
 use user_canister::GroupCanisterEvent;
 use utils::env::Environment;
@@ -432,12 +432,46 @@ impl RuntimeState {
             },
         }
     }
+
+    pub fn verified_caller(&self, mut bot_context: Option<BotCaller>) -> CallerResult {
+        use CallerResult::*;
+
+        let caller = self.env.caller();
+
+        if caller == self.data.user_index_canister_id {
+            return Success(Caller::OCBot(OPENCHAT_BOT_USER_ID));
+        }
+
+        let user_or_principal = bot_context.as_ref().map(|bc| bc.initiator.into()).unwrap_or(caller);
+
+        let Some(member) = self.data.get_member(user_or_principal) else {
+            return NotFound;
+        };
+
+        if member.suspended().value {
+            return Suspended;
+        }
+
+        if let Some(bot_context) = bot_context.take() {
+            if self.data.chat.bots.get(&bot_context.bot).is_some() {
+                Success(Caller::BotV2(bot_context))
+            } else {
+                NotFound
+            }
+        } else {
+            match member.user_type() {
+                UserType::User => Success(Caller::User(member.user_id())),
+                UserType::BotV2 => NotFound,
+                UserType::Bot => Success(Caller::Bot(member.user_id())),
+                UserType::OcControlledBot => Success(Caller::OCBot(member.user_id())),
+            }
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub chat: GroupChatCore,
-    #[serde(deserialize_with = "deserialize_principal_to_user_id_map_from_heap")]
     pub principal_to_user_id_map: PrincipalToUserIdMap,
     pub group_index_canister_id: CanisterId,
     pub local_group_index_canister_id: CanisterId,
@@ -802,4 +836,10 @@ pub enum StartImportIntoCommunityResult {
 pub struct StartImportIntoCommunityResultSuccess {
     pub total_bytes: u64,
     pub transfers_required: HashMap<CanisterId, (u128, u128)>,
+}
+
+pub enum CallerResult {
+    Success(Caller),
+    NotFound,
+    Suspended,
 }

@@ -1,11 +1,13 @@
 <script lang="ts">
     import {
         emptyBotInstance,
+        emptySlashCommandPermissions,
+        OpenChat,
         validateBot,
         ValidationErrors,
         type ExternalBot,
-        type SlashCommandPermissions,
         type SlashCommandSchema,
+        type ValidationErrorMessages,
     } from "openchat-client";
     import { i18nKey } from "../../i18n/i18n";
     import Input from "../Input.svelte";
@@ -18,6 +20,9 @@
     import ValidatingInput from "./ValidatingInput.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import { debouncedDerived } from "../../utils/reactivity.svelte";
+    import { getContext } from "svelte";
+
+    const client = getContext<OpenChat>("client");
 
     interface Props {
         valid: boolean;
@@ -33,14 +38,36 @@
     let errors = $derived.by(
         debouncedDerived(
             () => [$state.snapshot(candidate)],
-            () => {
-                console.log("Validating candidate");
-                return validateBot(candidate);
+            async () => {
+                const errors = validateBot(candidate);
+                if (errors.get("bot_name").length == 0) {
+                    errors.addErrors("bot_name", await checkUsername(candidate.name));
+                }
+                return errors;
             },
             300,
             new ValidationErrors(),
         ),
     );
+
+    function checkUsername(value: string): Promise<ValidationErrorMessages> {
+        return client
+            .checkUsername(value, true)
+            .then((resp) => {
+                if (resp === "success") {
+                    return [];
+                }
+
+                if (resp === "username_taken") {
+                    return [i18nKey("bots.builder.errors.duplicateName")];
+                }
+
+                return [i18nKey("bots.builder.errors.botNameInvalid")];
+            })
+            .catch((_) => {
+                return [i18nKey("bots.builder.errors.nameCheckError")];
+            });
+    }
 
     // TODO we will probably need to come back to this to flesh out edit mode (is the bot dirty etc)
     // let editing = $derived(bot !== undefined);
@@ -53,12 +80,11 @@
     });
 
     $effect(() => {
-        console.log("Candidate updated");
         onUpdate($state.snapshot(candidate));
     });
 
     function botAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>) {
-        candidate.avatar = ev.detail.url;
+        candidate.avatarUrl = ev.detail.url;
     }
 
     function onSubmit(e: Event) {
@@ -85,16 +111,7 @@
             name: "",
             description: "",
             params: [],
-            permissions: emptyPermissions(),
-        };
-    }
-
-    function emptyPermissions(): SlashCommandPermissions {
-        return {
-            chatPermissions: [],
-            communityPermissions: [],
-            messagePermissions: [],
-            threadPermissions: [],
+            permissions: emptySlashCommandPermissions(),
         };
     }
 </script>
@@ -114,9 +131,20 @@
         <EditableAvatar
             overlayIcon
             size={"medium"}
-            image={candidate.avatar}
+            image={candidate.avatarUrl}
             on:imageSelected={botAvatarSelected} />
     </div>
+
+    <Legend required label={i18nKey("bots.builder.principalLabel")}></Legend>
+    <ValidatingInput
+        autofocus
+        minlength={3}
+        maxlength={50}
+        invalid={errors.has("bot_principal")}
+        placeholder={i18nKey("bots.builder.principalPlaceholder")}
+        error={errors.get("bot_principal")}
+        bind:value={candidate.id}>
+    </ValidatingInput>
 
     <Legend
         required

@@ -200,8 +200,10 @@
                     );
                 }
             })
-            .catch(() => (swapId = undefined))
-            .finally(() => (busy = false));
+            .catch(() => {
+                swapId = undefined;
+                busy = false;
+            });
     }
 
     function dexName(dex: DexId): string {

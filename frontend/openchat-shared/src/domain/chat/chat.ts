@@ -767,7 +767,28 @@ export type ChatEvent =
     | UsersInvitedEvent
     | MembersAddedToDefaultChannel
     | EmptyEvent
-    | ExternalUrlUpdated;
+    | ExternalUrlUpdated
+    | BotAdded
+    | BotRemoved
+    | BotUpdated;
+
+export type BotAdded = {
+    kind: "bot_added";
+    userId: string;
+    addedBy: string;
+};
+
+export type BotRemoved = {
+    kind: "bot_removed";
+    userId: string;
+    removedBy: string;
+};
+
+export type BotUpdated = {
+    kind: "bot_updated";
+    userId: string;
+    updatedBy: string;
+};
 
 export type MembersAdded = {
     kind: "members_added";

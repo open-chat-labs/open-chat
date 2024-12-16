@@ -1489,7 +1489,7 @@ export function mergeEventsAndLocalUpdates(
     if (unconfirmed.length > 0) {
         unconfirmed.sort(sortByTimestampThenEventIndex);
 
-        let unconfirmedAdded = new Set<bigint>();
+        const unconfirmedAdded = new Set<bigint>();
         for (const message of unconfirmed) {
             // Only include unconfirmed events that are either contiguous with the loaded confirmed events, or are the
             // first events in a new chat

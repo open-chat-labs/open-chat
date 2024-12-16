@@ -138,6 +138,10 @@
                 @include nice-scrollbar();
                 overflow-wrap: anywhere;
 
+                :global(.markdown-wrapper pre) {
+                    text-wrap: auto;
+                }
+
                 &.fixed {
                     height: toRem(130);
                 }

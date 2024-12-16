@@ -1,5 +1,4 @@
 use crate::guards::caller_is_local_user_index_canister;
-use crate::timer_job_types::{JoinUserToGroup, TimerJob};
 use crate::{mutate_state, RuntimeState, UserRegisteredEventPayload, ONE_MB};
 use candid::Principal;
 use canister_api_macros::update;
@@ -57,17 +56,6 @@ fn handle_event(event: LocalUserIndexEvent, caller: Principal, now: TimestampMil
                     channels: ev.channels,
                     community_canister_timestamp: ev.community_canister_timestamp,
                 }),
-            );
-        }
-        LocalUserIndexEvent::JoinUserToGroup(ev) => {
-            state.data.timer_jobs.enqueue_job(
-                TimerJob::JoinUserToGroup(JoinUserToGroup {
-                    user_id: ev.user_id,
-                    group_id: ev.chat_id,
-                    attempt: 0,
-                }),
-                now,
-                now,
             );
         }
         LocalUserIndexEvent::OpenChatBotMessage(ev) => {

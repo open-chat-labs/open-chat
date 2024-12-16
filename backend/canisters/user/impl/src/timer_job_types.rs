@@ -394,7 +394,10 @@ impl Job for SendMessageToChannelJob {
 
 impl Job for MarkVideoCallEndedJob {
     fn execute(self) {
-        mutate_state(|state| end_video_call_impl(self.0, state));
+        let response = mutate_state(|state| end_video_call_impl(self.0.clone(), state));
+        if !matches!(response, user_canister::end_video_call::Response::Success) {
+            error!(?response, args = ?self.0, "Failed to mark video call ended");
+        }
     }
 }
 

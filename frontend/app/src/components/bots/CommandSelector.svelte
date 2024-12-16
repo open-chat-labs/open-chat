@@ -1,7 +1,11 @@
 <script lang="ts">
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../HoverIcon.svelte";
-    import { type FlattenedCommand } from "openchat-shared";
+    import {
+        emptySlashCommandPermissions,
+        hasEveryRequiredPermission,
+        type FlattenedCommand,
+    } from "openchat-shared";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import {
@@ -19,7 +23,21 @@
     import ErrorMessage from "../ErrorMessage.svelte";
     import { getContext, onMount } from "svelte";
     import Logo from "../Logo.svelte";
-    import type { MessageContext, OpenChat } from "openchat-client";
+    import type {
+        ChatSummary,
+        CommunitySummary,
+        MessageContext,
+        OpenChat,
+        PermissionRole,
+        SlashCommandPermissions,
+    } from "openchat-client";
+    import {
+        currentCommunityBots,
+        isPermitted,
+        selectedChatStore,
+        selectedCommunity,
+        selectedMessageContext,
+    } from "openchat-client";
     import {
         messagePermissionsForSelectedChat,
         threadPermissionsForSelectedChat,
@@ -40,24 +58,75 @@
 
     let { onCancel, onNoMatches, onCommandSent, mode, messageContext }: Props = $props();
 
+    let emptyPermissions = emptySlashCommandPermissions();
+
     let commands = $derived.by(() =>
         $commandsStore.filter((c) => {
-            return hasPermissionForCommand(c);
+            return hasPermissionForCommand(
+                c,
+                $currentCommunityBots,
+                $selectedChatStore,
+                $selectedCommunity,
+            );
         }),
     );
 
-    // We need to check that the user in the current context has all of the permissions that the command requires
-    // It's annoying that this can't really be in the botState file because it combines runes and stores
-    function hasPermissionForCommand(command: FlattenedCommand): boolean {
+    function userHasPermissionForCommand(
+        command: FlattenedCommand,
+        chat: ChatSummary | undefined,
+        community: CommunitySummary | undefined,
+    ): boolean {
+        const chatPermitted =
+            chat !== undefined && chat.kind !== "direct_chat"
+                ? [...command.permissions.chatPermissions].every((p) =>
+                      isPermitted(chat.membership.role, chat.permissions[p] as PermissionRole),
+                  )
+                : true;
+
+        const communityPermitted =
+            community !== undefined
+                ? [...command.permissions.communityPermissions].every((p) =>
+                      isPermitted(
+                          community.membership.role,
+                          community.permissions[p] as PermissionRole,
+                      ),
+                  )
+                : true;
+
         switch (mode) {
             case "message":
-                return [...command.permissions.messagePermissions].every((p) =>
-                    $messagePermissionsForSelectedChat.get(p),
+                return (
+                    chatPermitted &&
+                    communityPermitted &&
+                    [...command.permissions.messagePermissions].every((p) =>
+                        $messagePermissionsForSelectedChat.has(p),
+                    )
                 );
             case "thread":
-                return [...command.permissions.messagePermissions].every((p) =>
-                    $threadPermissionsForSelectedChat.get(p),
+                return (
+                    chatPermitted &&
+                    communityPermitted &&
+                    [...command.permissions.messagePermissions].every((p) =>
+                        $threadPermissionsForSelectedChat.has(p),
+                    )
                 );
+        }
+    }
+
+    function hasPermissionForCommand(
+        command: FlattenedCommand,
+        currenCommunityBots: Map<string, SlashCommandPermissions>,
+        chat: ChatSummary | undefined,
+        community: CommunitySummary | undefined,
+    ): boolean {
+        const userPermission = userHasPermissionForCommand(command, chat, community);
+        if (command.kind === "external_bot") {
+            // for an external bot we also need to know that the bot has been granted all the permissions it requires
+            const granted = currenCommunityBots.get(command.botId) ?? emptyPermissions;
+            const required = command.permissions;
+            return userPermission && hasEveryRequiredPermission(required, granted);
+        } else {
+            return userPermission;
         }
     }
 
@@ -67,9 +136,13 @@
     }
 
     function sendCommandIfValid() {
-        if ($selectedCommand && $instanceValid) {
+        if ($selectedCommand && $instanceValid && $selectedChatStore && $selectedMessageContext) {
             client
-                .executeBotCommand(createBotInstance($selectedCommand, messageContext))
+                .executeBotCommand(
+                    $selectedChatStore,
+                    $selectedMessageContext.threadRootMessageIndex,
+                    createBotInstance($selectedCommand, messageContext),
+                )
                 .then((success) => {
                     if (!success) {
                         toastStore.showFailureToast(i18nKey("bots.failed"));

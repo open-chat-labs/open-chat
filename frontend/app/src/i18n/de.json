@@ -149,6 +149,14 @@
     "blockUserFailed": "Benutzer kann nicht blockiert werden",
     "blockUserSucceeded": "Benutzer wurde gesperrt",
     "bots": {
+        "add": {
+            "addBot": "Bot hinzufügen",
+            "choosePermissions": "Berechtigungen",
+            "failure": "Es ist uns leider nicht gelungen, den Bot hinzuzufügen.",
+            "noPermissions": "Keine besonderen Berechtigungen erforderlich",
+            "permissionsInfo": "Dieser Bot fordert die folgenden Berechtigungen an. Wenn Sie die erteilten Berechtigungen einschränken, werden auch die verfügbaren Befehle eingeschränkt.",
+            "title": "Bot zur Community hinzufügen"
+        },
         "builder": {
             "addAnother": "Weitere hinzufügen",
             "addChoice": "Auswahl hinzufügen",
@@ -171,11 +179,15 @@
             "endpointRules": "Muss ein gültiger Ursprung oder eine Kanister-ID sein",
             "errors": {
                 "alphaOnly": "Darf nur alphanumerische Zeichen und Unterstriche enthalten",
+                "botNameInvalid": "Dieser Botname ist ungültig",
                 "duplicateCommands": "Bot enthält doppelte Befehle",
+                "duplicateName": "Dieser Botname ist bereits vergeben",
                 "duplicateParams": "Befehl enthält doppelte Parameter",
                 "endpoint": "Der Endpunkt muss ein gültiger Ursprung oder eine gültige Kanister-ID sein",
                 "minLength": "Muss mindestens {n} Zeichen haben",
-                "noCommands": "Ein Bot muss mindestens einen Befehl enthalten"
+                "nameCheckError": "Beim Überprüfen des Botnamens ist ein Fehler aufgetreten",
+                "noCommands": "Ein Bot muss mindestens einen Befehl enthalten",
+                "principal": "Sie müssen einen gültigen Auftraggeber eingeben, um den Bot zu identifizieren"
             },
             "iconLabel": "Bot-Symbol",
             "maxLengthLabel": "Maximallänge",
@@ -203,6 +215,8 @@
             "permScopeCommunity": "Gemeinschaft",
             "permScopeMessage": "Nachricht",
             "permScopeThread": "Faden",
+            "principalLabel": "Rektor",
+            "principalPlaceholder": "Geben Sie den Bot-Hauptbenutzer ein",
             "required": "Erforderlicher Parameter",
             "requiredDesc": "Ist dies ein erforderlicher Parameter für den Befehl",
             "title": "Einen Bot erstellen",
@@ -229,6 +243,10 @@
         },
         "diamond": {
             "desc": "Posten Sie einen Link, um die Diamond-Mitgliedschaft zu erklären"
+        },
+        "explorer": {
+            "addBots": "Bots hinzufügen",
+            "loadMore": "Mehr laden..."
         },
         "failed": "Entschuldigung, wir konnten den Bot-Befehl nicht ausführen",
         "faq": {

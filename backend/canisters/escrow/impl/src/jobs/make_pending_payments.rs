@@ -8,7 +8,7 @@ use icrc_ledger_types::icrc1::transfer::TransferArg;
 use ledger_utils::icrc1::make_transfer;
 use std::cell::Cell;
 use std::time::Duration;
-use tracing::trace;
+use tracing::{error, trace};
 use types::icrc1::{Account, CompletedCryptoTransaction};
 
 thread_local! {
@@ -51,56 +51,62 @@ async fn process_payment(pending_payment: PendingPayment) {
         amount: pending_payment.amount.into(),
     };
 
-    match make_transfer(pending_payment.token_info.ledger, &args, true).await {
-        Ok(Ok(block_index)) => {
-            mutate_state(|state| {
-                if let Some(swap) = state.data.swaps.get_mut(pending_payment.swap_id) {
-                    let transfer = CompletedCryptoTransaction {
-                        ledger: pending_payment.token_info.ledger,
-                        token: pending_payment.token_info.token,
-                        amount: pending_payment.amount,
-                        from: Account {
-                            owner: state.env.canister_id(),
-                            subaccount: args.from_subaccount,
-                        }
-                        .into(),
-                        to: Account::from(pending_payment.user_id).into(),
-                        fee: pending_payment.token_info.fee,
-                        memo: None,
-                        created: created_at_time,
-                        block_index,
-                    };
-                    let notify_status_change = match pending_payment.reason {
-                        PendingPaymentReason::Swap(_) => {
-                            if pending_payment.token_info.ledger == swap.token0.ledger {
-                                swap.token0_transfer_out = Some(transfer);
-                            } else {
-                                swap.token1_transfer_out = Some(transfer);
-                            }
-                            swap.is_complete()
-                        }
-                        PendingPaymentReason::Refund => {
-                            swap.refunds.push(transfer);
-                            matches!(
-                                swap.status(state.env.now()),
-                                SwapStatus::Expired(_) | SwapStatus::Cancelled(_)
-                            )
-                        }
-                    };
+    let response = make_transfer(pending_payment.token_info.ledger, &args, true).await;
 
-                    if notify_status_change {
-                        state.data.notify_status_change_queue.push(swap.id);
-                        crate::jobs::notify_status_change::start_job_if_required(state);
+    mutate_state(|state| match response {
+        Ok(Ok(block_index)) => {
+            if let Some(swap) = state.data.swaps.get_mut(pending_payment.swap_id) {
+                let transfer = CompletedCryptoTransaction {
+                    ledger: pending_payment.token_info.ledger,
+                    token: pending_payment.token_info.token,
+                    amount: pending_payment.amount,
+                    from: Account {
+                        owner: state.env.canister_id(),
+                        subaccount: args.from_subaccount,
                     }
+                    .into(),
+                    to: Account::from(pending_payment.user_id).into(),
+                    fee: pending_payment.token_info.fee,
+                    memo: None,
+                    created: created_at_time,
+                    block_index,
+                };
+                let notify_status_change = match pending_payment.reason {
+                    PendingPaymentReason::Swap(_) => {
+                        if pending_payment.token_info.ledger == swap.token0.ledger {
+                            swap.token0_transfer_out = Some(transfer);
+                        } else {
+                            swap.token1_transfer_out = Some(transfer);
+                        }
+                        swap.is_complete()
+                    }
+                    PendingPaymentReason::Refund => {
+                        swap.refunds.push(transfer);
+                        matches!(
+                            swap.status(state.env.now()),
+                            SwapStatus::Expired(_) | SwapStatus::Cancelled(_)
+                        )
+                    }
+                };
+
+                if notify_status_change {
+                    state.data.notify_status_change_queue.push(swap.id);
+                    crate::jobs::notify_status_change::start_job_if_required(state);
                 }
-            });
+            }
         }
-        Ok(Err(_)) => {}
-        Err(_) => {
-            mutate_state(|state| {
-                state.data.pending_payments_queue.push(pending_payment);
-                start_job_if_required(state);
-            });
+        Ok(Err(error)) => {
+            error!(?error, ?args, "Failed to process payment");
+            if let Some(swap) = state.data.swaps.get_mut(pending_payment.swap_id) {
+                swap.errors.push(format!("Ledger returned an error: {error:?}"));
+            }
         }
-    }
+        Err(error) => {
+            if let Some(swap) = state.data.swaps.get_mut(pending_payment.swap_id) {
+                swap.errors.push(format!("Failed to call into ledger: {error:?}"));
+            }
+            state.data.pending_payments_queue.push(pending_payment);
+            start_job_if_required(state);
+        }
+    });
 }

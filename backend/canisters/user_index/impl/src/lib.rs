@@ -6,7 +6,7 @@ use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use constants::{DAY_IN_MS, DEV_TEAM_DFX_PRINCIPAL};
+use constants::DAY_IN_MS;
 use event_store_producer::{EventBuilder, EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -116,11 +116,6 @@ impl RuntimeState {
         } else {
             false
         }
-    }
-
-    pub fn is_caller_dev_team_dfx_principal(&self) -> bool {
-        let caller = self.env.caller();
-        caller == DEV_TEAM_DFX_PRINCIPAL
     }
 
     pub fn is_caller_modclub(&self) -> bool {
@@ -351,7 +346,6 @@ struct Data {
     pub escrow_canister_id: CanisterId,
     pub translations_canister_id: CanisterId,
     pub event_store_client: EventStoreClient<CdkRuntime>,
-    #[serde(skip_deserializing, default = "storage_index_user_sync_queue")]
     pub storage_index_user_sync_queue: GroupedTimerJobQueue<StorageIndexUserConfigBatch>,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub pending_payments_queue: PendingPaymentsQueue,
@@ -366,7 +360,6 @@ struct Data {
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
     pub nns_governance_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
-    #[serde(default = "website_canister_id")]
     pub website_canister_id: CanisterId,
     pub platform_moderators_group: Option<ChatId>,
     pub reported_messages: ReportedMessages,
@@ -388,14 +381,6 @@ struct Data {
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
     #[serde(default)]
     pub streak_insurance_logs: StreakInsuranceLogs,
-}
-
-fn storage_index_user_sync_queue() -> GroupedTimerJobQueue<StorageIndexUserConfigBatch> {
-    GroupedTimerJobQueue::new(1, false)
-}
-
-fn website_canister_id() -> CanisterId {
-    CanisterId::from_text("6hsbt-vqaaa-aaaaf-aaafq-cai").unwrap()
 }
 
 impl Data {

@@ -1,6 +1,7 @@
 import type {
     AddMembersToChannelResponse,
     BlockCommunityUserResponse,
+    BotGroupDetails,
     ChangeCommunityRoleResponse,
     ChannelMatch,
     ChannelSummaryResponse,
@@ -64,6 +65,9 @@ import type {
     CommunitySetMemberDisplayNameResponse,
     CommunityDeleteUserGroupsResponse,
     CommunityUpdateUserGroupResponse,
+    CommunityAddBotResponse,
+    CommunityRemoveBotResponse,
+    BotGroupDetails as ApiBotGroupDetails,
 } from "../../typebox";
 import { mapOptional, optionUpdateV2, principalBytesToString } from "../../utils/mapping";
 import {
@@ -78,12 +82,29 @@ import {
     memberRole,
     mentions,
     messageEvent,
+    slashCommandPermissions,
     threadSyncDetails,
     updatedEvent,
     userGroup,
 } from "../common/chatMappersV2";
 import { identity } from "../../utils/mapping";
 import { mapCommonResponses } from "../common/commonResponseMapper";
+
+export function removeBotResponse(value: CommunityRemoveBotResponse): boolean {
+    if (value === "Success") {
+        return true;
+    }
+    console.warn("CommunityRemoveBotResponse failed with ", value);
+    return false;
+}
+
+export function addBotResponse(value: CommunityAddBotResponse): boolean {
+    if (value === "Success" || value === "AlreadyAdded") {
+        return true;
+    }
+    console.warn("CommunityAddBotResponse failed with ", value);
+    return false;
+}
 
 export function addMembersToChannelResponse(
     value: CommunityAddMembersToChannelResponse,
@@ -467,11 +488,19 @@ export function communityDetailsResponse(
             lastUpdated: value.Success.timestamp,
             userGroups: new Map(value.Success.user_groups.map(userGroupDetails)),
             referrals: new Set(value.Success.referrals.map(principalBytesToString)),
+            bots: value.Success.bots.map(botGroupDetails),
         };
     } else {
         console.warn("CommunityDetails failed with", value);
         return "failure";
     }
+}
+
+export function botGroupDetails(value: ApiBotGroupDetails): BotGroupDetails {
+    return {
+        id: principalBytesToString(value.user_id),
+        permissions: slashCommandPermissions(value.permissions),
+    };
 }
 
 export function userGroupDetails(value: TUserGroupDetails): [number, UserGroupDetails] {
@@ -518,6 +547,8 @@ export function communityDetailsUpdatesResponse(
                     value.Success.referrals_removed.map(principalBytesToString),
                 ),
                 referralsAdded: new Set(value.Success.referrals_added.map(principalBytesToString)),
+                botsAddedOrUpdated: value.Success.bots_added_or_updated.map(botGroupDetails),
+                botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
             };
         } else if ("SuccessNoUpdates" in value) {
             return {

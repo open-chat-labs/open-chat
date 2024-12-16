@@ -10,6 +10,7 @@ import {
 } from "../../utils/mapping";
 import type { AgentConfig } from "../../config";
 import {
+    addBotResponse,
     addMembersToChannelResponse,
     apiCommunityRole,
     apiMemberRole,
@@ -24,6 +25,7 @@ import {
     exploreChannelsResponse,
     followThreadResponse,
     importGroupResponse,
+    removeBotResponse,
     removeMemberFromChannelResponse,
     removeMemberResponse,
     reportMessageResponse,
@@ -37,9 +39,7 @@ import {
 } from "./mappersV2";
 import {
     acceptP2PSwapResponse,
-    apiAccessGate,
     apiAccessGateConfig,
-    apiMaybeAccessGate,
     addRemoveReactionResponse,
     apiGroupPermissions,
     apiMessageContent,
@@ -72,6 +72,9 @@ import {
     updateGroupResponse,
     videoCallParticipantsResponse,
     apiMaybeAccessGateConfig,
+    apiChatPermission,
+    apiCommunityPermission,
+    apiMessagePermission,
 } from "../common/chatMappersV2";
 import type {
     AddMembersToChannelResponse,
@@ -140,6 +143,7 @@ import type {
     SetVideoCallPresenceResponse,
     VideoCallParticipantsResponse,
     AccessGateConfig,
+    SlashCommandPermissions,
 } from "openchat-shared";
 import {
     textToCode,
@@ -287,6 +291,10 @@ import {
     CommunityVideoCallParticipantsArgs,
     CommunityVideoCallParticipantsResponse,
     Empty as TEmpty,
+    CommunityAddBotArgs,
+    CommunityAddBotResponse,
+    CommunityRemoveBotArgs,
+    CommunityRemoveBotResponse,
 } from "../../typebox";
 
 export class CommunityClient extends CandidService {
@@ -423,7 +431,6 @@ export class CommunityClient extends CandidService {
                 permissions_v2: apiGroupPermissions(channel.permissions),
                 rules: channel.rules,
                 gate_config: apiMaybeAccessGateConfig(channel.gateConfig),
-                gate: apiMaybeAccessGate(channel.gateConfig.gate),
                 messages_visible_to_non_members: channel.messagesVisibleToNonMembers,
             },
             (resp) => createGroupResponse(resp, channel.id),
@@ -1172,23 +1179,24 @@ export class CommunityClient extends CandidService {
             : dataClient.uploadData(event.event.content, [chatId.communityId]);
 
         return uploadContentPromise.then((content) => {
-            const newContent = content ?? event.event.content;
+            const newEvent =
+                content !== undefined ? { ...event, event: { ...event.event, content } } : event;
             const args = {
                 channel_id: BigInt(chatId.channelId),
-                content: apiMessageContent(newContent),
-                message_id: event.event.messageId,
+                content: apiMessageContent(newEvent.event.content),
+                message_id: newEvent.event.messageId,
                 sender_name: senderName,
                 sender_display_name: senderDisplayName,
                 community_rules_accepted: communityRulesAccepted,
                 channel_rules_accepted: channelRulesAccepted,
-                replies_to: mapOptional(event.event.repliesTo, (replyContext) => ({
+                replies_to: mapOptional(newEvent.event.repliesTo, (replyContext) => ({
                     event_index: replyContext.eventIndex,
                 })),
                 mentioned: mentioned.map(apiUserV2),
-                forwarding: event.event.forwarded,
+                forwarding: newEvent.event.forwarded,
                 thread_root_message_index: threadRootMessageIndex,
                 message_filter_failed: messageFilterFailed,
-                block_level_markdown: event.event.blockLevelMarkdown,
+                block_level_markdown: newEvent.event.blockLevelMarkdown,
                 new_achievement: newAchievement,
             };
             return this.executeMsgpackUpdate(
@@ -1200,20 +1208,17 @@ export class CommunityClient extends CandidService {
                 onRequestAccepted,
             )
                 .then((resp) => {
-                    const retVal: [SendMessageResponse, Message] = [
-                        resp,
-                        { ...event.event, content: newContent },
-                    ];
+                    const retVal: [SendMessageResponse, Message] = [resp, newEvent.event];
                     setCachedMessageFromSendResponse(
                         this.db,
                         chatId,
-                        event,
+                        newEvent,
                         threadRootMessageIndex,
                     )(retVal);
                     return retVal;
                 })
                 .catch((err) => {
-                    recordFailedMessage(this.db, chatId, event, threadRootMessageIndex);
+                    recordFailedMessage(this.db, chatId, newEvent, threadRootMessageIndex);
                     throw err;
                 });
         });
@@ -1424,12 +1429,6 @@ export class CommunityClient extends CandidService {
                 rules: mapOptional(rules, apiUpdatedRules),
                 public: isPublic,
                 events_ttl: apiOptionUpdateV2(identity, eventsTimeToLiveMs),
-                gate:
-                    gateConfig === undefined
-                        ? "NoChange"
-                        : gateConfig.gate.kind === "no_gate"
-                          ? "SetToNone"
-                          : { SetToSome: apiAccessGate(gateConfig.gate) },
                 gate_config:
                     gateConfig === undefined
                         ? "NoChange"
@@ -1476,12 +1475,6 @@ export class CommunityClient extends CandidService {
                 rules: mapOptional(rules, apiUpdatedRules),
                 public: isPublic,
                 primary_language: primaryLanguage,
-                gate:
-                    gateConfig === undefined
-                        ? "NoChange"
-                        : gateConfig.gate.kind === "no_gate"
-                          ? "SetToNone"
-                          : { SetToSome: apiAccessGate(gateConfig.gate) },
                 gate_config:
                     gateConfig === undefined
                         ? "NoChange"
@@ -1724,6 +1717,36 @@ export class CommunityClient extends CandidService {
             (value) => value === "Success",
             CommunityCancelInvitesArgs,
             CommunityCancelInvitesResponse,
+        );
+    }
+
+    addBot(botId: string, grantedPermissions: SlashCommandPermissions): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "add_bot",
+            {
+                bot_id: principalStringToBytes(botId),
+                granted_permissions: {
+                    chat: grantedPermissions.chatPermissions.map(apiChatPermission),
+                    community: grantedPermissions.communityPermissions.map(apiCommunityPermission),
+                    message: grantedPermissions.messagePermissions.map(apiMessagePermission),
+                    thread: grantedPermissions.messagePermissions.map(apiMessagePermission),
+                },
+            },
+            addBotResponse,
+            CommunityAddBotArgs,
+            CommunityAddBotResponse,
+        );
+    }
+
+    removeBot(botId: string): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "add_bot",
+            {
+                bot_id: principalStringToBytes(botId),
+            },
+            removeBotResponse,
+            CommunityRemoveBotArgs,
+            CommunityRemoveBotResponse,
         );
     }
 }

@@ -118,6 +118,8 @@ import type {
     AcceptP2PSwapResponse,
     AccessGateConfig,
     SetPinNumberResponse,
+    MessagePermission,
+    SlashCommandPermissions,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -278,6 +280,10 @@ import type {
     VideoCallPresence as TVideoCallPresence,
     VideoCallType as TVideoCallType,
     VideoContent as TVideoContent,
+    GroupPermission,
+    CommunityPermission,
+    MessagePermission as ApiMessagePermission,
+    SlashCommandPermissions as ApiSlashCommandPermissions,
 } from "../../typebox";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
@@ -488,6 +494,30 @@ export function event(value: TChatEvent): ChatEvent {
             kind: "external_url_updated",
             newUrl: mapOptional(value.ExternalUrlUpdated.new_url, identity),
             updatedBy: principalBytesToString(value.ExternalUrlUpdated.updated_by),
+        };
+    }
+
+    if ("BotAdded" in value) {
+        return {
+            kind: "bot_added",
+            userId: principalBytesToString(value.BotAdded.user_id),
+            addedBy: principalBytesToString(value.BotAdded.added_by),
+        };
+    }
+
+    if ("BotRemoved" in value) {
+        return {
+            kind: "bot_removed",
+            userId: principalBytesToString(value.BotRemoved.user_id),
+            removedBy: principalBytesToString(value.BotRemoved.removed_by),
+        };
+    }
+
+    if ("BotUpdated" in value) {
+        return {
+            kind: "bot_updated",
+            userId: principalBytesToString(value.BotUpdated.user_id),
+            updatedBy: principalBytesToString(value.BotUpdated.updated_by),
         };
     }
 
@@ -3131,4 +3161,158 @@ export function apiDexId(dex: DexId): TExchangeId {
         case "sonic":
             return "Sonic";
     }
+}
+
+export function apiChatPermission(perm: keyof ChatPermissions): GroupPermission {
+    switch (perm) {
+        case "addMembers":
+            return "AddMembers";
+        case "changeRoles":
+            return "ChangeRoles";
+        case "deleteMessages":
+            return "DeleteMessages";
+        case "inviteUsers":
+            return "InviteUsers";
+        case "mentionAllMembers":
+            return "MentionAllMembers";
+        case "pinMessages":
+            return "PinMessages";
+        case "reactToMessages":
+            return "ReactToMessages";
+        case "removeMembers":
+            return "RemoveMembers";
+        case "startVideoCall":
+            return "StartVideoCall";
+        case "updateGroup":
+            return "UpdateGroup";
+        default:
+            throw new Error(`Unexpected ChatPermission (${perm}) received`);
+    }
+}
+
+export function apiCommunityPermission(perm: keyof CommunityPermissions): CommunityPermission {
+    switch (perm) {
+        case "changeRoles":
+            return "ChangeRoles";
+        case "createPrivateChannel":
+            return "CreatePrivateChannel";
+        case "createPublicChannel":
+            return "CreatePublicChannel";
+        case "inviteUsers":
+            return "InviteUsers";
+        case "manageUserGroups":
+            return "ManageUserGroups";
+        case "removeMembers":
+            return "RemoveMembers";
+        case "updateDetails":
+            return "UpdateDetails";
+    }
+}
+
+export function apiMessagePermission(perm: MessagePermission): ApiMessagePermission {
+    switch (perm) {
+        case "audio":
+            return "Audio";
+        case "crypto":
+            return "Crypto";
+        case "file":
+            return "File";
+        case "giphy":
+            return "Giphy";
+        case "image":
+            return "Image";
+        case "p2pSwap":
+            return "P2pSwap";
+        case "poll":
+            return "Poll";
+        case "prize":
+            return "Prize";
+        case "text":
+            return "Text";
+        case "video":
+            return "Video";
+        default:
+            throw new Error(`Unexpect MessagePermission (${perm})`);
+    }
+}
+
+export function chatPermission(perm: GroupPermission): keyof ChatPermissions {
+    switch (perm) {
+        case "AddMembers":
+            return "addMembers";
+        case "ChangeRoles":
+            return "changeRoles";
+        case "DeleteMessages":
+            return "deleteMessages";
+        case "InviteUsers":
+            return "inviteUsers";
+        case "MentionAllMembers":
+            return "mentionAllMembers";
+        case "PinMessages":
+            return "pinMessages";
+        case "ReactToMessages":
+            return "reactToMessages";
+        case "RemoveMembers":
+            return "removeMembers";
+        case "StartVideoCall":
+            return "startVideoCall";
+        case "UpdateGroup":
+            return "updateGroup";
+    }
+}
+
+export function communityPermission(perm: CommunityPermission): keyof CommunityPermissions {
+    switch (perm) {
+        case "ChangeRoles":
+            return "changeRoles";
+        case "CreatePrivateChannel":
+            return "createPrivateChannel";
+        case "CreatePublicChannel":
+            return "createPublicChannel";
+        case "InviteUsers":
+            return "inviteUsers";
+        case "ManageUserGroups":
+            return "manageUserGroups";
+        case "RemoveMembers":
+            return "removeMembers";
+        case "UpdateDetails":
+            return "updateDetails";
+    }
+}
+
+export function messagePermission(perm: ApiMessagePermission): MessagePermission {
+    switch (perm) {
+        case "Audio":
+            return "audio";
+        case "Crypto":
+            return "crypto";
+        case "File":
+            return "file";
+        case "Giphy":
+            return "giphy";
+        case "Image":
+            return "image";
+        case "P2pSwap":
+            return "p2pSwap";
+        case "Poll":
+            return "poll";
+        case "Prize":
+            return "prize";
+        case "Text":
+            return "text";
+        case "Video":
+            return "video";
+        case "VideoCall":
+            return "text";
+    }
+}
+
+export function slashCommandPermissions(
+    value: ApiSlashCommandPermissions,
+): SlashCommandPermissions {
+    return {
+        chatPermissions: value.chat.map(chatPermission),
+        communityPermissions: value.community.map(communityPermission),
+        messagePermissions: value.message.map(messagePermission),
+    };
 }

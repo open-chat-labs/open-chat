@@ -36,6 +36,7 @@ import type {
     CurrentUserSummary,
     ExternalAchievement,
     MessageActivityEvent,
+    BotsResponse,
 } from "openchat-shared";
 import {
     canRetryMessage,
@@ -53,7 +54,7 @@ import type { CryptocurrencyContent } from "openchat-shared";
 import type { PrizeContent } from "openchat-shared";
 import type { P2PSwapContent } from "openchat-shared";
 
-const CACHE_VERSION = 119;
+const CACHE_VERSION = 121;
 const EARLIEST_SUPPORTED_MIGRATION = 115;
 const MAX_INDEX = 9999999999;
 
@@ -69,6 +70,11 @@ export interface ChatSchema extends DBSchema {
     chats: {
         key: string;
         value: ChatStateFull;
+    };
+
+    bots: {
+        key: string;
+        value: BotsResponse;
     };
 
     chat_events: {
@@ -148,6 +154,17 @@ type MigrationFunction<T> = (
     transaction: IDBPTransaction<T, StoreNames<T>[], "versionchange">,
 ) => Promise<void>;
 
+async function createBotsStore(
+    db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
+    _tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    if (db.objectStoreNames.contains("bots")) {
+        db.deleteObjectStore("bots");
+    }
+    db.createObjectStore("bots");
+}
+
 async function createActivityFeed(
     db: IDBPDatabase<ChatSchema>,
     _principal: Principal,
@@ -191,6 +208,14 @@ async function clearEverything(
     nuke(db);
 }
 
+async function clearEvents(
+    _db: IDBPDatabase<ChatSchema>,
+    _principal: Principal,
+    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    await tx.objectStore("chat_events").clear();
+}
+
 async function clearChatAndGroups(
     _db: IDBPDatabase<ChatSchema>,
     _principal: Principal,
@@ -224,6 +249,13 @@ const migrations: Record<number, MigrationFunction<ChatSchema>> = {
         ]);
     },
     119: clearExternalAchievements,
+    120: async (db, principal, tx) => {
+        await Promise.all([
+            clearCommunityDetailsStore(db, principal, tx),
+            createBotsStore(db, principal, tx),
+        ]);
+    },
+    121: clearEvents,
 };
 
 async function migrate(
@@ -253,6 +285,9 @@ function nuke(db: IDBPDatabase<ChatSchema>) {
     }
     if (db.objectStoreNames.contains("chats")) {
         db.deleteObjectStore("chats");
+    }
+    if (db.objectStoreNames.contains("bots")) {
+        db.deleteObjectStore("bots");
     }
     if (db.objectStoreNames.contains("group_details")) {
         db.deleteObjectStore("group_details");
@@ -296,6 +331,7 @@ function nuke(db: IDBPDatabase<ChatSchema>) {
     db.createObjectStore("localUserIndex");
     db.createObjectStore("externalAchievements");
     db.createObjectStore("activityFeed");
+    db.createObjectStore("bots");
 }
 
 function padMessageIndex(i: number): string {
@@ -349,6 +385,17 @@ export async function openDbAndGetCachedChats(
     if (db !== undefined) {
         return getCachedChats(db, principal);
     }
+}
+
+export async function getCachedBots(
+    db: Database,
+    principal: Principal,
+): Promise<BotsResponse | undefined> {
+    return (await db).get("bots", principal.toString());
+}
+
+export async function setCachedBots(db: Database, principal: Principal, bots: BotsResponse) {
+    (await db).put("bots", bots, principal.toString());
 }
 
 export async function getCachedChats(

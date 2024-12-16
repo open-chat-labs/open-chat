@@ -67,7 +67,6 @@
         SummonWitch,
         RegisterBot,
         UpdateBot,
-        nervousSystemLookup,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -212,8 +211,6 @@
     let messageToForward: Message | undefined = undefined;
     let creatingThread = false;
     let currentChatMessages: CurrentChatMessages | undefined;
-
-    $: console.log("Nervous System: ", $nervousSystemLookup);
 
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
 
@@ -1336,7 +1333,7 @@
         {:else if modal.kind === "suspended"}
             <SuspendedModal on:close={closeModal} />
         {:else if modal.kind === "register_bot"}
-            <BotBuilderModal on:close={closeModal} />
+            <BotBuilderModal onClose={closeModal} />
         {:else if modal.kind === "no_access"}
             <NoAccess on:close={closeNoAccess} />
         {:else if modal.kind === "not_found"}

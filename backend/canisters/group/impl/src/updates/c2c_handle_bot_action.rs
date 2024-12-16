@@ -7,7 +7,7 @@ use group_canister::c2c_handle_bot_action::*;
 use group_canister::send_message_v2;
 use types::bot_actions::MessageContent;
 use types::HandleBotActionsError;
-use types::{BotAction, MessageContentInitial};
+use types::{BotAction, BotCaller, MessageContentInitial};
 use utils::bots::can_execute_bot_command;
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
@@ -28,8 +28,8 @@ fn c2c_handle_bot_action_impl(args: Args, state: &mut RuntimeState) -> Response 
     }
 
     match args.action {
-        BotAction::SendMessage(content) => {
-            let content = match content {
+        BotAction::SendMessage(action) => {
+            let content = match action.content {
                 MessageContent::Text(text_content) => MessageContentInitial::Text(text_content),
                 MessageContent::Image(image_content) => MessageContentInitial::Image(image_content),
                 MessageContent::Video(video_content) => MessageContentInitial::Video(video_content),
@@ -55,7 +55,12 @@ fn c2c_handle_bot_action_impl(args: Args, state: &mut RuntimeState) -> Response 
                     new_achievement: false,
                     correlation_id: 0,
                 },
-                Some(args.bot.user_id.into()),
+                Some(BotCaller {
+                    bot: args.bot.user_id,
+                    initiator: args.initiator,
+                    command_text: args.command_text,
+                    finalised: action.finalised,
+                }),
                 state,
             ) {
                 send_message_v2::Response::Success(_) => Ok(()),
@@ -72,7 +77,7 @@ fn is_bot_permitted_to_execute_command(args: &Args, state: &RuntimeState) -> boo
     };
 
     // Get the permissions granted to the user in this community/channel
-    let Some(granted_to_user) = state.data.get_user_permissions_for_bot_commands(&args.commanded_by) else {
+    let Some(granted_to_user) = state.data.get_user_permissions_for_bot_commands(&args.initiator) else {
         return false;
     };
 

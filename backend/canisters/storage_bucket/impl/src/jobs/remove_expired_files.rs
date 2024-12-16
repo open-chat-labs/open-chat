@@ -1,4 +1,4 @@
-use crate::model::index_sync_state::EventToSync;
+use crate::model::index_event_batch::EventToSync;
 use crate::{mutate_state, RuntimeState};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
@@ -32,9 +32,8 @@ fn run() {
     mutate_state(|state| {
         let now = state.env.now();
         for file in state.data.files.remove_expired_files(now, 10) {
-            state.data.index_sync_state.enqueue(EventToSync::FileRemoved(file));
+            state.data.push_event_to_index(EventToSync::FileRemoved(file));
         }
-        crate::jobs::sync_index::start_job_if_required(&state.data);
         start_job_if_required(state);
     });
 }

@@ -30,6 +30,7 @@ stable_memory = { path = "../../../libraries/stable_memory" }
 storage_bucket_canister = { path = "../../storage_bucket/api" }
 storage_bucket_canister_c2c_client = { path = "../../storage_bucket/c2c_client" }
 storage_index_canister = { path = "../api" }
+timer_job_queues = { path = "../../../libraries/timer_job_queues" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 utils = { path = "../../../libraries/utils" }

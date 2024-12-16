@@ -9,6 +9,7 @@ use ic_cdk::post_upgrade;
 use instruction_counts_log::InstructionCountFunctionId;
 use stable_memory::get_reader;
 use tracing::info;
+use utils::env::Environment;
 
 #[post_upgrade]
 #[trace]
@@ -21,10 +22,16 @@ fn post_upgrade(args: Args) {
     let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
 
-    canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
-    data.members.move_member_ids_into_channel_links_map();
+    data.events.fix_role_changed_events();
 
     let env = init_env(data.rng_seed);
+    let now = env.now();
+    for channel in data.channels.iter_mut() {
+        channel.chat.events.remove_spurious_video_call_in_progress(now);
+    }
+
+    canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
+
     init_state(env, data, args.wasm_version);
 
     let completed_imports = read_state(|state| state.data.groups_being_imported.completed_imports());

@@ -2,4 +2,4 @@
 import type { LocalUserIndexInviteUsersToChannelFailedResult } from "./LocalUserIndexInviteUsersToChannelFailedResult";
 import type { LocalUserIndexInviteUsersToChannelPartialSuccessResult } from "./LocalUserIndexInviteUsersToChannelPartialSuccessResult";
 
-export type LocalUserIndexInviteUsersToChannelResponse = "Success" | { "PartialSuccess": LocalUserIndexInviteUsersToChannelPartialSuccessResult } | { "Failed": LocalUserIndexInviteUsersToChannelFailedResult } | "CommunityFrozen" | "UserNotInCommunity" | "ChannelNotFound" | "UserNotInChannel" | "UserSuspended" | "NotAuthorized" | { "TooManyInvites": number } | { "InternalError": string };
+export type LocalUserIndexInviteUsersToChannelResponse = "Success" | { "PartialSuccess": LocalUserIndexInviteUsersToChannelPartialSuccessResult } | { "Failed": LocalUserIndexInviteUsersToChannelFailedResult } | "CommunityFrozen" | "UserNotInCommunity" | "ChannelNotFound" | "UserNotInChannel" | "UserSuspended" | "UserLapsed" | "NotAuthorized" | { "TooManyInvites": number } | { "InternalError": string };

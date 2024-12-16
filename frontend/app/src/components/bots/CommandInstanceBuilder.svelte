@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        type ChatSummary,
         // createParamInstancesFromSchema,
         type FlattenedCommand,
         type MessageContext,
@@ -21,10 +22,11 @@
         onCancel: () => void;
         onCommandSent: () => void;
         messageContext: MessageContext;
+        chat: ChatSummary;
     }
 
     const client = getContext<OpenChat>("client");
-    let { command, onCancel, onCommandSent, messageContext }: Props = $props();
+    let { command, onCancel, onCommandSent, messageContext, chat }: Props = $props();
     let commandName = $derived(`/${command.name}`);
     let form: HTMLFormElement;
     let busy = $state(false);
@@ -39,7 +41,11 @@
         if (!$instanceValid) return;
         busy = true;
         client
-            .executeBotCommand(createBotInstance(command, messageContext))
+            .executeBotCommand(
+                chat,
+                messageContext.threadRootMessageIndex,
+                createBotInstance(command, messageContext),
+            )
             .then((success) => {
                 if (!success) {
                     toastStore.showFailureToast(i18nKey("bots.failed"));

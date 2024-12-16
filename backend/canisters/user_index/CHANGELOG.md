@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1508](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1508-user_index)] - 2024-12-13
+
 ### Added
 
 - Implement `register_bot` including bot schema ([#6928](https://github.com/open-chat-labs/open-chat/pull/6928))
@@ -23,6 +25,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Make `MessageId` comparisons use their 64bit representation ([#7030](https://github.com/open-chat-labs/open-chat/pull/7030))
 - Notify CHIT updates via LocalUserIndex ([#7033](https://github.com/open-chat-labs/open-chat/pull/7033))
 - Use `GroupedTimerJobQueue` to push user config to StorageIndex ([#7034](https://github.com/open-chat-labs/open-chat/pull/7034))
+
+### Removed
+
+- Remove some unused code ([#7050](https://github.com/open-chat-labs/open-chat/pull/7050))
 
 ### Fixed
 
