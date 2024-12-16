@@ -903,6 +903,7 @@ type SendMessageResponse = variant {
     CommunityFrozen;
     RulesNotAccepted;
     CommunityRulesNotAccepted;
+    MessageAlreadyExists;
 };
 
 type SendMessageSuccess = record {

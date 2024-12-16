@@ -586,6 +586,7 @@ type Message = record {
     message_id : MessageId;
     sender : UserId;
     content : MessageContent;
+    bot_context : opt BotMessageContext;
     replies_to : opt ReplyContext;
     reactions : vec record { text; vec UserId };
     tips : vec record { CanisterId; vec record { UserId; nat } };
@@ -2178,4 +2179,10 @@ type BotGroupDetails = record {
     user_id : UserId;
     added_by : UserId;
     permissions : SlashCommandPermissions;
-}
+};
+
+type BotMessageContext = record {
+    initiator : principal;
+    command_text : text;
+    finalised : bool;
+};

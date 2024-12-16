@@ -7,7 +7,7 @@ use std::collections::HashSet;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
-use types::bot_actions::MessageContent;
+use types::bot_actions::{BotMessageAction, MessageContent};
 use types::{
     AccessTokenType, BotAction, BotCommandArgs, Chat, ChatEvent, ChatId, MessagePermission, SlashCommandPermissions,
     SlashCommandSchema, TextContent,
@@ -122,7 +122,7 @@ fn bot_smoke_test() {
 
     println!("ACCESS TOKEN: {access_token}");
 
-    // Call execute_bot_command as bot
+    // Call execute_bot_command as bot - unfinalised message
     let username = user.username();
     let text = format!("Hello {username}");
     let response = client::local_user_index::execute_bot_command(
@@ -130,7 +130,44 @@ fn bot_smoke_test() {
         bot_principal,
         canister_ids.local_user_index,
         &local_user_index_canister::execute_bot_command::Args {
-            action: BotAction::SendMessage(MessageContent::Text(TextContent { text: text.clone() })),
+            action: BotAction::SendMessage(BotMessageAction {
+                content: MessageContent::Text(TextContent { text: text.clone() }),
+                finalised: false,
+            }),
+            jwt: access_token.clone(),
+        },
+    );
+
+    if response.is_err() {
+        panic!("'execute_bot_command' error: {response:?}");
+    }
+
+    // Call `events` and confirm the latest event is a text message from the bot
+    let response = client::group::happy_path::events(env, &user, group_id, 0.into(), true, 5, 10);
+
+    let latest_event = response.events.last().expect("Expected some channel events");
+    let ChatEvent::Message(message) = &latest_event.event else {
+        panic!("Expected latest event to be a message: {latest_event:?}");
+    };
+    let types::MessageContent::Text(text_content) = &message.content else {
+        panic!("Expected message to be text");
+    };
+    assert_eq!(text_content.text, text);
+    assert!(!message.edited);
+    assert!(message.bot_context.is_some());
+    assert!(!message.bot_context.as_ref().unwrap().finalised);
+
+    // Call execute_bot_command as bot - finalised message
+    let text = "Hello world".to_string();
+    let response = client::local_user_index::execute_bot_command(
+        env,
+        bot_principal,
+        canister_ids.local_user_index,
+        &local_user_index_canister::execute_bot_command::Args {
+            action: BotAction::SendMessage(BotMessageAction {
+                content: MessageContent::Text(TextContent { text: text.clone() }),
+                finalised: true,
+            }),
             jwt: access_token,
         },
     );
@@ -150,6 +187,10 @@ fn bot_smoke_test() {
         panic!("Expected message to be text");
     };
     assert_eq!(text_content.text, text);
+
+    assert!(message.edited);
+    assert!(message.bot_context.is_some());
+    assert!(message.bot_context.as_ref().unwrap().finalised);
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {

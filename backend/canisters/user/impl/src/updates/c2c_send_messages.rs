@@ -152,6 +152,7 @@ pub(crate) fn handle_message_impl(args: HandleMessageArgs, state: &mut RuntimeSt
         block_level_markdown: args.block_level_markdown,
         correlation_id: 0,
         now: args.now,
+        bot_context: None,
     };
 
     let message_id = push_message_args.message_id;
