@@ -53,6 +53,8 @@
         currentCommunityLapsedMembers as currentCommunityLapsed,
         selectedCommunity,
         eventsStore,
+        currentCommunityBots,
+        currentChatBots,
     } from "openchat-client";
 
     const dispatch = createEventDispatcher();
@@ -467,6 +469,7 @@
                 blocked={$currentCommunityBlocked}
                 lapsed={$currentCommunityLapsed}
                 initialUsergroup={lastState.userGroupId}
+                botIds={new Set($currentCommunityBots.keys())}
                 on:close={popRightPanelHistory}
                 on:blockUser={onBlockCommunityUser}
                 on:unblockUser={onUnblockCommnityUser}
@@ -509,6 +512,7 @@
             members={$currentChatMembers}
             blocked={$currentChatBlocked}
             lapsed={$currentChatLapsedMembers}
+            botIds={new Set($currentChatBots.keys())}
             on:close={popRightPanelHistory}
             on:blockUser={onBlockGroupUser}
             on:unblockUser={onUnblockGroupUser}
