@@ -1924,6 +1924,17 @@ export class OpenChat extends EventTarget {
         }
     }
 
+    canManageBots(id: ChatIdentifier | CommunityIdentifier): boolean {
+        switch (id.kind) {
+            case "community":
+                return this.#communityPredicate(id, ({ membership: { role } }) =>
+                    hasOwnerRights(role),
+                );
+            default:
+                return this.#chatPredicate(id, ({ membership: { role } }) => hasOwnerRights(role));
+        }
+    }
+
     canAddMembers(id: ChatIdentifier): boolean {
         return this.#chatPredicate(id, canAddMembers);
     }
@@ -3159,6 +3170,11 @@ export class OpenChat extends EventTarget {
                 chatStateStore.setProp(serverChat.id, "invitedUsers", resp.invitedUsers);
                 chatStateStore.setProp(serverChat.id, "pinnedMessages", resp.pinnedMessages);
                 chatStateStore.setProp(serverChat.id, "rules", resp.rules);
+                chatStateStore.setProp(
+                    serverChat.id,
+                    "bots",
+                    resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
+                );
             }
             await this.#updateUserStoreFromEvents(serverChat.id, []);
         }
@@ -7823,29 +7839,46 @@ export class OpenChat extends EventTarget {
         });
     }
 
-    addBotToCommunity(
-        id: CommunityIdentifier,
+    addBot(
+        id: CommunityIdentifier | GroupChatIdentifier,
         botId: string,
         grantedPermissions: SlashCommandPermissions,
     ): Promise<boolean> {
         return this.#sendRequest({
-            kind: "addBotToCommunity",
+            kind: "addBot",
             id,
             botId,
             grantedPermissions,
         }).catch((err) => {
-            this.#logger.error("Error adding bot to community", err);
+            this.#logger.error("Error adding bot to group or community", err);
             return false;
         });
     }
 
-    removeBotFromCommunity(id: CommunityIdentifier, botId: string): Promise<boolean> {
+    updateBot(
+        id: CommunityIdentifier | GroupChatIdentifier,
+        botId: string,
+        grantedPermissions: SlashCommandPermissions,
+    ): Promise<boolean> {
         return this.#sendRequest({
-            kind: "removeBotFromCommunity",
+            kind: "updateBot",
+            id,
+            botId,
+            grantedPermissions,
+        }).catch((err) => {
+            this.#logger.error("Error adding bot to group or community", err);
+            return false;
+        });
+    }
+
+    // TODO - probably need to think about local updates here
+    removeBot(id: CommunityIdentifier | GroupChatIdentifier, botId: string): Promise<boolean> {
+        return this.#sendRequest({
+            kind: "removeBot",
             id,
             botId,
         }).catch((err) => {
-            this.#logger.error("Error removing bot from community", err);
+            this.#logger.error("Error removing bot from group or community", err);
             return false;
         });
     }

@@ -31,6 +31,7 @@
     import ChatUnfrozenEvent from "./ChatUnfrozenEvent.svelte";
     import page from "page";
     import { i18nKey, interpolate } from "../../i18n/i18n";
+    import BotChangedEvent from "./BotChangedEvent.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -303,6 +304,27 @@
     <ChatFrozenEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
 {:else if event.event.kind === "chat_unfrozen"}
     <ChatUnfrozenEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
+{:else if event.event.kind === "bot_added"}
+    <BotChangedEvent
+        changedBy={event.event.addedBy}
+        resourceKey={"bots.events.add"}
+        event={event.event}
+        userId={user.userId}
+        timestamp={event.timestamp} />
+{:else if event.event.kind === "bot_removed"}
+    <BotChangedEvent
+        changedBy={event.event.removedBy}
+        resourceKey={"bots.events.remove"}
+        event={event.event}
+        userId={user.userId}
+        timestamp={event.timestamp} />
+{:else if event.event.kind === "bot_updated"}
+    <BotChangedEvent
+        changedBy={event.event.updatedBy}
+        resourceKey={"bots.events.update"}
+        event={event.event}
+        userId={user.userId}
+        timestamp={event.timestamp} />
 {:else if !client.isEventKindHidden(event.event.kind)}
-    <div>Unexpected event type</div>
+    <div>Unexpected event type: {event.event.kind}</div>
 {/if}

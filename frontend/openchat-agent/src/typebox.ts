@@ -180,6 +180,12 @@ export const GroupDisableInviteCodeArgs = Type.Object({
     correlation_id: Type.BigInt(),
 });
 
+export type GroupRemoveBotResponse = Static<typeof GroupRemoveBotResponse>;
+export const GroupRemoveBotResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("NotAuthorized"),
+]);
+
 export type GroupRegisterProposalVoteV2Response = Static<
     typeof GroupRegisterProposalVoteV2Response
 >;
@@ -271,6 +277,14 @@ export const GroupDeclineInvitiationResponse = Type.Union([
     Type.Literal("NotInvited"),
 ]);
 
+export type GroupUpdateBotResponse = Static<typeof GroupUpdateBotResponse>;
+export const GroupUpdateBotResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("ChatFrozen"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("NotFound"),
+]);
+
 export type GroupSelectedUpdatesArgs = Static<typeof GroupSelectedUpdatesArgs>;
 export const GroupSelectedUpdatesArgs = Type.Object({
     updates_since: Type.BigInt(),
@@ -313,6 +327,14 @@ export const GroupFollowThreadResponse = Type.Union([
     Type.Literal("UserSuspended"),
     Type.Literal("UserLapsed"),
     Type.Literal("GroupFrozen"),
+]);
+
+export type GroupAddBotResponse = Static<typeof GroupAddBotResponse>;
+export const GroupAddBotResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("ChatFrozen"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("AlreadyAdded"),
 ]);
 
 export type ChannelId = Static<typeof ChannelId>;
@@ -3037,6 +3059,14 @@ export const CommunityEventsArgs = Type.Object({
     latest_known_update: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
 });
 
+export type CommunityUpdateBotResponse = Static<typeof CommunityUpdateBotResponse>;
+export const CommunityUpdateBotResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("CommunityFrozen"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("NotFound"),
+]);
+
 export type CommunityAcceptP2pSwapArgs = Static<typeof CommunityAcceptP2pSwapArgs>;
 export const CommunityAcceptP2pSwapArgs = Type.Object({
     channel_id: ChannelId,
@@ -3181,7 +3211,7 @@ export const CommunityFollowThreadArgs = Type.Object({
 export type CommunityAddBotResponse = Static<typeof CommunityAddBotResponse>;
 export const CommunityAddBotResponse = Type.Union([
     Type.Literal("Success"),
-    Type.Literal("ChatFrozen"),
+    Type.Literal("CommunityFrozen"),
     Type.Literal("NotAuthorized"),
     Type.Literal("AlreadyAdded"),
 ]);
@@ -5206,6 +5236,12 @@ export const CommunityBlockUserArgs = Type.Object({
     user_id: UserId,
 });
 
+export type CommunityUpdateBotArgs = Static<typeof CommunityUpdateBotArgs>;
+export const CommunityUpdateBotArgs = Type.Object({
+    bot_id: UserId,
+    granted_permissions: SlashCommandPermissions,
+});
+
 export type CommunityCreateChannelResponse = Static<typeof CommunityCreateChannelResponse>;
 export const CommunityCreateChannelResponse = Type.Union([
     Type.Object({
@@ -5404,6 +5440,11 @@ export const GroupUpdateGroupResponse = Type.Union([
     Type.Literal("InternalError"),
 ]);
 
+export type GroupRemoveBotArgs = Static<typeof GroupRemoveBotArgs>;
+export const GroupRemoveBotArgs = Type.Object({
+    bot_id: UserId,
+});
+
 export type GroupBlockUserArgs = Static<typeof GroupBlockUserArgs>;
 export const GroupBlockUserArgs = Type.Object({
     user_id: UserId,
@@ -5414,6 +5455,18 @@ export type GroupRemoveParticipantArgs = Static<typeof GroupRemoveParticipantArg
 export const GroupRemoveParticipantArgs = Type.Object({
     user_id: UserId,
     correlation_id: Type.BigInt(),
+});
+
+export type GroupUpdateBotArgs = Static<typeof GroupUpdateBotArgs>;
+export const GroupUpdateBotArgs = Type.Object({
+    bot_id: UserId,
+    granted_permissions: SlashCommandPermissions,
+});
+
+export type GroupAddBotArgs = Static<typeof GroupAddBotArgs>;
+export const GroupAddBotArgs = Type.Object({
+    bot_id: UserId,
+    granted_permissions: SlashCommandPermissions,
 });
 
 export type UserSearchMessagesArgs = Static<typeof UserSearchMessagesArgs>;

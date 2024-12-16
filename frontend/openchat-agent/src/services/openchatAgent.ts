@@ -4019,16 +4019,39 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.registerBot(bot);
     }
 
-    addBotToCommunity(
-        id: CommunityIdentifier,
+    addBot(
+        id: CommunityIdentifier | GroupChatIdentifier,
         botId: string,
         grantedPermissions: SlashCommandPermissions,
     ): Promise<boolean> {
-        return this.communityClient(id.communityId).addBot(botId, grantedPermissions);
+        switch (id.kind) {
+            case "community":
+                return this.communityClient(id.communityId).addBot(botId, grantedPermissions);
+            case "group_chat":
+                return this.getGroupClient(id.groupId).addBot(botId, grantedPermissions);
+        }
     }
 
-    removeBotFromCommunity(id: CommunityIdentifier, botId: string): Promise<boolean> {
-        return this.communityClient(id.communityId).removeBot(botId);
+    updateBot(
+        id: CommunityIdentifier | GroupChatIdentifier,
+        botId: string,
+        grantedPermissions: SlashCommandPermissions,
+    ): Promise<boolean> {
+        switch (id.kind) {
+            case "community":
+                return this.communityClient(id.communityId).updateBot(botId, grantedPermissions);
+            case "group_chat":
+                return this.getGroupClient(id.groupId).updateBot(botId, grantedPermissions);
+        }
+    }
+
+    removeBot(id: CommunityIdentifier | GroupChatIdentifier, botId: string): Promise<boolean> {
+        switch (id.kind) {
+            case "community":
+                return this.communityClient(id.communityId).removeBot(botId);
+            case "group_chat":
+                return this.getGroupClient(id.groupId).removeBot(botId);
+        }
     }
 
     getBots(initialLoad: boolean): Stream<BotsResponse> {

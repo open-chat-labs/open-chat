@@ -244,6 +244,16 @@
         "diamond": {
             "desc": "Opublikuj link wyjaśniający członkostwo Diamond"
         },
+        "edit": {
+            "failure": "Przepraszamy, nie udało nam się zaktualizować uprawnień bota",
+            "title": "Zaktualizuj uprawnienia bota",
+            "updateBot": "Aktualizacja bota"
+        },
+        "events": {
+            "add": "Bot **{botname}** dodany przez {username}",
+            "remove": "Bot **{botname}** został usunięty przez {username}",
+            "update": "Bot **{botname}** zaktualizowany przez {username}"
+        },
         "explorer": {
             "addBots": "Dodaj boty",
             "loadMore": "Załaduj więcej..."
@@ -287,7 +297,17 @@
                 }
             }
         },
+        "manage": {
+            "remove": "Usuń bota",
+            "removeFailed": "Przepraszamy, nie udało nam się usunąć bota",
+            "review": "Przejrzyj uprawnienia bota",
+            "view": "Wyświetl szczegóły bota"
+        },
         "matchingCommands": "Dopasowywanie poleceń",
+        "member": {
+            "bots": "Boty",
+            "people": "Ludzie"
+        },
         "poll": {
             "desc": "Utwórz ankietę w bieżącym czacie"
         },
@@ -306,6 +326,10 @@
         },
         "update_bot": {
             "desc": "Rozpocznij propozycję aktualizacji istniejącego bota OpenChat"
+        },
+        "view": {
+            "close": "Zamknąć",
+            "title": "Szczegóły bota"
         },
         "witch": {
             "desc": "Przywołaj czarownicę"

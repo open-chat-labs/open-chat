@@ -196,7 +196,7 @@ export type ExternalBot = {
     id: string;
     ownerId: string;
     endpoint: string;
-    description?: string;
+    description: string;
     commands: SlashCommandSchema[];
 };
 

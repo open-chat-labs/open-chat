@@ -1867,19 +1867,27 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.deleteUser(payload.userId));
                 break;
 
-            case "addBotToCommunity":
+            case "addBot":
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.addBotToCommunity(payload.id, payload.botId, payload.grantedPermissions),
+                    agent.addBot(payload.id, payload.botId, payload.grantedPermissions),
                 );
                 break;
 
-            case "removeBotFromCommunity":
+            case "updateBot":
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.removeBotFromCommunity(payload.id, payload.botId),
+                    agent.updateBot(payload.id, payload.botId, payload.grantedPermissions),
+                );
+                break;
+
+            case "removeBot":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.removeBot(payload.id, payload.botId),
                 );
                 break;
 

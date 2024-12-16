@@ -244,6 +244,16 @@
         "diamond": {
             "desc": "Đăng liên kết để giải thích về tư cách thành viên Kim cương"
         },
+        "edit": {
+            "failure": "Xin lỗi, chúng tôi không thể cập nhật quyền của bot",
+            "title": "Cập nhật quyền bot",
+            "updateBot": "Cập nhật bot"
+        },
+        "events": {
+            "add": "Bot **{botname}** được thêm vào bởi {username}",
+            "remove": "Bot **{botname}** đã bị xóa bởi {username}",
+            "update": "Bot **{botname}** được cập nhật bởi {username}"
+        },
         "explorer": {
             "addBots": "Thêm bot",
             "loadMore": "Tải thêm..."
@@ -287,7 +297,17 @@
                 }
             }
         },
+        "manage": {
+            "remove": "Xóa bot",
+            "removeFailed": "Xin lỗi chúng tôi không thể xóa bot",
+            "review": "Xem lại quyền của bot",
+            "view": "Xem chi tiết bot"
+        },
         "matchingCommands": "Lệnh khớp",
+        "member": {
+            "bots": "Bots",
+            "people": "Mọi người"
+        },
         "poll": {
             "desc": "Tạo một cuộc thăm dò trong cuộc trò chuyện hiện tại"
         },
@@ -306,6 +326,10 @@
         },
         "update_bot": {
             "desc": "Bắt đầu đề xuất cập nhật bot OpenChat hiện có"
+        },
+        "view": {
+            "close": "Đóng",
+            "title": "Chi tiết bot"
         },
         "witch": {
             "desc": "Triệu hồi phù thủy"

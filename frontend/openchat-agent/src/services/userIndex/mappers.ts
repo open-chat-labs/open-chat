@@ -699,8 +699,7 @@ export function externalBotMatch(
                     .replace("{blobType}", "avatar")}/${botId}/${id}`,
         ),
         id: botId,
-        score: match.score,
-        owner: principalBytesToString(match.owner),
+        ownerId: principalBytesToString(match.owner),
         description: match.description,
         commands: match.commands.map(externalBotCommand),
     };

@@ -216,19 +216,17 @@ export const testBots: Bot[] = [
 export const testMatches: BotMatch[] = [
     {
         id: "one",
-        score: 10,
         name: "Kitten bot",
         description: "this is just a test bot and it doen't do very much",
-        owner: "owner",
+        ownerId: "owner",
         commands: [killCommand, kickPollCommand],
     },
     {
         id: "two",
-        score: 10,
         name: "Puppy bot",
         description:
             "This bot also does not do anything but in this case it has a much longer description. The reason that we need a longer description is so that we can tell that the card still renders ok if there is a lot of text to display. What should we do? Should we truncate it or should we do something else? Show multiple lines? Show the whole thing? Make it expandable?",
-        owner: "owner",
+        ownerId: "owner",
         commands: [
             chatCommand,
             banCommand,

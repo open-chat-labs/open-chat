@@ -244,6 +244,16 @@
         "diamond": {
             "desc": "Postez un lien pour expliquer l'adhésion Diamond"
         },
+        "edit": {
+            "failure": "Désolé, nous n'avons pas pu mettre à jour les autorisations du bot",
+            "title": "Mettre à jour les autorisations du bot",
+            "updateBot": "Bot de mise à jour"
+        },
+        "events": {
+            "add": "Bot **{botname}** ajouté par {username}",
+            "remove": "Bot **{botname}** supprimé par {username}",
+            "update": "Bot **{botname}** mis à jour par {username}"
+        },
         "explorer": {
             "addBots": "Ajouter des robots",
             "loadMore": "Charger plus..."
@@ -287,7 +297,17 @@
                 }
             }
         },
+        "manage": {
+            "remove": "Supprimer le bot",
+            "removeFailed": "Désolé, nous n'avons pas pu supprimer le bot",
+            "review": "Examiner les autorisations du robot",
+            "view": "Afficher les détails du bot"
+        },
         "matchingCommands": "Commandes correspondantes",
+        "member": {
+            "bots": "Les robots",
+            "people": "Personnes"
+        },
         "poll": {
             "desc": "Créer un sondage dans le chat actuel"
         },
@@ -306,6 +326,10 @@
         },
         "update_bot": {
             "desc": "Démarrer une proposition pour mettre à jour un bot OpenChat existant"
+        },
+        "view": {
+            "close": "Fermer",
+            "title": "Détails du bot"
         },
         "witch": {
             "desc": "Invoquer la sorcière"

@@ -137,6 +137,7 @@ fn main() {
     generate_ts_method!(community, undelete_messages);
     generate_ts_method!(community, unfollow_thread);
     generate_ts_method!(community, unpin_message);
+    generate_ts_method!(community, update_bot);
     generate_ts_method!(community, update_channel);
     generate_ts_method!(community, update_community);
     generate_ts_method!(community, update_user_group);
