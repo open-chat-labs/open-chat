@@ -1,5 +1,4 @@
-use crate::model::bucket_event_batch::BucketEventBatch;
-use crate::model::bucket_sync_state::EventToSync;
+use crate::model::bucket_event_batch::{BucketEventBatch, EventToSync};
 use crate::model::buckets::{BucketRecord, Buckets};
 use crate::model::files::Files;
 use candid::{CandidType, Principal};
@@ -104,17 +103,12 @@ struct Data {
     pub users: HashMap<Principal, UserRecordInternal>,
     pub files: Files,
     pub buckets: Buckets,
-    #[serde(default = "bucket_event_sync_queue")]
     pub bucket_event_sync_queue: GroupedTimerJobQueue<BucketEventBatch>,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cycles_dispenser_config: CyclesDispenserConfig,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
-}
-
-fn bucket_event_sync_queue() -> GroupedTimerJobQueue<BucketEventBatch> {
-    GroupedTimerJobQueue::new(5, false)
 }
 
 impl Data {
