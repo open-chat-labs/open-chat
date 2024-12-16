@@ -255,7 +255,12 @@ const migrations: Record<number, MigrationFunction<ChatSchema>> = {
             createBotsStore(db, principal, tx),
         ]);
     },
-    121: clearEvents,
+    121: async (db, principal, tx) => {
+        await Promise.all([
+            clearEvents(db, principal, tx),
+            clearGroupDetailsStore(db, principal, tx),
+        ]);
+    },
 };
 
 async function migrate(
