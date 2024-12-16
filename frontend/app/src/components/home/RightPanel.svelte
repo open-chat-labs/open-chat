@@ -469,7 +469,7 @@
                 blocked={$currentCommunityBlocked}
                 lapsed={$currentCommunityLapsed}
                 initialUsergroup={lastState.userGroupId}
-                botIds={new Set($currentCommunityBots.keys())}
+                installedBots={$currentCommunityBots}
                 on:close={popRightPanelHistory}
                 on:blockUser={onBlockCommunityUser}
                 on:unblockUser={onUnblockCommnityUser}
@@ -512,7 +512,7 @@
             members={$currentChatMembers}
             blocked={$currentChatBlocked}
             lapsed={$currentChatLapsedMembers}
-            botIds={new Set($currentChatBots.keys())}
+            installedBots={$currentChatBots}
             on:close={popRightPanelHistory}
             on:blockUser={onBlockGroupUser}
             on:unblockUser={onUnblockGroupUser}

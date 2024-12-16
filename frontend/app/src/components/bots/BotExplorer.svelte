@@ -1,5 +1,10 @@
 <script lang="ts">
-    import { i18nKey, type CommunitySummary, type OpenChat } from "openchat-client";
+    import {
+        i18nKey,
+        type CommunityIdentifier,
+        type GroupChatIdentifier,
+        type OpenChat,
+    } from "openchat-client";
     import Search from "../Search.svelte";
     import { getContext } from "svelte";
     import { botSearchState } from "../../stores/search.svelte";
@@ -11,10 +16,10 @@
     const PAGE_SIZE = 50;
 
     interface Props {
-        community: CommunitySummary;
+        id: CommunityIdentifier | GroupChatIdentifier;
     }
 
-    let { community }: Props = $props();
+    let { id }: Props = $props();
 
     let initialised = $state(false);
     let searching = $state(false);
@@ -70,7 +75,7 @@
 {/if}
 
 {#each botSearchState.results as match}
-    <BotMatch id={community.id} {match} />
+    <BotMatch {id} {match} />
 {/each}
 
 <style lang="scss"></style>

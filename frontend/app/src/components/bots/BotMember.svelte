@@ -14,7 +14,12 @@
     import { i18nKey } from "../../i18n/i18n";
     import Avatar from "../Avatar.svelte";
     import FilteredUsername from "../FilteredUsername.svelte";
-    import type { CommunityIdentifier, GroupChatIdentifier, OpenChat } from "openchat-client";
+    import type {
+        CommunityIdentifier,
+        GroupChatIdentifier,
+        OpenChat,
+        SlashCommandPermissions,
+    } from "openchat-client";
     import { getContext } from "svelte";
     import { toastStore } from "../../stores/toast";
     import BotSummary from "./BotSummary.svelte";
@@ -26,9 +31,10 @@
         bot: ExternalBot;
         canManage: boolean;
         searchTerm: string;
+        grantedPermissions: SlashCommandPermissions;
     }
 
-    let { id, bot, canManage, searchTerm }: Props = $props();
+    let { id, bot, canManage, searchTerm, grantedPermissions }: Props = $props();
     let reviewMode: "editing" | "viewing" | undefined = $state(undefined);
 
     function removeBot() {
@@ -53,7 +59,12 @@
 </script>
 
 {#if reviewMode !== undefined}
-    <BotSummary mode={reviewMode} {id} onClose={closeModal} {bot} />
+    <BotSummary
+        currentPermissions={grantedPermissions}
+        mode={reviewMode}
+        {id}
+        onClose={closeModal}
+        {bot} />
 {/if}
 
 <div class="bot_member" role="button">

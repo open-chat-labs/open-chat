@@ -28,7 +28,6 @@
     export let community: CommunitySummary;
     export let selectedTab: "community" | "channel" = "channel";
 
-    $: communityBotIds = new Set($currentCommunityBots.keys());
     $: canInvite =
         selectedTab === "community"
             ? client.canInviteUsers(community.id)
@@ -112,7 +111,7 @@
         members={[...$currentCommunityMembers.values()]}
         blocked={$currentCommunityBlocked}
         lapsed={$currentCommunityLapsed}
-        botIds={communityBotIds}
+        installedBots={$currentCommunityBots}
         on:close
         on:blockUser={onBlockCommunityUser}
         on:unblockUser={onUnblockCommunityUser}
@@ -131,7 +130,7 @@
         members={$currentChatMembers}
         blocked={$currentChatBlocked}
         lapsed={$currentChatLapsed}
-        botIds={communityBotIds}
+        installedBots={$currentCommunityBots}
         on:close
         on:blockUser={onBlockGroupUser}
         on:unblockUser={onUnblockGroupUser}

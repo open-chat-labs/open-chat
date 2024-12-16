@@ -33,12 +33,13 @@
         bot: BotMatch;
         onClose: () => void;
         id: CommunityIdentifier | GroupChatIdentifier;
+        currentPermissions?: SlashCommandPermissions;
     }
 
-    let { bot, onClose, id, mode }: Props = $props();
+    let { bot, onClose, id, mode, currentPermissions }: Props = $props();
     let busy = $state(false);
     let requestedPermissions = $derived(flattenPermissions());
-    let grantedPermissions = $state(flattenPermissions());
+    let grantedPermissions = $state(currentPermissions ?? flattenPermissions());
     let collapsed = $state(true);
     let title = $derived.by(() => {
         switch (mode) {

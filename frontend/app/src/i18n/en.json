@@ -149,6 +149,11 @@
     "blockUserFailed": "Unable to block user",
     "blockUserSucceeded": "User has been blocked",
     "bots": {
+        "events": {
+            "add": "Bot **{botname}** added by {username}",
+            "remove": "Bot **{botname}** removed by {username}",
+            "update": "Bot **{botname}** updated by {username}"
+        },
         "add": {
             "addBot": "Add bot",
             "choosePermissions": "Permissions",

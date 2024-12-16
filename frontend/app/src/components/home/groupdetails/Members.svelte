@@ -23,9 +23,9 @@
         LARGE_GROUP_THRESHOLD,
         userStore,
         currentUser as user,
-        selectedCommunity,
         type ExternalBot,
         externalBots,
+        type SlashCommandPermissions,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import InvitedUser from "./InvitedUser.svelte";
@@ -39,6 +39,8 @@
     import BotExplorer from "../../bots/BotExplorer.svelte";
     import BotMember from "../../bots/BotMember.svelte";
 
+    type EnhancedExternalBot = ExternalBot & { grantedPermissions: SlashCommandPermissions };
+
     const MAX_SEARCH_RESULTS = 255; // irritatingly this is a nat8 in the candid
     const client = getContext<OpenChat>("client");
 
@@ -48,7 +50,7 @@
     export let members: MemberType[];
     export let blocked: Set<string>;
     export let lapsed: Set<string>;
-    export let botIds: Set<string>;
+    export let installedBots: Map<string, SlashCommandPermissions>;
     export let initialUsergroup: number | undefined = undefined;
     export let showHeader = true;
 
@@ -69,21 +71,29 @@
     $: showLapsed = lapsedMembers.length > 0;
     $: canInvite = client.canInviteUsers(collection.id);
     $: canPromoteMyselfToOwner = false;
-    $: bots = hydrateBots(botIds, $externalBots).filter((b) => matchesSearch(searchTermLower, b));
+    $: bots = hydrateBots(installedBots, $externalBots).filter((b) =>
+        matchesSearch(searchTermLower, b),
+    );
     $: canManageBots = client.canManageBots(collection.id);
     $: botContainer =
         collection.kind === "channel"
             ? ({ kind: "community", communityId: collection.id.communityId } as CommunityIdentifier)
             : collection.id;
 
-    function hydrateBots(_ids: Set<string>, allBots: Map<string, ExternalBot>): ExternalBot[] {
-        return [..._ids].reduce((bots, id) => {
+    function hydrateBots(
+        bots: Map<string, SlashCommandPermissions>,
+        allBots: Map<string, ExternalBot>,
+    ): EnhancedExternalBot[] {
+        return [...bots.entries()].reduce((bots, [id, perm]) => {
             const bot = allBots.get(id);
             if (bot !== undefined) {
-                bots.push(bot);
+                bots.push({
+                    ...bot,
+                    grantedPermissions: perm,
+                });
             }
             return bots;
-        }, [] as ExternalBot[]);
+        }, [] as EnhancedExternalBot[]);
     }
 
     function matchingUsers(
@@ -224,7 +234,7 @@
         on:showInviteUsers={showInviteUsers} />
 {/if}
 
-{#if collection.level === "community"}
+{#if collection.kind !== "channel"}
     <div class="tabs">
         <button
             on:click={() => selectTab("users")}
@@ -232,12 +242,14 @@
             class="tab">
             <Translatable resourceKey={i18nKey("communities.members")} />
         </button>
-        <button
-            on:click={() => selectTab("groups")}
-            class:selected={selectedTab === "groups"}
-            class="tab">
-            <Translatable resourceKey={i18nKey("communities.userGroups")} />
-        </button>
+        {#if collection.kind === "community"}
+            <button
+                on:click={() => selectTab("groups")}
+                class:selected={selectedTab === "groups"}
+                class="tab">
+                <Translatable resourceKey={i18nKey("communities.userGroups")} />
+            </button>
+        {/if}
         {#if botsEnabled}
             <button
                 on:click={() => selectTab("add-bots")}
@@ -329,12 +341,19 @@
                 <Translatable resourceKey={i18nKey("bots.member.bots")}></Translatable>
             </h4>
             {#each bots as bot}
-                <BotMember id={botContainer} {bot} canManage={canManageBots} {searchTerm} />
+                <BotMember
+                    id={botContainer}
+                    {bot}
+                    grantedPermissions={bot.grantedPermissions}
+                    canManage={canManageBots}
+                    {searchTerm} />
             {/each}
 
-            <h4 class="member_type_label">
-                <Translatable resourceKey={i18nKey("bots.member.people")}></Translatable>
-            </h4>
+            {#if fullMembers.length > 0}
+                <h4 class="member_type_label">
+                    <Translatable resourceKey={i18nKey("bots.member.people")}></Translatable>
+                </h4>
+            {/if}
         {/if}
 
         <VirtualList
@@ -395,9 +414,9 @@
             bind:openedGroupId={initialUsergroup}
             community={collection} />
     </div>
-{:else if selectedTab === "add-bots" && collection.kind === "community" && $selectedCommunity}
+{:else if selectedTab === "add-bots" && collection.kind !== "channel"}
     <div class="bot-explorer">
-        <BotExplorer community={$selectedCommunity} />
+        <BotExplorer id={botContainer} />
     </div>
 {/if}
 
