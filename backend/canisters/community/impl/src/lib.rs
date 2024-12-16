@@ -313,7 +313,7 @@ impl RuntimeState {
         }
     }
 
-    pub fn caller(&self, bot_id: Option<UserId>) -> CallerResult {
+    pub fn verified_caller(&self, mut bot_context: Option<BotCaller>) -> CallerResult {
         use CallerResult::*;
 
         let caller = self.env.caller();
@@ -322,37 +322,32 @@ impl RuntimeState {
             return Success(Caller::OCBot(OPENCHAT_BOT_USER_ID));
         }
 
-        if let Some(bot_id) = bot_id {
-            if let Some(bot) = self.data.bots.get(&bot_id) {
-                if let Some(member) = self.data.members.get_by_user_id(&bot.added_by) {
-                    if member.suspended().value {
-                        return Suspended;
-                    } else if member.lapsed().value {
-                        return Lapsed;
-                    } else {
-                        return Success(Caller::BotV2(BotCaller {
-                            user_id: bot.added_by,
-                            bot_id,
-                        }));
-                    }
-                }
-            }
-        } else if let Some(member) = self.data.members.get(caller) {
-            if member.suspended().value {
-                return Suspended;
-            } else if member.lapsed().value {
-                return Lapsed;
-            } else {
-                return match member.user_type {
-                    UserType::User => Success(Caller::User(member.user_id)),
-                    UserType::BotV2 => NotFound,
-                    UserType::Bot => Success(Caller::Bot(member.user_id)),
-                    UserType::OcControlledBot => Success(Caller::OCBot(member.user_id)),
-                };
-            }
+        let user_or_principal = bot_context.as_ref().map(|bc| bc.initiator.into()).unwrap_or(caller);
+
+        let Some(member) = self.data.members.get(user_or_principal) else {
+            return NotFound;
+        };
+
+        if member.suspended().value {
+            return Suspended;
+        } else if member.lapsed().value {
+            return Lapsed;
         }
 
-        NotFound
+        if let Some(bot_context) = bot_context.take() {
+            if self.data.bots.get(&bot_context.bot).is_some() {
+                Success(Caller::BotV2(bot_context))
+            } else {
+                NotFound
+            }
+        } else {
+            match member.user_type {
+                UserType::User => Success(Caller::User(member.user_id)),
+                UserType::BotV2 => NotFound,
+                UserType::Bot => Success(Caller::Bot(member.user_id)),
+                UserType::OcControlledBot => Success(Caller::OCBot(member.user_id)),
+            }
+        }
     }
 }
 
@@ -409,7 +404,6 @@ struct Data {
     user_cache: UserCache,
     user_event_sync_queue: GroupedTimerJobQueue<UserEventBatch>,
     stable_memory_keys_to_garbage_collect: Vec<BaseKeyPrefix>,
-    #[serde(default)]
     bots: GroupBots,
 }
 

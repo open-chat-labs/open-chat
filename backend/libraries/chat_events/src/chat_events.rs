@@ -19,15 +19,15 @@ use std::mem;
 use std::ops::DerefMut;
 use tracing::error;
 use types::{
-    AcceptP2PSwapResult, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, ChatType, CompleteP2PSwapResult,
-    CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventContext, EventIndex, EventWrapper,
-    EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash,
-    HydratedMention, Mention, Message, MessageContent, MessageContentInitial, MessageEditedEventPayload, MessageEventPayload,
-    MessageId, MessageIndex, MessageMatch, MessageReport, MessageTippedEventPayload, Milliseconds, MultiUserChat,
-    P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus, PendingCryptoTransaction,
-    PollVotes, ProposalUpdate, PushEventResult, Reaction, ReactionAddedEventPayload, RegisterVoteResult, ReserveP2PSwapResult,
-    ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VideoCall, VideoCallEndedEventPayload,
-    VideoCallParticipants, VideoCallPresence, VoteOperation,
+    AcceptP2PSwapResult, BotMessageContext, CallParticipant, CancelP2PSwapResult, CanisterId, Chat, ChatType,
+    CompleteP2PSwapResult, CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventContext, EventIndex,
+    EventWrapper, EventWrapperInternal, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen,
+    GroupUnfrozen, Hash, HydratedMention, Mention, Message, MessageContent, MessageContentInitial, MessageEditedEventPayload,
+    MessageEventPayload, MessageId, MessageIndex, MessageMatch, MessageReport, MessageTippedEventPayload, Milliseconds,
+    MultiUserChat, P2PSwapAccepted, P2PSwapCompleted, P2PSwapCompletedEventPayload, P2PSwapContent, P2PSwapStatus,
+    PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, ReactionAddedEventPayload,
+    RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips,
+    UserId, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence, VoteOperation,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -222,6 +222,7 @@ impl ChatEvents {
             message_id: args.message_id,
             sender: args.sender,
             content: args.content,
+            bot_context: args.bot_context,
             replies_to: args.replies_to,
             reactions: Vec::new(),
             tips: Tips::default(),
@@ -361,6 +362,12 @@ impl ChatEvents {
 
                 let already_edited = message.last_edited.is_some();
                 message.last_edited = Some(args.now);
+
+                if args.finalise_bot_message {
+                    if let Some(bot_context) = message.bot_context.as_mut() {
+                        bot_context.finalised = true;
+                    }
+                }
 
                 if let Some(client) = event_store_client {
                     let new_length = message.content.text_length();
@@ -1025,6 +1032,7 @@ impl ChatEvents {
                             block_index: transaction.index(),
                             prize_message: message_index,
                         }),
+                        bot_context: None,
                         mentioned: Vec::new(),
                         replies_to: None,
                         forwarded: false,
@@ -1500,6 +1508,7 @@ impl ChatEvents {
                             notes,
                         }],
                     }),
+                    bot_context: None,
                     mentioned: Vec::new(),
                     replies_to: Some(ReplyContextInternal {
                         chat_if_other: Some((chat.into(), thread_root_message_index)),
@@ -2231,6 +2240,7 @@ pub struct PushMessageArgs {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
     pub content: MessageContentInternal,
+    pub bot_context: Option<BotMessageContext>,
     pub mentioned: Vec<UserId>,
     pub replies_to: Option<ReplyContextInternal>,
     pub forwarded: bool,
@@ -2247,6 +2257,7 @@ pub struct EditMessageArgs {
     pub message_id: MessageId,
     pub content: MessageContentInitial,
     pub block_level_markdown: Option<bool>,
+    pub finalise_bot_message: bool,
     pub now: TimestampMillis,
 }
 

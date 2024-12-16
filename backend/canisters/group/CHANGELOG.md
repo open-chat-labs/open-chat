@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Log error if end video call job fails ([#7066](https://github.com/open-chat-labs/open-chat/pull/7066))
+- 2-stage bot messages + bot context in messages ([#7060](https://github.com/open-chat-labs/open-chat/pull/7060))
+
+## [[2.0.1516](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1516-group)] - 2024-12-13
+
 ### Added
 
 - Update group bot config ([#7018](https://github.com/open-chat-labs/open-chat/pull/7018))

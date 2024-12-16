@@ -41,6 +41,7 @@ pub enum Response {
     UserLapsed,
     ChatFrozen,
     RulesNotAccepted,
+    MessageAlreadyExists,
     Retrying(String, CompletedCryptoTransaction),
     PinRequired,
     PinIncorrect(Milliseconds),

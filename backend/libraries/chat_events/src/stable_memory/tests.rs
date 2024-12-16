@@ -486,6 +486,7 @@ fn generate_value(content: MessageContentInternal) -> EventWrapperInternal<ChatE
             }),
             forwarded: true,
             block_level_markdown: true,
+            bot_context: None,
         })),
     }
 }

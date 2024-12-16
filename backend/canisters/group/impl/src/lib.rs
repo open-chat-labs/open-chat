@@ -22,7 +22,7 @@ use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, 
 use model::user_event_batch::UserEventBatch;
 use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
-use principal_to_user_id_map::{deserialize_principal_to_user_id_map_from_heap, PrincipalToUserIdMap};
+use principal_to_user_id_map::PrincipalToUserIdMap;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
@@ -433,7 +433,7 @@ impl RuntimeState {
         }
     }
 
-    pub fn caller(&self, bot_id: Option<UserId>) -> CallerResult {
+    pub fn verified_caller(&self, mut bot_context: Option<BotCaller>) -> CallerResult {
         use CallerResult::*;
 
         let caller = self.env.caller();
@@ -442,40 +442,36 @@ impl RuntimeState {
             return Success(Caller::OCBot(OPENCHAT_BOT_USER_ID));
         }
 
-        if let Some(bot_id) = bot_id {
-            if let Some(bot) = self.data.chat.bots.get(&bot_id) {
-                if let Some(member) = self.data.get_member(bot.added_by.into()) {
-                    if member.suspended().value {
-                        return Suspended;
-                    } else {
-                        return Success(Caller::BotV2(BotCaller {
-                            user_id: bot.added_by,
-                            bot_id,
-                        }));
-                    }
-                }
-            }
-        } else if let Some(member) = self.data.get_member(caller) {
-            if member.suspended().value {
-                return Suspended;
-            } else {
-                return match member.user_type() {
-                    UserType::User => Success(Caller::User(member.user_id())),
-                    UserType::BotV2 => NotFound,
-                    UserType::Bot => Success(Caller::Bot(member.user_id())),
-                    UserType::OcControlledBot => Success(Caller::OCBot(member.user_id())),
-                };
-            }
+        let user_or_principal = bot_context.as_ref().map(|bc| bc.initiator.into()).unwrap_or(caller);
+
+        let Some(member) = self.data.get_member(user_or_principal) else {
+            return NotFound;
+        };
+
+        if member.suspended().value {
+            return Suspended;
         }
 
-        NotFound
+        if let Some(bot_context) = bot_context.take() {
+            if self.data.chat.bots.get(&bot_context.bot).is_some() {
+                Success(Caller::BotV2(bot_context))
+            } else {
+                NotFound
+            }
+        } else {
+            match member.user_type() {
+                UserType::User => Success(Caller::User(member.user_id())),
+                UserType::BotV2 => NotFound,
+                UserType::Bot => Success(Caller::Bot(member.user_id())),
+                UserType::OcControlledBot => Success(Caller::OCBot(member.user_id())),
+            }
+        }
     }
 }
 
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub chat: GroupChatCore,
-    #[serde(deserialize_with = "deserialize_principal_to_user_id_map_from_heap")]
     pub principal_to_user_id_map: PrincipalToUserIdMap,
     pub group_index_canister_id: CanisterId,
     pub local_group_index_canister_id: CanisterId,

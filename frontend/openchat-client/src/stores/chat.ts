@@ -623,10 +623,7 @@ export function setSelectedChat(
         !clientChat.subtype.isNns
     ) {
         const { governanceCanisterId } = clientChat.subtype;
-        api.sendRequest({
-            kind: "listNervousSystemFunctions",
-            snsGovernanceCanisterId: governanceCanisterId,
-        }).then((val) => {
+        api.listNervousSystemFunctions(governanceCanisterId).then((val) => {
             snsFunctions.set(governanceCanisterId, val.functions);
             return val;
         });
