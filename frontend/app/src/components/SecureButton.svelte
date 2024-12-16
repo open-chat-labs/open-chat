@@ -26,10 +26,10 @@
 
     function probablyBot(ev: MouseEvent): boolean {
         const pause = Date.now() - lastMoved;
+        const fakePause = pause < PAUSE_TRESHOLD && !isTouchDevice;
+        console.debug("Suspected bot click detected: ", pause, isTouchDevice, ev.isTrusted, $suspectedAutomationBot)
         return (
-            pause < PAUSE_TRESHOLD ||
-            isTouchDevice ||
-            document.activeElement !== ev.target ||
+            fakePause ||
             !ev.isTrusted ||
             $suspectedAutomationBot
         );
