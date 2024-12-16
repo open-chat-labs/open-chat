@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Push any remaining events still queued in the old events system ([#7065](https://github.com/open-chat-labs/open-chat/pull/7065))
+
+## [[2.0.1522](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1522-storage_bucket)] - 2024-12-16
+
+### Changed
+
 - Expose size of each virtual stable memory in metrics ([#6981](https://github.com/open-chat-labs/open-chat/pull/6981))
 - Avoid having to regenerate rng seed after each upgrade ([#7043](https://github.com/open-chat-labs/open-chat/pull/7043))
 - Use `GroupedTimerJobQueue` to sync events to storage index ([#7047](https://github.com/open-chat-labs/open-chat/pull/7047))

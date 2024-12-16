@@ -1,6 +1,6 @@
 use crate::model::files::{Files, RemoveFileResult};
-use crate::model::index_event_batch::IndexEventBatch;
-use crate::model::index_sync_state::{EventToSync, IndexSyncState};
+use crate::model::index_event_batch::{EventToSync, IndexEventBatch};
+use crate::model::index_sync_state::IndexSyncState;
 use crate::model::users::Users;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;

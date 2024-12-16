@@ -1,13 +1,20 @@
-use crate::model::index_sync_state::EventToSync;
 use crate::model::users::FileStatusInternal;
 use crate::{mutate_state, DATA_LIMIT_BYTES, MAX_EVENTS_TO_SYNC_PER_BATCH};
+use candid::Deserialize;
+use serde::Serialize;
 use timer_job_queues::{TimerJobItem, TimerJobItemGroup};
-use types::CanisterId;
+use types::{CanisterId, FileAdded, FileRemoved};
 use utils::canister::should_retry_failed_c2c_call;
 
 pub struct IndexEventBatch {
     canister_id: CanisterId,
     events: Vec<(EventToSync, u64)>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub enum EventToSync {
+    FileAdded(FileAdded),
+    FileRemoved(FileRemoved),
 }
 
 impl TimerJobItem for IndexEventBatch {
