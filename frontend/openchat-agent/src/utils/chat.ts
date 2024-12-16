@@ -145,6 +145,11 @@ export function mergeGroupChatDetails(
             updates.pinnedMessagesRemoved,
         ),
         rules: updates.rules ?? previous.rules,
+        bots: mergeThings((b) => b.id, identity, previous.bots, {
+            added: [],
+            updated: updates.botsAddedOrUpdated,
+            removed: updates.botsRemoved,
+        }),
     };
 }
 

@@ -3170,6 +3170,11 @@ export class OpenChat extends EventTarget {
                 chatStateStore.setProp(serverChat.id, "invitedUsers", resp.invitedUsers);
                 chatStateStore.setProp(serverChat.id, "pinnedMessages", resp.pinnedMessages);
                 chatStateStore.setProp(serverChat.id, "rules", resp.rules);
+                chatStateStore.setProp(
+                    serverChat.id,
+                    "bots",
+                    resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
+                );
             }
             await this.#updateUserStoreFromEvents(serverChat.id, []);
         }

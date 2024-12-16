@@ -1,7 +1,6 @@
 import type {
     AddMembersToChannelResponse,
     BlockCommunityUserResponse,
-    BotGroupDetails,
     ChangeCommunityRoleResponse,
     ChannelMatch,
     ChannelSummaryResponse,
@@ -65,12 +64,12 @@ import type {
     CommunitySetMemberDisplayNameResponse,
     CommunityDeleteUserGroupsResponse,
     CommunityUpdateUserGroupResponse,
-    BotGroupDetails as ApiBotGroupDetails,
 } from "../../typebox";
 import { mapOptional, optionUpdateV2, principalBytesToString } from "../../utils/mapping";
 import {
     accessGateConfig,
     apiCommunityPermissionRole,
+    botGroupDetails,
     chatMetrics,
     communityChannelSummary,
     communityPermissions,
@@ -80,7 +79,6 @@ import {
     memberRole,
     mentions,
     messageEvent,
-    slashCommandPermissions,
     threadSyncDetails,
     updatedEvent,
     userGroup,
@@ -476,13 +474,6 @@ export function communityDetailsResponse(
         console.warn("CommunityDetails failed with", value);
         return "failure";
     }
-}
-
-export function botGroupDetails(value: ApiBotGroupDetails): BotGroupDetails {
-    return {
-        id: principalBytesToString(value.user_id),
-        permissions: slashCommandPermissions(value.permissions),
-    };
 }
 
 export function userGroupDetails(value: TUserGroupDetails): [number, UserGroupDetails] {

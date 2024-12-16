@@ -120,6 +120,7 @@ import type {
     SetPinNumberResponse,
     MessagePermission,
     SlashCommandPermissions,
+    BotGroupDetails,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -290,6 +291,7 @@ import type {
     GroupRemoveBotResponse,
     GroupAddBotResponse,
     GroupUpdateBotResponse,
+    BotGroupDetails as ApiBotGroupDetails,
 } from "../../typebox";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
@@ -2613,6 +2615,7 @@ export function groupDetailsResponse(
                 });
             }
         }
+        const bots = "bots" in value.Success ? value.Success.bots : [];
         return {
             members,
             blockedUsers: new Set(value.Success.blocked_users.map(principalBytesToString)),
@@ -2620,6 +2623,7 @@ export function groupDetailsResponse(
             pinnedMessages: new Set(value.Success.pinned_messages),
             rules: value.Success.chat_rules,
             timestamp: value.Success.timestamp,
+            bots: bots.map(botGroupDetails),
         };
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", value);
@@ -2648,6 +2652,8 @@ export function groupDetailsUpdatesResponse(
                     (invited_users) => new Set(invited_users.map(principalBytesToString)),
                 ),
                 timestamp: value.Success.timestamp,
+                botsAddedOrUpdated: value.Success.bots_added_or_updated.map(botGroupDetails),
+                botsRemoved: new Set(value.Success.bots_removed.map(principalBytesToString)),
             };
         } else if ("SuccessNoUpdates" in value) {
             return {
@@ -3349,4 +3355,11 @@ export function updateBotResponse(
     }
     console.warn("Community|GroupUpdateBotResponse failed with ", value);
     return false;
+}
+
+export function botGroupDetails(value: ApiBotGroupDetails): BotGroupDetails {
+    return {
+        id: principalBytesToString(value.user_id),
+        permissions: slashCommandPermissions(value.permissions),
+    };
 }
