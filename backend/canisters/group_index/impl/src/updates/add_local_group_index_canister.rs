@@ -73,6 +73,12 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
 
 fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut RuntimeState) -> Response {
     if state.data.local_index_map.add_index(canister_id, wasm_version) {
+        state.data.fire_and_forget_handler.send_candid(
+            state.data.cycles_dispenser_canister_id,
+            "add_canister",
+            cycles_dispenser_canister::add_canister::Args { canister_id },
+        );
+
         Success
     } else {
         AlreadyAdded

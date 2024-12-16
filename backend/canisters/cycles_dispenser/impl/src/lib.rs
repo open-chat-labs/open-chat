@@ -5,7 +5,7 @@ use ic_ledger_types::{BlockIndex, Tokens};
 use ledger_utils::default_ledger_account;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
 use types::{BuildVersion, CanisterId, Cycles, Milliseconds, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
@@ -37,6 +37,12 @@ impl State {
         self.data.governance_principals.contains(&self.env.caller())
     }
 
+    pub fn is_caller_authorized_to_add_canister(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.governance_principals.contains(&caller)
+            || self.data.canisters_directly_controlled_by_sns_root.contains(&caller)
+    }
+
     pub fn metrics(&self) -> Metrics {
         Metrics {
             heap_memory_used: utils::memory::heap(),
@@ -64,6 +70,8 @@ impl State {
 struct Data {
     pub governance_principals: HashSet<Principal>,
     pub canisters: Canisters,
+    #[serde(default)]
+    pub canisters_directly_controlled_by_sns_root: BTreeSet<CanisterId>,
     pub sns_root_canister: Option<CanisterId>,
     pub max_top_up_amount: Cycles,
     pub min_interval: Milliseconds,
@@ -93,6 +101,7 @@ impl Data {
         Data {
             governance_principals: governance_principals.into_iter().collect(),
             canisters: Canisters::new(canisters, now),
+            canisters_directly_controlled_by_sns_root: BTreeSet::default(),
             sns_root_canister: None,
             max_top_up_amount,
             min_interval,

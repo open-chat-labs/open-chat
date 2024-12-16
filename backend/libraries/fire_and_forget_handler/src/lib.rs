@@ -1,3 +1,4 @@
+use candid::CandidType;
 use canister_client::make_c2c_call_raw;
 use constants::SECOND_IN_MS;
 use ic_cdk_timers::TimerId;
@@ -32,6 +33,10 @@ impl FireAndForgetHandler {
         };
 
         ic_cdk::spawn(self.clone().process_single(call));
+    }
+
+    pub fn send_candid<A: CandidType>(&self, canister_id: CanisterId, method_name: impl Into<String>, args: A) {
+        self.send(canister_id, method_name, candid::encode_one(args).unwrap());
     }
 
     fn init(inner: FireAndForgetHandlerInner) -> Self {

@@ -2467,6 +2467,7 @@ dependencies = [
 name = "fire_and_forget_handler"
 version = "0.1.0"
 dependencies = [
+ "candid",
  "canister_client",
  "canister_time",
  "constants",
@@ -2902,6 +2903,7 @@ dependencies = [
  "community_canister",
  "community_canister_c2c_client",
  "constants",
+ "cycles_dispenser_canister",
  "fire_and_forget_handler",
  "futures",
  "group_canister",
@@ -5013,6 +5015,8 @@ dependencies = [
  "canister_state_macros",
  "canister_tracing_macros",
  "constants",
+ "cycles_dispenser_canister",
+ "fire_and_forget_handler",
  "futures",
  "http_request",
  "human_readable",
@@ -8314,6 +8318,7 @@ dependencies = [
  "community_canister",
  "community_canister_c2c_client",
  "constants",
+ "cycles_dispenser_canister",
  "dataurl",
  "event_store_producer",
  "event_store_producer_cdk_runtime",
