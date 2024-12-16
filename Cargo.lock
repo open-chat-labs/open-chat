@@ -6235,6 +6235,8 @@ dependencies = [
  "canister_tracing_macros",
  "constants",
  "dataurl",
+ "escrow_canister",
+ "escrow_canister_c2c_client",
  "futures",
  "hex",
  "http_request",

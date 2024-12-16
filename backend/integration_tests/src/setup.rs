@@ -339,6 +339,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         nns_governance_canister_id,
         nns_index_canister_id,
         sns_wasm_canister_id,
+        escrow_canister_id,
         cycles_dispenser_canister_id,
         wasm_version,
         test_mode,
@@ -352,6 +353,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     );
 
     let escrow_init_args = escrow_canister::init::Args {
+        registry_canister_id,
         cycles_dispenser_canister_id,
         wasm_version,
         test_mode,
