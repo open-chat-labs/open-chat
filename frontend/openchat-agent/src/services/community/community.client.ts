@@ -10,7 +10,6 @@ import {
 } from "../../utils/mapping";
 import type { AgentConfig } from "../../config";
 import {
-    addBotResponse,
     addMembersToChannelResponse,
     apiCommunityRole,
     apiMemberRole,
@@ -25,7 +24,6 @@ import {
     exploreChannelsResponse,
     followThreadResponse,
     importGroupResponse,
-    removeBotResponse,
     removeMemberFromChannelResponse,
     removeMemberResponse,
     reportMessageResponse,
@@ -34,7 +32,6 @@ import {
     summaryResponse,
     summaryUpdatesResponse,
     unblockUserResponse,
-    updateBotResponse,
     updateCommunityResponse,
     updateUserGroupResponse,
 } from "./mappersV2";
@@ -76,6 +73,9 @@ import {
     apiChatPermission,
     apiCommunityPermission,
     apiMessagePermission,
+    addBotResponse,
+    updateBotResponse,
+    removeBotResponse,
 } from "../common/chatMappersV2";
 import type {
     AddMembersToChannelResponse,

@@ -284,6 +284,12 @@ import type {
     CommunityPermission,
     MessagePermission as ApiMessagePermission,
     SlashCommandPermissions as ApiSlashCommandPermissions,
+    CommunityRemoveBotResponse,
+    CommunityAddBotResponse,
+    CommunityUpdateBotResponse,
+    GroupRemoveBotResponse,
+    GroupAddBotResponse,
+    GroupUpdateBotResponse,
 } from "../../typebox";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
@@ -3315,4 +3321,32 @@ export function slashCommandPermissions(
         communityPermissions: value.community.map(communityPermission),
         messagePermissions: value.message.map(messagePermission),
     };
+}
+
+export function removeBotResponse(
+    value: CommunityRemoveBotResponse | GroupRemoveBotResponse,
+): boolean {
+    if (value === "Success") {
+        return true;
+    }
+    console.warn("Community|GroupRemoveBotResponse failed with ", value);
+    return false;
+}
+
+export function addBotResponse(value: CommunityAddBotResponse | GroupAddBotResponse): boolean {
+    if (value === "Success" || value === "AlreadyAdded") {
+        return true;
+    }
+    console.warn("Community|GroupAddBotResponse failed with ", value);
+    return false;
+}
+
+export function updateBotResponse(
+    value: CommunityUpdateBotResponse | GroupUpdateBotResponse,
+): boolean {
+    if (value === "Success") {
+        return true;
+    }
+    console.warn("Community|GroupUpdateBotResponse failed with ", value);
+    return false;
 }
