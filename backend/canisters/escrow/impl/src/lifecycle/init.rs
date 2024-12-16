@@ -13,7 +13,7 @@ fn init(args: Args) {
     init_cycles_dispenser_client(args.cycles_dispenser_canister_id, args.test_mode);
 
     let env = init_env([0; 32]);
-    let data = Data::new(args.cycles_dispenser_canister_id, args.test_mode);
+    let data = Data::new(args.registry_canister_id, args.cycles_dispenser_canister_id, args.test_mode);
 
     init_state(env, data, args.wasm_version);
 

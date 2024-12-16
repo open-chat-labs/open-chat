@@ -1,5 +1,5 @@
 use crate::timer_job_types::{ExpireSwapJob, TimerJob};
-use crate::{mutate_state, RuntimeState};
+use crate::{mutate_state, Data, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use escrow_canister::create_swap::{Response::*, *};
@@ -13,7 +13,7 @@ fn create_swap(args: Args) -> Response {
 
 fn create_swap_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
-    if let Err(error) = validate_swap(&args, now) {
+    if let Err(error) = validate_swap(&args, now, &state.data) {
         InvalidSwap(error)
     } else {
         let caller = state.env.caller().into();
@@ -28,15 +28,19 @@ fn create_swap_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 }
 
-fn validate_swap(args: &Args, now: TimestampMillis) -> Result<(), String> {
+fn validate_swap(args: &Args, now: TimestampMillis, data: &Data) -> Result<(), String> {
     if args.token0.ledger == args.token1.ledger {
-        Err("Token0 must be different to token1".to_string())
+        Err("Input token must be different to output token".to_string())
     } else if args.token0_amount == 0 {
-        Err("Token0 amount cannot be 0".to_string())
+        Err("Input amount cannot be 0".to_string())
     } else if args.token1_amount == 0 {
-        Err("Token1 amount cannot be 0".to_string())
+        Err("Output amount cannot be 0".to_string())
     } else if args.expires_at < now {
         Err("Expiry cannot be in the past".to_string())
+    } else if data.disabled_tokens.contains(&args.token0.ledger) {
+        Err("Input token is disabled for swaps".to_string())
+    } else if data.disabled_tokens.contains(&args.token1.ledger) {
+        Err("Output token is disabled for swaps".to_string())
     } else {
         Ok(())
     }
