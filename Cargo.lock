@@ -1298,6 +1298,7 @@ dependencies = [
  "candid",
  "constants",
  "event_store_producer",
+ "event_store_producer_cdk_runtime",
  "hex",
  "ic-cdk 0.17.0",
  "ic-ledger-types",

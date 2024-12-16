@@ -6,6 +6,7 @@ use crate::search_index::SearchIndex;
 use crate::*;
 use constants::{HOUR_IN_MS, ONE_MB, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventBuilder, EventStoreClient, Runtime};
+use event_store_producer_cdk_runtime::CdkRuntime;
 use rand::rngs::StdRng;
 use rand::Rng;
 use search::simple::{Document, Query};
@@ -54,8 +55,14 @@ impl ChatEvents {
         // 3. More than 2 hours have passed since the call was started
         // THEN remove the video call in progress indicator
 
-        if self.video_call_is_spurious(now) {
-            self.video_call_in_progress = Timestamped::new(None, now);
+        let video_call_in_progress = self.video_call_in_progress.value.as_ref().map(|vc| vc.message_index);
+
+        if let Some(message_index) = video_call_in_progress {
+            if self.video_call_is_spurious(now) {
+                self.video_call_in_progress = Timestamped::new(None, now);
+
+                self.end_video_call::<CdkRuntime>(message_index.into(), now, None);
+            }
         }
     }
 
