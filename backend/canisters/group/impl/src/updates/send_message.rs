@@ -136,102 +136,104 @@ fn process_send_message_result(
 
             register_timer_jobs(thread_root_message_index, message_event, now, &mut state.data);
 
-            let content = &message_event.event.content;
-            let chat_id = state.env.canister_id().into();
+            if !result.unfinalised_bot_message {
+                let content = &message_event.event.content;
+                let chat_id = state.env.canister_id().into();
 
-            let notification = Notification::GroupMessage(GroupMessageNotification {
-                chat_id,
-                thread_root_message_index,
-                message_index,
-                event_index,
-                group_name: state.data.chat.name.value.clone(),
-                sender: caller.agent(),
-                sender_name: sender_username,
-                sender_display_name,
-                message_type: content.message_type(),
-                message_text: content.notification_text(&mentioned, &[]),
-                image_url: content.notification_image_url(),
-                group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
-                crypto_transfer: content.notification_crypto_transfer_details(&mentioned),
-            });
-            state.push_notification(result.users_to_notify, notification);
+                let notification = Notification::GroupMessage(GroupMessageNotification {
+                    chat_id,
+                    thread_root_message_index,
+                    message_index,
+                    event_index,
+                    group_name: state.data.chat.name.value.clone(),
+                    sender: caller.agent(),
+                    sender_name: sender_username,
+                    sender_display_name,
+                    message_type: content.message_type(),
+                    message_text: content.notification_text(&mentioned, &[]),
+                    image_url: content.notification_image_url(),
+                    group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
+                    crypto_transfer: content.notification_crypto_transfer_details(&mentioned),
+                });
+                state.push_notification(result.users_to_notify, notification);
 
-            if new_achievement && !caller.is_bot() {
-                for a in message_event.event.achievements(false, thread_root_message_index.is_some()) {
-                    state.data.notify_user_of_achievement(caller.agent(), a);
+                if new_achievement && !caller.is_bot() {
+                    for a in message_event.event.achievements(false, thread_root_message_index.is_some()) {
+                        state.data.notify_user_of_achievement(caller.agent(), a);
+                    }
                 }
-            }
 
-            let mut activity_events = Vec::new();
+                let mut activity_events = Vec::new();
 
-            if let MessageContent::Crypto(c) = content {
-                if state
-                    .data
-                    .chat
-                    .members
-                    .get(&c.recipient)
-                    .map_or(false, |m| !m.user_type().is_bot())
-                {
-                    state
-                        .data
-                        .notify_user_of_achievement(c.recipient, Achievement::ReceivedCrypto);
-
-                    activity_events.push((c.recipient, MessageActivity::Crypto));
-                }
-            }
-
-            for user in mentioned {
-                if user.user_id != caller.initiator()
-                    && state
+                if let MessageContent::Crypto(c) = content {
+                    if state
                         .data
                         .chat
                         .members
-                        .get(&user.user_id)
+                        .get(&c.recipient)
                         .map_or(false, |m| !m.user_type().is_bot())
-                {
-                    activity_events.push((user.user_id, MessageActivity::Mention));
-                }
-            }
+                    {
+                        state
+                            .data
+                            .notify_user_of_achievement(c.recipient, Achievement::ReceivedCrypto);
 
-            if let Some(replying_to_event_index) = message_event
-                .event
-                .replies_to
-                .as_ref()
-                .filter(|r| r.chat_if_other.is_none())
-                .map(|r| r.event_index)
-            {
-                if let Some((message, _)) = state.data.chat.events.message_internal(
-                    EventIndex::default(),
-                    thread_root_message_index,
-                    replying_to_event_index.into(),
-                ) {
-                    if message.sender != caller.initiator()
+                        activity_events.push((c.recipient, MessageActivity::Crypto));
+                    }
+                }
+
+                for user in mentioned {
+                    if user.user_id != caller.initiator()
                         && state
                             .data
                             .chat
                             .members
-                            .get(&message.sender)
+                            .get(&user.user_id)
                             .map_or(false, |m| !m.user_type().is_bot())
                     {
-                        activity_events.push((message.sender, MessageActivity::QuoteReply));
+                        activity_events.push((user.user_id, MessageActivity::Mention));
                     }
                 }
-            }
 
-            for (user_id, activity) in activity_events {
-                state.data.user_event_sync_queue.push(
-                    user_id,
-                    GroupCanisterEvent::MessageActivity(MessageActivityEvent {
-                        chat: Chat::Group(chat_id),
+                if let Some(replying_to_event_index) = message_event
+                    .event
+                    .replies_to
+                    .as_ref()
+                    .filter(|r| r.chat_if_other.is_none())
+                    .map(|r| r.event_index)
+                {
+                    if let Some((message, _)) = state.data.chat.events.message_internal(
+                        EventIndex::default(),
                         thread_root_message_index,
-                        message_index,
-                        message_id,
-                        event_index,
-                        activity,
-                        timestamp: now,
-                        user_id: Some(caller.agent()),
-                    }),
-                );
+                        replying_to_event_index.into(),
+                    ) {
+                        if message.sender != caller.initiator()
+                            && state
+                                .data
+                                .chat
+                                .members
+                                .get(&message.sender)
+                                .map_or(false, |m| !m.user_type().is_bot())
+                        {
+                            activity_events.push((message.sender, MessageActivity::QuoteReply));
+                        }
+                    }
+                }
+
+                for (user_id, activity) in activity_events {
+                    state.data.user_event_sync_queue.push(
+                        user_id,
+                        GroupCanisterEvent::MessageActivity(MessageActivityEvent {
+                            chat: Chat::Group(chat_id),
+                            thread_root_message_index,
+                            message_index,
+                            message_id,
+                            event_index,
+                            activity,
+                            timestamp: now,
+                            user_id: Some(caller.agent()),
+                        }),
+                    );
+                }
             }
 
             handle_activity_notification(state);

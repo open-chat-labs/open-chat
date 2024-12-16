@@ -654,32 +654,18 @@ impl GroupChatCore {
                         && bot_now.finalised
                         && !bot_message.finalised
                     {
-                        let edit_message_args = EditMessageArgs {
-                            sender: caller.agent(),
-                            min_visible_event_index: EventIndex::default(),
+                        return self.finalise_bot_message(
+                            caller,
                             thread_root_message_index,
                             message_id,
                             content,
-                            block_level_markdown: Some(block_level_markdown),
-                            finalise_bot_message: true,
+                            replies_to,
+                            mentioned,
+                            rules_accepted,
+                            suppressed,
+                            block_level_markdown,
                             now,
-                        };
-
-                        match self.events.edit_message::<CdkRuntime>(edit_message_args, None) {
-                            chat_events::EditMessageResult::Success => {
-                                let reader = self
-                                    .events
-                                    .events_reader(EventIndex::default(), thread_root_message_index)
-                                    .unwrap();
-                                let message_event = reader.message_event(message_id.into(), Some(caller.agent())).unwrap();
-                                return SendMessageResult::Success(SendMessageSuccess {
-                                    message_event,
-                                    users_to_notify: vec![],
-                                    bot_message_finalised: true,
-                                });
-                            }
-                            _ => unreachable!(),
-                        }
+                        );
                     }
                 }
             }
@@ -741,10 +727,6 @@ impl GroupChatCore {
             }
         }
 
-        let user_being_replied_to = replies_to
-            .as_ref()
-            .and_then(|r| self.get_user_being_replied_to(r, min_visible_event_index, thread_root_message_index));
-
         let sender = caller.agent();
 
         let push_message_args = PushMessageArgs {
@@ -763,7 +745,121 @@ impl GroupChatCore {
         };
 
         let message_event = self.events.push_message(push_message_args, Some(event_store_client));
-        let message_index = message_event.event.message_index;
+
+        let unfinalised_bot_message = if let Caller::BotV2(bot) = caller { !bot.finalised } else { false };
+
+        let users_to_notify = if unfinalised_bot_message {
+            vec![]
+        } else {
+            self.build_users_to_notify(
+                thread_root_message_index,
+                min_visible_event_index,
+                replies_to,
+                &message_event,
+                mentioned,
+                everyone_mentioned,
+                suppressed,
+                now,
+            )
+        };
+
+        Success(SendMessageSuccess {
+            message_event,
+            users_to_notify,
+            unfinalised_bot_message,
+        })
+    }
+
+    fn finalise_bot_message(
+        &mut self,
+        caller: &Caller,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        content: MessageContentInitial,
+        replies_to: Option<GroupReplyContext>,
+        mentioned: &[UserId],
+        rules_accepted: Option<Version>,
+        suppressed: bool,
+        block_level_markdown: bool,
+        now: TimestampMillis,
+    ) -> SendMessageResult {
+        use SendMessageResult::*;
+
+        let PrepareSendMessageSuccess {
+            min_visible_event_index,
+            everyone_mentioned,
+        } = match self.prepare_send_message(
+            caller,
+            thread_root_message_index,
+            &content.clone().into(),
+            rules_accepted,
+            now,
+        ) {
+            PrepareSendMessageResult::Success(success) => success,
+            PrepareSendMessageResult::UserLapsed => return UserLapsed,
+            PrepareSendMessageResult::UserSuspended => return UserSuspended,
+            PrepareSendMessageResult::UserNotInGroup => return UserNotInGroup,
+            PrepareSendMessageResult::RulesNotAccepted => return RulesNotAccepted,
+            PrepareSendMessageResult::NotAuthorized => return NotAuthorized,
+        };
+
+        let edit_message_args = EditMessageArgs {
+            sender: caller.agent(),
+            min_visible_event_index,
+            thread_root_message_index,
+            message_id,
+            content,
+            block_level_markdown: Some(block_level_markdown),
+            finalise_bot_message: true,
+            now,
+        };
+
+        self.events.edit_message::<CdkRuntime>(edit_message_args, None);
+
+        let reader = self
+            .events
+            .events_reader(min_visible_event_index, thread_root_message_index)
+            .unwrap();
+
+        let message_event = reader.message_event(message_id.into(), Some(caller.agent())).unwrap();
+
+        let users_to_notify = self.build_users_to_notify(
+            thread_root_message_index,
+            min_visible_event_index,
+            replies_to,
+            &message_event,
+            mentioned,
+            suppressed,
+            everyone_mentioned,
+            now,
+        );
+
+        SendMessageResult::Success(SendMessageSuccess {
+            message_event,
+            users_to_notify,
+            unfinalised_bot_message: false,
+        })
+    }
+
+    fn build_users_to_notify(
+        &mut self,
+        thread_root_message_index: Option<MessageIndex>,
+        min_visible_event_index: EventIndex,
+        replies_to: Option<GroupReplyContext>,
+        message_event: &EventWrapper<Message>,
+        mentioned: &[UserId],
+        everyone_mentioned: bool,
+        suppressed: bool,
+        now: TimestampMillis,
+    ) -> Vec<UserId> {
+        let message = &message_event.event;
+        let message_index = message.message_index;
+        let sender = message.sender;
+        let message_id = message.message_id;
+
+        let user_being_replied_to = replies_to
+            .as_ref()
+            .and_then(|r| self.get_user_being_replied_to(r, min_visible_event_index, thread_root_message_index));
 
         let mentions: HashSet<_> = mentioned.iter().copied().chain(user_being_replied_to).collect();
 
@@ -834,11 +930,7 @@ impl GroupChatCore {
             users_to_notify.remove(user_id);
         }
 
-        Success(SendMessageSuccess {
-            message_event,
-            users_to_notify: users_to_notify.iter().copied().collect(),
-            bot_message_finalised: false,
-        })
+        users_to_notify.iter().copied().collect()
     }
 
     fn prepare_send_message(
@@ -2101,7 +2193,7 @@ pub enum SendMessageResult {
 pub struct SendMessageSuccess {
     pub message_event: EventWrapper<Message>,
     pub users_to_notify: Vec<UserId>,
-    pub bot_message_finalised: bool,
+    pub unfinalised_bot_message: bool,
 }
 
 pub enum AddRemoveReactionResult {

@@ -204,7 +204,7 @@ fn process_send_message_result(
 
             register_timer_jobs(channel_id, thread_root_message_index, message_event, now, &mut state.data);
 
-            if !result.bot_message_finalised {
+            if !result.unfinalised_bot_message {
                 let notification = Notification::ChannelMessage(ChannelMessageNotification {
                     community_id,
                     channel_id,
