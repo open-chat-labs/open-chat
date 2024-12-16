@@ -1,7 +1,6 @@
 import type {
     AddMembersToChannelResponse,
     BlockCommunityUserResponse,
-    BotGroupDetails,
     ChangeCommunityRoleResponse,
     ChannelMatch,
     ChannelSummaryResponse,
@@ -65,14 +64,12 @@ import type {
     CommunitySetMemberDisplayNameResponse,
     CommunityDeleteUserGroupsResponse,
     CommunityUpdateUserGroupResponse,
-    CommunityAddBotResponse,
-    CommunityRemoveBotResponse,
-    BotGroupDetails as ApiBotGroupDetails,
 } from "../../typebox";
 import { mapOptional, optionUpdateV2, principalBytesToString } from "../../utils/mapping";
 import {
     accessGateConfig,
     apiCommunityPermissionRole,
+    botGroupDetails,
     chatMetrics,
     communityChannelSummary,
     communityPermissions,
@@ -82,29 +79,12 @@ import {
     memberRole,
     mentions,
     messageEvent,
-    slashCommandPermissions,
     threadSyncDetails,
     updatedEvent,
     userGroup,
 } from "../common/chatMappersV2";
 import { identity } from "../../utils/mapping";
 import { mapCommonResponses } from "../common/commonResponseMapper";
-
-export function removeBotResponse(value: CommunityRemoveBotResponse): boolean {
-    if (value === "Success") {
-        return true;
-    }
-    console.warn("CommunityRemoveBotResponse failed with ", value);
-    return false;
-}
-
-export function addBotResponse(value: CommunityAddBotResponse): boolean {
-    if (value === "Success" || value === "AlreadyAdded") {
-        return true;
-    }
-    console.warn("CommunityAddBotResponse failed with ", value);
-    return false;
-}
 
 export function addMembersToChannelResponse(
     value: CommunityAddMembersToChannelResponse,
@@ -494,13 +474,6 @@ export function communityDetailsResponse(
         console.warn("CommunityDetails failed with", value);
         return "failure";
     }
-}
-
-export function botGroupDetails(value: ApiBotGroupDetails): BotGroupDetails {
-    return {
-        id: principalBytesToString(value.user_id),
-        permissions: slashCommandPermissions(value.permissions),
-    };
 }
 
 export function userGroupDetails(value: TUserGroupDetails): [number, UserGroupDetails] {

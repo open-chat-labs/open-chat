@@ -109,6 +109,7 @@ fn main() {
     generate_ts_method!(group, undelete_messages);
     generate_ts_method!(group, unfollow_thread);
     generate_ts_method!(group, unpin_message);
+    generate_ts_method!(group, update_bot);
     generate_ts_method!(group, update_group_v2);
 
     candid::export_service!();

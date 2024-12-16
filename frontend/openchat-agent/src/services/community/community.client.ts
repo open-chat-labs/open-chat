@@ -10,7 +10,6 @@ import {
 } from "../../utils/mapping";
 import type { AgentConfig } from "../../config";
 import {
-    addBotResponse,
     addMembersToChannelResponse,
     apiCommunityRole,
     apiMemberRole,
@@ -25,7 +24,6 @@ import {
     exploreChannelsResponse,
     followThreadResponse,
     importGroupResponse,
-    removeBotResponse,
     removeMemberFromChannelResponse,
     removeMemberResponse,
     reportMessageResponse,
@@ -75,6 +73,9 @@ import {
     apiChatPermission,
     apiCommunityPermission,
     apiMessagePermission,
+    addBotResponse,
+    updateBotResponse,
+    removeBotResponse,
 } from "../common/chatMappersV2";
 import type {
     AddMembersToChannelResponse,
@@ -295,6 +296,8 @@ import {
     CommunityAddBotResponse,
     CommunityRemoveBotArgs,
     CommunityRemoveBotResponse,
+    CommunityUpdateBotArgs,
+    CommunityUpdateBotResponse,
 } from "../../typebox";
 
 export class CommunityClient extends CandidService {
@@ -1738,9 +1741,27 @@ export class CommunityClient extends CandidService {
         );
     }
 
+    updateBot(botId: string, grantedPermissions: SlashCommandPermissions): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "update_bot",
+            {
+                bot_id: principalStringToBytes(botId),
+                granted_permissions: {
+                    chat: grantedPermissions.chatPermissions.map(apiChatPermission),
+                    community: grantedPermissions.communityPermissions.map(apiCommunityPermission),
+                    message: grantedPermissions.messagePermissions.map(apiMessagePermission),
+                    thread: grantedPermissions.messagePermissions.map(apiMessagePermission),
+                },
+            },
+            updateBotResponse,
+            CommunityUpdateBotArgs,
+            CommunityUpdateBotResponse,
+        );
+    }
+
     removeBot(botId: string): Promise<boolean> {
         return this.executeMsgpackUpdate(
-            "add_bot",
+            "remove_bot",
             {
                 bot_id: principalStringToBytes(botId),
             },

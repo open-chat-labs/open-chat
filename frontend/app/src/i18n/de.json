@@ -244,6 +244,16 @@
         "diamond": {
             "desc": "Posten Sie einen Link, um die Diamond-Mitgliedschaft zu erklären"
         },
+        "edit": {
+            "failure": "Leider konnten wir die Bot-Berechtigungen nicht aktualisieren",
+            "title": "Bot-Berechtigungen aktualisieren",
+            "updateBot": "Bot aktualisieren"
+        },
+        "events": {
+            "add": "Bot **{botname}** hinzugefügt von {username}",
+            "remove": "Bot **{botname}** von {username} entfernt",
+            "update": "Bot **{botname}** aktualisiert von {username}"
+        },
         "explorer": {
             "addBots": "Bots hinzufügen",
             "loadMore": "Mehr laden..."
@@ -287,7 +297,17 @@
                 }
             }
         },
+        "manage": {
+            "remove": "Bot entfernen",
+            "removeFailed": "Es ist uns leider nicht gelungen, den Bot zu entfernen.",
+            "review": "Überprüfen Sie die Bot-Berechtigungen",
+            "view": "Botdetails anzeigen"
+        },
         "matchingCommands": "Passende Befehle",
+        "member": {
+            "bots": "Bots",
+            "people": "Menschen"
+        },
         "poll": {
             "desc": "Erstellen Sie eine Umfrage im aktuellen Chat"
         },
@@ -306,6 +326,10 @@
         },
         "update_bot": {
             "desc": "Starten Sie einen Vorschlag zur Aktualisierung eines vorhandenen OpenChat-Bots"
+        },
+        "view": {
+            "close": "Schließen",
+            "title": "Bot-Details"
         },
         "witch": {
             "desc": "Beschwöre die Hexe"

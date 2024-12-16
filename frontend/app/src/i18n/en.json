@@ -244,6 +244,16 @@
         "diamond": {
             "desc": "Post a link to explain Diamond membership"
         },
+        "edit": {
+            "failure": "Sorry we were unable to update the bot permissions",
+            "title": "Update bot permissions",
+            "updateBot": "Update bot"
+        },
+        "events": {
+            "add": "Bot **{botname}** added by {username}",
+            "remove": "Bot **{botname}** removed by {username}",
+            "update": "Bot **{botname}** updated by {username}"
+        },
         "explorer": {
             "addBots": "Add bots",
             "loadMore": "Load more..."
@@ -287,7 +297,17 @@
                 }
             }
         },
+        "manage": {
+            "remove": "Remove bot",
+            "removeFailed": "Sorry we were unable to remove the bot",
+            "review": "Review bot permissions",
+            "view": "View bot details"
+        },
         "matchingCommands": "Matching commands",
+        "member": {
+            "bots": "Bots",
+            "people": "People"
+        },
         "poll": {
             "desc": "Create a poll in the current chat"
         },
@@ -306,6 +326,10 @@
         },
         "update_bot": {
             "desc": "Start a proposal to update an existing OpenChat bot"
+        },
+        "view": {
+            "close": "Close",
+            "title": "Bot details"
         },
         "witch": {
             "desc": "Summon the witch"

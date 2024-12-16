@@ -244,6 +244,16 @@
         "diamond": {
             "desc": "ダイヤモンド会員資格を説明するリンクを投稿する"
         },
+        "edit": {
+            "failure": "申し訳ありませんが、ボットの権限を更新できませんでした",
+            "title": "ボットの権限を更新する",
+            "updateBot": "ボットの更新"
+        },
+        "events": {
+            "add": "ボット **{botname}** が {username} によって追加されました",
+            "remove": "ボット **{botname}** は {username} によって削除されました",
+            "update": "ボット **{botname}** が {username} によって更新されました"
+        },
         "explorer": {
             "addBots": "ボットを追加",
             "loadMore": "さらに読み込む..."
@@ -287,7 +297,17 @@
                 }
             }
         },
+        "manage": {
+            "remove": "ボットを削除",
+            "removeFailed": "申し訳ありませんが、ボットを削除できませんでした",
+            "review": "ボットの権限を確認する",
+            "view": "ボットの詳細を表示"
+        },
         "matchingCommands": "一致するコマンド",
+        "member": {
+            "bots": "ボット",
+            "people": "人々"
+        },
         "poll": {
             "desc": "現在のチャットでアンケートを作成する"
         },
@@ -306,6 +326,10 @@
         },
         "update_bot": {
             "desc": "既存のOpenChatボットを更新する提案を開始する"
+        },
+        "view": {
+            "close": "近い",
+            "title": "ボットの詳細"
         },
         "witch": {
             "desc": "魔女を召喚する"

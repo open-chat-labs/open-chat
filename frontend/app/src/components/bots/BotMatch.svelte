@@ -1,5 +1,10 @@
 <script lang="ts">
-    import { AvatarSize, type BotMatch, type CommunitySummary } from "openchat-client";
+    import {
+        AvatarSize,
+        type BotMatch,
+        type CommunityIdentifier,
+        type GroupChatIdentifier,
+    } from "openchat-client";
     import Avatar from "../Avatar.svelte";
     import BotSummary from "./BotSummary.svelte";
     import TooltipWrapper from "../TooltipWrapper.svelte";
@@ -7,15 +12,15 @@
 
     interface Props {
         match: BotMatch;
-        community: CommunitySummary;
+        id: CommunityIdentifier | GroupChatIdentifier;
     }
 
-    let { match, community }: Props = $props();
+    let { match, id }: Props = $props();
     let showing = $state(false);
 </script>
 
 {#if showing}
-    <BotSummary {community} onClose={() => (showing = false)} bot={match} />
+    <BotSummary mode={"adding"} {id} onClose={() => (showing = false)} bot={match} />
 {/if}
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->

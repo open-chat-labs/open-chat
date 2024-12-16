@@ -50,6 +50,7 @@ import type {
     VideoCallPresence,
     VideoCallParticipantsResponse,
     AccessGateConfig,
+    SlashCommandPermissions,
 } from "openchat-shared";
 import {
     DestinationInvalidError,
@@ -91,9 +92,13 @@ import {
 } from "../../utils/caching";
 import {
     acceptP2PSwapResponse,
+    addBotResponse,
     addRemoveReactionResponse,
     apiAccessGateConfig,
+    apiChatPermission,
+    apiCommunityPermission,
     apiMessageContent,
+    apiMessagePermission,
     apiUser as apiUserV2,
     apiVideoCallPresence,
     cancelP2PSwapResponse,
@@ -112,11 +117,13 @@ import {
     pinMessageResponse,
     registerPollVoteResponse,
     registerProposalVoteResponse,
+    removeBotResponse,
     searchGroupChatResponse,
     setVideoCallPresence,
     threadPreviewsResponse,
     undeleteMessageResponse,
     unpinMessageResponse,
+    updateBotResponse,
     updateGroupResponse,
     videoCallParticipantsResponse,
 } from "../common/chatMappersV2";
@@ -222,6 +229,12 @@ import {
     GroupUpdateGroupResponse,
     GroupVideoCallParticipantsArgs,
     GroupVideoCallParticipantsResponse,
+    GroupAddBotArgs,
+    GroupAddBotResponse,
+    GroupUpdateBotArgs,
+    GroupUpdateBotResponse,
+    GroupRemoveBotArgs,
+    GroupRemoveBotResponse,
 } from "../../typebox";
 
 export class GroupClient extends CandidService {
@@ -1275,6 +1288,54 @@ export class GroupClient extends CandidService {
             (value) => value === "Success",
             GroupCancelInvitesArgs,
             GroupCancelInvitesResponse,
+        );
+    }
+
+    addBot(botId: string, grantedPermissions: SlashCommandPermissions): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "add_bot",
+            {
+                bot_id: principalStringToBytes(botId),
+                granted_permissions: {
+                    chat: grantedPermissions.chatPermissions.map(apiChatPermission),
+                    community: grantedPermissions.communityPermissions.map(apiCommunityPermission),
+                    message: grantedPermissions.messagePermissions.map(apiMessagePermission),
+                    thread: grantedPermissions.messagePermissions.map(apiMessagePermission),
+                },
+            },
+            addBotResponse,
+            GroupAddBotArgs,
+            GroupAddBotResponse,
+        );
+    }
+
+    updateBot(botId: string, grantedPermissions: SlashCommandPermissions): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "update_bot",
+            {
+                bot_id: principalStringToBytes(botId),
+                granted_permissions: {
+                    chat: grantedPermissions.chatPermissions.map(apiChatPermission),
+                    community: grantedPermissions.communityPermissions.map(apiCommunityPermission),
+                    message: grantedPermissions.messagePermissions.map(apiMessagePermission),
+                    thread: grantedPermissions.messagePermissions.map(apiMessagePermission),
+                },
+            },
+            updateBotResponse,
+            GroupUpdateBotArgs,
+            GroupUpdateBotResponse,
+        );
+    }
+
+    removeBot(botId: string): Promise<boolean> {
+        return this.executeMsgpackUpdate(
+            "remove_bot",
+            {
+                bot_id: principalStringToBytes(botId),
+            },
+            removeBotResponse,
+            GroupRemoveBotArgs,
+            GroupRemoveBotResponse,
         );
     }
 }

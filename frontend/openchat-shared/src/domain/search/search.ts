@@ -33,10 +33,9 @@ export type MessageMatch = {
 
 export type BotMatch = {
     id: string;
-    score: number;
     name: string;
     description: string;
-    owner: string;
+    ownerId: string;
     avatarUrl?: string;
     commands: SlashCommandSchema[];
 };

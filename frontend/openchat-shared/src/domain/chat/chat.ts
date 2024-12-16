@@ -35,6 +35,7 @@ import type {
 } from "../community";
 import type { ChitEarned } from "../chit";
 import type { WalletConfig } from "../crypto";
+import type { BotGroupDetails, SlashCommandPermissions } from "../bots";
 
 export type CallerNotInGroup = { kind: "caller_not_in_group" };
 export type CanisterNotFound = { kind: "canister_not_found" };
@@ -1409,6 +1410,7 @@ export type GroupChatDetails = {
     pinnedMessages: Set<number>;
     rules: VersionedRules;
     timestamp: bigint;
+    bots: BotGroupDetails[];
 };
 
 /**
@@ -1431,6 +1433,7 @@ export type ChatSpecificState = {
     serverEvents: EventWrapper<ChatEvent>[];
     expandedDeletedMessages: Set<number>;
     expiredEventRanges: DRange;
+    bots: Map<string, SlashCommandPermissions>;
 };
 
 export type GroupChatDetailsUpdates = {
@@ -1443,6 +1446,8 @@ export type GroupChatDetailsUpdates = {
     rules?: VersionedRules;
     invitedUsers?: Set<string>;
     timestamp: bigint;
+    botsAddedOrUpdated: BotGroupDetails[];
+    botsRemoved: Set<string>;
 };
 
 export type ChatSummary = DirectChatSummary | MultiUserChat;
