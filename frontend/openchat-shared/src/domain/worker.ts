@@ -412,19 +412,27 @@ export type WorkerRequest =
     | MessageActivityFeed
     | MarkActivityFeedRead
     | DeleteUser
-    | AddBotToCommunity
-    | RemoveBotFromCommunity;
+    | AddBot
+    | RemoveBot
+    | UpdateBot;
 
-type AddBotToCommunity = {
-    kind: "addBotToCommunity";
-    id: CommunityIdentifier;
+type AddBot = {
+    kind: "addBot";
+    id: CommunityIdentifier | GroupChatIdentifier;
     botId: string;
     grantedPermissions: SlashCommandPermissions;
 };
 
-type RemoveBotFromCommunity = {
-    kind: "removeBotFromCommunity";
-    id: CommunityIdentifier;
+type UpdateBot = {
+    kind: "updateBot";
+    id: CommunityIdentifier | GroupChatIdentifier;
+    botId: string;
+    grantedPermissions: SlashCommandPermissions;
+};
+
+type RemoveBot = {
+    kind: "removeBot";
+    id: CommunityIdentifier | GroupChatIdentifier;
     botId: string;
 };
 
@@ -2248,6 +2256,10 @@ export type WorkerResult<T> = T extends Init
     ? void
     : T extends DeleteUser
     ? boolean
-    : T extends AddBotToCommunity
+    : T extends AddBot
+    ? boolean
+    : T extends RemoveBot
+    ? boolean
+    : T extends UpdateBot
     ? boolean
     : never;

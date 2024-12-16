@@ -68,6 +68,7 @@ import type {
     CommunityAddBotResponse,
     CommunityRemoveBotResponse,
     BotGroupDetails as ApiBotGroupDetails,
+    CommunityUpdateBotResponse,
 } from "../../typebox";
 import { mapOptional, optionUpdateV2, principalBytesToString } from "../../utils/mapping";
 import {
@@ -103,6 +104,14 @@ export function addBotResponse(value: CommunityAddBotResponse): boolean {
         return true;
     }
     console.warn("CommunityAddBotResponse failed with ", value);
+    return false;
+}
+
+export function updateBotResponse(value: CommunityUpdateBotResponse): boolean {
+    if (value === "Success") {
+        return true;
+    }
+    console.warn("CommunityUpdateBotResponse failed with ", value);
     return false;
 }
 

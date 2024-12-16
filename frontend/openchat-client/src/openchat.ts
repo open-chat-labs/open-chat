@@ -7834,37 +7834,48 @@ export class OpenChat extends EventTarget {
         });
     }
 
-    addBotToCommunity(
-        id: CommunityIdentifier,
+    addBot(
+        id: CommunityIdentifier | GroupChatIdentifier,
         botId: string,
         grantedPermissions: SlashCommandPermissions,
     ): Promise<boolean> {
         return this.#sendRequest({
-            kind: "addBotToCommunity",
+            kind: "addBot",
             id,
             botId,
             grantedPermissions,
         }).catch((err) => {
-            this.#logger.error("Error adding bot to community", err);
+            this.#logger.error("Error adding bot to group or community", err);
+            return false;
+        });
+    }
+
+    updateBot(
+        id: CommunityIdentifier | GroupChatIdentifier,
+        botId: string,
+        grantedPermissions: SlashCommandPermissions,
+    ): Promise<boolean> {
+        return this.#sendRequest({
+            kind: "updateBot",
+            id,
+            botId,
+            grantedPermissions,
+        }).catch((err) => {
+            this.#logger.error("Error adding bot to group or community", err);
             return false;
         });
     }
 
     // TODO - probably need to think about local updates here
     removeBot(id: CommunityIdentifier | GroupChatIdentifier, botId: string): Promise<boolean> {
-        switch (id.kind) {
-            case "community":
-                return this.#sendRequest({
-                    kind: "removeBotFromCommunity",
-                    id,
-                    botId,
-                }).catch((err) => {
-                    this.#logger.error("Error removing bot from community", err);
-                    return false;
-                });
-            case "group_chat":
-                throw new Error("Not implemented yet");
-        }
+        return this.#sendRequest({
+            kind: "removeBot",
+            id,
+            botId,
+        }).catch((err) => {
+            this.#logger.error("Error removing bot from group or community", err);
+            return false;
+        });
     }
 
     executeBotCommand(

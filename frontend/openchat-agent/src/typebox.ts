@@ -3037,6 +3037,14 @@ export const CommunityEventsArgs = Type.Object({
     latest_known_update: Type.Optional(Type.Union([Type.BigInt(), Type.Undefined()])),
 });
 
+export type CommunityUpdateBotResponse = Static<typeof CommunityUpdateBotResponse>;
+export const CommunityUpdateBotResponse = Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("ChatFrozen"),
+    Type.Literal("NotAuthorized"),
+    Type.Literal("NotFound"),
+]);
+
 export type CommunityAcceptP2pSwapArgs = Static<typeof CommunityAcceptP2pSwapArgs>;
 export const CommunityAcceptP2pSwapArgs = Type.Object({
     channel_id: ChannelId,
@@ -5204,6 +5212,12 @@ export const CommunityChangeChannelRoleArgs = Type.Object({
 export type CommunityBlockUserArgs = Static<typeof CommunityBlockUserArgs>;
 export const CommunityBlockUserArgs = Type.Object({
     user_id: UserId,
+});
+
+export type CommunityUpdateBotArgs = Static<typeof CommunityUpdateBotArgs>;
+export const CommunityUpdateBotArgs = Type.Object({
+    bot_id: UserId,
+    granted_permissions: SlashCommandPermissions,
 });
 
 export type CommunityCreateChannelResponse = Static<typeof CommunityCreateChannelResponse>;

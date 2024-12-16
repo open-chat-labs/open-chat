@@ -157,6 +157,15 @@
             "permissionsInfo": "This bot seeks the following permissions. Choosing to limit the permissions granted will limit the commands available.",
             "title": "Add bot to community"
         },
+        "edit": {
+            "title": "Update bot permissions",
+            "updateBot": "Update bot",
+            "failure": "Sorry we were unable to update the bot permissions"
+        },
+        "view": {
+            "title": "Bot details",
+            "close": "Close"
+        },
         "builder": {
             "addAnother": "Add another",
             "addChoice": "Add a choice",

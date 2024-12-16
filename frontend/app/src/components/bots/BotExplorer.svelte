@@ -70,7 +70,7 @@
 {/if}
 
 {#each botSearchState.results as match}
-    <BotMatch {community} {match} />
+    <BotMatch id={community.id} {match} />
 {/each}
 
 <style lang="scss"></style>

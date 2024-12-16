@@ -17,6 +17,7 @@
     import type { CommunityIdentifier, GroupChatIdentifier, OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import { toastStore } from "../../stores/toast";
+    import BotSummary from "./BotSummary.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -28,6 +29,7 @@
     }
 
     let { id, bot, canManage, searchTerm }: Props = $props();
+    let reviewMode: "editing" | "viewing" | undefined = $state(undefined);
 
     function removeBot() {
         client.removeBot(id, bot.id).then((success) => {
@@ -38,13 +40,21 @@
     }
 
     function reviewPermissions() {
-        console.log("Review bot permissions");
+        reviewMode = "editing";
     }
 
     function viewBotDetails() {
-        console.log("View bot details");
+        reviewMode = "viewing";
+    }
+
+    function closeModal() {
+        reviewMode = undefined;
     }
 </script>
+
+{#if reviewMode !== undefined}
+    <BotSummary mode={reviewMode} {id} onClose={closeModal} {bot} />
+{/if}
 
 <div class="bot_member" role="button">
     <span class="avatar">
