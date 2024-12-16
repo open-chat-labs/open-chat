@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Allow SNS controlled canisters to add additional canisters to the allow list ([#7070](https://github.com/open-chat-labs/open-chat/pull/7070))
+
 ## [[2.0.1511](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1511-cycles_dispenser)] - 2024-12-13
 
 ### Changed
