@@ -3,6 +3,7 @@
     import type { ButtonProps } from "./Button.svelte";
     import Button from "./Button.svelte";
     import { suspectedAutomationBot } from "../stores/automation";
+    import { isTouchDevice } from "../utils/devices";
 
     let { children, onClick, ...rest }: ButtonProps & { onClick: (ev: MouseEvent) => void } =
         $props();
@@ -27,6 +28,7 @@
         const pause = Date.now() - lastMoved;
         return (
             pause < PAUSE_TRESHOLD ||
+            isTouchDevice ||
             document.activeElement !== ev.target ||
             !ev.isTrusted ||
             $suspectedAutomationBot
