@@ -6,6 +6,7 @@ use crate::search_index::SearchIndex;
 use crate::*;
 use constants::{HOUR_IN_MS, ONE_MB, OPENCHAT_BOT_USER_ID};
 use event_store_producer::{EventBuilder, EventStoreClient, Runtime};
+use event_store_producer_cdk_runtime::CdkRuntime;
 use rand::rngs::StdRng;
 use rand::Rng;
 use search::simple::{Document, Query};
@@ -60,15 +61,7 @@ impl ChatEvents {
             if self.video_call_is_spurious(now) {
                 self.video_call_in_progress = Timestamped::new(None, now);
 
-                let _ = self.update_message(None, message_index.into(), EventIndex::default(), Some(now), |m, _| {
-                    if let MessageContentInternal::VideoCall(vc) = &mut m.content {
-                        if vc.ended.is_none() {
-                            vc.ended = Some(now);
-                            return Ok(());
-                        }
-                    }
-                    Err(UpdateEventError::NoChange(()))
-                });
+                self.end_video_call::<CdkRuntime>(message_index.into(), now, None);
             }
         }
     }
