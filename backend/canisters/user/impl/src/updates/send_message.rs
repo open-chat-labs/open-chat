@@ -242,6 +242,7 @@ fn send_message_impl(
         block_level_markdown: args.block_level_markdown,
         correlation_id: args.correlation_id,
         now,
+        bot_context: None,
     };
 
     let chat = if let Some(c) = state.data.direct_chats.get_mut(&recipient.into()) {
@@ -359,6 +360,7 @@ async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, ar
                             block_level_markdown: args.block_level_markdown,
                             correlation_id: 0,
                             now,
+                            bot_context: None,
                         };
                         chat.push_message(false, push_message_args, None, Some(&mut state.data.event_store_client));
 

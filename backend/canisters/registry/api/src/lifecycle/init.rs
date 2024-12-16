@@ -12,6 +12,7 @@ pub struct Args {
     pub nns_root_canister_id: CanisterId,
     pub sns_wasm_canister_id: CanisterId,
     pub nns_index_canister_id: CanisterId,
+    pub escrow_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub wasm_version: BuildVersion,
     pub test_mode: bool,

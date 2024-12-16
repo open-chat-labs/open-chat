@@ -118,6 +118,8 @@ fn handle_event(event: LocalUserIndexEvent, caller: Principal, now: TimestampMil
                 }
             }
         }
+        LocalUserIndexEvent::NotifyStreakInsurancePayment(payment) => state.data.streak_insurance_logs.mark_payment(*payment),
+        LocalUserIndexEvent::NotifyStreakInsuranceClaim(claim) => state.data.streak_insurance_logs.mark_claim(*claim),
     }
 }
 

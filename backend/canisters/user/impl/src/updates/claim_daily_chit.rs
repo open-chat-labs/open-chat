@@ -1,4 +1,5 @@
 use crate::guards::caller_is_owner;
+use crate::timer_job_types::{ClaimChitInsuranceJob, TimerJob};
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -18,9 +19,11 @@ fn claim_daily_chit_impl(state: &mut RuntimeState) -> Response {
     let now = state.env.now();
     let tomorrow = tomorrow(now);
 
-    if !state.data.streak.claim(now) {
-        return AlreadyClaimed(tomorrow);
-    }
+    match state.data.streak.claim(now) {
+        Ok(Some(insurance_claim)) => state.mark_streak_insurance_claim(insurance_claim),
+        Ok(None) => {}
+        Err(_) => return AlreadyClaimed(tomorrow),
+    };
 
     let user_id: UserId = state.env.canister_id().into();
     let streak = state.data.streak.days(now);
@@ -65,6 +68,19 @@ fn claim_daily_chit_impl(state: &mut RuntimeState) -> Response {
             .with_json_payload(&UserClaimedDailyChitEventPayload { streak, chit_earned })
             .build(),
     );
+
+    if state.data.streak.has_insurance() {
+        state
+            .data
+            .timer_jobs
+            .cancel_jobs(|j| matches!(j, TimerJob::ClaimChitInsurance(_)));
+
+        state.data.timer_jobs.enqueue_job(
+            TimerJob::ClaimChitInsurance(ClaimChitInsuranceJob),
+            state.data.streak.ends(),
+            now,
+        );
+    }
 
     Success(SuccessResult {
         chit_earned,

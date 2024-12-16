@@ -7,7 +7,13 @@ use serde::Serialize;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum BotAction {
-    SendMessage(MessageContent),
+    SendMessage(BotMessageAction),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct BotMessageAction {
+    pub content: MessageContent,
+    pub finalised: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -26,8 +32,8 @@ impl BotAction {
         let mut permissions_required = SlashCommandPermissions::default();
 
         match self {
-            BotAction::SendMessage(content) => {
-                let permission = match content {
+            BotAction::SendMessage(action) => {
+                let permission = match action.content {
                     MessageContent::Text(_) => MessagePermission::Text,
                     MessageContent::Image(_) => MessagePermission::Image,
                     MessageContent::Video(_) => MessagePermission::Video,

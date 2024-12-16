@@ -1,10 +1,5 @@
-<script lang="ts">
-    import type { Snippet } from "svelte";
-    import { currentTheme } from "../theme/themes";
-    import SignalsButton from "./SignalsButton.svelte";
-    import StandardButton from "./StandardButton.svelte";
-
-    interface Props {
+<script module lang="ts">
+    export interface ButtonProps {
         cls?: string;
         loading?: boolean;
         disabled?: boolean;
@@ -17,11 +12,15 @@
         square?: boolean;
         children?: Snippet;
     }
+</script>
 
-    let {
-        children,
-        ...rest
-    }: Props = $props();
+<script lang="ts">
+    import type { Snippet } from "svelte";
+    import { currentTheme } from "../theme/themes";
+    import SignalsButton from "./SignalsButton.svelte";
+    import StandardButton from "./StandardButton.svelte";
+
+    let { children, ...rest }: ButtonProps = $props();
 </script>
 
 {#if $currentTheme.name === "signals"}

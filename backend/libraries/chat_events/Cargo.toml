@@ -9,6 +9,7 @@ edition = "2021"
 candid = { workspace = true }
 constants = { path = "../constants" }
 event_store_producer = { workspace = true, features = ["json"] }
+event_store_producer_cdk_runtime = { workspace = true }
 hex = { workspace = true }
 ic-cdk = { workspace = true }
 ic-ledger-types = { workspace = true }

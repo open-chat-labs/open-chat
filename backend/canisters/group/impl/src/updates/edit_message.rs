@@ -36,6 +36,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             message_id: args.message_id,
             content: args.content,
             block_level_markdown: args.block_level_markdown,
+            finalise_bot_message: false,
             now,
         };
 

@@ -102,6 +102,7 @@ pub fn handle_start_video_call(
         block_level_markdown: false,
         correlation_id: 0,
         now,
+        bot_context: None,
     };
 
     let chat = if let Some(c) = state.data.direct_chats.get_mut(&other.into()) {

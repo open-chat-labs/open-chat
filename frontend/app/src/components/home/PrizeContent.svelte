@@ -1,5 +1,4 @@
 <script lang="ts">
-    import Button from "../Button.svelte";
     import {
         type ChatIdentifier,
         type DiamondMembershipStatus,
@@ -29,6 +28,7 @@
     import Diamond from "../icons/Diamond.svelte";
     import Human from "../icons/Human.svelte";
     import Streak from "./profile/Streak.svelte";
+    import SecureButton from "../SecureButton.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -189,7 +189,11 @@
 
             {#if !me}
                 <ButtonGroup align="fill">
-                    <Button loading={$claimsStore.has(messageId)} on:click={claim} {disabled} hollow
+                    <SecureButton
+                        loading={$claimsStore.has(messageId)}
+                        onClick={claim}
+                        {disabled}
+                        hollow
                         ><Translatable
                             resourceKey={i18nKey(
                                 claimedByYou
@@ -199,7 +203,7 @@
                                       : allClaimed
                                         ? "prizes.allClaimed"
                                         : "prizes.claim",
-                            )} /></Button>
+                            )} /></SecureButton>
                 </ButtonGroup>
             {/if}
         </div>

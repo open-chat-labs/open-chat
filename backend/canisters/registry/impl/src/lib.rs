@@ -63,6 +63,7 @@ impl RuntimeState {
             canister_ids: CanisterIds {
                 proposals_bot: self.data.proposals_bot_canister_id,
                 sns_wasm: self.data.sns_wasm_canister_id,
+                escrow: self.data.escrow_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
             },
         }
@@ -75,6 +76,8 @@ struct Data {
     proposals_bot_canister_id: CanisterId,
     user_index_canister_id: CanisterId,
     sns_wasm_canister_id: CanisterId,
+    #[serde(default = "CanisterId::anonymous")]
+    escrow_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
     tokens: Tokens,
     nervous_systems: NervousSystems,
@@ -94,6 +97,7 @@ impl Data {
         proposals_bot_canister_id: CanisterId,
         user_index_canister_id: CanisterId,
         sns_wasm_canister_id: CanisterId,
+        escrow_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
@@ -102,6 +106,7 @@ impl Data {
             proposals_bot_canister_id,
             user_index_canister_id,
             sns_wasm_canister_id,
+            escrow_canister_id,
             cycles_dispenser_canister_id,
             tokens: Tokens::default(),
             nervous_systems: NervousSystems::default(),
@@ -184,5 +189,6 @@ pub struct Metrics {
 pub struct CanisterIds {
     pub proposals_bot: CanisterId,
     pub sns_wasm: CanisterId,
+    pub escrow: CanisterId,
     pub cycles_dispenser: CanisterId,
 }
