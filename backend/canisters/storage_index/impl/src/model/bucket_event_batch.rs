@@ -1,12 +1,22 @@
-use crate::model::bucket_sync_state::EventToSync;
 use crate::MAX_EVENTS_TO_SYNC_PER_BATCH;
+use candid::Principal;
+use serde::{Deserialize, Serialize};
 use timer_job_queues::{TimerJobItem, TimerJobItemGroup};
-use types::CanisterId;
+use types::{AccessorId, CanisterId, FileId};
 use utils::canister::should_retry_failed_c2c_call;
 
 pub struct BucketEventBatch {
     canister_id: CanisterId,
     events: Vec<EventToSync>,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub enum EventToSync {
+    UserAdded(Principal),
+    UserRemoved(Principal),
+    AccessorRemoved(AccessorId),
+    UserIdUpdated(Principal, Principal),
+    FileToRemove(FileId),
 }
 
 impl TimerJobItem for BucketEventBatch {

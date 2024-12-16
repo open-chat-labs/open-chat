@@ -1,4 +1,3 @@
-use crate::model::bucket_sync_state::BucketSyncState;
 use crate::BucketMetrics;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -96,10 +95,6 @@ impl Buckets {
     pub fn iter_full_buckets(&self) -> impl Iterator<Item = &BucketRecord> {
         self.full_buckets.values()
     }
-
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut BucketRecord> {
-        self.active_buckets.iter_mut().chain(self.full_buckets.values_mut())
-    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -108,20 +103,16 @@ pub struct BucketRecord {
     pub wasm_version: BuildVersion,
     pub bytes_used: u64,
     pub bytes_remaining: i64,
-    #[deprecated]
-    pub sync_state: BucketSyncState,
     pub cycle_top_ups: Vec<CyclesTopUp>,
 }
 
 impl BucketRecord {
     pub fn new(canister_id: CanisterId, wasm_version: BuildVersion) -> BucketRecord {
-        #[allow(deprecated)]
         BucketRecord {
             canister_id,
             wasm_version,
             bytes_used: 0,
             bytes_remaining: 0,
-            sync_state: BucketSyncState::default(),
             cycle_top_ups: Vec::new(),
         }
     }

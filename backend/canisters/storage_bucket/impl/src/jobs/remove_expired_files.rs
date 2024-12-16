@@ -1,4 +1,4 @@
-use crate::model::index_sync_state::EventToSync;
+use crate::model::index_event_batch::EventToSync;
 use crate::{mutate_state, RuntimeState};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
