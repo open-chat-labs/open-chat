@@ -5041,7 +5041,6 @@ dependencies = [
  "canister_tracing_macros",
  "constants",
  "cycles_dispenser_canister",
- "fire_and_forget_handler",
  "futures",
  "http_request",
  "human_readable",

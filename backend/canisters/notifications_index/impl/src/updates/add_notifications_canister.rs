@@ -69,12 +69,6 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
             );
         }
 
-        state.data.fire_and_forget_handler.send_candid(
-            state.data.cycles_dispenser_canister_id,
-            "add_canister",
-            cycles_dispenser_canister::add_canister::Args { canister_id },
-        );
-
         Success
     } else {
         AlreadyAdded

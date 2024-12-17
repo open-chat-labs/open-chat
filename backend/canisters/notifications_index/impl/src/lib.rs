@@ -2,7 +2,6 @@ use crate::model::notifications_canister::NotificationsCanister;
 use crate::model::subscriptions::Subscriptions;
 use candid::Principal;
 use canister_state_macros::canister_state;
-use fire_and_forget_handler::FireAndForgetHandler;
 use notifications_index_canister::{NotificationsIndexEvent, SubscriptionAdded, SubscriptionRemoved};
 use principal_to_user_id_map::PrincipalToUserIdMap;
 use serde::{Deserialize, Serialize};
@@ -132,8 +131,6 @@ struct Data {
     pub notifications_canister_wasm_for_upgrades: CanisterWasm,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub notifications_index_event_sync_queue: CanisterEventSyncQueue<NotificationsIndexEvent>,
-    #[serde(default)]
-    pub fire_and_forget_handler: FireAndForgetHandler,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -161,7 +158,6 @@ impl Data {
             notifications_canister_wasm_for_upgrades: notifications_canister_wasm,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             notifications_index_event_sync_queue: CanisterEventSyncQueue::default(),
-            fire_and_forget_handler: FireAndForgetHandler::default(),
             rng_seed: [0; 32],
             test_mode,
         }
