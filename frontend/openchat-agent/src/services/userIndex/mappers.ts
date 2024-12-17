@@ -119,7 +119,6 @@ export function botSchema(
         kind: "external_bot",
         id: botId,
         name: bot.name,
-        description: bot.description,
         avatarUrl: mapOptional(
             bot.avatar_id,
             (id) =>
@@ -129,7 +128,10 @@ export function botSchema(
         ),
         ownerId: principalBytesToString(bot.owner),
         endpoint: bot.endpoint,
-        commands: bot.commands.map(externalBotCommand),
+        schema: {
+            description: bot.description,
+            commands: bot.commands.map(externalBotCommand),
+        },
     };
 }
 
@@ -700,8 +702,10 @@ export function externalBotMatch(
         ),
         id: botId,
         ownerId: principalBytesToString(match.owner),
-        description: match.description,
-        commands: match.commands.map(externalBotCommand),
+        schema: {
+            description: match.description,
+            commands: match.commands.map(externalBotCommand),
+        },
     };
 }
 

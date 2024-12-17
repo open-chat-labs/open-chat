@@ -76,6 +76,7 @@ import {
 } from "../../utils/mapping";
 import {
     Empty,
+    SlashCommandSchema,
     UserIndexBotUpdatesArgs,
     UserIndexBotUpdatesResponse,
     UserIndexCheckUsernameArgs,
@@ -642,8 +643,8 @@ export class UserIndexClient extends CandidService {
                 name: bot.name,
                 avatar: mapOptional(bot.avatarUrl, identity),
                 endpoint: bot.endpoint,
-                description: bot.description ?? "",
-                commands: bot.commands.map(apiExternalBotCommand),
+                description: bot.schema.description ?? "",
+                commands: bot.schema.commands.map(apiExternalBotCommand),
             },
             (resp) => {
                 console.log("UserIndex register bot response: ", resp);
