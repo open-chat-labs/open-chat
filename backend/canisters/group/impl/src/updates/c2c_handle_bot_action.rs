@@ -82,7 +82,7 @@ fn is_bot_permitted_to_execute_command(args: &Args, state: &RuntimeState) -> boo
     };
 
     // Get the permissions required to execute the given action
-    let permissions_required = args.action.permissions_required(args.thread_root_message_index.is_some());
+    let permissions_required = args.action.permissions_required();
 
     can_execute_bot_command(&permissions_required, granted_to_bot, &granted_to_user)
 }

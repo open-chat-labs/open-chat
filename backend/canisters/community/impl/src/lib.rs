@@ -885,20 +885,11 @@ impl Data {
         let message_permissions = channel_member
             .role()
             .message_permissions(&channel.chat.permissions.message_permissions);
-        let thread_permissions = channel
-            .chat
-            .permissions
-            .thread_permissions
-            .as_ref()
-            .map_or(message_permissions.clone(), |thread_permissions| {
-                channel_member.role().message_permissions(thread_permissions)
-            });
 
         Some(SlashCommandPermissions {
             community: community_permissions,
             chat: channel_permissions,
             message: message_permissions,
-            thread: thread_permissions,
         })
     }
 }
