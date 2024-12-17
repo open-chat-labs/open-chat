@@ -451,7 +451,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         cycles_minting_canister_init_args,
     );
 
-    let application_subnet = env.topology().get_app_subnets().first().unwrap().clone();
+    let application_subnet = *env.topology().get_app_subnets().first().unwrap();
 
     client::cmc::set_authorized_subnetwork_list(
         env,
