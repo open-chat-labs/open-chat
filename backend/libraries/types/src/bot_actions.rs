@@ -28,7 +28,7 @@ pub enum MessageContent {
 }
 
 impl BotAction {
-    pub fn permissions_required(&self, in_thread: bool) -> SlashCommandPermissions {
+    pub fn permissions_required(&self) -> SlashCommandPermissions {
         let mut permissions_required = SlashCommandPermissions::default();
 
         match self {
@@ -43,11 +43,7 @@ impl BotAction {
                     MessageContent::Giphy(_) => MessagePermission::Giphy,
                 };
 
-                if in_thread {
-                    permissions_required.thread.insert(permission);
-                } else {
-                    permissions_required.message.insert(permission);
-                }
+                permissions_required.message.insert(permission);
             }
         };
 

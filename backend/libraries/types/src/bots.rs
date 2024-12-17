@@ -4,6 +4,12 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use ts_export::ts_export;
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct BotDefinition {
+    pub description: String,
+    pub commands: Vec<SlashCommandSchema>,
+}
+
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct SlashCommandSchema {
@@ -63,7 +69,6 @@ pub struct SlashCommandPermissions {
     pub community: HashSet<CommunityPermission>,
     pub chat: HashSet<GroupPermission>,
     pub message: HashSet<MessagePermission>,
-    pub thread: HashSet<MessagePermission>,
 }
 
 #[ts_export]
