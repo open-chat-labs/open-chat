@@ -29,7 +29,7 @@ pub mod happy_path {
 
         assert!(matches!(response, expand_onto_subnet::Response::Success));
 
-        for _ in 0..50 {
+        for _ in 0..40 {
             env.advance_time(Duration::from_secs(1));
             env.tick();
         }

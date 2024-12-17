@@ -6,7 +6,7 @@ use types::{CanisterId, TimestampMillis};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Subnets {
-    subnets: Vec<Subnet>,
+    pub subnets: Vec<Subnet>,
     in_progress: Option<SubnetInProgress>,
 }
 
