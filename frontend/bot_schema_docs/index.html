@@ -7,10 +7,13 @@
                                                          </head>
 <body>
 <div class="container">
-    <div  class="panel panel-definition">
+    <div id="definition-OpenChat-bot-definition-schema" class="panel panel-definition">
+            <div class="panel-heading">
+                    <h3 class="panel-title">OpenChat bot definition schema</h3>
+            </div>
         <div class="panel-body">
                     <section class="json-schema-description">
-                        <p>Your bot must implement this schema so that OpenChat knows how to interact with it.</p>
+                        <p>When a bot is registered with OpenChat it must expose its definition on a special endpoint called /schema. OpenChat will make a GET request to this endpoint and must receive a response which is valid against the following schema. This is so that OpenChat can determine how the user will interact with the bot i.e. which commands it supports and what their parameter are.</p>
                 
                     </section>
                 
