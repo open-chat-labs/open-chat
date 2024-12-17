@@ -134,7 +134,7 @@ impl ExpandOntoNewSubnetJob {
                     (ids.notifications_canister, self.notifications_index),
                 ]
                 .into_iter()
-                .map(|(canister_id, controller)| async move {
+                .map(|(canister_id, controller)| {
                     ic_cdk::api::management_canister::main::update_settings(UpdateSettingsArgument {
                         canister_id,
                         settings: CanisterSettings {
@@ -142,7 +142,6 @@ impl ExpandOntoNewSubnetJob {
                             ..Default::default()
                         },
                     })
-                    .await
                 })
                 .collect();
 
