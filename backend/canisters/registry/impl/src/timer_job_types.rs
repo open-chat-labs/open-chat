@@ -51,14 +51,9 @@ impl Job for ExpandOntoNewSubnetJob {
 
 impl ExpandOntoNewSubnetJob {
     async fn process_step(self, next_step: ExpandOntoNewSubnetStep, now: TimestampMillis) {
-        ic_cdk::println!("Expanding onto new subnet. Step: {next_step:?}");
-
         let delay = match self.process_step_inner(next_step, now).await {
             Ok(Some(false)) => 0,
-            Err(error) => {
-                ic_cdk::println!("{error:?}");
-                MINUTE_IN_MS
-            }
+            Err(_) => MINUTE_IN_MS,
             Ok(Some(true)) | Ok(None) => return,
         };
 
@@ -259,7 +254,15 @@ async fn create_canister(
             )
             .await?
             {
-                Ok(index) => index,
+                Ok(index) => {
+                    mutate_state(|state| {
+                        state
+                            .data
+                            .subnets
+                            .update_in_progress(|s| s.create_canister_block_index = Some(index), now)
+                    });
+                    index
+                }
                 Err(error) => {
                     return Err((RejectionCode::Unknown, format!("{error:?}")));
                 }
