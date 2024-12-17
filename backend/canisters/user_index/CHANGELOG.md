@@ -9,6 +9,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add new LocalUserIndexes to the CyclesDispenser's allow list ([#7070](https://github.com/open-chat-labs/open-chat/pull/7070))
+- Add `update_bot` endpoint only callable by bot owner ([#7073](https://github.com/open-chat-labs/open-chat/pull/7073))
+
+### Removed
+
+- Remove bot thread permissions ([#7071](https://github.com/open-chat-labs/open-chat/pull/7071))
 
 ### Removed
 

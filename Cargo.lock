@@ -3436,6 +3436,7 @@ dependencies = [
  "ic0",
  "serde",
  "serde_bytes",
+ "slotmap",
 ]
 
 [[package]]
