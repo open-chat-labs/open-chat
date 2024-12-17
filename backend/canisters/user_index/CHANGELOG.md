@@ -15,10 +15,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove bot thread permissions ([#7071](https://github.com/open-chat-labs/open-chat/pull/7071))
 
-### Removed
-
-- Remove bot thread permissions ([#7071](https://github.com/open-chat-labs/open-chat/pull/7071))
-
 ## [[2.0.1508](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1508-user_index)] - 2024-12-13
 
 ### Added
