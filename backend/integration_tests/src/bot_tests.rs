@@ -44,7 +44,6 @@ fn bot_smoke_test() {
                 community: HashSet::new(),
                 chat: HashSet::new(),
                 message: HashSet::from_iter([MessagePermission::Text]),
-                thread: HashSet::new(),
             },
         }],
     );

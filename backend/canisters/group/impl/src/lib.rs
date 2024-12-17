@@ -735,20 +735,11 @@ impl Data {
 
         let group_permissions = member.role().permissions(&self.chat.permissions);
         let message_permissions = member.role().message_permissions(&self.chat.permissions.message_permissions);
-        let thread_permissions = self
-            .chat
-            .permissions
-            .thread_permissions
-            .as_ref()
-            .map_or(message_permissions.clone(), |thread_permissions| {
-                member.role().message_permissions(thread_permissions)
-            });
 
         Some(SlashCommandPermissions {
             community: HashSet::new(),
             chat: group_permissions,
             message: message_permissions,
-            thread: thread_permissions,
         })
     }
 }

@@ -63,7 +63,6 @@ pub struct SlashCommandPermissions {
     pub community: HashSet<CommunityPermission>,
     pub chat: HashSet<GroupPermission>,
     pub message: HashSet<MessagePermission>,
-    pub thread: HashSet<MessagePermission>,
 }
 
 #[ts_export]
