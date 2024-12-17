@@ -1,5 +1,6 @@
 use crate::guards::caller_is_governance_principal;
 use crate::model::user_map::Bot;
+use crate::model::{MAX_AVATAR_SIZE, MAX_COMMANDS, MAX_DESCRIPTION_LEN};
 use crate::{mutate_state, read_state, RuntimeState, USER_LIMIT};
 use candid::Principal;
 use canister_api_macros::{proposal, update};
@@ -13,10 +14,6 @@ use url::Url;
 use user_index_canister::register_bot::{Response::*, *};
 use utils::document::try_parse_data_url;
 use utils::text_validation::{validate_username, UsernameValidationError};
-
-const MAX_AVATAR_SIZE: usize = 250_000;
-const MAX_DESCRIPTION_LEN: usize = 10_000;
-const MAX_COMMANDS: usize = 100;
 
 #[update(msgpack = true)]
 #[trace]
