@@ -21,10 +21,30 @@ fn post_upgrade(args: Args) {
         msgpack::deserialize(reader).unwrap();
 
     if data.test_mode {
+        data.group_index_canister_id = CanisterId::from_text("7kifq-3yaaa-aaaaf-ab2cq-cai").unwrap();
+        data.notifications_index_canister_id = CanisterId::from_text("4glvk-ryaaa-aaaaf-aaaia-cai").unwrap();
+        data.event_relay_canister_id = CanisterId::from_text("6jejw-xyaaa-aaaaf-biiba-cai").unwrap();
         data.escrow_canister_id = CanisterId::from_text("tspqt-xaaaa-aaaal-qcnna-cai").unwrap();
     } else {
+        data.group_index_canister_id = CanisterId::from_text("4ijyc-kiaaa-aaaaf-aaaja-cai").unwrap();
+        data.notifications_index_canister_id = CanisterId::from_text("7ekiy-aiaaa-aaaaf-ab2dq-cai").unwrap();
+        data.event_relay_canister_id = CanisterId::from_text("6ofpc-2aaaa-aaaaf-biibq-cai").unwrap();
         data.escrow_canister_id = CanisterId::from_text("s4yi7-yiaaa-aaaar-qacpq-cai").unwrap();
     }
+
+    // if data.test_mode {
+    //     data.subnets
+    //         .subnets
+    //         .insert(Principal::from_text("eq6en-6jqla-fbu5s-daskr-h6hx2-376n5-iqabl-qgrng-gfqmv-n3yjr-mqe").unwrap());
+    // } else {
+    //
+    //     data.subnets
+    //         .subnets
+    //         .insert(Principal::from_text("eq6en-6jqla-fbu5s-daskr-h6hx2-376n5-iqabl-qgrng-gfqmv-n3yjr-mqe").unwrap());
+    //     data.subnets
+    //         .subnets
+    //         .insert(Principal::from_text("2fq7c-slacv-26cgz-vzbx2-2jrcs-5edph-i5s2j-tck77-c3rlz-iobzx-mqe").unwrap());
+    // }
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 

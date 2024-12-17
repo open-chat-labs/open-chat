@@ -17,6 +17,7 @@ fn init(args: Args) {
         args.push_events_whitelist.into_iter().collect(),
         args.event_store_canister_id,
         args.cycles_dispenser_canister_id,
+        args.registry_canister_id,
         args.chat_ledger_canister_id,
         args.chat_governance_canister_id,
         args.test_mode,

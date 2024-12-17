@@ -37,7 +37,6 @@ async fn run_async(canister_id: CanisterId) {
         mutate_state(|state| {
             let now = state.env.now();
             for canister_id in canisters.iter().filter_map(|s| s.canister_id) {
-                state.data.canisters_directly_controlled_by_sns_root.insert(canister_id);
                 state.data.canisters.add(canister_id, now);
             }
         });

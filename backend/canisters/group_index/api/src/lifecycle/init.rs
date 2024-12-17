@@ -10,6 +10,7 @@ pub struct Args {
     pub proposals_bot_user_id: UserId,
     pub escrow_canister_id: CanisterId,
     pub event_relay_canister_id: CanisterId,
+    pub registry_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
     pub video_call_operators: Vec<Principal>,
     #[serde(with = "serde_bytes")]

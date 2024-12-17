@@ -80,6 +80,7 @@ async fn install_service_canisters_impl(
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         escrow_canister_id: canister_ids.escrow,
         event_relay_canister_id: canister_ids.event_relay,
+        registry_canister_id: canister_ids.registry,
         nns_governance_canister_id: canister_ids.nns_governance,
         internet_identity_canister_id: canister_ids.nns_internet_identity,
         translations_canister_id: canister_ids.translations,
@@ -98,6 +99,7 @@ async fn install_service_canisters_impl(
         proposals_bot_user_id: canister_ids.proposals_bot.into(),
         escrow_canister_id: canister_ids.escrow,
         event_relay_canister_id: canister_ids.event_relay,
+        registry_canister_id: canister_ids.registry,
         internet_identity_canister_id: canister_ids.nns_internet_identity,
         video_call_operators: video_call_operators.clone(),
         ic_root_key: agent.read_root_key(),
@@ -112,6 +114,7 @@ async fn install_service_canisters_impl(
         user_index_canister_id: canister_ids.user_index,
         authorizers: vec![canister_ids.user_index, canister_ids.group_index],
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        registry_canister_id: canister_ids.registry,
         notifications_canister_wasm: CanisterWasm::default(),
         wasm_version: version,
         test_mode,
@@ -199,6 +202,7 @@ async fn install_service_canisters_impl(
             canister_ids.proposals_bot,
             canister_ids.storage_index,
         ],
+        registry_canister_id: canister_ids.registry,
         max_top_up_amount: 20 * T,
         min_interval: 5 * 60 * 1000, // 5 minutes
         min_cycles_balance: 200 * T,
@@ -212,6 +216,9 @@ async fn install_service_canisters_impl(
     let registry_canister_wasm = get_canister_wasm(CanisterName::Registry, version);
     let registry_init_args = registry_canister::init::Args {
         user_index_canister_id: canister_ids.user_index,
+        group_index_canister_id: canister_ids.group_index,
+        notifications_index_canister_id: canister_ids.notifications_index,
+        event_relay_canister_id: canister_ids.event_relay,
         governance_principals: vec![principal],
         proposals_bot_canister_id: canister_ids.proposals_bot,
         nns_ledger_canister_id: canister_ids.nns_ledger,
@@ -221,6 +228,7 @@ async fn install_service_canisters_impl(
         nns_index_canister_id: canister_ids.nns_index,
         escrow_canister_id: canister_ids.escrow,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        cycles_minting_canister_id: canister_ids.nns_cmc,
         wasm_version: version,
         test_mode,
     };
@@ -264,6 +272,7 @@ async fn install_service_canisters_impl(
         ],
         event_store_canister_id: canister_ids.event_store,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        registry_canister_id: canister_ids.registry,
         chat_ledger_canister_id: SNS_LEDGER_CANISTER_ID,
         chat_governance_canister_id: SNS_GOVERNANCE_CANISTER_ID,
         wasm_version: version,

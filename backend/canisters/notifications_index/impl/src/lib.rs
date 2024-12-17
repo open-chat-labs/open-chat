@@ -42,6 +42,10 @@ impl RuntimeState {
         self.data.governance_principals.contains(&caller)
     }
 
+    pub fn is_caller_registry_canister(&self) -> bool {
+        self.env.caller() == self.data.registry_canister_id
+    }
+
     pub fn is_caller_push_service(&self) -> bool {
         self.data.push_service_principals.contains(&self.env.caller())
     }
@@ -120,6 +124,8 @@ struct Data {
     pub push_service_principals: HashSet<Principal>,
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
+    #[serde(default = "CanisterId::anonymous")]
+    pub registry_canister_id: CanisterId,
     pub principal_to_user_id_map: PrincipalToUserIdMap,
     pub subscriptions: Subscriptions,
     pub notifications_canister_wasm_for_new_canisters: CanisterWasm,
@@ -138,6 +144,7 @@ impl Data {
         push_service_principals: Vec<Principal>,
         user_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
+        registry_canister_id: CanisterId,
         notifications_canister_wasm: CanisterWasm,
         test_mode: bool,
     ) -> Data {
@@ -147,6 +154,7 @@ impl Data {
             push_service_principals: push_service_principals.into_iter().collect(),
             user_index_canister_id,
             cycles_dispenser_canister_id,
+            registry_canister_id,
             principal_to_user_id_map: PrincipalToUserIdMap::default(),
             subscriptions: Subscriptions::default(),
             notifications_canister_wasm_for_new_canisters: notifications_canister_wasm.clone(),

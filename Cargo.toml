@@ -43,6 +43,7 @@ members = [
     "backend/canisters/notifications/client",
     "backend/canisters/notifications/impl",
     "backend/canisters/notifications_index/api",
+    "backend/canisters/notifications_index/c2c_client",
     "backend/canisters/notifications_index/client",
     "backend/canisters/notifications_index/impl",
     "backend/canisters/online_users/api",
