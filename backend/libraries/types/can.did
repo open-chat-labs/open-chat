@@ -2131,7 +2131,6 @@ type SlashCommandPermissions = record {
     community: vec CommunityPermission;
     chat: vec GroupPermission;
     message: vec MessagePermission;
-    thread: vec MessagePermission;
 };
 
 type CommunityPermission = variant {
