@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Allow Registry to add additional LocalUserIndexes ([#7072](https://github.com/open-chat-labs/open-chat/pull/7072))
+- Add `update_bot` endpoint only callable by bot owner ([#7073](https://github.com/open-chat-labs/open-chat/pull/7073))
 
 ### Removed
 

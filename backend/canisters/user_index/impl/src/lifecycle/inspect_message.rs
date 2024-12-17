@@ -20,6 +20,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "set_moderation_flags"
         | "set_username"
         | "submit_proof_of_unique_personhood"
+        | "update_bot"
         | "update_diamond_membership_subscription" => {
             let caller = state.env.caller();
             let is_user = state.data.users.get_by_principal(&caller).is_some();
