@@ -76,7 +76,6 @@ import {
 } from "../../utils/mapping";
 import {
     Empty,
-    SlashCommandSchema,
     UserIndexBotUpdatesArgs,
     UserIndexBotUpdatesResponse,
     UserIndexCheckUsernameArgs,
