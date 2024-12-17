@@ -57,20 +57,6 @@ fn post_upgrade(args: Args) {
     data.icp_ledger_canister_id = CanisterId::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
     data.cycles_minting_canister_id = CanisterId::from_text("rkp4c-7iaaa-aaaaa-aaaca-cai").unwrap();
 
-    // if data.test_mode {
-    //     data.subnets
-    //         .subnets
-    //         .insert(Principal::from_text("eq6en-6jqla-fbu5s-daskr-h6hx2-376n5-iqabl-qgrng-gfqmv-n3yjr-mqe").unwrap());
-    // } else {
-    //
-    //     data.subnets
-    //         .subnets
-    //         .insert(Principal::from_text("eq6en-6jqla-fbu5s-daskr-h6hx2-376n5-iqabl-qgrng-gfqmv-n3yjr-mqe").unwrap());
-    //     data.subnets
-    //         .subnets
-    //         .insert(Principal::from_text("2fq7c-slacv-26cgz-vzbx2-2jrcs-5edph-i5s2j-tck77-c3rlz-iobzx-mqe").unwrap());
-    // }
-
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
     let env = init_env(data.rng_seed);
