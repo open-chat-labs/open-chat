@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Fix any long-running video calls that failed to be marked as ended ([#7068](https://github.com/open-chat-labs/open-chat/pull/7068))
+- Avoid case where prize claims could result in "duplicate transfer" error ([#7079](https://github.com/open-chat-labs/open-chat/pull/7079))
 
 ## [[2.0.1516](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1516-group)] - 2024-12-13
 
