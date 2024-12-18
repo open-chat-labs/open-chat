@@ -1,4 +1,5 @@
 use crate::{mutate_state, State};
+use constants::NANOS_PER_MILLISECOND;
 use ic_ledger_types::{AccountIdentifier, BlockIndex, Memo, Subaccount, Timestamp, Tokens, TransferArgs};
 use std::time::Duration;
 use tracing::{error, info};
@@ -77,7 +78,7 @@ async fn burn_icp(burn_details: BurnIcpDetails) {
             from_subaccount: None,
             to: AccountIdentifier::new(&burn_details.cmc, &Subaccount::from(burn_details.this_canister_id)),
             created_at_time: Some(Timestamp {
-                timestamp_nanos: burn_details.now * 1_000_000,
+                timestamp_nanos: burn_details.now * NANOS_PER_MILLISECOND,
             }),
         },
     )

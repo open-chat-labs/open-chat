@@ -85,6 +85,10 @@ impl RuntimeState {
         self.data.governance_principals.contains(&caller)
     }
 
+    pub fn is_caller_registry_canister(&self) -> bool {
+        self.env.caller() == self.data.registry_canister_id
+    }
+
     pub fn is_caller_local_user_index_canister(&self) -> bool {
         let caller = self.env.caller();
         self.data.local_index_map.get(&caller).is_some()
@@ -292,6 +296,7 @@ impl RuntimeState {
                 escrow: self.data.escrow_canister_id,
                 translations: self.data.translations_canister_id,
                 event_relay: event_relay_canister_id,
+                registry: self.data.registry_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
                 website: self.data.website_canister_id,
             },
@@ -345,6 +350,8 @@ struct Data {
     pub storage_index_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
     pub translations_canister_id: CanisterId,
+    #[serde(default = "CanisterId::anonymous")]
+    pub registry_canister_id: CanisterId,
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub storage_index_user_sync_queue: GroupedTimerJobQueue<StorageIndexUserConfigBatch>,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
@@ -397,6 +404,7 @@ impl Data {
         storage_index_canister_id: CanisterId,
         escrow_canister_id: CanisterId,
         event_relay_canister_id: CanisterId,
+        registry_canister_id: CanisterId,
         nns_governance_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
         translations_canister_id: CanisterId,
@@ -422,6 +430,7 @@ impl Data {
             storage_index_canister_id,
             escrow_canister_id,
             translations_canister_id,
+            registry_canister_id,
             event_store_client: EventStoreClientBuilder::new(event_relay_canister_id, CdkRuntime::default())
                 .with_flush_delay(Duration::from_secs(60))
                 .build(),
@@ -554,6 +563,7 @@ impl Default for Data {
             storage_index_canister_id: Principal::anonymous(),
             escrow_canister_id: Principal::anonymous(),
             translations_canister_id: Principal::anonymous(),
+            registry_canister_id: Principal::anonymous(),
             event_store_client: EventStoreClientBuilder::new(Principal::anonymous(), CdkRuntime::default()).build(),
             storage_index_user_sync_queue: GroupedTimerJobQueue::new(1, false),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
@@ -723,6 +733,7 @@ pub struct CanisterIds {
     pub escrow: CanisterId,
     pub translations: CanisterId,
     pub event_relay: CanisterId,
+    pub registry: CanisterId,
     pub internet_identity: CanisterId,
     pub website: CanisterId,
 }

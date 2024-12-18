@@ -6,9 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
-### Added
+### Changed
 
-- Add new LocalGroupIndexes to the CyclesDispenser's allow list ([#7070](https://github.com/open-chat-labs/open-chat/pull/7070))
+- Allow Registry to add additional LocalGroupIndexes ([#7072](https://github.com/open-chat-labs/open-chat/pull/7072))
 
 ## [[2.0.1509](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1509-group_index)] - 2024-12-13
 

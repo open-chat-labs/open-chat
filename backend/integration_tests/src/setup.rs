@@ -1,4 +1,4 @@
-use crate::client::{create_canister, create_canister_with_id, install_canister};
+use crate::client::{create_canister, create_canister_with_id, install_canister, INIT_CYCLES_BALANCE};
 use crate::env::VIDEO_CALL_OPERATOR;
 use crate::utils::tick_many;
 use crate::{client, wasms, CanisterIds, TestEnv, T};
@@ -97,10 +97,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let sign_in_with_email_canister_id = create_canister(env, controller);
     let website_canister_id = create_canister(env, controller);
 
-    let local_user_index_canister_id = create_canister(env, user_index_canister_id);
-    let local_group_index_canister_id = create_canister(env, group_index_canister_id);
-    let notifications_canister_id = create_canister(env, notifications_index_canister_id);
-
     let community_canister_wasm = wasms::COMMUNITY.clone();
     let cycles_dispenser_canister_wasm = wasms::CYCLES_DISPENSER.clone();
     let cycles_minting_canister_wasm = wasms::CYCLES_MINTING_CANISTER.clone();
@@ -142,6 +138,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         storage_index_canister_id,
         escrow_canister_id,
         event_relay_canister_id,
+        registry_canister_id,
         nns_governance_canister_id,
         internet_identity_canister_id: NNS_INTERNET_IDENTITY_CANISTER_ID,
         translations_canister_id,
@@ -166,6 +163,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         proposals_bot_user_id: proposals_bot_canister_id.into(),
         escrow_canister_id,
         event_relay_canister_id,
+        registry_canister_id,
         internet_identity_canister_id: NNS_INTERNET_IDENTITY_CANISTER_ID,
         video_call_operators: vec![VIDEO_CALL_OPERATOR],
         ic_root_key: env.root_key().unwrap(),
@@ -184,6 +182,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         governance_principals: vec![controller],
         push_service_principals: vec![controller],
         user_index_canister_id,
+        registry_canister_id,
         authorizers: vec![user_index_canister_id, group_index_canister_id],
         cycles_dispenser_canister_id,
         notifications_canister_wasm: CanisterWasm::default(),
@@ -265,22 +264,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         proposals_bot_init_args,
     );
 
-    let airdrop_bot_init_args = airdrop_bot_canister::init::Args {
-        admins: vec![controller],
-        user_index_canister_id,
-        local_user_index_canister_id,
-        chat_ledger_canister_id,
-        wasm_version,
-        test_mode,
-    };
-    install_canister(
-        env,
-        controller,
-        airdrop_bot_canister_id,
-        airdrop_bot_canister_wasm,
-        airdrop_bot_init_args,
-    );
-
     let storage_index_init_args = storage_index_canister::init::Args {
         governance_principals: vec![controller],
         user_controllers: vec![user_index_canister_id, group_index_canister_id],
@@ -310,6 +293,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
             proposals_bot_canister_id,
             storage_index_canister_id,
         ],
+        registry_canister_id,
         max_top_up_amount: 20 * T,
         min_interval: 5 * 60 * 1000, // 5 minutes
         min_cycles_balance: 200 * T,
@@ -329,6 +313,9 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
 
     let registry_init_args = registry_canister::init::Args {
         user_index_canister_id,
+        group_index_canister_id,
+        notifications_index_canister_id,
+        event_relay_canister_id,
         governance_principals: vec![controller],
         proposals_bot_canister_id,
         nns_ledger_canister_id,
@@ -338,6 +325,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         sns_wasm_canister_id,
         escrow_canister_id,
         cycles_dispenser_canister_id,
+        cycles_minting_canister_id,
         wasm_version,
         test_mode,
     };
@@ -358,14 +346,10 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     install_canister(env, controller, escrow_canister_id, escrow_canister_wasm, escrow_init_args);
 
     let event_relay_init_args = event_relay_canister::init::Args {
-        push_events_whitelist: vec![
-            user_index_canister_id,
-            online_users_canister_id,
-            local_user_index_canister_id,
-            local_group_index_canister_id,
-        ],
+        push_events_whitelist: vec![user_index_canister_id, online_users_canister_id],
         event_store_canister_id,
         cycles_dispenser_canister_id,
+        registry_canister_id,
         chat_ledger_canister_id,
         chat_governance_canister_id,
         wasm_version,
@@ -408,13 +392,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         user_index_canister_id,
         local_user_index_canister_wasm,
     );
-    client::user_index::happy_path::add_local_user_index_canister(
-        env,
-        controller,
-        user_index_canister_id,
-        local_user_index_canister_id,
-        notifications_canister_id,
-    );
 
     client::group_index::happy_path::upgrade_group_canister_wasm(env, controller, group_index_canister_id, group_canister_wasm);
     client::group_index::happy_path::upgrade_community_canister_wasm(
@@ -429,14 +406,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         group_index_canister_id,
         local_group_index_canister_wasm,
     );
-    client::group_index::happy_path::add_local_group_index_canister(
-        env,
-        controller,
-        group_index_canister_id,
-        local_group_index_canister_id,
-        local_user_index_canister_id,
-        notifications_canister_id,
-    );
 
     client::notifications_index::happy_path::upgrade_notifications_canister_wasm(
         env,
@@ -444,16 +413,8 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         notifications_index_canister_id,
         notifications_canister_wasm,
     );
-    client::notifications_index::happy_path::add_notifications_canister(
-        env,
-        controller,
-        notifications_index_canister_id,
-        notifications_canister_id,
-        local_user_index_canister_id,
-        local_group_index_canister_id,
-    );
 
-    client::storage_index::happy_path::upgrade_notifications_canister_wasm(
+    client::storage_index::happy_path::upgrade_bucket_canister_wasm(
         env,
         controller,
         storage_index_canister_id,
@@ -478,7 +439,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
 
     let cycles_minting_canister_init_args = CyclesMintingCanisterInitPayload {
         ledger_canister_id: nns_ledger_canister_id,
-        governance_canister_id: CanisterId::anonymous(),
+        governance_canister_id: nns_governance_canister_id,
         minting_account_id: Some(minting_account.to_string()),
         last_purged_notification: Some(0),
     };
@@ -490,6 +451,18 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         cycles_minting_canister_init_args,
     );
 
+    let application_subnet = *env.topology().get_app_subnets().first().unwrap();
+
+    client::cmc::set_authorized_subnetwork_list(
+        env,
+        nns_governance_canister_id,
+        cycles_minting_canister_id,
+        &cycles_minting_canister::set_authorized_subnetwork_list::Args {
+            who: None,
+            subnets: vec![application_subnet],
+        },
+    );
+
     let sns_wasm_canister_init_args = SnsWasmCanisterInitPayload::default();
     install_canister(
         env,
@@ -497,6 +470,43 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         sns_wasm_canister_id,
         sns_wasm_canister_wasm,
         sns_wasm_canister_init_args,
+    );
+
+    // Top up the CyclesDispenser with 10k ICP
+    client::ledger::happy_path::transfer(
+        env,
+        controller,
+        nns_ledger_canister_id,
+        cycles_dispenser_canister_id,
+        10_000 * 100_000_000,
+    );
+
+    // Top up the Registry with 10 ICP
+    client::ledger::happy_path::transfer(env, controller, nns_ledger_canister_id, registry_canister_id, 1_000_000_000);
+
+    let subnet = client::registry::happy_path::expand_onto_subnet(env, controller, registry_canister_id, application_subnet);
+    let local_user_index_canister_id = subnet.local_user_index;
+    let local_group_index_canister_id = subnet.local_group_index;
+    let notifications_canister_id = subnet.notifications_canister;
+
+    env.add_cycles(local_user_index_canister_id, INIT_CYCLES_BALANCE);
+    env.add_cycles(local_group_index_canister_id, INIT_CYCLES_BALANCE);
+    env.add_cycles(notifications_canister_id, INIT_CYCLES_BALANCE);
+
+    let airdrop_bot_init_args = airdrop_bot_canister::init::Args {
+        admins: vec![controller],
+        user_index_canister_id,
+        local_user_index_canister_id,
+        chat_ledger_canister_id,
+        wasm_version,
+        test_mode,
+    };
+    install_canister(
+        env,
+        controller,
+        airdrop_bot_canister_id,
+        airdrop_bot_canister_wasm,
+        airdrop_bot_init_args,
     );
 
     // Tick a load of times so that all the child canisters have time to get installed

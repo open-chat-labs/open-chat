@@ -1,6 +1,6 @@
-use crate::guards::caller_is_governance_principal;
+use crate::guards::caller_is_registry_canister;
 use crate::{mutate_state, read_state, RuntimeState};
-use canister_api_macros::proposal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::add_local_group_index_canister::{Response::*, *};
 use group_index_canister::ChildCanisterType;
@@ -8,7 +8,7 @@ use tracing::info;
 use types::{BuildVersion, CanisterId, CanisterWasm};
 use utils::canister::{install_basic, set_controllers};
 
-#[proposal(guard = "caller_is_governance_principal")]
+#[update(guard = "caller_is_registry_canister", msgpack = true)]
 #[trace]
 async fn add_local_group_index_canister(args: Args) -> Response {
     match read_state(|state| prepare(&args, state)) {
@@ -73,12 +73,6 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
 
 fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut RuntimeState) -> Response {
     if state.data.local_index_map.add_index(canister_id, wasm_version) {
-        state.data.fire_and_forget_handler.send_candid(
-            state.data.cycles_dispenser_canister_id,
-            "add_canister",
-            cycles_dispenser_canister::add_canister::Args { canister_id },
-        );
-
         Success
     } else {
         AlreadyAdded

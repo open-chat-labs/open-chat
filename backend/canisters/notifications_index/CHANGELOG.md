@@ -6,9 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
-### Added
+### Changed
 
-- Add new Notifications canisters to the CyclesDispenser's allow list ([#7070](https://github.com/open-chat-labs/open-chat/pull/7070))
+- Allow Registry to add additional Notifications canisters ([#7072](https://github.com/open-chat-labs/open-chat/pull/7072))
 
 ## [[2.0.1518](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1518-notifications_index)] - 2024-12-13
 

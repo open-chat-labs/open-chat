@@ -1,6 +1,6 @@
-use crate::guards::caller_is_governance_principal;
+use crate::guards::caller_is_registry_canister;
 use crate::{mutate_state, read_state, RuntimeState};
-use canister_api_macros::proposal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::{UserIndexEvent, UserRegistered};
 use tracing::info;
@@ -9,7 +9,7 @@ use user_index_canister::add_local_user_index_canister::{Response::*, *};
 use user_index_canister::ChildCanisterType;
 use utils::canister::{install_basic, set_controllers};
 
-#[proposal(guard = "caller_is_governance_principal")]
+#[update(guard = "caller_is_registry_canister", msgpack = true)]
 #[trace]
 async fn add_local_user_index_canister(args: Args) -> Response {
     match read_state(|state| prepare(&args, state)) {
@@ -93,13 +93,6 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
             )
         }
         crate::jobs::sync_events_to_local_user_index_canisters::try_run_now(state);
-
-        state.data.fire_and_forget_handler.send_candid(
-            state.data.cycles_dispenser_canister_id,
-            "add_canister",
-            cycles_dispenser_canister::add_canister::Args { canister_id },
-        );
-
         Success
     } else {
         AlreadyAdded

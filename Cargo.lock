@@ -1806,6 +1806,7 @@ dependencies = [
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
+ "constants",
  "cycles_dispenser_canister",
  "cycles_minting_canister",
  "cycles_minting_canister_c2c_client",
@@ -2348,6 +2349,17 @@ dependencies = [
  "candid",
  "event_store_canister",
  "serde",
+ "types",
+]
+
+[[package]]
+name = "event_relay_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "event_relay_canister",
+ "ic-cdk 0.17.0",
  "types",
 ]
 
@@ -4111,6 +4123,7 @@ dependencies = [
  "community_canister",
  "constants",
  "cycles_dispenser_canister",
+ "cycles_minting_canister",
  "escrow_canister",
  "event_relay_canister",
  "event_store_canister",
@@ -4996,6 +5009,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "notifications_index_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "canister_client",
+ "ic-cdk 0.17.0",
+ "msgpack",
+ "notifications_index_canister",
+ "tracing",
+ "types",
+]
+
+[[package]]
 name = "notifications_index_canister_client"
 version = "0.1.0"
 dependencies = [
@@ -5017,7 +5042,6 @@ dependencies = [
  "canister_tracing_macros",
  "constants",
  "cycles_dispenser_canister",
- "fire_and_forget_handler",
  "futures",
  "http_request",
  "human_readable",
@@ -6237,22 +6261,35 @@ dependencies = [
  "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
+ "canister_timer_jobs",
  "canister_tracing_macros",
  "constants",
+ "cycles_dispenser_canister",
+ "cycles_dispenser_canister_c2c_client",
+ "cycles_minting_canister",
+ "cycles_minting_canister_c2c_client",
  "dataurl",
  "escrow_canister",
  "escrow_canister_c2c_client",
+ "event_relay_canister",
+ "event_relay_canister_c2c_client",
  "futures",
+ "group_index_canister",
+ "group_index_canister_c2c_client",
  "hex",
  "http_request",
  "human_readable",
  "ic-cdk 0.17.0",
  "ic-cdk-timers",
+ "ic-ledger-types",
  "ic-stable-structures",
+ "icp_ledger_canister_c2c_client",
  "icrc-ledger-types",
  "icrc_ledger_canister",
  "icrc_ledger_canister_c2c_client",
  "msgpack",
+ "notifications_index_canister",
+ "notifications_index_canister_c2c_client",
  "rand 0.8.5",
  "registry_canister",
  "serde",

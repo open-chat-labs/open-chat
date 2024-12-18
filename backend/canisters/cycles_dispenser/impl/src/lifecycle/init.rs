@@ -17,6 +17,7 @@ fn init(args: Args) {
     let data = Data::new(
         args.governance_principals,
         args.canisters,
+        args.registry_canister_id,
         args.max_top_up_amount,
         args.min_interval,
         args.min_cycles_balance,
