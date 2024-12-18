@@ -44,7 +44,7 @@
     import Translatable from "../Translatable.svelte";
     import DurationPicker from "./DurationPicker.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
-    import BotBuilder from "../bots/BotBuilder.svelte";
+    import BotBuilder from "../bots/AutoBotBuilder.svelte";
     import { botsEnabled } from "../../utils/bots";
 
     const MIN_TITLE_LENGTH = 3;

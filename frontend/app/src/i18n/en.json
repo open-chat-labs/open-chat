@@ -155,7 +155,8 @@
             "failure": "Sorry we were unable to add the bot",
             "noPermissions": "No special permissions required",
             "permissionsInfo": "This bot seeks the following permissions. Choosing to limit the permissions granted will limit the commands available.",
-            "title": "Add bot to community"
+            "title": "Add bot to community",
+            "loadDefinition": "Load definition"
         },
         "builder": {
             "addAnother": "Add another",
@@ -168,8 +169,9 @@
             "choiceValue": "Choice value",
             "commandDescLabel": "Command description",
             "commandDescPlaceholder": "Enter command description",
-            "commandLabel": "Command: /{name}",
+            "commandLabel": "/{name}",
             "commandNameLabel": "Command name",
+            "commandsLabel": "Commands",
             "commandNamePlaceholder": "Enter command name",
             "commandPermissionsDesc": "Describe the permissions that this command requires",
             "commandPermissionsLabel": "Command permissions",
@@ -206,6 +208,7 @@
             "paramDescPlaceholder": "Enter parameter description",
             "paramLabel": "Param: {name}",
             "paramNameLabel": "Parameter name",
+            "paramsLabel": "Parameters",
             "paramNamePlaceholder": "Enter parameter name",
             "paramPlaceholderLabel": "Parameter placeholder",
             "paramPlaceholderPlaceholder": "Enter parameter placeholder",

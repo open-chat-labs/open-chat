@@ -51,8 +51,8 @@
 
     .error-wrapper {
         position: absolute;
-        @include z-index("error");
         width: 100%;
         margin: auto;
+        @include z-index("error");
     }
 </style>

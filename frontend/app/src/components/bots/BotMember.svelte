@@ -78,7 +78,7 @@
             </h4>
         </div>
         <div class="bot_description">
-            <FilteredUsername {searchTerm} username={bot.schema.description} />
+            <FilteredUsername {searchTerm} username={bot.definition.description} />
         </div>
     </div>
     <MenuIcon position={"bottom"} align={"end"}>
