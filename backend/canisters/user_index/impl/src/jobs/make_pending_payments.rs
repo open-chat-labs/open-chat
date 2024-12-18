@@ -55,9 +55,6 @@ async fn process_payment(pending_payment: PendingPayment) {
                 PendingPaymentReason::ReferralReward => {
                     inform_referrer(&pending_payment, block_index, state);
                 }
-                PendingPaymentReason::TopUpNeuron => {
-                    state.data.refresh_nns_neuron();
-                }
                 _ => {}
             },
             Ok(Err(_)) => {}
