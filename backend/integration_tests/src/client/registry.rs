@@ -29,13 +29,19 @@ pub mod happy_path {
 
         assert!(matches!(response, expand_onto_subnet::Response::Success));
 
-        for _ in 0..40 {
+        for i in 1..200 {
             env.advance_time(Duration::from_secs(1));
             env.tick();
+
+            if i % 10 == 0 {
+                let subnets::Response::Success(subnets) = super::subnets(env, sender, registry_canister_id, &Empty {});
+
+                if let Some(subnet) = subnets.into_iter().find(|s| s.subnet_id == subnet_id) {
+                    return subnet;
+                }
+            }
         }
 
-        let subnets::Response::Success(subnets) = super::subnets(env, sender, registry_canister_id, &Empty {});
-
-        subnets.last().unwrap().clone()
+        panic!("Failed to expand onto new subnet")
     }
 }
