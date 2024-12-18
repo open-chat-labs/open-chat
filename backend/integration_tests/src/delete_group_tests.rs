@@ -43,11 +43,9 @@ fn user_canister_notified_of_group_deleted() {
         group_id,
     } = init_test_data(env, canister_ids);
 
-    env.stop_canister(user2.canister(), Some(canister_ids.local_user_index))
-        .unwrap();
+    env.stop_canister(user2.canister(), Some(user2.local_user_index)).unwrap();
 
-    env.stop_canister(user3.canister(), Some(canister_ids.local_user_index))
-        .unwrap();
+    env.stop_canister(user3.canister(), Some(user3.local_user_index)).unwrap();
 
     let delete_group_response = client::user::delete_group(
         env,
@@ -70,7 +68,7 @@ fn user_canister_notified_of_group_deleted() {
 
     env.tick();
 
-    env.start_canister(user2.user_id.into(), Some(canister_ids.local_user_index))
+    env.start_canister(user2.user_id.into(), Some(user2.local_user_index))
         .unwrap();
 
     env.tick();
@@ -82,7 +80,7 @@ fn user_canister_notified_of_group_deleted() {
 
     env.tick();
 
-    env.start_canister(user3.user_id.into(), Some(canister_ids.local_user_index))
+    env.start_canister(user3.user_id.into(), Some(user3.local_user_index))
         .unwrap();
 
     env.tick();
@@ -103,7 +101,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds) -> TestData {
     client::local_user_index::happy_path::add_users_to_group(
         env,
         &user1,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, group_id),
         group_id,
         vec![(user2.user_id, user2.principal), (user3.user_id, user3.principal)],
     );

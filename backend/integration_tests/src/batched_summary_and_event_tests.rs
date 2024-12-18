@@ -46,7 +46,7 @@ fn get_batched_events_succeeds() {
     let local_user_index_canister::chat_events::Response::Success(result) = client::local_user_index::chat_events(
         env,
         user1.principal,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, user1.canister()),
         &local_user_index_canister::chat_events::Args {
             requests: vec![
                 EventsArgs {
@@ -99,11 +99,13 @@ fn get_batched_summaries_succeeds() {
 
     let start = now_millis(env);
 
+    let local_user_index = canister_ids.local_user_index(env, user1.canister());
+
     let local_user_index_canister::group_and_community_summary_updates::Response::Success(responses) =
         client::local_user_index::group_and_community_summary_updates(
             env,
             user1.principal,
-            canister_ids.local_user_index,
+            local_user_index,
             &local_user_index_canister::group_and_community_summary_updates::Args {
                 requests: vec![
                     SummaryUpdatesArgs {
@@ -142,7 +144,7 @@ fn get_batched_summaries_succeeds() {
         client::local_user_index::group_and_community_summary_updates(
             env,
             user1.principal,
-            canister_ids.local_user_index,
+            local_user_index,
             &local_user_index_canister::group_and_community_summary_updates::Args {
                 requests: vec![
                     SummaryUpdatesArgs {

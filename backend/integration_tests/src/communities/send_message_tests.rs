@@ -69,7 +69,7 @@ fn send_crypto_in_channel(with_c2c_error: bool) {
     } = init_test_data(env, canister_ids, *controller);
 
     if with_c2c_error {
-        stop_canister(env, canister_ids.local_group_index, community_id.into());
+        stop_canister(env, canister_ids.local_group_index(env, community_id), community_id.into());
     }
 
     let send_message_result = client::user::send_message_with_transfer_to_channel(
@@ -123,7 +123,7 @@ fn send_crypto_in_channel(with_c2c_error: bool) {
 
     if with_c2c_error {
         env.advance_time(Duration::from_secs(10));
-        start_canister(env, canister_ids.local_group_index, community_id.into());
+        start_canister(env, canister_ids.local_group_index(env, community_id), community_id.into());
         env.tick();
     }
 
@@ -641,8 +641,8 @@ fn send_message_with_rules_leads_to_expected_summary_and_selected_states() {
 }
 
 fn get_community_rules(env: &mut PocketIc, user: &User, community_id: CommunityId) -> ChatRules {
-    let summary = client::community::happy_path::summary(env, user, community_id);
-    let selected = client::community::happy_path::selected_initial(env, user, community_id);
+    let summary = client::community::happy_path::summary(env, user.principal, community_id);
+    let selected = client::community::happy_path::selected_initial(env, user.principal, community_id);
 
     ChatRules {
         enabled: selected.chat_rules.enabled,
@@ -708,17 +708,11 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     let user2 = client::register_user(env, canister_ids);
     let community_id =
         client::user::happy_path::create_community(env, &user1, &random_string(), true, vec!["general".to_string()]);
-    client::local_user_index::happy_path::join_community(
-        env,
-        user2.principal,
-        canister_ids.local_user_index,
-        community_id,
-        None,
-    );
+    client::community::happy_path::join_community(env, user2.principal, community_id);
 
     env.tick();
 
-    let summary = client::community::happy_path::summary(env, &user2, community_id);
+    let summary = client::community::happy_path::summary(env, user2.principal, community_id);
     let channel_id = summary.channels.iter().find(|c| c.name == "general").unwrap().channel_id;
 
     TestData {

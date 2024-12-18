@@ -117,7 +117,7 @@ fn stable_memory_garbage_collected_after_messages_disappear() {
 
     let user = client::register_diamond_user(env, canister_ids, *controller);
     let community_id = client::user::happy_path::create_community(env, &user, &random_string(), true, vec![random_string()]);
-    let channel_id = client::community::happy_path::summary(env, &user, community_id)
+    let channel_id = client::community::happy_path::summary(env, user.principal, community_id)
         .channels
         .first()
         .unwrap()

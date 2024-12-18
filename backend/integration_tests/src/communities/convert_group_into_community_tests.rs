@@ -51,19 +51,19 @@ fn convert_into_community_succeeds() {
 
         let expected_channel_names = vec![group_name];
 
-        let summary1 = client::community::happy_path::summary(env, &user1, result.community_id);
+        let summary1 = client::community::happy_path::summary(env, user1.principal, result.community_id);
         assert_eq!(
             summary1.channels.into_iter().map(|c| c.name).collect_vec(),
             expected_channel_names
         );
 
-        let summary2 = client::community::happy_path::summary(env, &user2, result.community_id);
+        let summary2 = client::community::happy_path::summary(env, user2.principal, result.community_id);
         assert_eq!(
             summary2.channels.into_iter().map(|c| c.name).collect_vec(),
             expected_channel_names
         );
 
-        let selected_initial = client::community::happy_path::selected_initial(env, &user1, result.community_id);
+        let selected_initial = client::community::happy_path::selected_initial(env, user1.principal, result.community_id);
         assert_eq!(selected_initial.blocked_users.len(), 1);
 
         let selected_channel_initial =
@@ -112,8 +112,8 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     let group_name = random_string();
 
     let group_id = client::user::happy_path::create_group(env, &user1, &group_name, true, true);
-    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
-    client::local_user_index::happy_path::join_group(env, user3.principal, canister_ids.local_user_index, group_id);
+    client::group::happy_path::join_group(env, user2.principal, group_id);
+    client::group::happy_path::join_group(env, user3.principal, group_id);
 
     tick_many(env, 3);
 

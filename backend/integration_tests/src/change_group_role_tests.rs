@@ -20,12 +20,12 @@ fn owner_can_promote_to_and_demote_from_owner() {
 
     client::group::happy_path::change_role(env, user1.principal, group_id, user2.user_id, GroupRole::Owner);
 
-    let summary1 = client::group::happy_path::summary(env, &user2, group_id);
+    let summary1 = client::group::happy_path::summary(env, user2.principal, group_id);
     assert!(matches!(summary1.role, GroupRole::Owner));
 
     client::group::happy_path::change_role(env, user1.principal, group_id, user2.user_id, GroupRole::Admin);
 
-    let summary1 = client::group::happy_path::summary(env, &user2, group_id);
+    let summary1 = client::group::happy_path::summary(env, user2.principal, group_id);
     assert!(matches!(summary1.role, GroupRole::Admin));
 }
 
@@ -36,7 +36,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     let group_name = random_string();
 
     let group_id = client::user::happy_path::create_group(env, &user1, &group_name, true, true);
-    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
+    client::group::happy_path::join_group(env, user2.principal, group_id);
 
     TestData { user1, user2, group_id }
 }

@@ -1,4 +1,4 @@
-use crate::client::{create_canister, create_canister_with_id, install_canister, INIT_CYCLES_BALANCE};
+use crate::client::{create_canister, create_canister_with_id, install_canister};
 use crate::env::VIDEO_CALL_OPERATOR;
 use crate::utils::tick_many;
 use crate::{client, wasms, CanisterIds, TestEnv, T};
@@ -482,21 +482,20 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     );
 
     // Top up the Registry with 10 ICP
-    client::ledger::happy_path::transfer(env, controller, nns_ledger_canister_id, registry_canister_id, 1_000_000_000);
+    client::ledger::happy_path::transfer(
+        env,
+        controller,
+        nns_ledger_canister_id,
+        registry_canister_id,
+        10 * 100_000_000,
+    );
 
     let subnet = client::registry::happy_path::expand_onto_subnet(env, controller, registry_canister_id, application_subnet);
-    let local_user_index_canister_id = subnet.local_user_index;
-    let local_group_index_canister_id = subnet.local_group_index;
-    let notifications_canister_id = subnet.notifications_canister;
-
-    env.add_cycles(local_user_index_canister_id, INIT_CYCLES_BALANCE);
-    env.add_cycles(local_group_index_canister_id, INIT_CYCLES_BALANCE);
-    env.add_cycles(notifications_canister_id, INIT_CYCLES_BALANCE);
 
     let airdrop_bot_init_args = airdrop_bot_canister::init::Args {
         admins: vec![controller],
         user_index_canister_id,
-        local_user_index_canister_id,
+        local_user_index_canister_id: subnet.local_user_index,
         chat_ledger_canister_id,
         wasm_version,
         test_mode,
@@ -516,9 +515,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         user_index: user_index_canister_id,
         group_index: group_index_canister_id,
         notifications_index: notifications_index_canister_id,
-        local_user_index: local_user_index_canister_id,
-        local_group_index: local_group_index_canister_id,
-        notifications: notifications_canister_id,
         identity: identity_canister_id,
         online_users: online_users_canister_id,
         proposals_bot: proposals_bot_canister_id,
@@ -534,6 +530,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         icp_ledger: nns_ledger_canister_id,
         chat_ledger: chat_ledger_canister_id,
         cycles_minting_canister: cycles_minting_canister_id,
+        subnets: vec![subnet],
     };
 
     println!("Test env setup complete. {canister_ids:?}");

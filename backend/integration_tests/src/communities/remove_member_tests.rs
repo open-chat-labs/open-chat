@@ -45,7 +45,7 @@ fn block_user_succeeds(user_has_left_community: bool) {
     ));
 
     // Check user has been blocked
-    let response = client::community::happy_path::selected_initial(env, &user1, community_id);
+    let response = client::community::happy_path::selected_initial(env, user1.principal, community_id);
 
     assert!(response.blocked_users.contains(&user2.user_id));
     assert!(!response.members.iter().any(|member| member.user_id == user2.user_id));
@@ -135,7 +135,7 @@ fn remove_user_succeeds() {
     ));
 
     // Check user has been removed
-    let response = client::community::happy_path::selected_initial(env, &user1, community_id);
+    let response = client::community::happy_path::selected_initial(env, user1.principal, community_id);
 
     assert!(!response.blocked_users.contains(&user2.user_id));
     assert!(!response.members.iter().any(|member| member.user_id == user2.user_id));
@@ -180,7 +180,7 @@ fn community_referral_added_and_removed() {
     } = init_test_data(env, canister_ids, *controller, false);
 
     // Check the referral has been added - method 1
-    let response1 = client::community::happy_path::selected_initial(env, &user1, community_id);
+    let response1 = client::community::happy_path::selected_initial(env, user1.principal, community_id);
     assert!(response1.referrals.contains(&user2.user_id));
 
     // Check the referral has been added - method 2
@@ -205,7 +205,7 @@ fn community_referral_added_and_removed() {
     ));
 
     // Check the referral has been removed - method 1
-    let response3 = client::community::happy_path::selected_initial(env, &user1, community_id);
+    let response3 = client::community::happy_path::selected_initial(env, user1.principal, community_id);
     assert!(response3.referrals.is_empty());
 
     // Check the referral has been removed - method 2
@@ -228,19 +228,13 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
         client::local_user_index::happy_path::invite_users_to_community(
             env,
             &user1,
-            canister_ids.local_user_index,
+            canister_ids.local_user_index(env, community_id),
             community_id,
             vec![user2.user_id],
         );
     }
 
-    client::local_user_index::happy_path::join_community(
-        env,
-        user2.principal,
-        canister_ids.local_user_index,
-        community_id,
-        None,
-    );
+    client::community::happy_path::join_community(env, user2.principal, community_id);
 
     tick_many(env, 3);
 

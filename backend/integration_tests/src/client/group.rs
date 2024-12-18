@@ -159,6 +159,11 @@ pub mod happy_path {
         }
     }
 
+    pub fn join_group(env: &mut PocketIc, sender: Principal, group_chat_id: ChatId) {
+        let local_user_index = summary(env, sender, group_chat_id).local_user_index_canister_id;
+        crate::client::local_user_index::happy_path::join_group(env, sender, local_user_index, group_chat_id);
+    }
+
     pub fn update_group(
         env: &mut PocketIc,
         sender: Principal,
@@ -325,15 +330,10 @@ pub mod happy_path {
 
     pub fn selected_initial(
         env: &PocketIc,
-        sender: &User,
+        sender: Principal,
         group_chat_id: ChatId,
     ) -> group_canister::selected_initial::SuccessResult {
-        let response = super::selected_initial(
-            env,
-            sender.principal,
-            group_chat_id.into(),
-            &group_canister::selected_initial::Args {},
-        );
+        let response = super::selected_initial(env, sender, group_chat_id.into(), &group_canister::selected_initial::Args {});
 
         match response {
             group_canister::selected_initial::Response::Success(result) => result,
@@ -361,10 +361,10 @@ pub mod happy_path {
         }
     }
 
-    pub fn summary(env: &PocketIc, sender: &User, group_chat_id: ChatId) -> GroupCanisterGroupChatSummary {
+    pub fn summary(env: &PocketIc, sender: Principal, group_chat_id: ChatId) -> GroupCanisterGroupChatSummary {
         let response = super::summary(
             env,
-            sender.principal,
+            sender,
             group_chat_id.into(),
             &group_canister::summary::Args { on_behalf_of: None },
         );
@@ -377,13 +377,13 @@ pub mod happy_path {
 
     pub fn summary_updates(
         env: &PocketIc,
-        sender: &User,
+        sender: Principal,
         group_chat_id: ChatId,
         updates_since: TimestampMillis,
     ) -> Option<GroupCanisterGroupChatSummaryUpdates> {
         let response = super::summary_updates(
             env,
-            sender.principal,
+            sender,
             group_chat_id.into(),
             &group_canister::summary_updates::Args {
                 on_behalf_of: None,

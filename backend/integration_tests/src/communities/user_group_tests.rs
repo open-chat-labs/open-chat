@@ -45,7 +45,7 @@ fn create_user_group_succeeds() {
 
     assert!(user_group_id > 0);
 
-    let summary = client::community::happy_path::summary(env, &user1, community_id);
+    let summary = client::community::happy_path::summary(env, user1.principal, community_id);
     assert_eq!(summary.user_groups.len(), 1);
 
     let user_group = summary.user_groups.first().unwrap();
@@ -53,7 +53,7 @@ fn create_user_group_succeeds() {
     assert_eq!(user_group.name, user_group_name);
     assert_eq!(user_group.members, 3);
 
-    let details = client::community::happy_path::selected_initial(env, &user1, community_id);
+    let details = client::community::happy_path::selected_initial(env, user1.principal, community_id);
     assert_eq!(details.user_groups.len(), 1);
 
     let user_groups = details.user_groups.first().unwrap();
@@ -114,7 +114,7 @@ fn update_user_group_succeeds() {
         community_canister::update_user_group::Response::Success
     ));
 
-    let summary = client::community::happy_path::summary(env, &user1, community_id);
+    let summary = client::community::happy_path::summary(env, user1.principal, community_id);
     assert_eq!(summary.user_groups.len(), 1);
 
     let user_group = summary.user_groups.first().unwrap();
@@ -122,7 +122,7 @@ fn update_user_group_succeeds() {
     assert_eq!(user_group.name, new_name);
     assert_eq!(user_group.members, 2);
 
-    let details = client::community::happy_path::selected_initial(env, &user1, community_id);
+    let details = client::community::happy_path::selected_initial(env, user1.principal, community_id);
     assert_eq!(details.user_groups.len(), 1);
 
     let user_groups = details.user_groups.first().unwrap();
@@ -181,10 +181,11 @@ fn delete_user_group_succeeds() {
         community_canister::delete_user_groups::Response::Success
     ));
 
-    let summary = client::community::happy_path::summary(env, &user1, community_id);
+    let summary = client::community::happy_path::summary(env, user1.principal, community_id);
     assert!(summary.user_groups.is_empty());
 
-    let summary_updates = client::community::happy_path::summary_updates(env, &user1, community_id, now_millis(env) - 1);
+    let summary_updates =
+        client::community::happy_path::summary_updates(env, user1.principal, community_id, now_millis(env) - 1);
     assert_eq!(summary_updates.unwrap().user_groups_deleted, vec![user_group_id]);
 }
 
@@ -248,19 +249,19 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     client::local_user_index::happy_path::join_community(
         env,
         user2.principal,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, community_id),
         community_id,
         None,
     );
     client::local_user_index::happy_path::join_community(
         env,
         user3.principal,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, community_id),
         community_id,
         None,
     );
 
-    let summary = client::community::happy_path::summary(env, &user1, community_id);
+    let summary = client::community::happy_path::summary(env, user1.principal, community_id);
 
     TestData {
         user1,

@@ -53,6 +53,7 @@ pub mod happy_path {
                 principal,
                 user_id: res.user_id,
                 public_key,
+                local_user_index: canister_id,
             },
             response => panic!("'register_user' error: {response:?}"),
         }

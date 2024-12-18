@@ -9,6 +9,7 @@ generate_msgpack_query_call!(platform_moderators);
 generate_msgpack_query_call!(platform_moderators_group);
 generate_query_call!(public_key);
 generate_msgpack_query_call!(user);
+generate_msgpack_query_call!(user_registration_canister);
 generate_msgpack_query_call!(users);
 generate_msgpack_query_call!(users_chit);
 generate_msgpack_query_call!(bot_updates);
@@ -311,6 +312,15 @@ pub mod happy_path {
         match response {
             user_index_canister::explore_bots::Response::Success(success_result) => success_result,
             response => panic!("'explore_bots' expected Success: {response:?}"),
+        }
+    }
+
+    pub fn user_registration_canister(env: &PocketIc, user_index_canister_id: CanisterId) -> CanisterId {
+        let response = super::user_registration_canister(env, Principal::anonymous(), user_index_canister_id, &Empty {});
+
+        match response {
+            user_index_canister::user_registration_canister::Response::Success(local_user_index) => local_user_index,
+            response => panic!("'user_registration_canister' error: {response:?}"),
         }
     }
 

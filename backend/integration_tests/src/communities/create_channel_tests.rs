@@ -24,7 +24,7 @@ fn create_channel_succeeds(is_public: bool) {
     let channel_id =
         client::community::happy_path::create_channel(env, user.principal, community_id, is_public, channel_name.clone());
 
-    let summary = client::community::happy_path::summary(env, &user, community_id);
+    let summary = client::community::happy_path::summary(env, user.principal, community_id);
 
     assert_eq!(summary.channels.len(), 2);
     assert!(summary
@@ -48,20 +48,8 @@ fn existing_users_joined_to_new_public_channel() {
     let user2 = client::register_user(env, canister_ids);
     let user3 = client::register_user(env, canister_ids);
 
-    client::local_user_index::happy_path::join_community(
-        env,
-        user2.principal,
-        canister_ids.local_user_index,
-        community_id,
-        None,
-    );
-    client::local_user_index::happy_path::join_community(
-        env,
-        user3.principal,
-        canister_ids.local_user_index,
-        community_id,
-        None,
-    );
+    client::community::happy_path::join_community(env, user2.principal, community_id);
+    client::community::happy_path::join_community(env, user3.principal, community_id);
 
     let create_channel_response = client::community::create_channel(
         env,
@@ -89,8 +77,8 @@ fn existing_users_joined_to_new_public_channel() {
         panic!()
     };
 
-    let user2_summary = client::community::happy_path::summary(env, &user2, community_id);
-    let user3_summary = client::community::happy_path::summary(env, &user3, community_id);
+    let user2_summary = client::community::happy_path::summary(env, user2.principal, community_id);
+    let user3_summary = client::community::happy_path::summary(env, user3.principal, community_id);
 
     assert!(user2_summary.channels.iter().any(|c| c.channel_id == channel_id));
     assert!(user3_summary.channels.iter().any(|c| c.channel_id == channel_id));

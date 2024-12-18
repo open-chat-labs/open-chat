@@ -126,6 +126,20 @@ pub mod happy_path {
         }
     }
 
+    pub fn join_community(
+        env: &mut PocketIc,
+        sender: Principal,
+        community_id: CommunityId,
+    ) -> CommunityCanisterCommunitySummary {
+        let local_user_index = summary(env, sender, community_id).local_user_index_canister_id;
+        crate::client::local_user_index::happy_path::join_community(env, sender, local_user_index, community_id, None)
+    }
+
+    pub fn join_channel(env: &mut PocketIc, sender: Principal, community_id: CommunityId, channel_id: ChannelId) {
+        let local_user_index = summary(env, sender, community_id).local_user_index_canister_id;
+        crate::client::local_user_index::happy_path::join_channel(env, sender, local_user_index, community_id, channel_id);
+    }
+
     pub fn leave_channel(env: &mut PocketIc, sender: Principal, community_id: CommunityId, channel_id: ChannelId) {
         let response = super::leave_channel(
             env,
@@ -414,10 +428,10 @@ pub mod happy_path {
         }
     }
 
-    pub fn summary(env: &PocketIc, sender: &User, community_id: CommunityId) -> CommunityCanisterCommunitySummary {
+    pub fn summary(env: &PocketIc, sender: Principal, community_id: CommunityId) -> CommunityCanisterCommunitySummary {
         let response = super::summary(
             env,
-            sender.principal,
+            sender,
             community_id.into(),
             &community_canister::summary::Args {
                 on_behalf_of: None,
@@ -433,13 +447,13 @@ pub mod happy_path {
 
     pub fn summary_updates(
         env: &PocketIc,
-        sender: &User,
+        sender: Principal,
         community_id: CommunityId,
         updates_since: TimestampMillis,
     ) -> Option<CommunityCanisterCommunitySummaryUpdates> {
         match super::summary_updates(
             env,
-            sender.principal,
+            sender,
             community_id.into(),
             &community_canister::summary_updates::Args {
                 on_behalf_of: None,
@@ -455,12 +469,12 @@ pub mod happy_path {
 
     pub fn selected_initial(
         env: &PocketIc,
-        sender: &User,
+        sender: Principal,
         community_id: CommunityId,
     ) -> community_canister::selected_initial::SuccessResult {
         let response = super::selected_initial(
             env,
-            sender.principal,
+            sender,
             community_id.into(),
             &community_canister::selected_initial::Args { invite_code: None },
         );

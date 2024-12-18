@@ -25,8 +25,8 @@ fn prize_messages_can_be_claimed_successfully() {
     let user2 = client::register_user(env, canister_ids);
     let user3 = client::register_user(env, canister_ids);
     let group_id = client::user::happy_path::create_group(env, &user1, random_string().as_str(), true, true);
-    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
-    client::local_user_index::happy_path::join_group(env, user3.principal, canister_ids.local_user_index, group_id);
+    client::group::happy_path::join_group(env, user2.principal, group_id);
+    client::group::happy_path::join_group(env, user3.principal, group_id);
 
     // Send user1 some ICP
     client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_000_000_000);
@@ -134,7 +134,7 @@ fn unclaimed_prizes_get_refunded(case: u32) {
         );
     }
 
-    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
+    client::group::happy_path::join_group(env, user2.principal, group_id);
 
     // Send user1 some ICP
     client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_000_000_000);
