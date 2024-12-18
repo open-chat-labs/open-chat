@@ -1,5 +1,5 @@
 use crate::guards::caller_is_governance_principal;
-use crate::timer_job_types::ExpandOntoNewSubnetJob;
+use crate::timer_job_types::ExpandOntoSubnetJob;
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::proposal;
 use canister_timer_jobs::Job;
@@ -18,7 +18,7 @@ fn expand_onto_subnet(args: Args) -> Response {
     }
 }
 
-fn expand_onto_subnet_impl(args: Args, state: &mut RuntimeState) -> Result<ExpandOntoNewSubnetJob, Response> {
+fn expand_onto_subnet_impl(args: Args, state: &mut RuntimeState) -> Result<ExpandOntoSubnetJob, Response> {
     if state.data.subnets.subnets().iter().any(|s| s.subnet_id == args.subnet_id) {
         Err(AlreadyOnSubnet)
     } else if state.data.subnets.in_progress().is_some() {
@@ -26,7 +26,7 @@ fn expand_onto_subnet_impl(args: Args, state: &mut RuntimeState) -> Result<Expan
     } else {
         state.data.subnets.start_new(args.subnet_id, state.env.now());
 
-        Ok(ExpandOntoNewSubnetJob {
+        Ok(ExpandOntoSubnetJob {
             subnet_id: args.subnet_id,
             this_canister_id: state.env.canister_id(),
             user_index: state.data.user_index_canister_id,

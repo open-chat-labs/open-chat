@@ -14,11 +14,11 @@ const MEMO_CREATE_CANISTER: Memo = Memo(0x41455243); // == 'CREA'
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
-    ExpandOntoNewSubnet(ExpandOntoNewSubnetJob),
+    ExpandOntoSubnet(ExpandOntoSubnetJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct ExpandOntoNewSubnetJob {
+pub struct ExpandOntoSubnetJob {
     pub subnet_id: Principal,
     pub this_canister_id: CanisterId,
     pub user_index: CanisterId,
@@ -34,12 +34,12 @@ pub struct ExpandOntoNewSubnetJob {
 impl Job for TimerJob {
     fn execute(self) {
         match self {
-            TimerJob::ExpandOntoNewSubnet(job) => job.execute(),
+            TimerJob::ExpandOntoSubnet(job) => job.execute(),
         }
     }
 }
 
-impl Job for ExpandOntoNewSubnetJob {
+impl Job for ExpandOntoSubnetJob {
     fn execute(self) {
         if let Some((next_step, now)) =
             read_state(|state| state.data.subnets.in_progress().map(|s| (s.next_step(), state.env.now())))
@@ -49,12 +49,12 @@ impl Job for ExpandOntoNewSubnetJob {
     }
 }
 
-impl ExpandOntoNewSubnetJob {
+impl ExpandOntoSubnetJob {
     async fn process_step(self, next_step: ExpandOntoSubnetStep, now: TimestampMillis) {
         let delay = match self.process_step_inner(next_step, now).await {
             Ok(Some(false)) => 0,
             Err(error) => {
-                ic_cdk::println!("ExpandOntoNewSubnet processing failed: {:?}", error);
+                ic_cdk::println!("ExpandOntoSubnet processing failed: {:?}", error);
                 MINUTE_IN_MS
             }
             Ok(Some(true)) | Ok(None) => return,
@@ -65,7 +65,7 @@ impl ExpandOntoNewSubnetJob {
             state
                 .data
                 .timer_jobs
-                .enqueue_job(TimerJob::ExpandOntoNewSubnet(self), now + delay, now);
+                .enqueue_job(TimerJob::ExpandOntoSubnet(self), now + delay, now);
         })
     }
 
