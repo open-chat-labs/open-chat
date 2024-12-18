@@ -1,4 +1,4 @@
-use crate::client::{create_canister, create_canister_with_id, install_canister};
+use crate::client::{create_canister, create_canister_with_id, install_canister, INIT_CYCLES_BALANCE};
 use crate::env::VIDEO_CALL_OPERATOR;
 use crate::utils::tick_many;
 use crate::{client, wasms, CanisterIds, TestEnv, T};
@@ -488,6 +488,10 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let local_user_index_canister_id = subnet.local_user_index;
     let local_group_index_canister_id = subnet.local_group_index;
     let notifications_canister_id = subnet.notifications_canister;
+
+    env.add_cycles(local_user_index_canister_id, INIT_CYCLES_BALANCE);
+    env.add_cycles(local_group_index_canister_id, INIT_CYCLES_BALANCE);
+    env.add_cycles(notifications_canister_id, INIT_CYCLES_BALANCE);
 
     let airdrop_bot_init_args = airdrop_bot_canister::init::Args {
         admins: vec![controller],

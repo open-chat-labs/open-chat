@@ -33,7 +33,7 @@ pub mod storage_index;
 pub mod user;
 pub mod user_index;
 
-const INIT_CYCLES_BALANCE: u128 = 1_000 * T;
+pub const INIT_CYCLES_BALANCE: u128 = 1_000 * T;
 
 pub fn create_canister(env: &mut PocketIc, controller: Principal) -> CanisterId {
     let canister_id = env.create_canister_with_settings(Some(controller), None);
