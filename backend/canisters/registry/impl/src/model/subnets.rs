@@ -48,6 +48,7 @@ pub struct SubnetInProgress {
     pub local_group_index: Option<CanisterId>,
     pub notifications_canister: Option<CanisterId>,
     pub controllers_updated: bool,
+    pub cycles_dispenser_notified: bool,
     pub event_relay_notified: bool,
     pub notifications_index_notified: bool,
     pub local_user_index_notified: bool,
@@ -65,6 +66,7 @@ impl SubnetInProgress {
             local_group_index: None,
             notifications_canister: None,
             controllers_updated: false,
+            cycles_dispenser_notified: false,
             event_relay_notified: false,
             notifications_index_notified: false,
             local_user_index_notified: false,
@@ -73,15 +75,15 @@ impl SubnetInProgress {
         }
     }
 
-    pub fn next_step(&self) -> ExpandOntoNewSubnetStep {
+    pub fn next_step(&self) -> ExpandOntoSubnetStep {
         let Some(local_user_index) = self.local_user_index else {
-            return ExpandOntoNewSubnetStep::CreateLocalUserIndex;
+            return ExpandOntoSubnetStep::CreateLocalUserIndex;
         };
         let Some(local_group_index) = self.local_group_index else {
-            return ExpandOntoNewSubnetStep::CreateLocalGroupIndex;
+            return ExpandOntoSubnetStep::CreateLocalGroupIndex;
         };
         let Some(notifications_canister) = self.notifications_canister else {
-            return ExpandOntoNewSubnetStep::CreateNotificationsCanister;
+            return ExpandOntoSubnetStep::CreateNotificationsCanister;
         };
 
         let new_canister_ids = NewCanisterIds {
@@ -90,22 +92,24 @@ impl SubnetInProgress {
             notifications_canister,
         };
         if !self.controllers_updated {
-            ExpandOntoNewSubnetStep::UpdateControllers(new_canister_ids)
+            ExpandOntoSubnetStep::UpdateControllers(new_canister_ids)
+        } else if !self.cycles_dispenser_notified {
+            ExpandOntoSubnetStep::NotifyCyclesDispenser(new_canister_ids)
         } else if !self.event_relay_notified {
-            ExpandOntoNewSubnetStep::NotifyEventRelay(new_canister_ids)
+            ExpandOntoSubnetStep::NotifyEventRelay(new_canister_ids)
         } else if !self.notifications_index_notified {
-            ExpandOntoNewSubnetStep::NotifyNotificationsIndex(new_canister_ids)
+            ExpandOntoSubnetStep::NotifyNotificationsIndex(new_canister_ids)
         } else if !self.local_user_index_notified {
-            ExpandOntoNewSubnetStep::NotifyUserIndex(new_canister_ids)
+            ExpandOntoSubnetStep::NotifyUserIndex(new_canister_ids)
         } else if !self.local_group_index_notified {
-            ExpandOntoNewSubnetStep::NotifyGroupIndex(new_canister_ids)
+            ExpandOntoSubnetStep::NotifyGroupIndex(new_canister_ids)
         } else {
-            ExpandOntoNewSubnetStep::Complete
+            ExpandOntoSubnetStep::Complete
         }
     }
 
     pub fn is_complete(&self) -> bool {
-        matches!(self.next_step(), ExpandOntoNewSubnetStep::Complete)
+        matches!(self.next_step(), ExpandOntoSubnetStep::Complete)
     }
 }
 
@@ -138,7 +142,7 @@ pub struct NewCanisterIds {
 }
 
 #[derive(Debug)]
-pub enum ExpandOntoNewSubnetStep {
+pub enum ExpandOntoSubnetStep {
     CreateLocalUserIndex,
     CreateLocalGroupIndex,
     CreateNotificationsCanister,
