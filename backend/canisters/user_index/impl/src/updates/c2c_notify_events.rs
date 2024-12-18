@@ -5,8 +5,8 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use event_store_producer::EventBuilder;
 use local_user_index_canister::{
-    DeleteUser, OpenChatBotMessage, OpenChatBotMessageV2, UserIndexEvent, UserJoinedCommunityOrChannel, UserJoinedGroup,
-    UserRegistered, UsernameChanged,
+    OpenChatBotMessage, OpenChatBotMessageV2, UserIndexEvent, UserJoinedCommunityOrChannel, UserJoinedGroup, UserRegistered,
+    UsernameChanged,
 };
 use storage_index_canister::add_or_update_users::UserConfig;
 use types::{CanisterId, MessageContent, TextContent, TimestampMillis, UserId, UserType};
@@ -78,15 +78,15 @@ fn handle_event(event: LocalUserIndexEvent, caller: Principal, now: TimestampMil
                 })),
             );
         }
-        LocalUserIndexEvent::UserDeleted(ev) => {
-            state.delete_user(ev.user_id, false);
-            state.push_event_to_all_local_user_indexes(
-                UserIndexEvent::DeleteUser(DeleteUser {
-                    user_id: ev.user_id,
-                    triggered_by_user: false,
-                }),
-                Some(caller),
-            );
+        LocalUserIndexEvent::UserDeleted(_) => {
+            // state.delete_user(ev.user_id, false);
+            // state.push_event_to_all_local_user_indexes(
+            //     UserIndexEvent::DeleteUser(DeleteUser {
+            //         user_id: ev.user_id,
+            //         triggered_by_user: false,
+            //     }),
+            //     Some(caller),
+            // );
         }
         LocalUserIndexEvent::NotifyUniquePersonProof(ev) => {
             let (user_id, proof) = *ev;

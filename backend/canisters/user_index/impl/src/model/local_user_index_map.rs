@@ -44,17 +44,17 @@ impl LocalUserIndexMap {
         false
     }
 
-    pub fn remove_user(&mut self, user_id: &UserId) -> bool {
-        if let Some(index) = self.user_to_index.remove(user_id) {
-            self.index_map
-                .entry(index)
-                .and_modify(|i| i.user_count = i.user_count.saturating_sub(1));
-
-            true
-        } else {
-            false
-        }
-    }
+    // pub fn remove_user(&mut self, user_id: &UserId) -> bool {
+    //     if let Some(index) = self.user_to_index.remove(user_id) {
+    //         self.index_map
+    //             .entry(index)
+    //             .and_modify(|i| i.user_count = i.user_count.saturating_sub(1));
+    //
+    //         true
+    //     } else {
+    //         false
+    //     }
+    // }
 
     pub fn index_for_new_user(&self) -> Option<CanisterId> {
         self.index_map
