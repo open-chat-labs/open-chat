@@ -2,4 +2,9 @@
 import type { SlashCommandParam } from "./SlashCommandParam";
 import type { SlashCommandPermissions } from "./SlashCommandPermissions";
 
-export type SlashCommandSchema = { name: string, description?: string | undefined, params: Array<SlashCommandParam>, permissions: SlashCommandPermissions, };
+export type SlashCommandSchema = {
+  name: string;
+  description?: string | undefined;
+  params: Array<SlashCommandParam>;
+  permissions: SlashCommandPermissions;
+};

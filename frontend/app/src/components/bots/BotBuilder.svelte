@@ -92,13 +92,13 @@
     }
 
     function addCommand() {
-        candidate.commands.push(emptySlashCommand());
-        selectedCommand = candidate.commands[candidate.commands.length - 1];
-        selectedCommandIndex = candidate.commands.length - 1;
+        candidate.schema.commands.push(emptySlashCommand());
+        selectedCommand = candidate.schema.commands[candidate.schema.commands.length - 1];
+        selectedCommandIndex = candidate.schema.commands.length - 1;
     }
 
     function onDeleteCommand(cmd: SlashCommandSchema) {
-        candidate.commands = candidate.commands.filter((c) => c !== cmd);
+        candidate.schema.commands = candidate.schema.commands.filter((c) => c !== cmd);
     }
 
     function onSelectCommand(cmd: SlashCommandSchema, index: number) {
@@ -165,7 +165,7 @@
         minlength={3}
         maxlength={200}
         placeholder={i18nKey("bots.builder.descPlaceholder")}
-        bind:value={candidate.description} />
+        bind:value={candidate.schema.description} />
 
     <Legend
         label={i18nKey("bots.builder.endpointLabel")}
@@ -181,7 +181,7 @@
 
     <div class="commands">
         <div class="commands">
-            {#each candidate.commands as command, i}
+            {#each candidate.schema.commands as command, i}
                 <SummaryButton
                     valid={!errors.has(`command_${i}`)}
                     onSelect={() => onSelectCommand(command, i)}

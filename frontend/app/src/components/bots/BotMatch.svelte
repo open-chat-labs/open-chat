@@ -33,11 +33,11 @@
         <h4 class="bot-name">
             {match.name}
         </h4>
-        <p title={match.description} class="bot-desc">
-            {match.description}
+        <p title={match.schema.description} class="bot-desc">
+            {match.schema.description}
         </p>
         <div class="commands">
-            {#each match.commands as command}
+            {#each match.schema.commands as command}
                 <TooltipWrapper position="bottom" align="middle">
                     <div slot="target" class="command">{command.name}</div>
                     <div let:position let:align slot="tooltip">

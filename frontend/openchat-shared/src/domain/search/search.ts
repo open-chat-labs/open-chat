@@ -1,5 +1,5 @@
 import type { AccessGateConfig } from "../access";
-import type { SlashCommandSchema } from "../bots";
+import type { BotSchema } from "../bots";
 import type { ChatIdentifier, GroupChatIdentifier, GroupSubtype } from "../chat/chat";
 import type { ChannelMatch, CommunityIdentifier } from "../community";
 import type { DataContent } from "../data/data";
@@ -34,10 +34,9 @@ export type MessageMatch = {
 export type BotMatch = {
     id: string;
     name: string;
-    description: string;
     ownerId: string;
     avatarUrl?: string;
-    commands: SlashCommandSchema[];
+    schema: BotSchema;
 };
 
 export type ExploreCommunitiesResponse = TermInvalid | ExploreSuccess | Offline;

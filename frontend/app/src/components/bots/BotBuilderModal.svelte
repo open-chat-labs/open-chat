@@ -27,6 +27,7 @@
         if (bot !== undefined && valid) {
             registering = true;
             const snapshot = $state.snapshot(bot);
+            console.log(JSON.stringify(snapshot.schema));
             client
                 .registerBot({
                     ...snapshot,
