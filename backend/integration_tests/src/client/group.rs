@@ -8,6 +8,7 @@ pub const CHAT_EVENTS_MEMORY_ID: MemoryId = MemoryId::new(3);
 generate_msgpack_query_call!(events);
 generate_msgpack_query_call!(events_by_index);
 generate_msgpack_query_call!(events_window);
+generate_msgpack_query_call!(local_user_index);
 generate_msgpack_query_call!(public_summary);
 generate_msgpack_query_call!(selected_initial);
 generate_msgpack_query_call!(selected_updates_v2);
@@ -49,9 +50,10 @@ pub mod happy_path {
     use pocket_ic::PocketIc;
     use testing::rng::random_from_u128;
     use types::{
-        ChatId, EventIndex, EventsResponse, GroupCanisterGroupChatSummary, GroupCanisterGroupChatSummaryUpdates,
-        GroupReplyContext, GroupRole, MessageContentInitial, MessageId, MessageIndex, Milliseconds, PollVotes, Reaction,
-        SlashCommandPermissions, TextContent, TimestampMillis, UserId, VideoCallType, VoteOperation,
+        CanisterId, ChatId, Empty, EventIndex, EventsResponse, GroupCanisterGroupChatSummary,
+        GroupCanisterGroupChatSummaryUpdates, GroupReplyContext, GroupRole, MessageContentInitial, MessageId, MessageIndex,
+        Milliseconds, PollVotes, Reaction, SlashCommandPermissions, TextContent, TimestampMillis, UserId, VideoCallType,
+        VoteOperation,
     };
 
     pub fn send_text_message(
@@ -603,5 +605,12 @@ pub mod happy_path {
             group_canister::update_bot::Response::Success => {}
             response => panic!("'update_bot' error: {response:?}"),
         }
+    }
+
+    pub fn local_user_index(env: &PocketIc, group_id: ChatId) -> CanisterId {
+        let group_canister::local_user_index::Response::Success(local_user_index) =
+            super::local_user_index(env, Principal::anonymous(), group_id.into(), &Empty {});
+
+        local_user_index
     }
 }
