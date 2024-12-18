@@ -183,9 +183,11 @@ export function emptyBotInstance(bot?: ExternalBot): ExternalBot {
               id: "",
               ownerId: "",
               name: "",
-              description: "",
               endpoint: "",
-              commands: [],
+              schema: {
+                  description: "",
+                  commands: [],
+              },
           };
 }
 
@@ -196,6 +198,10 @@ export type ExternalBot = {
     id: string;
     ownerId: string;
     endpoint: string;
+    schema: BotSchema;
+};
+
+export type BotSchema = {
     description: string;
     commands: SlashCommandSchema[];
 };
@@ -203,8 +209,7 @@ export type ExternalBot = {
 export type InternalBot = {
     kind: "internal_bot";
     name: string;
-    description?: string;
-    commands: SlashCommandSchema[];
+    schema: BotSchema;
 };
 
 export type BotCommandInstance = ExternalBotCommandInstance | InternalBotCommandInstance;
@@ -376,15 +381,15 @@ export function validateBot(bot: ExternalBot): ValidationErrors {
         errors.addErrors("bot_principal", i18nKey("bots.builder.errors.principal"));
     }
 
-    if (bot.commands.length === 0) {
+    if (bot.schema.commands.length === 0) {
         errors.addErrors("no_commands", i18nKey("bots.builder.errors.noCommands"));
     }
 
-    if (containsDuplicateCommands(bot.commands)) {
+    if (containsDuplicateCommands(bot.schema.commands)) {
         errors.addErrors("duplicate_commands", i18nKey("bots.builder.errors.duplicateCommands"));
     }
 
-    bot.commands.forEach((command, i) => {
+    bot.schema.commands.forEach((command, i) => {
         if (!validateCommand(command, `command_${i}`, errors)) {
             errors.addErrors(`command_${i}`, i18nKey("Command has errors"));
         }
