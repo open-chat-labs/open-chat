@@ -251,7 +251,7 @@ fn unwrap_response<R: CandidType + DeserializeOwned>(response: Result<WasmResult
     }
 }
 
-fn unwrap_msgpack_response<R: DeserializeOwned>(response: Result<WasmResult, UserError>) -> R {
+pub fn unwrap_msgpack_response<R: DeserializeOwned>(response: Result<WasmResult, UserError>) -> R {
     match response.unwrap() {
         WasmResult::Reply(bytes) => msgpack::deserialize_then_unwrap(&bytes),
         WasmResult::Reject(error) => panic!("{error}"),

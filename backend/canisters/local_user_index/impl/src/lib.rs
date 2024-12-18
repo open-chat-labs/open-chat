@@ -20,9 +20,9 @@ use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::time::Duration;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms,
-    CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails,
-    MessageContent, ReferralType, TimestampMillis, Timestamped, User, UserId, VerifiedCredentialGateArgs,
+    BuildVersion, CanisterId, ChannelLatestMessageIndex, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary,
+    CommunityCanisterCommunitySummary, CommunityId, Cycles, DiamondMembershipDetails, MessageContent, ReferralType,
+    TimestampMillis, Timestamped, User, UserId, VerifiedCredentialGateArgs,
 };
 use user_canister::LocalUserIndexEvent as UserEvent;
 use user_index_canister::LocalUserIndexEvent as UserIndexEvent;
@@ -338,7 +338,6 @@ pub struct UserToDelete {
 impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
-        user_canister_wasm: CanisterWasm,
         user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
         identity_canister_id: CanisterId,
@@ -358,7 +357,7 @@ impl Data {
         Data {
             local_users: LocalUserMap::default(),
             global_users: GlobalUserMap::default(),
-            child_canister_wasms: ChildCanisterWasms::new(vec![(ChildCanisterType::User, user_canister_wasm)]),
+            child_canister_wasms: ChildCanisterWasms::default(),
             user_index_canister_id,
             group_index_canister_id,
             identity_canister_id,

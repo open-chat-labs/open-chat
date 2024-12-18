@@ -36,6 +36,7 @@ proposals_bot_canister = { path = "../canisters/proposals_bot/api" }
 rand = { workspace = true }
 registry_canister = { path = "../canisters/registry/api" }
 serde = { workspace = true }
+serde_json = { workspace = true }
 sha256 = { path = "../libraries/sha256" }
 sign_in_with_email_canister = { workspace = true }
 sign_in_with_email_canister_test_utils = { workspace = true }
