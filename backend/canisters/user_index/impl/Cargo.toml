@@ -48,8 +48,6 @@ p256_key_pair = { path = "../../../libraries/p256_key_pair" }
 modclub_canister = { path = "../../../external_canisters/modclub/api" }
 modclub_canister_c2c_client = { path = "../../../external_canisters/modclub/c2c_client" }
 msgpack = { path = "../../../libraries/msgpack" }
-nns_governance_canister = { path = "../../../external_canisters/nns_governance/api" }
-nns_governance_canister_c2c_client = { path = "../../../external_canisters/nns_governance/c2c_client" }
 online_users_canister = { path = "../../online_users/api" }
 online_users_canister_c2c_client = { path = "../../online_users/c2c_client" }
 proof_of_unique_personhood = { path = "../../../libraries/proof_of_unique_personhood" }

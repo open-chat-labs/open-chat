@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Allow Registry to add additional LocalUserIndexes ([#7072](https://github.com/open-chat-labs/open-chat/pull/7072))
 - Add `update_bot` endpoint only callable by bot owner ([#7073](https://github.com/open-chat-labs/open-chat/pull/7073))
 - Handle installing large wasms onto new subnets ([#7078](https://github.com/open-chat-labs/open-chat/pull/7078))
+- Have NeuronController refresh 8 year neuron rather than UserIndex ([#7080](https://github.com/open-chat-labs/open-chat/pull/7080))
 
 ### Removed
 

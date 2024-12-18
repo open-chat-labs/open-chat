@@ -8384,8 +8384,6 @@ dependencies = [
  "modclub_canister",
  "modclub_canister_c2c_client",
  "msgpack",
- "nns_governance_canister",
- "nns_governance_canister_c2c_client",
  "online_users_canister",
  "online_users_canister_c2c_client",
  "p256_key_pair",
