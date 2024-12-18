@@ -1,7 +1,7 @@
 pub mod add_local_user_index_canister;
 pub mod add_platform_moderator;
 pub mod add_platform_operator;
-pub mod assign_platform_moderators_group;
+// pub mod assign_platform_moderators_group;
 pub mod award_external_achievement;
 pub mod c2c_mark_user_canister_empty;
 pub mod c2c_notify_chit;
@@ -13,7 +13,7 @@ pub mod c2c_set_avatar;
 pub mod c2c_suspend_users;
 // pub mod delete_user;
 pub mod mark_local_user_index_full;
-pub mod mark_suspected_bot;
+// pub mod mark_suspected_bot;
 pub mod modclub_callback;
 pub mod pay_for_diamond_membership;
 pub mod register_bot;
