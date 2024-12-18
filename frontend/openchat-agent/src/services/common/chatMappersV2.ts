@@ -121,6 +121,10 @@ import type {
     MessagePermission,
     SlashCommandPermissions,
     BotGroupDetails,
+    BotDefinition,
+    SlashCommandSchema,
+    SlashCommandParamType,
+    SlashCommandParam,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -292,6 +296,9 @@ import type {
     GroupAddBotResponse,
     GroupUpdateBotResponse,
     BotGroupDetails as ApiBotGroupDetails,
+    SlashCommandSchema as ApiSlashCommandSchema,
+    SlashCommandParamType as ApiSlashCommandParamType,
+    SlashCommandParam as ApiSlashCommandParam,
 } from "../../typebox";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
@@ -3362,4 +3369,56 @@ export function botGroupDetails(value: ApiBotGroupDetails): BotGroupDetails {
         id: principalBytesToString(value.user_id),
         permissions: slashCommandPermissions(value.permissions),
     };
+}
+
+export function externalBotDefinition(value: {
+    description: string;
+    commands: ApiSlashCommandSchema[];
+}): BotDefinition {
+    return {
+        kind: "bot_definition",
+        description: value.description,
+        commands: value.commands.map(externalBotCommand),
+    };
+}
+
+export function externalBotCommand(command: ApiSlashCommandSchema): SlashCommandSchema {
+    return {
+        name: command.name,
+        description: command.description,
+        params: command.params.map(externalBotParam),
+        permissions: slashCommandPermissions(command.permissions),
+    };
+}
+
+export function externalBotParam(param: ApiSlashCommandParam): SlashCommandParam {
+    return {
+        ...param,
+        ...customParamFields(param.param_type),
+    };
+}
+
+export function customParamFields(paramType: ApiSlashCommandParamType): SlashCommandParamType {
+    if (paramType === "UserParam") {
+        return {
+            kind: "user",
+        };
+    } else if (paramType === "BooleanParam") {
+        return { kind: "boolean" };
+    } else if ("StringParam" in paramType) {
+        return {
+            kind: "string",
+            minLength: paramType.StringParam.min_length,
+            maxLength: paramType.StringParam.max_length,
+            choices: paramType.StringParam.choices,
+        };
+    } else if ("NumberParam" in paramType) {
+        return {
+            kind: "number",
+            minValue: paramType.NumberParam.min_length,
+            maxValue: paramType.NumberParam.max_length,
+            choices: paramType.NumberParam.choices,
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiSlashCommandParamType value", paramType);
 }

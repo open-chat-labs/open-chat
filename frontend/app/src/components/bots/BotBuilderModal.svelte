@@ -3,7 +3,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import ModalContent from "../ModalContent.svelte";
     import Translatable from "../Translatable.svelte";
-    import BotBuilder from "./BotBuilder.svelte";
+    import BotBuilder from "./AutoBotBuilder.svelte";
     import Button from "../Button.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
     import { getContext } from "svelte";
@@ -27,7 +27,6 @@
         if (bot !== undefined && valid) {
             registering = true;
             const snapshot = $state.snapshot(bot);
-            console.log(JSON.stringify(snapshot.schema));
             client
                 .registerBot({
                     ...snapshot,

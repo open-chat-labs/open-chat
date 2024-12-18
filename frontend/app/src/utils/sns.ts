@@ -306,9 +306,9 @@ export function createRegisterExternalBotPayload(
                     endpoint: candidate.endpoint,
                     owner: Principal.fromText(ownerId),
                     name: candidate.name,
-                    description: candidate.schema.description ?? "",
+                    description: candidate.definition.description ?? "",
                     avatar: optionalStringToCandid(candidate.avatarUrl),
-                    commands: candidate.schema.commands.map((c) => ({
+                    commands: candidate.definition.commands.map((c) => ({
                         name: c.name,
                         description: optionalStringToCandid(c.description),
                         permissions: createPermissions(c.permissions),

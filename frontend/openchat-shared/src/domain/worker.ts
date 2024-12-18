@@ -201,7 +201,12 @@ import type {
 } from "./chit";
 import type { JsonnableDelegationChain } from "@dfinity/identity";
 import type { Verification } from "./wallet";
-import type { BotsResponse, ExternalBot, SlashCommandPermissions } from "./bots";
+import type {
+    BotDefinitionResponse,
+    BotsResponse,
+    ExternalBot,
+    SlashCommandPermissions,
+} from "./bots";
 
 /**
  * Worker request types
@@ -414,7 +419,13 @@ export type WorkerRequest =
     | DeleteUser
     | AddBot
     | RemoveBot
-    | UpdateBot;
+    | UpdateBot
+    | GetBotDefinition;
+
+type GetBotDefinition = {
+    kind: "getBotDefinition";
+    endpoint: string;
+};
 
 type AddBot = {
     kind: "addBot";
@@ -1550,7 +1561,8 @@ export type WorkerResponseInner =
     | AuthenticationPrincipalsResponse
     | ExternalAchievement[]
     | MessageActivityFeedResponse
-    | ExploreBotsResponse;
+    | ExploreBotsResponse
+    | BotDefinitionResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -2258,6 +2270,8 @@ export type WorkerResult<T> = T extends Init
     ? boolean
     : T extends AddBot
     ? boolean
+    : T extends GetBotDefinition
+    ? BotDefinitionResponse
     : T extends RemoveBot
     ? boolean
     : T extends UpdateBot

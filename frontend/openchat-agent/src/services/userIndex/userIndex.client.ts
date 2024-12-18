@@ -642,8 +642,8 @@ export class UserIndexClient extends CandidService {
                 name: bot.name,
                 avatar: mapOptional(bot.avatarUrl, identity),
                 endpoint: bot.endpoint,
-                description: bot.schema.description ?? "",
-                commands: bot.schema.commands.map(apiExternalBotCommand),
+                description: bot.definition.description ?? "",
+                commands: bot.definition.commands.map(apiExternalBotCommand),
             },
             (resp) => {
                 console.log("UserIndex register bot response: ", resp);

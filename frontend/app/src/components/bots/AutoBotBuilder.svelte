@@ -1,7 +1,8 @@
 <script lang="ts">
+    import Reload from "svelte-material-icons/Reload.svelte";
     import {
+        validEndpoint,
         emptyBotInstance,
-        emptySlashCommandPermissions,
         OpenChat,
         validateBot,
         ValidationErrors,
@@ -14,13 +15,14 @@
     import Legend from "../Legend.svelte";
     import EditableAvatar from "../EditableAvatar.svelte";
     import Translatable from "../Translatable.svelte";
-    import Link from "../Link.svelte";
-    import CommandBuilder from "./CommandBuilder.svelte";
-    import SummaryButton from "./SummaryButton.svelte";
     import ValidatingInput from "./ValidatingInput.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import { debouncedDerived } from "../../utils/reactivity.svelte";
     import { getContext } from "svelte";
+    import { toastStore } from "../../stores/toast";
+    import HoverIcon from "../HoverIcon.svelte";
+    import { iconSize } from "../../stores/iconSize";
+    import CommandViewer from "./CommandViewer.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -34,6 +36,13 @@
     let selectedCommandIndex = $state<number | undefined>(undefined);
     let debug = $state(false);
     let candidate = $state<ExternalBot>(emptyBotInstance());
+    let schemaLoaded = $state(false);
+    let schemaLoading = $state(false);
+    let showNext = $derived(
+        selectedCommandIndex !== undefined &&
+            selectedCommandIndex < candidate.definition.commands.length - 1,
+    );
+    let showPrev = $derived(selectedCommandIndex !== undefined && selectedCommandIndex > 0);
 
     let errors = $derived.by(
         debouncedDerived(
@@ -49,6 +58,24 @@
             new ValidationErrors(),
         ),
     );
+
+    function traverseCommand(add: number) {
+        if (selectedCommandIndex === undefined) return;
+
+        selectedCommandIndex += add;
+        selectedCommand = candidate.definition.commands[selectedCommandIndex];
+        if (selectedCommand === undefined) {
+            selectedCommandIndex = undefined;
+        }
+    }
+
+    function nextCommand() {
+        traverseCommand(1);
+    }
+
+    function previousCommand() {
+        traverseCommand(-1);
+    }
 
     function checkUsername(value: string): Promise<ValidationErrorMessages> {
         return client
@@ -91,38 +118,38 @@
         e.preventDefault();
     }
 
-    function addCommand() {
-        candidate.definition.commands.push(emptySlashCommand());
-        selectedCommand = candidate.definition.commands[candidate.definition.commands.length - 1];
-        selectedCommandIndex = candidate.definition.commands.length - 1;
-    }
-
-    function onDeleteCommand(cmd: SlashCommandSchema) {
-        candidate.definition.commands = candidate.definition.commands.filter((c) => c !== cmd);
-    }
-
     function onSelectCommand(cmd: SlashCommandSchema, index: number) {
         selectedCommand = cmd;
         selectedCommandIndex = index;
     }
 
-    function emptySlashCommand(): SlashCommandSchema {
-        return {
-            name: "",
-            description: "",
-            params: [],
-            permissions: emptySlashCommandPermissions(),
-        };
+    function loadDefinition() {
+        if (!schemaLoading && validEndpoint(candidate.endpoint)) {
+            schemaLoading = true;
+            schemaLoaded = false;
+            client
+                .getBotDefinition(candidate.endpoint)
+                .then((resp) => {
+                    if (resp.kind === "bot_definition") {
+                        candidate.definition = resp;
+                        schemaLoaded = true;
+                    } else {
+                        toastStore.showFailureToast(i18nKey(`${JSON.stringify(resp.error)}`));
+                    }
+                })
+                .finally(() => (schemaLoading = false));
+        }
     }
 </script>
 
 {#if selectedCommand !== undefined && selectedCommandIndex !== undefined}
-    <CommandBuilder
-        onAddAnother={addCommand}
+    <CommandViewer
         on:close={() => (selectedCommand = undefined)}
         errorPath={`command_${selectedCommandIndex}`}
+        onNext={showNext ? nextCommand : undefined}
+        onPrevious={showPrev ? previousCommand : undefined}
         {errors}
-        bind:command={selectedCommand}></CommandBuilder>
+        command={selectedCommand}></CommandViewer>
 {/if}
 
 <form onsubmit={onSubmit} class="bot">
@@ -159,41 +186,48 @@
         bind:value={candidate.name}>
     </ValidatingInput>
 
-    <Legend label={i18nKey("bots.builder.descLabel")} rules={i18nKey("bots.builder.optional")}
-    ></Legend>
-    <Input
-        minlength={3}
-        maxlength={200}
-        placeholder={i18nKey("bots.builder.descPlaceholder")}
-        bind:value={candidate.definition.description} />
-
     <Legend
         label={i18nKey("bots.builder.endpointLabel")}
         required
         rules={i18nKey("bots.builder.endpointRules")}></Legend>
-    <ValidatingInput
-        minlength={3}
-        maxlength={200}
-        invalid={errors.has("bot_endpoint")}
-        error={errors.get("bot_endpoint")}
-        placeholder={i18nKey("https://my_openchat_bot")}
-        bind:value={candidate.endpoint} />
+    <div class="endpoint" class:endpoint-error={errors.has("bot_endpoint")}>
+        <div class="endpoint-input">
+            <ValidatingInput
+                minlength={3}
+                maxlength={200}
+                invalid={errors.has("bot_endpoint")}
+                error={errors.get("bot_endpoint")}
+                placeholder={i18nKey("https://my_openchat_bot")}
+                bind:value={candidate.endpoint} />
+        </div>
+        <div class="icon">
+            {#if !errors.has("bot_endpoint")}
+                <HoverIcon onclick={loadDefinition}>
+                    <Reload size={$iconSize} color={"var(--icon-txt)"}></Reload>
+                </HoverIcon>
+            {/if}
+        </div>
+    </div>
 
-    <div class="commands">
+    {#if schemaLoaded}
+        <Legend label={i18nKey("bots.builder.descLabel")}></Legend>
+        <Input disabled={true} value={candidate.definition.description} />
+
+        <Legend label={i18nKey("bots.builder.commandsLabel")}></Legend>
         <div class="commands">
             {#each candidate.definition.commands as command, i}
-                <SummaryButton
-                    valid={!errors.has(`command_${i}`)}
-                    onSelect={() => onSelectCommand(command, i)}
-                    onDelete={() => onDeleteCommand(command)}
-                    resourceKey={i18nKey("bots.builder.commandLabel", { name: command.name })}
-                ></SummaryButton>
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                <div
+                    onclick={() => onSelectCommand(command, i)}
+                    class="command"
+                    class:command-error={errors.has(`command_${i}`)}>
+                    <Translatable
+                        resourceKey={i18nKey("bots.builder.commandLabel", { name: command.name })}
+                    ></Translatable>
+                </div>
             {/each}
         </div>
-
-        <Link on:click={addCommand} underline="never">
-            <Translatable resourceKey={i18nKey("bots.builder.addCommand")} />
-        </Link>
 
         <div class="error">
             {#if errors.has("duplicate_commands")}
@@ -207,7 +241,7 @@
                     ></ErrorMessage>
             {/if}
         </div>
-    </div>
+    {/if}
 
     {#if debug}
         <pre class="debug">
@@ -226,12 +260,66 @@
         margin-bottom: $sp3;
     }
     .commands {
-        margin: $sp4 0 $sp3 0;
+        margin: 0 0 $sp3 0;
+        display: flex;
+        gap: $sp3;
+        flex-wrap: wrap;
+
+        .command {
+            padding: $sp3 $sp4;
+            cursor: pointer;
+            align-items: center;
+            background-color: var(--button-bg);
+            color: var(--button-txt);
+            transition:
+                background ease-in-out 200ms,
+                color ease-in-out 200ms;
+            border-radius: var(--button-rd);
+
+            @media (hover: hover) {
+                &:hover {
+                    background: var(--button-hv);
+                    color: var(--button-hv-txt);
+                }
+            }
+
+            &.command-error {
+                background-color: var(--error);
+                @media (hover: hover) {
+                    &:hover {
+                        background: var(--error);
+                    }
+                }
+            }
+        }
     }
 
     .error {
         :global(.error) {
             margin-top: $sp3;
+        }
+    }
+
+    .endpoint {
+        display: flex;
+        align-items: center;
+        gap: $sp3;
+        margin-bottom: $sp3;
+
+        &.endpoint-error {
+            margin-bottom: 22px;
+        }
+
+        :global(.input-wrapper) {
+            margin-bottom: 0;
+        }
+
+        .endpoint-input {
+            flex: 3;
+        }
+
+        .icon {
+            flex: 0 0 40px;
         }
     }
 </style>

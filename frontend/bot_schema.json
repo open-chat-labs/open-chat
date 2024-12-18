@@ -26,7 +26,7 @@
         "NameField": {
             "type": "string",
             "description": "A bot schema element name",
-            "minLength": 5,
+            "minLength": 3,
             "maxLength": 25,
             "pattern": "^[a-zA-Z0-9_]+$"
         },

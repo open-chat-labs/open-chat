@@ -6,7 +6,12 @@ import {
     ECDSAKeyIdentity,
     type JsonnableDelegationChain,
 } from "@dfinity/identity";
-import { IdentityAgent, OpenChatAgent, setCommunityReferral } from "openchat-agent";
+import {
+    IdentityAgent,
+    OpenChatAgent,
+    setCommunityReferral,
+    getBotDefinition,
+} from "openchat-agent";
 import {
     type CorrelatedWorkerRequest,
     type Init,
@@ -1889,6 +1894,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     correlationId,
                     agent.removeBot(payload.id, payload.botId),
                 );
+                break;
+
+            case "getBotDefinition":
+                executeThenReply(payload, correlationId, getBotDefinition(payload.endpoint));
                 break;
 
             default:
