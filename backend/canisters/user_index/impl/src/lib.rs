@@ -19,9 +19,6 @@ use model::pending_modclub_submissions_queue::{PendingModclubSubmission, Pending
 use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
 use model::reported_messages::{ReportedMessages, ReportingMetrics};
 use model::user::SuspensionDetails;
-use nns_governance_canister::types::manage_neuron::claim_or_refresh::By;
-use nns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
-use nns_governance_canister::types::{Empty, ManageNeuron, NeuronId};
 use p256_key_pair::P256KeyPair;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -501,26 +498,6 @@ impl Data {
             owner: self.nns_governance_canister_id,
             subaccount: Some(n.subaccount),
         })
-    }
-
-    pub fn refresh_nns_neuron(&self) {
-        if let Some(neuron_id) = self.nns_8_year_neuron.as_ref().map(|n| n.neuron_id) {
-            ic_cdk::spawn(refresh_nns_neuron_inner(self.nns_governance_canister_id, neuron_id));
-        }
-
-        async fn refresh_nns_neuron_inner(nns_governance_canister_id: CanisterId, neuron_id: u64) {
-            let _ = nns_governance_canister_c2c_client::manage_neuron(
-                nns_governance_canister_id,
-                &ManageNeuron {
-                    id: Some(NeuronId { id: neuron_id }),
-                    neuron_id_or_subaccount: None,
-                    command: Some(Command::ClaimOrRefresh(ClaimOrRefresh {
-                        by: Some(By::NeuronIdOrSubaccount(Empty {})),
-                    })),
-                },
-            )
-            .await;
-        }
     }
 
     pub fn chit_bands(&self, size: u32, year: u32, month: u8) -> BTreeMap<u32, u32> {
