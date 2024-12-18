@@ -72,22 +72,33 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
         let min_visible_event_index = member.min_visible_event_index();
         let user_id = member.user_id();
 
-        let (token, ledger, amount, fee) =
-            match state
-                .data
-                .chat
-                .events
-                .reserve_prize(args.message_id, min_visible_event_index, user_id, now)
-            {
-                ReservePrizeResult::AlreadyClaimed => return Err(Box::new(AlreadyClaimed)),
-                ReservePrizeResult::Success(t, l, a, f) => (t, l, a, f),
-                ReservePrizeResult::MessageNotFound => return Err(Box::new(MessageNotFound)),
-                ReservePrizeResult::PrizeFullyClaimed => return Err(Box::new(PrizeFullyClaimed)),
-                ReservePrizeResult::PrizeEnded => return Err(Box::new(PrizeEnded)),
-                ReservePrizeResult::LedgerError => return Err(Box::new(LedgerError)),
-            };
+        let result = match state
+            .data
+            .chat
+            .events
+            .reserve_prize(args.message_id, min_visible_event_index, user_id, now)
+        {
+            ReservePrizeResult::Success(result) => result,
+            ReservePrizeResult::AlreadyClaimed => return Err(Box::new(AlreadyClaimed)),
+            ReservePrizeResult::MessageNotFound => return Err(Box::new(MessageNotFound)),
+            ReservePrizeResult::PrizeFullyClaimed => return Err(Box::new(PrizeFullyClaimed)),
+            ReservePrizeResult::PrizeEnded => return Err(Box::new(PrizeEnded)),
+            ReservePrizeResult::LedgerError => return Err(Box::new(LedgerError)),
+        };
 
-        let transaction = create_pending_transaction(token, ledger, amount, fee, user_id, Some(&MEMO_PRIZE_CLAIM), now_nanos);
+        // Hack to ensure 2 prizes claimed by the same user in the same block don't result in "duplicate transaction" errors.
+        let duplicate_buster = u32::from(result.message_index) as u64 % 1000;
+        let transaction_time = now_nanos - duplicate_buster;
+
+        let transaction = create_pending_transaction(
+            result.token,
+            result.ledger_canister_id,
+            result.amount,
+            result.fee,
+            user_id,
+            Some(&MEMO_PRIZE_CLAIM),
+            transaction_time,
+        );
 
         Ok(PrepareResult {
             group: state.env.canister_id(),
