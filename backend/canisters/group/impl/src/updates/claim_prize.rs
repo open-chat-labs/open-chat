@@ -87,8 +87,8 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
         };
 
         // Hack to ensure 2 prizes claimed by the same user in the same block don't result in "duplicate transaction" errors.
-        let jitter = u32::from(result.message_index) as u64 % 1000;
-        let transaction_time = now_nanos - jitter;
+        let duplicate_buster = u32::from(result.message_index) as u64 % 1000;
+        let transaction_time = now_nanos - duplicate_buster;
 
         let transaction = create_pending_transaction(
             result.token,
