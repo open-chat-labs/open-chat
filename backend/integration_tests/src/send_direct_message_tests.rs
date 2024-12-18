@@ -89,12 +89,12 @@ fn send_message_retries_if_fails() {
     let user1 = client::register_user(env, canister_ids);
     let user2 = client::register_user(env, canister_ids);
 
-    stop_canister(env, canister_ids.local_user_index, user2.user_id.into());
+    stop_canister(env, user2.local_user_index, user2.user_id.into());
 
     let send_message_result = client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", None);
     env.tick();
 
-    start_canister(env, canister_ids.local_user_index, user2.user_id.into());
+    start_canister(env, user2.local_user_index, user2.user_id.into());
 
     env.advance_time(Duration::from_secs(10));
     env.tick();
@@ -114,12 +114,12 @@ fn messages_arrive_in_order_even_if_some_fail_originally() {
     let user1 = client::register_user(env, canister_ids);
     let user2 = client::register_user(env, canister_ids);
 
-    stop_canister(env, canister_ids.local_user_index, user2.user_id.into());
+    stop_canister(env, user2.local_user_index, user2.user_id.into());
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, "1", None);
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, "2", None);
 
-    start_canister(env, canister_ids.local_user_index, user2.user_id.into());
+    start_canister(env, user2.local_user_index, user2.user_id.into());
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, "3", None);
 

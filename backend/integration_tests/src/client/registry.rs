@@ -13,6 +13,7 @@ generate_msgpack_update_call!(set_token_enabled);
 
 pub mod happy_path {
     use super::*;
+    use crate::client::INIT_CYCLES_BALANCE;
     use candid::Principal;
     use pocket_ic::PocketIc;
     use registry_canister::subnets::Subnet;
@@ -37,6 +38,10 @@ pub mod happy_path {
                 let subnets::Response::Success(subnets) = super::subnets(env, sender, registry_canister_id, &Empty {});
 
                 if let Some(subnet) = subnets.into_iter().find(|s| s.subnet_id == subnet_id) {
+                    env.add_cycles(subnet.local_user_index, INIT_CYCLES_BALANCE);
+                    env.add_cycles(subnet.local_group_index, INIT_CYCLES_BALANCE);
+                    env.add_cycles(subnet.notifications_canister, INIT_CYCLES_BALANCE);
+
                     return subnet;
                 }
             }

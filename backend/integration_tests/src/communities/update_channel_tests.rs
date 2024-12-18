@@ -38,32 +38,19 @@ fn members_added_if_channel_made_public_or_gate_removed(make_public: bool) {
     client::local_user_index::happy_path::invite_users_to_channel(
         env,
         &user1,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, community_id),
         community_id,
         channel_id,
         vec![user2.user_id],
     );
-    client::local_user_index::happy_path::join_channel(
-        env,
-        user2.principal,
-        canister_ids.local_user_index,
-        community_id,
-        channel_id,
-    );
+    client::community::happy_path::join_channel(env, user2.principal, community_id, channel_id);
 
     for i in 0..5 {
         client::community::happy_path::send_text_message(env, &user1, community_id, channel_id, None, i.to_string(), None);
     }
 
     client::community::happy_path::leave_channel(env, user2.principal, community_id, channel_id);
-
-    client::local_user_index::happy_path::join_community(
-        env,
-        user3.principal,
-        canister_ids.local_user_index,
-        community_id,
-        None,
-    );
+    client::community::happy_path::join_community(env, user3.principal, community_id);
     client::community::happy_path::update_channel(
         env,
         user1.principal,
@@ -84,7 +71,7 @@ fn members_added_if_channel_made_public_or_gate_removed(make_public: bool) {
     );
 
     // Check that user2 has not been re-added to the channel
-    let user2_channel_summary = client::community::happy_path::summary(env, &user2, community_id);
+    let user2_channel_summary = client::community::happy_path::summary(env, user2.principal, community_id);
 
     assert!(!user2_channel_summary.channels.iter().any(|c| c.channel_id == channel_id));
 

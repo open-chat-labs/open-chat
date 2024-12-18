@@ -24,19 +24,13 @@ fn p2p_swap_in_channel_succeeds() {
     let user2 = client::register_user(env, canister_ids);
 
     let community_id = client::user::happy_path::create_community(env, &user1, &random_string(), true, vec![random_string()]);
-    let channel_id = client::community::happy_path::summary(env, &user1, community_id)
+    let channel_id = client::community::happy_path::summary(env, user1.principal, community_id)
         .channels
         .first()
         .unwrap()
         .channel_id;
 
-    client::local_user_index::happy_path::join_community(
-        env,
-        user2.principal,
-        canister_ids.local_user_index,
-        community_id,
-        None,
-    );
+    client::community::happy_path::join_community(env, user2.principal, community_id);
 
     client::ledger::happy_path::transfer(
         env,
@@ -146,18 +140,12 @@ fn cancel_p2p_swap_in_channel_succeeds(delete_message: bool) {
     let user2 = client::register_user(env, canister_ids);
 
     let community_id = client::user::happy_path::create_community(env, &user1, &random_string(), true, vec![random_string()]);
-    let channel_id = client::community::happy_path::summary(env, &user1, community_id)
+    let channel_id = client::community::happy_path::summary(env, user1.principal, community_id)
         .channels
         .first()
         .unwrap()
         .channel_id;
-    client::local_user_index::happy_path::join_community(
-        env,
-        user2.principal,
-        canister_ids.local_user_index,
-        community_id,
-        None,
-    );
+    client::community::happy_path::join_community(env, user2.principal, community_id);
 
     let original_chat_balance = 11_000_000_000;
 

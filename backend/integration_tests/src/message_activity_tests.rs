@@ -513,8 +513,8 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
         ChatType::Direct => Chat::Direct(us.user_id.into()),
         ChatType::Group => {
             let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
-            client::local_user_index::happy_path::join_group(env, us.principal, canister_ids.local_user_index, group_id);
-            client::local_user_index::happy_path::join_group(env, them.principal, canister_ids.local_user_index, group_id);
+            client::group::happy_path::join_group(env, us.principal, group_id);
+            client::group::happy_path::join_group(env, them.principal, group_id);
             Chat::Group(group_id)
         }
         ChatType::Channel => {
@@ -522,20 +522,8 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
                 client::user::happy_path::create_community(env, &owner, &random_string(), true, vec![random_string()]);
             let channel_id =
                 client::community::happy_path::create_channel(env, owner.principal, community_id, true, random_string());
-            client::local_user_index::happy_path::join_channel(
-                env,
-                us.principal,
-                canister_ids.local_user_index,
-                community_id,
-                channel_id,
-            );
-            client::local_user_index::happy_path::join_channel(
-                env,
-                them.principal,
-                canister_ids.local_user_index,
-                community_id,
-                channel_id,
-            );
+            client::community::happy_path::join_channel(env, us.principal, community_id, channel_id);
+            client::community::happy_path::join_channel(env, them.principal, community_id, channel_id);
             Chat::Channel(community_id, channel_id)
         }
     };

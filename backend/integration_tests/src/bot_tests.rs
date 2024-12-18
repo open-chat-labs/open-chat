@@ -78,7 +78,7 @@ fn e2e_bot_test() {
     env.tick();
 
     // Confirm bot returned in `selected_initial`
-    let response = client::group::happy_path::selected_initial(env, &user, group_id);
+    let response = client::group::happy_path::selected_initial(env, user.principal, group_id);
     assert_eq!(response.bots.len(), 1);
     assert_eq!(response.bots[0].user_id, bot.id);
 
@@ -99,8 +99,12 @@ fn e2e_bot_test() {
         }),
         chat,
     };
-    let response =
-        client::local_user_index::access_token(env, user.principal, canister_ids.local_user_index, &access_token_args);
+    let response = client::local_user_index::access_token(
+        env,
+        user.principal,
+        canister_ids.local_user_index(env, group_id),
+        &access_token_args,
+    );
 
     // Confirm bot is unauthorised
     assert!(matches!(
@@ -119,11 +123,15 @@ fn e2e_bot_test() {
     assert_eq!(response.bots_added_or_updated[0].user_id, bot.id);
 
     // Try again to get an access token to call the greet command
-    let access_token =
-        match client::local_user_index::access_token(env, user.principal, canister_ids.local_user_index, &access_token_args) {
-            local_user_index_canister::access_token::Response::Success(access_token) => access_token,
-            response => panic!("'access_token' error: {response:?}"),
-        };
+    let access_token = match client::local_user_index::access_token(
+        env,
+        user.principal,
+        canister_ids.local_user_index(env, group_id),
+        &access_token_args,
+    ) {
+        local_user_index_canister::access_token::Response::Success(access_token) => access_token,
+        response => panic!("'access_token' error: {response:?}"),
+    };
 
     println!("ACCESS TOKEN: {access_token}");
 
@@ -133,7 +141,7 @@ fn e2e_bot_test() {
     let response = client::local_user_index::execute_bot_command(
         env,
         bot_principal,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, group_id),
         &local_user_index_canister::execute_bot_command::Args {
             action: BotAction::SendMessage(BotMessageAction {
                 content: MessageContent::Text(TextContent { text: text.clone() }),
@@ -167,7 +175,7 @@ fn e2e_bot_test() {
     let response = client::local_user_index::execute_bot_command(
         env,
         bot_principal,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, group_id),
         &local_user_index_canister::execute_bot_command::Args {
             action: BotAction::SendMessage(BotMessageAction {
                 content: MessageContent::Text(TextContent { text: text.clone() }),

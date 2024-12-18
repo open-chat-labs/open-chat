@@ -27,17 +27,11 @@ fn join_public_channel_succeeds() {
     // First user2 needs to leave the channel because they were joined automatically
     client::community::happy_path::leave_channel(env, user2.principal, community_id, channel_id);
 
-    client::local_user_index::happy_path::join_channel(
-        env,
-        user2.principal,
-        canister_ids.local_user_index,
-        community_id,
-        channel_id,
-    );
+    client::community::happy_path::join_channel(env, user2.principal, community_id, channel_id);
 
     tick_many(env, 3);
 
-    let summary = client::community::happy_path::summary(env, &user2, community_id);
+    let summary = client::community::happy_path::summary(env, user2.principal, community_id);
 
     assert!(summary.channels.iter().any(|c| c.channel_id == channel_id));
 
@@ -70,7 +64,7 @@ fn join_private_channel_fails() {
     let response = client::local_user_index::join_channel(
         env,
         user2.principal,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, community_id),
         &local_user_index_canister::join_channel::Args {
             community_id,
             channel_id,
@@ -106,23 +100,17 @@ fn join_private_community_with_invitation_succeeds() {
     client::local_user_index::happy_path::invite_users_to_channel(
         env,
         &user1,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, community_id),
         community_id,
         channel_id,
         vec![user2.user_id],
     );
 
-    client::local_user_index::happy_path::join_channel(
-        env,
-        user2.principal,
-        canister_ids.local_user_index,
-        community_id,
-        channel_id,
-    );
+    client::community::happy_path::join_channel(env, user2.principal, community_id, channel_id);
 
     env.tick();
 
-    let summary = client::community::happy_path::summary(env, &user2, community_id);
+    let summary = client::community::happy_path::summary(env, user2.principal, community_id);
 
     assert!(summary.channels.iter().any(|c| c.channel_id == channel_id));
 }
@@ -149,7 +137,7 @@ fn join_community_and_channel_in_single_call_succeeds() {
     let response = client::local_user_index::join_channel(
         env,
         user3.principal,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, community_id),
         &local_user_index_canister::join_channel::Args {
             community_id,
             channel_id,
@@ -187,7 +175,7 @@ fn invite_non_community_member_to_channel_succeeds() {
     let invite_users_response = client::local_user_index::invite_users_to_channel(
         env,
         user1.principal,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, community_id),
         &local_user_index_canister::invite_users_to_channel::Args {
             community_id,
             channel_id,
@@ -204,7 +192,7 @@ fn invite_non_community_member_to_channel_succeeds() {
     let join_channel_response = client::local_user_index::join_channel(
         env,
         user3.principal,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, community_id),
         &local_user_index_canister::join_channel::Args {
             community_id,
             channel_id,
@@ -240,7 +228,7 @@ fn invite_to_channel_oc_bot_message_received() {
     client::local_user_index::happy_path::invite_users_to_channel(
         env,
         &user1,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, community_id),
         community_id,
         channel_id,
         vec![user2.user_id],
@@ -285,21 +273,8 @@ fn channel_marked_as_read_after_joining() {
 
     let user3 = client::register_user(env, canister_ids);
 
-    client::local_user_index::happy_path::join_channel(
-        env,
-        user2.principal,
-        canister_ids.local_user_index,
-        community_id,
-        channel_id,
-    );
-
-    client::local_user_index::happy_path::join_channel(
-        env,
-        user3.principal,
-        canister_ids.local_user_index,
-        community_id,
-        channel_id,
-    );
+    client::community::happy_path::join_channel(env, user2.principal, community_id, channel_id);
+    client::community::happy_path::join_channel(env, user3.principal, community_id, channel_id);
 
     tick_many(env, 3);
 
@@ -337,13 +312,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     let community_id =
         client::user::happy_path::create_community(env, &user1, &community_name, true, vec!["abcde".to_string()]);
 
-    client::local_user_index::happy_path::join_community(
-        env,
-        user2.principal,
-        canister_ids.local_user_index,
-        community_id,
-        None,
-    );
+    client::community::happy_path::join_community(env, user2.principal, community_id);
 
     let channel_id = client::community::happy_path::create_channel(env, user1.principal, community_id, public, channel_name);
 

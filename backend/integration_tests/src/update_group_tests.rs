@@ -40,7 +40,7 @@ fn update_group_name_succeeds() {
     );
 
     // Check the name has changed
-    let summary = client::group::happy_path::summary(env, &user2, group_id);
+    let summary = client::group::happy_path::summary(env, user2.principal, group_id);
     assert_eq!(summary.name, new_group_name);
 
     tick_many(env, 3);
@@ -84,7 +84,7 @@ fn change_casing_of_group_name_succeeds() {
     );
 
     // Check the name has changed
-    let summary = client::group::happy_path::summary(env, &user2, group_id);
+    let summary = client::group::happy_path::summary(env, user2.principal, group_id);
     assert_eq!(summary.name, new_group_name);
 
     tick_many(env, 3);
@@ -131,7 +131,7 @@ fn update_group_privacy_succeeds() {
     );
 
     // Check the privacy and name have changed
-    let summary = client::group::happy_path::summary(env, &user2, group_id);
+    let summary = client::group::happy_path::summary(env, user2.principal, group_id);
     assert_eq!(summary.name, new_group_name);
     assert!(!summary.is_public);
 
@@ -179,9 +179,9 @@ fn make_private_group_public_succeeds() {
         },
     );
 
-    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
+    client::group::happy_path::join_group(env, user2.principal, group_id);
 
-    let group_summary = client::group::happy_path::summary(env, &user2, group_id);
+    let group_summary = client::group::happy_path::summary(env, user2.principal, group_id);
 
     assert!(group_summary.is_public);
     assert_eq!(group_summary.min_visible_event_index, 6.into());
@@ -193,7 +193,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     let user2 = client::register_user(env, canister_ids);
 
     let group_id = client::user::happy_path::create_group(env, &user1, group_name, true, true);
-    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
+    client::group::happy_path::join_group(env, user2.principal, group_id);
 
     tick_many(env, 3);
 

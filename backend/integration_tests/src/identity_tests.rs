@@ -32,10 +32,11 @@ fn link_auth_identities(delay: bool) {
     );
 
     let oc_principal1 = Principal::self_authenticating(create_identity_result.user_key.clone());
+    let user_registration_canister = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     client::local_user_index::happy_path::register_user(
         env,
         oc_principal1,
-        canister_ids.local_user_index,
+        user_registration_canister,
         create_identity_result.user_key,
     );
 

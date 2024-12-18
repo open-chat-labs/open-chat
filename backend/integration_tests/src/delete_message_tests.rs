@@ -369,7 +369,7 @@ fn platform_operators_can_delete_messages(is_platform_moderator: bool) {
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
     let user2 = client::register_user(env, canister_ids);
     let group = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
-    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group);
+    client::group::happy_path::join_group(env, user2.principal, group);
 
     let message_id = random_from_u128();
 

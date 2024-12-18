@@ -190,10 +190,12 @@ fn register_user_internal(
         true,
     );
 
+    let local_user_index = user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+
     let user = local_user_index::happy_path::register_user_with_referrer(
         env,
         Principal::self_authenticating(&create_identity_result.user_key),
-        canister_ids.local_user_index,
+        local_user_index,
         create_identity_result.user_key,
         referral_code,
     );
