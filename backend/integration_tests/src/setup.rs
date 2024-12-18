@@ -283,6 +283,14 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         storage_index_init_args,
     );
 
+    // Top up the CyclesDispenser with 10k ICP
+    client::ledger::happy_path::transfer(
+        env,
+        controller,
+        nns_ledger_canister_id,
+        cycles_dispenser_canister_id,
+        10_000 * 100_000_000,
+    );
     let cycles_dispenser_init_args = cycles_dispenser_canister::init::Args {
         governance_principals: vec![controller],
         canisters: vec![
