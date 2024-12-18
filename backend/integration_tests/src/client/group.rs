@@ -162,7 +162,7 @@ pub mod happy_path {
     }
 
     pub fn join_group(env: &mut PocketIc, sender: Principal, group_chat_id: ChatId) {
-        let local_user_index = summary(env, sender, group_chat_id).local_user_index_canister_id;
+        let local_user_index = local_user_index(env, group_chat_id);
         crate::client::local_user_index::happy_path::join_group(env, sender, local_user_index, group_chat_id);
     }
 
