@@ -16,6 +16,7 @@ canister_client = { path = "../../../libraries/canister_client" }
 canister_logger = { path = "../../../libraries/canister_logger" }
 canister_state_macros = { path = "../../../libraries/canister_state_macros" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
+constants = { path = "../../../libraries/constants" }
 cycles_dispenser_canister = { path = "../api" }
 cycles_minting_canister = { path = "../../../external_canisters/cmc/api" }
 cycles_minting_canister_c2c_client = { path = "../../../external_canisters/cmc/c2c_client" }

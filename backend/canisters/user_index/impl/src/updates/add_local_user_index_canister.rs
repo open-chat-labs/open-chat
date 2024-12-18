@@ -1,15 +1,16 @@
-use crate::guards::caller_is_governance_principal;
+use crate::guards::caller_is_registry_canister;
+use crate::updates::upgrade_user_canister_wasm::upgrade_user_wasm_in_local_user_index;
 use crate::{mutate_state, read_state, RuntimeState};
-use canister_api_macros::proposal;
+use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::{UserIndexEvent, UserRegistered};
 use tracing::info;
-use types::{BuildVersion, CanisterId, CanisterWasm};
+use types::{BuildVersion, CanisterId, CanisterWasm, Hash};
 use user_index_canister::add_local_user_index_canister::{Response::*, *};
 use user_index_canister::ChildCanisterType;
 use utils::canister::{install_basic, set_controllers};
 
-#[proposal(guard = "caller_is_governance_principal")]
+#[update(guard = "caller_is_registry_canister", msgpack = true)]
 #[trace]
 async fn add_local_user_index_canister(args: Args) -> Response {
     match read_state(|state| prepare(&args, state)) {
@@ -20,6 +21,15 @@ async fn add_local_user_index_canister(args: Args) -> Response {
                 InternalError(format!("Failed to set controller: {error:?}"))
             } else if let Err(error) = install_basic(args.canister_id, result.canister_wasm, result.init_args).await {
                 InternalError(format!("Failed to install canister: {error:?}"))
+            } else if let Err(error) = upgrade_user_wasm_in_local_user_index(
+                args.canister_id,
+                &result.user_canister_wasm,
+                result.user_canister_wasm_hash,
+                None,
+            )
+            .await
+            {
+                InternalError(format!("Failed to install user canister wasm: {error:?}"))
             } else {
                 let response = mutate_state(|state| commit(args.canister_id, wasm_version, state));
                 info!(canister_id = %args.canister_id, "local user index canister added");
@@ -33,6 +43,8 @@ async fn add_local_user_index_canister(args: Args) -> Response {
 struct PrepareResult {
     this_canister_id: CanisterId,
     canister_wasm: CanisterWasm,
+    user_canister_wasm: CanisterWasm,
+    user_canister_wasm_hash: Hash,
     init_args: local_user_index_canister::init::Args,
 }
 
@@ -46,11 +58,14 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
             .clone();
         let wasm_version = canister_wasm.version;
 
+        let user_canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::User);
+
         Ok(PrepareResult {
             this_canister_id: state.env.canister_id(),
             canister_wasm,
+            user_canister_wasm: user_canister_wasm.wasm.clone(),
+            user_canister_wasm_hash: user_canister_wasm.wasm_hash,
             init_args: local_user_index_canister::init::Args {
-                user_canister_wasm: state.data.child_canister_wasms.get(ChildCanisterType::User).wasm.clone(),
                 wasm_version,
                 user_index_canister_id: state.env.canister_id(),
                 group_index_canister_id: state.data.group_index_canister_id,
@@ -93,13 +108,6 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
             )
         }
         crate::jobs::sync_events_to_local_user_index_canisters::try_run_now(state);
-
-        state.data.fire_and_forget_handler.send_candid(
-            state.data.cycles_dispenser_canister_id,
-            "add_canister",
-            cycles_dispenser_canister::add_canister::Args { canister_id },
-        );
-
         Success
     } else {
         AlreadyAdded

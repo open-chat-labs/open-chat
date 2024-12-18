@@ -1004,7 +1004,13 @@ impl ChatEvents {
 
         content.reservations.insert(user_id);
 
-        Ok(ReservePrizeResult::Success(token, ledger_canister_id, amount, fee))
+        Ok(ReservePrizeResult::Success(ReservePriceSuccess {
+            token,
+            ledger_canister_id,
+            amount,
+            fee,
+            message_index: message.message_index,
+        }))
     }
 
     pub fn claim_prize<R: Runtime + Send + 'static>(
@@ -2388,12 +2394,20 @@ pub enum TipMessageResult {
 }
 
 pub enum ReservePrizeResult {
-    Success(Cryptocurrency, CanisterId, u128, u128),
+    Success(ReservePriceSuccess),
     MessageNotFound,
     AlreadyClaimed,
     PrizeFullyClaimed,
     PrizeEnded,
     LedgerError,
+}
+
+pub struct ReservePriceSuccess {
+    pub token: Cryptocurrency,
+    pub ledger_canister_id: CanisterId,
+    pub amount: u128,
+    pub fee: u128,
+    pub message_index: MessageIndex,
 }
 
 #[allow(clippy::large_enum_variant)]

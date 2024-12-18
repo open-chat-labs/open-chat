@@ -27,7 +27,7 @@ fn report_message_succeeds() {
     let report_message_response = client::local_user_index::report_message_v2(
         env,
         user2.principal,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, group_id),
         &local_user_index_canister::report_message_v2::Args {
             chat_id: MultiUserChat::Group(group_id),
             thread_root_message_index: None,

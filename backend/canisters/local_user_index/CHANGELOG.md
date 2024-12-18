@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Rename fields in access token & c2c_handle_bot_action::Args ([#7060](https://github.com/open-chat-labs/open-chat/pull/7060))
+- Handle installing large wasms onto new subnets ([#7078](https://github.com/open-chat-labs/open-chat/pull/7078))
 
 ### Removed
 

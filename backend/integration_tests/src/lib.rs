@@ -3,6 +3,7 @@
 use crate::utils::principal_to_username;
 use candid::Principal;
 use pocket_ic::PocketIc;
+use registry_canister::subnets::Subnet;
 use std::fmt::{Debug, Formatter};
 use types::{CanisterId, Cycles, UserId};
 
@@ -67,6 +68,7 @@ pub struct User {
     pub principal: Principal,
     pub user_id: UserId,
     pub public_key: Vec<u8>,
+    pub local_user_index: CanisterId,
 }
 
 impl User {
@@ -92,9 +94,6 @@ pub struct CanisterIds {
     pub user_index: CanisterId,
     pub group_index: CanisterId,
     pub notifications_index: CanisterId,
-    pub local_user_index: CanisterId,
-    pub local_group_index: CanisterId,
-    pub notifications: CanisterId,
     pub identity: CanisterId,
     pub online_users: CanisterId,
     pub proposals_bot: CanisterId,
@@ -110,6 +109,26 @@ pub struct CanisterIds {
     pub icp_ledger: CanisterId,
     pub chat_ledger: CanisterId,
     pub cycles_minting_canister: CanisterId,
+    pub subnets: Vec<Subnet>,
+}
+
+impl CanisterIds {
+    pub fn local_user_index(&self, env: &PocketIc, canister_id: impl Into<CanisterId>) -> CanisterId {
+        self.subnet(env, canister_id.into()).local_user_index
+    }
+
+    pub fn local_group_index(&self, env: &PocketIc, canister_id: impl Into<CanisterId>) -> CanisterId {
+        self.subnet(env, canister_id.into()).local_group_index
+    }
+
+    pub fn notifications(&self, env: &PocketIc, canister_id: impl Into<CanisterId>) -> CanisterId {
+        self.subnet(env, canister_id.into()).notifications_canister
+    }
+
+    fn subnet(&self, env: &PocketIc, canister_id: CanisterId) -> Subnet {
+        let subnet_id = env.topology().get_subnet(canister_id).unwrap();
+        self.subnets.iter().find(|s| s.subnet_id == subnet_id).cloned().unwrap()
+    }
 }
 
 impl Debug for CanisterIds {
@@ -118,9 +137,6 @@ impl Debug for CanisterIds {
         w.field("user_index", &self.user_index.to_string());
         w.field("group_index", &self.group_index.to_string());
         w.field("notifications_index", &self.notifications_index.to_string());
-        w.field("local_user_index", &self.local_user_index.to_string());
-        w.field("local_group_index", &self.local_group_index.to_string());
-        w.field("notifications", &self.notifications.to_string());
         w.field("identity", &self.identity.to_string());
         w.field("online_users", &self.online_users.to_string());
         w.field("proposals_bot", &self.proposals_bot.to_string());

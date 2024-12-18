@@ -9,6 +9,7 @@ pub struct Args {
     pub user_index_canister_id: CanisterId,
     pub authorizers: Vec<CanisterId>,
     pub cycles_dispenser_canister_id: CanisterId,
+    pub registry_canister_id: CanisterId,
     pub notifications_canister_wasm: CanisterWasm,
     pub wasm_version: BuildVersion,
     pub test_mode: bool,

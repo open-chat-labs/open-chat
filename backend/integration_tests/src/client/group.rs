@@ -8,6 +8,7 @@ pub const CHAT_EVENTS_MEMORY_ID: MemoryId = MemoryId::new(3);
 generate_msgpack_query_call!(events);
 generate_msgpack_query_call!(events_by_index);
 generate_msgpack_query_call!(events_window);
+generate_msgpack_query_call!(local_user_index);
 generate_msgpack_query_call!(public_summary);
 generate_msgpack_query_call!(selected_initial);
 generate_msgpack_query_call!(selected_updates_v2);
@@ -49,9 +50,10 @@ pub mod happy_path {
     use pocket_ic::PocketIc;
     use testing::rng::random_from_u128;
     use types::{
-        ChatId, EventIndex, EventsResponse, GroupCanisterGroupChatSummary, GroupCanisterGroupChatSummaryUpdates,
-        GroupReplyContext, GroupRole, MessageContentInitial, MessageId, MessageIndex, Milliseconds, PollVotes, Reaction,
-        SlashCommandPermissions, TextContent, TimestampMillis, UserId, VideoCallType, VoteOperation,
+        CanisterId, ChatId, Empty, EventIndex, EventsResponse, GroupCanisterGroupChatSummary,
+        GroupCanisterGroupChatSummaryUpdates, GroupReplyContext, GroupRole, MessageContentInitial, MessageId, MessageIndex,
+        Milliseconds, PollVotes, Reaction, SlashCommandPermissions, TextContent, TimestampMillis, UserId, VideoCallType,
+        VoteOperation,
     };
 
     pub fn send_text_message(
@@ -157,6 +159,11 @@ pub mod happy_path {
             user_canister::send_message_with_transfer_to_group::Response::Success(result) => result,
             response => panic!("'send_message_with_transfer_to_group' error: {response:?}"),
         }
+    }
+
+    pub fn join_group(env: &mut PocketIc, sender: Principal, group_chat_id: ChatId) {
+        let local_user_index = local_user_index(env, group_chat_id);
+        crate::client::local_user_index::happy_path::join_group(env, sender, local_user_index, group_chat_id);
     }
 
     pub fn update_group(
@@ -325,15 +332,10 @@ pub mod happy_path {
 
     pub fn selected_initial(
         env: &PocketIc,
-        sender: &User,
+        sender: Principal,
         group_chat_id: ChatId,
     ) -> group_canister::selected_initial::SuccessResult {
-        let response = super::selected_initial(
-            env,
-            sender.principal,
-            group_chat_id.into(),
-            &group_canister::selected_initial::Args {},
-        );
+        let response = super::selected_initial(env, sender, group_chat_id.into(), &group_canister::selected_initial::Args {});
 
         match response {
             group_canister::selected_initial::Response::Success(result) => result,
@@ -361,10 +363,10 @@ pub mod happy_path {
         }
     }
 
-    pub fn summary(env: &PocketIc, sender: &User, group_chat_id: ChatId) -> GroupCanisterGroupChatSummary {
+    pub fn summary(env: &PocketIc, sender: Principal, group_chat_id: ChatId) -> GroupCanisterGroupChatSummary {
         let response = super::summary(
             env,
-            sender.principal,
+            sender,
             group_chat_id.into(),
             &group_canister::summary::Args { on_behalf_of: None },
         );
@@ -377,13 +379,13 @@ pub mod happy_path {
 
     pub fn summary_updates(
         env: &PocketIc,
-        sender: &User,
+        sender: Principal,
         group_chat_id: ChatId,
         updates_since: TimestampMillis,
     ) -> Option<GroupCanisterGroupChatSummaryUpdates> {
         let response = super::summary_updates(
             env,
-            sender.principal,
+            sender,
             group_chat_id.into(),
             &group_canister::summary_updates::Args {
                 on_behalf_of: None,
@@ -603,5 +605,12 @@ pub mod happy_path {
             group_canister::update_bot::Response::Success => {}
             response => panic!("'update_bot' error: {response:?}"),
         }
+    }
+
+    pub fn local_user_index(env: &PocketIc, group_id: ChatId) -> CanisterId {
+        let group_canister::local_user_index::Response::Success(local_user_index) =
+            super::local_user_index(env, Principal::anonymous(), group_id.into(), &Empty {});
+
+        local_user_index
     }
 }

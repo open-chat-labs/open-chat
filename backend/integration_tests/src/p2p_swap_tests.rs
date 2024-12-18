@@ -137,7 +137,7 @@ fn p2p_swap_in_group_succeeds() {
     let user2 = client::register_user(env, canister_ids);
 
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
-    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
+    client::group::happy_path::join_group(env, user2.principal, group_id);
 
     client::ledger::happy_path::transfer(
         env,
@@ -369,7 +369,7 @@ fn cancel_p2p_swap_in_group_chat_succeeds(delete_message: bool) {
     let user2 = client::register_user(env, canister_ids);
 
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
-    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
+    client::group::happy_path::join_group(env, user2.principal, group_id);
 
     let original_chat_balance = 11_000_000_000;
 

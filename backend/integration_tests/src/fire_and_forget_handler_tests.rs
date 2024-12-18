@@ -27,8 +27,7 @@ fn retries_after_failures(failures: usize) {
     assert_eq!(events_response1.events.len(), 1);
     assert!(matches!(events_response1.events[0].event, ChatEvent::Message(_)));
 
-    env.stop_canister(user2.user_id.into(), Some(canister_ids.local_user_index))
-        .unwrap();
+    env.stop_canister(user2.user_id.into(), Some(user2.local_user_index)).unwrap();
 
     client::user::happy_path::add_reaction(env, &user1, user2.user_id, "1", message_id);
 
@@ -37,7 +36,7 @@ fn retries_after_failures(failures: usize) {
         env.tick();
     }
 
-    env.start_canister(user2.user_id.into(), Some(canister_ids.local_user_index))
+    env.start_canister(user2.user_id.into(), Some(user2.local_user_index))
         .unwrap();
 
     env.tick();

@@ -28,7 +28,7 @@ fn send_direct_message_with_transfer_succeeds(with_c2c_error: bool, icrc2: bool)
     let user2 = client::register_user(env, canister_ids);
 
     if with_c2c_error {
-        stop_canister(env, canister_ids.local_user_index, user2.canister());
+        stop_canister(env, user2.local_user_index, user2.canister());
     }
 
     let token = Cryptocurrency::InternetComputer;
@@ -102,7 +102,7 @@ fn send_direct_message_with_transfer_succeeds(with_c2c_error: bool, icrc2: bool)
 
     if with_c2c_error {
         env.advance_time(Duration::from_secs(10));
-        start_canister(env, canister_ids.local_user_index, user2.canister());
+        start_canister(env, user2.local_user_index, user2.canister());
         tick_many(env, 3);
     }
 
@@ -135,13 +135,14 @@ fn send_message_with_transfer_to_group_succeeds(with_c2c_error: bool, icrc2: boo
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
     let user2 = client::register_user(env, canister_ids);
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
-    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
+    client::group::happy_path::join_group(env, user2.principal, group_id);
 
     let token = Cryptocurrency::InternetComputer;
     let ledger = token.ledger_canister_id().unwrap();
     let amount = 1_000_000;
     let fee = 10_000;
     let now_nanos = now_nanos(env);
+    let local_group_index = canister_ids.local_group_index(env, group_id);
 
     let transaction = if icrc2 {
         // Approve user1's canister to transfer some ICP
@@ -175,7 +176,7 @@ fn send_message_with_transfer_to_group_succeeds(with_c2c_error: bool, icrc2: boo
     };
 
     if with_c2c_error {
-        stop_canister(env, canister_ids.local_group_index, group_id.into());
+        stop_canister(env, local_group_index, group_id.into());
     }
 
     let send_message_result = client::user::send_message_with_transfer_to_group(
@@ -220,7 +221,7 @@ fn send_message_with_transfer_to_group_succeeds(with_c2c_error: bool, icrc2: boo
 
     if with_c2c_error {
         env.advance_time(Duration::from_secs(10));
-        start_canister(env, canister_ids.local_group_index, group_id.into());
+        start_canister(env, local_group_index, group_id.into());
     }
 
     let event = client::group::happy_path::events(env, &user2, group_id, 0.into(), true, 10, 10)

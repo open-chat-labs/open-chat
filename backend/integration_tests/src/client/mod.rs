@@ -13,6 +13,7 @@ use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration, SignedDeleg
 mod macros;
 
 pub mod airdrop_bot;
+pub mod cmc;
 pub mod community;
 pub mod cycles_dispenser;
 pub mod escrow;
@@ -32,7 +33,7 @@ pub mod storage_index;
 pub mod user;
 pub mod user_index;
 
-const INIT_CYCLES_BALANCE: u128 = 1_000 * T;
+pub const INIT_CYCLES_BALANCE: u128 = 1_000 * T;
 
 pub fn create_canister(env: &mut PocketIc, controller: Principal) -> CanisterId {
     let canister_id = env.create_canister_with_settings(Some(controller), None);
@@ -189,10 +190,12 @@ fn register_user_internal(
         true,
     );
 
+    let local_user_index = user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+
     let user = local_user_index::happy_path::register_user_with_referrer(
         env,
         Principal::self_authenticating(&create_identity_result.user_key),
-        canister_ids.local_user_index,
+        local_user_index,
         create_identity_result.user_key,
         referral_code,
     );
@@ -248,7 +251,7 @@ fn unwrap_response<R: CandidType + DeserializeOwned>(response: Result<WasmResult
     }
 }
 
-fn unwrap_msgpack_response<R: DeserializeOwned>(response: Result<WasmResult, UserError>) -> R {
+pub fn unwrap_msgpack_response<R: DeserializeOwned>(response: Result<WasmResult, UserError>) -> R {
     match response.unwrap() {
         WasmResult::Reply(bytes) => msgpack::deserialize_then_unwrap(&bytes),
         WasmResult::Reject(error) => panic!("{error}"),

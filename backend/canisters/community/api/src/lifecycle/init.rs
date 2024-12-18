@@ -17,7 +17,6 @@ pub struct Args {
     pub primary_language: String,
     pub created_by_principal: Principal,
     pub created_by_user_id: UserId,
-    #[serde(default)]
     pub created_by_user_type: UserType,
     pub mark_active_duration: Milliseconds,
     pub user_index_canister_id: CanisterId,

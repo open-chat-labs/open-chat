@@ -43,7 +43,7 @@ fn delete_channel_succeeds(as_owner: bool) {
             community_canister::delete_channel::Response::NotAuthorized
         ));
     }
-    let summary = client::community::happy_path::summary(env, &user1, community_id);
+    let summary = client::community::happy_path::summary(env, user1.principal, community_id);
     assert_ne!(summary.channels.iter().any(|c| c.channel_id == channel_id1), as_owner);
 }
 
@@ -112,14 +112,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     let community_name = random_string();
     let community_id =
         client::user::happy_path::create_community(env, &user1, &community_name, true, vec![random_string(), random_string()]);
-    client::local_user_index::happy_path::join_community(
-        env,
-        user2.principal,
-        canister_ids.local_user_index,
-        community_id,
-        None,
-    );
-    let summary = client::community::happy_path::summary(env, &user1, community_id);
+    let summary = client::community::happy_path::join_community(env, user2.principal, community_id);
     let channel_id1 = summary.channels.first().unwrap().channel_id;
     let channel_id2 = summary.channels.last().unwrap().channel_id;
 

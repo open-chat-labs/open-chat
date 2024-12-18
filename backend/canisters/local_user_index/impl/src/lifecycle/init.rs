@@ -20,7 +20,6 @@ fn init(args: Args) {
     let canister_pool_target_size = if args.test_mode { 3_u16 } else { CANISTER_POOL_TARGET_SIZE };
 
     let data = Data::new(
-        args.user_canister_wasm,
         args.user_index_canister_id,
         args.group_index_canister_id,
         args.identity_canister_id,

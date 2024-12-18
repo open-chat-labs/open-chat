@@ -34,7 +34,7 @@ fn remove_group_member_succeeds() {
         group_canister::remove_participant::Response::Success
     ));
 
-    let members = client::group::happy_path::selected_initial(env, &user1, group_id).participants;
+    let members = client::group::happy_path::selected_initial(env, user1.principal, group_id).participants;
 
     assert!(!members.iter().any(|m| m.user_id == user2.user_id));
 }
@@ -65,14 +65,14 @@ fn block_user_who_is_no_longer_group_member_succeeds() {
 
     assert!(matches!(block_user_response, group_canister::block_user::Response::Success));
 
-    let blocked_users = client::group::happy_path::selected_initial(env, &user1, group_id).blocked_users;
+    let blocked_users = client::group::happy_path::selected_initial(env, user1.principal, group_id).blocked_users;
 
     assert!(blocked_users.contains(&user2.user_id));
 
     let join_group_response = client::local_user_index::join_group(
         env,
         user2.principal,
-        canister_ids.local_user_index,
+        canister_ids.local_user_index(env, group_id),
         &local_user_index_canister::join_group::Args {
             chat_id: group_id,
             invite_code: None,
@@ -95,7 +95,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
 
     let group_id = client::user::happy_path::create_group(env, &user1, &group_name, public, true);
 
-    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
+    client::group::happy_path::join_group(env, user2.principal, group_id);
 
     tick_many(env, 3);
 
