@@ -96,7 +96,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         return Err(OwnerNotFound);
     };
 
-    if owner.user_id != bot_user.user_id {
+    if owner.user_id != bot.owner {
         return Err(NotAuthorised);
     }
 
