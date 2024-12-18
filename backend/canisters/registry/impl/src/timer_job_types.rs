@@ -270,7 +270,7 @@ async fn create_canister(
         }
     };
 
-    cycles_minting_canister_c2c_client::notify_create_canister(
+    match cycles_minting_canister_c2c_client::notify_create_canister(
         cmc,
         &cycles_minting_canister::notify_create_canister::Args {
             block_index,
@@ -279,5 +279,18 @@ async fn create_canister(
         },
     )
     .await?
-    .map_err(|error| (RejectionCode::Unknown, format!("{error:?}")))
+    {
+        Ok(canister_id) => {
+            if create_canister_block_index.is_some() {
+                mutate_state(|state| {
+                    state
+                        .data
+                        .subnets
+                        .update_in_progress(|s| s.create_canister_block_index = None, now)
+                });
+            }
+            Ok(canister_id)
+        }
+        Err(error) => Err((RejectionCode::Unknown, format!("{error:?}"))),
+    }
 }
