@@ -165,8 +165,8 @@
         if (user.kind === "external_bot") {
             return (
                 user.name.toLowerCase().includes(searchTermLower) ||
-                (user.schema.description !== undefined &&
-                    user.schema.description.toLocaleLowerCase().includes(searchTermLower))
+                (user.definition.description !== undefined &&
+                    user.definition.description.toLocaleLowerCase().includes(searchTermLower))
             );
         }
 
