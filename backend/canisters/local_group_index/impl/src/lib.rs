@@ -11,9 +11,7 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, VecDeque};
 use std::time::Duration;
-use types::{
-    BuildVersion, CanisterId, CanisterWasm, ChildCanisterWasms, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId,
-};
+use types::{BuildVersion, CanisterId, ChildCanisterWasms, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId};
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
@@ -164,8 +162,6 @@ struct Data {
 impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
-        group_canister_wasm: CanisterWasm,
-        community_canister_wasm: CanisterWasm,
         user_index_canister_id: CanisterId,
         local_user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
@@ -183,10 +179,7 @@ impl Data {
         Data {
             local_groups: LocalGroupMap::default(),
             local_communities: LocalCommunityMap::default(),
-            child_canister_wasms: ChildCanisterWasms::new(vec![
-                (ChildCanisterType::Group, group_canister_wasm),
-                (ChildCanisterType::Community, community_canister_wasm),
-            ]),
+            child_canister_wasms: ChildCanisterWasms::default(),
             user_index_canister_id,
             local_user_index_canister_id,
             group_index_canister_id,

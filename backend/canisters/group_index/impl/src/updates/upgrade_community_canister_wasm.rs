@@ -25,7 +25,7 @@ async fn upgrade_community_canister_wasm(args: Args) -> Response {
 
     let futures: Vec<_> = local_group_index_canisters
         .into_iter()
-        .map(|(canister_id, filter)| process_local_group_index(canister_id, &wasm, wasm_hash, Some(filter)))
+        .map(|(canister_id, filter)| upgrade_community_wasm_in_local_group_index(canister_id, &wasm, wasm_hash, Some(filter)))
         .collect();
 
     if let Err(error) = futures::future::try_join_all(futures).await {
@@ -71,7 +71,7 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
     })
 }
 
-async fn process_local_group_index(
+pub(crate) async fn upgrade_community_wasm_in_local_group_index(
     canister_id: CanisterId,
     canister_wasm: &CanisterWasm,
     wasm_hash: Hash,

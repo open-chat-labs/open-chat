@@ -37,9 +37,9 @@ pub struct ChunkedCanisterWasm {
 impl From<CanisterWasm> for ChunkedCanisterWasm {
     fn from(value: CanisterWasm) -> Self {
         ChunkedCanisterWasm {
+            wasm_hash: value.module.hash(),
             wasm: value,
             chunks: Vec::new(),
-            wasm_hash: [0; 32],
         }
     }
 }
