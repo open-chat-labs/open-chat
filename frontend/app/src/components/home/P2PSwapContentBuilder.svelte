@@ -189,7 +189,7 @@
                     <TokenInput
                         ledger={fromLedger}
                         {minAmount}
-                        maxAmount={fromDetails.balance}
+                        maxAmount={fromDetails.balance - totalFees}
                         showDollarAmount
                         bind:state={tokenInputState}
                         bind:valid={fromAmountValid}
