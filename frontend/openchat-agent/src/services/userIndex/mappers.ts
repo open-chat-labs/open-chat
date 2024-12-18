@@ -26,7 +26,6 @@ import type {
     SlashCommandSchema,
     BotMatch,
     SlashCommandParam,
-    SlashCommandParamType,
     BotsResponse,
     ExternalBot,
 } from "openchat-shared";
@@ -41,7 +40,8 @@ import {
     apiChatPermission,
     apiCommunityPermission,
     apiMessagePermission,
-    slashCommandPermissions,
+    externalBotCommand,
+    externalBotDefinition,
     token,
 } from "../common/chatMappersV2";
 import type {
@@ -128,7 +128,8 @@ export function botSchema(
         ),
         ownerId: principalBytesToString(bot.owner),
         endpoint: bot.endpoint,
-        schema: {
+        definition: {
+            kind: "bot_definition",
             description: bot.description,
             commands: bot.commands.map(externalBotCommand),
         },
@@ -623,38 +624,6 @@ export function apiCustomParamFields(param: SlashCommandParam): ApiSlashCommandP
     }
 }
 
-export function customParamFields(paramType: ApiSlashCommandParamType): SlashCommandParamType {
-    if (paramType === "UserParam") {
-        return {
-            kind: "user",
-        };
-    } else if (paramType === "BooleanParam") {
-        return { kind: "boolean" };
-    } else if ("StringParam" in paramType) {
-        return {
-            kind: "string",
-            minLength: paramType.StringParam.min_length,
-            maxLength: paramType.StringParam.max_length,
-            choices: paramType.StringParam.choices,
-        };
-    } else if ("NumberParam" in paramType) {
-        return {
-            kind: "number",
-            minValue: paramType.NumberParam.min_length,
-            maxValue: paramType.NumberParam.max_length,
-            choices: paramType.NumberParam.choices,
-        };
-    }
-    throw new UnsupportedValueError("Unexpected ApiSlashCommandParamType value", paramType);
-}
-
-export function externalBotParam(param: ApiSlashCommandParam): SlashCommandParam {
-    return {
-        ...param,
-        ...customParamFields(param.param_type),
-    };
-}
-
 export function apiExternalBotParam(param: SlashCommandParam): ApiSlashCommandParam {
     return {
         ...param,
@@ -671,17 +640,7 @@ export function apiExternalBotCommand(command: SlashCommandSchema): ApiSlashComm
             chat: command.permissions.chatPermissions.map(apiChatPermission),
             community: command.permissions.communityPermissions.map(apiCommunityPermission),
             message: command.permissions.messagePermissions.map(apiMessagePermission),
-            thread: command.permissions.messagePermissions.map(apiMessagePermission),
         },
-    };
-}
-
-export function externalBotCommand(command: ApiSlashCommandSchema): SlashCommandSchema {
-    return {
-        name: command.name,
-        description: command.description,
-        params: command.params.map(externalBotParam),
-        permissions: slashCommandPermissions(command.permissions),
     };
 }
 
@@ -702,10 +661,7 @@ export function externalBotMatch(
         ),
         id: botId,
         ownerId: principalBytesToString(match.owner),
-        schema: {
-            description: match.description,
-            commands: match.commands.map(externalBotCommand),
-        },
+        definition: externalBotDefinition(match),
     };
 }
 

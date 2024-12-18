@@ -9,7 +9,8 @@ export const emptyPermissions: SlashCommandPermissions = {
 export const builtinBot: InternalBot = {
     kind: "internal_bot",
     name: "bots.builtin.name",
-    schema: {
+    definition: {
+        kind: "bot_definition",
         description: "bots.builtin.desc",
         commands: [
             {

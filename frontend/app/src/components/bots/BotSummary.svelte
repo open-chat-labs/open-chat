@@ -63,7 +63,7 @@
     });
 
     function flattenPermissions() {
-        return bot.schema.commands.reduce((p, c) => {
+        return bot.definition.commands.reduce((p, c) => {
             return mergePermissions(p, c.permissions);
         }, emptySlashCommandPermissions());
     }
@@ -141,14 +141,14 @@
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
                 <p
-                    title={bot.schema.description}
+                    title={bot.definition.description}
                     class="bot-desc"
                     class:collapsed
                     onclick={() => (collapsed = !collapsed)}>
-                    {bot.schema.description}
+                    {bot.definition.description}
                 </p>
                 <div class="commands">
-                    {#each bot.schema.commands as command}
+                    {#each bot.definition.commands as command}
                         <TooltipWrapper position="bottom" align="middle">
                             <div
                                 slot="target"

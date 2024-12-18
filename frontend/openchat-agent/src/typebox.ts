@@ -1179,6 +1179,12 @@ export const CommunityPermissions = Type.Object({
     manage_user_groups: CommunityPermissionRole,
 });
 
+export type StreakInsurance = Static<typeof StreakInsurance>;
+export const StreakInsurance = Type.Object({
+    days_insured: Type.Number(),
+    days_missed: Type.Number(),
+});
+
 export type FieldTooLongResult = Static<typeof FieldTooLongResult>;
 export const FieldTooLongResult = Type.Object({
     length_provided: Type.Number(),
@@ -1439,6 +1445,18 @@ export const MessageMatch = Type.Object({
     score: Type.Number(),
 });
 
+export type OptionUpdateStreakInsurance = Static<typeof OptionUpdateStreakInsurance>;
+export const OptionUpdateStreakInsurance = Type.Union(
+    [
+        Type.Literal("NoChange"),
+        Type.Literal("SetToNone"),
+        Type.Object({
+            SetToSome: StreakInsurance,
+        }),
+    ],
+    { default: "NoChange" },
+);
+
 export type DirectChatCreated = Static<typeof DirectChatCreated>;
 export const DirectChatCreated = Type.Record(Type.String(), Type.Never());
 
@@ -1454,7 +1472,6 @@ export const SlashCommandPermissions = Type.Object({
     community: Type.Array(CommunityPermission),
     chat: Type.Array(GroupPermission),
     message: Type.Array(MessagePermission),
-    thread: Type.Array(MessagePermission),
 });
 
 export type Version = Static<typeof Version>;
@@ -3031,6 +3048,7 @@ export const CommunitySendMessageResponse = Type.Union([
     }),
     Type.Literal("CommunityFrozen"),
     Type.Literal("RulesNotAccepted"),
+    Type.Literal("MessageAlreadyExists"),
     Type.Literal("CommunityRulesNotAccepted"),
     Type.Literal("UserLapsed"),
 ]);
@@ -3689,6 +3707,7 @@ export const GroupSendMessageResponse = Type.Union([
     }),
     Type.Literal("ChatFrozen"),
     Type.Literal("RulesNotAccepted"),
+    Type.Literal("MessageAlreadyExists"),
 ]);
 
 export type GroupEventsByIndexArgs = Static<typeof GroupEventsByIndexArgs>;
@@ -6131,6 +6150,13 @@ export const GroupInviteCodeChanged = Type.Object({
     changed_by: UserId,
 });
 
+export type BotMessageContext = Static<typeof BotMessageContext>;
+export const BotMessageContext = Type.Object({
+    initiator: UserId,
+    command_text: Type.String(),
+    finalised: Type.Boolean(),
+});
+
 export type GroupNameChanged = Static<typeof GroupNameChanged>;
 export const GroupNameChanged = Type.Object({
     new_name: Type.String(),
@@ -7698,6 +7724,7 @@ export const UserSendMessageWithTransferToGroupResponse = Type.Union([
     Type.Literal("UserLapsed"),
     Type.Literal("ChatFrozen"),
     Type.Literal("RulesNotAccepted"),
+    Type.Literal("MessageAlreadyExists"),
     Type.Object({
         Retrying: Type.Tuple([Type.String(), CompletedCryptoTransaction]),
     }),
@@ -7788,6 +7815,7 @@ export const UserSendMessageWithTransferToChannelResponse = Type.Union([
     Type.Literal("UserLapsed"),
     Type.Literal("CommunityFrozen"),
     Type.Literal("RulesNotAccepted"),
+    Type.Literal("MessageAlreadyExists"),
     Type.Literal("CommunityRulesNotAccepted"),
     Type.Object({
         Retrying: Type.Tuple([Type.String(), CompletedCryptoTransaction]),
@@ -8296,6 +8324,7 @@ export const Message = Type.Object({
     message_id: MessageId,
     sender: UserId,
     content: MessageContent,
+    bot_context: Type.Optional(Type.Union([BotMessageContext, Type.Undefined()])),
     replies_to: Type.Optional(Type.Union([ReplyContext, Type.Undefined()])),
     reactions: Type.Array(Type.Tuple([Reaction, Type.Array(UserId)])),
     tips: Tips,
@@ -9222,6 +9251,7 @@ export const UserInitialStateSuccessResult = Type.Object({
     chit_balance: Type.Number(),
     streak: Type.Number(),
     streak_ends: Type.BigInt(),
+    streak_insurance: Type.Optional(Type.Union([StreakInsurance, Type.Undefined()])),
     next_daily_claim: Type.BigInt(),
     is_unique_person: Type.Boolean(),
     wallet_config: UserWalletConfig,
@@ -9253,6 +9283,7 @@ export const UserUpdatesSuccessResult = Type.Object({
     chit_balance: Type.Number(),
     streak: Type.Number(),
     streak_ends: Type.BigInt(),
+    streak_insurance: OptionUpdateStreakInsurance,
     next_daily_claim: Type.BigInt(),
     is_unique_person: Type.Optional(Type.Union([Type.Boolean(), Type.Undefined()])),
     wallet_config: Type.Optional(Type.Union([UserWalletConfig, Type.Undefined()])),

@@ -189,7 +189,8 @@ export const testBots: Bot[] = [
         id: "bot_one",
         ownerId: "",
         endpoint: "https://some_bot_or_other",
-        schema: {
+        definition: {
+            kind: "bot_definition",
             description: "this is just a test bot that doesn't do anything at all",
             commands: [killCommand, kickPollCommand],
         },
@@ -202,7 +203,8 @@ export const testBots: Bot[] = [
         id: "bot_two",
         ownerId: "",
         endpoint: "http://localhost:3000/execute",
-        schema: {
+        definition: {
+            kind: "bot_definition",
             description:
                 "This bot also does not do anything but in this case it has a much longer description. The reason that we need a longer description is so that we can tell that the card still renders ok if there is a lot of text to display. What should we do? Should we truncate it or should we do something else? Show multiple lines? Show the whole thing? Make it expandable?",
             commands: [
@@ -222,7 +224,8 @@ export const testMatches: BotMatch[] = [
         id: "one",
         name: "Kitten bot",
         ownerId: "owner",
-        schema: {
+        definition: {
+            kind: "bot_definition",
             description: "this is just a test bot and it doen't do very much",
             commands: [killCommand, kickPollCommand],
         },
@@ -231,7 +234,8 @@ export const testMatches: BotMatch[] = [
         id: "two",
         name: "Puppy bot",
         ownerId: "owner",
-        schema: {
+        definition: {
+            kind: "bot_definition",
             description:
                 "This bot also does not do anything but in this case it has a much longer description. The reason that we need a longer description is so that we can tell that the card still renders ok if there is a lot of text to display. What should we do? Should we truncate it or should we do something else? Show multiple lines? Show the whole thing? Make it expandable?",
             commands: [

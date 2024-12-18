@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        validEndpoint,
         emptyBotInstance,
         emptySlashCommandPermissions,
         OpenChat,
@@ -21,6 +22,8 @@
     import ErrorMessage from "../ErrorMessage.svelte";
     import { debouncedDerived } from "../../utils/reactivity.svelte";
     import { getContext } from "svelte";
+    import Button from "../Button.svelte";
+    import { toastStore } from "../../stores/toast";
 
     const client = getContext<OpenChat>("client");
 
@@ -34,6 +37,8 @@
     let selectedCommandIndex = $state<number | undefined>(undefined);
     let debug = $state(false);
     let candidate = $state<ExternalBot>(emptyBotInstance());
+    let schemaLoaded = $state(false);
+    let schemaLoading = $state(false);
 
     let errors = $derived.by(
         debouncedDerived(
@@ -114,6 +119,24 @@
             permissions: emptySlashCommandPermissions(),
         };
     }
+
+    function loadDefinition() {
+        if (validEndpoint(candidate.endpoint)) {
+            schemaLoading = true;
+            schemaLoaded = false;
+            client
+                .getBotDefinition(candidate.endpoint)
+                .then((resp) => {
+                    if (resp.kind === "bot_definition") {
+                        candidate.definition = resp;
+                        schemaLoaded = true;
+                    } else {
+                        toastStore.showFailureToast(i18nKey(`${resp.error}`));
+                    }
+                })
+                .finally(() => (schemaLoading = false));
+        }
+    }
 </script>
 
 {#if selectedCommand !== undefined && selectedCommandIndex !== undefined}
@@ -159,14 +182,6 @@
         bind:value={candidate.name}>
     </ValidatingInput>
 
-    <Legend label={i18nKey("bots.builder.descLabel")} rules={i18nKey("bots.builder.optional")}
-    ></Legend>
-    <Input
-        minlength={3}
-        maxlength={200}
-        placeholder={i18nKey("bots.builder.descPlaceholder")}
-        bind:value={candidate.definition.description} />
-
     <Legend
         label={i18nKey("bots.builder.endpointLabel")}
         required
@@ -179,35 +194,44 @@
         placeholder={i18nKey("https://my_openchat_bot")}
         bind:value={candidate.endpoint} />
 
-    <div class="commands">
+    <Button loading={schemaLoading} disabled={schemaLoading} on:click={loadDefinition}
+        >Load definition</Button>
+
+    {#if schemaLoaded}
+        <Legend label={i18nKey("bots.builder.descLabel")}></Legend>
+        <Input disabled={true} value={candidate.definition.description} />
+
         <div class="commands">
-            {#each candidate.definition.commands as command, i}
-                <SummaryButton
-                    valid={!errors.has(`command_${i}`)}
-                    onSelect={() => onSelectCommand(command, i)}
-                    onDelete={() => onDeleteCommand(command)}
-                    resourceKey={i18nKey("bots.builder.commandLabel", { name: command.name })}
-                ></SummaryButton>
-            {/each}
-        </div>
+            <div class="commands">
+                {#each candidate.definition.commands as command, i}
+                    <SummaryButton
+                        valid={!errors.has(`command_${i}`)}
+                        onSelect={() => onSelectCommand(command, i)}
+                        onDelete={() => onDeleteCommand(command)}
+                        resourceKey={i18nKey("bots.builder.commandLabel", { name: command.name })}
+                    ></SummaryButton>
+                {/each}
+            </div>
 
-        <Link on:click={addCommand} underline="never">
-            <Translatable resourceKey={i18nKey("bots.builder.addCommand")} />
-        </Link>
+            <Link on:click={addCommand} underline="never">
+                <Translatable resourceKey={i18nKey("bots.builder.addCommand")} />
+            </Link>
 
-        <div class="error">
-            {#if errors.has("duplicate_commands")}
-                <ErrorMessage>
-                    <Translatable resourceKey={errors.get("duplicate_commands")[0]}></Translatable
-                    ></ErrorMessage>
-            {/if}
-            {#if errors.has("no_commands")}
-                <ErrorMessage>
-                    <Translatable resourceKey={errors.get("no_commands")[0]}></Translatable
-                    ></ErrorMessage>
-            {/if}
+            <div class="error">
+                {#if errors.has("duplicate_commands")}
+                    <ErrorMessage>
+                        <Translatable resourceKey={errors.get("duplicate_commands")[0]}
+                        ></Translatable
+                        ></ErrorMessage>
+                {/if}
+                {#if errors.has("no_commands")}
+                    <ErrorMessage>
+                        <Translatable resourceKey={errors.get("no_commands")[0]}></Translatable
+                        ></ErrorMessage>
+                {/if}
+            </div>
         </div>
-    </div>
+    {/if}
 
     {#if debug}
         <pre class="debug">

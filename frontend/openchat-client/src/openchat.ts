@@ -408,6 +408,7 @@ import type {
     MarkReadRequest,
     ChatEventsArgs,
     ChatEventsResponse,
+    BotDefinitionResponse,
 } from "openchat-shared";
 import {
     Stream,
@@ -7723,7 +7724,20 @@ export class OpenChat extends EventTarget {
         return this.#liveState.userStore.get(userId)?.streak ?? 0;
     }
 
-    #callBotEndpoint(bot: ExternalBotCommandInstance, token: string): Promise<unknown> {
+    getBotDefinition(endpoint: string): Promise<BotDefinitionResponse> {
+        return this.#sendRequest({
+            kind: "getBotDefinition",
+            endpoint,
+        }).catch((err) => {
+            this.#logger.error("Failed to get the bot definition", endpoint, err);
+            return {
+                kind: "bot_definition_failure",
+                error: err,
+            };
+        });
+    }
+
+    #callBotCommandEndpoint(bot: ExternalBotCommandInstance, token: string): Promise<unknown> {
         const headers = new Headers();
         headers.append("x-auth-jwt", token);
         headers.append("Content-type", "application/json");
@@ -7891,7 +7905,7 @@ export class OpenChat extends EventTarget {
         switch (bot.kind) {
             case "external_bot":
                 return this.#getAuthTokenForBotCommand(chat, threadRootMessageIndex, bot)
-                    .then((token) => this.#callBotEndpoint(bot, token))
+                    .then((token) => this.#callBotCommandEndpoint(bot, token))
                     .then((resp) => {
                         if (bot.command.name === "chat") {
                             // eslint-disable-next-line @typescript-eslint/ban-ts-comment

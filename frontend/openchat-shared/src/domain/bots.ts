@@ -184,33 +184,43 @@ export function emptyBotInstance(bot?: ExternalBot): ExternalBot {
               ownerId: "",
               name: "",
               endpoint: "",
-              schema: {
+              definition: {
+                  kind: "bot_definition",
                   description: "",
                   commands: [],
               },
           };
 }
 
-export type ExternalBot = {
-    kind: "external_bot";
+type BotCommon = {
     name: string;
+    definition: BotDefinition;
+};
+
+export type ExternalBot = BotCommon & {
+    kind: "external_bot";
     avatarUrl?: string;
     id: string;
     ownerId: string;
     endpoint: string;
-    schema: BotSchema;
 };
 
-export type BotSchema = {
+export type InternalBot = BotCommon & {
+    kind: "internal_bot";
+};
+
+export type BotDefinition = {
+    kind: "bot_definition";
     description: string;
     commands: SlashCommandSchema[];
 };
 
-export type InternalBot = {
-    kind: "internal_bot";
-    name: string;
-    schema: BotSchema;
+export type BotDefinitionFailure = {
+    kind: "bot_definition_failure";
+    error: unknown;
 };
+
+export type BotDefinitionResponse = BotDefinition | BotDefinitionFailure;
 
 export type BotCommandInstance = ExternalBotCommandInstance | InternalBotCommandInstance;
 
@@ -369,11 +379,15 @@ function validatePrincipal(p: string): boolean {
     }
 }
 
+export function validEndpoint(endpoint: string): boolean {
+    return validOrigin(endpoint) || validCanister(endpoint);
+}
+
 export function validateBot(bot: ExternalBot): ValidationErrors {
     const errors = new ValidationErrors();
     errors.addErrors(`bot_name`, validBotComponentName(bot.name));
 
-    if (!(validateOrigin(bot.endpoint) || validateCanister(bot.endpoint))) {
+    if (!validEndpoint(bot.endpoint)) {
         errors.addErrors("bot_endpoint", i18nKey("bots.builder.errors.endpoint"));
     }
 
@@ -381,15 +395,15 @@ export function validateBot(bot: ExternalBot): ValidationErrors {
         errors.addErrors("bot_principal", i18nKey("bots.builder.errors.principal"));
     }
 
-    if (bot.schema.commands.length === 0) {
+    if (bot.definition.commands.length === 0) {
         errors.addErrors("no_commands", i18nKey("bots.builder.errors.noCommands"));
     }
 
-    if (containsDuplicateCommands(bot.schema.commands)) {
+    if (containsDuplicateCommands(bot.definition.commands)) {
         errors.addErrors("duplicate_commands", i18nKey("bots.builder.errors.duplicateCommands"));
     }
 
-    bot.schema.commands.forEach((command, i) => {
+    bot.definition.commands.forEach((command, i) => {
         if (!validateCommand(command, `command_${i}`, errors)) {
             errors.addErrors(`command_${i}`, i18nKey("Command has errors"));
         }
@@ -477,7 +491,7 @@ function validateParameter(
     return valid;
 }
 
-function validateOrigin(origin: string | undefined): boolean {
+function validOrigin(origin: string | undefined): boolean {
     if (!origin) return false;
     try {
         const o = new URL(origin);
@@ -487,7 +501,7 @@ function validateOrigin(origin: string | undefined): boolean {
     }
 }
 
-function validateCanister(canister: string | undefined): boolean {
+function validCanister(canister: string | undefined): boolean {
     if (!canister) return false;
     try {
         Principal.fromText(canister);

@@ -73,7 +73,7 @@ export const commands = derived(
         return bots.flatMap((b) => {
             switch (b.kind) {
                 case "external_bot":
-                    return b.schema.commands
+                    return b.definition.commands
                         .map((c) => {
                             return {
                                 ...c,
@@ -82,20 +82,20 @@ export const commands = derived(
                                 botIcon: b.avatarUrl,
                                 botId: b.id,
                                 botEndpoint: b.endpoint,
-                                botDescription: b.schema.description,
+                                botDescription: b.definition.description,
                             };
                         })
                         .filter((c) =>
                             filterCommand($_, c, selectedCommand, parsedPrefix, prefixParts),
                         ) as FlattenedCommand[];
                 case "internal_bot":
-                    return b.schema.commands
+                    return b.definition.commands
                         .map((c) => {
                             return {
                                 ...c,
                                 kind: b.kind,
                                 botName: b.name,
-                                botDescription: b.schema.description,
+                                botDescription: b.definition.description,
                             };
                         })
                         .filter((c) =>

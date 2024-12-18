@@ -1789,7 +1789,12 @@ export type SendMessageResponse =
     | P2PSwapSetUpFailed
     | DuplicateMessageId
     | PinNumberFailures
-    | MessageThrottled;
+    | MessageThrottled
+    | MessageAlreadyExists;
+
+export type MessageAlreadyExists = {
+    kind: "message_already_exists";
+};
 
 export type SendMessageSuccess = {
     kind: "success";
