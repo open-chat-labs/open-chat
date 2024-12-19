@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Handle retry attempts when adding a new LocalGroupIndex ([#7091](https://github.com/open-chat-labs/open-chat/pull/7091))
 - Add logging + skip steps that have already been completed ([#7093](https://github.com/open-chat-labs/open-chat/pull/7093))
+
+### Fixed
+
 - Set `wasm_hash` field which was previously empty ([#7097](https://github.com/open-chat-labs/open-chat/pull/7097))
 
 ## [[2.0.1528](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1528-group_index)] - 2024-12-19
