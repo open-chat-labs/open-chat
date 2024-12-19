@@ -2117,14 +2117,14 @@ type StringParamChoice = record {
 };
 
 type NumberParam = record {
-    min_length : nat16;
-    max_length : nat16;
+    min_value : float64;
+    max_value : float64;
     choices : vec NumberParamChoice;
 };
 
 type NumberParamChoice = record {
     name : text;
-    value : nat16;
+    value : float64;
 };
 
 type SlashCommandPermissions = record {
