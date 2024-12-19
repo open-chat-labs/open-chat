@@ -50,18 +50,14 @@ async fn install_service_canisters_impl(
         set_controllers(
             management_canister,
             &canister_ids.local_user_index,
-            vec![canister_ids.user_index],
+            vec![canister_ids.registry],
         ),
         set_controllers(
             management_canister,
             &canister_ids.local_group_index,
-            vec![canister_ids.group_index],
+            vec![canister_ids.registry],
         ),
-        set_controllers(
-            management_canister,
-            &canister_ids.notifications,
-            vec![canister_ids.notifications_index],
-        ),
+        set_controllers(management_canister, &canister_ids.notifications, vec![canister_ids.registry]),
     ])
     .await;
 
@@ -552,59 +548,29 @@ async fn install_service_canisters_impl(
     .await
     .unwrap();
 
-    let add_local_group_index_canister_response = group_index_canister_client::add_local_group_index_canister(
+    registry_canister_client::expand_onto_subnet(
         agent,
-        &canister_ids.group_index,
-        &group_index_canister::add_local_group_index_canister::Args {
-            canister_id: canister_ids.local_group_index,
-            local_user_index_canister_id: canister_ids.local_user_index,
-            notifications_canister_id: canister_ids.notifications,
+        &canister_ids.registry,
+        &registry_canister::expand_onto_subnet::Args {
+            subnet_id: Principal::anonymous(),
+            local_user_index: Some(canister_ids.local_user_index),
+            local_group_index: Some(canister_ids.local_group_index),
+            notifications_canister: Some(canister_ids.notifications),
         },
     )
     .await
     .unwrap();
 
-    if !matches!(
-        add_local_group_index_canister_response,
-        group_index_canister::add_local_group_index_canister::Response::Success
-    ) {
-        panic!("{add_local_group_index_canister_response:?}");
-    }
+    for _ in 0..20 {
+        tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
+        let registry_canister::subnets::Response::Success(subnets) =
+            registry_canister_client::subnets(agent, &canister_ids.registry, &registry_canister::subnets::Args {})
+                .await
+                .unwrap();
 
-    let add_local_user_index_canister_response = user_index_canister_client::add_local_user_index_canister(
-        agent,
-        &canister_ids.user_index,
-        &user_index_canister::add_local_user_index_canister::Args {
-            canister_id: canister_ids.local_user_index,
-            notifications_canister_id: canister_ids.notifications,
-        },
-    )
-    .await
-    .unwrap();
-
-    if !matches!(
-        add_local_user_index_canister_response,
-        user_index_canister::add_local_user_index_canister::Response::Success
-    ) {
-        panic!("{add_local_user_index_canister_response:?}");
-    }
-
-    let add_notifications_canister_response = notifications_index_canister_client::add_notifications_canister(
-        agent,
-        &canister_ids.notifications_index,
-        &notifications_index_canister::add_notifications_canister::Args {
-            canister_id: canister_ids.notifications,
-            authorizers: vec![canister_ids.local_user_index, canister_ids.local_group_index],
-        },
-    )
-    .await
-    .unwrap();
-
-    if !matches!(
-        add_notifications_canister_response,
-        notifications_index_canister::add_notifications_canister::Response::Success
-    ) {
-        panic!("{add_notifications_canister_response:?}");
+        if !subnets.is_empty() {
+            break;
+        }
     }
 
     println!("Canister wasms installed");
