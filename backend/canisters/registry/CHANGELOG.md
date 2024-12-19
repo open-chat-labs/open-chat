@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1539](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1539-registry)] - 2024-12-19
+
 ### Changed
 
 - Expose any errors that occur while expanding onto a new subnet ([#7094](https://github.com/open-chat-labs/open-chat/pull/7094))
