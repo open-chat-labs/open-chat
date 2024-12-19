@@ -2124,7 +2124,7 @@ type NumberParam = record {
 
 type NumberParamChoice = record {
     name : text;
-    value : nat16;
+    value : float64;
 };
 
 type SlashCommandPermissions = record {
