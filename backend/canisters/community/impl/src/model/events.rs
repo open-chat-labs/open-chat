@@ -7,7 +7,6 @@ use types::{
     EventWrapperInternal, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupInviteCodeChanged, GroupNameChanged,
     GroupRulesChanged, GroupUnfrozen, PrimaryLanguageChanged, TimestampMillis, UserId, UsersInvited, UsersUnblocked,
 };
-use user_canister::token_swap_status::CandidType;
 
 mod stable_memory;
 
