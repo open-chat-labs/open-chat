@@ -8,6 +8,7 @@ use ic_cdk::api::call::{CallResult, RejectionCode};
 use ic_cdk::api::management_canister::main::{CanisterSettings, UpdateSettingsArgument};
 use ic_ledger_types::{AccountIdentifier, Memo, Subaccount, Timestamp, Tokens, TransferArgs, DEFAULT_FEE};
 use serde::{Deserialize, Serialize};
+use tracing::error;
 use types::{CanisterId, TimestampMillis};
 
 const MEMO_CREATE_CANISTER: Memo = Memo(0x41455243); // == 'CREA'
@@ -54,7 +55,7 @@ impl ExpandOntoSubnetJob {
         let delay = match self.process_step_inner(next_step, now).await {
             Ok(Some(false)) => 0,
             Err(error) => {
-                ic_cdk::println!("ExpandOntoSubnet processing failed: {:?}", error);
+                error!("ExpandOntoSubnet processing failed: {:?}", error);
                 MINUTE_IN_MS
             }
             Ok(Some(true)) | Ok(None) => return,
