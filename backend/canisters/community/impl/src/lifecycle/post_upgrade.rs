@@ -9,7 +9,6 @@ use ic_cdk::post_upgrade;
 use instruction_counts_log::InstructionCountFunctionId;
 use stable_memory::get_reader;
 use tracing::info;
-use utils::env::Environment;
 
 #[post_upgrade]
 #[trace]
@@ -27,11 +26,6 @@ fn post_upgrade(args: Args) {
     data.events.fix_role_changed_events();
 
     let env = init_env(data.rng_seed);
-    let now = env.now();
-    for channel in data.channels.iter_mut() {
-        channel.chat.events.remove_spurious_video_call_in_progress(now);
-    }
-
     init_state(env, data, args.wasm_version);
 
     let completed_imports = read_state(|state| state.data.groups_being_imported.completed_imports());
