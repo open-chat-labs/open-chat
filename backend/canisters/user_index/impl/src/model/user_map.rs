@@ -52,7 +52,6 @@ pub struct Bot {
 }
 
 impl Bot {
-    #[allow(dead_code)]
     pub fn to_match(&self, id: UserId, score: u32) -> BotMatch {
         BotMatch {
             id,
@@ -376,7 +375,6 @@ impl UserMap {
         self.users.values()
     }
 
-    #[allow(dead_code)]
     pub fn iter_bots(&self) -> impl Iterator<Item = (&UserId, &Bot)> {
         self.bots.iter()
     }
@@ -474,7 +472,6 @@ impl UserMap {
 
     // TODO - When a bot is added/removed to/from a community or group the user_index should be notified
     // so it can maintain a popularity score and use this for ordering results
-    #[allow(dead_code)]
     pub fn search_bots(&self, search_term: Option<String>, page_index: u32, page_size: u8) -> (Vec<BotMatch>, u32) {
         let query = search_term.map(Query::parse);
 
