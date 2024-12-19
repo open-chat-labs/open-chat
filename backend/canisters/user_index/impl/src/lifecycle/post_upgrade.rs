@@ -3,10 +3,8 @@ use crate::memory::get_upgrades_memory;
 use crate::Data;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
-use ic_cdk::api::management_canister::main::{CanisterSettings, LogVisibility, UpdateSettingsArgument};
 use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
-use std::time::Duration;
 use tracing::info;
 use user_index_canister::post_upgrade::Args;
 use utils::cycles::init_cycles_dispenser_client;
@@ -28,18 +26,4 @@ fn post_upgrade(args: Args) {
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
-
-    ic_cdk_timers::set_timer(Duration::ZERO, || ic_cdk::spawn(make_logs_public()));
-}
-
-async fn make_logs_public() {
-    ic_cdk::api::management_canister::main::update_settings(UpdateSettingsArgument {
-        canister_id: ic_cdk::id(),
-        settings: CanisterSettings {
-            log_visibility: Some(LogVisibility::Public),
-            ..Default::default()
-        },
-    })
-    .await
-    .unwrap()
 }
