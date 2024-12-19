@@ -7764,7 +7764,6 @@ export class OpenChat extends EventTarget {
         return fetch(`${bot.endpoint}/execute_command`, {
             method: "POST",
             headers: headers,
-            body: token,
         }).then((res) => {
             if (res.ok) {
                 return res.json();
