@@ -347,7 +347,6 @@ struct Data {
     pub storage_index_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
     pub translations_canister_id: CanisterId,
-    #[serde(default = "CanisterId::anonymous")]
     pub registry_canister_id: CanisterId,
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub storage_index_user_sync_queue: GroupedTimerJobQueue<StorageIndexUserConfigBatch>,
@@ -383,7 +382,6 @@ struct Data {
     pub survey_messages_sent: usize,
     pub external_achievements: ExternalAchievements,
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
-    #[serde(default)]
     pub streak_insurance_logs: StreakInsuranceLogs,
 }
 

@@ -1,15 +1,15 @@
-use candid::Principal;
+use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{CanisterId, Empty};
 
 pub type Args = Empty;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(Vec<Subnet>),
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Subnet {
     pub subnet_id: Principal,
     pub local_user_index: CanisterId,

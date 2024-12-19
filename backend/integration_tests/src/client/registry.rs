@@ -1,8 +1,8 @@
-use crate::{generate_msgpack_query_call, generate_msgpack_update_call, generate_update_call};
+use crate::{generate_msgpack_query_call, generate_msgpack_update_call, generate_query_call, generate_update_call};
 use registry_canister::*;
 
 // Queries
-generate_msgpack_query_call!(subnets);
+generate_query_call!(subnets);
 generate_msgpack_query_call!(updates);
 
 // Updates
@@ -26,7 +26,17 @@ pub mod happy_path {
         registry_canister_id: CanisterId,
         subnet_id: Principal,
     ) -> Subnet {
-        let response = super::expand_onto_subnet(env, sender, registry_canister_id, &expand_onto_subnet::Args { subnet_id });
+        let response = super::expand_onto_subnet(
+            env,
+            sender,
+            registry_canister_id,
+            &expand_onto_subnet::Args {
+                subnet_id,
+                local_user_index: None,
+                local_group_index: None,
+                notifications_canister: None,
+            },
+        );
 
         assert!(matches!(response, expand_onto_subnet::Response::Success));
 
