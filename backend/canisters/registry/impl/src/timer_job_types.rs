@@ -23,17 +23,12 @@ pub struct ExpandOntoSubnetJob {
     pub this_canister_id: CanisterId,
     pub user_index: CanisterId,
     pub group_index: CanisterId,
-    #[serde(skip_deserializing, default = "notifications_index")]
     pub notifications_index: CanisterId,
     pub event_relay: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub ledger: CanisterId,
     pub cmc: CanisterId,
     pub create_canister_block_index: Option<u64>,
-}
-
-fn notifications_index() -> CanisterId {
-    CanisterId::from_text("4glvk-ryaaa-aaaaf-aaaia-cai").unwrap()
 }
 
 impl Job for TimerJob {
