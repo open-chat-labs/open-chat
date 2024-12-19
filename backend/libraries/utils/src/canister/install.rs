@@ -38,7 +38,7 @@ pub async fn install_basic<A: CandidType>(canister_id: CanisterId, wasm: Caniste
         new_wasm: WasmToInstall::Default(wasm.module),
         deposit_cycles_if_needed: true,
         args: init_args,
-        mode: CanisterInstallMode::Install,
+        mode: CanisterInstallMode::Reinstall,
         stop_start_canister: false,
     })
     .await

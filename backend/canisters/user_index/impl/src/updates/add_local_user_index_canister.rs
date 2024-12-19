@@ -3,6 +3,7 @@ use crate::updates::upgrade_user_canister_wasm::upgrade_user_wasm_in_local_user_
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use ic_cdk::api::management_canister::main::{canister_info, CanisterInfoRequest};
 use local_user_index_canister::{UserIndexEvent, UserRegistered};
 use tracing::info;
 use types::{BuildVersion, CanisterId, CanisterWasm, Hash};
@@ -17,11 +18,32 @@ async fn add_local_user_index_canister(args: Args) -> Response {
         Ok(result) => {
             let wasm_version = result.canister_wasm.version;
 
-            if let Err(error) = set_controllers(args.canister_id, vec![result.this_canister_id]).await {
-                InternalError(format!("Failed to set controller: {error:?}"))
-            } else if let Err(error) = install_basic(args.canister_id, result.canister_wasm, result.init_args).await {
-                InternalError(format!("Failed to install canister: {error:?}"))
-            } else if let Err(error) = upgrade_user_wasm_in_local_user_index(
+            let canister_info = match canister_info(CanisterInfoRequest {
+                canister_id: args.canister_id,
+                num_requested_changes: None,
+            })
+            .await
+            {
+                Ok((info,)) => info,
+                Err(error) => return InternalError(format!("Failed to get canister info: {error:?}")),
+            };
+
+            let controllers = vec![result.this_canister_id];
+            if canister_info.controllers != controllers {
+                if let Err(error) = set_controllers(args.canister_id, controllers).await {
+                    return InternalError(format!("Failed to set controller: {error:?}"));
+                }
+                info!("Updated controllers");
+            }
+
+            if canister_info.module_hash != Some(result.canister_wasm_hash.to_vec()) {
+                if let Err(error) = install_basic(args.canister_id, result.canister_wasm, result.init_args).await {
+                    return InternalError(format!("Failed to install canister: {error:?}"));
+                }
+                info!("Installed wasm");
+            }
+
+            if let Err(error) = upgrade_user_wasm_in_local_user_index(
                 args.canister_id,
                 &result.user_canister_wasm,
                 result.user_canister_wasm_hash,
@@ -43,6 +65,7 @@ async fn add_local_user_index_canister(args: Args) -> Response {
 struct PrepareResult {
     this_canister_id: CanisterId,
     canister_wasm: CanisterWasm,
+    canister_wasm_hash: Hash,
     user_canister_wasm: CanisterWasm,
     user_canister_wasm_hash: Hash,
     init_args: local_user_index_canister::init::Args,
@@ -50,23 +73,18 @@ struct PrepareResult {
 
 fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
     if !state.data.local_index_map.contains_key(&args.canister_id) {
-        let canister_wasm = state
-            .data
-            .child_canister_wasms
-            .get(ChildCanisterType::LocalUserIndex)
-            .wasm
-            .clone();
-        let wasm_version = canister_wasm.version;
+        let canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::LocalUserIndex);
 
         let user_canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::User);
 
         Ok(PrepareResult {
             this_canister_id: state.env.canister_id(),
-            canister_wasm,
+            canister_wasm: canister_wasm.wasm.clone(),
+            canister_wasm_hash: canister_wasm.wasm_hash,
             user_canister_wasm: user_canister_wasm.wasm.clone(),
             user_canister_wasm_hash: user_canister_wasm.wasm_hash,
             init_args: local_user_index_canister::init::Args {
-                wasm_version,
+                wasm_version: canister_wasm.wasm.version,
                 user_index_canister_id: state.env.canister_id(),
                 group_index_canister_id: state.data.group_index_canister_id,
                 identity_canister_id: state.data.identity_canister_id,

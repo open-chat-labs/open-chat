@@ -50,10 +50,10 @@ pub struct StringParam {
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct NumberParam {
-    pub min_length: u16,
-    pub max_length: u16,
-    #[ts(as = "Vec<SlashCommandOptionChoiceU16>")]
-    pub choices: Vec<SlashCommandOptionChoice<u16>>,
+    pub min_value: f64,
+    pub max_value: f64,
+    #[ts(as = "Vec<SlashCommandOptionChoiceF64>")]
+    pub choices: Vec<SlashCommandOptionChoice<f64>>,
 }
 
 #[ts_export]
@@ -104,7 +104,7 @@ macro_rules! slash_command_option_choice {
 }
 
 slash_command_option_choice!(SlashCommandOptionChoiceString, String);
-slash_command_option_choice!(SlashCommandOptionChoiceU16, u16);
+slash_command_option_choice!(SlashCommandOptionChoiceF64, f64);
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
