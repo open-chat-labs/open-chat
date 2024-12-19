@@ -71,7 +71,6 @@ impl State {
 struct Data {
     pub governance_principals: HashSet<Principal>,
     pub canisters: Canisters,
-    #[serde(default = "CanisterId::anonymous")]
     pub registry_canister_id: CanisterId,
     pub sns_root_canister: Option<CanisterId>,
     pub max_top_up_amount: Cycles,

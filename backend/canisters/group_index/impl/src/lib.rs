@@ -155,7 +155,6 @@ struct Data {
     pub proposals_bot_user_id: UserId,
     pub escrow_canister_id: CanisterId,
     pub event_relay_canister_id: CanisterId,
-    #[serde(default = "CanisterId::anonymous")]
     pub registry_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,

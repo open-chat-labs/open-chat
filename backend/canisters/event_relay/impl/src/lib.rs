@@ -76,7 +76,6 @@ struct Data {
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub event_deduper: EventDeduper,
     pub cycles_dispenser_canister_id: CanisterId,
-    #[serde(default = "CanisterId::anonymous")]
     pub registry_canister_id: CanisterId,
     pub chat_ledger_canister_id: CanisterId,
     pub chat_governance_canister_id: CanisterId,

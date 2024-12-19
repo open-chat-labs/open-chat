@@ -87,19 +87,13 @@ struct Data {
     governance_principals: HashSet<Principal>,
     proposals_bot_canister_id: CanisterId,
     user_index_canister_id: CanisterId,
-    #[serde(default = "CanisterId::anonymous")]
     group_index_canister_id: CanisterId,
-    #[serde(default = "CanisterId::anonymous")]
     notifications_index_canister_id: CanisterId,
-    #[serde(default = "CanisterId::anonymous")]
     event_relay_canister_id: CanisterId,
     sns_wasm_canister_id: CanisterId,
-    #[serde(default = "CanisterId::anonymous")]
     escrow_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
-    #[serde(default = "CanisterId::anonymous")]
     icp_ledger_canister_id: CanisterId,
-    #[serde(default = "CanisterId::anonymous")]
     cycles_minting_canister_id: CanisterId,
     tokens: Tokens,
     nervous_systems: NervousSystems,
@@ -109,9 +103,7 @@ struct Data {
     total_supply: Timestamped<u128>,
     circulating_supply: Timestamped<u128>,
     airdrop_config: Timestamped<Option<AirdropConfig>>,
-    #[serde(default)]
     subnets: Subnets,
-    #[serde(default)]
     timer_jobs: TimerJobs<TimerJob>,
     rng_seed: [u8; 32],
     test_mode: bool,

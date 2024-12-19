@@ -123,7 +123,6 @@ struct Data {
     pub push_service_principals: HashSet<Principal>,
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
-    #[serde(default = "CanisterId::anonymous")]
     pub registry_canister_id: CanisterId,
     pub principal_to_user_id_map: PrincipalToUserIdMap,
     pub subscriptions: Subscriptions,
